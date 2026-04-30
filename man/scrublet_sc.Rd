@@ -9,6 +9,7 @@ scrublet_sc(
   scrublet_params = params_scrublet(),
   seed = 42L,
   streaming = FALSE,
+  cells_to_use = NULL,
   return_combined_pca = FALSE,
   return_pairs = FALSE,
   .verbose = TRUE
@@ -24,6 +25,11 @@ scrublet_sc(
 
 \item{streaming}{Boolean. Shall streaming be used during the HVG
 calculations. Slower, but less memory usage.}
+
+\item{cells_to_use}{Optional string. Names of the cells to use for the
+generation of the Scrublet. Useful when you wish to run doublet detection
+on individual batches within your data. The object returned will be
+specifically using these cells.}
 
 \item{return_combined_pca}{Boolean. Shall the PCA of the observed cells and
 simulated doublets be returned.}

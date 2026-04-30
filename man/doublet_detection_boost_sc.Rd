@@ -7,6 +7,7 @@
 doublet_detection_boost_sc(
   object,
   boost_params = params_boost(),
+  cells_to_use = NULL,
   seed = 42L,
   streaming = FALSE,
   .verbose = TRUE
@@ -17,6 +18,11 @@ doublet_detection_boost_sc(
 
 \item{boost_params}{A list with the final scrublet parameters, see
 \code{\link[=params_boost]{params_boost()}} for full details.}
+
+\item{cells_to_use}{Optional string. Names of the cells to use for the
+run of the boosted doublet detection. Useful when you wish to run doublet
+detection on individual batches within your data. The object returned will be
+specifically using these cells.}
 
 \item{seed}{Integer. Random seed.}
 

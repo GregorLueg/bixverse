@@ -8,6 +8,7 @@ scdblfinder_sc(
   object,
   scdblfinder_params = params_scdblfinder(),
   return_features = FALSE,
+  cells_to_use = NULL,
   streaming = FALSE,
   seed = 42L,
   .verbose = TRUE
@@ -21,6 +22,11 @@ scdblfinder_sc(
 
 \item{return_features}{Boolean. Shall the features used to train the
 classifier be returned.}
+
+\item{cells_to_use}{Optional string. Names of the cells to use for the
+run of the boosted doublet detection. Useful when you wish to run doublet
+detection on individual batches within your data. The object returned will be
+specifically using these cells.}
 
 \item{streaming}{Boolean. Shall the gene data be streamed in. Useful on
 large data sets.}

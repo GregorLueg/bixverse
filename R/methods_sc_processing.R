@@ -796,7 +796,10 @@ S7::method(find_clusters_sc, ScOrMc) <- function(
   snn_graph <- get_snn_graph(object)
   if (is.null(snn_graph)) {
     warning(
-      "No sNN graph found. Did you run find_neighbours_sc(). Returning class as is."
+      paste(
+        "No sNN graph found. Did you run find_neighbours_sc().",
+        "Returning class as is."
+      )
     )
     return(object)
   }

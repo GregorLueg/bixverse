@@ -36,7 +36,8 @@ via ridge regression, and corrects the embedding. It tends to be fast and works
 well across a range of scenarios. Additionally, a version 2 has been released,
 see [Patikas, et al., 2026](https://www.biorxiv.org/content/10.64898/2026.03.16.711825v1)
 with improvements that increase scalability to larger data sets and 
-modifications to the objective functions. 
+modifications to the objective functions to not overcorrect across batches
+when different cell types are there.
 
 - **BBKNN** ([Polanski, et al., 2020](https://doi.org/10.1093/bioinformatics/btz625))
 takes a fundamentally different approach. Rather than correcting an embedding,
@@ -381,7 +382,17 @@ ggplot(tsne_dt_harmony, aes(x = tsne_1, y = tsne_2)) +
 
 #### Version 2
 
-To be written
+Compared to v1 of Harmony, several modifications/improvements were implemented
+by [Patikas, et al., 2026](https://www.biorxiv.org/content/10.64898/2026.03.16.711825v1),
+namely:
+
+- Stabilised diversity penalty
+- Batch pruning in ridge regression
+- Arrowhead matrix inversion for single-covariate case (making it faster!)
+- Dynamic lambda estimation and theta scaling by batch size.
+
+Overall, this makes v2 more amenable and faster on big data sets than v1 (if
+you wish to use Harmony, maybe use the version 2 over the v2?).
 
 ```{r}
 #| label: harmony (v2)

@@ -9,7 +9,7 @@ knitr:
     collapse: true
     comment: '#>'
 author: 
-  - name: "Gregor Lueg"
+  - name: "Gregor Lueg and Grant Neilson"
 ---
 
 ## Intro
@@ -17,12 +17,12 @@ author:
 Doublets - droplets containing two or more cells - are a common artefact in
 droplet-based single cell experiments. If left undetected, they masquerade as
 intermediate cell states or novel populations and quietly corrupt downstream
-analyses. This vignette demonstrates two doublet detection approaches available
-in `bixverse` and benchmarks them against ground truth calls from
+analyses. This vignette demonstrates three doublet detection approaches 
+available in `bixverse` and benchmarks them against ground truth calls from
 [demuxlet](https://github.com/statgen/demuxlet), which identifies doublets
 via genetic variation across pooled donors.
 
-`bixverse` provides two computational doublet detection methods:
+`bixverse` provides three computational doublet detection methods:
 
 - **Scrublet** is a simulation-based approach
 ([Wolock, et al., 2019](https://doi.org/10.1016/j.cels.2018.11.005)). It
@@ -40,7 +40,18 @@ probability. This can be more robust when the score distribution from Scrublet
 is not cleanly bimodal, though it introduces its own hyperparameters (and is
 slower).
 
-Both methods are purely computational and work without genetic or hashing
+- **scDblFinder** is a port of the
+[scDblFinder](https://bioconductor.org/packages/release/bioc/html/scDblFinder.html)
+method from [Germain et al.](https://pmc.ncbi.nlm.nih.gov/articles/PMC9204188/),
+with one modification: it uses lightGBM with the histogram trick on the feature
+space instead of xgboost, which tends to be faster to fit. Like the boosted
+approach it trains a classifier on real versus synthetic doublets, but it
+combines the classifier output with cxds co-expression scores
+([Bais and Kostka](https://pmc.ncbi.nlm.nih.gov/articles/PMC7703774/)) into a
+weighted final score. Across published benchmarks it tends to be the strongest
+of the three.
+
+All three methods are purely computational and work without genetic or hashing
 information. They complement experimental approaches like demuxlet, which
 require pooled donors or hashtag antibodies. They also have a failure mode
 if a large number of doublets dominates the original data.
@@ -293,7 +304,7 @@ were originally developed by
 used as an input into the classifier.
 
 ```{r}
-#| label: weighted scores from scdblfinder
+#| label: cxds scores from scdblfinder
 cxds_scores <- get_scores(scdblfinder, score_type = "cxds_scores")
 
 cxds_scores_threshold <- find_threshold_otsu(x = cxds_scores)
@@ -319,7 +330,7 @@ While Rust makes these methods blazingly fast (usually faster than the
 corresponding R or Python versions), they start feeling quite slow on large
 data sets. A potential approach via GPU acceleration, see 
 [bixverse.gpu](https://github.com/GregorLueg/bixverse.gpu) could be an idea 
-here...
+here to improve the speed
 
 ## Clean up
 

@@ -609,6 +609,7 @@ rs_fast_cluster_sc(
   resolutions = c(2.0, 1.5, 1.0, 0.5, 0.25),
   n_centroids = NULL,
   fc_params = params_sc_fast_cluster(),
+  snn = FALSE,
   seed = 42L,
   verbose = TRUE
 )
