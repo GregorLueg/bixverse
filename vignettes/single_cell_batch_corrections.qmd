@@ -33,7 +33,10 @@ particularly effective when cell type composition differs across batches.
 operates on PCA embeddings using iterative soft clustering with diversity
 penalties. It assigns cells to clusters, estimates batch effects per cluster
 via ridge regression, and corrects the embedding. It tends to be fast and works
-well across a range of scenarios.
+well across a range of scenarios. Additionally, a version 2 has been released,
+see [Patikas, et al., 2026](https://www.biorxiv.org/content/10.64898/2026.03.16.711825v1)
+with improvements that increase scalability to larger data sets and 
+modifications to the objective functions. 
 
 - **BBKNN** ([Polanski, et al., 2020](https://doi.org/10.1093/bioinformatics/btz625))
 takes a fundamentally different approach. Rather than correcting an embedding,
@@ -67,7 +70,6 @@ depth and cell counts, introducing a clear batch effect.
 
 ```{r}
 #| label: load data
-
 dir_data <- download_pbmc_batches()
 
 tempdir_batch_cor <- file.path(tempdir(), "batch_cor_bixverse")
@@ -96,7 +98,6 @@ gene proportions and library complexity metrics.
 
 ```{r}
 #| label: qc
-
 var <- get_sc_var(sc_object)
 
 gs_of_interest <- list(
@@ -135,7 +136,6 @@ Let's plot the metrics:
 #| label: qc plots
 #| fig-width: 10
 #| fig-height: 4
-
 plots <- plot(qc, qc_df)
 
 plots$log10_lib_size + plots$log10_nnz + plots$MT
@@ -145,7 +145,6 @@ Set the cells to keep
 
 ```{r}
 #| label: apply qc
-
 sc_object[["outlier"]] <- qc$combined
 cells_to_keep <- qc_df[!qc$combined, cell_id]
 sc_object <- set_cells_to_keep(sc_object, cells_to_keep)
@@ -157,7 +156,6 @@ Standard pre-processing: HVG selection, PCA, and neighbour computation.
 
 ```{r}
 #| label: preprocessing
-
 sc_object <- find_hvg_sc(
   object = sc_object,
   hvg_no = 2000L,
@@ -186,7 +184,6 @@ baseline metrics.
 
 ```{r}
 #| label: uncorrected tsne
-
 sc_object <- tsne_sc(object = sc_object)
 
 tsne_dt_pre <- as.data.table(
@@ -202,7 +199,6 @@ batch effect correction, so at least let's make it pleasant on the eye).
 #| label: uncorrected plot
 #| fig-width: 7
 #| fig-height: 5
-
 ggplot(tsne_dt_pre, aes(x = tsne_1, y = tsne_2)) +
   geom_point(aes(colour = as.factor(batch)), alpha = 0.5, size = 0.5) +
   labs(
@@ -217,7 +213,6 @@ ggplot(tsne_dt_pre, aes(x = tsne_1, y = tsne_2)) +
 Batch correction stats:
 ```{r}
 #| label: uncorrected metrics
-
 kbet_score_prior <- calculate_kbet_sc(sc_object, batch_column = "sample")
 asw_score_prior <- calculate_batch_asw_sc(sc_object, batch_column = "sample")
 lisi_score_prior <- calculate_batch_lisi_sc(sc_object, batch_column = "sample")
@@ -241,7 +236,6 @@ the batch-aware HVG) and run then the actual algorithm
 
 ```{r}
 #| label: fastmnn
-
 batch_aware_hvg <- find_hvg_batch_aware_sc(
   object = sc_object,
   batch_column = "sample"
@@ -262,7 +256,6 @@ sc_object <- find_neighbours_sc(
 
 ```{r}
 #| label: fastmnn metrics
-
 kbet_score_post_mnn <- calculate_kbet_sc(
   sc_object,
   batch_column = "sample"
@@ -287,7 +280,6 @@ AWS scores and LISI scores also closer to 2 (i.e., number of batches).
 
 ```{r}
 #| label: fastmnn tsne
-
 sc_object <- tsne_sc(object = sc_object)
 
 tsne_dt_mnn <- as.data.table(
@@ -300,7 +292,6 @@ tsne_dt_mnn <- as.data.table(
 #| label: fastmnn plot
 #| fig-width: 7
 #| fig-height: 5
-
 ggplot(tsne_dt_mnn, aes(x = tsne_1, y = tsne_2)) +
   geom_point(aes(colour = as.factor(batch)), alpha = 0.5, size = 0.5) +
   labs(
@@ -325,7 +316,6 @@ The two versions of Harmony are supported. Let's start with the original:
 
 ```{r}
 #| label: harmony
-
 sc_object <- harmony_sc(
   object = sc_object,
   batch_column = "sample",
@@ -343,7 +333,6 @@ Let's calculate the batch correction-related scores
 
 ```{r}
 #| label: harmony metrics
-
 kbet_score_post_harmony <- calculate_kbet_sc(
   sc_object,
   batch_column = "sample"
@@ -367,7 +356,6 @@ Also here, we observe improvements across the board.
 
 ```{r}
 #| label: harmony tsne
-
 sc_object <- tsne_sc(object = sc_object)
 
 tsne_dt_harmony <- as.data.table(
@@ -380,7 +368,6 @@ tsne_dt_harmony <- as.data.table(
 #| label: harmony plot
 #| fig-width: 7
 #| fig-height: 5
-
 ggplot(tsne_dt_harmony, aes(x = tsne_1, y = tsne_2)) +
   geom_point(aes(colour = as.factor(batch)), alpha = 0.5, size = 0.5) +
   labs(
@@ -398,7 +385,6 @@ To be written
 
 ```{r}
 #| label: harmony (v2)
-
 sc_object <- harmony_v2_sc(
   object = sc_object,
   batch_column = "sample",
@@ -416,7 +402,6 @@ Let's calculate the batch correction-related scores
 
 ```{r}
 #| label: harmony (v2) metrics
-
 kbet_score_post_harmony <- calculate_kbet_sc(
   sc_object,
   batch_column = "sample"
@@ -438,7 +423,6 @@ lisi_score_post_harmony
 
 ```{r}
 #| label: harmony (v2) tsne
-
 sc_object <- tsne_sc(object = sc_object)
 
 tsne_dt_harmony <- as.data.table(
@@ -451,7 +435,6 @@ tsne_dt_harmony <- as.data.table(
 #| label: harmony (v2) plot
 #| fig-width: 7
 #| fig-height: 5
-
 ggplot(tsne_dt_harmony, aes(x = tsne_1, y = tsne_2)) +
   geom_point(aes(colour = as.factor(batch)), alpha = 0.5, size = 0.5) +
   labs(
@@ -479,7 +462,6 @@ appropriate metric here.
 
 ```{r}
 #| label: bbknn
-
 sc_object <- bbknn_sc(
   object = sc_object,
   batch_column = "sample",
@@ -490,7 +472,6 @@ sc_object <- bbknn_sc(
 
 ```{r}
 #| label: bbknn metrics
-
 kbet_score_post_bbknn <- calculate_kbet_sc(
   sc_object,
   batch_column = "sample"
@@ -506,7 +487,6 @@ lisi_score_post_bbknn
 
 ```{r}
 #| label: bbknn tsne
-
 sc_object <- tsne_sc(object = sc_object)
 
 tsne_dt_bbknn <- as.data.table(
@@ -519,7 +499,6 @@ tsne_dt_bbknn <- as.data.table(
 #| label: bbknn plot
 #| fig-width: 7
 #| fig-height: 5
-
 ggplot(tsne_dt_bbknn, aes(x = tsne_1, y = tsne_2)) +
   geom_point(aes(colour = as.factor(batch)), alpha = 0.5, size = 0.5) +
   labs(
