@@ -21,6 +21,10 @@
 #' @param seed Integer. Random seed.
 #' @param streaming Boolean. Shall streaming be used during the HVG
 #' calculations. Slower, but less memory usage.
+#' @param cells_to_use Optional string. Names of the cells to use for the
+#' generation of the Scrublet. Useful when you wish to run doublet detection
+#' on individual batches within your data. The object returned will be
+#' specifically using these cells.
 #' @param return_combined_pca Boolean. Shall the PCA of the observed cells and
 #' simulated doublets be returned.
 #' @param return_pairs Boolean. Shall the pairs be returned.
@@ -64,6 +68,7 @@ scrublet_sc <- S7::new_generic(
     scrublet_params = params_scrublet(),
     seed = 42L,
     streaming = FALSE,
+    cells_to_use = NULL,
     return_combined_pca = FALSE,
     return_pairs = FALSE,
     .verbose = TRUE
@@ -83,6 +88,7 @@ S7::method(scrublet_sc, SingleCells) <- function(
   scrublet_params = params_scrublet(),
   seed = 42L,
   streaming = FALSE,
+  cells_to_use = NULL,
   return_combined_pca = FALSE,
   return_pairs = FALSE,
   .verbose = TRUE
@@ -96,10 +102,18 @@ S7::method(scrublet_sc, SingleCells) <- function(
   checkmate::qassert(return_pairs, "B1")
   checkmate::qassert(.verbose, "B1")
 
-  # function body
-  cells_to_keep <- get_cells_to_keep(object)
+  # cell indices
+  cells_to_use <- if (!is.null(cells_to_use)) {
+    cells_to_use <- get_cell_indices(
+      object,
+      cell_ids = cells_to_use,
+      rust_index = TRUE
+    )
+  } else {
+    get_cells_to_keep(object)
+  }
 
-  if (length(cells_to_keep) >= 100000) {
+  if (length(cells_to_use) >= 100000) {
     message("Setting PCA to sparse default. N_cells greater than 100,000")
 
     scrublet_params$sparse <- TRUE
@@ -108,7 +122,7 @@ S7::method(scrublet_sc, SingleCells) <- function(
   scrublet_res <- rs_sc_scrublet(
     f_path_gene = get_rust_count_gene_f_path(object),
     f_path_cell = get_rust_count_cell_f_path(object),
-    cells_to_keep = cells_to_keep,
+    cells_to_keep = cells_to_use,
     scrublet_params = scrublet_params,
     seed = seed,
     verbose = .verbose,
@@ -117,7 +131,7 @@ S7::method(scrublet_sc, SingleCells) <- function(
     return_pairs = return_pairs
   )
 
-  attr(scrublet_res, "cell_indices") <- cells_to_keep
+  attr(scrublet_res, "cell_indices") <- cells_to_use
   class(scrublet_res) <- "ScrubletRes"
 
   return(scrublet_res)
@@ -135,6 +149,10 @@ S7::method(scrublet_sc, SingleCells) <- function(
 #' @param object `SingleCells` class.
 #' @param boost_params A list with the final scrublet parameters, see
 #' [bixverse::params_boost()] for full details.
+#' @param cells_to_use Optional string. Names of the cells to use for the
+#' run of the boosted doublet detection. Useful when you wish to run doublet
+#' detection on individual batches within your data. The object returned will be
+#' specifically using these cells.
 #' @param seed Integer. Random seed.
 #' @param streaming Boolean. Shall streaming be used during the HVG
 #' calculations. Slower, but less memory usage.
@@ -156,6 +174,7 @@ doublet_detection_boost_sc <- S7::new_generic(
   fun = function(
     object,
     boost_params = params_boost(),
+    cells_to_use = NULL,
     seed = 42L,
     streaming = FALSE,
     .verbose = TRUE
@@ -173,6 +192,7 @@ doublet_detection_boost_sc <- S7::new_generic(
 S7::method(doublet_detection_boost_sc, SingleCells) <- function(
   object,
   boost_params = params_boost(),
+  cells_to_use = NULL,
   seed = 42L,
   streaming = FALSE,
   .verbose = TRUE
@@ -184,10 +204,18 @@ S7::method(doublet_detection_boost_sc, SingleCells) <- function(
   checkmate::qassert(streaming, "B1")
   checkmate::qassert(.verbose, "B1")
 
-  # function body
-  cells_to_keep <- get_cells_to_keep(object)
+  # cell indices
+  cells_to_use <- if (!is.null(cells_to_use)) {
+    cells_to_use <- get_cell_indices(
+      object,
+      cell_ids = cells_to_use,
+      rust_index = TRUE
+    )
+  } else {
+    get_cells_to_keep(object)
+  }
 
-  if (length(cells_to_keep) >= 100000) {
+  if (length(cells_to_use) >= 100000) {
     message("Setting PCA to sparse default. N_cells greater than 100,000")
 
     boost_params$sparse <- TRUE
@@ -196,14 +224,14 @@ S7::method(doublet_detection_boost_sc, SingleCells) <- function(
   boost_res <- rs_sc_doublet_detection(
     f_path_gene = get_rust_count_gene_f_path(object),
     f_path_cell = get_rust_count_cell_f_path(object),
-    cells_to_keep = cells_to_keep,
+    cells_to_keep = cells_to_use,
     boost_params = boost_params,
     seed = seed,
     verbose = .verbose,
     streaming = streaming
   )
 
-  attr(boost_res, "cell_indices") <- cells_to_keep
+  attr(boost_res, "cell_indices") <- cells_to_use
   class(boost_res) <- "BoostRes"
 
   return(boost_res)
@@ -220,6 +248,10 @@ S7::method(doublet_detection_boost_sc, SingleCells) <- function(
 #' @param object `SingleCells` class.
 #' @param scdblfinder_params List. Parameters from
 #' [bixverse::params_scdblfinder()].
+#' @param cells_to_use Optional string. Names of the cells to use for the
+#' run of the boosted doublet detection. Useful when you wish to run doublet
+#' detection on individual batches within your data. The object returned will be
+#' specifically using these cells.
 #' @param streaming Boolean. Shall the gene data be streamed in. Useful on
 #' large data sets.
 #' @param return_features Boolean. Shall the features used to train the
@@ -247,6 +279,7 @@ scdblfinder_sc <- S7::new_generic(
     object,
     scdblfinder_params = params_scdblfinder(),
     return_features = FALSE,
+    cells_to_use = NULL,
     streaming = FALSE,
     seed = 42L,
     .verbose = TRUE
@@ -262,6 +295,7 @@ S7::method(scdblfinder_sc, SingleCells) <- function(
   object,
   scdblfinder_params = params_scdblfinder(),
   return_features = FALSE,
+  cells_to_use = NULL,
   streaming = FALSE,
   seed = 42L,
   .verbose = TRUE
@@ -273,9 +307,18 @@ S7::method(scdblfinder_sc, SingleCells) <- function(
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, "B1")
 
-  cell_indices <- get_cells_to_keep(object)
+  # cell indices
+  cells_to_use <- if (!is.null(cells_to_use)) {
+    cells_to_use <- get_cell_indices(
+      object,
+      cell_ids = cells_to_use,
+      rust_index = TRUE
+    )
+  } else {
+    get_cells_to_keep(object)
+  }
 
-  if (length(cell_indices) >= 100000) {
+  if (length(cells_to_use) >= 100000) {
     message("Setting PCA to sparse default. N_cells greater than 100,000")
 
     scdblfinder_params$sparse <- TRUE
@@ -284,7 +327,7 @@ S7::method(scdblfinder_sc, SingleCells) <- function(
   res <- rs_sc_scdblfinder(
     f_path_gene = get_rust_count_gene_f_path(object),
     f_path_cell = get_rust_count_cell_f_path(object),
-    cell_indices = cell_indices,
+    cell_indices = cells_to_use,
     params = scdblfinder_params,
     return_features = return_features,
     streaming = streaming,
@@ -314,7 +357,7 @@ S7::method(scdblfinder_sc, SingleCells) <- function(
       detected_doublet_rate = res$detected_doublet_rate,
       features = features
     ),
-    cell_indices = cell_indices,
+    cell_indices = cells_to_use,
     class = "ScDblFinderRes"
   )
 }
