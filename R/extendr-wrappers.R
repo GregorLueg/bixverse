@@ -2589,6 +2589,39 @@ rs_compare_knn <- function(knn_mat_a, knn_mat_b) .Call(wrap__rs_compare_knn, knn
 #' @export
 rs_fast_cluster_sc <- function(embd, km_type, resolutions, n_centroids, fc_params, snn, seed, verbose) .Call(wrap__rs_fast_cluster_sc, embd, km_type, resolutions, n_centroids, fc_params, snn, seed, verbose)
 
+#' Runs fast Louvain cluster on the data (with multiple seeds)
+#'
+#' @description
+#' Runs first k-means clustering, followed by a kNN detection on the centroids
+#' to then run Louvain clustering with several seeds (based on the original
+#' one) on the graph and propagate the membership back to the original data.
+#' Returns additional metrics around cluster stability and community
+#' conductance.
+#'
+#' @param embd Numeric matrix. The original embedding.
+#' @param km_type String. One of `c("kmeans", "minibatch")` for the type of
+#' k means clustering to run.
+#' @param resolutions Numeric vector. The Louvain resolutions to iterate
+#' through.
+#' @param n_centroids Optional integer. The number of clusters to find. If
+#' not provided, defaults to `sqrt(nrow(embd))`.
+#' @param fc_params Named list. The fast clustering parameters.
+#' @param snn Boolean. Shall the kNN graph be additionally transformed into
+#' an sNN graph.
+#' @param no_seeds Integer. Number of additional seeds to use. Should be >=2.
+#' @param seed Integer. For reproducibility.
+#' @param verbose Boolean. Controls the verbosity of the function.
+#'
+#' @returns A list with the following elements:
+#' \itemize{
+#'  \item memberships - The memberships across the different resolutions. The
+#'  membership from the random seed with the best conductance is returned.
+#'  \item stats - The statistics per given resolution run.
+#' }
+#'
+#' @export
+rs_fast_cluster_sc_grid <- function(embd, km_type, resolutions, n_centroids, fc_params, snn, no_seeds, seed, verbose) .Call(wrap__rs_fast_cluster_sc_grid, embd, km_type, resolutions, n_centroids, fc_params, snn, no_seeds, seed, verbose)
+
 #' Calculate DGEs between cells based on Mann Whitney stats
 #'
 #' @description
@@ -2966,7 +2999,7 @@ rs_importance_threshold <- function(matrix, n_sd, min_value) .Call(wrap__rs_impo
 #' }
 #'
 #' @export
-rs_get_metacells <- function(f_path, knn_mat, embd, cells_to_keep, cells_to_use, meta_cell_params, target_size, seed, verbose) .Call(wrap__rs_get_metacells, f_path, knn_mat, embd, cells_to_keep, cells_to_use, meta_cell_params, target_size, seed, verbose)
+rs_get_metacells_bootstrapped <- function(f_path, knn_mat, embd, cells_to_keep, cells_to_use, meta_cell_params, target_size, seed, verbose) .Call(wrap__rs_get_metacells_bootstrapped, f_path, knn_mat, embd, cells_to_keep, cells_to_use, meta_cell_params, target_size, seed, verbose)
 
 #' Generate SEACells
 #'
@@ -3005,6 +3038,43 @@ rs_get_metacells <- function(f_path, knn_mat, embd, cells_to_keep, cells_to_use,
 #'
 #' @references Persad, et al., Nat. Biotechnol., 2023.
 rs_get_seacells <- function(f_path, embd, cells_to_keep, cells_to_use, seacells_params, target_size, seed, verbose) .Call(wrap__rs_get_seacells, f_path, embd, cells_to_keep, cells_to_use, seacells_params, target_size, seed, verbose)
+
+#' Generate SuperCells.
+#'
+#' @description This function implements the approach from Bilous, et al.
+#' to generate meta cells or called here SuperCells. You can provide an
+#' already pre-computed kNN matrix or an embedding to regenerate the kNN matrix
+#' with specified parameters in the meta_cell_params. If `knn_mat` is provided,
+#' this one will be used. You need to at least provide `knn_mat` or `embd`!
+#'
+#' @param f_path String. Path to the `counts_cells.bin` file.
+#' @param knn_mat Optional integer matrix. The kNN matrix you wish to use
+#' for the generation of the meta cells. This function expects 0-indices!
+#' @param embd Optional numerical matrix. The embedding matrix (for example
+#' PCA embedding) you wish to use for the generation of the kNN graph that
+#' is used subsequently for aggregation of the meta cells.
+#' @param cells_to_keep Optional indices of the cells to keep, i.e., the
+#' cells used for the generation of the embedding.
+#' @param cells_to_use Optional indices of cells to use for meta cell
+#' generation. Useful if you wish to generate meta cells in specific cell
+#' types. If this is provided, the kNN graph will be regenerated.
+#' @param supercell_params A list containing the SuperCell parameters.
+#' @param target_size Numeric. Target library size for re-normalisation of
+#' the meta cells. Typically `1e4`.
+#' @param seed Integer. For reproducibility purposes.
+#' @param verbose Boolean. Controls verbosity of the function.
+#'
+#' @returns A list with the following elements:
+#' \itemize{
+#'  \item assignments - A list containing assignment information with elements:
+#'    assignments (vector), metacells (list), unassigned (vector), n_metacells,
+#'    n_cells, n_unassigned
+#'  \item aggregated - A list with indptr, indices, raw_counts, norm_counts,
+#'    nrow, ncol in sparse format.
+#' }
+#'
+#' @export
+rs_supercell <- function(f_path, knn_mat, embd, cells_to_keep, cells_to_use, supercell_params, target_size, seed, verbose) .Call(wrap__rs_supercell, f_path, knn_mat, embd, cells_to_keep, cells_to_use, supercell_params, target_size, seed, verbose)
 
 #' Pseudo-bulk a set of cells (dense)
 #'
@@ -3048,43 +3118,6 @@ rs_pseudobulk_cells_dense <- function(f_path, cell_indices_ls, assay, verbose) .
 #'
 #' @export
 rs_pseudobulk_cells_sparse <- function(f_path, cell_indices_ls, assay, verbose) .Call(wrap__rs_pseudobulk_cells_sparse, f_path, cell_indices_ls, assay, verbose)
-
-#' Generate SuperCells.
-#'
-#' @description This function implements the approach from Bilous, et al.
-#' to generate meta cells or called here SuperCells. You can provide an
-#' already pre-computed kNN matrix or an embedding to regenerate the kNN matrix
-#' with specified parameters in the meta_cell_params. If `knn_mat` is provided,
-#' this one will be used. You need to at least provide `knn_mat` or `embd`!
-#'
-#' @param f_path String. Path to the `counts_cells.bin` file.
-#' @param knn_mat Optional integer matrix. The kNN matrix you wish to use
-#' for the generation of the meta cells. This function expects 0-indices!
-#' @param embd Optional numerical matrix. The embedding matrix (for example
-#' PCA embedding) you wish to use for the generation of the kNN graph that
-#' is used subsequently for aggregation of the meta cells.
-#' @param cells_to_keep Optional indices of the cells to keep, i.e., the
-#' cells used for the generation of the embedding.
-#' @param cells_to_use Optional indices of cells to use for meta cell
-#' generation. Useful if you wish to generate meta cells in specific cell
-#' types. If this is provided, the kNN graph will be regenerated.
-#' @param supercell_params A list containing the SuperCell parameters.
-#' @param target_size Numeric. Target library size for re-normalisation of
-#' the meta cells. Typically `1e4`.
-#' @param seed Integer. For reproducibility purposes.
-#' @param verbose Boolean. Controls verbosity of the function.
-#'
-#' @returns A list with the following elements:
-#' \itemize{
-#'  \item assignments - A list containing assignment information with elements:
-#'    assignments (vector), metacells (list), unassigned (vector), n_metacells,
-#'    n_cells, n_unassigned
-#'  \item aggregated - A list with indptr, indices, raw_counts, norm_counts,
-#'    nrow, ncol in sparse format.
-#' }
-#'
-#' @export
-rs_supercell <- function(f_path, knn_mat, embd, cells_to_keep, cells_to_use, supercell_params, target_size, seed, verbose) .Call(wrap__rs_supercell, f_path, knn_mat, embd, cells_to_keep, cells_to_use, supercell_params, target_size, seed, verbose)
 
 #' Helper to extract single cell counts as a dense vector for plotting
 #'

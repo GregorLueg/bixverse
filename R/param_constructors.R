@@ -519,6 +519,19 @@ params_sc_neighbours <- function(
 #' @param lr_alpha Numeric. Learning rate alpha parameter for mini batch
 #' k-means.
 #' @param louvain_iters Integer. Number of iterations for Louvain clustering.
+#' @param full_snn Boolean. Shall the full shared nearest neighbour graph
+#' be generated that generates edges between all cells instead of between
+#' only neighbours.
+#' @param pruning Optional numeric. Weights below this threshold will be set to
+#' 0 in the generation of the sNN graph. If not provided, defaults to
+#' `1 / ceil(k * 0.8)`.
+#' @param snn_similarity String. One of `c("rank", "jaccard")`. The Jaccard
+#' similarity calculates the Jaccard between the neighbours, whereas the rank
+#' method calculates edge weights based on the ranking of shared neighbours.
+#' For the rank method, the weight is determined by finding the shared
+#' neighbour with the lowest combined rank across both cells, where
+#' lower-ranked (closer) shared neighbours result in higher edge weights
+#' Both methods produce weights normalised to the range `[0, 1]`.
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
@@ -529,19 +542,31 @@ params_sc_neighbours <- function(
 #'
 #' @export
 params_sc_fast_cluster <- function(
+  # kmeans
   kmeans_iters = 100L,
   batch_size = 4096L,
   drift_threshold = 1e-4,
   lr_alpha = 1.0,
+  # snn
+  full_snn = FALSE,
+  pruning = NULL,
+  snn_similarity = c("jaccard", "rank"),
+  # louvain
   louvain_iters = 10L,
+  # knn
   knn = list(k = 5L)
 ) {
+  snn_similarity <- match.arg(snn_similarity)
+
   # checks
   checkmate::qassert(kmeans_iters, "I1")
   checkmate::qassert(batch_size, "I1")
   checkmate::qassert(drift_threshold, "N1")
   checkmate::qassert(lr_alpha, "N1")
   checkmate::qassert(louvain_iters, "I1")
+  checkmate::qassert(full_snn, "B1")
+  checkmate::qassert(pruning, c("N1", "0"))
+  checkmate::assertChoice(snn_similarity, c("jaccard", "rank"))
 
   knn_params <- modifyList(
     params_knn_defaults(),
@@ -555,7 +580,10 @@ params_sc_fast_cluster <- function(
       batch_size = batch_size,
       drift_threshold = drift_threshold,
       lr_alpha = lr_alpha,
-      louvain_iters = louvain_iters
+      louvain_iters = louvain_iters,
+      full_snn = full_snn,
+      pruning = pruning,
+      snn_similarity = snn_similarity
     ),
     knn_params
   )
@@ -706,7 +734,11 @@ params_sc_miloR <- function(
 
 ### meta cell (hdWGCNA) --------------------------------------------------------
 
-#' Wrapper function for parameters for meta cell generation
+#' Wrapper function for parameters for bootstrapped meta cell generation
+#'
+#' @description
+#' This function generates parameters for the bootstrapped meta cell generation
+#' based on hdWGCNA, see Morabito, et al., Cell Rep. Methods, 2023.
 #'
 #' @param max_shared Integer. Maximum number of allowed shared neighbours for
 #' the meta cell to be considered. Defaults to `15L`.
@@ -723,7 +755,7 @@ params_sc_miloR <- function(
 #' @returns A list with the metacell parameters.
 #'
 #' @export
-params_sc_metacells <- function(
+params_sc_bt_metacells <- function(
   max_shared = 15L,
   target_no_metacells = 1000L,
   max_iter = 5000L,

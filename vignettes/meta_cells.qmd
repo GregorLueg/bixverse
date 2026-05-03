@@ -1,0 +1,370 @@
+---
+title: "Meta cells with bixverse"
+vignette: >
+  %\VignetteIndexEntry{Meta cells with bixverse}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+knitr:
+  opts_chunk:
+    collapse: true
+    comment: '#>'
+author: 
+  - name: "Gregor Lueg"
+---
+
+## Intro
+
+Meta cells are small groups of transcriptionally similar cells aggregated into
+a single representative profile. The motivation is twofold: firstly, single cell 
+counts are sparse and noisy, and many downstream methods (correlation networks, 
+GRN inference, archetype-based modelling) behave poorly on raw single cell data.
+Aggregating into meta cells reduces sparsity while preserving the heterogeneity
+that bulk pseudo-replicates would average out. Secondly, they reduce the
+computational burden substantially.
+
+`bixverse` provides three meta cell algorithms with different underlying ideas:
+
+- **hdWGCNA-style meta cells** ([Morabito, et al., 2023](https://doi.org/10.1016/j.crmeth.2023.100498))
+iterate over a kNN graph, picking seed cells and aggregating their neighbours,
+with a constraint on how many cells two meta cells are allowed to share. Simple,
+fast and reasonably effective. Works directly on a kNN graph.
+
+- **SEACells** ([Persad, et al., 2023](https://doi.org/10.1038/s41587-023-01716-9))
+uses kernel archetypal analysis. The algorithm finds a set of archetypes (the
+SEACells) such that every cell can be expressed as a convex combination of
+nearby archetypes. Tends to produce purer aggregations but is the most
+computationally expensive of the three.
+
+- **SuperCells** ([Bilous, et al., 2022](https://doi.org/10.1186/s12859-022-04861-1))
+applies the walktrap community detection algorithm to the kNN graph and treats
+each community as a meta cell. Granularity is controlled indirectly through a
+graining factor (the average number of cells per meta cell).
+
+One implementation detail worth flagging upfront. In `bixverse`, the
+`SingleCells` class keeps counts on disk in DuckDB and binary Rust-based files 
+and streams them in as needed. The `MetaCells` class does not. After aggregation 
+the count matrix is small enough to hold entirely in memory as a sparse matrix, 
+and all downstream operations (HVG, PCA, neighbours, clustering, embeddings) run
+against this in-memory representation (most of the code still makes usage of
+Rust's incredible performance nonetheless). Practically that means the meta cell 
+pipeline is substantially faster than the equivalent operations on the parent
+`SingleCells` object for two reasons: data is already in memory and more
+importantly, it is simply less data.
+
+```{r}
+#| label: setup
+library(bixverse)
+library(ggplot2)
+library(data.table)
+```
+
+## Preparing the single cell data
+
+We use the same CD34 cells from the [SEACells vignette](https://github.com/dpeerlab/SEACells/blob/main/notebooks/SEACell_computation.ipynb) to set up the parent `SingleCells` object: 
+load (QC not needed - it's already filtered data), HVG selection, PCA, 
+kNN graph. We can use the provided cell type labels to check purity.
+
+```{r}
+#| label: load and qc
+cd34_path <- "~/Desktop/zenodo_data/cd34_multiome_rna.h5ad"
+
+tempdir_pbmc <- tempdir()
+
+sc_object <- SingleCells(dir_data = tempdir_pbmc)
+
+sc_object <- load_h5ad(object = sc_object, h5_path = cd34_path)
+```
+
+Let's run HVG detection, PCA and kNN (+ sNN) generation.
+
+```{r}
+#| label: preprocess
+sc_object <- find_hvg_sc(
+  object = sc_object,
+  hvg_no = 2000L,
+  .verbose = FALSE
+)
+
+sc_object <- calculate_pca_sc(
+  object = sc_object,
+  no_pcs = 30L,
+  sparse_svd = FALSE
+)
+
+sc_object <- find_neighbours_sc(
+  object = sc_object,
+  neighbours_params = params_sc_neighbours(
+    knn = list(knn_method = "kmknn")
+  )
+)
+```
+
+## Generating meta cells
+
+All three generators take a `SingleCells` object, read counts from the binary
+files as needed, and return a `MetaCells` object. They share a common output
+structure: an obs table with one row per meta cell (recording which original
+cells went into it), a var table mirrored from the parent object, and an
+in-memory sparse count matrix.
+
+### hdWGCNA-style (bootstrapped metacells)
+
+The hdWGCNA-style algorithm reuses the kNN graph already on the object. The
+two parameters that matter most are `target_no_metacells` and `max_shared`,
+which controls how many cells two meta cells may have in common.
+
+```{r}
+#| label: hdwgcna
+hdwgcna <- generate_bt_meta_cells_sc(
+  object = sc_object,
+  sc_meta_cell_params = params_sc_bt_metacells(
+    target_no_metacells = 250L,
+    max_shared = 15L,
+    knn = list(k = 25L)
+  ),
+  regenerate_knn = TRUE,
+  .verbose = TRUE
+)
+
+hdwgcna
+```
+
+Importantly, not all cells HAVE to be assigned to a meta cell. It's a fast,
+bootstrapped method.
+
+```{r}
+#| label: hdwgcna - cells per meta cell
+no_cells_hdwgcna <- purrr::map_dbl(hdwgcna[[]]$original_cell_idx, length)
+
+hist(
+  no_cells_hdwgcna,
+  xlab = "No cells per meta cell",
+  main = "Cells per hdWGCNA meta cell"
+)
+```
+
+### SEACells
+
+SEACells operates on the PCA embedding (or any batch corrected embedding) and 
+the kNN graph and runs an iterative kernel archetypal analysis. `n_sea_cells` 
+sets the number of archetypes; `min_iter`/`max_iter` bound the optimisation; 
+`convergence_epsilon` sets the early stopping threshold relative to the initial 
+RSS. The algorithm was aggressively optimised to be faster. With 
+`pruning = TRUE` small values are set to zero, reducing calculations... This can 
+impact quality, but usually it is very minor.
+
+```{r}
+#| label: seacells
+seacells <- generate_seacells_sc(
+  object = sc_object,
+  seacell_params = params_sc_seacells(
+    n_sea_cells = 250L,
+    min_iter = 10L,
+    convergence_epsilon = 0.001,
+    pruning = TRUE
+  ),
+  .verbose = TRUE
+)
+
+seacells
+```
+
+Compared to hdWGCNA methods, more cells can be included in a given "SEACell"
+
+```{r}
+#| label: seacells - cells per meta cell
+no_cells_seacells <- purrr::map_dbl(seacells[[]]$original_cell_idx, length)
+
+hist(
+  no_cells_seacells,
+  xlab = "No cells per meta cell",
+  main = "Cells per SEACells meta cell"
+)
+```
+
+### SuperCells
+
+SuperCells runs walktrap on the kNN graph. The number of meta cells is set
+indirectly through `graining_factor`: with a factor of 20 over ~6800 cells
+you should get roughly ~350 meta cells.
+
+```{r}
+#| label: supercells
+supercells <- generate_supercells_sc(
+  object = sc_object,
+  sc_supercell_params = params_sc_supercell(
+    graining_factor = 15
+  ),
+  .verbose = TRUE
+)
+
+supercells
+```
+
+Let's plot the number of cells per SEACell.
+
+```{r}
+#| label: supercells - cells per meta cell
+no_cells_supercells <- purrr::map_dbl(supercells[[]]$original_cell_idx, length)
+
+hist(
+  no_cells_supercells,
+  xlab = "No cells per meta cell",
+  main = "Cells per Supercell"
+)
+```
+
+### Purity
+
+A simple sanity check is to ask, for each meta cell, what fraction of its
+constituent cells share the same underlying label. We use the Leiden clusters
+from the parent `SingleCells` object as a proxy for cell type identity. The
+labels themselves are imperfect, so absolute numbers should be read with that
+caveat, but relative differences between methods are reasonably indicative.
+
+```{r}
+#| label: purity
+cell_labels <- unlist(sc_object[["celltype"]]) %>% as.character()
+
+hdwgcna <- calc_meta_cell_purity(hdwgcna, original_cell_type = cell_labels)
+seacells <- calc_meta_cell_purity(seacells, original_cell_type = cell_labels)
+supercells <- calc_meta_cell_purity(
+  supercells,
+  original_cell_type = cell_labels
+)
+
+purity_dt <- rbind(
+  data.table(method = "hdWGCNA", purity = hdwgcna[[]]$mc_purity),
+  data.table(method = "SEACells", purity = seacells[[]]$mc_purity),
+  data.table(method = "SuperCells", purity = supercells[[]]$mc_purity)
+)
+
+purity_dt[, .(mean = mean(purity), median = median(purity)), by = method]
+```
+
+```{r}
+#| label: purity plot
+#| fig-width: 6
+#| fig-height: 4
+ggplot(purity_dt, aes(x = method, y = purity)) +
+  geom_violin(aes(fill = method), alpha = 0.6) +
+  geom_boxplot(width = 0.05, outlier.size = 0.5) +
+  theme_bw() +
+  theme(legend.position = "none") +
+  labs(x = "", y = "Meta cell purity (Leiden)") +
+  ylim(0, 1)
+```
+
+## Working with the MetaCells class
+
+This is where the in-memory representation pays off. HVG selection, PCA,
+neighbour graphs and embeddings on a few hundred meta cells take seconds and
+do not touch disk.
+
+We continue with the SEACells output as it had the highest purity, but the
+same code works on any of the three.
+
+### HVGs and PCA
+
+```{r}
+#| label: mc hvg pca
+seacells <- find_hvg_sc(
+  object = seacells,
+  hvg_no = 2000L,
+  .verbose = FALSE
+)
+
+seacells <- calculate_pca_sc(
+  object = seacells,
+  no_pcs = 30L
+)
+```
+
+### Neighbours, clustering and UMAP
+
+```{r}
+#| label: mc neighbours clustering umap
+seacells <- find_neighbours_sc(
+  object = seacells,
+  neighbours_params = params_sc_neighbours(
+    knn = list(k = 5L, knn_method = "exhaustive")
+  )
+)
+
+seacells <- find_clusters_sc(seacells, res = 1.0, name = "leiden_clusters")
+
+seacells <- umap_sc(seacells, k = 10L, knn_method = "exhaustive")
+```
+
+```{r}
+#| label: mc umap plot
+#| fig-width: 7
+#| fig-height: 5
+umap_dt <- as.data.table(
+  get_embedding(seacells, "umap"),
+  keep.rownames = "meta_cell_id"
+)[, leiden_clusters := seacells[["leiden_clusters"]]]
+
+ggplot(umap_dt, aes(x = umap_1, y = umap_2)) +
+  geom_point(aes(colour = as.factor(leiden_clusters)), size = 1.5) +
+  theme_bw() +
+  labs(colour = "MetaCell cluster")
+```
+
+The plot is much sparser than the equivalent UMAP on the original cells,
+which is the point: each dot is a denoised aggregate of ~15-20 cells, and
+the structure that survives aggregation is the structure that's robust to
+sparsity.
+
+## Pseudo-bulking
+
+Pseudo-bulks are conceptually adjacent but solve a different problem. Where
+meta cells are dense aggregates designed to feed into co-expression and
+archetype methods, pseudo-bulks are coarse summaries (typically one bulk per
+sample-by-cluster combination) used as input to bulk-style DGE tools such as
+limma-voom, edgeR or DESeq2.
+
+`get_pseudobulked_sc` takes a named list of cell IDs and returns either a
+dense matrix or a sparse `dgRMatrix`. With `assay = "raw"` it sums raw counts
+(what bulk DGE tools expect); with `assay = "norm"` it averages normalised
+counts.
+
+```{r}
+#| label: pseudobulk
+cl_dt <- sc_object[[c("leiden_clusters", "cell_id")]]
+cell_list <- split(cl_dt$cell_id, cl_dt$leiden_clusters)
+
+pb_counts <- get_pseudobulked_sc(
+  object = sc_object,
+  cell_list = cell_list,
+  return_format = "sparse",
+  assay = "raw",
+  .verbose = FALSE
+)
+
+dim(pb_counts)
+```
+
+The returned matrix has one row per group and one column per gene. From here
+the standard bulk DGE pipeline applies; `bixverse` does not wrap the DGE call
+itself.
+
+## Coming up
+
+A few things sit naturally on top of `MetaCells` and will be added in
+upcoming releases:
+
+- A SCENIC implementation for `MetaCells`. Meta cells suit SCENIC well
+because the higher counts per observation make the GRN inference step less
+noisy.
+- An AUCell port for scoring gene sets on meta cells.
+
+Both will dispatch on the `MetaCells` class with the in-memory speed
+advantages described above.
+
+## Clean up
+
+```{r}
+#| label: clean up
+unlink(tempdir_pbmc, recursive = TRUE, force = TRUE)
+```

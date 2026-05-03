@@ -9,6 +9,9 @@ params_sc_fast_cluster(
   batch_size = 4096L,
   drift_threshold = 1e-04,
   lr_alpha = 1,
+  full_snn = FALSE,
+  pruning = NULL,
+  snn_similarity = c("jaccard", "rank"),
   louvain_iters = 10L,
   knn = list(k = 5L)
 )
@@ -24,6 +27,22 @@ terminates.}
 
 \item{lr_alpha}{Numeric. Learning rate alpha parameter for mini batch
 k-means.}
+
+\item{full_snn}{Boolean. Shall the full shared nearest neighbour graph
+be generated that generates edges between all cells instead of between
+only neighbours.}
+
+\item{pruning}{Optional numeric. Weights below this threshold will be set to
+0 in the generation of the sNN graph. If not provided, defaults to
+\code{1 / ceil(k * 0.8)}.}
+
+\item{snn_similarity}{String. One of \code{c("rank", "jaccard")}. The Jaccard
+similarity calculates the Jaccard between the neighbours, whereas the rank
+method calculates edge weights based on the ranking of shared neighbours.
+For the rank method, the weight is determined by finding the shared
+neighbour with the lowest combined rank across both cells, where
+lower-ranked (closer) shared neighbours result in higher edge weights
+Both methods produce weights normalised to the range \verb{[0, 1]}.}
 
 \item{louvain_iters}{Integer. Number of iterations for Louvain clustering.}
 

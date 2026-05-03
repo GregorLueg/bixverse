@@ -1,3 +1,4 @@
+use bixverse_rs::single_cell::sc_analysis::metacell_density::DiffusionDensity;
 use extendr_api::*;
 use faer::Mat;
 use rustc_hash::FxHashMap;
@@ -6,9 +7,12 @@ use std::time::Instant;
 use bixverse_rs::prelude::*;
 use bixverse_rs::single_cell::sc_analysis::cell_aggregation_utils::*;
 use bixverse_rs::single_cell::sc_analysis::hdwgcna_meta_cells::*;
+use bixverse_rs::single_cell::sc_analysis::metacell_density::*;
 use bixverse_rs::single_cell::sc_analysis::seacells::*;
 use bixverse_rs::single_cell::sc_analysis::super_cells::*;
 use bixverse_rs::single_cell::sc_r_wrappers::assignments_to_r_list;
+
+use crate::single_cell::utils::{knn_distances_processing, knn_indices_processing};
 
 /////////////
 // extendR //
@@ -16,11 +20,13 @@ use bixverse_rs::single_cell::sc_r_wrappers::assignments_to_r_list;
 
 extendr_module! {
     mod r_sc_metacells;
-    fn rs_get_metacells;
+    // meta cells
+    fn rs_get_metacells_bootstrapped;
     fn rs_get_seacells;
+    fn rs_supercell;
+    // pseudo-bulking
     fn rs_pseudobulk_cells_dense;
     fn rs_pseudobulk_cells_sparse;
-    fn rs_supercell;
 }
 
 ////////////////
@@ -64,7 +70,7 @@ extendr_module! {
 /// @export
 #[extendr]
 #[allow(clippy::too_many_arguments)]
-fn rs_get_metacells(
+fn rs_get_metacells_bootstrapped(
     f_path: String,
     knn_mat: Option<RMatrix<i32>>,
     embd: Option<RMatrix<f64>>,
@@ -75,9 +81,8 @@ fn rs_get_metacells(
     seed: usize,
     verbose: bool,
 ) -> extendr_api::Result<List> {
-    let meta_cell_params = MetaCellParams::from_r_list(meta_cell_params)?;
+    let meta_cell_params = BootstrappedMetaCellParams::from_r_list(meta_cell_params)?;
 
-    // If subsetting, we need both the QC cells and the subset to use
     if cells_to_use.is_some() && (cells_to_keep.is_none() || embd.is_none()) {
         return Err(
             "When using 'cells_to_use', both 'cells_to_keep' and 'embd' must be provided".into(),
@@ -92,14 +97,12 @@ fn rs_get_metacells(
             let qc_cells: Vec<usize> = cells_to_keep.iter().map(|&x| x as usize).collect();
             let use_cells: Vec<usize> = use_cells.iter().map(|&x| x as usize).collect();
 
-            // Create mapping: original index -> PCA row index
             let orig_to_pca: FxHashMap<usize, usize> = qc_cells
                 .iter()
                 .enumerate()
                 .map(|(pca_row, &orig_idx)| (orig_idx, pca_row))
                 .collect();
 
-            // Find which PCA rows correspond to cells_to_use
             let mut pca_rows_to_use = Vec::new();
             let mut subset_to_orig = Vec::new();
 
@@ -120,7 +123,6 @@ fn rs_get_metacells(
                 );
             }
 
-            // Subset the embedding using PCA row indices
             let ncol = embd.ncols();
             let nrow = embd.nrows();
             let data = embd.data();
@@ -148,7 +150,6 @@ fn rs_get_metacells(
             (subset_to_orig, n_total, knn)
         }
         None => {
-            // No subsetting - original logic
             let n_total = match (&knn_mat, &embd) {
                 (Some(mat), _) => mat.nrows(),
                 (_, Some(em)) => em.nrows(),
@@ -159,24 +160,7 @@ fn rs_get_metacells(
                     if verbose {
                         println!("Using provided kNN matrix");
                     }
-                    let ncol = knn_mat.ncols();
-                    let nrow = knn_mat.nrows();
-                    let data = knn_mat.data();
-
-                    (0..nrow)
-                        .map(|j| {
-                            (0..ncol)
-                                .filter_map(|i| {
-                                    let val = data[j + i * nrow];
-                                    if val > 0 {
-                                        Some((val - 1) as usize)
-                                    } else {
-                                        None
-                                    }
-                                })
-                                .collect()
-                        })
-                        .collect()
+                    knn_indices_processing(knn_mat)
                 }
                 (None, Some(embd)) => {
                     if verbose {
@@ -207,14 +191,15 @@ fn rs_get_metacells(
         }
     };
 
-    // Rest of the function remains the same...
+    let is_subset = cells_to_use.is_some();
+
     let nn_map = build_nn_map(&knn_graph);
 
     if verbose {
         println!("Identifying meta cells.");
     }
 
-    let meta_cell_indices: Vec<&[usize]> = identify_meta_cells(
+    let centres = identify_meta_cells(
         &nn_map,
         meta_cell_params.max_shared,
         meta_cell_params.target_no_metacells,
@@ -223,12 +208,17 @@ fn rs_get_metacells(
         verbose,
     );
 
-    let n_subset_cells = nn_map.len();
-    let assignments_subset = metacells_to_assignments(&meta_cell_indices, n_subset_cells);
+    let assignments_subset = assign_bootstrapped_meta_cells(&centres, &nn_map);
+    let n_metacells = centres.len();
 
-    let is_subset = cells_to_use.is_some();
+    let mut metacells_subset: Vec<Vec<usize>> = vec![Vec::new(); n_metacells];
+    for (cell_id, &a) in assignments_subset.iter().enumerate() {
+        if let Some(id) = a {
+            metacells_subset[id].push(cell_id);
+        }
+    }
 
-    let assignments_full = if is_subset {
+    let assignments_full: Vec<Option<usize>> = if is_subset {
         remap_assignments_to_original(&assignments_subset, &subset_to_orig, n_total_cells)
     } else {
         assignments_subset
@@ -244,12 +234,15 @@ fn rs_get_metacells(
     let n_genes = reader.get_header().total_genes;
 
     let metacells_original: Vec<Vec<usize>> = if is_subset {
-        remap_metacells_to_original(&meta_cell_indices, &subset_to_orig)
+        remap_metacells_to_original(
+            &metacells_subset
+                .iter()
+                .map(|v| v.as_slice())
+                .collect::<Vec<_>>(),
+            &subset_to_orig,
+        )
     } else {
-        meta_cell_indices
-            .iter()
-            .map(|&slice| slice.to_vec())
-            .collect()
+        metacells_subset
     };
 
     let metacells_refs: Vec<&[usize]> = metacells_original.iter().map(|v| v.as_slice()).collect();
@@ -287,6 +280,8 @@ fn rs_get_metacells(
 /// generation. Useful if you wish to generate meta cells in specific cell
 /// types.
 /// @param seacells_params A list containing the SEACells parameters.
+/// @param n_landmarks Optional integer. If provided, the archetype selection
+/// will use the Nyström method which makes large data sets more tractable.
 /// @param target_size Numeric. Target library size for re-normalisation of
 /// the meta cells. Typically `1e4`.
 /// @param seed Integer. For reproducibility purposes.
@@ -314,6 +309,7 @@ fn rs_get_seacells(
     cells_to_keep: Option<Vec<i32>>,
     cells_to_use: Option<Vec<i32>>,
     seacells_params: List,
+    n_landmarks: Option<usize>,
     target_size: f64,
     seed: usize,
     verbose: bool,
@@ -332,14 +328,12 @@ fn rs_get_seacells(
             let qc_cells: Vec<usize> = cells_to_keep.iter().map(|&x| x as usize).collect();
             let use_cells: Vec<usize> = use_cells.iter().map(|&x| x as usize).collect();
 
-            // Create mapping: original index -> PCA row index
             let orig_to_pca: FxHashMap<usize, usize> = qc_cells
                 .iter()
                 .enumerate()
                 .map(|(pca_row, &orig_idx)| (orig_idx, pca_row))
                 .collect();
 
-            // Find which PCA rows correspond to cells_to_use
             let mut pca_rows_to_use = Vec::new();
             let mut subset_to_orig = Vec::new();
 
@@ -360,7 +354,6 @@ fn rs_get_seacells(
                 );
             }
 
-            // Subset the embedding using PCA row indices
             let ncol = embd.ncols();
             let nrow = embd.nrows();
             let data = embd.data();
@@ -403,35 +396,77 @@ fn rs_get_seacells(
 
     let mut seacell = SEACells::new(embd_mat.nrows(), &seacells_params);
 
+    let dist_squared = seacells_params.knn_params.ann_dist == "euclidean";
+
     let knn_dist = knn_dist.unwrap();
 
     seacell.construct_kernel_mat(embd_mat.as_ref(), &knn_indices, &knn_dist, verbose);
-    let _ = seacell.initialise_archetypes(&knn_indices, &knn_dist, verbose, seed as u64);
 
-    seacell.fit(seed, verbose);
+    if let Some(n_landmarks) = n_landmarks {
+        seacell
+            .initialise_archetypes_landmark(
+                embd_mat.as_ref(),
+                &knn_indices,
+                &knn_dist,
+                dist_squared,
+                n_landmarks,
+                verbose,
+                seed as u64,
+            )
+            .to_extendr()?;
+    } else {
+        seacell
+            .initialise_archetypes(&knn_indices, &knn_dist, verbose, dist_squared, seed as u64)
+            .to_extendr()?;
+    }
 
-    let assignments_subset = seacell.get_hard_assignments();
-    let archetypes_subset = seacell.get_archetypes();
+    seacell.fit(seed, verbose).to_extendr()?;
+
+    let assignments_raw = seacell.get_hard_assignments().to_extendr()?;
+    let archetypes_raw = seacell.get_archetypes().to_extendr()?;
     let k = seacells_params.n_sea_cells;
 
     let rss = seacell.get_rss_history();
 
-    let assignments_subset_opt: Vec<Option<usize>> =
-        assignments_subset.iter().map(|&x| Some(x)).collect();
+    let groups_raw = assignments_to_metacells(&assignments_raw, k);
 
-    let assignments_full = if is_subset {
+    let mut id_remap: Vec<Option<usize>> = vec![None; k];
+    let mut groups_kept: Vec<Vec<usize>> = Vec::new();
+    let mut archetypes_kept: Vec<usize> = Vec::new();
+
+    for (old_id, group) in groups_raw.into_iter().enumerate() {
+        if !group.is_empty() {
+            id_remap[old_id] = Some(groups_kept.len());
+            archetypes_kept.push(archetypes_raw[old_id]);
+            groups_kept.push(group);
+        }
+    }
+
+    if verbose && groups_kept.len() < k {
+        println!(
+            "Dropped {} empty archetype(s); keeping {} of {} requested",
+            k - groups_kept.len(),
+            groups_kept.len(),
+            k
+        );
+    }
+
+    let assignments_subset_opt: Vec<Option<usize>> =
+        assignments_raw.iter().map(|&old| id_remap[old]).collect();
+
+    let assignments_full: Vec<Option<usize>> = if is_subset {
         remap_assignments_to_original(&assignments_subset_opt, &subset_to_orig, n_total_cells)
     } else {
         assignments_subset_opt
     };
 
     let archetypes_original: Vec<usize> = if is_subset {
-        archetypes_subset
+        archetypes_kept
             .iter()
             .map(|&idx| subset_to_orig[idx])
             .collect()
     } else {
-        archetypes_subset
+        archetypes_kept
     };
 
     let assignment_list = assignments_to_r_list(&assignments_full, n_total_cells);
@@ -440,18 +475,13 @@ fn rs_get_seacells(
         println!("Aggregating meta cells.");
     }
 
-    let meta_cell_indices = assignments_to_metacells(&assignments_subset, k);
-
     let metacells_original: Vec<Vec<usize>> = if is_subset {
         remap_metacells_to_original(
-            &meta_cell_indices
-                .iter()
-                .map(|v| v.as_slice())
-                .collect::<Vec<_>>(),
+            &groups_kept.iter().map(|v| v.as_slice()).collect::<Vec<_>>(),
             &subset_to_orig,
         )
     } else {
-        meta_cell_indices
+        groups_kept
     };
 
     let metacells_refs: Vec<&[usize]> = metacells_original.iter().map(|v| v.as_slice()).collect();
@@ -666,7 +696,6 @@ fn rs_supercell(
         &knn_graph,
         supercell_params.walk_length,
         n_meta_cells,
-        &supercell_params.linkage_dist,
         verbose,
     );
 
@@ -718,6 +747,58 @@ fn rs_supercell(
             ncol = aggregated.shape.1
         )
     ))
+}
+
+//////////////////////
+// MetaCell density //
+//////////////////////
+
+#[allow(clippy::too_many_arguments)]
+fn rs_metacell_density(
+    knn_indices: RMatrix<i32>,
+    knn_dist: RMatrix<f64>,
+    k_density: usize,
+    n_dcs: usize,
+    knn_params: List,
+    squared_dist: bool,
+    verbose: bool,
+    seed: usize,
+) -> Result<List> {
+    let original_k = knn_indices.ncols();
+    let knn_indices = knn_indices_processing(knn_indices);
+    let knn_distances = knn_distances_processing(knn_dist);
+    let knn_params = KnnParams::from_r_list(knn_params)?;
+
+    let density_res: DiffusionDensity = compute_diffusion_density(
+        &knn_indices,
+        &knn_distances,
+        squared_dist,
+        original_k,
+        n_dcs,
+        k_density,
+        &knn_params,
+        seed as u64,
+        verbose,
+    )
+    .to_extendr()?;
+
+    let density_to_string = |x: &DensityRegion| -> String {
+        match x {
+            DensityRegion::High => "high".to_string(),
+            DensityRegion::Mid => "mid".to_string(),
+            DensityRegion::Low => "low".to_string(),
+        }
+    };
+
+    let dcs = faer_to_r_matrix(density_res.dcs.as_ref());
+    let density_distances = density_res.density_distances.r_float_convert();
+    let regions: Vec<String> = density_res.regions.iter().map(density_to_string).collect();
+
+    Ok(list![
+        dcs = dcs,
+        density_distances = density_distances,
+        regions = regions
+    ])
 }
 
 ////////////////////

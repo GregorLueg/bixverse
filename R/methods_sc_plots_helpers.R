@@ -33,7 +33,7 @@
 
 ### umap -----------------------------------------------------------------------
 
-#' Run UMAP on a SingleCells object
+#' Run UMAP on a SingleCells/MetaCells object
 #'
 #' @description
 #' Wrapper around [manifoldsR::umap()] for the `SingleCells` and `MetaCells`
@@ -188,7 +188,7 @@ S7::method(umap_sc, ScOrMc) <- function(
 
 ### tsne -----------------------------------------------------------------------
 
-#' Run t-SNE on a SingleCells object
+#' Run t-SNE on a SingleCells/MetaCells object
 #'
 #' @description
 #' Wrapper around [manifoldsR::tsne()] for the `SingleCells` and `MetaCells`
@@ -338,7 +338,7 @@ S7::method(tsne_sc, ScOrMc) <- function(
 
 ### phate ----------------------------------------------------------------------
 
-#' Run PHATE on a SingleCells object
+#' Run PHATE on a SingleCells/MetaCells object
 #'
 #' @description
 #' Wrapper around [manifoldsR::phate()] for the `SingleCells` and `MetaCells`

@@ -215,6 +215,8 @@ hdwgcna <- generate_meta_cells_sc(
   .verbose = FALSE
 )
 
+hdwgcna[[]]$original_cell_idx[1]
+
 hdwgcna <- calc_meta_cell_purity(
   hdwgcna,
   original_cell_type = unlist(sc_object[["cell_grp"]])

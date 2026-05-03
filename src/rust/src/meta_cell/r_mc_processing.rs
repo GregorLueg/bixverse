@@ -8,7 +8,7 @@ use bixverse_rs::single_cell::sc_processing::hvg::*;
 use bixverse_rs::utils::r_rust_interface::list_to_sparse_matrix;
 use extendr_api::*;
 
-use crate::meta_cell::utils::cast_compressed_sparse_data;
+use crate::meta_cell::utils::cast_compressed_sparse_data_f32;
 
 /////////////
 // extendR //
@@ -71,7 +71,7 @@ fn rs_mc_hvg(
 ) -> Result<List> {
     let sparse: CompressedSparseData2<f64, f64> =
         list_to_sparse_matrix(sparse_data, true).to_extendr()?;
-    let sparse = cast_compressed_sparse_data(sparse);
+    let sparse = cast_compressed_sparse_data_f32(sparse);
 
     let hvg_type = parse_hvg_method(hvg_method)
         .ok_or_else(|| format!("Invalid HVG method: {}", hvg_method))
@@ -139,7 +139,7 @@ fn rs_mc_hvg(
 fn rs_mc_pca(sparse_data: List, no_pcs: usize, random_svd: bool, seed: usize) -> Result<List> {
     let sparse: CompressedSparseData2<f64, f64> =
         list_to_sparse_matrix(sparse_data, true).to_extendr()?;
-    let sparse = cast_compressed_sparse_data(sparse);
+    let sparse = cast_compressed_sparse_data_f32(sparse);
 
     let res = pca_on_metacells(&sparse, no_pcs, random_svd, seed).to_extendr()?;
 

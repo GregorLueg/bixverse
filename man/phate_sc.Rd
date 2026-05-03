@@ -2,7 +2,7 @@
 % Please edit documentation in R/methods_sc_plots_helpers.R
 \name{phate_sc}
 \alias{phate_sc}
-\title{Run PHATE on a SingleCells object}
+\title{Run PHATE on a SingleCells/MetaCells object}
 \usage{
 phate_sc(
   object,

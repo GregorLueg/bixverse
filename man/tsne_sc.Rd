@@ -2,7 +2,7 @@
 % Please edit documentation in R/methods_sc_plots_helpers.R
 \name{tsne_sc}
 \alias{tsne_sc}
-\title{Run t-SNE on a SingleCells object}
+\title{Run t-SNE on a SingleCells/MetaCells object}
 \usage{
 tsne_sc(
   object,

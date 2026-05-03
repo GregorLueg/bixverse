@@ -1,7 +1,15 @@
-//! Helpers for the single cell part.
+//! Helpers for the single cell part, especially around transforming structures
+//! into R lists.
 
+use bixverse_rs::prelude::*;
+use bixverse_rs::single_cell::sc_analysis::fast_clusters::FastLouvainGridResult;
 use bixverse_rs::single_cell::sc_processing::hvg::HvgDispersionRes;
+
 use extendr_api::*;
+
+/////////////
+// Helpers //
+/////////////
 
 /// Helper function to flatten the dispersion results to a List
 ///
@@ -39,4 +47,93 @@ pub fn flatten_dispersion_batches(results: Vec<HvgDispersionRes>) -> List {
         batch = batch_idx,
         gene_idx = gene_idx
     )
+}
+
+/// Process the fast cluster Louvain results
+///
+/// ### Params
+///
+/// * `results` - Vector of [FastLouvainGridResult]
+///
+/// ### Retuns
+///
+/// A list with the results
+pub fn process_fc_louvain_results(results: Vec<FastLouvainGridResult>) -> Result<List> {
+    let mut mean_ari: Vec<f32> = Vec::with_capacity(results.len());
+    let mut median_ari: Vec<f32> = Vec::with_capacity(results.len());
+    let mut mean_conductance: Vec<f32> = Vec::with_capacity(results.len());
+    let mut median_conductance: Vec<f32> = Vec::with_capacity(results.len());
+    let mut mean_n_comms: Vec<f32> = Vec::with_capacity(results.len());
+
+    let mut res = List::new(results.len());
+
+    for (index, louvain_res) in results.iter().enumerate() {
+        let membership = louvain_res.best_labels.clone().r_int_convert();
+        res.set_elt(index, Robj::from(membership))?;
+
+        mean_ari.push(louvain_res.mean_ari);
+        median_ari.push(louvain_res.median_ari);
+        mean_conductance.push(louvain_res.mean_conductance);
+        median_conductance.push(louvain_res.median_conductance);
+        mean_n_comms.push(louvain_res.mean_n_communities);
+    }
+
+    let stats = list![
+        mean_ari = mean_ari.r_float_convert(),
+        median_ari = median_ari.r_float_convert(),
+        mean_conductance = mean_conductance.r_float_convert(),
+        median_conductance = median_conductance.r_float_convert(),
+        mean_n_comms = mean_n_comms.r_float_convert(),
+    ];
+
+    Ok(list![memberships = res, stats = stats])
+}
+
+/// Process R KNN indices to the Rust variant
+///
+/// ### Params
+///
+/// * `knn_mat` - Samples x indices of the k-nearest neighbours (1-indexed!)
+///
+/// ### Returns
+///
+/// A `Vec<Vec<usize>>`
+pub fn knn_indices_processing(knn_mat: RMatrix<i32>) -> Vec<Vec<usize>> {
+    let ncol = knn_mat.ncols();
+    let nrow = knn_mat.nrows();
+    let data = knn_mat.data();
+
+    (0..nrow)
+        .map(|j| {
+            (0..ncol)
+                .filter_map(|i| {
+                    let val = data[j + i * nrow];
+                    if val > 0 {
+                        Some((val - 1) as usize)
+                    } else {
+                        None
+                    }
+                })
+                .collect()
+        })
+        .collect()
+}
+
+/// Process R KNN distances to the Rust variant
+///
+/// ### Params
+///
+/// * `knn_dist` - Samples x indices of the k-nearest neighbours (1-indexed!)
+///
+/// ### Returns
+///
+/// A `Vec<Vec<f32>>`
+pub fn knn_distances_processing(knn_dist: RMatrix<f64>) -> Vec<Vec<f32>> {
+    let ncol = knn_dist.ncols();
+    let nrow = knn_dist.nrows();
+    let data: Vec<f32> = knn_dist.data().iter().map(|x| *x as f32).collect();
+
+    (0..nrow)
+        .map(|j| (0..ncol).map(|i| data[j + i * nrow]).collect())
+        .collect()
 }

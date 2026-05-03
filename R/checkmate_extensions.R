@@ -2312,17 +2312,17 @@ assertCellsExist <- checkmate::makeAssertionFunction(checkCellsExist)
 
 #### meta cells ----------------------------------------------------------------
 
-#' Check metacell generation parameters
+#' Check (bootstrapped) metacell generation parameters
 #'
-#' @description Checkmate extension for checking the metacell generation
-#' parameters.
+#' @description Checkmate extension for checking the (bootstrapped) metacell
+#' generation parameters.
 #'
 #' @param x The list to check/assert
 #'
 #' @return \code{TRUE} if the check was successful, otherwise an error message.
 #'
 #' @keywords internal
-checkScMetacells <- function(x) {
+checkScBootstrappedMetacells <- function(x) {
   res <- checkmate::checkList(x)
   if (!isTRUE(res)) {
     return(res)
@@ -2367,7 +2367,7 @@ checkScMetacells <- function(x) {
     return(
       sprintf(
         paste(
-          "The following element `%s` in metacell generation is incorrect:",
+          "The following element `%s` in bootstrapped metacell generation is incorrect:",
           "max_shared, target_no_metacells and max_iter need to be integers >= 1."
         ),
         broken_elem
@@ -2378,12 +2378,12 @@ checkScMetacells <- function(x) {
   return(TRUE)
 }
 
-#' Assert metacell generation parameters
+#' Assert (bootstrapped) metacell generation parameters
 #'
 #' @description Checkmate extension for assert the metacell generation
 #' parameters.
 #'
-#' @inheritParams checkScMetacells
+#' @inheritParams checkScBootstrappedMetacells
 #'
 #' @param .var.name Name of the checked object to print in assertions. Defaults
 #' to the heuristic implemented in checkmate.
@@ -2393,7 +2393,9 @@ checkScMetacells <- function(x) {
 #' @return Invisibly returns the checked object if the assertion is successful.
 #'
 #' @keywords internal
-assertScMetacells <- checkmate::makeAssertionFunction(checkScMetacells)
+assertScBootstrappedMetacells <- checkmate::makeAssertionFunction(
+  checkScBootstrappedMetacells
+)
 
 #### seacells ------------------------------------------------------------------
 
@@ -3505,3 +3507,137 @@ checkScenicParams <- function(x) {
 #'
 #' @keywords internal
 assertScenicParams <- checkmate::makeAssertionFunction(checkScenicParams)
+
+#### fast clustering -----------------------------------------------------------
+
+#' Check singe cell fast clustering parameters
+#'
+#' @description Checkmate extension for checking the fast clustering parameters.
+#'
+#' @param x The list to check/assert
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
+checkScFastCluster <- function(x) {
+  res <- checkmate::checkList(x)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- checkmate::checkNames(
+    names(x),
+    must.include = c(
+      "kmeans_iters",
+      "batch_size",
+      "drift_threshold",
+      "lr_alpha",
+      "louvain_iters",
+      "full_snn",
+      "pruning",
+      "snn_similarity"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  knn_params <- x[names(x) %in% KNN_PARAM_NAMES]
+  res <- checkKnnParams(knn_params)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  integer_rules <- list(
+    "kmeans_iters" = "I1[1,)",
+    "batch_size" = "I1[1,)",
+    "louvain_iters" = "I1[1,)"
+  )
+
+  res <- purrr::imap_lgl(x, \(val, name) {
+    if (name %in% names(integer_rules)) {
+      checkmate::qtest(val, integer_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(sprintf(
+      paste(
+        "The element `%s` in fast clustering parameters is incorrect:",
+        "kmeans_iters, batch_size and louvain_iters must be >= 1."
+      ),
+      broken_elem
+    ))
+  }
+
+  numeric_rules <- list(
+    "drift_threshold" = "N1",
+    "lr_alpha" = "N1"
+  )
+
+  res <- purrr::imap_lgl(x, \(val, name) {
+    if (name %in% names(numeric_rules)) {
+      checkmate::qtest(val, numeric_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(sprintf(
+      paste(
+        "The element `%s` in fast clustering parameters",
+        "must be a single numeric value."
+      ),
+      broken_elem
+    ))
+  }
+
+  res <- checkmate::qtest(x[["full_snn"]], "B1")
+  if (!isTRUE(res)) {
+    return(
+      paste(
+        "The element `full_snn` in fast clustering parameters",
+        "must be a boolean (TRUE/FALSE)."
+      )
+    )
+  }
+
+  res <- checkmate::qtest(x[["pruning"]], c("0", "N1"))
+  if (!isTRUE(res)) {
+    return(
+      paste(
+        "The element `pruning` in fast clustering parameters must be NULL",
+        "or a single numeric value."
+      )
+    )
+  }
+
+  res <- checkmate::testChoice(x[["snn_similarity"]], c("jaccard", "rank"))
+  if (!isTRUE(res)) {
+    return("snn_similarity must be one of: jaccard, rank.")
+  }
+
+  return(TRUE)
+}
+
+#' Assert SC fast clustering parameters
+#'
+#' @description Checkmate extension for asserting the fast clustering
+#' parameters.
+#'
+#' @inheritParams checkScFastCluster
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#'   to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#'   [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
+assertScFastCluster <- checkmate::makeAssertionFunction(checkScFastCluster)

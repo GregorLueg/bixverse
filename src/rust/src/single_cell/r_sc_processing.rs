@@ -9,7 +9,7 @@ use extendr_api::prelude::*;
 use faer::Mat;
 use std::time::Instant;
 
-use crate::single_cell::utils::flatten_dispersion_batches;
+use crate::single_cell::utils::{flatten_dispersion_batches, process_fc_louvain_results};
 
 /////////////
 // extendR //
@@ -39,6 +39,7 @@ extendr_module! {
     fn rs_compare_knn;
     // clustering
     fn rs_fast_cluster_sc;
+    fn rs_fast_cluster_sc_grid;
 }
 
 ///////////////////////
@@ -1152,6 +1153,76 @@ fn rs_fast_cluster_sc(
         let membership = membership.clone().r_int_convert();
         res.set_elt(index, Robj::from(membership))?;
     }
+
+    Ok(res)
+}
+
+/// Runs fast Louvain cluster on the data (with multiple seeds)
+///
+/// @description
+/// Runs first k-means clustering, followed by a kNN detection on the centroids
+/// to then run Louvain clustering with several seeds (based on the original
+/// one) on the graph and propagate the membership back to the original data.
+/// Returns additional metrics around cluster stability and community
+/// conductance.
+///
+/// @param embd Numeric matrix. The original embedding.
+/// @param km_type String. One of `c("kmeans", "minibatch")` for the type of
+/// k means clustering to run.
+/// @param resolutions Numeric vector. The Louvain resolutions to iterate
+/// through.
+/// @param n_centroids Optional integer. The number of clusters to find. If
+/// not provided, defaults to `sqrt(nrow(embd))`.
+/// @param fc_params Named list. The fast clustering parameters.
+/// @param snn Boolean. Shall the kNN graph be additionally transformed into
+/// an sNN graph.
+/// @param no_seeds Integer. Number of additional seeds to use. Should be >=2.
+/// @param seed Integer. For reproducibility.
+/// @param verbose Boolean. Controls the verbosity of the function.
+///
+/// @returns A list with the following elements:
+/// \itemize{
+///  \item memberships - The memberships across the different resolutions. The
+///  membership from the random seed with the best conductance is returned.
+///  \item stats - The statistics per given resolution run.
+/// }
+///
+/// @export
+#[extendr]
+#[allow(clippy::too_many_arguments)]
+fn rs_fast_cluster_sc_grid(
+    embd: RMatrix<f64>,
+    km_type: String,
+    resolutions: &[f64],
+    n_centroids: Option<usize>,
+    fc_params: List,
+    snn: bool,
+    no_seeds: usize,
+    seed: usize,
+    verbose: bool,
+) -> Result<List, extendr_api::Error> {
+    let embd = r_matrix_to_faer_fp32(&embd);
+    let n_clusters = n_centroids.unwrap_or(((embd.nrows() as f32).sqrt()) as usize);
+    let resolutions = resolutions.r_float_convert();
+
+    let mut params: FastLouvainParams<f32> = FastLouvainParams::from_r_list(fc_params)?;
+
+    params.n_centroids = n_clusters;
+
+    let rust_res = fast_louvain_clusters_grid(
+        embd.as_ref(),
+        &km_type,
+        &resolutions,
+        &params,
+        snn,
+        true,
+        seed,
+        no_seeds,
+        verbose,
+    )
+    .to_extendr()?;
+
+    let res = process_fc_louvain_results(rust_res)?;
 
     Ok(res)
 }

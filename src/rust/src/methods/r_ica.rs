@@ -112,7 +112,8 @@ fn rs_fast_ica(
             ica_params.maxit,
             ica_params.verbose,
         ),
-    };
+    }
+    .to_extendr()?;
 
     Ok(list!(
         mixing = faer_to_r_matrix(a.0.as_ref()),
@@ -186,7 +187,8 @@ fn rs_ica_iters(
         ica_type,
         ica_params,
         random_seed,
-    );
+    )
+    .to_extendr()?;
 
     Ok(list!(
         s_combined = faer_to_r_matrix(s_combined.as_ref()),

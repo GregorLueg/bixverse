@@ -44,12 +44,12 @@
 #'
 #' @references
 #' Morabito, et al. Cell Rep Methods, 2023
-generate_meta_cells_sc <- S7::new_generic(
-  name = "generate_meta_cells_sc",
+generate_bt_meta_cells_sc <- S7::new_generic(
+  name = "generate_bt_meta_cells_sc",
   dispatch_args = "object",
   fun = function(
     object,
-    sc_meta_cell_params = params_sc_metacells(),
+    sc_meta_cell_params = params_sc_bt_metacells(),
     regenerate_knn = FALSE,
     embd_to_use = "pca",
     no_embd_to_use = NULL,
@@ -62,15 +62,15 @@ generate_meta_cells_sc <- S7::new_generic(
   }
 )
 
-#' @method generate_meta_cells_sc SingleCells
+#' @method generate_bt_meta_cells_sc SingleCells
 #'
 #' @export
 #'
 #' @importFrom zeallot `%<-%`
 #' @importFrom magrittr `%>%`
-S7::method(generate_meta_cells_sc, SingleCells) <- function(
+S7::method(generate_bt_meta_cells_sc, SingleCells) <- function(
   object,
-  sc_meta_cell_params = params_sc_metacells(),
+  sc_meta_cell_params = params_sc_bt_metacells(),
   regenerate_knn = FALSE,
   embd_to_use = "pca",
   no_embd_to_use = NULL,
@@ -81,7 +81,7 @@ S7::method(generate_meta_cells_sc, SingleCells) <- function(
 ) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
-  assertScMetacells(sc_meta_cell_params)
+  assertScBootstrappedMetacells(sc_meta_cell_params)
   checkmate::qassert(regenerate_knn, "B1")
   checkmate::qassert(embd_to_use, "S1")
   checkmate::qassert(no_embd_to_use, c("I1", "0"))
@@ -154,7 +154,7 @@ S7::method(generate_meta_cells_sc, SingleCells) <- function(
     knn_data <- NULL
   }
 
-  meta_cell_data <- rs_get_metacells(
+  meta_cell_data <- rs_get_metacells_bootstrapped(
     f_path = get_rust_count_cell_f_path(object),
     knn_mat = knn_data,
     embd = embd,

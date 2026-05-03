@@ -2,7 +2,7 @@
 % Please edit documentation in R/methods_sc_plots_helpers.R
 \name{umap_sc}
 \alias{umap_sc}
-\title{Run UMAP on a SingleCells object}
+\title{Run UMAP on a SingleCells/MetaCells object}
 \usage{
 umap_sc(
   object,

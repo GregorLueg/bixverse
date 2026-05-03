@@ -606,10 +606,22 @@ nrow_embd <- nrow(get_pca_factors(sc_object))
 rs_fast_cluster_sc(
   embd = get_pca_factors(sc_object),
   km_type = "kmeans",
-  resolutions = c(2.0, 1.5, 1.0, 0.5, 0.25),
+  resolutions = c(5.0, 2.0, 1.5, 1.0, 0.5, 0.25),
   n_centroids = NULL,
-  fc_params = params_sc_fast_cluster(),
-  snn = FALSE,
+  fc_params = params_sc_fast_cluster(batch_size = 100L, kmeans_iters = 1000L),
+  snn = TRUE,
+  seed = 42L,
+  verbose = TRUE
+)
+
+rs_fast_cluster_sc_grid(
+  embd = get_pca_factors(sc_object),
+  km_type = "standard",
+  resolutions = c(5.0, 2.0, 1.5, 1.0, 0.5, 0.25),
+  n_centroids = NULL,
+  fc_params = params_sc_fast_cluster(batch_size = 100L, kmeans_iters = 1000L),
+  snn = TRUE,
+  no_seeds = 5L,
   seed = 42L,
   verbose = TRUE
 )

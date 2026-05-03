@@ -60,6 +60,7 @@ pub use single_cell::r_sc_plot_extraction;
 pub use single_cell::r_sc_processing;
 
 // meta cell
+pub use meta_cell::r_mc_analysis;
 pub use meta_cell::r_mc_processing;
 
 /////////////
