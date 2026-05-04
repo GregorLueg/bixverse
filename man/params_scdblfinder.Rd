@@ -22,6 +22,7 @@ params_scdblfinder(
   se_fraction = 1,
   include_pcs = 19L,
   expected_doublet_rate = NULL,
+  cxds_genes = NULL,
   manual_threshold = NULL,
   normalisation = list(mean_center = TRUE),
   pca = list(),

@@ -1,0 +1,13 @@
+---
+title: "KNN searches for single cell"
+vignette: >
+  %\VignetteIndexEntry{KNN searches for single cell}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+knitr:
+  opts_chunk:
+    collapse: true
+    comment: '#>'
+author: 
+  - name: "Gregor Lueg"
+---

@@ -2001,7 +2001,8 @@ checkScDblFinder <- function(x) {
       "cv_folds",
       "cv_early_stop",
       "se_fraction",
-      "include_pcs"
+      "include_pcs",
+      "cxds_genes"
     )
   )
   if (!isTRUE(res)) {
@@ -2085,7 +2086,8 @@ checkScDblFinder <- function(x) {
   }
   optional_rules <- list(
     "expected_doublet_rate" = c("0", "N1(0,1]"),
-    "manual_threshold" = c("0", "N1[0,)")
+    "manual_threshold" = c("0", "N1[0,)"),
+    "cxds_genes" = c("0", "I1")
   )
   res <- purrr::imap_lgl(x, \(x, name) {
     if (name %in% names(optional_rules)) {
@@ -2097,7 +2099,7 @@ checkScDblFinder <- function(x) {
   if (!isTRUE(all(res))) {
     broken_elem <- names(res)[which(!res)][1]
     return(sprintf(
-      "The element `%s` in scDblFinder parameters is incorrect.",
+      "The element `%s` in scDblFinder parameters is incorrect. Please check.",
       broken_elem
     ))
   }

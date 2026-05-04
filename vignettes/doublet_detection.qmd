@@ -9,7 +9,7 @@ knitr:
     collapse: true
     comment: '#>'
 author: 
-  - name: "Gregor Lueg and Grant Neilson"
+  - name: "Gregor Lueg"
 ---
 
 ## Intro
@@ -38,7 +38,7 @@ from synthetic doublets generated in the same way as Scrublet. The classifier
 produces a probability per cell, and doublet calls are derived from that
 probability. This can be more robust when the score distribution from Scrublet
 is not cleanly bimodal, though it introduces its own hyperparameters (and is
-slower).
+substantially slower).
 
 - **scDblFinder** is a port of the
 [scDblFinder](https://bioconductor.org/packages/release/bioc/html/scDblFinder.html)
@@ -218,10 +218,13 @@ doublet_metrics(predicted = boosted_dt$doublet, actual = boosted_dt$Call)
 Overall, it takes longer and has worse performance (in this data set). If you
 wish to have a partially orthogonal method, it can be worthwhile nonetheless.
 There is also an option to accelerate the algorithm via fast clustering. This
-will run k-means clustering on `n_cells / 10` centroids, run the kNN on these
-subset of centroids, Louvain on the smaller kNN and project back the Louvain
-membership for final scoring. However, this comes at cost of Recall, as you can
-see below:
+will run k-means clustering with `sqrt(n_cells) * 4` centroids by default, run 
+the kNN on these subset of centroids, Louvain on the smaller kNN and project 
+back the Louvain membership for final scoring. However, this comes at cost of 
+Recall, as you can see below. Generally speaking, you need to see how many
+centroids you need to represent your data properly. On smaller data sets, you
+can get away with `n_cells / 10` and compress 10 cells into one centroid... On
+larger data sets, you might want to compress further.
 
 ```{r}
 #| label: run boosted (fast)
@@ -257,7 +260,7 @@ from [Germain et al.](https://pmc.ncbi.nlm.nih.gov/articles/PMC9204188/) with
 some modifications: instead of xgboost, we will be using an implementation of
 lightGBM using the histogram trick on the feature space. This usually yields
 faster fitting compared to the original xgboost approach. To run it, you can 
-just do.
+just do the following:
 
 ```{r}
 #| label: run scrublet
@@ -322,6 +325,12 @@ table(
   cxds = cxds_doublets
 )
 ```
+
+Should you observe that this is very flat or you only have a few data points
+(this can occur in low complexity experiments in which the highest expressing
+genes are VERY similar across all the cells for example in cell culture
+experiments), you can bump `cxds_genes` up. The default here is 500L, but you
+might want to increase this pending your experiment.
 
 ### Conclusion
 

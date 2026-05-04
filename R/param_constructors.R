@@ -431,6 +431,7 @@ params_scdblfinder <- function(
   se_fraction = 1.0,
   include_pcs = 19L,
   expected_doublet_rate = NULL,
+  cxds_genes = NULL,
   manual_threshold = NULL,
   normalisation = list(mean_center = TRUE),
   pca = list(),
@@ -454,6 +455,7 @@ params_scdblfinder <- function(
   checkmate::qassert(cv_early_stop, "I1[1,)")
   checkmate::qassert(se_fraction, "N1[0,)")
   checkmate::qassert(expected_doublet_rate, c("N1(0,1]", "0"))
+  checkmate::qassert(cxds_genes, c("I1", "0"))
   checkmate::qassert(manual_threshold, c("N1[0,)", "0"))
 
   # generate params list
@@ -487,7 +489,8 @@ params_scdblfinder <- function(
     se_fraction = se_fraction,
     include_pcs = include_pcs,
     expected_doublet_rate = expected_doublet_rate,
-    manual_threshold = manual_threshold
+    manual_threshold = manual_threshold,
+    cxds_genes = cxds_genes
   )
 
   params <- purrr::list_flatten(params, name_spec = "{inner}")

@@ -358,7 +358,11 @@ S7::method(scdblfinder_sc, SingleCells) <- function(
   features <- if (return_features) {
     feature_matrix <- res$features$feature_mat
     colnames(feature_matrix) <- res$features$feature_names
-    rownames(feature_matrix) <- get_cell_names(object, filtered = TRUE)
+    rownames(feature_matrix) <- if (is.null(cells_to_use)) {
+      get_cell_names(object, filtered = TRUE)
+    } else {
+      cells_to_use
+    }
 
     feature_matrix
   } else {
