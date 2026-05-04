@@ -11,6 +11,7 @@ rs_fast_cluster_sc(
   n_centroids,
   fc_params,
   snn,
+  knn_same_weight,
   seed,
   verbose
 )

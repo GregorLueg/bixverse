@@ -2587,7 +2587,7 @@ rs_compare_knn <- function(knn_mat_a, knn_mat_b) .Call(wrap__rs_compare_knn, knn
 #' @returns A list with the memberships per resolution.
 #'
 #' @export
-rs_fast_cluster_sc <- function(embd, km_type, resolutions, n_centroids, fc_params, snn, seed, verbose) .Call(wrap__rs_fast_cluster_sc, embd, km_type, resolutions, n_centroids, fc_params, snn, seed, verbose)
+rs_fast_cluster_sc <- function(embd, km_type, resolutions, n_centroids, fc_params, snn, knn_same_weight, seed, verbose) .Call(wrap__rs_fast_cluster_sc, embd, km_type, resolutions, n_centroids, fc_params, snn, knn_same_weight, seed, verbose)
 
 #' Runs fast Louvain cluster on the data (with multiple seeds)
 #'

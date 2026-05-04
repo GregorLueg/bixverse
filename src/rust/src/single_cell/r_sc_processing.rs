@@ -1124,6 +1124,7 @@ fn rs_fast_cluster_sc(
     n_centroids: Option<usize>,
     fc_params: List,
     snn: bool,
+    knn_same_weight: bool,
     seed: usize,
     verbose: bool,
 ) -> Result<List, extendr_api::Error> {
@@ -1141,6 +1142,7 @@ fn rs_fast_cluster_sc(
         &resolutions,
         &params,
         snn,
+        knn_same_weight,
         true,
         seed,
         verbose,
