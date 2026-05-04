@@ -3017,6 +3017,8 @@ rs_get_metacells_bootstrapped <- function(f_path, knn_mat, embd, cells_to_keep, 
 #' @param cells_to_use Optional indices of cells to use for meta cell
 #' generation. Useful if you wish to generate meta cells in specific cell
 #' types.
+#' @param knn_data Optional list. This contains pre-computed kNN data
+#' (including distances). The user has to ensure consistency!
 #' @param seacells_params A list containing the SEACells parameters.
 #' @param target_size Numeric. Target library size for re-normalisation of
 #' the meta cells. Typically `1e4`.
@@ -3037,7 +3039,7 @@ rs_get_metacells_bootstrapped <- function(f_path, knn_mat, embd, cells_to_keep, 
 #' @export
 #'
 #' @references Persad, et al., Nat. Biotechnol., 2023.
-rs_get_seacells <- function(f_path, embd, cells_to_keep, cells_to_use, seacells_params, target_size, seed, verbose) .Call(wrap__rs_get_seacells, f_path, embd, cells_to_keep, cells_to_use, seacells_params, target_size, seed, verbose)
+rs_get_seacells <- function(f_path, embd, cells_to_keep, cells_to_use, knn_data, seacells_params, target_size, seed, verbose) .Call(wrap__rs_get_seacells, f_path, embd, cells_to_keep, cells_to_use, knn_data, seacells_params, target_size, seed, verbose)
 
 #' Generate SuperCells.
 #'
@@ -3075,6 +3077,49 @@ rs_get_seacells <- function(f_path, embd, cells_to_keep, cells_to_use, seacells_
 #'
 #' @export
 rs_supercell <- function(f_path, knn_mat, embd, cells_to_keep, cells_to_use, supercell_params, target_size, seed, verbose) .Call(wrap__rs_supercell, f_path, knn_mat, embd, cells_to_keep, cells_to_use, supercell_params, target_size, seed, verbose)
+
+#' Calculates diffusion maps for density calculations for meta cells
+#'
+#' @param knn_data Named list. Needs to have the relevant data from the kNN
+#' graph.
+#' @param n_dcs Integer. The number of diffusion coordinates to return.
+#' Typically `10`.
+#' @param k_density Integer. The k-nearest neighbour to use for the density
+#' estimation. Typically `150`.
+#' @param knn_params List. The kNN parameters defined by
+#' [params_sc_neighbours()].
+#' @param verbose Boolean. Controls verbosity of the the function.
+#' @param seed Integer. For reproducibility.
+#'
+#' @return A list with the following items
+#' \itemize{
+#'   \item dcs - Density coordinates
+#'   \item density_distances - Density distances at `k_density` neighbours.
+#'   \item regions - Region of the manifold where this given cell is.
+#' }
+rs_metacell_density <- function(knn_data, n_dcs, k_density, knn_params, verbose, seed) .Call(wrap__rs_metacell_density, knn_data, n_dcs, k_density, knn_params, verbose, seed)
+
+#' Calculates the compactness of the MetaCells based on diffusion map
+#' coordinates
+#'
+#' @param dc Numerical matrix. The diffusion map coordinates.
+#' @param meta_cells List. The cell indices of the meta cells.
+#'
+#' @returns The compactness results
+#'
+#' @export
+rs_metacell_compactness <- function(dc, meta_cells) .Call(wrap__rs_metacell_compactness, dc, meta_cells)
+
+#' Calculates the separation of the centroids of the MetaCells based on
+#' diffusion map coordinates.
+#'
+#' @param dc Numerical matrix. The diffusion map coordinates.
+#' @param meta_cells List. The cell indices of the meta cells.
+#'
+#' @returns The separation results
+#'
+#' @export
+rs_metacell_separation <- function(dc, meta_cells) .Call(wrap__rs_metacell_separation, dc, meta_cells)
 
 #' Pseudo-bulk a set of cells (dense)
 #'

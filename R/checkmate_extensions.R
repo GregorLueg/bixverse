@@ -2425,7 +2425,8 @@ checkScSeacells <- function(x) {
       "greedy_threshold",
       "graph_building",
       "pruning",
-      "pruning_threshold"
+      "pruning_threshold",
+      "n_landmarks"
     )
   )
   if (!isTRUE(res)) {
@@ -2507,6 +2508,11 @@ checkScSeacells <- function(x) {
   res <- checkmate::qtest(x[["graph_building"]], "S1")
   if (!isTRUE(res)) {
     return("graph_building needs to be a string.")
+  }
+
+  res <- checkmate::qtest(x[["n_landmarks"]], c("0", "I1"))
+  if (!isTRUE(res)) {
+    return("n_landmarks needs to be an integer or NULL.")
   }
 
   TRUE

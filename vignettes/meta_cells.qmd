@@ -94,9 +94,12 @@ sc_object <- calculate_pca_sc(
 sc_object <- find_neighbours_sc(
   object = sc_object,
   neighbours_params = params_sc_neighbours(
-    knn = list(knn_method = "kmknn")
+    knn = list(ann_dist = "euclidean", knn_method = "kmknn")
   )
 )
+
+# we need the kNN object for the diffusion maps
+knn_object <- get_knn_obj(x = sc_object)
 ```
 
 ## Generating meta cells
@@ -111,7 +114,10 @@ in-memory sparse count matrix.
 
 The hdWGCNA-style algorithm reuses the kNN graph already on the object. The
 two parameters that matter most are `target_no_metacells` and `max_shared`,
-which controls how many cells two meta cells may have in common.
+which controls how many cells two meta cells may have in common. The original
+paper uses `1000L` meta cells, but we want to also compare the different metrics
+downstream, so, we will set it to `250L`. We also recalculate the kNN graph
+with larger k, to include more cells per given meta cell.
 
 ```{r}
 #| label: hdwgcna
@@ -119,7 +125,6 @@ hdwgcna <- generate_bt_meta_cells_sc(
   object = sc_object,
   sc_meta_cell_params = params_sc_bt_metacells(
     target_no_metacells = 250L,
-    max_shared = 15L,
     knn = list(k = 25L)
   ),
   regenerate_knn = TRUE,
@@ -129,18 +134,30 @@ hdwgcna <- generate_bt_meta_cells_sc(
 hdwgcna
 ```
 
-Importantly, not all cells HAVE to be assigned to a meta cell. It's a fast,
-bootstrapped method.
+Importantly, not all cells HAVE to be assigned to a meta cell and cells can 
+occur in several meta cells at once. We can appreciate here that a number
+of cells remains unassigned and each MetaCell does contain self + neighbours,
+i.e., 26 (`self + k = 25L`) original cells. Let's check how often the cells 
+occur... ?
 
 ```{r}
 #| label: hdwgcna - cells per meta cell
-no_cells_hdwgcna <- purrr::map_dbl(hdwgcna[[]]$original_cell_idx, length)
+no_duplicated_cells <- table(unlist(hdwgcna[[]]$original_cell_idx))
 
 hist(
-  no_cells_hdwgcna,
-  xlab = "No cells per meta cell",
-  main = "Cells per hdWGCNA meta cell"
+  no_duplicated_cells,
+  xlab = "No of times a cell occurs",
+  main = "No of times a cell is part of a meta cell",
+  breaks = 10L
 )
+```
+
+As we can appreciate, some of the cells are indeed shared across meta cells.
+Let's add the diffusion coordinates to this one for later analysis
+
+```{r}
+#| label: hdwgcna - add diffusion coordinates
+hdwgcna <- calc_diffusion_coordinates(object = hdwgcna, knn_data = knn_object)
 ```
 
 ### SEACells
@@ -150,8 +167,10 @@ the kNN graph and runs an iterative kernel archetypal analysis. `n_sea_cells`
 sets the number of archetypes; `min_iter`/`max_iter` bound the optimisation; 
 `convergence_epsilon` sets the early stopping threshold relative to the initial 
 RSS. The algorithm was aggressively optimised to be faster. With 
-`pruning = TRUE` small values are set to zero, reducing calculations... This can 
-impact quality, but usually it is very minor.
+`pruning = TRUE` small values are set to zero, reducing calculations... The rule
+of thumb by the authors is one SEACell per 75 cells, i.e., 90 SEACells for
+this experiment. We will set this higher here to `250L` to make this a bit
+more comparable with the other methods...
 
 ```{r}
 #| label: seacells
@@ -169,7 +188,8 @@ seacells <- generate_seacells_sc(
 seacells
 ```
 
-Compared to hdWGCNA methods, more cells can be included in a given "SEACell"
+We can appreciate that each SEACell can contain a varying degree of original
+cells contributing to this specific metacell.
 
 ```{r}
 #| label: seacells - cells per meta cell
@@ -178,22 +198,30 @@ no_cells_seacells <- purrr::map_dbl(seacells[[]]$original_cell_idx, length)
 hist(
   no_cells_seacells,
   xlab = "No cells per meta cell",
-  main = "Cells per SEACells meta cell"
+  main = "Cells per SEACells meta cell",
+  breaks = 25L
 )
+```
+
+We will also add the diffusion coordinates to this one
+
+```{r}
+#| label: seacells - add diffusion coordinates
+seacells <- calc_diffusion_coordinates(object = seacells, knn_data = knn_object)
 ```
 
 ### SuperCells
 
 SuperCells runs walktrap on the kNN graph. The number of meta cells is set
-indirectly through `graining_factor`: with a factor of 20 over ~6800 cells
-you should get roughly ~350 meta cells.
+indirectly through `graining_factor`: with a factor of 30 over ~6800 cells
+you should get roughly ~230 meta cells.
 
 ```{r}
 #| label: supercells
 supercells <- generate_supercells_sc(
   object = sc_object,
   sc_supercell_params = params_sc_supercell(
-    graining_factor = 15
+    graining_factor = 30
   ),
   .verbose = TRUE
 )
@@ -201,7 +229,7 @@ supercells <- generate_supercells_sc(
 supercells
 ```
 
-Let's plot the number of cells per SEACell.
+Let's plot the number of cells per SuperCell.
 
 ```{r}
 #| label: supercells - cells per meta cell
@@ -210,9 +238,22 @@ no_cells_supercells <- purrr::map_dbl(supercells[[]]$original_cell_idx, length)
 hist(
   no_cells_supercells,
   xlab = "No cells per meta cell",
-  main = "Cells per Supercell"
+  main = "Cells per Supercell",
+  breaks = 25L
 )
 ```
+
+Similar to SEACells, we get a gradient here.
+
+```{r}
+#| label: supercells - add diffusion coordinates
+supercells <- calc_diffusion_coordinates(
+  object = supercells,
+  knn_data = knn_object
+)
+```
+
+## Metrics
 
 ### Purity
 
@@ -251,8 +292,149 @@ ggplot(purity_dt, aes(x = method, y = purity)) +
   geom_boxplot(width = 0.05, outlier.size = 0.5) +
   theme_bw() +
   theme(legend.position = "none") +
-  labs(x = "", y = "Meta cell purity (Leiden)") +
+  labs(x = "Method", y = "Meta cell purity (Leiden)") +
   ylim(0, 1)
+```
+
+In terms of cell type purity, the methods are basically the same. Potentially
+more interesting is their behaviour in the manifold.
+
+### Manifold regions
+
+We called the `calc_diffusion_coordinates()` with the kNN graph on the data.
+This will tell us which parts of the manifold are being sampled here, i.e., for
+example high, medium or low density regions. This gives an idea how many rare
+cell states the meta cells capture.
+
+```{r}
+#| label: regions
+hdwgcna_regions <- as.data.table(
+  table(hdwgcna[[]]$density_region) / nrow(hdwgcna[[]])
+)[, method := "hdWGCNA"]
+seacells_regions <- as.data.table(
+  table(seacells[[]]$density_region) / nrow(seacells[[]])
+)[, method := "SEACells"]
+supercells_regions <- as.data.table(
+  table(supercells[[]]$density_region) / nrow(supercells[[]])
+)[, method := "SuperCells"]
+
+region_dt <- rbind(
+  hdwgcna_regions,
+  seacells_regions,
+  supercells_regions
+)[, V1 := factor(V1, levels = c("high", "mid", "low"))]
+setnames(region_dt, old = c("V1", "N"), new = c("region", "proportion"))
+```
+
+```{r}
+#| label: regions plot
+#| fig-width: 6
+#| fig-height: 4
+ggplot(region_dt, aes(x = method, y = proportion, fill = region)) +
+  geom_bar(stat = "identity") +
+  theme_bw() +
+  labs(x = "Method", y = "Proportion of meta cells", fill = "Density region") +
+  scale_fill_manual(
+    values = setNames(
+      c("#2c2d54", "#969bc7", "#6f9954"),
+      c("high", "mid", "low")
+    )
+  )
+```
+
+This is one of the most important differences between the methods. hdWGCNA will
+disproportionally sample regions of the manifolds with medium density and
+basically proportion-based. SEACells on the other hand generates MetaCells that
+capture sparse (more heterogenous) regions of the manifold. SuperCells sits
+between the two methods.
+
+### Compactness and separation
+
+```{r}
+#| label: calculate other metrics
+hdwgcna <- calc_manifold_metrics(hdwgcna)
+seacells <- calc_manifold_metrics(seacells)
+supercells <- calc_manifold_metrics(supercells)
+```
+
+```{r}
+#| label: prepare metrics dt
+metrics_dt <- rbind(
+  data.table(
+    method = "hdWGCNA",
+    separation = hdwgcna[[]]$separation,
+    compactness = hdwgcna[[]]$compactness,
+    region = hdwgcna[[]]$density_region
+  ),
+  data.table(
+    method = "SEACells",
+    separation = seacells[[]]$separation,
+    compactness = seacells[[]]$compactness,
+    region = seacells[[]]$density_region
+  ),
+  data.table(
+    method = "SuperCells",
+    separation = supercells[[]]$separation,
+    compactness = supercells[[]]$compactness,
+    region = supercells[[]]$density_region
+  )
+)[, region := factor(region, levels = c("high", "mid", "low"))]
+```
+
+```{r}
+#| label: compactness plot
+#| fig-width: 6
+#| fig-height: 4
+ggplot(metrics_dt, aes(x = method, y = compactness)) +
+  geom_violin(aes(fill = method), alpha = 0.6) +
+  geom_boxplot(width = 0.05, outlier.size = 0.5) +
+  theme_bw() +
+  theme(legend.position = "none") +
+  labs(x = "Method", y = "Compactness")
+```
+
+```{r}
+#| label: compactness per region
+#| fig-width: 6
+#| fig-height: 4
+ggplot(metrics_dt, aes(x = method, y = compactness)) +
+  geom_boxplot(aes(fill = region), outlier.size = 0.5) +
+  theme_bw() +
+  labs(x = "Method", y = "Compactness") +
+  scale_fill_manual(
+    values = setNames(
+      c("#2c2d54", "#969bc7", "#6f9954"),
+      c("high", "mid", "low")
+    )
+  )
+```
+
+```{r}
+#| label: separation plot
+#| fig-width: 6
+#| fig-height: 4
+ggplot(metrics_dt, aes(x = method, y = separation)) +
+  geom_violin(aes(fill = method), alpha = 0.6) +
+  geom_boxplot(width = 0.05, outlier.size = 0.5) +
+  theme_bw() +
+  theme(legend.position = "none") +
+  labs(x = "Method", y = "Separation")
+```
+
+```{r}
+#| label: separation per region
+#| fig-width: 6
+#| fig-height: 4
+ggplot(metrics_dt, aes(x = method, y = separation)) +
+  geom_boxplot(aes(fill = region), outlier.size = 0.5) +
+  theme_bw() +
+  labs(x = "Method", y = "Compactness") +
+  scale_fill_manual(
+    values = setNames(
+      c("#2c2d54", "#969bc7", "#6f9954"),
+      c("high", "mid", "low")
+    )
+  )
 ```
 
 ## Working with the MetaCells class
@@ -287,7 +469,7 @@ seacells <- calculate_pca_sc(
 seacells <- find_neighbours_sc(
   object = seacells,
   neighbours_params = params_sc_neighbours(
-    knn = list(k = 5L, knn_method = "exhaustive")
+    knn = list(k = 10L, knn_method = "exhaustive")
   )
 )
 

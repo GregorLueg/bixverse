@@ -10,9 +10,9 @@ use bixverse_rs::single_cell::sc_analysis::hdwgcna_meta_cells::*;
 use bixverse_rs::single_cell::sc_analysis::metacell_density::*;
 use bixverse_rs::single_cell::sc_analysis::seacells::*;
 use bixverse_rs::single_cell::sc_analysis::super_cells::*;
-use bixverse_rs::single_cell::sc_r_wrappers::assignments_to_r_list;
+use bixverse_rs::single_cell::sc_r_wrappers::{assignments_to_r_list, metacells_to_r_list};
 
-use crate::single_cell::utils::{knn_distances_processing, knn_indices_processing};
+use crate::single_cell::utils::{knn_data_to_rust, knn_indices_processing};
 
 /////////////
 // extendR //
@@ -24,6 +24,10 @@ extendr_module! {
     fn rs_get_metacells_bootstrapped;
     fn rs_get_seacells;
     fn rs_supercell;
+    // meta cell metrics
+    fn rs_metacell_density;
+    fn rs_metacell_compactness;
+    fn rs_metacell_separation;
     // pseudo-bulking
     fn rs_pseudobulk_cells_dense;
     fn rs_pseudobulk_cells_sparse;
@@ -32,6 +36,10 @@ extendr_module! {
 ////////////////
 // Meta cells //
 ////////////////
+
+//////////////////
+// Bootstrapped //
+//////////////////
 
 /// Generate meta cells (hdWGCNA method)
 ///
@@ -208,30 +216,7 @@ fn rs_get_metacells_bootstrapped(
         verbose,
     );
 
-    let assignments_subset = assign_bootstrapped_meta_cells(&centres, &nn_map);
-    let n_metacells = centres.len();
-
-    let mut metacells_subset: Vec<Vec<usize>> = vec![Vec::new(); n_metacells];
-    for (cell_id, &a) in assignments_subset.iter().enumerate() {
-        if let Some(id) = a {
-            metacells_subset[id].push(cell_id);
-        }
-    }
-
-    let assignments_full: Vec<Option<usize>> = if is_subset {
-        remap_assignments_to_original(&assignments_subset, &subset_to_orig, n_total_cells)
-    } else {
-        assignments_subset
-    };
-
-    let assignment_list = assignments_to_r_list(&assignments_full, n_total_cells);
-
-    if verbose {
-        println!("Aggregating meta cells.");
-    }
-
-    let reader = ParallelSparseReader::new(&f_path).unwrap();
-    let n_genes = reader.get_header().total_genes;
+    let metacells_subset: Vec<Vec<usize>> = assign_bootstrapped_meta_cells(&centres, &nn_map);
 
     let metacells_original: Vec<Vec<usize>> = if is_subset {
         remap_metacells_to_original(
@@ -244,6 +229,15 @@ fn rs_get_metacells_bootstrapped(
     } else {
         metacells_subset
     };
+
+    let assignment_list: List = metacells_to_r_list(&metacells_original, n_total_cells);
+
+    if verbose {
+        println!("Aggregating meta cells.");
+    }
+
+    let reader = ParallelSparseReader::new(&f_path).unwrap();
+    let n_genes = reader.get_header().total_genes;
 
     let metacells_refs: Vec<&[usize]> = metacells_original.iter().map(|v| v.as_slice()).collect();
 
@@ -263,6 +257,10 @@ fn rs_get_metacells_bootstrapped(
     ))
 }
 
+//////////////
+// SEACells //
+//////////////
+
 /// Generate SEACells
 ///
 /// @description This function implements the SEACells algorithm for generating
@@ -279,9 +277,9 @@ fn rs_get_metacells_bootstrapped(
 /// @param cells_to_use Optional indices of cells to use for meta cell
 /// generation. Useful if you wish to generate meta cells in specific cell
 /// types.
+/// @param knn_data Optional list. This contains pre-computed kNN data
+/// (including distances). The user has to ensure consistency!
 /// @param seacells_params A list containing the SEACells parameters.
-/// @param n_landmarks Optional integer. If provided, the archetype selection
-/// will use the Nyström method which makes large data sets more tractable.
 /// @param target_size Numeric. Target library size for re-normalisation of
 /// the meta cells. Typically `1e4`.
 /// @param seed Integer. For reproducibility purposes.
@@ -308,8 +306,8 @@ fn rs_get_seacells(
     embd: RMatrix<f64>,
     cells_to_keep: Option<Vec<i32>>,
     cells_to_use: Option<Vec<i32>>,
+    knn_data: Nullable<List>,
     seacells_params: List,
-    n_landmarks: Option<usize>,
     target_size: f64,
     seed: usize,
     verbose: bool,
@@ -320,11 +318,10 @@ fn rs_get_seacells(
 
     let (subset_to_orig, n_total_cells, embd_mat) = match cells_to_use {
         Some(ref use_cells) => {
-            if cells_to_keep.is_none() {
-                return Err("When using 'cells_to_use', 'cells_to_keep' must be provided".into());
-            }
+            let cells_to_keep = cells_to_keep.as_ref().ok_or_else(|| {
+                Error::Other("When using 'cells_to_use', 'cells_to_keep' must be provided".into())
+            })?;
 
-            let cells_to_keep = cells_to_keep.unwrap();
             let qc_cells: Vec<usize> = cells_to_keep.iter().map(|&x| x as usize).collect();
             let use_cells: Vec<usize> = use_cells.iter().map(|&x| x as usize).collect();
 
@@ -376,33 +373,54 @@ fn rs_get_seacells(
         }
     };
 
-    let is_subset = cells_to_use.is_some();
-
-    let knn_params = &seacells_params.knn_params;
-
-    let start_knn = Instant::now();
-
-    let (knn_indices, knn_dist) =
-        generate_knn_with_dist(embd_mat.as_ref(), knn_params, true, false, seed, verbose);
-
-    let end_knn = start_knn.elapsed();
-
-    if verbose {
-        println!(
-            "kNN generation done in : {:.2?} with {}",
-            end_knn, seacells_params.knn_params.knn_method
+    let (knn_indices, knn_dist, dist_squared) = if knn_data == extendr_api::Nullable::Null {
+        let start_knn = Instant::now();
+        let (knn_indices, knn_dist) = generate_knn_with_dist(
+            embd_mat.as_ref(),
+            &seacells_params.knn_params,
+            true,
+            false,
+            seed,
+            verbose,
         );
-    }
+        let knn_dist = knn_dist.unwrap();
+        let dist_squared = seacells_params.knn_params.ann_dist == "euclidean";
 
+        if verbose {
+            println!(
+                "kNN generation done in : {:.2?} with {}",
+                start_knn.elapsed(),
+                seacells_params.knn_params.knn_method
+            );
+        }
+
+        (knn_indices, knn_dist, dist_squared)
+    } else {
+        let knn_data = knn_data
+            .into_robj()
+            .as_list()
+            .ok_or_else(|| Error::Other("'knn_data' is not a list".into()))?;
+        let (knn_indices, knn_dist, _, distance) = knn_data_to_rust(knn_data)?;
+
+        if knn_indices.len() != embd_mat.nrows() {
+            return Err(format!(
+                "kNN indices have {} rows but embedding has {}",
+                knn_indices.len(),
+                embd_mat.nrows()
+            )
+            .into());
+        }
+
+        let dist_squared = distance == "euclidean";
+        (knn_indices, knn_dist, dist_squared)
+    };
+
+    let is_subset = cells_to_use.is_some();
     let mut seacell = SEACells::new(embd_mat.nrows(), &seacells_params);
-
-    let dist_squared = seacells_params.knn_params.ann_dist == "euclidean";
-
-    let knn_dist = knn_dist.unwrap();
 
     seacell.construct_kernel_mat(embd_mat.as_ref(), &knn_indices, &knn_dist, verbose);
 
-    if let Some(n_landmarks) = n_landmarks {
+    if let Some(n_landmarks) = seacells_params.n_landmarks {
         seacell
             .initialise_archetypes_landmark(
                 embd_mat.as_ref(),
@@ -492,10 +510,8 @@ fn rs_get_seacells(
     let aggregated: CompressedSparseData2<u32, f32> =
         aggregate_meta_cells(&reader, &metacells_refs, target_size as f32, n_genes).to_extendr()?;
 
-    let end_seacell = start_seacell.elapsed();
-
     if verbose {
-        println!("SEACells found in : {:.2?}", end_seacell);
+        println!("SEACells found in : {:.2?}", start_seacell.elapsed());
     }
 
     Ok(list!(
@@ -512,6 +528,10 @@ fn rs_get_seacells(
         archetypes = archetypes_original.r_int_convert()
     ))
 }
+
+////////////////
+// Supercells //
+////////////////
 
 /// Generate SuperCells.
 ///
@@ -634,29 +654,7 @@ fn rs_supercell(
             };
 
             let knn = match (knn_mat, embd) {
-                (Some(knn_mat), _) => {
-                    if verbose {
-                        println!("Using provided kNN matrix");
-                    }
-                    let ncol = knn_mat.ncols();
-                    let nrow = knn_mat.nrows();
-                    let data = knn_mat.data();
-
-                    (0..nrow)
-                        .map(|j| {
-                            (0..ncol)
-                                .filter_map(|i| {
-                                    let val = data[j + i * nrow];
-                                    if val > 0 {
-                                        Some((val - 1) as usize)
-                                    } else {
-                                        None
-                                    }
-                                })
-                                .collect()
-                        })
-                        .collect()
-                }
+                (Some(knn_mat), _) => knn_indices_processing(knn_mat),
                 (None, Some(embd)) => {
                     if verbose {
                         println!("Calculating kNN matrix from provided data");
@@ -753,21 +751,37 @@ fn rs_supercell(
 // MetaCell density //
 //////////////////////
 
-#[allow(clippy::too_many_arguments)]
+/// Calculates diffusion maps for density calculations for meta cells
+///
+/// @param knn_data Named list. Needs to have the relevant data from the kNN
+/// graph.
+/// @param n_dcs Integer. The number of diffusion coordinates to return.
+/// Typically `10`.
+/// @param k_density Integer. The k-nearest neighbour to use for the density
+/// estimation. Typically `150`.
+/// @param knn_params List. The kNN parameters defined by
+/// [params_sc_neighbours()].
+/// @param verbose Boolean. Controls verbosity of the the function.
+/// @param seed Integer. For reproducibility.
+///
+/// @return A list with the following items
+/// \itemize{
+///   \item dcs - Density coordinates
+///   \item density_distances - Density distances at `k_density` neighbours.
+///   \item regions - Region of the manifold where this given cell is.
+/// }
+#[extendr]
 fn rs_metacell_density(
-    knn_indices: RMatrix<i32>,
-    knn_dist: RMatrix<f64>,
-    k_density: usize,
+    knn_data: List,
     n_dcs: usize,
+    k_density: usize,
     knn_params: List,
-    squared_dist: bool,
     verbose: bool,
     seed: usize,
 ) -> Result<List> {
-    let original_k = knn_indices.ncols();
-    let knn_indices = knn_indices_processing(knn_indices);
-    let knn_distances = knn_distances_processing(knn_dist);
+    let (knn_indices, knn_distances, original_k, distance) = knn_data_to_rust(knn_data)?;
     let knn_params = KnnParams::from_r_list(knn_params)?;
+    let squared_dist = distance == "euclidean";
 
     let density_res: DiffusionDensity = compute_diffusion_density(
         &knn_indices,
@@ -799,6 +813,62 @@ fn rs_metacell_density(
         density_distances = density_distances,
         regions = regions
     ])
+}
+
+/// Calculates the compactness of the MetaCells based on diffusion map
+/// coordinates
+///
+/// @param dc Numerical matrix. The diffusion map coordinates.
+/// @param meta_cells List. The cell indices of the meta cells.
+///
+/// @returns The compactness results
+///
+/// @export
+#[extendr]
+fn rs_metacell_compactness(dc: RMatrix<f64>, meta_cells: List) -> Result<Vec<f64>> {
+    let dc = r_matrix_to_faer_fp32(&dc);
+
+    let mut meta_cell_indices: Vec<Vec<usize>> = Vec::with_capacity(meta_cells.len());
+
+    for i in 0..meta_cells.len() {
+        let indices = meta_cells.elt(i)?.as_integer_vector().ok_or_else(|| {
+            Error::Other("Could not convert the meta cell indices to Rust usize".into())
+        })?;
+
+        meta_cell_indices.push(indices.r_int_convert_shift());
+    }
+
+    let compactness = compute_compactness(dc.as_ref(), &meta_cell_indices);
+
+    Ok(compactness.r_float_convert())
+}
+
+/// Calculates the separation of the centroids of the MetaCells based on
+/// diffusion map coordinates.
+///
+/// @param dc Numerical matrix. The diffusion map coordinates.
+/// @param meta_cells List. The cell indices of the meta cells.
+///
+/// @returns The separation results
+///
+/// @export
+#[extendr]
+fn rs_metacell_separation(dc: RMatrix<f64>, meta_cells: List) -> Result<Vec<f64>> {
+    let dc = r_matrix_to_faer_fp32(&dc);
+
+    let mut meta_cell_indices: Vec<Vec<usize>> = Vec::with_capacity(meta_cells.len());
+
+    for i in 0..meta_cells.len() {
+        let indices = meta_cells.elt(i)?.as_integer_vector().ok_or_else(|| {
+            Error::Other("Could not convert the meta cell indices to Rust usize".into())
+        })?;
+
+        meta_cell_indices.push(indices.r_int_convert_shift());
+    }
+
+    let compactness = compute_separation(dc.as_ref(), &meta_cell_indices);
+
+    Ok(compactness.r_float_convert())
 }
 
 ////////////////////

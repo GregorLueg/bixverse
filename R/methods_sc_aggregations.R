@@ -217,6 +217,8 @@ S7::method(generate_bt_meta_cells_sc, SingleCells) <- function(
 #' generation of the SEACells.
 #' @param target_size Numeric. The library target size to normalise the meta
 #' cells to.
+#' @param regenerate_knn Boolean. Shall a kNN graph be regenerated. If not,
+#' the internal one will be used.
 #' @param seed Integer. Seed for reproducibility.
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
@@ -236,6 +238,7 @@ generate_seacells_sc <- S7::new_generic(
     embd_to_use = "pca",
     no_embd_to_use = NULL,
     cells_to_use = NULL,
+    regenerate_knn = FALSE,
     target_size = 1e5,
     seed = 42L,
     .verbose = TRUE
@@ -256,6 +259,7 @@ S7::method(generate_seacells_sc, SingleCells) <- function(
   embd_to_use = "pca",
   no_embd_to_use = NULL,
   cells_to_use = NULL,
+  regenerate_knn = FALSE,
   target_size = 1e5,
   seed = 42L,
   .verbose = TRUE
@@ -284,11 +288,18 @@ S7::method(generate_seacells_sc, SingleCells) <- function(
     )
   }
 
+  knn_data <- if (regenerate_knn) {
+    NULL
+  } else {
+    get_knn_obj(object)
+  }
+
   seacell_data <- rs_get_seacells(
     f_path = get_rust_count_cell_f_path(object),
     embd = embd,
     cells_to_use = cells_to_use,
     cells_to_keep = get_cells_to_keep(object),
+    knn_data = knn_data,
     seacells_params = seacell_params,
     target_size = target_size,
     seed = seed,

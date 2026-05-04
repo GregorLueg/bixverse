@@ -4,8 +4,23 @@
 use bixverse_rs::prelude::*;
 use bixverse_rs::single_cell::sc_analysis::fast_clusters::FastLouvainGridResult;
 use bixverse_rs::single_cell::sc_processing::hvg::HvgDispersionRes;
+use std::collections::HashMap;
 
 use extendr_api::*;
+
+///////////
+// Types //
+///////////
+
+/// Results data from the neighbours class
+///
+/// ### Fields
+///
+/// * `0` - The kNN indices
+/// * `1` - The kNN distances
+/// * `2` - Number of neighbours
+/// * `3` - Distance metric
+pub type NeighboursData = Result<(Vec<Vec<usize>>, Vec<Vec<f32>>, usize, String)>;
 
 /////////////
 // Helpers //
@@ -104,18 +119,7 @@ pub fn knn_indices_processing(knn_mat: RMatrix<i32>) -> Vec<Vec<usize>> {
     let data = knn_mat.data();
 
     (0..nrow)
-        .map(|j| {
-            (0..ncol)
-                .filter_map(|i| {
-                    let val = data[j + i * nrow];
-                    if val > 0 {
-                        Some((val - 1) as usize)
-                    } else {
-                        None
-                    }
-                })
-                .collect()
-        })
+        .map(|j| (0..ncol).map(|i| data[j + i * nrow] as usize).collect())
         .collect()
 }
 
@@ -136,4 +140,47 @@ pub fn knn_distances_processing(knn_dist: RMatrix<f64>) -> Vec<Vec<f32>> {
     (0..nrow)
         .map(|j| (0..ncol).map(|i| data[j + i * nrow]).collect())
         .collect()
+}
+
+/// Transform R kNN data to Rust data
+///
+/// ### Params
+///
+/// * `knn_data` - R list with the kNN data
+///
+/// ###
+///
+/// The [NeighboursData] or an error.
+pub fn knn_data_to_rust(knn_data: List) -> NeighboursData {
+    let data: HashMap<&str, Robj> = knn_data.try_into()?;
+
+    let knn_indices: RArray<i32, 2> = data
+        .get("indices")
+        .ok_or_else(|| Error::Other("missing 'indices'".into()))?
+        .as_matrix()
+        .ok_or_else(|| Error::Other("'indices' is not a matrix".into()))?;
+
+    let knn_dist: RArray<f64, 2> = data
+        .get("dist")
+        .ok_or_else(|| Error::Other("missing 'dist'".into()))?
+        .as_matrix()
+        .ok_or_else(|| Error::Other("'dist' is not a matrix".into()))?;
+
+    let dist_metric = data
+        .get("dist_metric")
+        .ok_or_else(|| Error::Other("missing 'dist_metric'".into()))?
+        .as_str()
+        .ok_or_else(|| Error::Other("'dist_metric' is not a string".into()))?
+        .to_string();
+
+    let k = data
+        .get("k")
+        .ok_or_else(|| Error::Other("missing 'k'".into()))?
+        .as_integer()
+        .ok_or_else(|| Error::Other("'k' is not an integer".into()))? as usize;
+
+    let knn_indices = knn_indices_processing(knn_indices);
+    let knn_dist = knn_distances_processing(knn_dist);
+
+    Ok((knn_indices, knn_dist, k, dist_metric))
 }

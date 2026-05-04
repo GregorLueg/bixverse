@@ -57,20 +57,19 @@ sc_qc_param <- params_sc_min_quality(
 
 sc_object <- SingleCells(dir_data = test_temp_dir)
 
-sc_object <- # keep all cells for the sake of this
-  sc_object <- load_r_data(
-    object = sc_object,
-    counts = single_cell_test_data$counts,
-    obs = single_cell_test_data$obs,
-    var = single_cell_test_data$var,
-    sc_qc_param = params_sc_min_quality(
-      min_unique_genes = min_genes_exp,
-      min_lib_size = min_lib_size,
-      min_cells = min_cells_exp
-    ),
-    streaming = FALSE,
-    .verbose = FALSE
-  )
+sc_object <- load_r_data(
+  object = sc_object,
+  counts = single_cell_test_data$counts,
+  obs = single_cell_test_data$obs,
+  var = single_cell_test_data$var,
+  sc_qc_param = params_sc_min_quality(
+    min_unique_genes = min_genes_exp,
+    min_lib_size = min_lib_size,
+    min_cells = min_cells_exp
+  ),
+  streaming = FALSE,
+  .verbose = FALSE
+)
 
 sc_object <- find_hvg_sc(
   object = sc_object,
@@ -207,15 +206,13 @@ expect_true(
 
 ### hdwgcna --------------------------------------------------------------------
 
-hdwgcna <- generate_meta_cells_sc(
+hdwgcna <- generate_bt_meta_cells_sc(
   sc_object,
-  sc_meta_cell_params = params_sc_metacells(
+  sc_meta_cell_params = params_sc_bt_metacells(
     target_no_metacells = 50L
   ),
   .verbose = FALSE
 )
-
-hdwgcna[[]]$original_cell_idx[1]
 
 hdwgcna <- calc_meta_cell_purity(
   hdwgcna,
@@ -273,9 +270,9 @@ expect_true(
 # in specific cell types; will remove cell_type_3
 cells_to_use <- sc_object[[]][cell_grp != "cell_type_3", cell_id]
 
-hdwgcna_small <- generate_meta_cells_sc(
+hdwgcna_small <- generate_bt_meta_cells_sc(
   sc_object,
-  sc_meta_cell_params = params_sc_metacells(
+  sc_meta_cell_params = params_sc_bt_metacells(
     target_no_metacells = 50L,
     max_shared = 10L,
     knn = list(k = 10L)
@@ -377,6 +374,22 @@ expect_true(
 
 #### smaller subset ------------------------------------------------------------
 
+expect_error(
+  current = generate_seacells_sc(
+    sc_object,
+    seacell_params = params_sc_seacells(
+      n_sea_cells = 50L,
+      min_iter = 5L,
+      convergence_epsilon = 0.001,
+      knn = list(k = 10L)
+    ),
+    regenerate_knn = FALSE,
+    cells_to_use = cells_to_use,
+    .verbose = FALSE
+  ),
+  info = "seacell error when embedding and kNN are not of expected dim."
+)
+
 seacells_small <- generate_seacells_sc(
   sc_object,
   seacell_params = params_sc_seacells(
@@ -385,6 +398,7 @@ seacells_small <- generate_seacells_sc(
     convergence_epsilon = 0.001,
     knn = list(k = 10L)
   ),
+  regenerate_knn = TRUE,
   cells_to_use = cells_to_use,
   .verbose = FALSE
 )

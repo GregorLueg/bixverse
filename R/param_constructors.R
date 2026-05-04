@@ -802,6 +802,8 @@ params_sc_bt_metacells <- function(
 #' large data sets. Defaults to `FALSE`.
 #' @param pruning_threshold Float. If `pruning = TRUE` values below which
 #' threshold shall be pruned.
+#' @param n_landmarks Optional integer. If provided, it will use the Nystroem
+#' extension during the archetype finding. Useful for larger data sets.
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
@@ -821,6 +823,7 @@ params_sc_seacells <- function(
   graph_building = "union",
   pruning = FALSE,
   pruning_threshold = 1e-7,
+  n_landmarks = NULL,
   knn = list()
 ) {
   checkmate::qassert(n_sea_cells, "I1")
@@ -832,6 +835,7 @@ params_sc_seacells <- function(
   checkmate::qassert(graph_building, "S1")
   checkmate::qassert(pruning, "B1")
   checkmate::qassert(pruning_threshold, "N1")
+  checkmate::qassert(n_landmarks, c("0", "N1"))
 
   knn_params <- modifyList(
     params_knn_defaults(),
@@ -849,7 +853,8 @@ params_sc_seacells <- function(
       greedy_threshold = greedy_threshold,
       graph_building = graph_building,
       pruning = pruning,
-      pruning_threshold = pruning_threshold
+      pruning_threshold = pruning_threshold,
+      n_landmarks = n_landmarks
     ),
     knn_params
   )
