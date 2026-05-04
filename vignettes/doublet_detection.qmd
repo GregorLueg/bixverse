@@ -227,7 +227,13 @@ see below:
 #| label: run boosted (fast)
 boosted_doublets_fast <- doublet_detection_boost_sc(
   object = sc_object,
-  boost_params = params_boost(fast_cluster = TRUE)
+  boost_params = params_boost(
+    fast_cluster = TRUE,
+    # in this case, we set the n_centroids to N_cells / 10
+    # you want this to not be too low; also the data is so small, we just
+    # use standard k-means over mini batch
+    fast_cluster_params = list(n_centroids = 1500L, km_type = "standard")
+  )
 )
 ```
 

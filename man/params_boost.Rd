@@ -15,7 +15,8 @@ params_boost(
   normalisation = list(),
   hvg = list(),
   pca = list(),
-  knn = list(k = 0L)
+  knn = list(k = 0L),
+  fast_cluster_params = list()
 )
 }
 \arguments{
@@ -63,6 +64,11 @@ parameters. See \code{\link[=params_hvg_defaults]{params_hvg_defaults()}} for av
 \code{diversify_prob}, \code{ef_budget}, \code{m}, \code{ef_construction}, \code{ef_search}, \code{n_list}
 and \code{n_probe}. Note: this function defaults to \code{k = 0L} (automatic neighbour
 detection).}
+
+\item{fast_cluster_params}{List. Optional overrides for the fast clustering
+parameters. Only relevant if \code{fast_cluster = TRUE}. See
+\code{\link[=params_fast_cluster_default]{params_fast_cluster_default()}} for available parameters: \code{km_type},
+\code{n_centroids}, \code{kmeans_iters} and \code{batch_size}.}
 }
 \value{
 A named list with all Boost parameters, combining defaults with

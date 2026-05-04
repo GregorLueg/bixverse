@@ -127,7 +127,7 @@ hdwgcna <- generate_bt_meta_cells_sc(
     target_no_metacells = 250L,
     knn = list(k = 25L)
   ),
-  regenerate_knn = TRUE,
+  regenerate_knn = TRUE, # regenerate kNN graph with 25 neighbours
   .verbose = TRUE
 )
 
@@ -297,7 +297,7 @@ ggplot(purity_dt, aes(x = method, y = purity)) +
 ```
 
 In terms of cell type purity, the methods are basically the same. Potentially
-more interesting is their behaviour in the manifold.
+more interesting is their behaviour in the manifold, see below...
 
 ### Manifold regions
 

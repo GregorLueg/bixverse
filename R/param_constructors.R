@@ -139,6 +139,28 @@ params_pca_defaults <- function() {
   )
 }
 
+#' Helper function to generate default parameters for the fast clustering for
+#' the doublet detection methods
+#'
+#' @returns A list with the following parameters for fast clustering:
+#' \itemize{
+#'  \item km_type - The type of k-means clustering. Defaults to `"minibatch"`
+#'  \item n_centroids - The number of centroids to use. Default to `NULL` and
+#'  the function will use `sqrt(N_cells) * 4` for the number of n_centroids.
+#'  \item kmeans_iters - Number of maximum k-means iterations. Defaults to
+#'  `100L`
+#'  \item batch_size - Max batch size will be set to `4098L`, but pending data
+#'  set set to `N_cells / 2`.
+#' }
+params_fast_cluster_default <- function() {
+  list(
+    km_type = "minibatch",
+    n_centroids = NULL,
+    kmeans_iters = 100L,
+    batch_size = 4098L
+  )
+}
+
 # constructors -----------------------------------------------------------------
 
 ## doublet detections ----------------------------------------------------------
@@ -265,6 +287,10 @@ params_scrublet <- function(
 #' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
 #' and `n_probe`. Note: this function defaults to `k = 0L` (automatic neighbour
 #' detection).
+#' @param fast_cluster_params List. Optional overrides for the fast clustering
+#' parameters. Only relevant if `fast_cluster = TRUE`. See
+#' [params_fast_cluster_default()] for available parameters: `km_type`,
+#' `n_centroids`, `kmeans_iters` and `batch_size`.
 #'
 #' @returns A named list with all Boost parameters, combining defaults with
 #' any user-specified overrides.
@@ -283,7 +309,8 @@ params_boost <- function(
   normalisation = list(),
   hvg = list(),
   pca = list(),
-  knn = list(k = 0L)
+  knn = list(k = 0L),
+  fast_cluster_params = list()
 ) {
   # checks
   checkmate::qassert(boost_rate, "N1[0,1]")
@@ -304,6 +331,11 @@ params_boost <- function(
     hvg = modifyList(params_hvg_defaults(), hvg, keep.null = TRUE),
     pca = modifyList(params_pca_defaults(), pca, keep.null = TRUE),
     knn = modifyList(params_knn_defaults(), knn, keep.null = TRUE),
+    fast_cluster_params = modifyList(
+      params_fast_cluster_default(),
+      fast_cluster_params,
+      keep.null = TRUE
+    ),
     boost_rate = boost_rate,
     replace = replace,
     resolution = resolution,
@@ -373,6 +405,10 @@ params_boost <- function(
 #' @param knn List. Optional overrides for kNN parameters.
 #' See [bixverse::params_knn_defaults()]. NNDescent works better for the larger
 #' k-values often used here.
+#' @param fast_cluster_params List. Optional overrides for the fast clustering
+#' parameters. Only relevant if `fast_cluster = TRUE`. See
+#' [params_fast_cluster_default()] for available parameters: `km_type`,
+#' `n_centroids`, `kmeans_iters` and `batch_size`.
 #'
 #' @returns A named list with all scDblFinder parameters.
 #'
@@ -398,7 +434,8 @@ params_scdblfinder <- function(
   manual_threshold = NULL,
   normalisation = list(mean_center = TRUE),
   pca = list(),
-  knn = list(k = 0L)
+  knn = list(k = 0L),
+  fast_cluster_params = list()
 ) {
   # checks
   checkmate::qassert(n_genes, "I1[1,)")
@@ -428,6 +465,11 @@ params_scdblfinder <- function(
     ),
     pca = modifyList(params_pca_defaults(), pca, keep.null = TRUE),
     knn = modifyList(params_knn_defaults(), knn, keep.null = TRUE),
+    fast_cluster_params = modifyList(
+      params_fast_cluster_default(),
+      fast_cluster_params,
+      keep.null = TRUE
+    ),
     n_genes = n_genes,
     doublet_ratio = doublet_ratio,
     heterotypic_bias = heterotypic_bias,

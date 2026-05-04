@@ -1281,6 +1281,43 @@ checkKnnParams <- function(x, required_params = NULL) {
   return(TRUE)
 }
 
+#' Check FastCluster default parameters
+#'
+#' @description Checkmate extension for checking FastCluster parameters.
+#'
+#' @param x The list to check/assert
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
+checkFastClusterDefaultParams <- function(x) {
+  res <- checkmate::checkNames(
+    names(x),
+    must.include = c("km_type", "n_centroids", "kmeans_iters", "batch_size")
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- checkmate::qtest(x[["batch_size"]], "I1") &
+    checkmate::qtest(x[["kmeans_iters"]], "I1")
+  if (!isTRUE(res)) {
+    return(paste("batch_size and kmeans_iters must be integers"))
+  }
+
+  res <- checkmate::qtest(x[["n_centroids"]], c("I1", "0"))
+  if (!isTRUE(res)) {
+    return(paste("n_centroids must be an integer or NULL."))
+  }
+
+  res <- checkmate::checkChoice(x[["km_type"]], c("minibatch", "standard"))
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  return(TRUE)
+}
+
 #### synthetic data ------------------------------------------------------------
 
 #' Check synthetic data parameters
@@ -1775,6 +1812,11 @@ checkScBoost <- function(x) {
     return(res)
   }
 
+  res <- checkFastClusterDefaultParams(x)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
   # Integer rules
   integer_rules <- list(
     "no_pcs" = "I1[1,)",
@@ -1970,6 +2012,11 @@ checkScDblFinder <- function(x) {
   if (!isTRUE(res)) {
     return(res)
   }
+  res <- checkFastClusterDefaultParams(x)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
   integer_rules <- list(
     "n_genes" = "I1[1,)",
     "no_pcs" = "I1[1,)",

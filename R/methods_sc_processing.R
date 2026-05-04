@@ -217,8 +217,16 @@ S7::method(doublet_detection_boost_sc, SingleCells) <- function(
 
   if (length(cells_to_use) >= 100000) {
     message("Setting PCA to sparse default. N_cells greater than 100,000")
-
     boost_params$sparse <- TRUE
+  }
+
+  if (boost_params$fast_cluster & is.null(boost_params$n_centroids)) {
+    message(paste(
+      "Fast clustering activated without any n_centroids set.",
+      "Setting n_centroids to sqrt(N) * 2"
+    ))
+
+    boost_params$n_centroids <- as.integer(sqrt(length(cells_to_use)) * 4)
   }
 
   boost_res <- rs_sc_doublet_detection(
@@ -322,6 +330,17 @@ S7::method(scdblfinder_sc, SingleCells) <- function(
     message("Setting PCA to sparse default. N_cells greater than 100,000")
 
     scdblfinder_params$sparse <- TRUE
+  }
+
+  if (
+    scdblfinder_params$fast_cluster & is.null(scdblfinder_params$n_centroids)
+  ) {
+    message(paste(
+      "Fast clustering activated without any n_centroids set.",
+      "Setting n_centroids to sqrt(N) * 2"
+    ))
+
+    scdblfinder_params$n_centroids <- as.integer(sqrt(length(cells_to_use)) * 4)
   }
 
   res <- rs_sc_scdblfinder(

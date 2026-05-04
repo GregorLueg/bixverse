@@ -25,7 +25,8 @@ params_scdblfinder(
   manual_threshold = NULL,
   normalisation = list(mean_center = TRUE),
   pca = list(),
-  knn = list(k = 0L)
+  knn = list(k = 0L),
+  fast_cluster_params = list()
 )
 }
 \arguments{
@@ -94,6 +95,11 @@ See \code{\link[=params_pca_defaults]{params_pca_defaults()}}.}
 \item{knn}{List. Optional overrides for kNN parameters.
 See \code{\link[=params_knn_defaults]{params_knn_defaults()}}. NNDescent works better for the larger
 k-values often used here.}
+
+\item{fast_cluster_params}{List. Optional overrides for the fast clustering
+parameters. Only relevant if \code{fast_cluster = TRUE}. See
+\code{\link[=params_fast_cluster_default]{params_fast_cluster_default()}} for available parameters: \code{km_type},
+\code{n_centroids}, \code{kmeans_iters} and \code{batch_size}.}
 }
 \value{
 A named list with all scDblFinder parameters.
