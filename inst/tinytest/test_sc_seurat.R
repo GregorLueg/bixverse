@@ -274,7 +274,8 @@ seurat_obj <- Seurat::FindNeighbors(
   seurat_obj,
   dims = 1:no_pcs,
   k.param = 15L,
-  verbose = FALSE
+  verbose = FALSE,
+  prune.SNN = 1 / 15
 )
 
 seurat_obj <- Seurat::FindClusters(seurat_obj, resolution = 1, verbose = FALSE)
@@ -282,12 +283,13 @@ seurat_obj <- Seurat::FindClusters(seurat_obj, resolution = 1, verbose = FALSE)
 #bixverse part
 sc_object <- find_neighbours_sc(
   sc_object,
+  # same as seurat
+  neighbours_params = params_sc_neighbours(),
   .verbose = FALSE
 )
 
-sc_object <- find_clusters_sc(sc_object)
-
-seurat_clusters <- seurat_obj$seurat_clusters
+# different resolution because leiden vs louvain
+sc_object <- find_clusters_sc(sc_object, res = 0.5)
 
 bixverse_clusters <- unlist(sc_object[["leiden_clustering"]])
 

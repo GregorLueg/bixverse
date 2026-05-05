@@ -31,12 +31,10 @@ metrics_helper <- function(cm) {
 
 syn_data <- generate_single_cell_test_data(seed = 123L)
 
-# Get cell indices by cell type
 ct1_idx <- which(syn_data$obs$cell_grp == "cell_type_1")
 ct2_idx <- which(syn_data$obs$cell_grp == "cell_type_2")
 ct3_idx <- which(syn_data$obs$cell_grp == "cell_type_3")
 
-# Create cross-cell-type doublets (more detectable)
 n_doublets_12 <- ceiling(n_doublets / 3)
 n_doublets_23 <- ceiling(n_doublets / 3)
 n_doublets_13 <- n_doublets - n_doublets_12 - n_doublets_23
@@ -64,7 +62,6 @@ doublet_matrix <- do.call(rbind, doublet_counts)
 all_counts <- rbind(syn_data$counts, doublet_matrix)
 n_total <- nrow(all_counts)
 
-# update obs
 doublet_obs <- data.table::data.table(
   cell_id = sprintf("doublet_%04d", 1:n_doublets),
   cell_grp = "doublet",
@@ -449,6 +446,7 @@ scdblfinder_res <- rs_sc_scdblfinder(
   params = scdblfinder_params,
   seed = 42L,
   return_features = FALSE,
+  streaming = FALSE,
   verbose = FALSE,
   debug = FALSE
 )

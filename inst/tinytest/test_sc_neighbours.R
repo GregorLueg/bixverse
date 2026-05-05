@@ -400,12 +400,9 @@ expect_true(
 
 #### check consistency with rust -----------------------------------------------
 
-# default with HNSW and cosine
 sc_object <- find_neighbours_sc(
   sc_object,
-  neighbours_params = params_sc_neighbours(
-    knn = list(k = 15L, knn_method = "hnsw")
-  ),
+  neighbours_params = params_sc_neighbours(),
   .verbose = FALSE
 )
 
@@ -413,15 +410,14 @@ sc_knn_cosine <- get_knn_mat(sc_object)
 
 expect_equivalent(
   current = sc_knn_cosine,
-  target = rs_hnsw_cos,
+  target = rs_kmknn_cos,
   info = "method wrapper behaving for HNSW"
 )
 
-# default with HNSW and cosine
 sc_object <- find_neighbours_sc(
   sc_object,
   neighbours_params = params_sc_neighbours(
-    knn = list(k = 15L, knn_method = "annoy", ann_dist = "euclidean")
+    knn = list(k = 15L, ann_dist = "euclidean")
   ),
   .verbose = FALSE
 )
@@ -430,7 +426,7 @@ sc_knn_euclidean <- get_knn_mat(sc_object)
 
 expect_equivalent(
   current = sc_knn_euclidean,
-  target = rs_annoy_euc,
+  target = rs_kmknn_euc,
   info = "method wrapper behaving for Annoy with different distance metric"
 )
 
