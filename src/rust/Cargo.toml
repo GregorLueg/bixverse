@@ -35,6 +35,7 @@ rayon = "1.11.0"
 rustc-hash = "2.1.1"
 thousands = "*"
 bixverse-rs = { git = "https://github.com/GregorLueg/bixverse-rs.git", branch = "release-0.1.8", features = ["single-cell",] }
+either = "1.15.0"
 
 [[bin]]
 name = "document"

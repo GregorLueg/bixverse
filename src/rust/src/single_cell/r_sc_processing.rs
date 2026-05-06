@@ -9,7 +9,7 @@ use extendr_api::prelude::*;
 use faer::Mat;
 use std::time::Instant;
 
-use crate::single_cell::utils::{flatten_dispersion_batches, process_fc_louvain_results};
+use crate::single_cell::utils::*;
 
 /////////////
 // extendR //
@@ -1124,7 +1124,7 @@ fn rs_fast_cluster_sc(
     n_centroids: Option<usize>,
     fc_params: List,
     snn: bool,
-    knn_same_weight: bool,
+    return_kmeans: bool,
     seed: usize,
     verbose: bool,
 ) -> Result<List, extendr_api::Error> {
@@ -1136,27 +1136,36 @@ fn rs_fast_cluster_sc(
 
     params.n_centroids = n_clusters;
 
-    let memberships = fast_louvain_clusters(
+    let fc_results = fast_louvain_clusters(
         embd.as_ref(),
         &km_type,
         &resolutions,
         &params,
         snn,
-        knn_same_weight,
-        true,
+        return_kmeans,
         seed,
         verbose,
     )
     .to_extendr()?;
 
-    let mut res = List::new(memberships.len());
+    let (memberships, k_means_cluster, centroids) =
+        fast_cluster_unwrap_single(fc_results, return_kmeans)?;
+
+    let mut memberships_ls = List::new(memberships.len());
 
     for (index, membership) in memberships.iter().enumerate() {
         let membership = membership.clone().r_int_convert();
-        res.set_elt(index, Robj::from(membership))?;
+        memberships_ls.set_elt(index, Robj::from(membership))?;
     }
 
-    Ok(res)
+    let k_means_cluster = k_means_cluster.map_or_else(|| r!(NULL), |v| r!(v));
+    let centroids = centroids.map_or_else(|| r!(NULL), |m| r!(m));
+
+    Ok(list!(
+        membership = memberships_ls,
+        k_means_cluster = r!(k_means_cluster),
+        centroids = r!(centroids),
+    ))
 }
 
 /// Runs fast Louvain cluster on the data (with multiple seeds)
@@ -1199,6 +1208,7 @@ fn rs_fast_cluster_sc_grid(
     n_centroids: Option<usize>,
     fc_params: List,
     snn: bool,
+    return_kmeans: bool,
     no_seeds: usize,
     seed: usize,
     verbose: bool,
@@ -1211,7 +1221,7 @@ fn rs_fast_cluster_sc_grid(
 
     params.n_centroids = n_clusters;
 
-    let rust_res = fast_louvain_clusters_grid(
+    let fc_results = fast_louvain_clusters_grid(
         embd.as_ref(),
         &km_type,
         &resolutions,
@@ -1224,7 +1234,17 @@ fn rs_fast_cluster_sc_grid(
     )
     .to_extendr()?;
 
-    let res = process_fc_louvain_results(rust_res)?;
+    let (memberships, k_means_cluster, centroids) =
+        fast_cluster_unwrap_multiple(fc_results, return_kmeans)?;
 
-    Ok(res)
+    let membership_ls = process_fc_louvain_results(memberships)?;
+
+    let k_means_cluster = k_means_cluster.map_or_else(|| r!(NULL), |v| r!(v));
+    let centroids = centroids.map_or_else(|| r!(NULL), |m| r!(m));
+
+    Ok(list!(
+        membership = membership_ls,
+        k_means_cluster = r!(k_means_cluster),
+        centroids = r!(centroids),
+    ))
 }

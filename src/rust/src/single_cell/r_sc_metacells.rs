@@ -1,16 +1,14 @@
-use bixverse_rs::single_cell::sc_analysis::metacell_density::DiffusionDensity;
+use bixverse_rs::prelude::*;
+use bixverse_rs::single_cell::mc_analysis::metacell_density::*;
+use bixverse_rs::single_cell::mc_generation::cell_aggregation_utils::*;
+use bixverse_rs::single_cell::mc_generation::hdwgcna_meta_cells::*;
+use bixverse_rs::single_cell::mc_generation::seacells::*;
+use bixverse_rs::single_cell::mc_generation::super_cells::*;
+use bixverse_rs::single_cell::sc_r_wrappers::{assignments_to_r_list, metacells_to_r_list};
 use extendr_api::*;
 use faer::Mat;
 use rustc_hash::FxHashMap;
 use std::time::Instant;
-
-use bixverse_rs::prelude::*;
-use bixverse_rs::single_cell::sc_analysis::cell_aggregation_utils::*;
-use bixverse_rs::single_cell::sc_analysis::hdwgcna_meta_cells::*;
-use bixverse_rs::single_cell::sc_analysis::metacell_density::*;
-use bixverse_rs::single_cell::sc_analysis::seacells::*;
-use bixverse_rs::single_cell::sc_analysis::super_cells::*;
-use bixverse_rs::single_cell::sc_r_wrappers::{assignments_to_r_list, metacells_to_r_list};
 
 use crate::single_cell::utils::{knn_data_to_rust, knn_indices_processing};
 
@@ -746,6 +744,10 @@ fn rs_supercell(
         )
     ))
 }
+
+////////////////
+// MetaCells2 //
+////////////////
 
 //////////////////////
 // MetaCell density //

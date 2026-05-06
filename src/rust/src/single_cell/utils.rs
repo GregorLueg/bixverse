@@ -2,8 +2,11 @@
 //! into R lists.
 
 use bixverse_rs::prelude::*;
-use bixverse_rs::single_cell::sc_analysis::fast_clusters::FastLouvainGridResult;
+use bixverse_rs::single_cell::sc_analysis::fast_clusters::{
+    FastLouvainGridResult, FastLouvainResults,
+};
 use bixverse_rs::single_cell::sc_processing::hvg::HvgDispersionRes;
+use either::Either;
 use std::collections::HashMap;
 
 use extendr_api::*;
@@ -22,9 +25,9 @@ use extendr_api::*;
 /// * `3` - Distance metric
 pub type NeighboursData = Result<(Vec<Vec<usize>>, Vec<Vec<f32>>, usize, String)>;
 
-/////////////
-// Helpers //
-/////////////
+////////////////////
+// Dispersion res //
+////////////////////
 
 /// Helper function to flatten the dispersion results to a List
 ///
@@ -64,45 +67,9 @@ pub fn flatten_dispersion_batches(results: Vec<HvgDispersionRes>) -> List {
     )
 }
 
-/// Process the fast cluster Louvain results
-///
-/// ### Params
-///
-/// * `results` - Vector of [FastLouvainGridResult]
-///
-/// ### Retuns
-///
-/// A list with the results
-pub fn process_fc_louvain_results(results: Vec<FastLouvainGridResult>) -> Result<List> {
-    let mut mean_ari: Vec<f32> = Vec::with_capacity(results.len());
-    let mut median_ari: Vec<f32> = Vec::with_capacity(results.len());
-    let mut mean_conductance: Vec<f32> = Vec::with_capacity(results.len());
-    let mut median_conductance: Vec<f32> = Vec::with_capacity(results.len());
-    let mut mean_n_comms: Vec<f32> = Vec::with_capacity(results.len());
-
-    let mut res = List::new(results.len());
-
-    for (index, louvain_res) in results.iter().enumerate() {
-        let membership = louvain_res.best_labels.clone().r_int_convert();
-        res.set_elt(index, Robj::from(membership))?;
-
-        mean_ari.push(louvain_res.mean_ari);
-        median_ari.push(louvain_res.median_ari);
-        mean_conductance.push(louvain_res.mean_conductance);
-        median_conductance.push(louvain_res.median_conductance);
-        mean_n_comms.push(louvain_res.mean_n_communities);
-    }
-
-    let stats = list![
-        mean_ari = mean_ari.r_float_convert(),
-        median_ari = median_ari.r_float_convert(),
-        mean_conductance = mean_conductance.r_float_convert(),
-        median_conductance = median_conductance.r_float_convert(),
-        mean_n_comms = mean_n_comms.r_float_convert(),
-    ];
-
-    Ok(list![memberships = res, stats = stats])
-}
+/////////
+// kNN //
+/////////
 
 /// Process R KNN indices to the Rust variant
 ///
@@ -183,4 +150,132 @@ pub fn knn_data_to_rust(knn_data: List) -> NeighboursData {
     let knn_dist = knn_distances_processing(knn_dist);
 
     Ok((knn_indices, knn_dist, k, dist_metric))
+}
+
+/////////////////
+// FastCluster //
+/////////////////
+
+/// Type for the fast clustering single results
+///
+/// ### Fields
+///
+/// * `0` - The Louvain membership per resolution
+/// * `1` - Optional k-means cluster membership
+/// * `2` - Optional k-means centroids
+pub type FastClusterSingle = Result<(Vec<Vec<usize>>, Option<Vec<i32>>, Option<RMatrix<f64>>)>;
+
+/// Type for the fast clustering single results
+///
+/// ### Fields
+///
+/// * `0` - The [FastLouvainGridResult] per resolution
+/// * `1` - Optional k-means cluster membership
+/// * `2` - Optional k-means centroids
+pub type FastClusterGrid = Result<(
+    Vec<FastLouvainGridResult>,
+    Option<Vec<i32>>,
+    Option<RMatrix<f64>>,
+)>;
+
+/// Helper function to extract (single) results from the FastClustering
+///
+/// ### Params
+///
+/// * `res` - The [FastLouvainResults]
+/// * `return_km` - Shall the km results be returned
+///
+/// ### Returns
+///
+/// [FastClusterSingle]
+pub fn fast_cluster_unwrap_single(res: FastLouvainResults, return_km: bool) -> FastClusterSingle {
+    let memberships = match res.get_assignments() {
+        Either::Left(v) => v,
+        Either::Right(_) => panic!("expected Single variant"),
+    };
+
+    let (k_means_membership, centroids) = if return_km {
+        let k_means_clusters = res.get_k_mean_clusters().to_extendr()?;
+        let centroids = res.get_centroids().to_extendr()?;
+
+        (
+            Some(k_means_clusters.r_int_convert()),
+            Some(faer_to_r_matrix(centroids.as_ref())),
+        )
+    } else {
+        (None, None)
+    };
+
+    Ok((memberships, k_means_membership, centroids))
+}
+
+/// Helper function to extract (single) results from the FastClustering
+///
+/// ### Params
+///
+/// * `res` - The [FastLouvainResults]
+/// * `return_km` - Shall the km results be returned
+///
+/// ### Returns
+///
+/// [FastClusterSingle]
+pub fn fast_cluster_unwrap_multiple(res: FastLouvainResults, return_km: bool) -> FastClusterGrid {
+    let memberships = match res.get_assignments() {
+        Either::Left(_) => panic!("expected Grid variant"),
+        Either::Right(v) => v,
+    };
+
+    let (k_means_membership, centroids) = if return_km {
+        let k_means_clusters = res.get_k_mean_clusters().to_extendr()?;
+        let centroids = res.get_centroids().to_extendr()?;
+
+        (
+            Some(k_means_clusters.r_int_convert()),
+            Some(faer_to_r_matrix(centroids.as_ref())),
+        )
+    } else {
+        (None, None)
+    };
+
+    Ok((memberships, k_means_membership, centroids))
+}
+
+/// Process the fast cluster Louvain results
+///
+/// ### Params
+///
+/// * `results` - Vector of [FastLouvainGridResult]
+///
+/// ### Retuns
+///
+/// A list with the results
+pub fn process_fc_louvain_results(results: Vec<FastLouvainGridResult>) -> Result<List> {
+    let mut mean_ari: Vec<f32> = Vec::with_capacity(results.len());
+    let mut median_ari: Vec<f32> = Vec::with_capacity(results.len());
+    let mut mean_conductance: Vec<f32> = Vec::with_capacity(results.len());
+    let mut median_conductance: Vec<f32> = Vec::with_capacity(results.len());
+    let mut mean_n_comms: Vec<f32> = Vec::with_capacity(results.len());
+
+    let mut res = List::new(results.len());
+
+    for (index, louvain_res) in results.iter().enumerate() {
+        let membership = louvain_res.best_labels.clone().r_int_convert();
+        res.set_elt(index, Robj::from(membership))?;
+
+        mean_ari.push(louvain_res.mean_ari);
+        median_ari.push(louvain_res.median_ari);
+        mean_conductance.push(louvain_res.mean_conductance);
+        median_conductance.push(louvain_res.median_conductance);
+        mean_n_comms.push(louvain_res.mean_n_communities);
+    }
+
+    let stats = list![
+        mean_ari = mean_ari.r_float_convert(),
+        median_ari = median_ari.r_float_convert(),
+        mean_conductance = mean_conductance.r_float_convert(),
+        median_conductance = median_conductance.r_float_convert(),
+        mean_n_comms = mean_n_comms.r_float_convert(),
+    ];
+
+    Ok(list![memberships = res, stats = stats])
 }

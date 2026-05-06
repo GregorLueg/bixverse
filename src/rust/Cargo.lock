@@ -157,6 +157,7 @@ name = "bixverse"
 version = "0.3.2"
 dependencies = [
  "bixverse-rs",
+ "either",
  "extendr-api",
  "faer",
  "half",
@@ -170,12 +171,13 @@ dependencies = [
 [[package]]
 name = "bixverse-rs"
 version = "0.2.0"
-source = "git+https://github.com/GregorLueg/bixverse-rs.git?branch=release-0.1.8#b23a38dde9d177692b92cb553d7a0e35107cea53"
+source = "git+https://github.com/GregorLueg/bixverse-rs.git?branch=release-0.1.8#48ef9e239cef490e4c0fa8c8c6dafda07f95ec5a"
 dependencies = [
  "ann-search-rs",
  "approx",
  "bincode",
  "document-features",
+ "either",
  "extendr-api",
  "faer",
  "faer-entity",
