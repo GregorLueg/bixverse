@@ -1,5 +1,7 @@
 ---
 title: "Analysing PBMCs with bixverse"
+date: last-modified
+date-format: yyyy-MM-dd
 vignette: >
   %\VignetteIndexEntry{Analysing PBMCs with bixverse}
   %\VignetteEngine{quarto::html}

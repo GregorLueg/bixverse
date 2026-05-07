@@ -2604,7 +2604,8 @@ checkScSupercell <- function(x) {
     must.include = c(
       "walk_length",
       "graining_factor",
-      "linkage_dist"
+      "use_kernel",
+      "k_ith"
     )
   )
   if (!isTRUE(res)) {
@@ -2620,7 +2621,8 @@ checkScSupercell <- function(x) {
 
   # Check non-kNN integer parameters
   integer_rules <- list(
-    "walk_length" = "I1[1,)"
+    "walk_length" = "I1[1,)",
+    "k_ith" = c("I1", "0")
   )
 
   res <- purrr::imap_lgl(x, \(val, name) {
@@ -2632,7 +2634,10 @@ checkScSupercell <- function(x) {
   })
 
   if (!isTRUE(all(res))) {
-    return("walk_length needs to be an integer >= 1.")
+    return(paste(
+      "walk_length needs to be an integer >= 1.",
+      "kith_neighbour needs to be an integer or NULL."
+    ))
   }
 
   # Check numeric parameters
@@ -2642,9 +2647,9 @@ checkScSupercell <- function(x) {
   }
 
   # Check choice parameters
-  res <- checkmate::testChoice(x[["linkage_dist"]], c("complete", "average"))
+  res <- checkmate::qtest(x[["use_kernel"]], "B1")
   if (!isTRUE(res)) {
-    return("linkage_dist must be either 'complete' or 'average'.")
+    return("use_kernel needs to be a boolean.")
   }
 
   return(TRUE)

@@ -27,7 +27,7 @@ min_cells_exp <- 500L
 # hvg
 hvgs_to_keep <- 30L
 # pcs
-no_pcs <- 10L
+no_pcs <- 15L
 
 ## synthetic data --------------------------------------------------------------
 
@@ -227,6 +227,7 @@ seurat_obj <- Seurat::RunPCA(
   seurat_obj,
   npcs = no_pcs,
   features = Seurat::VariableFeatures(object = seurat_obj),
+  approx = FALSE,
   verbose = FALSE,
   weight.by.var = TRUE
 )
@@ -284,14 +285,15 @@ seurat_obj <- Seurat::FindClusters(seurat_obj, resolution = 1, verbose = FALSE)
 sc_object <- find_neighbours_sc(
   sc_object,
   # same as seurat
-  neighbours_params = params_sc_neighbours(),
+  neighbours_params = params_sc_neighbours(pruning = 1 / 12),
   .verbose = FALSE
 )
 
 # different resolution because leiden vs louvain
-sc_object <- find_clusters_sc(sc_object, res = 0.5)
+sc_object <- find_clusters_sc(sc_object, res = 1.0)
 
 bixverse_clusters <- unlist(sc_object[["leiden_clustering"]])
+seurat_clusters <- seurat_obj$seurat_clusters
 
 f1_scores <- f1_score_confusion_mat(seurat_clusters, bixverse_clusters)
 

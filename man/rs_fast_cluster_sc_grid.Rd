@@ -11,6 +11,7 @@ rs_fast_cluster_sc_grid(
   n_centroids,
   fc_params,
   snn,
+  return_kmeans,
   no_seeds,
   seed,
   verbose

@@ -1,5 +1,7 @@
 ---
 title: "Thinking about single cells the bixverse way"
+date: last-modified
+date-format: yyyy-MM-dd
 vignette: >
   %\VignetteIndexEntry{Thinking about single cells the bixverse way}
   %\VignetteEngine{quarto::html}
@@ -35,7 +37,6 @@ noise genes.
 
 ```{r}
 #| label: loading in synthetic data
-
 single_cell_test_data <- generate_single_cell_test_data()
 
 str(single_cell_test_data)
@@ -73,7 +74,6 @@ Nope. But let's now load in the data and see what happens:
 
 ```{r}
 #| label: load synthetic data to disk
-
 sc_object <- load_r_data(
   object = sc_object,
   counts = single_cell_test_data$counts,
@@ -113,7 +113,6 @@ If we now print the class:
 
 ```{r}
 #| label: print the class again
-
 sc_object
 ```
 
@@ -127,7 +126,6 @@ testing).
 
 ```{r}
 #| label: load synthetic data to disk (more realistic)
-
 sc_object <- load_r_data(
   object = sc_object,
   counts = single_cell_test_data$counts,
@@ -159,7 +157,6 @@ the print like `To keep n`. This is very important! Let's check this out
 
 ```{r}
 #| label: cells to keep
-
 get_cells_to_keep(sc_object)[1:10]
 ```
 
@@ -173,7 +170,6 @@ other getters.
 
 ```{r}
 #| label: getters
-
 # get the cell identifiers - filtered for genes to keep; if set to FALSE
 # everything will be returned
 print(get_cell_names(sc_object, filtered = TRUE)[1:10])
@@ -186,21 +182,18 @@ THE footgun of the paper:
 
 ```{r}
 #| label: accessing the obs - via `[[]]`
-
 # a more R-native way
 sc_object[[]]
 ```
 
 ```{r}
 #| label: accessing the obs - subset or rows
-
 # a more R-native way: only first three rows
 sc_object[[1:3L]]
 ```
 
 ```{r}
 #| label: accessing the obs - column selection
-
 # a more R-native way: specific columns
 sc_object[[c("cell_idx", "cell_id", "cell_grp")]]
 ```
@@ -210,7 +203,6 @@ here:
 
 ```{r}
 #| label: accessing the obs - general getter
-
 get_sc_obs(sc_object, filtered = FALSE)
 # this one can retrieve unfiltered cells!
 ```
@@ -219,7 +211,6 @@ Let's pretend we want to do mitochondrial (or other gene set-based removal)
 
 ```{r}
 #| label: pseudo gene filtering
-
 # pseudo gene sets
 gs_of_interest <- list(
   gs_1 = c("gene_001", "gene_002", "gene_003", "gene_004"),
@@ -238,7 +229,6 @@ If we now look at the obs again:
 
 ```{r}
 #| label: accessing the obs - new data added
-
 sc_object[[]]
 ```
 
@@ -247,7 +237,6 @@ to really understand what's happening under the hood:
 
 ```{r}
 #| label: setting new cells to keep
-
 threshold <- 0.05
 
 cells_to_keep <- sc_object[[]][gs_2 < threshold, cell_id]
@@ -264,7 +253,6 @@ carefully think and remember what you did when. Also:
 
 ```{r}
 #| label: differences in obs row numbers
-
 obs_unfiltered <- get_sc_obs(sc_object, filtered = FALSE)
 
 obs_filtered <- get_sc_obs(sc_object, filtered = TRUE)
@@ -288,7 +276,6 @@ means... Let's say you are interested in the first 50 cells.
 
 ```{r}
 #| label: different file formats for the counts
-
 raw_counts_from_cells <- sc_object[
   1:50L,
   ,
@@ -317,7 +304,6 @@ can be seen here:
 
 ```{r}
 #| label: impact of the different retrieval
-
 microbenchmark::microbenchmark(
   the_correct_way = {
     sc_object[
@@ -347,7 +333,6 @@ and again you need to THINK about the cells to keep. A nasty example here:
 
 ```{r}
 #| label: the count getter in more detail
-
 counts_filtered <- get_sc_counts(
   object = sc_object,
   assay = "raw",
@@ -388,7 +373,6 @@ are not filtered, they are just not returned.** You can control this also via
 the primitive syntax.
 ```{r}
 #| label: filtering with primitives
-
 filtered_counts <- sc_object[1:10L, 1:10L, use_cells_to_keep = TRUE]
 
 unfiltered_counts <- sc_object[1:10L, 1:10L, use_cells_to_keep = FALSE]
@@ -410,7 +394,6 @@ just use:
 
 ```{r}
 #| label: using cell and gene identifiers
-
 # just use cell labels and genes directly...
 sc_object[
   c("cell_0001", "cell_0003", "cell_0100", "cell_0117"),

@@ -1,5 +1,7 @@
 ---
 title: "Batch correction with bixverse"
+date: last-modified
+date-format: yyyy-MM-dd
 vignette: >
   %\VignetteIndexEntry{Batch correction with bixverse}
   %\VignetteEngine{quarto::html}

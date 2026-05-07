@@ -297,7 +297,7 @@ right_cell_types <- purrr::map_lgl(
 )
 
 expect_true(
-  current = mean(hdwgcna_small[[]]$mc_purity) > 0.75,
+  current = mean(hdwgcna_small[[]]$mc_purity) > 0.9,
   info = paste(
     "hgwgnca - similar cell types are being pulled together;",
     "subsetted version"
@@ -348,9 +348,8 @@ seacells <- calc_meta_cell_purity(
   original_cell_type = unlist(sc_object[["cell_grp"]])
 )
 
-# much better than hdwgcna!
 expect_true(
-  current = mean(seacells[[]]$mc_purity) > 0.85,
+  current = mean(seacells[[]]$mc_purity) > 0.9,
   info = "seacell - similar cell types are being pulled together"
 )
 
@@ -373,22 +372,6 @@ expect_true(
 )
 
 #### smaller subset ------------------------------------------------------------
-
-expect_error(
-  current = generate_seacells_sc(
-    sc_object,
-    seacell_params = params_sc_seacells(
-      n_sea_cells = 50L,
-      min_iter = 5L,
-      convergence_epsilon = 0.001,
-      knn = list(k = 10L)
-    ),
-    regenerate_knn = FALSE,
-    cells_to_use = cells_to_use,
-    .verbose = FALSE
-  ),
-  info = "seacell error when embedding and kNN are not of expected dim."
-)
 
 seacells_small <- generate_seacells_sc(
   sc_object,

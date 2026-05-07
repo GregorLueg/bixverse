@@ -334,8 +334,9 @@ S7::method(generate_seacells_sc, SingleCells) <- function(
 #'   \item graining_factor - Numeric. Graining level of data (proportion of
 #'   number of single cells in the initial dataset to the number of metacells in
 #'   the final dataset)
-#'   \item linkage_dist - String. Which type of distance metric to use for the
-#'   linkage. Defaults to `"complete"`.
+#'   \item use_kernel - Boolean. Shall a kernel be applied.
+#'   \item kith_neighbour - Optional integer. Which neighbour to use for the
+#'   sigma estimation.
 #'   \item knn - List of kNN parameters. See [bixverse::params_knn_defaults()]
 #'   for available parameters and their defaults.
 #' }
@@ -425,7 +426,7 @@ S7::method(generate_supercells_sc, SingleCells) <- function(
     knn_data <- NULL
   } else {
     embd <- NULL
-    knn_data <- get_knn_mat(object)
+    knn_data <- get_knn_obj(object)
 
     if (is.null(knn_data)) {
       warning(
@@ -469,7 +470,7 @@ S7::method(generate_supercells_sc, SingleCells) <- function(
 
   supercell_res <- rs_supercell(
     f_path = get_rust_count_cell_f_path(object),
-    knn_mat = knn_data,
+    knn_data = knn_data,
     embd = embd,
     cells_to_use = cells_to_use,
     cells_to_keep = get_cells_to_keep(object),

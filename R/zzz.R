@@ -33,4 +33,9 @@
     "Hotspot",
     print.Hotspot
   )
+  registerS3method(
+    "print",
+    "SingleCellFastClusters",
+    print.SingleCellFastClusters
+  )
 }

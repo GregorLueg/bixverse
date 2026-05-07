@@ -434,7 +434,9 @@ expect_true(
 
 scdblfinder_params <- params_scdblfinder(
   pca = list(no_pcs = 10L),
-  expected_doublet_rate = 0.17
+  expected_doublet_rate = 0.17,
+  n_genes = 50L,
+  cxds_genes = 50L
 )
 
 ## rust logic ------------------------------------------------------------------
@@ -505,6 +507,20 @@ expect_true(
     "rust scdblfinder classified doublet detection:",
     "good f1 scores"
   )
+)
+
+# check the other metrics
+
+expect_true(
+  current = mean(scdblfinder_res$weighted[1:1000]) <
+    mean(scdblfinder_res$weighted[1001:1200]),
+  info = "scdblfinder: the weighted scores are higher for doublets"
+)
+
+expect_true(
+  current = mean(scdblfinder_res$cxds_scores[1:1000]) <
+    mean(scdblfinder_res$cxds_scores[1001:1200]),
+  info = "scdblfinder: the cxds scores are higher for doublets"
 )
 
 ## s7 method -------------------------------------------------------------------

@@ -1,5 +1,7 @@
 ---
 title: "Ontologies"
+date: last-modified
+date-format: yyyy-MM-dd
 vignette: >
   %\VignetteIndexEntry{Ontologies}
   %\VignetteEngine{quarto::html}
@@ -40,7 +42,6 @@ directed edges of the ontology graph.
 
 ```{r}
 #| label: loading-hpo
-
 library("ontologyIndex")
 
 data("hpo")
@@ -61,7 +62,6 @@ number of descendants each term has. Both are obtained in one step:
 
 ```{r}
 #| label: ancestry-and-ic
-
 c(ancestors, descendants) %<-% get_ontology_ancestry(hpo_data)
 
 information_content <- calculate_information_content(descendants)
@@ -86,7 +86,6 @@ the GitHub runners are VERY memory limited making this impossible.
 ```{r}
 #| label: resnik-similarity
 #| eval: false
-
 resnik_similarity <- calculate_semantic_sim_mat(
   similarity_type = "resnik",
   ancestor_list = ancestors,
@@ -101,7 +100,6 @@ Switching to the Lin similarity is just a parameter change:
 ```{r}
 #| label: lin-similarity
 #| eval: false
-
 lin_similarity <- calculate_semantic_sim_mat(
   similarity_type = "lin",
   ancestor_list = ancestors,
@@ -120,7 +118,6 @@ draw a random sample of ten terms and use the combined similarity:
 
 ```{r}
 #| label: subset-similarity
-
 set.seed(10101L)
 
 random_term_sample <- sort(sample(names(information_content), 10L))
@@ -147,7 +144,6 @@ fine-grained control over how different edges contribute to similarity.
 ```{r}
 #| label: wang-similarity-matrix
 #| eval: false
-
 # The HPO only has one relationship type; for the GO you would specify
 # several, e.g. c(is_a = 0.8, part_of = 0.6)
 
@@ -166,7 +162,6 @@ terms:
 
 ```{r}
 #| label: wang-similarity-subset
-
 # needs to be provided as previous chunk is not evaluated
 wang_weights <- setNames(0.8, "parent_of")
 

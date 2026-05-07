@@ -314,6 +314,14 @@ fn rs_get_seacells(
 
     let seacells_params = SEACellsParams::from_r_list(seacells_params)?;
 
+    let knn_provided = knn_data != extendr_api::Nullable::Null;
+
+    if cells_to_use.is_some() && knn_provided {
+        println!(
+            "[WARNING!] 'knn_data' is ignored when 'cells_to_use' is set; the kNN graph will be regenerated on the subset"
+        );
+    }
+
     let (subset_to_orig, n_total_cells, embd_mat) = match cells_to_use {
         Some(ref use_cells) => {
             let cells_to_keep = cells_to_keep.as_ref().ok_or_else(|| {
@@ -371,7 +379,27 @@ fn rs_get_seacells(
         }
     };
 
-    let (knn_indices, knn_dist, dist_squared) = if knn_data == extendr_api::Nullable::Null {
+    let is_subset = cells_to_use.is_some();
+
+    let (knn_indices, knn_dist, dist_squared) = if knn_provided && !is_subset {
+        let knn_data = knn_data
+            .into_robj()
+            .as_list()
+            .ok_or_else(|| Error::Other("'knn_data' is not a list".into()))?;
+        let (knn_indices, knn_dist, _, distance) = knn_data_to_rust(knn_data)?;
+
+        if knn_indices.len() != embd_mat.nrows() {
+            return Err(format!(
+                "kNN indices have {} rows but embedding has {}",
+                knn_indices.len(),
+                embd_mat.nrows()
+            )
+            .into());
+        }
+
+        let dist_squared = distance == "euclidean";
+        (knn_indices, knn_dist, dist_squared)
+    } else {
         let start_knn = Instant::now();
         let (knn_indices, knn_dist) = generate_knn_with_dist(
             embd_mat.as_ref(),
@@ -393,27 +421,8 @@ fn rs_get_seacells(
         }
 
         (knn_indices, knn_dist, dist_squared)
-    } else {
-        let knn_data = knn_data
-            .into_robj()
-            .as_list()
-            .ok_or_else(|| Error::Other("'knn_data' is not a list".into()))?;
-        let (knn_indices, knn_dist, _, distance) = knn_data_to_rust(knn_data)?;
-
-        if knn_indices.len() != embd_mat.nrows() {
-            return Err(format!(
-                "kNN indices have {} rows but embedding has {}",
-                knn_indices.len(),
-                embd_mat.nrows()
-            )
-            .into());
-        }
-
-        let dist_squared = distance == "euclidean";
-        (knn_indices, knn_dist, dist_squared)
     };
 
-    let is_subset = cells_to_use.is_some();
     let mut seacell = SEACells::new(embd_mat.nrows(), &seacells_params);
 
     seacell.construct_kernel_mat(embd_mat.as_ref(), &knn_indices, &knn_dist, verbose);
@@ -534,22 +543,27 @@ fn rs_get_seacells(
 /// Generate SuperCells.
 ///
 /// @description This function implements the approach from Bilous, et al.
-/// to generate meta cells or called here SuperCells. You can provide an
-/// already pre-computed kNN matrix or an embedding to regenerate the kNN matrix
-/// with specified parameters in the meta_cell_params. If `knn_mat` is provided,
-/// this one will be used. You need to at least provide `knn_mat` or `embd`!
+/// to generate meta cells or called here SuperCells. You can provide
+/// pre-computed kNN data (indices + distances) via `knn_data`, or an
+/// embedding via `embd` from which the kNN graph will be generated. You
+/// need to at least provide `knn_data` or `embd`. When `cells_to_use` is
+/// supplied, the kNN graph is always regenerated on the subset and any
+/// `knn_data` is ignored. Distances are required when the SuperCell
+/// parameters request the kernel-weighted graph.
 ///
 /// @param f_path String. Path to the `counts_cells.bin` file.
-/// @param knn_mat Optional integer matrix. The kNN matrix you wish to use
-/// for the generation of the meta cells. This function expects 0-indices!
 /// @param embd Optional numerical matrix. The embedding matrix (for example
-/// PCA embedding) you wish to use for the generation of the kNN graph that
-/// is used subsequently for aggregation of the meta cells.
+/// PCA embedding) used for the generation of the kNN graph. Required when
+/// `knn_data` is not provided, and required when using `cells_to_use`.
 /// @param cells_to_keep Optional indices of the cells to keep, i.e., the
 /// cells used for the generation of the embedding.
 /// @param cells_to_use Optional indices of cells to use for meta cell
 /// generation. Useful if you wish to generate meta cells in specific cell
-/// types. If this is provided, the kNN graph will be regenerated.
+/// types. If this is provided, `embd` and `cells_to_keep` are required and
+/// the kNN graph will be regenerated on the subset.
+/// @param knn_data Optional list. This contains pre-computed kNN data
+/// (including distances). The user has to ensure consistency! Ignored when
+/// `cells_to_use` is set.
 /// @param supercell_params A list containing the SuperCell parameters.
 /// @param target_size Numeric. Target library size for re-normalisation of
 /// the meta cells. Typically `1e4`.
@@ -570,10 +584,10 @@ fn rs_get_seacells(
 #[allow(clippy::too_many_arguments)]
 fn rs_supercell(
     f_path: String,
-    knn_mat: Option<RMatrix<i32>>,
     embd: Option<RMatrix<f64>>,
     cells_to_keep: Option<Vec<i32>>,
     cells_to_use: Option<Vec<i32>>,
+    knn_data: Nullable<List>,
     supercell_params: List,
     target_size: f64,
     seed: usize,
@@ -587,10 +601,23 @@ fn rs_supercell(
         );
     }
 
-    let (subset_to_orig, n_total_cells, knn_graph) = match cells_to_use {
+    let knn_provided = knn_data != extendr_api::Nullable::Null;
+    let is_subset = cells_to_use.is_some();
+
+    if is_subset && knn_provided {
+        println!(
+            "[WARNING!] 'knn_data' is ignored when 'cells_to_use' is set; the kNN graph will be regenerated on the subset"
+        );
+    }
+
+    if !knn_provided && embd.is_none() {
+        return Err("Must provide either 'knn_data' or 'embd'".into());
+    }
+
+    let (subset_to_orig, n_total_cells, knn_indices, knn_dist, dist_squared) = match cells_to_use {
         Some(ref use_cells) => {
-            let cells_to_keep = cells_to_keep.unwrap();
-            let embd = embd.unwrap();
+            let cells_to_keep = cells_to_keep.as_ref().unwrap();
+            let embd = embd.as_ref().unwrap();
 
             let qc_cells: Vec<usize> = cells_to_keep.iter().map(|&x| x as usize).collect();
             let use_cells: Vec<usize> = use_cells.iter().map(|&x| x as usize).collect();
@@ -633,64 +660,96 @@ fn rs_supercell(
                 subset_data[i * ncol + j] as f32
             });
 
-            let (knn, _) = generate_knn_with_dist(
+            let start_knn = Instant::now();
+            let (knn_idx, knn_d) = generate_knn_with_dist(
                 embd_subset.as_ref(),
                 &supercell_params.knn_params,
-                false,
+                true,
                 false,
                 seed,
                 verbose,
             );
+            let knn_d = knn_d.unwrap();
+            let dist_sq = supercell_params.knn_params.ann_dist == "euclidean";
 
-            (subset_to_orig, n_total, knn)
+            if verbose {
+                println!(
+                    "kNN generation done in: {:.2?} with {}",
+                    start_knn.elapsed(),
+                    supercell_params.knn_params.knn_method
+                );
+            }
+
+            (subset_to_orig, n_total, knn_idx, knn_d, dist_sq)
         }
         None => {
-            let n_total = match (&knn_mat, &embd) {
-                (Some(mat), _) => mat.nrows(),
-                (_, Some(em)) => em.nrows(),
-                _ => return Err("Must provide either 'knn_mat' or 'embd' parameter".into()),
-            };
+            if knn_provided {
+                let knn_list = knn_data
+                    .into_robj()
+                    .as_list()
+                    .ok_or_else(|| Error::Other("'knn_data' is not a list".into()))?;
+                let (knn_idx, knn_d, _, distance) = knn_data_to_rust(knn_list)?;
 
-            let knn = match (knn_mat, embd) {
-                (Some(knn_mat), _) => knn_indices_processing(knn_mat),
-                (None, Some(embd)) => {
-                    if verbose {
-                        println!("Calculating kNN matrix from provided data");
+                if let Some(ref em) = embd {
+                    if knn_idx.len() != em.nrows() {
+                        return Err(format!(
+                            "kNN indices have {} rows but embedding has {}",
+                            knn_idx.len(),
+                            em.nrows()
+                        )
+                        .into());
                     }
+                }
 
-                    let embd = r_matrix_to_faer_fp32(&embd);
+                let dist_sq = distance == "euclidean";
+                let n_total = knn_idx.len();
+                ((0..n_total).collect(), n_total, knn_idx, knn_d, dist_sq)
+            } else {
+                let embd = embd.unwrap();
+                let n_total = embd.nrows();
+                let embd_mat = r_matrix_to_faer_fp32(&embd);
 
-                    let (knn, _) = generate_knn_with_dist(
-                        embd.as_ref(),
-                        &supercell_params.knn_params,
-                        false,
-                        false,
-                        seed,
-                        verbose,
+                if verbose {
+                    println!("Calculating kNN matrix from provided data");
+                }
+
+                let start_knn = Instant::now();
+                let (knn_idx, knn_d) = generate_knn_with_dist(
+                    embd_mat.as_ref(),
+                    &supercell_params.knn_params,
+                    true,
+                    false,
+                    seed,
+                    verbose,
+                );
+                let knn_d = knn_d.unwrap();
+                let dist_sq = supercell_params.knn_params.ann_dist == "euclidean";
+
+                if verbose {
+                    println!(
+                        "kNN generation done in: {:.2?} with {}",
+                        start_knn.elapsed(),
+                        supercell_params.knn_params.knn_method
                     );
-
-                    knn
                 }
-                (None, None) => {
-                    return Err("Must provide either 'knn_mat' or 'embd' parameter".into());
-                }
-            };
 
-            ((0..n_total).collect(), n_total, knn)
+                ((0..n_total).collect(), n_total, knn_idx, knn_d, dist_sq)
+            }
         }
     };
 
-    let is_subset = cells_to_use.is_some();
-
-    let n_meta_cells = (knn_graph.len() as f64 / supercell_params.graining_factor).ceil() as usize;
+    let n_meta_cells =
+        (knn_indices.len() as f64 / supercell_params.graining_factor).ceil() as usize;
 
     if verbose {
         println!("Running SuperCell with Walktrap");
     }
 
     let membership_subset = supercell(
-        &knn_graph,
-        supercell_params.walk_length,
+        &knn_indices,
+        &knn_dist,
+        &supercell_params,
+        dist_squared,
         n_meta_cells,
         verbose,
     );

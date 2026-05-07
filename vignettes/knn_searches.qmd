@@ -1,5 +1,7 @@
 ---
 title: "KNN searches for single cell"
+date: last-modified
+date-format: yyyy-MM-dd
 vignette: >
   %\VignetteIndexEntry{KNN searches for single cell}
   %\VignetteEngine{quarto::html}

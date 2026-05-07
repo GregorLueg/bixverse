@@ -914,8 +914,11 @@ params_sc_seacells <- function(
 #' @param graining_factor Numeric. Graining level of data (proportion of number
 #' of single cells in the initial dataset to the number of metacells in the
 #' final dataset). Defaults to `20.0`. (One meta cell per 20 cells.)
-#' @param linkage_dist String. Which type of distance metric to use for the
-#' linkage. Defaults to `"average"`.
+#' @param use_kernel Boolean. Shall a kernel function akin to MAGIC be applied
+#' akin to the approach in SuperCell2, see Hérault, et al., bioRxiv, 2026 and
+#' van Dijk, et al., Cell, 2018.
+#' @param k_ith_neighbour Optional integer. The k-ith neighbour to use for
+#' the kernel. Defaults to `k %/% 2`.
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
@@ -928,14 +931,14 @@ params_sc_seacells <- function(
 params_sc_supercell <- function(
   walk_length = 3L,
   graining_factor = 20.0,
-  linkage_dist = c("complete", "average"),
+  use_kernel = TRUE,
+  k_ith = NULL,
   knn = list()
 ) {
-  linkage_dist <- match.arg(linkage_dist)
-
   checkmate::qassert(walk_length, "I1")
   checkmate::qassert(graining_factor, "N1")
-  checkmate::assertChoice(linkage_dist, c("complete", "average"))
+  checkmate::qassert(use_kernel, "B1")
+  checkmate::qassert(k_ith, c("I1", "0"))
 
   knn_params <- modifyList(
     params_knn_defaults(),
@@ -947,7 +950,8 @@ params_sc_supercell <- function(
     list(
       walk_length = walk_length,
       graining_factor = graining_factor,
-      linkage_dist = linkage_dist
+      use_kernel = use_kernel,
+      k_ith = k_ith
     ),
     knn_params
   )

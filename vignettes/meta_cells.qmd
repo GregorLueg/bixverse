@@ -1,5 +1,7 @@
 ---
 title: "Meta cells with bixverse"
+date: last-modified
+date-format: yyyy-MM-dd
 vignette: >
   %\VignetteIndexEntry{Meta cells with bixverse}
   %\VignetteEngine{quarto::html}
@@ -303,7 +305,8 @@ more interesting is their behaviour in the manifold, see below...
 
 We called the `calc_diffusion_coordinates()` with the kNN graph on the data.
 This will tell us which parts of the manifold are being sampled here, i.e., for
-example high, medium or low density regions. This gives an idea how many rare
+example high, medium or low density regions (based on the diffusion map and
+distance to the 150k-th neighbour within that). This gives an idea how many rare
 cell states the meta cells capture.
 
 ```{r}
@@ -344,11 +347,17 @@ ggplot(region_dt, aes(x = method, y = proportion, fill = region)) +
 
 This is one of the most important differences between the methods. hdWGCNA will
 disproportionally sample regions of the manifolds with medium density and
-basically proportion-based. SEACells on the other hand generates MetaCells that
+basically proportion-based. SEACells on the other hand generates meta cells that
 capture sparse (more heterogenous) regions of the manifold. SuperCells sits
 between the two methods.
 
 ### Compactness and separation
+
+We can also assess other metrics on the manifold representation. Compactness
+(how close are the cells within a given metacell to the centroid) and 
+separation (how far is the closest centroid). The first gives an (unbiased)
+indication of purity; the latter of diversity captured in the manifold. We
+can do this trivially via:
 
 ```{r}
 #| label: calculate other metrics
@@ -356,6 +365,8 @@ hdwgcna <- calc_manifold_metrics(hdwgcna)
 seacells <- calc_manifold_metrics(seacells)
 supercells <- calc_manifold_metrics(supercells)
 ```
+
+Let's generate a plotting data.table
 
 ```{r}
 #| label: prepare metrics dt
@@ -379,7 +390,46 @@ metrics_dt <- rbind(
     region = supercells[[]]$density_region
   )
 )[, region := factor(region, levels = c("high", "mid", "low"))]
+
+metrics_dt[,
+  .(
+    mean_separation = mean(separation),
+    median_separation = median(separation),
+    mean_compactness = mean(compactness),
+    median_compactness = median(compactness)
+  ),
+  .(method)
+]
 ```
+
+Some differences are visible here. hdWGCNA has the worst separation and best
+compactness (not unexpected given the bootstrapping method only sampling direct 
+neighbours). SEACells has the worst compactness across the three methods (not
+unsurprising as the meta cells here capture more sparse regions of the
+manifold) and middling separation; SuperCells (version 2.0, the default setting 
+here) is in the middle. 
+
+```{r}
+#| label: check metrics per region
+per_region_stats <- metrics_dt[,
+  .(
+    mean_separation = mean(separation),
+    median_separation = median(separation),
+    mean_compactness = mean(compactness),
+    median_compactness = median(compactness)
+  ),
+  .(method, region)
+]
+setorder(per_region_stats, method, region)
+
+per_region_stats[]
+```
+
+We can also look at this per density region in the manifold where we can
+observe that compactness is smallest in the high density regions, whereas 
+separation is the highest in the low density regions. And below as plots:
+
+#### Compactness plots
 
 ```{r}
 #| label: compactness plot
@@ -409,6 +459,8 @@ ggplot(metrics_dt, aes(x = method, y = compactness)) +
   )
 ```
 
+#### Separation plots
+
 ```{r}
 #| label: separation plot
 #| fig-width: 6
@@ -437,16 +489,34 @@ ggplot(metrics_dt, aes(x = method, y = separation)) +
   )
 ```
 
+Based on this, we can conclude the following:
+
+- Purity is VERY similar across the methods (for this data set).
+- At matched K (~250 metacells), SuperCells achieves the lowest median 
+  compactness, slightly ahead of hdWGCNA and SEACells. Separation is comparable
+  between SuperCells and SEACells, with hdWGCNA noticeably lower.
+- The methods differ markedly in where they place metacells. SEACells assigns 
+  50% of metacells to low-density regions versus 24% for hdWGCNA and 37% for 
+  SuperCells, consistent with its kernel archetypal formulation seeking out 
+  underrepresented states.
+- Method choice should reflect the downstream question. For tight aggregation in 
+  dense regions (e.g., bulk-like pseudo-replicates of common cell types), 
+  SuperCells is efficient and effective. For preserving rare populations or 
+  transitioning states (e.g., differentiation trajectories), SEACells' 
+  rare-state bias is desirable, with the trade-off of more heterogeneous 
+  metacells in those regions. hdWGCNA is fast and simple but assignments overlap 
+  more in embedding space.
+
 ## Working with the MetaCells class
 
 This is where the in-memory representation pays off. HVG selection, PCA,
 neighbour graphs and embeddings on a few hundred meta cells take seconds and
-do not touch disk.
-
-We continue with the SEACells output as it had the highest purity, but the
-same code works on any of the three.
+do not touch the Rust binary files on disk. We will just take forward SEACells
+here, but the methods below work across all of `MetaCells`.
 
 ### HVGs and PCA
+
+The same HVG and PCA method dispatches you know from single cells work here...
 
 ```{r}
 #| label: mc hvg pca
@@ -463,6 +533,9 @@ seacells <- calculate_pca_sc(
 ```
 
 ### Neighbours, clustering and UMAP
+
+And also the same interfaces for neighbours, (Leiden) clustering and UMAP can
+be used here.
 
 ```{r}
 #| label: mc neighbours clustering umap
@@ -498,13 +571,22 @@ which is the point: each dot is a denoised aggregate of ~15-20 cells, and
 the structure that survives aggregation is the structure that's robust to
 sparsity.
 
+### Co-expression module detection on meta cells
+
+Meta cells compress information and reduce sparsity. That makes them ideal
+for co-expression module detection methods and we can use a SCENIC 
+implementation within bixverse 
+[akin to the single cell version](https://gregorlueg.github.io/bixverse/articles/analysis_single_cell.html#scenic)
+also on MetaCells.
+
 ## Pseudo-bulking
 
 Pseudo-bulks are conceptually adjacent but solve a different problem. Where
 meta cells are dense aggregates designed to feed into co-expression and
 archetype methods, pseudo-bulks are coarse summaries (typically one bulk per
 sample-by-cluster combination) used as input to bulk-style DGE tools such as
-limma-voom, edgeR or DESeq2.
+limma-voom, edgeR or DESeq2 to get around pseudo-replication problems and 
+p-value inflation in cell-based DGEs, see [Zimmerman et al.](https://www.nature.com/articles/s41467-021-21038-1)
 
 `get_pseudobulked_sc` takes a named list of cell IDs and returns either a
 dense matrix or a sparse `dgRMatrix`. With `assay = "raw"` it sums raw counts
@@ -530,19 +612,6 @@ dim(pb_counts)
 The returned matrix has one row per group and one column per gene. From here
 the standard bulk DGE pipeline applies; `bixverse` does not wrap the DGE call
 itself.
-
-## Coming up
-
-A few things sit naturally on top of `MetaCells` and will be added in
-upcoming releases:
-
-- A SCENIC implementation for `MetaCells`. Meta cells suit SCENIC well
-because the higher counts per observation make the GRN inference step less
-noisy.
-- An AUCell port for scoring gene sets on meta cells.
-
-Both will dispatch on the `MetaCells` class with the in-memory speed
-advantages described above.
 
 ## Clean up
 

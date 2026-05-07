@@ -6,6 +6,7 @@
 \alias{get_obs_data.ScrubletRes}
 \alias{get_obs_data.BoostRes}
 \alias{get_obs_data.ScDblFinderRes}
+\alias{get_obs_data.SingleCellFastClusters}
 \title{Get the ready obs data from various sub method}
 \usage{
 get_obs_data(x, ...)
@@ -17,6 +18,8 @@ get_obs_data(x, ...)
 \method{get_obs_data}{BoostRes}(x, ...)
 
 \method{get_obs_data}{ScDblFinderRes}(x, ...)
+
+\method{get_obs_data}{SingleCellFastClusters}(x, ...)
 }
 \arguments{
 \item{x}{An object to set gene mapping for}

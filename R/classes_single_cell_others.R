@@ -1919,3 +1919,79 @@ tf_to_genes_motif_enrichment.ScenicGrn <- function(
   x$tf_to_gene_results <- tf_gene_dt
   return(x)
 }
+
+## fast clusters ---------------------------------------------------------------
+
+### getters --------------------------------------------------------------------
+
+#' @rdname get_obs_data
+#'
+#' @export
+get_obs_data.SingleCellFastClusters <- function(x, ...) {
+  checkmate::assertClass(x, "SingleCellFastClusters")
+  data.table::copy(x$memberships)
+}
+
+#' Get k-means centroids from a fast cluster result
+#'
+#' @param x `SingleCellFastClusters` object.
+#'
+#' @export
+get_centroids <- function(x) {
+  UseMethod("get_centroids")
+}
+
+#' @rdname get_centroids
+#'
+#' @export
+get_centroids.SingleCellFastClusters <- function(x) {
+  checkmate::assertClass(x, "SingleCellFastClusters")
+  if (is.null(x$centroids)) {
+    warning(paste(
+      "No centroids stored. Did you set return_kmeans = TRUE?",
+      "Returning NULL."
+    ))
+  }
+  x$centroids
+}
+
+#' Get k-means cluster assignments from a fast cluster result
+#'
+#' @param x `SingleCellFastClusters` object.
+#'
+#' @export
+get_kmeans_clusters <- function(x) {
+  UseMethod("get_kmeans_clusters")
+}
+
+#' @rdname get_kmeans_clusters
+#'
+#' @export
+get_kmeans_clusters.SingleCellFastClusters <- function(x) {
+  checkmate::assertClass(x, "SingleCellFastClusters")
+  if (is.null(x$k_means_cluster)) {
+    warning(paste(
+      "No k-means clusters stored. Did you set return_kmeans = TRUE?",
+      "Returning NULL."
+    ))
+  }
+  x$k_means_cluster
+}
+
+### primitives -----------------------------------------------------------------
+
+#' @export
+#'
+#' @keywords internal
+print.SingleCellFastClusters <- function(x, ...) {
+  cat(sprintf(
+    "SingleCellFastClusters: %d cells, %d resolutions\n",
+    nrow(x$memberships),
+    length(x$resolutions)
+  ))
+  cat(sprintf("  Resolutions: %s\n", paste(x$resolutions, collapse = ", ")))
+  cat(sprintf("  Grid stats stored: %s\n", !is.null(x$stats)))
+  cat(sprintf("  k-means stored:    %s\n", !is.null(x$centroids)))
+
+  invisible(x)
+}

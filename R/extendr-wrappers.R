@@ -2587,7 +2587,7 @@ rs_compare_knn <- function(knn_mat_a, knn_mat_b) .Call(wrap__rs_compare_knn, knn
 #' @returns A list with the memberships per resolution.
 #'
 #' @export
-rs_fast_cluster_sc <- function(embd, km_type, resolutions, n_centroids, fc_params, snn, knn_same_weight, seed, verbose) .Call(wrap__rs_fast_cluster_sc, embd, km_type, resolutions, n_centroids, fc_params, snn, knn_same_weight, seed, verbose)
+rs_fast_cluster_sc <- function(embd, km_type, resolutions, n_centroids, fc_params, snn, return_kmeans, seed, verbose) .Call(wrap__rs_fast_cluster_sc, embd, km_type, resolutions, n_centroids, fc_params, snn, return_kmeans, seed, verbose)
 
 #' Runs fast Louvain cluster on the data (with multiple seeds)
 #'
@@ -2620,7 +2620,7 @@ rs_fast_cluster_sc <- function(embd, km_type, resolutions, n_centroids, fc_param
 #' }
 #'
 #' @export
-rs_fast_cluster_sc_grid <- function(embd, km_type, resolutions, n_centroids, fc_params, snn, no_seeds, seed, verbose) .Call(wrap__rs_fast_cluster_sc_grid, embd, km_type, resolutions, n_centroids, fc_params, snn, no_seeds, seed, verbose)
+rs_fast_cluster_sc_grid <- function(embd, km_type, resolutions, n_centroids, fc_params, snn, return_kmeans, no_seeds, seed, verbose) .Call(wrap__rs_fast_cluster_sc_grid, embd, km_type, resolutions, n_centroids, fc_params, snn, return_kmeans, no_seeds, seed, verbose)
 
 #' Calculate DGEs between cells based on Mann Whitney stats
 #'
@@ -3044,22 +3044,27 @@ rs_get_seacells <- function(f_path, embd, cells_to_keep, cells_to_use, knn_data,
 #' Generate SuperCells.
 #'
 #' @description This function implements the approach from Bilous, et al.
-#' to generate meta cells or called here SuperCells. You can provide an
-#' already pre-computed kNN matrix or an embedding to regenerate the kNN matrix
-#' with specified parameters in the meta_cell_params. If `knn_mat` is provided,
-#' this one will be used. You need to at least provide `knn_mat` or `embd`!
+#' to generate meta cells or called here SuperCells. You can provide
+#' pre-computed kNN data (indices + distances) via `knn_data`, or an
+#' embedding via `embd` from which the kNN graph will be generated. You
+#' need to at least provide `knn_data` or `embd`. When `cells_to_use` is
+#' supplied, the kNN graph is always regenerated on the subset and any
+#' `knn_data` is ignored. Distances are required when the SuperCell
+#' parameters request the kernel-weighted graph.
 #'
 #' @param f_path String. Path to the `counts_cells.bin` file.
-#' @param knn_mat Optional integer matrix. The kNN matrix you wish to use
-#' for the generation of the meta cells. This function expects 0-indices!
 #' @param embd Optional numerical matrix. The embedding matrix (for example
-#' PCA embedding) you wish to use for the generation of the kNN graph that
-#' is used subsequently for aggregation of the meta cells.
+#' PCA embedding) used for the generation of the kNN graph. Required when
+#' `knn_data` is not provided, and required when using `cells_to_use`.
 #' @param cells_to_keep Optional indices of the cells to keep, i.e., the
 #' cells used for the generation of the embedding.
 #' @param cells_to_use Optional indices of cells to use for meta cell
 #' generation. Useful if you wish to generate meta cells in specific cell
-#' types. If this is provided, the kNN graph will be regenerated.
+#' types. If this is provided, `embd` and `cells_to_keep` are required and
+#' the kNN graph will be regenerated on the subset.
+#' @param knn_data Optional list. This contains pre-computed kNN data
+#' (including distances). The user has to ensure consistency! Ignored when
+#' `cells_to_use` is set.
 #' @param supercell_params A list containing the SuperCell parameters.
 #' @param target_size Numeric. Target library size for re-normalisation of
 #' the meta cells. Typically `1e4`.
@@ -3076,7 +3081,7 @@ rs_get_seacells <- function(f_path, embd, cells_to_keep, cells_to_use, knn_data,
 #' }
 #'
 #' @export
-rs_supercell <- function(f_path, knn_mat, embd, cells_to_keep, cells_to_use, supercell_params, target_size, seed, verbose) .Call(wrap__rs_supercell, f_path, knn_mat, embd, cells_to_keep, cells_to_use, supercell_params, target_size, seed, verbose)
+rs_supercell <- function(f_path, embd, cells_to_keep, cells_to_use, knn_data, supercell_params, target_size, seed, verbose) .Call(wrap__rs_supercell, f_path, embd, cells_to_keep, cells_to_use, knn_data, supercell_params, target_size, seed, verbose)
 
 #' Calculates diffusion maps for density calculations for meta cells
 #'

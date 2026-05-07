@@ -599,32 +599,54 @@ expect_true(
 
 ## fast clustering -------------------------------------------------------------
 
-# # TODO
+### simple version -------------------------------------------------------------
 
-# nrow_embd <- nrow(get_pca_factors(sc_object))
+fast_cluster_res <- fast_cluster_sc(
+  object = sc_object,
+  .verbose = FALSE
+)
 
-# rs_fast_cluster_sc(
-#   embd = get_pca_factors(sc_object),
-#   km_type = "kmeans",
-#   resolutions = c(5.0, 2.0, 1.5, 1.0, 0.5, 0.25),
-#   n_centroids = NULL,
-#   fc_params = params_sc_fast_cluster(batch_size = 100L, kmeans_iters = 1000L),
-#   snn = TRUE,
-#   seed = 42L,
-#   verbose = TRUE
-# )
+obs_fc <- get_obs_data(fast_cluster_res)
 
-# rs_fast_cluster_sc_grid(
-#   embd = get_pca_factors(sc_object),
-#   km_type = "standard",
-#   resolutions = c(5.0, 2.0, 1.5, 1.0, 0.5, 0.25),
-#   n_centroids = NULL,
-#   fc_params = params_sc_fast_cluster(batch_size = 100L, kmeans_iters = 1000L),
-#   snn = TRUE,
-#   no_seeds = 5L,
-#   seed = 42L,
-#   verbose = TRUE
-# )
+expect_true(
+  current = checkmate::testDataTable(obs_fc),
+  info = "fast clustering: data.table returned"
+)
+
+expect_warning(
+  current = get_centroids(fast_cluster_res),
+  info = "fast clustering: warning without k-means data"
+)
+
+expect_warning(
+  current = get_kmeans_clusters(fast_cluster_res),
+  info = "fast clustering: warning without k-means data (2)"
+)
+
+### with k-means clusters ------------------------------------------------------
+
+fast_cluster_res <- fast_cluster_sc(
+  object = sc_object,
+  return_kmeans = TRUE,
+  n_centroids = 30L,
+  .verbose = FALSE
+)
+
+centroids <- get_centroids(fast_cluster_res)
+
+kmeans_clusters <- get_kmeans_clusters(fast_cluster_res)
+
+expect_true(
+  current = checkmate::testMatrix(centroids, nrow = 30L, ncols = no_pcs),
+  info = "fast clustering: centroids returned"
+)
+
+expect_true(
+  current = checkmate::qtest(kmeans_clusters, "I+"),
+  info = "fast clustering: k-means clusters returned"
+)
+
+### grid version ---------------------------------------------------------------
 
 ### check the DB structure -----------------------------------------------------
 
