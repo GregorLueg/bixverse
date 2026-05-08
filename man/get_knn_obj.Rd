@@ -19,5 +19,6 @@ get_knn_obj(x)
 The \code{SingleCellNearestNeighbour} object.
 }
 \description{
-Get the KNN object
+Returns the \code{SingleCellNearestNeighbour} from the object. This function is
+used for the single cell-related classes and methods.
 }

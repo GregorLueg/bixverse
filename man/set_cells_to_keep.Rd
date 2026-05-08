@@ -4,7 +4,7 @@
 \alias{set_cells_to_keep}
 \alias{set_cells_to_keep.ScMap}
 \alias{set_cells_to_keep.SingleCells}
-\title{Set cells to keep for ScMap object}
+\title{Set cells to keep}
 \usage{
 set_cells_to_keep(x, cells_to_keep)
 
@@ -17,6 +17,8 @@ set_cells_to_keep(x, cells_to_keep)
 to keep in downstream analysis.}
 }
 \description{
-Set cells to keep for ScMap object
+Set the cells to keep. This is used for the single cell-related
+classes with streaming from disk and tells subsequent (Rust) methods which
+cells to include.
 }
 \keyword{internal}

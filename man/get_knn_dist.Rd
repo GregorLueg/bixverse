@@ -7,7 +7,7 @@
 \alias{get_knn_dist.ScCache}
 \alias{get_knn_dist.SingleCells}
 \alias{get_knn_dist.SingleCellNearestNeighbour}
-\title{Get the KNN distance measures}
+\title{Get the KNN distance}
 \usage{
 get_knn_dist(x)
 
@@ -19,5 +19,6 @@ get_knn_dist(x)
 \item{x}{An object to get the kNN distances from.}
 }
 \description{
-Get the KNN distance measures
+Getter for an integer matrix of samples x distances. Useful in combination
+with \code{\link[=get_knn_mat]{get_knn_mat()}}.
 }

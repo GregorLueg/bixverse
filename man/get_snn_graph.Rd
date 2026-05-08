@@ -19,5 +19,6 @@ get_snn_graph(x)
 The igraph that has the shared nearest neighbours.
 }
 \description{
-Get the sNN graph
+Returns the shared nearest neighbour graph from the object. This function is
+used for the single cell-related classes and methods.
 }

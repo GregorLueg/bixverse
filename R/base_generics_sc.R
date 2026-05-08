@@ -9,7 +9,7 @@
 
 #' Getter the obs table
 #'
-#' @param object `SingleCells`, `MetaCells` class.
+#' @param object `SingleCells`, `MetaCells` (or potentially other) class.
 #' @param indices Optional integer vector. The integer positions of the cells
 #' to return.
 #' @param cols Optional string vector. The columns from the obs table to return.
@@ -36,7 +36,7 @@ get_sc_obs <- S7::new_generic(
 
 #' Getter the var table
 #'
-#' @param object `SingleCells`, `MetaCells` class.
+#' @param object `SingleCells`, `MetaCells` (or potentially other) class.
 #' @param indices Optional integer vector. The integer positions of the genes
 #' to return.
 #' @param cols Optional string vector. The columns from the var table to return.
@@ -60,7 +60,7 @@ get_sc_var <- S7::new_generic(
 
 #' Getter the counts
 #'
-#' @param object `SingleCells`, `MetaCells` class.
+#' @param object `SingleCells`, `MetaCells` (or potentially other) class.
 #' @param assay String. Which slot to return. One of `c("raw", "norm")`.
 #' Defaults to `"raw"`.
 #' @param return_format String. One of `c("cell", "gene")`. Return data in
@@ -99,7 +99,7 @@ get_sc_counts <- S7::new_generic(
 #' Returns a data.table with available features in the obs table and in the
 #' count matrices.
 #'
-#' @param object `SingleCells`, `MetaCells` class.
+#' @param object `SingleCells`, `MetaCells` (or potentially other) class.
 #'
 #' @return A data.table with available features.
 #'
@@ -121,7 +121,7 @@ get_sc_available_features <- S7::new_generic(
 #' @description
 #' Renames the columns in the obs or var table of single cell-related classes.
 #'
-#' @param object `SingleCells`, `MetaCells` class.
+#' @param object `SingleCells`, `MetaCells` (or potentially other) class.
 #' @param table String. One of `c("obs", "var")`. In which of the tables to
 #' rename the columns.
 #' @param old Character vector. The old column names.
@@ -147,7 +147,10 @@ setnames_sc <- S7::new_generic(
 
 #### setters -------------------------------------------------------------------
 
-#' Set gene mapping for ScMap object
+#' @title Set gene mapping
+#'
+#' @description Set a gene mapping for a given object. This is used for the
+#' single cell-related classes with streaming from disk.
 #'
 #' @param x An object to set gene mapping for
 #' @param gene_map Named integer indicating indices and names of the genes
@@ -159,7 +162,10 @@ set_gene_mapping <- function(x, gene_map) {
   UseMethod("set_gene_mapping")
 }
 
-#' Set cell mapping for ScMap object
+#' @title Set cell mapping
+#'
+#' @description Set a cell mapping for a given object. This is used for the
+#' single cell-related classes with streaming from disk.
 #'
 #' @param x An object to set cell mapping for
 #' @param cell_map Named integer indicating indices and names of the cells
@@ -171,7 +177,11 @@ set_cell_mapping <- function(x, cell_map) {
   UseMethod("set_cell_mapping")
 }
 
-#' Set cells to keep for ScMap object
+#' @title Set cells to keep
+#'
+#' @description Set the cells to keep. This is used for the single cell-related
+#' classes with streaming from disk and tells subsequent (Rust) methods which
+#' cells to include.
 #'
 #' @param x An object to set cells to keep for
 #' @param cells_to_keep String or integer. The names or indices of the cells
@@ -184,7 +194,11 @@ set_cells_to_keep <- function(x, cells_to_keep) {
   UseMethod("set_cells_to_keep")
 }
 
-#' Set the HVG genes
+#' @title Set the HVG genes
+#'
+#' @description
+#' Stores within the class the index positions of the HVG. This is used for
+#' the single cell-related classes and methods.
 #'
 #' @param x An object to set the HVGs for
 #' @param hvg String or integer. The names or indices of the highly variable
@@ -199,61 +213,87 @@ set_hvg <- function(x, hvg) {
 
 #### getters -------------------------------------------------------------------
 
-#' Get the HVG
+#' @title Get the HVG
+#'
+#' @description
+#' Returns the HVG indices. Pending class type this are 1-based (for R) or
+#' 0-based for Rust.
 #'
 #' @param x An object to get HVG from.
+#'
+#' @returns Indices of the stored HVG genes.
 #'
 #' @export
 get_hvg <- function(x) {
   UseMethod("get_hvg")
 }
 
-#' Get the gene names
+#' @title Get the gene names
+#'
+#' @description
+#' Get the main gene names (for example symbols or Ensembl identifiers).
 #'
 #' @param x An object to get the gene names from.
+#'
+#' @return The primary gene identifiers stored in the class.
 #'
 #' @export
 get_gene_names <- function(x) {
   UseMethod("get_gene_names")
 }
 
-#' Get the cell names
+#' @title Get the cell names
+#'
+#' @description
+#' Returns the cell names (usually barcodes).
 #'
 #' @param x An object to get the cell names from.
 #' @param filtered Boolean. Shall, if found only the cell names of the
 #' `cells_to_keep` be returned (see [bixverse::set_cells_to_keep()]. Defaults
 #' to `FALSE`
 #'
+#' @return The cell names (barcodes)
+#'
 #' @export
 get_cell_names <- function(x, filtered = FALSE) {
   UseMethod("get_cell_names")
 }
 
-#' Get the index position for a gene
+#' @title Get the index position for a gene
+#'
+#' @description
+#' Returns the index for a given gene based on the internal gene mapping. This
+#' is used for the single cell-related classes and methods.
 #'
 #' @param x An object to get the gene index from.
 #' @param gene_ids String vector. The gene ids to search for.
-#' @param rust_index Bool. Shall rust-based indexing be returned. (No impact
-#' on classes that are not using Rust-based streaming under the hood.)
+#' @param rust_index Bool. Shall Rust-based indexing be returned.
+#'
+#' @returns The indices of the genes
 #'
 #' @export
 get_gene_indices <- function(x, gene_ids, rust_index) {
   UseMethod("get_gene_indices")
 }
 
-#' Get the index position for a gene
+#' @title Get the index position for a gene
+#'
+#' @description
+#' Returns the index for a given gene based on the internal gene mapping. This
+#' is used for the single cell-related classes and methods.
 #'
 #' @param x An object to get the gene index from.
 #' @param cell_ids String vector. The cell ids to search for.
-#' @param rust_index Bool. Shall rust-based indexing be returned. (No impact
-#' on classes that are not using Rust-based streaming under the hood.)
+#' @param rust_index Bool. Shall rust-based indexing be returned.
+#'
+#' @returns The indices of the cells
 #'
 #' @export
 get_cell_indices <- function(x, cell_ids, rust_index) {
   UseMethod("get_cell_indices")
 }
 
-#' Get the cells to keep
+#' @title Get the cells to keep
 #'
 #' @param x An object to get the gene index from.
 #'
@@ -376,7 +416,11 @@ remove_snn_graph <- function(x) {
 
 #### getters -------------------------------------------------------------------
 
-#' Get the PCA factors
+#' @title Get the PCA factors
+#'
+#' @description
+#' Returns the PCA factors (sample-based scores). This function is used for the
+#' single cell-related classes and methods.
 #'
 #' @param x An object to get PCA factors from.
 #'
@@ -387,7 +431,11 @@ get_pca_factors <- function(x) {
   UseMethod("get_pca_factors")
 }
 
-#' Get the PCA loadings
+#' @title Get the PCA loadings
+#'
+#' @description
+#' Returns the PCA loadings (feature-based scores). This function is used for
+#' the single cell-related classes and methods.
 #'
 #' @param x An object to get PCA loadings from.
 #'
@@ -398,7 +446,12 @@ get_pca_loadings <- function(x) {
   UseMethod("get_pca_loadings")
 }
 
-#' Get the PCA singular values
+#' @title Get the PCA singular values
+#'
+#' @description
+#' Returns the PCA singular values (can be useful to assess cumulative variance
+#' explained). This function is used for the single cell-related classes and
+#' methods.
 #'
 #' @param x An object to get PCA singular values from.
 #'
@@ -409,11 +462,12 @@ get_pca_singular_val <- function(x) {
   UseMethod("get_pca_singular_val")
 }
 
-#' Get the embedding from the cache
+#' @title Get the embedding
 #'
 #' @description
 #' General wrapper function that can be used to pull out any embedding stored
-#' in the `ScCache`.
+#' in the class. This function is used for the single cell-related classes and
+#' methods.
 #'
 #' @param x An object to get embedding from
 #' @param embd_name String. The name of the embedding to return. The function
@@ -426,10 +480,11 @@ get_embedding <- function(x, embd_name) {
   UseMethod("get_embedding")
 }
 
-#' Get the available embeddings from the cache
+#' Get the available embeddings
 #'
 #' @description
-#' Returns the available embedding names from the cache.
+#' Returns the available embedding as names from the class. This function is
+#' used for the single cell-related classes and methods.
 #'
 #' @param x An object to get embedding from
 #'
@@ -442,6 +497,10 @@ get_available_embeddings <- function(x) {
 
 #' Get the sNN graph
 #'
+#' @description
+#' Returns the shared nearest neighbour graph from the object. This function is
+#' used for the single cell-related classes and methods.
+#'
 #' @param x An object to get the sNN graph from.
 #'
 #' @returns The igraph that has the shared nearest neighbours.
@@ -452,6 +511,10 @@ get_snn_graph <- function(x) {
 }
 
 #' Get the KNN object
+#'
+#' @description
+#' Returns the `SingleCellNearestNeighbour` from the object. This function is
+#' used for the single cell-related classes and methods.
 #'
 #' @param x An object to get the KNN class from.
 #'
@@ -468,6 +531,9 @@ get_knn_obj <- function(x) {
 
 #' Get the KNN matrix
 #'
+#' @description
+#' Getter for an integer matrix of samples x neighbours.
+#'
 #' @param x An object to get the kNN matrix from.
 #'
 #' @export
@@ -475,7 +541,11 @@ get_knn_mat <- function(x) {
   UseMethod("get_knn_mat")
 }
 
-#' Get the KNN distance measures
+#' Get the KNN distance
+#'
+#' @description
+#' Getter for an integer matrix of samples x distances. Useful in combination
+#' with [get_knn_mat()].
 #'
 #' @param x An object to get the kNN distances from.
 #'
@@ -494,7 +564,7 @@ get_knn_dist <- function(x) {
 #' This is a helper function to identify highly variable genes for `SingleCells`
 #' (using the Rust-based streaming of data) or `MetaCells`.
 #'
-#' @param object `SingleCells`, `MetaCells` class.
+#' @param object `SingleCells`, `MetaCells` (or potentially other) class.
 #' @param hvg_no Integer. Number of highly variable genes to include. Defaults
 #' to `2000L`.
 #' @param hvg_params List, see [bixverse::params_sc_hvg()]. This list contains
@@ -539,7 +609,7 @@ find_hvg_sc <- S7::new_generic(
 #' use randomised SVD for speed and there is an option for sparse SVD for very
 #' large data sets to avoid memory pressure.
 #'
-#' @param object `SingleCells`, `MetaCells` class.
+#' @param object `SingleCells`, `MetaCells` (or potentially other) class.
 #' @param no_pcs Integer. Number of PCs to calculate.
 #' @param randomised_svd Boolean. Shall randomised SVD be used. Faster, but
 #' less precise.
@@ -585,25 +655,28 @@ calculate_pca_sc <- S7::new_generic(
 #' This function will generate the kNNs based on a given embedding. Available
 #' algorithms are:
 #' \itemize{
+#'   \item `kmknn` - An exact kNN search that leverages k-means clustering under
+#'   the hood to prune out data points. The default setting.
+#'   \item `exhaustive` - An exhaustive, flat index. On smaller data sets often
+#'   faster than the approximate nearest neighbour search algorithms.
 #'   \item `hnsw` - Hierarchical Navigable Small World. A graph-based
 #'   approximate nearest neighbour search algorithm; works well on large data
 #'   sets. A benign race condition is leveraged during index build, making the
 #'   build non-deterministic. Bigger impact on smaller data sets.
+#'   \item `nndescent` - Nearest neighbour descent. Leverages concepts from
+#'   `PyNNDescent` and works well on very large data sets similar to `hnsw`.
 #'   \item `ivf` - Inverted file index. Uses first k-means clustering to
 #'   identify Voronoi cells and leverages these during querying. Works well
-#'   on large data sets with high dimensionality.
-#'   \item `nndescent` - Nearest neighbour descent. Similar to `PyNNDescent`,
-#'   uses a first index to initialise the graph. Good all-rounder.
+#'   on large data sets with high dimensionality and when you need to return
+#'   large number of neighbours.
 #'   \item `annoy` - Approximate nearest neighbours Oh Yeah. Tree-based index,
 #'   used across different R single cell packages (Seurat, SCE). This version
 #'   is purely memory-based.
-#'   \item `exhaustive` - An exhaustive, flat index. On smaller data sets often
-#'   faster than the approximate nearest neighbour search algorithms.
 #' }
 #' Subsequently, the kNN graph will be additionally transformed into a shared
 #' nearest neighbour graph for clustering methods.
 #'
-#' @param object `SingleCells`, `MetaCells` class.
+#' @param object `SingleCells`, `MetaCells` (or potentially other) class.
 #' @param embd_to_use String. The embedding to use. Whichever you chose, it
 #' needs to be part of the object.
 #' @param no_embd_to_use Optional integer. Number of embedding dimensions to
@@ -651,7 +724,7 @@ find_neighbours_sc <- S7::new_generic(
 #' This function will apply Leiden clustering on the sNN graph with the
 #' given resolution and add a column to the obs table.
 #'
-#' @param object `SingleCells`, `MetaCells` class.
+#' @param object `SingleCells`, `MetaCells` (or potentially other) class.
 #' @param res Numeric. The resolution parameter for [igraph::cluster_leiden()].
 #' @param name String. The name to add to the obs table in the DuckDB.
 #'
@@ -682,7 +755,7 @@ find_clusters_sc <- S7::new_generic(
 #' pathway activity measurs, use the `"wilcox"`). Data can be streamed in chunks
 #' of 50k cells per or loaded in in one go.
 #'
-#' @param object `SingleCells` or `MetaCells` class.
+#' @param object `SingleCells`, `MetaCells` (or potentially other) class.
 #' @param gs_list Named list. The elements have the gene identifiers of the
 #' respective gene sets.
 #' @param auc_type String. Which type of AUC to calculate. Choice of
@@ -721,7 +794,7 @@ aucell_sc <- S7::new_generic(
 #' using the SCENIC inclusion criteria. Returns a character vector of gene
 #' identifiers passing both filters.
 #'
-#' @param object `SingleCells` or `MetaCells` class.
+#' @param object `SingleCells`, `MetaCells` (or potentially other) class.
 #' @param scenic_params List. SCENIC parameters, see
 #' [bixverse::params_scenic()]. Only `min_counts` and `min_cells` are used
 #' by this function.
@@ -755,7 +828,7 @@ scenic_gene_filter_sc <- S7::new_generic(
 #' transcription factors as predictors. Returns a `ScenicGrn` object
 #' containing the TF-gene importance matrix for further processing.
 #'
-#' @param object `SingleCells` or `MetaCells` class.
+#' @param object `SingleCells`, `MetaCells` (or potentially other) class.
 #' @param tf_ids Character vector. Transcription factor gene identifiers to
 #' use as predictors. Must be a subset of gene identifiers present in the
 #' object.

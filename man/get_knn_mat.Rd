@@ -19,5 +19,5 @@ get_knn_mat(x)
 \item{x}{An object to get the kNN matrix from.}
 }
 \description{
-Get the KNN matrix
+Getter for an integer matrix of samples x neighbours.
 }

@@ -6,7 +6,7 @@
 \alias{get_embedding.MetaCells}
 \alias{get_embedding.ScCache}
 \alias{get_embedding.SingleCells}
-\title{Get the embedding from the cache}
+\title{Get the embedding}
 \usage{
 get_embedding(x, embd_name)
 
@@ -23,5 +23,6 @@ Get the specified embeddings from the object (if found).
 }
 \description{
 General wrapper function that can be used to pull out any embedding stored
-in the \code{ScCache}.
+in the class. This function is used for the single cell-related classes and
+methods.
 }

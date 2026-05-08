@@ -16,7 +16,7 @@ scenic_grn_sc(
 )
 }
 \arguments{
-\item{object}{\code{SingleCells} or \code{MetaCells} class.}
+\item{object}{\code{SingleCells}, \code{MetaCells} (or potentially other) class.}
 
 \item{tf_ids}{Character vector. Transcription factor gene identifiers to
 use as predictors. Must be a subset of gene identifiers present in the

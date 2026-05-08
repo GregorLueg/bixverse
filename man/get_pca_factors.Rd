@@ -19,5 +19,6 @@ get_pca_factors(x)
 The PCA factors from the object (if found).
 }
 \description{
-Get the PCA factors
+Returns the PCA factors (sample-based scores). This function is used for the
+single cell-related classes and methods.
 }

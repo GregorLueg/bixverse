@@ -7,7 +7,7 @@
 get_sc_obs(object, indices = NULL, cols = NULL, filtered = FALSE)
 }
 \arguments{
-\item{object}{\code{SingleCells}, \code{MetaCells} class.}
+\item{object}{\code{SingleCells}, \code{MetaCells} (or potentially other) class.}
 
 \item{indices}{Optional integer vector. The integer positions of the cells
 to return.}

@@ -4,7 +4,7 @@
 \alias{set_gene_mapping}
 \alias{set_gene_mapping.ScMap}
 \alias{set_gene_mapping.SingleCells}
-\title{Set gene mapping for ScMap object}
+\title{Set gene mapping}
 \usage{
 set_gene_mapping(x, gene_map)
 
@@ -16,6 +16,7 @@ set_gene_mapping(x, gene_map)
 \item{gene_map}{Named integer indicating indices and names of the genes}
 }
 \description{
-Set gene mapping for ScMap object
+Set a gene mapping for a given object. This is used for the
+single cell-related classes with streaming from disk.
 }
 \keyword{internal}

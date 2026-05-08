@@ -7,7 +7,7 @@
 get_sc_available_features(object)
 }
 \arguments{
-\item{object}{\code{SingleCells}, \code{MetaCells} class.}
+\item{object}{\code{SingleCells}, \code{MetaCells} (or potentially other) class.}
 }
 \value{
 A data.table with available features.

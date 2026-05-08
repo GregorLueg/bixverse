@@ -13,7 +13,7 @@ aucell_sc(
 )
 }
 \arguments{
-\item{object}{\code{SingleCells} or \code{MetaCells} class.}
+\item{object}{\code{SingleCells}, \code{MetaCells} (or potentially other) class.}
 
 \item{gs_list}{Named list. The elements have the gene identifiers of the
 respective gene sets.}

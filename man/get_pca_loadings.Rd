@@ -19,5 +19,6 @@ get_pca_loadings(x)
 The PCA feature loadings from the object (if found).
 }
 \description{
-Get the PCA loadings
+Returns the PCA loadings (feature-based scores). This function is used for
+the single cell-related classes and methods.
 }

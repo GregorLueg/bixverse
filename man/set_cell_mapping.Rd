@@ -4,7 +4,7 @@
 \alias{set_cell_mapping}
 \alias{set_cell_mapping.ScMap}
 \alias{set_cell_mapping.SingleCells}
-\title{Set cell mapping for ScMap object}
+\title{Set cell mapping}
 \usage{
 set_cell_mapping(x, cell_map)
 
@@ -16,6 +16,7 @@ set_cell_mapping(x, cell_map)
 \item{cell_map}{Named integer indicating indices and names of the cells}
 }
 \description{
-Set cell mapping for ScMap object
+Set a cell mapping for a given object. This is used for the
+single cell-related classes with streaming from disk.
 }
 \keyword{internal}

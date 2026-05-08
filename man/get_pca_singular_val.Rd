@@ -19,5 +19,7 @@ get_pca_singular_val(x)
 The PCA singular values from the object (if found).
 }
 \description{
-Get the PCA singular values
+Returns the PCA singular values (can be useful to assess cumulative variance
+explained). This function is used for the single cell-related classes and
+methods.
 }

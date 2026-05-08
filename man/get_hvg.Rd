@@ -15,8 +15,10 @@ get_hvg(x)
 \arguments{
 \item{x}{An object to get HVG from.}
 }
+\value{
+Indices of the stored HVG genes.
+}
 \description{
-Get the HVG
-
-Get the highly variable gene indices from a \code{MetaCells}.
+Returns the HVG indices. Pending class type this are 1-based (for R) or
+0-based for Rust.
 }

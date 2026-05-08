@@ -17,11 +17,12 @@ get_cell_indices(x, cell_ids, rust_index)
 
 \item{cell_ids}{String vector. The cell ids to search for.}
 
-\item{rust_index}{Bool. Shall rust-based indexing be returned. (No impact
-on classes that are not using Rust-based streaming under the hood.)}
+\item{rust_index}{Bool. Shall rust-based indexing be returned.}
+}
+\value{
+The indices of the cells
 }
 \description{
-Get the index position for a gene
-
-Get the cell indices from a \code{MetaCells}.
+Returns the index for a given gene based on the internal gene mapping. This
+is used for the single cell-related classes and methods.
 }

@@ -7,7 +7,7 @@
 setnames_sc(object, table = c("obs", "var"), old, new)
 }
 \arguments{
-\item{object}{\code{SingleCells}, \code{MetaCells} class.}
+\item{object}{\code{SingleCells}, \code{MetaCells} (or potentially other) class.}
 
 \item{table}{String. One of \code{c("obs", "var")}. In which of the tables to
 rename the columns.}

@@ -15,7 +15,7 @@ calculate_pca_sc(
 )
 }
 \arguments{
-\item{object}{\code{SingleCells}, \code{MetaCells} class.}
+\item{object}{\code{SingleCells}, \code{MetaCells} (or potentially other) class.}
 
 \item{no_pcs}{Integer. Number of PCs to calculate.}
 

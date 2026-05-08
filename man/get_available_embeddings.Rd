@@ -6,7 +6,7 @@
 \alias{get_available_embeddings.MetaCells}
 \alias{get_available_embeddings.ScCache}
 \alias{get_available_embeddings.SingleCells}
-\title{Get the available embeddings from the cache}
+\title{Get the available embeddings}
 \usage{
 get_available_embeddings(x)
 
@@ -19,5 +19,6 @@ get_available_embeddings(x)
 Get the names of the available embeddings.
 }
 \description{
-Returns the available embedding names from the cache.
+Returns the available embedding as names from the class. This function is
+used for the single cell-related classes and methods.
 }

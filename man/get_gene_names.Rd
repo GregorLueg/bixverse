@@ -13,6 +13,9 @@ get_gene_names(x)
 \arguments{
 \item{x}{An object to get the gene names from.}
 }
+\value{
+The primary gene identifiers stored in the class.
+}
 \description{
-Get the gene names
+Get the main gene names (for example symbols or Ensembl identifiers).
 }

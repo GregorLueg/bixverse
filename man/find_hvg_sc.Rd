@@ -13,7 +13,7 @@ find_hvg_sc(
 )
 }
 \arguments{
-\item{object}{\code{SingleCells}, \code{MetaCells} class.}
+\item{object}{\code{SingleCells}, \code{MetaCells} (or potentially other) class.}
 
 \item{hvg_no}{Integer. Number of highly variable genes to include. Defaults
 to \code{2000L}.}

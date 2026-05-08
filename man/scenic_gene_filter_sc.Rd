@@ -12,7 +12,7 @@ scenic_gene_filter_sc(
 )
 }
 \arguments{
-\item{object}{\code{SingleCells} or \code{MetaCells} class.}
+\item{object}{\code{SingleCells}, \code{MetaCells} (or potentially other) class.}
 
 \item{scenic_params}{List. SCENIC parameters, see
 \code{\link[=params_scenic]{params_scenic()}}. Only \code{min_counts} and \code{min_cells} are used

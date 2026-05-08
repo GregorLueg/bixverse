@@ -17,6 +17,9 @@ get_cell_names(x, filtered = FALSE)
 \code{cells_to_keep} be returned (see \code{\link[=set_cells_to_keep]{set_cells_to_keep()}}. Defaults
 to \code{FALSE}}
 }
+\value{
+The cell names (barcodes)
+}
 \description{
-Get the cell names
+Returns the cell names (usually barcodes).
 }

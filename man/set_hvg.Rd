@@ -19,8 +19,7 @@ set_hvg(x, hvg)
 genes.}
 }
 \description{
-Set the HVG genes
-
-Set the highly variable genes for a \code{MetaCells} class.
+Stores within the class the index positions of the HVG. This is used for
+the single cell-related classes and methods.
 }
 \keyword{internal}
