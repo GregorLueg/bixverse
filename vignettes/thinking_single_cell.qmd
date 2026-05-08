@@ -1,7 +1,7 @@
 ---
 title: "Thinking about single cells the bixverse way"
 date: last-modified
-date-format: yyyy-MM-dd
+date-format: YYYY-MM-DD
 vignette: >
   %\VignetteIndexEntry{Thinking about single cells the bixverse way}
   %\VignetteEngine{quarto::html}

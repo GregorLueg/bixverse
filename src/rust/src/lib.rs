@@ -116,4 +116,5 @@ extendr_module! {
 
     // meta cell
     use r_mc_processing;
+    use r_mc_analysis;
 }

@@ -17,7 +17,8 @@ get_cell_indices(x, cell_ids, rust_index)
 
 \item{cell_ids}{String vector. The cell ids to search for.}
 
-\item{rust_index}{Bool. Shall rust-based indexing be returned.}
+\item{rust_index}{Bool. Shall rust-based indexing be returned. (No impact
+on classes that are not using Rust-based streaming under the hood.)}
 }
 \description{
 Get the index position for a gene

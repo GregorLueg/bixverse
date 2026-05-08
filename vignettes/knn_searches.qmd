@@ -1,7 +1,7 @@
 ---
 title: "KNN searches for single cell"
 date: last-modified
-date-format: yyyy-MM-dd
+date-format: YYYY-MM-DD
 vignette: >
   %\VignetteIndexEntry{KNN searches for single cell}
   %\VignetteEngine{quarto::html}
@@ -13,3 +13,139 @@ knitr:
 author: 
   - name: "Gregor Lueg"
 ---
+
+## Intro
+
+kNN searches are the bedrock of a lot of methods in the single cell space. This
+vignette is basically a primer to understand the large number of (approximate)
+nearest neighbour search methods available in `bixverse`, when to use what, 
+when to be careful with them and hopefully gives you a general idea on
+what they can (and cannot do) well.
+
+```{r}
+#| label: setup
+library(bixverse)
+library(ggplot2)
+library(data.table)
+```
+
+## Loading the data and basic workflow
+
+We start by downloading the PBMC3k data set bundled with the package and
+loading it via Cell Ranger-style MTX I/O, run a quick and dirty QC, HVG and
+PCA to then move onto the kNN searches...
+
+```{r}
+#| label: load pbmc3k and quick QC
+# load in the data
+pbmc3k_path <- bixverse:::download_pbmc3k()
+
+tempdir_pbmc <- tempdir()
+
+sc_object <- SingleCells(dir_data = tempdir_pbmc)
+
+mtx_io_params <- get_cell_ranger_params(pbmc3k_path)
+
+sc_object <- load_mtx(
+  object = sc_object,
+  sc_mtx_io_param = mtx_io_params,
+  streaming = FALSE,
+  .verbose = TRUE
+)
+
+# ensembl to gene symbols
+setnames_sc(
+  object = sc_object,
+  table = "var",
+  old = "column1",
+  new = "gene_symbol"
+)
+
+var <- get_sc_var(sc_object)
+
+ensembl_to_symbol <- setNames(var$gene_symbol, var$gene_id)
+symbol_to_ensembl <- setNames(var$gene_id, var$gene_symbol)
+
+gs_of_interest <- list(
+  MT = var[grepl("^MT-", gene_symbol), gene_id],
+  Ribo = var[grepl("^RPS|^RPL", gene_symbol), gene_id]
+)
+
+# remove high mitochondrial genes and generally low quality cells
+sc_object <- gene_set_proportions_sc(
+  sc_object,
+  gs_of_interest,
+  streaming = FALSE,
+  .verbose = TRUE
+)
+
+qc_df <- sc_object[[c("cell_id", "lib_size", "nnz", "MT")]]
+
+metrics <- list(
+  log10_lib_size = log10(qc_df$lib_size),
+  log10_nnz = log10(qc_df$nnz),
+  MT = qc_df$MT
+)
+
+directions <- c(
+  log10_lib_size = "twosided",
+  log10_nnz = "twosided",
+  MT = "above"
+)
+
+qc <- run_cell_qc(metrics, directions, threshold = 3)
+
+sc_object[["outlier"]] <- qc$combined
+
+cells_to_keep <- qc_df[!qc$combined, cell_id]
+
+sc_object <- set_cells_to_keep(sc_object, cells_to_keep)
+
+# HVG
+sc_object <- find_hvg_sc(
+  object = sc_object,
+  hvg_no = 2000L,
+  .verbose = TRUE
+)
+
+# PCA
+sc_object <- calculate_pca_sc(
+  object = sc_object,
+  no_pcs = 30L,
+  sparse_svd = TRUE
+)
+```
+
+## kNN searches
+
+Okay, with all of this out of the way, let's look at the different methods
+available in bixverse to generate kNN graphs for single cell. You will realise
+that there is a LARGE number of methods that use something like `knn = list()`
+with the function `params_knn_defaults()`. There is a lot of different 
+parameters in there. Let's first check out what we have there...
+
+```{r}
+#| label: knn defaults
+str(params_knn_defaults())
+```
+
+### The methods
+
+There is a lot of different parameters in here and it is worthwhile actually
+understanding them and where they are being called used. Let's first give an
+overview of the different kNN searches implemented/exposed in this package
+(all happens via [ann-search-rs](https://crates.io/crates/ann-search-rs)). 
+
+| Method | Features | Class | Use case | Ideal k range |
+|--------|----------|-------|----------|---------------|
+| Exhaustive | What the name says | Exact | Works well on smaller data sets where the CPU can just crunch through the numbers | Does not matter | 
+| KmKnn | An exact method that takes a shortcut via k-means cluster | (Fast) exact | On well structured (low dimensional) data, it gives you an exact kNN search that is substantially faster than Exhaustive on large data sets | Does not matter |
+| Annoy | The classic approximate nearest neighbour search you know from Seurat | Tree-based | A memory-based version of Annoy that avoids the round trip to the disk-based index of the original. Good default for data sets with up to half a million cells with fast index building (but slower querying) | Ideally ≤ 100 as otherwise the query phase can become quite long... |
+| HNSW | A powerful graph-based index for large data sets and vector search index powering a large number of data bases. | Graph-based | Need to tackle large data sets ... ? HNSW does that for you. An important note is that due to the benign race condition during graph construction this index is not deterministic. On large data sets this makes basically no difference, but something to keep in mind for smaller ones! | ≤50 or you need to bump the `ef_search` substantially | 
+| NNDescent | Another graph-based index that is ideal for tackling large data sets | Graph-based | Another graph-based index that is very good at dealing with large data sets. Uses tricks from PyNNDescent and is designed to be very memory-efficient | ≤30. The initial kNN is designed with a node degree of 30, so you might see degradation in the performance when you ask for higher k. If you try this, set `ef_budget` high!  |
+| IVF | A cluster-based index that partitions the data via k-means into Voronoi cells | Cluster-based | If you read a bit about vector searches, this is a very common algorithm which works well with quantisations in particular (and GPU-acceleration...). For the usual ephemeral kNN graph generation in single cell maybe not the right call, but if you need A LOT of neighbours on large data sets, this is a very good choice! | Does not matter (outside of absurd high numbers) | 
+
+There are additional GPU-accelerated kNN searches in the sister package, see
+[here](https://gregorlueg.github.io/bixverse.gpu/articles/gpu_single_cell.html).
+
+Now let's see which parameter belongs to which method and does what.

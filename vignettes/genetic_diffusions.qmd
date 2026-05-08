@@ -1,7 +1,7 @@
 ---
 title: "Genetic diffusion and community detections"
 date: last-modified
-date-format: yyyy-MM-dd
+date-format: YYYY-MM-DD
 vignette: >
   %\VignetteIndexEntry{Genetic diffusion and community detections}
   %\VignetteEngine{quarto::html}

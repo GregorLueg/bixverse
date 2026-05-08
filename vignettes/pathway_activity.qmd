@@ -1,7 +1,7 @@
 ---
 title: "Pathway activity functions"
 date: last-modified
-date-format: yyyy-MM-dd
+date-format: YYYY-MM-DD
 vignette: >
   %\VignetteIndexEntry{Pathway activity functions}
   %\VignetteEngine{quarto::html}

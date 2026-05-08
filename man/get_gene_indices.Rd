@@ -17,7 +17,8 @@ get_gene_indices(x, gene_ids, rust_index)
 
 \item{gene_ids}{String vector. The gene ids to search for.}
 
-\item{rust_index}{Bool. Shall rust-based indexing be returned.}
+\item{rust_index}{Bool. Shall rust-based indexing be returned. (No impact
+on classes that are not using Rust-based streaming under the hood.)}
 }
 \description{
 Get the index position for a gene

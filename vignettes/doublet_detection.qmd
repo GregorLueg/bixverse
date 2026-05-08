@@ -1,7 +1,7 @@
 ---
 title: "Doublet detection with bixverse"
 date: last-modified
-date-format: yyyy-MM-dd
+date-format: YYYY-MM-DD
 vignette: >
   %\VignetteIndexEntry{Doublet detection with bixverse}
   %\VignetteEngine{quarto::html}

@@ -394,8 +394,6 @@ S7::method(`[[<-`, MetaCells) <- function(x, i, ..., value) {
 
 #' @name set_hvg.MetaCells
 #'
-#' @title Set the highly variable genes for a `MetaCells` class.
-#'
 #' @rdname set_hvg
 #'
 #' @method set_hvg MetaCells
@@ -440,8 +438,6 @@ S7::method(set_hvg, MetaCells) <- function(
 
 #' @name get_hvg.MetaCells
 #'
-#' @title Get the highly variable gene indices from a `MetaCells`.
-#'
 #' @rdname get_hvg
 #'
 #' @method get_hvg MetaCells
@@ -460,8 +456,6 @@ S7::method(get_hvg, MetaCells) <- function(
 }
 
 #' @name get_cell_indices.MetaCells
-#'
-#' @title Get the cell indices from a `MetaCells`.
 #'
 #' @rdname get_cell_indices
 #'
@@ -492,8 +486,6 @@ S7::method(get_cell_indices, MetaCells) <- function(
 
 #' @name get_gene_indices.MetaCells
 #'
-#' @title Get the cell indices from a `MetaCells`.
-#'
 #' @rdname get_gene_indices
 #'
 #' @method get_gene_indices MetaCells
@@ -516,6 +508,16 @@ S7::method(get_gene_indices, MetaCells) <- function(
       sum(missing)
     ))
     indices <- indices[!missing]
+  }
+
+  if (rust_index) {
+    indices <- indices - 1L
+  }
+
+  if (length(indices) == 0) {
+    stop(
+      "The gene indices have length 0. Please double check provided parameters!"
+    )
   }
 
   return(indices)

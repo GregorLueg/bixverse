@@ -1,7 +1,7 @@
 ---
 title: "Meta cells with bixverse"
 date: last-modified
-date-format: yyyy-MM-dd
+date-format: YYYY-MM-DD
 vignette: >
   %\VignetteIndexEntry{Meta cells with bixverse}
   %\VignetteEngine{quarto::html}
@@ -58,6 +58,7 @@ importantly, it is simply less data.
 library(bixverse)
 library(ggplot2)
 library(data.table)
+library(patchwork)
 ```
 
 ## Preparing the single cell data
@@ -578,6 +579,81 @@ for co-expression module detection methods and we can use a SCENIC
 implementation within bixverse 
 [akin to the single cell version](https://gregorlueg.github.io/bixverse/articles/analysis_single_cell.html#scenic)
 also on MetaCells.
+
+Let's run this quickly...
+
+```{r}
+#| label: run SCENIC on meta cells
+tf_dt <- data.table::fread(
+  "https://resources.aertslab.org/cistarget/tf_lists/allTFs_hg38.txt",
+  header = FALSE,
+  col.names = "tf"
+)
+
+vars <- get_sc_var(seacells)
+
+scenic_res <- scenic_grn_sc(
+  object = seacells,
+  tf_ids = tf_dt$tf,
+  scenic_params = params_scenic(
+    learner_type = "randomforest",
+    gene_batch_size = 64L
+  ),
+  .verbose = TRUE
+)
+```
+
+```{r}
+#| label: pull out the genes of interest
+scenic_res <- identify_tf_to_genes(
+  scenic_res,
+  n_sd = 2,
+  .verbose = TRUE
+)
+
+scenic_res <- tf_to_genes_correlations(
+  x = scenic_res,
+  object = sc_object,
+  cor_filter = 0.01,
+  .verbose = TRUE
+)
+
+tf_gene_dt <- get_tf_to_gene(scenic_res)
+
+# we will not do any filtering
+tf_to_gene_ls <- split(tf_gene_dt$gene, tf_gene_dt$tf)
+```
+
+In a proper situation we would filter down the TF to gene associations via
+motifs, please refer to the details in this 
+[vignette](https://gregorlueg.github.io/bixverse/articles/analysis_single_cell.html#scenic).
+We will skip this step for now and just run AUCell to show how it works.
+
+```{r}
+#| label: run AUCell on meta cells
+auc_res <- aucell_sc(
+  object = seacells,
+  gs_list = tf_to_gene_ls
+)
+
+umap_dt[, `:=`(IRF7 = auc_res[, "IRF7"], IRF9 = auc_res[, "IRF9"])]
+
+p1 <- ggplot(umap_dt, aes(x = umap_1, y = umap_2)) +
+  geom_point(aes(colour = IRF7), size = 1.5) +
+  theme_bw() +
+  labs(colour = "IRF7 AUC")
+
+p2 <- ggplot(umap_dt, aes(x = umap_1, y = umap_2)) +
+  geom_point(aes(colour = IRF9), size = 1.5) +
+  theme_bw() +
+  labs(colour = "IRF9 AUC")
+
+p1 + p2
+```
+
+As we can appreciate, IRF7 and 9 seem more active in a subset of the meta cells.
+Other methods that could benefit from the meta cell approach are the 
+correlation-based methods and/or NMF. Both on the roadmap... !
 
 ## Pseudo-bulking
 

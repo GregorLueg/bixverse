@@ -92,44 +92,6 @@ S7::method(module_scores_sc, SingleCells) <- function(
 
 ## aucell ----------------------------------------------------------------------
 
-#' Calculate AUC scores (akin to AUCell)
-#'
-#' @description
-#' Calculates an AUC-type score akin to AUCell across the gene sets, see Aibar
-#' et al. You have the options to calculate the AUC. Two options here: calculate
-#' this with proper AUROC calculations (useful for marker gene expression, use
-#' the `"auroc"` version) or based on the Mann-Whitney statistic (useful for
-#' pathway activity measurs, use the `"wilcox"`). Data can be streamed in chunks
-#' of 50k cells per or loaded in in one go.
-#'
-#' @param object `SingleCells` class.
-#' @param gs_list Named list. The elements have the gene identifiers of the
-#' respective gene sets.
-#' @param auc_type String. Which type of AUC to calculate. Choice of
-#' `c("wilcox", "auroc")`.
-#' @param streaming Boolean. Shall the cell data be streamed in. Useful for
-#' larger data sets.
-#' @param .verbose Boolean. Controls the verbosity of the function.
-#'
-#' @return AUCell results in form of a matrix that is cells x gene sets.
-#'
-#' @export
-#'
-#' @references Aibar, et al., Nat Methods, 2017
-aucell_sc <- S7::new_generic(
-  name = "aucell_sc",
-  dispatch_args = "object",
-  fun = function(
-    object,
-    gs_list,
-    auc_type = c("wilcox", "auroc"),
-    streaming = FALSE,
-    .verbose = TRUE
-  ) {
-    S7::S7_dispatch()
-  }
-)
-
 #' @method aucell_sc SingleCells
 #'
 #' @export
@@ -814,41 +776,8 @@ S7::method(hotspot_gene_cor_sc, SingleCells) <- function(
 
 ### scenic gene filter ---------------------------------------------------------
 
-#' Filter genes for SCENIC GRN inference
-#'
-#' @description
-#' Filters genes by minimum total counts and minimum expressed-cell fraction
-#' using the SCENIC inclusion criteria. Returns a character vector of gene
-#' identifiers passing both filters.
-#'
-#' @param object `SingleCells` class.
-#' @param scenic_params List. SCENIC parameters, see
-#' [bixverse::params_scenic()]. Only `min_counts` and `min_cells` are used
-#' by this function.
-#' @param cells_to_take Optional string vector. Cell identifiers to restrict
-#' to. If `NULL`, defaults to all filtered cells in the class.
-#' @param .verbose Boolean. Controls verbosity. Defaults to `TRUE`.
-#'
-#' @returns A character vector of gene identifiers passing the SCENIC
-#' inclusion criteria.
-#'
-#' @export
-scenic_gene_filter_sc <- S7::new_generic(
-  name = "scenic_gene_filter_sc",
-  dispatch_args = "object",
-  fun = function(
-    object,
-    scenic_params = params_scenic(),
-    cells_to_take = NULL,
-    .verbose = TRUE
-  ) {
-    S7::S7_dispatch()
-  }
-)
+# generics found in base_generics_sc.R
 
-#' @method scenic_gene_filter_sc SingleCells
-#'
-#' @export
 S7::method(scenic_gene_filter_sc, SingleCells) <- function(
   object,
   scenic_params = params_scenic(),
@@ -888,68 +817,6 @@ S7::method(scenic_gene_filter_sc, SingleCells) <- function(
 }
 
 ### scenic GRN inference -------------------------------------------------------
-
-#' Run SCENIC GRN inference
-#'
-#' @description
-#' Runs SCENIC GRN inference on the provided genes using the specified
-#' transcription factors as predictors. Returns a `ScenicGrn` object
-#' containing the TF-gene importance matrix for further processing.
-#'
-#' @param object `SingleCells` class.
-#' @param tf_ids Character vector. Transcription factor gene identifiers to
-#' use as predictors. Must be a subset of gene identifiers present in the
-#' object.
-#' @param scenic_params List. SCENIC parameters, see
-#' [bixverse::params_scenic()].
-#' @param genes_to_take Optional character vector. Target gene identifiers.
-#' If `NULL`, genes are selected automatically via
-#' [bixverse::scenic_gene_filter_sc()] using the `min_counts` and `min_cells`
-#' thresholds in `scenic_params`.
-#' @param cells_to_take Optional string vector. Cell identifiers to restrict
-#' to. If `NULL`, defaults to all filtered cells in the class.
-#' @param streaming Boolean. Whether to use the streaming implementation to
-#' bound memory usage. Useful for large datasets. Defaults to `FALSE`.
-#' @param random_seed Integer. Used for reproducibility. Defaults to `42L`.
-#' @param .verbose Boolean. Controls verbosity. Defaults to `TRUE`.
-#'
-#' @returns A `ScenicGrn` object.
-#'
-#' @details
-#' TF identifiers that are not found in the object's gene list are silently
-#' dropped with a warning indicating how many were removed. TF indices are
-#' intersected with the target gene indices so that TFs not passing the gene
-#' filter are excluded from the predictor set but remain as potential targets
-#' if present in `genes_to_take`. You have the option to generate the TF-gene
-#' importance values with three distinct methods. For the `random_forest` and
-#' the `extratrees` version, a batching strategy is applied in the default
-#' settings. Correlated genes are identified and clustered together via
-#' k-means clustering on the feature loadings of the PCA. These are then
-#' divided into batches of `gene_batch_size` and the regression learners
-#' are leveraging multi-target regression to fit all genes in the batch in one
-#' go. This massively accelerates the algorithm and the importance values per
-#' gene-TF pair are calculated then individually. Due to the batching by
-#' similar gene, the signal dilution is limited. If you wish to run the
-#' traditional approach, you can set gene_batch_size to `1L` or use the
-#' `grnboost2` learner that can only fit one gene at a given time.
-#'
-#' @export
-scenic_grn_sc <- S7::new_generic(
-  name = "scenic_grn_sc",
-  dispatch_args = "object",
-  fun = function(
-    object,
-    tf_ids,
-    scenic_params = params_scenic(),
-    genes_to_take = NULL,
-    cells_to_take = NULL,
-    streaming = FALSE,
-    random_seed = 42L,
-    .verbose = TRUE
-  ) {
-    S7::S7_dispatch()
-  }
-)
 
 #' @method scenic_grn_sc SingleCells
 #'

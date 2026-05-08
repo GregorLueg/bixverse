@@ -1,7 +1,7 @@
 ---
 title: "Analysing PBMCs with bixverse"
 date: last-modified
-date-format: yyyy-MM-dd
+date-format: YYYY-MM-DD
 vignette: >
   %\VignetteIndexEntry{Analysing PBMCs with bixverse}
   %\VignetteEngine{quarto::html}
@@ -221,7 +221,12 @@ Let us run quickly UMAP and tSNE.
 #| label: umap and tsne
 sc_object <- umap_sc(sc_object, knn_method = "annoy")
 
-sc_object <- tsne_sc(sc_object, perplexity = 30, knn_method = "annoy")
+sc_object <- tsne_sc(
+  sc_object,
+  use_knn = FALSE,
+  perplexity = 20,
+  knn_method = "annoy"
+)
 ```
 
 We can pull the embeddings back into data.tables and plot them (longer term,

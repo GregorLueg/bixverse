@@ -3284,6 +3284,49 @@ rs_mc_hvg <- function(sparse_data, hvg_method, loess_span, binning, n_bins, clip
 #' @export
 rs_mc_pca <- function(sparse_data, no_pcs, random_svd, seed) .Call(wrap__rs_mc_pca, sparse_data, no_pcs, random_svd, seed)
 
+#' SCENIC on MetaCells
+#'
+#' @description
+#' Assumes that the sparse data is pre-filtered for the genes you wish to
+#' include. The indices need to be 0-indexed.
+#'
+#' @param sparse_data A named list that needs to have `data`, `indptr`,
+#' `indices`, `nrow`, `ncol` and `format`.
+#' @param tf_indices Integer vector. The indices of the transcription factors.
+#' @param scenic_params Named list. Contains all of the parameters need for
+#' SCENIC.
+#' @param seed Integer. Controls reproducibility of the function.
+#' @param verbose Boolean. Controls the verbosity of the function.
+#'
+#' @returns A gene x TF importance matrix
+#'
+#' @export
+rs_mc_scenic <- function(sparse_data, tf_indices, scenic_params, seed, verbose) .Call(wrap__rs_mc_scenic, sparse_data, tf_indices, scenic_params, seed, verbose)
+
+#' Calculate AUCell in Rust (for meta cells)
+#'
+#' @description
+#' The function will take in a list of gene set indices (0-indexed!) and
+#' calculate an AUCell type statistic. Two options here: calculate this
+#' with proper AUROC calculations (useful for marker gene expression) or
+#' based on the Mann-Whitney statistic (useful for pathway activity
+#' measurs). This version works on MetaCell counts which are stored in memory
+#' directly.
+#'
+#' @param gs_list List. List with the gene set indices (0-indexed!) of the
+#' genes of interest.
+#' @param cells_to_keep Integer. Vector of indices of the cells to keep.
+#' @param auc_type String. One of `"wilcox"` or `"auroc"`, pending on
+#' which statistic you wish to calculate.
+#' @param streaming Boolean. Shall the data be streamed.
+#' @param verbose Boolean. Controls verbosity of the function.
+#'
+#' @return A matrix of cells x gene sets with the values representing the
+#' AUC.
+#'
+#' @export
+rs_mc_aucell <- function(sparse_data, gs_list, auc_type, verbose) .Call(wrap__rs_mc_aucell, sparse_data, gs_list, auc_type, verbose)
+
 #' A class for handling single cell count data
 #'
 #' ### Params

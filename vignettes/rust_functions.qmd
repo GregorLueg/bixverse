@@ -1,7 +1,7 @@
 ---
 title: "Bixverse R <> Rust interface"
 date: last-modified
-date-format: yyyy-MM-dd
+date-format: YYYY-MM-DD
 vignette: >
   %\VignetteIndexEntry{Bixverse R <> Rust interface}
   %\VignetteEngine{quarto::html}
