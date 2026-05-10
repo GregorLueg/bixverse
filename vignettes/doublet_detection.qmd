@@ -158,6 +158,21 @@ scrublet_dt <- merge(scrublet_dt, demuxlet_data, by = "Barcode")
 doublet_metrics(predicted = scrublet_dt$doublet, actual = scrublet_dt$Call)
 ```
 
+If you want to add the information to the DuckDB within the object, you can
+just run:
+
+```{r}
+#| label: add scrublet
+sc_object <- add_sc_new_obs(
+  object = sc_object,
+  obs_data = get_obs_data(scrublet)
+)
+
+sc_object[[1:5]]
+```
+
+As we can see with added now the Scrublet data
+
 #### Manual threshold adjustment
 
 The automatic threshold does not always land in the right place. If the score

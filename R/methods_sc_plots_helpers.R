@@ -198,7 +198,7 @@ S7::method(umap_sc, ScOrMc) <- function(
 #' global structure while UMAP preserves it is largely an artefact of default
 #' initialisations rather than a property of the loss functions themselves.
 #'
-#' When `use_knn = TRUE` (the default), the kNN graph already stored on the
+#' When `use_knn = FALSE` (the default), the kNN graph already stored on the
 #' object is reused. Otherwise neighbours are computed from the chosen
 #' embedding.
 #'
@@ -210,7 +210,9 @@ S7::method(umap_sc, ScOrMc) <- function(
 #' neighbour set (typical values 5-50). When a pre-computed kNN is supplied via
 #' `use_knn = TRUE`, perplexity no longer drives neighbour retrieval but still
 #' shapes the affinity distribution over the retrieved neighbours; values too
-#' close to the kNN size will produce poor results.
+#' close to the kNN size will produce poor results. With tSNE in particular the
+#' rule of thumb is to set k to `3 * perplexity`. When `k ≤ perplexity`` the
+#' algorithm does not behave properly anymore, thus, will throw an error.
 #'
 #' @param object `SingleCells`, `MetaCells` class.
 #' @param use_knn Boolean. Use the kNN graph found in the object. Defaults to
@@ -240,7 +242,7 @@ tsne_sc <- S7::new_generic(
   dispatch_args = "object",
   fun = function(
     object,
-    use_knn = TRUE,
+    use_knn = FALSE,
     embd_to_use = "pca",
     no_embd_to_use = NULL,
     n_dim = 2L,
@@ -265,7 +267,7 @@ tsne_sc <- S7::new_generic(
 
 S7::method(tsne_sc, ScOrMc) <- function(
   object,
-  use_knn = TRUE,
+  use_knn = FALSE,
   embd_to_use = "pca",
   no_embd_to_use = NULL,
   n_dim = 2L,

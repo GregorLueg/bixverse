@@ -51,6 +51,10 @@ navbar:
           href: articles/single_cell_batch_corrections.html
         - text: "'Bag of genes' methods for single cell in bixverse"
           href: articles/analysis_single_cell.html
+        - text: "kNN searches for single cells in bixverse"
+          href: articles/knn_searches.html
+        - text: "Meta cells - generation and analysis"
+          href: articles/meta_cells.html
         - text: Analysing big data on a powerful laptop (example)
           href: articles/single_cell_big_data.html
     articles:
@@ -87,6 +91,8 @@ articles:
       - doublet_detection
       - single_cell_batch_corrections
       - analysis_single_cell
+      - knn_searches
+      - meta_cells
       - single_cell_big_data
 
 reference:
@@ -282,6 +288,8 @@ reference:
       THE single cell class with a large number of getters.
     contents:
       - SingleCells
+      - SingleCellCountData
+      - add_sc_new_obs
       - get_sc_obs
       - get_sc_var
       - get_sc_counts
@@ -311,12 +319,14 @@ reference:
       Generating meta cells.
     contents:
       - MetaCells
+      - calc_diffusion_coordinates
+      - calc_manifold_metrics
       - calc_meta_cell_purity
       - generate_supercells_sc
-      - generate_meta_cells_sc
+      - generate_bt_meta_cells_sc
       - generate_seacells_sc
       - params_sc_supercell
-      - params_sc_metacells
+      - params_sc_bt_metacells
       - params_sc_seacells
   # Single cell data I/O
   - title: Single cell i/o
@@ -350,6 +360,7 @@ reference:
       - scrublet_sc
       - call_doublets_manual
       - doublet_detection_boost_sc
+      - scdblfinder_sc
       - gene_set_proportions_sc
       - per_cell_qc_outlier
       - run_cell_qc
@@ -361,6 +372,7 @@ reference:
       - top_genes_perc_sc
       - fast_mnn_sc
       - harmony_sc
+      - harmony_v2_sc
       - bbknn_sc
       - calculate_kbet_sc
       - calculate_batch_asw_sc
@@ -370,12 +382,16 @@ reference:
       - params_sc_hvg
       - params_scrublet
       - params_sc_bbknn
+      - params_sc_fast_cluster
       - params_sc_fastmnn
       - params_sc_harmony
+      - params_sc_harmony_v2
       - params_sc_neighbours
+      - params_scdblfinder
       - params_hvg_defaults
       - params_pca_defaults
       - params_knn_defaults
+      - params_fast_cluster_default
   # Single cell analysis
   - title: Single cell analysis methods
     desc: 
@@ -385,6 +401,7 @@ reference:
     contents:
       - aucell_sc
       - module_scores_sc
+      - fast_cluster_sc
       - find_clusters_sc
       - find_markers_sc
       - find_all_markers_sc
@@ -420,8 +437,13 @@ reference:
     desc: 
       Additional helpers for specific small sub classes used in single cell.
     contents:
+      - calc_knn_metrics
+      - get_centroids
+      - get_feature_mat
+      - get_kmeans_clusters
       - get_knn_dist
       - get_obs_data
+      - get_scores
       - new_sc_knn
   # Single cell plotting helpers
   - title: Single-cell plotting stuff
@@ -474,6 +496,7 @@ reference:
     desc: 
       Functions and helpers to download or generate synthetic data.
     contents:
+      - download_cd34_data
       - download_pbmc3k
       - download_demuxlet_pbmc
       - download_pbmc_batches
@@ -495,6 +518,7 @@ reference:
     contents:
       - AnnDataParser
       - calculate_sparsity_stats
+      - find_threshold_otsu
       - get_seurat_counts_to_list
       - knn_graph_label_propagation
       - params_label_propagation
@@ -542,13 +566,15 @@ reference:
       - rs_extract_several_genes_plots
       - rs_extract_counts_plots
       - rs_fast_auc
+      - rs_fast_cluster_sc
+      - rs_fast_cluster_sc_grid
       - rs_fast_ica
       - rs_fdr_adjustment
       - rs_filter_onto_sim
       - rs_generate_bulk_rnaseq
       - rs_geom_elim_fgsea_simple
       - rs_get_gs_indices
-      - rs_get_metacells
+      - rs_get_metacells_bootstrapped
       - rs_get_seacells
       - rs_gower_dist
       - rs_gse_geom_elim
@@ -557,6 +583,7 @@ reference:
       - rs_h5ad_data
       - rs_hamming_dist
       - rs_harmony
+      - rs_harmony_v2
       - rs_hedges_g
       - rs_hotspot_autocor
       - rs_hotspot_cluster_genes
@@ -576,6 +603,13 @@ reference:
       - rs_knn_mat_to_edge_pairs
       - rs_mad_outlier
       - rs_make_milor_nhoods
+      - rs_mc_aucell
+      - rs_mc_hvg
+      - rs_mc_pca
+      - rs_mc_scenic
+      - rs_metacell_compactness
+      - rs_metacell_density
+      - rs_metacell_separation
       - rs_mitch_calc
       - rs_mnn
       - rs_module_scoring
@@ -610,8 +644,10 @@ reference:
       - rs_sc_hvg_batch_aware
       - rs_sc_knn
       - rs_sc_knn_w_dist
+      - rs_sc_otsu_method
       - rs_sc_pca
       - rs_sc_pca_sparse
+      - rs_sc_scdblfinder
       - rs_sc_scrublet
       - rs_sc_snn
       - rs_scenic_gene_filter

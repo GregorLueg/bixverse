@@ -4,12 +4,20 @@
 \alias{find_clusters_sc}
 \title{Graph-based clustering of cells on the sNN graph}
 \usage{
-find_clusters_sc(object, res = 1, name = "leiden_clustering")
+find_clusters_sc(
+  object,
+  cluster_algorithm = c("leiden", "louvain"),
+  res = 1,
+  name = "leiden_clustering"
+)
 }
 \arguments{
 \item{object}{\code{SingleCells}, \code{MetaCells} (or potentially other) class.}
 
-\item{res}{Numeric. The resolution parameter for \code{\link[igraph:cluster_leiden]{igraph::cluster_leiden()}}.}
+\item{cluster_algorithm}{String. One of \code{c("leiden", "louvain")}.}
+
+\item{res}{Numeric. The resolution parameter for \code{\link[igraph:cluster_leiden]{igraph::cluster_leiden()}}
+or \code{\link[igraph:cluster_louvain]{igraph::cluster_louvain()}}.}
 
 \item{name}{String. The name to add to the obs table in the DuckDB.}
 }

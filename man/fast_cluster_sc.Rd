@@ -9,13 +9,13 @@ fast_cluster_sc(
   embd_to_use = "pca",
   no_embd_to_use = NULL,
   resolutions = c(2, 1, 0.5),
-  km_type = c("minibatch", "kmeans"),
+  km_type = c("kmeans", "minibatch"),
   n_centroids = NULL,
   fc_params = params_sc_fast_cluster(),
   snn = TRUE,
   return_kmeans = FALSE,
   grid_search = FALSE,
-  no_seeds = 5L,
+  no_seeds = 10L,
   seed = 42L,
   .verbose = TRUE
 )
@@ -29,7 +29,9 @@ fast_cluster_sc(
 
 \item{resolutions}{Numeric vector. Louvain resolutions.}
 
-\item{km_type}{String. One of \code{c("minibatch", "kmeans")}.}
+\item{km_type}{String. One of \code{c("kmeans", "minibatch")}. The former runs
+standard k-means, the latter a mini-batch version that can be useful for
+large data sets.}
 
 \item{n_centroids}{Optional integer. Number of k-means centroids. Defaults
 to \code{sqrt(n_cells)} Rust-side if \code{NULL}.}

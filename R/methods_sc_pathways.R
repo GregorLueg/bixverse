@@ -23,7 +23,7 @@
 #' Useful for larger data sets.
 #' @param .verbose Boolean. Controls the verbosity of the function.
 #'
-#' @returns description
+#' @returns Returns a `ScMatrixRes` with the module scores.
 #'
 #' @references
 #' Tirosh et al, Science (2016)
@@ -87,7 +87,12 @@ S7::method(module_scores_sc, SingleCells) <- function(
   colnames(module_res) <- names(gs_list)
   rownames(module_res) <- get_cell_names(object, filtered = TRUE)
 
-  module_res
+  module_res <- new_sc_matrix(
+    res = module_res,
+    cell_indices = get_cells_to_keep(object)
+  )
+
+  return(module_res)
 }
 
 ## aucell ----------------------------------------------------------------------
@@ -127,6 +132,11 @@ S7::method(aucell_sc, SingleCells) <- function(
 
   colnames(auc_res) <- names(gs_list)
   rownames(auc_res) <- get_cell_names(object, filtered = TRUE)
+
+  auc_res <- new_sc_matrix(
+    res = auc_res,
+    cell_indices = get_cells_to_keep(object)
+  )
 
   return(auc_res)
 }
@@ -286,8 +296,7 @@ generate_null_perm_gs <- function(
 #' larger data sets.
 #' @param .verbose Boolean. Controls the verbosity of the function.
 #'
-#' @return Matrix of cells x signatures with the VISION pathway scores as
-#' values.
+#' @returns Returns a `ScMatrixRes` with the VISION scores.
 #'
 #' @references DeTomaso, et al., Nat. Commun., 2019
 #'
@@ -335,6 +344,11 @@ S7::method(vision_sc, SingleCells) <- function(
 
   colnames(vision_res) <- names(gs_list)
   rownames(vision_res) <- get_cell_names(object, filtered = TRUE)
+
+  vision_res <- new_sc_matrix(
+    res = vision_res,
+    cell_indices = get_cells_to_keep(object)
+  )
 
   return(vision_res)
 }

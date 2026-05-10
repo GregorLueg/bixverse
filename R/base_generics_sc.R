@@ -527,6 +527,26 @@ get_knn_obj <- function(x) {
 
 ### others ---------------------------------------------------------------------
 
+#### obs -----------------------------------------------------------------------
+
+#' Get the ready obs data from various sub method
+#'
+#' @description
+#' Helper method that creates data.tables with cell indices which were used
+#' in the given analysis + the values that are to be added to the obs table
+#' in the DuckDB.
+#'
+#' @param x An object to set gene mapping for
+#' @param ... Other parameters
+#'
+#' @returns Returns a data.table with a cell_idx column for the cells included
+#' in the analysis and additional columns to be added to the obs table.
+#'
+#' @export
+get_obs_data <- function(x, ...) {
+  UseMethod("get_obs_data")
+}
+
 #### knn getter methods --------------------------------------------------------
 
 #' Get the KNN matrix
@@ -725,7 +745,9 @@ find_neighbours_sc <- S7::new_generic(
 #' given resolution and add a column to the obs table.
 #'
 #' @param object `SingleCells`, `MetaCells` (or potentially other) class.
-#' @param res Numeric. The resolution parameter for [igraph::cluster_leiden()].
+#' @param cluster_algorithm String. One of `c("leiden", "louvain")`.
+#' @param res Numeric. The resolution parameter for [igraph::cluster_leiden()]
+#' or [igraph::cluster_louvain()].
 #' @param name String. The name to add to the obs table in the DuckDB.
 #'
 #' @return The object with added clustering in the obs table.
@@ -736,7 +758,8 @@ find_clusters_sc <- S7::new_generic(
   dispatch_args = "object",
   fun = function(
     object,
-    res = 1,
+    cluster_algorithm = c("leiden", "louvain"),
+    res = 1.0,
     name = "leiden_clustering"
   ) {
     S7::S7_dispatch()
@@ -764,7 +787,8 @@ find_clusters_sc <- S7::new_generic(
 #' larger data sets. Ignored when applied to `MetaCells`.
 #' @param .verbose Boolean. Controls the verbosity of the function.
 #'
-#' @return AUCell results in form of a matrix that is cells x gene sets.
+#' @return AUCell results in form of a matrix that is cells x gene sets or as
+#' `ScMatrixRes` pending the input.
 #'
 #' @export
 #'

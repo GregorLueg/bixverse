@@ -69,11 +69,11 @@ kNN graph. We can use the provided cell type labels to check purity.
 
 ```{r}
 #| label: load and qc
-cd34_path <- "~/Desktop/zenodo_data/cd34_multiome_rna.h5ad"
+cd34_path <- download_cd34_data()
 
-tempdir_pbmc <- tempdir()
+tempdir_cd34 <- tempdir()
 
-sc_object <- SingleCells(dir_data = tempdir_pbmc)
+sc_object <- SingleCells(dir_data = tempdir_cd34)
 
 sc_object <- load_h5ad(object = sc_object, h5_path = cd34_path)
 ```

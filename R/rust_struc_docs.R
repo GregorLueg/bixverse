@@ -1,4 +1,4 @@
-# #' @name SingeCellCountData
+# #' @name SingleCellCountData
 # #' @title Single Cell Count Data Handler
 # #'
 # #' @description
@@ -9,19 +9,19 @@
 # #' @section Methods:
 # #' \subsection{Public methods}{
 # #' \itemize{
-# #' \item \href{#method-SingeCellCountData-new}{\code{SingeCellCountData$new()}}
-# #' \item \href{#method-SingeCellCountData-r_csc_mat_to_file}{\code{SingeCellCountData$r_csc_mat_to_file()}}
-# #' \item \href{#method-SingeCellCountData-file_to_r_csc_mat}{\code{SingeCellCountData$file_to_r_csc_mat()}}
-# #' \item \href{#method-SingeCellCountData-get_cells_by_indices}{\code{SingeCellCountData$get_cells_by_indices()}}
+# #' \item \href{#method-SingleCellCountData-new}{\code{SingleCellCountData$new()}}
+# #' \item \href{#method-SingleCellCountData-r_csc_mat_to_file}{\code{SingleCellCountData$r_csc_mat_to_file()}}
+# #' \item \href{#method-SingleCellCountData-file_to_r_csc_mat}{\code{SingleCellCountData$file_to_r_csc_mat()}}
+# #' \item \href{#method-SingleCellCountData-get_cells_by_indices}{\code{SingleCellCountData$get_cells_by_indices()}}
 # #' }
 # #' }
 # #' \if{html}{\out{<hr>}}
-# #' \if{html}{\out{<a id="method-SingeCellCountData-new"></a>}}
-# #' \if{latex}{\out{\hypertarget{method-SingeCellCountData-new}{}}}
+# #' \if{html}{\out{<a id="method-SingleCellCountData-new"></a>}}
+# #' \if{latex}{\out{\hypertarget{method-SingleCellCountData-new}{}}}
 # #' \subsection{Method \code{new()}}{
-# #' Create a new SingeCellCountData instance
+# #' Create a new SingleCellCountData instance
 # #' \subsection{Usage}{
-# #' \if{html}{\out{<div class="r">}}\preformatted{SingeCellCountData$new(f_path_cells, f_path_genes)}\if{html}{\out{</div>}}
+# #' \if{html}{\out{<div class="r">}}\preformatted{SingleCellCountData$new(f_path_cells, f_path_genes)}\if{html}{\out{</div>}}
 # #' }
 # #'
 # #' \subsection{Arguments}{
@@ -33,16 +33,16 @@
 # #' \if{html}{\out{</div>}}
 # #' }
 # #' \subsection{Returns}{
-# #' Returns the initialized SingeCellCountData instance.
+# #' Returns the initialized SingleCellCountData instance.
 # #' }
 # #' }
 # #' \if{html}{\out{<hr>}}
-# #' \if{html}{\out{<a id="method-SingeCellCountData-r_csc_mat_to_file"></a>}}
-# #' \if{latex}{\out{\hypertarget{method-SingeCellCountData-r_csc_mat_to_file}{}}}
+# #' \if{html}{\out{<a id="method-SingleCellCountData-r_csc_mat_to_file"></a>}}
+# #' \if{latex}{\out{\hypertarget{method-SingleCellCountData-r_csc_mat_to_file}{}}}
 # #' \subsection{Method \code{r_csc_mat_to_file()}}{
 # #' Write CSC matrix data to binary file with normalization
 # #' \subsection{Usage}{
-# #' \if{html}{\out{<div class="r">}}\preformatted{SingeCellCountData$r_csc_mat_to_file(no_cells, no_genes, data, col_ptr, row_idx, target_size)}\if{html}{\out{</div>}}
+# #' \if{html}{\out{<div class="r">}}\preformatted{SingleCellCountData$r_csc_mat_to_file(no_cells, no_genes, data, col_ptr, row_idx, target_size)}\if{html}{\out{</div>}}
 # #' }
 # #'
 # #' \subsection{Arguments}{
@@ -59,12 +59,12 @@
 # #' }
 # #' }
 # #' \if{html}{\out{<hr>}}
-# #' \if{html}{\out{<a id="method-SingeCellCountData-file_to_r_csc_mat"></a>}}
-# #' \if{latex}{\out{\hypertarget{method-SingeCellCountData-file_to_r_csc_mat}{}}}
+# #' \if{html}{\out{<a id="method-SingleCellCountData-file_to_r_csc_mat"></a>}}
+# #' \if{latex}{\out{\hypertarget{method-SingleCellCountData-file_to_r_csc_mat}{}}}
 # #' \subsection{Method \code{file_to_r_csc_mat()}}{
 # #' Read complete CSC matrix from binary file
 # #' \subsection{Usage}{
-# #' \if{html}{\out{<div class="r">}}\preformatted{SingeCellCountData$file_to_r_csc_mat(assay)}\if{html}{\out{</div>}}
+# #' \if{html}{\out{<div class="r">}}\preformatted{SingleCellCountData$file_to_r_csc_mat(assay)}\if{html}{\out{</div>}}
 # #' }
 # #'
 # #' \subsection{Arguments}{
@@ -86,12 +86,12 @@
 # #' }
 # #' }
 # #' \if{html}{\out{<hr>}}
-# #' \if{html}{\out{<a id="method-SingeCellCountData-get_cells_by_indices"></a>}}
-# #' \if{latex}{\out{\hypertarget{method-SingeCellCountData-get_cells_by_indices}{}}}
+# #' \if{html}{\out{<a id="method-SingleCellCountData-get_cells_by_indices"></a>}}
+# #' \if{latex}{\out{\hypertarget{method-SingleCellCountData-get_cells_by_indices}{}}}
 # #' \subsection{Method \code{get_cells_by_indices()}}{
 # #' Read specific cells by their indices
 # #' \subsection{Usage}{
-# #' \if{html}{\out{<div class="r">}}\preformatted{SingeCellCountData$get_cells_by_indices(indices, assay)}\if{html}{\out{</div>}}
+# #' \if{html}{\out{<div class="r">}}\preformatted{SingleCellCountData$get_cells_by_indices(indices, assay)}\if{html}{\out{</div>}}
 # #' }
 # #'
 # #' \subsection{Arguments}{

@@ -4,12 +4,15 @@
 \alias{download_pbmc_batches}
 \title{Download two different PBMC data sets for batch correction testing}
 \usage{
-download_pbmc_batches()
+download_pbmc_batches(quiet = FALSE)
+}
+\arguments{
+\item{quiet}{Boolean. If the download shall be quiet.}
 }
 \value{
 String. The path to the extracted doublet detection data.
 }
 \description{
 This function downloads two different h5ad files for testing batch correction
-methods.
+methods into the temporary directory.
 }

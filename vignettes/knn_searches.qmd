@@ -148,4 +148,191 @@ overview of the different kNN searches implemented/exposed in this package
 There are additional GPU-accelerated kNN searches in the sister package, see
 [here](https://gregorlueg.github.io/bixverse.gpu/articles/gpu_single_cell.html).
 
+### The parameters
+
 Now let's see which parameter belongs to which method and does what.
+
+| Parameter | Default | Meaning | 
+| k | `15L` | Kinda obvious... Number of neighbours |
+| knn_method | `"kmknn"` | The approximate nearest neighbour method. One of `c("kmknn", "exhaustive", "annoy", "ivf", "hnsw", "nndescent")` |
+| ann_dist | `"euclidean"` | The distance metric to use. Two options are available... Euclidean distance or Cosine distance. Very important, the underlying library returns the **SQUARED** Euclidean distance for speed purposes. If you use the Euclidean distance for something, keep this in mind! |
+| n_trees | `50L` | **Annoy:** The number of trees to use for Annoy. Generally speaking the generation is very fast in terms of indexing and in different (emperical) experiments after 50 trees one gets diminishing returns |
+| search_budget | `NULL` | **Annoy:** The search budget during querying. If `NULL` defaults to `k * n_trees * 20`. Higher values allow for better Recall. |
+| delta | `0.001` | **NNDescent:** The termination criterium for the NNDescent iterations. When less than 0.001 (0.1%) of the edges are updated, the iterations stop and the algorithm is considered converged. |
+| diversify_prob | `0.0` | **NNDescent:** If you want to do additional diversification after the NNDescent algorithm converged. This is based on the original paper, but in reality usually degrades graph quality while not providing too many benefits. |
+| ef_budget | `NULL` | **NNDescent:** The beam width for the query phase for NNDescent. If `NULL`, it will use the library default, i.e., `(k * 2).clamp(50, 200)).max(k)`. Generally not really needed to touch, but limits the number of k neighbours you can confidently return. | 
+| m | `16L` | **HNSW:** The node degree during the index creation. Creates 16 edges per given node in the graph-based index. | 
+| ef_construction | `200L` | **HNSW:** The budget to generate good connections during construction of the index. Higher values yields a better initial graph-index. | 
+| ef_search | `100L` | **HNSW:** The beam width during querying of the index. If a high quality graph was generated, usually does not need to be too high. If you set `k` high, you should adopt this parameter. | 
+| n_list | `NULL` | **IVF and KmKnn:** This parameter is shared between the IVF and KmKnn index. Defines the number of Voronoi cells/clusters to generate. If not provided defaults to `sqrt(N)`. Be careful on smaller data sets and possible set it to more clusters here. |
+| n_probe | `NULL` | **IVF:** The number of clusters to probe per query. Defaults to `sqrt(n_list)`. On smaller data sets you need to set this higher. |
+
+### Exploration of the kNN search methods
+
+Okay, still do not get it. When do I use what and how ... ? The standard
+approach would be to do something like:
+
+```{r}
+#| label: neighbours on class directly
+sc_object <- find_neighbours_sc(
+  object = sc_object,
+  neighbours_params = params_sc_neighbours(
+    knn = list(knn_method = "exhaustive")
+  )
+)
+```
+
+You can however also generate the kNN indices like this:
+
+```{r}
+#| label: nearest neighbours external of the class
+exhaustive_knn <- generate_knn_sc(
+  object = sc_object,
+  neighbours_params = params_sc_neighbours(
+    knn = list(knn_method = "exhaustive")
+  )
+)
+
+exhaustive_knn
+```
+
+This is the class that is actually sored in the object after running 
+`find_neighbours_sc()`. 
+```{r}
+#| label: extract class
+exhaustive_knn_obj <- get_knn_obj(sc_object)
+
+tinytest::expect_equal(
+  current = exhaustive_knn,
+  target = exhaustive_knn_obj,
+  info = "same class"
+)
+```
+
+Potentially more interesting is what you can do with the approximate nearest
+neighbour searches.
+
+```{r}
+#| label: nearest neighbours external of the class
+annoy_knn <- generate_knn_sc(
+  object = sc_object,
+  neighbours_params = params_sc_neighbours(
+    knn = list(knn_method = "annoy")
+  )
+)
+
+annoy_knn
+```
+
+The print message showed this line here:
+
+```
+Recall of approximate nearest neighbours search in random subset: 1.00
+```
+
+The approximate versions have the option to test the index against a subset of
+the data (1000 randomly selected cells) and compare against the exhaustive 
+search for this 1000 cells. 
+
+```{r}
+#| label: exhaustive vs annoy
+annoy_vs_exhaustive <- calc_knn_metrics(exhaustive_knn, annoy_knn)
+
+cat(
+  "Annoy vs exhaustive.\n",
+  sprintf(
+    " Recall@15: %.3f.\n",
+    annoy_vs_exhaustive$final_recall
+  ),
+  sprintf(
+    " Distance ratio: %.3f.\n",
+    annoy_vs_exhaustive$final_ratio
+  )
+)
+```
+
+This allows us to actually explore some parameters
+more in depth:
+
+```{r}
+#| label: nearest neighbours external of the class
+annoy_knn_less_trees <- generate_knn_sc(
+  object = sc_object,
+  neighbours_params = params_sc_neighbours(
+    knn = list(knn_method = "annoy", n_trees = 1L)
+  )
+)
+
+annoy_knn_less_trees
+```
+
+With one tree, we can appreciate that the Recall is dropping:
+
+```
+Recall of approximate nearest neighbours search in random subset: 0.75
+```
+
+Let's get some more detailed info here:
+
+```{r}
+#| label: exhaustive vs annoy (less tree)
+annoy_lt_vs_exhaustive <- calc_knn_metrics(exhaustive_knn, annoy_knn_less_trees)
+
+cat(
+  "Annoy vs exhaustive.\n",
+  sprintf(
+    " Recall@15: %.3f.\n",
+    annoy_lt_vs_exhaustive$final_recall
+  ),
+  sprintf(
+    " Distance ratio: %.3f.\n",
+    annoy_lt_vs_exhaustive$final_ratio
+  )
+)
+```
+
+We can appreciate that with one tree we do not get a Recall of 1 and the 
+distance ratio is 4.2% worse than the exhaustive one. Let's test another index
+
+```{r}
+#| label: nearest neighbours external of the class
+nndescent_knn <- generate_knn_sc(
+  object = sc_object,
+  neighbours_params = params_sc_neighbours(
+    knn = list(knn_method = "nndescent")
+  )
+)
+
+nndescent_knn
+```
+
+And benchmark it:
+
+```{r}
+#| label: exhaustive vs annoy (less tree)
+nndescent_vs_exhaustive <- calc_knn_metrics(exhaustive_knn, nndescent_knn)
+
+cat(
+  "Annoy vs exhaustive.\n",
+  sprintf(
+    " Recall@15: %.3f.\n",
+    nndescent_vs_exhaustive$final_recall
+  ),
+  sprintf(
+    " Distance ratio: %.3f.\n",
+    nndescent_vs_exhaustive$final_ratio
+  )
+)
+```
+
+As we can see, this approximate index also reaches perfect recall and distance
+ratio. We could iterate through the others, but it does not have much of a 
+point. The core goal of this vignette was to check the type of hyperparameters
+and type of indices provided.
+
+## Clean up
+
+```{r}
+#| label: clean up
+unlink(tempdir_pbmc, recursive = TRUE, force = TRUE)
+```

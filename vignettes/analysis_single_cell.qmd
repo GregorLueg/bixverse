@@ -205,7 +205,8 @@ module_scores <- module_scores_sc(
   .verbose = FALSE
 )
 
-ms_dt <- as.data.table(module_scores, keep.rownames = "cell_id")
+# you need to unclass here
+ms_dt <- as.data.table(unclass(module_scores), keep.rownames = "cell_id")
 ms_dt <- merge(ms_dt, umap_dt, by = "cell_id")
 
 ms_long <- melt(
@@ -223,6 +224,21 @@ ggplot(ms_long, aes(x = umap_1, y = umap_2)) +
   theme_bw() +
   labs(colour = "Module\nscore")
 ```
+
+Let's imagine you want to add the scores to the internal DB. There are helpers
+for this, too. The `get_obs_data()` helper in combination with ``
+
+```{r}
+#| label: add module scores
+sc_object <- add_sc_new_obs(
+  object = sc_object,
+  obs_data = get_obs_data(module_scores)
+)
+
+sc_object[[1:5]]
+```
+
+As we can appreciate, this has now added the new columns. 
 
 ### AUCell
 
@@ -244,7 +260,7 @@ auc_scores <- aucell_sc(
   .verbose = FALSE
 )
 
-auc_dt <- as.data.table(auc_scores, keep.rownames = "cell_id")
+auc_dt <- as.data.table(unclass(auc_scores), keep.rownames = "cell_id")
 auc_dt <- merge(auc_dt, umap_dt, by = "cell_id")
 
 auc_long <- melt(
@@ -387,7 +403,7 @@ vision_scores_hotspot <- vision_sc(
 )
 
 vision_scores_dt <- as.data.table(
-  vision_scores_hotspot,
+  unclass(vision_scores_hotspot),
   keep.rownames = "cell_id"
 )
 vision_scores_dt <- merge(vision_scores_dt, umap_dt, by = "cell_id")

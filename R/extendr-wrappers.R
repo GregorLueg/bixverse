@@ -2558,11 +2558,24 @@ rs_sc_snn <- function(knn_mat, snn_method, limited_graph, pruning, verbose) .Cal
 
 #' Helper to compare kNN graphs
 #'
-#' @param knn_mat_a Integer matrix. The first kNN graph to compare.
-#' @param knn_mat_b Integer matrix. The second kNN graph to compare.
+#' @param knn_mat_a Integer matrix. The indices of the first kNN graph to
+#' compare. Should be samples x neighbours. This will be treated as ground
+#' truth.
+#' @param knn_mat_b Integer matrix. The indices of the second kNN graph to
+#' compare. Should be samples x neighbours.
+#' @param knn_dist_a Numeric matrix.
 #'
-#' @returns Vector of number of overlaps per sample.
-rs_compare_knn <- function(knn_mat_a, knn_mat_b) .Call(wrap__rs_compare_knn, knn_mat_a, knn_mat_b)
+#' @returns A list with the following elements:
+#' \itemize{
+#'  \item all_matches - Matching neighbours for this sample.
+#'  \item all_ratios - Distance ratio for this sample (with b / a).
+#'  \item final_recall - The final recall of assuming a being the ground truth
+#'  across all samples
+#'  \item final_ratio - The final distance ratio across all samples
+#' }
+#'
+#' @export
+rs_compare_knn <- function(knn_data_a, knn_data_b) .Call(wrap__rs_compare_knn, knn_data_a, knn_data_b)
 
 #' Runs fast Louvain cluster on the data
 #'
@@ -3594,46 +3607,46 @@ rs_mc_aucell <- function(sparse_data, gs_list, auc_type, verbose) .Call(wrap__rs
 #'A vector of NNZ for the genes.
 #'}
 #'
-SingeCellCountData <- new.env(parent = emptyenv())
+SingleCellCountData <- new.env(parent = emptyenv())
 
-SingeCellCountData$new <- function(f_path_cells, f_path_genes) .Call(wrap__SingeCellCountData__new, f_path_cells, f_path_genes)
+SingleCellCountData$new <- function(f_path_cells, f_path_genes) .Call(wrap__SingleCellCountData__new, f_path_cells, f_path_genes)
 
-SingeCellCountData$get_shape <- function() .Call(wrap__SingeCellCountData__get_shape, self)
+SingleCellCountData$get_shape <- function() .Call(wrap__SingleCellCountData__get_shape, self)
 
-SingeCellCountData$r_data_to_file <- function(r_data, qc_params, verbose) .Call(wrap__SingeCellCountData__r_data_to_file, self, r_data, qc_params, verbose)
+SingleCellCountData$r_data_to_file <- function(r_data, qc_params, verbose) .Call(wrap__SingleCellCountData__r_data_to_file, self, r_data, qc_params, verbose)
 
-SingeCellCountData$h5_to_file <- function(cs_type, h5_path, no_cells, no_genes, qc_params, verbose) .Call(wrap__SingeCellCountData__h5_to_file, self, cs_type, h5_path, no_cells, no_genes, qc_params, verbose)
+SingleCellCountData$h5_to_file <- function(cs_type, h5_path, no_cells, no_genes, qc_params, verbose) .Call(wrap__SingleCellCountData__h5_to_file, self, cs_type, h5_path, no_cells, no_genes, qc_params, verbose)
 
-SingeCellCountData$norm_h5_to_file <- function(cs_type, h5_path, no_cells, no_genes, obs_lib_size_col, target_size, qc_params, verbose) .Call(wrap__SingeCellCountData__norm_h5_to_file, self, cs_type, h5_path, no_cells, no_genes, obs_lib_size_col, target_size, qc_params, verbose)
+SingleCellCountData$norm_h5_to_file <- function(cs_type, h5_path, no_cells, no_genes, obs_lib_size_col, target_size, qc_params, verbose) .Call(wrap__SingleCellCountData__norm_h5_to_file, self, cs_type, h5_path, no_cells, no_genes, obs_lib_size_col, target_size, qc_params, verbose)
 
-SingeCellCountData$h5_to_file_streaming <- function(cs_type, h5_path, no_cells, no_genes, qc_params, verbose) .Call(wrap__SingeCellCountData__h5_to_file_streaming, self, cs_type, h5_path, no_cells, no_genes, qc_params, verbose)
+SingleCellCountData$h5_to_file_streaming <- function(cs_type, h5_path, no_cells, no_genes, qc_params, verbose) .Call(wrap__SingleCellCountData__h5_to_file_streaming, self, cs_type, h5_path, no_cells, no_genes, qc_params, verbose)
 
-SingeCellCountData$multi_h5_to_file <- function(file_tasks, universe_size, qc_params, verbose) .Call(wrap__SingeCellCountData__multi_h5_to_file, self, file_tasks, universe_size, qc_params, verbose)
+SingleCellCountData$multi_h5_to_file <- function(file_tasks, universe_size, qc_params, verbose) .Call(wrap__SingleCellCountData__multi_h5_to_file, self, file_tasks, universe_size, qc_params, verbose)
 
-SingeCellCountData$mtx_to_file <- function(mtx_path, qc_params, cells_as_rows, verbose) .Call(wrap__SingeCellCountData__mtx_to_file, self, mtx_path, qc_params, cells_as_rows, verbose)
+SingleCellCountData$mtx_to_file <- function(mtx_path, qc_params, cells_as_rows, verbose) .Call(wrap__SingleCellCountData__mtx_to_file, self, mtx_path, qc_params, cells_as_rows, verbose)
 
-SingeCellCountData$mtx_to_file_streaming <- function(mtx_path, qc_params, cells_as_rows, verbose) .Call(wrap__SingeCellCountData__mtx_to_file_streaming, self, mtx_path, qc_params, cells_as_rows, verbose)
+SingleCellCountData$mtx_to_file_streaming <- function(mtx_path, qc_params, cells_as_rows, verbose) .Call(wrap__SingleCellCountData__mtx_to_file_streaming, self, mtx_path, qc_params, cells_as_rows, verbose)
 
-SingeCellCountData$return_full_mat <- function(assay, cell_based, verbose) .Call(wrap__SingeCellCountData__return_full_mat, self, assay, cell_based, verbose)
+SingleCellCountData$return_full_mat <- function(assay, cell_based, verbose) .Call(wrap__SingleCellCountData__return_full_mat, self, assay, cell_based, verbose)
 
-SingeCellCountData$get_cells_by_indices <- function(indices, assay) .Call(wrap__SingeCellCountData__get_cells_by_indices, self, indices, assay)
+SingleCellCountData$get_cells_by_indices <- function(indices, assay) .Call(wrap__SingleCellCountData__get_cells_by_indices, self, indices, assay)
 
-SingeCellCountData$generate_gene_based_data <- function(verbose) .Call(wrap__SingeCellCountData__generate_gene_based_data, self, verbose)
+SingleCellCountData$generate_gene_based_data <- function(verbose) .Call(wrap__SingleCellCountData__generate_gene_based_data, self, verbose)
 
-SingeCellCountData$generate_gene_based_data_streaming <- function(batch_size, verbose) .Call(wrap__SingeCellCountData__generate_gene_based_data_streaming, self, batch_size, verbose)
+SingleCellCountData$generate_gene_based_data_streaming <- function(batch_size, verbose) .Call(wrap__SingleCellCountData__generate_gene_based_data_streaming, self, batch_size, verbose)
 
-SingeCellCountData$generate_gene_based_data_memory_bounded <- function(max_genes_in_memory, cell_batch_size, verbose) .Call(wrap__SingeCellCountData__generate_gene_based_data_memory_bounded, self, max_genes_in_memory, cell_batch_size, verbose)
+SingleCellCountData$generate_gene_based_data_memory_bounded <- function(max_genes_in_memory, cell_batch_size, verbose) .Call(wrap__SingleCellCountData__generate_gene_based_data_memory_bounded, self, max_genes_in_memory, cell_batch_size, verbose)
 
-SingeCellCountData$get_genes_by_indices <- function(indices, assay) .Call(wrap__SingeCellCountData__get_genes_by_indices, self, indices, assay)
+SingleCellCountData$get_genes_by_indices <- function(indices, assay) .Call(wrap__SingleCellCountData__get_genes_by_indices, self, indices, assay)
 
-SingeCellCountData$set_from_file <- function() .Call(wrap__SingeCellCountData__set_from_file, self)
+SingleCellCountData$set_from_file <- function() .Call(wrap__SingleCellCountData__set_from_file, self)
 
-SingeCellCountData$get_nnz_genes <- function(gene_indices) .Call(wrap__SingeCellCountData__get_nnz_genes, self, gene_indices)
-
-#' @export
-`$.SingeCellCountData` <- function (self, name) { func <- SingeCellCountData[[name]]; environment(func) <- environment(); func }
+SingleCellCountData$get_nnz_genes <- function(gene_indices) .Call(wrap__SingleCellCountData__get_nnz_genes, self, gene_indices)
 
 #' @export
-`[[.SingeCellCountData` <- `$.SingeCellCountData`
+`$.SingleCellCountData` <- function (self, name) { func <- SingleCellCountData[[name]]; environment(func) <- environment(); func }
+
+#' @export
+`[[.SingleCellCountData` <- `$.SingleCellCountData`
 
 # nolint end

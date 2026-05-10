@@ -2,11 +2,12 @@ use bixverse_rs::prelude::*;
 use bixverse_rs::single_cell::sc_analysis::fast_clusters::*;
 use bixverse_rs::single_cell::sc_processing::metrics::pairwise_gene_correlations;
 use bixverse_rs::single_cell::sc_processing::{
-    doublet_detection::*, hvg::*, knn::compare_knn_graphs, pca::*, qc::*, scdblfinder::*,
-    scrublet::*, snn::*, utils_doublets::find_threshold_otsu,
+    doublet_detection::*, hvg::*, pca::*, qc::*, scdblfinder::*, scrublet::*, snn::*,
+    utils_doublets::find_threshold_otsu,
 };
 use extendr_api::prelude::*;
 use faer::Mat;
+use rustc_hash::FxHashSet;
 use std::time::Instant;
 
 use crate::single_cell::utils::*;
@@ -1076,16 +1077,80 @@ fn rs_sc_snn(
 
 /// Helper to compare kNN graphs
 ///
-/// @param knn_mat_a Integer matrix. The first kNN graph to compare.
-/// @param knn_mat_b Integer matrix. The second kNN graph to compare.
+/// @param knn_mat_a Integer matrix. The indices of the first kNN graph to
+/// compare. Should be samples x neighbours. This will be treated as ground
+/// truth.
+/// @param knn_mat_b Integer matrix. The indices of the second kNN graph to
+/// compare. Should be samples x neighbours.
+/// @param knn_dist_a Numeric matrix.
 ///
-/// @returns Vector of number of overlaps per sample.
+/// @returns A list with the following elements:
+/// \itemize{
+///  \item all_matches - Matching neighbours for this sample.
+///  \item all_ratios - Distance ratio for this sample (with b / a).
+///  \item final_recall - The final recall of assuming a being the ground truth
+///  across all samples
+///  \item final_ratio - The final distance ratio across all samples
+/// }
+///
+/// @export
 #[extendr]
-fn rs_compare_knn(knn_mat_a: RMatrix<i32>, knn_mat_b: RMatrix<i32>) -> Vec<i32> {
-    let knn_mat_a = r_matrix_to_faer(&knn_mat_a);
-    let knn_mat_b = r_matrix_to_faer(&knn_mat_b);
+fn rs_compare_knn(knn_data_a: List, knn_data_b: List) -> Result<List, extendr_api::Error> {
+    let (indices_a, dist_a, _, _) = knn_data_to_rust(knn_data_a)?;
+    let (indices_b, dist_b, _, _) = knn_data_to_rust(knn_data_b)?;
 
-    compare_knn_graphs(knn_mat_a, knn_mat_b)
+    if indices_a.len() != indices_b.len() {
+        return Err(Error::Other(
+            "The two kNN data sets have different number of samples".into(),
+        ));
+    }
+    if indices_a[0].len() != indices_b[0].len() {
+        return Err(Error::Other(
+            "The two kNN data sets have a different set of neighbours requested".into(),
+        ));
+    }
+
+    // calculate the recalls
+    let k = indices_a[0].len();
+
+    let mut total_recall = 0.0;
+    let mut all_matches: Vec<usize> = Vec::with_capacity(indices_a.len());
+
+    for (nn_a, nn_b) in indices_a.iter().zip(indices_b.iter()) {
+        let true_set: FxHashSet<_> = nn_a.iter().take(k).collect();
+        let approx_set: FxHashSet<_> = nn_b.iter().take(k).collect();
+
+        let matches = approx_set.intersection(&true_set).count();
+        all_matches.push(matches);
+
+        total_recall += matches as f64 / k as f64;
+    }
+
+    let final_recall = total_recall / indices_a.len() as f64;
+
+    let mut all_ratios: Vec<f64> = Vec::with_capacity(dist_a.len());
+    let mut total_ratio: f64 = 0.0;
+    let mut count = 0usize;
+
+    for (d_a, d_b) in dist_a.iter().zip(dist_b.iter()) {
+        let sum_a: f64 = d_a.iter().map(|x| *x as f64).sum();
+        let sum_b: f64 = d_b.iter().map(|x| *x as f64).sum();
+        if sum_a > 1e-12 {
+            let ratio = sum_b / sum_a;
+            all_ratios.push(ratio);
+            total_ratio += ratio;
+            count += 1;
+        }
+    }
+
+    let final_ratio = total_ratio / count as f64;
+
+    Ok(list!(
+        all_matches = all_matches.r_int_convert(),
+        all_ratios = all_ratios,
+        final_recall = final_recall,
+        final_ratio = final_ratio
+    ))
 }
 
 //////////////////

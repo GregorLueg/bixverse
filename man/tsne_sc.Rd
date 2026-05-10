@@ -6,7 +6,7 @@
 \usage{
 tsne_sc(
   object,
-  use_knn = TRUE,
+  use_knn = FALSE,
   embd_to_use = "pca",
   no_embd_to_use = NULL,
   n_dim = 2L,
@@ -62,7 +62,7 @@ be over-interpreted quantitatively, but the common claim that t-SNE discards
 global structure while UMAP preserves it is largely an artefact of default
 initialisations rather than a property of the loss functions themselves.
 
-When \code{use_knn = TRUE} (the default), the kNN graph already stored on the
+When \code{use_knn = FALSE} (the default), the kNN graph already stored on the
 object is reused. Otherwise neighbours are computed from the chosen
 embedding.
 
@@ -74,5 +74,7 @@ bandwidth of the Gaussian kernel used to compute affinities within the
 neighbour set (typical values 5-50). When a pre-computed kNN is supplied via
 \code{use_knn = TRUE}, perplexity no longer drives neighbour retrieval but still
 shapes the affinity distribution over the retrieved neighbours; values too
-close to the kNN size will produce poor results.
+close to the kNN size will produce poor results. With tSNE in particular the
+rule of thumb is to set k to \code{3 * perplexity}. When `k ≤ perplexity`` the
+algorithm does not behave properly anymore, thus, will throw an error.
 }

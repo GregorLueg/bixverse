@@ -27,7 +27,8 @@ larger data sets. Ignored when applied to \code{MetaCells}.}
 \item{.verbose}{Boolean. Controls the verbosity of the function.}
 }
 \value{
-AUCell results in form of a matrix that is cells x gene sets.
+AUCell results in form of a matrix that is cells x gene sets or as
+\code{ScMatrixRes} pending the input.
 }
 \description{
 Calculates an AUC-type score akin to AUCell across the gene sets, see Aibar

@@ -22,7 +22,7 @@ use bixverse_rs::single_cell::sc_data::r_obj_io::*;
 
 extendr_module! {
     mod r_count_obj;
-    impl SingeCellCountData;
+    impl SingleCellCountData;
 }
 
 //////////////////
@@ -220,7 +220,7 @@ fn parse_count_type(s: &str) -> Option<AssayType> {
 /// * `n_cells` - No of cells represented in the data.
 /// * `n_genes` - No of genes represented in the data.
 #[extendr]
-struct SingeCellCountData {
+struct SingleCellCountData {
     pub f_path_cells: String,
     pub f_path_genes: String,
     pub n_cells: usize,
@@ -228,7 +228,7 @@ struct SingeCellCountData {
 }
 
 #[extendr]
-impl SingeCellCountData {
+impl SingleCellCountData {
     /// Create new instance of the class
     ///
     /// ### Params

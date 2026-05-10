@@ -450,12 +450,11 @@ S7::method(top_genes_perc_sc, SingleCells) <- function(
 
   names(rs_results) <- sprintf("top_%i_genes_percentage", top_n_vals)
 
-  class(rs_results) <- "sc_proportion_res"
-  attr(rs_results, "cell_indices") <- get_cells_to_keep(object)
+  res <- new_sc_list(res = rs_results, cell_indices = get_cells_to_keep(object))
 
   duckdb_con <- get_sc_duckdb(object)
 
-  duckdb_con$join_data_obs(get_obs_data(rs_results))
+  duckdb_con$join_data_obs(get_obs_data(res))
 
   return(object)
 }
@@ -527,12 +526,11 @@ S7::method(gene_set_proportions_sc, SingleCells) <- function(
     verbose = .verbose
   )
 
-  class(rs_results) <- "sc_proportion_res"
-  attr(rs_results, "cell_indices") <- get_cells_to_keep(object)
+  res <- new_sc_list(res = rs_results, cell_indices = get_cells_to_keep(object))
 
   duckdb_con <- get_sc_duckdb(object)
 
-  duckdb_con$join_data_obs(get_obs_data(rs_results))
+  duckdb_con$join_data_obs(get_obs_data(res))
 
   return(object)
 }
@@ -809,14 +807,18 @@ S7::method(find_neighbours_sc, ScOrMc) <- function(
 #' @export
 S7::method(find_clusters_sc, ScOrMc) <- function(
   object,
-  res = 1,
+  cluster_algorithm = c("leiden", "louvain"),
+  res = 1.0,
   name = "leiden_clustering"
 ) {
+  cluster_algorithm <- match.arg(cluster_algorithm)
+
   checkmate::assertTRUE(
     S7::S7_inherits(object, SingleCells) || S7::S7_inherits(object, MetaCells)
   )
   checkmate::qassert(res, "N1")
   checkmate::qassert(name, "S1")
+  checkmate::assertChoice(cluster_algorithm, c("leiden", "louvain"))
 
   snn_graph <- get_snn_graph(object)
   if (is.null(snn_graph)) {
@@ -829,13 +831,17 @@ S7::method(find_clusters_sc, ScOrMc) <- function(
     return(object)
   }
 
-  leiden_clusters <- igraph::cluster_leiden(
-    snn_graph,
-    objective_function = "modularity",
-    resolution = res
+  clusters <- switch(
+    cluster_algorithm,
+    leiden = igraph::cluster_leiden(
+      graph = snn_graph,
+      objective_function = "modularity",
+      resolution = res
+    ),
+    louvain = igraph::cluster_louvain(graph = snn_graph, resolution = res)
   )
 
-  object[[name]] <- leiden_clusters$membership
+  object[[name]] <- clusters$membership
   object
 }
 
@@ -852,10 +858,12 @@ S7::method(find_clusters_sc, ScOrMc) <- function(
 #' @param embd_to_use String. Embedding name. Defaults to `"pca"`.
 #' @param no_embd_to_use Optional integer. Number of dimensions to keep.
 #' @param resolutions Numeric vector. Louvain resolutions.
-#' @param km_type String. One of `c("minibatch", "kmeans")`.
+#' @param km_type String. One of `c("kmeans", "minibatch")`. The former runs
+#' standard k-means, the latter a mini-batch version that can be useful for
+#' large data sets.
 #' @param n_centroids Optional integer. Number of k-means centroids. Defaults
 #' to `sqrt(n_cells)` Rust-side if `NULL`.
-#' @param fc_params List. Output of [bixverse::params_sc_fast_cluster()].
+#' @param fc_params List. Output of [params_sc_fast_cluster()].
 #' @param snn Boolean. Convert kNN to sNN.
 #' @param return_kmeans Boolean. Return k-means assignments and centroids.
 #' @param grid_search Boolean. Run multi-seed grid version.
@@ -884,13 +892,13 @@ fast_cluster_sc <- S7::new_generic(
     embd_to_use = "pca",
     no_embd_to_use = NULL,
     resolutions = c(2.0, 1.0, 0.5),
-    km_type = c("minibatch", "kmeans"),
+    km_type = c("kmeans", "minibatch"),
     n_centroids = NULL,
     fc_params = params_sc_fast_cluster(),
     snn = TRUE,
     return_kmeans = FALSE,
     grid_search = FALSE,
-    no_seeds = 5L,
+    no_seeds = 10L,
     seed = 42L,
     .verbose = TRUE
   ) {
@@ -906,13 +914,13 @@ S7::method(fast_cluster_sc, SingleCells) <- function(
   embd_to_use = "pca",
   no_embd_to_use = NULL,
   resolutions = c(2.0, 1.0, 0.5),
-  km_type = c("minibatch", "kmeans"),
+  km_type = c("kmeans", "minibatch"),
   n_centroids = NULL,
   fc_params = params_sc_fast_cluster(),
   snn = TRUE,
   return_kmeans = FALSE,
   grid_search = FALSE,
-  no_seeds = 5L,
+  no_seeds = 10L,
   seed = 42L,
   .verbose = TRUE
 ) {

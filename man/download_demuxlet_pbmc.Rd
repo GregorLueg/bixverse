@@ -4,7 +4,10 @@
 \alias{download_demuxlet_pbmc}
 \title{Download PBMCs with demuxlet doublet information}
 \usage{
-download_demuxlet_pbmc()
+download_demuxlet_pbmc(quiet = FALSE)
+}
+\arguments{
+\item{quiet}{Boolean. If the download shall be quiet.}
 }
 \value{
 String. The path to the extracted doublet detection data.
