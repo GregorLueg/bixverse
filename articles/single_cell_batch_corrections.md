@@ -325,8 +325,9 @@ batches).
 
 ``` r
 
-sc_object <- tsne_sc(object = sc_object)
+sc_object <- tsne_sc(object = sc_object, use_knn = TRUE)
 #> Running t-SNE.
+#> Using provided kNN graph.
 
 tsne_dt_mnn <- as.data.table(
   get_embedding(sc_object, "tsne"),
@@ -421,8 +422,9 @@ Also here, we observe improvements across the board.
 
 ``` r
 
-sc_object <- tsne_sc(object = sc_object)
+sc_object <- tsne_sc(object = sc_object, use_knn = TRUE)
 #> Running t-SNE.
+#> Using provided kNN graph.
 
 tsne_dt_harmony <- as.data.table(
   get_embedding(sc_object, "tsne"),
@@ -518,8 +520,9 @@ lisi_score_post_harmony
 
 ``` r
 
-sc_object <- tsne_sc(object = sc_object)
+sc_object <- tsne_sc(object = sc_object, use_knn = TRUE)
 #> Running t-SNE.
+#> Using provided kNN graph.
 
 tsne_dt_harmony <- as.data.table(
   get_embedding(sc_object, "tsne"),
@@ -596,8 +599,9 @@ lisi_score_post_bbknn
 
 ``` r
 
-sc_object <- tsne_sc(object = sc_object)
+sc_object <- tsne_sc(object = sc_object, use_knn = TRUE)
 #> Running t-SNE.
+#> Using provided kNN graph.
 
 tsne_dt_bbknn <- as.data.table(
   get_embedding(sc_object, "tsne"),

@@ -358,8 +358,9 @@
 <p>We can see clear improvements across all scores. Lower kBET scores, better mean AWS scores and LISI scores also closer to 2 (i.e., number of batches).</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tsne_sc.html">tsne_sc</a></span><span class="op">(</span>object <span class="op">=</span> <span class="va">sc_object</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tsne_sc.html">tsne_sc</a></span><span class="op">(</span>object <span class="op">=</span> <span class="va">sc_object</span>, use_knn <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Running t-SNE.</span></span>
+<span><span class="co">#&gt; Using provided kNN graph.</span></span>
 <span></span>
 <span><span class="va">tsne_dt_mnn</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/data.table/man/as.data.table.html" class="external-link">as.data.table</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="../reference/get_embedding.html">get_embedding</a></span><span class="op">(</span><span class="va">sc_object</span>, <span class="st">"tsne"</span><span class="op">)</span>,</span>
@@ -446,8 +447,9 @@
 <p>Also here, we observe improvements across the board.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb16"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tsne_sc.html">tsne_sc</a></span><span class="op">(</span>object <span class="op">=</span> <span class="va">sc_object</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tsne_sc.html">tsne_sc</a></span><span class="op">(</span>object <span class="op">=</span> <span class="va">sc_object</span>, use_knn <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Running t-SNE.</span></span>
+<span><span class="co">#&gt; Using provided kNN graph.</span></span>
 <span></span>
 <span><span class="va">tsne_dt_harmony</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/data.table/man/as.data.table.html" class="external-link">as.data.table</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="../reference/get_embedding.html">get_embedding</a></span><span class="op">(</span><span class="va">sc_object</span>, <span class="st">"tsne"</span><span class="op">)</span>,</span>
@@ -536,8 +538,9 @@
 </div>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb20"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tsne_sc.html">tsne_sc</a></span><span class="op">(</span>object <span class="op">=</span> <span class="va">sc_object</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tsne_sc.html">tsne_sc</a></span><span class="op">(</span>object <span class="op">=</span> <span class="va">sc_object</span>, use_knn <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Running t-SNE.</span></span>
+<span><span class="co">#&gt; Using provided kNN graph.</span></span>
 <span></span>
 <span><span class="va">tsne_dt_harmony</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/data.table/man/as.data.table.html" class="external-link">as.data.table</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="../reference/get_embedding.html">get_embedding</a></span><span class="op">(</span><span class="va">sc_object</span>, <span class="st">"tsne"</span><span class="op">)</span>,</span>
@@ -604,8 +607,9 @@
 </div>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb24"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tsne_sc.html">tsne_sc</a></span><span class="op">(</span>object <span class="op">=</span> <span class="va">sc_object</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tsne_sc.html">tsne_sc</a></span><span class="op">(</span>object <span class="op">=</span> <span class="va">sc_object</span>, use_knn <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Running t-SNE.</span></span>
+<span><span class="co">#&gt; Using provided kNN graph.</span></span>
 <span></span>
 <span><span class="va">tsne_dt_bbknn</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/data.table/man/as.data.table.html" class="external-link">as.data.table</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="../reference/get_embedding.html">get_embedding</a></span><span class="op">(</span><span class="va">sc_object</span>, <span class="st">"tsne"</span><span class="op">)</span>,</span>
