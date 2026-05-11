@@ -404,7 +404,7 @@ vision_res_auto <- vision_w_autocor_sc(
 
 expect_equivalent(
   current = vision_res_auto$vision_matrix,
-  target = vision_res,
+  target = unclass(vision_res),
   info = "vision w autocor - matrix is still sensible"
 )
 

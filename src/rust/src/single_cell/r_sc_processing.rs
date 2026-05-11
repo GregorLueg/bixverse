@@ -203,6 +203,8 @@ fn rs_sc_doublet_detection(
 ///
 /// @returns A list with predicted_doublets, doublet_scores, threshold,
 /// cluster_labels and detected_doublet_rate.
+///
+/// @export
 #[extendr]
 #[allow(clippy::too_many_arguments)]
 fn rs_sc_scdblfinder(

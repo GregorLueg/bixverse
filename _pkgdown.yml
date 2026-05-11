@@ -637,6 +637,7 @@ reference:
       - rs_rbh_cor
       - rs_rbh_sets
       - rs_sample_ids_for_cell_types
+      - rs_sc_scdblfinder
       - rs_sc_doublet_detection
       - rs_sc_get_gene_set_perc
       - rs_sc_get_top_genes_perc

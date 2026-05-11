@@ -280,7 +280,7 @@ faster fitting compared to the original xgboost approach. To run it, you can
 just do the following:
 
 ```{r}
-#| label: run scrublet
+#| label: run scdblfinder
 scdblfinder <- scdblfinder_sc(
   object = sc_object,
   scdblfinder_params = params_scdblfinder(

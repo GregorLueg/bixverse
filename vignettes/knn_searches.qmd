@@ -213,7 +213,7 @@ Potentially more interesting is what you can do with the approximate nearest
 neighbour searches.
 
 ```{r}
-#| label: nearest neighbours external of the class
+#| label: run annoy
 annoy_knn <- generate_knn_sc(
   object = sc_object,
   neighbours_params = params_sc_neighbours(
@@ -255,7 +255,7 @@ This allows us to actually explore some parameters
 more in depth:
 
 ```{r}
-#| label: nearest neighbours external of the class
+#| label: run annoy with less trees
 annoy_knn_less_trees <- generate_knn_sc(
   object = sc_object,
   neighbours_params = params_sc_neighbours(
@@ -295,7 +295,7 @@ We can appreciate that with one tree we do not get a Recall of 1 and the
 distance ratio is 4.2% worse than the exhaustive one. Let's test another index
 
 ```{r}
-#| label: nearest neighbours external of the class
+#| label: run nndescent
 nndescent_knn <- generate_knn_sc(
   object = sc_object,
   neighbours_params = params_sc_neighbours(
@@ -309,7 +309,7 @@ nndescent_knn
 And benchmark it:
 
 ```{r}
-#| label: exhaustive vs annoy (less tree)
+#| label: exhaustive vs nndescent
 nndescent_vs_exhaustive <- calc_knn_metrics(exhaustive_knn, nndescent_knn)
 
 cat(
@@ -326,9 +326,14 @@ cat(
 ```
 
 As we can see, this approximate index also reaches perfect recall and distance
-ratio. We could iterate through the others, but it does not have much of a 
-point. The core goal of this vignette was to check the type of hyperparameters
-and type of indices provided.
+ratio. 
+
+## Conclusions
+
+We could iterate through the others, but it does not have much of a  point. The 
+goal of this vignette was to check the type of hyperparameters and type of 
+indices provided and give an idea when to use which and how to work with them 
+and validate parameters if neededed.
 
 ## Clean up
 

@@ -59,6 +59,7 @@ library(bixverse)
 library(ggplot2)
 library(data.table)
 library(patchwork)
+library(magrittr)
 ```
 
 ## Preparing the single cell data
@@ -671,8 +672,8 @@ counts.
 
 ```{r}
 #| label: pseudobulk
-cl_dt <- sc_object[[c("leiden_clusters", "cell_id")]]
-cell_list <- split(cl_dt$cell_id, cl_dt$leiden_clusters)
+cl_dt <- sc_object[[c("leiden", "cell_id")]]
+cell_list <- split(cl_dt$cell_id, cl_dt$leiden)
 
 pb_counts <- get_pseudobulked_sc(
   object = sc_object,
@@ -693,5 +694,5 @@ itself.
 
 ```{r}
 #| label: clean up
-unlink(tempdir_pbmc, recursive = TRUE, force = TRUE)
+unlink(tempdir_cd34, recursive = TRUE, force = TRUE)
 ```

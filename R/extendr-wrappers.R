@@ -2257,6 +2257,8 @@ rs_sc_doublet_detection <- function(f_path_gene, f_path_cell, cells_to_keep, boo
 #'
 #' @returns A list with predicted_doublets, doublet_scores, threshold,
 #' cluster_labels and detected_doublet_rate.
+#'
+#' @export
 rs_sc_scdblfinder <- function(f_path_gene, f_path_cell, cell_indices, params, return_features, streaming, seed, verbose, debug) .Call(wrap__rs_sc_scdblfinder, f_path_gene, f_path_cell, cell_indices, params, return_features, streaming, seed, verbose, debug)
 
 #' Run Otsu's method

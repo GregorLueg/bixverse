@@ -74,8 +74,9 @@ get_seurat_counts_to_list <- function(seurat_obj) {
 #' }
 #'
 #' @keywords internal
+#'
+#' @import Matrix
 get_meta_cell_matrices <- function(meta_cell_data) {
-  # checks
   checkmate::assertList(meta_cell_data, names = "named")
   checkmate::assertNames(
     names(meta_cell_data),
@@ -89,20 +90,26 @@ get_meta_cell_matrices <- function(meta_cell_data) {
     )
   )
 
+  dims <- as.integer(c(meta_cell_data$nrow, meta_cell_data$ncol))
+  p <- as.integer(meta_cell_data$indptr)
+  j <- as.integer(meta_cell_data$indices)
+
   list(
-    raw = new(
-      "dgRMatrix",
-      p = as.integer(meta_cell_data$indptr),
-      j = as.integer(meta_cell_data$indices),
+    raw = Matrix::sparseMatrix(
+      p = p,
+      j = j,
       x = as.numeric(meta_cell_data$raw_counts),
-      Dim = as.integer(c(meta_cell_data$nrow, meta_cell_data$ncol))
+      dims = dims,
+      repr = "R",
+      index1 = FALSE
     ),
-    norm = new(
-      "dgRMatrix",
-      p = as.integer(meta_cell_data$indptr),
-      j = as.integer(meta_cell_data$indices),
+    norm = Matrix::sparseMatrix(
+      p = p,
+      j = j,
       x = as.numeric(meta_cell_data$norm_counts),
-      Dim = as.integer(c(meta_cell_data$nrow, meta_cell_data$ncol))
+      dims = dims,
+      repr = "R",
+      index1 = FALSE
     )
   )
 }
@@ -365,6 +372,8 @@ generate_sc_knn <- function(
 #'  \item final_recall - The final recall across all samples.
 #'  \item final_ratio - The final distance ratio across all samples.
 #' }
+#'
+#' @export
 calc_knn_metrics <- function(ref_knn, query_knn) {
   # checks
   checkmate::assertClass(ref_knn, "SingleCellNearestNeighbour")

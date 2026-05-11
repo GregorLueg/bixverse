@@ -24,8 +24,9 @@ an orchestraction layer.
 Result? Blazingly fast performance with low memory usage, making large-scale
 analyses feasable without any cloud compute. Over time more and more methods
 will be added. The aim will be to come a `tidyverse` equivalent, but for
-a lot of downstream methods post WGS processing. There is a sister package for
-plotting functions being build in parallel, see 
+a lot of downstream methods post WGS processing (with a strong emphasis on 
+transcriptomics, think single cell and RNASeq for now). There is a sister 
+package for plotting functions being build in parallel, see 
 [here](https://github.com/GregorLueg/bixverse.plots) (that one is in alpha
 phase).
 
