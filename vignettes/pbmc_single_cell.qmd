@@ -1,5 +1,7 @@
 ---
 title: "Analysing PBMCs with bixverse"
+date: last-modified
+date-format: YYYY-MM-DD
 vignette: >
   %\VignetteIndexEntry{Analysing PBMCs with bixverse}
   %\VignetteEngine{quarto::html}
@@ -8,7 +10,8 @@ knitr:
   opts_chunk:
     collapse: true
     comment: '#>'
-author: "Grant Neilson and Gregor Lueg"
+author: 
+  - name: "Grant Neilson and Gregor Lueg"
 ---
 
 ## Intro
@@ -35,8 +38,7 @@ loading it via Cell Ranger-style MTX I/O.
 
 ```{r}
 #| label: load pbmc3k
-
-pbmc3k_path <- bixverse:::download_pbmc3k()
+pbmc3k_path <- download_pbmc3k()
 
 tempdir_pbmc <- tempdir()
 
@@ -60,7 +62,6 @@ something sensible and set up mappings between Ensembl IDs and symbols.
 
 ```{r}
 #| label: var table and renaming
-
 var <- get_sc_var(sc_object)
 
 head(var)
@@ -73,8 +74,6 @@ setnames_sc(
 )
 
 var <- get_sc_var(sc_object)
-
-head(var)
 
 ensembl_to_symbol <- setNames(var$gene_symbol, var$gene_id)
 symbol_to_ensembl <- setNames(var$gene_id, var$gene_symbol)
@@ -90,7 +89,6 @@ obs table in the DuckDB.
 
 ```{r}
 #| label: gene set proportions
-
 gs_of_interest <- list(
   MT = var[grepl("^MT-", gene_symbol), gene_id],
   Ribo = var[grepl("^RPS|^RPL", gene_symbol), gene_id]
@@ -116,7 +114,6 @@ metrics, per-metric outlier calls and a combined outlier vector.
 
 ```{r}
 #| label: qc outlier detection
-
 qc_df <- sc_object[[c("cell_id", "lib_size", "nnz", "MT")]]
 
 metrics <- list(
@@ -143,7 +140,6 @@ highlighted.
 #| label: qc plots
 #| fig-width: 12
 #| fig-height: 4
-
 plots <- plot(qc, qc_df)
 
 plots$log10_lib_size + plots$log10_nnz + plots$MT
@@ -157,7 +153,6 @@ operate on the retained cells.
 
 ```{r}
 #| label: set cells to keep
-
 sc_object[["outlier"]] <- qc$combined
 
 cells_to_keep <- qc_df[!qc$combined, cell_id]
@@ -174,7 +169,6 @@ selection, PCA, and nearest neighbour computation.
 
 ```{r}
 #| label: hvg pca neighbours
-
 sc_object <- find_hvg_sc(
   object = sc_object,
   hvg_no = 2000L,
@@ -199,12 +193,15 @@ sc_object <- find_neighbours_sc(
 
 ## Clustering and marker detection
 
+### Leiden clustering
+
 Leiden clustering followed by differential gene expression across all clusters.
+You can also run Louvain if you want, but Leiden is thought of to have better
+properties, see [Traag, et al.](https://www.nature.com/articles/s41598-019-41695-z).
 
 ```{r}
 #| label: clustering and markers
-
-sc_object <- find_clusters_sc(sc_object, res = 1.5, name = "leiden_clusters")
+sc_object <- find_clusters_sc(sc_object, res = 1, name = "leiden_clusters")
 
 all_markers <- find_all_markers_sc(
   object = sc_object,
@@ -216,6 +213,41 @@ all_markers[, gene_symbol := ensembl_to_symbol[gene_id]]
 head(all_markers[fdr <= 0.05][order(-abs(lfc))])
 ```
 
+### Fast clustering
+
+In the case of large data sets there is an option to run an accelerated form
+of clustering. This runs first k-means clustering (with default `sqrt(N)` 
+cells), then kNN on the centroids, followed by Louvain (Leiden is not yet
+supported, but on the to-do list) across a set of resolutions. There is also an 
+option to run this across several seeds to check for stability of the 
+clustering. If you ran the grid search, the membership
+
+```{r}
+#| label: fast clustering
+fast_cluster_res <- fast_cluster_sc(
+  object = sc_object,
+  resolutions = c(5, 3, 2, 1.5, 1, 0.5),
+  # also return the k-mean clustering
+  return_kmeans = TRUE,
+  no_seeds = 25L,
+  grid_search = TRUE
+)
+
+fast_clusted_dt <- get_obs_data(fast_cluster_res)
+
+head(fast_clusted_dt)
+```
+
+If you want to explore the k-means memberships or centroids, there are getters
+for this.
+
+```{r}
+#| label: fast cluster k-means data
+centroids <- get_centroids(fast_cluster_res)
+
+kmeans_membership <- get_kmeans_clusters(fast_cluster_res)
+```
+
 ## Visualisation
 
 ### Dimensionality reduction
@@ -224,10 +256,12 @@ Let us run quickly UMAP and tSNE.
 
 ```{r}
 #| label: umap and tsne
+sc_object <- umap_sc(sc_object)
 
-sc_object <- umap_sc(sc_object, knn_method = "annoy")
-
-sc_object <- tsne_sc(sc_object, perplexity = 30, knn_method = "annoy")
+sc_object <- tsne_sc(
+  sc_object,
+  perplexity = 10
+)
 ```
 
 We can pull the embeddings back into data.tables and plot them (longer term,
@@ -238,7 +272,6 @@ columns can be appended directly.
 #| label: umap plot
 #| fig-width: 7
 #| fig-height: 5
-
 umap_dt <- as.data.table(
   get_embedding(sc_object, "umap"),
   keep.rownames = "cell_id"
@@ -256,7 +289,6 @@ Let's check out tSNE
 #| label: tsne plot
 #| fig-width: 7
 #| fig-height: 5
-
 tsne_dt <- as.data.table(
   get_embedding(sc_object, "tsne"),
   keep.rownames = "cell_id"
@@ -278,7 +310,6 @@ grouping statistics and optional min-max scaling in one call.
 #| label: dot plot
 #| fig-width: 8
 #| fig-height: 6
-
 cell_markers <- c(
   "MS4A1",
   "CD79B",
@@ -328,7 +359,6 @@ gene, plus any obs metadata you need.
 #| label: feature plot
 #| fig-width: 10
 #| fig-height: 4
-
 expr_dt <- extract_gene_expression(
   object = sc_object,
   features = symbol_to_ensembl[c("CD14", "MS4A1", "CD3E")],

@@ -1,5 +1,7 @@
 ---
 title: "Gene Set Enrichment Methods"
+date: last-modified
+date-format: YYYY-MM-DD
 vignette: >
   %\VignetteIndexEntry{gse_methods}
   %\VignetteEngine{quarto::html}
@@ -144,7 +146,6 @@ in a few seconds.
 ```{r}
 #| label: rust speed hypergeom multiple
 #| eval: !expr requireNamespace("tictoc", quietly = TRUE)
-
 seed = 10101L
 
 set.seed(seed)
@@ -213,7 +214,6 @@ that transfers the ontology structure into Rust for efficient traversal.
 
 ```{r}
 #| label: load human go data
-
 go_data_dt <- get_go_data_human()
 
 go_data_s7 <- GeneOntologyElim(go_data_dt, min_genes = 3L)
@@ -225,7 +225,6 @@ across all tests without copying, keeping memory overhead low.
 
 ```{r}
 #| label: run single go-aware gse
-
 go_aware_res <- gse_go_elim_method(
   object = go_data_s7,
   target_genes = target_genes_1
@@ -238,7 +237,6 @@ And the version for lists:
 
 ```{r}
 #| label: run multiple go-aware gse
-
 go_aware_res_2 <- gse_go_elim_method_list(
   object = go_data_s7,
   target_gene_list = target_list
@@ -253,7 +251,6 @@ target gene sets against the full human GO completes in a matter of seconds:
 ```{r}
 #| label: speed go-aware gse
 #| eval: !expr requireNamespace("tictoc", quietly = TRUE)
-
 go_gene_universe <- unique(unlist(go_data_dt$ensembl_id))
 
 go_target_sets_no <- 100L
@@ -297,7 +294,6 @@ while for rigorous GO reporting the elimination method is generally preferable.
 
 ```{r}
 #| label: prepare go data for simplification approach
-
 go_data <- load_go_human_data()
 
 min_genes <- 3L
@@ -320,7 +316,6 @@ are broken by ontology depth, preferring the more specific term.
 
 ```{r}
 #| label: run simplification with the gene ontology info
-
 go_parent_child_dt <- go_data$gene_ontology[
   relationship %in% c("is_a", "part_of")
 ] %>%
@@ -350,7 +345,6 @@ Both are available for comparison.
 ```{r}
 #| label: fgsea run
 #| eval: !expr requireNamespace("fgsea", quietly = TRUE)
-
 library("fgsea")
 
 data(examplePathways)
@@ -403,7 +397,6 @@ but the gap widens with the number of pathways and permutations:
 ```{r}
 #| label: comparison of speed fgsea vs. bixverse version
 #| eval: !expr requireNamespace("microbenchmark", quietly = TRUE)
-
 microbenchmark::microbenchmark(
   fgsea = fgsea(
     pathways = examplePathways,
@@ -433,7 +426,6 @@ provide.
 
 ```{r}
 #| label: gsea gene ontology aware
-
 gene_universe_go <- unique(
   unlist(go_data_dt[, "ensembl_id"], use.names = FALSE)
 )

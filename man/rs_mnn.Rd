@@ -41,5 +41,5 @@ The batch-corrected embedding space.
 \description{
 This function implements the (fast) MNN algorithm from Haghverdi, et al.
 Instead of working on the full matrix, it uses under the hood PCA and
-generates an aligned embedding space.
+generates a batch-aligned embedding space.
 }

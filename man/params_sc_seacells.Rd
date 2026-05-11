@@ -14,6 +14,7 @@ params_sc_seacells(
   graph_building = "union",
   pruning = FALSE,
   pruning_threshold = 1e-07,
+  n_landmarks = NULL,
   knn = list()
 )
 }
@@ -43,6 +44,9 @@ large data sets. Defaults to \code{FALSE}.}
 
 \item{pruning_threshold}{Float. If \code{pruning = TRUE} values below which
 threshold shall be pruned.}
+
+\item{n_landmarks}{Optional integer. If provided, it will use the Nystroem
+extension during the archetype finding. Useful for larger data sets.}
 
 \item{knn}{List. Optional overrides for kNN parameters. See
 \code{\link[=params_knn_defaults]{params_knn_defaults()}} for available parameters: \code{k},

@@ -14,8 +14,8 @@
 #' \itemize{
 #'  \item k - Number of neighbours. Defaults to `15L`.
 #'  \item knn_method - Which of method to use for the approximate nearest
-#'  neighbour search. Defaults to `"hnsw"`. The implementations are:
-#'  `c("hnsw", "annoy", "nndescent", "ivf", "exhaustive")`.
+#'  neighbour search. Defaults to `"kmknn"`. The implementations are:
+#'  `c("kmknn", "hnsw", "annoy", "nndescent", "ivf", "exhaustive")`.
 #'  \item ann_dist - Which distance metric to use for the approximate nearest
 #'  neighbour search. Defaults to `"cosine"`. The implementations are
 #'  `c("cosine", "euclidean")`.
@@ -47,7 +47,7 @@ params_knn_defaults <- function() {
   list(
     # General parameters
     k = 15L,
-    knn_method = "hnsw",
+    knn_method = "kmknn",
     ann_dist = "euclidean",
     # Annoy
     n_trees = 50L,
@@ -74,8 +74,11 @@ params_knn_defaults <- function() {
 #'  \item min_gene_var_pctl - Which percentile of the highly variable genes
 #'  to include. Defaults to `0.7`.
 #'  \item hvg_method - Which method to use to identify HVG. Defaults to `"vst"`.
-#'  \item loess_span - In case of
-#'  \item clip_max -
+#'  \item loess_span - In case of `"vst"` the span of the loess function.
+#'  \item clip_max - The maximum clipping value (optional).
+#'  \item n_bins - The number of bins to use for the `"meanvarbin"` HVG
+#'  detection.
+#'  \item binning_strategy - Which binning strategy to use for `"meanvarbin"`.
 #' }
 #'
 #' @export
@@ -84,7 +87,9 @@ params_hvg_defaults <- function() {
     min_gene_var_pctl = 0.7,
     hvg_method = "vst",
     loess_span = 0.3,
-    clip_max = NULL
+    clip_max = NULL,
+    n_bins = 20L,
+    binning_strategy = "equal_width"
   )
 }
 
@@ -103,7 +108,7 @@ params_hvg_defaults <- function() {
 #' }
 #'
 #' @export
-params_norm_doublet_detection_defaults <- function() {
+params_norm_doublets_defaults <- function() {
   list(
     log_transform = TRUE,
     mean_center = FALSE,
@@ -134,6 +139,28 @@ params_pca_defaults <- function() {
   )
 }
 
+#' Helper function to generate default parameters for the fast clustering for
+#' the doublet detection methods
+#'
+#' @returns A list with the following parameters for fast clustering:
+#' \itemize{
+#'  \item km_type - The type of k-means clustering. Defaults to `"minibatch"`
+#'  \item n_centroids - The number of centroids to use. Default to `NULL` and
+#'  the function will use `sqrt(N_cells) * 4` for the number of n_centroids.
+#'  \item kmeans_iters - Number of maximum k-means iterations. Defaults to
+#'  `100L`
+#'  \item batch_size - Max batch size will be set to `4098L`, but pending data
+#'  set set to `N_cells / 2`.
+#' }
+params_fast_cluster_default <- function() {
+  list(
+    km_type = "minibatch",
+    n_centroids = NULL,
+    kmeans_iters = 100L,
+    batch_size = 4098L
+  )
+}
+
 # constructors -----------------------------------------------------------------
 
 ## doublet detections ----------------------------------------------------------
@@ -154,13 +181,13 @@ params_pca_defaults <- function() {
 #' 0 and 1. Defaults to `0.1`.
 #' @param stdev_doublet_rate Numeric. Uncertainty in the expected doublet rate.
 #' Defaults to `0.02`.
-#' @param n_bins Integer. Number of bins for histogram-based automatic threshold
-#' detection. Typically 50-100. Defaults to `100L`.
+#' @param n_bins_histogram Integer. Number of bins for histogram-based automatic
+#' threshold detection. Typically 50-100. Defaults to `100L`.
 #' @param manual_threshold Optional numeric. Manual doublet score threshold. If
 #' `NULL` (default), threshold is automatically detected from simulated doublet
 #' score distribution.
 #' @param normalisation List. Optional overrides for normalisation parameters.
-#' See [bixverse::params_norm_doublet_detection_defaults()] for available
+#' See [bixverse::params_norm_doublets_defaults()] for available
 #' parameters: `log_transform`, `mean_center`, `normalise_variance`,
 #' `target_size`.
 #' @param hvg List. Optional overrides for highly variable gene selection
@@ -184,18 +211,18 @@ params_scrublet <- function(
   sim_doublet_ratio = 1.5,
   expected_doublet_rate = 0.1,
   stdev_doublet_rate = 0.02,
-  n_bins = 100L,
+  n_bins_histogram = 100L,
   manual_threshold = NULL,
   normalisation = list(),
   hvg = list(),
   pca = list(),
-  knn = list(k = 0L, ann_dist = "euclidean")
+  knn = list(k = 0L)
 ) {
   # doublet simulation checks
   checkmate::qassert(sim_doublet_ratio, "N1(0,)")
   checkmate::qassert(expected_doublet_rate, "N1[0,1]")
   checkmate::qassert(stdev_doublet_rate, "N1[0,1]")
-  checkmate::qassert(n_bins, "I1[10,)")
+  checkmate::qassert(n_bins_histogram, "I1[10,)")
   if (!is.null(manual_threshold)) {
     checkmate::qassert(manual_threshold, "N1[0,)")
   }
@@ -203,7 +230,7 @@ params_scrublet <- function(
   # generate final parameters
   params <- list(
     normalisation = modifyList(
-      params_norm_doublet_detection_defaults(),
+      params_norm_doublets_defaults(),
       normalisation,
       keep.null = TRUE
     ),
@@ -213,7 +240,7 @@ params_scrublet <- function(
     sim_doublet_ratio = sim_doublet_ratio,
     expected_doublet_rate = expected_doublet_rate,
     stdev_doublet_rate = stdev_doublet_rate,
-    n_bins = n_bins,
+    n_bins_histogram = n_bins_histogram,
     manual_threshold = manual_threshold
   )
 
@@ -233,14 +260,18 @@ params_scrublet <- function(
 #' @param resolution Numeric. Resolution parameter for graph-based clustering.
 #' Higher values lead to more clusters. Defaults to `1.0`.
 #' @param n_iters Integer. Number of iterations to run the algorithm. Defaults
-#' to `25L`.
+#' to `20L`.
 #' @param p_thresh Numeric. P-value threshold for significance testing. Defaults
 #' to `1e-7`.
 #' @param voter_thresh Numeric. Voter threshold across iterations. Proportion of
 #' iterations a cell must be assigned to a cluster to be considered a member.
 #' Must be between 0 and 1. Defaults to `0.9`.
+#' @param fast_cluster Boolean. Shall fast Louvain clustering be applied, i.e.,
+#' k-means clustering and use the centroids for kNN graph generation and
+#' Louvain clustering with then backpropagating the membership based on centroid
+#' proximity.
 #' @param normalisation List. Optional overrides for normalisation parameters.
-#' See [bixverse::params_norm_doublet_detection_defaults()] for available
+#' See [bixverse::params_norm_doublets_defaults()] for available
 #' parameters: `log_transform`, `mean_center`, `normalise_variance`,
 #' `target_size`. Note: Boost uses different defaults (`log_transform = FALSE`,
 #' `mean_center = TRUE`, `normalise_variance = TRUE`, `target_size = NULL`).
@@ -256,6 +287,10 @@ params_scrublet <- function(
 #' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
 #' and `n_probe`. Note: this function defaults to `k = 0L` (automatic neighbour
 #' detection).
+#' @param fast_cluster_params List. Optional overrides for the fast clustering
+#' parameters. Only relevant if `fast_cluster = TRUE`. See
+#' [params_fast_cluster_default()] for available parameters: `km_type`,
+#' `n_centroids`, `kmeans_iters` and `batch_size`.
 #'
 #' @returns A named list with all Boost parameters, combining defaults with
 #' any user-specified overrides.
@@ -267,13 +302,15 @@ params_boost <- function(
   boost_rate = 0.25,
   replace = FALSE,
   resolution = 1.0,
-  n_iters = 25L,
+  n_iters = 20L,
   p_thresh = 1e-7,
   voter_thresh = 0.9,
+  fast_cluster = FALSE,
   normalisation = list(),
   hvg = list(),
   pca = list(),
-  knn = list(k = 0L, ann_dist = "euclidean")
+  knn = list(k = 0L),
+  fast_cluster_params = list()
 ) {
   # checks
   checkmate::qassert(boost_rate, "N1[0,1]")
@@ -282,20 +319,27 @@ params_boost <- function(
   checkmate::qassert(n_iters, "I1[1,)")
   checkmate::qassert(p_thresh, "N1(0,)")
   checkmate::qassert(voter_thresh, "N1[0,1]")
+  checkmate::qassert(fast_cluster, "B1")
 
   # generate final parameters
   params <- list(
     normalisation = modifyList(
-      params_norm_doublet_detection_defaults(),
+      params_norm_doublets_defaults(),
       normalisation,
       keep.null = TRUE
     ),
     hvg = modifyList(params_hvg_defaults(), hvg, keep.null = TRUE),
     pca = modifyList(params_pca_defaults(), pca, keep.null = TRUE),
     knn = modifyList(params_knn_defaults(), knn, keep.null = TRUE),
+    fast_cluster_params = modifyList(
+      params_fast_cluster_default(),
+      fast_cluster_params,
+      keep.null = TRUE
+    ),
     boost_rate = boost_rate,
     replace = replace,
     resolution = resolution,
+    fast_cluster = fast_cluster,
     n_iters = n_iters,
     p_thresh = p_thresh,
     voter_thresh = voter_thresh
@@ -308,6 +352,152 @@ params_boost <- function(
   params
 }
 
+### scdblfinder ----------------------------------------------------------------
+
+#' Wrapper function for scDblFinder doublet detection parameters
+#'
+#' @description Constructor for the scDblFinder parameters. This method
+#' combines cluster-aware doublet simulation with a gradient-boosted
+#' classifier trained on engineered features.
+#'
+#' @param n_genes Integer. Number of top-expressed genes to use as features.
+#' Defaults to `1352L`.
+#' @param doublet_ratio Numeric. Ratio of simulated doublets to observed cells.
+#' Defaults to `1.0`.
+#' @param heterotypic_bias Numeric. Fraction of simulated pairs forced to come
+#' from different clusters (0-1). Defaults to `1.0`.
+#' @param cluster_resolution Numeric. Resolution for the initial Louvain
+#' clustering. Defaults to `1.0`.
+#' @param cluster_iters Integer. Number of Louvain iterations per clustering
+#' step. Defaults to `10L`.
+#' @param fast_cluster Boolean. Shall fast Louvain clustering be applied, i.e.,
+#' k-means clustering and use the centroids for kNN graph generation and
+#' Louvain clustering with then backpropagating the membership based on centroid
+#' proximity.
+#' @param n_iterations Integer. Number of refinement iterations. Typically 2-3.
+#' Defaults to `3L`.
+#' @param n_trees Integer. Maximum number of boosting rounds for the GBM
+#' classifier. Defaults to `200L`.
+#' @param max_depth Integer. Maximum tree depth. Shallow trees (3-5) work best.
+#' Defaults to `4L`.
+#' @param learning_rate Numeric. Shrinkage applied to each tree. Defaults to
+#' `0.3`.
+#' @param min_samples_leaf Integer. Minimum training samples per leaf. Defaults
+#' to `20L`.
+#' @param subsample_rate Numeric. Fraction of samples used per tree. Defaults to
+#' `0.75`.
+#' @param cv_folds Integer. Number of cross-validation folds for boosting round
+#' selection. Defaults to `5L`.
+#' @param cv_early_stop Integer. Early stopping patience per CV fold. Defaults
+#' to `2L`.
+#' @param se_fraction Numeric. Multiplier on the standard error for the SE rule
+#' used in round selection. Defaults to `1.0`
+#' @param include_pcs Integer. Number of leading principal components to include
+#' as classifier features. Defaults to `19L`.
+#' @param expected_doublet_rate Optional numeric. Expected doublet rate as a
+#' percentage. If not provided, will be calculated internally.
+#' @param manual_threshold Optional numeric. Manual score threshold. If `NULL`
+#' (default), expected-rate thresholding is used.
+#' @param normalisation List. Optional overrides for normalisation parameters.
+#' See [bixverse::params_norm_doublets_defaults()].
+#' @param pca List. Optional overrides for PCA parameters.
+#' See [bixverse::params_pca_defaults()].
+#' @param knn List. Optional overrides for kNN parameters.
+#' See [bixverse::params_knn_defaults()]. NNDescent works better for the larger
+#' k-values often used here.
+#' @param fast_cluster_params List. Optional overrides for the fast clustering
+#' parameters. Only relevant if `fast_cluster = TRUE`. See
+#' [params_fast_cluster_default()] for available parameters: `km_type`,
+#' `n_centroids`, `kmeans_iters` and `batch_size`.
+#'
+#' @returns A named list with all scDblFinder parameters.
+#'
+#' @export
+params_scdblfinder <- function(
+  n_genes = 1352L,
+  doublet_ratio = 1.0,
+  heterotypic_bias = 1.0,
+  cluster_resolution = 1.0,
+  cluster_iters = 10L,
+  fast_cluster = FALSE,
+  n_iterations = 3L,
+  n_trees = 200L,
+  max_depth = 4L,
+  learning_rate = 0.3,
+  min_samples_leaf = 20L,
+  subsample_rate = 0.75,
+  cv_folds = 5L,
+  cv_early_stop = 2L,
+  se_fraction = 1.0,
+  include_pcs = 19L,
+  expected_doublet_rate = NULL,
+  cxds_genes = NULL,
+  manual_threshold = NULL,
+  normalisation = list(mean_center = TRUE),
+  pca = list(),
+  knn = list(k = 0L),
+  fast_cluster_params = list()
+) {
+  # checks
+  checkmate::qassert(n_genes, "I1[1,)")
+  checkmate::qassert(doublet_ratio, "N1(0,)")
+  checkmate::qassert(heterotypic_bias, "N1[0,1]")
+  checkmate::qassert(cluster_resolution, "N1(0,)")
+  checkmate::qassert(cluster_iters, "I1[1,)")
+  checkmate::qassert(n_iterations, "I1[1,)")
+  checkmate::qassert(fast_cluster, "B1")
+  checkmate::qassert(n_trees, "I1[1,)")
+  checkmate::qassert(max_depth, "I1[1,)")
+  checkmate::qassert(learning_rate, "N1(0,)")
+  checkmate::qassert(min_samples_leaf, "I1[1,)")
+  checkmate::qassert(subsample_rate, "N1(0,1]")
+  checkmate::qassert(cv_folds, "I1[2,)")
+  checkmate::qassert(cv_early_stop, "I1[1,)")
+  checkmate::qassert(se_fraction, "N1[0,)")
+  checkmate::qassert(expected_doublet_rate, c("N1(0,1]", "0"))
+  checkmate::qassert(cxds_genes, c("I1", "0"))
+  checkmate::qassert(manual_threshold, c("N1[0,)", "0"))
+
+  # generate params list
+  params <- list(
+    normalisation = modifyList(
+      params_norm_doublets_defaults(),
+      normalisation,
+      keep.null = TRUE
+    ),
+    pca = modifyList(params_pca_defaults(), pca, keep.null = TRUE),
+    knn = modifyList(params_knn_defaults(), knn, keep.null = TRUE),
+    fast_cluster_params = modifyList(
+      params_fast_cluster_default(),
+      fast_cluster_params,
+      keep.null = TRUE
+    ),
+    n_genes = n_genes,
+    doublet_ratio = doublet_ratio,
+    heterotypic_bias = heterotypic_bias,
+    cluster_resolution = cluster_resolution,
+    cluster_iters = cluster_iters,
+    fast_cluster = fast_cluster,
+    n_iterations = n_iterations,
+    n_trees = n_trees,
+    max_depth = max_depth,
+    learning_rate = learning_rate,
+    min_samples_leaf = min_samples_leaf,
+    subsample_rate = subsample_rate,
+    cv_folds = cv_folds,
+    cv_early_stop = cv_early_stop,
+    se_fraction = se_fraction,
+    include_pcs = include_pcs,
+    expected_doublet_rate = expected_doublet_rate,
+    manual_threshold = manual_threshold,
+    cxds_genes = cxds_genes
+  )
+
+  params <- purrr::list_flatten(params, name_spec = "{inner}")
+
+  params
+}
+
 ## neighbours ------------------------------------------------------------------
 
 #' Wrapper function for parameters for neighbour identification in single cell
@@ -316,7 +506,8 @@ params_boost <- function(
 #' be generated that generates edges between all cells instead of between
 #' only neighbours.
 #' @param pruning Numeric. Weights below this threshold will be set to 0 in
-#' the generation of the sNN graph.
+#' the generation of the sNN graph. Seurat uses for example `1/15` with
+#' `k = 20`. As the default k is set to 15, we set it to `1/12`.
 #' @param snn_similarity String. One of `c("rank", "jaccard")`. The Jaccard
 #' similarity calculates the Jaccard between the neighbours, whereas the rank
 #' method calculates edge weights based on the ranking of shared neighbours.
@@ -335,9 +526,9 @@ params_boost <- function(
 #' @export
 params_sc_neighbours <- function(
   full_snn = FALSE,
-  pruning = 1 / 15,
-  snn_similarity = c("rank", "jaccard"),
-  knn = list()
+  pruning = 1 / 12,
+  snn_similarity = c("jaccard", "rank"),
+  knn = list(ann_dist = "cosine")
 ) {
   snn_similarity <- match.arg(snn_similarity)
 
@@ -347,16 +538,94 @@ params_sc_neighbours <- function(
 
   knn_params <- modifyList(
     params_knn_defaults(),
-    modifyList(
-      list(k = 15L, ann_dist = "cosine"),
-      knn,
-      keep.null = TRUE
-    ),
+    knn,
     keep.null = TRUE
   )
 
   c(
     list(
+      full_snn = full_snn,
+      pruning = pruning,
+      snn_similarity = snn_similarity
+    ),
+    knn_params
+  )
+}
+
+## fast clustering -------------------------------------------------------------
+
+#' Fast single cell clustering parameters
+#'
+#' @param kmeans_iters Integer. Number of iterations for k-means clustering.
+#' @param batch_size Integer. Batch size for mini batch k-means clustering.
+#' @param drift_threshold Numeric. The drift for the mini batch k-means
+#' clustering. If the centroid drift is below this, the mini batch k-means
+#' terminates.
+#' @param lr_alpha Numeric. Learning rate alpha parameter for mini batch
+#' k-means.
+#' @param louvain_iters Integer. Number of iterations for Louvain clustering.
+#' @param full_snn Boolean. Shall the full shared nearest neighbour graph
+#' be generated that generates edges between all cells instead of between
+#' only neighbours.
+#' @param pruning Optional numeric. Weights below this threshold will be set to
+#' 0 in the generation of the sNN graph. If not provided, defaults to
+#' `1 / ceil(k * 0.8)`.
+#' @param snn_similarity String. One of `c("rank", "jaccard")`. The Jaccard
+#' similarity calculates the Jaccard between the neighbours, whereas the rank
+#' method calculates edge weights based on the ranking of shared neighbours.
+#' For the rank method, the weight is determined by finding the shared
+#' neighbour with the lowest combined rank across both cells, where
+#' lower-ranked (closer) shared neighbours result in higher edge weights
+#' Both methods produce weights normalised to the range `[0, 1]`.
+#' @param knn List. Optional overrides for kNN parameters. See
+#' [bixverse::params_knn_defaults()] for available parameters: `k`,
+#' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
+#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
+#' and `n_probe`. Sets the default `k = 5L`.
+#'
+#' @returns A named list with the single cell fast clustering parameters.
+#'
+#' @export
+params_sc_fast_cluster <- function(
+  # kmeans
+  kmeans_iters = 100L,
+  batch_size = 4096L,
+  drift_threshold = 1e-4,
+  lr_alpha = 1.0,
+  # snn
+  full_snn = FALSE,
+  pruning = NULL,
+  snn_similarity = c("jaccard", "rank"),
+  # louvain
+  louvain_iters = 10L,
+  # knn
+  knn = list(k = 5L)
+) {
+  snn_similarity <- match.arg(snn_similarity)
+
+  # checks
+  checkmate::qassert(kmeans_iters, "I1")
+  checkmate::qassert(batch_size, "I1")
+  checkmate::qassert(drift_threshold, "N1")
+  checkmate::qassert(lr_alpha, "N1")
+  checkmate::qassert(louvain_iters, "I1")
+  checkmate::qassert(full_snn, "B1")
+  checkmate::qassert(pruning, c("N1", "0"))
+  checkmate::assertChoice(snn_similarity, c("jaccard", "rank"))
+
+  knn_params <- modifyList(
+    params_knn_defaults(),
+    knn,
+    keep.null = TRUE
+  )
+
+  c(
+    list(
+      kmeans_iters = kmeans_iters,
+      batch_size = batch_size,
+      drift_threshold = drift_threshold,
+      lr_alpha = lr_alpha,
+      louvain_iters = louvain_iters,
       full_snn = full_snn,
       pruning = pruning,
       snn_similarity = snn_similarity
@@ -461,7 +730,7 @@ params_sc_hotspot <- function(
 #' One of `c("approximate", "bruteforce", "index")`. Defaults to
 #' `"index"`.
 #' @param index_type String. Type of kNN index to use. One of
-#' `c("hnsw", "annoy", "nndescent", "ivf")`. Defaults to `"hnsw"`.
+#' `c("hnsw", "annoy", "nndescent", "ivf")`. Defaults to `"nndescent"`.
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
@@ -476,7 +745,7 @@ params_sc_miloR <- function(
   prop = 0.2,
   k_refine = 20L,
   refinement_strategy = c("index", "approximate", "bruteforce"),
-  index_type = c("hnsw", "annoy", "nndescent", "ivf"),
+  index_type = c("nndescent", "ivf", "hnsw", "annoy"),
   knn = list()
 ) {
   refinement_strategy <- match.arg(refinement_strategy)
@@ -510,7 +779,11 @@ params_sc_miloR <- function(
 
 ### meta cell (hdWGCNA) --------------------------------------------------------
 
-#' Wrapper function for parameters for meta cell generation
+#' Wrapper function for parameters for bootstrapped meta cell generation
+#'
+#' @description
+#' This function generates parameters for the bootstrapped meta cell generation
+#' based on hdWGCNA, see Morabito, et al., Cell Rep. Methods, 2023.
 #'
 #' @param max_shared Integer. Maximum number of allowed shared neighbours for
 #' the meta cell to be considered. Defaults to `15L`.
@@ -527,7 +800,7 @@ params_sc_miloR <- function(
 #' @returns A list with the metacell parameters.
 #'
 #' @export
-params_sc_metacells <- function(
+params_sc_bt_metacells <- function(
   max_shared = 15L,
   target_no_metacells = 1000L,
   max_iter = 5000L,
@@ -574,6 +847,8 @@ params_sc_metacells <- function(
 #' large data sets. Defaults to `FALSE`.
 #' @param pruning_threshold Float. If `pruning = TRUE` values below which
 #' threshold shall be pruned.
+#' @param n_landmarks Optional integer. If provided, it will use the Nystroem
+#' extension during the archetype finding. Useful for larger data sets.
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
@@ -593,6 +868,7 @@ params_sc_seacells <- function(
   graph_building = "union",
   pruning = FALSE,
   pruning_threshold = 1e-7,
+  n_landmarks = NULL,
   knn = list()
 ) {
   checkmate::qassert(n_sea_cells, "I1")
@@ -604,6 +880,7 @@ params_sc_seacells <- function(
   checkmate::qassert(graph_building, "S1")
   checkmate::qassert(pruning, "B1")
   checkmate::qassert(pruning_threshold, "N1")
+  checkmate::qassert(n_landmarks, c("0", "N1"))
 
   knn_params <- modifyList(
     params_knn_defaults(),
@@ -621,7 +898,8 @@ params_sc_seacells <- function(
       greedy_threshold = greedy_threshold,
       graph_building = graph_building,
       pruning = pruning,
-      pruning_threshold = pruning_threshold
+      pruning_threshold = pruning_threshold,
+      n_landmarks = n_landmarks
     ),
     knn_params
   )
@@ -636,8 +914,11 @@ params_sc_seacells <- function(
 #' @param graining_factor Numeric. Graining level of data (proportion of number
 #' of single cells in the initial dataset to the number of metacells in the
 #' final dataset). Defaults to `20.0`. (One meta cell per 20 cells.)
-#' @param linkage_dist String. Which type of distance metric to use for the
-#' linkage. Defaults to `"average"`.
+#' @param use_kernel Boolean. Shall a kernel function akin to MAGIC be applied
+#' akin to the approach in SuperCell2, see Hérault, et al., bioRxiv, 2026 and
+#' van Dijk, et al., Cell, 2018.
+#' @param k_ith_neighbour Optional integer. The k-ith neighbour to use for
+#' the kernel. Defaults to `k %/% 2`.
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
@@ -650,14 +931,14 @@ params_sc_seacells <- function(
 params_sc_supercell <- function(
   walk_length = 3L,
   graining_factor = 20.0,
-  linkage_dist = c("complete", "average"),
+  use_kernel = TRUE,
+  k_ith = NULL,
   knn = list()
 ) {
-  linkage_dist <- match.arg(linkage_dist)
-
   checkmate::qassert(walk_length, "I1")
   checkmate::qassert(graining_factor, "N1")
-  checkmate::assertChoice(linkage_dist, c("complete", "average"))
+  checkmate::qassert(use_kernel, "B1")
+  checkmate::qassert(k_ith, c("I1", "0"))
 
   knn_params <- modifyList(
     params_knn_defaults(),
@@ -669,7 +950,8 @@ params_sc_supercell <- function(
     list(
       walk_length = walk_length,
       graining_factor = graining_factor,
-      linkage_dist = linkage_dist
+      use_kernel = use_kernel,
+      k_ith = k_ith
     ),
     knn_params
   )

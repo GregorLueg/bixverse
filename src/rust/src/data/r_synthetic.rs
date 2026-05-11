@@ -129,7 +129,7 @@ fn rs_simulate_dropouts(
     power_factor: f64,
     global_sparsity: f64,
     seed: usize,
-) -> extendr_api::Result<RArray<f64, [usize; 2]>> {
+) -> extendr_api::Result<RArray<f64, 2>> {
     let data = r_matrix_to_faer(&count_mat);
 
     let dropout_type = parse_sparsification(&dropout_function)
@@ -300,7 +300,7 @@ fn rs_synthetic_sc_data_with_cell_types(
         let list_i = elem_i
             .as_list()
             .ok_or_else(|| extendr_api::Error::Other("Expected list".into()))?;
-        let cell_config = CellTypeConfig::from_r_list(list_i);
+        let cell_config = CellTypeConfig::from_r_list(list_i)?;
         cell_configs_vec.push(cell_config);
     }
 

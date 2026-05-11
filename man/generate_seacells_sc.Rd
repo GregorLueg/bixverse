@@ -10,6 +10,7 @@ generate_seacells_sc(
   embd_to_use = "pca",
   no_embd_to_use = NULL,
   cells_to_use = NULL,
+  regenerate_knn = FALSE,
   target_size = 1e+05,
   seed = 42L,
   .verbose = TRUE
@@ -48,6 +49,9 @@ use. If \code{NULL} all will be used. Only relevant if you set regenerate_knn to
 
 \item{cells_to_use}{Optional string. Names of the cells to use for the
 generation of the SEACells.}
+
+\item{regenerate_knn}{Boolean. Shall a kNN graph be regenerated. If not,
+the internal one will be used.}
 
 \item{target_size}{Numeric. The library target size to normalise the meta
 cells to.}

@@ -44,12 +44,12 @@
 #'
 #' @references
 #' Morabito, et al. Cell Rep Methods, 2023
-generate_meta_cells_sc <- S7::new_generic(
-  name = "generate_meta_cells_sc",
+generate_bt_meta_cells_sc <- S7::new_generic(
+  name = "generate_bt_meta_cells_sc",
   dispatch_args = "object",
   fun = function(
     object,
-    sc_meta_cell_params = params_sc_metacells(),
+    sc_meta_cell_params = params_sc_bt_metacells(),
     regenerate_knn = FALSE,
     embd_to_use = "pca",
     no_embd_to_use = NULL,
@@ -62,15 +62,15 @@ generate_meta_cells_sc <- S7::new_generic(
   }
 )
 
-#' @method generate_meta_cells_sc SingleCells
+#' @method generate_bt_meta_cells_sc SingleCells
 #'
 #' @export
 #'
 #' @importFrom zeallot `%<-%`
 #' @importFrom magrittr `%>%`
-S7::method(generate_meta_cells_sc, SingleCells) <- function(
+S7::method(generate_bt_meta_cells_sc, SingleCells) <- function(
   object,
-  sc_meta_cell_params = params_sc_metacells(),
+  sc_meta_cell_params = params_sc_bt_metacells(),
   regenerate_knn = FALSE,
   embd_to_use = "pca",
   no_embd_to_use = NULL,
@@ -81,7 +81,7 @@ S7::method(generate_meta_cells_sc, SingleCells) <- function(
 ) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
-  assertScMetacells(sc_meta_cell_params)
+  assertScBootstrappedMetacells(sc_meta_cell_params)
   checkmate::qassert(regenerate_knn, "B1")
   checkmate::qassert(embd_to_use, "S1")
   checkmate::qassert(no_embd_to_use, c("I1", "0"))
@@ -154,7 +154,7 @@ S7::method(generate_meta_cells_sc, SingleCells) <- function(
     knn_data <- NULL
   }
 
-  meta_cell_data <- rs_get_metacells(
+  meta_cell_data <- rs_get_metacells_bootstrapped(
     f_path = get_rust_count_cell_f_path(object),
     knn_mat = knn_data,
     embd = embd,
@@ -217,6 +217,8 @@ S7::method(generate_meta_cells_sc, SingleCells) <- function(
 #' generation of the SEACells.
 #' @param target_size Numeric. The library target size to normalise the meta
 #' cells to.
+#' @param regenerate_knn Boolean. Shall a kNN graph be regenerated. If not,
+#' the internal one will be used.
 #' @param seed Integer. Seed for reproducibility.
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
@@ -236,6 +238,7 @@ generate_seacells_sc <- S7::new_generic(
     embd_to_use = "pca",
     no_embd_to_use = NULL,
     cells_to_use = NULL,
+    regenerate_knn = FALSE,
     target_size = 1e5,
     seed = 42L,
     .verbose = TRUE
@@ -256,6 +259,7 @@ S7::method(generate_seacells_sc, SingleCells) <- function(
   embd_to_use = "pca",
   no_embd_to_use = NULL,
   cells_to_use = NULL,
+  regenerate_knn = FALSE,
   target_size = 1e5,
   seed = 42L,
   .verbose = TRUE
@@ -284,11 +288,18 @@ S7::method(generate_seacells_sc, SingleCells) <- function(
     )
   }
 
+  knn_data <- if (regenerate_knn) {
+    NULL
+  } else {
+    get_knn_obj(object)
+  }
+
   seacell_data <- rs_get_seacells(
     f_path = get_rust_count_cell_f_path(object),
     embd = embd,
     cells_to_use = cells_to_use,
     cells_to_keep = get_cells_to_keep(object),
+    knn_data = knn_data,
     seacells_params = seacell_params,
     target_size = target_size,
     seed = seed,
@@ -323,8 +334,9 @@ S7::method(generate_seacells_sc, SingleCells) <- function(
 #'   \item graining_factor - Numeric. Graining level of data (proportion of
 #'   number of single cells in the initial dataset to the number of metacells in
 #'   the final dataset)
-#'   \item linkage_dist - String. Which type of distance metric to use for the
-#'   linkage. Defaults to `"complete"`.
+#'   \item use_kernel - Boolean. Shall a kernel be applied.
+#'   \item kith_neighbour - Optional integer. Which neighbour to use for the
+#'   sigma estimation.
 #'   \item knn - List of kNN parameters. See [bixverse::params_knn_defaults()]
 #'   for available parameters and their defaults.
 #' }
@@ -414,7 +426,7 @@ S7::method(generate_supercells_sc, SingleCells) <- function(
     knn_data <- NULL
   } else {
     embd <- NULL
-    knn_data <- get_knn_mat(object)
+    knn_data <- get_knn_obj(object)
 
     if (is.null(knn_data)) {
       warning(
@@ -458,7 +470,7 @@ S7::method(generate_supercells_sc, SingleCells) <- function(
 
   supercell_res <- rs_supercell(
     f_path = get_rust_count_cell_f_path(object),
-    knn_mat = knn_data,
+    knn_data = knn_data,
     embd = embd,
     cells_to_use = cells_to_use,
     cells_to_keep = get_cells_to_keep(object),

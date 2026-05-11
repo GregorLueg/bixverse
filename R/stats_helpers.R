@@ -1,3 +1,5 @@
+# various statistical functions ------------------------------------------------
+
 #' Calculates a harmonic sum normalised between 0 to 1.
 #'
 #' @description
@@ -93,7 +95,9 @@ calculate_effect_size <- function(
     )
   }
 
-  if (.verbose) message(message_text)
+  if (.verbose) {
+    message(message_text)
+  }
 
   small_sample_correction <- if (is.null(small_sample_correction)) {
     total_n <= 50
@@ -110,4 +114,21 @@ calculate_effect_size <- function(
   )
 
   results
+}
+
+#' Find a threshold via the Otsu method
+#'
+#' @param x Numerical vector. The vector for which to find the threshold via
+#' the Otsu method
+#' @param bins Integer. Number of bins to use.
+#'
+#' @returns The threshold.
+#'
+#' @export
+find_threshold_otsu <- function(x, bins = 100L) {
+  checkmate::qassert(x, "N+")
+  checkmate::qassert(bins, "I+")
+  checkmate::assertTRUE(length(x) > length(bins))
+
+  rs_sc_otsu_method(scores = x, bins = bins)
 }

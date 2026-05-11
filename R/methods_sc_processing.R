@@ -21,6 +21,10 @@
 #' @param seed Integer. Random seed.
 #' @param streaming Boolean. Shall streaming be used during the HVG
 #' calculations. Slower, but less memory usage.
+#' @param cells_to_use Optional string. Names of the cells to use for the
+#' generation of the Scrublet. Useful when you wish to run doublet detection
+#' on individual batches within your data. The object returned will be
+#' specifically using these cells.
 #' @param return_combined_pca Boolean. Shall the PCA of the observed cells and
 #' simulated doublets be returned.
 #' @param return_pairs Boolean. Shall the pairs be returned.
@@ -64,6 +68,7 @@ scrublet_sc <- S7::new_generic(
     scrublet_params = params_scrublet(),
     seed = 42L,
     streaming = FALSE,
+    cells_to_use = NULL,
     return_combined_pca = FALSE,
     return_pairs = FALSE,
     .verbose = TRUE
@@ -83,6 +88,7 @@ S7::method(scrublet_sc, SingleCells) <- function(
   scrublet_params = params_scrublet(),
   seed = 42L,
   streaming = FALSE,
+  cells_to_use = NULL,
   return_combined_pca = FALSE,
   return_pairs = FALSE,
   .verbose = TRUE
@@ -96,13 +102,27 @@ S7::method(scrublet_sc, SingleCells) <- function(
   checkmate::qassert(return_pairs, "B1")
   checkmate::qassert(.verbose, "B1")
 
-  # function body
-  cells_to_keep <- get_cells_to_keep(object)
+  # cell indices
+  cells_to_use <- if (!is.null(cells_to_use)) {
+    cells_to_use <- get_cell_indices(
+      object,
+      cell_ids = cells_to_use,
+      rust_index = TRUE
+    )
+  } else {
+    get_cells_to_keep(object)
+  }
+
+  if (length(cells_to_use) >= 100000) {
+    message("Setting PCA to sparse default. N_cells greater than 100,000")
+
+    scrublet_params$sparse <- TRUE
+  }
 
   scrublet_res <- rs_sc_scrublet(
     f_path_gene = get_rust_count_gene_f_path(object),
     f_path_cell = get_rust_count_cell_f_path(object),
-    cells_to_keep = cells_to_keep,
+    cells_to_keep = cells_to_use,
     scrublet_params = scrublet_params,
     seed = seed,
     verbose = .verbose,
@@ -111,7 +131,7 @@ S7::method(scrublet_sc, SingleCells) <- function(
     return_pairs = return_pairs
   )
 
-  attr(scrublet_res, "cell_indices") <- cells_to_keep
+  attr(scrublet_res, "cell_indices") <- cells_to_use
   class(scrublet_res) <- "ScrubletRes"
 
   return(scrublet_res)
@@ -129,6 +149,10 @@ S7::method(scrublet_sc, SingleCells) <- function(
 #' @param object `SingleCells` class.
 #' @param boost_params A list with the final scrublet parameters, see
 #' [bixverse::params_boost()] for full details.
+#' @param cells_to_use Optional string. Names of the cells to use for the
+#' run of the boosted doublet detection. Useful when you wish to run doublet
+#' detection on individual batches within your data. The object returned will be
+#' specifically using these cells.
 #' @param seed Integer. Random seed.
 #' @param streaming Boolean. Shall streaming be used during the HVG
 #' calculations. Slower, but less memory usage.
@@ -150,6 +174,7 @@ doublet_detection_boost_sc <- S7::new_generic(
   fun = function(
     object,
     boost_params = params_boost(),
+    cells_to_use = NULL,
     seed = 42L,
     streaming = FALSE,
     .verbose = TRUE
@@ -167,6 +192,7 @@ doublet_detection_boost_sc <- S7::new_generic(
 S7::method(doublet_detection_boost_sc, SingleCells) <- function(
   object,
   boost_params = params_boost(),
+  cells_to_use = NULL,
   seed = 42L,
   streaming = FALSE,
   .verbose = TRUE
@@ -178,23 +204,185 @@ S7::method(doublet_detection_boost_sc, SingleCells) <- function(
   checkmate::qassert(streaming, "B1")
   checkmate::qassert(.verbose, "B1")
 
-  # function body
-  cells_to_keep <- get_cells_to_keep(object)
+  # cell indices
+  cells_to_use <- if (!is.null(cells_to_use)) {
+    cells_to_use <- get_cell_indices(
+      object,
+      cell_ids = cells_to_use,
+      rust_index = TRUE
+    )
+  } else {
+    get_cells_to_keep(object)
+  }
+
+  if (length(cells_to_use) >= 100000) {
+    message("Setting PCA to sparse default. N_cells greater than 100,000")
+    boost_params$sparse <- TRUE
+  }
+
+  if (boost_params$fast_cluster & is.null(boost_params$n_centroids)) {
+    message(paste(
+      "Fast clustering activated without any n_centroids set.",
+      "Setting n_centroids to sqrt(N) * 2"
+    ))
+
+    boost_params$n_centroids <- as.integer(sqrt(length(cells_to_use)) * 4)
+  }
 
   boost_res <- rs_sc_doublet_detection(
     f_path_gene = get_rust_count_gene_f_path(object),
     f_path_cell = get_rust_count_cell_f_path(object),
-    cells_to_keep = cells_to_keep,
+    cells_to_keep = cells_to_use,
     boost_params = boost_params,
     seed = seed,
     verbose = .verbose,
     streaming = streaming
   )
 
-  attr(boost_res, "cell_indices") <- cells_to_keep
+  attr(boost_res, "cell_indices") <- cells_to_use
   class(boost_res) <- "BoostRes"
 
   return(boost_res)
+}
+
+### scdblfinder ----------------------------------------------------------------
+
+#' Run scDblFinder doublet detection on a SingleCells object
+#'
+#' @description
+#' Cluster-aware doublet detection using engineered features and a
+#' gradient-boosted classifier. See Germain et al., F1000Research, 2022.
+#'
+#' @param object `SingleCells` class.
+#' @param scdblfinder_params List. Parameters from
+#' [bixverse::params_scdblfinder()].
+#' @param cells_to_use Optional string. Names of the cells to use for the
+#' run of the boosted doublet detection. Useful when you wish to run doublet
+#' detection on individual batches within your data. The object returned will be
+#' specifically using these cells.
+#' @param streaming Boolean. Shall the gene data be streamed in. Useful on
+#' large data sets.
+#' @param return_features Boolean. Shall the features used to train the
+#' classifier be returned.
+#' @param seed Integer. Seed for reproducibility.
+#' @param .verbose Boolean. Controls verbosity.
+#'
+#' @return An S3 object of class `ScDblFinderRes` containing:
+#' \describe{
+#'   \item{predicted_doublets}{Logical vector of doublet calls.}
+#'   \item{doublet_score}{Numeric vector of classifier probabilities.}
+#'   \item{cxds_scores}{Numeric vector of the cxds scores.}
+#'   \item{weighted}{Numeric vector of the weighted scores.}
+#'   \item{threshold}{The threshold used for calling.}
+#'   \item{cluster_labels}{Integer vector of final cluster assignments.}
+#'   \item{detected_doublet_rate}{Fraction of cells called as doublets.}
+#' }
+#' with `cell_indices` stored as an attribute.
+#'
+#' @export
+scdblfinder_sc <- S7::new_generic(
+  name = "scdblfinder_sc",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    scdblfinder_params = params_scdblfinder(),
+    return_features = FALSE,
+    cells_to_use = NULL,
+    streaming = FALSE,
+    seed = 42L,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method scdblfinder_sc SingleCells
+#'
+#' @export
+S7::method(scdblfinder_sc, SingleCells) <- function(
+  object,
+  scdblfinder_params = params_scdblfinder(),
+  return_features = FALSE,
+  cells_to_use = NULL,
+  streaming = FALSE,
+  seed = 42L,
+  .verbose = TRUE
+) {
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  assertScDblFinder(scdblfinder_params)
+  checkmate::qassert(return_features, "B1")
+  checkmate::qassert(streaming, "B1")
+  checkmate::qassert(seed, "I1")
+  checkmate::qassert(.verbose, "B1")
+
+  # cell indices
+  cells_to_use <- if (!is.null(cells_to_use)) {
+    cells_to_use <- get_cell_indices(
+      object,
+      cell_ids = cells_to_use,
+      rust_index = TRUE
+    )
+  } else {
+    get_cells_to_keep(object)
+  }
+
+  if (length(cells_to_use) >= 100000) {
+    message("Setting PCA to sparse default. N_cells greater than 100,000")
+
+    scdblfinder_params$sparse <- TRUE
+  }
+
+  if (
+    scdblfinder_params$fast_cluster & is.null(scdblfinder_params$n_centroids)
+  ) {
+    message(paste(
+      "Fast clustering activated without any n_centroids set.",
+      "Setting n_centroids to sqrt(N) * 2"
+    ))
+
+    scdblfinder_params$n_centroids <- as.integer(sqrt(length(cells_to_use)) * 4)
+  }
+
+  res <- rs_sc_scdblfinder(
+    f_path_gene = get_rust_count_gene_f_path(object),
+    f_path_cell = get_rust_count_cell_f_path(object),
+    cell_indices = cells_to_use,
+    params = scdblfinder_params,
+    return_features = return_features,
+    streaming = streaming,
+    seed = seed,
+    verbose = .verbose,
+    debug = FALSE
+  )
+
+  features <- if (return_features) {
+    feature_matrix <- res$features$feature_mat
+    colnames(feature_matrix) <- res$features$feature_names
+    rownames(feature_matrix) <- if (is.null(cells_to_use)) {
+      get_cell_names(object, filtered = TRUE)
+    } else {
+      cells_to_use
+    }
+
+    feature_matrix
+  } else {
+    NULL
+  }
+
+  structure(
+    list(
+      predicted_doublets = res$predicted_doublets,
+      doublet_score = res$doublet_scores,
+      cxds_scores = res$cxds_scores,
+      weighted = res$weighted,
+      threshold = res$threshold,
+      cluster_labels = res$cluster_labels,
+      detected_doublet_rate = res$detected_doublet_rate,
+      features = features
+    ),
+    cell_indices = cells_to_use,
+    class = "ScDblFinderRes"
+  )
 }
 
 ## gene proportions ------------------------------------------------------------
@@ -262,12 +450,11 @@ S7::method(top_genes_perc_sc, SingleCells) <- function(
 
   names(rs_results) <- sprintf("top_%i_genes_percentage", top_n_vals)
 
-  class(rs_results) <- "sc_proportion_res"
-  attr(rs_results, "cell_indices") <- get_cells_to_keep(object)
+  res <- new_sc_list(res = rs_results, cell_indices = get_cells_to_keep(object))
 
   duckdb_con <- get_sc_duckdb(object)
 
-  duckdb_con$join_data_obs(get_obs_data(rs_results))
+  duckdb_con$join_data_obs(get_obs_data(res))
 
   return(object)
 }
@@ -339,64 +526,20 @@ S7::method(gene_set_proportions_sc, SingleCells) <- function(
     verbose = .verbose
   )
 
-  class(rs_results) <- "sc_proportion_res"
-  attr(rs_results, "cell_indices") <- get_cells_to_keep(object)
+  res <- new_sc_list(res = rs_results, cell_indices = get_cells_to_keep(object))
 
   duckdb_con <- get_sc_duckdb(object)
 
-  duckdb_con$join_data_obs(get_obs_data(rs_results))
+  duckdb_con$join_data_obs(get_obs_data(res))
 
   return(object)
 }
 
 ## hvg -------------------------------------------------------------------------
 
-#' Identify HVGs
-#'
-#' @description
-#' This is a helper function to identify highly variable genes. At the moment
-#' the implementation has only the VST-based version (known as Seurat v3). The
-#' other methods will be implemented in the future.
-#'
-#' @param object `SingleCells` class.
-#' @param hvg_no Integer. Number of highly variable genes to include. Defaults
-#' to `2000L`.
-#' @param hvg_params List, see [bixverse::params_sc_hvg()]. This list contains
-#' \itemize{
-#'   \item method - Which method to use. One of
-#'   `c("vst", "meanvarbin", "dispersion")`
-#'   \item loess_span - The span for the loess function to standardise the
-#'   variance
-#'   \item num_bin - Integer. Not yet implemented.
-#'   \item bin_method - String. One of `c("equal_width", "equal_freq")`. Not
-#'   implemented yet.
-#' }
-#' @param streaming Boolean. Shall the genes be streamed in. Useful for larger
-#' data sets where you wish to avoid loading in the whole data. Defaults to
-#' `FALSE`.
-#' @param .verbose Boolean. Controls verbosity and returns run times.
-#'
-#' @return It will add the mean, var, var_exp, var_std of each gene to the
-#' the var table.
-#'
-#' @export
-find_hvg_sc <- S7::new_generic(
-  name = "find_hvg_sc",
-  dispatch_args = "object",
-  fun = function(
-    object,
-    hvg_no = 2000L,
-    hvg_params = params_sc_hvg(),
-    streaming = FALSE,
-    .verbose = TRUE
-  ) {
-    S7::S7_dispatch()
-  }
-)
+# generic found in R/base_generics_sc.R
 
 #' @method find_hvg_sc SingleCells
-#'
-#' @export
 #'
 #' @importFrom zeallot `%<-%`
 #' @importFrom magrittr `%>%`
@@ -428,6 +571,8 @@ S7::method(find_hvg_sc, SingleCells) <- function(
       hvg_method = method,
       cell_indices = get_cells_to_keep(object),
       loess_span = loess_span,
+      n_bins = num_bin,
+      binning = bin_method,
       clip_max = NULL,
       streaming = streaming,
       verbose = .verbose
@@ -436,7 +581,13 @@ S7::method(find_hvg_sc, SingleCells) <- function(
 
   object <- set_sc_new_var_cols(object = object, data_list = res)
 
-  hvg <- order(res$var_std, decreasing = TRUE)[1:hvg_no]
+  hvg <- switch(
+    hvg_params$method,
+    "vst" = order(res$var_std, decreasing = TRUE)[1:hvg_no],
+    "dispersion" = order(res$dispersion, decreasing = TRUE)[1:hvg_no],
+    "meanvarbin" = order(res$dispersion_scaled, decreasing = TRUE)[1:hvg_no],
+    stop("Unknown HVG method: ", hvg_params$method)
+  )
 
   object <- set_hvg(object, hvg = hvg)
 
@@ -447,53 +598,9 @@ S7::method(find_hvg_sc, SingleCells) <- function(
 
 ### pca ------------------------------------------------------------------------
 
-#' Run PCA for single cell
-#'
-#' @description
-#' This function will run PCA (option of full SVD and randomised SVD for now)
-#' on the detected highly variable genes.
-#'
-#' @param object `SingleCells` class.
-#' @param no_pcs Integer. Number of PCs to calculate.
-#' @param randomised_svd Boolean. Shall randomised SVD be used. Faster, but
-#' less precise.
-#' @param sparse_svd Boolean. Shall sparse solvers be used that do not do
-#' scaling. If set to yes, in the case of `random_svd = FALSE`, Lanczos
-#' iterations are used to solve the sparse SVD. With `random_svd = TRUE`, the
-#' sparse initial matrix is multiplied with the random matrix, yielding a
-#' much smaller dense matrix that does not increase the memory pressure
-#' massively.
-#' @param hvg Optional integer. If you want to provide your own HVG genes.
-#' Otherwise, the function will default to what is found in
-#' [bixverse::get_hvg()]. Please provide 1-indexed genes here! If you provide
-#' these, the internal HVG will be overwritten.
-#' @param seed Integer. Controls reproducibility. Only relevant if
-#' `randomised_svd = TRUE`.
-#' @param .verbose Boolean. Controls verbosity and returns run times.
-#'
-#' @return The function will add the PCA factors, loadings and singular values
-#' to the object cache in memory.
-#'
-#' @export
-calculate_pca_sc <- S7::new_generic(
-  name = "calculate_pca_sc",
-  dispatch_args = "object",
-  fun = function(
-    object,
-    no_pcs,
-    randomised_svd = TRUE,
-    sparse_svd = FALSE,
-    hvg = NULL,
-    seed = 42L,
-    .verbose = TRUE
-  ) {
-    S7::S7_dispatch()
-  }
-)
+# generic found in R/base_generics_sc.R
 
 #' @method calculate_pca_sc SingleCells
-#'
-#' @export
 #'
 #' @importFrom zeallot `%<-%`
 #' @importFrom magrittr `%>%`
@@ -615,68 +722,11 @@ S7::method(calculate_pca_sc, SingleCells) <- function(
 
 ### neighbours -----------------------------------------------------------------
 
-#' Find the neighbours for single cell.
-#'
-#' @description
-#' This function will generate the kNNs based on a given embedding. Four
-#' different algorithms are implemented with different speed and accuracy to
-#' approximate the nearest neighbours. `"hnsw"` implements a Hierarchical
-#' Navigatable Small Worlds vector search that has slower index generation but
-#' high precision. `"annoy"` is based on the Approximate Nearest Neighbours Oh
-#' Yeah algorithm and is more rapid in terms of index generation, but querying
-#' on large data sets can be slow. `"nndescent"` is a Rust-based implementation
-#' of the PyNNDescent algorithm and is a good all-rounder and performs well
-#' on very large data sets. `"exhaustive"` performs exact nearest neighbour
-#' search. Subsequently, the kNN data will be used to generate an sNN igraph for
-#' clustering methods.
-#'
-#' @param object `SingleCells` class.
-#' @param embd_to_use String. The embedding to use. Whichever you chose, it
-#' needs to be part of the object.
-#' @param no_embd_to_use Optional integer. Number of embedding dimensions to
-#' use. If `NULL` all will be used.
-#' @param neighbours_params List. Output of [bixverse::params_sc_neighbours()].
-#' A list with the following items:
-#' \itemize{
-#'   \item full_snn - Boolean. Shall the full shared nearest neighbour graph
-#'   be generated that generates edges between all cells instead of between
-#'   only neighbours.
-#'   \item pruning - Numeric. Weights below this threshold will be set to 0 in
-#'   the generation of the sNN graph.
-#'   \item snn_similarity - String. One of `c("rank", "jaccard")`. Defines how
-#'   the weight from the SNN graph is calculated. For details, please see
-#'   [bixverse::params_sc_neighbours()].
-#'   \item knn - List of kNN parameters. See [bixverse::params_knn_defaults()]
-#'   for available parameters and their defaults.
-#' }
-#' @param seed Integer. For reproducibility.
-#' @param .verbose Boolean. Controls verbosity and returns run times.
-#'
-#' @return The object with added KNN matrix.
-#'
-#' @export
-find_neighbours_sc <- S7::new_generic(
-  name = "find_neighbours_sc",
-  dispatch_args = "object",
-  fun = function(
-    object,
-    embd_to_use = "pca",
-    no_embd_to_use = NULL,
-    neighbours_params = params_sc_neighbours(),
-    seed = 42L,
-    .verbose = TRUE
-  ) {
-    S7::S7_dispatch()
-  }
-)
+# generic found in R/base_generics_sc.R
+# method shared across SingleCells and MetaCells
 
-#' @method find_neighbours_sc SingleCells
-#'
 #' @export
-#'
-#' @importFrom zeallot `%<-%`
-#' @importFrom magrittr `%>%`
-S7::method(find_neighbours_sc, SingleCells) <- function(
+S7::method(find_neighbours_sc, ScOrMc) <- function(
   object,
   embd_to_use = "pca",
   no_embd_to_use = NULL,
@@ -684,25 +734,23 @@ S7::method(find_neighbours_sc, SingleCells) <- function(
   seed = 42L,
   .verbose = TRUE
 ) {
-  # checks
-  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  checkmate::assertTRUE(
+    S7::S7_inherits(object, SingleCells) || S7::S7_inherits(object, MetaCells)
+  )
   checkmate::qassert(embd_to_use, "S1")
   checkmate::qassert(no_embd_to_use, c("I1", "0"))
   assertScNeighbours(neighbours_params)
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, "B1")
 
-  # early return
   if (!embd_to_use %in% get_available_embeddings(object)) {
     warning("The desired embedding was not found. Returning class as is.")
     return(object)
   }
-  # get embedding
-  embd <- get_embedding(x = object, embd_name = embd_to_use)
 
+  embd <- get_embedding(x = object, embd_name = embd_to_use)
   if (!is.null(no_embd_to_use)) {
-    to_take <- min(c(no_embd_to_use, ncol(embd)))
-    embd <- embd[, 1:to_take]
+    embd <- embd[, 1:min(no_embd_to_use, ncol(embd))]
   }
 
   if (.verbose) {
@@ -711,14 +759,12 @@ S7::method(find_neighbours_sc, SingleCells) <- function(
       neighbours_params$knn_algorithm
     ))
   }
-
   knn_data <- generate_sc_knn(
     data = embd,
     neighbours_params = neighbours_params,
     seed = seed,
     .verbose = .verbose
   )
-
   object <- set_knn(object, knn_data)
 
   if (.verbose) {
@@ -727,7 +773,6 @@ S7::method(find_neighbours_sc, SingleCells) <- function(
       neighbours_params$full_snn
     ))
   }
-
   snn_graph_rs <- with(
     neighbours_params,
     rs_sc_snn(
@@ -742,9 +787,12 @@ S7::method(find_neighbours_sc, SingleCells) <- function(
   if (.verbose) {
     message("Transforming sNN data to igraph.")
   }
-
-  snn_g <- igraph::make_graph(snn_graph_rs$edges + 1, directed = FALSE)
-  igraph::E(snn_g)$weight <- snn_graph_rs$weights
+  snn_g <- igraph::make_empty_graph(n = nrow(embd), directed = FALSE)
+  snn_g <- igraph::add_edges(
+    snn_g,
+    snn_graph_rs$edges,
+    attr = list(weight = snn_graph_rs$weights)
+  )
 
   object <- set_snn_graph(object, snn_graph = snn_g)
 
@@ -753,74 +801,201 @@ S7::method(find_neighbours_sc, SingleCells) <- function(
 
 ### clustering -----------------------------------------------------------------
 
-#' Graph-based clustering of cells on the sNN graph
+# generic found in R/base_generics_sc.R
+# method shared across SingleCells and MetaCells
+
+#' @export
+S7::method(find_clusters_sc, ScOrMc) <- function(
+  object,
+  cluster_algorithm = c("leiden", "louvain"),
+  res = 1.0,
+  name = "leiden_clustering"
+) {
+  cluster_algorithm <- match.arg(cluster_algorithm)
+
+  checkmate::assertTRUE(
+    S7::S7_inherits(object, SingleCells) || S7::S7_inherits(object, MetaCells)
+  )
+  checkmate::qassert(res, "N1")
+  checkmate::qassert(name, "S1")
+  checkmate::assertChoice(cluster_algorithm, c("leiden", "louvain"))
+
+  snn_graph <- get_snn_graph(object)
+  if (is.null(snn_graph)) {
+    warning(
+      paste(
+        "No sNN graph found. Did you run find_neighbours_sc().",
+        "Returning class as is."
+      )
+    )
+    return(object)
+  }
+
+  clusters <- switch(
+    cluster_algorithm,
+    leiden = igraph::cluster_leiden(
+      graph = snn_graph,
+      objective_function = "modularity",
+      resolution = res
+    ),
+    louvain = igraph::cluster_louvain(graph = snn_graph, resolution = res)
+  )
+
+  object[[name]] <- clusters$membership
+  object
+}
+
+### fast clustering ------------------------------------------------------------
+
+#' Run fast Louvain clustering on a SingleCells object
 #'
 #' @description
-#' This function will apply Leiden clustering on the sNN graph with the
-#' given resolution and add a column to the obs table.
+#' Runs k-means on the chosen embedding, builds a kNN graph on the centroids,
+#' applies Louvain clustering and propagates memberships back to the cells.
+#' Optionally runs a grid over multiple seeds and returns stability statistics.
 #'
 #' @param object `SingleCells` class.
-#' @param res Numeric. The resolution parameter for [igraph::cluster_leiden()].
-#' @param name String. The name to add to the obs table in the DuckDB.
+#' @param embd_to_use String. Embedding name. Defaults to `"pca"`.
+#' @param no_embd_to_use Optional integer. Number of dimensions to keep.
+#' @param resolutions Numeric vector. Louvain resolutions.
+#' @param km_type String. One of `c("kmeans", "minibatch")`. The former runs
+#' standard k-means, the latter a mini-batch version that can be useful for
+#' large data sets.
+#' @param n_centroids Optional integer. Number of k-means centroids. Defaults
+#' to `sqrt(n_cells)` Rust-side if `NULL`.
+#' @param fc_params List. Output of [params_sc_fast_cluster()].
+#' @param snn Boolean. Convert kNN to sNN.
+#' @param return_kmeans Boolean. Return k-means assignments and centroids.
+#' @param grid_search Boolean. Run multi-seed grid version.
+#' @param no_seeds Integer. Number of additional seeds (only used when
+#' `grid_search = TRUE`).
+#' @param seed Integer. Reproducibility.
+#' @param .verbose Boolean. Verbosity.
 #'
-#' @return The object with added clustering in the obs table.
+#' @returns `SingleCellFastClusters` S3 object with:
+#' \describe{
+#'   \item{memberships}{data.table with `cell_idx` and one column per
+#'   resolution (`res_<value>`).}
+#'   \item{stats}{data.table of grid statistics, or `NULL`.}
+#'   \item{k_means_cluster}{Integer vector of k-means assignments, or `NULL`.}
+#'   \item{centroids}{Numeric matrix of centroids, or `NULL`.}
+#'   \item{resolutions}{Resolutions used.}
+#' }
+#' with `cell_indices` stored as an attribute (0-indexed).
 #'
 #' @export
-find_clusters_sc <- S7::new_generic(
-  name = "find_clusters_sc",
+fast_cluster_sc <- S7::new_generic(
+  name = "fast_cluster_sc",
   dispatch_args = "object",
   fun = function(
     object,
-    res = 1,
-    name = "leiden_clustering"
+    embd_to_use = "pca",
+    no_embd_to_use = NULL,
+    resolutions = c(2.0, 1.0, 0.5),
+    km_type = c("kmeans", "minibatch"),
+    n_centroids = NULL,
+    fc_params = params_sc_fast_cluster(),
+    snn = TRUE,
+    return_kmeans = FALSE,
+    grid_search = FALSE,
+    no_seeds = 10L,
+    seed = 42L,
+    .verbose = TRUE
   ) {
     S7::S7_dispatch()
   }
 )
 
-#' @method find_clusters_sc SingleCells
+#' @method fast_cluster_sc SingleCells
 #'
 #' @export
-#'
-#' @importFrom zeallot `%<-%`
-#' @importFrom magrittr `%>%`
-S7::method(find_clusters_sc, SingleCells) <- function(
+S7::method(fast_cluster_sc, SingleCells) <- function(
   object,
-  res = 1,
-  name = "leiden_clustering"
+  embd_to_use = "pca",
+  no_embd_to_use = NULL,
+  resolutions = c(2.0, 1.0, 0.5),
+  km_type = c("kmeans", "minibatch"),
+  n_centroids = NULL,
+  fc_params = params_sc_fast_cluster(),
+  snn = TRUE,
+  return_kmeans = FALSE,
+  grid_search = FALSE,
+  no_seeds = 10L,
+  seed = 42L,
+  .verbose = TRUE
 ) {
-  # checks
-  checkmate::assertClass(object, "bixverse::SingleCells")
-  checkmate::qassert(res, "N1")
-  checkmate::qassert(name, "S1")
+  km_type <- match.arg(km_type)
 
-  snn_graph <- get_snn_graph(object)
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  checkmate::qassert(embd_to_use, "S1")
+  checkmate::qassert(no_embd_to_use, c("I1", "0"))
+  checkmate::qassert(resolutions, "N+")
+  checkmate::qassert(n_centroids, c("I1", "0"))
+  checkmate::qassert(snn, "B1")
+  checkmate::qassert(return_kmeans, "B1")
+  checkmate::qassert(grid_search, "B1")
+  checkmate::qassert(no_seeds, "I1")
+  checkmate::qassert(seed, "I1")
+  checkmate::qassert(.verbose, "B1")
 
-  if (is.null(snn_graph)) {
-    warning(paste(
-      "No sNN graph found. Did you run find_neighbours_sc()",
-      "Returning class as is."
-    ))
-    return(object)
+  if (!embd_to_use %in% get_available_embeddings(object)) {
+    stop(sprintf("Embedding '%s' was not found.", embd_to_use))
   }
 
-  leiden_clusters <- igraph::cluster_leiden(
-    snn_graph,
-    objective_function = "modularity",
-    resolution = res
+  embd <- get_embedding(x = object, embd_name = embd_to_use)
+  if (!is.null(no_embd_to_use)) {
+    embd <- embd[, 1:min(no_embd_to_use, ncol(embd))]
+  }
+
+  cells_to_use <- get_cells_to_keep(object)
+
+  if (grid_search) {
+    res <- rs_fast_cluster_sc_grid(
+      embd = embd,
+      km_type = km_type,
+      resolutions = resolutions,
+      n_centroids = n_centroids,
+      fc_params = fc_params,
+      snn = snn,
+      return_kmeans = return_kmeans,
+      no_seeds = no_seeds,
+      seed = seed,
+      verbose = .verbose
+    )
+    memberships <- res$membership$memberships
+    stats <- data.table::as.data.table(res$membership$stats)
+    stats[, resolution := resolutions]
+    data.table::setcolorder(stats, "resolution")
+  } else {
+    res <- rs_fast_cluster_sc(
+      embd = embd,
+      km_type = km_type,
+      resolutions = resolutions,
+      n_centroids = n_centroids,
+      fc_params = fc_params,
+      snn = snn,
+      return_kmeans = return_kmeans,
+      seed = seed,
+      verbose = .verbose
+    )
+    memberships <- res$membership
+    stats <- NULL
+  }
+
+  membership_dt <- data.table::data.table(cell_idx = cells_to_use + 1L)
+  membership_dt[, (paste0("res_", resolutions)) := memberships]
+
+  structure(
+    list(
+      memberships = membership_dt,
+      stats = stats,
+      k_means_cluster = res$k_means_cluster,
+      centroids = res$centroids,
+      resolutions = resolutions
+    ),
+    cell_indices = cells_to_use,
+    class = "SingleCellFastClusters"
   )
-
-  duckdb_con <- get_sc_duckdb(object)
-
-  new_data <- data.table::data.table(
-    cell_idx = get_cells_to_keep(object) + 1, # needs to be 1-indexed
-    new_data = leiden_clusters$membership
-  )
-  data.table::setnames(new_data, "new_data", name)
-
-  duckdb_con$join_data_obs(new_data = new_data)
-
-  return(object)
 }
 
 ### knn with distances ---------------------------------------------------------
@@ -828,16 +1003,24 @@ S7::method(find_clusters_sc, SingleCells) <- function(
 #' Generate the KNN data with distances
 #'
 #' @description
-#' This function will generate the kNNs based on a given embedding. Three
-#' different algorithms are implemented with different speed and accuracy to
-#' approximate the nearest neighbours. `"annoy"` is more
-#' rapid and based on the `Approximate Nearest Neigbours Oh Yeah` algorithm;
-#' `"hnsw"` implements a `Hierarchical Navigatable Small Worlds` vector
-#' search that is slower, but more precise. Lastly, there is the option of
-#' `"nndescent"`, a Rust-based implementation of the PyNNDescent algorithm. This
-#' version skips the index generation and can be faster on smaller data sets.
-#' This version of the function returns an `sc_knn` object that can be
-#' used in other functions.
+#' This function will generate the kNNs based on a given embedding. Available
+#' algorithms are:
+#' \itemize{
+#'   \item `hnsw` - Hierarchical Navigable Small World. A graph-based
+#'   approximate nearest neighbour search algorithm; works well on large data
+#'   sets. A benign race condition is leveraged during index build, making the
+#'   build non-deterministic. Bigger impact on smaller data sets.
+#'   \item `ivf` - Inverted file index. Uses first k-means clustering to
+#'   identify Voronoi cells and leverages these during querying. Works well
+#'   on large data sets with high dimensionality.
+#'   \item `nndescent` - Nearest neighbour descent. Similar to `PyNNDescent`,
+#'   uses a first index to initialise the graph. Good all-rounder.
+#'   \item `annoy` - Approximate nearest neighbours Oh Yeah. Tree-based index,
+#'   used across different R single cell packages (Seurat, SCE). This version
+#'   is purely memory-based.
+#'   \item `exhaustive` - An exhaustive, flat index. On smaller data sets often
+#'   faster than the approximate nearest neighbour search algorithms.
+#' }
 #'
 #' @param object `SingleCells` class.
 #' @param embd_to_use String. The embedding to use. Whichever you chose, it
@@ -851,16 +1034,18 @@ S7::method(find_clusters_sc, SingleCells) <- function(
 #' \itemize{
 #'   \item full_snn - Boolean. Shall the full shared nearest neighbour graph
 #'   be generated that generates edges between all cells instead of between
-#'   only neighbours.
+#'   only neighbours. Not used for this function.
 #'   \item pruning - Numeric. Weights below this threshold will be set to 0 in
-#'   the generation of the sNN graph.
+#'   the generation of the sNN graph. Not used for this function.
 #'   \item snn_similarity - String. One of `c("rank", "jaccard")`. Defines how
 #'   the weight from the SNN graph is calculated. For details, please see
-#'   [bixverse::params_sc_neighbours()].
+#'   [bixverse::params_sc_neighbours()]. Not used for this function.
 #'   \item knn - List of kNN parameters. See [bixverse::params_knn_defaults()]
 #'   for available parameters and their defaults.
 #' }
 #' @param seed Integer. For reproducibility.
+#' @param .validate_index Boolean. Shall an exhaustive search against a subset
+#' of cells be run to validate the approximate nearest neighbour index.
 #' @param .verbose Boolean. Controls verbosity and returns run times.
 #'
 #' @return Initialised `sc_knn` with the kNN data.
@@ -876,6 +1061,7 @@ generate_knn_sc <- S7::new_generic(
     no_embd_to_use = NULL,
     neighbours_params = params_sc_neighbours(),
     seed = 42L,
+    .validate_index = TRUE,
     .verbose = TRUE
   ) {
     S7::S7_dispatch()
@@ -895,6 +1081,7 @@ S7::method(generate_knn_sc, SingleCells) <- function(
   no_embd_to_use = NULL,
   neighbours_params = params_sc_neighbours(),
   seed = 42L,
+  .validate_index = TRUE,
   .verbose = TRUE
 ) {
   # checks
@@ -904,6 +1091,7 @@ S7::method(generate_knn_sc, SingleCells) <- function(
   checkmate::qassert(cells_to_use, c("S+", "0"))
   assertScNeighbours(neighbours_params)
   checkmate::qassert(seed, "I1")
+  checkmate::qassert(.validate_index, "B1")
   checkmate::qassert(.verbose, "B1")
 
   # function body
@@ -929,6 +1117,7 @@ S7::method(generate_knn_sc, SingleCells) <- function(
     embd = embd,
     knn_params = neighbours_params,
     verbose = .verbose,
+    validate_index = .validate_index,
     seed = seed
   )
 

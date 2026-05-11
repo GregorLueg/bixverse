@@ -1,5 +1,6 @@
 use bixverse_rs::graph::graph_label_propagations::*;
 use extendr_api::prelude::*;
+use std::collections::HashMap;
 
 /////////////
 // ExtendR //
@@ -39,8 +40,8 @@ struct LabelPropParams {
 }
 
 impl LabelPropParams {
-    fn from_list(r_list: List) -> Self {
-        let map = r_list.into_hashmap();
+    fn from_list(r_list: List) -> Result<Self, extendr_api::Error> {
+        let map: HashMap<&str, Robj> = r_list.try_into()?;
 
         let alpha = map.get("alpha").and_then(|v| v.as_real()).unwrap_or(0.9);
 
@@ -71,14 +72,14 @@ impl LabelPropParams {
             .and_then(|v| v.as_integer())
             .map(|v| v as usize);
 
-        Self {
+        Ok(Self {
             alpha,
             iter,
             tolerance,
             symmetrise,
             symmetry_strategy,
             max_hops,
-        }
+        })
     }
 }
 
@@ -125,8 +126,8 @@ fn rs_knn_label_propagation(
     label_mask: &[Rbool],
     weights: Nullable<Vec<f64>>,
     label_prop_params: List,
-) -> RMatrix<f64> {
-    let params = LabelPropParams::from_list(label_prop_params);
+) -> Result<RMatrix<f64>, extendr_api::Error> {
+    let params = LabelPropParams::from_list(label_prop_params)?;
 
     // deal with 1 indexing from R
     let from: Vec<usize> = from.iter().map(|x| (*x - 1) as usize).collect();
@@ -164,7 +165,9 @@ fn rs_knn_label_propagation(
         params.max_hops,
     );
 
-    RMatrix::new_matrix(nrow, ncol, |r, c| new_labels[r][c] as f64)
+    Ok(RMatrix::new_matrix(nrow, ncol, |r, c| {
+        new_labels[r][c] as f64
+    }))
 }
 
 /// Flatten kNN matrix to edge list

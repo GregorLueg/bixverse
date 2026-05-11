@@ -9,6 +9,8 @@ rs_sc_hvg(
   hvg_method,
   cell_indices,
   loess_span,
+  binning,
+  n_bins,
   clip_max,
   streaming,
   verbose
@@ -17,14 +19,18 @@ rs_sc_hvg(
 \arguments{
 \item{f_path_gene}{String. Path to the \code{counts_genes.bin} file.}
 
-\item{hvg_method}{String. Which HVG detection method to use. Options
-are \code{c("vst", "meanvarbin", "dispersion")}. So far, only the first is
-implemented.}
+\item{hvg_method}{String. Which HVG detection method to use. One of
+\code{c("vst", "meanvarbin", "dispersion")}.}
 
 \item{cell_indices}{Integer positions (0-indexed!) that defines the cells
 to keep.}
 
 \item{loess_span}{Numeric. The span parameter for the loess function.}
+
+\item{binning}{String. The binning strategy for the \code{meanvarbin} method. One
+of \code{c("equal_width", "equal_frequency")}.}
+
+\item{n_bins}{Integer. Number of bins for the \code{meanvarbin} method.}
 
 \item{clip_max}{Optional clipping number. Defaults to \code{sqrt(no_cells)} if
 not provided.}
@@ -35,16 +41,23 @@ pressure.}
 \item{verbose}{Boolean. Controls verbosity of the function.}
 }
 \value{
-A list with the percentages of counts per gene set group detected
-in the cells:
+A list with the highly variable genes. If \code{hvg_method == "vst"}, the
+following elements can be found:
 \itemize{
 \item mean - The average expression of the gene.
 \item var - The variance of the gene.
 \item var_exp - The expected variance of the gene.
 \item var_std - The standardised variance of the gene.
 }
+For the other two methods, these elements can be found:
+\itemize{
+\item mean - The average expression of the gene.
+\item dispersion - The dispersion of the gene
+\item dispersion_scaled - The scaled dispersion per bin per gene
+\item bin - The bin of the gene
+}
 }
 \description{
-This function allows to calculate for example the proportion of
-mitochondrial genes, or ribosomal genes in the cells for QC purposes.
+This function identifies highly variable genes with the three methods known
+in Seurat.
 }

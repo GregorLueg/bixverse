@@ -25,7 +25,7 @@ fn rs_snf_affinity_continuous(
     k: usize,
     mu: f64,
     normalise: bool,
-) -> RArray<f64, [usize; 2]> {
+) -> RArray<f64, 2> {
     let data = r_matrix_to_faer(&data);
 
     let affinity_data = make_affinity_continuous(&data, distance_type, k, mu, normalise);
@@ -44,7 +44,7 @@ fn rs_snf_affinity_continuous(
 ///
 /// @export
 #[extendr]
-fn rs_snf_affinity_cat(data: RMatrix<i32>, k: usize, mu: f64) -> RArray<f64, [usize; 2]> {
+fn rs_snf_affinity_cat(data: RMatrix<i32>, k: usize, mu: f64) -> RArray<f64, 2> {
     let data = r_matrix_to_faer(&data);
 
     let affinity_data = make_affinity_categorical(&data, k, mu);
@@ -71,7 +71,7 @@ fn rs_snf_affinity_mixed(
     is_cat: Vec<Rbool>,
     k: usize,
     mu: f64,
-) -> RArray<f64, [usize; 2]> {
+) -> RArray<f64, 2> {
     let data = r_matrix_to_faer(&data);
 
     let is_cat = is_cat
@@ -98,7 +98,7 @@ fn rs_snf_affinity_mixed(
 ///
 /// @export
 #[extendr]
-fn rs_snf(aff_mat_list: List, k: usize, t: usize, alpha: f64) -> RArray<f64, [usize; 2]> {
+fn rs_snf(aff_mat_list: List, k: usize, t: usize, alpha: f64) -> RArray<f64, 2> {
     let mat_list = r_matrix_list_to_vec(aff_mat_list);
 
     // Store owned matrices to keep them alive

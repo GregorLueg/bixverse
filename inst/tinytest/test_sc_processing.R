@@ -597,6 +597,57 @@ expect_true(
   info = "leiden clustering identifies the cell groups"
 )
 
+## fast clustering -------------------------------------------------------------
+
+### simple version -------------------------------------------------------------
+
+fast_cluster_res <- fast_cluster_sc(
+  object = sc_object,
+  .verbose = FALSE
+)
+
+obs_fc <- get_obs_data(fast_cluster_res)
+
+expect_true(
+  current = checkmate::testDataTable(obs_fc),
+  info = "fast clustering: data.table returned"
+)
+
+expect_warning(
+  current = get_centroids(fast_cluster_res),
+  info = "fast clustering: warning without k-means data"
+)
+
+expect_warning(
+  current = get_kmeans_clusters(fast_cluster_res),
+  info = "fast clustering: warning without k-means data (2)"
+)
+
+### with k-means clusters ------------------------------------------------------
+
+fast_cluster_res <- fast_cluster_sc(
+  object = sc_object,
+  return_kmeans = TRUE,
+  n_centroids = 30L,
+  .verbose = FALSE
+)
+
+centroids <- get_centroids(fast_cluster_res)
+
+kmeans_clusters <- get_kmeans_clusters(fast_cluster_res)
+
+expect_true(
+  current = checkmate::testMatrix(centroids, nrow = 30L, ncols = no_pcs),
+  info = "fast clustering: centroids returned"
+)
+
+expect_true(
+  current = checkmate::qtest(kmeans_clusters, "I+"),
+  info = "fast clustering: k-means clusters returned"
+)
+
+### grid version ---------------------------------------------------------------
+
 ### check the DB structure -----------------------------------------------------
 
 expect_true(

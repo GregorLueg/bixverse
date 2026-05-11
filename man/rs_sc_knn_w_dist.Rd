@@ -4,7 +4,7 @@
 \alias{rs_sc_knn_w_dist}
 \title{Generates the kNN graph with additional distances}
 \usage{
-rs_sc_knn_w_dist(embd, knn_params, verbose, seed)
+rs_sc_knn_w_dist(embd, knn_params, validate_index, verbose, seed)
 }
 \arguments{
 \item{embd}{Numerical matrix. The embedding matrix to use to generate the
@@ -12,6 +12,9 @@ kNN graph.}
 
 \item{knn_params}{List. The kNN parameters defined by
 \code{\link[=params_sc_neighbours]{params_sc_neighbours()}}.}
+
+\item{validate_index}{Boolean. If you want to validate the index via
+an exhaustive search in a subset of cells.}
 
 \item{verbose}{Boolean. Controls verbosity of the function and returns
 how long certain operations took.}

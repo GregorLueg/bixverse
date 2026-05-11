@@ -8,7 +8,7 @@ params_sc_miloR(
   prop = 0.2,
   k_refine = 20L,
   refinement_strategy = c("index", "approximate", "bruteforce"),
-  index_type = c("hnsw", "annoy", "nndescent", "ivf"),
+  index_type = c("nndescent", "ivf", "hnsw", "annoy"),
   knn = list()
 )
 }
@@ -24,7 +24,7 @@ One of \code{c("approximate", "bruteforce", "index")}. Defaults to
 \code{"index"}.}
 
 \item{index_type}{String. Type of kNN index to use. One of
-\code{c("hnsw", "annoy", "nndescent", "ivf")}. Defaults to \code{"hnsw"}.}
+\code{c("hnsw", "annoy", "nndescent", "ivf")}. Defaults to \code{"nndescent"}.}
 
 \item{knn}{List. Optional overrides for kNN parameters. See
 \code{\link[=params_knn_defaults]{params_knn_defaults()}} for available parameters: \code{k},

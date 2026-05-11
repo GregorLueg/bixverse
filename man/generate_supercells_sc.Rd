@@ -26,8 +26,9 @@ A list with the following items:
 \item graining_factor - Numeric. Graining level of data (proportion of
 number of single cells in the initial dataset to the number of metacells in
 the final dataset)
-\item linkage_dist - String. Which type of distance metric to use for the
-linkage. Defaults to \code{"complete"}.
+\item use_kernel - Boolean. Shall a kernel be applied.
+\item kith_neighbour - Optional integer. Which neighbour to use for the
+sigma estimation.
 \item knn - List of kNN parameters. See \code{\link[=params_knn_defaults]{params_knn_defaults()}}
 for available parameters and their defaults.
 }}

@@ -1,9 +1,10 @@
 # bixverse package
 
-![r_package](https://img.shields.io/badge/R_package-0.3.1-orange) 
+![r_package](https://img.shields.io/badge/R_package-0.3.2-orange) 
 [![CI](https://github.com/GregorLueg/bixverse/actions/workflows/R-cmd-check.yml/badge.svg)](https://github.com/GregorLueg/bixverse/actions/workflows/R-cmd-check.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![pkgdown](https://img.shields.io/badge/pkgdown-website-1b5e9f?logo=github)](https://gregorlueg.github.io/bixverse/)
+[![extendr](https://img.shields.io/badge/extendr-^0.9.0-276DC2)](https://extendr.github.io/extendr/extendr_api/)
 
 </br>
 
@@ -23,8 +24,9 @@ an orchestraction layer.
 Result? Blazingly fast performance with low memory usage, making large-scale
 analyses feasable without any cloud compute. Over time more and more methods
 will be added. The aim will be to come a `tidyverse` equivalent, but for
-a lot of downstream methods post WGS processing. There is a sister package for
-plotting functions being build in parallel, see 
+a lot of downstream methods post WGS processing (with a strong emphasis on 
+transcriptomics, think single cell and RNASeq for now). There is a sister 
+package for plotting functions being build in parallel, see 
 [here](https://github.com/GregorLueg/bixverse.plots) (that one is in alpha
 phase).
 
@@ -100,13 +102,17 @@ and trade-offs. The various vignettes will show you how to analyse data.
   * Methods on top of the meta cells: co-expression network detection etc.
   * Expansion of the [sister package](https://github.com/GregorLueg/bixverse.plots) 
     to have plotting helpers in there for single cell.
-  * Helpers to slice and dice the data easier and add new data - this will
+  * Helpers to slice and dice the data easier and add new data - this will be
+    a larger piece of work.
   * Implementations of [Palantir](https://www.nature.com/articles/s41587-019-0068-4) and
     [Slingshot](https://pubmed.ncbi.nlm.nih.gov/29914354/).
   * Port over [NicheNet](https://www.nature.com/articles/s41592-019-0667-5)
   * Add more GPU-acceleration via [cubecl/WGPU backend]((https://github.com/tracel-ai/cubecl)) 
-    for GPU-agnostic acceleration where appropriate, see another 
+    for GPU-agnostic acceleration where deemed appropriate, see another 
     [sister package](https://github.com/GregorLueg/bixverse.gpu)
+  * Generate a Python package that interfaces into Deep Learning libraries for
+    training neural networks on top of the data. This will need some thinking
+    however.
 - Leverage the current infrastructure and add dedicated support and methods for
   spatial transcriptomics. There are some cool methods in that space that for 
   sure could benefit from the speed that a compiled, memory-managed language 

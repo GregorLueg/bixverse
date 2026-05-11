@@ -209,7 +209,7 @@ S7::method(calculate_batch_asw_sc, SingleCells) <- function(
   # checks
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::qassert(batch_column, "S1")
-  checkmate::assertChoice(embd_to_use, c("pca", "harmony", "mnn"))
+  checkmate::qassert(embd_to_use, "S1")
   checkmate::qassert(max_cells, c("I1", "0"))
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, "B1")
@@ -221,17 +221,13 @@ S7::method(calculate_batch_asw_sc, SingleCells) <- function(
     return(NULL)
   }
 
-  embd <- switch(
-    embd_to_use,
-    pca = get_pca_factors(object),
-    harmony = get_embedding(object, "harmony"),
-    mnn = get_embedding(object, "mnn")
-  )
-
-  if (is.null(embd)) {
-    warning("Embedding not found. Returning NULL")
-    return(NULL)
+  # early return
+  if (!embd_to_use %in% get_available_embeddings(object)) {
+    warning("The desired embedding was not found. Returning class as is.")
+    return(object)
   }
+  # get embedding
+  embd <- get_embedding(x = object, embd_name = embd_to_use)
 
   n_batches <- length(levels(factor(batch_index)))
 
@@ -467,7 +463,6 @@ S7::method(find_hvg_batch_aware_sc, SingleCells) <- function(
 ) {
   gene_comb_method <- match.arg(gene_comb_method)
 
-  # checks
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::qassert(batch_column, "S1")
   checkmate::qassert(hvg_no, "I1")
@@ -492,6 +487,8 @@ S7::method(find_hvg_batch_aware_sc, SingleCells) <- function(
       batch_labels = batch_indices,
       loess_span = loess_span,
       clip_max = NULL,
+      n_bins = num_bin,
+      binning = bin_method,
       streaming = streaming,
       verbose = .verbose
     )
@@ -500,21 +497,36 @@ S7::method(find_hvg_batch_aware_sc, SingleCells) <- function(
   batch_hvgs_dt <- data.table::as.data.table(batch_hvgs)
   batch_hvgs_dt[, batch := levels(batch_factor)[batch + 1L]]
 
+  sort_col <- switch(
+    hvg_params$method,
+    "vst" = "var_std",
+    "dispersion" = "dispersion",
+    "meanvarbin" = "dispersion_scaled",
+    stop("Unknown HVG method: ", hvg_params$method)
+  )
+
   hvg_genes <- switch(
     gene_comb_method,
     union = {
-      batch_hvgs_dt[, .SD[order(-var_std)][1:hvg_no], by = batch][, unique(
-        gene_idx
-      )]
+      batch_hvgs_dt[,
+        .SD[order(-score)][1:hvg_no],
+        by = batch,
+        env = list(score = sort_col)
+      ][, unique(gene_idx)]
     },
     average = {
-      avg_dt <- batch_hvgs_dt[, .(var_std_avg = mean(var_std)), by = gene_idx]
-      avg_dt[order(-var_std_avg)][1:hvg_no, gene_idx]
+      avg_dt <- batch_hvgs_dt[,
+        .(score_avg = mean(score)),
+        by = gene_idx,
+        env = list(score = sort_col)
+      ]
+      avg_dt[order(-score_avg)][1:hvg_no, gene_idx]
     },
     intersection = {
       top_per_batch <- batch_hvgs_dt[,
-        .(gene_idx = .SD[order(-var_std)][1:hvg_no, gene_idx]),
-        by = batch
+        .(gene_idx = .SD[order(-score)][1:hvg_no, gene_idx]),
+        by = batch,
+        env = list(score = sort_col)
       ]
       top_per_batch[, .N, by = gene_idx][
         N == uniqueN(batch_hvgs_dt$batch),
@@ -924,7 +936,7 @@ S7::method(harmony_sc, SingleCells) <- function(
   ))
 
   if (is.null(harmony_params$k)) {
-    harmony_params$k <- as.integer(min(round(nrow(pca_data) / 30), 200L))
+    harmony_params$k <- as.integer(min(round(nrow(pca_data) / 30), 100L))
     if (.verbose) {
       message(sprintf(
         " Auto-determined number of Harmony clusters: %d",
@@ -944,6 +956,122 @@ S7::method(harmony_sc, SingleCells) <- function(
   colnames(harmony_embd) <- sprintf("harmony_%s", 1:ncol(harmony_embd))
 
   object <- set_embedding(x = object, embd = harmony_embd, name = "harmony")
+
+  return(object)
+}
+
+## harmony v2 ------------------------------------------------------------------
+
+#' Run Harmony v2
+#'
+#' @description
+#' A version of Harmony v2 by Patikas et al., 2026, implemented in Rust.
+#' Performs batch correction on PCA embeddings and stores the result as a
+#' `"harmony_v2"` embedding in the object.
+#'
+#' @param object `SingleCells` class.
+#' @param batch_column String. Column name in the object containing the primary
+#' batch labels.
+#' @param additional_batch_columns Optional character vector. Additional batch
+#' columns to regress out. If `NULL`, only the primary batch column is used.
+#' @param harmony_params List. Output of [bixverse::params_sc_harmony_v2()].
+#' @param seed Integer. For reproducibility.
+#' @param .verbose Boolean. Controls verbosity.
+#'
+#' @return The object with a `"harmony_v2"` embedding added. If no PCA
+#' embeddings are found, returns the object unchanged with a warning.
+#'
+#' @export
+harmony_v2_sc <- S7::new_generic(
+  name = "harmony_v2_sc",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    batch_column,
+    additional_batch_columns = NULL,
+    harmony_params = params_sc_harmony_v2(),
+    seed = 42L,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method harmony_v2_sc SingleCells
+#'
+#' @export
+S7::method(harmony_v2_sc, SingleCells) <- function(
+  object,
+  batch_column,
+  additional_batch_columns = NULL,
+  harmony_params = params_sc_harmony_v2(),
+  seed = 42L,
+  .verbose = TRUE
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  checkmate::qassert(batch_column, "S1")
+  checkmate::qassert(additional_batch_columns, c("S+", "0"))
+  assertScHarmonyParamsV2(harmony_params)
+  checkmate::qassert(seed, "I1")
+  checkmate::qassert(.verbose, "B1")
+
+  # early return
+  if (is.null(get_pca_factors(object))) {
+    warning(paste(
+      "No PCA embeddings found in the object. Returning class as is"
+    ))
+    return(object)
+  } else {
+    pca_data <- get_pca_factors(object)
+  }
+
+  # function body
+  # main batch
+  batch_index_ls <- list()
+
+  batch_indices <- unlist(object[[batch_column]])
+  batch_factor <- factor(batch_indices)
+  batch_indices <- as.integer(batch_factor) - 1L
+
+  batch_index_ls[[1]] <- batch_indices
+
+  # add optional batch effects to regress out
+  if (!is.null(additional_batch_columns)) {
+    for (i in seq_along(additional_batch_columns)) {
+      batch_indices_i <- unlist(object[[additional_batch_columns[[i]]]])
+      batch_factor_i <- factor(batch_indices_i)
+      batch_indices_i <- as.integer(batch_factor_i) - 1L
+
+      batch_index_ls[[i + 1]] <- batch_indices_i
+    }
+  }
+
+  checkmate::assertTRUE(all(
+    purrr::map_dbl(batch_index_ls, length) == nrow(pca_data)
+  ))
+
+  if (is.null(harmony_params$k)) {
+    harmony_params$k <- as.integer(min(round(nrow(pca_data) / 30), 100L))
+    if (.verbose) {
+      message(sprintf(
+        " Auto-determined number of Harmony clusters: %d",
+        harmony_params$k
+      ))
+    }
+  }
+
+  harmony_embd <- rs_harmony_v2(
+    pca = pca_data,
+    harmony_params = harmony_params,
+    batch_labels = batch_index_ls,
+    seed = seed,
+    verbose = .verbose
+  )
+
+  colnames(harmony_embd) <- sprintf("harmony_v2_%s", 1:ncol(harmony_embd))
+
+  object <- set_embedding(x = object, embd = harmony_embd, name = "harmony_v2")
 
   return(object)
 }

@@ -4,9 +4,9 @@ use extendr_api::prelude::*;
 
 /// Prepare the data for whitening
 ///
-/// @description Prepares the data for subsequent usag in ICA.
-/// WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust
-/// functions with type checks are provided in the package.
+/// @description Prepares the data for subsequent usag in ICA. Incorrect use can
+/// cause kernel crashes. Wrapper around the Rust functions with type checks are
+/// provided in the package.
 ///
 /// @param x The matrix to whiten. The whitening will happen over the columns.
 /// @param fast_svd Boolean. Shall a randomised SVD be used. This is way faster
@@ -37,16 +37,17 @@ fn rs_prepare_whitening(
     rank: Option<usize>,
     oversampling: Option<usize>,
     n_power_iter: Option<usize>,
-) -> List {
+) -> Result<List, extendr_api::Error> {
     let x = r_matrix_to_faer(&x);
     let rank = rank.unwrap_or(10);
 
-    let (x, k) = prepare_whitening(x, fast_svd, seed, rank, oversampling, n_power_iter);
+    let (x, k) =
+        prepare_whitening(x, fast_svd, seed, rank, oversampling, n_power_iter).to_extendr()?;
 
-    list!(
+    Ok(list!(
         x = faer_to_r_matrix(x.as_ref()),
         k = faer_to_r_matrix(k.as_ref())
-    )
+    ))
 }
 
 /// Run the Rust implementation of fast ICA.
@@ -86,9 +87,9 @@ fn rs_fast_ica(
     w_init: RMatrix<f64>,
     ica_type: &str,
     ica_params: List,
-) -> List {
+) -> Result<List, extendr_api::Error> {
     // assert!(!whiten.nrows() == w_init.ncols(), "The dimensions of the provided matrices don't work");
-    let ica_params = IcaParams::<f64>::from_r_list(ica_params);
+    let ica_params = IcaParams::<f64>::from_r_list(ica_params)?;
 
     let x = r_matrix_to_faer(&whiten);
     let w_init = r_matrix_to_faer(&w_init);
@@ -111,12 +112,13 @@ fn rs_fast_ica(
             ica_params.maxit,
             ica_params.verbose,
         ),
-    };
+    }
+    .to_extendr()?;
 
-    list!(
+    Ok(list!(
         mixing = faer_to_r_matrix(a.0.as_ref()),
         converged = a.1 < ica_params.tol
-    )
+    ))
 }
 
 /// Run ICA over a given no_comp with random initilisations of w_init
@@ -164,7 +166,7 @@ fn rs_ica_iters(
     ica_type: &str,
     random_seed: usize,
     ica_params: List,
-) -> List {
+) -> Result<List, extendr_api::Error> {
     if k.nrows() < no_comp {
         panic!(
             "Number of rows in k ({}) must be at least as large as no_comp ({})",
@@ -175,7 +177,7 @@ fn rs_ica_iters(
     let x_processed = r_matrix_to_faer(&x1);
     let k = r_matrix_to_faer(&k);
 
-    let ica_params: IcaParams<f64> = IcaParams::<f64>::from_r_list(ica_params);
+    let ica_params: IcaParams<f64> = IcaParams::<f64>::from_r_list(ica_params)?;
 
     let (s_combined, converged) = stabilised_ica_iters(
         x_processed,
@@ -185,12 +187,13 @@ fn rs_ica_iters(
         ica_type,
         ica_params,
         random_seed,
-    );
+    )
+    .to_extendr()?;
 
-    list!(
+    Ok(list!(
         s_combined = faer_to_r_matrix(s_combined.as_ref()),
         converged = converged
-    )
+    ))
 }
 
 /// Run ICA with cross-validation and random initialsiation
@@ -235,9 +238,9 @@ fn rs_ica_iters_cv(
     ica_type: &str,
     random_seed: usize,
     ica_params: List,
-) -> List {
+) -> Result<List, extendr_api::Error> {
     let x = r_matrix_to_faer(&x);
-    let ica_params: IcaParams<f64> = IcaParams::<f64>::from_r_list(ica_params);
+    let ica_params: IcaParams<f64> = IcaParams::<f64>::from_r_list(ica_params)?;
 
     let (s_combined, converged) = stabilised_ica_cv(
         x,
@@ -248,12 +251,13 @@ fn rs_ica_iters_cv(
         ica_params,
         None,
         random_seed,
-    );
+    )
+    .to_extendr()?;
 
-    list!(
+    Ok(list!(
         s_combined = faer_to_r_matrix(s_combined.as_ref()),
         converged = converged
-    )
+    ))
 }
 
 extendr_module! {

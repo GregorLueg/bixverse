@@ -96,7 +96,8 @@ fn rs_calculate_dge_mann_whitney(
         min_prop as f32,
         &alternative,
         verbose,
-    )?;
+    )
+    .to_extendr()?;
 
     Ok(list!(
         lfc = dge_results
@@ -166,7 +167,7 @@ fn rs_module_scoring(
     seed: usize,
     streaming: bool,
     verbose: bool,
-) -> extendr_api::Result<RMatrix<f64>> {
+) -> Result<RMatrix<f64>> {
     let cells_to_keep = cells_to_keep.r_int_convert();
 
     let mut gs_indices: Vec<Vec<usize>> = Vec::with_capacity(gs_list.len());
@@ -191,7 +192,8 @@ fn rs_module_scoring(
         streaming,
         seed,
         verbose,
-    )?;
+    )
+    .to_extendr()?;
 
     let nrows = module_scores[0].len(); // cells
     let ncols = module_scores.len(); // gene sets
@@ -232,7 +234,7 @@ fn rs_aucell(
     auc_type: &str,
     streaming: bool,
     verbose: bool,
-) -> extendr_api::Result<RArray<f64, [usize; 2]>> {
+) -> Result<RArray<f64, 2>> {
     let cells_to_keep = cells_to_keep.r_int_convert();
 
     let mut gs_indices: Vec<Vec<usize>> = Vec::with_capacity(gs_list.len());
@@ -248,9 +250,10 @@ fn rs_aucell(
     }
 
     let res = if streaming {
-        calculate_aucell_streaming(&f_path, &gs_indices, &cells_to_keep, auc_type, verbose)?
+        calculate_aucell_streaming(&f_path, &gs_indices, &cells_to_keep, auc_type, verbose)
+            .to_extendr()?
     } else {
-        calculate_aucell(&f_path, &gs_indices, &cells_to_keep, auc_type, verbose)?
+        calculate_aucell(&f_path, &gs_indices, &cells_to_keep, auc_type, verbose).to_extendr()?
     };
 
     let auc_mat = Mat::from_fn(res[0].len(), res.len(), |i, j| res[j][i] as f64);
@@ -281,14 +284,15 @@ fn rs_vision(
     cells_to_keep: Vec<i32>,
     streaming: bool,
     verbose: bool,
-) -> extendr_api::Result<RArray<f64, [usize; 2]>> {
+) -> Result<RArray<f64, 2>> {
     let cells_to_keep = cells_to_keep.r_int_convert();
     let gene_signatures = r_list_to_sig_genes(gs_list)?;
 
     let res = if streaming {
         calculate_vision_streaming(&f_path, &gene_signatures, &cells_to_keep, verbose)
+            .to_extendr()?
     } else {
-        calculate_vision(&f_path, &gene_signatures, &cells_to_keep, verbose)
+        calculate_vision(&f_path, &gene_signatures, &cells_to_keep, verbose).to_extendr()?
     };
 
     let vision_mat = Mat::from_fn(res.len(), res[0].len(), |i, j| res[i][j] as f64);
@@ -358,8 +362,9 @@ fn rs_vision_with_autocorrelation(
 
     let res = if streaming {
         calculate_vision_streaming(&f_path, &gene_signatures, &cells_to_keep, verbose)
+            .to_extendr()?
     } else {
-        calculate_vision(&f_path, &gene_signatures, &cells_to_keep, verbose)
+        calculate_vision(&f_path, &gene_signatures, &cells_to_keep, verbose).to_extendr()?
     };
 
     if verbose {
@@ -378,8 +383,9 @@ fn rs_vision_with_autocorrelation(
 
         let cluster_random_scores = if streaming {
             calculate_vision_streaming(&f_path, &cluster_signatures, &cells_to_keep, verbose)
+                .to_extendr()?
         } else {
-            calculate_vision(&f_path, &cluster_signatures, &cells_to_keep, verbose)
+            calculate_vision(&f_path, &cluster_signatures, &cells_to_keep, verbose).to_extendr()?
         };
 
         random_scores_by_cluster.push(cluster_random_scores);
@@ -394,10 +400,10 @@ fn rs_vision_with_autocorrelation(
     }
 
     let embd = r_matrix_to_faer_fp32(&embd);
-    let knn_params = KnnParams::from_r_list(vision_params);
+    let knn_params = KnnParams::from_r_list(vision_params)?;
 
     let (knn_indices, knn_dist) =
-        generate_knn_with_dist(embd.as_ref(), &knn_params, true, seed, verbose);
+        generate_knn_with_dist(embd.as_ref(), &knn_params, true, false, seed, verbose);
 
     let cluster_membership = cluster_membership.r_int_convert_shift();
 
@@ -479,7 +485,7 @@ fn rs_hotspot_autocor(
         "The embedding matrix need to have the same nrow as the the cells to use."
     );
 
-    let hotspot_params = HotSpotParams::from_r_list(hotspot_params);
+    let hotspot_params = HotSpotParams::from_r_list(hotspot_params)?;
 
     let embd = r_matrix_to_faer_fp32(&embd);
     let cells_to_keep = cells_to_keep.r_int_convert();
@@ -493,6 +499,7 @@ fn rs_hotspot_autocor(
         embd.as_ref(),
         &hotspot_params.knn_params,
         true,
+        false,
         seed,
         verbose,
     );
@@ -508,20 +515,24 @@ fn rs_hotspot_autocor(
     );
 
     let res: HotSpotGeneRes = if streaming {
-        hotspot.compute_all_genes_streaming(
-            &genes_to_use,
-            &hotspot_params.model,
-            hotspot_params.normalise,
-            verbose,
-        )
+        hotspot
+            .compute_all_genes_streaming(
+                &genes_to_use,
+                &hotspot_params.model,
+                hotspot_params.normalise,
+                verbose,
+            )
+            .to_extendr()?
     } else {
-        hotspot.compute_all_genes(
-            &genes_to_use,
-            &hotspot_params.model,
-            hotspot_params.normalise,
-            verbose,
-        )
-    }?;
+        hotspot
+            .compute_all_genes(
+                &genes_to_use,
+                &hotspot_params.model,
+                hotspot_params.normalise,
+                verbose,
+            )
+            .to_extendr()?
+    };
 
     Ok(list!(
         gene_idx = res.gene_idx,
@@ -581,7 +592,7 @@ fn rs_hotspot_gene_cor(
     let cells_to_keep = cells_to_keep.r_int_convert();
     let genes_to_use = genes_to_use.r_int_convert();
 
-    let hotspot_params = HotSpotParams::from_r_list(hotspot_params);
+    let hotspot_params = HotSpotParams::from_r_list(hotspot_params)?;
 
     if verbose {
         println!("Generating kNN graph...")
@@ -591,6 +602,7 @@ fn rs_hotspot_gene_cor(
         embd.as_ref(),
         &hotspot_params.knn_params,
         true,
+        false,
         seed,
         verbose,
     );
@@ -678,8 +690,8 @@ fn rs_make_milor_nhoods(
     milor_params: List,
     seed: usize,
     verbose: bool,
-) -> List {
-    let milor_params = MiloRParams::from_r_list(milor_params);
+) -> Result<List> {
+    let milor_params = MiloRParams::from_r_list(milor_params)?;
     let embd = r_matrix_to_faer_fp32(&embd);
     let k_original = knn_indices.ncols();
     let n_cells = embd.nrows();
@@ -761,7 +773,7 @@ fn rs_make_milor_nhoods(
         knn_indices[0].len() - 1,
     );
 
-    list!(
+    Ok(list!(
         index_cell = unique_indices.r_int_convert(),
         nhoods_i = nhoods_triplets.0,
         nhoods_j = nhoods_triplets.1,
@@ -769,7 +781,7 @@ fn rs_make_milor_nhoods(
         nrows = n_cells as i32,
         ncols = len_unique_indices,
         kth_distances = kth_distances
-    )
+    ))
 }
 
 //////////
@@ -795,14 +807,15 @@ fn rs_scenic_gene_filter(
     cell_indices: Vec<i32>,
     scenic_params: List,
     verbose: bool,
-) -> Vec<i32> {
+) -> Result<Vec<i32>> {
     let cell_indices = cell_indices.r_int_convert();
 
-    let scenic_params = ScenicParams::from_r_list(scenic_params);
+    let scenic_params = ScenicParams::from_r_list(scenic_params)?;
 
-    let genes_to_use = scenic_gene_filter(&f_path_genes, &cell_indices, &scenic_params, verbose);
+    let genes_to_use =
+        scenic_gene_filter(&f_path_genes, &cell_indices, &scenic_params, verbose).to_extendr()?;
 
-    genes_to_use.r_int_convert()
+    Ok(genes_to_use.r_int_convert())
 }
 
 /// SCENIC: Generating gene-regulatory networks
@@ -831,12 +844,12 @@ fn rs_scenic_grn(
     scenic_params: List,
     seed: usize,
     verbose: bool,
-) -> RArray<f64, [usize; 2]> {
+) -> Result<RArray<f64, 2>> {
     let cell_indices = cell_indices.r_int_convert();
     let gene_indices = gene_indices.r_int_convert();
     let tf_indices = tf_indices.r_int_convert();
 
-    let scenic_params = ScenicParams::from_r_list(scenic_params);
+    let scenic_params = ScenicParams::from_r_list(scenic_params)?;
 
     let grn_matrix = run_scenic_grn(
         &f_path_genes,
@@ -846,9 +859,10 @@ fn rs_scenic_grn(
         &scenic_params,
         seed,
         verbose,
-    );
+    )
+    .to_extendr()?;
 
-    faer_to_r_matrix(grn_matrix.as_ref())
+    Ok(faer_to_r_matrix(grn_matrix.as_ref()))
 }
 
 /// SCENIC: Generating gene-regulatory networks (streaming version)
@@ -879,12 +893,12 @@ fn rs_scenic_grn_streaming(
     scenic_params: List,
     seed: usize,
     verbose: bool,
-) -> RArray<f64, [usize; 2]> {
+) -> Result<RArray<f64, 2>> {
     let cell_indices = cell_indices.r_int_convert();
     let gene_indices = gene_indices.r_int_convert();
     let tf_indices = tf_indices.r_int_convert();
 
-    let scenic_params = ScenicParams::from_r_list(scenic_params);
+    let scenic_params = ScenicParams::from_r_list(scenic_params)?;
 
     let grn_matrix = run_scenic_grn_streaming(
         &f_path_genes,
@@ -894,9 +908,10 @@ fn rs_scenic_grn_streaming(
         &scenic_params,
         seed,
         verbose,
-    );
+    )
+    .to_extendr()?;
 
-    faer_to_r_matrix(grn_matrix.as_ref())
+    Ok(faer_to_r_matrix(grn_matrix.as_ref()))
 }
 
 /// SCENIC: Select the Top TF <> Gene pairs
@@ -963,13 +978,13 @@ fn rs_top_k_targets(matrix: RMatrix<f64>, k: i32, margin: i32, min_value: Option
         for &j in &idx[..take] {
             let (tf_name, gene_name, val) = match margin {
                 1 => (
-                    colnames[j].as_str(),
-                    rownames[i].as_str(),
+                    colnames[j].as_ref(),
+                    rownames[i].as_ref(),
                     data[j * nrow + i],
                 ),
                 _ => (
-                    colnames[i].as_str(),
-                    rownames[j].as_str(),
+                    colnames[i].as_ref(),
+                    rownames[j].as_ref(),
                     data[i * nrow + j],
                 ),
             };
@@ -1028,8 +1043,8 @@ fn rs_importance_threshold(matrix: RMatrix<f64>, n_sd: f64, min_value: Option<f6
         for j in 0..ncol {
             let v = data[j * nrow + i];
             if v >= threshold && min_value.is_none_or(|min| v >= min) {
-                tfs.push(colnames[j].as_str().to_string());
-                genes.push(rownames[i].as_str().to_string());
+                tfs.push(colnames[j].as_ref().to_string());
+                genes.push(rownames[i].as_ref().to_string());
                 importances.push(v);
             }
         }

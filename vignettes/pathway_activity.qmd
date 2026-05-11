@@ -1,5 +1,7 @@
 ---
 title: "Pathway activity functions"
+date: last-modified
+date-format: YYYY-MM-DD
 vignette: >
   %\VignetteIndexEntry{Pathway activity functions}
   %\VignetteEngine{quarto::html}
@@ -9,7 +11,7 @@ knitr:
     collapse: true
     comment: '#>'
 author:
-  - name: Gregor Lueg
+  - name: "Gregor Lueg"
 ---
 
 ## Single-sample pathway activity
@@ -40,7 +42,6 @@ collection of random gene sets.
 
 ```{r}
 #| label: random-data-generation
-
 p <- 10000L # genes
 n <- 100L # samples
 
@@ -79,7 +80,6 @@ single call:
 
 ```{r}
 #| label: bixverse-gsva-gaussian
-
 bixverse_res_gaussian <- calc_gsva(
   exp = X,
   pathways = gs,
@@ -97,7 +97,6 @@ the two implementations are consistently above 0.99.
 ```{r}
 #| label: gsva-gaussian-comparison
 #| eval: !expr requireNamespace("GSVA", quietly = TRUE)
-
 library(GSVA)
 
 gsvaPar <- gsvaParam(X, gs)
@@ -118,7 +117,6 @@ computational fire power your system has.)
 ```{r}
 #| label: gsva-gaussian-speed
 #| eval: !expr requireNamespace(c("GSVA", "microbenchmark"), quietly = TRUE)
-
 microbenchmark::microbenchmark(
   gsva = {
     gsvaPar <- gsvaParam(X, gs)
@@ -136,7 +134,6 @@ setting `gaussian = FALSE`:
 
 ```{r}
 #| label: bixverse-gsva-poisson
-
 bixverse_res_poisson <- calc_gsva(
   exp = X_counts,
   pathways = gs,
@@ -151,7 +148,6 @@ And vs. the original
 ```{r}
 #| label: gsva-poisson-comparison
 #| eval: !expr requireNamespace("GSVA", quietly = TRUE)
-
 gsvaParPoisson <- gsvaParam(X_counts, gs, kcdf = "Poisson")
 gsva_res_poisson <- as.matrix(gsva(gsvaParPoisson, verbose = FALSE))
 
@@ -169,7 +165,6 @@ And speed:
 ```{r}
 #| label: gsva-poisson-speed
 #| eval: !expr requireNamespace(c("GSVA", "microbenchmark"), quietly = TRUE)
-
 microbenchmark::microbenchmark(
   gsva = {
     gsvaPar <- gsvaParam(X_counts, gs, kcdf = "Poisson")
@@ -189,7 +184,6 @@ approach but does not apply a kernel-based normalisation across samples.
 
 ```{r}
 #| label: bixverse-ssgsea
-
 bixverse_res_ssgsea <- calc_ssgsea(
   exp = X,
   pathways = gs
@@ -203,7 +197,6 @@ Let's compare again against the GSVA version:
 ```{r}
 #| label: ssgsea-comparison
 #| eval: !expr requireNamespace("GSVA", quietly = TRUE)
-
 ssgseaPar <- ssgseaParam(X, gs)
 ssgsea_res <- as.matrix(gsva(ssgseaPar, verbose = FALSE))
 
@@ -220,7 +213,6 @@ And check the underlying speed differences:
 ```{r}
 #| label: ssgsea-speed
 #| eval: !expr requireNamespace(c("GSVA", "microbenchmark"), quietly = TRUE)
-
 microbenchmark::microbenchmark(
   gsva = {
     ssgseaPar <- ssgseaParam(X, gs)
@@ -251,7 +243,6 @@ individual contrast-level enrichment scores and p-values.
 
 ```{r}
 #| label: mitch-example
-
 set.seed(42L)
 
 contrast_data <- matrix(rnorm(3 * 26), nrow = 26)
@@ -287,7 +278,6 @@ bundled with `mitch`:
 ```{r}
 #| label: mitch-comparison
 #| eval: !expr requireNamespace("mitch", quietly = TRUE)
-
 data(myImportedData, genesetsExample, package = "mitch")
 
 mitch_res <- suppressMessages(mitch::mitch_calc(
@@ -313,7 +303,6 @@ And let's check the speed differences:
 ```{r}
 #| label: mitch-speed
 #| eval: !expr requireNamespace(c("mitch", "microbenchmark"), quietly = TRUE)
-
 microbenchmark::microbenchmark(
   mitch = suppressMessages(mitch::mitch_calc(
     myImportedData,

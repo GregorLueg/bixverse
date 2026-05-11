@@ -353,17 +353,19 @@ write_cellranger_output <- function(
 #'
 #' @description
 #' This function downloads the PBMC3K dataset from 10x Genomics (uploaded
-#' on Zenodo) and extracts it and returns the paths.
+#' on Zenodo) and extracts it and returns the (temporary) paths.
+#'
+#' @param quiet Boolean. If the download shall be quiet.
 #'
 #' @returns String. The path to the extracted PBMC3K data.
 #'
 #' @export
-download_pbmc3k <- function() {
+download_pbmc3k <- function(quiet = FALSE) {
   temp_dir <- tempdir()
   dest_file <- file.path(temp_dir, "pbmc3k.tar.gz")
-  url <- "https://zenodo.org/records/19183419/files/pbmc3k_filtered_gene_bc_matrices.tar.gz?download=1"
+  url <- "https://zenodo.org/records/20113571/files/pbmc3k_filtered_gene_bc_matrices.tar.gz?download=1"
 
-  download.file(url, dest_file, mode = "wb", quiet = TRUE)
+  download.file(url, dest_file, mode = "wb", quiet = quiet)
   untar(dest_file, exdir = temp_dir)
 
   # add headers to genes.tsv
@@ -380,44 +382,73 @@ download_pbmc3k <- function() {
 #' This function downloads a PBMC data set with demuxlet information to test
 #' doublet detection methods.
 #'
+#' @param quiet Boolean. If the download shall be quiet.
+#'
 #' @returns String. The path to the extracted doublet detection data.
 #'
 #' @export
-download_demuxlet_pbmc <- function() {
+download_demuxlet_pbmc <- function(quiet = FALSE) {
   temp_dir <- tempdir()
   dest_file <- file.path(temp_dir, "demuxlet_PBMCs.tar.gz")
-  url <- "https://zenodo.org/records/19183419/files/demuxlet_PBMCs.tar.gz?download=1"
+  url <- "https://zenodo.org/records/20113571/files/demuxlet_PBMCs.tar.gz?download=1"
 
-  download.file(url, dest_file, mode = "wb", quiet = TRUE)
+  download.file(url, dest_file, mode = "wb", quiet = quiet)
   untar(dest_file, exdir = temp_dir)
 
-  # add headers to genes.tsv
   data_path <- file.path(temp_dir, "demuxlet_PBMCs")
 
   data_path
 }
 
-### pbmc with demuxlet ---------------------------------------------------------
+### pbmc batches ---------------------------------------------------------------
 
 #' Download two different PBMC data sets for batch correction testing
 #'
 #' @description
 #' This function downloads two different h5ad files for testing batch correction
-#' methods.
+#' methods into the temporary directory.
+#'
+#' @param quiet Boolean. If the download shall be quiet.
 #'
 #' @returns String. The path to the extracted doublet detection data.
 #'
 #' @export
-download_pbmc_batches <- function() {
+download_pbmc_batches <- function(quiet = FALSE) {
   temp_dir <- tempdir()
   dest_file <- file.path(temp_dir, "pbmc_batches.tar.gz")
-  url <- "https://zenodo.org/records/19183419/files/pbmc_batches.tar.gz?download=1"
+  url <- "https://zenodo.org/records/20113571/files/pbmc_batches.tar.gz?download=1"
 
-  download.file(url, dest_file, mode = "wb", quiet = TRUE)
+  download.file(url, dest_file, mode = "wb", quiet = quiet)
   untar(dest_file, exdir = temp_dir)
 
   # add headers to genes.tsv
   data_path <- file.path(temp_dir, "pbmc_batches")
 
   data_path
+}
+
+### cd34 example data sets -----------------------------------------------------
+
+#' Download the CD34 example data from SEACells
+#'
+#' @description
+#' This function downloads the CD34 data set from the SEACells paper into the
+#' temperorary directory.
+#'
+#' @param quiet Boolean. If the download shall be quiet.
+#'
+#' @returns String. The path to the extracted doublet detection data.
+#'
+#' @export
+#'
+#' @references Persad, et al., Nat. Biotechnol., 2023
+download_cd34_data <- function(quiet = FALSE) {
+  temp_dir <- tempdir()
+  dest_file <- file.path(temp_dir, "cd34_multiome_rna.h5ad.gz")
+  url <- "https://zenodo.org/records/20113571/files/cd34_multiome_rna.h5ad.gz?download=1"
+
+  download.file(url, dest_file, mode = "wb", quiet = quiet)
+  R.utils::gunzip(dest_file, remove = TRUE)
+
+  file.path(temp_dir, "cd34_multiome_rna.h5ad")
 }

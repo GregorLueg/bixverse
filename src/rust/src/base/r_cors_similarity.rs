@@ -47,7 +47,7 @@ extendr_module! {
 ///
 /// @export
 #[extendr]
-fn rs_covariance(x: RMatrix<f64>) -> RArray<f64, [usize; 2]> {
+fn rs_covariance(x: RMatrix<f64>) -> RArray<f64, 2> {
     let mat = r_matrix_to_faer(&x);
     let covar = column_pairwise_cov(&mat);
 
@@ -68,7 +68,7 @@ fn rs_covariance(x: RMatrix<f64>) -> RArray<f64, [usize; 2]> {
 ///
 /// @export
 #[extendr]
-fn rs_cor(x: RMatrix<f64>, spearman: bool) -> RArray<f64, [usize; 2]> {
+fn rs_cor(x: RMatrix<f64>, spearman: bool) -> RArray<f64, 2> {
     let mat = r_matrix_to_faer(&x);
 
     let cor = column_pairwise_cor(&mat, spearman);
@@ -86,7 +86,7 @@ fn rs_cor(x: RMatrix<f64>, spearman: bool) -> RArray<f64, [usize; 2]> {
 ///
 /// @export
 #[extendr]
-fn rs_cos(x: RMatrix<f64>) -> RArray<f64, [usize; 2]> {
+fn rs_cos(x: RMatrix<f64>) -> RArray<f64, 2> {
     let mat = r_matrix_to_faer(&x);
 
     let cos = column_pairwise_cos(&mat);
@@ -108,7 +108,7 @@ fn rs_cos(x: RMatrix<f64>) -> RArray<f64, [usize; 2]> {
 ///
 /// @export
 #[extendr]
-fn rs_cor2(x: RMatrix<f64>, y: RMatrix<f64>, spearman: bool) -> RArray<f64, [usize; 2]> {
+fn rs_cor2(x: RMatrix<f64>, y: RMatrix<f64>, spearman: bool) -> RArray<f64, 2> {
     let x = r_matrix_to_faer(&x);
     let y = r_matrix_to_faer(&y);
 
@@ -128,7 +128,7 @@ fn rs_cor2(x: RMatrix<f64>, y: RMatrix<f64>, spearman: bool) -> RArray<f64, [usi
 ///
 /// @export
 #[extendr]
-fn rs_cov2cor(x: RMatrix<f64>) -> RArray<f64, [usize; 2]> {
+fn rs_cov2cor(x: RMatrix<f64>) -> RArray<f64, 2> {
     let mat = r_matrix_to_faer(&x);
 
     let cor = cov2cor(mat);
@@ -159,7 +159,7 @@ fn rs_mutual_info(
     n_bins: Option<usize>,
     strategy: String,
     normalise: bool,
-) -> RArray<f64, [usize; 2]> {
+) -> RArray<f64, 2> {
     let mat = r_matrix_to_faer(&x);
 
     let mi_mat = column_mutual_information(&mat, n_bins, normalise, &strategy);
@@ -182,7 +182,7 @@ fn rs_mutual_info(
 ///
 /// @export
 #[extendr]
-fn rs_pointwise_mutual_info(x: RMatrix<Rbool>, normalise: bool) -> RArray<f64, [usize; 2]> {
+fn rs_pointwise_mutual_info(x: RMatrix<Rbool>, normalise: bool) -> RArray<f64, 2> {
     let data = r_matrix_to_vec_bool(&x);
 
     let npmi_mat = calc_pmi::<f64>(&data, normalise);
@@ -205,7 +205,7 @@ fn rs_pointwise_mutual_info(x: RMatrix<Rbool>, normalise: bool) -> RArray<f64, [
 ///
 /// @export
 #[extendr]
-fn rs_dist(x: RMatrix<f64>, distance_type: String) -> extendr_api::Result<RArray<f64, [usize; 2]>> {
+fn rs_dist(x: RMatrix<f64>, distance_type: String) -> extendr_api::Result<RArray<f64, 2>> {
     let data = &r_matrix_to_faer(&x);
 
     let dist_type = parse_distance_type(&distance_type)
@@ -302,7 +302,7 @@ fn rs_set_similarity_list2(
     s_1_list: List,
     s_2_list: List,
     overlap_coefficient: bool,
-) -> extendr_api::Result<RArray<f64, [usize; 2]>> {
+) -> extendr_api::Result<RArray<f64, 2>> {
     let s1_vec = r_list_to_str_vec(s_1_list)?;
     let s2_vec = r_list_to_str_vec(s_2_list)?;
 
@@ -409,7 +409,7 @@ fn rs_jaccard_row_integers(data_1: RMatrix<i32>, data_2: RMatrix<i32>) -> f64 {
 ///
 /// @export
 #[extendr]
-fn rs_hamming_dist(x: RMatrix<i32>) -> RArray<f64, [usize; 2]> {
+fn rs_hamming_dist(x: RMatrix<i32>) -> RArray<f64, 2> {
     let data = r_matrix_to_faer(&x);
 
     let hamming_dist = column_pairwise_hamming_cat::<f64>(&data);
@@ -427,7 +427,7 @@ fn rs_hamming_dist(x: RMatrix<i32>) -> RArray<f64, [usize; 2]> {
 ///
 /// @export
 #[extendr]
-fn rs_gower_dist(x: RMatrix<f64>, is_cat: Vec<Rbool>) -> RArray<f64, [usize; 2]> {
+fn rs_gower_dist(x: RMatrix<f64>, is_cat: Vec<Rbool>) -> RArray<f64, 2> {
     let data = r_matrix_to_faer(&x);
 
     let is_cat = is_cat

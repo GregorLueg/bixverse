@@ -1,5 +1,7 @@
 ---
 title: "Contrastive PCA"
+date: last-modified
+date-format: YYYY-MM-DD
 vignette: >
   %\VignetteIndexEntry{Contrastive PCA}
   %\VignetteEngine{quarto::html}
@@ -71,7 +73,6 @@ Let's explore first the synthetic data (same as from the original authors).
 ```{r}
 #| label: synthetic data
 #| fig-cap: "Synthetic data visualisation for contrastive PCA analysis"
-
 cpca_test_data <- synthetic_c_pca_data()
 
 plot(cpca_test_data)
@@ -115,7 +116,6 @@ covariance matrices internally.
 
 ```{r}
 #| label: process the background matrix
-
 cpca_obj <- contrastive_pca_processing(
   cpca_obj,
   background_mat = background_mat
@@ -131,7 +131,6 @@ where meaningful separation emerges.
 ```{r}
 #| label: plot different alphas
 #| fig-cap: "Impact of the alpha parameter on the ability to distinguish the groups"
-
 c_pca_plot_alphas(
   cpca_obj,
   label_column = "grp",
@@ -153,7 +152,6 @@ Once you have settled on an $\alpha$, running the full decomposition and
 extracting the factors and loadings is straightforward:
 ```{r}
 #| label: run contrastive PCA and extract the factors and loadings
-
 cpca_obj <- contrastive_pca(
   cpca_obj,
   alpha = 2.5,

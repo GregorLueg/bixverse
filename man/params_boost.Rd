@@ -8,13 +8,15 @@ params_boost(
   boost_rate = 0.25,
   replace = FALSE,
   resolution = 1,
-  n_iters = 25L,
+  n_iters = 20L,
   p_thresh = 1e-07,
   voter_thresh = 0.9,
+  fast_cluster = FALSE,
   normalisation = list(),
   hvg = list(),
   pca = list(),
-  knn = list(k = 0L, ann_dist = "euclidean")
+  knn = list(k = 0L),
+  fast_cluster_params = list()
 )
 }
 \arguments{
@@ -28,7 +30,7 @@ to \code{FALSE}.}
 Higher values lead to more clusters. Defaults to \code{1.0}.}
 
 \item{n_iters}{Integer. Number of iterations to run the algorithm. Defaults
-to \code{25L}.}
+to \code{20L}.}
 
 \item{p_thresh}{Numeric. P-value threshold for significance testing. Defaults
 to \code{1e-7}.}
@@ -37,8 +39,13 @@ to \code{1e-7}.}
 iterations a cell must be assigned to a cluster to be considered a member.
 Must be between 0 and 1. Defaults to \code{0.9}.}
 
+\item{fast_cluster}{Boolean. Shall fast Louvain clustering be applied, i.e.,
+k-means clustering and use the centroids for kNN graph generation and
+Louvain clustering with then backpropagating the membership based on centroid
+proximity.}
+
 \item{normalisation}{List. Optional overrides for normalisation parameters.
-See \code{\link[=params_norm_doublet_detection_defaults]{params_norm_doublet_detection_defaults()}} for available
+See \code{\link[=params_norm_doublets_defaults]{params_norm_doublets_defaults()}} for available
 parameters: \code{log_transform}, \code{mean_center}, \code{normalise_variance},
 \code{target_size}. Note: Boost uses different defaults (\code{log_transform = FALSE},
 \code{mean_center = TRUE}, \code{normalise_variance = TRUE}, \code{target_size = NULL}).}
@@ -57,6 +64,11 @@ parameters. See \code{\link[=params_hvg_defaults]{params_hvg_defaults()}} for av
 \code{diversify_prob}, \code{ef_budget}, \code{m}, \code{ef_construction}, \code{ef_search}, \code{n_list}
 and \code{n_probe}. Note: this function defaults to \code{k = 0L} (automatic neighbour
 detection).}
+
+\item{fast_cluster_params}{List. Optional overrides for the fast clustering
+parameters. Only relevant if \code{fast_cluster = TRUE}. See
+\code{\link[=params_fast_cluster_default]{params_fast_cluster_default()}} for available parameters: \code{km_type},
+\code{n_centroids}, \code{kmeans_iters} and \code{batch_size}.}
 }
 \value{
 A named list with all Boost parameters, combining defaults with

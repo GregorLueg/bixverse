@@ -3,4 +3,6 @@
 *.dll
 target
 .cargo
-*.bin
+rust/vendor
+Makevars
+Makevars.win

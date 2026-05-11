@@ -8,12 +8,12 @@ params_scrublet(
   sim_doublet_ratio = 1.5,
   expected_doublet_rate = 0.1,
   stdev_doublet_rate = 0.02,
-  n_bins = 100L,
+  n_bins_histogram = 100L,
   manual_threshold = NULL,
   normalisation = list(),
   hvg = list(),
   pca = list(),
-  knn = list(k = 0L, ann_dist = "euclidean")
+  knn = list(k = 0L)
 )
 }
 \arguments{
@@ -28,15 +28,15 @@ experiment, typically 0.05-0.10 depending on cell loading. Must be between
 \item{stdev_doublet_rate}{Numeric. Uncertainty in the expected doublet rate.
 Defaults to \code{0.02}.}
 
-\item{n_bins}{Integer. Number of bins for histogram-based automatic threshold
-detection. Typically 50-100. Defaults to \code{100L}.}
+\item{n_bins_histogram}{Integer. Number of bins for histogram-based automatic
+threshold detection. Typically 50-100. Defaults to \code{100L}.}
 
 \item{manual_threshold}{Optional numeric. Manual doublet score threshold. If
 \code{NULL} (default), threshold is automatically detected from simulated doublet
 score distribution.}
 
 \item{normalisation}{List. Optional overrides for normalisation parameters.
-See \code{\link[=params_norm_doublet_detection_defaults]{params_norm_doublet_detection_defaults()}} for available
+See \code{\link[=params_norm_doublets_defaults]{params_norm_doublets_defaults()}} for available
 parameters: \code{log_transform}, \code{mean_center}, \code{normalise_variance},
 \code{target_size}.}
 

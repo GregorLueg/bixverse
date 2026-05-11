@@ -1,5 +1,7 @@
 ---
 title: "Bixverse R <> Rust interface"
+date: last-modified
+date-format: YYYY-MM-DD
 vignette: >
   %\VignetteIndexEntry{Bixverse R <> Rust interface}
   %\VignetteEngine{quarto::html}
@@ -9,7 +11,7 @@ knitr:
     collapse: true
     comment: '#>'
 author:
-  - name: Gregor Lueg
+  - name: "Gregor Lueg"
 ---
 
 ## Why Rust?
@@ -115,7 +117,6 @@ brave, they can just use the Rust crate directly, see
 
 ```{r}
 #| label: generate random data
-
 no_rows <- 500L
 no_cols <- 500L
 
@@ -132,7 +133,6 @@ random_data <- matrix(
 
 ```{r}
 #| label: pearson correlations
-
 r_pearsons_res <- cor(random_data)
 
 rust_pearsons_res <- rs_cor(random_data, spearman = FALSE)
@@ -146,7 +146,6 @@ Let's check the speed.
 ```{r}
 #| label: pearson correlations (speed)
 #| eval: !expr requireNamespace("microbenchmark", quietly = TRUE)
-
 microbenchmark::microbenchmark(
   r = cor(random_data),
   rust = rs_cor(random_data, spearman = FALSE),
@@ -160,7 +159,6 @@ What about ranked correlations?
 
 ```{r}
 #| label: spearman correlations
-
 r_spearman_res <- cor(random_data, method = "spearman")
 
 rust_spearman_res <- rs_cor(random_data, spearman = TRUE)
@@ -173,7 +171,6 @@ And speed
 ```{r}
 #| label: spearman correlations (speed)
 #| eval: !expr requireNamespace("microbenchmark", quietly = TRUE)
-
 microbenchmark::microbenchmark(
   r = cor(random_data, method = "spearman"),
   rust = rs_cor(random_data, spearman = TRUE),
@@ -187,7 +184,6 @@ Covariance matrices are also very common...
 
 ```{r}
 #| label: covariance
-
 r_covar_res <- cov(random_data)
 
 rust_covar_res <- rs_covariance(random_data)
@@ -200,7 +196,6 @@ And speed comparisons
 ```{r}
 #| label: covariance (speed)
 #| eval: !expr requireNamespace("microbenchmark", quietly = TRUE)
-
 microbenchmark::microbenchmark(
   r = cov(random_data),
   rust = rs_covariance(random_data),
@@ -212,7 +207,6 @@ microbenchmark::microbenchmark(
 
 ```{r}
 #| label: covariance to correlation
-
 r_cor_from_covar <- cov2cor(r_covar_res)
 
 rust_cor_from_covar <- rs_cov2cor(rust_covar_res)
@@ -227,7 +221,6 @@ with the rest of the `rs_` family.
 ```{r}
 #| label: covariance to correlation (speed)
 #| eval: !expr requireNamespace("microbenchmark", quietly = TRUE)
-
 microbenchmark::microbenchmark(
   r = cov2cor(r_covar_res),
   rust = rs_cov2cor(rust_covar_res),
@@ -242,7 +235,6 @@ two correlations against each other?
 
 ```{r}
 #| label: generate a second random data
-
 no_rows_2 <- 500L
 no_cols_2 <- 400L
 
@@ -272,7 +264,6 @@ And speed:
 ```{r}
 #| label: correlations between two matrices (speed)
 #| eval: !expr requireNamespace("microbenchmark", quietly = TRUE)
-
 microbenchmark::microbenchmark(
   r = cor(random_data, random_data_2),
   rust = rs_cor2(random_data, random_data_2, spearman = FALSE),
@@ -289,7 +280,6 @@ columns to represent observations — hence the transpose.
 
 ```{r}
 #| label: euclidean distance
-
 r_euclidean_distance <- as.matrix(
   dist(random_data, method = "euclidean")
 )
@@ -312,7 +302,6 @@ And speed...
 ```{r}
 #| label: euclidean distance speed
 #| eval: !expr requireNamespace("microbenchmark", quietly = TRUE)
-
 microbenchmark::microbenchmark(
   r = dist(random_data, method = "euclidean"),
   rust = rs_dist(random_data, distance_type = "euclidean"),
@@ -324,7 +313,6 @@ microbenchmark::microbenchmark(
 
 ```{r}
 #| label: manhattan distance
-
 r_manhattan_distance <- as.matrix(
   dist(random_data, method = "manhattan")
 )
@@ -347,7 +335,6 @@ And speed... ?
 ```{r}
 #| label: manhattan distance speed
 #| eval: !expr requireNamespace("microbenchmark", quietly = TRUE)
-
 microbenchmark::microbenchmark(
   r = dist(random_data, method = "manhattan"),
   rust = rs_dist(random_data, distance_type = "manhattan"),
@@ -359,7 +346,6 @@ microbenchmark::microbenchmark(
 
 ```{r}
 #| label: canberra distance
-
 r_canberra_distance <- as.matrix(
   dist(random_data, method = "canberra")
 )
@@ -382,7 +368,6 @@ Same benchmarks as before...
 ```{r}
 #| label: canberra distance speed
 #| eval: !expr requireNamespace("microbenchmark", quietly = TRUE)
-
 microbenchmark::microbenchmark(
   r = dist(random_data, method = "canberra"),
   rust = rs_dist(random_data, distance_type = "canberra"),
@@ -394,7 +379,6 @@ microbenchmark::microbenchmark(
 
 ```{r}
 #| label: generate new smaller data
-
 set.seed(246L)
 
 nrows <- 100
@@ -413,7 +397,6 @@ discretisation strategies are available.
 ```{r}
 #| label: mutual information calculations - equal width
 #| eval: !expr requireNamespace("infotheo", quietly = TRUE)
-
 rust_res_mi <- rs_mutual_info(
   mat,
   n_bins = NULL,
@@ -434,7 +417,6 @@ all.equal(rust_res_mi, infotheo_res_mi)
 ```{r}
 #| label: speed differences bixverse vs. infotheo (equal width)
 #| eval: !expr requireNamespace(c("infotheo", "microbenchmark"), quietly = TRUE)
-
 microbenchmark::microbenchmark(
   infotheo = infotheo::mutinformation(infotheo::discretize(
     mat,
@@ -456,7 +438,6 @@ microbenchmark::microbenchmark(
 ```{r}
 #| label: mutual information calculations - equal frequency
 #| eval: !expr requireNamespace("infotheo", quietly = TRUE)
-
 rust_res_mi <- rs_mutual_info(
   mat,
   n_bins = NULL,
@@ -477,7 +458,6 @@ all.equal(rust_res_mi, infotheo_res_mi)
 ```{r}
 #| label: speed differences bixverse vs. infotheo (equal frequency)
 #| eval: !expr requireNamespace(c("infotheo", "microbenchmark"), quietly = TRUE)
-
 microbenchmark::microbenchmark(
   infotheo = infotheo::mutinformation(infotheo::discretize(
     mat,
@@ -502,7 +482,6 @@ implementation of Jaccard similarity across two lists.
 
 ```{r}
 #| label: R similarity data
-
 jaccard_sim <- function(x, y) {
   length(intersect(x, y)) / length(union(x, y))
 }
@@ -525,7 +504,6 @@ the baseline:
 ```{r}
 #| label: set similarity in R (purrr)
 #| eval: !expr requireNamespace(c("tictoc"), quietly = TRUE)
-
 tictoc::tic()
 
 r_results <- purrr::map(
@@ -552,7 +530,6 @@ speedup:
 ```{r}
 #| label: set similarity in R (furrr)
 #| eval: !expr requireNamespace(c("future", "tictoc", "furrr"), quietly = TRUE)
-
 future::plan(strategy = future::multisession(workers = parallel::detectCores()))
 
 tictoc::tic()
@@ -583,7 +560,6 @@ scheduling overhead (somtimes) compared to `future` and does a bit better:
 ```{r}
 #| label: set similarity in R (mirai)
 #| eval: !expr requireNamespace(c("tictoc", "mirai"), quietly = TRUE)
-
 mirai::daemons(parallel::detectCores())
 
 tictoc::tic()
@@ -616,7 +592,6 @@ implementation:
 
 ```{r}
 #| label: bixverse jaccard similarity function
-
 tictoc::tic()
 
 rust_res <- rs_set_similarity_list2(

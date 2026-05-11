@@ -1,5 +1,7 @@
 ---
 title: "Gene set analysis and GRN inference on PBMCs"
+date: last-modified
+date-format: YYYY-MM-DD
 vignette: >
   %\VignetteIndexEntry{Gene set analysis and GRN inference on PBMCs}
   %\VignetteEngine{quarto::html}
@@ -60,7 +62,6 @@ PCA, neighbour computation, Leiden clustering and UMAP.
 #| label: rebuild-object
 #| code-fold: true
 #| code-summary: "Rebuild the PBMC3k object (click to expand)"
-
 pbmc3k_path <- bixverse:::download_pbmc3k()
 tempdir_pbmc <- tempdir()
 
@@ -144,7 +145,6 @@ visualisations.
 #| fig-width: 10
 #| fig-height: 6
 #| fig-cap: "Module scores for lineage genes projected onto UMAP"
-
 lineage_sets <- list(
   `T cell` = symbol_to_ensembl[c(
     "CD3D",
@@ -205,7 +205,8 @@ module_scores <- module_scores_sc(
   .verbose = FALSE
 )
 
-ms_dt <- as.data.table(module_scores, keep.rownames = "cell_id")
+# you need to unclass here
+ms_dt <- as.data.table(unclass(module_scores), keep.rownames = "cell_id")
 ms_dt <- merge(ms_dt, umap_dt, by = "cell_id")
 
 ms_long <- melt(
@@ -224,6 +225,21 @@ ggplot(ms_long, aes(x = umap_1, y = umap_2)) +
   labs(colour = "Module\nscore")
 ```
 
+Let's imagine you want to add the scores to the internal DB. There are helpers
+for this, too. The `get_obs_data()` helper in combination with ``
+
+```{r}
+#| label: add module scores
+sc_object <- add_sc_new_obs(
+  object = sc_object,
+  obs_data = get_obs_data(module_scores)
+)
+
+sc_object[[1:5]]
+```
+
+As we can appreciate, this has now added the new columns. 
+
 ### AUCell
 
 [AUCell](https://www.nature.com/articles/nmeth.4463) ranks genes within each
@@ -237,7 +253,6 @@ highly correlated; we show the Wilcoxon variant here.
 #| fig-width: 10
 #| fig-height: 7
 #| fig-cap: "AUCell scores for lineage genes projected onto UMAP"
-
 auc_scores <- aucell_sc(
   object = sc_object,
   gs_list = lineage_sets,
@@ -245,7 +260,7 @@ auc_scores <- aucell_sc(
   .verbose = FALSE
 )
 
-auc_dt <- as.data.table(auc_scores, keep.rownames = "cell_id")
+auc_dt <- as.data.table(unclass(auc_scores), keep.rownames = "cell_id")
 auc_dt <- merge(auc_dt, umap_dt, by = "cell_id")
 
 auc_long <- melt(
@@ -262,7 +277,6 @@ ggplot(auc_long, aes(x = umap_1, y = umap_2)) +
   facet_wrap(~phase) +
   theme_bw() +
   labs(colour = "AUC")
-
 ```
 
 ### VISION with spatial autocorrelation
@@ -282,7 +296,6 @@ cell type's markers as negatives, but we will just leave it blank here.
 ```{r}
 #| label: vision
 #| fig-cap: "Spatial autocorrelation test for cell cycle gene sets"
-
 vision_gs <- lapply(lineage_sets, function(genes) list(pos = genes))
 
 vision_res <- vision_w_autocor_sc(
@@ -316,7 +329,6 @@ programmes.
 
 ```{r}
 #| label: hotspot-autocor
-
 hotspot_autocor <- hotspot_autocor_sc(
   object = sc_object,
   .verbose = FALSE
@@ -338,7 +350,6 @@ stronger signal than global correlation alone.
 
 ```{r}
 #| label: hotspot - gene correlations
-
 sig_genes <- hotspot_autocor[fdr <= 0.05, gene_id]
 
 hotspot_cor <- hotspot_gene_cor_sc(
@@ -354,7 +365,6 @@ This returns a HotSpot result. Let's add the membership and plot it.
 
 ```{r}
 #| label: hotspot - plot modules
-
 hotspot_cor <- generate_hotspot_membership(hotspot_cor)
 
 # this will only plot a subsample of 500 genes for speed (stratified by
@@ -366,7 +376,6 @@ Let's pull out the genes:
 
 ```{r}
 #| label: hotspot - module membership
-
 membership <- get_hotspot_membership(hotspot_cor)
 membership[, gene_symbol := ensembl_to_symbol[gene_id]]
 
@@ -381,7 +390,6 @@ visualise this with AUCell check it out.
 
 ```{r}
 #| label: hotspot - plot the gene sets
-
 hotspot_gene_sets <- membership %$% split(gene_id, cluster_member)
 
 hotspot_gene_sets <- lapply(hotspot_gene_sets, function(genes) {
@@ -395,7 +403,7 @@ vision_scores_hotspot <- vision_sc(
 )
 
 vision_scores_dt <- as.data.table(
-  vision_scores_hotspot,
+  unclass(vision_scores_hotspot),
   keep.rownames = "cell_id"
 )
 vision_scores_dt <- merge(vision_scores_dt, umap_dt, by = "cell_id")
@@ -467,7 +475,6 @@ expressing cells to remove uninformative targets.
 
 ```{r}
 #| label: scenic-gene-filter
-
 scenic_genes <- scenic_gene_filter_sc(
   object = sc_object,
   scenic_params = params_scenic(min_counts = 50L),
@@ -484,7 +491,6 @@ which we can download and map to Ensembl IDs.
 
 ```{r}
 #| label: scenic-tfs
-
 tf_dt <- data.table::fread(
   "https://resources.aertslab.org/cistarget/tf_lists/allTFs_hg38.txt",
   header = FALSE,
@@ -503,7 +509,6 @@ random forests with a batch size of 64 to illustrate the multi-output path.
 
 ```{r}
 #| label: scenic-grn
-
 scenic_res <- scenic_grn_sc(
   object = sc_object,
   tf_ids = tf_dt$gene_id,
@@ -537,7 +542,6 @@ even `n_sd = 2`.
 
 ```{r}
 #| label: scenic-tf-to-gene
-
 scenic_res <- identify_tf_to_genes(
   scenic_res,
   n_sd = 2,
@@ -570,7 +574,6 @@ it by default.
 ```{r}
 #| label: scenic-cistarget
 #| eval: false
-
 # Download the CisTarget reference files (cached after first download)
 paths <- download_cistarget_hg38()
 

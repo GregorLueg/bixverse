@@ -8,6 +8,7 @@ generate_sc_knn(
   data,
   neighbours_params = params_sc_neighbours(),
   seed = 42L,
+  .validate_index = FALSE,
   .verbose = TRUE
 )
 }
@@ -31,6 +32,9 @@ for available parameters and their defaults.
 }}
 
 \item{seed}{Integer. Random seed for reproducibility.}
+
+\item{.validate_index}{Boolean. Shall an exhaustive search against a subset
+of cells be run to validate the approximate nearest neighbour index.}
 
 \item{.verbose}{Boolean. Controls verbosity.}
 }

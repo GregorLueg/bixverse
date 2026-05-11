@@ -20,8 +20,7 @@ larger data sets.}
 \item{.verbose}{Boolean. Controls the verbosity of the function.}
 }
 \value{
-Matrix of cells x signatures with the VISION pathway scores as
-values.
+Returns a \code{ScMatrixRes} with the VISION scores.
 }
 \description{
 Calculates an VISION-type scores for pathways based on DeTomaso, et al.

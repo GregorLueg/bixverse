@@ -10,6 +10,8 @@ rs_sc_hvg_batch_aware(
   cell_indices,
   batch_labels,
   loess_span,
+  binning,
+  n_bins,
   clip_max,
   streaming,
   verbose
@@ -18,8 +20,8 @@ rs_sc_hvg_batch_aware(
 \arguments{
 \item{f_path_gene}{String. Path to the \code{counts_genes.bin} file.}
 
-\item{hvg_method}{String. Which HVG detection method to use. Currently
-only \code{"vst"} is implemented for batch-aware mode.}
+\item{hvg_method}{String. Which HVG detection method to use. One of
+\code{c("vst", "meanvarbin", "dispersion")}.}
 
 \item{cell_indices}{Integer positions (0-indexed!) that defines the cells
 to keep.}
@@ -28,6 +30,11 @@ to keep.}
 for each cell. Must be same length as \code{cell_indices}.}
 
 \item{loess_span}{Numeric. The span parameter for the loess function.}
+
+\item{binning}{String. The binning strategy for the \code{meanvarbin} method. One
+of \code{c("equal_width", "equal_frequency")}.}
+
+\item{n_bins}{Integer. Number of bins for the \code{meanvarbin} method.}
 
 \item{clip_max}{Optional clipping number. Defaults to \code{sqrt(no_cells)} per
 batch if not provided.}
@@ -38,12 +45,24 @@ pressure.}
 \item{verbose}{Boolean. Controls verbosity of the function.}
 }
 \value{
-A list with HVG statistics concatenated across all batches:
+A list with HVG statistics concatenated across all batches. For
+\code{hvg_method == 'vst'}, the following elements can be found:
 \itemize{
 \item mean - The average expression of each gene in each batch.
 \item var - The variance of each gene in each batch.
 \item var_exp - The expected variance of each gene in each batch.
 \item var_std - The standardised variance of each gene in each batch.
+\item batch - Batch index for each gene (length = n_genes * n_batches).
+\item gene_idx - Gene index for each entry (0-indexed, length = n_genes *
+n_batches).
+}
+For the other methods
+\itemize{
+\item mean - The average expression of each gene in each batch.
+\item dispersion - The dispersion of the gene in each batch.
+\item dispersion_scaled - The scaled dispersion per bin per gene in each
+batch.
+\item bin - The bin of the gene in each batch.
 \item batch - Batch index for each gene (length = n_genes * n_batches).
 \item gene_idx - Gene index for each entry (0-indexed, length = n_genes *
 n_batches).

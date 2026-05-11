@@ -1,5 +1,6 @@
 use extendr_api::prelude::*;
 
+use bixverse_rs::prelude::*;
 use bixverse_rs::single_cell::sc_data::depracated_conversion::migrate_v2_to_v3_pair;
 
 ////////////////////
@@ -34,6 +35,7 @@ fn rs_data_v2_3_conversion(
     verbose: bool,
 ) -> extendr_api::Result<()> {
     migrate_v2_to_v3_pair(cell_input, cell_output, gene_input, gene_output, verbose)
-        .map_err(|e| e.to_string())?;
+        .to_extendr()?;
+
     Ok(())
 }

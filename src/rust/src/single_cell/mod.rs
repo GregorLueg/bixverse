@@ -8,3 +8,4 @@ pub mod r_sc_data;
 pub mod r_sc_metacells;
 pub mod r_sc_plot_extraction;
 pub mod r_sc_processing;
+pub mod utils;

@@ -74,8 +74,9 @@ get_seurat_counts_to_list <- function(seurat_obj) {
 #' }
 #'
 #' @keywords internal
+#'
+#' @import Matrix
 get_meta_cell_matrices <- function(meta_cell_data) {
-  # checks
   checkmate::assertList(meta_cell_data, names = "named")
   checkmate::assertNames(
     names(meta_cell_data),
@@ -89,20 +90,26 @@ get_meta_cell_matrices <- function(meta_cell_data) {
     )
   )
 
+  dims <- as.integer(c(meta_cell_data$nrow, meta_cell_data$ncol))
+  p <- as.integer(meta_cell_data$indptr)
+  j <- as.integer(meta_cell_data$indices)
+
   list(
-    raw = new(
-      "dgRMatrix",
-      p = as.integer(meta_cell_data$indptr),
-      j = as.integer(meta_cell_data$indices),
+    raw = Matrix::sparseMatrix(
+      p = p,
+      j = j,
       x = as.numeric(meta_cell_data$raw_counts),
-      Dim = as.integer(c(meta_cell_data$nrow, meta_cell_data$ncol))
+      dims = dims,
+      repr = "R",
+      index1 = FALSE
     ),
-    norm = new(
-      "dgRMatrix",
-      p = as.integer(meta_cell_data$indptr),
-      j = as.integer(meta_cell_data$indices),
+    norm = Matrix::sparseMatrix(
+      p = p,
+      j = j,
       x = as.numeric(meta_cell_data$norm_counts),
-      Dim = as.integer(c(meta_cell_data$nrow, meta_cell_data$ncol))
+      dims = dims,
+      repr = "R",
+      index1 = FALSE
     )
   )
 }
@@ -289,6 +296,8 @@ plot.CellQc <- function(x, qc_df, ...) {
 
 ## knn -------------------------------------------------------------------------
 
+### class ----------------------------------------------------------------------
+
 #' Generate a new SingleCellNearestNeighbour from data
 #'
 #' @param data Numerical matrix. Samplex x features. The embedding matrix from
@@ -308,6 +317,8 @@ plot.CellQc <- function(x, qc_df, ...) {
 #'   for available parameters and their defaults.
 #' }
 #' @param seed Integer. Random seed for reproducibility.
+#' @param .validate_index Boolean. Shall an exhaustive search against a subset
+#' of cells be run to validate the approximate nearest neighbour index.
 #' @param .verbose Boolean. Controls verbosity.
 #'
 #' @returns The `SingleCellNearestNeighbour` for downstream usage.
@@ -317,21 +328,58 @@ generate_sc_knn <- function(
   data,
   neighbours_params = params_sc_neighbours(),
   seed = 42L,
+  .validate_index = FALSE,
   .verbose = TRUE
 ) {
   checkmate::assertMatrix(data, mode = "numeric")
   assertScNeighbours(neighbours_params)
   checkmate::qassert(seed, "I1")
+  checkmate::qassert(.validate_index, "B1")
   checkmate::qassert(.verbose, "B1")
 
   knn_data <- rs_sc_knn_w_dist(
     embd = data,
     knn_params = neighbours_params,
     verbose = .verbose,
+    validate_index = .validate_index,
     seed = seed
   )
 
   knn <- new_sc_knn(knn_data = knn_data, used_cells = row.names(data))
 
   knn
+}
+
+### metrics --------------------------------------------------------------------
+
+#' Calculate recall at k and distance ratio
+#'
+#' @description
+#' Helper function to compare the results of two `SingleCellNearestNeighbour`
+#' against each other. The first one can serve as a reference (ground truth)
+#' and you can compare against the second one.
+#'
+#' @param ref_knn The reference `SingleCellNearestNeighbour`.
+#' @param query_knn The query `SingleCellNearestNeighbour`.
+#'
+#' @returns A list with:
+#' \itemize{
+#'  \item matches - The intersecting indices between the reference and query
+#'  kNN for each sample. In an ideal match up should be equal to k.
+#'  \item distance_ratio - The distance ratio. Calculates
+#'  `sum(dist_query) / sum(dist_ref)` per sample. Indicates how much worse the
+#'  reference is.
+#'  \item final_recall - The final recall across all samples.
+#'  \item final_ratio - The final distance ratio across all samples.
+#' }
+#'
+#' @export
+calc_knn_metrics <- function(ref_knn, query_knn) {
+  # checks
+  checkmate::assertClass(ref_knn, "SingleCellNearestNeighbour")
+  checkmate::assertClass(query_knn, "SingleCellNearestNeighbour")
+
+  res <- rs_compare_knn(knn_data_a = ref_knn, knn_data_b = query_knn)
+
+  res
 }

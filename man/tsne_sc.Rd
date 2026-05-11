@@ -2,17 +2,17 @@
 % Please edit documentation in R/methods_sc_plots_helpers.R
 \name{tsne_sc}
 \alias{tsne_sc}
-\title{Run t-SNE on a SingleCells object}
+\title{Run t-SNE on a SingleCells/MetaCells object}
 \usage{
 tsne_sc(
   object,
-  use_knn = TRUE,
+  use_knn = FALSE,
   embd_to_use = "pca",
   no_embd_to_use = NULL,
   n_dim = 2L,
-  perplexity = 30,
+  perplexity = 10,
   approx_type = c("bh", "fft"),
-  knn_method = c("hnsw", "balltree", "annoy", "nndescent", "exhaustive"),
+  knn_method = c("kmknn", "hnsw", "balltree", "annoy", "nndescent", "exhaustive"),
   nn_params = manifoldsR::params_nn(),
   tsne_params = manifoldsR::params_tsne(),
   seed = 42L,
@@ -20,7 +20,7 @@ tsne_sc(
 )
 }
 \arguments{
-\item{object}{\code{SingleCells} class.}
+\item{object}{\code{SingleCells}, \code{MetaCells} class.}
 
 \item{use_knn}{Boolean. Use the kNN graph found in the object. Defaults to
 \code{TRUE}. If not available, will default to the embedding.}
@@ -55,5 +55,26 @@ or \code{"fft"}. Defaults to \code{"bh"}.}
 The object with a \code{"tsne"} embedding added.
 }
 \description{
-Wrapper around \code{\link[manifoldsR:tsne]{manifoldsR::tsne()}} for the \code{SingleCells} class.
+Wrapper around \code{\link[manifoldsR:tsne]{manifoldsR::tsne()}} for the \code{SingleCells} and \code{MetaCells}
+classes. t-SNE produces a low-dimensional embedding that emphasises local
+neighbourhood structure. Distances between well-separated clusters should not
+be over-interpreted quantitatively, but the common claim that t-SNE discards
+global structure while UMAP preserves it is largely an artefact of default
+initialisations rather than a property of the loss functions themselves.
+
+When \code{use_knn = FALSE} (the default), the kNN graph already stored on the
+object is reused. Otherwise neighbours are computed from the chosen
+embedding.
+
+Two approximation strategies are available via \code{approx_type}: \code{"bh"}
+(Barnes-Hut) is the classical O(n log n) approximation and works well
+across a wide range of dataset sizes; \code{"fft"} (interpolation-based, as in
+FIt-SNE) scales better to very large datasets. \code{perplexity} controls the
+bandwidth of the Gaussian kernel used to compute affinities within the
+neighbour set (typical values 5-50). When a pre-computed kNN is supplied via
+\code{use_knn = TRUE}, perplexity no longer drives neighbour retrieval but still
+shapes the affinity distribution over the retrieved neighbours; values too
+close to the kNN size will produce poor results. With tSNE in particular the
+rule of thumb is to set k to \code{3 * perplexity}. When `k ≤ perplexity`` the
+algorithm does not behave properly anymore, thus, will throw an error.
 }

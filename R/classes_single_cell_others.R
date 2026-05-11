@@ -4,24 +4,19 @@
 # analyses. general generics are found on the top of the file, otherwise you
 # have per class the class generation and specific methods, getters, setters.
 
-## general generics ------------------------------------------------------------
+## helpers ---------------------------------------------------------------------
 
-#' Get the ready obs data from various sub method
+#' Add "is_obs" attribute
 #'
-#' @description
-#' Helper method that creates data.tables with cell indices which were used
-#' in the given analysis + the values that are to be added to the obs table
-#' in the DuckDB.
+#' @param x data.table. The data.table to which to add the attribute.
 #'
-#' @param x An object to set gene mapping for
-#' @param ... Other parameters
+#' @returns `x` with added attribute
 #'
-#' @returns Returns a data.table with a cell_idx column for the cells included
-#' in the analysis and additional columns to be added to the obs table.
-#'
-#' @export
-get_obs_data <- function(x, ...) {
-  UseMethod("get_obs_data")
+#' @keywords internal
+.add_is_obs_attr <- function(x) {
+  data.table::setattr(x, "is_obs", TRUE)
+
+  return(x)
 }
 
 ## kNN class -------------------------------------------------------------------
@@ -156,7 +151,7 @@ print.SingleCellNearestNeighbour <- function(x, ...) {
 sc_knn_to_nearest_neighbours <- function(x) {
   checkmate::assertClass(x, "SingleCellNearestNeighbour")
 
-  manifoldsR::generate_nearest_neigbours_class(
+  manifoldsR::new_nearest_neighbour(
     indices = as.vector(t(x$indices)) + 1L,
     dist = as.vector(t(x$dist)),
     k = x$k,
@@ -164,28 +159,99 @@ sc_knn_to_nearest_neighbours <- function(x) {
   )
 }
 
-# methods ----------------------------------------------------------------------
+## list results ----------------------------------------------------------------
 
-## gene proportion analysis ----------------------------------------------------
+#' Generate an ScListRes instance
+#'
+#' @param res Named list. The results from a single cell analysis in list form.
+#' @param cell_indices Integer. The cells that were included in the analysis.
+#'
+#' @returns `ScListRes` class for subsequant usage.
+#'
+#' @keywords internal
+#'
+#' @export
+new_sc_list <- function(res, cell_indices) {
+  # checks
+  checkmate::assertList(res, names = "named")
+  checkmate::assertInteger(cell_indices, len = length(res[[1]]))
+
+  structure(
+    res,
+    class = "ScListRes",
+    cell_indices = cell_indices
+  )
+}
+
+### getters --------------------------------------------------------------------
 
 #' @rdname get_obs_data
 #'
 #' @export
-get_obs_data.sc_proportion_res <- function(x, ...) {
+get_obs_data.ScListRes <- function(x, ...) {
   # checks
-  checkmate::assertClass(x, "sc_proportion_res")
+  checkmate::assertClass(x, "ScListRes")
 
   # function body
   obs_dt <- data.table::as.data.table(unclass(x))
   obs_dt[, cell_idx := (attr(x, "cell_indices") + 1)] # was zero indexed
 
+  obs_dt <- .add_is_obs_attr(obs_dt)
+
   return(obs_dt)
 }
 
-# additional S3 classes --------------------------------------------------------
+## matrix results --------------------------------------------------------------
 
-# contains generics/methods for additional S3 classes related to single cell
-# analysis
+#' Generate an ScMatrixRes instance
+#'
+#' @param res Numeric matrix. Of shape samples x features.
+#' @param cell_indices Integer. The cells that were included in the analysis.
+#'
+#' @returns `ScMatrixRes` class for subsequant usage.
+#'
+#' @keywords internal
+#'
+#' @export
+new_sc_matrix <- function(res, cell_indices) {
+  # checks
+  checkmate::assertMatrix(
+    res,
+    mode = "numeric",
+    row.names = "named",
+    col.names = "named"
+  )
+  checkmate::assertInteger(cell_indices, len = nrow(res))
+
+  structure(
+    res,
+    class = "ScMatrixRes",
+    cell_indices = cell_indices
+  )
+}
+
+### getters --------------------------------------------------------------------
+
+#' @rdname get_obs_data
+#'
+#' @export
+get_obs_data.ScMatrixRes <- function(x, columns = NULL, ...) {
+  # checks
+  checkmate::assertClass(x, "ScMatrixRes")
+  checkmate::qassert(columns, c("0", "S+"))
+
+  if (!is.null(columns)) {
+    x <- x[, columns]
+  }
+
+  # function body
+  obs_dt <- data.table::as.data.table(unclass(x))
+  obs_dt[, cell_idx := (attr(x, "cell_indices") + 1)] # was zero indexed
+
+  obs_dt <- .add_is_obs_attr(obs_dt)
+
+  return(obs_dt)
+}
 
 ## scrublet --------------------------------------------------------------------
 
@@ -332,6 +398,8 @@ get_obs_data.ScrubletRes <- function(x, ...) {
   )
   obs_dt[, cell_idx := (attr(x, "cell_indices") + 1)] # was zero indexed
 
+  obs_dt <- .add_is_obs_attr(obs_dt)
+
   return(obs_dt)
 }
 
@@ -406,6 +474,8 @@ get_obs_data.BoostRes <- function(x, ...) {
   )
   obs_dt[, cell_idx := (attr(x, "cell_indices") + 1)] # was zero indexed
 
+  obs_dt <- .add_is_obs_attr(obs_dt)
+
   return(obs_dt)
 }
 
@@ -436,6 +506,121 @@ print.BoostRes <- function(x, ...) {
     min(x$doublet_score),
     max(x$doublet_score)
   ))
+
+  invisible(x)
+}
+
+## scdblfinder -----------------------------------------------------------------
+
+### obs data -------------------------------------------------------------------
+
+#' @rdname get_obs_data
+#'
+#' @export
+get_obs_data.ScDblFinderRes <- function(x, ...) {
+  # checks
+  checkmate::assertClass(x, "ScDblFinderRes")
+
+  # results
+  obs_dt <- data.table::as.data.table(x[c(
+    "predicted_doublets",
+    "doublet_score",
+    "cxds_scores",
+    "weighted",
+    "cluster_labels"
+  )])
+  obs_dt[, cell_idx := (attr(x, "cell_indices") + 1)]
+
+  obs_dt <- .add_is_obs_attr(obs_dt)
+
+  return(obs_dt)
+}
+
+### getters --------------------------------------------------------------------
+
+#' Get the feature matrix used for the classifier
+#'
+#' @param x An object to get the feature matrix from. This will only include
+#' the values of the observed cells.
+#'
+#' @export
+get_feature_mat <- function(x) {
+  UseMethod("get_feature_mat")
+}
+
+#' @rdname get_feature_mat
+#'
+#' @export
+get_feature_mat.ScDblFinderRes <- function(x, ...) {
+  checkmate::assertClass(x, "ScDblFinderRes")
+
+  if (is.null(x$features)) {
+    warning(paste(
+      "You did not extract the features during run of the function.",
+      "Returning NULL."
+    ))
+  }
+
+  return(x$features)
+}
+
+#' Get either the cxds or weighted scores
+#'
+#' @param x An object to get the weighted or cxds scores from.
+#'
+#' @export
+get_scores <- function(x, ..., score_type = c("weighted", "cxds_scores")) {
+  UseMethod("get_scores")
+}
+
+#' @rdname get_scores
+#'
+#' @export
+get_scores.ScDblFinderRes <- function(
+  x,
+  ...,
+  score_type = c("weighted", "cxds_scores")
+) {
+  score_type <- match.arg(score_type)
+
+  checkmate::assertClass(x, "ScDblFinderRes")
+  checkmate::assertChoice(score_type, c("weighted", "cxds_scores"))
+
+  x[[score_type]]
+}
+
+### print ----------------------------------------------------------------------
+
+#' Print a ScDblFinderRes object
+#'
+#' @param x A `ScDblFinderRes` object.
+#' @param ... Ignored.
+#'
+#' @return Invisible `x`.
+#'
+#' @export
+#'
+#' @keywords internal
+print.ScDblFinderRes <- function(x, ...) {
+  n_cells <- length(x$predicted_doublets)
+  n_doublets <- sum(x$predicted_doublets)
+  n_clusters <- length(unique(x$cluster_labels))
+  features_extracted <- !is.null(x$features)
+
+  cat(sprintf(
+    "ScDblFinderRes: %d cells, %d doublets (%.1f%%)\n",
+    n_cells,
+    n_doublets,
+    100 * n_doublets / n_cells
+  ))
+  cat(sprintf("  Threshold:        %.4f\n", x$threshold))
+  cat(sprintf(
+    "  Score range:      [%.4f, %.4f]\n",
+    min(x$doublet_score),
+    max(x$doublet_score)
+  ))
+  cat(sprintf("  Final clusters:   %d\n", n_clusters))
+  cat(sprintf("  Features avaiable: %s\n", features_extracted))
 
   invisible(x)
 }
@@ -1809,4 +1994,84 @@ tf_to_genes_motif_enrichment.ScenicGrn <- function(
   data.table::setorder(tf_gene_dt, tf)
   x$tf_to_gene_results <- tf_gene_dt
   return(x)
+}
+
+## fast clusters ---------------------------------------------------------------
+
+### getters --------------------------------------------------------------------
+
+#' @rdname get_obs_data
+#'
+#' @export
+get_obs_data.SingleCellFastClusters <- function(x, ...) {
+  checkmate::assertClass(x, "SingleCellFastClusters")
+  res <- data.table::copy(x$memberships)
+
+  res <- .add_is_obs_attr(res)
+
+  res
+}
+
+#' Get k-means centroids from a fast cluster result
+#'
+#' @param x `SingleCellFastClusters` object.
+#'
+#' @export
+get_centroids <- function(x) {
+  UseMethod("get_centroids")
+}
+
+#' @rdname get_centroids
+#'
+#' @export
+get_centroids.SingleCellFastClusters <- function(x) {
+  checkmate::assertClass(x, "SingleCellFastClusters")
+  if (is.null(x$centroids)) {
+    warning(paste(
+      "No centroids stored. Did you set return_kmeans = TRUE?",
+      "Returning NULL."
+    ))
+  }
+  x$centroids
+}
+
+#' Get k-means cluster assignments from a fast cluster result
+#'
+#' @param x `SingleCellFastClusters` object.
+#'
+#' @export
+get_kmeans_clusters <- function(x) {
+  UseMethod("get_kmeans_clusters")
+}
+
+#' @rdname get_kmeans_clusters
+#'
+#' @export
+get_kmeans_clusters.SingleCellFastClusters <- function(x) {
+  checkmate::assertClass(x, "SingleCellFastClusters")
+  if (is.null(x$k_means_cluster)) {
+    warning(paste(
+      "No k-means clusters stored. Did you set return_kmeans = TRUE?",
+      "Returning NULL."
+    ))
+  }
+  x$k_means_cluster
+}
+
+### primitives -----------------------------------------------------------------
+
+#' @export
+#'
+#' @keywords internal
+print.SingleCellFastClusters <- function(x, ...) {
+  cat(sprintf(
+    "SingleCellFastClusters: %d cells, %d resolutions\n",
+    nrow(x$memberships),
+    length(x$resolutions)
+  ))
+  cat(sprintf("  Resolutions: %s\n", paste(x$resolutions, collapse = ", ")))
+  cat(sprintf("  Grid stats stored: %s\n", !is.null(x$stats)))
+  cat(sprintf("  k-means stored:    %s\n", !is.null(x$centroids)))
+
+  invisible(x)
 }

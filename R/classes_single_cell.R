@@ -60,157 +60,6 @@ new_sc_cache <- function() {
 
 ## setters ---------------------------------------------------------------------
 
-### generics -------------------------------------------------------------------
-
-#### ScMap ---------------------------------------------------------------------
-
-#' Set gene mapping for ScMap object
-#'
-#' @param x An object to set gene mapping for
-#' @param gene_map Named integer indicating indices and names of the genes
-#'
-#' @export
-#'
-#' @keywords internal
-set_gene_mapping <- function(x, gene_map) {
-  UseMethod("set_gene_mapping")
-}
-
-#' Set cell mapping for ScMap object
-#'
-#' @param x An object to set cell mapping for
-#' @param cell_map Named integer indicating indices and names of the cells
-#'
-#' @export
-#'
-#' @keywords internal
-set_cell_mapping <- function(x, cell_map) {
-  UseMethod("set_cell_mapping")
-}
-
-#' Set cells to keep for ScMap object
-#'
-#' @param x An object to set cells to keep for
-#' @param cells_to_keep String or integer. The names or indices of the cells
-#' to keep in downstream analysis.
-#'
-#' @export
-#'
-#' @keywords internal
-set_cells_to_keep <- function(x, cells_to_keep) {
-  UseMethod("set_cells_to_keep")
-}
-
-#' Set the HVG genes
-#'
-#' @param x An object to set the HVGs for
-#' @param hvg String or integer. The names or indices of the highly variable
-#' genes.
-#'
-#' @export
-#'
-#' @keywords internal
-set_hvg <- function(x, hvg) {
-  UseMethod("set_hvg")
-}
-
-#### ScCache -------------------------------------------------------------------
-
-#' Set/add PCA factors
-#'
-#' @param x An object to add the PCA factors for.
-#' @param pca_factor Numerical matrix. The matrix with the PCA factors.
-#'
-#' @export
-#'
-#' @keywords internal
-set_pca_factors <- function(x, pca_factor) {
-  UseMethod("set_pca_factors")
-}
-
-#' Set/add PCA loadings
-#'
-#' @param x An object to add the PCA loadings for.
-#' @param pca_loading Numerical matrix. The Matrix with the PCA loadings.
-#'
-#' @export
-#'
-#' @keywords internal
-set_pca_loadings <- function(x, pca_loading) {
-  UseMethod("set_pca_loadings")
-}
-
-#' Set/add PCA singular values
-#'
-#' @param x An object to add the singular values for.
-#' @param singular_vals Numerical vector. The singular values.
-#'
-#' @export
-#'
-#' @keywords internal
-set_pca_singular_vals <- function(x, singular_vals) {
-  UseMethod("set_pca_singular_vals")
-}
-
-#' Add additional embeddings to the class
-#'
-#' @param x An object to add the singular values for.
-#' @param embd Numerical matrix representing the additional embedding.
-#' @param name String. Name of the embedding.
-#'
-#' @export
-#'
-#' @keywords internal
-set_embedding <- function(x, embd, name) {
-  UseMethod("set_embedding")
-}
-
-#' Set/add KNN
-#'
-#' @param x An object to add the KNN data to
-#' @param knn `SingleCellNearestNeighbour` class to add to the classes.
-#'
-#' @export
-#'
-#' @keywords internal
-set_knn <- function(x, knn) {
-  UseMethod("set_knn")
-}
-
-#' Set/add KNN
-#'
-#' @param x An object to add the KNN data to
-#' @param snn_graph Igraph. The sNN graph for subsequent clustering.
-#'
-#' @export
-#'
-#' @keywords internal
-set_snn_graph <- function(x, snn_graph) {
-  UseMethod("set_snn_graph")
-}
-
-#' Remove the KNN data
-#'
-#' @param x An object from which to remove the kNN data
-#'
-#' @export
-#'
-#' @keywords internal
-remove_knn <- function(x) {
-  UseMethod("remove_knn")
-}
-
-#' Remove the sNN graph
-#'
-#' @param x An object from which to remove the sNN graph
-#'
-#' @export
-#'
-#' @keywords internal
-remove_snn_graph <- function(x) {
-  UseMethod("remove_knn")
-}
-
 ### methods --------------------------------------------------------------------
 
 #### ScMap ---------------------------------------------------------------------
@@ -393,168 +242,6 @@ remove_snn_graph.ScCache <- function(x) {
 ### generics -------------------------------------------------------------------
 
 #### ScMap ---------------------------------------------------------------------
-
-#' Get the gene names
-#'
-#' @param x An object to get the gene names from.
-#'
-#' @export
-get_gene_names <- function(x) {
-  UseMethod("get_gene_names")
-}
-
-#' Get the cell names
-#'
-#' @param x An object to get the cell names from.
-#' @param filtered Boolean. Shall, if found only the cell names of the
-#' `cells_to_keep` be returned (see [bixverse::set_cells_to_keep()]. Defaults
-#' to `FALSE`
-#'
-#' @export
-get_cell_names <- function(x, filtered = FALSE) {
-  UseMethod("get_cell_names")
-}
-
-#' Get the index position for a gene
-#'
-#' @param x An object to get the gene index from.
-#' @param gene_ids String vector. The gene ids to search for.
-#' @param rust_index Bool. Shall rust-based indexing be returned.
-#'
-#' @export
-get_gene_indices <- function(x, gene_ids, rust_index) {
-  UseMethod("get_gene_indices")
-}
-
-#' Get the index position for a gene
-#'
-#' @param x An object to get the gene index from.
-#' @param cell_ids String vector. The cell ids to search for.
-#' @param rust_index Bool. Shall rust-based indexing be returned.
-#'
-#' @export
-get_cell_indices <- function(x, cell_ids, rust_index) {
-  UseMethod("get_cell_indices")
-}
-
-#' Get the cells to keep
-#'
-#' @param x An object to get the gene index from.
-#'
-#' @export
-get_cells_to_keep <- function(x) {
-  UseMethod("get_cells_to_keep")
-}
-
-#' Get the HVG
-#'
-#' @param x An object to get HVG from.
-#'
-#' @export
-get_hvg <- function(x) {
-  UseMethod("get_hvg")
-}
-
-#' Get the gene names based on the gene idx
-#'
-#' @param x An object to get the gene names from.
-#' @param gene_idx Integer. The original gene indices for which to return
-#' the gene names.
-#' @param rust_based Boolean. Is it Rust-based, i.e., 0-index or R-based, i.e.,
-#' 1-indexed.
-#'
-#' @export
-get_gene_names_from_idx <- function(x, gene_idx, rust_based = TRUE) {
-  UseMethod("get_gene_names_from_idx")
-}
-
-#### ScCache -------------------------------------------------------------------
-
-#' Get the PCA factors
-#'
-#' @param x An object to get PCA factors from.
-#'
-#' @returns The PCA factors from the object (if found).
-#'
-#' @export
-get_pca_factors <- function(x) {
-  UseMethod("get_pca_factors")
-}
-
-#' Get the PCA loadings
-#'
-#' @param x An object to get PCA loadings from.
-#'
-#' @returns The PCA feature loadings from the object (if found).
-#'
-#' @export
-get_pca_loadings <- function(x) {
-  UseMethod("get_pca_loadings")
-}
-
-#' Get the PCA singular values
-#'
-#' @param x An object to get PCA singular values from.
-#'
-#' @returns The PCA singular values from the object (if found).
-#'
-#' @export
-get_pca_singular_val <- function(x) {
-  UseMethod("get_pca_singular_val")
-}
-
-#' Get the embedding from the cache
-#'
-#' @description
-#' General wrapper function that can be used to pull out any embedding stored
-#' in the `ScCache`.
-#'
-#' @param x An object to get embedding from
-#' @param embd_name String. The name of the embedding to return. The function
-#' will throw an error if the embedding does not exist.
-#'
-#' @returns Get the specified embeddings from the object (if found).
-#'
-#' @export
-get_embedding <- function(x, embd_name) {
-  UseMethod("get_embedding")
-}
-
-#' Get the available embeddings from the cache
-#'
-#' @description
-#' Returns the available embedding names from the cache.
-#'
-#' @param x An object to get embedding from
-#'
-#' @return Get the names of the available embeddings.
-#'
-#' @export
-get_available_embeddings <- function(x) {
-  UseMethod("get_available_embeddings")
-}
-
-#' Get the sNN graph
-#'
-#' @param x An object to get the sNN graph from.
-#'
-#' @returns The igraph that has the shared nearest neighbours.
-#'
-#' @export
-get_snn_graph <- function(x) {
-  UseMethod("get_snn_graph")
-}
-
-#' Get the KNN object
-#'
-#' @param x An object to get the KNN class from.
-#'
-#' @returns The `SingleCellNearestNeighbour` object.
-#'
-#' @export
-get_knn_obj <- function(x) {
-  UseMethod("get_knn_obj")
-}
 
 ### methods --------------------------------------------------------------------
 
@@ -882,7 +569,7 @@ SingleCells <- S7::new_class(
     dir_data <- path.expand(dir_data)
 
     # generate the Rust pointer
-    count_connection <- SingeCellCountData$new(
+    count_connection <- SingleCellCountData$new(
       f_path_cells = file.path(dir_data, "counts_cells.bin"),
       f_path_genes = file.path(dir_data, "counts_genes.bin")
     )
@@ -1282,7 +969,7 @@ S7::method(`[`, SingleCells) <- function(
 
 #' Helper function to get counts from Rust
 #'
-#' @param rust_con `SingeCellCountData` class. The connector to Rust.
+#' @param rust_con `SingleCellCountData` class. The connector to Rust.
 #' @param assay String. One of `c("raw", "norm")`.
 #' @param return_format String. One of `c("cell", "gene")`.
 #' @param cell_indices Optional integer vector. The index positions of cells to
@@ -1310,7 +997,7 @@ get_counts_from_rust <- function(
   .verbose = TRUE
 ) {
   # checks
-  checkmate::assertClass(rust_con, "SingeCellCountData")
+  checkmate::assertClass(rust_con, "SingleCellCountData")
   checkmate::assertChoice(assay, c("raw", "norm"))
   checkmate::assertChoice(return_format, c("cell", "gene"))
   checkmate::qassert(cell_indices, c("0", "I+"))
@@ -1444,8 +1131,6 @@ finalise_matrix <- function(
 
 #' @name get_cell_names.SingleCells
 #'
-#' @title Get the cell names from a `SingleCells`.
-#'
 #' @rdname get_cell_names
 #'
 #' @method get_cell_names SingleCells
@@ -1467,8 +1152,6 @@ S7::method(get_cell_names, SingleCells) <- function(
 
 #' @name get_gene_names.SingleCells
 #'
-#' @title Get the gene names from a `SingleCells`.
-#'
 #' @rdname get_gene_names
 #'
 #' @method get_gene_names SingleCells
@@ -1487,8 +1170,6 @@ S7::method(get_gene_names, SingleCells) <- function(
 }
 
 #' @name get_cells_to_keep.SingleCells
-#'
-#' @title Get the cells to keep from a `SingleCells`.
 #'
 #' @rdname get_cells_to_keep
 #'
@@ -1514,8 +1195,6 @@ S7::method(get_cells_to_keep, SingleCells) <- function(
 
 #' @name get_gene_indices.SingleCells
 #'
-#' @title Get the gene indices from a `SingleCells`.
-#'
 #' @rdname get_gene_indices
 #'
 #' @method get_gene_indices SingleCells
@@ -1539,10 +1218,7 @@ S7::method(get_gene_indices, SingleCells) <- function(
   return(res)
 }
 
-
 #' @name get_cell_indices.SingleCells
-#'
-#' @title Set the gene mapping for a `SingleCells` class.
 #'
 #' @rdname get_cell_indices
 #'
@@ -1569,8 +1245,6 @@ S7::method(get_cell_indices, SingleCells) <- function(
 
 #' @name get_hvg.SingleCells
 #'
-#' @title Get the highly variable gene indices from a `SingleCells`.
-#'
 #' @rdname get_hvg
 #'
 #' @method get_hvg SingleCells
@@ -1589,8 +1263,6 @@ S7::method(get_hvg, SingleCells) <- function(
 }
 
 #' @name get_gene_names_from_idx.SingleCells
-#'
-#' @title Get the highly variable gene indices from a `SingleCells`.
 #'
 #' @rdname get_gene_names_from_idx
 #'
@@ -1619,8 +1291,6 @@ S7::method(get_gene_names_from_idx, SingleCells) <- function(
 
 #' @name get_pca_factors.SingleCells
 #'
-#' @title Get the PCA factors from a `SingleCells`.
-#'
 #' @rdname get_pca_factors
 #'
 #' @method get_pca_factors SingleCells
@@ -1647,8 +1317,6 @@ S7::method(get_pca_factors, SingleCells) <- function(
 
 #' @name get_pca_loadings.SingleCells
 #'
-#' @title Get the PCA loadings from a `SingleCells`.
-#'
 #' @rdname get_pca_loadings
 #'
 #' @method get_pca_loadings SingleCells
@@ -1671,8 +1339,6 @@ S7::method(get_pca_loadings, SingleCells) <- function(
 
 #' @name get_pca_singular_val.SingleCells
 #'
-#' @title Get the PCA singular values from a `SingleCells`.
-#'
 #' @rdname get_pca_singular_val
 #'
 #' @method get_pca_singular_val SingleCells
@@ -1691,8 +1357,6 @@ S7::method(get_pca_singular_val, SingleCells) <- function(
 }
 
 #' @name get_embedding.SingleCells
-#'
-#' @title Get the embeddings from a `SingleCells`.
 #'
 #' @rdname get_embedding
 #'
@@ -1718,8 +1382,6 @@ S7::method(get_embedding, SingleCells) <- function(
 
 #' @name get_available_embeddings.SingleCells
 #'
-#' @title Get the embeddings from a `SingleCells`.
-#'
 #' @rdname get_available_embeddings
 #'
 #' @method get_available_embeddings SingleCells
@@ -1738,8 +1400,6 @@ S7::method(get_available_embeddings, SingleCells) <- function(
 }
 
 #' @name get_knn_mat.SingleCells
-#'
-#' @title Get the KNN matrix from a `SingleCells`.
 #'
 #' @rdname get_knn_mat
 #'
@@ -1760,8 +1420,6 @@ S7::method(get_knn_mat, SingleCells) <- function(
 
 #' @name get_knn_dist.SingleCells
 #'
-#' @title Get the KNN distances from a `SingleCells`.
-#'
 #' @rdname get_knn_dist
 #'
 #' @method get_knn_dist SingleCells
@@ -1781,8 +1439,6 @@ S7::method(get_knn_dist, SingleCells) <- function(
 
 #' @name get_knn_obj.SingleCells
 #'
-#' @title Get the KNN object from a `SingleCells`.
-#'
 #' @rdname get_knn_obj
 #'
 #' @method get_knn_obj SingleCells
@@ -1801,8 +1457,6 @@ S7::method(get_knn_obj, SingleCells) <- function(
 }
 
 #' @name get_snn_graph.SingleCells
-#'
-#' @title Get the SNN graph from a `SingleCells`.
 #'
 #' @rdname get_snn_graph
 #'
@@ -1886,10 +1540,10 @@ S7::method(setnames_sc, SingleCells) <- function(
 
 #' Add a new column to the obs table
 #'
-#' @param object `bixverse::SingleCells` class.
+#' @param object `SingleCells` class.
 #' @param col_name String. The name of the column to add.
 #' @param new_data Atomic vector. The data to add to the column. Needs to be
-#' of same length as [bixverse::get_cells_to_keep()] and have the same order.
+#' of same length as [bixverse::get_cells_to_keep()] and have the same order!
 #'
 #' @return The class with updated obs table in the DuckDB
 #'
@@ -1933,7 +1587,7 @@ S7::method(set_sc_new_obs_col, SingleCells) <- function(
 
 #' Add multiple new columns to the obs table
 #'
-#' @param object `bixverse::SingleCells` class.
+#' @param object `SingleCells` class.
 #' @param new_data Named list. The names will be the column names and the
 #' elements will be added to the obs table. Needs to be of same length as
 #' [bixverse::get_cells_to_keep()] and have the same order!
@@ -1977,6 +1631,46 @@ S7::method(set_sc_new_obs_col_multiple, SingleCells) <- function(
   return(object)
 }
 
+#' Add an obs table derived from a method to the SingleCells.
+#'
+#' @param object `SingleCells` class.
+#' @param obs_data data.table. A data.table you generated with [get_obs_data()]
+#' on some sub class.
+#'
+#' @return The class with updated obs table in the DuckDB
+#'
+#' @export
+add_sc_new_obs <- S7::new_generic(
+  name = "add_sc_new_obs",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    obs_data
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method add_sc_new_obs SingleCells
+#'
+#' @export
+S7::method(add_sc_new_obs, SingleCells) <- function(
+  object,
+  obs_data
+) {
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  checkmate::assertDataTable(obs_data)
+  if (!isTRUE(attr(obs_data, "is_obs"))) {
+    stop("The provided obs data was not generated by a get_obs_data() method.")
+  }
+
+  duckdb_con <- get_sc_duckdb(object)
+
+  duckdb_con$join_data_obs(obs_data)
+
+  return(object)
+}
+
 #' @method `[[<-` SingleCells
 #'
 #' @export
@@ -2000,10 +1694,11 @@ S7::method(`[[<-`, SingleCells) <- function(x, i, ..., value) {
   return(x)
 }
 
+#### var -----------------------------------------------------------------------
 
 #' Add a new column to the var table
 #'
-#' @param object `bixverse::SingleCells` class.
+#' @param object `SingleCells` class.
 #' @param data_list Named list with the data to add.
 #'
 #' @return The class with updated var table in the DuckDB
@@ -2042,8 +1737,6 @@ S7::method(set_sc_new_var_cols, SingleCells) <- function(
 
 #' @name set_gene_mapping.SingleCells
 #'
-#' @title Set the gene mapping for a `SingleCells` class.
-#'
 #' @rdname set_gene_mapping
 #'
 #' @method set_gene_mapping SingleCells
@@ -2067,8 +1760,6 @@ S7::method(set_gene_mapping, SingleCells) <- function(
 
 #' @name set_cell_mapping.SingleCells
 #'
-#' @title Set the cell mapping for a `SingleCells` class.
-#'
 #' @rdname set_cell_mapping
 #'
 #' @method set_cell_mapping SingleCells
@@ -2091,8 +1782,6 @@ S7::method(set_cell_mapping, SingleCells) <- function(
 }
 
 #' @name set_cells_to_keep.SingleCells
-#'
-#' @title Set the cell mapping for a `SingleCells` class.
 #'
 #' @rdname set_cells_to_keep
 #'
@@ -2123,8 +1812,6 @@ S7::method(set_cells_to_keep, SingleCells) <- function(
 
 #' @name set_hvg.SingleCells
 #'
-#' @title Set the highly variable genes for a `SingleCells` class.
-#'
 #' @rdname set_hvg
 #'
 #' @method set_hvg SingleCells
@@ -2149,8 +1836,6 @@ S7::method(set_hvg, SingleCells) <- function(
 
 #' @name set_pca_factors.SingleCells
 #'
-#' @title Set the PCA factors for a `SingleCells` class.
-#'
 #' @rdname set_pca_factors
 #'
 #' @method set_pca_factors SingleCells
@@ -2172,8 +1857,6 @@ S7::method(set_pca_factors, SingleCells) <- function(
 }
 
 #' @name set_pca_loadings.SingleCells
-#'
-#' @title Set the PCA factors for a `SingleCells` class.
 #'
 #' @rdname set_pca_loadings
 #'
@@ -2197,8 +1880,6 @@ S7::method(set_pca_loadings, SingleCells) <- function(
 
 #' @name set_pca_singular_vals.SingleCells
 #'
-#' @title Set the PCA singular values for a `SingleCells` class.
-#'
 #' @rdname set_pca_singular_vals
 #'
 #' @method set_pca_singular_vals SingleCells
@@ -2220,8 +1901,6 @@ S7::method(set_pca_singular_vals, SingleCells) <- function(
 }
 
 #' @name set_embedding.SingleCells
-#'
-#' @title Set additional embeddings to `SingleCells`.
 #'
 #' @rdname set_embedding
 #'
@@ -2248,8 +1927,6 @@ S7::method(set_embedding, SingleCells) <- function(
 
 #' @name set_knn.SingleCells
 #'
-#' @title Set the KNN matrix for a `SingleCells` class.
-#'
 #' @rdname set_knn
 #'
 #' @method set_knn SingleCells
@@ -2273,8 +1950,6 @@ S7::method(set_knn, SingleCells) <- function(
 
 #' @name set_snn_graph.SingleCells
 #'
-#' @title Set the sNN graph for a `SingleCells` class.
-#'
 #' @rdname set_snn_graph
 #'
 #' @method set_snn_graph SingleCells
@@ -2297,8 +1972,6 @@ S7::method(set_snn_graph, SingleCells) <- function(
 
 #' @name remove_knn.SingleCells
 #'
-#' @title Remove the KNN matrix from a `SingleCells` class.
-#'
 #' @rdname remove_knn
 #'
 #' @method remove_knn SingleCells
@@ -2318,8 +1991,6 @@ S7::method(remove_knn, SingleCells) <- function(
 
 
 #' @name remove_snn_graph.SingleCells
-#'
-#' @title Remove the sNN graph from a `SingleCells` class.
 #'
 #' @rdname remove_snn_graph
 #'
@@ -2341,6 +2012,7 @@ S7::method(remove_snn_graph, SingleCells) <- function(
 ### generic / primitives -------------------------------------------------------
 
 #' @name print.SingleCells
+#'
 #' @title print Method for SingleCells object
 #'
 #' @description
@@ -2391,6 +2063,7 @@ S7::method(print, SingleCells) <- function(x, ...) {
 }
 
 #' @name dim.SingleCells
+#'
 #' @title dim Method for SingleCells object
 #'
 #' @description

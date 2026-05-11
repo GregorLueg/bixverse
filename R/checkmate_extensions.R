@@ -1253,7 +1253,7 @@ checkKnnParams <- function(x, required_params = NULL) {
 
   # choice rules
   test_choice_rules <- list(
-    knn_method = c("annoy", "hnsw", "nndescent", "exhaustive", "ivf"),
+    knn_method = c("annoy", "hnsw", "nndescent", "exhaustive", "ivf", "kmknn"),
     ann_dist = c("euclidean", "cosine")
   )
 
@@ -1276,6 +1276,43 @@ checkKnnParams <- function(x, required_params = NULL) {
         broken_elem
       )
     )
+  }
+
+  return(TRUE)
+}
+
+#' Check FastCluster default parameters
+#'
+#' @description Checkmate extension for checking FastCluster parameters.
+#'
+#' @param x The list to check/assert
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
+checkFastClusterDefaultParams <- function(x) {
+  res <- checkmate::checkNames(
+    names(x),
+    must.include = c("km_type", "n_centroids", "kmeans_iters", "batch_size")
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- checkmate::qtest(x[["batch_size"]], "I1") &
+    checkmate::qtest(x[["kmeans_iters"]], "I1")
+  if (!isTRUE(res)) {
+    return(paste("batch_size and kmeans_iters must be integers"))
+  }
+
+  res <- checkmate::qtest(x[["n_centroids"]], c("I1", "0"))
+  if (!isTRUE(res)) {
+    return(paste("n_centroids must be an integer or NULL."))
+  }
+
+  res <- checkmate::checkChoice(x[["km_type"]], c("minibatch", "standard"))
+  if (!isTRUE(res)) {
+    return(res)
   }
 
   return(TRUE)
@@ -1558,11 +1595,13 @@ checkScScrublet <- function(x) {
       "hvg_method",
       "loess_span",
       "clip_max",
+      "n_bins",
+      "binning_strategy",
       "sim_doublet_ratio",
       "expected_doublet_rate",
       "stdev_doublet_rate",
       "manual_threshold",
-      "n_bins",
+      "n_bins_histogram",
       "no_pcs",
       "random_svd"
     )
@@ -1581,7 +1620,8 @@ checkScScrublet <- function(x) {
   # Integer rules (non-kNN)
   integer_rules <- list(
     "no_pcs" = "I1[1,)",
-    "n_bins" = "I1[10,)"
+    "n_bins_histogram" = "I1[10,)",
+    "n_bins" = "I1[1,)"
   )
 
   res <- purrr::imap_lgl(x, \(x, name) {
@@ -1693,6 +1733,13 @@ checkScScrublet <- function(x) {
   if (!isTRUE(res)) {
     return("hvg_method must be one of: vst, mvb, dispersion.")
   }
+  res <- checkmate::testChoice(
+    x[["binning_strategy"]],
+    c("equal_width", "equal_frequency")
+  )
+  if (!isTRUE(res)) {
+    return("hvg_method must be one of: equal_width, equal_frequency")
+  }
 
   return(TRUE)
 }
@@ -1741,6 +1788,8 @@ checkScBoost <- function(x) {
       "hvg_method",
       "loess_span",
       "clip_max",
+      "n_bins",
+      "binning_strategy",
       "boost_rate",
       "replace",
       "no_pcs",
@@ -1748,7 +1797,8 @@ checkScBoost <- function(x) {
       "resolution",
       "n_iters",
       "p_thresh",
-      "voter_thresh"
+      "voter_thresh",
+      "fast_cluster"
     )
   )
   if (!isTRUE(res)) {
@@ -1762,10 +1812,16 @@ checkScBoost <- function(x) {
     return(res)
   }
 
+  res <- checkFastClusterDefaultParams(x)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
   # Integer rules
   integer_rules <- list(
     "no_pcs" = "I1[1,)",
-    "n_iters" = "I1[1,)"
+    "n_iters" = "I1[1,)",
+    "n_bins" = "I1[1,)"
   )
 
   res <- purrr::imap_lgl(x, \(x, name) {
@@ -1782,7 +1838,7 @@ checkScBoost <- function(x) {
       sprintf(
         paste(
           "The following element `%s` in Boost parameters is incorrect:",
-          "no_pcs and n_iters must be >= 1."
+          "no_pcs, n_bins, and n_iters must be >= 1."
         ),
         broken_elem
       )
@@ -1829,7 +1885,8 @@ checkScBoost <- function(x) {
     "mean_center",
     "normalise_variance",
     "replace",
-    "random_svd"
+    "random_svd",
+    "fast_cluster"
   )
 
   res <- purrr::map_lgl(boolean_rules, \(name) {
@@ -1877,6 +1934,13 @@ checkScBoost <- function(x) {
   if (!isTRUE(res)) {
     return("hvg_method must be one of: vst, mvb, dispersion.")
   }
+  res <- checkmate::testChoice(
+    x[["binning_strategy"]],
+    c("equal_width", "equal_frequency")
+  )
+  if (!isTRUE(res)) {
+    return("hvg_method must be one of: equal_width, equal_frequency")
+  }
 
   return(TRUE)
 }
@@ -1896,6 +1960,165 @@ checkScBoost <- function(x) {
 #'
 #' @keywords internal
 assertScBoost <- checkmate::makeAssertionFunction(checkScBoost)
+
+#### scdblfinder ---------------------------------------------------------------
+
+#' Check scDblFinder parameters
+#'
+#' @description Checkmate extension for checking scDblFinder parameters.
+#'
+#' @param x The list to check/assert.
+#'
+#' @return `TRUE` if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
+checkScDblFinder <- function(x) {
+  res <- checkmate::checkList(x)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+  res <- checkmate::checkNames(
+    names(x),
+    must.include = c(
+      "log_transform",
+      "mean_center",
+      "normalise_variance",
+      "target_size",
+      "n_genes",
+      "no_pcs",
+      "random_svd",
+      "doublet_ratio",
+      "heterotypic_bias",
+      "cluster_resolution",
+      "cluster_iters",
+      "fast_cluster",
+      "n_iterations",
+      "n_trees",
+      "max_depth",
+      "learning_rate",
+      "min_samples_leaf",
+      "subsample_rate",
+      "cv_folds",
+      "cv_early_stop",
+      "se_fraction",
+      "include_pcs",
+      "cxds_genes"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+  knn_params <- x[names(x) %in% KNN_PARAM_NAMES]
+  res <- checkKnnParams(knn_params)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+  res <- checkFastClusterDefaultParams(x)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  integer_rules <- list(
+    "n_genes" = "I1[1,)",
+    "no_pcs" = "I1[1,)",
+    "cluster_iters" = "I1[1,)",
+    "n_iterations" = "I1[1,)",
+    "n_trees" = "I1[1,)",
+    "max_depth" = "I1[1,)",
+    "min_samples_leaf" = "I1[1,)",
+    "cv_folds" = "I1[2,)",
+    "cv_early_stop" = "I1[1,)",
+    "include_pcs" = "I1[1,)"
+  )
+  res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(integer_rules)) {
+      checkmate::qtest(x, integer_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(sprintf(
+      "The element `%s` in scDblFinder parameters is incorrect.",
+      broken_elem
+    ))
+  }
+  numeric_rules <- list(
+    "doublet_ratio" = "N1(0,)",
+    "heterotypic_bias" = "N1[0,1]",
+    "cluster_resolution" = "N1(0,)",
+    "learning_rate" = "N1(0,)",
+    "subsample_rate" = "N1(0,1]",
+    "se_fraction" = "N1[0,)",
+    "target_size" = "N1(0,)"
+  )
+  res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(numeric_rules)) {
+      checkmate::qtest(x, numeric_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(sprintf(
+      "The element `%s` in scDblFinder parameters has an invalid value.",
+      broken_elem
+    ))
+  }
+  boolean_rules <- c(
+    "log_transform",
+    "mean_center",
+    "normalise_variance",
+    "random_svd",
+    "fast_cluster"
+  )
+  res <- purrr::map_lgl(boolean_rules, \(name) {
+    checkmate::qtest(x[[name]], "B1")
+  })
+  if (!isTRUE(all(res))) {
+    broken_elem <- boolean_rules[which(!res)][1]
+    return(sprintf(
+      "The element `%s` in scDblFinder parameters must be TRUE or FALSE.",
+      broken_elem
+    ))
+  }
+  optional_rules <- list(
+    "expected_doublet_rate" = c("0", "N1(0,1]"),
+    "manual_threshold" = c("0", "N1[0,)"),
+    "cxds_genes" = c("0", "I1")
+  )
+  res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(optional_rules)) {
+      checkmate::qtest(x, optional_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(sprintf(
+      "The element `%s` in scDblFinder parameters is incorrect. Please check.",
+      broken_elem
+    ))
+  }
+  return(TRUE)
+}
+
+#' Assert scDblFinder parameters
+#'
+#' @description Checkmate extension for asserting scDblFinder parameters.
+#'
+#' @inheritParams checkScDblFinder
+#'
+#' @param .var.name Name of the checked object to print in assertions.
+#' @param add Collection to store assertion messages.
+#'
+#' @return Invisibly returns the checked object if successful.
+#'
+#' @keywords internal
+assertScDblFinder <- checkmate::makeAssertionFunction(checkScDblFinder)
 
 #### hvg -----------------------------------------------------------------------
 
@@ -2138,17 +2361,17 @@ assertCellsExist <- checkmate::makeAssertionFunction(checkCellsExist)
 
 #### meta cells ----------------------------------------------------------------
 
-#' Check metacell generation parameters
+#' Check (bootstrapped) metacell generation parameters
 #'
-#' @description Checkmate extension for checking the metacell generation
-#' parameters.
+#' @description Checkmate extension for checking the (bootstrapped) metacell
+#' generation parameters.
 #'
 #' @param x The list to check/assert
 #'
 #' @return \code{TRUE} if the check was successful, otherwise an error message.
 #'
 #' @keywords internal
-checkScMetacells <- function(x) {
+checkScBootstrappedMetacells <- function(x) {
   res <- checkmate::checkList(x)
   if (!isTRUE(res)) {
     return(res)
@@ -2193,7 +2416,7 @@ checkScMetacells <- function(x) {
     return(
       sprintf(
         paste(
-          "The following element `%s` in metacell generation is incorrect:",
+          "The following element `%s` in bootstrapped metacell generation is incorrect:",
           "max_shared, target_no_metacells and max_iter need to be integers >= 1."
         ),
         broken_elem
@@ -2204,12 +2427,12 @@ checkScMetacells <- function(x) {
   return(TRUE)
 }
 
-#' Assert metacell generation parameters
+#' Assert (bootstrapped) metacell generation parameters
 #'
 #' @description Checkmate extension for assert the metacell generation
 #' parameters.
 #'
-#' @inheritParams checkScMetacells
+#' @inheritParams checkScBootstrappedMetacells
 #'
 #' @param .var.name Name of the checked object to print in assertions. Defaults
 #' to the heuristic implemented in checkmate.
@@ -2219,7 +2442,9 @@ checkScMetacells <- function(x) {
 #' @return Invisibly returns the checked object if the assertion is successful.
 #'
 #' @keywords internal
-assertScMetacells <- checkmate::makeAssertionFunction(checkScMetacells)
+assertScBootstrappedMetacells <- checkmate::makeAssertionFunction(
+  checkScBootstrappedMetacells
+)
 
 #### seacells ------------------------------------------------------------------
 
@@ -2249,7 +2474,8 @@ checkScSeacells <- function(x) {
       "greedy_threshold",
       "graph_building",
       "pruning",
-      "pruning_threshold"
+      "pruning_threshold",
+      "n_landmarks"
     )
   )
   if (!isTRUE(res)) {
@@ -2333,6 +2559,11 @@ checkScSeacells <- function(x) {
     return("graph_building needs to be a string.")
   }
 
+  res <- checkmate::qtest(x[["n_landmarks"]], c("0", "I1"))
+  if (!isTRUE(res)) {
+    return("n_landmarks needs to be an integer or NULL.")
+  }
+
   TRUE
 }
 
@@ -2373,7 +2604,8 @@ checkScSupercell <- function(x) {
     must.include = c(
       "walk_length",
       "graining_factor",
-      "linkage_dist"
+      "use_kernel",
+      "k_ith"
     )
   )
   if (!isTRUE(res)) {
@@ -2389,7 +2621,8 @@ checkScSupercell <- function(x) {
 
   # Check non-kNN integer parameters
   integer_rules <- list(
-    "walk_length" = "I1[1,)"
+    "walk_length" = "I1[1,)",
+    "k_ith" = c("I1", "0")
   )
 
   res <- purrr::imap_lgl(x, \(val, name) {
@@ -2401,7 +2634,10 @@ checkScSupercell <- function(x) {
   })
 
   if (!isTRUE(all(res))) {
-    return("walk_length needs to be an integer >= 1.")
+    return(paste(
+      "walk_length needs to be an integer >= 1.",
+      "kith_neighbour needs to be an integer or NULL."
+    ))
   }
 
   # Check numeric parameters
@@ -2411,9 +2647,9 @@ checkScSupercell <- function(x) {
   }
 
   # Check choice parameters
-  res <- checkmate::testChoice(x[["linkage_dist"]], c("complete", "average"))
+  res <- checkmate::qtest(x[["use_kernel"]], "B1")
   if (!isTRUE(res)) {
-    return("linkage_dist must be either 'complete' or 'average'.")
+    return("use_kernel needs to be a boolean.")
   }
 
   return(TRUE)
@@ -2786,7 +3022,7 @@ checkScMiloR <- function(x) {
   # Check choice parameters
   test_choice_rules <- list(
     refinement_strategy = c("approximate", "bruteforce", "index"),
-    index_type = c("annoy", "hnsw")
+    index_type = c("nndescent", "ivf", "hnsw", "annoy")
   )
 
   test_choice_res <- purrr::imap_lgl(x, \(val, name) {
@@ -2972,6 +3208,185 @@ checkScHarmonyParams <- function(x) {
 #' @keywords internal
 assertScHarmonyParams <- checkmate::makeAssertionFunction(checkScHarmonyParams)
 
+#### Harmony (version 2) -------------------------------------------------------
+
+#' Check Harmony v2 parameters
+#'
+#' @description Checkmate extension for checking Harmony v2 parameters.
+#'
+#' @param x The list to check/assert.
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
+checkScHarmonyParamsV2 <- function(x) {
+  res <- checkmate::checkList(x)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- checkmate::checkNames(
+    names(x),
+    must.include = c(
+      "k",
+      "sigma",
+      "theta",
+      "lambda",
+      "block_size",
+      "max_iter_kmeans",
+      "max_iter_harmony",
+      "epsilon_kmeans",
+      "epsilon_harmony",
+      "window_size",
+      "alpha",
+      "tau",
+      "batch_proportion_cutoff",
+      "use_dynamic_lambda"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  # Integer rules
+  integer_rules <- list(
+    "k" = c("I1[1,)", "0"),
+    "max_iter_kmeans" = "I1[1,)",
+    "max_iter_harmony" = "I1[1,)",
+    "window_size" = "I1[1,)"
+  )
+
+  res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(integer_rules)) {
+      checkmate::qtest(x, integer_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(
+      sprintf(
+        paste(
+          "The following element `%s` in Harmony v2 parameters is incorrect:",
+          "max_iter_kmeans, max_iter_harmony,",
+          "and window_size must be integers >= 1. k must be NULL or an integer."
+        ),
+        broken_elem
+      )
+    )
+  }
+
+  # Numeric vector rules (can be length 1 or longer)
+  vector_rules <- list(
+    "sigma" = "N+[0,)",
+    "theta" = "N+[0,)",
+    "lambda" = "N+[0,)"
+  )
+
+  res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(vector_rules)) {
+      checkmate::qtest(x, vector_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(
+      sprintf(
+        paste(
+          "The following element `%s` in Harmony v2 parameters is incorrect:",
+          "sigma, theta, and lambda must be numeric vectors",
+          "with non-negative values."
+        ),
+        broken_elem
+      )
+    )
+  }
+
+  # Scalar numeric rules
+  scalar_rules <- list(
+    "block_size" = "N1(0,1]",
+    "epsilon_kmeans" = "N1(0,)",
+    "epsilon_harmony" = "N1(0,)",
+    "alpha" = "N1(0,1)",
+    "tau" = "N1[0,)",
+    "batch_proportion_cutoff" = "N1(0,)"
+  )
+
+  res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(scalar_rules)) {
+      checkmate::qtest(x, scalar_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(
+      sprintf(
+        paste(
+          "The following element `%s` in Harmony v2 parameters is incorrect:",
+          "block_size must be in (0,1]; epsilon_kmeans, epsilon_harmony,",
+          "and batch_proportion_cutoff must be > 0;",
+          "alpha must be in (0,1); tau must be >= 0."
+        ),
+        broken_elem
+      )
+    )
+  }
+
+  # Boolean rules
+  bool_rules <- list(
+    "use_dynamic_lambda" = "B1"
+  )
+
+  res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(bool_rules)) {
+      checkmate::qtest(x, bool_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(
+      sprintf(
+        paste(
+          "The following element `%s` in Harmony v2 parameters is incorrect:",
+          "use_dynamic_lambda must be a single logical."
+        ),
+        broken_elem
+      )
+    )
+  }
+
+  return(TRUE)
+}
+
+#' Assert Harmony v2 parameters
+#'
+#' @description Checkmate extension for asserting the Harmony v2 parameters.
+#'
+#' @inheritParams checkScHarmonyParamsV2
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
+assertScHarmonyParamsV2 <- checkmate::makeAssertionFunction(
+  checkScHarmonyParamsV2
+)
+
 #### scenic --------------------------------------------------------------------
 
 #' Check SCENIC parameters
@@ -3152,3 +3567,137 @@ checkScenicParams <- function(x) {
 #'
 #' @keywords internal
 assertScenicParams <- checkmate::makeAssertionFunction(checkScenicParams)
+
+#### fast clustering -----------------------------------------------------------
+
+#' Check singe cell fast clustering parameters
+#'
+#' @description Checkmate extension for checking the fast clustering parameters.
+#'
+#' @param x The list to check/assert
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
+checkScFastCluster <- function(x) {
+  res <- checkmate::checkList(x)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- checkmate::checkNames(
+    names(x),
+    must.include = c(
+      "kmeans_iters",
+      "batch_size",
+      "drift_threshold",
+      "lr_alpha",
+      "louvain_iters",
+      "full_snn",
+      "pruning",
+      "snn_similarity"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  knn_params <- x[names(x) %in% KNN_PARAM_NAMES]
+  res <- checkKnnParams(knn_params)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  integer_rules <- list(
+    "kmeans_iters" = "I1[1,)",
+    "batch_size" = "I1[1,)",
+    "louvain_iters" = "I1[1,)"
+  )
+
+  res <- purrr::imap_lgl(x, \(val, name) {
+    if (name %in% names(integer_rules)) {
+      checkmate::qtest(val, integer_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(sprintf(
+      paste(
+        "The element `%s` in fast clustering parameters is incorrect:",
+        "kmeans_iters, batch_size and louvain_iters must be >= 1."
+      ),
+      broken_elem
+    ))
+  }
+
+  numeric_rules <- list(
+    "drift_threshold" = "N1",
+    "lr_alpha" = "N1"
+  )
+
+  res <- purrr::imap_lgl(x, \(val, name) {
+    if (name %in% names(numeric_rules)) {
+      checkmate::qtest(val, numeric_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(sprintf(
+      paste(
+        "The element `%s` in fast clustering parameters",
+        "must be a single numeric value."
+      ),
+      broken_elem
+    ))
+  }
+
+  res <- checkmate::qtest(x[["full_snn"]], "B1")
+  if (!isTRUE(res)) {
+    return(
+      paste(
+        "The element `full_snn` in fast clustering parameters",
+        "must be a boolean (TRUE/FALSE)."
+      )
+    )
+  }
+
+  res <- checkmate::qtest(x[["pruning"]], c("0", "N1"))
+  if (!isTRUE(res)) {
+    return(
+      paste(
+        "The element `pruning` in fast clustering parameters must be NULL",
+        "or a single numeric value."
+      )
+    )
+  }
+
+  res <- checkmate::testChoice(x[["snn_similarity"]], c("jaccard", "rank"))
+  if (!isTRUE(res)) {
+    return("snn_similarity must be one of: jaccard, rank.")
+  }
+
+  return(TRUE)
+}
+
+#' Assert SC fast clustering parameters
+#'
+#' @description Checkmate extension for asserting the fast clustering
+#' parameters.
+#'
+#' @inheritParams checkScFastCluster
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#'   to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#'   [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
+assertScFastCluster <- checkmate::makeAssertionFunction(checkScFastCluster)

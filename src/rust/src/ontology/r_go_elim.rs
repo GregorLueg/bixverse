@@ -262,7 +262,7 @@ fn rs_geom_elim_fgsea_simple(
 
     let (go_to_gene, ancestors_map, levels_map) = prepare_go_data(go_obj);
 
-    let gsea_params = prepare_gsea_params(gsea_params);
+    let gsea_params = prepare_gsea_params(gsea_params)?;
 
     let mut go_obj = GeneOntology::new(go_to_gene, &ancestors_map, &levels_map);
 

@@ -22,5 +22,5 @@ integer that represents the batch effects you wish to regress out.}
 The batch-corrected Harmony embedding space.
 }
 \description{
-This function implements the Harmony algorithm from
+This function implements the Harmony algorithm from Korsunsky et al., 2019.
 }

@@ -1,11 +1,13 @@
 .onLoad <- function(...) {
   S7::methods_register()
+
   # S3 <> S7 weirdness
   # manual registering here
   registerS3method("print", "ScenicGrn", print.ScenicGrn)
   registerS3method("print", "CellQc", print.CellQc)
   registerS3method("print", "ScrubletRes", print.ScrubletRes)
   registerS3method("print", "BoostRes", print.BoostRes)
+  registerS3method("print", "ScDblFinderRes", print.ScDblFinderRes)
   registerS3method(
     "print",
     "SingleCellNearestNeighbour",
@@ -30,5 +32,10 @@
     "print",
     "Hotspot",
     print.Hotspot
+  )
+  registerS3method(
+    "print",
+    "SingleCellFastClusters",
+    print.SingleCellFastClusters
   )
 }

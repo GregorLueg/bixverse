@@ -2,7 +2,7 @@
 % Please edit documentation in R/methods_sc_plots_helpers.R
 \name{umap_sc}
 \alias{umap_sc}
-\title{Run UMAP on a SingleCells object}
+\title{Run UMAP on a SingleCells/MetaCells object}
 \usage{
 umap_sc(
   object,
@@ -13,7 +13,7 @@ umap_sc(
   k = 15L,
   min_dist = 0.5,
   spread = 1,
-  knn_method = c("hnsw", "balltree", "annoy", "nndescent", "exhaustive"),
+  knn_method = c("kmknn", "hnsw", "balltree", "annoy", "nndescent", "exhaustive"),
   nn_params = manifoldsR::params_nn(),
   umap_params = manifoldsR::params_umap(),
   seed = 42L,
@@ -21,7 +21,7 @@ umap_sc(
 )
 }
 \arguments{
-\item{object}{\code{SingleCells} class.}
+\item{object}{\code{SingleCells}, \code{MetaCells} class.}
 
 \item{use_knn}{Boolean. Use the kNN graph found in the object. Defaults to
 \code{TRUE}. If not available, will default to the embedding.}
@@ -56,5 +56,25 @@ to \code{0.5}.}
 The object with a \code{"umap"} embedding added.
 }
 \description{
-Wrapper around \code{\link[manifoldsR:umap]{manifoldsR::umap()}} for the \code{SingleCells} class.
+Wrapper around \code{\link[manifoldsR:umap]{manifoldsR::umap()}} for the \code{SingleCells} and \code{MetaCells}
+classes. UMAP produces a low-dimensional embedding that emphasises local
+neighbourhood structure while being computationally efficient via its
+negative-sampling-based optimisation. It is the de facto default for
+visualising single-cell data, though claims that it preserves global
+structure substantially better than t-SNE are not well supported; with
+matched initialisation (e.g. PCA or Laplacian Eigenmaps), the two methods
+behave similarly on global geometry, and both should be interpreted primarily
+as views of local structure.
+
+When \code{use_knn = TRUE} (the default), the kNN graph already stored on the
+object (via \code{\link[=find_neighbours_sc]{find_neighbours_sc()}}) is reused, which avoids
+recomputing nearest neighbours and keeps the UMAP consistent with any
+downstream sNN-based clustering. If no kNN is present, neighbours are
+computed from the chosen embedding on the fly.
+
+Key parameters to tune: \code{k} controls the balance between local and global
+structure (larger values produce more global layouts), while \code{min_dist}
+and \code{spread} together control how tightly points are packed in the
+embedding. For \code{MetaCells}, smaller \code{k} values are often appropriate given
+the reduced number of points.
 }

@@ -20,7 +20,7 @@ params_sc_harmony(
 \arguments{
 \item{k}{Optional integer. Number of clusters for k-means clustering. If
 not provided, it will be automatically determined as
-\code{min(round(N / 30), 200)}.}
+\code{min(round(N / 30), 100)}.}
 
 \item{sigma}{Numeric vector. Per-cluster diversity weights. Either a single
 value (broadcast to all clusters) or a vector of length k.}

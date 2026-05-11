@@ -14,7 +14,7 @@ get_counts_from_rust(
 )
 }
 \arguments{
-\item{rust_con}{\code{SingeCellCountData} class. The connector to Rust.}
+\item{rust_con}{\code{SingleCellCountData} class. The connector to Rust.}
 
 \item{assay}{String. One of \code{c("raw", "norm")}.}
 

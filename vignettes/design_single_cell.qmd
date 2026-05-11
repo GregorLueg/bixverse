@@ -1,16 +1,18 @@
 ---
 title: "Technical design choices for the single cell implementation"
+date: last-modified
+date-format: YYYY-MM-DD
 format:
   html:
     toc: true
     toc-depth: 3
-author: 
-  - name: Gregor Lueg
 knitr:
   opts_chunk:
     collapse: true
     comment: '#>'
     eval: false
+author: 
+  - name: Gregor Lueg
 ---
 
 *This is an opinionated piece, so take what is written here with a pinch of 

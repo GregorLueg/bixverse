@@ -23,6 +23,8 @@
 #'   \item{obs_table}{The meta cell observation table.}
 #'   \item{var_table}{The meta cell variable table.}
 #'   \item{data}{List with the raw and normalised counts.}
+#'   \item{sc_cache}{Class with embeddings, kNN/sNN graphs, etc. Shared with
+#'   [bixverse::SingleCells()].}
 #'   \item{original_assignment}{List with original assignment information.}
 #'   \item{dims}{Dimensions of the new meta cell matrices.}
 #'   \item{other_data}{Potential other data returned from the meta-cell
@@ -38,6 +40,7 @@ MetaCells <- S7::new_class(
     obs_table = S7::class_data.frame,
     var_table = S7::class_data.frame,
     data = S7::class_list,
+    sc_cache = S7::class_any,
     original_assignment = S7::class_list,
     dims = S7::class_integer,
     other_data = S7::class_list,
@@ -94,6 +97,7 @@ MetaCells <- S7::new_class(
       obs_table = obs_data,
       var_table = var_data,
       data = list(raw = raw_counts, norm = norm_counts),
+      sc_cache = new_sc_cache(),
       original_assignment = meta_cell_data$assignments[c(
         "assignments",
         "n_cells",
@@ -106,6 +110,62 @@ MetaCells <- S7::new_class(
     )
   }
 )
+
+## primitives ------------------------------------------------------------------
+
+#' @name print.MetaCells
+#'
+#' @title print Method for MetaCells object
+#'
+#' @description
+#' Print a MetaCells object.
+#'
+#' @param x An object of class `MetaCells`.
+#' @param ... Additional arguments (currently not used).
+#'
+#' @returns Invisibly returns `x`.
+#'
+#' @method print MetaCells
+#'
+#' @keywords internal
+S7::method(print, MetaCells) <- function(x, ...) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))
+
+  # various params
+  dims <- S7::prop(x, "dims")
+  original_assignment <- S7::prop(x, "original_assignment")
+  other_data <- S7::prop(x, "other_data")
+  sc_cache <- S7::prop(x, "sc_cache")
+  meta_cell_method <- S7::prop(x, "meta_cell_method")
+  hvg_calculated <- !is.null(other_data[["hvg"]])
+  pca_calculated <- !is.null(sc_cache[["pca_factors"]])
+  knn_generated <- !is.null(sc_cache[["knn"]])
+  snn_generated <- !is.null(sc_cache[["snn_graph"]])
+  other_embeddings <- names(sc_cache[["other_embeddings"]])
+  other_embeddings_str <- if (length(other_embeddings) > 0) {
+    paste(other_embeddings, collapse = ", ")
+  } else {
+    "none"
+  }
+
+  # print
+  cat(
+    "Single cell experiment (Meta Cells).\n",
+    sprintf("  Meta cell method: %s\n", meta_cell_method),
+    sprintf("  No meta cells: %i\n", dims[1]),
+    sprintf("  No genes: %i\n", dims[2]),
+    sprintf("  No original cells: %i\n", original_assignment$n_cells),
+    sprintf("  No unassigned cells: %i\n", original_assignment$n_unassigned),
+    sprintf("  HVG calculated: %s\n", hvg_calculated),
+    sprintf("  PCA calculated: %s\n", pca_calculated),
+    sprintf("  Other embeddings: %s\n", other_embeddings_str),
+    sprintf("  KNN generated: %s\n", knn_generated),
+    sprintf("  SNN generated: %s\n", snn_generated),
+    sep = ""
+  )
+  invisible(x)
+}
 
 ## getters ---------------------------------------------------------------------
 
@@ -230,6 +290,14 @@ S7::method(`[`, MetaCells) <- function(
   }
   assay <- match.arg(assay)
 
+  # transform (meta)cell ids and gene ids to indices
+  if (checkmate::qtest(i, "S+")) {
+    i <- get_cell_indices(x = x, cell_ids = i, rust_index = FALSE)
+  }
+  if (checkmate::qtest(j, "S+")) {
+    j <- get_gene_indices(x = x, gene_ids = j, rust_index = FALSE)
+  }
+
   checkmate::qassert(i, c("I+", "0"))
   checkmate::qassert(j, c("I+", "0"))
   checkmate::assertChoice(assay, c("raw", "norm"))
@@ -239,6 +307,62 @@ S7::method(`[`, MetaCells) <- function(
     assay = assay,
     cell_indices = i,
     gene_indices = j
+  )
+}
+
+#' Transform the counts to a Rust-specific list
+#'
+#' @description
+#' Helper function to transform the counts from the `MetaCells` into a Rust
+#' specific list.
+#'
+#' @param object `MetaCells` class.
+#' @param cell_indices Optional integer. Defines the indices of the (meta)cells
+#' to extract.
+#' @param gene_indices Optional integer. Defines the indices of the genes to
+#' extract.
+#' @param assay String. One of `c("raw", "norm")`
+#'
+#' @keywords internal
+#'
+#' @export
+mc_counts_to_list <- S7::new_generic(
+  name = "mc_counts_to_list",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    cell_indices = NULL,
+    gene_indices = NULL,
+    assay = c("raw", "norm")
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method mc_counts_to_list MetaCells
+#'
+#' @export
+S7::method(mc_counts_to_list, MetaCells) <- function(
+  object,
+  cell_indices = NULL,
+  gene_indices = NULL,
+  assay = c("raw", "norm")
+) {
+  assay <- match.arg(assay)
+  # checks
+  checkmate::assertChoice(assay, c("raw", "norm"))
+  checkmate::assertTRUE(S7::S7_inherits(object, MetaCells))
+
+  # body
+  x <- object[cell_indices, gene_indices, assay = assay]
+
+  list(
+    indptr = x@p,
+    indices = x@j,
+    data = x@x,
+    format = "csr",
+    nrow = nrow(x),
+    ncol = ncol(x)
   )
 }
 
@@ -262,4 +386,491 @@ S7::method(`[[<-`, MetaCells) <- function(x, i, ..., value) {
   }
 
   return(x)
+}
+
+### others ---------------------------------------------------------------------
+
+#### setters -------------------------------------------------------------------
+
+#' @name set_hvg.MetaCells
+#'
+#' @rdname set_hvg
+#'
+#' @method set_hvg MetaCells
+S7::method(set_hvg, MetaCells) <- function(
+  x,
+  hvg
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))
+  checkmate::qassert(hvg, c("I+", "S+"))
+
+  var_table <- S7::prop(x, "var_table")
+
+  res <- if (is.numeric(hvg)) {
+    as.integer(hvg)
+  } else {
+    idx <- match(hvg, var_table$gene_id)
+    missing <- is.na(idx)
+    if (any(missing)) {
+      warning(sprintf(
+        "With the provided hvg gene_ids a total of %i could not be matched.",
+        sum(missing)
+      ))
+      idx <- idx[!missing]
+    }
+    if (length(idx) == 0) {
+      stop(
+        "The HVG indices have length 0. Please double check provided parameters!"
+      )
+    }
+    as.integer(idx)
+  }
+
+  other_data <- S7::prop(x, "other_data")
+  other_data[["hvg"]] <- res
+  S7::prop(x, "other_data") <- other_data
+
+  return(x)
+}
+
+#### getters -------------------------------------------------------------------
+
+#' @name get_hvg.MetaCells
+#'
+#' @rdname get_hvg
+#'
+#' @method get_hvg MetaCells
+S7::method(get_hvg, MetaCells) <- function(
+  x
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))
+
+  hvg_indices <- as.integer(S7::prop(x, "other_data")[["hvg"]])
+  if (length(hvg_indices) == 0) {
+    warning("No highly variable features found in the class.")
+  }
+
+  return(hvg_indices)
+}
+
+#' @name get_cell_indices.MetaCells
+#'
+#' @rdname get_cell_indices
+#'
+#' @method get_cell_indices MetaCells
+S7::method(get_cell_indices, MetaCells) <- function(
+  x,
+  cell_ids,
+  rust_index
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))
+  checkmate::qassert(cell_ids, "S+")
+  checkmate::qassert(rust_index, "B1")
+
+  indices <- match(cell_ids, x@obs_table[["meta_cell_id"]])
+
+  missing <- is.na(indices)
+  if (any(missing)) {
+    warning(sprintf(
+      "With the provided meta_cell_ids a total of %i could not be matched.",
+      sum(missing)
+    ))
+    indices <- indices[!missing]
+  }
+
+  return(indices)
+}
+
+#' @name get_gene_indices.MetaCells
+#'
+#' @rdname get_gene_indices
+#'
+#' @method get_gene_indices MetaCells
+S7::method(get_gene_indices, MetaCells) <- function(
+  x,
+  gene_ids,
+  rust_index
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))
+  checkmate::qassert(gene_ids, "S+")
+  checkmate::qassert(rust_index, "B1")
+
+  indices <- match(gene_ids, x@var_table[["gene_id"]])
+
+  missing <- is.na(indices)
+  if (any(missing)) {
+    warning(sprintf(
+      "With the provided gene_ids a total of %i could not be matched.",
+      sum(missing)
+    ))
+    indices <- indices[!missing]
+  }
+
+  if (rust_index) {
+    indices <- indices - 1L
+  }
+
+  if (length(indices) == 0) {
+    stop(
+      "The gene indices have length 0. Please double check provided parameters!"
+    )
+  }
+
+  return(indices)
+}
+
+### sc cache -------------------------------------------------------------------
+
+#### setters -------------------------------------------------------------------
+
+#' @name set_pca_factors.MetaCells
+#'
+#' @rdname set_pca_factors
+#'
+#' @method set_pca_factors MetaCells
+S7::method(set_pca_factors, MetaCells) <- function(
+  x,
+  pca_factor
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))
+  checkmate::assertMatrix(pca_factor, mode = "numeric")
+
+  S7::prop(x, "sc_cache") <- set_pca_factors(
+    x = S7::prop(x, "sc_cache"),
+    pca_factor = pca_factor
+  )
+
+  return(x)
+}
+
+#' @name set_pca_loadings.MetaCells
+#'
+#' @rdname set_pca_loadings
+#'
+#' @method set_pca_loadings MetaCells
+S7::method(set_pca_loadings, MetaCells) <- function(
+  x,
+  pca_loading
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))
+  checkmate::assertMatrix(pca_loading, mode = "numeric")
+
+  S7::prop(x, "sc_cache") <- set_pca_loadings(
+    x = S7::prop(x, "sc_cache"),
+    pca_loading = pca_loading
+  )
+
+  return(x)
+}
+
+#' @name set_pca_singular_vals.MetaCells
+#'
+#' @rdname set_pca_singular_vals
+#'
+#' @method set_pca_singular_vals MetaCells
+S7::method(set_pca_singular_vals, MetaCells) <- function(
+  x,
+  singular_vals
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))
+  checkmate::qassert(singular_vals, "N+")
+
+  S7::prop(x, "sc_cache") <- set_pca_singular_vals(
+    x = S7::prop(x, "sc_cache"),
+    singular_vals = singular_vals
+  )
+
+  return(x)
+}
+
+#' @name set_embedding.MetaCells
+#'
+#' @rdname set_embedding
+#'
+#' @method set_embedding MetaCells
+S7::method(set_embedding, MetaCells) <- function(
+  x,
+  embd,
+  name
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))
+  checkmate::assertMatrix(embd, mode = "numeric")
+  checkmate::qassert(name, "S1")
+
+  S7::prop(x, "sc_cache") <- set_embedding(
+    x = S7::prop(x, "sc_cache"),
+    embd = embd,
+    name = name
+  )
+
+  return(x)
+}
+
+#' @name set_knn.MetaCells
+#'
+#' @rdname set_knn
+#'
+#' @method set_knn MetaCells
+S7::method(set_knn, MetaCells) <- function(
+  x,
+  knn
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))
+  checkmate::assertClass(knn, "SingleCellNearestNeighbour")
+
+  S7::prop(x, "sc_cache") <- set_knn(
+    x = S7::prop(x, "sc_cache"),
+    knn = knn
+  )
+
+  return(x)
+}
+
+#' @name set_snn_graph.MetaCells
+#'
+#' @rdname set_snn_graph
+#'
+#' @method set_snn_graph MetaCells
+S7::method(set_snn_graph, MetaCells) <- function(
+  x,
+  snn_graph
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))
+  checkmate::assertClass(snn_graph, "igraph")
+
+  S7::prop(x, "sc_cache") <- set_snn_graph(
+    x = S7::prop(x, "sc_cache"),
+    snn_graph = snn_graph
+  )
+
+  return(x)
+}
+
+#' @name remove_knn.MetaCells
+#'
+#' @rdname remove_knn
+#'
+#' @method remove_knn MetaCells
+S7::method(remove_knn, MetaCells) <- function(
+  x
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))
+
+  S7::prop(x, "sc_cache") <- remove_knn(
+    x = S7::prop(x, "sc_cache")
+  )
+
+  return(x)
+}
+
+#' @name remove_snn_graph.MetaCells
+#'
+#' @rdname remove_snn_graph
+#'
+#' @method remove_snn_graph MetaCells
+S7::method(remove_snn_graph, MetaCells) <- function(
+  x
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))
+
+  S7::prop(x, "sc_cache") <- remove_snn_graph(
+    x = S7::prop(x, "sc_cache")
+  )
+
+  return(x)
+}
+
+#### getters -------------------------------------------------------------------
+
+#' @name get_pca_factors.MetaCells
+#'
+#' @rdname get_pca_factors
+#'
+#' @method get_pca_factors MetaCells
+S7::method(get_pca_factors, MetaCells) <- function(
+  x
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))
+
+  res <- get_pca_factors(
+    x = S7::prop(x, "sc_cache")
+  )
+
+  if (is.null(res)) {
+    return(NULL)
+  }
+
+  rownames(res) <- S7::prop(x, "obs_table")$meta_cell_id
+  colnames(res) <- sprintf("PC_%i", 1:ncol(res))
+
+  return(res)
+}
+
+#' @name get_pca_loadings.MetaCells
+#'
+#' @rdname get_pca_loadings
+#'
+#' @method get_pca_loadings MetaCells
+S7::method(get_pca_loadings, MetaCells) <- function(
+  x
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))
+
+  res <- get_pca_loadings(
+    x = S7::prop(x, "sc_cache")
+  )
+
+  if (is.null(res)) {
+    return(NULL)
+  }
+
+  colnames(res) <- sprintf("PC_%i", 1:ncol(res))
+  rownames(res) <- S7::prop(x, "var_table")$gene_id[get_hvg(x)]
+
+  return(res)
+}
+
+#' @name get_pca_singular_val.MetaCells
+#'
+#' @rdname get_pca_singular_val
+#'
+#' @method get_pca_singular_val MetaCells
+S7::method(get_pca_singular_val, MetaCells) <- function(
+  x
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))
+
+  res <- get_pca_singular_val(
+    x = S7::prop(x, "sc_cache")
+  )
+
+  return(res)
+}
+
+#' @name get_embedding.MetaCells
+#'
+#' @rdname get_embedding
+#'
+#' @method get_embedding MetaCells
+S7::method(get_embedding, MetaCells) <- function(
+  x,
+  embd_name
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))
+  checkmate::qassert(embd_name, "S1")
+
+  res <- get_embedding(
+    x = S7::prop(x, "sc_cache"),
+    embd_name = embd_name
+  )
+
+  rownames(res) <- S7::prop(x, "obs_table")$meta_cell_id
+
+  return(res)
+}
+
+#' @name get_available_embeddings.MetaCells
+#'
+#' @rdname get_available_embeddings
+#'
+#' @method get_available_embeddings MetaCells
+S7::method(get_available_embeddings, MetaCells) <- function(
+  x
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))
+
+  res <- get_available_embeddings(
+    x = S7::prop(x, "sc_cache")
+  )
+
+  return(res)
+}
+
+#' @name get_knn_mat.MetaCells
+#'
+#' @rdname get_knn_mat
+#'
+#' @method get_knn_mat MetaCells
+S7::method(get_knn_mat, MetaCells) <- function(
+  x
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))
+
+  res <- get_knn_mat(
+    x = S7::prop(x, "sc_cache")
+  )
+
+  return(res)
+}
+
+#' @name get_knn_dist.MetaCells
+#'
+#' @rdname get_knn_dist
+#'
+#' @method get_knn_dist MetaCells
+S7::method(get_knn_dist, MetaCells) <- function(
+  x
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))
+
+  res <- get_knn_dist(
+    x = S7::prop(x, "sc_cache")
+  )
+
+  return(res)
+}
+
+#' @name get_knn_obj.MetaCells
+#'
+#' @rdname get_knn_obj
+#'
+#' @method get_knn_obj MetaCells
+S7::method(get_knn_obj, MetaCells) <- function(
+  x
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))
+
+  res <- get_knn_obj(
+    x = S7::prop(x, "sc_cache")
+  )
+
+  return(res)
+}
+
+#' @name get_snn_graph.MetaCells
+#'
+#' @rdname get_snn_graph
+#'
+#' @method get_snn_graph MetaCells
+S7::method(get_snn_graph, MetaCells) <- function(
+  x
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))
+
+  res <- get_snn_graph(
+    x = S7::prop(x, "sc_cache")
+  )
+
+  return(res)
 }

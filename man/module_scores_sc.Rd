@@ -33,7 +33,7 @@ Useful for larger data sets.}
 \item{.verbose}{Boolean. Controls the verbosity of the function.}
 }
 \value{
-description
+Returns a \code{ScMatrixRes} with the module scores.
 }
 \description{
 Implements the approach from Tirosh et al into bixverse, i.e., the

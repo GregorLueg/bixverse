@@ -7,7 +7,8 @@
 params_sc_supercell(
   walk_length = 3L,
   graining_factor = 20,
-  linkage_dist = c("complete", "average"),
+  use_kernel = TRUE,
+  k_ith = NULL,
   knn = list()
 )
 }
@@ -19,14 +20,18 @@ to \code{3L}.}
 of single cells in the initial dataset to the number of metacells in the
 final dataset). Defaults to \code{20.0}. (One meta cell per 20 cells.)}
 
-\item{linkage_dist}{String. Which type of distance metric to use for the
-linkage. Defaults to \code{"average"}.}
+\item{use_kernel}{Boolean. Shall a kernel function akin to MAGIC be applied
+akin to the approach in SuperCell2, see Hérault, et al., bioRxiv, 2026 and
+van Dijk, et al., Cell, 2018.}
 
 \item{knn}{List. Optional overrides for kNN parameters. See
 \code{\link[=params_knn_defaults]{params_knn_defaults()}} for available parameters: \code{k},
 \code{knn_method}, \code{ann_dist}, \code{search_budget}, \code{n_trees}, \code{delta},
 \code{diversify_prob}, \code{ef_budget}, \code{m}, \code{ef_construction}, \code{ef_search}, \code{n_list}
 and \code{n_probe}.}
+
+\item{k_ith_neighbour}{Optional integer. The k-ith neighbour to use for
+the kernel. Defaults to \code{k \%/\% 2}.}
 }
 \value{
 A list with the SuperCell parameters.

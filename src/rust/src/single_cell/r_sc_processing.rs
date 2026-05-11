@@ -1,12 +1,16 @@
-use extendr_api::prelude::*;
-use faer::Mat;
-use std::time::Instant;
-
 use bixverse_rs::prelude::*;
+use bixverse_rs::single_cell::sc_analysis::fast_clusters::*;
 use bixverse_rs::single_cell::sc_processing::metrics::pairwise_gene_correlations;
 use bixverse_rs::single_cell::sc_processing::{
-    doublet_detection::*, hvg::*, knn::compare_knn_graphs, pca::*, qc::*, scrublet::*, snn::*,
+    doublet_detection::*, hvg::*, pca::*, qc::*, scdblfinder::*, scrublet::*, snn::*,
+    utils_doublets::find_threshold_otsu,
 };
+use extendr_api::prelude::*;
+use faer::Mat;
+use rustc_hash::FxHashSet;
+use std::time::Instant;
+
+use crate::single_cell::utils::*;
 
 /////////////
 // extendR //
@@ -17,6 +21,8 @@ extendr_module! {
     // doublet detection
     fn rs_sc_scrublet;
     fn rs_sc_doublet_detection;
+    fn rs_sc_scdblfinder;
+    fn rs_sc_otsu_method;
     // cell quality
     fn rs_sc_get_top_genes_perc;
     fn rs_sc_get_gene_set_perc;
@@ -32,6 +38,9 @@ extendr_module! {
     fn rs_sc_knn_w_dist;
     fn rs_sc_snn;
     fn rs_compare_knn;
+    // clustering
+    fn rs_fast_cluster_sc;
+    fn rs_fast_cluster_sc_grid;
 }
 
 ///////////////////////
@@ -94,12 +103,13 @@ fn rs_sc_scrublet(
     streaming: bool,
     return_combined_pca: bool,
     return_pairs: bool,
-) -> List {
-    let scrublet_params = ScrubletParams::from_r_list(scrublet_params);
+) -> Result<List, extendr_api::Error> {
+    let scrublet_params = ScrubletParams::from_r_list(scrublet_params)?;
     let cells_to_keep = cells_to_keep.r_int_convert();
     let mut scrublet = Scrublet::new(f_path_gene, f_path_cell, scrublet_params, &cells_to_keep);
-    let (scrublet_res, pca, pair_1, pair_2): FinalScrubletRes =
-        scrublet.run_scrublet(streaming, seed, verbose, return_combined_pca, return_pairs);
+    let (scrublet_res, pca, pair_1, pair_2): FinalScrubletRes = scrublet
+        .run_scrublet(streaming, seed, verbose, return_combined_pca, return_pairs)
+        .to_extendr()?;
 
     let pca_out = pca.map(|m| faer_to_r_matrix(m.as_ref()));
     let pair_1_out: Robj = match pair_1 {
@@ -111,7 +121,7 @@ fn rs_sc_scrublet(
         None => NULL.into(),
     };
 
-    list!(
+    Ok(list!(
         predicted_doublets = scrublet_res.predicted_doublets,
         doublet_scores_obs = scrublet_res.doublet_scores_obs.r_float_convert(),
         doublet_scores_sim = scrublet_res.doublet_scores_sim.r_float_convert(),
@@ -124,7 +134,7 @@ fn rs_sc_scrublet(
         pca = pca_out,
         pair_1 = pair_1_out,
         pair_2 = pair_2_out
-    )
+    ))
 }
 
 /// Detect Doublets via BoostClassifier (in Rust)
@@ -159,20 +169,115 @@ fn rs_sc_doublet_detection(
     seed: usize,
     streaming: bool,
     verbose: bool,
-) -> List {
-    let boost_params = BoostParams::from_r_list(boost_params);
+) -> Result<List, extendr_api::Error> {
+    let boost_params = BoostParams::from_r_list(boost_params)?;
     let cells_to_keep = cells_to_keep.r_int_convert();
 
     let mut boost_classifier =
         BoostClassifier::new(f_path_gene, f_path_cell, boost_params, &cells_to_keep);
 
-    let boost_res: BoostResult = boost_classifier.run_boost(streaming, seed, verbose);
+    let boost_res: BoostResult = boost_classifier
+        .run_boost(streaming, seed, verbose)
+        .to_extendr()?;
 
-    list!(
+    Ok(list!(
         doublet = boost_res.predicted_doublets,
         doublet_score = boost_res.doublet_scores,
         voting_avg = boost_res.voting_average
-    )
+    ))
+}
+
+/// Run scDblFinder doublet detection
+///
+/// @param f_path_gene String. Path to the gene-based binary file.
+/// @param f_path_cell String. Path to the cell-based binary file.
+/// @param cell_indices Integer vector (0-indexed).
+/// @param params List. scDblFinder parameters from R.
+/// @param return_features Boolean. Return the features for the observed cells
+/// that are used to train the classifier.
+/// @param streaming Boolean. Shall the gene data be streamed in for the
+/// selection of the top genes.
+/// @param seed Integer. Seed for reproducibility.
+/// @param verbose Boolean. Controls verbosity.
+/// @param debug Boolean. Additional verbosity for debugging purposes.
+///
+/// @returns A list with predicted_doublets, doublet_scores, threshold,
+/// cluster_labels and detected_doublet_rate.
+///
+/// @export
+#[extendr]
+#[allow(clippy::too_many_arguments)]
+fn rs_sc_scdblfinder(
+    f_path_gene: &str,
+    f_path_cell: &str,
+    cell_indices: &[i32],
+    params: List,
+    return_features: bool,
+    streaming: bool,
+    seed: i32,
+    verbose: bool,
+    debug: bool,
+) -> extendr_api::Result<List> {
+    let cell_indices = cell_indices.r_int_convert();
+    let mut params = ScDblFinderParams::from_r_list(params)?;
+
+    // doing this outside to be more explit
+    params.return_features = return_features;
+
+    let mut finder = ScDblFinder::new(f_path_gene, f_path_cell, params, &cell_indices);
+    let res: ScDblFinderResult = finder
+        .run(seed as usize, streaming, verbose, debug)
+        .to_extendr()?;
+
+    let features = if return_features {
+        let features: FeatureTable = res.features.unwrap();
+
+        list!(
+            feature_names = features.feature_names,
+            feature_mat = faer_to_r_matrix(features.values.as_ref()),
+            included_in_training = features.include_in_training
+        )
+    } else {
+        list!()
+    };
+
+    Ok(list!(
+        predicted_doublets = res.predicted_doublets,
+        doublet_scores = res.doublet_scores.r_float_convert(),
+        cxds_scores = res.cxds.r_float_convert(),
+        weighted = res.weighted.r_float_convert(),
+        threshold = res.threshold as f64,
+        cluster_labels = res
+            .cluster_labels
+            .iter()
+            .map(|&x| x as i32)
+            .collect::<Vec<i32>>(),
+        detected_doublet_rate = res.detected_doublet_rate as f64,
+        selected_genes = res.selected_genes.r_int_convert(),
+        features = features
+    ))
+}
+
+/// Run Otsu's method
+///
+/// Maximises between-class variance of the observed score distribution to
+/// find the optimal binary split. Robust to both bimodal and skewed
+/// distributions.
+///
+/// @param scores Numeric vector. The vector for which to identify the
+/// threshold.
+/// @param bins Integer. Number of bins to use for the histogram building.
+///
+/// @returns The threshold based on Otsu's method
+///
+/// @export
+#[extendr]
+fn rs_sc_otsu_method(scores: &[f64], bins: usize) -> f64 {
+    let scores = scores.r_float_convert();
+
+    let threshold = find_threshold_otsu(&scores, bins);
+
+    threshold as f64
 }
 
 /////////////
@@ -208,14 +313,15 @@ fn rs_sc_get_top_genes_perc(
     cell_indices: &[i32],
     streaming: bool,
     verbose: bool,
-) -> List {
+) -> Result<List, extendr_api::Error> {
     let cell_indices = cell_indices.r_int_convert();
     let top_n_vals = top_n_vals.r_int_convert();
 
     let res = if streaming {
         get_top_genes_perc_streaming(f_path_cell, &top_n_vals, &cell_indices, verbose)
+            .to_extendr()?
     } else {
-        get_top_genes_perc(f_path_cell, &top_n_vals, &cell_indices, verbose)
+        get_top_genes_perc(f_path_cell, &top_n_vals, &cell_indices, verbose).to_extendr()?
     };
 
     let mut result_list = List::new(top_n_vals.len());
@@ -225,7 +331,7 @@ fn rs_sc_get_top_genes_perc(
         result_list.set_elt(i, Robj::from(res_i)).unwrap();
     }
 
-    result_list
+    Ok(result_list)
 }
 
 //////////////////////////
@@ -275,8 +381,9 @@ fn rs_sc_get_gene_set_perc(
 
     let res = if streaming {
         get_gene_set_perc_streaming(f_path_cell, gene_set_indices, &cell_indices, verbose)
+            .to_extendr()?
     } else {
-        get_gene_set_perc(f_path_cell, gene_set_indices, &cell_indices, verbose)
+        get_gene_set_perc(f_path_cell, gene_set_indices, &cell_indices, verbose).to_extendr()?
     };
 
     let mut result_list = List::new(gene_set_idx.len());
@@ -318,7 +425,7 @@ fn rs_pairwise_gene_cors(
     gene_indices_2: &[i32],
     cells_to_keep: &[i32],
     spearman: bool,
-) -> Vec<f64> {
+) -> Result<Vec<f64>, extendr_api::Error> {
     let gene_indices_1 = gene_indices_1.r_int_convert();
     let gene_indices_2 = gene_indices_2.r_int_convert();
     let cells_to_keep = cells_to_keep.r_int_convert();
@@ -329,9 +436,10 @@ fn rs_pairwise_gene_cors(
         &gene_indices_2,
         &cells_to_keep,
         spearman,
-    );
+    )
+    .to_extendr()?;
 
-    pairwise_cors.r_float_convert()
+    Ok(pairwise_cors.r_float_convert())
 }
 
 ///////////////////////////
@@ -341,72 +449,105 @@ fn rs_pairwise_gene_cors(
 /// Calculate the percentage of gene sets in the cells
 ///
 /// @description
-/// This function allows to calculate for example the proportion of
-/// mitochondrial genes, or ribosomal genes in the cells for QC purposes.
+/// This function identifies highly variable genes with the three methods known
+/// in Seurat.
 ///
 /// @param f_path_gene String. Path to the `counts_genes.bin` file.
-/// @param hvg_method String. Which HVG detection method to use. Options
-/// are `c("vst", "meanvarbin", "dispersion")`. So far, only the first is
-/// implemented.
+/// @param hvg_method String. Which HVG detection method to use. One of
+/// `c("vst", "meanvarbin", "dispersion")`.
 /// @param cell_indices Integer positions (0-indexed!) that defines the cells
 /// to keep.
 /// @param loess_span Numeric. The span parameter for the loess function.
 /// @param clip_max Optional clipping number. Defaults to `sqrt(no_cells)` if
 /// not provided.
+/// @param binning String. The binning strategy for the `meanvarbin` method. One
+/// of `c("equal_width", "equal_frequency")`.
+/// @param n_bins Integer. Number of bins for the `meanvarbin` method.
 /// @param streaming Boolean. Shall the genes be streamed in to reduce memory
 /// pressure.
 /// @param verbose Boolean. Controls verbosity of the function.
 ///
-/// @return A list with the percentages of counts per gene set group detected
-/// in the cells:
+/// @return A list with the highly variable genes. If `hvg_method == "vst"`, the
+/// following elements can be found:
 /// \itemize{
 ///   \item mean - The average expression of the gene.
 ///   \item var - The variance of the gene.
 ///   \item var_exp - The expected variance of the gene.
 ///   \item var_std - The standardised variance of the gene.
 /// }
+/// For the other two methods, these elements can be found:
+/// \itemize{
+///   \item mean - The average expression of the gene.
+///   \item dispersion - The dispersion of the gene
+///   \item dispersion_scaled - The scaled dispersion per bin per gene
+///   \item bin - The bin of the gene
+/// }
 ///
 /// @export
 #[extendr]
+#[allow(clippy::too_many_arguments)]
 fn rs_sc_hvg(
     f_path_gene: &str,
     hvg_method: &str,
     cell_indices: Vec<i32>,
     loess_span: f64,
+    binning: String,
+    n_bins: usize,
     clip_max: Option<f32>,
     streaming: bool,
     verbose: bool,
-) -> List {
+) -> Result<List, extendr_api::Error> {
     let cell_set = cell_indices.r_int_convert();
-
     let hvg_type = parse_hvg_method(hvg_method)
         .ok_or_else(|| format!("Invalid HVG method: {}", hvg_method))
         .unwrap();
 
-    let hvg_res: HvgRes = if streaming {
-        match hvg_type {
-            HvgMethod::Vst => {
+    match hvg_type {
+        HvgMethod::Vst => {
+            let res = if streaming {
                 get_hvg_vst_streaming(f_path_gene, &cell_set, loess_span as f32, clip_max, verbose)
-            }
-            HvgMethod::MeanVarBin => get_hvg_mvb_streaming(),
-            HvgMethod::Dispersion => get_hvg_dispersion_streaming(),
-        }
-    } else {
-        match hvg_type {
-            HvgMethod::Vst => {
+                    .to_extendr()?
+            } else {
                 get_hvg_vst(f_path_gene, &cell_set, loess_span as f32, clip_max, verbose)
-            }
-            HvgMethod::MeanVarBin => get_hvg_mvb(),
-            HvgMethod::Dispersion => get_hvg_dispersion(),
+                    .to_extendr()?
+            };
+            Ok(list!(
+                mean = res.mean,
+                var = res.var,
+                var_exp = res.var_exp,
+                var_std = res.var_std
+            ))
         }
-    };
-
-    list!(
-        mean = hvg_res.mean,
-        var = hvg_res.var,
-        var_exp = hvg_res.var_exp,
-        var_std = hvg_res.var_std
-    )
+        HvgMethod::MeanVarBin => {
+            let res = if streaming {
+                get_hvg_mvb_streaming(f_path_gene, &cell_set, &binning, n_bins, verbose)
+                    .to_extendr()?
+            } else {
+                get_hvg_mvb(f_path_gene, &cell_set, &binning, n_bins, verbose).to_extendr()?
+            };
+            Ok(list!(
+                mean = res.mean,
+                dispersion = res.dispersion,
+                dispersion_scaled = res.dispersion_scaled,
+                bin = res.bin
+            ))
+        }
+        HvgMethod::Dispersion => {
+            let res = if streaming {
+                get_hvg_dispersion_streaming(f_path_gene, &cell_set, &binning, n_bins, verbose)
+                    .to_extendr()?
+            } else {
+                get_hvg_dispersion(f_path_gene, &cell_set, &binning, n_bins, verbose)
+                    .to_extendr()?
+            };
+            Ok(list!(
+                mean = res.mean,
+                dispersion = res.dispersion,
+                dispersion_scaled = res.dispersion_scaled,
+                bin = res.bin
+            ))
+        }
+    }
 }
 
 /// Calculate HVG per batch
@@ -417,8 +558,8 @@ fn rs_sc_hvg(
 /// such as union of top genes per batch.
 ///
 /// @param f_path_gene String. Path to the `counts_genes.bin` file.
-/// @param hvg_method String. Which HVG detection method to use. Currently
-/// only `"vst"` is implemented for batch-aware mode.
+/// @param hvg_method String. Which HVG detection method to use. One of
+/// `c("vst", "meanvarbin", "dispersion")`.
 /// @param cell_indices Integer positions (0-indexed!) that defines the cells
 /// to keep.
 /// @param batch_labels Integer vector (0-indexed!) defining batch membership
@@ -426,16 +567,31 @@ fn rs_sc_hvg(
 /// @param loess_span Numeric. The span parameter for the loess function.
 /// @param clip_max Optional clipping number. Defaults to `sqrt(no_cells)` per
 /// batch if not provided.
+/// @param binning String. The binning strategy for the `meanvarbin` method. One
+/// of `c("equal_width", "equal_frequency")`.
+/// @param n_bins Integer. Number of bins for the `meanvarbin` method.
 /// @param streaming Boolean. Shall the genes be streamed in to reduce memory
 /// pressure.
 /// @param verbose Boolean. Controls verbosity of the function.
 ///
-/// @return A list with HVG statistics concatenated across all batches:
+/// @return A list with HVG statistics concatenated across all batches. For
+/// `hvg_method == 'vst'`, the following elements can be found:
 /// \itemize{
 ///   \item mean - The average expression of each gene in each batch.
 ///   \item var - The variance of each gene in each batch.
 ///   \item var_exp - The expected variance of each gene in each batch.
 ///   \item var_std - The standardised variance of each gene in each batch.
+///   \item batch - Batch index for each gene (length = n_genes * n_batches).
+///   \item gene_idx - Gene index for each entry (0-indexed, length = n_genes *
+///   n_batches).
+/// }
+/// For the other methods
+/// \itemize{
+///   \item mean - The average expression of each gene in each batch.
+///   \item dispersion - The dispersion of the gene in each batch.
+///   \item dispersion_scaled - The scaled dispersion per bin per gene in each
+///   batch.
+///   \item bin - The bin of the gene in each batch.
 ///   \item batch - Batch index for each gene (length = n_genes * n_batches).
 ///   \item gene_idx - Gene index for each entry (0-indexed, length = n_genes *
 ///   n_batches).
@@ -450,79 +606,121 @@ fn rs_sc_hvg_batch_aware(
     cell_indices: Vec<i32>,
     batch_labels: Vec<i32>,
     loess_span: f64,
+    binning: String,
+    n_bins: usize,
     clip_max: Option<f32>,
     streaming: bool,
     verbose: bool,
-) -> List {
+) -> Result<List, extendr_api::Error> {
     let cell_set = cell_indices.r_int_convert();
     let batch_set = batch_labels.r_int_convert();
-
     let hvg_type = parse_hvg_method(hvg_method)
         .ok_or_else(|| format!("Invalid HVG method: {}", hvg_method))
         .unwrap();
 
-    let hvg_results: Vec<HvgRes> = if streaming {
-        match hvg_type {
-            HvgMethod::Vst => get_hvg_vst_batch_aware_streaming(
-                f_path_gene,
-                &cell_set,
-                &batch_set,
-                loess_span as f32,
-                clip_max,
-                verbose,
-            ),
-            HvgMethod::MeanVarBin => panic!("MeanVarBin not implemented for batch-aware mode"),
-            HvgMethod::Dispersion => panic!("Dispersion not implemented for batch-aware mode"),
+    match hvg_type {
+        HvgMethod::Vst => {
+            let results = if streaming {
+                get_hvg_vst_batch_aware_streaming(
+                    f_path_gene,
+                    &cell_set,
+                    &batch_set,
+                    loess_span as f32,
+                    clip_max,
+                    verbose,
+                )
+            } else {
+                get_hvg_vst_batch_aware(
+                    f_path_gene,
+                    &cell_set,
+                    &batch_set,
+                    loess_span as f32,
+                    clip_max,
+                    verbose,
+                )
+            }
+            .to_extendr()?;
+
+            let n_genes = results[0].mean.len();
+            let total_len = n_genes * results.len();
+            let mut mean_flat = Vec::with_capacity(total_len);
+            let mut var_flat = Vec::with_capacity(total_len);
+            let mut var_exp_flat = Vec::with_capacity(total_len);
+            let mut var_std_flat = Vec::with_capacity(total_len);
+            let mut batch_idx = Vec::with_capacity(total_len);
+            let mut gene_idx = Vec::with_capacity(total_len);
+
+            for (batch, res) in results.into_iter().enumerate() {
+                mean_flat.extend(res.mean);
+                var_flat.extend(res.var);
+                var_exp_flat.extend(res.var_exp);
+                var_std_flat.extend(res.var_std);
+                batch_idx.extend(vec![batch as i32; n_genes]);
+                gene_idx.extend(0..n_genes as i32);
+            }
+
+            Ok(list!(
+                mean = mean_flat,
+                var = var_flat,
+                var_exp = var_exp_flat,
+                var_std = var_std_flat,
+                batch = batch_idx,
+                gene_idx = gene_idx
+            ))
         }
-    } else {
-        match hvg_type {
-            HvgMethod::Vst => get_hvg_vst_batch_aware(
-                f_path_gene,
-                &cell_set,
-                &batch_set,
-                loess_span as f32,
-                clip_max,
-                verbose,
-            ),
-            HvgMethod::MeanVarBin => panic!("MeanVarBin not implemented for batch-aware mode"),
-            HvgMethod::Dispersion => panic!("Dispersion not implemented for batch-aware mode"),
+        HvgMethod::MeanVarBin => {
+            let results = if streaming {
+                get_hvg_mvb_batch_aware_streaming(
+                    f_path_gene,
+                    &cell_set,
+                    &batch_set,
+                    &binning,
+                    n_bins,
+                    verbose,
+                )
+            } else {
+                get_hvg_mvb_batch_aware(
+                    f_path_gene,
+                    &cell_set,
+                    &batch_set,
+                    &binning,
+                    n_bins,
+                    verbose,
+                )
+            }
+            .to_extendr()?;
+
+            Ok(flatten_dispersion_batches(results))
         }
-    };
+        HvgMethod::Dispersion => {
+            let results = if streaming {
+                get_hvg_dispersion_batch_aware_streaming(
+                    f_path_gene,
+                    &cell_set,
+                    &batch_set,
+                    &binning,
+                    n_bins,
+                    verbose,
+                )
+            } else {
+                get_hvg_dispersion_batch_aware(
+                    f_path_gene,
+                    &cell_set,
+                    &batch_set,
+                    &binning,
+                    n_bins,
+                    verbose,
+                )
+            }
+            .to_extendr()?;
 
-    // Flatten results for easy R manipulation
-    let n_genes = hvg_results[0].mean.len();
-    let n_batches = hvg_results.len();
-    let total_len = n_genes * n_batches;
-
-    let mut mean_flat = Vec::with_capacity(total_len);
-    let mut var_flat = Vec::with_capacity(total_len);
-    let mut var_exp_flat = Vec::with_capacity(total_len);
-    let mut var_std_flat = Vec::with_capacity(total_len);
-    let mut batch_idx = Vec::with_capacity(total_len);
-    let mut gene_idx = Vec::with_capacity(total_len);
-
-    for (batch, hvg_res) in hvg_results.into_iter().enumerate() {
-        mean_flat.extend(hvg_res.mean);
-        var_flat.extend(hvg_res.var);
-        var_exp_flat.extend(hvg_res.var_exp);
-        var_std_flat.extend(hvg_res.var_std);
-        batch_idx.extend(vec![batch as i32; n_genes]);
-        gene_idx.extend(0..n_genes as i32);
+            Ok(flatten_dispersion_batches(results))
+        }
     }
-
-    list!(
-        mean = mean_flat,
-        var = var_flat,
-        var_exp = var_exp_flat,
-        var_std = var_std_flat,
-        batch = batch_idx,
-        gene_idx = gene_idx
-    )
 }
 
 /////////
 // PCA //
-/////////
 /////////
 
 /// Calculates PCA for single cell
@@ -561,7 +759,7 @@ fn rs_sc_pca(
     seed: usize,
     return_scaled: bool,
     verbose: bool,
-) -> List {
+) -> Result<List, extendr_api::Error> {
     let cell_set = cell_indices.r_int_convert();
     let gene_indices = gene_indices.r_int_convert();
 
@@ -574,17 +772,18 @@ fn rs_sc_pca(
         seed,
         return_scaled,
         verbose,
-    );
+    )
+    .to_extendr()?;
 
     let singular_values_f64: Vec<f64> = res.2.iter().map(|&x| x as f64).collect();
     let scaled = res.3.map(|s| faer_to_r_matrix(s.as_ref()));
 
-    list!(
+    Ok(list!(
         scores = faer_to_r_matrix(res.0.as_ref()),
         loadings = faer_to_r_matrix(res.1.as_ref()),
         singular_values = singular_values_f64,
         scaled = scaled
-    )
+    ))
 }
 
 /// Calculates sparse PCA for single cell
@@ -627,7 +826,7 @@ fn rs_sc_pca_sparse(
     gene_indices: Vec<i32>,
     seed: usize,
     verbose: bool,
-) -> List {
+) -> Result<List, extendr_api::Error> {
     let cell_set = cell_indices.r_int_convert();
     let gene_indices = gene_indices.r_int_convert();
 
@@ -639,15 +838,14 @@ fn rs_sc_pca_sparse(
         random_svd,
         seed,
         verbose,
-    );
+    )
+    .to_extendr()?;
 
-    let singular_values_f64: Vec<f64> = res.2.iter().map(|&x| x as f64).collect();
-
-    list!(
+    Ok(list!(
         scores = faer_to_r_matrix(res.0.as_ref()),
         loadings = faer_to_r_matrix(res.1.as_ref()),
-        singular_values = singular_values_f64
-    )
+        singular_values = res.2.r_float_convert()
+    ))
 }
 
 ///////////////
@@ -658,21 +856,14 @@ fn rs_sc_pca_sparse(
 ///
 /// @description
 /// This function is a wrapper over the Rust-based generation of the approximate
-/// nearest neighbours. You have several options to get the approximate nearest
-/// neighbours:
-///
-/// - `"annoy"`: leverages binary trees to generate rapidly in a parallel manner
-///   an index. Good compromise of index generation, querying speed.
-/// - `"hnsw"`: uses a hierarchical navigatable small worlds index under the
-///   hood. The index generation takes more long, but higher recall and ideal
-///   for very large datasets due to subdued memory pressure.
-/// - `"nndescent"`: an index-free approximate nearest neighbour algorithm
-///   that is ideal for small, ephemeral kNN graphs.
+/// nearest neighbours.
 ///
 /// @param embd Numerical matrix. The embedding matrix to use to generate the
 /// kNN graph.
 /// @param knn_params List. The kNN parameters defined by
-/// [bixverse::params_sc_neighbours()].
+/// [params_sc_neighbours()].
+/// @param validate_index Boolean. If you want to validate the index via
+/// an exhaustive search in a subset of cells.
 /// @param verbose Boolean. Controls verbosity of the function and returns
 /// how long certain operations took.
 /// @param seed Integer. Seed for reproducibility purposes.
@@ -685,12 +876,13 @@ fn rs_sc_pca_sparse(
 fn rs_sc_knn(
     embd: RMatrix<f64>,
     knn_params: List,
+    validate_index: bool,
     verbose: bool,
     seed: usize,
-) -> extendr_api::Result<extendr_api::RArray<i32, [usize; 2]>> {
+) -> extendr_api::Result<extendr_api::RArray<i32, 2>> {
     let embd = r_matrix_to_faer_fp32(&embd);
 
-    let knn_params = KnnParams::from_r_list(knn_params);
+    let knn_params = KnnParams::from_r_list(knn_params)?;
 
     let start_knn = Instant::now();
 
@@ -705,6 +897,7 @@ fn rs_sc_knn(
             knn_params.ef_construction,
             knn_params.ef_search,
             seed,
+            validate_index,
             verbose,
         ),
         KnnSearch::Annoy => generate_knn_annoy(
@@ -714,6 +907,7 @@ fn rs_sc_knn(
             knn_params.n_tree,
             knn_params.search_budget,
             seed,
+            validate_index,
             verbose,
         ),
         KnnSearch::NNDescent => generate_knn_nndescent(
@@ -724,6 +918,7 @@ fn rs_sc_knn(
             knn_params.ef_budget,
             knn_params.delta,
             seed,
+            validate_index,
             verbose,
         ),
         KnnSearch::Exhaustive => {
@@ -735,6 +930,15 @@ fn rs_sc_knn(
             knn_params.k,
             knn_params.n_list,
             knn_params.n_probe,
+            seed,
+            validate_index,
+            verbose,
+        ),
+        KnnSearch::KmKnn => generate_knn_kmknn(
+            embd.as_ref(),
+            &knn_params.ann_dist,
+            knn_params.k,
+            knn_params.n_list,
             seed,
             verbose,
         ),
@@ -760,7 +964,9 @@ fn rs_sc_knn(
 /// @param embd Numerical matrix. The embedding matrix to use to generate the
 /// kNN graph.
 /// @param knn_params List. The kNN parameters defined by
-/// [bixverse::params_sc_neighbours()].
+/// [params_sc_neighbours()].
+/// @param validate_index Boolean. If you want to validate the index via
+/// an exhaustive search in a subset of cells.
 /// @param verbose Boolean. Controls verbosity of the function and returns
 /// how long certain operations took.
 /// @param seed Integer. Seed for reproducibility purposes.
@@ -776,24 +982,36 @@ fn rs_sc_knn(
 ///
 /// @export
 #[extendr]
-fn rs_sc_knn_w_dist(embd: RMatrix<f64>, knn_params: List, verbose: bool, seed: usize) -> List {
+fn rs_sc_knn_w_dist(
+    embd: RMatrix<f64>,
+    knn_params: List,
+    validate_index: bool,
+    verbose: bool,
+    seed: usize,
+) -> Result<List, extendr_api::Error> {
     let embd = r_matrix_to_faer_fp32(&embd);
 
-    let knn_params = KnnParams::from_r_list(knn_params);
+    let knn_params = KnnParams::from_r_list(knn_params)?;
 
-    let (knn_indices, knn_dist) =
-        generate_knn_with_dist(embd.as_ref(), &knn_params, true, seed, verbose);
+    let (knn_indices, knn_dist) = generate_knn_with_dist(
+        embd.as_ref(),
+        &knn_params,
+        true,
+        validate_index,
+        seed,
+        verbose,
+    );
 
     let knn_dist = knn_dist.unwrap();
 
     let index_mat = Mat::from_fn(embd.nrows(), knn_params.k, |i, j| knn_indices[i][j] as i32);
     let dist_mat = Mat::from_fn(embd.nrows(), knn_params.k, |i, j| knn_dist[i][j] as f64);
 
-    list!(
+    Ok(list!(
         indices = faer_to_r_matrix(index_mat.as_ref()),
         dist = faer_to_r_matrix(dist_mat.as_ref()),
         dist_metric = knn_params.ann_dist
-    )
+    ))
 }
 
 /// Generates the sNN graph for igraph
@@ -830,7 +1048,7 @@ fn rs_sc_snn(
     let n_neighbours = knn_mat.ncols();
     let data = knn_mat.data().r_int_convert();
 
-    let snn_method = get_snn_similiarity_method(&snn_method)
+    let snn_method = parse_snn_similiarity_method(&snn_method)
         .ok_or_else(|| format!("Invalid SNN similarity method: {}", snn_method))?;
 
     let snn_data = if limited_graph {
@@ -854,21 +1072,246 @@ fn rs_sc_snn(
     };
 
     Ok(list!(
-        edges = snn_data.0.r_int_convert(),
+        edges = snn_data.0.r_int_convert_shift(),
         weights = snn_data.1
     ))
 }
 
 /// Helper to compare kNN graphs
 ///
-/// @param knn_mat_a Integer matrix. The first kNN graph to compare.
-/// @param knn_mat_b Integer matrix. The second kNN graph to compare.
+/// @param knn_mat_a Integer matrix. The indices of the first kNN graph to
+/// compare. Should be samples x neighbours. This will be treated as ground
+/// truth.
+/// @param knn_mat_b Integer matrix. The indices of the second kNN graph to
+/// compare. Should be samples x neighbours.
+/// @param knn_dist_a Numeric matrix.
 ///
-/// @returns Vector of number of overlaps per sample.
+/// @returns A list with the following elements:
+/// \itemize{
+///  \item all_matches - Matching neighbours for this sample.
+///  \item all_ratios - Distance ratio for this sample (with b / a).
+///  \item final_recall - The final recall of assuming a being the ground truth
+///  across all samples
+///  \item final_ratio - The final distance ratio across all samples
+/// }
+///
+/// @export
 #[extendr]
-fn rs_compare_knn(knn_mat_a: RMatrix<i32>, knn_mat_b: RMatrix<i32>) -> Vec<i32> {
-    let knn_mat_a = r_matrix_to_faer(&knn_mat_a);
-    let knn_mat_b = r_matrix_to_faer(&knn_mat_b);
+fn rs_compare_knn(knn_data_a: List, knn_data_b: List) -> Result<List, extendr_api::Error> {
+    let (indices_a, dist_a, _, _) = knn_data_to_rust(knn_data_a)?;
+    let (indices_b, dist_b, _, _) = knn_data_to_rust(knn_data_b)?;
 
-    compare_knn_graphs(knn_mat_a, knn_mat_b)
+    if indices_a.len() != indices_b.len() {
+        return Err(Error::Other(
+            "The two kNN data sets have different number of samples".into(),
+        ));
+    }
+    if indices_a[0].len() != indices_b[0].len() {
+        return Err(Error::Other(
+            "The two kNN data sets have a different set of neighbours requested".into(),
+        ));
+    }
+
+    // calculate the recalls
+    let k = indices_a[0].len();
+
+    let mut total_recall = 0.0;
+    let mut all_matches: Vec<usize> = Vec::with_capacity(indices_a.len());
+
+    for (nn_a, nn_b) in indices_a.iter().zip(indices_b.iter()) {
+        let true_set: FxHashSet<_> = nn_a.iter().take(k).collect();
+        let approx_set: FxHashSet<_> = nn_b.iter().take(k).collect();
+
+        let matches = approx_set.intersection(&true_set).count();
+        all_matches.push(matches);
+
+        total_recall += matches as f64 / k as f64;
+    }
+
+    let final_recall = total_recall / indices_a.len() as f64;
+
+    let mut all_ratios: Vec<f64> = Vec::with_capacity(dist_a.len());
+    let mut total_ratio: f64 = 0.0;
+    let mut count = 0usize;
+
+    for (d_a, d_b) in dist_a.iter().zip(dist_b.iter()) {
+        let sum_a: f64 = d_a.iter().map(|x| *x as f64).sum();
+        let sum_b: f64 = d_b.iter().map(|x| *x as f64).sum();
+        if sum_a > 1e-12 {
+            let ratio = sum_b / sum_a;
+            all_ratios.push(ratio);
+            total_ratio += ratio;
+            count += 1;
+        }
+    }
+
+    let final_ratio = total_ratio / count as f64;
+
+    Ok(list!(
+        all_matches = all_matches.r_int_convert(),
+        all_ratios = all_ratios,
+        final_recall = final_recall,
+        final_ratio = final_ratio
+    ))
+}
+
+//////////////////
+// Fast cluster //
+//////////////////
+
+/// Runs fast Louvain cluster on the data
+///
+/// @description
+/// Runs first k-means clustering, followed by a kNN detection on the centroids
+/// to then run Louvain clustering on the graph and propagate the membership
+/// back to the original data.
+///
+/// @param embd Numeric matrix. The original embedding.
+/// @param km_type String. One of `c("kmeans", "minibatch")` for the type of
+/// k means clustering to run.
+/// @param resolutions Numeric vector. The Louvain resolutions to iterate
+/// through.
+/// @param n_centroids Optional integer. The number of clusters to find. If
+/// not provided, defaults to `sqrt(nrow(embd))`.
+/// @param fc_params Named list. The fast clustering parameters.
+/// @param snn Boolean. Shall the kNN graph be additionally transformed into
+/// an sNN graph.
+/// @param seed Integer. For reproducibility.
+/// @param verbose Boolean. Controls the verbosity of the function.
+///
+/// @returns A list with the memberships per resolution.
+///
+/// @export
+#[extendr]
+#[allow(clippy::too_many_arguments)]
+fn rs_fast_cluster_sc(
+    embd: RMatrix<f64>,
+    km_type: String,
+    resolutions: &[f64],
+    n_centroids: Option<usize>,
+    fc_params: List,
+    snn: bool,
+    return_kmeans: bool,
+    seed: usize,
+    verbose: bool,
+) -> Result<List, extendr_api::Error> {
+    let embd = r_matrix_to_faer_fp32(&embd);
+    let n_clusters = n_centroids.unwrap_or(((embd.nrows() as f32).sqrt()) as usize);
+    let resolutions = resolutions.r_float_convert();
+
+    let mut params: FastLouvainParams<f32> = FastLouvainParams::from_r_list(fc_params)?;
+
+    params.n_centroids = n_clusters;
+
+    let fc_results = fast_louvain_clusters(
+        embd.as_ref(),
+        &km_type,
+        &resolutions,
+        &params,
+        snn,
+        return_kmeans,
+        seed,
+        verbose,
+    )
+    .to_extendr()?;
+
+    let (memberships, k_means_cluster, centroids) =
+        fast_cluster_unwrap_single(fc_results, return_kmeans)?;
+
+    let mut memberships_ls = List::new(memberships.len());
+
+    for (index, membership) in memberships.iter().enumerate() {
+        let membership = membership.clone().r_int_convert();
+        memberships_ls.set_elt(index, Robj::from(membership))?;
+    }
+
+    let k_means_cluster = k_means_cluster.map_or_else(|| r!(NULL), |v| r!(v));
+    let centroids = centroids.map_or_else(|| r!(NULL), |m| r!(m));
+
+    Ok(list!(
+        membership = memberships_ls,
+        k_means_cluster = r!(k_means_cluster),
+        centroids = r!(centroids),
+    ))
+}
+
+/// Runs fast Louvain cluster on the data (with multiple seeds)
+///
+/// @description
+/// Runs first k-means clustering, followed by a kNN detection on the centroids
+/// to then run Louvain clustering with several seeds (based on the original
+/// one) on the graph and propagate the membership back to the original data.
+/// Returns additional metrics around cluster stability and community
+/// conductance.
+///
+/// @param embd Numeric matrix. The original embedding.
+/// @param km_type String. One of `c("kmeans", "minibatch")` for the type of
+/// k means clustering to run.
+/// @param resolutions Numeric vector. The Louvain resolutions to iterate
+/// through.
+/// @param n_centroids Optional integer. The number of clusters to find. If
+/// not provided, defaults to `sqrt(nrow(embd))`.
+/// @param fc_params Named list. The fast clustering parameters.
+/// @param snn Boolean. Shall the kNN graph be additionally transformed into
+/// an sNN graph.
+/// @param no_seeds Integer. Number of additional seeds to use. Should be >=2.
+/// @param seed Integer. For reproducibility.
+/// @param verbose Boolean. Controls the verbosity of the function.
+///
+/// @returns A list with the following elements:
+/// \itemize{
+///  \item memberships - The memberships across the different resolutions. The
+///  membership from the random seed with the best conductance is returned.
+///  \item stats - The statistics per given resolution run.
+/// }
+///
+/// @export
+#[extendr]
+#[allow(clippy::too_many_arguments)]
+fn rs_fast_cluster_sc_grid(
+    embd: RMatrix<f64>,
+    km_type: String,
+    resolutions: &[f64],
+    n_centroids: Option<usize>,
+    fc_params: List,
+    snn: bool,
+    return_kmeans: bool,
+    no_seeds: usize,
+    seed: usize,
+    verbose: bool,
+) -> Result<List, extendr_api::Error> {
+    let embd = r_matrix_to_faer_fp32(&embd);
+    let n_clusters = n_centroids.unwrap_or(((embd.nrows() as f32).sqrt()) as usize);
+    let resolutions = resolutions.r_float_convert();
+
+    let mut params: FastLouvainParams<f32> = FastLouvainParams::from_r_list(fc_params)?;
+
+    params.n_centroids = n_clusters;
+
+    let fc_results = fast_louvain_clusters_grid(
+        embd.as_ref(),
+        &km_type,
+        &resolutions,
+        &params,
+        snn,
+        true,
+        seed,
+        no_seeds,
+        verbose,
+    )
+    .to_extendr()?;
+
+    let (memberships, k_means_cluster, centroids) =
+        fast_cluster_unwrap_multiple(fc_results, return_kmeans)?;
+
+    let membership_ls = process_fc_louvain_results(memberships)?;
+
+    let k_means_cluster = k_means_cluster.map_or_else(|| r!(NULL), |v| r!(v));
+    let centroids = centroids.map_or_else(|| r!(NULL), |m| r!(m));
+
+    Ok(list!(
+        membership = membership_ls,
+        k_means_cluster = r!(k_means_cluster),
+        centroids = r!(centroids),
+    ))
 }

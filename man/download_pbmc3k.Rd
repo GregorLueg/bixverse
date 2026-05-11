@@ -4,12 +4,15 @@
 \alias{download_pbmc3k}
 \title{Download PBMC3K data from Zenodo}
 \usage{
-download_pbmc3k()
+download_pbmc3k(quiet = FALSE)
+}
+\arguments{
+\item{quiet}{Boolean. If the download shall be quiet.}
 }
 \value{
 String. The path to the extracted PBMC3K data.
 }
 \description{
 This function downloads the PBMC3K dataset from 10x Genomics (uploaded
-on Zenodo) and extracts it and returns the paths.
+on Zenodo) and extracts it and returns the (temporary) paths.
 }

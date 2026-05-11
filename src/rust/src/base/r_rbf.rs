@@ -66,7 +66,7 @@ fn rs_rbf_function_mat(
     x: RMatrix<f64>,
     epsilon: f64,
     rbf_type: &str,
-) -> extendr_api::Result<RArray<f64, [usize; 2]>> {
+) -> extendr_api::Result<RArray<f64, 2>> {
     let x = r_matrix_to_faer(&x);
 
     let rbf_fun = parse_rbf_types(rbf_type)
@@ -115,7 +115,7 @@ fn rs_rbf_iterate_epsilons(
     original_dim: usize,
     shift: usize,
     rbf_type: &str,
-) -> RArray<f64, [usize; 2]> {
+) -> RArray<f64, 2> {
     let band_width_data = rbf_iterate_epsilons(dist, epsilon_vec, original_dim, shift, rbf_type);
 
     faer_to_r_matrix(band_width_data.as_ref())
