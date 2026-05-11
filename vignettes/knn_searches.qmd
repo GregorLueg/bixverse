@@ -152,7 +152,8 @@ There are additional GPU-accelerated kNN searches in the sister package, see
 
 Now let's see which parameter belongs to which method and does what.
 
-| Parameter | Default | Meaning | 
+| Parameter | Default | Meaning |
+|-----------|---------|---------|
 | k | `15L` | Kinda obvious... Number of neighbours |
 | knn_method | `"kmknn"` | The approximate nearest neighbour method. One of `c("kmknn", "exhaustive", "annoy", "ivf", "hnsw", "nndescent")` |
 | ann_dist | `"euclidean"` | The distance metric to use. Two options are available... Euclidean distance or Cosine distance. Very important, the underlying library returns the **SQUARED** Euclidean distance for speed purposes. If you use the Euclidean distance for something, keep this in mind! |
