@@ -162,11 +162,12 @@ per_cell_qc_outlier <- function(
 #' Run MAD outlier detection on per-cell QC metrics
 #'
 #' @param metrics Named list of numeric vectors. Each element is a QC metric
-#'   to check (e.g. `list(log10_lib_size = log10(lib_size), MT = mt_pct)`).
+#' to check (e.g. `list(log10_lib_size = log10(lib_size), MT = mt_pct)`).
 #' @param directions Named character vector mapping metric names to direction.
-#'   One of `"twosided"`, `"below"`, `"above"`. Defaults to `"twosided"` for
-#'   all metrics if `NULL`.
+#' One of `"twosided"`, `"below"`, `"above"`. Defaults to `"twosided"` for
+#' all metrics if `NULL`.
 #' @param threshold Numeric. Number of MADs to use for outlier detection.
+#' @param groups Optional grouping variable. A string.
 #'
 #' @return An object of class `CellQc` containing:
 #' \describe{
@@ -179,17 +180,43 @@ per_cell_qc_outlier <- function(
 #' }
 #'
 #' @export
-run_cell_qc <- function(metrics, directions = NULL, threshold = 3) {
+run_cell_qc <- function(
+  metrics,
+  directions = NULL,
+  threshold = 3,
+  groups = NULL
+) {
   checkmate::assertList(metrics, types = "numeric", names = "unique")
   checkmate::qassert(threshold, "N1")
+
+  n <- length(metrics[[1]])
+  if (is.null(groups)) {
+    groups <- rep("all", n)
+  }
+  checkmate::assertAtomic(groups, len = n, any.missing = FALSE)
+  groups <- as.character(groups)
 
   if (is.null(directions)) {
     directions <- setNames(rep("twosided", length(metrics)), names(metrics))
   }
 
+  group_levels <- unique(groups)
+
   results <- Map(
     function(x, dir) {
-      per_cell_qc_outlier(metric = x, threshold = threshold, direction = dir)
+      outlier <- logical(n)
+      thresholds <- list()
+      for (g in group_levels) {
+        idx <- which(groups == g)
+        res <- per_cell_qc_outlier(
+          metric = x[idx],
+          threshold = threshold,
+          direction = dir
+        )
+        outlier[idx] <- res$outlier
+        thresholds[[g]] <- res$metrics
+      }
+      list(outlier = outlier, metrics = thresholds)
     },
     metrics,
     directions[names(metrics)]
@@ -201,95 +228,13 @@ run_cell_qc <- function(metrics, directions = NULL, threshold = 3) {
   structure(
     list(
       metrics = metrics,
+      groups = groups,
       per_metric = results,
       outlier_mat = outlier_mat,
       combined = combined
     ),
     class = "CellQc"
   )
-}
-
-#### R primitives --------------------------------------------------------------
-
-#' Print a CellQc object
-#'
-#' @param x A `CellQc` object.
-#' @param ... Ignored.
-#'
-#' @return Invisible `x`.
-#'
-#' @export
-#'
-#' @keywords internal
-print.CellQc <- function(x, ...) {
-  n_cells <- length(x$combined)
-  n_outliers <- sum(x$combined)
-  metric_names <- colnames(x$outlier_mat)
-
-  cat(sprintf(
-    "CellQc: %d cells, %d outliers (%.1f%%)\n",
-    n_cells,
-    n_outliers,
-    100 * n_outliers / n_cells
-  ))
-  cat("Metrics:\n")
-
-  for (nm in metric_names) {
-    n <- sum(x$outlier_mat[, nm])
-    thresholds <- x$per_metric[[nm]]$metrics
-    parts <- character()
-    if (!is.na(thresholds["lower_threshold"])) {
-      parts <- c(parts, sprintf("lower = %.2f", thresholds["lower_threshold"]))
-    }
-    if (!is.na(thresholds["upper_threshold"])) {
-      parts <- c(parts, sprintf("upper = %.2f", thresholds["upper_threshold"]))
-    }
-    cat(sprintf(
-      "  - %s: %d outliers [%s]\n",
-      nm,
-      n,
-      paste(parts, collapse = ", ")
-    ))
-  }
-
-  invisible(x)
-}
-
-#' Plot per-cell QC violin plots from a CellQc object
-#'
-#' @param x A `CellQc` object.
-#' @param qc_df A data.table containing the cell-level data.
-#' @param ... Ignored.
-#'
-#' @return A named list of ggplot objects, one per metric.
-#'
-#' @export
-#'
-#' @import ggplot2
-#'
-#' @keywords internal
-plot.CellQc <- function(x, qc_df, ...) {
-  outlier_colours <- c("FALSE" = "lightgrey", "TRUE" = "orange")
-
-  plots <- purrr::map(names(x$metrics), function(nm) {
-    plot_dt <- data.table::copy(qc_df)[, outlier := x$combined]
-
-    ggplot2::ggplot(plot_dt, ggplot2::aes(y = x$metrics[[nm]], x = "cells")) +
-      ggplot2::geom_violin() +
-      ggplot2::geom_jitter(
-        ggplot2::aes(colour = outlier),
-        width = 0.05,
-        size = 0.4,
-        alpha = 0.5,
-        show.legend = FALSE
-      ) +
-      ggplot2::scale_colour_manual(values = outlier_colours) +
-      ggplot2::ylab(nm) +
-      ggplot2::xlab("") +
-      ggplot2::theme_bw()
-  })
-
-  setNames(plots, names(x$metrics))
 }
 
 ## knn -------------------------------------------------------------------------

@@ -6,6 +6,13 @@ Following things were added:
 
 * Merging of SingleCells object possible
 * Multi file reading in for .mtx files
+* Multi-model single cell support set up
+  - New multi-model class for single cells: `SingleCellsMultiModal`.
+  - You can no add the ADT counts to that one (in the future maybe also ATAC-
+    Seq).
+  - The weighted nearest neighbour graph method from 
+    [Hao et al., 2021](https://www.cell.com/cell/fulltext/S0092-8674(21)00583-3)
+   
 
 ## Breaking changes
 

@@ -191,7 +191,7 @@ sc_object <- SingleCells(dir_data = test_temp_dir)
 
 rust_con <- get_sc_rust_ptr(sc_object)
 
-file_res <- rust_con$h5_to_file(
+file_res <- rust_con$h5ad_to_file(
   cs_type = h5_meta_csr$type,
   h5_path = path.expand(f_path_csr),
   no_cells = h5_meta_csr$dims["obs"],
@@ -212,7 +212,7 @@ expect_equivalent(
   info = paste("h5ad to binary - correct genes being kept")
 )
 
-file_res <- rust_con$h5_to_file(
+file_res <- rust_con$h5ad_to_file(
   cs_type = h5_meta_csc$type,
   h5_path = path.expand(f_path_csc),
   no_cells = h5_meta_csc$dims["obs"],
@@ -235,7 +235,7 @@ expect_equivalent(
 
 #### streaming engine ----------------------------------------------------------
 
-file_res <- rust_con$h5_to_file_streaming(
+file_res <- rust_con$h5ad_to_file_streaming(
   cs_type = h5_meta_csr$type,
   h5_path = path.expand(f_path_csr),
   no_cells = h5_meta_csr$dims["obs"],
@@ -256,7 +256,7 @@ expect_equivalent(
   info = paste("h5ad to binary - correct genes being kept")
 )
 
-file_res <- rust_con$h5_to_file_streaming(
+file_res <- rust_con$h5ad_to_file_streaming(
   cs_type = h5_meta_csc$type,
   h5_path = path.expand(f_path_csc),
   no_cells = h5_meta_csc$dims["obs"],
@@ -283,12 +283,12 @@ duckdb_con <- get_sc_duckdb(sc_object)
 
 # test csr reading in
 
-duckdb_con$populate_obs_from_h5(
+duckdb_con$populate_obs_from_h5ad(
   h5_path = path.expand(f_path_csr),
   filter = as.integer(file_res$cell_indices + 1)
 )
 
-duckdb_con$populate_vars_from_h5(
+duckdb_con$populate_vars_from_h5ad(
   h5_path = path.expand(f_path_csr),
   filter = as.integer(file_res$gene_indices + 1)
 )
@@ -311,12 +311,12 @@ expect_equivalent(
 
 # test csc
 
-duckdb_con$populate_obs_from_h5(
+duckdb_con$populate_obs_from_h5ad(
   h5_path = path.expand(f_path_csc),
   filter = as.integer(file_res$cell_indices + 1)
 )
 
-duckdb_con$populate_vars_from_h5(
+duckdb_con$populate_vars_from_h5ad(
   h5_path = path.expand(f_path_csc),
   filter = as.integer(file_res$gene_indices + 1)
 )
@@ -644,7 +644,7 @@ sc_object <- SingleCells(dir_data = test_temp_dir)
 
 rust_con <- get_sc_rust_ptr(sc_object)
 
-file_res <- rust_con$multi_h5_to_file(
+file_res <- rust_con$multi_h5ad_to_file(
   file_tasks = h5_tasks$file_tasks,
   universe_size = as.integer(h5_tasks$universe_size),
   qc_params = sc_qc_param,
@@ -694,7 +694,7 @@ per_file_info <- lapply(file_res$per_file, function(f) {
   )
 })
 
-duckdb_con$populate_obs_from_multi_h5(
+duckdb_con$populate_obs_from_multi_h5ad(
   per_file_info = per_file_info,
   cell_id_col = NULL
 )
@@ -715,7 +715,7 @@ expect_true(
 
 final_gene_names <- h5_tasks$universe[file_res$global_gene_indices + 1L]
 
-duckdb_con$populate_vars_from_h5_reordered(
+duckdb_con$populate_vars_from_h5ad_reordered(
   h5_path = h5_tasks$file_tasks[[1L]]$h5_path,
   final_gene_names = final_gene_names
 )

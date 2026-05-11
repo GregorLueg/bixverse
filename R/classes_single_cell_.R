@@ -239,10 +239,6 @@ remove_snn_graph.ScCache <- function(x) {
 
 ## getters ---------------------------------------------------------------------
 
-### generics -------------------------------------------------------------------
-
-#### ScMap ---------------------------------------------------------------------
-
 ### methods --------------------------------------------------------------------
 
 #### ScMap ---------------------------------------------------------------------
@@ -521,15 +517,17 @@ get_snn_graph.ScCache <- function(x) {
 
 ## single cell class -----------------------------------------------------------
 
-#' @title bixverse single cell class
+#' @title bixverse SingleCells class
 #'
 #' @description
-#' This is the `bixverse`-based single cell class. Under the hood it uses a
+#' This is the `bixverse`-based SingleCells class. Under the hood it uses a
 #' DuckDB for obs and vars storing, and a Rust-based binarised file format to
 #' store the raw and normalised counts. In both cases, the idea is not to hold
 #' any data that is not needed at a given point of time in memory, but leverage
 #' speedy on-disk computations and streaming engines powered by Rust and DuckDB
-#' to run the analysis.
+#' to run the analysis. This version is specifically designed for single cell
+#' RNAseq. If you want to use multi-modal data, please refer to
+#' [SingleCellsMultiModal()] - this class can store multiple layers of 'omics.
 #'
 #' @param dir_data String. This is the directory in which the experimental files
 #' will be
@@ -860,10 +858,20 @@ S7::method(get_sc_counts, SingleCells) <- function(
   cell_indices = NULL,
   gene_indices = NULL,
   use_cells_to_keep = TRUE,
+  modality = c("rna", "adt"),
   .verbose = TRUE
 ) {
   assay <- match.arg(assay)
   return_format <- match.arg(return_format)
+  modality <- match.arg(modality)
+  if (modality != "rna") {
+    stop(
+      paste(
+        "SingleCells only supports modality = 'rna'.",
+        "Use SingleCellsMultiModal for ADT."
+      )
+    )
+  }
 
   # checks
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
@@ -1295,7 +1303,8 @@ S7::method(get_gene_names_from_idx, SingleCells) <- function(
 #'
 #' @method get_pca_factors SingleCells
 S7::method(get_pca_factors, SingleCells) <- function(
-  x
+  x,
+  ...
 ) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
@@ -1321,7 +1330,8 @@ S7::method(get_pca_factors, SingleCells) <- function(
 #'
 #' @method get_pca_loadings SingleCells
 S7::method(get_pca_loadings, SingleCells) <- function(
-  x
+  x,
+  ...
 ) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
@@ -1343,7 +1353,8 @@ S7::method(get_pca_loadings, SingleCells) <- function(
 #'
 #' @method get_pca_singular_val SingleCells
 S7::method(get_pca_singular_val, SingleCells) <- function(
-  x
+  x,
+  ...
 ) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
@@ -1363,7 +1374,8 @@ S7::method(get_pca_singular_val, SingleCells) <- function(
 #' @method get_embedding SingleCells
 S7::method(get_embedding, SingleCells) <- function(
   x,
-  embd_name
+  embd_name,
+  ...
 ) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
@@ -1386,7 +1398,8 @@ S7::method(get_embedding, SingleCells) <- function(
 #'
 #' @method get_available_embeddings SingleCells
 S7::method(get_available_embeddings, SingleCells) <- function(
-  x
+  x,
+  ...
 ) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
@@ -1405,7 +1418,8 @@ S7::method(get_available_embeddings, SingleCells) <- function(
 #'
 #' @method get_knn_mat SingleCells
 S7::method(get_knn_mat, SingleCells) <- function(
-  x
+  x,
+  ...
 ) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
@@ -1424,7 +1438,8 @@ S7::method(get_knn_mat, SingleCells) <- function(
 #'
 #' @method get_knn_dist SingleCells
 S7::method(get_knn_dist, SingleCells) <- function(
-  x
+  x,
+  ...
 ) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
@@ -1443,7 +1458,8 @@ S7::method(get_knn_dist, SingleCells) <- function(
 #'
 #' @method get_knn_obj SingleCells
 S7::method(get_knn_obj, SingleCells) <- function(
-  x
+  x,
+  ...
 ) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
@@ -1462,7 +1478,8 @@ S7::method(get_knn_obj, SingleCells) <- function(
 #'
 #' @method get_snn_graph SingleCells
 S7::method(get_snn_graph, SingleCells) <- function(
-  x
+  x,
+  ...
 ) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
@@ -1507,7 +1524,9 @@ S7::method(get_sc_available_features, SingleCells) <- function(
 
 ### setters --------------------------------------------------------------------
 
-#### obs -----------------------------------------------------------------------
+#### obs and vars --------------------------------------------------------------
+
+# generic found in base_generics_sc.R
 
 #' @method setnames_sc SingleCells
 #'
@@ -1537,6 +1556,30 @@ S7::method(setnames_sc, SingleCells) <- function(
 
   invisible(object)
 }
+
+# generic found in base_generics_sc.R
+
+#' @method drop_cols_sc SingleCells
+#'
+#' @export
+S7::method(drop_cols_sc, SingleCells) <- function(
+  object,
+  table = c("obs", "var"),
+  cols
+) {
+  table <- match.arg(table)
+
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  checkmate::assertChoice(table, c("obs", "var"))
+  checkmate::qassert(cols, "S+")
+
+  duckdb_con <- get_sc_duckdb(object)
+  duckdb_con$drop_columns(table = table, cols = cols)
+
+  invisible(object)
+}
+
+#### obs -----------------------------------------------------------------------
 
 #' Add a new column to the obs table
 #'
@@ -1841,7 +1884,8 @@ S7::method(set_hvg, SingleCells) <- function(
 #' @method set_pca_factors SingleCells
 S7::method(set_pca_factors, SingleCells) <- function(
   x,
-  pca_factor
+  pca_factor,
+  ...
 ) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
@@ -1863,7 +1907,8 @@ S7::method(set_pca_factors, SingleCells) <- function(
 #' @method set_pca_loadings SingleCells
 S7::method(set_pca_loadings, SingleCells) <- function(
   x,
-  pca_loading
+  pca_loading,
+  ...
 ) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
@@ -1885,7 +1930,8 @@ S7::method(set_pca_loadings, SingleCells) <- function(
 #' @method set_pca_singular_vals SingleCells
 S7::method(set_pca_singular_vals, SingleCells) <- function(
   x,
-  singular_vals
+  singular_vals,
+  ...
 ) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
@@ -1908,7 +1954,8 @@ S7::method(set_pca_singular_vals, SingleCells) <- function(
 S7::method(set_embedding, SingleCells) <- function(
   x,
   embd,
-  name
+  name,
+  ...
 ) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
@@ -1932,7 +1979,8 @@ S7::method(set_embedding, SingleCells) <- function(
 #' @method set_knn SingleCells
 S7::method(set_knn, SingleCells) <- function(
   x,
-  knn
+  knn,
+  ...
 ) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
@@ -1955,7 +2003,8 @@ S7::method(set_knn, SingleCells) <- function(
 #' @method set_snn_graph SingleCells
 S7::method(set_snn_graph, SingleCells) <- function(
   x,
-  snn_graph
+  snn_graph,
+  ...
 ) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
@@ -1976,7 +2025,8 @@ S7::method(set_snn_graph, SingleCells) <- function(
 #'
 #' @method remove_knn SingleCells
 S7::method(remove_knn, SingleCells) <- function(
-  x
+  x,
+  ...
 ) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
@@ -1996,7 +2046,8 @@ S7::method(remove_knn, SingleCells) <- function(
 #'
 #' @method remove_snn_graph SingleCells
 S7::method(remove_snn_graph, SingleCells) <- function(
-  x
+  x,
+  ...
 ) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))

@@ -3342,313 +3342,374 @@ rs_mc_scenic <- function(sparse_data, tf_indices, scenic_params, seed, verbose) 
 #' @export
 rs_mc_aucell <- function(sparse_data, gs_list, auc_type, verbose) .Call(wrap__rs_mc_aucell, sparse_data, gs_list, auc_type, verbose)
 
-#' A class for handling single cell count data
+#' Applies CLR normalisation on ADT counts (Seurat-style, per cell)
 #'
-#' ### Params
+#' @param counts R matrix of shape cells x features.
 #'
-#' * `f_path_cells` - Path to the .bin file for the cells.
-#' * `f_path_genes` - Path to the .bin file for the genes.
-#' * `n_cells` - No of cells represented in the data.
-#' * `n_genes` - No of genes represented in the data.
+#' @returns CLR-transformed matrix.
+#'
+#' @export
+rs_adt_clr <- function(counts) .Call(wrap__rs_adt_clr, counts)
+
+#' Single cell count data handler
+#'
+#' @description
+#' A class for handling single cell count data stored on disk in two
+#' complementary binary representations: a CSR-like layout (`f_path_cells`)
+#' for fast cell-wise access and a CSC-like layout (`f_path_genes`) for fast
+#' gene-wise access. Both raw counts and log-normalised counts are stored
+#' side by side. Provides methods for ingesting data from R, `h5ad`, and
+#' `mtx` sources (including multi-file workflows), converting between
+#' layouts, retrieving slices of the matrix, and merging existing binary
+#' objects.
+#'
+#' @usage NULL
+#' @format NULL
+#'
+#' @param f_path_cells (`character`)\cr
+#' Path to the `.bin` file for the cell-based (CSR-like) representation.
+#' @param f_path_genes (`character`)\cr
+#' Path to the `.bin` file for the gene-based (CSC-like) representation.
+#' @param n_cells (`integer`)\cr
+#' Number of cells represented in the data.
+#' @param n_genes (`integer`)\cr
+#' Number of genes represented in the data.
+#'
+#' @return A new instance of the `SingleCellCountData` class.
+#'
+#' @export
 #'
 #' @section Methods:
 #'\subsection{Method `new`}{
-#'Create new instance of the class
+#'Create a new instance of the class
 #'
-#'### Params
-#'
-#'* `f_path_cells` - Path to the .bin file for the cells.
-#'* `f_path_genes` - Path to the .bin file for the genes.
+#' \subsection{Arguments}{
+#'\describe{
+#'\item{`f_path_cells`}{(`character`)\cr Path to the `.bin` file for the cell-based representation.}
+#'\item{`f_path_genes`}{(`character`)\cr Path to the `.bin` file for the gene-based representation. }
+#'}}
+#' \subsection{return}{
+#'A new `SingleCellCountData` instance with `n_cells` and
+#'`n_genes` initialised to zero.
+#'}
 #'}
 #'
 #'\subsection{Method `get_shape`}{
-#'Get the shape
+#'Get the shape of the matrix
 #'
-#'### Returns
-#'
-#'Vector with rows x cells
+#' \subsection{return}{
+#'An integer vector `c(n_cells, n_genes)`.
+#'}
 #'}
 #'
 #'\subsection{Method `set_from_file`}{
-#'Set cell numbers and genes
+#'Populate `n_cells` and `n_genes` from the cells binary file
 #'
-#'### Params
+#' \subsection{description}{
+#'Reads the header of the file at `f_path_cells` and updates the
+#'`n_cells` and `n_genes` fields accordingly. Useful when reconnecting
+#'to an existing object on disk.
 #'
-#'* `cell_no` - No of cells
-#'* `gene_no` - No of genes
+#'}
+#' \subsection{return}{
+#'Invisible `NULL`.
+#'}
 #'}
 #'
 #'\subsection{Method `r_data_to_file`}{
-#'Write data from R CSR to disk
+#'Write a CSR matrix from R to the cells binary file
 #'
-#'Helper function to write CSR matrices from R to disk.
+#' \subsection{Arguments}{
+#'\describe{
+#'\item{`r_data`}{(`list`)\cr A list convertible into `CompressedSparseData2`. Must contain the elements `"indptr"`, `"indices"`, `"data"`, `"nrow"`, `"ncol"` and `"format"`.}
+#'\item{`qc_params`}{(`list`)\cr Quality control parameters parseable into `MinCellQuality`.}
+#'\item{`verbose`}{(`logical`)\cr Controls verbosity of the function. }
+#'}}
+#' \subsection{description}{
+#'Ingest a sparse matrix passed in from R, apply per-cell QC, and write
+#'the result to `f_path_cells`.
 #'
-#'### Params
-#'
-#'* `r_data` - A list that can be transformed into CompressedSparseData2.
-#'Needs to have following elements: `"indptr"`, `"indices"`, `"data"`,
-#'`"nrow"`, `"ncol"` and `"format"`.
-#'* `qc_params` - List with the quality control parameters.
-#'* `verbose` - Controls verbosity of the function.
-#'
-#'### Returns
-#'
-#'A list with QC parameters.
+#'}
+#' \subsection{return}{
+#'A list with `cell_indices`, `gene_indices`, `lib_size` and
+#'`nnz`.
+#'}
 #'}
 #'
-#'\subsection{Method `h5_to_file`}{
-#'Save h5ad to file
+#'\subsection{Method `h5ad_to_file`}{
+#'Write an h5ad file to the cells binary file
 #'
-#'### Params
-#'
-#'* `cs_type` - How was the h5ad data saved. CSC or CSR.
-#'* `h5_path` - Path to the h5ad file.
-#'* `no_cells` - Number of cells in the h5 file.
-#'* `no_genes` - Number of genes in the h5 file.
-#'* `qc_params` - List with the quality control parameters.
-#'* `verbose` - Controls verbosity of the function.
-#'
-#'### Returns
-#'
-#'A list with qc parameters.
+#' \subsection{Arguments}{
+#'\describe{
+#'\item{`cs_type`}{(`character`)\cr Storage layout of the h5ad data. One of `"CSC"` or `"CSR"`.}
+#'\item{`h5_path`}{(`character`)\cr Path to the h5ad file.}
+#'\item{`no_cells`}{(`integer`)\cr Number of cells in the h5ad file.}
+#'\item{`no_genes`}{(`integer`)\cr Number of genes in the h5ad file.}
+#'\item{`qc_params`}{(`list`)\cr Quality control parameters parseable into `MinCellQuality`.}
+#'\item{`verbose`}{(`logical`)\cr Controls verbosity of the function. }
+#'}}
+#' \subsection{return}{
+#'A list with `cell_indices`, `gene_indices`, `lib_size` and
+#'`nnz`.
+#'}
 #'}
 #'
-#'\subsection{Method `norm_h5_to_file`}{
-#'Save h5ad with normalised counts to file
+#'\subsection{Method `norm_h5ad_to_file`}{
+#'Write an h5ad file with normalised counts to the cells binary file
 #'
-#'For datasets where only normalised counts are available in X. Reads
-#'library sizes from a specified obs column to reconstruct raw counts.
+#' \subsection{Arguments}{
+#'\describe{
+#'\item{`cs_type`}{(`character`)\cr Storage layout of the h5 data. One of `"CSC"` or `"CSR"`.}
+#'\item{`h5_path`}{(`character`)\cr Path to the h5 file.}
+#'\item{`no_cells`}{(`integer`)\cr Number of cells in the h5 file.}
+#'\item{`no_genes`}{(`integer`)\cr Number of genes in the h5 file.}
+#'\item{`obs_lib_size_col`}{(`character`)\cr Name of the `obs` column containing total counts per cell (e.g. `"nCount_RNA"`).}
+#'\item{`target_size`}{(`numeric`)\cr Target size used in the original normalisation (e.g. `1e4`).}
+#'\item{`qc_params`}{(`list`)\cr Quality control parameters parseable into `MinCellQuality`.}
+#'\item{`verbose`}{(`logical`)\cr Controls verbosity of the function. }
+#'}}
+#' \subsection{description}{
+#'For data sets where only normalised counts are available in `X`.
+#'Reads library sizes from a specified `obs` column to reconstruct raw
+#'counts before writing.
 #'
-#'### Params
-#'
-#'* `cs_type` - How was the h5 data saved. CSC or CSR.
-#'* `h5_path` - Path to the h5 file.
-#'* `no_cells` - Number of cells in the h5 file.
-#'* `no_genes` - Number of genes in the h5 file.
-#'* `obs_lib_size_col` - Name of the obs column containing total counts per
-#'cell (e.g. "nCount_RNA").
-#'* `target_size` - Target size used in the original normalisation (e.g. 1e4).
-#'* `qc_params` - List with the quality control parameters.
-#'* `verbose` - Controls verbosity of the function.
-#'
-#'### Returns
-#'
-#'A list with qc parameters.
+#'}
+#' \subsection{return}{
+#'A list with `cell_indices`, `gene_indices`, `lib_size` and
+#'`nnz`.
+#'}
 #'}
 #'
-#'\subsection{Method `h5_to_file_streaming`}{
-#'Save h5 to file
+#'\subsection{Method `h5ad_to_file_streaming`}{
+#'Write an h5ad file to disk using streaming
 #'
-#'Slower version that is less memory heavy and will make usage of
-#'streaming where possible.
+#' \subsection{Arguments}{
+#'\describe{
+#'\item{`cs_type`}{(`character`)\cr Storage layout of the h5 data. One of `"CSC"` or `"CSR"`.}
+#'\item{`h5_path`}{(`character`)\cr Path to the h5 file.}
+#'\item{`no_cells`}{(`integer`)\cr Number of cells in the h5 file.}
+#'\item{`no_genes`}{(`integer`)\cr Number of genes in the h5 file.}
+#'\item{`qc_params`}{(`list`)\cr Quality control parameters parseable into `MinCellQuality`.}
+#'\item{`verbose`}{(`logical`)\cr Controls verbosity of the function. }
+#'}}
+#' \subsection{description}{
+#'Slower but lighter on memory than `h5ad_to_file`; streams the input
+#'where possible.
 #'
-#'### Params
-#'
-#'* `cs_type` - How was the h5 data saved. CSC or CSR.
-#'* `h5_path` - Path to the h5 file.
-#'* `no_cells` - Number of cells in the h5 file.
-#'* `no_genes` - Number of genes in the h5 file.
-#'* `qc_params` - List with the quality control parameters.
-#'* `verbose` - Controls verbosity of the function.
-#'
-#'### Returns
-#'
-#'A list with qc parameters.
+#'}
+#' \subsection{return}{
+#'A list with `cell_indices`, `gene_indices`, `lib_size` and
+#'`nnz`.
+#'}
 #'}
 #'
-#'\subsection{Method `multi_h5_to_file`}{
+#'\subsection{Method `multi_h5ad_to_file`}{
 #'Load multiple h5ad files into a single binary
 #'
-#'### Params
-#'
-#'* `file_tasks` - R list of lists, each produced by the R prescan
-#'function. Each inner list must contain: exp_id, h5_path, cs_type,
-#'no_cells, no_genes, gene_local_to_universe.
-#'* `universe_size` - Total number of genes in the universe.
-#'* `qc_params` - List with QC parameters (min_unique_genes,
-#'min_lib_size, min_cells, target_size).
-#'* `verbose` - Controls verbosity.
-#'
-#'### Returns
-#'
-#'A list with: global_gene_indices, total_cells, total_genes,
-#'per_file (list of lists with exp_id, cell_indices, lib_size, nnz).
+#' \subsection{Arguments}{
+#'\describe{
+#'\item{`file_tasks`}{(`list`)\cr A list of lists, each produced by the R prescan function. Each inner list must contain `exp_id`, `h5_path`, `cs_type`, `no_cells`, `no_genes` and `gene_local_to_universe`.}
+#'\item{`universe_size`}{(`integer`)\cr Total number of genes in the universe.}
+#'\item{`qc_params`}{(`list`)\cr Quality control parameters (`min_unique_genes`, `min_lib_size`, `min_cells`, `target_size`).}
+#'\item{`verbose`}{(`logical`)\cr Controls verbosity. }
+#'}}
+#' \subsection{return}{
+#'A list with `global_gene_indices`, `total_cells`,
+#'`total_genes` and `per_file` (a list of lists with `exp_id`,
+#'`cell_indices`, `lib_size`, `nnz`).
+#'}
 #'}
 #'
 #'\subsection{Method `mtx_to_file`}{
-#'Save mtx to file
+#'Write an mtx file to the cells binary file
 #'
-#'### Params
-#'
-#'* `mtx_path` - Path to the mtx file.
-#'* `qc_params` - List with the quality control parameters.
-#'* `cells_as_rows` - Do the cells represent rows (= TRUE) or columns.
-#'* `verbose` - Controls verbosity of the function.
-#'
-#'### Returns
-#'
-#'A list with qc parameters.
+#' \subsection{Arguments}{
+#'\describe{
+#'\item{`mtx_path`}{(`character`)\cr Path to the mtx file.}
+#'\item{`qc_params`}{(`list`)\cr Quality control parameters parseable into `MinCellQuality`.}
+#'\item{`cells_as_rows`}{(`logical`)\cr `TRUE` if cells are rows in the mtx file, `FALSE` if cells are columns.}
+#'\item{`verbose`}{(`logical`)\cr Controls verbosity of the function. }
+#'}}
+#' \subsection{return}{
+#'A list with `cell_indices`, `gene_indices`, `lib_size` and
+#'`nnz`.
+#'}
 #'}
 #'
 #'\subsection{Method `mtx_to_file_streaming`}{
-#'Save mtx to file - streaming version
+#'Write an mtx file to the cells binary file using streaming
 #'
-#'### Params
-#'
-#'* `mtx_path` - Path to the mtx file.
-#'* `qc_params` - List with the quality control parameters.
-#'* `cells_as_rows` - Do the cells represent rows (= TRUE) or columns.
-#'* `verbose` - Controls verbosity of the function.
-#'
-#'### Returns
-#'
-#'A list with qc parameters.
+#' \subsection{Arguments}{
+#'\describe{
+#'\item{`mtx_path`}{(`character`)\cr Path to the mtx file.}
+#'\item{`qc_params`}{(`list`)\cr Quality control parameters parseable into `MinCellQuality`.}
+#'\item{`cells_as_rows`}{(`logical`)\cr `TRUE` if cells are rows in the mtx file, `FALSE` if cells are columns.}
+#'\item{`verbose`}{(`logical`)\cr Controls verbosity of the function. }
+#'}}
+#' \subsection{return}{
+#'A list with `cell_indices`, `gene_indices`, `lib_size` and
+#'`nnz`.
+#'}
 #'}
 #'
 #'\subsection{Method `multi_mtx_to_file`}{
 #'Load multiple mtx files into a single binary
 #'
-#'### Params
-#'
-#'* `file_tasks` - R list of lists, each with: exp_id, mtx_path,
-#'cells_as_rows, gene_local_to_universe (integer vector, NA for
-#'unmapped).
-#'* `universe_size` - Number of genes in the intersection universe.
-#'* `qc_params` - List with QC parameters.
-#'* `verbose` - Controls verbosity.
-#'
-#'### Returns
-#'
-#'A list with: global_gene_indices, total_cells, total_genes,
-#'per_file (list of lists with exp_id, cell_indices, lib_size, nnz).
+#' \subsection{Arguments}{
+#'\describe{
+#'\item{`file_tasks`}{(`list`)\cr A list of lists, each containing `exp_id`, `mtx_path`, `cells_as_rows` and `gene_local_to_universe` (integer vector, `NA` for unmapped genes).}
+#'\item{`universe_size`}{(`integer`)\cr Number of genes in the intersection universe.}
+#'\item{`qc_params`}{(`list`)\cr Quality control parameters parseable into `MinCellQuality`.}
+#'\item{`verbose`}{(`logical`)\cr Controls verbosity. }
+#'}}
+#' \subsection{return}{
+#'A list with `global_gene_indices`, `total_cells`,
+#'`total_genes` and `per_file` (a list of lists with `exp_id`,
+#'`cell_indices`, `lib_size`, `nnz`).
+#'}
 #'}
 #'
 #'\subsection{Method `return_full_mat`}{
-#'Returns the full matrix
+#'Return the full count matrix
 #'
-#'### Params
-#'
-#'* `assay` - String. Return the raw counts or log-normalised counts. One
-#'of `"raw"` or `"norm"`.
-#'* `cell_based` - Boolean. Shall the data be returned in CSR or CSC.
-#'* `verbose` - Boolean. Verbosity of the function.
-#'
-#'### Returns
-#'
-#'An R list with all of the info that was stored in the .bin file
+#' \subsection{Arguments}{
+#'\describe{
+#'\item{`assay`}{(`character`)\cr One of `"raw"` or `"norm"`. Selects whether raw counts or log-normalised counts are returned.}
+#'\item{`cell_based`}{(`logical`)\cr If `TRUE`, the data is returned in CSR layout (cells as rows). If `FALSE`, the data is returned in CSC layout (genes as columns).}
+#'\item{`verbose`}{(`logical`)\cr Controls verbosity of the function. }
+#'}}
+#' \subsection{return}{
+#'A list with `indptr`, `indices`, `data`, `no_cells` and
+#'`no_genes`, parseable into a sparse matrix in R.
+#'}
 #'}
 #'
 #'\subsection{Method `get_cells_by_indices`}{
 #'Return cells by index positions
 #'
-#'Leverages the CSR-stored data for fast cell retrieval
+#' \subsection{Arguments}{
+#'\describe{
+#'\item{`indices`}{(`integer`)\cr The cell indices to return (1-indexed).}
+#'\item{`assay`}{(`character`)\cr One of `"raw"` or `"norm"`. }
+#'}}
+#' \subsection{description}{
+#'Leverages the CSR-stored data for fast cell retrieval.
 #'
-#'### Params
-#'
-#'* `indices` - The cell indices which to return (1-indexed).
-#'* `assay` - Shall the raw or norm counts be returned
-#'
-#'### Returns
-#'
-#'A list that can be parsed into a CSR matrix in R
+#'}
+#' \subsection{return}{
+#'A list with `indptr`, `indices`, `data`, `no_cells` and
+#'`no_genes`, parseable into a CSR matrix in R.
+#'}
 #'}
 #'
 #'\subsection{Method `generate_gene_based_data`}{
-#'Transforms already written cell data also into the gene data
+#'Generate gene-based data from the cells binary file
 #'
-#'This function will read the .bin file at `self.f_path_cells` and
-#'transform the data into the gene-based file format. This happens for
-#'the full data set in memory and might cause memory pressure, pending
-#'the size of the data.
+#' \subsection{Arguments}{
+#'\describe{
+#'\item{`verbose`}{(`logical`)\cr Controls verbosity of the function. }
+#'}}
+#' \subsection{description}{
+#'Reads the `.bin` file at `f_path_cells` and writes a gene-friendly
+#'(CSC) representation to `f_path_genes`. The conversion happens fully
+#'in memory and may cause memory pressure on large data sets; see
+#'`generate_gene_based_data_streaming` or
+#'`generate_gene_based_data_memory_bounded` for lighter alternatives.
 #'
-#'### Params
-#'
-#'* `qc_params` - List with the quality control parameters.
-#'* `verbose` - Controls verbosity of the function.
+#'}
+#' \subsection{return}{
+#'Invisible `NULL`.
+#'}
 #'}
 #'
 #'\subsection{Method `generate_gene_based_data_streaming`}{
-#'Generate gene-based data with streaming to reduce memory pressure
+#'Generate gene-based data with streaming
 #'
-#'This approach builds CSC format directly without creating intermediate
-#'CSR structures. Ideal for very large data sets.
+#' \subsection{Arguments}{
+#'\describe{
+#'\item{`batch_size`}{(`integer`)\cr Number of cells processed per batch. Larger values increase memory pressure but reduce overhead.}
+#'\item{`verbose`}{(`logical`)\cr Controls verbosity of the function. }
+#'}}
+#' \subsection{description}{
+#'Builds the CSC representation directly without creating intermediate
+#'CSR structures. Suitable for very large data sets where the all-in-
+#'memory path is too costly.
 #'
-#'### Params
-#'
-#'* `batch_size` - Size of the batch to process in one go. The larger, the
-#'more memory pressure will occur.
-#'* `verbose` - Controls verbosity of the function.
+#'}
+#' \subsection{return}{
+#'Invisible `NULL`.
+#'}
 #'}
 #'
 #'\subsection{Method `generate_gene_based_data_memory_bounded`}{
 #'Generate gene-based data with memory-bounded accumulation
 #'
-#'This processes genes in phases to limit memory usage. Each phase:
+#' \subsection{Arguments}{
+#'\describe{
+#'\item{`max_genes_in_memory`}{(`integer`)\cr Maximum number of genes to accumulate at once (e.g. `2000`).}
+#'\item{`cell_batch_size`}{(`integer`)\cr Number of cells to process at once (e.g. `100000`).}
+#'\item{`verbose`}{(`logical`)\cr Controls verbosity. }
+#'}}
+#' \subsection{description}{
+#'Processes genes in phases to cap memory usage. Each phase:
+#'\enumerate{
+#'\item reads all cells (unavoidable for CSC conversion);
+#'\item only accumulates data for genes in the current phase;
+#'\item writes those genes to disk;
+#'\item clears memory and moves to the next phase.
+#'}
 #'
-#'1. Reads all cells (unavoidable for CSC conversion)
-#'2. Only accumulates data for genes in current phase
-#'3. Writes those genes to disk
-#'4. Clears memory and moves to next phase
-#'
-#'### Params
-#'
-#'* `max_genes_in_memory` - Maximum genes to accumulate at once
-#'(e.g., 2000)
-#'* `cell_batch_size` - How many cells to process at once
-#'(e.g., 100000)
-#'* `verbose` - Controls verbosity
+#'}
+#' \subsection{return}{
+#'Invisible `NULL`.
+#'}
 #'}
 #'
 #'\subsection{Method `get_genes_by_indices`}{
 #'Return genes by index positions
 #'
-#'Leverages the CSC-stored data for fast gene retrieval
+#' \subsection{Arguments}{
+#'\describe{
+#'\item{`indices`}{(`integer`)\cr The gene indices to return (1-indexed).}
+#'\item{`assay`}{(`character`)\cr One of `"raw"` or `"norm"`. }
+#'}}
+#' \subsection{description}{
+#'Leverages the CSC-stored data for fast gene retrieval.
 #'
-#'### Params
-#'
-#'* `indices` - The gene indices which to return (1-indexed).
-#'* `assay` - Shall the raw or norm counts be returned
-#'
-#'### Returns
-#'
-#'A list that can be parsed into a CSC matrix in R
+#'}
+#' \subsection{return}{
+#'A list with `indptr`, `indices`, `data`, `no_cells` and
+#'`no_genes`, parseable into a CSC matrix in R.
+#'}
 #'}
 #'
 #'\subsection{Method `get_nnz_genes`}{
-#'Helper function to get the number of cells expressing a gene
+#'Get the number of cells expressing each gene
 #'
-#'### Params
-#'
-#'* `gene_indices` - Optional gene indices (1-indexed!). If None, returns
-#'all genes.
-#'
-#'### Returns
-#'
-#'A vector of NNZ for the genes.
+#' \subsection{Arguments}{
+#'\describe{
+#'\item{`gene_indices`}{(`integer` or `NULL`)\cr Optional 1-indexed gene indices. If `NULL`, results are returned for all genes. }
+#'}}
+#' \subsection{return}{
+#'An integer vector of NNZ counts for the requested genes.
+#'}
 #'}
 #'
 #'\subsection{Method `merge_sc_files`}{
-#'Merge multiple existing bin files into the cells .bin file
+#'Merge multiple existing bin files into the cells binary file
 #'
-#'### Params
-#'
-#'* `merge_tasks` - List of lists. Each inner list must contain: exp_id,
-#'bin_cells_path, cells_to_keep (0-indexed integer vector), and
-#'gene_local_to_universe (integer vector, -1 for genes absent from the
-#'universe).
-#'* `universe_size` - Number of genes in the intersection universe.
-#'* `renormalise` - If `true`, recompute `data_norm` against `target_size`
-#'using each cell's surviving raw counts. If `false`, pass `data_norm`
-#'through untouched; the caller must guarantee all inputs were
-#'normalised against the same `target_size`.
-#'* `target_size` - Target library size for renormalisation. Ignored when
-#'`renormalise = false`.
-#'* `verbose` - Controls verbosity.
-#'
-#'### Returns
-#'
-#'A list with: total_cells, total_genes, per_file (list of lists with
-#'exp_id, lib_size, nnz).
+#' \subsection{Arguments}{
+#'\describe{
+#'\item{`merge_tasks`}{(`list`)\cr A list of lists. Each inner list must contain `exp_id`, `bin_cells_path`, `cells_to_keep` (0-indexed integer vector) and `gene_local_to_universe` (integer vector, `-1` for genes absent from the universe).}
+#'\item{`universe_size`}{(`integer`)\cr Number of genes in the intersection universe.}
+#'\item{`renormalise`}{(`logical`)\cr If `TRUE`, recompute `data_norm` against `target_size` using each cell's surviving raw counts. If `FALSE`, pass `data_norm` through untouched; the caller must guarantee all inputs were normalised against the same `target_size`.}
+#'\item{`target_size`}{(`numeric`)\cr Target library size for renormalisation. Ignored when `renormalise = FALSE`.}
+#'\item{`verbose`}{(`logical`)\cr Controls verbosity. }
+#'}}
+#' \subsection{return}{
+#'A list with `total_cells`, `total_genes` and `per_file` (a
+#'list of lists with `exp_id`, `lib_size`, `nnz`).
+#'}
 #'}
 #'
 SingleCellCountData <- new.env(parent = emptyenv())
@@ -3661,13 +3722,13 @@ SingleCellCountData$set_from_file <- function() .Call(wrap__SingleCellCountData_
 
 SingleCellCountData$r_data_to_file <- function(r_data, qc_params, verbose) .Call(wrap__SingleCellCountData__r_data_to_file, self, r_data, qc_params, verbose)
 
-SingleCellCountData$h5_to_file <- function(cs_type, h5_path, no_cells, no_genes, qc_params, verbose) .Call(wrap__SingleCellCountData__h5_to_file, self, cs_type, h5_path, no_cells, no_genes, qc_params, verbose)
+SingleCellCountData$h5ad_to_file <- function(cs_type, h5_path, no_cells, no_genes, qc_params, verbose) .Call(wrap__SingleCellCountData__h5ad_to_file, self, cs_type, h5_path, no_cells, no_genes, qc_params, verbose)
 
-SingleCellCountData$norm_h5_to_file <- function(cs_type, h5_path, no_cells, no_genes, obs_lib_size_col, target_size, qc_params, verbose) .Call(wrap__SingleCellCountData__norm_h5_to_file, self, cs_type, h5_path, no_cells, no_genes, obs_lib_size_col, target_size, qc_params, verbose)
+SingleCellCountData$norm_h5ad_to_file <- function(cs_type, h5_path, no_cells, no_genes, obs_lib_size_col, target_size, qc_params, verbose) .Call(wrap__SingleCellCountData__norm_h5ad_to_file, self, cs_type, h5_path, no_cells, no_genes, obs_lib_size_col, target_size, qc_params, verbose)
 
-SingleCellCountData$h5_to_file_streaming <- function(cs_type, h5_path, no_cells, no_genes, qc_params, verbose) .Call(wrap__SingleCellCountData__h5_to_file_streaming, self, cs_type, h5_path, no_cells, no_genes, qc_params, verbose)
+SingleCellCountData$h5ad_to_file_streaming <- function(cs_type, h5_path, no_cells, no_genes, qc_params, verbose) .Call(wrap__SingleCellCountData__h5ad_to_file_streaming, self, cs_type, h5_path, no_cells, no_genes, qc_params, verbose)
 
-SingleCellCountData$multi_h5_to_file <- function(file_tasks, universe_size, qc_params, verbose) .Call(wrap__SingleCellCountData__multi_h5_to_file, self, file_tasks, universe_size, qc_params, verbose)
+SingleCellCountData$multi_h5ad_to_file <- function(file_tasks, universe_size, qc_params, verbose) .Call(wrap__SingleCellCountData__multi_h5ad_to_file, self, file_tasks, universe_size, qc_params, verbose)
 
 SingleCellCountData$mtx_to_file <- function(mtx_path, qc_params, cells_as_rows, verbose) .Call(wrap__SingleCellCountData__mtx_to_file, self, mtx_path, qc_params, cells_as_rows, verbose)
 
@@ -3691,6 +3752,8 @@ SingleCellCountData$get_nnz_genes <- function(gene_indices) .Call(wrap__SingleCe
 
 SingleCellCountData$merge_sc_files <- function(merge_tasks, universe_size, renormalise, target_size, verbose) .Call(wrap__SingleCellCountData__merge_sc_files, self, merge_tasks, universe_size, renormalise, target_size, verbose)
 
+#' @rdname SingleCellCountData
+#' @usage NULL
 #' @export
 `$.SingleCellCountData` <- function (self, name) { func <- SingleCellCountData[[name]]; environment(func) <- environment(); func }
 

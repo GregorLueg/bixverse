@@ -4,7 +4,7 @@
 \alias{run_cell_qc}
 \title{Run MAD outlier detection on per-cell QC metrics}
 \usage{
-run_cell_qc(metrics, directions = NULL, threshold = 3)
+run_cell_qc(metrics, directions = NULL, threshold = 3, groups = NULL)
 }
 \arguments{
 \item{metrics}{Named list of numeric vectors. Each element is a QC metric
@@ -15,6 +15,8 @@ One of \code{"twosided"}, \code{"below"}, \code{"above"}. Defaults to \code{"two
 all metrics if \code{NULL}.}
 
 \item{threshold}{Numeric. Number of MADs to use for outlier detection.}
+
+\item{groups}{Optional grouping variable. A string.}
 }
 \value{
 An object of class \code{CellQc} containing:

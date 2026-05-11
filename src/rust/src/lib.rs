@@ -52,6 +52,7 @@ pub use ontology::r_similiarity;
 
 // single cell
 pub use single_cell::r_count_obj;
+pub use single_cell::r_sc_adt;
 pub use single_cell::r_sc_analysis;
 pub use single_cell::r_sc_batch_corr;
 pub use single_cell::r_sc_data;
@@ -117,4 +118,7 @@ extendr_module! {
     // meta cell
     use r_mc_processing;
     use r_mc_analysis;
+
+    // multi-modal
+    use r_sc_adt;
 }

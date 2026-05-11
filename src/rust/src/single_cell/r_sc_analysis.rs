@@ -12,6 +12,10 @@ use bixverse_rs::single_cell::sc_analysis::module_scoring::*;
 use bixverse_rs::single_cell::sc_analysis::scenic::*;
 use bixverse_rs::single_cell::sc_analysis::vision::*;
 
+////////////////////
+// extendr Module //
+////////////////////
+
 extendr_module! {
     mod r_sc_analysis;
     // dge

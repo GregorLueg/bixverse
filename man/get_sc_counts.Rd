@@ -11,6 +11,7 @@ get_sc_counts(
   cell_indices = NULL,
   gene_indices = NULL,
   use_cells_to_keep = TRUE,
+  modality = c("rna", "adt"),
   .verbose = TRUE
 )
 }
@@ -30,6 +31,8 @@ Defaults to \code{"cell"}. Not relevant for \code{MetaCells}.}
 
 \item{use_cells_to_keep}{Boolean. Shall cells to keep be found in the class,
 shall the counts be reduced to these. Not relevant for \code{MetaCells}.}
+
+\item{modality}{String. The modality to return. One of \code{c("rna", "adt")}.}
 
 \item{.verbose}{Boolean. Controls verbosity of the function.}
 }

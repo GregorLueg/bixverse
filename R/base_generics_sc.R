@@ -68,6 +68,7 @@ get_sc_var <- S7::new_generic(
 #' Defaults to `"cell"`. Not relevant for `MetaCells`.
 #' @param cell_indices Optional cell indices.
 #' @param gene_indices Optional gene indices.
+#' @param modality String. The modality to return. One of `c("rna", "adt")`.
 #' @param use_cells_to_keep Boolean. Shall cells to keep be found in the class,
 #' shall the counts be reduced to these. Not relevant for `MetaCells`.
 #' @param .verbose Boolean. Controls verbosity of the function.
@@ -85,6 +86,7 @@ get_sc_counts <- S7::new_generic(
     cell_indices = NULL,
     gene_indices = NULL,
     use_cells_to_keep = TRUE,
+    modality = c("rna", "adt"),
     .verbose = TRUE
   ) {
     S7::S7_dispatch()
@@ -138,6 +140,36 @@ setnames_sc <- S7::new_generic(
     table = c("obs", "var"),
     old,
     new
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+### drop columns ---------------------------------------------------------------
+
+#' Drop columns from the obs or var table
+#'
+#' @description
+#' Drops the named columns from the obs or var table of single cell-related
+#' classes. Protected identifier and bookkeeping columns (`cell_idx`,
+#' `cell_id`, `to_keep` for obs; `gene_idx`, `gene_id` for var) are refused
+#' with a warning. Columns that do not exist trigger a warning and are
+#' skipped.
+#'
+#' @param object `SingleCells` (or other compatible) class.
+#' @param table String. One of `c("obs", "var")`.
+#' @param cols Character vector. Column names to drop.
+#'
+#' @return Invisible self.
+#'
+#' @export
+drop_cols_sc <- S7::new_generic(
+  name = "drop_cols_sc",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    table = c("obs", "var"),
+    cols
   ) {
     S7::S7_dispatch()
   }
@@ -323,11 +355,12 @@ get_gene_names_from_idx <- function(x, gene_idx, rust_based = TRUE) {
 #'
 #' @param x An object to add the PCA factors for.
 #' @param pca_factor Numerical matrix. The matrix with the PCA factors.
+#' @param ... Other parameters.
 #'
 #' @export
 #'
 #' @keywords internal
-set_pca_factors <- function(x, pca_factor) {
+set_pca_factors <- function(x, pca_factor, ...) {
   UseMethod("set_pca_factors")
 }
 
@@ -335,11 +368,12 @@ set_pca_factors <- function(x, pca_factor) {
 #'
 #' @param x An object to add the PCA loadings for.
 #' @param pca_loading Numerical matrix. The Matrix with the PCA loadings.
+#' @param ... Other parameters.
 #'
 #' @export
 #'
 #' @keywords internal
-set_pca_loadings <- function(x, pca_loading) {
+set_pca_loadings <- function(x, pca_loading, ...) {
   UseMethod("set_pca_loadings")
 }
 
@@ -347,11 +381,12 @@ set_pca_loadings <- function(x, pca_loading) {
 #'
 #' @param x An object to add the singular values for.
 #' @param singular_vals Numerical vector. The singular values.
+#' @param ... Other parameters.
 #'
 #' @export
 #'
 #' @keywords internal
-set_pca_singular_vals <- function(x, singular_vals) {
+set_pca_singular_vals <- function(x, singular_vals, ...) {
   UseMethod("set_pca_singular_vals")
 }
 
@@ -360,11 +395,12 @@ set_pca_singular_vals <- function(x, singular_vals) {
 #' @param x An object to add the singular values for.
 #' @param embd Numerical matrix representing the additional embedding.
 #' @param name String. Name of the embedding.
+#' @param ... Other parameters.
 #'
 #' @export
 #'
 #' @keywords internal
-set_embedding <- function(x, embd, name) {
+set_embedding <- function(x, embd, name, ...) {
   UseMethod("set_embedding")
 }
 
@@ -372,45 +408,49 @@ set_embedding <- function(x, embd, name) {
 #'
 #' @param x An object to add the KNN data to
 #' @param knn `SingleCellNearestNeighbour` class to add to the classes.
+#' @param ... Other parameters.
 #'
 #' @export
 #'
 #' @keywords internal
-set_knn <- function(x, knn) {
+set_knn <- function(x, knn, ...) {
   UseMethod("set_knn")
 }
 
 #' Set/add KNN
 #'
-#' @param x An object to add the KNN data to
+#' @param x An object to add the KNN data to.
 #' @param snn_graph Igraph. The sNN graph for subsequent clustering.
+#' @param ... Other parameters.
 #'
 #' @export
 #'
 #' @keywords internal
-set_snn_graph <- function(x, snn_graph) {
+set_snn_graph <- function(x, snn_graph, ...) {
   UseMethod("set_snn_graph")
 }
 
 #' Remove the KNN data
 #'
-#' @param x An object from which to remove the kNN data
+#' @param x An object from which to remove the kNN data.
+#' @param ... Other parameters.
 #'
 #' @export
 #'
 #' @keywords internal
-remove_knn <- function(x) {
+remove_knn <- function(x, ...) {
   UseMethod("remove_knn")
 }
 
 #' Remove the sNN graph
 #'
 #' @param x An object from which to remove the sNN graph
+#' @param ... Other parameters.
 #'
 #' @export
 #'
 #' @keywords internal
-remove_snn_graph <- function(x) {
+remove_snn_graph <- function(x, ...) {
   UseMethod("remove_snn_graph")
 }
 
@@ -423,11 +463,12 @@ remove_snn_graph <- function(x) {
 #' single cell-related classes and methods.
 #'
 #' @param x An object to get PCA factors from.
+#' @param ... Other parameters.
 #'
 #' @returns The PCA factors from the object (if found).
 #'
 #' @export
-get_pca_factors <- function(x) {
+get_pca_factors <- function(x, ...) {
   UseMethod("get_pca_factors")
 }
 
@@ -438,11 +479,12 @@ get_pca_factors <- function(x) {
 #' the single cell-related classes and methods.
 #'
 #' @param x An object to get PCA loadings from.
+#' @param ... Other parameters.
 #'
 #' @returns The PCA feature loadings from the object (if found).
 #'
 #' @export
-get_pca_loadings <- function(x) {
+get_pca_loadings <- function(x, ...) {
   UseMethod("get_pca_loadings")
 }
 
@@ -454,11 +496,12 @@ get_pca_loadings <- function(x) {
 #' methods.
 #'
 #' @param x An object to get PCA singular values from.
+#' @param ... Other parameters.
 #'
 #' @returns The PCA singular values from the object (if found).
 #'
 #' @export
-get_pca_singular_val <- function(x) {
+get_pca_singular_val <- function(x, ...) {
   UseMethod("get_pca_singular_val")
 }
 
@@ -472,11 +515,12 @@ get_pca_singular_val <- function(x) {
 #' @param x An object to get embedding from
 #' @param embd_name String. The name of the embedding to return. The function
 #' will throw an error if the embedding does not exist.
+#' @param ... Other parameters.
 #'
 #' @returns Get the specified embeddings from the object (if found).
 #'
 #' @export
-get_embedding <- function(x, embd_name) {
+get_embedding <- function(x, embd_name, ...) {
   UseMethod("get_embedding")
 }
 
@@ -491,7 +535,7 @@ get_embedding <- function(x, embd_name) {
 #' @return Get the names of the available embeddings.
 #'
 #' @export
-get_available_embeddings <- function(x) {
+get_available_embeddings <- function(x, ...) {
   UseMethod("get_available_embeddings")
 }
 
@@ -502,11 +546,12 @@ get_available_embeddings <- function(x) {
 #' used for the single cell-related classes and methods.
 #'
 #' @param x An object to get the sNN graph from.
+#' @param ... Other parameters.
 #'
 #' @returns The igraph that has the shared nearest neighbours.
 #'
 #' @export
-get_snn_graph <- function(x) {
+get_snn_graph <- function(x, ...) {
   UseMethod("get_snn_graph")
 }
 
@@ -517,11 +562,12 @@ get_snn_graph <- function(x) {
 #' used for the single cell-related classes and methods.
 #'
 #' @param x An object to get the KNN class from.
+#' @param ... Other parameters.
 #'
 #' @returns The `SingleCellNearestNeighbour` object.
 #'
 #' @export
-get_knn_obj <- function(x) {
+get_knn_obj <- function(x, ...) {
   UseMethod("get_knn_obj")
 }
 
@@ -555,9 +601,10 @@ get_obs_data <- function(x, ...) {
 #' Getter for an integer matrix of samples x neighbours.
 #'
 #' @param x An object to get the kNN matrix from.
+#' @param ... Other parameters.
 #'
 #' @export
-get_knn_mat <- function(x) {
+get_knn_mat <- function(x, ...) {
   UseMethod("get_knn_mat")
 }
 
@@ -568,9 +615,10 @@ get_knn_mat <- function(x) {
 #' with [get_knn_mat()].
 #'
 #' @param x An object to get the kNN distances from.
+#' @param ... Other parameters.
 #'
 #' @export
-get_knn_dist <- function(x) {
+get_knn_dist <- function(x, ...) {
   UseMethod("get_knn_dist")
 }
 

@@ -26,6 +26,7 @@ etc.
 \item \href{#method-SingleCellDuckDBBase-set_to_keep_column}{\code{SingleCellDuckDBBase$set_to_keep_column()}}
 \item \href{#method-SingleCellDuckDBBase-add_data_var}{\code{SingleCellDuckDBBase$add_data_var()}}
 \item \href{#method-SingleCellDuckDBBase-rename_column}{\code{SingleCellDuckDBBase$rename_column()}}
+\item \href{#method-SingleCellDuckDBBase-drop_columns}{\code{SingleCellDuckDBBase$drop_columns()}}
 \item \href{#method-SingleCellDuckDBBase-clone}{\code{SingleCellDuckDBBase$clone()}}
 }
 }
@@ -241,7 +242,7 @@ in the DuckDB.
 \if{html}{\out{<a id="method-SingleCellDuckDBBase-set_to_keep_column"></a>}}
 \if{latex}{\out{\hypertarget{method-SingleCellDuckDBBase-set_to_keep_column}{}}}
 \subsection{Method \code{set_to_keep_column()}}{
-Indepenent of the loader, set the to_keep column to \code{TRUE} initially
+Independent of the loader, set the to_keep column to \code{TRUE} initially
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SingleCellDuckDBBase$set_to_keep_column()}\if{html}{\out{</div>}}
 }
@@ -286,6 +287,32 @@ Rename a column in the obs or var table.
 \item{\code{old}}{String. The current column name.}
 
 \item{\code{new}}{String. The desired new column name.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+Invisible self.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SingleCellDuckDBBase-drop_columns"></a>}}
+\if{latex}{\out{\hypertarget{method-SingleCellDuckDBBase-drop_columns}{}}}
+\subsection{Method \code{drop_columns()}}{
+Drop columns from the obs or var table.
+
+Refuses to drop the protected identifier and bookkeeping columns
+(\code{cell_idx}, \code{cell_id}, \code{to_keep} for obs; \code{gene_idx}, \code{gene_id} for
+var). Columns that do not exist trigger a warning and are skipped.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SingleCellDuckDBBase$drop_columns(table = c("obs", "var"), cols)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{table}}{String. Either "obs" or "var".}
+
+\item{\code{cols}}{Character vector. The column names to drop.}
 }
 \if{html}{\out{</div>}}
 }

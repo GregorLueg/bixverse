@@ -446,7 +446,7 @@ SingleCellDuckDBBase <- R6::R6Class(
     },
 
     #' @description
-    #' Indepenent of the loader, set the to_keep column to `TRUE` initially
+    #' Independent of the loader, set the to_keep column to `TRUE` initially
     set_to_keep_column = function() {
       private$check_obs_exists()
       con <- private$connect_db()
@@ -578,6 +578,81 @@ SingleCellDuckDBBase <- R6::R6Class(
       )
 
       invisible(self)
+    },
+
+    ########
+    # Drop #
+    ########
+
+    #' @description
+    #' Drop columns from the obs or var table.
+    #'
+    #' Refuses to drop the protected identifier and bookkeeping columns
+    #' (`cell_idx`, `cell_id`, `to_keep` for obs; `gene_idx`, `gene_id` for
+    #' var). Columns that do not exist trigger a warning and are skipped.
+    #'
+    #' @param table String. Either "obs" or "var".
+    #' @param cols Character vector. The column names to drop.
+    #'
+    #' @return Invisible self.
+    drop_columns = function(table = c("obs", "var"), cols) {
+      table <- match.arg(table)
+      checkmate::qassert(cols, "S+")
+
+      if (table == "obs") {
+        private$check_obs_exists()
+        protected <- c("cell_idx", "cell_id", "to_keep")
+      } else {
+        private$check_var_exists()
+        protected <- c("gene_idx", "gene_id")
+      }
+
+      con <- private$connect_db()
+      on.exit({
+        if (exists("con") && !is.null(con)) {
+          tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
+        }
+      })
+
+      existing <- DBI::dbGetQuery(
+        con,
+        sprintf(
+          "SELECT column_name FROM information_schema.columns WHERE table_name = '%s'",
+          table
+        )
+      )$column_name
+
+      to_drop_protected <- intersect(cols, protected)
+      if (length(to_drop_protected) > 0L) {
+        warning(sprintf(
+          "Refusing to drop protected column(s) in '%s': %s",
+          table,
+          paste(to_drop_protected, collapse = ", ")
+        ))
+      }
+
+      to_drop_missing <- setdiff(cols, c(existing, protected))
+      if (length(to_drop_missing) > 0L) {
+        warning(sprintf(
+          "Column(s) not found in '%s' (skipping): %s",
+          table,
+          paste(to_drop_missing, collapse = ", ")
+        ))
+      }
+
+      to_drop <- setdiff(intersect(cols, existing), protected)
+      if (length(to_drop) == 0L) {
+        return(invisible(self))
+      }
+
+      for (col in to_drop) {
+        DBI::dbExecute(
+          con,
+          sprintf('ALTER TABLE %s DROP COLUMN "%s"', table, col)
+        )
+      }
+
+      invisible(self)
     }
   ),
   private = list(
@@ -652,7 +727,6 @@ SingleCellDuckDBBase <- R6::R6Class(
   )
 )
 
-
 ### reader helper --------------------------------------------------------------
 
 #' @title Class for storing single cell experimental data in DuckDB (nightly!)
@@ -672,9 +746,9 @@ SingleCellDuckDB <- R6::R6Class(
   # public functions, slots
   inherit = SingleCellDuckDBBase,
   public = list(
-    ##############
-    # Readers h5 #
-    ##############
+    ################
+    # Readers h5ad #
+    ################
 
     #' @description
     #' This function populates the obs table from an h5 file (if found).
@@ -688,7 +762,7 @@ SingleCellDuckDB <- R6::R6Class(
     #'
     #' @return Returns invisible self. As a side effect, it will load in the
     #' obs data from the h5ad file into the DuckDB.
-    populate_obs_from_h5 = function(
+    populate_obs_from_h5ad = function(
       h5_path,
       filter = NULL,
       cell_id_col = NULL
@@ -818,7 +892,7 @@ SingleCellDuckDB <- R6::R6Class(
     #'
     #' @return Returns invisible self. As a side effect, it will load in the
     #' obs data from the h5ad file into the DuckDB.
-    populate_vars_from_h5 = function(h5_path, filter = NULL) {
+    populate_vars_from_h5ad = function(h5_path, filter = NULL) {
       checkmate::assertFileExists(h5_path)
       checkmate::qassert(filter, c("I+", "0"))
 
@@ -940,7 +1014,7 @@ SingleCellDuckDB <- R6::R6Class(
     #' @param cell_id_col Optional string. Column name for cell identifiers.
     #'
     #' @return Invisible self. Populates the obs table in DuckDB.
-    populate_obs_from_multi_h5 = function(per_file_info, cell_id_col = NULL) {
+    populate_obs_from_multi_h5ad = function(per_file_info, cell_id_col = NULL) {
       checkmate::assertList(per_file_info, min.len = 2L)
       checkmate::qassert(cell_id_col, c("S1", "0"))
 
@@ -1077,11 +1151,11 @@ SingleCellDuckDB <- R6::R6Class(
     #'   final order.
     #'
     #' @return Invisible self. Populates the var table in DuckDB.
-    populate_vars_from_h5_reordered = function(h5_path, final_gene_names) {
+    populate_vars_from_h5ad_reordered = function(h5_path, final_gene_names) {
       checkmate::assertFileExists(h5_path)
       checkmate::assertCharacter(final_gene_names, min.len = 1L)
 
-      self$populate_vars_from_h5(h5_path = h5_path, filter = NULL)
+      self$populate_vars_from_h5ad(h5_path = h5_path, filter = NULL)
 
       var_dt <- self$get_vars_table()
       var_dt <- var_dt[match(final_gene_names, gene_id)]
@@ -1410,6 +1484,54 @@ SingleCellDuckDB <- R6::R6Class(
       DBI::dbWriteTable(
         con,
         "var",
+        var_dt,
+        overwrite = TRUE
+      )
+
+      invisible(self)
+    },
+
+    #' Function to populate the var_adt table from R
+    #'
+    #' @param var_dt data.table with `feature_idx` and `feature_id` columns.
+    #' @param filter Optional integer. Row indices to keep.
+    #'
+    #' @returns Invisible self and populates the internal var_adt table.
+    populate_var_adt_from_data.table = function(var_dt, filter = NULL) {
+      # checks
+      checkmate::assertDataTable(var_dt)
+      checkmate::assertSubset(c("feature_idx", "feature_id"), names(var_dt))
+      checkmate::qassert(filter, c("I+", "0"))
+
+      var_dt <- data.table::copy(var_dt)
+
+      con <- private$connect_db()
+      on.exit(
+        {
+          if (exists("con") && !is.null(con)) {
+            tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
+          }
+        }
+      )
+
+      if (!is.null(filter)) {
+        var_dt <- var_dt[filter]
+      }
+
+      # regenerate feature_idx from row order for contiguous 1-indexed positions
+      var_dt[, feature_idx := .I]
+      data.table::setcolorder(
+        var_dt,
+        c(
+          "feature_idx",
+          "feature_id",
+          setdiff(names(var_dt), c("feature_idx", "feature_id"))
+        )
+      )
+
+      DBI::dbWriteTable(
+        con,
+        "var_adt",
         var_dt,
         overwrite = TRUE
       )

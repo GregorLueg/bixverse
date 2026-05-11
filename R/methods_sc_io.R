@@ -602,7 +602,7 @@ S7::method(load_h5ad, SingleCells) <- function(
 
   rust_con <- get_sc_rust_ptr(object)
 
-  file_res <- rust_con$h5_to_file(
+  file_res <- rust_con$h5ad_to_file(
     cs_type = h5_meta$type,
     h5_path = h5_path,
     no_cells = h5_meta$dims["obs"],
@@ -627,7 +627,7 @@ S7::method(load_h5ad, SingleCells) <- function(
   if (.verbose) {
     message("Loading observations data from h5ad into the DuckDB.")
   }
-  duckdb_con$populate_obs_from_h5(
+  duckdb_con$populate_obs_from_h5ad(
     h5_path = h5_path,
     filter = as.integer(file_res$cell_indices + 1),
     cell_id_col = cell_id_col
@@ -635,7 +635,7 @@ S7::method(load_h5ad, SingleCells) <- function(
   if (.verbose) {
     message("Loading variables data from h5ad into the DuckDB.")
   }
-  duckdb_con$populate_vars_from_h5(
+  duckdb_con$populate_vars_from_h5ad(
     h5_path = h5_path,
     filter = as.integer(file_res$gene_indices + 1)
   )
@@ -746,7 +746,7 @@ S7::method(load_h5ad_norm, SingleCells) <- function(
 
   rust_con <- get_sc_rust_ptr(object)
 
-  file_res <- rust_con$norm_h5_to_file(
+  file_res <- rust_con$norm_h5ad_to_file(
     cs_type = h5_meta$type,
     h5_path = h5_path,
     no_cells = h5_meta$dims["obs"],
@@ -773,7 +773,7 @@ S7::method(load_h5ad_norm, SingleCells) <- function(
   if (.verbose) {
     message("Loading observations data from h5ad into the DuckDB.")
   }
-  duckdb_con$populate_obs_from_h5(
+  duckdb_con$populate_obs_from_h5ad(
     h5_path = h5_path,
     filter = as.integer(file_res$cell_indices + 1),
     cell_id_col = cell_id_col
@@ -781,7 +781,7 @@ S7::method(load_h5ad_norm, SingleCells) <- function(
   if (.verbose) {
     message("Loading variables data from h5ad into the DuckDB.")
   }
-  duckdb_con$populate_vars_from_h5(
+  duckdb_con$populate_vars_from_h5ad(
     h5_path = h5_path,
     filter = as.integer(file_res$gene_indices + 1)
   )
@@ -930,7 +930,7 @@ S7::method(load_multi_h5ad, SingleCells) <- function(
 
   rust_con <- get_sc_rust_ptr(object)
 
-  file_res <- rust_con$multi_h5_to_file(
+  file_res <- rust_con$multi_h5ad_to_file(
     file_tasks = prescan_result$file_tasks,
     universe_size = as.integer(prescan_result$universe_size),
     qc_params = sc_qc_param,
@@ -963,7 +963,7 @@ S7::method(load_multi_h5ad, SingleCells) <- function(
     )
   })
 
-  duckdb_con$populate_obs_from_multi_h5(
+  duckdb_con$populate_obs_from_multi_h5ad(
     per_file_info = per_file_info,
     cell_id_col = cell_id_col
   )
@@ -974,7 +974,7 @@ S7::method(load_multi_h5ad, SingleCells) <- function(
 
   final_gene_names <- prescan_result$universe[file_res$global_gene_indices + 1L]
 
-  duckdb_con$populate_vars_from_h5_reordered(
+  duckdb_con$populate_vars_from_h5ad_reordered(
     h5_path = prescan_result$file_tasks[[1L]]$h5_path,
     final_gene_names = final_gene_names
   )

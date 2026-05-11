@@ -159,6 +159,113 @@ sc_knn_to_nearest_neighbours <- function(x) {
   )
 }
 
+## single cell qc results ------------------------------------------------------
+
+#### R primitives --------------------------------------------------------------
+
+#' Print a CellQc object
+#'
+#' @param x A `CellQc` object.
+#' @param ... Ignored.
+#'
+#' @return Invisible `x`.
+#'
+#' @export
+#'
+#' @keywords internal
+print.CellQc <- function(x, ...) {
+  n_cells <- length(x$combined)
+  n_outliers <- sum(x$combined)
+  metric_names <- colnames(x$outlier_mat)
+  group_levels <- unique(x$groups)
+  grouped <- !(length(group_levels) == 1L && group_levels == "all")
+
+  cat(sprintf(
+    "CellQc: %d cells, %d outliers (%.1f%%)\n",
+    n_cells,
+    n_outliers,
+    100 * n_outliers / n_cells
+  ))
+  if (grouped) {
+    cat(sprintf("Groups: %d\n", length(group_levels)))
+  }
+  cat("Metrics:\n")
+
+  for (nm in metric_names) {
+    n <- sum(x$outlier_mat[, nm])
+    cat(sprintf("  - %s: %d outliers\n", nm, n))
+    for (g in group_levels) {
+      thresholds <- x$per_metric[[nm]]$metrics[[g]]
+      parts <- character()
+      if (!is.na(thresholds["lower_threshold"])) {
+        parts <- c(
+          parts,
+          sprintf("lower = %.2f", thresholds["lower_threshold"])
+        )
+      }
+      if (!is.na(thresholds["upper_threshold"])) {
+        parts <- c(
+          parts,
+          sprintf("upper = %.2f", thresholds["upper_threshold"])
+        )
+      }
+      prefix <- if (grouped) sprintf("    [%s] ", g) else "    "
+      cat(sprintf("%s%s\n", prefix, paste(parts, collapse = ", ")))
+    }
+  }
+
+  invisible(x)
+}
+
+#' Plot per-cell QC violin plots from a CellQc object
+#'
+#' @param x A `CellQc` object.
+#' @param qc_df A data.table containing the cell-level data.
+#' @param ... Ignored.
+#'
+#' @return A named list of ggplot objects, one per metric.
+#'
+#' @export
+#'
+#' @import ggplot2
+#'
+#' @keywords internal
+plot.CellQc <- function(x, qc_df, ...) {
+  outlier_colours <- c("FALSE" = "lightgrey", "TRUE" = "orange")
+  group_levels <- unique(x$groups)
+  do_facet <- length(group_levels) > 1L
+
+  plots <- purrr::map(names(x$metrics), function(nm) {
+    plot_dt <- data.table::copy(qc_df)[,
+      `:=`(outlier = x$combined, .group = x$groups)
+    ]
+
+    p <- ggplot2::ggplot(
+      plot_dt,
+      ggplot2::aes(y = x$metrics[[nm]], x = "cells")
+    ) +
+      ggplot2::geom_violin() +
+      ggplot2::geom_jitter(
+        ggplot2::aes(colour = outlier),
+        width = 0.05,
+        size = 0.4,
+        alpha = 0.5,
+        show.legend = FALSE
+      ) +
+      ggplot2::scale_colour_manual(values = outlier_colours) +
+      ggplot2::ylab(nm) +
+      ggplot2::xlab("") +
+      ggplot2::theme_bw()
+
+    if (do_facet) {
+      p <- p + ggplot2::facet_wrap(~.group)
+    }
+    p
+  })
+
+  setNames(plots, names(x$metrics))
+}
+
 ## list results ----------------------------------------------------------------
 
 #' Generate an ScListRes instance
