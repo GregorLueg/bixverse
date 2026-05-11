@@ -283,7 +283,7 @@ AWS scores and LISI scores also closer to 2 (i.e., number of batches).
 
 ```{r}
 #| label: fastmnn tsne
-sc_object <- tsne_sc(object = sc_object)
+sc_object <- tsne_sc(object = sc_object, use_knn = TRUE)
 
 tsne_dt_mnn <- as.data.table(
   get_embedding(sc_object, "tsne"),
@@ -359,7 +359,7 @@ Also here, we observe improvements across the board.
 
 ```{r}
 #| label: harmony tsne
-sc_object <- tsne_sc(object = sc_object)
+sc_object <- tsne_sc(object = sc_object, use_knn = TRUE)
 
 tsne_dt_harmony <- as.data.table(
   get_embedding(sc_object, "tsne"),
@@ -436,7 +436,7 @@ lisi_score_post_harmony
 
 ```{r}
 #| label: harmony (v2) tsne
-sc_object <- tsne_sc(object = sc_object)
+sc_object <- tsne_sc(object = sc_object, use_knn = TRUE)
 
 tsne_dt_harmony <- as.data.table(
   get_embedding(sc_object, "tsne"),
@@ -500,7 +500,7 @@ lisi_score_post_bbknn
 
 ```{r}
 #| label: bbknn tsne
-sc_object <- tsne_sc(object = sc_object)
+sc_object <- tsne_sc(object = sc_object, use_knn = TRUE)
 
 tsne_dt_bbknn <- as.data.table(
   get_embedding(sc_object, "tsne"),
