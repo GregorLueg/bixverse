@@ -3369,6 +3369,15 @@ rs_mc_aucell <- function(sparse_data, gs_list, auc_type, verbose) .Call(wrap__rs
 #'Vector with rows x cells
 #'}
 #'
+#'\subsection{Method `set_from_file`}{
+#'Set cell numbers and genes
+#'
+#'### Params
+#'
+#'* `cell_no` - No of cells
+#'* `gene_no` - No of genes
+#'}
+#'
 #'\subsection{Method `r_data_to_file`}{
 #'Write data from R CSR to disk
 #'
@@ -3388,12 +3397,12 @@ rs_mc_aucell <- function(sparse_data, gs_list, auc_type, verbose) .Call(wrap__rs
 #'}
 #'
 #'\subsection{Method `h5_to_file`}{
-#'Save h5 to file
+#'Save h5ad to file
 #'
 #'### Params
 #'
-#'* `cs_type` - How was the h5 data saved. CSC or CSR.
-#'* `h5_path` - Path to the h5 file.
+#'* `cs_type` - How was the h5ad data saved. CSC or CSR.
+#'* `h5_path` - Path to the h5ad file.
 #'* `no_cells` - Number of cells in the h5 file.
 #'* `no_genes` - Number of genes in the h5 file.
 #'* `qc_params` - List with the quality control parameters.
@@ -3405,7 +3414,7 @@ rs_mc_aucell <- function(sparse_data, gs_list, auc_type, verbose) .Call(wrap__rs
 #'}
 #'
 #'\subsection{Method `norm_h5_to_file`}{
-#'Save h5 with normalised counts to file
+#'Save h5ad with normalised counts to file
 #'
 #'For datasets where only normalised counts are available in X. Reads
 #'library sizes from a specified obs column to reconstruct raw counts.
@@ -3494,6 +3503,24 @@ rs_mc_aucell <- function(sparse_data, gs_list, auc_type, verbose) .Call(wrap__rs
 #'### Returns
 #'
 #'A list with qc parameters.
+#'}
+#'
+#'\subsection{Method `multi_mtx_to_file`}{
+#'Load multiple mtx files into a single binary
+#'
+#'### Params
+#'
+#'* `file_tasks` - R list of lists, each with: exp_id, mtx_path,
+#'cells_as_rows, gene_local_to_universe (integer vector, NA for
+#'unmapped).
+#'* `universe_size` - Number of genes in the intersection universe.
+#'* `qc_params` - List with QC parameters.
+#'* `verbose` - Controls verbosity.
+#'
+#'### Returns
+#'
+#'A list with: global_gene_indices, total_cells, total_genes,
+#'per_file (list of lists with exp_id, cell_indices, lib_size, nnz).
 #'}
 #'
 #'\subsection{Method `return_full_mat`}{
@@ -3587,15 +3614,6 @@ rs_mc_aucell <- function(sparse_data, gs_list, auc_type, verbose) .Call(wrap__rs
 #'A list that can be parsed into a CSC matrix in R
 #'}
 #'
-#'\subsection{Method `set_from_file`}{
-#'Set cell numbers and genes
-#'
-#'### Params
-#'
-#'* `cell_no` - No of cells
-#'* `gene_no` - No of genes
-#'}
-#'
 #'\subsection{Method `get_nnz_genes`}{
 #'Helper function to get the number of cells expressing a gene
 #'
@@ -3609,11 +3627,37 @@ rs_mc_aucell <- function(sparse_data, gs_list, auc_type, verbose) .Call(wrap__rs
 #'A vector of NNZ for the genes.
 #'}
 #'
+#'\subsection{Method `merge_sc_files`}{
+#'Merge multiple existing bin files into the cells .bin file
+#'
+#'### Params
+#'
+#'* `merge_tasks` - List of lists. Each inner list must contain: exp_id,
+#'bin_cells_path, cells_to_keep (0-indexed integer vector), and
+#'gene_local_to_universe (integer vector, -1 for genes absent from the
+#'universe).
+#'* `universe_size` - Number of genes in the intersection universe.
+#'* `renormalise` - If `true`, recompute `data_norm` against `target_size`
+#'using each cell's surviving raw counts. If `false`, pass `data_norm`
+#'through untouched; the caller must guarantee all inputs were
+#'normalised against the same `target_size`.
+#'* `target_size` - Target library size for renormalisation. Ignored when
+#'`renormalise = false`.
+#'* `verbose` - Controls verbosity.
+#'
+#'### Returns
+#'
+#'A list with: total_cells, total_genes, per_file (list of lists with
+#'exp_id, lib_size, nnz).
+#'}
+#'
 SingleCellCountData <- new.env(parent = emptyenv())
 
 SingleCellCountData$new <- function(f_path_cells, f_path_genes) .Call(wrap__SingleCellCountData__new, f_path_cells, f_path_genes)
 
 SingleCellCountData$get_shape <- function() .Call(wrap__SingleCellCountData__get_shape, self)
+
+SingleCellCountData$set_from_file <- function() .Call(wrap__SingleCellCountData__set_from_file, self)
 
 SingleCellCountData$r_data_to_file <- function(r_data, qc_params, verbose) .Call(wrap__SingleCellCountData__r_data_to_file, self, r_data, qc_params, verbose)
 
@@ -3629,6 +3673,8 @@ SingleCellCountData$mtx_to_file <- function(mtx_path, qc_params, cells_as_rows, 
 
 SingleCellCountData$mtx_to_file_streaming <- function(mtx_path, qc_params, cells_as_rows, verbose) .Call(wrap__SingleCellCountData__mtx_to_file_streaming, self, mtx_path, qc_params, cells_as_rows, verbose)
 
+SingleCellCountData$multi_mtx_to_file <- function(file_tasks, universe_size, qc_params, verbose) .Call(wrap__SingleCellCountData__multi_mtx_to_file, self, file_tasks, universe_size, qc_params, verbose)
+
 SingleCellCountData$return_full_mat <- function(assay, cell_based, verbose) .Call(wrap__SingleCellCountData__return_full_mat, self, assay, cell_based, verbose)
 
 SingleCellCountData$get_cells_by_indices <- function(indices, assay) .Call(wrap__SingleCellCountData__get_cells_by_indices, self, indices, assay)
@@ -3641,9 +3687,9 @@ SingleCellCountData$generate_gene_based_data_memory_bounded <- function(max_gene
 
 SingleCellCountData$get_genes_by_indices <- function(indices, assay) .Call(wrap__SingleCellCountData__get_genes_by_indices, self, indices, assay)
 
-SingleCellCountData$set_from_file <- function() .Call(wrap__SingleCellCountData__set_from_file, self)
-
 SingleCellCountData$get_nnz_genes <- function(gene_indices) .Call(wrap__SingleCellCountData__get_nnz_genes, self, gene_indices)
+
+SingleCellCountData$merge_sc_files <- function(merge_tasks, universe_size, renormalise, target_size, verbose) .Call(wrap__SingleCellCountData__merge_sc_files, self, merge_tasks, universe_size, renormalise, target_size, verbose)
 
 #' @export
 `$.SingleCellCountData` <- function (self, name) { func <- SingleCellCountData[[name]]; environment(func) <- environment(); func }

@@ -6,11 +6,10 @@ use std::time::Instant;
 use thousands::Separable;
 
 use bixverse_rs::prelude::*;
-use bixverse_rs::single_cell::sc_data::data_io::*;
-use bixverse_rs::single_cell::sc_data::h5ad_io::*;
-use bixverse_rs::single_cell::sc_data::h5ad_multifile_io::*;
-use bixverse_rs::single_cell::sc_data::mtx_io::*;
-use bixverse_rs::single_cell::sc_data::r_obj_io::*;
+use bixverse_rs::single_cell::sc_data::{
+    bin_merge_io::*, data_io::*, h5ad_io::*, h5ad_multifile_io::*, mtx_io::*, mtx_multifile_io::*,
+    r_obj_io::*,
+};
 
 // Extendr unfortunately cannot do Roxygen2 manipulation of R6 type
 // classes. This will have to be done manually in R... Documentation
@@ -257,9 +256,28 @@ impl SingleCellCountData {
         vec![self.n_cells, self.n_genes]
     }
 
-    ///////////
-    // Cells //
-    ///////////
+    /// Set cell numbers and genes
+    ///
+    /// ### Params
+    ///
+    /// * `cell_no` - No of cells
+    /// * `gene_no` - No of genes
+    pub fn set_from_file(&mut self) -> Result<(), extendr_api::Error> {
+        let reader = ParallelSparseReader::new(&self.f_path_cells).to_extendr()?;
+        let header = reader.get_header();
+        self.n_cells = header.total_cells;
+        self.n_genes = header.total_genes;
+
+        Ok(())
+    }
+
+    /////////////////////
+    // Cells ingestion //
+    /////////////////////
+
+    ////////////
+    // From R //
+    ////////////
 
     /// Write data from R CSR to disk
     ///
@@ -301,12 +319,16 @@ impl SingleCellCountData {
         ))
     }
 
-    /// Save h5 to file
+    ///////////////
+    // From h5ad //
+    ///////////////
+
+    /// Save h5ad to file
     ///
     /// ### Params
     ///
-    /// * `cs_type` - How was the h5 data saved. CSC or CSR.
-    /// * `h5_path` - Path to the h5 file.
+    /// * `cs_type` - How was the h5ad data saved. CSC or CSR.
+    /// * `h5_path` - Path to the h5ad file.
     /// * `no_cells` - Number of cells in the h5 file.
     /// * `no_genes` - Number of genes in the h5 file.
     /// * `qc_params` - List with the quality control parameters.
@@ -348,7 +370,7 @@ impl SingleCellCountData {
         ))
     }
 
-    /// Save h5 with normalised counts to file
+    /// Save h5ad with normalised counts to file
     ///
     /// For datasets where only normalised counts are available in X. Reads
     /// library sizes from a specified obs column to reconstruct raw counts.
@@ -522,6 +544,10 @@ impl SingleCellCountData {
         ))
     }
 
+    //////////////
+    // From mtx //
+    //////////////
+
     /// Save mtx to file
     ///
     /// ### Params
@@ -601,6 +627,75 @@ impl SingleCellCountData {
             nnz = mtx_res.cell_qc.nnz
         ))
     }
+
+    /// Load multiple mtx files into a single binary
+    ///
+    /// ### Params
+    ///
+    /// * `file_tasks` - R list of lists, each with: exp_id, mtx_path,
+    ///   cells_as_rows, gene_local_to_universe (integer vector, NA for
+    ///   unmapped).
+    /// * `universe_size` - Number of genes in the intersection universe.
+    /// * `qc_params` - List with QC parameters.
+    /// * `verbose` - Controls verbosity.
+    ///
+    /// ### Returns
+    ///
+    /// A list with: global_gene_indices, total_cells, total_genes,
+    /// per_file (list of lists with exp_id, cell_indices, lib_size, nnz).
+    pub fn multi_mtx_to_file(
+        &mut self,
+        file_tasks: List,
+        universe_size: i32,
+        qc_params: List,
+        verbose: bool,
+    ) -> Result<List, extendr_api::Error> {
+        let qc = MinCellQuality::from_r_list(qc_params)?;
+
+        let tasks: Vec<MtxFileTask> = file_tasks
+            .into_iter()
+            .map(|(_, robj)| {
+                let inner = List::try_from(robj).expect("Each file_task must be a list");
+                MtxFileTask::from_r_list(inner)
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+
+        let result = multi_mtx_to_file(
+            &tasks,
+            &self.f_path_cells,
+            universe_size as usize,
+            &qc,
+            verbose,
+        )
+        .to_extendr()?;
+
+        self.n_cells = result.total_cells;
+        self.n_genes = result.total_genes;
+
+        let per_file: List = result
+            .per_file
+            .into_iter()
+            .map(|f| {
+                list!(
+                    exp_id = f.exp_id,
+                    cell_indices = f.cells_to_keep,
+                    lib_size = f.lib_size,
+                    nnz = f.nnz
+                )
+            })
+            .collect::<List>();
+
+        Ok(list!(
+            global_gene_indices = result.global_gene_indices,
+            total_cells = result.total_cells,
+            total_genes = result.total_genes,
+            per_file = per_file
+        ))
+    }
+
+    //////////////////////////////
+    // Return cell-based counts //
+    //////////////////////////////
 
     /// Returns the full matrix
     ///
@@ -739,6 +834,10 @@ impl SingleCellCountData {
     ///////////
     // Genes //
     ///////////
+
+    //////////////////////////////
+    // Transform the CSR to CSC //
+    //////////////////////////////
 
     /// Transforms already written cell data also into the gene data
     ///
@@ -1115,6 +1214,10 @@ impl SingleCellCountData {
         Ok(())
     }
 
+    //////////////////////////////
+    // Return gene-based counts //
+    //////////////////////////////
+
     /// Return genes by index positions
     ///
     /// Leverages the CSC-stored data for fast gene retrieval
@@ -1174,21 +1277,6 @@ impl SingleCellCountData {
         ))
     }
 
-    /// Set cell numbers and genes
-    ///
-    /// ### Params
-    ///
-    /// * `cell_no` - No of cells
-    /// * `gene_no` - No of genes
-    pub fn set_from_file(&mut self) -> Result<(), extendr_api::Error> {
-        let reader = ParallelSparseReader::new(&self.f_path_cells).to_extendr()?;
-        let header = reader.get_header();
-        self.n_cells = header.total_cells;
-        self.n_genes = header.total_genes;
-
-        Ok(())
-    }
-
     /// Helper function to get the number of cells expressing a gene
     ///
     /// ### Params
@@ -1217,5 +1305,72 @@ impl SingleCellCountData {
         };
 
         Ok(nnz.r_int_convert())
+    }
+
+    ///////////////////////
+    // Combining objects //
+    ///////////////////////
+
+    /// Merge multiple existing bin files into the cells .bin file
+    ///
+    /// ### Params
+    ///
+    /// * `merge_tasks` - List of lists. Each inner list must contain: exp_id,
+    ///   bin_cells_path, cells_to_keep (0-indexed integer vector), and
+    ///   gene_local_to_universe (integer vector, -1 for genes absent from the
+    ///   universe).
+    /// * `universe_size` - Number of genes in the intersection universe.
+    /// * `renormalise` - If `true`, recompute `data_norm` against `target_size`
+    ///   using each cell's surviving raw counts. If `false`, pass `data_norm`
+    ///   through untouched; the caller must guarantee all inputs were
+    ///   normalised against the same `target_size`.
+    /// * `target_size` - Target library size for renormalisation. Ignored when
+    ///   `renormalise = false`.
+    /// * `verbose` - Controls verbosity.
+    ///
+    /// ### Returns
+    ///
+    /// A list with: total_cells, total_genes, per_file (list of lists with
+    /// exp_id, lib_size, nnz).
+    pub fn merge_sc_files(
+        &mut self,
+        merge_tasks: List,
+        universe_size: i32,
+        renormalise: bool,
+        target_size: f64,
+        verbose: bool,
+    ) -> Result<List, extendr_api::Error> {
+        let tasks: Vec<BinMergeTask> = merge_tasks
+            .into_iter()
+            .map(|(_, robj)| {
+                let inner = List::try_from(robj).expect("Each merge_task must be a list");
+                BinMergeTask::from_r_list(inner)
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+
+        let result = merge_sc_bin_files(
+            &tasks,
+            &self.f_path_cells,
+            universe_size as usize,
+            renormalise,
+            target_size as f32,
+            verbose,
+        )
+        .to_extendr()?;
+
+        self.n_cells = result.total_cells;
+        self.n_genes = result.total_genes;
+
+        let per_file: List = result
+            .per_file
+            .into_iter()
+            .map(|f| list!(exp_id = f.exp_id, lib_size = f.lib_size, nnz = f.nnz))
+            .collect::<List>();
+
+        Ok(list!(
+            total_cells = result.total_cells,
+            total_genes = result.total_genes,
+            per_file = per_file
+        ))
     }
 }

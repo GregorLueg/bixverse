@@ -803,7 +803,6 @@ change_gene_identifier <- S7::new_generic(
 #' @method change_gene_identifier BulkDge
 #'
 #' @export
-BulkDge
 function(object, alternative_gene_id, variable_info = NULL) {
   # Checks
   checkmate::assertClass(

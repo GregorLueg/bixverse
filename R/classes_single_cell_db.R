@@ -1415,10 +1415,313 @@ SingleCellDuckDB <- R6::R6Class(
       )
 
       invisible(self)
+    },
+
+    #########################
+    # From multiple DuckDBs #
+    #########################
+
+    #' @description
+    #' Populate the obs table by merging obs from multiple source DuckDBs.
+    #'
+    #' Reads obs rows where `to_keep = TRUE` from each source, ordered by
+    #' `cell_idx` ascending (matching the order used in the Rust bin merge).
+    #' Prefixes `cell_id` with `exp_id`, intersects column names across all
+    #' inputs, and rbindlists.
+    #'
+    #' @param per_file_info List of lists; each must contain `db_path`
+    #'   (string) and `exp_id` (string).
+    #'
+    #' @return Invisible self.
+    populate_obs_from_multi_duckdb = function(per_file_info) {
+      checkmate::assertList(per_file_info, min.len = 2L)
+
+      obs_parts <- vector("list", length(per_file_info))
+
+      for (i in seq_along(per_file_info)) {
+        fi <- per_file_info[[i]]
+        checkmate::assertFileExists(fi$db_path)
+        checkmate::qassert(fi$exp_id, "S1")
+
+        src_con <- DBI::dbConnect(
+          duckdb::duckdb(),
+          dbdir = fi$db_path,
+          read_only = TRUE
+        )
+
+        obs_dt <- tryCatch(
+          data.table::setDT(DBI::dbGetQuery(
+            src_con,
+            "SELECT * FROM obs WHERE to_keep = TRUE ORDER BY cell_idx"
+          )),
+          finally = DBI::dbDisconnect(src_con)
+        )
+
+        if ("exp_id" %in% names(obs_dt)) {
+          stop(sprintf(
+            paste(
+              "Input '%s' already has an exp_id column in obs.",
+              "Merging already-merged objects is not supported."
+            ),
+            fi$exp_id
+          ))
+        }
+
+        drop_cols <- intersect(c("cell_idx", "to_keep"), names(obs_dt))
+        if (length(drop_cols) > 0L) {
+          obs_dt[, (drop_cols) := NULL]
+        }
+
+        obs_dt[, cell_id := paste(fi$exp_id, cell_id, sep = "_")]
+        obs_dt[, exp_id := fi$exp_id]
+
+        obs_parts[[i]] <- obs_dt
+      }
+
+      shared_cols <- Reduce(intersect, lapply(obs_parts, names))
+      obs_parts <- lapply(obs_parts, function(dt) {
+        dt[, .SD, .SDcols = shared_cols]
+      })
+
+      obs_combined <- data.table::rbindlist(obs_parts, use.names = TRUE)
+      obs_combined[, cell_idx := .I]
+      data.table::setcolorder(
+        obs_combined,
+        c(
+          "cell_idx",
+          "cell_id",
+          "exp_id",
+          setdiff(names(obs_combined), c("cell_idx", "cell_id", "exp_id"))
+        )
+      )
+
+      con <- private$connect_db()
+      on.exit(
+        {
+          if (exists("con") && !is.null(con)) {
+            tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
+          }
+        },
+        add = TRUE
+      )
+
+      DBI::dbWriteTable(con, "obs", obs_combined, overwrite = TRUE)
+
+      invisible(self)
+    },
+
+    #' @description
+    #' Populate the var table from a source DuckDB, filtered and reordered
+    #' to match a target gene set.
+    #'
+    #' @param source_db_path String. Path to the source DuckDB.
+    #' @param final_gene_names Character vector. Gene names in the desired
+    #'   final order.
+    #'
+    #' @return Invisible self.
+    populate_vars_from_duckdb_reordered = function(
+      source_db_path,
+      final_gene_names
+    ) {
+      checkmate::assertFileExists(source_db_path)
+      checkmate::assertCharacter(final_gene_names, min.len = 1L)
+
+      src_con <- DBI::dbConnect(
+        duckdb::duckdb(),
+        dbdir = source_db_path,
+        read_only = TRUE
+      )
+
+      var_dt <- tryCatch(
+        data.table::setDT(DBI::dbGetQuery(src_con, "SELECT * FROM var")),
+        finally = DBI::dbDisconnect(src_con)
+      )
+
+      var_dt <- var_dt[match(final_gene_names, gene_id)]
+
+      if ("gene_idx" %in% names(var_dt)) {
+        var_dt[, gene_idx := NULL]
+      }
+      var_dt[, gene_idx := .I]
+      data.table::setcolorder(
+        var_dt,
+        c(
+          "gene_idx",
+          "gene_id",
+          setdiff(names(var_dt), c("gene_idx", "gene_id"))
+        )
+      )
+
+      con <- private$connect_db()
+      on.exit(
+        {
+          if (exists("con") && !is.null(con)) {
+            tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
+          }
+        },
+        add = TRUE
+      )
+
+      DBI::dbWriteTable(con, "var", var_dt, overwrite = TRUE)
+
+      invisible(self)
+    },
+
+    ##################################
+    # From multiple plain text files #
+    ##################################
+
+    #' @description
+    #' Populate obs from multiple plain-text barcode files.
+    #'
+    #' Reads each input's barcodes file, filters to the cells that passed QC,
+    #' prefixes `cell_id` with `exp_id`, intersects column names across inputs,
+    #' and rbindlists.
+    #'
+    #' @param per_file_info List of lists; each must contain `f_path` (string),
+    #' `exp_id` (string), `has_hdr` (boolean), `cell_filter` (1-indexed integer
+    #' vector).
+    #'
+    #' @return Invisible self.
+    populate_obs_from_multi_plain_text = function(per_file_info) {
+      checkmate::assertList(per_file_info, min.len = 2L)
+
+      con <- private$connect_db()
+      on.exit(
+        {
+          if (exists("con") && !is.null(con)) {
+            tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
+          }
+        },
+        add = TRUE
+      )
+
+      obs_parts <- vector("list", length(per_file_info))
+
+      for (i in seq_along(per_file_info)) {
+        fi <- per_file_info[[i]]
+        checkmate::assertFileExists(fi$f_path)
+        checkmate::qassert(fi$exp_id, "S1")
+        checkmate::qassert(fi$has_hdr, "B1")
+        checkmate::qassert(fi$cell_filter, "I+")
+
+        delim <- if (grepl("\\.tsv(\\.gz)?$", fi$f_path, ignore.case = TRUE)) {
+          "\t"
+        } else {
+          ","
+        }
+
+        dt <- data.table::fread(
+          file = fi$f_path,
+          sep = delim,
+          header = fi$has_hdr
+        )
+
+        if (fi$has_hdr) {
+          data.table::setnames(dt, to_snake_case(names(dt)))
+          data.table::setnames(dt, names(dt)[1L], "cell_id")
+        } else {
+          data.table::setnames(dt, names(dt)[1L], "cell_id")
+        }
+
+        if ("exp_id" %in% names(dt)) {
+          stop(sprintf(
+            "Input '%s' barcodes file already has an exp_id column.",
+            fi$exp_id
+          ))
+        }
+
+        dt <- dt[fi$cell_filter]
+        dt[, cell_id := paste(fi$exp_id, cell_id, sep = "_")]
+        dt[, exp_id := fi$exp_id]
+
+        obs_parts[[i]] <- dt
+      }
+
+      shared_cols <- Reduce(intersect, lapply(obs_parts, names))
+      obs_parts <- lapply(obs_parts, function(d) {
+        d[, .SD, .SDcols = shared_cols]
+      })
+
+      combined <- data.table::rbindlist(obs_parts, use.names = TRUE)
+      combined[, cell_idx := .I]
+      data.table::setcolorder(
+        combined,
+        c(
+          "cell_idx",
+          "cell_id",
+          "exp_id",
+          setdiff(names(combined), c("cell_idx", "cell_id", "exp_id"))
+        )
+      )
+
+      DBI::dbWriteTable(con, "obs", combined, overwrite = TRUE)
+
+      invisible(self)
+    },
+
+    #' @description
+    #' Populate the var table from a single plain-text features file,
+    #' filtered and reordered to match a target gene set.
+    #'
+    #' @param f_path String. Path to one input's features file.
+    #' @param has_hdr Boolean.
+    #' @param final_gene_names Character vector. Gene IDs in the desired final
+    #' order.
+    #'
+    #' @return Invisible self.
+    populate_vars_from_plain_text_reordered = function(
+      f_path,
+      has_hdr,
+      final_gene_names
+    ) {
+      checkmate::assertFileExists(f_path)
+      checkmate::qassert(has_hdr, "B1")
+      checkmate::assertCharacter(final_gene_names, min.len = 1L)
+
+      delim <- if (grepl("\\.tsv(\\.gz)?$", f_path, ignore.case = TRUE)) {
+        "\t"
+      } else {
+        ","
+      }
+
+      dt <- data.table::fread(
+        file = f_path,
+        sep = delim,
+        header = has_hdr
+      )
+
+      if (has_hdr) {
+        data.table::setnames(dt, to_snake_case(names(dt)))
+        data.table::setnames(dt, names(dt)[1L], "gene_id")
+      } else {
+        data.table::setnames(dt, names(dt)[1L], "gene_id")
+      }
+
+      dt <- dt[match(final_gene_names, gene_id)]
+
+      if ("gene_idx" %in% names(dt)) {
+        dt[, gene_idx := NULL]
+      }
+      dt[, gene_idx := .I]
+      data.table::setcolorder(
+        dt,
+        c("gene_idx", "gene_id", setdiff(names(dt), c("gene_idx", "gene_id")))
+      )
+
+      con <- private$connect_db()
+      on.exit(
+        {
+          if (exists("con") && !is.null(con)) {
+            tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
+          }
+        },
+        add = TRUE
+      )
+
+      DBI::dbWriteTable(con, "var", dt, overwrite = TRUE)
+
+      invisible(self)
     }
   )
-
-  ############################
-  # Private fields/functions #
-  ############################
 )

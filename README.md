@@ -94,16 +94,15 @@ and trade-offs. The various vignettes will show you how to analyse data.
 ### Single and spatial transcriptomics:
 
 - For single cell the following stuff will be hopefully soon'ish implemented:
-  * More multi-file read in support. At the moment, multiple h5ad files are
-    possible, but not yet for other file formats.
+  * More multi-file read in support: h5ad and mtx can both now be done, but
+    for sure some edge cases still there.
   * h5 file i/o (provided by CellRanger).
   * Saving data to h5ad for easier interoperability with Python.
   * Something cool with [Zarr](https://zarr.dev) ... ? 
-  * Methods on top of the meta cells: co-expression network detection etc.
   * Expansion of the [sister package](https://github.com/GregorLueg/bixverse.plots) 
     to have plotting helpers in there for single cell.
-  * Helpers to slice and dice the data easier and add new data - this will be
-    a larger piece of work.
+  * Additional helpers for slicing the SingleCell class into several sub parts.
+    Merging is now officially supported.
   * Implementations of [Palantir](https://www.nature.com/articles/s41587-019-0068-4) and
     [Slingshot](https://pubmed.ncbi.nlm.nih.gov/29914354/).
   * Port over [NicheNet](https://www.nature.com/articles/s41592-019-0667-5)
@@ -117,7 +116,11 @@ and trade-offs. The various vignettes will show you how to analyse data.
   spatial transcriptomics. There are some cool methods in that space that for 
   sure could benefit from the speed that a compiled, memory-managed language 
   offers. Especially when analysing more data sets.
-- Add other interesting methods that I can find (and have a use-case for).
+- Add more single cell multi 'omics support. First tentative attempts at writing
+  the infrastructure to support CITE-Seq with ADTs.
+- Add other interesting methods that I can find (and have a use-case for)... 
+  NMF would be great to have as a fast Rust-accelerated method.
+
 
 ### Documentation
 

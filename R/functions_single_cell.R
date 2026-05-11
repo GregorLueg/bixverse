@@ -74,8 +74,6 @@ get_seurat_counts_to_list <- function(seurat_obj) {
 #' }
 #'
 #' @keywords internal
-#'
-#' @import Matrix
 get_meta_cell_matrices <- function(meta_cell_data) {
   checkmate::assertList(meta_cell_data, names = "named")
   checkmate::assertNames(

@@ -34,6 +34,10 @@ observation/cell metadata and the feature/gene metadata.
 \item \href{#method-SingleCellDuckDB-populate_var_from_plain_text}{\code{SingleCellDuckDB$populate_var_from_plain_text()}}
 \item \href{#method-SingleCellDuckDB-populate_obs_from_data.table}{\code{SingleCellDuckDB$populate_obs_from_data.table()}}
 \item \href{#method-SingleCellDuckDB-populate_var_from_data.table}{\code{SingleCellDuckDB$populate_var_from_data.table()}}
+\item \href{#method-SingleCellDuckDB-populate_obs_from_multi_duckdb}{\code{SingleCellDuckDB$populate_obs_from_multi_duckdb()}}
+\item \href{#method-SingleCellDuckDB-populate_vars_from_duckdb_reordered}{\code{SingleCellDuckDB$populate_vars_from_duckdb_reordered()}}
+\item \href{#method-SingleCellDuckDB-populate_obs_from_multi_plain_text}{\code{SingleCellDuckDB$populate_obs_from_multi_plain_text()}}
+\item \href{#method-SingleCellDuckDB-populate_vars_from_plain_text_reordered}{\code{SingleCellDuckDB$populate_vars_from_plain_text_reordered()}}
 \item \href{#method-SingleCellDuckDB-clone}{\code{SingleCellDuckDB$clone()}}
 }
 }
@@ -235,6 +239,115 @@ Function to populate the obs table from plain text files
 \item{\code{filter}}{Optional integer. Row indices to keep}
 }
 \if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SingleCellDuckDB-populate_obs_from_multi_duckdb"></a>}}
+\if{latex}{\out{\hypertarget{method-SingleCellDuckDB-populate_obs_from_multi_duckdb}{}}}
+\subsection{Method \code{populate_obs_from_multi_duckdb()}}{
+Populate the obs table by merging obs from multiple source DuckDBs.
+
+Reads obs rows where \code{to_keep = TRUE} from each source, ordered by
+\code{cell_idx} ascending (matching the order used in the Rust bin merge).
+Prefixes \code{cell_id} with \code{exp_id}, intersects column names across all
+inputs, and rbindlists.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SingleCellDuckDB$populate_obs_from_multi_duckdb(per_file_info)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{per_file_info}}{List of lists; each must contain \code{db_path}
+(string) and \code{exp_id} (string).}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+Invisible self.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SingleCellDuckDB-populate_vars_from_duckdb_reordered"></a>}}
+\if{latex}{\out{\hypertarget{method-SingleCellDuckDB-populate_vars_from_duckdb_reordered}{}}}
+\subsection{Method \code{populate_vars_from_duckdb_reordered()}}{
+Populate the var table from a source DuckDB, filtered and reordered
+to match a target gene set.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SingleCellDuckDB$populate_vars_from_duckdb_reordered(
+  source_db_path,
+  final_gene_names
+)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{source_db_path}}{String. Path to the source DuckDB.}
+
+\item{\code{final_gene_names}}{Character vector. Gene names in the desired
+final order.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+Invisible self.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SingleCellDuckDB-populate_obs_from_multi_plain_text"></a>}}
+\if{latex}{\out{\hypertarget{method-SingleCellDuckDB-populate_obs_from_multi_plain_text}{}}}
+\subsection{Method \code{populate_obs_from_multi_plain_text()}}{
+Populate obs from multiple plain-text barcode files.
+
+Reads each input's barcodes file, filters to the cells that passed QC,
+prefixes \code{cell_id} with \code{exp_id}, intersects column names across inputs,
+and rbindlists.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SingleCellDuckDB$populate_obs_from_multi_plain_text(per_file_info)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{per_file_info}}{List of lists; each must contain \code{f_path} (string),
+\code{exp_id} (string), \code{has_hdr} (boolean), \code{cell_filter} (1-indexed integer
+vector).}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+Invisible self.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SingleCellDuckDB-populate_vars_from_plain_text_reordered"></a>}}
+\if{latex}{\out{\hypertarget{method-SingleCellDuckDB-populate_vars_from_plain_text_reordered}{}}}
+\subsection{Method \code{populate_vars_from_plain_text_reordered()}}{
+Populate the var table from a single plain-text features file,
+filtered and reordered to match a target gene set.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SingleCellDuckDB$populate_vars_from_plain_text_reordered(
+  f_path,
+  has_hdr,
+  final_gene_names
+)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{f_path}}{String. Path to one input's features file.}
+
+\item{\code{has_hdr}}{Boolean.}
+
+\item{\code{final_gene_names}}{Character vector. Gene IDs in the desired final
+order.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+Invisible self.
 }
 }
 \if{html}{\out{<hr>}}

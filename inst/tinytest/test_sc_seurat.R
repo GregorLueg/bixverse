@@ -55,11 +55,11 @@ sc_object <- load_seurat(
     min_lib_size = min_lib_size,
     min_cells = min_cells_exp
   ),
-  streaming = FALSE,
+  streaming = 0L,
   .verbose = FALSE
 )
 
-# subset here... Seurat is weird as f--k
+# subset here... Seurat is weird...
 # also, otherwise dual filtering is happening
 seurat_obj <- subset(
   seurat_obj,

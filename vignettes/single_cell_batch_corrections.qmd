@@ -530,7 +530,9 @@ There is no universally best batch correction method. Some practical guidance:
 - **Harmony** is a good default. It is fast, operates on the PCA embedding
 directly, and handles multiple batch variables simultaneously. It tends to work
 well when batch effects are moderate and cell type composition is broadly
-similar across batches.
+similar across batches. Version 2 is quite an improvement and necessitates less
+that the same cells are available across the batches and is even faster when
+you provide only one batch effect to regress out.
 
 - **fastMNN** is worth considering when cell type composition differs
 substantially across batches. The mutual nearest neighbour approach is less
@@ -546,7 +548,9 @@ In practice, running multiple methods and looking at quantitative metrics is the
 most reliable approach. No single metric captures everything -- kBET and ASW
 measure different aspects of embedding-based correction, and LISI is most 
 informative for graph-based methods. UMAPs and tSNE assessments should be taken
-with a big pinch of salt, see [Chari, et al.](https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1011288). Admittedly, they do look pretty however.
+with a big pinch of salt, see 
+[Chari, et al.](https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1011288) 
+Admittedly, they do look pretty however.
 
 ## Clean up
 

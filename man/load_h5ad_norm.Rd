@@ -10,9 +10,11 @@ load_h5ad_norm(
   obs_lib_size_col,
   target_size,
   sc_qc_param = params_sc_min_quality(),
-  streaming = TRUE,
+  streaming = 1L,
   cell_id_col = NULL,
   batch_size = 1000L,
+  max_genes_in_memory = 2000L,
+  cell_batch_size = 100000L,
   .verbose = TRUE
 )
 }
@@ -22,34 +24,30 @@ load_h5ad_norm(
 \item{h5_path}{File path to the h5ad object you wish to load in.}
 
 \item{obs_lib_size_col}{String. Name of the obs column containing the total
-counts per cell or spot (e.g. \code{"nCount_RNA"}). You will have to check the
-original obs data for this.}
+counts per cell or spot (e.g. \code{"nCount_RNA"}).}
 
 \item{target_size}{Numeric. The target size used in the original
 normalisation (e.g. \code{1e4}).}
 
-\item{sc_qc_param}{List. Output of \code{\link[=params_sc_min_quality]{params_sc_min_quality()}}. A
-list with the following elements:
-\itemize{
-\item min_unique_genes - Integer. Minimum number of genes to be detected
-in the cell to be included.
-\item min_lib_size - Integer. Minimum library size in the cell to be
-included.
-\item min_cells - Integer. Minimum number of cells a gene needs to be
-detected to be included.
-\item target_size - Float. Target size to normalise to. Defaults to \code{1e5}.
-}}
+\item{sc_qc_param}{List. Output of \code{\link[=params_sc_min_quality]{params_sc_min_quality()}}.}
 
-\item{streaming}{Boolean. Shall the data be streamed during the conversion
-of CSR to CSC. Defaults to \code{TRUE} and should be used for larger data sets.}
+\item{streaming}{Integer. \code{0L} -> in-memory, \code{1L} -> light streaming, \code{2L}
+-> heavy streaming with memory upper boundaries. Controls memory pressure
+during CSR-to-CSC conversion. Defaults to \code{1L}.}
 
 \item{cell_id_col}{Optional string. If a specific column in the h5ad obs
 data represents the cell identifiers, you can specify it here.}
 
-\item{batch_size}{Integer. If \code{streaming = TRUE}, how many cells to process
-in one batch. Defaults to \code{1000L}.}
+\item{batch_size}{Integer. Cell batch size when \code{streaming = 1L}. Defaults
+to \code{1000L}.}
 
-\item{.verbose}{Boolean. Controls the verbosity of the function.}
+\item{max_genes_in_memory}{Integer. Maximum genes held in memory at once
+when \code{streaming = 2L}. Defaults to \code{2000L}.}
+
+\item{cell_batch_size}{Integer. Cell batch size when \code{streaming = 2L}.
+Defaults to \code{100000L}.}
+
+\item{.verbose}{Boolean.}
 }
 \value{
 It will populate the files on disk and return the class with updated
@@ -58,9 +56,9 @@ shape information.
 \description{
 This function takes an h5ad file where only normalised counts are available
 in the X slot and loads the obs and var data into the DuckDB of the
-\code{SingleCells} class and the counts into a Rust-binarised format for
-rapid access. Raw counts are reconstructed from the normalised values using
-the library sizes stored in a specified obs column.
+\code{SingleCells} class and the counts into a Rust-binarised format for rapid
+access. Raw counts are reconstructed from the normalised values using the
+library sizes stored in a specified obs column.
 
 The reconstruction assumes the normalisation was:
 \code{norm = log1p(x / lib_size * target_size)}

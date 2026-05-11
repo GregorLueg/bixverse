@@ -10,8 +10,10 @@ load_r_data(
   obs,
   var,
   sc_qc_param = params_sc_min_quality(),
+  streaming = 1L,
   batch_size = 1000L,
-  streaming = TRUE,
+  max_genes_in_memory = 2000L,
+  cell_batch_size = 100000L,
   .verbose = TRUE
 )
 }
@@ -19,13 +21,13 @@ load_r_data(
 \item{object}{\code{SingleCells} class.}
 
 \item{counts}{Sparse matrix. The cells represent the rows, the genes the
-indices. Needs to be \code{"dgRMatrix"}.}
+columns. Needs to be a \code{"dgRMatrix"}.}
 
-\item{obs}{data.table. The data.table representing the observations, i.e.,
-cell information.}
+\item{obs}{data.table. Cell metadata. Must have one row per cell in the
+same order as \code{counts}.}
 
-\item{var}{data.table. The data.table representing the features, i.e., the
-feature information.}
+\item{var}{data.table. Feature metadata. Must have one row per gene in
+the same order as \code{counts}.}
 
 \item{sc_qc_param}{List. Output of \code{\link[=params_sc_min_quality]{params_sc_min_quality()}}. A
 list with the following elements:
@@ -39,11 +41,18 @@ detected to be included.
 \item target_size - Float. Target size to normalise to. Defaults to \code{1e5}.
 }}
 
-\item{batch_size}{Integer. If \code{streaming = TRUE}, how many cells to process
-in one batch. Defaults to \code{1000L}.}
+\item{streaming}{Integer. CSR-to-CSC conversion mode. \code{0L} -> in-memory
+(fastest, highest memory), \code{1L} -> light streaming with cell batching,
+\code{2L} -> heavy streaming with memory upper boundaries. Defaults to \code{1L}.}
 
-\item{streaming}{Boolean. Shall the data be streamed during the conversion
-of CSR to CSC. Defaults to \code{TRUE} and should be used for larger data sets.}
+\item{batch_size}{Integer. Cell batch size when \code{streaming = 1L}. Defaults
+to \code{1000L}.}
+
+\item{max_genes_in_memory}{Integer. Maximum genes held in memory at once
+when \code{streaming = 2L}. Defaults to \code{2000L}.}
+
+\item{cell_batch_size}{Integer. Cell batch size when \code{streaming = 2L}.
+Defaults to \code{100000L}.}
 
 \item{.verbose}{Boolean. Controls the verbosity of the function.}
 }
@@ -52,5 +61,6 @@ It will populate the files on disk and return the class with updated
 shape information.
 }
 \description{
-This function loads in data directly from R objects.
+This function loads in data directly from R objects. The counts matrix must
+be a \code{dgRMatrix} (rows = cells, columns = genes).
 }

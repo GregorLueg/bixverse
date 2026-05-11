@@ -1,3 +1,26 @@
+# bixverse 0.3.3
+
+## Features
+
+Following things were added:
+
+* Merging of SingleCells object possible
+* Multi file reading in for .mtx files
+
+## Breaking changes
+
+The interface to the i/o functions for the single cell was changed. The 
+`streaming = TRUE` parameter was simplified and gives you now more control over
+how to stream in data. This can (and will) break old code! If you get an error
+like:
+
+```
+Assertion on 'streaming' failed. Must be of class 'integer', not 'logical'.
+``` 
+
+Update the streaming parameter to `0L`, `1L` or `2L`, pending on data set size
+and available memory.
+
 # bixverse 0.3.2
 
 ## Features

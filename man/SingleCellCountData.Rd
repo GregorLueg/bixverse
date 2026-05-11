@@ -5,7 +5,7 @@
 \alias{SingleCellCountData}
 \title{A class for handling single cell count data}
 \format{
-An object of class \code{environment} of length 17.
+An object of class \code{environment} of length 19.
 }
 \usage{
 SingleCellCountData
@@ -42,6 +42,17 @@ Get the shape
 Vector with rows x cells
 }
 
+\subsection{Method \code{set_from_file}}{
+Set cell numbers and genes
+}
+
+\subsection{Params}{
+\itemize{
+\item \code{cell_no} - No of cells
+\item \code{gene_no} - No of genes
+}
+}
+
 \subsection{Method \code{r_data_to_file}}{
 Write data from R CSR to disk
 
@@ -64,13 +75,13 @@ A list with QC parameters.
 }
 
 \subsection{Method \code{h5_to_file}}{
-Save h5 to file
+Save h5ad to file
 }
 
 \subsection{Params}{
 \itemize{
-\item \code{cs_type} - How was the h5 data saved. CSC or CSR.
-\item \code{h5_path} - Path to the h5 file.
+\item \code{cs_type} - How was the h5ad data saved. CSC or CSR.
+\item \code{h5_path} - Path to the h5ad file.
 \item \code{no_cells} - Number of cells in the h5 file.
 \item \code{no_genes} - Number of genes in the h5 file.
 \item \code{qc_params} - List with the quality control parameters.
@@ -84,7 +95,7 @@ A list with qc parameters.
 }
 
 \subsection{Method \code{norm_h5_to_file}}{
-Save h5 with normalised counts to file
+Save h5ad with normalised counts to file
 
 For datasets where only normalised counts are available in X. Reads
 library sizes from a specified obs column to reconstruct raw counts.
@@ -188,6 +199,27 @@ Save mtx to file - streaming version
 \subsection{Returns}{
 
 A list with qc parameters.
+}
+
+\subsection{Method \code{multi_mtx_to_file}}{
+Load multiple mtx files into a single binary
+}
+
+\subsection{Params}{
+\itemize{
+\item \code{file_tasks} - R list of lists, each with: exp_id, mtx_path,
+cells_as_rows, gene_local_to_universe (integer vector, NA for
+unmapped).
+\item \code{universe_size} - Number of genes in the intersection universe.
+\item \code{qc_params} - List with QC parameters.
+\item \code{verbose} - Controls verbosity.
+}
+}
+
+\subsection{Returns}{
+
+A list with: global_gene_indices, total_cells, total_genes,
+per_file (list of lists with exp_id, cell_indices, lib_size, nnz).
 }
 
 \subsection{Method \code{return_full_mat}}{
@@ -297,17 +329,6 @@ Leverages the CSC-stored data for fast gene retrieval
 A list that can be parsed into a CSC matrix in R
 }
 
-\subsection{Method \code{set_from_file}}{
-Set cell numbers and genes
-}
-
-\subsection{Params}{
-\itemize{
-\item \code{cell_no} - No of cells
-\item \code{gene_no} - No of genes
-}
-}
-
 \subsection{Method \code{get_nnz_genes}}{
 Helper function to get the number of cells expressing a gene
 }
@@ -322,6 +343,33 @@ all genes.
 \subsection{Returns}{
 
 A vector of NNZ for the genes.
+}
+
+\subsection{Method \code{merge_sc_files}}{
+Merge multiple existing bin files into the cells .bin file
+}
+
+\subsection{Params}{
+\itemize{
+\item \code{merge_tasks} - List of lists. Each inner list must contain: exp_id,
+bin_cells_path, cells_to_keep (0-indexed integer vector), and
+gene_local_to_universe (integer vector, -1 for genes absent from the
+universe).
+\item \code{universe_size} - Number of genes in the intersection universe.
+\item \code{renormalise} - If \code{true}, recompute \code{data_norm} against \code{target_size}
+using each cell's surviving raw counts. If \code{false}, pass \code{data_norm}
+through untouched; the caller must guarantee all inputs were
+normalised against the same \code{target_size}.
+\item \code{target_size} - Target library size for renormalisation. Ignored when
+\code{renormalise = false}.
+\item \code{verbose} - Controls verbosity.
+}
+}
+
+\subsection{Returns}{
+
+A list with: total_cells, total_genes, per_file (list of lists with
+exp_id, lib_size, nnz).
 }
 }
 }

@@ -8,8 +8,10 @@ load_seurat(
   object,
   seurat,
   sc_qc_param = params_sc_min_quality(),
+  streaming = 1L,
   batch_size = 1000L,
-  streaming = TRUE,
+  max_genes_in_memory = 2000L,
+  cell_batch_size = 100000L,
   .verbose = TRUE
 )
 }
@@ -30,11 +32,18 @@ detected to be included.
 \item target_size - Float. Target size to normalise to. Defaults to \code{1e5}.
 }}
 
-\item{batch_size}{Integer. If \code{streaming = TRUE}, how many cells to process
-in one batch. Defaults to \code{1000L}.}
+\item{streaming}{Integer. CSR-to-CSC conversion mode. \code{0L} -> in-memory
+(fastest, highest memory), \code{1L} -> light streaming with cell batching,
+\code{2L} -> heavy streaming with memory upper boundaries. Defaults to \code{1L}.}
 
-\item{streaming}{Boolean. Shall the data be streamed during the conversion
-of CSR to CSC. Defaults to \code{TRUE} and should be used for larger data sets.}
+\item{batch_size}{Integer. Cell batch size when \code{streaming = 1L}. Defaults
+to \code{1000L}.}
+
+\item{max_genes_in_memory}{Integer. Maximum genes held in memory at once
+when \code{streaming = 2L}. Defaults to \code{2000L}.}
+
+\item{cell_batch_size}{Integer. Cell batch size when \code{streaming = 2L}.
+Defaults to \code{100000L}.}
 
 \item{.verbose}{Boolean. Controls the verbosity of the function.}
 }
@@ -43,6 +52,7 @@ It will populate the files on disk and return the class with updated
 shape information.
 }
 \description{
-This function takes a Seurat file and generates \code{SingleCells} class
-from it.
+This function takes a Seurat object and generates a \code{SingleCells} class
+from it. The raw counts are extracted, written to the Rust binary format,
+and the metadata is loaded into the DuckDB.
 }

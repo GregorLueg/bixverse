@@ -343,7 +343,6 @@ cell_map <- duckdb_con$get_obs_index_map()
 
 gene_map <- duckdb_con$get_var_index_map()
 
-
 expect_true(
   current = checkmate::checkInteger(
     cell_map,
