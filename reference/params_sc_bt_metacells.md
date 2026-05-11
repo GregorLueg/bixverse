@@ -1,0 +1,44 @@
+# Wrapper function for parameters for bootstrapped meta cell generation
+
+This function generates parameters for the bootstrapped meta cell
+generation based on hdWGCNA, see Morabito, et al., Cell Rep. Methods,
+2023.
+
+## Usage
+
+``` r
+params_sc_bt_metacells(
+  max_shared = 15L,
+  target_no_metacells = 1000L,
+  max_iter = 5000L,
+  knn = list()
+)
+```
+
+## Arguments
+
+- max_shared:
+
+  Integer. Maximum number of allowed shared neighbours for the meta cell
+  to be considered. Defaults to `15L`.
+
+- target_no_metacells:
+
+  Integer. Target number of meta-cells to generate. Defaults to `1000L`.
+
+- max_iter:
+
+  Integer. Maximum number of iterations for the algorithm. Defaults to
+  `5000L`.
+
+- knn:
+
+  List. Optional overrides for kNN parameters. See
+  [`params_knn_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_knn_defaults.md)
+  for available parameters: `k`, `knn_method`, `ann_dist`,
+  `search_budget`, `n_trees`, `delta`, `diversify_prob`, `ef_budget`,
+  `m`, `ef_construction`, `ef_search`, `n_list` and `n_probe`.
+
+## Value
+
+A list with the metacell parameters.

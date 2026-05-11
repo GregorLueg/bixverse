@@ -9,7 +9,7 @@ params_sc_miloR(
   prop = 0.2,
   k_refine = 20L,
   refinement_strategy = c("index", "approximate", "bruteforce"),
-  index_type = c("hnsw", "annoy", "nndescent", "ivf"),
+  index_type = c("nndescent", "ivf", "hnsw", "annoy"),
   knn = list()
 )
 ```
@@ -34,7 +34,7 @@ params_sc_miloR(
 - index_type:
 
   String. Type of kNN index to use. One of
-  `c("hnsw", "annoy", "nndescent", "ivf")`. Defaults to `"hnsw"`.
+  `c("hnsw", "annoy", "nndescent", "ivf")`. Defaults to `"nndescent"`.
 
 - knn:
 

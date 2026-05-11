@@ -1,8 +1,7 @@
-# Set cell mapping for ScMap object
+# Set cell mapping
 
-Set cell mapping for ScMap object
-
-Set the cell mapping for a `SingleCells` class.
+Set a cell mapping for a given object. This is used for the single
+cell-related classes with streaming from disk.
 
 ## Usage
 

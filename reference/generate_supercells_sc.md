@@ -38,8 +38,10 @@ generate_supercells_sc(
     number of single cells in the initial dataset to the number of
     metacells in the final dataset)
 
-  - linkage_dist - String. Which type of distance metric to use for the
-    linkage. Defaults to `"complete"`.
+  - use_kernel - Boolean. Shall a kernel be applied.
+
+  - kith_neighbour - Optional integer. Which neighbour to use for the
+    sigma estimation.
 
   - knn - List of kNN parameters. See
     [`params_knn_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_knn_defaults.md)

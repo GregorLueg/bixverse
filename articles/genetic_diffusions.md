@@ -15,9 +15,15 @@ al.](https://pubmed.ncbi.nlm.nih.gov/36823319/), and [Rosenthal et
 al.](https://www.nature.com/articles/s41596-022-00797-1).
 
 ``` r
+
 library(bixverse)
 library(magrittr)
 library(data.table)
+#> 
+#> Attaching package: 'data.table'
+#> The following object is masked from 'package:base':
+#> 
+#>     %notin%
 ```
 
 ### Data
@@ -30,6 +36,7 @@ seed genes, we will be sampling two sets based on the node degree
 distribution.
 
 ``` r
+
 set.seed(123)
 
 no_nodes <- 100L
@@ -73,6 +80,7 @@ gold_standard_genes <- sample(
 To generate the class, you run
 
 ``` r
+
 diffusion_obj <- NetworkDiffusions(
   edge_data,
   weighted = FALSE,
@@ -83,6 +91,7 @@ diffusion_obj <- NetworkDiffusions(
 For just running a single diffusion from a single set, you can do:
 
 ``` r
+
 diffusion_obj <- diffuse_seed_nodes(
   object = diffusion_obj,
   diffusion_vector = diffusion_vector_1,
@@ -98,6 +107,7 @@ samplings to calculate Z-scores for each node. This is based on
 Rust-accelerated, parallelised permutations.
 
 ``` r
+
 diffusion_obj <- permute_seed_nodes(
   object = diffusion_obj,
   perm_iters = 1000L,
@@ -108,6 +118,7 @@ diffusion_obj <- permute_seed_nodes(
 You can access the data via S7 properties
 
 ``` r
+
 diffusion_res <- get_diffusion_vector(diffusion_obj)
 permutation_res <- get_diffusion_perms(diffusion_obj)
 
@@ -121,6 +132,7 @@ hist(permutation_res, xlab = "Z score", main = "Permutation result")
 
 ``` r
 
+
 par(mfrow = c(1, 1))
 ```
 
@@ -133,6 +145,7 @@ network.
 To assess if the diffusions are useful to start with, you can run:
 
 ``` r
+
 auc_results <- calculate_diffusion_auc(
   object = diffusion_obj,
   hit_nodes = gold_standard_genes,
@@ -173,6 +186,7 @@ We provide two options to return the initial network:
 Verion 1 is run here:
 
 ``` r
+
 diffusion_obj <- community_detection(
   object = diffusion_obj,
   community_params = params_community_detection(
@@ -207,6 +221,7 @@ has more heat than the rest of the network. In version 2, this is less
 relevant, as the network is massively reduced.
 
 ``` r
+
 diffusion_obj <- community_detection(
   object = diffusion_obj,
   community_params = params_community_detection(
@@ -250,6 +265,7 @@ i.e., identifying intersecting nodes between the two sets of genes. To
 run the algorithm, you can just do:
 
 ``` r
+
 diffusion_obj <- tied_diffusion(
   object = diffusion_obj,
   diffusion_vector_1 = diffusion_vector_1,
@@ -265,6 +281,7 @@ diffusion_obj <- tied_diffusion(
 We also provide permutations here again
 
 ``` r
+
 # The function will automatically recognise which diffusion was used initially
 diffusion_obj <- permute_seed_nodes(
   object = diffusion_obj,
@@ -276,6 +293,7 @@ diffusion_obj <- permute_seed_nodes(
 Plotting the two:
 
 ``` r
+
 diffusion_res <- get_diffusion_vector(diffusion_obj)
 permutation_res <- get_diffusion_perms(diffusion_obj)
 
@@ -293,6 +311,7 @@ hist(
 
 ``` r
 
+
 par(mfrow = c(1, 1))
 ```
 
@@ -301,6 +320,7 @@ same methods. The function will automatically identify the type of
 diffusion you applied before. Let’s do this threshold based:
 
 ``` r
+
 diffusion_obj <- community_detection(
   object = diffusion_obj,
   community_params = params_community_detection(
@@ -333,6 +353,7 @@ head(results_v1)
 Or p-value based:
 
 ``` r
+
 diffusion_obj <- community_detection(
   object = diffusion_obj,
   community_params = params_community_detection(

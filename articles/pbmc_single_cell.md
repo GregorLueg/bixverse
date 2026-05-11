@@ -11,9 +11,15 @@ please do so first; this vignette assumes familiarity with how the
 `SingleCells` class, on-disk storage and cells-to-keep logic work.
 
 ``` r
+
 library(bixverse)
 library(ggplot2)
 library(data.table)
+#> 
+#> Attaching package: 'data.table'
+#> The following object is masked from 'package:base':
+#> 
+#>     %notin%
 ```
 
 ## Loading the data
@@ -22,7 +28,8 @@ We start by downloading the PBMC3k data set bundled with the package and
 loading it via Cell Ranger-style MTX I/O.
 
 ``` r
-pbmc3k_path <- bixverse:::download_pbmc3k()
+
+pbmc3k_path <- download_pbmc3k()
 
 tempdir_pbmc <- tempdir()
 
@@ -57,6 +64,7 @@ column to something sensible and set up mappings between Ensembl IDs and
 symbols.
 
 ``` r
+
 var <- get_sc_var(sc_object)
 
 head(var)
@@ -78,16 +86,6 @@ setnames_sc(
 
 var <- get_sc_var(sc_object)
 
-head(var)
-#>    gene_idx         gene_id gene_symbol no_cells_exp
-#>       <num>          <char>      <char>        <int>
-#> 1:        1 ENSG00000225880   LINC00115           18
-#> 2:        2 ENSG00000188976       NOC2L          258
-#> 3:        3 ENSG00000188290        HES4          145
-#> 4:        4 ENSG00000187608       ISG15         1206
-#> 5:        5 ENSG00000131591    C1orf159           24
-#> 6:        6 ENSG00000186891    TNFRSF18           92
-
 ensembl_to_symbol <- setNames(var$gene_symbol, var$gene_id)
 symbol_to_ensembl <- setNames(var$gene_id, var$gene_symbol)
 ```
@@ -101,6 +99,7 @@ mitochondrial and ribosomal genes per cell. These are added directly to
 the obs table in the DuckDB.
 
 ``` r
+
 gs_of_interest <- list(
   MT = var[grepl("^MT-", gene_symbol), gene_id],
   Ribo = var[grepl("^RPS|^RPL", gene_symbol), gene_id]
@@ -133,6 +132,7 @@ that carries the metrics, per-metric outlier calls and a combined
 outlier vector.
 
 ``` r
+
 qc_df <- sc_object[[c("cell_id", "lib_size", "nnz", "MT")]]
 
 metrics <- list(
@@ -161,6 +161,7 @@ The `CellQc` class has a `plot` method that produces violin plots with
 outliers highlighted.
 
 ``` r
+
 plots <- plot(qc, qc_df)
 
 plots$log10_lib_size + plots$log10_nnz + plots$MT
@@ -175,6 +176,7 @@ keep. From this point on, all downstream methods (HVG selection, PCA,
 etc.) will only operate on the retained cells.
 
 ``` r
+
 sc_object[["outlier"]] <- qc$combined
 
 cells_to_keep <- qc_df[!qc$combined, cell_id]
@@ -199,6 +201,7 @@ With QC done, we move through the standard pipeline: highly variable
 gene selection, PCA, and nearest neighbour computation.
 
 ``` r
+
 sc_object <- find_hvg_sc(
   object = sc_object,
   hvg_no = 2000L,
@@ -227,43 +230,93 @@ sc_object <- find_neighbours_sc(
 
 ## Clustering and marker detection
 
+### Leiden clustering
+
 Leiden clustering followed by differential gene expression across all
-clusters.
+clusters. You can also run Louvain if you want, but Leiden is thought of
+to have better properties, see [Traag, et
+al.](https://www.nature.com/articles/s41598-019-41695-z).
 
 ``` r
-sc_object <- find_clusters_sc(sc_object, res = 1.5, name = "leiden_clusters")
+
+sc_object <- find_clusters_sc(sc_object, res = 1, name = "leiden_clusters")
 
 all_markers <- find_all_markers_sc(
   object = sc_object,
   column_of_interest = "leiden_clusters"
 )
-#> Processing group 1 out of 7.
-#> Processing group 2 out of 7.
-#> Processing group 3 out of 7.
-#> Processing group 4 out of 7.
-#> Processing group 5 out of 7.
-#> Processing group 6 out of 7.
-#> Processing group 7 out of 7.
+#> Processing group 1 out of 8.
+#> Processing group 2 out of 8.
+#> Processing group 3 out of 8.
+#> Processing group 4 out of 8.
+#> Processing group 5 out of 8.
+#> Processing group 6 out of 8.
+#> Processing group 7 out of 8.
+#> Processing group 8 out of 8.
 
 all_markers[, gene_symbol := ensembl_to_symbol[gene_id]]
 
 head(all_markers[fdr <= 0.05][order(-abs(lfc))])
-#>      grp         gene_id      lfc     prop1      prop2 z_scores      p_values
-#>    <num>          <char>    <num>     <num>      <num>    <num>         <num>
-#> 1:     6 ENSG00000163220 4.174770 0.9887324 0.20077434 29.09827 1.887722e-186
-#> 2:     7 ENSG00000105374 4.156168 1.0000000 0.25049117 18.50890  8.752290e-77
-#> 3:     6 ENSG00000090382 4.081069 1.0000000 0.51050884 29.66810 9.907717e-194
-#> 4:     7 ENSG00000115523 3.934315 0.9527559 0.13654225 17.52567  4.562691e-69
-#> 5:     6 ENSG00000143546 3.663987 0.9718310 0.11504425 28.62794 1.508612e-180
-#> 6:     7 ENSG00000100453 3.544770 0.9842520 0.06974459 18.39899  6.691597e-76
+#>      grp         gene_id      lfc     prop1     prop2 z_scores      p_values
+#>    <num>          <char>    <num>     <num>     <num>    <num>         <num>
+#> 1:     6 ENSG00000163220 4.150865 0.9830986 0.2018805 28.88792 8.465550e-184
+#> 2:     7 ENSG00000115523 4.130326 0.9714286 0.1300049 19.00160  8.270732e-81
+#> 3:     7 ENSG00000105374 4.078447 1.0000000 0.2456747 19.20149  1.798204e-82
+#> 4:     6 ENSG00000090382 4.055920 0.9971831 0.5110620 29.47783 2.769802e-191
+#> 5:     6 ENSG00000143546 3.647868 0.9690141 0.1155973 28.50864 4.576800e-179
+#> 6:     6 ENSG00000101439 3.409787 0.9943662 0.2389380 28.07345 1.033391e-173
 #>              fdr gene_symbol
 #>            <num>      <char>
-#> 1: 4.275690e-183      S100A9
-#> 2:  3.963037e-73        NKG7
-#> 3: 4.488196e-190         LYZ
-#> 4:  5.164966e-66        GNLY
-#> 5: 2.278005e-177      S100A8
-#> 6:  1.514978e-72        GZMB
+#> 1: 1.915331e-180      S100A9
+#> 2:  1.925426e-77        GNLY
+#> 3:  8.372437e-79        NKG7
+#> 4: 1.253335e-187         LYZ
+#> 5: 6.903339e-176      S100A8
+#> 6: 1.169024e-170        CST3
+```
+
+### Fast clustering
+
+In the case of large data sets there is an option to run an accelerated
+form of clustering. This runs first k-means clustering (with default
+`sqrt(N)` cells), then kNN on the centroids, followed by Louvain (Leiden
+is not yet supported, but on the to-do list) across a set of
+resolutions. There is also an option to run this across several seeds to
+check for stability of the clustering. If you ran the grid search, the
+membership
+
+``` r
+
+fast_cluster_res <- fast_cluster_sc(
+  object = sc_object,
+  resolutions = c(5, 3, 2, 1.5, 1, 0.5),
+  # also return the k-mean clustering
+  return_kmeans = TRUE,
+  no_seeds = 25L,
+  grid_search = TRUE
+)
+
+fast_clusted_dt <- get_obs_data(fast_cluster_res)
+
+head(fast_clusted_dt)
+#>    cell_idx res_5 res_3 res_2 res_1.5 res_1 res_0.5
+#>       <int> <int> <int> <int>   <int> <int>   <int>
+#> 1:        1     7     2     2       2     0       0
+#> 2:        3    14     2     2       2     0       0
+#> 3:        4     9     1     1       1     1       1
+#> 4:        6     7     2     2       2     0       0
+#> 5:        8     5     2     2       2     0       0
+#> 6:        9     5     2     2       2     0       0
+```
+
+If you want to explore the k-means memberships or centroids, there are
+getters for this.
+
+``` r
+
+centroids <- get_centroids(fast_cluster_res)
+
+kmeans_membership <- get_kmeans_clusters(fast_cluster_res)
 ```
 
 ## Visualisation
@@ -273,14 +326,17 @@ head(all_markers[fdr <= 0.05][order(-abs(lfc))])
 Let us run quickly UMAP and tSNE.
 
 ``` r
-sc_object <- umap_sc(sc_object, knn_method = "annoy")
+
+sc_object <- umap_sc(sc_object)
 #> Running UMAP.
 #> Using n_epochs = 500 (dataset <10k samples or adam_parallel optimiser)
 #> Using provided kNN graph.
 
-sc_object <- tsne_sc(sc_object, perplexity = 30, knn_method = "annoy")
+sc_object <- tsne_sc(
+  sc_object,
+  perplexity = 10
+)
 #> Running t-SNE.
-#> Using provided kNN graph.
 ```
 
 We can pull the embeddings back into data.tables and plot them (longer
@@ -288,6 +344,7 @@ term, the idea will be to provide plotting helpers in `bixverse.plots`).
 The obs columns can be appended directly.
 
 ``` r
+
 umap_dt <- as.data.table(
   get_embedding(sc_object, "umap"),
   keep.rownames = "cell_id"
@@ -304,6 +361,7 @@ ggplot(umap_dt, aes(x = umap_1, y = umap_2)) +
 Let’s check out tSNE
 
 ``` r
+
 tsne_dt <- as.data.table(
   get_embedding(sc_object, "tsne"),
   keep.rownames = "cell_id"
@@ -325,6 +383,7 @@ extraction, grouping statistics and optional min-max scaling in one
 call.
 
 ``` r
+
 cell_markers <- c(
   "MS4A1",
   "CD79B",
@@ -374,6 +433,7 @@ cell and columns for each requested gene, plus any obs metadata you
 need.
 
 ``` r
+
 expr_dt <- extract_gene_expression(
   object = sc_object,
   features = symbol_to_ensembl[c("CD14", "MS4A1", "CD3E")],
@@ -413,5 +473,6 @@ ggplot(plot_long, aes(x = umap_1, y = umap_2)) +
 ## Clean up
 
 ``` r
+
 unlink(tempdir_pbmc, recursive = TRUE, force = TRUE)
 ```

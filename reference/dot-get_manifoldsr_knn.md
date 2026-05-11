@@ -12,7 +12,7 @@ Helper function to generate manifoldsR nearest neighbours
 
 - x:
 
-  `SingleCells` object from which to extract the kNN data
+  `SingleCells`, `MetaCells` object from which to extract the kNN data.
 
 ## Value
 

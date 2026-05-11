@@ -9,13 +9,15 @@ params_boost(
   boost_rate = 0.25,
   replace = FALSE,
   resolution = 1,
-  n_iters = 25L,
+  n_iters = 20L,
   p_thresh = 1e-07,
   voter_thresh = 0.9,
+  fast_cluster = FALSE,
   normalisation = list(),
   hvg = list(),
   pca = list(),
-  knn = list(k = 0L, ann_dist = "euclidean")
+  knn = list(k = 0L),
+  fast_cluster_params = list()
 )
 ```
 
@@ -38,7 +40,7 @@ params_boost(
 
 - n_iters:
 
-  Integer. Number of iterations to run the algorithm. Defaults to `25L`.
+  Integer. Number of iterations to run the algorithm. Defaults to `20L`.
 
 - p_thresh:
 
@@ -51,10 +53,17 @@ params_boost(
   cell must be assigned to a cluster to be considered a member. Must be
   between 0 and 1. Defaults to `0.9`.
 
+- fast_cluster:
+
+  Boolean. Shall fast Louvain clustering be applied, i.e., k-means
+  clustering and use the centroids for kNN graph generation and Louvain
+  clustering with then backpropagating the membership based on centroid
+  proximity.
+
 - normalisation:
 
   List. Optional overrides for normalisation parameters. See
-  [`params_norm_doublet_detection_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_norm_doublet_detection_defaults.md)
+  [`params_norm_doublets_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_norm_doublets_defaults.md)
   for available parameters: `log_transform`, `mean_center`,
   `normalise_variance`, `target_size`. Note: Boost uses different
   defaults (`log_transform = FALSE`, `mean_center = TRUE`,
@@ -82,6 +91,14 @@ params_boost(
   `search_budget`, `n_trees`, `delta`, `diversify_prob`, `ef_budget`,
   `m`, `ef_construction`, `ef_search`, `n_list` and `n_probe`. Note:
   this function defaults to `k = 0L` (automatic neighbour detection).
+
+- fast_cluster_params:
+
+  List. Optional overrides for the fast clustering parameters. Only
+  relevant if `fast_cluster = TRUE`. See
+  [`params_fast_cluster_default()`](https://gregorlueg.github.io/bixverse/reference/params_fast_cluster_default.md)
+  for available parameters: `km_type`, `n_centroids`, `kmeans_iters` and
+  `batch_size`.
 
 ## Value
 

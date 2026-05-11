@@ -1,8 +1,7 @@
 # Get the PCA factors
 
-Get the PCA factors
-
-Get the PCA factors from a `SingleCells`.
+Returns the PCA factors (sample-based scores). This function is used for
+the single cell-related classes and methods.
 
 ## Usage
 

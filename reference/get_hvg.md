@@ -1,8 +1,7 @@
 # Get the HVG
 
-Get the HVG
-
-Get the highly variable gene indices from a `SingleCells`.
+Returns the HVG indices. Pending class type this are 1-based (for R) or
+0-based for Rust.
 
 ## Usage
 
@@ -18,3 +17,7 @@ get_hvg(x)
 - x:
 
   An object to get HVG from.
+
+## Value
+
+Indices of the stored HVG genes.

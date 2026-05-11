@@ -23,7 +23,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -58,6 +58,8 @@
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
     <li><a class="dropdown-item" href="../articles/analysis_single_cell.html">'Bag of genes' methods for single cell in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/knn_searches.html">kNN searches for single cells in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing big data on a powerful laptop (example)</a></li>
   </ul>
 </li>
@@ -80,7 +82,7 @@
       <h1>Gene set analysis and GRN inference on PBMCs</h1>
 
       <p class="author">Gregor Lueg</p>
-
+      <p class="date">2026-05-11</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -105,6 +107,11 @@
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">bixverse</span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-datatable.com" class="external-link">data.table</a></span><span class="op">)</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Attaching package: 'data.table'</span></span>
+<span><span class="co">#&gt; The following object is masked from 'package:base':</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;     %notin%</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://magrittr.tidyverse.org" class="external-link">magrittr</a></span><span class="op">)</span></span></code></pre></div>
 </div>
 <div>
@@ -259,7 +266,8 @@
 <span>  .verbose <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">ms_dt</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/data.table/man/as.data.table.html" class="external-link">as.data.table</a></span><span class="op">(</span><span class="va">module_scores</span>, keep.rownames <span class="op">=</span> <span class="st">"cell_id"</span><span class="op">)</span></span>
+<span><span class="co"># you need to unclass here</span></span>
+<span><span class="va">ms_dt</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/data.table/man/as.data.table.html" class="external-link">as.data.table</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/class.html" class="external-link">unclass</a></span><span class="op">(</span><span class="va">module_scores</span><span class="op">)</span>, keep.rownames <span class="op">=</span> <span class="st">"cell_id"</span><span class="op">)</span></span>
 <span><span class="va">ms_dt</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/merge.html" class="external-link">merge</a></span><span class="op">(</span><span class="va">ms_dt</span>, <span class="va">umap_dt</span>, by <span class="op">=</span> <span class="st">"cell_id"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">ms_long</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/data.table/man/melt.data.table.html" class="external-link">melt</a></span><span class="op">(</span></span>
@@ -283,11 +291,32 @@
 </div>
 </div>
 </div>
+<p>Let’s imagine you want to add the scores to the internal DB. There are helpers for this, too. The <code><a href="../reference/get_obs_data.html">get_obs_data()</a></code> helper in combination with ``</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/add_sc_new_obs.html">add_sc_new_obs</a></span><span class="op">(</span></span>
+<span>  object <span class="op">=</span> <span class="va">sc_object</span>,</span>
+<span>  obs_data <span class="op">=</span> <span class="fu"><a href="../reference/get_obs_data.html">get_obs_data</a></span><span class="op">(</span><span class="va">module_scores</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">sc_object</span><span class="op">[[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span><span class="op">]</span></span>
+<span><span class="co">#&gt;    cell_idx          cell_id   nnz lib_size to_keep          MT      Ribo</span></span>
+<span><span class="co">#&gt;       &lt;num&gt;           &lt;char&gt; &lt;num&gt;    &lt;num&gt;  &lt;lgcl&gt;       &lt;num&gt;     &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1:        1 AAACATACAACCAC-1   778     2418    TRUE 0.030190241 0.4371381</span></span>
+<span><span class="co">#&gt; 2:        3 AAACATTGATCAGC-1  1126     3144    TRUE 0.008905852 0.3171120</span></span>
+<span><span class="co">#&gt; 3:        4 AAACCGTGCTTCCG-1   953     2632    TRUE 0.017477203 0.2431611</span></span>
+<span><span class="co">#&gt;    outlier leiden_clusters     T cell Cytotoxic NK     B cell   Monocyte</span></span>
+<span><span class="co">#&gt;     &lt;lgcl&gt;           &lt;num&gt;      &lt;num&gt;        &lt;num&gt;      &lt;num&gt;      &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1:   FALSE               1  0.3236977   -0.2325926 -0.3144407 -0.7570705</span></span>
+<span><span class="co">#&gt; 2:   FALSE               1  0.2307960   -0.3455873 -0.4134143 -0.6403040</span></span>
+<span><span class="co">#&gt; 3:   FALSE               2 -1.1175209   -0.2854205  0.0692758  1.2887695</span></span></code></pre></div>
+</div>
+<p>As we can appreciate, this has now added the new columns.</p>
 </section><section class="level3"><h3 id="aucell">AUCell<a class="anchor" aria-label="anchor" href="#aucell"></a>
 </h3>
 <p><a href="https://www.nature.com/articles/nmeth.4463" class="external-link">AUCell</a> ranks genes within each cell by expression and computes the area under the recovery curve for the gene set. This is more robust to outliers than a simple mean. <code>bixverse</code> provides two flavours: a Wilcoxon-statistic-based AUC and a standard AUROC. The two are highly correlated; we show the Wilcoxon variant here.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">auc_scores</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/aucell_sc.html">aucell_sc</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">sc_object</span>,</span>
 <span>  gs_list <span class="op">=</span> <span class="va">lineage_sets</span>,</span>
@@ -295,7 +324,7 @@
 <span>  .verbose <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">auc_dt</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/data.table/man/as.data.table.html" class="external-link">as.data.table</a></span><span class="op">(</span><span class="va">auc_scores</span>, keep.rownames <span class="op">=</span> <span class="st">"cell_id"</span><span class="op">)</span></span>
+<span><span class="va">auc_dt</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/data.table/man/as.data.table.html" class="external-link">as.data.table</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/class.html" class="external-link">unclass</a></span><span class="op">(</span><span class="va">auc_scores</span><span class="op">)</span>, keep.rownames <span class="op">=</span> <span class="st">"cell_id"</span><span class="op">)</span></span>
 <span><span class="va">auc_dt</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/merge.html" class="external-link">merge</a></span><span class="op">(</span><span class="va">auc_dt</span>, <span class="va">umap_dt</span>, by <span class="op">=</span> <span class="st">"cell_id"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">auc_long</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/data.table/man/melt.data.table.html" class="external-link">melt</a></span><span class="op">(</span></span>
@@ -324,7 +353,7 @@
 <p>Scoring gene sets is useful, but a natural follow-up question is: <em>are these scores spatially structured on the cell neighbourhood graph, or just noise?</em> <a href="https://www.nature.com/articles/s41467-019-12235-0" class="external-link">VISION</a> provides a permutation-based test of spatial autocorrelation (Geary’s C) on the kNN graph. Gene sets with significant autocorrelation are those whose activity varies smoothly across cell neighbourhoods – a strong indication that the signal is biologically meaningful rather than random.</p>
 <p>VISION expects gene sets in a signed format with <code>pos</code> and (optionally) <code>neg</code> components. In the cause of our cell lineage genes, we could use the other cell type’s markers as negatives, but we will just leave it blank here.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">vision_gs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">lineage_sets</span>, <span class="kw">function</span><span class="op">(</span><span class="va">genes</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>pos <span class="op">=</span> <span class="va">genes</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">vision_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/vision_w_autocor_sc.html">vision_w_autocor_sc</a></span><span class="op">(</span></span>
@@ -339,10 +368,10 @@
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">vision_res</span><span class="op">$</span><span class="va">auto_cor_dt</span><span class="op">)</span></span>
 <span><span class="co">#&gt;    gene_set_name  auto_cor       p_val         fdr</span></span>
 <span><span class="co">#&gt;           &lt;char&gt;     &lt;num&gt;       &lt;num&gt;       &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1:        T cell 0.7568005 0.001996008 0.002661344</span></span>
-<span><span class="co">#&gt; 2:  Cytotoxic NK 0.4578163 0.009980040 0.009980040</span></span>
-<span><span class="co">#&gt; 3:        B cell 0.5715143 0.001996008 0.002661344</span></span>
-<span><span class="co">#&gt; 4:      Monocyte 0.5571136 0.001996008 0.002661344</span></span></code></pre></div>
+<span><span class="co">#&gt; 1:        T cell 0.7570726 0.001996008 0.002661344</span></span>
+<span><span class="co">#&gt; 2:  Cytotoxic NK 0.4577023 0.009980040 0.009980040</span></span>
+<span><span class="co">#&gt; 3:        B cell 0.5715574 0.001996008 0.002661344</span></span>
+<span><span class="co">#&gt; 4:      Monocyte 0.5573538 0.001996008 0.002661344</span></span></code></pre></div>
 </div>
 <p>Unsurprisingly, all of these gene sets show highly significant spatial correlation.</p>
 </section></section><section class="level2"><h2 id="hotspot">Hotspot<a class="anchor" aria-label="anchor" href="#hotspot"></a>
@@ -352,7 +381,7 @@
 </h3>
 <p>The first step computes Geary’s C for every gene against the neighbour graph. Genes with significant autocorrelation are those whose expression varies smoothly across neighbouring cells, i.e., genes that mark spatially coherent programmes.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">hotspot_autocor</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/hotspot_autocor_sc.html">hotspot_autocor_sc</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">sc_object</span>,</span>
 <span>  .verbose <span class="op">=</span> <span class="cn">FALSE</span></span>
@@ -364,24 +393,24 @@
 <span><span class="co">#&gt;             gene_id  gaerys_c   z_score  pval   fdr gene_symbol</span></span>
 <span><span class="co">#&gt;              &lt;char&gt;     &lt;num&gt;     &lt;num&gt; &lt;num&gt; &lt;num&gt;      &lt;char&gt;</span></span>
 <span><span class="co">#&gt;  1: ENSG00000163131 0.5366797  42.91577     0     0        CTSS</span></span>
-<span><span class="co">#&gt;  2: ENSG00000163220 0.7227547  66.40027     0     0      S100A9</span></span>
-<span><span class="co">#&gt;  3: ENSG00000143546 0.6843615  67.94934     0     0      S100A8</span></span>
-<span><span class="co">#&gt;  4: ENSG00000197956 0.5665674  60.65974     0     0      S100A6</span></span>
+<span><span class="co">#&gt;  2: ENSG00000163220 0.7227550  66.40030     0     0      S100A9</span></span>
+<span><span class="co">#&gt;  3: ENSG00000143546 0.6843617  67.94936     0     0      S100A8</span></span>
+<span><span class="co">#&gt;  4: ENSG00000197956 0.5665673  60.65974     0     0      S100A6</span></span>
 <span><span class="co">#&gt;  5: ENSG00000196154 0.6060494  63.34227     0     0      S100A4</span></span>
-<span><span class="co">#&gt;  6: ENSG00000177954 0.5416360  73.15498     0     0       RPS27</span></span>
-<span><span class="co">#&gt;  7: ENSG00000158869 0.6635510  57.40018     0     0      FCER1G</span></span>
-<span><span class="co">#&gt;  8: ENSG00000203747 0.5674031  49.58241     0     0      FCGR3A</span></span>
-<span><span class="co">#&gt;  9: ENSG00000198821 0.2257416  53.25403     0     0       CD247</span></span>
-<span><span class="co">#&gt; 10: ENSG00000143185 0.3175716  52.36314     0     0        XCL2</span></span>
-<span><span class="co">#&gt; 11: ENSG00000143184 0.3614058  64.42496     0     0        XCL1</span></span>
-<span><span class="co">#&gt; 12: ENSG00000143947 0.3309335  45.01268     0     0      RPS27A</span></span>
-<span><span class="co">#&gt; 13: ENSG00000115523 0.5998338 125.16331     0     0        GNLY</span></span>
+<span><span class="co">#&gt;  6: ENSG00000177954 0.5416360  73.15499     0     0       RPS27</span></span>
+<span><span class="co">#&gt;  7: ENSG00000158869 0.6635511  57.40020     0     0      FCER1G</span></span>
+<span><span class="co">#&gt;  8: ENSG00000203747 0.5674031  49.58242     0     0      FCGR3A</span></span>
+<span><span class="co">#&gt;  9: ENSG00000198821 0.2257417  53.25403     0     0       CD247</span></span>
+<span><span class="co">#&gt; 10: ENSG00000143185 0.3175716  52.36315     0     0        XCL2</span></span>
+<span><span class="co">#&gt; 11: ENSG00000143184 0.3614059  64.42496     0     0        XCL1</span></span>
+<span><span class="co">#&gt; 12: ENSG00000143947 0.3309334  45.01267     0     0      RPS27A</span></span>
+<span><span class="co">#&gt; 13: ENSG00000115523 0.5998337 125.16331     0     0        GNLY</span></span>
 <span><span class="co">#&gt; 14: ENSG00000153563 0.2413221  45.56990     0     0        CD8A</span></span>
-<span><span class="co">#&gt; 15: ENSG00000172116 0.2275548  42.96105     0     0        CD8B</span></span>
-<span><span class="co">#&gt; 16: ENSG00000071082 0.3413935  48.71975     0     0       RPL31</span></span>
+<span><span class="co">#&gt; 15: ENSG00000172116 0.2275547  42.96105     0     0        CD8B</span></span>
+<span><span class="co">#&gt; 16: ENSG00000071082 0.3413936  48.71976     0     0       RPL31</span></span>
 <span><span class="co">#&gt; 17: ENSG00000144713 0.3609772  56.28450     0     0       RPL32</span></span>
-<span><span class="co">#&gt; 18: ENSG00000233276 0.4705675  43.87036     0     0        GPX1</span></span>
-<span><span class="co">#&gt; 19: ENSG00000196542 0.3204369  52.86174     0     0      SPTSSB</span></span>
+<span><span class="co">#&gt; 18: ENSG00000233276 0.4705675  43.87037     0     0        GPX1</span></span>
+<span><span class="co">#&gt; 19: ENSG00000196542 0.3204369  52.86175     0     0      SPTSSB</span></span>
 <span><span class="co">#&gt; 20: ENSG00000159674 0.4994881  94.23473     0     0       SPON2</span></span>
 <span><span class="co">#&gt;             gene_id  gaerys_c   z_score  pval   fdr gene_symbol</span></span>
 <span><span class="co">#&gt;              &lt;char&gt;     &lt;num&gt;     &lt;num&gt; &lt;num&gt; &lt;num&gt;      &lt;char&gt;</span></span></code></pre></div>
@@ -391,7 +420,7 @@
 </h3>
 <p>Taking the significant genes forward, we compute pairwise local correlations and cluster them into modules. Each module represents a group of genes that are not only individually autocorrelated but also co-vary locally - a much stronger signal than global correlation alone.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sig_genes</span> <span class="op">&lt;-</span> <span class="va">hotspot_autocor</span><span class="op">[</span><span class="va">fdr</span> <span class="op">&lt;=</span> <span class="fl">0.05</span>, <span class="va">gene_id</span><span class="op">]</span></span>
 <span></span>
 <span><span class="va">hotspot_cor</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/hotspot_gene_cor_sc.html">hotspot_gene_cor_sc</a></span><span class="op">(</span></span>
@@ -408,7 +437,7 @@
 </div>
 <p>This returns a HotSpot result. Let’s add the membership and plot it.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">hotspot_cor</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/generate_hotspot_membership.html">generate_hotspot_membership</a></span><span class="op">(</span><span class="va">hotspot_cor</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># this will only plot a subsample of 500 genes for speed (stratified by</span></span>
@@ -423,7 +452,7 @@
 </div>
 <p>Let’s pull out the genes:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">membership</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_hotspot_membership.html">get_hotspot_membership</a></span><span class="op">(</span><span class="va">hotspot_cor</span><span class="op">)</span></span>
 <span><span class="va">membership</span><span class="op">[</span>, <span class="va">gene_symbol</span> <span class="op">:=</span> <span class="va">ensembl_to_symbol</span><span class="op">[</span><span class="va">gene_id</span><span class="op">]</span><span class="op">]</span></span>
 <span></span>
@@ -457,7 +486,7 @@
 </div>
 <p>The resulting modules should roughly correspond to the major cell-type programmes in PBMCs (T cell, monocyte, B cell, NK cell signatures, etc.). Let’s visualise this with AUCell check it out.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">hotspot_gene_sets</span> <span class="op">&lt;-</span> <span class="va">membership</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/exposition.html" class="external-link">%$%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/split.html" class="external-link">split</a></span><span class="op">(</span><span class="va">gene_id</span>, <span class="va">cluster_member</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">hotspot_gene_sets</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">hotspot_gene_sets</span>, <span class="kw">function</span><span class="op">(</span><span class="va">genes</span><span class="op">)</span> <span class="op">{</span></span>
@@ -471,7 +500,7 @@
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">vision_scores_dt</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/data.table/man/as.data.table.html" class="external-link">as.data.table</a></span><span class="op">(</span></span>
-<span>  <span class="va">vision_scores_hotspot</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/class.html" class="external-link">unclass</a></span><span class="op">(</span><span class="va">vision_scores_hotspot</span><span class="op">)</span>,</span>
 <span>  keep.rownames <span class="op">=</span> <span class="st">"cell_id"</span></span>
 <span><span class="op">)</span></span>
 <span><span class="va">vision_scores_dt</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/merge.html" class="external-link">merge</a></span><span class="op">(</span><span class="va">vision_scores_dt</span>, <span class="va">umap_dt</span>, by <span class="op">=</span> <span class="st">"cell_id"</span><span class="op">)</span></span>
@@ -524,7 +553,7 @@
 </h3>
 <p>SCENIC first filters genes by minimum total counts and minimum proportion of expressing cells to remove uninformative targets.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">scenic_genes</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/scenic_gene_filter_sc.html">scenic_gene_filter_sc</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">sc_object</span>,</span>
 <span>  scenic_params <span class="op">=</span> <span class="fu"><a href="../reference/params_scenic.html">params_scenic</a></span><span class="op">(</span>min_counts <span class="op">=</span> <span class="fl">50L</span><span class="op">)</span>,</span>
@@ -538,7 +567,7 @@
 </h3>
 <p>We need a list of known TFs. The Aerts lab provides a curated list for human which we can download and map to Ensembl IDs.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">tf_dt</span> <span class="op">&lt;-</span> <span class="fu">data.table</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/data.table/man/fread.html" class="external-link">fread</a></span><span class="op">(</span></span>
 <span>  <span class="st">"https://resources.aertslab.org/cistarget/tf_lists/allTFs_hg38.txt"</span>,</span>
 <span>  header <span class="op">=</span> <span class="cn">FALSE</span>,</span>
@@ -554,7 +583,7 @@
 </h3>
 <p>With genes and TFs in hand, we run the GRN inference step. Here we use random forests with a batch size of 64 to illustrate the multi-output path.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">scenic_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/scenic_grn_sc.html">scenic_grn_sc</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">sc_object</span>,</span>
 <span>  tf_ids <span class="op">=</span> <span class="va">tf_dt</span><span class="op">$</span><span class="va">gene_id</span>,</span>
@@ -580,7 +609,7 @@
 </h3>
 <p>The raw importance matrix is large and noisy. The next steps winnow it down to a candidate regulatory network by keeping only the top TF-gene pairs and filtering by pairwise expression correlation. The approach used here is that per gene only TFs with an <code>importance score ≥ mean(importance_score) + n_sd * sd(importance_score)</code> per given gene are kept. Note that <code>n_sd</code> should be adjusted depending on the learner: RF and ExtraTrees spread importance more evenly across TFs than GRNBoost2, so a lower threshold (e.g. <code>n_sd = 1</code>) is appropriate, whereas GRNBoost2 concentrates importance onto fewer TFs and tolerates <code>n_sd = 1.5</code> or even <code>n_sd = 2</code>.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">scenic_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/identify_tf_to_genes.html">identify_tf_to_genes</a></span><span class="op">(</span></span>
 <span>  <span class="va">scenic_res</span>,</span>
 <span>  n_sd <span class="op">=</span> <span class="fl">2</span>,</span>
@@ -622,7 +651,7 @@
 </h3>
 <p>The final (and optional) step in the SCENIC pipeline validates the predicted TF-gene links against known motif binding sites. This requires downloading the CisTarget motif ranking database and motif-to-TF annotation files from the <a href="https://resources.aertslab.org/cistarget/" class="external-link">Aerts lab resources</a>, which together are roughly 1.5 GB. We therefore show the code but do not evaluate it by default.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Download the CisTarget reference files (cached after first download)</span></span>
 <span><span class="va">paths</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/download_cistarget_hg38.html">download_cistarget_hg38</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
@@ -658,7 +687,7 @@
 </section></section><section class="level2"><h2 id="clean-up">Clean up<a class="anchor" aria-label="anchor" href="#clean-up"></a>
 </h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">tempdir_pbmc</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span>, force <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 </div>
 </section><script id="quarto-html-after-body" type="application/javascript">

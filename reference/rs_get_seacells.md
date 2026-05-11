@@ -15,6 +15,7 @@ rs_get_seacells(
   embd,
   cells_to_keep,
   cells_to_use,
+  knn_data,
   seacells_params,
   target_size,
   seed,
@@ -42,6 +43,11 @@ rs_get_seacells(
 
   Optional indices of cells to use for meta cell generation. Useful if
   you wish to generate meta cells in specific cell types.
+
+- knn_data:
+
+  Optional list. This contains pre-computed kNN data (including
+  distances). The user has to ensure consistency!
 
 - seacells_params:
 

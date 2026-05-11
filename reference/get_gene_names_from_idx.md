@@ -2,8 +2,6 @@
 
 Get the gene names based on the gene idx
 
-Get the highly variable gene indices from a `SingleCells`.
-
 ## Usage
 
 ``` r

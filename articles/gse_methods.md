@@ -6,6 +6,7 @@ This vignette shows you how to use the gene set enrichment methods
 implemented in `bixverse`.
 
 ``` r
+
 if (!requireNamespace("fgsea", quietly = TRUE)) {
   BiocManager::install("fgsea")
 }
@@ -14,6 +15,11 @@ if (!requireNamespace("msigdbr", quietly = TRUE)) {
 }
 library(bixverse)
 library(data.table)
+#> 
+#> Attaching package: 'data.table'
+#> The following object is masked from 'package:base':
+#> 
+#>     %notin%
 library(magrittr)
 ```
 
@@ -28,8 +34,8 @@ implementations of the two dominant paradigms for this, along with gene
 ontology-aware variants of each.
 
 **Over-representation analysis (ORA)** via the hypergeometric test asks:
-given that I have drawn $k$ genes from a universe of $N$, and $K$ of
-those belong to a particular gene set, is the overlap of $k \cap K$
+given that I have drawn $`k`$ genes from a universe of $`N`$, and $`K`$
+of those belong to a particular gene set, is the overlap of $`k \cap K`$
 larger than expected? This is fast and interpretable, but requires a
 discrete gene list — typically genes passing some fold-change and
 significance threshold. The choice of threshold and universe can
@@ -70,6 +76,7 @@ construct a named list, which is the expected input format throughout
 `bixverse` for gene set analyses.
 
 ``` r
+
 h_gene_sets <- msigdbr::msigdbr(species = "human", collection = "H")
 
 h_gene_sets_ls <- split(h_gene_sets$ensembl_gene, h_gene_sets$gs_name)
@@ -89,6 +96,7 @@ but worth checking if your assay covers a non-standard set of genes. FDR
 threshold and minimum overlap are also configurable.
 
 ``` r
+
 results <- gse_hypergeometric(
   target_genes = target_genes_1,
   gene_set_list = h_gene_sets_ls
@@ -114,6 +122,7 @@ parallel via [rayon](https://github.com/rayon-rs/rayon) and optimiser
 making it very fast even at scale.
 
 ``` r
+
 target_genes_2 <- c(
   sample(h_gene_sets_ls[["HALLMARK_TNFA_SIGNALING_VIA_NFKB"]], 20),
   sample(h_gene_sets_ls[["HALLMARK_IL6_JAK_STAT3_SIGNALING"]], 25)
@@ -155,6 +164,7 @@ of 20,000 genes — 1.25 million hypergeometric tests in total. On most
 systems this completes in a few seconds.
 
 ``` r
+
 seed = 10101L
 
 set.seed(seed)
@@ -203,7 +213,7 @@ rs_results_example <- gse_hypergeometric_list(
   gene_set_list = gene_sets
 )
 tictoc::toc()
-#> 0.483 sec elapsed
+#> 0.582 sec elapsed
 ```
 
 ## Gene Ontology-aware enrichment: the elimination method
@@ -226,6 +236,7 @@ S7 class that transfers the ontology structure into Rust for efficient
 traversal.
 
 ``` r
+
 go_data_dt <- get_go_data_human()
 #> Loading the data from the package.
 #> Processing data for the gene_ontology class.
@@ -243,6 +254,7 @@ structure is shared across all tests without copying, keeping memory
 overhead low.
 
 ``` r
+
 go_aware_res <- gse_go_elim_method(
   object = go_data_s7,
   target_genes = target_genes_1
@@ -270,6 +282,7 @@ head(go_aware_res)
 And the version for lists:
 
 ``` r
+
 go_aware_res_2 <- gse_go_elim_method_list(
   object = go_data_s7,
   target_gene_list = target_list
@@ -300,6 +313,7 @@ rayon. Running 100 target gene sets against the full human GO completes
 in a matter of seconds:
 
 ``` r
+
 go_gene_universe <- unique(unlist(go_data_dt$ensembl_id))
 
 go_target_sets_no <- 100L
@@ -328,7 +342,7 @@ rs_results_example <- gse_go_elim_method_list(
   target_gene_list = go_target_gene_sets
 )
 tictoc::toc()
-#> 1.374 sec elapsed
+#> 1.538 sec elapsed
 ```
 
 ## Alternative: post-hoc simplification of GO results
@@ -344,6 +358,7 @@ analyses the simplification approach can be more convenient, while for
 rigorous GO reporting the elimination method is generally preferable.
 
 ``` r
+
 go_data <- load_go_human_data()
 
 min_genes <- 3L
@@ -382,6 +397,7 @@ Ties on FDR are broken by ontology depth, preferring the more specific
 term.
 
 ``` r
+
 go_parent_child_dt <- go_data$gene_ontology[
   relationship %in% c("is_a", "part_of")
 ] %>%
@@ -416,6 +432,7 @@ adaptive permutation scheme to estimate precise p-values efficiently.
 Both are available for comparison.
 
 ``` r
+
 library("fgsea")
 
 data(examplePathways)
@@ -442,12 +459,12 @@ head(fgsea_res)
 #> 6:                                        573389_NoRC_negatively_regulates_rRNA_expression
 #>         pval      padj    log2err         ES        NES  size
 #>        <num>     <num>      <num>      <num>      <num> <int>
-#> 1: 0.5490534 0.7262873 0.06674261  0.2885754  0.9399884    27
-#> 2: 0.6952862 0.8366277 0.05445560  0.2387284  0.8366856    39
-#> 3: 0.1122449 0.2599823 0.21392786 -0.3640706 -1.3460572    31
-#> 4: 0.7826888 0.8799951 0.05312981  0.2516324  0.7287088    17
-#> 5: 0.3580060 0.5579562 0.08197788  0.2469065  1.0498921   106
-#> 6: 0.4198895 0.6197865 0.08407456  0.3607407  1.0446784    17
+#> 1: 0.5490534 0.7262873 0.06674261  0.2885755  0.9399888    27
+#> 2: 0.6952862 0.8366277 0.05445560  0.2387284  0.8366858    39
+#> 3: 0.1122449 0.2610139 0.21392786 -0.3640705 -1.3460567    31
+#> 4: 0.7826888 0.8799951 0.05312981  0.2516326  0.7287094    17
+#> 5: 0.3580060 0.5579562 0.08197788  0.2469065  1.0498922   106
+#> 6: 0.4198895 0.6197865 0.08407456  0.3607409  1.0446789    17
 #>                                     leadingEdge
 #>                                          <list>
 #> 1:                            15270,12189,71846
@@ -461,6 +478,7 @@ head(fgsea_res)
 How does bixverse look in comparison?
 
 ``` r
+
 bixverse_fgsea <- calc_fgsea(
   stats = exampleRanks,
   pathways = examplePathways,
@@ -499,6 +517,7 @@ The p-values from both implementations are in close agreement, as
 expected:
 
 ``` r
+
 plot(
   x = -log10(fgsea_res$pval),
   y = -log10(bixverse_fgsea$pvals),
@@ -516,6 +535,7 @@ typical benchmarks), but the gap widens with the number of pathways and
 permutations:
 
 ``` r
+
 microbenchmark::microbenchmark(
   fgsea = fgsea(
     pathways = examplePathways,
@@ -531,9 +551,9 @@ microbenchmark::microbenchmark(
   times = 5L
 )
 #> Unit: seconds
-#>   expr     min       lq     mean   median       uq      max neval
-#>  fgsea 2.40426 2.438197 2.613924 2.576308 2.679570 2.971285     5
-#>   rust 2.16457 2.179880 2.195300 2.205283 2.208558 2.218208     5
+#>   expr      min       lq     mean   median       uq      max neval
+#>  fgsea 2.922578 3.059589 3.257546 3.247606 3.336394 3.721562     5
+#>   rust 2.216998 2.224911 2.233707 2.232283 2.237481 2.256862     5
 ```
 
 ## GO-aware GSEA: the elimination method
@@ -548,6 +568,7 @@ to terms that reached nominal significance to obtain more precise
 p-values than pure permutation alone can provide.
 
 ``` r
+
 gene_universe_go <- unique(
   unlist(go_data_dt[, "ensembl_id"], use.names = FALSE)
 )

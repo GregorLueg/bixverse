@@ -1,17 +1,34 @@
 # Find the neighbours for single cell.
 
-This function will generate the kNNs based on a given embedding. Four
-different algorithms are implemented with different speed and accuracy
-to approximate the nearest neighbours. `"hnsw"` implements a
-Hierarchical Navigatable Small Worlds vector search that has slower
-index generation but high precision. `"annoy"` is based on the
-Approximate Nearest Neighbours Oh Yeah algorithm and is more rapid in
-terms of index generation, but querying on large data sets can be slow.
-`"nndescent"` is a Rust-based implementation of the PyNNDescent
-algorithm and is a good all-rounder and performs well on very large data
-sets. `"exhaustive"` performs exact nearest neighbour search.
-Subsequently, the kNN data will be used to generate an sNN igraph for
-clustering methods.
+This function will generate the kNNs based on a given embedding.
+Available algorithms are:
+
+- `kmknn` - An exact kNN search that leverages k-means clustering under
+  the hood to prune out data points. The default setting.
+
+- `exhaustive` - An exhaustive, flat index. On smaller data sets often
+  faster than the approximate nearest neighbour search algorithms.
+
+- `hnsw` - Hierarchical Navigable Small World. A graph-based approximate
+  nearest neighbour search algorithm; works well on large data sets. A
+  benign race condition is leveraged during index build, making the
+  build non-deterministic. Bigger impact on smaller data sets.
+
+- `nndescent` - Nearest neighbour descent. Leverages concepts from
+  `PyNNDescent` and works well on very large data sets similar to
+  `hnsw`.
+
+- `ivf` - Inverted file index. Uses first k-means clustering to identify
+  Voronoi cells and leverages these during querying. Works well on large
+  data sets with high dimensionality and when you need to return large
+  number of neighbours.
+
+- `annoy` - Approximate nearest neighbours Oh Yeah. Tree-based index,
+  used across different R single cell packages (Seurat, SCE). This
+  version is purely memory-based.
+
+Subsequently, the kNN graph will be additionally transformed into a
+shared nearest neighbour graph for clustering methods.
 
 ## Usage
 
@@ -30,7 +47,7 @@ find_neighbours_sc(
 
 - object:
 
-  `SingleCells` class.
+  `SingleCells`, `MetaCells` (or potentially other) class.
 
 - embd_to_use:
 

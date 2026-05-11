@@ -11,7 +11,7 @@ algorithm showed the best performance in different empirical benchmarks.'></head
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,6 +40,8 @@ algorithm showed the best performance in different empirical benchmarks.'></head
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
     <li><a class="dropdown-item" href="../articles/analysis_single_cell.html">'Bag of genes' methods for single cell in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/knn_searches.html">kNN searches for single cells in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing big data on a powerful laptop (example)</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -71,12 +73,12 @@ algorithm showed the best performance in different empirical benchmarks.</p>
 <span>  sim_doublet_ratio <span class="op">=</span> <span class="fl">1.5</span>,</span>
 <span>  expected_doublet_rate <span class="op">=</span> <span class="fl">0.1</span>,</span>
 <span>  stdev_doublet_rate <span class="op">=</span> <span class="fl">0.02</span>,</span>
-<span>  n_bins <span class="op">=</span> <span class="fl">100L</span>,</span>
+<span>  n_bins_histogram <span class="op">=</span> <span class="fl">100L</span>,</span>
 <span>  manual_threshold <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  normalisation <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  hvg <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  pca <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  knn <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>k <span class="op">=</span> <span class="fl">0L</span>, ann_dist <span class="op">=</span> <span class="st">"euclidean"</span><span class="op">)</span></span>
+<span>  knn <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>k <span class="op">=</span> <span class="fl">0L</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -101,9 +103,9 @@ experiment, typically 0.05-0.10 depending on cell loading. Must be between
 Defaults to <code>0.02</code>.</p></dd>
 
 
-<dt id="arg-n-bins">n_bins<a class="anchor" aria-label="anchor" href="#arg-n-bins"></a></dt>
-<dd><p>Integer. Number of bins for histogram-based automatic threshold
-detection. Typically 50-100. Defaults to <code>100L</code>.</p></dd>
+<dt id="arg-n-bins-histogram">n_bins_histogram<a class="anchor" aria-label="anchor" href="#arg-n-bins-histogram"></a></dt>
+<dd><p>Integer. Number of bins for histogram-based automatic
+threshold detection. Typically 50-100. Defaults to <code>100L</code>.</p></dd>
 
 
 <dt id="arg-manual-threshold">manual_threshold<a class="anchor" aria-label="anchor" href="#arg-manual-threshold"></a></dt>
@@ -114,7 +116,7 @@ score distribution.</p></dd>
 
 <dt id="arg-normalisation">normalisation<a class="anchor" aria-label="anchor" href="#arg-normalisation"></a></dt>
 <dd><p>List. Optional overrides for normalisation parameters.
-See <code><a href="params_norm_doublet_detection_defaults.html">params_norm_doublet_detection_defaults()</a></code> for available
+See <code><a href="params_norm_doublets_defaults.html">params_norm_doublets_defaults()</a></code> for available
 parameters: <code>log_transform</code>, <code>mean_center</code>, <code>normalise_variance</code>,
 <code>target_size</code>.</p></dd>
 

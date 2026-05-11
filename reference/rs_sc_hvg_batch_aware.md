@@ -13,6 +13,8 @@ rs_sc_hvg_batch_aware(
   cell_indices,
   batch_labels,
   loess_span,
+  binning,
+  n_bins,
   clip_max,
   streaming,
   verbose
@@ -27,8 +29,8 @@ rs_sc_hvg_batch_aware(
 
 - hvg_method:
 
-  String. Which HVG detection method to use. Currently only `"vst"` is
-  implemented for batch-aware mode.
+  String. Which HVG detection method to use. One of
+  `c("vst", "meanvarbin", "dispersion")`.
 
 - cell_indices:
 
@@ -42,6 +44,15 @@ rs_sc_hvg_batch_aware(
 - loess_span:
 
   Numeric. The span parameter for the loess function.
+
+- binning:
+
+  String. The binning strategy for the `meanvarbin` method. One of
+  `c("equal_width", "equal_frequency")`.
+
+- n_bins:
+
+  Integer. Number of bins for the `meanvarbin` method.
 
 - clip_max:
 
@@ -58,7 +69,8 @@ rs_sc_hvg_batch_aware(
 
 ## Value
 
-A list with HVG statistics concatenated across all batches:
+A list with HVG statistics concatenated across all batches. For
+`hvg_method == 'vst'`, the following elements can be found:
 
 - mean - The average expression of each gene in each batch.
 
@@ -67,6 +79,22 @@ A list with HVG statistics concatenated across all batches:
 - var_exp - The expected variance of each gene in each batch.
 
 - var_std - The standardised variance of each gene in each batch.
+
+- batch - Batch index for each gene (length = n_genes \* n_batches).
+
+- gene_idx - Gene index for each entry (0-indexed, length = n_genes \*
+  n_batches).
+
+For the other methods
+
+- mean - The average expression of each gene in each batch.
+
+- dispersion - The dispersion of the gene in each batch.
+
+- dispersion_scaled - The scaled dispersion per bin per gene in each
+  batch.
+
+- bin - The bin of the gene in each batch.
 
 - batch - Batch index for each gene (length = n_genes \* n_batches).
 

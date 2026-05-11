@@ -1,8 +1,7 @@
 # Get the index position for a gene
 
-Get the index position for a gene
-
-Get the gene indices from a `SingleCells`.
+Returns the index for a given gene based on the internal gene mapping.
+This is used for the single cell-related classes and methods.
 
 ## Usage
 
@@ -25,4 +24,8 @@ get_gene_indices(x, gene_ids, rust_index)
 
 - rust_index:
 
-  Bool. Shall rust-based indexing be returned.
+  Bool. Shall Rust-based indexing be returned.
+
+## Value
+
+The indices of the genes

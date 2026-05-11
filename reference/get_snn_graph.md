@@ -1,8 +1,7 @@
 # Get the sNN graph
 
-Get the sNN graph
-
-Get the SNN graph from a `SingleCells`.
+Returns the shared nearest neighbour graph from the object. This
+function is used for the single cell-related classes and methods.
 
 ## Usage
 

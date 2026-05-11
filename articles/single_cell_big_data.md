@@ -32,6 +32,7 @@ If you want to reproduce this, download one of the h5ad files from Tahoe
 100m. Or use large enough data you always wanted to analyse.
 
 ``` r
+
 library(bixverse)
 library(ggplot2)
 library(data.table)
@@ -45,6 +46,7 @@ DuckDB. Once the data has been streamed once, subsequent sessions can
 reconnect via `load_existing`.
 
 ``` r
+
 h5_path <- path.expand(
   "PATH TO H5AD/plate1_filt_Vevo_Tahoe100M_WServicesFrom_ParseGigalab.h5ad"
 )
@@ -89,6 +91,7 @@ have no idea how long it would take to load in the full h5ad file in
 Python or R – I do not want to try with 64 GB memory.
 
 ``` r
+
 sc_object <- SingleCells(
   dir_data = dir_files
 )
@@ -106,6 +109,7 @@ are computed in batches rather than pulling the entire count matrix into
 Rust… The memory pressure you should observe should remain minimal.
 
 ``` r
+
 var <- get_sc_var(object = sc_object)
 
 gs_of_interest <- list(
@@ -130,6 +134,7 @@ metrics table is modest in size (one row per cell, a handful of columns)
 and fits comfortably in memory even at millions of cells.
 
 ``` r
+
 qc_df <- sc_object[[c("cell_id", "lib_size", "nnz", "MT")]]
 
 metrics <- list(
@@ -160,6 +165,7 @@ happy.
 Usual filters.
 
 ``` r
+
 sc_object[["outlier"]] <- qc$combined
 
 cells_to_keep <- qc_df[!qc$combined, cell_id]
@@ -179,6 +185,7 @@ automatically selected when cell counts exceed 500k but can be set
 explicitly.
 
 ``` r
+
 sc_object <- find_hvg_sc(
   object = sc_object,
   streaming = TRUE,
@@ -212,6 +219,7 @@ established single cell methods in terms of CPU speed, but yeah… If you
 have a GPU, go use that.
 
 ``` r
+
 library(bixverse.gpu)
 
 sc_object <- find_neighbours_cagra_sc(
@@ -230,6 +238,7 @@ single machine (embedding optimisation with parallel Adam optimisation
 done in \<3 minutes for me).
 
 ``` r
+
 sc_object <- umap_sc(object = sc_object)
 ```
 
@@ -243,6 +252,7 @@ roughly 30k cells), do a fast ranking in Rust and do the DGE. Easy
 peezy, done in ca. 3 seconds.
 
 ``` r
+
 meta_data <- sc_object[[c("cell_id", "cell_name", "drug")]]
 
 cells_grp_a <- meta_data[drug == "AT7519", cell_id]

@@ -1,8 +1,8 @@
 # Get the PCA singular values
 
-Get the PCA singular values
-
-Get the PCA singular values from a `SingleCells`.
+Returns the PCA singular values (can be useful to assess cumulative
+variance explained). This function is used for the single cell-related
+classes and methods.
 
 ## Usage
 

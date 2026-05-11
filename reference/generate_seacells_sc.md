@@ -14,6 +14,7 @@ generate_seacells_sc(
   embd_to_use = "pca",
   no_embd_to_use = NULL,
   cells_to_use = NULL,
+  regenerate_knn = FALSE,
   target_size = 1e+05,
   seed = 42L,
   .verbose = TRUE
@@ -73,6 +74,11 @@ generate_seacells_sc(
 
   Optional string. Names of the cells to use for the generation of the
   SEACells.
+
+- regenerate_knn:
+
+  Boolean. Shall a kNN graph be regenerated. If not, the internal one
+  will be used.
 
 - target_size:
 

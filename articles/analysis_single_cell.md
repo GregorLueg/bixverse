@@ -28,9 +28,15 @@ real datasets with tens of thousands of cells the same code applies
 unchanged. Also, as the
 
 ``` r
+
 library(bixverse)
 library(ggplot2)
 library(data.table)
+#> 
+#> Attaching package: 'data.table'
+#> The following object is masked from 'package:base':
+#> 
+#>     %notin%
 library(magrittr)
 ```
 
@@ -50,6 +56,7 @@ UMAP.
 Rebuild the PBMC3k object (click to expand)
 
 ``` r
+
 pbmc3k_path <- bixverse:::download_pbmc3k()
 tempdir_pbmc <- tempdir()
 
@@ -137,6 +144,7 @@ expression bins. We will just use some lineage-specific genes to have
 pretty visualisations.
 
 ``` r
+
 lineage_sets <- list(
   `T cell` = symbol_to_ensembl[c(
     "CD3D",
@@ -197,7 +205,8 @@ module_scores <- module_scores_sc(
   .verbose = FALSE
 )
 
-ms_dt <- as.data.table(module_scores, keep.rownames = "cell_id")
+# you need to unclass here
+ms_dt <- as.data.table(unclass(module_scores), keep.rownames = "cell_id")
 ms_dt <- merge(ms_dt, umap_dt, by = "cell_id")
 
 ms_long <- melt(
@@ -220,6 +229,33 @@ ggplot(ms_long, aes(x = umap_1, y = umap_2)) +
 
 Module scores for lineage genes projected onto UMAP
 
+Let’s imagine you want to add the scores to the internal DB. There are
+helpers for this, too. The
+[`get_obs_data()`](https://gregorlueg.github.io/bixverse/reference/get_obs_data.md)
+helper in combination with \`\`
+
+``` r
+
+sc_object <- add_sc_new_obs(
+  object = sc_object,
+  obs_data = get_obs_data(module_scores)
+)
+
+sc_object[[1:5]]
+#>    cell_idx          cell_id   nnz lib_size to_keep          MT      Ribo
+#>       <num>           <char> <num>    <num>  <lgcl>       <num>     <num>
+#> 1:        1 AAACATACAACCAC-1   778     2418    TRUE 0.030190241 0.4371381
+#> 2:        3 AAACATTGATCAGC-1  1126     3144    TRUE 0.008905852 0.3171120
+#> 3:        4 AAACCGTGCTTCCG-1   953     2632    TRUE 0.017477203 0.2431611
+#>    outlier leiden_clusters     T cell Cytotoxic NK     B cell   Monocyte
+#>     <lgcl>           <num>      <num>        <num>      <num>      <num>
+#> 1:   FALSE               1  0.3236977   -0.2325926 -0.3144407 -0.7570705
+#> 2:   FALSE               1  0.2307960   -0.3455873 -0.4134143 -0.6403040
+#> 3:   FALSE               2 -1.1175209   -0.2854205  0.0692758  1.2887695
+```
+
+As we can appreciate, this has now added the new columns.
+
 ### AUCell
 
 [AUCell](https://www.nature.com/articles/nmeth.4463) ranks genes within
@@ -230,6 +266,7 @@ standard AUROC. The two are highly correlated; we show the Wilcoxon
 variant here.
 
 ``` r
+
 auc_scores <- aucell_sc(
   object = sc_object,
   gs_list = lineage_sets,
@@ -237,7 +274,7 @@ auc_scores <- aucell_sc(
   .verbose = FALSE
 )
 
-auc_dt <- as.data.table(auc_scores, keep.rownames = "cell_id")
+auc_dt <- as.data.table(unclass(auc_scores), keep.rownames = "cell_id")
 auc_dt <- merge(auc_dt, umap_dt, by = "cell_id")
 
 auc_long <- melt(
@@ -278,6 +315,7 @@ the other cell type’s markers as negatives, but we will just leave it
 blank here.
 
 ``` r
+
 vision_gs <- lapply(lineage_sets, function(genes) list(pos = genes))
 
 vision_res <- vision_w_autocor_sc(
@@ -292,10 +330,10 @@ vision_res <- vision_w_autocor_sc(
 head(vision_res$auto_cor_dt)
 #>    gene_set_name  auto_cor       p_val         fdr
 #>           <char>     <num>       <num>       <num>
-#> 1:        T cell 0.7568005 0.001996008 0.002661344
-#> 2:  Cytotoxic NK 0.4578163 0.009980040 0.009980040
-#> 3:        B cell 0.5715143 0.001996008 0.002661344
-#> 4:      Monocyte 0.5571136 0.001996008 0.002661344
+#> 1:        T cell 0.7570726 0.001996008 0.002661344
+#> 2:  Cytotoxic NK 0.4577023 0.009980040 0.009980040
+#> 3:        B cell 0.5715574 0.001996008 0.002661344
+#> 4:      Monocyte 0.5573538 0.001996008 0.002661344
 ```
 
 Unsurprisingly, all of these gene sets show highly significant spatial
@@ -318,6 +356,7 @@ varies smoothly across neighbouring cells, i.e., genes that mark
 spatially coherent programmes.
 
 ``` r
+
 hotspot_autocor <- hotspot_autocor_sc(
   object = sc_object,
   .verbose = FALSE
@@ -329,24 +368,24 @@ head(hotspot_autocor[order(fdr)], 20L)
 #>             gene_id  gaerys_c   z_score  pval   fdr gene_symbol
 #>              <char>     <num>     <num> <num> <num>      <char>
 #>  1: ENSG00000163131 0.5366797  42.91577     0     0        CTSS
-#>  2: ENSG00000163220 0.7227547  66.40027     0     0      S100A9
-#>  3: ENSG00000143546 0.6843615  67.94934     0     0      S100A8
-#>  4: ENSG00000197956 0.5665674  60.65974     0     0      S100A6
+#>  2: ENSG00000163220 0.7227550  66.40030     0     0      S100A9
+#>  3: ENSG00000143546 0.6843617  67.94936     0     0      S100A8
+#>  4: ENSG00000197956 0.5665673  60.65974     0     0      S100A6
 #>  5: ENSG00000196154 0.6060494  63.34227     0     0      S100A4
-#>  6: ENSG00000177954 0.5416360  73.15498     0     0       RPS27
-#>  7: ENSG00000158869 0.6635510  57.40018     0     0      FCER1G
-#>  8: ENSG00000203747 0.5674031  49.58241     0     0      FCGR3A
-#>  9: ENSG00000198821 0.2257416  53.25403     0     0       CD247
-#> 10: ENSG00000143185 0.3175716  52.36314     0     0        XCL2
-#> 11: ENSG00000143184 0.3614058  64.42496     0     0        XCL1
-#> 12: ENSG00000143947 0.3309335  45.01268     0     0      RPS27A
-#> 13: ENSG00000115523 0.5998338 125.16331     0     0        GNLY
+#>  6: ENSG00000177954 0.5416360  73.15499     0     0       RPS27
+#>  7: ENSG00000158869 0.6635511  57.40020     0     0      FCER1G
+#>  8: ENSG00000203747 0.5674031  49.58242     0     0      FCGR3A
+#>  9: ENSG00000198821 0.2257417  53.25403     0     0       CD247
+#> 10: ENSG00000143185 0.3175716  52.36315     0     0        XCL2
+#> 11: ENSG00000143184 0.3614059  64.42496     0     0        XCL1
+#> 12: ENSG00000143947 0.3309334  45.01267     0     0      RPS27A
+#> 13: ENSG00000115523 0.5998337 125.16331     0     0        GNLY
 #> 14: ENSG00000153563 0.2413221  45.56990     0     0        CD8A
-#> 15: ENSG00000172116 0.2275548  42.96105     0     0        CD8B
-#> 16: ENSG00000071082 0.3413935  48.71975     0     0       RPL31
+#> 15: ENSG00000172116 0.2275547  42.96105     0     0        CD8B
+#> 16: ENSG00000071082 0.3413936  48.71976     0     0       RPL31
 #> 17: ENSG00000144713 0.3609772  56.28450     0     0       RPL32
-#> 18: ENSG00000233276 0.4705675  43.87036     0     0        GPX1
-#> 19: ENSG00000196542 0.3204369  52.86174     0     0      SPTSSB
+#> 18: ENSG00000233276 0.4705675  43.87037     0     0        GPX1
+#> 19: ENSG00000196542 0.3204369  52.86175     0     0      SPTSSB
 #> 20: ENSG00000159674 0.4994881  94.23473     0     0       SPON2
 #>             gene_id  gaerys_c   z_score  pval   fdr gene_symbol
 #>              <char>     <num>     <num> <num> <num>      <char>
@@ -363,6 +402,7 @@ group of genes that are not only individually autocorrelated but also
 co-vary locally - a much stronger signal than global correlation alone.
 
 ``` r
+
 sig_genes <- hotspot_autocor[fdr <= 0.05, gene_id]
 
 hotspot_cor <- hotspot_gene_cor_sc(
@@ -381,6 +421,7 @@ hotspot_cor
 This returns a HotSpot result. Let’s add the membership and plot it.
 
 ``` r
+
 hotspot_cor <- generate_hotspot_membership(hotspot_cor)
 
 # this will only plot a subsample of 500 genes for speed (stratified by
@@ -393,6 +434,7 @@ plot(hotspot_cor)
 Let’s pull out the genes:
 
 ``` r
+
 membership <- get_hotspot_membership(hotspot_cor)
 membership[, gene_symbol := ensembl_to_symbol[gene_id]]
 
@@ -430,6 +472,7 @@ programmes in PBMCs (T cell, monocyte, B cell, NK cell signatures,
 etc.). Let’s visualise this with AUCell check it out.
 
 ``` r
+
 hotspot_gene_sets <- membership %$% split(gene_id, cluster_member)
 
 hotspot_gene_sets <- lapply(hotspot_gene_sets, function(genes) {
@@ -443,7 +486,7 @@ vision_scores_hotspot <- vision_sc(
 )
 
 vision_scores_dt <- as.data.table(
-  vision_scores_hotspot,
+  unclass(vision_scores_hotspot),
   keep.rownames = "cell_id"
 )
 vision_scores_dt <- merge(vision_scores_dt, umap_dt, by = "cell_id")
@@ -520,6 +563,7 @@ SCENIC first filters genes by minimum total counts and minimum
 proportion of expressing cells to remove uninformative targets.
 
 ``` r
+
 scenic_genes <- scenic_gene_filter_sc(
   object = sc_object,
   scenic_params = params_scenic(min_counts = 50L),
@@ -536,6 +580,7 @@ We need a list of known TFs. The Aerts lab provides a curated list for
 human which we can download and map to Ensembl IDs.
 
 ``` r
+
 tf_dt <- data.table::fread(
   "https://resources.aertslab.org/cistarget/tf_lists/allTFs_hg38.txt",
   header = FALSE,
@@ -555,6 +600,7 @@ random forests with a batch size of 64 to illustrate the multi-output
 path.
 
 ``` r
+
 scenic_res <- scenic_grn_sc(
   object = sc_object,
   tf_ids = tf_dt$gene_id,
@@ -595,6 +641,7 @@ appropriate, whereas GRNBoost2 concentrates importance onto fewer TFs
 and tolerates `n_sd = 1.5` or even `n_sd = 2`.
 
 ``` r
+
 scenic_res <- identify_tf_to_genes(
   scenic_res,
   n_sd = 2,
@@ -644,6 +691,7 @@ are roughly 1.5 GB. We therefore show the code but do not evaluate it by
 default.
 
 ``` r
+
 # Download the CisTarget reference files (cached after first download)
 paths <- download_cistarget_hg38()
 
@@ -682,5 +730,6 @@ single cell in `bixverse`.
 ## Clean up
 
 ``` r
+
 unlink(tempdir_pbmc, recursive = TRUE, force = TRUE)
 ```

@@ -56,7 +56,7 @@ module_scores_sc(
 
 ## Value
 
-description
+Returns a `ScMatrixRes` with the module scores.
 
 ## References
 

@@ -11,7 +11,7 @@ For details, please refer to the paper."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,6 +40,8 @@ For details, please refer to the paper."></head><body>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
     <li><a class="dropdown-item" href="../articles/analysis_single_cell.html">'Bag of genes' methods for single cell in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/knn_searches.html">kNN searches for single cells in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing big data on a powerful laptop (example)</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -94,8 +96,9 @@ A list with the following items:</p><ul><li><p>walk_length - Integer. Walk lengt
 <li><p>graining_factor - Numeric. Graining level of data (proportion of
 number of single cells in the initial dataset to the number of metacells in
 the final dataset)</p></li>
-<li><p>linkage_dist - String. Which type of distance metric to use for the
-linkage. Defaults to <code>"complete"</code>.</p></li>
+<li><p>use_kernel - Boolean. Shall a kernel be applied.</p></li>
+<li><p>kith_neighbour - Optional integer. Which neighbour to use for the
+sigma estimation.</p></li>
 <li><p>knn - List of kNN parameters. See <code><a href="params_knn_defaults.html">params_knn_defaults()</a></code>
 for available parameters and their defaults.</p></li>
 </ul></dd>

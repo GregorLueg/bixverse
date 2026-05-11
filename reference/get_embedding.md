@@ -1,7 +1,8 @@
-# Get the embedding from the cache
+# Get the embedding
 
 General wrapper function that can be used to pull out any embedding
-stored in the `ScCache`.
+stored in the class. This function is used for the single cell-related
+classes and methods.
 
 ## Usage
 

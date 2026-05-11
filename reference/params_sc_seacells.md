@@ -15,6 +15,7 @@ params_sc_seacells(
   graph_building = "union",
   pruning = FALSE,
   pruning_threshold = 1e-07,
+  n_landmarks = NULL,
   knn = list()
 )
 ```
@@ -62,6 +63,11 @@ params_sc_seacells(
 
   Float. If `pruning = TRUE` values below which threshold shall be
   pruned.
+
+- n_landmarks:
+
+  Optional integer. If provided, it will use the Nystroem extension
+  during the archetype finding. Useful for larger data sets.
 
 - knn:
 

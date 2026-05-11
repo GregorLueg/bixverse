@@ -23,7 +23,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -58,6 +58,8 @@
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
     <li><a class="dropdown-item" href="../articles/analysis_single_cell.html">'Bag of genes' methods for single cell in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/knn_searches.html">kNN searches for single cells in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing big data on a powerful laptop (example)</a></li>
   </ul>
 </li>
@@ -80,7 +82,7 @@
       <h1>Analysing PBMCs with bixverse</h1>
 
       <p class="author">Grant Neilson and Gregor Lueg</p>
-
+      <p class="date">2026-05-11</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -98,14 +100,19 @@
 <div class="sourceCode cell-code" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">bixverse</span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-datatable.com" class="external-link">data.table</a></span><span class="op">)</span></span></code></pre></div>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-datatable.com" class="external-link">data.table</a></span><span class="op">)</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Attaching package: 'data.table'</span></span>
+<span><span class="co">#&gt; The following object is masked from 'package:base':</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;     %notin%</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="loading-the-data">Loading the data<a class="anchor" aria-label="anchor" href="#loading-the-data"></a>
 </h2>
 <p>We start by downloading the PBMC3k data set bundled with the package and loading it via Cell Ranger-style MTX I/O.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">pbmc3k_path</span> <span class="op">&lt;-</span> <span class="fu">bixverse</span><span class="fu">:::</span><span class="fu"><a href="../reference/download_pbmc3k.html">download_pbmc3k</a></span><span class="op">(</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">pbmc3k_path</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/download_pbmc3k.html">download_pbmc3k</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">tempdir_pbmc</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
@@ -156,16 +163,6 @@
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">var</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_sc_var.html">get_sc_var</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">var</span><span class="op">)</span></span>
-<span><span class="co">#&gt;    gene_idx         gene_id gene_symbol no_cells_exp</span></span>
-<span><span class="co">#&gt;       &lt;num&gt;          &lt;char&gt;      &lt;char&gt;        &lt;int&gt;</span></span>
-<span><span class="co">#&gt; 1:        1 ENSG00000225880   LINC00115           18</span></span>
-<span><span class="co">#&gt; 2:        2 ENSG00000188976       NOC2L          258</span></span>
-<span><span class="co">#&gt; 3:        3 ENSG00000188290        HES4          145</span></span>
-<span><span class="co">#&gt; 4:        4 ENSG00000187608       ISG15         1206</span></span>
-<span><span class="co">#&gt; 5:        5 ENSG00000131591    C1orf159           24</span></span>
-<span><span class="co">#&gt; 6:        6 ENSG00000186891    TNFRSF18           92</span></span>
 <span></span>
 <span><span class="va">ensembl_to_symbol</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/setNames.html" class="external-link">setNames</a></span><span class="op">(</span><span class="va">var</span><span class="op">$</span><span class="va">gene_symbol</span>, <span class="va">var</span><span class="op">$</span><span class="va">gene_id</span><span class="op">)</span></span>
 <span><span class="va">symbol_to_ensembl</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/setNames.html" class="external-link">setNames</a></span><span class="op">(</span><span class="va">var</span><span class="op">$</span><span class="va">gene_id</span>, <span class="va">var</span><span class="op">$</span><span class="va">gene_symbol</span><span class="op">)</span></span></code></pre></div>
@@ -294,62 +291,100 @@
 </div>
 </section><section class="level2"><h2 id="clustering-and-marker-detection">Clustering and marker detection<a class="anchor" aria-label="anchor" href="#clustering-and-marker-detection"></a>
 </h2>
-<p>Leiden clustering followed by differential gene expression across all clusters.</p>
+<section class="level3"><h3 id="leiden-clustering">Leiden clustering<a class="anchor" aria-label="anchor" href="#leiden-clustering"></a>
+</h3>
+<p>Leiden clustering followed by differential gene expression across all clusters. You can also run Louvain if you want, but Leiden is thought of to have better properties, see <a href="https://www.nature.com/articles/s41598-019-41695-z" class="external-link">Traag, et al.</a>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/find_clusters_sc.html">find_clusters_sc</a></span><span class="op">(</span><span class="va">sc_object</span>, res <span class="op">=</span> <span class="fl">1.5</span>, name <span class="op">=</span> <span class="st">"leiden_clusters"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/find_clusters_sc.html">find_clusters_sc</a></span><span class="op">(</span><span class="va">sc_object</span>, res <span class="op">=</span> <span class="fl">1</span>, name <span class="op">=</span> <span class="st">"leiden_clusters"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">all_markers</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/find_all_markers_sc.html">find_all_markers_sc</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">sc_object</span>,</span>
 <span>  column_of_interest <span class="op">=</span> <span class="st">"leiden_clusters"</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Processing group 1 out of 7.</span></span>
-<span><span class="co">#&gt; Processing group 2 out of 7.</span></span>
-<span><span class="co">#&gt; Processing group 3 out of 7.</span></span>
-<span><span class="co">#&gt; Processing group 4 out of 7.</span></span>
-<span><span class="co">#&gt; Processing group 5 out of 7.</span></span>
-<span><span class="co">#&gt; Processing group 6 out of 7.</span></span>
-<span><span class="co">#&gt; Processing group 7 out of 7.</span></span>
+<span><span class="co">#&gt; Processing group 1 out of 8.</span></span>
+<span><span class="co">#&gt; Processing group 2 out of 8.</span></span>
+<span><span class="co">#&gt; Processing group 3 out of 8.</span></span>
+<span><span class="co">#&gt; Processing group 4 out of 8.</span></span>
+<span><span class="co">#&gt; Processing group 5 out of 8.</span></span>
+<span><span class="co">#&gt; Processing group 6 out of 8.</span></span>
+<span><span class="co">#&gt; Processing group 7 out of 8.</span></span>
+<span><span class="co">#&gt; Processing group 8 out of 8.</span></span>
 <span></span>
 <span><span class="va">all_markers</span><span class="op">[</span>, <span class="va">gene_symbol</span> <span class="op">:=</span> <span class="va">ensembl_to_symbol</span><span class="op">[</span><span class="va">gene_id</span><span class="op">]</span><span class="op">]</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">all_markers</span><span class="op">[</span><span class="va">fdr</span> <span class="op">&lt;=</span> <span class="fl">0.05</span><span class="op">]</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="op">-</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">lfc</span><span class="op">)</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span>
-<span><span class="co">#&gt;      grp         gene_id      lfc     prop1      prop2 z_scores      p_values</span></span>
-<span><span class="co">#&gt;    &lt;num&gt;          &lt;char&gt;    &lt;num&gt;     &lt;num&gt;      &lt;num&gt;    &lt;num&gt;         &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1:     6 ENSG00000163220 4.174770 0.9887324 0.20077434 29.09827 1.887722e-186</span></span>
-<span><span class="co">#&gt; 2:     7 ENSG00000105374 4.156168 1.0000000 0.25049117 18.50890  8.752290e-77</span></span>
-<span><span class="co">#&gt; 3:     6 ENSG00000090382 4.081069 1.0000000 0.51050884 29.66810 9.907717e-194</span></span>
-<span><span class="co">#&gt; 4:     7 ENSG00000115523 3.934315 0.9527559 0.13654225 17.52567  4.562691e-69</span></span>
-<span><span class="co">#&gt; 5:     6 ENSG00000143546 3.663987 0.9718310 0.11504425 28.62794 1.508612e-180</span></span>
-<span><span class="co">#&gt; 6:     7 ENSG00000100453 3.544770 0.9842520 0.06974459 18.39899  6.691597e-76</span></span>
+<span><span class="co">#&gt;      grp         gene_id      lfc     prop1     prop2 z_scores      p_values</span></span>
+<span><span class="co">#&gt;    &lt;num&gt;          &lt;char&gt;    &lt;num&gt;     &lt;num&gt;     &lt;num&gt;    &lt;num&gt;         &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1:     6 ENSG00000163220 4.150865 0.9830986 0.2018805 28.88792 8.465550e-184</span></span>
+<span><span class="co">#&gt; 2:     7 ENSG00000115523 4.130326 0.9714286 0.1300049 19.00160  8.270732e-81</span></span>
+<span><span class="co">#&gt; 3:     7 ENSG00000105374 4.078447 1.0000000 0.2456747 19.20149  1.798204e-82</span></span>
+<span><span class="co">#&gt; 4:     6 ENSG00000090382 4.055920 0.9971831 0.5110620 29.47783 2.769802e-191</span></span>
+<span><span class="co">#&gt; 5:     6 ENSG00000143546 3.647868 0.9690141 0.1155973 28.50864 4.576800e-179</span></span>
+<span><span class="co">#&gt; 6:     6 ENSG00000101439 3.409787 0.9943662 0.2389380 28.07345 1.033391e-173</span></span>
 <span><span class="co">#&gt;              fdr gene_symbol</span></span>
 <span><span class="co">#&gt;            &lt;num&gt;      &lt;char&gt;</span></span>
-<span><span class="co">#&gt; 1: 4.275690e-183      S100A9</span></span>
-<span><span class="co">#&gt; 2:  3.963037e-73        NKG7</span></span>
-<span><span class="co">#&gt; 3: 4.488196e-190         LYZ</span></span>
-<span><span class="co">#&gt; 4:  5.164966e-66        GNLY</span></span>
-<span><span class="co">#&gt; 5: 2.278005e-177      S100A8</span></span>
-<span><span class="co">#&gt; 6:  1.514978e-72        GZMB</span></span></code></pre></div>
+<span><span class="co">#&gt; 1: 1.915331e-180      S100A9</span></span>
+<span><span class="co">#&gt; 2:  1.925426e-77        GNLY</span></span>
+<span><span class="co">#&gt; 3:  8.372437e-79        NKG7</span></span>
+<span><span class="co">#&gt; 4: 1.253335e-187         LYZ</span></span>
+<span><span class="co">#&gt; 5: 6.903339e-176      S100A8</span></span>
+<span><span class="co">#&gt; 6: 1.169024e-170        CST3</span></span></code></pre></div>
 </div>
-</section><section class="level2"><h2 id="visualisation">Visualisation<a class="anchor" aria-label="anchor" href="#visualisation"></a>
+</section><section class="level3"><h3 id="fast-clustering">Fast clustering<a class="anchor" aria-label="anchor" href="#fast-clustering"></a>
+</h3>
+<p>In the case of large data sets there is an option to run an accelerated form of clustering. This runs first k-means clustering (with default <code>sqrt(N)</code> cells), then kNN on the centroids, followed by Louvain (Leiden is not yet supported, but on the to-do list) across a set of resolutions. There is also an option to run this across several seeds to check for stability of the clustering. If you ran the grid search, the membership</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">fast_cluster_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fast_cluster_sc.html">fast_cluster_sc</a></span><span class="op">(</span></span>
+<span>  object <span class="op">=</span> <span class="va">sc_object</span>,</span>
+<span>  resolutions <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">5</span>, <span class="fl">3</span>, <span class="fl">2</span>, <span class="fl">1.5</span>, <span class="fl">1</span>, <span class="fl">0.5</span><span class="op">)</span>,</span>
+<span>  <span class="co"># also return the k-mean clustering</span></span>
+<span>  return_kmeans <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  no_seeds <span class="op">=</span> <span class="fl">25L</span>,</span>
+<span>  grid_search <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">fast_clusted_dt</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_obs_data.html">get_obs_data</a></span><span class="op">(</span><span class="va">fast_cluster_res</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">fast_clusted_dt</span><span class="op">)</span></span>
+<span><span class="co">#&gt;    cell_idx res_5 res_3 res_2 res_1.5 res_1 res_0.5</span></span>
+<span><span class="co">#&gt;       &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt;   &lt;int&gt; &lt;int&gt;   &lt;int&gt;</span></span>
+<span><span class="co">#&gt; 1:        1     7     2     2       2     0       0</span></span>
+<span><span class="co">#&gt; 2:        3    14     2     2       2     0       0</span></span>
+<span><span class="co">#&gt; 3:        4     9     1     1       1     1       1</span></span>
+<span><span class="co">#&gt; 4:        6     7     2     2       2     0       0</span></span>
+<span><span class="co">#&gt; 5:        8     5     2     2       2     0       0</span></span>
+<span><span class="co">#&gt; 6:        9     5     2     2       2     0       0</span></span></code></pre></div>
+</div>
+<p>If you want to explore the k-means memberships or centroids, there are getters for this.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">centroids</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_centroids.html">get_centroids</a></span><span class="op">(</span><span class="va">fast_cluster_res</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">kmeans_membership</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_kmeans_clusters.html">get_kmeans_clusters</a></span><span class="op">(</span><span class="va">fast_cluster_res</span><span class="op">)</span></span></code></pre></div>
+</div>
+</section></section><section class="level2"><h2 id="visualisation">Visualisation<a class="anchor" aria-label="anchor" href="#visualisation"></a>
 </h2>
 <section class="level3"><h3 id="dimensionality-reduction">Dimensionality reduction<a class="anchor" aria-label="anchor" href="#dimensionality-reduction"></a>
 </h3>
 <p>Let us run quickly UMAP and tSNE.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/umap_sc.html">umap_sc</a></span><span class="op">(</span><span class="va">sc_object</span>, knn_method <span class="op">=</span> <span class="st">"annoy"</span><span class="op">)</span></span>
+<div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/umap_sc.html">umap_sc</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Running UMAP.</span></span>
 <span><span class="co">#&gt; Using n_epochs = 500 (dataset &lt;10k samples or adam_parallel optimiser)</span></span>
 <span><span class="co">#&gt; Using provided kNN graph.</span></span>
 <span></span>
-<span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tsne_sc.html">tsne_sc</a></span><span class="op">(</span><span class="va">sc_object</span>, perplexity <span class="op">=</span> <span class="fl">30</span>, knn_method <span class="op">=</span> <span class="st">"annoy"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Running t-SNE.</span></span>
-<span><span class="co">#&gt; Using provided kNN graph.</span></span></code></pre></div>
+<span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tsne_sc.html">tsne_sc</a></span><span class="op">(</span></span>
+<span>  <span class="va">sc_object</span>,</span>
+<span>  perplexity <span class="op">=</span> <span class="fl">10</span></span>
+<span><span class="op">)</span></span>
+<span><span class="co">#&gt; Running t-SNE.</span></span></code></pre></div>
 </div>
 <p>We can pull the embeddings back into data.tables and plot them (longer term, the idea will be to provide plotting helpers in <code>bixverse.plots</code>). The obs columns can be appended directly.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">umap_dt</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/data.table/man/as.data.table.html" class="external-link">as.data.table</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="../reference/get_embedding.html">get_embedding</a></span><span class="op">(</span><span class="va">sc_object</span>, <span class="st">"umap"</span><span class="op">)</span>,</span>
 <span>  keep.rownames <span class="op">=</span> <span class="st">"cell_id"</span></span>
@@ -368,7 +403,7 @@
 </div>
 <p>Let’s check out tSNE</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">tsne_dt</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/data.table/man/as.data.table.html" class="external-link">as.data.table</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="../reference/get_embedding.html">get_embedding</a></span><span class="op">(</span><span class="va">sc_object</span>, <span class="st">"tsne"</span><span class="op">)</span>,</span>
 <span>  keep.rownames <span class="op">=</span> <span class="st">"cell_id"</span></span>
@@ -389,7 +424,7 @@
 </h3>
 <p>Dot plots are a standard way to visualise marker gene expression across clusters. The <code>extract_dot_plot_data</code> method handles the Rust-level extraction, grouping statistics and optional min-max scaling in one call.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">cell_markers</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
 <span>  <span class="st">"MS4A1"</span>,</span>
 <span>  <span class="st">"CD79B"</span>,</span>
@@ -438,7 +473,7 @@
 </h3>
 <p>For feature plots or other per-cell visualisations, <code>extract_gene_expression</code> returns a long data.table with one row per cell and columns for each requested gene, plus any obs metadata you need.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">expr_dt</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/extract_gene_expression.html">extract_gene_expression</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">sc_object</span>,</span>
 <span>  features <span class="op">=</span> <span class="va">symbol_to_ensembl</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"CD14"</span>, <span class="st">"MS4A1"</span>, <span class="st">"CD3E"</span><span class="op">)</span><span class="op">]</span>,</span>
@@ -481,7 +516,7 @@
 </section></section><section class="level2"><h2 id="clean-up">Clean up<a class="anchor" aria-label="anchor" href="#clean-up"></a>
 </h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">tempdir_pbmc</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span>, force <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 </div>
 </section><script id="quarto-html-after-body" type="application/javascript">

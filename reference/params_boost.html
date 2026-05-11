@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -36,6 +36,8 @@
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
     <li><a class="dropdown-item" href="../articles/analysis_single_cell.html">'Bag of genes' methods for single cell in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/knn_searches.html">kNN searches for single cells in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing big data on a powerful laptop (example)</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -65,13 +67,15 @@
 <span>  boost_rate <span class="op">=</span> <span class="fl">0.25</span>,</span>
 <span>  replace <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  resolution <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  n_iters <span class="op">=</span> <span class="fl">25L</span>,</span>
+<span>  n_iters <span class="op">=</span> <span class="fl">20L</span>,</span>
 <span>  p_thresh <span class="op">=</span> <span class="fl">1e-07</span>,</span>
 <span>  voter_thresh <span class="op">=</span> <span class="fl">0.9</span>,</span>
+<span>  fast_cluster <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  normalisation <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  hvg <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  pca <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  knn <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>k <span class="op">=</span> <span class="fl">0L</span>, ann_dist <span class="op">=</span> <span class="st">"euclidean"</span><span class="op">)</span></span>
+<span>  knn <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>k <span class="op">=</span> <span class="fl">0L</span><span class="op">)</span>,</span>
+<span>  fast_cluster_params <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -96,7 +100,7 @@ Higher values lead to more clusters. Defaults to <code>1.0</code>.</p></dd>
 
 <dt id="arg-n-iters">n_iters<a class="anchor" aria-label="anchor" href="#arg-n-iters"></a></dt>
 <dd><p>Integer. Number of iterations to run the algorithm. Defaults
-to <code>25L</code>.</p></dd>
+to <code>20L</code>.</p></dd>
 
 
 <dt id="arg-p-thresh">p_thresh<a class="anchor" aria-label="anchor" href="#arg-p-thresh"></a></dt>
@@ -110,9 +114,16 @@ iterations a cell must be assigned to a cluster to be considered a member.
 Must be between 0 and 1. Defaults to <code>0.9</code>.</p></dd>
 
 
+<dt id="arg-fast-cluster">fast_cluster<a class="anchor" aria-label="anchor" href="#arg-fast-cluster"></a></dt>
+<dd><p>Boolean. Shall fast Louvain clustering be applied, i.e.,
+k-means clustering and use the centroids for kNN graph generation and
+Louvain clustering with then backpropagating the membership based on centroid
+proximity.</p></dd>
+
+
 <dt id="arg-normalisation">normalisation<a class="anchor" aria-label="anchor" href="#arg-normalisation"></a></dt>
 <dd><p>List. Optional overrides for normalisation parameters.
-See <code><a href="params_norm_doublet_detection_defaults.html">params_norm_doublet_detection_defaults()</a></code> for available
+See <code><a href="params_norm_doublets_defaults.html">params_norm_doublets_defaults()</a></code> for available
 parameters: <code>log_transform</code>, <code>mean_center</code>, <code>normalise_variance</code>,
 <code>target_size</code>. Note: Boost uses different defaults (<code>log_transform = FALSE</code>,
 <code>mean_center = TRUE</code>, <code>normalise_variance = TRUE</code>, <code>target_size = NULL</code>).</p></dd>
@@ -137,6 +148,13 @@ parameters. See <code><a href="params_hvg_defaults.html">params_hvg_defaults()</
 <code>diversify_prob</code>, <code>ef_budget</code>, <code>m</code>, <code>ef_construction</code>, <code>ef_search</code>, <code>n_list</code>
 and <code>n_probe</code>. Note: this function defaults to <code>k = 0L</code> (automatic neighbour
 detection).</p></dd>
+
+
+<dt id="arg-fast-cluster-params">fast_cluster_params<a class="anchor" aria-label="anchor" href="#arg-fast-cluster-params"></a></dt>
+<dd><p>List. Optional overrides for the fast clustering
+parameters. Only relevant if <code>fast_cluster = TRUE</code>. See
+<code><a href="params_fast_cluster_default.html">params_fast_cluster_default()</a></code> for available parameters: <code>km_type</code>,
+<code>n_centroids</code>, <code>kmeans_iters</code> and <code>batch_size</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

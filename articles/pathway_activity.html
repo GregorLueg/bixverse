@@ -23,7 +23,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -58,6 +58,8 @@
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
     <li><a class="dropdown-item" href="../articles/analysis_single_cell.html">'Bag of genes' methods for single cell in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/knn_searches.html">kNN searches for single cells in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing big data on a powerful laptop (example)</a></li>
   </ul>
 </li>
@@ -80,7 +82,7 @@
       <h1>Pathway activity functions</h1>
 
       <p class="author">Gregor Lueg</p>
-
+      <p class="date">2026-05-11</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -144,12 +146,12 @@
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">bixverse_res_gaussian</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span></span>
-<span><span class="co">#&gt;               s1          s2          s3            s4          s5</span></span>
-<span><span class="co">#&gt; gs1  0.009863134 -0.13265560  0.03860958 -0.0007354569  0.09979839</span></span>
-<span><span class="co">#&gt; gs2  0.145475387  0.06788168  0.16272776 -0.0484834371 -0.07349338</span></span>
-<span><span class="co">#&gt; gs3 -0.141597186 -0.09199815 -0.03758254 -0.0770037606 -0.05471550</span></span>
-<span><span class="co">#&gt; gs4 -0.186252365 -0.08253650 -0.02488495  0.0419060853  0.01726811</span></span>
-<span><span class="co">#&gt; gs5 -0.016465263 -0.03264040 -0.18299280  0.0884396512  0.08989500</span></span></code></pre></div>
+<span><span class="co">#&gt;             s1          s2          s3          s4          s5</span></span>
+<span><span class="co">#&gt; gs1  0.2831024 -0.05018816  0.18297439  0.13505225 -0.08451001</span></span>
+<span><span class="co">#&gt; gs2  0.3139142 -0.11333432  0.21586202  0.06766904  0.10128482</span></span>
+<span><span class="co">#&gt; gs3 -0.1382938 -0.04520287 -0.24021999  0.12832321  0.09866920</span></span>
+<span><span class="co">#&gt; gs4 -0.1190033  0.18706330  0.05476168 -0.05905408 -0.08870603</span></span>
+<span><span class="co">#&gt; gs5  0.0357218 -0.06788972  0.18996609 -0.04650968 -0.07014103</span></span></code></pre></div>
 </div>
 <p>If the original <code>GSVA</code> Bioconductor package is available we can verify that the results are essentially identical. Minor differences in numerical precision arise from optimisations on the Rust side, but per-pathway correlations between the two implementations are consistently above 0.99.</p>
 <div class="cell">
@@ -180,9 +182,9 @@
 <span>  times <span class="op">=</span> <span class="fl">3L</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: milliseconds</span></span>
-<span><span class="co">#&gt;      expr      min        lq      mean    median        uq       max neval</span></span>
-<span><span class="co">#&gt;      gsva 2460.576 2465.6239 2481.7239 2470.6716 2492.2977 2513.9238     3</span></span>
-<span><span class="co">#&gt;  bixverse  580.856  581.0158  581.8882  581.1756  582.4043  583.6329     3</span></span></code></pre></div>
+<span><span class="co">#&gt;      expr      min        lq     mean    median        uq       max neval</span></span>
+<span><span class="co">#&gt;      gsva 2501.661 2503.8809 2515.854 2506.1008 2522.9502 2539.7996     3</span></span>
+<span><span class="co">#&gt;  bixverse  581.451  581.6388  581.913  581.8266  582.1439  582.4612     3</span></span></code></pre></div>
 </div>
 </section><section class="level3"><h3 id="poisson-kernel">Poisson kernel<a class="anchor" aria-label="anchor" href="#poisson-kernel"></a>
 </h3>
@@ -196,12 +198,12 @@
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">bixverse_res_poisson</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span></span>
-<span><span class="co">#&gt;              s1          s2          s3          s4          s5</span></span>
-<span><span class="co">#&gt; gs1  0.22094438 -0.13988088  0.07786652  0.12042579 -0.14646733</span></span>
-<span><span class="co">#&gt; gs2  0.00717930 -0.03540182 -0.03552337  0.04872137  0.02476266</span></span>
-<span><span class="co">#&gt; gs3  0.07494343 -0.06666265  0.02612589 -0.20409502 -0.11010636</span></span>
-<span><span class="co">#&gt; gs4 -0.17342691  0.16554904 -0.21089376  0.31440297 -0.09433910</span></span>
-<span><span class="co">#&gt; gs5 -0.08230767  0.16365369 -0.18232393 -0.01777528 -0.13746922</span></span></code></pre></div>
+<span><span class="co">#&gt;              s1          s2          s3          s4           s5</span></span>
+<span><span class="co">#&gt; gs1  0.12442115 -0.07984133  0.10025140  0.28791072  0.081558281</span></span>
+<span><span class="co">#&gt; gs2  0.03683659 -0.02366761  0.02030295 -0.07163563 -0.058065471</span></span>
+<span><span class="co">#&gt; gs3  0.07691830 -0.16186852  0.06715375  0.02673317 -0.073180742</span></span>
+<span><span class="co">#&gt; gs4  0.09288716  0.16516966 -0.22793381 -0.03648418 -0.008651714</span></span>
+<span><span class="co">#&gt; gs5 -0.10631888  0.06703667 -0.03618798  0.26867660 -0.211001102</span></span></code></pre></div>
 </div>
 <p>And vs. the original</p>
 <div class="cell">
@@ -231,8 +233,8 @@
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: seconds</span></span>
 <span><span class="co">#&gt;      expr       min        lq      mean    median        uq       max neval</span></span>
-<span><span class="co">#&gt;      gsva 18.832861 18.842568 18.848288 18.852276 18.856002 18.859728     3</span></span>
-<span><span class="co">#&gt;  bixverse  2.786899  2.787046  2.792641  2.787193  2.795512  2.803831     3</span></span></code></pre></div>
+<span><span class="co">#&gt;      gsva 18.858847 18.867389 18.870556 18.875931 18.876411 18.876890     3</span></span>
+<span><span class="co">#&gt;  bixverse  2.788495  2.789203  2.790473  2.789911  2.791462  2.793012     3</span></span></code></pre></div>
 </div>
 </section></section><section class="level2"><h2 id="ssgsea">ssGSEA<a class="anchor" aria-label="anchor" href="#ssgsea"></a>
 </h2>
@@ -245,12 +247,12 @@
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">bixverse_res_ssgsea</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span></span>
-<span><span class="co">#&gt;             s1         s2           s3         s4         s5</span></span>
-<span><span class="co">#&gt; gs1 0.10762277 0.05601719  0.138749022 0.14962965 0.16567135</span></span>
-<span><span class="co">#&gt; gs2 0.18438116 0.09872824  0.213621747 0.10770997 0.12138715</span></span>
-<span><span class="co">#&gt; gs3 0.04110268 0.03513645  0.067135131 0.02300473 0.07935425</span></span>
-<span><span class="co">#&gt; gs4 0.02771066 0.12243466  0.095543228 0.10847501 0.08636451</span></span>
-<span><span class="co">#&gt; gs5 0.10298632 0.07888029 -0.002787812 0.13500292 0.12466942</span></span></code></pre></div>
+<span><span class="co">#&gt;             s1         s2           s3        s4         s5</span></span>
+<span><span class="co">#&gt; gs1 0.29792486 0.09543156  0.166080955 0.2205289 0.12028131</span></span>
+<span><span class="co">#&gt; gs2 0.23559625 0.10543363  0.159728020 0.1258051 0.13531435</span></span>
+<span><span class="co">#&gt; gs3 0.00898486 0.09186646 -0.009559779 0.1921628 0.16285276</span></span>
+<span><span class="co">#&gt; gs4 0.03633415 0.18766356  0.149768292 0.0877070 0.08845423</span></span>
+<span><span class="co">#&gt; gs5 0.08315156 0.09893530  0.212265849 0.1499003 0.01828444</span></span></code></pre></div>
 </div>
 <p>Let’s compare again against the GSVA version:</p>
 <div class="cell">
@@ -280,8 +282,8 @@
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: milliseconds</span></span>
 <span><span class="co">#&gt;      expr      min       lq     mean   median       uq      max neval</span></span>
-<span><span class="co">#&gt;      gsva 611.5410 612.2522 614.6657 612.9634 616.2281 619.4928     3</span></span>
-<span><span class="co">#&gt;  bixverse 110.5719 110.8645 111.4187 111.1572 111.8422 112.5271     3</span></span></code></pre></div>
+<span><span class="co">#&gt;      gsva 620.6626 627.0403 629.8052 633.4181 634.3765 635.3350     3</span></span>
+<span><span class="co">#&gt;  bixverse 109.8428 109.9232 110.1304 110.0036 110.2742 110.5448     3</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="multi-contrast-enrichment-mitch">Multi-contrast enrichment (mitch)<a class="anchor" aria-label="anchor" href="#multi-contrast-enrichment-mitch"></a>
 </h2>
@@ -317,7 +319,7 @@
 <div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">myImportedData</span>, <span class="va">genesetsExample</span>, package <span class="op">=</span> <span class="st">"mitch"</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">mitch_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">suppressMessages</a></span><span class="op">(</span><span class="fu">mitch</span><span class="fu">::</span><span class="fu">mitch_calc</span><span class="op">(</span></span>
+<span><span class="va">mitch_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">suppressMessages</a></span><span class="op">(</span><span class="fu">mitch</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/mitch/man/mitch_calc.html" class="external-link">mitch_calc</a></span><span class="op">(</span></span>
 <span>  <span class="va">myImportedData</span>,</span>
 <span>  <span class="va">genesetsExample</span>,</span>
 <span>  priority <span class="op">=</span> <span class="st">"significance"</span>,</span>
@@ -332,13 +334,14 @@
 <span></span>
 <span><span class="co"># Pathway ordering and FDR values should match exactly</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/all.html" class="external-link">all</a></span><span class="op">(</span><span class="va">bixverse_res</span><span class="op">$</span><span class="va">pathway_names</span> <span class="op">==</span> <span class="va">mitch_res</span><span class="op">$</span><span class="va">enrichment_result</span><span class="op">$</span><span class="va">set</span><span class="op">)</span> <span class="op">&amp;&amp;</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/all.equal.html" class="external-link">all.equal</a></span><span class="op">(</span><span class="va">bixverse_res</span><span class="op">$</span><span class="va">manova_fdr</span>, <span class="va">mitch_res</span><span class="op">$</span><span class="va">enrichment_result</span><span class="op">$</span><span class="va">p.adjustMANOVA</span><span class="op">)</span></span></code></pre></div>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/all.equal.html" class="external-link">all.equal</a></span><span class="op">(</span><span class="va">bixverse_res</span><span class="op">$</span><span class="va">manova_fdr</span>, <span class="va">mitch_res</span><span class="op">$</span><span class="va">enrichment_result</span><span class="op">$</span><span class="va">p.adjustMANOVA</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
 </div>
 <p>And let’s check the speed differences:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">microbenchmark</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/microbenchmark/man/microbenchmark.html" class="external-link">microbenchmark</a></span><span class="op">(</span></span>
-<span>  mitch <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">suppressMessages</a></span><span class="op">(</span><span class="fu">mitch</span><span class="fu">::</span><span class="fu">mitch_calc</span><span class="op">(</span></span>
+<span>  mitch <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">suppressMessages</a></span><span class="op">(</span><span class="fu">mitch</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/mitch/man/mitch_calc.html" class="external-link">mitch_calc</a></span><span class="op">(</span></span>
 <span>    <span class="va">myImportedData</span>,</span>
 <span>    <span class="va">genesetsExample</span>,</span>
 <span>    priority <span class="op">=</span> <span class="st">"significance"</span>,</span>
@@ -350,7 +353,14 @@
 <span>    gene_set_list <span class="op">=</span> <span class="va">genesetsExample</span></span>
 <span>  <span class="op">)</span>,</span>
 <span>  times <span class="op">=</span> <span class="fl">5L</span></span>
-<span><span class="op">)</span></span></code></pre></div>
+<span><span class="op">)</span></span>
+<span><span class="co">#&gt; Unit: milliseconds</span></span>
+<span><span class="co">#&gt;      expr        min         lq       mean     median         uq        max</span></span>
+<span><span class="co">#&gt;     mitch 144.744383 146.351535 147.796067 146.843517 148.598075 152.442825</span></span>
+<span><span class="co">#&gt;  bixverse   3.429687   3.435188   4.290205   3.512752   4.942413   6.130983</span></span>
+<span><span class="co">#&gt;  neval</span></span>
+<span><span class="co">#&gt;      5</span></span>
+<span><span class="co">#&gt;      5</span></span></code></pre></div>
 </div>
 <p>As with the GSVA and ssGSEA implementations, you should observe meaningful speed improvements from Rust, particularly as the number of gene sets or contrasts grows and the more cores/oomph your system has.</p>
 </section></section><script id="quarto-html-after-body" type="application/javascript">

@@ -1,8 +1,7 @@
 # Get the PCA loadings
 
-Get the PCA loadings
-
-Get the PCA loadings from a `SingleCells`.
+Returns the PCA loadings (feature-based scores). This function is used
+for the single cell-related classes and methods.
 
 ## Usage
 

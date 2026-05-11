@@ -1,15 +1,26 @@
 # Generate the KNN data with distances
 
-This function will generate the kNNs based on a given embedding. Three
-different algorithms are implemented with different speed and accuracy
-to approximate the nearest neighbours. `"annoy"` is more rapid and based
-on the `Approximate Nearest Neigbours Oh Yeah` algorithm; `"hnsw"`
-implements a `Hierarchical Navigatable Small Worlds` vector search that
-is slower, but more precise. Lastly, there is the option of
-`"nndescent"`, a Rust-based implementation of the PyNNDescent algorithm.
-This version skips the index generation and can be faster on smaller
-data sets. This version of the function returns an `sc_knn` object that
-can be used in other functions.
+This function will generate the kNNs based on a given embedding.
+Available algorithms are:
+
+- `hnsw` - Hierarchical Navigable Small World. A graph-based approximate
+  nearest neighbour search algorithm; works well on large data sets. A
+  benign race condition is leveraged during index build, making the
+  build non-deterministic. Bigger impact on smaller data sets.
+
+- `ivf` - Inverted file index. Uses first k-means clustering to identify
+  Voronoi cells and leverages these during querying. Works well on large
+  data sets with high dimensionality.
+
+- `nndescent` - Nearest neighbour descent. Similar to `PyNNDescent`,
+  uses a first index to initialise the graph. Good all-rounder.
+
+- `annoy` - Approximate nearest neighbours Oh Yeah. Tree-based index,
+  used across different R single cell packages (Seurat, SCE). This
+  version is purely memory-based.
+
+- `exhaustive` - An exhaustive, flat index. On smaller data sets often
+  faster than the approximate nearest neighbour search algorithms.
 
 ## Usage
 
@@ -21,6 +32,7 @@ generate_knn_sc(
   no_embd_to_use = NULL,
   neighbours_params = params_sc_neighbours(),
   seed = 42L,
+  .validate_index = TRUE,
   .verbose = TRUE
 )
 ```
@@ -54,14 +66,15 @@ generate_knn_sc(
 
   - full_snn - Boolean. Shall the full shared nearest neighbour graph be
     generated that generates edges between all cells instead of between
-    only neighbours.
+    only neighbours. Not used for this function.
 
   - pruning - Numeric. Weights below this threshold will be set to 0 in
-    the generation of the sNN graph.
+    the generation of the sNN graph. Not used for this function.
 
   - snn_similarity - String. One of `c("rank", "jaccard")`. Defines how
     the weight from the SNN graph is calculated. For details, please see
     [`params_sc_neighbours()`](https://gregorlueg.github.io/bixverse/reference/params_sc_neighbours.md).
+    Not used for this function.
 
   - knn - List of kNN parameters. See
     [`params_knn_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_knn_defaults.md)
@@ -70,6 +83,11 @@ generate_knn_sc(
 - seed:
 
   Integer. For reproducibility.
+
+- .validate_index:
+
+  Boolean. Shall an exhaustive search against a subset of cells be run
+  to validate the approximate nearest neighbour index.
 
 - .verbose:
 

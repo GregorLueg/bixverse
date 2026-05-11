@@ -8,9 +8,9 @@ cell
 ``` r
 params_sc_neighbours(
   full_snn = FALSE,
-  pruning = 1/15,
-  snn_similarity = c("rank", "jaccard"),
-  knn = list()
+  pruning = 1/12,
+  snn_similarity = c("jaccard", "rank"),
+  knn = list(ann_dist = "cosine")
 )
 ```
 
@@ -25,7 +25,8 @@ params_sc_neighbours(
 - pruning:
 
   Numeric. Weights below this threshold will be set to 0 in the
-  generation of the sNN graph.
+  generation of the sNN graph. Seurat uses for example `1/15` with
+  `k = 20`. As the default k is set to 15, we set it to `1/12`.
 
 - snn_similarity:
 

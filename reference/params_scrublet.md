@@ -11,12 +11,12 @@ params_scrublet(
   sim_doublet_ratio = 1.5,
   expected_doublet_rate = 0.1,
   stdev_doublet_rate = 0.02,
-  n_bins = 100L,
+  n_bins_histogram = 100L,
   manual_threshold = NULL,
   normalisation = list(),
   hvg = list(),
   pca = list(),
-  knn = list(k = 0L, ann_dist = "euclidean")
+  knn = list(k = 0L)
 )
 ```
 
@@ -37,7 +37,7 @@ params_scrublet(
 
   Numeric. Uncertainty in the expected doublet rate. Defaults to `0.02`.
 
-- n_bins:
+- n_bins_histogram:
 
   Integer. Number of bins for histogram-based automatic threshold
   detection. Typically 50-100. Defaults to `100L`.
@@ -51,7 +51,7 @@ params_scrublet(
 - normalisation:
 
   List. Optional overrides for normalisation parameters. See
-  [`params_norm_doublet_detection_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_norm_doublet_detection_defaults.md)
+  [`params_norm_doublets_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_norm_doublets_defaults.md)
   for available parameters: `log_transform`, `mean_center`,
   `normalise_variance`, `target_size`.
 

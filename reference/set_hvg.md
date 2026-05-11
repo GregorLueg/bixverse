@@ -1,8 +1,7 @@
 # Set the HVG genes
 
-Set the HVG genes
-
-Set the highly variable genes for a `SingleCells` class.
+Stores within the class the index positions of the HVG. This is used for
+the single cell-related classes and methods.
 
 ## Usage
 

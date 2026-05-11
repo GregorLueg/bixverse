@@ -2,8 +2,6 @@
 
 Remove the KNN data
 
-Remove the KNN matrix from a `SingleCells` class.
-
 ## Usage
 
 ``` r

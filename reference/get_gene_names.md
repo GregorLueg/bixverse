@@ -1,8 +1,6 @@
 # Get the gene names
 
-Get the gene names
-
-Get the gene names from a `SingleCells`.
+Get the main gene names (for example symbols or Ensembl identifiers).
 
 ## Usage
 
@@ -18,3 +16,7 @@ get_gene_names(x)
 - x:
 
   An object to get the gene names from.
+
+## Value
+
+The primary gene identifiers stored in the class.

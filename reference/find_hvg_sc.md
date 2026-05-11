@@ -1,8 +1,7 @@
 # Identify HVGs
 
-This is a helper function to identify highly variable genes. At the
-moment the implementation has only the VST-based version (known as
-Seurat v3). The other methods will be implemented in the future.
+This is a helper function to identify highly variable genes for
+`SingleCells` (using the Rust-based streaming of data) or `MetaCells`.
 
 ## Usage
 
@@ -20,7 +19,7 @@ find_hvg_sc(
 
 - object:
 
-  `SingleCells` class.
+  `SingleCells`, `MetaCells` (or potentially other) class.
 
 - hvg_no:
 
@@ -48,7 +47,7 @@ find_hvg_sc(
 
   Boolean. Shall the genes be streamed in. Useful for larger data sets
   where you wish to avoid loading in the whole data. Defaults to
-  `FALSE`.
+  `FALSE`. Not used for `MetaCells`.
 
 - .verbose:
 

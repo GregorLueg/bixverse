@@ -31,5 +31,9 @@
   bixverse](https://gregorlueg.github.io/bixverse/articles/single_cell_batch_corrections.md):
 - [Gene set analysis and GRN inference on
   PBMCs](https://gregorlueg.github.io/bixverse/articles/analysis_single_cell.md):
+- [KNN searches for single
+  cell](https://gregorlueg.github.io/bixverse/articles/knn_searches.md):
+- [Meta cells with
+  bixverse](https://gregorlueg.github.io/bixverse/articles/meta_cells.md):
 - [Scaling to millions of cells with
   bixverse](https://gregorlueg.github.io/bixverse/articles/single_cell_big_data.md):

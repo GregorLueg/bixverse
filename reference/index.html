@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -36,6 +36,8 @@
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
     <li><a class="dropdown-item" href="../articles/analysis_single_cell.html">'Bag of genes' methods for single cell in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/knn_searches.html">kNN searches for single cells in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing big data on a powerful laptop (example)</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -1049,6 +1051,20 @@
 
         <dt>
 
+          <code><a href="SingleCellCountData.html">SingleCellCountData</a></code>
+
+        </dt>
+        <dd>A class for handling single cell count data</dd>
+
+        <dt>
+
+          <code><a href="add_sc_new_obs.html">add_sc_new_obs()</a></code>
+
+        </dt>
+        <dd>Add an obs table derived from a method to the SingleCells.</dd>
+
+        <dt>
+
           <code><a href="get_sc_obs.html">get_sc_obs()</a></code>
 
         </dt>
@@ -1073,7 +1089,7 @@
           <code><a href="get_available_embeddings.html">get_available_embeddings()</a></code>
 
         </dt>
-        <dd>Get the available embeddings from the cache</dd>
+        <dd>Get the available embeddings</dd>
 
         <dt>
 
@@ -1101,7 +1117,7 @@
           <code><a href="get_embedding.html">get_embedding()</a></code>
 
         </dt>
-        <dd>Get the embedding from the cache</dd>
+        <dd>Get the embedding</dd>
 
         <dt>
 
@@ -1226,6 +1242,20 @@
 
         <dt>
 
+          <code><a href="calc_diffusion_coordinates.html">calc_diffusion_coordinates()</a></code>
+
+        </dt>
+        <dd>Calculate diffusion coordinates</dd>
+
+        <dt>
+
+          <code><a href="calc_manifold_metrics.html">calc_manifold_metrics()</a></code>
+
+        </dt>
+        <dd>Calculate manifold metrics</dd>
+
+        <dt>
+
           <code><a href="calc_meta_cell_purity.html">calc_meta_cell_purity()</a></code>
 
         </dt>
@@ -1240,7 +1270,7 @@
 
         <dt>
 
-          <code><a href="generate_meta_cells_sc.html">generate_meta_cells_sc()</a></code>
+          <code><a href="generate_bt_meta_cells_sc.html">generate_bt_meta_cells_sc()</a></code>
 
         </dt>
         <dd>Generate meta cells based on hdWGCNA and return a <code>MetaCells</code> object</dd>
@@ -1261,10 +1291,10 @@
 
         <dt>
 
-          <code><a href="params_sc_metacells.html">params_sc_metacells()</a></code>
+          <code><a href="params_sc_bt_metacells.html">params_sc_bt_metacells()</a></code>
 
         </dt>
-        <dd>Wrapper function for parameters for meta cell generation</dd>
+        <dd>Wrapper function for parameters for bootstrapped meta cell generation</dd>
 
         <dt>
 
@@ -1433,6 +1463,13 @@
 
         <dt>
 
+          <code><a href="scdblfinder_sc.html">scdblfinder_sc()</a></code>
+
+        </dt>
+        <dd>Run scDblFinder doublet detection on a SingleCells object</dd>
+
+        <dt>
+
           <code><a href="gene_set_proportions_sc.html">gene_set_proportions_sc()</a></code>
 
         </dt>
@@ -1510,6 +1547,13 @@
 
         <dt>
 
+          <code><a href="harmony_v2_sc.html">harmony_v2_sc()</a></code>
+
+        </dt>
+        <dd>Run Harmony v2</dd>
+
+        <dt>
+
           <code><a href="bbknn_sc.html">bbknn_sc()</a></code>
 
         </dt>
@@ -1538,7 +1582,7 @@
 
         <dt>
 
-          <code><a href="params_norm_doublet_detection_defaults.html">params_norm_doublet_detection_defaults()</a></code>
+          <code><a href="params_norm_doublets_defaults.html">params_norm_doublets_defaults()</a></code>
 
         </dt>
         <dd>Helper function to generate normalisation defaults for doublet detection.</dd>
@@ -1573,6 +1617,13 @@
 
         <dt>
 
+          <code><a href="params_sc_fast_cluster.html">params_sc_fast_cluster()</a></code>
+
+        </dt>
+        <dd>Fast single cell clustering parameters</dd>
+
+        <dt>
+
           <code><a href="params_sc_fastmnn.html">params_sc_fastmnn()</a></code>
 
         </dt>
@@ -1587,10 +1638,24 @@
 
         <dt>
 
+          <code><a href="params_sc_harmony_v2.html">params_sc_harmony_v2()</a></code>
+
+        </dt>
+        <dd>Default parameters for Harmony v2 batch correction</dd>
+
+        <dt>
+
           <code><a href="params_sc_neighbours.html">params_sc_neighbours()</a></code>
 
         </dt>
         <dd>Wrapper function for parameters for neighbour identification in single cell</dd>
+
+        <dt>
+
+          <code><a href="params_scdblfinder.html">params_scdblfinder()</a></code>
+
+        </dt>
+        <dd>Wrapper function for scDblFinder doublet detection parameters</dd>
 
         <dt>
 
@@ -1612,6 +1677,13 @@
 
         </dt>
         <dd>Helper function to generate kNN defaults</dd>
+
+        <dt>
+
+          <code><a href="params_fast_cluster_default.html">params_fast_cluster_default()</a></code>
+
+        </dt>
+        <dd>Helper function to generate default parameters for the fast clustering for the doublet detection methods</dd>
       </dl></div><div class="section level2">
       <h2 id="single-cell-analysis-methods">Single cell analysis methods<a class="anchor" aria-label="anchor" href="#single-cell-analysis-methods"></a></h2>
 
@@ -1635,6 +1707,13 @@
 
         </dt>
         <dd>Calculate module activity scores</dd>
+
+        <dt>
+
+          <code><a href="fast_cluster_sc.html">fast_cluster_sc()</a></code>
+
+        </dt>
+        <dd>Run fast Louvain clustering on a SingleCells object</dd>
 
         <dt>
 
@@ -1857,10 +1936,38 @@
 
       <dl><dt>
 
+          <code><a href="calc_knn_metrics.html">calc_knn_metrics()</a></code>
+
+        </dt>
+        <dd>Calculate recall at k and distance ratio</dd>
+
+        <dt>
+
+          <code><a href="get_centroids.html">get_centroids()</a></code>
+
+        </dt>
+        <dd>Get k-means centroids from a fast cluster result</dd>
+
+        <dt>
+
+          <code><a href="get_feature_mat.html">get_feature_mat()</a></code>
+
+        </dt>
+        <dd>Get the feature matrix used for the classifier</dd>
+
+        <dt>
+
+          <code><a href="get_kmeans_clusters.html">get_kmeans_clusters()</a></code>
+
+        </dt>
+        <dd>Get k-means cluster assignments from a fast cluster result</dd>
+
+        <dt>
+
           <code><a href="get_knn_dist.html">get_knn_dist()</a></code>
 
         </dt>
-        <dd>Get the KNN distance measures</dd>
+        <dd>Get the KNN distance</dd>
 
         <dt>
 
@@ -1868,6 +1975,13 @@
 
         </dt>
         <dd>Get the ready obs data from various sub method</dd>
+
+        <dt>
+
+          <code><a href="get_scores.html">get_scores()</a></code>
+
+        </dt>
+        <dd>Get either the cxds or weighted scores</dd>
 
         <dt>
 
@@ -1897,21 +2011,21 @@
           <code><a href="umap_sc.html">umap_sc()</a></code>
 
         </dt>
-        <dd>Run UMAP on a SingleCells object</dd>
+        <dd>Run UMAP on a SingleCells/MetaCells object</dd>
 
         <dt>
 
           <code><a href="tsne_sc.html">tsne_sc()</a></code>
 
         </dt>
-        <dd>Run t-SNE on a SingleCells object</dd>
+        <dd>Run t-SNE on a SingleCells/MetaCells object</dd>
 
         <dt>
 
           <code><a href="phate_sc.html">phate_sc()</a></code>
 
         </dt>
-        <dd>Run PHATE on a SingleCells object</dd>
+        <dd>Run PHATE on a SingleCells/MetaCells object</dd>
 
         <dt>
 
@@ -2110,6 +2224,13 @@
 
       <dl><dt>
 
+          <code><a href="download_cd34_data.html">download_cd34_data()</a></code>
+
+        </dt>
+        <dd>Download the CD34 example data from SEACells</dd>
+
+        <dt>
+
           <code><a href="download_pbmc3k.html">download_pbmc3k()</a></code>
 
         </dt>
@@ -2228,6 +2349,13 @@
 
         </dt>
         <dd>Helper function to calculate the induced sparsity</dd>
+
+        <dt>
+
+          <code><a href="find_threshold_otsu.html">find_threshold_otsu()</a></code>
+
+        </dt>
+        <dd>Find a threshold via the Otsu method</dd>
 
         <dt>
 
@@ -2534,6 +2662,20 @@
 
         <dt>
 
+          <code><a href="rs_fast_cluster_sc.html">rs_fast_cluster_sc()</a></code>
+
+        </dt>
+        <dd>Runs fast Louvain cluster on the data</dd>
+
+        <dt>
+
+          <code><a href="rs_fast_cluster_sc_grid.html">rs_fast_cluster_sc_grid()</a></code>
+
+        </dt>
+        <dd>Runs fast Louvain cluster on the data (with multiple seeds)</dd>
+
+        <dt>
+
           <code><a href="rs_fast_ica.html">rs_fast_ica()</a></code>
 
         </dt>
@@ -2576,7 +2718,7 @@
 
         <dt>
 
-          <code><a href="rs_get_metacells.html">rs_get_metacells()</a></code>
+          <code><a href="rs_get_metacells_bootstrapped.html">rs_get_metacells_bootstrapped()</a></code>
 
         </dt>
         <dd>Generate meta cells (hdWGCNA method)</dd>
@@ -2636,6 +2778,13 @@
 
         </dt>
         <dd>Harmony batch correction in Rust</dd>
+
+        <dt>
+
+          <code><a href="rs_harmony_v2.html">rs_harmony_v2()</a></code>
+
+        </dt>
+        <dd>Harmony batch correction in Rust (version 2)</dd>
 
         <dt>
 
@@ -2748,6 +2897,55 @@
 
         </dt>
         <dd>Generate the neighbourhoods akin to the miloR approach</dd>
+
+        <dt>
+
+          <code><a href="rs_mc_aucell.html">rs_mc_aucell()</a></code>
+
+        </dt>
+        <dd>Calculate AUCell in Rust (for meta cells)</dd>
+
+        <dt>
+
+          <code><a href="rs_mc_hvg.html">rs_mc_hvg()</a></code>
+
+        </dt>
+        <dd>Meta cells highly variable genes</dd>
+
+        <dt>
+
+          <code><a href="rs_mc_pca.html">rs_mc_pca()</a></code>
+
+        </dt>
+        <dd>PCA on MetaCells (sparse data)</dd>
+
+        <dt>
+
+          <code><a href="rs_mc_scenic.html">rs_mc_scenic()</a></code>
+
+        </dt>
+        <dd>SCENIC on MetaCells</dd>
+
+        <dt>
+
+          <code><a href="rs_metacell_compactness.html">rs_metacell_compactness()</a></code>
+
+        </dt>
+        <dd>Calculates the compactness of the MetaCells based on diffusion map coordinates</dd>
+
+        <dt>
+
+          <code><a href="rs_metacell_density.html">rs_metacell_density()</a></code>
+
+        </dt>
+        <dd>Calculates diffusion maps for density calculations for meta cells</dd>
+
+        <dt>
+
+          <code><a href="rs_metacell_separation.html">rs_metacell_separation()</a></code>
+
+        </dt>
+        <dd>Calculates the separation of the centroids of the MetaCells based on diffusion map coordinates.</dd>
 
         <dt>
 
@@ -2940,6 +3138,13 @@
 
         <dt>
 
+          <code><a href="rs_sc_scdblfinder.html">rs_sc_scdblfinder()</a></code>
+
+        </dt>
+        <dd>Run scDblFinder doublet detection</dd>
+
+        <dt>
+
           <code><a href="rs_sc_doublet_detection.html">rs_sc_doublet_detection()</a></code>
 
         </dt>
@@ -2986,6 +3191,13 @@
 
         </dt>
         <dd>Generates the kNN graph with additional distances</dd>
+
+        <dt>
+
+          <code><a href="rs_sc_otsu_method.html">rs_sc_otsu_method()</a></code>
+
+        </dt>
+        <dd>Run Otsu's method</dd>
 
         <dt>
 

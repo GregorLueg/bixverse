@@ -13,7 +13,7 @@ together with the simulated doublets."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -42,6 +42,8 @@ together with the simulated doublets."></head><body>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
     <li><a class="dropdown-item" href="../articles/analysis_single_cell.html">'Bag of genes' methods for single cell in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/knn_searches.html">kNN searches for single cells in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing big data on a powerful laptop (example)</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -73,6 +75,7 @@ together with the simulated doublets.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">doublet_detection_boost_sc</span><span class="op">(</span></span>
 <span>  <span class="va">object</span>,</span>
 <span>  boost_params <span class="op">=</span> <span class="fu"><a href="params_boost.html">params_boost</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  cells_to_use <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  seed <span class="op">=</span> <span class="fl">42L</span>,</span>
 <span>  streaming <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  .verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
@@ -90,6 +93,13 @@ together with the simulated doublets.</p>
 <dt id="arg-boost-params">boost_params<a class="anchor" aria-label="anchor" href="#arg-boost-params"></a></dt>
 <dd><p>A list with the final scrublet parameters, see
 <code><a href="params_boost.html">params_boost()</a></code> for full details.</p></dd>
+
+
+<dt id="arg-cells-to-use">cells_to_use<a class="anchor" aria-label="anchor" href="#arg-cells-to-use"></a></dt>
+<dd><p>Optional string. Names of the cells to use for the
+run of the boosted doublet detection. Useful when you wish to run doublet
+detection on individual batches within your data. The object returned will be
+specifically using these cells.</p></dd>
 
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>

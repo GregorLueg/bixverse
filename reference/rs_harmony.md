@@ -1,6 +1,7 @@
 # Harmony batch correction in Rust
 
-This function implements the Harmony algorithm from
+This function implements the Harmony algorithm from Korsunsky et al.,
+2019.
 
 ## Usage
 

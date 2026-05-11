@@ -19,7 +19,7 @@ get_counts_from_rust(
 
 - rust_con:
 
-  `SingeCellCountData` class. The connector to Rust.
+  `SingleCellCountData` class. The connector to Rust.
 
 - assay:
 

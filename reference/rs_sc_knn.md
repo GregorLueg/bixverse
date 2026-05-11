@@ -1,23 +1,12 @@
 # Generates the kNN graph
 
 This function is a wrapper over the Rust-based generation of the
-approximate nearest neighbours. You have several options to get the
-approximate nearest neighbours:
-
-- `"annoy"`: leverages binary trees to generate rapidly in a parallel
-  manner an index. Good compromise of index generation, querying speed.
-
-- `"hnsw"`: uses a hierarchical navigatable small worlds index under the
-  hood. The index generation takes more long, but higher recall and
-  ideal for very large datasets due to subdued memory pressure.
-
-- `"nndescent"`: an index-free approximate nearest neighbour algorithm
-  that is ideal for small, ephemeral kNN graphs.
+approximate nearest neighbours.
 
 ## Usage
 
 ``` r
-rs_sc_knn(embd, knn_params, verbose, seed)
+rs_sc_knn(embd, knn_params, validate_index, verbose, seed)
 ```
 
 ## Arguments
@@ -31,6 +20,11 @@ rs_sc_knn(embd, knn_params, verbose, seed)
 
   List. The kNN parameters defined by
   [`params_sc_neighbours()`](https://gregorlueg.github.io/bixverse/reference/params_sc_neighbours.md).
+
+- validate_index:
+
+  Boolean. If you want to validate the index via an exhaustive search in
+  a subset of cells.
 
 - verbose:
 

@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -36,6 +36,8 @@
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
     <li><a class="dropdown-item" href="../articles/analysis_single_cell.html">'Bag of genes' methods for single cell in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/knn_searches.html">kNN searches for single cells in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing big data on a powerful laptop (example)</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -64,7 +66,8 @@
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">params_sc_supercell</span><span class="op">(</span></span>
 <span>  walk_length <span class="op">=</span> <span class="fl">3L</span>,</span>
 <span>  graining_factor <span class="op">=</span> <span class="fl">20</span>,</span>
-<span>  linkage_dist <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"complete"</span>, <span class="st">"average"</span><span class="op">)</span>,</span>
+<span>  use_kernel <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  k_ith <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  knn <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -84,9 +87,10 @@ of single cells in the initial dataset to the number of metacells in the
 final dataset). Defaults to <code>20.0</code>. (One meta cell per 20 cells.)</p></dd>
 
 
-<dt id="arg-linkage-dist">linkage_dist<a class="anchor" aria-label="anchor" href="#arg-linkage-dist"></a></dt>
-<dd><p>String. Which type of distance metric to use for the
-linkage. Defaults to <code>"average"</code>.</p></dd>
+<dt id="arg-use-kernel">use_kernel<a class="anchor" aria-label="anchor" href="#arg-use-kernel"></a></dt>
+<dd><p>Boolean. Shall a kernel function akin to MAGIC be applied
+akin to the approach in SuperCell2, see Hérault, et al., bioRxiv, 2026 and
+van Dijk, et al., Cell, 2018.</p></dd>
 
 
 <dt id="arg-knn">knn<a class="anchor" aria-label="anchor" href="#arg-knn"></a></dt>
@@ -95,6 +99,11 @@ linkage. Defaults to <code>"average"</code>.</p></dd>
 <code>knn_method</code>, <code>ann_dist</code>, <code>search_budget</code>, <code>n_trees</code>, <code>delta</code>,
 <code>diversify_prob</code>, <code>ef_budget</code>, <code>m</code>, <code>ef_construction</code>, <code>ef_search</code>, <code>n_list</code>
 and <code>n_probe</code>.</p></dd>
+
+
+<dt id="arg-k-ith-neighbour">k_ith_neighbour<a class="anchor" aria-label="anchor" href="#arg-k-ith-neighbour"></a></dt>
+<dd><p>Optional integer. The k-ith neighbour to use for
+the kernel. Defaults to <code>k %/% 2</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

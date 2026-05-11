@@ -11,6 +11,7 @@ together with the simulated doublets.
 doublet_detection_boost_sc(
   object,
   boost_params = params_boost(),
+  cells_to_use = NULL,
   seed = 42L,
   streaming = FALSE,
   .verbose = TRUE
@@ -28,6 +29,13 @@ doublet_detection_boost_sc(
   A list with the final scrublet parameters, see
   [`params_boost()`](https://gregorlueg.github.io/bixverse/reference/params_boost.md)
   for full details.
+
+- cells_to_use:
+
+  Optional string. Names of the cells to use for the run of the boosted
+  doublet detection. Useful when you wish to run doublet detection on
+  individual batches within your data. The object returned will be
+  specifically using these cells.
 
 - seed:
 

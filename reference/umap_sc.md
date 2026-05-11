@@ -1,8 +1,29 @@
-# Run UMAP on a SingleCells object
+# Run UMAP on a SingleCells/MetaCells object
 
 Wrapper around
 [`manifoldsR::umap()`](https://gregorlueg.github.io/manifoldsR/reference/umap.html)
-for the `SingleCells` class.
+for the `SingleCells` and `MetaCells` classes. UMAP produces a
+low-dimensional embedding that emphasises local neighbourhood structure
+while being computationally efficient via its negative-sampling-based
+optimisation. It is the de facto default for visualising single-cell
+data, though claims that it preserves global structure substantially
+better than t-SNE are not well supported; with matched initialisation
+(e.g. PCA or Laplacian Eigenmaps), the two methods behave similarly on
+global geometry, and both should be interpreted primarily as views of
+local structure.
+
+When `use_knn = TRUE` (the default), the kNN graph already stored on the
+object (via
+[`find_neighbours_sc()`](https://gregorlueg.github.io/bixverse/reference/find_neighbours_sc.md))
+is reused, which avoids recomputing nearest neighbours and keeps the
+UMAP consistent with any downstream sNN-based clustering. If no kNN is
+present, neighbours are computed from the chosen embedding on the fly.
+
+Key parameters to tune: `k` controls the balance between local and
+global structure (larger values produce more global layouts), while
+`min_dist` and `spread` together control how tightly points are packed
+in the embedding. For `MetaCells`, smaller `k` values are often
+appropriate given the reduced number of points.
 
 ## Usage
 
@@ -16,7 +37,7 @@ umap_sc(
   k = 15L,
   min_dist = 0.5,
   spread = 1,
-  knn_method = c("hnsw", "balltree", "annoy", "nndescent", "exhaustive"),
+  knn_method = c("kmknn", "hnsw", "balltree", "annoy", "nndescent", "exhaustive"),
   nn_params = manifoldsR::params_nn(),
   umap_params = manifoldsR::params_umap(),
   seed = 42L,
@@ -28,7 +49,7 @@ umap_sc(
 
 - object:
 
-  `SingleCells` class.
+  `SingleCells`, `MetaCells` class.
 
 - use_knn:
 

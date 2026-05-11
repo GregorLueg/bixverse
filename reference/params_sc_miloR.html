@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -36,6 +36,8 @@
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
     <li><a class="dropdown-item" href="../articles/analysis_single_cell.html">'Bag of genes' methods for single cell in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/knn_searches.html">kNN searches for single cells in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing big data on a powerful laptop (example)</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -65,7 +67,7 @@
 <span>  prop <span class="op">=</span> <span class="fl">0.2</span>,</span>
 <span>  k_refine <span class="op">=</span> <span class="fl">20L</span>,</span>
 <span>  refinement_strategy <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"index"</span>, <span class="st">"approximate"</span>, <span class="st">"bruteforce"</span><span class="op">)</span>,</span>
-<span>  index_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"hnsw"</span>, <span class="st">"annoy"</span>, <span class="st">"nndescent"</span>, <span class="st">"ivf"</span><span class="op">)</span>,</span>
+<span>  index_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"nndescent"</span>, <span class="st">"ivf"</span>, <span class="st">"hnsw"</span>, <span class="st">"annoy"</span><span class="op">)</span>,</span>
 <span>  knn <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -92,7 +94,7 @@ One of <code>c("approximate", "bruteforce", "index")</code>. Defaults to
 
 <dt id="arg-index-type">index_type<a class="anchor" aria-label="anchor" href="#arg-index-type"></a></dt>
 <dd><p>String. Type of kNN index to use. One of
-<code>c("hnsw", "annoy", "nndescent", "ivf")</code>. Defaults to <code>"hnsw"</code>.</p></dd>
+<code>c("hnsw", "annoy", "nndescent", "ivf")</code>. Defaults to <code>"nndescent"</code>.</p></dd>
 
 
 <dt id="arg-knn">knn<a class="anchor" aria-label="anchor" href="#arg-knn"></a></dt>

@@ -1,7 +1,7 @@
 # Calculate the percentage of gene sets in the cells
 
-This function allows to calculate for example the proportion of
-mitochondrial genes, or ribosomal genes in the cells for QC purposes.
+This function identifies highly variable genes with the three methods
+known in Seurat.
 
 ## Usage
 
@@ -11,6 +11,8 @@ rs_sc_hvg(
   hvg_method,
   cell_indices,
   loess_span,
+  binning,
+  n_bins,
   clip_max,
   streaming,
   verbose
@@ -25,9 +27,8 @@ rs_sc_hvg(
 
 - hvg_method:
 
-  String. Which HVG detection method to use. Options are
-  `c("vst", "meanvarbin", "dispersion")`. So far, only the first is
-  implemented.
+  String. Which HVG detection method to use. One of
+  `c("vst", "meanvarbin", "dispersion")`.
 
 - cell_indices:
 
@@ -36,6 +37,15 @@ rs_sc_hvg(
 - loess_span:
 
   Numeric. The span parameter for the loess function.
+
+- binning:
+
+  String. The binning strategy for the `meanvarbin` method. One of
+  `c("equal_width", "equal_frequency")`.
+
+- n_bins:
+
+  Integer. Number of bins for the `meanvarbin` method.
 
 - clip_max:
 
@@ -52,8 +62,8 @@ rs_sc_hvg(
 
 ## Value
 
-A list with the percentages of counts per gene set group detected in the
-cells:
+A list with the highly variable genes. If `hvg_method == "vst"`, the
+following elements can be found:
 
 - mean - The average expression of the gene.
 
@@ -62,3 +72,13 @@ cells:
 - var_exp - The expected variance of the gene.
 
 - var_std - The standardised variance of the gene.
+
+For the other two methods, these elements can be found:
+
+- mean - The average expression of the gene.
+
+- dispersion - The dispersion of the gene
+
+- dispersion_scaled - The scaled dispersion per bin per gene
+
+- bin - The bin of the gene

@@ -2,8 +2,6 @@
 
 Get the cells to keep
 
-Get the cells to keep from a `SingleCells`.
-
 ## Usage
 
 ``` r

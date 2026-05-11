@@ -1,8 +1,6 @@
 # Get the cell names
 
-Get the cell names
-
-Get the cell names from a `SingleCells`.
+Returns the cell names (usually barcodes).
 
 ## Usage
 
@@ -25,3 +23,7 @@ get_cell_names(x, filtered = FALSE)
   returned (see
   [`set_cells_to_keep()`](https://gregorlueg.github.io/bixverse/reference/set_cells_to_keep.md).
   Defaults to `FALSE`
+
+## Value
+
+The cell names (barcodes)

@@ -6,7 +6,7 @@ approximate nearest neighbours.
 ## Usage
 
 ``` r
-rs_sc_knn_w_dist(embd, knn_params, verbose, seed)
+rs_sc_knn_w_dist(embd, knn_params, validate_index, verbose, seed)
 ```
 
 ## Arguments
@@ -20,6 +20,11 @@ rs_sc_knn_w_dist(embd, knn_params, verbose, seed)
 
   List. The kNN parameters defined by
   [`params_sc_neighbours()`](https://gregorlueg.github.io/bixverse/reference/params_sc_neighbours.md).
+
+- validate_index:
+
+  Boolean. If you want to validate the index via an exhaustive search in
+  a subset of cells.
 
 - verbose:
 

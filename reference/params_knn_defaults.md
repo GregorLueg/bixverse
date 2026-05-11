@@ -17,8 +17,8 @@ A list with default parameters for kNN searches. Following parameters:
 - k - Number of neighbours. Defaults to `15L`.
 
 - knn_method - Which of method to use for the approximate nearest
-  neighbour search. Defaults to `"hnsw"`. The implementations are:
-  `c("hnsw", "annoy", "nndescent", "ivf", "exhaustive")`.
+  neighbour search. Defaults to `"kmknn"`. The implementations are:
+  `c("kmknn", "hnsw", "annoy", "nndescent", "ivf", "exhaustive")`.
 
 - ann_dist - Which distance metric to use for the approximate nearest
   neighbour search. Defaults to `"cosine"`. The implementations are

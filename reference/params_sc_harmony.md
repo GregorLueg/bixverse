@@ -25,7 +25,7 @@ params_sc_harmony(
 
   Optional integer. Number of clusters for k-means clustering. If not
   provided, it will be automatically determined as
-  `min(round(N / 30), 200)`.
+  `min(round(N / 30), 100)`.
 
 - sigma:
 

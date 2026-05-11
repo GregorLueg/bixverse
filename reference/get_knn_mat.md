@@ -1,8 +1,6 @@
 # Get the KNN matrix
 
-Get the KNN matrix
-
-Get the KNN matrix from a `SingleCells`.
+Getter for an integer matrix of samples x neighbours.
 
 ## Usage
 

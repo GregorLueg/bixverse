@@ -11,7 +11,7 @@ such as union of top genes per batch."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,6 +40,8 @@ such as union of top genes per batch."></head><body>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
     <li><a class="dropdown-item" href="../articles/analysis_single_cell.html">'Bag of genes' methods for single cell in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/knn_searches.html">kNN searches for single cells in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing big data on a powerful laptop (example)</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -73,6 +75,8 @@ such as union of top genes per batch.</p>
 <span>  <span class="va">cell_indices</span>,</span>
 <span>  <span class="va">batch_labels</span>,</span>
 <span>  <span class="va">loess_span</span>,</span>
+<span>  <span class="va">binning</span>,</span>
+<span>  <span class="va">n_bins</span>,</span>
 <span>  <span class="va">clip_max</span>,</span>
 <span>  <span class="va">streaming</span>,</span>
 <span>  <span class="va">verbose</span></span>
@@ -88,8 +92,8 @@ such as union of top genes per batch.</p>
 
 
 <dt id="arg-hvg-method">hvg_method<a class="anchor" aria-label="anchor" href="#arg-hvg-method"></a></dt>
-<dd><p>String. Which HVG detection method to use. Currently
-only <code>"vst"</code> is implemented for batch-aware mode.</p></dd>
+<dd><p>String. Which HVG detection method to use. One of
+<code>c("vst", "meanvarbin", "dispersion")</code>.</p></dd>
 
 
 <dt id="arg-cell-indices">cell_indices<a class="anchor" aria-label="anchor" href="#arg-cell-indices"></a></dt>
@@ -104,6 +108,15 @@ for each cell. Must be same length as <code>cell_indices</code>.</p></dd>
 
 <dt id="arg-loess-span">loess_span<a class="anchor" aria-label="anchor" href="#arg-loess-span"></a></dt>
 <dd><p>Numeric. The span parameter for the loess function.</p></dd>
+
+
+<dt id="arg-binning">binning<a class="anchor" aria-label="anchor" href="#arg-binning"></a></dt>
+<dd><p>String. The binning strategy for the <code>meanvarbin</code> method. One
+of <code>c("equal_width", "equal_frequency")</code>.</p></dd>
+
+
+<dt id="arg-n-bins">n_bins<a class="anchor" aria-label="anchor" href="#arg-n-bins"></a></dt>
+<dd><p>Integer. Number of bins for the <code>meanvarbin</code> method.</p></dd>
 
 
 <dt id="arg-clip-max">clip_max<a class="anchor" aria-label="anchor" href="#arg-clip-max"></a></dt>
@@ -122,10 +135,19 @@ pressure.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list with HVG statistics concatenated across all batches:</p><ul><li><p>mean - The average expression of each gene in each batch.</p></li>
+    <p>A list with HVG statistics concatenated across all batches. For
+<code>hvg_method == 'vst'</code>, the following elements can be found:</p><ul><li><p>mean - The average expression of each gene in each batch.</p></li>
 <li><p>var - The variance of each gene in each batch.</p></li>
 <li><p>var_exp - The expected variance of each gene in each batch.</p></li>
 <li><p>var_std - The standardised variance of each gene in each batch.</p></li>
+<li><p>batch - Batch index for each gene (length = n_genes * n_batches).</p></li>
+<li><p>gene_idx - Gene index for each entry (0-indexed, length = n_genes *
+n_batches).</p></li>
+</ul><p>For the other methods</p><ul><li><p>mean - The average expression of each gene in each batch.</p></li>
+<li><p>dispersion - The dispersion of the gene in each batch.</p></li>
+<li><p>dispersion_scaled - The scaled dispersion per bin per gene in each
+batch.</p></li>
+<li><p>bin - The bin of the gene in each batch.</p></li>
 <li><p>batch - Batch index for each gene (length = n_genes * n_batches).</p></li>
 <li><p>gene_idx - Gene index for each entry (0-indexed, length = n_genes *
 n_batches).</p></li>

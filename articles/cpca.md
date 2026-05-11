@@ -8,8 +8,14 @@ This vignette will show you how to run the algorithm with some synthetic
 data.
 
 ``` r
+
 library(bixverse)
 library(data.table)
+#> 
+#> Attaching package: 'data.table'
+#> The following object is masked from 'package:base':
+#> 
+#>     %notin%
 ```
 
 ## Intro
@@ -25,28 +31,30 @@ Contrastive PCA addresses this directly. Instead of decomposing the
 covariance of your target data alone, it works with the **contrastive
 covariance matrix**:
 
-$$C_{\alpha} = \Sigma_{target} - \alpha \cdot \Sigma_{background}$$
+``` math
+C_\alpha = \Sigma_{target} - \alpha \cdot \Sigma_{background}
+```
 
-where $\Sigma_{target}$ and $\Sigma_{background}$ are the covariance
+where $`\Sigma_{target}`$ and $`\Sigma_{background}`$ are the covariance
 matrices of your target and background datasets, respectively. The
-eigenvectors of $C_{\alpha}$ define the **contrastive principal
+eigenvectors of $`C_\alpha`$ define the **contrastive principal
 components** — directions that capture variance enriched in the target
-relative to the background. The parameter $\alpha \geq 0$ controls how
+relative to the background. The parameter $`\alpha \geq 0`$ controls how
 aggressively the background signal is subtracted.
 
-At $\alpha = 0$, contrastive PCA reduces to standard PCA on the target
-data. As $\alpha$ increases, directions shared with the background are
+At $`\alpha = 0`$, contrastive PCA reduces to standard PCA on the target
+data. As $`\alpha`$ increases, directions shared with the background are
 progressively suppressed, and the components increasingly reflect
-structure unique to the target. At very high $\alpha$, you risk
+structure unique to the target. At very high $`\alpha`$, you risk
 over-subtracting: genuine signal that happens to be partially present in
 the background gets removed as well.
 
-**Choosing $\alpha$ is therefore the central modelling decision.** There
-is no universally correct value — it depends on how much background
-signal you want to remove and how much target-specific signal remains.
-The typical workflow is to scan a range of $\alpha$ values and select
-one that produces meaningful separation in your target groups, which
-`bixverse` makes straightforward.
+**Choosing $`\alpha`$ is therefore the central modelling decision.**
+There is no universally correct value — it depends on how much
+background signal you want to remove and how much target-specific signal
+remains. The typical workflow is to scan a range of $`\alpha`$ values
+and select one that produces meaningful separation in your target
+groups, which `bixverse` makes straightforward.
 
 One important caveat: contrastive PCA assumes your background dataset is
 a reasonable proxy for the unwanted variance. A poorly chosen background
@@ -64,6 +72,7 @@ Let’s explore first the synthetic data (same as from the original
 authors).
 
 ``` r
+
 cpca_test_data <- synthetic_c_pca_data()
 
 plot(cpca_test_data)
@@ -88,6 +97,7 @@ co-expression module analysis — built on
 [S7](https://github.com/RConsortium/S7).
 
 ``` r
+
 raw_data <- t(cpca_test_data$target)
 background_mat <- t(cpca_test_data$background)
 
@@ -111,6 +121,7 @@ Next we supply the background data, which triggers computation of both
 covariance matrices internally.
 
 ``` r
+
 cpca_obj <- contrastive_pca_processing(
   cpca_obj,
   background_mat = background_mat
@@ -120,11 +131,12 @@ cpca_obj <- contrastive_pca_processing(
 
 The object is now ready to explore the alpha parameter space. `bixverse`
 provides a convenience function that runs contrastive PCA across a grid
-of $\alpha$ values and plots the resulting two-dimensional embeddings,
+of $`\alpha`$ values and plots the resulting two-dimensional embeddings,
 coloured by a metadata column of your choice. This gives you an
 immediate visual sense of where meaningful separation emerges.
 
 ``` r
+
 c_pca_plot_alphas(
   cpca_obj,
   label_column = "grp",
@@ -138,20 +150,21 @@ c_pca_plot_alphas(
 
 Impact of the alpha parameter on the ability to distinguish the groups
 
-At $\alpha = 0$ the embedding is essentially standard PCA — dominated by
-the shared noise — and the four groups are indistinguishable. In the
-range of roughly $\alpha \approx 1.5$ to $10$, the groups become clearly
-separated as the background signal is progressively removed. At higher
-values the embedding starts to degrade, consistent with
+At $`\alpha = 0`$ the embedding is essentially standard PCA — dominated
+by the shared noise — and the four groups are indistinguishable. In the
+range of roughly $`\alpha \approx 1.5`$ to $`10`$, the groups become
+clearly separated as the background signal is progressively removed. At
+higher values the embedding starts to degrade, consistent with
 over-subtraction. For this dataset, something in the range
-$\alpha \in \lbrack 2,5\rbrack$ looks reasonable.
+$`\alpha \in [2, 5]`$ looks reasonable.
 
 ## Run contrastive PCA and extract the results
 
-Once you have settled on an $\alpha$, running the full decomposition and
-extracting the factors and loadings is straightforward:
+Once you have settled on an $`\alpha`$, running the full decomposition
+and extracting the factors and loadings is straightforward:
 
 ``` r
+
 cpca_obj <- contrastive_pca(
   cpca_obj,
   alpha = 2.5,

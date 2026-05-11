@@ -1,21 +1,43 @@
-# Run t-SNE on a SingleCells object
+# Run t-SNE on a SingleCells/MetaCells object
 
 Wrapper around
 [`manifoldsR::tsne()`](https://gregorlueg.github.io/manifoldsR/reference/tsne.html)
-for the `SingleCells` class.
+for the `SingleCells` and `MetaCells` classes. t-SNE produces a
+low-dimensional embedding that emphasises local neighbourhood structure.
+Distances between well-separated clusters should not be over-interpreted
+quantitatively, but the common claim that t-SNE discards global
+structure while UMAP preserves it is largely an artefact of default
+initialisations rather than a property of the loss functions themselves.
+
+When `use_knn = FALSE` (the default), the kNN graph already stored on
+the object is reused. Otherwise neighbours are computed from the chosen
+embedding.
+
+Two approximation strategies are available via `approx_type`: `"bh"`
+(Barnes-Hut) is the classical O(n log n) approximation and works well
+across a wide range of dataset sizes; `"fft"` (interpolation-based, as
+in FIt-SNE) scales better to very large datasets. `perplexity` controls
+the bandwidth of the Gaussian kernel used to compute affinities within
+the neighbour set (typical values 5-50). When a pre-computed kNN is
+supplied via `use_knn = TRUE`, perplexity no longer drives neighbour
+retrieval but still shapes the affinity distribution over the retrieved
+neighbours; values too close to the kNN size will produce poor results.
+With tSNE in particular the rule of thumb is to set k to
+`3 * perplexity`. When \`k ≤ perplexity“ the algorithm does not behave
+properly anymore, thus, will throw an error.
 
 ## Usage
 
 ``` r
 tsne_sc(
   object,
-  use_knn = TRUE,
+  use_knn = FALSE,
   embd_to_use = "pca",
   no_embd_to_use = NULL,
   n_dim = 2L,
-  perplexity = 30,
+  perplexity = 10,
   approx_type = c("bh", "fft"),
-  knn_method = c("hnsw", "balltree", "annoy", "nndescent", "exhaustive"),
+  knn_method = c("kmknn", "hnsw", "balltree", "annoy", "nndescent", "exhaustive"),
   nn_params = manifoldsR::params_nn(),
   tsne_params = manifoldsR::params_tsne(),
   seed = 42L,
@@ -27,7 +49,7 @@ tsne_sc(
 
 - object:
 
-  `SingleCells` class.
+  `SingleCells`, `MetaCells` class.
 
 - use_knn:
 

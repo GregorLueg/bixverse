@@ -1,8 +1,26 @@
-# Run PHATE on a SingleCells object
+# Run PHATE on a SingleCells/MetaCells object
 
 Wrapper around
 [`manifoldsR::phate()`](https://gregorlueg.github.io/manifoldsR/reference/phate.html)
-for the `SingleCells` class.
+for the `SingleCells` and `MetaCells` classes. PHATE (Potential of
+Heat-diffusion for Affinity-based Trajectory Embedding) produces a
+low-dimensional embedding that preserves both local and global structure
+by operating on a diffusion process over the data manifold. Unlike UMAP
+or t-SNE, PHATE is explicitly designed to reveal continuous progressions
+and branching structure, making it the preferred choice for data with
+developmental or trajectory-like organisation.
+
+When `use_knn = TRUE` (the default), the kNN graph already stored on the
+object is reused; otherwise neighbours are computed from the chosen
+embedding. The algorithm then constructs a diffusion operator, raises it
+to a power (the diffusion time `t`, see
+[`manifoldsR::params_phate()`](https://gregorlueg.github.io/manifoldsR/reference/params_phate.html))
+that denoises the manifold, and computes potential distances that are
+finally embedded via metric MDS.
+
+Because PHATE inherently smooths over the kNN graph, it pairs naturally
+with `MetaCells`: the combination yields a particularly clean view of
+continuous biological processes on denoised data.
 
 ## Usage
 
@@ -14,7 +32,7 @@ phate_sc(
   no_embd_to_use = NULL,
   n_dim = 2L,
   k = 5L,
-  knn_method = c("hnsw", "balltree", "annoy", "nndescent", "exhaustive"),
+  knn_method = c("kmknn", "hnsw", "balltree", "annoy", "nndescent", "exhaustive"),
   nn_params = manifoldsR::params_nn(),
   phate_params = manifoldsR::params_phate(),
   seed = 42L,
@@ -26,7 +44,7 @@ phate_sc(
 
 - object:
 
-  `SingleCells` class.
+  `SingleCells`, `MetaCells` class.
 
 - use_knn:
 

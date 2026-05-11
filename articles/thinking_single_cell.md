@@ -11,6 +11,7 @@ easier. The aim of this vignette is to take some small synthetic data
 and point out some quirks due to design choices made.
 
 ``` r
+
 library(bixverse)
 ```
 
@@ -23,6 +24,7 @@ genes 11 to 20 the next cell type and 21 to 30 the last cell type. The
 remaining genes are noise genes.
 
 ``` r
+
 single_cell_test_data <- generate_single_cell_test_data()
 
 str(single_cell_test_data)
@@ -40,11 +42,11 @@ str(single_cell_test_data)
 #>   ..$ cell_id    : chr [1:1000] "cell_0001" "cell_0002" "cell_0003" "cell_0004" ...
 #>   ..$ cell_grp   : chr [1:1000] "cell_type_1" "cell_type_2" "cell_type_3" "cell_type_1" ...
 #>   ..$ batch_index: num [1:1000] 1 1 1 1 1 1 1 1 1 1 ...
-#>   ..- attr(*, ".internal.selfref")=<externalptr> 
+#>   ..- attr(*, ".internal.selfref")=<pointer: 0x565029ec3b20> 
 #>  $ var   :Classes 'data.table' and 'data.frame': 100 obs. of  2 variables:
 #>   ..$ gene_id   : chr [1:100] "gene_001" "gene_002" "gene_003" "gene_004" ...
 #>   ..$ ensembl_id: chr [1:100] "ens_001" "ens_002" "ens_003" "ens_004" ...
-#>   ..- attr(*, ".internal.selfref")=<externalptr>
+#>   ..- attr(*, ".internal.selfref")=<pointer: 0x565029ec3b20>
 ```
 
 We have a count matrix with pseudo raw counts, an obs table and a var
@@ -59,6 +61,7 @@ design docs, you know why you have to provide a path here. If you do not
 know why, go back to the docs.
 
 ``` r
+
 test_dir <- file.path(tempdir(), "single_cell_test")
 dir.create(test_dir, showWarnings = FALSE, recursive = TRUE)
 
@@ -79,6 +82,7 @@ sc_object
 Is something in the directory?
 
 ``` r
+
 list.files(test_dir)
 #> character(0)
 ```
@@ -86,6 +90,7 @@ list.files(test_dir)
 Nope. But let’s now load in the data and see what happens:
 
 ``` r
+
 sc_object <- load_r_data(
   object = sc_object,
   counts = single_cell_test_data$counts,
@@ -130,6 +135,7 @@ So, what has just happened … ? Actually quite a lot of things:
 If we now print the class:
 
 ``` r
+
 sc_object
 #> Single cell experiment (Single Cells).
 #>   No cells (original): 1000
@@ -151,6 +157,7 @@ apply some filters here (the synthetic data is weird, but does the job
 of assumption testing).
 
 ``` r
+
 sc_object <- load_r_data(
   object = sc_object,
   counts = single_cell_test_data$counts,
@@ -196,6 +203,7 @@ might have realised in the print like `To keep n`. This is very
 important! Let’s check this out
 
 ``` r
+
 get_cells_to_keep(sc_object)[1:10]
 #>  [1] 0 1 2 3 4 5 6 7 8 9
 ```
@@ -210,6 +218,7 @@ memory and on-disk work!). Also the DuckDB state will get updated, but
 let’s get to this later. We also have other getters.
 
 ``` r
+
 # get the cell identifiers - filtered for genes to keep; if set to FALSE
 # everything will be returned
 print(get_cell_names(sc_object, filtered = TRUE)[1:10])
@@ -225,6 +234,7 @@ Let’s quickly check out how you access the obs table and then let’s
 exemplify THE footgun of the paper:
 
 ``` r
+
 # a more R-native way
 sc_object[[]]
 #>      cell_idx   cell_id    cell_grp batch_index   nnz lib_size to_keep
@@ -243,6 +253,7 @@ sc_object[[]]
 ```
 
 ``` r
+
 # a more R-native way: only first three rows
 sc_object[[1:3L]]
 #>    cell_idx   cell_id    cell_grp batch_index   nnz lib_size to_keep
@@ -253,6 +264,7 @@ sc_object[[1:3L]]
 ```
 
 ``` r
+
 # a more R-native way: specific columns
 sc_object[[c("cell_idx", "cell_id", "cell_grp")]]
 #>      cell_idx   cell_id    cell_grp
@@ -274,6 +286,7 @@ All of these ways above call R primitives. There is also a more general
 getter here:
 
 ``` r
+
 get_sc_obs(sc_object, filtered = FALSE)
 #>      cell_idx   cell_id    cell_grp batch_index   nnz lib_size to_keep
 #>         <int>    <char>      <char>       <num> <num>    <num>  <lgcl>
@@ -295,6 +308,7 @@ Let’s pretend we want to do mitochondrial (or other gene set-based
 removal)
 
 ``` r
+
 # pseudo gene sets
 gs_of_interest <- list(
   gs_1 = c("gene_001", "gene_002", "gene_003", "gene_004"),
@@ -312,6 +326,7 @@ sc_object <- gene_set_proportions_sc(
 If we now look at the obs again:
 
 ``` r
+
 sc_object[[]]
 #>      cell_idx   cell_id    cell_grp batch_index   nnz lib_size to_keep
 #>         <int>    <char>      <char>       <num> <num>    <num>  <lgcl>
@@ -345,6 +360,7 @@ We now have two new columns here! That worked well… Let’s now do
 filtering to really understand what’s happening under the hood:
 
 ``` r
+
 threshold <- 0.05
 
 cells_to_keep <- sc_object[[]][gs_2 < threshold, cell_id]
@@ -370,6 +386,7 @@ cells, and you have to carefully think and remember what you did when.
 Also:
 
 ``` r
+
 obs_unfiltered <- get_sc_obs(sc_object, filtered = FALSE)
 
 obs_filtered <- get_sc_obs(sc_object, filtered = TRUE)
@@ -396,6 +413,7 @@ why (if you don’t, please read it!). Now let’s look into what it
 ACTUALLY means… Let’s say you are interested in the first 50 cells.
 
 ``` r
+
 raw_counts_from_cells <- sc_object[
   1:50L,
   ,
@@ -429,6 +447,7 @@ telling R to tell Rust to load in ALL genes and then filter to the
 desired cells. The impact of this can be seen here:
 
 ``` r
+
 microbenchmark::microbenchmark(
   the_correct_way = {
     sc_object[
@@ -450,8 +469,8 @@ microbenchmark::microbenchmark(
 )
 #> Unit: milliseconds
 #>               expr      min       lq     mean   median       uq      max neval
-#>    the_correct_way 1.293488 1.323143 1.490062 1.372220 1.437636 2.489974    10
-#>  the_incorrect_way 2.016520 2.167542 2.251115 2.226933 2.302153 2.598767    10
+#>    the_correct_way 1.346235 1.373706 1.515621 1.403005 1.421215 2.574149    10
+#>  the_incorrect_way 2.209448 2.257577 2.308635 2.300277 2.381709 2.391719    10
 ```
 
 The difference seems marginal here, but it WILL bite you if you do this
@@ -462,6 +481,7 @@ the Rust files have and again you need to THINK about the cells to keep.
 A nasty example here:
 
 ``` r
+
 counts_filtered <- get_sc_counts(
   object = sc_object,
   assay = "raw",
@@ -504,6 +524,7 @@ cells”. **They are not filtered, they are just not returned.** You can
 control this also via the primitive syntax.
 
 ``` r
+
 filtered_counts <- sc_object[1:10L, 1:10L, use_cells_to_keep = TRUE]
 
 unfiltered_counts <- sc_object[1:10L, 1:10L, use_cells_to_keep = FALSE]
@@ -526,6 +547,7 @@ If you want to avoid thinking about indices altogether (which is
 recommended), just use:
 
 ``` r
+
 # just use cell labels and genes directly...
 sc_object[
   c("cell_0001", "cell_0003", "cell_0100", "cell_0117"),

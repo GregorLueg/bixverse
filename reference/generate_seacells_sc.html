@@ -13,7 +13,7 @@ refer to the publication."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -42,6 +42,8 @@ refer to the publication."></head><body>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
     <li><a class="dropdown-item" href="../articles/analysis_single_cell.html">'Bag of genes' methods for single cell in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/knn_searches.html">kNN searches for single cells in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing big data on a powerful laptop (example)</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -76,6 +78,7 @@ refer to the publication.</p>
 <span>  embd_to_use <span class="op">=</span> <span class="st">"pca"</span>,</span>
 <span>  no_embd_to_use <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  cells_to_use <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  regenerate_knn <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  target_size <span class="op">=</span> <span class="fl">1e+05</span>,</span>
 <span>  seed <span class="op">=</span> <span class="fl">42L</span>,</span>
 <span>  .verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
@@ -125,6 +128,11 @@ use. If <code>NULL</code> all will be used. Only relevant if you set regenerate_
 <dt id="arg-cells-to-use">cells_to_use<a class="anchor" aria-label="anchor" href="#arg-cells-to-use"></a></dt>
 <dd><p>Optional string. Names of the cells to use for the
 generation of the SEACells.</p></dd>
+
+
+<dt id="arg-regenerate-knn">regenerate_knn<a class="anchor" aria-label="anchor" href="#arg-regenerate-knn"></a></dt>
+<dd><p>Boolean. Shall a kNN graph be regenerated. If not,
+the internal one will be used.</p></dd>
 
 
 <dt id="arg-target-size">target_size<a class="anchor" aria-label="anchor" href="#arg-target-size"></a></dt>

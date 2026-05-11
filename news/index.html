@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -36,6 +36,8 @@
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
     <li><a class="dropdown-item" href="../articles/analysis_single_cell.html">'Bag of genes' methods for single cell in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/knn_searches.html">kNN searches for single cells in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing big data on a powerful laptop (example)</a></li>
   </ul></li>
 <li class="active nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -54,6 +56,36 @@
 
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.3.2" id="bixverse-032">bixverse 0.3.2<a class="anchor" aria-label="anchor" href="#bixverse-032"></a></h2>
+<div class="section level3">
+<h3 id="features-0-3-2">Features<a class="anchor" aria-label="anchor" href="#features-0-3-2"></a></h3>
+<p>Following things were added:</p>
+<ul><li>scDblFinder as another doublet detection method</li>
+<li>Following methods on top of meta-cells:
+<ul><li>HVG detection</li>
+<li>PCA</li>
+<li>kNN generation</li>
+<li>sNN generation</li>
+<li>Leiden clustering</li>
+<li>SCENIC for meta cells</li>
+</ul></li>
+<li>Exposing (finally) other HVG methods for single cell</li>
+<li>Addition of <code>KmKnn</code> as a nearest neighbour method</li>
+<li>Fast clustering methods with k-means clustering followed by Louvain clustering.</li>
+<li>Harmony v2 added.</li>
+<li>Following vignettes added:
+<ul><li>K-nearest neighbour searches for single cell</li>
+<li>Metacells in <code>bixverse</code>
+</li>
+<li>Updates to various single cell vignettes</li>
+</ul></li>
+<li>Major update to the rextendr/extendr interface</li>
+</ul></div>
+<div class="section level3">
+<h3 id="breaking-changes-0-3-2">Breaking changes<a class="anchor" aria-label="anchor" href="#breaking-changes-0-3-2"></a></h3>
+</div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.3.1" id="bixverse-031">bixverse 0.3.1<a class="anchor" aria-label="anchor" href="#bixverse-031"></a></h2>
 <ul><li>Minor dependency update on the Rust side. Bumped versions to improved Rust crates.</li>

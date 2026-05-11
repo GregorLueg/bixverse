@@ -9,13 +9,22 @@ in the DuckDB.
 ``` r
 get_obs_data(x, ...)
 
-# S3 method for class 'sc_proportion_res'
+# S3 method for class 'ScListRes'
 get_obs_data(x, ...)
+
+# S3 method for class 'ScMatrixRes'
+get_obs_data(x, columns = NULL, ...)
 
 # S3 method for class 'ScrubletRes'
 get_obs_data(x, ...)
 
 # S3 method for class 'BoostRes'
+get_obs_data(x, ...)
+
+# S3 method for class 'ScDblFinderRes'
+get_obs_data(x, ...)
+
+# S3 method for class 'SingleCellFastClusters'
 get_obs_data(x, ...)
 ```
 

@@ -1,6 +1,7 @@
-# Get the available embeddings from the cache
+# Get the available embeddings
 
-Returns the available embedding names from the cache.
+Returns the available embedding as names from the class. This function
+is used for the single cell-related classes and methods.
 
 ## Usage
 

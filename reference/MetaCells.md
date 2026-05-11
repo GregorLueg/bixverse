@@ -47,6 +47,11 @@ Returns the `MetaCells` class for further operations.
 
   List with the raw and normalised counts.
 
+- sc_cache:
+
+  Class with embeddings, kNN/sNN graphs, etc. Shared with
+  [`SingleCells()`](https://gregorlueg.github.io/bixverse/reference/SingleCells.md).
+
 - original_assignment:
 
   List with original assignment information.

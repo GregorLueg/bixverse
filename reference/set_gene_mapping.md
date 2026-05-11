@@ -1,8 +1,7 @@
-# Set gene mapping for ScMap object
+# Set gene mapping
 
-Set gene mapping for ScMap object
-
-Set the gene mapping for a `SingleCells` class.
+Set a gene mapping for a given object. This is used for the single
+cell-related classes with streaming from disk.
 
 ## Usage
 

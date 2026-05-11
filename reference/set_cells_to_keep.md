@@ -1,8 +1,8 @@
-# Set cells to keep for ScMap object
+# Set cells to keep
 
-Set cells to keep for ScMap object
-
-Set the cell mapping for a `SingleCells` class.
+Set the cells to keep. This is used for the single cell-related classes
+with streaming from disk and tells subsequent (Rust) methods which cells
+to include.
 
 ## Usage
 

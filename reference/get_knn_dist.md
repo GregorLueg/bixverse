@@ -1,8 +1,8 @@
-# Get the KNN distance measures
+# Get the KNN distance
 
-Get the KNN distance measures
-
-Get the KNN distances from a `SingleCells`.
+Getter for an integer matrix of samples x distances. Useful in
+combination with
+[`get_knn_mat()`](https://gregorlueg.github.io/bixverse/reference/get_knn_mat.md).
 
 ## Usage
 

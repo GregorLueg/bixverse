@@ -1,5 +1,32 @@
 # Changelog
 
+## bixverse 0.3.2
+
+### Features
+
+Following things were added:
+
+- scDblFinder as another doublet detection method
+- Following methods on top of meta-cells:
+  - HVG detection
+  - PCA
+  - kNN generation
+  - sNN generation
+  - Leiden clustering
+  - SCENIC for meta cells
+- Exposing (finally) other HVG methods for single cell
+- Addition of `KmKnn` as a nearest neighbour method
+- Fast clustering methods with k-means clustering followed by Louvain
+  clustering.
+- Harmony v2 added.
+- Following vignettes added:
+  - K-nearest neighbour searches for single cell
+  - Metacells in `bixverse`
+  - Updates to various single cell vignettes
+- Major update to the rextendr/extendr interface
+
+### Breaking changes
+
 ## bixverse 0.3.1
 
 - Minor dependency update on the Rust side. Bumped versions to improved

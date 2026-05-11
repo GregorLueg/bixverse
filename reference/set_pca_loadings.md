@@ -2,8 +2,6 @@
 
 Set/add PCA loadings
 
-Set the PCA factors for a `SingleCells` class.
-
 ## Usage
 
 ``` r

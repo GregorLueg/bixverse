@@ -19,7 +19,7 @@ scenic_gene_filter_sc(
 
 - object:
 
-  `SingleCells` class.
+  `SingleCells`, `MetaCells` (or potentially other) class.
 
 - scenic_params:
 

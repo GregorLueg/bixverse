@@ -100,6 +100,7 @@ These may be useful for your own package development.
 ## Set-up
 
 ``` r
+
 library(bixverse)
 ```
 
@@ -113,6 +114,7 @@ or if they feel brave, they can just use the Rust crate directly, see
 ### Correlations, covariance, and cosine distance
 
 ``` r
+
 no_rows <- 500L
 no_cols <- 500L
 
@@ -128,6 +130,7 @@ random_data <- matrix(
 #### Pearson’s correlation
 
 ``` r
+
 r_pearsons_res <- cor(random_data)
 
 rust_pearsons_res <- rs_cor(random_data, spearman = FALSE)
@@ -140,15 +143,16 @@ all.equal(r_pearsons_res, rust_pearsons_res, tolerance = 1e-15)
 Let’s check the speed.
 
 ``` r
+
 microbenchmark::microbenchmark(
   r = cor(random_data),
   rust = rs_cor(random_data, spearman = FALSE),
   times = 10L
 )
 #> Unit: milliseconds
-#>  expr        min        lq       mean     median         uq        max neval
-#>     r 135.129510 135.15287 135.361154 135.312126 135.345664 136.244074    10
-#>  rust   5.417325   5.56965   6.340263   5.889052   6.975938   8.116911    10
+#>  expr        min         lq       mean     median         uq        max neval
+#>     r 135.308947 135.358530 135.488225 135.423496 135.485026 136.168452    10
+#>  rust   5.859677   6.574292   7.187097   6.723896   8.049347   9.113926    10
 ```
 
 #### Spearman’s correlation
@@ -156,6 +160,7 @@ microbenchmark::microbenchmark(
 What about ranked correlations?
 
 ``` r
+
 r_spearman_res <- cor(random_data, method = "spearman")
 
 rust_spearman_res <- rs_cor(random_data, spearman = TRUE)
@@ -167,15 +172,16 @@ all.equal(r_spearman_res, rust_spearman_res, tolerance = 1e-15)
 And speed
 
 ``` r
+
 microbenchmark::microbenchmark(
   r = cor(random_data, method = "spearman"),
   rust = rs_cor(random_data, spearman = TRUE),
   times = 10L
 )
 #> Unit: milliseconds
-#>  expr        min         lq       mean     median         uq       max neval
-#>     r 165.711238 166.771830 168.341354 168.730592 169.899446 170.35679    10
-#>  rust   7.089851   7.322075   8.275321   7.545908   9.505185  10.68323    10
+#>  expr        min        lq       mean     median         uq       max neval
+#>     r 166.617787 168.00909 169.245091 169.109657 170.997108 171.67229    10
+#>  rust   7.694525   8.27057   8.819979   8.546276   8.989855  11.03774    10
 ```
 
 #### Covariance
@@ -183,6 +189,7 @@ microbenchmark::microbenchmark(
 Covariance matrices are also very common…
 
 ``` r
+
 r_covar_res <- cov(random_data)
 
 rust_covar_res <- rs_covariance(random_data)
@@ -194,6 +201,7 @@ all.equal(r_covar_res, rust_covar_res, tolerance = 1e-15)
 And speed comparisons
 
 ``` r
+
 microbenchmark::microbenchmark(
   r = cov(random_data),
   rust = rs_covariance(random_data),
@@ -201,13 +209,14 @@ microbenchmark::microbenchmark(
 )
 #> Unit: milliseconds
 #>  expr        min         lq       mean     median         uq        max neval
-#>     r 134.859886 134.897467 135.313301 134.951678 135.114131 136.831961    10
-#>  rust   4.333822   4.366922   5.532887   5.149454   5.501282   8.346721    10
+#>     r 135.057928 135.117509 135.401343 135.144080 135.255107 136.601853    10
+#>  rust   4.320532   5.152125   5.805676   5.382015   7.111766   8.208695    10
 ```
 
 #### Covariance to correlation
 
 ``` r
+
 r_cor_from_covar <- cov2cor(r_covar_res)
 
 rust_cor_from_covar <- rs_cov2cor(rust_covar_res)
@@ -221,6 +230,7 @@ operation is already cheap in base R — but the interface remains
 consistent with the rest of the `rs_` family.
 
 ``` r
+
 microbenchmark::microbenchmark(
   r = cov2cor(r_covar_res),
   rust = rs_cov2cor(rust_covar_res),
@@ -228,8 +238,8 @@ microbenchmark::microbenchmark(
 )
 #> Unit: milliseconds
 #>  expr      min       lq     mean   median       uq      max neval
-#>     r 2.201775 2.413260 3.398934 3.197761 4.204378 6.013450    10
-#>  rust 1.420715 1.533927 2.786392 2.006590 3.552870 6.808175    10
+#>     r 2.233202 2.502585 3.579112 3.288278 4.747168 6.315088    10
+#>  rust 1.570694 2.098240 3.032057 2.222707 3.753483 7.774534    10
 ```
 
 #### Correlations between two matrices
@@ -238,6 +248,7 @@ So far, all of the functions did pairwise column-based correlations.
 What about two correlations against each other?
 
 ``` r
+
 no_rows_2 <- 500L
 no_cols_2 <- 400L
 
@@ -253,6 +264,7 @@ random_data_2 <- matrix(
 Let’s compare against R:
 
 ``` r
+
 r_cor_2_matrices <- cor(random_data, random_data_2)
 
 rust_cor_2_matrices <- rs_cor2(random_data, random_data_2, spearman = FALSE)
@@ -265,6 +277,7 @@ all.equal(r_cor_2_matrices, rust_cor_2_matrices, tolerance = 1e-14)
 And speed:
 
 ``` r
+
 microbenchmark::microbenchmark(
   r = cor(random_data, random_data_2),
   rust = rs_cor2(random_data, random_data_2, spearman = FALSE),
@@ -272,8 +285,8 @@ microbenchmark::microbenchmark(
 )
 #> Unit: milliseconds
 #>  expr        min         lq       mean     median         uq        max neval
-#>     r 193.585846 193.748560 193.860604 193.798744 193.971397 194.475950    10
-#>  rust   4.735992   5.324241   6.118443   5.915485   6.956501   7.738373    10
+#>     r 190.923664 191.060739 191.142922 191.098280 191.260142 191.448795    10
+#>  rust   6.096128   6.934965   7.764175   7.541413   8.818204   9.604843    10
 ```
 
 ### Distance metrics
@@ -286,6 +299,7 @@ row-wise distances, while
 expects columns to represent observations — hence the transpose.
 
 ``` r
+
 r_euclidean_distance <- as.matrix(
   dist(random_data, method = "euclidean")
 )
@@ -307,20 +321,22 @@ all.equal(
 And speed…
 
 ``` r
+
 microbenchmark::microbenchmark(
   r = dist(random_data, method = "euclidean"),
   rust = rs_dist(random_data, distance_type = "euclidean"),
   times = 10L
 )
 #> Unit: milliseconds
-#>  expr       min        lq      mean    median        uq      max neval
-#>     r 95.095295 95.226420 95.548990 95.396589 95.626549 97.11469    10
-#>  rust  4.565683  4.698441  4.892128  4.878208  5.145327  5.19537    10
+#>  expr       min        lq      mean    median        uq       max neval
+#>     r 97.766893 98.006301 98.368307 98.194202 98.685099 99.470956    10
+#>  rust  4.393638  4.440355  4.790472  4.679531  5.190677  5.252853    10
 ```
 
 #### Manhattan distance
 
 ``` r
+
 r_manhattan_distance <- as.matrix(
   dist(random_data, method = "manhattan")
 )
@@ -342,6 +358,7 @@ all.equal(
 And speed… ?
 
 ``` r
+
 microbenchmark::microbenchmark(
   r = dist(random_data, method = "manhattan"),
   rust = rs_dist(random_data, distance_type = "manhattan"),
@@ -349,13 +366,14 @@ microbenchmark::microbenchmark(
 )
 #> Unit: milliseconds
 #>  expr      min       lq     mean   median       uq      max neval
-#>     r 89.36864 89.41936 89.62563 89.67866 89.77539 89.84988    10
-#>  rust 17.09855 17.16074 17.38307 17.25756 17.64508 17.87759    10
+#>     r 91.82860 92.19334 93.19943 93.16050 94.17349 94.98994    10
+#>  rust 17.39455 17.52952 17.71641 17.73326 17.89381 18.05763    10
 ```
 
 #### Canberra distance
 
 ``` r
+
 r_canberra_distance <- as.matrix(
   dist(random_data, method = "canberra")
 )
@@ -377,6 +395,7 @@ all.equal(
 Same benchmarks as before…
 
 ``` r
+
 microbenchmark::microbenchmark(
   r = dist(random_data, method = "canberra"),
   rust = rs_dist(random_data, distance_type = "canberra"),
@@ -384,13 +403,14 @@ microbenchmark::microbenchmark(
 )
 #> Unit: milliseconds
 #>  expr       min        lq      mean    median        uq       max neval
-#>     r 134.76585 134.87735 135.24578 134.98257 135.16090 136.95542    10
-#>  rust  46.04899  46.31671  46.43284  46.43207  46.62209  46.69678    10
+#>     r 138.01294 138.18123 138.51417 138.38963 138.76506 139.39356    10
+#>  rust  46.46705  46.78096  46.88619  46.89094  46.92848  47.29135    10
 ```
 
 ### Mutual information
 
 ``` r
+
 set.seed(246L)
 
 nrows <- 100
@@ -407,6 +427,7 @@ Two discretisation strategies are available.
 **Equal width:**
 
 ``` r
+
 rust_res_mi <- rs_mutual_info(
   mat,
   n_bins = NULL,
@@ -426,6 +447,7 @@ all.equal(rust_res_mi, infotheo_res_mi)
 ```
 
 ``` r
+
 microbenchmark::microbenchmark(
   infotheo = infotheo::mutinformation(infotheo::discretize(
     mat,
@@ -441,14 +463,15 @@ microbenchmark::microbenchmark(
   times = 10L
 )
 #> Unit: milliseconds
-#>      expr       min      lq     mean    median        uq       max neval
-#>  infotheo 83.162443 83.4657 84.20452 84.098332 84.891725 85.428568    10
-#>      rust  3.307592  3.3649  3.47485  3.483766  3.564042  3.720183    10
+#>      expr       min        lq      mean    median        uq       max neval
+#>  infotheo 82.684778 83.258710 83.418606 83.324908 83.756429 84.115640    10
+#>      rust  3.451408  3.480372  3.676916  3.739527  3.818634  3.981308    10
 ```
 
 **Equal frequency:**
 
 ``` r
+
 rust_res_mi <- rs_mutual_info(
   mat,
   n_bins = NULL,
@@ -468,6 +491,7 @@ all.equal(rust_res_mi, infotheo_res_mi)
 ```
 
 ``` r
+
 microbenchmark::microbenchmark(
   infotheo = infotheo::mutinformation(infotheo::discretize(
     mat,
@@ -483,12 +507,9 @@ microbenchmark::microbenchmark(
   times = 10L
 )
 #> Unit: milliseconds
-#>      expr        min         lq       mean     median         uq        max
-#>  infotheo 101.116219 101.428322 102.046697 101.896457 102.770610 103.272028
-#>      rust   4.369887   4.415793   4.515948   4.561882   4.572656   4.626907
-#>  neval
-#>     10
-#>     10
+#>      expr       min        lq       mean     median         uq        max neval
+#>  infotheo 99.766298 99.996378 100.360592 100.389970 100.716854 100.797544    10
+#>      rust  4.473697  4.574837   4.661603   4.666913   4.795178   4.811589    10
 ```
 
 ### Set similarities
@@ -498,6 +519,7 @@ illustrate the performance, below is a comparison against a naive R
 implementation of Jaccard similarity across two lists.
 
 ``` r
+
 jaccard_sim <- function(x, y) {
   length(intersect(x, y)) / length(union(x, y))
 }
@@ -519,6 +541,7 @@ Starting with a sequential [purrr](https://purrr.tidyverse.org) approach
 as the baseline:
 
 ``` r
+
 tictoc::tic()
 
 r_results <- purrr::map(
@@ -528,14 +551,14 @@ r_results <- purrr::map(
   },
   .progress = TRUE
 )
-#>  ■■■                                7% |  ETA: 23s
-#>  ■■■■■■■                           19% |  ETA: 20s
-#>  ■■■■■■■■■■■                       32% |  ETA: 17s
-#>  ■■■■■■■■■■■■■■                    44% |  ETA: 14s
-#>  ■■■■■■■■■■■■■■■■■■                56% |  ETA: 11s
-#>  ■■■■■■■■■■■■■■■■■■■■■■            68% |  ETA:  8s
-#>  ■■■■■■■■■■■■■■■■■■■■■■■■■         81% |  ETA:  5s
-#>  ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■     93% |  ETA:  2s
+#>  ■■■                                6% |  ETA: 24s
+#>  ■■■■■■                            17% |  ETA: 21s
+#>  ■■■■■■■■■■                        29% |  ETA: 18s
+#>  ■■■■■■■■■■■■■                     42% |  ETA: 15s
+#>  ■■■■■■■■■■■■■■■■■                 54% |  ETA: 12s
+#>  ■■■■■■■■■■■■■■■■■■■■■             65% |  ETA:  9s
+#>  ■■■■■■■■■■■■■■■■■■■■■■■■          77% |  ETA:  6s
+#>  ■■■■■■■■■■■■■■■■■■■■■■■■■■■■      90% |  ETA:  3s
 
 similarity_matrix <- matrix(
   data = unlist(r_results),
@@ -545,13 +568,14 @@ similarity_matrix <- matrix(
 )
 
 tictoc::toc()
-#> 24.617 sec elapsed
+#> 25.13 sec elapsed
 ```
 
 Parallelising via [furrr](https://furrr.futureverse.org) gives a
 meaningful speedup:
 
 ``` r
+
 future::plan(strategy = future::multisession(workers = parallel::detectCores()))
 
 tictoc::tic()
@@ -572,7 +596,7 @@ similarity_matrix <- matrix(
 )
 
 tictoc::toc()
-#> 13.838 sec elapsed
+#> 14.031 sec elapsed
 
 future::plan(strategy = future::sequential())
 ```
@@ -582,6 +606,7 @@ scheduling overhead (somtimes) compared to `future` and does a bit
 better:
 
 ``` r
+
 mirai::daemons(parallel::detectCores())
 
 tictoc::tic()
@@ -604,7 +629,7 @@ similarity_matrix <- matrix(
 )
 
 tictoc::toc()
-#> 13.392 sec elapsed
+#> 13.517 sec elapsed
 
 mirai::daemons(0)
 ```
@@ -614,6 +639,7 @@ Depending on your system this optimised parallel R version may be around
 Rust implementation:
 
 ``` r
+
 tictoc::tic()
 
 rust_res <- rs_set_similarity_list2(
@@ -623,7 +649,7 @@ rust_res <- rs_set_similarity_list2(
 )
 
 tictoc::toc()
-#> 0.046 sec elapsed
+#> 0.053 sec elapsed
 
 all.equal(similarity_matrix, rust_res, tolerance = 1e-15)
 #> [1] TRUE

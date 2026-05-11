@@ -1,21 +1,23 @@
 # Generate SuperCells.
 
 This function implements the approach from Bilous, et al. to generate
-meta cells or called here SuperCells. You can provide an already
-pre-computed kNN matrix or an embedding to regenerate the kNN matrix
-with specified parameters in the meta_cell_params. If `knn_mat` is
-provided, this one will be used. You need to at least provide `knn_mat`
-or `embd`!
+meta cells or called here SuperCells. You can provide pre-computed kNN
+data (indices + distances) via `knn_data`, or an embedding via `embd`
+from which the kNN graph will be generated. You need to at least provide
+`knn_data` or `embd`. When `cells_to_use` is supplied, the kNN graph is
+always regenerated on the subset and any `knn_data` is ignored.
+Distances are required when the SuperCell parameters request the
+kernel-weighted graph.
 
 ## Usage
 
 ``` r
 rs_supercell(
   f_path,
-  knn_mat,
   embd,
   cells_to_keep,
   cells_to_use,
+  knn_data,
   supercell_params,
   target_size,
   seed,
@@ -29,16 +31,11 @@ rs_supercell(
 
   String. Path to the `counts_cells.bin` file.
 
-- knn_mat:
-
-  Optional integer matrix. The kNN matrix you wish to use for the
-  generation of the meta cells. This function expects 0-indices!
-
 - embd:
 
   Optional numerical matrix. The embedding matrix (for example PCA
-  embedding) you wish to use for the generation of the kNN graph that is
-  used subsequently for aggregation of the meta cells.
+  embedding) used for the generation of the kNN graph. Required when
+  `knn_data` is not provided, and required when using `cells_to_use`.
 
 - cells_to_keep:
 
@@ -49,7 +46,14 @@ rs_supercell(
 
   Optional indices of cells to use for meta cell generation. Useful if
   you wish to generate meta cells in specific cell types. If this is
-  provided, the kNN graph will be regenerated.
+  provided, `embd` and `cells_to_keep` are required and the kNN graph
+  will be regenerated on the subset.
+
+- knn_data:
+
+  Optional list. This contains pre-computed kNN data (including
+  distances). The user has to ensure consistency! Ignored when
+  `cells_to_use` is set.
 
 - supercell_params:
 

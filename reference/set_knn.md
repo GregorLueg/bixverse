@@ -2,8 +2,6 @@
 
 Set/add KNN
 
-Set the KNN matrix for a `SingleCells` class.
-
 ## Usage
 
 ``` r

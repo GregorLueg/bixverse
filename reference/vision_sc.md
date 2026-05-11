@@ -35,7 +35,7 @@ vision_sc(object, gs_list, streaming = FALSE, .verbose = TRUE)
 
 ## Value
 
-Matrix of cells x signatures with the VISION pathway scores as values.
+Returns a `ScMatrixRes` with the VISION scores.
 
 ## References
 

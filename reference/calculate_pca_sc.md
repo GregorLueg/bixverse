@@ -1,7 +1,8 @@
 # Run PCA for single cell
 
-This function will run PCA (option of full SVD and randomised SVD for
-now) on the detected highly variable genes.
+This function will run PCA on the detected highly variable genes. You
+can use randomised SVD for speed and there is an option for sparse SVD
+for very large data sets to avoid memory pressure.
 
 ## Usage
 
@@ -21,7 +22,7 @@ calculate_pca_sc(
 
 - object:
 
-  `SingleCells` class.
+  `SingleCells`, `MetaCells` (or potentially other) class.
 
 - no_pcs:
 
@@ -38,7 +39,7 @@ calculate_pca_sc(
   used to solve the sparse SVD. With `random_svd = TRUE`, the sparse
   initial matrix is multiplied with the random matrix, yielding a much
   smaller dense matrix that does not increase the memory pressure
-  massively.
+  massively. Not used for `MetaCells`.
 
 - hvg:
 

@@ -2,8 +2,6 @@
 
 Set/add KNN
 
-Set the sNN graph for a `SingleCells` class.
-
 ## Usage
 
 ``` r

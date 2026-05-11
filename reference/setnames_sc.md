@@ -13,7 +13,7 @@ setnames_sc(object, table = c("obs", "var"), old, new)
 
 - object:
 
-  `SingleCells`, `MetaCells` class.
+  `SingleCells`, `MetaCells` (or potentially other) class.
 
 - table:
 

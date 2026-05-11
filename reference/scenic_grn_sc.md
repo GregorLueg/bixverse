@@ -23,7 +23,7 @@ scenic_grn_sc(
 
 - object:
 
-  `SingleCells` class.
+  `SingleCells`, `MetaCells` (or potentially other) class.
 
 - tf_ids:
 
@@ -51,7 +51,8 @@ scenic_grn_sc(
 - streaming:
 
   Boolean. Whether to use the streaming implementation to bound memory
-  usage. Useful for large datasets. Defaults to `FALSE`.
+  usage. Useful for large datasets. Defaults to `FALSE`. Ignored when
+  applied to `MetaCells`.
 
 - random_seed:
 

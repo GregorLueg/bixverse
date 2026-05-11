@@ -1,8 +1,7 @@
 # Get the KNN object
 
-Get the KNN object
-
-Get the KNN object from a `SingleCells`.
+Returns the `SingleCellNearestNeighbour` from the object. This function
+is used for the single cell-related classes and methods.
 
 ## Usage
 

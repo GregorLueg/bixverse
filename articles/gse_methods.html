@@ -23,7 +23,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -58,6 +58,8 @@
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
     <li><a class="dropdown-item" href="../articles/analysis_single_cell.html">'Bag of genes' methods for single cell in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/knn_searches.html">kNN searches for single cells in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing big data on a powerful laptop (example)</a></li>
   </ul>
 </li>
@@ -80,7 +82,7 @@
       <h1>Gene Set Enrichment Methods</h1>
 
       <p class="author">Gregor Lueg</p>
-
+      <p class="date">2026-05-11</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -104,6 +106,11 @@
 <span><span class="op">}</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">bixverse</span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-datatable.com" class="external-link">data.table</a></span><span class="op">)</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Attaching package: 'data.table'</span></span>
+<span><span class="co">#&gt; The following object is masked from 'package:base':</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;     %notin%</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://magrittr.tidyverse.org" class="external-link">magrittr</a></span><span class="op">)</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="intro">Intro<a class="anchor" aria-label="anchor" href="#intro"></a>
@@ -237,7 +244,7 @@
 <span>  gene_set_list <span class="op">=</span> <span class="va">gene_sets</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu">tictoc</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tictoc/man/tic.html" class="external-link">toc</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 0.483 sec elapsed</span></span></code></pre></div>
+<span><span class="co">#&gt; 0.582 sec elapsed</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="gene-ontology-aware-enrichment-the-elimination-method">Gene Ontology-aware enrichment: the elimination method<a class="anchor" aria-label="anchor" href="#gene-ontology-aware-enrichment-the-elimination-method"></a>
 </h2>
@@ -338,7 +345,7 @@
 <span>  target_gene_list <span class="op">=</span> <span class="va">go_target_gene_sets</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu">tictoc</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tictoc/man/tic.html" class="external-link">toc</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 1.374 sec elapsed</span></span></code></pre></div>
+<span><span class="co">#&gt; 1.538 sec elapsed</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="alternative-post-hoc-simplification-of-go-results">Alternative: post-hoc simplification of GO results<a class="anchor" aria-label="anchor" href="#alternative-post-hoc-simplification-of-go-results"></a>
 </h2>
@@ -406,7 +413,7 @@
 <p><code>bixverse</code> implements GSEA following <a href="https://www.pnas.org/doi/10.1073/pnas.0506580102" class="external-link">Subramanian et al.</a> for testing against a continuously ranked gene list. The package also wraps the <code>fgsea</code> multilevel method from <a href="https://www.biorxiv.org/content/10.1101/060012v3" class="external-link">Korotkevich et al.</a>, which uses an adaptive permutation scheme to estimate precise p-values efficiently. Both are available for comparison.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="st"><a href="https://github.com/ctlab/fgsea/" class="external-link">"fgsea"</a></span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="st"><a href="https://github.com/alserglab/fgsea/" class="external-link">"fgsea"</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">examplePathways</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">exampleRanks</span><span class="op">)</span></span>
@@ -432,12 +439,12 @@
 <span><span class="co">#&gt; 6:                                        573389_NoRC_negatively_regulates_rRNA_expression</span></span>
 <span><span class="co">#&gt;         pval      padj    log2err         ES        NES  size</span></span>
 <span><span class="co">#&gt;        &lt;num&gt;     &lt;num&gt;      &lt;num&gt;      &lt;num&gt;      &lt;num&gt; &lt;int&gt;</span></span>
-<span><span class="co">#&gt; 1: 0.5490534 0.7262873 0.06674261  0.2885754  0.9399884    27</span></span>
-<span><span class="co">#&gt; 2: 0.6952862 0.8366277 0.05445560  0.2387284  0.8366856    39</span></span>
-<span><span class="co">#&gt; 3: 0.1122449 0.2599823 0.21392786 -0.3640706 -1.3460572    31</span></span>
-<span><span class="co">#&gt; 4: 0.7826888 0.8799951 0.05312981  0.2516324  0.7287088    17</span></span>
-<span><span class="co">#&gt; 5: 0.3580060 0.5579562 0.08197788  0.2469065  1.0498921   106</span></span>
-<span><span class="co">#&gt; 6: 0.4198895 0.6197865 0.08407456  0.3607407  1.0446784    17</span></span>
+<span><span class="co">#&gt; 1: 0.5490534 0.7262873 0.06674261  0.2885755  0.9399888    27</span></span>
+<span><span class="co">#&gt; 2: 0.6952862 0.8366277 0.05445560  0.2387284  0.8366858    39</span></span>
+<span><span class="co">#&gt; 3: 0.1122449 0.2610139 0.21392786 -0.3640705 -1.3460567    31</span></span>
+<span><span class="co">#&gt; 4: 0.7826888 0.8799951 0.05312981  0.2516326  0.7287094    17</span></span>
+<span><span class="co">#&gt; 5: 0.3580060 0.5579562 0.08197788  0.2469065  1.0498922   106</span></span>
+<span><span class="co">#&gt; 6: 0.4198895 0.6197865 0.08407456  0.3607409  1.0446789    17</span></span>
 <span><span class="co">#&gt;                                     leadingEdge</span></span>
 <span><span class="co">#&gt;                                          &lt;list&gt;</span></span>
 <span><span class="co">#&gt; 1:                            15270,12189,71846</span></span>
@@ -518,9 +525,9 @@
 <span>  times <span class="op">=</span> <span class="fl">5L</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: seconds</span></span>
-<span><span class="co">#&gt;   expr     min       lq     mean   median       uq      max neval</span></span>
-<span><span class="co">#&gt;  fgsea 2.40426 2.438197 2.613924 2.576308 2.679570 2.971285     5</span></span>
-<span><span class="co">#&gt;   rust 2.16457 2.179880 2.195300 2.205283 2.208558 2.218208     5</span></span></code></pre></div>
+<span><span class="co">#&gt;   expr      min       lq     mean   median       uq      max neval</span></span>
+<span><span class="co">#&gt;  fgsea 2.922578 3.059589 3.257546 3.247606 3.336394 3.721562     5</span></span>
+<span><span class="co">#&gt;   rust 2.216998 2.224911 2.233707 2.232283 2.237481 2.256862     5</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="go-aware-gsea-the-elimination-method">GO-aware GSEA: the elimination method<a class="anchor" aria-label="anchor" href="#go-aware-gsea-the-elimination-method"></a>
 </h2>

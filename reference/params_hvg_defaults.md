@@ -17,6 +17,11 @@ A list with default parameters for kNN searches. Following parameters:
 
 - hvg_method - Which method to use to identify HVG. Defaults to `"vst"`.
 
-- loess_span - In case of
+- loess_span - In case of `"vst"` the span of the loess function.
 
-- clip_max -
+- clip_max - The maximum clipping value (optional).
+
+- n_bins - The number of bins to use for the `"meanvarbin"` HVG
+  detection.
+
+- binning_strategy - Which binning strategy to use for `"meanvarbin"`.

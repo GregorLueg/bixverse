@@ -15,6 +15,7 @@ also provides Rust-accelerated implementations from
 [mitch](https://bmcgenomics.biomedcentral.com/articles/10.1186/s12864-020-06856-9).
 
 ``` r
+
 library(bixverse)
 ```
 
@@ -26,6 +27,7 @@ RNA-seq log counts, and Poisson-distributed to mimic raw counts)
 together with a collection of random gene sets.
 
 ``` r
+
 p <- 10000L # genes
 n <- 100L # samples
 
@@ -63,6 +65,7 @@ expression values (log-CPM, microarray intensities, etc.). Running it in
 `bixverse` is a single call:
 
 ``` r
+
 bixverse_res_gaussian <- calc_gsva(
   exp = X,
   pathways = gs,
@@ -70,12 +73,12 @@ bixverse_res_gaussian <- calc_gsva(
 )
 
 bixverse_res_gaussian[1:5, 1:5]
-#>               s1          s2          s3            s4          s5
-#> gs1  0.009863134 -0.13265560  0.03860958 -0.0007354569  0.09979839
-#> gs2  0.145475387  0.06788168  0.16272776 -0.0484834371 -0.07349338
-#> gs3 -0.141597186 -0.09199815 -0.03758254 -0.0770037606 -0.05471550
-#> gs4 -0.186252365 -0.08253650 -0.02488495  0.0419060853  0.01726811
-#> gs5 -0.016465263 -0.03264040 -0.18299280  0.0884396512  0.08989500
+#>             s1          s2          s3          s4          s5
+#> gs1  0.2831024 -0.05018816  0.18297439  0.13505225 -0.08451001
+#> gs2  0.3139142 -0.11333432  0.21586202  0.06766904  0.10128482
+#> gs3 -0.1382938 -0.04520287 -0.24021999  0.12832321  0.09866920
+#> gs4 -0.1190033  0.18706330  0.05476168 -0.05905408 -0.08870603
+#> gs5  0.0357218 -0.06788972  0.18996609 -0.04650968 -0.07014103
 ```
 
 If the original `GSVA` Bioconductor package is available we can verify
@@ -85,6 +88,7 @@ per-pathway correlations between the two implementations are
 consistently above 0.99.
 
 ``` r
+
 library(GSVA)
 
 gsvaPar <- gsvaParam(X, gs)
@@ -104,6 +108,7 @@ Let’s compare speed (differences will be more pronounced, the more
 computational fire power your system has.)
 
 ``` r
+
 microbenchmark::microbenchmark(
   gsva = {
     gsvaPar <- gsvaParam(X, gs)
@@ -113,9 +118,9 @@ microbenchmark::microbenchmark(
   times = 3L
 )
 #> Unit: milliseconds
-#>      expr      min        lq      mean    median        uq       max neval
-#>      gsva 2460.576 2465.6239 2481.7239 2470.6716 2492.2977 2513.9238     3
-#>  bixverse  580.856  581.0158  581.8882  581.1756  582.4043  583.6329     3
+#>      expr      min        lq     mean    median        uq       max neval
+#>      gsva 2501.661 2503.8809 2515.854 2506.1008 2522.9502 2539.7996     3
+#>  bixverse  581.451  581.6388  581.913  581.8266  582.1439  582.4612     3
 ```
 
 ### Poisson kernel
@@ -124,6 +129,7 @@ For count data a Poisson kernel is more appropriate. The only change is
 setting `gaussian = FALSE`:
 
 ``` r
+
 bixverse_res_poisson <- calc_gsva(
   exp = X_counts,
   pathways = gs,
@@ -131,17 +137,18 @@ bixverse_res_poisson <- calc_gsva(
 )
 
 bixverse_res_poisson[1:5, 1:5]
-#>              s1          s2          s3          s4          s5
-#> gs1  0.22094438 -0.13988088  0.07786652  0.12042579 -0.14646733
-#> gs2  0.00717930 -0.03540182 -0.03552337  0.04872137  0.02476266
-#> gs3  0.07494343 -0.06666265  0.02612589 -0.20409502 -0.11010636
-#> gs4 -0.17342691  0.16554904 -0.21089376  0.31440297 -0.09433910
-#> gs5 -0.08230767  0.16365369 -0.18232393 -0.01777528 -0.13746922
+#>              s1          s2          s3          s4           s5
+#> gs1  0.12442115 -0.07984133  0.10025140  0.28791072  0.081558281
+#> gs2  0.03683659 -0.02366761  0.02030295 -0.07163563 -0.058065471
+#> gs3  0.07691830 -0.16186852  0.06715375  0.02673317 -0.073180742
+#> gs4  0.09288716  0.16516966 -0.22793381 -0.03648418 -0.008651714
+#> gs5 -0.10631888  0.06703667 -0.03618798  0.26867660 -0.211001102
 ```
 
 And vs. the original
 
 ``` r
+
 gsvaParPoisson <- gsvaParam(X_counts, gs, kcdf = "Poisson")
 gsva_res_poisson <- as.matrix(gsva(gsvaParPoisson, verbose = FALSE))
 
@@ -158,6 +165,7 @@ print(sprintf(
 And speed:
 
 ``` r
+
 microbenchmark::microbenchmark(
   gsva = {
     gsvaPar <- gsvaParam(X_counts, gs, kcdf = "Poisson")
@@ -168,8 +176,8 @@ microbenchmark::microbenchmark(
 )
 #> Unit: seconds
 #>      expr       min        lq      mean    median        uq       max neval
-#>      gsva 18.832861 18.842568 18.848288 18.852276 18.856002 18.859728     3
-#>  bixverse  2.786899  2.787046  2.792641  2.787193  2.795512  2.803831     3
+#>      gsva 18.858847 18.867389 18.870556 18.875931 18.876411 18.876890     3
+#>  bixverse  2.788495  2.789203  2.790473  2.789911  2.791462  2.793012     3
 ```
 
 ## ssGSEA
@@ -180,23 +188,25 @@ approach but does not apply a kernel-based normalisation across samples.
 `bixverse` provides a Rust-optimised version here as well:
 
 ``` r
+
 bixverse_res_ssgsea <- calc_ssgsea(
   exp = X,
   pathways = gs
 )
 
 bixverse_res_ssgsea[1:5, 1:5]
-#>             s1         s2           s3         s4         s5
-#> gs1 0.10762277 0.05601719  0.138749022 0.14962965 0.16567135
-#> gs2 0.18438116 0.09872824  0.213621747 0.10770997 0.12138715
-#> gs3 0.04110268 0.03513645  0.067135131 0.02300473 0.07935425
-#> gs4 0.02771066 0.12243466  0.095543228 0.10847501 0.08636451
-#> gs5 0.10298632 0.07888029 -0.002787812 0.13500292 0.12466942
+#>             s1         s2           s3        s4         s5
+#> gs1 0.29792486 0.09543156  0.166080955 0.2205289 0.12028131
+#> gs2 0.23559625 0.10543363  0.159728020 0.1258051 0.13531435
+#> gs3 0.00898486 0.09186646 -0.009559779 0.1921628 0.16285276
+#> gs4 0.03633415 0.18766356  0.149768292 0.0877070 0.08845423
+#> gs5 0.08315156 0.09893530  0.212265849 0.1499003 0.01828444
 ```
 
 Let’s compare again against the GSVA version:
 
 ``` r
+
 ssgseaPar <- ssgseaParam(X, gs)
 ssgsea_res <- as.matrix(gsva(ssgseaPar, verbose = FALSE))
 
@@ -213,6 +223,7 @@ print(sprintf(
 And check the underlying speed differences:
 
 ``` r
+
 microbenchmark::microbenchmark(
   gsva = {
     ssgseaPar <- ssgseaParam(X, gs)
@@ -223,8 +234,8 @@ microbenchmark::microbenchmark(
 )
 #> Unit: milliseconds
 #>      expr      min       lq     mean   median       uq      max neval
-#>      gsva 611.5410 612.2522 614.6657 612.9634 616.2281 619.4928     3
-#>  bixverse 110.5719 110.8645 111.4187 111.1572 111.8422 112.5271     3
+#>      gsva 620.6626 627.0403 629.8052 633.4181 634.3765 635.3350     3
+#>  bixverse 109.8428 109.9232 110.1304 110.0036 110.2742 110.5448     3
 ```
 
 ## Multi-contrast enrichment (mitch)
@@ -247,6 +258,7 @@ p-values, and the individual contrast-level enrichment scores and
 p-values.
 
 ``` r
+
 set.seed(42L)
 
 contrast_data <- matrix(rnorm(3 * 26), nrow = 26)
@@ -280,6 +292,7 @@ two implementations produce identical results. Here we use the example
 data bundled with `mitch`:
 
 ``` r
+
 data(myImportedData, genesetsExample, package = "mitch")
 
 mitch_res <- suppressMessages(mitch::mitch_calc(
@@ -298,11 +311,13 @@ bixverse_res <- calc_mitch(
 # Pathway ordering and FDR values should match exactly
 all(bixverse_res$pathway_names == mitch_res$enrichment_result$set) &&
   all.equal(bixverse_res$manova_fdr, mitch_res$enrichment_result$p.adjustMANOVA)
+#> [1] TRUE
 ```
 
 And let’s check the speed differences:
 
 ``` r
+
 microbenchmark::microbenchmark(
   mitch = suppressMessages(mitch::mitch_calc(
     myImportedData,
@@ -317,6 +332,13 @@ microbenchmark::microbenchmark(
   ),
   times = 5L
 )
+#> Unit: milliseconds
+#>      expr        min         lq       mean     median         uq        max
+#>     mitch 144.744383 146.351535 147.796067 146.843517 148.598075 152.442825
+#>  bixverse   3.429687   3.435188   4.290205   3.512752   4.942413   6.130983
+#>  neval
+#>      5
+#>      5
 ```
 
 As with the GSVA and ssGSEA implementations, you should observe

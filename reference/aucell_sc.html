@@ -17,7 +17,7 @@ of 50k cells per or loaded in in one go.'></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -46,6 +46,8 @@ of 50k cells per or loaded in in one go.'></head><body>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
     <li><a class="dropdown-item" href="../articles/analysis_single_cell.html">'Bag of genes' methods for single cell in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/knn_searches.html">kNN searches for single cells in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing big data on a powerful laptop (example)</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -90,7 +92,7 @@ of 50k cells per or loaded in in one go.</p>
 
 
 <dl><dt id="arg-object">object<a class="anchor" aria-label="anchor" href="#arg-object"></a></dt>
-<dd><p><code>SingleCells</code> class.</p></dd>
+<dd><p><code>SingleCells</code>, <code>MetaCells</code> (or potentially other) class.</p></dd>
 
 
 <dt id="arg-gs-list">gs_list<a class="anchor" aria-label="anchor" href="#arg-gs-list"></a></dt>
@@ -105,7 +107,7 @@ respective gene sets.</p></dd>
 
 <dt id="arg-streaming">streaming<a class="anchor" aria-label="anchor" href="#arg-streaming"></a></dt>
 <dd><p>Boolean. Shall the cell data be streamed in. Useful for
-larger data sets.</p></dd>
+larger data sets. Ignored when applied to <code>MetaCells</code>.</p></dd>
 
 
 <dt id="arg--verbose">.verbose<a class="anchor" aria-label="anchor" href="#arg--verbose"></a></dt>
@@ -114,7 +116,8 @@ larger data sets.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>AUCell results in form of a matrix that is cells x gene sets.</p>
+    <p>AUCell results in form of a matrix that is cells x gene sets or as
+<code>ScMatrixRes</code> pending the input.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>

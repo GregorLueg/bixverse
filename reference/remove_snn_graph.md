@@ -2,8 +2,6 @@
 
 Remove the sNN graph
 
-Remove the sNN graph from a `SingleCells` class.
-
 ## Usage
 
 ``` r

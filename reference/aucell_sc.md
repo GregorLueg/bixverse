@@ -23,7 +23,7 @@ aucell_sc(
 
 - object:
 
-  `SingleCells` class.
+  `SingleCells`, `MetaCells` (or potentially other) class.
 
 - gs_list:
 
@@ -38,7 +38,7 @@ aucell_sc(
 - streaming:
 
   Boolean. Shall the cell data be streamed in. Useful for larger data
-  sets.
+  sets. Ignored when applied to `MetaCells`.
 
 - .verbose:
 
@@ -46,7 +46,8 @@ aucell_sc(
 
 ## Value
 
-AUCell results in form of a matrix that is cells x gene sets.
+AUCell results in form of a matrix that is cells x gene sets or as
+`ScMatrixRes` pending the input.
 
 ## References
 

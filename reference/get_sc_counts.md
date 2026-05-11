@@ -20,7 +20,7 @@ get_sc_counts(
 
 - object:
 
-  `SingleCells`, `MetaCells` class.
+  `SingleCells`, `MetaCells` (or potentially other) class.
 
 - assay:
 

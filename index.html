@@ -23,7 +23,7 @@
 
     <a class="navbar-brand me-2" href="index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -58,6 +58,8 @@
     <li><a class="dropdown-item" href="articles/doublet_detection.html">Doublet detection in bixverse</a></li>
     <li><a class="dropdown-item" href="articles/single_cell_batch_corrections.html">Batch corrections</a></li>
     <li><a class="dropdown-item" href="articles/analysis_single_cell.html">'Bag of genes' methods for single cell in bixverse</a></li>
+    <li><a class="dropdown-item" href="articles/knn_searches.html">kNN searches for single cells in bixverse</a></li>
+    <li><a class="dropdown-item" href="articles/meta_cells.html">Meta cells - generation and analysis</a></li>
     <li><a class="dropdown-item" href="articles/single_cell_big_data.html">Analysing big data on a powerful laptop (example)</a></li>
   </ul>
 </li>
@@ -78,7 +80,7 @@
   <main id="main" class="col-md-9"><div class="section level1">
 <div class="page-header"><h1 id="bixverse-package">bixverse package<a class="anchor" aria-label="anchor" href="#bixverse-package"></a>
 </h1></div>
-<p><img src="https://img.shields.io/badge/R_package-0.3.1-orange" alt="r_package"><a href="https://github.com/GregorLueg/bixverse/actions/workflows/R-cmd-check.yml" class="external-link"><img src="https://github.com/GregorLueg/bixverse/actions/workflows/R-cmd-check.yml/badge.svg" alt="CI"></a> <a href="https://opensource.org/licenses/MIT" class="external-link"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a> <a href="https://gregorlueg.github.io/bixverse/"><img src="https://img.shields.io/badge/pkgdown-website-1b5e9f?logo=github" alt="pkgdown"></a></p>
+<p><img src="https://img.shields.io/badge/R_package-0.3.2-orange" alt="r_package"><a href="https://github.com/GregorLueg/bixverse/actions/workflows/R-cmd-check.yml" class="external-link"><img src="https://github.com/GregorLueg/bixverse/actions/workflows/R-cmd-check.yml/badge.svg" alt="CI"></a> <a href="https://opensource.org/licenses/MIT" class="external-link"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a> <a href="https://gregorlueg.github.io/bixverse/"><img src="https://img.shields.io/badge/pkgdown-website-1b5e9f?logo=github" alt="pkgdown"></a> <a href="https://extendr.github.io/extendr/extendr_api/" class="external-link"><img src="https://img.shields.io/badge/extendr-%5E0.9.0-276DC2" alt="extendr"></a></p>
 <p></p>
 <p><img src="reference/figures/bixverse_logo.png" width="128" height="128" alt="bixverse logo"></p>
 <p></p>
@@ -88,7 +90,7 @@
 <div class="section level3">
 <h3 id="description">Description<a class="anchor" aria-label="anchor" href="#description"></a>
 </h3>
-<p>This is an <em>opionated</em> package making various bioinformatics workflows in R (or ported from Python) much faster via low-level implementations in Rust. The core idea is to take different methods, write implementations in a compiled, memory-managed language with minimal kernel round trips and leverage R purely as an orchestraction layer. Result? Blazingly fast performance with low memory usage, making large-scale analyses feasable without any cloud compute. Over time more and more methods will be added. The aim will be to come a <code>tidyverse</code> equivalent, but for a lot of downstream methods post WGS processing. There is a sister package for plotting functions being build in parallel, see <a href="https://github.com/GregorLueg/bixverse.plots" class="external-link">here</a> (that one is in alpha phase).</p>
+<p>This is an <em>opionated</em> package making various bioinformatics workflows in R (or ported from Python) much faster via low-level implementations in Rust. The core idea is to take different methods, write implementations in a compiled, memory-managed language with minimal kernel round trips and leverage R purely as an orchestraction layer. Result? Blazingly fast performance with low memory usage, making large-scale analyses feasable without any cloud compute. Over time more and more methods will be added. The aim will be to come a <code>tidyverse</code> equivalent, but for a lot of downstream methods post WGS processing (with a strong emphasis on transcriptomics, think single cell and RNASeq for now). There is a sister package for plotting functions being build in parallel, see <a href="https://github.com/GregorLueg/bixverse.plots" class="external-link">here</a> (that one is in alpha phase).</p>
 </div>
 <div class="section level3">
 <h3 id="release-notes">Release notes<a class="anchor" aria-label="anchor" href="#release-notes"></a>
@@ -144,12 +146,13 @@
 <li>Something cool with <a href="https://zarr.dev" class="external-link">Zarr</a> … ?</li>
 <li>Methods on top of the meta cells: co-expression network detection etc.</li>
 <li>Expansion of the <a href="https://github.com/GregorLueg/bixverse.plots" class="external-link">sister package</a> to have plotting helpers in there for single cell.</li>
-<li>Helpers to slice and dice the data easier and add new data - this will</li>
+<li>Helpers to slice and dice the data easier and add new data - this will be a larger piece of work.</li>
 <li>Implementations of <a href="https://www.nature.com/articles/s41587-019-0068-4" class="external-link">Palantir</a> and <a href="https://pubmed.ncbi.nlm.nih.gov/29914354/" class="external-link">Slingshot</a>.</li>
 <li>Port over <a href="https://www.nature.com/articles/s41592-019-0667-5" class="external-link">NicheNet</a>
 </li>
-<li>Add more GPU-acceleration via <a href="(https://github.com/tracel-ai/cubecl)" class="external-link">cubecl/WGPU backend</a> for GPU-agnostic acceleration where appropriate, see another <a href="https://github.com/GregorLueg/bixverse.gpu" class="external-link">sister package</a>
+<li>Add more GPU-acceleration via <a href="(https://github.com/tracel-ai/cubecl)" class="external-link">cubecl/WGPU backend</a> for GPU-agnostic acceleration where deemed appropriate, see another <a href="https://github.com/GregorLueg/bixverse.gpu" class="external-link">sister package</a>
 </li>
+<li>Generate a Python package that interfaces into Deep Learning libraries for training neural networks on top of the data. This will need some thinking however.</li>
 </ul>
 </li>
 <li>Leverage the current infrastructure and add dedicated support and methods for spatial transcriptomics. There are some cool methods in that space that for sure could benefit from the speed that a compiled, memory-managed language offers. Especially when analysing more data sets.</li>

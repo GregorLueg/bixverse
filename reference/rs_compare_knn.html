@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -36,6 +36,8 @@
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
     <li><a class="dropdown-item" href="../articles/analysis_single_cell.html">'Bag of genes' methods for single cell in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/knn_searches.html">kNN searches for single cells in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing big data on a powerful laptop (example)</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -61,7 +63,7 @@
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">rs_compare_knn</span><span class="op">(</span><span class="va">knn_mat_a</span>, <span class="va">knn_mat_b</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">rs_compare_knn</span><span class="op">(</span><span class="va">knn_data_a</span>, <span class="va">knn_data_b</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -69,17 +71,28 @@
 
 
 <dl><dt id="arg-knn-mat-a">knn_mat_a<a class="anchor" aria-label="anchor" href="#arg-knn-mat-a"></a></dt>
-<dd><p>Integer matrix. The first kNN graph to compare.</p></dd>
+<dd><p>Integer matrix. The indices of the first kNN graph to
+compare. Should be samples x neighbours. This will be treated as ground
+truth.</p></dd>
 
 
 <dt id="arg-knn-mat-b">knn_mat_b<a class="anchor" aria-label="anchor" href="#arg-knn-mat-b"></a></dt>
-<dd><p>Integer matrix. The second kNN graph to compare.</p></dd>
+<dd><p>Integer matrix. The indices of the second kNN graph to
+compare. Should be samples x neighbours.</p></dd>
+
+
+<dt id="arg-knn-dist-a">knn_dist_a<a class="anchor" aria-label="anchor" href="#arg-knn-dist-a"></a></dt>
+<dd><p>Numeric matrix.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>Vector of number of overlaps per sample.</p>
-    </div>
+    <p>A list with the following elements:</p><ul><li><p>all_matches - Matching neighbours for this sample.</p></li>
+<li><p>all_ratios - Distance ratio for this sample (with b / a).</p></li>
+<li><p>final_recall - The final recall of assuming a being the ground truth
+across all samples</p></li>
+<li><p>final_ratio - The final distance ratio across all samples</p></li>
+</ul></div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>

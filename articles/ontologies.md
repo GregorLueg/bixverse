@@ -13,8 +13,14 @@ from a parent–child table, deriving information content, and computing
 different flavours of semantic similarity.
 
 ``` r
+
 library(bixverse)
 library(data.table)
+#> 
+#> Attaching package: 'data.table'
+#> The following object is masked from 'package:base':
+#> 
+#>     %notin%
 library(magrittr)
 library(zeallot)
 ```
@@ -27,6 +33,7 @@ We will use the Human Phenotype Ontology (HPO) bundled with the
 are describing the directed edges of the ontology graph.
 
 ``` r
+
 library("ontologyIndex")
 
 data("hpo")
@@ -46,6 +53,7 @@ ancestors for every term, and the information content (IC) derived from
 the number of descendants each term has. Both are obtained in one step:
 
 ``` r
+
 c(ancestors, descendants) %<-% get_ontology_ancestry(hpo_data)
 
 information_content <- calculate_information_content(descendants)
@@ -63,7 +71,7 @@ measures:
   terms.
 - **Combined** — the average of the (normalised) Resnik and Lin scores.
 
-All matrices are rescaled to the $\lbrack 0,1\rbrack$ interval.
+All matrices are rescaled to the $`[0, 1]`$ interval.
 
 > **Note**
 >
@@ -72,6 +80,7 @@ All matrices are rescaled to the $\lbrack 0,1\rbrack$ interval.
 > impossible.
 
 ``` r
+
 resnik_similarity <- calculate_semantic_sim_mat(
   similarity_type = "resnik",
   ancestor_list = ancestors,
@@ -84,6 +93,7 @@ resnik_similarity[1:5, 1:5]
 Switching to the Lin similarity is just a parameter change:
 
 ``` r
+
 lin_similarity <- calculate_semantic_sim_mat(
   similarity_type = "lin",
   ancestor_list = ancestors,
@@ -102,6 +112,7 @@ of a dense matrix. Here we draw a random sample of ten terms and use the
 combined similarity:
 
 ``` r
+
 set.seed(10101L)
 
 random_term_sample <- sort(sample(names(information_content), 10L))
@@ -136,6 +147,7 @@ this gives you fine-grained control over how different edges contribute
 to similarity.
 
 ``` r
+
 # The HPO only has one relationship type; for the GO you would specify
 # several, e.g. c(is_a = 0.8, part_of = 0.6)
 
@@ -153,6 +165,7 @@ As with the IC-based measures, you can restrict the computation to a
 subset of terms:
 
 ``` r
+
 # needs to be provided as previous chunk is not evaluated
 wang_weights <- setNames(0.8, "parent_of")
 
