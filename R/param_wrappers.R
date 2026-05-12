@@ -904,3 +904,60 @@ params_sc_harmony_v2 <- function(
     use_dynamic_lambda = use_dynamic_lambda
   )
 }
+
+## single cell (multi modal) ---------------------------------------------------
+
+### dsb adt normalisation ------------------------------------------------------
+
+#' Default parameters for DSB ADT normalisation
+#'
+#' @param denoise_counts Boolean. Run Step II (cell-to-cell technical noise
+#' removal).
+#' @param use_isotype_controls Boolean. Include isotype controls in the noise
+#' matrix in Step II. Requires `isotype_indices` to be passed at call time.
+#' @param pseudocount Numeric. Pseudocount added before the log transform.
+#' The DSB paper recommends `10` with empty droplets and `1` without.
+#' @param quantile_low Optional numeric in `[0, 1)`. Lower quantile for
+#' per-protein output clipping. If `NULL` (and `quantile_high` is also `NULL`),
+#' no clipping is applied.
+#' @param quantile_high Optional numeric in `(0, 1]`. Upper quantile for
+#' per-protein output clipping. If `NULL` (and `quantile_low` is also `NULL`),
+#' no clipping is applied.
+#'
+#' @return A list with the parameters.
+#'
+#' @export
+params_sc_dsb <- function(
+  denoise_counts = TRUE,
+  use_isotype_controls = TRUE,
+  pseudocount = 10,
+  quantile_low = NULL,
+  quantile_high = NULL
+) {
+  # checks
+  checkmate::qassert(denoise_counts, "B1")
+  checkmate::qassert(use_isotype_controls, "B1")
+  checkmate::qassert(pseudocount, "N1(0,)")
+  checkmate::qassert(quantile_low, c("N1[0,1)", "0"))
+  checkmate::qassert(quantile_high, c("N1(0,1]", "0"))
+
+  # both-or-neither for clipping
+  if (xor(is.null(quantile_low), is.null(quantile_high))) {
+    stop("quantile_low and quantile_high must both be provided or both NULL.")
+  }
+  if (
+    !is.null(quantile_low) &&
+      !is.null(quantile_high) &&
+      quantile_low >= quantile_high
+  ) {
+    stop("quantile_low must be strictly less than quantile_high.")
+  }
+
+  list(
+    denoise_counts = denoise_counts,
+    use_isotype_controls = use_isotype_controls,
+    pseudocount = pseudocount,
+    quantile_low = quantile_low,
+    quantile_high = quantile_high
+  )
+}

@@ -4,22 +4,27 @@
 \alias{add_adt_counts_sc}
 \title{Add ADT counts to \code{SingleCellsMultiModal}}
 \usage{
-add_adt_counts_sc(object, adt_counts)
+add_adt_counts_sc(object, adt_counts, method = c("clr", "dsb"), ...)
 }
 \arguments{
 \item{object}{\code{SingleCellsMultiModal} class.}
 
-\item{adt_counts}{Numeric matrix. Of shape samples x features with the ADT
-raw counts.}
+\item{adt_counts}{Numeric matrix. Cells x features matrix of raw ADT counts.}
+
+\item{method}{String. One of \code{c("clr", "dsb")}. Normalisation method.}
+
+\item{...}{Additional arguments forwarded to the normalisation constructor.
+For \code{method = "clr"}: \code{clean_clr_counts}, \code{percentile}. For \code{method = "dsb"}:
+\code{empty_drops}, \code{isotype_names}, \code{dsb_params}, \code{scale_factor}, \code{seed},
+\code{verbose}. See \code{\link[=new_adt_counts_clr]{new_adt_counts_clr()}} and \code{\link[=new_adt_counts_dsb]{new_adt_counts_dsb()}}.}
 }
 \value{
 Returns a \code{SingleCellsMultiModal} with the ADT data added.
 }
 \description{
-This method allows you to add the ADT counts to a \code{SingleCellsMultiModal}.
-This assumes you already have ingested transcriptomics data and you know
-which cells to keep. The method will subset the ADT counts into these cells
-and add a \code{"var_adt"} to the DuckDB and the \code{ADTCounts} to the class, too.
-A CLR transformation will be automatically applied to the counts and
-normalised counts will be added, too.
+This method allows you to add ADT counts to a \code{SingleCellsMultiModal}.
+Assumes the transcriptomics data has already been ingested and the cells
+to keep are known. The method subsets the ADT counts to the kept cells,
+applies the requested normalisation (CLR or DSB), populates the \code{"var_adt"}
+table in the DuckDB, and attaches an \code{ADTCounts} to the class.
 }

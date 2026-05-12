@@ -4,14 +4,27 @@
 
 #' Generates a new `ADTCounts` class
 #'
+#' @description
+#' This function generates a new `ADTCounts` class which uses CLR normalisation
+#' under the hood.
+#'
 #' @param raw_counts Numeric matrix. The raw ADT counts.
 #' @param cell_names String. The barcodes to keep (from the transcriptomics
 #' for example.)
+#' @param clean_clr_counts Boolean. Shall the per-protein 1st percentile be
+#' removed from the CLR normalised counts.
+#' @param percentile Numeric. The percentile to remove to reduce background
+#' effects.
 #'
 #' @returns `ADTCounts` that contains the raw and normalised ADT counts.
 #'
 #' @export
-new_adt_counts <- function(raw_counts, cell_names) {
+new_adt_counts_clr <- function(
+  raw_counts,
+  cell_names,
+  clean_clr_counts = TRUE,
+  percentile = 0.01
+) {
   # checks
   checkmate::assertMatrix(
     raw_counts,
@@ -20,14 +33,145 @@ new_adt_counts <- function(raw_counts, cell_names) {
     col.names = "named"
   )
   checkmate::qassert(cell_names, "S+")
+  checkmate::qassert(clean_clr_counts, "B1")
+  checkmate::qassert(percentile, "N1(0,1)")
 
   raw_counts <- raw_counts[cell_names, ]
   norm_counts <- rs_adt_clr(counts = raw_counts)
   colnames(norm_counts) <- colnames(raw_counts)
   rownames(norm_counts) <- rownames(raw_counts)
 
+  if (clean_clr_counts) {
+    for (j in seq_len(ncol(norm_counts))) {
+      norm_counts[, j] <- norm_counts[, j] -
+        quantile(norm_counts[, j], percentile)
+    }
+  }
+
   structure(
-    list(raw_counts = raw_counts, norm_counts = norm_counts),
+    list(
+      raw_counts = raw_counts,
+      norm_counts = norm_counts,
+      other_data = list()
+    ),
+    class = "ADTCounts"
+  )
+}
+
+#' Generates a new `ADTCounts` class via DSB normalisation
+#'
+#' @description
+#' This function generates a new `ADTCounts` class using DSB normalisation from
+#' Mulè et al., instead of CLR. When `empty_drops` is provided, the per-protein
+#' background is estimated from empty droplets. Without `empty_drops`, the
+#' function falls back to a 2-component k-means on the log-transformed cell
+#' counts ("ModelNegativeADTnorm").
+#'
+#' @param raw_counts Numeric matrix. Cells x proteins matrix of raw ADT counts
+#' with cell barcodes as row names and protein names as column names.
+#' @param cell_names String vector. The barcodes to keep (from the
+#' transcriptomics for example).
+#' @param empty_drops Optional numeric matrix. Cells x proteins matrix of
+#' empty-droplet ADT counts. If provided, used to estimate per-protein ambient
+#' background.
+#' @param isotype_names Optional string vector. Column names in `raw_counts`
+#' identifying isotype control proteins. Required when
+#' `dsb_params$use_isotype_controls = TRUE`.
+#' @param dsb_params List. Output of [params_sc_dsb()] with DSB parameters.
+#' @param scale_factor String. One of `c("standardise", "mean_subtract")`. Only
+#' used when `empty_drops` is provided.
+#' @param seed Integer. Random seed for k-means initialisation.
+#' @param verbose Boolean. Print progress messages.
+#'
+#' @returns `ADTCounts` containing the raw counts and the DSB-normalised
+#' counts.
+#'
+#' @export
+#'
+#' @references Mulè et al., Nat Commun, 2022
+new_adt_counts_dsb <- function(
+  raw_counts,
+  cell_names,
+  empty_drops = NULL,
+  isotype_names = NULL,
+  dsb_params = params_sc_dsb(),
+  scale_factor = c("standardise", "mean_subtract"),
+  seed = 42L,
+  verbose = TRUE
+) {
+  scale_factor <- match.arg(scale_factor)
+
+  # checks
+  checkmate::assertMatrix(
+    raw_counts,
+    mode = "numeric",
+    row.names = "named",
+    col.names = "named"
+  )
+  checkmate::qassert(cell_names, "S+")
+  if (!is.null(empty_drops)) {
+    checkmate::assertMatrix(
+      empty_drops,
+      mode = "numeric",
+      col.names = "named"
+    )
+    checkmate::assertTRUE(ncol(empty_drops) == ncol(raw_counts))
+    checkmate::assertTRUE(
+      all(colnames(empty_drops) == colnames(raw_counts))
+    )
+  }
+  checkmate::qassert(isotype_names, c("S+", "0"))
+  if (!is.null(isotype_names)) {
+    checkmate::assertSubset(isotype_names, colnames(raw_counts))
+  }
+  if (isTRUE(dsb_params$use_isotype_controls) && is.null(isotype_names)) {
+    stop(
+      "dsb_params$use_isotype_controls = TRUE but isotype_names is NULL."
+    )
+  }
+  assertScDsbParams(dsb_params)
+  checkmate::qassert(seed, "I1")
+  checkmate::qassert(verbose, "B1")
+
+  raw_counts <- raw_counts[cell_names, ]
+
+  # resolve isotype names to 0-based column indices
+  isotype_indices <- if (is.null(isotype_names)) {
+    integer(0)
+  } else {
+    as.integer(match(isotype_names, colnames(raw_counts)) - 1L)
+  }
+
+  dsb_res <- rs_dsb(
+    raw_counts = raw_counts,
+    background_counts = empty_drops,
+    isotype_indices = isotype_indices,
+    dsb_params = dsb_params,
+    scale_factor = scale_factor,
+    seed = seed,
+    verbose = verbose
+  )
+
+  norm_counts <- dsb_res$norm_counts
+  colnames(norm_counts) <- colnames(raw_counts)
+  rownames(norm_counts) <- rownames(raw_counts)
+
+  other_data <- list(
+    protein_background_mean = dsb_res$protein_background_mean,
+    protein_background_sd = dsb_res$protein_background_sd,
+    technical_component = dsb_res$technical_component,
+    cellwise_background_mean = dsb_res$cellwise_background_mean,
+    isotype_names = isotype_names,
+    dsb_params = dsb_params,
+    scale_factor = scale_factor
+  )
+
+  structure(
+    list(
+      raw_counts = raw_counts,
+      norm_counts = norm_counts,
+      other_data = other_data
+    ),
     class = "ADTCounts"
   )
 }
@@ -124,6 +268,8 @@ new_adt_counts <- function(raw_counts, cell_names) {
 #'   chromatin accessability.}
 #'   \item{sc_map}{Class containing various mapping information such as HVG
 #'   indices, cells to keep, etc.}
+#'   \item{other_data}{List that contains additional data and results, such
+#'   as for example the WNN graph.}
 #'   \item{dims}{Dimensions of the original data.}
 #' }
 #'
@@ -143,6 +289,7 @@ SingleCellsMultiModal <- S7::new_class(
     adt_cache = S7::class_any,
     atac_cache = S7::class_any,
     sc_map = S7::class_any,
+    other_data = S7::class_list,
     dims = S7::class_integer
   ),
   constructor = function(dir_data) {
@@ -173,6 +320,7 @@ SingleCellsMultiModal <- S7::new_class(
       adt_cache = new_sc_cache(),
       atac_cache = new_sc_cache(),
       sc_map = new_sc_mapper(),
+      other_data = list(),
       dims = c(0L, 0L)
     )
   }
@@ -264,16 +412,19 @@ S7::method(print, SingleCellsMultiModal) <- function(x, ...) {
 #' Add ADT counts to `SingleCellsMultiModal`
 #'
 #' @description
-#' This method allows you to add the ADT counts to a `SingleCellsMultiModal`.
-#' This assumes you already have ingested transcriptomics data and you know
-#' which cells to keep. The method will subset the ADT counts into these cells
-#' and add a `"var_adt"` to the DuckDB and the `ADTCounts` to the class, too.
-#' A CLR transformation will be automatically applied to the counts and
-#' normalised counts will be added, too.
+#' This method allows you to add ADT counts to a `SingleCellsMultiModal`.
+#' Assumes the transcriptomics data has already been ingested and the cells
+#' to keep are known. The method subsets the ADT counts to the kept cells,
+#' applies the requested normalisation (CLR or DSB), populates the `"var_adt"`
+#' table in the DuckDB, and attaches an `ADTCounts` to the class.
 #'
 #' @param object `SingleCellsMultiModal` class.
-#' @param adt_counts Numeric matrix. Of shape samples x features with the ADT
-#' raw counts.
+#' @param adt_counts Numeric matrix. Cells x features matrix of raw ADT counts.
+#' @param method String. One of `c("clr", "dsb")`. Normalisation method.
+#' @param ... Additional arguments forwarded to the normalisation constructor.
+#' For `method = "clr"`: `clean_clr_counts`, `percentile`. For `method = "dsb"`:
+#' `empty_drops`, `isotype_names`, `dsb_params`, `scale_factor`, `seed`,
+#' `verbose`. See [new_adt_counts_clr()] and [new_adt_counts_dsb()].
 #'
 #' @returns Returns a `SingleCellsMultiModal` with the ADT data added.
 #'
@@ -283,7 +434,9 @@ add_adt_counts_sc <- S7::new_generic(
   dispatch_args = "object",
   fun = function(
     object,
-    adt_counts
+    adt_counts,
+    method = c("clr", "dsb"),
+    ...
   ) {
     S7::S7_dispatch()
   }
@@ -292,13 +445,14 @@ add_adt_counts_sc <- S7::new_generic(
 #' @method add_adt_counts_sc SingleCellsMultiModal
 #'
 #' @export
-#'
-#' @importFrom zeallot `%<-%`
-#' @importFrom magrittr `%>%`
 S7::method(add_adt_counts_sc, SingleCellsMultiModal) <- function(
   object,
-  adt_counts
+  adt_counts,
+  method = c("clr", "dsb"),
+  ...
 ) {
+  method <- match.arg(method)
+
   # checks
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCellsMultiModal))
   checkmate::assertMatrix(
@@ -309,16 +463,26 @@ S7::method(add_adt_counts_sc, SingleCellsMultiModal) <- function(
   )
 
   barcodes <- get_cell_names(object, filtered = TRUE)
-
   checkmate::assertSubset(barcodes, rownames(adt_counts))
   checkmate::assertTRUE(length(barcodes) >= 1)
 
-  adt_obj <- new_adt_counts(raw_counts = adt_counts, cell_names = barcodes)
+  adt_obj <- switch(
+    method,
+    clr = new_adt_counts_clr(
+      raw_counts = adt_counts,
+      cell_names = barcodes,
+      ...
+    ),
+    dsb = new_adt_counts_dsb(
+      raw_counts = adt_counts,
+      cell_names = barcodes,
+      ...
+    )
+  )
 
   adt_vars <- .generate_adt_var(adt_counts = adt_counts)
 
   duckdb_con <- get_sc_duckdb(object)
-
   duckdb_con$populate_var_adt_from_data.table(var_dt = adt_vars)
 
   S7::prop(object, "adt_counts") <- adt_obj

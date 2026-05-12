@@ -2824,7 +2824,7 @@ checkScFastmnn <- function(x) {
 #' @keywords internal
 assertScFastmnn <- checkmate::makeAssertionFunction(checkScFastmnn)
 
-### VISION ---------------------------------------------------------------------
+#### VISION --------------------------------------------------------------------
 
 #' Check VISION parameters
 #'
@@ -3701,3 +3701,150 @@ checkScFastCluster <- function(x) {
 #'
 #' @keywords internal
 assertScFastCluster <- checkmate::makeAssertionFunction(checkScFastCluster)
+
+### single cells (multi modal) -------------------------------------------------
+
+#### dsb count normalisation ---------------------------------------------------
+
+#' Check DSB parameters
+#'
+#' @description Checkmate extension for checking DSB parameters.
+#'
+#' @param x The list to check/assert.
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
+checkScDsbParams <- function(x) {
+  res <- checkmate::checkList(x)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- checkmate::checkNames(
+    names(x),
+    must.include = c(
+      "denoise_counts",
+      "use_isotype_controls",
+      "pseudocount",
+      "quantile_low",
+      "quantile_high"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  # Boolean rules
+  bool_rules <- list(
+    "denoise_counts" = "B1",
+    "use_isotype_controls" = "B1"
+  )
+
+  res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(bool_rules)) {
+      checkmate::qtest(x, bool_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(
+      sprintf(
+        paste(
+          "The following element `%s` in DSB parameters is incorrect:",
+          "denoise_counts and use_isotype_controls must be single logicals."
+        ),
+        broken_elem
+      )
+    )
+  }
+
+  # Scalar numeric rules
+  scalar_rules <- list(
+    "pseudocount" = "N1(0,)"
+  )
+
+  res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(scalar_rules)) {
+      checkmate::qtest(x, scalar_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(
+      sprintf(
+        paste(
+          "The following element `%s` in DSB parameters is incorrect:",
+          "pseudocount must be a single numeric > 0."
+        ),
+        broken_elem
+      )
+    )
+  }
+
+  # Quantile rules: either both NULL or both numeric in valid ranges
+  quantile_rules <- list(
+    "quantile_low" = c("N1[0,1)", "0"),
+    "quantile_high" = c("N1(0,1]", "0")
+  )
+
+  res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(quantile_rules)) {
+      checkmate::qtest(x, quantile_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(
+      sprintf(
+        paste(
+          "The following element `%s` in DSB parameters is incorrect:",
+          "quantile_low must be NULL or in [0, 1);",
+          "quantile_high must be NULL or in (0, 1]."
+        ),
+        broken_elem
+      )
+    )
+  }
+
+  # Cross-field rules for the quantile pair
+  if (xor(is.null(x$quantile_low), is.null(x$quantile_high))) {
+    return(
+      "quantile_low and quantile_high must both be provided or both NULL."
+    )
+  }
+  if (
+    !is.null(x$quantile_low) &&
+      !is.null(x$quantile_high) &&
+      x$quantile_low >= x$quantile_high
+  ) {
+    return("quantile_low must be strictly less than quantile_high.")
+  }
+
+  return(TRUE)
+}
+
+#' Assert DSB parameters
+#'
+#' @description Checkmate extension for asserting DSB parameters.
+#'
+#' @inheritParams checkScDsbParams
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
+assertScDsbParams <- checkmate::makeAssertionFunction(checkScDsbParams)
