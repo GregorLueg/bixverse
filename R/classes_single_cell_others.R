@@ -161,7 +161,7 @@ sc_knn_to_nearest_neighbours <- function(x) {
 
 ## single cell qc results ------------------------------------------------------
 
-#### R primitives --------------------------------------------------------------
+### R primitives ---------------------------------------------------------------
 
 #' Print a CellQc object
 #'
@@ -217,10 +217,41 @@ print.CellQc <- function(x, ...) {
   invisible(x)
 }
 
+### getters --------------------------------------------------------------------
+
+#' @rdname get_obs_data
+#'
+#' @export
+get_obs_data.CellQc <- function(x, ...) {
+  # checks
+  checkmate::assertClass(x, "CellQc")
+
+  # function body
+  obs_dt <- data.table::as.data.table(
+    x$metrics
+  )[, `:=`(
+    cell_idx = x$cell_idx,
+    grp = x$groups,
+    global_outlier = apply(x$outlier_mat, 1, FUN = function(x) {
+      any(x)
+    })
+  )]
+
+  outlier <- data.table::as.data.table(x$outlier_mat)
+  colnames(outlier) <- sprintf("%s_is_outlier", colnames(outlier))
+
+  obs_dt <- cbind(obs_dt, outlier)
+
+  obs_dt <- .add_is_obs_attr(obs_dt)
+
+  return(obs_dt)
+}
+
+### plot -----------------------------------------------------------------------
+
 #' Plot per-cell QC violin plots from a CellQc object
 #'
 #' @param x A `CellQc` object.
-#' @param qc_df A data.table containing the cell-level data.
 #' @param ... Ignored.
 #'
 #' @return A named list of ggplot objects, one per metric.
@@ -230,41 +261,35 @@ print.CellQc <- function(x, ...) {
 #' @import ggplot2
 #'
 #' @keywords internal
-plot.CellQc <- function(x, qc_df, ...) {
+plot.CellQc <- function(x, ...) {
   outlier_colours <- c("FALSE" = "lightgrey", "TRUE" = "orange")
-  group_levels <- unique(x$groups)
-  do_facet <- length(group_levels) > 1L
+  plot_df <- get_obs_data(x)
 
-  plots <- purrr::map(names(x$metrics), function(nm) {
-    plot_dt <- data.table::copy(qc_df)[,
-      `:=`(outlier = x$combined, .group = x$groups)
-    ]
-
-    p <- ggplot2::ggplot(
-      plot_dt,
-      ggplot2::aes(y = x$metrics[[nm]], x = "cells")
+  plots <- purrr::map(names(x$metrics), function(metric) {
+    p <- ggplot(
+      data = plot_df,
+      mapping = aes(y = .data[[metric]], x = grp)
     ) +
-      ggplot2::geom_violin() +
-      ggplot2::geom_jitter(
-        ggplot2::aes(colour = outlier),
+      geom_violin(scale = "width") +
+      geom_jitter(
+        mapping = aes(colour = global_outlier),
         width = 0.05,
         size = 0.4,
         alpha = 0.5,
         show.legend = FALSE
       ) +
-      ggplot2::scale_colour_manual(values = outlier_colours) +
-      ggplot2::ylab(nm) +
-      ggplot2::xlab("") +
-      ggplot2::theme_bw()
+      scale_colour_manual(values = outlier_colours) +
+      ylab(metric) +
+      theme_bw() +
+      theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+      ggtitle(metric)
 
-    if (do_facet) {
-      p <- p + ggplot2::facet_wrap(~.group)
-    }
     p
   })
 
   setNames(plots, names(x$metrics))
 }
+
 
 ## list results ----------------------------------------------------------------
 

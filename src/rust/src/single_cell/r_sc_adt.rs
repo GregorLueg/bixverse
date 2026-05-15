@@ -79,7 +79,8 @@ fn rs_adt_clr(counts: RMatrix<f64>) -> RMatrix<f64> {
 /// the per-protein background mean and divides by the per-protein background
 /// SD. `"mean_subtract"` subtracts the mean only.
 /// @param seed Integer. Random seed for k-means initialisation.
-/// @param verbose Boolean. Print progress messages.
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
 ///
 /// @returns A list with the following elements:
 /// \itemize{
@@ -107,7 +108,7 @@ fn rs_dsb(
     dsb_params: List,
     scale_factor: String,
     seed: usize,
-    verbose: bool,
+    verbose: usize,
 ) -> Result<List> {
     let raw_counts = r_matrix_to_faer_fp32(&raw_counts);
     let dsb_params = DsbParams::from_r_list(dsb_params, isotype_indices)?;

@@ -134,7 +134,7 @@ rs_exhaustive_euc <- rs_sc_knn(
   embd = pca_embd,
   knn_params = list(knn_method = "exhaustive", ann_dist = "euclidean"),
   validate_index = FALSE,
-  verbose = FALSE,
+  verbose = 0L,
   seed = 42L
 )
 
@@ -143,7 +143,7 @@ rs_kmknn_euc <- rs_sc_knn(
   embd = pca_embd,
   knn_params = list(knn_method = "kmknn", ann_dist = "euclidean"),
   validate_index = FALSE,
-  verbose = FALSE,
+  verbose = 0L,
   seed = 42L
 )
 
@@ -151,7 +151,7 @@ rs_annoy_euc <- rs_sc_knn(
   embd = pca_embd,
   knn_params = list(knn_method = "annoy", ann_dist = "euclidean"),
   validate_index = FALSE,
-  verbose = FALSE,
+  verbose = 0L,
   seed = 42L
 )
 
@@ -159,7 +159,7 @@ rs_hnsw_euc <- rs_sc_knn(
   embd = pca_embd,
   knn_params = list(knn_method = "hnsw", ann_dist = "euclidean"),
   validate_index = FALSE,
-  verbose = FALSE,
+  verbose = 0L,
   seed = 42L
 )
 
@@ -167,7 +167,7 @@ rs_nndescent_euc <- rs_sc_knn(
   embd = pca_embd,
   knn_params = list(knn_method = "nndescent", ann_dist = "euclidean"),
   validate_index = FALSE,
-  verbose = FALSE,
+  verbose = 0L,
   seed = 42L
 )
 
@@ -181,7 +181,7 @@ rs_ivf_euc <- rs_sc_knn(
     n_list = 3L,
     n_probe = 2L
   ),
-  verbose = FALSE,
+  verbose = 0L,
   validate_index = FALSE,
   seed = 42L
 )
@@ -254,7 +254,7 @@ expect_true(
 rs_exhaustive_cos <- rs_sc_knn(
   embd = pca_embd,
   knn_params = list(knn_method = "exhaustive", ann_dist = "cosine"),
-  verbose = FALSE,
+  verbose = 0L,
   validate_index = FALSE,
   seed = 42L
 )
@@ -262,7 +262,7 @@ rs_exhaustive_cos <- rs_sc_knn(
 rs_kmknn_cos <- rs_sc_knn(
   embd = pca_embd,
   knn_params = list(knn_method = "kmknn", ann_dist = "cosine"),
-  verbose = FALSE,
+  verbose = 0L,
   validate_index = FALSE,
   seed = 42L
 )
@@ -270,7 +270,7 @@ rs_kmknn_cos <- rs_sc_knn(
 rs_annoy_cos <- rs_sc_knn(
   embd = pca_embd,
   knn_params = list(knn_method = "annoy", ann_dist = "cosine"),
-  verbose = FALSE,
+  verbose = 0L,
   validate_index = FALSE,
   seed = 42L
 )
@@ -278,7 +278,7 @@ rs_annoy_cos <- rs_sc_knn(
 rs_hnsw_cos <- rs_sc_knn(
   embd = pca_embd,
   knn_params = list(knn_method = "hnsw", ann_dist = "cosine"),
-  verbose = FALSE,
+  verbose = 0L,
   validate_index = FALSE,
   seed = 42L
 )
@@ -286,7 +286,7 @@ rs_hnsw_cos <- rs_sc_knn(
 rs_nndescent_cos <- rs_sc_knn(
   embd = pca_embd,
   knn_params = list(knn_method = "nndescent", ann_dist = "cosine"),
-  verbose = FALSE,
+  verbose = 0L,
   validate_index = FALSE,
   seed = 42L
 )
@@ -301,7 +301,7 @@ rs_ivf_cos <- rs_sc_knn(
     n_list = 3L,
     n_probe = 2L
   ),
-  verbose = FALSE,
+  verbose = 0L,
   validate_index = FALSE,
   seed = 42L
 )
@@ -469,7 +469,7 @@ bixverse_snn_euclidean_rank <- rs_sc_snn(
   snn_method = "rank",
   limited_graph = FALSE,
   pruning = 0,
-  verbose = FALSE
+  verbose = 0L
 )
 
 bixverse_snn_euclidean_jaccard <- rs_sc_snn(
@@ -477,7 +477,7 @@ bixverse_snn_euclidean_jaccard <- rs_sc_snn(
   snn_method = "jaccard",
   limited_graph = FALSE,
   pruning = 0,
-  verbose = FALSE
+  verbose = 0L
 )
 
 # rank version

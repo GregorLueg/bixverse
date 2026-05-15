@@ -33,7 +33,9 @@ large data sets.}
 
 \item{seed}{Integer. Seed for reproducibility.}
 
-\item{.verbose}{Boolean. Controls verbosity.}
+\item{.verbose}{Boolean or integer. Controls verbosity and returns run times.
+\code{FALSE} -> quiet, \code{TRUE} or \code{1L} -> normal verbosity, \code{2L} -> detailed
+verbosity.}
 }
 \value{
 An S3 object of class \code{ScDblFinderRes} containing:

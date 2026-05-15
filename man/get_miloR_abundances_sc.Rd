@@ -44,7 +44,9 @@ for available parameters and their defaults. Note: \code{knn_method} cannot be
 
 \item{seed}{Integer. Seed for reproducibility}
 
-\item{.verbose}{Boolean. Controls verbosity of the method.}
+\item{.verbose}{Boolean or integer. Controls verbosity and returns run times.
+\code{FALSE} -> quiet, \code{TRUE} or \code{1L} -> normal verbosity, \code{2L} -> detailed
+verbosity.}
 }
 \description{
 This function implements the miloR differential abundance testing on top

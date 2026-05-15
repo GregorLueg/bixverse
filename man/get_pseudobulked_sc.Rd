@@ -21,7 +21,9 @@ get_pseudobulked_sc(
 
 \item{assay}{String. One of \code{c("raw", "norm")}.}
 
-\item{.verbose}{Boolean. Controls verbosity of the function.}
+\item{.verbose}{Boolean or integer. Controls verbosity and returns run times.
+\code{FALSE} -> quiet, \code{TRUE} or \code{1L} -> normal verbosity, \code{2L} -> detailed
+verbosity.}
 }
 \value{
 Pending on your setting in return_format a dense matrix or sparse

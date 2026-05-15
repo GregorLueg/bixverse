@@ -29,7 +29,8 @@ to include in this analysis.}
 
 \item{seed}{Integer. Seed for reproducibility purposes.}
 
-\item{verbose}{Boolean. Controls verbosity}
+\item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
+detailed verbosity.}
 
 \item{streaming}{Boolean. Shall the data be streamed for the HVG
 calculations.}

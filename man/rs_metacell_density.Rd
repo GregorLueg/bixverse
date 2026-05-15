@@ -19,7 +19,8 @@ estimation. Typically \code{150}.}
 \item{knn_params}{List. The kNN parameters defined by
 \code{\link[=params_sc_neighbours]{params_sc_neighbours()}}.}
 
-\item{verbose}{Boolean. Controls verbosity of the the function.}
+\item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
+detailed verbosity.}
 
 \item{seed}{Integer. For reproducibility.}
 }

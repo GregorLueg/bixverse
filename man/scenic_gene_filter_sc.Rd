@@ -21,7 +21,9 @@ by this function.}
 \item{cells_to_take}{Optional string vector. Cell identifiers to restrict
 to. If \code{NULL}, defaults to all filtered cells in the class.}
 
-\item{.verbose}{Boolean. Controls verbosity. Defaults to \code{TRUE}.}
+\item{.verbose}{Boolean or integer. Controls verbosity and returns run times.
+\code{FALSE} -> quiet, \code{TRUE} or \code{1L} -> normal verbosity, \code{2L} -> detailed
+verbosity.}
 }
 \value{
 A character vector of gene identifiers passing the SCENIC

@@ -8,6 +8,7 @@ tsne_sc(
   object,
   use_knn = FALSE,
   embd_to_use = "pca",
+  slot_name = "tsne",
   no_embd_to_use = NULL,
   n_dim = 2L,
   perplexity = 10,
@@ -27,6 +28,9 @@ tsne_sc(
 
 \item{embd_to_use}{String. The embedding to use for t-SNE. Must be available
 in the object.}
+
+\item{slot_name}{String. The name of this embedding within the object.
+Defaults to \code{"tsne"}.}
 
 \item{no_embd_to_use}{Optional integer. Number of embedding dimensions to
 use. If \code{NULL} all will be used.}

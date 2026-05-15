@@ -9,6 +9,7 @@ vision_w_autocor_sc(
   gs_list,
   embd_to_use,
   no_embd_to_use = NULL,
+  use_knn = TRUE,
   vision_params = params_sc_vision(),
   streaming = FALSE,
   random_seed = 42L,
@@ -29,6 +30,9 @@ needs to be part of the object.}
 \item{no_embd_to_use}{Optional integer. Number of embedding dimensions to
 use. If \code{NULL} all will be used.}
 
+\item{use_knn}{Boolean. Shall the internal kNN be used. If set to yes, you
+need to ensure consistency.}
+
 \item{vision_params}{List with vision parameters, see
 \code{\link[=params_sc_vision]{params_sc_vision()}} with the following elements:
 \itemize{
@@ -44,7 +48,9 @@ larger data sets.}
 
 \item{random_seed}{Integer. The random seed.}
 
-\item{.verbose}{Boolean. Controls the verbosity of the function.}
+\item{.verbose}{Boolean or integer. Controls verbosity and returns run times.
+\code{FALSE} -> quiet, \code{TRUE} or \code{1L} -> normal verbosity, \code{2L} -> detailed
+verbosity.}
 }
 \value{
 Matrix of cells x signatures with the VISION pathway scores as

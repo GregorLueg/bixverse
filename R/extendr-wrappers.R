@@ -2087,7 +2087,8 @@ rs_batch_lisi <- function(knn_mat, batch_vector) .Call(wrap__rs_batch_lisi, knn_
 #' cell belongs.
 #' @param bbknn_params List. Contains all of the BBKNN parameters.
 #' @param seed Integer. Seed for reproducibility purposes.
-#' @param verbose Boolean. Controls verbosity of the function.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
 #'
 #' @return A list of two lists representing the sparse matrix representation
 #' of the distances and the connectivities.
@@ -2128,7 +2129,8 @@ rs_bbknn_filtering <- function(indptr, indices, data, no_neighbours_to_keep) .Ca
 #' @param precomputed_pca Optional PCA matrix. If you want to provide a
 #' pre-computed matrix.
 #' @param seed Integer. Seed for reproducibility purposes.
-#' @param verbose Boolean. Controls verbosity of the function.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
 #'
 #' @return The batch-corrected embedding space.
 #'
@@ -2145,7 +2147,8 @@ rs_mnn <- function(f_path_gene, cell_indices, gene_indices, batch_indices, preco
 #' @param batch_labels List. Each element in the list needs to be a 0-indexed
 #' integer that represents the batch effects you wish to regress out.
 #' @param seed Integer. Seed for reproducibility purposes.
-#' @param verbose Boolean. Controls verbosity of the function.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
 #'
 #' @return The batch-corrected Harmony embedding space.
 #'
@@ -2163,7 +2166,8 @@ rs_harmony <- function(pca, harmony_params, batch_labels, seed, verbose) .Call(w
 #' @param batch_labels List. Each element in the list needs to be a 0-indexed
 #' integer that represents the batch effects you wish to regress out.
 #' @param seed Integer. Seed for reproducibility purposes.
-#' @param verbose Boolean. Controls verbosity of the function.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
 #'
 #' @return The batch-corrected Harmony (v2) embedding space.
 #'
@@ -2179,7 +2183,8 @@ rs_harmony_v2 <- function(pca, harmony_params, batch_labels, seed, verbose) .Cal
 #' @param scrublet_params List. Parameter list, see
 #' [bixverse::params_scrublet()].
 #' @param seed Integer. Seed for reproducibility purposes.
-#' @param verbose Boolean. Controls verbosity
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
 #' @param streaming Boolean. Shall the data be streamed for the HVG
 #' calculations.
 #' @param return_combined_pca Boolean. Shall the generated PCA be returned.
@@ -2225,7 +2230,8 @@ rs_sc_scrublet <- function(f_path_gene, f_path_cell, cells_to_keep, scrublet_par
 #' @param boost_params List. Parameter list, see
 #' [bixverse::params_boost()].
 #' @param seed Integer. Seed for reproducibility purposes.
-#' @param verbose Boolean. Controls verbosity
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
 #' @param streaming Boolean. Shall the data be streamed for the HVG
 #' calculations.
 #'
@@ -2239,7 +2245,7 @@ rs_sc_scrublet <- function(f_path_gene, f_path_cell, cells_to_keep, scrublet_par
 #' }
 #'
 #' @export
-rs_sc_doublet_detection <- function(f_path_gene, f_path_cell, cells_to_keep, boost_params, seed, streaming, verbose) .Call(wrap__rs_sc_doublet_detection, f_path_gene, f_path_cell, cells_to_keep, boost_params, seed, streaming, verbose)
+rs_sc_doublet_detection <- function(f_path_gene, f_path_cell, cells_to_keep, boost_params, seed, verbose, streaming) .Call(wrap__rs_sc_doublet_detection, f_path_gene, f_path_cell, cells_to_keep, boost_params, seed, verbose, streaming)
 
 #' Run scDblFinder doublet detection
 #'
@@ -2252,14 +2258,15 @@ rs_sc_doublet_detection <- function(f_path_gene, f_path_cell, cells_to_keep, boo
 #' @param streaming Boolean. Shall the gene data be streamed in for the
 #' selection of the top genes.
 #' @param seed Integer. Seed for reproducibility.
-#' @param verbose Boolean. Controls verbosity.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
 #' @param debug Boolean. Additional verbosity for debugging purposes.
 #'
 #' @returns A list with predicted_doublets, doublet_scores, threshold,
 #' cluster_labels and detected_doublet_rate.
 #'
 #' @export
-rs_sc_scdblfinder <- function(f_path_gene, f_path_cell, cell_indices, params, return_features, streaming, seed, verbose, debug) .Call(wrap__rs_sc_scdblfinder, f_path_gene, f_path_cell, cell_indices, params, return_features, streaming, seed, verbose, debug)
+rs_sc_scdblfinder <- function(f_path_gene, f_path_cell, cell_indices, params, return_features, streaming, seed, verbose) .Call(wrap__rs_sc_scdblfinder, f_path_gene, f_path_cell, cell_indices, params, return_features, streaming, seed, verbose)
 
 #' Run Otsu's method
 #'
@@ -2288,7 +2295,8 @@ rs_sc_otsu_method <- function(scores, bins) .Call(wrap__rs_sc_otsu_method, score
 #' @param cell_indices Integer. The indices of the cells for which to calculate
 #' the proportions. (0-indexed!)
 #' @param streaming Boolean. Shall the data be worked on in chunks.
-#' @param verbose Boolean. Controls verbosity of the function.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
 #'
 #' @return A list with the cumulative percentages of the Top X genes defined
 #' as in `top_n_vals`.
@@ -2308,7 +2316,8 @@ rs_sc_get_top_genes_perc <- function(f_path_cell, top_n_vals, cell_indices, stre
 #' @param cell_indices Integer. The indices of the cells for which to calculate
 #' the proportions. (0-indexed!)
 #' @param streaming Boolean. Shall the data be worked on in chunks.
-#' @param verbose Boolean. Controls verbosity of the function.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
 #'
 #' @return A list with the percentages of counts per gene set group detected
 #' in the cells.
@@ -2352,7 +2361,8 @@ rs_pairwise_gene_cors <- function(f_path, gene_indices_1, gene_indices_2, cells_
 #' @param n_bins Integer. Number of bins for the `meanvarbin` method.
 #' @param streaming Boolean. Shall the genes be streamed in to reduce memory
 #' pressure.
-#' @param verbose Boolean. Controls verbosity of the function.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
 #'
 #' @return A list with the highly variable genes. If `hvg_method == "vst"`, the
 #' following elements can be found:
@@ -2395,7 +2405,8 @@ rs_sc_hvg <- function(f_path_gene, hvg_method, cell_indices, loess_span, binning
 #' @param n_bins Integer. Number of bins for the `meanvarbin` method.
 #' @param streaming Boolean. Shall the genes be streamed in to reduce memory
 #' pressure.
-#' @param verbose Boolean. Controls verbosity of the function.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
 #'
 #' @return A list with HVG statistics concatenated across all batches. For
 #' `hvg_method == 'vst'`, the following elements can be found:
@@ -2437,7 +2448,8 @@ rs_sc_hvg_batch_aware <- function(f_path_gene, hvg_method, cell_indices, batch_l
 #' @param gene_indices Integer. The gene indices to use. (0-indexed!)
 #' @param seed Integer. Random seed for the randomised SVD.
 #' @param return_scaled Boolean. Shall the scaled data be returned.
-#' @param verbose Boolean. Controls verbosity of the function.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
 #'
 #' @returns A list with with the following items
 #' \itemize{
@@ -2468,7 +2480,8 @@ rs_sc_pca <- function(f_path_gene, no_pcs, random_svd, cell_indices, gene_indice
 #' @param cell_indices Integer. The cell indices to use. (0-indexed!)
 #' @param gene_indices Integer. The gene indices to use. (0-indexed!)
 #' @param seed Integer. Random seed for the randomised SVD.
-#' @param verbose Boolean. Controls verbosity of the function.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
 #'
 #' @returns A list with with the following items
 #' \itemize{
@@ -2495,8 +2508,8 @@ rs_sc_pca_sparse <- function(f_path_gene, no_pcs, random_svd, cell_indices, gene
 #' [params_sc_neighbours()].
 #' @param validate_index Boolean. If you want to validate the index via
 #' an exhaustive search in a subset of cells.
-#' @param verbose Boolean. Controls verbosity of the function and returns
-#' how long certain operations took.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
 #' @param seed Integer. Seed for reproducibility purposes.
 #'
 #' @return A integer matrix of N x k with N being the number of cells and k the
@@ -2517,8 +2530,8 @@ rs_sc_knn <- function(embd, knn_params, validate_index, verbose, seed) .Call(wra
 #' [params_sc_neighbours()].
 #' @param validate_index Boolean. If you want to validate the index via
 #' an exhaustive search in a subset of cells.
-#' @param verbose Boolean. Controls verbosity of the function and returns
-#' how long certain operations took.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
 #' @param seed Integer. Seed for reproducibility purposes.
 #'
 #' @return A list with:
@@ -2547,7 +2560,8 @@ rs_sc_knn_w_dist <- function(embd, knn_params, validate_index, verbose, seed) .C
 #' direct neighbours in the graph, or between all possible combinations.
 #' @param pruning Float. Below which value for the Jaccard similarity to prune
 #' the weight to 0.
-#' @param verbose Boolean. Controls verbosity of the function.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
 #'
 #' @return A list with the following items:
 #' \itemize{
@@ -2597,7 +2611,8 @@ rs_compare_knn <- function(knn_data_a, knn_data_b) .Call(wrap__rs_compare_knn, k
 #' @param snn Boolean. Shall the kNN graph be additionally transformed into
 #' an sNN graph.
 #' @param seed Integer. For reproducibility.
-#' @param verbose Boolean. Controls the verbosity of the function.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
 #'
 #' @returns A list with the memberships per resolution.
 #'
@@ -2625,7 +2640,8 @@ rs_fast_cluster_sc <- function(embd, km_type, resolutions, n_centroids, fc_param
 #' an sNN graph.
 #' @param no_seeds Integer. Number of additional seeds to use. Should be >=2.
 #' @param seed Integer. For reproducibility.
-#' @param verbose Boolean. Controls the verbosity of the function.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
 #'
 #' @returns A list with the following elements:
 #' \itemize{
@@ -2653,7 +2669,8 @@ rs_fast_cluster_sc_grid <- function(embd, km_type, resolutions, n_centroids, fc_
 #' two groups to be tested.
 #' @param alternative String. One of `c("twosided", "greater", "less")`. Null
 #' hypothesis.
-#' @param verbose Boolean. Controls verbosity of the function.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
 #'
 #' @return A list with the following elements
 #' \itemize{
@@ -2686,7 +2703,8 @@ rs_calculate_dge_mann_whitney <- function(f_path, cell_indices_1, cell_indices_2
 #' @param auc_type String. One of `"wilcox"` or `"auroc"`, pending on
 #' which statistic you wish to calculate.
 #' @param streaming Boolean. Shall the data be streamed.
-#' @param verbose Boolean. Controls verbosity of the function.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
 #'
 #' @return A matrix of cells x gene sets with the values representing the
 #' AUC.
@@ -2709,11 +2727,15 @@ rs_aucell <- function(f_path, gs_list, cells_to_keep, auc_type, streaming, verbo
 #' @param cells_to_keep Integer vector. 0-index vector indicating which cells
 #' to include in the analysis. Ensure that this is of same order/length
 #' as the embedding matrix.
+#' @param knn_data Optional list. This contains pre-computed kNN data
+#' (including distances). The user has to ensure consistency! If provided,
+#' this will be used.
 #' @param genes_to_use Integer vector. 0-index vector indicating which genes
 #' to include.
 #' @param streaming Boolean. Shall the data be streamed in chunks. Useful
 #' for large data sets.
-#' @param verbose Boolean. Controls verbosity of the function.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
 #' @param seed Integer. Random seed for reproducibility.
 #'
 #' @returns A list with the following elements.
@@ -2729,7 +2751,7 @@ rs_aucell <- function(f_path, gs_list, cells_to_keep, auc_type, streaming, verbo
 #' @export
 #'
 #' @references DeTomaso, et al., Cell Systems, 2021
-rs_hotspot_autocor <- function(f_path_genes, f_path_cells, embd, hotspot_params, cells_to_keep, genes_to_use, streaming, verbose, seed) .Call(wrap__rs_hotspot_autocor, f_path_genes, f_path_cells, embd, hotspot_params, cells_to_keep, genes_to_use, streaming, verbose, seed)
+rs_hotspot_autocor <- function(f_path_genes, f_path_cells, embd, knn_data, hotspot_params, cells_to_keep, genes_to_use, streaming, verbose, seed) .Call(wrap__rs_hotspot_autocor, f_path_genes, f_path_cells, embd, knn_data, hotspot_params, cells_to_keep, genes_to_use, streaming, verbose, seed)
 
 #' Cluster the genes by Z-score together
 #'
@@ -2753,6 +2775,9 @@ rs_hotspot_cluster_genes <- function(z_matrix, fdr_threshold, min_size) .Call(wr
 #' @param f_path_cells Path to the `counts_cells.bin` file.
 #' @param embd Numerical matrix. The embedding matrix from which to generate
 #' the kNN graph.
+#' @param knn_data Optional list. This contains pre-computed kNN data
+#' (including distances). The user has to ensure consistency! If provided,
+#' this will be used.
 #' @param hotspot_params List. The HotSpot parameter list.
 #' @param cells_to_keep Integer vector. 0-index vector indicating which cells
 #' to include in the analysis. Ensure that this is of same order/length
@@ -2761,7 +2786,8 @@ rs_hotspot_cluster_genes <- function(z_matrix, fdr_threshold, min_size) .Call(wr
 #' to include.
 #' @param streaming Boolean. Shall the data be streamed in chunks. Useful
 #' for large data sets.
-#' @param verbose Boolean. Controls verbosity of the function.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
 #' @param seed Integer. Random seed for reproducibility.
 #'
 #' @returns A list with the following elements.
@@ -2775,7 +2801,7 @@ rs_hotspot_cluster_genes <- function(z_matrix, fdr_threshold, min_size) .Call(wr
 #' @export
 #'
 #' @references DeTomaso, et al., Cell Systems, 2021
-rs_hotspot_gene_cor <- function(f_path_genes, f_path_cells, embd, hotspot_params, cells_to_keep, genes_to_use, streaming, verbose, seed) .Call(wrap__rs_hotspot_gene_cor, f_path_genes, f_path_cells, embd, hotspot_params, cells_to_keep, genes_to_use, streaming, verbose, seed)
+rs_hotspot_gene_cor <- function(f_path_genes, f_path_cells, embd, knn_data, hotspot_params, cells_to_keep, genes_to_use, streaming, verbose, seed) .Call(wrap__rs_hotspot_gene_cor, f_path_genes, f_path_cells, embd, knn_data, hotspot_params, cells_to_keep, genes_to_use, streaming, verbose, seed)
 
 #' Calculate module activity scores in Rust
 #'
@@ -2797,7 +2823,8 @@ rs_hotspot_gene_cor <- function(f_path_genes, f_path_cells, embd, hotspot_params
 #' @param seed Integer. Random seed for reproducible control gene sampling.
 #' @param streaming Logical. If TRUE, processes cells and genes are read in in
 #' chunks to reduce memory usage.
-#' @param verbose Logical. Controls verbosity of the function.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
 #'
 #' @return Matrix of module scores (modules x cells). Each row corresponds to a
 #' module from gs_list, each column to a cell from cells_to_keep.
@@ -2819,7 +2846,8 @@ rs_module_scoring <- function(f_path_cells, f_path_genes, gs_list, cells_to_keep
 #' @param milor_params Named list. Contains the parameters for running the
 #' miloR approach.
 #' @param seed Integer. Seed for reproducibility.
-#' @param verbose Boolean. Controls verbosity of the function.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
 #'
 #' @returns A list with the following elements:
 #' \itemize{
@@ -2850,7 +2878,8 @@ rs_make_milor_nhoods <- function(embd, knn_indices, milor_params, seed, verbose)
 #' and negative gene indices of that specific gene set.
 #' @param cells_to_keep Integer. Vector of indices of the cells to keep.
 #' @param streaming Boolean. Shall the data be streamed.
-#' @param verbose Boolean. Controls verbosity of the function.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
 #'
 #' @return A matrix of cells x vision scores per gene set.
 #'
@@ -2870,6 +2899,9 @@ rs_vision <- function(f_path, gs_list, cells_to_keep, streaming, verbose) .Call(
 #' @param f_path String. Path to the `counts_cells.bin` file.
 #' @param embd Numerical matrix. The embedding matrix to use to generate the
 #' kNN graph.
+#' @param knn_data Optional list. This contains pre-computed kNN data
+#' (including distances). The user has to ensure consistency! If provided,
+#' this will be used.
 #' @param gs_list Nested list. Each sublist contains the (0-indexed!) positive
 #' and negative gene indices of that specific gene set.
 #' @param random_gs_list Double-nested list. The outer list represents the
@@ -2881,7 +2913,8 @@ rs_vision <- function(f_path, gs_list, cells_to_keep, streaming, verbose) .Call(
 #' @param cluster_membership Integer. Vector that indicates to which of the
 #' permuted gene set clusters the given gene set belongs.
 #' @param streaming Boolean. Shall the data be streamed.
-#' @param verbose Boolean. Controls verbosity of the function.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
 #' @param seed Integer. Random seed for reproducibility.
 #'
 #' @return A list with the following items:
@@ -2892,7 +2925,7 @@ rs_vision <- function(f_path, gs_list, cells_to_keep, streaming, verbose) .Call(
 #' }
 #'
 #' @export
-rs_vision_with_autocorrelation <- function(f_path, embd, gs_list, random_gs_list, vision_params, cells_to_keep, cluster_membership, streaming, verbose, seed) .Call(wrap__rs_vision_with_autocorrelation, f_path, embd, gs_list, random_gs_list, vision_params, cells_to_keep, cluster_membership, streaming, verbose, seed)
+rs_vision_with_autocorrelation <- function(f_path, embd, knn_data, gs_list, random_gs_list, vision_params, cells_to_keep, cluster_membership, streaming, verbose, seed) .Call(wrap__rs_vision_with_autocorrelation, f_path, embd, knn_data, gs_list, random_gs_list, vision_params, cells_to_keep, cluster_membership, streaming, verbose, seed)
 
 #' Identifies genes to include into a SCENIC analysis
 #'
@@ -2901,7 +2934,8 @@ rs_vision_with_autocorrelation <- function(f_path, embd, gs_list, random_gs_list
 #' include in the analysis
 #' @param scenic_params Named list. Contains all of the parameters need for
 #' SCENIC.
-#' @param verbose Boolean. Controls the verbosity of the function.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
 #'
 #' @returns The 0-indexed positions of the genes to include in the scenic
 #' analysis.
@@ -2921,7 +2955,8 @@ rs_scenic_gene_filter <- function(f_path_genes, cell_indices, scenic_params, ver
 #' @param scenic_params Named list. Contains all of the parameters need for
 #' SCENIC.
 #' @param seed Integer. Controls reproducibility of the function.
-#' @param verbose Boolean. Controls the verbosity of the function.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
 #'
 #' @returns A gene x TF importance matrix
 #'
@@ -2942,7 +2977,8 @@ rs_scenic_grn <- function(f_path_genes, cell_indices, gene_indices, tf_indices, 
 #' @param scenic_params Named list. Contains all of the parameters need for
 #' SCENIC.
 #' @param seed Integer. Controls reproducibility of the function.
-#' @param verbose Boolean. Controls the verbosity of the function.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
 #'
 #' @returns A gene x TF importance matrix
 #'
@@ -3001,7 +3037,8 @@ rs_importance_threshold <- function(matrix, n_sd, min_value) .Call(wrap__rs_impo
 #' @param meta_cell_params A list containing the meta cell parameters.
 #' @param target_size Numeric. Target library size for re-normalisation of
 #' the meta cells. Typically `1e4`.
-#' @param seed Integer. For reproducibility purposes.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
 #' @param verbose Boolean. Controls verbosity of the function.
 #'
 #' @returns A list with the following elements:
@@ -3038,7 +3075,8 @@ rs_get_metacells_bootstrapped <- function(f_path, knn_mat, embd, cells_to_keep, 
 #' @param target_size Numeric. Target library size for re-normalisation of
 #' the meta cells. Typically `1e4`.
 #' @param seed Integer. For reproducibility purposes.
-#' @param verbose Boolean. Controls verbosity of the function.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
 #'
 #' @returns A list with the following elements:
 #' \itemize{
@@ -3084,7 +3122,8 @@ rs_get_seacells <- function(f_path, embd, cells_to_keep, cells_to_use, knn_data,
 #' @param target_size Numeric. Target library size for re-normalisation of
 #' the meta cells. Typically `1e4`.
 #' @param seed Integer. For reproducibility purposes.
-#' @param verbose Boolean. Controls verbosity of the function.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
 #'
 #' @returns A list with the following elements:
 #' \itemize{
@@ -3108,7 +3147,8 @@ rs_supercell <- function(f_path, embd, cells_to_keep, cells_to_use, knn_data, su
 #' estimation. Typically `150`.
 #' @param knn_params List. The kNN parameters defined by
 #' [params_sc_neighbours()].
-#' @param verbose Boolean. Controls verbosity of the the function.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
 #' @param seed Integer. For reproducibility.
 #'
 #' @return A list with the following items
@@ -3152,7 +3192,8 @@ rs_metacell_separation <- function(dc, meta_cells) .Call(wrap__rs_metacell_separ
 #' @param cell_indices_ls List. Must contains 0-indexed positions of the
 #' cells to aggregate per element.
 #' @param assay String. One of `c("raw", "norm")`. Which counts to normalise.
-#' @param verbose Controls verbosity of the function
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
 #'
 #' @returns A dense matrix with the pseudo-bulked data.
 #'
@@ -3170,7 +3211,8 @@ rs_pseudobulk_cells_dense <- function(f_path, cell_indices_ls, assay, verbose) .
 #' @param cell_indices_ls List. Must contains 0-indexed positions of the
 #' cells to aggregate per element.
 #' @param assay String. One of `c("raw", "norm")`. Which counts to normalise.
-#' @param verbose Controls verbosity of the function
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
 #'
 #' @returns A list with the following elements (easy to convert into CSR in R)
 #' \itemize{
@@ -3311,7 +3353,8 @@ rs_mc_pca <- function(sparse_data, no_pcs, random_svd, seed) .Call(wrap__rs_mc_p
 #' @param scenic_params Named list. Contains all of the parameters need for
 #' SCENIC.
 #' @param seed Integer. Controls reproducibility of the function.
-#' @param verbose Boolean. Controls the verbosity of the function.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
 #'
 #' @returns A gene x TF importance matrix
 #'
@@ -3334,7 +3377,8 @@ rs_mc_scenic <- function(sparse_data, tf_indices, scenic_params, seed, verbose) 
 #' @param auc_type String. One of `"wilcox"` or `"auroc"`, pending on
 #' which statistic you wish to calculate.
 #' @param streaming Boolean. Shall the data be streamed.
-#' @param verbose Boolean. Controls verbosity of the function.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
 #'
 #' @return A matrix of cells x gene sets with the values representing the
 #' AUC.
@@ -3380,7 +3424,8 @@ rs_adt_clr <- function(counts) .Call(wrap__rs_adt_clr, counts)
 #' the per-protein background mean and divides by the per-protein background
 #' SD. `"mean_subtract"` subtracts the mean only.
 #' @param seed Integer. Random seed for k-means initialisation.
-#' @param verbose Boolean. Print progress messages.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
 #'
 #' @returns A list with the following elements:
 #' \itemize{

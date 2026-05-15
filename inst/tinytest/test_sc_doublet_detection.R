@@ -118,7 +118,7 @@ scrublet_res <- rs_sc_scrublet(
   cells_to_keep = get_cells_to_keep(sc_object),
   scrublet_params = optimal_params,
   seed = 42L,
-  verbose = FALSE,
+  verbose = 0L,
   streaming = FALSE,
   return_combined_pca = TRUE,
   return_pairs = TRUE
@@ -216,7 +216,7 @@ scrublet_res.full_norm <- rs_sc_scrublet(
   cells_to_keep = get_cells_to_keep(sc_object),
   scrublet_params = params_full_norm,
   seed = 42L,
-  verbose = FALSE,
+  verbose = 0L,
   streaming = FALSE,
   return_combined_pca = FALSE,
   return_pairs = FALSE
@@ -336,7 +336,7 @@ doublet_detection_res <- rs_sc_doublet_detection(
   cells_to_keep = get_cells_to_keep(sc_object),
   boost_params = boost_params,
   seed = 42L,
-  verbose = FALSE,
+  verbose = 0L,
   streaming = FALSE
 )
 
@@ -449,8 +449,7 @@ scdblfinder_res <- rs_sc_scdblfinder(
   seed = 42L,
   return_features = FALSE,
   streaming = FALSE,
-  verbose = FALSE,
-  debug = FALSE
+  verbose = 0L
 )
 
 expect_true(

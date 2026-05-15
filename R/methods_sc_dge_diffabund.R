@@ -23,7 +23,9 @@
 #' `c("twosided", "greater", "less")`. Function will default to `"twosided"`.
 #' @param min_prop Numeric. The minimum proportion of cells that need to express
 #' the gene to be tested in any of the two groups.
-#' @param .verbose Boolean. Controls verbosity of the function.
+#' @param .verbose Boolean or integer. Controls verbosity and returns run times.
+#' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
+#' verbosity.
 #'
 #' @return data.table with the DGE results from the test.
 #'
@@ -68,7 +70,7 @@ S7::method(find_markers_sc, SingleCells) <- function(
   checkmate::assertChoice(method, c("wilcox"))
   checkmate::assertChoice(alternative, c("twosided", "greater", "less"))
   checkmate::qassert(min_prop, "N1[0, 1]")
-  checkmate::qassert(.verbose, "B1")
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   dge_results <- switch(
     method,
@@ -86,7 +88,7 @@ S7::method(find_markers_sc, SingleCells) <- function(
       ),
       min_prop = min_prop,
       alternative = alternative,
-      verbose = .verbose
+      verbose = parse_verbosity(.verbose)
     )
   )
 
@@ -144,7 +146,9 @@ S7::method(find_markers_sc, SingleCells) <- function(
 #' @param downsampling Boolean. If the other group exceeds 100,000 cells, a
 #' random subsample of 100,000 cells will be used.
 #' @param seed Integer. Seed that is used for the downsampling.
-#' @param .verbose Boolean. Controls verbosity of the function.
+#' @param .verbose Boolean or integer. Controls verbosity and returns run times.
+#' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
+#' verbosity.
 #'
 #' @return data.table with the DGE results from the test.
 #'
@@ -192,7 +196,7 @@ S7::method(find_all_markers_sc, SingleCells) <- function(
   checkmate::qassert(min_prop, "N1[0, 1]")
   checkmate::qassert(downsampling, "B1")
   checkmate::qassert(seed, "I1")
-  checkmate::qassert(.verbose, "B1")
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   obs_data <- object[[c("cell_id", column_of_interest)]][
     !is.na(get(column_of_interest))
@@ -246,7 +250,7 @@ S7::method(find_all_markers_sc, SingleCells) <- function(
         ),
         min_prop = min_prop,
         alternative = alternative,
-        verbose = FALSE
+        verbose = 0L
       )
     )
 
@@ -325,7 +329,9 @@ S7::method(find_all_markers_sc, SingleCells) <- function(
 #'   `"exhaustive"` for MiloR as it basically boils down to `"bruteforce"`.
 #' }
 #' @param seed Integer. Seed for reproducibility
-#' @param .verbose Boolean. Controls verbosity of the method.
+#' @param .verbose Boolean or integer. Controls verbosity and returns run times.
+#' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
+#' verbosity.
 #'
 #' @references Dann, et al., Nat Biotechnol, 2022
 #'
@@ -366,7 +372,7 @@ S7::method(get_miloR_abundances_sc, SingleCells) <- function(
   checkmate::qassert(sample_id_col, "S1")
   assertScMiloR(miloR_params)
   checkmate::qassert(seed, "I1")
-  checkmate::qassert(.verbose, "B1")
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   samples <- unlist(object[[sample_id_col]], use.names = FALSE)
 
@@ -406,7 +412,7 @@ S7::method(get_miloR_abundances_sc, SingleCells) <- function(
     knn_indices = knn_data,
     milor_params = miloR_params,
     seed = seed,
-    verbose = .verbose
+    verbose = parse_verbosity(.verbose)
   )
 
   nhoods <- Matrix::sparseMatrix(

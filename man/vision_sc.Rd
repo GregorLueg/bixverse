@@ -17,7 +17,9 @@ gene sets. The names need to be part of the variables of the
 \item{streaming}{Boolean. Shall the cell data be streamed in. Useful for
 larger data sets.}
 
-\item{.verbose}{Boolean. Controls the verbosity of the function.}
+\item{.verbose}{Boolean or integer. Controls verbosity and returns run times.
+\code{FALSE} -> quiet, \code{TRUE} or \code{1L} -> normal verbosity, \code{2L} -> detailed
+verbosity.}
 }
 \value{
 Returns a \code{ScMatrixRes} with the VISION scores.

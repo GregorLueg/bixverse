@@ -63,6 +63,8 @@
 #' `TRUE`. If not available, will default to the embedding.
 #' @param embd_to_use String. The embedding to use for UMAP. Must be available
 #' in the object.
+#' @param slot_name String. The name of this embedding within the object.
+#' Defaults to `"umap"`.
 #' @param no_embd_to_use Optional integer. Number of embedding dimensions to
 #' use. If `NULL` all will be used.
 #' @param n_dim Integer. Number of UMAP dimensions. Defaults to `2L`.
@@ -87,6 +89,7 @@ umap_sc <- S7::new_generic(
     object,
     use_knn = TRUE,
     embd_to_use = "pca",
+    slot_name = "umap",
     no_embd_to_use = NULL,
     n_dim = 2L,
     k = 15L,
@@ -113,6 +116,7 @@ S7::method(umap_sc, ScOrMc) <- function(
   object,
   use_knn = TRUE,
   embd_to_use = "pca",
+  slot_name = "umap",
   no_embd_to_use = NULL,
   n_dim = 2L,
   k = 15L,
@@ -137,6 +141,7 @@ S7::method(umap_sc, ScOrMc) <- function(
   )
   checkmate::qassert(use_knn, "B1")
   checkmate::qassert(embd_to_use, "S1")
+  checkmate::qassert(slot_name, "S1")
   checkmate::qassert(no_embd_to_use, c("I1", "0"))
   checkmate::qassert(n_dim, "I1[1,)")
   checkmate::qassert(k, "I1[2,)")
@@ -181,7 +186,7 @@ S7::method(umap_sc, ScOrMc) <- function(
   )
 
   colnames(umap_embd) <- sprintf("umap_%s", seq_len(ncol(umap_embd)))
-  object <- set_embedding(x = object, embd = umap_embd, name = "umap")
+  object <- set_embedding(x = object, embd = umap_embd, name = slot_name)
 
   return(object)
 }
@@ -219,6 +224,8 @@ S7::method(umap_sc, ScOrMc) <- function(
 #' `TRUE`. If not available, will default to the embedding.
 #' @param embd_to_use String. The embedding to use for t-SNE. Must be available
 #' in the object.
+#' @param slot_name String. The name of this embedding within the object.
+#' Defaults to `"tsne"`.
 #' @param no_embd_to_use Optional integer. Number of embedding dimensions to
 #' use. If `NULL` all will be used.
 #' @param n_dim Integer. Number of t-SNE dimensions. Currently only `2L` is
@@ -244,6 +251,7 @@ tsne_sc <- S7::new_generic(
     object,
     use_knn = FALSE,
     embd_to_use = "pca",
+    slot_name = "tsne",
     no_embd_to_use = NULL,
     n_dim = 2L,
     perplexity = 10.0,
@@ -269,6 +277,7 @@ S7::method(tsne_sc, ScOrMc) <- function(
   object,
   use_knn = FALSE,
   embd_to_use = "pca",
+  slot_name = "tsne",
   no_embd_to_use = NULL,
   n_dim = 2L,
   perplexity = 10.0,
@@ -291,6 +300,7 @@ S7::method(tsne_sc, ScOrMc) <- function(
     S7::S7_inherits(object, SingleCells) || S7::S7_inherits(object, MetaCells)
   )
   checkmate::qassert(embd_to_use, "S1")
+  checkmate::qassert(slot_name, "S1")
   checkmate::qassert(no_embd_to_use, c("I1", "0"))
   checkmate::qassert(n_dim, "I1[2,2]")
   checkmate::qassert(perplexity, "N1[1,)")
@@ -333,7 +343,7 @@ S7::method(tsne_sc, ScOrMc) <- function(
   )
 
   colnames(tsne_embd) <- sprintf("tsne_%s", seq_len(ncol(tsne_embd)))
-  object <- set_embedding(x = object, embd = tsne_embd, name = "tsne")
+  object <- set_embedding(x = object, embd = tsne_embd, name = slot_name)
 
   return(object)
 }
@@ -367,6 +377,8 @@ S7::method(tsne_sc, ScOrMc) <- function(
 #' `TRUE`. If not available, will default to the embedding.
 #' @param embd_to_use String. The embedding to use for PHATE. Must be available
 #' in the object.
+#' @param slot_name String. The name of this embedding within the object.
+#' Defaults to `"phase"`.
 #' @param no_embd_to_use Optional integer. Number of embedding dimensions to
 #' use. If `NULL` all will be used.
 #' @param n_dim Integer. Number of PHATE dimensions. Currently only `2L` is
@@ -390,6 +402,7 @@ phate_sc <- S7::new_generic(
     object,
     use_knn = TRUE,
     embd_to_use = "pca",
+    slot_name = "phate",
     no_embd_to_use = NULL,
     n_dim = 2L,
     k = 5L,
@@ -414,6 +427,7 @@ S7::method(phate_sc, ScOrMc) <- function(
   object,
   use_knn = TRUE,
   embd_to_use = "pca",
+  slot_name = "phate",
   no_embd_to_use = NULL,
   n_dim = 2L,
   k = 5L,
@@ -435,6 +449,7 @@ S7::method(phate_sc, ScOrMc) <- function(
     S7::S7_inherits(object, SingleCells) || S7::S7_inherits(object, MetaCells)
   )
   checkmate::qassert(embd_to_use, "S1")
+  checkmate::qassert(slot_name, "S1")
   checkmate::qassert(no_embd_to_use, c("I1", "0"))
   checkmate::qassert(n_dim, "I1[2,2]")
   checkmate::qassert(k, "I1[1,)")

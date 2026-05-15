@@ -31,7 +31,8 @@ pre-computed matrix.}
 
 \item{mnn_params}{List. Contains all of the fastMNN parameters.}
 
-\item{verbose}{Boolean. Controls verbosity of the function.}
+\item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
+detailed verbosity.}
 
 \item{seed}{Integer. Seed for reproducibility purposes.}
 }

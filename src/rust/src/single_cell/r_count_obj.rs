@@ -281,13 +281,31 @@ impl SingleCellCountData {
         qc_params: List,
         verbose: bool,
     ) -> Result<List, extendr_api::Error> {
+        let start = Instant::now();
+
         let qc_params = MinCellQuality::from_r_list(qc_params)?;
+
+        if verbose {
+            println!("Transforming R data into compressed sparse data.")
+        }
 
         let compressed_data: CompressedSparseData2<u32> =
             list_to_sparse_matrix(r_data, false).to_extendr()?;
 
+        if verbose {
+            println!(" Done in {:.2?}", start.elapsed())
+        }
+
+        if verbose {
+            println!("Preparing generation of binary files.")
+        }
+
         let (no_cells, no_genes, cell_qc): (usize, usize, CellQuality) =
             write_r_counts(&self.f_path_cells, compressed_data, qc_params, verbose);
+
+        if verbose {
+            println!(" Done in {:.2?}", start.elapsed())
+        }
 
         self.n_cells = no_cells;
         self.n_genes = no_genes;

@@ -9,8 +9,7 @@ calculate_batch_asw_sc(
   batch_column,
   embd_to_use = "pca",
   max_cells = 5000L,
-  seed = 42L,
-  .verbose = TRUE
+  seed = 42L
 )
 }
 \arguments{
@@ -27,8 +26,6 @@ cells for performance. The pairwise distance computation is O(n^2), so
 subsampling is recommended for large datasets. Defaults to \code{5000L}.}
 
 \item{seed}{Integer. Seed for subsampling reproducibility.}
-
-\item{.verbose}{Boolean. Controls the verbosity of the function.}
 }
 \value{
 A \code{BatchSilhouetteScores} object with the following elements

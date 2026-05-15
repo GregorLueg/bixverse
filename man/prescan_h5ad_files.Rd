@@ -7,7 +7,8 @@
 prescan_h5ad_files(
   h5_paths,
   gene_universe = c("intersection", "union"),
-  var_index = "_index"
+  var_index = "_index",
+  .verbose = TRUE
 )
 }
 \arguments{
@@ -18,6 +19,8 @@ provided, these will be used as experimental identifiers.}
 
 \item{var_index}{String. The name within the h5ad var part in which the
 variable names are stored. Defaults to \code{"_index"}.}
+
+\item{.verbose}{Boolean. Controls verbosity of the function.}
 }
 \value{
 A list with:

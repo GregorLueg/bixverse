@@ -26,7 +26,9 @@ columns to regress out. If \code{NULL}, only the primary batch column is used.}
 
 \item{seed}{Integer. For reproducibility.}
 
-\item{.verbose}{Boolean. Controls verbosity.}
+\item{.verbose}{Boolean or integer. Controls verbosity and returns run times.
+\code{FALSE} -> quiet, \code{TRUE} or \code{1L} -> normal verbosity, \code{2L} -> detailed
+verbosity.}
 }
 \value{
 The object with a \code{"harmony_v2"} embedding added. If no PCA

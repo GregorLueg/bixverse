@@ -28,7 +28,8 @@ two groups to be tested.}
 \item{alternative}{String. One of \code{c("twosided", "greater", "less")}. Null
 hypothesis.}
 
-\item{verbose}{Boolean. Controls verbosity of the function.}
+\item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
+detailed verbosity.}
 }
 \value{
 A list with the following elements

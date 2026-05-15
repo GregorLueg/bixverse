@@ -8,6 +8,7 @@ phate_sc(
   object,
   use_knn = TRUE,
   embd_to_use = "pca",
+  slot_name = "phate",
   no_embd_to_use = NULL,
   n_dim = 2L,
   k = 5L,
@@ -26,6 +27,9 @@ phate_sc(
 
 \item{embd_to_use}{String. The embedding to use for PHATE. Must be available
 in the object.}
+
+\item{slot_name}{String. The name of this embedding within the object.
+Defaults to \code{"phase"}.}
 
 \item{no_embd_to_use}{Optional integer. Number of embedding dimensions to
 use. If \code{NULL} all will be used.}

@@ -19,7 +19,8 @@ direct neighbours in the graph, or between all possible combinations.}
 \item{pruning}{Float. Below which value for the Jaccard similarity to prune
 the weight to 0.}
 
-\item{verbose}{Boolean. Controls verbosity of the function.}
+\item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
+detailed verbosity.}
 }
 \value{
 A list with the following items:

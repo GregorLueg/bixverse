@@ -24,7 +24,9 @@ respective gene sets.}
 \item{streaming}{Boolean. Shall the cell data be streamed in. Useful for
 larger data sets. Ignored when applied to \code{MetaCells}.}
 
-\item{.verbose}{Boolean. Controls the verbosity of the function.}
+\item{.verbose}{Boolean or integer. Controls verbosity and returns run times.
+\code{FALSE} -> quiet, \code{TRUE} or \code{1L} -> normal verbosity, \code{2L} -> detailed
+verbosity.}
 }
 \value{
 AUCell results in form of a matrix that is cells x gene sets or as

@@ -47,7 +47,9 @@ for available parameters and their defaults.
 \item{.validate_index}{Boolean. Shall an exhaustive search against a subset
 of cells be run to validate the approximate nearest neighbour index.}
 
-\item{.verbose}{Boolean. Controls verbosity and returns run times.}
+\item{.verbose}{Boolean or integer. Controls verbosity and returns run times.
+\code{FALSE} -> quiet, \code{TRUE} or \code{1L} -> normal verbosity, \code{2L} -> detailed
+verbosity.}
 }
 \value{
 Initialised \code{sc_knn} with the kNN data.

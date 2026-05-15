@@ -27,7 +27,8 @@ rs_sc_pca_sparse(
 
 \item{seed}{Integer. Random seed for the randomised SVD.}
 
-\item{verbose}{Boolean. Controls verbosity of the function.}
+\item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
+detailed verbosity.}
 }
 \value{
 A list with with the following items

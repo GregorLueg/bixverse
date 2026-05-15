@@ -2771,7 +2771,8 @@ checkScFastmnn <- function(x) {
       "ndist",
       "cos_norm",
       "no_pcs",
-      "random_svd"
+      "random_svd",
+      "sparse_svd"
     )
   )
   if (!isTRUE(res)) {
@@ -2794,7 +2795,7 @@ checkScFastmnn <- function(x) {
     return("ndist needs to be a positive numeric.")
   }
   # Check logical parameters
-  logical_params <- c("cos_norm", "random_svd")
+  logical_params <- c("cos_norm", "random_svd", "sparse_svd")
   res <- purrr::map_lgl(logical_params, \(param) {
     checkmate::qtest(x[[param]], "B1")
   })

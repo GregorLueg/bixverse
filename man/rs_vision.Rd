@@ -16,7 +16,8 @@ and negative gene indices of that specific gene set.}
 
 \item{streaming}{Boolean. Shall the data be streamed.}
 
-\item{verbose}{Boolean. Controls verbosity of the function.}
+\item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
+detailed verbosity.}
 }
 \value{
 A matrix of cells x vision scores per gene set.

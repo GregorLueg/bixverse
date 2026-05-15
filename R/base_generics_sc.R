@@ -648,7 +648,9 @@ get_knn_dist <- function(x, ...) {
 #' @param streaming Boolean. Shall the genes be streamed in. Useful for larger
 #' data sets where you wish to avoid loading in the whole data. Defaults to
 #' `FALSE`. Not used for `MetaCells`.
-#' @param .verbose Boolean. Controls verbosity and returns run times.
+#' @param .verbose Boolean or integer. Controls verbosity and returns run times.
+#' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
+#' verbosity.
 #'
 #' @return It will add the mean, var, var_exp, var_std of each gene to the
 #' the var table.
@@ -693,7 +695,9 @@ find_hvg_sc <- S7::new_generic(
 #' these, the internal HVG will be overwritten.
 #' @param seed Integer. Controls reproducibility. Only relevant if
 #' `randomised_svd = TRUE`.
-#' @param .verbose Boolean. Controls verbosity and returns run times.
+#' @param .verbose Boolean or integer. Controls verbosity and returns run times.
+#' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
+#' verbosity.
 #'
 #' @return The function will add the PCA factors, loadings and singular values
 #' to the object cache in memory.
@@ -764,7 +768,9 @@ calculate_pca_sc <- S7::new_generic(
 #'   for available parameters and their defaults.
 #' }
 #' @param seed Integer. For reproducibility.
-#' @param .verbose Boolean. Controls verbosity and returns run times.
+#' @param .verbose Boolean or integer. Controls verbosity and returns run times.
+#' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
+#' verbosity.
 #'
 #' @return The object with added KNN matrix.
 #'
@@ -833,7 +839,9 @@ find_clusters_sc <- S7::new_generic(
 #' `c("wilcox", "auroc")`.
 #' @param streaming Boolean. Shall the cell data be streamed in. Useful for
 #' larger data sets. Ignored when applied to `MetaCells`.
-#' @param .verbose Boolean. Controls the verbosity of the function.
+#' @param .verbose Boolean or integer. Controls verbosity and returns run times.
+#' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
+#' verbosity.
 #'
 #' @return AUCell results in form of a matrix that is cells x gene sets or as
 #' `ScMatrixRes` pending the input.
@@ -872,7 +880,9 @@ aucell_sc <- S7::new_generic(
 #' by this function.
 #' @param cells_to_take Optional string vector. Cell identifiers to restrict
 #' to. If `NULL`, defaults to all filtered cells in the class.
-#' @param .verbose Boolean. Controls verbosity. Defaults to `TRUE`.
+#' @param .verbose Boolean or integer. Controls verbosity and returns run times.
+#' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
+#' verbosity.
 #'
 #' @returns A character vector of gene identifiers passing the SCENIC
 #' inclusion criteria.
@@ -916,7 +926,9 @@ scenic_gene_filter_sc <- S7::new_generic(
 #' bound memory usage. Useful for large datasets. Defaults to `FALSE`. Ignored
 #' when applied to `MetaCells`.
 #' @param random_seed Integer. Used for reproducibility. Defaults to `42L`.
-#' @param .verbose Boolean. Controls verbosity. Defaults to `TRUE`.
+#' @param .verbose Boolean or integer. Controls verbosity and returns run times.
+#' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
+#' verbosity.
 #'
 #' @returns A `ScenicGrn` object.
 #'
@@ -951,6 +963,55 @@ scenic_grn_sc <- S7::new_generic(
     streaming = FALSE,
     random_seed = 42L,
     .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#### i/o -----------------------------------------------------------------------
+
+#' Save memory-bound data to disk
+#'
+#' @description
+#' Helper function that stores the memory-bound data to disk for checkpointing
+#' or when you close the session for quick recovery of prior work. You have the
+#' option to save as `".rds"` or `".qs2"` (you need to have the package `"qs2"`
+#' installed for this option!).
+#'
+#' @param object `SingleCells`, `MetaCells` or `SingleCellsMultiModal` class.
+#' @param type String. One of `c("qs2", "rds")`. Defines which binary format to
+#' use. Will default to `"qs2"` for speed.
+#'
+#' @returns The object with added information on the data on disk.
+#'
+#' @export
+save_sc_exp_to_disk <- S7::new_generic(
+  name = "save_sc_exp_to_disk",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    type = c("qs2", "rds")
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' Load an existing SingleCells from disk
+#'
+#' @description
+#' Helper function that can load the parameters to access the on-disk stored
+#' data into the class.
+#'
+#' @param object `SingleCells`, `MetaCells` or `SingleCellsMultiModal` class.
+#'
+#' @returns The object with added information on the data on disk.
+#'
+#' @export
+load_existing <- S7::new_generic(
+  name = "load_existing",
+  dispatch_args = "object",
+  fun = function(
+    object
   ) {
     S7::S7_dispatch()
   }

@@ -74,7 +74,9 @@ S7::method(calc_meta_cell_purity, MetaCells) <- function(
 #' @param k_density Integer. The k-th neighbour to use for the density region
 #' estimation. Defaults to `150L`.
 #' @param seed Integer. Seed for reproducibility
-#' @param .verbose Boolean. Controls verbosity.
+#' @param .verbose Boolean or integer. Controls verbosity and returns run times.
+#' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
+#' verbosity.
 #'
 #' @returns The class with the diffusion map coordinates, density distance and
 #' region attached.
@@ -113,6 +115,7 @@ S7::method(calc_diffusion_coordinates, MetaCells) <- function(
   checkmate::qassert(n_dcs, "I1")
   checkmate::qassert(k_density, "I1")
   checkmate::qassert(seed, "I1")
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   # deal with knn params here
   knn_params <- params_knn_defaults()
@@ -123,7 +126,7 @@ S7::method(calc_diffusion_coordinates, MetaCells) <- function(
     n_dcs = n_dcs,
     k_density = k_density,
     knn_params = knn_params,
-    verbose = .verbose,
+    verbose = parse_verbosity(.verbose),
     seed = seed
   )
 
@@ -235,7 +238,7 @@ S7::method(find_hvg_sc, MetaCells) <- function(
   checkmate::qassert(hvg_no, "I1")
   assertScHvg(hvg_params)
   checkmate::qassert(streaming, "B1")
-  checkmate::qassert(.verbose, "B1")
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   assay <- if (hvg_params$method == "vst") {
     "raw"
@@ -297,7 +300,7 @@ S7::method(calculate_pca_sc, MetaCells) <- function(
   checkmate::qassert(sparse_svd, "B1")
   checkmate::qassert(hvg, c("I+", "0"))
   checkmate::qassert(seed, "I1")
-  checkmate::qassert(.verbose, "B1")
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   if ((length(get_hvg(object)) == 0) && is.null(hvg)) {
     warning(paste(

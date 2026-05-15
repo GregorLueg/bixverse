@@ -182,7 +182,8 @@ fn rs_batch_lisi(knn_mat: RMatrix<i32>, batch_vector: Vec<i32>) -> List {
 /// cell belongs.
 /// @param bbknn_params List. Contains all of the BBKNN parameters.
 /// @param seed Integer. Seed for reproducibility purposes.
-/// @param verbose Boolean. Controls verbosity of the function.
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
 ///
 /// @return A list of two lists representing the sparse matrix representation
 /// of the distances and the connectivities.
@@ -196,7 +197,7 @@ fn rs_bbknn(
     batch_labels: Vec<i32>,
     bbknn_params: List,
     seed: usize,
-    verbose: bool,
+    verbose: usize,
 ) -> Result<List> {
     let bbknn_params = BbknnParams::from_r_list(bbknn_params)?;
     let embd = r_matrix_to_faer_fp32(&embd);
@@ -277,7 +278,8 @@ fn rs_bbknn_filtering(
 /// @param precomputed_pca Optional PCA matrix. If you want to provide a
 /// pre-computed matrix.
 /// @param seed Integer. Seed for reproducibility purposes.
-/// @param verbose Boolean. Controls verbosity of the function.
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
 ///
 /// @return The batch-corrected embedding space.
 ///
@@ -291,7 +293,7 @@ fn rs_mnn(
     batch_indices: Vec<i32>,
     precomputed_pca: Option<RMatrix<f64>>,
     mnn_params: List,
-    verbose: bool,
+    verbose: usize,
     seed: usize,
 ) -> Result<RArray<f64, 2>> {
     let cell_indices = cell_indices.r_int_convert();
@@ -330,7 +332,8 @@ fn rs_mnn(
 /// @param batch_labels List. Each element in the list needs to be a 0-indexed
 /// integer that represents the batch effects you wish to regress out.
 /// @param seed Integer. Seed for reproducibility purposes.
-/// @param verbose Boolean. Controls verbosity of the function.
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
 ///
 /// @return The batch-corrected Harmony embedding space.
 ///
@@ -341,7 +344,7 @@ fn rs_harmony(
     harmony_params: List,
     batch_labels: List,
     seed: usize,
-    verbose: bool,
+    verbose: usize,
 ) -> extendr_api::Result<RArray<f64, 2>> {
     let mut batch_indices: Vec<Vec<usize>> = Vec::new();
 
@@ -377,7 +380,8 @@ fn rs_harmony(
 /// @param batch_labels List. Each element in the list needs to be a 0-indexed
 /// integer that represents the batch effects you wish to regress out.
 /// @param seed Integer. Seed for reproducibility purposes.
-/// @param verbose Boolean. Controls verbosity of the function.
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
 ///
 /// @return The batch-corrected Harmony (v2) embedding space.
 ///
@@ -388,7 +392,7 @@ fn rs_harmony_v2(
     harmony_params: List,
     batch_labels: List,
     seed: usize,
-    verbose: bool,
+    verbose: usize,
 ) -> extendr_api::Result<RArray<f64, 2>> {
     let mut batch_indices: Vec<Vec<usize>> = Vec::new();
 

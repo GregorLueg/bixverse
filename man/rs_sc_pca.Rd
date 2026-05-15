@@ -30,7 +30,8 @@ rs_sc_pca(
 
 \item{return_scaled}{Boolean. Shall the scaled data be returned.}
 
-\item{verbose}{Boolean. Controls verbosity of the function.}
+\item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
+detailed verbosity.}
 }
 \value{
 A list with with the following items

@@ -49,7 +49,9 @@ to \code{sqrt(n_cells)} Rust-side if \code{NULL}.}
 
 \item{seed}{Integer. Reproducibility.}
 
-\item{.verbose}{Boolean. Verbosity.}
+\item{.verbose}{Boolean or integer. Controls verbosity and returns run times.
+\code{FALSE} -> quiet, \code{TRUE} or \code{1L} -> normal verbosity, \code{2L} -> detailed
+verbosity.}
 }
 \value{
 \code{SingleCellFastClusters} S3 object with:

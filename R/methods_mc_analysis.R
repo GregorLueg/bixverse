@@ -19,7 +19,7 @@ S7::method(aucell_sc, MetaCells) <- function(
   checkmate::assertList(gs_list, types = "character", names = "named")
   checkmate::assertChoice(auc_type, c("wilcox", "auroc"))
   checkmate::qassert(streaming, "B1")
-  checkmate::qassert(.verbose, "B1")
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   # 0-indexed gene indices for Rust
   gs_indices <- purrr::map(gs_list, \(e) {
@@ -32,7 +32,7 @@ S7::method(aucell_sc, MetaCells) <- function(
     sparse_data = sparse_data,
     gs_list = gs_indices,
     auc_type = auc_type,
-    verbose = .verbose
+    verbose = parse_verbosity(.verbose)
   )
 
   colnames(auc_res) <- names(gs_list)
@@ -116,7 +116,7 @@ S7::method(scenic_grn_sc, MetaCells) <- function(
   checkmate::qassert(cells_to_take, c("S+", "0"))
   checkmate::qassert(streaming, "B1")
   checkmate::qassert(random_seed, "I1")
-  checkmate::qassert(.verbose, "B1")
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   # resolve cells
   cell_indices <- if (is.null(cells_to_take)) {
@@ -200,7 +200,7 @@ S7::method(scenic_grn_sc, MetaCells) <- function(
     tf_indices = as.integer(tf_indices_rust),
     scenic_params = scenic_params,
     seed = random_seed,
-    verbose = .verbose
+    verbose = parse_verbosity(.verbose)
   )
 
   rownames(importance_matrix) <- genes_to_take

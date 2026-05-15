@@ -21,7 +21,9 @@
 #' @param seed Integer. The random seed.
 #' @param streaming Boolean. Shall the cell and gene data be streamed in.
 #' Useful for larger data sets.
-#' @param .verbose Boolean. Controls the verbosity of the function.
+#' @param .verbose Boolean or integer. Controls verbosity and returns run times.
+#' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
+#' verbosity.
 #'
 #' @returns Returns a `ScMatrixRes` with the module scores.
 #'
@@ -64,7 +66,7 @@ S7::method(module_scores_sc, SingleCells) <- function(
   checkmate::qassert(n_ctrl, "I1")
   checkmate::qassert(seed, "I1")
   checkmate::qassert(streaming, "B1")
-  checkmate::qassert(.verbose, "B1")
+  checkmate::qassert(.verbose, c("B1", "I1[0,1]"))
 
   # get the gene indices
   gs_list <- purrr::map(gs_list, \(e) {
@@ -81,7 +83,7 @@ S7::method(module_scores_sc, SingleCells) <- function(
     ctrl = n_ctrl,
     seed = seed,
     streaming = streaming,
-    verbose = .verbose
+    verbose = parse_verbosity(.verbose)
   )
 
   colnames(module_res) <- names(gs_list)
@@ -114,7 +116,7 @@ S7::method(aucell_sc, SingleCells) <- function(
   checkmate::assertList(gs_list, types = "character", names = "named")
   checkmate::assertChoice(auc_type, c("wilcox", "auroc"))
   checkmate::qassert(streaming, "B1")
-  checkmate::qassert(.verbose, "B1")
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   # get the gene indices
   gs_list <- purrr::map(gs_list, \(e) {
@@ -127,7 +129,7 @@ S7::method(aucell_sc, SingleCells) <- function(
     cells_to_keep = get_cells_to_keep(object),
     auc_type = auc_type,
     streaming = streaming,
-    verbose = .verbose
+    verbose = parse_verbosity(.verbose)
   )
 
   colnames(auc_res) <- names(gs_list)
@@ -294,7 +296,9 @@ generate_null_perm_gs <- function(
 #' `SingleCells` class.
 #' @param streaming Boolean. Shall the cell data be streamed in. Useful for
 #' larger data sets.
-#' @param .verbose Boolean. Controls the verbosity of the function.
+#' @param .verbose Boolean or integer. Controls verbosity and returns run times.
+#' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
+#' verbosity.
 #'
 #' @returns Returns a `ScMatrixRes` with the VISION scores.
 #'
@@ -327,7 +331,7 @@ S7::method(vision_sc, SingleCells) <- function(
   checkmate::checkTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::assertList(gs_list, types = "list", names = "named")
   checkmate::qassert(streaming, "B1")
-  checkmate::qassert(.verbose, "B1")
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   # no one sees this...
   vision_gs_clean <- purrr::map(gs_list, \(ls) {
@@ -339,7 +343,7 @@ S7::method(vision_sc, SingleCells) <- function(
     gs_list = vision_gs_clean,
     cells_to_keep = get_cells_to_keep(object),
     streaming = streaming,
-    verbose = .verbose
+    verbose = parse_verbosity(.verbose)
   )
 
   colnames(vision_res) <- names(gs_list)
@@ -384,10 +388,14 @@ S7::method(vision_sc, SingleCells) <- function(
 #' needs to be part of the object.
 #' @param no_embd_to_use Optional integer. Number of embedding dimensions to
 #' use. If `NULL` all will be used.
+#' @param use_knn Boolean. Shall the internal kNN be used. If set to yes, you
+#' need to ensure consistency.
 #' @param random_seed Integer. The random seed.
 #' @param streaming Boolean. Shall the cell data be streamed in. Useful for
 #' larger data sets.
-#' @param .verbose Boolean. Controls the verbosity of the function.
+#' @param .verbose Boolean or integer. Controls verbosity and returns run times.
+#' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
+#' verbosity.
 #'
 #' @return Matrix of cells x signatures with the VISION pathway scores as
 #' values.
@@ -403,6 +411,7 @@ vision_w_autocor_sc <- S7::new_generic(
     gs_list,
     embd_to_use,
     no_embd_to_use = NULL,
+    use_knn = TRUE,
     vision_params = params_sc_vision(),
     streaming = FALSE,
     random_seed = 42L,
@@ -420,6 +429,7 @@ S7::method(vision_w_autocor_sc, SingleCells) <- function(
   gs_list,
   embd_to_use,
   no_embd_to_use = NULL,
+  use_knn = TRUE,
   vision_params = params_sc_vision(),
   streaming = FALSE,
   random_seed = 42L,
@@ -431,7 +441,7 @@ S7::method(vision_w_autocor_sc, SingleCells) <- function(
   checkmate::qassert(no_embd_to_use, c("I1", "0"))
   assertScVision(vision_params)
   checkmate::qassert(streaming, "B1")
-  checkmate::qassert(.verbose, "B1")
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   # get the embedding
   checkmate::assertTRUE(embd_to_use %in% get_available_embeddings(object))
@@ -475,16 +485,23 @@ S7::method(vision_w_autocor_sc, SingleCells) <- function(
     )
   })
 
+  knn_data <- if (use_knn) {
+    get_knn_obj(object)
+  } else {
+    NULL
+  }
+
   vision_res <- rs_vision_with_autocorrelation(
     f_path = get_rust_count_cell_f_path(object),
     embd = embd,
+    knn_data = knn_data,
     gs_list = vision_gs_clean,
     random_gs_list = random_gs_clean,
     vision_params = vision_params,
     cells_to_keep = get_cells_to_keep(object),
     cluster_membership = as.integer(cluster_membership),
     streaming = streaming,
-    verbose = .verbose,
+    verbose = parse_verbosity(.verbose),
     seed = random_seed
   )
 
@@ -516,6 +533,9 @@ S7::method(vision_w_autocor_sc, SingleCells) <- function(
 #'
 #' @param object `SingleCells` class.
 #' @param embd_to_use String. The embedding to use. Defaults to `"pca"`.
+#' @param use_knn Boolean. Shall the internal kNN be used. If set to yes, you
+#' need to ensure consistency. If you provide `cells_to_take`, the function
+#' will regenerate the kNN graph with these cells.
 #' @param hotspot_params List with hotspot parameters, see
 #' [bixverse::params_sc_hotspot()] with the following elements:
 #' \itemize{
@@ -535,7 +555,9 @@ S7::method(vision_w_autocor_sc, SingleCells) <- function(
 #' @param streaming Boolean. Shall the data be streamed in. Useful for larger
 #' data sets.
 #' @param random_seed Integer. Used for reproducibility.
-#' @param .verbose Boolean. Controls verbosity of the function.
+#' @param .verbose Boolean or integer. Controls verbosity and returns run times.
+#' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
+#' verbosity.
 #'
 #' @returns A data.table with the auto-correlations on a per gene basis and
 #' various statistics.
@@ -554,6 +576,7 @@ hotspot_autocor_sc <- S7::new_generic(
   fun = function(
     object,
     embd_to_use = "pca",
+    use_knn = TRUE,
     hotspot_params = params_sc_hotspot(),
     no_embd_to_use = NULL,
     cells_to_take = NULL,
@@ -572,6 +595,7 @@ hotspot_autocor_sc <- S7::new_generic(
 S7::method(hotspot_autocor_sc, SingleCells) <- function(
   object,
   embd_to_use = "pca",
+  use_knn = TRUE,
   hotspot_params = params_sc_hotspot(),
   no_embd_to_use = NULL,
   cells_to_take = NULL,
@@ -589,7 +613,7 @@ S7::method(hotspot_autocor_sc, SingleCells) <- function(
   checkmate::qassert(genes_to_take, c("S+", "0"))
   checkmate::qassert(streaming, "B1")
   checkmate::qassert(random_seed, "I1")
-  checkmate::qassert(.verbose, "B1")
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   # get the embedding
   checkmate::assertTRUE(embd_to_use %in% get_available_embeddings(object))
@@ -602,6 +626,9 @@ S7::method(hotspot_autocor_sc, SingleCells) <- function(
 
   if (is.null(cells_to_take)) {
     cells_to_take <- get_cell_names(object, filtered = TRUE)
+  } else {
+    # if the user overwrites this specifically, recreate the kNN data internally
+    use_knn <- FALSE
   }
 
   if (is.null(genes_to_take)) {
@@ -617,10 +644,17 @@ S7::method(hotspot_autocor_sc, SingleCells) <- function(
     )
   }
 
+  knn_data <- if (use_knn) {
+    get_knn_obj(object)
+  } else {
+    NULL
+  }
+
   hotspot_auto_cor <- rs_hotspot_autocor(
     f_path_genes = get_rust_count_gene_f_path(object),
     f_path_cells = get_rust_count_cell_f_path(object),
     embd = embd[cells_to_take, ],
+    knn_data = knn_data,
     hotspot_params = hotspot_params,
     cells_to_keep = get_cell_indices(
       object,
@@ -633,7 +667,7 @@ S7::method(hotspot_autocor_sc, SingleCells) <- function(
       rust_index = TRUE
     ),
     streaming = streaming,
-    verbose = .verbose,
+    verbose = parse_verbosity(.verbose),
     seed = random_seed
   )
 
@@ -658,6 +692,9 @@ S7::method(hotspot_autocor_sc, SingleCells) <- function(
 #'
 #' @param object `SingleCells` class.
 #' @param embd_to_use String. The embedding to use. Defaults to `"pca"`.
+#' @param use_knn Boolean. Shall the internal kNN be used. If set to yes, you
+#' need to ensure consistency. If you provide `cells_to_take`, the function
+#' will regenerate the kNN graph with these cells.
 #' @param hotspot_params List with hotspot parameters, see
 #' [bixverse::params_sc_hotspot()] with the following elements:
 #' \itemize{
@@ -677,7 +714,9 @@ S7::method(hotspot_autocor_sc, SingleCells) <- function(
 #' @param streaming Boolean. Shall the data be streamed in. Useful for larger
 #' data sets.
 #' @param random_seed Integer. Used for reproducibility.
-#' @param .verbose Boolean. Controls verbosity of the function.
+#' @param .verbose Boolean or integer. Controls verbosity and returns run times.
+#' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
+#' verbosity.
 #'
 #' @returns A `sc_hotspot` class that can be used for subsequent analysis.
 #'
@@ -694,6 +733,7 @@ hotspot_gene_cor_sc <- S7::new_generic(
   fun = function(
     object,
     embd_to_use = "pca",
+    use_knn = TRUE,
     hotspot_params = params_sc_hotspot(),
     no_embd_to_use = NULL,
     cells_to_take = NULL,
@@ -712,6 +752,7 @@ hotspot_gene_cor_sc <- S7::new_generic(
 S7::method(hotspot_gene_cor_sc, SingleCells) <- function(
   object,
   embd_to_use = "pca",
+  use_knn = TRUE,
   hotspot_params = params_sc_hotspot(),
   no_embd_to_use = NULL,
   cells_to_take = NULL,
@@ -729,7 +770,7 @@ S7::method(hotspot_gene_cor_sc, SingleCells) <- function(
   checkmate::qassert(genes_to_take, c("S+", "0"))
   checkmate::qassert(streaming, "B1")
   checkmate::qassert(random_seed, "I1")
-  checkmate::qassert(.verbose, "B1")
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   # get the embedding
   checkmate::assertTRUE(embd_to_use %in% get_available_embeddings(object))
@@ -742,6 +783,9 @@ S7::method(hotspot_gene_cor_sc, SingleCells) <- function(
 
   if (is.null(cells_to_take)) {
     cells_to_take <- get_cell_names(object, filtered = TRUE)
+  } else {
+    # if the user overwrites this specifically, recreate the kNN data internally
+    use_knn <- FALSE
   }
 
   if (is.null(genes_to_take)) {
@@ -757,10 +801,17 @@ S7::method(hotspot_gene_cor_sc, SingleCells) <- function(
     )
   }
 
+  knn_data <- if (use_knn) {
+    get_knn_obj(object)
+  } else {
+    NULL
+  }
+
   hotspot_gene_cor <- rs_hotspot_gene_cor(
     f_path_genes = get_rust_count_gene_f_path(object),
     f_path_cells = get_rust_count_cell_f_path(object),
     embd = embd[cells_to_take, ],
+    knn_data = knn_data,
     hotspot_params = hotspot_params,
     cells_to_keep = get_cell_indices(
       object,
@@ -773,7 +824,7 @@ S7::method(hotspot_gene_cor_sc, SingleCells) <- function(
       rust_index = TRUE
     ),
     streaming = streaming,
-    verbose = .verbose,
+    verbose = parse_verbosity(.verbose),
     seed = random_seed
   )
 
@@ -802,7 +853,7 @@ S7::method(scenic_gene_filter_sc, SingleCells) <- function(
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   assertScenicParams(scenic_params)
   checkmate::qassert(cells_to_take, c("S+", "0"))
-  checkmate::qassert(.verbose, "B1")
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   if (is.null(cells_to_take)) {
     cells_to_take <- get_cell_names(object, filtered = TRUE)
@@ -818,7 +869,7 @@ S7::method(scenic_gene_filter_sc, SingleCells) <- function(
     f_path_genes = get_rust_count_gene_f_path(object),
     cell_indices = cell_indices,
     scenic_params = scenic_params,
-    verbose = .verbose
+    verbose = parse_verbosity(.verbose)
   )
 
   passing_gene_ids <- get_gene_names_from_idx(
@@ -853,7 +904,7 @@ S7::method(scenic_grn_sc, SingleCells) <- function(
   checkmate::qassert(cells_to_take, c("S+", "0"))
   checkmate::qassert(streaming, "B1")
   checkmate::qassert(random_seed, "I1")
-  checkmate::qassert(.verbose, "B1")
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   # resolve cells
   if (is.null(cells_to_take)) {
@@ -875,7 +926,7 @@ S7::method(scenic_grn_sc, SingleCells) <- function(
       object,
       scenic_params = scenic_params,
       cells_to_take = cells_to_take,
-      .verbose = .verbose
+      .verbose = parse_verbosity(.verbose)
     )
   }
 
@@ -937,7 +988,7 @@ S7::method(scenic_grn_sc, SingleCells) <- function(
     tf_indices = as.integer(tf_indices_red),
     scenic_params = scenic_params,
     seed = random_seed,
-    verbose = .verbose
+    verbose = parse_verbosity(.verbose)
   )
 
   # label the matrix

@@ -38,7 +38,8 @@ extendr_module! {
 /// @param scenic_params Named list. Contains all of the parameters need for
 /// SCENIC.
 /// @param seed Integer. Controls reproducibility of the function.
-/// @param verbose Boolean. Controls the verbosity of the function.
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
 ///
 /// @returns A gene x TF importance matrix
 ///
@@ -49,7 +50,7 @@ fn rs_mc_scenic(
     tf_indices: Vec<i32>,
     scenic_params: List,
     seed: usize,
-    verbose: bool,
+    verbose: usize,
 ) -> Result<RArray<f64, 2>> {
     let tf_indices = tf_indices.r_int_convert();
     let sparse: CompressedSparseData2<f64, f64> =
@@ -83,7 +84,8 @@ fn rs_mc_scenic(
 /// @param auc_type String. One of `"wilcox"` or `"auroc"`, pending on
 /// which statistic you wish to calculate.
 /// @param streaming Boolean. Shall the data be streamed.
-/// @param verbose Boolean. Controls verbosity of the function.
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
 ///
 /// @return A matrix of cells x gene sets with the values representing the
 /// AUC.
@@ -94,7 +96,7 @@ fn rs_mc_aucell(
     sparse_data: List,
     gs_list: List,
     auc_type: &str,
-    verbose: bool,
+    verbose: usize,
 ) -> Result<RArray<f64, 2>> {
     let mut gs_indices: Vec<Vec<usize>> = Vec::with_capacity(gs_list.len());
     for i in 0..gs_list.len() {
@@ -112,7 +114,7 @@ fn rs_mc_aucell(
         list_to_sparse_matrix(sparse_data, true).to_extendr()?;
     let sparse = cast_compressed_sparse_data_u32(sparse);
 
-    let res = calculate_aucell_metacells(&sparse, &gs_indices, auc_type, verbose);
+    let res = calculate_aucell_metacells(&sparse, &gs_indices, auc_type, verbose).to_extendr()?;
 
     let auc_mat = Mat::from_fn(res[0].len(), res.len(), |i, j| res[j][i] as f64);
     Ok(faer_to_r_matrix(auc_mat.as_ref()))

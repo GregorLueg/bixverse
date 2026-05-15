@@ -50,6 +50,7 @@
 #' @param gene_universe One of "intersection" or "union".
 #' @param var_index String. The name within the h5ad var part in which the
 #' variable names are stored. Defaults to `"_index"`.
+#' @param .verbose Boolean. Controls verbosity of the function.
 #'
 #' @return A list with:
 #' \itemize{
@@ -63,13 +64,15 @@
 prescan_h5ad_files <- function(
   h5_paths,
   gene_universe = c("intersection", "union"),
-  var_index = "_index"
+  var_index = "_index",
+  .verbose = TRUE
 ) {
   # checks
   gene_universe <- match.arg(gene_universe)
   checkmate::assertCharacter(h5_paths, min.len = 2L)
   invisible(lapply(h5_paths, checkmate::assertFileExists))
   checkmate::qassert(var_index, "S1")
+  checkmate::qassert(.verbose, "B1")
 
   exp_ids <- if (is.null(names(h5_paths))) {
     tools::file_path_sans_ext(basename(h5_paths))
@@ -82,6 +85,15 @@ prescan_h5ad_files <- function(
 
   # collect per-file metadata
   file_meta <- vector("list", length(h5_paths))
+
+  if (.verbose) {
+    pb = txtProgressBar(
+      min = 0,
+      max = length(file_meta),
+      initial = 0,
+      style = 3
+    )
+  }
 
   for (i in seq_along(h5_paths)) {
     meta <- get_h5ad_dimensions(h5_paths[[i]])
@@ -98,6 +110,14 @@ prescan_h5ad_files <- function(
       no_genes = meta$dims[["var"]],
       gene_names = gene_names
     )
+
+    if (.verbose) {
+      setTxtProgressBar(pb, i)
+    }
+  }
+
+  if (.verbose) {
+    close(pb)
   }
 
   # compute gene universe

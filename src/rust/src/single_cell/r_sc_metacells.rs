@@ -61,7 +61,8 @@ extendr_module! {
 /// @param meta_cell_params A list containing the meta cell parameters.
 /// @param target_size Numeric. Target library size for re-normalisation of
 /// the meta cells. Typically `1e4`.
-/// @param seed Integer. For reproducibility purposes.
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
 /// @param verbose Boolean. Controls verbosity of the function.
 ///
 /// @returns A list with the following elements:
@@ -85,9 +86,11 @@ fn rs_get_metacells_bootstrapped(
     meta_cell_params: List,
     target_size: f64,
     seed: usize,
-    verbose: bool,
+    verbose: usize,
 ) -> extendr_api::Result<List> {
     let meta_cell_params = BootstrappedMetaCellParams::from_r_list(meta_cell_params)?;
+
+    let verbosity = parse_verbosity_level(verbose);
 
     if cells_to_use.is_some() && (cells_to_keep.is_none() || embd.is_none()) {
         return Err(
@@ -121,7 +124,7 @@ fn rs_get_metacells_bootstrapped(
 
             let n_total = use_cells.iter().max().map(|&x| x + 1).unwrap_or(0);
 
-            if verbose {
+            if verbosity.normal_verbosity() {
                 println!(
                     "Subsetting to {} cells (from {} QC-passing cells) and regenerating kNN graph",
                     pca_rows_to_use.len(),
@@ -150,7 +153,7 @@ fn rs_get_metacells_bootstrapped(
                 false,
                 false,
                 seed,
-                verbose,
+                verbosity.detailed_verbosity(),
             );
 
             (subset_to_orig, n_total, knn)
@@ -163,13 +166,13 @@ fn rs_get_metacells_bootstrapped(
             };
             let knn = match (knn_mat, embd) {
                 (Some(knn_mat), _) => {
-                    if verbose {
+                    if verbosity.normal_verbosity() {
                         println!("Using provided kNN matrix");
                     }
                     knn_indices_processing(knn_mat)
                 }
                 (None, Some(embd)) => {
-                    if verbose {
+                    if verbosity.normal_verbosity() {
                         println!("Calculating the kNN matrix from the provided data.");
                     }
 
@@ -183,7 +186,7 @@ fn rs_get_metacells_bootstrapped(
                         false,
                         false,
                         seed,
-                        verbose,
+                        verbosity.detailed_verbosity(),
                     );
 
                     knn
@@ -201,7 +204,7 @@ fn rs_get_metacells_bootstrapped(
 
     let nn_map = build_nn_map(&knn_graph);
 
-    if verbose {
+    if verbosity.normal_verbosity() {
         println!("Identifying meta cells.");
     }
 
@@ -230,7 +233,7 @@ fn rs_get_metacells_bootstrapped(
 
     let assignment_list: List = metacells_to_r_list(&metacells_original, n_total_cells);
 
-    if verbose {
+    if verbosity.normal_verbosity() {
         println!("Aggregating meta cells.");
     }
 
@@ -281,7 +284,8 @@ fn rs_get_metacells_bootstrapped(
 /// @param target_size Numeric. Target library size for re-normalisation of
 /// the meta cells. Typically `1e4`.
 /// @param seed Integer. For reproducibility purposes.
-/// @param verbose Boolean. Controls verbosity of the function.
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
 ///
 /// @returns A list with the following elements:
 /// \itemize{
@@ -308,12 +312,12 @@ fn rs_get_seacells(
     seacells_params: List,
     target_size: f64,
     seed: usize,
-    verbose: bool,
+    verbose: usize,
 ) -> extendr_api::Result<List> {
     let start_seacell = Instant::now();
 
     let seacells_params = SEACellsParams::from_r_list(seacells_params)?;
-
+    let verbosity = parse_verbosity_level(verbose);
     let knn_provided = knn_data != extendr_api::Nullable::Null;
 
     if cells_to_use.is_some() && knn_provided {
@@ -349,7 +353,7 @@ fn rs_get_seacells(
 
             let n_total = use_cells.iter().max().map(|&x| x + 1).unwrap_or(0);
 
-            if verbose {
+            if verbosity.normal_verbosity() {
                 println!(
                     "Subsetting to {} cells (from {} QC-passing cells)",
                     pca_rows_to_use.len(),
@@ -382,6 +386,10 @@ fn rs_get_seacells(
     let is_subset = cells_to_use.is_some();
 
     let (knn_indices, knn_dist, dist_squared) = if knn_provided && !is_subset {
+        if verbosity.normal_verbosity() {
+            println!("Using provided kNN graph.")
+        }
+
         let knn_data = knn_data
             .into_robj()
             .as_list()
@@ -401,18 +409,23 @@ fn rs_get_seacells(
         (knn_indices, knn_dist, dist_squared)
     } else {
         let start_knn = Instant::now();
+
+        if verbosity.normal_verbosity() {
+            println!("Regenerating kNN graph.")
+        }
+
         let (knn_indices, knn_dist) = generate_knn_with_dist(
             embd_mat.as_ref(),
             &seacells_params.knn_params,
             true,
             false,
             seed,
-            verbose,
+            verbosity.detailed_verbosity(),
         );
         let knn_dist = knn_dist.unwrap();
         let dist_squared = seacells_params.knn_params.ann_dist == "euclidean";
 
-        if verbose {
+        if verbosity.normal_verbosity() {
             println!(
                 "kNN generation done in : {:.2?} with {}",
                 start_knn.elapsed(),
@@ -467,7 +480,7 @@ fn rs_get_seacells(
         }
     }
 
-    if verbose && groups_kept.len() < k {
+    if verbosity.normal_verbosity() && groups_kept.len() < k {
         println!(
             "Dropped {} empty archetype(s); keeping {} of {} requested",
             k - groups_kept.len(),
@@ -496,7 +509,7 @@ fn rs_get_seacells(
 
     let assignment_list = assignments_to_r_list(&assignments_full, n_total_cells);
 
-    if verbose {
+    if verbosity.normal_verbosity() {
         println!("Aggregating meta cells.");
     }
 
@@ -517,7 +530,7 @@ fn rs_get_seacells(
     let aggregated: CompressedSparseData2<u32, f32> =
         aggregate_meta_cells(&reader, &metacells_refs, target_size as f32, n_genes).to_extendr()?;
 
-    if verbose {
+    if verbosity.normal_verbosity() {
         println!("SEACells found in : {:.2?}", start_seacell.elapsed());
     }
 
@@ -568,7 +581,8 @@ fn rs_get_seacells(
 /// @param target_size Numeric. Target library size for re-normalisation of
 /// the meta cells. Typically `1e4`.
 /// @param seed Integer. For reproducibility purposes.
-/// @param verbose Boolean. Controls verbosity of the function.
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
 ///
 /// @returns A list with the following elements:
 /// \itemize{
@@ -591,9 +605,10 @@ fn rs_supercell(
     supercell_params: List,
     target_size: f64,
     seed: usize,
-    verbose: bool,
+    verbose: usize,
 ) -> extendr_api::Result<List> {
     let supercell_params = SuperCellParams::from_r_list(supercell_params)?;
+    let verbosity = parse_verbosity_level(verbose);
 
     if cells_to_use.is_some() && (cells_to_keep.is_none() || embd.is_none()) {
         return Err(
@@ -640,7 +655,7 @@ fn rs_supercell(
 
             let n_total = use_cells.iter().max().map(|&x| x + 1).unwrap_or(0);
 
-            if verbose {
+            if verbosity.normal_verbosity() {
                 println!(
                     "Subsetting to {} cells and regenerating kNN graph",
                     pca_rows_to_use.len()
@@ -667,12 +682,12 @@ fn rs_supercell(
                 true,
                 false,
                 seed,
-                verbose,
+                verbosity.detailed_verbosity(),
             );
             let knn_d = knn_d.unwrap();
             let dist_sq = supercell_params.knn_params.ann_dist == "euclidean";
 
-            if verbose {
+            if verbosity.normal_verbosity() {
                 println!(
                     "kNN generation done in: {:.2?} with {}",
                     start_knn.elapsed(),
@@ -709,7 +724,7 @@ fn rs_supercell(
                 let n_total = embd.nrows();
                 let embd_mat = r_matrix_to_faer_fp32(&embd);
 
-                if verbose {
+                if verbosity.normal_verbosity() {
                     println!("Calculating kNN matrix from provided data");
                 }
 
@@ -720,12 +735,12 @@ fn rs_supercell(
                     true,
                     false,
                     seed,
-                    verbose,
+                    verbosity.detailed_verbosity(),
                 );
                 let knn_d = knn_d.unwrap();
                 let dist_sq = supercell_params.knn_params.ann_dist == "euclidean";
 
-                if verbose {
+                if verbosity.normal_verbosity() {
                     println!(
                         "kNN generation done in: {:.2?} with {}",
                         start_knn.elapsed(),
@@ -741,7 +756,7 @@ fn rs_supercell(
     let n_meta_cells =
         (knn_indices.len() as f64 / supercell_params.graining_factor).ceil() as usize;
 
-    if verbose {
+    if verbosity.normal_verbosity() {
         println!("Running SuperCell with Walktrap");
     }
 
@@ -765,7 +780,7 @@ fn rs_supercell(
 
     let assignment_list = assignments_to_r_list(&assignments_full, n_total_cells);
 
-    if verbose {
+    if verbosity.normal_verbosity() {
         println!("Aggregating metacells");
     }
 
@@ -822,7 +837,8 @@ fn rs_supercell(
 /// estimation. Typically `150`.
 /// @param knn_params List. The kNN parameters defined by
 /// [params_sc_neighbours()].
-/// @param verbose Boolean. Controls verbosity of the the function.
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
 /// @param seed Integer. For reproducibility.
 ///
 /// @return A list with the following items
@@ -837,7 +853,7 @@ fn rs_metacell_density(
     n_dcs: usize,
     k_density: usize,
     knn_params: List,
-    verbose: bool,
+    verbose: usize,
     seed: usize,
 ) -> Result<List> {
     let (knn_indices, knn_distances, original_k, distance) = knn_data_to_rust(knn_data)?;
@@ -947,7 +963,8 @@ fn rs_metacell_separation(dc: RMatrix<f64>, meta_cells: List) -> Result<Vec<f64>
 /// @param cell_indices_ls List. Must contains 0-indexed positions of the
 /// cells to aggregate per element.
 /// @param assay String. One of `c("raw", "norm")`. Which counts to normalise.
-/// @param verbose Controls verbosity of the function
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
 ///
 /// @returns A dense matrix with the pseudo-bulked data.
 ///
@@ -957,7 +974,7 @@ fn rs_pseudobulk_cells_dense(
     f_path: String,
     cell_indices_ls: List,
     assay: String,
-    verbose: bool,
+    verbose: usize,
 ) -> extendr_api::Result<RArray<f64, 2>> {
     let bulk_type = parse_pseudo_bulk(&assay).unwrap_or_default();
 
@@ -986,7 +1003,8 @@ fn rs_pseudobulk_cells_dense(
 /// @param cell_indices_ls List. Must contains 0-indexed positions of the
 /// cells to aggregate per element.
 /// @param assay String. One of `c("raw", "norm")`. Which counts to normalise.
-/// @param verbose Controls verbosity of the function
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
 ///
 /// @returns A list with the following elements (easy to convert into CSR in R)
 /// \itemize{
@@ -1003,7 +1021,7 @@ fn rs_pseudobulk_cells_sparse(
     f_path: String,
     cell_indices_ls: List,
     assay: String,
-    verbose: bool,
+    verbose: usize,
 ) -> extendr_api::Result<List> {
     let bulk_type = parse_pseudo_bulk(&assay).unwrap_or_default();
 

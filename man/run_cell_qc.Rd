@@ -4,11 +4,20 @@
 \alias{run_cell_qc}
 \title{Run MAD outlier detection on per-cell QC metrics}
 \usage{
-run_cell_qc(metrics, directions = NULL, threshold = 3, groups = NULL)
+run_cell_qc(
+  metrics,
+  cells_to_keep,
+  directions = NULL,
+  threshold = 3,
+  groups = NULL
+)
 }
 \arguments{
 \item{metrics}{Named list of numeric vectors. Each element is a QC metric
 to check (e.g. \code{list(log10_lib_size = log10(lib_size), MT = mt_pct)}).}
+
+\item{cells_to_keep}{Integer. Which cells were included in the analysis.
+0-indices for Rust.}
 
 \item{directions}{Named character vector mapping metric names to direction.
 One of \code{"twosided"}, \code{"below"}, \code{"above"}. Defaults to \code{"twosided"} for

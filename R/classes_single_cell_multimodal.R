@@ -81,7 +81,9 @@ new_adt_counts_clr <- function(
 #' @param scale_factor String. One of `c("standardise", "mean_subtract")`. Only
 #' used when `empty_drops` is provided.
 #' @param seed Integer. Random seed for k-means initialisation.
-#' @param verbose Boolean. Print progress messages.
+#' @param .verbose Boolean or integer. Controls verbosity and returns run times.
+#' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
+#' verbosity.
 #'
 #' @returns `ADTCounts` containing the raw counts and the DSB-normalised
 #' counts.
@@ -97,7 +99,7 @@ new_adt_counts_dsb <- function(
   dsb_params = params_sc_dsb(),
   scale_factor = c("standardise", "mean_subtract"),
   seed = 42L,
-  verbose = TRUE
+  .verbose = TRUE
 ) {
   scale_factor <- match.arg(scale_factor)
 
@@ -131,7 +133,7 @@ new_adt_counts_dsb <- function(
   }
   assertScDsbParams(dsb_params)
   checkmate::qassert(seed, "I1")
-  checkmate::qassert(verbose, "B1")
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   raw_counts <- raw_counts[cell_names, ]
 
@@ -149,7 +151,7 @@ new_adt_counts_dsb <- function(
     dsb_params = dsb_params,
     scale_factor = scale_factor,
     seed = seed,
-    verbose = verbose
+    verbose = parse_verbosity(.verbose)
   )
 
   norm_counts <- dsb_res$norm_counts
@@ -185,7 +187,7 @@ new_adt_counts_dsb <- function(
 #' @param adt_counts Numeric matrix. Of shape samples x features with the ADT
 #' raw counts.
 #'
-#' @returns A data.table with the feature_idx and feature_names of the ADT data.
+#' @returns A data.table with the feature_idx and feature_id of the ADT data.
 #'
 #' @keywords internal
 .generate_adt_var <- function(adt_counts) {
@@ -199,7 +201,7 @@ new_adt_counts_dsb <- function(
 
   data.table::data.table(
     feature_idx = seq_along(colnames(adt_counts)),
-    feature_name = colnames(adt_counts)
+    feature_id = colnames(adt_counts)
   )
 }
 
@@ -531,8 +533,9 @@ S7::method(get_sc_counts, SingleCellsMultiModal) <- function(
 
   mat <- if (assay == "raw") adt$raw_counts else adt$norm_counts
 
+  cells_to_keep_1idx <- get_cells_to_keep(object) + 1L
+
   if (!is.null(cell_indices)) {
-    cells_to_keep_1idx <- get_cells_to_keep(object) + 1L
     adt_rows <- match(cell_indices, cells_to_keep_1idx)
     if (any(is.na(adt_rows))) {
       warning(sprintf(
@@ -545,6 +548,8 @@ S7::method(get_sc_counts, SingleCellsMultiModal) <- function(
       stop("No valid cell_indices for the ADT matrix.")
     }
     mat <- mat[adt_rows, , drop = FALSE]
+  } else {
+    mat <- mat[cells_to_keep_1idx, , drop = FALSE]
   }
 
   if (!is.null(gene_indices)) {

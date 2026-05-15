@@ -7,6 +7,7 @@
 hotspot_gene_cor_sc(
   object,
   embd_to_use = "pca",
+  use_knn = TRUE,
   hotspot_params = params_sc_hotspot(),
   no_embd_to_use = NULL,
   cells_to_take = NULL,
@@ -20,6 +21,10 @@ hotspot_gene_cor_sc(
 \item{object}{\code{SingleCells} class.}
 
 \item{embd_to_use}{String. The embedding to use. Defaults to \code{"pca"}.}
+
+\item{use_knn}{Boolean. Shall the internal kNN be used. If set to yes, you
+need to ensure consistency. If you provide \code{cells_to_take}, the function
+will regenerate the kNN graph with these cells.}
 
 \item{hotspot_params}{List with hotspot parameters, see
 \code{\link[=params_sc_hotspot]{params_sc_hotspot()}} with the following elements:
@@ -46,7 +51,9 @@ data sets.}
 
 \item{random_seed}{Integer. Used for reproducibility.}
 
-\item{.verbose}{Boolean. Controls verbosity of the function.}
+\item{.verbose}{Boolean or integer. Controls verbosity and returns run times.
+\code{FALSE} -> quiet, \code{TRUE} or \code{1L} -> normal verbosity, \code{2L} -> detailed
+verbosity.}
 }
 \value{
 A \code{sc_hotspot} class that can be used for subsequent analysis.

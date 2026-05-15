@@ -11,7 +11,7 @@
 raw counts.}
 }
 \value{
-A data.table with the feature_idx and feature_names of the ADT data.
+A data.table with the feature_idx and feature_id of the ADT data.
 }
 \description{
 Helper function to generate ADT vars

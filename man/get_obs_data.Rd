@@ -3,6 +3,7 @@
 %   R/classes_single_cell_others.R
 \name{get_obs_data}
 \alias{get_obs_data}
+\alias{get_obs_data.CellQc}
 \alias{get_obs_data.ScListRes}
 \alias{get_obs_data.ScMatrixRes}
 \alias{get_obs_data.ScrubletRes}
@@ -12,6 +13,8 @@
 \title{Get the ready obs data from various sub method}
 \usage{
 get_obs_data(x, ...)
+
+\method{get_obs_data}{CellQc}(x, ...)
 
 \method{get_obs_data}{ScListRes}(x, ...)
 

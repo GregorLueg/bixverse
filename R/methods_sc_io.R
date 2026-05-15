@@ -300,7 +300,16 @@ S7::method(load_seurat, SingleCells) <- function(
   checkmate::assertTRUE(streaming %in% c(0L, 1L, 2L))
   checkmate::qassert(.verbose, "B1")
 
+  if (.verbose) {
+    message("Pulling the raw counts out of the Seurat object.")
+  }
+
   counts <- get_seurat_counts_to_list(seurat)
+
+  if (.verbose) {
+    message("Pulling the obs and var data out of the object")
+  }
+
   obs_dt <- data.table::as.data.table(
     seurat@meta.data,
     keep.rownames = "barcode"
@@ -1299,31 +1308,7 @@ S7::method(load_multi_mtx, SingleCells) <- function(
 
 ### save to disk ---------------------------------------------------------------
 
-#' Save memory-bound data to disk
-#'
-#' @description
-#' Helper function that stores the memory-bound data to disk for checkpointing
-#' or when you close the session for quick recovery of prior work. You have the
-#' option to save as `".rds"` or `".qs2"` (you need to have the package `"qs2"`
-#' installed for this option!).
-#'
-#' @param object `SingleCells` class.
-#' @param type String. One of `c("qs2", "rds")`. Defines which binary format to
-#' use. Will default to `"qs2"` for speed.
-#'
-#' @returns The object with added information on the data on disk.
-#'
-#' @export
-save_sc_exp_to_disk <- S7::new_generic(
-  name = "save_sc_exp_to_disk",
-  dispatch_args = "object",
-  fun = function(
-    object,
-    type = c("qs2", "rds")
-  ) {
-    S7::S7_dispatch()
-  }
-)
+# generic in base_generics_sc.R
 
 #' @method save_sc_exp_to_disk SingleCells
 #'
@@ -1356,28 +1341,9 @@ S7::method(save_sc_exp_to_disk, SingleCells) <- function(
 
 ### from disk ------------------------------------------------------------------
 
-#' Load an existing SingleCells from disk
-#'
-#' @description
-#' Helper function that can load the parameters to access the on-disk stored
-#' data into the class.
-#'
-#' @param object `SingleCells` class.
-#'
-#' @returns The object with added information on the data on disk.
-#'
-#' @export
-load_existing <- S7::new_generic(
-  name = "load_existing",
-  dispatch_args = "object",
-  fun = function(
-    object
-  ) {
-    S7::S7_dispatch()
-  }
-)
+# generic in base_generics_sc.R
 
-#' @method load_mtx SingleCells
+#' @method load_existing SingleCells
 #'
 #' @export
 #'
@@ -1428,6 +1394,146 @@ S7::method(load_existing, SingleCells) <- function(object) {
       stop(paste(
         "The dimensions of the found data do not agree with the Rust data."
       ))
+    }
+  } else {
+    cell_map <- duckdb_con$get_obs_index_map()
+    gene_map <- duckdb_con$get_var_index_map()
+    cells_to_keep <- duckdb_con$get_cells_to_keep()
+    S7::prop(object, "dims") <- as.integer(rust_con$get_shape())
+
+    if (
+      (length(cell_map) != rust_con$get_shape()[1]) |
+        (length(gene_map) != rust_con$get_shape()[2])
+    ) {
+      stop(paste(
+        "The data in the observation table and or var table do not match",
+        "with what is stored on disk. Loading of the file failed"
+      ))
+    }
+
+    object <- set_cell_mapping(x = object, cell_map = cell_map)
+    object <- set_gene_mapping(x = object, gene_map = gene_map)
+    S7::prop(object, "sc_map") <- set_cells_to_keep(
+      S7::prop(object, "sc_map"),
+      cells_to_keep
+    )
+  }
+
+  return(object)
+}
+
+# multi modal i/o --------------------------------------------------------------
+
+## methods ---------------------------------------------------------------------
+
+### save to disk ---------------------------------------------------------------
+
+#' @method save_sc_exp_to_disk SingleCellsMultiModal
+#'
+#' @export
+S7::method(save_sc_exp_to_disk, SingleCellsMultiModal) <- function(
+  object,
+  type = c("qs2", "rds")
+) {
+  type <- match.arg(type)
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCellsMultiModal))
+  checkmate::assertChoice(type, c("qs2", "rds"))
+
+  # pull the data out from the class
+  sc_map <- get_sc_map(object)
+  sc_cache <- get_sc_cache(object)
+  adt_cache <- S7::prop(object, "adt_cache")
+  atac_cache <- S7::prop(object, "atac_cache")
+  adt_counts <- S7::prop(object, "adt_counts")
+  other_data <- S7::prop(object, "other_data")
+  dir <- S7::prop(object, "dir_data")
+
+  to_save <- list(
+    sc_map = sc_map,
+    sc_cache = sc_cache,
+    adt_cache = adt_cache,
+    atac_cache = atac_cache,
+    adt_counts = adt_counts,
+    other_data = other_data
+  )
+
+  if (type == "qs2") {
+    if (!requireNamespace("qs2", quietly = TRUE)) {
+      stop("Package 'qs2' is required to use qs2 format. Please install it.")
+    }
+    qs2::qs_save(to_save, file = file.path(dir, "memory.qs2"))
+  } else if (type == "rds") {
+    saveRDS(to_save, file = file.path(dir, "memory.rds"))
+  }
+}
+
+### load from disk -------------------------------------------------------------
+
+#' @method load_existing SingleCellsMultiModal
+#'
+#' @export
+#'
+#' @importFrom zeallot `%<-%`
+#' @importFrom magrittr `%>%`
+S7::method(load_existing, SingleCellsMultiModal) <- function(object) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCellsMultiModal))
+
+  dir_data <- S7::prop(object, "dir_data")
+
+  checkmate::assertFileExists(file.path(dir_data, "counts_cells.bin"))
+  checkmate::assertFileExists(file.path(dir_data, "counts_genes.bin"))
+  checkmate::assertFileExists(file.path(dir_data, "sc_duckdb.db"))
+
+  # function body
+  rust_con <- get_sc_rust_ptr(object)
+  rust_con$set_from_file()
+
+  duckdb_con <- get_sc_duckdb(object)
+
+  if (any(c("memory.qs2", "memory.rds") %in% list.files(dir_data))) {
+    message(paste(
+      "Found stored data from save_sc_exp_to_disk().",
+      "Loading that one into the object."
+    ))
+
+    saved_data <- if ("memory.qs2" %in% list.files(dir_data)) {
+      if (!requireNamespace("qs2", quietly = TRUE)) {
+        stop("Package 'qs2' is required to use qs2 format. Please install it.")
+      }
+      qs2::qs_read(file.path(dir_data, "memory.qs2"))
+    } else {
+      readRDS(file.path(dir_data, "memory.rds"))
+    }
+
+    S7::prop(object, "dims") <- as.integer(rust_con$get_shape())
+    S7::prop(object, "sc_map") <- saved_data$sc_map
+    S7::prop(object, "sc_cache") <- saved_data$sc_cache
+    S7::prop(object, "adt_cache") <- saved_data$adt_cache
+    S7::prop(object, "atac_cache") <- saved_data$atac_cache
+    S7::prop(object, "adt_counts") <- saved_data$adt_counts
+    S7::prop(object, "other_data") <- saved_data$other_data
+
+    if (
+      (length(get_cell_names(object)) != rust_con$get_shape()[1]) |
+        (length(get_gene_names(object)) != rust_con$get_shape()[2])
+    ) {
+      stop(paste(
+        "The dimensions of the found data do not agree with the Rust data."
+      ))
+    }
+
+    # sanity check ADT against kept cells
+    adt <- S7::prop(object, "adt_counts")
+    if (!is.null(adt)) {
+      n_kept <- length(get_cells_to_keep(object))
+      if (nrow(adt$raw_counts) != n_kept) {
+        stop(paste(
+          "The number of rows in the stored ADT counts does not match",
+          "the number of cells to keep."
+        ))
+      }
     }
   } else {
     cell_map <- duckdb_con$get_obs_index_map()

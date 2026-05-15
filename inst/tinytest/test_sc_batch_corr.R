@@ -302,7 +302,7 @@ assess_bbknn_impact <- function(object) {
       set_op_mix_ratio = 0.5
     ),
     seed = 42L,
-    verbose = FALSE
+    verbose = 0L
   )
 
   knn_corr <- rs_bbknn_filtering(

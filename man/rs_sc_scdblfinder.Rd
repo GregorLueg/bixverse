@@ -12,8 +12,7 @@ rs_sc_scdblfinder(
   return_features,
   streaming,
   seed,
-  verbose,
-  debug
+  verbose
 )
 }
 \arguments{
@@ -33,7 +32,8 @@ selection of the top genes.}
 
 \item{seed}{Integer. Seed for reproducibility.}
 
-\item{verbose}{Boolean. Controls verbosity.}
+\item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
+detailed verbosity.}
 
 \item{debug}{Boolean. Additional verbosity for debugging purposes.}
 }

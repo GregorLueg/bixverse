@@ -1,8 +1,3 @@
-use extendr_api::*;
-use faer::Mat;
-use rand::prelude::*;
-use std::cmp::Ordering;
-
 use bixverse_rs::core::math::stats::calc_fdr;
 use bixverse_rs::prelude::*;
 use bixverse_rs::single_cell::sc_analysis::dge_pathway_scores::*;
@@ -11,6 +6,12 @@ use bixverse_rs::single_cell::sc_analysis::milo_r::*;
 use bixverse_rs::single_cell::sc_analysis::module_scoring::*;
 use bixverse_rs::single_cell::sc_analysis::scenic::*;
 use bixverse_rs::single_cell::sc_analysis::vision::*;
+use extendr_api::*;
+use faer::Mat;
+use rand::prelude::*;
+use std::cmp::Ordering;
+
+use crate::single_cell::utils::knn_data_to_rust;
 
 ////////////////////
 // extendr Module //
@@ -61,7 +62,8 @@ extendr_module! {
 /// two groups to be tested.
 /// @param alternative String. One of `c("twosided", "greater", "less")`. Null
 /// hypothesis.
-/// @param verbose Boolean. Controls verbosity of the function.
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
 ///
 /// @return A list with the following elements
 /// \itemize{
@@ -82,7 +84,7 @@ fn rs_calculate_dge_mann_whitney(
     cell_indices_2: &[i32],
     min_prop: f64,
     alternative: String,
-    verbose: bool,
+    verbose: usize,
 ) -> extendr_api::Result<List> {
     let cell_indices_1 = cell_indices_1
         .iter()
@@ -150,7 +152,8 @@ fn rs_calculate_dge_mann_whitney(
 /// @param seed Integer. Random seed for reproducible control gene sampling.
 /// @param streaming Logical. If TRUE, processes cells and genes are read in in
 /// chunks to reduce memory usage.
-/// @param verbose Logical. Controls verbosity of the function.
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
 ///
 /// @return Matrix of module scores (modules x cells). Each row corresponds to a
 /// module from gs_list, each column to a cell from cells_to_keep.
@@ -170,7 +173,7 @@ fn rs_module_scoring(
     ctrl: usize,
     seed: usize,
     streaming: bool,
-    verbose: bool,
+    verbose: usize,
 ) -> Result<RMatrix<f64>> {
     let cells_to_keep = cells_to_keep.r_int_convert();
 
@@ -224,7 +227,8 @@ fn rs_module_scoring(
 /// @param auc_type String. One of `"wilcox"` or `"auroc"`, pending on
 /// which statistic you wish to calculate.
 /// @param streaming Boolean. Shall the data be streamed.
-/// @param verbose Boolean. Controls verbosity of the function.
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
 ///
 /// @return A matrix of cells x gene sets with the values representing the
 /// AUC.
@@ -237,7 +241,7 @@ fn rs_aucell(
     cells_to_keep: Vec<i32>,
     auc_type: &str,
     streaming: bool,
-    verbose: bool,
+    verbose: usize,
 ) -> Result<RArray<f64, 2>> {
     let cells_to_keep = cells_to_keep.r_int_convert();
 
@@ -276,7 +280,8 @@ fn rs_aucell(
 /// and negative gene indices of that specific gene set.
 /// @param cells_to_keep Integer. Vector of indices of the cells to keep.
 /// @param streaming Boolean. Shall the data be streamed.
-/// @param verbose Boolean. Controls verbosity of the function.
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
 ///
 /// @return A matrix of cells x vision scores per gene set.
 ///
@@ -287,7 +292,7 @@ fn rs_vision(
     gs_list: List,
     cells_to_keep: Vec<i32>,
     streaming: bool,
-    verbose: bool,
+    verbose: usize,
 ) -> Result<RArray<f64, 2>> {
     let cells_to_keep = cells_to_keep.r_int_convert();
     let gene_signatures = r_list_to_sig_genes(gs_list)?;
@@ -317,6 +322,9 @@ fn rs_vision(
 /// @param f_path String. Path to the `counts_cells.bin` file.
 /// @param embd Numerical matrix. The embedding matrix to use to generate the
 /// kNN graph.
+/// @param knn_data Optional list. This contains pre-computed kNN data
+/// (including distances). The user has to ensure consistency! If provided,
+/// this will be used.
 /// @param gs_list Nested list. Each sublist contains the (0-indexed!) positive
 /// and negative gene indices of that specific gene set.
 /// @param random_gs_list Double-nested list. The outer list represents the
@@ -328,7 +336,8 @@ fn rs_vision(
 /// @param cluster_membership Integer. Vector that indicates to which of the
 /// permuted gene set clusters the given gene set belongs.
 /// @param streaming Boolean. Shall the data be streamed.
-/// @param verbose Boolean. Controls verbosity of the function.
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
 /// @param seed Integer. Random seed for reproducibility.
 ///
 /// @return A list with the following items:
@@ -344,13 +353,14 @@ fn rs_vision(
 fn rs_vision_with_autocorrelation(
     f_path: String,
     embd: RMatrix<f64>,
+    knn_data: Nullable<List>,
     gs_list: List,
     random_gs_list: List,
     vision_params: List,
     cells_to_keep: Vec<i32>,
     cluster_membership: Vec<i32>,
     streaming: bool,
-    verbose: bool,
+    verbose: usize,
     seed: usize,
 ) -> extendr_api::Result<List> {
     assert!(
@@ -358,7 +368,10 @@ fn rs_vision_with_autocorrelation(
         "The embedding matrix need to have the same nrow as the the cells to use"
     );
 
-    if verbose {
+    let verbosity = parse_verbosity_level(verbose);
+    let knn_provided = knn_data != extendr_api::Nullable::Null;
+
+    if verbosity.normal_verbosity() {
         println!("Calculating the VISION scores of the actual gene sets.")
     }
     let cells_to_keep = cells_to_keep.r_int_convert();
@@ -371,7 +384,7 @@ fn rs_vision_with_autocorrelation(
         calculate_vision(&f_path, &gene_signatures, &cells_to_keep, verbose).to_extendr()?
     };
 
-    if verbose {
+    if verbosity.normal_verbosity() {
         println!("Calculating the VISION scores of the permuted gene sets.")
     }
 
@@ -394,7 +407,7 @@ fn rs_vision_with_autocorrelation(
 
         random_scores_by_cluster.push(cluster_random_scores);
 
-        if verbose {
+        if verbosity.normal_verbosity() {
             println!(
                 "Completed random signatures for cluster {} / {}",
                 cluster_idx + 1,
@@ -406,8 +419,34 @@ fn rs_vision_with_autocorrelation(
     let embd = r_matrix_to_faer_fp32(&embd);
     let knn_params = KnnParams::from_r_list(vision_params)?;
 
-    let (knn_indices, knn_dist) =
-        generate_knn_with_dist(embd.as_ref(), &knn_params, true, false, seed, verbose);
+    let (knn_indices, knn_dist) = if knn_provided {
+        if verbosity.normal_verbosity() {
+            println!("Using generated kNN graph.")
+        }
+
+        let knn_data = knn_data
+            .into_robj()
+            .as_list()
+            .ok_or_else(|| Error::Other("'knn_data' is not a list".into()))?;
+        let (knn_indices, knn_dist, _, _) = knn_data_to_rust(knn_data)?;
+
+        (knn_indices, knn_dist)
+    } else {
+        if verbosity.normal_verbosity() {
+            println!("Using generated kNN graph.")
+        }
+
+        let (knn_indices, knn_dist) = generate_knn_with_dist(
+            embd.as_ref(),
+            &knn_params,
+            true,
+            false,
+            seed,
+            verbosity.detailed_verbosity(),
+        );
+
+        (knn_indices, knn_dist.unwrap())
+    };
 
     let cluster_membership = cluster_membership.r_int_convert_shift();
 
@@ -416,7 +455,7 @@ fn rs_vision_with_autocorrelation(
         &random_scores_by_cluster,
         &cluster_membership,
         knn_indices,
-        knn_dist.unwrap(),
+        knn_dist,
         verbose,
     );
 
@@ -451,11 +490,15 @@ fn rs_vision_with_autocorrelation(
 /// @param cells_to_keep Integer vector. 0-index vector indicating which cells
 /// to include in the analysis. Ensure that this is of same order/length
 /// as the embedding matrix.
+/// @param knn_data Optional list. This contains pre-computed kNN data
+/// (including distances). The user has to ensure consistency! If provided,
+/// this will be used.
 /// @param genes_to_use Integer vector. 0-index vector indicating which genes
 /// to include.
 /// @param streaming Boolean. Shall the data be streamed in chunks. Useful
 /// for large data sets.
-/// @param verbose Boolean. Controls verbosity of the function.
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
 /// @param seed Integer. Random seed for reproducibility.
 ///
 /// @returns A list with the following elements.
@@ -477,11 +520,12 @@ fn rs_hotspot_autocor(
     f_path_genes: String,
     f_path_cells: String,
     embd: RMatrix<f64>,
+    knn_data: Nullable<List>,
     hotspot_params: List,
     cells_to_keep: Vec<i32>,
     genes_to_use: Vec<i32>,
     streaming: bool,
-    verbose: bool,
+    verbose: usize,
     seed: usize,
 ) -> extendr_api::Result<List> {
     assert!(
@@ -489,26 +533,42 @@ fn rs_hotspot_autocor(
         "The embedding matrix need to have the same nrow as the the cells to use."
     );
 
+    let verbosity = parse_verbosity_level(verbose);
+    let knn_provided = knn_data != extendr_api::Nullable::Null;
+
     let hotspot_params = HotSpotParams::from_r_list(hotspot_params)?;
 
     let embd = r_matrix_to_faer_fp32(&embd);
     let cells_to_keep = cells_to_keep.r_int_convert();
     let genes_to_use = genes_to_use.r_int_convert();
 
-    if verbose {
-        println!("Generating kNN graph...")
-    }
+    let (knn_indices, mut knn_dist) = if knn_provided {
+        if verbosity.normal_verbosity() {
+            println!("Using provided kNN graph...")
+        }
+        let knn_data = knn_data
+            .into_robj()
+            .as_list()
+            .ok_or_else(|| Error::Other("'knn_data' is not a list".into()))?;
+        let (knn_indices, knn_dist, _, _) = knn_data_to_rust(knn_data)?;
 
-    let (knn_indices, knn_dist) = generate_knn_with_dist(
-        embd.as_ref(),
-        &hotspot_params.knn_params,
-        true,
-        false,
-        seed,
-        verbose,
-    );
+        (knn_indices, knn_dist)
+    } else {
+        if verbosity.normal_verbosity() {
+            println!("Generating a kNN graph from scratch")
+        }
 
-    let mut knn_dist = knn_dist.unwrap();
+        let (knn_indices, knn_dist) = generate_knn_with_dist(
+            embd.as_ref(),
+            &hotspot_params.knn_params,
+            true,
+            false,
+            seed,
+            verbosity.detailed_verbosity(),
+        );
+
+        (knn_indices, knn_dist.unwrap())
+    };
 
     let mut hotspot = Hotspot::new(
         f_path_genes,
@@ -557,6 +617,9 @@ fn rs_hotspot_autocor(
 /// @param f_path_cells Path to the `counts_cells.bin` file.
 /// @param embd Numerical matrix. The embedding matrix from which to generate
 /// the kNN graph.
+/// @param knn_data Optional list. This contains pre-computed kNN data
+/// (including distances). The user has to ensure consistency! If provided,
+/// this will be used.
 /// @param hotspot_params List. The HotSpot parameter list.
 /// @param cells_to_keep Integer vector. 0-index vector indicating which cells
 /// to include in the analysis. Ensure that this is of same order/length
@@ -565,7 +628,8 @@ fn rs_hotspot_autocor(
 /// to include.
 /// @param streaming Boolean. Shall the data be streamed in chunks. Useful
 /// for large data sets.
-/// @param verbose Boolean. Controls verbosity of the function.
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
 /// @param seed Integer. Random seed for reproducibility.
 ///
 /// @returns A list with the following elements.
@@ -585,11 +649,12 @@ fn rs_hotspot_gene_cor(
     f_path_genes: String,
     f_path_cells: String,
     embd: RMatrix<f64>,
+    knn_data: Nullable<List>,
     hotspot_params: List,
     cells_to_keep: Vec<i32>,
     genes_to_use: Vec<i32>,
     streaming: bool,
-    verbose: bool,
+    verbose: usize,
     seed: usize,
 ) -> extendr_api::Result<List> {
     let embd = r_matrix_to_faer_fp32(&embd);
@@ -598,20 +663,36 @@ fn rs_hotspot_gene_cor(
 
     let hotspot_params = HotSpotParams::from_r_list(hotspot_params)?;
 
-    if verbose {
-        println!("Generating kNN graph...")
-    }
+    let verbosity = parse_verbosity_level(verbose);
+    let knn_provided = knn_data != extendr_api::Nullable::Null;
 
-    let (knn_indices, knn_dist) = generate_knn_with_dist(
-        embd.as_ref(),
-        &hotspot_params.knn_params,
-        true,
-        false,
-        seed,
-        verbose,
-    );
+    let (knn_indices, mut knn_dist) = if knn_provided {
+        if verbosity.normal_verbosity() {
+            println!("Using provided kNN graph...")
+        }
+        let knn_data = knn_data
+            .into_robj()
+            .as_list()
+            .ok_or_else(|| Error::Other("'knn_data' is not a list".into()))?;
+        let (knn_indices, knn_dist, _, _) = knn_data_to_rust(knn_data)?;
 
-    let mut knn_dist = knn_dist.unwrap();
+        (knn_indices, knn_dist)
+    } else {
+        if verbosity.normal_verbosity() {
+            println!("Generating a kNN graph from scratch")
+        }
+
+        let (knn_indices, knn_dist) = generate_knn_with_dist(
+            embd.as_ref(),
+            &hotspot_params.knn_params,
+            true,
+            false,
+            seed,
+            verbosity.detailed_verbosity(),
+        );
+
+        (knn_indices, knn_dist.unwrap())
+    };
 
     let mut hotspot = Hotspot::new(
         f_path_genes,
@@ -670,7 +751,8 @@ fn rs_hotspot_cluster_genes(
 /// @param milor_params Named list. Contains the parameters for running the
 /// miloR approach.
 /// @param seed Integer. Seed for reproducibility.
-/// @param verbose Boolean. Controls verbosity of the function.
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
 ///
 /// @returns A list with the following elements:
 /// \itemize{
@@ -693,13 +775,15 @@ fn rs_make_milor_nhoods(
     knn_indices: RMatrix<i32>,
     milor_params: List,
     seed: usize,
-    verbose: bool,
+    verbose: usize,
 ) -> Result<List> {
     let milor_params = MiloRParams::from_r_list(milor_params)?;
     let embd = r_matrix_to_faer_fp32(&embd);
     let k_original = knn_indices.ncols();
     let n_cells = embd.nrows();
     let knn_data = knn_indices.data();
+
+    let verbosity = parse_verbosity_level(verbose);
 
     let knn_indices: Vec<Vec<usize>> = (0..n_cells)
         .map(|i| {
@@ -721,7 +805,7 @@ fn rs_make_milor_nhoods(
             index_type,
             &milor_params.knn_params,
             seed,
-            verbose,
+            verbosity.detailed_verbosity(),
         ))
     } else {
         None
@@ -736,7 +820,7 @@ fn rs_make_milor_nhoods(
     random_indices.shuffle(&mut rng);
     random_indices.truncate(n_sample);
 
-    if verbose {
+    if verbosity.normal_verbosity() {
         println!("Sampled {} vertices from {} cells", n_sample, n_cells);
     }
 
@@ -759,7 +843,7 @@ fn rs_make_milor_nhoods(
 
     let len_unique_indices = unique_indices.len();
 
-    if verbose {
+    if verbosity.normal_verbosity() {
         println!(
             "Refined to {} unique neighbourhood indices",
             unique_indices.len()
@@ -799,7 +883,8 @@ fn rs_make_milor_nhoods(
 /// include in the analysis
 /// @param scenic_params Named list. Contains all of the parameters need for
 /// SCENIC.
-/// @param verbose Boolean. Controls the verbosity of the function.
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
 ///
 /// @returns The 0-indexed positions of the genes to include in the scenic
 /// analysis.
@@ -810,7 +895,7 @@ fn rs_scenic_gene_filter(
     f_path_genes: String,
     cell_indices: Vec<i32>,
     scenic_params: List,
-    verbose: bool,
+    verbose: usize,
 ) -> Result<Vec<i32>> {
     let cell_indices = cell_indices.r_int_convert();
 
@@ -834,7 +919,8 @@ fn rs_scenic_gene_filter(
 /// @param scenic_params Named list. Contains all of the parameters need for
 /// SCENIC.
 /// @param seed Integer. Controls reproducibility of the function.
-/// @param verbose Boolean. Controls the verbosity of the function.
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
 ///
 /// @returns A gene x TF importance matrix
 ///
@@ -847,7 +933,7 @@ fn rs_scenic_grn(
     tf_indices: Vec<i32>,
     scenic_params: List,
     seed: usize,
-    verbose: bool,
+    verbose: usize,
 ) -> Result<RArray<f64, 2>> {
     let cell_indices = cell_indices.r_int_convert();
     let gene_indices = gene_indices.r_int_convert();
@@ -883,7 +969,8 @@ fn rs_scenic_grn(
 /// @param scenic_params Named list. Contains all of the parameters need for
 /// SCENIC.
 /// @param seed Integer. Controls reproducibility of the function.
-/// @param verbose Boolean. Controls the verbosity of the function.
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
 ///
 /// @returns A gene x TF importance matrix
 ///
@@ -896,7 +983,7 @@ fn rs_scenic_grn_streaming(
     tf_indices: Vec<i32>,
     scenic_params: List,
     seed: usize,
-    verbose: bool,
+    verbose: usize,
 ) -> Result<RArray<f64, 2>> {
     let cell_indices = cell_indices.r_int_convert();
     let gene_indices = gene_indices.r_int_convert();

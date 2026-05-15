@@ -37,7 +37,8 @@ SD. \code{"mean_subtract"} subtracts the mean only.}
 
 \item{seed}{Integer. Random seed for k-means initialisation.}
 
-\item{verbose}{Boolean. Print progress messages.}
+\item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
+detailed verbosity.}
 }
 \value{
 A list with the following elements:

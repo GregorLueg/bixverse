@@ -552,7 +552,7 @@ zeallot::`%<-%`(
     gene_indices = get_hvg(sc_object),
     seed = 42L,
     return_scaled = TRUE,
-    verbose = FALSE
+    verbose = 0L
   )
 )
 
@@ -725,7 +725,7 @@ zeallot::`%<-%`(
     cell_indices = get_cells_to_keep(sc_object),
     gene_indices = get_hvg(sc_object),
     seed = 42L,
-    verbose = FALSE
+    verbose = 0L
   )
 )
 
@@ -738,7 +738,7 @@ zeallot::`%<-%`(
     cell_indices = get_cells_to_keep(sc_object),
     gene_indices = get_hvg(sc_object),
     seed = 42L,
-    verbose = FALSE
+    verbose = 0L
   )
 )
 

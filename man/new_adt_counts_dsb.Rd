@@ -12,7 +12,7 @@ new_adt_counts_dsb(
   dsb_params = params_sc_dsb(),
   scale_factor = c("standardise", "mean_subtract"),
   seed = 42L,
-  verbose = TRUE
+  .verbose = TRUE
 )
 }
 \arguments{
@@ -37,7 +37,9 @@ used when \code{empty_drops} is provided.}
 
 \item{seed}{Integer. Random seed for k-means initialisation.}
 
-\item{verbose}{Boolean. Print progress messages.}
+\item{.verbose}{Boolean or integer. Controls verbosity and returns run times.
+\code{FALSE} -> quiet, \code{TRUE} or \code{1L} -> normal verbosity, \code{2L} -> detailed
+verbosity.}
 }
 \value{
 \code{ADTCounts} containing the raw counts and the DSB-normalised

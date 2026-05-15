@@ -29,7 +29,9 @@ specifically using these cells.}
 \item{streaming}{Boolean. Shall streaming be used during the HVG
 calculations. Slower, but less memory usage.}
 
-\item{.verbose}{Boolean. Controls verbosity of the function.}
+\item{.verbose}{Boolean or integer. Controls verbosity and returns run times.
+\code{FALSE} -> quiet, \code{TRUE} or \code{1L} -> normal verbosity, \code{2L} -> detailed
+verbosity.}
 }
 \value{
 A \code{boost_res} class that has with the following items:

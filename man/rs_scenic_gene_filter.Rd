@@ -15,7 +15,8 @@ include in the analysis}
 \item{scenic_params}{Named list. Contains all of the parameters need for
 SCENIC.}
 
-\item{verbose}{Boolean. Controls the verbosity of the function.}
+\item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
+detailed verbosity.}
 }
 \value{
 The 0-indexed positions of the genes to include in the scenic

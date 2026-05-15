@@ -9,6 +9,7 @@ params_sc_fastmnn(
   cos_norm = TRUE,
   no_pcs = 30L,
   random_svd = TRUE,
+  sparse_svd = TRUE,
   knn = list(k = 20L)
 )
 }

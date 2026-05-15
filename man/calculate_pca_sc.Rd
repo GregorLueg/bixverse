@@ -37,7 +37,9 @@ these, the internal HVG will be overwritten.}
 \item{seed}{Integer. Controls reproducibility. Only relevant if
 \code{randomised_svd = TRUE}.}
 
-\item{.verbose}{Boolean. Controls verbosity and returns run times.}
+\item{.verbose}{Boolean or integer. Controls verbosity and returns run times.
+\code{FALSE} -> quiet, \code{TRUE} or \code{1L} -> normal verbosity, \code{2L} -> detailed
+verbosity.}
 }
 \value{
 The function will add the PCA factors, loadings and singular values

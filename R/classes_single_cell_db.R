@@ -69,7 +69,7 @@ SingleCellDuckDBBase <- R6::R6Class(
       col_part <- if (is.null(cols)) {
         "*"
       } else {
-        paste(cols, collapse = ", ")
+        paste(sprintf('"%s"', cols), collapse = ", ")
       }
 
       where_clauses <- character()
@@ -130,7 +130,7 @@ SingleCellDuckDBBase <- R6::R6Class(
       col_part <- if (is.null(cols)) {
         "*"
       } else {
-        paste(cols, collapse = ", ")
+        paste(sprintf('"%s"', cols), collapse = ", ")
       }
 
       sql_query <- if (is.null(indices)) {
@@ -1417,6 +1417,7 @@ SingleCellDuckDB <- R6::R6Class(
       # deal with column names
       colnames(obs_dt) <- to_snake_case(colnames(obs_dt))
       colnames(obs_dt)[1] <- "cell_id"
+      colnames(obs_dt) <- make.unique(colnames(obs_dt))
 
       if (!is.null(filter)) {
         obs_dt <- obs_dt[filter]

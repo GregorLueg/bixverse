@@ -38,8 +38,6 @@ types. If this is provided, the kNN graph will be regenerated.}
 \item{target_size}{Numeric. Target library size for re-normalisation of
 the meta cells. Typically \code{1e4}.}
 
-\item{seed}{Integer. For reproducibility purposes.}
-
 \item{verbose}{Boolean. Controls verbosity of the function.}
 }
 \value{

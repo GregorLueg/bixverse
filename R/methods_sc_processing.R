@@ -28,7 +28,9 @@
 #' @param return_combined_pca Boolean. Shall the PCA of the observed cells and
 #' simulated doublets be returned.
 #' @param return_pairs Boolean. Shall the pairs be returned.
-#' @param .verbose Boolean. Controls verbosity of the function.
+#' @param .verbose Boolean or integer. Controls verbosity and returns run times.
+#' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
+#' verbosity.
 #'
 #' @return A `scrublet_res` class that has with the following items:
 #' \itemize{
@@ -100,7 +102,7 @@ S7::method(scrublet_sc, SingleCells) <- function(
   checkmate::qassert(streaming, "B1")
   checkmate::qassert(return_combined_pca, "B1")
   checkmate::qassert(return_pairs, "B1")
-  checkmate::qassert(.verbose, "B1")
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   # cell indices
   cells_to_use <- if (!is.null(cells_to_use)) {
@@ -125,7 +127,7 @@ S7::method(scrublet_sc, SingleCells) <- function(
     cells_to_keep = cells_to_use,
     scrublet_params = scrublet_params,
     seed = seed,
-    verbose = .verbose,
+    verbose = parse_verbosity(.verbose),
     streaming = streaming,
     return_combined_pca = return_combined_pca,
     return_pairs = return_pairs
@@ -156,7 +158,9 @@ S7::method(scrublet_sc, SingleCells) <- function(
 #' @param seed Integer. Random seed.
 #' @param streaming Boolean. Shall streaming be used during the HVG
 #' calculations. Slower, but less memory usage.
-#' @param .verbose Boolean. Controls verbosity of the function.
+#' @param .verbose Boolean or integer. Controls verbosity and returns run times.
+#' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
+#' verbosity.
 #'
 #' @return A `boost_res` class that has with the following items:
 #' \itemize{
@@ -202,7 +206,7 @@ S7::method(doublet_detection_boost_sc, SingleCells) <- function(
   assertScBoost(boost_params)
   checkmate::qassert(seed, "I1")
   checkmate::qassert(streaming, "B1")
-  checkmate::qassert(.verbose, "B1")
+  checkmate::qassert(.verbose, c("B1", "N1[0,2]"))
 
   # cell indices
   cells_to_use <- if (!is.null(cells_to_use)) {
@@ -235,7 +239,7 @@ S7::method(doublet_detection_boost_sc, SingleCells) <- function(
     cells_to_keep = cells_to_use,
     boost_params = boost_params,
     seed = seed,
-    verbose = .verbose,
+    verbose = parse_verbosity(.verbose),
     streaming = streaming
   )
 
@@ -265,7 +269,9 @@ S7::method(doublet_detection_boost_sc, SingleCells) <- function(
 #' @param return_features Boolean. Shall the features used to train the
 #' classifier be returned.
 #' @param seed Integer. Seed for reproducibility.
-#' @param .verbose Boolean. Controls verbosity.
+#' @param .verbose Boolean or integer. Controls verbosity and returns run times.
+#' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
+#' verbosity.
 #'
 #' @return An S3 object of class `ScDblFinderRes` containing:
 #' \describe{
@@ -313,7 +319,7 @@ S7::method(scdblfinder_sc, SingleCells) <- function(
   checkmate::qassert(return_features, "B1")
   checkmate::qassert(streaming, "B1")
   checkmate::qassert(seed, "I1")
-  checkmate::qassert(.verbose, "B1")
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   # cell indices
   cells_to_use <- if (!is.null(cells_to_use)) {
@@ -351,8 +357,7 @@ S7::method(scdblfinder_sc, SingleCells) <- function(
     return_features = return_features,
     streaming = streaming,
     seed = seed,
-    verbose = .verbose,
-    debug = FALSE
+    verbose = parse_verbosity(.verbose)
   )
 
   features <- if (return_features) {
@@ -402,7 +407,9 @@ S7::method(scdblfinder_sc, SingleCells) <- function(
 #' @param streaming Boolean. Shall the cells be streamed in. Useful for larger
 #' data sets where you wish to avoid loading in the whole data. Default to
 #' `FALSE`.
-#' @param .verbose Boolean. Controls verbosity of the function.
+#' @param .verbose Boolean or integer. Controls verbosity and returns run times.
+#' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
+#' verbosity.
 #'
 #' @return It will add the columns based on the names in the `gene_set_list` to
 #' the obs table.
@@ -437,7 +444,7 @@ S7::method(top_genes_perc_sc, SingleCells) <- function(
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::qassert(top_n_vals, "I+")
   checkmate::qassert(streaming, "B1")
-  checkmate::qassert(.verbose, "B1")
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   # function
   rs_results <- rs_sc_get_top_genes_perc(
@@ -445,7 +452,7 @@ S7::method(top_genes_perc_sc, SingleCells) <- function(
     top_n_vals = top_n_vals,
     cell_indices = get_cells_to_keep(object),
     streaming = streaming,
-    verbose = .verbose
+    verbose = parse_verbosity(.verbose)
   )
 
   names(rs_results) <- sprintf("top_%i_genes_percentage", top_n_vals)
@@ -476,7 +483,9 @@ S7::method(top_genes_perc_sc, SingleCells) <- function(
 #' @param streaming Boolean. Shall the cells be streamed in. Useful for larger
 #' data sets where you wish to avoid loading in the whole data. Default to
 #' `FALSE`.
-#' @param .verbose Boolean. Controls verbosity of the function.
+#' @param .verbose Boolean or integer. Controls verbosity and returns run times.
+#' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
+#' verbosity.
 #'
 #' @return It will add the columns based on the names in the `gene_set_list` to
 #' the obs table.
@@ -511,7 +520,7 @@ S7::method(gene_set_proportions_sc, SingleCells) <- function(
   checkmate::assertClass(object, "bixverse::SingleCells")
   checkmate::assertList(gene_set_list, names = "named", types = "character")
   checkmate::qassert(streaming, "B1")
-  checkmate::qassert(.verbose, "B1")
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   gene_set_list_tidy <- purrr::map(gene_set_list, \(g) {
     get_gene_indices(object, gene_ids = g, rust_index = TRUE)
@@ -523,7 +532,7 @@ S7::method(gene_set_proportions_sc, SingleCells) <- function(
     cell_indices = get_cells_to_keep(object),
     gene_set_idx = gene_set_list_tidy,
     streaming = streaming,
-    verbose = .verbose
+    verbose = parse_verbosity(.verbose)
   )
 
   res <- new_sc_list(res = rs_results, cell_indices = get_cells_to_keep(object))
@@ -554,7 +563,7 @@ S7::method(find_hvg_sc, SingleCells) <- function(
   checkmate::qassert(hvg_no, "I1")
   assertScHvg(hvg_params)
   checkmate::qassert(streaming, "B1")
-  checkmate::qassert(.verbose, "B1")
+  checkmate::qassert(.verbose, c("B1", "I1[0, 2]"))
 
   if (length(get_cells_to_keep(object)) == 0) {
     warning(paste(
@@ -575,7 +584,7 @@ S7::method(find_hvg_sc, SingleCells) <- function(
       binning = bin_method,
       clip_max = NULL,
       streaming = streaming,
-      verbose = .verbose
+      verbose = parse_verbosity(.verbose)
     )
   )
 
@@ -619,7 +628,7 @@ S7::method(calculate_pca_sc, SingleCells) <- function(
   checkmate::qassert(sparse_svd, "B1")
   checkmate::qassert(hvg, c("I+", "0"))
   checkmate::qassert(seed, "I1")
-  checkmate::qassert(.verbose, "B1")
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   if ((length(get_hvg(object)) == 0) && is.null(hvg)) {
     warning(paste(
@@ -677,7 +686,7 @@ S7::method(calculate_pca_sc, SingleCells) <- function(
         gene_indices = selected_hvg,
         seed = seed,
         return_scaled = FALSE,
-        verbose = .verbose
+        verbose = parse_verbosity(.verbose)
       )
     )
 
@@ -705,7 +714,7 @@ S7::method(calculate_pca_sc, SingleCells) <- function(
         cell_indices = get_cells_to_keep(object),
         gene_indices = selected_hvg,
         seed = seed,
-        verbose = .verbose
+        verbose = parse_verbosity(.verbose)
       )
     )
 
@@ -741,7 +750,7 @@ S7::method(find_neighbours_sc, ScOrMc) <- function(
   checkmate::qassert(no_embd_to_use, c("I1", "0"))
   assertScNeighbours(neighbours_params)
   checkmate::qassert(seed, "I1")
-  checkmate::qassert(.verbose, "B1")
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   if (!embd_to_use %in% get_available_embeddings(object)) {
     warning("The desired embedding was not found. Returning class as is.")
@@ -780,7 +789,7 @@ S7::method(find_neighbours_sc, ScOrMc) <- function(
       snn_method = snn_similarity,
       pruning = pruning,
       limited_graph = !full_snn,
-      verbose = .verbose
+      verbose = parse_verbosity(.verbose)
     )
   )
 
@@ -870,7 +879,9 @@ S7::method(find_clusters_sc, ScOrMc) <- function(
 #' @param no_seeds Integer. Number of additional seeds (only used when
 #' `grid_search = TRUE`).
 #' @param seed Integer. Reproducibility.
-#' @param .verbose Boolean. Verbosity.
+#' @param .verbose Boolean or integer. Controls verbosity and returns run times.
+#' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
+#' verbosity.
 #'
 #' @returns `SingleCellFastClusters` S3 object with:
 #' \describe{
@@ -936,7 +947,7 @@ S7::method(fast_cluster_sc, SingleCells) <- function(
   checkmate::qassert(grid_search, "B1")
   checkmate::qassert(no_seeds, "I1")
   checkmate::qassert(seed, "I1")
-  checkmate::qassert(.verbose, "B1")
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   if (!embd_to_use %in% get_available_embeddings(object)) {
     stop(sprintf("Embedding '%s' was not found.", embd_to_use))
@@ -960,7 +971,7 @@ S7::method(fast_cluster_sc, SingleCells) <- function(
       return_kmeans = return_kmeans,
       no_seeds = no_seeds,
       seed = seed,
-      verbose = .verbose
+      verbose = parse_verbosity(.verbose)
     )
     memberships <- res$membership$memberships
     stats <- data.table::as.data.table(res$membership$stats)
@@ -976,7 +987,7 @@ S7::method(fast_cluster_sc, SingleCells) <- function(
       snn = snn,
       return_kmeans = return_kmeans,
       seed = seed,
-      verbose = .verbose
+      verbose = parse_verbosity(.verbose)
     )
     memberships <- res$membership
     stats <- NULL
@@ -1046,7 +1057,9 @@ S7::method(fast_cluster_sc, SingleCells) <- function(
 #' @param seed Integer. For reproducibility.
 #' @param .validate_index Boolean. Shall an exhaustive search against a subset
 #' of cells be run to validate the approximate nearest neighbour index.
-#' @param .verbose Boolean. Controls verbosity and returns run times.
+#' @param .verbose Boolean or integer. Controls verbosity and returns run times.
+#' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
+#' verbosity.
 #'
 #' @return Initialised `sc_knn` with the kNN data.
 #'
@@ -1092,7 +1105,7 @@ S7::method(generate_knn_sc, SingleCells) <- function(
   assertScNeighbours(neighbours_params)
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.validate_index, "B1")
-  checkmate::qassert(.verbose, "B1")
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   # function body
   embd <- get_embedding(x = object, embd_name = embd_to_use)
@@ -1116,7 +1129,7 @@ S7::method(generate_knn_sc, SingleCells) <- function(
   knn_data <- rs_sc_knn_w_dist(
     embd = embd,
     knn_params = neighbours_params,
-    verbose = .verbose,
+    verbose = parse_verbosity(.verbose),
     validate_index = .validate_index,
     seed = seed
   )

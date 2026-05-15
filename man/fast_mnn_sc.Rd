@@ -46,7 +46,9 @@ on the batch-aware HVG ideally.}
 
 \item{seed}{Integer. Random seed.}
 
-\item{.verbose}{Boolean. Controls the verbosity of the function.}
+\item{.verbose}{Boolean or integer. Controls verbosity and returns run times.
+\code{FALSE} -> quiet, \code{TRUE} or \code{1L} -> normal verbosity, \code{2L} -> detailed
+verbosity.}
 }
 \value{
 The object with the added fastMNN embeddings to the object.

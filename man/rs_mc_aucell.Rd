@@ -13,7 +13,8 @@ genes of interest.}
 \item{auc_type}{String. One of \code{"wilcox"} or \code{"auroc"}, pending on
 which statistic you wish to calculate.}
 
-\item{verbose}{Boolean. Controls verbosity of the function.}
+\item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
+detailed verbosity.}
 
 \item{cells_to_keep}{Integer. Vector of indices of the cells to keep.}
 

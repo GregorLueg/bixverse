@@ -36,7 +36,8 @@ module.}
 \item{streaming}{Logical. If TRUE, processes cells and genes are read in in
 chunks to reduce memory usage.}
 
-\item{verbose}{Logical. Controls verbosity of the function.}
+\item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
+detailed verbosity.}
 }
 \value{
 Matrix of module scores (modules x cells). Each row corresponds to a

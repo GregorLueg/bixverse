@@ -1,5 +1,21 @@
 # helpers ----------------------------------------------------------------------
 
+## utils -----------------------------------------------------------------------
+
+#' Helper to parse the verbosity
+#'
+#' @param input Boolean or integer to parse
+#'
+#' @returns The integer controlling the verbosity
+#'
+#' @keywords internal
+parse_verbosity <- function(input) {
+  # checks
+  checkmate::qassert(input, c("B1", "I1[0, 2]"))
+
+  as.integer(sum(input))
+}
+
 ## cell ranger outputs ---------------------------------------------------------
 
 #' Helper to generate cell ranger input parameters
@@ -45,8 +61,12 @@ get_seurat_counts_to_list <- function(seurat_obj) {
   # checks
   checkmate::assertClass(seurat_obj, "Seurat")
 
-  # get the counts
-  raw_counts <- seurat_obj@assays$RNA@layers$counts
+  assay <- seurat_obj@assays$RNA
+  if (methods::.hasSlot(assay, "layers")) {
+    raw_counts <- assay@layers$counts
+  } else {
+    raw_counts <- assay@counts
+  }
 
   res <- list(
     indptr = raw_counts@p,
@@ -163,6 +183,8 @@ per_cell_qc_outlier <- function(
 #'
 #' @param metrics Named list of numeric vectors. Each element is a QC metric
 #' to check (e.g. `list(log10_lib_size = log10(lib_size), MT = mt_pct)`).
+#' @param cells_to_keep Integer. Which cells were included in the analysis.
+#' 0-indices for Rust.
 #' @param directions Named character vector mapping metric names to direction.
 #' One of `"twosided"`, `"below"`, `"above"`. Defaults to `"twosided"` for
 #' all metrics if `NULL`.
@@ -182,11 +204,13 @@ per_cell_qc_outlier <- function(
 #' @export
 run_cell_qc <- function(
   metrics,
+  cells_to_keep,
   directions = NULL,
   threshold = 3,
   groups = NULL
 ) {
   checkmate::assertList(metrics, types = "numeric", names = "unique")
+  checkmate::qassert(cells_to_keep, "I+")
   checkmate::qassert(threshold, "N1")
 
   n <- length(metrics[[1]])
@@ -227,6 +251,8 @@ run_cell_qc <- function(
 
   structure(
     list(
+      # transform to cell idx
+      cell_idx = cells_to_keep + 1L,
       metrics = metrics,
       groups = groups,
       per_metric = results,
@@ -262,7 +288,9 @@ run_cell_qc <- function(
 #' @param seed Integer. Random seed for reproducibility.
 #' @param .validate_index Boolean. Shall an exhaustive search against a subset
 #' of cells be run to validate the approximate nearest neighbour index.
-#' @param .verbose Boolean. Controls verbosity.
+#' @param .verbose Boolean or integer. Controls verbosity and returns run times.
+#' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
+#' verbosity.
 #'
 #' @returns The `SingleCellNearestNeighbour` for downstream usage.
 #'
@@ -278,12 +306,12 @@ generate_sc_knn <- function(
   assertScNeighbours(neighbours_params)
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.validate_index, "B1")
-  checkmate::qassert(.verbose, "B1")
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   knn_data <- rs_sc_knn_w_dist(
     embd = data,
     knn_params = neighbours_params,
-    verbose = .verbose,
+    verbose = parse_verbosity(.verbose),
     validate_index = .validate_index,
     seed = seed
   )

@@ -14,7 +14,8 @@ cells to aggregate per element.}
 
 \item{assay}{String. One of \code{c("raw", "norm")}. Which counts to normalise.}
 
-\item{verbose}{Controls verbosity of the function}
+\item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
+detailed verbosity.}
 }
 \value{
 A dense matrix with the pseudo-bulked data.

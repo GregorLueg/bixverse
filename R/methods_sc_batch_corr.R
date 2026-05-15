@@ -18,7 +18,6 @@
 #' obs data of the class.
 #' @param threshold Numeric. Number between 0 and 1. Below this threshold, the
 #' test is considered significant. Defaults to `0.05`.
-#' @param .verbose Boolean. Controls the verbosity of the function.
 #'
 #' @returns A `KbetScores` object with the following elements
 #' \itemize{
@@ -43,8 +42,7 @@ calculate_kbet_sc <- S7::new_generic(
   fun = function(
     object,
     batch_column,
-    threshold = 0.05,
-    .verbose = TRUE
+    threshold = 0.05
   ) {
     S7::S7_dispatch()
   }
@@ -56,14 +54,12 @@ calculate_kbet_sc <- S7::new_generic(
 S7::method(calculate_kbet_sc, SingleCells) <- function(
   object,
   batch_column,
-  threshold = 0.05,
-  .verbose = TRUE
+  threshold = 0.05
 ) {
   # check
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::qassert(batch_column, "S1")
   checkmate::qassert(threshold, "N1[0, 1]")
-  checkmate::qassert(.verbose, "B1")
 
   # function
   batch_index <- unlist(object[[batch_column]])
@@ -168,7 +164,6 @@ print.KbetScores <- function(x, ...) {
 #' cells for performance. The pairwise distance computation is O(n^2), so
 #' subsampling is recommended for large datasets. Defaults to `5000L`.
 #' @param seed Integer. Seed for subsampling reproducibility.
-#' @param .verbose Boolean. Controls the verbosity of the function.
 #'
 #' @returns A `BatchSilhouetteScores` object with the following elements
 #' \itemize{
@@ -188,8 +183,7 @@ calculate_batch_asw_sc <- S7::new_generic(
     batch_column,
     embd_to_use = "pca",
     max_cells = 5000L,
-    seed = 42L,
-    .verbose = TRUE
+    seed = 42L
   ) {
     S7::S7_dispatch()
   }
@@ -203,8 +197,7 @@ S7::method(calculate_batch_asw_sc, SingleCells) <- function(
   batch_column,
   embd_to_use = "pca",
   max_cells = 5000L,
-  seed = 42L,
-  .verbose = TRUE
+  seed = 42L
 ) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
@@ -212,7 +205,6 @@ S7::method(calculate_batch_asw_sc, SingleCells) <- function(
   checkmate::qassert(embd_to_use, "S1")
   checkmate::qassert(max_cells, c("I1", "0"))
   checkmate::qassert(seed, "I1")
-  checkmate::qassert(.verbose, "B1")
 
   batch_index <- unlist(object[[batch_column]])
 
@@ -291,7 +283,6 @@ print.BatchSilhouetteScores <- function(x, ...) {
 #' @param object `SingleCells` class.
 #' @param batch_column String. The column with the batch information in the
 #' obs data of the class.
-#' @param .verbose Boolean. Controls the verbosity of the function.
 #'
 #' @returns A `BatchLisiScores` object with the following elements
 #' \itemize{
@@ -309,8 +300,7 @@ calculate_batch_lisi_sc <- S7::new_generic(
   dispatch_args = "object",
   fun = function(
     object,
-    batch_column,
-    .verbose = TRUE
+    batch_column
   ) {
     S7::S7_dispatch()
   }
@@ -321,13 +311,11 @@ calculate_batch_lisi_sc <- S7::new_generic(
 #' @export
 S7::method(calculate_batch_lisi_sc, SingleCells) <- function(
   object,
-  batch_column,
-  .verbose = TRUE
+  batch_column
 ) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::qassert(batch_column, "S1")
-  checkmate::qassert(.verbose, "B1")
 
   batch_index <- unlist(object[[batch_column]])
 
@@ -423,7 +411,9 @@ print.BatchLisiScores <- function(x, ...) {
 #' @param streaming Boolean. Shall the genes be streamed in. Useful for larger
 #' data sets where you wish to avoid loading in the whole data. Defaults to
 #' `FALSE`.
-#' @param .verbose Boolean. Controls verbosity and returns run times.
+#' @param .verbose Boolean or integer. Controls verbosity and returns run times.
+#' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
+#' verbosity.
 #'
 #' @return This function will return a list with:
 #' \itemize{
@@ -472,7 +462,7 @@ S7::method(find_hvg_batch_aware_sc, SingleCells) <- function(
   )
   assertScHvg(hvg_params)
   checkmate::qassert(streaming, "B1")
-  checkmate::qassert(.verbose, "B1")
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   batch_indices <- unlist(object[[batch_column]])
   batch_factor <- factor(batch_indices)
@@ -490,7 +480,7 @@ S7::method(find_hvg_batch_aware_sc, SingleCells) <- function(
       n_bins = num_bin,
       binning = bin_method,
       streaming = streaming,
-      verbose = .verbose
+      verbose = parse_verbosity(.verbose)
     )
   )
 
@@ -578,7 +568,9 @@ S7::method(find_hvg_batch_aware_sc, SingleCells) <- function(
 #'   for available parameters and their defaults.
 #' }
 #' @param seed Integer. Random seed.
-#' @param .verbose Boolean. Controls the verbosity of the function.
+#' @param .verbose Boolean or integer. Controls verbosity and returns run times.
+#' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
+#' verbosity.
 #'
 #' @returns The object with added kNN matrix based on BBKNN and the graph based
 #' on the returned connectivities of the algorithm.
@@ -623,7 +615,7 @@ S7::method(bbknn_sc, SingleCells) <- function(
   checkmate::qassert(no_embd_to_use, c("I1", "0"))
   assertScBbknn(bbknn_params)
   checkmate::qassert(seed, "I1")
-  checkmate::qassert(.verbose, "B1")
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   # function body
   if (!is.null(get_knn_mat(object))) {
@@ -675,7 +667,7 @@ S7::method(bbknn_sc, SingleCells) <- function(
     batch_labels = as.integer(batch_index),
     bbknn_params = bbknn_params,
     seed = seed,
-    verbose = .verbose
+    verbose = parse_verbosity(.verbose)
   )
 
   # extract kNN indices and distances
@@ -768,7 +760,9 @@ S7::method(bbknn_sc, SingleCells) <- function(
 #' if found. If you decide to do this, make sure that you have run the PCA
 #' on the batch-aware HVG ideally.
 #' @param seed Integer. Random seed.
-#' @param .verbose Boolean. Controls the verbosity of the function.
+#' @param .verbose Boolean or integer. Controls verbosity and returns run times.
+#' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
+#' verbosity.
 #'
 #' @returns The object with the added fastMNN embeddings to the object.
 #'
@@ -810,7 +804,7 @@ S7::method(fast_mnn_sc, SingleCells) <- function(
   assertScFastmnn(fastmnn_params)
   checkmate::qassert(use_precomputed_pca, "B1")
   checkmate::qassert(seed, "I1")
-  checkmate::qassert(.verbose, "B1")
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   # function body
   batch_indices <- unlist(object[[batch_column]])
@@ -833,7 +827,7 @@ S7::method(fast_mnn_sc, SingleCells) <- function(
     batch_indices = batch_indices,
     mnn_params = fastmnn_params,
     precomputed_pca = pca_data,
-    verbose = .verbose,
+    verbose = parse_verbosity(.verbose),
     seed = 42L
   )
 
@@ -860,7 +854,9 @@ S7::method(fast_mnn_sc, SingleCells) <- function(
 #' columns to regress out. If `NULL`, only the primary batch column is used.
 #' @param harmony_params List. Output of [bixverse::params_sc_harmony()].
 #' @param seed Integer. For reproducibility.
-#' @param .verbose Boolean. Controls verbosity.
+#' @param .verbose Boolean or integer. Controls verbosity and returns run times.
+#' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
+#' verbosity.
 #'
 #' @return The object with a `"harmony"` embedding added. If no PCA embeddings
 #' are found, returns the object unchanged with a warning.
@@ -898,7 +894,7 @@ S7::method(harmony_sc, SingleCells) <- function(
   checkmate::qassert(additional_batch_columns, c("S+", "0"))
   assertScHarmonyParams(harmony_params)
   checkmate::qassert(seed, "I1")
-  checkmate::qassert(.verbose, "B1")
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   # early return
   if (is.null(get_pca_factors(object))) {
@@ -950,7 +946,7 @@ S7::method(harmony_sc, SingleCells) <- function(
     harmony_params = harmony_params,
     batch_labels = batch_index_ls,
     seed = seed,
-    verbose = .verbose
+    verbose = parse_verbosity(.verbose)
   )
 
   colnames(harmony_embd) <- sprintf("harmony_%s", 1:ncol(harmony_embd))
@@ -976,7 +972,9 @@ S7::method(harmony_sc, SingleCells) <- function(
 #' columns to regress out. If `NULL`, only the primary batch column is used.
 #' @param harmony_params List. Output of [bixverse::params_sc_harmony_v2()].
 #' @param seed Integer. For reproducibility.
-#' @param .verbose Boolean. Controls verbosity.
+#' @param .verbose Boolean or integer. Controls verbosity and returns run times.
+#' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
+#' verbosity.
 #'
 #' @return The object with a `"harmony_v2"` embedding added. If no PCA
 #' embeddings are found, returns the object unchanged with a warning.
@@ -1014,7 +1012,7 @@ S7::method(harmony_v2_sc, SingleCells) <- function(
   checkmate::qassert(additional_batch_columns, c("S+", "0"))
   assertScHarmonyParamsV2(harmony_params)
   checkmate::qassert(seed, "I1")
-  checkmate::qassert(.verbose, "B1")
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   # early return
   if (is.null(get_pca_factors(object))) {
@@ -1066,7 +1064,7 @@ S7::method(harmony_v2_sc, SingleCells) <- function(
     harmony_params = harmony_params,
     batch_labels = batch_index_ls,
     seed = seed,
-    verbose = .verbose
+    verbose = parse_verbosity(.verbose)
   )
 
   colnames(harmony_embd) <- sprintf("harmony_v2_%s", 1:ncol(harmony_embd))

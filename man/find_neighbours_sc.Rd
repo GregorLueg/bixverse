@@ -39,7 +39,9 @@ for available parameters and their defaults.
 
 \item{seed}{Integer. For reproducibility.}
 
-\item{.verbose}{Boolean. Controls verbosity and returns run times.}
+\item{.verbose}{Boolean or integer. Controls verbosity and returns run times.
+\code{FALSE} -> quiet, \code{TRUE} or \code{1L} -> normal verbosity, \code{2L} -> detailed
+verbosity.}
 }
 \value{
 The object with added KNN matrix.

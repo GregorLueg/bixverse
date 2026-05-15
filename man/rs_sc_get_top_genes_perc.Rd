@@ -22,7 +22,8 @@ the proportions. (0-indexed!)}
 
 \item{streaming}{Boolean. Shall the data be worked on in chunks.}
 
-\item{verbose}{Boolean. Controls verbosity of the function.}
+\item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
+detailed verbosity.}
 }
 \value{
 A list with the cumulative percentages of the Top X genes defined

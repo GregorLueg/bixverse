@@ -4,12 +4,10 @@
 \alias{plot.CellQc}
 \title{Plot per-cell QC violin plots from a CellQc object}
 \usage{
-\method{plot}{CellQc}(x, qc_df, ...)
+\method{plot}{CellQc}(x, ...)
 }
 \arguments{
 \item{x}{A \code{CellQc} object.}
-
-\item{qc_df}{A data.table containing the cell-level data.}
 
 \item{...}{Ignored.}
 }

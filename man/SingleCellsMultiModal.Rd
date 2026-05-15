@@ -44,6 +44,8 @@ such as embeddings, kNN information or sNN graphs for the single cell
 chromatin accessability.}
 \item{sc_map}{Class containing various mapping information such as HVG
 indices, cells to keep, etc.}
+\item{other_data}{List that contains additional data and results, such
+as for example the WNN graph.}
 \item{dims}{Dimensions of the original data.}
 }
 }

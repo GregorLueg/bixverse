@@ -36,7 +36,9 @@ simulated doublets be returned.}
 
 \item{return_pairs}{Boolean. Shall the pairs be returned.}
 
-\item{.verbose}{Boolean. Controls verbosity of the function.}
+\item{.verbose}{Boolean or integer. Controls verbosity and returns run times.
+\code{FALSE} -> quiet, \code{TRUE} or \code{1L} -> normal verbosity, \code{2L} -> detailed
+verbosity.}
 }
 \value{
 A \code{scrublet_res} class that has with the following items:

@@ -42,7 +42,8 @@ the meta cells. Typically \code{1e4}.}
 
 \item{seed}{Integer. For reproducibility purposes.}
 
-\item{verbose}{Boolean. Controls verbosity of the function.}
+\item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
+detailed verbosity.}
 }
 \value{
 A list with the following elements:

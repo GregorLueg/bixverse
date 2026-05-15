@@ -16,8 +16,8 @@ kNN graph.}
 \item{validate_index}{Boolean. If you want to validate the index via
 an exhaustive search in a subset of cells.}
 
-\item{verbose}{Boolean. Controls verbosity of the function and returns
-how long certain operations took.}
+\item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
+detailed verbosity.}
 
 \item{seed}{Integer. Seed for reproducibility purposes.}
 }
