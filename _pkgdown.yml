@@ -442,7 +442,7 @@ reference:
       - get_feature_mat
       - get_kmeans_clusters
       - get_knn_dist
-      - get_obs_data
+      - get_data
       - get_scores
       - new_sc_knn
   # Single cell plotting helpers

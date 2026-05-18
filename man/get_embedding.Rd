@@ -10,7 +10,13 @@
 \usage{
 get_embedding(x, embd_name, ...)
 
+## S7 method for class <bixverse::MetaCells>
+get_embedding(x, embd_name, ...)
+
 \method{get_embedding}{ScCache}(x, embd_name)
+
+## S7 method for class <bixverse::SingleCells>
+get_embedding(x, embd_name, ...)
 }
 \arguments{
 \item{x}{An object to get embedding from}
