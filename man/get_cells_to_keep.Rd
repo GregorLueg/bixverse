@@ -9,6 +9,9 @@
 get_cells_to_keep(x)
 
 \method{get_cells_to_keep}{ScMap}(x)
+
+## S7 method for class <bixverse::SingleCells>
+get_cells_to_keep(x)
 }
 \arguments{
 \item{x}{An object to get the gene index from.}

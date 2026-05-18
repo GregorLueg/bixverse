@@ -9,7 +9,7 @@ add_sc_new_obs(object, obs_data)
 \arguments{
 \item{object}{\code{SingleCells} class.}
 
-\item{obs_data}{data.table. A data.table you generated with \code{\link[=get_obs_data]{get_obs_data()}}
+\item{obs_data}{data.table. A data.table you generated with \code{\link[=get_data]{get_data()}}
 on some sub class.}
 }
 \value{

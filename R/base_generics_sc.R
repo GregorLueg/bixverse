@@ -607,8 +607,8 @@ get_knn_obj <- function(x, ...) {
 #' in the analysis and additional columns to be added to the obs table.
 #'
 #' @export
-get_obs_data <- function(x, ...) {
-  UseMethod("get_obs_data")
+get_data <- function(x, ...) {
+  UseMethod("get_data")
 }
 
 #### knn getter methods --------------------------------------------------------

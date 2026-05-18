@@ -219,10 +219,10 @@ print.CellQc <- function(x, ...) {
 
 ### getters --------------------------------------------------------------------
 
-#' @rdname get_obs_data
+#' @rdname get_data
 #'
 #' @export
-get_obs_data.CellQc <- function(x, ...) {
+get_data.CellQc <- function(x, ...) {
   # checks
   checkmate::assertClass(x, "CellQc")
 
@@ -245,49 +245,6 @@ get_obs_data.CellQc <- function(x, ...) {
   obs_dt <- .add_is_obs_attr(obs_dt)
 
   return(obs_dt)
-}
-
-### plot -----------------------------------------------------------------------
-
-#' Plot per-cell QC violin plots from a CellQc object
-#'
-#' @param x A `CellQc` object.
-#' @param ... Ignored.
-#'
-#' @return A named list of ggplot objects, one per metric.
-#'
-#' @export
-#'
-#' @import ggplot2
-#'
-#' @keywords internal
-plot.CellQc <- function(x, ...) {
-  outlier_colours <- c("FALSE" = "lightgrey", "TRUE" = "orange")
-  plot_df <- get_obs_data(x)
-
-  plots <- purrr::map(names(x$metrics), function(metric) {
-    p <- ggplot(
-      data = plot_df,
-      mapping = aes(y = .data[[metric]], x = grp)
-    ) +
-      geom_violin(scale = "width") +
-      geom_jitter(
-        mapping = aes(colour = global_outlier),
-        width = 0.05,
-        size = 0.4,
-        alpha = 0.5,
-        show.legend = FALSE
-      ) +
-      scale_colour_manual(values = outlier_colours) +
-      ylab(metric) +
-      theme_bw() +
-      theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-      ggtitle(metric)
-
-    p
-  })
-
-  setNames(plots, names(x$metrics))
 }
 
 
@@ -317,10 +274,10 @@ new_sc_list <- function(res, cell_indices) {
 
 ### getters --------------------------------------------------------------------
 
-#' @rdname get_obs_data
+#' @rdname get_data
 #'
 #' @export
-get_obs_data.ScListRes <- function(x, ...) {
+get_data.ScListRes <- function(x, ...) {
   # checks
   checkmate::assertClass(x, "ScListRes")
 
@@ -364,10 +321,10 @@ new_sc_matrix <- function(res, cell_indices) {
 
 ### getters --------------------------------------------------------------------
 
-#' @rdname get_obs_data
+#' @rdname get_data
 #'
 #' @export
-get_obs_data.ScMatrixRes <- function(x, columns = NULL, ...) {
+get_data.ScMatrixRes <- function(x, columns = NULL, ...) {
   # checks
   checkmate::assertClass(x, "ScMatrixRes")
   checkmate::qassert(columns, c("0", "S+"))
@@ -516,10 +473,10 @@ call_doublets_manual <- function(scrublet_res, threshold, .verbose = TRUE) {
 
 ### obs data -------------------------------------------------------------------
 
-#' @rdname get_obs_data
+#' @rdname get_data
 #'
 #' @export
-get_obs_data.ScrubletRes <- function(x, ...) {
+get_data.ScrubletRes <- function(x, ...) {
   # checks
   checkmate::assertClass(x, "ScrubletRes")
 
@@ -593,10 +550,10 @@ print.ScrubletRes <- function(x, ...) {
 
 ### obs data -------------------------------------------------------------------
 
-#' @rdname get_obs_data
+#' @rdname get_data
 #'
 #' @export
-get_obs_data.BoostRes <- function(x, ...) {
+get_data.BoostRes <- function(x, ...) {
   # checks
   checkmate::assertClass(x, "BoostRes")
 
@@ -646,10 +603,10 @@ print.BoostRes <- function(x, ...) {
 
 ### obs data -------------------------------------------------------------------
 
-#' @rdname get_obs_data
+#' @rdname get_data
 #'
 #' @export
-get_obs_data.ScDblFinderRes <- function(x, ...) {
+get_data.ScDblFinderRes <- function(x, ...) {
   # checks
   checkmate::assertClass(x, "ScDblFinderRes")
 
@@ -2132,10 +2089,10 @@ tf_to_genes_motif_enrichment.ScenicGrn <- function(
 
 ### getters --------------------------------------------------------------------
 
-#' @rdname get_obs_data
+#' @rdname get_data
 #'
 #' @export
-get_obs_data.SingleCellFastClusters <- function(x, ...) {
+get_data.SingleCellFastClusters <- function(x, ...) {
   checkmate::assertClass(x, "SingleCellFastClusters")
   res <- data.table::copy(x$memberships)
 
