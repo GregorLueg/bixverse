@@ -233,7 +233,7 @@ fast_cluster_res <- fast_cluster_sc(
   grid_search = TRUE
 )
 
-fast_clusted_dt <- get_obs_data(fast_cluster_res)
+fast_clusted_dt <- get_data(fast_cluster_res)
 
 head(fast_clusted_dt)
 ```

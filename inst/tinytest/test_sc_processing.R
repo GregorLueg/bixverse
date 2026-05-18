@@ -606,7 +606,7 @@ fast_cluster_res <- fast_cluster_sc(
   .verbose = FALSE
 )
 
-obs_fc <- get_obs_data(fast_cluster_res)
+obs_fc <- get_data(fast_cluster_res)
 
 expect_true(
   current = checkmate::testDataTable(obs_fc),

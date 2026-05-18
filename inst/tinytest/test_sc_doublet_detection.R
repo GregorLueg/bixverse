@@ -302,7 +302,7 @@ expect_true(
   info = "rust scrublet: 'good' recall on synthetic data"
 )
 
-obs_data <- get_obs_data(obj_res.up)
+obs_data <- get_data(obj_res.up)
 
 expect_true(
   current = checkmate::testDataTable(obs_data),
@@ -415,7 +415,7 @@ expect_equivalent(
   info = "S7 boost: no weird changes during generation (called doublets)"
 )
 
-obs_data <- get_obs_data(obj_res)
+obs_data <- get_data(obj_res)
 
 expect_true(
   current = checkmate::testDataTable(obs_data),
@@ -541,7 +541,7 @@ expect_equivalent(
   info = "S7 scDblFinder: no weird changes during generation (called doublets)"
 )
 
-obs_data <- get_obs_data(obj_res)
+obs_data <- get_data(obj_res)
 
 expect_true(
   current = checkmate::testDataTable(obs_data),

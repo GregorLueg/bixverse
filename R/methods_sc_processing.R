@@ -461,7 +461,7 @@ S7::method(top_genes_perc_sc, SingleCells) <- function(
 
   duckdb_con <- get_sc_duckdb(object)
 
-  duckdb_con$join_data_obs(get_obs_data(res))
+  duckdb_con$join_data_obs(get_data(res))
 
   return(object)
 }
@@ -539,7 +539,7 @@ S7::method(gene_set_proportions_sc, SingleCells) <- function(
 
   duckdb_con <- get_sc_duckdb(object)
 
-  duckdb_con$join_data_obs(get_obs_data(res))
+  duckdb_con$join_data_obs(get_data(res))
 
   return(object)
 }
@@ -734,7 +734,6 @@ S7::method(calculate_pca_sc, SingleCells) <- function(
 # generic found in R/base_generics_sc.R
 # method shared across SingleCells and MetaCells
 
-#' @export
 S7::method(find_neighbours_sc, ScOrMc) <- function(
   object,
   embd_to_use = "pca",
@@ -813,7 +812,6 @@ S7::method(find_neighbours_sc, ScOrMc) <- function(
 # generic found in R/base_generics_sc.R
 # method shared across SingleCells and MetaCells
 
-#' @export
 S7::method(find_clusters_sc, ScOrMc) <- function(
   object,
   cluster_algorithm = c("leiden", "louvain"),

@@ -226,13 +226,13 @@ ggplot(ms_long, aes(x = umap_1, y = umap_2)) +
 ```
 
 Let's imagine you want to add the scores to the internal DB. There are helpers
-for this, too. The `get_obs_data()` helper in combination with ``
+for this, too. The `get_data()` helper in combination with ``
 
 ```{r}
 #| label: add module scores
 sc_object <- add_sc_new_obs(
   object = sc_object,
-  obs_data = get_obs_data(module_scores)
+  obs_data = get_data(module_scores)
 )
 
 sc_object[[1:5]]

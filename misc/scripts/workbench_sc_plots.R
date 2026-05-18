@@ -79,7 +79,7 @@ qc <- run_cell_qc(
 
 
 ## get_sc_obs --> the same naming?
-qc_df <- get_obs_data(qc)
+qc_df <- get_data(qc)
 
 plot_qc_violin(
   df = qc_df,
