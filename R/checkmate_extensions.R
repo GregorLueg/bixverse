@@ -1318,6 +1318,61 @@ checkFastClusterDefaultParams <- function(x) {
   return(TRUE)
 }
 
+#' Check k-means method parameters
+#'
+#' @description Checkmate extension for checking the run parameters of the
+#' k-means clustering methods.
+#'
+#' @param x The list to check/assert
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
+checkKMeansParams <- function(x) {
+  res <- checkmate::checkNames(
+    names(x),
+    must.include = c("k_means_iter", "k_means_init", "gemm", "hamerly")
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- checkmate::qtest(x[["k_means_iter"]], "I1")
+  if (!isTRUE(res)) {
+    return("k_means_iter must be an integer.")
+  }
+
+  # integer rules
+  boolean_null_rules <- list(
+    "gemm" = c("0", "B1"),
+    "hamerly" = c("0", "B1")
+  )
+
+  res <- purrr::imap_lgl(x, \(val, name) {
+    if (name %in% names(boolean_null_rules)) {
+      checkmate::qtest(val, boolean_null_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(
+      paste("'gemm' and 'hamerly' needs to be a boolean or NULL.")
+    )
+  }
+
+  # choice rules
+  res <- checkmate::testChoice(x[["k_means_init"]], c("parallel", "random"))
+
+  if (!isTRUE(res)) {
+    return("'k_means_init' needs to be one of 'parallel' or 'random'.")
+  }
+
+  return(TRUE)
+}
+
 #### synthetic data ------------------------------------------------------------
 
 #' Check synthetic data parameters
@@ -3083,6 +3138,11 @@ checkScHarmonyParams <- function(x) {
     return(res)
   }
 
+  res <- checkKMeansParams(x)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
   res <- checkmate::checkNames(
     names(x),
     must.include = c(
@@ -3222,6 +3282,11 @@ assertScHarmonyParams <- checkmate::makeAssertionFunction(checkScHarmonyParams)
 #' @keywords internal
 checkScHarmonyParamsV2 <- function(x) {
   res <- checkmate::checkList(x)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- checkKMeansParams(x)
   if (!isTRUE(res)) {
     return(res)
   }

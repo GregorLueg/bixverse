@@ -9,7 +9,7 @@
 
 #' Getter the obs table
 #'
-#' @param object `SingleCells`, `MetaCells` (or potentially other) class.
+#' @param object `SingleCells`, `MetaCells`, `SingleCellsMultiModal` class.
 #' @param indices Optional integer vector. The integer positions of the cells
 #' to return.
 #' @param cols Optional string vector. The columns from the obs table to return.
@@ -36,10 +36,11 @@ get_sc_obs <- S7::new_generic(
 
 #' Getter the var table
 #'
-#' @param object `SingleCells`, `MetaCells` (or potentially other) class.
+#' @param object `SingleCells`, `MetaCells`, `SingleCellsMultiModal` class.
 #' @param indices Optional integer vector. The integer positions of the genes
 #' to return.
 #' @param cols Optional string vector. The columns from the var table to return.
+#' @param modality String. The modality to return. One of `c("rna", "adt")`.
 #'
 #' @return The vars table
 #'
@@ -50,7 +51,8 @@ get_sc_var <- S7::new_generic(
   fun = function(
     object,
     indices = NULL,
-    cols = NULL
+    cols = NULL,
+    modality = c("rna", "adt")
   ) {
     S7::S7_dispatch()
   }
@@ -60,7 +62,7 @@ get_sc_var <- S7::new_generic(
 
 #' Getter the counts
 #'
-#' @param object `SingleCells`, `MetaCells` (or potentially other) class.
+#' @param object `SingleCells`, `MetaCells`, `SingleCellsMultiModal` class.
 #' @param assay String. Which slot to return. One of `c("raw", "norm")`.
 #' Defaults to `"raw"`.
 #' @param return_format String. One of `c("cell", "gene")`. Return data in
@@ -323,6 +325,22 @@ get_gene_indices <- function(x, gene_ids, rust_index) {
 #' @export
 get_cell_indices <- function(x, cell_ids, rust_index) {
   UseMethod("get_cell_indices")
+}
+
+#' @title Get the cell idx (R-based) and cell names
+#'
+#' @description
+#' Returns the cell indices (R-based) and the cell names (usually barcodes)
+#' from the object for further downstream usage.
+#'
+#' @param x An object to get the cell info from
+#' @param filtered Boolean. If `TRUE`, only the cells to keep will be returned.
+#'
+#' @returns A named vector with elements -> cell_idx, names -> cell_names.
+#'
+#' @export
+get_cell_info <- function(x, filtered = TRUE) {
+  UseMethod("get_cell_info")
 }
 
 #' @title Get the cells to keep

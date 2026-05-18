@@ -223,10 +223,22 @@ S7::method(`[[`, MetaCells) <- function(x, i, ...) {
 S7::method(get_sc_var, MetaCells) <- function(
   object,
   indices = NULL,
-  cols = NULL
+  cols = NULL,
+  modality = c("rna", "adt")
 ) {
+  modality <- match.arg(modality)
+
   checkmate::assertClass(object, "bixverse::MetaCells")
   checkmate::qassert(indices, c("0", "I+"))
+
+  if (modality != "rna") {
+    stop(
+      paste(
+        "MetaCells only supports modality = 'rna'.",
+        "Use SingleCellsMultiModal for ADT."
+      )
+    )
+  }
 
   var_table <- object@var_table
 

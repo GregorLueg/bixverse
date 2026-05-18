@@ -4,15 +4,17 @@
 \alias{get_sc_var}
 \title{Getter the var table}
 \usage{
-get_sc_var(object, indices = NULL, cols = NULL)
+get_sc_var(object, indices = NULL, cols = NULL, modality = c("rna", "adt"))
 }
 \arguments{
-\item{object}{\code{SingleCells}, \code{MetaCells} (or potentially other) class.}
+\item{object}{\code{SingleCells}, \code{MetaCells}, \code{SingleCellsMultiModal} class.}
 
 \item{indices}{Optional integer vector. The integer positions of the genes
 to return.}
 
 \item{cols}{Optional string vector. The columns from the var table to return.}
+
+\item{modality}{String. The modality to return. One of \code{c("rna", "adt")}.}
 }
 \value{
 The vars table

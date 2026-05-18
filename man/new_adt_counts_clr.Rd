@@ -6,7 +6,7 @@
 \usage{
 new_adt_counts_clr(
   raw_counts,
-  cell_names,
+  cell_info,
   clean_clr_counts = TRUE,
   percentile = 0.01
 )
@@ -14,8 +14,8 @@ new_adt_counts_clr(
 \arguments{
 \item{raw_counts}{Numeric matrix. The raw ADT counts.}
 
-\item{cell_names}{String. The barcodes to keep (from the transcriptomics
-for example.)}
+\item{cell_info}{Named integer vector. Output of \code{\link[=get_cell_info]{get_cell_info()}}. Defines
+as elements the cell indices (R-based) and as names the barcodes.}
 
 \item{clean_clr_counts}{Boolean. Shall the per-protein 1st percentile be
 removed from the CLR normalised counts.}

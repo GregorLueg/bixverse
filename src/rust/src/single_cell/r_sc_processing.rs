@@ -951,7 +951,8 @@ fn rs_sc_knn(
             seed,
             verbosity.normal_verbosity(),
         ),
-    };
+    }
+    .to_extendr()?;
 
     let end_knn = start_knn.elapsed();
 
@@ -1011,7 +1012,8 @@ fn rs_sc_knn_w_dist(
         validate_index,
         seed,
         verbosity.normal_verbosity(),
-    );
+    )
+    .to_extendr()?;
 
     let knn_dist = knn_dist.unwrap();
 
