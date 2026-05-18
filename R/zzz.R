@@ -38,4 +38,9 @@
     "SingleCellFastClusters",
     print.SingleCellFastClusters
   )
+  registerS3method(
+    "print",
+    "ADTCounts",
+    print.ADTCounts
+  )
 }

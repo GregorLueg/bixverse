@@ -207,7 +207,7 @@ fn rs_bbknn(
         .collect::<Vec<usize>>();
 
     let (distances, connectivities) =
-        bbknn(embd.as_ref(), &batch_labels, &bbknn_params, seed, verbose);
+        bbknn(embd.as_ref(), &batch_labels, &bbknn_params, seed, verbose).to_extendr()?;
 
     Ok(list!(
         distances = sparse_data_to_list(distances),
@@ -364,7 +364,8 @@ fn rs_harmony(
         &harmony_params,
         seed,
         verbose,
-    );
+    )
+    .to_extendr()?;
 
     Ok(faer_to_r_matrix(res.as_ref()))
 }
@@ -412,7 +413,8 @@ fn rs_harmony_v2(
         &harmony_params,
         seed,
         verbose,
-    );
+    )
+    .to_extendr()?;
 
     Ok(faer_to_r_matrix(res.as_ref()))
 }

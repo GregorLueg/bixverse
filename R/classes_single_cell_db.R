@@ -106,7 +106,7 @@ SingleCellDuckDBBase <- R6::R6Class(
     },
 
     #' @description
-    #' Returns the full var table from the DuckDB.
+    #' Returns the var table from the DuckDB.
     #'
     #' @param indices Optional gene/var indices.
     #' @param cols Optional column names to return.
@@ -116,6 +116,7 @@ SingleCellDuckDBBase <- R6::R6Class(
     get_vars_table = function(indices = NULL, cols = NULL) {
       # checks
       checkmate::qassert(indices, c("0", "I+"))
+      checkmate::qassert(cols, c("S+", "0"))
       private$check_var_exists()
 
       con <- private$connect_db()
@@ -151,6 +152,55 @@ SingleCellDuckDBBase <- R6::R6Class(
       ))
 
       return(var_dt)
+    },
+
+    #' @description
+    #' Returns the var table specific for the ADTs from the DuckDB.
+    #'
+    #' @param indices Optional ADT/var indices.
+    #' @param cols Optional column names to return.
+    #'
+    #' @return The var adt table (if found) as a data.table with optionally
+    #' selected indices and/or columns.
+    get_vars_adt_table = function(indices = NULL, cols = NULL) {
+      # checks
+      checkmate::qassert(indices, c("0", "I+"))
+      checkmate::qassert(cols, c("S+", "0"))
+      private$check_var_adt_exists()
+
+      con <- private$connect_db()
+      on.exit(
+        {
+          if (exists("con") && !is.null(con)) {
+            tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
+          }
+        }
+      )
+
+      col_part <- if (is.null(cols)) {
+        "*"
+      } else {
+        paste(sprintf('"%s"', cols), collapse = ", ")
+      }
+
+      sql_query <- if (is.null(indices)) {
+        sprintf("SELECT %s FROM var_adt", col_part)
+      } else {
+        placeholders <- paste(rep("?", length(indices)), collapse = ", ")
+        sprintf(
+          "SELECT %s FROM var_adt WHERE gene_idx IN (%s)",
+          col_part,
+          placeholders
+        )
+      }
+
+      var_adt_dt <- data.table::setDT(DBI::dbGetQuery(
+        conn = con,
+        statement = sql_query,
+        params = as.list(indices)
+      ))
+
+      return(var_adt_dt)
     },
 
     #' @description
@@ -693,7 +743,24 @@ SingleCellDuckDBBase <- R6::R6Class(
       res <- "var" %in% DBI::dbGetQuery(con, "SHOW TABLES")[, "name"]
 
       if (!res) {
-        stop("Obs table was not found in the DB.")
+        stop("Var table was not found in the DB.")
+      }
+    },
+    # Helper to check that var table exists
+    check_var_adt_exists = function() {
+      con <- private$connect_db()
+      on.exit(
+        {
+          if (exists("con") && !is.null(con)) {
+            tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
+          }
+        }
+      )
+
+      res <- "var_adt" %in% DBI::dbGetQuery(con, "SHOW TABLES")[, "name"]
+
+      if (!res) {
+        stop("Var table for ADT was not found in the DB.")
       }
     },
     # Check number of rows in the obs table
@@ -1519,8 +1586,6 @@ SingleCellDuckDB <- R6::R6Class(
         var_dt <- var_dt[filter]
       }
 
-      # regenerate feature_idx from row order for contiguous 1-indexed positions
-      var_dt[, feature_idx := .I]
       data.table::setcolorder(
         var_dt,
         c(

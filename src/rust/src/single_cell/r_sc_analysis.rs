@@ -443,7 +443,8 @@ fn rs_vision_with_autocorrelation(
             false,
             seed,
             verbosity.detailed_verbosity(),
-        );
+        )
+        .to_extendr()?;
 
         (knn_indices, knn_dist.unwrap())
     };
@@ -565,7 +566,8 @@ fn rs_hotspot_autocor(
             false,
             seed,
             verbosity.detailed_verbosity(),
-        );
+        )
+        .to_extendr()?;
 
         (knn_indices, knn_dist.unwrap())
     };
@@ -689,7 +691,8 @@ fn rs_hotspot_gene_cor(
             false,
             seed,
             verbosity.detailed_verbosity(),
-        );
+        )
+        .to_extendr()?;
 
         (knn_indices, knn_dist.unwrap())
     };
@@ -800,13 +803,16 @@ fn rs_make_milor_nhoods(
         let index_type =
             parse_index_type(&milor_params.index_type).unwrap_or(KnnIndexType::AnnoyIndex);
 
-        Some(KnnIndex::new(
-            embd.as_ref(),
-            index_type,
-            &milor_params.knn_params,
-            seed,
-            verbosity.detailed_verbosity(),
-        ))
+        Some(
+            KnnIndex::new(
+                embd.as_ref(),
+                index_type,
+                &milor_params.knn_params,
+                seed,
+                verbosity.detailed_verbosity(),
+            )
+            .to_extendr()?,
+        )
     } else {
         None
     };
@@ -834,7 +840,8 @@ fn rs_make_milor_nhoods(
         &refinement_strategy,
         knn_idx.as_ref(),
         verbose,
-    );
+    )
+    .to_extendr()?;
 
     // deduplicate
     let mut unique_indices = indices_refined;

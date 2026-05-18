@@ -154,7 +154,8 @@ fn rs_get_metacells_bootstrapped(
                 false,
                 seed,
                 verbosity.detailed_verbosity(),
-            );
+            )
+            .to_extendr()?;
 
             (subset_to_orig, n_total, knn)
         }
@@ -187,7 +188,8 @@ fn rs_get_metacells_bootstrapped(
                         false,
                         seed,
                         verbosity.detailed_verbosity(),
-                    );
+                    )
+                    .to_extendr()?;
 
                     knn
                 }
@@ -421,7 +423,8 @@ fn rs_get_seacells(
             false,
             seed,
             verbosity.detailed_verbosity(),
-        );
+        )
+        .to_extendr()?;
         let knn_dist = knn_dist.unwrap();
         let dist_squared = seacells_params.knn_params.ann_dist == "euclidean";
 
@@ -683,7 +686,8 @@ fn rs_supercell(
                 false,
                 seed,
                 verbosity.detailed_verbosity(),
-            );
+            )
+            .to_extendr()?;
             let knn_d = knn_d.unwrap();
             let dist_sq = supercell_params.knn_params.ann_dist == "euclidean";
 
@@ -736,7 +740,8 @@ fn rs_supercell(
                     false,
                     seed,
                     verbosity.detailed_verbosity(),
-                );
+                )
+                .to_extendr()?;
                 let knn_d = knn_d.unwrap();
                 let dist_sq = supercell_params.knn_params.ann_dist == "euclidean";
 

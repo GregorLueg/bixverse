@@ -9,8 +9,8 @@
 #' under the hood.
 #'
 #' @param raw_counts Numeric matrix. The raw ADT counts.
-#' @param cell_names String. The barcodes to keep (from the transcriptomics
-#' for example.)
+#' @param cell_info Named integer vector. Output of [get_cell_info()]. Defines
+#' as elements the cell indices (R-based) and as names the barcodes.
 #' @param clean_clr_counts Boolean. Shall the per-protein 1st percentile be
 #' removed from the CLR normalised counts.
 #' @param percentile Numeric. The percentile to remove to reduce background
@@ -21,7 +21,7 @@
 #' @export
 new_adt_counts_clr <- function(
   raw_counts,
-  cell_names,
+  cell_info,
   clean_clr_counts = TRUE,
   percentile = 0.01
 ) {
@@ -32,11 +32,11 @@ new_adt_counts_clr <- function(
     row.names = "named",
     col.names = "named"
   )
-  checkmate::qassert(cell_names, "S+")
+  checkmate::assertInteger(cell_info, names = "named")
   checkmate::qassert(clean_clr_counts, "B1")
   checkmate::qassert(percentile, "N1(0,1)")
 
-  raw_counts <- raw_counts[cell_names, ]
+  raw_counts <- raw_counts[names(cell_info), ]
   norm_counts <- rs_adt_clr(counts = raw_counts)
   colnames(norm_counts) <- colnames(raw_counts)
   rownames(norm_counts) <- rownames(raw_counts)
@@ -52,7 +52,9 @@ new_adt_counts_clr <- function(
     list(
       raw_counts = raw_counts,
       norm_counts = norm_counts,
-      other_data = list()
+      cell_info = cell_info,
+      other_data = list(),
+      type = "CLR"
     ),
     class = "ADTCounts"
   )
@@ -69,8 +71,8 @@ new_adt_counts_clr <- function(
 #'
 #' @param raw_counts Numeric matrix. Cells x proteins matrix of raw ADT counts
 #' with cell barcodes as row names and protein names as column names.
-#' @param cell_names String vector. The barcodes to keep (from the
-#' transcriptomics for example).
+#' @param cell_info Named integer vector. Output of [get_cell_info()]. Defines
+#' as elements the cell indices (R-based) and as names the barcodes.
 #' @param empty_drops Optional numeric matrix. Cells x proteins matrix of
 #' empty-droplet ADT counts. If provided, used to estimate per-protein ambient
 #' background.
@@ -93,7 +95,7 @@ new_adt_counts_clr <- function(
 #' @references Mulè et al., Nat Commun, 2022
 new_adt_counts_dsb <- function(
   raw_counts,
-  cell_names,
+  cell_info,
   empty_drops = NULL,
   isotype_names = NULL,
   dsb_params = params_sc_dsb(),
@@ -110,7 +112,7 @@ new_adt_counts_dsb <- function(
     row.names = "named",
     col.names = "named"
   )
-  checkmate::qassert(cell_names, "S+")
+  checkmate::assertInteger(cell_info, names = "named")
   if (!is.null(empty_drops)) {
     checkmate::assertMatrix(
       empty_drops,
@@ -135,7 +137,7 @@ new_adt_counts_dsb <- function(
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
-  raw_counts <- raw_counts[cell_names, ]
+  raw_counts <- raw_counts[names(cell_info), ]
 
   # resolve isotype names to 0-based column indices
   isotype_indices <- if (is.null(isotype_names)) {
@@ -172,11 +174,95 @@ new_adt_counts_dsb <- function(
     list(
       raw_counts = raw_counts,
       norm_counts = norm_counts,
-      other_data = other_data
+      cell_info = cell_info,
+      other_data = other_data,
+      type = "DSB"
     ),
     class = "ADTCounts"
   )
 }
+
+### methods --------------------------------------------------------------------
+
+#### primitives ----------------------------------------------------------------
+
+#' @export
+print.ADTCounts <- function(x, ...) {
+  cat("ADTCounts\n")
+  cat("  Cells:    ", nrow(x$raw_counts), "\n")
+  cat("  Proteins: ", ncol(x$raw_counts), "\n")
+  cat("  Type:     ", x$type, "\n")
+  invisible(x)
+}
+
+#### getters -------------------------------------------------------------------
+
+#' Get the ADT feature info
+#'
+#' @description
+#' Returns the number of cells expressing a given ADT
+#'
+#' @param x The object from which to get the ADT feature information
+#'
+#' @returns A data.table with the ADT feature information
+#'
+#' @export
+get_adt_feature_info <- function(x) {
+  UseMethod("get_adt_feature_info")
+}
+
+#' @rdname get_adt_feature_info
+#'
+#' @export
+get_adt_feature_info.ADTCounts <- function(x) {
+  # checks
+  checkmate::assertClass(x, "ADTCounts")
+
+  # body
+  raw_counts <- x$raw_counts
+
+  res <- data.table::data.table(
+    feature_idx = seq_along(colnames(raw_counts)),
+    feature_id = colnames(raw_counts),
+    nnz = colSums(raw_counts > 0)
+  )
+
+  return(res)
+}
+
+#' Get the ADT sample info
+#'
+#' @description
+#' Returns sample information in terms of ADT capture, number of features, etc.
+#'
+#' @param x The object from which to get the ADT sample information
+#'
+#' @returns A data.table with the ADT sample information
+#'
+#' @export
+get_adt_sample_info <- function(x) {
+  UseMethod("get_adt_sample_info")
+}
+
+#' @rdname get_adt_sample_info
+#'
+#' @export
+get_adt_sample_info.ADTCounts <- function(x) {
+  # checks
+  checkmate::assertClass(x, "ADTCounts")
+
+  # body
+  res <- data.table::data.table(
+    cell_idx = x$cell_info,
+    adt_nnz = rowSums(x$raw_counts != 0),
+    adt_lib_size = rowSums(x$raw_counts)
+  )
+
+  .add_is_obs_attr(res)
+
+  return(res)
+}
+
 
 # s7 ---------------------------------------------------------------------------
 
@@ -407,6 +493,35 @@ S7::method(print, SingleCellsMultiModal) <- function(x, ...) {
 
 ## methods ---------------------------------------------------------------------
 
+### getters --------------------------------------------------------------------
+
+#' @method get_sc_var SingleCellsMultiModal
+#'
+#' @export
+S7::method(get_sc_var, SingleCellsMultiModal) <- function(
+  object,
+  indices = NULL,
+  cols = NULL,
+  modality = c("rna", "adt")
+) {
+  modality <- match.arg(modality)
+
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  checkmate::qassert(indices, c("0", "I+"))
+  checkmate::assertChoice(modality, c("rna", "adt"))
+
+  duckdb_con <- get_sc_duckdb(object)
+
+  var_table <- switch(
+    modality,
+    rna = duckdb_con$get_vars_table(indices = indices, cols = cols),
+    adt = duckdb_con$get_vars_adt_table(indices = indices, cols = cols)
+  )
+
+  return(var_table)
+}
+
 ### adt ------------------------------------------------------------------------
 
 #### add function --------------------------------------------------------------
@@ -464,28 +579,31 @@ S7::method(add_adt_counts_sc, SingleCellsMultiModal) <- function(
     col.names = "named"
   )
 
-  barcodes <- get_cell_names(object, filtered = TRUE)
-  checkmate::assertSubset(barcodes, rownames(adt_counts))
-  checkmate::assertTRUE(length(barcodes) >= 1)
+  cell_info <- get_cell_info(object, filtered = TRUE)
+  checkmate::assertSubset(names(cell_info), rownames(adt_counts))
+  checkmate::assertTRUE(length(cell_info) >= 1)
 
   adt_obj <- switch(
     method,
     clr = new_adt_counts_clr(
       raw_counts = adt_counts,
-      cell_names = barcodes,
+      cell_info = cell_info,
       ...
     ),
     dsb = new_adt_counts_dsb(
       raw_counts = adt_counts,
-      cell_names = barcodes,
+      cell_info = cell_info,
       ...
     )
   )
 
-  adt_vars <- .generate_adt_var(adt_counts = adt_counts)
+  adt_vars <- get_adt_feature_info(x = adt_obj)
+  adt_obs <- get_adt_sample_info(x = adt_obj)
 
   duckdb_con <- get_sc_duckdb(object)
   duckdb_con$populate_var_adt_from_data.table(var_dt = adt_vars)
+
+  object <- add_sc_new_obs(object, adt_obs)
 
   S7::prop(object, "adt_counts") <- adt_obj
 

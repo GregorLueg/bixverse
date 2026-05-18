@@ -6,7 +6,7 @@
 \usage{
 new_adt_counts_dsb(
   raw_counts,
-  cell_names,
+  cell_info,
   empty_drops = NULL,
   isotype_names = NULL,
   dsb_params = params_sc_dsb(),
@@ -19,8 +19,8 @@ new_adt_counts_dsb(
 \item{raw_counts}{Numeric matrix. Cells x proteins matrix of raw ADT counts
 with cell barcodes as row names and protein names as column names.}
 
-\item{cell_names}{String vector. The barcodes to keep (from the
-transcriptomics for example).}
+\item{cell_info}{Named integer vector. Output of \code{\link[=get_cell_info]{get_cell_info()}}. Defines
+as elements the cell indices (R-based) and as names the barcodes.}
 
 \item{empty_drops}{Optional numeric matrix. Cells x proteins matrix of
 empty-droplet ADT counts. If provided, used to estimate per-protein ambient

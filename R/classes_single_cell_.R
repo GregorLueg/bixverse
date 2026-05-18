@@ -349,6 +349,26 @@ get_cell_names.ScMap <- function(x, filtered = FALSE) {
   return(cell_names)
 }
 
+#' @rdname get_cell_info
+#'
+#' @export
+get_cell_info.ScMap <- function(x, filtered = TRUE) {
+  # checks
+  checkmate::assertClass(x, "ScMap")
+  checkmate::qassert(filtered, "B1")
+
+  cell_mapping <- x[["cell_mapping"]]
+
+  if (filtered) {
+    cells_to_keep <- get_cells_to_keep(x)
+    if (length(cells_to_keep) > 0) {
+      cell_names <- cell_names[cells_to_keep + 1]
+    }
+  }
+
+  return(cell_mapping)
+}
+
 #' @rdname get_hvg
 #'
 #' @export
@@ -743,8 +763,20 @@ S7::method(get_sc_obs, SingleCells) <- function(
 S7::method(get_sc_var, SingleCells) <- function(
   object,
   indices = NULL,
-  cols = NULL
+  cols = NULL,
+  modality = c("rna", "adt")
 ) {
+  modality <- match.arg(modality)
+
+  if (modality != "rna") {
+    stop(
+      paste(
+        "MetaCells only supports modality = 'rna'.",
+        "Use SingleCellsMultiModal for ADT."
+      )
+    )
+  }
+
   # checks
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::qassert(indices, c("0", "I+"))
@@ -1149,13 +1181,32 @@ S7::method(get_cell_names, SingleCells) <- function(
   # checks
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
 
-  # add the data using the S3 method
   cell_names <- get_cell_names(
     x = S7::prop(x, "sc_map"),
     filtered = filtered
   )
 
   return(cell_names)
+}
+
+#' @name get_cell_info.SingleCells
+#'
+#' @rdname get_cell_info
+#'
+#' @method get_cell_info SingleCells
+S7::method(get_cell_info, SingleCells) <- function(
+  x,
+  filtered = TRUE
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
+
+  cell_info <- get_cell_info(
+    x = S7::prop(x, "sc_map"),
+    filtered = filtered
+  )
+
+  return(cell_info)
 }
 
 #' @name get_gene_names.SingleCells
