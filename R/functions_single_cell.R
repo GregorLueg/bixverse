@@ -224,6 +224,9 @@ run_cell_qc <- function(
     directions <- setNames(rep("twosided", length(metrics)), names(metrics))
   }
 
+  # additional check
+  checkmate::assertNames(names(directions), must.include = names(metrics))
+
   group_levels <- unique(groups)
 
   results <- Map(

@@ -57,6 +57,7 @@ pub use single_cell::r_sc_analysis;
 pub use single_cell::r_sc_batch_corr;
 pub use single_cell::r_sc_data;
 pub use single_cell::r_sc_metacells;
+pub use single_cell::r_sc_multimodal;
 pub use single_cell::r_sc_plot_extraction;
 pub use single_cell::r_sc_processing;
 
@@ -121,4 +122,5 @@ extendr_module! {
 
     // multi-modal
     use r_sc_adt;
+    use r_sc_multimodal;
 }
