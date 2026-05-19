@@ -36,7 +36,7 @@ consider during the Limma Voom modelling.}
 \item{quantile_norm}{Boolean. Shall the data also be quantile normalised.
 Defaults to \code{FALSE}.}
 
-\item{...}{Additional parameters to forward to \code{\link[limma:eBayes]{limma::eBayes()}} or
+\item{...}{Additional parameters to forward to \code{\link[limma:ebayes]{limma::eBayes()}} or
 \code{\link[limma:voom]{limma::voom()}}.}
 
 \item{.verbose}{Controls verbosity of the function.}

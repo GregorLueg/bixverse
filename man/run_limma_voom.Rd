@@ -34,13 +34,13 @@ during model fitting.}
 \item{quantile_norm}{Boolean. Shall the counts be also quantile-normalised.
 Defaults to \code{FALSE}.}
 
-\item{...}{Additional parameters to forward to \code{\link[limma:eBayes]{limma::eBayes()}} or
+\item{...}{Additional parameters to forward to \code{\link[limma:ebayes]{limma::eBayes()}} or
 \code{\link[limma:voom]{limma::voom()}}.}
 
 \item{.verbose}{Boolean. Controls verbosity of the function.}
 }
 \value{
-A data.table with all the DGE results from \code{\link[limma:topTable]{limma::topTable()}} for
+A data.table with all the DGE results from \code{\link[limma:toptable]{limma::topTable()}} for
 the identified contrast pairs.
 }
 \description{

@@ -806,7 +806,7 @@ rs_simulate_dropouts <- function(count_mat, dropout_function, dropout_midpoint, 
 #' }
 #'
 #' @export
-rs_h5ad_data <- function(f_path, cs_type, nrows, ncols, cell_quality, verbose) .Call(wrap__rs_h5ad_data, f_path, cs_type, nrows, ncols, cell_quality, verbose)
+rs_h5ad_data <- function(f_path, cs_type, nrows, ncols, cell_quality, slot, verbose) .Call(wrap__rs_h5ad_data, f_path, cs_type, nrows, ncols, cell_quality, slot, verbose)
 
 #' Calculates the traditional GSEA enrichment score
 #'
@@ -3542,6 +3542,7 @@ rs_dsb <- function(raw_counts, background_counts, isotype_indices, dsb_params, s
 #'\item{`no_cells`}{(`integer`)\cr Number of cells in the h5ad file.}
 #'\item{`no_genes`}{(`integer`)\cr Number of genes in the h5ad file.}
 #'\item{`qc_params`}{(`list`)\cr Quality control parameters parseable into `MinCellQuality`.}
+#'\item{`slot`}{(`character`)\cr Where to find the raw counts. One of `"X"` or `"raw.X"` (for CellXGene data).}
 #'\item{`verbose`}{(`logical`)\cr Controls verbosity of the function. }
 #'}}
 #' \subsection{return}{
@@ -3586,6 +3587,7 @@ rs_dsb <- function(raw_counts, background_counts, isotype_indices, dsb_params, s
 #'\item{`no_cells`}{(`integer`)\cr Number of cells in the h5 file.}
 #'\item{`no_genes`}{(`integer`)\cr Number of genes in the h5 file.}
 #'\item{`qc_params`}{(`list`)\cr Quality control parameters parseable into `MinCellQuality`.}
+#'\item{`slot`}{(`character`)\cr Where to find the raw counts. One of `"X"` or `"raw.X"` (for CellXGene data).}
 #'\item{`verbose`}{(`logical`)\cr Controls verbosity of the function. }
 #'}}
 #' \subsection{description}{
@@ -3818,11 +3820,11 @@ SingleCellCountData$set_from_file <- function() .Call(wrap__SingleCellCountData_
 
 SingleCellCountData$r_data_to_file <- function(r_data, qc_params, verbose) .Call(wrap__SingleCellCountData__r_data_to_file, self, r_data, qc_params, verbose)
 
-SingleCellCountData$h5ad_to_file <- function(cs_type, h5_path, no_cells, no_genes, qc_params, verbose) .Call(wrap__SingleCellCountData__h5ad_to_file, self, cs_type, h5_path, no_cells, no_genes, qc_params, verbose)
+SingleCellCountData$h5ad_to_file <- function(cs_type, h5_path, no_cells, no_genes, qc_params, slot, verbose) .Call(wrap__SingleCellCountData__h5ad_to_file, self, cs_type, h5_path, no_cells, no_genes, qc_params, slot, verbose)
 
 SingleCellCountData$norm_h5ad_to_file <- function(cs_type, h5_path, no_cells, no_genes, obs_lib_size_col, target_size, qc_params, verbose) .Call(wrap__SingleCellCountData__norm_h5ad_to_file, self, cs_type, h5_path, no_cells, no_genes, obs_lib_size_col, target_size, qc_params, verbose)
 
-SingleCellCountData$h5ad_to_file_streaming <- function(cs_type, h5_path, no_cells, no_genes, qc_params, verbose) .Call(wrap__SingleCellCountData__h5ad_to_file_streaming, self, cs_type, h5_path, no_cells, no_genes, qc_params, verbose)
+SingleCellCountData$h5ad_to_file_streaming <- function(cs_type, h5_path, no_cells, no_genes, qc_params, slot, verbose) .Call(wrap__SingleCellCountData__h5ad_to_file_streaming, self, cs_type, h5_path, no_cells, no_genes, qc_params, slot, verbose)
 
 SingleCellCountData$multi_h5ad_to_file <- function(file_tasks, universe_size, qc_params, verbose) .Call(wrap__SingleCellCountData__multi_h5ad_to_file, self, file_tasks, universe_size, qc_params, verbose)
 

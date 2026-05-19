@@ -522,7 +522,7 @@ S7::method(load_r_data, SingleCells) <- function(
 
 ### h5ad -----------------------------------------------------------------------
 
-#### fast ----------------------------------------------------------------------
+#### general -------------------------------------------------------------------
 
 #' Load in h5ad to `SingleCells`
 #'
@@ -551,6 +551,8 @@ S7::method(load_r_data, SingleCells) <- function(
 #' (fastest, highest memory), `1L` -> light streaming with cell batching, `2L`
 #' -> heavy streaming with memory upper boundaries on the gene side. Controls
 #' memory pressure during the CSR-to-CSC conversion. Defaults to `1L`.
+#' @param raw_count_slot String. One of `c("X", "raw.X")`. Where to find the
+#' raw counts.
 #' @param batch_size Integer. Cell batch size when `streaming = 1L`. Defaults
 #' to `1000L`.
 #' @param max_genes_in_memory Integer. Maximum genes held in memory at once
@@ -571,6 +573,7 @@ load_h5ad <- S7::new_generic(
     h5_path,
     sc_qc_param = params_sc_min_quality(),
     streaming = 1L,
+    raw_count_slot = c("X", "raw.X"),
     cell_id_col = NULL,
     batch_size = 1000L,
     max_genes_in_memory = 2000L,
@@ -592,17 +595,24 @@ S7::method(load_h5ad, SingleCells) <- function(
   h5_path,
   sc_qc_param = params_sc_min_quality(),
   streaming = 1L,
+  raw_count_slot = c("X", "raw.X"),
   cell_id_col = NULL,
   batch_size = 1000L,
   max_genes_in_memory = 2000L,
   cell_batch_size = 100000L,
   .verbose = TRUE
 ) {
+  raw_count_slot <- match.arg(raw_count_slot)
+
   # checks
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   assertScMinQC(sc_qc_param)
   checkmate::qassert(streaming, "I1")
   checkmate::assertTRUE(streaming %in% c(0L, 1L, 2L))
+  checkmate::assertChoice(raw_count_slot, c("X", "raw.X"))
+  checkmate::qassert(batch_size, "I1")
+  checkmate::qassert(max_genes_in_memory, "I1")
+  checkmate::qassert(cell_batch_size, "I1")
   checkmate::qassert(.verbose, "B1")
 
   h5_path <- path.expand(h5_path)
@@ -617,6 +627,7 @@ S7::method(load_h5ad, SingleCells) <- function(
     no_cells = h5_meta$dims["obs"],
     no_genes = h5_meta$dims["var"],
     qc_params = sc_qc_param,
+    slot = raw_count_slot,
     verbose = .verbose
   )
 
@@ -823,6 +834,8 @@ S7::method(load_h5ad_norm, SingleCells) <- function(
 #' @param object `SingleCells` class.
 #' @param h5_path File path to the h5ad object.
 #' @param sc_qc_param List. Output of [bixverse::params_sc_min_quality()].
+#' @param raw_count_slot String. One of `c("X", "raw.X")`. Where to find the
+#' raw counts.
 #' @param max_genes_in_memory Integer. Genes held in memory at once. Defaults
 #' to `2000L`.
 #' @param cell_batch_size Integer. Cell batch size. Defaults to `100000L`.
@@ -838,6 +851,7 @@ stream_h5ad <- S7::new_generic(
     object,
     h5_path,
     sc_qc_param = params_sc_min_quality(),
+    raw_count_slot = c("X", "raw.X"),
     max_genes_in_memory = 2000L,
     cell_batch_size = 100000L,
     .verbose = TRUE
@@ -853,6 +867,7 @@ S7::method(stream_h5ad, SingleCells) <- function(
   object,
   h5_path,
   sc_qc_param = params_sc_min_quality(),
+  raw_count_slot = c("X", "raw.X"),
   max_genes_in_memory = 2000L,
   cell_batch_size = 100000L,
   .verbose = TRUE
@@ -861,6 +876,7 @@ S7::method(stream_h5ad, SingleCells) <- function(
     object = object,
     h5_path = h5_path,
     sc_qc_param = sc_qc_param,
+    raw_count_slot = raw_count_slot,
     streaming = 2L,
     max_genes_in_memory = max_genes_in_memory,
     cell_batch_size = cell_batch_size,

@@ -65,6 +65,7 @@ prescan_h5ad_files <- function(
   h5_paths,
   gene_universe = c("intersection", "union"),
   var_index = "_index",
+  raw_count_slot = c("X", "raw.X"),
   .verbose = TRUE
 ) {
   # checks
@@ -108,7 +109,8 @@ prescan_h5ad_files <- function(
       cs_type = meta$type,
       no_cells = meta$dims[["obs"]],
       no_genes = meta$dims[["var"]],
-      gene_names = gene_names
+      gene_names = gene_names,
+      raw_slot = raw_count_slot
     )
 
     if (.verbose) {

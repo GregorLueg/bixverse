@@ -9,9 +9,6 @@
 get_cell_info(x, filtered = TRUE)
 
 \method{get_cell_info}{ScMap}(x, filtered = TRUE)
-
-## S7 method for class <bixverse::SingleCells>
-get_cell_info(x, filtered = TRUE)
 }
 \arguments{
 \item{x}{An object to get the cell info from}

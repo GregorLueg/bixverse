@@ -3,10 +3,6 @@
 \name{print.MetaCells}
 \alias{print.MetaCells}
 \title{print Method for MetaCells object}
-\usage{
-## S7 method for class <bixverse::MetaCells>
-print(x, ...)
-}
 \arguments{
 \item{x}{An object of class \code{MetaCells}.}
 

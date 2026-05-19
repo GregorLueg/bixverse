@@ -8,6 +8,7 @@ prescan_h5ad_files(
   h5_paths,
   gene_universe = c("intersection", "union"),
   var_index = "_index",
+  raw_count_slot = c("X", "raw.X"),
   .verbose = TRUE
 )
 }

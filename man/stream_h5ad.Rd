@@ -8,6 +8,7 @@ stream_h5ad(
   object,
   h5_path,
   sc_qc_param = params_sc_min_quality(),
+  raw_count_slot = c("X", "raw.X"),
   max_genes_in_memory = 2000L,
   cell_batch_size = 100000L,
   .verbose = TRUE
@@ -19,6 +20,9 @@ stream_h5ad(
 \item{h5_path}{File path to the h5ad object.}
 
 \item{sc_qc_param}{List. Output of \code{\link[=params_sc_min_quality]{params_sc_min_quality()}}.}
+
+\item{raw_count_slot}{String. One of \code{c("X", "raw.X")}. Where to find the
+raw counts.}
 
 \item{max_genes_in_memory}{Integer. Genes held in memory at once. Defaults
 to \code{2000L}.}

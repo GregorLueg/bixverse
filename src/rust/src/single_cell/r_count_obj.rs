@@ -11,10 +11,6 @@ use bixverse_rs::single_cell::sc_data::{
     r_obj_io::*,
 };
 
-// Extendr unfortunately cannot do Roxygen2 manipulation of R6 type
-// classes. This will have to be done manually in R... Documentation
-// still here to make it easier.
-
 /////////////
 // extendR //
 /////////////
@@ -103,6 +99,17 @@ impl AssayData {
 /////////////
 
 /// Retrieve cell data for a given assay type
+///
+/// ### Params
+///
+/// * `indices` - The indices for which cells to return the data
+/// * `data_raw` - The raw counts.
+/// * `data_norm` - The normalised counts.
+/// * `assay_type` - Which assay type to return, see [AssayType]
+///
+/// ### Returns
+///
+/// A tuple of indices and the assay data.
 fn get_cell_data(
     indices: &[u32],
     data_raw: &RawCounts,
@@ -129,6 +136,17 @@ fn get_cell_data(
 }
 
 /// Retrieve gene data for a given assay type
+///
+/// ### Params
+///
+/// * `indices` - The indices for which genes to return the data
+/// * `data_raw` - The raw counts.
+/// * `data_norm` - The normalised counts.
+/// * `assay_type` - Which assay type to return, see [AssayType]
+///
+/// ### Returns
+///
+/// A tuple of indices and the assay data.
 fn get_gene_data(
     indices: &[u32],
     data_raw: &RawCounts,
@@ -334,11 +352,15 @@ impl SingleCellCountData {
     /// Number of genes in the h5ad file.
     /// @param qc_params (`list`)\cr
     /// Quality control parameters parseable into `MinCellQuality`.
+    /// @param slot (`character`)\cr
+    /// Where to find the raw counts. One of `"X"` or `"raw.X"` (for CellXGene
+    /// data).
     /// @param verbose (`logical`)\cr
     /// Controls verbosity of the function.
     ///
     /// @return A list with `cell_indices`, `gene_indices`, `lib_size` and
     /// `nnz`.
+    #[allow(clippy::too_many_arguments)]
     pub fn h5ad_to_file(
         &mut self,
         cs_type: String,
@@ -346,9 +368,18 @@ impl SingleCellCountData {
         no_cells: usize,
         no_genes: usize,
         qc_params: List,
+        slot: String,
         verbose: bool,
     ) -> extendr_api::Result<List> {
         let qc_params = MinCellQuality::from_r_list(qc_params)?;
+
+        let raw_slot = parse_raw_slot(&slot).unwrap_or_else(|| {
+            println!(
+                "The provided string ({:?}) could not be matched. Defaulting to X",
+                slot
+            );
+            RawDataSlot::default()
+        });
 
         let (no_cells, no_genes, cell_qc) = write_h5_counts(
             &h5_path,
@@ -357,6 +388,7 @@ impl SingleCellCountData {
             no_cells,
             no_genes,
             qc_params,
+            raw_slot,
             verbose,
         )
         .to_extendr()?;
@@ -453,11 +485,15 @@ impl SingleCellCountData {
     /// Number of genes in the h5 file.
     /// @param qc_params (`list`)\cr
     /// Quality control parameters parseable into `MinCellQuality`.
+    /// @param slot (`character`)\cr
+    /// Where to find the raw counts. One of `"X"` or `"raw.X"` (for CellXGene
+    /// data).
     /// @param verbose (`logical`)\cr
     /// Controls verbosity of the function.
     ///
     /// @return A list with `cell_indices`, `gene_indices`, `lib_size` and
     /// `nnz`.
+    #[allow(clippy::too_many_arguments)]
     pub fn h5ad_to_file_streaming(
         &mut self,
         cs_type: String,
@@ -465,9 +501,18 @@ impl SingleCellCountData {
         no_cells: usize,
         no_genes: usize,
         qc_params: List,
+        slot: String,
         verbose: bool,
     ) -> extendr_api::Result<List> {
         let qc_params = MinCellQuality::from_r_list(qc_params)?;
+
+        let raw_slot = parse_raw_slot(&slot).unwrap_or_else(|| {
+            println!(
+                "The provided string ({:?}) could not be matched. Defaulting to X",
+                slot
+            );
+            RawDataSlot::default()
+        });
 
         let (no_cells, no_genes, cell_qc) = stream_h5_counts(
             &h5_path,
@@ -476,6 +521,7 @@ impl SingleCellCountData {
             no_cells,
             no_genes,
             qc_params,
+            raw_slot,
             verbose,
         )
         .to_extendr()?;

@@ -10,13 +10,7 @@
 \usage{
 get_pca_factors(x, ...)
 
-## S7 method for class <bixverse::MetaCells>
-get_pca_factors(x, ...)
-
 \method{get_pca_factors}{ScCache}(x)
-
-## S7 method for class <bixverse::SingleCells>
-get_pca_factors(x, ...)
 }
 \arguments{
 \item{x}{An object to get PCA factors from.}

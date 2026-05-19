@@ -3,10 +3,6 @@
 \name{print.GeneOntologyElim}
 \alias{print.GeneOntologyElim}
 \title{print Method for GeneOntologyElim object}
-\usage{
-## S7 method for class <bixverse::GeneOntologyElim>
-print(x, ...)
-}
 \arguments{
 \item{x}{An object of class \code{GeneOntologyElim}, see
 \code{\link[=GeneOntologyElim]{GeneOntologyElim()}}.}
