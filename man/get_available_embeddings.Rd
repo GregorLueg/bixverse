@@ -14,6 +14,8 @@ get_available_embeddings(x, ...)
 }
 \arguments{
 \item{x}{An object to get embedding from}
+
+\item{...}{Other parameters.}
 }
 \value{
 Get the names of the available embeddings.

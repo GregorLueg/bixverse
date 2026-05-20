@@ -3768,6 +3768,77 @@ checkScFastCluster <- function(x) {
 #' @keywords internal
 assertScFastCluster <- checkmate::makeAssertionFunction(checkScFastCluster)
 
+#### sc type -------------------------------------------------------------------
+
+#' Check cell marker list
+#'
+#' @description Checkmate extension for checking a cell marker list as returned
+#' by [prepare_cell_markers()].
+#'
+#' @param x The list to check.
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
+checkCellMarkerList <- function(x) {
+  res <- checkmate::checkList(x, names = "named", min.len = 1)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  for (nm in names(x)) {
+    entry <- x[[nm]]
+
+    res <- checkmate::checkList(entry, names = "named", len = 3)
+    if (!isTRUE(res)) {
+      return(sprintf("Entry '%s': %s", nm, res))
+    }
+
+    res <- checkmate::checkNames(
+      names(entry),
+      must.include = c("cell_type", "positive_indices", "negative_indices")
+    )
+    if (!isTRUE(res)) {
+      return(sprintf("Entry '%s': %s", nm, res))
+    }
+
+    res <- checkmate::checkString(entry$cell_type, min.chars = 1)
+    if (!isTRUE(res)) {
+      return(sprintf("Entry '%s' cell_type: %s", nm, res))
+    }
+
+    res <- checkmate::checkIntegerish(entry$positive_indices, min.len = 1)
+    if (!isTRUE(res)) {
+      return(sprintf("Entry '%s' positive_indices: %s", nm, res))
+    }
+
+    if (!is.null(entry$negative_indices)) {
+      res <- checkmate::checkIntegerish(entry$negative_indices, min.len = 1)
+      if (!isTRUE(res)) {
+        return(sprintf("Entry '%s' negative_indices: %s", nm, res))
+      }
+    }
+  }
+
+  return(TRUE)
+}
+
+#' Assert cell marker list
+#'
+#' @description Checkmate extension for asserting a cell marker list as returned
+#' by [prepare_cell_markers()].
+#'
+#' @param x The list to assert.
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns \code{x} if the assertion is successful.
+#'
+#' @keywords internal
+assertCellMarkerList <- checkmate::makeAssertionFunction(checkCellMarkerList)
+
 ### single cells (multi modal) -------------------------------------------------
 
 #### dsb count normalisation ---------------------------------------------------
@@ -3914,3 +3985,151 @@ checkScDsbParams <- function(x) {
 #'
 #' @keywords internal
 assertScDsbParams <- checkmate::makeAssertionFunction(checkScDsbParams)
+
+#### wnn -----------------------------------------------------------------------
+
+#' Check WNN parameters
+#'
+#' @description Checkmate extension for checking WNN parameters.
+#'
+#' @param x The list to check/assert.
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
+checkScWnnParams <- function(x) {
+  res <- checkmate::checkList(x)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- checkKnnParams(x)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- checkmate::checkNames(
+    names(x),
+    must.include = c(
+      "k_nn",
+      "knn_range",
+      "sigma_method",
+      "sigma_idx",
+      "snn_type",
+      "s_nn",
+      "sd_scale",
+      "kernel_power",
+      "cross_const",
+      "sigma_floor"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  # Integer rules
+  integer_rules <- list(
+    "k_nn" = "I1[1,)",
+    "knn_range" = "I1[1,)",
+    "sigma_idx" = "I1[0,)",
+    "s_nn" = "I1[1,)"
+  )
+
+  res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(integer_rules)) {
+      checkmate::qtest(x, integer_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(
+      sprintf(
+        paste(
+          "The following element `%s` in WNN parameters is incorrect:",
+          "k_nn, knn_range, and s_nn must be integers >= 1;",
+          "sigma_idx must be an integer >= 0."
+        ),
+        broken_elem
+      )
+    )
+  }
+
+  # Scalar numeric rules
+  scalar_rules <- list(
+    "sd_scale" = "N1(0,)",
+    "kernel_power" = "N1(0,)",
+    "cross_const" = "N1[0,)",
+    "sigma_floor" = "N1(0,)"
+  )
+
+  res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(scalar_rules)) {
+      checkmate::qtest(x, scalar_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(
+      sprintf(
+        paste(
+          "The following element `%s` in WNN parameters is incorrect:",
+          "sd_scale, kernel_power, and sigma_floor must be > 0;",
+          "cross_const must be >= 0."
+        ),
+        broken_elem
+      )
+    )
+  }
+
+  # String choice rules
+  choice_rules <- list(
+    "sigma_method" = c("snn_farthest", "sigma_idx"),
+    "snn_type" = c("full_connection", "limited")
+  )
+
+  res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(choice_rules)) {
+      checkmate::testChoice(x, choice_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(
+      sprintf(
+        paste(
+          "The following element `%s` in WNN parameters is incorrect:",
+          "sigma_method must be one of c('snn_farthest', 'sigma_idx');",
+          "snn_type must be one of c('full_connection', 'limited')."
+        ),
+        broken_elem
+      )
+    )
+  }
+
+  return(TRUE)
+}
+
+#' Assert WNN parameters
+#'
+#' @description Checkmate extension for asserting the WNN parameters.
+#'
+#' @inheritParams checkScWnnParams
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
+assertScWnnParams <- checkmate::makeAssertionFunction(checkScWnnParams)

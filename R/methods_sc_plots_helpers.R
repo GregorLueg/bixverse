@@ -8,17 +8,18 @@
 #'
 #' @param x `SingleCells`, `MetaCells` object from which to extract the kNN
 #' data.
+#' @param modality String. One of `c("rna", "adt")`.
 #'
 #' @returns The manifoldsR `NearestNeigbours` if possible
 #'
 #' @keywords internal
-.get_manifoldsr_knn <- function(x) {
-  # checks
+.get_manifoldsr_knn <- function(x, modality = c("rna", "adt")) {
+  modality <- match.arg(modality)
   checkmate::assertTRUE(
     S7::S7_inherits(x, SingleCells) || S7::S7_inherits(x, MetaCells)
   )
 
-  knn_obj <- get_knn_obj(x)
+  knn_obj <- get_knn_obj(x, modality = modality)
   if (is.null(knn_obj)) {
     warning(paste(
       "No kNN data found.",
@@ -29,6 +30,13 @@
   manifold_nn <- sc_knn_to_nearest_neighbours(knn_obj)
 
   return(manifold_nn)
+}
+
+#' Placeholder: manifoldsR nearest neighbours from a WNN graph
+#'
+#' @keywords internal
+.get_manifoldsr_knn_from_wnn <- function(x) {
+  stop("WNN-based neighbours are not yet implemented.")
 }
 
 ### umap -----------------------------------------------------------------------
@@ -67,6 +75,9 @@
 #' Defaults to `"umap"`.
 #' @param no_embd_to_use Optional integer. Number of embedding dimensions to
 #' use. If `NULL` all will be used.
+#' @param modality String. On which modality to run the UMAP. One of
+#' `c("rna", "adt", "wnn")`. The two latter options are only available for
+#' multi-modal versions with the added data.
 #' @param n_dim Integer. Number of UMAP dimensions. Defaults to `2L`.
 #' @param k Integer. Number of nearest neighbours. Defaults to `15L`.
 #' @param min_dist Numeric. Minimum distance between embedded points. Defaults
@@ -91,6 +102,7 @@ umap_sc <- S7::new_generic(
     embd_to_use = "pca",
     slot_name = "umap",
     no_embd_to_use = NULL,
+    modality = c("rna", "adt", "wnn"),
     n_dim = 2L,
     k = 15L,
     min_dist = 0.5,
@@ -118,6 +130,7 @@ S7::method(umap_sc, ScOrMc) <- function(
   embd_to_use = "pca",
   slot_name = "umap",
   no_embd_to_use = NULL,
+  modality = c("rna", "adt", "wnn"),
   n_dim = 2L,
   k = 15L,
   min_dist = 0.5,
@@ -135,6 +148,8 @@ S7::method(umap_sc, ScOrMc) <- function(
   seed = 42L,
   .verbose = TRUE
 ) {
+  modality <- match.arg(modality)
+
   # checks
   checkmate::assertTRUE(
     S7::S7_inherits(object, SingleCells) || S7::S7_inherits(object, MetaCells)
@@ -151,16 +166,34 @@ S7::method(umap_sc, ScOrMc) <- function(
   checkmate::qassert(.verbose, "B1")
   knn_method <- match.arg(knn_method)
 
+  if (modality != "rna" && !S7::S7_inherits(object, SingleCellsMultiModal)) {
+    stop(sprintf(
+      "modality = '%s' is only supported for SingleCellsMultiModal.",
+      modality
+    ))
+  }
+
+  # wnn takes the integrated graph; embeddings still read/write the rna cache
+  cache_modality <- if (modality == "wnn") "rna" else modality
+
   # get the knn
-  knn <- if (use_knn) {
-    .get_manifoldsr_knn(x = object)
+  knn <- if (modality == "wnn") {
+    .get_manifoldsr_knn_from_wnn(x = object)
+  } else if (use_knn) {
+    .get_manifoldsr_knn(x = object, modality = modality)
   } else {
     NULL
   }
 
   # get the embedding
-  checkmate::assertTRUE(embd_to_use %in% get_available_embeddings(object))
-  embd <- get_embedding(x = object, embd_name = embd_to_use)
+  checkmate::assertTRUE(
+    embd_to_use %in% get_available_embeddings(object, modality = cache_modality)
+  )
+  embd <- get_embedding(
+    x = object,
+    embd_name = embd_to_use,
+    modality = cache_modality
+  )
 
   if (!is.null(no_embd_to_use)) {
     to_take <- min(c(no_embd_to_use, ncol(embd)))
@@ -186,7 +219,12 @@ S7::method(umap_sc, ScOrMc) <- function(
   )
 
   colnames(umap_embd) <- sprintf("umap_%s", seq_len(ncol(umap_embd)))
-  object <- set_embedding(x = object, embd = umap_embd, name = slot_name)
+  object <- set_embedding(
+    x = object,
+    embd = umap_embd,
+    name = slot_name,
+    modality = cache_modality
+  )
 
   return(object)
 }
@@ -228,6 +266,9 @@ S7::method(umap_sc, ScOrMc) <- function(
 #' Defaults to `"tsne"`.
 #' @param no_embd_to_use Optional integer. Number of embedding dimensions to
 #' use. If `NULL` all will be used.
+#' @param modality String. On which modality to run the UMAP. One of
+#' `c("rna", "adt", "wnn")`. The two latter options are only available for
+#' multi-modal versions with the added data.
 #' @param n_dim Integer. Number of t-SNE dimensions. Currently only `2L` is
 #' supported. Defaults to `2L`.
 #' @param perplexity Numeric. Perplexity parameter. Typical values between 5
@@ -253,6 +294,7 @@ tsne_sc <- S7::new_generic(
     embd_to_use = "pca",
     slot_name = "tsne",
     no_embd_to_use = NULL,
+    modality = c("rna", "adt", "wnn"),
     n_dim = 2L,
     perplexity = 10.0,
     approx_type = c("bh", "fft"),
@@ -279,6 +321,7 @@ S7::method(tsne_sc, ScOrMc) <- function(
   embd_to_use = "pca",
   slot_name = "tsne",
   no_embd_to_use = NULL,
+  modality = c("rna", "adt", "wnn"),
   n_dim = 2L,
   perplexity = 10.0,
   approx_type = c("bh", "fft"),
@@ -295,6 +338,8 @@ S7::method(tsne_sc, ScOrMc) <- function(
   seed = 42L,
   .verbose = TRUE
 ) {
+  modality <- match.arg(modality)
+
   # checks
   checkmate::assertTRUE(
     S7::S7_inherits(object, SingleCells) || S7::S7_inherits(object, MetaCells)
@@ -309,16 +354,33 @@ S7::method(tsne_sc, ScOrMc) <- function(
   approx_type <- match.arg(approx_type)
   knn_method <- match.arg(knn_method)
 
+  if (modality != "rna" && !S7::S7_inherits(object, SingleCellsMultiModal)) {
+    stop(sprintf(
+      "modality = '%s' is only supported for SingleCellsMultiModal.",
+      modality
+    ))
+  }
+
+  cache_modality <- if (modality == "wnn") "rna" else modality
+
   # get the knn
-  knn <- if (use_knn) {
-    .get_manifoldsr_knn(x = object)
+  knn <- if (modality == "wnn") {
+    .get_manifoldsr_knn_from_wnn(x = object)
+  } else if (use_knn) {
+    .get_manifoldsr_knn(x = object, modality = modality)
   } else {
     NULL
   }
 
   # get the embedding
-  checkmate::assertTRUE(embd_to_use %in% get_available_embeddings(object))
-  embd <- get_embedding(x = object, embd_name = embd_to_use)
+  checkmate::assertTRUE(
+    embd_to_use %in% get_available_embeddings(object, modality = cache_modality)
+  )
+  embd <- get_embedding(
+    x = object,
+    embd_name = embd_to_use,
+    modality = cache_modality
+  )
 
   if (!is.null(no_embd_to_use)) {
     to_take <- min(c(no_embd_to_use, ncol(embd)))
@@ -343,7 +405,12 @@ S7::method(tsne_sc, ScOrMc) <- function(
   )
 
   colnames(tsne_embd) <- sprintf("tsne_%s", seq_len(ncol(tsne_embd)))
-  object <- set_embedding(x = object, embd = tsne_embd, name = slot_name)
+  object <- set_embedding(
+    x = object,
+    embd = tsne_embd,
+    name = slot_name,
+    modality = cache_modality
+  )
 
   return(object)
 }
@@ -378,9 +445,12 @@ S7::method(tsne_sc, ScOrMc) <- function(
 #' @param embd_to_use String. The embedding to use for PHATE. Must be available
 #' in the object.
 #' @param slot_name String. The name of this embedding within the object.
-#' Defaults to `"phase"`.
+#' Defaults to `"phate"`.
 #' @param no_embd_to_use Optional integer. Number of embedding dimensions to
 #' use. If `NULL` all will be used.
+#' @param modality String. On which modality to run the UMAP. One of
+#' `c("rna", "adt", "wnn")`. The two latter options are only available for
+#' multi-modal versions with the added data.
 #' @param n_dim Integer. Number of PHATE dimensions. Currently only `2L` is
 #' supported. Defaults to `2L`.
 #' @param k Integer. Number of nearest neighbours for graph construction.
@@ -404,6 +474,7 @@ phate_sc <- S7::new_generic(
     embd_to_use = "pca",
     slot_name = "phate",
     no_embd_to_use = NULL,
+    modality = c("rna", "adt", "wnn"),
     n_dim = 2L,
     k = 5L,
     knn_method = c(
@@ -429,6 +500,7 @@ S7::method(phate_sc, ScOrMc) <- function(
   embd_to_use = "pca",
   slot_name = "phate",
   no_embd_to_use = NULL,
+  modality = c("rna", "adt", "wnn"),
   n_dim = 2L,
   k = 5L,
   knn_method = c(
@@ -444,6 +516,8 @@ S7::method(phate_sc, ScOrMc) <- function(
   seed = 42L,
   .verbose = TRUE
 ) {
+  modality <- match.arg(modality)
+
   # checks
   checkmate::assertTRUE(
     S7::S7_inherits(object, SingleCells) || S7::S7_inherits(object, MetaCells)
@@ -457,16 +531,33 @@ S7::method(phate_sc, ScOrMc) <- function(
   checkmate::qassert(.verbose, "B1")
   knn_method <- match.arg(knn_method)
 
+  if (modality != "rna" && !S7::S7_inherits(object, SingleCellsMultiModal)) {
+    stop(sprintf(
+      "modality = '%s' is only supported for SingleCellsMultiModal.",
+      modality
+    ))
+  }
+
+  cache_modality <- if (modality == "wnn") "rna" else modality
+
   # get the knn
-  knn <- if (use_knn) {
-    .get_manifoldsr_knn(x = object)
+  knn <- if (modality == "wnn") {
+    .get_manifoldsr_knn_from_wnn(x = object)
+  } else if (use_knn) {
+    .get_manifoldsr_knn(x = object, modality = modality)
   } else {
     NULL
   }
 
   # get the embedding
-  checkmate::assertTRUE(embd_to_use %in% get_available_embeddings(object))
-  embd <- get_embedding(x = object, embd_name = embd_to_use)
+  checkmate::assertTRUE(
+    embd_to_use %in% get_available_embeddings(object, modality = cache_modality)
+  )
+  embd <- get_embedding(
+    x = object,
+    embd_name = embd_to_use,
+    modality = cache_modality
+  )
 
   if (!is.null(no_embd_to_use)) {
     to_take <- min(c(no_embd_to_use, ncol(embd)))
@@ -479,6 +570,7 @@ S7::method(phate_sc, ScOrMc) <- function(
 
   phate_embd <- manifoldsR::phate(
     data = embd,
+    knn = knn,
     n_dim = n_dim,
     k = k,
     knn_method = knn_method,
@@ -489,7 +581,12 @@ S7::method(phate_sc, ScOrMc) <- function(
   )
 
   colnames(phate_embd) <- sprintf("phate_%s", seq_len(ncol(phate_embd)))
-  object <- set_embedding(x = object, embd = phate_embd, name = "phate")
+  object <- set_embedding(
+    x = object,
+    embd = phate_embd,
+    name = slot_name,
+    modality = cache_modality
+  )
 
   return(object)
 }

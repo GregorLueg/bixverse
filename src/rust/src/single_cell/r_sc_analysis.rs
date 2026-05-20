@@ -745,8 +745,6 @@ fn rs_hotspot_cluster_genes(
 
 /// Generate the neighbourhoods akin to the miloR approach
 ///
-/// @description Rust version of the
-///
 /// @param embd Numeric matrix. Represents the matrix used to generate the kNN
 /// graph and will be used to refine the neighbourhoods.
 /// @param knn_indices Integer matrix. Each row represents a given cell and

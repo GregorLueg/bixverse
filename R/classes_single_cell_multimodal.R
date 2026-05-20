@@ -922,18 +922,60 @@ S7::method(get_knn_dist, SingleCellsMultiModal) <- function(
 
 S7::method(get_knn_obj, SingleCellsMultiModal) <- function(
   x,
-  modality = c("rna", "adt"),
+  modality = c("rna", "adt", "wnn"),
   ...
 ) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsMultiModal))
+  checkmate::assertChoice(modality, c("rna", "adt", "wnn"))
+
+  # special case WNN
+  if (modality == "wnn") {
+    wnn_data <- S7::prop(x, "other_data")[["wnn"]]
+
+    if (is.null(wnn_data)) {
+      warning(paste(
+        "No WNN data found. Did you run generate_wnn_graph_sc()",
+        "Returning NULL."
+      ))
+      return(NULL)
+    }
+
+    knn <- wnn_data[["wnn"]][["knn"]]
+
+    return(knn)
+  }
+
   slot <- .cache_slot_from_modality(modality)
   get_knn_obj(S7::prop(x, slot))
 }
 
 S7::method(get_snn_graph, SingleCellsMultiModal) <- function(
   x,
-  modality = c("rna", "adt"),
+  modality = c("rna", "adt", "wnn"),
   ...
 ) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsMultiModal))
+  checkmate::assertChoice(modality, c("rna", "adt", "wnn"))
+
+  # special case WNN
+  if (modality == "wnn") {
+    wnn_data <- S7::prop(x, "other_data")[["wnn"]]
+
+    if (is.null(wnn_data)) {
+      warning(paste(
+        "No WNN data found. Did you run generate_wnn_graph_sc()",
+        "Returning NULL."
+      ))
+      return(NULL)
+    }
+
+    snn <- wnn_data[["wnn"]][["snn"]]
+
+    return(snn)
+  }
+
   slot <- .cache_slot_from_modality(modality)
   get_snn_graph(S7::prop(x, slot))
 }

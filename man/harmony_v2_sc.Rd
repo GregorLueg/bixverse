@@ -8,6 +8,7 @@ harmony_v2_sc(
   object,
   batch_column,
   additional_batch_columns = NULL,
+  modality = c("rna", "adt"),
   harmony_params = params_sc_harmony_v2(),
   seed = 42L,
   .verbose = TRUE
@@ -21,6 +22,9 @@ batch labels.}
 
 \item{additional_batch_columns}{Optional character vector. Additional batch
 columns to regress out. If \code{NULL}, only the primary batch column is used.}
+
+\item{modality}{String. One of \code{c("rna", "adt")}. You can only use \code{"adt"}
+on \code{SingleCellsMultiModal} class.}
 
 \item{harmony_params}{List. Output of \code{\link[=params_sc_harmony_v2]{params_sc_harmony_v2()}}.}
 

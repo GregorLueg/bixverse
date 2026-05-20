@@ -549,6 +549,7 @@ get_embedding <- function(x, embd_name, ...) {
 #' used for the single cell-related classes and methods.
 #'
 #' @param x An object to get embedding from
+#' @param ... Other parameters.
 #'
 #' @return Get the names of the available embeddings.
 #'
@@ -771,6 +772,8 @@ calculate_pca_sc <- S7::new_generic(
 #' needs to be part of the object.
 #' @param no_embd_to_use Optional integer. Number of embedding dimensions to
 #' use. If `NULL` all will be used.
+#' @param modality String. One of `c("rna", "adt")`. You can only use `"adt"`
+#' on `SingleCellsMultiModal` class.
 #' @param neighbours_params List. Output of [bixverse::params_sc_neighbours()].
 #' A list with the following items:
 #' \itemize{
@@ -800,6 +803,7 @@ find_neighbours_sc <- S7::new_generic(
     object,
     embd_to_use = "pca",
     no_embd_to_use = NULL,
+    modality = c("rna", "adt"),
     neighbours_params = params_sc_neighbours(),
     seed = 42L,
     .verbose = TRUE
@@ -807,7 +811,6 @@ find_neighbours_sc <- S7::new_generic(
     S7::S7_dispatch()
   }
 )
-
 #### clustering ----------------------------------------------------------------
 
 #' Graph-based clustering of cells on the sNN graph
@@ -821,6 +824,9 @@ find_neighbours_sc <- S7::new_generic(
 #' @param res Numeric. The resolution parameter for [igraph::cluster_leiden()]
 #' or [igraph::cluster_louvain()].
 #' @param name String. The name to add to the obs table in the DuckDB.
+#' @param modality String. On which modality to run the UMAP. One of
+#' `c("rna", "adt", "wnn")`. The two latter options are only available for
+#' multi-modal versions with the added data.
 #'
 #' @return The object with added clustering in the obs table.
 #'
@@ -832,7 +838,8 @@ find_clusters_sc <- S7::new_generic(
     object,
     cluster_algorithm = c("leiden", "louvain"),
     res = 1.0,
-    name = "leiden_clustering"
+    name = "leiden_clustering",
+    modality = c("rna", "adt", "wnn")
   ) {
     S7::S7_dispatch()
   }

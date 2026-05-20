@@ -357,3 +357,52 @@ calc_knn_metrics <- function(ref_knn, query_knn) {
 
   res
 }
+
+## annotation helpers ----------------------------------------------------------
+
+#' Helper function to prepare cell markers
+#'
+#' @description
+#' This function is a helper to generate a list of cell type to cell marker
+#' annotations that can be fed into for example `[REF]`.
+#'
+#' @param obj A single cell class, i.e. one of `SingleCells` or
+#' `SingleCellsMultiModal`.
+#' @param marker_df A data.table with the columns `"cell_type"` and `"gene_id"`.
+#' You need to ensure that the gene id type matches the obj gene id.
+#'
+#' @returns A list of cell type to marker associations ready for subsequent
+#' usage. Genes not found in the object will be automatically removed.
+#'
+#' @export
+prepare_cell_markers <- function(obj, marker_df) {
+  # checks
+  checkmate::assertTRUE(
+    S7::S7_inherits(obj, SingleCells)
+  )
+  checkmate::assertDataTable(marker_df)
+  checkmate::assertNames(
+    names(marker_df),
+    must.include = c("gene_id", "cell_type")
+  )
+
+  marker_df[, gene_idx := get_sc_map(obj)$gene_mapping[marker_df$gene_id]]
+
+  res <- marker_df[
+    !is.na(gene_idx),
+    .(
+      data = list(list(
+        cell_type = cell_type[1],
+        positive_indices = gene_idx,
+        negative_indices = NULL
+      ))
+    ),
+    by = cell_type
+  ]
+
+  res_ls <- res$data
+
+  names(res_ls) <- res$cell_type
+
+  return(res_ls)
+}

@@ -54,6 +54,7 @@ pub use ontology::r_similiarity;
 pub use single_cell::r_count_obj;
 pub use single_cell::r_sc_adt;
 pub use single_cell::r_sc_analysis;
+pub use single_cell::r_sc_annotation;
 pub use single_cell::r_sc_batch_corr;
 pub use single_cell::r_sc_data;
 pub use single_cell::r_sc_metacells;
@@ -110,6 +111,7 @@ extendr_module! {
 
     // single cell
     use r_count_obj;
+    use r_sc_annotation;
     use r_sc_batch_corr;
     use r_sc_processing;
     use r_sc_analysis;

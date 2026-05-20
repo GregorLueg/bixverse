@@ -5,6 +5,7 @@ use bixverse_rs::prelude::*;
 use bixverse_rs::single_cell::sc_analysis::fast_clusters::{
     FastLouvainGridResult, FastLouvainResults,
 };
+use bixverse_rs::single_cell::sc_annotation::sc_type::CellTypeMarkers;
 use bixverse_rs::single_cell::sc_processing::hvg::HvgDispersionRes;
 use either::Either;
 use std::collections::HashMap;
@@ -278,4 +279,35 @@ pub fn process_fc_louvain_results(results: Vec<FastLouvainGridResult>) -> Result
     ];
 
     Ok(list![memberships = res, stats = stats])
+}
+
+////////////
+// ScType //
+////////////
+
+/// Process a list of cell markers
+///
+/// ### Params
+///
+/// * `r_list` - The R list to parse
+///
+/// ### Returns
+///
+/// A vector of [CellTypeMarkers].
+pub fn process_cell_markers(r_list: List) -> Result<Vec<CellTypeMarkers>> {
+    let mut res: Vec<CellTypeMarkers> = Vec::with_capacity(r_list.len());
+
+    let iterator = 0..r_list.len();
+
+    for i in iterator {
+        let element = r_list
+            .elt(i)?
+            .as_list()
+            .ok_or_else(|| Error::Other("missing 'k'".into()))?;
+        let markers = CellTypeMarkers::from_r_list(element)?;
+
+        res.push(markers);
+    }
+
+    Ok(res)
 }

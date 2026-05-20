@@ -852,6 +852,8 @@ S7::method(fast_mnn_sc, SingleCells) <- function(
 #' batch labels.
 #' @param additional_batch_columns Optional character vector. Additional batch
 #' columns to regress out. If `NULL`, only the primary batch column is used.
+#' @param modality String. One of `c("rna", "adt")`. You can only use `"adt"`
+#' on `SingleCellsMultiModal` class.
 #' @param harmony_params List. Output of [bixverse::params_sc_harmony()].
 #' @param seed Integer. For reproducibility.
 #' @param .verbose Boolean or integer. Controls verbosity and returns run times.
@@ -869,6 +871,7 @@ harmony_sc <- S7::new_generic(
     object,
     batch_column,
     additional_batch_columns = NULL,
+    modality = c("rna", "adt"),
     harmony_params = params_sc_harmony(),
     seed = 42L,
     .verbose = TRUE
@@ -884,10 +887,13 @@ S7::method(harmony_sc, SingleCells) <- function(
   object,
   batch_column,
   additional_batch_columns = NULL,
+  modality = c("rna", "adt"),
   harmony_params = params_sc_harmony(),
   seed = 42L,
   .verbose = TRUE
 ) {
+  modality <- match.arg(modality)
+
   # checks
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::qassert(batch_column, "S1")
@@ -896,14 +902,21 @@ S7::method(harmony_sc, SingleCells) <- function(
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
+  if (modality != "rna" && !S7::S7_inherits(object, SingleCellsMultiModal)) {
+    stop(sprintf(
+      "modality = '%s' is only supported for SingleCellsMultiModal.",
+      modality
+    ))
+  }
+
   # early return
-  if (is.null(get_pca_factors(object))) {
+  if (is.null(get_pca_factors(object, modality = modality))) {
     warning(paste(
       "No PCA embeddings found in the object. Returning class as is"
     ))
     return(object)
   } else {
-    pca_data <- get_pca_factors(object)
+    pca_data <- get_pca_factors(object, modality = modality)
   }
 
   # function body
@@ -951,7 +964,12 @@ S7::method(harmony_sc, SingleCells) <- function(
 
   colnames(harmony_embd) <- sprintf("harmony_%s", 1:ncol(harmony_embd))
 
-  object <- set_embedding(x = object, embd = harmony_embd, name = "harmony")
+  object <- set_embedding(
+    x = object,
+    embd = harmony_embd,
+    name = "harmony",
+    modality = modality
+  )
 
   return(object)
 }
@@ -970,6 +988,8 @@ S7::method(harmony_sc, SingleCells) <- function(
 #' batch labels.
 #' @param additional_batch_columns Optional character vector. Additional batch
 #' columns to regress out. If `NULL`, only the primary batch column is used.
+#' @param modality String. One of `c("rna", "adt")`. You can only use `"adt"`
+#' on `SingleCellsMultiModal` class.
 #' @param harmony_params List. Output of [bixverse::params_sc_harmony_v2()].
 #' @param seed Integer. For reproducibility.
 #' @param .verbose Boolean or integer. Controls verbosity and returns run times.
@@ -987,6 +1007,7 @@ harmony_v2_sc <- S7::new_generic(
     object,
     batch_column,
     additional_batch_columns = NULL,
+    modality = c("rna", "adt"),
     harmony_params = params_sc_harmony_v2(),
     seed = 42L,
     .verbose = TRUE
@@ -1002,10 +1023,13 @@ S7::method(harmony_v2_sc, SingleCells) <- function(
   object,
   batch_column,
   additional_batch_columns = NULL,
+  modality = c("rna", "adt"),
   harmony_params = params_sc_harmony_v2(),
   seed = 42L,
   .verbose = TRUE
 ) {
+  modality <- match.arg(modality)
+
   # checks
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::qassert(batch_column, "S1")
@@ -1014,14 +1038,21 @@ S7::method(harmony_v2_sc, SingleCells) <- function(
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
+  if (modality != "rna" && !S7::S7_inherits(object, SingleCellsMultiModal)) {
+    stop(sprintf(
+      "modality = '%s' is only supported for SingleCellsMultiModal.",
+      modality
+    ))
+  }
+
   # early return
-  if (is.null(get_pca_factors(object))) {
+  if (is.null(get_pca_factors(object, modality = modality))) {
     warning(paste(
       "No PCA embeddings found in the object. Returning class as is"
     ))
     return(object)
   } else {
-    pca_data <- get_pca_factors(object)
+    pca_data <- get_pca_factors(object, modality = modality)
   }
 
   # function body
@@ -1069,7 +1100,12 @@ S7::method(harmony_v2_sc, SingleCells) <- function(
 
   colnames(harmony_embd) <- sprintf("harmony_v2_%s", 1:ncol(harmony_embd))
 
-  object <- set_embedding(x = object, embd = harmony_embd, name = "harmony_v2")
+  object <- set_embedding(
+    x = object,
+    embd = harmony_embd,
+    name = "harmony_v2",
+    modality = modality
+  )
 
   return(object)
 }

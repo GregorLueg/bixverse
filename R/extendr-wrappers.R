@@ -478,7 +478,10 @@ rs_mad_outlier <- function(x, threshold, direction) .Call(wrap__rs_mad_outlier, 
 #' Assumes that samples = rows, and columns = features.
 #'
 #' @param x Numeric matrix. Rows = samples, columns = features.
-#' @param scale Boolean. Shall the columns additionally be scaled.
+#' @param scale Boolean. Shall the columns be variance normalised. (Mean
+#' centering will automatically occur.)
+#' @param top_pcs Optional integer. Only return the top PCs (under the hood
+#' all of them will be calculated).
 #'
 #' @return A list with:
 #' \itemize{
@@ -489,7 +492,7 @@ rs_mad_outlier <- function(x, threshold, direction) .Call(wrap__rs_mad_outlier, 
 #' }
 #'
 #' @export
-rs_prcomp <- function(x, scale) .Call(wrap__rs_prcomp, x, scale)
+rs_prcomp <- function(x, scale, top_pcs) .Call(wrap__rs_prcomp, x, scale, top_pcs)
 
 #' Run randomised SVD over a matrix
 #'
@@ -499,6 +502,8 @@ rs_prcomp <- function(x, scale) .Call(wrap__rs_prcomp, x, scale)
 #'
 #' @param x Numeric matrix. Rows = samples, columns = features.
 #' @param rank Integer. The rank to use.
+#' @param scale Boolean. Shall the columns be variance normalised. (Mean
+#' centering will automatically occur.)
 #' @param seed Integer. Random seed for reproducibility.
 #' @param oversampling Integer. Defaults to `10L` if nothing is provided.
 #' @param n_power_iter Integer. How often shall the QR decomposition be
@@ -512,7 +517,7 @@ rs_prcomp <- function(x, scale) .Call(wrap__rs_prcomp, x, scale)
 #' }
 #'
 #' @export
-rs_random_svd <- function(x, rank, seed, oversampling, n_power_iter) .Call(wrap__rs_random_svd, x, rank, seed, oversampling, n_power_iter)
+rs_random_svd <- function(x, scale, rank, seed, oversampling, n_power_iter) .Call(wrap__rs_random_svd, x, scale, rank, seed, oversampling, n_power_iter)
 
 #' Calculate the contrastive PCA
 #'
@@ -2002,6 +2007,51 @@ rs_onto_sim_wang_mat <- function(parents, children, w, flat_matrix) .Call(wrap__
 #' @export
 rs_filter_onto_sim <- function(sim_vals, names, threshold) .Call(wrap__rs_filter_onto_sim, sim_vals, names, threshold)
 
+#' Run the ScType scoring approach
+#'
+#' @description This Rust function implements the cell type scoring approach
+#' from Ianevski et al. (2022).
+#'
+#' @param f_path String. Path to the `counts_genes.bin` file.
+#' @param cell_indices Integer vector. 0-indexed(!) positions of cells to
+#' include in the analysis
+#' @param cell_markers A list with the cell marker gene indices.
+#' @param sensitivity Boolean. Shall a sensitivity correction be applied that
+#' downweights common cell type markers.
+#' @param weight_floor Optional numeric. If `sensitivity = TRUE`, what is
+#' the weight floor. If not provided, defaults to `0.1`.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @returns A list with
+#' \itemize{
+#'   \item cell_types - String vector. The cell types
+#'   \item scores - Row-major scores (cells x cell_types).
+#'   \item n_cells - Number of cells
+#'   \item n_cell_types - Number of cell types
+#' }
+#'
+#' @export
+rs_sc_type <- function(f_path, cell_indices, cell_markers, sensitivity, weight_floor, verbose) .Call(wrap__rs_sc_type, f_path, cell_indices, cell_markers, sensitivity, weight_floor, verbose)
+
+#' Score the individual clusters based on ScType
+#'
+#' @description This Rust function implements the cell type scoring approach
+#' from Ianevski et al. (2022).
+#'
+#' @param sc_type_res List. The ScType results.
+#' @param cluster_labels Integer. Cluster assignment. Needs to be of length
+#' of scored cells.
+#'
+#' @returns A list with
+#' \itemize{
+#'  \item cluster_id - The cluster id/integer
+#'  \item cell_type - String; the predicted cell type
+#'  \item score - The final score for the clsuter.
+#'  \item n_cells - The number of cells in the cluster.
+#' }
+rs_sc_type_cluster_assignment <- function(sc_type_res, cluster_labels) .Call(wrap__rs_sc_type_cluster_assignment, sc_type_res, cluster_labels)
+
 #' Calculate kBET type scores
 #'
 #' @description
@@ -2837,8 +2887,6 @@ rs_module_scoring <- function(f_path_cells, f_path_genes, gs_list, cells_to_keep
 
 #' Generate the neighbourhoods akin to the miloR approach
 #'
-#' @description Rust version of the
-#'
 #' @param embd Numeric matrix. Represents the matrix used to generate the kNN
 #' graph and will be used to refine the neighbourhoods.
 #' @param knn_indices Integer matrix. Each row represents a given cell and
@@ -3446,6 +3494,30 @@ rs_adt_clr <- function(counts) .Call(wrap__rs_adt_clr, counts)
 #'
 #' @export
 rs_dsb <- function(raw_counts, background_counts, isotype_indices, dsb_params, scale_factor, seed, verbose) .Call(wrap__rs_dsb, raw_counts, background_counts, isotype_indices, dsb_params, scale_factor, seed, verbose)
+
+#' Run the weighted nearest neighbour algorithm
+#'
+#' @param modality_emb_one Numerical matrix of the first modality. For example
+#' the PCA (or other embeddings) from the transcriptomics.
+#' @param modality_emb_two Numerical matrix of the second modality. For example
+#' the PCA (or other embeddings) from the ADT counts.
+#' @param wnn_params Named list. The weighted nearest neighbour parameters.
+#' @param seed Integer. For reproducibility purposes.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @returns A list with
+#' \itemize{
+#'   \item indices An integer matrix representing the indices of the
+#'  approximate nearest neighbours.
+#'  \item dist - An numerical matrix representing the distances to the nearest
+#'  neighbours.
+#'  \item modality_one_weights - The weights of the first modality.
+#'  \item modality_two_weights - The weights of the second modality.
+#' }
+#'
+#' @export
+rs_wnn <- function(modality_emb_one, modality_emb_two, wnn_params, seed, verbose) .Call(wrap__rs_wnn, modality_emb_one, modality_emb_two, wnn_params, seed, verbose)
 
 #' Single cell count data handler
 #'

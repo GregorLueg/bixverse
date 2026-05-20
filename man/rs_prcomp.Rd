@@ -4,12 +4,16 @@
 \alias{rs_prcomp}
 \title{Rust implementation of prcomp}
 \usage{
-rs_prcomp(x, scale)
+rs_prcomp(x, scale, top_pcs)
 }
 \arguments{
 \item{x}{Numeric matrix. Rows = samples, columns = features.}
 
-\item{scale}{Boolean. Shall the columns additionally be scaled.}
+\item{scale}{Boolean. Shall the columns be variance normalised. (Mean
+centering will automatically occur.)}
+
+\item{top_pcs}{Optional integer. Only return the top PCs (under the hood
+all of them will be calculated).}
 }
 \value{
 A list with:

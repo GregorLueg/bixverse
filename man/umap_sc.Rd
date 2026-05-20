@@ -10,6 +10,7 @@ umap_sc(
   embd_to_use = "pca",
   slot_name = "umap",
   no_embd_to_use = NULL,
+  modality = c("rna", "adt", "wnn"),
   n_dim = 2L,
   k = 15L,
   min_dist = 0.5,
@@ -35,6 +36,10 @@ Defaults to \code{"umap"}.}
 
 \item{no_embd_to_use}{Optional integer. Number of embedding dimensions to
 use. If \code{NULL} all will be used.}
+
+\item{modality}{String. On which modality to run the UMAP. One of
+\code{c("rna", "adt", "wnn")}. The two latter options are only available for
+multi-modal versions with the added data.}
 
 \item{n_dim}{Integer. Number of UMAP dimensions. Defaults to \code{2L}.}
 
