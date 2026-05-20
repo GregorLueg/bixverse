@@ -776,12 +776,22 @@ S7::method(set_embedding, SingleCellsMultiModal) <- function(
   x,
   embd,
   name,
-  modality = c("rna", "adt"),
+  modality = c("rna", "adt", "other"),
   ...
 ) {
-  slot <- .cache_slot_from_modality(modality)
+  modality <- match.arg(modality)
   checkmate::assertMatrix(embd, mode = "numeric")
   checkmate::qassert(name, "S1")
+
+  # wnn-derived embeddings live under other_data[["wnn"]][["embeddings"]]
+  if (modality == "other") {
+    other_data <- S7::prop(x, "other_data")
+    other_data[[name]] <- embd
+    S7::prop(x, "other_data") <- other_data
+    return(x)
+  }
+
+  slot <- .cache_slot_from_modality(modality)
   S7::prop(x, slot) <- set_embedding(
     S7::prop(x, slot),
     embd = embd,
@@ -883,9 +893,19 @@ S7::method(get_pca_singular_val, SingleCellsMultiModal) <- function(
 S7::method(get_embedding, SingleCellsMultiModal) <- function(
   x,
   embd_name,
-  modality = c("rna", "adt"),
+  modality = c("rna", "adt", "other"),
   ...
 ) {
+  modality <- match.arg(modality)
+
+  if (modality == "other") {
+    res <- S7::prop(x, "other_data")[[embd_name]]
+    if (is.null(res)) {
+      warning("The desired embedding is not available.")
+    }
+    return(res)
+  }
+
   slot <- .cache_slot_from_modality(modality)
   checkmate::qassert(embd_name, "S1")
   res <- get_embedding(S7::prop(x, slot), embd_name = embd_name)

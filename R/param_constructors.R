@@ -1488,7 +1488,7 @@ params_scenic <- function(
 #' @export
 params_sc_wnn <- function(
   k_nn = 20L,
-  knn_range = 100L,
+  knn_range = 200L,
   sigma_method = c("snn_farthest", "sigma_idx"),
   sigma_idx = 19L,
   snn_type = c("full_connection", "limited"),

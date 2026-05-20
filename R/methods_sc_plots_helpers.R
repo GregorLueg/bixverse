@@ -36,7 +36,19 @@
 #'
 #' @keywords internal
 .get_manifoldsr_knn_from_wnn <- function(x) {
-  stop("WNN-based neighbours are not yet implemented.")
+  checkmate::assertTRUE(
+    S7::S7_inherits(x, SingleCellsMultiModal)
+  )
+
+  res <- S7::prop(x, "other_data")[["wnn"]][["knn"]]
+
+  if (is.null(res)) {
+    stop("WNN-based neighbours were not found.")
+  }
+
+  manifold_nn <- sc_knn_to_nearest_neighbours(res)
+
+  return(manifold_nn)
 }
 
 ### umap -----------------------------------------------------------------------
@@ -219,11 +231,14 @@ S7::method(umap_sc, ScOrMc) <- function(
   )
 
   colnames(umap_embd) <- sprintf("umap_%s", seq_len(ncol(umap_embd)))
+
+  slot <- ifelse(modality == "wnn", "other", cache_modality)
+
   object <- set_embedding(
     x = object,
     embd = umap_embd,
     name = slot_name,
-    modality = cache_modality
+    modality = slot
   )
 
   return(object)
@@ -405,11 +420,14 @@ S7::method(tsne_sc, ScOrMc) <- function(
   )
 
   colnames(tsne_embd) <- sprintf("tsne_%s", seq_len(ncol(tsne_embd)))
+
+  slot <- ifelse(modality == "wnn", "other", cache_modality)
+
   object <- set_embedding(
     x = object,
     embd = tsne_embd,
     name = slot_name,
-    modality = cache_modality
+    modality = slot
   )
 
   return(object)
@@ -581,11 +599,14 @@ S7::method(phate_sc, ScOrMc) <- function(
   )
 
   colnames(phate_embd) <- sprintf("phate_%s", seq_len(ncol(phate_embd)))
+
+  slot <- ifelse(modality == "wnn", "other", cache_modality)
+
   object <- set_embedding(
     x = object,
     embd = phate_embd,
     name = slot_name,
-    modality = cache_modality
+    modality = slot
   )
 
   return(object)
