@@ -738,10 +738,13 @@ S7::method(find_neighbours_sc, ScOrMc) <- function(
   object,
   embd_to_use = "pca",
   no_embd_to_use = NULL,
+  modality = c("rna", "adt"),
   neighbours_params = params_sc_neighbours(),
   seed = 42L,
   .verbose = TRUE
 ) {
+  modality <- match.arg(modality)
+
   checkmate::assertTRUE(
     S7::S7_inherits(object, SingleCells) || S7::S7_inherits(object, MetaCells)
   )
@@ -751,12 +754,23 @@ S7::method(find_neighbours_sc, ScOrMc) <- function(
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
-  if (!embd_to_use %in% get_available_embeddings(object)) {
+  if (modality != "rna" && !S7::S7_inherits(object, SingleCellsMultiModal)) {
+    stop(sprintf(
+      "modality = '%s' is only supported for SingleCellsMultiModal.",
+      modality
+    ))
+  }
+
+  if (!embd_to_use %in% get_available_embeddings(object, modality = modality)) {
     warning("The desired embedding was not found. Returning class as is.")
     return(object)
   }
 
-  embd <- get_embedding(x = object, embd_name = embd_to_use)
+  embd <- get_embedding(
+    x = object,
+    embd_name = embd_to_use,
+    modality = modality
+  )
   if (!is.null(no_embd_to_use)) {
     embd <- embd[, 1:min(no_embd_to_use, ncol(embd))]
   }
@@ -773,7 +787,7 @@ S7::method(find_neighbours_sc, ScOrMc) <- function(
     seed = seed,
     .verbose = .verbose
   )
-  object <- set_knn(object, knn_data)
+  object <- set_knn(object, knn_data, modality = modality)
 
   if (.verbose) {
     message(sprintf(
@@ -802,7 +816,7 @@ S7::method(find_neighbours_sc, ScOrMc) <- function(
     attr = list(weight = snn_graph_rs$weights)
   )
 
-  object <- set_snn_graph(object, snn_graph = snn_g)
+  object <- set_snn_graph(object, snn_graph = snn_g, modality = modality)
 
   return(object)
 }
@@ -816,9 +830,11 @@ S7::method(find_clusters_sc, ScOrMc) <- function(
   object,
   cluster_algorithm = c("leiden", "louvain"),
   res = 1.0,
-  name = "leiden_clustering"
+  name = "leiden_clustering",
+  modality = c("rna", "adt", "wnn")
 ) {
   cluster_algorithm <- match.arg(cluster_algorithm)
+  modality <- match.arg(modality)
 
   checkmate::assertTRUE(
     S7::S7_inherits(object, SingleCells) || S7::S7_inherits(object, MetaCells)
@@ -827,7 +843,14 @@ S7::method(find_clusters_sc, ScOrMc) <- function(
   checkmate::qassert(name, "S1")
   checkmate::assertChoice(cluster_algorithm, c("leiden", "louvain"))
 
-  snn_graph <- get_snn_graph(object)
+  if (modality != "rna" && !S7::S7_inherits(object, SingleCellsMultiModal)) {
+    stop(sprintf(
+      "modality = '%s' is only supported for SingleCellsMultiModal.",
+      modality
+    ))
+  }
+
+  snn_graph <- get_snn_graph(object, modality = modality)
   if (is.null(snn_graph)) {
     warning(
       paste(

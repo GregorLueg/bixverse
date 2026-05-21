@@ -338,7 +338,7 @@ expect_equal(
 
 r_pca_res <- prcomp(mat)
 
-rs_pca_res <- rs_prcomp(mat, scale = FALSE)
+rs_pca_res <- rs_prcomp(mat, scale = FALSE, top_pcs = NULL)
 
 # Absolute as signs can flip
 expect_equivalent(

@@ -37,5 +37,5 @@ defaults to \code{1.0}.
 }
 }
 \description{
-Rust version of the
+Generate the neighbourhoods akin to the miloR approach
 }

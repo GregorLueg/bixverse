@@ -4,7 +4,7 @@
 \alias{rs_h5ad_data}
 \title{Load in h5ad data via Rust}
 \usage{
-rs_h5ad_data(f_path, cs_type, nrows, ncols, cell_quality, verbose)
+rs_h5ad_data(f_path, cs_type, nrows, ncols, cell_quality, slot, verbose)
 }
 \arguments{
 \item{f_path}{File path. The path to the h5ad file.}

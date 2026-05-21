@@ -4,10 +4,13 @@
 \alias{rs_random_svd}
 \title{Run randomised SVD over a matrix}
 \usage{
-rs_random_svd(x, rank, seed, oversampling, n_power_iter)
+rs_random_svd(x, scale, rank, seed, oversampling, n_power_iter)
 }
 \arguments{
 \item{x}{Numeric matrix. Rows = samples, columns = features.}
+
+\item{scale}{Boolean. Shall the columns be variance normalised. (Mean
+centering will automatically occur.)}
 
 \item{rank}{Integer. The rank to use.}
 

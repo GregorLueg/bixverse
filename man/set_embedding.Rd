@@ -10,13 +10,7 @@
 \usage{
 set_embedding(x, embd, name, ...)
 
-## S7 method for class <bixverse::MetaCells>
-set_embedding(x, embd, name, ...)
-
 \method{set_embedding}{ScCache}(x, embd, name)
-
-## S7 method for class <bixverse::SingleCells>
-set_embedding(x, embd, name, ...)
 }
 \arguments{
 \item{x}{An object to add the singular values for.}

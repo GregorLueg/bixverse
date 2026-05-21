@@ -1496,7 +1496,7 @@ S7::method(cor_module_coremo_eigengene, BulkCoExp) <- function(
 
     data_i <- processed_data[, module_i]
 
-    pc_scores_i <- rs_prcomp(data_i, scale = TRUE)
+    pc_scores_i <- rs_prcomp(data_i, scale = TRUE, top_pcs = NULL)
 
     eigengene_samples_i <- data.table::data.table(
       sample_name = rownames(data_i),

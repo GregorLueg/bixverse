@@ -10,16 +10,12 @@
 \usage{
 get_available_embeddings(x, ...)
 
-## S7 method for class <bixverse::MetaCells>
-get_available_embeddings(x, ...)
-
 \method{get_available_embeddings}{ScCache}(x)
-
-## S7 method for class <bixverse::SingleCells>
-get_available_embeddings(x, ...)
 }
 \arguments{
 \item{x}{An object to get embedding from}
+
+\item{...}{Other parameters.}
 }
 \value{
 Get the names of the available embeddings.

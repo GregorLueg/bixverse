@@ -543,7 +543,7 @@ S7::method(calculate_pca_bulk_dge, BulkDge) <- function(
   }
 
   input_genes <- t(normalised_counts[hvg_genes, ])
-  pca_results <- rs_prcomp(input_genes, scale = scale_genes)
+  pca_results <- rs_prcomp(input_genes, scale = scale_genes, top_pcs = NULL)
   pcs_to_take <- min(pcs, ncol(pca_results$scores))
   pca_dt <- pca_results$scores[, 1:pcs_to_take] %>%
     `colnames<-`(sprintf("PC_%i", 1:pcs_to_take)) %>%
@@ -740,7 +740,7 @@ S7::method(batch_correction_bulk_dge, BulkDge) <- function(
   hvg_genes <- hvg_data[1:no_hvg_genes, gene_id]
 
   input_genes <- t(normalised_counts_corrected[hvg_genes, ])
-  pca_results <- rs_prcomp(input_genes, scale = scale_genes)
+  pca_results <- rs_prcomp(input_genes, scale = scale_genes, top_pcs = NULL)
 
   pca_dt_cor <- pca_results$scores[, 1:2] %>%
     `colnames<-`(sprintf("PC_%i", 1:2)) %>%

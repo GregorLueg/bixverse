@@ -214,6 +214,18 @@ print.CellQc <- function(x, ...) {
     }
   }
 
+  if (!is.null(x$per_group_stats)) {
+    outlier_groups <- x$per_group_stats[(is_outlier)]
+    cat(sprintf("Group outliers: %d\n", nrow(outlier_groups)))
+    for (i in seq_len(nrow(outlier_groups))) {
+      cat(sprintf(
+        "  - [%s] %s\n",
+        outlier_groups$metric[i],
+        outlier_groups$group[i]
+      ))
+    }
+  }
+
   invisible(x)
 }
 

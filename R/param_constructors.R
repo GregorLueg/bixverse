@@ -552,7 +552,7 @@ params_scdblfinder <- function(
 #'
 #' @export
 params_sc_neighbours <- function(
-  full_snn = FALSE,
+  full_snn = TRUE,
   pruning = 1 / 12,
   snn_similarity = c("jaccard", "rank"),
   knn = list(ann_dist = "cosine")
@@ -1450,4 +1450,88 @@ params_scenic <- function(
   )
 
   params
+}
+
+## multi-modal -----------------------------------------------------------------
+
+### wnn ------------------------------------------------------------------------
+
+#' Wrapper function for WNN parameters
+#'
+#' @param k_nn Integer. Final number of multimodal neighbours per cell. Defaults
+#' to `20L`.
+#' @param knn_range Integer. Candidate pool size per modality. Each cell's kNN
+#' input must contain at least this many neighbours. Defaults to `100L`.
+#' @param sigma_method String. Bandwidth method. One of
+#' `c("snn_farthest", "sigma_idx")`. Defaults to `"snn_farthest"`.
+#' @param sigma_idx Integer. `"sigma_idx"` only: 0-based kNN index for
+#' bandwidth. Defaults to `19L` (i.e. `k_nn - 1`).
+#' @param snn_type String. sNN type. One of `c("full_connection", "limited")`.
+#' The limited version only considers edges that exist in the kNN. Defaults to
+#' `"full_connection"`.
+#' @param s_nn Integer. `"snn_farthest"` only: kNN size used to build the SNN
+#' graph. Defaults to `20L`.
+#' @param sd_scale Numeric. Multiplier on sigma. Defaults to `1.0`.
+#' @param kernel_power Numeric. Kernel exponent power. Defaults to `1.0`.
+#' @param cross_const Numeric. Cross-modality kernel stabiliser. Defaults to
+#' `1e-4`.
+#' @param sigma_floor Numeric. Minimum sigma value (avoids division by zero).
+#' Defaults to `1e-8`.
+#' @param knn List. Optional overrides for kNN parameters. See
+#' [bixverse::params_knn_defaults()] for available parameters: `k`,
+#' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
+#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
+#' and `n_probe`.
+#'
+#' @returns A list with the WNN parameters.
+#'
+#' @export
+params_sc_wnn <- function(
+  k_nn = 20L,
+  knn_range = 200L,
+  sigma_method = c("snn_farthest", "sigma_idx"),
+  sigma_idx = 19L,
+  snn_type = c("full_connection", "limited"),
+  s_nn = 20L,
+  sd_scale = 1.0,
+  kernel_power = 1.0,
+  cross_const = 1e-4,
+  sigma_floor = 1e-8,
+  knn = list()
+) {
+  sigma_method <- match.arg(sigma_method)
+  snn_type <- match.arg(snn_type)
+
+  checkmate::qassert(k_nn, "I1[1,)")
+  checkmate::qassert(knn_range, "I1[1,)")
+  checkmate::assertChoice(sigma_method, c("snn_farthest", "sigma_idx"))
+  checkmate::qassert(sigma_idx, "I1[0,)")
+  checkmate::assertChoice(snn_type, c("full_connection", "limited"))
+  checkmate::qassert(s_nn, "I1[1,)")
+  checkmate::qassert(sd_scale, "N1(0,)")
+  checkmate::qassert(kernel_power, "N1(0,)")
+  checkmate::qassert(cross_const, "N1[0,)")
+  checkmate::qassert(sigma_floor, "N1(0,)")
+
+  knn_params <- modifyList(
+    params_knn_defaults(),
+    knn,
+    keep.null = TRUE
+  )
+
+  c(
+    list(
+      k_nn = k_nn,
+      knn_range = knn_range,
+      sigma_method = sigma_method,
+      sigma_idx = sigma_idx,
+      snn_type = snn_type,
+      s_nn = s_nn,
+      sd_scale = sd_scale,
+      kernel_power = kernel_power,
+      cross_const = cross_const,
+      sigma_floor = sigma_floor
+    ),
+    knn_params
+  )
 }

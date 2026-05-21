@@ -10,13 +10,7 @@
 \usage{
 set_pca_singular_vals(x, singular_vals, ...)
 
-## S7 method for class <bixverse::MetaCells>
-set_pca_singular_vals(x, singular_vals, ...)
-
 \method{set_pca_singular_vals}{ScCache}(x, singular_vals)
-
-## S7 method for class <bixverse::SingleCells>
-set_pca_singular_vals(x, singular_vals, ...)
 }
 \arguments{
 \item{x}{An object to add the singular values for.}

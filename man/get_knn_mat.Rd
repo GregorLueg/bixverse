@@ -11,13 +11,7 @@
 \usage{
 get_knn_mat(x, ...)
 
-## S7 method for class <bixverse::MetaCells>
-get_knn_mat(x, ...)
-
 \method{get_knn_mat}{ScCache}(x)
-
-## S7 method for class <bixverse::SingleCells>
-get_knn_mat(x, ...)
 
 \method{get_knn_mat}{SingleCellNearestNeighbour}(x)
 }

@@ -96,6 +96,7 @@ direct_load_csr <- rs_h5ad_data(
     min_cells = 0L,
     target_size = 1e5
   ),
+  slot = "X",
   verbose = FALSE
 )
 
@@ -110,6 +111,7 @@ direct_load_csc <- rs_h5ad_data(
     min_cells = 0L,
     target_size = 1e5
   ),
+  slot = "X",
   verbose = FALSE
 )
 
@@ -141,6 +143,24 @@ expect_true(
 expect_true(
   current = all(direct_load_csr$data == single_cell_test_data$counts@x),
   info = paste("h5ad ingestion - data are preserved")
+)
+
+expect_error(
+  current = rs_h5ad_data(
+    f_path = f_path_csr,
+    cs_type = h5_meta_csr$type,
+    nrows = h5_meta_csr$dims[1],
+    ncols = h5_meta_csr$dims[2],
+    cell_quality = params_sc_min_quality(
+      min_unique_genes = 0L,
+      min_lib_size = 0L,
+      min_cells = 0L,
+      target_size = 1e5
+    ),
+    slot = "raw.X",
+    verbose = FALSE
+  ),
+  info = "error with wrong raw count slot"
 )
 
 ### qc params work -------------------------------------------------------------
@@ -197,6 +217,7 @@ file_res <- rust_con$h5ad_to_file(
   no_cells = h5_meta_csr$dims["obs"],
   no_genes = h5_meta_csr$dims["var"],
   qc_params = sc_qc_param,
+  slot = "X",
   verbose = FALSE
 )
 
@@ -218,6 +239,7 @@ file_res <- rust_con$h5ad_to_file(
   no_cells = h5_meta_csc$dims["obs"],
   no_genes = h5_meta_csc$dims["var"],
   qc_params = sc_qc_param,
+  slot = "X",
   verbose = FALSE
 )
 
@@ -241,6 +263,7 @@ file_res <- rust_con$h5ad_to_file_streaming(
   no_cells = h5_meta_csr$dims["obs"],
   no_genes = h5_meta_csr$dims["var"],
   qc_params = sc_qc_param,
+  slot = "X",
   verbose = FALSE
 )
 
@@ -262,6 +285,7 @@ file_res <- rust_con$h5ad_to_file_streaming(
   no_cells = h5_meta_csc$dims["obs"],
   no_genes = h5_meta_csc$dims["var"],
   qc_params = sc_qc_param,
+  slot = "X",
   verbose = FALSE
 )
 
@@ -622,7 +646,7 @@ h5ad_files <- h5ad_files[
 h5ad_files_final <- file.path(test_temp_dir, h5ad_files)
 names(h5ad_files_final) <- c("exp1", "exp2")
 
-h5_tasks <- prescan_h5ad_files(h5_paths = h5ad_files_final)
+h5_tasks <- prescan_h5ad_files(h5_paths = h5ad_files_final, .verbose = FALSE)
 
 expect_true(
   current = checkmate::testList(h5_tasks),

@@ -22,7 +22,7 @@ contrast groups. Needs to be part of the metadata stored in the class.}
 
 \item{norm_method}{String. One of
 \code{c("TMM", "TMMwsp", "RLE", "upperquartile", "none")}. Please refer to
-\code{\link[edgeR:normLibSizes]{edgeR::normLibSizes()}}.}
+\code{\link[edgeR:calcNormFactors]{edgeR::normLibSizes()}}.}
 
 \item{calc_tpm}{Boolean. Output TPM calculation (default = FALSE).}
 

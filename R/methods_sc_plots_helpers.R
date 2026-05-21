@@ -8,17 +8,18 @@
 #'
 #' @param x `SingleCells`, `MetaCells` object from which to extract the kNN
 #' data.
+#' @param modality String. One of `c("rna", "adt")`.
 #'
 #' @returns The manifoldsR `NearestNeigbours` if possible
 #'
 #' @keywords internal
-.get_manifoldsr_knn <- function(x) {
-  # checks
+.get_manifoldsr_knn <- function(x, modality = c("rna", "adt")) {
+  modality <- match.arg(modality)
   checkmate::assertTRUE(
     S7::S7_inherits(x, SingleCells) || S7::S7_inherits(x, MetaCells)
   )
 
-  knn_obj <- get_knn_obj(x)
+  knn_obj <- get_knn_obj(x, modality = modality)
   if (is.null(knn_obj)) {
     warning(paste(
       "No kNN data found.",
@@ -27,6 +28,25 @@
     return(knn_obj)
   }
   manifold_nn <- sc_knn_to_nearest_neighbours(knn_obj)
+
+  return(manifold_nn)
+}
+
+#' Placeholder: manifoldsR nearest neighbours from a WNN graph
+#'
+#' @keywords internal
+.get_manifoldsr_knn_from_wnn <- function(x) {
+  checkmate::assertTRUE(
+    S7::S7_inherits(x, SingleCellsMultiModal)
+  )
+
+  res <- S7::prop(x, "other_data")[["wnn"]][["knn"]]
+
+  if (is.null(res)) {
+    stop("WNN-based neighbours were not found.")
+  }
+
+  manifold_nn <- sc_knn_to_nearest_neighbours(res)
 
   return(manifold_nn)
 }
@@ -67,6 +87,9 @@
 #' Defaults to `"umap"`.
 #' @param no_embd_to_use Optional integer. Number of embedding dimensions to
 #' use. If `NULL` all will be used.
+#' @param modality String. On which modality to run the UMAP. One of
+#' `c("rna", "adt", "wnn")`. The two latter options are only available for
+#' multi-modal versions with the added data.
 #' @param n_dim Integer. Number of UMAP dimensions. Defaults to `2L`.
 #' @param k Integer. Number of nearest neighbours. Defaults to `15L`.
 #' @param min_dist Numeric. Minimum distance between embedded points. Defaults
@@ -91,6 +114,7 @@ umap_sc <- S7::new_generic(
     embd_to_use = "pca",
     slot_name = "umap",
     no_embd_to_use = NULL,
+    modality = c("rna", "adt", "wnn"),
     n_dim = 2L,
     k = 15L,
     min_dist = 0.5,
@@ -118,6 +142,7 @@ S7::method(umap_sc, ScOrMc) <- function(
   embd_to_use = "pca",
   slot_name = "umap",
   no_embd_to_use = NULL,
+  modality = c("rna", "adt", "wnn"),
   n_dim = 2L,
   k = 15L,
   min_dist = 0.5,
@@ -135,6 +160,8 @@ S7::method(umap_sc, ScOrMc) <- function(
   seed = 42L,
   .verbose = TRUE
 ) {
+  modality <- match.arg(modality)
+
   # checks
   checkmate::assertTRUE(
     S7::S7_inherits(object, SingleCells) || S7::S7_inherits(object, MetaCells)
@@ -151,16 +178,34 @@ S7::method(umap_sc, ScOrMc) <- function(
   checkmate::qassert(.verbose, "B1")
   knn_method <- match.arg(knn_method)
 
+  if (modality != "rna" && !S7::S7_inherits(object, SingleCellsMultiModal)) {
+    stop(sprintf(
+      "modality = '%s' is only supported for SingleCellsMultiModal.",
+      modality
+    ))
+  }
+
+  # wnn takes the integrated graph; embeddings still read/write the rna cache
+  cache_modality <- if (modality == "wnn") "rna" else modality
+
   # get the knn
-  knn <- if (use_knn) {
-    .get_manifoldsr_knn(x = object)
+  knn <- if (modality == "wnn") {
+    .get_manifoldsr_knn_from_wnn(x = object)
+  } else if (use_knn) {
+    .get_manifoldsr_knn(x = object, modality = modality)
   } else {
     NULL
   }
 
   # get the embedding
-  checkmate::assertTRUE(embd_to_use %in% get_available_embeddings(object))
-  embd <- get_embedding(x = object, embd_name = embd_to_use)
+  checkmate::assertTRUE(
+    embd_to_use %in% get_available_embeddings(object, modality = cache_modality)
+  )
+  embd <- get_embedding(
+    x = object,
+    embd_name = embd_to_use,
+    modality = cache_modality
+  )
 
   if (!is.null(no_embd_to_use)) {
     to_take <- min(c(no_embd_to_use, ncol(embd)))
@@ -186,7 +231,15 @@ S7::method(umap_sc, ScOrMc) <- function(
   )
 
   colnames(umap_embd) <- sprintf("umap_%s", seq_len(ncol(umap_embd)))
-  object <- set_embedding(x = object, embd = umap_embd, name = slot_name)
+
+  slot <- ifelse(modality == "wnn", "other", cache_modality)
+
+  object <- set_embedding(
+    x = object,
+    embd = umap_embd,
+    name = slot_name,
+    modality = slot
+  )
 
   return(object)
 }
@@ -228,6 +281,9 @@ S7::method(umap_sc, ScOrMc) <- function(
 #' Defaults to `"tsne"`.
 #' @param no_embd_to_use Optional integer. Number of embedding dimensions to
 #' use. If `NULL` all will be used.
+#' @param modality String. On which modality to run the UMAP. One of
+#' `c("rna", "adt", "wnn")`. The two latter options are only available for
+#' multi-modal versions with the added data.
 #' @param n_dim Integer. Number of t-SNE dimensions. Currently only `2L` is
 #' supported. Defaults to `2L`.
 #' @param perplexity Numeric. Perplexity parameter. Typical values between 5
@@ -253,6 +309,7 @@ tsne_sc <- S7::new_generic(
     embd_to_use = "pca",
     slot_name = "tsne",
     no_embd_to_use = NULL,
+    modality = c("rna", "adt", "wnn"),
     n_dim = 2L,
     perplexity = 10.0,
     approx_type = c("bh", "fft"),
@@ -279,6 +336,7 @@ S7::method(tsne_sc, ScOrMc) <- function(
   embd_to_use = "pca",
   slot_name = "tsne",
   no_embd_to_use = NULL,
+  modality = c("rna", "adt", "wnn"),
   n_dim = 2L,
   perplexity = 10.0,
   approx_type = c("bh", "fft"),
@@ -295,6 +353,8 @@ S7::method(tsne_sc, ScOrMc) <- function(
   seed = 42L,
   .verbose = TRUE
 ) {
+  modality <- match.arg(modality)
+
   # checks
   checkmate::assertTRUE(
     S7::S7_inherits(object, SingleCells) || S7::S7_inherits(object, MetaCells)
@@ -309,16 +369,33 @@ S7::method(tsne_sc, ScOrMc) <- function(
   approx_type <- match.arg(approx_type)
   knn_method <- match.arg(knn_method)
 
+  if (modality != "rna" && !S7::S7_inherits(object, SingleCellsMultiModal)) {
+    stop(sprintf(
+      "modality = '%s' is only supported for SingleCellsMultiModal.",
+      modality
+    ))
+  }
+
+  cache_modality <- if (modality == "wnn") "rna" else modality
+
   # get the knn
-  knn <- if (use_knn) {
-    .get_manifoldsr_knn(x = object)
+  knn <- if (modality == "wnn") {
+    .get_manifoldsr_knn_from_wnn(x = object)
+  } else if (use_knn) {
+    .get_manifoldsr_knn(x = object, modality = modality)
   } else {
     NULL
   }
 
   # get the embedding
-  checkmate::assertTRUE(embd_to_use %in% get_available_embeddings(object))
-  embd <- get_embedding(x = object, embd_name = embd_to_use)
+  checkmate::assertTRUE(
+    embd_to_use %in% get_available_embeddings(object, modality = cache_modality)
+  )
+  embd <- get_embedding(
+    x = object,
+    embd_name = embd_to_use,
+    modality = cache_modality
+  )
 
   if (!is.null(no_embd_to_use)) {
     to_take <- min(c(no_embd_to_use, ncol(embd)))
@@ -343,7 +420,15 @@ S7::method(tsne_sc, ScOrMc) <- function(
   )
 
   colnames(tsne_embd) <- sprintf("tsne_%s", seq_len(ncol(tsne_embd)))
-  object <- set_embedding(x = object, embd = tsne_embd, name = slot_name)
+
+  slot <- ifelse(modality == "wnn", "other", cache_modality)
+
+  object <- set_embedding(
+    x = object,
+    embd = tsne_embd,
+    name = slot_name,
+    modality = slot
+  )
 
   return(object)
 }
@@ -378,9 +463,12 @@ S7::method(tsne_sc, ScOrMc) <- function(
 #' @param embd_to_use String. The embedding to use for PHATE. Must be available
 #' in the object.
 #' @param slot_name String. The name of this embedding within the object.
-#' Defaults to `"phase"`.
+#' Defaults to `"phate"`.
 #' @param no_embd_to_use Optional integer. Number of embedding dimensions to
 #' use. If `NULL` all will be used.
+#' @param modality String. On which modality to run the UMAP. One of
+#' `c("rna", "adt", "wnn")`. The two latter options are only available for
+#' multi-modal versions with the added data.
 #' @param n_dim Integer. Number of PHATE dimensions. Currently only `2L` is
 #' supported. Defaults to `2L`.
 #' @param k Integer. Number of nearest neighbours for graph construction.
@@ -404,6 +492,7 @@ phate_sc <- S7::new_generic(
     embd_to_use = "pca",
     slot_name = "phate",
     no_embd_to_use = NULL,
+    modality = c("rna", "adt", "wnn"),
     n_dim = 2L,
     k = 5L,
     knn_method = c(
@@ -429,6 +518,7 @@ S7::method(phate_sc, ScOrMc) <- function(
   embd_to_use = "pca",
   slot_name = "phate",
   no_embd_to_use = NULL,
+  modality = c("rna", "adt", "wnn"),
   n_dim = 2L,
   k = 5L,
   knn_method = c(
@@ -444,6 +534,8 @@ S7::method(phate_sc, ScOrMc) <- function(
   seed = 42L,
   .verbose = TRUE
 ) {
+  modality <- match.arg(modality)
+
   # checks
   checkmate::assertTRUE(
     S7::S7_inherits(object, SingleCells) || S7::S7_inherits(object, MetaCells)
@@ -457,16 +549,33 @@ S7::method(phate_sc, ScOrMc) <- function(
   checkmate::qassert(.verbose, "B1")
   knn_method <- match.arg(knn_method)
 
+  if (modality != "rna" && !S7::S7_inherits(object, SingleCellsMultiModal)) {
+    stop(sprintf(
+      "modality = '%s' is only supported for SingleCellsMultiModal.",
+      modality
+    ))
+  }
+
+  cache_modality <- if (modality == "wnn") "rna" else modality
+
   # get the knn
-  knn <- if (use_knn) {
-    .get_manifoldsr_knn(x = object)
+  knn <- if (modality == "wnn") {
+    .get_manifoldsr_knn_from_wnn(x = object)
+  } else if (use_knn) {
+    .get_manifoldsr_knn(x = object, modality = modality)
   } else {
     NULL
   }
 
   # get the embedding
-  checkmate::assertTRUE(embd_to_use %in% get_available_embeddings(object))
-  embd <- get_embedding(x = object, embd_name = embd_to_use)
+  checkmate::assertTRUE(
+    embd_to_use %in% get_available_embeddings(object, modality = cache_modality)
+  )
+  embd <- get_embedding(
+    x = object,
+    embd_name = embd_to_use,
+    modality = cache_modality
+  )
 
   if (!is.null(no_embd_to_use)) {
     to_take <- min(c(no_embd_to_use, ncol(embd)))
@@ -479,6 +588,7 @@ S7::method(phate_sc, ScOrMc) <- function(
 
   phate_embd <- manifoldsR::phate(
     data = embd,
+    knn = knn,
     n_dim = n_dim,
     k = k,
     knn_method = knn_method,
@@ -489,36 +599,145 @@ S7::method(phate_sc, ScOrMc) <- function(
   )
 
   colnames(phate_embd) <- sprintf("phate_%s", seq_len(ncol(phate_embd)))
-  object <- set_embedding(x = object, embd = phate_embd, name = "phate")
+
+  slot <- ifelse(modality == "wnn", "other", cache_modality)
+
+  object <- set_embedding(
+    x = object,
+    embd = phate_embd,
+    name = slot_name,
+    modality = slot
+  )
 
   return(object)
 }
 
-## gene extracters -------------------------------------------------------------
+## feature extraction ----------------------------------------------------------
+
+### helpers --------------------------------------------------------------------
+
+#' Match requested features against available feature names
+#'
+#' @param features Character vector. Requested feature ids.
+#' @param available Character vector. Feature names present in the data.
+#'
+#' @return The subset of `features` that was matched, in input order.
+#'
+#' @keywords internal
+.match_features <- function(features, available) {
+  idx <- match(features, available)
+  missing <- is.na(idx)
+  if (any(missing)) {
+    warning(sprintf("%i features could not be matched.", sum(missing)))
+    features <- features[!missing]
+  }
+  if (length(features) == 0) {
+    stop("No features matched. Please double check provided parameters!")
+  }
+  features
+}
+
+#' Z-score and optionally clip a numeric vector
+#'
+#' @param x Numeric vector.
+#' @param clip Optional numeric. Clip the z-scores to `[-clip, clip]`.
+#'
+#' @return The scaled (and optionally clipped) vector.
+#'
+#' @keywords internal
+.scale_and_clip_expr <- function(x, clip = NULL) {
+  s <- stats::sd(x)
+  if (s > 1e-8) {
+    x <- (x - mean(x)) / s
+  }
+  if (!is.null(clip)) {
+    x <- pmax(pmin(x, clip), -clip)
+  }
+  x
+}
+
+#' Extract dense expression for in-memory count matrices
+#'
+#' @param mat Numeric matrix. Cells x features, with cell ids as row names and
+#' feature ids as column names.
+#' @param features Character vector. Feature ids to extract (pre-matched).
+#' @param scale Boolean. Whether to z-score each feature across cells.
+#' @param clip Optional numeric. Clip the z-scores if `scale = TRUE`.
+#'
+#' @return A data.table with a `cell_id` column and one column per feature.
+#'
+#' @keywords internal
+.extract_expr_in_memory <- function(mat, features, scale = FALSE, clip = NULL) {
+  idx <- match(features, colnames(mat))
+  dt <- data.table::data.table(cell_id = rownames(mat))
+  for (i in seq_along(features)) {
+    v <- mat[, idx[i]]
+    if (scale) {
+      v <- .scale_and_clip_expr(v, clip)
+    }
+    data.table::set(dt, j = features[i], value = v)
+  }
+  dt
+}
+
+#' Per-group mean expression and percent expressed for in-memory matrices
+#'
+#' @param mat Numeric matrix. Cells x features.
+#' @param features Character vector. Feature ids to extract (pre-matched).
+#' @param grouping Factor. Group assignment per cell.
+#'
+#' @return A long data.table with columns `gene`, `group`, `mean_exp`,
+#' `pct_exp`.
+#'
+#' @keywords internal
+.grouped_gene_stats_in_memory <- function(mat, features, grouping) {
+  group_levels <- levels(grouping)
+  sub <- mat[, match(features, colnames(mat)), drop = FALSE]
+
+  res <- lapply(seq_along(features), function(j) {
+    vals <- sub[, j]
+    data.table::data.table(
+      gene = features[j],
+      group = group_levels,
+      mean_exp = as.numeric(tapply(vals, grouping, mean)),
+      pct_exp = as.numeric(tapply(vals > 0, grouping, mean)) * 100
+    )
+  })
+
+  data.table::rbindlist(res)
+}
+
+#' Finalise a long dot-plot data.table
+#'
+#' @param plot_dt data.table. With columns `gene`, `group`, `mean_exp`,
+#' `pct_exp`.
+#' @param features Character vector. Feature ids, in display order.
+#' @param group_levels Character vector. Group levels, in display order.
+#' @param scale_exp Boolean. Whether to min-max scale mean expression per gene.
+#'
+#' @return The data.table with an added `scaled_exp` column and ordered
+#' `gene`/`group` factors.
+#'
+#' @keywords internal
+.finalise_dot_plot_dt <- function(plot_dt, features, group_levels, scale_exp) {
+  plot_dt[, scaled_exp := mean_exp]
+  if (scale_exp) {
+    plot_dt[,
+      scaled_exp := {
+        rng <- range(mean_exp)
+        if (rng[1] == rng[2]) 0 else (mean_exp - rng[1]) / (rng[2] - rng[1])
+      },
+      by = gene
+    ]
+  }
+  plot_dt[, gene := factor(gene, levels = features)]
+  plot_dt[, group := factor(group, levels = group_levels)]
+  plot_dt[]
+}
 
 ### gene summaries -------------------------------------------------------------
 
-#' Extract grouped gene statistics for dot plots
-#'
-#' @description
-#' Extracts per-group mean expression and percentage of expressing cells for a
-#' set of genes. Returns a long-format data.table suitable for dot plots.
-#'
-#' @param object `SingleCells` class.
-#' @param features Character vector. Gene IDs to extract.
-#' @param grouping_variable String. Column name in the obs table to group by.
-#' @param scale_exp Boolean. Whether to min-max scale mean expression per gene.
-#'
-#' @return A data.table with columns: gene, group, mean_exp, scaled_exp, pct_exp.
-#'
-#' @export
-extract_dot_plot_data <- S7::new_generic(
-  name = "extract_dot_plot_data",
-  dispatch_args = "object",
-  fun = function(object, features, grouping_variable, scale_exp = TRUE) {
-    S7::S7_dispatch()
-  }
-)
+# generic in base_generics_sc.R
 
 #' @method extract_dot_plot_data SingleCells
 #'
@@ -527,12 +746,21 @@ S7::method(extract_dot_plot_data, SingleCells) <- function(
   object,
   features,
   grouping_variable,
-  scale_exp = TRUE
+  scale_exp = TRUE,
+  modality = c("rna", "adt")
 ) {
+  modality <- match.arg(modality)
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::qassert(features, "S+")
   checkmate::qassert(grouping_variable, "S1")
   checkmate::qassert(scale_exp, "B1")
+
+  if (modality != "rna") {
+    stop(paste(
+      "SingleCells only supports modality = 'rna'.",
+      "Use SingleCellsMultiModal for ADT."
+    ))
+  }
 
   gene_idx <- get_gene_indices(
     x = object,
@@ -561,56 +789,85 @@ S7::method(extract_dot_plot_data, SingleCells) <- function(
     pct_exp = gene_res$perc_exp * 100
   )
 
-  plot_dt[, scaled_exp := mean_exp]
-  if (scale_exp) {
-    plot_dt[,
-      scaled_exp := {
-        rng <- range(mean_exp)
-        if (rng[1] == rng[2]) 0 else (mean_exp - rng[1]) / (rng[2] - rng[1])
-      },
-      by = gene
-    ]
+  .finalise_dot_plot_dt(plot_dt, features, levels(grouping), scale_exp)
+}
+
+#' @method extract_dot_plot_data SingleCellsMultiModal
+#'
+#' @export
+S7::method(extract_dot_plot_data, SingleCellsMultiModal) <- function(
+  object,
+  features,
+  grouping_variable,
+  scale_exp = TRUE,
+  modality = c("rna", "adt")
+) {
+  modality <- match.arg(modality)
+
+  if (modality == "rna") {
+    rna_method <- S7::method(extract_dot_plot_data, SingleCells)
+    return(rna_method(
+      object = object,
+      features = features,
+      grouping_variable = grouping_variable,
+      scale_exp = scale_exp,
+      modality = "rna"
+    ))
   }
 
-  plot_dt[, gene := factor(gene, levels = rev(features))]
-  plot_dt[, group := factor(group, levels = levels(grouping))]
+  # ADT path
+  checkmate::qassert(features, "S+")
+  checkmate::qassert(grouping_variable, "S1")
+  checkmate::qassert(scale_exp, "B1")
 
-  plot_dt
+  adt <- S7::prop(object, "adt_counts")
+  if (is.null(adt)) {
+    stop("No ADT counts in this object. Add them with add_adt_counts_sc().")
+  }
+
+  features <- .match_features(features, colnames(adt$norm_counts))
+  grouping <- as.factor(
+    unlist(object[[grouping_variable]], use.names = FALSE)
+  )
+
+  plot_dt <- .grouped_gene_stats_in_memory(adt$norm_counts, features, grouping)
+  .finalise_dot_plot_dt(plot_dt, features, levels(grouping), scale_exp)
+}
+
+#' @method extract_dot_plot_data MetaCells
+#'
+#' @export
+S7::method(extract_dot_plot_data, MetaCells) <- function(
+  object,
+  features,
+  grouping_variable,
+  scale_exp = TRUE,
+  modality = c("rna", "adt")
+) {
+  modality <- match.arg(modality)
+  checkmate::assertTRUE(S7::S7_inherits(object, MetaCells))
+  checkmate::qassert(features, "S+")
+  checkmate::qassert(grouping_variable, "S1")
+  checkmate::qassert(scale_exp, "B1")
+
+  if (modality != "rna") {
+    stop(paste(
+      "MetaCells only supports modality = 'rna'.",
+      "Use SingleCellsMultiModal for ADT."
+    ))
+  }
+
+  mat <- get_sc_counts(object, assay = "norm")
+  features <- .match_features(features, colnames(mat))
+  grouping <- as.factor(
+    unlist(object[[grouping_variable]], use.names = FALSE)
+  )
+
+  plot_dt <- .grouped_gene_stats_in_memory(mat, features, grouping)
+  .finalise_dot_plot_dt(plot_dt, features, levels(grouping), scale_exp)
 }
 
 ### individual cells -----------------------------------------------------------
-
-#' Extract normalised gene expression for plotting
-#'
-#' @description
-#' Extracts dense normalised (log1p) expression values for a set of genes,
-#' optionally with additional observation metadata columns.
-#'
-#' @param object `SingleCells` class.
-#' @param features Character vector. Gene IDs to extract.
-#' @param obs_cols Optional character vector. Column names from the obs table
-#' to include.
-#' @param scale Boolean. Whether to z-score the expression values.
-#' @param clip Optional numeric. If `scale = TRUE`, clip z-scores to
-#' `[-clip, clip]`.
-#'
-#' @return A data.table with a `cell_id` column, one column per gene, and
-#'   any requested obs columns.
-#'
-#' @export
-extract_gene_expression <- S7::new_generic(
-  name = "extract_gene_expression",
-  dispatch_args = "object",
-  fun = function(
-    object,
-    features,
-    obs_cols = NULL,
-    scale = FALSE,
-    clip = NULL
-  ) {
-    S7::S7_dispatch()
-  }
-)
 
 #' @method extract_gene_expression SingleCells
 #'
@@ -620,13 +877,22 @@ S7::method(extract_gene_expression, SingleCells) <- function(
   features,
   obs_cols = NULL,
   scale = FALSE,
-  clip = NULL
+  clip = NULL,
+  modality = c("rna", "adt")
 ) {
+  modality <- match.arg(modality)
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::qassert(features, "S+")
   checkmate::qassert(obs_cols, c("0", "S+"))
   checkmate::qassert(scale, "B1")
   checkmate::qassert(clip, c("0", "N1(0,)"))
+
+  if (modality != "rna") {
+    stop(paste(
+      "SingleCells only supports modality = 'rna'.",
+      "Use SingleCellsMultiModal for ADT."
+    ))
+  }
 
   gene_idx <- get_gene_indices(
     x = object,
@@ -648,6 +914,95 @@ S7::method(extract_gene_expression, SingleCells) <- function(
   for (i in seq_along(features)) {
     data.table::set(dt, j = features[i], value = counts[[i]])
   }
+
+  if (!is.null(obs_cols)) {
+    obs_dt <- object[[obs_cols]]
+    for (col in names(obs_dt)) {
+      data.table::set(dt, j = col, value = obs_dt[[col]])
+    }
+  }
+
+  dt
+}
+
+#' @method extract_gene_expression SingleCellsMultiModal
+#'
+#' @export
+S7::method(extract_gene_expression, SingleCellsMultiModal) <- function(
+  object,
+  features,
+  obs_cols = NULL,
+  scale = FALSE,
+  clip = NULL,
+  modality = c("rna", "adt")
+) {
+  modality <- match.arg(modality)
+
+  if (modality == "rna") {
+    rna_method <- S7::method(extract_gene_expression, SingleCells)
+    return(rna_method(
+      object = object,
+      features = features,
+      obs_cols = obs_cols,
+      scale = scale,
+      clip = clip,
+      modality = "rna"
+    ))
+  }
+
+  # ADT path
+  checkmate::qassert(features, "S+")
+  checkmate::qassert(obs_cols, c("0", "S+"))
+  checkmate::qassert(scale, "B1")
+  checkmate::qassert(clip, c("0", "N1(0,)"))
+
+  adt <- S7::prop(object, "adt_counts")
+  if (is.null(adt)) {
+    stop("No ADT counts in this object. Add them with add_adt_counts_sc().")
+  }
+
+  features <- .match_features(features, colnames(adt$norm_counts))
+  dt <- .extract_expr_in_memory(adt$norm_counts, features, scale, clip)
+
+  # obs are attached positionally; rows are the kept cells in kept order
+  if (!is.null(obs_cols)) {
+    obs_dt <- object[[obs_cols]]
+    for (col in names(obs_dt)) {
+      data.table::set(dt, j = col, value = obs_dt[[col]])
+    }
+  }
+
+  dt
+}
+
+#' @method extract_gene_expression MetaCells
+#'
+#' @export
+S7::method(extract_gene_expression, MetaCells) <- function(
+  object,
+  features,
+  obs_cols = NULL,
+  scale = FALSE,
+  clip = NULL,
+  modality = c("rna", "adt")
+) {
+  modality <- match.arg(modality)
+  checkmate::assertTRUE(S7::S7_inherits(object, MetaCells))
+  checkmate::qassert(features, "S+")
+  checkmate::qassert(obs_cols, c("0", "S+"))
+  checkmate::qassert(scale, "B1")
+  checkmate::qassert(clip, c("0", "N1(0,)"))
+
+  if (modality != "rna") {
+    stop(paste(
+      "MetaCells only supports modality = 'rna'.",
+      "Use SingleCellsMultiModal for ADT."
+    ))
+  }
+
+  mat <- get_sc_counts(object, assay = "norm")
+  features <- .match_features(features, colnames(mat))
+  dt <- .extract_expr_in_memory(mat, features, scale, clip)
 
   if (!is.null(obs_cols)) {
     obs_dt <- object[[obs_cols]]

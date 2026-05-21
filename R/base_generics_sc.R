@@ -549,6 +549,7 @@ get_embedding <- function(x, embd_name, ...) {
 #' used for the single cell-related classes and methods.
 #'
 #' @param x An object to get embedding from
+#' @param ... Other parameters.
 #'
 #' @return Get the names of the available embeddings.
 #'
@@ -771,6 +772,8 @@ calculate_pca_sc <- S7::new_generic(
 #' needs to be part of the object.
 #' @param no_embd_to_use Optional integer. Number of embedding dimensions to
 #' use. If `NULL` all will be used.
+#' @param modality String. One of `c("rna", "adt")`. You can only use `"adt"`
+#' on `SingleCellsMultiModal` class.
 #' @param neighbours_params List. Output of [bixverse::params_sc_neighbours()].
 #' A list with the following items:
 #' \itemize{
@@ -800,6 +803,7 @@ find_neighbours_sc <- S7::new_generic(
     object,
     embd_to_use = "pca",
     no_embd_to_use = NULL,
+    modality = c("rna", "adt"),
     neighbours_params = params_sc_neighbours(),
     seed = 42L,
     .verbose = TRUE
@@ -807,7 +811,6 @@ find_neighbours_sc <- S7::new_generic(
     S7::S7_dispatch()
   }
 )
-
 #### clustering ----------------------------------------------------------------
 
 #' Graph-based clustering of cells on the sNN graph
@@ -821,6 +824,9 @@ find_neighbours_sc <- S7::new_generic(
 #' @param res Numeric. The resolution parameter for [igraph::cluster_leiden()]
 #' or [igraph::cluster_louvain()].
 #' @param name String. The name to add to the obs table in the DuckDB.
+#' @param modality String. On which modality to run the UMAP. One of
+#' `c("rna", "adt", "wnn")`. The two latter options are only available for
+#' multi-modal versions with the added data.
 #'
 #' @return The object with added clustering in the obs table.
 #'
@@ -832,7 +838,8 @@ find_clusters_sc <- S7::new_generic(
     object,
     cluster_algorithm = c("leiden", "louvain"),
     res = 1.0,
-    name = "leiden_clustering"
+    name = "leiden_clustering",
+    modality = c("rna", "adt", "wnn")
   ) {
     S7::S7_dispatch()
   }
@@ -1030,6 +1037,73 @@ load_existing <- S7::new_generic(
   dispatch_args = "object",
   fun = function(
     object
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#### plotting ------------------------------------------------------------------
+
+#' Extract grouped gene statistics for dot plots
+#'
+#' @description
+#' Extracts per-group mean expression and percentage of expressing cells for a
+#' set of genes. Returns a long-format data.table suitable for dot plots.
+#'
+#' @param object A single cell class.
+#' @param features Character vector. Gene IDs to extract.
+#' @param grouping_variable String. Column name in the obs table to group by.
+#' @param scale_exp Boolean. Whether to min-max scale mean expression per gene.
+#' @param modality String. One of `c("rna", "adt")`. ADT is only available for
+#' `SingleCellsMultiModal`.
+#'
+#' @return A data.table with columns: gene, group, mean_exp, scaled_exp, pct_exp.
+#'
+#' @export
+extract_dot_plot_data <- S7::new_generic(
+  name = "extract_dot_plot_data",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    features,
+    grouping_variable,
+    scale_exp = TRUE,
+    modality = c("rna", "adt")
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' Extract normalised gene expression for plotting
+#'
+#' @description
+#' Extracts dense normalised (log1p) expression values for a set of genes,
+#' optionally with additional observation metadata columns.
+#'
+#' @param object A single cell class.
+#' @param features Character vector. Gene IDs to extract.
+#' @param obs_cols Optional character vector. Column names from the obs table
+#' to include.
+#' @param scale Boolean. Whether to z-score the expression values.
+#' @param clip Optional numeric. If `scale = TRUE`, clip z-scores to
+#' `[-clip, clip]`.
+#' @param modality String. One of `c("rna", "adt")`. ADT is only available for
+#' `SingleCellsMultiModal`.
+#'
+#' @return A data.table with a `cell_id` column, one column per gene, and
+#'   any requested obs columns.
+#'
+#' @export
+extract_gene_expression <- S7::new_generic(
+  name = "extract_gene_expression",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    features,
+    obs_cols = NULL,
+    scale = FALSE,
+    clip = NULL,
+    modality = c("rna", "adt")
   ) {
     S7::S7_dispatch()
   }
