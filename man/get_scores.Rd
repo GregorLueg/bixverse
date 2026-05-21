@@ -3,15 +3,25 @@
 \name{get_scores}
 \alias{get_scores}
 \alias{get_scores.ScDblFinderRes}
+\alias{get_scores.ScTypeResults}
 \title{Get either the cxds or weighted scores}
 \usage{
-get_scores(x, ..., score_type = c("weighted", "cxds_scores"))
+get_scores(x)
 
 \method{get_scores}{ScDblFinderRes}(x, ..., score_type = c("weighted", "cxds_scores"))
+
+get_scores(x)
+
+\method{get_scores}{ScTypeResults}(x)
 }
 \arguments{
-\item{x}{An object to get the weighted or cxds scores from.}
+\item{x}{\code{ScTypeResults} object.}
+}
+\value{
+A numeric matrix of cells x cell types.
 }
 \description{
 Get either the cxds or weighted scores
+
+Get the ScType score matrix
 }

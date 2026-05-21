@@ -416,7 +416,11 @@ SingleCellDuckDBBase <- R6::R6Class(
       cols_to_exclude <- intersect(existing_cols, new_cols)
 
       exclude_clause <- if (length(cols_to_exclude) > 0) {
-        paste0(" EXCLUDE(", paste(cols_to_exclude, collapse = ", "), ")")
+        paste0(
+          " EXCLUDE(",
+          paste(paste0('"', cols_to_exclude, '"'), collapse = ", "),
+          ")"
+        )
       } else {
         ""
       }
@@ -470,7 +474,11 @@ SingleCellDuckDBBase <- R6::R6Class(
       cols_to_exclude <- intersect(existing_cols, new_cols)
 
       exclude_clause <- if (length(cols_to_exclude) > 0) {
-        paste0(" EXCLUDE(", paste(cols_to_exclude, collapse = ", "), ")")
+        paste0(
+          " EXCLUDE(",
+          paste(paste0('"', cols_to_exclude, '"'), collapse = ", "),
+          ")"
+        )
       } else {
         ""
       }
@@ -550,7 +558,11 @@ SingleCellDuckDBBase <- R6::R6Class(
       cols_to_exclude <- intersect(existing_cols, new_cols)
 
       exclude_clause <- if (length(cols_to_exclude) > 0) {
-        paste0(" EXCLUDE(", paste(cols_to_exclude, collapse = ", "), ")")
+        paste0(
+          " EXCLUDE(",
+          paste(paste0('"', cols_to_exclude, '"'), collapse = ", "),
+          ")"
+        )
       } else {
         ""
       }

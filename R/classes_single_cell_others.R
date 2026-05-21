@@ -2176,3 +2176,81 @@ print.SingleCellFastClusters <- function(x, ...) {
 
   invisible(x)
 }
+
+## sctypes ---------------------------------------------------------------------
+
+### getters --------------------------------------------------------------------
+
+#' Get the ScType score matrix
+#'
+#' @param x `ScTypeResults` object.
+#'
+#' @returns A numeric matrix of cells x cell types.
+#'
+#' @export
+get_scores <- function(x) {
+  UseMethod("get_scores")
+}
+
+#' @rdname get_scores
+#'
+#' @export
+get_scores.ScTypeResults <- function(x) {
+  checkmate::assertClass(x, "ScTypeResults")
+  m <- matrix(
+    x$scores,
+    nrow = x$n_cells,
+    ncol = x$n_cell_types,
+    byrow = TRUE
+  )
+  colnames(m) <- x$cell_types
+  m
+}
+
+### cluster scoring ------------------------------------------------------------
+
+#' Score clusters based on ScType
+#'
+#' @param x `ScTypeResults` object.
+#' @param cluster_labels Integer vector. Cluster assignment, of length of the
+#' scored cells.
+#'
+#' @returns A `data.table` with cluster_id, cell_type, scores and n_cells.
+#'
+#' @export
+score_clusters <- function(x, cluster_labels) {
+  UseMethod("score_clusters")
+}
+
+#' @rdname score_clusters
+#'
+#' @export
+score_clusters.ScTypeResults <- function(x, cluster_labels) {
+  checkmate::assertClass(x, "ScTypeResults")
+  checkmate::assertIntegerish(cluster_labels, len = x$n_cells)
+
+  res <- rs_sc_type_cluster_assignment(
+    sc_type_res = x,
+    cluster_labels = as.integer(cluster_labels)
+  )
+
+  res <- data.table::setDT(res)
+
+  return(res)
+}
+
+### primitives -----------------------------------------------------------------
+
+#' @export
+#'
+#' @keywords internal
+print.ScTypeResults <- function(x, ...) {
+  cat(sprintf(
+    "ScTypeResults: %d cells, %d cell types\n",
+    x$n_cells,
+    x$n_cell_types
+  ))
+  cat(sprintf("  Cell types: %s\n", paste(x$cell_types, collapse = ", ")))
+
+  invisible(x)
+}

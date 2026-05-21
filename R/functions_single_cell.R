@@ -442,7 +442,7 @@ prepare_cell_markers <- function(obj, marker_df) {
     must.include = c("gene_id", "cell_type")
   )
 
-  marker_df[, gene_idx := get_sc_map(obj)$gene_mapping[marker_df$gene_id]]
+  marker_df[, gene_idx := get_sc_map(obj)$gene_mapping[marker_df$gene_id] - 1L]
 
   res <- marker_df[
     !is.na(gene_idx),
