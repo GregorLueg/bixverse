@@ -309,7 +309,6 @@ expect_true(
   info = "no unexpected cell types in subsetted version - hdwgcna"
 )
 
-
 ### seacells -------------------------------------------------------------------
 
 seacells <- generate_seacells_sc(

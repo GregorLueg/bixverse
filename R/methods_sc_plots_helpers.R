@@ -612,31 +612,132 @@ S7::method(phate_sc, ScOrMc) <- function(
   return(object)
 }
 
-## gene extracters -------------------------------------------------------------
+## feature extraction ----------------------------------------------------------
+
+### helpers --------------------------------------------------------------------
+
+#' Match requested features against available feature names
+#'
+#' @param features Character vector. Requested feature ids.
+#' @param available Character vector. Feature names present in the data.
+#'
+#' @return The subset of `features` that was matched, in input order.
+#'
+#' @keywords internal
+.match_features <- function(features, available) {
+  idx <- match(features, available)
+  missing <- is.na(idx)
+  if (any(missing)) {
+    warning(sprintf("%i features could not be matched.", sum(missing)))
+    features <- features[!missing]
+  }
+  if (length(features) == 0) {
+    stop("No features matched. Please double check provided parameters!")
+  }
+  features
+}
+
+#' Z-score and optionally clip a numeric vector
+#'
+#' @param x Numeric vector.
+#' @param clip Optional numeric. Clip the z-scores to `[-clip, clip]`.
+#'
+#' @return The scaled (and optionally clipped) vector.
+#'
+#' @keywords internal
+.scale_and_clip_expr <- function(x, clip = NULL) {
+  s <- stats::sd(x)
+  if (s > 1e-8) {
+    x <- (x - mean(x)) / s
+  }
+  if (!is.null(clip)) {
+    x <- pmax(pmin(x, clip), -clip)
+  }
+  x
+}
+
+#' Extract dense expression for in-memory count matrices
+#'
+#' @param mat Numeric matrix. Cells x features, with cell ids as row names and
+#' feature ids as column names.
+#' @param features Character vector. Feature ids to extract (pre-matched).
+#' @param scale Boolean. Whether to z-score each feature across cells.
+#' @param clip Optional numeric. Clip the z-scores if `scale = TRUE`.
+#'
+#' @return A data.table with a `cell_id` column and one column per feature.
+#'
+#' @keywords internal
+.extract_expr_in_memory <- function(mat, features, scale = FALSE, clip = NULL) {
+  idx <- match(features, colnames(mat))
+  dt <- data.table::data.table(cell_id = rownames(mat))
+  for (i in seq_along(features)) {
+    v <- mat[, idx[i]]
+    if (scale) {
+      v <- .scale_and_clip_expr(v, clip)
+    }
+    data.table::set(dt, j = features[i], value = v)
+  }
+  dt
+}
+
+#' Per-group mean expression and percent expressed for in-memory matrices
+#'
+#' @param mat Numeric matrix. Cells x features.
+#' @param features Character vector. Feature ids to extract (pre-matched).
+#' @param grouping Factor. Group assignment per cell.
+#'
+#' @return A long data.table with columns `gene`, `group`, `mean_exp`,
+#' `pct_exp`.
+#'
+#' @keywords internal
+.grouped_gene_stats_in_memory <- function(mat, features, grouping) {
+  group_levels <- levels(grouping)
+  sub <- mat[, match(features, colnames(mat)), drop = FALSE]
+
+  res <- lapply(seq_along(features), function(j) {
+    vals <- sub[, j]
+    data.table::data.table(
+      gene = features[j],
+      group = group_levels,
+      mean_exp = as.numeric(tapply(vals, grouping, mean)),
+      pct_exp = as.numeric(tapply(vals > 0, grouping, mean)) * 100
+    )
+  })
+
+  data.table::rbindlist(res)
+}
+
+#' Finalise a long dot-plot data.table
+#'
+#' @param plot_dt data.table. With columns `gene`, `group`, `mean_exp`,
+#' `pct_exp`.
+#' @param features Character vector. Feature ids, in display order.
+#' @param group_levels Character vector. Group levels, in display order.
+#' @param scale_exp Boolean. Whether to min-max scale mean expression per gene.
+#'
+#' @return The data.table with an added `scaled_exp` column and ordered
+#' `gene`/`group` factors.
+#'
+#' @keywords internal
+.finalise_dot_plot_dt <- function(plot_dt, features, group_levels, scale_exp) {
+  plot_dt[, scaled_exp := mean_exp]
+  if (scale_exp) {
+    plot_dt[,
+      scaled_exp := {
+        rng <- range(mean_exp)
+        if (rng[1] == rng[2]) 0 else (mean_exp - rng[1]) / (rng[2] - rng[1])
+      },
+      by = gene
+    ]
+  }
+  plot_dt[, gene := factor(gene, levels = features)]
+  plot_dt[, group := factor(group, levels = group_levels)]
+  plot_dt[]
+}
 
 ### gene summaries -------------------------------------------------------------
 
-#' Extract grouped gene statistics for dot plots
-#'
-#' @description
-#' Extracts per-group mean expression and percentage of expressing cells for a
-#' set of genes. Returns a long-format data.table suitable for dot plots.
-#'
-#' @param object `SingleCells` class.
-#' @param features Character vector. Gene IDs to extract.
-#' @param grouping_variable String. Column name in the obs table to group by.
-#' @param scale_exp Boolean. Whether to min-max scale mean expression per gene.
-#'
-#' @return A data.table with columns: gene, group, mean_exp, scaled_exp, pct_exp.
-#'
-#' @export
-extract_dot_plot_data <- S7::new_generic(
-  name = "extract_dot_plot_data",
-  dispatch_args = "object",
-  fun = function(object, features, grouping_variable, scale_exp = TRUE) {
-    S7::S7_dispatch()
-  }
-)
+# generic in base_generics_sc.R
 
 #' @method extract_dot_plot_data SingleCells
 #'
@@ -645,12 +746,21 @@ S7::method(extract_dot_plot_data, SingleCells) <- function(
   object,
   features,
   grouping_variable,
-  scale_exp = TRUE
+  scale_exp = TRUE,
+  modality = c("rna", "adt")
 ) {
+  modality <- match.arg(modality)
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::qassert(features, "S+")
   checkmate::qassert(grouping_variable, "S1")
   checkmate::qassert(scale_exp, "B1")
+
+  if (modality != "rna") {
+    stop(paste(
+      "SingleCells only supports modality = 'rna'.",
+      "Use SingleCellsMultiModal for ADT."
+    ))
+  }
 
   gene_idx <- get_gene_indices(
     x = object,
@@ -679,56 +789,85 @@ S7::method(extract_dot_plot_data, SingleCells) <- function(
     pct_exp = gene_res$perc_exp * 100
   )
 
-  plot_dt[, scaled_exp := mean_exp]
-  if (scale_exp) {
-    plot_dt[,
-      scaled_exp := {
-        rng <- range(mean_exp)
-        if (rng[1] == rng[2]) 0 else (mean_exp - rng[1]) / (rng[2] - rng[1])
-      },
-      by = gene
-    ]
+  .finalise_dot_plot_dt(plot_dt, features, levels(grouping), scale_exp)
+}
+
+#' @method extract_dot_plot_data SingleCellsMultiModal
+#'
+#' @export
+S7::method(extract_dot_plot_data, SingleCellsMultiModal) <- function(
+  object,
+  features,
+  grouping_variable,
+  scale_exp = TRUE,
+  modality = c("rna", "adt")
+) {
+  modality <- match.arg(modality)
+
+  if (modality == "rna") {
+    rna_method <- S7::method(extract_dot_plot_data, SingleCells)
+    return(rna_method(
+      object = object,
+      features = features,
+      grouping_variable = grouping_variable,
+      scale_exp = scale_exp,
+      modality = "rna"
+    ))
   }
 
-  plot_dt[, gene := factor(gene, levels = rev(features))]
-  plot_dt[, group := factor(group, levels = levels(grouping))]
+  # ADT path
+  checkmate::qassert(features, "S+")
+  checkmate::qassert(grouping_variable, "S1")
+  checkmate::qassert(scale_exp, "B1")
 
-  plot_dt
+  adt <- S7::prop(object, "adt_counts")
+  if (is.null(adt)) {
+    stop("No ADT counts in this object. Add them with add_adt_counts_sc().")
+  }
+
+  features <- .match_features(features, colnames(adt$norm_counts))
+  grouping <- as.factor(
+    unlist(object[[grouping_variable]], use.names = FALSE)
+  )
+
+  plot_dt <- .grouped_gene_stats_in_memory(adt$norm_counts, features, grouping)
+  .finalise_dot_plot_dt(plot_dt, features, levels(grouping), scale_exp)
+}
+
+#' @method extract_dot_plot_data MetaCells
+#'
+#' @export
+S7::method(extract_dot_plot_data, MetaCells) <- function(
+  object,
+  features,
+  grouping_variable,
+  scale_exp = TRUE,
+  modality = c("rna", "adt")
+) {
+  modality <- match.arg(modality)
+  checkmate::assertTRUE(S7::S7_inherits(object, MetaCells))
+  checkmate::qassert(features, "S+")
+  checkmate::qassert(grouping_variable, "S1")
+  checkmate::qassert(scale_exp, "B1")
+
+  if (modality != "rna") {
+    stop(paste(
+      "MetaCells only supports modality = 'rna'.",
+      "Use SingleCellsMultiModal for ADT."
+    ))
+  }
+
+  mat <- get_sc_counts(object, assay = "norm")
+  features <- .match_features(features, colnames(mat))
+  grouping <- as.factor(
+    unlist(object[[grouping_variable]], use.names = FALSE)
+  )
+
+  plot_dt <- .grouped_gene_stats_in_memory(mat, features, grouping)
+  .finalise_dot_plot_dt(plot_dt, features, levels(grouping), scale_exp)
 }
 
 ### individual cells -----------------------------------------------------------
-
-#' Extract normalised gene expression for plotting
-#'
-#' @description
-#' Extracts dense normalised (log1p) expression values for a set of genes,
-#' optionally with additional observation metadata columns.
-#'
-#' @param object `SingleCells` class.
-#' @param features Character vector. Gene IDs to extract.
-#' @param obs_cols Optional character vector. Column names from the obs table
-#' to include.
-#' @param scale Boolean. Whether to z-score the expression values.
-#' @param clip Optional numeric. If `scale = TRUE`, clip z-scores to
-#' `[-clip, clip]`.
-#'
-#' @return A data.table with a `cell_id` column, one column per gene, and
-#'   any requested obs columns.
-#'
-#' @export
-extract_gene_expression <- S7::new_generic(
-  name = "extract_gene_expression",
-  dispatch_args = "object",
-  fun = function(
-    object,
-    features,
-    obs_cols = NULL,
-    scale = FALSE,
-    clip = NULL
-  ) {
-    S7::S7_dispatch()
-  }
-)
 
 #' @method extract_gene_expression SingleCells
 #'
@@ -738,13 +877,22 @@ S7::method(extract_gene_expression, SingleCells) <- function(
   features,
   obs_cols = NULL,
   scale = FALSE,
-  clip = NULL
+  clip = NULL,
+  modality = c("rna", "adt")
 ) {
+  modality <- match.arg(modality)
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::qassert(features, "S+")
   checkmate::qassert(obs_cols, c("0", "S+"))
   checkmate::qassert(scale, "B1")
   checkmate::qassert(clip, c("0", "N1(0,)"))
+
+  if (modality != "rna") {
+    stop(paste(
+      "SingleCells only supports modality = 'rna'.",
+      "Use SingleCellsMultiModal for ADT."
+    ))
+  }
 
   gene_idx <- get_gene_indices(
     x = object,
@@ -766,6 +914,95 @@ S7::method(extract_gene_expression, SingleCells) <- function(
   for (i in seq_along(features)) {
     data.table::set(dt, j = features[i], value = counts[[i]])
   }
+
+  if (!is.null(obs_cols)) {
+    obs_dt <- object[[obs_cols]]
+    for (col in names(obs_dt)) {
+      data.table::set(dt, j = col, value = obs_dt[[col]])
+    }
+  }
+
+  dt
+}
+
+#' @method extract_gene_expression SingleCellsMultiModal
+#'
+#' @export
+S7::method(extract_gene_expression, SingleCellsMultiModal) <- function(
+  object,
+  features,
+  obs_cols = NULL,
+  scale = FALSE,
+  clip = NULL,
+  modality = c("rna", "adt")
+) {
+  modality <- match.arg(modality)
+
+  if (modality == "rna") {
+    rna_method <- S7::method(extract_gene_expression, SingleCells)
+    return(rna_method(
+      object = object,
+      features = features,
+      obs_cols = obs_cols,
+      scale = scale,
+      clip = clip,
+      modality = "rna"
+    ))
+  }
+
+  # ADT path
+  checkmate::qassert(features, "S+")
+  checkmate::qassert(obs_cols, c("0", "S+"))
+  checkmate::qassert(scale, "B1")
+  checkmate::qassert(clip, c("0", "N1(0,)"))
+
+  adt <- S7::prop(object, "adt_counts")
+  if (is.null(adt)) {
+    stop("No ADT counts in this object. Add them with add_adt_counts_sc().")
+  }
+
+  features <- .match_features(features, colnames(adt$norm_counts))
+  dt <- .extract_expr_in_memory(adt$norm_counts, features, scale, clip)
+
+  # obs are attached positionally; rows are the kept cells in kept order
+  if (!is.null(obs_cols)) {
+    obs_dt <- object[[obs_cols]]
+    for (col in names(obs_dt)) {
+      data.table::set(dt, j = col, value = obs_dt[[col]])
+    }
+  }
+
+  dt
+}
+
+#' @method extract_gene_expression MetaCells
+#'
+#' @export
+S7::method(extract_gene_expression, MetaCells) <- function(
+  object,
+  features,
+  obs_cols = NULL,
+  scale = FALSE,
+  clip = NULL,
+  modality = c("rna", "adt")
+) {
+  modality <- match.arg(modality)
+  checkmate::assertTRUE(S7::S7_inherits(object, MetaCells))
+  checkmate::qassert(features, "S+")
+  checkmate::qassert(obs_cols, c("0", "S+"))
+  checkmate::qassert(scale, "B1")
+  checkmate::qassert(clip, c("0", "N1(0,)"))
+
+  if (modality != "rna") {
+    stop(paste(
+      "MetaCells only supports modality = 'rna'.",
+      "Use SingleCellsMultiModal for ADT."
+    ))
+  }
+
+  mat <- get_sc_counts(object, assay = "norm")
+  features <- .match_features(features, colnames(mat))
+  dt <- .extract_expr_in_memory(mat, features, scale, clip)
 
   if (!is.null(obs_cols)) {
     obs_dt <- object[[obs_cols]]

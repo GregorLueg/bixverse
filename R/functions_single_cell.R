@@ -177,6 +177,50 @@ per_cell_qc_outlier <- function(
   list(outlier = outliers$outlier, metrics = metrics)
 }
 
+### per group outliers ---------------------------------------------------------
+
+#' MAD outlier detection on per-group QC metrics
+#'
+#' Aggregates each metric to per-group medians and applies `per_cell_qc_outlier`
+#' to those medians, flagging whole groups (e.g. donors, samples) whose median
+#' deviates by more than `threshold` MADs. Directionality is respected per
+#' metric.
+#'
+#' @param metrics Named list of numeric vectors. The QC metrics.
+#' @param groups Character vector. Group label per observation.
+#' @param directions Named character vector mapping metric names to direction.
+#' One of `"twosided"`, `"below"`, `"above"`.
+#' @param threshold Numeric. Number of MADs to use for outlier detection.
+#'
+#' @return A `data.table` with one row per metric/group and columns `metric`,
+#' `group`, `group_median`, `lower_threshold`, `upper_threshold`, `is_outlier`.
+#'
+#' @keywords internal
+per_group_qc_outlier <- function(metrics, groups, directions, threshold = 3) {
+  checkmate::assertList(metrics, types = "numeric", names = "unique")
+  checkmate::qassert(threshold, "N1")
+
+  stats <- lapply(names(metrics), function(nm) {
+    dt <- data.table::data.table(value = metrics[[nm]], group = groups)
+    medians <- dt[, .(group_median = median(value)), by = group]
+    res <- per_cell_qc_outlier(
+      metric = medians$group_median,
+      threshold = threshold,
+      direction = directions[[nm]]
+    )
+    data.table::data.table(
+      metric = nm,
+      group = medians$group,
+      group_median = medians$group_median,
+      lower_threshold = res$metrics[["lower_threshold"]],
+      upper_threshold = res$metrics[["upper_threshold"]],
+      is_outlier = res$outlier
+    )
+  })
+
+  data.table::rbindlist(stats)
+}
+
 ### multiple metrics -----------------------------------------------------------
 
 #' Run MAD outlier detection on per-cell QC metrics
@@ -189,16 +233,22 @@ per_cell_qc_outlier <- function(
 #' One of `"twosided"`, `"below"`, `"above"`. Defaults to `"twosided"` for
 #' all metrics if `NULL`.
 #' @param threshold Numeric. Number of MADs to use for outlier detection.
-#' @param groups Optional grouping variable. A string.
+#' @param groups Optional grouping variable. An atomic vector of length equal to
+#' the metrics. Per-group outlier detection only runs when more than one group
+#' is present.
 #'
 #' @return An object of class `CellQc` containing:
 #' \describe{
+#'   \item{cell_idx}{Integer vector of 1-indexed cell positions.}
 #'   \item{metrics}{The input metrics list.}
+#'   \item{groups}{Character vector of group labels.}
 #'   \item{per_metric}{Named list of per-metric results from
 #'     \code{\link{per_cell_qc_outlier}}.}
 #'   \item{outlier_mat}{Logical matrix with one column per metric.}
 #'   \item{combined}{Logical vector. `TRUE` if a cell is an outlier in any
 #'     metric.}
+#'   \item{per_group_stats}{A `data.table` of per-group outlier statistics
+#'     (see \code{\link{per_group_qc_outlier}}), or `NULL` for a single group.}
 #' }
 #'
 #' @export
@@ -224,9 +274,9 @@ run_cell_qc <- function(
     directions <- setNames(rep("twosided", length(metrics)), names(metrics))
   }
 
-  # additional check
   checkmate::assertNames(names(directions), must.include = names(metrics))
 
+  directions <- directions[names(metrics)]
   group_levels <- unique(groups)
 
   results <- Map(
@@ -246,21 +296,27 @@ run_cell_qc <- function(
       list(outlier = outlier, metrics = thresholds)
     },
     metrics,
-    directions[names(metrics)]
+    directions
   )
 
   outlier_mat <- do.call(cbind, lapply(results, `[[`, "outlier"))
   combined <- rowSums(outlier_mat) > 0
 
+  per_group_stats <- if (length(group_levels) > 1L) {
+    per_group_qc_outlier(metrics, groups, directions, threshold)
+  } else {
+    NULL
+  }
+
   structure(
     list(
-      # transform to cell idx
       cell_idx = cells_to_keep + 1L,
       metrics = metrics,
       groups = groups,
       per_metric = results,
       outlier_mat = outlier_mat,
-      combined = combined
+      combined = combined,
+      per_group_stats = per_group_stats
     ),
     class = "CellQc"
   )
@@ -405,4 +461,155 @@ prepare_cell_markers <- function(obj, marker_df) {
   names(res_ls) <- res$cell_type
 
   return(res_ls)
+}
+
+## plotting extraction ---------------------------------------------------------
+
+#' Extract embedding coordinates for plotting
+#'
+#' @description
+#' Pulls an embedding into a long data.table with standardised coordinate
+#' columns (`dim_1`, `dim_2`, ...) and, optionally, observation metadata. The
+#' embedding name is stored as an `embedding` attribute for axis labelling.
+#'
+#' @param object A single cell class.
+#' @param embedding String. Name of the embedding (e.g. `"umap"`, `"pca"`).
+#' @param obs_cols Optional character vector. Obs columns to attach.
+#' @param ... Additional arguments forwarded to [get_embedding()] (e.g.
+#' `modality`).
+#'
+#' @return A data.table with `cell_id`, `dim_*` columns and any requested obs
+#' columns.
+#'
+#' @export
+extract_embedding_data <- function(object, embedding, obs_cols = NULL, ...) {
+  checkmate::qassert(embedding, "S1")
+  checkmate::qassert(obs_cols, c("0", "S+"))
+
+  embd <- get_embedding(object, embedding, ...)
+  dt <- data.table::as.data.table(embd, keep.rownames = "cell_id")
+  data.table::setnames(
+    dt,
+    setdiff(names(dt), "cell_id"),
+    sprintf("dim_%i", seq_len(ncol(embd)))
+  )
+
+  if (!is.null(obs_cols)) {
+    obs_dt <- object[[obs_cols]]
+    for (col in names(obs_dt)) {
+      data.table::set(dt, j = col, value = obs_dt[[col]])
+    }
+  }
+
+  data.table::setattr(dt, "embedding", embedding)
+
+  dt
+}
+
+#' Extract per-cell expression mapped onto an embedding
+#'
+#' @description
+#' Combines [extract_gene_expression()] with [extract_embedding_data()] and
+#' melts to long format, ready for faceted feature plots.
+#'
+#' @param object A single cell class.
+#' @param features Character vector. Gene IDs to extract.
+#' @param embedding String. Name of the embedding.
+#' @param scale Boolean. Whether to z-score the expression values.
+#' @param clip Optional numeric. Clip z-scores if `scale = TRUE`.
+#' @param modality String. One of `c("rna", "adt")`.
+#' @param ... Additional arguments forwarded to [get_embedding()].
+#'
+#' @return A long data.table with `cell_id`, `dim_*`, `gene` and `expression`.
+#'
+#' @export
+extract_feature_plot_data <- function(
+  object,
+  features,
+  embedding,
+  scale = FALSE,
+  clip = NULL,
+  modality = c("rna", "adt"),
+  ...
+) {
+  modality <- match.arg(modality)
+
+  expr <- extract_gene_expression(
+    object = object,
+    features = features,
+    scale = scale,
+    clip = clip,
+    modality = modality
+  )
+  embd <- extract_embedding_data(object, embedding = embedding, ...)
+
+  dt <- merge(expr, embd, by = "cell_id")
+  dim_cols <- grep("^dim_", names(dt), value = TRUE)
+  feature_cols <- setdiff(names(expr), "cell_id")
+
+  long <- data.table::melt(
+    dt,
+    id.vars = c("cell_id", dim_cols),
+    measure.vars = feature_cols,
+    variable.name = "gene",
+    value.name = "expression"
+  )
+
+  data.table::setattr(long, "embedding", embedding)
+
+  long
+}
+
+#' Extract per-cell expression grouped for violin plots
+#'
+#' @description
+#' Combines [extract_gene_expression()] with a grouping obs column and melts to
+#' long format, ready for stacked (one gene per row) violin plots.
+#'
+#' @param object A single cell class.
+#' @param features Character vector. Gene IDs to extract.
+#' @param grouping_variable String. Obs column to group by.
+#' @param scale Boolean. Whether to z-score the expression values.
+#' @param clip Optional numeric. Clip z-scores if `scale = TRUE`.
+#' @param modality String. One of `c("rna", "adt")`.
+#'
+#' @return A long data.table with `cell_id`, `group`, `gene` and `expression`.
+#' `gene` is an ordered factor following `features`.
+#'
+#' @export
+extract_gene_violin_data <- function(
+  object,
+  features,
+  grouping_variable,
+  scale = FALSE,
+  clip = NULL,
+  modality = c("rna", "adt")
+) {
+  modality <- match.arg(modality)
+  checkmate::qassert(grouping_variable, "S1")
+
+  expr <- extract_gene_expression(
+    object = object,
+    features = features,
+    obs_cols = grouping_variable,
+    scale = scale,
+    clip = clip,
+    modality = modality
+  )
+
+  feature_cols <- setdiff(names(expr), c("cell_id", grouping_variable))
+
+  long <- data.table::melt(
+    expr,
+    id.vars = c("cell_id", grouping_variable),
+    measure.vars = feature_cols,
+    variable.name = "gene",
+    value.name = "expression"
+  )
+
+  data.table::setnames(long, grouping_variable, "group")
+  long[, group := as.factor(group)]
+  long[, gene := factor(gene, levels = feature_cols)]
+
+  long
 }
