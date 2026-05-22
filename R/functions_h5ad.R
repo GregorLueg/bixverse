@@ -41,6 +41,103 @@
   list(idx = NULL, idx_col = NULL)
 }
 
+#' Read a sample of values from a matrix slot in an h5ad file
+#'
+#' Handles both sparse (group with a `data` dataset) and dense (direct dataset)
+#' storage. Returns NULL if the slot does not exist.
+#'
+#' @keywords internal
+.read_slot_value_sample <- function(
+  f_path,
+  slot_path,
+  h5_content,
+  n_sample = 10000L
+) {
+  full <- data.table::fifelse(
+    h5_content$group == "/",
+    paste0("/", h5_content$name),
+    paste0(h5_content$group, "/", h5_content$name)
+  )
+
+  if (!slot_path %in% full) {
+    return(NULL)
+  }
+
+  otype <- h5_content$otype[full == slot_path][1L]
+
+  if (otype == "H5I_GROUP") {
+    data_path <- paste0(slot_path, "/data")
+    if (!data_path %in% full) {
+      return(NULL)
+    }
+    len <- as.numeric(
+      strsplit(h5_content$dim[full == data_path][1L], " x ", fixed = TRUE)[[
+        1L
+      ]][1L]
+    )
+    idx <- seq_len(min(len, n_sample))
+    return(as.vector(rhdf5::h5read(f_path, data_path, index = list(idx))))
+  }
+
+  # dense dataset
+  dims <- as.integer(
+    strsplit(h5_content$dim[full == slot_path][1L], " x ", fixed = TRUE)[[1L]]
+  )
+  side <- max(1L, as.integer(ceiling(sqrt(n_sample))))
+  idx <- lapply(dims, function(d) seq_len(min(d, side)))
+  as.vector(rhdf5::h5read(f_path, slot_path, index = idx))
+}
+
+#' Detect which slot holds raw integer counts in an h5ad file
+#'
+#' Samples the non-zero values of each candidate slot and returns the first one
+#' that is integer-valued. Slots are checked in the given order, so dedicated
+#' count slots take precedence over `X`.
+#'
+#' @param f_path File path to the `.h5ad` file.
+#' @param candidates Character vector of slots to test, any of "layers.counts",
+#' "raw.X", "X". Order defines priority.
+#' @param n_sample Number of values to sample per slot.
+#' @param threshold Minimum fraction of non-zero values that must be whole
+#' numbers for a slot to count as raw.
+#'
+#' @return The detected slot name, or NULL if none qualifies.
+#'
+#' @export
+detect_raw_count_slot <- function(
+  f_path,
+  candidates = c("layers.counts", "raw.X", "X"),
+  n_sample = 10000L,
+  threshold = 0.99
+) {
+  checkmate::assertFileExists(f_path)
+  on.exit(tryCatch(rhdf5::h5closeAll(), error = function(e) invisible()))
+
+  slot_paths <- c(X = "/X", raw.X = "/raw/X", layers.counts = "/layers/counts")
+  candidates <- match.arg(candidates, names(slot_paths), several.ok = TRUE)
+
+  h5_content <- rhdf5::h5ls(f_path) |> data.table::setDT()
+
+  for (slot in candidates) {
+    vals <- .read_slot_value_sample(
+      f_path,
+      slot_paths[[slot]],
+      h5_content,
+      n_sample
+    )
+    if (is.null(vals) || length(vals) == 0L) {
+      next
+    }
+    nz <- vals[vals != 0]
+    if (length(nz) == 0L) {
+      next
+    }
+    if (mean(nz == floor(nz)) >= threshold) return(slot)
+  }
+
+  NULL
+}
+
 ## scan multiple files for ingestion -------------------------------------------
 
 #' Pre-scan multiple h5ad files for multi-sample loading
@@ -50,6 +147,9 @@
 #' @param gene_universe One of "intersection" or "union".
 #' @param var_index String. The name within the h5ad var part in which the
 #' variable names are stored. Defaults to `"_index"`.
+#' @param raw_count_slot Where raw counts live. `"auto"` detects per file via
+#' [detect_raw_count_slot()]; otherwise one of `"X"`, `"raw.X"`,
+#' `"layers.counts"`.
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
 #' @return A list with:
@@ -65,15 +165,19 @@ prescan_h5ad_files <- function(
   h5_paths,
   gene_universe = c("intersection", "union"),
   var_index = "_index",
-  raw_count_slot = c("X", "raw.X"),
+  raw_count_slot = c("auto", "X", "raw.X", "layers.counts"),
   .verbose = TRUE
 ) {
-  # checks
   gene_universe <- match.arg(gene_universe)
+  raw_count_slot <- match.arg(raw_count_slot)
   checkmate::assertCharacter(h5_paths, min.len = 2L)
   invisible(lapply(h5_paths, checkmate::assertFileExists))
   checkmate::qassert(var_index, "S1")
   checkmate::qassert(.verbose, "B1")
+  checkmate::assertChoice(
+    raw_count_slot,
+    c("auto", "X", "raw.X", "layers.counts")
+  )
 
   exp_ids <- if (is.null(names(h5_paths))) {
     tools::file_path_sans_ext(basename(h5_paths))
@@ -103,6 +207,20 @@ prescan_h5ad_files <- function(
     )
     rhdf5::h5closeAll()
 
+    resolved_slot <- if (raw_count_slot == "auto") {
+      detect_raw_count_slot(h5_paths[[i]])
+    } else {
+      raw_count_slot
+    }
+
+    if (is.null(resolved_slot)) {
+      warning(sprintf(
+        "Could not detect a raw count slot for %s",
+        h5_paths[[i]]
+      ))
+      resolved_slot <- NA_character_
+    }
+
     file_meta[[i]] <- list(
       exp_id = exp_ids[[i]],
       h5_path = h5_paths[[i]],
@@ -110,7 +228,7 @@ prescan_h5ad_files <- function(
       no_cells = meta$dims[["obs"]],
       no_genes = meta$dims[["var"]],
       gene_names = gene_names,
-      raw_slot = raw_count_slot
+      raw_slot = resolved_slot
     )
 
     if (.verbose) {
@@ -138,7 +256,6 @@ prescan_h5ad_files <- function(
   # build per-file mappings
   file_tasks <- lapply(file_meta, function(fm) {
     mapping <- universe_lookup[fm$gene_names]
-    # genes not in universe become NA
     mapping <- as.integer(unname(mapping))
 
     list(
@@ -147,6 +264,7 @@ prescan_h5ad_files <- function(
       cs_type = fm$cs_type,
       no_cells = fm$no_cells,
       no_genes = fm$no_genes,
+      raw_slot = fm$raw_slot,
       gene_local_to_universe = mapping
     )
   })

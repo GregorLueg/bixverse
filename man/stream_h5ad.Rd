@@ -8,7 +8,7 @@ stream_h5ad(
   object,
   h5_path,
   sc_qc_param = params_sc_min_quality(),
-  raw_count_slot = c("X", "raw.X"),
+  raw_count_slot = c("auto", "X", "raw.X", "layers.counts"),
   max_genes_in_memory = 2000L,
   cell_batch_size = 100000L,
   .verbose = TRUE
@@ -21,8 +21,9 @@ stream_h5ad(
 
 \item{sc_qc_param}{List. Output of \code{\link[=params_sc_min_quality]{params_sc_min_quality()}}.}
 
-\item{raw_count_slot}{String. One of \code{c("X", "raw.X")}. Where to find the
-raw counts.}
+\item{raw_count_slot}{Where raw counts live. \code{"auto"} detects per file via
+\code{\link[=detect_raw_count_slot]{detect_raw_count_slot()}}; otherwise one of \code{"X"}, \code{"raw.X"},
+\code{"layers.counts"}.}
 
 \item{max_genes_in_memory}{Integer. Genes held in memory at once. Defaults
 to \code{2000L}.}

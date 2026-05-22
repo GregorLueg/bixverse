@@ -9,7 +9,7 @@ load_h5ad(
   h5_path,
   sc_qc_param = params_sc_min_quality(),
   streaming = 1L,
-  raw_count_slot = c("X", "raw.X"),
+  raw_count_slot = c("auto", "X", "raw.X", "layers.counts"),
   cell_id_col = NULL,
   batch_size = 1000L,
   max_genes_in_memory = 2000L,
@@ -39,8 +39,9 @@ detected to be included.
 -> heavy streaming with memory upper boundaries on the gene side. Controls
 memory pressure during the CSR-to-CSC conversion. Defaults to \code{1L}.}
 
-\item{raw_count_slot}{String. One of \code{c("X", "raw.X")}. Where to find the
-raw counts.}
+\item{raw_count_slot}{Where raw counts live. \code{"auto"} detects per file via
+\code{\link[=detect_raw_count_slot]{detect_raw_count_slot()}}; otherwise one of \code{"X"}, \code{"raw.X"},
+\code{"layers.counts"}.}
 
 \item{cell_id_col}{Optional string. If a specific column in the h5ad obs
 data is representing the cell identifiers, you can specify it here.}
