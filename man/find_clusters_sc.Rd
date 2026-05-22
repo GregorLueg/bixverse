@@ -9,7 +9,8 @@ find_clusters_sc(
   cluster_algorithm = c("leiden", "louvain"),
   res = 1,
   name = "leiden_clustering",
-  modality = c("rna", "adt", "wnn")
+  modality = c("rna", "adt", "wnn"),
+  seed = 42L
 )
 }
 \arguments{
@@ -25,6 +26,8 @@ or \code{\link[igraph:cluster_louvain]{igraph::cluster_louvain()}}.}
 \item{modality}{String. On which modality to run the UMAP. One of
 \code{c("rna", "adt", "wnn")}. The two latter options are only available for
 multi-modal versions with the added data.}
+
+\item{seed}{Integer. For reproducibility.}
 }
 \value{
 The object with added clustering in the obs table.

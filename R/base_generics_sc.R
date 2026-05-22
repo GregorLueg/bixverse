@@ -827,6 +827,7 @@ find_neighbours_sc <- S7::new_generic(
 #' @param modality String. On which modality to run the UMAP. One of
 #' `c("rna", "adt", "wnn")`. The two latter options are only available for
 #' multi-modal versions with the added data.
+#' @param seed Integer. For reproducibility.
 #'
 #' @return The object with added clustering in the obs table.
 #'
@@ -839,7 +840,8 @@ find_clusters_sc <- S7::new_generic(
     cluster_algorithm = c("leiden", "louvain"),
     res = 1.0,
     name = "leiden_clustering",
-    modality = c("rna", "adt", "wnn")
+    modality = c("rna", "adt", "wnn"),
+    seed = 42L
   ) {
     S7::S7_dispatch()
   }
@@ -1091,7 +1093,7 @@ extract_dot_plot_data <- S7::new_generic(
 #' `SingleCellsMultiModal`.
 #'
 #' @return A data.table with a `cell_id` column, one column per gene, and
-#'   any requested obs columns.
+#' any requested obs columns.
 #'
 #' @export
 extract_gene_expression <- S7::new_generic(

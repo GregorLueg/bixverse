@@ -1,5 +1,23 @@
 # single cell processing methods -----------------------------------------------
 
+## helpers ---------------------------------------------------------------------
+
+#' Remap communities by size
+#'
+#' @description
+#' Remap community assignment by size
+#'
+#' @param labels Integer vector that represents the community assignment.
+#'
+#' @returns The remapped communities by size
+#'
+#' @keywords internal
+.remap_communities_by_size <- function(labels) {
+  counts <- sort(table(labels), decreasing = TRUE)
+  remap <- setNames(seq_along(counts) - 1L, names(counts))
+  unname(remap[as.character(labels)])
+}
+
 ## doublet detection -----------------------------------------------------------
 
 ### scrublet -------------------------------------------------------------------
@@ -831,7 +849,8 @@ S7::method(find_clusters_sc, ScOrMc) <- function(
   cluster_algorithm = c("leiden", "louvain"),
   res = 1.0,
   name = "leiden_clustering",
-  modality = c("rna", "adt", "wnn")
+  modality = c("rna", "adt", "wnn"),
+  seed = 42L
 ) {
   cluster_algorithm <- match.arg(cluster_algorithm)
   modality <- match.arg(modality)
@@ -842,6 +861,7 @@ S7::method(find_clusters_sc, ScOrMc) <- function(
   checkmate::qassert(res, "N1")
   checkmate::qassert(name, "S1")
   checkmate::assertChoice(cluster_algorithm, c("leiden", "louvain"))
+  checkmate::qassert(seed, "I1")
 
   if (modality != "rna" && !S7::S7_inherits(object, SingleCellsMultiModal)) {
     stop(sprintf(
@@ -861,6 +881,8 @@ S7::method(find_clusters_sc, ScOrMc) <- function(
     return(object)
   }
 
+  # set a global seed to ensure more reproducibility here
+  set.seed(seed)
   clusters <- switch(
     cluster_algorithm,
     leiden = igraph::cluster_leiden(
@@ -871,7 +893,8 @@ S7::method(find_clusters_sc, ScOrMc) <- function(
     louvain = igraph::cluster_louvain(graph = snn_graph, resolution = res)
   )
 
-  object[[name]] <- clusters$membership
+  object[[name]] <- .remap_communities_by_size(clusters$membership)
+
   object
 }
 
