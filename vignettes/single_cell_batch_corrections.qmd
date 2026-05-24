@@ -144,9 +144,9 @@ Let's plot the metrics:
 #| label: qc plots
 #| fig-width: 10
 #| fig-height: 4
-plots <- plot(qc, qc_df)
+# plots <- plot(qc, qc_df)
 
-plots$log10_lib_size + plots$log10_nnz + plots$MT
+# plots$log10_lib_size + plots$log10_nnz + plots$MT
 ```
 
 Set the cells to keep

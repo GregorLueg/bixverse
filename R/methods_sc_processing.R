@@ -1055,26 +1055,29 @@ S7::method(fast_cluster_sc, SingleCells) <- function(
 
 ### knn with distances ---------------------------------------------------------
 
-#' Generate the KNN data with distances
+#' Generate a `SingleCellNearestNeighbour` from a single cell class
 #'
 #' @description
 #' This function will generate the kNNs based on a given embedding. Available
 #' algorithms are:
 #' \itemize{
+#'   \item `kmknn` - An exact kNN search that leverages k-means clustering under
+#'   the hood to prune out data points. The default setting.
+#'   \item `exhaustive` - An exhaustive, flat index. On smaller data sets often
+#'   faster than the approximate nearest neighbour search algorithms.
 #'   \item `hnsw` - Hierarchical Navigable Small World. A graph-based
 #'   approximate nearest neighbour search algorithm; works well on large data
 #'   sets. A benign race condition is leveraged during index build, making the
 #'   build non-deterministic. Bigger impact on smaller data sets.
+#'   \item `nndescent` - Nearest neighbour descent. Leverages concepts from
+#'   `PyNNDescent` and works well on very large data sets similar to `hnsw`.
 #'   \item `ivf` - Inverted file index. Uses first k-means clustering to
 #'   identify Voronoi cells and leverages these during querying. Works well
-#'   on large data sets with high dimensionality.
-#'   \item `nndescent` - Nearest neighbour descent. Similar to `PyNNDescent`,
-#'   uses a first index to initialise the graph. Good all-rounder.
+#'   on large data sets with high dimensionality and when you need to return
+#'   large number of neighbours.
 #'   \item `annoy` - Approximate nearest neighbours Oh Yeah. Tree-based index,
 #'   used across different R single cell packages (Seurat, SCE). This version
 #'   is purely memory-based.
-#'   \item `exhaustive` - An exhaustive, flat index. On smaller data sets often
-#'   faster than the approximate nearest neighbour search algorithms.
 #' }
 #'
 #' @param object `SingleCells` class.
