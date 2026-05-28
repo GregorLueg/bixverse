@@ -11,7 +11,7 @@ use faer::Mat;
 use rand::prelude::*;
 use std::cmp::Ordering;
 
-use crate::single_cell::utils::knn_data_to_rust;
+use crate::single_cell::utils::{knn_data_to_rust, panel_size_from_mem};
 
 ////////////////////
 // extendr Module //
@@ -578,7 +578,8 @@ fn rs_hotspot_autocor(
         &cells_to_keep,
         &knn_indices,
         &mut knn_dist,
-    );
+    )
+    .to_extendr()?;
 
     let res: HotSpotGeneRes = if streaming {
         hotspot
@@ -628,6 +629,10 @@ fn rs_hotspot_autocor(
 /// as the embedding matrix.
 /// @param genes_to_use Integer vector. 0-index vector indicating which genes
 /// to include.
+/// @param working_mem_gb Numeric. Approximate working memory (GB) the streaming
+/// pair path may use for resident gene panels. Ignored when `streaming` is
+/// `FALSE`. Larger values mean fewer disk re-reads. Note this excludes the two
+/// dense N_genes x N_genes output matrices, which scale with `genes_to_use`.
 /// @param streaming Boolean. Shall the data be streamed in chunks. Useful
 /// for large data sets.
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
@@ -655,6 +660,7 @@ fn rs_hotspot_gene_cor(
     hotspot_params: List,
     cells_to_keep: Vec<i32>,
     genes_to_use: Vec<i32>,
+    working_mem_gb: f64,
     streaming: bool,
     verbose: usize,
     seed: usize,
@@ -703,14 +709,27 @@ fn rs_hotspot_gene_cor(
         &cells_to_keep,
         &knn_indices,
         &mut knn_dist,
-    );
+    )
+    .to_extendr()?;
 
     let res: HotSpotPairRes = if streaming {
-        hotspot.compute_gene_cor_streaming(&genes_to_use, &hotspot_params.model, verbose)
+        const STREAM_BATCH_SIZE: usize = 1000;
+        let n_cells = knn_indices.len();
+        let panel_size = panel_size_from_mem(working_mem_gb, n_cells, genes_to_use.len());
+        hotspot
+            .compute_gene_cor_streaming(
+                &genes_to_use,
+                &hotspot_params.model,
+                STREAM_BATCH_SIZE,
+                panel_size,
+                verbose,
+            )
+            .to_extendr()?
     } else {
-        hotspot.compute_gene_cor(&genes_to_use, &hotspot_params.model, verbose)
-    }
-    .unwrap();
+        hotspot
+            .compute_gene_cor(&genes_to_use, &hotspot_params.model, verbose)
+            .to_extendr()?
+    };
 
     Ok(list!(
         cor = faer_to_r_matrix(res.cor.as_ref()),

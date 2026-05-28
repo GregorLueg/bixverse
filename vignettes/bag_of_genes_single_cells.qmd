@@ -105,7 +105,12 @@ directions <- c(
   log10_nnz = "twosided",
   MT = "above"
 )
-qc <- run_cell_qc(metrics, directions, threshold = 3)
+qc <- run_cell_qc(
+  metrics,
+  cells_to_keep = get_cells_to_keep(sc_object),
+  directions = directions,
+  threshold = 3
+)
 sc_object[["outlier"]] <- qc$combined
 cells_to_keep <- qc_df[!qc$combined, cell_id]
 sc_object <- set_cells_to_keep(sc_object, cells_to_keep)
@@ -336,10 +341,10 @@ hotspot_autocor <- hotspot_autocor_sc(
 
 hotspot_autocor[, gene_symbol := ensembl_to_symbol[gene_id]]
 
-head(hotspot_autocor[order(fdr)], 20L)
+head(hotspot_autocor[order(fdr)], 25L)
 ```
 
-Known PBMC markers (LYZ, CD3D, NKG7, etc.) should appear among the top hits.
+You should get a set of well known cell type markers here...
 
 ### Gene-gene local correlations and modules
 

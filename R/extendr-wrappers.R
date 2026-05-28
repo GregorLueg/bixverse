@@ -2834,6 +2834,10 @@ rs_hotspot_cluster_genes <- function(z_matrix, fdr_threshold, min_size) .Call(wr
 #' as the embedding matrix.
 #' @param genes_to_use Integer vector. 0-index vector indicating which genes
 #' to include.
+#' @param working_mem_gb Numeric. Approximate working memory (GB) the streaming
+#' pair path may use for resident gene panels. Ignored when `streaming` is
+#' `FALSE`. Larger values mean fewer disk re-reads. Note this excludes the two
+#' dense N_genes x N_genes output matrices, which scale with `genes_to_use`.
 #' @param streaming Boolean. Shall the data be streamed in chunks. Useful
 #' for large data sets.
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
@@ -2851,7 +2855,7 @@ rs_hotspot_cluster_genes <- function(z_matrix, fdr_threshold, min_size) .Call(wr
 #' @export
 #'
 #' @references DeTomaso, et al., Cell Systems, 2021
-rs_hotspot_gene_cor <- function(f_path_genes, f_path_cells, embd, knn_data, hotspot_params, cells_to_keep, genes_to_use, streaming, verbose, seed) .Call(wrap__rs_hotspot_gene_cor, f_path_genes, f_path_cells, embd, knn_data, hotspot_params, cells_to_keep, genes_to_use, streaming, verbose, seed)
+rs_hotspot_gene_cor <- function(f_path_genes, f_path_cells, embd, knn_data, hotspot_params, cells_to_keep, genes_to_use, working_mem_gb, streaming, verbose, seed) .Call(wrap__rs_hotspot_gene_cor, f_path_genes, f_path_cells, embd, knn_data, hotspot_params, cells_to_keep, genes_to_use, working_mem_gb, streaming, verbose, seed)
 
 #' Calculate module activity scores in Rust
 #'

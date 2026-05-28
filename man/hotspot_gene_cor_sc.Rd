@@ -13,6 +13,7 @@ hotspot_gene_cor_sc(
   cells_to_take = NULL,
   genes_to_take = NULL,
   streaming = FALSE,
+  working_mem_gb = 4,
   random_seed = 42L,
   .verbose = TRUE
 )
@@ -48,6 +49,12 @@ class.}
 
 \item{streaming}{Boolean. Shall the data be streamed in. Useful for larger
 data sets.}
+
+\item{working_mem_gb}{Numeric. Approximate working memory (GB) the streaming
+pair path may use for resident gene panels. Ignored when \code{streaming} is
+\code{FALSE}. Larger values mean fewer disk re-reads. Note this excludes the two
+dense N_genes x N_genes output matrices, which scale with \code{genes_to_use}.
+Defaults to \code{4} (4 GB of memory allocated).}
 
 \item{random_seed}{Integer. Used for reproducibility.}
 

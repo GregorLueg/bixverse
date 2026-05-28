@@ -713,6 +713,11 @@ S7::method(hotspot_autocor_sc, SingleCells) <- function(
 #' class.
 #' @param streaming Boolean. Shall the data be streamed in. Useful for larger
 #' data sets.
+#' @param working_mem_gb Numeric. Approximate working memory (GB) the streaming
+#'  pair path may use for resident gene panels. Ignored when `streaming` is
+#'  `FALSE`. Larger values mean fewer disk re-reads. Note this excludes the two
+#' dense N_genes x N_genes output matrices, which scale with `genes_to_use`.
+#' Defaults to `4` (4 GB of memory allocated).
 #' @param random_seed Integer. Used for reproducibility.
 #' @param .verbose Boolean or integer. Controls verbosity and returns run times.
 #' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
@@ -739,6 +744,7 @@ hotspot_gene_cor_sc <- S7::new_generic(
     cells_to_take = NULL,
     genes_to_take = NULL,
     streaming = FALSE,
+    working_mem_gb = 4,
     random_seed = 42L,
     .verbose = TRUE
   ) {
@@ -758,6 +764,7 @@ S7::method(hotspot_gene_cor_sc, SingleCells) <- function(
   cells_to_take = NULL,
   genes_to_take = NULL,
   streaming = FALSE,
+  working_mem_gb = 4,
   random_seed = 42L,
   .verbose = TRUE
 ) {
@@ -824,6 +831,7 @@ S7::method(hotspot_gene_cor_sc, SingleCells) <- function(
       rust_index = TRUE
     ),
     streaming = streaming,
+    working_mem_gb = working_mem_gb,
     verbose = parse_verbosity(.verbose),
     seed = random_seed
   )

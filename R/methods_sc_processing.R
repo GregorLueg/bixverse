@@ -1053,7 +1053,7 @@ S7::method(fast_cluster_sc, SingleCells) <- function(
   )
 }
 
-### knn with distances ---------------------------------------------------------
+### generate knn class ---------------------------------------------------------
 
 #' Generate a `SingleCellNearestNeighbour` from a single cell class
 #'
