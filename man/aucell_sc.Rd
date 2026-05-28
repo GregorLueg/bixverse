@@ -8,7 +8,7 @@ aucell_sc(
   object,
   gs_list,
   auc_type = c("wilcox", "auroc"),
-  streaming = FALSE,
+  streaming = NULL,
   .verbose = TRUE
 )
 }
@@ -21,8 +21,9 @@ respective gene sets.}
 \item{auc_type}{String. Which type of AUC to calculate. Choice of
 \code{c("wilcox", "auroc")}.}
 
-\item{streaming}{Boolean. Shall the cell data be streamed in. Useful for
-larger data sets. Ignored when applied to \code{MetaCells}.}
+\item{streaming}{Optional Boolean. Shall the data be streamed in. Useful for
+larger data sets where you wish to avoid loading in the whole data. If
+\code{NULL}, will automatically detect. Ignored when applied to \code{MetaCells}.}
 
 \item{.verbose}{Boolean or integer. Controls verbosity and returns run times.
 \code{FALSE} -> quiet, \code{TRUE} or \code{1L} -> normal verbosity, \code{2L} -> detailed

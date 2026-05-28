@@ -1,5 +1,9 @@
 # helpers ----------------------------------------------------------------------
 
+## consts ----------------------------------------------------------------------
+
+.N_CELLS_STREAMING_THRESHOLD <- 1e6
+
 ## utils -----------------------------------------------------------------------
 
 #' Helper to parse the verbosity
@@ -14,6 +18,33 @@ parse_verbosity <- function(input) {
   checkmate::qassert(input, c("B1", "I1[0, 2]"))
 
   as.integer(sum(input))
+}
+
+#' Helper to set streaming to TRUE on large data sets
+#'
+#' @param n_cells Integer. Number of cells in the data set.
+#' @param streaming Optional boolean. Parsed from the main function.
+#' @param .verbose Boolean. Controls verbosity of the function.
+#'
+#' @returns Boolean if streaming should be used.
+#'
+#' @keywords internal
+auto_streaming <- function(n_cells, streaming = NULL, .verbose = TRUE) {
+  # checks
+  checkmate::qassert(n_cells, "I1")
+  checkmate::qassert(streaming, c("0", "B1"))
+
+  res <- ifelse(
+    test = is.logical(streaming),
+    yes = streaming,
+    no = n_cells > .N_CELLS_STREAMING_THRESHOLD
+  )
+
+  if (res && .verbose) {
+    message("Setting streaming for large data to TRUE.")
+  }
+
+  return(res)
 }
 
 ## cell ranger outputs ---------------------------------------------------------
@@ -40,6 +71,7 @@ get_cell_ranger_params <- function(dir_data) {
 
   return(res)
 }
+
 
 ## seurat assay to list --------------------------------------------------------
 

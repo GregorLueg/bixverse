@@ -2,6 +2,7 @@ use bixverse_rs::core::math::stats::calc_fdr;
 use bixverse_rs::prelude::*;
 use bixverse_rs::single_cell::sc_analysis::dge_pathway_scores::*;
 use bixverse_rs::single_cell::sc_analysis::hotspot::*;
+use bixverse_rs::single_cell::sc_analysis::meld::*;
 use bixverse_rs::single_cell::sc_analysis::milo_r::*;
 use bixverse_rs::single_cell::sc_analysis::module_scoring::*;
 use bixverse_rs::single_cell::sc_analysis::scenic::*;
@@ -31,6 +32,8 @@ extendr_module! {
     fn rs_module_scoring;
     // miloR
     fn rs_make_milor_nhoods;
+    // MELD
+    fn rs_meld_sc;
     // vision
     fn rs_vision;
     fn rs_vision_with_autocorrelation;
@@ -1166,4 +1169,116 @@ fn rs_importance_threshold(matrix: RMatrix<f64>, n_sd: f64, min_value: Option<f6
     }
 
     list!(tf = tfs, gene = genes, importance = importances)
+}
+
+//////////
+// MELD //
+//////////
+
+/// Run MELD
+///
+/// @description This implements a Rust-based version of the MELD algorithm,
+/// see Burkhardt, et al.
+///
+/// @param embd Numeric matrix. The original embedding that was used to generate
+/// the kNN graph.
+/// @param knn_data Optional named list. This contains pre-computed kNN data
+/// (including distances). The user has to ensure consistency! If provided, this
+/// will be used.
+/// @param meld_params Named list. Contains the parameters to use for MELD.
+/// @param landmark Boolean. Shall a landmark method be used for accelerated
+/// MELD.
+/// @param n_landmarks Integer. If `landmark = TRUE`, how many landmarks to use.
+/// @param labels Integer. The labels of the different groups.
+/// @param seed Integer. For reproducibility.
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
+///
+/// @returns A numeric matrix with the MELD values per given condition/cell
+///
+/// @export
+#[extendr]
+#[allow(clippy::too_many_arguments)]
+fn rs_meld_sc(
+    embd: RMatrix<f64>,
+    knn_data: Nullable<List>,
+    meld_params: List,
+    landmark: bool,
+    n_landmark: usize,
+    labels: &[i32],
+    n_labels: usize,
+    seed: usize,
+    verbose: usize,
+) -> Result<RMatrix<f64>> {
+    let embd = r_matrix_to_faer_fp32(&embd);
+    let meld_params = MeldParams::from_r_list(meld_params)?;
+    let labels = labels.r_int_convert();
+    let verbosity = parse_verbosity_level(verbose);
+
+    // deal with kNN
+    let knn_provided = knn_data != extendr_api::Nullable::Null;
+
+    let (knn_indices, knn_dist, dist) = if knn_provided {
+        if verbosity.normal_verbosity() {
+            println!("Using provided kNN graph...")
+        }
+        let knn_data = knn_data
+            .into_robj()
+            .as_list()
+            .ok_or_else(|| Error::Other("'knn_data' is not a list".into()))?;
+        let (knn_indices, knn_dist, _, dist) = knn_data_to_rust(knn_data)?;
+
+        (knn_indices, knn_dist, dist)
+    } else {
+        if verbosity.normal_verbosity() {
+            println!("Generating a kNN graph from scratch")
+        }
+
+        let (knn_indices, knn_dist) = generate_knn_with_dist(
+            embd.as_ref(),
+            &meld_params.knn_params,
+            true,
+            false,
+            seed,
+            verbosity.detailed_verbosity(),
+        )
+        .to_extendr()?;
+
+        (
+            knn_indices,
+            knn_dist.unwrap(),
+            meld_params.knn_params.ann_dist.clone(),
+        )
+    };
+
+    let is_squared_distance = dist == "euclidean";
+
+    let meld_res = if landmark {
+        meld_landmark(
+            embd.as_ref(),
+            &knn_indices,
+            &knn_dist,
+            &labels,
+            n_labels,
+            is_squared_distance,
+            n_landmark,
+            &meld_params,
+            seed as u64,
+            verbose,
+        )
+    } else {
+        meld(
+            &knn_indices,
+            &knn_dist,
+            &labels,
+            n_labels,
+            is_squared_distance,
+            &meld_params,
+            seed as u64,
+            verbose,
+        )
+    }
+    .to_extendr()?;
+
+    Ok(faer_to_r_matrix(meld_res.as_ref()))
 }

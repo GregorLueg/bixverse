@@ -3839,6 +3839,99 @@ checkCellMarkerList <- function(x) {
 #' @keywords internal
 assertCellMarkerList <- checkmate::makeAssertionFunction(checkCellMarkerList)
 
+#### meld ----------------------------------------------------------------------
+
+#' Check MELD parameters
+#'
+#' @description Checkmate extension for checking MELD parameters.
+#'
+#' @param x The list to check/assert.
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
+checkMeldParams <- function(x) {
+  res <- checkmate::checkList(x)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  required_names <- c(
+    "beta",
+    "offset",
+    "order",
+    "filter",
+    "chebyshev_order",
+    "lap_type",
+    "normalise_indicators"
+  )
+  res <- checkmate::checkNames(names(x), must.include = required_names)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  knn_params <- x[names(x) %in% KNN_PARAM_NAMES]
+  res <- checkKnnParams(knn_params)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  numeric_rules <- list(
+    beta = "N1(0,)",
+    offset = "N1[0,1]",
+    order = "N1(0,)"
+  )
+  res <- purrr::imap_lgl(x, \(val, name) {
+    if (name %in% names(numeric_rules)) {
+      checkmate::qtest(val, numeric_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+  if (!all(res)) {
+    return(sprintf(
+      "Element `%s` in MELD parameters failed numeric validation.",
+      names(res)[!res][1]
+    ))
+  }
+
+  res <- checkmate::checkChoice(x$filter, c("heat", "laplacian"))
+  if (!isTRUE(res)) {
+    return(paste("filter:", res))
+  }
+
+  if (!checkmate::qtest(x$chebyshev_order, "I1[2,)")) {
+    return("chebyshev_order must be an integer >= 2.")
+  }
+
+  res <- checkmate::checkChoice(x$lap_type, c("combinatorial", "normalised"))
+  if (!isTRUE(res)) {
+    return(paste("lap_type:", res))
+  }
+
+  if (!checkmate::qtest(x$normalise_indicators, "B1")) {
+    return("normalise_indicators must be a single logical.")
+  }
+
+  TRUE
+}
+
+#' Assert MELD parameters
+#'
+#' @description Checkmate extension for asserting MELD parameters.
+#'
+#' @inheritParams checkMeldParams
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
+assertMeldParams <- checkmate::makeAssertionFunction(checkMeldParams)
+
 ### single cells (multi modal) -------------------------------------------------
 
 #### dsb count normalisation ---------------------------------------------------

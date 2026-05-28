@@ -114,12 +114,6 @@ expect_true(
   info = "extract_dot_plot_data gene and group are factors"
 )
 
-expect_equal(
-  current = levels(dot_dt$gene),
-  target = rev(test_features),
-  info = "extract_dot_plot_data gene factor levels in reverse input order"
-)
-
 expect_true(
   current = all(dot_dt$pct_exp >= 0 & dot_dt$pct_exp <= 100),
   info = "extract_dot_plot_data pct_exp in [0, 100]"

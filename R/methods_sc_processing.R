@@ -37,8 +37,9 @@
 #' @param scrublet_params A list with the final scrublet parameters, see
 #' [bixverse::params_scrublet()] for full details.
 #' @param seed Integer. Random seed.
-#' @param streaming Boolean. Shall streaming be used during the HVG
-#' calculations. Slower, but less memory usage.
+#' @param streaming Optional Boolean. Shall the data be streamed in. Useful for
+#' larger data sets where you wish to avoid loading in the whole data. If
+#' `NULL`, will automatically detect.
 #' @param cells_to_use Optional string. Names of the cells to use for the
 #' generation of the Scrublet. Useful when you wish to run doublet detection
 #' on individual batches within your data. The object returned will be
@@ -87,7 +88,7 @@ scrublet_sc <- S7::new_generic(
     object,
     scrublet_params = params_scrublet(),
     seed = 42L,
-    streaming = FALSE,
+    streaming = NULL,
     cells_to_use = NULL,
     return_combined_pca = FALSE,
     return_pairs = FALSE,
@@ -107,7 +108,7 @@ S7::method(scrublet_sc, SingleCells) <- function(
   object,
   scrublet_params = params_scrublet(),
   seed = 42L,
-  streaming = FALSE,
+  streaming = NULL,
   cells_to_use = NULL,
   return_combined_pca = FALSE,
   return_pairs = FALSE,
@@ -117,7 +118,7 @@ S7::method(scrublet_sc, SingleCells) <- function(
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   assertScScrublet(scrublet_params)
   checkmate::qassert(seed, "I1")
-  checkmate::qassert(streaming, "B1")
+  checkmate::qassert(streaming, c("B1", "0"))
   checkmate::qassert(return_combined_pca, "B1")
   checkmate::qassert(return_pairs, "B1")
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
@@ -132,6 +133,12 @@ S7::method(scrublet_sc, SingleCells) <- function(
   } else {
     get_cells_to_keep(object)
   }
+
+  streaming <- auto_streaming(
+    n_cells = length(cells_to_use),
+    streaming = streaming,
+    .verbose = .verbose
+  )
 
   if (length(cells_to_use) >= 100000) {
     message("Setting PCA to sparse default. N_cells greater than 100,000")
@@ -174,8 +181,9 @@ S7::method(scrublet_sc, SingleCells) <- function(
 #' detection on individual batches within your data. The object returned will be
 #' specifically using these cells.
 #' @param seed Integer. Random seed.
-#' @param streaming Boolean. Shall streaming be used during the HVG
-#' calculations. Slower, but less memory usage.
+#' @param streaming Optional Boolean. Shall the data be streamed in. Useful for
+#' larger data sets where you wish to avoid loading in the whole data. If
+#' `NULL`, will automatically detect.
 #' @param .verbose Boolean or integer. Controls verbosity and returns run times.
 #' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
 #' verbosity.
@@ -198,7 +206,7 @@ doublet_detection_boost_sc <- S7::new_generic(
     boost_params = params_boost(),
     cells_to_use = NULL,
     seed = 42L,
-    streaming = FALSE,
+    streaming = NULL,
     .verbose = TRUE
   ) {
     S7::S7_dispatch()
@@ -216,14 +224,14 @@ S7::method(doublet_detection_boost_sc, SingleCells) <- function(
   boost_params = params_boost(),
   cells_to_use = NULL,
   seed = 42L,
-  streaming = FALSE,
+  streaming = NULL,
   .verbose = TRUE
 ) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   assertScBoost(boost_params)
   checkmate::qassert(seed, "I1")
-  checkmate::qassert(streaming, "B1")
+  checkmate::qassert(streaming, c("B1", "0"))
   checkmate::qassert(.verbose, c("B1", "N1[0,2]"))
 
   # cell indices
@@ -236,6 +244,12 @@ S7::method(doublet_detection_boost_sc, SingleCells) <- function(
   } else {
     get_cells_to_keep(object)
   }
+
+  streaming <- auto_streaming(
+    n_cells = length(cells_to_use),
+    streaming = streaming,
+    .verbose = .verbose
+  )
 
   if (length(cells_to_use) >= 100000) {
     message("Setting PCA to sparse default. N_cells greater than 100,000")
@@ -282,8 +296,9 @@ S7::method(doublet_detection_boost_sc, SingleCells) <- function(
 #' run of the boosted doublet detection. Useful when you wish to run doublet
 #' detection on individual batches within your data. The object returned will be
 #' specifically using these cells.
-#' @param streaming Boolean. Shall the gene data be streamed in. Useful on
-#' large data sets.
+#' @param streaming Optional Boolean. Shall the data be streamed in. Useful for
+#' larger data sets where you wish to avoid loading in the whole data. If
+#' `NULL`, will automatically detect.
 #' @param return_features Boolean. Shall the features used to train the
 #' classifier be returned.
 #' @param seed Integer. Seed for reproducibility.
@@ -312,7 +327,7 @@ scdblfinder_sc <- S7::new_generic(
     scdblfinder_params = params_scdblfinder(),
     return_features = FALSE,
     cells_to_use = NULL,
-    streaming = FALSE,
+    streaming = NULL,
     seed = 42L,
     .verbose = TRUE
   ) {
@@ -328,14 +343,14 @@ S7::method(scdblfinder_sc, SingleCells) <- function(
   scdblfinder_params = params_scdblfinder(),
   return_features = FALSE,
   cells_to_use = NULL,
-  streaming = FALSE,
+  streaming = NULL,
   seed = 42L,
   .verbose = TRUE
 ) {
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   assertScDblFinder(scdblfinder_params)
   checkmate::qassert(return_features, "B1")
-  checkmate::qassert(streaming, "B1")
+  checkmate::qassert(streaming, c("B1", "0"))
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
@@ -349,6 +364,12 @@ S7::method(scdblfinder_sc, SingleCells) <- function(
   } else {
     get_cells_to_keep(object)
   }
+
+  streaming <- auto_streaming(
+    n_cells = length(cells_to_use),
+    streaming = streaming,
+    .verbose = .verbose
+  )
 
   if (length(cells_to_use) >= 100000) {
     message("Setting PCA to sparse default. N_cells greater than 100,000")
@@ -422,9 +443,9 @@ S7::method(scdblfinder_sc, SingleCells) <- function(
 #'
 #' @param object `SingleCells` class.
 #' @param top_n_vals Integer. The Top N thresholds to test.
-#' @param streaming Boolean. Shall the cells be streamed in. Useful for larger
-#' data sets where you wish to avoid loading in the whole data. Default to
-#' `FALSE`.
+#' @param streaming Optional Boolean. Shall the data be streamed in. Useful for
+#' larger data sets where you wish to avoid loading in the whole data. If
+#' `NULL`, will automatically detect.
 #' @param .verbose Boolean or integer. Controls verbosity and returns run times.
 #' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
 #' verbosity.
@@ -439,7 +460,7 @@ top_genes_perc_sc <- S7::new_generic(
   fun = function(
     object,
     top_n_vals = c(25L, 50L, 100L),
-    streaming = FALSE,
+    streaming = NULL,
     .verbose = TRUE
   ) {
     S7::S7_dispatch()
@@ -455,14 +476,20 @@ top_genes_perc_sc <- S7::new_generic(
 S7::method(top_genes_perc_sc, SingleCells) <- function(
   object,
   top_n_vals = c(25L, 50L, 100L),
-  streaming = FALSE,
+  streaming = NULL,
   .verbose = TRUE
 ) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::qassert(top_n_vals, "I+")
-  checkmate::qassert(streaming, "B1")
+  checkmate::qassert(streaming, c("B1", "0"))
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
+
+  streaming <- auto_streaming(
+    n_cells = nrow(object),
+    streaming = streaming,
+    .verbose = .verbose
+  )
 
   # function
   rs_results <- rs_sc_get_top_genes_perc(
@@ -498,9 +525,9 @@ S7::method(top_genes_perc_sc, SingleCells) <- function(
 #' @param gene_set_list A named list with each element containing the gene
 #' identifiers of that set. These should be the same as
 #' `get_gene_names(object)`!
-#' @param streaming Boolean. Shall the cells be streamed in. Useful for larger
-#' data sets where you wish to avoid loading in the whole data. Default to
-#' `FALSE`.
+#' @param streaming Optional Boolean. Shall the data be streamed in. Useful for
+#' larger data sets where you wish to avoid loading in the whole data. If
+#' `NULL`, will automatically detect.
 #' @param .verbose Boolean or integer. Controls verbosity and returns run times.
 #' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
 #' verbosity.
@@ -515,7 +542,7 @@ gene_set_proportions_sc <- S7::new_generic(
   fun = function(
     object,
     gene_set_list,
-    streaming = FALSE,
+    streaming = NULL,
     .verbose = TRUE
   ) {
     S7::S7_dispatch()
@@ -532,13 +559,19 @@ gene_set_proportions_sc <- S7::new_generic(
 S7::method(gene_set_proportions_sc, SingleCells) <- function(
   object,
   gene_set_list,
-  streaming = FALSE,
+  streaming = NULL,
   .verbose = TRUE
 ) {
   checkmate::assertClass(object, "bixverse::SingleCells")
   checkmate::assertList(gene_set_list, names = "named", types = "character")
-  checkmate::qassert(streaming, "B1")
+  checkmate::qassert(streaming, c("B1", "0"))
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
+
+  streaming <- auto_streaming(
+    n_cells = nrow(object),
+    streaming = streaming,
+    .verbose = .verbose
+  )
 
   gene_set_list_tidy <- purrr::map(gene_set_list, \(g) {
     get_gene_indices(object, gene_ids = g, rust_index = TRUE)
@@ -574,22 +607,20 @@ S7::method(find_hvg_sc, SingleCells) <- function(
   object,
   hvg_no = 2000L,
   hvg_params = params_sc_hvg(),
-  streaming = FALSE,
+  streaming = NULL,
   .verbose = TRUE
 ) {
   checkmate::assertClass(object, "bixverse::SingleCells")
   checkmate::qassert(hvg_no, "I1")
   assertScHvg(hvg_params)
-  checkmate::qassert(streaming, "B1")
+  checkmate::qassert(streaming, c("B1", "0"))
   checkmate::qassert(.verbose, c("B1", "I1[0, 2]"))
 
-  if (length(get_cells_to_keep(object)) == 0) {
-    warning(paste(
-      "You need to set the cells to keep with set_cells_to_keep().",
-      "Returning class as is."
-    ))
-    return(object)
-  }
+  streaming <- auto_streaming(
+    n_cells = nrow(object),
+    streaming = streaming,
+    .verbose = .verbose
+  )
 
   res <- with(
     hvg_params,

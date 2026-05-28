@@ -357,7 +357,6 @@ expect_error(
   info = "addition of list with random lengths throws an error"
 )
 
-
 ### test that the original data is still in there ------------------------------
 
 expect_true(
@@ -454,6 +453,7 @@ expect_true(
 sc_object <- find_hvg_sc(
   object = sc_object,
   hvg_no = hvg_to_keep,
+  streaming = TRUE,
   .verbose = FALSE
 )
 
@@ -659,8 +659,8 @@ expect_true(
 
 ### between two groups ---------------------------------------------------------
 
-cell_names_1 <- sc_object[[]][leiden_clustering == 1, cell_id]
-cell_names_2 <- sc_object[[]][leiden_clustering == 2, cell_id]
+cell_names_1 <- sc_object[[]][cell_grp == "cell_type_1", cell_id]
+cell_names_2 <- sc_object[[]][cell_grp == "cell_type_2", cell_id]
 
 expect_error(
   current = find_markers_sc(
@@ -679,7 +679,7 @@ dge_test <- find_markers_sc(
 )
 
 expected_upregulated <- sprintf("gene_%03d", 1:10)
-expected_downregulated <- sprintf("gene_%03d", 21:30)
+expected_downregulated <- sprintf("gene_%03d", 11:20)
 
 expect_true(
   current = all(

@@ -3,6 +3,10 @@
 \name{dim.SingleCells}
 \alias{dim.SingleCells}
 \title{dim Method for SingleCells object}
+\usage{
+## S7 method for class <bixverse::SingleCells>
+dim(x)
+}
 \arguments{
 \item{x}{An object of class \code{SingleCells}.}
 }
@@ -10,6 +14,7 @@
 An integer vector of length 2 with the number of cells and genes.
 }
 \description{
-Returns the dimensions of a SingleCells object.
+Returns the dimensions of a SingleCells object. (Only taking into
+consideration the cells to keep).
 }
 \keyword{internal}

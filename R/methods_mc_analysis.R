@@ -9,7 +9,7 @@ S7::method(aucell_sc, MetaCells) <- function(
   object,
   gs_list,
   auc_type = c("wilcox", "auroc"),
-  streaming = FALSE,
+  streaming = NULL,
   .verbose = TRUE
 ) {
   auc_type <- match.arg(auc_type)
@@ -18,7 +18,7 @@ S7::method(aucell_sc, MetaCells) <- function(
   checkmate::assertTRUE(S7::S7_inherits(object, MetaCells))
   checkmate::assertList(gs_list, types = "character", names = "named")
   checkmate::assertChoice(auc_type, c("wilcox", "auroc"))
-  checkmate::qassert(streaming, "B1")
+  checkmate::qassert(streaming, c("B1", "0"))
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   # 0-indexed gene indices for Rust
@@ -104,7 +104,7 @@ S7::method(scenic_grn_sc, MetaCells) <- function(
   scenic_params = params_scenic(),
   genes_to_take = NULL,
   cells_to_take = NULL,
-  streaming = FALSE,
+  streaming = NULL,
   random_seed = 42L,
   .verbose = TRUE
 ) {
@@ -114,7 +114,7 @@ S7::method(scenic_grn_sc, MetaCells) <- function(
   assertScenicParams(scenic_params)
   checkmate::qassert(genes_to_take, c("S+", "0"))
   checkmate::qassert(cells_to_take, c("S+", "0"))
-  checkmate::qassert(streaming, "B1")
+  checkmate::qassert(streaming, c("B1", "0"))
   checkmate::qassert(random_seed, "I1")
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 

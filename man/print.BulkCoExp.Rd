@@ -3,6 +3,10 @@
 \name{print.BulkCoExp}
 \alias{print.BulkCoExp}
 \title{print Method for BulkCoExp object}
+\usage{
+## S7 method for class <bixverse::BulkCoExp>
+print(x, ...)
+}
 \arguments{
 \item{x}{An object of class \code{BulkCoExp}.}
 

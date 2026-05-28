@@ -2918,6 +2918,30 @@ rs_module_scoring <- function(f_path_cells, f_path_genes, gs_list, cells_to_keep
 #' @export
 rs_make_milor_nhoods <- function(embd, knn_indices, milor_params, seed, verbose) .Call(wrap__rs_make_milor_nhoods, embd, knn_indices, milor_params, seed, verbose)
 
+#' Run MELD
+#'
+#' @description This implements a Rust-based version of the MELD algorithm,
+#' see Burkhardt, et al.
+#'
+#' @param embd Numeric matrix. The original embedding that was used to generate
+#' the kNN graph.
+#' @param knn_data Optional named list. This contains pre-computed kNN data
+#' (including distances). The user has to ensure consistency! If provided, this
+#' will be used.
+#' @param meld_params Named list. Contains the parameters to use for MELD.
+#' @param landmark Boolean. Shall a landmark method be used for accelerated
+#' MELD.
+#' @param n_landmarks Integer. If `landmark = TRUE`, how many landmarks to use.
+#' @param labels Integer. The labels of the different groups.
+#' @param seed Integer. For reproducibility.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @returns A numeric matrix with the MELD values per given condition/cell
+#'
+#' @export
+rs_meld_sc <- function(embd, knn_data, meld_params, landmark, n_landmark, labels, n_labels, seed, verbose) .Call(wrap__rs_meld_sc, embd, knn_data, meld_params, landmark, n_landmark, labels, n_labels, seed, verbose)
+
 #' Calculate VISION pathway scores in Rust
 #'
 #' @description

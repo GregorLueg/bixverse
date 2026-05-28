@@ -11,7 +11,7 @@ vision_w_autocor_sc(
   no_embd_to_use = NULL,
   use_knn = TRUE,
   vision_params = params_sc_vision(),
-  streaming = FALSE,
+  streaming = NULL,
   random_seed = 42L,
   .verbose = TRUE
 )
@@ -43,8 +43,9 @@ associate each set with.
 for available parameters and their defaults.
 }}
 
-\item{streaming}{Boolean. Shall the cell data be streamed in. Useful for
-larger data sets.}
+\item{streaming}{Optional Boolean. Shall the data be streamed in. Useful for
+larger data sets where you wish to avoid loading in the whole data. If
+\code{NULL}, will automatically detect.}
 
 \item{random_seed}{Integer. The random seed.}
 

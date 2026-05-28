@@ -3,6 +3,10 @@
 \name{print.SingleCellsMultiModal}
 \alias{print.SingleCellsMultiModal}
 \title{print Method for SingleCellsMultiModal object}
+\usage{
+## S7 method for class <bixverse::SingleCellsMultiModal>
+print(x, ...)
+}
 \arguments{
 \item{x}{An object of class \code{SingleCellsMultiModal}.}
 

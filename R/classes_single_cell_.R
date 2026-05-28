@@ -2169,7 +2169,8 @@ S7::method(print, SingleCells) <- function(x, ...) {
 #' @title dim Method for SingleCells object
 #'
 #' @description
-#' Returns the dimensions of a SingleCells object.
+#' Returns the dimensions of a SingleCells object. (Only taking into
+#' consideration the cells to keep).
 #'
 #' @param x An object of class `SingleCells`.
 #'
@@ -2179,5 +2180,28 @@ S7::method(print, SingleCells) <- function(x, ...) {
 #'
 #' @keywords internal
 S7::method(dim, SingleCells) <- function(x) {
-  S7::prop(x, "dims")
+  n_cells <- length(get_cells_to_keep(x))
+  n_genes <- S7::prop(x, "dims")[2]
+  c(n_cells, n_genes)
+}
+
+
+#' @title head Method for SingleCells object
+#'
+#' @description
+#' Returns the first `n` rows of the obs table from a `SingleCells` object.
+#'
+#' @param x An object of class `SingleCells`.
+#' @param n Integer. Number of rows to return. Defaults to `6L`.
+#' @param ... Additional arguments (currently not used).
+#'
+#' @returns A data.table with the first `n` rows of the obs table.
+#'
+#' @method head SingleCells
+#'
+#' @keywords internal
+S7::method(head, SingleCells) <- function(x, n = 6L, ...) {
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
+  checkmate::qassert(n, "I1[1,)")
+  get_sc_obs(x, indices = seq_len(n), filtered = TRUE)
 }

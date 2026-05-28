@@ -19,8 +19,9 @@
 #' @param n_ctrl Integer. Number of control genes to use per gene for each gene
 #' set. Defaults to `100L`.
 #' @param seed Integer. The random seed.
-#' @param streaming Boolean. Shall the cell and gene data be streamed in.
-#' Useful for larger data sets.
+#' @param streaming Optional Boolean. Shall the data be streamed in. Useful for
+#' larger data sets where you wish to avoid loading in the whole data. If
+#' `NULL`, will automatically detect.
 #' @param .verbose Boolean or integer. Controls verbosity and returns run times.
 #' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
 #' verbosity.
@@ -40,7 +41,7 @@ module_scores_sc <- S7::new_generic(
     n_bins = 24L,
     n_ctrl = 100L,
     seed = 42L,
-    streaming = FALSE,
+    streaming = NULL,
     .verbose = TRUE
   ) {
     S7::S7_dispatch()
@@ -56,7 +57,7 @@ S7::method(module_scores_sc, SingleCells) <- function(
   n_bins = 24L,
   n_ctrl = 100L,
   seed = 42L,
-  streaming = FALSE,
+  streaming = NULL,
   .verbose = TRUE
 ) {
   # checks
@@ -65,8 +66,14 @@ S7::method(module_scores_sc, SingleCells) <- function(
   checkmate::qassert(n_bins, "I1")
   checkmate::qassert(n_ctrl, "I1")
   checkmate::qassert(seed, "I1")
-  checkmate::qassert(streaming, "B1")
+  checkmate::qassert(streaming, c("B1", "0"))
   checkmate::qassert(.verbose, c("B1", "I1[0,1]"))
+
+  streaming <- auto_streaming(
+    n_cells = nrow(object),
+    streaming = streaming,
+    .verbose = .verbose
+  )
 
   # get the gene indices
   gs_list <- purrr::map(gs_list, \(e) {
@@ -106,16 +113,22 @@ S7::method(aucell_sc, SingleCells) <- function(
   object,
   gs_list,
   auc_type = c("wilcox", "auroc"),
-  streaming = FALSE,
+  streaming = NULL,
   .verbose = TRUE
 ) {
   auc_type <- match.arg(auc_type)
+
+  streaming <- auto_streaming(
+    n_cells = nrow(object),
+    streaming = streaming,
+    .verbose = .verbose
+  )
 
   # checks
   checkmate::checkTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::assertList(gs_list, types = "character", names = "named")
   checkmate::assertChoice(auc_type, c("wilcox", "auroc"))
-  checkmate::qassert(streaming, "B1")
+  checkmate::qassert(streaming, c("B1", "0"))
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   # get the gene indices
@@ -294,8 +307,9 @@ generate_null_perm_gs <- function(
 #' the respective gene sets and have the option to have a `"pos"` and `"neg"`
 #' gene sets. The names need to be part of the variables of the
 #' `SingleCells` class.
-#' @param streaming Boolean. Shall the cell data be streamed in. Useful for
-#' larger data sets.
+#' @param streaming Optional Boolean. Shall the data be streamed in. Useful for
+#' larger data sets where you wish to avoid loading in the whole data. If
+#' `NULL`, will automatically detect.
 #' @param .verbose Boolean or integer. Controls verbosity and returns run times.
 #' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
 #' verbosity.
@@ -311,7 +325,7 @@ vision_sc <- S7::new_generic(
   fun = function(
     object,
     gs_list,
-    streaming = FALSE,
+    streaming = NULL,
     .verbose = TRUE
   ) {
     S7::S7_dispatch()
@@ -324,14 +338,20 @@ vision_sc <- S7::new_generic(
 S7::method(vision_sc, SingleCells) <- function(
   object,
   gs_list,
-  streaming = FALSE,
+  streaming = NULL,
   .verbose = TRUE
 ) {
   # checks
   checkmate::checkTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::assertList(gs_list, types = "list", names = "named")
-  checkmate::qassert(streaming, "B1")
+  checkmate::qassert(streaming, c("B1", "0"))
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
+
+  streaming <- auto_streaming(
+    n_cells = nrow(object),
+    streaming = streaming,
+    .verbose = .verbose
+  )
 
   # no one sees this...
   vision_gs_clean <- purrr::map(gs_list, \(ls) {
@@ -391,8 +411,9 @@ S7::method(vision_sc, SingleCells) <- function(
 #' @param use_knn Boolean. Shall the internal kNN be used. If set to yes, you
 #' need to ensure consistency.
 #' @param random_seed Integer. The random seed.
-#' @param streaming Boolean. Shall the cell data be streamed in. Useful for
-#' larger data sets.
+#' @param streaming Optional Boolean. Shall the data be streamed in. Useful for
+#' larger data sets where you wish to avoid loading in the whole data. If
+#' `NULL`, will automatically detect.
 #' @param .verbose Boolean or integer. Controls verbosity and returns run times.
 #' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
 #' verbosity.
@@ -413,7 +434,7 @@ vision_w_autocor_sc <- S7::new_generic(
     no_embd_to_use = NULL,
     use_knn = TRUE,
     vision_params = params_sc_vision(),
-    streaming = FALSE,
+    streaming = NULL,
     random_seed = 42L,
     .verbose = TRUE
   ) {
@@ -431,7 +452,7 @@ S7::method(vision_w_autocor_sc, SingleCells) <- function(
   no_embd_to_use = NULL,
   use_knn = TRUE,
   vision_params = params_sc_vision(),
-  streaming = FALSE,
+  streaming = NULL,
   random_seed = 42L,
   .verbose = TRUE
 ) {
@@ -440,8 +461,14 @@ S7::method(vision_w_autocor_sc, SingleCells) <- function(
   checkmate::qassert(embd_to_use, "S1")
   checkmate::qassert(no_embd_to_use, c("I1", "0"))
   assertScVision(vision_params)
-  checkmate::qassert(streaming, "B1")
+  checkmate::qassert(streaming, c("B1", "0"))
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
+
+  streaming <- auto_streaming(
+    n_cells = nrow(object),
+    streaming = streaming,
+    .verbose = .verbose
+  )
 
   # get the embedding
   checkmate::assertTRUE(embd_to_use %in% get_available_embeddings(object))
@@ -552,8 +579,9 @@ S7::method(vision_w_autocor_sc, SingleCells) <- function(
 #' @param genes_to_take Optional string vector. If you wish to limit the
 #' search to a subset of genes. If `NULL` will default to all genes in the
 #' class.
-#' @param streaming Boolean. Shall the data be streamed in. Useful for larger
-#' data sets.
+#' @param streaming Optional Boolean. Shall the data be streamed in. Useful for
+#' larger data sets where you wish to avoid loading in the whole data. If
+#' `NULL`, will automatically detect.
 #' @param random_seed Integer. Used for reproducibility.
 #' @param .verbose Boolean or integer. Controls verbosity and returns run times.
 #' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
@@ -581,7 +609,7 @@ hotspot_autocor_sc <- S7::new_generic(
     no_embd_to_use = NULL,
     cells_to_take = NULL,
     genes_to_take = NULL,
-    streaming = FALSE,
+    streaming = NULL,
     random_seed = 42L,
     .verbose = TRUE
   ) {
@@ -600,7 +628,7 @@ S7::method(hotspot_autocor_sc, SingleCells) <- function(
   no_embd_to_use = NULL,
   cells_to_take = NULL,
   genes_to_take = NULL,
-  streaming = FALSE,
+  streaming = NULL,
   random_seed = 42L,
   .verbose = TRUE
 ) {
@@ -611,7 +639,7 @@ S7::method(hotspot_autocor_sc, SingleCells) <- function(
   checkmate::qassert(no_embd_to_use, c("0", "I1"))
   checkmate::qassert(cells_to_take, c("S+", "0"))
   checkmate::qassert(genes_to_take, c("S+", "0"))
-  checkmate::qassert(streaming, "B1")
+  checkmate::qassert(streaming, c("B1", "0"))
   checkmate::qassert(random_seed, "I1")
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
@@ -630,6 +658,12 @@ S7::method(hotspot_autocor_sc, SingleCells) <- function(
     # if the user overwrites this specifically, recreate the kNN data internally
     use_knn <- FALSE
   }
+
+  streaming <- auto_streaming(
+    n_cells = length(cells_to_take),
+    streaming = streaming,
+    .verbose = .verbose
+  )
 
   if (is.null(genes_to_take)) {
     genes_to_take <- get_gene_names(object)
@@ -711,8 +745,9 @@ S7::method(hotspot_autocor_sc, SingleCells) <- function(
 #' @param genes_to_take Optional string vector. If you wish to limit the
 #' search to a subset of genes. If `NULL` will default to all genes in the
 #' class.
-#' @param streaming Boolean. Shall the data be streamed in. Useful for larger
-#' data sets.
+#' @param streaming Optional Boolean. Shall the data be streamed in. Useful for
+#' larger data sets where you wish to avoid loading in the whole data. If
+#' `NULL`, will automatically detect.
 #' @param working_mem_gb Numeric. Approximate working memory (GB) the streaming
 #'  pair path may use for resident gene panels. Ignored when `streaming` is
 #'  `FALSE`. Larger values mean fewer disk re-reads. Note this excludes the two
@@ -743,7 +778,7 @@ hotspot_gene_cor_sc <- S7::new_generic(
     no_embd_to_use = NULL,
     cells_to_take = NULL,
     genes_to_take = NULL,
-    streaming = FALSE,
+    streaming = NULL,
     working_mem_gb = 4,
     random_seed = 42L,
     .verbose = TRUE
@@ -763,7 +798,7 @@ S7::method(hotspot_gene_cor_sc, SingleCells) <- function(
   no_embd_to_use = NULL,
   cells_to_take = NULL,
   genes_to_take = NULL,
-  streaming = FALSE,
+  streaming = NULL,
   working_mem_gb = 4,
   random_seed = 42L,
   .verbose = TRUE
@@ -775,7 +810,7 @@ S7::method(hotspot_gene_cor_sc, SingleCells) <- function(
   checkmate::qassert(no_embd_to_use, c("0", "I1"))
   checkmate::qassert(cells_to_take, c("S+", "0"))
   checkmate::qassert(genes_to_take, c("S+", "0"))
-  checkmate::qassert(streaming, "B1")
+  checkmate::qassert(streaming, c("B1", "0"))
   checkmate::qassert(random_seed, "I1")
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
@@ -794,6 +829,12 @@ S7::method(hotspot_gene_cor_sc, SingleCells) <- function(
     # if the user overwrites this specifically, recreate the kNN data internally
     use_knn <- FALSE
   }
+
+  streaming <- auto_streaming(
+    n_cells = length(cells_to_take),
+    streaming = streaming,
+    .verbose = .verbose
+  )
 
   if (is.null(genes_to_take)) {
     genes_to_take <- get_gene_names(object)
@@ -900,7 +941,7 @@ S7::method(scenic_grn_sc, SingleCells) <- function(
   scenic_params = params_scenic(),
   genes_to_take = NULL,
   cells_to_take = NULL,
-  streaming = FALSE,
+  streaming = NULL,
   random_seed = 42L,
   .verbose = TRUE
 ) {
@@ -910,7 +951,7 @@ S7::method(scenic_grn_sc, SingleCells) <- function(
   assertScenicParams(scenic_params)
   checkmate::qassert(genes_to_take, c("S+", "0"))
   checkmate::qassert(cells_to_take, c("S+", "0"))
-  checkmate::qassert(streaming, "B1")
+  checkmate::qassert(streaming, c("B1", "0"))
   checkmate::qassert(random_seed, "I1")
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
@@ -918,6 +959,12 @@ S7::method(scenic_grn_sc, SingleCells) <- function(
   if (is.null(cells_to_take)) {
     cells_to_take <- get_cell_names(object, filtered = TRUE)
   }
+
+  streaming <- auto_streaming(
+    n_cells = length(cells_to_take),
+    streaming = streaming,
+    .verbose = .verbose
+  )
 
   cell_indices <- get_cell_indices(
     object,

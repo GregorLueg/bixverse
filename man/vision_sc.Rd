@@ -4,7 +4,7 @@
 \alias{vision_sc}
 \title{Calculate VISION scores}
 \usage{
-vision_sc(object, gs_list, streaming = FALSE, .verbose = TRUE)
+vision_sc(object, gs_list, streaming = NULL, .verbose = TRUE)
 }
 \arguments{
 \item{object}{\code{SingleCells} class.}
@@ -14,8 +14,9 @@ the respective gene sets and have the option to have a \code{"pos"} and \code{"n
 gene sets. The names need to be part of the variables of the
 \code{SingleCells} class.}
 
-\item{streaming}{Boolean. Shall the cell data be streamed in. Useful for
-larger data sets.}
+\item{streaming}{Optional Boolean. Shall the data be streamed in. Useful for
+larger data sets where you wish to avoid loading in the whole data. If
+\code{NULL}, will automatically detect.}
 
 \item{.verbose}{Boolean or integer. Controls verbosity and returns run times.
 \code{FALSE} -> quiet, \code{TRUE} or \code{1L} -> normal verbosity, \code{2L} -> detailed
