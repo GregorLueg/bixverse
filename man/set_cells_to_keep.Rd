@@ -9,9 +9,6 @@
 set_cells_to_keep(x, cells_to_keep)
 
 \method{set_cells_to_keep}{ScMap}(x, cells_to_keep)
-
-## S7 method for class <bixverse::SingleCells>
-set_cells_to_keep(x, cells_to_keep)
 }
 \arguments{
 \item{x}{An object to set cells to keep for}

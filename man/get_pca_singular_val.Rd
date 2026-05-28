@@ -10,13 +10,7 @@
 \usage{
 get_pca_singular_val(x, ...)
 
-## S7 method for class <bixverse::MetaCells>
-get_pca_singular_val(x, ...)
-
 \method{get_pca_singular_val}{ScCache}(x)
-
-## S7 method for class <bixverse::SingleCells>
-get_pca_singular_val(x, ...)
 }
 \arguments{
 \item{x}{An object to get PCA singular values from.}

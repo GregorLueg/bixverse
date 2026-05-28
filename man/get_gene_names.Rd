@@ -9,9 +9,6 @@
 get_gene_names(x)
 
 \method{get_gene_names}{ScMap}(x)
-
-## S7 method for class <bixverse::SingleCells>
-get_gene_names(x)
 }
 \arguments{
 \item{x}{An object to get the gene names from.}

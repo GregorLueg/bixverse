@@ -11,11 +11,6 @@ Your favourite methods used in bioinformatics and computational biology made VER
 \author{
 \strong{Maintainer}: Gregor Lueg \email{gregorlueg@me.com}
 
-Authors:
-\itemize{
-  \item Gregor Lueg \email{gregorlueg@me.com}
-}
-
 Other contributors:
 \itemize{
   \item Liesbeth Francois \email{francois.liesbeth@gmail.com} [contributor]

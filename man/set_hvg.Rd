@@ -10,13 +10,7 @@
 \usage{
 set_hvg(x, hvg)
 
-## S7 method for class <bixverse::MetaCells>
-set_hvg(x, hvg)
-
 \method{set_hvg}{ScMap}(x, hvg)
-
-## S7 method for class <bixverse::SingleCells>
-set_hvg(x, hvg)
 }
 \arguments{
 \item{x}{An object to set the HVGs for}

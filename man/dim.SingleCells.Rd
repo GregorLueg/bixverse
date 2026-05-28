@@ -3,10 +3,6 @@
 \name{dim.SingleCells}
 \alias{dim.SingleCells}
 \title{dim Method for SingleCells object}
-\usage{
-## S7 method for class <bixverse::SingleCells>
-dim(x)
-}
 \arguments{
 \item{x}{An object of class \code{SingleCells}.}
 }
