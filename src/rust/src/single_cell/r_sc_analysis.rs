@@ -1178,7 +1178,7 @@ fn rs_importance_threshold(matrix: RMatrix<f64>, n_sd: f64, min_value: Option<f6
 /// Run MELD
 ///
 /// @description This implements a Rust-based version of the MELD algorithm,
-/// see Burkhardt, et al.
+/// see Burkhardt, et al. Nat. Biotechnol., 2021.
 ///
 /// @param embd Numeric matrix. The original embedding that was used to generate
 /// the kNN graph.
@@ -1189,7 +1189,7 @@ fn rs_importance_threshold(matrix: RMatrix<f64>, n_sd: f64, min_value: Option<f6
 /// @param landmark Boolean. Shall a landmark method be used for accelerated
 /// MELD.
 /// @param n_landmarks Integer. If `landmark = TRUE`, how many landmarks to use.
-/// @param labels Integer. The labels of the different groups.
+/// @param labels Integer. The labels of the different groups. (1-indexed!)
 /// @param seed Integer. For reproducibility.
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
@@ -1203,8 +1203,6 @@ fn rs_meld_sc(
     embd: RMatrix<f64>,
     knn_data: Nullable<List>,
     meld_params: List,
-    landmark: bool,
-    n_landmark: usize,
     labels: &[i32],
     n_labels: usize,
     seed: usize,
@@ -1212,7 +1210,7 @@ fn rs_meld_sc(
 ) -> Result<RMatrix<f64>> {
     let embd = r_matrix_to_faer_fp32(&embd);
     let meld_params = MeldParams::from_r_list(meld_params)?;
-    let labels = labels.r_int_convert();
+    let labels = labels.r_int_convert_shift();
     let verbosity = parse_verbosity_level(verbose);
 
     // deal with kNN
@@ -1253,31 +1251,16 @@ fn rs_meld_sc(
 
     let is_squared_distance = dist == "euclidean";
 
-    let meld_res = if landmark {
-        meld_landmark(
-            embd.as_ref(),
-            &knn_indices,
-            &knn_dist,
-            &labels,
-            n_labels,
-            is_squared_distance,
-            n_landmark,
-            &meld_params,
-            seed as u64,
-            verbose,
-        )
-    } else {
-        meld(
-            &knn_indices,
-            &knn_dist,
-            &labels,
-            n_labels,
-            is_squared_distance,
-            &meld_params,
-            seed as u64,
-            verbose,
-        )
-    }
+    let meld_res = meld(
+        &knn_indices,
+        &knn_dist,
+        &labels,
+        n_labels,
+        is_squared_distance,
+        &meld_params,
+        seed as u64,
+        verbose,
+    )
     .to_extendr()?;
 
     Ok(faer_to_r_matrix(meld_res.as_ref()))

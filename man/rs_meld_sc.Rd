@@ -4,17 +4,7 @@
 \alias{rs_meld_sc}
 \title{Run MELD}
 \usage{
-rs_meld_sc(
-  embd,
-  knn_data,
-  meld_params,
-  landmark,
-  n_landmark,
-  labels,
-  n_labels,
-  seed,
-  verbose
-)
+rs_meld_sc(embd, knn_data, meld_params, labels, n_labels, seed, verbose)
 }
 \arguments{
 \item{embd}{Numeric matrix. The original embedding that was used to generate
@@ -26,15 +16,15 @@ will be used.}
 
 \item{meld_params}{Named list. Contains the parameters to use for MELD.}
 
-\item{landmark}{Boolean. Shall a landmark method be used for accelerated
-MELD.}
-
-\item{labels}{Integer. The labels of the different groups.}
+\item{labels}{Integer. The labels of the different groups. (1-indexed!)}
 
 \item{seed}{Integer. For reproducibility.}
 
 \item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
 detailed verbosity.}
+
+\item{landmark}{Boolean. Shall a landmark method be used for accelerated
+MELD.}
 
 \item{n_landmarks}{Integer. If \code{landmark = TRUE}, how many landmarks to use.}
 }
@@ -43,5 +33,5 @@ A numeric matrix with the MELD values per given condition/cell
 }
 \description{
 This implements a Rust-based version of the MELD algorithm,
-see Burkhardt, et al.
+see Burkhardt, et al. Nat. Biotechnol., 2021.
 }
