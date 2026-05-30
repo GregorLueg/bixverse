@@ -9,6 +9,7 @@ params_sc_supercell(
   graining_factor = 20,
   use_kernel = TRUE,
   k_ith = NULL,
+  max_support = NULL,
   knn = list()
 )
 }
@@ -23,6 +24,11 @@ final dataset). Defaults to \code{20.0}. (One meta cell per 20 cells.)}
 \item{use_kernel}{Boolean. Shall a kernel function akin to MAGIC be applied
 akin to the approach in SuperCell2, see Hérault, et al., bioRxiv, 2026 and
 van Dijk, et al., Cell, 2018.}
+
+\item{max_support}{Optional integer. Caps each cell's walk-probability vector
+to its top entries by mass, bounding memory at ~\code{max_support * n_cells} on
+large data. Makes the result an approximation. \code{NULL} (default) keeps the
+walks exact.}
 
 \item{knn}{List. Optional overrides for kNN parameters. See
 \code{\link[=params_knn_defaults]{params_knn_defaults()}} for available parameters: \code{k},

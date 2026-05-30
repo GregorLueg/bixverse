@@ -167,6 +167,8 @@ S7::method(print, MetaCells) <- function(x, ...) {
   invisible(x)
 }
 
+#' @name head.MetaCells
+#'
 #' @title head Method for MetaCells object
 #'
 #' @description

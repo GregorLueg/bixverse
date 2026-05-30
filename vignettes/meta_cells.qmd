@@ -246,6 +246,9 @@ SEACells feasible on large data sets:
    these are what made it possible to run on a million cells locally, which the 
    original implementation cannot do.
 
+If you want to run SEACells on larger data sets, these are the knobs you have
+to make this run in a reasonable time on a powerful laptop.
+
 ### SuperCells
 
 SuperCells runs walktrap on the kNN graph. The number of meta cells is set
@@ -294,10 +297,11 @@ supercells <- calc_diffusion_coordinates(
 SuperCell is already far cheaper than SEACells on large data: there is no
 archetypal analysis, just Walktrap community detection on the kNN graph. The
 one part that does not scale naively is the random-walk representation.
-`compute_walk_probabilities` gives every cell a sparse vector of landing
-probabilities for a `walk_length`-step walk; on a well-connected graph these
-vectors spread to touch a large fraction of cells after only a few steps, so
-the store drifts towards dense and memory grows as O(n × support).
+`compute_walk_probabilities()` within the Rust code gives every cell a sparse 
+vector of landing probabilities for a `walk_length`-step walk; on a 
+well-connected graph these vectors spread to touch a large fraction of cells 
+after only a few steps, so the store drifts towards dense and memory grows as 
+`O(n × support)`.
 
 `max_support` caps this. With `max_support = k` each initial walk vector keeps
 only its `k` largest entries (the dropped tail holds negligible walk mass),
@@ -311,17 +315,16 @@ both are linear in the support.
 
 ```{r}
 #| label: supercells - large data
+#| eval: false
 supercells_large <- generate_supercells_sc(
   object = sc_object,
   sc_supercell_params = params_sc_supercell(
     graining_factor = 30,
-    max_support = 256L
+    max_support = 256L # would bound the walk vectors to 256
   ),
   .verbose = TRUE
 )
 ```
-
-
 
 ## Metrics
 
@@ -680,7 +683,7 @@ scenic_res <- identify_tf_to_genes(
 
 scenic_res <- tf_to_genes_correlations(
   x = scenic_res,
-  object = sc_object,
+  object = seacells,
   cor_filter = 0.01,
   .verbose = TRUE
 )

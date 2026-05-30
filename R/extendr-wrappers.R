@@ -3417,6 +3417,22 @@ rs_mc_hvg <- function(sparse_data, hvg_method, loess_span, binning, n_bins, clip
 #' @export
 rs_mc_pca <- function(sparse_data, no_pcs, random_svd, seed) .Call(wrap__rs_mc_pca, sparse_data, no_pcs, random_svd, seed)
 
+#' Calculate the pairwise gene-correlation for meta cells
+#'
+#' @param sparse_data A named list that needs to have `data`, `indptr`,
+#' `indices`, `nrow`, `ncol` and `format`.
+#' @param gene_indices_1 Integer. The gene indices for the first set of genes.
+#' Must be 0-indexed!
+#' @param gene_indices_2 Integer. The gene indices for the first set of genes.
+#' Must be 0-indexed!
+#' @param spearman Boolean. Shall the spearman correlation be calculated.
+#'
+#' @returns The vector of correlations between the pairs of gene_indices_1
+#' and gene_indices_2
+#'
+#' @export
+rs_pairwise_gene_cors_mc <- function(sparse_data, gene_indices_1, gene_indices_2, spearman) .Call(wrap__rs_pairwise_gene_cors_mc, sparse_data, gene_indices_1, gene_indices_2, spearman)
+
 #' SCENIC on MetaCells
 #'
 #' @description

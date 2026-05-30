@@ -2660,7 +2660,8 @@ checkScSupercell <- function(x) {
       "walk_length",
       "graining_factor",
       "use_kernel",
-      "k_ith"
+      "k_ith",
+      "max_support"
     )
   )
   if (!isTRUE(res)) {
@@ -2677,7 +2678,8 @@ checkScSupercell <- function(x) {
   # Check non-kNN integer parameters
   integer_rules <- list(
     "walk_length" = "I1[1,)",
-    "k_ith" = c("I1", "0")
+    "k_ith" = c("I1", "0"),
+    "max_support" = c("I1[1,)", "0")
   )
 
   res <- purrr::imap_lgl(x, \(val, name) {
@@ -2691,7 +2693,7 @@ checkScSupercell <- function(x) {
   if (!isTRUE(all(res))) {
     return(paste(
       "walk_length needs to be an integer >= 1.",
-      "kith_neighbour needs to be an integer or NULL."
+      "kith_neighbour and max_support needs to be an integer or NULL."
     ))
   }
 

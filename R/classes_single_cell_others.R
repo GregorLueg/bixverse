@@ -1816,11 +1816,85 @@ identify_tf_to_genes.ScenicGrn <- function(
 
 #' Get TF gene correlations for SingleCells
 #'
-#' @param tf_to_gene
-#' @param object
+#' @param tf_to_gene data.table. The TF to gene data.table
+#' @param object `SingleCells` class.
+#' @param spearman Boolean. Shall the Spearman correlation be used.
 #'
-#' @returns
-.tf_gene_cor_sc <- function(tf_to_gene, object) {}
+#' @returns Adds a `pairwise_cor` column to the tf_to_gene data.table
+#'
+#' @keywords internal
+.tf_gene_cor_sc <- function(tf_to_gene, object, spearman) {
+  # checks
+  checkmate::assertDataTable(tf_to_gene)
+  checkmate::assertNames(
+    names(tf_to_gene),
+    must.include = c("tf", "gene", "importance")
+  )
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  checkmate::qassert(spearman, "B1")
+
+  indices_1 <- get_sc_map(object)$gene_mapping[tf_to_gene$tf] - 1L
+  indices_2 <- get_sc_map(object)$gene_mapping[tf_to_gene$gene] - 1L
+
+  pairwise_cors <- rs_pairwise_gene_cors(
+    f_path = get_rust_count_gene_f_path(object),
+    gene_indices_1 = as.integer(indices_1),
+    gene_indices_2 = as.integer(indices_2),
+    cells_to_keep = as.integer(get_cells_to_keep(object)),
+    spearman = FALSE
+  )
+
+  tf_to_gene[, pairwise_cor := pairwise_cors]
+
+  return(tf_to_gene)
+}
+
+#' Get TF gene correlations for MetaCells
+#'
+#' @param tf_to_gene data.table. The TF to gene data.table
+#' @param object `MetaCells` class.
+#' @param spearman Boolean. Shall the Spearman correlation be used.
+#'
+#' @returns Adds a `pairwise_cor` column to the tf_to_gene data.table
+#'
+#' @keywords internal
+.tf_gene_cor_mc <- function(tf_to_gene, object, spearman) {
+  # checks
+  checkmate::assertDataTable(tf_to_gene)
+  checkmate::assertNames(
+    names(tf_to_gene),
+    must.include = c("tf", "gene", "importance")
+  )
+  checkmate::assertTRUE(S7::S7_inherits(object, MetaCells))
+  checkmate::qassert(spearman, "B1")
+
+  indices_1 <- get_gene_indices(
+    x = object,
+    gene_ids = tf_to_gene$tf,
+    rust_index = TRUE
+  )
+  indices_2 <- get_gene_indices(
+    x = object,
+    gene_ids = tf_to_gene$gene,
+    rust_index = TRUE
+  )
+
+  count_list <- mc_counts_to_list(
+    object = object,
+    assay = "norm"
+  )
+
+  pairwise_cors <- rs_pairwise_gene_cors_mc(
+    sparse_data = count_list,
+    gene_indices_1 = indices_1,
+    gene_indices_2 = indices_2,
+    spearman = spearman
+  )
+
+  tf_to_gene[, pairwise_cor := pairwise_cors]
+
+  return(tf_to_gene)
+}
 
 #### main function -------------------------------------------------------------
 
@@ -1869,7 +1943,9 @@ tf_to_genes_correlations.ScenicGrn <- function(
 ) {
   # checks
   checkmate::assertClass(x, "ScenicGrn")
-  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  checkmate::assertTRUE(
+    S7::S7_inherits(object, SingleCells) || S7::S7_inherits(object, MetaCells)
+  )
   checkmate::qassert(cor_filter, c("0", "N1"))
   checkmate::qassert(remove_self, "B1")
   checkmate::qassert(spearman, "B1")
@@ -1890,18 +1966,11 @@ tf_to_genes_correlations.ScenicGrn <- function(
     message("Calculating the pairwise correlations between the TFs and genes")
   }
 
-  indices_1 <- get_sc_map(object)$gene_mapping[tf_to_gene$tf] - 1L
-  indices_2 <- get_sc_map(object)$gene_mapping[tf_to_gene$gene] - 1L
-
-  pairwise_cors <- rs_pairwise_gene_cors(
-    f_path = get_rust_count_gene_f_path(object),
-    gene_indices_1 = as.integer(indices_1),
-    gene_indices_2 = as.integer(indices_2),
-    cells_to_keep = as.integer(get_cells_to_keep(object)),
-    spearman = FALSE
-  )
-
-  tf_to_gene[, pairwise_cor := pairwise_cors]
+  tf_to_gene <- if (S7::S7_inherits(object, SingleCells)) {
+    .tf_gene_cor_sc(tf_to_gene, object, spearman)
+  } else {
+    .tf_gene_cor_mc(tf_to_gene, object, spearman)
+  }
 
   if (!is.null(cor_filter)) {
     if (.verbose) {

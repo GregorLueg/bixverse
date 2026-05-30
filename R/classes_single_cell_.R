@@ -2186,6 +2186,8 @@ S7::method(dim, SingleCells) <- function(x) {
 }
 
 
+#' @name head.SingleCells
+#'
 #' @title head Method for SingleCells object
 #'
 #' @description

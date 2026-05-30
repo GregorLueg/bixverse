@@ -946,6 +946,10 @@ params_sc_seacells <- function(
 #' van Dijk, et al., Cell, 2018.
 #' @param k_ith_neighbour Optional integer. The k-ith neighbour to use for
 #' the kernel. Defaults to `k %/% 2`.
+#' @param max_support Optional integer. Caps each cell's walk-probability vector
+#' to its top entries by mass, bounding memory at ~`max_support * n_cells` on
+#' large data. Makes the result an approximation. `NULL` (default) keeps the
+#' walks exact.
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
@@ -960,6 +964,7 @@ params_sc_supercell <- function(
   graining_factor = 20.0,
   use_kernel = TRUE,
   k_ith = NULL,
+  max_support = NULL,
   knn = list()
 ) {
   checkmate::qassert(walk_length, "I1")
