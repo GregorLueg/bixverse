@@ -1812,6 +1812,18 @@ identify_tf_to_genes.ScenicGrn <- function(
 
 ### tf to gene correlation -----------------------------------------------------
 
+#### helpers -------------------------------------------------------------------
+
+#' Get TF gene correlations for SingleCells
+#'
+#' @param tf_to_gene
+#' @param object
+#'
+#' @returns
+.tf_gene_cor_sc <- function(tf_to_gene, object) {}
+
+#### main function -------------------------------------------------------------
+
 #' Generate TF to gene correlations
 #'
 #' @description
@@ -1820,8 +1832,8 @@ identify_tf_to_genes.ScenicGrn <- function(
 #'
 #' @param x `ScenicGrn` object for which to generate the TF to gene
 #' associations.
-#' @param object `SingleCells` object that was used to generate the original
-#' GRNs.
+#' @param object `SingleCells` or `MetaCells` object that was used to generate
+#' the original GRNs.
 #' @param cor_filter Optional float. If you wish to filter out TF genes below
 #' a certain correlation. If `NULL` all genes will be kept.
 #' @param remove_self Boolean. Shall self loops (where TF controls its own

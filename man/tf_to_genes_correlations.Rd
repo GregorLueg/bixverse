@@ -27,8 +27,8 @@ tf_to_genes_correlations(
 \item{x}{\code{ScenicGrn} object for which to generate the TF to gene
 associations.}
 
-\item{object}{\code{SingleCells} object that was used to generate the original
-GRNs.}
+\item{object}{\code{SingleCells} or \code{MetaCells} object that was used to generate
+the original GRNs.}
 
 \item{cor_filter}{Optional float. If you wish to filter out TF genes below
 a certain correlation. If \code{NULL} all genes will be kept.}

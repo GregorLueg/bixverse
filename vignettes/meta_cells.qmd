@@ -214,6 +214,38 @@ We will also add the diffusion coordinates to this one
 seacells <- calc_diffusion_coordinates(object = seacells, knn_data = knn_object)
 ```
 
+#### SEACells on large data
+
+SEACells is quite infamous for being very slow and difficult to run on larger 
+data sets. bixverse offers some tricks here which make the generation of 
+SEACells feasible on large data sets:
+
+1. The initialisation is the part of the original algorithm that scales the 
+   worst. The greedy column subset selection needs a full `K^2` column for 
+   every candidate cell, which is `O(N2)` and simply will not finish on millions 
+   of cells. `bixverse` therefore switches strategy by size: above 
+   `greedy_threshold` it drops the greedy top-up and samples the archetypes at 
+   random, which is effectively free. When a better-than-random start is wanted 
+   but the greedy pass is still out of reach, setting `n_landmarks` enables a 
+   Nyström route: a small set of density-weighted landmarks is chosen, the 
+   diffusion operator is built and eigendecomposed on those landmarks alone, and 
+   the multiscale embedding is then carried to all cells via a Nyström extension 
+   before the usual max-min waypoint sampling. The expensive eigendecomposition 
+   stays at landmark scale `L x L` instead of `N x N`.
+2. The optimisation loop itself runs in bounded memory. `K^2` is never formed; 
+   every `K^2 * X` term is evaluated as `K (K x X)` so memory stays bounded by 
+   the number of non-zeros in `K` rather `N^2`. The Frank-Wolfe gradients are 
+   computed one column at a time and in parallel, so the full `k x N` gradient 
+   never has to exist at once, and pruning keeps A and B sparse across 
+   iterations.
+3. The RSS for the convergence check is computed differently above 20,000 cells. 
+   Rather than materialising the `N x N` reconstruction `K x B x A`, the squared 
+   residual is expanded with the trace identity and evaluated through cyclic 
+   reordering, so every intermediate is at most `N x k` or `k x k`. The value is 
+   the same Frobenius norm, just without the dense reconstruction. Together 
+   these are what made it possible to run on a million cells locally, which the 
+   original implementation cannot do.
+
 ### SuperCells
 
 SuperCells runs walktrap on the kNN graph. The number of meta cells is set
@@ -256,6 +288,40 @@ supercells <- calc_diffusion_coordinates(
   knn_data = knn_object
 )
 ```
+
+#### SuperCells on large data
+
+SuperCell is already far cheaper than SEACells on large data: there is no
+archetypal analysis, just Walktrap community detection on the kNN graph. The
+one part that does not scale naively is the random-walk representation.
+`compute_walk_probabilities` gives every cell a sparse vector of landing
+probabilities for a `walk_length`-step walk; on a well-connected graph these
+vectors spread to touch a large fraction of cells after only a few steps, so
+the store drifts towards dense and memory grows as O(n × support).
+
+`max_support` caps this. With `max_support = k` each initial walk vector keeps
+only its `k` largest entries (the dropped tail holds negligible walk mass),
+bounding the store at roughly `k × n` regardless of how far the walks spread.
+This makes the run an approximation: the Ward merge criterion is driven by
+distances between walk vectors, and truncating them can shift the merge order
+slightly, so you may get marginally different communities than the exact run.
+With `max_support = NULL` (the default) the walks are kept exact. Beyond saving
+memory, a smaller `k` also speeds up every distance and merge operation, since
+both are linear in the support.
+
+```{r}
+#| label: supercells - large data
+supercells_large <- generate_supercells_sc(
+  object = sc_object,
+  sc_supercell_params = params_sc_supercell(
+    graining_factor = 30,
+    max_support = 256L
+  ),
+  .verbose = TRUE
+)
+```
+
+
 
 ## Metrics
 
