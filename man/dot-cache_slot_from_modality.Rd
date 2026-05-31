@@ -7,10 +7,11 @@
 .cache_slot_from_modality(modality)
 }
 \arguments{
-\item{modality}{String. One of \code{c("rna", "adt")}.}
+\item{modality}{String. One of \code{c("rna", "adt", "atac")}. Assumed already
+validated by the caller via \code{match.arg}.}
 }
 \value{
-The name of the cache.
+The name of the cache property.
 }
 \description{
 Helper to get the cache slot

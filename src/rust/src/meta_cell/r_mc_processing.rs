@@ -3,6 +3,7 @@
 //! with meta cells.
 
 use bixverse_rs::prelude::*;
+use bixverse_rs::single_cell::mc_analysis::metrics::pairwise_gene_correlations_in_memory;
 use bixverse_rs::single_cell::mc_processing::hvg_pca::*;
 use bixverse_rs::single_cell::sc_processing::hvg::*;
 use bixverse_rs::utils::r_rust_interface::list_to_sparse_matrix;
@@ -19,6 +20,8 @@ extendr_module! {
     // hvg and pca
     fn rs_mc_hvg;
     fn rs_mc_pca;
+    // correlations
+    fn rs_pairwise_gene_cors_mc;
 }
 
 ///////////////////////////
@@ -148,4 +151,50 @@ fn rs_mc_pca(sparse_data: List, no_pcs: usize, random_svd: bool, seed: usize) ->
         loadings = faer_to_r_matrix(res.1.as_ref()),
         singular_values = res.2.r_float_convert()
     ))
+}
+
+///////////////////
+// Pairwise cors //
+///////////////////
+
+/// Calculate the pairwise gene-correlation for meta cells
+///
+/// @param sparse_data A named list that needs to have `data`, `indptr`,
+/// `indices`, `nrow`, `ncol` and `format`.
+/// @param gene_indices_1 Integer. The gene indices for the first set of genes.
+/// Must be 0-indexed!
+/// @param gene_indices_2 Integer. The gene indices for the first set of genes.
+/// Must be 0-indexed!
+/// @param spearman Boolean. Shall the spearman correlation be calculated.
+///
+/// @returns The vector of correlations between the pairs of gene_indices_1
+/// and gene_indices_2
+///
+/// @export
+#[extendr]
+fn rs_pairwise_gene_cors_mc(
+    sparse_data: List,
+    gene_indices_1: &[i32],
+    gene_indices_2: &[i32],
+    spearman: bool,
+) -> Result<Vec<f64>> {
+    let gene_indices_1 = gene_indices_1.r_int_convert();
+    let gene_indices_2 = gene_indices_2.r_int_convert();
+
+    let sparse: CompressedSparseData2<f64, f64> =
+        list_to_sparse_matrix(sparse_data, true).to_extendr()?;
+    let sparse = cast_compressed_sparse_data_f32(sparse);
+
+    // transpose
+    let sparse = if sparse.cs_type.is_csr() {
+        sparse.transform()
+    } else {
+        sparse
+    };
+
+    let pairwise_cors =
+        pairwise_gene_correlations_in_memory(&sparse, &gene_indices_1, &gene_indices_2, spearman)
+            .to_extendr()?;
+
+    Ok(pairwise_cors.r_float_convert())
 }

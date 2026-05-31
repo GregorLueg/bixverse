@@ -673,8 +673,6 @@ reference:
       - rs_split_cor_signs
       - rs_ssgsea
       - rs_supercell
-      - rs_synthetic_sc_data_csc
-      - rs_synthetic_sc_data_csr
       - rs_synthetic_sc_data_with_cell_types
       - rs_tied_diffusion_parallel
       - rs_tom

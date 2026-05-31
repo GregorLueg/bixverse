@@ -1,7 +1,10 @@
 use bixverse_rs::prelude::*;
-use bixverse_rs::single_cell::multi_modal::dsb::*;
+use bixverse_rs::single_cell::multi_modal::adt::h5_10x_adt_io::TenxDenseModality;
+use bixverse_rs::single_cell::multi_modal::adt::{dsb::*, h5_10x_adt_io::read_tenx_h5_modality};
+use bixverse_rs::single_cell::sc_data::h5_10x_io::parse_tenx_version;
 use extendr_api::Nullable::Null;
 use extendr_api::*;
+
 use rayon::prelude::*;
 
 ////////////////////
@@ -10,9 +13,51 @@ use rayon::prelude::*;
 
 extendr_module! {
     mod r_sc_adt;
+    // i/o
+    fn rs_read_tenx_h5_modality;
     // processing
     fn rs_adt_clr;
     fn rs_dsb;
+}
+
+/////////
+// I/O //
+/////////
+
+/// Loads in a modality from a 10x h5 file
+///
+/// @param f_path String. The path to the h5 file
+/// @param version String. The 10x version. If `"auto"` uses the automatic
+/// detection.
+/// @param feature_type String. The feature type to return.
+///
+/// @returns A list with:
+/// \itemize{
+///   \item counts - Numerical matrix of cells x features
+///   \item barcodes - The barcodes as a string
+///   \item features - The features as a string
+/// }
+///
+/// @export
+#[extendr]
+fn rs_read_tenx_h5_modality(f_path: String, version: String, feature_type: String) -> Result<List> {
+    let tenx_version = match version.to_lowercase().as_str() {
+        "auto" => None,
+        other => parse_tenx_version(other),
+    };
+
+    let modality_res: TenxDenseModality =
+        read_tenx_h5_modality(f_path, tenx_version, &feature_type).to_extendr()?;
+
+    let counts = RMatrix::new_matrix(modality_res.n_cells, modality_res.n_features, |i, j| {
+        modality_res.counts[j * modality_res.n_cells + i]
+    });
+
+    Ok(list!(
+        counts = counts,
+        barcodes = modality_res.barcodes,
+        features = modality_res.features
+    ))
 }
 
 ////////////////

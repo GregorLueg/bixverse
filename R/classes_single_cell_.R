@@ -362,7 +362,7 @@ get_cell_info.ScMap <- function(x, filtered = TRUE) {
   if (filtered) {
     cells_to_keep <- get_cells_to_keep(x)
     if (length(cells_to_keep) > 0) {
-      cell_names <- cell_names[cells_to_keep + 1]
+      cell_mapping <- cell_mapping[cells_to_keep + 1]
     }
   }
 
@@ -1145,7 +1145,7 @@ finalise_matrix <- function(
     if (is.null(gene_indices)) {
       colnames(matrix) <- gene_names
     } else {
-      matrix <- matrix[, gene_indices]
+      matrix <- matrix[, gene_indices, drop = FALSE]
       colnames(matrix) <- gene_names[gene_indices]
     }
   } else {
@@ -1159,7 +1159,7 @@ finalise_matrix <- function(
     if (is.null(cell_indices)) {
       rownames(matrix) <- cell_names
     } else {
-      matrix <- matrix[cell_indices, ]
+      matrix <- matrix[cell_indices, , drop = FALSE]
       rownames(matrix) <- cell_names[cell_indices]
     }
   }
@@ -2186,6 +2186,8 @@ S7::method(dim, SingleCells) <- function(x) {
 }
 
 
+#' @name head.SingleCells
+#'
 #' @title head Method for SingleCells object
 #'
 #' @description

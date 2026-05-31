@@ -7,8 +7,8 @@ use thousands::Separable;
 
 use bixverse_rs::prelude::*;
 use bixverse_rs::single_cell::sc_data::{
-    bin_merge_io::*, data_io::*, h5ad_io::*, h5ad_multifile_io::*, mtx_io::*, mtx_multifile_io::*,
-    r_obj_io::*,
+    bin_merge_io::*, data_io::*, h5_10x_io::*, h5ad_io::*, h5ad_multifile_io::*, mtx_io::*,
+    mtx_multifile_io::*, r_obj_io::*,
 };
 
 /////////////
@@ -758,6 +758,85 @@ impl SingleCellCountData {
         ))
     }
 
+    /////////////////////////
+    // From h5 10x outputs //
+    /////////////////////////
+
+    /// Write a 10x CellRanger h5 file to the cells binary file using streaming
+    ///
+    /// @description
+    /// Ingests the gene-expression modality from a CellRanger v2/v3 h5 file.
+    /// Other modalities (e.g. Antibody Capture) are filtered out via
+    /// `feature_type`.
+    ///
+    /// @param h5_path (`character`)\cr
+    /// Path to the 10x h5 file.
+    /// @param version (`character`)\cr
+    /// One of `"auto"`, `"v2"` or `"v3"`. `"auto"` detects the layout from the
+    /// file.
+    /// @param no_cells (`integer`)\cr
+    /// Number of cells (columns) in the file.
+    /// @param no_genes (`integer`)\cr
+    /// Number of features (rows), including all modalities.
+    /// @param qc_params (`list`)\cr
+    /// Quality control parameters parseable into `MinCellQuality`.
+    /// @param feature_type (`character` or `NULL`)\cr
+    /// Target modality for v3. Defaults to `"Gene Expression"` when `NULL`.
+    /// @param verbose (`logical`)\cr
+    /// Controls verbosity of the function.
+    ///
+    /// @return A list with `cell_indices`, `gene_indices`, `lib_size` and
+    /// `nnz`.
+    #[allow(clippy::too_many_arguments)]
+    pub fn tenx_h5_to_file_streaming(
+        &mut self,
+        h5_path: String,
+        version: String,
+        no_cells: usize,
+        no_genes: usize,
+        qc_params: List,
+        feature_type: Option<String>,
+        verbose: bool,
+    ) -> extendr_api::Result<List> {
+        let qc_params = MinCellQuality::from_r_list(qc_params)?;
+
+        let version = match version.to_lowercase().as_str() {
+            "auto" => None,
+            other => match parse_tenx_version(other) {
+                Some(v) => Some(v),
+                None => {
+                    println!(
+                            "The provided version ({:?}) could not be matched. Falling back to auto-detection.",
+                            version
+                        );
+                    None
+                }
+            },
+        };
+
+        let (no_cells, no_genes, cell_qc) = stream_h5_tenx_counts(
+            &h5_path,
+            &self.f_path_cells,
+            version,
+            no_cells,
+            no_genes,
+            qc_params,
+            feature_type.as_deref(),
+            verbose,
+        )
+        .to_extendr()?;
+
+        self.n_cells = no_cells;
+        self.n_genes = no_genes;
+
+        Ok(list!(
+            cell_indices = cell_qc.cell_indices,
+            gene_indices = cell_qc.gene_indices,
+            lib_size = cell_qc.lib_size,
+            nnz = cell_qc.nnz
+        ))
+    }
+
     //////////////////////////////
     // Return cell-based counts //
     //////////////////////////////
@@ -931,16 +1010,16 @@ impl SingleCellCountData {
         let mut data: Vec<Vec<u32>> = Vec::new();
         let mut data_2: Vec<Vec<F16>> = Vec::new();
         let mut col_idx: Vec<Vec<u32>> = Vec::new();
-        let mut row_ptr: Vec<usize> = Vec::new();
+        let mut row_ptr: Vec<u32> = Vec::new();
 
-        let mut current_row_ptr = 0_usize;
+        let mut current_row_ptr = 0_u32;
         row_ptr.push(current_row_ptr);
 
         for cell in all_cells {
             let data_i: Vec<u32> = cell.data_raw.iter().collect();
             let data_norm_i = cell.data_norm;
 
-            let len_data_i = data_i.len();
+            let len_data_i = data_i.len() as u32;
             current_row_ptr += len_data_i;
             data.push(data_i);
             data_2.push(data_norm_i);
@@ -951,7 +1030,6 @@ impl SingleCellCountData {
         let data = flatten_vector(data);
         let data_2 = flatten_vector(data_2);
         let col_idx = flatten_vector(col_idx);
-        let col_idx = col_idx.iter().map(|x| *x as usize).collect::<Vec<usize>>();
 
         let sparse_data = CompressedSparseData2::new_csr(
             &data,
@@ -968,14 +1046,14 @@ impl SingleCellCountData {
             .to_extendr()?;
 
         for i in 0..no_genes {
-            let start_i = sparse_data.indptr[i];
-            let end_i = sparse_data.indptr[i + 1];
+            let start_i = sparse_data.indptr[i] as usize;
+            let end_i = sparse_data.indptr[i + 1] as usize;
 
             let raw_slice = &sparse_data.data[start_i..end_i];
             let chunk_i = CscGeneChunk::from_conversion(
                 RawCounts::from_u32_auto(raw_slice),
                 &data_2[start_i..end_i],
-                &sparse_data.indices[start_i..end_i],
+                &sparse_data.indices[start_i..end_i].index_cast(),
                 i,
                 true,
             );
