@@ -36,7 +36,7 @@ rustc-hash = "2.1.1"
 thousands = "*"
 bixverse-rs = {
     git = "https://github.com/GregorLueg/bixverse-rs.git",
-    branch = "meta-cell-data",
+    branch = "feat-h5",
     features = ["single-cell", "multi-modal"]
 }
 either = "1.15.0"

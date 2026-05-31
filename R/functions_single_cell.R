@@ -497,6 +497,29 @@ prepare_cell_markers <- function(obj, marker_df) {
 
 ## plotting extraction ---------------------------------------------------------
 
+### helpers --------------------------------------------------------------------
+
+#' Parse an optional modality suffix from a feature id
+#'
+#' @param feature String. Feature id, optionally suffixed with `_rna` or
+#' `_adt`.
+#' @param default_modality String. Modality used when no suffix is present.
+#'
+#' @return A list with `id` and `modality`.
+#'
+#' @keywords internal
+.parse_feature_modality <- function(feature, default_modality) {
+  if (grepl("_rna$", feature)) {
+    list(id = sub("_rna$", "", feature), modality = "rna")
+  } else if (grepl("_adt$", feature)) {
+    list(id = sub("_adt$", "", feature), modality = "adt")
+  } else {
+    list(id = feature, modality = default_modality)
+  }
+}
+
+### extractors -----------------------------------------------------------------
+
 #' Extract embedding coordinates for plotting
 #'
 #' @description
@@ -542,15 +565,27 @@ extract_embedding_data <- function(object, embedding, obs_cols = NULL, ...) {
 #'
 #' @description
 #' Combines [extract_gene_expression()] with [extract_embedding_data()] and
-#' melts to long format, ready for faceted feature plots.
+#' melts to long format, ready for faceted feature plots. The expression
+#' source and the embedding source are chosen independently via
+#' `expr_modality` and `embd_modality`, so you can colour an embedding from
+#' one modality by expression from another (e.g. RNA expression on an
+#' ADT-derived UMAP, or either modality on a WNN embedding). All sources key
+#' on the same kept-cell barcodes, so the merge stays aligned regardless of
+#' the chosen combination.
 #'
 #' @param object A single cell class.
-#' @param features Character vector. Gene IDs to extract.
+#' @param features Character vector. Gene/feature IDs to extract, taken from
+#' `expr_modality`.
 #' @param embedding String. Name of the embedding.
 #' @param scale Boolean. Whether to z-score the expression values.
 #' @param clip Optional numeric. Clip z-scores if `scale = TRUE`.
-#' @param modality String. One of `c("rna", "adt")`.
-#' @param ... Additional arguments forwarded to [get_embedding()].
+#' @param expr_modality String. Modality the expression is pulled from. One of
+#' `c("rna", "adt")`.
+#' @param embd_modality String. Modality the embedding is pulled from. One of
+#' `c("rna", "adt", "wnn")`. Use `"wnn"` for WNN-derived embeddings.
+#' @param ... Additional arguments forwarded to [extract_embedding_data()] and
+#' onward to [get_embedding()]. Do not pass `modality` here; the embedding
+#' modality is set via `embd_modality` and passing it again will error.
 #'
 #' @return A long data.table with `cell_id`, `dim_*`, `gene` and `expression`.
 #'
@@ -561,19 +596,26 @@ extract_feature_plot_data <- function(
   embedding,
   scale = FALSE,
   clip = NULL,
-  modality = c("rna", "adt"),
+  expr_modality = c("rna", "adt"),
+  embd_modality = c("rna", "adt", "wnn"),
   ...
 ) {
-  modality <- match.arg(modality)
+  expr_modality <- match.arg(expr_modality)
+  embd_modality <- match.arg(embd_modality)
 
   expr <- extract_gene_expression(
     object = object,
     features = features,
     scale = scale,
     clip = clip,
-    modality = modality
+    modality = expr_modality
   )
-  embd <- extract_embedding_data(object, embedding = embedding, ...)
+  embd <- extract_embedding_data(
+    object,
+    embedding = embedding,
+    modality = embd_modality,
+    ...
+  )
 
   dt <- merge(expr, embd, by = "cell_id")
   dim_cols <- grep("^dim_", names(dt), value = TRUE)
@@ -644,4 +686,76 @@ extract_gene_violin_data <- function(
   long[, gene := factor(gene, levels = feature_cols)]
 
   long
+}
+
+#' Extract a pair of features for scatter / hex plots
+#'
+#' @description
+#' Extracts two features into a wide data.table with `feature_1` and
+#' `feature_2` value columns, ready for a scatter or hex plot. Each feature may
+#' carry a `_rna` or `_adt` suffix to choose its modality independently (e.g.
+#' `"ENSG00000167286_rna"` against `"CD3_adt"`); features without a suffix fall
+#' back to `modality`. For `SingleCells` / `MetaCells` only RNA exists, so an
+#' `_adt` feature there errors via [extract_gene_expression()].
+#'
+#' @param object A single cell class.
+#' @param feature_1 String. First feature, optionally `_rna` / `_adt` suffixed.
+#' @param feature_2 String. Second feature, optionally `_rna` / `_adt` suffixed.
+#' @param obs_cols Optional character vector. Obs columns to attach (e.g. to
+#' colour the scatter).
+#' @param scale Boolean. Whether to z-score the expression values per feature.
+#' @param clip Optional numeric. Clip z-scores if `scale = TRUE`.
+#' @param modality String. Fallback modality for unsuffixed features. One of
+#' `c("rna", "adt")`.
+#'
+#' @return A data.table with `cell_id`, `feature_1`, `feature_2` and any
+#' requested obs columns. The original feature labels are stored in a
+#' `features` attribute as `c(feature_1, feature_2)`.
+#'
+#' @export
+extract_feature_pair <- function(
+  object,
+  feature_1,
+  feature_2,
+  obs_cols = NULL,
+  scale = FALSE,
+  clip = NULL,
+  modality = c("rna", "adt")
+) {
+  modality <- match.arg(modality)
+  checkmate::qassert(feature_1, "S1")
+  checkmate::qassert(feature_2, "S1")
+  checkmate::qassert(obs_cols, c("0", "S+"))
+
+  f1 <- .parse_feature_modality(feature_1, modality)
+  f2 <- .parse_feature_modality(feature_2, modality)
+
+  # obs ride along on the first extract (kept-order there), then key on cell_id
+  expr_1 <- extract_gene_expression(
+    object = object,
+    features = f1$id,
+    obs_cols = obs_cols,
+    scale = scale,
+    clip = clip,
+    modality = f1$modality
+  )
+  expr_2 <- extract_gene_expression(
+    object = object,
+    features = f2$id,
+    scale = scale,
+    clip = clip,
+    modality = f2$modality
+  )
+
+  data.table::setnames(expr_1, f1$id, "feature_1")
+  v2 <- data.table::data.table(
+    cell_id = expr_2$cell_id,
+    feature_2 = expr_2[[f2$id]]
+  )
+
+  dt <- merge(expr_1, v2, by = "cell_id")
+  data.table::setcolorder(dt, c("cell_id", "feature_1", "feature_2"))
+  data.table::setattr(dt, "features", c(feature_1, feature_2))
+
+  dt
 }

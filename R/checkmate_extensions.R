@@ -1375,6 +1375,8 @@ checkKMeansParams <- function(x) {
 
 #### synthetic data ------------------------------------------------------------
 
+##### rna ----------------------------------------------------------------------
+
 #' Check synthetic data parameters
 #'
 #' @description Checkmate extension for checking the synthetic data
@@ -1484,6 +1486,107 @@ checkScSyntheticData <- function(x) {
 #'
 #' @keywords internal
 assertScSyntheticData <- checkmate::makeAssertionFunction(checkScSyntheticData)
+
+##### adt ----------------------------------------------------------------------
+
+#' Check synthetic ADT data parameters
+#'
+#' @description Checkmate extension for checking the synthetic ADT data
+#' parameters.
+#'
+#' @param x The list to check/assert
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
+checkScSyntheticDataAdt <- function(x) {
+  res <- checkmate::checkList(x)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- checkmate::checkNames(
+    names(x),
+    must.include = c(
+      "n_cells",
+      "n_proteins",
+      "marker_genes",
+      "n_batches",
+      "isotype_controls",
+      "batch_effect_strength"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  rules <- list(
+    "n_cells" = "I1",
+    "n_proteins" = "I1",
+    "n_batches" = "I1",
+    "isotype_controls" = "I+"
+  )
+
+  res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(rules)) {
+      checkmate::qtest(x, rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(
+      sprintf(
+        paste(
+          "The following element `%s` in synthetic ADT data is incorrect:",
+          "n_cells, n_proteins and n_batches need to be integers.",
+          "isotype_controls a non-empty integer vector."
+        ),
+        broken_elem
+      )
+    )
+  }
+
+  res <- checkmate::checkList(
+    x$marker_genes,
+    types = "list",
+    names = "named"
+  )
+  if (!isTRUE(res)) {
+    return("marker_genes must be a named list of lists.")
+  }
+
+  res <- checkmate::checkChoice(
+    x[["batch_effect_strength"]],
+    c("strong", "medium", "weak")
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  return(TRUE)
+}
+
+#' Assert synthetic ADT data parameters
+#'
+#' @description Checkmate extension for asserting the synthetic ADT data
+#' parameters.
+#'
+#' @inheritParams checkScSyntheticDataAdt
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertionFunction()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
+assertScSyntheticDataAdt <- checkmate::makeAssertionFunction(
+  checkScSyntheticDataAdt
+)
 
 #### io ------------------------------------------------------------------------
 

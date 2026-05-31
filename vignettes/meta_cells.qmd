@@ -678,6 +678,7 @@ scenic_res <- scenic_grn_sc(
 scenic_res <- identify_tf_to_genes(
   scenic_res,
   n_sd = 2,
+  min_importance = 0.01,
   .verbose = TRUE
 )
 
@@ -706,24 +707,22 @@ auc_res <- aucell_sc(
   gs_list = tf_to_gene_ls
 )
 
-umap_dt[, `:=`(IRF7 = auc_res[, "IRF7"], IRF9 = auc_res[, "IRF9"])]
+umap_dt[, `:=`(IRF1 = auc_res[, "IRF1"], TCF4 = auc_res[, "TCF4"])]
 
 p1 <- ggplot(umap_dt, aes(x = umap_1, y = umap_2)) +
-  geom_point(aes(colour = IRF7), size = 1.5) +
+  geom_point(aes(fill = IRF1), size = 2.5, shape = 21) +
   theme_bw() +
-  labs(colour = "IRF7 AUC")
+  labs(fill = "IRF1 AUC") +
+  scale_fill_viridis_c()
 
 p2 <- ggplot(umap_dt, aes(x = umap_1, y = umap_2)) +
-  geom_point(aes(colour = IRF9), size = 1.5) +
+  geom_point(aes(fill = TCF4), size = 2.5, shape = 21) +
   theme_bw() +
-  labs(colour = "IRF9 AUC")
+  labs(fill = "TCF AUC") +
+  scale_fill_viridis_c()
 
 p1 + p2
 ```
-
-As we can appreciate, IRF7 and 9 seem more active in a subset of the meta cells.
-Other methods that could benefit from the meta cell approach are the 
-correlation-based methods and/or NMF. Both on the roadmap... !
 
 ## Pseudo-bulking
 

@@ -606,110 +606,6 @@ rs_upper_triangle_to_sparse <- function(value, shift, n, cs_type) .Call(wrap__rs
 #' @export
 rs_count_zeroes <- function(x) .Call(wrap__rs_count_zeroes, x)
 
-#' Generate synthetic single cell data (Seurat type)
-#'
-#' @description This function generates pseudo data to test single cell
-#' functions in form of the Seurat version, with cells = columns and genes =
-#' rows. The data is CSC type.
-#'
-#' @param n_genes Integer. Number of genes you wish to have in the synthetic
-#' data.
-#' @param n_cells Integer. Number of cells you wish to have in the synthetic
-#' data.
-#' @param min_genes Integer. Minimum number of genes expressed per cell.
-#' @param max_genes Integer. Maximum number of genes expressed per cell.
-#' @param max_exp Upper bound in terms of expression. Expression values will be
-#' sampled from `1:max_exp`.
-#' @param seed Integer. Seed for reproducibility purposes.
-#'
-#' @return The list with the synthetic data with the following items:
-#'  \itemize{
-#'   \item data - The synthetic counts
-#'   \item col_ptrs - The column pointers
-#'   \item row_indices - The row indices
-#'   \item nrow - Number of rows (cells)
-#'   \item ncol - Number of cols (genes)
-#' }
-rs_synthetic_sc_data_csc <- function(n_genes, n_cells, min_genes, max_genes, max_exp, seed) .Call(wrap__rs_synthetic_sc_data_csc, n_genes, n_cells, min_genes, max_genes, max_exp, seed)
-
-#' Generate synthetic single cell data (h5ad type)
-#'
-#' @description This function generates pseudo data to test single cell
-#' functions in form of the h5ad version, with cells = rows and genes =
-#' columns. The data is encoded in CSR.
-#'
-#' @param n_genes Integer. Number of genes you wish to have in the synthetic
-#' data.
-#' @param n_cells Integer. Number of cells you wish to have in the synthetic
-#' data.
-#' @param min_genes Integer. Minimum number of genes expressed per cell.
-#' @param max_genes Integer. Maximum number of genes expressed per cell.
-#' @param max_exp Upper bound in terms of expression. Expression values will be
-#' sampled from `1:max_exp`.
-#' @param seed Integer. Seed for reproducibility purposes.
-#'
-#' @return The list with the synthetic data with the following items:
-#'  \itemize{
-#'   \item data - The synthetic counts
-#'   \item row_ptrs - The row pointers
-#'   \item col_indices - The column indices
-#'   \item nrow - Number of rows (cells)
-#'   \item ncol - Number of cols (genes)
-#' }
-#'
-#' @export
-rs_synthetic_sc_data_csr <- function(n_genes, n_cells, min_genes, max_genes, max_exp, seed) .Call(wrap__rs_synthetic_sc_data_csr, n_genes, n_cells, min_genes, max_genes, max_exp, seed)
-
-#' Generates synthetic data for single cell
-#'
-#' @description
-#' Helper function to generate synthetic single cell data with optional
-#'
-#' @param n_cells Integer. Number of cells to generate.
-#' @param n_genes Integer. Number of genes to generate.
-#' @param n_batches Integer. Number of the batches to generated.
-#' @param n_samples Optional integer. Shall the cells be distributed over
-#' `n_samples` samples.
-#' @param cell_configs A nested list that indicates which gene indices
-#' are markers for which cell.
-#' @param batch_effect_strength String. One of `c("strong", "medium", "low")`.
-#' Defines the strength of the added batch effect.
-#' @param sample_bias Optional string. One of
-#' `c("even", "slightly_uneven", "very_uneven")`
-#' @param seed Integer. Random seed for reproducibility.
-#'
-#' @return A list with the following items.
-#' \itemize{
-#'   \item data - The synthetic raw counts.
-#'   \item indptr - The index pointers of the cells.
-#'   \item indices - The indices of the genes for the given cells.
-#'   \item nrow - Number of rows.
-#'   \item ncol - Number of columns
-#'   \item cell_type_indices - Vector indicating which cell type this is.
-#'   \item batch_indices - Vector indicating the batch.
-#'   \item sample_indices - Optional sample indices if asked for.
-#' }
-#'
-#' @export
-rs_synthetic_sc_data_with_cell_types <- function(n_cells, n_genes, n_batches, n_samples, cell_configs, batch_effect_strength, sample_bias, seed) .Call(wrap__rs_synthetic_sc_data_with_cell_types, n_cells, n_genes, n_batches, n_samples, cell_configs, batch_effect_strength, sample_bias, seed)
-
-#' Helper function to generate sample identifiers based on cells
-#'
-#' @description
-#' Extract out of `rs_synthetic_sc_data_with_cell_types()` to quickly iterate
-#' over different sample to cell type patterns
-#'
-#' @param cell_type_indices Integer vector. Each integer represents a cell
-#' type.
-#' @param n_samples Integer. Number of different sample ids to generate.
-#' @param sample_bias String. One of
-#' `c("even", "slightly_uneven", "very_uneven")`. Determins the cell type
-#' to sample id associations.
-#' @param seed Integer. Random seed for reproducibility.
-#'
-#' @returns An integer vector representing the samples.
-rs_sample_ids_for_cell_types <- function(cell_type_indices, n_samples, sample_bias, seed) .Call(wrap__rs_sample_ids_for_cell_types, cell_type_indices, n_samples, sample_bias, seed)
-
 #' Generation of bulkRNAseq-like data with optional correlation structure
 #'
 #' @description
@@ -786,6 +682,99 @@ rs_generate_bulk_rnaseq <- function(num_samples, num_genes, seed, add_modules, m
 #'
 #' @export
 rs_simulate_dropouts <- function(count_mat, dropout_function, dropout_midpoint, dropout_shape, power_factor, global_sparsity, seed) .Call(wrap__rs_simulate_dropouts, count_mat, dropout_function, dropout_midpoint, dropout_shape, power_factor, global_sparsity, seed)
+
+#' Generates synthetic data for single cell
+#'
+#' @description
+#' Helper function to generate synthetic single cell data with optional
+#' bathc effects and sample bias.
+#'
+#' @param n_cells Integer. Number of cells to generate.
+#' @param n_genes Integer. Number of genes to generate.
+#' @param n_batches Integer. Number of the batches to generated.
+#' @param n_samples Optional integer. Shall the cells be distributed over
+#' `n_samples` samples.
+#' @param cell_configs A nested list that indicates which gene indices
+#' are markers for which cell.
+#' @param batch_effect_strength String. One of `c("strong", "medium", "low")`.
+#' Defines the strength of the added batch effect.
+#' @param sample_bias Optional string. One of
+#' `c("even", "slightly_uneven", "very_uneven")`
+#' @param seed Integer. Random seed for reproducibility.
+#'
+#' @return A list with the following items.
+#' \itemize{
+#'   \item data - The synthetic raw counts.
+#'   \item indptr - The index pointers of the cells.
+#'   \item indices - The indices of the genes for the given cells.
+#'   \item nrow - Number of rows.
+#'   \item ncol - Number of columns
+#'   \item cell_type_indices - Vector indicating which cell type this is.
+#'   \item batch_indices - Vector indicating the batch.
+#'   \item sample_indices - Optional sample indices if asked for.
+#' }
+#'
+#' @export
+rs_synthetic_sc_data_with_cell_types <- function(n_cells, n_genes, n_batches, n_samples, cell_configs, batch_effect_strength, sample_bias, seed) .Call(wrap__rs_synthetic_sc_data_with_cell_types, n_cells, n_genes, n_batches, n_samples, cell_configs, batch_effect_strength, sample_bias, seed)
+
+#' Helper function to generate sample identifiers based on cells
+#'
+#' @description
+#' Extract out of `rs_synthetic_sc_data_with_cell_types()` to quickly iterate
+#' over different sample to cell type patterns
+#'
+#' @param cell_type_indices Integer vector. Each integer represents a cell
+#' type.
+#' @param n_samples Integer. Number of different sample ids to generate.
+#' @param sample_bias String. One of
+#' `c("even", "slightly_uneven", "very_uneven")`. Determins the cell type
+#' to sample id associations.
+#' @param seed Integer. Random seed for reproducibility.
+#'
+#' @returns An integer vector representing the samples.
+rs_sample_ids_for_cell_types <- function(cell_type_indices, n_samples, sample_bias, seed) .Call(wrap__rs_sample_ids_for_cell_types, cell_type_indices, n_samples, sample_bias, seed)
+
+#' Generates synthetic ADT counts with defined cell types
+#'
+#' @description
+#' Generates a dense cells x proteins matrix of synthetic raw ADT counts for
+#' testing. Proteins are assigned roles by column index: marker proteins are
+#' elevated in their owning cell type and sit at background elsewhere, isotype
+#' controls only ever carry background, and any column named as neither is a
+#' generic background-only protein. Counts follow a negative-binomial draw with
+#' an additive background plus per-cell-type signal, a per-cell capture
+#' efficiency factor, and an optional per-batch staining multiplier. Cell type
+#' and batch assignment match `rs_synthetic_sc_with_cell_types()` cell-for-cell
+#' for matched inputs, so RNA and ADT can be paired for multi-modal tests.
+#'
+#' @param n_cells Integer. Number of cells (matrix rows).
+#' @param n_proteins Integer. Total number of proteins (matrix columns). Must
+#' be large enough to cover every marker and isotype index supplied.
+#' @param n_batches Integer. Number of batches. Batch 0 is unperturbed; further
+#' batches receive a per-protein staining multiplier.
+#' @param isotype_controls Integer vector. The 0-based column indices that are
+#' isotype controls. These are forced to background only, even if they also
+#' appear in a cell type's markers.
+#' @param cell_configs List. One element per cell type, each a list with a
+#' `marker_genes` integer vector of 0-based marker column indices for that
+#' cell type.
+#' @param batch_effect_strength String. One of `c("weak", "medium", "strong")`.
+#' Controls the spread of the per-batch staining multiplier. Unrecognised
+#' values fall back to `"strong"`.
+#' @param seed Integer. For reproducibility.
+#'
+#' @return A list with the following items.
+#' \itemize{
+#'   \item data - Integer vector. The counts in row-major order, length
+#'   `n_cells * n_proteins` (cell-major: all proteins of cell 0, then cell 1).
+#'   \item cell_type_indices - Integer vector of length `n_cells`. The 0-based
+#'   cell type assigned to each cell.
+#'   \item batch_indices - Integer vector of length `n_cells`. The 0-based
+#'   batch assigned to each cell.
+#' }
+#'
+#' @export
+rs_synthetic_sc_adt_with_cell_types <- function(n_cells, n_proteins, n_batches, isotype_controls, cell_configs, batch_effect_strength, seed) .Call(wrap__rs_synthetic_sc_adt_with_cell_types, n_cells, n_proteins, n_batches, isotype_controls, cell_configs, batch_effect_strength, seed)
 
 #' Load in h5ad data via Rust
 #'
@@ -3478,6 +3467,23 @@ rs_mc_scenic <- function(sparse_data, tf_indices, scenic_params, seed, verbose) 
 #' @export
 rs_mc_aucell <- function(sparse_data, gs_list, auc_type, verbose) .Call(wrap__rs_mc_aucell, sparse_data, gs_list, auc_type, verbose)
 
+#' Loads in a modality from a 10x h5 file
+#'
+#' @param f_path String. The path to the h5 file
+#' @param version String. The 10x version. If `"auto"` uses the automatic
+#' detection.
+#' @param feature_type String. The feature type to return.
+#'
+#' @returns A list with:
+#' \itemize{
+#'   \item counts - Numerical matrix of cells x features
+#'   \item barcodes - The barcodes as a string
+#'   \item features - The features as a string
+#' }
+#'
+#' @export
+rs_read_tenx_h5_modality <- function(f_path, version, feature_type) .Call(wrap__rs_read_tenx_h5_modality, f_path, version, feature_type)
+
 #' Applies CLR normalisation on ADT counts (Seurat-style, per cell)
 #'
 #' @param counts R matrix of shape cells x features.
@@ -3783,6 +3789,31 @@ rs_wnn <- function(modality_emb_one, modality_emb_two, wnn_params, seed, verbose
 #'}
 #'}
 #'
+#'\subsection{Method `tenx_h5_to_file_streaming`}{
+#'Write a 10x CellRanger h5 file to the cells binary file using streaming
+#'
+#' \subsection{Arguments}{
+#'\describe{
+#'\item{`h5_path`}{(`character`)\cr Path to the 10x h5 file.}
+#'\item{`version`}{(`character`)\cr One of `"auto"`, `"v2"` or `"v3"`. `"auto"` detects the layout from the file.}
+#'\item{`no_cells`}{(`integer`)\cr Number of cells (columns) in the file.}
+#'\item{`no_genes`}{(`integer`)\cr Number of features (rows), including all modalities.}
+#'\item{`qc_params`}{(`list`)\cr Quality control parameters parseable into `MinCellQuality`.}
+#'\item{`feature_type`}{(`character` or `NULL`)\cr Target modality for v3. Defaults to `"Gene Expression"` when `NULL`.}
+#'\item{`verbose`}{(`logical`)\cr Controls verbosity of the function. }
+#'}}
+#' \subsection{description}{
+#'Ingests the gene-expression modality from a CellRanger v2/v3 h5 file.
+#'Other modalities (e.g. Antibody Capture) are filtered out via
+#'`feature_type`.
+#'
+#'}
+#' \subsection{return}{
+#'A list with `cell_indices`, `gene_indices`, `lib_size` and
+#'`nnz`.
+#'}
+#'}
+#'
 #'\subsection{Method `return_full_mat`}{
 #'Return the full count matrix
 #'
@@ -3949,6 +3980,8 @@ SingleCellCountData$mtx_to_file <- function(mtx_path, qc_params, cells_as_rows, 
 SingleCellCountData$mtx_to_file_streaming <- function(mtx_path, qc_params, cells_as_rows, verbose) .Call(wrap__SingleCellCountData__mtx_to_file_streaming, self, mtx_path, qc_params, cells_as_rows, verbose)
 
 SingleCellCountData$multi_mtx_to_file <- function(file_tasks, universe_size, qc_params, verbose) .Call(wrap__SingleCellCountData__multi_mtx_to_file, self, file_tasks, universe_size, qc_params, verbose)
+
+SingleCellCountData$tenx_h5_to_file_streaming <- function(h5_path, version, no_cells, no_genes, qc_params, feature_type, verbose) .Call(wrap__SingleCellCountData__tenx_h5_to_file_streaming, self, h5_path, version, no_cells, no_genes, qc_params, feature_type, verbose)
 
 SingleCellCountData$return_full_mat <- function(assay, cell_based, verbose) .Call(wrap__SingleCellCountData__return_full_mat, self, assay, cell_based, verbose)
 

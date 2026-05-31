@@ -983,7 +983,8 @@ params_sc_supercell <- function(
       walk_length = walk_length,
       graining_factor = graining_factor,
       use_kernel = use_kernel,
-      k_ith = k_ith
+      k_ith = k_ith,
+      max_support = max_support
     ),
     knn_params
   )

@@ -12,6 +12,8 @@
 #'
 #' @param object `SingleCellsMultiModal` class with ADT counts added.
 #' @param no_pcs Integer. Number of PCs to calculate.
+#' @param features Optional string vector. If you want to subset to a specific
+#' set of ADT probes (for example to exclude isotypes).
 #' @param randomised_svd Boolean. Shall randomised SVD be used. Faster, but
 #' less precise.
 #' @param seed Integer. Controls reproducibility. Only relevant if
@@ -27,6 +29,7 @@ calculate_pca_adt_sc <- S7::new_generic(
   fun = function(
     object,
     no_pcs,
+    features = NULL,
     randomised_svd = FALSE,
     seed = 42L
   ) {
@@ -38,19 +41,20 @@ calculate_pca_adt_sc <- S7::new_generic(
 S7::method(calculate_pca_adt_sc, SingleCellsMultiModal) <- function(
   object,
   no_pcs,
+  features = NULL,
   randomised_svd = FALSE,
   seed = 42L
 ) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCellsMultiModal))
   checkmate::qassert(no_pcs, "I1")
+  checkmate::qassert(features, c("0", "S+"))
   checkmate::qassert(randomised_svd, "B1")
   checkmate::qassert(seed, "I1")
 
   norm_counts <- get_sc_counts(
     object = object,
     assay = "norm",
-    cell_indices = get_cells_to_keep(object) + 1L,
     modality = "adt"
   )
 
@@ -282,6 +286,7 @@ S7::method(generate_wnn_graph_sc, SingleCellsMultiModal) <- function(
 
   other_data <- S7::prop(object, "other_data")
   other_data[["wnn"]] <- list(
+    embeddings = list(),
     knn = wnn_knn,
     snn = snn_g,
     weights = wnn_weights,
