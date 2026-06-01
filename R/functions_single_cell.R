@@ -518,7 +518,8 @@ extract_embedding_data <- function(object, embedding, obs_cols = NULL, ...) {
 #' @param scale Boolean. Whether to z-score the expression values.
 #' @param clip Optional numeric. Clip z-scores if `scale = TRUE`.
 #' @param modality String. One of `c("rna", "adt")`.
-#' @param ... Additional arguments forwarded to [get_embedding()].
+#' @param obs_cols Optional character vector. Obs columns to attach.
+#' @param ... Additional arguments forwarded to [extract_embedding_data()].
 #'
 #' @return A long data.table with `cell_id`, `dim_*`, `gene` and `expression`.
 #'
@@ -530,6 +531,7 @@ extract_feature_plot_data <- function(
   scale = FALSE,
   clip = NULL,
   modality = c("rna", "adt"),
+  obs_col = NULL,
   ...
 ) {
   modality <- match.arg(modality)
@@ -541,20 +543,25 @@ extract_feature_plot_data <- function(
     clip = clip,
     modality = modality
   )
-  embd <- extract_embedding_data(object, embedding = embedding, ...)
+  embd <- extract_embedding_data(
+    object,
+    embedding = embedding,
+    obs_col = obs_col,
+    ...
+  )
 
   dt <- merge(expr, embd, by = "cell_id")
   dim_cols <- grep("^dim_", names(dt), value = TRUE)
   feature_cols <- setdiff(names(expr), "cell_id")
+  add_cols <- setdiff(names(dt), c(dim_cols, feature_cols, "cell_id"))
 
   long <- data.table::melt(
     dt,
-    id.vars = c("cell_id", dim_cols),
+    id.vars = c("cell_id", dim_cols, add_cols),
     measure.vars = feature_cols,
     variable.name = "gene",
     value.name = "expression"
   )
-
   data.table::setattr(long, "embedding", embedding)
 
   long

@@ -16,7 +16,7 @@ directory.}
 to the heuristic implemented in checkmate.}
 
 \item{add}{Collection to store assertion messages. See
-\code{\link[checkmate:AssertCollection]{checkmate::makeAssertCollection()}}.}
+\code{\link[checkmate:makeAssertCollection]{checkmate::makeAssertCollection()}}.}
 }
 \value{
 Invisibly returns the checked object if the assertion is successful.

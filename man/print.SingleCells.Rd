@@ -3,6 +3,10 @@
 \name{print.SingleCells}
 \alias{print.SingleCells}
 \title{print Method for SingleCells object}
+\usage{
+## S7 method for class <bixverse::SingleCells>
+print(x, ...)
+}
 \arguments{
 \item{x}{An object of class \code{SingleCells}.}
 

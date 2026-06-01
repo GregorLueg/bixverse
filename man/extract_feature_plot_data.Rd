@@ -11,6 +11,7 @@ extract_feature_plot_data(
   scale = FALSE,
   clip = NULL,
   modality = c("rna", "adt"),
+  obs_col = NULL,
   ...
 )
 }
@@ -27,7 +28,9 @@ extract_feature_plot_data(
 
 \item{modality}{String. One of \code{c("rna", "adt")}.}
 
-\item{...}{Additional arguments forwarded to \code{\link[=get_embedding]{get_embedding()}}.}
+\item{...}{Additional arguments forwarded to \code{\link[=extract_embedding_data]{extract_embedding_data()}}.}
+
+\item{obs_cols}{Optional character vector. Obs columns to attach.}
 }
 \value{
 A long data.table with \code{cell_id}, \verb{dim_*}, \code{gene} and \code{expression}.
