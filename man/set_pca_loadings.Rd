@@ -10,7 +10,13 @@
 \usage{
 set_pca_loadings(x, pca_loading, ...)
 
+## S7 method for class <bixverse::MetaCells>
+set_pca_loadings(x, pca_loading, ...)
+
 \method{set_pca_loadings}{ScCache}(x, pca_loading)
+
+## S7 method for class <bixverse::SingleCells>
+set_pca_loadings(x, pca_loading, ...)
 }
 \arguments{
 \item{x}{An object to add the PCA loadings for.}

@@ -10,7 +10,13 @@
 \usage{
 set_snn_graph(x, snn_graph, ...)
 
+## S7 method for class <bixverse::MetaCells>
+set_snn_graph(x, snn_graph, ...)
+
 \method{set_snn_graph}{ScCache}(x, snn_graph)
+
+## S7 method for class <bixverse::SingleCells>
+set_snn_graph(x, snn_graph, ...)
 }
 \arguments{
 \item{x}{An object to add the KNN data to.}

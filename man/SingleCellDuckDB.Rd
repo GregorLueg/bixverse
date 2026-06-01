@@ -3,28 +3,13 @@
 \name{SingleCellDuckDB}
 \alias{SingleCellDuckDB}
 \title{Class for storing single cell experimental data in DuckDB (nightly!)}
-\value{
-Invisible self and populates the internal obs table.
-Function to populate the var table from plain text files
-
-Invisible self and populates the internal var table.
-Function to populate the obs table from R
-
-Invisible self and populates the internal obs table.
-Function to populate the var table from R
-
-Invisible self and populates the internal obs table.
-Function to populate the var_adt table from R
-
-Invisible self and populates the internal var_adt table.
-}
 \description{
 This class wraps up the DB connection and methods to interact with the
 observation/cell metadata and the feature/gene metadata.
 }
 \keyword{internal}
 \section{Super class}{
-\code{\link[bixverse:SingleCellDuckDBBase]{bixverse::SingleCellDuckDBBase}} -> \code{SingleCellDuckDB}
+\code{\link[bixverse:SingleCellDuckDBBase]{SingleCellDuckDBBase}} -> \code{SingleCellDuckDB}
 }
 \section{Methods}{
 \subsection{Public methods}{
@@ -50,226 +35,250 @@ observation/cell metadata and the feature/gene metadata.
 \if{html}{\out{
 <details><summary>Inherited methods</summary>
 <ul>
-<li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="add_data_obs"><a href='../../bixverse/html/SingleCellDuckDBBase.html#method-SingleCellDuckDBBase-add_data_obs'><code>bixverse::SingleCellDuckDBBase$add_data_obs()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="add_data_var"><a href='../../bixverse/html/SingleCellDuckDBBase.html#method-SingleCellDuckDBBase-add_data_var'><code>bixverse::SingleCellDuckDBBase$add_data_var()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="drop_columns"><a href='../../bixverse/html/SingleCellDuckDBBase.html#method-SingleCellDuckDBBase-drop_columns'><code>bixverse::SingleCellDuckDBBase$drop_columns()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="filter_var_table"><a href='../../bixverse/html/SingleCellDuckDBBase.html#method-SingleCellDuckDBBase-filter_var_table'><code>bixverse::SingleCellDuckDBBase$filter_var_table()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="get_cells_to_keep"><a href='../../bixverse/html/SingleCellDuckDBBase.html#method-SingleCellDuckDBBase-get_cells_to_keep'><code>bixverse::SingleCellDuckDBBase$get_cells_to_keep()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="get_obs_cols"><a href='../../bixverse/html/SingleCellDuckDBBase.html#method-SingleCellDuckDBBase-get_obs_cols'><code>bixverse::SingleCellDuckDBBase$get_obs_cols()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="get_obs_index_map"><a href='../../bixverse/html/SingleCellDuckDBBase.html#method-SingleCellDuckDBBase-get_obs_index_map'><code>bixverse::SingleCellDuckDBBase$get_obs_index_map()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="get_obs_table"><a href='../../bixverse/html/SingleCellDuckDBBase.html#method-SingleCellDuckDBBase-get_obs_table'><code>bixverse::SingleCellDuckDBBase$get_obs_table()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="get_var_index_map"><a href='../../bixverse/html/SingleCellDuckDBBase.html#method-SingleCellDuckDBBase-get_var_index_map'><code>bixverse::SingleCellDuckDBBase$get_var_index_map()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="get_vars_adt_table"><a href='../../bixverse/html/SingleCellDuckDBBase.html#method-SingleCellDuckDBBase-get_vars_adt_table'><code>bixverse::SingleCellDuckDBBase$get_vars_adt_table()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="get_vars_table"><a href='../../bixverse/html/SingleCellDuckDBBase.html#method-SingleCellDuckDBBase-get_vars_table'><code>bixverse::SingleCellDuckDBBase$get_vars_table()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="initialize"><a href='../../bixverse/html/SingleCellDuckDBBase.html#method-SingleCellDuckDBBase-initialize'><code>bixverse::SingleCellDuckDBBase$initialize()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="join_data_obs"><a href='../../bixverse/html/SingleCellDuckDBBase.html#method-SingleCellDuckDBBase-join_data_obs'><code>bixverse::SingleCellDuckDBBase$join_data_obs()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="rename_column"><a href='../../bixverse/html/SingleCellDuckDBBase.html#method-SingleCellDuckDBBase-rename_column'><code>bixverse::SingleCellDuckDBBase$rename_column()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="set_cells_to_keep"><a href='../../bixverse/html/SingleCellDuckDBBase.html#method-SingleCellDuckDBBase-set_cells_to_keep'><code>bixverse::SingleCellDuckDBBase$set_cells_to_keep()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="set_to_keep_column"><a href='../../bixverse/html/SingleCellDuckDBBase.html#method-SingleCellDuckDBBase-set_to_keep_column'><code>bixverse::SingleCellDuckDBBase$set_to_keep_column()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="add_data_obs"><a href='../../bixverse/html/SingleCellDuckDBBase.html#method-SingleCellDuckDBBase-add_data_obs'><code>SingleCellDuckDBBase$add_data_obs()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="add_data_var"><a href='../../bixverse/html/SingleCellDuckDBBase.html#method-SingleCellDuckDBBase-add_data_var'><code>SingleCellDuckDBBase$add_data_var()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="drop_columns"><a href='../../bixverse/html/SingleCellDuckDBBase.html#method-SingleCellDuckDBBase-drop_columns'><code>SingleCellDuckDBBase$drop_columns()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="filter_var_table"><a href='../../bixverse/html/SingleCellDuckDBBase.html#method-SingleCellDuckDBBase-filter_var_table'><code>SingleCellDuckDBBase$filter_var_table()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="get_cells_to_keep"><a href='../../bixverse/html/SingleCellDuckDBBase.html#method-SingleCellDuckDBBase-get_cells_to_keep'><code>SingleCellDuckDBBase$get_cells_to_keep()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="get_obs_cols"><a href='../../bixverse/html/SingleCellDuckDBBase.html#method-SingleCellDuckDBBase-get_obs_cols'><code>SingleCellDuckDBBase$get_obs_cols()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="get_obs_index_map"><a href='../../bixverse/html/SingleCellDuckDBBase.html#method-SingleCellDuckDBBase-get_obs_index_map'><code>SingleCellDuckDBBase$get_obs_index_map()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="get_obs_table"><a href='../../bixverse/html/SingleCellDuckDBBase.html#method-SingleCellDuckDBBase-get_obs_table'><code>SingleCellDuckDBBase$get_obs_table()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="get_var_index_map"><a href='../../bixverse/html/SingleCellDuckDBBase.html#method-SingleCellDuckDBBase-get_var_index_map'><code>SingleCellDuckDBBase$get_var_index_map()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="get_vars_adt_table"><a href='../../bixverse/html/SingleCellDuckDBBase.html#method-SingleCellDuckDBBase-get_vars_adt_table'><code>SingleCellDuckDBBase$get_vars_adt_table()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="get_vars_table"><a href='../../bixverse/html/SingleCellDuckDBBase.html#method-SingleCellDuckDBBase-get_vars_table'><code>SingleCellDuckDBBase$get_vars_table()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="initialize"><a href='../../bixverse/html/SingleCellDuckDBBase.html#method-SingleCellDuckDBBase-initialize'><code>SingleCellDuckDBBase$initialize()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="join_data_obs"><a href='../../bixverse/html/SingleCellDuckDBBase.html#method-SingleCellDuckDBBase-join_data_obs'><code>SingleCellDuckDBBase$join_data_obs()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="rename_column"><a href='../../bixverse/html/SingleCellDuckDBBase.html#method-SingleCellDuckDBBase-rename_column'><code>SingleCellDuckDBBase$rename_column()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="set_cells_to_keep"><a href='../../bixverse/html/SingleCellDuckDBBase.html#method-SingleCellDuckDBBase-set_cells_to_keep'><code>SingleCellDuckDBBase$set_cells_to_keep()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="set_to_keep_column"><a href='../../bixverse/html/SingleCellDuckDBBase.html#method-SingleCellDuckDBBase-set_to_keep_column'><code>SingleCellDuckDBBase$set_to_keep_column()</code></a></span></li>
 </ul>
-</details>
-}}
+</details>}}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SingleCellDuckDB-populate_obs_from_h5ad"></a>}}
 \if{latex}{\out{\hypertarget{method-SingleCellDuckDB-populate_obs_from_h5ad}{}}}
-\subsection{Method \code{populate_obs_from_h5ad()}}{
-This function populates the obs table from an h5 file (if found).
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SingleCellDuckDB$populate_obs_from_h5ad(
+\subsection{\code{SingleCellDuckDB$populate_obs_from_h5ad()}}{
+  This function populates the obs table from an h5 file (if found).
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{SingleCellDuckDB$populate_obs_from_h5ad(
   h5_path,
   filter = NULL,
   cell_id_col = NULL
-)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{h5_path}}{String. Path to the h5 file from which to load in the
+)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{h5_path}}{String. Path to the h5 file from which to load in the
 observation table.}
-
-\item{\code{filter}}{Optional integer. Positions of obs to read in from file.}
-
-\item{\code{cell_id_col}}{Optional string. If you can see that the first column
+      \item{\code{filter}}{Optional integer. Positions of obs to read in from file.}
+      \item{\code{cell_id_col}}{Optional string. If you can see that the first column
 in the h5ad obs table is NOT the cell identifier, you can provide
 here the correct column name to use as cell_name.}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Returns}{
-Returns invisible self. As a side effect, it will load in the
+    }
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    Returns invisible self. As a side effect, it will load in the
 obs data from the h5ad file into the DuckDB.
+  }
 }
-}
+
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SingleCellDuckDB-populate_vars_from_h5ad"></a>}}
 \if{latex}{\out{\hypertarget{method-SingleCellDuckDB-populate_vars_from_h5ad}{}}}
-\subsection{Method \code{populate_vars_from_h5ad()}}{
-This populates the vars table from an h5 file (if found.)
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SingleCellDuckDB$populate_vars_from_h5ad(h5_path, filter = NULL)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{h5_path}}{String. Path to the h5 file from which to load in the
+\subsection{\code{SingleCellDuckDB$populate_vars_from_h5ad()}}{
+  This populates the vars table from an h5 file (if found.)
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{SingleCellDuckDB$populate_vars_from_h5ad(h5_path, filter = NULL)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{h5_path}}{String. Path to the h5 file from which to load in the
 observation table.}
-
-\item{\code{filter}}{Optional integer. Positions of obs to read in from file.}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Returns}{
-Returns invisible self. As a side effect, it will load in the
+      \item{\code{filter}}{Optional integer. Positions of obs to read in from file.}
+    }
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    Returns invisible self. As a side effect, it will load in the
 obs data from the h5ad file into the DuckDB.
+  }
 }
-}
+
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SingleCellDuckDB-populate_obs_from_multi_h5ad"></a>}}
 \if{latex}{\out{\hypertarget{method-SingleCellDuckDB-populate_obs_from_multi_h5ad}{}}}
-\subsection{Method \code{populate_obs_from_multi_h5ad()}}{
-Populate the obs table from multiple h5ad files.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SingleCellDuckDB$populate_obs_from_multi_h5ad(
+\subsection{\code{SingleCellDuckDB$populate_obs_from_multi_h5ad()}}{
+  Populate the obs table from multiple h5ad files.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{SingleCellDuckDB$populate_obs_from_multi_h5ad(
   per_file_info,
   cell_id_col = NULL
-)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{per_file_info}}{List of lists, each containing: h5_path, exp_id,
+)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{per_file_info}}{List of lists, each containing: h5_path, exp_id,
 cell_filter (1-indexed integer vector of cells to keep).}
+      \item{\code{cell_id_col}}{Optional string. Column name for cell identifiers.}
+    }
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    Invisible self. Populates the obs table in DuckDB.
+  }
+}
 
-\item{\code{cell_id_col}}{Optional string. Column name for cell identifiers.}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Returns}{
-Invisible self. Populates the obs table in DuckDB.
-}
-}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SingleCellDuckDB-populate_vars_from_h5ad_reordered"></a>}}
 \if{latex}{\out{\hypertarget{method-SingleCellDuckDB-populate_vars_from_h5ad_reordered}{}}}
-\subsection{Method \code{populate_vars_from_h5ad_reordered()}}{
-Populate the var table from an h5ad file, filtered and reordered to
+\subsection{\code{SingleCellDuckDB$populate_vars_from_h5ad_reordered()}}{
+  Populate the var table from an h5ad file, filtered and reordered to
 match a target gene set.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SingleCellDuckDB$populate_vars_from_h5ad_reordered(h5_path, final_gene_names)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{h5_path}}{String. Path to the reference h5ad file.}
-
-\item{\code{final_gene_names}}{Character vector. Gene names in the desired
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{SingleCellDuckDB$populate_vars_from_h5ad_reordered(h5_path, final_gene_names)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{h5_path}}{String. Path to the reference h5ad file.}
+      \item{\code{final_gene_names}}{Character vector. Gene names in the desired
 final order.}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Returns}{
-Invisible self. Populates the var table in DuckDB.
+    }
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    Invisible self. Populates the var table in DuckDB.
 Function to populate the obs table from plain text files
+  }
 }
-}
+
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SingleCellDuckDB-populate_obs_from_plain_text"></a>}}
 \if{latex}{\out{\hypertarget{method-SingleCellDuckDB-populate_obs_from_plain_text}{}}}
-\subsection{Method \code{populate_obs_from_plain_text()}}{
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SingleCellDuckDB$populate_obs_from_plain_text(f_path, has_hdr, filter = NULL)}\if{html}{\out{</div>}}
+\subsection{\code{SingleCellDuckDB$populate_obs_from_plain_text()}}{
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{SingleCellDuckDB$populate_obs_from_plain_text(f_path, has_hdr, filter = NULL)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{f_path}}{File path to the plain text file.}
+      \item{\code{has_hdr}}{Boolean. Does the flat file have a header.}
+      \item{\code{filter}}{Optional integer. Positions of obs to read in from file.}
+    }
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    Invisible self and populates the internal obs table.
+Function to populate the var table from plain text files
+  }
 }
 
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{f_path}}{File path to the plain text file.}
-
-\item{\code{has_hdr}}{Boolean. Does the flat file have a header.}
-
-\item{\code{filter}}{Optional integer. Positions of obs to read in from file.}
-}
-\if{html}{\out{</div>}}
-}
-}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SingleCellDuckDB-populate_var_from_plain_text"></a>}}
 \if{latex}{\out{\hypertarget{method-SingleCellDuckDB-populate_var_from_plain_text}{}}}
-\subsection{Method \code{populate_var_from_plain_text()}}{
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SingleCellDuckDB$populate_var_from_plain_text(f_path, has_hdr, filter = NULL)}\if{html}{\out{</div>}}
+\subsection{\code{SingleCellDuckDB$populate_var_from_plain_text()}}{
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{SingleCellDuckDB$populate_var_from_plain_text(f_path, has_hdr, filter = NULL)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{f_path}}{File path to the plain text file.}
+      \item{\code{has_hdr}}{Boolean. Does the flat file have a header.}
+      \item{\code{filter}}{Optional integer. Positions of obs to read in from file.}
+    }
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    Invisible self and populates the internal var table.
+Function to populate the obs table from R
+  }
 }
 
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{f_path}}{File path to the plain text file.}
-
-\item{\code{has_hdr}}{Boolean. Does the flat file have a header.}
-
-\item{\code{filter}}{Optional integer. Positions of obs to read in from file.}
-}
-\if{html}{\out{</div>}}
-}
-}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SingleCellDuckDB-populate_obs_from_data.table"></a>}}
 \if{latex}{\out{\hypertarget{method-SingleCellDuckDB-populate_obs_from_data.table}{}}}
-\subsection{Method \code{populate_obs_from_data.table()}}{
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SingleCellDuckDB$populate_obs_from_data.table(obs_dt, filter = NULL)}\if{html}{\out{</div>}}
+\subsection{\code{SingleCellDuckDB$populate_obs_from_data.table()}}{
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{SingleCellDuckDB$populate_obs_from_data.table(obs_dt, filter = NULL)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{obs_dt}}{data.table}
+      \item{\code{filter}}{Optional integer. Row indices to keep}
+    }
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    Invisible self and populates the internal obs table.
+Function to populate the var table from R
+  }
 }
 
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{obs_dt}}{data.table}
-
-\item{\code{filter}}{Optional integer. Row indices to keep}
-}
-\if{html}{\out{</div>}}
-}
-}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SingleCellDuckDB-populate_var_from_data.table"></a>}}
 \if{latex}{\out{\hypertarget{method-SingleCellDuckDB-populate_var_from_data.table}{}}}
-\subsection{Method \code{populate_var_from_data.table()}}{
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SingleCellDuckDB$populate_var_from_data.table(var_dt, filter = NULL)}\if{html}{\out{</div>}}
+\subsection{\code{SingleCellDuckDB$populate_var_from_data.table()}}{
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{SingleCellDuckDB$populate_var_from_data.table(var_dt, filter = NULL)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{var_dt}}{data.table}
+      \item{\code{filter}}{Optional integer. Row indices to keep}
+    }
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    Invisible self and populates the internal obs table.
+Function to populate the var_adt table from R
+  }
 }
 
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{var_dt}}{data.table}
-
-\item{\code{filter}}{Optional integer. Row indices to keep}
-}
-\if{html}{\out{</div>}}
-}
-}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SingleCellDuckDB-populate_var_adt_from_data.table"></a>}}
 \if{latex}{\out{\hypertarget{method-SingleCellDuckDB-populate_var_adt_from_data.table}{}}}
-\subsection{Method \code{populate_var_adt_from_data.table()}}{
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SingleCellDuckDB$populate_var_adt_from_data.table(var_dt, filter = NULL)}\if{html}{\out{</div>}}
+\subsection{\code{SingleCellDuckDB$populate_var_adt_from_data.table()}}{
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{SingleCellDuckDB$populate_var_adt_from_data.table(var_dt, filter = NULL)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{var_dt}}{data.table with \code{feature_idx} and \code{feature_id} columns.}
+      \item{\code{filter}}{Optional integer. Row indices to keep.}
+    }
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    Invisible self and populates the internal var_adt table.
+  }
 }
 
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{var_dt}}{data.table with \code{feature_idx} and \code{feature_id} columns.}
-
-\item{\code{filter}}{Optional integer. Row indices to keep.}
-}
-\if{html}{\out{</div>}}
-}
-}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SingleCellDuckDB-populate_obs_from_tenx_h5"></a>}}
 \if{latex}{\out{\hypertarget{method-SingleCellDuckDB-populate_obs_from_tenx_h5}{}}}
@@ -324,127 +333,134 @@ Invisible self. Populates the var table in DuckDB.
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SingleCellDuckDB-populate_obs_from_multi_duckdb"></a>}}
 \if{latex}{\out{\hypertarget{method-SingleCellDuckDB-populate_obs_from_multi_duckdb}{}}}
-\subsection{Method \code{populate_obs_from_multi_duckdb()}}{
-Populate the obs table by merging obs from multiple source DuckDBs.
+\subsection{\code{SingleCellDuckDB$populate_obs_from_multi_duckdb()}}{
+  Populate the obs table by merging obs from multiple source DuckDBs.
 
 Reads obs rows where \code{to_keep = TRUE} from each source, ordered by
 \code{cell_idx} ascending (matching the order used in the Rust bin merge).
 Prefixes \code{cell_id} with \code{exp_id}, intersects column names across all
 inputs, and rbindlists.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SingleCellDuckDB$populate_obs_from_multi_duckdb(per_file_info)}\if{html}{\out{</div>}}
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{SingleCellDuckDB$populate_obs_from_multi_duckdb(per_file_info)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{per_file_info}}{List of lists; each must contain \code{db_path}
+(string) and \code{exp_id} (string).}
+    }
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    Invisible self.
+  }
 }
 
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{per_file_info}}{List of lists; each must contain \code{db_path}
-(string) and \code{exp_id} (string).}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Returns}{
-Invisible self.
-}
-}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SingleCellDuckDB-populate_vars_from_duckdb_reordered"></a>}}
 \if{latex}{\out{\hypertarget{method-SingleCellDuckDB-populate_vars_from_duckdb_reordered}{}}}
-\subsection{Method \code{populate_vars_from_duckdb_reordered()}}{
-Populate the var table from a source DuckDB, filtered and reordered
+\subsection{\code{SingleCellDuckDB$populate_vars_from_duckdb_reordered()}}{
+  Populate the var table from a source DuckDB, filtered and reordered
 to match a target gene set.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SingleCellDuckDB$populate_vars_from_duckdb_reordered(
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{SingleCellDuckDB$populate_vars_from_duckdb_reordered(
   source_db_path,
   final_gene_names
-)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{source_db_path}}{String. Path to the source DuckDB.}
-
-\item{\code{final_gene_names}}{Character vector. Gene names in the desired
+)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{source_db_path}}{String. Path to the source DuckDB.}
+      \item{\code{final_gene_names}}{Character vector. Gene names in the desired
 final order.}
+    }
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    Invisible self.
+  }
 }
-\if{html}{\out{</div>}}
-}
-\subsection{Returns}{
-Invisible self.
-}
-}
+
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SingleCellDuckDB-populate_obs_from_multi_plain_text"></a>}}
 \if{latex}{\out{\hypertarget{method-SingleCellDuckDB-populate_obs_from_multi_plain_text}{}}}
-\subsection{Method \code{populate_obs_from_multi_plain_text()}}{
-Populate obs from multiple plain-text barcode files.
+\subsection{\code{SingleCellDuckDB$populate_obs_from_multi_plain_text()}}{
+  Populate obs from multiple plain-text barcode files.
 
 Reads each input's barcodes file, filters to the cells that passed QC,
 prefixes \code{cell_id} with \code{exp_id}, intersects column names across inputs,
 and rbindlists.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SingleCellDuckDB$populate_obs_from_multi_plain_text(per_file_info)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{per_file_info}}{List of lists; each must contain \code{f_path} (string),
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{SingleCellDuckDB$populate_obs_from_multi_plain_text(per_file_info)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{per_file_info}}{List of lists; each must contain \code{f_path} (string),
 \code{exp_id} (string), \code{has_hdr} (boolean), \code{cell_filter} (1-indexed integer
 vector).}
+    }
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    Invisible self.
+  }
 }
-\if{html}{\out{</div>}}
-}
-\subsection{Returns}{
-Invisible self.
-}
-}
+
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SingleCellDuckDB-populate_vars_from_plain_text_reordered"></a>}}
 \if{latex}{\out{\hypertarget{method-SingleCellDuckDB-populate_vars_from_plain_text_reordered}{}}}
-\subsection{Method \code{populate_vars_from_plain_text_reordered()}}{
-Populate the var table from a single plain-text features file,
+\subsection{\code{SingleCellDuckDB$populate_vars_from_plain_text_reordered()}}{
+  Populate the var table from a single plain-text features file,
 filtered and reordered to match a target gene set.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SingleCellDuckDB$populate_vars_from_plain_text_reordered(
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{SingleCellDuckDB$populate_vars_from_plain_text_reordered(
   f_path,
   has_hdr,
   final_gene_names
-)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{f_path}}{String. Path to one input's features file.}
-
-\item{\code{has_hdr}}{Boolean.}
-
-\item{\code{final_gene_names}}{Character vector. Gene IDs in the desired final
+)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{f_path}}{String. Path to one input's features file.}
+      \item{\code{has_hdr}}{Boolean.}
+      \item{\code{final_gene_names}}{Character vector. Gene IDs in the desired final
 order.}
+    }
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    Invisible self.
+  }
 }
-\if{html}{\out{</div>}}
-}
-\subsection{Returns}{
-Invisible self.
-}
-}
+
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SingleCellDuckDB-clone"></a>}}
 \if{latex}{\out{\hypertarget{method-SingleCellDuckDB-clone}{}}}
-\subsection{Method \code{clone()}}{
-The objects of this class are cloneable with this method.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SingleCellDuckDB$clone(deep = FALSE)}\if{html}{\out{</div>}}
+\subsection{\code{SingleCellDuckDB$clone()}}{
+  The objects of this class are cloneable with this method.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{SingleCellDuckDB$clone(deep = FALSE)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{deep}}{Whether to make a deep clone.}
+    }
+    \if{html}{\out{</div>}}
+  }
 }
 
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{deep}}{Whether to make a deep clone.}
-}
-\if{html}{\out{</div>}}
-}
-}
 }
