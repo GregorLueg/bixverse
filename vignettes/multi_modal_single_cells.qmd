@@ -1,0 +1,288 @@
+---
+title: "Multi-modal single cell analysis with bixverse"
+date: last-modified
+date-format: YYYY-MM-DD
+vignette: >
+  %\VignetteIndexEntry{Multi-modal single cell analysis with bixverse}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+knitr:
+  opts_chunk:
+    collapse: true
+    comment: '#>'
+author: 
+  - name: "Gregor Lueg"
+---
+
+## Intro
+
+...
+
+```{r}
+#| label: setup
+library(bixverse)
+library(bixverse.plots)
+library(ggplot2)
+library(data.table)
+```
+
+## Loading the data
+
+...
+
+```{r}
+#| label: paths
+h5_10x_path <- "~/Desktop/zenodo_data/multi-omics-data/10k_Human_PBMC_TotalSeqB.h5"
+
+tempdir_10x_total_seq <- tempdir()
+```
+
+### EDA
+
+...
+
+```{r}
+#| label: data exploration
+h5_metadata <- read_tenx_h5_metadata(h5_10x_path)
+```
+
+### Loading in the RNA
+
+```{r}
+#| label: load the RNA in 
+sc_object <- SingleCellsMultiModal(dir_data = tempdir_10x_total_seq)
+
+sc_object <- load_tenx_h5(object = sc_object, h5_path = h5_10x_path)
+
+head(sc_object)
+```
+
+### Loading in the ADT counts
+
+```{r}
+#| label: load the ADT counts 
+adt_counts <- read_tenx_h5_adt(f_path = h5_10x_path)
+
+iso <- detect_adt_isotypes(colnames(adt_counts))
+
+# add adt counts
+sc_object <- add_adt_counts_sc(
+  object = sc_object,
+  adt_counts = adt_counts,
+  method = "dsb",
+  dsb_params = params_sc_dsb(
+    use_isotype_controls = TRUE,
+    quantile_low = 0.01,
+    quantile_high = 1.0
+  ),
+  isotype_names = iso
+)
+```
+
+## QC
+
+### Low quality cells
+
+```{r}
+qc_df <- sc_object[[c(
+  "cell_id",
+  "lib_size",
+  "nnz",
+  "adt_lib_size",
+  "adt_nnz"
+)]]
+metrics <- list(
+  log10_rna_lib_size = log10(qc_df$lib_size),
+  log10_rna_nnz = log10(qc_df$nnz),
+  log10_adt_lib_size = log10(qc_df$adt_lib_size),
+  log10_adt_nnz = log10(qc_df$adt_nnz)
+)
+
+directions <- c(
+  log10_rna_lib_size = "twosided",
+  log10_rna_nnz = "twosided",
+  log10_adt_lib_size = "twosided",
+  log10_adt_nnz = "twosided"
+)
+
+qc <- run_cell_qc(
+  metrics = metrics,
+  cells_to_keep = get_cells_to_keep(sc_object),
+  directions = directions,
+  threshold = 3
+)
+
+qc_obs <- get_data(qc)
+
+plots <- violin_plot_sc(qc)
+```
+
+```{r}
+sc_object[["outlier"]] <- qc$combined
+
+cells_to_keep <- qc_df[!qc$combined, cell_id]
+
+sc_object <- set_cells_to_keep(sc_object, cells_to_keep)
+```
+
+## Standard workflows
+
+### RNA
+
+```{r}
+sc_object <- find_hvg_sc(
+  object = sc_object,
+  hvg_no = 2000L,
+  .verbose = TRUE
+)
+
+sc_object <- calculate_pca_sc(
+  object = sc_object,
+  no_pcs = 30L,
+  sparse_svd = TRUE
+)
+
+# the data is so tiny that exhaustive kNN search is faster than building
+# an approximate nearest neighbour index
+sc_object <- find_neighbours_sc(
+  object = sc_object,
+  no_embd_to_use = 16L,
+  neighbours_params = params_sc_neighbours(
+    knn = list(knn_method = "exhaustive")
+  )
+)
+```
+
+```{r}
+sc_object <- find_clusters_sc(sc_object)
+
+head(sc_object)
+```
+
+```{r}
+sc_object <- tsne_sc(
+  sc_object,
+  modality = "rna"
+)
+```
+
+```{r}
+embedding_plot_sc(
+  sc_object,
+  embedding = "tsne",
+  colour_by = "leiden_clustering",
+  discrete = TRUE,
+  point_size = 0.5
+)
+```
+
+### ADT
+
+```{r}
+sc_object <- calculate_pca_adt_sc(
+  object = sc_object,
+  no_pcs = 15L,
+  features = remove_adt_isotypes(get_adt_names(sc_object))
+)
+
+# the data is so tiny that exhaustive kNN search is faster than building
+# an approximate nearest neighbour index
+sc_object <- find_neighbours_sc(
+  object = sc_object,
+  neighbours_params = params_sc_neighbours(
+    knn = list(knn_method = "exhaustive")
+  ),
+  modality = "adt"
+)
+```
+
+```{r}
+sc_object <- tsne_sc(
+  sc_object,
+  modality = "adt"
+)
+
+feature_plot_sc(
+  sc_object,
+  features = "CD3D",
+  embedding = "tsne",
+  expr_modality = "adt",
+  embd_modality = "adt",
+  point_size = 1
+)
+```
+
+```{r}
+feature_plot_sc(
+  sc_object,
+  features = "ENSG00000167286",
+  embedding = "tsne",
+  expr_modality = "rna",
+  embd_modality = "adt",
+  point_size = 1
+)
+```
+
+```{r}
+feature_plot_sc(
+  sc_object,
+  features = "CD19",
+  embedding = "umap",
+  expr_modality = "adt",
+  embd_modality = "adt",
+  point_size = 1
+)
+```
+
+```{r}
+embedding_plot_sc(
+  object = sc_object,
+  embedding = "tsne",
+  embd_modality = "adt",
+  colour_by = "leiden_clustering",
+  discrete = TRUE,
+  point_size = 1
+)
+```
+
+## WNN
+
+```{r}
+sc_object <- generate_wnn_graph_sc(
+  sc_object,
+  wnn_params = params_sc_wnn(sd_scale = 1)
+)
+```
+
+```{r}
+sc_object <- tsne_sc(
+  sc_object,
+  modality = "wnn"
+)
+
+feature_plot_sc(
+  sc_object,
+  features = "ENSG00000167286",
+  embedding = "tsne",
+  expr_modality = "rna",
+  embd_modality = "wnn",
+  point_size = 1
+)
+
+feature_plot_sc(
+  sc_object,
+  features = "CD3D",
+  embedding = "tsne",
+  expr_modality = "adt",
+  embd_modality = "wnn",
+  point_size = 1
+)
+
+test <- extract_feature_pair(
+  object = sc_object,
+  feature_1 = "ENSG00000167286_rna",
+  feature_2 = "CD3D_adt"
+)
+
+ggplot(data = test, mapping = aes(x = feature_1, y = feature_2)) + geom_hex()
+```

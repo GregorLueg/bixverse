@@ -2,6 +2,8 @@
 
 ## data generation -------------------------------------------------------------
 
+### rna ------------------------------------------------------------------------
+
 #' Single cell test data
 #'
 #' @description
@@ -114,6 +116,101 @@ generate_single_cell_test_data <- function(
     obs = obs,
     var = var
   )
+}
+
+### adt ------------------------------------------------------------------------
+
+#' Single cell test data (ADT)
+#'
+#' @description
+#' This function generates synthetic ADT counts for single cell test purposes.
+#' These data can be used for testing multi-modal functionality of various
+#' single cell functions. Pairs cell-for-cell with
+#' [bixverse::generate_single_cell_test_data()] when generated with matching
+#' `n_cells`, number of cell types and `n_batches`.
+#'
+#' @param syn_data_params List. Contains the parameters for the generation of
+#' synthetic ADT data, see: [bixverse::params_sc_synthetic_data_adt()]. Has the
+#' following elements:
+#' \itemize{
+#'   \item n_cells - Integer. Number of cells.
+#'   \item n_proteins - Integer. Number of proteins.
+#'   \item marker_genes - List. A nested list that indicates which protein
+#'   indices are markers for which cell type.
+#'   \item n_batches - Integer. Number of batches.
+#'   \item isotype_controls - Integer vector. Column indices (0-based) of the
+#'   isotype controls.
+#'   \item batch_effect_strength - String. Indicates the strength of the batch
+#'   effect to add.
+#' }
+#' @param seed Integer. The seed for the generation of the synthetic data.
+#'
+#' @returns List with the following items
+#' \itemize{
+#'   \item counts - Numeric matrix with cells x proteins.
+#'   \item obs - data.table that contains the cell information.
+#'   \item var - data.table that contains the protein information.
+#' }
+#'
+#' @export
+generate_single_cell_test_data_adt <- function(
+  syn_data_params = params_sc_synthetic_data_adt(),
+  seed = 42L
+) {
+  # checks
+  assertScSyntheticDataAdt(syn_data_params)
+  checkmate::qassert(seed, "I1")
+
+  data <- with(
+    syn_data_params,
+    rs_synthetic_sc_adt_with_cell_types(
+      n_cells = n_cells,
+      n_proteins = n_proteins,
+      n_batches = n_batches,
+      isotype_controls = isotype_controls,
+      cell_configs = marker_genes,
+      batch_effect_strength = batch_effect_strength,
+      seed = seed
+    )
+  )
+
+  # the Rust side returns a flat row-major (cell-major) vector
+  counts <- matrix(
+    as.numeric(data$data),
+    nrow = syn_data_params$n_cells,
+    ncol = syn_data_params$n_proteins,
+    byrow = TRUE
+  )
+
+  n_digits <- nchar(as.character(syn_data_params$n_cells))
+  format_str <- sprintf("cell_%%0%dd", n_digits)
+  rownames(counts) <- sprintf(format_str, 1:syn_data_params$n_cells)
+
+  obs <- data.table(
+    cell_id = sprintf(format_str, 1:syn_data_params$n_cells),
+    cell_grp = sprintf("cell_type_%i", data$cell_type_indices + 1),
+    batch_index = data$batch_indices + 1
+  )
+
+  n_digits <- nchar(as.character(syn_data_params$n_proteins))
+  format_str <- sprintf("protein_%%0%dd", n_digits)
+  colnames(counts) <- sprintf(format_str, 1:syn_data_params$n_proteins)
+
+  isotype_ids <- sprintf(format_str, syn_data_params$isotype_controls + 1)
+
+  var <- data.table(
+    protein_id = sprintf(format_str, 1:syn_data_params$n_proteins),
+    is_isotype = sprintf(format_str, 1:syn_data_params$n_proteins) %in%
+      isotype_ids
+  )
+
+  res <- list(
+    counts = counts,
+    obs = obs,
+    var = var
+  )
+
+  res
 }
 
 ## data saving -----------------------------------------------------------------

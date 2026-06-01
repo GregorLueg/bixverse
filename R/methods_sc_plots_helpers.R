@@ -232,13 +232,11 @@ S7::method(umap_sc, ScOrMc) <- function(
 
   colnames(umap_embd) <- sprintf("umap_%s", seq_len(ncol(umap_embd)))
 
-  slot <- ifelse(modality == "wnn", "other", cache_modality)
-
   object <- set_embedding(
     x = object,
     embd = umap_embd,
     name = slot_name,
-    modality = slot
+    modality = modality
   )
 
   return(object)
@@ -421,13 +419,11 @@ S7::method(tsne_sc, ScOrMc) <- function(
 
   colnames(tsne_embd) <- sprintf("tsne_%s", seq_len(ncol(tsne_embd)))
 
-  slot <- ifelse(modality == "wnn", "other", cache_modality)
-
   object <- set_embedding(
     x = object,
     embd = tsne_embd,
     name = slot_name,
-    modality = slot
+    modality = modality
   )
 
   return(object)
@@ -600,13 +596,11 @@ S7::method(phate_sc, ScOrMc) <- function(
 
   colnames(phate_embd) <- sprintf("phate_%s", seq_len(ncol(phate_embd)))
 
-  slot <- ifelse(modality == "wnn", "other", cache_modality)
-
   object <- set_embedding(
     x = object,
     embd = phate_embd,
     name = slot_name,
-    modality = slot
+    modality = modality
   )
 
   return(object)

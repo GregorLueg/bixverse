@@ -1340,6 +1340,135 @@ S7::method(load_multi_mtx, SingleCells) <- function(
   return(object)
 }
 
+### h5 10x outputs -------------------------------------------------------------
+
+#' Load in a 10x CellRanger h5 file to `SingleCells`
+#'
+#' @description
+#' Loads the gene-expression modality from a CellRanger v2/v3 h5 file. The
+#' counts go into the Rust-binarised format (with log normalisation applied on
+#' read) and the barcodes/features into the DuckDB. Non-gene modalities (e.g.
+#' Antibody Capture) are filtered out via `feature_type`.
+#'
+#' @param object `SingleCells` class.
+#' @param h5_path File path to the 10x h5 file.
+#' @param sc_qc_param List. Output of [bixverse::params_sc_min_quality()].
+#' @param feature_type String. Modality to keep. Defaults to
+#' `"Gene Expression"`. Ignored for v2 (single modality).
+#' @param streaming Integer. CSR-to-CSC conversion mode. `0L` -> in-memory,
+#' `1L` -> light streaming, `2L` -> heavy streaming. Defaults to `1L`.
+#' @param batch_size Integer. Cell batch size when `streaming = 1L`. Defaults
+#' to `1000L`.
+#' @param max_genes_in_memory Integer. Maximum genes held in memory at once
+#' when `streaming = 2L`. Defaults to `2000L`.
+#' @param cell_batch_size Integer. Cell batch size when `streaming = 2L`.
+#' Defaults to `100000L`.
+#' @param .verbose Boolean.
+#'
+#' @return The class with updated shape information.
+#'
+#' @export
+load_tenx_h5 <- S7::new_generic(
+  name = "load_tenx_h5",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    h5_path,
+    sc_qc_param = params_sc_min_quality(),
+    feature_type = "Gene Expression",
+    streaming = 1L,
+    batch_size = 1000L,
+    max_genes_in_memory = 2000L,
+    cell_batch_size = 100000L,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method load_tenx_h5 SingleCells
+#'
+#' @export
+S7::method(load_tenx_h5, SingleCells) <- function(
+  object,
+  h5_path,
+  sc_qc_param = params_sc_min_quality(),
+  feature_type = "Gene Expression",
+  streaming = 1L,
+  batch_size = 1000L,
+  max_genes_in_memory = 2000L,
+  cell_batch_size = 100000L,
+  .verbose = TRUE
+) {
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  assertScMinQC(sc_qc_param)
+  checkmate::qassert(feature_type, c("S1", "0"))
+  checkmate::qassert(streaming, "I1")
+  checkmate::assertTRUE(streaming %in% c(0L, 1L, 2L))
+  checkmate::qassert(.verbose, "B1")
+
+  h5_path <- path.expand(h5_path)
+  meta <- get_tenx_h5_metadata(h5_path)
+
+  rust_con <- get_sc_rust_ptr(object)
+
+  file_res <- rust_con$tenx_h5_to_file_streaming(
+    h5_path = h5_path,
+    version = meta$version,
+    no_cells = meta$n_cells,
+    no_genes = meta$n_genes,
+    qc_params = sc_qc_param,
+    feature_type = feature_type,
+    verbose = .verbose
+  )
+
+  .dispatch_gene_based_data(
+    rust_con = rust_con,
+    streaming = streaming,
+    batch_size = batch_size,
+    max_genes_in_memory = max_genes_in_memory,
+    cell_batch_size = cell_batch_size,
+    .verbose = .verbose
+  )
+
+  gene_nnz <- rust_con$get_nnz_genes(gene_indices = NULL)
+  gene_nnz_dt <- data.table::data.table(no_cells_exp = gene_nnz)
+
+  duckdb_con <- get_sc_duckdb(object)
+
+  if (.verbose) {
+    message("Loading barcodes from 10x h5 into the DuckDB.")
+  }
+  duckdb_con$populate_obs_from_tenx_h5(
+    h5_path = h5_path,
+    version = meta$version,
+    filter = as.integer(file_res$cell_indices + 1)
+  )
+
+  if (.verbose) {
+    message("Loading features from 10x h5 into the DuckDB.")
+  }
+  duckdb_con$populate_vars_from_tenx_h5(
+    h5_path = h5_path,
+    version = meta$version,
+    filter = as.integer(file_res$gene_indices + 1)
+  )
+
+  cell_res_dt <- data.table::setDT(file_res[c("nnz", "lib_size")])
+
+  duckdb_con$add_data_obs(new_data = cell_res_dt)
+  duckdb_con$add_data_var(new_data = gene_nnz_dt)
+  duckdb_con$set_to_keep_column()
+  cell_map <- duckdb_con$get_obs_index_map()
+  gene_map <- duckdb_con$get_var_index_map()
+
+  S7::prop(object, "dims") <- as.integer(rust_con$get_shape())
+  object <- set_cell_mapping(x = object, cell_map = cell_map)
+  object <- set_gene_mapping(x = object, gene_map = gene_map)
+
+  return(object)
+}
+
 ### save to disk ---------------------------------------------------------------
 
 # generic in base_generics_sc.R

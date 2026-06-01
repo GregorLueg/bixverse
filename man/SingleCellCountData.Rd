@@ -223,6 +223,31 @@ A list with \code{global_gene_indices}, \code{total_cells},
 }
 }
 
+\subsection{Method \code{tenx_h5_to_file_streaming}}{
+Write a 10x CellRanger h5 file to the cells binary file using streaming
+
+\subsection{Arguments}{
+\describe{
+\item{\code{h5_path}}{(\code{character})\cr Path to the 10x h5 file.}
+\item{\code{version}}{(\code{character})\cr One of \code{"auto"}, \code{"v2"} or \code{"v3"}. \code{"auto"} detects the layout from the file.}
+\item{\code{no_cells}}{(\code{integer})\cr Number of cells (columns) in the file.}
+\item{\code{no_genes}}{(\code{integer})\cr Number of features (rows), including all modalities.}
+\item{\code{qc_params}}{(\code{list})\cr Quality control parameters parseable into \code{MinCellQuality}.}
+\item{\code{feature_type}}{(\code{character} or \code{NULL})\cr Target modality for v3. Defaults to \code{"Gene Expression"} when \code{NULL}.}
+\item{\code{verbose}}{(\code{logical})\cr Controls verbosity of the function. }
+}}
+\subsection{description}{
+Ingests the gene-expression modality from a CellRanger v2/v3 h5 file.
+Other modalities (e.g. Antibody Capture) are filtered out via
+\code{feature_type}.
+
+}
+\subsection{return}{
+A list with \code{cell_indices}, \code{gene_indices}, \code{lib_size} and
+\code{nnz}.
+}
+}
+
 \subsection{Method \code{return_full_mat}}{
 Return the full count matrix
 

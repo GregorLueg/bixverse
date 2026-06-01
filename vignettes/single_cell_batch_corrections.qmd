@@ -128,7 +128,12 @@ directions <- c(
   MT = "above"
 )
 
-qc <- run_cell_qc(metrics, directions, threshold = 3)
+qc <- run_cell_qc(
+  metrics,
+  cells_to_keep = get_cells_to_keep(sc_object),
+  directions = directions,
+  threshold = 3
+)
 
 qc
 ```
@@ -139,9 +144,9 @@ Let's plot the metrics:
 #| label: qc plots
 #| fig-width: 10
 #| fig-height: 4
-plots <- plot(qc, qc_df)
+# plots <- plot(qc, qc_df)
 
-plots$log10_lib_size + plots$log10_nnz + plots$MT
+# plots$log10_lib_size + plots$log10_nnz + plots$MT
 ```
 
 Set the cells to keep
@@ -478,8 +483,8 @@ appropriate metric here.
 sc_object <- bbknn_sc(
   object = sc_object,
   batch_column = "sample",
-  no_neighbours_to_keep = 15L,
-  bbknn_params = params_sc_bbknn(neighbours_within_batch = 10L)
+  no_neighbours_to_keep = 6L,
+  bbknn_params = params_sc_bbknn(neighbours_within_batch = 4L)
 )
 ```
 
@@ -500,7 +505,7 @@ lisi_score_post_bbknn
 
 ```{r}
 #| label: bbknn tsne
-sc_object <- tsne_sc(object = sc_object, use_knn = TRUE)
+sc_object <- tsne_sc(object = sc_object, perplexity = 5L, use_knn = TRUE)
 
 tsne_dt_bbknn <- as.data.table(
   get_embedding(sc_object, "tsne"),

@@ -2,7 +2,7 @@
 % Please edit documentation in R/methods_sc_processing.R
 \name{generate_knn_sc}
 \alias{generate_knn_sc}
-\title{Generate the KNN data with distances}
+\title{Generate a \code{SingleCellNearestNeighbour} from a single cell class}
 \usage{
 generate_knn_sc(
   object,
@@ -58,19 +58,22 @@ Initialised \code{sc_knn} with the kNN data.
 This function will generate the kNNs based on a given embedding. Available
 algorithms are:
 \itemize{
+\item \code{kmknn} - An exact kNN search that leverages k-means clustering under
+the hood to prune out data points. The default setting.
+\item \code{exhaustive} - An exhaustive, flat index. On smaller data sets often
+faster than the approximate nearest neighbour search algorithms.
 \item \code{hnsw} - Hierarchical Navigable Small World. A graph-based
 approximate nearest neighbour search algorithm; works well on large data
 sets. A benign race condition is leveraged during index build, making the
 build non-deterministic. Bigger impact on smaller data sets.
+\item \code{nndescent} - Nearest neighbour descent. Leverages concepts from
+\code{PyNNDescent} and works well on very large data sets similar to \code{hnsw}.
 \item \code{ivf} - Inverted file index. Uses first k-means clustering to
 identify Voronoi cells and leverages these during querying. Works well
-on large data sets with high dimensionality.
-\item \code{nndescent} - Nearest neighbour descent. Similar to \code{PyNNDescent},
-uses a first index to initialise the graph. Good all-rounder.
+on large data sets with high dimensionality and when you need to return
+large number of neighbours.
 \item \code{annoy} - Approximate nearest neighbours Oh Yeah. Tree-based index,
 used across different R single cell packages (Seurat, SCE). This version
 is purely memory-based.
-\item \code{exhaustive} - An exhaustive, flat index. On smaller data sets often
-faster than the approximate nearest neighbour search algorithms.
 }
 }

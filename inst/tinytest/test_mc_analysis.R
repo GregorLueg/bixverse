@@ -132,8 +132,6 @@ expect_true(
 # var table is updated with hvg metrics
 mc_var <- get_sc_var(mc_object)
 
-sort(mc_hvg)
-
 expect_true(
   current = all(c("mean", "var", "var_std") %in% names(mc_var)),
   info = "mc hvg - var table populated with hvg metrics"

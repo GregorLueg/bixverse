@@ -9,7 +9,7 @@ doublet_detection_boost_sc(
   boost_params = params_boost(),
   cells_to_use = NULL,
   seed = 42L,
-  streaming = FALSE,
+  streaming = NULL,
   .verbose = TRUE
 )
 }
@@ -26,8 +26,9 @@ specifically using these cells.}
 
 \item{seed}{Integer. Random seed.}
 
-\item{streaming}{Boolean. Shall streaming be used during the HVG
-calculations. Slower, but less memory usage.}
+\item{streaming}{Optional Boolean. Shall the data be streamed in. Useful for
+larger data sets where you wish to avoid loading in the whole data. If
+\code{NULL}, will automatically detect.}
 
 \item{.verbose}{Boolean or integer. Controls verbosity and returns run times.
 \code{FALSE} -> quiet, \code{TRUE} or \code{1L} -> normal verbosity, \code{2L} -> detailed

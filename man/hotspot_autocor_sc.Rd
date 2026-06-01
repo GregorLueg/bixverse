@@ -12,7 +12,7 @@ hotspot_autocor_sc(
   no_embd_to_use = NULL,
   cells_to_take = NULL,
   genes_to_take = NULL,
-  streaming = FALSE,
+  streaming = NULL,
   random_seed = 42L,
   .verbose = TRUE
 )
@@ -46,8 +46,9 @@ selected cells. If \code{NULL} will default to all cells_to_keep in the class.}
 search to a subset of genes. If \code{NULL} will default to all genes in the
 class.}
 
-\item{streaming}{Boolean. Shall the data be streamed in. Useful for larger
-data sets.}
+\item{streaming}{Optional Boolean. Shall the data be streamed in. Useful for
+larger data sets where you wish to avoid loading in the whole data. If
+\code{NULL}, will automatically detect.}
 
 \item{random_seed}{Integer. Used for reproducibility.}
 

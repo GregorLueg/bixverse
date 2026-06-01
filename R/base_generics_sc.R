@@ -664,9 +664,9 @@ get_knn_dist <- function(x, ...) {
 #'   \item bin_method - String. One of `c("equal_width", "equal_freq")`. Not
 #'   implemented yet.
 #' }
-#' @param streaming Boolean. Shall the genes be streamed in. Useful for larger
-#' data sets where you wish to avoid loading in the whole data. Defaults to
-#' `FALSE`. Not used for `MetaCells`.
+#' @param streaming Optional Boolean. Shall the data be streamed in. Useful for
+#' larger data sets where you wish to avoid loading in the whole data. If
+#' `NULL`, will automatically detect. Not used for `MetaCells`.
 #' @param .verbose Boolean or integer. Controls verbosity and returns run times.
 #' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
 #' verbosity.
@@ -682,7 +682,7 @@ find_hvg_sc <- S7::new_generic(
     object,
     hvg_no = 2000L,
     hvg_params = params_sc_hvg(),
-    streaming = FALSE,
+    streaming = NULL,
     .verbose = TRUE
   ) {
     S7::S7_dispatch()
@@ -864,8 +864,9 @@ find_clusters_sc <- S7::new_generic(
 #' respective gene sets.
 #' @param auc_type String. Which type of AUC to calculate. Choice of
 #' `c("wilcox", "auroc")`.
-#' @param streaming Boolean. Shall the cell data be streamed in. Useful for
-#' larger data sets. Ignored when applied to `MetaCells`.
+#' @param streaming Optional Boolean. Shall the data be streamed in. Useful for
+#' larger data sets where you wish to avoid loading in the whole data. If
+#' `NULL`, will automatically detect. Ignored when applied to `MetaCells`.
 #' @param .verbose Boolean or integer. Controls verbosity and returns run times.
 #' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
 #' verbosity.
@@ -883,7 +884,7 @@ aucell_sc <- S7::new_generic(
     object,
     gs_list,
     auc_type = c("wilcox", "auroc"),
-    streaming = FALSE,
+    streaming = NULL,
     .verbose = TRUE
   ) {
     S7::S7_dispatch()
@@ -949,9 +950,9 @@ scenic_gene_filter_sc <- S7::new_generic(
 #' thresholds in `scenic_params`.
 #' @param cells_to_take Optional string vector. Cell identifiers to restrict
 #' to. If `NULL`, defaults to all filtered cells in the class.
-#' @param streaming Boolean. Whether to use the streaming implementation to
-#' bound memory usage. Useful for large datasets. Defaults to `FALSE`. Ignored
-#' when applied to `MetaCells`.
+#' @param streaming Optional Boolean. Shall the data be streamed in. Useful for
+#' larger data sets where you wish to avoid loading in the whole data. If
+#' `NULL`, will automatically detect. Ignored when applied to `MetaCells`.
 #' @param random_seed Integer. Used for reproducibility. Defaults to `42L`.
 #' @param .verbose Boolean or integer. Controls verbosity and returns run times.
 #' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
@@ -987,7 +988,7 @@ scenic_grn_sc <- S7::new_generic(
     scenic_params = params_scenic(),
     genes_to_take = NULL,
     cells_to_take = NULL,
-    streaming = FALSE,
+    streaming = NULL,
     random_seed = 42L,
     .verbose = TRUE
   ) {

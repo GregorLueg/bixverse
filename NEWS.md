@@ -12,6 +12,10 @@ Following things were added:
     Seq).
   - The weighted nearest neighbour graph method from 
     [Hao et al., 2021](https://www.cell.com/cell/fulltext/S0092-8674(21)00583-3)
+* Improved performance on:
+  - Harmony version 1 and version 2 with substantial speed improvements.
+  - Hotspot with even more substantial speed improvements via doing less stupid 
+    things in the Rust code.
    
 
 ## Breaking changes

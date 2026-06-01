@@ -14,6 +14,7 @@ dim(x)
 An integer vector of length 2 with the number of cells and genes.
 }
 \description{
-Returns the dimensions of a SingleCells object.
+Returns the dimensions of a SingleCells object. (Only taking into
+consideration the cells to keep).
 }
 \keyword{internal}

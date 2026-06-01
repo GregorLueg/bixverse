@@ -263,6 +263,30 @@ get_adt_sample_info.ADTCounts <- function(x) {
   return(res)
 }
 
+#' @title Get the ADT feature names
+#'
+#' @description
+#' Get the main ADT feature names
+#'
+#' @param x An object to get the gene names from.
+#'
+#' @return The primary ADT feature identifiers stored in the class.
+#'
+#' @export
+get_adt_names <- function(x) {
+  UseMethod("get_adt_names")
+}
+
+#' @rdname get_adt_names
+#'
+#' @export
+get_adt_names.ADTCounts <- function(x) {
+  # checks
+  checkmate::assertClass(x, "ADTCounts")
+
+  # body
+  return(colnames(x$raw_counts))
+}
 
 # s7 ---------------------------------------------------------------------------
 
@@ -293,15 +317,39 @@ get_adt_sample_info.ADTCounts <- function(x) {
 
 #' Helper to get the cache slot
 #'
-#' @param modality String. One of `c("rna", "adt")`.
+#' @param modality String. One of `c("rna", "adt", "atac")`. Assumed already
+#' validated by the caller via `match.arg`.
 #'
-#' @returns The name of the cache.
+#' @returns The name of the cache property.
 #'
 #' @keywords internal
 .cache_slot_from_modality <- function(modality) {
-  modality <- match.arg(modality, c("rna", "adt"))
+  switch(
+    modality,
+    rna = "sc_cache",
+    adt = "adt_cache",
+    atac = "atac_cache",
+    stop(sprintf("No cache slot for modality '%s'.", modality))
+  )
+}
 
-  switch(modality, rna = "sc_cache", adt = "adt_cache")
+#' Helper to fetch an integration result slot from other_data
+#'
+#' @param x `SingleCellsMultiModal` class.
+#' @param modality String. The integration slot name, e.g. `"wnn"`.
+#'
+#' @returns The integration result list stored under `other_data[[modality]]`.
+#'
+#' @keywords internal
+.integration_slot <- function(x, modality) {
+  res <- S7::prop(x, "other_data")[[modality]]
+  if (is.null(res)) {
+    stop(sprintf(
+      "No '%s' integration found. Did you run the relevant integration step?",
+      modality
+    ))
+  }
+  res
 }
 
 #' Helper to get the ADT feature names
@@ -650,25 +698,35 @@ S7::method(get_sc_counts, SingleCellsMultiModal) <- function(
   }
 
   mat <- if (assay == "raw") adt$raw_counts else adt$norm_counts
+  adt_names <- rownames(mat)
 
-  cells_to_keep_1idx <- get_cells_to_keep(object) + 1L
-
-  if (!is.null(cell_indices)) {
-    adt_rows <- match(cell_indices, cells_to_keep_1idx)
-    if (any(is.na(adt_rows))) {
-      warning(sprintf(
-        "%i cell_indices not in the kept-cell set; dropping.",
-        sum(is.na(adt_rows))
-      ))
-      adt_rows <- adt_rows[!is.na(adt_rows)]
+  # resolve requested cells to barcodes (the ADT matrix is keyed by barcode,
+  # not by full-set position, and may be a frozen subset of the current data)
+  requested <- if (!is.null(cell_indices)) {
+    all_names <- get_cell_names(object, filtered = FALSE)
+    if (use_cells_to_keep) {
+      keep_1idx <- get_cells_to_keep(object) + 1L
+      cell_indices <- intersect(cell_indices, keep_1idx)
     }
-    if (length(adt_rows) == 0L) {
-      stop("No valid cell_indices for the ADT matrix.")
-    }
-    mat <- mat[adt_rows, , drop = FALSE]
+    all_names[cell_indices]
+  } else if (use_cells_to_keep) {
+    get_cell_names(object, filtered = TRUE)
   } else {
-    mat <- mat[cells_to_keep_1idx, , drop = FALSE]
+    adt_names
   }
+
+  row_pos <- match(requested, adt_names)
+  if (any(is.na(row_pos))) {
+    warning(sprintf(
+      "%i requested cells are not present in the ADT matrix; dropping.",
+      sum(is.na(row_pos))
+    ))
+    row_pos <- row_pos[!is.na(row_pos)]
+  }
+  if (length(row_pos) == 0L) {
+    stop("No valid cells for the ADT matrix.")
+  }
+  mat <- mat[row_pos, , drop = FALSE]
 
   if (!is.null(gene_indices)) {
     mat <- mat[, gene_indices, drop = FALSE]
@@ -742,6 +800,7 @@ S7::method(set_pca_factors, SingleCellsMultiModal) <- function(
   modality = c("rna", "adt"),
   ...
 ) {
+  modality <- match.arg(modality)
   slot <- .cache_slot_from_modality(modality)
   checkmate::assertMatrix(pca_factor, mode = "numeric")
   S7::prop(x, slot) <- set_pca_factors(S7::prop(x, slot), pca_factor)
@@ -754,6 +813,7 @@ S7::method(set_pca_loadings, SingleCellsMultiModal) <- function(
   modality = c("rna", "adt"),
   ...
 ) {
+  modality <- match.arg(modality)
   slot <- .cache_slot_from_modality(modality)
   checkmate::assertMatrix(pca_loading, mode = "numeric")
   S7::prop(x, slot) <- set_pca_loadings(S7::prop(x, slot), pca_loading)
@@ -766,6 +826,7 @@ S7::method(set_pca_singular_vals, SingleCellsMultiModal) <- function(
   modality = c("rna", "adt"),
   ...
 ) {
+  modality <- match.arg(modality)
   slot <- .cache_slot_from_modality(modality)
   checkmate::qassert(singular_vals, "N+")
   S7::prop(x, slot) <- set_pca_singular_vals(S7::prop(x, slot), singular_vals)
@@ -776,17 +837,19 @@ S7::method(set_embedding, SingleCellsMultiModal) <- function(
   x,
   embd,
   name,
-  modality = c("rna", "adt", "other"),
+  modality = c("rna", "adt", "wnn"),
   ...
 ) {
   modality <- match.arg(modality)
   checkmate::assertMatrix(embd, mode = "numeric")
   checkmate::qassert(name, "S1")
 
-  # wnn-derived embeddings live under other_data[["wnn"]][["embeddings"]]
-  if (modality == "other") {
+  # integration embeddings live under other_data[[modality]][["embeddings"]]
+  if (modality == "wnn") {
+    slot_data <- .integration_slot(x, modality)
+    slot_data[["embeddings"]][[name]] <- embd
     other_data <- S7::prop(x, "other_data")
-    other_data[[name]] <- embd
+    other_data[[modality]] <- slot_data
     S7::prop(x, "other_data") <- other_data
     return(x)
   }
@@ -806,6 +869,7 @@ S7::method(set_knn, SingleCellsMultiModal) <- function(
   modality = c("rna", "adt"),
   ...
 ) {
+  modality <- match.arg(modality)
   slot <- .cache_slot_from_modality(modality)
   checkmate::assertClass(knn, "SingleCellNearestNeighbour")
   S7::prop(x, slot) <- set_knn(S7::prop(x, slot), knn)
@@ -818,6 +882,7 @@ S7::method(set_snn_graph, SingleCellsMultiModal) <- function(
   modality = c("rna", "adt"),
   ...
 ) {
+  modality <- match.arg(modality)
   slot <- .cache_slot_from_modality(modality)
   checkmate::assertClass(snn_graph, "igraph")
   S7::prop(x, slot) <- set_snn_graph(S7::prop(x, slot), snn_graph)
@@ -829,6 +894,7 @@ S7::method(remove_knn, SingleCellsMultiModal) <- function(
   modality = c("rna", "adt"),
   ...
 ) {
+  modality <- match.arg(modality)
   slot <- .cache_slot_from_modality(modality)
   S7::prop(x, slot) <- remove_knn(S7::prop(x, slot))
   x
@@ -839,6 +905,7 @@ S7::method(remove_snn_graph, SingleCellsMultiModal) <- function(
   modality = c("rna", "adt"),
   ...
 ) {
+  modality <- match.arg(modality)
   slot <- .cache_slot_from_modality(modality)
   S7::prop(x, slot) <- remove_snn_graph(S7::prop(x, slot))
   x
@@ -851,6 +918,7 @@ S7::method(get_pca_factors, SingleCellsMultiModal) <- function(
   modality = c("rna", "adt"),
   ...
 ) {
+  modality <- match.arg(modality)
   slot <- .cache_slot_from_modality(modality)
   res <- get_pca_factors(S7::prop(x, slot))
   if (is.null(res)) {
@@ -886,6 +954,7 @@ S7::method(get_pca_singular_val, SingleCellsMultiModal) <- function(
   modality = c("rna", "adt"),
   ...
 ) {
+  modality <- match.arg(modality)
   slot <- .cache_slot_from_modality(modality)
   get_pca_singular_val(S7::prop(x, slot))
 }
@@ -893,21 +962,27 @@ S7::method(get_pca_singular_val, SingleCellsMultiModal) <- function(
 S7::method(get_embedding, SingleCellsMultiModal) <- function(
   x,
   embd_name,
-  modality = c("rna", "adt", "other"),
+  modality = c("rna", "adt", "wnn"),
   ...
 ) {
   modality <- match.arg(modality)
+  checkmate::qassert(embd_name, "S1")
 
-  if (modality == "other") {
-    res <- S7::prop(x, "other_data")[[embd_name]]
+  if (modality == "wnn") {
+    slot_data <- .integration_slot(x, modality)
+    res <- slot_data[["embeddings"]][[embd_name]]
     if (is.null(res)) {
-      warning("The desired embedding is not available.")
+      stop(sprintf(
+        "Embedding '%s' not found for the '%s' integration.",
+        embd_name,
+        modality
+      ))
     }
+    rownames(res) <- get_cell_names(x, filtered = TRUE)
     return(res)
   }
 
   slot <- .cache_slot_from_modality(modality)
-  checkmate::qassert(embd_name, "S1")
   res <- get_embedding(S7::prop(x, slot), embd_name = embd_name)
   rownames(res) <- get_cell_names(x, filtered = TRUE)
   res
@@ -915,27 +990,47 @@ S7::method(get_embedding, SingleCellsMultiModal) <- function(
 
 S7::method(get_available_embeddings, SingleCellsMultiModal) <- function(
   x,
-  modality = c("rna", "adt"),
+  modality = c("rna", "adt", "wnn"),
   ...
 ) {
+  modality <- match.arg(modality)
+
+  # tolerant read: querying what is present should not error if absent
+  if (modality == "wnn") {
+    slot_data <- S7::prop(x, "other_data")[[modality]]
+    embds <- names(slot_data[["embeddings"]])
+    if (length(embds) == 0L) {
+      return("")
+    }
+    return(embds)
+  }
+
   slot <- .cache_slot_from_modality(modality)
   get_available_embeddings(S7::prop(x, slot))
 }
 
 S7::method(get_knn_mat, SingleCellsMultiModal) <- function(
   x,
-  modality = c("rna", "adt"),
+  modality = c("rna", "adt", "wnn"),
   ...
 ) {
+  modality <- match.arg(modality)
+  if (modality == "wnn") {
+    return(get_knn_mat(.integration_slot(x, modality)[["knn"]]))
+  }
   slot <- .cache_slot_from_modality(modality)
   get_knn_mat(S7::prop(x, slot))
 }
 
 S7::method(get_knn_dist, SingleCellsMultiModal) <- function(
   x,
-  modality = c("rna", "adt"),
+  modality = c("rna", "adt", "wnn"),
   ...
 ) {
+  modality <- match.arg(modality)
+  if (modality == "wnn") {
+    return(get_knn_dist(.integration_slot(x, modality)[["knn"]]))
+  }
   slot <- .cache_slot_from_modality(modality)
   get_knn_dist(S7::prop(x, slot))
 }
@@ -945,27 +1040,11 @@ S7::method(get_knn_obj, SingleCellsMultiModal) <- function(
   modality = c("rna", "adt", "wnn"),
   ...
 ) {
-  # checks
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsMultiModal))
-  checkmate::assertChoice(modality, c("rna", "adt", "wnn"))
-
-  # special case WNN
+  modality <- match.arg(modality)
   if (modality == "wnn") {
-    wnn_data <- S7::prop(x, "other_data")[["wnn"]]
-
-    if (is.null(wnn_data)) {
-      warning(paste(
-        "No WNN data found. Did you run generate_wnn_graph_sc()",
-        "Returning NULL."
-      ))
-      return(NULL)
-    }
-
-    knn <- wnn_data[["wnn"]][["knn"]]
-
-    return(knn)
+    return(.integration_slot(x, modality)[["knn"]])
   }
-
   slot <- .cache_slot_from_modality(modality)
   get_knn_obj(S7::prop(x, slot))
 }
@@ -975,27 +1054,26 @@ S7::method(get_snn_graph, SingleCellsMultiModal) <- function(
   modality = c("rna", "adt", "wnn"),
   ...
 ) {
-  # checks
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsMultiModal))
-  checkmate::assertChoice(modality, c("rna", "adt", "wnn"))
-
-  # special case WNN
+  modality <- match.arg(modality)
   if (modality == "wnn") {
-    wnn_data <- S7::prop(x, "other_data")[["wnn"]]
-
-    if (is.null(wnn_data)) {
-      warning(paste(
-        "No WNN data found. Did you run generate_wnn_graph_sc()",
-        "Returning NULL."
-      ))
-      return(NULL)
-    }
-
-    snn <- wnn_data[["wnn"]][["snn"]]
-
-    return(snn)
+    return(.integration_slot(x, modality)[["snn"]])
   }
-
   slot <- .cache_slot_from_modality(modality)
   get_snn_graph(S7::prop(x, slot))
+}
+
+S7::method(get_adt_names, SingleCellsMultiModal) <- function(
+  x
+) {
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsMultiModal))
+
+  adt_counts <- S7::prop(x, "adt_counts")
+
+  if (is.null(adt_counts)) {
+    warning("No ADT counts found. Returning NULL.")
+    return(NULL)
+  }
+
+  get_adt_names(adt_counts)
 }
