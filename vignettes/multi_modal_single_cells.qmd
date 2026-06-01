@@ -54,8 +54,6 @@ sc_object <- SingleCellsMultiModal(dir_data = tempdir_10x_total_seq)
 
 sc_object <- load_tenx_h5(object = sc_object, h5_path = h5_10x_path)
 
-get_sc_var(sc_object)
-
 head(sc_object)
 ```
 
@@ -127,30 +125,6 @@ cells_to_keep <- qc_df[!qc$combined, cell_id]
 sc_object <- set_cells_to_keep(sc_object, cells_to_keep)
 ```
 
-### Doublet detection
-
-```{r}
-scrublet <- scrublet_sc(
-  object = sc_object,
-  scrublet_params = params_scrublet(expected_doublet_rate = 0.12)
-)
-
-scrublet
-```
-
-```{r}
-plot(scrublet)
-```
-
-```{r}
-scrublet_obs <- get_data(scrublet)
-
-sc_object <- add_sc_new_obs(
-  object = sc_object,
-  obs_data = get_data(scrublet)
-)
-```
-
 ## Standard workflows
 
 ### RNA
@@ -186,59 +160,19 @@ head(sc_object)
 ```
 
 ```{r}
-get_sc_var(sc_object)[gene_name == "CD3D"]
-```
-
-```{r}
-sc_object <- umap_sc(
+sc_object <- tsne_sc(
   sc_object,
-  modality = "rna",
-  umap_params = manifoldsR::params_umap(init = "random")
-)
-
-plot(
-  sc_object[,
-    "ENSG00000167286",
-    return_format = "gene",
-    assay = "norm",
-    modality = "rna"
-  ] %>%
-    as.vector(),
-  sc_object[,
-    "CD3D",
-    return_format = "gene",
-    assay = "norm",
-    modality = "adt"
-  ] %>%
-    as.vector(),
-  xlab = "RNA",
-  ylab = "ADT"
-)
-
-cor(
-  sc_object[,
-    "ENSG00000156738",
-    return_format = "gene",
-    assay = "norm",
-    modality = "rna"
-  ] %>%
-    as.vector(),
-  sc_object[,
-    "CD19",
-    return_format = "gene",
-    assay = "norm",
-    modality = "adt"
-  ] %>%
-    as.vector()
+  modality = "rna"
 )
 ```
 
 ```{r}
 embedding_plot_sc(
   sc_object,
-  embedding = "umap",
+  embedding = "tsne",
   colour_by = "leiden_clustering",
-  discrete = TRUE
+  discrete = TRUE,
+  point_size = 0.5
 )
 ```
 
@@ -263,17 +197,15 @@ sc_object <- find_neighbours_sc(
 ```
 
 ```{r}
-sc_object <- umap_sc(
+sc_object <- tsne_sc(
   sc_object,
   modality = "adt"
 )
 
-get_sc_var(sc_object, modality = 'adt')[["feature_id"]]
-
 feature_plot_sc(
   sc_object,
   features = "CD3D",
-  embedding = "umap",
+  embedding = "tsne",
   expr_modality = "adt",
   embd_modality = "adt",
   point_size = 1
@@ -284,7 +216,7 @@ feature_plot_sc(
 feature_plot_sc(
   sc_object,
   features = "ENSG00000167286",
-  embedding = "umap",
+  embedding = "tsne",
   expr_modality = "rna",
   embd_modality = "adt",
   point_size = 1
@@ -305,7 +237,7 @@ feature_plot_sc(
 ```{r}
 embedding_plot_sc(
   object = sc_object,
-  embedding = "umap",
+  embedding = "tsne",
   embd_modality = "adt",
   colour_by = "leiden_clustering",
   discrete = TRUE,
@@ -323,7 +255,7 @@ sc_object <- generate_wnn_graph_sc(
 ```
 
 ```{r}
-sc_object <- umap_sc(
+sc_object <- tsne_sc(
   sc_object,
   modality = "wnn"
 )
@@ -331,7 +263,7 @@ sc_object <- umap_sc(
 feature_plot_sc(
   sc_object,
   features = "ENSG00000167286",
-  embedding = "umap",
+  embedding = "tsne",
   expr_modality = "rna",
   embd_modality = "wnn",
   point_size = 1
@@ -340,9 +272,17 @@ feature_plot_sc(
 feature_plot_sc(
   sc_object,
   features = "CD3D",
-  embedding = "umap",
+  embedding = "tsne",
   expr_modality = "adt",
   embd_modality = "wnn",
   point_size = 1
 )
+
+test <- extract_feature_pair(
+  object = sc_object,
+  feature_1 = "ENSG00000167286_rna",
+  feature_2 = "CD3D_adt"
+)
+
+ggplot(data = test, mapping = aes(x = feature_1, y = feature_2)) + geom_hex()
 ```

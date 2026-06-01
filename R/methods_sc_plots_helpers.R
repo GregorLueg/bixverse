@@ -421,7 +421,7 @@ S7::method(tsne_sc, ScOrMc) <- function(
 
   object <- set_embedding(
     x = object,
-    embd = umap_embd,
+    embd = tsne_embd,
     name = slot_name,
     modality = modality
   )
@@ -598,7 +598,7 @@ S7::method(phate_sc, ScOrMc) <- function(
 
   object <- set_embedding(
     x = object,
-    embd = umap_embd,
+    embd = phate_embd,
     name = slot_name,
     modality = modality
   )

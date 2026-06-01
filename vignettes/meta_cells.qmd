@@ -660,14 +660,15 @@ tf_dt <- data.table::fread(
   col.names = "tf"
 )
 
-vars <- get_sc_var(seacells)
-
 scenic_res <- scenic_grn_sc(
   object = seacells,
   tf_ids = tf_dt$tf,
   scenic_params = params_scenic(
     learner_type = "randomforest",
-    gene_batch_size = 64L
+    gene_batch_size = 64L,
+    # due to the small data set size, we should set 'min_samples_leaf' lower
+    # than for a massive single cell data set
+    learner_params = list(min_samples_leaf = 10L)
   ),
   .verbose = TRUE
 )
@@ -678,7 +679,6 @@ scenic_res <- scenic_grn_sc(
 scenic_res <- identify_tf_to_genes(
   scenic_res,
   n_sd = 2,
-  min_importance = 0.01,
   .verbose = TRUE
 )
 
@@ -718,7 +718,7 @@ p1 <- ggplot(umap_dt, aes(x = umap_1, y = umap_2)) +
 p2 <- ggplot(umap_dt, aes(x = umap_1, y = umap_2)) +
   geom_point(aes(fill = TCF4), size = 2.5, shape = 21) +
   theme_bw() +
-  labs(fill = "TCF AUC") +
+  labs(fill = "TCF4 AUC") +
   scale_fill_viridis_c()
 
 p1 + p2
