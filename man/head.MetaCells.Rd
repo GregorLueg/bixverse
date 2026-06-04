@@ -3,6 +3,10 @@
 \name{head.MetaCells}
 \alias{head.MetaCells}
 \title{head Method for MetaCells object}
+\usage{
+## S7 method for class <bixverse::MetaCells>
+head(x, n = 6L, ...)
+}
 \arguments{
 \item{x}{An object of class \code{MetaCells}.}
 

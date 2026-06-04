@@ -3,6 +3,10 @@
 \name{head.SingleCells}
 \alias{head.SingleCells}
 \title{head Method for SingleCells object}
+\usage{
+## S7 method for class <bixverse::SingleCells>
+head(x, n = 6L, ...)
+}
 \arguments{
 \item{x}{An object of class \code{SingleCells}.}
 

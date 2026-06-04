@@ -13,7 +13,7 @@ assertScSyntheticDataAdt(x, .var.name = checkmate::vname(x), add = NULL)
 to the heuristic implemented in checkmate.}
 
 \item{add}{Collection to store assertion messages. See
-\code{\link[checkmate:makeAssertion]{checkmate::makeAssertionFunction()}}.}
+\code{\link[checkmate:makeAssertionFunction]{checkmate::makeAssertionFunction()}}.}
 }
 \value{
 Invisibly returns the checked object if the assertion is successful.

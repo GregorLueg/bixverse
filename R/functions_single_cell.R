@@ -481,7 +481,7 @@ prepare_cell_markers <- function(obj, marker_df) {
     .(
       data = list(list(
         cell_type = cell_type[1],
-        positive_indices = gene_idx,
+        positive_indices = as.integer(gene_idx),
         negative_indices = NULL
       ))
     ),
