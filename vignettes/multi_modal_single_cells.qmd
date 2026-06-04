@@ -227,7 +227,7 @@ feature_plot_sc(
 feature_plot_sc(
   sc_object,
   features = "CD19",
-  embedding = "umap",
+  embedding = "tsne",
   expr_modality = "adt",
   embd_modality = "adt",
   point_size = 1
@@ -284,5 +284,5 @@ test <- extract_feature_pair(
   feature_2 = "CD3D_adt"
 )
 
-ggplot(data = test, mapping = aes(x = feature_1, y = feature_2)) + geom_hex()
+ggplot(data = test, mapping = aes(x = feature_1, y = feature_2)) + geom_point()
 ```
