@@ -22,6 +22,8 @@ extract_feature_plot_data(
 \item{features}{Character vector. Gene/feature IDs to extract, taken from
 \code{expr_modality}.}
 
+\item{embedding}{String. Name of the embedding.}
+
 \item{scale}{Boolean. Whether to z-score the expression values.}
 
 \item{clip}{Optional numeric. Clip z-scores if \code{scale = TRUE}.}
@@ -29,13 +31,14 @@ extract_feature_plot_data(
 \item{expr_modality}{String. Modality the expression is pulled from. One of
 \code{c("rna", "adt")}.}
 
-\item{obs_cols}{Optional character vector. Obs columns to attach.}
 \item{embd_modality}{String. Modality the embedding is pulled from. One of
 \code{c("rna", "adt", "wnn")}. Use \code{"wnn"} for WNN-derived embeddings.}
 
 \item{...}{Additional arguments forwarded to \code{\link[=extract_embedding_data]{extract_embedding_data()}} and
 onward to \code{\link[=get_embedding]{get_embedding()}}. Do not pass \code{modality} here; the embedding
 modality is set via \code{embd_modality} and passing it again will error.}
+
+\item{obs_cols}{Optional character vector. Obs columns to attach.}
 }
 \value{
 A long data.table with \code{cell_id}, \verb{dim_*}, \code{gene} and \code{expression}.

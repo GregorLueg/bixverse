@@ -10,69 +10,70 @@ dense R matrix for a given parameter if need be.
 }
 \keyword{internal}
 \section{Super class}{
-\code{\link[bixverse:upper_triangular_sym_mat]{upper_triangular_sym_mat}} -> \code{UpperTriangleDiffcorMat}
+\code{\link[bixverse:upper_triangular_sym_mat]{bixverse::upper_triangular_sym_mat}} -> \code{UpperTriangleDiffcorMat}
 }
 \section{Methods}{
 \subsection{Public methods}{
-  \itemize{
-    \item \href{#method-UpperTriangleDiffcorMat-initialize}{\code{UpperTriangleDiffcorMat$new()}}
-    \item \href{#method-UpperTriangleDiffcorMat-get_data_table}{\code{UpperTriangleDiffcorMat$get_data_table()}}
-    \item \href{#method-UpperTriangleDiffcorMat-get_cor_matrix}{\code{UpperTriangleDiffcorMat$get_cor_matrix()}}
-    \item \href{#method-UpperTriangleDiffcorMat-clone}{\code{UpperTriangleDiffcorMat$clone()}}
-  }
+\itemize{
+\item \href{#method-UpperTriangleDiffcorMat-new}{\code{UpperTriangleDiffcorMat$new()}}
+\item \href{#method-UpperTriangleDiffcorMat-get_data_table}{\code{UpperTriangleDiffcorMat$get_data_table()}}
+\item \href{#method-UpperTriangleDiffcorMat-get_cor_matrix}{\code{UpperTriangleDiffcorMat$get_cor_matrix()}}
+\item \href{#method-UpperTriangleDiffcorMat-clone}{\code{UpperTriangleDiffcorMat$clone()}}
 }
-\if{html}{\out{<details open><summary>Inherited methods</summary>
+}
+\if{html}{\out{
+<details open><summary>Inherited methods</summary>
 <ul>
-  <li><span class="pkg-link" data-pkg="bixverse" data-topic="upper_triangular_sym_mat" data-id="get_data"><a href='../../bixverse/html/upper_triangular_sym_mat.html#method-upper_triangular_sym_mat-get_data'><code>upper_triangular_sym_mat$get_data()</code></a></span></li>
-  <li><span class="pkg-link" data-pkg="bixverse" data-topic="upper_triangular_sym_mat" data-id="get_sparse_matrix"><a href='../../bixverse/html/upper_triangular_sym_mat.html#method-upper_triangular_sym_mat-get_sparse_matrix'><code>upper_triangular_sym_mat$get_sparse_matrix()</code></a></span></li>
-  <li><span class="pkg-link" data-pkg="bixverse" data-topic="upper_triangular_sym_mat" data-id="get_sym_matrix"><a href='../../bixverse/html/upper_triangular_sym_mat.html#method-upper_triangular_sym_mat-get_sym_matrix'><code>upper_triangular_sym_mat$get_sym_matrix()</code></a></span></li>
-  <li><span class="pkg-link" data-pkg="bixverse" data-topic="upper_triangular_sym_mat" data-id="print"><a href='../../bixverse/html/upper_triangular_sym_mat.html#method-upper_triangular_sym_mat-print'><code>upper_triangular_sym_mat$print()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="bixverse" data-topic="upper_triangular_sym_mat" data-id="get_data"><a href='../../bixverse/html/upper_triangular_sym_mat.html#method-upper_triangular_sym_mat-get_data'><code>bixverse::upper_triangular_sym_mat$get_data()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="bixverse" data-topic="upper_triangular_sym_mat" data-id="get_sparse_matrix"><a href='../../bixverse/html/upper_triangular_sym_mat.html#method-upper_triangular_sym_mat-get_sparse_matrix'><code>bixverse::upper_triangular_sym_mat$get_sparse_matrix()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="bixverse" data-topic="upper_triangular_sym_mat" data-id="get_sym_matrix"><a href='../../bixverse/html/upper_triangular_sym_mat.html#method-upper_triangular_sym_mat-get_sym_matrix'><code>bixverse::upper_triangular_sym_mat$get_sym_matrix()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="bixverse" data-topic="upper_triangular_sym_mat" data-id="print"><a href='../../bixverse/html/upper_triangular_sym_mat.html#method-upper_triangular_sym_mat-print'><code>bixverse::upper_triangular_sym_mat$print()</code></a></span></li>
 </ul>
-</details>}}
+</details>
+}}
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-UpperTriangleDiffcorMat-initialize"></a>}}
-\if{latex}{\out{\hypertarget{method-UpperTriangleDiffcorMat-initialize}{}}}
-\subsection{\code{UpperTriangleDiffcorMat$new()}}{
-  Initialises the R6 class.
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{UpperTriangleDiffcorMat$new(diff_cor_res, features)}
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Arguments}{
-    \if{html}{\out{<div class="arguments">}}
-    \describe{
-      \item{\code{diff_cor_res}}{A list of differential correlation results.}
-      \item{\code{features}}{String vector. The features of the correlation matrices.}
-    }
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Returns}{
-    Returns the initialised class.
-  }
+\if{html}{\out{<a id="method-UpperTriangleDiffcorMat-new"></a>}}
+\if{latex}{\out{\hypertarget{method-UpperTriangleDiffcorMat-new}{}}}
+\subsection{Method \code{new()}}{
+Initialises the R6 class.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{UpperTriangleDiffcorMat$new(diff_cor_res, features)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{diff_cor_res}}{A list of differential correlation results.}
+
+\item{\code{features}}{String vector. The features of the correlation matrices.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+Returns the initialised class.
+}
+}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-UpperTriangleDiffcorMat-get_data_table"></a>}}
 \if{latex}{\out{\hypertarget{method-UpperTriangleDiffcorMat-get_data_table}{}}}
-\subsection{\code{UpperTriangleDiffcorMat$get_data_table()}}{
-  Returns the data in form of a data.table.
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{UpperTriangleDiffcorMat$get_data_table(factor = FALSE, .verbose = TRUE)}
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Arguments}{
-    \if{html}{\out{<div class="arguments">}}
-    \describe{
-      \item{\code{factor}}{Boolean. Shall the string columns be transformed into
+\subsection{Method \code{get_data_table()}}{
+Returns the data in form of a data.table.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{UpperTriangleDiffcorMat$get_data_table(factor = FALSE, .verbose = TRUE)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{factor}}{Boolean. Shall the string columns be transformed into
 factors. Reduces size of the object; however, takes longer to generate.}
-      \item{\code{.verbose}}{Boolean. Controls verbosity.}
-    }
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Returns}{
-    A data.table with three columns:
+
+\item{\code{.verbose}}{Boolean. Controls verbosity.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+A data.table with three columns:
 \itemize{
 \item feature_a: The name of the first feature in the correlation matrix.
 \item feature_b: The name of the second feature in the correlation
@@ -84,53 +85,49 @@ features.
 \item z_score: The differential correlation z-score.
 \item p_val: The p-value of the differential correlation.
 }
-  }
 }
-
+}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-UpperTriangleDiffcorMat-get_cor_matrix"></a>}}
 \if{latex}{\out{\hypertarget{method-UpperTriangleDiffcorMat-get_cor_matrix}{}}}
-\subsection{\code{UpperTriangleDiffcorMat$get_cor_matrix()}}{
-  Return the full correlation matrix of either sample.
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{UpperTriangleDiffcorMat$get_cor_matrix(
+\subsection{Method \code{get_cor_matrix()}}{
+Return the full correlation matrix of either sample.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{UpperTriangleDiffcorMat$get_cor_matrix(
   to_ret = c("cor_a", "cor_b"),
   .verbose = TRUE
-)}
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Arguments}{
-    \if{html}{\out{<div class="arguments">}}
-    \describe{
-      \item{\code{to_ret}}{String. Option of \verb{("cor_a", "cor_b")}, pending on which
-correlation matrix you want to retrieve.}
-      \item{\code{.verbose}}{Boolean. Controls verbosity.}
-    }
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Returns}{
-    Returns the specified correlation matrix as a dense R matrix.
-  }
+)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{to_ret}}{String. Option of \verb{("cor_a", "cor_b")}, pending on which
+correlation matrix you want to retrieve.}
+
+\item{\code{.verbose}}{Boolean. Controls verbosity.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+Returns the specified correlation matrix as a dense R matrix.
+}
+}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-UpperTriangleDiffcorMat-clone"></a>}}
 \if{latex}{\out{\hypertarget{method-UpperTriangleDiffcorMat-clone}{}}}
-\subsection{\code{UpperTriangleDiffcorMat$clone()}}{
-  The objects of this class are cloneable with this method.
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{UpperTriangleDiffcorMat$clone(deep = FALSE)}
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Arguments}{
-    \if{html}{\out{<div class="arguments">}}
-    \describe{
-      \item{\code{deep}}{Whether to make a deep clone.}
-    }
-    \if{html}{\out{</div>}}
-  }
+\subsection{Method \code{clone()}}{
+The objects of this class are cloneable with this method.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{UpperTriangleDiffcorMat$clone(deep = FALSE)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{deep}}{Whether to make a deep clone.}
+}
+\if{html}{\out{</div>}}
+}
+}
 }

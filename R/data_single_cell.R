@@ -442,6 +442,98 @@ write_cellranger_output <- function(
   invisible()
 }
 
+### write 10x h5 files ---------------------------------------------------------
+
+#' Helper function to write data to a 10x CellRanger-style h5 file
+#'
+#' @param f_path String. Output path.
+#' @param counts Sparse matrix (`dgRMatrix` or `dgCMatrix`), cells x features.
+#' @param barcodes Character. Cell barcodes, length `nrow(counts)`.
+#' @param features data.table with `id` and `name` of length `ncol(counts)`. For
+#' v3 may include `feature_type`; defaults to `"Gene Expression"` if absent.
+#' @param version One of `"v3"` or `"v2"`.
+#' @param overwrite Boolean.
+#'
+#' @return Invisible.
+#'
+#' @export
+write_tenx_h5_sc <- function(
+  f_path,
+  counts,
+  barcodes,
+  features,
+  version = c("v3", "v2"),
+  overwrite = TRUE
+) {
+  version <- match.arg(version)
+
+  checkmate::assertPathForOutput(f_path, overwrite = TRUE)
+  checkmate::assert(
+    checkmate::testClass(counts, "dgRMatrix"),
+    checkmate::testClass(counts, "dgCMatrix")
+  )
+  checkmate::assertCharacter(barcodes, len = nrow(counts))
+  checkmate::assertDataTable(features, nrows = ncol(counts))
+  checkmate::assertSubset(c("id", "name"), names(features))
+  checkmate::qassert(overwrite, "B1")
+
+  if (file.exists(f_path) && !overwrite) {
+    stop("The h5 file already exists and overwrite = FALSE.")
+  } else if (file.exists(f_path)) {
+    file.remove(f_path)
+  }
+
+  # cells x features dgRMatrix has the same slot layout as a
+  # features x cells dgCMatrix (which is what 10x stores).
+  counts_r <- if (inherits(counts, "dgRMatrix")) {
+    counts
+  } else {
+    as(counts, "RsparseMatrix")
+  }
+
+  indptr <- as.integer(counts_r@p)
+  indices <- as.integer(counts_r@j)
+  data <- as.integer(counts_r@x)
+  shape <- as.integer(c(ncol(counts), nrow(counts)))
+
+  rhdf5::h5createFile(f_path)
+  on.exit(tryCatch(rhdf5::h5closeAll(), error = function(e) invisible()))
+
+  if (version == "v3") {
+    rhdf5::h5createGroup(f_path, "matrix")
+    rhdf5::h5createGroup(f_path, "matrix/features")
+
+    rhdf5::h5write(data, f_path, "matrix/data")
+    rhdf5::h5write(indices, f_path, "matrix/indices")
+    rhdf5::h5write(indptr, f_path, "matrix/indptr")
+    rhdf5::h5write(shape, f_path, "matrix/shape")
+    rhdf5::h5write(barcodes, f_path, "matrix/barcodes")
+    rhdf5::h5write(as.character(features$id), f_path, "matrix/features/id")
+    rhdf5::h5write(
+      as.character(features$name),
+      f_path,
+      "matrix/features/name"
+    )
+
+    feature_type <- if ("feature_type" %in% names(features)) {
+      as.character(features$feature_type)
+    } else {
+      rep("Gene Expression", nrow(features))
+    }
+    rhdf5::h5write(feature_type, f_path, "matrix/features/feature_type")
+  } else {
+    rhdf5::h5write(data, f_path, "data")
+    rhdf5::h5write(indices, f_path, "indices")
+    rhdf5::h5write(indptr, f_path, "indptr")
+    rhdf5::h5write(shape, f_path, "shape")
+    rhdf5::h5write(barcodes, f_path, "barcodes")
+    rhdf5::h5write(as.character(features$id), f_path, "genes")
+    rhdf5::h5write(as.character(features$name), f_path, "gene_names")
+  }
+
+  invisible()
+}
+
 ## example data sets -----------------------------------------------------------
 
 ### pbmc3k ---------------------------------------------------------------------

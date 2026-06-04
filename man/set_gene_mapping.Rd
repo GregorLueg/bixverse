@@ -9,9 +9,6 @@
 set_gene_mapping(x, gene_map)
 
 \method{set_gene_mapping}{ScMap}(x, gene_map)
-
-## S7 method for class <bixverse::SingleCells>
-set_gene_mapping(x, gene_map)
 }
 \arguments{
 \item{x}{An object to set gene mapping for}

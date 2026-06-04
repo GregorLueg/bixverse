@@ -125,6 +125,17 @@ S7::method(scenic_grn_sc, MetaCells) <- function(
     get_cell_indices(object, cell_ids = cells_to_take, rust_index = FALSE)
   }
 
+  # reduce this here for meta cells...
+  if (scenic_params$min_samples_leaf >= 20) {
+    if (.verbose) {
+      message(paste(
+        "The mean leafs per sample is set quite high for meta cells.",
+        "Reducing to 10L."
+      ))
+    }
+    scenic_params$min_samples_leaf <- 10L
+  }
+
   # resolve target genes
   if (is.null(genes_to_take)) {
     if (.verbose) {

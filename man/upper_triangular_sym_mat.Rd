@@ -11,170 +11,159 @@ if need be.
 }
 \section{Methods}{
 \subsection{Public methods}{
-  \itemize{
-    \item \href{#method-upper_triangular_sym_mat-initialize}{\code{upper_triangular_sym_mat$new()}}
-    \item \href{#method-upper_triangular_sym_mat-print}{\code{upper_triangular_sym_mat$print()}}
-    \item \href{#method-upper_triangular_sym_mat-get_data_table}{\code{upper_triangular_sym_mat$get_data_table()}}
-    \item \href{#method-upper_triangular_sym_mat-get_sym_matrix}{\code{upper_triangular_sym_mat$get_sym_matrix()}}
-    \item \href{#method-upper_triangular_sym_mat-get_sparse_matrix}{\code{upper_triangular_sym_mat$get_sparse_matrix()}}
-    \item \href{#method-upper_triangular_sym_mat-get_data}{\code{upper_triangular_sym_mat$get_data()}}
-    \item \href{#method-upper_triangular_sym_mat-clone}{\code{upper_triangular_sym_mat$clone()}}
-  }
+\itemize{
+\item \href{#method-upper_triangular_sym_mat-new}{\code{upper_triangular_sym_mat$new()}}
+\item \href{#method-upper_triangular_sym_mat-print}{\code{upper_triangular_sym_mat$print()}}
+\item \href{#method-upper_triangular_sym_mat-get_data_table}{\code{upper_triangular_sym_mat$get_data_table()}}
+\item \href{#method-upper_triangular_sym_mat-get_sym_matrix}{\code{upper_triangular_sym_mat$get_sym_matrix()}}
+\item \href{#method-upper_triangular_sym_mat-get_sparse_matrix}{\code{upper_triangular_sym_mat$get_sparse_matrix()}}
+\item \href{#method-upper_triangular_sym_mat-get_data}{\code{upper_triangular_sym_mat$get_data()}}
+\item \href{#method-upper_triangular_sym_mat-clone}{\code{upper_triangular_sym_mat$clone()}}
+}
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-upper_triangular_sym_mat-initialize"></a>}}
-\if{latex}{\out{\hypertarget{method-upper_triangular_sym_mat-initialize}{}}}
-\subsection{\code{upper_triangular_sym_mat$new()}}{
-  Initialises the R6 class.
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{upper_triangular_sym_mat$new(values, features, shift)}
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Arguments}{
-    \if{html}{\out{<div class="arguments">}}
-    \describe{
-      \item{\code{values}}{Numerical vector. The correlation coefficients of the
-upper triangular correlation matrix stored as a row-major vector}
-      \item{\code{features}}{String vector. The features of the correlation matrix.}
-      \item{\code{shift}}{Integer. Was a shift applied during the calculation of the
-upper triangular matrix. Typically 0 (diagonal included) or 1 (diagonal
-not included)}
-    }
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Returns}{
-    Returns the initialised class.
-  }
+\if{html}{\out{<a id="method-upper_triangular_sym_mat-new"></a>}}
+\if{latex}{\out{\hypertarget{method-upper_triangular_sym_mat-new}{}}}
+\subsection{Method \code{new()}}{
+Initialises the R6 class.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{upper_triangular_sym_mat$new(values, features, shift)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{values}}{Numerical vector. The correlation coefficients of the
+upper triangular correlation matrix stored as a row-major vector}
+
+\item{\code{features}}{String vector. The features of the correlation matrix.}
+
+\item{\code{shift}}{Integer. Was a shift applied during the calculation of the
+upper triangular matrix. Typically 0 (diagonal included) or 1 (diagonal
+not included)}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+Returns the initialised class.
+}
+}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-upper_triangular_sym_mat-print"></a>}}
 \if{latex}{\out{\hypertarget{method-upper_triangular_sym_mat-print}{}}}
-\subsection{\code{upper_triangular_sym_mat$print()}}{
-  Print the class
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{upper_triangular_sym_mat$print()}
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Returns}{
-    Returns the initialised class
-  }
+\subsection{Method \code{print()}}{
+Print the class
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{upper_triangular_sym_mat$print()}\if{html}{\out{</div>}}
 }
 
+\subsection{Returns}{
+Returns the initialised class
+}
+}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-upper_triangular_sym_mat-get_data_table"></a>}}
 \if{latex}{\out{\hypertarget{method-upper_triangular_sym_mat-get_data_table}{}}}
-\subsection{\code{upper_triangular_sym_mat$get_data_table()}}{
-  Returns the data in form of a data.table.
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{upper_triangular_sym_mat$get_data_table(factor = FALSE, .verbose = TRUE)}
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Arguments}{
-    \if{html}{\out{<div class="arguments">}}
-    \describe{
-      \item{\code{factor}}{Boolean. Shall the string columns be transformed into
+\subsection{Method \code{get_data_table()}}{
+Returns the data in form of a data.table.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{upper_triangular_sym_mat$get_data_table(factor = FALSE, .verbose = TRUE)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{factor}}{Boolean. Shall the string columns be transformed into
 factors. Reduces size of the object; however, takes longer to generate.}
-      \item{\code{.verbose}}{Boolean. Controls verbosity.}
-    }
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Returns}{
-    A data.table with three columns:
+
+\item{\code{.verbose}}{Boolean. Controls verbosity.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+A data.table with three columns:
 \itemize{
 \item feature_a: The name of the first feature in the correlation matrix.
 \item feature_b: The name of the second feature in the correlation
 matrix.
 \item cor: The correlation coefficients between these two features.
 }
-  }
 }
-
+}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-upper_triangular_sym_mat-get_sym_matrix"></a>}}
 \if{latex}{\out{\hypertarget{method-upper_triangular_sym_mat-get_sym_matrix}{}}}
-\subsection{\code{upper_triangular_sym_mat$get_sym_matrix()}}{
-  Return the full correlation matrix.
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{upper_triangular_sym_mat$get_sym_matrix(.verbose = TRUE)}
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Arguments}{
-    \if{html}{\out{<div class="arguments">}}
-    \describe{
-      \item{\code{.verbose}}{Boolean. Controls verbosity.}
-    }
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Returns}{
-    Returns the correlation matrix as a dense R matrix.
-  }
+\subsection{Method \code{get_sym_matrix()}}{
+Return the full correlation matrix.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{upper_triangular_sym_mat$get_sym_matrix(.verbose = TRUE)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{.verbose}}{Boolean. Controls verbosity.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+Returns the correlation matrix as a dense R matrix.
+}
+}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-upper_triangular_sym_mat-get_sparse_matrix"></a>}}
 \if{latex}{\out{\hypertarget{method-upper_triangular_sym_mat-get_sparse_matrix}{}}}
-\subsection{\code{upper_triangular_sym_mat$get_sparse_matrix()}}{
-  Return a sparse version of the correlation matrix
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{upper_triangular_sym_mat$get_sparse_matrix(.verbose = TRUE)}
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Arguments}{
-    \if{html}{\out{<div class="arguments">}}
-    \describe{
-      \item{\code{.verbose}}{Boolean. Controls verbosity}
-    }
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Returns}{
-    The sparse matrix.
-  }
+\subsection{Method \code{get_sparse_matrix()}}{
+Return a sparse version of the correlation matrix
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{upper_triangular_sym_mat$get_sparse_matrix(.verbose = TRUE)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{.verbose}}{Boolean. Controls verbosity}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+The sparse matrix.
+}
+}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-upper_triangular_sym_mat-get_data"></a>}}
 \if{latex}{\out{\hypertarget{method-upper_triangular_sym_mat-get_data}{}}}
-\subsection{\code{upper_triangular_sym_mat$get_data()}}{
-  Return the correlation data and shift
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{upper_triangular_sym_mat$get_data()}
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Returns}{
-    A list with
+\subsection{Method \code{get_data()}}{
+Return the correlation data and shift
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{upper_triangular_sym_mat$get_data()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+A list with
 \itemize{
 \item cor_data - Numeric vector. The values.
 \item features - String. The feature names.
 \item n_features - Integer. Number of initial features.
 \item shift - Integer. The applied shift.
 }
-  }
 }
-
+}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-upper_triangular_sym_mat-clone"></a>}}
 \if{latex}{\out{\hypertarget{method-upper_triangular_sym_mat-clone}{}}}
-\subsection{\code{upper_triangular_sym_mat$clone()}}{
-  The objects of this class are cloneable with this method.
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{upper_triangular_sym_mat$clone(deep = FALSE)}
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Arguments}{
-    \if{html}{\out{<div class="arguments">}}
-    \describe{
-      \item{\code{deep}}{Whether to make a deep clone.}
-    }
-    \if{html}{\out{</div>}}
-  }
+\subsection{Method \code{clone()}}{
+The objects of this class are cloneable with this method.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{upper_triangular_sym_mat$clone(deep = FALSE)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{deep}}{Whether to make a deep clone.}
+}
+\if{html}{\out{</div>}}
+}
+}
 }
