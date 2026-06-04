@@ -373,19 +373,6 @@ sctype_scores <- calc_sc_type_scores(
   object = sc_object,
   cell_marker_list = marker_list
 )
-cell_type_anno <- score_clusters(
-  sctype_scores,
-  sc_object[[]][["leiden_clusters"]]
-)
-add_sctype <- sc_object[[]][, .(cell_idx, leiden_clusters)] %>%
-  .[,
-    sctype := cell_type_anno$cell_type[match(
-      leiden_clusters,
-      cell_type_anno$cluster_id
-    )]
-  ]
-sc_object[["sc_type"]] <- add_sctype$sctype
-```
 
 ```{r}
 embedding_plot_sc(
