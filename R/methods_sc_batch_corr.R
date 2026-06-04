@@ -640,6 +640,8 @@ S7::method(bbknn_sc, SingleCells) <- function(
   }
 
   batch_index <- unlist(object[[batch_column]])
+  batch_factor <- factor(batch_index)
+  batch_index <- as.integer(batch_factor) - 1L
 
   if (!length(levels(factor(batch_index))) > 1) {
     warning("The batch column only has one batch. Returning object as is.")

@@ -134,8 +134,7 @@ qc <- run_cell_qc(
   metrics = metrics,
   cells_to_keep = get_cells_to_keep(sc_object),
   directions = directions,
-  threshold = 3,
-  groups = qc_df$donor_id
+  threshold = 3
 )
 
 
@@ -368,11 +367,33 @@ cell_markers_dt <- stack(cell_markers) %>%
   .[, gene_id := var$gene_id[match(gene_symbol, var$gene_symbol)]] %>%
   .[!is.na(gene_id), ]
 
+## Prepare the list of markers
 marker_list <- prepare_cell_markers(sc_object, cell_markers_dt)
+## Calculate the score for each cell
 sctype_scores <- calc_sc_type_scores(
   object = sc_object,
   cell_marker_list = marker_list
 )
+## Annotate the clusters
+cell_type_anno <- score_clusters(
+  sctype_scores,
+  sc_object[[]][["leiden_clusters"]]
+)
+```
+
+We can add the cell type annotation back into the `sc_object`.
+
+```{r}
+obs <- sc_object[[]][, .(cell_idx, leiden_clusters)]
+add_sctype <- setNames(
+  cell_type_anno$cell_type[match(
+    obs$leiden_clusters,
+    cell_type_anno$cluster_id
+  )],
+  nm = obs$cell_idx
+)
+sc_object[["sc_type"]] <- add_sctype
+``` 
 
 ```{r}
 embedding_plot_sc(
@@ -380,9 +401,10 @@ embedding_plot_sc(
   embedding = "umap",
   colour_by = "sc_type",
   label_by = "sc_type",
-  discrete = F,
-  point_alpha = 0.2
-)
+  discrete = T
+) +
+  labs(color = "Cell type") +
+  theme(legend.position = "bottom")
 ```
 
 Alternatively, we can also show the expression levels of the cell type markers using the dotplot plotting function `dot_plot_sc` from `bixverse.plots`. 
@@ -410,16 +432,17 @@ In addition to the feature plot (`feature_plot_sc`), we can also represent the g
 #| label: feature plot
 #| fig-width: 10
 #| fig-height: 4
-genes <- c(
+features <- symbol_to_ensembl[c(
   "CD3D",
   "IL7R",
   "CD8A",
   "MS4A1"
-)
+)]
+feature_labels <- setNames(names(features), nm = features)
 stacked_violin_plot_sc(
   sc_object,
-  features = ensembl_to_symbol[genes],
-  # feature_labels = symbol_to_ensembl[genes],
+  features = features,
+  feature_labels = feature_labels,
   grouping_variable = "leiden_clusters"
 )
 ```
