@@ -59,11 +59,6 @@ fn rs_sc_type(
     let cell_markers: Vec<CellTypeMarkers> = process_cell_markers(cell_markers)?;
     let cell_indices = cell_indices.r_int_convert();
 
-    println!(
-        "Are the indices propagated through ... ? {:?}",
-        cell_markers[0].positive_indices
-    );
-
     let res: SctypeRes = run_sctype(
         f_path,
         &cell_indices,
