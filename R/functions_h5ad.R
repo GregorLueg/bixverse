@@ -473,3 +473,173 @@ read_h5ad_x_summary <- function(f_path, n_sample = 10000L) {
     sample = vals_sample
   )
 }
+
+# h5 10x input functions and helpers -------------------------------------------
+
+## helpers ---------------------------------------------------------------------
+
+#' Detect 10x h5 version and read dimensions
+#'
+#' @param f_path Path to the 10x CellRanger h5 file.
+#'
+#' @return A list with `version` (`"v2"`/`"v3"`), `n_cells` and `n_genes`.
+#'
+#' @keywords internal
+get_tenx_h5_metadata <- function(f_path) {
+  checkmate::assertFileExists(f_path)
+
+  content <- rhdf5::h5ls(f_path) |> data.table::setDT()
+  on.exit(
+    tryCatch(rhdf5::h5closeAll(), error = function(e) invisible()),
+    add = TRUE
+  )
+
+  is_v3 <- nrow(content[group == "/matrix" & name == "data"]) > 0L
+  is_v2 <- nrow(content[group == "/" & name == "data"]) > 0L &&
+    nrow(content[group == "/" & name == "genes"]) > 0L
+
+  version <- if (is_v3) {
+    "v3"
+  } else if (is_v2) {
+    "v2"
+  } else {
+    stop(paste(
+      "Could not detect 10x h5 version: neither v3 ('/matrix/data')",
+      "nor v2 ('/data' + '/genes') layout found."
+    ))
+  }
+
+  shape_path <- if (version == "v3") "matrix/shape" else "shape"
+  shape <- as.integer(rhdf5::h5read(f_path, shape_path))
+
+  list(version = version, n_genes = shape[1], n_cells = shape[2])
+}
+
+#' Detect likely isotype-control features by name pattern
+#'
+#' @param feature_names Character. ADT feature names (matrix colnames).
+#' @param pattern String. Case-insensitive regex. Defaults to `"isotype"`.
+#'
+#' @return Character vector of matching names, for inspection before passing
+#' to [add_adt_counts_sc()] as `isotype_names`.
+#'
+#' @export
+detect_adt_isotypes <- function(feature_names, pattern = "isotype") {
+  checkmate::qassert(feature_names, "S+")
+  checkmate::qassert(pattern, "S1")
+
+  grep(pattern, feature_names, ignore.case = TRUE, value = TRUE)
+}
+
+#' Return the ADT feature names removing the isotypes
+#'
+#' @param feature_names Character. ADT feature names (matrix colnames or
+#' from [get_adt_names()]).
+#' @param pattern String. Case-insensitive regex. Defaults to `"isotype"`.
+#'
+#' @return Character vector of ADT features, but anything with `"isotype"`.
+#'
+#' @export
+remove_adt_isotypes <- function(feature_names, pattern = "isotype") {
+  checkmate::qassert(feature_names, "S+")
+  checkmate::qassert(pattern, "S1")
+
+  feature_names[!grepl(pattern, feature_names)]
+}
+
+## eda -------------------------------------------------------------------------
+
+#' Read barcode and feature tables and metadata from a 10x h5 file
+#'
+#' @description
+#' Useful for exploring the data stored in a 10x CellRanger v2/v3 h5 file,
+#' including the breakdown of feature types in a multi-modal file.
+#'
+#' @param f_path File path to the 10x `.h5` file.
+#'
+#' @return A list with:
+#' \itemize{
+#'   \item obs - data.table of barcodes
+#'   \item var - data.table of features (id, name, and feature_type for v3)
+#'   \item dims - named integer vector c(obs, var)
+#'   \item version - "v2" or "v3"
+#'   \item feature_types - named integer vector of feature_type counts (v3
+#'   only, otherwise NULL)
+#' }
+#'
+#' @export
+read_tenx_h5_metadata <- function(f_path) {
+  checkmate::assertFileExists(f_path)
+  on.exit(tryCatch(rhdf5::h5closeAll(), error = function(e) invisible()))
+
+  meta <- get_tenx_h5_metadata(f_path)
+  version <- meta$version
+
+  barcodes_path <- if (version == "v3") "matrix/barcodes" else "barcodes"
+  obs <- data.table::data.table(
+    .id = as.character(rhdf5::h5read(f_path, barcodes_path))
+  )
+
+  var <- if (version == "v3") {
+    data.table::data.table(
+      .id = as.character(rhdf5::h5read(f_path, "matrix/features/id")),
+      name = as.character(rhdf5::h5read(f_path, "matrix/features/name")),
+      feature_type = as.character(
+        rhdf5::h5read(f_path, "matrix/features/feature_type")
+      )
+    )
+  } else {
+    data.table::data.table(
+      .id = as.character(rhdf5::h5read(f_path, "genes")),
+      name = as.character(rhdf5::h5read(f_path, "gene_names"))
+    )
+  }
+
+  feature_types <- if (version == "v3") {
+    table(var$feature_type) |> (\(x) setNames(as.integer(x), names(x)))()
+  } else {
+    NULL
+  }
+
+  list(
+    obs = obs,
+    var = var,
+    dims = c(obs = meta$n_cells, var = meta$n_genes),
+    version = version,
+    feature_types = feature_types
+  )
+}
+
+## i/o -------------------------------------------------------------------------
+
+#' Read in 10x h5 ADT data
+#'
+#' @description
+#' Helper function to load in ADT counts from h5. Leverages Rust under the
+#' hood for faster filtering and reading.
+#'
+#' @param f_path String. File to the h5 file from which to read the ADT counts.
+#' @param feature_type String. The feature type to return. Defaults here to
+#' `"Antibody Capture"`
+#'
+#' @returns A dense matrix of cells x features
+#'
+#' @export
+read_tenx_h5_adt <- function(f_path, feature_type = "Antibody Capture") {
+  # checks
+  checkmate::assertFileExists(f_path)
+
+  # function
+  meta <- get_tenx_h5_metadata(path.expand(f_path))
+
+  res <- rs_read_tenx_h5_modality(
+    f_path = path.expand(f_path),
+    version = meta$version,
+    feature_type = feature_type
+  )
+
+  m <- res$counts
+  rownames(m) <- res$barcodes
+  colnames(m) <- res$features
+  m
+}

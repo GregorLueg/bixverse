@@ -311,3 +311,32 @@ pub fn process_cell_markers(r_list: List) -> Result<Vec<CellTypeMarkers>> {
 
     Ok(res)
 }
+
+///////////////////////////////////////
+// Hotspot working size calculations //
+///////////////////////////////////////
+
+/// Derive a panel size from a working-memory budget for the streaming pair path.
+///
+/// Working set is roughly `20 * n_cells * panel_size` bytes (two resident
+/// panels plus transient load buffers); the `n_genes^2` output matrices sit on
+/// top and are not controlled here. Clamps to `[512, n_genes]`: below ~512 the
+/// GEMM blocks are too small to be efficient, and `panel_size == n_genes` is the
+/// single-panel (no-reload) case.
+///
+/// ### Parmas
+///
+/// * `working_mem_gb` - Working memory to allocate here
+/// * `n_cells` - Number of cells
+/// * `n_genes` - Number of genes
+///
+/// ### Returns
+///
+/// The panel size
+pub fn panel_size_from_mem(working_mem_gb: f64, n_cells: usize, n_genes: usize) -> usize {
+    const BYTES_PER_GENE_PER_CELL: f64 = 20.0;
+    let budget = working_mem_gb * (1u64 << 30) as f64;
+    let raw = (budget / (BYTES_PER_GENE_PER_CELL * n_cells.max(1) as f64)).floor() as usize;
+    let lo = 512.min(n_genes.max(1));
+    raw.clamp(lo, n_genes.max(1))
+}

@@ -10,6 +10,8 @@
 #' @returns If `a` is not `NULL`, a; otherwise b.
 #'
 #' @keywords internal
+#'
+#' @noRd
 `%||%` <- function(a, b) {
   if (!is.null(a)) {
     return(a)

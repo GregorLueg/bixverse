@@ -341,10 +341,10 @@ hotspot_autocor <- hotspot_autocor_sc(
 
 hotspot_autocor[, gene_symbol := ensembl_to_symbol[gene_id]]
 
-head(hotspot_autocor[order(fdr)], 20L)
+head(hotspot_autocor[order(fdr)], 25L)
 ```
 
-Known PBMC markers (LYZ, CD3D, NKG7, etc.) should appear among the top hits.
+You should get a set of well known cell type markers here...
 
 ### Gene-gene local correlations and modules
 

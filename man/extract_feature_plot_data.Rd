@@ -10,15 +10,17 @@ extract_feature_plot_data(
   embedding,
   scale = FALSE,
   clip = NULL,
-  modality = c("rna", "adt"),
   obs_col = NULL,
+  expr_modality = c("rna", "adt"),
+  embd_modality = c("rna", "adt", "wnn"),
   ...
 )
 }
 \arguments{
 \item{object}{A single cell class.}
 
-\item{features}{Character vector. Gene IDs to extract.}
+\item{features}{Character vector. Gene/feature IDs to extract, taken from
+\code{expr_modality}.}
 
 \item{embedding}{String. Name of the embedding.}
 
@@ -26,9 +28,15 @@ extract_feature_plot_data(
 
 \item{clip}{Optional numeric. Clip z-scores if \code{scale = TRUE}.}
 
-\item{modality}{String. One of \code{c("rna", "adt")}.}
+\item{expr_modality}{String. Modality the expression is pulled from. One of
+\code{c("rna", "adt")}.}
 
-\item{...}{Additional arguments forwarded to \code{\link[=extract_embedding_data]{extract_embedding_data()}}.}
+\item{embd_modality}{String. Modality the embedding is pulled from. One of
+\code{c("rna", "adt", "wnn")}. Use \code{"wnn"} for WNN-derived embeddings.}
+
+\item{...}{Additional arguments forwarded to \code{\link[=extract_embedding_data]{extract_embedding_data()}} and
+onward to \code{\link[=get_embedding]{get_embedding()}}. Do not pass \code{modality} here; the embedding
+modality is set via \code{embd_modality} and passing it again will error.}
 
 \item{obs_cols}{Optional character vector. Obs columns to attach.}
 }
@@ -37,5 +45,11 @@ A long data.table with \code{cell_id}, \verb{dim_*}, \code{gene} and \code{expre
 }
 \description{
 Combines \code{\link[=extract_gene_expression]{extract_gene_expression()}} with \code{\link[=extract_embedding_data]{extract_embedding_data()}} and
-melts to long format, ready for faceted feature plots.
+melts to long format, ready for faceted feature plots. The expression
+source and the embedding source are chosen independently via
+\code{expr_modality} and \code{embd_modality}, so you can colour an embedding from
+one modality by expression from another (e.g. RNA expression on an
+ADT-derived UMAP, or either modality on a WNN embedding). All sources key
+on the same kept-cell barcodes, so the merge stays aligned regardless of
+the chosen combination.
 }

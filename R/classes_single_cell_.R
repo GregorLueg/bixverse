@@ -362,7 +362,7 @@ get_cell_info.ScMap <- function(x, filtered = TRUE) {
   if (filtered) {
     cells_to_keep <- get_cells_to_keep(x)
     if (length(cells_to_keep) > 0) {
-      cell_names <- cell_names[cells_to_keep + 1]
+      cell_mapping <- cell_mapping[cells_to_keep + 1]
     }
   }
 
@@ -1145,7 +1145,7 @@ finalise_matrix <- function(
     if (is.null(gene_indices)) {
       colnames(matrix) <- gene_names
     } else {
-      matrix <- matrix[, gene_indices]
+      matrix <- matrix[, gene_indices, drop = FALSE]
       colnames(matrix) <- gene_names[gene_indices]
     }
   } else {
@@ -1159,7 +1159,7 @@ finalise_matrix <- function(
     if (is.null(cell_indices)) {
       rownames(matrix) <- cell_names
     } else {
-      matrix <- matrix[cell_indices, ]
+      matrix <- matrix[cell_indices, , drop = FALSE]
       rownames(matrix) <- cell_names[cell_indices]
     }
   }
@@ -2169,7 +2169,8 @@ S7::method(print, SingleCells) <- function(x, ...) {
 #' @title dim Method for SingleCells object
 #'
 #' @description
-#' Returns the dimensions of a SingleCells object.
+#' Returns the dimensions of a SingleCells object. (Only taking into
+#' consideration the cells to keep).
 #'
 #' @param x An object of class `SingleCells`.
 #'
@@ -2179,5 +2180,30 @@ S7::method(print, SingleCells) <- function(x, ...) {
 #'
 #' @keywords internal
 S7::method(dim, SingleCells) <- function(x) {
-  S7::prop(x, "dims")
+  n_cells <- length(get_cells_to_keep(x))
+  n_genes <- S7::prop(x, "dims")[2]
+  c(n_cells, n_genes)
+}
+
+
+#' @name head.SingleCells
+#'
+#' @title head Method for SingleCells object
+#'
+#' @description
+#' Returns the first `n` rows of the obs table from a `SingleCells` object.
+#'
+#' @param x An object of class `SingleCells`.
+#' @param n Integer. Number of rows to return. Defaults to `6L`.
+#' @param ... Additional arguments (currently not used).
+#'
+#' @returns A data.table with the first `n` rows of the obs table.
+#'
+#' @method head SingleCells
+#'
+#' @keywords internal
+S7::method(head, SingleCells) <- function(x, n = 6L, ...) {
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
+  checkmate::qassert(n, "I1[1,)")
+  get_sc_obs(x, indices = seq_len(n), filtered = TRUE)
 }

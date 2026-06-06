@@ -9,7 +9,7 @@ scdblfinder_sc(
   scdblfinder_params = params_scdblfinder(),
   return_features = FALSE,
   cells_to_use = NULL,
-  streaming = FALSE,
+  streaming = NULL,
   seed = 42L,
   .verbose = TRUE
 )
@@ -28,8 +28,9 @@ run of the boosted doublet detection. Useful when you wish to run doublet
 detection on individual batches within your data. The object returned will be
 specifically using these cells.}
 
-\item{streaming}{Boolean. Shall the gene data be streamed in. Useful on
-large data sets.}
+\item{streaming}{Optional Boolean. Shall the data be streamed in. Useful for
+larger data sets where you wish to avoid loading in the whole data. If
+\code{NULL}, will automatically detect.}
 
 \item{seed}{Integer. Seed for reproducibility.}
 

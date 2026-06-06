@@ -946,6 +946,10 @@ params_sc_seacells <- function(
 #' van Dijk, et al., Cell, 2018.
 #' @param k_ith_neighbour Optional integer. The k-ith neighbour to use for
 #' the kernel. Defaults to `k %/% 2`.
+#' @param max_support Optional integer. Caps each cell's walk-probability vector
+#' to its top entries by mass, bounding memory at ~`max_support * n_cells` on
+#' large data. Makes the result an approximation. `NULL` (default) keeps the
+#' walks exact.
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
@@ -960,6 +964,7 @@ params_sc_supercell <- function(
   graining_factor = 20.0,
   use_kernel = TRUE,
   k_ith = NULL,
+  max_support = NULL,
   knn = list()
 ) {
   checkmate::qassert(walk_length, "I1")
@@ -978,7 +983,8 @@ params_sc_supercell <- function(
       walk_length = walk_length,
       graining_factor = graining_factor,
       use_kernel = use_kernel,
-      k_ith = k_ith
+      k_ith = k_ith,
+      max_support = max_support
     ),
     knn_params
   )
@@ -1448,6 +1454,69 @@ params_scenic <- function(
     ),
     modifyList(learner_defaults, learner_params, keep.null = TRUE)
   )
+
+  params
+}
+
+## meld ------------------------------------------------------------------------
+
+#' Constructor for MELD parameters
+#'
+#' @param beta Numeric. Smoothing strength; larger values produce smoother
+#' densities. Must be strictly positive. Defaults to `60.0`.
+#' @param offset Numeric. Shift of the filter centre in the rescaled spectrum.
+#' Must be in `[0, 1]`. Defaults to `0.0`.
+#' @param order Numeric. Filter falloff sharpness; larger values approach a
+#' square low-pass. Must be strictly positive. Defaults to `1.0`.
+#' @param filter Character. Filter family to use. One of `"heat"` or
+#' `"laplacian"`. Defaults to `"heat"`.
+#' @param chebyshev_order Integer. Number of Chebyshev coefficients (polynomial
+#' terms). Must be >= 2. Defaults to `50L`.
+#' @param lap_type Character. Type of Laplacian to use for spectral filtering.
+#' One of `"combinatorial"` or `"normalised"`. Defaults to `"combinatorial"`.
+#' @param normalise_indicators Logical. If `TRUE`, each column of the indicator
+#' matrix is divided by its column sum before filtering, making
+#' cross-condition densities comparable regardless of cells-per-condition.
+#' Defaults to `TRUE`.
+#' @param knn List. Optional overrides for kNN parameters. See
+#' [bixverse::params_knn_defaults()] for available parameters: `k`,
+#' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
+#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`,
+#' `n_list` and `n_probe`.
+#'
+#' @returns A named flat list with all MELD parameters.
+#'
+#' @export
+params_meld <- function(
+  beta = 60.0,
+  offset = 0.0,
+  order = 1.0,
+  filter = "heat",
+  chebyshev_order = 50L,
+  lap_type = "combinatorial",
+  normalise_indicators = TRUE,
+  knn = list()
+) {
+  checkmate::qassert(beta, "N1(0,)")
+  checkmate::qassert(offset, "N1[0,1]")
+  checkmate::qassert(order, "N1(0,)")
+  checkmate::assert_choice(filter, c("heat", "laplacian"))
+  checkmate::qassert(chebyshev_order, "I1[2,)")
+  checkmate::assert_choice(lap_type, c("combinatorial", "normalised"))
+  checkmate::qassert(normalise_indicators, "B1")
+
+  params <- list(
+    knn = modifyList(params_knn_defaults(), knn, keep.null = TRUE),
+    beta = beta,
+    offset = offset,
+    order = order,
+    filter = filter,
+    chebyshev_order = chebyshev_order,
+    lap_type = lap_type,
+    normalise_indicators = normalise_indicators
+  )
+
+  params <- purrr::list_flatten(params, name_spec = "{inner}")
 
   params
 }

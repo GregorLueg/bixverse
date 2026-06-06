@@ -51,4 +51,5 @@ A list with the following items.
 }
 \description{
 Helper function to generate synthetic single cell data with optional
+bathc effects and sample bias.
 }

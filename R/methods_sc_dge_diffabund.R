@@ -444,3 +444,128 @@ S7::method(get_miloR_abundances_sc, SingleCells) <- function(
 
   miloR_obj
 }
+
+### meld -----------------------------------------------------------------------
+
+#' Run MELD signal smoothing for differential abundance estimation
+#'
+#' @description
+#' This function implements MELD  for estimating sample-associated density on a
+#' cell manifold. The general idea is to smooth a binary sample indicator matrix
+#' over the kNN graph via spectral filtering, yielding per-cell likelihood
+#' estimates for each sample condition. For further details on the method,
+#' please refer to Burkhardt, et al. This function will take a `SingleCells`
+#' class and return the smoothed density estimates per cell and condition.
+#'
+#' @param object `SingleCells` class.
+#' @param sample_id_col Character. The column in the obs table representing
+#' the sample identifier.
+#' @param embd_to_use Character. The embedding to use for kNN graph
+#' construction. Please use the same here as you used to generate the
+#' neighbours. Defaults to `"pca"`.
+#' @param no_embd_to_use Optional integer. If you only want to use a subset of
+#' the embedding dimensions.
+#' @param meld_params A list, please see [bixverse::params_meld()]. The list
+#' has the following parameters:
+#' \itemize{
+#'   \item beta - Numeric. Smoothing strength; larger values produce smoother
+#'   densities.
+#'   \item offset - Numeric. Shift of the filter centre in the rescaled
+#'   spectrum. Must be in `[0, 1]`.
+#'   \item order - Numeric. Filter falloff sharpness; larger values approach a
+#'   square low-pass.
+#'   \item filter - Character. Filter family. One of `c("heat", "laplacian")`.
+#'   \item chebyshev_order - Integer. Number of Chebyshev coefficients. Must
+#'   be >= 2.
+#'   \item lap_type - Character. Type of Laplacian. One of
+#'   `c("combinatorial", "normalised")`.
+#'   \item normalise_indicators - Logical. If `TRUE`, indicator columns are
+#'   divided by their column sum before filtering.
+#'   \item landmark - Logical. Whether to use landmark approximation. Useful
+#'   for large data sets.
+#'   \item n_landmarks - Integer. Number of landmarks to use.
+#'   \item knn - List of kNN parameters. See [bixverse::params_knn_defaults()]
+#'   for available parameters and their defaults.
+#' }
+#' @param seed Integer. Seed for reproducibility.
+#' @param .verbose Boolean or integer. Controls verbosity and returns run
+#' times. `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` ->
+#' detailed verbosity.
+#'
+#' @references Burkhardt, et al. Nat. Biotechnol., 2021.
+#'
+#' @export
+meld_sc <- S7::new_generic(
+  name = "meld_sc",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    sample_id_col,
+    embd_to_use = "pca",
+    no_embd_to_use = NULL,
+    meld_params = params_meld(),
+    seed = 42L,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method meld_sc SingleCells
+#'
+#' @export
+#'
+#' @importFrom zeallot `%<-%`
+#' @importFrom magrittr `%>%`
+S7::method(meld_sc, SingleCells) <- function(
+  object,
+  sample_id_col,
+  embd_to_use = "pca",
+  no_embd_to_use = NULL,
+  meld_params = params_meld(),
+  seed = 42L,
+  .verbose = TRUE
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  checkmate::qassert(sample_id_col, "S1")
+  assertMeldParams(meld_params)
+  checkmate::qassert(seed, "I1")
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
+
+  samples <- as.factor(unlist(object[[sample_id_col]], use.names = FALSE))
+
+  embd <- get_embedding(x = object, embd_name = embd_to_use)
+
+  if (!is.null(no_embd_to_use)) {
+    to_take <- min(c(no_embd_to_use, ncol(embd)))
+    embd <- embd[, 1:to_take]
+  }
+
+  knn_data <- get_knn_obj(object)
+
+  if (is.null(knn_data)) {
+    warning(
+      paste(
+        "No kNN data could be found on the object.",
+        "The kNN graph will be regenerated with the specified embedding."
+      )
+    )
+    return(NULL)
+  }
+
+  meld_res <- rs_meld_sc(
+    embd = embd,
+    knn_data = knn_data,
+    meld_params = meld_params,
+    labels = as.integer(samples),
+    n_labels = as.integer(length(levels(samples))),
+    seed = seed,
+    verbose = parse_verbosity(.verbose)
+  )
+
+  colnames(meld_res) <- levels(samples)
+  rownames(meld_res) <- get_cell_names(object, filtered = TRUE)
+
+  meld_res
+}

@@ -408,9 +408,9 @@ print.BatchLisiScores <- function(x, ...) {
 #'   \item bin_method - String. One of `c("equal_width", "equal_freq")`. Not
 #'   implemented yet.
 #' }
-#' @param streaming Boolean. Shall the genes be streamed in. Useful for larger
-#' data sets where you wish to avoid loading in the whole data. Defaults to
-#' `FALSE`.
+#' @param streaming Optional Boolean. Shall the data be streamed in. Useful for
+#' larger data sets where you wish to avoid loading in the whole data. If
+#' `NULL`, will automatically detect.
 #' @param .verbose Boolean or integer. Controls verbosity and returns run times.
 #' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
 #' verbosity.
@@ -432,7 +432,7 @@ find_hvg_batch_aware_sc <- S7::new_generic(
     hvg_no = 2000L,
     gene_comb_method = c("union", "average", "intersection"),
     hvg_params = params_sc_hvg(),
-    streaming = FALSE,
+    streaming = NULL,
     .verbose = TRUE
   ) {
     S7::S7_dispatch()
@@ -448,7 +448,7 @@ S7::method(find_hvg_batch_aware_sc, SingleCells) <- function(
   hvg_no = 2000L,
   gene_comb_method = c("union", "average", "intersection"),
   hvg_params = params_sc_hvg(),
-  streaming = FALSE,
+  streaming = NULL,
   .verbose = TRUE
 ) {
   gene_comb_method <- match.arg(gene_comb_method)
@@ -461,8 +461,14 @@ S7::method(find_hvg_batch_aware_sc, SingleCells) <- function(
     c("union", "average", "intersection")
   )
   assertScHvg(hvg_params)
-  checkmate::qassert(streaming, "B1")
+  checkmate::qassert(streaming, c("B1", "0"))
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
+
+  streaming <- auto_streaming(
+    n_cells = nrow(object),
+    streaming = streaming,
+    .verbose = .verbose
+  )
 
   batch_indices <- unlist(object[[batch_column]])
   batch_factor <- factor(batch_indices)

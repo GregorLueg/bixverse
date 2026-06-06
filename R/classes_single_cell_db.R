@@ -1617,6 +1617,121 @@ SingleCellDuckDB <- R6::R6Class(
       invisible(self)
     },
 
+    ##################
+    # Readers 10x h5 #
+    ##################
+
+    #' @description
+    #' Populate the obs table from the barcodes in a 10x CellRanger h5 file.
+    #'
+    #' @param h5_path String. Path to the 10x h5 file.
+    #' @param version String. One of `"v2"` or `"v3"`.
+    #' @param filter Optional integer. 1-indexed positions of cells to keep.
+    #'
+    #' @return Invisible self. Populates the obs table in DuckDB.
+    populate_obs_from_tenx_h5 = function(h5_path, version, filter = NULL) {
+      checkmate::assertFileExists(h5_path)
+      checkmate::assertChoice(version, c("v2", "v3"))
+      checkmate::qassert(filter, c("I+", "0"))
+
+      on.exit(
+        tryCatch(rhdf5::h5closeAll(), error = function(e) invisible()),
+        add = TRUE
+      )
+
+      barcodes_path <- if (version == "v3") "matrix/barcodes" else "barcodes"
+      barcodes <- as.character(rhdf5::h5read(h5_path, barcodes_path))
+
+      obs_dt <- data.table::data.table(cell_id = barcodes)
+
+      if (!is.null(filter)) {
+        obs_dt <- obs_dt[filter]
+      }
+      obs_dt[, cell_idx := .I]
+      data.table::setcolorder(obs_dt, c("cell_idx", "cell_id"))
+
+      con <- private$connect_db()
+      on.exit(
+        {
+          if (exists("con") && !is.null(con)) {
+            tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
+          }
+        },
+        add = TRUE
+      )
+
+      DBI::dbWriteTable(con, "obs", obs_dt, overwrite = TRUE)
+
+      invisible(self)
+    },
+
+    #' @description
+    #' Populate the var table from the features in a 10x CellRanger h5 file.
+    #'
+    #' Features are read in full file order (all modalities); `filter` selects
+    #' the gene-expression features that survived QC.
+    #'
+    #' @param h5_path String. Path to the 10x h5 file.
+    #' @param version String. One of `"v2"` or `"v3"`.
+    #' @param filter Optional integer. 1-indexed positions of features to keep.
+    #'
+    #' @return Invisible self. Populates the var table in DuckDB.
+    populate_vars_from_tenx_h5 = function(h5_path, version, filter = NULL) {
+      checkmate::assertFileExists(h5_path)
+      checkmate::assertChoice(version, c("v2", "v3"))
+      checkmate::qassert(filter, c("I+", "0"))
+
+      on.exit(
+        tryCatch(rhdf5::h5closeAll(), error = function(e) invisible()),
+        add = TRUE
+      )
+
+      var_dt <- if (version == "v3") {
+        data.table::data.table(
+          gene_id = as.character(rhdf5::h5read(h5_path, "matrix/features/id")),
+          gene_name = as.character(rhdf5::h5read(
+            h5_path,
+            "matrix/features/name"
+          )),
+          feature_type = as.character(
+            rhdf5::h5read(h5_path, "matrix/features/feature_type")
+          )
+        )
+      } else {
+        data.table::data.table(
+          gene_id = as.character(rhdf5::h5read(h5_path, "genes")),
+          gene_name = as.character(rhdf5::h5read(h5_path, "gene_names"))
+        )
+      }
+
+      if (!is.null(filter)) {
+        var_dt <- var_dt[filter]
+      }
+      var_dt[, gene_idx := .I]
+      data.table::setcolorder(
+        var_dt,
+        c(
+          "gene_idx",
+          "gene_id",
+          setdiff(names(var_dt), c("gene_idx", "gene_id"))
+        )
+      )
+
+      con <- private$connect_db()
+      on.exit(
+        {
+          if (exists("con") && !is.null(con)) {
+            tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
+          }
+        },
+        add = TRUE
+      )
+
+      DBI::dbWriteTable(con, "var", var_dt, overwrite = TRUE)
+
+      invisible(self)
+    },
+
     #########################
     # From multiple DuckDBs #
     #########################

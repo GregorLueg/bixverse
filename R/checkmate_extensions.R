@@ -1375,6 +1375,8 @@ checkKMeansParams <- function(x) {
 
 #### synthetic data ------------------------------------------------------------
 
+##### rna ----------------------------------------------------------------------
+
 #' Check synthetic data parameters
 #'
 #' @description Checkmate extension for checking the synthetic data
@@ -1484,6 +1486,107 @@ checkScSyntheticData <- function(x) {
 #'
 #' @keywords internal
 assertScSyntheticData <- checkmate::makeAssertionFunction(checkScSyntheticData)
+
+##### adt ----------------------------------------------------------------------
+
+#' Check synthetic ADT data parameters
+#'
+#' @description Checkmate extension for checking the synthetic ADT data
+#' parameters.
+#'
+#' @param x The list to check/assert
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
+checkScSyntheticDataAdt <- function(x) {
+  res <- checkmate::checkList(x)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- checkmate::checkNames(
+    names(x),
+    must.include = c(
+      "n_cells",
+      "n_proteins",
+      "marker_genes",
+      "n_batches",
+      "isotype_controls",
+      "batch_effect_strength"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  rules <- list(
+    "n_cells" = "I1",
+    "n_proteins" = "I1",
+    "n_batches" = "I1",
+    "isotype_controls" = "I+"
+  )
+
+  res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(rules)) {
+      checkmate::qtest(x, rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(
+      sprintf(
+        paste(
+          "The following element `%s` in synthetic ADT data is incorrect:",
+          "n_cells, n_proteins and n_batches need to be integers.",
+          "isotype_controls a non-empty integer vector."
+        ),
+        broken_elem
+      )
+    )
+  }
+
+  res <- checkmate::checkList(
+    x$marker_genes,
+    types = "list",
+    names = "named"
+  )
+  if (!isTRUE(res)) {
+    return("marker_genes must be a named list of lists.")
+  }
+
+  res <- checkmate::checkChoice(
+    x[["batch_effect_strength"]],
+    c("strong", "medium", "weak")
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  return(TRUE)
+}
+
+#' Assert synthetic ADT data parameters
+#'
+#' @description Checkmate extension for asserting the synthetic ADT data
+#' parameters.
+#'
+#' @inheritParams checkScSyntheticDataAdt
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertionFunction()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
+assertScSyntheticDataAdt <- checkmate::makeAssertionFunction(
+  checkScSyntheticDataAdt
+)
 
 #### io ------------------------------------------------------------------------
 
@@ -2660,7 +2763,8 @@ checkScSupercell <- function(x) {
       "walk_length",
       "graining_factor",
       "use_kernel",
-      "k_ith"
+      "k_ith",
+      "max_support"
     )
   )
   if (!isTRUE(res)) {
@@ -2677,7 +2781,8 @@ checkScSupercell <- function(x) {
   # Check non-kNN integer parameters
   integer_rules <- list(
     "walk_length" = "I1[1,)",
-    "k_ith" = c("I1", "0")
+    "k_ith" = c("I1", "0"),
+    "max_support" = c("I1[1,)", "0")
   )
 
   res <- purrr::imap_lgl(x, \(val, name) {
@@ -2691,7 +2796,7 @@ checkScSupercell <- function(x) {
   if (!isTRUE(all(res))) {
     return(paste(
       "walk_length needs to be an integer >= 1.",
-      "kith_neighbour needs to be an integer or NULL."
+      "kith_neighbour and max_support needs to be an integer or NULL."
     ))
   }
 
@@ -3838,6 +3943,99 @@ checkCellMarkerList <- function(x) {
 #'
 #' @keywords internal
 assertCellMarkerList <- checkmate::makeAssertionFunction(checkCellMarkerList)
+
+#### meld ----------------------------------------------------------------------
+
+#' Check MELD parameters
+#'
+#' @description Checkmate extension for checking MELD parameters.
+#'
+#' @param x The list to check/assert.
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
+checkMeldParams <- function(x) {
+  res <- checkmate::checkList(x)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  required_names <- c(
+    "beta",
+    "offset",
+    "order",
+    "filter",
+    "chebyshev_order",
+    "lap_type",
+    "normalise_indicators"
+  )
+  res <- checkmate::checkNames(names(x), must.include = required_names)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  knn_params <- x[names(x) %in% KNN_PARAM_NAMES]
+  res <- checkKnnParams(knn_params)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  numeric_rules <- list(
+    beta = "N1(0,)",
+    offset = "N1[0,1]",
+    order = "N1(0,)"
+  )
+  res <- purrr::imap_lgl(x, \(val, name) {
+    if (name %in% names(numeric_rules)) {
+      checkmate::qtest(val, numeric_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+  if (!all(res)) {
+    return(sprintf(
+      "Element `%s` in MELD parameters failed numeric validation.",
+      names(res)[!res][1]
+    ))
+  }
+
+  res <- checkmate::checkChoice(x$filter, c("heat", "laplacian"))
+  if (!isTRUE(res)) {
+    return(paste("filter:", res))
+  }
+
+  if (!checkmate::qtest(x$chebyshev_order, "I1[2,)")) {
+    return("chebyshev_order must be an integer >= 2.")
+  }
+
+  res <- checkmate::checkChoice(x$lap_type, c("combinatorial", "normalised"))
+  if (!isTRUE(res)) {
+    return(paste("lap_type:", res))
+  }
+
+  if (!checkmate::qtest(x$normalise_indicators, "B1")) {
+    return("normalise_indicators must be a single logical.")
+  }
+
+  TRUE
+}
+
+#' Assert MELD parameters
+#'
+#' @description Checkmate extension for asserting MELD parameters.
+#'
+#' @inheritParams checkMeldParams
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
+assertMeldParams <- checkmate::makeAssertionFunction(checkMeldParams)
 
 ### single cells (multi modal) -------------------------------------------------
 

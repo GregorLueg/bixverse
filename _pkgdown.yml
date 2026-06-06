@@ -50,7 +50,7 @@ navbar:
         - text: Batch corrections
           href: articles/single_cell_batch_corrections.html
         - text: "'Bag of genes' methods for single cell in bixverse"
-          href: articles/analysis_single_cell.html
+          href: articles/bag_of_genes_single_cells.html
         - text: "kNN searches for single cells in bixverse"
           href: articles/knn_searches.html
         - text: "Meta cells - generation and analysis"
@@ -90,7 +90,7 @@ articles:
       - pbmc_single_cell
       - doublet_detection
       - single_cell_batch_corrections
-      - analysis_single_cell
+      - bag_of_genes_single_cells
       - knn_searches
       - meta_cells
       - single_cell_big_data
@@ -673,8 +673,6 @@ reference:
       - rs_split_cor_signs
       - rs_ssgsea
       - rs_supercell
-      - rs_synthetic_sc_data_csc
-      - rs_synthetic_sc_data_csr
       - rs_synthetic_sc_data_with_cell_types
       - rs_tied_diffusion_parallel
       - rs_tom

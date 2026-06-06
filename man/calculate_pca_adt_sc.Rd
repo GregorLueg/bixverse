@@ -4,12 +4,21 @@
 \alias{calculate_pca_adt_sc}
 \title{Calculate the PCA on top of the normalised ADT counts}
 \usage{
-calculate_pca_adt_sc(object, no_pcs, randomised_svd = FALSE, seed = 42L)
+calculate_pca_adt_sc(
+  object,
+  no_pcs,
+  features = NULL,
+  randomised_svd = FALSE,
+  seed = 42L
+)
 }
 \arguments{
 \item{object}{\code{SingleCellsMultiModal} class with ADT counts added.}
 
 \item{no_pcs}{Integer. Number of PCs to calculate.}
+
+\item{features}{Optional string vector. If you want to subset to a specific
+set of ADT probes (for example to exclude isotypes).}
 
 \item{randomised_svd}{Boolean. Shall randomised SVD be used. Faster, but
 less precise.}

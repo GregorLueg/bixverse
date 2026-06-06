@@ -231,13 +231,13 @@ S7::method(find_hvg_sc, MetaCells) <- function(
   object,
   hvg_no = 2000L,
   hvg_params = params_sc_hvg(),
-  streaming = FALSE,
+  streaming = NULL,
   .verbose = TRUE
 ) {
   checkmate::assertTRUE(S7::S7_inherits(object, MetaCells))
   checkmate::qassert(hvg_no, "I1")
   assertScHvg(hvg_params)
-  checkmate::qassert(streaming, "B1")
+  checkmate::qassert(streaming, c("B1", "0"))
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   assay <- if (hvg_params$method == "vst") {

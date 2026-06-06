@@ -56,7 +56,7 @@ fn rs_sc_type(
     weight_floor: Option<f64>,
     verbose: usize,
 ) -> Result<List> {
-    let cell_markers = process_cell_markers(cell_markers)?;
+    let cell_markers: Vec<CellTypeMarkers> = process_cell_markers(cell_markers)?;
     let cell_indices = cell_indices.r_int_convert();
 
     let res: SctypeRes = run_sctype(
