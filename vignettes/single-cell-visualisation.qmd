@@ -16,12 +16,8 @@ author:
 
 ## Intro
 
-This vignette walks through a standard single cell analysis on the PBMC3k data
-set using `bixverse`. If you have not read the
-[design choices](https://gregorlueg.github.io/bixverse/articles/design_single_cell.html)
-and the
-[introductory vignette](https://gregorlueg.github.io/bixverse/articles/thinking_single_cell.html),
-please do so first; this vignette assumes familiarity with how the
+This vignette gives an overview of the different plotting functions that are available when running a single cell analysis. For more details on the data analysis itself, please refer to the
+[introductory vignette](https://gregorlueg.github.io/bixverse/articles/thinking_single_cell.html). This vignette assumes familiarity with how the
 `SingleCells` class, on-disk storage and cells-to-keep logic work.
 
 ```{r}
@@ -33,13 +29,12 @@ library(bixverse.plots)
 library(magrittr)
 ```
 
-## Loading the data
+## Preparing the data
 
-We start by downloading the PBMC3k data set bundled with the package and
-loading it via Cell Ranger-style MTX I/O.
+We run the standard analysis using the same PBMC3k data set.
 
 ```{r}
-#| label: load pbmc3k
+#| label: prepare pbmc3k
 pbmc3k_path <- download_pbmc3k()
 
 tempdir_pbmc <- tempdir()
@@ -60,18 +55,7 @@ sc_object[["sample"]] <- sample(
   size = nrow(sc_object),
   replace = T
 )
-```
-
-Let's have a quick look at the variable table. The column names from the MTX
-files are not always informative, so we rename the gene symbol column to
-something sensible and set up mappings between Ensembl IDs and symbols.
-
-```{r}
-#| label: var table and renaming
-var <- get_sc_var(sc_object)
-
-head(var)
-
+##
 setnames_sc(
   object = sc_object,
   table = "var",
@@ -83,15 +67,7 @@ var <- get_sc_var(sc_object)
 
 ensembl_to_symbol <- setNames(var$gene_symbol, var$gene_id)
 symbol_to_ensembl <- setNames(var$gene_id, var$gene_symbol)
-```
 
-# Quality Control Plots
-
-QC metrics are computed with `gene_set_proportions_sc()` and flagged with
-`run_cell_qc()`. Three complementary plotting functions then visualise the
-results.
-
-```{r qc-setup}
 # Define gene sets whose proportional expression signals low quality
 gs_of_interest <- list(
   MT = var[grepl("^MT-", gene_symbol), gene_id],
@@ -129,20 +105,15 @@ qc <- run_cell_qc(
 )
 ```
 
-## Joint QC Overview — `joint_plot_sc()`
+## Joint QC plot
 
-`joint_plot_sc()` arranges all QC panels in a single figure, making it easy to
-spot global trends at a glance.
+`joint_plot_sc()` compares the number of features and number of counts per cell similar to `sns.jointplot`.
 
-```{r joint-plot, fig.cap="Joint QC plot. Each panel shows one metric; red points indicate MAD-based outliers."}
+```{r joint-plot, fig.cap="Joint QC plot showing features versus counts."}
 joint_plot_sc(qc)
 ```
 
-**When to use:** first-pass assessment of data quality before any filtering.
-
----
-
-## Violin Plots — `violin_plot_sc()`
+## Violin QC Plots 
 
 `violin_plot_sc()` shows the distribution of each QC metric as a violin,
 split by donor (or any grouping variable stored in the `qc` object).
@@ -151,26 +122,19 @@ split by donor (or any grouping variable stored in the `qc` object).
 violin_plot_sc(qc)
 ```
 
-**Tip:** compare widths across donors to detect batch effects or low-quality
-libraries.
+## Density QC Plots 
 
----
-
-## Density Plots — `density_plot_sc()`
-
-`density_plot_sc()` overlays smoothed density curves for each group, which
+`density_plot_sc()` overlays smoothed density distributionss for each group, which
 highlights bimodal distributions or outlier populations that violins can obscure.
 
-```{r density-plot, fig.cap="Density plots for each QC metric. Vertical dashed lines mark the MAD thresholds."}
+```{r density-plot, fig.cap="Density plots for each QC metric."}
 density_plot_sc(qc)
 ```
 
----
-
-# Dimensionality Reduction Plots — `embedding_plot_sc()`
+# Dimensionality Reduction Plots
 
 After PCA, neighbour-finding, clustering, and UMAP, cells can be visualised
-on any 2-D embedding stored in the object.
+on any 2D embedding stored in the object.
 
 ```{r umap-setup}
 #| label: hvg pca neighbours
@@ -254,10 +218,9 @@ add_sctype <- setNames(
 sc_object[["sc_type"]] <- add_sctype
 ```
 
-## Colouring by Leiden Cluster ID
+**Colouring by Cluster**
 
-Showing raw cluster IDs before annotation helps validate the
-`group_to_celltype` mapping.
+We can plot the UMAP embedding highlighting the leiden clusters. 
 
 ```{r embedding-leiden, fig.cap="UMAP coloured by Leiden cluster number."}
 embedding_plot_sc(
@@ -269,27 +232,27 @@ embedding_plot_sc(
 )
 ```
 
-## Colouring by a Discrete Variable
+**Colouring by a discrete variable**
 
 Pass any column from the cell metadata to `colour_by`. Use `label_by` to
-overlay text labels at the cluster centroid.
+overlay text labels at the cluster centroid. These do not need to be the same variables.
 
 ```{r embedding-celltype, fig.cap="UMAP coloured by manually annotated cell type. Labels are placed at cluster centroids."}
 embedding_plot_sc(
   sc_object,
   embedding = "umap",
   colour_by = "sc_type",
-  label_by = "sc_type",
+  label_by = "leiden_clusters",
   discrete = TRUE
 )
 ```
 
-## Colouring by a Continuous Variable
+**Colouring by a continuous variable**
 
 Set `discrete = FALSE` to use a continuous colour scale — useful for
 confidence scores, pseudotime, or gene module scores.
 
-```{r embedding-sctype, fig.cap="UMAP coloured by scType annotation confidence score (continuous scale)."}
+```{r embedding-sctype, fig.cap="UMAP coloured by ribosomal content (continuous scale)."}
 embedding_plot_sc(
   sc_object,
   embedding = "umap",
@@ -303,27 +266,25 @@ embedding_plot_sc(
 
 | Argument | Description |
 |---|---|
-| `embedding` | Name of the stored embedding (`"umap"`, `"tsne"`, …) |
+| `embedding` | Name of the stored embedding (`"umap"`, `"tsne"`, `"pca`…) |
 | `colour_by` | Metadata column used to colour points |
 | `label_by` | Metadata column used to label centroids |
 | `discrete` | `TRUE` for categorical palettes, `FALSE` for continuous |
 | `point_alpha` | Transparency (0–1); reduce for dense datasets |
 
----
+# Per-Gene Expression plots`
 
-# Per-Gene Expression — `feature_plot_sc()`
-
-`feature_plot_sc()` projects raw or normalised expression of one or more genes
+`feature_plot_sc()` projects normalised expression of one or more genes
 onto the embedding.
 
-```{r feature-plot, fig.cap="Expression of CAMK2A (excitatory neuron marker) on the UMAP. High-expressing cells cluster in expected Exc neuron regions."}
+```{r feature-plot, fig.cap="Expression of MS4A1 on the UMAP. High-expressing cells cluster in expected B cell cluster."}
 # Select a single feature by Ensembl ID; provide a human-readable label
 features <- setdiff(symbol_to_ensembl[names(cell_markers)], NA)
 feature_labels <- ensembl_to_symbol[features]
 
 feature_plot_sc(
   object = sc_object,
-  features = features[8], # CAMK2A
+  features = features[8],
   feature_labels = feature_labels[8],
   embedding = "umap",
   label_by = "sc_type"
@@ -333,7 +294,9 @@ feature_plot_sc(
 **Tip:** pass a character vector of Ensembl IDs to `features` and matching
 labels to `feature_labels` to produce one panel per gene.
 
-```{r feature-plot, fig.cap="Expression of CAMK2A (excitatory neuron marker) on the UMAP. High-expressing cells cluster in expected Exc neuron regions."}
+We can also highlight the genes of interest for clearer visualization.
+
+```{r feature-plot-higlight, fig.cap="Expression of MS4A1 on the UMAP. High-expressing cells cluster in expected B cell cluster."}
 # Select a single feature by Ensembl ID; provide a human-readable label
 features <- setdiff(symbol_to_ensembl[names(cell_markers)], NA)
 feature_labels <- ensembl_to_symbol[features]
@@ -348,9 +311,7 @@ feature_plot_sc(
 )
 ```
 
----
-
-# Dot Plots — `dot_plot_sc()`
+# Dot Plots 
 
 Dot plots encode two dimensions simultaneously:
 
@@ -387,60 +348,19 @@ dot_plot_sc(
 
 ---
 
-# Stacked Violin Plots — `stacked_violin_plot_sc()`
+# Stacked Violin Plots 
 
-Stacked violins show the per-group distribution of several genes in a
-compact vertical layout — a convenient complement to the dot plot.
+Stacked violins show the per-group expression distribution of several genes in a
+compact vertical layout.
 
-```{r stacked-violin, fig.cap="Stacked violin plot of pan-neuronal markers across final cell types."}
+```{r stacked-violin, fig.cap="Stacked violin plot of markers across final cell types."}
 # Take the first five markers
-pan_idx <- 1:5
+idx <- 1:5
 
 stacked_violin_plot_sc(
   sc_object,
-  features = names(feature_labels)[pan_idx],
-  feature_labels = feature_labels[pan_idx],
+  features = names(feature_labels)[idx],
+  feature_labels = feature_labels[idx],
   grouping_variable = "sc_type"
 )
-```
-
-**When to use:** validating cell-type annotations with a small, curated gene
-panel, or presenting figure-ready marker summaries.
-
----
-
-# Combining Plots with `patchwork`
-
-All `bixverse.plots` functions return standard `ggplot2` objects, so they
-compose naturally with `patchwork` or `cowplot`.
-
-```{r patchwork-example, fig.cap="Side-by-side UMAP coloured by cell type (left) and MBP expression (right).", fig.width=12}
-library(patchwork)
-
-p1 <- embedding_plot_sc(
-  sc_object,
-  embedding = "umap",
-  colour_by = "sc_type",
-  label_by = "sc_type",
-  discrete = TRUE,
-  point_alpha = 0.15
-)
-
-p2 <- feature_plot_sc(
-  object = sc_object,
-  label_by = "sc_type",
-  features = features[8],
-  feature_labels = feature_labels[8],
-  embedding = "umap"
-)
-
-p1 + p2 + plot_layout(ncol = 2)
-```
-
----
-
-# Session Info
-
-```{r session-info}
-sessionInfo()
 ```
