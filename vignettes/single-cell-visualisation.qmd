@@ -16,9 +16,7 @@ author:
 
 ## Intro
 
-This vignette gives an overview of the different plotting functions that are available when running a single cell analysis. For more details on the data analysis itself, please refer to the
-[introductory vignette](https://gregorlueg.github.io/bixverse/articles/thinking_single_cell.html). This vignette assumes familiarity with how the
-`SingleCells` class, on-disk storage and cells-to-keep logic work.
+This vignette gives an overview of the different plotting functions that are available when running a single cell analysis. 
 
 ```{r}
 #| label: setup
@@ -31,10 +29,11 @@ library(magrittr)
 
 ## Preparing the data
 
-We run the standard analysis using the same PBMC3k data set.
+We run the standard analysis using the same PBMC3k data set. For more details on the data analysis itself, please refer to the [introductory vignette](https://gregorlueg.github.io/bixverse/articles/thinking_single_cell.html). This vignette assumes familiarity with how the `SingleCells` class, on-disk storage and cells-to-keep logic work.
 
 ```{r}
 #| label: prepare pbmc3k
+#| code-fold: TRUE
 pbmc3k_path <- download_pbmc3k()
 
 tempdir_pbmc <- tempdir()
@@ -122,6 +121,18 @@ split by donor (or any grouping variable stored in the `qc` object).
 violin_plot_sc(qc)
 ```
 
+Alternatively, we can also provide a datatable generate the violins plots with different variables than those considered in the QC.
+
+```{r}
+obs <- get_sc_obs(sc_object)
+violin_plot_sc(
+  obs,
+  grouping_column = "sample",
+  variable = "Ribo",
+  show_outlier = TRUE
+)
+```
+
 ## Density QC Plots 
 
 `density_plot_sc()` overlays smoothed density distributionss for each group, which
@@ -138,6 +149,7 @@ on any 2D embedding stored in the object.
 
 ```{r umap-setup}
 #| label: hvg pca neighbours
+#| code-fold: TRUE
 sc_object <- find_hvg_sc(
   object = sc_object,
   hvg_no = 2000L,
@@ -272,6 +284,19 @@ embedding_plot_sc(
 | `discrete` | `TRUE` for categorical palettes, `FALSE` for continuous |
 | `point_alpha` | Transparency (0–1); reduce for dense datasets |
 
+**Extracting the plotting data**
+
+Alternatively, you can also extract the plotting data directly to make customized plots.
+
+```{r embedding-dt}
+dt <- extract_embedding_data(
+  sc_object,
+  embedding = "umap",
+  obs_cols = c("sc_type", "leiden_clusters", "Ribo")
+)
+head(dt)
+```
+
 # Per-Gene Expression plots`
 
 `feature_plot_sc()` projects normalised expression of one or more genes
@@ -311,6 +336,21 @@ feature_plot_sc(
 )
 ```
 
+**Extracting the plotting data**
+
+Alternatively, you can also extract the plotting data directly to make customized plots.
+
+```{r feature-plot-dt}
+dt <- bixverse::extract_feature_plot_data(
+  sc_object,
+  embedding = "umap",
+  obs_cols = c("sc_type", "leiden_clusters", "Ribo"),
+  features = features[8],
+  modality = "rna"
+)
+head(dt)
+```
+
 # Dot Plots 
 
 Dot plots encode two dimensions simultaneously:
@@ -346,7 +386,20 @@ dot_plot_sc(
 | `feature_grouping` | Named vector mapping gene → group label for x-axis brackets |
 | `cluster_groups` | Hierarchically cluster rows by expression profile |
 
----
+**Extracting the plotting data**
+
+
+Alternatively, you can also extract the plotting data directly to make customized plots.
+
+```{r dot-plot-dt}
+dt <- bixverse::extract_dot_plot_data(
+  sc_object,
+  features = features,
+  grouping_variable = "leiden_clusters",
+  modality = "rna"
+)
+head(dt)
+```
 
 # Stacked Violin Plots 
 
@@ -361,6 +414,18 @@ stacked_violin_plot_sc(
   sc_object,
   features = names(feature_labels)[idx],
   feature_labels = feature_labels[idx],
-  grouping_variable = "sc_type"
+  grouping_variable = "sc_type",
 )
+```
+
+**Extracting the plotting data**
+
+```{r stacked-violin-dt}
+dt <- bixverse::extract_gene_violin_data(
+  sc_object,
+  features = features,
+  grouping_variable = "sc_type",
+  modality = "rna"
+)
+head(dt)
 ```

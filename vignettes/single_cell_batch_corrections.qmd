@@ -74,6 +74,7 @@ depth and cell counts, introducing a clear batch effect.
 
 ```{r}
 #| label: load data
+#| code-fold: true
 dir_data <- download_pbmc_batches()
 
 tempdir_batch_cor <- file.path(tempdir(), "batch_cor_bixverse")
@@ -102,6 +103,7 @@ gene proportions and library complexity metrics.
 
 ```{r}
 #| label: qc
+#| code-fold: true
 var <- get_sc_var(sc_object)
 
 gs_of_interest <- list(
@@ -136,35 +138,7 @@ qc <- run_cell_qc(
   threshold = 3
 )
 
-qc
-```
-
-Let's plot the metrics:
-
-The `CellQc` class has a few associated plotting functions using the output of `run_cell_qc` and the specified metrics as input
-
-- `violin_plot_sc` method that produces violin plots with outliers highlighted.
-
-```{r}
-#| label: qc plots
-#| fig-width: 12
-#| fig-height: 4
-violin_plot_sc(qc)
-```
-
-- `joint_plot_sc` method that compares the genes versus UMIs per cell.
-
-```{r}
-#| label: qc plots
-#| fig-width: 12
-#| fig-height: 4
-joint_plot_sc(qc)
-```
-
-Set the cells to keep
-
-```{r}
-#| label: apply qc
+# Set the cells to keep
 sc_object[["outlier"]] <- qc$combined
 cells_to_keep <- qc_df[!qc$combined, cell_id]
 sc_object <- set_cells_to_keep(sc_object, cells_to_keep)
@@ -176,6 +150,7 @@ Standard pre-processing: HVG selection, PCA, and neighbour computation.
 
 ```{r}
 #| label: preprocessing
+#| code-fold: true
 sc_object <- find_hvg_sc(
   object = sc_object,
   hvg_no = 2000L,
@@ -297,7 +272,7 @@ AWS scores and LISI scores also closer to 2 (i.e., number of batches).
 
 ```{r}
 #| label: fastmnn tsne
-sc_object <- tsne_sc(object = sc_object, use_knn = TRUE)
+sc_object <- tsne_sc(object = sc_object, slot_name = "tsne_mnn", use_knn = TRUE)
 ```
 
 ```{r}
@@ -306,7 +281,7 @@ sc_object <- tsne_sc(object = sc_object, use_knn = TRUE)
 #| fig-height: 5
 embedding_plot_sc(
   sc_object,
-  embedding = "tsne",
+  embedding = "tsne_mnn",
   colour_by = "exp_id",
   label_by = "exp_id",
   discrete = TRUE
@@ -370,16 +345,20 @@ Also here, we observe improvements across the board.
 
 ```{r}
 #| label: harmony tsne
-sc_object <- tsne_sc(object = sc_object, use_knn = TRUE)
+sc_object <- tsne_sc(
+  object = sc_object,
+  slot_name = "tsne_harm",
+  use_knn = TRUE
+)
 ```
 
 ```{r}
 #| label: harmony plot
 #| fig-width: 7
-#| fig-height: 5
+#| #| fig-height: 5
 embedding_plot_sc(
   sc_object,
-  embedding = "tsne",
+  embedding = "tsne_harm",
   colour_by = "exp_id",
   label_by = "exp_id",
   discrete = TRUE
@@ -444,7 +423,11 @@ lisi_score_post_harmony
 
 ```{r}
 #| label: harmony (v2) tsne
-sc_object <- tsne_sc(object = sc_object, use_knn = TRUE)
+sc_object <- tsne_sc(
+  object = sc_object,
+  slot_name = "tsne_harm_v2",
+  use_knn = TRUE
+)
 ```
 
 ```{r}
@@ -453,7 +436,7 @@ sc_object <- tsne_sc(object = sc_object, use_knn = TRUE)
 #| fig-height: 5
 embedding_plot_sc(
   sc_object,
-  embedding = "tsne",
+  embedding = "tsne_harm_v2",
   colour_by = "exp_id",
   label_by = "exp_id",
   discrete = TRUE

@@ -148,7 +148,7 @@ The `CellQc` class has a few associated plotting functions using the output of `
 - `violin_plot_sc` method that produces violin plots with outliers highlighted.
 
 ```{r}
-#| label: qc plots
+#| label: violin qc plots
 #| fig-width: 12
 #| fig-height: 4
 violin_plot_sc(qc)
@@ -157,7 +157,7 @@ violin_plot_sc(qc)
 - `joint_plot_sc` method that compares the genes versus UMIs per cell.
 
 ```{r}
-#| label: qc plots
+#| label: joint qc plots
 #| fig-width: 12
 #| fig-height: 4
 joint_plot_sc(qc)
@@ -384,15 +384,17 @@ cell_type_anno <- score_clusters(
 We can add the cell type annotation back into the `sc_object`.
 
 ```{r}
-obs <- sc_object[[]][, .(cell_idx, leiden_clusters)]
-add_sctype <- setNames(
-  cell_type_anno$cell_type[match(
-    obs$leiden_clusters,
-    cell_type_anno$cluster_id
-  )],
-  nm = obs$cell_idx
-)
-sc_object[["sc_type"]] <- add_sctype
+obs <- get_sc_obs(sc_object, filtered = TRUE)[, .(
+  cell_idx,
+  leiden_clusters
+)] %>%
+  .[,
+    sc_type := cell_type_anno$cell_type[match(
+      leiden_clusters,
+      cell_type_anno$cluster_id
+    )]
+  ]
+sc_object[["sc_type"]] <- obs$sc_type
 ``` 
 
 ```{r}
