@@ -106,7 +106,7 @@ directions <- c(
   MT = "above"
 )
 qc <- run_cell_qc(
-  metrics,
+  metrics = metrics,
   cells_to_keep = get_cells_to_keep(sc_object),
   directions = directions,
   threshold = 3

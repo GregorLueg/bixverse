@@ -11,7 +11,7 @@ knitr:
     collapse: true
     comment: '#>'
 author: 
-  - name: "Grant Neilson and Gregor Lueg"
+  - name: "Grant Neilson, Gregor Lueg, Liesbeth François"
 ---
 
 ## Intro
@@ -29,6 +29,8 @@ please do so first; this vignette assumes familiarity with how the
 library(bixverse)
 library(ggplot2)
 library(data.table)
+library(bixverse.plots)
+library(magrittr)
 ```
 
 ## Loading the data
@@ -129,27 +131,36 @@ directions <- c(
 )
 
 qc <- run_cell_qc(
-  metrics,
+  metrics = metrics,
   cells_to_keep = get_cells_to_keep(sc_object),
   directions = directions,
   threshold = 3
 )
+
 
 get_data(qc)
 
 qc
 ```
 
-The `CellQc` class has a `plot` method that produces violin plots with outliers
-highlighted.
+The `CellQc` class has a few associated plotting functions using the output of `run_cell_qc` and the specified metrics as input
+
+- `violin_plot_sc` method that produces violin plots with outliers highlighted.
 
 ```{r}
-#| label: qc plots
+#| label: violin qc plots
 #| fig-width: 12
 #| fig-height: 4
-plots <- plot(qc, qc_df)
+violin_plot_sc(qc)
+```
 
-plots$log10_lib_size + plots$log10_nnz + plots$MT
+- `joint_plot_sc` method that compares the genes versus UMIs per cell.
+
+```{r}
+#| label: joint qc plots
+#| fig-width: 12
+#| fig-height: 4
+joint_plot_sc(qc)
 ```
 
 ### Filtering cells
@@ -255,7 +266,6 @@ centroids <- get_centroids(fast_cluster_res)
 kmeans_membership <- get_kmeans_clusters(fast_cluster_res)
 ```
 
-## Visualisation
 
 ### Dimensionality reduction
 
@@ -271,23 +281,21 @@ sc_object <- tsne_sc(
 )
 ```
 
-We can pull the embeddings back into data.tables and plot them (longer term,
-the idea will be to provide plotting helpers in `bixverse.plots`). The obs 
-columns can be appended directly.
+We can use `bixverse.plots` package which provides some basic plotting functions such as:
+
+- Plotting the embedding using `embedding_plot_sc` to check out the UMAP embeddings:
 
 ```{r}
 #| label: umap plot
 #| fig-width: 7
 #| fig-height: 5
-umap_dt <- as.data.table(
-  get_embedding(sc_object, "umap"),
-  keep.rownames = "cell_id"
-)[, leiden_clusters := sc_object[["leiden_clusters"]]]
-
-ggplot(umap_dt, aes(x = umap_1, y = umap_2)) +
-  geom_point(aes(colour = as.factor(leiden_clusters)), size = 0.5) +
-  theme_bw() +
-  labs(colour = "Leiden cluster")
+embedding_plot_sc(
+  sc_object,
+  embedding = "umap",
+  colour_by = "leiden_clusters",
+  label_by = "leiden_clusters",
+  discrete = TRUE
+)
 ```
 
 Let's check out tSNE
@@ -296,108 +304,149 @@ Let's check out tSNE
 #| label: tsne plot
 #| fig-width: 7
 #| fig-height: 5
-tsne_dt <- as.data.table(
-  get_embedding(sc_object, "tsne"),
-  keep.rownames = "cell_id"
-)[, leiden_clusters := sc_object[["leiden_clusters"]]]
-
-ggplot(tsne_dt, aes(x = tsne_1, y = tsne_2)) +
-  geom_point(aes(colour = as.factor(leiden_clusters)), size = 0.5) +
-  theme_bw() +
-  labs(colour = "Leiden cluster")
+embedding_plot_sc(
+  sc_object,
+  embedding = "tsne",
+  colour_by = "leiden_clusters",
+  label_by = "leiden_clusters",
+  discrete = TRUE
+)
 ```
 
-### Dot plots
-
-Dot plots are a standard way to visualise marker gene expression across
-clusters. The `extract_dot_plot_data` method handles the Rust-level extraction,
-grouping statistics and optional min-max scaling in one call.
+- We can also plot a gene expression on the embedding space using `feature_plot_sc`:
 
 ```{r}
-#| label: dot plot
-#| fig-width: 8
-#| fig-height: 6
-cell_markers <- c(
-  "MS4A1",
-  "CD79B",
-  "GNLY",
-  "CD3D",
-  "CD8A",
-  "CD4",
-  "CD14",
-  "FCER1A",
-  "FCGR3A",
-  "LYZ",
-  "PPBP"
-)
-
-features <- symbol_to_ensembl[cell_markers]
-
-dot_dt <- extract_dot_plot_data(
+feature_plot_sc(
   object = sc_object,
-  features = features,
-  grouping_variable = "leiden_clusters",
-  scale_exp = TRUE
+  features = "ENSG00000156738",
+  feature_labels = c("ENSG00000156738" = "MS4A1"),
+  embedding = "umap"
 )
+```
 
-dot_dt[, gene_symbol := ensembl_to_symbol[as.character(gene)]]
-dot_dt[, gene_symbol := factor(gene_symbol, levels = rev(cell_markers))]
+### Cell type annotation
 
-ggplot(dot_dt, aes(x = group, y = gene_symbol)) +
-  geom_point(aes(size = pct_exp, colour = scaled_exp)) +
-  scale_colour_viridis_c() +
-  scale_size_continuous(range = c(0, 6)) +
-  theme_bw() +
-  labs(
-    size = "% expressed",
-    colour = "Scaled\nexpression",
-    x = "Cluster",
-    y = ""
-  )
+Define a set of marker genes to perform cell type annotation.
+
+```{r}
+cell_markers <- c(
+  CD3D = "T cells",
+  CD3E = "T cells",
+  CD3G = "T cells",
+  IL7R = "CD4+ T",
+  CD4 = "CD4+ T",
+  CD8A = "CD8+ T",
+  CD8B = "CD8+ T",
+  MS4A1 = "B cells",
+  CD79A = "B cells",
+  CD19 = "B cells",
+  CD14 = "CD14+ Mono",
+  LYZ = "CD14+ Mono",
+  S100A8 = "CD14+ Mono",
+  FCGR3A = "CD16+ Mono",
+  CDKN1C = "CD16+ Mono",
+  GNLY = "NK",
+  NKG7 = "NK",
+  NCAM1 = "NK",
+  FCER1A = "mDC",
+  CD1C = "mDC",
+  LILRA4 = "pDC",
+  CLEC4C = "pDC",
+  PPBP = "Platelet",
+  PF4 = "Platelet"
+)
+```
+
+Let's annotate the PBMCs using the scType cell type annotation algorithm by [Ianevski et al. (2022)](https://doi.org/10.1038/s41467-022-28803-w). We first prepare the cell type markers into the right format using `prepare_cell_markers` helper functions. Subsequently calculate the scType score using `calc_sc_type_scores`and summarize on cluster level to get the annotated cell type using `score_clusters`. Finally, we can assign back the cell type annotation into the `sc_object`.
+
+```{r}
+cell_markers_dt <- stack(cell_markers) %>%
+  as.data.table() %>%
+  setnames(., c("values", "ind"), c("cell_type", "gene_symbol")) %>%
+  .[, gene_symbol := as.character(gene_symbol)] %>%
+  .[, gene_id := var$gene_id[match(gene_symbol, var$gene_symbol)]] %>%
+  .[!is.na(gene_id), ]
+
+## Prepare the list of markers
+marker_list <- prepare_cell_markers(sc_object, cell_markers_dt)
+## Calculate the score for each cell
+sctype_scores <- calc_sc_type_scores(
+  object = sc_object,
+  cell_marker_list = marker_list
+)
+## Annotate the clusters
+cell_type_anno <- score_clusters(
+  sctype_scores,
+  sc_object[[]][["leiden_clusters"]]
+)
+```
+
+We can add the cell type annotation back into the `sc_object`.
+
+```{r}
+obs <- get_sc_obs(sc_object, filtered = TRUE)[, .(
+  cell_idx,
+  leiden_clusters
+)] %>%
+  .[,
+    sc_type := cell_type_anno$cell_type[match(
+      leiden_clusters,
+      cell_type_anno$cluster_id
+    )]
+  ]
+sc_object[["sc_type"]] <- obs$sc_type
+``` 
+
+```{r}
+embedding_plot_sc(
+  sc_object,
+  embedding = "umap",
+  colour_by = "sc_type",
+  label_by = "sc_type",
+  discrete = T
+) +
+  labs(color = "Cell type") +
+  theme(legend.position = "bottom")
+```
+
+Alternatively, we can also show the expression levels of the cell type markers using the dotplot plotting function `dot_plot_sc` from `bixverse.plots`. 
+
+```{r}
+features_vec <- setdiff(symbol_to_ensembl[names(cell_markers)], NA)
+feature_labels = ensembl_to_symbol[features_vec]
+
+dot_plot_sc(
+  object = sc_object,
+  features = features_vec,
+  feature_labels = ensembl_to_symbol[features_vec],
+  grouping_variable = "leiden_clusters",
+  scale_exp = TRUE,
+  feature_grouping = cell_markers,
+  cluster_groups = T
+)
 ```
 
 ### Per-cell gene expression
 
-For feature plots or other per-cell visualisations, `extract_gene_expression`
-returns a long data.table with one row per cell and columns for each requested
-gene, plus any obs metadata you need.
+In addition to the feature plot (`feature_plot_sc`), we can also represent the gene expression using a violin plot 
 
 ```{r}
 #| label: feature plot
 #| fig-width: 10
 #| fig-height: 4
-expr_dt <- extract_gene_expression(
-  object = sc_object,
-  features = symbol_to_ensembl[c("CD14", "MS4A1", "CD3E")],
-  obs_cols = "leiden_clusters"
+features <- symbol_to_ensembl[c(
+  "CD3D",
+  "IL7R",
+  "CD8A",
+  "MS4A1"
+)]
+feature_labels <- setNames(names(features), nm = features)
+stacked_violin_plot_sc(
+  sc_object,
+  features = features,
+  feature_labels = feature_labels,
+  grouping_variable = "leiden_clusters"
 )
-
-# attach UMAP coordinates
-umap_embd <- as.data.table(
-  get_embedding(sc_object, "umap"),
-  keep.rownames = "cell_id"
-)
-
-plot_dt <- merge(expr_dt, umap_embd, by = "cell_id")
-
-# melt to long for faceting
-gene_cols <- symbol_to_ensembl[c("CD14", "MS4A1", "CD3E")]
-
-plot_long <- melt(
-  plot_dt,
-  id.vars = c("cell_id", "umap_1", "umap_2"),
-  measure.vars = gene_cols,
-  variable.name = "gene",
-  value.name = "expression"
-)
-plot_long[, gene_symbol := ensembl_to_symbol[as.character(gene)]]
-
-ggplot(plot_long, aes(x = umap_1, y = umap_2)) +
-  geom_point(aes(colour = expression), size = 0.3) +
-  scale_colour_viridis_c() +
-  facet_wrap(~gene_symbol) +
-  theme_bw() +
-  labs(colour = "log1p\nexpression")
 ```
 
 ## Clean up
