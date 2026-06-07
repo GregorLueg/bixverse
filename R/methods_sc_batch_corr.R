@@ -18,6 +18,7 @@
 #' obs data of the class.
 #' @param threshold Numeric. Number between 0 and 1. Below this threshold, the
 #' test is considered significant. Defaults to `0.05`.
+#' @param .verbose Boolean. Controls verbosity of the function.
 #'
 #' @returns A `KbetScores` object with the following elements
 #' \itemize{
@@ -42,7 +43,8 @@ calculate_kbet_sc <- S7::new_generic(
   fun = function(
     object,
     batch_column,
-    threshold = 0.05
+    threshold = 0.05,
+    .verbose = TRUE
   ) {
     S7::S7_dispatch()
   }
@@ -54,12 +56,14 @@ calculate_kbet_sc <- S7::new_generic(
 S7::method(calculate_kbet_sc, SingleCells) <- function(
   object,
   batch_column,
-  threshold = 0.05
+  threshold = 0.05,
+  .verbose = TRUE
 ) {
   # check
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::qassert(batch_column, "S1")
   checkmate::qassert(threshold, "N1[0, 1]")
+  checkmate::qassert(.verbose, "B1")
 
   # function
   batch_index <- unlist(object[[batch_column]])
@@ -80,7 +84,8 @@ S7::method(calculate_kbet_sc, SingleCells) <- function(
 
   rs_res <- rs_kbet(
     knn_mat = knn_mat,
-    batch_vector = as.integer(factor(batch_index))
+    batch_vector = as.integer(factor(batch_index)),
+    verbose = .verbose
   )
 
   res <- structure(
@@ -164,6 +169,7 @@ print.KbetScores <- function(x, ...) {
 #' cells for performance. The pairwise distance computation is O(n^2), so
 #' subsampling is recommended for large datasets. Defaults to `5000L`.
 #' @param seed Integer. Seed for subsampling reproducibility.
+#' @param .verbose Boolean. Controls verbosity of the function.
 #'
 #' @returns A `BatchSilhouetteScores` object with the following elements
 #' \itemize{
@@ -183,7 +189,8 @@ calculate_batch_asw_sc <- S7::new_generic(
     batch_column,
     embd_to_use = "pca",
     max_cells = 5000L,
-    seed = 42L
+    seed = 42L,
+    .verbose = TRUE
   ) {
     S7::S7_dispatch()
   }
@@ -197,7 +204,8 @@ S7::method(calculate_batch_asw_sc, SingleCells) <- function(
   batch_column,
   embd_to_use = "pca",
   max_cells = 5000L,
-  seed = 42L
+  seed = 42L,
+  .verbose = TRUE
 ) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
@@ -205,6 +213,7 @@ S7::method(calculate_batch_asw_sc, SingleCells) <- function(
   checkmate::qassert(embd_to_use, "S1")
   checkmate::qassert(max_cells, c("I1", "0"))
   checkmate::qassert(seed, "I1")
+  checkmate::qassert(.verbose, "B1")
 
   batch_index <- unlist(object[[batch_column]])
 
@@ -227,7 +236,8 @@ S7::method(calculate_batch_asw_sc, SingleCells) <- function(
     embedding = embd,
     batch_vector = as.integer(factor(batch_index)),
     max_cells = max_cells,
-    seed = seed
+    seed = seed,
+    verbose = .verbose
   )
 
   res <- structure(
@@ -260,7 +270,7 @@ print.BatchSilhouetteScores <- function(x, ...) {
   cat("Batch Silhouette Width\n")
   cat(sprintf("  Cells: %d | Batches: %d\n", n_cells, x$n_batches))
   cat(sprintf(
-    "  Mean ASW:    %.4f (0 = perfect mixing, 1 = separated)\n",
+    "  Mean ASW:    %.4f (-1 = strong intermixing, 0 = mixed, 1 = separated)\n",
     x$mean_asw
   ))
   cat(sprintf("  Median ASW:  %.4f\n", x$median_asw))
@@ -283,6 +293,7 @@ print.BatchSilhouetteScores <- function(x, ...) {
 #' @param object `SingleCells` class.
 #' @param batch_column String. The column with the batch information in the
 #' obs data of the class.
+#' @param .verbose Boolean. Controls verbosity of the function.
 #'
 #' @returns A `BatchLisiScores` object with the following elements
 #' \itemize{
@@ -300,7 +311,8 @@ calculate_batch_lisi_sc <- S7::new_generic(
   dispatch_args = "object",
   fun = function(
     object,
-    batch_column
+    batch_column,
+    .verbose = TRUE
   ) {
     S7::S7_dispatch()
   }
@@ -311,11 +323,13 @@ calculate_batch_lisi_sc <- S7::new_generic(
 #' @export
 S7::method(calculate_batch_lisi_sc, SingleCells) <- function(
   object,
-  batch_column
+  batch_column,
+  .verbose = TRUE
 ) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::qassert(batch_column, "S1")
+  checkmate::qassert(.verbose, "B1")
 
   batch_index <- unlist(object[[batch_column]])
 
@@ -335,7 +349,8 @@ S7::method(calculate_batch_lisi_sc, SingleCells) <- function(
 
   rs_res <- rs_batch_lisi(
     knn_mat = knn_mat,
-    batch_vector = as.integer(factor(batch_index))
+    batch_vector = as.integer(factor(batch_index)),
+    verbose = .verbose
   )
 
   res <- structure(

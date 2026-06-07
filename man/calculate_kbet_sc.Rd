@@ -4,7 +4,7 @@
 \alias{calculate_kbet_sc}
 \title{Calculate kBET scores}
 \usage{
-calculate_kbet_sc(object, batch_column, threshold = 0.05)
+calculate_kbet_sc(object, batch_column, threshold = 0.05, .verbose = TRUE)
 }
 \arguments{
 \item{object}{\code{SingleCells} class.}
@@ -14,6 +14,8 @@ obs data of the class.}
 
 \item{threshold}{Numeric. Number between 0 and 1. Below this threshold, the
 test is considered significant. Defaults to \code{0.05}.}
+
+\item{.verbose}{Boolean. Controls verbosity of the function.}
 }
 \value{
 A \code{KbetScores} object with the following elements

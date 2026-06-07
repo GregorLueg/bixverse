@@ -45,6 +45,7 @@ extendr_module! {
 /// columns the neighbour indices.
 /// @param batch_vector Integer vector. The integers indicate to which
 /// batch a given cell belongs.
+/// @param verbose Boolean. Controls verbosity of the function.
 ///
 /// @return A list with the following items
 /// \itemize{
@@ -56,7 +57,7 @@ extendr_module! {
 ///
 /// @export
 #[extendr]
-fn rs_kbet(knn_mat: RMatrix<i32>, batch_vector: Vec<i32>) -> List {
+fn rs_kbet(knn_mat: RMatrix<i32>, batch_vector: Vec<i32>, verbose: bool) -> Result<List> {
     let n_cells = knn_mat.nrows();
     let k_neighbours = knn_mat.ncols();
 
@@ -71,14 +72,14 @@ fn rs_kbet(knn_mat: RMatrix<i32>, batch_vector: Vec<i32>) -> List {
     // Convert batch_vector to Vec<usize>
     let batches: Vec<usize> = batch_vector.r_int_convert();
 
-    let kbet_res = kbet(&knn_matrix, &batches);
+    let kbet_res = kbet(&knn_matrix, &batches, verbose).to_extendr()?;
 
-    list![
+    Ok(list![
         pval = kbet_res.p_values,
         chi_square_stats = kbet_res.chi_square_stats,
         mean_chi_square = kbet_res.mean_chi_square,
         median_chi_square = kbet_res.median_chi_square
-    ]
+    ])
 }
 
 /// Calculate batch silhouette width from an embedding
@@ -94,6 +95,7 @@ fn rs_kbet(knn_mat: RMatrix<i32>, batch_vector: Vec<i32>) -> List {
 /// batch a given cell belongs.
 /// @param max_cells Integer or NULL. If not NULL, subsample to this many
 /// cells for performance. Defaults to 5000.
+/// @param verbose Boolean. Controls verbosity of the function.
 /// @param seed Integer. Seed for subsampling reproducibility.
 ///
 /// @return A list with the following items
@@ -109,8 +111,9 @@ fn rs_batch_silhouette_width(
     embedding: RMatrix<f64>,
     batch_vector: Vec<i32>,
     max_cells: Nullable<i32>,
+    verbose: bool,
     seed: i32,
-) -> List {
+) -> Result<List> {
     let embd = r_matrix_to_faer_fp32(&embedding);
     let batches: Vec<usize> = batch_vector.r_int_convert();
     let subsample = match max_cells {
@@ -118,13 +121,14 @@ fn rs_batch_silhouette_width(
         Nullable::Null => None,
     };
 
-    let res = batch_silhouette_width(embd.as_ref(), &batches, subsample, seed as usize);
+    let res = batch_silhouette_width(embd.as_ref(), &batches, subsample, seed as usize, verbose)
+        .to_extendr()?;
 
-    list![
+    Ok(list![
         per_cell = res.per_cell,
         mean_asw = res.mean_asw,
         median_asw = res.median_asw
-    ]
+    ])
 }
 
 /// Calculate batch LISI scores
@@ -139,6 +143,7 @@ fn rs_batch_silhouette_width(
 /// columns the neighbour indices.
 /// @param batch_vector Integer vector. The integers indicate to which
 /// batch a given cell belongs.
+/// @param verbose Boolean. Controls verbosity of the function.
 ///
 /// @return A list with the following items
 /// \itemize{
@@ -149,7 +154,7 @@ fn rs_batch_silhouette_width(
 ///
 /// @export
 #[extendr]
-fn rs_batch_lisi(knn_mat: RMatrix<i32>, batch_vector: Vec<i32>) -> List {
+fn rs_batch_lisi(knn_mat: RMatrix<i32>, batch_vector: Vec<i32>, verbose: bool) -> Result<List> {
     let n_cells = knn_mat.nrows();
     let k = knn_mat.ncols();
 
@@ -158,13 +163,13 @@ fn rs_batch_lisi(knn_mat: RMatrix<i32>, batch_vector: Vec<i32>) -> List {
         .collect();
 
     let batches: Vec<usize> = batch_vector.r_int_convert();
-    let res = batch_lisi(&knn_indices, &batches);
+    let res = batch_lisi(&knn_indices, &batches, verbose).to_extendr()?;
 
-    list![
+    Ok(list![
         per_cell = res.per_cell,
         mean_lisi = res.mean_lisi,
         median_lisi = res.median_lisi
-    ]
+    ])
 }
 
 ///////////

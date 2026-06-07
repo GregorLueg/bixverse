@@ -51,7 +51,7 @@ fn rs_prcomp(
     let nrow = x_scaled.nrows() as f64;
     let svd_res = x_scaled
         .thin_svd()
-        .map_err(|_| BixverseErrors::FaerSvdError)
+        .map_err(|e| BixverseErrors::FaerSvdError(format!("{e:?}")))
         .to_extendr()?;
     let scores = x_scaled * svd_res.V();
     let n = top_pcs.unwrap_or(scores.ncols());

@@ -811,6 +811,7 @@ find_neighbours_sc <- S7::new_generic(
     S7::S7_dispatch()
   }
 )
+
 #### clustering ----------------------------------------------------------------
 
 #' Graph-based clustering of cells on the sNN graph

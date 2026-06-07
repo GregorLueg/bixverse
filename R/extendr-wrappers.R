@@ -2055,6 +2055,7 @@ rs_sc_type_cluster_assignment <- function(sc_type_res, cluster_labels) .Call(wra
 #' columns the neighbour indices.
 #' @param batch_vector Integer vector. The integers indicate to which
 #' batch a given cell belongs.
+#' @param verbose Boolean. Controls verbosity of the function.
 #'
 #' @return A list with the following items
 #' \itemize{
@@ -2065,7 +2066,7 @@ rs_sc_type_cluster_assignment <- function(sc_type_res, cluster_labels) .Call(wra
 #' }
 #'
 #' @export
-rs_kbet <- function(knn_mat, batch_vector) .Call(wrap__rs_kbet, knn_mat, batch_vector)
+rs_kbet <- function(knn_mat, batch_vector, verbose) .Call(wrap__rs_kbet, knn_mat, batch_vector, verbose)
 
 #' Calculate batch silhouette width from an embedding
 #'
@@ -2080,6 +2081,7 @@ rs_kbet <- function(knn_mat, batch_vector) .Call(wrap__rs_kbet, knn_mat, batch_v
 #' batch a given cell belongs.
 #' @param max_cells Integer or NULL. If not NULL, subsample to this many
 #' cells for performance. Defaults to 5000.
+#' @param verbose Boolean. Controls verbosity of the function.
 #' @param seed Integer. Seed for subsampling reproducibility.
 #'
 #' @return A list with the following items
@@ -2090,7 +2092,7 @@ rs_kbet <- function(knn_mat, batch_vector) .Call(wrap__rs_kbet, knn_mat, batch_v
 #' }
 #'
 #' @export
-rs_batch_silhouette_width <- function(embedding, batch_vector, max_cells, seed) .Call(wrap__rs_batch_silhouette_width, embedding, batch_vector, max_cells, seed)
+rs_batch_silhouette_width <- function(embedding, batch_vector, max_cells, verbose, seed) .Call(wrap__rs_batch_silhouette_width, embedding, batch_vector, max_cells, verbose, seed)
 
 #' Calculate batch LISI scores
 #'
@@ -2104,6 +2106,7 @@ rs_batch_silhouette_width <- function(embedding, batch_vector, max_cells, seed) 
 #' columns the neighbour indices.
 #' @param batch_vector Integer vector. The integers indicate to which
 #' batch a given cell belongs.
+#' @param verbose Boolean. Controls verbosity of the function.
 #'
 #' @return A list with the following items
 #' \itemize{
@@ -2113,7 +2116,7 @@ rs_batch_silhouette_width <- function(embedding, batch_vector, max_cells, seed) 
 #' }
 #'
 #' @export
-rs_batch_lisi <- function(knn_mat, batch_vector) .Call(wrap__rs_batch_lisi, knn_mat, batch_vector)
+rs_batch_lisi <- function(knn_mat, batch_vector, verbose) .Call(wrap__rs_batch_lisi, knn_mat, batch_vector, verbose)
 
 #' BBKNN implementation in Rust
 #'
