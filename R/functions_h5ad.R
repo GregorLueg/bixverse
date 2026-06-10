@@ -188,19 +188,17 @@ prescan_h5ad_files <- function(
 
   h5_paths <- path.expand(h5_paths)
 
-  # collect per-file metadata
   file_meta <- vector("list", length(h5_paths))
 
   if (.verbose) {
-    pb = txtProgressBar(
-      min = 0,
-      max = length(file_meta),
-      initial = 0,
-      style = 3
-    )
+    cli::cli_progress_bar("Scanning h5ad files", total = length(h5_paths))
   }
 
   for (i in seq_along(h5_paths)) {
+    if (.verbose) {
+      cli::cli_progress_update(status = exp_ids[[i]])
+    }
+
     meta <- get_h5ad_dimensions(h5_paths[[i]])
     gene_names <- as.vector(
       rhdf5::h5read(h5_paths[[i]], sprintf("var/%s", var_index))
@@ -230,17 +228,12 @@ prescan_h5ad_files <- function(
       gene_names = gene_names,
       raw_slot = resolved_slot
     )
-
-    if (.verbose) {
-      setTxtProgressBar(pb, i)
-    }
   }
 
   if (.verbose) {
-    close(pb)
+    cli::cli_progress_done()
   }
 
-  # compute gene universe
   all_gene_sets <- lapply(file_meta, `[[`, "gene_names")
 
   universe <- if (gene_universe == "intersection") {
@@ -249,11 +242,9 @@ prescan_h5ad_files <- function(
     Reduce(union, all_gene_sets)
   }
 
-  # preserve a stable ordering (sorted)
   universe <- sort(universe)
   universe_lookup <- setNames(seq_along(universe) - 1L, universe)
 
-  # build per-file mappings
   file_tasks <- lapply(file_meta, function(fm) {
     mapping <- universe_lookup[fm$gene_names]
     mapping <- as.integer(unname(mapping))

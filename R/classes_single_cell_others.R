@@ -356,21 +356,137 @@ get_data.ScMatrixRes <- function(x, columns = NULL, ...) {
 
 ## scrublet --------------------------------------------------------------------
 
+### helpers --------------------------------------------------------------------
+
+#' Update doublet calls and summary statistics for a new Scrublet threshold
+#'
+#' Recomputes `predicted_doublets`, `z_scores`, and the three rate fields
+#' (`detected_doublet_rate`, `detectable_doublet_fraction`,
+#' `overall_doublet_rate`) for either the full result or a single group.
+#'
+#' @param scrublet_res A `ScrubletRes` object.
+#' @param threshold Numeric. The new score threshold to apply.
+#' @param sample_name Character or `NULL`. If `NULL`, updates apply to the
+#' whole object (ungrouped). Otherwise, updates are scoped to the named group.
+#' @param .verbose Logical. If `TRUE`, prints updated rate summaries to the
+#' console.
+#'
+#' @return The `ScrubletRes` object with updated doublet calls and summary
+#' statistics.
+#'
+#' @keywords internal
+.update_scrublet_threshold <- function(
+  scrublet_res,
+  threshold,
+  sample_name,
+  .verbose
+) {
+  if (is.null(sample_name)) {
+    cell_mask <- rep(TRUE, length(scrublet_res$doublet_scores_obs))
+    sim_scores <- scrublet_res$doublet_scores_sim
+  } else {
+    cell_mask <- scrublet_res$cell_groups == sample_name
+    sim_scores <- scrublet_res$doublet_scores_sim[[sample_name]]
+  }
+
+  obs_scores <- scrublet_res$doublet_scores_obs[cell_mask]
+  obs_errors <- scrublet_res$doublet_errors_obs[cell_mask]
+
+  new_preds <- obs_scores > threshold
+  new_z <- (obs_scores - threshold) / obs_errors
+
+  scrublet_res$predicted_doublets[cell_mask] <- new_preds
+  scrublet_res$z_scores[cell_mask] <- new_z
+
+  detected_rate <- sum(new_preds) / length(new_preds)
+  detectable_fraction <- sum(sim_scores > threshold) / length(sim_scores)
+  overall_rate <- if (detectable_fraction > 0.01) {
+    detected_rate / detectable_fraction
+  } else {
+    0.0
+  }
+
+  if (is.null(sample_name)) {
+    scrublet_res$threshold <- threshold
+    scrublet_res$detected_doublet_rate <- detected_rate
+    scrublet_res$detectable_doublet_fraction <- detectable_fraction
+    scrublet_res$overall_doublet_rate <- overall_rate
+  } else {
+    scrublet_res$threshold[sample_name] <- threshold
+    scrublet_res$detected_doublet_rate[sample_name] <- detected_rate
+    scrublet_res$detectable_doublet_fraction[sample_name] <- detectable_fraction
+    scrublet_res$overall_doublet_rate[sample_name] <- overall_rate
+  }
+
+  if (.verbose) {
+    prefix <- if (is.null(sample_name)) "" else sprintf("[%s] ", sample_name)
+    cat(sprintf(
+      "%sDetected doublet rate = %.1f%%\n",
+      prefix,
+      100 * detected_rate
+    ))
+    cat(sprintf(
+      "%sEstimated detectable doublet fraction = %.1f%%\n",
+      prefix,
+      100 * detectable_fraction
+    ))
+    cat(sprintf("%sOverall doublet rate:\n", prefix))
+    cat(sprintf("%s  Estimated = %.1f%%\n", prefix, 100 * overall_rate))
+  }
+
+  scrublet_res
+}
+
 ### histogram plotting ---------------------------------------------------------
 
+#' Plot Scrublet score distributions
+#'
+#' @description
+#' Plots histograms of doublet scores for observed transcriptomes and simulated
+#' doublets side by side. The threshold is shown as a dashed red vertical line.
+#' For grouped results, plots a single group at a time.
+#'
+#' @param x A `ScrubletRes` object.
+#' @param break_number Integer. Number of breaks to use in the histograms.
+#' @param for_sample Optional character. For grouped results, the name of the
+#' group to plot. Defaults to the first group if `NULL`.
+#' @param ... Additional arguments (unused; required by the S3 generic).
+#'
+#' @return A `patchwork` object with two `ggplot2` histograms.
+#'
 #' @export
-plot.ScrubletRes <- function(
-  x,
-  break_number = 31L,
-  ...
-) {
-  # checks
+plot.ScrubletRes <- function(x, break_number = 31L, for_sample = NULL, ...) {
   checkmate::assertClass(x, "ScrubletRes")
   checkmate::qassert(break_number, "I1")
+  checkmate::qassert(for_sample, c("S1", "0"))
 
-  # plotting
+  is_grouped <- isTRUE(attr(x, "grouped"))
+
+  if (is_grouped) {
+    groups <- unique(x$cell_groups)
+    sample_name <- if (is.null(for_sample)) groups[1] else for_sample
+
+    if (!(sample_name %in% groups)) {
+      stop(sprintf(
+        "Sample '%s' not found. Available: %s",
+        sample_name,
+        paste(groups, collapse = ", ")
+      ))
+    }
+
+    obs_scores <- x$doublet_scores_obs[x$cell_groups == sample_name]
+    sim_scores <- x$doublet_scores_sim[[sample_name]]
+    thr <- x$threshold[[sample_name]]
+    title_suffix <- sprintf(" [%s]", sample_name)
+  } else {
+    obs_scores <- x$doublet_scores_obs
+    sim_scores <- x$doublet_scores_sim
+    thr <- x$threshold
+    title_suffix <- ""
+  }
+
   obs_plot <- ggplot2::ggplot(
-    data.frame(score = x$doublet_scores_obs),
+    data.frame(score = obs_scores),
     ggplot2::aes(x = score)
   ) +
     ggplot2::geom_histogram(
@@ -380,20 +496,20 @@ plot.ScrubletRes <- function(
       ggplot2::aes(y = ggplot2::after_stat(density))
     ) +
     ggplot2::geom_vline(
-      xintercept = x$threshold,
+      xintercept = thr,
       linewidth = 0.5,
       colour = "red",
       linetype = "dashed"
     ) +
     ggplot2::labs(
-      title = "Observed transcriptomes",
+      title = paste0("Observed transcriptomes", title_suffix),
       x = "Doublet score",
       y = "Probability density"
     ) +
     ggplot2::theme_bw()
 
   sim_plot <- ggplot2::ggplot(
-    data.frame(score = x$doublet_scores_sim),
+    data.frame(score = sim_scores),
     ggplot2::aes(x = score)
   ) +
     ggplot2::geom_histogram(
@@ -403,13 +519,13 @@ plot.ScrubletRes <- function(
       ggplot2::aes(y = ggplot2::after_stat(density))
     ) +
     ggplot2::geom_vline(
-      xintercept = x$threshold,
+      xintercept = thr,
       linewidth = 0.5,
       colour = "red",
       linetype = "dashed"
     ) +
     ggplot2::labs(
-      title = "Simulated doublets",
+      title = paste0("Simulated doublets", title_suffix),
       x = "Doublet score",
       y = "Probability density"
     ) +
@@ -420,67 +536,55 @@ plot.ScrubletRes <- function(
 
 ### readjusting thresholds -----------------------------------------------------
 
-#' Helper function to manually readjust Scrublet thresholds
+#' Manually readjust Scrublet doublet call thresholds
 #'
 #' @description
-#' Can update the Scrublet thresholding after manual introspection of the
-#' histogram.
+#' Updates doublet calls and associated summary statistics in a `ScrubletRes`
+#' object using a user-supplied threshold. Intended for use after visual
+#' inspection of the score histograms via [plot.ScrubletRes()].
 #'
-#' @param scrublet_res `ScrubletRes` result class.
-#' @param threshold Numeric. The new threshold to use.
-#' @param .verbose Boolean. Controls the verbosity of the function.
+#' @param scrublet_res A `ScrubletRes` object.
+#' @param threshold Numeric in `[0, 1]`. The new threshold to apply.
+#' @param for_sample Optional character. For grouped results, the name of the
+#' group to update. Defaults to the first group if `NULL`. Ignored for
+#' ungrouped results.
+#' @param .verbose Logical. If `TRUE`, prints updated rate summaries to the
+#' console.
 #'
-#' @returns `ScrubletRes` class with updated doublet calls based on the new
-#' threshold.
+#' @return The `ScrubletRes` object with updated `predicted_doublets`,
+#' `z_scores`, `threshold`, `detected_doublet_rate`,
+#' `detectable_doublet_fraction`, and `overall_doublet_rate`.
 #'
 #' @export
-call_doublets_manual <- function(scrublet_res, threshold, .verbose = TRUE) {
-  # checks
+call_doublets_manual <- function(
+  scrublet_res,
+  threshold,
+  for_sample = NULL,
+  .verbose = TRUE
+) {
   checkmate::assertClass(scrublet_res, "ScrubletRes")
   checkmate::qassert(threshold, "N1[0,1]")
+  checkmate::qassert(for_sample, c("S1", "0"))
   checkmate::qassert(.verbose, "B1")
 
-  # function
-  predicted_doublets <- scrublet_res$doublet_scores_obs > threshold
+  is_grouped <- isTRUE(attr(scrublet_res, "grouped"))
 
-  z_scores <- (scrublet_res$doublet_scores_obs - threshold) /
-    scrublet_res$doublet_errors_obs
-
-  detected_doublet_rate <- sum(predicted_doublets) /
-    length(predicted_doublets)
-
-  detectable_doublet_fraction <- sum(
-    scrublet_res$doublet_scores_sim > threshold
-  ) /
-    length(scrublet_res$doublet_scores_sim)
-
-  overall_doublet_rate <- if (detectable_doublet_fraction > 0.01) {
-    detected_doublet_rate / detectable_doublet_fraction
-  } else {
-    0.0
+  if (!is_grouped) {
+    return(.update_scrublet_threshold(scrublet_res, threshold, NULL, .verbose))
   }
 
-  if (.verbose) {
-    cat(sprintf(
-      "Detected doublet rate = %.1f%%\n",
-      100 * detected_doublet_rate
+  groups <- unique(scrublet_res$cell_groups)
+  sample_name <- if (is.null(for_sample)) groups[1] else for_sample
+
+  if (!(sample_name %in% groups)) {
+    stop(sprintf(
+      "Sample '%s' not found. Available: %s",
+      sample_name,
+      paste(groups, collapse = ", ")
     ))
-    cat(sprintf(
-      "Estimated detectable doublet fraction = %.1f%%\n",
-      100 * detectable_doublet_fraction
-    ))
-    cat(sprintf("Overall doublet rate:\n"))
-    cat(sprintf("  Estimated = %.1f%%\n", 100 * overall_doublet_rate))
   }
 
-  scrublet_res$predicted_doublets <- predicted_doublets
-  scrublet_res$z_scores <- z_scores
-  scrublet_res$threshold <- threshold
-  scrublet_res$detected_doublet_rate <- detected_doublet_rate
-  scrublet_res$detectable_doublet_fraction <- detectable_doublet_fraction
-  scrublet_res$overall_doublet_rate <- overall_doublet_rate
-
-  scrublet_res
+  .update_scrublet_threshold(scrublet_res, threshold, sample_name, .verbose)
 }
 
 ### obs data -------------------------------------------------------------------
@@ -519,27 +623,61 @@ get_data.ScrubletRes <- function(x, ...) {
 print.ScrubletRes <- function(x, ...) {
   n_cells <- length(x$predicted_doublets)
   n_doublets <- sum(x$predicted_doublets)
+  is_grouped <- isTRUE(attr(x, "grouped"))
 
-  cat(sprintf(
-    "ScrubletRes: %d cells, %d doublets (%.1f%%)\n",
-    n_cells,
-    n_doublets,
-    100 * n_doublets / n_cells
-  ))
-  cat(sprintf("  Threshold:              %.4f\n", x$threshold))
-  cat(sprintf(
-    "  Detected doublet rate:  %.1f%%\n",
-    100 * x$detected_doublet_rate
-  ))
-  cat(sprintf(
-    "  Detectable fraction:    %.1f%%\n",
-    100 * x$detectable_doublet_fraction
-  ))
-  cat(sprintf(
-    "  Overall doublet rate:   %.1f%%\n",
-    100 * x$overall_doublet_rate
-  ))
-  cat(sprintf("  Simulated doublets:     %d\n", length(x$doublet_scores_sim)))
+  header <- if (is_grouped) {
+    sprintf(
+      "ScrubletRes (grouped by '%s', %d groups): %d cells, %d doublets (%.1f%%)\n",
+      attr(x, "group_by_col"),
+      length(unique(x$cell_groups)),
+      n_cells,
+      n_doublets,
+      100 * n_doublets / n_cells
+    )
+  } else {
+    sprintf(
+      "ScrubletRes: %d cells, %d doublets (%.1f%%)\n",
+      n_cells,
+      n_doublets,
+      100 * n_doublets / n_cells
+    )
+  }
+  cat(header)
+
+  if (is_grouped) {
+    cat("Per-group:\n")
+    for (g in names(x$threshold)) {
+      mask <- x$cell_groups == g
+      n_g <- sum(mask)
+      d_g <- sum(x$predicted_doublets[mask])
+      cat(sprintf(
+        "  - %s: %d cells, %d doublets (%.1f%%), threshold = %.4f\n",
+        g,
+        n_g,
+        d_g,
+        100 * d_g / n_g,
+        x$threshold[[g]]
+      ))
+    }
+  } else {
+    cat(sprintf("  Threshold:              %.4f\n", x$threshold))
+    cat(sprintf(
+      "  Detected doublet rate:  %.1f%%\n",
+      100 * x$detected_doublet_rate
+    ))
+    cat(sprintf(
+      "  Detectable fraction:    %.1f%%\n",
+      100 * x$detectable_doublet_fraction
+    ))
+    cat(sprintf(
+      "  Overall doublet rate:   %.1f%%\n",
+      100 * x$overall_doublet_rate
+    ))
+    cat(sprintf(
+      "  Simulated doublets:     %d\n",
+      length(x$doublet_scores_sim)
+    ))
+  }
 
   extras <- character()
   if (!is.null(x$pca)) {
@@ -595,18 +733,43 @@ get_data.BoostRes <- function(x, ...) {
 print.BoostRes <- function(x, ...) {
   n_cells <- length(x$doublet)
   n_doublets <- sum(x$doublet)
+  is_grouped <- isTRUE(attr(x, "grouped"))
 
-  cat(sprintf(
-    "BoostRes: %d cells, %d doublets (%.1f%%)\n",
-    n_cells,
-    n_doublets,
-    100 * n_doublets / n_cells
-  ))
-  cat(sprintf(
-    "  Score range: [%.4f, %.4f]\n",
-    min(x$doublet_score),
-    max(x$doublet_score)
-  ))
+  if (is_grouped) {
+    cat(sprintf(
+      "BoostRes (grouped by '%s', %d groups): %d cells, %d doublets (%.1f%%)\n",
+      attr(x, "group_by_col"),
+      length(unique(x$cell_groups)),
+      n_cells,
+      n_doublets,
+      100 * n_doublets / n_cells
+    ))
+    cat("Per-group:\n")
+    for (g in unique(x$cell_groups)) {
+      mask <- x$cell_groups == g
+      n_g <- sum(mask)
+      d_g <- sum(x$doublet[mask])
+      cat(sprintf(
+        "  - %s: %d cells, %d doublets (%.1f%%)\n",
+        g,
+        n_g,
+        d_g,
+        100 * d_g / n_g
+      ))
+    }
+  } else {
+    cat(sprintf(
+      "BoostRes: %d cells, %d doublets (%.1f%%)\n",
+      n_cells,
+      n_doublets,
+      100 * n_doublets / n_cells
+    ))
+    cat(sprintf(
+      "  Score range: [%.4f, %.4f]\n",
+      min(x$doublet_score),
+      max(x$doublet_score)
+    ))
+  }
 
   invisible(x)
 }
@@ -707,21 +870,49 @@ print.ScDblFinderRes <- function(x, ...) {
   n_doublets <- sum(x$predicted_doublets)
   n_clusters <- length(unique(x$cluster_labels))
   features_extracted <- !is.null(x$features)
+  is_grouped <- isTRUE(attr(x, "grouped"))
 
-  cat(sprintf(
-    "ScDblFinderRes: %d cells, %d doublets (%.1f%%)\n",
-    n_cells,
-    n_doublets,
-    100 * n_doublets / n_cells
-  ))
-  cat(sprintf("  Threshold:        %.4f\n", x$threshold))
-  cat(sprintf(
-    "  Score range:      [%.4f, %.4f]\n",
-    min(x$doublet_score),
-    max(x$doublet_score)
-  ))
-  cat(sprintf("  Final clusters:   %d\n", n_clusters))
-  cat(sprintf("  Features avaiable: %s\n", features_extracted))
+  if (is_grouped) {
+    cat(sprintf(
+      "ScDblFinderRes (grouped by '%s', %d groups): %d cells, %d doublets (%.1f%%)\n",
+      attr(x, "group_by_col"),
+      length(unique(x$cell_groups)),
+      n_cells,
+      n_doublets,
+      100 * n_doublets / n_cells
+    ))
+    cat("Per-group:\n")
+    for (g in names(x$threshold)) {
+      mask <- x$cell_groups == g
+      n_g <- sum(mask)
+      d_g <- sum(x$predicted_doublets[mask])
+      cat(sprintf(
+        "  - %s: %d cells, %d doublets (%.1f%%), threshold = %.4f\n",
+        g,
+        n_g,
+        d_g,
+        100 * d_g / n_g,
+        x$threshold[[g]]
+      ))
+    }
+    cat(sprintf("  Total clusters:    %d (prefixed)\n", n_clusters))
+    cat(sprintf("  Features available: %s\n", features_extracted))
+  } else {
+    cat(sprintf(
+      "ScDblFinderRes: %d cells, %d doublets (%.1f%%)\n",
+      n_cells,
+      n_doublets,
+      100 * n_doublets / n_cells
+    ))
+    cat(sprintf("  Threshold:        %.4f\n", x$threshold))
+    cat(sprintf(
+      "  Score range:      [%.4f, %.4f]\n",
+      min(x$doublet_score),
+      max(x$doublet_score)
+    ))
+    cat(sprintf("  Final clusters:   %d\n", n_clusters))
+    cat(sprintf("  Features available: %s\n", features_extracted))
+  }
 
   invisible(x)
 }

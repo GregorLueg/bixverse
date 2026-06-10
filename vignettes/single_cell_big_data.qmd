@@ -16,84 +16,108 @@ author: "Gregor Lueg"
 ## Intro
 
 This vignette demonstrates how to run a single cell analysis on a data set
-containing nearly 3 million cells on a local machine - in this case a MacBook
-Pro M1 Max - without exhausting memory. If you have not read the
+containing nearly 1 million cells on a local machine... In this case, a MacBook 
+Air with 24 GBs (if you think *"IMPOSSIBLE!"*, you would not be wrong coming
+from other languages/frameworks). If you have not read the
 [design choices](https://gregorlueg.github.io/bixverse/articles/design_single_cell.html)
 and the [introductory vignette](https://gregorlueg.github.io/bixverse/articles/thinking_single_cell.html),
 please do so first. The [PBMC3k walkthrough](https://gregorlueg.github.io/bixverse/articles/pbmc_single_cell.html)
 covers every step in detail on a small data set; here we focus on what changes
-when the cell count moves from thousands to millions.
+when the cell count moves from thousands to a million.
 
-The data set used is one of the h5ad of the [100 million cell Tahoe](https://www.biorxiv.org/content/10.1101/2025.02.20.639398v3) data set from Parse Biosciences. The original file has 5.5m cells; 
-after quality control roughly 2.9 million cells are retained and read in. It
-was for me large enough data set to test out what can be done on a laptop.
+In the orignal version of the vignette, I used a one of the h5ad files from
+the Tahoe 100m data. set, but I have decided to update the data set to the 
+1 million cell data set from Parse Bioscience as it's an often used data set to 
+show case large single cell data analysis, see original article 
+[here](https://support.parsebiosciences.com/hc/en-us/articles/7704577188500-How-to-analyze-a-1-million-cell-data-set-using-Scanpy-and-Harmony).
+**The important bit here is that this was run successfully on a MacBook Air with
+24 GB (M3)**. And please contrast that with the following line for the analysis
+of this data:
+
+<i>To avoid computer crashes and program failures, we recommend you execute the 
+Python code on a cloud computing platform. The instance you select on the cloud 
+platform to run this analysis should consist of at least 8 threads and 160 GB of 
+RAM.</i> - Parse Biosciences 
 
 ::: {.callout-note}
 None of the code chunks below are evaluated. This vignette is a reference for
 how one *would* run such an analysis, not a live rendering - the data set is
-far too large for CI/CD runners and Microsoft would not be happy.
+far too large for CI/CD runners and GitHub would not be happy.
 :::
 
-If you want to reproduce this, download one of the h5ad files from Tahoe 100m. 
-Or use large enough data you always wanted to analyse.
+If you want to reproduce this, download the data from Parse Biosciences (or
+any other fat data set you have) and go have fun.
+
+```{bash}
+#| label: get data
+#| eval: false
+wget "https://cdn.parsebiosciences.com/1M_PBMC_T1D_Parse.zip"
+```
 
 ```{r}
 #| label: setup
 #| eval: false
+# main packages
 library(bixverse)
+library(bixverse.plots)
+
+# GPU-acceleration (experimental)
+library(bixverse.gpu)
+
+# Plotting, data manipulation
 library(ggplot2)
 library(data.table)
 ```
 
 ## Loading the data
 
-For large `.h5ad` files the key entry point is `stream_h5ad`, which streams the
-sparse matrix into the Rust binary files and the internal DuckDB. Once the data 
-has been streamed once, subsequent sessions can reconnect via `load_existing`.
+Once you have unzipped the data, we can start streaming it into memory and
+writing the files to disk.
 
 ```{r}
 #| label: stream h5ad
 #| eval: false
-h5_path <- path.expand(
-  "PATH TO H5AD/plate1_filt_Vevo_Tahoe100M_WServicesFrom_ParseGigalab.h5ad"
+data_path <- "<PATH TO UNZIPPED DATA>"
+
+load_params <- params_sc_mtx_io(
+  path_mtx = path.expand(file.path(data_path, "DGE_1M_PBMC.mtx")),
+  path_obs = path.expand(file.path(data_path, "cell_metadata_1M_PBMC.csv")),
+  path_var = path.expand(file.path(data_path, "all_genes_1M_PBMC.csv")),
+  cells_as_rows = TRUE,
+  has_hdr = TRUE
 )
 
-dir_files <- "PATH TO WHERE TO SAVE THE FILES"
+# We will write everything into the temporary directory
+sce <- SingleCells(dir_data = tempdir())
 
-# Quick sanity check on dimensions before committing to the stream
-meta <- get_h5ad_dimensions(h5_path)
-meta
-
-sc_object <- SingleCells(
-  dir_data = dir_files
-)
-
-sc_object <- stream_h5ad(object = sc_object, h5_path = h5_path)
+# We enforce level 2 streaming here which will run for a bit longer, but ensure
+# your memory never blows up
+sce <- load_mtx(object = sce, sc_mtx_io_param = load_params, streaming = 2L)
 ```
 
-This step is slow. Ca. 10 minutes. The function does 4 things on the counts.
+This step is the slowest... A lot of things are actually happening here.
 
 - First, (streaming) scan to understand in how many cells a gene is expressed.
-  Only keep genes that are expressed in whatever you set to `min_cells` (for me
-  ca. 90 seconds).
+  Only keep genes that are expressed in whatever you set to `min_cells`.
 - Second, (streaming) scan, given the genes from the first step, which cells to
-  include based on minimum library size and minimum features. (For me ca. 
-  2 min).
-- Third, now that it's clear which cells/genes to include, load the data in
-  chunks and write into a CSR style format for easy cell-retrieval while also
-  directly normalising the data. (Ca. 3 to 4 minutes for me.)
+  include based on minimum library size and minimum features.
+- Third, now that it's clear which cells/genes to include, create quick temp
+  files with the cells to keep with the genes already re-indexed. This way we
+  avoid loading in the massive MTX file in one go into memory. These files are
+  automatically cleaned up at the end and loaded sequentially and written to the
+  CSR-type file (while the normalisation is also done on the fly).
 - Lastly, load in the cell data in small chunks and do a transpose to a CSC 
-  style format for easy gene retrieval. (Ca. 3 to 4 minutes for me.)
+  style format for easy gene retrieval.
 
-The DuckDB also gets populated with the metadata in the observations (based
-on what has been filtered) and the vars (add another 1 to 2 minutes here). This 
-step takes the most time and is partially bound by the field going for h5 as the 
-go-to file storage. Go have a coffee while this is running, listen to a podcast, 
-watch something on the side. If you have already loaded in the data and it 
-exists on-disk from a previous session, skip the streaming step entirely and 
-reconnect. This is the one (very) slow part in `bixverse` single cell... To be 
-fair, I have no idea how long it would take to load in the full h5ad file in 
-Python or R -- I do not want to try with 64 GB memory.
+This approach avoids loading the whole data into memory and any point. The 
+DuckDB also gets populated with the metadata in the observations (based on what 
+has been filtered) and the vars (add another 1 to 2 minutes here). This part -
+streaming the data and processing it - is usually what takes the most time. If 
+you have already loaded in the data and it exists on-disk from a previous 
+session, skip the streaming step entirely and reconnect. This is the one (very) 
+slow part in `bixverse` single cell... To be fair, I have no idea how long it 
+would take to load in the full MTX file in  Python or R -- also, I do not want 
+to really try...
 
 ```{r}
 #| label: reconnect
@@ -109,29 +133,29 @@ sc_object <- load_existing(object = sc_object)
 
 ### Gene set proportions
 
-The same gene set proportion logic from the PBMC3k vignette applies, but the
-`streaming` argument **must** be set to `TRUE` so that proportions are computed
-in batches rather than pulling the entire count matrix into Rust... The 
-memory pressure you should observe should remain minimal.
+The same gene set proportion logic from the PBMC3k vignette applies. The 
+functions automatically recognise if you have more than 100k cells and will
+leverage the streaming engine by default in this case. You do have more manual
+control via the `streaming = NULL` parameter. If you have a fat memory machine,
+you can set this to `FALSE` despite a large data set. 
 
 ```{r}
 #| label: gene set proportions
 #| eval: false
-var <- get_sc_var(object = sc_object)
+var <- get_sc_var(object = sce)
 
 gs_of_interest <- list(
-  MT = var[grepl("^MT-", gene_id), gene_id],
-  Ribo = var[grepl("^RPS|^RPL", gene_id), gene_id]
+  MT = var[grepl("^MT-", gene_name), gene_id],
+  Ribo = var[grepl("^RPS|^RPL", gene_name), gene_id]
 )
 
-sc_object <- gene_set_proportions_sc(
-  object = sc_object,
+sce <- gene_set_proportions_sc(
+  object = sce,
   gene_set_list = gs_of_interest,
-  streaming = TRUE,
   .verbose = TRUE
 )
 
-sc_object[[1:5L]]
+head(sce)
 ```
 
 ### MAD outlier detection

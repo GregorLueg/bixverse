@@ -25,6 +25,7 @@
 #' to `FALSE` (10x convention: genes are rows).
 #' @param has_hdr Boolean. Whether the barcodes/features files have a
 #' header row. Applied uniformly. Defaults to `FALSE` (10x convention).
+#' @param .verbose Boolean. Controls verbosity of the function.
 #'
 #' @return A list with:
 #' \itemize{
@@ -41,7 +42,8 @@ prescan_mtx_dirs <- function(
   dirs,
   exp_ids,
   cells_as_rows = FALSE,
-  has_hdr = FALSE
+  has_hdr = FALSE,
+  .verbose = TRUE
 ) {
   checkmate::assertCharacter(dirs, min.len = 2L)
   for (d in dirs) {
@@ -50,12 +52,12 @@ prescan_mtx_dirs <- function(
   checkmate::assertCharacter(exp_ids, len = length(dirs), unique = TRUE)
   checkmate::qassert(cells_as_rows, "B1")
   checkmate::qassert(has_hdr, "B1")
+  checkmate::qassert(.verbose, "B1")
 
   temp_dir <- tempfile(pattern = "bixverse_mtx_prescan_")
   dir.create(temp_dir)
   temp_files <- character()
 
-  # locate the trio inside each directory
   locate <- function(dir, pat) {
     files <- list.files(
       dir,
@@ -72,7 +74,6 @@ prescan_mtx_dirs <- function(
     files
   }
 
-  # gunzip helper - returns decompressed path, registers temp file
   gunzip_to_temp <- function(path) {
     out_name <- sub("\\.gz$", "", basename(path), ignore.case = TRUE)
     out_path <- file.path(
@@ -102,7 +103,15 @@ prescan_mtx_dirs <- function(
   gene_sets <- vector("list", length(dirs))
   file_tasks <- vector("list", length(dirs))
 
+  if (.verbose) {
+    cli::cli_progress_bar("Prescanning mtx directories", total = length(dirs))
+  }
+
   for (i in seq_along(dirs)) {
+    if (.verbose) {
+      cli::cli_progress_update(status = exp_ids[i])
+    }
+
     d <- dirs[i]
     mtx_path <- locate(d, "\\.mtx(\\.gz)?$")
     features_path <- locate(d, "(features|genes)\\.(tsv|csv)(\\.gz)?$")
@@ -136,6 +145,10 @@ prescan_mtx_dirs <- function(
       has_hdr = has_hdr,
       local_gene_ids = gene_ids
     )
+  }
+
+  if (.verbose) {
+    cli::cli_progress_done()
   }
 
   universe <- Reduce(intersect, gene_sets)
@@ -277,11 +290,6 @@ load_seurat <- S7::new_generic(
 )
 
 #' @method load_seurat SingleCells
-#'
-#' @export
-#'
-#' @importFrom zeallot `%<-%`
-#' @importFrom magrittr `%>%`
 S7::method(load_seurat, SingleCells) <- function(
   object,
   seurat,
@@ -429,11 +437,6 @@ load_r_data <- S7::new_generic(
 )
 
 #' @method load_r_data SingleCells
-#'
-#' @export
-#'
-#' @importFrom zeallot `%<-%`
-#' @importFrom magrittr `%>%`
 S7::method(load_r_data, SingleCells) <- function(
   object,
   counts,

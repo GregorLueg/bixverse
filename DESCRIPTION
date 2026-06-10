@@ -36,6 +36,7 @@ biocViews:
 Imports: 
     arrow,
     checkmate,
+    cli,
     data.table,
     DBI,
     dplyr,

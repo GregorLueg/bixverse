@@ -2,7 +2,8 @@
 
 ## consts ----------------------------------------------------------------------
 
-.N_CELLS_STREAMING_THRESHOLD <- 1e6
+# Auto-streaming fires up with more than 100,000 cells
+.N_CELLS_STREAMING_THRESHOLD <- 1e5
 
 ## utils -----------------------------------------------------------------------
 
