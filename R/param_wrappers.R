@@ -744,9 +744,9 @@ params_sc_mtx_io <- function(
   checkmate::qassert(has_hdr, "B1")
 
   list(
-    path_mtx = path_mtx,
-    path_obs = path_obs,
-    path_var = path_var,
+    path_mtx = path.expand(path_mtx),
+    path_obs = path.expand(path_obs),
+    path_var = path.expand(path_var),
     cells_as_rows = cells_as_rows,
     has_hdr = has_hdr
   )
