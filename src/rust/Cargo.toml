@@ -34,10 +34,7 @@ rand = { version = "0.9.0", features = ["std"] }
 rayon = "1.11.0"
 rustc-hash = "2.1.1"
 thousands = "*"
-bixverse-rs = {
-    version = "0.3.0",
-    features = ["single-cell", "multi-modal"]
-}
+bixverse-rs = { version = "0.3.0", features = ["single-cell", "multi-modal"] }
 either = "1.15.0"
 
 [[bin]]

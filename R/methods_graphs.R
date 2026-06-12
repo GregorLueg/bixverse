@@ -177,7 +177,7 @@ S7::method(tied_diffusion, NetworkDiffusions) <-
     for (node in seed_nodes_2) {
       diff_vec_2[node] <- diffusion_vector_2[node]
     }
-    if ((sum(diff_vec_1) == 0) || (sum(diff_vec_1) == 0)) {
+    if ((sum(diff_vec_1) == 0) || (sum(diff_vec_2) == 0)) {
       stop(
         paste(
           "No scores found on first and/or second of the diffusion vectors.",
