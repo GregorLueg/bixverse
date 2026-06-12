@@ -566,7 +566,7 @@ impl SingleCellCountData {
         let tasks: Vec<H5adFileTask> = file_tasks
             .into_iter()
             .map(|(_, robj)| {
-                let inner_list = List::try_from(robj).expect("Each file_task must be a list");
+                let inner_list = List::try_from(robj)?;
                 H5adFileTask::from_r_list(inner_list)
             })
             .collect::<Result<Vec<_>, _>>()?;
@@ -720,7 +720,7 @@ impl SingleCellCountData {
         let tasks: Vec<MtxFileTask> = file_tasks
             .into_iter()
             .map(|(_, robj)| {
-                let inner = List::try_from(robj).expect("Each file_task must be a list");
+                let inner = List::try_from(robj)?;
                 MtxFileTask::from_r_list(inner)
             })
             .collect::<Result<Vec<_>, _>>()?;
@@ -863,7 +863,9 @@ impl SingleCellCountData {
         let mut data: Vec<AssayData> = Vec::new();
         let mut indices: Vec<Vec<i32>> = Vec::new();
         let mut indptr: Vec<usize> = Vec::new();
-        let assay_type = parse_count_type(assay).unwrap();
+        let assay_type = parse_count_type(assay).ok_or_else(|| {
+            extendr_api::Error::Other(format!("Invalid assay '{assay}'. Use 'raw' or 'norm'."))
+        })?;
 
         if cell_based {
             let reader = ParallelSparseReader::new(&self.f_path_cells).to_extendr()?;
@@ -938,7 +940,9 @@ impl SingleCellCountData {
         assay: &str,
     ) -> Result<List, extendr_api::Error> {
         let reader = ParallelSparseReader::new(&self.f_path_cells).to_extendr()?;
-        let assay_type = parse_count_type(assay).unwrap();
+        let assay_type = parse_count_type(assay).ok_or_else(|| {
+            extendr_api::Error::Other(format!("Invalid assay '{assay}'. Use 'raw' or 'norm'."))
+        })?;
 
         let indices: Vec<usize> = indices.iter().map(|x| (*x - 1) as usize).collect();
 
@@ -1331,7 +1335,7 @@ impl SingleCellCountData {
                         gene_id,
                         true,
                     );
-                    writer.write_gene_chunk(chunk).unwrap();
+                    writer.write_gene_chunk(chunk).to_extendr()?;
                 } else {
                     let empty_chunk = CscGeneChunk::from_conversion(
                         RawCounts::U16(Vec::new()),
@@ -1386,7 +1390,9 @@ impl SingleCellCountData {
     ) -> Result<List, extendr_api::Error> {
         let reader = ParallelSparseReader::new(&self.f_path_genes).to_extendr()?;
 
-        let assay_type = parse_count_type(assay).unwrap();
+        let assay_type = parse_count_type(assay).ok_or_else(|| {
+            extendr_api::Error::Other(format!("Invalid assay '{assay}'. Use 'raw' or 'norm'."))
+        })?;
 
         let no_cells = reader.get_header().total_cells;
 
