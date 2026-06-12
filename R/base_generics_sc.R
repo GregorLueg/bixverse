@@ -700,8 +700,8 @@ find_hvg_sc <- S7::new_generic(
 #'
 #' @param object `SingleCells`, `MetaCells` (or potentially other) class.
 #' @param no_pcs Integer. Number of PCs to calculate.
-#' @param randomised_svd Boolean. Shall randomised SVD be used. Faster, but
-#' less precise.
+#' @param pca_params Named list. Controls the parameters to be used for the
+#' PCA calculation which is single cell-specific, see [params_sc_pca()]
 #' @param sparse_svd Boolean. Shall sparse solvers be used that do not do
 #' scaling. If set to yes, in the case of `random_svd = FALSE`, Lanczos
 #' iterations are used to solve the sparse SVD. With `random_svd = TRUE`, the
@@ -728,7 +728,7 @@ calculate_pca_sc <- S7::new_generic(
   fun = function(
     object,
     no_pcs,
-    randomised_svd = TRUE,
+    pca_params = params_sc_pca(),
     sparse_svd = FALSE,
     hvg = NULL,
     seed = 42L,

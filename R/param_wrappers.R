@@ -819,6 +819,42 @@ params_sc_hvg <- function(
   )
 }
 
+#' Wrapper for PCA specifically designed for single cells
+#'
+#' @param mean_center Boolean. Shall the data be mean centered
+#' @param normalise_variance Boolean. Shall the data have normalised variance
+#' @param randomised Boolean. Shall fast, approximate randomised SVD be used.
+#' @param clr Boolean. Shall the CLR-type `PFlogPF` be applied, see Booeshaghi,
+#' et al.
+#' @param size_factor Numeric. The used size factor during I/O. It needs to be
+#' the same as during I/O to have correct results when using the `PFlogPF`
+#' transformation.
+#'
+#' @returns A list with the parameters
+#'
+#' @export
+params_sc_pca <- function(
+  mean_center = FALSE,
+  normalise_variance = FALSE,
+  randomised = TRUE,
+  clr = TRUE,
+  size_factor = 1e4
+) {
+  # checks
+  checkmate::qassert(mean_center, "B1")
+  checkmate::qassert(normalise_variance, "B1")
+  checkmate::qassert(randomised, "B1")
+  checkmate::qassert(clr, "B1")
+  checkmate::qassert(size_factor, "N1")
+
+  list(
+    mean_center = mean_center,
+    normalise_variance = normalise_variance,
+    randomised = randomised,
+    clr = clr,
+    size_factor = size_factor
+  )
+}
 
 ## single cell (multi modal) ---------------------------------------------------
 

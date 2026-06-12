@@ -2162,6 +2162,8 @@ rs_bbknn_filtering <- function(indptr, indices, data, no_neighbours_to_keep) .Ca
 #' generates a batch-aligned embedding space.
 #'
 #' @param f_path_gene String. Path to the `counts_genes.bin` file.
+#' @param f_path_cell String. Path to the `counts_cells.bin` file. Used if
+#' you wish to use the PFlogPF transformation during the optional PCA step.
 #' @param cell_indices Integer. The cell indices to use. (0-indexed!)
 #' @param gene_indices Integer. The gene indices to use. (0-indexed!) Ideally
 #' these are batch-aware highly variable genes.
@@ -2177,7 +2179,7 @@ rs_bbknn_filtering <- function(indptr, indices, data, no_neighbours_to_keep) .Ca
 #' @return The batch-corrected embedding space.
 #'
 #' @export
-rs_mnn <- function(f_path_gene, cell_indices, gene_indices, batch_indices, precomputed_pca, mnn_params, verbose, seed) .Call(wrap__rs_mnn, f_path_gene, cell_indices, gene_indices, batch_indices, precomputed_pca, mnn_params, verbose, seed)
+rs_mnn <- function(f_path_gene, f_path_cell, cell_indices, gene_indices, batch_indices, precomputed_pca, mnn_params, verbose, seed) .Call(wrap__rs_mnn, f_path_gene, f_path_cell, cell_indices, gene_indices, batch_indices, precomputed_pca, mnn_params, verbose, seed)
 
 #' Harmony batch correction in Rust
 #'
@@ -2480,12 +2482,16 @@ rs_sc_hvg_batch_aware <- function(f_path_gene, hvg_method, cell_indices, batch_l
 #'
 #' @description
 #' Helper function that will calculate the PCA for the specified highly
-#' variable genes. Has the option to use randomised SVD for faster solving
-#' of the PCA.
+#' variable genes. You have the option to do mean centering, variance
+#' normalisation and/or apply the new proposed transformation `PFlogPF` from
+#' Booeshaghi, et al.
 #'
 #' @param f_path_gene String. Path to the `counts_genes.bin` file.
+#' @param f_path_cell String. Path to the `counts_cells.bin` file. Used if
+#' you wish to use the PFlogPF transformation.
 #' @param no_pcs Integer. Number of PCs to calculate.
-#' @param random_svd Boolean. Shall randomised SVD be used.
+#' @param pca_params Named list. Contains the parameters to use for this PCA
+#' run.
 #' @param cell_indices Integer. The cell indices to use. (0-indexed!)
 #' @param gene_indices Integer. The gene indices to use. (0-indexed!)
 #' @param seed Integer. Random seed for the randomised SVD.
@@ -2502,23 +2508,24 @@ rs_sc_hvg_batch_aware <- function(f_path_gene, hvg_method, cell_indices, batch_l
 #' }
 #'
 #' @export
-rs_sc_pca <- function(f_path_gene, no_pcs, random_svd, cell_indices, gene_indices, seed, return_scaled, verbose) .Call(wrap__rs_sc_pca, f_path_gene, no_pcs, random_svd, cell_indices, gene_indices, seed, return_scaled, verbose)
+#'
+#' @references Booeshaghi, et al., bioRxive, 2026.
+rs_sc_pca <- function(f_path_gene, f_path_cell, no_pcs, pca_params, cell_indices, gene_indices, seed, return_scaled, verbose) .Call(wrap__rs_sc_pca, f_path_gene, f_path_cell, no_pcs, pca_params, cell_indices, gene_indices, seed, return_scaled, verbose)
 
 #' Calculates sparse PCA for single cell
 #'
 #' @description
 #' Helper function that will calculate sparse PCA without scaling the data.
-#' This has the advantage that you avoid creating a large dense matrix due
-#' to scaling; however, it has the disadvantage that the first PC will be
-#' heavily influenced by average expression. If random_svd is set to `FALSE`,
-#' Lanczos iterations will be used to solve the SVD; if random_svd is set
-#' to `TRUE`, the randomised version will be used with multiplication of the
-#' initial sparse matrix with a much smaller random dense matrix, avoiding
-#' holding a large dense matrix in memory.
+#' You have the option to do mean centering, variance normalisation and/or
+#' apply the new proposed transformation `PFlogPF` from Booeshaghi, et al.
+#' None of these will densify the matrix.
 #'
 #' @param f_path_gene String. Path to the `counts_genes.bin` file.
+#' @param f_path_cell String. Path to the `counts_cells.bin` file. Used if
+#' you wish to use the PFlogPF transformation.
 #' @param no_pcs Integer. Number of PCs to calculate.
-#' @param random_svd Boolean. Shall randomised SVD be used.
+#' @param pca_params Named list. Contains the parameters to use for this PCA
+#' run.
 #' @param cell_indices Integer. The cell indices to use. (0-indexed!)
 #' @param gene_indices Integer. The gene indices to use. (0-indexed!)
 #' @param seed Integer. Random seed for the randomised SVD.
@@ -2536,7 +2543,9 @@ rs_sc_pca <- function(f_path_gene, no_pcs, random_svd, cell_indices, gene_indice
 #' }
 #'
 #' @export
-rs_sc_pca_sparse <- function(f_path_gene, no_pcs, random_svd, cell_indices, gene_indices, seed, verbose) .Call(wrap__rs_sc_pca_sparse, f_path_gene, no_pcs, random_svd, cell_indices, gene_indices, seed, verbose)
+#'
+#' @references Booeshaghi, et al., bioRxive, 2026.
+rs_sc_pca_sparse <- function(f_path_gene, f_path_cell, no_pcs, pca_params, cell_indices, gene_indices, seed, verbose) .Call(wrap__rs_sc_pca_sparse, f_path_gene, f_path_cell, no_pcs, pca_params, cell_indices, gene_indices, seed, verbose)
 
 #' Generates the kNN graph
 #'
@@ -3393,7 +3402,10 @@ rs_mc_hvg <- function(sparse_data, hvg_method, loess_span, binning, n_bins, clip
 #' @param sparse_data A named list that needs to have `data`, `indptr`,
 #' `indices`, `nrow`, `ncol` and `format`.
 #' @param no_pcs Integer. Number of PCs to return.
-#' @param random_svd Boolean. Shall randomised SVD be used.
+#' @param pca_params Named list. Contains the parameters to use for this PCA
+#' run.
+#' @param clr_offsets Optional numeric. If you wish to use the `PFlogPF`
+#' normalisation prior to PCA from Booeshaghi, et al.
 #' @param seed Integer. Random seed for the randomised SVD.
 #'
 #' @returns A list with with the following items
@@ -3407,7 +3419,9 @@ rs_mc_hvg <- function(sparse_data, hvg_method, loess_span, binning, n_bins, clip
 #' }
 #'
 #' @export
-rs_mc_pca <- function(sparse_data, no_pcs, random_svd, seed) .Call(wrap__rs_mc_pca, sparse_data, no_pcs, random_svd, seed)
+#'
+#' @references Booeshaghi, et al., bioRxive, 2026.
+rs_mc_pca <- function(sparse_data, no_pcs, pca_params, clr_offsets, seed) .Call(wrap__rs_mc_pca, sparse_data, no_pcs, pca_params, clr_offsets, seed)
 
 #' Calculate the pairwise gene-correlation for meta cells
 #'
@@ -3487,14 +3501,16 @@ rs_mc_aucell <- function(sparse_data, gs_list, auc_type, verbose) .Call(wrap__rs
 #' @export
 rs_read_tenx_h5_modality <- function(f_path, version, feature_type) .Call(wrap__rs_read_tenx_h5_modality, f_path, version, feature_type)
 
-#' Applies CLR normalisation on ADT counts (Seurat-style, per cell)
+#' Applies CLR normalisation on ADT counts
 #'
 #' @param counts R matrix of shape cells x features.
+#' @param seurat_clr Logical; if TRUE uses the Seurat variant (non-negative),
+#' if FALSE uses proper CLR (mean-centred log, can be negative).
 #'
 #' @returns CLR-transformed matrix.
 #'
 #' @export
-rs_adt_clr <- function(counts) .Call(wrap__rs_adt_clr, counts)
+rs_adt_clr <- function(counts, seurat_clr) .Call(wrap__rs_adt_clr, counts, seurat_clr)
 
 #' Run DSB normalisation on raw ADT counts
 #'

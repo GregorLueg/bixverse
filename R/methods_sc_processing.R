@@ -1206,7 +1206,7 @@ S7::method(find_hvg_sc, SingleCells) <- function(
 S7::method(calculate_pca_sc, SingleCells) <- function(
   object,
   no_pcs,
-  randomised_svd = TRUE,
+  pca_params = params_sc_pca(),
   sparse_svd = FALSE,
   hvg = NULL,
   seed = 42L,
@@ -1214,7 +1214,7 @@ S7::method(calculate_pca_sc, SingleCells) <- function(
 ) {
   checkmate::assertClass(object, "bixverse::SingleCells")
   checkmate::qassert(no_pcs, "I1")
-  checkmate::qassert(randomised_svd, "B1")
+  assertScPca(pca_params)
   checkmate::qassert(sparse_svd, "B1")
   checkmate::qassert(hvg, c("I+", "0"))
   checkmate::qassert(seed, "I1")
@@ -1270,8 +1270,9 @@ S7::method(calculate_pca_sc, SingleCells) <- function(
       c(pca_factors, pca_loadings, singular_values, scaled),
       rs_sc_pca(
         f_path_gene = get_rust_count_gene_f_path(object),
+        f_path_cell = get_rust_count_cell_f_path(object),
         no_pcs = no_pcs,
-        random_svd = randomised_svd,
+        pca_params = pca_params,
         cell_indices = get_cells_to_keep(object),
         gene_indices = selected_hvg,
         seed = seed,
@@ -1298,9 +1299,10 @@ S7::method(calculate_pca_sc, SingleCells) <- function(
     zeallot::`%<-%`(
       c(sparse_pca_factors, sparse_pca_loadings, sparse_pca_eigenvals),
       rs_sc_pca_sparse(
-        f_path_gene = bixverse:::get_rust_count_gene_f_path(object),
+        f_path_gene = get_rust_count_gene_f_path(object),
+        f_path_cell = get_rust_count_cell_f_path(object),
         no_pcs = no_pcs,
-        random_svd = randomised_svd,
+        pca_params = pca_params,
         cell_indices = get_cells_to_keep(object),
         gene_indices = selected_hvg,
         seed = seed,

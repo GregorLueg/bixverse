@@ -775,8 +775,9 @@ S7::method(bbknn_sc, SingleCells) <- function(
 #'   \item var_adj - Logical. Apply variance adjustment to avoid kissing
 #'   effects.
 #'   \item no_pcs - Integer. Number of PCs to use for MNN calculations.
-#'   \item random_svd - Logical. Use randomised SVD.
 #'   \item knn - List of kNN parameters. See [bixverse::params_knn_defaults()]
+#'   for available parameters and their defaults.
+#'   \item pca - List of PCA parameters, see [bixverse::param_sc_pca()]
 #'   for available parameters and their defaults.
 #' }
 #' @param use_precomputed_pca Boolean. Should the PCA in the object be used
@@ -845,6 +846,7 @@ S7::method(fast_mnn_sc, SingleCells) <- function(
 
   mnn_embd <- rs_mnn(
     f_path = get_rust_count_gene_f_path(object),
+    f_path_cell = get_rust_count_cell_f_path(object),
     cell_indices = get_cells_to_keep(object),
     gene_indices = as.integer(batch_hvg_genes),
     batch_indices = batch_indices,

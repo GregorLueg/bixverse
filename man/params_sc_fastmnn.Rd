@@ -8,9 +8,9 @@ params_sc_fastmnn(
   ndist = 3,
   cos_norm = TRUE,
   no_pcs = 30L,
-  random_svd = TRUE,
   sparse_svd = TRUE,
-  knn = list(k = 20L)
+  knn = list(k = 20L),
+  pca = params_sc_pca()
 )
 }
 \arguments{
@@ -23,13 +23,16 @@ distances. Defaults to \code{TRUE}.}
 \item{no_pcs}{Integer. Number of PCs to use for MNN calculations.
 Defaults to \code{30L}.}
 
-\item{random_svd}{Logical. Use randomised SVD. Defaults to \code{TRUE}.}
+\item{sparse_svd}{Boolean. Shall the sparse SVD be used.}
 
 \item{knn}{List. Optional overrides for kNN parameters. See
 \code{\link[=params_knn_defaults]{params_knn_defaults()}} for available parameters: \code{k},
 \code{knn_method}, \code{ann_dist}, \code{search_budget}, \code{n_trees}, \code{delta},
 \code{diversify_prob}, \code{ef_budget}, \code{m}, \code{ef_construction}, \code{ef_search}, \code{n_list}
 and \code{n_probe}.}
+
+\item{pca}{Named list. Parameters to feed through to the optional
+recalculation of the PCA, see \code{\link[=params_sc_pca]{params_sc_pca()}}.}
 }
 \value{
 A list with the fastMNN parameters.
