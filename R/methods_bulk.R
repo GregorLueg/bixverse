@@ -933,9 +933,9 @@ S7::method(calculate_dge_limma, BulkDge) <- function(
 
       # Limma Voom
       limma_results <- run_limma_voom(
-        meta_data = sample_info,
+        meta_data = data.table::copy(sample_info_red),
         main_contrast = contrast_column,
-        dge_list = dge_list,
+        dge_list = dge_list_red,
         contrast_list = contrast_list,
         co_variates = co_variates,
         quantile_norm = quantile_norm,

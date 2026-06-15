@@ -1829,7 +1829,7 @@ coremo_tree_cut <- function(
     sort(unique(clusters)),
     \(cluster_i) {
       x <-
-        prcomp(t(d[names(clusters)[clusters == cluster_i], ]), 1)$x[, "PC1"]
+        prcomp(t(dist_mat[names(clusters)[clusters == cluster_i], ]), 1)$x[, "PC1"]
     }
   ) %>%
     do.call(rbind, .) %>%
@@ -1839,7 +1839,7 @@ coremo_tree_cut <- function(
 
   eg_cor <- rs_cor(x = t(eg), spearman = spearman)
   eg_cor <-
-    abs(eg_cor[to_keep, toMerge, drop = FALSE])
+    abs(eg_cor[to_keep, to_merge, drop = FALSE])
   res <- clusters
   for (i in to_merge) {
     sel_clust <- to_keep[which.max(eg_cor[, as.character(i)])]

@@ -1192,12 +1192,13 @@ SingleCellDuckDB <- R6::R6Class(
         obs_parts[[i]] <- obs_dt
       }
 
-      shared_cols <- Reduce(intersect, lapply(obs_parts, names))
-      obs_parts <- lapply(obs_parts, function(dt) {
-        dt[, .SD, .SDcols = shared_cols]
-      })
-
-      obs_combined <- data.table::rbindlist(obs_parts, use.names = TRUE)
+      # keep the union of all obs columns; columns absent from a given file are
+      # NA-filled rather than silently dropped (cell_id / exp_id always present)
+      obs_combined <- data.table::rbindlist(
+        obs_parts,
+        use.names = TRUE,
+        fill = TRUE
+      )
       obs_combined[, cell_idx := .I]
       data.table::setcolorder(
         obs_combined,
@@ -1914,12 +1915,13 @@ SingleCellDuckDB <- R6::R6Class(
         obs_parts[[i]] <- obs_dt
       }
 
-      shared_cols <- Reduce(intersect, lapply(obs_parts, names))
-      obs_parts <- lapply(obs_parts, function(dt) {
-        dt[, .SD, .SDcols = shared_cols]
-      })
-
-      obs_combined <- data.table::rbindlist(obs_parts, use.names = TRUE)
+      # keep the union of all obs columns; columns absent from a given file are
+      # NA-filled rather than silently dropped (cell_id / exp_id always present)
+      obs_combined <- data.table::rbindlist(
+        obs_parts,
+        use.names = TRUE,
+        fill = TRUE
+      )
       obs_combined[, cell_idx := .I]
       data.table::setcolorder(
         obs_combined,
@@ -2074,12 +2076,13 @@ SingleCellDuckDB <- R6::R6Class(
         obs_parts[[i]] <- dt
       }
 
-      shared_cols <- Reduce(intersect, lapply(obs_parts, names))
-      obs_parts <- lapply(obs_parts, function(d) {
-        d[, .SD, .SDcols = shared_cols]
-      })
-
-      combined <- data.table::rbindlist(obs_parts, use.names = TRUE)
+      # keep the union of all obs columns; columns absent from a given file are
+      # NA-filled rather than silently dropped (cell_id / exp_id always present)
+      combined <- data.table::rbindlist(
+        obs_parts,
+        use.names = TRUE,
+        fill = TRUE
+      )
       combined[, cell_idx := .I]
       data.table::setcolorder(
         combined,
