@@ -16,6 +16,10 @@
 
 ### Description
 
+<img src="/man/figures/bixverse_single_cell.png" width="500" height="500" alt="atlas scale on small compute">
+
+</br>
+
 This is an *opionated* package making various bioinformatics workflows in R (or
 ported from Python) much faster via low-level implementations in Rust. The core 
 idea is to take different methods, write implementations in a compiled,
@@ -107,7 +111,7 @@ and trade-offs. The various vignettes will show you how to analyse data.
 
 #### General
 
-- [ ] Multi h5 (10x output) i/o
+- [x] Multi h5 (10x output) i/o
 - [ ] Save data to h5ad for easier interoperability with Python.
 - [ ] Splitting a SingleCells into several sub directories for easier management
 - [ ] Implementation of [Palantir](https://www.nature.com/articles/s41587-019-0068-4) and
