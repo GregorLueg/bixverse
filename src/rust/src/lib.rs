@@ -8,6 +8,7 @@ pub mod base;
 pub mod data;
 pub mod enrichment;
 pub mod graph;
+pub mod hotfix;
 pub mod meta_cell;
 pub mod methods;
 pub mod ontology;

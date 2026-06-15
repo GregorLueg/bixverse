@@ -3,6 +3,10 @@
 \name{print.OntologySim}
 \alias{print.OntologySim}
 \title{print Method for OntologySim object}
+\usage{
+## S7 method for class <bixverse::OntologySim>
+print(x, ...)
+}
 \arguments{
 \item{x}{An object of class \code{OntologySim}, see \code{\link[=OntologySim]{OntologySim()}}.}
 

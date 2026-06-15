@@ -9,6 +9,9 @@
 get_cell_names(x, filtered = FALSE)
 
 \method{get_cell_names}{ScMap}(x, filtered = FALSE)
+
+## S7 method for class <bixverse::SingleCells>
+get_cell_names(x, filtered = FALSE)
 }
 \arguments{
 \item{x}{An object to get the cell names from.}

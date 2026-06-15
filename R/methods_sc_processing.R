@@ -725,7 +725,6 @@ S7::method(calculate_pca_sc, SingleCells) <- function(
 # generic found in R/base_generics_sc.R
 # method shared across SingleCells and MetaCells
 
-#' @export
 S7::method(find_neighbours_sc, ScOrMc) <- function(
   object,
   embd_to_use = "pca",
@@ -804,7 +803,6 @@ S7::method(find_neighbours_sc, ScOrMc) <- function(
 # generic found in R/base_generics_sc.R
 # method shared across SingleCells and MetaCells
 
-#' @export
 S7::method(find_clusters_sc, ScOrMc) <- function(
   object,
   cluster_algorithm = c("leiden", "louvain"),

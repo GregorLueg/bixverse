@@ -154,7 +154,7 @@ checksum = "843867be96c8daad0d758b57df9392b6d8d271134fce549de6ce169ff98a92af"
 
 [[package]]
 name = "bixverse"
-version = "0.3.2"
+version = "0.3.3"
 dependencies = [
  "bixverse-rs",
  "either",
@@ -165,6 +165,7 @@ dependencies = [
  "rand 0.9.3",
  "rayon",
  "rustc-hash",
+ "statrs",
  "thousands",
 ]
 
