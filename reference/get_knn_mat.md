@@ -7,7 +7,13 @@ Getter for an integer matrix of samples x neighbours.
 ``` r
 get_knn_mat(x)
 
+## S7 method for class <bixverse::MetaCells>
+get_knn_mat(x)
+
 # S3 method for class 'ScCache'
+get_knn_mat(x)
+
+## S7 method for class <bixverse::SingleCells>
 get_knn_mat(x)
 
 # S3 method for class 'SingleCellNearestNeighbour'

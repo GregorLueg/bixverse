@@ -9,6 +9,9 @@ get_gene_names(x)
 
 # S3 method for class 'ScMap'
 get_gene_names(x)
+
+## S7 method for class <bixverse::SingleCells>
+get_gene_names(x)
 ```
 
 ## Arguments

@@ -3,6 +3,13 @@
 Get gene lengths for a BulkCoExp object by extracting the count matrix
 and delegating to the matrix method.
 
+## Usage
+
+``` r
+## S7 method for class <bixverse::BulkCoExp>
+get_gene_lengths(x, species = c("human", "mouse", "rat"), ...)
+```
+
 ## Arguments
 
 - x:

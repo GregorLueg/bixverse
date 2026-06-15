@@ -9,7 +9,13 @@ classes and methods.
 ``` r
 get_embedding(x, embd_name)
 
+## S7 method for class <bixverse::MetaCells>
+get_embedding(x, embd_name)
+
 # S3 method for class 'ScCache'
+get_embedding(x, embd_name)
+
+## S7 method for class <bixverse::SingleCells>
 get_embedding(x, embd_name)
 ```
 

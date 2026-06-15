@@ -7,7 +7,13 @@ Set/add PCA loadings
 ``` r
 set_pca_loadings(x, pca_loading)
 
+## S7 method for class <bixverse::MetaCells>
+set_pca_loadings(x, pca_loading)
+
 # S3 method for class 'ScCache'
+set_pca_loadings(x, pca_loading)
+
+## S7 method for class <bixverse::SingleCells>
 set_pca_loadings(x, pca_loading)
 ```
 

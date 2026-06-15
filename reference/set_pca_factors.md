@@ -7,7 +7,13 @@ Set/add PCA factors
 ``` r
 set_pca_factors(x, pca_factor)
 
+## S7 method for class <bixverse::MetaCells>
+set_pca_factors(x, pca_factor)
+
 # S3 method for class 'ScCache'
+set_pca_factors(x, pca_factor)
+
+## S7 method for class <bixverse::SingleCells>
 set_pca_factors(x, pca_factor)
 ```
 

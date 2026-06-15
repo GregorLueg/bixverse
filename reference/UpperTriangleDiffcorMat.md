@@ -6,14 +6,14 @@ a data.table or dense R matrix for a given parameter if need be.
 
 ## Super class
 
-[`bixverse::upper_triangular_sym_mat`](https://gregorlueg.github.io/bixverse/reference/upper_triangular_sym_mat.md)
+[`upper_triangular_sym_mat`](https://gregorlueg.github.io/bixverse/reference/upper_triangular_sym_mat.md)
 -\> `UpperTriangleDiffcorMat`
 
 ## Methods
 
 ### Public methods
 
-- [`UpperTriangleDiffcorMat$new()`](#method-UpperTriangleDiffcorMat-new)
+- [`UpperTriangleDiffcorMat$new()`](#method-UpperTriangleDiffcorMat-initialize)
 
 - [`UpperTriangleDiffcorMat$get_data_table()`](#method-UpperTriangleDiffcorMat-get_data_table)
 
@@ -23,14 +23,14 @@ a data.table or dense R matrix for a given parameter if need be.
 
 Inherited methods
 
-- [`bixverse::upper_triangular_sym_mat$get_data()`](https://gregorlueg.github.io/bixverse/reference/upper_triangular_sym_mat.html#method-get_data)
-- [`bixverse::upper_triangular_sym_mat$get_sparse_matrix()`](https://gregorlueg.github.io/bixverse/reference/upper_triangular_sym_mat.html#method-get_sparse_matrix)
-- [`bixverse::upper_triangular_sym_mat$get_sym_matrix()`](https://gregorlueg.github.io/bixverse/reference/upper_triangular_sym_mat.html#method-get_sym_matrix)
-- [`bixverse::upper_triangular_sym_mat$print()`](https://gregorlueg.github.io/bixverse/reference/upper_triangular_sym_mat.html#method-print)
+- [`upper_triangular_sym_mat$get_data()`](https://gregorlueg.github.io/bixverse/reference/upper_triangular_sym_mat.html#method-get_data)
+- [`upper_triangular_sym_mat$get_sparse_matrix()`](https://gregorlueg.github.io/bixverse/reference/upper_triangular_sym_mat.html#method-get_sparse_matrix)
+- [`upper_triangular_sym_mat$get_sym_matrix()`](https://gregorlueg.github.io/bixverse/reference/upper_triangular_sym_mat.html#method-get_sym_matrix)
+- [`upper_triangular_sym_mat$print()`](https://gregorlueg.github.io/bixverse/reference/upper_triangular_sym_mat.html#method-print)
 
 ------------------------------------------------------------------------
 
-### Method `new()`
+### `UpperTriangleDiffcorMat$new()`
 
 Initialises the R6 class.
 
@@ -54,7 +54,7 @@ Returns the initialised class.
 
 ------------------------------------------------------------------------
 
-### Method `get_data_table()`
+### `UpperTriangleDiffcorMat$get_data_table()`
 
 Returns the data in form of a data.table.
 
@@ -93,7 +93,7 @@ A data.table with three columns:
 
 ------------------------------------------------------------------------
 
-### Method `get_cor_matrix()`
+### `UpperTriangleDiffcorMat$get_cor_matrix()`
 
 Return the full correlation matrix of either sample.
 
@@ -121,7 +121,7 @@ Returns the specified correlation matrix as a dense R matrix.
 
 ------------------------------------------------------------------------
 
-### Method `clone()`
+### `UpperTriangleDiffcorMat$clone()`
 
 The objects of this class are cloneable with this method.
 

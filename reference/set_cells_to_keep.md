@@ -11,6 +11,9 @@ set_cells_to_keep(x, cells_to_keep)
 
 # S3 method for class 'ScMap'
 set_cells_to_keep(x, cells_to_keep)
+
+## S7 method for class <bixverse::SingleCells>
+set_cells_to_keep(x, cells_to_keep)
 ```
 
 ## Arguments

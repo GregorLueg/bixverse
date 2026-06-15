@@ -2,6 +2,13 @@
 
 Returns the dimensions of a SingleCells object.
 
+## Usage
+
+``` r
+## S7 method for class <bixverse::SingleCells>
+dim(x)
+```
+
 ## Arguments
 
 - x:

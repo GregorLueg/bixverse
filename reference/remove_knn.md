@@ -7,7 +7,13 @@ Remove the KNN data
 ``` r
 remove_knn(x)
 
+## S7 method for class <bixverse::MetaCells>
+remove_knn(x)
+
 # S3 method for class 'ScCache'
+remove_knn(x)
+
+## S7 method for class <bixverse::SingleCells>
 remove_knn(x)
 ```
 

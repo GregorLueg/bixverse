@@ -13,11 +13,11 @@
 ## Citation
 
 Lueg G (2026). *bixverse: Rust-accelerated standard bioinformatics,
-computational biology workflows*. R package version 0.3.2.
+computational biology workflows*. R package version 0.3.3.
 
     @Manual{,
       title = {bixverse: Rust-accelerated standard bioinformatics, computational biology workflows},
       author = {Gregor Lueg},
       year = {2026},
-      note = {R package version 0.3.2},
+      note = {R package version 0.3.3},
     }

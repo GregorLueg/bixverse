@@ -8,7 +8,7 @@ checks, etc.
 
 ### Public methods
 
-- [`SingleCellDuckDBBase$new()`](#method-SingleCellDuckDBBase-new)
+- [`SingleCellDuckDBBase$new()`](#method-SingleCellDuckDBBase-initialize)
 
 - [`SingleCellDuckDBBase$get_obs_table()`](#method-SingleCellDuckDBBase-get_obs_table)
 
@@ -40,7 +40,7 @@ checks, etc.
 
 ------------------------------------------------------------------------
 
-### Method `new()`
+### `SingleCellDuckDBBase$new()`
 
 Initialises the Singe Cell DuckDB connection
 
@@ -64,7 +64,7 @@ Returns the initialised class
 
 ------------------------------------------------------------------------
 
-### Method `get_obs_table()`
+### `SingleCellDuckDBBase$get_obs_table()`
 
 Returns the full observation table from the DuckDB
 
@@ -97,7 +97,7 @@ selected indices and/or columns.
 
 ------------------------------------------------------------------------
 
-### Method `get_vars_table()`
+### `SingleCellDuckDBBase$get_vars_table()`
 
 Returns the full var table from the DuckDB.
 
@@ -122,7 +122,7 @@ indices and/or columns.
 
 ------------------------------------------------------------------------
 
-### Method `get_obs_index_map()`
+### `SingleCellDuckDBBase$get_obs_index_map()`
 
 Returns a mapping between cell index and cell names/barcodes.
 
@@ -136,7 +136,7 @@ A named numeric containing the cell index mapping.
 
 ------------------------------------------------------------------------
 
-### Method `get_var_index_map()`
+### `SingleCellDuckDBBase$get_var_index_map()`
 
 Returns a mapping between variable index and variable names.
 
@@ -150,7 +150,7 @@ A named numeric containing the gene index mapping.
 
 ------------------------------------------------------------------------
 
-### Method [`get_cells_to_keep()`](https://gregorlueg.github.io/bixverse/reference/get_cells_to_keep.md)
+### `SingleCellDuckDBBase$get_cells_to_keep()`
 
 Returns the indices of the cells that have to_keep = TRUE in the DB.
 
@@ -164,7 +164,7 @@ The index positions (1-index) of the cells to keep.
 
 ------------------------------------------------------------------------
 
-### Method `get_obs_cols()`
+### `SingleCellDuckDBBase$get_obs_cols()`
 
 Returns the available column names in the obs table.
 
@@ -179,7 +179,7 @@ cell idx
 
 ------------------------------------------------------------------------
 
-### Method [`set_cells_to_keep()`](https://gregorlueg.github.io/bixverse/reference/set_cells_to_keep.md)
+### `SingleCellDuckDBBase$set_cells_to_keep()`
 
 #### Usage
 
@@ -198,7 +198,7 @@ the var table and reset the gene idx
 
 ------------------------------------------------------------------------
 
-### Method `filter_var_table()`
+### `SingleCellDuckDBBase$filter_var_table()`
 
 #### Usage
 
@@ -212,7 +212,7 @@ the var table and reset the gene idx
 
 ------------------------------------------------------------------------
 
-### Method `add_data_obs()`
+### `SingleCellDuckDBBase$add_data_obs()`
 
 Add new data to the obs table in the DuckDB
 
@@ -234,7 +234,7 @@ DuckDB.
 
 ------------------------------------------------------------------------
 
-### Method `join_data_obs()`
+### `SingleCellDuckDBBase$join_data_obs()`
 
 Left join new data to the obs table in the DuckDB by cell_idx
 
@@ -255,7 +255,7 @@ DuckDB.
 
 ------------------------------------------------------------------------
 
-### Method `set_to_keep_column()`
+### `SingleCellDuckDBBase$set_to_keep_column()`
 
 Indepenent of the loader, set the to_keep column to `TRUE` initially
 
@@ -265,7 +265,7 @@ Indepenent of the loader, set the to_keep column to `TRUE` initially
 
 ------------------------------------------------------------------------
 
-### Method `add_data_var()`
+### `SingleCellDuckDBBase$add_data_var()`
 
 Add the information which genes pass threshold to the DuckDB.
 
@@ -287,7 +287,7 @@ DuckDB.
 
 ------------------------------------------------------------------------
 
-### Method `rename_column()`
+### `SingleCellDuckDBBase$rename_column()`
 
 Rename a column in the obs or var table.
 
@@ -315,7 +315,7 @@ Invisible self.
 
 ------------------------------------------------------------------------
 
-### Method `clone()`
+### `SingleCellDuckDBBase$clone()`
 
 The objects of this class are cloneable with this method.
 

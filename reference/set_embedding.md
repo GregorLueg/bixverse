@@ -7,7 +7,13 @@ Add additional embeddings to the class
 ``` r
 set_embedding(x, embd, name)
 
+## S7 method for class <bixverse::MetaCells>
+set_embedding(x, embd, name)
+
 # S3 method for class 'ScCache'
+set_embedding(x, embd, name)
+
+## S7 method for class <bixverse::SingleCells>
 set_embedding(x, embd, name)
 ```
 

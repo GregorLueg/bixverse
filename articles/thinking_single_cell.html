@@ -7,8 +7,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>Thinking about single cells the bixverse way • bixverse</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><script src="thinking_single_cell_files/libs/quarto-html/popper.min.js"></script><script src="thinking_single_cell_files/libs/quarto-html/tippy.umd.min.js"></script><link href="thinking_single_cell_files/libs/quarto-html/tippy.css" rel="stylesheet">
 <link href="thinking_single_cell_files/libs/quarto-html/light-border.css" rel="stylesheet">
@@ -23,7 +23,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -82,7 +82,7 @@
       <h1>Thinking about single cells the bixverse way</h1>
 
       <p class="author">Gregor Lueg and Grant Neilson</p>
-      <p class="date">2026-05-11</p>
+      <p class="date">2026-06-15</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -122,11 +122,11 @@
 <span><span class="co">#&gt;   ..$ cell_id    : chr [1:1000] "cell_0001" "cell_0002" "cell_0003" "cell_0004" ...</span></span>
 <span><span class="co">#&gt;   ..$ cell_grp   : chr [1:1000] "cell_type_1" "cell_type_2" "cell_type_3" "cell_type_1" ...</span></span>
 <span><span class="co">#&gt;   ..$ batch_index: num [1:1000] 1 1 1 1 1 1 1 1 1 1 ...</span></span>
-<span><span class="co">#&gt;   ..- attr(*, ".internal.selfref")=&lt;pointer: 0x55d152990b20&gt; </span></span>
+<span><span class="co">#&gt;   ..- attr(*, ".internal.selfref")=&lt;pointer: 0x55edb0540b20&gt; </span></span>
 <span><span class="co">#&gt;  $ var   :Classes 'data.table' and 'data.frame': 100 obs. of  2 variables:</span></span>
 <span><span class="co">#&gt;   ..$ gene_id   : chr [1:100] "gene_001" "gene_002" "gene_003" "gene_004" ...</span></span>
 <span><span class="co">#&gt;   ..$ ensembl_id: chr [1:100] "ens_001" "ens_002" "ens_003" "ens_004" ...</span></span>
-<span><span class="co">#&gt;   ..- attr(*, ".internal.selfref")=&lt;pointer: 0x55d152990b20&gt;</span></span></code></pre></div>
+<span><span class="co">#&gt;   ..- attr(*, ".internal.selfref")=&lt;pointer: 0x55edb0540b20&gt;</span></span></code></pre></div>
 </div>
 <p>We have a count matrix with pseudo raw counts, an obs table and a var table. Let us load this into a <code>bixverse</code> SingleCell class and explore what’s actually happening.</p>
 </section><section class="level3"><h3 id="loading-in-data">Loading in data<a class="anchor" aria-label="anchor" href="#loading-in-data"></a>
@@ -464,8 +464,8 @@
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: milliseconds</span></span>
 <span><span class="co">#&gt;               expr      min       lq     mean   median       uq      max neval</span></span>
-<span><span class="co">#&gt;    the_correct_way 1.300111 1.342454 1.380547 1.366139 1.437505 1.483674    10</span></span>
-<span><span class="co">#&gt;  the_incorrect_way 2.220819 2.247338 2.493813 2.379179 2.475988 3.706675    10</span></span></code></pre></div>
+<span><span class="co">#&gt;    the_correct_way 1.402528 1.422526 1.634182 1.457921 1.473541 3.134961    10</span></span>
+<span><span class="co">#&gt;  the_incorrect_way 2.304131 2.332974 2.398138 2.359218 2.422952 2.647552    10</span></span></code></pre></div>
 </div>
 <p>The difference seems marginal here, but it WILL bite you if you do this on large data sets. Also, the memory advantages this approach gives you usually will disappear if you force the wrong format. Also, another thing to REALLY consider… The indices you supply in R should match what the Rust files have and again you need to THINK about the cells to keep. A nasty example here:</p>
 <div class="cell">

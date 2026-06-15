@@ -1,5 +1,13 @@
 # Changelog
 
+## bixverse 0.3.3
+
+### Fixes
+
+- Hotfix coded in that made mitch explode on larger data sets. Will be
+  properly fixed on the `bixverse-rs` side in the next release, but
+  needed now.
+
 ## bixverse 0.3.2
 
 ### Features

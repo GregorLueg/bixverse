@@ -8,7 +8,7 @@ two possible functions:
 
 With dropout probability defined as:
 
-    P(dropout) = clamp(1 / (1 + exp(shape * (ln(exp+1) - ln(midpoint+1)))), 0.3, 0.8) * (1 - global_sparsity) + global_sparsity
+`P(dropout) = clamp(1 / (1 + exp(shape * (ln(exp+1) - ln(midpoint+1)))), 0.3, 0.8) * (1 - global_sparsity) + global_sparsity`
 
 with the following characteristics:
 
@@ -22,7 +22,7 @@ with the following characteristics:
 
 With dropout probability defined as:
 
-    P(dropout) = (midpoint / (exp + midpoint))^power * scale_factor * (1 - global_sparsity) + global_sparsity
+`P(dropout) = (midpoint / (exp + midpoint))^power * scale_factor * (1 - global_sparsity) + global_sparsity`
 
 with the following characteristics:
 

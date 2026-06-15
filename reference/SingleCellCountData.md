@@ -8,10 +8,6 @@
 SingleCellCountData
 ```
 
-## Format
-
-An object of class `environment` of length 17.
-
 ## Details
 
 - `f_path_cells` - Path to the .bin file for the cells.

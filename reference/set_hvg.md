@@ -8,7 +8,13 @@ the single cell-related classes and methods.
 ``` r
 set_hvg(x, hvg)
 
+## S7 method for class <bixverse::MetaCells>
+set_hvg(x, hvg)
+
 # S3 method for class 'ScMap'
+set_hvg(x, hvg)
+
+## S7 method for class <bixverse::SingleCells>
 set_hvg(x, hvg)
 ```
 

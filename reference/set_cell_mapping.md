@@ -10,6 +10,9 @@ set_cell_mapping(x, cell_map)
 
 # S3 method for class 'ScMap'
 set_cell_mapping(x, cell_map)
+
+## S7 method for class <bixverse::SingleCells>
+set_cell_mapping(x, cell_map)
 ```
 
 ## Arguments

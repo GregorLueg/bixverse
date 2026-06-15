@@ -2,6 +2,13 @@
 
 Print a GeneOntologyElim object.
 
+## Usage
+
+``` r
+## S7 method for class <bixverse::GeneOntologyElim>
+print(x, ...)
+```
+
 ## Arguments
 
 - x:

@@ -9,7 +9,7 @@ matrix if need be.
 
 ### Public methods
 
-- [`upper_triangular_sym_mat$new()`](#method-upper_triangular_sym_mat-new)
+- [`upper_triangular_sym_mat$new()`](#method-upper_triangular_sym_mat-initialize)
 
 - [`upper_triangular_sym_mat$print()`](#method-upper_triangular_sym_mat-print)
 
@@ -25,7 +25,7 @@ matrix if need be.
 
 ------------------------------------------------------------------------
 
-### Method `new()`
+### `upper_triangular_sym_mat$new()`
 
 Initialises the R6 class.
 
@@ -56,7 +56,7 @@ Returns the initialised class.
 
 ------------------------------------------------------------------------
 
-### Method [`print()`](https://rdrr.io/r/base/print.html)
+### `upper_triangular_sym_mat$print()`
 
 Print the class
 
@@ -70,7 +70,7 @@ Returns the initialised class
 
 ------------------------------------------------------------------------
 
-### Method `get_data_table()`
+### `upper_triangular_sym_mat$get_data_table()`
 
 Returns the data in form of a data.table.
 
@@ -101,7 +101,7 @@ A data.table with three columns:
 
 ------------------------------------------------------------------------
 
-### Method `get_sym_matrix()`
+### `upper_triangular_sym_mat$get_sym_matrix()`
 
 Return the full correlation matrix.
 
@@ -121,7 +121,7 @@ Returns the correlation matrix as a dense R matrix.
 
 ------------------------------------------------------------------------
 
-### Method `get_sparse_matrix()`
+### `upper_triangular_sym_mat$get_sparse_matrix()`
 
 Return a sparse version of the correlation matrix
 
@@ -141,7 +141,7 @@ The sparse matrix.
 
 ------------------------------------------------------------------------
 
-### Method `get_data()`
+### `upper_triangular_sym_mat$get_data()`
 
 Return the correlation data and shift
 
@@ -163,7 +163,7 @@ A list with
 
 ------------------------------------------------------------------------
 
-### Method `clone()`
+### `upper_triangular_sym_mat$clone()`
 
 The objects of this class are cloneable with this method.
 

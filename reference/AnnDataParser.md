@@ -7,7 +7,7 @@ several options will allow for retrieval of the underlying data.
 
 ### Public methods
 
-- [`AnnDataParser$new()`](#method-AnnDataParser-new)
+- [`AnnDataParser$new()`](#method-AnnDataParser-initialize)
 
 - [`AnnDataParser$get_obs_table()`](#method-AnnDataParser-get_obs_table)
 
@@ -21,7 +21,7 @@ several options will allow for retrieval of the underlying data.
 
 ------------------------------------------------------------------------
 
-### Method `new()`
+### `AnnDataParser$new()`
 
 Initialises the Anndata Parser.
 
@@ -41,7 +41,7 @@ Returns the initialised class.
 
 ------------------------------------------------------------------------
 
-### Method `get_obs_table()`
+### `AnnDataParser$get_obs_table()`
 
 Returns the observation table with all the data from the h5ad file.
 
@@ -57,7 +57,7 @@ factors due to the way the data is stored in h5.
 
 ------------------------------------------------------------------------
 
-### Method `get_var_info()`
+### `AnnDataParser$get_var_info()`
 
 Returns the variable table with all the data from the h5ad file.
 
@@ -73,7 +73,7 @@ factors due to the way the data is stored in h5.
 
 ------------------------------------------------------------------------
 
-### Method `get_raw_counts()`
+### `AnnDataParser$get_raw_counts()`
 
 Returns the counts that are stored in `X` slot of the anndata object.
 
@@ -87,7 +87,7 @@ Returns the count matrix with samples = columns and rows = features.
 
 ------------------------------------------------------------------------
 
-### Method `get_key_data()`
+### `AnnDataParser$get_key_data()`
 
 Wrapper function that returns a list of the stored count data and the
 metadata found in the h5ad file.
@@ -108,7 +108,7 @@ List with following elements:
 
 ------------------------------------------------------------------------
 
-### Method `clone()`
+### `AnnDataParser$clone()`
 
 The objects of this class are cloneable with this method.
 

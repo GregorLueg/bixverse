@@ -10,6 +10,10 @@ analysis on local compute.
 
 **Maintainer**: Gregor Lueg <gregorlueg@me.com>
 
+Authors:
+
+- Gregor Lueg <gregorlueg@me.com>
+
 Other contributors:
 
 - Liesbeth Francois <francois.liesbeth@gmail.com> \[contributor\]

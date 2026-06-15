@@ -8,7 +8,13 @@ is used for the single cell-related classes and methods.
 ``` r
 get_knn_obj(x)
 
+## S7 method for class <bixverse::MetaCells>
+get_knn_obj(x)
+
 # S3 method for class 'ScCache'
+get_knn_obj(x)
+
+## S7 method for class <bixverse::SingleCells>
 get_knn_obj(x)
 ```
 

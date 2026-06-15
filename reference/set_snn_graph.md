@@ -7,7 +7,13 @@ Set/add KNN
 ``` r
 set_snn_graph(x, snn_graph)
 
+## S7 method for class <bixverse::MetaCells>
+set_snn_graph(x, snn_graph)
+
 # S3 method for class 'ScCache'
+set_snn_graph(x, snn_graph)
+
+## S7 method for class <bixverse::SingleCells>
 set_snn_graph(x, snn_graph)
 ```
 

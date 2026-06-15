@@ -9,6 +9,9 @@ get_cell_names(x, filtered = FALSE)
 
 # S3 method for class 'ScMap'
 get_cell_names(x, filtered = FALSE)
+
+## S7 method for class <bixverse::SingleCells>
+get_cell_names(x, filtered = FALSE)
 ```
 
 ## Arguments

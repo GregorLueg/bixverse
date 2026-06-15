@@ -10,6 +10,9 @@ set_gene_mapping(x, gene_map)
 
 # S3 method for class 'ScMap'
 set_gene_mapping(x, gene_map)
+
+## S7 method for class <bixverse::SingleCells>
+set_gene_mapping(x, gene_map)
 ```
 
 ## Arguments

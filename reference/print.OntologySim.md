@@ -2,6 +2,13 @@
 
 Print a OntologySim object.
 
+## Usage
+
+``` r
+## S7 method for class <bixverse::OntologySim>
+print(x, ...)
+```
+
 ## Arguments
 
 - x:

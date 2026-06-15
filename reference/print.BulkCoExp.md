@@ -2,6 +2,13 @@
 
 Print a BulkCoExp object.
 
+## Usage
+
+``` r
+## S7 method for class <bixverse::BulkCoExp>
+print(x, ...)
+```
+
 ## Arguments
 
 - x:

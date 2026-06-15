@@ -7,8 +7,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>Gene Set Enrichment Methods • bixverse</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><script src="gse_methods_files/libs/quarto-html/popper.min.js"></script><script src="gse_methods_files/libs/quarto-html/tippy.umd.min.js"></script><link href="gse_methods_files/libs/quarto-html/tippy.css" rel="stylesheet">
 <link href="gse_methods_files/libs/quarto-html/light-border.css" rel="stylesheet">
@@ -23,7 +23,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -82,7 +82,7 @@
       <h1>Gene Set Enrichment Methods</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-05-11</p>
+      <p class="date">2026-06-15</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -244,7 +244,7 @@
 <span>  gene_set_list <span class="op">=</span> <span class="va">gene_sets</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu">tictoc</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tictoc/man/tic.html" class="external-link">toc</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 0.587 sec elapsed</span></span></code></pre></div>
+<span><span class="co">#&gt; 0.565 sec elapsed</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="gene-ontology-aware-enrichment-the-elimination-method">Gene Ontology-aware enrichment: the elimination method<a class="anchor" aria-label="anchor" href="#gene-ontology-aware-enrichment-the-elimination-method"></a>
 </h2>
@@ -345,7 +345,7 @@
 <span>  target_gene_list <span class="op">=</span> <span class="va">go_target_gene_sets</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu">tictoc</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tictoc/man/tic.html" class="external-link">toc</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 1.645 sec elapsed</span></span></code></pre></div>
+<span><span class="co">#&gt; 1.537 sec elapsed</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="alternative-post-hoc-simplification-of-go-results">Alternative: post-hoc simplification of GO results<a class="anchor" aria-label="anchor" href="#alternative-post-hoc-simplification-of-go-results"></a>
 </h2>
@@ -526,8 +526,8 @@
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: seconds</span></span>
 <span><span class="co">#&gt;   expr      min       lq     mean   median       uq      max neval</span></span>
-<span><span class="co">#&gt;  fgsea 3.120309 3.298741 3.501945 3.514212 3.629403 3.947061     5</span></span>
-<span><span class="co">#&gt;   rust 2.337670 2.353005 2.356086 2.357403 2.363467 2.368887     5</span></span></code></pre></div>
+<span><span class="co">#&gt;  fgsea 2.958900 3.103304 3.282258 3.345663 3.347524 3.655901     5</span></span>
+<span><span class="co">#&gt;   rust 2.204423 2.214742 2.223608 2.223151 2.227662 2.248062     5</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="go-aware-gsea-the-elimination-method">GO-aware GSEA: the elimination method<a class="anchor" aria-label="anchor" href="#go-aware-gsea-the-elimination-method"></a>
 </h2>

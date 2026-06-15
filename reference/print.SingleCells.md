@@ -2,6 +2,13 @@
 
 Print a SingleCells object.
 
+## Usage
+
+``` r
+## S7 method for class <bixverse::SingleCells>
+print(x, ...)
+```
+
 ## Arguments
 
 - x:

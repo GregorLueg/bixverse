@@ -7,8 +7,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>Analysing PBMCs with bixverse • bixverse</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><script src="pbmc_single_cell_files/libs/quarto-html/popper.min.js"></script><script src="pbmc_single_cell_files/libs/quarto-html/tippy.umd.min.js"></script><link href="pbmc_single_cell_files/libs/quarto-html/tippy.css" rel="stylesheet">
 <link href="pbmc_single_cell_files/libs/quarto-html/light-border.css" rel="stylesheet">
@@ -23,7 +23,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -82,7 +82,7 @@
       <h1>Analysing PBMCs with bixverse</h1>
 
       <p class="author">Grant Neilson and Gregor Lueg</p>
-      <p class="date">2026-05-11</p>
+      <p class="date">2026-06-15</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -314,22 +314,22 @@
 <span><span class="va">all_markers</span><span class="op">[</span>, <span class="va">gene_symbol</span> <span class="op">:=</span> <span class="va">ensembl_to_symbol</span><span class="op">[</span><span class="va">gene_id</span><span class="op">]</span><span class="op">]</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">all_markers</span><span class="op">[</span><span class="va">fdr</span> <span class="op">&lt;=</span> <span class="fl">0.05</span><span class="op">]</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="op">-</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">lfc</span><span class="op">)</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span>
-<span><span class="co">#&gt;      grp         gene_id      lfc     prop1      prop2 z_scores      p_values</span></span>
-<span><span class="co">#&gt;    &lt;num&gt;          &lt;char&gt;    &lt;num&gt;     &lt;num&gt;      &lt;num&gt;    &lt;num&gt;         &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1:     7 ENSG00000105374 4.162056 1.0000000 0.25122669 18.38210  9.137992e-76</span></span>
-<span><span class="co">#&gt; 2:     6 ENSG00000163220 4.150865 0.9830986 0.20188053 28.88792 8.465550e-184</span></span>
-<span><span class="co">#&gt; 3:     6 ENSG00000090382 4.055920 0.9971831 0.51106197 29.47783 2.769802e-191</span></span>
-<span><span class="co">#&gt; 4:     7 ENSG00000115523 3.963956 0.9600000 0.13689892 17.53884  3.619278e-69</span></span>
-<span><span class="co">#&gt; 5:     6 ENSG00000143546 3.647868 0.9690141 0.11559734 28.50864 4.576800e-179</span></span>
-<span><span class="co">#&gt; 6:     7 ENSG00000100453 3.581136 0.9920000 0.07016683 18.41987  4.551234e-76</span></span>
+<span><span class="co">#&gt;      grp         gene_id      lfc     prop1     prop2 z_scores      p_values</span></span>
+<span><span class="co">#&gt;    &lt;num&gt;          &lt;char&gt;    &lt;num&gt;     &lt;num&gt;     &lt;num&gt;    &lt;num&gt;         &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1:     6 ENSG00000163220 4.150865 0.9830986 0.2018805 28.88792 8.465550e-184</span></span>
+<span><span class="co">#&gt; 2:     7 ENSG00000115523 4.130326 0.9714286 0.1300049 19.00160  8.270732e-81</span></span>
+<span><span class="co">#&gt; 3:     7 ENSG00000105374 4.078447 1.0000000 0.2456747 19.20149  1.798204e-82</span></span>
+<span><span class="co">#&gt; 4:     6 ENSG00000090382 4.055920 0.9971831 0.5110620 29.47783 2.769802e-191</span></span>
+<span><span class="co">#&gt; 5:     6 ENSG00000143546 3.647868 0.9690141 0.1155973 28.50864 4.576800e-179</span></span>
+<span><span class="co">#&gt; 6:     6 ENSG00000101439 3.409787 0.9943662 0.2389380 28.07345 1.033391e-173</span></span>
 <span><span class="co">#&gt;              fdr gene_symbol</span></span>
 <span><span class="co">#&gt;            &lt;num&gt;      &lt;char&gt;</span></span>
-<span><span class="co">#&gt; 1:  2.057876e-72        NKG7</span></span>
-<span><span class="co">#&gt; 2: 1.915331e-180      S100A9</span></span>
-<span><span class="co">#&gt; 3: 1.253335e-187         LYZ</span></span>
-<span><span class="co">#&gt; 4:  4.075307e-66        GNLY</span></span>
+<span><span class="co">#&gt; 1: 1.915331e-180      S100A9</span></span>
+<span><span class="co">#&gt; 2:  1.925426e-77        GNLY</span></span>
+<span><span class="co">#&gt; 3:  8.372437e-79        NKG7</span></span>
+<span><span class="co">#&gt; 4: 1.253335e-187         LYZ</span></span>
 <span><span class="co">#&gt; 5: 6.903339e-176      S100A8</span></span>
-<span><span class="co">#&gt; 6:  2.049876e-72        GZMB</span></span></code></pre></div>
+<span><span class="co">#&gt; 6: 1.169024e-170        CST3</span></span></code></pre></div>
 </div>
 </section><section class="level3"><h3 id="fast-clustering">Fast clustering<a class="anchor" aria-label="anchor" href="#fast-clustering"></a>
 </h3>

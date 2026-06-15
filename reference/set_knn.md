@@ -7,7 +7,13 @@ Set/add KNN
 ``` r
 set_knn(x, knn)
 
+## S7 method for class <bixverse::MetaCells>
+set_knn(x, knn)
+
 # S3 method for class 'ScCache'
+set_knn(x, knn)
+
+## S7 method for class <bixverse::SingleCells>
 set_knn(x, knn)
 ```
 

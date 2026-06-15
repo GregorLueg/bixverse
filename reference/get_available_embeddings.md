@@ -8,7 +8,13 @@ is used for the single cell-related classes and methods.
 ``` r
 get_available_embeddings(x)
 
+## S7 method for class <bixverse::MetaCells>
+get_available_embeddings(x)
+
 # S3 method for class 'ScCache'
+get_available_embeddings(x)
+
+## S7 method for class <bixverse::SingleCells>
 get_available_embeddings(x)
 ```
 

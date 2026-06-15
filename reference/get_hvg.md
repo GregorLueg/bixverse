@@ -8,7 +8,13 @@ Returns the HVG indices. Pending class type this are 1-based (for R) or
 ``` r
 get_hvg(x)
 
+## S7 method for class <bixverse::MetaCells>
+get_hvg(x)
+
 # S3 method for class 'ScMap'
+get_hvg(x)
+
+## S7 method for class <bixverse::SingleCells>
 get_hvg(x)
 ```
 

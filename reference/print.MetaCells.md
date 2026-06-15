@@ -2,6 +2,13 @@
 
 Print a MetaCells object.
 
+## Usage
+
+``` r
+## S7 method for class <bixverse::MetaCells>
+print(x, ...)
+```
+
 ## Arguments
 
 - x:
