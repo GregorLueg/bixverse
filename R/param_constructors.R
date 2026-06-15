@@ -1078,7 +1078,6 @@ params_sc_fastmnn <- function(
   checkmate::qassert(ndist, "N1(0,)")
   checkmate::qassert(cos_norm, "B1")
   checkmate::qassert(no_pcs, "I1")
-  checkmate::qassert(random_svd, "B1")
   checkmate::qassert(sparse_svd, "B1")
 
   knn_params <- modifyList(

@@ -1701,6 +1701,10 @@ rs_ica_iters_cv <- function(x, no_comp, no_folds, no_random_init, ica_type, rand
 #' @param module_list A nested named list. The outer list should contain the
 #' origin of the gene modules, the inner list the names of the gene modules and
 #' the respective genes in them.
+#' @param k_best Integer. Number of best neighbours to consider. If set to
+#' `1L`, this behaves as the traditional reciprocal best hit. If you set this
+#' to `3L` you consider edges if the modules is in the top 3 best modules
+#' by similarity for each other.
 #' @param overlap_coefficient Shall the overlap coefficient instead of the
 #' Jaccard similarity be used.
 #' @param min_similarity Minimum similarity that should exist between any two
@@ -1719,7 +1723,7 @@ rs_ica_iters_cv <- function(x, no_comp, no_folds, no_random_init, ica_type, rand
 #' }
 #'
 #' @export
-rs_rbh_sets <- function(module_list, overlap_coefficient, min_similarity) .Call(wrap__rs_rbh_sets, module_list, overlap_coefficient, min_similarity)
+rs_rbh_sets <- function(module_list, k_best, overlap_coefficient, min_similarity) .Call(wrap__rs_rbh_sets, module_list, k_best, overlap_coefficient, min_similarity)
 
 #' Generate reciprocal best hits based on correlations
 #'
@@ -1730,6 +1734,10 @@ rs_rbh_sets <- function(module_list, overlap_coefficient, min_similarity) .Call(
 #'
 #' @param module_matrices A list of named matrices. Rows represent features
 #' and columns the samples you wish to calculate the correlations for.
+#' @param k_best Integer. Number of best neighbours to consider. If set to
+#' `1L`, this behaves as the traditional reciprocal best hit. If you set this
+#' to `3L` you consider edges if the modules is in the top 3 best modules
+#' by similarity for each other.
 #' @param spearman Shall Spearman correlation be used.
 #' @param min_similarity Minimum (absolute) correlations that needs to exist
 #' between two terms.
@@ -1747,7 +1755,7 @@ rs_rbh_sets <- function(module_list, overlap_coefficient, min_similarity) .Call(
 #' }
 #'
 #' @export
-rs_rbh_cor <- function(module_matrices, spearman, min_similarity) .Call(wrap__rs_rbh_cor, module_matrices, spearman, min_similarity)
+rs_rbh_cor <- function(module_matrices, k_best, spearman, min_similarity) .Call(wrap__rs_rbh_cor, module_matrices, k_best, spearman, min_similarity)
 
 #' Run CisTarget motif enrichment analysis
 #'
@@ -3833,6 +3841,23 @@ rs_wnn <- function(modality_emb_one, modality_emb_two, wnn_params, seed, verbose
 #'}
 #'}
 #'
+#'\subsection{Method `multi_tenx_h5_to_file`}{
+#'Load multiple 10x CellRanger h5 files into a single binary
+#'
+#' \subsection{Arguments}{
+#'\describe{
+#'\item{`file_tasks`}{(`list`)\cr A list of lists, each produced by the R prescan function. Each inner list must contain `exp_id`, `h5_path`, `version` (`"v2"` or `"v3"`), `no_cells`, `no_genes`, `gene_local_to_universe` (integer vector, `NA` for unmapped / non-gene features) and `feature_type` (optional string, defaults to `"Gene Expression"`). }
+#'\item{`universe_size`}{(`integer`)\cr Total number of genes in the universe.}
+#'\item{`qc_params`}{(`list`)\cr Quality control parameters (`min_unique_genes`, `min_lib_size`, `min_cells`, `target_size`).}
+#'\item{`verbose`}{(`logical`)\cr Controls verbosity. }
+#'}}
+#' \subsection{return}{
+#'A list with `global_gene_indices`, `total_cells`, `total_genes`
+#'and `per_file` (a list of lists with `exp_id`, `cell_indices`,
+#'`lib_size`, `nnz`).
+#'}
+#'}
+#'
 #'\subsection{Method `return_full_mat`}{
 #'Return the full count matrix
 #'
@@ -4001,6 +4026,8 @@ SingleCellCountData$mtx_to_file_streaming <- function(mtx_path, qc_params, cells
 SingleCellCountData$multi_mtx_to_file <- function(file_tasks, universe_size, qc_params, verbose) .Call(wrap__SingleCellCountData__multi_mtx_to_file, self, file_tasks, universe_size, qc_params, verbose)
 
 SingleCellCountData$tenx_h5_to_file_streaming <- function(h5_path, version, no_cells, no_genes, qc_params, feature_type, verbose) .Call(wrap__SingleCellCountData__tenx_h5_to_file_streaming, self, h5_path, version, no_cells, no_genes, qc_params, feature_type, verbose)
+
+SingleCellCountData$multi_tenx_h5_to_file <- function(file_tasks, universe_size, qc_params, verbose) .Call(wrap__SingleCellCountData__multi_tenx_h5_to_file, self, file_tasks, universe_size, qc_params, verbose)
 
 SingleCellCountData$return_full_mat <- function(assay, cell_based, verbose) .Call(wrap__SingleCellCountData__return_full_mat, self, assay, cell_based, verbose)
 

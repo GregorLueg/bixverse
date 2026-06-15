@@ -834,10 +834,10 @@ params_sc_hvg <- function(
 #'
 #' @export
 params_sc_pca <- function(
-  mean_center = FALSE,
-  normalise_variance = FALSE,
+  mean_center = TRUE,
+  normalise_variance = TRUE,
   randomised = TRUE,
-  clr = TRUE,
+  clr = FALSE,
   size_factor = 1e4
 ) {
   # checks

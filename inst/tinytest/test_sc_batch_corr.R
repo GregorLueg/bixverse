@@ -108,7 +108,6 @@ sc_object.weak_batch_effect <- find_hvg_sc(
 sc_object.weak_batch_effect <- calculate_pca_sc(
   object = sc_object.weak_batch_effect,
   no_pcs = no_pcs,
-  randomised_svd = FALSE,
   .verbose = FALSE
 )
 
@@ -147,7 +146,6 @@ sc_object.medium_batch_effect <- find_hvg_sc(
 sc_object.medium_batch_effect <- calculate_pca_sc(
   object = sc_object.medium_batch_effect,
   no_pcs = no_pcs,
-  randomised_svd = FALSE,
   .verbose = FALSE
 )
 
@@ -186,7 +184,6 @@ sc_object.strong_batch_effect <- find_hvg_sc(
 sc_object.strong_batch_effect <- calculate_pca_sc(
   object = sc_object.strong_batch_effect,
   no_pcs = no_pcs,
-  randomised_svd = FALSE,
   .verbose = FALSE
 )
 

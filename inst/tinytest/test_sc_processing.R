@@ -64,11 +64,7 @@ sc_object <- load_r_data(
   counts = single_cell_test_data$counts,
   obs = single_cell_test_data$obs,
   var = single_cell_test_data$var,
-  sc_qc_param = params_sc_min_quality(
-    min_unique_genes = min_genes_exp,
-    min_lib_size = min_lib_size,
-    min_cells = min_cells_exp
-  ),
+  sc_qc_param = sc_qc_param,
   streaming = 0L,
   .verbose = FALSE
 )
@@ -489,7 +485,9 @@ expect_true(
 
 ## pca -------------------------------------------------------------------------
 
-### r --------------------------------------------------------------------------
+### seurat version -------------------------------------------------------------
+
+#### r -------------------------------------------------------------------------
 
 pca_input <- as.matrix(sc_object[,
   as.integer(get_hvg(sc_object) + 1),
@@ -505,12 +503,17 @@ pca_r <- prcomp(pca_input, scale. = TRUE)
 expected_names <- get_gene_names(sc_object)[hvg_r + 1]
 actual_names <- colnames(pca_input)
 
-### rust -----------------------------------------------------------------------
+#### rust ----------------------------------------------------------------------
 
 sc_object <- calculate_pca_sc(
   object = sc_object,
   no_pcs = no_pcs,
-  randomised_svd = FALSE,
+  pca_params = params_sc_pca(
+    mean_center = TRUE,
+    normalise_variance = TRUE,
+    clr = FALSE,
+    randomised = FALSE
+  ),
   .verbose = FALSE
 )
 
@@ -526,7 +529,12 @@ expect_true(
 sc_object <- calculate_pca_sc(
   object = sc_object,
   no_pcs = no_pcs,
-  randomised_svd = TRUE,
+  pca_params = params_sc_pca(
+    mean_center = TRUE,
+    normalise_variance = TRUE,
+    clr = FALSE,
+    randomised = TRUE
+  ),
   .verbose = FALSE
 )
 
@@ -546,8 +554,14 @@ zeallot::`%<-%`(
   c(pca_factors, pca_loadings, pca_eigenvals, scaled),
   rs_sc_pca(
     f_path_gene = bixverse:::get_rust_count_gene_f_path(sc_object),
+    f_path_cell = bixverse:::get_rust_count_gene_f_path(sc_object),
     no_pcs = no_pcs,
-    random_svd = FALSE,
+    pca_params = params_sc_pca(
+      mean_center = TRUE,
+      normalise_variance = TRUE,
+      clr = FALSE,
+      randomised = FALSE
+    ),
     cell_indices = get_cells_to_keep(sc_object),
     gene_indices = get_hvg(sc_object),
     seed = 42L,
@@ -561,6 +575,125 @@ expect_equivalent(
   target = scaled_data,
   tolerance = 1e-6,
   info = "scaling behaves"
+)
+
+### PFlogPF version ------------------------------------------------------------
+
+# CLR-type normalisation
+
+#### r -------------------------------------------------------------------------
+
+# pre-calculated everything in R
+
+raw_counts <- as.matrix(sc_object[,,
+  assay = "raw",
+  return_format = "cell",
+  use_cells_to_keep = TRUE
+])
+
+lib_sizes <- rowSums(raw_counts)
+u <- sweep(raw_counts, 1, lib_sizes, "/")
+log1p_u <- log1p(u)
+
+clr_offsets <- rowMeans(log1p_u)
+
+clr_matrix <- sweep(log1p_u, 1, clr_offsets, "-")
+pca_input_clr <- clr_matrix[, as.integer(get_hvg(sc_object) + 1)]
+
+pca_r_clr <- prcomp(pca_input_clr, center = FALSE, scale. = FALSE)
+
+pca_r_clr_scaled <- prcomp(pca_input_clr, center = TRUE, scale. = TRUE)
+
+#### rust ----------------------------------------------------------------------
+
+sc_object <- calculate_pca_sc(
+  object = sc_object,
+  no_pcs = no_pcs,
+  pca_params = params_sc_pca(
+    mean_center = FALSE,
+    normalise_variance = FALSE,
+    clr = TRUE,
+    randomised = FALSE,
+    size_factor = 1e3
+  ),
+  .verbose = FALSE
+)
+
+expect_true(
+  current = all.equal(
+    abs(diag(cor(
+      get_pca_factors(sc_object)[, 1:no_pcs],
+      pca_r_clr$x[, 1:no_pcs]
+    ))),
+    rep(1, no_pcs),
+    tolerance = 1e-5
+  ),
+  info = "PFlogPF PCA on single cell data compared to R"
+)
+
+sc_object <- calculate_pca_sc(
+  object = sc_object,
+  no_pcs = no_pcs,
+  pca_params = params_sc_pca(
+    mean_center = TRUE,
+    normalise_variance = TRUE,
+    clr = TRUE,
+    randomised = FALSE,
+    size_factor = 1e3
+  ),
+  .verbose = FALSE
+)
+
+expect_true(
+  current = all.equal(
+    abs(diag(cor(
+      get_pca_factors(sc_object)[, 1:no_pcs],
+      pca_r_clr_scaled$x[, 1:no_pcs]
+    ))),
+    rep(1, no_pcs),
+    tolerance = 1e-5
+  ),
+  info = "PFlogPF PCA (scaled) on single cell data compared to R"
+)
+
+#### compare scaled data -------------------------------------------------------
+
+# test if the scaling results in the same data
+zeallot::`%<-%`(
+  c(pca_factors_clr, pca_loadings_clr, pca_eigenvals_clr, scaled_clr),
+  rs_sc_pca(
+    f_path_gene = bixverse:::get_rust_count_gene_f_path(sc_object),
+    f_path_cell = bixverse:::get_rust_count_cell_f_path(sc_object),
+    no_pcs = no_pcs,
+    pca_params = params_sc_pca(
+      mean_center = FALSE,
+      normalise_variance = FALSE,
+      clr = TRUE,
+      randomised = FALSE,
+      size_factor = 1e3
+    ),
+    cell_indices = get_cells_to_keep(sc_object),
+    gene_indices = get_hvg(sc_object),
+    seed = 42L,
+    return_scaled = TRUE,
+    verbose = 0L
+  )
+)
+
+expect_equivalent(
+  current = scaled_clr,
+  target = pca_input_clr,
+  tolerance = 1e-3, # FP16
+  info = "clr transformation behaves"
+)
+
+### rerun pca with normal parameters -------------------------------------------
+
+sc_object <- calculate_pca_sc(
+  object = sc_object,
+  no_pcs = no_pcs,
+  pca_params = params_sc_pca(),
+  .verbose = FALSE
 )
 
 ## knn and snn -----------------------------------------------------------------
@@ -720,8 +853,9 @@ zeallot::`%<-%`(
   c(sparse_pca_factors, sparse_pca_loadings, sparse_pca_eigenvals),
   rs_sc_pca_sparse(
     f_path_gene = bixverse:::get_rust_count_gene_f_path(sc_object),
+    f_path_cell = bixverse:::get_rust_count_cell_f_path(sc_object),
     no_pcs = no_pcs,
-    random_svd = FALSE,
+    pca_params = params_sc_pca(randomised = FALSE),
     cell_indices = get_cells_to_keep(sc_object),
     gene_indices = get_hvg(sc_object),
     seed = 42L,
@@ -733,8 +867,9 @@ zeallot::`%<-%`(
   c(sparse_pca_factors_rnd, sparse_pca_loadings_rnd, sparse_pca_eigenvals_rnd),
   rs_sc_pca_sparse(
     f_path_gene = bixverse:::get_rust_count_gene_f_path(sc_object),
+    f_path_cell = bixverse:::get_rust_count_cell_f_path(sc_object),
     no_pcs = no_pcs,
-    random_svd = TRUE,
+    pca_params = params_sc_pca(randomised = FALSE),
     cell_indices = get_cells_to_keep(sc_object),
     gene_indices = get_hvg(sc_object),
     seed = 42L,
@@ -762,7 +897,7 @@ expect_equal(
 sc_object <- calculate_pca_sc(
   object = sc_object,
   no_pcs = no_pcs,
-  randomised_svd = FALSE,
+  pca_params = params_sc_pca(randomised = FALSE),
   sparse_svd = TRUE,
   .verbose = FALSE
 )

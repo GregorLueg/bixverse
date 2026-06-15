@@ -5,10 +5,10 @@
 \title{Wrapper for PCA specifically designed for single cells}
 \usage{
 params_sc_pca(
-  mean_center = FALSE,
-  normalise_variance = FALSE,
+  mean_center = TRUE,
+  normalise_variance = TRUE,
   randomised = TRUE,
-  clr = TRUE,
+  clr = FALSE,
   size_factor = 10000
 )
 }
