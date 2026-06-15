@@ -1055,12 +1055,14 @@ params_sc_bbknn <- function(
 #' distances. Defaults to `TRUE`.
 #' @param no_pcs Integer. Number of PCs to use for MNN calculations.
 #' Defaults to `30L`.
-#' @param random_svd Logical. Use randomised SVD. Defaults to `TRUE`.
+#' @param sparse_svd Boolean. Shall the sparse SVD be used.
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
 #' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
 #' and `n_probe`.
+#' @param pca Named list. Parameters to feed through to the optional
+#' recalculation of the PCA, see [params_sc_pca()].
 #'
 #' @returns A list with the fastMNN parameters.
 #'
@@ -1069,14 +1071,13 @@ params_sc_fastmnn <- function(
   ndist = 3.0,
   cos_norm = TRUE,
   no_pcs = 30L,
-  random_svd = TRUE,
   sparse_svd = TRUE,
-  knn = list(k = 20L)
+  knn = list(k = 20L),
+  pca = params_sc_pca()
 ) {
   checkmate::qassert(ndist, "N1(0,)")
   checkmate::qassert(cos_norm, "B1")
   checkmate::qassert(no_pcs, "I1")
-  checkmate::qassert(random_svd, "B1")
   checkmate::qassert(sparse_svd, "B1")
 
   knn_params <- modifyList(
@@ -1090,10 +1091,10 @@ params_sc_fastmnn <- function(
       ndist = ndist,
       cos_norm = cos_norm,
       no_pcs = no_pcs,
-      random_svd = random_svd,
       sparse_svd = sparse_svd
     ),
-    knn_params
+    knn_params,
+    pca
   )
 }
 

@@ -580,6 +580,378 @@ expect_equivalent(
   info = "tenx multi modal - ADT values match input on kept cells"
 )
 
+## multi file ingestion -------------------------------------------------------
+
+min_lib_size <- 300L
+min_genes_exp <- 25L
+min_cells_exp <- 250L
+
+sc_qc_param <- params_sc_min_quality(
+  min_unique_genes = min_genes_exp,
+  min_lib_size = min_lib_size,
+  min_cells = min_cells_exp
+)
+
+### synthetic data ------------------------------------------------------------
+
+# split the existing rna data into two disjoint cell sets with overlapping
+# but non-identical gene sets to exercise the universe logic
+set.seed(7L)
+cell_perm <- sample(seq_len(nrow(rna$counts)))
+half_n <- length(cell_perm) %/% 2L
+cells_a <- sort(cell_perm[1:half_n])
+cells_b <- sort(cell_perm[(half_n + 1L):length(cell_perm)])
+
+genes_a <- 1:80
+genes_b <- 21:100
+genes_isect <- intersect(genes_a, genes_b)
+genes_union_idx <- union(genes_a, genes_b)
+
+counts_a <- rna$counts[cells_a, genes_a]
+counts_b <- rna$counts[cells_b, genes_b]
+
+barcodes_a <- paste0("A_", rna$obs$cell_id[cells_a])
+barcodes_b <- paste0("B_", rna$obs$cell_id[cells_b])
+
+features_a_v3 <- data.table::data.table(
+  id = rna$var$gene_id[genes_a],
+  name = rna$var$ensembl_id[genes_a],
+  feature_type = "Gene Expression"
+)
+features_b_v3 <- data.table::data.table(
+  id = rna$var$gene_id[genes_b],
+  name = rna$var$ensembl_id[genes_b],
+  feature_type = "Gene Expression"
+)
+
+f_path_multi_a <- file.path(test_temp_dir, "multi_a.h5")
+f_path_multi_b <- file.path(test_temp_dir, "multi_b.h5")
+
+write_tenx_h5_sc(
+  f_path = f_path_multi_a,
+  counts = counts_a,
+  barcodes = barcodes_a,
+  features = features_a_v3,
+  version = "v3"
+)
+
+write_tenx_h5_sc(
+  f_path = f_path_multi_b,
+  counts = counts_b,
+  barcodes = barcodes_b,
+  features = features_b_v3,
+  version = "v3"
+)
+
+# mixed version: write file_b as v2 instead
+features_b_v2 <- data.table::data.table(
+  id = rna$var$gene_id[genes_b],
+  name = rna$var$ensembl_id[genes_b]
+)
+f_path_multi_b_v2 <- file.path(test_temp_dir, "multi_b_v2.h5")
+write_tenx_h5_sc(
+  f_path = f_path_multi_b_v2,
+  counts = counts_b,
+  barcodes = barcodes_b,
+  features = features_b_v2,
+  version = "v2"
+)
+
+# multi modal file_b: add some ADT features that must be dropped
+adt_sub <- adt$counts[cells_b, ]
+adt_sub_sparse <- as(adt_sub, "RsparseMatrix")
+counts_b_mm <- cbind(counts_b, adt_sub_sparse)
+features_b_mm <- data.table::data.table(
+  id = c(rna$var$gene_id[genes_b], colnames(adt$counts)),
+  name = c(rna$var$ensembl_id[genes_b], colnames(adt$counts)),
+  feature_type = c(
+    rep("Gene Expression", length(genes_b)),
+    rep("Antibody Capture", ncol(adt$counts))
+  )
+)
+f_path_multi_b_mm <- file.path(test_temp_dir, "multi_b_mm.h5")
+write_tenx_h5_sc(
+  f_path = f_path_multi_b_mm,
+  counts = counts_b_mm,
+  barcodes = barcodes_b,
+  features = features_b_mm,
+  version = "v3"
+)
+
+### prescan: intersection ----------------------------------------------------
+
+prescan_isect <- prescan_tenx_h5_files(
+  h5_paths = c(A = f_path_multi_a, B = f_path_multi_b),
+  feature_type = "Gene Expression",
+  gene_universe = "intersection",
+  .verbose = FALSE
+)
+
+expect_equal(
+  current = prescan_isect$universe_size,
+  target = length(genes_isect),
+  info = "multi tenx prescan - intersection universe size"
+)
+
+expect_true(
+  current = setequal(
+    prescan_isect$universe,
+    rna$var$gene_id[genes_isect]
+  ),
+  info = "multi tenx prescan - intersection universe content"
+)
+
+expect_equal(
+  current = names(prescan_isect$file_tasks),
+  target = c("A", "B"),
+  info = "multi tenx prescan - file_tasks names match exp_ids"
+)
+
+expect_equal(
+  current = prescan_isect$file_tasks[["A"]]$version,
+  target = "v3",
+  info = "multi tenx prescan - version captured"
+)
+
+### prescan: union -----------------------------------------------------------
+
+prescan_union <- prescan_tenx_h5_files(
+  h5_paths = c(A = f_path_multi_a, B = f_path_multi_b),
+  feature_type = "Gene Expression",
+  gene_universe = "union",
+  .verbose = FALSE
+)
+
+expect_equal(
+  current = prescan_union$universe_size,
+  target = length(genes_union_idx),
+  info = "multi tenx prescan - union universe size"
+)
+
+### prescan: ADT filtered out from multi modal file --------------------------
+
+prescan_mm <- prescan_tenx_h5_files(
+  h5_paths = c(A = f_path_multi_a, B = f_path_multi_b_mm),
+  feature_type = "Gene Expression",
+  gene_universe = "intersection",
+  .verbose = FALSE
+)
+
+expect_equal(
+  current = prescan_mm$universe_size,
+  target = length(genes_isect),
+  info = "multi tenx prescan - ADT features excluded from universe"
+)
+
+expect_true(
+  current = all(
+    is.na(prescan_mm$file_tasks[["B"]]$gene_local_to_universe[
+      (length(genes_b) + 1L):(length(genes_b) + ncol(adt$counts))
+    ])
+  ),
+  info = "multi tenx prescan - ADT features map to NA"
+)
+
+### prescan: missing feature_type errors -------------------------------------
+
+expect_error(
+  current = prescan_tenx_h5_files(
+    h5_paths = c(A = f_path_multi_a, B = f_path_multi_b),
+    feature_type = "Surface Protein",
+    gene_universe = "intersection",
+    .verbose = FALSE
+  ),
+  info = "multi tenx prescan - unknown feature_type errors"
+)
+
+### expected pass list (intersection) ----------------------------------------
+
+# global gene QC is across both files
+counts_a_isect <- rna$counts[cells_a, genes_isect]
+counts_b_isect <- rna$counts[cells_b, genes_isect]
+nnz_a <- Matrix::colSums(counts_a_isect != 0)
+nnz_b <- Matrix::colSums(counts_b_isect != 0)
+genes_pass_global <- which((nnz_a + nnz_b) >= min_cells_exp)
+
+cells_a_pass <- which(
+  (Matrix::rowSums(counts_a_isect[, genes_pass_global]) >= min_lib_size) &
+    (Matrix::rowSums(counts_a_isect[, genes_pass_global] != 0) >= min_genes_exp)
+)
+cells_b_pass <- which(
+  (Matrix::rowSums(counts_b_isect[, genes_pass_global]) >= min_lib_size) &
+    (Matrix::rowSums(counts_b_isect[, genes_pass_global] != 0) >= min_genes_exp)
+)
+
+### full multi load: two v3 files --------------------------------------------
+
+dir_multi <- file.path(test_temp_dir, "sc_multi_tenx")
+dir.create(dir_multi, recursive = TRUE, showWarnings = FALSE)
+
+sc_multi <- SingleCells(dir_data = dir_multi)
+
+sc_multi <- load_multi_tenx_h5(
+  object = sc_multi,
+  prescan_result = prescan_isect,
+  sc_qc_param = sc_qc_param,
+  streaming = 0L,
+  .verbose = FALSE
+)
+
+expect_equal(
+  current = dim(sc_multi)[1],
+  target = length(cells_a_pass) + length(cells_b_pass),
+  info = "multi tenx (full) - total cells = sum of per-file passes"
+)
+
+expect_equal(
+  current = dim(sc_multi)[2],
+  target = length(genes_pass_global),
+  info = "multi tenx (full) - genes match global QC"
+)
+
+obs_multi <- sc_multi[[]]
+
+expect_true(
+  current = "exp_id" %in% names(obs_multi),
+  info = "multi tenx (full) - exp_id column added"
+)
+
+expect_equal(
+  current = sort(unique(obs_multi$exp_id)),
+  target = c("A", "B"),
+  info = "multi tenx (full) - both files represented"
+)
+
+expect_equal(
+  current = sum(obs_multi$exp_id == "A"),
+  target = length(cells_a_pass),
+  info = "multi tenx (full) - file A cell count"
+)
+
+expect_equal(
+  current = sum(obs_multi$exp_id == "B"),
+  target = length(cells_b_pass),
+  info = "multi tenx (full) - file B cell count"
+)
+
+expect_true(
+  current = all(grepl("^A_", obs_multi[exp_id == "A", cell_id])) &&
+    all(grepl("^B_", obs_multi[exp_id == "B", cell_id])),
+  info = "multi tenx (full) - cell_id prefixed with exp_id"
+)
+
+var_multi <- get_sc_var(sc_multi)
+expect_true(
+  current = setequal(
+    var_multi$gene_id,
+    rna$var$gene_id[genes_isect][genes_pass_global]
+  ),
+  info = "multi tenx (full) - gene ids match QC pass"
+)
+
+### count round-trip per file ------------------------------------------------
+
+# rebuild the expected dense counts from the (cells_a x universe-survivors)
+# and (cells_b x universe-survivors) slices, in the universe gene order
+
+gene_id_kept <- rna$var$gene_id[genes_isect][genes_pass_global]
+universe_order <- match(prescan_isect$universe, rna$var$gene_id)
+gene_id_universe_order <- rna$var$gene_id[universe_order]
+gene_idx_final_in_universe <- match(gene_id_kept, gene_id_universe_order)
+
+counts_a_expected <- counts_a_isect[cells_a_pass, , drop = FALSE]
+colnames(counts_a_expected) <- rna$var$gene_id[genes_isect]
+counts_a_expected <- counts_a_expected[, gene_id_kept, drop = FALSE]
+
+counts_b_expected <- counts_b_isect[cells_b_pass, , drop = FALSE]
+colnames(counts_b_expected) <- rna$var$gene_id[genes_isect]
+counts_b_expected <- counts_b_expected[, gene_id_kept, drop = FALSE]
+
+counts_multi_obj <- sc_multi[,, return_format = "cell"]
+
+expect_equivalent(
+  current = unname(as.matrix(
+    counts_multi_obj[obs_multi$exp_id == "A", ]
+  )),
+  target = unname(as.matrix(counts_a_expected)),
+  info = "multi tenx (full) - file A counts round-trip"
+)
+
+expect_equivalent(
+  current = unname(as.matrix(
+    counts_multi_obj[obs_multi$exp_id == "B", ]
+  )),
+  target = unname(as.matrix(counts_b_expected)),
+  info = "multi tenx (full) - file B counts round-trip"
+)
+
+### mixed v2 + v3 ------------------------------------------------------------
+
+prescan_mixed <- prescan_tenx_h5_files(
+  h5_paths = c(A = f_path_multi_a, B = f_path_multi_b_v2),
+  feature_type = "Gene Expression",
+  gene_universe = "intersection",
+  .verbose = FALSE
+)
+
+expect_equal(
+  current = c(
+    prescan_mixed$file_tasks[["A"]]$version,
+    prescan_mixed$file_tasks[["B"]]$version
+  ),
+  target = c("v3", "v2"),
+  info = "multi tenx prescan - mixed versions captured"
+)
+
+dir_mixed <- file.path(test_temp_dir, "sc_multi_tenx_mixed")
+dir.create(dir_mixed, recursive = TRUE, showWarnings = FALSE)
+sc_mixed <- SingleCells(dir_data = dir_mixed)
+
+sc_mixed <- load_multi_tenx_h5(
+  object = sc_mixed,
+  prescan_result = prescan_mixed,
+  sc_qc_param = sc_qc_param,
+  streaming = 0L,
+  .verbose = FALSE
+)
+
+expect_equal(
+  current = dim(sc_mixed)[1],
+  target = length(cells_a_pass) + length(cells_b_pass),
+  info = "multi tenx mixed v2/v3 - same total cells as both-v3 case"
+)
+
+expect_equal(
+  current = dim(sc_mixed)[2],
+  target = length(genes_pass_global),
+  info = "multi tenx mixed v2/v3 - same genes as both-v3 case"
+)
+
+### multi modal: ADT does not leak into counts -------------------------------
+
+dir_mm_multi <- file.path(test_temp_dir, "sc_multi_tenx_mm")
+dir.create(dir_mm_multi, recursive = TRUE, showWarnings = FALSE)
+sc_mm_multi <- SingleCells(dir_data = dir_mm_multi)
+
+sc_mm_multi <- load_multi_tenx_h5(
+  object = sc_mm_multi,
+  prescan_result = prescan_mm,
+  sc_qc_param = sc_qc_param,
+  streaming = 0L,
+  .verbose = FALSE
+)
+
+expect_equal(
+  current = dim(sc_mm_multi)[2],
+  target = length(genes_pass_global),
+  info = "multi tenx multi-modal - ADT excluded from genes"
+)
+
+expect_true(
+  current = !any(get_gene_names(sc_mm_multi) %in% colnames(adt$counts)),
+  info = "multi tenx multi-modal - no ADT names in gene_id"
+)
+
 # clean up ---------------------------------------------------------------------
 
 on.exit(unlink(test_temp_dir, recursive = TRUE, force = TRUE), add = TRUE)

@@ -97,8 +97,7 @@ sc_object <- find_hvg_sc(
 sc_object <- calculate_pca_sc(
   sc_object,
   no_pcs = no_pcs,
-  .verbose = FALSE,
-  randomised_svd = TRUE
+  .verbose = FALSE
 )
 
 # tests ------------------------------------------------------------------------

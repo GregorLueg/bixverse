@@ -1701,6 +1701,10 @@ rs_ica_iters_cv <- function(x, no_comp, no_folds, no_random_init, ica_type, rand
 #' @param module_list A nested named list. The outer list should contain the
 #' origin of the gene modules, the inner list the names of the gene modules and
 #' the respective genes in them.
+#' @param k_best Integer. Number of best neighbours to consider. If set to
+#' `1L`, this behaves as the traditional reciprocal best hit. If you set this
+#' to `3L` you consider edges if the modules is in the top 3 best modules
+#' by similarity for each other.
 #' @param overlap_coefficient Shall the overlap coefficient instead of the
 #' Jaccard similarity be used.
 #' @param min_similarity Minimum similarity that should exist between any two
@@ -1719,7 +1723,7 @@ rs_ica_iters_cv <- function(x, no_comp, no_folds, no_random_init, ica_type, rand
 #' }
 #'
 #' @export
-rs_rbh_sets <- function(module_list, overlap_coefficient, min_similarity) .Call(wrap__rs_rbh_sets, module_list, overlap_coefficient, min_similarity)
+rs_rbh_sets <- function(module_list, k_best, overlap_coefficient, min_similarity) .Call(wrap__rs_rbh_sets, module_list, k_best, overlap_coefficient, min_similarity)
 
 #' Generate reciprocal best hits based on correlations
 #'
@@ -1730,6 +1734,10 @@ rs_rbh_sets <- function(module_list, overlap_coefficient, min_similarity) .Call(
 #'
 #' @param module_matrices A list of named matrices. Rows represent features
 #' and columns the samples you wish to calculate the correlations for.
+#' @param k_best Integer. Number of best neighbours to consider. If set to
+#' `1L`, this behaves as the traditional reciprocal best hit. If you set this
+#' to `3L` you consider edges if the modules is in the top 3 best modules
+#' by similarity for each other.
 #' @param spearman Shall Spearman correlation be used.
 #' @param min_similarity Minimum (absolute) correlations that needs to exist
 #' between two terms.
@@ -1747,7 +1755,7 @@ rs_rbh_sets <- function(module_list, overlap_coefficient, min_similarity) .Call(
 #' }
 #'
 #' @export
-rs_rbh_cor <- function(module_matrices, spearman, min_similarity) .Call(wrap__rs_rbh_cor, module_matrices, spearman, min_similarity)
+rs_rbh_cor <- function(module_matrices, k_best, spearman, min_similarity) .Call(wrap__rs_rbh_cor, module_matrices, k_best, spearman, min_similarity)
 
 #' Run CisTarget motif enrichment analysis
 #'
@@ -2162,6 +2170,8 @@ rs_bbknn_filtering <- function(indptr, indices, data, no_neighbours_to_keep) .Ca
 #' generates a batch-aligned embedding space.
 #'
 #' @param f_path_gene String. Path to the `counts_genes.bin` file.
+#' @param f_path_cell String. Path to the `counts_cells.bin` file. Used if
+#' you wish to use the PFlogPF transformation during the optional PCA step.
 #' @param cell_indices Integer. The cell indices to use. (0-indexed!)
 #' @param gene_indices Integer. The gene indices to use. (0-indexed!) Ideally
 #' these are batch-aware highly variable genes.
@@ -2177,7 +2187,7 @@ rs_bbknn_filtering <- function(indptr, indices, data, no_neighbours_to_keep) .Ca
 #' @return The batch-corrected embedding space.
 #'
 #' @export
-rs_mnn <- function(f_path_gene, cell_indices, gene_indices, batch_indices, precomputed_pca, mnn_params, verbose, seed) .Call(wrap__rs_mnn, f_path_gene, cell_indices, gene_indices, batch_indices, precomputed_pca, mnn_params, verbose, seed)
+rs_mnn <- function(f_path_gene, f_path_cell, cell_indices, gene_indices, batch_indices, precomputed_pca, mnn_params, verbose, seed) .Call(wrap__rs_mnn, f_path_gene, f_path_cell, cell_indices, gene_indices, batch_indices, precomputed_pca, mnn_params, verbose, seed)
 
 #' Harmony batch correction in Rust
 #'
@@ -2480,12 +2490,16 @@ rs_sc_hvg_batch_aware <- function(f_path_gene, hvg_method, cell_indices, batch_l
 #'
 #' @description
 #' Helper function that will calculate the PCA for the specified highly
-#' variable genes. Has the option to use randomised SVD for faster solving
-#' of the PCA.
+#' variable genes. You have the option to do mean centering, variance
+#' normalisation and/or apply the new proposed transformation `PFlogPF` from
+#' Booeshaghi, et al.
 #'
 #' @param f_path_gene String. Path to the `counts_genes.bin` file.
+#' @param f_path_cell String. Path to the `counts_cells.bin` file. Used if
+#' you wish to use the PFlogPF transformation.
 #' @param no_pcs Integer. Number of PCs to calculate.
-#' @param random_svd Boolean. Shall randomised SVD be used.
+#' @param pca_params Named list. Contains the parameters to use for this PCA
+#' run.
 #' @param cell_indices Integer. The cell indices to use. (0-indexed!)
 #' @param gene_indices Integer. The gene indices to use. (0-indexed!)
 #' @param seed Integer. Random seed for the randomised SVD.
@@ -2502,23 +2516,24 @@ rs_sc_hvg_batch_aware <- function(f_path_gene, hvg_method, cell_indices, batch_l
 #' }
 #'
 #' @export
-rs_sc_pca <- function(f_path_gene, no_pcs, random_svd, cell_indices, gene_indices, seed, return_scaled, verbose) .Call(wrap__rs_sc_pca, f_path_gene, no_pcs, random_svd, cell_indices, gene_indices, seed, return_scaled, verbose)
+#'
+#' @references Booeshaghi, et al., bioRxive, 2026.
+rs_sc_pca <- function(f_path_gene, f_path_cell, no_pcs, pca_params, cell_indices, gene_indices, seed, return_scaled, verbose) .Call(wrap__rs_sc_pca, f_path_gene, f_path_cell, no_pcs, pca_params, cell_indices, gene_indices, seed, return_scaled, verbose)
 
 #' Calculates sparse PCA for single cell
 #'
 #' @description
 #' Helper function that will calculate sparse PCA without scaling the data.
-#' This has the advantage that you avoid creating a large dense matrix due
-#' to scaling; however, it has the disadvantage that the first PC will be
-#' heavily influenced by average expression. If random_svd is set to `FALSE`,
-#' Lanczos iterations will be used to solve the SVD; if random_svd is set
-#' to `TRUE`, the randomised version will be used with multiplication of the
-#' initial sparse matrix with a much smaller random dense matrix, avoiding
-#' holding a large dense matrix in memory.
+#' You have the option to do mean centering, variance normalisation and/or
+#' apply the new proposed transformation `PFlogPF` from Booeshaghi, et al.
+#' None of these will densify the matrix.
 #'
 #' @param f_path_gene String. Path to the `counts_genes.bin` file.
+#' @param f_path_cell String. Path to the `counts_cells.bin` file. Used if
+#' you wish to use the PFlogPF transformation.
 #' @param no_pcs Integer. Number of PCs to calculate.
-#' @param random_svd Boolean. Shall randomised SVD be used.
+#' @param pca_params Named list. Contains the parameters to use for this PCA
+#' run.
 #' @param cell_indices Integer. The cell indices to use. (0-indexed!)
 #' @param gene_indices Integer. The gene indices to use. (0-indexed!)
 #' @param seed Integer. Random seed for the randomised SVD.
@@ -2536,7 +2551,9 @@ rs_sc_pca <- function(f_path_gene, no_pcs, random_svd, cell_indices, gene_indice
 #' }
 #'
 #' @export
-rs_sc_pca_sparse <- function(f_path_gene, no_pcs, random_svd, cell_indices, gene_indices, seed, verbose) .Call(wrap__rs_sc_pca_sparse, f_path_gene, no_pcs, random_svd, cell_indices, gene_indices, seed, verbose)
+#'
+#' @references Booeshaghi, et al., bioRxive, 2026.
+rs_sc_pca_sparse <- function(f_path_gene, f_path_cell, no_pcs, pca_params, cell_indices, gene_indices, seed, verbose) .Call(wrap__rs_sc_pca_sparse, f_path_gene, f_path_cell, no_pcs, pca_params, cell_indices, gene_indices, seed, verbose)
 
 #' Generates the kNN graph
 #'
@@ -3393,7 +3410,10 @@ rs_mc_hvg <- function(sparse_data, hvg_method, loess_span, binning, n_bins, clip
 #' @param sparse_data A named list that needs to have `data`, `indptr`,
 #' `indices`, `nrow`, `ncol` and `format`.
 #' @param no_pcs Integer. Number of PCs to return.
-#' @param random_svd Boolean. Shall randomised SVD be used.
+#' @param pca_params Named list. Contains the parameters to use for this PCA
+#' run.
+#' @param clr_offsets Optional numeric. If you wish to use the `PFlogPF`
+#' normalisation prior to PCA from Booeshaghi, et al.
 #' @param seed Integer. Random seed for the randomised SVD.
 #'
 #' @returns A list with with the following items
@@ -3407,7 +3427,9 @@ rs_mc_hvg <- function(sparse_data, hvg_method, loess_span, binning, n_bins, clip
 #' }
 #'
 #' @export
-rs_mc_pca <- function(sparse_data, no_pcs, random_svd, seed) .Call(wrap__rs_mc_pca, sparse_data, no_pcs, random_svd, seed)
+#'
+#' @references Booeshaghi, et al., bioRxive, 2026.
+rs_mc_pca <- function(sparse_data, no_pcs, pca_params, clr_offsets, seed) .Call(wrap__rs_mc_pca, sparse_data, no_pcs, pca_params, clr_offsets, seed)
 
 #' Calculate the pairwise gene-correlation for meta cells
 #'
@@ -3487,14 +3509,16 @@ rs_mc_aucell <- function(sparse_data, gs_list, auc_type, verbose) .Call(wrap__rs
 #' @export
 rs_read_tenx_h5_modality <- function(f_path, version, feature_type) .Call(wrap__rs_read_tenx_h5_modality, f_path, version, feature_type)
 
-#' Applies CLR normalisation on ADT counts (Seurat-style, per cell)
+#' Applies CLR normalisation on ADT counts
 #'
 #' @param counts R matrix of shape cells x features.
+#' @param seurat_clr Logical; if TRUE uses the Seurat variant (non-negative),
+#' if FALSE uses proper CLR (mean-centred log, can be negative).
 #'
 #' @returns CLR-transformed matrix.
 #'
 #' @export
-rs_adt_clr <- function(counts) .Call(wrap__rs_adt_clr, counts)
+rs_adt_clr <- function(counts, seurat_clr) .Call(wrap__rs_adt_clr, counts, seurat_clr)
 
 #' Run DSB normalisation on raw ADT counts
 #'
@@ -3817,6 +3841,23 @@ rs_wnn <- function(modality_emb_one, modality_emb_two, wnn_params, seed, verbose
 #'}
 #'}
 #'
+#'\subsection{Method `multi_tenx_h5_to_file`}{
+#'Load multiple 10x CellRanger h5 files into a single binary
+#'
+#' \subsection{Arguments}{
+#'\describe{
+#'\item{`file_tasks`}{(`list`)\cr A list of lists, each produced by the R prescan function. Each inner list must contain `exp_id`, `h5_path`, `version` (`"v2"` or `"v3"`), `no_cells`, `no_genes`, `gene_local_to_universe` (integer vector, `NA` for unmapped / non-gene features) and `feature_type` (optional string, defaults to `"Gene Expression"`). }
+#'\item{`universe_size`}{(`integer`)\cr Total number of genes in the universe.}
+#'\item{`qc_params`}{(`list`)\cr Quality control parameters (`min_unique_genes`, `min_lib_size`, `min_cells`, `target_size`).}
+#'\item{`verbose`}{(`logical`)\cr Controls verbosity. }
+#'}}
+#' \subsection{return}{
+#'A list with `global_gene_indices`, `total_cells`, `total_genes`
+#'and `per_file` (a list of lists with `exp_id`, `cell_indices`,
+#'`lib_size`, `nnz`).
+#'}
+#'}
+#'
 #'\subsection{Method `return_full_mat`}{
 #'Return the full count matrix
 #'
@@ -3985,6 +4026,8 @@ SingleCellCountData$mtx_to_file_streaming <- function(mtx_path, qc_params, cells
 SingleCellCountData$multi_mtx_to_file <- function(file_tasks, universe_size, qc_params, verbose) .Call(wrap__SingleCellCountData__multi_mtx_to_file, self, file_tasks, universe_size, qc_params, verbose)
 
 SingleCellCountData$tenx_h5_to_file_streaming <- function(h5_path, version, no_cells, no_genes, qc_params, feature_type, verbose) .Call(wrap__SingleCellCountData__tenx_h5_to_file_streaming, self, h5_path, version, no_cells, no_genes, qc_params, feature_type, verbose)
+
+SingleCellCountData$multi_tenx_h5_to_file <- function(file_tasks, universe_size, qc_params, verbose) .Call(wrap__SingleCellCountData__multi_tenx_h5_to_file, self, file_tasks, universe_size, qc_params, verbose)
 
 SingleCellCountData$return_full_mat <- function(assay, cell_based, verbose) .Call(wrap__SingleCellCountData__return_full_mat, self, assay, cell_based, verbose)
 

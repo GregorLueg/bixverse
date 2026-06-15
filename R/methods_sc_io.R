@@ -1472,6 +1472,143 @@ S7::method(load_tenx_h5, SingleCells) <- function(
   return(object)
 }
 
+### multiple h5 10x outputs ----------------------------------------------------
+
+#' Load multiple 10x CellRanger h5 files into a single `SingleCells`
+#'
+#' @description
+#' Takes the result of [bixverse::prescan_tenx_h5_files()] and loads all
+#' inputs into a single experiment with global gene QC and sequential cell
+#' indexing. The feature space is determined by the prescan
+#' (intersection or union of gene ids).
+#'
+#' @param object `SingleCells` class.
+#' @param prescan_result Output of [bixverse::prescan_tenx_h5_files()].
+#' @param sc_qc_param List. Output of [bixverse::params_sc_min_quality()].
+#' @param streaming Integer. CSR-to-CSC conversion mode. `0L` -> in-memory,
+#' `1L` -> light streaming, `2L` -> heavy streaming with memory upper
+#' boundaries. Defaults to `1L`.
+#' @param batch_size Integer. Cell batch size when `streaming = 1L`.
+#' Defaults to `1000L`.
+#' @param max_genes_in_memory Integer. Maximum genes held in memory at
+#' once when `streaming = 2L`. Defaults to `2000L`.
+#' @param cell_batch_size Integer. Cell batch size when `streaming = 2L`.
+#' Defaults to `100000L`.
+#' @param .verbose Boolean.
+#'
+#' @return The class with updated shape and populated DuckDB.
+#'
+#' @export
+load_multi_tenx_h5 <- S7::new_generic(
+  name = "load_multi_tenx_h5",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    prescan_result,
+    sc_qc_param = params_sc_min_quality(),
+    streaming = 1L,
+    batch_size = 1000L,
+    max_genes_in_memory = 2000L,
+    cell_batch_size = 100000L,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method load_multi_tenx_h5 SingleCells
+#'
+#' @export
+S7::method(load_multi_tenx_h5, SingleCells) <- function(
+  object,
+  prescan_result,
+  sc_qc_param = params_sc_min_quality(),
+  streaming = 1L,
+  batch_size = 1000L,
+  max_genes_in_memory = 2000L,
+  cell_batch_size = 100000L,
+  .verbose = TRUE
+) {
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  assertScMinQC(sc_qc_param)
+  checkmate::assertList(prescan_result)
+  checkmate::assertTRUE(all(
+    c("universe", "universe_size", "file_tasks") %in% names(prescan_result)
+  ))
+  checkmate::qassert(streaming, "I1")
+  checkmate::assertTRUE(streaming %in% c(0L, 1L, 2L))
+  checkmate::qassert(.verbose, "B1")
+
+  rust_con <- get_sc_rust_ptr(object)
+
+  file_res <- rust_con$multi_tenx_h5_to_file(
+    file_tasks = prescan_result$file_tasks,
+    universe_size = as.integer(prescan_result$universe_size),
+    qc_params = sc_qc_param,
+    verbose = .verbose
+  )
+
+  .dispatch_gene_based_data(
+    rust_con = rust_con,
+    streaming = streaming,
+    batch_size = batch_size,
+    max_genes_in_memory = max_genes_in_memory,
+    cell_batch_size = cell_batch_size,
+    .verbose = .verbose
+  )
+
+  gene_nnz <- rust_con$get_nnz_genes(gene_indices = NULL)
+  gene_nnz_dt <- data.table::data.table(no_cells_exp = gene_nnz)
+
+  duckdb_con <- get_sc_duckdb(object)
+
+  if (.verbose) {
+    message("Loading barcodes from 10x h5 files into DuckDB.")
+  }
+
+  per_file_info <- lapply(file_res$per_file, function(f) {
+    task <- prescan_result$file_tasks[[f$exp_id]]
+    list(
+      h5_path = task$h5_path,
+      version = task$version,
+      exp_id = f$exp_id,
+      cell_filter = as.integer(f$cell_indices + 1L)
+    )
+  })
+
+  duckdb_con$populate_obs_from_multi_tenx_h5(per_file_info = per_file_info)
+
+  if (.verbose) {
+    message("Loading features into DuckDB.")
+  }
+
+  final_gene_names <-
+    prescan_result$universe[file_res$global_gene_indices + 1L]
+  duckdb_con$populate_vars_from_tenx_h5_reordered(
+    h5_path = prescan_result$file_tasks[[1L]]$h5_path,
+    version = prescan_result$file_tasks[[1L]]$version,
+    final_gene_names = final_gene_names
+  )
+
+  per_file_qc <- lapply(file_res$per_file, function(f) {
+    data.table::data.table(nnz = f$nnz, lib_size = f$lib_size)
+  })
+  cell_res_dt <- data.table::rbindlist(per_file_qc)
+
+  duckdb_con$add_data_obs(new_data = cell_res_dt)
+  duckdb_con$add_data_var(new_data = gene_nnz_dt)
+  duckdb_con$set_to_keep_column()
+
+  cell_map <- duckdb_con$get_obs_index_map()
+  gene_map <- duckdb_con$get_var_index_map()
+
+  S7::prop(object, "dims") <- as.integer(rust_con$get_shape())
+  object <- set_cell_mapping(x = object, cell_map = cell_map)
+  object <- set_gene_mapping(x = object, gene_map = gene_map)
+
+  return(object)
+}
+
 ### save to disk ---------------------------------------------------------------
 
 # generic in base_generics_sc.R

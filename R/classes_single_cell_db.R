@@ -1732,6 +1732,127 @@ SingleCellDuckDB <- R6::R6Class(
       invisible(self)
     },
 
+    #' @description
+    #' Populate the obs table from multiple 10x CellRanger h5 files.
+    #'
+    #' Reads each input's barcodes, applies the cell filter, prefixes
+    #' `cell_id` with `exp_id`, and rbindlists.
+    #'
+    #' @param per_file_info List of lists; each must contain `h5_path`
+    #' (string), `version` (`"v2"` or `"v3"`), `exp_id` (string) and
+    #' `cell_filter` (1-indexed integer vector).
+    #'
+    #' @return Invisible self.
+    populate_obs_from_multi_tenx_h5 = function(per_file_info) {
+      checkmate::assertList(per_file_info, min.len = 2L)
+
+      on.exit(
+        tryCatch(rhdf5::h5closeAll(), error = function(e) invisible()),
+        add = TRUE
+      )
+
+      obs_parts <- vector("list", length(per_file_info))
+
+      for (i in seq_along(per_file_info)) {
+        fi <- per_file_info[[i]]
+        checkmate::assertFileExists(fi$h5_path)
+        checkmate::assertChoice(fi$version, c("v2", "v3"))
+        checkmate::qassert(fi$exp_id, "S1")
+        checkmate::qassert(fi$cell_filter, "I+")
+
+        barcodes_path <- if (fi$version == "v3") {
+          "matrix/barcodes"
+        } else {
+          "barcodes"
+        }
+        barcodes <- as.character(rhdf5::h5read(fi$h5_path, barcodes_path))
+
+        dt <- data.table::data.table(cell_id = barcodes)
+        dt <- dt[fi$cell_filter]
+        dt[, cell_id := paste(fi$exp_id, cell_id, sep = "_")]
+        dt[, exp_id := fi$exp_id]
+
+        obs_parts[[i]] <- dt
+      }
+
+      combined <- data.table::rbindlist(obs_parts, use.names = TRUE)
+      combined[, cell_idx := .I]
+      data.table::setcolorder(
+        combined,
+        c("cell_idx", "cell_id", "exp_id")
+      )
+
+      con <- private$connect_db()
+      on.exit(
+        {
+          if (exists("con") && !is.null(con)) {
+            tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
+          }
+        },
+        add = TRUE
+      )
+
+      DBI::dbWriteTable(con, "obs", combined, overwrite = TRUE)
+
+      invisible(self)
+    },
+
+    #' @description
+    #' Populate the var table from a 10x h5 file, filtered and reordered to
+    #' match a target gene set.
+    #'
+    #' @param h5_path String. Path to a reference 10x h5 file.
+    #' @param version String. One of `"v2"` or `"v3"`.
+    #' @param final_gene_names Character vector. Gene ids in the desired
+    #' final order.
+    #'
+    #' @return Invisible self.
+    populate_vars_from_tenx_h5_reordered = function(
+      h5_path,
+      version,
+      final_gene_names
+    ) {
+      checkmate::assertFileExists(h5_path)
+      checkmate::assertChoice(version, c("v2", "v3"))
+      checkmate::assertCharacter(final_gene_names, min.len = 1L)
+
+      self$populate_vars_from_tenx_h5(
+        h5_path = h5_path,
+        version = version,
+        filter = NULL
+      )
+
+      var_dt <- self$get_vars_table()
+      var_dt <- var_dt[match(final_gene_names, gene_id)]
+
+      if ("gene_idx" %in% names(var_dt)) {
+        var_dt[, gene_idx := NULL]
+      }
+      var_dt[, gene_idx := .I]
+      data.table::setcolorder(
+        var_dt,
+        c(
+          "gene_idx",
+          "gene_id",
+          setdiff(names(var_dt), c("gene_idx", "gene_id"))
+        )
+      )
+
+      con <- private$connect_db()
+      on.exit(
+        {
+          if (exists("con") && !is.null(con)) {
+            tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
+          }
+        },
+        add = TRUE
+      )
+
+      DBI::dbWriteTable(con, "var", var_dt, overwrite = TRUE)
+
+      invisible(self)
+    },
+
     #########################
     # From multiple DuckDBs #
     #########################

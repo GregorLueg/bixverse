@@ -19,6 +19,10 @@ use rayon::prelude::*;
 /// @param module_list A nested named list. The outer list should contain the
 /// origin of the gene modules, the inner list the names of the gene modules and
 /// the respective genes in them.
+/// @param k_best Integer. Number of best neighbours to consider. If set to
+/// `1L`, this behaves as the traditional reciprocal best hit. If you set this
+/// to `3L` you consider edges if the modules is in the top 3 best modules
+/// by similarity for each other.
 /// @param overlap_coefficient Shall the overlap coefficient instead of the
 /// Jaccard similarity be used.
 /// @param min_similarity Minimum similarity that should exist between any two
@@ -40,6 +44,7 @@ use rayon::prelude::*;
 #[extendr]
 fn rs_rbh_sets(
     module_list: List,
+    k_best: usize,
     overlap_coefficient: bool,
     min_similarity: f64,
 ) -> extendr_api::Result<List> {
@@ -69,6 +74,7 @@ fn rs_rbh_sets(
                     let rbh_res = calculate_rbh_set(
                         origin_module_data,
                         target_module_data,
+                        k_best,
                         overlap_coefficient,
                         min_similarity,
                     );
@@ -141,6 +147,10 @@ fn rs_rbh_sets(
 ///
 /// @param module_matrices A list of named matrices. Rows represent features
 /// and columns the samples you wish to calculate the correlations for.
+/// @param k_best Integer. Number of best neighbours to consider. If set to
+/// `1L`, this behaves as the traditional reciprocal best hit. If you set this
+/// to `3L` you consider edges if the modules is in the top 3 best modules
+/// by similarity for each other.
 /// @param spearman Shall Spearman correlation be used.
 /// @param min_similarity Minimum (absolute) correlations that needs to exist
 /// between two terms.
@@ -161,6 +171,7 @@ fn rs_rbh_sets(
 #[extendr]
 fn rs_rbh_cor(
     module_matrices: List,
+    k_best: usize,
     spearman: bool,
     min_similarity: f64,
 ) -> extendr_api::Result<List> {
@@ -185,7 +196,7 @@ fn rs_rbh_cor(
                 .iter()
                 .map(|target| {
                     let target_matrix = matrix_map.get(target).unwrap();
-                    let result = calculate_rbh_cor(origin_mat, target_matrix, spearman);
+                    let result = calculate_rbh_cor(origin_mat, target_matrix, k_best, spearman);
                     let mut origin_modules: Vec<String> = Vec::new();
                     let mut target_modules: Vec<String> = Vec::new();
                     let mut similarities: Vec<f64> = Vec::new();

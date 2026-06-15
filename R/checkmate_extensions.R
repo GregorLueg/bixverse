@@ -2377,6 +2377,83 @@ checkScHvg <- function(x) {
 #' @keywords internal
 assertScHvg <- checkmate::makeAssertionFunction(checkScHvg)
 
+#### pca -----------------------------------------------------------------------
+
+#' Check PCA parameters for single cell
+#'
+#' @description Checkmate extension for checking the PCA parameters for single
+#' cell.
+#'
+#' @param x The list to check/assert.
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
+checkScPca <- function(x) {
+  res <- checkmate::checkList(x)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+  res <- checkmate::checkNames(
+    names(x),
+    must.include = c(
+      "mean_center",
+      "normalise_variance",
+      "randomised",
+      "clr",
+      "size_factor"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+  rules <- list(
+    mean_center = "B1",
+    normalise_variance = "B1",
+    randomised = "B1",
+    clr = "B1",
+    size_factor = "N1"
+  )
+  res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(rules)) {
+      checkmate::qtest(x, rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(
+      sprintf(
+        paste(
+          "The following element `%s` in single cell PCA parameters is",
+          "incorrect: mean_center, normalise_variance, randomised, and clr",
+          "must be single booleans; size_factor must be a single numeric."
+        ),
+        broken_elem
+      )
+    )
+  }
+  return(TRUE)
+}
+
+#' Assert PCA parameters for single cell
+#'
+#' @description Checkmate extension for asserting the PCA parameters for single
+#' cell.
+#'
+#' @inheritParams checkScPca
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
+assertScPca <- checkmate::makeAssertionFunction(checkScPca)
+
 #### knn -----------------------------------------------------------------------
 
 #' Check neighbour generation parameters
@@ -2931,8 +3008,12 @@ checkScFastmnn <- function(x) {
       "ndist",
       "cos_norm",
       "no_pcs",
-      "random_svd",
-      "sparse_svd"
+      "randomised",
+      "sparse_svd",
+      "mean_center",
+      "normalise_variance",
+      "clr",
+      "size_factor"
     )
   )
   if (!isTRUE(res)) {
@@ -2955,7 +3036,14 @@ checkScFastmnn <- function(x) {
     return("ndist needs to be a positive numeric.")
   }
   # Check logical parameters
-  logical_params <- c("cos_norm", "random_svd", "sparse_svd")
+  logical_params <- c(
+    "cos_norm",
+    "randomised",
+    "sparse_svd",
+    "mean_center",
+    "normalise_variance",
+    "clr"
+  )
   res <- purrr::map_lgl(logical_params, \(param) {
     checkmate::qtest(x[[param]], "B1")
   })
@@ -2966,6 +3054,12 @@ checkScFastmnn <- function(x) {
       broken_param
     ))
   }
+  # Check numerical parameters
+  res <- checkmate::checkNumber(x[["size_factor"]])
+  if (!isTRUE(all(res))) {
+    return(res)
+  }
+
   return(TRUE)
 }
 

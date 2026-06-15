@@ -6,8 +6,9 @@
 \usage{
 rs_sc_pca(
   f_path_gene,
+  f_path_cell,
   no_pcs,
-  random_svd,
+  pca_params,
   cell_indices,
   gene_indices,
   seed,
@@ -18,9 +19,13 @@ rs_sc_pca(
 \arguments{
 \item{f_path_gene}{String. Path to the \code{counts_genes.bin} file.}
 
+\item{f_path_cell}{String. Path to the \code{counts_cells.bin} file. Used if
+you wish to use the PFlogPF transformation.}
+
 \item{no_pcs}{Integer. Number of PCs to calculate.}
 
-\item{random_svd}{Boolean. Shall randomised SVD be used.}
+\item{pca_params}{Named list. Contains the parameters to use for this PCA
+run.}
 
 \item{cell_indices}{Integer. The cell indices to use. (0-indexed!)}
 
@@ -44,6 +49,10 @@ A list with with the following items
 }
 \description{
 Helper function that will calculate the PCA for the specified highly
-variable genes. Has the option to use randomised SVD for faster solving
-of the PCA.
+variable genes. You have the option to do mean centering, variance
+normalisation and/or apply the new proposed transformation \code{PFlogPF} from
+Booeshaghi, et al.
+}
+\references{
+Booeshaghi, et al., bioRxive, 2026.
 }

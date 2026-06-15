@@ -20,7 +20,8 @@ Following things were added:
     can run on a million cells on consumer hardware now.
 * Large number of helpers for plotting via the sister package and updated
   vignettes for this.
-* Reading in of 10x CellRanger h5 files.
+* Reading in of 10x CellRanger h5 files (and multi-file support).
+* NMF for bulk and single cell.
    
 
 ## Breaking changes

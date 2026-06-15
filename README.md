@@ -30,6 +30,8 @@ package for plotting functions being build in parallel, see
 [here](https://github.com/GregorLueg/bixverse.plots) (that one is in alpha
 phase).
 
+<img src="/man/figures/bixverse_single_cell.png" width="500" height="500" alt="atlas scale on small compute">
+
 ### Release notes
 
 Major release with `"0.4.0". The single cell suite has been further improved. 
@@ -107,7 +109,7 @@ and trade-offs. The various vignettes will show you how to analyse data.
 
 #### General
 
-- [ ] Multi h5 (10x output) i/o
+- [x] Multi h5 (10x output) i/o
 - [ ] Save data to h5ad for easier interoperability with Python.
 - [ ] Splitting a SingleCells into several sub directories for easier management
 - [ ] Implementation of [Palantir](https://www.nature.com/articles/s41587-019-0068-4) and

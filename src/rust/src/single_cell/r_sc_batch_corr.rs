@@ -274,6 +274,8 @@ fn rs_bbknn_filtering(
 /// generates a batch-aligned embedding space.
 ///
 /// @param f_path_gene String. Path to the `counts_genes.bin` file.
+/// @param f_path_cell String. Path to the `counts_cells.bin` file. Used if
+/// you wish to use the PFlogPF transformation during the optional PCA step.
 /// @param cell_indices Integer. The cell indices to use. (0-indexed!)
 /// @param gene_indices Integer. The gene indices to use. (0-indexed!) Ideally
 /// these are batch-aware highly variable genes.
@@ -293,6 +295,7 @@ fn rs_bbknn_filtering(
 #[allow(clippy::too_many_arguments)]
 fn rs_mnn(
     f_path_gene: &str,
+    f_path_cell: &str,
     cell_indices: Vec<i32>,
     gene_indices: Vec<i32>,
     batch_indices: Vec<i32>,
@@ -301,10 +304,26 @@ fn rs_mnn(
     verbose: usize,
     seed: usize,
 ) -> Result<RArray<f64, 2>> {
+    let verbosity = parse_verbosity_level(verbose);
+
     let cell_indices = cell_indices.r_int_convert();
     let gene_indices = gene_indices.r_int_convert();
     let batch_indices = batch_indices.r_int_convert();
     let mnn_params = FastMnnParams::from_r_list(mnn_params)?;
+
+    let offsets = if mnn_params.pca_params.clr {
+        if verbosity.normal_verbosity() {
+            println!("PFlogPF-transformation requested. Loading offsets from disk.")
+        }
+
+        let reader = ParallelSparseReader::new(f_path_cell).to_extendr()?;
+
+        let offsets = reader.get_clr_offsets(&cell_indices, None).to_extendr()?;
+
+        Some(offsets)
+    } else {
+        None
+    };
 
     let pre_computed_pca = precomputed_pca.map(|embd| r_matrix_to_faer_fp32(&embd));
 
@@ -314,6 +333,7 @@ fn rs_mnn(
         &gene_indices,
         &batch_indices,
         pre_computed_pca,
+        offsets.as_deref(),
         &mnn_params,
         verbose,
         seed,

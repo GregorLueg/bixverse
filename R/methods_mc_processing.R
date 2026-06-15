@@ -288,7 +288,7 @@ S7::method(find_hvg_sc, MetaCells) <- function(
 S7::method(calculate_pca_sc, MetaCells) <- function(
   object,
   no_pcs,
-  randomised_svd = TRUE,
+  pca_params = params_sc_pca(),
   sparse_svd = FALSE,
   hvg = NULL,
   seed = 42L,
@@ -296,7 +296,7 @@ S7::method(calculate_pca_sc, MetaCells) <- function(
 ) {
   checkmate::assertTRUE(S7::S7_inherits(object, MetaCells))
   checkmate::qassert(no_pcs, "I1")
-  checkmate::qassert(randomised_svd, "B1")
+  assertScPca(pca_params)
   checkmate::qassert(sparse_svd, "B1")
   checkmate::qassert(hvg, c("I+", "0"))
   checkmate::qassert(seed, "I1")
@@ -333,12 +333,19 @@ S7::method(calculate_pca_sc, MetaCells) <- function(
     assay = "norm"
   )
 
+  clr_offsets <- if (pca_params$clr) {
+    mc_get_clr_offsets(object)
+  } else {
+    NULL
+  }
+
   zeallot::`%<-%`(
     c(pca_factors, pca_loadings, singular_values),
     rs_mc_pca(
       sparse_data = count_list,
       no_pcs = no_pcs,
-      random_svd = randomised_svd,
+      pca_params = pca_params,
+      clr_offsets = clr_offsets,
       seed = seed
     )
   )

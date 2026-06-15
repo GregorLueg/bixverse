@@ -7,7 +7,7 @@
 calculate_pca_sc(
   object,
   no_pcs,
-  randomised_svd = TRUE,
+  pca_params = params_sc_pca(),
   sparse_svd = FALSE,
   hvg = NULL,
   seed = 42L,
@@ -19,8 +19,8 @@ calculate_pca_sc(
 
 \item{no_pcs}{Integer. Number of PCs to calculate.}
 
-\item{randomised_svd}{Boolean. Shall randomised SVD be used. Faster, but
-less precise.}
+\item{pca_params}{Named list. Controls the parameters to be used for the
+PCA calculation which is single cell-specific, see \code{\link[=params_sc_pca]{params_sc_pca()}}}
 
 \item{sparse_svd}{Boolean. Shall sparse solvers be used that do not do
 scaling. If set to yes, in the case of \code{random_svd = FALSE}, Lanczos

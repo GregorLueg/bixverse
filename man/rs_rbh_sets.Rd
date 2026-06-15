@@ -4,12 +4,17 @@
 \alias{rs_rbh_sets}
 \title{Generate reciprocal best hits based on set similarities}
 \usage{
-rs_rbh_sets(module_list, overlap_coefficient, min_similarity)
+rs_rbh_sets(module_list, k_best, overlap_coefficient, min_similarity)
 }
 \arguments{
 \item{module_list}{A nested named list. The outer list should contain the
 origin of the gene modules, the inner list the names of the gene modules and
 the respective genes in them.}
+
+\item{k_best}{Integer. Number of best neighbours to consider. If set to
+\code{1L}, this behaves as the traditional reciprocal best hit. If you set this
+to \code{3L} you consider edges if the modules is in the top 3 best modules
+by similarity for each other.}
 
 \item{overlap_coefficient}{Shall the overlap coefficient instead of the
 Jaccard similarity be used.}

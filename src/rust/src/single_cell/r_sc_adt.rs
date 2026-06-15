@@ -64,35 +64,75 @@ fn rs_read_tenx_h5_modality(f_path: String, version: String, feature_type: Strin
 // Processing //
 ////////////////
 
-/// Applies CLR normalisation on ADT counts (Seurat-style, per cell)
+/////////////
+// Helpers //
+/////////////
+
+/// Helper function that does Seurat style CLR
+///
+/// ### Params
+///
+/// * `row` - The row values
+/// * `ncol` - Number of columns/features in the data
+///
+/// ### Returns
+///
+/// Seurat-style CLR-normalised data
+#[inline]
+fn clr_row_seurat(row: &[f64], ncol: usize) -> Vec<f64> {
+    let g = ((0..ncol)
+        .filter(|&j| row[j] > 0.0)
+        .map(|j| row[j].ln_1p())
+        .sum::<f64>()
+        / ncol as f64)
+        .exp();
+    row.iter().map(|&v| (v / g).ln_1p()).collect()
+}
+
+/// Helper function that does normal CLR
+///
+/// ### Params
+///
+/// * `row` - The row values
+/// * `ncol` - Number of columns/features in the data
+///
+/// ### Returns
+///
+/// CLR-normalised data
+#[inline]
+fn clr_row(row: &[f64], ncol: usize) -> Vec<f64> {
+    let log_gm = row.iter().map(|&v| v.ln_1p()).sum::<f64>() / ncol as f64;
+    row.iter().map(|&v| v.ln_1p() - log_gm).collect()
+}
+
+/// Applies CLR normalisation on ADT counts
 ///
 /// @param counts R matrix of shape cells x features.
+/// @param seurat_clr Logical; if TRUE uses the Seurat variant (non-negative),
+/// if FALSE uses proper CLR (mean-centred log, can be negative).
 ///
 /// @returns CLR-transformed matrix.
 ///
 /// @export
 #[extendr]
-fn rs_adt_clr(counts: RMatrix<f64>) -> RMatrix<f64> {
+fn rs_adt_clr(counts: RMatrix<f64>, seurat_clr: bool) -> RMatrix<f64> {
     let counts = r_matrix_to_faer(&counts);
     let nrow = counts.nrows();
     let ncol = counts.ncols();
 
-    // per-row geometric-mean factor
-    let g: Vec<f64> = (0..nrow)
+    let rows: Vec<Vec<f64>> = (0..nrow)
         .into_par_iter()
         .map(|i| {
-            let mut s = 0.0_f64;
-            for j in 0..ncol {
-                let v = counts[(i, j)];
-                if v > 0.0 {
-                    s += v.ln_1p();
-                }
+            let row: Vec<f64> = (0..ncol).map(|j| counts[(i, j)]).collect();
+            if seurat_clr {
+                clr_row_seurat(&row, ncol)
+            } else {
+                clr_row(&row, ncol)
             }
-            (s / ncol as f64).exp()
         })
         .collect();
 
-    RMatrix::new_matrix(nrow, ncol, |i, j| (counts[(i, j)] / g[i]).ln_1p())
+    RMatrix::new_matrix(nrow, ncol, |i, j| rows[i][j])
 }
 
 /// Run DSB normalisation on raw ADT counts

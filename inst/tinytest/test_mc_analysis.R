@@ -77,7 +77,6 @@ sc_object <- find_hvg_sc(
 sc_object <- calculate_pca_sc(
   object = sc_object,
   no_pcs = no_pcs,
-  randomised_svd = TRUE,
   .verbose = FALSE
 )
 
@@ -150,7 +149,7 @@ expect_true(
 mc_object <- calculate_pca_sc(
   object = mc_object,
   no_pcs = no_pcs,
-  randomised_svd = FALSE,
+  pca_params = params_sc_pca(randomised = FALSE),
   .verbose = FALSE
 )
 
@@ -191,7 +190,7 @@ expect_true(
 mc_object <- calculate_pca_sc(
   object = mc_object,
   no_pcs = no_pcs,
-  randomised_svd = TRUE,
+  pca_params = params_sc_pca(),
   .verbose = FALSE
 )
 
