@@ -16,10 +16,6 @@
 
 ### Description
 
-<img src="/man/figures/bixverse_single_cell.png" width="500" height="500" alt="atlas scale on small compute">
-
-</br>
-
 This is an *opionated* package making various bioinformatics workflows in R (or
 ported from Python) much faster via low-level implementations in Rust. The core 
 idea is to take different methods, write implementations in a compiled,
@@ -33,6 +29,8 @@ transcriptomics, think single cell and RNASeq for now). There is a sister
 package for plotting functions being build in parallel, see 
 [here](https://github.com/GregorLueg/bixverse.plots) (that one is in alpha
 phase).
+
+<img src="/man/figures/bixverse_single_cell.png" width="500" height="500" alt="atlas scale on small compute">
 
 ### Release notes
 
