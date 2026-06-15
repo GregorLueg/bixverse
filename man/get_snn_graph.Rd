@@ -10,7 +10,13 @@
 \usage{
 get_snn_graph(x)
 
+## S7 method for class <bixverse::MetaCells>
+get_snn_graph(x)
+
 \method{get_snn_graph}{ScCache}(x)
+
+## S7 method for class <bixverse::SingleCells>
+get_snn_graph(x)
 }
 \arguments{
 \item{x}{An object to get the sNN graph from.}

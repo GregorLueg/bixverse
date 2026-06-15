@@ -3,6 +3,10 @@
 \name{get_gene_lengths.BulkCoExp}
 \alias{get_gene_lengths.BulkCoExp}
 \title{Get gene set lengths for a BulkCoExp class}
+\usage{
+## S7 method for class <bixverse::BulkCoExp>
+get_gene_lengths(x, species = c("human", "mouse", "rat"), ...)
+}
 \arguments{
 \item{x}{An object of class \code{BulkCoExp}.}
 
