@@ -64,7 +64,7 @@ PCA, neighbour computation, Leiden clustering and UMAP.
 #| label: rebuild-object
 #| code-fold: true
 #| code-summary: "Rebuild the PBMC3k object (click to expand)"
-pbmc3k_path <- bixverse:::download_pbmc3k()
+pbmc3k_path <- download_pbmc3k()
 tempdir_pbmc <- tempdir()
 
 sc_object <- SingleCells(dir_data = tempdir_pbmc)
@@ -130,9 +130,12 @@ sc_object <- find_clusters_sc(sc_object, res = 1.5, name = "leiden_clusters")
 sc_object <- umap_sc(sc_object, knn_method = "annoy")
 
 # UMAP coordinates for reuse
-umap_dt <- as.data.table(
-  get_embedding(sc_object, "umap"),
-  keep.rownames = "cell_id"
+umap_dt <- extract_embedding_data(sc_object, embedding = "umap")
+setnames(
+  umap_dt,
+  old = c("dim_1", "dim_2"),
+  new = c("umap_1", "umap_2"),
+  skip_absent = TRUE
 )
 ```
 
@@ -310,7 +313,7 @@ vision_res <- vision_w_autocor_sc(
   gs_list = vision_gs,
   embd_to_use = "pca",
   vision_params = params_sc_vision(n_perm = 500L),
-  .verbose = TRUE
+  .verbose = FALSE
 )
 
 head(vision_res$auto_cor_dt)
@@ -618,18 +621,163 @@ cell in `bixverse`.
 
 ## NMF on single cells
 
+The methods so far have all started from either a pre-defined gene set, a
+graph-based notion of locality, or a TF-centric regression framework. NMF 
+(non-negative matrix factorisation) takes yet another angle: it factorises the 
+expression matrix `V ≈ W H` into a small number of latent factors, where `W` 
+carries non-negative gene loadings and `H` carries non-negative cell 
+activations. The non-negativity constraint tends to push the factors into 
+something interpretable as additive gene programmes rather than abstract 
+directions of variance like PCA. `bixverse` implements 
+[HALS](https://proceedings.mlr.press/v39/kimura14.pdf) (Hierarchical
+Alternating Least Squares) in Rust, which converges fast and scales nicely.
+
+A few practical notes before diving in:
+
+- NMF is non-convex: different random initialisations land in different local
+  optima. The package therefore provides `nmf_sc()` for a single run and
+  `stabilised_nmf_sc()` for multiple restarts. The latter is the right default
+  for any serious analysis as well as down stream meta analyses such as 
+  finding consensus programmes.
+- Picking `k` is the eternal question. Too small and programmes get smushed
+  together; too large and they fragment into redundant copies. There is no
+  free lunch here. Usually you run with several values and inspect. If in doubt,
+  lick your finger and see from where the wind comes... (Joke)
+- NMF on a heterogeneous dataset often just rediscovers the obvious cell-type
+  axis. The interesting use case is running it *within* a cell type to find
+  finer-grained programmes (activation, exhaustion, cycling, etc.). We will
+  do exactly that here.
+
+We will focus on the T cells as an example. Think of your own use cases in your
+data set and analyses.
+
+### Identifying T cells
+
+We will use the AUC scores from earlier to pull out the T cell population.
+[Otsu's method](https://en.wikipedia.org/wiki/Otsu%27s_method) gives us a
+data-driven threshold for the bimodal AUC distribution.
+
 ```{r}
-nmf_res <- rs_nmf_single_sc(
-  f_path_gene = get_rust_count_gene_f_path(sc_object),
-  gene_indices = get_hvg(sc_object),
-  cell_indices = get_cells_to_keep(sc_object),
-  k = 20L,
-  preprocessing = "none",
-  nmf_hals_params = list(eps = 1e-7),
-  seed = 42L,
-  verbose = 2L
+otsu_t_cell <- find_threshold_otsu(auc_dt$`T cell`)
+
+ggplot(data = auc_dt, mapping = aes(x = `T cell`)) +
+  geom_histogram(bins = 13, fill = "darkgrey") +
+  theme_minimal() +
+  xlab("T cell signature [AUC]") +
+  geom_vline(xintercept = otsu_t_cell)
+```
+
+With the threshold in hand we grab the T cell IDs and recompute HVGs *within*
+this subset. This matters: HVGs computed across all PBMCs are dominated by
+inter-cell-type variation (T vs B vs monocyte). HVGs within T cells expose the
+genes that actually vary across T cell states, which is what we want NMF to
+factorise.
+
+`get_hvg_data_sc()` is a non-mutating variant of `find_hvg_sc()`: it returns
+a data.table with the HVG metrics and an `is_hvg` flag, without overwriting
+the HVGs stored on the object. Convenient when you want HVGs for a specific
+downstream analysis without disturbing the global state.
+
+```{r}
+t_cell_ids = otsu_t_cell, cell_id]
+
+hvg_t_cell_data <- get_hvg_data_sc(object = sc_object, cell_ids = t_cell_ids)
+
+t_cell_hvg <- hvg_t_cell_data[(is_hvg), gene_id]
+```
+
+### Running a single NMF run
+
+`nmf_sc()` runs one NMF on the chosen cells and genes. The default
+initialisation is NNDSVD, which is deterministic and usually gives a sensible
+starting point.
+
+```{r}
+t_cell_nmf_results <- nmf_sc(
+  object = sc_object,
+  k = 10L,
+  cell_ids = t_cell_ids,
+  gene_ids = t_cell_hvg
 )
 ```
+
+The result is an `NmfResult` carrying the `W` gene-loading matrix
+(genes x components) and the `H` cell-activation matrix (components x cells),
+plus the parameters and convergence info.
+
+```{r}
+get_w(t_cell_nmf_results)[1:5, 1:5]
+```
+
+```{r}
+get_h(t_cell_nmf_results)[1:5, 1:5]
+```
+
+### Running multiple NMF runs
+
+For anything beyond exploratory work you want multiple restarts. 
+`stabilised_nmf_sc()` runs `n_runs` HALS NMFs with random initialisations
+(seeded by `seed + i`) and column-binds the resulting `W` matrices.
+Looking at this stabilised data allows you to identify components that 
+constantly show up between random initialisations.
+
+```{r}
+t_cell_nmf_results_stabilised <- stabilised_nmf_sc(
+  object = sc_object,
+  k = 10L,
+  cell_ids = t_cell_ids,
+  gene_ids = t_cell_hvg,
+  n_runs = 10L
+)
+```
+
+The W matrix here is wide: `n_genes x (k * n_runs)`. Each block of `k`
+columns corresponds to one run. You can then use it for downstream consensus 
+analyses.
+
+```{r}
+get_w(t_cell_nmf_results_stabilised)
+```
+
+The H matrices are kept per-run, since each random initialisation gives a
+different cell-activation pattern (components are not aligned across runs
+without further work).
+
+```{r}
+str(get_h(t_cell_nmf_results_stabilised))
+```
+
+The run with the lowest final reconstruction loss is the most natural starting
+point for a single-run analysis. `get_best_run()` returns it as an
+`NmfResult`, identical in shape to the output of `nmf_sc()`.
+
+```{r}
+best_run <- get_best_run(t_cell_nmf_results_stabilised)
+best_run
+```
+
+### Downstream analysis
+
+What you do next depends entirely on what you are after. Some natural
+directions:
+
+- **Inspect the components**: rank genes by loading in `W` to read off what
+  each component represents. Components that recover known programmes
+  (cytotoxicity, exhaustion, ribosomal, IFN response, etc.) are a good sign;
+  components that load on uninteresting genes you can ignore or merge.
+- **Score cells**: `H` gives you per-cell activations for each programme.
+  Project them onto your UMAP, correlate against existing annotations, or
+  use them as features for downstream clustering.
+- **Add activations to the obs table**: `get_data()` on an `NmfResult`
+  returns a data.table of cell activations that slots into the SingleCells
+  obs table via `add_sc_new_obs()`, the same way module scores did earlier.
+- **Consensus across runs**: with `stabilised_nmf_sc()` you have `k * n_runs`
+  W columns to play with. The classical move is to cluster these to identify
+  components that recur across initialisations (the stable programmes) and
+  components that appear only once (likely overfit to a particular seed).
+
+We leave the choice of analysis here to you - the right downstream depends on
+the biology and your questions to the data, not the API.
 
 ## Clean up
 ```{r}
