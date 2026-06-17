@@ -728,6 +728,40 @@ expect_equal(
   info = "multi tenx prescan - union universe size"
 )
 
+### full multi load: union (regression - gene metadata never NA) -------------
+
+# file A is the var reference (first file) and lacks the genes only present in
+# file B; under gene_universe = "union" the var table must not be NA-keyed
+dir_multi_union <- file.path(test_temp_dir, "sc_multi_tenx_union")
+dir.create(dir_multi_union, recursive = TRUE, showWarnings = FALSE)
+
+sc_union <- SingleCells(dir_data = dir_multi_union)
+sc_union <- suppressWarnings(load_multi_tenx_h5(
+  object = sc_union,
+  prescan_result = prescan_union,
+  sc_qc_param = sc_qc_param,
+  streaming = 0L,
+  .verbose = FALSE
+))
+
+var_union <- get_sc_var(sc_union)
+
+expect_false(
+  current = anyNA(var_union$gene_id),
+  info = "multi tenx (union) - no NA gene_id in var table"
+)
+
+expect_true(
+  current = all(var_union$gene_id %in% rna$var$gene_id[genes_union_idx]),
+  info = "multi tenx (union) - var gene ids are canonical universe ids"
+)
+
+expect_equal(
+  current = nrow(var_union),
+  target = dim(sc_union)[2],
+  info = "multi tenx (union) - var rows match gene matrix dimension"
+)
+
 ### prescan: ADT filtered out from multi modal file --------------------------
 
 prescan_mm <- prescan_tenx_h5_files(

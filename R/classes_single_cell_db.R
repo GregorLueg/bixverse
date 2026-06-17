@@ -1239,6 +1239,20 @@ SingleCellDuckDB <- R6::R6Class(
 
       var_dt <- self$get_vars_table()
       var_dt <- var_dt[match(final_gene_names, gene_id)]
+      # gene_universe = "union" can include genes absent from the var reference
+      # file; pin gene_id to the canonical universe id so the var <-> counts
+      # mapping is never NA-keyed (counts for those genes are ingested correctly)
+      n_missing_meta <- sum(is.na(var_dt$gene_id))
+      if (n_missing_meta > 0L) {
+        warning(sprintf(
+          paste(
+            "%d gene(s) absent from the var reference file; metadata limited",
+            "to gene_id (gene_universe = 'union')."
+          ),
+          n_missing_meta
+        ))
+      }
+      var_dt[, gene_id := final_gene_names]
       var_dt[, gene_idx := .I]
 
       con <- private$connect_db()
@@ -1825,6 +1839,20 @@ SingleCellDuckDB <- R6::R6Class(
 
       var_dt <- self$get_vars_table()
       var_dt <- var_dt[match(final_gene_names, gene_id)]
+      # gene_universe = "union" can include genes absent from the var reference
+      # file; pin gene_id to the canonical universe id so the var <-> counts
+      # mapping is never NA-keyed (counts for those genes are ingested correctly)
+      n_missing_meta <- sum(is.na(var_dt$gene_id))
+      if (n_missing_meta > 0L) {
+        warning(sprintf(
+          paste(
+            "%d gene(s) absent from the var reference file; metadata limited",
+            "to gene_id (gene_universe = 'union')."
+          ),
+          n_missing_meta
+        ))
+      }
+      var_dt[, gene_id := final_gene_names]
 
       if ("gene_idx" %in% names(var_dt)) {
         var_dt[, gene_idx := NULL]
@@ -1976,6 +2004,20 @@ SingleCellDuckDB <- R6::R6Class(
       )
 
       var_dt <- var_dt[match(final_gene_names, gene_id)]
+      # gene_universe = "union" can include genes absent from the var reference
+      # source; pin gene_id to the canonical universe id so the var <-> counts
+      # mapping is never NA-keyed (counts for those genes are ingested correctly)
+      n_missing_meta <- sum(is.na(var_dt$gene_id))
+      if (n_missing_meta > 0L) {
+        warning(sprintf(
+          paste(
+            "%d gene(s) absent from the var reference source; metadata limited",
+            "to gene_id (gene_universe = 'union')."
+          ),
+          n_missing_meta
+        ))
+      }
+      var_dt[, gene_id := final_gene_names]
 
       if ("gene_idx" %in% names(var_dt)) {
         var_dt[, gene_idx := NULL]
@@ -2138,6 +2180,20 @@ SingleCellDuckDB <- R6::R6Class(
       }
 
       dt <- dt[match(final_gene_names, gene_id)]
+      # gene_universe = "union" can include genes absent from the var reference
+      # file; pin gene_id to the canonical universe id so the var <-> counts
+      # mapping is never NA-keyed (counts for those genes are ingested correctly)
+      n_missing_meta <- sum(is.na(dt$gene_id))
+      if (n_missing_meta > 0L) {
+        warning(sprintf(
+          paste(
+            "%d gene(s) absent from the var reference file; metadata limited",
+            "to gene_id (gene_universe = 'union')."
+          ),
+          n_missing_meta
+        ))
+      }
+      dt[, gene_id := final_gene_names]
 
       if ("gene_idx" %in% names(dt)) {
         dt[, gene_idx := NULL]
