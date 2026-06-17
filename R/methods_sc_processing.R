@@ -1138,6 +1138,8 @@ S7::method(gene_set_proportions_sc, SingleCells) <- function(
 
 ## hvg -------------------------------------------------------------------------
 
+### manipulating object state --------------------------------------------------
+
 # generic found in R/base_generics_sc.R
 
 #' @method find_hvg_sc SingleCells
@@ -1191,6 +1193,63 @@ S7::method(find_hvg_sc, SingleCells) <- function(
   object <- set_hvg(object, hvg = hvg)
 
   return(object)
+}
+
+### without manipulating object state ------------------------------------------
+
+#' @method get_hvg_data_sc SingleCells
+#'
+#' @export
+S7::method(get_hvg_data_sc, SingleCells) <- function(
+  object,
+  cell_ids = NULL,
+  hvg_no = 3000L,
+  hvg_params = params_sc_hvg(),
+  streaming = NULL,
+  .verbose = TRUE
+) {
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  checkmate::qassert(cell_ids, c("0", "S+"))
+  checkmate::qassert(hvg_no, "I1")
+  assertScHvg(hvg_params)
+  checkmate::qassert(streaming, c("B1", "0"))
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
+
+  cell_indices <- if (is.null(cell_ids)) {
+    get_cells_to_keep(object)
+  } else {
+    get_cell_indices(object, cell_ids = cell_ids, rust_index = TRUE)
+  }
+
+  streaming <- auto_streaming(
+    n_cells = length(cell_indices),
+    streaming = streaming,
+    .verbose = .verbose
+  )
+
+  res <- with(
+    hvg_params,
+    rs_sc_hvg(
+      f_path_gene = get_rust_count_gene_f_path(object),
+      hvg_method = method,
+      cell_indices = cell_indices,
+      loess_span = loess_span,
+      n_bins = num_bin,
+      binning = bin_method,
+      clip_max = NULL,
+      streaming = streaming,
+      verbose = parse_verbosity(.verbose)
+    )
+  )
+
+  var_table <- get_sc_var(object, cols = c("gene_idx", "gene_id"))
+
+  build_hvg_table(
+    var_table = var_table,
+    res = res,
+    hvg_no = hvg_no,
+    hvg_method = hvg_params$method
+  )
 }
 
 ## dimension reduction and knn/snn ---------------------------------------------

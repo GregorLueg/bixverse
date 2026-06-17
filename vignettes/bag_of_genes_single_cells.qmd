@@ -32,6 +32,8 @@ The methods fall into two broad categories:
   and scores them per cell. 
 - The second, Hotspot and SCENIC, *discovers* gene programmes and regulatory
   relationships from the data itself.
+- The third, NMF, also *discovers* gene programmes and regulatory relationships
+  via matrix factorisation which is different from SCENIC and Hotspot.
 
 We use the PBMC3k dataset throughout. At 2,700 cells this is likely too small 
 for the GRN methods to produce biologically meaningful results, but it is large
@@ -613,6 +615,21 @@ head(tf_gene_final[(in_leading_edge)][order(-importance)])
 
 This is how you work with all types of `"bag of genes"` analyses for single
 cell in `bixverse`.
+
+## NMF on single cells
+
+```{r}
+nmf_res <- rs_nmf_single_sc(
+  f_path_gene = get_rust_count_gene_f_path(sc_object),
+  gene_indices = get_hvg(sc_object),
+  cell_indices = get_cells_to_keep(sc_object),
+  k = 20L,
+  preprocessing = "none",
+  nmf_hals_params = list(eps = 1e-7),
+  seed = 42L,
+  verbose = 2L
+)
+```
 
 ## Clean up
 ```{r}

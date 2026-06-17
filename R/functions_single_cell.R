@@ -48,6 +48,54 @@ auto_streaming <- function(n_cells, streaming = NULL, .verbose = TRUE) {
   return(res)
 }
 
+#' Assemble the HVG data.table and flag the top N
+#'
+#' @description
+#' Internal helper shared by the `get_hvg_data_sc` methods. Takes the
+#' per-gene statistics returned by the Rust HVG functions, attaches them
+#' to a copy of the var table, and flags the top `hvg_no` genes according
+#' to the ranking column appropriate for the chosen HVG method.
+#'
+#' @param var_table data.table. The var table (or a subset of it) containing
+#' at least `gene_idx` and `gene_id`. Copied internally so the caller's
+#' table is not mutated.
+#' @param res Named list. Per-gene statistics returned by `rs_sc_hvg` or
+#' `rs_mc_hvg`. The names of `res` become new columns on the returned
+#' data.table. Must contain the ranking column implied by `hvg_method`
+#' (`var_std` for `"vst"`, `dispersion` for `"dispersion"`,
+#' `dispersion_scaled` for `"meanvarbin"`).
+#' @param hvg_no Integer. Number of top genes to flag as HVGs.
+#' @param hvg_method String. One of `c("vst", "dispersion", "meanvarbin")`.
+#' Selects which column in `res` is used to rank genes.
+#'
+#' @return A data.table with the original `var_table` columns, all columns
+#' from `res`, plus:
+#' \itemize{
+#'   \item `is_hvg` - Boolean. `TRUE` for the top `hvg_no` genes.
+#'   \item `hvg_rank` - Integer. Rank from 1 (most variable) to `hvg_no`
+#'   for HVGs, `NA_integer_` otherwise.
+#' }
+#'
+#' @keywords internal
+build_hvg_table <- function(var_table, res, hvg_no, hvg_method) {
+  dt <- data.table::copy(var_table)
+  dt[, names(res) := res]
+
+  rank_col <- switch(
+    hvg_method,
+    "vst" = "var_std",
+    "dispersion" = "dispersion",
+    "meanvarbin" = "dispersion_scaled",
+    stop("Unknown HVG method: ", hvg_method)
+  )
+
+  hvg_idx <- order(dt[[rank_col]], decreasing = TRUE)[seq_len(hvg_no)]
+  dt[, c("is_hvg", "hvg_rank") := list(FALSE, NA_integer_)]
+  dt[hvg_idx, c("is_hvg", "hvg_rank") := list(TRUE, seq_len(hvg_no))]
+
+  dt[]
+}
+
 ## cell ranger outputs ---------------------------------------------------------
 
 #' Helper to generate cell ranger input parameters
@@ -72,7 +120,6 @@ get_cell_ranger_params <- function(dir_data) {
 
   return(res)
 }
-
 
 ## seurat assay to list --------------------------------------------------------
 

@@ -3100,6 +3100,72 @@ rs_top_k_targets <- function(matrix, k, margin, min_value) .Call(wrap__rs_top_k_
 #' @export
 rs_importance_threshold <- function(matrix, n_sd, min_value) .Call(wrap__rs_importance_threshold, matrix, n_sd, min_value)
 
+#' Run NMF (HALS) over a set of single cells and genes
+#'
+#' @param f_path_gene Path to the `counts_genes.bin` file.
+#' @param gene_indices Integer vector. 0-indexed(!) positions of the genes
+#' to include.
+#' @param cell_indices Integer vector. 0-indexed(!) positions of cells to
+#' include in the analysis.
+#' @param k Integer. Number of latent factors to return.
+#' @param preprocessing String. One of `c("none", "sd", "sqrt_sd")`. Takes the
+#' data as is, or scales by standard deviation or squared standard deviation
+#' per feature.
+#' @param use_second_layer Boolean. If `TRUE`, runs NMF on the normalised
+#' counts; if `FALSE`, on the raw counts.
+#' @param nmf_hals_params Named list. Contains the NMF parameters.
+#' @param seed Integer. Random seed for initialisation.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @returns A list with the following items
+#' \itemize{
+#'   \item w - The left factor matrix (n_features x k)
+#'   \item h - The right factor matrix (k x n_samples)
+#'   \item final_loss - Loss at the final iteration
+#'   \item n_iter - Number of iterations the algorithm run for
+#'   \item converged - Did the NMF algorithm converge
+#' }
+#'
+#' @export
+rs_nmf_single_sc <- function(f_path_gene, gene_indices, cell_indices, k, preprocessing, use_second_layer, nmf_hals_params, seed, verbose) .Call(wrap__rs_nmf_single_sc, f_path_gene, gene_indices, cell_indices, k, preprocessing, use_second_layer, nmf_hals_params, seed, verbose)
+
+#' Run multiple NMF (HALS) restarts over a set of single cells and genes
+#'
+#' Runs `n_runs` HALS NMF with random initialisations seeded by `seed + i`.
+#' The `nmf_init` field in `nmf_hals_params` is ignored; random init is always
+#' used. The returned `w_all` is the column-binding of all run W matrices.
+#'
+#' @param f_path_gene Path to the `counts_genes.bin` file.
+#' @param gene_indices Integer vector. 0-indexed(!) positions of the genes
+#' to include.
+#' @param cell_indices Integer vector. 0-indexed(!) positions of cells to
+#' include in the analysis.
+#' @param k Integer. Number of latent factors per run.
+#' @param preprocessing String. One of `c("none", "sd", "sqrt_sd")`.
+#' @param use_second_layer Boolean. If `TRUE`, runs NMF on the normalised
+#' counts; if `FALSE`, on the raw counts.
+#' @param nmf_hals_params Named list. Contains the NMF parameters.
+#' @param n_runs Integer. Number of random restarts.
+#' @param seed Integer. Base random seed. Run `i` uses `seed + i`.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @returns A list with the following items
+#' \itemize{
+#'   \item w_all - Column-bound W matrices across all runs,
+#'   shape `n_features x (k * n_runs)`. Columns `i*k+1..(i+1)*k` are run `i`'s
+#'   components (1-indexed).
+#'   \item h_per_run - List of H matrices, each `k x n_cells`.
+#'   \item losses - Numeric vector. Final reconstruction loss per run.
+#'   \item converged - Logical vector. Convergence flag per run.
+#'   \item best_idx - Integer. 1-indexed position of the run with the lowest
+#'   final loss.
+#' }
+#'
+#' @export
+rs_nmf_multi_sc <- function(f_path_gene, gene_indices, cell_indices, k, preprocessing, use_second_layer, nmf_hals_params, n_runs, seed, verbose) .Call(wrap__rs_nmf_multi_sc, f_path_gene, gene_indices, cell_indices, k, preprocessing, use_second_layer, nmf_hals_params, n_runs, seed, verbose)
+
 #' Generate meta cells (hdWGCNA method)
 #'
 #' @description This function implements the approach from Morabito, et al.
@@ -3491,6 +3557,50 @@ rs_mc_scenic <- function(sparse_data, tf_indices, scenic_params, seed, verbose) 
 #'
 #' @export
 rs_mc_aucell <- function(sparse_data, gs_list, auc_type, verbose) .Call(wrap__rs_mc_aucell, sparse_data, gs_list, auc_type, verbose)
+
+#' Run NMF (HALS) on MetaCells
+#'
+#' @description
+#' Assumes that the sparse data is pre-filtered for the cells/genes you wish
+#' to include. Indices in the sparse data need to be 0-indexed.
+#'
+#' @param sparse_data A named list with `data`, `indptr`, `indices`, `nrow`,
+#' `ncol` and `format`.
+#' @param k Integer. Number of latent factors to return.
+#' @param preprocessing String. One of `c("none", "sd", "sqrt_sd")`.
+#' @param use_second_layer Boolean. If `TRUE`, runs NMF on normalised counts.
+#' @param nmf_hals_params Named list. Contains the NMF parameters.
+#' @param seed Integer. Random seed for initialisation.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @returns A list with `w`, `h`, `final_loss`, `n_iter`, `converged`.
+#'
+#' @export
+rs_nmf_single_mc <- function(sparse_data, k, preprocessing, use_second_layer, nmf_hals_params, seed, verbose) .Call(wrap__rs_nmf_single_mc, sparse_data, k, preprocessing, use_second_layer, nmf_hals_params, seed, verbose)
+
+#' Run multiple NMF (HALS) restarts on MetaCells
+#'
+#' @description
+#' Assumes that the sparse data is pre-filtered for the cells/genes you wish
+#' to include. Indices in the sparse data need to be 0-indexed.
+#'
+#' @param sparse_data A named list with `data`, `indptr`, `indices`, `nrow`,
+#' `ncol` and `format`.
+#' @param k Integer. Number of latent factors per run.
+#' @param preprocessing String. One of `c("none", "sd", "sqrt_sd")`.
+#' @param use_second_layer Boolean. If `TRUE`, runs NMF on normalised counts.
+#' @param nmf_hals_params Named list. Contains the NMF parameters.
+#' @param n_runs Integer. Number of random restarts.
+#' @param seed Integer. Base random seed. Run `i` uses `seed + i`.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @returns A list with `w_all`, `h_per_run`, `losses`, `converged`,
+#' `best_idx` (1-indexed).
+#'
+#' @export
+rs_nmf_multi_mc <- function(sparse_data, k, preprocessing, use_second_layer, nmf_hals_params, n_runs, seed, verbose) .Call(wrap__rs_nmf_multi_mc, sparse_data, k, preprocessing, use_second_layer, nmf_hals_params, n_runs, seed, verbose)
 
 #' Loads in a modality from a 10x h5 file
 #'

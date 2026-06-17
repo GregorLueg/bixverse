@@ -431,6 +431,45 @@ params_dgrdl <- function(
   )
 }
 
+## NMF (HALS) ------------------------------------------------------------------
+
+#' Wrapper function for NMF (HALS) parameters
+#'
+#' @param max_iter Integer. Maximum number of HALS iterations.
+#' @param tol Numeric. Convergence tolerance on the relative change in
+#' reconstruction loss.
+#' @param eps Numeric. Numerical floor for non-negativity / division safety.
+#' @param check_every Integer. Convergence check interval in iterations.
+#' @param nmf_init String. One of `c("nndsvd", "svd", "random")`. `"nndsvd"`
+#' and `"svd"` both map to deterministic NNDSVD initialisation; `"random"`
+#' uses random non-negative draws. For stabilised (multi-run) NMF this field
+#' is ignored and random init is always used.
+#'
+#' @returns A list with the HALS NMF parameters.
+#'
+#' @export
+params_nmf_hals <- function(
+  max_iter = 250L,
+  tol = 1e-4,
+  eps = 1e-10,
+  check_every = 10L,
+  nmf_init = "nndsvd"
+) {
+  checkmate::qassert(max_iter, "I1[1,)")
+  checkmate::qassert(tol, "N1(0,)")
+  checkmate::qassert(eps, "N1(0,)")
+  checkmate::qassert(check_every, "I1[1,)")
+  checkmate::assertChoice(nmf_init, c("nndsvd", "svd", "random"))
+
+  list(
+    max_iter = max_iter,
+    tol = tol,
+    eps = eps,
+    check_every = check_every,
+    nmf_init = nmf_init
+  )
+}
+
 ## SNF -------------------------------------------------------------------------
 
 #' Wrapper function to generate SNF parameters

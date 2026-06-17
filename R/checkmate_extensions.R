@@ -889,6 +889,86 @@ checkDGRDLparams <- function(x) {
 #' @keywords internal
 assertDGRDLparams <- checkmate::makeAssertionFunction(checkDGRDLparams)
 
+### nmf (hals) -----------------------------------------------------------------
+
+#' Check NMF HALS parameters
+#'
+#' @description Checkmate extension for checking the NMF HALS parameters for
+#' single cell.
+#'
+#' @param x The list to check/assert
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
+checkNmfHals <- function(x) {
+  res <- checkmate::checkList(x)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+  res <- checkmate::checkNames(
+    names(x),
+    must.include = c(
+      "max_iter",
+      "tol",
+      "eps",
+      "check_every",
+      "nmf_init"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+  rules <- list(
+    "max_iter" = "I1[1,)",
+    "tol" = "N1(0,)",
+    "eps" = "N1(0,)",
+    "check_every" = "I1[1,)"
+  )
+  res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(rules)) {
+      checkmate::qtest(x, rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(
+      sprintf(
+        paste(
+          "The following element `%s` in NMF HALS params is incorrect:",
+          "max_iter and check_every must be positive integers;",
+          "tol and eps must be positive numerics."
+        ),
+        broken_elem
+      )
+    )
+  }
+  if (!checkmate::testChoice(x$nmf_init, c("nndsvd", "svd", "random"))) {
+    return(
+      "nmf_init must be one of 'nndsvd', 'svd' or 'random'."
+    )
+  }
+
+  return(TRUE)
+}
+
+#' Assert NMF HALS parameters
+#'
+#' @description Checkmate extension for asserting the NMF HALS parameters for
+#' single cell.
+#'
+#' @inheritParams checkNmfHals
+#'
+#' @param .var.name Name of the checked object to print in assertions.
+#' @param add Collection to store assertion messages.
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
+assertNmfHals <- checkmate::makeAssertionFunction(checkNmfHals)
+
 ### snf ------------------------------------------------------------------------
 
 #' Check SNF parameters
