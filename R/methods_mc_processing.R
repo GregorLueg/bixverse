@@ -219,6 +219,8 @@ S7::method(calc_manifold_metrics, MetaCells) <- function(
 
 ### hvg ------------------------------------------------------------------------
 
+#### with object state ---------------------------------------------------------
+
 # generic found in R/base_generics_sc.R
 
 #' @method find_hvg_sc MetaCells
@@ -274,6 +276,63 @@ S7::method(find_hvg_sc, MetaCells) <- function(
 
   return(object)
 }
+
+#### without changing object state ---------------------------------------------
+
+#' @method get_hvg_data_sc MetaCells
+#'
+#' @export
+S7::method(get_hvg_data_sc, MetaCells) <- function(
+  object,
+  cell_ids = NULL,
+  hvg_no = 3000L,
+  hvg_params = params_sc_hvg(),
+  streaming = NULL,
+  .verbose = TRUE
+) {
+  checkmate::assertTRUE(S7::S7_inherits(object, MetaCells))
+  checkmate::qassert(cell_ids, c("0", "S+"))
+  checkmate::qassert(hvg_no, "I1")
+  assertScHvg(hvg_params)
+  checkmate::qassert(streaming, c("B1", "0"))
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
+
+  cell_indices <- if (is.null(cell_ids)) {
+    NULL
+  } else {
+    get_cell_indices(object, cell_ids = cell_ids, rust_index = FALSE)
+  }
+
+  assay <- if (hvg_params$method == "vst") "raw" else "norm"
+
+  count_list <- mc_counts_to_list(
+    object = object,
+    cell_indices = cell_indices,
+    assay = assay
+  )
+
+  res <- with(
+    hvg_params,
+    rs_mc_hvg(
+      sparse_data = count_list,
+      hvg_method = method,
+      loess_span = loess_span,
+      binning = bin_method,
+      n_bins = num_bin,
+      clip_max = NULL
+    )
+  )
+
+  var_table <- get_sc_var(object, cols = c("gene_idx", "gene_id"))
+
+  build_hvg_table(
+    var_table = var_table,
+    res = res,
+    hvg_no = hvg_no,
+    hvg_method = hvg_params$method
+  )
+}
+
 
 ### pca ------------------------------------------------------------------------
 

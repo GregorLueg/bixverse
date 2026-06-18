@@ -483,6 +483,246 @@ expect_true(
   info = "Overlap in the detected HVGs"
 )
 
+### dispersion version --------------------------------------------------------
+
+sc_object <- find_hvg_sc(
+  object = sc_object,
+  hvg_no = hvg_to_keep,
+  hvg_params = params_sc_hvg(method = "dispersion"),
+  .verbose = FALSE
+)
+
+var_data_disp <- get_sc_var(sc_object)
+
+expect_true(
+  current = all(
+    c("mean", "dispersion", "dispersion_scaled", "bin") %in%
+      names(var_data_disp)
+  ),
+  info = "sc hvg dispersion - var table populated with dispersion metrics"
+)
+
+hvg_disp <- get_hvg(sc_object)
+
+expect_true(
+  current = checkmate::qtest(hvg_disp, sprintf("I%i", hvg_to_keep)),
+  info = "sc hvg dispersion - correct number of HVGs returned"
+)
+
+# signal genes (1-30) should dominate non-signal genes (31-100)
+expect_true(
+  current = length(intersect(hvg_disp + 1, 1:30)) >=
+    length(intersect(hvg_disp + 1, 31:100)),
+  info = "sc hvg dispersion - signal genes dominate the HVGs"
+)
+
+#### streaming version --------------------------------------------------------
+
+sc_object <- find_hvg_sc(
+  object = sc_object,
+  hvg_no = hvg_to_keep,
+  hvg_params = params_sc_hvg(method = "dispersion"),
+  streaming = TRUE,
+  .verbose = FALSE
+)
+
+var_data_disp_stream <- get_sc_var(sc_object)
+
+expect_equivalent(
+  current = var_data_disp_stream$mean,
+  target = var_data_disp$mean,
+  tolerance = 1e-6,
+  info = "sc hvg dispersion - streaming matches non-streaming (mean)"
+)
+
+expect_equivalent(
+  current = var_data_disp_stream$dispersion,
+  target = var_data_disp$dispersion,
+  tolerance = 1e-5,
+  info = "sc hvg dispersion - streaming matches non-streaming (dispersion)"
+)
+
+expect_equivalent(
+  current = var_data_disp_stream$dispersion_scaled,
+  target = var_data_disp$dispersion_scaled,
+  tolerance = 1e-5,
+  info = "sc hvg dispersion - streaming matches non-streaming (scaled)"
+)
+
+expect_true(
+  current = length(intersect(get_hvg(sc_object), hvg_disp)) == hvg_to_keep,
+  info = "sc hvg dispersion - streaming returns the same HVGs"
+)
+
+### meanvarbin version -------------------------------------------------------
+
+sc_object <- find_hvg_sc(
+  object = sc_object,
+  hvg_no = hvg_to_keep,
+  hvg_params = params_sc_hvg(
+    method = "meanvarbin",
+    num_bin = 5L
+  ),
+  .verbose = FALSE
+)
+
+var_data_mvb <- get_sc_var(sc_object)
+
+expect_true(
+  current = all(
+    c("mean", "dispersion", "dispersion_scaled", "bin") %in% names(var_data_mvb)
+  ),
+  info = "sc hvg meanvarbin - var table populated with metrics"
+)
+
+hvg_mvb <- get_hvg(sc_object)
+
+expect_true(
+  current = checkmate::qtest(hvg_mvb, sprintf("I%i", hvg_to_keep)),
+  info = "sc hvg meanvarbin - correct number of HVGs returned"
+)
+
+# this one behaves worse than the others due to the weirdness in the synthetic
+# data
+expect_true(
+  current = length(intersect(hvg_mvb + 1, 1:30)) >= 10L,
+  info = "sc hvg meanvarbin - signal genes dominate the HVGs"
+)
+
+#### streaming version --------------------------------------------------------
+
+sc_object <- find_hvg_sc(
+  object = sc_object,
+  hvg_no = hvg_to_keep,
+  hvg_params = params_sc_hvg(method = "meanvarbin", num_bin = 5L),
+  streaming = TRUE,
+  .verbose = FALSE
+)
+
+var_data_mvb_stream <- get_sc_var(sc_object)
+
+expect_equivalent(
+  current = var_data_mvb_stream$mean,
+  target = var_data_mvb$mean,
+  tolerance = 1e-6,
+  info = "sc hvg meanvarbin - streaming matches non-streaming (mean)"
+)
+
+expect_equivalent(
+  current = var_data_mvb_stream$dispersion_scaled,
+  target = var_data_mvb$dispersion_scaled,
+  tolerance = 1e-5,
+  info = "sc hvg meanvarbin - streaming matches non-streaming (scaled)"
+)
+
+expect_true(
+  current = length(intersect(get_hvg(sc_object), hvg_mvb)) == hvg_to_keep,
+  info = "sc hvg meanvarbin - streaming returns the same HVGs"
+)
+
+### get_hvg_data_sc -----------------------------------------------------------
+
+# reset to vst so downstream PCA tests remain unchanged
+sc_object <- find_hvg_sc(
+  object = sc_object,
+  hvg_no = hvg_to_keep,
+  .verbose = FALSE
+)
+
+current_hvg <- get_hvg(sc_object)
+current_var <- get_sc_var(sc_object)
+
+#### full cells_to_keep -------------------------------------------------------
+
+hvg_dt_full <- get_hvg_data_sc(
+  object = sc_object,
+  hvg_no = hvg_to_keep,
+  .verbose = FALSE
+)
+
+expect_true(
+  current = checkmate::testDataTable(hvg_dt_full),
+  info = "get_hvg_data_sc - returns a data.table"
+)
+
+expect_true(
+  current = all(
+    c(
+      "gene_idx",
+      "gene_id",
+      "mean",
+      "var",
+      "var_std",
+      "is_hvg",
+      "hvg_rank"
+    ) %in%
+      names(hvg_dt_full)
+  ),
+  info = "get_hvg_data_sc - expected columns present"
+)
+
+expect_true(
+  current = sum(hvg_dt_full$is_hvg) == hvg_to_keep,
+  info = "get_hvg_data_sc - correct number of HVGs flagged"
+)
+
+expect_true(
+  current = all(!is.na(hvg_dt_full[is_hvg == TRUE, hvg_rank])) &
+    all(is.na(hvg_dt_full[is_hvg == FALSE, hvg_rank])),
+  info = "get_hvg_data_sc - hvg_rank NA exactly when is_hvg is FALSE"
+)
+
+# cell_ids = NULL should give HVGs equivalent to those stored on the object
+expect_true(
+  current = length(intersect(
+    hvg_dt_full[is_hvg == TRUE, gene_idx],
+    current_hvg + 1
+  )) ==
+    hvg_to_keep,
+  info = "get_hvg_data_sc - NULL cell_ids matches state-mutating version"
+)
+
+#### biological subset -------------------------------------------------------
+
+ct1_cells <- sc_object[[]][cell_grp == "cell_type_1", cell_id]
+
+expect_true(
+  current = length(ct1_cells) > 50,
+  info = "get_hvg_data_sc - sensible number of cell_type_1 cells for subset test"
+)
+
+hvg_dt_subset <- get_hvg_data_sc(
+  object = sc_object,
+  cell_ids = ct1_cells,
+  hvg_no = hvg_to_keep,
+  .verbose = FALSE
+)
+
+expect_true(
+  current = sum(hvg_dt_subset$is_hvg) == hvg_to_keep,
+  info = "get_hvg_data_sc - subset returns correct number of HVGs"
+)
+
+# means/vars computed on the subset must differ from the full data
+expect_false(
+  current = isTRUE(all.equal(hvg_dt_subset$mean, hvg_dt_full$mean)),
+  info = "get_hvg_data_sc - subset stats differ from full stats"
+)
+
+#### state preservation -----------------------------------------------------
+
+expect_equal(
+  current = get_hvg(sc_object),
+  target = current_hvg,
+  info = "get_hvg_data_sc - object HVGs unchanged after call"
+)
+
+expect_equivalent(
+  current = get_sc_var(sc_object)$var_std,
+  target = current_var$var_std,
+  info = "get_hvg_data_sc - object var table unchanged after call"
+)
+
 ## pca -------------------------------------------------------------------------
 
 ### seurat version -------------------------------------------------------------

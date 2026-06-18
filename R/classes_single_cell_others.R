@@ -2526,3 +2526,411 @@ print.ScTypeResults <- function(x, ...) {
 
   invisible(x)
 }
+
+## nmf result classes ----------------------------------------------------------
+
+### NmfResult ------------------------------------------------------------------
+
+#' Constructor for single-run NMF results
+#'
+#' @description
+#' Stores the W (genes x components) and H (components x cells) matrices from
+#' a single HALS NMF run, plus convergence metadata and provenance information.
+#'
+#' @param nmf_res Named list. Output of [rs_nmf_single_sc()] or
+#' [rs_nmf_single_mc()]. Must contain `w`, `h`, `final_loss`, `n_iter`,
+#' `converged`.
+#' @param gene_ids Character vector. Gene identifiers for the rows of W.
+#' @param cell_ids Character vector. Cell (or meta cell) identifiers for the
+#' columns of H.
+#' @param cell_indices Integer vector. 0-indexed cell positions used in the
+#' run (Rust-side indices, kept for re-running / cross-referencing).
+#' @param source_class String. One of `c("SingleCells", "MetaCells")`.
+#' @param params List. The full set of parameters used for the run.
+#'
+#' @returns An object of class `NmfResult`.
+#'
+#' @export
+#'
+#' @keywords internal
+new_nmf_result <- function(
+  nmf_res,
+  gene_ids,
+  cell_ids,
+  cell_indices,
+  source_class,
+  params
+) {
+  checkmate::assertList(nmf_res)
+  checkmate::assertNames(
+    names(nmf_res),
+    must.include = c("w", "h", "final_loss", "n_iter", "converged")
+  )
+  checkmate::qassert(gene_ids, "S+")
+  checkmate::qassert(cell_ids, "S+")
+  checkmate::qassert(cell_indices, "I+")
+  checkmate::assertChoice(source_class, c("SingleCells", "MetaCells"))
+  checkmate::assertList(params)
+
+  w <- t(nmf_res$h)
+  h <- t(nmf_res$w)
+
+  k <- ncol(w)
+  comp_names <- sprintf("comp_%02d", seq_len(k))
+
+  rownames(w) <- gene_ids
+  colnames(w) <- comp_names
+  rownames(h) <- comp_names
+  colnames(h) <- cell_ids
+
+  res <- list(
+    w = w,
+    h = h,
+    gene_ids = gene_ids,
+    cell_ids = cell_ids,
+    cell_indices = cell_indices,
+    final_loss = nmf_res$final_loss,
+    n_iter = nmf_res$n_iter,
+    converged = nmf_res$converged,
+    source_class = source_class,
+    params = params
+  )
+
+  class(res) <- "NmfResult"
+  res
+}
+
+#### primitives ----------------------------------------------------------------
+
+#' @export
+#'
+#' @keywords internal
+print.NmfResult <- function(x, ...) {
+  cat("NmfResult (single-run HALS NMF)\n")
+  cat(sprintf("  Source class:     %s\n", x$source_class))
+  cat(sprintf("  No genes:         %d\n", nrow(x$w)))
+  cat(sprintf("  No cells:         %d\n", ncol(x$h)))
+  cat(sprintf("  No components:    %d\n", ncol(x$w)))
+  cat(sprintf("  Final loss:       %.4g\n", x$final_loss))
+  cat(sprintf("  Iterations:       %d\n", x$n_iter))
+  cat(sprintf("  Converged:        %s\n", x$converged))
+  cat(sprintf("  Preprocessing:    %s\n", x$params$preprocessing))
+  invisible(x)
+}
+
+#' @export
+#'
+#' @keywords internal
+dim.NmfResult <- function(x) {
+  c(nrow(x$w), ncol(x$h), ncol(x$w))
+}
+
+#### transforms ----------------------------------------------------------------
+
+#' @export
+as.matrix.NmfResult <- function(x, which = c("w", "h"), ...) {
+  which <- match.arg(which)
+  x[[which]]
+}
+
+#### getters -------------------------------------------------------------------
+
+#' Get the W (gene loadings) matrix
+#'
+#' @param x An object holding NMF results.
+#'
+#' @export
+get_w <- function(x) {
+  UseMethod("get_w")
+}
+
+#' @rdname get_w
+#'
+#' @export
+get_w.NmfResult <- function(x) {
+  checkmate::assertClass(x, "NmfResult")
+  x$w
+}
+
+#' Get the H (cell activations) matrix
+#'
+#' @param x An object holding NMF results.
+#'
+#' @export
+get_h <- function(x) {
+  UseMethod("get_h")
+}
+
+#' @rdname get_h
+#'
+#' @export
+get_h.NmfResult <- function(x) {
+  checkmate::assertClass(x, "NmfResult")
+  x$h
+}
+
+#' @method get_params NmfResult
+#'
+#' @export
+S7::method(get_params, S7::new_S3_class("NmfResult")) <-
+  function(object, to_json = FALSE, pretty_json = FALSE) {
+    get_params.NmfResult(
+      object = object,
+      to_json = to_json,
+      pretty_json = pretty_json
+    )
+  }
+
+#' @rdname get_params
+#'
+#' @export
+get_params.NmfResult <- function(
+  object,
+  to_json = FALSE,
+  pretty_json = FALSE
+) {
+  checkmate::assertClass(object, "NmfResult")
+  checkmate::qassert(to_json, "B1")
+  checkmate::qassert(pretty_json, "B1")
+
+  to_ret <- object[["params"]]
+  if (to_json) {
+    to_ret <- jsonlite::toJSON(to_ret)
+  }
+  if (to_json && pretty_json) {
+    to_ret <- jsonlite::prettify(to_ret)
+  }
+  to_ret
+}
+
+#' @rdname get_data
+#'
+#' @export
+get_data.NmfResult <- function(x, ...) {
+  checkmate::assertClass(x, "NmfResult")
+
+  obs_dt <- data.table::as.data.table(t(x$h))
+  obs_dt[, cell_idx := (x$cell_indices + 1L)]
+
+  obs_dt <- .add_is_obs_attr(obs_dt)
+  obs_dt
+}
+
+### StabilisedNmfResult --------------------------------------------------------
+
+#' Constructor for stabilised (multi-run) NMF results
+#'
+#' @description
+#' Stores the column-bound W matrices across runs, per-run H matrices,
+#' per-run losses and convergence flags, plus the index of the best run.
+#'
+#' @param nmf_res Named list. Output of [rs_nmf_multi_sc()] or
+#' [rs_nmf_multi_mc()]. Must contain `w_all`, `h_per_run`, `losses`,
+#' `converged`, `best_idx`.
+#' @param gene_ids Character vector. Gene identifiers for the rows of W.
+#' @param cell_ids Character vector. Cell identifiers for the columns of H.
+#' @param cell_indices Integer vector. 0-indexed cell positions used in the run.
+#' @param source_class String. One of `c("SingleCells", "MetaCells")`.
+#' @param params List. The full set of parameters used for the run.
+#'
+#' @returns An object of class `StabilisedNmfResult`.
+#'
+#' @export
+#'
+#' @keywords internal
+new_stabilised_nmf_result <- function(
+  nmf_res,
+  gene_ids,
+  cell_ids,
+  cell_indices,
+  source_class,
+  params
+) {
+  checkmate::assertList(nmf_res)
+  checkmate::assertNames(
+    names(nmf_res),
+    must.include = c("w_all", "h_per_run", "losses", "converged", "best_idx")
+  )
+  checkmate::qassert(gene_ids, "S+")
+  checkmate::qassert(cell_ids, "S+")
+  checkmate::qassert(cell_indices, "I+")
+  checkmate::assertChoice(source_class, c("SingleCells", "MetaCells"))
+  checkmate::assertList(params)
+
+  k <- params$k
+  n_runs <- length(nmf_res$h_per_run)
+  comp_names <- sprintf("comp_%02d", seq_len(k))
+
+  # Each h_per_run entry is (k x n_genes) from Rust; transpose to (n_genes x k)
+  # and column-bind into w_all-style matrix.
+  w_all <- do.call(cbind, lapply(nmf_res$h_per_run, t))
+
+  # Each w in the original w_all column block is the cell-loading matrix;
+  # transpose into per-run H matrices of shape (k x n_cells).
+  h_per_run <- lapply(seq_len(n_runs), function(i) {
+    col_start <- (i - 1L) * k + 1L
+    col_end <- i * k
+    t(nmf_res$w_all[, col_start:col_end, drop = FALSE])
+  })
+
+  w_all_colnames <- as.vector(outer(
+    comp_names,
+    sprintf("run_%02d", seq_len(n_runs)),
+    function(comp, run) paste(run, comp, sep = ".")
+  ))
+  rownames(w_all) <- gene_ids
+  colnames(w_all) <- w_all_colnames
+
+  h_per_run <- lapply(h_per_run, function(h) {
+    rownames(h) <- comp_names
+    colnames(h) <- cell_ids
+    h
+  })
+  names(h_per_run) <- sprintf("run_%02d", seq_len(n_runs))
+
+  res <- list(
+    w_all = w_all,
+    h_per_run = h_per_run,
+    gene_ids = gene_ids,
+    cell_ids = cell_ids,
+    cell_indices = cell_indices,
+    losses = nmf_res$losses,
+    converged = nmf_res$converged,
+    best_idx = nmf_res$best_idx,
+    source_class = source_class,
+    params = params
+  )
+
+  class(res) <- "StabilisedNmfResult"
+  res
+}
+
+#### primitives ----------------------------------------------------------------
+
+#' @export
+#'
+#' @keywords internal
+print.StabilisedNmfResult <- function(x, ...) {
+  n_runs <- length(x$h_per_run)
+  cat("StabilisedNmfResult (multi-run HALS NMF)\n")
+  cat(sprintf("  Source class:     %s\n", x$source_class))
+  cat(sprintf("  No genes:         %d\n", nrow(x$w_all)))
+  cat(sprintf("  No cells:         %d\n", ncol(x$h_per_run[[1]])))
+  cat(sprintf("  No components:    %d\n", x$params$k))
+  cat(sprintf("  No runs:          %d\n", n_runs))
+  cat(sprintf("  No converged:     %d / %d\n", sum(x$converged), n_runs))
+  cat(sprintf(
+    "  Loss range:       [%.4g, %.4g]\n",
+    min(x$losses),
+    max(x$losses)
+  ))
+  cat(sprintf(
+    "  Best run:         %d (loss = %.4g)\n",
+    x$best_idx,
+    x$losses[x$best_idx]
+  ))
+  cat(sprintf("  Preprocessing:    %s\n", x$params$preprocessing))
+  invisible(x)
+}
+
+#### getters -------------------------------------------------------------------
+
+#' @rdname get_w
+#'
+#' @export
+get_w.StabilisedNmfResult <- function(x) {
+  checkmate::assertClass(x, "StabilisedNmfResult")
+  x$w_all
+}
+
+#' @rdname get_h
+#'
+#' @export
+get_h.StabilisedNmfResult <- function(x) {
+  checkmate::assertClass(x, "StabilisedNmfResult")
+  x$h_per_run
+}
+
+#' Get the best run from a stabilised NMF result
+#'
+#' @description
+#' Extracts the run with the lowest reconstruction loss and returns it as a
+#' single-run `NmfResult` for downstream methods.
+#'
+#' @param x `StabilisedNmfResult` object.
+#'
+#' @returns An `NmfResult` containing the W/H of the best run.
+#'
+#' @export
+get_best_run <- function(x) {
+  UseMethod("get_best_run")
+}
+
+#' @rdname get_best_run
+#'
+#' @export
+get_best_run.StabilisedNmfResult <- function(x) {
+  checkmate::assertClass(x, "StabilisedNmfResult")
+
+  k <- x$params$k
+  best <- x$best_idx
+  col_start <- (best - 1L) * k + 1L
+  col_end <- best * k
+
+  w_best <- x$w_all[, col_start:col_end, drop = FALSE]
+  h_best <- x$h_per_run[[best]]
+
+  comp_names <- sprintf("comp_%02d", seq_len(k))
+  colnames(w_best) <- comp_names
+  rownames(h_best) <- comp_names
+
+  res <- list(
+    w = w_best,
+    h = h_best,
+    gene_ids = x$gene_ids,
+    cell_ids = x$cell_ids,
+    cell_indices = x$cell_indices,
+    final_loss = x$losses[best],
+    n_iter = NA_integer_,
+    converged = x$converged[best],
+    source_class = x$source_class,
+    params = x$params
+  )
+
+  class(res) <- "NmfResult"
+  res
+}
+
+#' @method get_params StabilisedNmfResult
+#'
+#' @export
+S7::method(get_params, S7::new_S3_class("StabilisedNmfResult")) <-
+  function(object, to_json = FALSE, pretty_json = FALSE) {
+    get_params.StabilisedNmfResult(
+      object = object,
+      to_json = to_json,
+      pretty_json = pretty_json
+    )
+  }
+
+#' @rdname get_params
+#'
+#' @export
+get_params.StabilisedNmfResult <- function(
+  object,
+  to_json = FALSE,
+  pretty_json = FALSE
+) {
+  checkmate::assertClass(object, "StabilisedNmfResult")
+  checkmate::qassert(to_json, "B1")
+  checkmate::qassert(pretty_json, "B1")
+
+  to_ret <- object[["params"]]
+  if (to_json) {
+    to_ret <- jsonlite::toJSON(to_ret)
+  }
+  if (to_json && pretty_json) {
+    to_ret <- jsonlite::prettify(to_ret)
+  }
+  to_ret
+}

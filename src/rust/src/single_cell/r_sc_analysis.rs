@@ -1,10 +1,12 @@
 use bixverse_rs::core::math::stats::calc_fdr;
+use bixverse_rs::methods::nmf_hals::HalsOpts;
 use bixverse_rs::prelude::*;
 use bixverse_rs::single_cell::sc_analysis::dge_pathway_scores::*;
 use bixverse_rs::single_cell::sc_analysis::hotspot::*;
 use bixverse_rs::single_cell::sc_analysis::meld::*;
 use bixverse_rs::single_cell::sc_analysis::milo_r::*;
 use bixverse_rs::single_cell::sc_analysis::module_scoring::*;
+use bixverse_rs::single_cell::sc_analysis::nmf_sc::{nmf_multiple_run_sc, nmf_single_run_sc};
 use bixverse_rs::single_cell::sc_analysis::scenic::*;
 use bixverse_rs::single_cell::sc_analysis::vision::*;
 use extendr_api::*;
@@ -43,6 +45,9 @@ extendr_module! {
     fn rs_scenic_grn_streaming;
     fn rs_top_k_targets;
     fn rs_importance_threshold;
+    // nmf
+    fn rs_nmf_single_sc;
+    fn rs_nmf_multi_sc;
 }
 
 //////////
@@ -1264,4 +1269,150 @@ fn rs_meld_sc(
     .to_extendr()?;
 
     Ok(faer_to_r_matrix(meld_res.as_ref()))
+}
+
+/////////
+// NMF //
+/////////
+
+/// Run NMF (HALS) over a set of single cells and genes
+///
+/// @param f_path_gene Path to the `counts_genes.bin` file.
+/// @param gene_indices Integer vector. 0-indexed(!) positions of the genes
+/// to include.
+/// @param cell_indices Integer vector. 0-indexed(!) positions of cells to
+/// include in the analysis.
+/// @param k Integer. Number of latent factors to return.
+/// @param preprocessing String. One of `c("none", "sd", "sqrt_sd")`. Takes the
+/// data as is, or scales by standard deviation or squared standard deviation
+/// per feature.
+/// @param use_second_layer Boolean. If `TRUE`, runs NMF on the normalised
+/// counts; if `FALSE`, on the raw counts.
+/// @param nmf_hals_params Named list. Contains the NMF parameters.
+/// @param seed Integer. Random seed for initialisation.
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
+///
+/// @returns A list with the following items
+/// \itemize{
+///   \item w - The left factor matrix (n_features x k)
+///   \item h - The right factor matrix (k x n_samples)
+///   \item final_loss - Loss at the final iteration
+///   \item n_iter - Number of iterations the algorithm run for
+///   \item converged - Did the NMF algorithm converge
+/// }
+///
+/// @export
+#[extendr]
+#[allow(clippy::too_many_arguments)]
+fn rs_nmf_single_sc(
+    f_path_gene: &str,
+    gene_indices: &[i32],
+    cell_indices: &[i32],
+    k: usize,
+    preprocessing: &str,
+    use_second_layer: bool,
+    nmf_hals_params: List,
+    seed: usize,
+    verbose: usize,
+) -> Result<List> {
+    let cell_indices = cell_indices.r_int_convert();
+    let gene_indices = gene_indices.r_int_convert();
+    let nmf_hals_opt: HalsOpts<f32> = HalsOpts::from_r_list(nmf_hals_params, seed).to_extendr()?;
+    let nmf_res = nmf_single_run_sc(
+        f_path_gene,
+        &gene_indices,
+        &cell_indices,
+        k,
+        preprocessing,
+        use_second_layer,
+        Some(nmf_hals_opt),
+        verbose,
+    )
+    .to_extendr()?;
+    Ok(list!(
+        w = faer_to_r_matrix(nmf_res.w.as_ref()),
+        h = faer_to_r_matrix(nmf_res.h.as_ref()),
+        final_loss = nmf_res.final_loss as f64,
+        n_iter = nmf_res.n_iter,
+        converged = nmf_res.converged
+    ))
+}
+
+/// Run multiple NMF (HALS) restarts over a set of single cells and genes
+///
+/// Runs `n_runs` HALS NMF with random initialisations seeded by `seed + i`.
+/// The `nmf_init` field in `nmf_hals_params` is ignored; random init is always
+/// used. The returned `w_all` is the column-binding of all run W matrices.
+///
+/// @param f_path_gene Path to the `counts_genes.bin` file.
+/// @param gene_indices Integer vector. 0-indexed(!) positions of the genes
+/// to include.
+/// @param cell_indices Integer vector. 0-indexed(!) positions of cells to
+/// include in the analysis.
+/// @param k Integer. Number of latent factors per run.
+/// @param preprocessing String. One of `c("none", "sd", "sqrt_sd")`.
+/// @param use_second_layer Boolean. If `TRUE`, runs NMF on the normalised
+/// counts; if `FALSE`, on the raw counts.
+/// @param nmf_hals_params Named list. Contains the NMF parameters.
+/// @param n_runs Integer. Number of random restarts.
+/// @param seed Integer. Base random seed. Run `i` uses `seed + i`.
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
+///
+/// @returns A list with the following items
+/// \itemize{
+///   \item w_all - Column-bound W matrices across all runs,
+///   shape `n_features x (k * n_runs)`. Columns `i*k+1..(i+1)*k` are run `i`'s
+///   components (1-indexed).
+///   \item h_per_run - List of H matrices, each `k x n_cells`.
+///   \item losses - Numeric vector. Final reconstruction loss per run.
+///   \item converged - Logical vector. Convergence flag per run.
+///   \item best_idx - Integer. 1-indexed position of the run with the lowest
+///   final loss.
+/// }
+///
+/// @export
+#[extendr]
+#[allow(clippy::too_many_arguments)]
+fn rs_nmf_multi_sc(
+    f_path_gene: &str,
+    gene_indices: &[i32],
+    cell_indices: &[i32],
+    k: usize,
+    preprocessing: &str,
+    use_second_layer: bool,
+    nmf_hals_params: List,
+    n_runs: usize,
+    seed: usize,
+    verbose: usize,
+) -> Result<List> {
+    let gene_indices = gene_indices.r_int_convert();
+    let cell_indices = cell_indices.r_int_convert();
+    let nmf_hals_opt: HalsOpts<f32> = HalsOpts::from_r_list(nmf_hals_params, seed).to_extendr()?;
+    let nmf_res = nmf_multiple_run_sc(
+        f_path_gene,
+        &gene_indices,
+        &cell_indices,
+        k,
+        preprocessing,
+        use_second_layer,
+        Some(nmf_hals_opt),
+        n_runs,
+        seed,
+        verbose,
+    )
+    .to_extendr()?;
+    let h_per_run: List = nmf_res
+        .h_per_run
+        .iter()
+        .map(|h| faer_to_r_matrix(h.as_ref()))
+        .collect();
+    Ok(list!(
+        w_all = faer_to_r_matrix(nmf_res.w_all.as_ref()),
+        h_per_run = h_per_run,
+        losses = nmf_res.losses.r_float_convert(),
+        converged = nmf_res.converged,
+        best_idx = (nmf_res.best_idx + 1) as i32
+    ))
 }
