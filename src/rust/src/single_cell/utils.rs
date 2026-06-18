@@ -76,38 +76,48 @@ pub fn flatten_dispersion_batches(results: Vec<HvgDispersionRes>) -> List {
 ///
 /// ### Params
 ///
-/// * `knn_mat` - Samples x indices of the k-nearest neighbours (1-indexed!)
+/// * `knn_mat` - Samples x indices of the k-nearest neighbours (0-indexed!)
 ///
 /// ### Returns
 ///
 /// A `Vec<Vec<usize>>`
 pub fn knn_indices_processing(knn_mat: RMatrix<i32>) -> Vec<Vec<usize>> {
-    let ncol = knn_mat.ncols();
     let nrow = knn_mat.nrows();
+    let ncol = knn_mat.ncols();
     let data = knn_mat.data();
 
-    (0..nrow)
-        .map(|j| (0..ncol).map(|i| data[j + i * nrow] as usize).collect())
-        .collect()
+    let mut out: Vec<Vec<usize>> = (0..nrow).map(|_| Vec::with_capacity(ncol)).collect();
+    for i in 0..ncol {
+        let col_offset = i * nrow;
+        for j in 0..nrow {
+            out[j].push(data[col_offset + j] as usize);
+        }
+    }
+    out
 }
 
 /// Process R KNN distances to the Rust variant
 ///
 /// ### Params
 ///
-/// * `knn_dist` - Samples x indices of the k-nearest neighbours (1-indexed!)
+/// * `knn_dist` - Samples x indices of the k-nearest neighbours (0-indexed!)
 ///
 /// ### Returns
 ///
 /// A `Vec<Vec<f32>>`
 pub fn knn_distances_processing(knn_dist: RMatrix<f64>) -> Vec<Vec<f32>> {
-    let ncol = knn_dist.ncols();
     let nrow = knn_dist.nrows();
-    let data: Vec<f32> = knn_dist.data().iter().map(|x| *x as f32).collect();
+    let ncol = knn_dist.ncols();
+    let data = knn_dist.data();
 
-    (0..nrow)
-        .map(|j| (0..ncol).map(|i| data[j + i * nrow]).collect())
-        .collect()
+    let mut out: Vec<Vec<f32>> = (0..nrow).map(|_| Vec::with_capacity(ncol)).collect();
+    for i in 0..ncol {
+        let col_offset = i * nrow;
+        for j in 0..nrow {
+            out[j].push(data[col_offset + j] as f32);
+        }
+    }
+    out
 }
 
 /// Transform R kNN data to Rust data

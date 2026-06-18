@@ -61,19 +61,21 @@ fn rs_kbet(knn_mat: RMatrix<i32>, batch_vector: Vec<i32>, verbose: bool) -> Resu
     let n_cells = knn_mat.nrows();
     let k_neighbours = knn_mat.ncols();
 
-    let knn_matrix: Vec<Vec<usize>> = (0..n_cells)
-        .map(|i| {
-            (0..k_neighbours)
-                .map(|j| knn_mat[[i, j]] as usize)
-                .collect()
-        })
+    let raw: &[i32] = knn_mat.data();
+
+    let mut knn_matrix: Vec<Vec<usize>> = (0..n_cells)
+        .map(|_| Vec::with_capacity(k_neighbours))
         .collect();
 
-    // Convert batch_vector to Vec<usize>
+    for j in 0..k_neighbours {
+        let col_offset = j * n_cells;
+        for i in 0..n_cells {
+            knn_matrix[i].push(raw[col_offset + i] as usize);
+        }
+    }
+
     let batches: Vec<usize> = batch_vector.r_int_convert();
-
     let kbet_res = kbet(&knn_matrix, &batches, verbose).to_extendr()?;
-
     Ok(list![
         pval = kbet_res.p_values,
         chi_square_stats = kbet_res.chi_square_stats,

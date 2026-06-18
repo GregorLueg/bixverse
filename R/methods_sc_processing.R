@@ -432,11 +432,6 @@
     .verbose = .verbose
   )
 
-  if (length(cells_to_use) >= 100000) {
-    message("Setting PCA to sparse default. N_cells greater than 100,000")
-    scrublet_params$sparse <- TRUE
-  }
-
   scrublet_res <- rs_sc_scrublet(
     f_path_gene = get_rust_count_gene_f_path(object),
     f_path_cell = get_rust_count_cell_f_path(object),
@@ -480,11 +475,6 @@
     streaming = streaming,
     .verbose = .verbose
   )
-
-  if (length(cells_to_use) >= 100000) {
-    message("Setting PCA to sparse default. N_cells greater than 100,000")
-    boost_params$sparse <- TRUE
-  }
 
   if (boost_params$fast_cluster & is.null(boost_params$n_centroids)) {
     message(paste(
@@ -539,11 +529,6 @@
     streaming = streaming,
     .verbose = .verbose
   )
-
-  if (length(cells_to_use) >= 100000) {
-    message("Setting PCA to sparse default. N_cells greater than 100,000")
-    scdblfinder_params$sparse <- TRUE
-  }
 
   if (
     scdblfinder_params$fast_cluster & is.null(scdblfinder_params$n_centroids)
