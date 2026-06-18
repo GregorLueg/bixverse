@@ -110,10 +110,11 @@ This step is the slowest... A lot of things are actually happening here.
 
 This approach avoids loading the whole data into memory at any point. The DuckDB 
 also gets populated with the metadata in the observations (based on what has 
-been filtered) and the vars (add another 1 to 2 minutes here). This part -
-streaming the data and processing it - is usually what takes the most time. If
-you have already loaded in the data and it exists on-disk from a previous
-session, skip the streaming step entirely and reconnect.
+been filtered) and the vars. 
+This part - streaming the data and processing it - is usually what takes quite a
+bit of time. If you have already loaded in the data and it exists on-disk from a 
+previous session, skip the streaming step entirely and reconnect. On a MacBook
+Air with 24 GB and an M3 chip, this takes ~3.5 minutes.
 
 ```{r}
 #| label: reconnect
@@ -152,6 +153,11 @@ cells_without_doublets <- sce[[c("doublet", "cell_id")]][
 sce <- set_cells_to_keep(x = sce, cells_to_keep = cells_without_doublets)
 ```
 
+Due to having run over 24 samples in this case, this will take ~15 minutes. 
+Ideal moment for a podcast, video of your favourite YouTuber and/or coffee - 
+which ever floats your boat. Once you have passed this, things will get 
+substantially faster.
+
 ## Quality control
 
 ### Gene set proportions
@@ -178,6 +184,9 @@ sce <- gene_set_proportions_sc(
   .verbose = TRUE
 )
 ```
+
+This is where the streaming engine comes really into play. Done under <10 
+seconds.
 
 ### MAD outlier detection
 
@@ -235,9 +244,11 @@ sce <- set_cells_to_keep(sce, cells_to_keep)
 
 HVG selection at this scale again requires `streaming = TRUE` (if left as is,
 the auto-detection will take care of this and automatically use streaming when
-more than 1e5 cells are detected). There are two data passes to avoid 
+more than `1e5` cells are detected). There are two data passes to avoid 
 materialising large data in memory: the first calculates means and standard 
-deviations, and the second does the variance stabilisation.
+deviations, and the second does the variance stabilisation. Again, the streaming
+keeps memory pressure low and the function runs in ~10 seconds on the mentioned
+MacBook Air.
 
 ```{r}
 #| label: hvg
@@ -269,10 +280,10 @@ cpu_res <- get_pca_factors(sce)
 cpu_s <- get_pca_singular_val(sce)
 ```
 
-Let's compare this against the GPU-accelerated version. In this case, the GEMMs
-prior to the thin SVD on the massively reduced matrix in the randomised SVD
-are run on the GPU. You pay for moving the data, but you should still see
-an acceleration compared to the CPU form.
+This runs in ~25 seconds. Let's compare this against the GPU-accelerated 
+version. In this case, the GEMMs prior to the thin SVD on the massively reduced 
+matrix in the randomised SVD are run on the GPU. You pay for moving the data, 
+but you should still see an acceleration compared to the CPU form.
 
 ```{r}
 #| label: pca gpu
@@ -291,28 +302,18 @@ gpu_s <- get_pca_singular_val(sce)
 plot(cpu_res[, 1], gpu_res[, 1])
 ```
 
-In practice you would pick one. The GPU path becomes the more attractive
-option as cell counts grow; on this data set you can feel the difference (if
-VRAM permits). You will see some slight differences due to floating operation
-differences between CPU and GPU.
+On the test MacBook Air, this runs in 15 seconds. In practice you would pick 
+one. The GPU path becomes the more attractive option as cell counts grow; on 
+this data set you can feel the difference (if VRAM permits). You will see some 
+slight differences due to floating operation differences between CPU and GPU.
 
 ## Nearest neighbours (GPU-accelerated)
 
-At nearly 1 million cells, nearest neighbour search is the main computational
-bottleneck. The companion package [bixverse.gpu](https://github.com/GregorLueg/bixverse.gpu)
+The companion package [bixverse.gpu](https://github.com/GregorLueg/bixverse.gpu)
 exposes a CAGRA-style GPU-accelerated approximate nearest neighbour search
 that makes this quite fast on a laptop with a discrete GPU - thanks to CubeCL
-and WGPU, as long as you can fit the data into VRAM (should be feasible with
-8 GBs - I think?) this should run quite fast. CPU-side alternatives such as
-`"nndescent"` or `"hnsw"` also work but will be considerably slower at this
-scale. For empirical reference:
-
-- GPU version on M1 Max with 64 GB takes ~1 minute.
-- HNSW somewhere between 3 to 4 minutes.
-
-Likely still comparably much faster if you are used to the more established
-single cell methods in terms of CPU speed, but yeah... If you have a GPU,
-go use that.
+and WGPU, as long as you can fit the data into VRAM. The time the GPU version 
+takes is <30 seconds. CPU version with `HNSW` takes ~90 seconds.
 
 ```{r}
 #| label: cpu knn
@@ -331,6 +332,7 @@ sce <- find_neighbours_cagra_sc(
   object = sce,
   embd_to_use = "pca",
   cagra_params = params_sc_cagra(),
+  extract_knn = FALSE,
   .verbose = TRUE
 )
 ```
@@ -377,9 +379,9 @@ sce <- tsne_sc(
 
 You might wonder why in the case of tSNE we regenerate the kNN graph. You do not
 have to, but the rule-of-thumb is `k_neighbours = perplexity * 3.0`. With the
-default perplexity, we would need 30 neighbours, but we only returned 15. So,
-we just rerun this. Skip tSNE if you don't need it, but the FFT-accelerated
-version is substantially faster than you would expect from tSNE.
+default perplexity, we would need 30 neighbours, but we previously only 
+returned 15. So, we just rerun this. Skip tSNE if you don't need it, but the 
+FFT-accelerated version is substantially faster than you would expect from tSNE.
 
 ```{r}
 #| label: plot prior - umap
@@ -415,7 +417,8 @@ embedding_plot_sc(
 
 Okay, there is clearly a big sample batch effect. Let's remove that one. Again
 you have two options here... Harmony ([version 2]() - recommended) on CPU or
-a GPU-accelerated version. Let's check out the CPU version first...
+a GPU-accelerated version. Let's check out the CPU version first... (~ 40 
+seconds)
 
 ```{r}
 #| label: harmony cpu
@@ -423,10 +426,10 @@ a GPU-accelerated version. Let's check out the CPU version first...
 sce <- harmony_v2_sc(object = sce, batch_column = "sample")
 ```
 
-If you have a GPU at hand, you can also just use the GPU version. Again, you
-will observe some slight numerical differences... This is due to the GPU
-implementation, but the overall structure of the data will be recovered in the
-same way.
+If you have a GPU at hand, you can also just use the GPU version (15 seconds). 
+Again, you will observe some slight numerical differences... This is due to the 
+GPU implementation, but the overall structure of the data will be recovered in 
+the same way.
 
 ```{r}
 #| label: harmony gpu
@@ -443,6 +446,7 @@ sce <- find_neighbours_cagra_sc(
   object = sce,
   embd_to_use = "harmony_gpu", # or harmony_v2 if you just did the CPU version
   cagra_params = params_sc_cagra(),
+  extract_knn = FALSE,
   .verbose = TRUE
 )
 ```
@@ -460,9 +464,53 @@ kbet_post_gpu <- calculate_kbet_sc(object = sce, batch_column = "sample")
 kbet_post_gpu
 ```
 
+## Cell type annotations
+
+This is a nice data set where the fast clustering makes a lot of sense... We use
+the k-means clustering to quantise the data to representative centroids and
+run the Louvain clustering specifically for the centroids and project the 
+community membership back.
+
+```{r}
+#| label: fast clustering
+fast_cluster_res <- fast_cluster_sc(
+  object = sce,
+  embd_to_use = "harmony_gpu", # or harmony_v2 if you just did the CPU version
+  return_kmeans = FALSE,
+  grid_search = TRUE,
+  .verbose = 2L
+)
+
+sce <- add_sc_new_obs(
+  object = sce,
+  obs_data = get_data(fast_cluster_res)
+)
+
+head(sce)
+```
+
 ## Differential gene expression
 
-TODO.
+```{r}
+#| label: dge
+#| eval: false
+meta_data <- sce[[c("cell_id", "res_2")]]
+
+cells_grp_a <- meta_data[res_2 == "1", cell_id]
+cells_grp_b <- meta_data[res_2 == "2", cell_id]
+
+dge_results <- find_markers_sc(
+  object = sce,
+  cells_1 = cells_grp_a,
+  cells_2 = cells_grp_b
+)
+
+setorder(dge_results, fdr)
+
+head(dge_results, 25L)
+```
+
+The data is again streamed from disk, which makes this very fast...
 
 ## Key differences from the small-data workflow
 
@@ -477,13 +525,13 @@ meaningful differences when working at the million-cell scale are:
    streamed data set without re-reading the source. (Works for any data.)
 3. **Per-sample QC.** With batches comes the need to compute outliers per
    sample rather than globally.
-4. **Doublet detection per sample.** Scrublet is run with `group_by`, which
-   matters once capture rates differ between batches.
+4. **Doublet detection per sample.** Scrublet (or any other doublet detection) 
+   can be run with `group_by`, which matters once capture rates differ between 
+   batches.
 5. **GPU-accelerated PCA and kNN.** `bixverse.gpu` provides GPU paths for
    PCA, CAGRA-based nearest neighbour search, and Harmony. The CPU versions
    remain highly optimised with SIMD and cache-aware memory layouts, but the
    GPU paths get faster as the data scales.
 
-For context... Running this on my machine (MacBook Pro M1 Max with 64 GB)
-took roughly 20 minutes from start to finish, with about half of the time
-spent on data I/O. Memory pressure remained green throughout.
+For context... The whole workflow here was run on a MacBook Air and did not
+cause any substantial memory pressure.
