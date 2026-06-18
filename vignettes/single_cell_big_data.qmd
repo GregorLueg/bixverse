@@ -473,6 +473,7 @@ community membership back.
 
 ```{r}
 #| label: fast clustering
+#| eval: false
 fast_cluster_res <- fast_cluster_sc(
   object = sce,
   embd_to_use = "harmony_gpu", # or harmony_v2 if you just did the CPU version
