@@ -41,7 +41,8 @@ SingleCellsGrps <- S7::new_class(
     count_connection = S7::class_any,
     obs_table = S7::class_data.frame,
     var_table = S7::class_data.frame,
-    groups = S7::class_character,
+    grouping_variable = S7::class_character,
+    group = S7::class_character,
     sc_cache = S7::class_any,
     sc_map = S7::class_any,
     dims = S7::class_integer,
@@ -50,6 +51,7 @@ SingleCellsGrps <- S7::new_class(
   constructor = function(
     sc_object,
     grouping_variable,
+    group,
     other_data = list()
   ) {
     # checks
@@ -67,23 +69,10 @@ SingleCellsGrps <- S7::new_class(
     )
     # function body
     # generate the Rust pointer
-    count_connection <- SingleCellCountData$new(
-      f_path_cells = file.path(dir_data, "counts_cells.bin"),
-      f_path_genes = file.path(dir_data, "counts_genes.bin")
-    )
+    count_connection <- sc_object@count_connection
     #
-    groups = unique(sort(obs_table[[grouping_variable]]))
-    #
-    cells_by_group <- split(
-      obs_table[, .(cell_idx, cell_id)],
-      obs_table[[grouping_variable]]
-    )
-    cells_by_group <- purrr::map(
-      cells_by_group,
-      ~ {
-        setNames(.x$cell_idx, .x$cell_id)
-      }
-    )
+    cells_by_group <- obs_table[get(grouping_variable) == group, ] %>%
+      .[, .(cell_idx, cell_id)]
     sc_map$cell_mapping <- cells_by_group
 
     S7::new_object(
@@ -91,6 +80,7 @@ SingleCellsGrps <- S7::new_class(
       count_connection = count_connection,
       obs_table = obs_table,
       var_table = var_table,
+      grouping_variable = grouping_variable,
       groups = groups,
       sc_cache = new_sc_cache(),
       sc_map = sc_map,
@@ -214,6 +204,7 @@ S7::method(get_sc_obs, SingleCellsGrps) <- function(
   checkmate::qassert(indices, c("0", "I+"))
   checkmate::qassert(filtered, "B1")
 
+  grouping_variable <- S7::prop(object, "grouping_variable")
   obs_table <- data.table::copy(S7::prop(object, "obs_table"))
 
   if (!is.null(indices)) {
@@ -224,6 +215,7 @@ S7::method(get_sc_obs, SingleCellsGrps) <- function(
     obs_table <- obs_table[, cols, with = FALSE]
   }
 
+  obs_table <- split(obs_table, obs_table[[grouping_variable]])
   return(obs_table)
 }
 
@@ -328,7 +320,7 @@ S7::method(get_sc_counts, SingleCellsGrps) <- function(
   ## tmp fix, need to think about a better implementation
   sc_map$cell_mapping <- sc_map$cell_mapping[[group]]
 
-  cells_to_keep <- intersect(get_cells_to_keep(object), sc_map$cell_mapping)
+  cells_to_keep <- intersect(get_cells_to_keep(object), sc_map$cell_mapping - 1)
 
   if (use_cells_to_keep) {
     if (!is.null(cell_indices) & length(cells_to_keep) > 0) {
@@ -400,8 +392,8 @@ S7::method(get_cells_to_keep, SingleCellsGrps) <- function(
   )
   # special case that this has not been set. Return all cell indices then
   if (length(res) == 0) {
-    no_cells <- S7::prop(x, "dims")[1]
-    res <- seq_len(no_cells) - 1 # 0 index for Rust
+    res <- unlist(S7::prop(x, "sc_map")["cell_mapping"]) - 1
+    # 0 index for Rust
   }
 
   return(as.integer(res))

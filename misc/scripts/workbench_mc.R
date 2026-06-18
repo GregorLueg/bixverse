@@ -28,7 +28,11 @@ grp_object <- SingleCellsGrps(
   sc_object = sc_object,
   grouping_variable = "sample"
 )
-grp_object
+grp_object@grouping_variable
+
+
+get_sc_counts(sc_object)
+get_sc_counts(grp_object)
 
 
 object = grp_object
