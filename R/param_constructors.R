@@ -555,7 +555,7 @@ params_sc_neighbours <- function(
   full_snn = TRUE,
   pruning = 1 / 12,
   snn_similarity = c("jaccard", "rank"),
-  knn = list(ann_dist = "cosine")
+  knn = list()
 ) {
   snn_similarity <- match.arg(snn_similarity)
 
