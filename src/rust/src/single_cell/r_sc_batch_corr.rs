@@ -45,6 +45,7 @@ extendr_module! {
 /// columns the neighbour indices.
 /// @param batch_vector Integer vector. The integers indicate to which
 /// batch a given cell belongs.
+/// @param verbose Boolean. Controls verbosity of the function.
 ///
 /// @return A list with the following items
 /// \itemize{
@@ -56,29 +57,31 @@ extendr_module! {
 ///
 /// @export
 #[extendr]
-fn rs_kbet(knn_mat: RMatrix<i32>, batch_vector: Vec<i32>) -> List {
+fn rs_kbet(knn_mat: RMatrix<i32>, batch_vector: Vec<i32>, verbose: bool) -> Result<List> {
     let n_cells = knn_mat.nrows();
     let k_neighbours = knn_mat.ncols();
 
-    let knn_matrix: Vec<Vec<usize>> = (0..n_cells)
-        .map(|i| {
-            (0..k_neighbours)
-                .map(|j| knn_mat[[i, j]] as usize)
-                .collect()
-        })
+    let raw: &[i32] = knn_mat.data();
+
+    let mut knn_matrix: Vec<Vec<usize>> = (0..n_cells)
+        .map(|_| Vec::with_capacity(k_neighbours))
         .collect();
 
-    // Convert batch_vector to Vec<usize>
+    for j in 0..k_neighbours {
+        let col_offset = j * n_cells;
+        for i in 0..n_cells {
+            knn_matrix[i].push(raw[col_offset + i] as usize);
+        }
+    }
+
     let batches: Vec<usize> = batch_vector.r_int_convert();
-
-    let kbet_res = kbet(&knn_matrix, &batches);
-
-    list![
+    let kbet_res = kbet(&knn_matrix, &batches, verbose).to_extendr()?;
+    Ok(list![
         pval = kbet_res.p_values,
         chi_square_stats = kbet_res.chi_square_stats,
         mean_chi_square = kbet_res.mean_chi_square,
         median_chi_square = kbet_res.median_chi_square
-    ]
+    ])
 }
 
 /// Calculate batch silhouette width from an embedding
@@ -94,6 +97,7 @@ fn rs_kbet(knn_mat: RMatrix<i32>, batch_vector: Vec<i32>) -> List {
 /// batch a given cell belongs.
 /// @param max_cells Integer or NULL. If not NULL, subsample to this many
 /// cells for performance. Defaults to 5000.
+/// @param verbose Boolean. Controls verbosity of the function.
 /// @param seed Integer. Seed for subsampling reproducibility.
 ///
 /// @return A list with the following items
@@ -109,8 +113,9 @@ fn rs_batch_silhouette_width(
     embedding: RMatrix<f64>,
     batch_vector: Vec<i32>,
     max_cells: Nullable<i32>,
+    verbose: bool,
     seed: i32,
-) -> List {
+) -> Result<List> {
     let embd = r_matrix_to_faer_fp32(&embedding);
     let batches: Vec<usize> = batch_vector.r_int_convert();
     let subsample = match max_cells {
@@ -118,13 +123,14 @@ fn rs_batch_silhouette_width(
         Nullable::Null => None,
     };
 
-    let res = batch_silhouette_width(embd.as_ref(), &batches, subsample, seed as usize);
+    let res = batch_silhouette_width(embd.as_ref(), &batches, subsample, seed as usize, verbose)
+        .to_extendr()?;
 
-    list![
+    Ok(list![
         per_cell = res.per_cell,
         mean_asw = res.mean_asw,
         median_asw = res.median_asw
-    ]
+    ])
 }
 
 /// Calculate batch LISI scores
@@ -139,6 +145,7 @@ fn rs_batch_silhouette_width(
 /// columns the neighbour indices.
 /// @param batch_vector Integer vector. The integers indicate to which
 /// batch a given cell belongs.
+/// @param verbose Boolean. Controls verbosity of the function.
 ///
 /// @return A list with the following items
 /// \itemize{
@@ -149,7 +156,7 @@ fn rs_batch_silhouette_width(
 ///
 /// @export
 #[extendr]
-fn rs_batch_lisi(knn_mat: RMatrix<i32>, batch_vector: Vec<i32>) -> List {
+fn rs_batch_lisi(knn_mat: RMatrix<i32>, batch_vector: Vec<i32>, verbose: bool) -> Result<List> {
     let n_cells = knn_mat.nrows();
     let k = knn_mat.ncols();
 
@@ -158,13 +165,13 @@ fn rs_batch_lisi(knn_mat: RMatrix<i32>, batch_vector: Vec<i32>) -> List {
         .collect();
 
     let batches: Vec<usize> = batch_vector.r_int_convert();
-    let res = batch_lisi(&knn_indices, &batches);
+    let res = batch_lisi(&knn_indices, &batches, verbose).to_extendr()?;
 
-    list![
+    Ok(list![
         per_cell = res.per_cell,
         mean_lisi = res.mean_lisi,
         median_lisi = res.median_lisi
-    ]
+    ])
 }
 
 ///////////
@@ -269,6 +276,8 @@ fn rs_bbknn_filtering(
 /// generates a batch-aligned embedding space.
 ///
 /// @param f_path_gene String. Path to the `counts_genes.bin` file.
+/// @param f_path_cell String. Path to the `counts_cells.bin` file. Used if
+/// you wish to use the PFlogPF transformation during the optional PCA step.
 /// @param cell_indices Integer. The cell indices to use. (0-indexed!)
 /// @param gene_indices Integer. The gene indices to use. (0-indexed!) Ideally
 /// these are batch-aware highly variable genes.
@@ -288,6 +297,7 @@ fn rs_bbknn_filtering(
 #[allow(clippy::too_many_arguments)]
 fn rs_mnn(
     f_path_gene: &str,
+    f_path_cell: &str,
     cell_indices: Vec<i32>,
     gene_indices: Vec<i32>,
     batch_indices: Vec<i32>,
@@ -296,10 +306,26 @@ fn rs_mnn(
     verbose: usize,
     seed: usize,
 ) -> Result<RArray<f64, 2>> {
+    let verbosity = parse_verbosity_level(verbose);
+
     let cell_indices = cell_indices.r_int_convert();
     let gene_indices = gene_indices.r_int_convert();
     let batch_indices = batch_indices.r_int_convert();
     let mnn_params = FastMnnParams::from_r_list(mnn_params)?;
+
+    let offsets = if mnn_params.pca_params.clr {
+        if verbosity.normal_verbosity() {
+            println!("PFlogPF-transformation requested. Loading offsets from disk.")
+        }
+
+        let reader = ParallelSparseReader::new(f_path_cell).to_extendr()?;
+
+        let offsets = reader.get_clr_offsets(&cell_indices, None).to_extendr()?;
+
+        Some(offsets)
+    } else {
+        None
+    };
 
     let pre_computed_pca = precomputed_pca.map(|embd| r_matrix_to_faer_fp32(&embd));
 
@@ -309,6 +335,7 @@ fn rs_mnn(
         &gene_indices,
         &batch_indices,
         pre_computed_pca,
+        offsets.as_deref(),
         &mnn_params,
         verbose,
         seed,

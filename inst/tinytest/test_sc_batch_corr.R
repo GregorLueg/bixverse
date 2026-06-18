@@ -108,7 +108,6 @@ sc_object.weak_batch_effect <- find_hvg_sc(
 sc_object.weak_batch_effect <- calculate_pca_sc(
   object = sc_object.weak_batch_effect,
   no_pcs = no_pcs,
-  randomised_svd = FALSE,
   .verbose = FALSE
 )
 
@@ -147,7 +146,6 @@ sc_object.medium_batch_effect <- find_hvg_sc(
 sc_object.medium_batch_effect <- calculate_pca_sc(
   object = sc_object.medium_batch_effect,
   no_pcs = no_pcs,
-  randomised_svd = FALSE,
   .verbose = FALSE
 )
 
@@ -186,7 +184,6 @@ sc_object.strong_batch_effect <- find_hvg_sc(
 sc_object.strong_batch_effect <- calculate_pca_sc(
   object = sc_object.strong_batch_effect,
   no_pcs = no_pcs,
-  randomised_svd = FALSE,
   .verbose = FALSE
 )
 
@@ -198,21 +195,26 @@ sc_object.strong_batch_effect <- find_neighbours_sc(
 
 # tests ------------------------------------------------------------------------
 
-## kbet scores -----------------------------------------------------------------
+## metrics ---------------------------------------------------------------------
+
+### kbet scores ----------------------------------------------------------------
 
 kbet_scores.weak_batch_effect <- calculate_kbet_sc(
   object = sc_object.weak_batch_effect,
-  batch_column = "batch_index"
+  batch_column = "batch_index",
+  .verbose = FALSE
 )
 
 kbet_scores.medium_batch_effect <- calculate_kbet_sc(
   object = sc_object.medium_batch_effect,
-  batch_column = "batch_index"
+  batch_column = "batch_index",
+  .verbose = FALSE
 )
 
 kbet_scores.strong_batch_effect <- calculate_kbet_sc(
   object = sc_object.strong_batch_effect,
-  batch_column = "batch_index"
+  batch_column = "batch_index",
+  .verbose = FALSE
 )
 
 expect_true(
@@ -244,6 +246,130 @@ expect_true(
   current = kbet_scores.medium_batch_effect$kbet_score <
     kbet_scores.strong_batch_effect$kbet_score,
   info = paste("kbet scores - weak kbet < strong kbet")
+)
+
+### silhouette scores -----------------------------------------------------------
+
+silouette_scores.weak_batch_effect <- calculate_batch_asw_sc(
+  object = sc_object.weak_batch_effect,
+  batch_column = "batch_index",
+  .verbose = FALSE
+)
+
+silouette_scores.medium_batch_effect <- calculate_batch_asw_sc(
+  object = sc_object.medium_batch_effect,
+  batch_column = "batch_index",
+  .verbose = FALSE
+)
+
+silouette_scores.strong_batch_effect <- calculate_batch_asw_sc(
+  object = sc_object.strong_batch_effect,
+  batch_column = "batch_index",
+  .verbose = FALSE
+)
+
+expect_true(
+  current = checkmate::qtest(
+    silouette_scores.weak_batch_effect$per_cell,
+    "N+[-1, 1]"
+  ),
+  info = paste("batch silhouette scores - returns values in range")
+)
+
+expect_true(
+  current = checkmate::qtest(
+    silouette_scores.weak_batch_effect$mean_asw,
+    "N1[-1, 1]"
+  ),
+  info = paste("batch silhouette scores - returns sensible mean asw")
+)
+
+expect_true(
+  current = checkmate::qtest(
+    silouette_scores.weak_batch_effect$median_asw,
+    "N1[-1, 1]"
+  ),
+  info = paste("batch silhouette scores - returns sensible median asw")
+)
+
+expect_true(
+  current = silouette_scores.weak_batch_effect$mean_asw <
+    silouette_scores.medium_batch_effect$mean_asw,
+  info = paste("batch silhouette scores - weak asw < medium asw")
+)
+
+expect_true(
+  current = silouette_scores.weak_batch_effect$mean_asw <
+    silouette_scores.strong_batch_effect$mean_asw,
+  info = paste("batch silhouette scores - weak asw < strong asw")
+)
+
+expect_true(
+  current = silouette_scores.medium_batch_effect$mean_asw <
+    silouette_scores.strong_batch_effect$mean_asw,
+  info = paste("batch silhouette scores - medium asw < strong asw")
+)
+
+### lisi scores ----------------------------------------------------------------
+
+lisi_scores.weak_batch_effect <- calculate_batch_lisi_sc(
+  object = sc_object.weak_batch_effect,
+  batch_column = "batch_index",
+  .verbose = FALSE
+)
+
+lisi_scores.medium_batch_effect <- calculate_batch_lisi_sc(
+  object = sc_object.medium_batch_effect,
+  batch_column = "batch_index",
+  .verbose = FALSE
+)
+
+lisi_scores.strong_batch_effect <- calculate_batch_lisi_sc(
+  object = sc_object.strong_batch_effect,
+  batch_column = "batch_index",
+  .verbose = FALSE
+)
+
+expect_true(
+  current = checkmate::qtest(
+    lisi_scores.weak_batch_effect$per_cell,
+    "N+"
+  ),
+  info = paste("lisi scores - correct return type")
+)
+
+expect_true(
+  current = checkmate::qtest(
+    lisi_scores.weak_batch_effect$mean_lisi,
+    "N+"
+  ),
+  info = paste("lisi scores - correct mean return type")
+)
+
+expect_true(
+  current = checkmate::qtest(
+    lisi_scores.weak_batch_effect$median_lisi,
+    "N+"
+  ),
+  info = paste("lisi scores - correct median return type")
+)
+
+expect_true(
+  current = lisi_scores.medium_batch_effect$mean_lisi <
+    lisi_scores.weak_batch_effect$mean_lisi,
+  info = paste("lisi scores - medium lisi < weak lisi")
+)
+
+expect_true(
+  current = lisi_scores.strong_batch_effect$mean_lisi <
+    lisi_scores.weak_batch_effect$mean_lisi,
+  info = paste("lisi scores - medium lisi < strong lisi")
+)
+
+expect_true(
+  current = lisi_scores.strong_batch_effect$mean_lisi <
+    lisi_scores.medium_batch_effect$mean_lisi,
+  info = paste("lisi scores - strong lisi < medium lisi")
 )
 
 ## bbknn -----------------------------------------------------------------------
@@ -279,7 +405,8 @@ assess_bbknn_impact <- function(object) {
   # of same cell type as itself
   original_kbet <- calculate_kbet_sc(
     object = object,
-    batch_column = "batch_index"
+    batch_column = "batch_index",
+    .verbose = FALSE
   )
 
   correct_neighbours_uncor <- vector(
@@ -315,7 +442,8 @@ assess_bbknn_impact <- function(object) {
   storage.mode(knn_corr$indices) <- "integer"
 
   k_bet_corrected <- sum(
-    rs_kbet(knn_corr$indices, as.integer(batch_effects))$pval < 0.05
+    rs_kbet(knn_corr$indices, as.integer(batch_effects), verbose = FALSE)$pval <
+      0.05
   )
 
   correct_neighbours_cor <- vector(
@@ -410,7 +538,8 @@ object <- sc_object.medium_batch_effect
 
 kbet_scores_prior_bbknn <- calculate_kbet_sc(
   object = object,
-  batch_column = "batch_index"
+  batch_column = "batch_index",
+  .verbose = FALSE
 )
 
 expect_warning(
@@ -446,7 +575,8 @@ object <- bbknn_sc(
 
 kbet_scores_post_bbknn <- calculate_kbet_sc(
   object = object,
-  batch_column = "batch_index"
+  batch_column = "batch_index",
+  .verbose = FALSE
 )
 
 expect_true(
@@ -584,7 +714,8 @@ assess_fast_mnn_impact <- function(object) {
 
   kbet_original <- rs_kbet(
     knn_mat = knn_original,
-    batch_vector = as.integer(batch_effects)
+    batch_vector = as.integer(batch_effects),
+    verbose = FALSE
   )
 
   kbet_score_original <- sum(kbet_original$pval <= 0.05) /
@@ -617,7 +748,8 @@ assess_fast_mnn_impact <- function(object) {
 
   kbet_corrected <- rs_kbet(
     knn_mat = knn_corrected,
-    batch_vector = as.integer(batch_effects)
+    batch_vector = as.integer(batch_effects),
+    verbose = FALSE
   )
 
   kbet_score_corrected <- sum(kbet_corrected$pval <= 0.05) /
@@ -801,7 +933,8 @@ assess_harmony_impact <- function(object) {
 
   kbet_original <- rs_kbet(
     knn_mat = knn_original,
-    batch_vector = as.integer(batch_effects)
+    batch_vector = as.integer(batch_effects),
+    verbose = FALSE
   )
 
   kbet_score_original <- sum(kbet_original$pval <= 0.05) /
@@ -825,7 +958,8 @@ assess_harmony_impact <- function(object) {
 
   kbet_corrected <- rs_kbet(
     knn_mat = knn_corrected,
-    batch_vector = as.integer(batch_effects)
+    batch_vector = as.integer(batch_effects),
+    verbose = FALSE
   )
 
   kbet_score_corrected <- sum(kbet_corrected$pval <= 0.05) /
@@ -891,7 +1025,8 @@ assess_harmony_impact_v2 <- function(object) {
 
   kbet_original <- rs_kbet(
     knn_mat = knn_original,
-    batch_vector = as.integer(batch_effects)
+    batch_vector = as.integer(batch_effects),
+    verbose = FALSE
   )
 
   kbet_score_original <- sum(kbet_original$pval <= 0.05) /
@@ -915,7 +1050,8 @@ assess_harmony_impact_v2 <- function(object) {
 
   kbet_corrected <- rs_kbet(
     knn_mat = knn_corrected,
-    batch_vector = as.integer(batch_effects)
+    batch_vector = as.integer(batch_effects),
+    verbose = FALSE
   )
 
   kbet_score_corrected <- sum(kbet_corrected$pval <= 0.05) /

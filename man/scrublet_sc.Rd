@@ -10,6 +10,7 @@ scrublet_sc(
   seed = 42L,
   streaming = NULL,
   cells_to_use = NULL,
+  group_by = NULL,
   return_combined_pca = FALSE,
   return_pairs = FALSE,
   .verbose = TRUE
@@ -31,6 +32,9 @@ larger data sets where you wish to avoid loading in the whole data. If
 generation of the Scrublet. Useful when you wish to run doublet detection
 on individual batches within your data. The object returned will be
 specifically using these cells.}
+
+\item{group_by}{Optional grouping variable. Useful if you want to run the
+method on a per-sample basis.}
 
 \item{return_combined_pca}{Boolean. Shall the PCA of the observed cells and
 simulated doublets be returned.}

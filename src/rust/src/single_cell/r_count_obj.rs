@@ -7,8 +7,8 @@ use thousands::Separable;
 
 use bixverse_rs::prelude::*;
 use bixverse_rs::single_cell::sc_data::{
-    bin_merge_io::*, data_io::*, h5_10x_io::*, h5ad_io::*, h5ad_multifile_io::*, mtx_io::*,
-    mtx_multifile_io::*, r_obj_io::*,
+    bin_merge_io::*, data_io::*, h5_10x_io::*, h5_10x_multifile_io::*, h5ad_io::*,
+    h5ad_multifile_io::*, mtx_io::*, mtx_multifile_io::*, r_obj_io::*,
 };
 
 /////////////
@@ -834,6 +834,76 @@ impl SingleCellCountData {
             gene_indices = cell_qc.gene_indices,
             lib_size = cell_qc.lib_size,
             nnz = cell_qc.nnz
+        ))
+    }
+
+    /// Load multiple 10x CellRanger h5 files into a single binary
+    ///
+    /// @param file_tasks (`list`)\cr
+    /// A list of lists, each produced by the R prescan function. Each inner
+    /// list must contain `exp_id`, `h5_path`, `version` (`"v2"` or `"v3"`),
+    /// `no_cells`, `no_genes`, `gene_local_to_universe` (integer vector, `NA`
+    /// for unmapped / non-gene features) and `feature_type` (optional string,
+    /// defaults to `"Gene Expression"`).
+    ///
+    /// @param universe_size (`integer`)\cr
+    /// Total number of genes in the universe.
+    /// @param qc_params (`list`)\cr
+    /// Quality control parameters (`min_unique_genes`, `min_lib_size`,
+    /// `min_cells`, `target_size`).
+    /// @param verbose (`logical`)\cr
+    /// Controls verbosity.
+    ///
+    /// @return A list with `global_gene_indices`, `total_cells`, `total_genes`
+    /// and `per_file` (a list of lists with `exp_id`, `cell_indices`,
+    /// `lib_size`, `nnz`).
+    pub fn multi_tenx_h5_to_file(
+        &mut self,
+        file_tasks: List,
+        universe_size: i32,
+        qc_params: List,
+        verbose: bool,
+    ) -> Result<List, extendr_api::Error> {
+        let qc = MinCellQuality::from_r_list(qc_params)?;
+
+        let tasks: Vec<TenxFileTask> = file_tasks
+            .into_iter()
+            .map(|(_, robj)| {
+                let inner = List::try_from(robj).expect("Each file_task must be a list");
+                TenxFileTask::from_r_list(inner)
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+
+        let result = multi_10x_h5_to_file(
+            &tasks,
+            &self.f_path_cells,
+            universe_size as usize,
+            &qc,
+            verbose,
+        )
+        .to_extendr()?;
+
+        self.n_cells = result.total_cells;
+        self.n_genes = result.total_genes;
+
+        let per_file: List = result
+            .per_file
+            .into_iter()
+            .map(|f| {
+                list!(
+                    exp_id = f.exp_id,
+                    cell_indices = f.cells_to_keep,
+                    lib_size = f.lib_size,
+                    nnz = f.nnz
+                )
+            })
+            .collect::<List>();
+
+        Ok(list!(
+            global_gene_indices = result.global_gene_indices,
+            total_cells = result.total_cells,
+            total_genes = result.total_genes,
+            per_file = per_file
         ))
     }
 

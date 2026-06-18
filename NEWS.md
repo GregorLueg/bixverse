@@ -1,4 +1,4 @@
-# bixverse 0.3.3
+# bixverse 0.4.0
 
 ## Features
 
@@ -16,6 +16,12 @@ Following things were added:
   - Harmony version 1 and version 2 with substantial speed improvements.
   - Hotspot with even more substantial speed improvements via doing less stupid 
     things in the Rust code.
+  - Large improvements to the memory management of SuperCells and SEACells. Both
+    can run on a million cells on consumer hardware now.
+* Large number of helpers for plotting via the sister package and updated
+  vignettes for this.
+* Reading in of 10x CellRanger h5 files (and multi-file support).
+* NMF for bulk and single cell.
    
 
 ## Breaking changes

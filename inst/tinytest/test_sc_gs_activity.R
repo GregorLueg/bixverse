@@ -1039,6 +1039,317 @@ expect_true(
   info = "scenic grn: grnboost returns correct res"
 )
 
+## nmf -------------------------------------------------------------------------
+
+# For each NMF component, find which true cell type has the highest mean H
+# activation. Returns a vector of length k mapping component index to cell type.
+.nmf_component_to_celltype <- function(h, cell_grp_per_col) {
+  apply(h, 1, function(activations) {
+    means <- tapply(activations, cell_grp_per_col, mean)
+    names(means)[which.max(means)]
+  })
+}
+
+# For each NMF component, find which signal gene block (1:10, 11:20, 21:30)
+# has the highest mean W loading. Returns a vector mapping component to block.
+.nmf_component_to_gene_block <- function(w) {
+  gene_blocks <- list(
+    cell_type_1 = sprintf("gene_%03d", 1:10),
+    cell_type_2 = sprintf("gene_%03d", 11:20),
+    cell_type_3 = sprintf("gene_%03d", 21:30)
+  )
+  available <- rownames(w)
+  apply(w, 2, function(loadings) {
+    block_means <- sapply(gene_blocks, function(genes) {
+      mean(loadings[intersect(genes, available)])
+    })
+    names(which.max(block_means))
+  })
+}
+
+## nmf -------------------------------------------------------------------------
+
+nmf_k <- 3L
+
+# obs slice for the cells currently in play, in the same order as H columns
+nmf_obs <- sc_object[[c("cell_id", "cell_grp")]]
+
+### nmf_sc on SingleCells -----------------------------------------------------
+
+#### parameter validation -----------------------------------------------------
+
+expect_error(
+  current = nmf_sc(
+    object = sc_object,
+    k = nmf_k,
+    preprocessing = "garbage",
+    .verbose = FALSE
+  ),
+  info = "nmf_sc: invalid preprocessing string errors"
+)
+
+bad_hals <- params_nmf_hals()
+bad_hals$tol <- -1
+
+expect_error(
+  current = nmf_sc(
+    object = sc_object,
+    k = nmf_k,
+    nmf_hals_params = bad_hals,
+    .verbose = FALSE
+  ),
+  info = "nmf_sc: bad NMF HALS params errors"
+)
+
+#### default run --------------------------------------------------------------
+
+nmf_res <- nmf_sc(
+  object = sc_object,
+  k = nmf_k,
+  preprocessing = "none",
+  use_second_layer = TRUE,
+  .verbose = FALSE
+)
+
+n_cells_kept <- length(get_cells_to_keep(sc_object))
+hvg_n <- length(get_hvg(sc_object))
+
+expect_equal(
+  current = dim(get_w(nmf_res)),
+  target = c(hvg_n, nmf_k),
+  info = "nmf_sc: W has shape (n_hvg, k)"
+)
+
+expect_equal(
+  current = dim(get_h(nmf_res)),
+  target = c(nmf_k, n_cells_kept),
+  info = "nmf_sc: H has shape (k, n_cells_kept)"
+)
+
+expect_true(
+  current = all(get_w(nmf_res) >= 0) & all(get_h(nmf_res) >= 0),
+  info = "nmf_sc: W and H are non-negative"
+)
+
+expect_true(
+  current = checkmate::testMatrix(
+    get_w(nmf_res),
+    mode = "numeric",
+    row.names = "named",
+    col.names = "named"
+  ),
+  info = "nmf_sc: W is named"
+)
+
+expect_true(
+  current = checkmate::testMatrix(
+    get_h(nmf_res),
+    mode = "numeric",
+    row.names = "named",
+    col.names = "named"
+  ),
+  info = "nmf_sc: H is named"
+)
+
+expect_true(
+  current = all(rownames(get_w(nmf_res)) %in% get_gene_names(sc_object)),
+  info = "nmf_sc: W gene names match HVGs"
+)
+
+#### signal recovery ----------------------------------------------------------
+
+h <- get_h(nmf_res)
+w <- get_w(nmf_res)
+
+cell_grp_per_col <- nmf_obs[match(colnames(h), cell_id), cell_grp]
+
+comp_to_ct <- .nmf_component_to_celltype(h, cell_grp_per_col)
+comp_to_block <- .nmf_component_to_gene_block(w)
+
+expect_equal(
+  current = sort(unique(comp_to_ct)),
+  target = c("cell_type_1", "cell_type_2", "cell_type_3"),
+  info = "nmf_sc: H components bijectively cover the three cell types"
+)
+
+expect_equal(
+  current = sort(unique(comp_to_block)),
+  target = c("cell_type_1", "cell_type_2", "cell_type_3"),
+  info = "nmf_sc: W components bijectively cover the three gene blocks"
+)
+
+expect_equal(
+  current = comp_to_ct,
+  target = comp_to_block,
+  info = "nmf_sc: per-component, H cell type matches W gene block"
+)
+
+#### get_data slots into obs --------------------------------------------------
+
+nmf_obs_dt <- get_data(nmf_res)
+
+expect_true(
+  current = checkmate::testDataTable(nmf_obs_dt, nrows = n_cells_kept),
+  info = "nmf_sc: get_data returns data.table of correct shape"
+)
+
+expect_true(
+  current = isTRUE(attr(nmf_obs_dt, "is_obs")),
+  info = "nmf_sc: get_data carries the is_obs attribute"
+)
+
+expect_true(
+  current = all(sprintf("comp_%02d", 1:nmf_k) %in% names(nmf_obs_dt)),
+  info = "nmf_sc: get_data has one column per component"
+)
+
+sc_object_with_nmf <- add_sc_new_obs(sc_object, nmf_obs_dt)
+
+expect_true(
+  current = all(
+    sprintf("comp_%02d", 1:nmf_k) %in% names(sc_object_with_nmf[[]])
+  ),
+  info = "nmf_sc: components join cleanly into the obs table"
+)
+
+### stabilised_nmf_sc on SingleCells ------------------------------------------
+
+n_runs <- 4L
+
+stab_res <- stabilised_nmf_sc(
+  object = sc_object,
+  k = nmf_k,
+  preprocessing = "none",
+  use_second_layer = TRUE,
+  n_runs = n_runs,
+  .verbose = FALSE
+)
+
+expect_true(
+  current = checkmate::testClass(stab_res, "StabilisedNmfResult"),
+  info = "stabilised_nmf_sc: StabilisedNmfResult class returned"
+)
+
+expect_equal(
+  current = dim(get_w(stab_res)),
+  target = c(hvg_n, nmf_k * n_runs),
+  info = "stabilised_nmf_sc: w_all has shape (n_hvg, k * n_runs)"
+)
+
+expect_true(
+  current = is.list(get_h(stab_res)) & length(get_h(stab_res)) == n_runs,
+  info = "stabilised_nmf_sc: h_per_run is a list of length n_runs"
+)
+
+expect_true(
+  current = all(purrr::map_lgl(get_h(stab_res), function(h) {
+    isTRUE(all.equal(dim(h), c(nmf_k, n_cells_kept)))
+  })),
+  info = "stabilised_nmf_sc: each H has shape (k, n_cells_kept)"
+)
+
+expect_true(
+  current = stab_res$best_idx >= 1L & stab_res$best_idx <= n_runs,
+  info = "stabilised_nmf_sc: best_idx is in range"
+)
+
+expect_equal(
+  current = stab_res$best_idx,
+  target = which.min(stab_res$losses),
+  info = "stabilised_nmf_sc: best_idx matches the minimum loss run"
+)
+
+#### get_best_run round-trip --------------------------------------------------
+
+best <- get_best_run(stab_res)
+
+expect_true(
+  current = checkmate::testClass(best, "NmfResult"),
+  info = "get_best_run: returns an NmfResult"
+)
+
+expect_equal(
+  current = dim(get_w(best)),
+  target = c(hvg_n, nmf_k),
+  info = "get_best_run: W has shape (n_hvg, k)"
+)
+
+expect_equal(
+  current = dim(get_h(best)),
+  target = c(nmf_k, n_cells_kept),
+  info = "get_best_run: H has shape (k, n_cells_kept)"
+)
+
+# the best run's W slice in w_all should match get_w(best)
+k_idx <- ((stab_res$best_idx - 1L) * nmf_k + 1L):(stab_res$best_idx * nmf_k)
+expect_equivalent(
+  current = unname(get_w(stab_res)[, k_idx]),
+  target = unname(get_w(best)),
+  info = "get_best_run: W matches the corresponding slice of w_all"
+)
+
+expect_equivalent(
+  current = unname(get_h(stab_res)[[stab_res$best_idx]]),
+  target = unname(get_h(best)),
+  info = "get_best_run: H matches the corresponding entry in h_per_run"
+)
+
+#### best run also recovers the signal ----------------------------------------
+
+best_h <- get_h(best)
+best_w <- get_w(best)
+
+best_cell_grp_per_col <- nmf_obs[match(colnames(best_h), cell_id), cell_grp]
+best_comp_to_ct <- .nmf_component_to_celltype(best_h, best_cell_grp_per_col)
+best_comp_to_block <- .nmf_component_to_gene_block(best_w)
+
+expect_equal(
+  current = sort(unique(best_comp_to_ct)),
+  target = c("cell_type_1", "cell_type_2", "cell_type_3"),
+  info = "stabilised_nmf_sc: best run H covers all cell types"
+)
+
+expect_equal(
+  current = best_comp_to_ct,
+  target = best_comp_to_block,
+  info = "stabilised_nmf_sc: best run components consistent across W and H"
+)
+
+### subset of cells -----------------------------------------------------------
+
+# NMF on a single cell type should still recover something - but the per-block
+# gene loadings should now be dominated by that cell type's marker block
+
+ct1_cells <- nmf_obs[cell_grp == "cell_type_1", cell_id]
+
+expect_true(
+  current = length(ct1_cells) > 100,
+  info = "nmf_sc subset: sensible number of cell_type_1 cells"
+)
+
+nmf_res_subset <- nmf_sc(
+  object = sc_object,
+  k = 2L,
+  cell_ids = ct1_cells,
+  preprocessing = "none",
+  .verbose = FALSE
+)
+
+expect_equal(
+  current = dim(get_h(nmf_res_subset)),
+  target = c(2L, length(ct1_cells)),
+  info = "nmf_sc subset: H restricted to subset cells"
+)
+
+# the cell_type_1 gene block should rank top in at least one component
+subset_w <- get_w(nmf_res_subset)
+subset_block_assignment <- .nmf_component_to_gene_block(subset_w)
+
+expect_true(
+  current = "cell_type_1" %in% subset_block_assignment,
+  info = "nmf_sc subset: at least one component aligns with cell_type_1 genes"
+)
+
 # clean up ---------------------------------------------------------------------
 
 on.exit(unlink(test_temp_dir, recursive = TRUE, force = TRUE), add = TRUE)

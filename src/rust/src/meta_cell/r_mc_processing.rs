@@ -6,6 +6,7 @@ use bixverse_rs::prelude::*;
 use bixverse_rs::single_cell::mc_analysis::metrics::pairwise_gene_correlations_in_memory;
 use bixverse_rs::single_cell::mc_processing::hvg_pca::*;
 use bixverse_rs::single_cell::sc_processing::hvg::*;
+use bixverse_rs::single_cell::sc_processing::pca::SingleCellPcaParams;
 use bixverse_rs::utils::r_rust_interface::list_to_sparse_matrix;
 use extendr_api::*;
 
@@ -124,7 +125,10 @@ fn rs_mc_hvg(
 /// @param sparse_data A named list that needs to have `data`, `indptr`,
 /// `indices`, `nrow`, `ncol` and `format`.
 /// @param no_pcs Integer. Number of PCs to return.
-/// @param random_svd Boolean. Shall randomised SVD be used.
+/// @param pca_params Named list. Contains the parameters to use for this PCA
+/// run.
+/// @param clr_offsets Optional numeric. If you wish to use the `PFlogPF`
+/// normalisation prior to PCA from Booeshaghi, et al.
 /// @param seed Integer. Random seed for the randomised SVD.
 ///
 /// @returns A list with with the following items
@@ -138,13 +142,30 @@ fn rs_mc_hvg(
 /// }
 ///
 /// @export
+///
+/// @references Booeshaghi, et al., bioRxive, 2026.
 #[extendr]
-fn rs_mc_pca(sparse_data: List, no_pcs: usize, random_svd: bool, seed: usize) -> Result<List> {
+fn rs_mc_pca(
+    sparse_data: List,
+    no_pcs: usize,
+    pca_params: List,
+    clr_offsets: Option<Vec<f64>>,
+    seed: usize,
+) -> Result<List> {
     let sparse: CompressedSparseData2<f64, f64> =
         list_to_sparse_matrix(sparse_data, true).to_extendr()?;
     let sparse = cast_compressed_sparse_data_f32(sparse);
+    let pca_params = SingleCellPcaParams::from_r_list(pca_params)?;
 
-    let res = pca_on_metacells(&sparse, no_pcs, random_svd, seed).to_extendr()?;
+    let offsets = if pca_params.clr {
+        let offsets = clr_offsets.ok_or_else(|| Error::Other("'clr_offsets' ".into()))?;
+        Some(offsets)
+    } else {
+        None
+    };
+
+    let res =
+        pca_on_metacells(&sparse, no_pcs, &pca_params, offsets.as_deref(), seed).to_extendr()?;
 
     Ok(list!(
         scores = faer_to_r_matrix(res.0.as_ref()),

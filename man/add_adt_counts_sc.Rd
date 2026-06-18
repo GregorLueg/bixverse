@@ -14,9 +14,10 @@ add_adt_counts_sc(object, adt_counts, method = c("clr", "dsb"), ...)
 \item{method}{String. One of \code{c("clr", "dsb")}. Normalisation method.}
 
 \item{...}{Additional arguments forwarded to the normalisation constructor.
-For \code{method = "clr"}: \code{clean_clr_counts}, \code{percentile}. For \code{method = "dsb"}:
-\code{empty_drops}, \code{isotype_names}, \code{dsb_params}, \code{scale_factor}, \code{seed},
-\code{verbose}. See \code{\link[=new_adt_counts_clr]{new_adt_counts_clr()}} and \code{\link[=new_adt_counts_dsb]{new_adt_counts_dsb()}}.}
+For \code{method = "clr"}: \code{seurat_clr}, \code{clean_clr_counts}, \code{percentile}.
+For \code{method = "dsb"}: \code{empty_drops}, \code{isotype_names}, \code{dsb_params},
+\code{scale_factor}, \code{seed}, \code{verbose}. See \code{\link[=new_adt_counts_clr]{new_adt_counts_clr()}} and
+\code{\link[=new_adt_counts_dsb]{new_adt_counts_dsb()}}.}
 }
 \value{
 Returns a \code{SingleCellsMultiModal} with the ADT data added.

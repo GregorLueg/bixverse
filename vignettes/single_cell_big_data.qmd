@@ -16,134 +16,190 @@ author: "Gregor Lueg"
 ## Intro
 
 This vignette demonstrates how to run a single cell analysis on a data set
-containing nearly 3 million cells on a local machine - in this case a MacBook
-Pro M1 Max - without exhausting memory. If you have not read the
+containing nearly 1 million cells on a local machine... In this case, a MacBook
+Air with 24 GBs (if you think *"IMPOSSIBLE!"*, you would not be wrong coming
+from other languages/frameworks). If you have not read the
 [design choices](https://gregorlueg.github.io/bixverse/articles/design_single_cell.html)
 and the [introductory vignette](https://gregorlueg.github.io/bixverse/articles/thinking_single_cell.html),
 please do so first. The [PBMC3k walkthrough](https://gregorlueg.github.io/bixverse/articles/pbmc_single_cell.html)
 covers every step in detail on a small data set; here we focus on what changes
-when the cell count moves from thousands to millions.
+when the cell count moves from thousands to a million.
 
-The data set used is one of the h5ad of the [100 million cell Tahoe](https://www.biorxiv.org/content/10.1101/2025.02.20.639398v3) data set from Parse Biosciences. The original file has 5.5m cells; 
-after quality control roughly 2.9 million cells are retained and read in. It
-was for me large enough data set to test out what can be done on a laptop.
+The data used here is the 1 million cell PBMC data set from Parse Biosciences,
+a commonly used reference for showing large single cell analyses, see the
+original article
+[here](https://support.parsebiosciences.com/hc/en-us/articles/7704577188500-How-to-analyze-a-1-million-cell-data-set-using-Scanpy-and-Harmony).
+**The important bit here is that this was run successfully on a MacBook Air with
+24 GB (M3)**. And please contrast that with the following line for the analysis
+of this data:
+
+<i>To avoid computer crashes and program failures, we recommend you execute the
+Python code on a cloud computing platform. The instance you select on the cloud
+platform to run this analysis should consist of at least 8 threads and 160 GB of
+RAM.</i> - Parse Biosciences
 
 ::: {.callout-note}
 None of the code chunks below are evaluated. This vignette is a reference for
 how one *would* run such an analysis, not a live rendering - the data set is
-far too large for CI/CD runners and Microsoft would not be happy.
+far too large for CI/CD runners and GitHub would not be happy.
 :::
 
-If you want to reproduce this, download one of the h5ad files from Tahoe 100m. 
-Or use large enough data you always wanted to analyse.
+If you want to reproduce this, download the data from Parse Biosciences (or
+any other fat data set you have) and go have fun.
+
+```{bash}
+#| label: get data
+#| eval: false
+wget "https://cdn.parsebiosciences.com/1M_PBMC_T1D_Parse.zip"
+```
 
 ```{r}
 #| label: setup
 #| eval: false
+# main packages
 library(bixverse)
+library(bixverse.plots)
+
+# GPU-acceleration (experimental)
+library(bixverse.gpu)
+
+# Plotting, data manipulation
 library(ggplot2)
 library(data.table)
 ```
 
 ## Loading the data
 
-For large `.h5ad` files the key entry point is `stream_h5ad`, which streams the
-sparse matrix into the Rust binary files and the internal DuckDB. Once the data 
-has been streamed once, subsequent sessions can reconnect via `load_existing`.
+Once you have unzipped the data, we can start streaming it into memory and
+writing the files to disk.
 
 ```{r}
-#| label: stream h5ad
+#| label: stream mtx
 #| eval: false
-h5_path <- path.expand(
-  "PATH TO H5AD/plate1_filt_Vevo_Tahoe100M_WServicesFrom_ParseGigalab.h5ad"
+data_path <- "~/Desktop/parse_pbmc_1m/"
+
+load_params <- params_sc_mtx_io(
+  path_mtx = path.expand(file.path(data_path, "DGE_1M_PBMC.mtx")),
+  path_obs = path.expand(file.path(data_path, "cell_metadata_1M_PBMC.csv")),
+  path_var = path.expand(file.path(data_path, "all_genes_1M_PBMC.csv")),
+  cells_as_rows = TRUE,
+  has_hdr = TRUE
 )
 
-dir_files <- "PATH TO WHERE TO SAVE THE FILES"
+# We will write everything into the temporary directory
+sce <- SingleCells(dir_data = tempdir())
 
-# Quick sanity check on dimensions before committing to the stream
-meta <- get_h5ad_dimensions(h5_path)
-meta
-
-sc_object <- SingleCells(
-  dir_data = dir_files
-)
-
-sc_object <- stream_h5ad(object = sc_object, h5_path = h5_path)
+# We enforce level 2 streaming here which will run for a bit longer, but ensure
+# your memory never blows up
+sce <- load_mtx(object = sce, sc_mtx_io_param = load_params, streaming = 2L)
 ```
 
-This step is slow. Ca. 10 minutes. The function does 4 things on the counts.
+This step is the slowest... A lot of things are actually happening here.
 
 - First, (streaming) scan to understand in how many cells a gene is expressed.
-  Only keep genes that are expressed in whatever you set to `min_cells` (for me
-  ca. 90 seconds).
+  Only keep genes that are expressed in whatever you set to `min_cells`.
 - Second, (streaming) scan, given the genes from the first step, which cells to
-  include based on minimum library size and minimum features. (For me ca. 
-  2 min).
-- Third, now that it's clear which cells/genes to include, load the data in
-  chunks and write into a CSR style format for easy cell-retrieval while also
-  directly normalising the data. (Ca. 3 to 4 minutes for me.)
-- Lastly, load in the cell data in small chunks and do a transpose to a CSC 
-  style format for easy gene retrieval. (Ca. 3 to 4 minutes for me.)
+  include based on minimum library size and minimum features.
+- Third, now that it's clear which cells/genes to include, create quick temp
+  files with the cells to keep with the genes already re-indexed. This way we
+  avoid loading in the massive MTX file in one go into memory. These files are
+  automatically cleaned up at the end and loaded sequentially and written to the
+  CSR-type file (while the normalisation is also done on the fly).
+- Lastly, load in the cell data in small chunks and do a transpose to a CSC
+  style format for easy gene retrieval.
 
-The DuckDB also gets populated with the metadata in the observations (based
-on what has been filtered) and the vars (add another 1 to 2 minutes here). This 
-step takes the most time and is partially bound by the field going for h5 as the 
-go-to file storage. Go have a coffee while this is running, listen to a podcast, 
-watch something on the side. If you have already loaded in the data and it 
-exists on-disk from a previous session, skip the streaming step entirely and 
-reconnect. This is the one (very) slow part in `bixverse` single cell... To be 
-fair, I have no idea how long it would take to load in the full h5ad file in 
-Python or R -- I do not want to try with 64 GB memory.
+This approach avoids loading the whole data into memory at any point. The DuckDB 
+also gets populated with the metadata in the observations (based on what has 
+been filtered) and the vars. 
+This part - streaming the data and processing it - is usually what takes quite a
+bit of time. If you have already loaded in the data and it exists on-disk from a 
+previous session, skip the streaming step entirely and reconnect. On a MacBook
+Air with 24 GB and an M3 chip, this takes ~3.5 minutes.
 
 ```{r}
 #| label: reconnect
 #| eval: false
-sc_object <- SingleCells(
-  dir_data = dir_files
+# the folder is hopefully not temp...
+sce <- SingleCells(dir_data = tempdir())
+
+sce <- load_existing(object = sce)
+```
+
+## Doublet detection
+
+Before any QC on library sizes and gene-set proportions, we run Scrublet to
+flag doublets. Doublets are called per sample via the `group_by` argument,
+which is what you want when sample-level differences in capture rates would
+otherwise distort a single global score. Results are merged back onto the cell
+metadata and the doublets are dropped from the set of cells to keep. The
+runs over the individual samples are occuring sequentially to not overwhelm
+memory and each run is massively parallelised internally in Rust.
+
+```{r}
+#| label: doublet detection
+#| eval: false
+scrublet_res <- scrublet_sc(object = sce, group_by = "sample")
+
+sce <- add_sc_new_obs(
+  object = sce,
+  obs_data = get_data(scrublet_res)
 )
 
-sc_object <- load_existing(object = sc_object)
+cells_without_doublets <- sce[[c("doublet", "cell_id")]][
+  !(doublet),
+  cell_id
+]
+
+sce <- set_cells_to_keep(x = sce, cells_to_keep = cells_without_doublets)
 ```
+
+Due to having run over 24 samples in this case, this will take ~15 minutes. 
+Ideal moment for a podcast, video of your favourite YouTuber and/or coffee - 
+which ever floats your boat. Once you have passed this, things will get 
+substantially faster.
 
 ## Quality control
 
 ### Gene set proportions
 
-The same gene set proportion logic from the PBMC3k vignette applies, but the
-`streaming` argument **must** be set to `TRUE` so that proportions are computed
-in batches rather than pulling the entire count matrix into Rust... The 
-memory pressure you should observe should remain minimal.
+The same gene set proportion logic from the PBMC3k vignette applies. The
+functions automatically recognise if you have more than 100k cells and will
+leverage the streaming engine by default in this case. You do have more manual
+control via the `streaming = NULL` parameter. If you have a fat memory machine,
+you can set this to `FALSE` despite a large data set.
 
 ```{r}
 #| label: gene set proportions
 #| eval: false
-var <- get_sc_var(object = sc_object)
+var <- get_sc_var(object = sce)
 
 gs_of_interest <- list(
-  MT = var[grepl("^MT-", gene_id), gene_id],
-  Ribo = var[grepl("^RPS|^RPL", gene_id), gene_id]
+  MT = var[grepl("^MT-", gene_name), gene_id],
+  Ribo = var[grepl("^RPS|^RPL", gene_name), gene_id]
 )
 
-sc_object <- gene_set_proportions_sc(
-  object = sc_object,
+sce <- gene_set_proportions_sc(
+  object = sce,
   gene_set_list = gs_of_interest,
-  streaming = TRUE,
   .verbose = TRUE
 )
-
-sc_object[[1:5L]]
 ```
+
+This is where the streaming engine comes really into play. Done under <10 
+seconds.
 
 ### MAD outlier detection
 
-Outlier detection works identically to the small-data case. The QC metrics
-table is modest in size (one row per cell, a handful of columns) and fits
-comfortably in memory even at millions of cells.
+Outlier detection on library size, the number of detected genes, and
+mitochondrial proportion. We compute outliers per sample (`groups = sample`),
+which matters once batches have non-trivial differences in sequencing depth -
+a global threshold would otherwise penalise whole batches rather than
+individual cells within them.
 
 ```{r}
 #| label: qc outlier detection
 #| eval: false
-qc_df <- sc_object[[c("cell_id", "lib_size", "nnz", "MT")]]
+qc_df <- sce[[c("cell_id", "sample", "lib_size", "nnz", "MT")]]
 
 metrics <- list(
   log10_lib_size = log10(qc_df$lib_size),
@@ -152,128 +208,300 @@ metrics <- list(
 )
 
 directions <- c(
-  log10_lib_size = "twosided",
-  log10_nnz = "twosided",
+  log10_lib_size = "below",
+  log10_nnz = "below",
   MT = "above"
 )
 
 qc <- run_cell_qc(
   metrics = metrics,
-  cells_to_keep = get_cells_to_keep(sc_object),
+  cells_to_keep = get_cells_to_keep(sce),
   directions = directions,
-  threshold = 3
+  threshold = 3,
+  groups = qc_df$sample
 )
 
-# not needed anymore
-rm(qc_df)
-
-qc
+sce <- add_sc_new_obs(sce, obs_data = get_data(qc))
 ```
 
-I cannot recommend trying to plot this naively... ggplot2 will not be happy.
+I cannot recommend trying to plot the metric distributions naively...
+ggplot2 will not be happy at this cell count.
 
 ### Filtering cells
-
-Usual filters.
 
 ```{r}
 #| label: set cells to keep
 #| eval: false
-sc_object[["outlier"]] <- qc$combined
+cells_to_keep <- sce[[c("global_outlier", "cell_id")]][
+  !(global_outlier),
+  cell_id
+]
 
-cells_to_keep <- qc_df[!qc$combined, cell_id]
-
-sc_object <- set_cells_to_keep(sc_object, cells_to_keep)
-
-sc_object
+sce <- set_cells_to_keep(sce, cells_to_keep)
 ```
 
 ## Feature selection and PCA
 
-HVG selection at this scale again requires `streaming = TRUE`. There is two
-data passes to avoid materialising large data in memory. First pass will 
-calculate the means and standard deviations. Second pass will do the variance
-stabilisation. PCA uses a sparse SVD, which is automatically selected when cell 
-counts exceed 500k but can be set explicitly.
+HVG selection at this scale again requires `streaming = TRUE` (if left as is,
+the auto-detection will take care of this and automatically use streaming when
+more than `1e5` cells are detected). There are two data passes to avoid 
+materialising large data in memory: the first calculates means and standard 
+deviations, and the second does the variance stabilisation. Again, the streaming
+keeps memory pressure low and the function runs in ~10 seconds on the mentioned
+MacBook Air.
 
 ```{r}
-#| label: hvg and pca
+#| label: hvg
 #| eval: false
-sc_object <- find_hvg_sc(
-  object = sc_object,
-  streaming = TRUE,
+sce <- find_hvg_sc(
+  object = sce,
+  hvg_no = 2000L,
   .verbose = TRUE
-)
-
-sc_object <- calculate_pca_sc(
-  object = sc_object,
-  no_pcs = 30L,
-  sparse_svd = TRUE
 )
 ```
 
+PCA is one of the points where GPU acceleration starts to noticeably matter
+(if you want to install the GPU-accelerated versions... If you have some VRAM 
+or unified memory to spare it will make a difference).
+Both implementations share the same parameter interface, so swapping between
+them is a one-line change. The leading components should agree up to sign
+between the two, which is worth a quick visual check.
+
+```{r}
+#| label: pca cpu
+#| eval: false
+sce <- calculate_pca_sc(
+  object = sce,
+  pca_params = params_sc_pca(),
+  no_pcs = 32L
+)
+
+cpu_res <- get_pca_factors(sce)
+cpu_s <- get_pca_singular_val(sce)
+```
+
+This runs in ~25 seconds. Let's compare this against the GPU-accelerated 
+version. In this case, the GEMMs prior to the thin SVD on the massively reduced 
+matrix in the randomised SVD are run on the GPU. You pay for moving the data, 
+but you should still see an acceleration compared to the CPU form.
+
+```{r}
+#| label: pca gpu
+#| eval: false
+sce <- calculate_pca_gpu_sc(
+  object = sce,
+  pca_params = params_sc_pca(),
+  no_pcs = 32L,
+  .verbose = 2L
+)
+
+gpu_res <- get_pca_factors(sce)
+gpu_s <- get_pca_singular_val(sce)
+
+# sanity check on the leading component
+plot(cpu_res[, 1], gpu_res[, 1])
+```
+
+On the test MacBook Air, this runs in 15 seconds. In practice you would pick 
+one. The GPU path becomes the more attractive option as cell counts grow; on 
+this data set you can feel the difference (if VRAM permits). You will see some 
+slight differences due to floating operation differences between CPU and GPU.
+
 ## Nearest neighbours (GPU-accelerated)
 
-At nearly 3 million cells, nearest neighbour search is the main computational
-bottleneck. The companion package [bixverse.gpu](https://github.com/GregorLueg/bixverse.gpu) 
-exposes a CAGRA-style GPU-accelerated approximate nearest neighbour search that 
-makes this quite fast on a laptop with a discrete GPU - thanks to CubeCL and 
-WGPU as long as you can fit the data into VRAM (should be feasible with 8 GBs - 
-I think?) this should run quite fast. CPU-side alternatives such as 
-`"nndescent"` or `"hnsw"` also work but will be considerably slower at this 
-scale. For (empirical reference):
+The companion package [bixverse.gpu](https://github.com/GregorLueg/bixverse.gpu)
+exposes a CAGRA-style GPU-accelerated approximate nearest neighbour search
+that makes this quite fast on a laptop with a discrete GPU - thanks to CubeCL
+and WGPU, as long as you can fit the data into VRAM. The time the GPU version 
+takes is <30 seconds. CPU version with `HNSW` takes ~90 seconds.
 
-- GPU version on M1 Max with 64 GB takes ~1 minute.
-- HNSW somewhere between 3 to 4 minutes.
-
-Likely still comparably much faster if you are used to the more established 
-single cell methods in terms of CPU speed, but yeah... If you have a GPU,
-go use that.
+```{r}
+#| label: cpu knn
+#| eval: false
+sce <- find_neighbours_sc(
+  object = sce,
+  embd_to_use = "pca",
+  neighbours_params = params_sc_neighbours(knn = list(knn_method = "hnsw"))
+)
+```
 
 ```{r}
 #| label: gpu knn
 #| eval: false
-library(bixverse.gpu)
-
-sc_object <- find_neighbours_cagra_sc(
-  object = sc_object,
-  cagra_params = params_sc_cagra(k_query = 15L, ann_dist = "cosine"),
+sce <- find_neighbours_cagra_sc(
+  object = sce,
+  embd_to_use = "pca",
+  cagra_params = params_sc_cagra(),
   extract_knn = FALSE,
   .verbose = TRUE
 )
 ```
 
-## Visualisation
+## Embeddings before batch correction
 
-Running UMAP on the shared nearest neighbour graph built from ~2.8 million
-cells and 65 million+ edges takes time but does complete on a single machine
-(embedding optimisation with parallel Adam optimisation done in <3 minutes for 
-me).
+### Batch effect quantification
+
+A kBET score on the uncorrected neighbour graph gives a quantitative baseline
+to compare against once batch correction is applied...
 
 ```{r}
-#| label: umap
+#| label: kbet prior
 #| eval: false
-sc_object <- umap_sc(object = sc_object)
+kbet_prior <- calculate_kbet_sc(object = sce, batch_column = "sample")
+
+kbet_prior
+```
+
+### Plots
+
+Or if you are a visual person, let's check UMAP and tSNE
+
+```{r}
+#| label: embeddings prior umap
+#| eval: false
+sce <- umap_sc(
+  sce,
+  slot_name = "umap_prior"
+)
+```
+
+```{r}
+#| label: embeddings prior tsne
+#| eval: false
+sce <- tsne_sc(
+  sce,
+  slot_name = "tsne_prior",
+  # use FFT here! It will make a massive difference
+  approx_type = "fft",
+  knn_method = "hnsw"
+)
+```
+
+You might wonder why in the case of tSNE we regenerate the kNN graph. You do not
+have to, but the rule-of-thumb is `k_neighbours = perplexity * 3.0`. With the
+default perplexity, we would need 30 neighbours, but we previously only 
+returned 15. So, we just rerun this. Skip tSNE if you don't need it, but the 
+FFT-accelerated version is substantially faster than you would expect from tSNE.
+
+```{r}
+#| label: plot prior - umap
+#| eval: false
+embedding_plot_sc(
+  sce,
+  embedding = "umap_prior",
+  colour_by = "sample",
+  discrete = TRUE
+) +
+  labs(
+    title = "No batch correction",
+    colour = "Batch:"
+  )
+```
+
+```{r}
+#| label: plot prior - tsne
+#| eval: false
+embedding_plot_sc(
+  sce,
+  embedding = "tsne_prior",
+  colour_by = "sample",
+  discrete = TRUE
+) +
+  labs(
+    title = "No batch correction",
+    colour = "Batch:"
+  )
+```
+
+## Batch correction
+
+Okay, there is clearly a big sample batch effect. Let's remove that one. Again
+you have two options here... Harmony ([version 2]() - recommended) on CPU or
+a GPU-accelerated version. Let's check out the CPU version first... (~ 40 
+seconds)
+
+```{r}
+#| label: harmony cpu
+#| eval: false
+sce <- harmony_v2_sc(object = sce, batch_column = "sample")
+```
+
+If you have a GPU at hand, you can also just use the GPU version (15 seconds). 
+Again, you will observe some slight numerical differences... This is due to the 
+GPU implementation, but the overall structure of the data will be recovered in 
+the same way.
+
+```{r}
+#| label: harmony gpu
+#| eval: false
+sce <- harmony_v2_gpu_sc(object = sce, batch_column = "sample")
+```
+
+Let's overwrite the kNN graph with the now batch-corrected embedding:
+
+```{r}
+#| label: regeneration of the knn graph
+#| eval: false
+sce <- find_neighbours_cagra_sc(
+  object = sce,
+  embd_to_use = "harmony_gpu", # or harmony_v2 if you just did the CPU version
+  cagra_params = params_sc_cagra(),
+  extract_knn = FALSE,
+  .verbose = TRUE
+)
+```
+
+### Batch correction quantification
+
+Let's requantify the kBET scores and see if we removed some of the batch 
+effects...
+
+```{r}
+#| label: kbet post batch correction
+#| eval: false
+kbet_post_gpu <- calculate_kbet_sc(object = sce, batch_column = "sample")
+
+kbet_post_gpu
+```
+
+## Cell type annotations
+
+This is a nice data set where the fast clustering makes a lot of sense... We use
+the k-means clustering to quantise the data to representative centroids and
+run the Louvain clustering specifically for the centroids and project the 
+community membership back.
+
+```{r}
+#| label: fast clustering
+#| eval: false
+fast_cluster_res <- fast_cluster_sc(
+  object = sce,
+  embd_to_use = "harmony_gpu", # or harmony_v2 if you just did the CPU version
+  return_kmeans = FALSE,
+  grid_search = TRUE,
+  .verbose = 2L
+)
+
+sce <- add_sc_new_obs(
+  object = sce,
+  obs_data = get_data(fast_cluster_res)
+)
+
+head(sce)
 ```
 
 ## Differential gene expression
 
-With metadata stored in the obs table, subsetting cells for a pairwise
-comparison is straightforward. Here we compare two drug treatment conditions.
-Again, we leverage the streaming here... Instead of holding the full data set
-in memory, we just load in the two groups (each roughly 30k cells), do a fast
-ranking in Rust and do the DGE. Easy peezy, done in ca. 3 seconds.
-
 ```{r}
 #| label: dge
 #| eval: false
-meta_data <- sc_object[[c("cell_id", "cell_name", "drug")]]
+meta_data <- sce[[c("cell_id", "res_2")]]
 
-cells_grp_a <- meta_data[drug == "AT7519", cell_id]
-cells_grp_b <- meta_data[drug == "palbociclib", cell_id]
+cells_grp_a <- meta_data[res_2 == "1", cell_id]
+cells_grp_b <- meta_data[res_2 == "2", cell_id]
 
 dge_results <- find_markers_sc(
-  object = sc_object,
+  object = sce,
   cells_1 = cells_grp_a,
   cells_2 = cells_grp_b
 )
@@ -283,26 +511,28 @@ setorder(dge_results, fdr)
 head(dge_results, 25L)
 ```
 
+The data is again streamed from disk, which makes this very fast...
+
 ## Key differences from the small-data workflow
 
 The API surface is intentionally identical to the PBMC3k walkthrough. The
 meaningful differences when working at the million-cell scale are:
 
-1. **Streaming I/O.** Use `stream_h5ad` instead of `load_h5ad`, and set
-   `streaming = TRUE` on `gene_set_proportions_sc` and `find_hvg_sc`. This
-   is VERY important. This is also what makes this package actually quite cool.
+1. **Streaming I/O.** Use `load_mtx(..., streaming = 2L)` (or the equivalent
+   on whatever loader fits your input), and the streaming behaviour propagates
+   through `gene_set_proportions_sc` and `find_hvg_sc`. This is what makes
+   working with this data set on a laptop possible at all.
 2. **On-disk persistence.** `load_existing` lets you reconnect to a previously
-   streamed data set without re-reading the `.h5ad`. (Btw, works for any data.)
-3. **Sparse SVD.** Automatically enabled above 500k cells; can be forced
-   explicitly via `sparse_svd = TRUE` (slower on small data sets... Modern BLAS
-   just eats up small matrix multiplications in `faer`).
-4. **GPU-accelerated kNN.** `bixverse.gpu` provides CAGRA-based nearest
-   neighbour search (also others) that scales comfortably to millions of cells 
-   and makes it run in a minute or so. The CPU versions are still highly 
-   optimised with SIMD and memory layouts specifically designed to avoid cache 
-   misses.
+   streamed data set without re-reading the source. (Works for any data.)
+3. **Per-sample QC.** With batches comes the need to compute outliers per
+   sample rather than globally.
+4. **Doublet detection per sample.** Scrublet (or any other doublet detection) 
+   can be run with `group_by`, which matters once capture rates differ between 
+   batches.
+5. **GPU-accelerated PCA and kNN.** `bixverse.gpu` provides GPU paths for
+   PCA, CAGRA-based nearest neighbour search, and Harmony. The CPU versions
+   remain highly optimised with SIMD and cache-aware memory layouts, but the
+   GPU paths get faster as the data scales.
 
-For context... Running this on my machine took (MacBook Pro M1 Max with 64 GB)
-took a grand total of ca. 20 minutes from start to finish, with basically half
-of the time being spent on data I/O. Memory pressure remained green through out
-the whole thing.
+For context... The whole workflow here was run on a MacBook Air and did not
+cause any substantial memory pressure.

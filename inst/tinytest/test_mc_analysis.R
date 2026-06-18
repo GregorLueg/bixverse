@@ -77,7 +77,6 @@ sc_object <- find_hvg_sc(
 sc_object <- calculate_pca_sc(
   object = sc_object,
   no_pcs = no_pcs,
-  randomised_svd = TRUE,
   .verbose = FALSE
 )
 
@@ -116,6 +115,8 @@ expect_warning(
   info = "mc - warning when no HVGs identified yet"
 )
 
+### vst ------------------------------------------------------------------------
+
 mc_object <- find_hvg_sc(
   object = mc_object,
   hvg_no = hvg_to_keep,
@@ -145,12 +146,176 @@ expect_true(
   info = "mc hvg - bulk of signal genes recovered as HVGs"
 )
 
+### dispersion -----------------------------------------------------------------
+
+mc_object <- find_hvg_sc(
+  object = mc_object,
+  hvg_no = hvg_to_keep,
+  hvg_params = params_sc_hvg(method = "dispersion"),
+  .verbose = FALSE
+)
+
+mc_var_disp <- get_sc_var(mc_object)
+
+expect_true(
+  current = all(
+    c("mean", "dispersion", "dispersion_scaled", "bin") %in% names(mc_var_disp)
+  ),
+  info = "mc hvg dispersion - var table populated with dispersion metrics"
+)
+
+mc_hvg_disp <- get_hvg(mc_object)
+
+expect_true(
+  current = checkmate::qtest(mc_hvg_disp, sprintf("I%i", hvg_to_keep)),
+  info = "mc hvg dispersion - correct number of HVGs"
+)
+
+expect_true(
+  current = length(intersect(mc_hvg_disp, 1:30)) >=
+    length(intersect(mc_hvg_disp, 31:100)),
+  info = "mc hvg dispersion - signal genes dominate the HVGs"
+)
+
+### meanvarbin -----------------------------------------------------------------
+
+mc_object <- find_hvg_sc(
+  object = mc_object,
+  hvg_no = hvg_to_keep,
+  hvg_params = params_sc_hvg(method = "meanvarbin"),
+  .verbose = FALSE
+)
+
+mc_var_mvb <- get_sc_var(mc_object)
+
+expect_true(
+  current = all(
+    c("mean", "dispersion", "dispersion_scaled", "bin") %in% names(mc_var_mvb)
+  ),
+  info = "mc hvg meanvarbin - var table populated with metrics"
+)
+
+mc_hvg_mvb <- get_hvg(mc_object)
+
+expect_true(
+  current = checkmate::qtest(mc_hvg_mvb, sprintf("I%i", hvg_to_keep)),
+  info = "mc hvg meanvarbin - correct number of HVGs"
+)
+
+expect_true(
+  current = length(intersect(mc_hvg_mvb, 1:30)) >=
+    length(intersect(mc_hvg_mvb, 31:100)),
+  info = "mc hvg meanvarbin - signal genes dominate the HVGs"
+)
+
+### get_hvg_data_sc ------------------------------------------------------------
+
+# reset to vst for downstream tests
+mc_object <- find_hvg_sc(
+  object = mc_object,
+  hvg_no = hvg_to_keep,
+  .verbose = FALSE
+)
+
+mc_current_hvg <- get_hvg(mc_object)
+mc_current_var <- get_sc_var(mc_object)
+
+#### all meta cells ------------------------------------------------------------
+
+mc_hvg_dt_full <- get_hvg_data_sc(
+  object = mc_object,
+  hvg_no = hvg_to_keep,
+  .verbose = FALSE
+)
+
+expect_true(
+  current = checkmate::testDataTable(mc_hvg_dt_full),
+  info = "mc get_hvg_data_sc - returns a data.table"
+)
+
+expect_true(
+  current = all(
+    c(
+      "gene_idx",
+      "gene_id",
+      "mean",
+      "var",
+      "var_std",
+      "is_hvg",
+      "hvg_rank"
+    ) %in%
+      names(mc_hvg_dt_full)
+  ),
+  info = "mc get_hvg_data_sc - expected columns present"
+)
+
+expect_true(
+  current = sum(mc_hvg_dt_full$is_hvg) == hvg_to_keep,
+  info = "mc get_hvg_data_sc - correct number of HVGs flagged"
+)
+
+expect_true(
+  current = all(!is.na(mc_hvg_dt_full[is_hvg == TRUE, hvg_rank])) &
+    all(is.na(mc_hvg_dt_full[is_hvg == FALSE, hvg_rank])),
+  info = "mc get_hvg_data_sc - hvg_rank NA exactly when is_hvg is FALSE"
+)
+
+# cell_ids = NULL should mirror the state-mutating version on all meta cells
+expect_true(
+  current = length(intersect(
+    mc_hvg_dt_full[is_hvg == TRUE, gene_idx],
+    mc_current_hvg
+  )) ==
+    hvg_to_keep,
+  info = "mc get_hvg_data_sc - NULL cell_ids matches find_hvg_sc"
+)
+
+#### biological subset ---------------------------------------------------------
+
+ct1_mc_ids <- mc_object[[]]$meta_cell_id[mc_dominant_type == "cell_type_1"]
+
+expect_true(
+  current = length(ct1_mc_ids) > 10,
+  info = "mc get_hvg_data_sc - sensible number of cell_type_1 meta cells"
+)
+
+mc_hvg_dt_subset <- get_hvg_data_sc(
+  object = mc_object,
+  cell_ids = ct1_mc_ids,
+  hvg_no = hvg_to_keep,
+  .verbose = FALSE
+)
+
+expect_true(
+  current = sum(mc_hvg_dt_subset$is_hvg) == hvg_to_keep,
+  info = "mc get_hvg_data_sc - subset returns correct number of HVGs"
+)
+
+expect_false(
+  current = isTRUE(all.equal(mc_hvg_dt_subset$mean, mc_hvg_dt_full$mean)),
+  info = "mc get_hvg_data_sc - subset stats differ from full stats"
+)
+
+#### state preservation --------------------------------------------------------
+
+expect_equal(
+  current = get_hvg(mc_object),
+  target = mc_current_hvg,
+  info = "mc get_hvg_data_sc - object HVGs unchanged after call"
+)
+
+expect_equivalent(
+  current = get_sc_var(mc_object)$var_std,
+  target = mc_current_var$var_std,
+  info = "mc get_hvg_data_sc - object var table unchanged after call"
+)
+
 ## pca -------------------------------------------------------------------------
 
 mc_object <- calculate_pca_sc(
   object = mc_object,
   no_pcs = no_pcs,
-  randomised_svd = FALSE,
+  pca_params = params_sc_pca(randomised = FALSE),
   .verbose = FALSE
 )
 
@@ -191,7 +356,7 @@ expect_true(
 mc_object <- calculate_pca_sc(
   object = mc_object,
   no_pcs = no_pcs,
-  randomised_svd = TRUE,
+  pca_params = params_sc_pca(),
   .verbose = FALSE
 )
 
@@ -465,6 +630,202 @@ importances_grnboost <- check_tf_importances(
 expect_true(
   current = all(importances_grnboost),
   info = "mc scenic grnboost2 - expected TF -> gene importances recovered"
+)
+
+## nmf -------------------------------------------------------------------------
+
+### helpers --------------------------------------------------------------------
+
+# For each NMF component, find which true cell type has the highest mean H
+# activation. Returns a vector of length k mapping component index to cell type.
+.nmf_component_to_celltype <- function(h, cell_grp_per_col) {
+  apply(h, 1, function(activations) {
+    means <- tapply(activations, cell_grp_per_col, mean)
+    names(means)[which.max(means)]
+  })
+}
+
+# For each NMF component, find which signal gene block (1:10, 11:20, 21:30)
+# has the highest mean W loading. Returns a vector mapping component to block.
+.nmf_component_to_gene_block <- function(w) {
+  gene_blocks <- list(
+    cell_type_1 = sprintf("gene_%03d", 1:10),
+    cell_type_2 = sprintf("gene_%03d", 11:20),
+    cell_type_3 = sprintf("gene_%03d", 21:30)
+  )
+  available <- rownames(w)
+  apply(w, 2, function(loadings) {
+    block_means <- sapply(gene_blocks, function(genes) {
+      mean(loadings[intersect(genes, available)])
+    })
+    names(which.max(block_means))
+  })
+}
+
+### tests ----------------------------------------------------------------------
+
+mc_nmf_k <- 3L
+
+### nmf_sc on MetaCells --------------------------------------------------------
+
+mc_nmf_res <- nmf_sc(
+  object = mc_object,
+  k = mc_nmf_k,
+  preprocessing = "none",
+  use_second_layer = TRUE,
+  .verbose = FALSE
+)
+
+expect_true(
+  current = checkmate::testClass(mc_nmf_res, "NmfResult"),
+  info = "mc nmf_sc: NmfResult class returned"
+)
+
+mc_hvg_n <- length(get_hvg(mc_object))
+
+expect_equal(
+  current = dim(get_w(mc_nmf_res)),
+  target = c(mc_hvg_n, mc_nmf_k),
+  info = "mc nmf_sc: W has shape (n_hvg, k)"
+)
+
+expect_equal(
+  current = dim(get_h(mc_nmf_res)),
+  target = c(mc_nmf_k, target_n_metacells),
+  info = "mc nmf_sc: H has shape (k, n_metacells)"
+)
+
+expect_true(
+  current = all(get_w(mc_nmf_res) >= 0) & all(get_h(mc_nmf_res) >= 0),
+  info = "mc nmf_sc: W and H are non-negative"
+)
+
+#### signal recovery via dominant cell type -----------------------------------
+
+mc_h <- get_h(mc_nmf_res)
+mc_w <- get_w(mc_nmf_res)
+
+mc_grp_per_col <- mc_dominant_type[match(colnames(mc_h), mc_ids)]
+
+mc_comp_to_ct <- .nmf_component_to_celltype(mc_h, mc_grp_per_col)
+mc_comp_to_block <- .nmf_component_to_gene_block(mc_w)
+
+expect_equal(
+  current = sort(unique(mc_comp_to_ct)),
+  target = c("cell_type_1", "cell_type_2", "cell_type_3"),
+  info = "mc nmf_sc: H components bijectively cover the three cell types"
+)
+
+expect_equal(
+  current = sort(unique(mc_comp_to_block)),
+  target = c("cell_type_1", "cell_type_2", "cell_type_3"),
+  info = "mc nmf_sc: W components bijectively cover the three gene blocks"
+)
+
+expect_equal(
+  current = mc_comp_to_ct,
+  target = mc_comp_to_block,
+  info = "mc nmf_sc: per-component, H cell type matches W gene block"
+)
+
+#### get_data slots into obs ---------------------------------------------------
+
+mc_nmf_obs_dt <- get_data(mc_nmf_res)
+
+expect_true(
+  current = checkmate::testDataTable(mc_nmf_obs_dt, nrows = target_n_metacells),
+  info = "mc nmf_sc: get_data returns data.table of correct shape"
+)
+
+expect_true(
+  current = isTRUE(attr(mc_nmf_obs_dt, "is_obs")),
+  info = "mc nmf_sc: get_data carries the is_obs attribute"
+)
+
+expect_true(
+  current = all(sprintf("comp_%02d", 1:mc_nmf_k) %in% names(mc_nmf_obs_dt)),
+  info = "mc nmf_sc: get_data has one column per component"
+)
+
+### stabilised_nmf_sc on MetaCells ---------------------------------------------
+
+mc_n_runs <- 4L
+
+mc_stab_res <- stabilised_nmf_sc(
+  object = mc_object,
+  k = mc_nmf_k,
+  preprocessing = "none",
+  use_second_layer = TRUE,
+  n_runs = mc_n_runs,
+  .verbose = FALSE
+)
+
+expect_true(
+  current = checkmate::testClass(mc_stab_res, "StabilisedNmfResult"),
+  info = "mc stabilised_nmf_sc: StabilisedNmfResult class returned"
+)
+
+expect_equal(
+  current = dim(get_w(mc_stab_res)),
+  target = c(mc_hvg_n, mc_nmf_k * mc_n_runs),
+  info = "mc stabilised_nmf_sc: w_all has shape (n_hvg, k * n_runs)"
+)
+
+expect_true(
+  current = is.list(get_h(mc_stab_res)) &
+    length(get_h(mc_stab_res)) == mc_n_runs,
+  info = "mc stabilised_nmf_sc: h_per_run is a list of length n_runs"
+)
+
+expect_equal(
+  current = mc_stab_res$best_idx,
+  target = which.min(mc_stab_res$losses),
+  info = "mc stabilised_nmf_sc: best_idx matches minimum loss run"
+)
+
+#### get_best_run round-trip ---------------------------------------------------
+
+mc_best <- get_best_run(mc_stab_res)
+
+expect_true(
+  current = checkmate::testClass(mc_best, "NmfResult"),
+  info = "mc get_best_run: returns an NmfResult"
+)
+
+mc_k_idx <- ((mc_stab_res$best_idx - 1L) *
+  mc_nmf_k +
+  1L):(mc_stab_res$best_idx *
+  mc_nmf_k)
+
+expect_equivalent(
+  current = unname(get_w(mc_stab_res)[, mc_k_idx]),
+  target = unname(get_w(mc_best)),
+  info = "mc get_best_run: W matches the corresponding slice of w_all"
+)
+
+expect_equivalent(
+  current = unname(get_h(mc_stab_res)[[mc_stab_res$best_idx]]),
+  target = unname(get_h(mc_best)),
+  info = "mc get_best_run: H matches the corresponding entry in h_per_run"
+)
+
+mc_best_w <- get_w(mc_best)
+mc_best_h <- get_h(mc_best)
+
+mc_best_grp_per_col <- mc_dominant_type[match(colnames(mc_best_h), mc_ids)]
+mc_best_comp_to_ct <- .nmf_component_to_celltype(mc_best_h, mc_best_grp_per_col)
+mc_best_comp_to_block <- .nmf_component_to_gene_block(mc_best_w)
+
+expect_equal(
+  current = sort(unique(mc_best_comp_to_ct)),
+  target = c("cell_type_1", "cell_type_2", "cell_type_3"),
+  info = "mc stabilised_nmf_sc: best run H covers all cell types"
+)
+
+expect_equal(
+  current = mc_best_comp_to_ct,
+  target = mc_best_comp_to_block,
+  info = "mc stabilised_nmf_sc: best run components consistent across W and H"
 )
 
 # clean up ---------------------------------------------------------------------

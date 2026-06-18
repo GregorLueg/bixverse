@@ -431,6 +431,45 @@ params_dgrdl <- function(
   )
 }
 
+## NMF (HALS) ------------------------------------------------------------------
+
+#' Wrapper function for NMF (HALS) parameters
+#'
+#' @param max_iter Integer. Maximum number of HALS iterations.
+#' @param tol Numeric. Convergence tolerance on the relative change in
+#' reconstruction loss.
+#' @param eps Numeric. Numerical floor for non-negativity / division safety.
+#' @param check_every Integer. Convergence check interval in iterations.
+#' @param nmf_init String. One of `c("nndsvd", "svd", "random")`. `"nndsvd"`
+#' and `"svd"` both map to deterministic NNDSVD initialisation; `"random"`
+#' uses random non-negative draws. For stabilised (multi-run) NMF this field
+#' is ignored and random init is always used.
+#'
+#' @returns A list with the HALS NMF parameters.
+#'
+#' @export
+params_nmf_hals <- function(
+  max_iter = 250L,
+  tol = 1e-4,
+  eps = 1e-10,
+  check_every = 10L,
+  nmf_init = "nndsvd"
+) {
+  checkmate::qassert(max_iter, "I1[1,)")
+  checkmate::qassert(tol, "N1(0,)")
+  checkmate::qassert(eps, "N1(0,)")
+  checkmate::qassert(check_every, "I1[1,)")
+  checkmate::assertChoice(nmf_init, c("nndsvd", "svd", "random"))
+
+  list(
+    max_iter = max_iter,
+    tol = tol,
+    eps = eps,
+    check_every = check_every,
+    nmf_init = nmf_init
+  )
+}
+
 ## SNF -------------------------------------------------------------------------
 
 #' Wrapper function to generate SNF parameters
@@ -744,9 +783,9 @@ params_sc_mtx_io <- function(
   checkmate::qassert(has_hdr, "B1")
 
   list(
-    path_mtx = path_mtx,
-    path_obs = path_obs,
-    path_var = path_var,
+    path_mtx = path.expand(path_mtx),
+    path_obs = path.expand(path_obs),
+    path_var = path.expand(path_var),
     cells_as_rows = cells_as_rows,
     has_hdr = has_hdr
   )
@@ -819,6 +858,42 @@ params_sc_hvg <- function(
   )
 }
 
+#' Wrapper for PCA specifically designed for single cells
+#'
+#' @param mean_center Boolean. Shall the data be mean centered
+#' @param normalise_variance Boolean. Shall the data have normalised variance
+#' @param randomised Boolean. Shall fast, approximate randomised SVD be used.
+#' @param clr Boolean. Shall the CLR-type `PFlogPF` be applied, see Booeshaghi,
+#' et al.
+#' @param size_factor Numeric. The used size factor during I/O. It needs to be
+#' the same as during I/O to have correct results when using the `PFlogPF`
+#' transformation.
+#'
+#' @returns A list with the parameters
+#'
+#' @export
+params_sc_pca <- function(
+  mean_center = TRUE,
+  normalise_variance = TRUE,
+  randomised = TRUE,
+  clr = FALSE,
+  size_factor = 1e4
+) {
+  # checks
+  checkmate::qassert(mean_center, "B1")
+  checkmate::qassert(normalise_variance, "B1")
+  checkmate::qassert(randomised, "B1")
+  checkmate::qassert(clr, "B1")
+  checkmate::qassert(size_factor, "N1")
+
+  list(
+    mean_center = mean_center,
+    normalise_variance = normalise_variance,
+    randomised = randomised,
+    clr = clr,
+    size_factor = size_factor
+  )
+}
 
 ## single cell (multi modal) ---------------------------------------------------
 

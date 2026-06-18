@@ -6,6 +6,7 @@
 \usage{
 rs_mnn(
   f_path_gene,
+  f_path_cell,
   cell_indices,
   gene_indices,
   batch_indices,
@@ -17,6 +18,9 @@ rs_mnn(
 }
 \arguments{
 \item{f_path_gene}{String. Path to the \code{counts_genes.bin} file.}
+
+\item{f_path_cell}{String. Path to the \code{counts_cells.bin} file. Used if
+you wish to use the PFlogPF transformation during the optional PCA step.}
 
 \item{cell_indices}{Integer. The cell indices to use. (0-indexed!)}
 

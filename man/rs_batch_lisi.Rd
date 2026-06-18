@@ -4,7 +4,7 @@
 \alias{rs_batch_lisi}
 \title{Calculate batch LISI scores}
 \usage{
-rs_batch_lisi(knn_mat, batch_vector)
+rs_batch_lisi(knn_mat, batch_vector, verbose)
 }
 \arguments{
 \item{knn_mat}{Integer matrix. The rows represent the cells and the
@@ -12,6 +12,8 @@ columns the neighbour indices.}
 
 \item{batch_vector}{Integer vector. The integers indicate to which
 batch a given cell belongs.}
+
+\item{verbose}{Boolean. Controls verbosity of the function.}
 }
 \value{
 A list with the following items

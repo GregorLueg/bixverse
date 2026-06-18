@@ -219,7 +219,7 @@ sc_mm <- find_hvg_sc(sc_mm, hvg_no = hvg_to_keep, .verbose = FALSE)
 sc_mm <- calculate_pca_sc(
   sc_mm,
   no_pcs = no_pcs,
-  randomised_svd = FALSE,
+  pca_params = params_sc_pca(),
   .verbose = FALSE
 )
 

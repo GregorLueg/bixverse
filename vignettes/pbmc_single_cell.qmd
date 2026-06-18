@@ -103,7 +103,7 @@ sc_object <- gene_set_proportions_sc(
   .verbose = TRUE
 )
 
-sc_object[[1:5L]]
+head(sc_object)
 ```
 
 As we can see we now have MT and Ribo as columns in the obs table.
@@ -136,9 +136,6 @@ qc <- run_cell_qc(
   directions = directions,
   threshold = 3
 )
-
-
-get_data(qc)
 
 qc
 ```

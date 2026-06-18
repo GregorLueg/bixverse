@@ -30,15 +30,29 @@ package for plotting functions being build in parallel, see
 [here](https://github.com/GregorLueg/bixverse.plots) (that one is in alpha
 phase).
 
+<img src="/man/figures/bixverse_single_cell.png" width="500" height="500" alt="atlas scale on small compute">
+
 ### Release notes
 
-With the release of `0.3.0` a lot has happened. The lack of updates had a (big) 
-reason... Some cooking has been going on... Since `0.3.0` the package contains a 
-full release of the teasered single cell functionality suite that you can use to 
-analyse millions of cells locally and implements already a large number of 
-methods in this space into Rust and exposes them to R.
-[Please checkout out the website of the package for details](https://gregorlueg.github.io/bixverse/); particularly the sections around single cell (design choices and
-vignettes.)
+Major release with `"0.4.0". The single cell suite has been further improved. 
+The key changes are:
+- Performance improvements across several axis. A lot of the underlying Rust
+  code was made even faster and more performant. The goal of analysing a 1m
+  single cell data set on a MacBook Air with 24 GB memory has been achieved.
+- Multi-modal support. There is now a `SingleCellsMultiModal` class that allows
+  you to (for now only) also add ADT counts. Some readers have been added to
+  load in the data. This also includes support for new methods in this space:
+  * [DSB normalisation](https://www.nature.com/articles/s41467-022-29356-8) for ADT counts
+  * [WNN generation](https://www.cell.com/cell/fulltext/S0092-8674(21)00583-3) 
+    for generation of multi-modal graphs.
+  * Large number of methods and updates to support multi-model analysis
+- Massive improvements on the two sister packages ([bixverse.plots](https://github.com/GregorLueg/bixverse.plots) and 
+  [bixverse.gpu](https://github.com/GregorLueg/bixverse.gpu)): enabling 
+  GPU-accelerated methods (Harmony, PCA) and a large number of plotting helpers.
+- Updates to various vignettes to reflect the changes with this release.
+
+[Please checkout out the website of the package for details](https://gregorlueg.github.io/bixverse/) -> 
+particularly the sections around single cell (design choices and vignettes.)
 
 ## Usage
 
@@ -93,34 +107,35 @@ and trade-offs. The various vignettes will show you how to analyse data.
 
 ### Single and spatial transcriptomics:
 
-- For single cell the following stuff will be hopefully soon'ish implemented:
-  * More multi-file read in support: h5ad and mtx can both now be done, but
-    for sure some edge cases still there.
-  * h5 file i/o (provided by CellRanger).
-  * Saving data to h5ad for easier interoperability with Python.
-  * Something cool with [Zarr](https://zarr.dev) ... ? 
-  * Expansion of the [sister package](https://github.com/GregorLueg/bixverse.plots) 
-    to have plotting helpers in there for single cell.
-  * Additional helpers for slicing the SingleCell class into several sub parts.
-    Merging is now officially supported.
-  * Implementations of [Palantir](https://www.nature.com/articles/s41587-019-0068-4) and
-    [Slingshot](https://pubmed.ncbi.nlm.nih.gov/29914354/).
-  * Port over [NicheNet](https://www.nature.com/articles/s41592-019-0667-5)
-  * Add more GPU-acceleration via [cubecl/WGPU backend]((https://github.com/tracel-ai/cubecl)) 
-    for GPU-agnostic acceleration where deemed appropriate, see another 
-    [sister package](https://github.com/GregorLueg/bixverse.gpu)
-  * Generate a Python package that interfaces into Deep Learning libraries for
-    training neural networks on top of the data. This will need some thinking
-    however.
-- Leverage the current infrastructure and add dedicated support and methods for
-  spatial transcriptomics. There are some cool methods in that space that for 
-  sure could benefit from the speed that a compiled, memory-managed language 
-  offers. Especially when analysing more data sets.
-- Add more single cell multi 'omics support. First tentative attempts at writing
-  the infrastructure to support CITE-Seq with ADTs.
-- Add other interesting methods that I can find (and have a use-case for)... 
-  NMF would be great to have as a fast Rust-accelerated method.
+#### General
 
+- [x] Multi h5 (10x output) i/o
+- [ ] Save data to h5ad for easier interoperability with Python.
+- [ ] Splitting a SingleCells into several sub directories for easier management
+- [ ] Implementation of [Palantir](https://www.nature.com/articles/s41587-019-0068-4) and
+  [Slingshot](https://pubmed.ncbi.nlm.nih.gov/29914354/) for trajectory
+  analysis
+- [ ] Port over [NicheNet](https://www.nature.com/articles/s41592-019-0667-5).
+- [ ] Easy interoperability that chunks of data can be read in for neural 
+  network training in the corresponding deep learning frameworks.
+
+#### Spatial 
+
+Full support of spatial transcriptomics via a dedicated `SpatialSpots` class
+leveraging the current Rust-based infrastructure for large scale analysis on
+local compute.
+
+### General methods
+
+- [ ] Addition of an NMF method for dense and sparse matrices. After some 
+  research likely a combination HALS + NNDSVD initialisation
+
+### Further cross integration with other packages
+
+Two sister packages are in active development: 
+[GPU-accelerated methods](https://github.com/GregorLueg/bixverse.gpu) and a
+dedicated [plotting package](https://github.com/GregorLueg/bixverse.plots). 
+Further improved cross integration is on the to-do list.
 
 ### Documentation
 

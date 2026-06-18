@@ -25,6 +25,8 @@ observation/cell metadata and the feature/gene metadata.
     \item \href{#method-SingleCellDuckDB-populate_var_adt_from_data.table}{\code{SingleCellDuckDB$populate_var_adt_from_data.table()}}
     \item \href{#method-SingleCellDuckDB-populate_obs_from_tenx_h5}{\code{SingleCellDuckDB$populate_obs_from_tenx_h5()}}
     \item \href{#method-SingleCellDuckDB-populate_vars_from_tenx_h5}{\code{SingleCellDuckDB$populate_vars_from_tenx_h5()}}
+    \item \href{#method-SingleCellDuckDB-populate_obs_from_multi_tenx_h5}{\code{SingleCellDuckDB$populate_obs_from_multi_tenx_h5()}}
+    \item \href{#method-SingleCellDuckDB-populate_vars_from_tenx_h5_reordered}{\code{SingleCellDuckDB$populate_vars_from_tenx_h5_reordered()}}
     \item \href{#method-SingleCellDuckDB-populate_obs_from_multi_duckdb}{\code{SingleCellDuckDB$populate_obs_from_multi_duckdb()}}
     \item \href{#method-SingleCellDuckDB-populate_vars_from_duckdb_reordered}{\code{SingleCellDuckDB$populate_vars_from_duckdb_reordered()}}
     \item \href{#method-SingleCellDuckDB-populate_obs_from_multi_plain_text}{\code{SingleCellDuckDB$populate_obs_from_multi_plain_text()}}
@@ -326,6 +328,63 @@ the gene-expression features that survived QC.
   }
   \subsection{Returns}{
     Invisible self. Populates the var table in DuckDB.
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SingleCellDuckDB-populate_obs_from_multi_tenx_h5"></a>}}
+\if{latex}{\out{\hypertarget{method-SingleCellDuckDB-populate_obs_from_multi_tenx_h5}{}}}
+\subsection{\code{SingleCellDuckDB$populate_obs_from_multi_tenx_h5()}}{
+  Populate the obs table from multiple 10x CellRanger h5 files.
+
+Reads each input's barcodes, applies the cell filter, prefixes
+\code{cell_id} with \code{exp_id}, and rbindlists.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{SingleCellDuckDB$populate_obs_from_multi_tenx_h5(per_file_info)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{per_file_info}}{List of lists; each must contain \code{h5_path}
+(string), \code{version} (\code{"v2"} or \code{"v3"}), \code{exp_id} (string) and
+\code{cell_filter} (1-indexed integer vector).}
+    }
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    Invisible self.
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SingleCellDuckDB-populate_vars_from_tenx_h5_reordered"></a>}}
+\if{latex}{\out{\hypertarget{method-SingleCellDuckDB-populate_vars_from_tenx_h5_reordered}{}}}
+\subsection{\code{SingleCellDuckDB$populate_vars_from_tenx_h5_reordered()}}{
+  Populate the var table from a 10x h5 file, filtered and reordered to
+match a target gene set.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{SingleCellDuckDB$populate_vars_from_tenx_h5_reordered(
+  h5_path,
+  version,
+  final_gene_names
+)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{h5_path}}{String. Path to a reference 10x h5 file.}
+      \item{\code{version}}{String. One of \code{"v2"} or \code{"v3"}.}
+      \item{\code{final_gene_names}}{Character vector. Gene ids in the desired
+final order.}
+    }
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    Invisible self.
   }
 }
 

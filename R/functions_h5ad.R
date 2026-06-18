@@ -188,19 +188,17 @@ prescan_h5ad_files <- function(
 
   h5_paths <- path.expand(h5_paths)
 
-  # collect per-file metadata
   file_meta <- vector("list", length(h5_paths))
 
   if (.verbose) {
-    pb = txtProgressBar(
-      min = 0,
-      max = length(file_meta),
-      initial = 0,
-      style = 3
-    )
+    cli::cli_progress_bar("Scanning h5ad files", total = length(h5_paths))
   }
 
   for (i in seq_along(h5_paths)) {
+    if (.verbose) {
+      cli::cli_progress_update(status = exp_ids[[i]])
+    }
+
     meta <- get_h5ad_dimensions(h5_paths[[i]])
     gene_names <- as.vector(
       rhdf5::h5read(h5_paths[[i]], sprintf("var/%s", var_index))
@@ -230,17 +228,12 @@ prescan_h5ad_files <- function(
       gene_names = gene_names,
       raw_slot = resolved_slot
     )
-
-    if (.verbose) {
-      setTxtProgressBar(pb, i)
-    }
   }
 
   if (.verbose) {
-    close(pb)
+    cli::cli_progress_done()
   }
 
-  # compute gene universe
   all_gene_sets <- lapply(file_meta, `[[`, "gene_names")
 
   universe <- if (gene_universe == "intersection") {
@@ -249,11 +242,9 @@ prescan_h5ad_files <- function(
     Reduce(union, all_gene_sets)
   }
 
-  # preserve a stable ordering (sorted)
   universe <- sort(universe)
   universe_lookup <- setNames(seq_along(universe) - 1L, universe)
 
-  # build per-file mappings
   file_tasks <- lapply(file_meta, function(fm) {
     mapping <- universe_lookup[fm$gene_names]
     mapping <- as.integer(unname(mapping))
@@ -547,6 +538,154 @@ remove_adt_isotypes <- function(feature_names, pattern = "isotype") {
   feature_names[!grepl(pattern, feature_names)]
 }
 
+## multi h5 files --------------------------------------------------------------
+
+#' Pre-scan multiple 10x CellRanger h5 files for multi-sample loading
+#'
+#' @description
+#' Walks each input file, reads the per-file feature ids, restricts to the
+#' chosen `feature_type` (V3 only; ignored for V2), builds the intersection
+#' or union universe of gene ids, and returns the file tasks expected by
+#' [bixverse::load_multi_tenx_h5()].
+#'
+#' V2 and V3 files can be mixed in a single batch. Gene matching is done on
+#' the feature `id` (ensembl-style) since gene symbols collide.
+#'
+#' @param h5_paths Character vector of file paths to 10x h5 files. If names
+#' are provided, these will be used as experimental identifiers.
+#' @param feature_type String. Modality to keep across all files (V3 only;
+#' ignored for V2). Defaults to `"Gene Expression"`.
+#' @param gene_universe One of `"intersection"` or `"union"`.
+#' @param .verbose Boolean. Controls verbosity.
+#'
+#' @return A list with:
+#' \itemize{
+#'   \item universe - Character vector of gene ids in the universe.
+#'   \item universe_size - Length of the universe.
+#'   \item file_tasks - Named list of per-file task structures, each
+#'   containing `exp_id`, `h5_path`, `version`, `no_cells`, `no_genes`,
+#'   `feature_type` and `gene_local_to_universe` (integer vector, `NA`
+#'   for features outside the universe / non-target modality, 0-indexed).
+#' }
+#'
+#' @export
+prescan_tenx_h5_files <- function(
+  h5_paths,
+  feature_type = "Gene Expression",
+  gene_universe = c("intersection", "union"),
+  .verbose = TRUE
+) {
+  gene_universe <- match.arg(gene_universe)
+  checkmate::assertCharacter(h5_paths, min.len = 2L)
+  invisible(lapply(h5_paths, checkmate::assertFileExists))
+  checkmate::qassert(feature_type, "S1")
+  checkmate::qassert(.verbose, "B1")
+
+  exp_ids <- if (is.null(names(h5_paths))) {
+    tools::file_path_sans_ext(basename(h5_paths))
+  } else {
+    names(h5_paths)
+  }
+  checkmate::assertCharacter(exp_ids, len = length(h5_paths), unique = TRUE)
+
+  h5_paths <- path.expand(h5_paths)
+
+  file_meta <- vector("list", length(h5_paths))
+
+  if (.verbose) {
+    cli::cli_progress_bar("Scanning 10x h5 files", total = length(h5_paths))
+  }
+
+  for (i in seq_along(h5_paths)) {
+    if (.verbose) {
+      cli::cli_progress_update(status = exp_ids[[i]])
+    }
+
+    meta <- get_tenx_h5_metadata(h5_paths[[i]])
+
+    if (meta$version == "v3") {
+      all_ids <- as.character(
+        rhdf5::h5read(h5_paths[[i]], "matrix/features/id")
+      )
+      all_types <- as.character(
+        rhdf5::h5read(h5_paths[[i]], "matrix/features/feature_type")
+      )
+      keep_mask <- all_types == feature_type
+
+      if (!any(keep_mask)) {
+        stop(sprintf(
+          "No features of type '%s' found in %s. Available: %s",
+          feature_type,
+          h5_paths[[i]],
+          paste(unique(all_types), collapse = ", ")
+        ))
+      }
+    } else {
+      all_ids <- as.character(rhdf5::h5read(h5_paths[[i]], "genes"))
+      keep_mask <- rep(TRUE, length(all_ids))
+    }
+    rhdf5::h5closeAll()
+
+    file_meta[[i]] <- list(
+      exp_id = exp_ids[[i]],
+      h5_path = h5_paths[[i]],
+      version = meta$version,
+      no_cells = meta$n_cells,
+      no_genes = meta$n_genes,
+      all_ids = all_ids,
+      keep_mask = keep_mask
+    )
+  }
+
+  if (.verbose) {
+    cli::cli_progress_done()
+  }
+
+  per_file_target_ids <- lapply(
+    file_meta,
+    function(fm) fm$all_ids[fm$keep_mask]
+  )
+
+  universe <- if (gene_universe == "intersection") {
+    Reduce(intersect, per_file_target_ids)
+  } else {
+    Reduce(union, per_file_target_ids)
+  }
+
+  if (length(universe) == 0L) {
+    stop("Gene universe across inputs is empty.")
+  }
+
+  universe <- sort(universe)
+  universe_lookup <- setNames(seq_along(universe) - 1L, universe)
+
+  file_tasks <- lapply(file_meta, function(fm) {
+    mapping <- rep(NA_integer_, fm$no_genes)
+    in_target <- fm$keep_mask
+    mapping[in_target] <- as.integer(unname(
+      universe_lookup[fm$all_ids[in_target]]
+    ))
+
+    list(
+      exp_id = fm$exp_id,
+      h5_path = fm$h5_path,
+      version = fm$version,
+      no_cells = fm$no_cells,
+      no_genes = fm$no_genes,
+      feature_type = feature_type,
+      gene_local_to_universe = mapping
+    )
+  })
+
+  names(file_tasks) <- exp_ids
+
+  list(
+    universe = universe,
+    universe_size = length(universe),
+    file_tasks = file_tasks
+  )
+}
+
 ## eda -------------------------------------------------------------------------
 
 #' Read barcode and feature tables and metadata from a 10x h5 file
@@ -612,6 +751,8 @@ read_tenx_h5_metadata <- function(f_path) {
 
 ## i/o -------------------------------------------------------------------------
 
+### single file ----------------------------------------------------------------
+
 #' Read in 10x h5 ADT data
 #'
 #' @description
@@ -642,4 +783,91 @@ read_tenx_h5_adt <- function(f_path, feature_type = "Antibody Capture") {
   rownames(m) <- res$barcodes
   colnames(m) <- res$features
   m
+}
+
+### multiple files -------------------------------------------------------------
+
+#' Read in 10x h5 ADT data from multiple files
+#'
+#' @description
+#' Multi-file counterpart to [bixverse::read_tenx_h5_adt()]. Reads the same
+#' modality from each input, stacks the cells (rows), and prefixes each
+#' barcode with its `exp_id` so the result matches the cell_id convention
+#' used by [bixverse::load_multi_tenx_h5()]. The feature space is either
+#' the intersection or union of features across inputs; missing features
+#' in the union case are filled with zero.
+#'
+#' @param h5_paths Character vector of file paths to 10x h5 files. If names
+#' are provided, these will be used as `exp_id`s; otherwise the file basename
+#' is used.
+#' @param feature_type String. The feature type to return. Defaults to
+#' `"Antibody Capture"`.
+#' @param gene_universe One of `"intersection"` or `"union"`.
+#'
+#' @returns A dense matrix of cells x features with `exp_id_barcode`
+#' rownames and feature names as colnames.
+#'
+#' @export
+read_multi_tenx_h5_adt <- function(
+  h5_paths,
+  feature_type = "Antibody Capture",
+  gene_universe = c("intersection", "union")
+) {
+  gene_universe <- match.arg(gene_universe)
+  checkmate::assertCharacter(h5_paths, min.len = 2L)
+  invisible(lapply(h5_paths, checkmate::assertFileExists))
+  checkmate::qassert(feature_type, "S1")
+
+  exp_ids <- if (is.null(names(h5_paths))) {
+    tools::file_path_sans_ext(basename(h5_paths))
+  } else {
+    names(h5_paths)
+  }
+  checkmate::assertCharacter(exp_ids, len = length(h5_paths), unique = TRUE)
+
+  h5_paths <- path.expand(h5_paths)
+
+  per_file <- vector("list", length(h5_paths))
+
+  for (i in seq_along(h5_paths)) {
+    meta <- get_tenx_h5_metadata(h5_paths[[i]])
+    res <- rs_read_tenx_h5_modality(
+      f_path = h5_paths[[i]],
+      version = meta$version,
+      feature_type = feature_type
+    )
+    m <- res$counts
+    rownames(m) <- paste(exp_ids[[i]], res$barcodes, sep = "_")
+    colnames(m) <- res$features
+    per_file[[i]] <- m
+  }
+
+  feature_sets <- lapply(per_file, colnames)
+  features <- if (gene_universe == "intersection") {
+    Reduce(intersect, feature_sets)
+  } else {
+    Reduce(union, feature_sets)
+  }
+
+  if (length(features) == 0L) {
+    stop("Feature universe across inputs is empty.")
+  }
+
+  total_rows <- sum(vapply(per_file, nrow, integer(1L)))
+  combined <- matrix(0, nrow = total_rows, ncol = length(features))
+  colnames(combined) <- features
+  row_names <- character(total_rows)
+
+  offset <- 0L
+  for (m in per_file) {
+    n <- nrow(m)
+    rng <- (offset + 1L):(offset + n)
+    in_common <- intersect(colnames(m), features)
+    combined[rng, in_common] <- as.matrix(m[, in_common, drop = FALSE])
+    row_names[rng] <- rownames(m)
+    offset <- offset + n
+  }
+  rownames(combined) <- row_names
+
+  combined
 }

@@ -226,3 +226,194 @@ S7::method(scenic_grn_sc, MetaCells) <- function(
 
   return(result)
 }
+
+## nmf -------------------------------------------------------------------------
+
+### helpers --------------------------------------------------------------------
+
+#' Resolve cell and gene selection for NMF on MetaCells
+#'
+#' @param object `MetaCells` class.
+#' @param cell_ids Optional string vector. The cells to include.
+#' @param gene_ids Optional string vector. The genes to include.
+#'
+#' @returns A list with the following items:
+#' \itemize{
+#'  \item cell_indices - The Rust-based cell indices.
+#'  \item gene_indices - The Rust-based gene indices.
+#'  \item cell_ids - The cell identifiers (1-based)
+#'  \item gene_ids - The gene identifiers (1-based).
+#' }
+#'
+#' @keywords internal
+#'
+#' @keywords internal
+.resolve_mc_nmf_selection <- function(object, cell_ids, gene_ids) {
+  checkmate::assertTRUE(S7::S7_inherits(object, MetaCells))
+  checkmate::qassert(cell_ids, c("S+", "0"))
+  checkmate::qassert(gene_ids, c("S+", "0"))
+
+  obs_table <- S7::prop(object, "obs_table")
+  var_table <- S7::prop(object, "var_table")
+
+  cell_indices_1b <- if (is.null(cell_ids)) {
+    seq_len(nrow(obs_table))
+  } else {
+    get_cell_indices(object, cell_ids = cell_ids, rust_index = FALSE)
+  }
+
+  gene_indices_1b <- if (is.null(gene_ids)) {
+    get_hvg(object)
+  } else {
+    get_gene_indices(object, gene_ids = gene_ids, rust_index = FALSE)
+  }
+
+  resolved_cell_ids <- obs_table$meta_cell_id[cell_indices_1b]
+  resolved_gene_ids <- var_table$gene_id[gene_indices_1b]
+
+  list(
+    cell_indices_1b = as.integer(cell_indices_1b),
+    gene_indices_1b = as.integer(gene_indices_1b),
+    # Rust-side 0-based for storage on the result class
+    cell_indices_rust = as.integer(cell_indices_1b - 1L),
+    cell_ids = resolved_cell_ids,
+    gene_ids = resolved_gene_ids
+  )
+}
+
+### methods --------------------------------------------------------------------
+
+#' @method nmf_sc MetaCells
+#'
+#' @export
+S7::method(nmf_sc, MetaCells) <- function(
+  object,
+  k,
+  cell_ids = NULL,
+  gene_ids = NULL,
+  preprocessing = "none",
+  use_second_layer = TRUE,
+  nmf_hals_params = params_nmf_hals(),
+  seed = 42L,
+  .verbose = TRUE
+) {
+  checkmate::assertTRUE(S7::S7_inherits(object, MetaCells))
+  checkmate::qassert(k, "I1[1,)")
+  checkmate::qassert(cell_ids, c("0", "S+"))
+  checkmate::qassert(gene_ids, c("0", "S+"))
+  checkmate::assertChoice(preprocessing, c("none", "sd", "sqrt_sd"))
+  checkmate::qassert(use_second_layer, "B1")
+  assertNmfHals(nmf_hals_params)
+  checkmate::qassert(seed, "I1")
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
+
+  sel <- .resolve_mc_nmf_selection(object, cell_ids, gene_ids)
+
+  assay <- if (use_second_layer) "norm" else "raw"
+
+  count_list <- mc_counts_to_list(
+    object = object,
+    cell_indices = sel$cell_indices_1b,
+    gene_indices = sel$gene_indices_1b,
+    assay = assay
+  )
+
+  nmf_res <- rs_nmf_single_mc(
+    sparse_data = count_list,
+    k = k,
+    preprocessing = preprocessing,
+    use_second_layer = use_second_layer,
+    nmf_hals_params = nmf_hals_params,
+    seed = seed,
+    verbose = parse_verbosity(.verbose)
+  )
+
+  params <- c(
+    nmf_hals_params,
+    list(
+      k = k,
+      preprocessing = preprocessing,
+      use_second_layer = use_second_layer,
+      seed = seed
+    )
+  )
+
+  new_nmf_result(
+    nmf_res = nmf_res,
+    gene_ids = sel$gene_ids,
+    cell_ids = sel$cell_ids,
+    cell_indices = sel$cell_indices_rust,
+    source_class = "MetaCells",
+    params = params
+  )
+}
+
+
+#' @method stabilised_nmf_sc MetaCells
+#'
+#' @export
+S7::method(stabilised_nmf_sc, MetaCells) <- function(
+  object,
+  k,
+  cell_ids = NULL,
+  gene_ids = NULL,
+  preprocessing = "none",
+  use_second_layer = TRUE,
+  nmf_hals_params = params_nmf_hals(),
+  n_runs = 30L,
+  seed = 42L,
+  .verbose = TRUE
+) {
+  checkmate::assertTRUE(S7::S7_inherits(object, MetaCells))
+  checkmate::qassert(k, "I1[1,)")
+  checkmate::qassert(cell_ids, c("0", "S+"))
+  checkmate::qassert(gene_ids, c("0", "S+"))
+  checkmate::assertChoice(preprocessing, c("none", "sd", "sqrt_sd"))
+  checkmate::qassert(use_second_layer, "B1")
+  assertNmfHals(nmf_hals_params)
+  checkmate::qassert(n_runs, "I1[1,)")
+  checkmate::qassert(seed, "I1")
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
+
+  sel <- .resolve_mc_nmf_selection(object, cell_ids, gene_ids)
+
+  assay <- if (use_second_layer) "norm" else "raw"
+
+  count_list <- mc_counts_to_list(
+    object = object,
+    cell_indices = sel$cell_indices_1b,
+    gene_indices = sel$gene_indices_1b,
+    assay = assay
+  )
+
+  nmf_res <- rs_nmf_multi_mc(
+    sparse_data = count_list,
+    k = k,
+    preprocessing = preprocessing,
+    use_second_layer = use_second_layer,
+    nmf_hals_params = nmf_hals_params,
+    n_runs = n_runs,
+    seed = seed,
+    verbose = parse_verbosity(.verbose)
+  )
+
+  params <- c(
+    nmf_hals_params,
+    list(
+      k = k,
+      preprocessing = preprocessing,
+      use_second_layer = use_second_layer,
+      n_runs = n_runs,
+      seed = seed
+    )
+  )
+
+  new_stabilised_nmf_result(
+    nmf_res = nmf_res,
+    gene_ids = sel$gene_ids,
+    cell_ids = sel$cell_ids,
+    cell_indices = sel$cell_indices_rust,
+    source_class = "MetaCells",
+    params = params
+  )
+}

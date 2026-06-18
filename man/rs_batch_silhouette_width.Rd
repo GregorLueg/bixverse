@@ -4,7 +4,7 @@
 \alias{rs_batch_silhouette_width}
 \title{Calculate batch silhouette width from an embedding}
 \usage{
-rs_batch_silhouette_width(embedding, batch_vector, max_cells, seed)
+rs_batch_silhouette_width(embedding, batch_vector, max_cells, verbose, seed)
 }
 \arguments{
 \item{embedding}{Numeric matrix. The embedding to assess (e.g. PCA or
@@ -15,6 +15,8 @@ batch a given cell belongs.}
 
 \item{max_cells}{Integer or NULL. If not NULL, subsample to this many
 cells for performance. Defaults to 5000.}
+
+\item{verbose}{Boolean. Controls verbosity of the function.}
 
 \item{seed}{Integer. Seed for subsampling reproducibility.}
 }

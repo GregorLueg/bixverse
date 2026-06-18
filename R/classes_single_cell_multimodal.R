@@ -6,11 +6,13 @@
 #'
 #' @description
 #' This function generates a new `ADTCounts` class which uses CLR normalisation
-#' under the hood.
+#' under the hood. You have the choice between Seurat-style CLR (no negative
+#' values) and normal CLR (allows negative values).
 #'
 #' @param raw_counts Numeric matrix. The raw ADT counts.
 #' @param cell_info Named integer vector. Output of [get_cell_info()]. Defines
 #' as elements the cell indices (R-based) and as names the barcodes.
+#' @param seurat_clr Boolean. Shall a Seurat-style CLR be applied.
 #' @param clean_clr_counts Boolean. Shall the per-protein 1st percentile be
 #' removed from the CLR normalised counts.
 #' @param percentile Numeric. The percentile to remove to reduce background
@@ -22,6 +24,7 @@
 new_adt_counts_clr <- function(
   raw_counts,
   cell_info,
+  seurat_clr = FALSE,
   clean_clr_counts = TRUE,
   percentile = 0.01
 ) {
@@ -37,7 +40,7 @@ new_adt_counts_clr <- function(
   checkmate::qassert(percentile, "N1(0,1)")
 
   raw_counts <- raw_counts[names(cell_info), ]
-  norm_counts <- rs_adt_clr(counts = raw_counts)
+  norm_counts <- rs_adt_clr(counts = raw_counts, seurat_clr = seurat_clr)
   colnames(norm_counts) <- colnames(raw_counts)
   rownames(norm_counts) <- rownames(raw_counts)
 
@@ -587,9 +590,10 @@ S7::method(get_sc_var, SingleCellsMultiModal) <- function(
 #' @param adt_counts Numeric matrix. Cells x features matrix of raw ADT counts.
 #' @param method String. One of `c("clr", "dsb")`. Normalisation method.
 #' @param ... Additional arguments forwarded to the normalisation constructor.
-#' For `method = "clr"`: `clean_clr_counts`, `percentile`. For `method = "dsb"`:
-#' `empty_drops`, `isotype_names`, `dsb_params`, `scale_factor`, `seed`,
-#' `verbose`. See [new_adt_counts_clr()] and [new_adt_counts_dsb()].
+#' For `method = "clr"`: `seurat_clr`, `clean_clr_counts`, `percentile`.
+#' For `method = "dsb"`: `empty_drops`, `isotype_names`, `dsb_params`,
+#' `scale_factor`, `seed`, `verbose`. See [new_adt_counts_clr()] and
+#' [new_adt_counts_dsb()].
 #'
 #' @returns Returns a `SingleCellsMultiModal` with the ADT data added.
 #'

@@ -2,22 +2,34 @@
 % Please edit documentation in R/classes_single_cell_others.R
 \name{call_doublets_manual}
 \alias{call_doublets_manual}
-\title{Helper function to manually readjust Scrublet thresholds}
+\title{Manually readjust Scrublet doublet call thresholds}
 \usage{
-call_doublets_manual(scrublet_res, threshold, .verbose = TRUE)
+call_doublets_manual(
+  scrublet_res,
+  threshold,
+  for_sample = NULL,
+  .verbose = TRUE
+)
 }
 \arguments{
-\item{scrublet_res}{\code{ScrubletRes} result class.}
+\item{scrublet_res}{A \code{ScrubletRes} object.}
 
-\item{threshold}{Numeric. The new threshold to use.}
+\item{threshold}{Numeric in \verb{[0, 1]}. The new threshold to apply.}
 
-\item{.verbose}{Boolean. Controls the verbosity of the function.}
+\item{for_sample}{Optional character. For grouped results, the name of the
+group to update. Defaults to the first group if \code{NULL}. Ignored for
+ungrouped results.}
+
+\item{.verbose}{Logical. If \code{TRUE}, prints updated rate summaries to the
+console.}
 }
 \value{
-\code{ScrubletRes} class with updated doublet calls based on the new
-threshold.
+The \code{ScrubletRes} object with updated \code{predicted_doublets},
+\code{z_scores}, \code{threshold}, \code{detected_doublet_rate},
+\code{detectable_doublet_fraction}, and \code{overall_doublet_rate}.
 }
 \description{
-Can update the Scrublet thresholding after manual introspection of the
-histogram.
+Updates doublet calls and associated summary statistics in a \code{ScrubletRes}
+object using a user-supplied threshold. Intended for use after visual
+inspection of the score histograms via \code{\link[=plot.ScrubletRes]{plot.ScrubletRes()}}.
 }

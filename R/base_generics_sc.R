@@ -689,6 +689,44 @@ find_hvg_sc <- S7::new_generic(
   }
 )
 
+#' Identify HVGs without mutating object state
+#'
+#' @description
+#' Like [find_hvg_sc()] but does not mutate `object`. Returns a data.table
+#' with per-gene HVG statistics plus `is_hvg`/`hvg_rank` for the top `hvg_no`
+#' genes. Useful for computing HVGs on a subset of cells (e.g. a specific
+#' cell type) for downstream methods like NMF, without overwriting the HVGs
+#' stored on the object.
+#'
+#' @param object `SingleCells` or `MetaCells` class.
+#' @param cell_ids Optional character. Cell ids (or meta cell ids) to restrict
+#' the HVG calculation to. If `NULL`, uses [get_cells_to_keep()] for
+#' `SingleCells` and all meta cells for `MetaCells`.
+#' @param hvg_no Integer. Number of top HVGs to flag. Defaults to `3000L`.
+#' @param hvg_params List, see [params_sc_hvg()].
+#' @param streaming Optional Boolean. Stream the data. Ignored for `MetaCells`.
+#' @param .verbose Boolean or integer. Verbosity.
+#'
+#' @return data.table with `gene_idx`, `gene_id`, the HVG statistics returned
+#' by the Rust HVG function, an `is_hvg` boolean and an `hvg_rank` integer
+#' (`NA` for non-HVGs).
+#'
+#' @export
+get_hvg_data_sc <- S7::new_generic(
+  name = "get_hvg_data_sc",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    cell_ids = NULL,
+    hvg_no = 3000L,
+    hvg_params = params_sc_hvg(),
+    streaming = NULL,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
 #### pca -----------------------------------------------------------------------
 
 #' Run PCA for single cell
@@ -700,8 +738,8 @@ find_hvg_sc <- S7::new_generic(
 #'
 #' @param object `SingleCells`, `MetaCells` (or potentially other) class.
 #' @param no_pcs Integer. Number of PCs to calculate.
-#' @param randomised_svd Boolean. Shall randomised SVD be used. Faster, but
-#' less precise.
+#' @param pca_params Named list. Controls the parameters to be used for the
+#' PCA calculation which is single cell-specific, see [params_sc_pca()]
 #' @param sparse_svd Boolean. Shall sparse solvers be used that do not do
 #' scaling. If set to yes, in the case of `random_svd = FALSE`, Lanczos
 #' iterations are used to solve the sparse SVD. With `random_svd = TRUE`, the
@@ -728,7 +766,7 @@ calculate_pca_sc <- S7::new_generic(
   fun = function(
     object,
     no_pcs,
-    randomised_svd = TRUE,
+    pca_params = params_sc_pca(),
     sparse_svd = FALSE,
     hvg = NULL,
     seed = 42L,
@@ -811,6 +849,7 @@ find_neighbours_sc <- S7::new_generic(
     S7::S7_dispatch()
   }
 )
+
 #### clustering ----------------------------------------------------------------
 
 #' Graph-based clustering of cells on the sNN graph
@@ -990,6 +1029,84 @@ scenic_grn_sc <- S7::new_generic(
     cells_to_take = NULL,
     streaming = NULL,
     random_seed = 42L,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#### nmf -----------------------------------------------------------------------
+
+## generics --------------------------------------------------------------------
+
+#' Run single-run NMF on single cell or meta cell data
+#'
+#' @description
+#' Runs a single HALS NMF on a chosen subset of cells and genes. For
+#' `SingleCells`, the counts are streamed from disk via the Rust binary
+#' files; for `MetaCells`, the in-memory sparse counts are used.
+#'
+#' @param object `SingleCells` or `MetaCells` class.
+#' @param k Integer. Number of latent factors to return.
+#' @param cell_ids Optional character. Cell ids (or meta cell ids) to restrict
+#' the NMF to. If `NULL`, uses [get_cells_to_keep()] for `SingleCells` and all
+#' meta cells for `MetaCells`.
+#' @param gene_ids Optional character. Gene ids to restrict the NMF to. If
+#' `NULL`, uses [get_hvg()] on the object.
+#' @param preprocessing String. One of `c("none", "sd", "sqrt_sd")`.
+#' @param use_second_layer Boolean. If `TRUE`, runs NMF on the normalised
+#' counts (recommended); if `FALSE`, on the raw counts.
+#' @param nmf_hals_params List, see [params_nmf_hals()].
+#' @param seed Integer. Random seed for initialisation.
+#' @param .verbose Boolean or integer. Verbosity.
+#'
+#' @returns An `NmfResult` object.
+#'
+#' @export
+nmf_sc <- S7::new_generic(
+  name = "nmf_sc",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    k,
+    cell_ids = NULL,
+    gene_ids = NULL,
+    preprocessing = "none",
+    use_second_layer = TRUE,
+    nmf_hals_params = params_nmf_hals(),
+    seed = 42L,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' Run stabilised (multi-run) NMF on single cell or meta cell data
+#'
+#' @description
+#' Runs `n_runs` HALS NMF with random initialisations seeded by `seed + i`.
+#' The `nmf_init` field in `nmf_hals_params` is ignored; random init is
+#' always used.
+#'
+#' @inheritParams nmf_sc
+#' @param n_runs Integer. Number of random restarts.
+#'
+#' @returns A `StabilisedNmfResult` object.
+#'
+#' @export
+stabilised_nmf_sc <- S7::new_generic(
+  name = "stabilised_nmf_sc",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    k,
+    cell_ids = NULL,
+    gene_ids = NULL,
+    preprocessing = "none",
+    use_second_layer = TRUE,
+    nmf_hals_params = params_nmf_hals(),
+    n_runs = 30L,
+    seed = 42L,
     .verbose = TRUE
   ) {
     S7::S7_dispatch()

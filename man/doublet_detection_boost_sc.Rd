@@ -8,6 +8,7 @@ doublet_detection_boost_sc(
   object,
   boost_params = params_boost(),
   cells_to_use = NULL,
+  group_by = NULL,
   seed = 42L,
   streaming = NULL,
   .verbose = TRUE
@@ -23,6 +24,9 @@ doublet_detection_boost_sc(
 run of the boosted doublet detection. Useful when you wish to run doublet
 detection on individual batches within your data. The object returned will be
 specifically using these cells.}
+
+\item{group_by}{Optional grouping variable. Useful if you want to run the
+method on a per-sample basis.}
 
 \item{seed}{Integer. Random seed.}
 

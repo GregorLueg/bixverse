@@ -193,13 +193,12 @@ S7::method(aucell_sc, SingleCells) <- function(
 #' }
 #'
 #' @keywords internal
-generate_null_perm_gs <- function(
+.generate_null_perm_gs <- function(
   gs_list,
   expr_genes,
   n_perm = 500L,
   n_comp = 5L,
-  random_seed = 42L,
-  no_cores = NULL
+  random_seed = 42L
 ) {
   # checks
   checkmate::assertList(gs_list, types = "list", names = "named")
@@ -207,11 +206,6 @@ generate_null_perm_gs <- function(
   checkmate::qassert(n_perm, "I1")
   checkmate::qassert(n_comp, "I1")
   checkmate::qassert(random_seed, "I1")
-  checkmate::qassert(no_cores, c("0", "I1"))
-
-  if (is.null(no_cores)) {
-    no_cores <- get_cores()
-  }
 
   # function
   sig_data_signed <- purrr::map(gs_list, \(gs) {
@@ -248,41 +242,28 @@ generate_null_perm_gs <- function(
 
   centers[, "sig_sizes"] <- round(10**centers[, "sig_sizes"])
 
-  mirai::daemons(no_cores)
+  set.seed(random_seed)
 
-  random_sigs <- mirai::mirai_map(
-    seq_len(nrow(centers)),
-    .f = function(i, n_perm, centers, random_seed, gene_names) {
-      size <- centers[i, "sig_sizes"]
-      balance <- centers[i, "sig_balance"]
-      n_pos_genes <- ceiling(balance * size)
-      n_neg_genes <- size - n_pos_genes
+  random_sigs <- lapply(seq_len(nrow(centers)), function(i) {
+    size <- centers[i, "sig_sizes"]
+    balance <- centers[i, "sig_balance"]
+    n_pos_genes <- ceiling(balance * size)
+    n_neg_genes <- size - n_pos_genes
 
-      lapply(seq_len(n_perm), function(iter) {
-        set.seed(random_seed + (i - 1) * 1e6 + iter)
-        genes <- sample(gene_names, size)
-
-        if (n_pos_genes == size) {
-          list(pos = genes)
-        } else if (n_neg_genes == size) {
-          list(neg = genes)
-        } else {
-          list(
-            pos = genes[1:n_pos_genes],
-            neg = genes[(n_pos_genes + 1):size]
-          )
-        }
-      })
-    },
-    .args = list(
-      n_perm = n_perm,
-      centers = centers,
-      random_seed = random_seed,
-      gene_names = expr_genes
-    )
-  )[]
-
-  mirai::daemons(0)
+    lapply(seq_len(n_perm), function(iter) {
+      genes <- sample(expr_genes, size)
+      if (n_pos_genes == size) {
+        list(pos = genes)
+      } else if (n_neg_genes == size) {
+        list(neg = genes)
+      } else {
+        list(
+          pos = genes[1:n_pos_genes],
+          neg = genes[(n_pos_genes + 1):size]
+        )
+      }
+    })
+  })
 
   res <- list(
     random_signatures = random_sigs,
@@ -494,7 +475,7 @@ S7::method(vision_w_autocor_sc, SingleCells) <- function(
   c(random_gs, cluster_membership) %<-%
     with(
       vision_params,
-      generate_null_perm_gs(
+      .generate_null_perm_gs(
         gs_list = gs_list,
         expr_genes = get_gene_names(object),
         n_perm = n_perm,
@@ -1064,4 +1045,173 @@ S7::method(scenic_grn_sc, SingleCells) <- function(
   )
 
   return(result)
+}
+
+## nmf -------------------------------------------------------------------------
+
+### helpers --------------------------------------------------------------------
+
+#' Resolve cell and gene selection for NMF on SingleCells
+#'
+#' @param object `SingleCells` class.
+#' @param cell_ids Optional string vector. The cells to include.
+#' @param gene_ids Optional string vector. The genes to include.
+#'
+#' @returns A list with the following items:
+#' \itemize{
+#'  \item cell_indices - The Rust-based cell indices.
+#'  \item gene_indices - The Rust-based gene indices.
+#'  \item cell_ids - The cell identifiers.
+#'  \item gene_ids - The gene identifiers.
+#' }
+#'
+#' @keywords internal
+.resolve_sc_nmf_selection <- function(object, cell_ids, gene_ids) {
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  checkmate::qassert(cell_ids, c("S+", "0"))
+  checkmate::qassert(gene_ids, c("S+", "0"))
+
+  cell_indices <- if (is.null(cell_ids)) {
+    get_cells_to_keep(object)
+  } else {
+    get_cell_indices(object, cell_ids = cell_ids, rust_index = TRUE)
+  }
+
+  gene_indices <- if (is.null(gene_ids)) {
+    get_hvg(object)
+  } else {
+    get_gene_indices(object, gene_ids = gene_ids, rust_index = TRUE)
+  }
+
+  resolved_cell_ids <- get_cell_names(object)[cell_indices + 1L]
+  resolved_gene_ids <- get_gene_names(object)[gene_indices + 1L]
+
+  list(
+    cell_indices = as.integer(cell_indices),
+    gene_indices = as.integer(gene_indices),
+    cell_ids = resolved_cell_ids,
+    gene_ids = resolved_gene_ids
+  )
+}
+
+### methods --------------------------------------------------------------------
+
+#' @method nmf_sc SingleCells
+#'
+#' @export
+S7::method(nmf_sc, SingleCells) <- function(
+  object,
+  k,
+  cell_ids = NULL,
+  gene_ids = NULL,
+  preprocessing = "none",
+  use_second_layer = TRUE,
+  nmf_hals_params = params_nmf_hals(),
+  seed = 42L,
+  .verbose = TRUE
+) {
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  checkmate::qassert(k, "I1[1,)")
+  checkmate::qassert(cell_ids, c("0", "S+"))
+  checkmate::qassert(gene_ids, c("0", "S+"))
+  checkmate::assertChoice(preprocessing, c("none", "sd", "sqrt_sd"))
+  checkmate::qassert(use_second_layer, "B1")
+  assertNmfHals(nmf_hals_params)
+  checkmate::qassert(seed, "I1")
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
+
+  sel <- .resolve_sc_nmf_selection(object, cell_ids, gene_ids)
+
+  nmf_res <- rs_nmf_single_sc(
+    f_path_gene = get_rust_count_gene_f_path(object),
+    gene_indices = sel$gene_indices,
+    cell_indices = sel$cell_indices,
+    k = k,
+    preprocessing = preprocessing,
+    use_second_layer = use_second_layer,
+    nmf_hals_params = nmf_hals_params,
+    seed = seed,
+    verbose = parse_verbosity(.verbose)
+  )
+
+  params <- c(
+    nmf_hals_params,
+    list(
+      k = k,
+      preprocessing = preprocessing,
+      use_second_layer = use_second_layer,
+      seed = seed
+    )
+  )
+
+  new_nmf_result(
+    nmf_res = nmf_res,
+    gene_ids = sel$gene_ids,
+    cell_ids = sel$cell_ids,
+    cell_indices = sel$cell_indices,
+    source_class = "SingleCells",
+    params = params
+  )
+}
+
+#' @method stabilised_nmf_sc SingleCells
+#'
+#' @export
+S7::method(stabilised_nmf_sc, SingleCells) <- function(
+  object,
+  k,
+  cell_ids = NULL,
+  gene_ids = NULL,
+  preprocessing = "none",
+  use_second_layer = TRUE,
+  nmf_hals_params = params_nmf_hals(),
+  n_runs = 30L,
+  seed = 42L,
+  .verbose = TRUE
+) {
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  checkmate::qassert(k, "I1[1,)")
+  checkmate::qassert(cell_ids, c("0", "S+"))
+  checkmate::qassert(gene_ids, c("0", "S+"))
+  checkmate::assertChoice(preprocessing, c("none", "sd", "sqrt_sd"))
+  checkmate::qassert(use_second_layer, "B1")
+  assertNmfHals(nmf_hals_params)
+  checkmate::qassert(n_runs, "I1[1,)")
+  checkmate::qassert(seed, "I1")
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
+
+  sel <- .resolve_sc_nmf_selection(object, cell_ids, gene_ids)
+
+  nmf_res <- rs_nmf_multi_sc(
+    f_path_gene = get_rust_count_gene_f_path(object),
+    gene_indices = sel$gene_indices,
+    cell_indices = sel$cell_indices,
+    k = k,
+    preprocessing = preprocessing,
+    use_second_layer = use_second_layer,
+    nmf_hals_params = nmf_hals_params,
+    n_runs = n_runs,
+    seed = seed,
+    verbose = parse_verbosity(.verbose)
+  )
+
+  params <- c(
+    nmf_hals_params,
+    list(
+      k = k,
+      preprocessing = preprocessing,
+      use_second_layer = use_second_layer,
+      n_runs = n_runs,
+      seed = seed
+    )
+  )
+
+  new_stabilised_nmf_result(
+    nmf_res = nmf_res,
+    gene_ids = sel$gene_ids,
+    cell_ids = sel$cell_ids,
+    cell_indices = sel$cell_indices,
+    source_class = "SingleCells",
+    params = params
+  )
 }

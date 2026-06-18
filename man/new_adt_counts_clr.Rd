@@ -7,6 +7,7 @@
 new_adt_counts_clr(
   raw_counts,
   cell_info,
+  seurat_clr = FALSE,
   clean_clr_counts = TRUE,
   percentile = 0.01
 )
@@ -16,6 +17,8 @@ new_adt_counts_clr(
 
 \item{cell_info}{Named integer vector. Output of \code{\link[=get_cell_info]{get_cell_info()}}. Defines
 as elements the cell indices (R-based) and as names the barcodes.}
+
+\item{seurat_clr}{Boolean. Shall a Seurat-style CLR be applied.}
 
 \item{clean_clr_counts}{Boolean. Shall the per-protein 1st percentile be
 removed from the CLR normalised counts.}
@@ -28,5 +31,6 @@ effects.}
 }
 \description{
 This function generates a new \code{ADTCounts} class which uses CLR normalisation
-under the hood.
+under the hood. You have the choice between Seurat-style CLR (no negative
+values) and normal CLR (allows negative values).
 }

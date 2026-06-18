@@ -729,12 +729,16 @@ fn rs_sc_hvg_batch_aware(
 ///
 /// @description
 /// Helper function that will calculate the PCA for the specified highly
-/// variable genes. Has the option to use randomised SVD for faster solving
-/// of the PCA.
+/// variable genes. You have the option to do mean centering, variance
+/// normalisation and/or apply the new proposed transformation `PFlogPF` from
+/// Booeshaghi, et al.
 ///
 /// @param f_path_gene String. Path to the `counts_genes.bin` file.
+/// @param f_path_cell String. Path to the `counts_cells.bin` file. Used if
+/// you wish to use the PFlogPF transformation.
 /// @param no_pcs Integer. Number of PCs to calculate.
-/// @param random_svd Boolean. Shall randomised SVD be used.
+/// @param pca_params Named list. Contains the parameters to use for this PCA
+/// run.
 /// @param cell_indices Integer. The cell indices to use. (0-indexed!)
 /// @param gene_indices Integer. The gene indices to use. (0-indexed!)
 /// @param seed Integer. Random seed for the randomised SVD.
@@ -751,27 +755,49 @@ fn rs_sc_hvg_batch_aware(
 /// }
 ///
 /// @export
+///
+/// @references Booeshaghi, et al., bioRxive, 2026.
 #[allow(clippy::too_many_arguments)]
 #[extendr]
 fn rs_sc_pca(
     f_path_gene: &str,
+    f_path_cell: &str,
     no_pcs: usize,
-    random_svd: bool,
+    pca_params: List,
     cell_indices: Vec<i32>,
     gene_indices: Vec<i32>,
     seed: usize,
     return_scaled: bool,
     verbose: usize,
 ) -> Result<List, extendr_api::Error> {
+    let verbosity = parse_verbosity_level(verbose);
+
     let cell_set = cell_indices.r_int_convert();
     let gene_indices = gene_indices.r_int_convert();
+
+    let pca_params = SingleCellPcaParams::from_r_list(pca_params)?;
+
+    let offsets = if pca_params.clr {
+        if verbosity.normal_verbosity() {
+            println!("PFlogPF-transformation requested. Loading offsets from disk.")
+        }
+
+        let reader = ParallelSparseReader::new(f_path_cell).to_extendr()?;
+
+        let offsets = reader.get_clr_offsets(&cell_set, None).to_extendr()?;
+
+        Some(offsets)
+    } else {
+        None
+    };
 
     let res = pca_on_sc(
         f_path_gene,
         &cell_set,
         &gene_indices,
         no_pcs,
-        random_svd,
+        &pca_params,
+        offsets.as_deref(),
         seed,
         return_scaled,
         verbose,
@@ -793,17 +819,16 @@ fn rs_sc_pca(
 ///
 /// @description
 /// Helper function that will calculate sparse PCA without scaling the data.
-/// This has the advantage that you avoid creating a large dense matrix due
-/// to scaling; however, it has the disadvantage that the first PC will be
-/// heavily influenced by average expression. If random_svd is set to `FALSE`,
-/// Lanczos iterations will be used to solve the SVD; if random_svd is set
-/// to `TRUE`, the randomised version will be used with multiplication of the
-/// initial sparse matrix with a much smaller random dense matrix, avoiding
-/// holding a large dense matrix in memory.
+/// You have the option to do mean centering, variance normalisation and/or
+/// apply the new proposed transformation `PFlogPF` from Booeshaghi, et al.
+/// None of these will densify the matrix.
 ///
 /// @param f_path_gene String. Path to the `counts_genes.bin` file.
+/// @param f_path_cell String. Path to the `counts_cells.bin` file. Used if
+/// you wish to use the PFlogPF transformation.
 /// @param no_pcs Integer. Number of PCs to calculate.
-/// @param random_svd Boolean. Shall randomised SVD be used.
+/// @param pca_params Named list. Contains the parameters to use for this PCA
+/// run.
 /// @param cell_indices Integer. The cell indices to use. (0-indexed!)
 /// @param gene_indices Integer. The gene indices to use. (0-indexed!)
 /// @param seed Integer. Random seed for the randomised SVD.
@@ -821,25 +846,47 @@ fn rs_sc_pca(
 /// }
 ///
 /// @export
+///
+/// @references Booeshaghi, et al., bioRxive, 2026.
 #[extendr]
+#[allow(clippy::too_many_arguments)]
 fn rs_sc_pca_sparse(
     f_path_gene: &str,
+    f_path_cell: &str,
     no_pcs: usize,
-    random_svd: bool,
+    pca_params: List,
     cell_indices: Vec<i32>,
     gene_indices: Vec<i32>,
     seed: usize,
     verbose: usize,
 ) -> Result<List, extendr_api::Error> {
+    let verbosity = parse_verbosity_level(verbose);
     let cell_set = cell_indices.r_int_convert();
     let gene_indices = gene_indices.r_int_convert();
+
+    let pca_params = SingleCellPcaParams::from_r_list(pca_params)?;
+
+    let offsets = if pca_params.clr {
+        if verbosity.normal_verbosity() {
+            println!("PFlogPF-transformation requested. Loading offsets from disk.")
+        }
+
+        let reader = ParallelSparseReader::new(f_path_cell).to_extendr()?;
+
+        let offsets = reader.get_clr_offsets(&cell_set, None).to_extendr()?;
+
+        Some(offsets)
+    } else {
+        None
+    };
 
     let res = pca_on_sc_sparse(
         f_path_gene,
         &cell_set,
         &gene_indices,
         no_pcs,
-        random_svd,
+        &pca_params,
+        offsets.as_deref(),
         seed,
         verbose,
     )
