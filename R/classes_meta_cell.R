@@ -282,6 +282,7 @@ S7::method(get_sc_var, MetaCells) <- function(
 #' @export
 S7::method(get_sc_counts, MetaCells) <- function(
   object,
+  group = NULL,
   assay = c("raw", "norm"),
   return_format = c("cell", "gene"),
   cell_indices = NULL,
@@ -293,6 +294,7 @@ S7::method(get_sc_counts, MetaCells) <- function(
   checkmate::assertTRUE(S7::S7_inherits(object, MetaCells))
   assay <- match.arg(assay)
   modality <- match.arg(modality)
+  stopifnot(is.null(group))
 
   if (modality != "rna") {
     stop(

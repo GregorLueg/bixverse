@@ -346,10 +346,12 @@ S7::method(generate_seacells_sc, SingleCells) <- function(
 #' }
 #' @param regenerate_knn Boolean. Shall a kNN graph be regenerated.
 #' @param embd_to_use String. The embedding to use. Only relevant if you set
-#' regenerate_knn to `TRUE`.
+#' regenerate_knn to `TRUE`. (Default: "pca").
 #' @param no_embd_to_use Optional integer. Number of embedding dimensions to
 #' use. If `NULL` all will be used. Only relevant if you set regenerate_knn to
 #' `TRUE`.
+#' @param group Optional string. Name of the obs column to regenerate the kNN graph
+#' by this variable.
 #' @param cells_to_use Optional string. Names of the cells to use for the
 #' generation of the meta-cells. If provided, this function will regenerate the
 #' kNN graph no matter what.
@@ -376,6 +378,7 @@ generate_supercells_sc <- S7::new_generic(
     regenerate_knn = FALSE,
     embd_to_use = "pca",
     no_embd_to_use = NULL,
+    group = NULL,
     cells_to_use = NULL,
     target_size = 1e5,
     seed = 42L,
@@ -394,6 +397,7 @@ S7::method(generate_supercells_sc, SingleCells) <- function(
   regenerate_knn = FALSE,
   embd_to_use = "pca",
   no_embd_to_use = NULL,
+  group = NULL,
   cells_to_use = NULL,
   target_size = 1e5,
   seed = 42L,
@@ -406,53 +410,91 @@ S7::method(generate_supercells_sc, SingleCells) <- function(
   checkmate::qassert(embd_to_use, "S1")
   checkmate::qassert(no_embd_to_use, c("I1", "0"))
   checkmate::qassert(cells_to_use, c("S+", "0"))
+  checkmate::qassert(group, c("S+", "0"))
   checkmate::qassert(target_size, "N1")
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
-  # if the kNN graph shall be regenerated, get the embedding here...
-  if (regenerate_knn) {
-    embd <- get_embedding(x = object, embd_name = embd_to_use)
+  ## if metacells are identified on the entire graph
+  if (is.null(group)) {
+    # if the kNN graph shall be regenerated, get the embedding here...
+    if (regenerate_knn) {
+      embd <- get_embedding(x = object, embd_name = embd_to_use)
 
-    # early return
-    if (is.null(embd)) {
-      warning(
-        paste(
-          "The desired embedding was not found. Please check the parameters.",
-          "Returning NULL."
+      # early return
+      if (is.null(embd)) {
+        warning(
+          paste(
+            "The desired embedding was not found. Please check the parameters.",
+            "Returning NULL."
+          )
         )
+
+        return(NULL)
+      }
+
+      if (!is.null(no_embd_to_use)) {
+        to_take <- min(c(no_embd_to_use, ncol(embd)))
+        embd <- embd[, 1:to_take]
+      }
+      knn_data <- NULL
+    } else {
+      embd <- NULL
+      knn_data <- get_knn_obj(object)
+
+      if (is.null(knn_data)) {
+        warning(
+          paste(
+            "No kNN data could be found on the object. Set regenerate_knn to",
+            "TRUE or generate the kNN matrix via other means",
+            "Returning NULL."
+          )
+        )
+        return(NULL)
+      }
+    }
+
+    if (!is.null(cells_to_use)) {
+      cells_to_use <- get_cell_indices(
+        object,
+        cell_ids = cells_to_use,
+        rust_index = TRUE
       )
 
-      return(NULL)
-    }
+      embd <- get_embedding(x = object, embd_name = embd_to_use)
 
-    if (!is.null(no_embd_to_use)) {
-      to_take <- min(c(no_embd_to_use, ncol(embd)))
-      embd <- embd[, 1:to_take]
-    }
-    knn_data <- NULL
-  } else {
-    embd <- NULL
-    knn_data <- get_knn_obj(object)
-
-    if (is.null(knn_data)) {
-      warning(
-        paste(
-          "No kNN data could be found on the object. Set regenerate_knn to",
-          "TRUE or generate the kNN matrix via other means",
-          "Returning NULL."
+      # early return
+      if (is.null(embd)) {
+        warning(
+          paste(
+            "The desired embedding was not found. Please check the parameters.",
+            "Returning NULL."
+          )
         )
-      )
-      return(NULL)
-    }
-  }
 
-  if (!is.null(cells_to_use)) {
-    cells_to_use <- get_cell_indices(
-      object,
-      cell_ids = cells_to_use,
-      rust_index = TRUE
+        return(NULL)
+      }
+
+      if (!is.null(no_embd_to_use)) {
+        to_take <- min(c(no_embd_to_use, ncol(embd)))
+        embd <- embd[, 1:to_take]
+      }
+      knn_data <- NULL
+    }
+
+    supercell_res <- rs_supercell(
+      f_path = get_rust_count_cell_f_path(object),
+      knn_data = knn_data,
+      embd = embd,
+      cells_to_use = cells_to_use,
+      cells_to_keep = get_cells_to_keep(object),
+      supercell_params = sc_supercell_params,
+      target_size = target_size,
+      seed = seed,
+      verbose = parse_verbosity(.verbose)
     )
-
+  } else {
+    ## Run supercell by group variable
+    ## First extract the dimensions used for the original embedding
     embd <- get_embedding(x = object, embd_name = embd_to_use)
 
     # early return
@@ -467,25 +509,44 @@ S7::method(generate_supercells_sc, SingleCells) <- function(
       return(NULL)
     }
 
-    if (!is.null(no_embd_to_use)) {
-      to_take <- min(c(no_embd_to_use, ncol(embd)))
-      embd <- embd[, 1:to_take]
+    ncol_emb <- ncol(embd)
+
+    ## recalculate the embedding by group and run supercell
+    obs <- object[[]]
+    gr_obs <- unique(obs[[group]])
+
+    for (i in gr_obs) {
+      cell_ids <- obs[get(group) == i][["cell_id"]]
+      cells_to_use <- get_cell_indices(
+        object,
+        cell_ids = cell_ids,
+        rust_index = TRUE
+      )
+
+      sc_object <- calculate_pca_sc(
+        object = sc_object,
+        no_pcs = 30L,
+        sparse_svd = TRUE
+      )
+
+      if (!is.null(no_embd_to_use)) {
+        to_take <- min(c(no_embd_to_use, ncol(embd)))
+        embd <- embd[, 1:to_take]
+      }
+      knn_data <- NULL
+      supercell_res <- rs_supercell(
+        f_path = get_rust_count_cell_f_path(object),
+        knn_data = knn_data,
+        embd = embd,
+        cells_to_use = cells_to_use,
+        cells_to_keep = get_cells_to_keep(object),
+        supercell_params = sc_supercell_params,
+        target_size = target_size,
+        seed = seed,
+        verbose = parse_verbosity(.verbose)
+      )
     }
-    knn_data <- NULL
   }
-
-  supercell_res <- rs_supercell(
-    f_path = get_rust_count_cell_f_path(object),
-    knn_data = knn_data,
-    embd = embd,
-    cells_to_use = cells_to_use,
-    cells_to_keep = get_cells_to_keep(object),
-    supercell_params = sc_supercell_params,
-    target_size = target_size,
-    seed = seed,
-    verbose = parse_verbosity(.verbose)
-  )
-
   var_data <- get_sc_var(object, cols = c("gene_idx", "gene_id"))
 
   meta_cell_obj <- MetaCells(

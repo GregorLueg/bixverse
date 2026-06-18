@@ -550,7 +550,7 @@ get_snn_graph.ScCache <- function(x) {
 #' [SingleCellsMultiModal()] - this class can store multiple layers of 'omics.
 #'
 #' @param dir_data String. This is the directory in which the experimental files
-#' will be
+#' will be saved
 #'
 #' @section Properties:
 #' \describe{
@@ -819,7 +819,7 @@ S7::method(`[[`, SingleCells) <- function(x, i, ...) {
 #'
 #' @keywords internal
 get_sc_map <- S7::new_generic(
-  name = "get_sc_maps",
+  name = "get_sc_map",
   dispatch_args = "object",
   fun = function(
     object
@@ -828,7 +828,7 @@ get_sc_map <- S7::new_generic(
   }
 )
 
-#' @method get_sc_var SingleCells
+#' @method get_sc_map SingleCells
 #'
 #' @export
 S7::method(get_sc_map, SingleCells) <- function(
@@ -885,6 +885,7 @@ S7::method(get_sc_cache, SingleCells) <- function(
 #' @export
 S7::method(get_sc_counts, SingleCells) <- function(
   object,
+  group = NULL,
   assay = c("raw", "norm"),
   return_format = c("cell", "gene"),
   cell_indices = NULL,
@@ -912,6 +913,8 @@ S7::method(get_sc_counts, SingleCells) <- function(
   checkmate::qassert(cell_indices, c("0", "I+"))
   checkmate::qassert(gene_indices, c("0", "I+"))
   checkmate::qassert(.verbose, "B1")
+
+  stopifnot(is.null(group))
 
   requireNamespace("Matrix", quietly = TRUE)
 

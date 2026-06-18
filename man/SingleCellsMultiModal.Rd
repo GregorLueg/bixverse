@@ -8,7 +8,7 @@ SingleCellsMultiModal(dir_data)
 }
 \arguments{
 \item{dir_data}{String. This is the directory in which the experimental files
-will be}
+will be stored}
 }
 \value{
 Returns the \code{SingleCellsMultiModal} class for further operations.

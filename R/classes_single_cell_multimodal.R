@@ -380,7 +380,7 @@ get_adt_names.ADTCounts <- function(x) {
 #' streaming engines powered by Rust and DuckDB to run the analysis.
 #'
 #' @param dir_data String. This is the directory in which the experimental files
-#' will be
+#' will be stored
 #'
 #' @section Properties:
 #' \describe{
@@ -662,6 +662,7 @@ S7::method(add_adt_counts_sc, SingleCellsMultiModal) <- function(
 
 S7::method(get_sc_counts, SingleCellsMultiModal) <- function(
   object,
+  group = NULL,
   assay = c("raw", "norm"),
   return_format = c("cell", "gene"),
   cell_indices = NULL,
@@ -673,6 +674,7 @@ S7::method(get_sc_counts, SingleCellsMultiModal) <- function(
   modality <- match.arg(modality)
   assay <- match.arg(assay)
   return_format <- match.arg(return_format)
+  stopifnot(is.null(group))
 
   if (modality == "rna") {
     rna_method <- S7::method(get_sc_counts, SingleCells)

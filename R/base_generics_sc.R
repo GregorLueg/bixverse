@@ -62,7 +62,10 @@ get_sc_var <- S7::new_generic(
 
 #' Getter the counts
 #'
-#' @param object `SingleCells`, `MetaCells`, `SingleCellsMultiModal` class.
+#' @param object `SingleCells`, `SingleCellsGrps`,`MetaCells`,
+#'  `SingleCellsMultiModal` class.
+#' @param group String. Which group to return counts for, only relevant
+#' for the `SingleCellsGrps`class.
 #' @param assay String. Which slot to return. One of `c("raw", "norm")`.
 #' Defaults to `"raw"`.
 #' @param return_format String. One of `c("cell", "gene")`. Return data in
@@ -83,6 +86,7 @@ get_sc_counts <- S7::new_generic(
   dispatch_args = "object",
   fun = function(
     object,
+    group = NULL,
     assay = c("raw", "norm"),
     return_format = c("cell", "gene"),
     cell_indices = NULL,

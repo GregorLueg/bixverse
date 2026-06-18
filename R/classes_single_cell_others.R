@@ -764,7 +764,7 @@ new_sc_hotspot_res <- function(hotspot_res, used_genes, used_cells) {
       hotspot_res$cor %>% `rownames<-`(used_genes) %>% `colnames<-`(used_genes)
     },
     params = list(used_cells = used_cells),
-    module_memership = NULL
+    module_membership = NULL
   )
 
   class(sc_hotspot) <- "Hotspot"
@@ -784,14 +784,14 @@ new_sc_hotspot_res <- function(hotspot_res, used_genes, used_cells) {
 print.Hotspot <- function(x, ...) {
   n_genes <- nrow(x$z)
   n_cells <- length(x$params$used_cells)
-  has_modules <- !is.null(x$module_memership)
+  has_modules <- !is.null(x$module_membership)
 
   cat("Hotspot gene-gene local correlation results\n")
   cat(sprintf("  Genes: %d\n", n_genes))
   cat(sprintf("  Cells: %d\n", n_cells))
 
   if (has_modules) {
-    membership <- x$module_memership
+    membership <- x$module_membership
     n_assigned <- sum(!is.na(membership$cluster_member))
     n_modules <- length(unique(na.omit(membership$cluster_member)))
     cat(sprintf(
@@ -841,8 +841,8 @@ plot.Hotspot <- function(x, max_genes = 500L, seed = 42L, ...) {
 
   z_mat <- x$z
 
-  if (!is.null(x$module_memership)) {
-    membership <- data.table::copy(x$module_memership)
+  if (!is.null(x$module_membership)) {
+    membership <- data.table::copy(x$module_membership)
     membership <- membership[!is.na(cluster_member)]
     data.table::setorder(membership, cluster_member)
 
@@ -959,7 +959,7 @@ get_hotspot_membership.Hotspot <- function(
   # checks
   checkmate::assertClass(x, "Hotspot")
 
-  x[["module_memership"]]
+  x[["module_membership"]]
 }
 
 #### methods -------------------------------------------------------------------
@@ -1002,7 +1002,7 @@ generate_hotspot_membership.Hotspot <- function(
     )
   )
 
-  x[["module_memership"]] <- gene_membership
+  x[["module_membership"]] <- gene_membership
 
   x
 }
