@@ -432,7 +432,8 @@ print.BatchLisiScores <- function(x, ...) {
 #'
 #' @return This function will return a list with:
 #' \itemize{
-#'   \item hvg_indices - The indices of the batch-aware HVG.
+#'   \item hvg_genes - The gene names of the HVGs.
+#'   \item hvg_gene_idx - The (0-index) gene features.
 #'   \item batch_hvg_data - data.table with the detailed information of the
 #'   variance per batch.
 #' }
@@ -516,7 +517,7 @@ S7::method(find_hvg_batch_aware_sc, SingleCells) <- function(
     stop("Unknown HVG method: ", hvg_params$method)
   )
 
-  hvg_genes <- switch(
+  hvg_gene_idx <- switch(
     gene_comb_method,
     union = {
       batch_hvgs_dt[,
@@ -545,8 +546,13 @@ S7::method(find_hvg_batch_aware_sc, SingleCells) <- function(
       ]
     }
   )
+  hvg_genes <- get_gene_names_from_idx(x = object, gene_idx = hvg_gene_idx)
 
-  return(list(hvg_genes = hvg_genes, hvg_data = batch_hvgs_dt))
+  return(list(
+    hvg_genes = hvg_genes,
+    hvg_gene_idx = hvg_gene_idx,
+    hvg_data = batch_hvgs_dt
+  ))
 }
 
 ## BBKNN -----------------------------------------------------------------------

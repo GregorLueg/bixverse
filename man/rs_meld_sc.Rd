@@ -29,7 +29,12 @@ MELD.}
 \item{n_landmarks}{Integer. If \code{landmark = TRUE}, how many landmarks to use.}
 }
 \value{
-A numeric matrix with the MELD values per given condition/cell
+A list with the following items
+\itemize{
+\item raw_scores - The raw MELD scores
+\item norm_scores - Negative values were clamped to 0 and the rows L1
+normalised. This yields probability-like values.
+}
 }
 \description{
 This implements a Rust-based version of the MELD algorithm,

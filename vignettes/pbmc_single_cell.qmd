@@ -263,6 +263,11 @@ centroids <- get_centroids(fast_cluster_res)
 kmeans_membership <- get_kmeans_clusters(fast_cluster_res)
 ```
 
+You can add the data to the object via:
+
+```{r}
+#| label: fast cluster
+```
 
 ### Dimensionality reduction
 

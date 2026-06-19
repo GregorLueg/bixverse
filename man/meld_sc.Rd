@@ -56,6 +56,14 @@ for available parameters and their defaults.
 times. \code{FALSE} -> quiet, \code{TRUE} or \code{1L} -> normal verbosity, \code{2L} ->
 detailed verbosity.}
 }
+\value{
+A list with:
+\itemize{
+\item raw_scores - The raw MELD scores
+\item norm_scores - Negative values were clamped to 0 and the rows L1
+normalised. This yields probability-like values.
+}
+}
 \description{
 This function implements MELD  for estimating sample-associated density on a
 cell manifold. The general idea is to smooth a binary sample indicator matrix

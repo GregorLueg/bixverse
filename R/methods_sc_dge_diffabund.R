@@ -492,6 +492,13 @@ S7::method(get_miloR_abundances_sc, SingleCells) <- function(
 #' times. `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` ->
 #' detailed verbosity.
 #'
+#' @return A list with:
+#' \itemize{
+#'  \item raw_scores - The raw MELD scores
+#'  \item norm_scores - Negative values were clamped to 0 and the rows L1
+#'  normalised. This yields probability-like values.
+#' }
+#'
 #' @references Burkhardt, et al. Nat. Biotechnol., 2021.
 #'
 #' @export
@@ -564,8 +571,12 @@ S7::method(meld_sc, SingleCells) <- function(
     verbose = parse_verbosity(.verbose)
   )
 
-  colnames(meld_res) <- levels(samples)
-  rownames(meld_res) <- get_cell_names(object, filtered = TRUE)
+  colnames(meld_res$raw_scores) <- colnames(meld_res$norm_scores) <- levels(
+    samples
+  )
+  rownames(meld_res$raw_scores) <- rownames(
+    meld_res$norm_scores
+  ) <- get_cell_names(object, filtered = TRUE)
 
   meld_res
 }

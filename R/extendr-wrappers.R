@@ -2049,6 +2049,65 @@ rs_sc_type <- function(f_path, cell_indices, cell_markers, sensitivity, weight_f
 #' }
 rs_sc_type_cluster_assignment <- function(sc_type_res, cluster_labels) .Call(wrap__rs_sc_type_cluster_assignment, sc_type_res, cluster_labels)
 
+#' Build a Symphony reference (Rust)
+#'
+#' @param f_path String. Path to the gene-based binary file.
+#' @param cell_indices Integer vector. 0-based cell indices.
+#' @param hvg_indices Integer vector. 0-based HVG indices.
+#' @param batch_labels List of 0-indexed integer vectors (one per batch
+#' variable).
+#' @param pca_params List. Output of `params_sc_pca()`.
+#' @param no_pcs Integer.
+#' @param harmony_params List. Output of `params_sc_harmony()` or
+#' `params_sc_harmony_v2()`.
+#' @param harmony_version String. "v1" or "v2".
+#' @param clr_offsets Numerical vector. Length-0 for None.
+#' @param seed Integer.
+#' @param verbose Integer. 0/1/2.
+#'
+#' @return A list with gene_means, gene_sds, loadings, z_orig, z_corr, r,
+#' centroids, nr, c.
+#'
+#' @export
+rs_build_symphony_ref <- function(f_path_gene, f_path_cell, cell_indices, hvg_indices, batch_labels, pca_params, no_pcs, harmony_params, harmony_version, seed, verbose) .Call(wrap__rs_build_symphony_ref, f_path_gene, f_path_cell, cell_indices, hvg_indices, batch_labels, pca_params, no_pcs, harmony_params, harmony_version, seed, verbose)
+
+#' Map a query onto a Symphony reference (Rust)
+#'
+#' @param f_path_query String. Path to the query gene-based binary file.
+#' @param cell_indices_query Integer vector. 0-based query cell indices.
+#' @param gene_means,gene_sds Numerical vectors. Reference per-HVG stats.
+#' @param loadings Reference PCA loadings (n_hvgs x d).
+#' @param centroids Reference centroids (K x d).
+#' @param nr Reference cluster sizes (length K).
+#' @param c_cache Reference compression term R*Z_corr (K x d).
+#' @param ref_to_query_gene_map Integer vector. For each reference HVG slot,
+#' the 0-based query gene index, or `NA_integer_` if absent.
+#' @param batch_labels_query List of 0-indexed integer vectors (empty = no
+#' batch correction).
+#' @param sigma,lambda Mapping parameters.
+#' @param verbose Integer. 0/1/2.
+#'
+#' @return A list with z_pca, z_corr, r.
+#'
+#' @export
+rs_symphony_map_query <- function(f_path_query, cell_indices_query, gene_means, gene_sds, loadings, centroids, nr, c_cache, ref_to_query_gene_map, batch_labels_query, params_symphony, verbose) .Call(wrap__rs_symphony_map_query, f_path_query, cell_indices_query, gene_means, gene_sds, loadings, centroids, nr, c_cache, ref_to_query_gene_map, batch_labels_query, params_symphony, verbose)
+
+#' Transfer labels from a Symphony reference to a query via kNN vote
+#'
+#' @param reference_z_corr Reference Harmony-corrected embedding (N_ref x d).
+#' @param query_z_corr Query Symphony-corrected embedding (N_q x d).
+#' @param reference_labels 0-based integer-encoded reference labels.
+#' @param n_labels Number of distinct labels.
+#' @param knn_params List. Output of `params_sc_knn()`.
+#' @param seed Integer.
+#' @param verbose Integer. 0/1/2.
+#'
+#' @return A list with `predicted` (0-based integer per query cell) and
+#' `confidence` (vote share of the winning label).
+#'
+#' @export
+rs_transfer_labels_symphony <- function(reference_z_corr, query_z_corr, reference_labels, n_labels, knn_params, seed, verbose) .Call(wrap__rs_transfer_labels_symphony, reference_z_corr, query_z_corr, reference_labels, n_labels, knn_params, seed, verbose)
+
 #' Calculate kBET type scores
 #'
 #' @description
@@ -2946,7 +3005,12 @@ rs_make_milor_nhoods <- function(embd, knn_indices, milor_params, seed, verbose)
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
 #'
-#' @returns A numeric matrix with the MELD values per given condition/cell
+#' @returns A list with the following items
+#' \itemize{
+#'   \item raw_scores - The raw MELD scores
+#'   \item norm_scores - Negative values were clamped to 0 and the rows L1
+#'   normalised. This yields probability-like values.
+#' }
 #'
 #' @export
 rs_meld_sc <- function(embd, knn_data, meld_params, labels, n_labels, seed, verbose) .Call(wrap__rs_meld_sc, embd, knn_data, meld_params, labels, n_labels, seed, verbose)

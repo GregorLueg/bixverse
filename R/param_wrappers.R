@@ -616,9 +616,9 @@ params_label_propagation <- function(
 
 ### general --------------------------------------------------------------------
 
-### synthetic data -------------------------------------------------------------
+#### synthetic data ------------------------------------------------------------
 
-#### rna -----------------------------------------------------------------------
+##### rna ----------------------------------------------------------------------
 
 #' Default parameters for generation of synthetic single cell data (RNA)
 #'
@@ -691,7 +691,7 @@ params_sc_synthetic_data <- function(
   )
 }
 
-#### adt -----------------------------------------------------------------------
+##### adt ----------------------------------------------------------------------
 
 #' Default parameters for generation of synthetic single cell data (ADT)
 #'
@@ -754,7 +754,7 @@ params_sc_synthetic_data_adt <- function(
   )
 }
 
-### io -------------------------------------------------------------------------
+#### io ------------------------------------------------------------------------
 
 #' Wrapper function to provide data for mtx-based loading
 #'
@@ -791,7 +791,7 @@ params_sc_mtx_io <- function(
   )
 }
 
-### qc -------------------------------------------------------------------------
+#### qc ------------------------------------------------------------------------
 
 #' Wrapper function to generate QC metric params for single cell
 #'
@@ -827,6 +827,8 @@ params_sc_min_quality <- function(
   )
 }
 
+#### hvg -----------------------------------------------------------------------
+
 #' Wrapper function for HVG detection parameters.
 #'
 #' @param method String. One of `c("vst", "meanvarbin", "dispersion")`.
@@ -857,6 +859,8 @@ params_sc_hvg <- function(
     bin_method = bin_method
   )
 }
+
+#### pca -----------------------------------------------------------------------
 
 #' Wrapper for PCA specifically designed for single cells
 #'
@@ -893,6 +897,102 @@ params_sc_pca <- function(
     clr = clr,
     size_factor = size_factor
   )
+}
+
+#### knn -----------------------------------------------------------------------
+
+#' Parameters for single cell kNN searches
+#'
+#' @param k Integer. Number of neighbours. Defaults to `15L`.
+#' @param knn_method String. Which method to use for the approximate nearest
+#' neighbour search. Defaults to `"kmknn"`. One of
+#' `c("kmknn", "hnsw", "annoy", "nndescent", "ivf", "exhaustive")`.
+#' @param ann_dist String. Distance metric to use. Defaults to `"euclidean"`.
+#' One of `c("cosine", "euclidean")`.
+#' @param n_trees Integer. Annoy param: number of trees. Defaults to `50L`.
+#' @param search_budget Integer or `NULL`. Annoy param: optional search budget
+#' per tree. If `NULL`, defaults to `n_trees * k * 20L` internally.
+#' @param delta Numeric. NNDescent param: early termination criterion.
+#' Defaults to `0.001`.
+#' @param diversify_prob Numeric. NNDescent param: diversification probability
+#' applied at the end of index construction. Defaults to `0.0`.
+#' @param ef_budget Integer or `NULL`. NNDescent param: optional query budget.
+#' Higher values improve recall at the cost of speed.
+#' @param m Integer. HNSW param: number of connections between layers.
+#' Defaults to `16L`.
+#' @param ef_construction Integer. HNSW param: size of the dynamic candidate
+#' list during construction. Defaults to `200L`.
+#' @param ef_search Integer. HNSW param: size of the candidate list at query
+#' time. Higher values improve recall at the cost of speed. Defaults to `100L`.
+#' @param n_list Integer or `NULL`. IVF param: number of clusters to generate.
+#' If `NULL`, defaults to `sqrt(n)` internally.
+#' @param n_probe Integer or `NULL`. IVF param: number of clusters to query.
+#' If `NULL`, defaults to `sqrt(n_list)` internally.
+#'
+#' @return A list with the kNN parameters.
+#'
+#' @export
+params_sc_knn <- function(
+  k = 15L,
+  knn_method = "kmknn",
+  ann_dist = "euclidean",
+  n_trees = 50L,
+  search_budget = NULL,
+  delta = 0.001,
+  diversify_prob = 0.0,
+  ef_budget = NULL,
+  m = 16L,
+  ef_construction = 200L,
+  ef_search = 100L,
+  n_list = NULL,
+  n_probe = NULL
+) {
+  checkmate::qassert(k, "I1[1,)")
+  checkmate::assertChoice(
+    knn_method,
+    c("kmknn", "hnsw", "annoy", "nndescent", "ivf", "exhaustive")
+  )
+  checkmate::assertChoice(ann_dist, c("cosine", "euclidean"))
+  checkmate::qassert(n_trees, "I1[1,)")
+  checkmate::assert(
+    checkmate::checkNull(search_budget),
+    checkmate::checkInt(search_budget, lower = 1L)
+  )
+  checkmate::qassert(delta, "N1(0,)")
+  checkmate::qassert(diversify_prob, "N1[0,1]")
+  checkmate::assert(
+    checkmate::checkNull(ef_budget),
+    checkmate::checkInt(ef_budget, lower = 1L)
+  )
+  checkmate::qassert(m, "I1[1,)")
+  checkmate::qassert(ef_construction, "I1[1,)")
+  checkmate::qassert(ef_search, "I1[1,)")
+  checkmate::assert(
+    checkmate::checkNull(n_list),
+    checkmate::checkInt(n_list, lower = 1L)
+  )
+  checkmate::assert(
+    checkmate::checkNull(n_probe),
+    checkmate::checkInt(n_probe, lower = 1L)
+  )
+
+  res <- list(
+    k = k,
+    knn_method = knn_method,
+    ann_dist = ann_dist,
+    n_trees = n_trees,
+    search_budget = search_budget,
+    delta = delta,
+    diversify_prob = diversify_prob,
+    ef_budget = ef_budget,
+    m = m,
+    ef_construction = ef_construction,
+    ef_search = ef_search,
+    n_list = n_list,
+    n_probe = n_probe
+  )
+
+  res
 }
 
 ## single cell (multi modal) ---------------------------------------------------
@@ -950,4 +1050,24 @@ params_sc_dsb <- function(
     quantile_low = quantile_low,
     quantile_high = quantile_high
   )
+}
+
+### symphony -------------------------------------------------------------------
+
+#' Default parameters for Symphony query mapping
+#'
+#' @param sigma Numeric. Soft-clustering fuzziness for query -> reference
+#' centroid assignment. Symphony R default is 0.1.
+#' @param lambda Numeric. Ridge penalty on batch coefficients. Symphony R
+#' hardcodes 1.0.
+#'
+#' @return A list with the parameters.
+#'
+#' @export
+params_symphony_map <- function(sigma = 0.1, lambda = 1.0) {
+  checkmate::qassert(sigma, "N1[0,)")
+  checkmate::qassert(lambda, "N1[0,)")
+  res <- list(sigma = sigma, lambda = lambda)
+  class(res) <- c("params_symphony_map", "list")
+  res
 }

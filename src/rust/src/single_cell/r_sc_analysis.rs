@@ -1199,7 +1199,12 @@ fn rs_importance_threshold(matrix: RMatrix<f64>, n_sd: f64, min_value: Option<f6
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
 ///
-/// @returns A numeric matrix with the MELD values per given condition/cell
+/// @returns A list with the following items
+/// \itemize{
+///   \item raw_scores - The raw MELD scores
+///   \item norm_scores - Negative values were clamped to 0 and the rows L1
+///   normalised. This yields probability-like values.
+/// }
 ///
 /// @export
 #[extendr]
@@ -1212,7 +1217,7 @@ fn rs_meld_sc(
     n_labels: usize,
     seed: usize,
     verbose: usize,
-) -> Result<RMatrix<f64>> {
+) -> Result<List> {
     let embd = r_matrix_to_faer_fp32(&embd);
     let meld_params = MeldParams::from_r_list(meld_params)?;
     let labels = labels.r_int_convert_shift();
@@ -1256,7 +1261,7 @@ fn rs_meld_sc(
 
     let is_squared_distance = dist == "euclidean";
 
-    let meld_res = meld(
+    let (meld_raw, meld_norm) = meld(
         &knn_indices,
         &knn_dist,
         &labels,
@@ -1268,7 +1273,10 @@ fn rs_meld_sc(
     )
     .to_extendr()?;
 
-    Ok(faer_to_r_matrix(meld_res.as_ref()))
+    Ok(list!(
+        raw_scores = faer_to_r_matrix(meld_raw.as_ref()),
+        norm_scores = faer_to_r_matrix(meld_norm.as_ref())
+    ))
 }
 
 /////////
