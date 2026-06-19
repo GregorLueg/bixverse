@@ -885,7 +885,6 @@ S7::method(get_sc_cache, SingleCells) <- function(
 #' @export
 S7::method(get_sc_counts, SingleCells) <- function(
   object,
-  group = NULL,
   assay = c("raw", "norm"),
   return_format = c("cell", "gene"),
   cell_indices = NULL,
@@ -913,8 +912,6 @@ S7::method(get_sc_counts, SingleCells) <- function(
   checkmate::qassert(cell_indices, c("0", "I+"))
   checkmate::qassert(gene_indices, c("0", "I+"))
   checkmate::qassert(.verbose, "B1")
-
-  stopifnot(is.null(group))
 
   requireNamespace("Matrix", quietly = TRUE)
 

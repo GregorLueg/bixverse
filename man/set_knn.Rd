@@ -6,7 +6,7 @@
 \alias{set_knn.MetaCells}
 \alias{set_knn.ScCache}
 \alias{set_knn.SingleCells}
-\alias{set_knn.SingleCellsGrps}
+\alias{set_knn.SingleCellsSubset}
 \title{Set/add KNN}
 \usage{
 set_knn(x, knn, ...)
@@ -19,7 +19,7 @@ set_knn(x, knn, ...)
 ## S7 method for class <bixverse::SingleCells>
 set_knn(x, knn, ...)
 
-## S7 method for class <bixverse::SingleCellsGrps>
+## S7 method for class <bixverse::SingleCellsSubset>
 set_knn(x, knn, ...)
 }
 \arguments{

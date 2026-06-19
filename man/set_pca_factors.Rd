@@ -6,7 +6,7 @@
 \alias{set_pca_factors.MetaCells}
 \alias{set_pca_factors.ScCache}
 \alias{set_pca_factors.SingleCells}
-\alias{set_pca_factors.SingleCellsGrps}
+\alias{set_pca_factors.SingleCellsSubset}
 \title{Set/add PCA factors}
 \usage{
 set_pca_factors(x, pca_factor, ...)
@@ -19,7 +19,7 @@ set_pca_factors(x, pca_factor, ...)
 ## S7 method for class <bixverse::SingleCells>
 set_pca_factors(x, pca_factor, ...)
 
-## S7 method for class <bixverse::SingleCellsGrps>
+## S7 method for class <bixverse::SingleCellsSubset>
 set_pca_factors(x, pca_factor, ...)
 }
 \arguments{

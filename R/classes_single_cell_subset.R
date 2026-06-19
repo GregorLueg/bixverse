@@ -32,16 +32,17 @@
 #'   as for example the hvg indices}
 #' }
 #'
-#' @return Returns the `SingleCellsGrps` class for further operations.
+#' @return Returns the `SingleCellsSubset` class for further operations.
 #'
 #' @export
-SingleCellsGrps <- S7::new_class(
-  name = "SingleCellsGrps",
+SingleCellsSubset <- S7::new_class(
+  name = "SingleCellsSubset",
   properties = list(
     count_connection = S7::class_any,
+    dir_data = S7::class_character,
     obs_table = S7::class_data.frame,
     var_table = S7::class_data.frame,
-    grouping_variable = S7::class_character,
+    grouping_column = S7::class_character,
     group = S7::class_character,
     sc_cache = S7::class_any,
     sc_map = S7::class_any,
@@ -50,7 +51,7 @@ SingleCellsGrps <- S7::new_class(
   ),
   constructor = function(
     sc_object,
-    grouping_variable,
+    grouping_column,
     group,
     other_data = list()
   ) {
@@ -59,29 +60,39 @@ SingleCellsGrps <- S7::new_class(
 
     dir_data <- S7::prop(sc_object, "dir_data")
     sc_map <- S7::prop(sc_object, "sc_map")
-    obs_table <- get_sc_obs(sc_object)
+    obs_table <- get_sc_obs(sc_object) %>%
+      .[get(grouping_column) == group, ]
     var_table <- get_sc_var(sc_object)
 
-    checkmate::assertString(grouping_variable)
+    checkmate::assertString(grouping_column)
     checkmate::assertNames(
       x = colnames(obs_table),
-      must.include = grouping_variable
+      must.include = grouping_column
     )
     # function body
     # generate the Rust pointer
     count_connection <- sc_object@count_connection
-    #
-    cells_by_group <- obs_table[get(grouping_variable) == group, ] %>%
-      .[, .(cell_idx, cell_id)]
-    sc_map$cell_mapping <- cells_by_group
+    # subset indices
+    sc_map$cell_mapping <- sc_map$cell_mapping[
+      sc_map$cell_mapping %in%
+        obs_table$cell_idx
+    ]
+    if (!is.null(sc_map$cells_to_keep_idx)) {
+      sc_map$cells_to_keep_idx <- sc_map$cells_to_keep_idx[
+        sc_map$cells_to_keep_idx %in%
+          obs_table$cell_idx
+      ]
+    }
+    sc_map["hvg_gene_indices"] <- list(NULL)
 
     S7::new_object(
       S7::S7_object(),
       count_connection = count_connection,
+      dir_data = dir_data,
       obs_table = obs_table,
       var_table = var_table,
-      grouping_variable = grouping_variable,
-      groups = groups,
+      grouping_column = grouping_column,
+      group = group,
       sc_cache = new_sc_cache(),
       sc_map = sc_map,
       dims = c(nrow(obs_table), nrow(var_table)),
@@ -92,28 +103,28 @@ SingleCellsGrps <- S7::new_class(
 
 ## primitives ------------------------------------------------------------------
 
-#' @name print.SingleCellsGrps
+#' @name print.SingleCellsSubset
 #'
-#' @title print Method for SingleCellsGrps object
+#' @title print Method for SingleCellsSubset object
 #'
 #' @description
-#' Print a SingleCellsGrps object.
+#' Print a SingleCellsSubset object.
 #'
-#' @param x An object of class `SingleCellsGrps`.
+#' @param x An object of class `SingleCellsSubset`.
 #' @param ... Additional arguments (currently not used).
 #'
 #' @returns Invisibly returns `x`.
 #'
-#' @method print SingleCellsGrps
+#' @method print SingleCellsSubset
 #'
 #' @keywords internal
-S7::method(print, SingleCellsGrps) <- function(x, ...) {
+S7::method(print, SingleCellsSubset) <- function(x, ...) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsGrps))
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
 
   # various params
   dims <- S7::prop(x, "dims")
-  ngroups <- S7::prop(x, "groups")
+  group <- S7::prop(x, "group")
   sc_cache <- S7::prop(x, "sc_cache")
   other_data <- S7::prop(x, "other_data")
   hvg_calculated <- !is.null(other_data[["hvg"]])
@@ -132,8 +143,7 @@ S7::method(print, SingleCellsGrps) <- function(x, ...) {
     "Single cell experiment (Groups).\n",
     sprintf("  No cells: %i\n", dims[1]),
     sprintf("  No genes: %i\n", dims[2]),
-    sprintf("  No of groups: %i\n", length(ngroups)),
-    sprintf("    Group names: %s \n", paste(ngroups, collapse = ", ")),
+    sprintf("  Represented subset: %s\n", group),
     sprintf("  HVG calculated: %s\n", hvg_calculated),
     sprintf("  PCA calculated: %s\n", pca_calculated),
     sprintf("  Other embeddings: %s\n", other_embeddings_str),
@@ -144,45 +154,45 @@ S7::method(print, SingleCellsGrps) <- function(x, ...) {
   invisible(x)
 }
 
-#' @name dim.SingleCells
+#' @name dim.SingleCellsSubset
 #'
-#' @title dim Method for SingleCells object
+#' @title dim Method for SingleCellsSubset object
 #'
 #' @description
-#' Returns the dimensions of a SingleCells object. (Only taking into
+#' Returns the dimensions of a SingleCellsSubset object. (Only taking into
 #' consideration the cells to keep).
 #'
-#' @param x An object of class `SingleCells`.
+#' @param x An object of class `SingleCellsSubset`.
 #'
 #' @returns An integer vector of length 2 with the number of cells and genes.
 #'
-#' @method dim SingleCells
+#' @method dim SingleCellsSubset
 #'
 #' @keywords internal
-S7::method(dim, SingleCellsGrps) <- function(x) {
+S7::method(dim, SingleCellsSubset) <- function(x) {
   n_cells <- nrow(S7::prop(x, "obs_table"))
   n_genes <- nrow(S7::prop(x, "var_table"))
   c(n_cells, n_genes)
 }
 
-#' @name head.SingleCellsGrps
+#' @name head.SingleCellsSubset
 #'
-#' @title head Method for SingleCellsGrps object
+#' @title head Method for SingleCellsSubset object
 #'
 #' @description
-#' Returns the first `n` rows of the obs table from a `SingleCellsGrps` object.
+#' Returns the first `n` rows of the obs table from a `SingleCellsSubset` object.
 #'
-#' @param x An object of class `SingleCellsGrps`.
+#' @param x An object of class `SingleCellsSubset`.
 #' @param n Integer. Number of rows to return. Defaults to `6L`.
 #' @param ... Additional arguments (currently not used).
 #'
 #' @returns A data.table with the first `n` rows of the obs table.
 #'
-#' @method head SingleCellsGrps
+#' @method head SingleCellsSubset
 #'
 #' @keywords internal
-S7::method(head, SingleCellsGrps) <- function(x, n = 6L, ...) {
-  checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsGrps))
+S7::method(head, SingleCellsSubset) <- function(x, n = 6L, ...) {
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
   checkmate::qassert(n, "I1[1,)")
   get_sc_obs(x, indices = seq_len(n), filtered = FALSE)
 }
@@ -191,16 +201,16 @@ S7::method(head, SingleCellsGrps) <- function(x, n = 6L, ...) {
 
 ### obs ------------------------------------------------------------------------
 
-#' @method get_sc_obs SingleCellsGrps
+#' @method get_sc_obs SingleCellsSubset
 #'
 #' @export
-S7::method(get_sc_obs, SingleCellsGrps) <- function(
+S7::method(get_sc_obs, SingleCellsSubset) <- function(
   object,
   indices = NULL,
   cols = NULL,
   filtered = FALSE
 ) {
-  checkmate::assertClass(object, "bixverse::SingleCellsGrps")
+  checkmate::assertClass(object, "bixverse::SingleCellsSubset")
   checkmate::qassert(indices, c("0", "I+"))
   checkmate::qassert(filtered, "B1")
 
@@ -219,10 +229,10 @@ S7::method(get_sc_obs, SingleCellsGrps) <- function(
   return(obs_table)
 }
 
-#' @method `[[` SingleCellsGrps
+#' @method `[[` SingleCellsSubset
 #'
 #' @export
-S7::method(`[[`, SingleCellsGrps) <- function(x, i, ...) {
+S7::method(`[[`, SingleCellsSubset) <- function(x, i, ...) {
   if (missing(i)) {
     i <- NULL
   }
@@ -239,10 +249,10 @@ S7::method(`[[`, SingleCellsGrps) <- function(x, i, ...) {
 
 ### vars -----------------------------------------------------------------------
 
-#' @method get_sc_var SingleCellsGrps
+#' @method get_sc_var SingleCellsSubset
 #'
 #' @export
-S7::method(get_sc_var, SingleCellsGrps) <- function(
+S7::method(get_sc_var, SingleCellsSubset) <- function(
   object,
   indices = NULL,
   cols = NULL,
@@ -250,13 +260,13 @@ S7::method(get_sc_var, SingleCellsGrps) <- function(
 ) {
   modality <- match.arg(modality)
 
-  checkmate::assertClass(object, "bixverse::SingleCellsGrps")
+  checkmate::assertClass(object, "bixverse::SingleCellsSubset")
   checkmate::qassert(indices, c("0", "I+"))
 
   if (modality != "rna") {
     stop(
       paste(
-        "SingleCellsGrps only supports modality = 'rna'.",
+        "SingleCellsSubset only supports modality = 'rna'.",
         "Use SingleCellsMultiModal for ADT."
       )
     )
@@ -277,12 +287,11 @@ S7::method(get_sc_var, SingleCellsGrps) <- function(
 
 ### counts ---------------------------------------------------------------------
 
-#' @method get_sc_counts SingleCellsGrps
+#' @method get_sc_counts SingleCellsSubset
 #'
 #' @export
-S7::method(get_sc_counts, SingleCellsGrps) <- function(
+S7::method(get_sc_counts, SingleCellsSubset) <- function(
   object,
-  group = NULL,
   assay = c("raw", "norm"),
   return_format = c("cell", "gene"),
   cell_indices = NULL,
@@ -297,15 +306,14 @@ S7::method(get_sc_counts, SingleCellsGrps) <- function(
   if (modality != "rna") {
     stop(
       paste(
-        "SingleCellsGrps only supports modality = 'rna'.",
+        "SingleCellsSubset only supports modality = 'rna'.",
         "Use SingleCellsMultiModal for ADT."
       )
     )
   }
 
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(object, SingleCellsGrps))
-  checkmate::assertChoice(group, S7::prop(object, "groups"))
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCellsSubset))
   checkmate::assertChoice(assay, c("raw", "norm"))
   checkmate::assertChoice(return_format, c("cell", "gene"))
   checkmate::qassert(cell_indices, c("0", "I+"))
@@ -317,10 +325,8 @@ S7::method(get_sc_counts, SingleCellsGrps) <- function(
   rust_con <- get_sc_rust_ptr(object)
 
   sc_map <- get_sc_map(object)
-  ## tmp fix, need to think about a better implementation
-  sc_map$cell_mapping <- sc_map$cell_mapping[[group]]
 
-  cells_to_keep <- intersect(get_cells_to_keep(object), sc_map$cell_mapping - 1)
+  cells_to_keep <- get_cells_to_keep(object)
 
   if (use_cells_to_keep) {
     if (!is.null(cell_indices) & length(cells_to_keep) > 0) {
@@ -361,30 +367,30 @@ S7::method(get_sc_counts, SingleCellsGrps) <- function(
 
 ### map getter -----------------------------------------------------------------
 
-#' @method get_sc_var SingleCellsGrps
+#' @method get_sc_var SingleCellsSubset
 #'
 #' @export
-S7::method(get_sc_map, SingleCellsGrps) <- function(
+S7::method(get_sc_map, SingleCellsSubset) <- function(
   object
 ) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(object, SingleCellsGrps))
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCellsSubset))
 
   res <- S7::prop(object, "sc_map")
 
   return(res)
 }
 
-#' @name get_cells_to_keep.SingleCellsGrps
+#' @name get_cells_to_keep.SingleCellsSubset
 #'
 #' @rdname get_cells_to_keep
 #'
-#' @method get_cells_to_keep SingleCellsGrps
-S7::method(get_cells_to_keep, SingleCellsGrps) <- function(
+#' @method get_cells_to_keep SingleCellsSubset
+S7::method(get_cells_to_keep, SingleCellsSubset) <- function(
   x
 ) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsGrps))
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
 
   # forward to S3
   res <- get_cells_to_keep(
@@ -401,22 +407,22 @@ S7::method(get_cells_to_keep, SingleCellsGrps) <- function(
 
 #### env getters ---------------------------------------------------------------
 
-#' @method get_sc_rust_ptr SingleCellsGrps
+#' @method get_sc_rust_ptr SingleCellsSubset
 #'
 #' @export
-S7::method(get_sc_rust_ptr, SingleCellsGrps) <- function(object) {
+S7::method(get_sc_rust_ptr, SingleCellsSubset) <- function(object) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(object, SingleCellsGrps))
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCellsSubset))
 
   return(S7::prop(object, "count_connection"))
 }
 
-#' @method get_rust_count_gene_f_path SingleCellsGrps
+#' @method get_rust_count_gene_f_path SingleCellsSubset
 #'
 #' @export
-S7::method(get_rust_count_gene_f_path, SingleCellsGrps) <- function(object) {
+S7::method(get_rust_count_gene_f_path, SingleCellsSubset) <- function(object) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(object, SingleCellsGrps))
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCellsSubset))
 
   f_path <- file.path(S7::prop(object, "dir_data"), "counts_genes.bin")
 
@@ -424,22 +430,22 @@ S7::method(get_rust_count_gene_f_path, SingleCellsGrps) <- function(object) {
 }
 
 
-#' @method get_rust_count_cell_f_path SingleCellsGrps
+#' @method get_rust_count_cell_f_path SingleCellsSubset
 #'
 #' @export
-S7::method(get_rust_count_cell_f_path, SingleCellsGrps) <- function(object) {
+S7::method(get_rust_count_cell_f_path, SingleCellsSubset) <- function(object) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(object, SingleCellsGrps))
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCellsSubset))
 
   f_path <- file.path(S7::prop(object, "dir_data"), "counts_cells.bin")
 
   return(f_path)
 }
 
-#' @method `[` SingleCellsGrps
+#' @method `[` SingleCellsSubset
 #'
 #' @export
-S7::method(`[`, SingleCellsGrps) <- function(
+S7::method(`[`, SingleCellsSubset) <- function(
   x,
   i,
   j,
@@ -480,11 +486,11 @@ S7::method(`[`, SingleCellsGrps) <- function(
 
 ### obs table ------------------------------------------------------------------
 
-#' @method `[[<-` SingleCellsGrps
+#' @method `[[<-` SingleCellsSubset
 #'
 #' @export
-S7::method(`[[<-`, SingleCellsGrps) <- function(x, i, ..., value) {
-  checkmate::assertClass(x, "bixverse::SingleCellsGrps")
+S7::method(`[[<-`, SingleCellsSubset) <- function(x, i, ..., value) {
+  checkmate::assertClass(x, "bixverse::SingleCellsSubset")
   checkmate::qassert(i, "S+")
 
   if (length(i) == 1) {
@@ -502,17 +508,17 @@ S7::method(`[[<-`, SingleCellsGrps) <- function(x, i, ..., value) {
 
 #### setters -------------------------------------------------------------------
 
-#' @name set_hvg.SingleCellsGrps
+#' @name set_hvg.SingleCellsSubset
 #'
 #' @rdname set_hvg
 #'
-#' @method set_hvg SingleCellsGrps
-S7::method(set_hvg, SingleCellsGrps) <- function(
+#' @method set_hvg SingleCellsSubset
+S7::method(set_hvg, SingleCellsSubset) <- function(
   x,
   hvg
 ) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsGrps))
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
   checkmate::qassert(hvg, c("I+", "S+"))
 
   var_table <- S7::prop(x, "var_table")
@@ -546,16 +552,16 @@ S7::method(set_hvg, SingleCellsGrps) <- function(
 
 #### getters -------------------------------------------------------------------
 
-#' @name get_hvg.SingleCellsGrps
+#' @name get_hvg.SingleCellsSubset
 #'
 #' @rdname get_hvg
 #'
-#' @method get_hvg SingleCellsGrps
-S7::method(get_hvg, SingleCellsGrps) <- function(
+#' @method get_hvg SingleCellsSubset
+S7::method(get_hvg, SingleCellsSubset) <- function(
   x
 ) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsGrps))
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
 
   hvg_indices <- as.integer(S7::prop(x, "other_data")[["hvg"]])
   if (length(hvg_indices) == 0) {
@@ -565,18 +571,18 @@ S7::method(get_hvg, SingleCellsGrps) <- function(
   return(hvg_indices)
 }
 
-#' @name get_cell_indices.SingleCellsGrps
+#' @name get_cell_indices.SingleCellsSubset
 #'
 #' @rdname get_cell_indices
 #'
-#' @method get_cell_indices SingleCellsGrps
-S7::method(get_cell_indices, SingleCellsGrps) <- function(
+#' @method get_cell_indices SingleCellsSubset
+S7::method(get_cell_indices, SingleCellsSubset) <- function(
   x,
   cell_ids,
   rust_index
 ) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsGrps))
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
   checkmate::qassert(cell_ids, "S+")
   checkmate::qassert(rust_index, "B1")
 
@@ -594,18 +600,18 @@ S7::method(get_cell_indices, SingleCellsGrps) <- function(
   return(indices)
 }
 
-#' @name get_gene_indices.SingleCellsGrps
+#' @name get_gene_indices.SingleCellsSubset
 #'
 #' @rdname get_gene_indices
 #'
-#' @method get_gene_indices SingleCellsGrps
-S7::method(get_gene_indices, SingleCellsGrps) <- function(
+#' @method get_gene_indices SingleCellsSubset
+S7::method(get_gene_indices, SingleCellsSubset) <- function(
   x,
   gene_ids,
   rust_index
 ) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsGrps))
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
   checkmate::qassert(gene_ids, "S+")
   checkmate::qassert(rust_index, "B1")
 
@@ -637,18 +643,18 @@ S7::method(get_gene_indices, SingleCellsGrps) <- function(
 
 #### setters -------------------------------------------------------------------
 
-#' @name set_pca_factors.SingleCellsGrps
+#' @name set_pca_factors.SingleCellsSubset
 #'
 #' @rdname set_pca_factors
 #'
-#' @method set_pca_factors SingleCellsGrps
-S7::method(set_pca_factors, SingleCellsGrps) <- function(
+#' @method set_pca_factors SingleCellsSubset
+S7::method(set_pca_factors, SingleCellsSubset) <- function(
   x,
   pca_factor,
   ...
 ) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsGrps))
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
   checkmate::assertMatrix(pca_factor, mode = "numeric")
 
   S7::prop(x, "sc_cache") <- set_pca_factors(
@@ -659,18 +665,18 @@ S7::method(set_pca_factors, SingleCellsGrps) <- function(
   return(x)
 }
 
-#' @name set_pca_loadings.SingleCellsGrps
+#' @name set_pca_loadings.SingleCellsSubset
 #'
 #' @rdname set_pca_loadings
 #'
-#' @method set_pca_loadings SingleCellsGrps
-S7::method(set_pca_loadings, SingleCellsGrps) <- function(
+#' @method set_pca_loadings SingleCellsSubset
+S7::method(set_pca_loadings, SingleCellsSubset) <- function(
   x,
   pca_loading,
   ...
 ) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsGrps))
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
   checkmate::assertMatrix(pca_loading, mode = "numeric")
 
   S7::prop(x, "sc_cache") <- set_pca_loadings(
@@ -681,18 +687,18 @@ S7::method(set_pca_loadings, SingleCellsGrps) <- function(
   return(x)
 }
 
-#' @name set_pca_singular_vals.SingleCellsGrps
+#' @name set_pca_singular_vals.SingleCellsSubset
 #'
 #' @rdname set_pca_singular_vals
 #'
-#' @method set_pca_singular_vals SingleCellsGrps
-S7::method(set_pca_singular_vals, SingleCellsGrps) <- function(
+#' @method set_pca_singular_vals SingleCellsSubset
+S7::method(set_pca_singular_vals, SingleCellsSubset) <- function(
   x,
   singular_vals,
   ...
 ) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsGrps))
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
   checkmate::qassert(singular_vals, "N+")
 
   S7::prop(x, "sc_cache") <- set_pca_singular_vals(
@@ -703,19 +709,19 @@ S7::method(set_pca_singular_vals, SingleCellsGrps) <- function(
   return(x)
 }
 
-#' @name set_embedding.SingleCellsGrps
+#' @name set_embedding.SingleCellsSubset
 #'
 #' @rdname set_embedding
 #'
-#' @method set_embedding SingleCellsGrps
-S7::method(set_embedding, SingleCellsGrps) <- function(
+#' @method set_embedding SingleCellsSubset
+S7::method(set_embedding, SingleCellsSubset) <- function(
   x,
   embd,
   name,
   ...
 ) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsGrps))
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
   checkmate::assertMatrix(embd, mode = "numeric")
   checkmate::qassert(name, "S1")
 
@@ -728,18 +734,18 @@ S7::method(set_embedding, SingleCellsGrps) <- function(
   return(x)
 }
 
-#' @name set_knn.SingleCellsGrps
+#' @name set_knn.SingleCellsSubset
 #'
 #' @rdname set_knn
 #'
-#' @method set_knn SingleCellsGrps
-S7::method(set_knn, SingleCellsGrps) <- function(
+#' @method set_knn SingleCellsSubset
+S7::method(set_knn, SingleCellsSubset) <- function(
   x,
   knn,
   ...
 ) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsGrps))
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
   checkmate::assertClass(knn, "SingleCellNearestNeighbour")
 
   S7::prop(x, "sc_cache") <- set_knn(
@@ -750,18 +756,18 @@ S7::method(set_knn, SingleCellsGrps) <- function(
   return(x)
 }
 
-#' @name set_snn_graph.SingleCellsGrps
+#' @name set_snn_graph.SingleCellsSubset
 #'
 #' @rdname set_snn_graph
 #'
-#' @method set_snn_graph SingleCellsGrps
-S7::method(set_snn_graph, SingleCellsGrps) <- function(
+#' @method set_snn_graph SingleCellsSubset
+S7::method(set_snn_graph, SingleCellsSubset) <- function(
   x,
   snn_graph,
   ...
 ) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsGrps))
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
   checkmate::assertClass(snn_graph, "igraph")
 
   S7::prop(x, "sc_cache") <- set_snn_graph(
@@ -772,17 +778,17 @@ S7::method(set_snn_graph, SingleCellsGrps) <- function(
   return(x)
 }
 
-#' @name remove_knn.SingleCellsGrps
+#' @name remove_knn.SingleCellsSubset
 #'
 #' @rdname remove_knn
 #'
-#' @method remove_knn SingleCellsGrps
-S7::method(remove_knn, SingleCellsGrps) <- function(
+#' @method remove_knn SingleCellsSubset
+S7::method(remove_knn, SingleCellsSubset) <- function(
   x,
   ...
 ) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsGrps))
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
 
   S7::prop(x, "sc_cache") <- remove_knn(
     x = S7::prop(x, "sc_cache")
@@ -791,17 +797,17 @@ S7::method(remove_knn, SingleCellsGrps) <- function(
   return(x)
 }
 
-#' @name remove_snn_graph.SingleCellsGrps
+#' @name remove_snn_graph.SingleCellsSubset
 #'
 #' @rdname remove_snn_graph
 #'
-#' @method remove_snn_graph SingleCellsGrps
-S7::method(remove_snn_graph, SingleCellsGrps) <- function(
+#' @method remove_snn_graph SingleCellsSubset
+S7::method(remove_snn_graph, SingleCellsSubset) <- function(
   x,
   ...
 ) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsGrps))
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
 
   S7::prop(x, "sc_cache") <- remove_snn_graph(
     x = S7::prop(x, "sc_cache")
@@ -812,17 +818,17 @@ S7::method(remove_snn_graph, SingleCellsGrps) <- function(
 
 #### getters -------------------------------------------------------------------
 
-#' @name get_pca_factors.SingleCellsGrps
+#' @name get_pca_factors.SingleCellsSubset
 #'
 #' @rdname get_pca_factors
 #'
-#' @method get_pca_factors SingleCellsGrps
-S7::method(get_pca_factors, SingleCellsGrps) <- function(
+#' @method get_pca_factors SingleCellsSubset
+S7::method(get_pca_factors, SingleCellsSubset) <- function(
   x,
   ...
 ) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsGrps))
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
 
   res <- get_pca_factors(
     x = S7::prop(x, "sc_cache")
@@ -838,17 +844,17 @@ S7::method(get_pca_factors, SingleCellsGrps) <- function(
   return(res)
 }
 
-#' @name get_pca_loadings.SingleCellsGrps
+#' @name get_pca_loadings.SingleCellsSubset
 #'
 #' @rdname get_pca_loadings
 #'
-#' @method get_pca_loadings SingleCellsGrps
-S7::method(get_pca_loadings, SingleCellsGrps) <- function(
+#' @method get_pca_loadings SingleCellsSubset
+S7::method(get_pca_loadings, SingleCellsSubset) <- function(
   x,
   ...
 ) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsGrps))
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
 
   res <- get_pca_loadings(
     x = S7::prop(x, "sc_cache")
@@ -864,17 +870,17 @@ S7::method(get_pca_loadings, SingleCellsGrps) <- function(
   return(res)
 }
 
-#' @name get_pca_singular_val.SingleCellsGrps
+#' @name get_pca_singular_val.SingleCellsSubset
 #'
 #' @rdname get_pca_singular_val
 #'
-#' @method get_pca_singular_val SingleCellsGrps
-S7::method(get_pca_singular_val, SingleCellsGrps) <- function(
+#' @method get_pca_singular_val SingleCellsSubset
+S7::method(get_pca_singular_val, SingleCellsSubset) <- function(
   x,
   ...
 ) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsGrps))
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
 
   res <- get_pca_singular_val(
     x = S7::prop(x, "sc_cache")
@@ -883,18 +889,18 @@ S7::method(get_pca_singular_val, SingleCellsGrps) <- function(
   return(res)
 }
 
-#' @name get_embedding.SingleCellsGrps
+#' @name get_embedding.SingleCellsSubset
 #'
 #' @rdname get_embedding
 #'
-#' @method get_embedding SingleCellsGrps
-S7::method(get_embedding, SingleCellsGrps) <- function(
+#' @method get_embedding SingleCellsSubset
+S7::method(get_embedding, SingleCellsSubset) <- function(
   x,
   embd_name,
   ...
 ) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsGrps))
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
   checkmate::qassert(embd_name, "S1")
 
   res <- get_embedding(
@@ -907,17 +913,17 @@ S7::method(get_embedding, SingleCellsGrps) <- function(
   return(res)
 }
 
-#' @name get_available_embeddings.SingleCellsGrps
+#' @name get_available_embeddings.SingleCellsSubset
 #'
 #' @rdname get_available_embeddings
 #'
-#' @method get_available_embeddings SingleCellsGrps
-S7::method(get_available_embeddings, SingleCellsGrps) <- function(
+#' @method get_available_embeddings SingleCellsSubset
+S7::method(get_available_embeddings, SingleCellsSubset) <- function(
   x,
   ...
 ) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsGrps))
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
 
   res <- get_available_embeddings(
     x = S7::prop(x, "sc_cache")
@@ -926,17 +932,17 @@ S7::method(get_available_embeddings, SingleCellsGrps) <- function(
   return(res)
 }
 
-#' @name get_knn_mat.SingleCellsGrps
+#' @name get_knn_mat.SingleCellsSubset
 #'
 #' @rdname get_knn_mat
 #'
-#' @method get_knn_mat SingleCellsGrps
-S7::method(get_knn_mat, SingleCellsGrps) <- function(
+#' @method get_knn_mat SingleCellsSubset
+S7::method(get_knn_mat, SingleCellsSubset) <- function(
   x,
   ...
 ) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsGrps))
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
 
   res <- get_knn_mat(
     x = S7::prop(x, "sc_cache")
@@ -945,17 +951,17 @@ S7::method(get_knn_mat, SingleCellsGrps) <- function(
   return(res)
 }
 
-#' @name get_knn_dist.SingleCellsGrps
+#' @name get_knn_dist.SingleCellsSubset
 #'
 #' @rdname get_knn_dist
 #'
-#' @method get_knn_dist SingleCellsGrps
-S7::method(get_knn_dist, SingleCellsGrps) <- function(
+#' @method get_knn_dist SingleCellsSubset
+S7::method(get_knn_dist, SingleCellsSubset) <- function(
   x,
   ...
 ) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsGrps))
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
 
   res <- get_knn_dist(
     x = S7::prop(x, "sc_cache")
@@ -964,17 +970,17 @@ S7::method(get_knn_dist, SingleCellsGrps) <- function(
   return(res)
 }
 
-#' @name get_knn_obj.SingleCellsGrps
+#' @name get_knn_obj.SingleCellsSubset
 #'
 #' @rdname get_knn_obj
 #'
-#' @method get_knn_obj SingleCellsGrps
-S7::method(get_knn_obj, SingleCellsGrps) <- function(
+#' @method get_knn_obj SingleCellsSubset
+S7::method(get_knn_obj, SingleCellsSubset) <- function(
   x,
   ...
 ) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsGrps))
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
 
   res <- get_knn_obj(
     x = S7::prop(x, "sc_cache")
@@ -983,17 +989,17 @@ S7::method(get_knn_obj, SingleCellsGrps) <- function(
   return(res)
 }
 
-#' @name get_snn_graph.SingleCellsGrps
+#' @name get_snn_graph.SingleCellsSubset
 #'
 #' @rdname get_snn_graph
 #'
-#' @method get_snn_graph SingleCellsGrps
-S7::method(get_snn_graph, SingleCellsGrps) <- function(
+#' @method get_snn_graph SingleCellsSubset
+S7::method(get_snn_graph, SingleCellsSubset) <- function(
   x,
   ...
 ) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsGrps))
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
 
   res <- get_snn_graph(
     x = S7::prop(x, "sc_cache")

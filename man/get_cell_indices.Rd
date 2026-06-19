@@ -6,7 +6,7 @@
 \alias{get_cell_indices.MetaCells}
 \alias{get_cell_indices.ScMap}
 \alias{get_cell_indices.SingleCells}
-\alias{get_cell_indices.SingleCellsGrps}
+\alias{get_cell_indices.SingleCellsSubset}
 \title{Get the index position for a gene}
 \usage{
 get_cell_indices(x, cell_ids, rust_index)
@@ -19,7 +19,7 @@ get_cell_indices(x, cell_ids, rust_index)
 ## S7 method for class <bixverse::SingleCells>
 get_cell_indices(x, cell_ids, rust_index)
 
-## S7 method for class <bixverse::SingleCellsGrps>
+## S7 method for class <bixverse::SingleCellsSubset>
 get_cell_indices(x, cell_ids, rust_index)
 }
 \arguments{

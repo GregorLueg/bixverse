@@ -6,7 +6,7 @@
 \alias{remove_knn.MetaCells}
 \alias{remove_knn.ScCache}
 \alias{remove_knn.SingleCells}
-\alias{remove_knn.SingleCellsGrps}
+\alias{remove_knn.SingleCellsSubset}
 \title{Remove the KNN data}
 \usage{
 remove_knn(x, ...)
@@ -19,7 +19,7 @@ remove_knn(x, ...)
 ## S7 method for class <bixverse::SingleCells>
 remove_knn(x, ...)
 
-## S7 method for class <bixverse::SingleCellsGrps>
+## S7 method for class <bixverse::SingleCellsSubset>
 remove_knn(x, ...)
 }
 \arguments{

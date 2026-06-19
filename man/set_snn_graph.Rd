@@ -6,7 +6,7 @@
 \alias{set_snn_graph.MetaCells}
 \alias{set_snn_graph.ScCache}
 \alias{set_snn_graph.SingleCells}
-\alias{set_snn_graph.SingleCellsGrps}
+\alias{set_snn_graph.SingleCellsSubset}
 \title{Set/add KNN}
 \usage{
 set_snn_graph(x, snn_graph, ...)
@@ -19,7 +19,7 @@ set_snn_graph(x, snn_graph, ...)
 ## S7 method for class <bixverse::SingleCells>
 set_snn_graph(x, snn_graph, ...)
 
-## S7 method for class <bixverse::SingleCellsGrps>
+## S7 method for class <bixverse::SingleCellsSubset>
 set_snn_graph(x, snn_graph, ...)
 }
 \arguments{

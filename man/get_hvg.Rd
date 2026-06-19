@@ -6,7 +6,7 @@
 \alias{get_hvg.MetaCells}
 \alias{get_hvg.ScMap}
 \alias{get_hvg.SingleCells}
-\alias{get_hvg.SingleCellsGrps}
+\alias{get_hvg.SingleCellsSubset}
 \title{Get the HVG}
 \usage{
 get_hvg(x)
@@ -19,7 +19,7 @@ get_hvg(x)
 ## S7 method for class <bixverse::SingleCells>
 get_hvg(x)
 
-## S7 method for class <bixverse::SingleCellsGrps>
+## S7 method for class <bixverse::SingleCellsSubset>
 get_hvg(x)
 }
 \arguments{

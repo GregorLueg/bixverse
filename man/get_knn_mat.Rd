@@ -7,7 +7,7 @@
 \alias{get_knn_mat.MetaCells}
 \alias{get_knn_mat.ScCache}
 \alias{get_knn_mat.SingleCells}
-\alias{get_knn_mat.SingleCellsGrps}
+\alias{get_knn_mat.SingleCellsSubset}
 \alias{get_knn_mat.SingleCellNearestNeighbour}
 \title{Get the KNN matrix}
 \usage{
@@ -21,7 +21,7 @@ get_knn_mat(x, ...)
 ## S7 method for class <bixverse::SingleCells>
 get_knn_mat(x, ...)
 
-## S7 method for class <bixverse::SingleCellsGrps>
+## S7 method for class <bixverse::SingleCellsSubset>
 get_knn_mat(x, ...)
 
 \method{get_knn_mat}{SingleCellNearestNeighbour}(x)

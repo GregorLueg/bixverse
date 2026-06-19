@@ -5,7 +5,7 @@
 \alias{get_cells_to_keep}
 \alias{get_cells_to_keep.ScMap}
 \alias{get_cells_to_keep.SingleCells}
-\alias{get_cells_to_keep.SingleCellsGrps}
+\alias{get_cells_to_keep.SingleCellsSubset}
 \title{Get the cells to keep}
 \usage{
 get_cells_to_keep(x)
@@ -15,7 +15,7 @@ get_cells_to_keep(x)
 ## S7 method for class <bixverse::SingleCells>
 get_cells_to_keep(x)
 
-## S7 method for class <bixverse::SingleCellsGrps>
+## S7 method for class <bixverse::SingleCellsSubset>
 get_cells_to_keep(x)
 }
 \arguments{

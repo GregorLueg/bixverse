@@ -6,7 +6,7 @@
 \alias{set_hvg.MetaCells}
 \alias{set_hvg.ScMap}
 \alias{set_hvg.SingleCells}
-\alias{set_hvg.SingleCellsGrps}
+\alias{set_hvg.SingleCellsSubset}
 \title{Set the HVG genes}
 \usage{
 set_hvg(x, hvg)
@@ -19,7 +19,7 @@ set_hvg(x, hvg)
 ## S7 method for class <bixverse::SingleCells>
 set_hvg(x, hvg)
 
-## S7 method for class <bixverse::SingleCellsGrps>
+## S7 method for class <bixverse::SingleCellsSubset>
 set_hvg(x, hvg)
 }
 \arguments{

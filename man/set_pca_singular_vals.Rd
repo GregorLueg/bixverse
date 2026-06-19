@@ -6,7 +6,7 @@
 \alias{set_pca_singular_vals.MetaCells}
 \alias{set_pca_singular_vals.ScCache}
 \alias{set_pca_singular_vals.SingleCells}
-\alias{set_pca_singular_vals.SingleCellsGrps}
+\alias{set_pca_singular_vals.SingleCellsSubset}
 \title{Set/add PCA singular values}
 \usage{
 set_pca_singular_vals(x, singular_vals, ...)
@@ -19,7 +19,7 @@ set_pca_singular_vals(x, singular_vals, ...)
 ## S7 method for class <bixverse::SingleCells>
 set_pca_singular_vals(x, singular_vals, ...)
 
-## S7 method for class <bixverse::SingleCellsGrps>
+## S7 method for class <bixverse::SingleCellsSubset>
 set_pca_singular_vals(x, singular_vals, ...)
 }
 \arguments{

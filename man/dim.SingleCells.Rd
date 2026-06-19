@@ -8,7 +8,7 @@
 ## S7 method for class <bixverse::SingleCells>
 dim(x)
 
-## S7 method for class <bixverse::SingleCellsGrps>
+## S7 method for class <bixverse::SingleCellsSubset>
 dim(x)
 }
 \arguments{

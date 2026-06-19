@@ -6,7 +6,7 @@
 \alias{get_pca_factors.MetaCells}
 \alias{get_pca_factors.ScCache}
 \alias{get_pca_factors.SingleCells}
-\alias{get_pca_factors.SingleCellsGrps}
+\alias{get_pca_factors.SingleCellsSubset}
 \title{Get the PCA factors}
 \usage{
 get_pca_factors(x, ...)
@@ -19,7 +19,7 @@ get_pca_factors(x, ...)
 ## S7 method for class <bixverse::SingleCells>
 get_pca_factors(x, ...)
 
-## S7 method for class <bixverse::SingleCellsGrps>
+## S7 method for class <bixverse::SingleCellsSubset>
 get_pca_factors(x, ...)
 }
 \arguments{

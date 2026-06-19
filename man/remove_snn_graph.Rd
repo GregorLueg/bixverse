@@ -6,7 +6,7 @@
 \alias{remove_snn_graph.MetaCells}
 \alias{remove_snn_graph.ScCache}
 \alias{remove_snn_graph.SingleCells}
-\alias{remove_snn_graph.SingleCellsGrps}
+\alias{remove_snn_graph.SingleCellsSubset}
 \title{Remove the sNN graph}
 \usage{
 remove_snn_graph(x, ...)
@@ -19,7 +19,7 @@ remove_snn_graph(x, ...)
 ## S7 method for class <bixverse::SingleCells>
 remove_snn_graph(x, ...)
 
-## S7 method for class <bixverse::SingleCellsGrps>
+## S7 method for class <bixverse::SingleCellsSubset>
 remove_snn_graph(x, ...)
 }
 \arguments{

@@ -6,7 +6,7 @@
 \alias{set_embedding.MetaCells}
 \alias{set_embedding.ScCache}
 \alias{set_embedding.SingleCells}
-\alias{set_embedding.SingleCellsGrps}
+\alias{set_embedding.SingleCellsSubset}
 \title{Add additional embeddings to the class}
 \usage{
 set_embedding(x, embd, name, ...)
@@ -19,7 +19,7 @@ set_embedding(x, embd, name, ...)
 ## S7 method for class <bixverse::SingleCells>
 set_embedding(x, embd, name, ...)
 
-## S7 method for class <bixverse::SingleCellsGrps>
+## S7 method for class <bixverse::SingleCellsSubset>
 set_embedding(x, embd, name, ...)
 }
 \arguments{

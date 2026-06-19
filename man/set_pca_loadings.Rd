@@ -6,7 +6,7 @@
 \alias{set_pca_loadings.MetaCells}
 \alias{set_pca_loadings.ScCache}
 \alias{set_pca_loadings.SingleCells}
-\alias{set_pca_loadings.SingleCellsGrps}
+\alias{set_pca_loadings.SingleCellsSubset}
 \title{Set/add PCA loadings}
 \usage{
 set_pca_loadings(x, pca_loading, ...)
@@ -19,7 +19,7 @@ set_pca_loadings(x, pca_loading, ...)
 ## S7 method for class <bixverse::SingleCells>
 set_pca_loadings(x, pca_loading, ...)
 
-## S7 method for class <bixverse::SingleCellsGrps>
+## S7 method for class <bixverse::SingleCellsSubset>
 set_pca_loadings(x, pca_loading, ...)
 }
 \arguments{

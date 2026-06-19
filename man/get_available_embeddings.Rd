@@ -6,7 +6,7 @@
 \alias{get_available_embeddings.MetaCells}
 \alias{get_available_embeddings.ScCache}
 \alias{get_available_embeddings.SingleCells}
-\alias{get_available_embeddings.SingleCellsGrps}
+\alias{get_available_embeddings.SingleCellsSubset}
 \title{Get the available embeddings}
 \usage{
 get_available_embeddings(x, ...)
@@ -19,7 +19,7 @@ get_available_embeddings(x, ...)
 ## S7 method for class <bixverse::SingleCells>
 get_available_embeddings(x, ...)
 
-## S7 method for class <bixverse::SingleCellsGrps>
+## S7 method for class <bixverse::SingleCellsSubset>
 get_available_embeddings(x, ...)
 }
 \arguments{

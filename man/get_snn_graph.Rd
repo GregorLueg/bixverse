@@ -6,7 +6,7 @@
 \alias{get_snn_graph.MetaCells}
 \alias{get_snn_graph.ScCache}
 \alias{get_snn_graph.SingleCells}
-\alias{get_snn_graph.SingleCellsGrps}
+\alias{get_snn_graph.SingleCellsSubset}
 \title{Get the sNN graph}
 \usage{
 get_snn_graph(x, ...)
@@ -19,7 +19,7 @@ get_snn_graph(x, ...)
 ## S7 method for class <bixverse::SingleCells>
 get_snn_graph(x, ...)
 
-## S7 method for class <bixverse::SingleCellsGrps>
+## S7 method for class <bixverse::SingleCellsSubset>
 get_snn_graph(x, ...)
 }
 \arguments{

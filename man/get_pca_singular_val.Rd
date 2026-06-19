@@ -6,7 +6,7 @@
 \alias{get_pca_singular_val.MetaCells}
 \alias{get_pca_singular_val.ScCache}
 \alias{get_pca_singular_val.SingleCells}
-\alias{get_pca_singular_val.SingleCellsGrps}
+\alias{get_pca_singular_val.SingleCellsSubset}
 \title{Get the PCA singular values}
 \usage{
 get_pca_singular_val(x, ...)
@@ -19,7 +19,7 @@ get_pca_singular_val(x, ...)
 ## S7 method for class <bixverse::SingleCells>
 get_pca_singular_val(x, ...)
 
-## S7 method for class <bixverse::SingleCellsGrps>
+## S7 method for class <bixverse::SingleCellsSubset>
 get_pca_singular_val(x, ...)
 }
 \arguments{

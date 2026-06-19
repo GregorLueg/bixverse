@@ -6,7 +6,7 @@
 \alias{get_knn_obj.MetaCells}
 \alias{get_knn_obj.ScCache}
 \alias{get_knn_obj.SingleCells}
-\alias{get_knn_obj.SingleCellsGrps}
+\alias{get_knn_obj.SingleCellsSubset}
 \title{Get the KNN object}
 \usage{
 get_knn_obj(x, ...)
@@ -19,7 +19,7 @@ get_knn_obj(x, ...)
 ## S7 method for class <bixverse::SingleCells>
 get_knn_obj(x, ...)
 
-## S7 method for class <bixverse::SingleCellsGrps>
+## S7 method for class <bixverse::SingleCellsSubset>
 get_knn_obj(x, ...)
 }
 \arguments{

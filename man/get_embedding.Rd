@@ -6,7 +6,7 @@
 \alias{get_embedding.MetaCells}
 \alias{get_embedding.ScCache}
 \alias{get_embedding.SingleCells}
-\alias{get_embedding.SingleCellsGrps}
+\alias{get_embedding.SingleCellsSubset}
 \title{Get the embedding}
 \usage{
 get_embedding(x, embd_name, ...)
@@ -19,7 +19,7 @@ get_embedding(x, embd_name, ...)
 ## S7 method for class <bixverse::SingleCells>
 get_embedding(x, embd_name, ...)
 
-## S7 method for class <bixverse::SingleCellsGrps>
+## S7 method for class <bixverse::SingleCellsSubset>
 get_embedding(x, embd_name, ...)
 }
 \arguments{

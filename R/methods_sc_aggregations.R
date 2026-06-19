@@ -12,6 +12,9 @@
 #' of for example correlation-based methods to identify co-regulated genes.
 #'
 #' @param object `SingleCells` class.
+#' @param group_by String. Optional parameter to generate metacells
+#' by the grouping variable (e.g. by sample). This will regenerate
+#' also the requested embedding (e.g. pca or harmony) within each group.
 #' @param sc_meta_cell_params List. Output of [bixverse::params_sc_metacells()].
 #' A list with the following items:
 #' \itemize{
@@ -51,6 +54,7 @@ generate_bt_meta_cells_sc <- S7::new_generic(
   dispatch_args = "object",
   fun = function(
     object,
+    group_by = NULL,
     sc_meta_cell_params = params_sc_bt_metacells(),
     regenerate_knn = FALSE,
     embd_to_use = "pca",
@@ -72,6 +76,7 @@ generate_bt_meta_cells_sc <- S7::new_generic(
 #' @importFrom magrittr `%>%`
 S7::method(generate_bt_meta_cells_sc, SingleCells) <- function(
   object,
+  group_by = NULL,
   sc_meta_cell_params = params_sc_bt_metacells(),
   regenerate_knn = FALSE,
   embd_to_use = "pca",
@@ -91,7 +96,102 @@ S7::method(generate_bt_meta_cells_sc, SingleCells) <- function(
   checkmate::qassert(target_size, "N1")
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
-  # if the kNN graph shall be regenerated, get the emedding here...
+  if (is.null(group_by)) {
+    # if the kNN graph shall be regenerated, get the embedding here...
+    c(embd, knn_data) %<-%
+      prepare_metacell_data(
+        object,
+        regenerate_knn,
+        embd_to_use,
+        no_embd_to_use,
+        cells_to_use
+      )
+
+    meta_cell_data <- rs_get_metacells_bootstrapped(
+      f_path = get_rust_count_cell_f_path(object),
+      knn_mat = knn_data,
+      embd = embd,
+      cells_to_use = cells_to_use,
+      cells_to_keep = get_cells_to_keep(object),
+      meta_cell_params = sc_meta_cell_params,
+      target_size = target_size,
+      seed = seed,
+      verbose = parse_verbosity(.verbose)
+    )
+  } else {
+    ## generating metacells by group
+    obs_table <- get_sc_obs(object)
+    checkmate::assertChoice(x = group_by, choices = colnames(obs_table))
+    ## subset object by group
+    groups <- unique(obs_table[[group_by]])
+    no_hvg <- length(object@sc_map$hvg_gene_indices)
+    no_pca_dim <- ncol(object@sc_cache$pca_factors)
+
+    for (i in groups) {
+      subset_object <- SingleCellsSubset(
+        sc_object = object,
+        grouping_column = group_by,
+        group = i
+      )
+
+      ## regenerate embedding
+      subset_object <- find_hvg_sc(
+        object = subset_object,
+        hvg_no = no_hvg,
+        .verbose = TRUE
+      )
+
+      subset_object <- calculate_pca_sc(
+        object = subset_object,
+        no_pcs = 30L,
+        sparse_svd = TRUE
+      )
+      embd <- get_embedding(x = subset_object, embd_name = embd_to_use)
+
+      if (!is.null(no_embd_to_use)) {
+        to_take <- min(c(no_embd_to_use, ncol(embd)))
+        embd <- embd[, 1:to_take]
+      }
+      knn_data <- NULL
+
+      meta_cell_data_subset <- rs_get_metacells_bootstrapped(
+        f_path = get_rust_count_cell_f_path(subset_object),
+        knn_mat = knn_data,
+        embd = embd,
+        cells_to_use = cells_to_use,
+        cells_to_keep = get_cells_to_keep(subset_object),
+        meta_cell_params = sc_meta_cell_params,
+        target_size = target_size,
+        seed = seed,
+        verbose = parse_verbosity(.verbose)
+      )
+      meta_cell_obj <- MetaCells(
+        meta_cell_data = meta_cell_data_subset,
+        var_data = var_data,
+        meta_cell_method = "meta_cells_hdwgcna"
+      )
+    }
+  }
+
+  var_data <- get_sc_var(object, cols = c("gene_idx", "gene_id"))
+
+  meta_cell_obj <- MetaCells(
+    meta_cell_data = meta_cell_data,
+    var_data = var_data,
+    meta_cell_method = "meta_cells_hdwgcna"
+  )
+
+  return(meta_cell_obj)
+}
+
+
+prepare_metacell_data <- function(
+  object,
+  regenerate_knn,
+  embd_to_use,
+  no_embd_to_use,
+  cells_to_use
+) {
   if (regenerate_knn) {
     embd <- get_embedding(x = object, embd_name = embd_to_use)
 
@@ -155,30 +255,8 @@ S7::method(generate_bt_meta_cells_sc, SingleCells) <- function(
     }
     knn_data <- NULL
   }
-
-  meta_cell_data <- rs_get_metacells_bootstrapped(
-    f_path = get_rust_count_cell_f_path(object),
-    knn_mat = knn_data,
-    embd = embd,
-    cells_to_use = cells_to_use,
-    cells_to_keep = get_cells_to_keep(object),
-    meta_cell_params = sc_meta_cell_params,
-    target_size = target_size,
-    seed = seed,
-    verbose = parse_verbosity(.verbose)
-  )
-
-  var_data <- get_sc_var(object, cols = c("gene_idx", "gene_id"))
-
-  meta_cell_obj <- MetaCells(
-    meta_cell_data = meta_cell_data,
-    var_data = var_data,
-    meta_cell_method = "meta_cells_hdwgcna"
-  )
-
-  return(meta_cell_obj)
+  return(list(embd, knn_data))
 }
-
 ### seacells -------------------------------------------------------------------
 
 #' Generate meta cells based on SEACells and return a `MetaCells` object

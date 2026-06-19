@@ -24,24 +24,34 @@ sc_object[["sample"]] <- sample(
   replace = T
 )
 
-grp_object <- SingleCellsGrps(
+grp_object <- SingleCellsSubset(
   sc_object = sc_object,
-  grouping_variable = "sample"
+  grouping_column = "sample",
+  group = "sample1"
 )
-grp_object@grouping_variable
-
+head(grp_object@sc_map$cell_mapping)
+grp_object@group
 
 get_sc_counts(sc_object)
 get_sc_counts(grp_object)
 
+count_data <- get_counts_from_rust(
+  rust_con = rust_con,
+  assay = assay,
+  return_format = return_format,
+  cell_indices = cell_indices,
+  gene_indices = gene_indices,
+  .verbose = .verbose
+)
 
-object = grp_object
-assay = "norm"
-return_format = "gene"
-cell_indices = NULL
-gene_indices = NULL
-use_cells_to_keep = TRUE
-modality = "rna"
+group_by = NULL
+sc_meta_cell_params = params_sc_bt_metacells()
+regenerate_knn = FALSE
+embd_to_use = "pca"
+no_embd_to_use = NULL
+cells_to_use = NULL
+target_size = 1e5
+seed = 42L
 .verbose = TRUE
 
 sc_object <- SingleCells(dir_data = tempdir_pbmc)

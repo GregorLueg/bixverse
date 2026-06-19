@@ -7,7 +7,7 @@
 \alias{get_knn_dist.MetaCells}
 \alias{get_knn_dist.ScCache}
 \alias{get_knn_dist.SingleCells}
-\alias{get_knn_dist.SingleCellsGrps}
+\alias{get_knn_dist.SingleCellsSubset}
 \alias{get_knn_dist.SingleCellNearestNeighbour}
 \title{Get the KNN distance}
 \usage{
@@ -21,7 +21,7 @@ get_knn_dist(x, ...)
 ## S7 method for class <bixverse::SingleCells>
 get_knn_dist(x, ...)
 
-## S7 method for class <bixverse::SingleCellsGrps>
+## S7 method for class <bixverse::SingleCellsSubset>
 get_knn_dist(x, ...)
 
 \method{get_knn_dist}{SingleCellNearestNeighbour}(x)
