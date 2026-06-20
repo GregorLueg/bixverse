@@ -29,6 +29,7 @@ A list with the following items
 }
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 Computes the average silhouette width on batch labels using pairwise
 distances in the embedding space. Values near 0 indicate good batch
 mixing, values near 1 indicate batch separation.

@@ -25,7 +25,6 @@ Following things were added:
 * [Symphony](https://www.nature.com/articles/s41467-021-25957-x) for label 
   transfer of cell types.
 * Grouping column for doublet detection methods.
-* 
 
 ## Breaking changes
 

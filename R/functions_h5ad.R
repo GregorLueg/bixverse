@@ -104,6 +104,8 @@
 #' @return The detected slot name, or NULL if none qualifies.
 #'
 #' @export
+#'
+#' @keywords internal
 detect_raw_count_slot <- function(
   f_path,
   candidates = c("layers.counts", "raw.X", "X"),

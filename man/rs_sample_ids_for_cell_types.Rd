@@ -22,6 +22,8 @@ to sample id associations.}
 An integer vector representing the samples.
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 Extract out of \code{rs_synthetic_sc_data_with_cell_types()} to quickly iterate
 over different sample to cell type patterns
 }
+\keyword{internal}

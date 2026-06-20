@@ -27,6 +27,7 @@ A list with:
 }
 }
 \description{
-This function calculates the Wang similarities between all
-permutations of a given set of terms.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+This function calculates the Wang similarities between all permutations of a
+given set of terms.
 }

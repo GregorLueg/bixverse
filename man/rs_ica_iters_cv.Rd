@@ -50,6 +50,7 @@ convergence. Length = no_random_init
 }
 }
 \description{
-This function will split the data into \code{no_folds} and apply
-ICA with \code{no_random_inits} over that fold.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+This function will split the data into \code{no_folds} and apply ICA with
+\code{no_random_inits} over that fold.
 }

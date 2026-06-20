@@ -44,7 +44,9 @@ detailed verbosity.}
 The batch-corrected embedding space.
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 This function implements the (fast) MNN algorithm from Haghverdi, et al.
 Instead of working on the full matrix, it uses under the hood PCA and
 generates a batch-aligned embedding space.
 }
+\keyword{internal}

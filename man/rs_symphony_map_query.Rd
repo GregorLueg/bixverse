@@ -48,5 +48,11 @@ batch correction).}
 A list with z_pca, z_corr, r.
 }
 \description{
-Map a query onto a Symphony reference (Rust)
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+Maps a given other SingleCells data set to the Symphony reference, see
+Kang et al.
 }
+\references{
+Kang et al., Nat Comm, 2021.
+}
+\keyword{internal}

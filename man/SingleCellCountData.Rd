@@ -21,6 +21,7 @@ Number of genes represented in the data.}
 A new instance of the \code{SingleCellCountData} class.
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 A class for handling single cell count data stored on disk in two
 complementary binary representations: a CSR-like layout (\code{f_path_cells})
 for fast cell-wise access and a CSC-like layout (\code{f_path_genes}) for fast

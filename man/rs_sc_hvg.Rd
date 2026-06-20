@@ -59,6 +59,8 @@ For the other two methods, these elements can be found:
 }
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 This function identifies highly variable genes with the three methods known
 in Seurat.
 }
+\keyword{internal}

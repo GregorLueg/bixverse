@@ -716,6 +716,8 @@ params_sc_synthetic_data <- function(
 #' @return A list with the parameters.
 #'
 #' @export
+#'
+#' @keywords internal
 params_sc_synthetic_data_adt <- function(
   n_cells = 1000L,
   n_proteins = 15L,

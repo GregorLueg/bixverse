@@ -21,9 +21,10 @@ extendr_module! {
 
 /// Apply a Radial Basis Function
 ///
-/// @description Applies a radial basis function (RBF) to a given distance
-/// vector. Has at the option to apply a Gaussian, Bump or Inverse Quadratic
-/// RBF.
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Applies a radial basis function (RBF) to a given distance vector. Has at the
+/// option to apply a Gaussian, Bump or Inverse Quadratic RBF.
 ///
 /// @param x Numeric vector. The distances you wish to apply the Gaussian kernel
 /// onto.
@@ -49,14 +50,16 @@ fn rs_rbf_function(x: &[f64], epsilon: f64, rbf_type: &str) -> extendr_api::Resu
 
 /// Apply a Radial Basis Function (to a matrix)
 ///
-/// @description Applies a radial basis function (RBF) to a given distance
-/// matrix. Has at the option to apply a Gaussian, Bump or Inverse Quadratic
-/// RBF.
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Applies a radial basis function (RBF) to a given distance matrix. Has at the
+/// option to apply a Gaussian, Bump or Inverse Quadratic RBF.
 ///
 /// @param x Numeric Matrix. The distances you wish to apply the Gaussian kernel
 /// onto.
 /// @param epsilon Float. Epsilon parameter for the RBF.
-/// @param rbf_type String. Needs to be from `c("gaussian", "bump", "inverse_quadratic")`.
+/// @param rbf_type String. Needs to be from
+/// `c("gaussian", "bump", "inverse_quadratic")`.
 ///
 /// @return The affinities after the Kernel was applied.
 ///
@@ -85,21 +88,22 @@ fn rs_rbf_function_mat(
 
 /// Helper to identify the right epsilon parameter
 ///
-/// @description This function will take a distance vector from the upper
-/// triangle of a symmetric distance matrix and apply the desired RBF with the
-/// supplied epsilon from epsilon vec. Subsequently, the column sums will be
-/// measured to identify the total similarity of each feature with other
-/// features. This data can be used to see if the data follows scale-free
-/// topology for example to identify the right epsilon parameter with the given
-/// RBF.
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// This function will take a distance vector from the upper triangle of a
+/// symmetric distance matrix and apply the desired RBF with the supplied
+/// epsilon from epsilon vec. Subsequently, the column sums will be measured to
+/// identify the total similarity of each feature with other features. This data
+/// can be used to see if the data follows scale-free topology for example to
+/// identify the right epsilon parameter with the given RBF.
 ///
 /// @param dist Numeric vector. The distances you wish to apply the RBF function
 /// to.
 /// @param epsilon_vec Numeric vector. The epsilons you wish to use/test.
 /// @param original_dim Integer. The original dimensions of the symmetric
 /// distance matrix.
-/// @param shift Integer. Was the matrix shifted up (0 = diagonal included; 1
-/// diagonal not incldued).
+/// @param shift Boolean. Was the matrix shifted up (false = diagonal included;
+/// true diagonal not incldued).
 /// @param rbf_type String. One of `c('gaussian', 'bump', 'inverse_quadratic')`
 /// for the currently implemented RBF function. Weird strings will default
 /// to Gaussian.
@@ -108,14 +112,17 @@ fn rs_rbf_function_mat(
 /// representing the summed affinity to other features.
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_rbf_iterate_epsilons(
     dist: &[f64],
     epsilon_vec: &[f64],
     original_dim: usize,
-    shift: usize,
+    shift: bool,
     rbf_type: &str,
 ) -> RArray<f64, 2> {
+    let shift = if shift { 1usize } else { 0usize };
     let band_width_data = rbf_iterate_epsilons(dist, epsilon_vec, original_dim, shift, rbf_type);
 
     faer_to_r_matrix(band_width_data.as_ref())

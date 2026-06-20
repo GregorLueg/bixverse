@@ -25,6 +25,7 @@ A list with the following items
 }
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 The function takes in a kNN matrix and a batch vector indicating which
 cell belongs to which batch. The function will check for the neighbourhood
 of each cell if the proportion of represented batches are different from

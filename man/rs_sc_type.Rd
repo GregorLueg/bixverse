@@ -40,6 +40,8 @@ A list with
 }
 }
 \description{
-This Rust function implements the cell type scoring approach
-from Ianevski et al. (2022).
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+This Rust function implements the cell type scoring approach from Ianevski
+et al. (2022).
 }
+\keyword{internal}

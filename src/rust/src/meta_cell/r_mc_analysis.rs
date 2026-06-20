@@ -34,6 +34,7 @@ extendr_module! {
 /// SCENIC on MetaCells
 ///
 /// @description
+/// `r lifecycle::badge("experimental")`
 /// Assumes that the sparse data is pre-filtered for the genes you wish to
 /// include. The indices need to be 0-indexed.
 ///
@@ -76,6 +77,7 @@ fn rs_mc_scenic(
 /// Calculate AUCell in Rust (for meta cells)
 ///
 /// @description
+/// `r lifecycle::badge("experimental")`
 /// The function will take in a list of gene set indices (0-indexed!) and
 /// calculate an AUCell type statistic. Two options here: calculate this
 /// with proper AUROC calculations (useful for marker gene expression) or
@@ -132,6 +134,7 @@ fn rs_mc_aucell(
 /// Run NMF (HALS) on MetaCells
 ///
 /// @description
+/// `r lifecycle::badge("experimental")`
 /// Assumes that the sparse data is pre-filtered for the cells/genes you wish
 /// to include. Indices in the sparse data need to be 0-indexed.
 ///
@@ -184,6 +187,7 @@ fn rs_nmf_single_mc(
 /// Run multiple NMF (HALS) restarts on MetaCells
 ///
 /// @description
+/// `r lifecycle::badge("experimental")`
 /// Assumes that the sparse data is pre-filtered for the cells/genes you wish
 /// to include. Indices in the sparse data need to be 0-indexed.
 ///

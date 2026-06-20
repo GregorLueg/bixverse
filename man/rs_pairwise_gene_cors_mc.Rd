@@ -23,5 +23,6 @@ The vector of correlations between the pairs of gene_indices_1
 and gene_indices_2
 }
 \description{
-Calculate the pairwise gene-correlation for meta cells
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 }
+\keyword{internal}

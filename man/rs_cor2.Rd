@@ -18,6 +18,7 @@ Pearson.}
 The correlation matrix.
 }
 \description{
-Calculates the correlation between the columns of two matrices.
-The number of rows need to be the same!
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+Calculates the correlation between the columns of two matrices. The number
+of rows need to be the same!
 }

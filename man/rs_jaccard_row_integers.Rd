@@ -15,6 +15,7 @@ rs_jaccard_row_integers(data_1, data_2)
 The average Jaccard similarity.
 }
 \description{
-Helper function to quickly calculate the Jaccard similarity
-between the rows across the two matrices.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+Helper function to quickly calculate the Jaccard similarity between the rows
+across the two matrices.
 }

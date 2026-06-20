@@ -27,6 +27,7 @@ A matrix of cells x gene sets with the values representing the
 AUC.
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 The function will take in a list of gene set indices (0-indexed!) and
 calculate an AUCell type statistic. Two options here: calculate this
 with proper AUROC calculations (useful for marker gene expression) or
@@ -34,3 +35,4 @@ based on the Mann-Whitney statistic (useful for pathway activity
 measurs). Data can be streamed in chunks of 50k cells per or loaded in
 in one go.
 }
+\keyword{internal}

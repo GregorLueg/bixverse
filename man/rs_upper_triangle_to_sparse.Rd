@@ -9,7 +9,8 @@ rs_upper_triangle_to_sparse(value, shift, n, cs_type)
 \arguments{
 \item{value}{Numeric vector. The upper triangle values.}
 
-\item{shift}{Integer Did you apply a shift to remove the diagonal values?}
+\item{shift}{Boolean. Was the matrix shifted up (false = diagonal included;
+true diagonal not incldued).}
 
 \item{n}{Integer. The number of columns/rows in the symmetric matrix.}
 
@@ -26,6 +27,7 @@ Robj are stored in Rust.)
 }
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 This function takes the values from an upper triangle matrix
 the shift and the nrows/ncols and returns a list.
 }

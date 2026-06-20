@@ -4,6 +4,10 @@ use bixverse_rs::prelude::*;
 use extendr_api::prelude::*;
 use rustc_hash::FxHashMap;
 
+/////////////
+// extendR //
+/////////////
+
 extendr_module! {
     mod r_gsva;
     fn rs_prepare_gsva_gs;
@@ -11,7 +15,14 @@ extendr_module! {
     fn rs_ssgsea;
 }
 
+///////////////
+// Functions //
+///////////////
+
 /// Prepare a pathway list for GSVA
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
 ///
 /// @param feature_names String vector. The feature names of the matrix (should
 /// be the rows).
@@ -22,6 +33,8 @@ extendr_module! {
 /// @return Returns a list with (zero-indexed) indices.
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_prepare_gsva_gs(
     feature_names: Vec<String>,
@@ -78,6 +91,7 @@ fn rs_prepare_gsva_gs(
 /// Rust version of the GSVA algorithm
 ///
 /// @description
+/// `r lifecycle::badge("experimental")`
 /// Rust-based implementation of the popular GSVA algorithm. Has further
 /// performance optimisations compared to the original implementation.
 ///
@@ -127,6 +141,7 @@ fn rs_gsva(
 /// Rust version of the ssGSEA algorithm
 ///
 /// @description
+/// `r lifecycle::badge("experimental")`
 /// Rust-based implementation of the popular single sample GSEA algorithm. Has
 /// further performance optimisations compared to the original implementation.
 ///

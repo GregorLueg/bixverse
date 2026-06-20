@@ -21,7 +21,8 @@ rs_gse_geom_elim(
 \item{levels}{A character vector representing the levels to iterate through.
 The order will be the one the iterations are happening in.}
 
-\item{go_obj}{The gene_ontology_data S7 class. See \code{\link[=gene_ontology_data]{gene_ontology_data()}}.}
+\item{go_obj}{The \code{GeneOntologyElim} S7 class. See
+\code{\link[=GeneOntologyElim]{GeneOntologyElim()}}.}
 
 \item{gene_universe_length}{The length of the gene universe.}
 
@@ -46,11 +47,10 @@ A list containing:
 }
 }
 \description{
-This function implements a Rust version of the gene ontology
-enrichment with elimination: the starting point are the leafs of the
-ontology and hypergeometric tests will first conducted there. Should the
-hypergeometric test p-value be below a certain threshold, the genes of that
-gene ontology term will be removed from all ancestors. WARNING! Incorrect
-use can cause kernel crashes. Wrapper around the Rust functions with type
-checks are provided in the package.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+This function implements a Rust version of the gene ontology enrichment with
+elimination: the starting point are the leafs of the ontology and
+hypergeometric tests will first conducted there. Should the hypergeometric
+test p-value be below a certain threshold, the genes of that gene ontology
+term will be removed from all ancestors.
 }

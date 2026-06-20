@@ -66,14 +66,14 @@ S7::method(cor_module_processing, BulkCoExp) <- function(
   cor_diagonal <- rs_cor_upper_triangle(
     target_mat,
     spearman = spearman,
-    shift = 1L
+    shift = TRUE
   )
 
   # Save data to memory friendly R6 class
   cor_data <- upper_triangular_sym_mat$new(
     values = cor_diagonal,
     features = colnames(target_mat),
-    shift = 1L
+    shift = TRUE
   )
 
   correlation_params <- list(spearman = spearman, type = "simple")
@@ -159,7 +159,7 @@ S7::method(cor_module_tom, BulkCoExp) <- function(
 
   features <- rownames(cor_mat)
   tom_mat <- rs_tom(x = cor_mat, tom_type = version, signed = signed)
-  tom_vec <- rs_dense_to_upper_triangle(tom_mat, 1L)
+  tom_vec <- rs_dense_to_upper_triangle(tom_mat, TRUE)
 
   tom_res <- upper_triangular_sym_mat$new(
     values = tom_vec,
@@ -1829,7 +1829,9 @@ coremo_tree_cut <- function(
     sort(unique(clusters)),
     \(cluster_i) {
       x <-
-        prcomp(t(dist_mat[names(clusters)[clusters == cluster_i], ]), 1)$x[, "PC1"]
+        prcomp(t(dist_mat[names(clusters)[clusters == cluster_i], ]), 1)$x[,
+          "PC1"
+        ]
     }
   ) %>%
     do.call(rbind, .) %>%

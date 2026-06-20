@@ -26,6 +26,9 @@ extendr_module! {
 
 /// Loads in a modality from a 10x h5 file
 ///
+/// @description
+/// `r lifecycle::badge("experimental")`
+///
 /// @param f_path String. The path to the h5 file
 /// @param version String. The 10x version. If `"auto"` uses the automatic
 /// detection.
@@ -39,6 +42,8 @@ extendr_module! {
 /// }
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_read_tenx_h5_modality(f_path: String, version: String, feature_type: String) -> Result<List> {
     let tenx_version = match version.to_lowercase().as_str() {
@@ -107,6 +112,9 @@ fn clr_row(row: &[f64], ncol: usize) -> Vec<f64> {
 
 /// Applies CLR normalisation on ADT counts
 ///
+/// @description
+/// `r lifecycle::badge("experimental")`
+///
 /// @param counts R matrix of shape cells x features.
 /// @param seurat_clr Logical; if TRUE uses the Seurat variant (non-negative),
 /// if FALSE uses proper CLR (mean-centred log, can be negative).
@@ -114,6 +122,8 @@ fn clr_row(row: &[f64], ncol: usize) -> Vec<f64> {
 /// @returns CLR-transformed matrix.
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_adt_clr(counts: RMatrix<f64>, seurat_clr: bool) -> RMatrix<f64> {
     let counts = r_matrix_to_faer(&counts);
@@ -137,16 +147,17 @@ fn rs_adt_clr(counts: RMatrix<f64>, seurat_clr: bool) -> RMatrix<f64> {
 
 /// Run DSB normalisation on raw ADT counts
 ///
-/// @description This function applies the DSB algorithm to normalise
-/// antibody-derived tag (ADT) counts from CITE-seq experiments. Two variants
-/// are supported. When `background_counts` is provided, per-protein ambient
-/// background is estimated from empty droplets ("Step I" of the original
-/// paper). When `background_counts` is `NULL`, per-protein background is
-/// estimated by a two-component k-means on the log-transformed cell counts,
-/// with the lower centroid taken as the background level. An optional second
-/// step removes cell-to-cell technical noise by regressing out PC1 of a noise
-/// matrix built from isotype controls (if available) and the per-cell
-/// background mean.
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// This function applies the DSB algorithm to normalise antibody-derived tag
+/// (ADT) counts from CITE-seq experiments. Two variants are supported. When
+/// `background_counts` is provided, per-protein ambient background is estimated
+/// from empty droplets ("Step I" of the original paper). When
+/// `background_counts` is `NULL`, per-protein background is estimated by a
+/// two-component k-means on the log-transformed cell counts, with the lower
+/// centroid taken as the background level. An optional second step removes
+/// cell-to-cell technical noise by regressing out PC1 of a noise matrix built
+/// from isotype controls (if available) and the per-cell background mean.
 ///
 /// @param raw_counts Numeric matrix. Cells x proteins matrix of raw ADT
 /// counts.
@@ -185,6 +196,8 @@ fn rs_adt_clr(counts: RMatrix<f64>, seurat_clr: bool) -> RMatrix<f64> {
 /// }
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_dsb(
     raw_counts: RMatrix<f64>,

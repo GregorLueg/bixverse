@@ -10,10 +10,29 @@ use rand::prelude::*;
 use rayon::prelude::*;
 use rustc_hash::FxHashMap;
 
+/////////////
+// extendR //
+/////////////
+
+extendr_module! {
+    mod r_coremo;
+    fn rs_tom;
+    fn rs_coremo_quality;
+    fn rs_coremo_stability;
+    fn rs_cluster_stability;
+    fn rs_split_cor_signs;
+}
+
+///////////////
+// Functions //
+///////////////
+
 /// Calculates the TOM over an affinity matrix
 ///
-/// @description Calculates the topological overlap measure for a given affinity
-/// matrix x. Has the option to calculate the signed and unsigned version.
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Calculates the topological overlap measure for a given affinity matrix x.
+/// Has the option to calculate the signed and unsigned version.
 ///
 /// @param x Numerical matrix. Affinity matrix.
 /// @param tom_type String. One of `c("v1", "v2")` - pending on choice, a
@@ -41,10 +60,12 @@ fn rs_tom(x: RMatrix<f64>, tom_type: &str, signed: bool) -> extendr_api::Result<
 
 /// Helper function to assess CoReMo cluster quality
 ///
-/// @description This function assesses the quality of the clusters
-/// with a given cut `k`. Returns the median R2 (cor^2) and the median absolute
-/// deviation (MAD) of the clusters. Large clusters (≥1000) are subsampled
-/// to a random set of 1000 genes.
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// This function assesses the quality of the clusters with a given cut `k`.
+/// Returns the median R2 (cor^2) and the median absolute deviation (MAD) of the
+/// clusters. Large clusters (≥1000) are subsampled to a random set of 1000
+/// genes.
 ///
 /// @param cluster_genes A list. Contains the cluster and their respective
 /// genes.
@@ -59,6 +80,8 @@ fn rs_tom(x: RMatrix<f64>, tom_type: &str, signed: bool) -> extendr_api::Result<
 ///   \item r2mad - median absolute deviation of the R2 in the cluster.
 ///   \item size - size of the cluster.
 /// }
+///
+/// @keywords internal
 #[extendr]
 fn rs_coremo_quality(
     cluster_genes: List,
@@ -147,9 +170,11 @@ fn rs_coremo_quality(
 
 /// Helper function to assess CoReMo cluster stability
 ///
-/// @description This function is a helper for the leave-on-out stability
-/// assessment of CoReMo clusters. The function will generate the distance
-/// vectors based on leaving out the samples defined in indices one by one.
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// This function is a helper for the leave-on-out stability assessment of
+/// CoReMo clusters. The function will generate the distance vectors based on
+/// leaving out the samples defined in indices one by one.
 ///
 /// @param data Numeric matrix. The original processed matrix.
 /// @param indices Integer vector. The sample indices to remove to re-calculate
@@ -161,6 +186,8 @@ fn rs_coremo_quality(
 ///
 /// @return A list with `length(indices)` elements, each containing the distance
 /// minus the given sample.
+///
+/// @keywords internal
 #[extendr]
 fn rs_coremo_stability(
     data: RMatrix<f64>,
@@ -209,6 +236,9 @@ fn rs_coremo_stability(
 
 /// Helper function to assess cluster stability
 ///
+/// @description
+/// `r lifecycle::badge("experimental")`
+///
 /// @param data Integer matrix. Assumes that each column represents a given
 /// resampling/bootstrap and the rows represent the features, while each integer
 /// indicates cluster membership.
@@ -220,6 +250,8 @@ fn rs_coremo_stability(
 ///   \item std_jaccard - the standard deviation of the Jaccard similarities for
 ///   this feature across all the bootstraps, resamplings.
 /// }
+///
+/// @keywords internal
 #[extendr]
 fn rs_cluster_stability(data: RMatrix<i32>) -> List {
     let data = r_matrix_to_faer(&data);
@@ -241,24 +273,20 @@ fn rs_cluster_stability(data: RMatrix<i32>) -> List {
 
 /// Helper function to split correlation matrices by sign
 ///
+/// @description
+/// `r lifecycle::badge("experimental")`
+///
 /// @param data The correlation matrix to split by sign.
 ///
 /// @return A vector of 1 and -1 indicating the respective sign of the
 /// correlation matrix.
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_split_cor_signs(data: RMatrix<f64>) -> Vec<i32> {
     let data = r_matrix_to_faer(&data);
 
     split_cor_mat_by_sign(&data)
-}
-
-extendr_module! {
-    mod r_coremo;
-    fn rs_tom;
-    fn rs_coremo_quality;
-    fn rs_coremo_stability;
-    fn rs_cluster_stability;
-    fn rs_split_cor_signs;
 }

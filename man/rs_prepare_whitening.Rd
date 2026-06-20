@@ -33,7 +33,8 @@ A list containing:
 }
 }
 \description{
-Prepares the data for subsequent usag in ICA. Incorrect use can
-cause kernel crashes. Wrapper around the Rust functions with type checks are
-provided in the package.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+Prepares the data for subsequent usag in ICA. Incorrect use can cause kernel
+crashes. Wrapper around the Rust functions with type checks are provided in
+the package.
 }

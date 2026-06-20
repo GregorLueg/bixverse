@@ -153,6 +153,8 @@ generate_single_cell_test_data <- function(
 #' }
 #'
 #' @export
+#'
+#' @keywords internal
 generate_single_cell_test_data_adt <- function(
   syn_data_params = params_sc_synthetic_data_adt(),
   seed = 42L
@@ -457,6 +459,8 @@ write_cellranger_output <- function(
 #' @return Invisible.
 #'
 #' @export
+#'
+#' @keywords internal
 write_tenx_h5_sc <- function(
   f_path,
   counts,

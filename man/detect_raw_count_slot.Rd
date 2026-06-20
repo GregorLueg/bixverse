@@ -30,3 +30,4 @@ Samples the non-zero values of each candidate slot and returns the first one
 that is integer-valued. Slots are checked in the given order, so dedicated
 count slots take precedence over \code{X}.
 }
+\keyword{internal}

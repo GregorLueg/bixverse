@@ -22,5 +22,6 @@ List with the following elements:
 }
 }
 \description{
-Calculates the simple and multi error for fgsea multi level
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 }
+\keyword{internal}

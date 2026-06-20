@@ -23,5 +23,6 @@ The 0-indexed positions of the genes to include in the scenic
 analysis.
 }
 \description{
-Identifies genes to include into a SCENIC analysis
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 }
+\keyword{internal}

@@ -16,6 +16,8 @@ rs_metacell_separation(dc, meta_cells)
 The separation results
 }
 \description{
-Calculates the separation of the centroids of the MetaCells based on
-diffusion map coordinates.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+Calculates the separation of the single cells of a given meta cell based on
+the diffusion map.
 }
+\keyword{internal}

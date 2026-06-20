@@ -34,5 +34,6 @@ A list with \code{predicted} (0-based integer per query cell) and
 \code{confidence} (vote share of the winning label).
 }
 \description{
-Transfer labels from a Symphony reference to a query via kNN vote
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 }
+\keyword{internal}

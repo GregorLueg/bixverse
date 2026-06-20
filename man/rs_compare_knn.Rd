@@ -27,5 +27,7 @@ across all samples
 }
 }
 \description{
-Helper to compare kNN graphs
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+Compare two kNN graphs and return the distance ratios and overlaps of
+k-nearest neighbours between them.
 }

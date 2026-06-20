@@ -48,6 +48,7 @@ A list with with the following items
 }
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 Helper function that will calculate the PCA for the specified highly
 variable genes. You have the option to do mean centering, variance
 normalisation and/or apply the new proposed transformation \code{PFlogPF} from
@@ -56,3 +57,4 @@ Booeshaghi, et al.
 \references{
 Booeshaghi, et al., bioRxive, 2026.
 }
+\keyword{internal}

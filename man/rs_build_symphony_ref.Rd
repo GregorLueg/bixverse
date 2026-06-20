@@ -48,5 +48,10 @@ A list with gene_means, gene_sds, loadings, z_orig, z_corr, r,
 centroids, nr, c.
 }
 \description{
-Build a Symphony reference (Rust)
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+Builds the Symphony reference in Rust, see Kang et al.
 }
+\references{
+Kang et al., Nat Comm, 2021.
+}
+\keyword{internal}

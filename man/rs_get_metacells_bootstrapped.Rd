@@ -51,9 +51,11 @@ nrow, ncol in sparse format.
 }
 }
 \description{
-This function implements the approach from Morabito, et al.
-to generate meta cells. You can provide an already pre-computed kNN matrix
-or an embedding to regenerate the kNN matrix with specified parameters in
-the meta_cell_params. If \code{knn_mat} is provided, this one will be used. You
-need to at least provide \code{knn_mat} or \code{embd}!
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+This function implements the approach from Morabito, et al. to generate meta
+cells. You can provide an already pre-computed kNN matrix or an embedding to
+regenerate the kNN matrix with specified parameters in the meta_cell_params.
+If \code{knn_mat} is provided, this one will be used. You need to at least
+provide \code{knn_mat} or \code{embd}!
 }
+\keyword{internal}

@@ -31,7 +31,9 @@ extendr_module! {
 
 /// Meta cells highly variable genes
 ///
-/// @description Calculates highly variable genes for MetaCells or more
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Calculates highly variable genes for MetaCells or more
 /// generally speaking sparse data. This is happening in-memory compared to the
 /// (usually much) larger single cell data sets.
 ///
@@ -118,7 +120,9 @@ fn rs_mc_hvg(
 
 /// PCA on MetaCells (sparse data)
 ///
-/// @description Calculates PCA for MetaCells or more generally speaking sparse
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Calculates PCA for MetaCells or more generally speaking sparse
 /// data. This is happening in-memory compared to the (usually much) larger
 /// single cell data sets.
 ///
@@ -180,6 +184,9 @@ fn rs_mc_pca(
 
 /// Calculate the pairwise gene-correlation for meta cells
 ///
+/// @description
+/// `r lifecycle::badge("experimental")`
+///
 /// @param sparse_data A named list that needs to have `data`, `indptr`,
 /// `indices`, `nrow`, `ncol` and `format`.
 /// @param gene_indices_1 Integer. The gene indices for the first set of genes.
@@ -192,6 +199,8 @@ fn rs_mc_pca(
 /// and gene_indices_2
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_pairwise_gene_cors_mc(
     sparse_data: List,

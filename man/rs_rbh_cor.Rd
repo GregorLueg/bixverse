@@ -34,8 +34,9 @@ modules.
 }
 }
 \description{
-This function takes list of (named) matrices which represent
-for example matrix factorisation results you wish to identify reciprocal
-best hits (RBH) for. The rows need to represent the features and the columns
-the parts you wish to calculate the RBH for.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+This function takes list of (named) matrices which represent for example
+matrix factorisation results you wish to identify (k-th) reciprocal best
+hits (RBH) for. The rows need to represent the features and the columns the
+parts you wish to calculate the RBH for.
 }

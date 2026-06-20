@@ -37,6 +37,8 @@ normalised. This yields probability-like values.
 }
 }
 \description{
-This implements a Rust-based version of the MELD algorithm,
-see Burkhardt, et al. Nat. Biotechnol., 2021.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+This implements a Rust-based version of the MELD algorithm, see Burkhardt,
+et al. Nat. Biotechnol., 2021.
 }
+\keyword{internal}

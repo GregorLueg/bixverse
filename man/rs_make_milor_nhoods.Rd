@@ -37,5 +37,6 @@ defaults to \code{1.0}.
 }
 }
 \description{
-Generate the neighbourhoods akin to the miloR approach
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 }
+\keyword{internal}

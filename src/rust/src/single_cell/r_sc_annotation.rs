@@ -32,8 +32,10 @@ extendr_module! {
 
 /// Run the ScType scoring approach
 ///
-/// @description This Rust function implements the cell type scoring approach
-/// from Ianevski et al. (2022).
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// This Rust function implements the cell type scoring approach from Ianevski
+/// et al. (2022).
 ///
 /// @param f_path String. Path to the `counts_genes.bin` file.
 /// @param cell_indices Integer vector. 0-indexed(!) positions of cells to
@@ -55,6 +57,8 @@ extendr_module! {
 /// }
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_sc_type(
     f_path: &str,
@@ -88,8 +92,10 @@ fn rs_sc_type(
 
 /// Score the individual clusters based on ScType
 ///
-/// @description This Rust function implements the cell type scoring approach
-/// from Ianevski et al. (2022).
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// This Rust function implements the cell type scoring approach from Ianevski
+/// et al. (2022).
 ///
 /// @param sc_type_res List. The ScType results.
 /// @param cluster_labels Integer. Cluster assignment. Needs to be of length
@@ -102,6 +108,10 @@ fn rs_sc_type(
 ///  \item score - The final score for the clsuter.
 ///  \item n_cells - The number of cells in the cluster.
 /// }
+///
+/// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_sc_type_cluster_assignment(sc_type_res: List, cluster_labels: Vec<i32>) -> Result<List> {
     let cluster_labels = cluster_labels.r_int_convert();
@@ -137,6 +147,10 @@ fn rs_sc_type_cluster_assignment(sc_type_res: List, cluster_labels: Vec<i32>) ->
 
 /// Build a Symphony reference (Rust)
 ///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Builds the Symphony reference in Rust, see Kang et al.
+///
 /// @param f_path String. Path to the gene-based binary file.
 /// @param cell_indices Integer vector. 0-based cell indices.
 /// @param hvg_indices Integer vector. 0-based HVG indices.
@@ -154,7 +168,12 @@ fn rs_sc_type_cluster_assignment(sc_type_res: List, cluster_labels: Vec<i32>) ->
 /// @return A list with gene_means, gene_sds, loadings, z_orig, z_corr, r,
 /// centroids, nr, c.
 ///
+/// @references
+/// Kang et al., Nat Comm, 2021.
+///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 #[allow(clippy::too_many_arguments)]
 fn rs_build_symphony_ref(
@@ -240,6 +259,11 @@ fn rs_build_symphony_ref(
 
 /// Map a query onto a Symphony reference (Rust)
 ///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Maps a given other SingleCells data set to the Symphony reference, see
+/// Kang et al.
+///
 /// @param f_path_query String. Path to the query gene-based binary file.
 /// @param cell_indices_query Integer vector. 0-based query cell indices.
 /// @param gene_means,gene_sds Numerical vectors. Reference per-HVG stats.
@@ -256,7 +280,12 @@ fn rs_build_symphony_ref(
 ///
 /// @return A list with z_pca, z_corr, r.
 ///
+/// @references
+/// Kang et al., Nat Comm, 2021.
+///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 #[allow(clippy::too_many_arguments)]
 fn rs_symphony_map_query(
@@ -328,6 +357,9 @@ fn rs_symphony_map_query(
 
 /// Transfer labels from a Symphony reference to a query via kNN vote
 ///
+/// @description
+/// `r lifecycle::badge("experimental")`
+///
 /// @param reference_z_corr Reference Harmony-corrected embedding (N_ref x d).
 /// @param query_z_corr Query Symphony-corrected embedding (N_q x d).
 /// @param reference_labels 0-based integer-encoded reference labels.
@@ -340,6 +372,8 @@ fn rs_symphony_map_query(
 /// `confidence` (vote share of the winning label).
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_transfer_labels_symphony(
     reference_z_corr: RMatrix<f64>,

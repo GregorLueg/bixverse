@@ -188,6 +188,7 @@ fn parse_count_type(s: &str) -> Option<AssayType> {
 /// Single cell count data handler
 ///
 /// @description
+/// `r lifecycle::badge("experimental")`
 /// A class for handling single cell count data stored on disk in two
 /// complementary binary representations: a CSR-like layout (`f_path_cells`)
 /// for fast cell-wise access and a CSC-like layout (`f_path_genes`) for fast

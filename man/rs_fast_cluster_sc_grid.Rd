@@ -50,9 +50,11 @@ membership from the random seed with the best conductance is returned.
 }
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 Runs first k-means clustering, followed by a kNN detection on the centroids
 to then run Louvain clustering with several seeds (based on the original
 one) on the graph and propagate the membership back to the original data.
 Returns additional metrics around cluster stability and community
 conductance.
 }
+\keyword{internal}

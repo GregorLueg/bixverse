@@ -42,5 +42,7 @@ A list with predicted_doublets, doublet_scores, threshold,
 cluster_labels and detected_doublet_rate.
 }
 \description{
-Run scDblFinder doublet detection
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+Implementation of scDblFinder in Rust.
 }
+\keyword{internal}

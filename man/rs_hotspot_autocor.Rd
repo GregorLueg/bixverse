@@ -58,6 +58,7 @@ coefficient.
 }
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 This function implements the HotSpot auto-correlation functionality and
 will return to what extent a given gene shows auto-correlation in the
 generated kNN-graph from the embeddings. For details see DeTomaso, et al.
@@ -65,3 +66,4 @@ generated kNN-graph from the embeddings. For details see DeTomaso, et al.
 \references{
 DeTomaso, et al., Cell Systems, 2021
 }
+\keyword{internal}

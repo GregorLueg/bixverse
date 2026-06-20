@@ -30,5 +30,6 @@ overesimation of the p-values.
 }
 }
 \description{
-Calculates p-values for pre-processed data
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 }
+\keyword{internal}

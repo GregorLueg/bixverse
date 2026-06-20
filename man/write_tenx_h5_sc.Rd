@@ -33,3 +33,4 @@ Invisible.
 \description{
 Helper function to write data to a 10x CellRanger-style h5 file
 }
+\keyword{internal}
