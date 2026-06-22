@@ -1,8 +1,10 @@
-# additional single cell classes and methods -----------------------------------
-
+# ------------------------------------------------------------------------------
 # this file contains additional, smaller s3 classes relevant for single cell
 # analyses. general generics are found on the top of the file, otherwise you
 # have per class the class generation and specific methods, getters, setters.
+# ------------------------------------------------------------------------------
+
+# additional single cell classes and methods -----------------------------------
 
 ## helpers ---------------------------------------------------------------------
 
@@ -455,6 +457,8 @@ get_data.ScMatrixRes <- function(x, columns = NULL, ...) {
 #' @return A `patchwork` object with two `ggplot2` histograms.
 #'
 #' @export
+#'
+#' @keywords internal
 plot.ScrubletRes <- function(x, break_number = 31L, for_sample = NULL, ...) {
   checkmate::assertClass(x, "ScrubletRes")
   checkmate::qassert(break_number, "I1")

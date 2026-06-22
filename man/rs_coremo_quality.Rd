@@ -26,8 +26,10 @@ A list containing:
 }
 }
 \description{
-This function assesses the quality of the clusters
-with a given cut \code{k}. Returns the median R2 (cor^2) and the median absolute
-deviation (MAD) of the clusters. Large clusters (≥1000) are subsampled
-to a random set of 1000 genes.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+This function assesses the quality of the clusters with a given cut \code{k}.
+Returns the median R2 (cor^2) and the median absolute deviation (MAD) of the
+clusters. Large clusters (≥1000) are subsampled to a random set of 1000
+genes.
 }
+\keyword{internal}

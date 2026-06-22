@@ -38,5 +38,6 @@ detailed verbosity.}
 A gene x TF importance matrix
 }
 \description{
-SCENIC: Generating gene-regulatory networks
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 }
+\keyword{internal}

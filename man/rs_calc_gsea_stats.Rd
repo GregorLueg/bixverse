@@ -35,5 +35,6 @@ List with the following elements
 }
 }
 \description{
-Rust implementation of the fgsea::calcGseaStat() function
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 }
+\keyword{internal}

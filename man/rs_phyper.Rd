@@ -2,7 +2,7 @@
 % Please edit documentation in R/extendr-wrappers.R
 \name{rs_phyper}
 \alias{rs_phyper}
-\title{Calculate the hypergeometric rest in Rust}
+\title{Calculate the hypergeometric test in Rust}
 \usage{
 rs_phyper(q, m, n, k)
 }
@@ -19,5 +19,5 @@ rs_phyper(q, m, n, k)
 P-value (with lower.tail set to False)
 }
 \description{
-Calculate the hypergeometric rest in Rust
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 }

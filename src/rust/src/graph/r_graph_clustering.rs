@@ -5,9 +5,25 @@ use bixverse_rs::ml::clustering::k_means::KMeansParamsWrappers;
 use bixverse_rs::prelude::*;
 use extendr_api::prelude::*;
 
+/////////////
+// extendR //
+/////////////
+
+extendr_module! {
+    mod r_graph_clustering;
+    fn rs_spectral_clustering_sim;
+    fn rs_spectral_clustering;
+}
+
+///////////////
+// Functions //
+///////////////
+
 /// Rust implementation of spectral clustering
 ///
-/// @description Spectral clustering on a pre-calculated similarity matrix.
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Spectral clustering on a pre-calculated similarity matrix.
 ///
 /// @param similarities Numerical matrix representing the similarities. Needs
 /// to be symmetric!
@@ -44,6 +60,11 @@ fn rs_spectral_clustering_sim(
 }
 
 /// Rust implementation of spectral clustering
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// This version can take in data as is and will calculate the distance matrix
+/// internally.
 ///
 /// @param data Numerical matrix. The data to cluster. Rows = samples, columns =
 /// features.
@@ -96,10 +117,4 @@ fn rs_spectral_clustering(
         .collect::<Vec<i32>>();
 
     Ok(res)
-}
-
-extendr_module! {
-    mod r_graph_clustering;
-    fn rs_spectral_clustering_sim;
-    fn rs_spectral_clustering;
 }

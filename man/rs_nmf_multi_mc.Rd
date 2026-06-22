@@ -39,6 +39,7 @@ A list with \code{w_all}, \code{h_per_run}, \code{losses}, \code{converged},
 \code{best_idx} (1-indexed).
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 Assumes that the sparse data is pre-filtered for the cells/genes you wish
 to include. Indices in the sparse data need to be 0-indexed.
 }

@@ -4,14 +4,15 @@
 \alias{rs_upper_triangle_to_dense}
 \title{Reconstruct a matrix from a flattened upper triangle vector}
 \usage{
-rs_upper_triangle_to_dense(cor_vector, shift, n)
+rs_upper_triangle_to_dense(data, shift, n)
 }
 \arguments{
-\item{cor_vector}{Numeric vector. The vector of correlation coefficients
-that you want to use to go back to a dense matrix.}
+\item{data}{Numeric vector. The vector of for example correlation
+coefficients that you want to use to go back to a dense matrix.}
 
-\item{shift}{Integer. If you applied a shift, i.e. included the diagonal
-values = 0; or excluded the diagonal values = 1.}
+\item{shift}{Boolean. If you applied a shift, i.e. included the diagonal
+values. If \code{true}, assumes the diagonal values are \code{1}, otherwise derives
+them from the data.}
 
 \item{n}{Integer. Original dimension (i.e., ncol/nrow) of the matrix to be
 reconstructed.}
@@ -20,7 +21,8 @@ reconstructed.}
 The dense R matrix.
 }
 \description{
-This function takes a flattened vector of the upper triangle
-from a symmetric matrix (think correlation matrix) and reconstructs the full
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+This function takes a flattened vector of the upper triangle from a
+symmetric matrix (think correlation matrix) and reconstructs the full
 dense matrix for you.
 }

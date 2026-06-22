@@ -7,20 +7,36 @@ use extendr_api::prelude::*;
 use rayon::prelude::*;
 use rustc_hash::{FxHashMap, FxHashSet};
 
+/////////////
+// extendR //
+/////////////
+
+extendr_module! {
+    mod r_go_elim;
+    fn rs_gse_geom_elim;
+    fn rs_gse_geom_elim_list;
+    fn rs_geom_elim_fgsea_simple;
+}
+
+///////////////
+// Functions //
+///////////////
+
 /// Run hypergeometric enrichment over the gene ontology
 ///
-/// @description This function implements a Rust version of the gene ontology
-/// enrichment with elimination: the starting point are the leafs of the
-/// ontology and hypergeometric tests will first conducted there. Should the
-/// hypergeometric test p-value be below a certain threshold, the genes of that
-/// gene ontology term will be removed from all ancestors. WARNING! Incorrect
-/// use can cause kernel crashes. Wrapper around the Rust functions with type
-/// checks are provided in the package.
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// This function implements a Rust version of the gene ontology enrichment with
+/// elimination: the starting point are the leafs of the ontology and
+/// hypergeometric tests will first conducted there. Should the hypergeometric
+/// test p-value be below a certain threshold, the genes of that gene ontology
+/// term will be removed from all ancestors.
 ///
 /// @param target_genes A character vector representing the target gene set.
 /// @param levels A character vector representing the levels to iterate through.
 /// The order will be the one the iterations are happening in.
-/// @param go_obj The gene_ontology_data S7 class. See [bixverse::gene_ontology_data()].
+/// @param go_obj The `GeneOntologyElim` S7 class. See
+/// [bixverse::GeneOntologyElim()].
 /// @param gene_universe_length The length of the gene universe.
 /// @param min_genes number of minimum genes for the gene ontology term to be
 /// tested.
@@ -86,20 +102,22 @@ fn rs_gse_geom_elim(
 
 /// Run hypergeometric enrichment a list of target genes over the gene ontology
 ///
+/// @description
+/// `r lifecycle::badge("experimental")`
 /// This function implements a Rust version of the gene ontology enrichment with
 /// elimination: the starting point are the leafs of the ontology and
 /// hypergeometric tests will first conducted there. Should the hypergeometric
 /// test p-value be below a certain threshold, the genes of that gene ontology
 /// term will be removed from all ancestors. This function is designed to
 /// leverage Rust-based threading for parallel processing of a list of target
-/// genes. WARNING! Incorrect use can cause kernel crashes. Wrapper around the
-/// Rust functions with type checks are provided in the package.
+/// genes.
 ///
 /// @param target_genes_list A list of target genes against which to run the
 /// method.
 /// @param levels A character vector representing the levels to iterate through.
 /// The order will be the one the iterations are happening in.
-/// @param go_obj The gene_ontology_data S7 class. See [bixverse::gene_ontology_data()].
+/// @param go_obj The `GeneOntologyElim` S7 class. See
+/// [bixverse::GeneOntologyElim()].
 /// @param gene_universe_length The length of the gene universe.
 /// @param min_genes number of minimum genes for the gene ontology term to be
 /// tested.
@@ -208,6 +226,9 @@ fn rs_gse_geom_elim_list(
 }
 
 /// Run fgsea simple method for gene ontology with elimination method
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
 ///
 /// @param stats Named numerical vector. Needs to be sorted. The gene level statistics.
 /// @param levels A character vector representing the levels to iterate through.
@@ -346,11 +367,4 @@ fn rs_geom_elim_fgsea_simple(
         le_zero = le_zero,
         leading_edge = leading_edge_list
     ))
-}
-
-extendr_module! {
-    mod r_go_elim;
-    fn rs_gse_geom_elim;
-    fn rs_gse_geom_elim_list;
-    fn rs_geom_elim_fgsea_simple;
 }

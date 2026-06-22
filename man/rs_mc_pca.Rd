@@ -32,6 +32,7 @@ SVD).
 }
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 Calculates PCA for MetaCells or more generally speaking sparse
 data. This is happening in-memory compared to the (usually much) larger
 single cell data sets.

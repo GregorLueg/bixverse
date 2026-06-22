@@ -24,3 +24,4 @@ Plots histograms of doublet scores for observed transcriptomes and simulated
 doublets side by side. The threshold is shown as a dashed red vertical line.
 For grouped results, plots a single group at a time.
 }
+\keyword{internal}

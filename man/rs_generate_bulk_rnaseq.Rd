@@ -34,7 +34,9 @@ List with the following elements
 }
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 Function generates synthetic bulkRNAseq data with heteroskedasticity (lowly
 expressed genes show higher variance) and can optionally add correlation
 structures for testing purposes.
 }
+\keyword{internal}

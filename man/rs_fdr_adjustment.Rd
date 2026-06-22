@@ -13,6 +13,7 @@ rs_fdr_adjustment(pvals)
 The Benjamini-Hochberg adjusted p-values.
 }
 \description{
-Rust implementation that will be faster if you have an
-terrifying amount of p-values to adjust.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+Rust implementation that will be faster if you have an terrifying amount of
+p-values to adjust.
 }

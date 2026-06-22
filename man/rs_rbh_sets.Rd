@@ -36,9 +36,8 @@ modules.
 }
 }
 \description{
-This function takes a nested list that contains gene modules/
-sets derived from various methods and generate identifies reciprocal best
-hits between gene modules/sets across the different origins. WARNING!
-Incorrect use can cause kernel crashes. Wrapper around the Rust functions
-with type checks are provided in the package.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+This function takes a nested list that contains gene modules/sets derived
+from various methods and generate identifies (k-th) reciprocal best hits
+between gene modules/sets across the different origins.
 }

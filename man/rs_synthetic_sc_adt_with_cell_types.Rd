@@ -49,6 +49,7 @@ batch assigned to each cell.
 }
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 Generates a dense cells x proteins matrix of synthetic raw ADT counts for
 testing. Proteins are assigned roles by column index: marker proteins are
 elevated in their owning cell type and sit at background elsewhere, isotype
@@ -59,3 +60,4 @@ efficiency factor, and an optional per-batch staining multiplier. Cell type
 and batch assignment match \code{rs_synthetic_sc_with_cell_types()} cell-for-cell
 for matched inputs, so RNA and ADT can be paired for multi-modal tests.
 }
+\keyword{internal}

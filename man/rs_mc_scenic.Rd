@@ -24,6 +24,7 @@ detailed verbosity.}
 A gene x TF importance matrix
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 Assumes that the sparse data is pre-filtered for the genes you wish to
 include. The indices need to be 0-indexed.
 }

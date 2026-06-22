@@ -17,5 +17,6 @@ Returns a list with the index positions of the gene set genes in the gene univer
 Importantly, these are indexed to R's 1-indexing!
 }
 \description{
-Helper function to rapidly retrieve the indices of the gene set members
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 }
+\keyword{internal}

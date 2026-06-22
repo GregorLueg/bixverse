@@ -24,6 +24,7 @@ A list with the following items
 }
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 Computes the Local Inverse Simpson's Index on batch labels using the
 kNN graph. Measures the effective number of batches in each cell's
 neighbourhood. Under perfect mixing LISI equals the number of batches,

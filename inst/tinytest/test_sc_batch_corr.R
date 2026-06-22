@@ -626,18 +626,33 @@ hvg_batch_intersection <- find_hvg_batch_aware_sc(
 )
 
 expect_true(
-  current = checkmate::qtest(hvg_batch_union$hvg_genes, "I+"),
+  current = checkmate::qtest(hvg_batch_union$hvg_gene_idx, "I+"),
   info = "correct return type for HVG batch aware: gene indices - union"
 )
 
 expect_true(
-  current = checkmate::qtest(hvg_batch_avg$hvg_genes, "I+"),
+  current = checkmate::qtest(hvg_batch_union$hvg_genes, "S+"),
+  info = "correct return type for HVG batch aware: gene names - union"
+)
+
+expect_true(
+  current = checkmate::qtest(hvg_batch_avg$hvg_gene_idx, "I+"),
   info = "correct return type for HVG batch aware: gene indices - average"
 )
 
 expect_true(
-  current = checkmate::qtest(hvg_batch_intersection$hvg_genes, "I+"),
+  current = checkmate::qtest(hvg_batch_avg$hvg_genes, "S+"),
+  info = "correct return type for HVG batch aware: gene names - average"
+)
+
+expect_true(
+  current = checkmate::qtest(hvg_batch_intersection$hvg_gene_idx, "I+"),
   info = "correct return type for HVG batch aware: gene indices - intersection"
+)
+
+expect_true(
+  current = checkmate::qtest(hvg_batch_intersection$hvg_genes, "S+"),
+  info = "correct return type for HVG batch aware: gene names - intersection"
 )
 
 expect_true(
@@ -732,7 +747,7 @@ assess_fast_mnn_impact <- function(object) {
   object = fast_mnn_sc(
     object = object,
     batch_column = "batch_index",
-    batch_hvg_genes = batch_aware_hvg$hvg_genes,
+    batch_hvg_genes = batch_aware_hvg$hvg_gene_idx,
     fastmnn_params = params_sc_fastmnn(no_pcs = 10L, knn = list(k = 5L)),
     .verbose = FALSE
   )
@@ -854,20 +869,20 @@ batch_aware_hvg = find_hvg_batch_aware_sc(
 test_mnn_pca <- calculate_pca_sc(
   test_mnn_pca,
   no_pcs = 10L,
-  hvg = unique(batch_aware_hvg$hvg_genes) + 1L, # needs to be 1-indexed
+  hvg = unique(batch_aware_hvg$hvg_gene_idx) + 1L, # needs to be 1-indexed
   .verbose = FALSE
 )
 
 expect_equal(
   current = get_hvg(test_mnn_pca),
-  target = batch_aware_hvg$hvg_genes,
+  target = batch_aware_hvg$hvg_gene_idx,
   info = "batch aware hvg update worked"
 )
 
 test_mnn_pca = fast_mnn_sc(
   object = test_mnn_pca,
   batch_column = "batch_index",
-  batch_hvg_genes = batch_aware_hvg$hvg_genes,
+  batch_hvg_genes = batch_aware_hvg$hvg_gene_idx,
   fastmnn_params = params_sc_fastmnn(no_pcs = 10L, knn = list(k = 5L)),
   .verbose = FALSE
 )
@@ -877,7 +892,7 @@ internal_result <- get_embedding(test_mnn_pca, "mnn")
 test_mnn_pca = fast_mnn_sc(
   object = test_mnn_pca,
   batch_column = "batch_index",
-  batch_hvg_genes = batch_aware_hvg$hvg_genes,
+  batch_hvg_genes = batch_aware_hvg$hvg_gene_idx,
   use_precomputed_pca = TRUE,
   fastmnn_params = params_sc_fastmnn(no_pcs = 10L, knn = list(k = 5L)),
   .verbose = FALSE

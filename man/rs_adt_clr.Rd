@@ -16,5 +16,6 @@ if FALSE uses proper CLR (mean-centred log, can be negative).}
 CLR-transformed matrix.
 }
 \description{
-Applies CLR normalisation on ADT counts
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 }
+\keyword{internal}

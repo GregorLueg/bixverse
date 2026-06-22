@@ -56,7 +56,9 @@ final loss.
 }
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 Runs \code{n_runs} HALS NMF with random initialisations seeded by \code{seed + i}.
 The \code{nmf_init} field in \code{nmf_hals_params} is ignored; random init is always
 used. The returned \code{w_all} is the column-binding of all run W matrices.
 }
+\keyword{internal}

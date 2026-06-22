@@ -3,11 +3,29 @@ use bixverse_rs::ontology::similarity::*;
 use bixverse_rs::prelude::*;
 use extendr_api::prelude::*;
 
+/////////////
+// extendR //
+/////////////
+
+extendr_module! {
+  mod r_similiarity;
+  fn rs_onto_semantic_sim;
+  fn rs_onto_semantic_sim_mat;
+  fn rs_onto_sim_wang;
+  fn rs_onto_sim_wang_mat;
+  fn rs_filter_onto_sim;
+}
+
+///////////////
+// Functions //
+///////////////
+
 /// Calculate the semantic similarity in an ontology
 ///
-/// @description This function calculates the specified semantic similarity and
-/// returns the full vector (only calculating the upper triangle) for the given
-/// similarity.
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// This function calculates the specified semantic similarity and returns the
+/// full vector (only calculating the upper triangle) for the given similarity.
 ///
 /// @param terms Vector of strings. The terms in the ontology you wish to screen.
 /// @param sim_type String. Must be one of `c("resnik", "lin", "combined")`.
@@ -62,9 +80,10 @@ fn rs_onto_semantic_sim(
 
 /// Calculate the semantic similarity in an ontology
 ///
-/// @description This function calculates the specified semantic similarity and
-/// returns the full vector (only calculating the upper triangle) for the given
-/// similarity.
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// This function calculates the specified semantic similarity and returns the
+/// full vector (only calculating the upper triangle) for the given similarity.
 ///
 /// @param sim_type String. Must be one of `c("resnik", "lin", "combined")`.
 /// @param ancestor_list R list with names being the term and the elements in the
@@ -120,8 +139,9 @@ fn rs_onto_semantic_sim_mat(
 
 /// Calculate the Wang similarity matrix for an ontology
 ///
-/// @description This function calculates the Wang similarity matrix for a given
-/// ontology.
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// This function calculates the Wang similarity matrix for a given ontology.
 ///
 /// @param parents String vector. The names of the parents.
 /// @param children String vector. The names of the childs. The length of
@@ -166,8 +186,10 @@ fn rs_onto_sim_wang_mat(
 
 /// Calculate the Wang similarity for specific terms
 ///
-/// @description This function calculates the Wang similarities between all
-/// permutations of a given set of terms.
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// This function calculates the Wang similarities between all permutations of a
+/// given set of terms.
 ///
 /// @param terms String vector. The terms you wish to calculate the similarities
 /// for.
@@ -238,8 +260,10 @@ fn rs_onto_sim_wang(
 
 /// Filter the term similarities for a specific critical value
 ///
-/// @description This function takes the similarity values as the upper triangle,
-/// the row/column names and filtering the values down based on the threshold.
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// This function takes the similarity values as the upper triangle, the
+/// row/column names and filtering the values down based on the threshold.
 ///
 /// @param sim_vals Numerical vector. The upper triangle of the similarity matrix
 /// as a flattened vector.
@@ -254,6 +278,8 @@ fn rs_onto_sim_wang(
 /// }
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_filter_onto_sim(sim_vals: &[f64], names: Vec<String>, threshold: f64) -> List {
     let filtered_results = filter_sims_critval(sim_vals, &names, threshold);
@@ -269,13 +295,4 @@ fn rs_filter_onto_sim(sim_vals: &[f64], names: Vec<String>, threshold: f64) -> L
     }
 
     list!(t1 = terms1, t2 = terms2, sim = sim)
-}
-
-extendr_module! {
-  mod r_similiarity;
-  fn rs_onto_semantic_sim;
-  fn rs_onto_semantic_sim_mat;
-  fn rs_onto_sim_wang;
-  fn rs_onto_sim_wang_mat;
-  fn rs_filter_onto_sim;
 }

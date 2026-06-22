@@ -25,8 +25,10 @@ A list of two lists representing the sparse matrix representation
 of the distances and the connectivities.
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 This function implements the BBKNN algorithm from Polański, et al.
 }
 \references{
 Polański, et al., Bioinformatics, 2020
 }
+\keyword{internal}

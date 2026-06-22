@@ -19,5 +19,6 @@ the function will equal a min-max normalisation.}
 Normalised values
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 Applies a range normalisation on an R vector.
 }

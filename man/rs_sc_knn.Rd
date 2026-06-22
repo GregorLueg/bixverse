@@ -26,6 +26,7 @@ A integer matrix of N x k with N being the number of cells and k the
 number of neighbours.
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 This function is a wrapper over the Rust-based generation of the approximate
 nearest neighbours.
 }

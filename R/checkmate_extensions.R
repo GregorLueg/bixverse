@@ -2536,6 +2536,122 @@ assertScPca <- checkmate::makeAssertionFunction(checkScPca)
 
 #### knn -----------------------------------------------------------------------
 
+#' Check single cell kNN parameters
+#'
+#' @description Checkmate extension for checking the single cell kNN
+#' parameters.
+#'
+#' @param x The list to check/assert.
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
+checkScKnn <- function(x) {
+  res <- checkmate::checkList(x)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- checkmate::checkNames(
+    names(x),
+    must.include = c(
+      "k",
+      "knn_method",
+      "ann_dist",
+      "n_trees",
+      "search_budget",
+      "delta",
+      "diversify_prob",
+      "ef_budget",
+      "m",
+      "ef_construction",
+      "ef_search",
+      "n_list",
+      "n_probe"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  rules <- list(
+    "k" = "I1[1,)",
+    "n_trees" = "I1[1,)",
+    "delta" = "N1(0,)",
+    "diversify_prob" = "N1[0,1]",
+    "m" = "I1[1,)",
+    "ef_construction" = "I1[1,)",
+    "ef_search" = "I1[1,)"
+  )
+
+  res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(rules)) {
+      checkmate::qtest(x, rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(
+      sprintf(
+        paste(
+          "The following element `%s` in kNN params is incorrect:",
+          "k, n_trees, m, ef_construction and ef_search must be positive",
+          "integers; delta must be a positive numeric;",
+          "diversify_prob must be a numeric in [0, 1]."
+        ),
+        broken_elem
+      )
+    )
+  }
+
+  if (
+    !checkmate::testChoice(
+      x$knn_method,
+      c("kmknn", "hnsw", "annoy", "nndescent", "ivf", "exhaustive")
+    )
+  ) {
+    return(
+      "knn_method must be one of 'kmknn', 'hnsw', 'annoy', 'nndescent', 'ivf' or 'exhaustive'."
+    )
+  }
+
+  if (!checkmate::testChoice(x$ann_dist, c("cosine", "euclidean"))) {
+    return("ann_dist must be one of 'cosine' or 'euclidean'.")
+  }
+
+  nullable_int_fields <- c("search_budget", "ef_budget", "n_list", "n_probe")
+  for (field in nullable_int_fields) {
+    val <- x[[field]]
+    if (!is.null(val) && !checkmate::testInt(val, lower = 1L)) {
+      return(sprintf("`%s` must be a positive integer or NULL.", field))
+    }
+  }
+
+  return(TRUE)
+}
+
+#' Assert single cell kNN parameters
+#'
+#' @description Checkmate extension for asserting the single cell kNN
+#' parameters.
+#'
+#' @inheritParams checkScKnn
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertionFunction()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
+assertScKnn <- checkmate::makeAssertionFunction(checkScKnn)
+
+#### neighbours ----------------------------------------------------------------
+
 #' Check neighbour generation parameters
 #'
 #' @description Checkmate extension for checking the neighbour generation
@@ -3731,6 +3847,71 @@ checkScHarmonyParamsV2 <- function(x) {
 assertScHarmonyParamsV2 <- checkmate::makeAssertionFunction(
   checkScHarmonyParamsV2
 )
+
+#### symphony ------------------------------------------------------------------
+
+#' Check Symphony map parameters
+#'
+#' @description Checkmate extension for checking the Symphony query mapping
+#' parameters.
+#'
+#' @param x The list to check/assert.
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
+checkSymphonyMap <- function(x) {
+  res <- checkmate::checkList(x)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+  res <- checkmate::checkNames(
+    names(x),
+    must.include = c("sigma", "lambda")
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+  rules <- list(
+    "sigma" = "N1[0,)",
+    "lambda" = "N1[0,)"
+  )
+  res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(rules)) {
+      checkmate::qtest(x, rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(
+      sprintf(
+        paste(
+          "The following element `%s` in Symphony map params is incorrect:",
+          "sigma and lambda must be non-negative numerics."
+        ),
+        broken_elem
+      )
+    )
+  }
+  return(TRUE)
+}
+
+#' Assert Symphony map parameters
+#'
+#' @description Checkmate extension for asserting the Symphony query mapping
+#' parameters.
+#'
+#' @inheritParams checkSymphonyMap
+#'
+#' @param .var.name Name of the checked object to print in assertions.
+#' @param add Collection to store assertion messages.
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
+assertSymphonyMap <- checkmate::makeAssertionFunction(checkSymphonyMap)
 
 #### scenic --------------------------------------------------------------------
 

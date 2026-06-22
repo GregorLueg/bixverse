@@ -1007,7 +1007,7 @@ component_mutual_information <- function(centrotype) {
       strategy = "equal_width",
       normalise = TRUE
     ),
-    1L
+    TRUE
   )
   total_mi <- sum(mi_data) / length(mi_data)
 

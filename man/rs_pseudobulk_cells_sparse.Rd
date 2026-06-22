@@ -28,8 +28,10 @@ A list with the following elements (easy to convert into CSR in R)
 }
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 This function will return a sparse matrix of
 \verb{length(cell_indices_ls) x number of genes} (in list form in CSR).
 The function has the option to return the sum of the sum of the raw counts
 or the average of the normalised counts.
 }
+\keyword{internal}

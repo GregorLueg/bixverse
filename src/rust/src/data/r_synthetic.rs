@@ -4,6 +4,10 @@ use bixverse_rs::core::synthetic_data::*;
 use bixverse_rs::prelude::*;
 use bixverse_rs::single_cell::sc_data::sc_synthetic_data::*;
 
+/////////////
+// extendR //
+/////////////
+
 extendr_module! {
     mod r_synthetic;
     // bulk
@@ -24,6 +28,7 @@ extendr_module! {
 /// Generation of bulkRNAseq-like data with optional correlation structure
 ///
 /// @description
+/// `r lifecycle::badge("experimental")`
 /// Function generates synthetic bulkRNAseq data with heteroskedasticity (lowly
 /// expressed genes show higher variance) and can optionally add correlation
 /// structures for testing purposes.
@@ -44,6 +49,8 @@ extendr_module! {
 /// }
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_generate_bulk_rnaseq(
     num_samples: usize,
@@ -76,6 +83,7 @@ fn rs_generate_bulk_rnaseq(
 /// Sparsify bulkRNAseq like data
 ///
 /// @description
+/// `r lifecycle::badge("experimental")`
 /// This function takes in a (raw) count matrix (for example from the synthetic
 /// data in bixverse) and applies sparsification to it based on two possible
 /// functions:
@@ -123,6 +131,8 @@ fn rs_generate_bulk_rnaseq(
 /// @return The sparsified matrix based on the provided parameters.
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_simulate_dropouts(
     count_mat: RMatrix<f64>,
@@ -165,6 +175,7 @@ fn rs_simulate_dropouts(
 /// Generates synthetic data for single cell
 ///
 /// @description
+/// `r lifecycle::badge("experimental")`
 /// Helper function to generate synthetic single cell data with optional
 /// bathc effects and sample bias.
 ///
@@ -194,6 +205,8 @@ fn rs_simulate_dropouts(
 /// }
 ///
 /// @export
+///
+/// @keywords internal
 #[allow(clippy::too_many_arguments)]
 #[extendr]
 fn rs_synthetic_sc_data_with_cell_types(
@@ -258,6 +271,7 @@ fn rs_synthetic_sc_data_with_cell_types(
 /// Generates synthetic ADT counts with defined cell types
 ///
 /// @description
+/// `r lifecycle::badge("experimental")`
 /// Generates a dense cells x proteins matrix of synthetic raw ADT counts for
 /// testing. Proteins are assigned roles by column index: marker proteins are
 /// elevated in their owning cell type and sit at background elsewhere, isotype
@@ -295,6 +309,8 @@ fn rs_synthetic_sc_data_with_cell_types(
 /// }
 ///
 /// @export
+///
+/// @keywords internal
 #[allow(clippy::too_many_arguments)]
 #[extendr]
 fn rs_synthetic_sc_adt_with_cell_types(
@@ -337,6 +353,7 @@ fn rs_synthetic_sc_adt_with_cell_types(
 /// Helper function to generate sample identifiers based on cells
 ///
 /// @description
+/// `r lifecycle::badge("experimental")`
 /// Extract out of `rs_synthetic_sc_data_with_cell_types()` to quickly iterate
 /// over different sample to cell type patterns
 ///
@@ -349,6 +366,10 @@ fn rs_synthetic_sc_adt_with_cell_types(
 /// @param seed Integer. Random seed for reproducibility.
 ///
 /// @returns An integer vector representing the samples.
+///
+/// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_sample_ids_for_cell_types(
     cell_type_indices: &[i32],

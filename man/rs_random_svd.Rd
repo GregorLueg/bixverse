@@ -30,7 +30,8 @@ A list with:
 }
 }
 \description{
-Runs a randomised singular value decomposition over a matrix.
-This implementation is faster than the full SVD on large data sets, with
-slight loss in precision.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+Runs a randomised singular value decomposition over a matrix. This
+implementation is faster than the full SVD on large data sets, with slight
+loss in precision.
 }

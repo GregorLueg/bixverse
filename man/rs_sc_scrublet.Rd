@@ -69,5 +69,7 @@ the simulated doublets.
 }
 }
 \description{
-Scrublet Rust interface
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+Implementation of Scrublet in Rust.
 }
+\keyword{internal}

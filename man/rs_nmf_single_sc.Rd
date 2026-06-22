@@ -52,5 +52,7 @@ A list with the following items
 }
 }
 \description{
-Run NMF (HALS) over a set of single cells and genes
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+Runs a single NMF (HALS) run with the specified initialisation.
 }
+\keyword{internal}

@@ -38,6 +38,6 @@ List of lists, one per gene set, each containing motif_idx, nes, auc,
 rank_at_max, n_enriched, and leading_edge.
 }
 \description{
-Core Rust function for motif enrichment analysis using recovery
-curves.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+Core Rust function for motif enrichment analysis using recovery curves.
 }

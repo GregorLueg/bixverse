@@ -23,5 +23,7 @@ to keep.}
 A list of dense vectors of the normalised counts.
 }
 \description{
-Helper to extract single cell counts for several genes
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+Extract the single cell counts of several genes at ones.
 }
+\keyword{internal}

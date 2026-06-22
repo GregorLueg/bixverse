@@ -27,10 +27,9 @@ coefficients.
 }
 }
 \description{
-This function calculates the differential correlation based on
-the Fisher method. For speed purposes, the function will only calculate the
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+This function calculates the differential correlation based on the Fisher
+method. For speed purposes, the function will only calculate the
 differential correlation on the upper triangle of the two correlation
 matrices.
-WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust
-functions with type checks are provided in the package.
 }

@@ -3,10 +3,24 @@ use bixverse_rs::methods::methods_r_wrapper::motif_enrichments_to_r_list;
 use bixverse_rs::prelude::*;
 use extendr_api::prelude::*;
 
+/////////////
+// extendR //
+/////////////
+
+extendr_module! {
+    mod r_cistarget;
+    fn rs_cistarget;
+}
+
+///////////////
+// Functions //
+///////////////
+
 /// Run CisTarget motif enrichment analysis
 ///
-/// @description Core Rust function for motif enrichment analysis using recovery
-/// curves.
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Core Rust function for motif enrichment analysis using recovery curves.
 ///
 /// @param rankings Integer matrix with motif rankings for genes (genes in rows,
 /// motifs in columns). Lower ranks indicate higher regulatory potential.
@@ -74,9 +88,4 @@ fn rs_cistarget(
     }
 
     r_results
-}
-
-extendr_module! {
-    mod r_cistarget;
-    fn rs_cistarget;
 }

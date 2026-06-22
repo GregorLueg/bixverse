@@ -57,6 +57,7 @@ extendr_module! {
 /// Calculate DGEs between cells based on Mann Whitney stats
 ///
 /// @description
+/// `r lifecycle::badge("experimental")`
 /// The function will take two sets of cell indices and calculate the
 /// differential gene expression based on the Mann Whitney test between the
 /// two groups.
@@ -85,6 +86,8 @@ extendr_module! {
 /// }
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_calculate_dge_mann_whitney(
     f_path: String,
@@ -143,6 +146,7 @@ fn rs_calculate_dge_mann_whitney(
 /// Calculate module activity scores in Rust
 ///
 /// @description
+/// `r lifecycle::badge("experimental")`
 /// Calculates module activity scores following Seurat's `AddModuleScore`.
 /// For each module (gene set), computes the average expression of genes in the
 /// set minus the average expression of randomly selected control genes from the
@@ -170,6 +174,8 @@ fn rs_calculate_dge_mann_whitney(
 /// Tirosh et al, Science (2016)
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 #[allow(clippy::too_many_arguments)]
 fn rs_module_scoring(
@@ -221,6 +227,7 @@ fn rs_module_scoring(
 /// Calculate AUCell in Rust
 ///
 /// @description
+/// `r lifecycle::badge("experimental")`
 /// The function will take in a list of gene set indices (0-indexed!) and
 /// calculate an AUCell type statistic. Two options here: calculate this
 /// with proper AUROC calculations (useful for marker gene expression) or
@@ -242,6 +249,8 @@ fn rs_module_scoring(
 /// AUC.
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_aucell(
     f_path: String,
@@ -279,6 +288,7 @@ fn rs_aucell(
 /// Calculate VISION pathway scores in Rust
 ///
 /// @description
+/// `r lifecycle::badge("experimental")`
 /// The function will take in a list of gene sets that contains lists of `"pos"`
 /// and `"neg"` gene indices (0-indexed). You don't have to provide the `"neg"`,
 /// but it can be useful to classify the delta of two stats (EMT, Th1; Th2) etc.
@@ -294,6 +304,8 @@ fn rs_aucell(
 /// @return A matrix of cells x vision scores per gene set.
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_vision(
     f_path: String,
@@ -320,6 +332,7 @@ fn rs_vision(
 /// Calculate VISION pathway scores in Rust with auto-correlation
 ///
 /// @description
+/// `r lifecycle::badge("experimental")`
 /// The function will take in a list of gene sets that contains lists of `"pos"`
 /// and `"neg"` gene indices (0-indexed). You don't have to provide the `"neg"`,
 /// but it can be useful to classify the delta of two stats (EMT, Th1; Th2) etc.
@@ -356,6 +369,8 @@ fn rs_vision(
 /// }
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 #[allow(clippy::too_many_arguments)]
 fn rs_vision_with_autocorrelation(
@@ -487,6 +502,7 @@ fn rs_vision_with_autocorrelation(
 /// Calculate gene spatial auto-correlations
 ///
 /// @description
+/// `r lifecycle::badge("experimental")`
 /// This function implements the HotSpot auto-correlation functionality and
 /// will return to what extent a given gene shows auto-correlation in the
 /// generated kNN-graph from the embeddings. For details see DeTomaso, et al.
@@ -523,6 +539,8 @@ fn rs_vision_with_autocorrelation(
 /// @export
 ///
 /// @references DeTomaso, et al., Cell Systems, 2021
+///
+/// @keywords internal
 #[extendr]
 #[allow(clippy::too_many_arguments)]
 fn rs_hotspot_autocor(
@@ -618,9 +636,10 @@ fn rs_hotspot_autocor(
     ))
 }
 
-/// Calculate gene<>gene spatial correlations
+/// Calculate gene to gene spatial correlations
 ///
 /// @description
+/// `r lifecycle::badge("experimental")`
 /// This function implements the HotSpot gene <> gene local correlation
 /// functionality from HotSpot, see DeTomaso, et al.
 ///
@@ -658,6 +677,8 @@ fn rs_hotspot_autocor(
 /// @export
 ///
 /// @references DeTomaso, et al., Cell Systems, 2021
+///
+/// @keywords internal
 #[extendr]
 #[allow(clippy::too_many_arguments)]
 fn rs_hotspot_gene_cor(
@@ -747,6 +768,9 @@ fn rs_hotspot_gene_cor(
 
 /// Cluster the genes by Z-score together
 ///
+/// @description
+/// `r lifecycle::badge("experimental")`
+///
 /// @param z_matrix Numerical matrix representing the Z-scores.
 /// @param fdr_threshold Float. The FDR thresholds in terms of the Z-scores.
 /// @param min_size Integer. Minimum cluster size.
@@ -755,6 +779,8 @@ fn rs_hotspot_gene_cor(
 /// thresholds and has not been assigned.
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_hotspot_cluster_genes(
     z_matrix: RMatrix<f64>,
@@ -771,6 +797,9 @@ fn rs_hotspot_cluster_genes(
 ////////////////////////////
 
 /// Generate the neighbourhoods akin to the miloR approach
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
 ///
 /// @param embd Numeric matrix. Represents the matrix used to generate the kNN
 /// graph and will be used to refine the neighbourhoods.
@@ -797,6 +826,8 @@ fn rs_hotspot_cluster_genes(
 /// }
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_make_milor_nhoods(
     embd: RMatrix<f64>,
@@ -910,6 +941,9 @@ fn rs_make_milor_nhoods(
 
 /// Identifies genes to include into a SCENIC analysis
 ///
+/// @description
+/// `r lifecycle::badge("experimental")`
+///
 /// @param f_path_genes Path to the `counts_genes.bin` file.
 /// @param cell_indices Integer vector. 0-indexed(!) positions of cells to
 /// include in the analysis
@@ -922,6 +956,8 @@ fn rs_make_milor_nhoods(
 /// analysis.
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_scenic_gene_filter(
     f_path_genes: String,
@@ -941,6 +977,9 @@ fn rs_scenic_gene_filter(
 
 /// SCENIC: Generating gene-regulatory networks
 ///
+/// @description
+/// `r lifecycle::badge("experimental")`
+///
 /// @param f_path_genes Path to the `counts_genes.bin` file.
 /// @param cell_indices Integer vector. 0-indexed(!) positions of cells to
 /// include in the analysis
@@ -957,6 +996,8 @@ fn rs_scenic_gene_filter(
 /// @returns A gene x TF importance matrix
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_scenic_grn(
     f_path_genes: String,
@@ -989,7 +1030,9 @@ fn rs_scenic_grn(
 
 /// SCENIC: Generating gene-regulatory networks (streaming version)
 ///
-/// @description Loads the genes in as chunks to avoid high memory pressure.
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Loads the genes in as chunks to avoid high memory pressure.
 ///
 /// @param f_path_genes Path to the `counts_genes.bin` file.
 /// @param cell_indices Integer vector. 0-indexed(!) positions of cells to
@@ -1007,6 +1050,8 @@ fn rs_scenic_grn(
 /// @returns A gene x TF importance matrix
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_scenic_grn_streaming(
     f_path_genes: String,
@@ -1039,6 +1084,9 @@ fn rs_scenic_grn_streaming(
 
 /// SCENIC: Select the Top TF <> Gene pairs
 ///
+/// @description
+/// `r lifecycle::badge("experimental")`
+///
 /// @param matrix Numeric matrix with genes x TF importance values
 /// @param k Integer. Number of top genes / TFs to extract.
 /// @param margin If set to 1, the top k TFs per gene are used. If set to 2, the
@@ -1048,6 +1096,8 @@ fn rs_scenic_grn_streaming(
 /// @returns A list with three vectors: tf, gene, importance
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_top_k_targets(matrix: RMatrix<f64>, k: i32, margin: i32, min_value: Option<f64>) -> List {
     let nrow = matrix.nrows();
@@ -1122,6 +1172,8 @@ fn rs_top_k_targets(matrix: RMatrix<f64>, k: i32, margin: i32, min_value: Option
 
 /// SCENIC: Select TF-gene pairs by per-gene importance threshold
 ///
+/// @description
+/// `r lifecycle::badge("experimental")`
 /// For each gene (row), computes mean + n_sd * SD of the importance scores
 /// across all TFs and retains only pairs exceeding that threshold.
 ///
@@ -1135,6 +1187,8 @@ fn rs_top_k_targets(matrix: RMatrix<f64>, k: i32, margin: i32, min_value: Option
 /// @returns A list with three vectors: tf, gene, importance
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_importance_threshold(matrix: RMatrix<f64>, n_sd: f64, min_value: Option<f64>) -> List {
     let nrow = matrix.nrows();
@@ -1182,8 +1236,10 @@ fn rs_importance_threshold(matrix: RMatrix<f64>, n_sd: f64, min_value: Option<f6
 
 /// Run MELD
 ///
-/// @description This implements a Rust-based version of the MELD algorithm,
-/// see Burkhardt, et al. Nat. Biotechnol., 2021.
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// This implements a Rust-based version of the MELD algorithm, see Burkhardt,
+/// et al. Nat. Biotechnol., 2021.
 ///
 /// @param embd Numeric matrix. The original embedding that was used to generate
 /// the kNN graph.
@@ -1199,9 +1255,16 @@ fn rs_importance_threshold(matrix: RMatrix<f64>, n_sd: f64, min_value: Option<f6
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
 ///
-/// @returns A numeric matrix with the MELD values per given condition/cell
+/// @returns A list with the following items
+/// \itemize{
+///   \item raw_scores - The raw MELD scores
+///   \item norm_scores - Negative values were clamped to 0 and the rows L1
+///   normalised. This yields probability-like values.
+/// }
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 #[allow(clippy::too_many_arguments)]
 fn rs_meld_sc(
@@ -1212,7 +1275,7 @@ fn rs_meld_sc(
     n_labels: usize,
     seed: usize,
     verbose: usize,
-) -> Result<RMatrix<f64>> {
+) -> Result<List> {
     let embd = r_matrix_to_faer_fp32(&embd);
     let meld_params = MeldParams::from_r_list(meld_params)?;
     let labels = labels.r_int_convert_shift();
@@ -1256,7 +1319,7 @@ fn rs_meld_sc(
 
     let is_squared_distance = dist == "euclidean";
 
-    let meld_res = meld(
+    let (meld_raw, meld_norm) = meld(
         &knn_indices,
         &knn_dist,
         &labels,
@@ -1268,7 +1331,10 @@ fn rs_meld_sc(
     )
     .to_extendr()?;
 
-    Ok(faer_to_r_matrix(meld_res.as_ref()))
+    Ok(list!(
+        raw_scores = faer_to_r_matrix(meld_raw.as_ref()),
+        norm_scores = faer_to_r_matrix(meld_norm.as_ref())
+    ))
 }
 
 /////////
@@ -1276,6 +1342,10 @@ fn rs_meld_sc(
 /////////
 
 /// Run NMF (HALS) over a set of single cells and genes
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Runs a single NMF (HALS) run with the specified initialisation.
 ///
 /// @param f_path_gene Path to the `counts_genes.bin` file.
 /// @param gene_indices Integer vector. 0-indexed(!) positions of the genes
@@ -1303,6 +1373,8 @@ fn rs_meld_sc(
 /// }
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 #[allow(clippy::too_many_arguments)]
 fn rs_nmf_single_sc(
@@ -1341,6 +1413,8 @@ fn rs_nmf_single_sc(
 
 /// Run multiple NMF (HALS) restarts over a set of single cells and genes
 ///
+/// @description
+/// `r lifecycle::badge("experimental")`
 /// Runs `n_runs` HALS NMF with random initialisations seeded by `seed + i`.
 /// The `nmf_init` field in `nmf_hals_params` is ignored; random init is always
 /// used. The returned `w_all` is the column-binding of all run W matrices.
@@ -1373,6 +1447,8 @@ fn rs_nmf_single_sc(
 /// }
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 #[allow(clippy::too_many_arguments)]
 fn rs_nmf_multi_sc(

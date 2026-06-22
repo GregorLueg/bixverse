@@ -22,8 +22,10 @@ extendr_module! {
 
 /// Rust implementation of prcomp
 ///
-/// @description Runs the singular value decomposition over the matrix x.
-/// Assumes that samples = rows, and columns = features.
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Runs the singular value decomposition over the matrix x. Assumes that
+/// samples = rows, and columns = features.
 ///
 /// @param x Numeric matrix. Rows = samples, columns = features.
 /// @param scale Boolean. Shall the columns be variance normalised. (Mean
@@ -73,9 +75,11 @@ fn rs_prcomp(
 
 /// Run randomised SVD over a matrix
 ///
-/// @description Runs a randomised singular value decomposition over a matrix.
-/// This implementation is faster than the full SVD on large data sets, with
-/// slight loss in precision.
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Runs a randomised singular value decomposition over a matrix. This
+/// implementation is faster than the full SVD on large data sets, with slight
+/// loss in precision.
 ///
 /// @param x Numeric matrix. Rows = samples, columns = features.
 /// @param rank Integer. The rank to use.
@@ -123,13 +127,13 @@ fn rs_random_svd(
 
 /// Calculate the contrastive PCA
 ///
-/// @description This function calculate the contrastive PCA given a target
-/// covariance matrix and the background covariance matrix you wish to subtract.
-/// The alpha parameter controls how much of the background covariance you wish
-/// to remove. You have the options to return the feature loadings and you can
-/// specificy the number of cPCAs to return. WARNING! Incorrect use can cause
-/// kernel crashes. Wrapper around the Rust functions with type checks are
-/// provided in the package.
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// This function calculate the contrastive PCA given a target covariance matrix
+/// and the background covariance matrix you wish to subtract. The alpha
+/// parameter controls how much of the background covariance you wish to remove.
+/// You have the options to return the feature loadings and you can specificy
+/// the number of cPCAs to return.
 ///
 /// @param target_covar The co-variance matrix of the target data set.
 /// @param background_covar The co-variance matrix of the background data set.

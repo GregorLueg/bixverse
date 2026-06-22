@@ -34,6 +34,7 @@ extendr_module! {
 /// Calculate kBET type scores
 ///
 /// @description
+/// `r lifecycle::badge("experimental")`
 /// The function takes in a kNN matrix and a batch vector indicating which
 /// cell belongs to which batch. The function will check for the neighbourhood
 /// of each cell if the proportion of represented batches are different from
@@ -87,6 +88,7 @@ fn rs_kbet(knn_mat: RMatrix<i32>, batch_vector: Vec<i32>, verbose: bool) -> Resu
 /// Calculate batch silhouette width from an embedding
 ///
 /// @description
+/// `r lifecycle::badge("experimental")`
 /// Computes the average silhouette width on batch labels using pairwise
 /// distances in the embedding space. Values near 0 indicate good batch
 /// mixing, values near 1 indicate batch separation.
@@ -136,6 +138,7 @@ fn rs_batch_silhouette_width(
 /// Calculate batch LISI scores
 ///
 /// @description
+/// `r lifecycle::badge("experimental")`
 /// Computes the Local Inverse Simpson's Index on batch labels using the
 /// kNN graph. Measures the effective number of batches in each cell's
 /// neighbourhood. Under perfect mixing LISI equals the number of batches,
@@ -181,6 +184,7 @@ fn rs_batch_lisi(knn_mat: RMatrix<i32>, batch_vector: Vec<i32>, verbose: bool) -
 /// BBKNN implementation in Rust
 ///
 /// @description
+/// `r lifecycle::badge("experimental")`
 /// This function implements the BBKNN algorithm from Polański, et al.
 ///
 /// @param embd Numerical matrix. The embedding matrix to use to generate the
@@ -198,6 +202,8 @@ fn rs_batch_lisi(knn_mat: RMatrix<i32>, batch_vector: Vec<i32>, verbose: bool) -
 /// @export
 ///
 /// @references Polański, et al., Bioinformatics, 2020
+///
+/// @keywords internal
 #[extendr]
 fn rs_bbknn(
     embd: RMatrix<f64>,
@@ -224,6 +230,9 @@ fn rs_bbknn(
 
 /// Reduce BBKNN results to Top X neighbours
 ///
+/// @description
+/// `r lifecycle::badge("experimental")`
+///
 /// @param indptr Integer vector. The index pointers of the underlying data.
 /// @param indices Integer vector. The indices of the nearest neighbours.
 /// @param data Numeric vector. The distances to the nearest neighbours.
@@ -234,6 +243,8 @@ fn rs_bbknn(
 /// neighbours are filled with -1 (indices) or NaN (distances).
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_bbknn_filtering(
     indptr: Vec<i32>,
@@ -271,6 +282,7 @@ fn rs_bbknn_filtering(
 /// FastMNN batch correction in Rust
 ///
 /// @description
+/// `r lifecycle::badge("experimental")`
 /// This function implements the (fast) MNN algorithm from Haghverdi, et al.
 /// Instead of working on the full matrix, it uses under the hood PCA and
 /// generates a batch-aligned embedding space.
@@ -293,6 +305,8 @@ fn rs_bbknn_filtering(
 /// @return The batch-corrected embedding space.
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 #[allow(clippy::too_many_arguments)]
 fn rs_mnn(
@@ -352,6 +366,7 @@ fn rs_mnn(
 /// Harmony batch correction in Rust
 ///
 /// @description
+/// `r lifecycle::badge("experimental")`
 /// This function implements the Harmony algorithm from Korsunsky et al., 2019.
 ///
 /// @param pca Numerical matrix, i.e., the PCA matrix you want to correct.
@@ -400,6 +415,7 @@ fn rs_harmony(
 /// Harmony batch correction in Rust (version 2)
 ///
 /// @description
+/// `r lifecycle::badge("experimental")`
 /// This function implements the version 2 Harmony algorithm from Patikas, et
 /// al., 2026.
 ///

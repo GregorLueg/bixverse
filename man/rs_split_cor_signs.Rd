@@ -14,5 +14,6 @@ A vector of 1 and -1 indicating the respective sign of the
 correlation matrix.
 }
 \description{
-Helper function to split correlation matrices by sign
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 }
+\keyword{internal}

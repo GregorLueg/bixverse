@@ -25,6 +25,7 @@ A list with:
 }
 }
 \description{
-Runs the singular value decomposition over the matrix x.
-Assumes that samples = rows, and columns = features.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+Runs the singular value decomposition over the matrix x. Assumes that
+samples = rows, and columns = features.
 }

@@ -22,5 +22,6 @@ to be of \code{nrow(data)}.}
 The affinity matrix based on mixed values.
 }
 \description{
-Calculate the SNF affinity matrix for mixed values
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 }
+\keyword{internal}

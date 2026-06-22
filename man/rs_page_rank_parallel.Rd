@@ -34,7 +34,8 @@ A matrix of the scores with each row representing an element in the
 of the personalised page rank diffusion for this node.
 }
 \description{
-Helper function to calculate in parallel on the same (unweighted)
-network the personalised page rank as fast as possible. Can be used for permutations
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+Helper function to calculate in parallel on the same (unweighted) network
+the personalised page rank as fast as possible. Can be used for permutations
 type approaches.
 }

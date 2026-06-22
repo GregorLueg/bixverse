@@ -55,12 +55,14 @@ nrow, ncol in sparse format.
 }
 }
 \description{
-This function implements the SEACells algorithm for generating
-meta cells from Persad et al. An embedding matrix must be provided which is
-used to construct the kNN graph and kernel matrix for the SEACells
-algorithm. This version is highly memory and speed-optimised and will
-truncate small values during matrix operations which can affect convergence.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+This function implements the SEACells algorithm for generating meta cells
+from Persad et al. An embedding matrix must be provided which is used to
+construct the kNN graph and kernel matrix for the SEACells algorithm. This
+version is highly memory and speed-optimised and will truncate small values
+during matrix operations which can affect convergence.
 }
 \references{
 Persad, et al., Nat. Biotechnol., 2023.
 }
+\keyword{internal}

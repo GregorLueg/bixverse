@@ -16,6 +16,7 @@ rs_metacell_compactness(dc, meta_cells)
 The compactness results
 }
 \description{
-Calculates the compactness of the MetaCells based on diffusion map
-coordinates
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+Calculates the meta cell compactness based on the diffusion map coordinates.
 }
+\keyword{internal}

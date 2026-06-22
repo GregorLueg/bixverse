@@ -4,7 +4,7 @@
 
 data <- c(0.3, 0.0, 1.0, 0, 0.2, -0.5)
 
-data_dense <- rs_upper_triangle_to_dense(data, 1, 4)
+data_dense <- rs_upper_triangle_to_dense(data, TRUE, 4)
 
 expected_sparse_matrix <- as(
   Matrix::Matrix(data_dense, sparse = TRUE),
@@ -13,7 +13,7 @@ expected_sparse_matrix <- as(
 
 ### rust tests -----------------------------------------------------------------
 
-rs_data <- rs_upper_triangle_to_sparse(data, 1, 4, cs_type = "csc")
+rs_data <- rs_upper_triangle_to_sparse(data, TRUE, 4, cs_type = "csc")
 
 sparse_matrix <- sparse_list_to_mat(rs_data)
 
@@ -53,7 +53,7 @@ expect_equal(
 
 ### r tests --------------------------------------------------------------------
 
-sparse_matrix <- upper_triangle_to_sparse(data, 1L, 4L)
+sparse_matrix <- upper_triangle_to_sparse(data, TRUE, 4L)
 
 expect_equal(
   current = sparse_matrix,
@@ -73,7 +73,7 @@ rownames(expected_sparse_matrix) <- colnames(expected_sparse_matrix) <- c(
 upper_triangle_repr <- bixverse:::upper_triangular_sym_mat$new(
   values = data,
   features = c("a", "b", "c", "d"),
-  shift = 1L
+  shift = TRUE
 )
 
 sparse_matrix_class <- upper_triangle_repr$get_sparse_matrix(.verbose = FALSE)

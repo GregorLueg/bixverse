@@ -1162,7 +1162,7 @@ params_sc_harmony <- function(
     keep.null = TRUE
   )
 
-  c(
+  res <- c(
     list(
       k = k,
       sigma = sigma,
@@ -1177,6 +1177,9 @@ params_sc_harmony <- function(
     ),
     kmeans_params
   )
+  # for easier detection down the line
+  class(res) <- c("params_sc_harmony", "list")
+  res
 }
 
 ### harmony (version 2) --------------------------------------------------------
@@ -1260,7 +1263,7 @@ params_sc_harmony_v2 <- function(
     keep.null = TRUE
   )
 
-  c(
+  res <- c(
     list(
       k = k,
       sigma = sigma,
@@ -1279,6 +1282,11 @@ params_sc_harmony_v2 <- function(
     ),
     kmeans_params
   )
+
+  # for some tricks with symphony
+  class(res) <- c("params_sc_harmony_v2", "list")
+
+  res
 }
 
 ## scenic ----------------------------------------------------------------------

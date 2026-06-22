@@ -38,5 +38,7 @@ detailed verbosity.}
 A gene x TF importance matrix
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 Loads the genes in as chunks to avoid high memory pressure.
 }
+\keyword{internal}

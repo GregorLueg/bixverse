@@ -23,6 +23,6 @@ calculated via joint entropy.}
 The mutual information matrix.
 }
 \description{
-Calculates the mutual information across all columns in the
-data.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+Calculates the pairwise mutual information across all columns in the data.
 }

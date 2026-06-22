@@ -373,25 +373,37 @@ meld_res <- meld_sc(
   .verbose = FALSE
 )
 
+meld_res$raw_scores
+
 expect_true(
   current = checkmate::testMatrix(
-    meld_res,
+    meld_res$raw_scores,
     mode = "numeric",
     row.names = "named",
     col.names = "named"
   ),
-  info = "meld results are a matrix"
+  info = "meld results (raw) are a matrix"
+)
+
+expect_true(
+  current = checkmate::testMatrix(
+    meld_res$norm_scores,
+    mode = "numeric",
+    row.names = "named",
+    col.names = "named"
+  ),
+  info = "meld results (norm) are a matrix"
 )
 
 expect_equal(
-  current = dim(meld_res),
-  target = c(nrow(meld_res), n_samples),
+  current = dim(meld_res$raw_scores),
+  target = c(nrow(meld_res$raw_scores), n_samples),
   info = "meld results has expected dimensionaliy"
 )
 
 expect_true(
-  current = all(abs(rowSums(meld_res) - 1) < 1e-6),
-  info = "meld results are all close to 1"
+  current = all(abs(rowSums(meld_res$norm_scores) - 1) < 1e-5),
+  info = "meld normalised results are all close to 1"
 )
 
 ### specific results -----------------------------------------------------------
@@ -406,11 +418,11 @@ for (i in seq_along(sample_to_cell)) {
   sample_i <- names(sample_to_cell)[i]
   cells_i <- sample_to_cell[[i]]
 
-  in_sample_i <- which(row.names(meld_res_v2) %in% cells_i)
+  in_sample_i <- which(row.names(meld_res_v2$norm_scores) %in% cells_i)
 
   expect_true(
-    current = mean(meld_res_v2[in_sample_i, sample_i]) >
-      mean(meld_res_v2[-in_sample_i, sample_i]),
+    current = mean(meld_res_v2$norm_scores[in_sample_i, sample_i]) >
+      mean(meld_res_v2$norm_scores[-in_sample_i, sample_i]),
     info = sprintf("for %s the correct cells have higher meld scores", sample_i)
   )
 }

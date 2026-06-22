@@ -42,11 +42,12 @@ when this edge type is traversed.}
 A list of the personalised (constrained) page rank values.
 }
 \description{
-This function can be used to get constrainted personalised
-page-rank scores akin to Ruiz, et al. You can provide optionally
-\code{sink_nodes} (node types that will force a reset) and/or \code{sink_edges}
-(edge types that will force a reset). This version can take in a list
-of personalisation vectors and returns a list as result.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+This function can be used to get constrainted personalised page-rank scores
+akin to Ruiz, et al. You can provide optionally \code{sink_nodes} (node types
+that will force a reset) and/or \code{sink_edges} (edge types that will force a
+reset). This version can take in a list of personalisation vectors and
+returns a list as result.
 }
 \references{
 Ruiz, et al., Nat Commun, 2021

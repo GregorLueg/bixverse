@@ -3,14 +3,23 @@ use extendr_api::prelude::*;
 use bixverse_rs::prelude::*;
 use bixverse_rs::single_cell::sc_data::h5ad_io::*;
 
+/////////////
+// extendR //
+/////////////
+
 extendr_module! {
     mod r_h5;
     fn rs_h5ad_data;
 }
 
+///////////////
+// Fucntions //
+///////////////
+
 /// Load in h5ad data via Rust
 ///
 /// @description
+/// `r lifecycle::badge("experimental")`
 /// Loads in h5ad data within Rust and automatically converts the data into
 /// CSR with cells x genes.
 ///
