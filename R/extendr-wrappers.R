@@ -3636,6 +3636,52 @@ rs_nmf_single_sc <- function(f_path_gene, gene_indices, cell_indices, k, preproc
 #' @keywords internal
 rs_nmf_multi_sc <- function(f_path_gene, gene_indices, cell_indices, k, preprocessing, use_second_layer, nmf_hals_params, n_runs, seed, verbose) .Call(wrap__rs_nmf_multi_sc, f_path_gene, gene_indices, cell_indices, k, preprocessing, use_second_layer, nmf_hals_params, n_runs, seed, verbose)
 
+#' Generate the ligand to target influence matrices
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Helper function to generate the ligand to target influence matrix for the
+#' NicheNet like approach.
+#'
+#' @param ligand_seeds List. Contains the indices of the seeds, i.e., ligands.
+#' @param ppi_network Named list. Contains the PPI network with the ligand
+#' to receptor to signalling to TFs. Must contain from (indices), to
+#' (indices), and edge weights.
+#' @param grn_network Named list. Contains the gene regulatory network with the
+#' TF to target gene network. Must contain from (indices), to (indices), and
+#' edge weights.
+#' @param n_nodes Integer. Number of total nodes.
+#' @param params Named list.
+#'
+#' @returns A dense matrix of ligands x genes that contains the influence
+#' scores of each
+#'
+#' @export
+rs_generate_ligand_target_influence <- function(ligand_seeds, ppi_network, grn_network, n_nodes, params) .Call(wrap__rs_generate_ligand_target_influence, ligand_seeds, ppi_network, grn_network, n_nodes, params)
+
+#' Calculate the NicheNet ligand activity scores
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#'
+#' @param ligand_influence A ligand x background genes matrix that measures the
+#' ligand to target gene influence.
+#' @param in_gene_sets A list of logicals with the genes of interest being set
+#' to `TRUE` and the background genes set to `FALSE`.
+#'
+#' @returns A list with internal lists with:
+#' \itemize{
+#'   \item `auroc` - The Area Under the Receiver Operating Characteristic for
+#'   that ligand
+#'   \item `aupr` - The Area Under the Precision-Recall curve for that ligand.
+#'   \item `aupr_corrected` - The corrected AUPR
+#'   \item `pearson` - The Pearson correlations
+#'   \item `spearman` - The Spearman correlations
+#' }
+#'
+#' @export
+rs_ligand_activity_scores <- function(ligand_influence, in_gene_sets) .Call(wrap__rs_ligand_activity_scores, ligand_influence, in_gene_sets)
+
 #' Generate meta cells (hdWGCNA method)
 #'
 #' @description

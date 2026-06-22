@@ -19,6 +19,7 @@ Authors:
 Other contributors:
 \itemize{
   \item Liesbeth Francois \email{francois.liesbeth@gmail.com} [contributor]
+  \item Andrew Skelton \email{Ajskelton@proton.me} [contributor]
   \item Grant Neilson \email{grant.neilson5@gmail.com} [contributor]
 }
 

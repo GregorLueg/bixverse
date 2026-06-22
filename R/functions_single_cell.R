@@ -1,3 +1,10 @@
+# ------------------------------------------------------------------------------
+# Various helper functions for single cell that do not necessarily fit any
+# specific other file:
+# - single cell QC
+# - various helper and util functions used in other workflows
+# ------------------------------------------------------------------------------
+
 # helpers ----------------------------------------------------------------------
 
 ## consts ----------------------------------------------------------------------

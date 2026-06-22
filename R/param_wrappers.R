@@ -1073,3 +1073,53 @@ params_symphony_map <- function(sigma = 0.1, lambda = 1.0) {
   class(res) <- c("params_symphony_map", "list")
   res
 }
+
+### nichenet -------------------------------------------------------------------
+
+#' Parameters for ligand to target influence computation
+#'
+#' @param lr_sig_hub Numeric in `[0, 1]`. Hub correction strength for the
+#' ligand-receptor / signalling layer. 0 disables correction.
+#' @param gr_hub Numeric in `[0, 1]`. Hub correction strength for the gene
+#' regulatory layer. 0 disables correction.
+#' @param ltf_cutoff Numeric in `[0, 1]`. Quantile cutoff applied to the
+#' intermediate ligand-to-TF matrix.
+#' @param damping_factor Numeric in `[0, 1]`. PageRank-style damping factor.
+#' @param tol Numeric > 0. Convergence tolerance for the propagation step.
+#' @param max_iter Integer >= 1. Maximum iterations for the propagation step.
+#' @param topology_correction Boolean. Apply topology correction.
+#' @param secondary_targets Boolean. Run a second round through targets.
+#'
+#' @returns A named list of parameters.
+#'
+#' @export
+params_ligand_target <- function(
+  lr_sig_hub = 0,
+  gr_hub = 0,
+  ltf_cutoff = 0.99,
+  damping_factor = 0.5,
+  tol = 1e-6,
+  max_iter = 1000L,
+  topology_correction = FALSE,
+  secondary_targets = FALSE
+) {
+  checkmate::qassert(lr_sig_hub, "N1[0,1]")
+  checkmate::qassert(gr_hub, "N1[0,1]")
+  checkmate::qassert(ltf_cutoff, "N1[0,1]")
+  checkmate::qassert(damping_factor, "N1[0,1]")
+  checkmate::qassert(tol, "N1(0,)")
+  checkmate::qassert(max_iter, "X1[1,)")
+  checkmate::qassert(topology_correction, "B1")
+  checkmate::qassert(secondary_targets, "B1")
+
+  list(
+    lr_sig_hub = lr_sig_hub,
+    gr_hub = gr_hub,
+    ltf_cutoff = ltf_cutoff,
+    damping_factor = damping_factor,
+    tol = tol,
+    max_iter = as.integer(max_iter),
+    topology_correction = topology_correction,
+    secondary_targets = secondary_targets
+  )
+}

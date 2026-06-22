@@ -4686,3 +4686,87 @@ checkScWnnParams <- function(x) {
 #'
 #' @keywords internal
 assertScWnnParams <- checkmate::makeAssertionFunction(checkScWnnParams)
+
+#### nichenet ------------------------------------------------------------------
+
+#' Check ligand-target influence parameters
+#'
+#' @description Checkmate extension for checking the ligand to target
+#' influence parameters.
+#'
+#' @param x The list to check/assert.
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error
+#' message.
+#'
+#' @keywords internal
+checkLigandTarget <- function(x) {
+  res <- checkmate::checkList(x)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+  res <- checkmate::checkNames(
+    names(x),
+    must.include = c(
+      "lr_sig_hub",
+      "gr_hub",
+      "ltf_cutoff",
+      "damping_factor",
+      "tol",
+      "max_iter",
+      "topology_correction",
+      "secondary_targets"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+  rules <- list(
+    lr_sig_hub = "N1[0,1]",
+    gr_hub = "N1[0,1]",
+    ltf_cutoff = "N1[0,1]",
+    damping_factor = "N1[0,1]",
+    tol = "N1(0,)",
+    max_iter = "X1[1,)",
+    topology_correction = "B1",
+    secondary_targets = "B1"
+  )
+  res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(rules)) {
+      checkmate::qtest(x, rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(
+      sprintf(
+        paste(
+          "The following element `%s` in ligand-target parameters is",
+          "incorrect: lr_sig_hub, gr_hub, ltf_cutoff and damping_factor must",
+          "be single numerics in [0, 1]; tol must be a single positive",
+          "numeric; max_iter must be a single positive integer;",
+          "topology_correction and secondary_targets must be single booleans."
+        ),
+        broken_elem
+      )
+    )
+  }
+  return(TRUE)
+}
+
+#' Assert ligand-target influence parameters
+#'
+#' @inheritParams checkLigandTarget
+#'
+#' @param .var.name Name of the checked object to print in assertions.
+#' Defaults to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is
+#' successful.
+#'
+#' @keywords internal
+assertLigandTarget <- checkmate::makeAssertionFunction(checkLigandTarget)
