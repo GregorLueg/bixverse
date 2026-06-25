@@ -34,8 +34,8 @@ Following things were added:
   write `NA` gene ids into the `var` table under `gene_universe = "union"` when
   the var reference file does not contain every gene in the universe. The
   `gene_id` is now pinned to the canonical universe id (counts were already
-  ingested correctly); a warning reports genes whose `gene_name`/`feature_type`
-  metadata is unavailable from the reference file.
+  ingested correctly) and additional data found in the vars is dropped. The user
+  has to add them subsequently.
 
 ## Breaking changes
 
