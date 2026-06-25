@@ -28,6 +28,15 @@ Following things were added:
   transfer of cell types.
 * Grouping column for doublet detection methods.
 
+## Bug fixes
+
+* Multi-file loaders (`load_multi_tenx_h5()`, `load_multi_h5ad()`) no longer
+  write `NA` gene ids into the `var` table under `gene_universe = "union"` when
+  the var reference file does not contain every gene in the universe. The
+  `gene_id` is now pinned to the canonical universe id (counts were already
+  ingested correctly); a warning reports genes whose `gene_name`/`feature_type`
+  metadata is unavailable from the reference file.
+
 ## Breaking changes
 
 The interface to the i/o functions for the single cell was changed. The 
