@@ -33,9 +33,8 @@ Following things were added:
 * Multi-file loaders (`load_multi_tenx_h5()`, `load_multi_h5ad()`) no longer
   write `NA` gene ids into the `var` table under `gene_universe = "union"` when
   the var reference file does not contain every gene in the universe. The
-  `gene_id` is now pinned to the canonical universe id (counts were already
-  ingested correctly) and additional data found in the vars is dropped. The user
-  has to add them subsequently.
+  `gene_id` is now pinned to the canonical universe id and additional data found 
+  in the vars is dropped. The user has to add them subsequently.
 
 ## Breaking changes
 
