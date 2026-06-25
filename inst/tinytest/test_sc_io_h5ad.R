@@ -22,7 +22,7 @@ min_cells_exp <- 500L
 single_cell_test_data <- generate_single_cell_test_data()
 
 # CSR version
-f_path_csr = file.path(test_temp_dir, "csr_test.h5ad")
+f_path_csr <- file.path(test_temp_dir, "csr_test.h5ad")
 
 write_h5ad_sc(
   f_path = f_path_csr,
@@ -35,7 +35,7 @@ write_h5ad_sc(
 # CSC version
 counts_csc <- as(single_cell_test_data$counts, "CsparseMatrix")
 
-f_path_csc = file.path(test_temp_dir, "csc_test.h5ad")
+f_path_csc <- file.path(test_temp_dir, "csc_test.h5ad")
 
 write_h5ad_sc(
   f_path = f_path_csc,
@@ -198,7 +198,7 @@ vars_filtered <- single_cell_test_data$var[genes_pass, ]
 
 #### rust logic ----------------------------------------------------------------
 
-sc_qc_param = params_sc_min_quality(
+sc_qc_param <- params_sc_min_quality(
   min_unique_genes = min_genes_exp,
   min_lib_size = min_lib_size,
   min_cells = min_cells_exp
@@ -611,7 +611,7 @@ expect_equal(
 
 single_cell_test_data_1 <- generate_single_cell_test_data(seed = 1L)
 
-f_path_csr_1 = file.path(test_temp_dir, "csr_test_1.h5ad")
+f_path_csr_1 <- file.path(test_temp_dir, "csr_test_1.h5ad")
 
 write_h5ad_sc(
   f_path = f_path_csr_1,
@@ -625,7 +625,7 @@ write_h5ad_sc(
 
 single_cell_test_data_2 <- generate_single_cell_test_data(seed = 2L)
 
-f_path_csr_2 = file.path(test_temp_dir, "csr_test_2.h5ad")
+f_path_csr_2 <- file.path(test_temp_dir, "csr_test_2.h5ad")
 
 write_h5ad_sc(
   f_path = f_path_csr_2,
@@ -640,7 +640,7 @@ write_h5ad_sc(
 h5ad_files <- list.files(test_temp_dir)
 
 h5ad_files <- h5ad_files[
-  grepl("test_1", h5ad_files) | grepl("test_2", h5ad_files)
+  grepl("csr_test_1", h5ad_files) | grepl("csr_test_2", h5ad_files)
 ]
 
 h5ad_files_final <- file.path(test_temp_dir, h5ad_files)
@@ -781,6 +781,196 @@ expect_equal(
   current = get_sc_var(sc_object)[, colnames(var_direct), with = FALSE],
   target = var_direct,
   info = "main multi-read method returns a var table"
+)
+
+## dense h5ad ------------------------------------------------------------------
+
+### single dense file ---------------------------------------------------------
+
+f_path_dense <- file.path(test_temp_dir, "dense_test.h5ad")
+
+write_h5ad_sc_dense(
+  f_path = f_path_dense,
+  counts = single_cell_test_data$counts,
+  obs = single_cell_test_data$obs,
+  var = single_cell_test_data$var,
+  .verbose = FALSE
+)
+
+h5_meta_dense <- bixverse:::get_h5ad_dimensions(f_path_dense)
+
+expect_equal(
+  current = h5_meta_dense$dims,
+  target = expected_dims,
+  info = "h5ad dense - correct dimensions"
+)
+
+expect_equal(
+  current = h5_meta_dense$type,
+  target = "DENSE_ROW",
+  info = "h5ad dense - detected as DENSE_ROW"
+)
+
+#### streaming ingest ---------------------------------------------------------
+
+sc_object <- SingleCells(dir_data = test_temp_dir)
+rust_con <- get_sc_rust_ptr(sc_object)
+
+file_res <- rust_con$h5ad_to_file_streaming(
+  cs_type = h5_meta_dense$type,
+  h5_path = path.expand(f_path_dense),
+  no_cells = h5_meta_dense$dims["obs"],
+  no_genes = h5_meta_dense$dims["var"],
+  qc_params = sc_qc_param,
+  slot = "X",
+  verbose = FALSE
+)
+
+expect_equivalent(
+  current = file_res$cell_indices + 1,
+  target = cells_pass,
+  info = "h5ad dense to binary - correct cells being kept"
+)
+
+expect_equivalent(
+  current = file_res$gene_indices + 1,
+  target = genes_pass,
+  info = "h5ad dense to binary - correct genes being kept"
+)
+
+#### full object load --------------------------------------------------------
+
+sc_object <- SingleCells(dir_data = test_temp_dir)
+sc_object <- stream_h5ad(
+  object = sc_object,
+  h5_path = path.expand(f_path_dense),
+  sc_qc_param = sc_qc_param,
+  .verbose = FALSE
+)
+
+obs_object <- sc_object[[]]
+
+expect_equal(
+  current = obs_object$cell_id,
+  target = obs_filtered$cell_id,
+  info = "h5ad dense (object) - correct cells kept"
+)
+
+expect_equivalent(
+  current = Matrix::rowSums(counts_filtered),
+  target = obs_object$lib_size,
+  info = "h5ad dense (object) - library size correct"
+)
+
+expect_equivalent(
+  current = Matrix::rowSums(counts_filtered != 0),
+  target = obs_object$nnz,
+  info = "h5ad dense (object) - nnz correct"
+)
+
+counts_csr_dense <- sc_object[,, return_format = "cell"]
+
+expect_equal(
+  current = counts_csr_dense,
+  target = counts_filtered,
+  info = "count retrieval - dense ingest, CSR layout"
+)
+
+counts_csc_dense <- sc_object[,, return_format = "gene"]
+
+expect_equal(
+  current = counts_csc_dense,
+  target = counts_filtered_csc,
+  info = "count retrieval - dense ingest, CSC layout"
+)
+
+### multi dense files --------------------------------------------------------
+
+f_path_dense_1 <- file.path(test_temp_dir, "dense_test_1.h5ad")
+f_path_dense_2 <- file.path(test_temp_dir, "dense_test_2.h5ad")
+
+write_h5ad_sc_dense(
+  f_path = f_path_dense_1,
+  counts = single_cell_test_data_1$counts,
+  obs = single_cell_test_data_1$obs,
+  var = single_cell_test_data_1$var,
+  .verbose = FALSE
+)
+
+write_h5ad_sc_dense(
+  f_path = f_path_dense_2,
+  counts = single_cell_test_data_2$counts,
+  obs = single_cell_test_data_2$obs,
+  var = single_cell_test_data_2$var,
+  .verbose = FALSE
+)
+
+dense_files_final <- c(
+  exp1 = f_path_dense_1,
+  exp2 = f_path_dense_2
+)
+
+h5_tasks_dense <- prescan_h5ad_files(
+  h5_paths = dense_files_final,
+  .verbose = FALSE
+)
+
+expect_true(
+  current = all(
+    vapply(
+      h5_tasks_dense$file_tasks,
+      function(t) t$cs_type == "DENSE_ROW",
+      logical(1L)
+    )
+  ),
+  info = "multi-dense prescan - all files DENSE_ROW"
+)
+
+sc_object <- SingleCells(dir_data = test_temp_dir)
+rust_con <- get_sc_rust_ptr(sc_object)
+
+file_res_dense <- rust_con$multi_h5ad_to_file(
+  file_tasks = h5_tasks_dense$file_tasks,
+  universe_size = as.integer(h5_tasks_dense$universe_size),
+  qc_params = sc_qc_param,
+  verbose = FALSE
+)
+
+expect_true(
+  current = checkmate::testNames(
+    names(file_res_dense),
+    must.include = c(
+      "global_gene_indices",
+      "total_cells",
+      "total_genes",
+      "per_file"
+    )
+  ),
+  info = "multi-dense rust file result has expected structure"
+)
+
+counts_dense_multi <- rust_con$return_full_mat(
+  assay = "raw",
+  cell_based = FALSE,
+  verbose = FALSE
+)
+
+expect_true(
+  current = counts_dense_multi$no_cells > 1000,
+  info = "multi-dense: more than 1000 cells were written to file"
+)
+
+sc_object <- load_multi_h5ad(
+  object = sc_object,
+  prescan_result = h5_tasks_dense,
+  sc_qc_param = sc_qc_param,
+  .verbose = FALSE
+)
+
+expect_equal(
+  current = dim(sc_object[]),
+  target = c(counts_dense_multi$no_cells, counts_dense_multi$no_genes),
+  info = "multi-dense main method returns expected dims"
 )
 
 # clean up ---------------------------------------------------------------------

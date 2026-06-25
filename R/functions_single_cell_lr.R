@@ -35,15 +35,17 @@ new_ligand_target_influence <- function(
   rownames(influence) <- ligand_names
   colnames(influence) <- gene_ids
 
-  res <- list(
-    influence = influence,
-    ligand_seeds = ligand_seeds,
-    ligand_names = ligand_names,
-    gene_ids = gene_ids,
-    params = params
+  res <- structure(
+    list(
+      influence = influence,
+      ligand_seeds = ligand_seeds,
+      ligand_names = ligand_names,
+      gene_ids = gene_ids,
+      params = params
+    ),
+    class = "LigandTargetInfluence"
   )
 
-  class(res) <- "LigandTargetInfluence"
   res
 }
 

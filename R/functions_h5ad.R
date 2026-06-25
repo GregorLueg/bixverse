@@ -275,24 +275,21 @@ prescan_h5ad_files <- function(
 
 ### dimensions -----------------------------------------------------------------
 
-#' Helper function to get the dimensions and compressed sparse format
+#' Helper function to get the dimensions and storage format
+#'
+#' Distinguishes sparse (`CSR`/`CSC`) from dense storage. For dense `X` the
+#' orientation is inferred by comparing the matrix dims against the obs and
+#' var lengths (`DENSE_ROW` = cells x genes, `DENSE_COL` = genes x cells).
+#' Ties (`no_obs == no_var`) fall back to the AnnData convention (`DENSE_ROW`).
 #'
 #' @param f_path File path to the `.h5ad` file.
 #'
-#' @return A list with the following elements:
-#' \itemize{
-#'   \item dims - Dimensions of the stored data in the h5ad file.
-#'   \item type - Was the data stored in CSR (indptr = cells) or CSC (indptr =
-#'   genes).
-#' }
+#' @return A list with `dims` (named integer `c(obs, var)`) and `type` (one of
+#'   `"CSR"`, `"CSC"`, `"DENSE_ROW"`, `"DENSE_COL"`).
 get_h5ad_dimensions <- function(f_path) {
-  # checks
   checkmate::assertFileExists(f_path)
 
-  # function
-  h5_content <- rhdf5::h5ls(
-    f_path
-  ) %>%
+  h5_content <- rhdf5::h5ls(f_path) %>%
     data.table::setDT()
 
   on.exit(tryCatch(rhdf5::h5closeAll(), error = function(e) invisible()))
@@ -305,17 +302,55 @@ get_h5ad_dimensions <- function(f_path) {
     group == "/var" & otype == "H5I_DATASET"
   ][1, as.numeric(dim)]
 
-  indptr <- h5_content[
-    group == "/X" & name == "indptr",
-    as.numeric(dim)
-  ]
+  x_row <- h5_content[group == "/" & name == "X"]
 
-  cs_format <- ifelse(no_var + 1 == indptr, "CSC", "CSR")
+  if (nrow(x_row) == 0L) {
+    stop("Could not locate /X in the h5ad file.")
+  }
 
-  return(list(
+  cs_format <- if (x_row$otype == "H5I_GROUP") {
+    indptr <- h5_content[
+      group == "/X" & name == "indptr",
+      as.numeric(dim)
+    ]
+    if (length(indptr) == 0L) {
+      stop("/X is a group but contains no indptr dataset.")
+    }
+    ifelse(no_var + 1 == indptr, "CSC", "CSR")
+  } else {
+    # h5ls dim is R-view; read native order directly
+    fid <- rhdf5::H5Fopen(f_path)
+    did <- rhdf5::H5Dopen(fid, "X")
+    sid <- rhdf5::H5Dget_space(did)
+    x_dims <- rhdf5::H5Sget_simple_extent_dims(sid)$size
+    rhdf5::H5Sclose(sid)
+    rhdf5::H5Dclose(did)
+    rhdf5::H5Fclose(fid)
+
+    if (length(x_dims) != 2L) {
+      stop(sprintf("Unexpected /X rank: %d", length(x_dims)))
+    }
+    if (x_dims[1] == no_obs && x_dims[2] == no_var) {
+      "DENSE_COL"
+    } else if (x_dims[1] == no_var && x_dims[2] == no_obs) {
+      "DENSE_ROW"
+    } else if (no_obs == no_var) {
+      "DENSE_ROW"
+    } else {
+      stop(sprintf(
+        "/X dense dims (%d x %d) match neither obs/var (%d / %d) ordering.",
+        x_dims[1],
+        x_dims[2],
+        no_obs,
+        no_var
+      ))
+    }
+  }
+
+  list(
     dims = setNames(c(as.integer(no_obs), as.integer(no_var)), c("obs", "var")),
     type = cs_format
-  ))
+  )
 }
 
 ### eda ------------------------------------------------------------------------

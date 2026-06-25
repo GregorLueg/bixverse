@@ -171,9 +171,8 @@ dependencies = [
 
 [[package]]
 name = "bixverse-rs"
-version = "0.3.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "282b16e4d0e2a7c12af822beb8a34e0248208936bd9665cbe2cd1e4e84a915ea"
+version = "0.3.2"
+source = "git+https://github.com/GregorLueg/bixverse-rs.git?branch=v0.3.2#ebf3497e37188caca96658e14fae76d390e8ad84"
 dependencies = [
  "ann-search-rs",
  "approx",
@@ -190,6 +189,7 @@ dependencies = [
  "indexmap",
  "lz4_flex",
  "memmap2",
+ "ndarray",
  "num-traits",
  "once_cell",
  "petgraph",
