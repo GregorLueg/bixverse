@@ -26,5 +26,6 @@ write_h5ad_sc(f_path, counts, obs, var, overwrite = TRUE, .verbose = TRUE)
 Returns invisible
 }
 \description{
-This is a helper to write synthetic data to h5ad file.
+This is a helper to write synthetic data to h5ad file. This
+version will write the data into the common compressed sparse data format.
 }

@@ -173,6 +173,14 @@ fn get_gene_data(
 }
 
 /// Parse a count type string into an `AssayType`
+///
+/// ### Params
+///
+/// * `s` - String to parse. One of `"raw"` or `"norm"`.
+///
+/// ### Returns
+///
+/// The optional [AssayType]
 fn parse_count_type(s: &str) -> Option<AssayType> {
     match s.to_lowercase().as_str() {
         "raw" => Some(AssayType::Raw),

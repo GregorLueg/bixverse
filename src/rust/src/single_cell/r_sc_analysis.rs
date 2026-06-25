@@ -1,20 +1,25 @@
 use bixverse_rs::core::math::stats::calc_fdr;
 use bixverse_rs::methods::nmf_hals::HalsOpts;
 use bixverse_rs::prelude::*;
-use bixverse_rs::single_cell::sc_analysis::dge_pathway_scores::*;
-use bixverse_rs::single_cell::sc_analysis::hotspot::*;
-use bixverse_rs::single_cell::sc_analysis::meld::*;
-use bixverse_rs::single_cell::sc_analysis::milo_r::*;
-use bixverse_rs::single_cell::sc_analysis::module_scoring::*;
-use bixverse_rs::single_cell::sc_analysis::nmf_sc::{nmf_multiple_run_sc, nmf_single_run_sc};
-use bixverse_rs::single_cell::sc_analysis::scenic::*;
-use bixverse_rs::single_cell::sc_analysis::vision::*;
+use bixverse_rs::single_cell::sc_analysis::{
+    dge_pathway_scores::*,
+    hotspot::*,
+    meld::*,
+    milo_r::*,
+    module_scoring::*,
+    nichenet::activity_scoring::*,
+    nichenet::ligand_regulatory_potential::*,
+    nmf_sc::{nmf_multiple_run_sc, nmf_single_run_sc},
+    scenic::*,
+    vision::*,
+};
 use extendr_api::*;
 use faer::Mat;
 use rand::prelude::*;
+use rayon::prelude::*;
 use std::cmp::Ordering;
 
-use crate::single_cell::utils::{knn_data_to_rust, panel_size_from_mem};
+use crate::single_cell::utils::{knn_data_to_rust, panel_size_from_mem, prep_nichenet_network};
 
 ////////////////////
 // extendr Module //
@@ -48,6 +53,9 @@ extendr_module! {
     // nmf
     fn rs_nmf_single_sc;
     fn rs_nmf_multi_sc;
+    // nichenet
+    fn rs_generate_ligand_target_influence;
+    fn rs_ligand_activity_scores;
 }
 
 //////////
@@ -1491,4 +1499,146 @@ fn rs_nmf_multi_sc(
         converged = nmf_res.converged,
         best_idx = (nmf_res.best_idx + 1) as i32
     ))
+}
+
+//////////////
+// NicheNet //
+//////////////
+
+/// Generate the ligand to target influence matrices
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Helper function to generate the ligand to target influence matrix for the
+/// NicheNet like approach.
+///
+/// @param ligand_seeds List. Contains the indices of the seeds, i.e., ligands.
+/// @param ppi_network Named list. Contains the PPI network with the ligand
+/// to receptor to signalling to TFs. Must contain from (indices), to
+/// (indices), and edge weights.
+/// @param grn_network Named list. Contains the gene regulatory network with the
+/// TF to target gene network. Must contain from (indices), to (indices), and
+/// edge weights.
+/// @param n_nodes Integer. Number of total nodes.
+/// @param params Named list.
+///
+/// @returns A dense matrix of ligands x genes that contains the influence
+/// scores of each
+///
+/// @export
+#[extendr]
+fn rs_generate_ligand_target_influence(
+    ligand_seeds: List,
+    ppi_network: List,
+    grn_network: List,
+    n_nodes: usize,
+    params: List,
+) -> Result<RMatrix<f64>> {
+    let (sig_from, sig_to, sig_weight) = prep_nichenet_network(ppi_network)?;
+    let (grn_from, grn_to, grn_weight) = prep_nichenet_network(grn_network)?;
+    let mut seed_vec = Vec::with_capacity(ligand_seeds.len());
+
+    for i in 0..ligand_seeds.len() {
+        let elem_i = ligand_seeds.elt(i)?;
+        let vec_i = elem_i
+            .as_integer_vector()
+            .ok_or_else(|| {
+                Error::Other("One of the ligand seeds could not be transformed to integers.".into())
+            })?
+            .iter()
+            .map(|x| *x as u32)
+            .collect();
+        seed_vec.push(vec_i);
+    }
+
+    let params: LigandTargetParams<f64> = LigandTargetParams::from_r_list(params)?;
+
+    let ligand_influence_matrix = construct_ligand_target_mat(
+        n_nodes,
+        &sig_from,
+        &sig_to,
+        &sig_weight,
+        &grn_from,
+        &grn_to,
+        &grn_weight,
+        &seed_vec,
+        &params,
+    )
+    .to_extendr()?;
+
+    Ok(faer_to_r_matrix(ligand_influence_matrix.as_ref()))
+}
+
+/// [LigandActivityScores] to R list Helper
+///
+/// ### Params
+///
+/// * `scores` - The [LigandActivityScores] structure to transform
+///
+/// ### Returns
+///
+/// The list with the results
+fn activity_to_list(scores: &LigandActivityScores<f64>) -> List {
+    list!(
+        auroc = scores.auroc.clone(),
+        aupr = scores.aupr.clone(),
+        aupr_corrected = scores.aupr_corrected.clone(),
+        pearson = scores.pearson.clone(),
+        spearman = scores.spearman.clone()
+    )
+}
+
+/// Calculate the NicheNet ligand activity scores
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
+///
+/// @param ligand_influence A ligand x background genes matrix that measures the
+/// ligand to target gene influence.
+/// @param in_gene_sets A list of logicals with the genes of interest being set
+/// to `TRUE` and the background genes set to `FALSE`.
+///
+/// @returns A list with internal lists with:
+/// \itemize{
+///   \item `auroc` - The Area Under the Receiver Operating Characteristic for
+///   that ligand
+///   \item `aupr` - The Area Under the Precision-Recall curve for that ligand.
+///   \item `aupr_corrected` - The corrected AUPR
+///   \item `pearson` - The Pearson correlations
+///   \item `spearman` - The Spearman correlations
+/// }
+///
+/// @export
+#[extendr]
+fn rs_ligand_activity_scores(ligand_influence: RMatrix<f64>, in_gene_sets: List) -> Result<List> {
+    let ligand_influence = r_matrix_to_faer(&ligand_influence);
+
+    let mut in_gene_sets_vec = Vec::with_capacity(in_gene_sets.len());
+
+    for i in 0..in_gene_sets.len() {
+        let elem_i = in_gene_sets.elt(i)?;
+        let vec_i: Vec<bool> = elem_i
+            .as_logical_vector()
+            .ok_or_else(|| {
+                Error::Other("One of the ligand seeds could not be transformed to integers.".into())
+            })?
+            .iter()
+            .map(|x| x.to_bool())
+            .collect();
+        in_gene_sets_vec.push(vec_i);
+    }
+
+    let scores: Vec<LigandActivityScores<f64>> = in_gene_sets_vec
+        .par_iter()
+        .map(|x| ligand_activity_scores(&ligand_influence.as_ref(), x))
+        .collect();
+
+    let mut res = List::new(scores.len());
+
+    for i in 0..res.len() {
+        let res_i = activity_to_list(&scores[i]);
+        res.set_elt(i, res_i.into())?;
+    }
+
+    Ok(res)
 }

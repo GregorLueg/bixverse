@@ -6,6 +6,7 @@ Following things were added:
 
 * Merging of SingleCells object possible
 * Multi file reading in for .mtx files
+* Possibility to read in densely stored h5ad files.
 * Multi-model single cell support set up
   - New multi-model class for single cells: `SingleCellsMultiModal`.
   - You can no add the ADT counts to that one (in the future maybe also ATAC-
@@ -14,17 +15,26 @@ Following things were added:
     [Hao et al., 2021](https://www.cell.com/cell/fulltext/S0092-8674(21)00583-3)
 * Improved performance on:
   - Harmony version 1 and version 2 with substantial speed improvements.
-  - Hotspot with even more substantial speed improvements via doing less stupid 
-    things in the Rust code.
+  - Hotspot with even more substantial speed improvements via doing less 
+    suboptimal things in the Rust code.
   - Large improvements to the memory management of SuperCells and SEACells. Both
     can run on a million cells on consumer hardware now.
 * Large number of helpers for plotting via the sister package and updated
   vignettes for this.
 * Reading in of 10x CellRanger h5 files (and multi-file support).
-* NMF for bulk and single cell.
+* NMF for single cell wired up. TODO: Add also to bulk -> in one of the future
+  releases.
 * [Symphony](https://www.nature.com/articles/s41467-021-25957-x) for label 
   transfer of cell types.
 * Grouping column for doublet detection methods.
+
+## Bug fixes
+
+* Multi-file loaders (`load_multi_tenx_h5()`, `load_multi_h5ad()`) no longer
+  write `NA` gene ids into the `var` table under `gene_universe = "union"` when
+  the var reference file does not contain every gene in the universe. The
+  `gene_id` is now pinned to the canonical universe id and additional data found 
+  in the vars is dropped. The user has to add them subsequently.
 
 ## Breaking changes
 
@@ -54,7 +64,7 @@ calculate_pca_sc(
 ```
 
 This gives you way more control over how to run the PCA normalisation (mean
-centering, variance normalisation or now also the new PFLogPF function).
+centering, variance normalisation or now also the new PFLogPF normalisation).
 
 # bixverse 0.3.2
 
