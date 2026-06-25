@@ -739,10 +739,7 @@ expect_true(
 
 final_gene_names <- h5_tasks$universe[file_res$global_gene_indices + 1L]
 
-duckdb_con$populate_vars_from_h5ad_reordered(
-  h5_path = h5_tasks$file_tasks[[1L]]$h5_path,
-  final_gene_names = final_gene_names
-)
+duckdb_con$populate_var_minimal(final_gene_names)
 
 var_direct <- duckdb_con$get_vars_table()
 

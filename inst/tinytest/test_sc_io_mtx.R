@@ -84,7 +84,7 @@ obs_filtered <- single_cell_test_data$obs[cells_pass, ]
 
 vars_filtered <- single_cell_test_data$var[genes_pass, ]
 
-sc_qc_param = params_sc_min_quality(
+sc_qc_param <- params_sc_min_quality(
   min_unique_genes = min_genes_exp,
   min_lib_size = min_lib_size,
   min_cells = min_cells_exp
@@ -934,12 +934,7 @@ expect_equal(
 
 final_gene_names <- prescan_result$universe[file_res$global_gene_indices + 1L]
 
-duckdb_con$populate_vars_from_plain_text_reordered(
-  f_path = prescan_result$file_tasks[[1L]]$features_path,
-  has_hdr = prescan_result$file_tasks[[1L]]$has_hdr,
-  final_gene_names = final_gene_names
-)
-
+duckdb_con$populate_var_minimal(final_gene_names = final_gene_names)
 var_direct <- duckdb_con$get_vars_table()
 
 expect_true(

@@ -1019,11 +1019,7 @@ S7::method(load_multi_h5ad, SingleCells) <- function(
   }
 
   final_gene_names <- prescan_result$universe[file_res$global_gene_indices + 1L]
-
-  duckdb_con$populate_vars_from_h5ad_reordered(
-    h5_path = prescan_result$file_tasks[[1L]]$h5_path,
-    final_gene_names = final_gene_names
-  )
+  duckdb_con$populate_var_minimal(final_gene_names = final_gene_names)
 
   per_file_qc <- lapply(file_res$per_file, function(f) {
     data.table::data.table(nnz = f$nnz, lib_size = f$lib_size)
@@ -1318,11 +1314,7 @@ S7::method(load_multi_mtx, SingleCells) <- function(
   }
   final_gene_names <-
     prescan_result$universe[file_res$global_gene_indices + 1L]
-  duckdb_con$populate_vars_from_plain_text_reordered(
-    f_path = prescan_result$file_tasks[[1L]]$features_path,
-    has_hdr = prescan_result$file_tasks[[1L]]$has_hdr,
-    final_gene_names = final_gene_names
-  )
+  duckdb_con$populate_var_minimal(final_gene_names = final_gene_names)
 
   per_file_qc <- lapply(file_res$per_file, function(f) {
     data.table::data.table(nnz = f$nnz, lib_size = f$lib_size)
@@ -1582,13 +1574,8 @@ S7::method(load_multi_tenx_h5, SingleCells) <- function(
     message("Loading features into DuckDB.")
   }
 
-  final_gene_names <-
-    prescan_result$universe[file_res$global_gene_indices + 1L]
-  duckdb_con$populate_vars_from_tenx_h5_reordered(
-    h5_path = prescan_result$file_tasks[[1L]]$h5_path,
-    version = prescan_result$file_tasks[[1L]]$version,
-    final_gene_names = final_gene_names
-  )
+  final_gene_names <- prescan_result$universe[file_res$global_gene_indices + 1L]
+  duckdb_con$populate_var_minimal(final_gene_names = final_gene_names)
 
   per_file_qc <- lapply(file_res$per_file, function(f) {
     data.table::data.table(nnz = f$nnz, lib_size = f$lib_size)
