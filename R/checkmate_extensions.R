@@ -4770,3 +4770,36 @@ checkLigandTarget <- function(x) {
 #'
 #' @keywords internal
 assertLigandTarget <- checkmate::makeAssertionFunction(checkLigandTarget)
+
+### spatial --------------------------------------------------------------------
+
+#' Check that an object is a valid SpatialSample
+#'
+#' @description Checkmate extension for [bixverse::SpatialSample()].
+#'
+#' @param x The object to check.
+#'
+#' @return `TRUE` if the check was successful, otherwise an error message
+#' string.
+#'
+#' @keywords internal
+checkSpatialSample <- function(x) {
+  res <- validate_spatial_sample(x)
+  if (isTRUE(res)) TRUE else res
+}
+
+#' Assert that an object is a valid SpatialSample
+#'
+#' @description Checkmate assertion for [bixverse::SpatialSample()].
+#'
+#' @inheritParams checkSpatialSample
+#'
+#' @param .var.name Name of the checked object to print in assertions.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is
+#' successful.
+#'
+#' @keywords internal
+assertSpatialSample <- checkmate::makeAssertionFunction(checkSpatialSample)
