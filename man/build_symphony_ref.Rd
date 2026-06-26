@@ -13,6 +13,7 @@ build_symphony_ref(
   pca_params = params_sc_pca(),
   no_pcs = 30L,
   slim = FALSE,
+  label_columns = NULL,
   seed = 42L,
   .verbose = TRUE
 )
@@ -37,6 +38,11 @@ universe of \code{object}. Must be provided explicitly.}
 \item{slim}{Boolean. If \code{TRUE}, drops \code{z_orig} and \code{r} from the returned
 reference. \code{z_corr} is always kept (needed for kNN label transfer).}
 
+\item{label_columns}{Optional character vector of obs column names to
+snapshot into the reference. Read in \code{cells_to_keep} order to align with
+\code{z_corr}. Required for \code{\link[=transfer_labels_symphony]{transfer_labels_symphony()}} unless populated
+later via \code{\link[=add_symphony_labels]{add_symphony_labels()}}.}
+
 \item{seed}{Integer.}
 
 \item{.verbose}{Boolean or integer.}
@@ -48,4 +54,6 @@ A \link{SymphonyReference} object.
 Runs sparse PCA over the provided HVGs, runs Harmony for batch correction,
 and compresses the result into the cached terms used at query time. The
 Harmony version is auto-detected from the class of \code{harmony_params}.
+Optionally snapshots one or more obs columns (e.g. cell type annotations)
+into the reference's \code{labels} slot for downstream label transfer.
 }

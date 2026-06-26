@@ -1505,6 +1505,33 @@ fn rs_nmf_multi_sc(
 // NicheNet //
 //////////////
 
+/////////////
+// Helpers //
+/////////////
+
+/// [LigandActivityScores] to R list Helper
+///
+/// ### Params
+///
+/// * `scores` - The [LigandActivityScores] structure to transform
+///
+/// ### Returns
+///
+/// The list with the results
+fn activity_to_list(scores: &LigandActivityScores<f64>) -> List {
+    list!(
+        auroc = scores.auroc.clone(),
+        aupr = scores.aupr.clone(),
+        aupr_corrected = scores.aupr_corrected.clone(),
+        pearson = scores.pearson.clone(),
+        spearman = scores.spearman.clone()
+    )
+}
+
+//////////
+// Main //
+//////////
+
 /// Generate the ligand to target influence matrices
 ///
 /// @description
@@ -1567,25 +1594,6 @@ fn rs_generate_ligand_target_influence(
     .to_extendr()?;
 
     Ok(faer_to_r_matrix(ligand_influence_matrix.as_ref()))
-}
-
-/// [LigandActivityScores] to R list Helper
-///
-/// ### Params
-///
-/// * `scores` - The [LigandActivityScores] structure to transform
-///
-/// ### Returns
-///
-/// The list with the results
-fn activity_to_list(scores: &LigandActivityScores<f64>) -> List {
-    list!(
-        auroc = scores.auroc.clone(),
-        aupr = scores.aupr.clone(),
-        aupr_corrected = scores.aupr_corrected.clone(),
-        pearson = scores.pearson.clone(),
-        spearman = scores.spearman.clone()
-    )
 }
 
 /// Calculate the NicheNet ligand activity scores

@@ -1,4 +1,6 @@
-# symphony class ---------------------------------------------------------------
+# classes related to reference generation for single cell
+
+# symphony ---------------------------------------------------------------------
 
 ## class -----------------------------------------------------------------------
 
@@ -8,7 +10,10 @@
 #' Holds a Symphony reference: PCA loadings, per-HVG scaling stats, soft
 #' cluster centroids and the cached compression terms (Nr, C) needed to map
 #' queries without the reference cells. The Harmony-corrected reference
-#' embedding (`z_corr`) is retained for downstream label transfer.
+#' embedding (`z_corr`) is retained for downstream label transfer. Reference
+#' cell labels (e.g. cell type annotations) can be snapshotted at build time
+#' via `label_columns` in [build_symphony_ref()] or attached post-hoc via
+#' [add_symphony_labels()]. For details on the method, refer to Kang et al.
 #'
 #' @section Properties:
 #' \describe{
@@ -18,9 +23,10 @@
 #'   \item{gene_sds}{Per-HVG standard deviation of the normalised reference
 #'   data.}
 #'   \item{loadings}{PCA gene loadings matrix (n_hvgs x d).}
-#'   \item{z_orig}{Pre-Harmony PCA scores (N x d).}
-#'   \item{z_corr}{Post-Harmony corrected embedding (N x d). `NULL` in slim
+#'   \item{z_orig}{Pre-Harmony PCA scores (N x d). `NULL` in slim
 #'   references.}
+#'   \item{z_corr}{Post-Harmony corrected embedding (N x d). Always kept,
+#'   even in slim references, since it backs kNN label transfer.}
 #'   \item{r}{Soft cluster assignments (K x N). `NULL` in slim references.}
 #'   \item{centroids}{Cosine-normalised reference centroids (K x d). Used for
 #'   query soft clustering.}
@@ -31,11 +37,16 @@
 #'   reference (`"v1"` or `"v2"`).}
 #'   \item{batch_vars}{Names of the batch variables used during reference
 #'   construction.}
-#'   \item{slim}{Logical; if `TRUE`, `z_orig`, `z_corr` and `r` are dropped
-#'   to reduce memory footprint.}
+#'   \item{slim}{Logical; if `TRUE`, `z_orig` and `r` are dropped to reduce
+#'   memory footprint.}
+#'   \item{labels}{Optional `data.table` of reference cell labels with
+#'   `nrow(z_corr)` rows, one column per label. `NULL` if no labels were
+#'   stored.}
 #' }
 #'
 #' @return Returns the `SymphonyReference` class for further operations.
+#'
+#' @references Kang et al., Nat. Commun., 2021
 #'
 #' @export
 SymphonyReference <- S7::new_class(
@@ -54,7 +65,8 @@ SymphonyReference <- S7::new_class(
     no_pcs = S7::class_integer,
     harmony_backend = S7::class_character,
     batch_vars = S7::class_character,
-    slim = S7::class_logical
+    slim = S7::class_logical,
+    labels = S7::class_any
   )
 )
 
@@ -79,8 +91,7 @@ S7::method(get_symphony_loadings, SymphonyReference) <- function(object) {
 #'
 #' @param object `SymphonyReference` class.
 #'
-#' @return The post-Harmony corrected embedding (N x d), or `NULL` for slim
-#' references.
+#' @return The post-Harmony corrected embedding (N x d).
 #'
 #' @export
 get_symphony_z_corr <- S7::new_generic("get_symphony_z_corr", "object")
@@ -100,6 +111,20 @@ get_symphony_hvg_names <- S7::new_generic("get_symphony_hvg_names", "object")
 
 S7::method(get_symphony_hvg_names, SymphonyReference) <- function(object) {
   S7::prop(object, "hvg_gene_names")
+}
+
+#' Getter for the stored labels of a Symphony reference
+#'
+#' @param object `SymphonyReference` class.
+#'
+#' @return A `data.table` of reference cell labels in `z_corr` row order, or
+#' `NULL` if no labels are stored.
+#'
+#' @export
+get_symphony_labels <- S7::new_generic("get_symphony_labels", "object")
+
+S7::method(get_symphony_labels, SymphonyReference) <- function(object) {
+  S7::prop(object, "labels")
 }
 
 ## primitives ------------------------------------------------------------------
@@ -124,6 +149,12 @@ S7::method(get_symphony_hvg_names, SymphonyReference) <- function(object) {
 S7::method(print, SymphonyReference) <- function(x, ...) {
   loadings <- S7::prop(x, "loadings")
   centroids <- S7::prop(x, "centroids")
+  labels <- S7::prop(x, "labels")
+  label_str <- if (is.null(labels)) {
+    "none"
+  } else {
+    paste(names(labels), collapse = ", ")
+  }
   cat(
     "Symphony reference\n",
     sprintf("  Harmony backend: %s\n", S7::prop(x, "harmony_backend")),
@@ -135,6 +166,7 @@ S7::method(print, SymphonyReference) <- function(x, ...) {
       paste(S7::prop(x, "batch_vars"), collapse = ", ")
     ),
     sprintf("  Slim: %s\n", S7::prop(x, "slim")),
+    sprintf("  Labels: %s\n", label_str),
     sep = ""
   )
   invisible(x)

@@ -106,9 +106,23 @@ gene proportions and library complexity metrics.
 #| code-fold: true
 var <- get_sc_var(sc_object)
 
+# let's get the gene symbols from one of the h5ad files - in multi file import
+# additional columns are dropped from the vars
+
+h5_metadata <- read_h5ad_metadata(h5ad_paths[[1]])
+
+var <- merge(
+  var,
+  h5_metadata$var[, c("ENSEMBL_ID", "Symbol_TENx")],
+  by.x = "gene_id",
+  by.y = "ENSEMBL_ID"
+)
+
+setnames(var, old = "Symbol_TENx", new = "gene_symbol", skip_absent = TRUE)
+
 gs_of_interest <- list(
-  MT = var[grepl("^MT-", symbol_tenx), gene_id],
-  Ribo = var[grepl("^RPS|^RPL", symbol_tenx), gene_id]
+  MT = var[grepl("^MT-", gene_symbol), gene_id],
+  Ribo = var[grepl("^RPS|^RPL", gene_symbol), gene_id]
 )
 
 sc_object <- gene_set_proportions_sc(
