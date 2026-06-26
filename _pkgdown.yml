@@ -43,6 +43,8 @@ navbar:
       menu:
         - text: Thinking about single cells the bixverse way
           href: articles/thinking_single_cell.html
+        - text: "Reading data in (single-cell I/O)"
+          href: articles/single_cell_io.html
         - text: PBMC analysis with the bixverse single cell framework
           href: articles/pbmc_single_cell.html
         - text: Doublet detection in bixverse
@@ -87,6 +89,7 @@ articles:
     navbar: Single Cells
     contents:
       - thinking_single_cell
+      - single_cell_io
       - pbmc_single_cell
       - doublet_detection
       - single_cell_batch_corrections
