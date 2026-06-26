@@ -214,7 +214,7 @@ S7::method(get_sc_obs, SingleCellsSubset) <- function(
   checkmate::qassert(indices, c("0", "I+"))
   checkmate::qassert(filtered, "B1")
 
-  grouping_variable <- S7::prop(object, "grouping_variable")
+  grouping_variable <- S7::prop(object, "grouping_column")
   obs_table <- data.table::copy(S7::prop(object, "obs_table"))
 
   if (!is.null(indices)) {
@@ -224,8 +224,6 @@ S7::method(get_sc_obs, SingleCellsSubset) <- function(
   if (!is.null(cols)) {
     obs_table <- obs_table[, cols, with = FALSE]
   }
-
-  obs_table <- split(obs_table, obs_table[[grouping_variable]])
   return(obs_table)
 }
 

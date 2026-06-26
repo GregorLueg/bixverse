@@ -29,22 +29,14 @@ grp_object <- SingleCellsSubset(
   grouping_column = "sample",
   group = "sample1"
 )
-head(grp_object@sc_map$cell_mapping)
-grp_object@group
-
-get_sc_counts(sc_object)
+head(grp_object)
+print(grp_object)
+get_sc_var(grp_object)
 get_sc_counts(grp_object)
 
-count_data <- get_counts_from_rust(
-  rust_con = rust_con,
-  assay = assay,
-  return_format = return_format,
-  cell_indices = cell_indices,
-  gene_indices = gene_indices,
-  .verbose = .verbose
-)
 
-group_by = NULL
+object = grp_object
+group_by = "sample"
 sc_meta_cell_params = params_sc_bt_metacells()
 regenerate_knn = FALSE
 embd_to_use = "pca"
@@ -53,8 +45,6 @@ cells_to_use = NULL
 target_size = 1e5
 seed = 42L
 .verbose = TRUE
-
-sc_object <- SingleCells(dir_data = tempdir_pbmc)
 
 
 ##
