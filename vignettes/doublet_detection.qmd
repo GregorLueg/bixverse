@@ -204,6 +204,14 @@ We have made it worse here, but maybe there are cases where the scores are not
 very good. Compared to the original version, Otsu's method is used to identify
 the perfect threshold, but it might fail in some situations.
 
+#### Running with grouping variables or within specific cell subsets
+
+Scrublet (and the other methods) have the two parameters if you wish to run
+the detection method within a specific set of cells (see the 
+`cells_to_use = NULL` parameter )and/or want to use a
+grouping variable (like run the doublet detection within individual samples,
+see the `group_by = NULL` parameter).
+
 ### Boosted doublet detection
 
 The boosted approach trains a classifier to separate real cells from synthetic
@@ -355,14 +363,6 @@ All methods can help to identify in a data-driven way doublets in your data.
 In this example, Scrublet performed better compared to the other two methods;
 in a comparison paper scDblFinder is the best across different benchmark data 
 sets, see [here](https://www.cell.com/cell-systems/fulltext/S2405-4712(20)30459-2).
-
-### Future outlook
-
-While Rust makes these methods blazingly fast (usually faster than the 
-corresponding R or Python versions), they start feeling quite slow on large
-data sets. A potential approach via GPU acceleration, see 
-[bixverse.gpu](https://github.com/GregorLueg/bixverse.gpu) could be an idea 
-here to improve the speed
 
 ## Clean up
 
