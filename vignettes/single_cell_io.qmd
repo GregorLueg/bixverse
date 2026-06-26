@@ -11,16 +11,16 @@ knitr:
     collapse: true
     comment: '#>'
 author:
-  - name: "Gregor Lueg"
+  - name: "Andrew Skelton and Gregor Lueg"
 ---
 
 ## Intro
 
-`bixverse` keeps single-cell counts on disk -- a compact Rust binary for the
+`bixverse` keeps single-cell counts on disk -- in compact Rust binaries for the
 count matrix and a DuckDB for the `obs` / `var` metadata -- so that millions of
 cells can be analysed on a laptop. Ingestion happens once, up front, through
 format-specific readers that stream the data into that on-disk layout and apply
-the cell/gene QC along the way.
+the basic cell/gene QC and normalisations along the way.
 
 This vignette walks through every reader on a small synthetic data set, so it
 runs end-to-end without any downloads. It covers:
@@ -28,7 +28,8 @@ runs end-to-end without any downloads. It covers:
 - in-memory R objects (`load_r_data`)
 - 10x CellRanger MTX, single and multi-sample (`load_mtx`, `load_multi_mtx`)
 - AnnData `h5ad`, single and multi-sample (`load_h5ad`, `load_multi_h5ad`)
-- 10x CellRanger HDF5 (`load_tenx_h5`)
+- 10x CellRanger HDF5, single and multi-sample (`load_tenx_h5`,
+  `load_multi_tenx_h5`)
 - checkpointing to and from disk (`save_sc_exp_to_disk`, `load_existing`)
 
 If you have not seen the `SingleCells` class before, read the
@@ -67,10 +68,21 @@ counts_b <- as(counts[idx_b, ], "RsparseMatrix")
 # scratch directories (one on-disk store per loaded object)
 base <- file.path(tempdir(), "bixverse_io")
 stores <- c(
-  "mtx_a", "mtx_b", "store_r", "store_mtx", "store_multi_mtx",
-  "store_h5", "store_multi_h5", "store_10x"
+  "mtx_a",
+  "mtx_b",
+  "mtx_swapped",
+  "store_r",
+  "store_mtx",
+  "store_mtx_swapped",
+  "store_multi_mtx",
+  "store_h5",
+  "store_multi_h5",
+  "store_10x",
+  "store_multi_10x"
 )
-for (s in stores) dir.create(file.path(base, s), recursive = TRUE, showWarnings = FALSE)
+for (s in stores) {
+  dir.create(file.path(base, s), recursive = TRUE, showWarnings = FALSE)
+}
 
 # light QC thresholds, suitable for this small toy data set
 qc <- params_sc_min_quality(
@@ -108,11 +120,29 @@ We write one sample out in CellRanger flat-file form and point an explicit
 helper `get_cell_ranger_params()` auto-locates `matrix.mtx` / `barcodes.tsv` /
 `genes.tsv`).
 
+Two `params_sc_mtx_io()` arguments handle the common deviations from the
+strict CellRanger convention:
+
+- `cells_as_rows` -- whether the .mtx has cells on the rows. The CellRanger
+  default is `FALSE` (genes are rows). Set to `TRUE` for externally produced
+  matrices that are transposed.
+- `has_hdr` -- whether the barcodes/features flat files carry a header row.
+  CellRanger itself writes headerless TSVs (`has_hdr = FALSE`), but CSV/TSV
+  exports from downstream pipelines often carry one. The example below uses
+  `has_hdr = TRUE` because `write_cellranger_output()` emits headers.
+
 ```{r}
 #| label: write + load single mtx
 dir_a <- file.path(base, "mtx_a")
 # real CellRanger MTX is genes x cells, matching cells_as_rows = FALSE below
-write_cellranger_output(dir_a, counts_a, obs[idx_a], var, rows = "genes", .verbose = FALSE)
+write_cellranger_output(
+  dir_a,
+  counts_a,
+  obs[idx_a],
+  var,
+  rows = "genes",
+  .verbose = FALSE
+)
 
 mtx_params <- params_sc_mtx_io(
   path_mtx = file.path(dir_a, "mat.mtx"),
@@ -143,7 +173,14 @@ object with a global gene QC. The originating sample is recorded in the `exp_id`
 ```{r}
 #| label: write + load multi mtx
 dir_b <- file.path(base, "mtx_b")
-write_cellranger_output(dir_b, counts_b, obs[idx_b], var, rows = "genes", .verbose = FALSE)
+write_cellranger_output(
+  dir_b,
+  counts_b,
+  obs[idx_b],
+  var,
+  rows = "genes",
+  .verbose = FALSE
+)
 
 ps_mtx <- prescan_mtx_dirs(
   dirs = c(dir_a, dir_b),
@@ -163,6 +200,50 @@ sc_multi_mtx
 # cells per sample
 get_sc_obs(sc_multi_mtx)[, .N, by = exp_id]
 ```
+
+### File layout variations
+
+To make the `cells_as_rows` and `has_hdr` knobs concrete, here is the same
+sample written with cells on the rows of the .mtx (i.e. transposed relative to
+CellRanger). The only thing that changes at load time is `cells_as_rows = TRUE`:
+
+```{r}
+#| label: cells-as-rows mtx
+dir_swapped <- file.path(base, "mtx_swapped")
+write_cellranger_output(
+  dir_swapped,
+  counts_a,
+  obs[idx_a],
+  var,
+  rows = "cells",
+  .verbose = FALSE
+)
+
+mtx_params_swapped <- params_sc_mtx_io(
+  path_mtx = file.path(dir_swapped, "mat.mtx"),
+  path_obs = file.path(dir_swapped, "barcodes.csv"),
+  path_var = file.path(dir_swapped, "features.csv"),
+  cells_as_rows = TRUE,
+  has_hdr = TRUE
+)
+
+sc_mtx_swapped <- SingleCells(dir_data = file.path(base, "store_mtx_swapped"))
+sc_mtx_swapped <- load_mtx(
+  object = sc_mtx_swapped,
+  sc_mtx_io_param = mtx_params_swapped,
+  sc_qc_param = qc,
+  mtx_streaming = FALSE,
+  .verbose = FALSE
+)
+sc_mtx_swapped
+```
+
+The resulting on-disk object is identical to the standard-layout single-sample
+load above; only the path through the reader differs.
+
+For headerless barcodes/features files (the strict CellRanger convention), set
+`has_hdr = FALSE`. The same flag applies uniformly across all input directories
+in `prescan_mtx_dirs()` for the multi-sample case.
 
 ## AnnData h5ad
 
@@ -213,10 +294,12 @@ sc_multi_h5
 
 ## 10x CellRanger HDF5
 
+### Single sample
+
 `write_tenx_h5_sc()` expects the counts plus a barcode vector and a `features`
-table (with at least `id` and `name`). `load_tenx_h5()` reads the gene-expression
-modality (V3 files may also carry e.g. Antibody Capture, which is filtered out
-via `feature_type`).
+table (with at least `id` and `name`). `load_tenx_h5()` reads the
+gene-expression modality (V3 files may also carry e.g. Antibody Capture, which
+is filtered out via `feature_type`).
 
 ```{r}
 #| label: write + load 10x h5
@@ -241,12 +324,64 @@ sc_10x <- load_tenx_h5(
 sc_10x
 ```
 
-::: {.callout-note}
-Multiple 10x `.h5` files: the streaming Rust combiner is implemented in
-`bixverse-rs` ([PR #27](https://github.com/GregorLueg/bixverse-rs/pull/27)) and
-will be exposed as `load_multi_10x()` once released; the workflow will mirror
-`prescan_h5ad_files()` / `load_multi_h5ad()`.
-:::
+### Multiple samples
+
+`prescan_tenx_h5_files()` takes a named vector of `.h5` paths (the names become
+the sample identifiers), inspects each file for its CellRanger version (v2 vs
+v3), filters to the requested `feature_type`, and builds the global gene
+space. `load_multi_tenx_h5()` then mirrors the multi-MTX / multi-h5ad
+workflow.
+
+`gene_universe` controls how the feature space is reconciled across files:
+
+- `"intersection"` keeps genes present in **every** input.
+- `"union"` keeps genes present in **any** input; cells from a file that lacks
+  a given gene get zero counts for it.
+
+Mixed v2 / v3 inputs in the same call are handled transparently, and non-gene
+modalities (e.g. Antibody Capture) are silently dropped when `feature_type =
+"Gene Expression"`.
+
+```{r}
+#| label: write + load multi 10x h5
+features_b <- data.table(
+  id = var$gene_id,
+  name = var$ensembl_id,
+  feature_type = "Gene Expression"
+)
+h5_tenx_b <- file.path(base, "sample_b_10x.h5")
+write_tenx_h5_sc(
+  f_path = h5_tenx_b,
+  counts = counts_b,
+  barcodes = obs[idx_b]$cell_id,
+  features = features_b,
+  version = "v3"
+)
+
+ps_10x <- prescan_tenx_h5_files(
+  h5_paths = c(sample_a = h5_tenx, sample_b = h5_tenx_b),
+  feature_type = "Gene Expression",
+  gene_universe = "intersection",
+  .verbose = FALSE
+)
+
+sc_multi_10x <- SingleCells(dir_data = file.path(base, "store_multi_10x"))
+sc_multi_10x <- load_multi_tenx_h5(
+  object = sc_multi_10x,
+  prescan_result = ps_10x,
+  sc_qc_param = qc,
+  .verbose = FALSE
+)
+sc_multi_10x
+
+# cells per sample
+get_sc_obs(sc_multi_10x)[, .N, by = exp_id]
+```
+
+For multi-modal `.h5` files that carry both Gene Expression and Antibody
+Capture features, load the gene side as above and read the ADT side
+separately with `read_tenx_h5_adt()`, then attach it to a
+`SingleCellsMultiModal` object via `add_adt_counts_sc()`.
 
 ## Checkpointing to disk
 
@@ -271,12 +406,10 @@ sc_restored
 | In-memory R | `load_r_data()` | -- |
 | 10x MTX | `load_mtx()` | `prescan_mtx_dirs()` + `load_multi_mtx()` |
 | AnnData h5ad | `load_h5ad()` | `prescan_h5ad_files()` + `load_multi_h5ad()` |
-| 10x HDF5 | `load_tenx_h5()` | *(`load_multi_10x()` -- forthcoming)* |
+| 10x HDF5 | `load_tenx_h5()` | `prescan_tenx_h5_files()` + `load_multi_tenx_h5()` |
 | Seurat | `load_seurat()` | -- |
 
 All readers share the same `sc_qc_param` QC interface and write into the same
 on-disk `SingleCells` layout, so everything downstream (normalisation, HVGs,
 PCA, neighbours, clustering, ...) is identical regardless of how the data
 came in.
-```
-
