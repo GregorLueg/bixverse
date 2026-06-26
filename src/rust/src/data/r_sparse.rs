@@ -2,13 +2,30 @@ use bixverse_rs::core::math::sparse::count_zeroes;
 use bixverse_rs::prelude::*;
 use extendr_api::prelude::*;
 
+/////////////
+// extendR //
+/////////////
+
+extendr_module! {
+    mod r_sparse;
+    fn rs_upper_triangle_to_sparse;
+    fn rs_count_zeroes;
+}
+
+///////////////
+// Functions //
+///////////////
+
 /// Generate sparse data from an upper triangle
 ///
-/// @description This function takes the values from an upper triangle matrix
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// This function takes the values from an upper triangle matrix
 /// the shift and the nrows/ncols and returns a list.
 ///
 /// @param value Numeric vector. The upper triangle values.
-/// @param shift Integer Did you apply a shift to remove the diagonal values?
+/// @param shift Boolean. Was the matrix shifted up (false = diagonal included;
+/// true diagonal not incldued).
 /// @param n Integer. The number of columns/rows in the symmetric matrix.
 /// @param cs_type String. One of `c("csr", "csc")`. Which type of list to
 /// return.
@@ -25,21 +42,20 @@ use extendr_api::prelude::*;
 #[extendr]
 fn rs_upper_triangle_to_sparse(
     value: &[f64],
-    shift: usize,
+    shift: bool,
     n: usize,
     cs_type: &str,
 ) -> extendr_api::Result<List> {
-    let include_diagonal = shift != 1;
     let cs_type = parse_compressed_sparse_format(cs_type)
         .ok_or_else(|| extendr_api::Error::Other("Invalid cs_type".into()))?;
-    let sparse =
-        CompressedSparseData2::from_upper_triangle_sym(value, n, include_diagonal, cs_type);
+    let sparse = CompressedSparseData2::from_upper_triangle_sym(value, n, !shift, cs_type);
     Ok(sparse_data_to_list(sparse))
 }
 
 /// Helper to get zero stats from a given matrix
 ///
 /// @description
+/// `r lifecycle::badge("experimental")`
 /// Calculates in a single matrix pass the total number of zeroes, the row
 /// zeroes and column zeroes.
 ///
@@ -64,10 +80,4 @@ fn rs_count_zeroes(x: RMatrix<f64>) -> List {
         row_zeroes = row_zeroes,
         col_zeroes = col_zeroes
     )
-}
-
-extendr_module! {
-    mod r_sparse;
-    fn rs_upper_triangle_to_sparse;
-    fn rs_count_zeroes;
 }

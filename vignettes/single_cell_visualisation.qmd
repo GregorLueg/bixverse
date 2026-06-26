@@ -16,7 +16,8 @@ author:
 
 ## Intro
 
-This vignette gives an overview of the different plotting functions that are available when running a single cell analysis. 
+This vignette gives an overview of the different plotting functions that are 
+available when running a single cell analysis. 
 
 ```{r}
 #| label: setup
@@ -29,7 +30,11 @@ library(magrittr)
 
 ## Preparing the data
 
-We run the standard analysis using the same PBMC3k data set. For more details on the data analysis itself, please refer to the [introductory vignette](https://gregorlueg.github.io/bixverse/articles/thinking_single_cell.html). This vignette assumes familiarity with how the `SingleCells` class, on-disk storage and cells-to-keep logic work.
+We run the standard analysis using the same PBMC3k data set. For more details on 
+the data analysis itself, please refer to the 
+[introductory vignette](https://gregorlueg.github.io/bixverse/articles/thinking_single_cell.html). 
+This vignette assumes familiarity with how the `SingleCells` class, on-disk 
+storage and cells-to-keep logic work.
 
 ```{r}
 #| label: prepare pbmc3k
@@ -106,7 +111,8 @@ qc <- run_cell_qc(
 
 ## Joint QC plot
 
-`joint_plot_sc()` compares the number of features and number of counts per cell similar to `sns.jointplot`.
+`joint_plot_sc()` compares the number of features and number of counts per cell 
+similar to `sns.jointplot`.
 
 ```{r joint-plot, fig.cap="Joint QC plot showing features versus counts."}
 joint_plot_sc(qc)
@@ -121,7 +127,8 @@ split by donor (or any grouping variable stored in the `qc` object).
 violin_plot_sc(qc)
 ```
 
-Alternatively, we can also provide a datatable generate the violins plots with different variables than those considered in the QC.
+Alternatively, we can also provide a datatable generate the violins plots with 
+different variables than those considered in the QC.
 
 ```{r}
 obs <- get_sc_obs(sc_object)
@@ -135,8 +142,9 @@ violin_plot_sc(
 
 ## Density QC Plots 
 
-`density_plot_sc()` overlays smoothed density distributionss for each group, which
-highlights bimodal distributions or outlier populations that violins can obscure.
+`density_plot_sc()` overlays smoothed density distributionss for each group, 
+which highlights bimodal distributions or outlier populations that violins can 
+obscure.
 
 ```{r density-plot, fig.cap="Density plots for each QC metric."}
 density_plot_sc(qc)
@@ -144,8 +152,8 @@ density_plot_sc(qc)
 
 # Dimensionality Reduction Plots
 
-After PCA, neighbour-finding, clustering, and UMAP, cells can be visualised
-on any 2D embedding stored in the object.
+After PCA, neighbour-finding, clustering, and UMAP, cells can be visualised on 
+any 2D embedding stored in the object.
 
 ```{r umap-setup}
 #| label: hvg pca neighbours
@@ -199,6 +207,7 @@ cell_markers <- c(
   PPBP = "Platelet",
   PF4 = "Platelet"
 )
+
 cell_markers_dt <- stack(cell_markers) %>%
   as.data.table() %>%
   setnames(., c("values", "ind"), c("cell_type", "gene_symbol")) %>%
@@ -246,8 +255,8 @@ embedding_plot_sc(
 
 **Colouring by a discrete variable**
 
-Pass any column from the cell metadata to `colour_by`. Use `label_by` to
-overlay text labels at the cluster centroid. These do not need to be the same variables.
+Pass any column from the cell metadata to `colour_by`. Use `label_by` to overlay 
+text labels at the cluster centroid. These do not need to be the same variables.
 
 ```{r embedding-celltype, fig.cap="UMAP coloured by manually annotated cell type. Labels are placed at cluster centroids."}
 embedding_plot_sc(
@@ -261,8 +270,8 @@ embedding_plot_sc(
 
 **Colouring by a continuous variable**
 
-Set `discrete = FALSE` to use a continuous colour scale — useful for
-confidence scores, pseudotime, or gene module scores.
+Set `discrete = FALSE` to use a continuous colour scale — useful for confidence 
+scores, pseudotime, or gene module scores.
 
 ```{r embedding-sctype, fig.cap="UMAP coloured by ribosomal content (continuous scale)."}
 embedding_plot_sc(
@@ -286,7 +295,8 @@ embedding_plot_sc(
 
 **Extracting the plotting data**
 
-Alternatively, you can also extract the plotting data directly to make customized plots.
+Alternatively, you can also extract the plotting data directly to make 
+customised plots.
 
 ```{r embedding-dt}
 dt <- extract_embedding_data(
@@ -299,8 +309,8 @@ head(dt)
 
 # Per-Gene Expression plots`
 
-`feature_plot_sc()` projects normalised expression of one or more genes
-onto the embedding.
+`feature_plot_sc()` projects normalised expression of one or more genes onto the 
+embedding.
 
 ```{r feature-plot, fig.cap="Expression of MS4A1 on the UMAP. High-expressing cells cluster in expected B cell cluster."}
 # Select a single feature by Ensembl ID; provide a human-readable label
@@ -319,7 +329,7 @@ feature_plot_sc(
 **Tip:** pass a character vector of Ensembl IDs to `features` and matching
 labels to `feature_labels` to produce one panel per gene.
 
-We can also highlight the genes of interest for clearer visualization.
+We can also highlight the genes of interest for clearer visualisation.
 
 ```{r feature-plot-higlight, fig.cap="Expression of MS4A1 on the UMAP. High-expressing cells cluster in expected B cell cluster."}
 # Select a single feature by Ensembl ID; provide a human-readable label
@@ -338,7 +348,8 @@ feature_plot_sc(
 
 **Extracting the plotting data**
 
-Alternatively, you can also extract the plotting data directly to make customized plots.
+Alternatively, you can also extract the plotting data directly to make 
+customised plots.
 
 ```{r feature-plot-dt}
 dt <- bixverse::extract_feature_plot_data(
@@ -389,7 +400,8 @@ dot_plot_sc(
 **Extracting the plotting data**
 
 
-Alternatively, you can also extract the plotting data directly to make customized plots.
+Alternatively, you can also extract the plotting data directly to make 
+customised plots.
 
 ```{r dot-plot-dt}
 dt <- bixverse::extract_dot_plot_data(

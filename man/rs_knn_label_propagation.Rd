@@ -44,6 +44,7 @@ optional fields (defaults in parentheses):
 The matrix with the probabilities of being of a certain class.
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 The function is a helper function to do kNN label propagation. This can
 be useful for semi-supervised tasks. It implements the label spreading
 method.

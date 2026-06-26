@@ -21,6 +21,8 @@ A list with the following elements
 }
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 Helper function to leverage Rust to transform a kNN matrix into an edge
 list.
 }
+\keyword{internal}

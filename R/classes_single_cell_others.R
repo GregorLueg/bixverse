@@ -1,8 +1,10 @@
-# additional single cell classes and methods -----------------------------------
-
+# ------------------------------------------------------------------------------
 # this file contains additional, smaller s3 classes relevant for single cell
 # analyses. general generics are found on the top of the file, otherwise you
 # have per class the class generation and specific methods, getters, setters.
+# ------------------------------------------------------------------------------
+
+# additional single cell classes and methods -----------------------------------
 
 ## helpers ---------------------------------------------------------------------
 
@@ -356,21 +358,139 @@ get_data.ScMatrixRes <- function(x, columns = NULL, ...) {
 
 ## scrublet --------------------------------------------------------------------
 
+### helpers --------------------------------------------------------------------
+
+#' Update doublet calls and summary statistics for a new Scrublet threshold
+#'
+#' Recomputes `predicted_doublets`, `z_scores`, and the three rate fields
+#' (`detected_doublet_rate`, `detectable_doublet_fraction`,
+#' `overall_doublet_rate`) for either the full result or a single group.
+#'
+#' @param scrublet_res A `ScrubletRes` object.
+#' @param threshold Numeric. The new score threshold to apply.
+#' @param sample_name Character or `NULL`. If `NULL`, updates apply to the
+#' whole object (ungrouped). Otherwise, updates are scoped to the named group.
+#' @param .verbose Logical. If `TRUE`, prints updated rate summaries to the
+#' console.
+#'
+#' @return The `ScrubletRes` object with updated doublet calls and summary
+#' statistics.
+#'
+#' @keywords internal
+.update_scrublet_threshold <- function(
+  scrublet_res,
+  threshold,
+  sample_name,
+  .verbose
+) {
+  if (is.null(sample_name)) {
+    cell_mask <- rep(TRUE, length(scrublet_res$doublet_scores_obs))
+    sim_scores <- scrublet_res$doublet_scores_sim
+  } else {
+    cell_mask <- scrublet_res$cell_groups == sample_name
+    sim_scores <- scrublet_res$doublet_scores_sim[[sample_name]]
+  }
+
+  obs_scores <- scrublet_res$doublet_scores_obs[cell_mask]
+  obs_errors <- scrublet_res$doublet_errors_obs[cell_mask]
+
+  new_preds <- obs_scores > threshold
+  new_z <- (obs_scores - threshold) / obs_errors
+
+  scrublet_res$predicted_doublets[cell_mask] <- new_preds
+  scrublet_res$z_scores[cell_mask] <- new_z
+
+  detected_rate <- sum(new_preds) / length(new_preds)
+  detectable_fraction <- sum(sim_scores > threshold) / length(sim_scores)
+  overall_rate <- if (detectable_fraction > 0.01) {
+    detected_rate / detectable_fraction
+  } else {
+    0.0
+  }
+
+  if (is.null(sample_name)) {
+    scrublet_res$threshold <- threshold
+    scrublet_res$detected_doublet_rate <- detected_rate
+    scrublet_res$detectable_doublet_fraction <- detectable_fraction
+    scrublet_res$overall_doublet_rate <- overall_rate
+  } else {
+    scrublet_res$threshold[sample_name] <- threshold
+    scrublet_res$detected_doublet_rate[sample_name] <- detected_rate
+    scrublet_res$detectable_doublet_fraction[sample_name] <- detectable_fraction
+    scrublet_res$overall_doublet_rate[sample_name] <- overall_rate
+  }
+
+  if (.verbose) {
+    prefix <- if (is.null(sample_name)) "" else sprintf("[%s] ", sample_name)
+    cat(sprintf(
+      "%sDetected doublet rate = %.1f%%\n",
+      prefix,
+      100 * detected_rate
+    ))
+    cat(sprintf(
+      "%sEstimated detectable doublet fraction = %.1f%%\n",
+      prefix,
+      100 * detectable_fraction
+    ))
+    cat(sprintf("%sOverall doublet rate:\n", prefix))
+    cat(sprintf("%s  Estimated = %.1f%%\n", prefix, 100 * overall_rate))
+  }
+
+  scrublet_res
+}
+
 ### histogram plotting ---------------------------------------------------------
 
+#' Plot Scrublet score distributions
+#'
+#' @description
+#' Plots histograms of doublet scores for observed transcriptomes and simulated
+#' doublets side by side. The threshold is shown as a dashed red vertical line.
+#' For grouped results, plots a single group at a time.
+#'
+#' @param x A `ScrubletRes` object.
+#' @param break_number Integer. Number of breaks to use in the histograms.
+#' @param for_sample Optional character. For grouped results, the name of the
+#' group to plot. Defaults to the first group if `NULL`.
+#' @param ... Additional arguments (unused; required by the S3 generic).
+#'
+#' @return A `patchwork` object with two `ggplot2` histograms.
+#'
 #' @export
-plot.ScrubletRes <- function(
-  x,
-  break_number = 31L,
-  ...
-) {
-  # checks
+#'
+#' @keywords internal
+plot.ScrubletRes <- function(x, break_number = 31L, for_sample = NULL, ...) {
   checkmate::assertClass(x, "ScrubletRes")
   checkmate::qassert(break_number, "I1")
+  checkmate::qassert(for_sample, c("S1", "0"))
 
-  # plotting
+  is_grouped <- isTRUE(attr(x, "grouped"))
+
+  if (is_grouped) {
+    groups <- unique(x$cell_groups)
+    sample_name <- if (is.null(for_sample)) groups[1] else for_sample
+
+    if (!(sample_name %in% groups)) {
+      stop(sprintf(
+        "Sample '%s' not found. Available: %s",
+        sample_name,
+        paste(groups, collapse = ", ")
+      ))
+    }
+
+    obs_scores <- x$doublet_scores_obs[x$cell_groups == sample_name]
+    sim_scores <- x$doublet_scores_sim[[sample_name]]
+    thr <- x$threshold[[sample_name]]
+    title_suffix <- sprintf(" [%s]", sample_name)
+  } else {
+    obs_scores <- x$doublet_scores_obs
+    sim_scores <- x$doublet_scores_sim
+    thr <- x$threshold
+    title_suffix <- ""
+  }
+
   obs_plot <- ggplot2::ggplot(
-    data.frame(score = x$doublet_scores_obs),
+    data.frame(score = obs_scores),
     ggplot2::aes(x = score)
   ) +
     ggplot2::geom_histogram(
@@ -380,20 +500,20 @@ plot.ScrubletRes <- function(
       ggplot2::aes(y = ggplot2::after_stat(density))
     ) +
     ggplot2::geom_vline(
-      xintercept = x$threshold,
+      xintercept = thr,
       linewidth = 0.5,
       colour = "red",
       linetype = "dashed"
     ) +
     ggplot2::labs(
-      title = "Observed transcriptomes",
+      title = paste0("Observed transcriptomes", title_suffix),
       x = "Doublet score",
       y = "Probability density"
     ) +
     ggplot2::theme_bw()
 
   sim_plot <- ggplot2::ggplot(
-    data.frame(score = x$doublet_scores_sim),
+    data.frame(score = sim_scores),
     ggplot2::aes(x = score)
   ) +
     ggplot2::geom_histogram(
@@ -403,13 +523,13 @@ plot.ScrubletRes <- function(
       ggplot2::aes(y = ggplot2::after_stat(density))
     ) +
     ggplot2::geom_vline(
-      xintercept = x$threshold,
+      xintercept = thr,
       linewidth = 0.5,
       colour = "red",
       linetype = "dashed"
     ) +
     ggplot2::labs(
-      title = "Simulated doublets",
+      title = paste0("Simulated doublets", title_suffix),
       x = "Doublet score",
       y = "Probability density"
     ) +
@@ -420,67 +540,55 @@ plot.ScrubletRes <- function(
 
 ### readjusting thresholds -----------------------------------------------------
 
-#' Helper function to manually readjust Scrublet thresholds
+#' Manually readjust Scrublet doublet call thresholds
 #'
 #' @description
-#' Can update the Scrublet thresholding after manual introspection of the
-#' histogram.
+#' Updates doublet calls and associated summary statistics in a `ScrubletRes`
+#' object using a user-supplied threshold. Intended for use after visual
+#' inspection of the score histograms via [plot.ScrubletRes()].
 #'
-#' @param scrublet_res `ScrubletRes` result class.
-#' @param threshold Numeric. The new threshold to use.
-#' @param .verbose Boolean. Controls the verbosity of the function.
+#' @param scrublet_res A `ScrubletRes` object.
+#' @param threshold Numeric in `[0, 1]`. The new threshold to apply.
+#' @param for_sample Optional character. For grouped results, the name of the
+#' group to update. Defaults to the first group if `NULL`. Ignored for
+#' ungrouped results.
+#' @param .verbose Logical. If `TRUE`, prints updated rate summaries to the
+#' console.
 #'
-#' @returns `ScrubletRes` class with updated doublet calls based on the new
-#' threshold.
+#' @return The `ScrubletRes` object with updated `predicted_doublets`,
+#' `z_scores`, `threshold`, `detected_doublet_rate`,
+#' `detectable_doublet_fraction`, and `overall_doublet_rate`.
 #'
 #' @export
-call_doublets_manual <- function(scrublet_res, threshold, .verbose = TRUE) {
-  # checks
+call_doublets_manual <- function(
+  scrublet_res,
+  threshold,
+  for_sample = NULL,
+  .verbose = TRUE
+) {
   checkmate::assertClass(scrublet_res, "ScrubletRes")
   checkmate::qassert(threshold, "N1[0,1]")
+  checkmate::qassert(for_sample, c("S1", "0"))
   checkmate::qassert(.verbose, "B1")
 
-  # function
-  predicted_doublets <- scrublet_res$doublet_scores_obs > threshold
+  is_grouped <- isTRUE(attr(scrublet_res, "grouped"))
 
-  z_scores <- (scrublet_res$doublet_scores_obs - threshold) /
-    scrublet_res$doublet_errors_obs
-
-  detected_doublet_rate <- sum(predicted_doublets) /
-    length(predicted_doublets)
-
-  detectable_doublet_fraction <- sum(
-    scrublet_res$doublet_scores_sim > threshold
-  ) /
-    length(scrublet_res$doublet_scores_sim)
-
-  overall_doublet_rate <- if (detectable_doublet_fraction > 0.01) {
-    detected_doublet_rate / detectable_doublet_fraction
-  } else {
-    0.0
+  if (!is_grouped) {
+    return(.update_scrublet_threshold(scrublet_res, threshold, NULL, .verbose))
   }
 
-  if (.verbose) {
-    cat(sprintf(
-      "Detected doublet rate = %.1f%%\n",
-      100 * detected_doublet_rate
+  groups <- unique(scrublet_res$cell_groups)
+  sample_name <- if (is.null(for_sample)) groups[1] else for_sample
+
+  if (!(sample_name %in% groups)) {
+    stop(sprintf(
+      "Sample '%s' not found. Available: %s",
+      sample_name,
+      paste(groups, collapse = ", ")
     ))
-    cat(sprintf(
-      "Estimated detectable doublet fraction = %.1f%%\n",
-      100 * detectable_doublet_fraction
-    ))
-    cat(sprintf("Overall doublet rate:\n"))
-    cat(sprintf("  Estimated = %.1f%%\n", 100 * overall_doublet_rate))
   }
 
-  scrublet_res$predicted_doublets <- predicted_doublets
-  scrublet_res$z_scores <- z_scores
-  scrublet_res$threshold <- threshold
-  scrublet_res$detected_doublet_rate <- detected_doublet_rate
-  scrublet_res$detectable_doublet_fraction <- detectable_doublet_fraction
-  scrublet_res$overall_doublet_rate <- overall_doublet_rate
-
-  scrublet_res
+  .update_scrublet_threshold(scrublet_res, threshold, sample_name, .verbose)
 }
 
 ### obs data -------------------------------------------------------------------
@@ -519,27 +627,61 @@ get_data.ScrubletRes <- function(x, ...) {
 print.ScrubletRes <- function(x, ...) {
   n_cells <- length(x$predicted_doublets)
   n_doublets <- sum(x$predicted_doublets)
+  is_grouped <- isTRUE(attr(x, "grouped"))
 
-  cat(sprintf(
-    "ScrubletRes: %d cells, %d doublets (%.1f%%)\n",
-    n_cells,
-    n_doublets,
-    100 * n_doublets / n_cells
-  ))
-  cat(sprintf("  Threshold:              %.4f\n", x$threshold))
-  cat(sprintf(
-    "  Detected doublet rate:  %.1f%%\n",
-    100 * x$detected_doublet_rate
-  ))
-  cat(sprintf(
-    "  Detectable fraction:    %.1f%%\n",
-    100 * x$detectable_doublet_fraction
-  ))
-  cat(sprintf(
-    "  Overall doublet rate:   %.1f%%\n",
-    100 * x$overall_doublet_rate
-  ))
-  cat(sprintf("  Simulated doublets:     %d\n", length(x$doublet_scores_sim)))
+  header <- if (is_grouped) {
+    sprintf(
+      "ScrubletRes (grouped by '%s', %d groups): %d cells, %d doublets (%.1f%%)\n",
+      attr(x, "group_by_col"),
+      length(unique(x$cell_groups)),
+      n_cells,
+      n_doublets,
+      100 * n_doublets / n_cells
+    )
+  } else {
+    sprintf(
+      "ScrubletRes: %d cells, %d doublets (%.1f%%)\n",
+      n_cells,
+      n_doublets,
+      100 * n_doublets / n_cells
+    )
+  }
+  cat(header)
+
+  if (is_grouped) {
+    cat("Per-group:\n")
+    for (g in names(x$threshold)) {
+      mask <- x$cell_groups == g
+      n_g <- sum(mask)
+      d_g <- sum(x$predicted_doublets[mask])
+      cat(sprintf(
+        "  - %s: %d cells, %d doublets (%.1f%%), threshold = %.4f\n",
+        g,
+        n_g,
+        d_g,
+        100 * d_g / n_g,
+        x$threshold[[g]]
+      ))
+    }
+  } else {
+    cat(sprintf("  Threshold:              %.4f\n", x$threshold))
+    cat(sprintf(
+      "  Detected doublet rate:  %.1f%%\n",
+      100 * x$detected_doublet_rate
+    ))
+    cat(sprintf(
+      "  Detectable fraction:    %.1f%%\n",
+      100 * x$detectable_doublet_fraction
+    ))
+    cat(sprintf(
+      "  Overall doublet rate:   %.1f%%\n",
+      100 * x$overall_doublet_rate
+    ))
+    cat(sprintf(
+      "  Simulated doublets:     %d\n",
+      length(x$doublet_scores_sim)
+    ))
+  }
 
   extras <- character()
   if (!is.null(x$pca)) {
@@ -595,18 +737,43 @@ get_data.BoostRes <- function(x, ...) {
 print.BoostRes <- function(x, ...) {
   n_cells <- length(x$doublet)
   n_doublets <- sum(x$doublet)
+  is_grouped <- isTRUE(attr(x, "grouped"))
 
-  cat(sprintf(
-    "BoostRes: %d cells, %d doublets (%.1f%%)\n",
-    n_cells,
-    n_doublets,
-    100 * n_doublets / n_cells
-  ))
-  cat(sprintf(
-    "  Score range: [%.4f, %.4f]\n",
-    min(x$doublet_score),
-    max(x$doublet_score)
-  ))
+  if (is_grouped) {
+    cat(sprintf(
+      "BoostRes (grouped by '%s', %d groups): %d cells, %d doublets (%.1f%%)\n",
+      attr(x, "group_by_col"),
+      length(unique(x$cell_groups)),
+      n_cells,
+      n_doublets,
+      100 * n_doublets / n_cells
+    ))
+    cat("Per-group:\n")
+    for (g in unique(x$cell_groups)) {
+      mask <- x$cell_groups == g
+      n_g <- sum(mask)
+      d_g <- sum(x$doublet[mask])
+      cat(sprintf(
+        "  - %s: %d cells, %d doublets (%.1f%%)\n",
+        g,
+        n_g,
+        d_g,
+        100 * d_g / n_g
+      ))
+    }
+  } else {
+    cat(sprintf(
+      "BoostRes: %d cells, %d doublets (%.1f%%)\n",
+      n_cells,
+      n_doublets,
+      100 * n_doublets / n_cells
+    ))
+    cat(sprintf(
+      "  Score range: [%.4f, %.4f]\n",
+      min(x$doublet_score),
+      max(x$doublet_score)
+    ))
+  }
 
   invisible(x)
 }
@@ -707,21 +874,49 @@ print.ScDblFinderRes <- function(x, ...) {
   n_doublets <- sum(x$predicted_doublets)
   n_clusters <- length(unique(x$cluster_labels))
   features_extracted <- !is.null(x$features)
+  is_grouped <- isTRUE(attr(x, "grouped"))
 
-  cat(sprintf(
-    "ScDblFinderRes: %d cells, %d doublets (%.1f%%)\n",
-    n_cells,
-    n_doublets,
-    100 * n_doublets / n_cells
-  ))
-  cat(sprintf("  Threshold:        %.4f\n", x$threshold))
-  cat(sprintf(
-    "  Score range:      [%.4f, %.4f]\n",
-    min(x$doublet_score),
-    max(x$doublet_score)
-  ))
-  cat(sprintf("  Final clusters:   %d\n", n_clusters))
-  cat(sprintf("  Features avaiable: %s\n", features_extracted))
+  if (is_grouped) {
+    cat(sprintf(
+      "ScDblFinderRes (grouped by '%s', %d groups): %d cells, %d doublets (%.1f%%)\n",
+      attr(x, "group_by_col"),
+      length(unique(x$cell_groups)),
+      n_cells,
+      n_doublets,
+      100 * n_doublets / n_cells
+    ))
+    cat("Per-group:\n")
+    for (g in names(x$threshold)) {
+      mask <- x$cell_groups == g
+      n_g <- sum(mask)
+      d_g <- sum(x$predicted_doublets[mask])
+      cat(sprintf(
+        "  - %s: %d cells, %d doublets (%.1f%%), threshold = %.4f\n",
+        g,
+        n_g,
+        d_g,
+        100 * d_g / n_g,
+        x$threshold[[g]]
+      ))
+    }
+    cat(sprintf("  Total clusters:    %d (prefixed)\n", n_clusters))
+    cat(sprintf("  Features available: %s\n", features_extracted))
+  } else {
+    cat(sprintf(
+      "ScDblFinderRes: %d cells, %d doublets (%.1f%%)\n",
+      n_cells,
+      n_doublets,
+      100 * n_doublets / n_cells
+    ))
+    cat(sprintf("  Threshold:        %.4f\n", x$threshold))
+    cat(sprintf(
+      "  Score range:      [%.4f, %.4f]\n",
+      min(x$doublet_score),
+      max(x$doublet_score)
+    ))
+    cat(sprintf("  Final clusters:   %d\n", n_clusters))
+    cat(sprintf("  Features available: %s\n", features_extracted))
+  }
 
   invisible(x)
 }
@@ -2334,4 +2529,412 @@ print.ScTypeResults <- function(x, ...) {
   cat(sprintf("  Cell types: %s\n", paste(x$cell_types, collapse = ", ")))
 
   invisible(x)
+}
+
+## nmf result classes ----------------------------------------------------------
+
+### NmfResult ------------------------------------------------------------------
+
+#' Constructor for single-run NMF results
+#'
+#' @description
+#' Stores the W (genes x components) and H (components x cells) matrices from
+#' a single HALS NMF run, plus convergence metadata and provenance information.
+#'
+#' @param nmf_res Named list. Output of [rs_nmf_single_sc()] or
+#' [rs_nmf_single_mc()]. Must contain `w`, `h`, `final_loss`, `n_iter`,
+#' `converged`.
+#' @param gene_ids Character vector. Gene identifiers for the rows of W.
+#' @param cell_ids Character vector. Cell (or meta cell) identifiers for the
+#' columns of H.
+#' @param cell_indices Integer vector. 0-indexed cell positions used in the
+#' run (Rust-side indices, kept for re-running / cross-referencing).
+#' @param source_class String. One of `c("SingleCells", "MetaCells")`.
+#' @param params List. The full set of parameters used for the run.
+#'
+#' @returns An object of class `NmfResult`.
+#'
+#' @export
+#'
+#' @keywords internal
+new_nmf_result <- function(
+  nmf_res,
+  gene_ids,
+  cell_ids,
+  cell_indices,
+  source_class,
+  params
+) {
+  checkmate::assertList(nmf_res)
+  checkmate::assertNames(
+    names(nmf_res),
+    must.include = c("w", "h", "final_loss", "n_iter", "converged")
+  )
+  checkmate::qassert(gene_ids, "S+")
+  checkmate::qassert(cell_ids, "S+")
+  checkmate::qassert(cell_indices, "I+")
+  checkmate::assertChoice(source_class, c("SingleCells", "MetaCells"))
+  checkmate::assertList(params)
+
+  w <- t(nmf_res$h)
+  h <- t(nmf_res$w)
+
+  k <- ncol(w)
+  comp_names <- sprintf("comp_%02d", seq_len(k))
+
+  rownames(w) <- gene_ids
+  colnames(w) <- comp_names
+  rownames(h) <- comp_names
+  colnames(h) <- cell_ids
+
+  res <- list(
+    w = w,
+    h = h,
+    gene_ids = gene_ids,
+    cell_ids = cell_ids,
+    cell_indices = cell_indices,
+    final_loss = nmf_res$final_loss,
+    n_iter = nmf_res$n_iter,
+    converged = nmf_res$converged,
+    source_class = source_class,
+    params = params
+  )
+
+  class(res) <- "NmfResult"
+  res
+}
+
+#### primitives ----------------------------------------------------------------
+
+#' @export
+#'
+#' @keywords internal
+print.NmfResult <- function(x, ...) {
+  cat("NmfResult (single-run HALS NMF)\n")
+  cat(sprintf("  Source class:     %s\n", x$source_class))
+  cat(sprintf("  No genes:         %d\n", nrow(x$w)))
+  cat(sprintf("  No cells:         %d\n", ncol(x$h)))
+  cat(sprintf("  No components:    %d\n", ncol(x$w)))
+  cat(sprintf("  Final loss:       %.4g\n", x$final_loss))
+  cat(sprintf("  Iterations:       %d\n", x$n_iter))
+  cat(sprintf("  Converged:        %s\n", x$converged))
+  cat(sprintf("  Preprocessing:    %s\n", x$params$preprocessing))
+  invisible(x)
+}
+
+#' @export
+#'
+#' @keywords internal
+dim.NmfResult <- function(x) {
+  c(nrow(x$w), ncol(x$h), ncol(x$w))
+}
+
+#### transforms ----------------------------------------------------------------
+
+#' @export
+as.matrix.NmfResult <- function(x, which = c("w", "h"), ...) {
+  which <- match.arg(which)
+  x[[which]]
+}
+
+#### getters -------------------------------------------------------------------
+
+#' Get the W (gene loadings) matrix
+#'
+#' @param x An object holding NMF results.
+#'
+#' @export
+get_w <- function(x) {
+  UseMethod("get_w")
+}
+
+#' @rdname get_w
+#'
+#' @export
+get_w.NmfResult <- function(x) {
+  checkmate::assertClass(x, "NmfResult")
+  x$w
+}
+
+#' Get the H (cell activations) matrix
+#'
+#' @param x An object holding NMF results.
+#'
+#' @export
+get_h <- function(x) {
+  UseMethod("get_h")
+}
+
+#' @rdname get_h
+#'
+#' @export
+get_h.NmfResult <- function(x) {
+  checkmate::assertClass(x, "NmfResult")
+  x$h
+}
+
+#' @method get_params NmfResult
+#'
+#' @export
+S7::method(get_params, S7::new_S3_class("NmfResult")) <-
+  function(object, to_json = FALSE, pretty_json = FALSE) {
+    get_params.NmfResult(
+      object = object,
+      to_json = to_json,
+      pretty_json = pretty_json
+    )
+  }
+
+#' @rdname get_params
+#'
+#' @export
+get_params.NmfResult <- function(
+  object,
+  to_json = FALSE,
+  pretty_json = FALSE
+) {
+  checkmate::assertClass(object, "NmfResult")
+  checkmate::qassert(to_json, "B1")
+  checkmate::qassert(pretty_json, "B1")
+
+  to_ret <- object[["params"]]
+  if (to_json) {
+    to_ret <- jsonlite::toJSON(to_ret)
+  }
+  if (to_json && pretty_json) {
+    to_ret <- jsonlite::prettify(to_ret)
+  }
+  to_ret
+}
+
+#' @rdname get_data
+#'
+#' @export
+get_data.NmfResult <- function(x, ...) {
+  checkmate::assertClass(x, "NmfResult")
+
+  obs_dt <- data.table::as.data.table(t(x$h))
+  obs_dt[, cell_idx := (x$cell_indices + 1L)]
+
+  obs_dt <- .add_is_obs_attr(obs_dt)
+  obs_dt
+}
+
+### StabilisedNmfResult --------------------------------------------------------
+
+#' Constructor for stabilised (multi-run) NMF results
+#'
+#' @description
+#' Stores the column-bound W matrices across runs, per-run H matrices,
+#' per-run losses and convergence flags, plus the index of the best run.
+#'
+#' @param nmf_res Named list. Output of [rs_nmf_multi_sc()] or
+#' [rs_nmf_multi_mc()]. Must contain `w_all`, `h_per_run`, `losses`,
+#' `converged`, `best_idx`.
+#' @param gene_ids Character vector. Gene identifiers for the rows of W.
+#' @param cell_ids Character vector. Cell identifiers for the columns of H.
+#' @param cell_indices Integer vector. 0-indexed cell positions used in the run.
+#' @param source_class String. One of `c("SingleCells", "MetaCells")`.
+#' @param params List. The full set of parameters used for the run.
+#'
+#' @returns An object of class `StabilisedNmfResult`.
+#'
+#' @export
+#'
+#' @keywords internal
+new_stabilised_nmf_result <- function(
+  nmf_res,
+  gene_ids,
+  cell_ids,
+  cell_indices,
+  source_class,
+  params
+) {
+  checkmate::assertList(nmf_res)
+  checkmate::assertNames(
+    names(nmf_res),
+    must.include = c("w_all", "h_per_run", "losses", "converged", "best_idx")
+  )
+  checkmate::qassert(gene_ids, "S+")
+  checkmate::qassert(cell_ids, "S+")
+  checkmate::qassert(cell_indices, "I+")
+  checkmate::assertChoice(source_class, c("SingleCells", "MetaCells"))
+  checkmate::assertList(params)
+
+  k <- params$k
+  n_runs <- length(nmf_res$h_per_run)
+  comp_names <- sprintf("comp_%02d", seq_len(k))
+
+  # Each h_per_run entry is (k x n_genes) from Rust; transpose to (n_genes x k)
+  # and column-bind into w_all-style matrix.
+  w_all <- do.call(cbind, lapply(nmf_res$h_per_run, t))
+
+  # Each w in the original w_all column block is the cell-loading matrix;
+  # transpose into per-run H matrices of shape (k x n_cells).
+  h_per_run <- lapply(seq_len(n_runs), function(i) {
+    col_start <- (i - 1L) * k + 1L
+    col_end <- i * k
+    t(nmf_res$w_all[, col_start:col_end, drop = FALSE])
+  })
+
+  w_all_colnames <- as.vector(outer(
+    comp_names,
+    sprintf("run_%02d", seq_len(n_runs)),
+    function(comp, run) paste(run, comp, sep = ".")
+  ))
+  rownames(w_all) <- gene_ids
+  colnames(w_all) <- w_all_colnames
+
+  h_per_run <- lapply(h_per_run, function(h) {
+    rownames(h) <- comp_names
+    colnames(h) <- cell_ids
+    h
+  })
+  names(h_per_run) <- sprintf("run_%02d", seq_len(n_runs))
+
+  res <- list(
+    w_all = w_all,
+    h_per_run = h_per_run,
+    gene_ids = gene_ids,
+    cell_ids = cell_ids,
+    cell_indices = cell_indices,
+    losses = nmf_res$losses,
+    converged = nmf_res$converged,
+    best_idx = nmf_res$best_idx,
+    source_class = source_class,
+    params = params
+  )
+
+  class(res) <- "StabilisedNmfResult"
+  res
+}
+
+#### primitives ----------------------------------------------------------------
+
+#' @export
+#'
+#' @keywords internal
+print.StabilisedNmfResult <- function(x, ...) {
+  n_runs <- length(x$h_per_run)
+  cat("StabilisedNmfResult (multi-run HALS NMF)\n")
+  cat(sprintf("  Source class:     %s\n", x$source_class))
+  cat(sprintf("  No genes:         %d\n", nrow(x$w_all)))
+  cat(sprintf("  No cells:         %d\n", ncol(x$h_per_run[[1]])))
+  cat(sprintf("  No components:    %d\n", x$params$k))
+  cat(sprintf("  No runs:          %d\n", n_runs))
+  cat(sprintf("  No converged:     %d / %d\n", sum(x$converged), n_runs))
+  cat(sprintf(
+    "  Loss range:       [%.4g, %.4g]\n",
+    min(x$losses),
+    max(x$losses)
+  ))
+  cat(sprintf(
+    "  Best run:         %d (loss = %.4g)\n",
+    x$best_idx,
+    x$losses[x$best_idx]
+  ))
+  cat(sprintf("  Preprocessing:    %s\n", x$params$preprocessing))
+  invisible(x)
+}
+
+#### getters -------------------------------------------------------------------
+
+#' @rdname get_w
+#'
+#' @export
+get_w.StabilisedNmfResult <- function(x) {
+  checkmate::assertClass(x, "StabilisedNmfResult")
+  x$w_all
+}
+
+#' @rdname get_h
+#'
+#' @export
+get_h.StabilisedNmfResult <- function(x) {
+  checkmate::assertClass(x, "StabilisedNmfResult")
+  x$h_per_run
+}
+
+#' Get the best run from a stabilised NMF result
+#'
+#' @description
+#' Extracts the run with the lowest reconstruction loss and returns it as a
+#' single-run `NmfResult` for downstream methods.
+#'
+#' @param x `StabilisedNmfResult` object.
+#'
+#' @returns An `NmfResult` containing the W/H of the best run.
+#'
+#' @export
+get_best_run <- function(x) {
+  UseMethod("get_best_run")
+}
+
+#' @rdname get_best_run
+#'
+#' @export
+get_best_run.StabilisedNmfResult <- function(x) {
+  checkmate::assertClass(x, "StabilisedNmfResult")
+
+  k <- x$params$k
+  best <- x$best_idx
+  col_start <- (best - 1L) * k + 1L
+  col_end <- best * k
+
+  w_best <- x$w_all[, col_start:col_end, drop = FALSE]
+  h_best <- x$h_per_run[[best]]
+
+  comp_names <- sprintf("comp_%02d", seq_len(k))
+  colnames(w_best) <- comp_names
+  rownames(h_best) <- comp_names
+
+  res <- list(
+    w = w_best,
+    h = h_best,
+    gene_ids = x$gene_ids,
+    cell_ids = x$cell_ids,
+    cell_indices = x$cell_indices,
+    final_loss = x$losses[best],
+    n_iter = NA_integer_,
+    converged = x$converged[best],
+    source_class = x$source_class,
+    params = x$params
+  )
+
+  class(res) <- "NmfResult"
+  res
+}
+
+#' @method get_params StabilisedNmfResult
+#'
+#' @export
+S7::method(get_params, S7::new_S3_class("StabilisedNmfResult")) <-
+  function(object, to_json = FALSE, pretty_json = FALSE) {
+    get_params.StabilisedNmfResult(
+      object = object,
+      to_json = to_json,
+      pretty_json = pretty_json
+    )
+  }
+
+#' @rdname get_params
+#'
+#' @export
+get_params.StabilisedNmfResult <- function(
+  object,
+  to_json = FALSE,
+  pretty_json = FALSE
+) {
+  checkmate::assertClass(object, "StabilisedNmfResult")
+  checkmate::qassert(to_json, "B1")
+  checkmate::qassert(pretty_json, "B1")
+
+  to_ret <- object[["params"]]
+  if (to_json) {
+    to_ret <- jsonlite::toJSON(to_ret)
+  }
+  if (to_json && pretty_json) {
+    to_ret <- jsonlite::prettify(to_ret)
+  }
+  to_ret
 }

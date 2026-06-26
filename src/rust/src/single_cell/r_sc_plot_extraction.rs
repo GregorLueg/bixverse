@@ -20,6 +20,10 @@ extendr_module! {
 
 /// Helper to extract single cell counts as a dense vector for plotting
 ///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Extract dense counts for this given gene.
+///
 /// @param f_path String. Path to the `counts_genes.bin` file.
 /// @param cell_indices Integer positions (0-indexed!) that defines the cells
 /// to keep.
@@ -32,6 +36,8 @@ extendr_module! {
 /// @returns The dense vector of expression values for this gene.
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_extract_counts_plots(
     f_path: &str,
@@ -55,6 +61,10 @@ fn rs_extract_counts_plots(
 
 /// Helper to extract single cell counts for several genes
 ///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Extract the single cell counts of several genes at ones.
+///
 /// @param f_path String. Path to the `counts_genes.bin` file.
 /// @param cell_indices Integer positions (0-indexed!) that defines the cells
 /// to keep.
@@ -66,6 +76,8 @@ fn rs_extract_counts_plots(
 /// @returns A list of dense vectors of the normalised counts.
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_extract_several_genes_plots(
     f_path: &str,
@@ -93,6 +105,7 @@ fn rs_extract_several_genes_plots(
 /// Calculates the gene statistics for a set of cell groups and genes
 ///
 /// @description
+/// `r lifecycle::badge("experimental")`
 /// Helper function to extract data for dot plots and/or heatmaps.
 ///
 /// @param f_path String. Path to the `counts_genes.bin` file.
@@ -110,6 +123,10 @@ fn rs_extract_several_genes_plots(
 ///   \item perc_exp - Vector of proportions of cells with expression in row
 ///   major (genes x n_levels)
 /// }
+///
+/// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_extract_grouped_gene_stats(
     f_path: &str,

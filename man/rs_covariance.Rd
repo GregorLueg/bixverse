@@ -13,7 +13,6 @@ rs_covariance(x)
 The co-variance matrix.
 }
 \description{
-Calculates the co-variance of the columns.
-WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust
-functions with type checks are provided in the package.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+Calculates the pairwise co-variance of the columns.
 }

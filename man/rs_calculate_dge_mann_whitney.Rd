@@ -44,7 +44,9 @@ A list with the following elements
 }
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 The function will take two sets of cell indices and calculate the
 differential gene expression based on the Mann Whitney test between the
 two groups.
 }
+\keyword{internal}

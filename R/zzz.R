@@ -44,4 +44,15 @@
     print.ADTCounts
   )
   registerS3method("merge", "MetaCells", merge.MetaCells)
+  registerS3method(
+    "print",
+    "NmfResult",
+    print.NmfResult
+  )
+  registerS3method("print", "StabilisedNmfResult", print.StabilisedNmfResult)
+  registerS3method(
+    "print",
+    "LigandTargetInfluence",
+    print.LigandTargetInfluence
+  )
 }

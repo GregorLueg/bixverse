@@ -196,21 +196,21 @@ combined <- calculate_semantic_sim_mat(
 )
 
 expect_equal(
-  current = rs_dense_to_upper_triangle(resnik, 1),
+  current = rs_dense_to_upper_triangle(resnik, TRUE),
   target = expected_resnik,
   info = "Ontology similarity test for semantic semilarity (Resnik).",
   tolerance = 1e-6
 )
 
 expect_equal(
-  current = rs_dense_to_upper_triangle(lin, 1),
+  current = rs_dense_to_upper_triangle(lin, TRUE),
   target = expected_lin,
   info = "Ontology similarity test for semantic semilarity (Lin).",
   tolerance = 1e-6
 )
 
 expect_equal(
-  current = rs_dense_to_upper_triangle(combined, 1),
+  current = rs_dense_to_upper_triangle(combined, TRUE),
   target = expected_combined,
   info = "Ontology similarity test for semantic semilarity (combined type).",
   tolerance = 1e-6
@@ -250,7 +250,7 @@ matrix_result <- get_sim_matrix(test_class, .verbose = FALSE)
 dt_result <- get_sim_matrix(test_class, as_data_table = TRUE, .verbose = FALSE)
 
 expect_equal(
-  current = rs_dense_to_upper_triangle(matrix_result, 1),
+  current = rs_dense_to_upper_triangle(matrix_result, TRUE),
   target = expected_resnik,
   info = paste(
     "Ontology class semantic similarity - matrix version"
@@ -440,7 +440,7 @@ results_v1 <- calculate_wang_sim_mat(test_onto_wang, weights = weights_v1)
 critval_v1 <- calculate_critical_value(results_v1, alpha = 0.1)
 
 expect_equivalent(
-  current = rs_dense_to_upper_triangle(results_v1, 1L),
+  current = rs_dense_to_upper_triangle(results_v1, TRUE),
   target = expected_wang_sim_v1,
   info = "Wang similarity version 1 values",
   tolerance = 1e-6
@@ -458,7 +458,7 @@ results_v2 <- calculate_wang_sim_mat(test_onto_wang, weights = weights_v2)
 critval_v2 <- calculate_critical_value(results_v2, alpha = 0.1)
 
 expect_equivalent(
-  current = rs_dense_to_upper_triangle(results_v2, 1L),
+  current = rs_dense_to_upper_triangle(results_v2, TRUE),
   target = expected_wang_sim_v2,
   info = "Wang similarity version 2 values",
   tolerance = 1e-6
@@ -542,7 +542,7 @@ dt_res <- get_sim_matrix(
 critval_class <- calculate_critical_value(test_class, alpha = 0.1)
 
 expect_equivalent(
-  current = rs_dense_to_upper_triangle(matrix_res, 1L),
+  current = rs_dense_to_upper_triangle(matrix_res, TRUE),
   target = expected_wang_sim_v1,
   info = "Ontology class wang similarity - matrix version",
   tolerance = 1e-6

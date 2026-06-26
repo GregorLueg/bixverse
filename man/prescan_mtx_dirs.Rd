@@ -4,7 +4,13 @@
 \alias{prescan_mtx_dirs}
 \title{Prescan multiple mtx directories for a multi-load}
 \usage{
-prescan_mtx_dirs(dirs, exp_ids, cells_as_rows = FALSE, has_hdr = FALSE)
+prescan_mtx_dirs(
+  dirs,
+  exp_ids,
+  cells_as_rows = FALSE,
+  has_hdr = FALSE,
+  .verbose = TRUE
+)
 }
 \arguments{
 \item{dirs}{Character vector of input directories. Length >= 2.}
@@ -17,6 +23,8 @@ to \code{FALSE} (10x convention: genes are rows).}
 
 \item{has_hdr}{Boolean. Whether the barcodes/features files have a
 header row. Applied uniformly. Defaults to \code{FALSE} (10x convention).}
+
+\item{.verbose}{Boolean. Controls verbosity of the function.}
 }
 \value{
 A list with:

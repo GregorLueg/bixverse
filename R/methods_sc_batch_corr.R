@@ -18,6 +18,7 @@
 #' obs data of the class.
 #' @param threshold Numeric. Number between 0 and 1. Below this threshold, the
 #' test is considered significant. Defaults to `0.05`.
+#' @param .verbose Boolean. Controls verbosity of the function.
 #'
 #' @returns A `KbetScores` object with the following elements
 #' \itemize{
@@ -42,7 +43,8 @@ calculate_kbet_sc <- S7::new_generic(
   fun = function(
     object,
     batch_column,
-    threshold = 0.05
+    threshold = 0.05,
+    .verbose = TRUE
   ) {
     S7::S7_dispatch()
   }
@@ -54,12 +56,14 @@ calculate_kbet_sc <- S7::new_generic(
 S7::method(calculate_kbet_sc, SingleCells) <- function(
   object,
   batch_column,
-  threshold = 0.05
+  threshold = 0.05,
+  .verbose = TRUE
 ) {
   # check
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::qassert(batch_column, "S1")
   checkmate::qassert(threshold, "N1[0, 1]")
+  checkmate::qassert(.verbose, "B1")
 
   # function
   batch_index <- unlist(object[[batch_column]])
@@ -80,7 +84,8 @@ S7::method(calculate_kbet_sc, SingleCells) <- function(
 
   rs_res <- rs_kbet(
     knn_mat = knn_mat,
-    batch_vector = as.integer(factor(batch_index))
+    batch_vector = as.integer(factor(batch_index)),
+    verbose = .verbose
   )
 
   res <- structure(
@@ -164,6 +169,7 @@ print.KbetScores <- function(x, ...) {
 #' cells for performance. The pairwise distance computation is O(n^2), so
 #' subsampling is recommended for large datasets. Defaults to `5000L`.
 #' @param seed Integer. Seed for subsampling reproducibility.
+#' @param .verbose Boolean. Controls verbosity of the function.
 #'
 #' @returns A `BatchSilhouetteScores` object with the following elements
 #' \itemize{
@@ -183,7 +189,8 @@ calculate_batch_asw_sc <- S7::new_generic(
     batch_column,
     embd_to_use = "pca",
     max_cells = 5000L,
-    seed = 42L
+    seed = 42L,
+    .verbose = TRUE
   ) {
     S7::S7_dispatch()
   }
@@ -197,7 +204,8 @@ S7::method(calculate_batch_asw_sc, SingleCells) <- function(
   batch_column,
   embd_to_use = "pca",
   max_cells = 5000L,
-  seed = 42L
+  seed = 42L,
+  .verbose = TRUE
 ) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
@@ -205,6 +213,7 @@ S7::method(calculate_batch_asw_sc, SingleCells) <- function(
   checkmate::qassert(embd_to_use, "S1")
   checkmate::qassert(max_cells, c("I1", "0"))
   checkmate::qassert(seed, "I1")
+  checkmate::qassert(.verbose, "B1")
 
   batch_index <- unlist(object[[batch_column]])
 
@@ -227,7 +236,8 @@ S7::method(calculate_batch_asw_sc, SingleCells) <- function(
     embedding = embd,
     batch_vector = as.integer(factor(batch_index)),
     max_cells = max_cells,
-    seed = seed
+    seed = seed,
+    verbose = .verbose
   )
 
   res <- structure(
@@ -260,7 +270,7 @@ print.BatchSilhouetteScores <- function(x, ...) {
   cat("Batch Silhouette Width\n")
   cat(sprintf("  Cells: %d | Batches: %d\n", n_cells, x$n_batches))
   cat(sprintf(
-    "  Mean ASW:    %.4f (0 = perfect mixing, 1 = separated)\n",
+    "  Mean ASW:    %.4f (-1 = strong intermixing, 0 = mixed, 1 = separated)\n",
     x$mean_asw
   ))
   cat(sprintf("  Median ASW:  %.4f\n", x$median_asw))
@@ -283,6 +293,7 @@ print.BatchSilhouetteScores <- function(x, ...) {
 #' @param object `SingleCells` class.
 #' @param batch_column String. The column with the batch information in the
 #' obs data of the class.
+#' @param .verbose Boolean. Controls verbosity of the function.
 #'
 #' @returns A `BatchLisiScores` object with the following elements
 #' \itemize{
@@ -300,7 +311,8 @@ calculate_batch_lisi_sc <- S7::new_generic(
   dispatch_args = "object",
   fun = function(
     object,
-    batch_column
+    batch_column,
+    .verbose = TRUE
   ) {
     S7::S7_dispatch()
   }
@@ -311,11 +323,13 @@ calculate_batch_lisi_sc <- S7::new_generic(
 #' @export
 S7::method(calculate_batch_lisi_sc, SingleCells) <- function(
   object,
-  batch_column
+  batch_column,
+  .verbose = TRUE
 ) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::qassert(batch_column, "S1")
+  checkmate::qassert(.verbose, "B1")
 
   batch_index <- unlist(object[[batch_column]])
 
@@ -335,7 +349,8 @@ S7::method(calculate_batch_lisi_sc, SingleCells) <- function(
 
   rs_res <- rs_batch_lisi(
     knn_mat = knn_mat,
-    batch_vector = as.integer(factor(batch_index))
+    batch_vector = as.integer(factor(batch_index)),
+    verbose = .verbose
   )
 
   res <- structure(
@@ -417,7 +432,8 @@ print.BatchLisiScores <- function(x, ...) {
 #'
 #' @return This function will return a list with:
 #' \itemize{
-#'   \item hvg_indices - The indices of the batch-aware HVG.
+#'   \item hvg_genes - The gene names of the HVGs.
+#'   \item hvg_gene_idx - The (0-index) gene features.
 #'   \item batch_hvg_data - data.table with the detailed information of the
 #'   variance per batch.
 #' }
@@ -501,7 +517,7 @@ S7::method(find_hvg_batch_aware_sc, SingleCells) <- function(
     stop("Unknown HVG method: ", hvg_params$method)
   )
 
-  hvg_genes <- switch(
+  hvg_gene_idx <- switch(
     gene_comb_method,
     union = {
       batch_hvgs_dt[,
@@ -530,8 +546,13 @@ S7::method(find_hvg_batch_aware_sc, SingleCells) <- function(
       ]
     }
   )
+  hvg_genes <- get_gene_names_from_idx(x = object, gene_idx = hvg_gene_idx)
 
-  return(list(hvg_genes = hvg_genes, hvg_data = batch_hvgs_dt))
+  return(list(
+    hvg_genes = hvg_genes,
+    hvg_gene_idx = hvg_gene_idx,
+    hvg_data = batch_hvgs_dt
+  ))
 }
 
 ## BBKNN -----------------------------------------------------------------------
@@ -760,8 +781,9 @@ S7::method(bbknn_sc, SingleCells) <- function(
 #'   \item var_adj - Logical. Apply variance adjustment to avoid kissing
 #'   effects.
 #'   \item no_pcs - Integer. Number of PCs to use for MNN calculations.
-#'   \item random_svd - Logical. Use randomised SVD.
 #'   \item knn - List of kNN parameters. See [bixverse::params_knn_defaults()]
+#'   for available parameters and their defaults.
+#'   \item pca - List of PCA parameters, see [bixverse::param_sc_pca()]
 #'   for available parameters and their defaults.
 #' }
 #' @param use_precomputed_pca Boolean. Should the PCA in the object be used
@@ -830,6 +852,7 @@ S7::method(fast_mnn_sc, SingleCells) <- function(
 
   mnn_embd <- rs_mnn(
     f_path = get_rust_count_gene_f_path(object),
+    f_path_cell = get_rust_count_cell_f_path(object),
     cell_indices = get_cells_to_keep(object),
     gene_indices = as.integer(batch_hvg_genes),
     batch_indices = batch_indices,

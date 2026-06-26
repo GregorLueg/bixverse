@@ -31,6 +31,7 @@ A list with:
 }
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 Loads in h5ad data within Rust and automatically converts the data into
 CSR with cells x genes.
 }

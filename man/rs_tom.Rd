@@ -19,6 +19,7 @@ different normalisation method will be used.}
 Returns the TOM matrix.
 }
 \description{
-Calculates the topological overlap measure for a given affinity
-matrix x. Has the option to calculate the signed and unsigned version.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+Calculates the topological overlap measure for a given affinity matrix x.
+Has the option to calculate the signed and unsigned version.
 }

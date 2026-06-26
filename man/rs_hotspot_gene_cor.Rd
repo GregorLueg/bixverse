@@ -2,7 +2,7 @@
 % Please edit documentation in R/extendr-wrappers.R
 \name{rs_hotspot_gene_cor}
 \alias{rs_hotspot_gene_cor}
-\title{Calculate gene<>gene spatial correlations}
+\title{Calculate gene to gene spatial correlations}
 \usage{
 rs_hotspot_gene_cor(
   f_path_genes,
@@ -62,9 +62,11 @@ local correlations between two genes.
 }
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 This function implements the HotSpot gene <> gene local correlation
 functionality from HotSpot, see DeTomaso, et al.
 }
 \references{
 DeTomaso, et al., Cell Systems, 2021
 }
+\keyword{internal}

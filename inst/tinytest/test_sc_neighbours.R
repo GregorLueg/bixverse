@@ -83,7 +83,6 @@ sc_object <- find_hvg_sc(
 sc_object <- calculate_pca_sc(
   object = sc_object,
   no_pcs = no_pcs,
-  randomised_svd = FALSE,
   .verbose = FALSE
 )
 
@@ -402,7 +401,7 @@ expect_true(
 
 sc_object <- find_neighbours_sc(
   sc_object,
-  neighbours_params = params_sc_neighbours(),
+  neighbours_params = params_sc_neighbours(knn = list(ann_dist = "cosine")),
   .verbose = FALSE
 )
 
@@ -411,7 +410,7 @@ sc_knn_cosine <- get_knn_mat(sc_object)
 expect_equivalent(
   current = sc_knn_cosine,
   target = rs_kmknn_cos,
-  info = "method wrapper behaving for HNSW"
+  info = "method wrapper behaving for default kNN search"
 )
 
 sc_object <- find_neighbours_sc(
@@ -449,13 +448,11 @@ bluster_snn_euclidean_jaccard <- bluster:::build_snn_graph(
 
 #### hnsw euclidean ------------------------------------------------------------
 
-# due to tiny differences, i will only test the case where the similarity
-# is perfect, i.e., HNSW == 1.
-
 sc_object <- find_neighbours_sc(
   sc_object,
   neighbours_params = params_sc_neighbours(
     knn = list(
+      knn_method = "exhaustive",
       ann_dist = "euclidean"
     )
   ),

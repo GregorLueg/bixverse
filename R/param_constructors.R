@@ -555,7 +555,7 @@ params_sc_neighbours <- function(
   full_snn = TRUE,
   pruning = 1 / 12,
   snn_similarity = c("jaccard", "rank"),
-  knn = list(ann_dist = "cosine")
+  knn = list()
 ) {
   snn_similarity <- match.arg(snn_similarity)
 
@@ -1055,12 +1055,14 @@ params_sc_bbknn <- function(
 #' distances. Defaults to `TRUE`.
 #' @param no_pcs Integer. Number of PCs to use for MNN calculations.
 #' Defaults to `30L`.
-#' @param random_svd Logical. Use randomised SVD. Defaults to `TRUE`.
+#' @param sparse_svd Boolean. Shall the sparse SVD be used.
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
 #' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
 #' and `n_probe`.
+#' @param pca Named list. Parameters to feed through to the optional
+#' recalculation of the PCA, see [params_sc_pca()].
 #'
 #' @returns A list with the fastMNN parameters.
 #'
@@ -1069,14 +1071,13 @@ params_sc_fastmnn <- function(
   ndist = 3.0,
   cos_norm = TRUE,
   no_pcs = 30L,
-  random_svd = TRUE,
   sparse_svd = TRUE,
-  knn = list(k = 20L)
+  knn = list(k = 20L),
+  pca = params_sc_pca()
 ) {
   checkmate::qassert(ndist, "N1(0,)")
   checkmate::qassert(cos_norm, "B1")
   checkmate::qassert(no_pcs, "I1")
-  checkmate::qassert(random_svd, "B1")
   checkmate::qassert(sparse_svd, "B1")
 
   knn_params <- modifyList(
@@ -1090,10 +1091,10 @@ params_sc_fastmnn <- function(
       ndist = ndist,
       cos_norm = cos_norm,
       no_pcs = no_pcs,
-      random_svd = random_svd,
       sparse_svd = sparse_svd
     ),
-    knn_params
+    knn_params,
+    pca
   )
 }
 
@@ -1135,7 +1136,7 @@ params_sc_harmony <- function(
   sigma = 0.1,
   theta = 2.0,
   lambda = 1.0,
-  block_size = 0.05,
+  block_size = 0.2,
   max_iter_kmeans = 20L,
   max_iter_harmony = 10L,
   epsilon_kmeans = 1e-5,
@@ -1161,7 +1162,7 @@ params_sc_harmony <- function(
     keep.null = TRUE
   )
 
-  c(
+  res <- c(
     list(
       k = k,
       sigma = sigma,
@@ -1176,6 +1177,9 @@ params_sc_harmony <- function(
     ),
     kmeans_params
   )
+  # for easier detection down the line
+  class(res) <- c("params_sc_harmony", "list")
+  res
 }
 
 ### harmony (version 2) --------------------------------------------------------
@@ -1225,7 +1229,7 @@ params_sc_harmony_v2 <- function(
   sigma = 0.1,
   theta = 2.0,
   lambda = 1.0,
-  block_size = 0.05,
+  block_size = 0.2,
   max_iter_kmeans = 4L,
   max_iter_harmony = 10L,
   epsilon_kmeans = 1e-3,
@@ -1259,7 +1263,7 @@ params_sc_harmony_v2 <- function(
     keep.null = TRUE
   )
 
-  c(
+  res <- c(
     list(
       k = k,
       sigma = sigma,
@@ -1278,6 +1282,11 @@ params_sc_harmony_v2 <- function(
     ),
     kmeans_params
   )
+
+  # for some tricks with symphony
+  class(res) <- c("params_sc_harmony_v2", "list")
+
+  res
 }
 
 ## scenic ----------------------------------------------------------------------

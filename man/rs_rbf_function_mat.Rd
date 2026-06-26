@@ -12,13 +12,14 @@ onto.}
 
 \item{epsilon}{Float. Epsilon parameter for the RBF.}
 
-\item{rbf_type}{String. Needs to be from \code{c("gaussian", "bump", "inverse_quadratic")}.}
+\item{rbf_type}{String. Needs to be from
+\code{c("gaussian", "bump", "inverse_quadratic")}.}
 }
 \value{
 The affinities after the Kernel was applied.
 }
 \description{
-Applies a radial basis function (RBF) to a given distance
-matrix. Has at the option to apply a Gaussian, Bump or Inverse Quadratic
-RBF.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+Applies a radial basis function (RBF) to a given distance matrix. Has at the
+option to apply a Gaussian, Bump or Inverse Quadratic RBF.
 }

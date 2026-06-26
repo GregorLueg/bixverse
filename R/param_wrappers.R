@@ -431,6 +431,45 @@ params_dgrdl <- function(
   )
 }
 
+## NMF (HALS) ------------------------------------------------------------------
+
+#' Wrapper function for NMF (HALS) parameters
+#'
+#' @param max_iter Integer. Maximum number of HALS iterations.
+#' @param tol Numeric. Convergence tolerance on the relative change in
+#' reconstruction loss.
+#' @param eps Numeric. Numerical floor for non-negativity / division safety.
+#' @param check_every Integer. Convergence check interval in iterations.
+#' @param nmf_init String. One of `c("nndsvd", "svd", "random")`. `"nndsvd"`
+#' and `"svd"` both map to deterministic NNDSVD initialisation; `"random"`
+#' uses random non-negative draws. For stabilised (multi-run) NMF this field
+#' is ignored and random init is always used.
+#'
+#' @returns A list with the HALS NMF parameters.
+#'
+#' @export
+params_nmf_hals <- function(
+  max_iter = 250L,
+  tol = 1e-4,
+  eps = 1e-10,
+  check_every = 10L,
+  nmf_init = "nndsvd"
+) {
+  checkmate::qassert(max_iter, "I1[1,)")
+  checkmate::qassert(tol, "N1(0,)")
+  checkmate::qassert(eps, "N1(0,)")
+  checkmate::qassert(check_every, "I1[1,)")
+  checkmate::assertChoice(nmf_init, c("nndsvd", "svd", "random"))
+
+  list(
+    max_iter = max_iter,
+    tol = tol,
+    eps = eps,
+    check_every = check_every,
+    nmf_init = nmf_init
+  )
+}
+
 ## SNF -------------------------------------------------------------------------
 
 #' Wrapper function to generate SNF parameters
@@ -577,9 +616,9 @@ params_label_propagation <- function(
 
 ### general --------------------------------------------------------------------
 
-### synthetic data -------------------------------------------------------------
+#### synthetic data ------------------------------------------------------------
 
-#### rna -----------------------------------------------------------------------
+##### rna ----------------------------------------------------------------------
 
 #' Default parameters for generation of synthetic single cell data (RNA)
 #'
@@ -652,7 +691,7 @@ params_sc_synthetic_data <- function(
   )
 }
 
-#### adt -----------------------------------------------------------------------
+##### adt ----------------------------------------------------------------------
 
 #' Default parameters for generation of synthetic single cell data (ADT)
 #'
@@ -677,6 +716,8 @@ params_sc_synthetic_data <- function(
 #' @return A list with the parameters.
 #'
 #' @export
+#'
+#' @keywords internal
 params_sc_synthetic_data_adt <- function(
   n_cells = 1000L,
   n_proteins = 15L,
@@ -715,7 +756,7 @@ params_sc_synthetic_data_adt <- function(
   )
 }
 
-### io -------------------------------------------------------------------------
+#### io ------------------------------------------------------------------------
 
 #' Wrapper function to provide data for mtx-based loading
 #'
@@ -744,15 +785,15 @@ params_sc_mtx_io <- function(
   checkmate::qassert(has_hdr, "B1")
 
   list(
-    path_mtx = path_mtx,
-    path_obs = path_obs,
-    path_var = path_var,
+    path_mtx = path.expand(path_mtx),
+    path_obs = path.expand(path_obs),
+    path_var = path.expand(path_var),
     cells_as_rows = cells_as_rows,
     has_hdr = has_hdr
   )
 }
 
-### qc -------------------------------------------------------------------------
+#### qc ------------------------------------------------------------------------
 
 #' Wrapper function to generate QC metric params for single cell
 #'
@@ -788,6 +829,8 @@ params_sc_min_quality <- function(
   )
 }
 
+#### hvg -----------------------------------------------------------------------
+
 #' Wrapper function for HVG detection parameters.
 #'
 #' @param method String. One of `c("vst", "meanvarbin", "dispersion")`.
@@ -819,6 +862,140 @@ params_sc_hvg <- function(
   )
 }
 
+#### pca -----------------------------------------------------------------------
+
+#' Wrapper for PCA specifically designed for single cells
+#'
+#' @param mean_center Boolean. Shall the data be mean centered
+#' @param normalise_variance Boolean. Shall the data have normalised variance
+#' @param randomised Boolean. Shall fast, approximate randomised SVD be used.
+#' @param clr Boolean. Shall the CLR-type `PFlogPF` be applied, see Booeshaghi,
+#' et al.
+#' @param size_factor Numeric. The used size factor during I/O. It needs to be
+#' the same as during I/O to have correct results when using the `PFlogPF`
+#' transformation.
+#'
+#' @returns A list with the parameters
+#'
+#' @export
+params_sc_pca <- function(
+  mean_center = TRUE,
+  normalise_variance = TRUE,
+  randomised = TRUE,
+  clr = FALSE,
+  size_factor = 1e4
+) {
+  # checks
+  checkmate::qassert(mean_center, "B1")
+  checkmate::qassert(normalise_variance, "B1")
+  checkmate::qassert(randomised, "B1")
+  checkmate::qassert(clr, "B1")
+  checkmate::qassert(size_factor, "N1")
+
+  list(
+    mean_center = mean_center,
+    normalise_variance = normalise_variance,
+    randomised = randomised,
+    clr = clr,
+    size_factor = size_factor
+  )
+}
+
+#### knn -----------------------------------------------------------------------
+
+#' Parameters for single cell kNN searches
+#'
+#' @param k Integer. Number of neighbours. Defaults to `15L`.
+#' @param knn_method String. Which method to use for the approximate nearest
+#' neighbour search. Defaults to `"kmknn"`. One of
+#' `c("kmknn", "hnsw", "annoy", "nndescent", "ivf", "exhaustive")`.
+#' @param ann_dist String. Distance metric to use. Defaults to `"euclidean"`.
+#' One of `c("cosine", "euclidean")`.
+#' @param n_trees Integer. Annoy param: number of trees. Defaults to `50L`.
+#' @param search_budget Integer or `NULL`. Annoy param: optional search budget
+#' per tree. If `NULL`, defaults to `n_trees * k * 20L` internally.
+#' @param delta Numeric. NNDescent param: early termination criterion.
+#' Defaults to `0.001`.
+#' @param diversify_prob Numeric. NNDescent param: diversification probability
+#' applied at the end of index construction. Defaults to `0.0`.
+#' @param ef_budget Integer or `NULL`. NNDescent param: optional query budget.
+#' Higher values improve recall at the cost of speed.
+#' @param m Integer. HNSW param: number of connections between layers.
+#' Defaults to `16L`.
+#' @param ef_construction Integer. HNSW param: size of the dynamic candidate
+#' list during construction. Defaults to `200L`.
+#' @param ef_search Integer. HNSW param: size of the candidate list at query
+#' time. Higher values improve recall at the cost of speed. Defaults to `100L`.
+#' @param n_list Integer or `NULL`. IVF param: number of clusters to generate.
+#' If `NULL`, defaults to `sqrt(n)` internally.
+#' @param n_probe Integer or `NULL`. IVF param: number of clusters to query.
+#' If `NULL`, defaults to `sqrt(n_list)` internally.
+#'
+#' @return A list with the kNN parameters.
+#'
+#' @export
+params_sc_knn <- function(
+  k = 15L,
+  knn_method = "kmknn",
+  ann_dist = "euclidean",
+  n_trees = 50L,
+  search_budget = NULL,
+  delta = 0.001,
+  diversify_prob = 0.0,
+  ef_budget = NULL,
+  m = 16L,
+  ef_construction = 200L,
+  ef_search = 100L,
+  n_list = NULL,
+  n_probe = NULL
+) {
+  checkmate::qassert(k, "I1[1,)")
+  checkmate::assertChoice(
+    knn_method,
+    c("kmknn", "hnsw", "annoy", "nndescent", "ivf", "exhaustive")
+  )
+  checkmate::assertChoice(ann_dist, c("cosine", "euclidean"))
+  checkmate::qassert(n_trees, "I1[1,)")
+  checkmate::assert(
+    checkmate::checkNull(search_budget),
+    checkmate::checkInt(search_budget, lower = 1L)
+  )
+  checkmate::qassert(delta, "N1(0,)")
+  checkmate::qassert(diversify_prob, "N1[0,1]")
+  checkmate::assert(
+    checkmate::checkNull(ef_budget),
+    checkmate::checkInt(ef_budget, lower = 1L)
+  )
+  checkmate::qassert(m, "I1[1,)")
+  checkmate::qassert(ef_construction, "I1[1,)")
+  checkmate::qassert(ef_search, "I1[1,)")
+  checkmate::assert(
+    checkmate::checkNull(n_list),
+    checkmate::checkInt(n_list, lower = 1L)
+  )
+  checkmate::assert(
+    checkmate::checkNull(n_probe),
+    checkmate::checkInt(n_probe, lower = 1L)
+  )
+
+  res <- list(
+    k = k,
+    knn_method = knn_method,
+    ann_dist = ann_dist,
+    n_trees = n_trees,
+    search_budget = search_budget,
+    delta = delta,
+    diversify_prob = diversify_prob,
+    ef_budget = ef_budget,
+    m = m,
+    ef_construction = ef_construction,
+    ef_search = ef_search,
+    n_list = n_list,
+    n_probe = n_probe
+  )
+
+  res
+}
 
 ## single cell (multi modal) ---------------------------------------------------
 
@@ -874,5 +1051,75 @@ params_sc_dsb <- function(
     pseudocount = pseudocount,
     quantile_low = quantile_low,
     quantile_high = quantile_high
+  )
+}
+
+### symphony -------------------------------------------------------------------
+
+#' Default parameters for Symphony query mapping
+#'
+#' @param sigma Numeric. Soft-clustering fuzziness for query -> reference
+#' centroid assignment. Symphony R default is 0.1.
+#' @param lambda Numeric. Ridge penalty on batch coefficients. Symphony R
+#' hardcodes 1.0.
+#'
+#' @return A list with the parameters.
+#'
+#' @export
+params_symphony_map <- function(sigma = 0.1, lambda = 1.0) {
+  checkmate::qassert(sigma, "N1[0,)")
+  checkmate::qassert(lambda, "N1[0,)")
+  res <- list(sigma = sigma, lambda = lambda)
+  class(res) <- c("params_symphony_map", "list")
+  res
+}
+
+### nichenet -------------------------------------------------------------------
+
+#' Parameters for ligand to target influence computation
+#'
+#' @param lr_sig_hub Numeric in `[0, 1]`. Hub correction strength for the
+#' ligand-receptor / signalling layer. 0 disables correction.
+#' @param gr_hub Numeric in `[0, 1]`. Hub correction strength for the gene
+#' regulatory layer. 0 disables correction.
+#' @param ltf_cutoff Numeric in `[0, 1]`. Quantile cutoff applied to the
+#' intermediate ligand-to-TF matrix.
+#' @param damping_factor Numeric in `[0, 1]`. PageRank-style damping factor.
+#' @param tol Numeric > 0. Convergence tolerance for the propagation step.
+#' @param max_iter Integer >= 1. Maximum iterations for the propagation step.
+#' @param topology_correction Boolean. Apply topology correction.
+#' @param secondary_targets Boolean. Run a second round through targets.
+#'
+#' @returns A named list of parameters.
+#'
+#' @export
+params_ligand_target <- function(
+  lr_sig_hub = 0,
+  gr_hub = 0,
+  ltf_cutoff = 0.99,
+  damping_factor = 0.5,
+  tol = 1e-6,
+  max_iter = 1000L,
+  topology_correction = FALSE,
+  secondary_targets = FALSE
+) {
+  checkmate::qassert(lr_sig_hub, "N1[0,1]")
+  checkmate::qassert(gr_hub, "N1[0,1]")
+  checkmate::qassert(ltf_cutoff, "N1[0,1]")
+  checkmate::qassert(damping_factor, "N1[0,1]")
+  checkmate::qassert(tol, "N1(0,)")
+  checkmate::qassert(max_iter, "X1[1,)")
+  checkmate::qassert(topology_correction, "B1")
+  checkmate::qassert(secondary_targets, "B1")
+
+  list(
+    lr_sig_hub = lr_sig_hub,
+    gr_hub = gr_hub,
+    ltf_cutoff = ltf_cutoff,
+    damping_factor = damping_factor,
+    tol = tol,
+    max_iter = as.integer(max_iter),
+    topology_correction = topology_correction,
+    secondary_targets = secondary_targets
   )
 }

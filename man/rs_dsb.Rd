@@ -59,14 +59,15 @@ background mean from the 2-component k-means clustering.
 }
 }
 \description{
-This function applies the DSB algorithm to normalise
-antibody-derived tag (ADT) counts from CITE-seq experiments. Two variants
-are supported. When \code{background_counts} is provided, per-protein ambient
-background is estimated from empty droplets ("Step I" of the original
-paper). When \code{background_counts} is \code{NULL}, per-protein background is
-estimated by a two-component k-means on the log-transformed cell counts,
-with the lower centroid taken as the background level. An optional second
-step removes cell-to-cell technical noise by regressing out PC1 of a noise
-matrix built from isotype controls (if available) and the per-cell
-background mean.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+This function applies the DSB algorithm to normalise antibody-derived tag
+(ADT) counts from CITE-seq experiments. Two variants are supported. When
+\code{background_counts} is provided, per-protein ambient background is estimated
+from empty droplets ("Step I" of the original paper). When
+\code{background_counts} is \code{NULL}, per-protein background is estimated by a
+two-component k-means on the log-transformed cell counts, with the lower
+centroid taken as the background level. An optional second step removes
+cell-to-cell technical noise by regressing out PC1 of a noise matrix built
+from isotype controls (if available) and the per-cell background mean.
 }
+\keyword{internal}

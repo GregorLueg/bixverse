@@ -44,5 +44,7 @@ a doublet for the observed cells.
 }
 }
 \description{
-Detect Doublets via BoostClassifier (in Rust)
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+Implementation of BoostClassifier in Rust.
 }
+\keyword{internal}

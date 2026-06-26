@@ -31,6 +31,8 @@ A list with the percentages of counts per gene set group detected
 in the cells.
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 This function allows to calculate for example the proportion of
 mitochondrial genes, or ribosomal genes in the cells for QC purposes.
 }
+\keyword{internal}

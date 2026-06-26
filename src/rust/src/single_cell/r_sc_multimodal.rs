@@ -21,6 +21,11 @@ extendr_module! {
 
 /// Run the weighted nearest neighbour algorithm
 ///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// This provides a Rust-based implementation of the WNN algorithm from Hao,
+/// et al.
+///
 /// @param modality_emb_one Numerical matrix of the first modality. For example
 /// the PCA (or other embeddings) from the transcriptomics.
 /// @param modality_emb_two Numerical matrix of the second modality. For example
@@ -41,6 +46,8 @@ extendr_module! {
 /// }
 ///
 /// @export
+///
+/// @references Hao et al., Cell, 2021
 #[extendr]
 fn rs_wnn(
     modality_emb_one: RMatrix<f64>,

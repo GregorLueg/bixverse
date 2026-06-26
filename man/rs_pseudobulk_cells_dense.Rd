@@ -21,8 +21,10 @@ detailed verbosity.}
 A dense matrix with the pseudo-bulked data.
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 This function will return a dense matrix of
 \verb{length(cell_indices_ls) x number of genes}. The function has the option
 to return the sum of the sum of the raw counts or the average of the
 normalised counts.
 }
+\keyword{internal}

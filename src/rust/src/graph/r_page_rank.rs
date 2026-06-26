@@ -11,7 +11,27 @@ use rayon::prelude::*;
 use rustc_hash::FxHashSet;
 use std::sync::Arc;
 
+/////////////
+// extendR //
+/////////////
+
+extendr_module! {
+    mod r_page_rank;
+    fn rs_page_rank;
+    fn rs_page_rank_parallel;
+    fn rs_tied_diffusion_parallel;
+    fn rs_constrained_page_rank;
+    fn rs_constrained_page_rank_list;
+}
+
+///////////////
+// Functions //
+///////////////
+
 /// Rust version of calcaluting the personalised page rank
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
 ///
 /// @param node_names String vector. Name of the graph nodes.
 /// @param from String vector. The names of the `from` edges from the edge list.
@@ -42,8 +62,10 @@ fn rs_page_rank(
 
 /// Calculate massively parallelised personalised page rank scores
 ///
-/// @description Helper function to calculate in parallel on the same (unweighted)
-/// network the personalised page rank as fast as possible. Can be used for permutations
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Helper function to calculate in parallel on the same (unweighted) network
+/// the personalised page rank as fast as possible. Can be used for permutations
 /// type approaches.
 ///
 /// @param node_names String vector. Name of the graph nodes.
@@ -58,6 +80,8 @@ fn rs_page_rank(
 /// @return A matrix of the scores with each row representing an element in the
 /// `diffusion_scores` list (in order), and each column representing the value
 /// of the personalised page rank diffusion for this node.
+///
+/// @export
 #[extendr]
 fn rs_page_rank_parallel(
     node_names: Vec<String>,
@@ -101,8 +125,10 @@ fn rs_page_rank_parallel(
 
 /// Calculate massively parallelised tied diffusion scores
 ///
-/// @description Helper function to calculate in parallel on the same (unweighted)
-/// network the tied diffusions as fast as possible. Can be used for permutation.
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Helper function to calculate in parallel on the same (unweighted) network
+/// the tied diffusions as fast as possible. Can be used for permutation.
 ///
 /// @param node_names String vector. Name of the graph nodes.
 /// @param from String vector. The names of the `from` edges from the edge list.
@@ -122,6 +148,8 @@ fn rs_page_rank_parallel(
 /// @return A matrix of the scores with each row representing a tied diffusion of
 /// of `diffusion_scores_1` and  `diffusion_scores_2` lists (in order), and each
 /// column representing the value of the tied diffusion for this node.
+///
+/// @export
 #[extendr]
 #[allow(clippy::too_many_arguments)]
 fn rs_tied_diffusion_parallel(
@@ -164,7 +192,9 @@ fn rs_tied_diffusion_parallel(
 
 /// Calculate a constrained page-rank score
 ///
-/// @description This function can be used to get constrainted personalised
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// This function can be used to get constrainted personalised
 /// page-rank scores akin to Ruiz, et al. You can provide optionally
 /// `sink_nodes` (node types that will force a reset) and/or `sink_edges`
 /// (edge types that will force a reset).
@@ -230,11 +260,13 @@ fn rs_constrained_page_rank(
 
 /// Calculate a constrained page-rank score over a list.
 ///
-/// @description This function can be used to get constrainted personalised
-/// page-rank scores akin to Ruiz, et al. You can provide optionally
-/// `sink_nodes` (node types that will force a reset) and/or `sink_edges`
-/// (edge types that will force a reset). This version can take in a list
-/// of personalisation vectors and returns a list as result.
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// This function can be used to get constrainted personalised page-rank scores
+/// akin to Ruiz, et al. You can provide optionally `sink_nodes` (node types
+/// that will force a reset) and/or `sink_edges` (edge types that will force a
+/// reset). This version can take in a list of personalisation vectors and
+/// returns a list as result.
 ///
 /// @param personalisation_list List. The list with the personalisation vectors.
 /// The sum must equal to 1, otherwise the function panics!
@@ -314,13 +346,4 @@ fn rs_constrained_page_rank_list(
     }
 
     Ok(result_list)
-}
-
-extendr_module! {
-    mod r_page_rank;
-    fn rs_page_rank;
-    fn rs_page_rank_parallel;
-    fn rs_tied_diffusion_parallel;
-    fn rs_constrained_page_rank;
-    fn rs_constrained_page_rank_list;
 }

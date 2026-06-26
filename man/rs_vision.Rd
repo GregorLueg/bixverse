@@ -23,7 +23,9 @@ detailed verbosity.}
 A matrix of cells x vision scores per gene set.
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 The function will take in a list of gene sets that contains lists of \code{"pos"}
 and \code{"neg"} gene indices (0-indexed). You don't have to provide the \code{"neg"},
 but it can be useful to classify the delta of two stats (EMT, Th1; Th2) etc.
 }
+\keyword{internal}

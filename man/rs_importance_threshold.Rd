@@ -20,6 +20,8 @@ below this are excluded even if they pass the per-gene threshold.}
 A list with three vectors: tf, gene, importance
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 For each gene (row), computes mean + n_sd * SD of the importance scores
 across all TFs and retains only pairs exceeding that threshold.
 }
+\keyword{internal}

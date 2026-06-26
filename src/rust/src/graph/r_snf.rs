@@ -5,7 +5,22 @@ use extendr_api::scalar::Rbool;
 use extendr_api::*;
 use faer::MatRef;
 
+/////////////
+// extendR //
+/////////////
+
+extendr_module! {
+    mod r_snf;
+    fn rs_snf_affinity_continuous;
+    fn rs_snf_affinity_cat;
+    fn rs_snf_affinity_mixed;
+    fn rs_snf;
+}
+
 /// Calculate the SNF affinity matrix for continuous values
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
 ///
 /// @param data Numerical matrix. Needs to be oriented features x samples!
 /// @param distance_type String. One of
@@ -18,6 +33,8 @@ use faer::MatRef;
 /// @return The affinity matrix based on continuous values.
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_snf_affinity_continuous(
     data: RMatrix<f64>,
@@ -35,6 +52,9 @@ fn rs_snf_affinity_continuous(
 
 /// Calculate the SNF affinity matrix for categorical values
 ///
+/// @description
+/// `r lifecycle::badge("experimental")`
+///
 /// @param data Integer matrix. Needs to be oriented features x samples! The
 /// integers represent the factor values of the catagories.
 /// @param k Integer. Number of neighbours to consider.
@@ -43,6 +63,8 @@ fn rs_snf_affinity_continuous(
 /// @return The affinity matrix based on categorical values.
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_snf_affinity_cat(data: RMatrix<i32>, k: usize, mu: f64) -> RArray<f64, 2> {
     let data = r_matrix_to_faer(&data);
@@ -53,6 +75,9 @@ fn rs_snf_affinity_cat(data: RMatrix<i32>, k: usize, mu: f64) -> RArray<f64, 2> 
 }
 
 /// Calculate the SNF affinity matrix for mixed values
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
 ///
 /// @param data Numerical matrix. Needs to be oriented features x samples! This
 /// function will calculate the Gower distance under the hood for the affinity
@@ -65,6 +90,8 @@ fn rs_snf_affinity_cat(data: RMatrix<i32>, k: usize, mu: f64) -> RArray<f64, 2> 
 /// @return The affinity matrix based on mixed values.
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_snf_affinity_mixed(
     data: RMatrix<f64>,
@@ -86,7 +113,9 @@ fn rs_snf_affinity_mixed(
 
 /// Similarity network fusion
 ///
-/// @description This function iteratively fuses the affinity matrices together.
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// This function iteratively fuses the affinity matrices together.
 ///
 /// @param aff_mat_list A list of numerical matrices. The affinity matrices to
 /// fuse together.
@@ -110,12 +139,4 @@ fn rs_snf(aff_mat_list: List, k: usize, t: usize, alpha: f64) -> RArray<f64, 2> 
     let res = snf(&aff_mats, k, t, alpha);
 
     faer_to_r_matrix(res.as_ref())
-}
-
-extendr_module! {
-    mod r_snf;
-    fn rs_snf_affinity_continuous;
-    fn rs_snf_affinity_cat;
-    fn rs_snf_affinity_mixed;
-    fn rs_snf;
 }

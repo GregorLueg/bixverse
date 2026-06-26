@@ -17,6 +17,10 @@ extendr_module! {
 
 /// Convert old v2 files to v3 files
 ///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Internal helper to transfer version 2 to version 3 files.
+///
 /// @param cell_input Path to the `counts_cells.bin` file.
 /// @param cell_output Path to the `counts_cells_new.bin` file.
 /// @param gene_input Path to the `counts_genes.bin` file.
@@ -26,6 +30,8 @@ extendr_module! {
 /// @returns A potential error if it occurs
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_data_v2_3_conversion(
     cell_input: &str,

@@ -20,5 +20,6 @@ Recommended size: 10000L.}
 The AUC.
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 This function calculates rapidly AUCs based on an approximation.
 }

@@ -41,3 +41,4 @@ proteins with probes 1:3 being cell markers for cell type 1, genes 4:6 for
 cell type 2 and genes 7:9 for cell type. Columns 13:15 represents isotype
 controls.
 }
+\keyword{internal}

@@ -59,6 +59,7 @@ FDR.
 }
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 The function will take in a list of gene sets that contains lists of \code{"pos"}
 and \code{"neg"} gene indices (0-indexed). You don't have to provide the \code{"neg"},
 but it can be useful to classify the delta of two stats (EMT, Th1; Th2) etc.
@@ -66,3 +67,4 @@ Additionally, it will take a random gene list and calculate an
 auto-correlation score based on Gaery's C to identify pathways that show
 significant patterns on the kNN graph generate on the provided embedding.
 }
+\keyword{internal}

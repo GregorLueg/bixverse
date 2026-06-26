@@ -21,5 +21,6 @@ each with shape (n_cells, no_neighbours_to_keep). Positions without
 neighbours are filled with -1 (indices) or NaN (distances).
 }
 \description{
-Reduce BBKNN results to Top X neighbours
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 }
+\keyword{internal}

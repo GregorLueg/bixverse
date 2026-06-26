@@ -17,7 +17,8 @@ returned.}
 The (normalised) pointwise mutual information matrix.
 }
 \description{
-Calculates the pointwise mutual information (can be also
-normalised) across all columns of the data. This can be used to identify
-(dis)similar samples based on Boolean characteristics.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+Calculates the pointwise mutual information (can be also normalised) across
+all columns of the data. This can be used to identify (dis)similar samples
+based on Boolean characteristics.
 }

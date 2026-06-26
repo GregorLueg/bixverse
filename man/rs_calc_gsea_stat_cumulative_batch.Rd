@@ -51,5 +51,6 @@ list:
 }
 }
 \description{
-Helper function to generate fgsea simple-based permutations
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 }
+\keyword{internal}

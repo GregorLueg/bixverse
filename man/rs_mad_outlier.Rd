@@ -24,7 +24,7 @@ A list with the following items:
 }
 }
 \description{
-Calculate MAD outlier detection in Rust.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 }
 \details{
 Should you provide too short vectors, the function will return an empty

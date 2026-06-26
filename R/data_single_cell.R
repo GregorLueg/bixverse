@@ -153,6 +153,8 @@ generate_single_cell_test_data <- function(
 #' }
 #'
 #' @export
+#'
+#' @keywords internal
 generate_single_cell_test_data_adt <- function(
   syn_data_params = params_sc_synthetic_data_adt(),
   seed = 42L
@@ -217,9 +219,12 @@ generate_single_cell_test_data_adt <- function(
 
 ### write h5ad type formats ----------------------------------------------------
 
+#### sparse --------------------------------------------------------------------
+
 #' Helper function to write data to h5ad format
 #'
-#' @description This is a helper to write synthetic data to h5ad file.
+#' @description This is a helper to write synthetic data to h5ad file. This
+#' version will write the data into the common compressed sparse data format.
 #'
 #' @param f_path String. The filepath to which to save the data
 #' @param counts Sparse matrix. Needs to be of class `dgRMatrix` or
@@ -301,6 +306,85 @@ write_h5ad_sc <- function(
     message("Writing the var to h5ad.")
   }
 
+  rhdf5::h5createGroup(f_path, "var")
+  rhdf5::h5write(var[[1]], f_path, "var/_index")
+  for (col in names(var)[-1]) {
+    rhdf5::h5write(var[[col]], f_path, paste0("var/", col))
+  }
+
+  rhdf5::h5closeAll()
+
+  invisible()
+}
+
+#### dense ---------------------------------------------------------------------
+
+#' Helper function to write data to a dense h5ad file
+#'
+#' @description Helper to write synthetic data to h5ad with `/X` stored as a
+#' dense 2D dataset (cells x genes). Useful for exercising the dense ingestion
+#' path.
+#'
+#' @param f_path String. The filepath to which to save the data
+#' @param counts Matrix or sparse matrix; sparse input is densified.
+#' @param obs data.table. The observations. Needs `nrow(obs) == nrow(counts)`.
+#' @param var data.table. The variable data. Needs `nrow(var) == ncol(counts)`.
+#' @param overwrite Boolean. Shall any found h5ad file be overwritten.
+#' @param .verbose Boolean. Controls verbosity of the function.
+#'
+#' @return Returns invisible
+#'
+#' @export
+write_h5ad_sc_dense <- function(
+  f_path,
+  counts,
+  obs,
+  var,
+  overwrite = TRUE,
+  .verbose = TRUE
+) {
+  checkmate::assertPathForOutput(f_path, overwrite = TRUE)
+  checkmate::assertDataTable(
+    obs,
+    min.rows = nrow(counts),
+    max.rows = nrow(counts)
+  )
+  checkmate::assertDataTable(
+    var,
+    min.rows = ncol(counts),
+    max.rows = ncol(counts)
+  )
+  checkmate::qassert(overwrite, "B1")
+  checkmate::qassert(.verbose, "B1")
+
+  if (file.exists(f_path) && !overwrite) {
+    stop("The h5ad file already exists and overwrite = FALSE.")
+  } else if (file.exists(f_path)) {
+    file.remove(f_path)
+  }
+
+  rhdf5::h5createFile(f_path)
+
+  counts_dense <- as.matrix(counts)
+
+  if (.verbose) {
+    message("Writing the dense counts to h5ad.")
+  }
+  # Dense X as a 2D dataset directly under /X
+  rhdf5::h5write(counts_dense, f_path, "X", native = TRUE)
+
+  if (.verbose) {
+    message("Writing the obs to h5ad.")
+  }
+  rhdf5::h5createGroup(f_path, "obs")
+  rhdf5::h5write(obs[[1]], f_path, "obs/_index")
+  for (col in names(obs)[-1]) {
+    rhdf5::h5write(obs[[col]], f_path, paste0("obs/", col))
+  }
+
+  if (.verbose) {
+    message("Writing the var to h5ad.")
+  }
   rhdf5::h5createGroup(f_path, "var")
   rhdf5::h5write(var[[1]], f_path, "var/_index")
   for (col in names(var)[-1]) {
@@ -457,6 +541,8 @@ write_cellranger_output <- function(
 #' @return Invisible.
 #'
 #' @export
+#'
+#' @keywords internal
 write_tenx_h5_sc <- function(
   f_path,
   counts,

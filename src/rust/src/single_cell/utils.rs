@@ -76,38 +76,48 @@ pub fn flatten_dispersion_batches(results: Vec<HvgDispersionRes>) -> List {
 ///
 /// ### Params
 ///
-/// * `knn_mat` - Samples x indices of the k-nearest neighbours (1-indexed!)
+/// * `knn_mat` - Samples x indices of the k-nearest neighbours (0-indexed!)
 ///
 /// ### Returns
 ///
 /// A `Vec<Vec<usize>>`
 pub fn knn_indices_processing(knn_mat: RMatrix<i32>) -> Vec<Vec<usize>> {
-    let ncol = knn_mat.ncols();
     let nrow = knn_mat.nrows();
+    let ncol = knn_mat.ncols();
     let data = knn_mat.data();
 
-    (0..nrow)
-        .map(|j| (0..ncol).map(|i| data[j + i * nrow] as usize).collect())
-        .collect()
+    let mut out: Vec<Vec<usize>> = (0..nrow).map(|_| Vec::with_capacity(ncol)).collect();
+    for i in 0..ncol {
+        let col_offset = i * nrow;
+        for j in 0..nrow {
+            out[j].push(data[col_offset + j] as usize);
+        }
+    }
+    out
 }
 
 /// Process R KNN distances to the Rust variant
 ///
 /// ### Params
 ///
-/// * `knn_dist` - Samples x indices of the k-nearest neighbours (1-indexed!)
+/// * `knn_dist` - Samples x indices of the k-nearest neighbours (0-indexed!)
 ///
 /// ### Returns
 ///
 /// A `Vec<Vec<f32>>`
 pub fn knn_distances_processing(knn_dist: RMatrix<f64>) -> Vec<Vec<f32>> {
-    let ncol = knn_dist.ncols();
     let nrow = knn_dist.nrows();
-    let data: Vec<f32> = knn_dist.data().iter().map(|x| *x as f32).collect();
+    let ncol = knn_dist.ncols();
+    let data = knn_dist.data();
 
-    (0..nrow)
-        .map(|j| (0..ncol).map(|i| data[j + i * nrow]).collect())
-        .collect()
+    let mut out: Vec<Vec<f32>> = (0..nrow).map(|_| Vec::with_capacity(ncol)).collect();
+    for i in 0..ncol {
+        let col_offset = i * nrow;
+        for j in 0..nrow {
+            out[j].push(data[col_offset + j] as f32);
+        }
+    }
+    out
 }
 
 /// Transform R kNN data to Rust data
@@ -316,13 +326,14 @@ pub fn process_cell_markers(r_list: List) -> Result<Vec<CellTypeMarkers>> {
 // Hotspot working size calculations //
 ///////////////////////////////////////
 
-/// Derive a panel size from a working-memory budget for the streaming pair path.
+/// Derive a panel size from a working-memory budget for the streaming pair
+/// path.
 ///
 /// Working set is roughly `20 * n_cells * panel_size` bytes (two resident
 /// panels plus transient load buffers); the `n_genes^2` output matrices sit on
 /// top and are not controlled here. Clamps to `[512, n_genes]`: below ~512 the
-/// GEMM blocks are too small to be efficient, and `panel_size == n_genes` is the
-/// single-panel (no-reload) case.
+/// GEMM blocks are too small to be efficient, and `panel_size == n_genes` is
+/// the single-panel (no-reload) case.
 ///
 /// ### Parmas
 ///
@@ -339,4 +350,53 @@ pub fn panel_size_from_mem(working_mem_gb: f64, n_cells: usize, n_genes: usize) 
     let raw = (budget / (BYTES_PER_GENE_PER_CELL * n_cells.max(1) as f64)).floor() as usize;
     let lo = 512.min(n_genes.max(1));
     raw.clamp(lo, n_genes.max(1))
+}
+
+//////////////
+// NicheNet //
+//////////////
+
+/// NicheNet network data
+///
+/// ### Fields
+///
+/// * `0` - The from indices
+/// * `1` - The to indices
+/// * `2` - The edge weights
+pub type NicheNetNetwork = Result<(Vec<u32>, Vec<u32>, Vec<f64>)>;
+
+/// Transform network data into a [NicheNetNetwork]
+///
+/// ### Params
+///
+/// * `network_data` - R list. Needs to have the `"from"`, `"to"` and
+///   `"weights"` of the network.
+///
+/// ### Returns
+///
+/// The [NicheNetNetwork]
+pub fn prep_nichenet_network(network_data: List) -> NicheNetNetwork {
+    let network_data: HashMap<&str, Robj> = network_data.try_into()?;
+
+    let from = network_data
+        .get("from")
+        .ok_or_else(|| Error::Other("missing 'from'".into()))?
+        .as_integer_vector()
+        .ok_or_else(|| Error::Other("'from' is not a integer vector".into()))?;
+    let from = from.iter().map(|x| *x as u32).collect();
+
+    let to = network_data
+        .get("to")
+        .ok_or_else(|| Error::Other("missing 'to'".into()))?
+        .as_integer_vector()
+        .ok_or_else(|| Error::Other("'to' is not a integer vector".into()))?;
+    let to = to.iter().map(|x| *x as u32).collect();
+
+    let weight = network_data
+        .get("weight")
+        .ok_or_else(|| Error::Other("missing 'weight'".into()))?
+        .as_real_vector()
+        .ok_or_else(|| Error::Other("'weight' is not a real vector".into()))?;
+
+    Ok((from, to, weight))
 }

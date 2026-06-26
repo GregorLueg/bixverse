@@ -18,5 +18,6 @@ integers represent the factor values of the catagories.}
 The affinity matrix based on categorical values.
 }
 \description{
-Calculate the SNF affinity matrix for categorical values
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 }
+\keyword{internal}

@@ -19,9 +19,9 @@ checksum = "4b46cbb362ab8752921c97e041f5e366ee6297bd428a31275b9fcf1e380f7299"
 
 [[package]]
 name = "ann-search-rs"
-version = "0.4.1"
+version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8e56ec304e8e675921e8a8c2fcb4a4d4546970664644c2a74a42b423d9739a9c"
+checksum = "b2665db76c5afce94fdbacfc8094bbab38fbb21c5cc533ac4de611e85a42523b"
 dependencies = [
  "approx",
  "clap",
@@ -171,9 +171,9 @@ dependencies = [
 
 [[package]]
 name = "bixverse-rs"
-version = "0.3.0"
+version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c3907cf26ee47f1c4fdffdfb9c88fe4017eb050c06a3b82009ab9983182be2d8"
+checksum = "e7cab20d66b9373fbb5ae03ae7a56548360bfb4dc74f3c9210e024d368b49773"
 dependencies = [
  "ann-search-rs",
  "approx",
@@ -183,12 +183,14 @@ dependencies = [
  "extendr-api",
  "faer",
  "faer-entity",
+ "faer-traits",
  "fmt",
  "half",
  "hdf5-metno",
  "indexmap",
  "lz4_flex",
  "memmap2",
+ "ndarray",
  "num-traits",
  "once_cell",
  "petgraph",

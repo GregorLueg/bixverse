@@ -18,5 +18,6 @@ An assignment vector. NA indicates that the gene did not pass the
 thresholds and has not been assigned.
 }
 \description{
-Cluster the genes by Z-score together
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 }
+\keyword{internal}

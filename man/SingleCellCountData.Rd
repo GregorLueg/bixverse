@@ -21,6 +21,7 @@ Number of genes represented in the data.}
 A new instance of the \code{SingleCellCountData} class.
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 A class for handling single cell count data stored on disk in two
 complementary binary representations: a CSR-like layout (\code{f_path_cells})
 for fast cell-wise access and a CSC-like layout (\code{f_path_genes}) for fast
@@ -245,6 +246,23 @@ Other modalities (e.g. Antibody Capture) are filtered out via
 \subsection{return}{
 A list with \code{cell_indices}, \code{gene_indices}, \code{lib_size} and
 \code{nnz}.
+}
+}
+
+\subsection{Method \code{multi_tenx_h5_to_file}}{
+Load multiple 10x CellRanger h5 files into a single binary
+
+\subsection{Arguments}{
+\describe{
+\item{\code{file_tasks}}{(\code{list})\cr A list of lists, each produced by the R prescan function. Each inner list must contain \code{exp_id}, \code{h5_path}, \code{version} (\code{"v2"} or \code{"v3"}), \code{no_cells}, \code{no_genes}, \code{gene_local_to_universe} (integer vector, \code{NA} for unmapped / non-gene features) and \code{feature_type} (optional string, defaults to \code{"Gene Expression"}). }
+\item{\code{universe_size}}{(\code{integer})\cr Total number of genes in the universe.}
+\item{\code{qc_params}}{(\code{list})\cr Quality control parameters (\code{min_unique_genes}, \code{min_lib_size}, \code{min_cells}, \code{target_size}).}
+\item{\code{verbose}}{(\code{logical})\cr Controls verbosity. }
+}}
+\subsection{return}{
+A list with \code{global_gene_indices}, \code{total_cells}, \code{total_genes}
+and \code{per_file} (a list of lists with \code{exp_id}, \code{cell_indices},
+\code{lib_size}, \code{nnz}).
 }
 }
 

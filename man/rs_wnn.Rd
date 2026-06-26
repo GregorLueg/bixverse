@@ -32,5 +32,10 @@ neighbours.
 }
 }
 \description{
-Run the weighted nearest neighbour algorithm
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+This provides a Rust-based implementation of the WNN algorithm from Hao,
+et al.
+}
+\references{
+Hao et al., Cell, 2021
 }

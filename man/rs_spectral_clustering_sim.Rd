@@ -29,5 +29,6 @@ graph generation}
 A vector with the membership of the samples
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 Spectral clustering on a pre-calculated similarity matrix.
 }

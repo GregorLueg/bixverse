@@ -42,3 +42,4 @@ single cell functions. Pairs cell-for-cell with
 \code{\link[=generate_single_cell_test_data]{generate_single_cell_test_data()}} when generated with matching
 \code{n_cells}, number of cell types and \code{n_batches}.
 }
+\keyword{internal}
