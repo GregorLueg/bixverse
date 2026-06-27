@@ -3682,6 +3682,30 @@ rs_generate_ligand_target_influence <- function(ligand_seeds, ppi_network, grn_n
 #' @export
 rs_ligand_activity_scores <- function(ligand_influence, in_gene_sets) .Call(wrap__rs_ligand_activity_scores, ligand_influence, in_gene_sets)
 
+#' Compute cluster statistics for NicheNet prioritisation
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Helper function to pull out average expression and fraction of cells for
+#' genes of interest.
+#'
+#' @param f_path_gene Path to the `counts_genes.bin` file.
+#' @param gene_indices Integer vector. 0-indexed(!) positions of the genes
+#' to include.
+#' @param clusters List. A list that contains within the cell indices of the
+#' clusters of interest (0-indexed).
+#'
+#' @returns A list with two matrices
+#' \itemize{
+#'   \item mean - The average expression. Shape genes x clusters.
+#'   \item frac - The fraction of cells expressing. Shape genes x clusters.
+#' }
+#'
+#' @export
+#'
+#' @keywords internal
+rs_compute_cluster_expr_stats <- function(f_path_gene, gene_indices, clusters) .Call(wrap__rs_compute_cluster_expr_stats, f_path_gene, gene_indices, clusters)
+
 #' Generate meta cells (hdWGCNA method)
 #'
 #' @description

@@ -41,24 +41,35 @@ navbar:
     singlecells:
       text: Single Cells
       menu:
-        - text: Thinking about single cells the bixverse way
+        - text: "Intro vignettes"
+        - text: "Thinking about single cells the bixverse way"
           href: articles/thinking_single_cell.html
+        - text: "PBMC analysis with the bixverse single cell framework"
+          href: articles/pbmc_single_cell.html
         - text: "Reading data in (single-cell I/O)"
           href: articles/single_cell_io.html
-        - text: PBMC analysis with the bixverse single cell framework
-          href: articles/pbmc_single_cell.html
-        - text: Doublet detection in bixverse
+        - text: "Doublet detection in bixverse"
           href: articles/doublet_detection.html
-        - text: Batch corrections
+        - text: "Batch corrections"
           href: articles/single_cell_batch_corrections.html
-        - text: "'Bag of genes' methods for single cell in bixverse"
-          href: articles/bag_of_genes_single_cells.html
         - text: "kNN searches for single cells in bixverse"
           href: articles/knn_searches.html
+        - text: -------
+        - text: "More advanced analysis methods"
+        - text: "'Bag of genes' methods for single cell in bixverse"
+          href: articles/bag_of_genes_single_cells.html
         - text: "Meta cells - generation and analysis"
           href: articles/meta_cells.html
+        - text: "Reference mapping via Symphony"
+          href: articles/symphomy.html
+        - text: "Multi-modal analysis"
+          href: articles/multi_modal_single_cell.html
+        - text: -------
+        - text: "Others"
         - text: Analysing big data on a powerful laptop (example)
           href: articles/single_cell_big_data.html
+        - text: Plotting helpers
+          href: articles/single_cell_visualisation.html
     articles:
       text: Articles
       menu:
@@ -97,6 +108,9 @@ articles:
       - knn_searches
       - meta_cells
       - single_cell_big_data
+      - multi_modal_single_cells
+      - single_cell_visualisation
+      - symphony
 
 reference:
   # General getters shared across classes
@@ -501,9 +515,11 @@ reference:
       cell
     contents:
       - SymphonyReference
+      - add_symphony_labels
       - build_symphony_ref
       - transfer_labels_symphony
       - get_symphony_hvg_names
+      - get_symphony_labels
       - get_symphony_loadings
       - get_symphony_z_corr
       - map_symphony_query
@@ -511,8 +527,18 @@ reference:
       - calc_sc_type_scores
       - score_clusters
       - params_symphony_map
+  # Single cell ligand receptor
+  - title: Single cell ligand receptor 
+    desc: 
+      Classes, functions and generics/methods for ligand receptor analysis for
+      single cell.
+    contents:
+      - generate_ligand_target_influence
+      - get_influence
+      - ligand_activity_scores
+      - params_ligand_target
   # Single cell plotting helpers
-  - title: Single-cell plotting stuff
+  - title: Single cell plotting stuff
     desc: 
       Various helpers that generate data for plotting single cell, such as 2D 
       embeddings, or extract specific columns from the metadata or genes (and
@@ -528,7 +554,7 @@ reference:
       - extract_feature_pair
       - extract_feature_plot_data
       - extract_gene_violin_data
-
+  
   # Different statistical functions
   - title: Stastical functions
     desc: 
@@ -577,6 +603,7 @@ reference:
       - cell_cycle_genes
       - write_cellranger_output
       - write_h5ad_sc
+      - write_h5ad_sc_dense
       - params_sc_synthetic_data
       - synthetic_signal_matrix
       - simulate_dropouts
@@ -642,6 +669,8 @@ reference:
       - rs_kbet
       - rs_knn_label_propagation
       - rs_knn_mat_to_edge_list
+      - rs_generate_ligand_target_influence
+      - rs_ligand_activity_scores
       - rs_mad_outlier
       - rs_mc_aucell
       - rs_mc_hvg
