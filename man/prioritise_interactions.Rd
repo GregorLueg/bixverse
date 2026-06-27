@@ -54,6 +54,7 @@ A \code{data.table} with one row per surviving
 \description{
 For every (sender, ligand, receiver, receptor) tuple drawn from the LR
 network, compute a weighted prioritisation score combining:
+
 \itemize{
 \item ligand DE in the sender (\code{de_ligand})
 \item receptor DE in the receiver (\code{de_receptor})
@@ -63,6 +64,7 @@ network, compute a weighted prioritisation score combining:
 \item ligand condition specificity (\code{ligand_condition_specificity})
 \item receptor condition specificity (\code{receptor_condition_specificity})
 }
+
 Components with weight zero are skipped (their joins are not performed).
 
 DE tables are supplied by the user. \code{find_markers_sc} and

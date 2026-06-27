@@ -320,7 +320,7 @@ the doublets like this.
 
 ```{r}
 #| label: weighted scores from scdblfinder
-weighted_scores <- get_scores(scdblfinder)
+weighted_scores <- get_scores(scdblfinder, score_type = "weighted")
 
 weighted_scores_threshold <- find_threshold_otsu(x = weighted_scores)
 

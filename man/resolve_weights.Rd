@@ -7,7 +7,14 @@
 resolve_weights(weights, scenario, has_condition_de)
 }
 \arguments{
-\item{weights}{description}
+\item{weights}{...}
+
+\item{scenario}{...}
+
+\item{has_condition_de}{...}
+}
+\value{
+...
 }
 \description{
 Resolve prioritisation weights from the scenario or validate a user vector

@@ -50,3 +50,15 @@ add_new_metadata <- S7::new_generic(
     S7::S7_dispatch()
   }
 )
+
+## scores ----------------------------------------------------------------------
+
+#' Get scores
+#'
+#' @param x An object to get scores from.
+#' @param ... Additional arguments passed to methods.
+#'
+#' @export
+get_scores <- function(x, ...) {
+  UseMethod("get_scores")
+}

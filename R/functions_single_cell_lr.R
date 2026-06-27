@@ -409,11 +409,11 @@ assertExpTable <- function(x, name) {
 
 #' Resolve prioritisation weights from the scenario or validate a user vector
 #'
-#' @param weights description
-#' @param scenario
-#' @param has_condition_de
+#' @param weights ...
+#' @param scenario ...
+#' @param has_condition_de ...
 #'
-#' @returns
+#' @returns ...
 #'
 #' @keywords internal
 resolve_weights <- function(weights, scenario, has_condition_de) {
