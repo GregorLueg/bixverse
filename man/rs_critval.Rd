@@ -21,6 +21,8 @@ critical value is smaller than 0.1 percentile of the random permutations.}
 The critical value for the given parameters.
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 This function calculates the critical value for a given set based on random
 permutations and a given alpha value.
 }
+\keyword{internal}

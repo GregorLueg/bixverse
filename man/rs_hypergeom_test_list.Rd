@@ -42,9 +42,8 @@ set.
 }
 }
 \description{
-Given a list of target gene sets, this function will test for
-each of the individual target genes the hypergeoemetric enrichment against
-the specified gene sets. WARNING! Incorrect use can cause kernel crashes.
-Wrapper around the Rust functions with type checks are provided in the
-package.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+Given a list of target gene sets, this function will test for each of the
+individual target genes the hypergeoemetric enrichment against the specified
+gene sets.
 }

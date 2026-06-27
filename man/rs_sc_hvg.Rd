@@ -38,7 +38,8 @@ not provided.}
 \item{streaming}{Boolean. Shall the genes be streamed in to reduce memory
 pressure.}
 
-\item{verbose}{Boolean. Controls verbosity of the function.}
+\item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
+detailed verbosity.}
 }
 \value{
 A list with the highly variable genes. If \code{hvg_method == "vst"}, the
@@ -58,6 +59,8 @@ For the other two methods, these elements can be found:
 }
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 This function identifies highly variable genes with the three methods known
 in Seurat.
 }
+\keyword{internal}

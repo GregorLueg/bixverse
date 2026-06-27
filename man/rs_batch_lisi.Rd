@@ -4,7 +4,7 @@
 \alias{rs_batch_lisi}
 \title{Calculate batch LISI scores}
 \usage{
-rs_batch_lisi(knn_mat, batch_vector)
+rs_batch_lisi(knn_mat, batch_vector, verbose)
 }
 \arguments{
 \item{knn_mat}{Integer matrix. The rows represent the cells and the
@@ -12,6 +12,8 @@ columns the neighbour indices.}
 
 \item{batch_vector}{Integer vector. The integers indicate to which
 batch a given cell belongs.}
+
+\item{verbose}{Boolean. Controls verbosity of the function.}
 }
 \value{
 A list with the following items
@@ -22,6 +24,7 @@ A list with the following items
 }
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 Computes the Local Inverse Simpson's Index on batch labels using the
 kNN graph. Measures the effective number of batches in each cell's
 neighbourhood. Under perfect mixing LISI equals the number of batches,

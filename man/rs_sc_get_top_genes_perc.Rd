@@ -22,14 +22,17 @@ the proportions. (0-indexed!)}
 
 \item{streaming}{Boolean. Shall the data be worked on in chunks.}
 
-\item{verbose}{Boolean. Controls verbosity of the function.}
+\item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
+detailed verbosity.}
 }
 \value{
 A list with the cumulative percentages of the Top X genes defined
 as in \code{top_n_vals}.
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 This calculates the cumulative proportion of the top X genes, for example
 Top10, 50, 100. High values here indicate low complexity samples, i.e.,
 bad quality.
 }
+\keyword{internal}

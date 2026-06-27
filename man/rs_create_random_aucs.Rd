@@ -23,7 +23,9 @@ A vector of random AUCs based the score vector and size of the
 positive set.
 }
 \description{
-This function creates a random set of AUCs based on a score
-vector and a size of the positive set. This can be used for permutation-
-based estimation of Z-scores and subsequently p-values.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+This function creates a random set of AUCs based on a score vector and a
+size of the positive set. This can be used for permutation-based estimation
+of Z-scores and subsequently p-values.
 }
+\keyword{internal}

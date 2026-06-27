@@ -8,8 +8,9 @@ doublet_detection_boost_sc(
   object,
   boost_params = params_boost(),
   cells_to_use = NULL,
+  group_by = NULL,
   seed = 42L,
-  streaming = FALSE,
+  streaming = NULL,
   .verbose = TRUE
 )
 }
@@ -24,12 +25,18 @@ run of the boosted doublet detection. Useful when you wish to run doublet
 detection on individual batches within your data. The object returned will be
 specifically using these cells.}
 
+\item{group_by}{Optional grouping variable. Useful if you want to run the
+method on a per-sample basis.}
+
 \item{seed}{Integer. Random seed.}
 
-\item{streaming}{Boolean. Shall streaming be used during the HVG
-calculations. Slower, but less memory usage.}
+\item{streaming}{Optional Boolean. Shall the data be streamed in. Useful for
+larger data sets where you wish to avoid loading in the whole data. If
+\code{NULL}, will automatically detect.}
 
-\item{.verbose}{Boolean. Controls verbosity of the function.}
+\item{.verbose}{Boolean or integer. Controls verbosity and returns run times.
+\code{FALSE} -> quiet, \code{TRUE} or \code{1L} -> normal verbosity, \code{2L} -> detailed
+verbosity.}
 }
 \value{
 A \code{boost_res} class that has with the following items:

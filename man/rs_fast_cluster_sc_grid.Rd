@@ -38,7 +38,8 @@ an sNN graph.}
 
 \item{seed}{Integer. For reproducibility.}
 
-\item{verbose}{Boolean. Controls the verbosity of the function.}
+\item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
+detailed verbosity.}
 }
 \value{
 A list with the following elements:
@@ -49,9 +50,11 @@ membership from the random seed with the best conductance is returned.
 }
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 Runs first k-means clustering, followed by a kNN detection on the centroids
 to then run Louvain clustering with several seeds (based on the original
 one) on the graph and propagate the membership back to the original data.
 Returns additional metrics around cluster stability and community
 conductance.
 }
+\keyword{internal}

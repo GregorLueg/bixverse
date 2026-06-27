@@ -28,7 +28,7 @@ subsampling is recommended for large datasets. Defaults to \code{5000L}.}
 
 \item{seed}{Integer. Seed for subsampling reproducibility.}
 
-\item{.verbose}{Boolean. Controls the verbosity of the function.}
+\item{.verbose}{Boolean. Controls verbosity of the function.}
 }
 \value{
 A \code{BatchSilhouetteScores} object with the following elements

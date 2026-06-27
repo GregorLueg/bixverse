@@ -13,5 +13,6 @@ rs_cos(x)
 The correlation matrix.
 }
 \description{
-Calculates the cosyne similarity matrix of the columns.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+Calculates the pairwise cosine similarity matrix of the columns.
 }

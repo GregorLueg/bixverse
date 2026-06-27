@@ -8,6 +8,7 @@ rs_hotspot_autocor(
   f_path_genes,
   f_path_cells,
   embd,
+  knn_data,
   hotspot_params,
   cells_to_keep,
   genes_to_use,
@@ -24,6 +25,10 @@ rs_hotspot_autocor(
 \item{embd}{Numerical matrix. The embedding matrix from which to generate
 the kNN graph.}
 
+\item{knn_data}{Optional list. This contains pre-computed kNN data
+(including distances). The user has to ensure consistency! If provided,
+this will be used.}
+
 \item{hotspot_params}{List. The HotSpot parameter list.}
 
 \item{cells_to_keep}{Integer vector. 0-index vector indicating which cells
@@ -36,7 +41,8 @@ to include.}
 \item{streaming}{Boolean. Shall the data be streamed in chunks. Useful
 for large data sets.}
 
-\item{verbose}{Boolean. Controls verbosity of the function.}
+\item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
+detailed verbosity.}
 
 \item{seed}{Integer. Random seed for reproducibility.}
 }
@@ -52,6 +58,7 @@ coefficient.
 }
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 This function implements the HotSpot auto-correlation functionality and
 will return to what extent a given gene shows auto-correlation in the
 generated kNN-graph from the embeddings. For details see DeTomaso, et al.
@@ -59,3 +66,4 @@ generated kNN-graph from the embeddings. For details see DeTomaso, et al.
 \references{
 DeTomaso, et al., Cell Systems, 2021
 }
+\keyword{internal}

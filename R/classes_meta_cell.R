@@ -113,21 +113,7 @@ MetaCells <- S7::new_class(
 
 ## primitives ------------------------------------------------------------------
 
-#' @name print.MetaCells
-#'
-#' @title print Method for MetaCells object
-#'
-#' @description
-#' Print a MetaCells object.
-#'
-#' @param x An object of class `MetaCells`.
-#' @param ... Additional arguments (currently not used).
-#'
-#' @returns Invisibly returns `x`.
-#'
-#' @method print MetaCells
-#'
-#' @keywords internal
+#' @noRd
 S7::method(print, MetaCells) <- function(x, ...) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))
@@ -165,6 +151,13 @@ S7::method(print, MetaCells) <- function(x, ...) {
     sep = ""
   )
   invisible(x)
+}
+
+#' @noRd
+S7::method(head, MetaCells) <- function(x, ..., n = 6L) {
+  checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))
+  checkmate::qassert(n, "I1[1,)")
+  get_sc_obs(x, indices = seq_len(n), filtered = FALSE)
 }
 
 ## getters ---------------------------------------------------------------------
@@ -223,10 +216,22 @@ S7::method(`[[`, MetaCells) <- function(x, i, ...) {
 S7::method(get_sc_var, MetaCells) <- function(
   object,
   indices = NULL,
-  cols = NULL
+  cols = NULL,
+  modality = c("rna", "adt")
 ) {
+  modality <- match.arg(modality)
+
   checkmate::assertClass(object, "bixverse::MetaCells")
   checkmate::qassert(indices, c("0", "I+"))
+
+  if (modality != "rna") {
+    stop(
+      paste(
+        "MetaCells only supports modality = 'rna'.",
+        "Use SingleCellsMultiModal for ADT."
+      )
+    )
+  }
 
   var_table <- object@var_table
 
@@ -253,10 +258,21 @@ S7::method(get_sc_counts, MetaCells) <- function(
   cell_indices = NULL,
   gene_indices = NULL,
   use_cells_to_keep = TRUE,
+  modality = c("rna", "adt"),
   .verbose = TRUE
 ) {
-  checkmate::assertClass(object, "bixverse::MetaCells")
+  checkmate::assertTRUE(S7::S7_inherits(object, MetaCells))
   assay <- match.arg(assay)
+  modality <- match.arg(modality)
+
+  if (modality != "rna") {
+    stop(
+      paste(
+        "MetaCells only supports modality = 'rna'.",
+        "Use SingleCellsMultiModal for ADT."
+      )
+    )
+  }
 
   counts <- S7::prop(object, "data")[[assay]]
 
@@ -364,6 +380,49 @@ S7::method(mc_counts_to_list, MetaCells) <- function(
     nrow = nrow(x),
     ncol = ncol(x)
   )
+}
+
+#' Get the offsets for the CLR/PFlogPF transformation prior PCA
+#'
+#' @description
+#' Helper function to get the offsets for the CLR/PFlogPF transformation.
+#'
+#' @param object `MetaCells` class.
+#' @param cell_indices Optional integer. Defines the indices of the (meta)cells
+#' to use for the calculation.
+#'
+#' @returns A vector of length cell_indices which contains the CLR offsets
+#'
+#' @keywords internal
+#'
+#' @export
+mc_get_clr_offsets <- S7::new_generic(
+  name = "mc_counts_to_list",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    cell_indices = NULL
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method mc_get_clr_offsets MetaCells
+#'
+#' @export
+S7::method(mc_get_clr_offsets, MetaCells) <- function(
+  object,
+  cell_indices = NULL
+) {
+  checkmate::assertTRUE(S7::S7_inherits(object, MetaCells))
+
+  x <- object[cell_indices, , assay = "raw"]
+
+  s <- rowSums(x)
+  u <- counts / s
+  clr_offsets <- rowMeans(log1p(u))
+
+  clr_offsets
 }
 
 ## setters ---------------------------------------------------------------------
@@ -534,7 +593,8 @@ S7::method(get_gene_indices, MetaCells) <- function(
 #' @method set_pca_factors MetaCells
 S7::method(set_pca_factors, MetaCells) <- function(
   x,
-  pca_factor
+  pca_factor,
+  ...
 ) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))
@@ -555,7 +615,8 @@ S7::method(set_pca_factors, MetaCells) <- function(
 #' @method set_pca_loadings MetaCells
 S7::method(set_pca_loadings, MetaCells) <- function(
   x,
-  pca_loading
+  pca_loading,
+  ...
 ) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))
@@ -576,7 +637,8 @@ S7::method(set_pca_loadings, MetaCells) <- function(
 #' @method set_pca_singular_vals MetaCells
 S7::method(set_pca_singular_vals, MetaCells) <- function(
   x,
-  singular_vals
+  singular_vals,
+  ...
 ) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))
@@ -598,7 +660,8 @@ S7::method(set_pca_singular_vals, MetaCells) <- function(
 S7::method(set_embedding, MetaCells) <- function(
   x,
   embd,
-  name
+  name,
+  ...
 ) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))
@@ -621,7 +684,8 @@ S7::method(set_embedding, MetaCells) <- function(
 #' @method set_knn MetaCells
 S7::method(set_knn, MetaCells) <- function(
   x,
-  knn
+  knn,
+  ...
 ) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))
@@ -642,7 +706,8 @@ S7::method(set_knn, MetaCells) <- function(
 #' @method set_snn_graph MetaCells
 S7::method(set_snn_graph, MetaCells) <- function(
   x,
-  snn_graph
+  snn_graph,
+  ...
 ) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))
@@ -662,7 +727,8 @@ S7::method(set_snn_graph, MetaCells) <- function(
 #'
 #' @method remove_knn MetaCells
 S7::method(remove_knn, MetaCells) <- function(
-  x
+  x,
+  ...
 ) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))
@@ -680,7 +746,8 @@ S7::method(remove_knn, MetaCells) <- function(
 #'
 #' @method remove_snn_graph MetaCells
 S7::method(remove_snn_graph, MetaCells) <- function(
-  x
+  x,
+  ...
 ) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))
@@ -700,7 +767,8 @@ S7::method(remove_snn_graph, MetaCells) <- function(
 #'
 #' @method get_pca_factors MetaCells
 S7::method(get_pca_factors, MetaCells) <- function(
-  x
+  x,
+  ...
 ) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))
@@ -725,7 +793,8 @@ S7::method(get_pca_factors, MetaCells) <- function(
 #'
 #' @method get_pca_loadings MetaCells
 S7::method(get_pca_loadings, MetaCells) <- function(
-  x
+  x,
+  ...
 ) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))
@@ -750,7 +819,8 @@ S7::method(get_pca_loadings, MetaCells) <- function(
 #'
 #' @method get_pca_singular_val MetaCells
 S7::method(get_pca_singular_val, MetaCells) <- function(
-  x
+  x,
+  ...
 ) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))
@@ -769,7 +839,8 @@ S7::method(get_pca_singular_val, MetaCells) <- function(
 #' @method get_embedding MetaCells
 S7::method(get_embedding, MetaCells) <- function(
   x,
-  embd_name
+  embd_name,
+  ...
 ) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))
@@ -791,7 +862,8 @@ S7::method(get_embedding, MetaCells) <- function(
 #'
 #' @method get_available_embeddings MetaCells
 S7::method(get_available_embeddings, MetaCells) <- function(
-  x
+  x,
+  ...
 ) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))
@@ -809,7 +881,8 @@ S7::method(get_available_embeddings, MetaCells) <- function(
 #'
 #' @method get_knn_mat MetaCells
 S7::method(get_knn_mat, MetaCells) <- function(
-  x
+  x,
+  ...
 ) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))
@@ -827,7 +900,8 @@ S7::method(get_knn_mat, MetaCells) <- function(
 #'
 #' @method get_knn_dist MetaCells
 S7::method(get_knn_dist, MetaCells) <- function(
-  x
+  x,
+  ...
 ) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))
@@ -845,7 +919,8 @@ S7::method(get_knn_dist, MetaCells) <- function(
 #'
 #' @method get_knn_obj MetaCells
 S7::method(get_knn_obj, MetaCells) <- function(
-  x
+  x,
+  ...
 ) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))
@@ -863,7 +938,8 @@ S7::method(get_knn_obj, MetaCells) <- function(
 #'
 #' @method get_snn_graph MetaCells
 S7::method(get_snn_graph, MetaCells) <- function(
-  x
+  x,
+  ...
 ) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))

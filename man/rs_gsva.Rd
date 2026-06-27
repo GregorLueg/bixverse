@@ -30,6 +30,7 @@ absolute value}
 Returns a matrix of gene set ES scores x samples.
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 Rust-based implementation of the popular GSVA algorithm. Has further
 performance optimisations compared to the original implementation.
 }

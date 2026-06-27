@@ -4,11 +4,16 @@
 \alias{rs_rbh_cor}
 \title{Generate reciprocal best hits based on correlations}
 \usage{
-rs_rbh_cor(module_matrices, spearman, min_similarity)
+rs_rbh_cor(module_matrices, k_best, spearman, min_similarity)
 }
 \arguments{
 \item{module_matrices}{A list of named matrices. Rows represent features
 and columns the samples you wish to calculate the correlations for.}
+
+\item{k_best}{Integer. Number of best neighbours to consider. If set to
+\code{1L}, this behaves as the traditional reciprocal best hit. If you set this
+to \code{3L} you consider edges if the modules is in the top 3 best modules
+by similarity for each other.}
 
 \item{spearman}{Shall Spearman correlation be used.}
 
@@ -29,8 +34,9 @@ modules.
 }
 }
 \description{
-This function takes list of (named) matrices which represent
-for example matrix factorisation results you wish to identify reciprocal
-best hits (RBH) for. The rows need to represent the features and the columns
-the parts you wish to calculate the RBH for.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+This function takes list of (named) matrices which represent for example
+matrix factorisation results you wish to identify (k-th) reciprocal best
+hits (RBH) for. The rows need to represent the features and the columns the
+parts you wish to calculate the RBH for.
 }

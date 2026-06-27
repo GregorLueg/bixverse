@@ -1,9 +1,9 @@
 [package]
-version = '0.3.3'
+version = '0.4.0'
 name = 'bixverse'
 publish = false
 edition = '2021'
-rust-version = '1.88'
+rust-version = '1.90'
 
 [lib]
 crate-type = ['staticlib', 'rlib']
@@ -33,9 +33,8 @@ petgraph = { version = "0.8.3", features = ["rayon"] }
 rand = { version = "0.9.0", features = ["std"] }
 rayon = "1.11.0"
 rustc-hash = "2.1.1"
-thousands = "0.2.0"
-statrs = "0.18.0"
-bixverse-rs = { version = "0.2.0" , features = ["single-cell",] }
+thousands = "*"
+bixverse-rs = { version = "0.3.2", features = ["single-cell", "multi-modal"] }
 either = "1.15.0"
 
 [[bin]]

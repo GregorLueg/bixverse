@@ -15,5 +15,6 @@ rs_calc_es(stats, pathway_r)
 The enrichment score
 }
 \description{
-Calculates the traditional GSEA enrichment score
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 }
+\keyword{internal}

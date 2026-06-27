@@ -3,7 +3,7 @@ use bixverse_rs::prelude::*;
 use extendr_api::prelude::*;
 
 /////////////
-// Extendr //
+// extendR //
 /////////////
 
 extendr_module! {
@@ -12,11 +12,16 @@ extendr_module! {
     fn rs_sparse_dict_dgrdl_grid_search;
 }
 
+///////////////
+// Functions //
+///////////////
+
 /// Generate a sparse dictionary with DGRDL
 ///
-/// @description This is the Rust implementation of dual graph regularised
-/// dictionary learning in the implementation of Pan, et al., Cell Systems,
-/// 2022.
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// This is the Rust implementation of dual graph regularised dictionary
+/// learning in the implementation of Pan, et al., Cell Systems, 2022.
 ///
 /// @param x Numerical matrix. Rows = samples, columns = features.
 /// @param dgrdl_params A list with the parameters for the algorithm. Expects
@@ -84,9 +89,11 @@ fn rs_sparse_dict_dgrdl(
 
 /// Generate a sparse dictionary with DGRDL
 ///
-/// @description This is the Rust implementation of dual graph regularised
-/// dictionary learning in the implementation of Pan, et al., Cell Systems,
-/// 2022. This helper function is designed to run a grid search over the data.
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// This is the Rust implementation of dual graph regularised dictionary
+/// learning in the implementation of Pan, et al., Cell Systems, 2022. This
+/// helper function is designed to run a grid search over the data.
 ///
 /// @param x Numerical matrix. Rows = samples, columns = features.
 /// @param dgrdl_params A list with the parameters for the algorithm. Expects

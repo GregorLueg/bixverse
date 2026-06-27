@@ -177,7 +177,7 @@ S7::method(tied_diffusion, NetworkDiffusions) <-
     for (node in seed_nodes_2) {
       diff_vec_2[node] <- diffusion_vector_2[node]
     }
-    if ((sum(diff_vec_1) == 0) || (sum(diff_vec_1) == 0)) {
+    if ((sum(diff_vec_1) == 0) || (sum(diff_vec_2) == 0)) {
       stop(
         paste(
           "No scores found on first and/or second of the diffusion vectors.",
@@ -941,6 +941,10 @@ summarise_scores <- function(
 #'
 #' @param object The underlying class, see [bixverse::RbhGraph()].
 #' @param minimum_similarity The minimum similarity to create an edge.
+#' @param k_best Integer. Number of best neighbours to consider. If set to
+#' `1L`, this behaves as the traditional reciprocal best hit. If you set this
+#' to `3L` you consider edges if the modules is in the top 3 best modules
+#' by similarity for each other.
 #' @param overlap_coefficient Boolean. Shall the overlap coefficient be used
 #' instead of Jaccard similarity. Only relevant if the underlying class is set
 #' to set similarity.
@@ -956,6 +960,7 @@ generate_rbh_graph <- S7::new_generic(
   fun = function(
     object,
     minimum_similarity,
+    k_best = 1L,
     overlap_coefficient = FALSE,
     spearman = FALSE
   ) {
@@ -969,102 +974,104 @@ generate_rbh_graph <- S7::new_generic(
 #' @importFrom magrittr `%>%`
 #'
 #' @method generate_rbh_graph RbhGraph
-S7::method(generate_rbh_graph, RbhGraph) <-
-  function(
-    object,
-    minimum_similarity,
-    overlap_coefficient = FALSE,
-    spearman = FALSE
-  ) {
-    # scope checks
-    origin_modules <- . <- similiarity <- origin <- target <- `:=` <-
-      target_modules <- NULL
-    # checks
-    checkmate::assertClass(object, "bixverse::RbhGraph")
-    checkmate::qassert(minimum_similarity, "R[0, 1]")
-    checkmate::qassert(overlap_coefficient, "B1")
-    checkmate::qassert(spearman, "B1")
+S7::method(generate_rbh_graph, RbhGraph) <- function(
+  object,
+  minimum_similarity,
+  k_best = 1L,
+  overlap_coefficient = FALSE,
+  spearman = FALSE
+) {
+  # scope checks
+  origin_modules <- . <- similiarity <- origin <- target <- `:=` <-
+    target_modules <- NULL
+  # checks
+  checkmate::assertClass(object, "bixverse::RbhGraph")
+  checkmate::qassert(minimum_similarity, "R[0, 1]")
+  checkmate::qassert(overlap_coefficient, "B1")
+  checkmate::qassert(spearman, "B1")
 
-    # function body
-    rbh_type <- S7::prop(object, "params")[["rbh_type"]]
+  # function body
+  rbh_type <- S7::prop(object, "params")[["rbh_type"]]
 
-    rbh_results <- if (rbh_type == "set") {
-      list_of_list <- S7::prop(object, "module_data")
+  rbh_results <- if (rbh_type == "set") {
+    list_of_list <- S7::prop(object, "module_data")
 
-      rs_rbh_sets(
-        module_list = list_of_list,
-        overlap_coefficient = overlap_coefficient,
-        min_similarity = minimum_similarity
-      )
-    } else {
-      list_of_matrices <- S7::prop(object, "module_data")
-
-      rs_rbh_cor(
-        module_matrices = list_of_matrices,
-        spearman = spearman,
-        min_similarity = minimum_similarity
-      )
-    }
-
-    rbh_results$origin_modules[rbh_results$origin_modules == "NA"] <- NA
-    rbh_results$target_modules[rbh_results$target_modules == "NA"] <- NA
-
-    origin_vector <- unlist(purrr::map2(
-      rbh_results$origin,
-      rbh_results$comparisons,
-      ~ {
-        rep(.x, each = .y)
-      }
-    ))
-
-    target_vector <- unlist(purrr::map2(
-      rbh_results$target,
-      rbh_results$comparisons,
-      ~ {
-        rep(.x, each = .y)
-      }
-    ))
-
-    rbh_results_dt <- data.table::data.table(
-      origin = origin_vector,
-      target = target_vector,
-      origin_modules = rbh_results$origin_modules,
-      target_modules = rbh_results$target_modules,
-      similiarity = rbh_results$similarity
-    ) %>%
-      .[
-        !is.na(origin_modules) &
-          similiarity >= minimum_similarity
-      ] %>%
-      .[, `:=`(
-        combined_origin = paste(origin, origin_modules, sep = "_"),
-        combined_target = paste(target, target_modules, sep = "_")
-      )]
-
-    edge_dt <- rbh_results_dt[, c(
-      "combined_origin",
-      "combined_target",
-      "similiarity"
-    )] %>%
-      data.table::setnames(
-        .,
-        old = c("combined_origin", "combined_target", "similiarity"),
-        new = c("from", "to", "weight")
-      )
-
-    rbh_igraph <- igraph::graph_from_data_frame(edge_dt, directed = FALSE)
-
-    ## Assign and return
-    S7::prop(object, "rbh_edge_df") <- rbh_results_dt
-    S7::prop(object, "rbh_graph") <- rbh_igraph
-    S7::prop(object, "params")[["rbh_graph_gen"]] <- list(
-      minimum_similarity = minimum_similarity,
+    rs_rbh_sets(
+      module_list = list_of_list,
+      k_best = k_best,
       overlap_coefficient = overlap_coefficient,
-      spearman = spearman
+      min_similarity = minimum_similarity
+    )
+  } else {
+    list_of_matrices <- S7::prop(object, "module_data")
+
+    rs_rbh_cor(
+      module_matrices = list_of_matrices,
+      k_best = k_best,
+      spearman = spearman,
+      min_similarity = minimum_similarity
+    )
+  }
+
+  rbh_results$origin_modules[rbh_results$origin_modules == "NA"] <- NA
+  rbh_results$target_modules[rbh_results$target_modules == "NA"] <- NA
+
+  origin_vector <- unlist(purrr::map2(
+    rbh_results$origin,
+    rbh_results$comparisons,
+    ~ {
+      rep(.x, each = .y)
+    }
+  ))
+
+  target_vector <- unlist(purrr::map2(
+    rbh_results$target,
+    rbh_results$comparisons,
+    ~ {
+      rep(.x, each = .y)
+    }
+  ))
+
+  rbh_results_dt <- data.table::data.table(
+    origin = origin_vector,
+    target = target_vector,
+    origin_modules = rbh_results$origin_modules,
+    target_modules = rbh_results$target_modules,
+    similiarity = rbh_results$similarity
+  ) %>%
+    .[
+      !is.na(origin_modules) &
+        similiarity >= minimum_similarity
+    ] %>%
+    .[, `:=`(
+      combined_origin = paste(origin, origin_modules, sep = "_"),
+      combined_target = paste(target, target_modules, sep = "_")
+    )]
+
+  edge_dt <- rbh_results_dt[, c(
+    "combined_origin",
+    "combined_target",
+    "similiarity"
+  )] %>%
+    data.table::setnames(
+      .,
+      old = c("combined_origin", "combined_target", "similiarity"),
+      new = c("from", "to", "weight")
     )
 
-    return(object)
-  }
+  rbh_igraph <- igraph::graph_from_data_frame(edge_dt, directed = FALSE)
+
+  ## Assign and return
+  S7::prop(object, "rbh_edge_df") <- rbh_results_dt
+  S7::prop(object, "rbh_graph") <- rbh_igraph
+  S7::prop(object, "params")[["rbh_graph_gen"]] <- list(
+    minimum_similarity = minimum_similarity,
+    overlap_coefficient = overlap_coefficient,
+    spearman = spearman
+  )
+
+  return(object)
+}
 
 
 #' Find RBH communities

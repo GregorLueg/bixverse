@@ -18,7 +18,7 @@ onto.}
 The affinities after the Kernel was applied.
 }
 \description{
-Applies a radial basis function (RBF) to a given distance
-vector. Has at the option to apply a Gaussian, Bump or Inverse Quadratic
-RBF.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+Applies a radial basis function (RBF) to a given distance vector. Has at the
+option to apply a Gaussian, Bump or Inverse Quadratic RBF.
 }

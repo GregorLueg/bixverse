@@ -25,6 +25,9 @@ extendr_module! {
 
 /// Calculate the OT harmonic sum
 ///
+/// @description
+/// `r lifecycle::badge("experimental")`
+///
 /// @param x The numeric vector (should be between 0 and 1) for which to
 /// calculate the harmonic sum
 ///
@@ -52,14 +55,17 @@ fn rs_ot_harmonic_sum(mut x: Vec<f64>) -> f64 {
 
 /// Reconstruct a matrix from a flattened upper triangle vector
 ///
-/// @description This function takes a flattened vector of the upper triangle
-/// from a symmetric matrix (think correlation matrix) and reconstructs the full
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// This function takes a flattened vector of the upper triangle from a
+/// symmetric matrix (think correlation matrix) and reconstructs the full
 /// dense matrix for you.
 ///
-/// @param cor_vector Numeric vector. The vector of correlation coefficients
-/// that you want to use to go back to a dense matrix.
-/// @param shift Integer. If you applied a shift, i.e. included the diagonal
-/// values = 0; or excluded the diagonal values = 1.
+/// @param data Numeric vector. The vector of for example correlation
+/// coefficients that you want to use to go back to a dense matrix.
+/// @param shift Boolean. If you applied a shift, i.e. included the diagonal
+/// values. If `true`, assumes the diagonal values are `1`, otherwise derives
+/// them from the data.
 /// @param n Integer. Original dimension (i.e., ncol/nrow) of the matrix to be
 /// reconstructed.
 ///
@@ -67,7 +73,9 @@ fn rs_ot_harmonic_sum(mut x: Vec<f64>) -> f64 {
 ///
 /// @export
 #[extendr]
-fn rs_upper_triangle_to_dense(cor_vector: &[f64], shift: usize, n: usize) -> RArray<f64, 2> {
+fn rs_upper_triangle_to_dense(data: &[f64], shift: bool, n: usize) -> RArray<f64, 2> {
+    let shift = if shift { 1usize } else { 0usize };
+
     let mut mat = Mat::<f64>::zeros(n, n);
     let mut idx = 0;
     for i in 0..n {
@@ -75,8 +83,8 @@ fn rs_upper_triangle_to_dense(cor_vector: &[f64], shift: usize, n: usize) -> RAr
             if shift == 1 && i == j {
                 mat[(i, j)] = 1_f64
             } else {
-                mat[(i, j)] = cor_vector[idx];
-                mat[(j, i)] = cor_vector[idx];
+                mat[(i, j)] = data[idx];
+                mat[(j, i)] = data[idx];
                 idx += 1;
             }
         }
@@ -87,20 +95,24 @@ fn rs_upper_triangle_to_dense(cor_vector: &[f64], shift: usize, n: usize) -> RAr
 
 /// Generate a vector-based representation of the upper triangle of a matrix
 ///
-/// @description This function generates a vector from the upper triangle of
-/// a given symmetric matrix. You have the option to remove the diagonal with
-/// setting shift to 1.
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// This function generates a vector from the upper triangle of a given
+/// symmetric matrix. You have the option to remove the diagonal with setting
+/// shift to 1.
 ///
 /// @param x Numeric vector. The vector of correlation coefficients that you
 /// want to use to go back to a dense matrix.
-/// @param shift Integer. If you want to apply a shift, i.e. included the diagonal
-/// values = 0; or excluded the diagonal values = 1.
+/// @param shift Boolean. If you applied a shift, i.e. included the diagonal
+/// values. If `true`, assumes the diagonal values are `1`, otherwise derives
+/// them from the data.
 ///
 /// @return The dense R matrix.
 ///
 /// @export
 #[extendr]
-fn rs_dense_to_upper_triangle(x: RMatrix<f64>, shift: usize) -> Vec<f64> {
+fn rs_dense_to_upper_triangle(x: RMatrix<f64>, shift: bool) -> Vec<f64> {
+    let shift = if shift { 1usize } else { 0usize };
     let n = x.ncols();
 
     let total_elements = if shift == 0 {
@@ -123,7 +135,9 @@ fn rs_dense_to_upper_triangle(x: RMatrix<f64>, shift: usize) -> Vec<f64> {
 
 /// Apply a range normalisation on a vector.
 ///
-/// @description Applies a range normalisation on an R vector.
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Applies a range normalisation on an R vector.
 ///
 /// @param x Numerical vector. The data to normalise.
 /// @param max_val Numeric. The upper bound value to normalise into. If set to 1,
@@ -146,6 +160,8 @@ fn rs_range_norm(x: &[f64], max_val: f64, min_val: f64) -> Vec<f64> {
 
 /// Calculate the critical value
 ///
+/// @description
+/// `r lifecycle::badge("experimental")`
 /// This function calculates the critical value for a given set based on random
 /// permutations and a given alpha value.
 ///
@@ -159,6 +175,8 @@ fn rs_range_norm(x: &[f64], max_val: f64, min_val: f64) -> Vec<f64> {
 /// @return The critical value for the given parameters.
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_critval(values: &[f64], iters: usize, alpha: f64, seed: usize) -> f64 {
     calculate_critval(values, iters, &alpha, seed)
@@ -166,6 +184,8 @@ fn rs_critval(values: &[f64], iters: usize, alpha: f64, seed: usize) -> f64 {
 
 /// Calculate the critical value
 ///
+/// @description
+/// `r lifecycle::badge("experimental")`
 /// This function calculates the critical value for a given set based on random
 /// permutations and a given alpha value.
 ///
@@ -178,6 +198,8 @@ fn rs_critval(values: &[f64], iters: usize, alpha: f64, seed: usize) -> f64 {
 /// @return The critical value for the given parameters.
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_critval_mat(mat: RMatrix<f64>, iters: usize, alpha: f64, seed: usize) -> f64 {
     let mut values: Vec<f64> = Vec::new();

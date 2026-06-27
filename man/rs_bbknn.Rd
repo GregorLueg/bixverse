@@ -17,15 +17,18 @@ cell belongs.}
 
 \item{seed}{Integer. Seed for reproducibility purposes.}
 
-\item{verbose}{Boolean. Controls verbosity of the function.}
+\item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
+detailed verbosity.}
 }
 \value{
 A list of two lists representing the sparse matrix representation
 of the distances and the connectivities.
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 This function implements the BBKNN algorithm from Polański, et al.
 }
 \references{
 Polański, et al., Bioinformatics, 2020
 }
+\keyword{internal}

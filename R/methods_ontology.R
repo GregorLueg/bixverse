@@ -136,7 +136,7 @@ S7::method(calculate_semantic_sim_onto, OntologySim) <-
 
     final_sim <- upper_triangular_sym_mat$new(
       values = similarities$sim_mat,
-      shift = 1L,
+      shift = TRUE,
       features = similarities$names
     )
 
@@ -234,7 +234,7 @@ S7::method(calculate_wang_sim_onto, OntologySim) <- function(
 
   final_sim <- upper_triangular_sym_mat$new(
     values = sim_data,
-    shift = 1L,
+    shift = TRUE,
     features = features
   )
 

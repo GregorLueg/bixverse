@@ -37,7 +37,9 @@ random subsample of 100,000 cells will be used.}
 
 \item{seed}{Integer. Seed that is used for the downsampling.}
 
-\item{.verbose}{Boolean. Controls verbosity of the function.}
+\item{.verbose}{Boolean or integer. Controls verbosity and returns run times.
+\code{FALSE} -> quiet, \code{TRUE} or \code{1L} -> normal verbosity, \code{2L} -> detailed
+verbosity.}
 }
 \value{
 data.table with the DGE results from the test.

@@ -9,8 +9,10 @@ load_multi_h5ad(
   prescan_result,
   sc_qc_param = params_sc_min_quality(),
   cell_id_col = NULL,
-  streaming = TRUE,
+  streaming = 1L,
   batch_size = 1000L,
+  max_genes_in_memory = 2000L,
+  cell_batch_size = 100000L,
   .verbose = TRUE
 )
 }
@@ -23,9 +25,17 @@ load_multi_h5ad(
 
 \item{cell_id_col}{Optional string. Column name for cell identifiers in obs.}
 
-\item{streaming}{Boolean. Use streaming for CSR-to-CSC conversion.}
+\item{streaming}{Integer. \code{0L} -> in-memory, \code{1L} -> light streaming, \code{2L}
+-> heavy streaming with memory upper boundaries. Defaults to \code{1L}.}
 
-\item{batch_size}{Integer. Batch size if \code{streaming = TRUE}.}
+\item{batch_size}{Integer. Cell batch size when \code{streaming = 1L}. Defaults
+to \code{1000L}.}
+
+\item{max_genes_in_memory}{Integer. Maximum genes held in memory at once
+when \code{streaming = 2L}. Defaults to \code{2000L}.}
+
+\item{cell_batch_size}{Integer. Cell batch size when \code{streaming = 2L}.
+Defaults to \code{100000L}.}
 
 \item{.verbose}{Boolean.}
 }

@@ -8,7 +8,7 @@ find_hvg_sc(
   object,
   hvg_no = 2000L,
   hvg_params = params_sc_hvg(),
-  streaming = FALSE,
+  streaming = NULL,
   .verbose = TRUE
 )
 }
@@ -29,11 +29,13 @@ variance
 implemented yet.
 }}
 
-\item{streaming}{Boolean. Shall the genes be streamed in. Useful for larger
-data sets where you wish to avoid loading in the whole data. Defaults to
-\code{FALSE}. Not used for \code{MetaCells}.}
+\item{streaming}{Optional Boolean. Shall the data be streamed in. Useful for
+larger data sets where you wish to avoid loading in the whole data. If
+\code{NULL}, will automatically detect. Not used for \code{MetaCells}.}
 
-\item{.verbose}{Boolean. Controls verbosity and returns run times.}
+\item{.verbose}{Boolean or integer. Controls verbosity and returns run times.
+\code{FALSE} -> quiet, \code{TRUE} or \code{1L} -> normal verbosity, \code{2L} -> detailed
+verbosity.}
 }
 \value{
 It will add the mean, var, var_exp, var_std of each gene to the

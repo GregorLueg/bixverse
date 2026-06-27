@@ -33,7 +33,9 @@ for future features.}
 \item{min_prop}{Numeric. The minimum proportion of cells that need to express
 the gene to be tested in any of the two groups.}
 
-\item{.verbose}{Boolean. Controls verbosity of the function.}
+\item{.verbose}{Boolean or integer. Controls verbosity and returns run times.
+\code{FALSE} -> quiet, \code{TRUE} or \code{1L} -> normal verbosity, \code{2L} -> detailed
+verbosity.}
 }
 \value{
 data.table with the DGE results from the test.

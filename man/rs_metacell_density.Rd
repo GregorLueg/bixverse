@@ -19,7 +19,8 @@ estimation. Typically \code{150}.}
 \item{knn_params}{List. The kNN parameters defined by
 \code{\link[=params_sc_neighbours]{params_sc_neighbours()}}.}
 
-\item{verbose}{Boolean. Controls verbosity of the the function.}
+\item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
+detailed verbosity.}
 
 \item{seed}{Integer. For reproducibility.}
 }
@@ -32,5 +33,11 @@ A list with the following items
 }
 }
 \description{
-Calculates diffusion maps for density calculations for meta cells
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+Generates diffusion maps and identifies in which density region a given
+cell sits (defined as distance to k-nearest neighbours quite).
 }
+\references{
+Persad, et al., Nat. Biotechnol., 2023.
+}
+\keyword{internal}

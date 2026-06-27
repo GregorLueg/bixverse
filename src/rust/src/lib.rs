@@ -8,7 +8,6 @@ pub mod base;
 pub mod data;
 pub mod enrichment;
 pub mod graph;
-pub mod hotfix;
 pub mod meta_cell;
 pub mod methods;
 pub mod ontology;
@@ -53,10 +52,13 @@ pub use ontology::r_similiarity;
 
 // single cell
 pub use single_cell::r_count_obj;
+pub use single_cell::r_sc_adt;
 pub use single_cell::r_sc_analysis;
+pub use single_cell::r_sc_annotation;
 pub use single_cell::r_sc_batch_corr;
 pub use single_cell::r_sc_data;
 pub use single_cell::r_sc_metacells;
+pub use single_cell::r_sc_multimodal;
 pub use single_cell::r_sc_plot_extraction;
 pub use single_cell::r_sc_processing;
 
@@ -109,6 +111,7 @@ extendr_module! {
 
     // single cell
     use r_count_obj;
+    use r_sc_annotation;
     use r_sc_batch_corr;
     use r_sc_processing;
     use r_sc_analysis;
@@ -118,4 +121,8 @@ extendr_module! {
     // meta cell
     use r_mc_processing;
     use r_mc_analysis;
+
+    // multi-modal
+    use r_sc_adt;
+    use r_sc_multimodal;
 }

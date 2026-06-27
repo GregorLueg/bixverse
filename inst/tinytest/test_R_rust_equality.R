@@ -57,12 +57,12 @@ expect_equivalent(
 ## upper triangle versions -----------------------------------------------------
 
 # Check if the upper triangle class behaves as expected
-cor_data <- rs_cor_upper_triangle(mat, spearman = FALSE, shift = 1L)
+cor_data <- rs_cor_upper_triangle(mat, spearman = FALSE, shift = TRUE)
 
 cor_class <- bixverse:::upper_triangular_sym_mat$new(
   values = cor_data,
   features = colnames(mat),
-  shift = 1L
+  shift = TRUE
 )
 
 expect_equal(
@@ -338,7 +338,7 @@ expect_equal(
 
 r_pca_res <- prcomp(mat)
 
-rs_pca_res <- rs_prcomp(mat, scale = FALSE)
+rs_pca_res <- rs_prcomp(mat, scale = FALSE, top_pcs = NULL)
 
 # Absolute as signs can flip
 expect_equivalent(

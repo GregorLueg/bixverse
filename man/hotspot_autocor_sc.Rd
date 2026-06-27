@@ -7,11 +7,12 @@
 hotspot_autocor_sc(
   object,
   embd_to_use = "pca",
+  use_knn = TRUE,
   hotspot_params = params_sc_hotspot(),
   no_embd_to_use = NULL,
   cells_to_take = NULL,
   genes_to_take = NULL,
-  streaming = FALSE,
+  streaming = NULL,
   random_seed = 42L,
   .verbose = TRUE
 )
@@ -20,6 +21,10 @@ hotspot_autocor_sc(
 \item{object}{\code{SingleCells} class.}
 
 \item{embd_to_use}{String. The embedding to use. Defaults to \code{"pca"}.}
+
+\item{use_knn}{Boolean. Shall the internal kNN be used. If set to yes, you
+need to ensure consistency. If you provide \code{cells_to_take}, the function
+will regenerate the kNN graph with these cells.}
 
 \item{hotspot_params}{List with hotspot parameters, see
 \code{\link[=params_sc_hotspot]{params_sc_hotspot()}} with the following elements:
@@ -41,12 +46,15 @@ selected cells. If \code{NULL} will default to all cells_to_keep in the class.}
 search to a subset of genes. If \code{NULL} will default to all genes in the
 class.}
 
-\item{streaming}{Boolean. Shall the data be streamed in. Useful for larger
-data sets.}
+\item{streaming}{Optional Boolean. Shall the data be streamed in. Useful for
+larger data sets where you wish to avoid loading in the whole data. If
+\code{NULL}, will automatically detect.}
 
 \item{random_seed}{Integer. Used for reproducibility.}
 
-\item{.verbose}{Boolean. Controls verbosity of the function.}
+\item{.verbose}{Boolean or integer. Controls verbosity and returns run times.
+\code{FALSE} -> quiet, \code{TRUE} or \code{1L} -> normal verbosity, \code{2L} -> detailed
+verbosity.}
 }
 \value{
 A data.table with the auto-correlations on a per gene basis and

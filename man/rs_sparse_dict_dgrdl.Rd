@@ -43,7 +43,7 @@ sparse format list.
 }
 }
 \description{
-This is the Rust implementation of dual graph regularised
-dictionary learning in the implementation of Pan, et al., Cell Systems,
-2022.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+This is the Rust implementation of dual graph regularised dictionary
+learning in the implementation of Pan, et al., Cell Systems, 2022.
 }

@@ -49,6 +49,10 @@ extendr_module! {
 
 /// Scrublet Rust interface
 ///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Implementation of Scrublet in Rust.
+///
 /// @param f_path_gene String. Path to the `counts_genes.bin` file.
 /// @param f_path_cell String. Path to the `counts_cells.bin` file.
 /// @param cells_to_keep Integer vector. The indices (0-indexed!) of the cells
@@ -56,7 +60,8 @@ extendr_module! {
 /// @param scrublet_params List. Parameter list, see
 /// [bixverse::params_scrublet()].
 /// @param seed Integer. Seed for reproducibility purposes.
-/// @param verbose Boolean. Controls verbosity
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
 /// @param streaming Boolean. Shall the data be streamed for the HVG
 /// calculations.
 /// @param return_combined_pca Boolean. Shall the generated PCA be returned.
@@ -91,6 +96,8 @@ extendr_module! {
 /// }
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 #[allow(clippy::too_many_arguments)]
 fn rs_sc_scrublet(
@@ -99,7 +106,7 @@ fn rs_sc_scrublet(
     cells_to_keep: Vec<i32>,
     scrublet_params: List,
     seed: usize,
-    verbose: bool,
+    verbose: usize,
     streaming: bool,
     return_combined_pca: bool,
     return_pairs: bool,
@@ -139,6 +146,10 @@ fn rs_sc_scrublet(
 
 /// Detect Doublets via BoostClassifier (in Rust)
 ///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Implementation of BoostClassifier in Rust.
+///
 /// @param f_path_gene String. Path to the `counts_genes.bin` file.
 /// @param f_path_cell String. Path to the `counts_cells.bin` file.
 /// @param cells_to_keep Integer vector. The indices (0-indexed!) of the cells
@@ -146,7 +157,8 @@ fn rs_sc_scrublet(
 /// @param boost_params List. Parameter list, see
 /// [bixverse::params_boost()].
 /// @param seed Integer. Seed for reproducibility purposes.
-/// @param verbose Boolean. Controls verbosity
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
 /// @param streaming Boolean. Shall the data be streamed for the HVG
 /// calculations.
 ///
@@ -160,6 +172,8 @@ fn rs_sc_scrublet(
 /// }
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_sc_doublet_detection(
     f_path_gene: &str,
@@ -167,8 +181,8 @@ fn rs_sc_doublet_detection(
     cells_to_keep: Vec<i32>,
     boost_params: List,
     seed: usize,
+    verbose: usize,
     streaming: bool,
-    verbose: bool,
 ) -> Result<List, extendr_api::Error> {
     let boost_params = BoostParams::from_r_list(boost_params)?;
     let cells_to_keep = cells_to_keep.r_int_convert();
@@ -189,6 +203,10 @@ fn rs_sc_doublet_detection(
 
 /// Run scDblFinder doublet detection
 ///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Implementation of scDblFinder in Rust.
+///
 /// @param f_path_gene String. Path to the gene-based binary file.
 /// @param f_path_cell String. Path to the cell-based binary file.
 /// @param cell_indices Integer vector (0-indexed).
@@ -198,13 +216,15 @@ fn rs_sc_doublet_detection(
 /// @param streaming Boolean. Shall the gene data be streamed in for the
 /// selection of the top genes.
 /// @param seed Integer. Seed for reproducibility.
-/// @param verbose Boolean. Controls verbosity.
-/// @param debug Boolean. Additional verbosity for debugging purposes.
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
 ///
 /// @returns A list with predicted_doublets, doublet_scores, threshold,
 /// cluster_labels and detected_doublet_rate.
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 #[allow(clippy::too_many_arguments)]
 fn rs_sc_scdblfinder(
@@ -215,8 +235,7 @@ fn rs_sc_scdblfinder(
     return_features: bool,
     streaming: bool,
     seed: i32,
-    verbose: bool,
-    debug: bool,
+    verbose: usize,
 ) -> extendr_api::Result<List> {
     let cell_indices = cell_indices.r_int_convert();
     let mut params = ScDblFinderParams::from_r_list(params)?;
@@ -225,9 +244,7 @@ fn rs_sc_scdblfinder(
     params.return_features = return_features;
 
     let mut finder = ScDblFinder::new(f_path_gene, f_path_cell, params, &cell_indices);
-    let res: ScDblFinderResult = finder
-        .run(seed as usize, streaming, verbose, debug)
-        .to_extendr()?;
+    let res: ScDblFinderResult = finder.run(seed as usize, streaming, verbose).to_extendr()?;
 
     let features = if return_features {
         let features: FeatureTable = res.features.unwrap();
@@ -260,6 +277,8 @@ fn rs_sc_scdblfinder(
 
 /// Run Otsu's method
 ///
+/// @description
+/// `r lifecycle::badge("experimental")`
 /// Maximises between-class variance of the observed score distribution to
 /// find the optimal binary split. Robust to both bimodal and skewed
 /// distributions.
@@ -271,6 +290,8 @@ fn rs_sc_scdblfinder(
 /// @returns The threshold based on Otsu's method
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_sc_otsu_method(scores: &[f64], bins: usize) -> f64 {
     let scores = scores.r_float_convert();
@@ -291,6 +312,7 @@ fn rs_sc_otsu_method(scores: &[f64], bins: usize) -> f64 {
 /// Calculates the cumulative proportion of the top X genes
 ///
 /// @description
+/// `r lifecycle::badge("experimental")`
 /// This calculates the cumulative proportion of the top X genes, for example
 /// Top10, 50, 100. High values here indicate low complexity samples, i.e.,
 /// bad quality.
@@ -300,19 +322,22 @@ fn rs_sc_otsu_method(scores: &[f64], bins: usize) -> f64 {
 /// @param cell_indices Integer. The indices of the cells for which to calculate
 /// the proportions. (0-indexed!)
 /// @param streaming Boolean. Shall the data be worked on in chunks.
-/// @param verbose Boolean. Controls verbosity of the function.
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
 ///
 /// @return A list with the cumulative percentages of the Top X genes defined
 /// as in `top_n_vals`.
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_sc_get_top_genes_perc(
     f_path_cell: &str,
     top_n_vals: &[i32],
     cell_indices: &[i32],
     streaming: bool,
-    verbose: bool,
+    verbose: usize,
 ) -> Result<List, extendr_api::Error> {
     let cell_indices = cell_indices.r_int_convert();
     let top_n_vals = top_n_vals.r_int_convert();
@@ -341,6 +366,7 @@ fn rs_sc_get_top_genes_perc(
 /// Calculate the percentage of gene sets in the cells
 ///
 /// @description
+/// `r lifecycle::badge("experimental")`
 /// This function allows to calculate for example the proportion of
 /// mitochondrial genes, or ribosomal genes in the cells for QC purposes.
 ///
@@ -350,19 +376,22 @@ fn rs_sc_get_top_genes_perc(
 /// @param cell_indices Integer. The indices of the cells for which to calculate
 /// the proportions. (0-indexed!)
 /// @param streaming Boolean. Shall the data be worked on in chunks.
-/// @param verbose Boolean. Controls verbosity of the function.
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
 ///
 /// @return A list with the percentages of counts per gene set group detected
 /// in the cells.
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_sc_get_gene_set_perc(
     f_path_cell: &str,
     gene_set_idx: List,
     cell_indices: Vec<i32>,
     streaming: bool,
-    verbose: bool,
+    verbose: usize,
 ) -> extendr_api::Result<List> {
     let mut gene_set_indices = Vec::with_capacity(gene_set_idx.len());
 
@@ -405,6 +434,10 @@ fn rs_sc_get_gene_set_perc(
 
 /// Calculates pairwise gene correlations in single cell
 ///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Calculates the correlations between sets of genes.
+///
 /// @param f_path Path to the `counts_genes.bin` file.
 /// @param gene_indices_1 Integer vector. The first set of gene indices to
 /// correlate against `gene_indices_2` (0-indexed!)
@@ -418,6 +451,8 @@ fn rs_sc_get_gene_set_perc(
 /// and gene_indices_2
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_pairwise_gene_cors(
     f_path: &str,
@@ -449,6 +484,7 @@ fn rs_pairwise_gene_cors(
 /// Calculate the percentage of gene sets in the cells
 ///
 /// @description
+/// `r lifecycle::badge("experimental")`
 /// This function identifies highly variable genes with the three methods known
 /// in Seurat.
 ///
@@ -465,7 +501,8 @@ fn rs_pairwise_gene_cors(
 /// @param n_bins Integer. Number of bins for the `meanvarbin` method.
 /// @param streaming Boolean. Shall the genes be streamed in to reduce memory
 /// pressure.
-/// @param verbose Boolean. Controls verbosity of the function.
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
 ///
 /// @return A list with the highly variable genes. If `hvg_method == "vst"`, the
 /// following elements can be found:
@@ -484,6 +521,8 @@ fn rs_pairwise_gene_cors(
 /// }
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 #[allow(clippy::too_many_arguments)]
 fn rs_sc_hvg(
@@ -495,12 +534,11 @@ fn rs_sc_hvg(
     n_bins: usize,
     clip_max: Option<f32>,
     streaming: bool,
-    verbose: bool,
+    verbose: usize,
 ) -> Result<List, extendr_api::Error> {
     let cell_set = cell_indices.r_int_convert();
     let hvg_type = parse_hvg_method(hvg_method)
-        .ok_or_else(|| format!("Invalid HVG method: {}", hvg_method))
-        .unwrap();
+        .ok_or_else(|| format!("Invalid HVG method method: {}", hvg_method))?;
 
     match hvg_type {
         HvgMethod::Vst => {
@@ -553,6 +591,7 @@ fn rs_sc_hvg(
 /// Calculate HVG per batch
 ///
 /// @description
+/// `r lifecycle::badge("experimental")`
 /// Batch-aware highly variable gene detection. Calculates HVG statistics
 /// separately for each batch, allowing for downstream selection strategies
 /// such as union of top genes per batch.
@@ -572,7 +611,8 @@ fn rs_sc_hvg(
 /// @param n_bins Integer. Number of bins for the `meanvarbin` method.
 /// @param streaming Boolean. Shall the genes be streamed in to reduce memory
 /// pressure.
-/// @param verbose Boolean. Controls verbosity of the function.
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
 ///
 /// @return A list with HVG statistics concatenated across all batches. For
 /// `hvg_method == 'vst'`, the following elements can be found:
@@ -598,6 +638,8 @@ fn rs_sc_hvg(
 /// }
 ///
 /// @export
+///
+/// @keywords internal
 #[allow(clippy::too_many_arguments)]
 #[extendr]
 fn rs_sc_hvg_batch_aware(
@@ -610,13 +652,12 @@ fn rs_sc_hvg_batch_aware(
     n_bins: usize,
     clip_max: Option<f32>,
     streaming: bool,
-    verbose: bool,
+    verbose: usize,
 ) -> Result<List, extendr_api::Error> {
     let cell_set = cell_indices.r_int_convert();
     let batch_set = batch_labels.r_int_convert();
     let hvg_type = parse_hvg_method(hvg_method)
-        .ok_or_else(|| format!("Invalid HVG method: {}", hvg_method))
-        .unwrap();
+        .ok_or_else(|| format!("Invalid HVG method method: {}", hvg_method))?;
 
     match hvg_type {
         HvgMethod::Vst => {
@@ -726,18 +767,24 @@ fn rs_sc_hvg_batch_aware(
 /// Calculates PCA for single cell
 ///
 /// @description
+/// `r lifecycle::badge("experimental")`
 /// Helper function that will calculate the PCA for the specified highly
-/// variable genes. Has the option to use randomised SVD for faster solving
-/// of the PCA.
+/// variable genes. You have the option to do mean centering, variance
+/// normalisation and/or apply the new proposed transformation `PFlogPF` from
+/// Booeshaghi, et al.
 ///
 /// @param f_path_gene String. Path to the `counts_genes.bin` file.
+/// @param f_path_cell String. Path to the `counts_cells.bin` file. Used if
+/// you wish to use the PFlogPF transformation.
 /// @param no_pcs Integer. Number of PCs to calculate.
-/// @param random_svd Boolean. Shall randomised SVD be used.
+/// @param pca_params Named list. Contains the parameters to use for this PCA
+/// run.
 /// @param cell_indices Integer. The cell indices to use. (0-indexed!)
 /// @param gene_indices Integer. The gene indices to use. (0-indexed!)
 /// @param seed Integer. Random seed for the randomised SVD.
 /// @param return_scaled Boolean. Shall the scaled data be returned.
-/// @param verbose Boolean. Controls verbosity of the function.
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
 ///
 /// @returns A list with with the following items
 /// \itemize{
@@ -748,27 +795,51 @@ fn rs_sc_hvg_batch_aware(
 /// }
 ///
 /// @export
+///
+/// @references Booeshaghi, et al., bioRxive, 2026.
+///
+/// @keywords internal
 #[allow(clippy::too_many_arguments)]
 #[extendr]
 fn rs_sc_pca(
     f_path_gene: &str,
+    f_path_cell: &str,
     no_pcs: usize,
-    random_svd: bool,
+    pca_params: List,
     cell_indices: Vec<i32>,
     gene_indices: Vec<i32>,
     seed: usize,
     return_scaled: bool,
-    verbose: bool,
+    verbose: usize,
 ) -> Result<List, extendr_api::Error> {
+    let verbosity = parse_verbosity_level(verbose);
+
     let cell_set = cell_indices.r_int_convert();
     let gene_indices = gene_indices.r_int_convert();
+
+    let pca_params = SingleCellPcaParams::from_r_list(pca_params)?;
+
+    let offsets = if pca_params.clr {
+        if verbosity.normal_verbosity() {
+            println!("PFlogPF-transformation requested. Loading offsets from disk.")
+        }
+
+        let reader = ParallelSparseReader::new(f_path_cell).to_extendr()?;
+
+        let offsets = reader.get_clr_offsets(&cell_set, None).to_extendr()?;
+
+        Some(offsets)
+    } else {
+        None
+    };
 
     let res = pca_on_sc(
         f_path_gene,
         &cell_set,
         &gene_indices,
         no_pcs,
-        random_svd,
+        &pca_params,
+        offsets.as_deref(),
         seed,
         return_scaled,
         verbose,
@@ -789,22 +860,23 @@ fn rs_sc_pca(
 /// Calculates sparse PCA for single cell
 ///
 /// @description
+/// `r lifecycle::badge("experimental")`
 /// Helper function that will calculate sparse PCA without scaling the data.
-/// This has the advantage that you avoid creating a large dense matrix due
-/// to scaling; however, it has the disadvantage that the first PC will be
-/// heavily influenced by average expression. If random_svd is set to `FALSE`,
-/// Lanczos iterations will be used to solve the SVD; if random_svd is set
-/// to `TRUE`, the randomised version will be used with multiplication of the
-/// initial sparse matrix with a much smaller random dense matrix, avoiding
-/// holding a large dense matrix in memory.
+/// You have the option to do mean centering, variance normalisation and/or
+/// apply the new proposed transformation `PFlogPF` from Booeshaghi, et al.
+/// None of these will densify the matrix.
 ///
 /// @param f_path_gene String. Path to the `counts_genes.bin` file.
+/// @param f_path_cell String. Path to the `counts_cells.bin` file. Used if
+/// you wish to use the PFlogPF transformation.
 /// @param no_pcs Integer. Number of PCs to calculate.
-/// @param random_svd Boolean. Shall randomised SVD be used.
+/// @param pca_params Named list. Contains the parameters to use for this PCA
+/// run.
 /// @param cell_indices Integer. The cell indices to use. (0-indexed!)
 /// @param gene_indices Integer. The gene indices to use. (0-indexed!)
 /// @param seed Integer. Random seed for the randomised SVD.
-/// @param verbose Boolean. Controls verbosity of the function.
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
 ///
 /// @returns A list with with the following items
 /// \itemize{
@@ -817,25 +889,49 @@ fn rs_sc_pca(
 /// }
 ///
 /// @export
+///
+/// @references Booeshaghi, et al., bioRxive, 2026.
+///
+/// @keywords internal
 #[extendr]
+#[allow(clippy::too_many_arguments)]
 fn rs_sc_pca_sparse(
     f_path_gene: &str,
+    f_path_cell: &str,
     no_pcs: usize,
-    random_svd: bool,
+    pca_params: List,
     cell_indices: Vec<i32>,
     gene_indices: Vec<i32>,
     seed: usize,
-    verbose: bool,
+    verbose: usize,
 ) -> Result<List, extendr_api::Error> {
+    let verbosity = parse_verbosity_level(verbose);
     let cell_set = cell_indices.r_int_convert();
     let gene_indices = gene_indices.r_int_convert();
+
+    let pca_params = SingleCellPcaParams::from_r_list(pca_params)?;
+
+    let offsets = if pca_params.clr {
+        if verbosity.normal_verbosity() {
+            println!("PFlogPF-transformation requested. Loading offsets from disk.")
+        }
+
+        let reader = ParallelSparseReader::new(f_path_cell).to_extendr()?;
+
+        let offsets = reader.get_clr_offsets(&cell_set, None).to_extendr()?;
+
+        Some(offsets)
+    } else {
+        None
+    };
 
     let res = pca_on_sc_sparse(
         f_path_gene,
         &cell_set,
         &gene_indices,
         no_pcs,
-        random_svd,
+        &pca_params,
+        offsets.as_deref(),
         seed,
         verbose,
     )
@@ -855,6 +951,7 @@ fn rs_sc_pca_sparse(
 /// Generates the kNN graph
 ///
 /// @description
+/// `r lifecycle::badge("experimental")`
 /// This function is a wrapper over the Rust-based generation of the approximate
 /// nearest neighbours.
 ///
@@ -864,8 +961,8 @@ fn rs_sc_pca_sparse(
 /// [params_sc_neighbours()].
 /// @param validate_index Boolean. If you want to validate the index via
 /// an exhaustive search in a subset of cells.
-/// @param verbose Boolean. Controls verbosity of the function and returns
-/// how long certain operations took.
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
 /// @param seed Integer. Seed for reproducibility purposes.
 ///
 /// @return A integer matrix of N x k with N being the number of cells and k the
@@ -877,10 +974,12 @@ fn rs_sc_knn(
     embd: RMatrix<f64>,
     knn_params: List,
     validate_index: bool,
-    verbose: bool,
+    verbose: usize,
     seed: usize,
 ) -> extendr_api::Result<extendr_api::RArray<i32, 2>> {
     let embd = r_matrix_to_faer_fp32(&embd);
+
+    let verbosity = parse_verbosity_level(verbose);
 
     let knn_params = KnnParams::from_r_list(knn_params)?;
 
@@ -898,7 +997,7 @@ fn rs_sc_knn(
             knn_params.ef_search,
             seed,
             validate_index,
-            verbose,
+            verbosity.normal_verbosity(),
         ),
         KnnSearch::Annoy => generate_knn_annoy(
             embd.as_ref(),
@@ -908,7 +1007,7 @@ fn rs_sc_knn(
             knn_params.search_budget,
             seed,
             validate_index,
-            verbose,
+            verbosity.normal_verbosity(),
         ),
         KnnSearch::NNDescent => generate_knn_nndescent(
             embd.as_ref(),
@@ -919,11 +1018,14 @@ fn rs_sc_knn(
             knn_params.delta,
             seed,
             validate_index,
-            verbose,
+            verbosity.normal_verbosity(),
         ),
-        KnnSearch::Exhaustive => {
-            generate_knn_exhaustive(embd.as_ref(), &knn_params.ann_dist, knn_params.k, verbose)
-        }
+        KnnSearch::Exhaustive => generate_knn_exhaustive(
+            embd.as_ref(),
+            &knn_params.ann_dist,
+            knn_params.k,
+            verbosity.normal_verbosity(),
+        ),
         KnnSearch::Ivf => generate_knn_ivf(
             embd.as_ref(),
             &knn_params.ann_dist,
@@ -932,7 +1034,7 @@ fn rs_sc_knn(
             knn_params.n_probe,
             seed,
             validate_index,
-            verbose,
+            verbosity.normal_verbosity(),
         ),
         KnnSearch::KmKnn => generate_knn_kmknn(
             embd.as_ref(),
@@ -940,13 +1042,14 @@ fn rs_sc_knn(
             knn_params.k,
             knn_params.n_list,
             seed,
-            verbose,
+            verbosity.normal_verbosity(),
         ),
-    };
+    }
+    .to_extendr()?;
 
     let end_knn = start_knn.elapsed();
 
-    if verbose {
+    if verbosity.normal_verbosity() {
         println!("KNN generation done : {:.2?}", end_knn);
     }
 
@@ -958,6 +1061,7 @@ fn rs_sc_knn(
 /// Generates the kNN graph with additional distances
 ///
 /// @description
+/// `r lifecycle::badge("experimental")`
 /// This function is a wrapper over the Rust-based generation of the approximate
 /// nearest neighbours.
 ///
@@ -967,8 +1071,8 @@ fn rs_sc_knn(
 /// [params_sc_neighbours()].
 /// @param validate_index Boolean. If you want to validate the index via
 /// an exhaustive search in a subset of cells.
-/// @param verbose Boolean. Controls verbosity of the function and returns
-/// how long certain operations took.
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
 /// @param seed Integer. Seed for reproducibility purposes.
 ///
 /// @return A list with:
@@ -986,12 +1090,14 @@ fn rs_sc_knn_w_dist(
     embd: RMatrix<f64>,
     knn_params: List,
     validate_index: bool,
-    verbose: bool,
+    verbose: usize,
     seed: usize,
 ) -> Result<List, extendr_api::Error> {
     let embd = r_matrix_to_faer_fp32(&embd);
 
     let knn_params = KnnParams::from_r_list(knn_params)?;
+
+    let verbosity = parse_verbosity_level(verbose);
 
     let (knn_indices, knn_dist) = generate_knn_with_dist(
         embd.as_ref(),
@@ -999,8 +1105,9 @@ fn rs_sc_knn_w_dist(
         true,
         validate_index,
         seed,
-        verbose,
-    );
+        verbosity.normal_verbosity(),
+    )
+    .to_extendr()?;
 
     let knn_dist = knn_dist.unwrap();
 
@@ -1017,6 +1124,7 @@ fn rs_sc_knn_w_dist(
 /// Generates the sNN graph for igraph
 ///
 /// @description
+/// `r lifecycle::badge("experimental")`
 /// This function takes a kNN matrix and generates the inputs for an SNN
 /// graph based on it.
 ///
@@ -1028,7 +1136,8 @@ fn rs_sc_knn_w_dist(
 /// direct neighbours in the graph, or between all possible combinations.
 /// @param pruning Float. Below which value for the Jaccard similarity to prune
 /// the weight to 0.
-/// @param verbose Boolean. Controls verbosity of the function.
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
 ///
 /// @return A list with the following items:
 /// \itemize{
@@ -1043,7 +1152,7 @@ fn rs_sc_snn(
     snn_method: String,
     limited_graph: bool,
     pruning: f64,
-    verbose: bool,
+    verbose: usize,
 ) -> extendr_api::Result<List> {
     let n_neighbours = knn_mat.ncols();
     let data = knn_mat.data().r_int_convert();
@@ -1079,12 +1188,16 @@ fn rs_sc_snn(
 
 /// Helper to compare kNN graphs
 ///
-/// @param knn_mat_a Integer matrix. The indices of the first kNN graph to
-/// compare. Should be samples x neighbours. This will be treated as ground
-/// truth.
-/// @param knn_mat_b Integer matrix. The indices of the second kNN graph to
-/// compare. Should be samples x neighbours.
-/// @param knn_dist_a Numeric matrix.
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Compare two kNN graphs and return the distance ratios and overlaps of
+/// k-nearest neighbours between them.
+///
+/// @param knn_data_a Named list. This contains the kNN data (including
+/// distances) of the first kNN graph. This one will be treated as the ground
+/// truth
+/// @param knn_data_b Named list. This contains the kNN data (including
+/// distances) of the second kNN graph.
 ///
 /// @returns A list with the following elements:
 /// \itemize{
@@ -1162,6 +1275,7 @@ fn rs_compare_knn(knn_data_a: List, knn_data_b: List) -> Result<List, extendr_ap
 /// Runs fast Louvain cluster on the data
 ///
 /// @description
+/// `r lifecycle::badge("experimental")`
 /// Runs first k-means clustering, followed by a kNN detection on the centroids
 /// to then run Louvain clustering on the graph and propagate the membership
 /// back to the original data.
@@ -1177,11 +1291,14 @@ fn rs_compare_knn(knn_data_a: List, knn_data_b: List) -> Result<List, extendr_ap
 /// @param snn Boolean. Shall the kNN graph be additionally transformed into
 /// an sNN graph.
 /// @param seed Integer. For reproducibility.
-/// @param verbose Boolean. Controls the verbosity of the function.
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
 ///
 /// @returns A list with the memberships per resolution.
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 #[allow(clippy::too_many_arguments)]
 fn rs_fast_cluster_sc(
@@ -1193,7 +1310,7 @@ fn rs_fast_cluster_sc(
     snn: bool,
     return_kmeans: bool,
     seed: usize,
-    verbose: bool,
+    verbose: usize,
 ) -> Result<List, extendr_api::Error> {
     let embd = r_matrix_to_faer_fp32(&embd);
     let n_clusters = n_centroids.unwrap_or(((embd.nrows() as f32).sqrt()) as usize);
@@ -1238,6 +1355,7 @@ fn rs_fast_cluster_sc(
 /// Runs fast Louvain cluster on the data (with multiple seeds)
 ///
 /// @description
+/// `r lifecycle::badge("experimental")`
 /// Runs first k-means clustering, followed by a kNN detection on the centroids
 /// to then run Louvain clustering with several seeds (based on the original
 /// one) on the graph and propagate the membership back to the original data.
@@ -1256,7 +1374,8 @@ fn rs_fast_cluster_sc(
 /// an sNN graph.
 /// @param no_seeds Integer. Number of additional seeds to use. Should be >=2.
 /// @param seed Integer. For reproducibility.
-/// @param verbose Boolean. Controls the verbosity of the function.
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
 ///
 /// @returns A list with the following elements:
 /// \itemize{
@@ -1266,6 +1385,8 @@ fn rs_fast_cluster_sc(
 /// }
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 #[allow(clippy::too_many_arguments)]
 fn rs_fast_cluster_sc_grid(
@@ -1278,7 +1399,7 @@ fn rs_fast_cluster_sc_grid(
     return_kmeans: bool,
     no_seeds: usize,
     seed: usize,
-    verbose: bool,
+    verbose: usize,
 ) -> Result<List, extendr_api::Error> {
     let embd = r_matrix_to_faer_fp32(&embd);
     let n_clusters = n_centroids.unwrap_or(((embd.nrows() as f32).sqrt()) as usize);

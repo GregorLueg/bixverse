@@ -6,15 +6,10 @@ use std::time::Instant;
 use thousands::Separable;
 
 use bixverse_rs::prelude::*;
-use bixverse_rs::single_cell::sc_data::data_io::*;
-use bixverse_rs::single_cell::sc_data::h5ad_io::*;
-use bixverse_rs::single_cell::sc_data::h5ad_multifile_io::*;
-use bixverse_rs::single_cell::sc_data::mtx_io::*;
-use bixverse_rs::single_cell::sc_data::r_obj_io::*;
-
-// Extendr unfortunately cannot do Roxygen2 manipulation of R6 type
-// classes. This will have to be done manually in R... Documentation
-// still here to make it easier.
+use bixverse_rs::single_cell::sc_data::{
+    bin_merge_io::*, data_io::*, h5_10x_io::*, h5_10x_multifile_io::*, h5ad_io::*,
+    h5ad_multifile_io::*, mtx_io::*, mtx_multifile_io::*, r_obj_io::*,
+};
 
 /////////////
 // extendR //
@@ -59,10 +54,6 @@ enum AssayData {
 
 impl AssayData {
     /// Get the length of the vector
-    ///
-    /// ### Returns
-    ///
-    /// The length of the vector
     fn len(&self) -> usize {
         match self {
             AssayData::Raw(data) => data.len(),
@@ -71,15 +62,6 @@ impl AssayData {
     }
 
     /// Flatten the data into an R vector
-    ///
-    /// ### Params
-    ///
-    /// * `data` - A vector of AssayData that shall be flattened and transformed
-    ///   into an R object
-    ///
-    /// ### Returns
-    ///
-    /// The flattened vector as an `Robj`
     fn flatten_into_r_vector(data: Vec<AssayData>) -> Robj {
         if data.is_empty() {
             return Robj::from(Vec::<f64>::new());
@@ -116,18 +98,18 @@ impl AssayData {
 // Helpers //
 /////////////
 
-/// Helper function to retrieve and optionally filter cell data
+/// Retrieve cell data for a given assay type
 ///
 /// ### Params
 ///
-/// * `indices` - The original indices (in this case column).
-/// * `data_raw`- The raw counts for the cell.
-/// * `data_norm` - The normalised counts for the cell.
-/// * `assay_type` - Which assay to return
+/// * `indices` - The indices for which cells to return the data
+/// * `data_raw` - The raw counts.
+/// * `data_norm` - The normalised counts.
+/// * `assay_type` - Which assay type to return, see [AssayType]
 ///
 /// ### Returns
 ///
-/// Tuple of the indices and respective data
+/// A tuple of indices and the assay data.
 fn get_cell_data(
     indices: &[u32],
     data_raw: &RawCounts,
@@ -153,18 +135,18 @@ fn get_cell_data(
     (all_indices, data)
 }
 
-/// Helper function to retrieve the gene data
+/// Retrieve gene data for a given assay type
 ///
 /// ### Params
 ///
-/// * `indices` - The original indices (in this case column).
-/// * `data_raw`- The raw counts for the cell.
-/// * `data_norm` - The normalised counts for the cell.
-/// * `assay_type` - Which assay to return
+/// * `indices` - The indices for which genes to return the data
+/// * `data_raw` - The raw counts.
+/// * `data_norm` - The normalised counts.
+/// * `assay_type` - Which assay type to return, see [AssayType]
 ///
 /// ### Returns
 ///
-/// Tuple of the indices and respective data
+/// A tuple of indices and the assay data.
 fn get_gene_data(
     indices: &[u32],
     data_raw: &RawCounts,
@@ -190,15 +172,15 @@ fn get_gene_data(
     (all_indices, data)
 }
 
-/// Parsing the count types
+/// Parse a count type string into an `AssayType`
 ///
 /// ### Params
 ///
-/// * `s` - String defining the count type to return
+/// * `s` - String to parse. One of `"raw"` or `"norm"`.
 ///
 /// ### Returns
 ///
-/// The `AssayType`.
+/// The optional [AssayType]
 fn parse_count_type(s: &str) -> Option<AssayType> {
     match s.to_lowercase().as_str() {
         "raw" => Some(AssayType::Raw),
@@ -211,14 +193,34 @@ fn parse_count_type(s: &str) -> Option<AssayType> {
 // Structures //
 ////////////////
 
-/// A class for handling single cell count data
+/// Single cell count data handler
 ///
-/// ### Params
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// A class for handling single cell count data stored on disk in two
+/// complementary binary representations: a CSR-like layout (`f_path_cells`)
+/// for fast cell-wise access and a CSC-like layout (`f_path_genes`) for fast
+/// gene-wise access. Both raw counts and log-normalised counts are stored
+/// side by side. Provides methods for ingesting data from R, `h5ad`, and
+/// `mtx` sources (including multi-file workflows), converting between
+/// layouts, retrieving slices of the matrix, and merging existing binary
+/// objects.
 ///
-/// * `f_path_cells` - Path to the .bin file for the cells.
-/// * `f_path_genes` - Path to the .bin file for the genes.
-/// * `n_cells` - No of cells represented in the data.
-/// * `n_genes` - No of genes represented in the data.
+/// @usage NULL
+/// @format NULL
+///
+/// @param f_path_cells (`character`)\cr
+/// Path to the `.bin` file for the cell-based (CSR-like) representation.
+/// @param f_path_genes (`character`)\cr
+/// Path to the `.bin` file for the gene-based (CSC-like) representation.
+/// @param n_cells (`integer`)\cr
+/// Number of cells represented in the data.
+/// @param n_genes (`integer`)\cr
+/// Number of genes represented in the data.
+///
+/// @return A new instance of the `SingleCellCountData` class.
+///
+/// @export
 #[extendr]
 struct SingleCellCountData {
     pub f_path_cells: String,
@@ -229,12 +231,15 @@ struct SingleCellCountData {
 
 #[extendr]
 impl SingleCellCountData {
-    /// Create new instance of the class
+    /// Create a new instance of the class
     ///
-    /// ### Params
+    /// @param f_path_cells (`character`)\cr
+    /// Path to the `.bin` file for the cell-based representation.
+    /// @param f_path_genes (`character`)\cr
+    /// Path to the `.bin` file for the gene-based representation.
     ///
-    /// * `f_path_cells` - Path to the .bin file for the cells.
-    /// * `f_path_genes` - Path to the .bin file for the genes.
+    /// @return A new `SingleCellCountData` instance with `n_cells` and
+    /// `n_genes` initialised to zero.
     pub fn new(f_path_cells: String, f_path_genes: String) -> Self {
         Self {
             f_path_cells,
@@ -248,47 +253,86 @@ impl SingleCellCountData {
     // Helpers //
     /////////////
 
-    /// Get the shape
+    /// Get the shape of the matrix
     ///
-    /// ### Returns
-    ///
-    /// Vector with rows x cells
+    /// @return An integer vector `c(n_cells, n_genes)`.
     pub fn get_shape(&mut self) -> Vec<usize> {
         vec![self.n_cells, self.n_genes]
     }
 
-    ///////////
-    // Cells //
-    ///////////
+    /// Populate `n_cells` and `n_genes` from the cells binary file
+    ///
+    /// @description
+    /// Reads the header of the file at `f_path_cells` and updates the
+    /// `n_cells` and `n_genes` fields accordingly. Useful when reconnecting
+    /// to an existing object on disk.
+    ///
+    /// @return Invisible `NULL`.
+    pub fn set_from_file(&mut self) -> Result<(), extendr_api::Error> {
+        let reader = ParallelSparseReader::new(&self.f_path_cells).to_extendr()?;
+        let header = reader.get_header();
+        self.n_cells = header.total_cells;
+        self.n_genes = header.total_genes;
 
-    /// Write data from R CSR to disk
+        Ok(())
+    }
+
+    /////////////////////
+    // Cells ingestion //
+    /////////////////////
+
+    ////////////
+    // From R //
+    ////////////
+
+    /// Write a CSR matrix from R to the cells binary file
     ///
-    /// Helper function to write CSR matrices from R to disk.
+    /// @description
+    /// Ingest a sparse matrix passed in from R, apply per-cell QC, and write
+    /// the result to `f_path_cells`.
     ///
-    /// ### Params
+    /// @param r_data (`list`)\cr
+    /// A list convertible into `CompressedSparseData2`. Must contain the
+    /// elements `"indptr"`, `"indices"`, `"data"`, `"nrow"`, `"ncol"` and
+    /// `"format"`.
+    /// @param qc_params (`list`)\cr
+    /// Quality control parameters parseable into `MinCellQuality`.
+    /// @param verbose (`logical`)\cr
+    /// Controls verbosity of the function.
     ///
-    /// * `r_data` - A list that can be transformed into CompressedSparseData2.
-    ///   Needs to have following elements: `"indptr"`, `"indices"`, `"data"`,
-    ///   `"nrow"`, `"ncol"` and `"format"`.
-    /// * `qc_params` - List with the quality control parameters.
-    /// * `verbose` - Controls verbosity of the function.
-    ///
-    /// ### Returns
-    ///
-    /// A list with QC parameters.
+    /// @return A list with `cell_indices`, `gene_indices`, `lib_size` and
+    /// `nnz`.
     pub fn r_data_to_file(
         &mut self,
         r_data: List,
         qc_params: List,
         verbose: bool,
     ) -> Result<List, extendr_api::Error> {
+        let start = Instant::now();
+
         let qc_params = MinCellQuality::from_r_list(qc_params)?;
+
+        if verbose {
+            println!("Transforming R data into compressed sparse data.")
+        }
 
         let compressed_data: CompressedSparseData2<u32> =
             list_to_sparse_matrix(r_data, false).to_extendr()?;
 
+        if verbose {
+            println!(" Done in {:.2?}", start.elapsed())
+        }
+
+        if verbose {
+            println!("Preparing generation of binary files.")
+        }
+
         let (no_cells, no_genes, cell_qc): (usize, usize, CellQuality) =
             write_r_counts(&self.f_path_cells, compressed_data, qc_params, verbose);
+
+        if verbose {
+            println!(" Done in {:.2?}", start.elapsed())
+        }
 
         self.n_cells = no_cells;
         self.n_genes = no_genes;
@@ -301,30 +345,50 @@ impl SingleCellCountData {
         ))
     }
 
-    /// Save h5 to file
+    ///////////////
+    // From h5ad //
+    ///////////////
+
+    /// Write an h5ad file to the cells binary file
     ///
-    /// ### Params
+    /// @param cs_type (`character`)\cr
+    /// Storage layout of the h5ad data. One of `"CSC"` or `"CSR"`.
+    /// @param h5_path (`character`)\cr
+    /// Path to the h5ad file.
+    /// @param no_cells (`integer`)\cr
+    /// Number of cells in the h5ad file.
+    /// @param no_genes (`integer`)\cr
+    /// Number of genes in the h5ad file.
+    /// @param qc_params (`list`)\cr
+    /// Quality control parameters parseable into `MinCellQuality`.
+    /// @param slot (`character`)\cr
+    /// Where to find the raw counts. One of `"X"` or `"raw.X"` (for CellXGene
+    /// data).
+    /// @param verbose (`logical`)\cr
+    /// Controls verbosity of the function.
     ///
-    /// * `cs_type` - How was the h5 data saved. CSC or CSR.
-    /// * `h5_path` - Path to the h5 file.
-    /// * `no_cells` - Number of cells in the h5 file.
-    /// * `no_genes` - Number of genes in the h5 file.
-    /// * `qc_params` - List with the quality control parameters.
-    /// * `verbose` - Controls verbosity of the function.
-    ///
-    /// ### Returns
-    ///
-    /// A list with qc parameters.
-    pub fn h5_to_file(
+    /// @return A list with `cell_indices`, `gene_indices`, `lib_size` and
+    /// `nnz`.
+    #[allow(clippy::too_many_arguments)]
+    pub fn h5ad_to_file(
         &mut self,
         cs_type: String,
         h5_path: String,
         no_cells: usize,
         no_genes: usize,
         qc_params: List,
+        slot: String,
         verbose: bool,
     ) -> extendr_api::Result<List> {
         let qc_params = MinCellQuality::from_r_list(qc_params)?;
+
+        let raw_slot = parse_raw_slot(&slot).unwrap_or_else(|| {
+            println!(
+                "The provided string ({:?}) could not be matched. Defaulting to X",
+                slot
+            );
+            RawDataSlot::default()
+        });
 
         let (no_cells, no_genes, cell_qc) = write_h5_counts(
             &h5_path,
@@ -333,6 +397,7 @@ impl SingleCellCountData {
             no_cells,
             no_genes,
             qc_params,
+            raw_slot,
             verbose,
         )
         .to_extendr()?;
@@ -348,28 +413,35 @@ impl SingleCellCountData {
         ))
     }
 
-    /// Save h5 with normalised counts to file
+    /// Write an h5ad file with normalised counts to the cells binary file
     ///
-    /// For datasets where only normalised counts are available in X. Reads
-    /// library sizes from a specified obs column to reconstruct raw counts.
+    /// @description
+    /// For data sets where only normalised counts are available in `X`.
+    /// Reads library sizes from a specified `obs` column to reconstruct raw
+    /// counts before writing.
     ///
-    /// ### Params
+    /// @param cs_type (`character`)\cr
+    /// Storage layout of the h5 data. One of `"CSC"` or `"CSR"`.
+    /// @param h5_path (`character`)\cr
+    /// Path to the h5 file.
+    /// @param no_cells (`integer`)\cr
+    /// Number of cells in the h5 file.
+    /// @param no_genes (`integer`)\cr
+    /// Number of genes in the h5 file.
+    /// @param obs_lib_size_col (`character`)\cr
+    /// Name of the `obs` column containing total counts per cell
+    /// (e.g. `"nCount_RNA"`).
+    /// @param target_size (`numeric`)\cr
+    /// Target size used in the original normalisation (e.g. `1e4`).
+    /// @param qc_params (`list`)\cr
+    /// Quality control parameters parseable into `MinCellQuality`.
+    /// @param verbose (`logical`)\cr
+    /// Controls verbosity of the function.
     ///
-    /// * `cs_type` - How was the h5 data saved. CSC or CSR.
-    /// * `h5_path` - Path to the h5 file.
-    /// * `no_cells` - Number of cells in the h5 file.
-    /// * `no_genes` - Number of genes in the h5 file.
-    /// * `obs_lib_size_col` - Name of the obs column containing total counts per
-    ///   cell (e.g. "nCount_RNA").
-    /// * `target_size` - Target size used in the original normalisation (e.g. 1e4).
-    /// * `qc_params` - List with the quality control parameters.
-    /// * `verbose` - Controls verbosity of the function.
-    ///
-    /// ### Returns
-    ///
-    /// A list with qc parameters.
+    /// @return A list with `cell_indices`, `gene_indices`, `lib_size` and
+    /// `nnz`.
     #[allow(clippy::too_many_arguments)]
-    pub fn norm_h5_to_file(
+    pub fn norm_h5ad_to_file(
         &mut self,
         cs_type: String,
         h5_path: String,
@@ -406,33 +478,50 @@ impl SingleCellCountData {
         ))
     }
 
-    /// Save h5 to file
+    /// Write an h5ad file to disk using streaming
     ///
-    /// Slower version that is less memory heavy and will make usage of
-    /// streaming where possible.
+    /// @description
+    /// Slower but lighter on memory than `h5ad_to_file`; streams the input
+    /// where possible.
     ///
-    /// ### Params
+    /// @param cs_type (`character`)\cr
+    /// Storage layout of the h5 data. One of `"CSC"` or `"CSR"`.
+    /// @param h5_path (`character`)\cr
+    /// Path to the h5 file.
+    /// @param no_cells (`integer`)\cr
+    /// Number of cells in the h5 file.
+    /// @param no_genes (`integer`)\cr
+    /// Number of genes in the h5 file.
+    /// @param qc_params (`list`)\cr
+    /// Quality control parameters parseable into `MinCellQuality`.
+    /// @param slot (`character`)\cr
+    /// Where to find the raw counts. One of `"X"` or `"raw.X"` (for CellXGene
+    /// data).
+    /// @param verbose (`logical`)\cr
+    /// Controls verbosity of the function.
     ///
-    /// * `cs_type` - How was the h5 data saved. CSC or CSR.
-    /// * `h5_path` - Path to the h5 file.
-    /// * `no_cells` - Number of cells in the h5 file.
-    /// * `no_genes` - Number of genes in the h5 file.
-    /// * `qc_params` - List with the quality control parameters.
-    /// * `verbose` - Controls verbosity of the function.
-    ///
-    /// ### Returns
-    ///
-    /// A list with qc parameters.
-    pub fn h5_to_file_streaming(
+    /// @return A list with `cell_indices`, `gene_indices`, `lib_size` and
+    /// `nnz`.
+    #[allow(clippy::too_many_arguments)]
+    pub fn h5ad_to_file_streaming(
         &mut self,
         cs_type: String,
         h5_path: String,
         no_cells: usize,
         no_genes: usize,
         qc_params: List,
+        slot: String,
         verbose: bool,
     ) -> extendr_api::Result<List> {
         let qc_params = MinCellQuality::from_r_list(qc_params)?;
+
+        let raw_slot = parse_raw_slot(&slot).unwrap_or_else(|| {
+            println!(
+                "The provided string ({:?}) could not be matched. Defaulting to X",
+                slot
+            );
+            RawDataSlot::default()
+        });
 
         let (no_cells, no_genes, cell_qc) = stream_h5_counts(
             &h5_path,
@@ -441,6 +530,7 @@ impl SingleCellCountData {
             no_cells,
             no_genes,
             qc_params,
+            raw_slot,
             verbose,
         )
         .to_extendr()?;
@@ -458,21 +548,22 @@ impl SingleCellCountData {
 
     /// Load multiple h5ad files into a single binary
     ///
-    /// ### Params
+    /// @param file_tasks (`list`)\cr
+    /// A list of lists, each produced by the R prescan function. Each inner
+    /// list must contain `exp_id`, `h5_path`, `cs_type`, `no_cells`,
+    /// `no_genes` and `gene_local_to_universe`.
+    /// @param universe_size (`integer`)\cr
+    /// Total number of genes in the universe.
+    /// @param qc_params (`list`)\cr
+    /// Quality control parameters (`min_unique_genes`, `min_lib_size`,
+    /// `min_cells`, `target_size`).
+    /// @param verbose (`logical`)\cr
+    /// Controls verbosity.
     ///
-    /// * `file_tasks` - R list of lists, each produced by the R prescan
-    ///   function. Each inner list must contain: exp_id, h5_path, cs_type,
-    ///   no_cells, no_genes, gene_local_to_universe.
-    /// * `universe_size` - Total number of genes in the universe.
-    /// * `qc_params` - List with QC parameters (min_unique_genes,
-    ///   min_lib_size, min_cells, target_size).
-    /// * `verbose` - Controls verbosity.
-    ///
-    /// ### Returns
-    ///
-    /// A list with: global_gene_indices, total_cells, total_genes,
-    /// per_file (list of lists with exp_id, cell_indices, lib_size, nnz).
-    pub fn multi_h5_to_file(
+    /// @return A list with `global_gene_indices`, `total_cells`,
+    /// `total_genes` and `per_file` (a list of lists with `exp_id`,
+    /// `cell_indices`, `lib_size`, `nnz`).
+    pub fn multi_h5ad_to_file(
         &mut self,
         file_tasks: List,
         universe_size: i32,
@@ -484,7 +575,7 @@ impl SingleCellCountData {
         let tasks: Vec<H5adFileTask> = file_tasks
             .into_iter()
             .map(|(_, robj)| {
-                let inner_list = List::try_from(robj).expect("Each file_task must be a list");
+                let inner_list = List::try_from(robj)?;
                 H5adFileTask::from_r_list(inner_list)
             })
             .collect::<Result<Vec<_>, _>>()?;
@@ -522,18 +613,24 @@ impl SingleCellCountData {
         ))
     }
 
-    /// Save mtx to file
+    //////////////
+    // From mtx //
+    //////////////
+
+    /// Write an mtx file to the cells binary file
     ///
-    /// ### Params
+    /// @param mtx_path (`character`)\cr
+    /// Path to the mtx file.
+    /// @param qc_params (`list`)\cr
+    /// Quality control parameters parseable into `MinCellQuality`.
+    /// @param cells_as_rows (`logical`)\cr
+    /// `TRUE` if cells are rows in the mtx file, `FALSE` if cells are
+    /// columns.
+    /// @param verbose (`logical`)\cr
+    /// Controls verbosity of the function.
     ///
-    /// * `mtx_path` - Path to the mtx file.
-    /// * `qc_params` - List with the quality control parameters.
-    /// * `cells_as_rows` - Do the cells represent rows (= TRUE) or columns.
-    /// * `verbose` - Controls verbosity of the function.
-    ///
-    /// ### Returns
-    ///
-    /// A list with qc parameters.
+    /// @return A list with `cell_indices`, `gene_indices`, `lib_size` and
+    /// `nnz`.
     pub fn mtx_to_file(
         &mut self,
         mtx_path: String,
@@ -562,18 +659,20 @@ impl SingleCellCountData {
         ))
     }
 
-    /// Save mtx to file - streaming version
+    /// Write an mtx file to the cells binary file using streaming
     ///
-    /// ### Params
+    /// @param mtx_path (`character`)\cr
+    /// Path to the mtx file.
+    /// @param qc_params (`list`)\cr
+    /// Quality control parameters parseable into `MinCellQuality`.
+    /// @param cells_as_rows (`logical`)\cr
+    /// `TRUE` if cells are rows in the mtx file, `FALSE` if cells are
+    /// columns.
+    /// @param verbose (`logical`)\cr
+    /// Controls verbosity of the function.
     ///
-    /// * `mtx_path` - Path to the mtx file.
-    /// * `qc_params` - List with the quality control parameters.
-    /// * `cells_as_rows` - Do the cells represent rows (= TRUE) or columns.
-    /// * `verbose` - Controls verbosity of the function.
-    ///
-    /// ### Returns
-    ///
-    /// A list with qc parameters.
+    /// @return A list with `cell_indices`, `gene_indices`, `lib_size` and
+    /// `nnz`.
     pub fn mtx_to_file_streaming(
         &mut self,
         mtx_path: String,
@@ -602,18 +701,238 @@ impl SingleCellCountData {
         ))
     }
 
-    /// Returns the full matrix
+    /// Load multiple mtx files into a single binary
     ///
-    /// ### Params
+    /// @param file_tasks (`list`)\cr
+    /// A list of lists, each containing `exp_id`, `mtx_path`,
+    /// `cells_as_rows` and `gene_local_to_universe` (integer vector, `NA`
+    /// for unmapped genes).
+    /// @param universe_size (`integer`)\cr
+    /// Number of genes in the intersection universe.
+    /// @param qc_params (`list`)\cr
+    /// Quality control parameters parseable into `MinCellQuality`.
+    /// @param verbose (`logical`)\cr
+    /// Controls verbosity.
     ///
-    /// * `assay` - String. Return the raw counts or log-normalised counts. One
-    ///   of `"raw"` or `"norm"`.
-    /// * `cell_based` - Boolean. Shall the data be returned in CSR or CSC.
-    /// * `verbose` - Boolean. Verbosity of the function.
+    /// @return A list with `global_gene_indices`, `total_cells`,
+    /// `total_genes` and `per_file` (a list of lists with `exp_id`,
+    /// `cell_indices`, `lib_size`, `nnz`).
+    pub fn multi_mtx_to_file(
+        &mut self,
+        file_tasks: List,
+        universe_size: i32,
+        qc_params: List,
+        verbose: bool,
+    ) -> Result<List, extendr_api::Error> {
+        let qc = MinCellQuality::from_r_list(qc_params)?;
+
+        let tasks: Vec<MtxFileTask> = file_tasks
+            .into_iter()
+            .map(|(_, robj)| {
+                let inner = List::try_from(robj)?;
+                MtxFileTask::from_r_list(inner)
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+
+        let result = multi_mtx_to_file(
+            &tasks,
+            &self.f_path_cells,
+            universe_size as usize,
+            &qc,
+            verbose,
+        )
+        .to_extendr()?;
+
+        self.n_cells = result.total_cells;
+        self.n_genes = result.total_genes;
+
+        let per_file: List = result
+            .per_file
+            .into_iter()
+            .map(|f| {
+                list!(
+                    exp_id = f.exp_id,
+                    cell_indices = f.cells_to_keep,
+                    lib_size = f.lib_size,
+                    nnz = f.nnz
+                )
+            })
+            .collect::<List>();
+
+        Ok(list!(
+            global_gene_indices = result.global_gene_indices,
+            total_cells = result.total_cells,
+            total_genes = result.total_genes,
+            per_file = per_file
+        ))
+    }
+
+    /////////////////////////
+    // From h5 10x outputs //
+    /////////////////////////
+
+    /// Write a 10x CellRanger h5 file to the cells binary file using streaming
     ///
-    /// ### Returns
+    /// @description
+    /// Ingests the gene-expression modality from a CellRanger v2/v3 h5 file.
+    /// Other modalities (e.g. Antibody Capture) are filtered out via
+    /// `feature_type`.
     ///
-    /// An R list with all of the info that was stored in the .bin file
+    /// @param h5_path (`character`)\cr
+    /// Path to the 10x h5 file.
+    /// @param version (`character`)\cr
+    /// One of `"auto"`, `"v2"` or `"v3"`. `"auto"` detects the layout from the
+    /// file.
+    /// @param no_cells (`integer`)\cr
+    /// Number of cells (columns) in the file.
+    /// @param no_genes (`integer`)\cr
+    /// Number of features (rows), including all modalities.
+    /// @param qc_params (`list`)\cr
+    /// Quality control parameters parseable into `MinCellQuality`.
+    /// @param feature_type (`character` or `NULL`)\cr
+    /// Target modality for v3. Defaults to `"Gene Expression"` when `NULL`.
+    /// @param verbose (`logical`)\cr
+    /// Controls verbosity of the function.
+    ///
+    /// @return A list with `cell_indices`, `gene_indices`, `lib_size` and
+    /// `nnz`.
+    #[allow(clippy::too_many_arguments)]
+    pub fn tenx_h5_to_file_streaming(
+        &mut self,
+        h5_path: String,
+        version: String,
+        no_cells: usize,
+        no_genes: usize,
+        qc_params: List,
+        feature_type: Option<String>,
+        verbose: bool,
+    ) -> extendr_api::Result<List> {
+        let qc_params = MinCellQuality::from_r_list(qc_params)?;
+
+        let version = match version.to_lowercase().as_str() {
+            "auto" => None,
+            other => match parse_tenx_version(other) {
+                Some(v) => Some(v),
+                None => {
+                    println!(
+                            "The provided version ({:?}) could not be matched. Falling back to auto-detection.",
+                            version
+                        );
+                    None
+                }
+            },
+        };
+
+        let (no_cells, no_genes, cell_qc) = stream_h5_tenx_counts(
+            &h5_path,
+            &self.f_path_cells,
+            version,
+            no_cells,
+            no_genes,
+            qc_params,
+            feature_type.as_deref(),
+            verbose,
+        )
+        .to_extendr()?;
+
+        self.n_cells = no_cells;
+        self.n_genes = no_genes;
+
+        Ok(list!(
+            cell_indices = cell_qc.cell_indices,
+            gene_indices = cell_qc.gene_indices,
+            lib_size = cell_qc.lib_size,
+            nnz = cell_qc.nnz
+        ))
+    }
+
+    /// Load multiple 10x CellRanger h5 files into a single binary
+    ///
+    /// @param file_tasks (`list`)\cr
+    /// A list of lists, each produced by the R prescan function. Each inner
+    /// list must contain `exp_id`, `h5_path`, `version` (`"v2"` or `"v3"`),
+    /// `no_cells`, `no_genes`, `gene_local_to_universe` (integer vector, `NA`
+    /// for unmapped / non-gene features) and `feature_type` (optional string,
+    /// defaults to `"Gene Expression"`).
+    ///
+    /// @param universe_size (`integer`)\cr
+    /// Total number of genes in the universe.
+    /// @param qc_params (`list`)\cr
+    /// Quality control parameters (`min_unique_genes`, `min_lib_size`,
+    /// `min_cells`, `target_size`).
+    /// @param verbose (`logical`)\cr
+    /// Controls verbosity.
+    ///
+    /// @return A list with `global_gene_indices`, `total_cells`, `total_genes`
+    /// and `per_file` (a list of lists with `exp_id`, `cell_indices`,
+    /// `lib_size`, `nnz`).
+    pub fn multi_tenx_h5_to_file(
+        &mut self,
+        file_tasks: List,
+        universe_size: i32,
+        qc_params: List,
+        verbose: bool,
+    ) -> Result<List, extendr_api::Error> {
+        let qc = MinCellQuality::from_r_list(qc_params)?;
+
+        let tasks: Vec<TenxFileTask> = file_tasks
+            .into_iter()
+            .map(|(_, robj)| {
+                let inner = List::try_from(robj).expect("Each file_task must be a list");
+                TenxFileTask::from_r_list(inner)
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+
+        let result = multi_10x_h5_to_file(
+            &tasks,
+            &self.f_path_cells,
+            universe_size as usize,
+            &qc,
+            verbose,
+        )
+        .to_extendr()?;
+
+        self.n_cells = result.total_cells;
+        self.n_genes = result.total_genes;
+
+        let per_file: List = result
+            .per_file
+            .into_iter()
+            .map(|f| {
+                list!(
+                    exp_id = f.exp_id,
+                    cell_indices = f.cells_to_keep,
+                    lib_size = f.lib_size,
+                    nnz = f.nnz
+                )
+            })
+            .collect::<List>();
+
+        Ok(list!(
+            global_gene_indices = result.global_gene_indices,
+            total_cells = result.total_cells,
+            total_genes = result.total_genes,
+            per_file = per_file
+        ))
+    }
+
+    //////////////////////////////
+    // Return cell-based counts //
+    //////////////////////////////
+
+    /// Return the full count matrix
+    ///
+    /// @param assay (`character`)\cr
+    /// One of `"raw"` or `"norm"`. Selects whether raw counts or
+    /// log-normalised counts are returned.
+    /// @param cell_based (`logical`)\cr
+    /// If `TRUE`, the data is returned in CSR layout (cells as rows). If
+    /// `FALSE`, the data is returned in CSC layout (genes as columns).
+    /// @param verbose (`logical`)\cr
+    /// Controls verbosity of the function.
+    ///
+    /// @return A list with `indptr`, `indices`, `data`, `no_cells` and
+    /// `no_genes`, parseable into a sparse matrix in R.
     pub fn return_full_mat(
         &self,
         assay: &str,
@@ -623,7 +942,9 @@ impl SingleCellCountData {
         let mut data: Vec<AssayData> = Vec::new();
         let mut indices: Vec<Vec<i32>> = Vec::new();
         let mut indptr: Vec<usize> = Vec::new();
-        let assay_type = parse_count_type(assay).unwrap();
+        let assay_type = parse_count_type(assay).ok_or_else(|| {
+            extendr_api::Error::Other(format!("Invalid assay '{assay}'. Use 'raw' or 'norm'."))
+        })?;
 
         if cell_based {
             let reader = ParallelSparseReader::new(&self.f_path_cells).to_extendr()?;
@@ -642,7 +963,6 @@ impl SingleCellCountData {
 
                 let len_data_i = data_i.len();
                 current_ptr += len_data_i;
-                // Add data
                 data.push(data_i);
                 indices.push(indices_i);
                 indptr.push(current_ptr);
@@ -683,36 +1003,35 @@ impl SingleCellCountData {
 
     /// Return cells by index positions
     ///
-    /// Leverages the CSR-stored data for fast cell retrieval
+    /// @description
+    /// Leverages the CSR-stored data for fast cell retrieval.
     ///
-    /// ### Params
+    /// @param indices (`integer`)\cr
+    /// The cell indices to return (1-indexed).
+    /// @param assay (`character`)\cr
+    /// One of `"raw"` or `"norm"`.
     ///
-    /// * `indices` - The cell indices which to return (1-indexed).
-    /// * `assay` - Shall the raw or norm counts be returned
-    ///
-    /// ### Returns
-    ///
-    /// A list that can be parsed into a CSR matrix in R
+    /// @return A list with `indptr`, `indices`, `data`, `no_cells` and
+    /// `no_genes`, parseable into a CSR matrix in R.
     pub fn get_cells_by_indices(
         &self,
         indices: &[i32],
         assay: &str,
     ) -> Result<List, extendr_api::Error> {
         let reader = ParallelSparseReader::new(&self.f_path_cells).to_extendr()?;
-        let assay_type = parse_count_type(assay).unwrap();
+        let assay_type = parse_count_type(assay).ok_or_else(|| {
+            extendr_api::Error::Other(format!("Invalid assay '{assay}'. Use 'raw' or 'norm'."))
+        })?;
 
         let indices: Vec<usize> = indices.iter().map(|x| (*x - 1) as usize).collect();
 
-        // Parallel read all cells at once
         let cells = reader.read_cells_parallel(&indices).to_extendr()?;
 
-        // Parallel processing of results
         let results: Vec<(Vec<i32>, AssayData)> = cells
             .par_iter()
             .map(|cell| get_cell_data(&cell.indices, &cell.data_raw, &cell.data_norm, &assay_type))
             .collect();
 
-        // Sequential assembly (required for row_ptr)
         let mut data = Vec::new();
         let mut col_idx = Vec::new();
         let mut row_ptr = vec![0];
@@ -740,17 +1059,23 @@ impl SingleCellCountData {
     // Genes //
     ///////////
 
-    /// Transforms already written cell data also into the gene data
+    //////////////////////////////
+    // Transform the CSR to CSC //
+    //////////////////////////////
+
+    /// Generate gene-based data from the cells binary file
     ///
-    /// This function will read the .bin file at `self.f_path_cells` and
-    /// transform the data into the gene-based file format. This happens for
-    /// the full data set in memory and might cause memory pressure, pending
-    /// the size of the data.
+    /// @description
+    /// Reads the `.bin` file at `f_path_cells` and writes a gene-friendly
+    /// (CSC) representation to `f_path_genes`. The conversion happens fully
+    /// in memory and may cause memory pressure on large data sets; see
+    /// `generate_gene_based_data_streaming` or
+    /// `generate_gene_based_data_memory_bounded` for lighter alternatives.
     ///
-    /// ### Params
+    /// @param verbose (`logical`)\cr
+    /// Controls verbosity of the function.
     ///
-    /// * `qc_params` - List with the quality control parameters.
-    /// * `verbose` - Controls verbosity of the function.
+    /// @return Invisible `NULL`.
     pub fn generate_gene_based_data(&mut self, verbose: bool) -> Result<(), extendr_api::Error> {
         let reader = ParallelSparseReader::new(&self.f_path_cells).to_extendr()?;
 
@@ -768,16 +1093,16 @@ impl SingleCellCountData {
         let mut data: Vec<Vec<u32>> = Vec::new();
         let mut data_2: Vec<Vec<F16>> = Vec::new();
         let mut col_idx: Vec<Vec<u32>> = Vec::new();
-        let mut row_ptr: Vec<usize> = Vec::new();
+        let mut row_ptr: Vec<u32> = Vec::new();
 
-        let mut current_row_ptr = 0_usize;
+        let mut current_row_ptr = 0_u32;
         row_ptr.push(current_row_ptr);
 
         for cell in all_cells {
             let data_i: Vec<u32> = cell.data_raw.iter().collect();
             let data_norm_i = cell.data_norm;
 
-            let len_data_i = data_i.len();
+            let len_data_i = data_i.len() as u32;
             current_row_ptr += len_data_i;
             data.push(data_i);
             data_2.push(data_norm_i);
@@ -788,7 +1113,6 @@ impl SingleCellCountData {
         let data = flatten_vector(data);
         let data_2 = flatten_vector(data_2);
         let col_idx = flatten_vector(col_idx);
-        let col_idx = col_idx.iter().map(|x| *x as usize).collect::<Vec<usize>>();
 
         let sparse_data = CompressedSparseData2::new_csr(
             &data,
@@ -805,14 +1129,14 @@ impl SingleCellCountData {
             .to_extendr()?;
 
         for i in 0..no_genes {
-            let start_i = sparse_data.indptr[i];
-            let end_i = sparse_data.indptr[i + 1];
+            let start_i = sparse_data.indptr[i] as usize;
+            let end_i = sparse_data.indptr[i + 1] as usize;
 
             let raw_slice = &sparse_data.data[start_i..end_i];
             let chunk_i = CscGeneChunk::from_conversion(
                 RawCounts::from_u32_auto(raw_slice),
                 &data_2[start_i..end_i],
-                &sparse_data.indices[start_i..end_i],
+                &sparse_data.indices[start_i..end_i].index_cast(),
                 i,
                 true,
             );
@@ -834,16 +1158,20 @@ impl SingleCellCountData {
         Ok(())
     }
 
-    /// Generate gene-based data with streaming to reduce memory pressure
+    /// Generate gene-based data with streaming
     ///
-    /// This approach builds CSC format directly without creating intermediate
-    /// CSR structures. Ideal for very large data sets.
+    /// @description
+    /// Builds the CSC representation directly without creating intermediate
+    /// CSR structures. Suitable for very large data sets where the all-in-
+    /// memory path is too costly.
     ///
-    /// ### Params
+    /// @param batch_size (`integer`)\cr
+    /// Number of cells processed per batch. Larger values increase memory
+    /// pressure but reduce overhead.
+    /// @param verbose (`logical`)\cr
+    /// Controls verbosity of the function.
     ///
-    /// * `batch_size` - Size of the batch to process in one go. The larger, the
-    ///   more memory pressure will occur.
-    /// * `verbose` - Controls verbosity of the function.
+    /// @return Invisible `NULL`.
     pub fn generate_gene_based_data_streaming(
         &mut self,
         batch_size: usize,
@@ -955,20 +1283,23 @@ impl SingleCellCountData {
 
     /// Generate gene-based data with memory-bounded accumulation
     ///
-    /// This processes genes in phases to limit memory usage. Each phase:
+    /// @description
+    /// Processes genes in phases to cap memory usage. Each phase:
+    /// \enumerate{
+    ///   \item reads all cells (unavoidable for CSC conversion);
+    ///   \item only accumulates data for genes in the current phase;
+    ///   \item writes those genes to disk;
+    ///   \item clears memory and moves to the next phase.
+    /// }
     ///
-    /// 1. Reads all cells (unavoidable for CSC conversion)
-    /// 2. Only accumulates data for genes in current phase
-    /// 3. Writes those genes to disk
-    /// 4. Clears memory and moves to next phase
+    /// @param max_genes_in_memory (`integer`)\cr
+    /// Maximum number of genes to accumulate at once (e.g. `2000`).
+    /// @param cell_batch_size (`integer`)\cr
+    /// Number of cells to process at once (e.g. `100000`).
+    /// @param verbose (`logical`)\cr
+    /// Controls verbosity.
     ///
-    /// ### Params
-    ///
-    /// * `max_genes_in_memory` - Maximum genes to accumulate at once
-    ///   (e.g., 2000)
-    /// * `cell_batch_size` - How many cells to process at once
-    ///   (e.g., 100000)
-    /// * `verbose` - Controls verbosity
+    /// @return Invisible `NULL`.
     pub fn generate_gene_based_data_memory_bounded(
         &mut self,
         max_genes_in_memory: usize,
@@ -1083,7 +1414,7 @@ impl SingleCellCountData {
                         gene_id,
                         true,
                     );
-                    writer.write_gene_chunk(chunk).unwrap();
+                    writer.write_gene_chunk(chunk).to_extendr()?;
                 } else {
                     let empty_chunk = CscGeneChunk::from_conversion(
                         RawCounts::U16(Vec::new()),
@@ -1115,18 +1446,22 @@ impl SingleCellCountData {
         Ok(())
     }
 
+    //////////////////////////////
+    // Return gene-based counts //
+    //////////////////////////////
+
     /// Return genes by index positions
     ///
-    /// Leverages the CSC-stored data for fast gene retrieval
+    /// @description
+    /// Leverages the CSC-stored data for fast gene retrieval.
     ///
-    /// ### Params
+    /// @param indices (`integer`)\cr
+    /// The gene indices to return (1-indexed).
+    /// @param assay (`character`)\cr
+    /// One of `"raw"` or `"norm"`.
     ///
-    /// * `indices` - The gene indices which to return (1-indexed).
-    /// * `assay` - Shall the raw or norm counts be returned
-    ///
-    /// ### Returns
-    ///
-    /// A list that can be parsed into a CSC matrix in R
+    /// @return A list with `indptr`, `indices`, `data`, `no_cells` and
+    /// `no_genes`, parseable into a CSC matrix in R.
     pub fn get_genes_by_indices(
         &self,
         indices: &[i32],
@@ -1134,7 +1469,9 @@ impl SingleCellCountData {
     ) -> Result<List, extendr_api::Error> {
         let reader = ParallelSparseReader::new(&self.f_path_genes).to_extendr()?;
 
-        let assay_type = parse_count_type(assay).unwrap();
+        let assay_type = parse_count_type(assay).ok_or_else(|| {
+            extendr_api::Error::Other(format!("Invalid assay '{assay}'. Use 'raw' or 'norm'."))
+        })?;
 
         let no_cells = reader.get_header().total_cells;
 
@@ -1174,31 +1511,13 @@ impl SingleCellCountData {
         ))
     }
 
-    /// Set cell numbers and genes
+    /// Get the number of cells expressing each gene
     ///
-    /// ### Params
+    /// @param gene_indices (`integer` or `NULL`)\cr
+    /// Optional 1-indexed gene indices. If `NULL`, results are returned for
+    /// all genes.
     ///
-    /// * `cell_no` - No of cells
-    /// * `gene_no` - No of genes
-    pub fn set_from_file(&mut self) -> Result<(), extendr_api::Error> {
-        let reader = ParallelSparseReader::new(&self.f_path_cells).to_extendr()?;
-        let header = reader.get_header();
-        self.n_cells = header.total_cells;
-        self.n_genes = header.total_genes;
-
-        Ok(())
-    }
-
-    /// Helper function to get the number of cells expressing a gene
-    ///
-    /// ### Params
-    ///
-    /// * `gene_indices` - Optional gene indices (1-indexed!). If None, returns
-    ///   all genes.
-    ///
-    /// ### Returns
-    ///
-    /// A vector of NNZ for the genes.
+    /// @return An integer vector of NNZ counts for the requested genes.
     pub fn get_nnz_genes(
         &mut self,
         gene_indices: Option<&[i32]>,
@@ -1217,5 +1536,73 @@ impl SingleCellCountData {
         };
 
         Ok(nnz.r_int_convert())
+    }
+
+    ///////////////////////
+    // Combining objects //
+    ///////////////////////
+
+    /// Merge multiple existing bin files into the cells binary file
+    ///
+    /// @param merge_tasks (`list`)\cr
+    /// A list of lists. Each inner list must contain `exp_id`,
+    /// `bin_cells_path`, `cells_to_keep` (0-indexed integer vector) and
+    /// `gene_local_to_universe` (integer vector, `-1` for genes absent from
+    /// the universe).
+    /// @param universe_size (`integer`)\cr
+    /// Number of genes in the intersection universe.
+    /// @param renormalise (`logical`)\cr
+    /// If `TRUE`, recompute `data_norm` against `target_size` using each
+    /// cell's surviving raw counts. If `FALSE`, pass `data_norm` through
+    /// untouched; the caller must guarantee all inputs were normalised
+    /// against the same `target_size`.
+    /// @param target_size (`numeric`)\cr
+    /// Target library size for renormalisation. Ignored when
+    /// `renormalise = FALSE`.
+    /// @param verbose (`logical`)\cr
+    /// Controls verbosity.
+    ///
+    /// @return A list with `total_cells`, `total_genes` and `per_file` (a
+    /// list of lists with `exp_id`, `lib_size`, `nnz`).
+    pub fn merge_sc_files(
+        &mut self,
+        merge_tasks: List,
+        universe_size: i32,
+        renormalise: bool,
+        target_size: f64,
+        verbose: bool,
+    ) -> Result<List, extendr_api::Error> {
+        let tasks: Vec<BinMergeTask> = merge_tasks
+            .into_iter()
+            .map(|(_, robj)| {
+                let inner = List::try_from(robj).expect("Each merge_task must be a list");
+                BinMergeTask::from_r_list(inner)
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+
+        let result = merge_sc_bin_files(
+            &tasks,
+            &self.f_path_cells,
+            universe_size as usize,
+            renormalise,
+            target_size as f32,
+            verbose,
+        )
+        .to_extendr()?;
+
+        self.n_cells = result.total_cells;
+        self.n_genes = result.total_genes;
+
+        let per_file: List = result
+            .per_file
+            .into_iter()
+            .map(|f| list!(exp_id = f.exp_id, lib_size = f.lib_size, nnz = f.nnz))
+            .collect::<List>();
+
+        Ok(list!(
+            total_cells = result.total_cells,
+            total_genes = result.total_genes,
+            per_file = per_file
+        ))
     }
 }

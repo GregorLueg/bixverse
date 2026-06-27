@@ -25,5 +25,5 @@ and be of same length of \code{node_names}!}
 The personalised page rank values.
 }
 \description{
-Rust version of calcaluting the personalised page rank
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 }

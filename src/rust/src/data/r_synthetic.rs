@@ -4,14 +4,21 @@ use bixverse_rs::core::synthetic_data::*;
 use bixverse_rs::prelude::*;
 use bixverse_rs::single_cell::sc_data::sc_synthetic_data::*;
 
+/////////////
+// extendR //
+/////////////
+
 extendr_module! {
     mod r_synthetic;
-    fn rs_synthetic_sc_data_csc;
-    fn rs_synthetic_sc_data_csr;
-    fn rs_synthetic_sc_data_with_cell_types;
-    fn rs_sample_ids_for_cell_types;
+    // bulk
     fn rs_generate_bulk_rnaseq;
     fn rs_simulate_dropouts;
+    // single cell
+    // -- rna --
+    fn rs_synthetic_sc_data_with_cell_types;
+    fn rs_sample_ids_for_cell_types;
+    // -- adt --
+    fn rs_synthetic_sc_adt_with_cell_types;
 }
 
 //////////
@@ -21,6 +28,7 @@ extendr_module! {
 /// Generation of bulkRNAseq-like data with optional correlation structure
 ///
 /// @description
+/// `r lifecycle::badge("experimental")`
 /// Function generates synthetic bulkRNAseq data with heteroskedasticity (lowly
 /// expressed genes show higher variance) and can optionally add correlation
 /// structures for testing purposes.
@@ -41,6 +49,8 @@ extendr_module! {
 /// }
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_generate_bulk_rnaseq(
     num_samples: usize,
@@ -73,6 +83,7 @@ fn rs_generate_bulk_rnaseq(
 /// Sparsify bulkRNAseq like data
 ///
 /// @description
+/// `r lifecycle::badge("experimental")`
 /// This function takes in a (raw) count matrix (for example from the synthetic
 /// data in bixverse) and applies sparsification to it based on two possible
 /// functions:
@@ -116,6 +127,8 @@ fn rs_generate_bulk_rnaseq(
 /// @return The sparsified matrix based on the provided parameters.
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_simulate_dropouts(
     count_mat: RMatrix<f64>,
@@ -155,102 +168,12 @@ fn rs_simulate_dropouts(
 // Single cell //
 /////////////////
 
-/// Generate synthetic single cell data (Seurat type)
-///
-/// @description This function generates pseudo data to test single cell
-/// functions in form of the Seurat version, with cells = columns and genes =
-/// rows. The data is CSC type.
-///
-/// @param n_genes Integer. Number of genes you wish to have in the synthetic
-/// data.
-/// @param n_cells Integer. Number of cells you wish to have in the synthetic
-/// data.
-/// @param min_genes Integer. Minimum number of genes expressed per cell.
-/// @param max_genes Integer. Maximum number of genes expressed per cell.
-/// @param max_exp Upper bound in terms of expression. Expression values will be
-/// sampled from `1:max_exp`.
-/// @param seed Integer. Seed for reproducibility purposes.
-///
-/// @return The list with the synthetic data with the following items:
-///  \itemize{
-///   \item data - The synthetic counts
-///   \item col_ptrs - The column pointers
-///   \item row_indices - The row indices
-///   \item nrow - Number of rows (cells)
-///   \item ncol - Number of cols (genes)
-/// }
-#[extendr]
-fn rs_synthetic_sc_data_csc(
-    n_genes: usize,
-    n_cells: usize,
-    min_genes: usize,
-    max_genes: usize,
-    max_exp: i32,
-    seed: usize,
-) -> List {
-    let synthetic_data: CompressedSparseData2<i32> =
-        create_sparse_csc_data(n_cells, n_genes, (min_genes, max_genes), max_exp, seed);
-
-    list!(
-        data = synthetic_data.data,
-        indptr = synthetic_data.indptr,
-        indices = synthetic_data.indices,
-        nrow = n_cells,
-        ncol = n_genes
-    )
-}
-
-/// Generate synthetic single cell data (h5ad type)
-///
-/// @description This function generates pseudo data to test single cell
-/// functions in form of the h5ad version, with cells = rows and genes =
-/// columns. The data is encoded in CSR.
-///
-/// @param n_genes Integer. Number of genes you wish to have in the synthetic
-/// data.
-/// @param n_cells Integer. Number of cells you wish to have in the synthetic
-/// data.
-/// @param min_genes Integer. Minimum number of genes expressed per cell.
-/// @param max_genes Integer. Maximum number of genes expressed per cell.
-/// @param max_exp Upper bound in terms of expression. Expression values will be
-/// sampled from `1:max_exp`.
-/// @param seed Integer. Seed for reproducibility purposes.
-///
-/// @return The list with the synthetic data with the following items:
-///  \itemize{
-///   \item data - The synthetic counts
-///   \item row_ptrs - The row pointers
-///   \item col_indices - The column indices
-///   \item nrow - Number of rows (cells)
-///   \item ncol - Number of cols (genes)
-/// }
-///
-/// @export
-#[extendr]
-fn rs_synthetic_sc_data_csr(
-    n_genes: usize,
-    n_cells: usize,
-    min_genes: usize,
-    max_genes: usize,
-    max_exp: i32,
-    seed: usize,
-) -> List {
-    let synthetic_data: CompressedSparseData2<i32> =
-        create_sparse_csr_data(n_cells, n_genes, (min_genes, max_genes), max_exp, seed);
-
-    list!(
-        data = synthetic_data.data,
-        indptr = synthetic_data.indptr,
-        indices = synthetic_data.indices,
-        nrow = n_cells,
-        ncol = n_genes
-    )
-}
-
 /// Generates synthetic data for single cell
 ///
 /// @description
+/// `r lifecycle::badge("experimental")`
 /// Helper function to generate synthetic single cell data with optional
+/// bathc effects and sample bias.
 ///
 /// @param n_cells Integer. Number of cells to generate.
 /// @param n_genes Integer. Number of genes to generate.
@@ -278,6 +201,8 @@ fn rs_synthetic_sc_data_csr(
 /// }
 ///
 /// @export
+///
+/// @keywords internal
 #[allow(clippy::too_many_arguments)]
 #[extendr]
 fn rs_synthetic_sc_data_with_cell_types(
@@ -339,9 +264,92 @@ fn rs_synthetic_sc_data_with_cell_types(
     }
 }
 
+/// Generates synthetic ADT counts with defined cell types
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Generates a dense cells x proteins matrix of synthetic raw ADT counts for
+/// testing. Proteins are assigned roles by column index: marker proteins are
+/// elevated in their owning cell type and sit at background elsewhere, isotype
+/// controls only ever carry background, and any column named as neither is a
+/// generic background-only protein. Counts follow a negative-binomial draw with
+/// an additive background plus per-cell-type signal, a per-cell capture
+/// efficiency factor, and an optional per-batch staining multiplier. Cell type
+/// and batch assignment match `rs_synthetic_sc_with_cell_types()` cell-for-cell
+/// for matched inputs, so RNA and ADT can be paired for multi-modal tests.
+///
+/// @param n_cells Integer. Number of cells (matrix rows).
+/// @param n_proteins Integer. Total number of proteins (matrix columns). Must
+/// be large enough to cover every marker and isotype index supplied.
+/// @param n_batches Integer. Number of batches. Batch 0 is unperturbed; further
+/// batches receive a per-protein staining multiplier.
+/// @param isotype_controls Integer vector. The 0-based column indices that are
+/// isotype controls. These are forced to background only, even if they also
+/// appear in a cell type's markers.
+/// @param cell_configs List. One element per cell type, each a list with a
+/// `marker_genes` integer vector of 0-based marker column indices for that
+/// cell type.
+/// @param batch_effect_strength String. One of `c("weak", "medium", "strong")`.
+/// Controls the spread of the per-batch staining multiplier. Unrecognised
+/// values fall back to `"strong"`.
+/// @param seed Integer. For reproducibility.
+///
+/// @return A list with the following items.
+/// \itemize{
+///   \item data - Integer vector. The counts in row-major order, length
+///   `n_cells * n_proteins` (cell-major: all proteins of cell 0, then cell 1).
+///   \item cell_type_indices - Integer vector of length `n_cells`. The 0-based
+///   cell type assigned to each cell.
+///   \item batch_indices - Integer vector of length `n_cells`. The 0-based
+///   batch assigned to each cell.
+/// }
+///
+/// @export
+///
+/// @keywords internal
+#[allow(clippy::too_many_arguments)]
+#[extendr]
+fn rs_synthetic_sc_adt_with_cell_types(
+    n_cells: usize,
+    n_proteins: usize,
+    n_batches: usize,
+    isotype_controls: Vec<i32>,
+    cell_configs: List,
+    batch_effect_strength: String,
+    seed: usize,
+) -> extendr_api::Result<List> {
+    let isotype_controls: Vec<usize> = isotype_controls.r_int_convert();
+    let mut cell_configs_vec = Vec::with_capacity(cell_configs.len());
+    for i in 0..cell_configs.len() {
+        let elem_i = cell_configs.elt(i)?;
+        let list_i = elem_i
+            .as_list()
+            .ok_or_else(|| extendr_api::Error::Other("Expected list".into()))?;
+        let cell_config = CellTypeConfig::from_r_list(list_i)?;
+        cell_configs_vec.push(cell_config);
+    }
+
+    let synthetic_data: (Vec<u32>, Vec<usize>, Vec<usize>) = create_adt_synthetic_data(
+        n_cells,
+        n_proteins,
+        cell_configs_vec,
+        isotype_controls,
+        n_batches,
+        &batch_effect_strength,
+        seed,
+    );
+
+    Ok(list!(
+        data = synthetic_data.0.r_int_convert(),
+        cell_type_indices = synthetic_data.1.r_int_convert(),
+        batch_indices = synthetic_data.2.r_int_convert()
+    ))
+}
+
 /// Helper function to generate sample identifiers based on cells
 ///
 /// @description
+/// `r lifecycle::badge("experimental")`
 /// Extract out of `rs_synthetic_sc_data_with_cell_types()` to quickly iterate
 /// over different sample to cell type patterns
 ///
@@ -354,6 +362,10 @@ fn rs_synthetic_sc_data_with_cell_types(
 /// @param seed Integer. Random seed for reproducibility.
 ///
 /// @returns An integer vector representing the samples.
+///
+/// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_sample_ids_for_cell_types(
     cell_type_indices: &[i32],

@@ -50,5 +50,8 @@ A list with the following items.
 }
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 Helper function to generate synthetic single cell data with optional
+bathc effects and sample bias.
 }
+\keyword{internal}

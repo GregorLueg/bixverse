@@ -2,7 +2,7 @@
 % Please edit documentation in R/param_wrappers.R
 \name{params_sc_synthetic_data}
 \alias{params_sc_synthetic_data}
-\title{Default parameters for generation of synthetic data}
+\title{Default parameters for generation of synthetic single cell data (RNA)}
 \usage{
 params_sc_synthetic_data(
   n_cells = 1000L,
@@ -39,5 +39,8 @@ synthetic data. If you want sample information you need to provide
 A list with the parameters.
 }
 \description{
-Default parameters for generation of synthetic data
+For the generation of synthetic single cell data mostly for testing or
+showcasing purposes. The default configurations generates 1000 cells x 100
+genes with genes 1:10 being cell markers for cell type 1, genes 11:20 for
+cell type 2 and genes 21:30 for cell type.
 }

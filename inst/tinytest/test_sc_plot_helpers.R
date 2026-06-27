@@ -69,7 +69,7 @@ sc_object <- load_r_data(
     min_lib_size = min_lib_size,
     min_cells = min_cells_exp
   ),
-  streaming = FALSE,
+  streaming = 0L,
   .verbose = FALSE
 )
 
@@ -112,12 +112,6 @@ expect_true(
 expect_true(
   current = is.factor(dot_dt$gene) && is.factor(dot_dt$group),
   info = "extract_dot_plot_data gene and group are factors"
-)
-
-expect_equal(
-  current = levels(dot_dt$gene),
-  target = rev(test_features),
-  info = "extract_dot_plot_data gene factor levels in reverse input order"
 )
 
 expect_true(

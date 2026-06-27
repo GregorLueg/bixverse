@@ -7,7 +7,7 @@
 gene_set_proportions_sc(
   object,
   gene_set_list,
-  streaming = FALSE,
+  streaming = NULL,
   .verbose = TRUE
 )
 }
@@ -18,11 +18,13 @@ gene_set_proportions_sc(
 identifiers of that set. These should be the same as
 \code{get_gene_names(object)}!}
 
-\item{streaming}{Boolean. Shall the cells be streamed in. Useful for larger
-data sets where you wish to avoid loading in the whole data. Default to
-\code{FALSE}.}
+\item{streaming}{Optional Boolean. Shall the data be streamed in. Useful for
+larger data sets where you wish to avoid loading in the whole data. If
+\code{NULL}, will automatically detect.}
 
-\item{.verbose}{Boolean. Controls verbosity of the function.}
+\item{.verbose}{Boolean or integer. Controls verbosity and returns run times.
+\code{FALSE} -> quiet, \code{TRUE} or \code{1L} -> normal verbosity, \code{2L} -> detailed
+verbosity.}
 }
 \value{
 It will add the columns based on the names in the \code{gene_set_list} to

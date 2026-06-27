@@ -5,10 +5,10 @@
 \title{Wrapper function for parameters for neighbour identification in single cell}
 \usage{
 params_sc_neighbours(
-  full_snn = FALSE,
+  full_snn = TRUE,
   pruning = 1/12,
   snn_similarity = c("jaccard", "rank"),
-  knn = list(ann_dist = "cosine")
+  knn = list()
 )
 }
 \arguments{

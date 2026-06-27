@@ -26,7 +26,9 @@ extendr_module! {
 
 /// Fast AUC calculation
 ///
-/// @description This function calculates rapidly AUCs based on an approximation.
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// This function calculates rapidly AUCs based on an approximation.
 ///
 /// @param pos_scores The scores of your hits.
 /// @param neg_scores The scores of your non-hits.
@@ -55,9 +57,11 @@ fn rs_fast_auc(pos_scores: &[f64], neg_scores: &[f64], iters: usize, seed: u64) 
 
 /// Create random AUCs
 ///
-/// @description This function creates a random set of AUCs based on a score
-/// vector and a size of the positive set. This can be used for permutation-
-/// based estimation of Z-scores and subsequently p-values.
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// This function creates a random set of AUCs based on a score vector and a
+/// size of the positive set. This can be used for permutation-based estimation
+/// of Z-scores and subsequently p-values.
 ///
 /// @param score_vec The overall vector of scores.
 /// @param size_pos The size of the hits represented in the score_vec.
@@ -70,6 +74,8 @@ fn rs_fast_auc(pos_scores: &[f64], neg_scores: &[f64], iters: usize, seed: u64) 
 /// positive set.
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_create_random_aucs(
     score_vec: &[f64],
@@ -94,10 +100,10 @@ fn rs_create_random_aucs(
 
 /// Calculate the Hedge's G effect
 ///
-/// @description Calculates the Hedge's G effect for two sets of matrices. The
-/// function assumes that rows = samples and columns = features.
-/// WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust
-/// functions with type checks are provided in the package.
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Calculates the Hedge's G effect for two sets of matrices. The function
+/// assumes that rows = samples and columns = features.
 ///
 /// @param mat_a The matrix of samples and features in grp A for which to
 /// calculate the Hedge's G effect.
@@ -137,8 +143,10 @@ fn rs_hedges_g(mat_a: RMatrix<f64>, mat_b: RMatrix<f64>, small_sample_correction
 
 /// Calculate a BH-based FDR
 ///
-/// @description Rust implementation that will be faster if you have an
-/// terrifying amount of p-values to adjust.
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Rust implementation that will be faster if you have an terrifying amount of
+/// p-values to adjust.
 ///
 /// @param pvals Numeric vector. The p-values you wish to adjust.
 ///
@@ -150,7 +158,10 @@ fn rs_fdr_adjustment(pvals: &[f64]) -> Vec<f64> {
     calc_fdr(pvals)
 }
 
-/// Calculate the hypergeometric rest in Rust
+/// Calculate the hypergeometric test in Rust
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
 ///
 /// @param q Number of white balls drawn out of urn.
 /// @param m Number of white balls in the urn.
@@ -166,6 +177,9 @@ fn rs_phyper(q: usize, m: usize, n: usize, k: usize) -> f64 {
 }
 
 /// Calculate MAD outlier detection in Rust.
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
 ///
 /// @param x Numerical vector to test.
 /// @param threshold Numeric. Number of MADs in either direction that is

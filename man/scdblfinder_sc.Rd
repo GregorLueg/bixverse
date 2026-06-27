@@ -9,7 +9,8 @@ scdblfinder_sc(
   scdblfinder_params = params_scdblfinder(),
   return_features = FALSE,
   cells_to_use = NULL,
-  streaming = FALSE,
+  group_by = NULL,
+  streaming = NULL,
   seed = 42L,
   .verbose = TRUE
 )
@@ -28,12 +29,18 @@ run of the boosted doublet detection. Useful when you wish to run doublet
 detection on individual batches within your data. The object returned will be
 specifically using these cells.}
 
-\item{streaming}{Boolean. Shall the gene data be streamed in. Useful on
-large data sets.}
+\item{group_by}{Optional grouping variable. Useful if you want to run the
+method on a per-sample basis.}
+
+\item{streaming}{Optional Boolean. Shall the data be streamed in. Useful for
+larger data sets where you wish to avoid loading in the whole data. If
+\code{NULL}, will automatically detect.}
 
 \item{seed}{Integer. Seed for reproducibility.}
 
-\item{.verbose}{Boolean. Controls verbosity.}
+\item{.verbose}{Boolean or integer. Controls verbosity and returns run times.
+\code{FALSE} -> quiet, \code{TRUE} or \code{1L} -> normal verbosity, \code{2L} -> detailed
+verbosity.}
 }
 \value{
 An S3 object of class \code{ScDblFinderRes} containing:

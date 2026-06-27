@@ -431,6 +431,45 @@ params_dgrdl <- function(
   )
 }
 
+## NMF (HALS) ------------------------------------------------------------------
+
+#' Wrapper function for NMF (HALS) parameters
+#'
+#' @param max_iter Integer. Maximum number of HALS iterations.
+#' @param tol Numeric. Convergence tolerance on the relative change in
+#' reconstruction loss.
+#' @param eps Numeric. Numerical floor for non-negativity / division safety.
+#' @param check_every Integer. Convergence check interval in iterations.
+#' @param nmf_init String. One of `c("nndsvd", "svd", "random")`. `"nndsvd"`
+#' and `"svd"` both map to deterministic NNDSVD initialisation; `"random"`
+#' uses random non-negative draws. For stabilised (multi-run) NMF this field
+#' is ignored and random init is always used.
+#'
+#' @returns A list with the HALS NMF parameters.
+#'
+#' @export
+params_nmf_hals <- function(
+  max_iter = 250L,
+  tol = 1e-4,
+  eps = 1e-10,
+  check_every = 10L,
+  nmf_init = "nndsvd"
+) {
+  checkmate::qassert(max_iter, "I1[1,)")
+  checkmate::qassert(tol, "N1(0,)")
+  checkmate::qassert(eps, "N1(0,)")
+  checkmate::qassert(check_every, "I1[1,)")
+  checkmate::assertChoice(nmf_init, c("nndsvd", "svd", "random"))
+
+  list(
+    max_iter = max_iter,
+    tol = tol,
+    eps = eps,
+    check_every = check_every,
+    nmf_init = nmf_init
+  )
+}
+
 ## SNF -------------------------------------------------------------------------
 
 #' Wrapper function to generate SNF parameters
@@ -577,9 +616,17 @@ params_label_propagation <- function(
 
 ### general --------------------------------------------------------------------
 
-### synthetic data -------------------------------------------------------------
+#### synthetic data ------------------------------------------------------------
 
-#' Default parameters for generation of synthetic data
+##### rna ----------------------------------------------------------------------
+
+#' Default parameters for generation of synthetic single cell data (RNA)
+#'
+#' @description
+#' For the generation of synthetic single cell data mostly for testing or
+#' showcasing purposes. The default configurations generates 1000 cells x 100
+#' genes with genes 1:10 being cell markers for cell type 1, genes 11:20 for
+#' cell type 2 and genes 21:30 for cell type.
 #'
 #' @param n_cells Integer. Number of cells.
 #' @param n_genes Integer. Number of genes.
@@ -644,7 +691,72 @@ params_sc_synthetic_data <- function(
   )
 }
 
-### io -------------------------------------------------------------------------
+##### adt ----------------------------------------------------------------------
+
+#' Default parameters for generation of synthetic single cell data (ADT)
+#'
+#' @description
+#' For the generation of synthetic single cell data mostly for testing or
+#' showcasing purposes. In this case, ADT counts to test multi-modal
+#' integration. The default configurations generates 1000 cells x 15
+#' proteins with probes 1:3 being cell markers for cell type 1, genes 4:6 for
+#' cell type 2 and genes 7:9 for cell type. Columns 13:15 represents isotype
+#' controls.
+#'
+#' @param n_cells Integer. Number of cells.
+#' @param n_proteins Integer. Number of proteins
+#' @param n_batches Integer. Number of batches.
+#' @param marker_genes List. A nested list that indicates which gene indices
+#' are markers for which cell.
+#' @param isotype_controls Integer vector. The columns that defines the isotype
+#' controls. (0-indexed!)
+#' @param batch_effect_strength String. One of
+#' `c("strong", "medium", "weak")`. The strength of the batch effect to add.
+#'
+#' @return A list with the parameters.
+#'
+#' @export
+#'
+#' @keywords internal
+params_sc_synthetic_data_adt <- function(
+  n_cells = 1000L,
+  n_proteins = 15L,
+  n_batches = 1L,
+  marker_genes = list(
+    cell_type_1 = list(
+      marker_genes = 0:2L
+    ),
+    cell_type_2 = list(
+      marker_genes = 3:5L
+    ),
+    cell_type_3 = list(
+      marker_genes = 6:8L
+    )
+  ),
+  isotype_controls = 12L:14L,
+  batch_effect_strength = c("strong", "medium", "weak")
+) {
+  batch_effect_strength <- match.arg(batch_effect_strength)
+
+  # checks
+  checkmate::qassert(n_cells, "I1")
+  checkmate::qassert(n_proteins, "I1")
+  checkmate::assertList(marker_genes, types = "list", names = "named")
+  checkmate::qassert(n_batches, "I1")
+  checkmate::qassert(isotype_controls, "I+")
+  checkmate::assertChoice(batch_effect_strength, c("strong", "medium", "weak"))
+
+  list(
+    n_cells = n_cells,
+    n_proteins = n_proteins,
+    marker_genes = marker_genes,
+    n_batches = n_batches,
+    isotype_controls = isotype_controls,
+    batch_effect_strength = batch_effect_strength
+  )
+}
+
+#### io ------------------------------------------------------------------------
 
 #' Wrapper function to provide data for mtx-based loading
 #'
@@ -673,15 +785,15 @@ params_sc_mtx_io <- function(
   checkmate::qassert(has_hdr, "B1")
 
   list(
-    path_mtx = path_mtx,
-    path_obs = path_obs,
-    path_var = path_var,
+    path_mtx = path.expand(path_mtx),
+    path_obs = path.expand(path_obs),
+    path_var = path.expand(path_var),
     cells_as_rows = cells_as_rows,
     has_hdr = has_hdr
   )
 }
 
-### qc -------------------------------------------------------------------------
+#### qc ------------------------------------------------------------------------
 
 #' Wrapper function to generate QC metric params for single cell
 #'
@@ -717,6 +829,8 @@ params_sc_min_quality <- function(
   )
 }
 
+#### hvg -----------------------------------------------------------------------
+
 #' Wrapper function for HVG detection parameters.
 #'
 #' @param method String. One of `c("vst", "meanvarbin", "dispersion")`.
@@ -748,159 +862,264 @@ params_sc_hvg <- function(
   )
 }
 
-### harmony --------------------------------------------------------------------
+#### pca -----------------------------------------------------------------------
 
-#' Default parameters for Harmony batch correction
+#' Wrapper for PCA specifically designed for single cells
 #'
-#' @param k Optional integer. Number of clusters for k-means clustering. If
-#' not provided, it will be automatically determined as
-#' `min(round(N / 30), 100)`.
-#' @param sigma Numeric vector. Per-cluster diversity weights. Either a single
-#' value (broadcast to all clusters) or a vector of length k.
-#' @param theta Numeric vector. Per-variable diversity penalties. Either a
-#' single value (broadcast to all variables) or a vector of length equal to the
-#' number of batch variables.
-#' @param lambda Numeric vector. Ridge regression penalty for the linear model.
-#' Typically a single value that is broadcast to all design matrix columns.
-#' @param block_size Numeric. Fraction of cells to update per block during
-#' optimisation (0.0-1.0). Lower values reduce memory usage but increase
-#' computation time.
-#' @param max_iter_kmeans Integer. Maximum number of k-means iterations per
-#' Harmony round.
-#' @param max_iter_harmony Integer. Maximum number of Harmony outer iterations.
-#' @param epsilon_kmeans Numeric. Convergence threshold for k-means clustering.
-#' Stops when the relative change in cluster assignments falls below this value.
-#' @param epsilon_harmony Numeric. Convergence threshold for Harmony. Stops when
-#' the relative change in the objective function falls below this value.
-#' @param window_size Integer. Number of previous iterations to consider when
-#' checking convergence.
+#' @param mean_center Boolean. Shall the data be mean centered
+#' @param normalise_variance Boolean. Shall the data have normalised variance
+#' @param randomised Boolean. Shall fast, approximate randomised SVD be used.
+#' @param clr Boolean. Shall the CLR-type `PFlogPF` be applied, see Booeshaghi,
+#' et al.
+#' @param size_factor Numeric. The used size factor during I/O. It needs to be
+#' the same as during I/O to have correct results when using the `PFlogPF`
+#' transformation.
 #'
-#' @return A list with the parameters.
+#' @returns A list with the parameters
 #'
 #' @export
-params_sc_harmony <- function(
-  k = NULL,
-  sigma = 0.1,
-  theta = 2.0,
-  lambda = 1.0,
-  block_size = 0.05,
-  max_iter_kmeans = 20L,
-  max_iter_harmony = 10L,
-  epsilon_kmeans = 1e-5,
-  epsilon_harmony = 1e-4,
-  window_size = 2L
+params_sc_pca <- function(
+  mean_center = TRUE,
+  normalise_variance = TRUE,
+  randomised = TRUE,
+  clr = FALSE,
+  size_factor = 1e4
 ) {
   # checks
-  checkmate::qassert(k, c("I1[1,)", "0"))
-  checkmate::qassert(sigma, "N+[0,)")
-  checkmate::qassert(theta, "N+[0,)")
-  checkmate::qassert(lambda, "N+[0,)")
-  checkmate::qassert(block_size, "N1(0,1]")
-  checkmate::qassert(max_iter_kmeans, "I1[1,)")
-  checkmate::qassert(max_iter_harmony, "I1[1,)")
-  checkmate::qassert(epsilon_kmeans, "N1(0,)")
-  checkmate::qassert(epsilon_harmony, "N1(0,)")
-  checkmate::qassert(window_size, "I1[1,)")
+  checkmate::qassert(mean_center, "B1")
+  checkmate::qassert(normalise_variance, "B1")
+  checkmate::qassert(randomised, "B1")
+  checkmate::qassert(clr, "B1")
+  checkmate::qassert(size_factor, "N1")
 
   list(
-    k = k,
-    sigma = sigma,
-    theta = theta,
-    lambda = lambda,
-    block_size = block_size,
-    max_iter_kmeans = max_iter_kmeans,
-    max_iter_harmony = max_iter_harmony,
-    epsilon_kmeans = epsilon_kmeans,
-    epsilon_harmony = epsilon_harmony,
-    window_size = window_size
+    mean_center = mean_center,
+    normalise_variance = normalise_variance,
+    randomised = randomised,
+    clr = clr,
+    size_factor = size_factor
   )
 }
 
-### harmony (version 2) --------------------------------------------------------
+#### knn -----------------------------------------------------------------------
 
-#' Default parameters for Harmony v2 batch correction
+#' Parameters for single cell kNN searches
 #'
-#' @param k Optional integer. Number of clusters for k-means clustering. If
-#' not provided, it will be automatically determined as
-#' `min(round(N / 30), 100)`.
-#' @param sigma Numeric vector. Per-cluster diversity weights. Either a single
-#' value (broadcast to all clusters) or a vector of length k.
-#' @param theta Numeric vector. Per-variable diversity penalties. Either a
-#' single value (broadcast to all variables) or a vector of length equal to the
-#' number of batch variables.
-#' @param lambda Numeric vector. Ridge regression penalty for the linear model.
-#' Typically a single value that is broadcast to all design matrix columns.
-#' Ignored when `use_dynamic_lambda = TRUE`.
-#' @param block_size Numeric. Fraction of cells to update per block during
-#' optimisation (0.0-1.0). Lower values reduce memory usage but increase
-#' computation time.
-#' @param max_iter_kmeans Integer. Maximum number of k-means iterations per
-#' Harmony round.
-#' @param max_iter_harmony Integer. Maximum number of Harmony outer iterations.
-#' @param epsilon_kmeans Numeric. Convergence threshold for k-means clustering.
-#' Stops when the relative change in cluster assignments falls below this value.
-#' @param epsilon_harmony Numeric. Convergence threshold for Harmony. Stops when
-#' the relative change in the objective function falls below this value.
-#' @param window_size Integer. Number of previous iterations to consider when
-#' checking convergence.
-#' @param alpha Numeric. Scaling factor for dynamic lambda estimation. Must be
-#' in (0, 1). Only relevant when `use_dynamic_lambda = TRUE`.
-#' @param tau Numeric. Scaling factor for theta based on batch size. A value of
-#' 0 disables batch-size scaling of theta.
-#' @param batch_proportion_cutoff Numeric. Cutoff for pruning batches with small
-#' proportions during ridge regression.
-#' @param use_dynamic_lambda Boolean. If `TRUE`, lambda is estimated dynamically
-#' per cluster instead of using the fixed `lambda` value.
+#' @param k Integer. Number of neighbours. Defaults to `15L`.
+#' @param knn_method String. Which method to use for the approximate nearest
+#' neighbour search. Defaults to `"kmknn"`. One of
+#' `c("kmknn", "hnsw", "annoy", "nndescent", "ivf", "exhaustive")`.
+#' @param ann_dist String. Distance metric to use. Defaults to `"euclidean"`.
+#' One of `c("cosine", "euclidean")`.
+#' @param n_trees Integer. Annoy param: number of trees. Defaults to `50L`.
+#' @param search_budget Integer or `NULL`. Annoy param: optional search budget
+#' per tree. If `NULL`, defaults to `n_trees * k * 20L` internally.
+#' @param delta Numeric. NNDescent param: early termination criterion.
+#' Defaults to `0.001`.
+#' @param diversify_prob Numeric. NNDescent param: diversification probability
+#' applied at the end of index construction. Defaults to `0.0`.
+#' @param ef_budget Integer or `NULL`. NNDescent param: optional query budget.
+#' Higher values improve recall at the cost of speed.
+#' @param m Integer. HNSW param: number of connections between layers.
+#' Defaults to `16L`.
+#' @param ef_construction Integer. HNSW param: size of the dynamic candidate
+#' list during construction. Defaults to `200L`.
+#' @param ef_search Integer. HNSW param: size of the candidate list at query
+#' time. Higher values improve recall at the cost of speed. Defaults to `100L`.
+#' @param n_list Integer or `NULL`. IVF param: number of clusters to generate.
+#' If `NULL`, defaults to `sqrt(n)` internally.
+#' @param n_probe Integer or `NULL`. IVF param: number of clusters to query.
+#' If `NULL`, defaults to `sqrt(n_list)` internally.
+#'
+#' @return A list with the kNN parameters.
+#'
+#' @export
+params_sc_knn <- function(
+  k = 15L,
+  knn_method = "kmknn",
+  ann_dist = "euclidean",
+  n_trees = 50L,
+  search_budget = NULL,
+  delta = 0.001,
+  diversify_prob = 0.0,
+  ef_budget = NULL,
+  m = 16L,
+  ef_construction = 200L,
+  ef_search = 100L,
+  n_list = NULL,
+  n_probe = NULL
+) {
+  checkmate::qassert(k, "I1[1,)")
+  checkmate::assertChoice(
+    knn_method,
+    c("kmknn", "hnsw", "annoy", "nndescent", "ivf", "exhaustive")
+  )
+  checkmate::assertChoice(ann_dist, c("cosine", "euclidean"))
+  checkmate::qassert(n_trees, "I1[1,)")
+  checkmate::assert(
+    checkmate::checkNull(search_budget),
+    checkmate::checkInt(search_budget, lower = 1L)
+  )
+  checkmate::qassert(delta, "N1(0,)")
+  checkmate::qassert(diversify_prob, "N1[0,1]")
+  checkmate::assert(
+    checkmate::checkNull(ef_budget),
+    checkmate::checkInt(ef_budget, lower = 1L)
+  )
+  checkmate::qassert(m, "I1[1,)")
+  checkmate::qassert(ef_construction, "I1[1,)")
+  checkmate::qassert(ef_search, "I1[1,)")
+  checkmate::assert(
+    checkmate::checkNull(n_list),
+    checkmate::checkInt(n_list, lower = 1L)
+  )
+  checkmate::assert(
+    checkmate::checkNull(n_probe),
+    checkmate::checkInt(n_probe, lower = 1L)
+  )
+
+  res <- list(
+    k = k,
+    knn_method = knn_method,
+    ann_dist = ann_dist,
+    n_trees = n_trees,
+    search_budget = search_budget,
+    delta = delta,
+    diversify_prob = diversify_prob,
+    ef_budget = ef_budget,
+    m = m,
+    ef_construction = ef_construction,
+    ef_search = ef_search,
+    n_list = n_list,
+    n_probe = n_probe
+  )
+
+  res
+}
+
+## single cell (multi modal) ---------------------------------------------------
+
+### dsb adt normalisation ------------------------------------------------------
+
+#' Default parameters for DSB ADT normalisation
+#'
+#' @param denoise_counts Boolean. Run Step II (cell-to-cell technical noise
+#' removal).
+#' @param use_isotype_controls Boolean. Include isotype controls in the noise
+#' matrix in Step II. Requires `isotype_indices` to be passed at call time.
+#' @param pseudocount Numeric. Pseudocount added before the log transform.
+#' The DSB paper recommends `10` with empty droplets and `1` without.
+#' @param quantile_low Optional numeric in `[0, 1)`. Lower quantile for
+#' per-protein output clipping. If `NULL` (and `quantile_high` is also `NULL`),
+#' no clipping is applied.
+#' @param quantile_high Optional numeric in `(0, 1]`. Upper quantile for
+#' per-protein output clipping. If `NULL` (and `quantile_low` is also `NULL`),
+#' no clipping is applied.
 #'
 #' @return A list with the parameters.
 #'
 #' @export
-params_sc_harmony_v2 <- function(
-  k = NULL,
-  sigma = 0.1,
-  theta = 2.0,
-  lambda = 1.0,
-  block_size = 0.05,
-  max_iter_kmeans = 4L,
-  max_iter_harmony = 10L,
-  epsilon_kmeans = 1e-3,
-  epsilon_harmony = 1e-2,
-  window_size = 3L,
-  alpha = 0.2,
-  tau = 0.0,
-  batch_proportion_cutoff = 1e-5,
-  use_dynamic_lambda = FALSE
+params_sc_dsb <- function(
+  denoise_counts = TRUE,
+  use_isotype_controls = TRUE,
+  pseudocount = 10,
+  quantile_low = NULL,
+  quantile_high = NULL
 ) {
   # checks
-  checkmate::qassert(k, c("I1[1,)", "0"))
-  checkmate::qassert(sigma, "N+[0,)")
-  checkmate::qassert(theta, "N+[0,)")
-  checkmate::qassert(lambda, "N+[0,)")
-  checkmate::qassert(block_size, "N1(0,1]")
-  checkmate::qassert(max_iter_kmeans, "I1[1,)")
-  checkmate::qassert(max_iter_harmony, "I1[1,)")
-  checkmate::qassert(epsilon_kmeans, "N1(0,)")
-  checkmate::qassert(epsilon_harmony, "N1(0,)")
-  checkmate::qassert(window_size, "I1[1,)")
-  checkmate::qassert(alpha, "N1(0,1)")
-  checkmate::qassert(tau, "N1[0,)")
-  checkmate::qassert(batch_proportion_cutoff, "N1(0,)")
-  checkmate::qassert(use_dynamic_lambda, "B1")
+  checkmate::qassert(denoise_counts, "B1")
+  checkmate::qassert(use_isotype_controls, "B1")
+  checkmate::qassert(pseudocount, "N1(0,)")
+  checkmate::qassert(quantile_low, c("N1[0,1)", "0"))
+  checkmate::qassert(quantile_high, c("N1(0,1]", "0"))
+
+  # both-or-neither for clipping
+  if (xor(is.null(quantile_low), is.null(quantile_high))) {
+    stop("quantile_low and quantile_high must both be provided or both NULL.")
+  }
+  if (
+    !is.null(quantile_low) &&
+      !is.null(quantile_high) &&
+      quantile_low >= quantile_high
+  ) {
+    stop("quantile_low must be strictly less than quantile_high.")
+  }
 
   list(
-    k = k,
-    sigma = sigma,
-    theta = theta,
-    lambda = lambda,
-    block_size = block_size,
-    max_iter_kmeans = max_iter_kmeans,
-    max_iter_harmony = max_iter_harmony,
-    epsilon_kmeans = epsilon_kmeans,
-    epsilon_harmony = epsilon_harmony,
-    window_size = window_size,
-    alpha = alpha,
-    tau = tau,
-    batch_proportion_cutoff = batch_proportion_cutoff,
-    use_dynamic_lambda = use_dynamic_lambda
+    denoise_counts = denoise_counts,
+    use_isotype_controls = use_isotype_controls,
+    pseudocount = pseudocount,
+    quantile_low = quantile_low,
+    quantile_high = quantile_high
+  )
+}
+
+### symphony -------------------------------------------------------------------
+
+#' Default parameters for Symphony query mapping
+#'
+#' @param sigma Numeric. Soft-clustering fuzziness for query -> reference
+#' centroid assignment. Symphony R default is 0.1.
+#' @param lambda Numeric. Ridge penalty on batch coefficients. Symphony R
+#' hardcodes 1.0.
+#'
+#' @return A list with the parameters.
+#'
+#' @export
+params_symphony_map <- function(sigma = 0.1, lambda = 1.0) {
+  checkmate::qassert(sigma, "N1[0,)")
+  checkmate::qassert(lambda, "N1[0,)")
+  res <- list(sigma = sigma, lambda = lambda)
+  class(res) <- c("params_symphony_map", "list")
+  res
+}
+
+### nichenet -------------------------------------------------------------------
+
+#' Parameters for ligand to target influence computation
+#'
+#' @param lr_sig_hub Numeric in `[0, 1]`. Hub correction strength for the
+#' ligand-receptor / signalling layer. 0 disables correction.
+#' @param gr_hub Numeric in `[0, 1]`. Hub correction strength for the gene
+#' regulatory layer. 0 disables correction.
+#' @param ltf_cutoff Numeric in `[0, 1]`. Quantile cutoff applied to the
+#' intermediate ligand-to-TF matrix.
+#' @param damping_factor Numeric in `[0, 1]`. PageRank-style damping factor.
+#' @param tol Numeric > 0. Convergence tolerance for the propagation step.
+#' @param max_iter Integer >= 1. Maximum iterations for the propagation step.
+#' @param topology_correction Boolean. Apply topology correction.
+#' @param secondary_targets Boolean. Run a second round through targets.
+#'
+#' @returns A named list of parameters.
+#'
+#' @export
+params_ligand_target <- function(
+  lr_sig_hub = 0,
+  gr_hub = 0,
+  ltf_cutoff = 0.99,
+  damping_factor = 0.5,
+  tol = 1e-6,
+  max_iter = 1000L,
+  topology_correction = FALSE,
+  secondary_targets = FALSE
+) {
+  checkmate::qassert(lr_sig_hub, "N1[0,1]")
+  checkmate::qassert(gr_hub, "N1[0,1]")
+  checkmate::qassert(ltf_cutoff, "N1[0,1]")
+  checkmate::qassert(damping_factor, "N1[0,1]")
+  checkmate::qassert(tol, "N1(0,)")
+  checkmate::qassert(max_iter, "X1[1,)")
+  checkmate::qassert(topology_correction, "B1")
+  checkmate::qassert(secondary_targets, "B1")
+
+  list(
+    lr_sig_hub = lr_sig_hub,
+    gr_hub = gr_hub,
+    ltf_cutoff = ltf_cutoff,
+    damping_factor = damping_factor,
+    tol = tol,
+    max_iter = as.integer(max_iter),
+    topology_correction = topology_correction,
+    secondary_targets = secondary_targets
   )
 }

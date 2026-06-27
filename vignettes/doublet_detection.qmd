@@ -94,7 +94,7 @@ mtx_io_params$cells_as_rows <- TRUE
 sc_object <- load_mtx(
   object = sc_object,
   sc_mtx_io_param = mtx_io_params,
-  streaming = FALSE
+  streaming = 0L
 )
 
 sc_object
@@ -151,7 +151,7 @@ How does the automatic thresholding perform against the demuxlet ground truth?
 
 ```{r}
 #| label: scrublet metrics
-scrublet_dt <- get_obs_data(scrublet)
+scrublet_dt <- get_data(scrublet)
 scrublet_dt[, Barcode := get_cell_names(sc_object)]
 scrublet_dt <- merge(scrublet_dt, demuxlet_data, by = "Barcode")
 
@@ -165,10 +165,10 @@ just run:
 #| label: add scrublet
 sc_object <- add_sc_new_obs(
   object = sc_object,
-  obs_data = get_obs_data(scrublet)
+  obs_data = get_data(scrublet)
 )
 
-sc_object[[1:5]]
+head(sc_object)
 ```
 
 As we can see with added now the Scrublet data
@@ -190,7 +190,7 @@ plot(scrublet_adj)
 
 ```{r}
 #| label: scrublet adjusted metrics
-scrublet_adj_dt <- get_obs_data(scrublet_adj)
+scrublet_adj_dt <- get_data(scrublet_adj)
 scrublet_adj_dt[, Barcode := get_cell_names(sc_object)]
 scrublet_adj_dt <- merge(scrublet_adj_dt, demuxlet_data, by = "Barcode")
 
@@ -203,6 +203,14 @@ doublet_metrics(
 We have made it worse here, but maybe there are cases where the scores are not
 very good. Compared to the original version, Otsu's method is used to identify
 the perfect threshold, but it might fail in some situations.
+
+#### Running with grouping variables or within specific cell subsets
+
+Scrublet (and the other methods) have the two parameters if you wish to run
+the detection method within a specific set of cells (see the 
+`cells_to_use = NULL` parameter )and/or want to use a
+grouping variable (like run the doublet detection within individual samples,
+see the `group_by = NULL` parameter).
 
 ### Boosted doublet detection
 
@@ -225,7 +233,7 @@ Let's check how boosted works?
 
 ```{r}
 #| label: boosted metrics
-boosted_dt <- get_obs_data(boosted_doublets)
+boosted_dt <- get_data(boosted_doublets)
 boosted_dt[, Barcode := get_cell_names(sc_object)]
 boosted_dt <- merge(boosted_dt, demuxlet_data, by = "Barcode")
 
@@ -259,7 +267,7 @@ boosted_doublets_fast <- doublet_detection_boost_sc(
 
 ```{r}
 #| label: boosted metrics (fast)
-boosted_fast_dt <- get_obs_data(boosted_doublets_fast)
+boosted_fast_dt <- get_data(boosted_doublets_fast)
 boosted_fast_dt[, Barcode := get_cell_names(sc_object)]
 boosted_fast_dt <- merge(boosted_fast_dt, demuxlet_data, by = "Barcode")
 
@@ -295,7 +303,7 @@ The scores are similar to the other methods.
 
 ```{r}
 #| label: scdblfinder metrics
-scdblfinder_dt <- get_obs_data(scdblfinder)
+scdblfinder_dt <- get_data(scdblfinder)
 
 scdblfinder_dt[, Barcode := get_cell_names(sc_object)]
 scdblfinder_dt <- merge(scdblfinder_dt, demuxlet_data, by = "Barcode")
@@ -312,7 +320,7 @@ the doublets like this.
 
 ```{r}
 #| label: weighted scores from scdblfinder
-weighted_scores <- get_scores(scdblfinder)
+weighted_scores <- get_scores(scdblfinder, score_type = "weighted")
 
 weighted_scores_threshold <- find_threshold_otsu(x = weighted_scores)
 
@@ -355,14 +363,6 @@ All methods can help to identify in a data-driven way doublets in your data.
 In this example, Scrublet performed better compared to the other two methods;
 in a comparison paper scDblFinder is the best across different benchmark data 
 sets, see [here](https://www.cell.com/cell-systems/fulltext/S2405-4712(20)30459-2).
-
-### Future outlook
-
-While Rust makes these methods blazingly fast (usually faster than the 
-corresponding R or Python versions), they start feeling quite slow on large
-data sets. A potential approach via GPU acceleration, see 
-[bixverse.gpu](https://github.com/GregorLueg/bixverse.gpu) could be an idea 
-here to improve the speed
 
 ## Clean up
 

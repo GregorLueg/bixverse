@@ -15,6 +15,7 @@ etc.
     \item \href{#method-SingleCellDuckDBBase-initialize}{\code{SingleCellDuckDBBase$new()}}
     \item \href{#method-SingleCellDuckDBBase-get_obs_table}{\code{SingleCellDuckDBBase$get_obs_table()}}
     \item \href{#method-SingleCellDuckDBBase-get_vars_table}{\code{SingleCellDuckDBBase$get_vars_table()}}
+    \item \href{#method-SingleCellDuckDBBase-get_vars_adt_table}{\code{SingleCellDuckDBBase$get_vars_adt_table()}}
     \item \href{#method-SingleCellDuckDBBase-get_obs_index_map}{\code{SingleCellDuckDBBase$get_obs_index_map()}}
     \item \href{#method-SingleCellDuckDBBase-get_var_index_map}{\code{SingleCellDuckDBBase$get_var_index_map()}}
     \item \href{#method-SingleCellDuckDBBase-get_cells_to_keep}{\code{SingleCellDuckDBBase$get_cells_to_keep()}}
@@ -26,6 +27,7 @@ etc.
     \item \href{#method-SingleCellDuckDBBase-set_to_keep_column}{\code{SingleCellDuckDBBase$set_to_keep_column()}}
     \item \href{#method-SingleCellDuckDBBase-add_data_var}{\code{SingleCellDuckDBBase$add_data_var()}}
     \item \href{#method-SingleCellDuckDBBase-rename_column}{\code{SingleCellDuckDBBase$rename_column()}}
+    \item \href{#method-SingleCellDuckDBBase-drop_columns}{\code{SingleCellDuckDBBase$drop_columns()}}
     \item \href{#method-SingleCellDuckDBBase-clone}{\code{SingleCellDuckDBBase$clone()}}
   }
 }
@@ -85,7 +87,7 @@ selected indices and/or columns.
 \if{html}{\out{<a id="method-SingleCellDuckDBBase-get_vars_table"></a>}}
 \if{latex}{\out{\hypertarget{method-SingleCellDuckDBBase-get_vars_table}{}}}
 \subsection{\code{SingleCellDuckDBBase$get_vars_table()}}{
-  Returns the full var table from the DuckDB.
+  Returns the var table from the DuckDB.
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}
     \preformatted{SingleCellDuckDBBase$get_vars_table(indices = NULL, cols = NULL)}
@@ -101,6 +103,30 @@ selected indices and/or columns.
   }
   \subsection{Returns}{
     The var table (if found) as a data.table with optionally
+selected indices and/or columns.
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SingleCellDuckDBBase-get_vars_adt_table"></a>}}
+\if{latex}{\out{\hypertarget{method-SingleCellDuckDBBase-get_vars_adt_table}{}}}
+\subsection{\code{SingleCellDuckDBBase$get_vars_adt_table()}}{
+  Returns the var table specific for the ADTs from the DuckDB.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{SingleCellDuckDBBase$get_vars_adt_table(indices = NULL, cols = NULL)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{indices}}{Optional ADT/var indices.}
+      \item{\code{cols}}{Optional column names to return.}
+    }
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    The var adt table (if found) as a data.table with optionally
 selected indices and/or columns.
   }
 }
@@ -259,7 +285,7 @@ in the DuckDB.
 \if{html}{\out{<a id="method-SingleCellDuckDBBase-set_to_keep_column"></a>}}
 \if{latex}{\out{\hypertarget{method-SingleCellDuckDBBase-set_to_keep_column}{}}}
 \subsection{\code{SingleCellDuckDBBase$set_to_keep_column()}}{
-  Indepenent of the loader, set the to_keep column to \code{TRUE} initially
+  Independent of the loader, set the to_keep column to \code{TRUE} initially
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}
     \preformatted{SingleCellDuckDBBase$set_to_keep_column()}
@@ -307,6 +333,33 @@ in the DuckDB.
       \item{\code{table}}{String. Either "obs" or "var".}
       \item{\code{old}}{String. The current column name.}
       \item{\code{new}}{String. The desired new column name.}
+    }
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    Invisible self.
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SingleCellDuckDBBase-drop_columns"></a>}}
+\if{latex}{\out{\hypertarget{method-SingleCellDuckDBBase-drop_columns}{}}}
+\subsection{\code{SingleCellDuckDBBase$drop_columns()}}{
+  Drop columns from the obs or var table.
+
+Refuses to drop the protected identifier and bookkeeping columns
+(\code{cell_idx}, \code{cell_id}, \code{to_keep} for obs; \code{gene_idx}, \code{gene_id} for
+var). Columns that do not exist trigger a warning and are skipped.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{SingleCellDuckDBBase$drop_columns(table = c("obs", "var"), cols)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{table}}{String. Either "obs" or "var".}
+      \item{\code{cols}}{Character vector. The column names to drop.}
     }
     \if{html}{\out{</div>}}
   }

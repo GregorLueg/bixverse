@@ -42,7 +42,8 @@ batch if not provided.}
 \item{streaming}{Boolean. Shall the genes be streamed in to reduce memory
 pressure.}
 
-\item{verbose}{Boolean. Controls verbosity of the function.}
+\item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
+detailed verbosity.}
 }
 \value{
 A list with HVG statistics concatenated across all batches. For
@@ -69,7 +70,9 @@ n_batches).
 }
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 Batch-aware highly variable gene detection. Calculates HVG statistics
 separately for each batch, allowing for downstream selection strategies
 such as union of top genes per batch.
 }
+\keyword{internal}

@@ -35,5 +35,7 @@ major (genes x n_levels)
 }
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 Helper function to extract data for dot plots and/or heatmaps.
 }
+\keyword{internal}

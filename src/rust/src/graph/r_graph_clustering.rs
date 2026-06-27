@@ -1,12 +1,29 @@
 use bixverse_rs::core::base::cors_similarity::*;
 use bixverse_rs::core::math::rbf::rbf_gaussian_mat;
 use bixverse_rs::graph::graph_clustering::*;
+use bixverse_rs::ml::clustering::k_means::KMeansParamsWrappers;
 use bixverse_rs::prelude::*;
 use extendr_api::prelude::*;
 
+/////////////
+// extendR //
+/////////////
+
+extendr_module! {
+    mod r_graph_clustering;
+    fn rs_spectral_clustering_sim;
+    fn rs_spectral_clustering;
+}
+
+///////////////
+// Functions //
+///////////////
+
 /// Rust implementation of spectral clustering
 ///
-/// @description Spectral clustering on a pre-calculated similarity matrix.
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Spectral clustering on a pre-calculated similarity matrix.
 ///
 /// @param similarities Numerical matrix representing the similarities. Needs
 /// to be symmetric!
@@ -26,18 +43,28 @@ fn rs_spectral_clustering_sim(
     n_clusters: usize,
     max_iters: usize,
     seed: usize,
-) -> Vec<i32> {
+) -> Result<Vec<i32>, extendr_api::Error> {
     let sim = r_matrix_to_faer(&similarities);
 
-    let membership = spectral_clustering(&sim, k_neighbours, n_clusters, max_iters, seed);
+    let params = KMeansParamsWrappers::new(max_iters, None, None);
 
-    membership
+    let membership =
+        spectral_clustering(&sim, k_neighbours, n_clusters, Some(params), seed).to_extendr()?;
+
+    let res = membership
         .iter()
         .map(|x| (*x + 1_usize) as i32)
-        .collect::<Vec<i32>>()
+        .collect::<Vec<i32>>();
+
+    Ok(res)
 }
 
 /// Rust implementation of spectral clustering
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// This version can take in data as is and will calculate the distance matrix
+/// internally.
 ///
 /// @param data Numerical matrix. The data to cluster. Rows = samples, columns =
 /// features.
@@ -76,9 +103,13 @@ fn rs_spectral_clustering(
         DistanceType::Canberra => column_pairwise_canberra_dist(data),
     };
 
+    let params = KMeansParamsWrappers::new(max_iters, None, None);
+
     let sim = rbf_gaussian_mat(res.as_ref(), &epsilon);
 
-    let membership = spectral_clustering(&sim.as_ref(), k_neighbours, n_clusters, max_iters, seed);
+    let membership =
+        spectral_clustering(&sim.as_ref(), k_neighbours, n_clusters, Some(params), seed)
+            .to_extendr()?;
 
     let res = membership
         .iter()
@@ -86,10 +117,4 @@ fn rs_spectral_clustering(
         .collect::<Vec<i32>>();
 
     Ok(res)
-}
-
-extendr_module! {
-    mod r_graph_clustering;
-    fn rs_spectral_clustering_sim;
-    fn rs_spectral_clustering;
 }

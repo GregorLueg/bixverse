@@ -23,13 +23,16 @@ the proportions. (0-indexed!)}
 
 \item{streaming}{Boolean. Shall the data be worked on in chunks.}
 
-\item{verbose}{Boolean. Controls verbosity of the function.}
+\item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
+detailed verbosity.}
 }
 \value{
 A list with the percentages of counts per gene set group detected
 in the cells.
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 This function allows to calculate for example the proportion of
 mitochondrial genes, or ribosomal genes in the cells for QC purposes.
 }
+\keyword{internal}

@@ -803,7 +803,6 @@ change_gene_identifier <- S7::new_generic(
 #' @method change_gene_identifier BulkDge
 #'
 #' @export
-BulkDge
 function(object, alternative_gene_id, variable_info = NULL) {
   # Checks
   checkmate::assertClass(
@@ -855,22 +854,7 @@ S7::method(add_new_metadata, BulkDge) <-
 
 ## prints ----------------------------------------------------------------------
 
-# TODO These need updating.
-
-#' @name print.BulkCoExp
-#' @title print Method for BulkCoExp object
-#'
-#' @description
-#' Print a BulkCoExp object.
-#'
-#' @param x An object of class `BulkCoExp`.
-#' @param ... Additional arguments (currently not used).
-#'
-#' @returns Invisibly returns `x`.
-#'
-#' @method print BulkCoExp
-#'
-#' @keywords internal
+#' @noRd
 S7::method(print, BulkCoExp) <- function(x, ...) {
   . <- hvg <- NULL
   # Pre-processing

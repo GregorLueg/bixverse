@@ -8,6 +8,7 @@ find_neighbours_sc(
   object,
   embd_to_use = "pca",
   no_embd_to_use = NULL,
+  modality = c("rna", "adt"),
   neighbours_params = params_sc_neighbours(),
   seed = 42L,
   .verbose = TRUE
@@ -21,6 +22,9 @@ needs to be part of the object.}
 
 \item{no_embd_to_use}{Optional integer. Number of embedding dimensions to
 use. If \code{NULL} all will be used.}
+
+\item{modality}{String. One of \code{c("rna", "adt")}. You can only use \code{"adt"}
+on \code{SingleCellsMultiModal} class.}
 
 \item{neighbours_params}{List. Output of \code{\link[=params_sc_neighbours]{params_sc_neighbours()}}.
 A list with the following items:
@@ -39,7 +43,9 @@ for available parameters and their defaults.
 
 \item{seed}{Integer. For reproducibility.}
 
-\item{.verbose}{Boolean. Controls verbosity and returns run times.}
+\item{.verbose}{Boolean or integer. Controls verbosity and returns run times.
+\code{FALSE} -> quiet, \code{TRUE} or \code{1L} -> normal verbosity, \code{2L} -> detailed
+verbosity.}
 }
 \value{
 The object with added KNN matrix.

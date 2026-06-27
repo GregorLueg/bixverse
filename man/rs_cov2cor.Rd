@@ -13,6 +13,6 @@ rs_cov2cor(x)
 The correlation matrix.
 }
 \description{
-Calculates the correlation matrix from a co-variance
-matrix
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+Calculates the correlation matrix from a co-variance matrix.
 }

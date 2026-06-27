@@ -13,5 +13,5 @@ rs_hamming_dist(x)
 The Hamming distance matrix
 }
 \description{
-Calculates the Hamming distance between categorical columns
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 }

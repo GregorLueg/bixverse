@@ -4,12 +4,16 @@
 \alias{rs_prcomp}
 \title{Rust implementation of prcomp}
 \usage{
-rs_prcomp(x, scale)
+rs_prcomp(x, scale, top_pcs)
 }
 \arguments{
 \item{x}{Numeric matrix. Rows = samples, columns = features.}
 
-\item{scale}{Boolean. Shall the columns additionally be scaled.}
+\item{scale}{Boolean. Shall the columns be variance normalised. (Mean
+centering will automatically occur.)}
+
+\item{top_pcs}{Optional integer. Only return the top PCs (under the hood
+all of them will be calculated).}
 }
 \value{
 A list with:
@@ -21,6 +25,7 @@ A list with:
 }
 }
 \description{
-Runs the singular value decomposition over the matrix x.
-Assumes that samples = rows, and columns = features.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+Runs the singular value decomposition over the matrix x. Assumes that
+samples = rows, and columns = features.
 }

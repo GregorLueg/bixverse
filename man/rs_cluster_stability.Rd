@@ -21,5 +21,6 @@ this feature across all the bootstraps, resamplings.
 }
 }
 \description{
-Helper function to assess cluster stability
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 }
+\keyword{internal}

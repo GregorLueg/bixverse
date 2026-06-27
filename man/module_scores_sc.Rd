@@ -10,7 +10,7 @@ module_scores_sc(
   n_bins = 24L,
   n_ctrl = 100L,
   seed = 42L,
-  streaming = FALSE,
+  streaming = NULL,
   .verbose = TRUE
 )
 }
@@ -27,10 +27,13 @@ set. Defaults to \code{100L}.}
 
 \item{seed}{Integer. The random seed.}
 
-\item{streaming}{Boolean. Shall the cell and gene data be streamed in.
-Useful for larger data sets.}
+\item{streaming}{Optional Boolean. Shall the data be streamed in. Useful for
+larger data sets where you wish to avoid loading in the whole data. If
+\code{NULL}, will automatically detect.}
 
-\item{.verbose}{Boolean. Controls the verbosity of the function.}
+\item{.verbose}{Boolean or integer. Controls verbosity and returns run times.
+\code{FALSE} -> quiet, \code{TRUE} or \code{1L} -> normal verbosity, \code{2L} -> detailed
+verbosity.}
 }
 \value{
 Returns a \code{ScMatrixRes} with the module scores.

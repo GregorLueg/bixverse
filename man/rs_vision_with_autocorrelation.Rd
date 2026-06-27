@@ -7,6 +7,7 @@
 rs_vision_with_autocorrelation(
   f_path,
   embd,
+  knn_data,
   gs_list,
   random_gs_list,
   vision_params,
@@ -22,6 +23,10 @@ rs_vision_with_autocorrelation(
 
 \item{embd}{Numerical matrix. The embedding matrix to use to generate the
 kNN graph.}
+
+\item{knn_data}{Optional list. This contains pre-computed kNN data
+(including distances). The user has to ensure consistency! If provided,
+this will be used.}
 
 \item{gs_list}{Nested list. Each sublist contains the (0-indexed!) positive
 and negative gene indices of that specific gene set.}
@@ -40,7 +45,8 @@ permuted gene set clusters the given gene set belongs.}
 
 \item{streaming}{Boolean. Shall the data be streamed.}
 
-\item{verbose}{Boolean. Controls verbosity of the function.}
+\item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
+detailed verbosity.}
 
 \item{seed}{Integer. Random seed for reproducibility.}
 }
@@ -53,6 +59,7 @@ FDR.
 }
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 The function will take in a list of gene sets that contains lists of \code{"pos"}
 and \code{"neg"} gene indices (0-indexed). You don't have to provide the \code{"neg"},
 but it can be useful to classify the delta of two stats (EMT, Th1; Th2) etc.
@@ -60,3 +67,4 @@ Additionally, it will take a random gene list and calculate an
 auto-correlation score based on Gaery's C to identify pathways that show
 significant patterns on the kNN graph generate on the provided embedding.
 }
+\keyword{internal}

@@ -6,12 +6,27 @@ use rayon::prelude::*;
 use rustc_hash::FxBuildHasher;
 use rustc_hash::FxHashSet;
 
+/////////////
+// extendR //
+/////////////
+
+extendr_module! {
+    mod r_oea;
+    fn rs_hypergeom_test;
+    fn rs_hypergeom_test_list;
+}
+
+///////////////
+// Functions //
+///////////////
+
 /// Run a single hypergeometric test.
 ///
-/// @description Given a set of target genes, this is a Rust implementation of
-/// an hypergeometric test testing for overenrichment of the target genes in the
-/// gene sets. WARNING! Incorrect use can cause kernel crashes. Wrapper around
-/// the Rust functions with type checks are provided in the package.
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Given a set of target genes, this is a Rust implementation of an
+/// hypergeometric test testing for overenrichment of the target genes in the
+/// gene sets.
 ///
 /// @param target_genes String vector. Represents the target gene set.
 /// @param gene_sets List. Contains the strings that represent the gene sets to
@@ -65,11 +80,11 @@ fn rs_hypergeom_test(
 
 /// Run a hypergeometric test over a list of target genes
 ///
-/// @description Given a list of target gene sets, this function will test for
-/// each of the individual target genes the hypergeoemetric enrichment against
-/// the specified gene sets. WARNING! Incorrect use can cause kernel crashes.
-/// Wrapper around the Rust functions with type checks are provided in the
-/// package.
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Given a list of target gene sets, this function will test for each of the
+/// individual target genes the hypergeoemetric enrichment against the specified
+/// gene sets.
 ///
 /// @param target_genes_list A character vector representing the target gene set.
 /// @param gene_sets A list of strings that represent the gene sets to test
@@ -147,10 +162,4 @@ fn rs_hypergeom_test_list(
         to_keep = to_keep,
         tests_passed = tests_passed
     ))
-}
-
-extendr_module! {
-    mod r_oea;
-    fn rs_hypergeom_test;
-    fn rs_hypergeom_test_list;
 }

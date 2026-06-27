@@ -37,5 +37,7 @@ graph generation}
 A vector with the membership of the samples
 }
 \description{
-Rust implementation of spectral clustering
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+This version can take in data as is and will calculate the distance matrix
+internally.
 }

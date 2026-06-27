@@ -1,10 +1,19 @@
-use crate::hotfix::mitch_hotfix::*;
 use bixverse_rs::core::math::stats::calc_fdr;
 use bixverse_rs::enrichment::enrichment_r_wrapper::prepare_mitch_pathways;
+use bixverse_rs::enrichment::mitch::*;
 use bixverse_rs::prelude::*;
 use bixverse_rs::utils::vec_utils::flatten_vector;
 use extendr_api::prelude::*;
 use rayon::prelude::*;
+
+/////////////
+// extendR //
+/////////////
+
+extendr_module! {
+    mod r_mitch;
+    fn rs_mitch_calc;
+}
 
 /// Calculate mitch enrichment leveraging Rust under the hood
 ///
@@ -82,9 +91,4 @@ fn rs_mitch_calc(
         s_dist = s_dist,
         sd = sd
     ))
-}
-
-extendr_module! {
-    mod r_mitch;
-    fn rs_mitch_calc;
 }

@@ -9,7 +9,7 @@
 
 #' Getter the obs table
 #'
-#' @param object `SingleCells`, `MetaCells` (or potentially other) class.
+#' @param object `SingleCells`, `MetaCells`, `SingleCellsMultiModal` class.
 #' @param indices Optional integer vector. The integer positions of the cells
 #' to return.
 #' @param cols Optional string vector. The columns from the obs table to return.
@@ -36,10 +36,11 @@ get_sc_obs <- S7::new_generic(
 
 #' Getter the var table
 #'
-#' @param object `SingleCells`, `MetaCells` (or potentially other) class.
+#' @param object `SingleCells`, `MetaCells`, `SingleCellsMultiModal` class.
 #' @param indices Optional integer vector. The integer positions of the genes
 #' to return.
 #' @param cols Optional string vector. The columns from the var table to return.
+#' @param modality String. The modality to return. One of `c("rna", "adt")`.
 #'
 #' @return The vars table
 #'
@@ -50,7 +51,8 @@ get_sc_var <- S7::new_generic(
   fun = function(
     object,
     indices = NULL,
-    cols = NULL
+    cols = NULL,
+    modality = c("rna", "adt")
   ) {
     S7::S7_dispatch()
   }
@@ -60,7 +62,7 @@ get_sc_var <- S7::new_generic(
 
 #' Getter the counts
 #'
-#' @param object `SingleCells`, `MetaCells` (or potentially other) class.
+#' @param object `SingleCells`, `MetaCells`, `SingleCellsMultiModal` class.
 #' @param assay String. Which slot to return. One of `c("raw", "norm")`.
 #' Defaults to `"raw"`.
 #' @param return_format String. One of `c("cell", "gene")`. Return data in
@@ -68,6 +70,7 @@ get_sc_var <- S7::new_generic(
 #' Defaults to `"cell"`. Not relevant for `MetaCells`.
 #' @param cell_indices Optional cell indices.
 #' @param gene_indices Optional gene indices.
+#' @param modality String. The modality to return. One of `c("rna", "adt")`.
 #' @param use_cells_to_keep Boolean. Shall cells to keep be found in the class,
 #' shall the counts be reduced to these. Not relevant for `MetaCells`.
 #' @param .verbose Boolean. Controls verbosity of the function.
@@ -85,6 +88,7 @@ get_sc_counts <- S7::new_generic(
     cell_indices = NULL,
     gene_indices = NULL,
     use_cells_to_keep = TRUE,
+    modality = c("rna", "adt"),
     .verbose = TRUE
   ) {
     S7::S7_dispatch()
@@ -138,6 +142,36 @@ setnames_sc <- S7::new_generic(
     table = c("obs", "var"),
     old,
     new
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+### drop columns ---------------------------------------------------------------
+
+#' Drop columns from the obs or var table
+#'
+#' @description
+#' Drops the named columns from the obs or var table of single cell-related
+#' classes. Protected identifier and bookkeeping columns (`cell_idx`,
+#' `cell_id`, `to_keep` for obs; `gene_idx`, `gene_id` for var) are refused
+#' with a warning. Columns that do not exist trigger a warning and are
+#' skipped.
+#'
+#' @param object `SingleCells` (or other compatible) class.
+#' @param table String. One of `c("obs", "var")`.
+#' @param cols Character vector. Column names to drop.
+#'
+#' @return Invisible self.
+#'
+#' @export
+drop_cols_sc <- S7::new_generic(
+  name = "drop_cols_sc",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    table = c("obs", "var"),
+    cols
   ) {
     S7::S7_dispatch()
   }
@@ -293,6 +327,22 @@ get_cell_indices <- function(x, cell_ids, rust_index) {
   UseMethod("get_cell_indices")
 }
 
+#' @title Get the cell idx (R-based) and cell names
+#'
+#' @description
+#' Returns the cell indices (R-based) and the cell names (usually barcodes)
+#' from the object for further downstream usage.
+#'
+#' @param x An object to get the cell info from
+#' @param filtered Boolean. If `TRUE`, only the cells to keep will be returned.
+#'
+#' @returns A named vector with elements -> cell_idx, names -> cell_names.
+#'
+#' @export
+get_cell_info <- function(x, filtered = TRUE) {
+  UseMethod("get_cell_info")
+}
+
 #' @title Get the cells to keep
 #'
 #' @param x An object to get the gene index from.
@@ -323,11 +373,12 @@ get_gene_names_from_idx <- function(x, gene_idx, rust_based = TRUE) {
 #'
 #' @param x An object to add the PCA factors for.
 #' @param pca_factor Numerical matrix. The matrix with the PCA factors.
+#' @param ... Other parameters.
 #'
 #' @export
 #'
 #' @keywords internal
-set_pca_factors <- function(x, pca_factor) {
+set_pca_factors <- function(x, pca_factor, ...) {
   UseMethod("set_pca_factors")
 }
 
@@ -335,11 +386,12 @@ set_pca_factors <- function(x, pca_factor) {
 #'
 #' @param x An object to add the PCA loadings for.
 #' @param pca_loading Numerical matrix. The Matrix with the PCA loadings.
+#' @param ... Other parameters.
 #'
 #' @export
 #'
 #' @keywords internal
-set_pca_loadings <- function(x, pca_loading) {
+set_pca_loadings <- function(x, pca_loading, ...) {
   UseMethod("set_pca_loadings")
 }
 
@@ -347,11 +399,12 @@ set_pca_loadings <- function(x, pca_loading) {
 #'
 #' @param x An object to add the singular values for.
 #' @param singular_vals Numerical vector. The singular values.
+#' @param ... Other parameters.
 #'
 #' @export
 #'
 #' @keywords internal
-set_pca_singular_vals <- function(x, singular_vals) {
+set_pca_singular_vals <- function(x, singular_vals, ...) {
   UseMethod("set_pca_singular_vals")
 }
 
@@ -360,11 +413,12 @@ set_pca_singular_vals <- function(x, singular_vals) {
 #' @param x An object to add the singular values for.
 #' @param embd Numerical matrix representing the additional embedding.
 #' @param name String. Name of the embedding.
+#' @param ... Other parameters.
 #'
 #' @export
 #'
 #' @keywords internal
-set_embedding <- function(x, embd, name) {
+set_embedding <- function(x, embd, name, ...) {
   UseMethod("set_embedding")
 }
 
@@ -372,45 +426,49 @@ set_embedding <- function(x, embd, name) {
 #'
 #' @param x An object to add the KNN data to
 #' @param knn `SingleCellNearestNeighbour` class to add to the classes.
+#' @param ... Other parameters.
 #'
 #' @export
 #'
 #' @keywords internal
-set_knn <- function(x, knn) {
+set_knn <- function(x, knn, ...) {
   UseMethod("set_knn")
 }
 
 #' Set/add KNN
 #'
-#' @param x An object to add the KNN data to
+#' @param x An object to add the KNN data to.
 #' @param snn_graph Igraph. The sNN graph for subsequent clustering.
+#' @param ... Other parameters.
 #'
 #' @export
 #'
 #' @keywords internal
-set_snn_graph <- function(x, snn_graph) {
+set_snn_graph <- function(x, snn_graph, ...) {
   UseMethod("set_snn_graph")
 }
 
 #' Remove the KNN data
 #'
-#' @param x An object from which to remove the kNN data
+#' @param x An object from which to remove the kNN data.
+#' @param ... Other parameters.
 #'
 #' @export
 #'
 #' @keywords internal
-remove_knn <- function(x) {
+remove_knn <- function(x, ...) {
   UseMethod("remove_knn")
 }
 
 #' Remove the sNN graph
 #'
 #' @param x An object from which to remove the sNN graph
+#' @param ... Other parameters.
 #'
 #' @export
 #'
 #' @keywords internal
-remove_snn_graph <- function(x) {
+remove_snn_graph <- function(x, ...) {
   UseMethod("remove_snn_graph")
 }
 
@@ -423,11 +481,12 @@ remove_snn_graph <- function(x) {
 #' single cell-related classes and methods.
 #'
 #' @param x An object to get PCA factors from.
+#' @param ... Other parameters.
 #'
 #' @returns The PCA factors from the object (if found).
 #'
 #' @export
-get_pca_factors <- function(x) {
+get_pca_factors <- function(x, ...) {
   UseMethod("get_pca_factors")
 }
 
@@ -438,11 +497,12 @@ get_pca_factors <- function(x) {
 #' the single cell-related classes and methods.
 #'
 #' @param x An object to get PCA loadings from.
+#' @param ... Other parameters.
 #'
 #' @returns The PCA feature loadings from the object (if found).
 #'
 #' @export
-get_pca_loadings <- function(x) {
+get_pca_loadings <- function(x, ...) {
   UseMethod("get_pca_loadings")
 }
 
@@ -454,11 +514,12 @@ get_pca_loadings <- function(x) {
 #' methods.
 #'
 #' @param x An object to get PCA singular values from.
+#' @param ... Other parameters.
 #'
 #' @returns The PCA singular values from the object (if found).
 #'
 #' @export
-get_pca_singular_val <- function(x) {
+get_pca_singular_val <- function(x, ...) {
   UseMethod("get_pca_singular_val")
 }
 
@@ -472,11 +533,12 @@ get_pca_singular_val <- function(x) {
 #' @param x An object to get embedding from
 #' @param embd_name String. The name of the embedding to return. The function
 #' will throw an error if the embedding does not exist.
+#' @param ... Other parameters.
 #'
 #' @returns Get the specified embeddings from the object (if found).
 #'
 #' @export
-get_embedding <- function(x, embd_name) {
+get_embedding <- function(x, embd_name, ...) {
   UseMethod("get_embedding")
 }
 
@@ -487,11 +549,12 @@ get_embedding <- function(x, embd_name) {
 #' used for the single cell-related classes and methods.
 #'
 #' @param x An object to get embedding from
+#' @param ... Other parameters.
 #'
 #' @return Get the names of the available embeddings.
 #'
 #' @export
-get_available_embeddings <- function(x) {
+get_available_embeddings <- function(x, ...) {
   UseMethod("get_available_embeddings")
 }
 
@@ -502,11 +565,12 @@ get_available_embeddings <- function(x) {
 #' used for the single cell-related classes and methods.
 #'
 #' @param x An object to get the sNN graph from.
+#' @param ... Other parameters.
 #'
 #' @returns The igraph that has the shared nearest neighbours.
 #'
 #' @export
-get_snn_graph <- function(x) {
+get_snn_graph <- function(x, ...) {
   UseMethod("get_snn_graph")
 }
 
@@ -517,11 +581,12 @@ get_snn_graph <- function(x) {
 #' used for the single cell-related classes and methods.
 #'
 #' @param x An object to get the KNN class from.
+#' @param ... Other parameters.
 #'
 #' @returns The `SingleCellNearestNeighbour` object.
 #'
 #' @export
-get_knn_obj <- function(x) {
+get_knn_obj <- function(x, ...) {
   UseMethod("get_knn_obj")
 }
 
@@ -536,15 +601,17 @@ get_knn_obj <- function(x) {
 #' in the given analysis + the values that are to be added to the obs table
 #' in the DuckDB.
 #'
-#' @param x An object to set gene mapping for
+#' @param x An object to get the data from.
+#' @param columns Optional string. For some of the functions you can decide
+#' to only extract specific columns.
 #' @param ... Other parameters
 #'
 #' @returns Returns a data.table with a cell_idx column for the cells included
 #' in the analysis and additional columns to be added to the obs table.
 #'
 #' @export
-get_obs_data <- function(x, ...) {
-  UseMethod("get_obs_data")
+get_data <- function(x, columns = NULL, ...) {
+  UseMethod("get_data")
 }
 
 #### knn getter methods --------------------------------------------------------
@@ -555,9 +622,10 @@ get_obs_data <- function(x, ...) {
 #' Getter for an integer matrix of samples x neighbours.
 #'
 #' @param x An object to get the kNN matrix from.
+#' @param ... Other parameters.
 #'
 #' @export
-get_knn_mat <- function(x) {
+get_knn_mat <- function(x, ...) {
   UseMethod("get_knn_mat")
 }
 
@@ -568,9 +636,10 @@ get_knn_mat <- function(x) {
 #' with [get_knn_mat()].
 #'
 #' @param x An object to get the kNN distances from.
+#' @param ... Other parameters.
 #'
 #' @export
-get_knn_dist <- function(x) {
+get_knn_dist <- function(x, ...) {
   UseMethod("get_knn_dist")
 }
 
@@ -597,10 +666,12 @@ get_knn_dist <- function(x) {
 #'   \item bin_method - String. One of `c("equal_width", "equal_freq")`. Not
 #'   implemented yet.
 #' }
-#' @param streaming Boolean. Shall the genes be streamed in. Useful for larger
-#' data sets where you wish to avoid loading in the whole data. Defaults to
-#' `FALSE`. Not used for `MetaCells`.
-#' @param .verbose Boolean. Controls verbosity and returns run times.
+#' @param streaming Optional Boolean. Shall the data be streamed in. Useful for
+#' larger data sets where you wish to avoid loading in the whole data. If
+#' `NULL`, will automatically detect. Not used for `MetaCells`.
+#' @param .verbose Boolean or integer. Controls verbosity and returns run times.
+#' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
+#' verbosity.
 #'
 #' @return It will add the mean, var, var_exp, var_std of each gene to the
 #' the var table.
@@ -613,7 +684,45 @@ find_hvg_sc <- S7::new_generic(
     object,
     hvg_no = 2000L,
     hvg_params = params_sc_hvg(),
-    streaming = FALSE,
+    streaming = NULL,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' Identify HVGs without mutating object state
+#'
+#' @description
+#' Like [find_hvg_sc()] but does not mutate `object`. Returns a data.table
+#' with per-gene HVG statistics plus `is_hvg`/`hvg_rank` for the top `hvg_no`
+#' genes. Useful for computing HVGs on a subset of cells (e.g. a specific
+#' cell type) for downstream methods like NMF, without overwriting the HVGs
+#' stored on the object.
+#'
+#' @param object `SingleCells` or `MetaCells` class.
+#' @param cell_ids Optional character. Cell ids (or meta cell ids) to restrict
+#' the HVG calculation to. If `NULL`, uses [get_cells_to_keep()] for
+#' `SingleCells` and all meta cells for `MetaCells`.
+#' @param hvg_no Integer. Number of top HVGs to flag. Defaults to `3000L`.
+#' @param hvg_params List, see [params_sc_hvg()].
+#' @param streaming Optional Boolean. Stream the data. Ignored for `MetaCells`.
+#' @param .verbose Boolean or integer. Verbosity.
+#'
+#' @return data.table with `gene_idx`, `gene_id`, the HVG statistics returned
+#' by the Rust HVG function, an `is_hvg` boolean and an `hvg_rank` integer
+#' (`NA` for non-HVGs).
+#'
+#' @export
+get_hvg_data_sc <- S7::new_generic(
+  name = "get_hvg_data_sc",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    cell_ids = NULL,
+    hvg_no = 3000L,
+    hvg_params = params_sc_hvg(),
+    streaming = NULL,
     .verbose = TRUE
   ) {
     S7::S7_dispatch()
@@ -631,8 +740,8 @@ find_hvg_sc <- S7::new_generic(
 #'
 #' @param object `SingleCells`, `MetaCells` (or potentially other) class.
 #' @param no_pcs Integer. Number of PCs to calculate.
-#' @param randomised_svd Boolean. Shall randomised SVD be used. Faster, but
-#' less precise.
+#' @param pca_params Named list. Controls the parameters to be used for the
+#' PCA calculation which is single cell-specific, see [params_sc_pca()]
 #' @param sparse_svd Boolean. Shall sparse solvers be used that do not do
 #' scaling. If set to yes, in the case of `random_svd = FALSE`, Lanczos
 #' iterations are used to solve the sparse SVD. With `random_svd = TRUE`, the
@@ -645,7 +754,9 @@ find_hvg_sc <- S7::new_generic(
 #' these, the internal HVG will be overwritten.
 #' @param seed Integer. Controls reproducibility. Only relevant if
 #' `randomised_svd = TRUE`.
-#' @param .verbose Boolean. Controls verbosity and returns run times.
+#' @param .verbose Boolean or integer. Controls verbosity and returns run times.
+#' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
+#' verbosity.
 #'
 #' @return The function will add the PCA factors, loadings and singular values
 #' to the object cache in memory.
@@ -657,7 +768,7 @@ calculate_pca_sc <- S7::new_generic(
   fun = function(
     object,
     no_pcs,
-    randomised_svd = TRUE,
+    pca_params = params_sc_pca(),
     sparse_svd = FALSE,
     hvg = NULL,
     seed = 42L,
@@ -701,6 +812,8 @@ calculate_pca_sc <- S7::new_generic(
 #' needs to be part of the object.
 #' @param no_embd_to_use Optional integer. Number of embedding dimensions to
 #' use. If `NULL` all will be used.
+#' @param modality String. One of `c("rna", "adt")`. You can only use `"adt"`
+#' on `SingleCellsMultiModal` class.
 #' @param neighbours_params List. Output of [bixverse::params_sc_neighbours()].
 #' A list with the following items:
 #' \itemize{
@@ -716,7 +829,9 @@ calculate_pca_sc <- S7::new_generic(
 #'   for available parameters and their defaults.
 #' }
 #' @param seed Integer. For reproducibility.
-#' @param .verbose Boolean. Controls verbosity and returns run times.
+#' @param .verbose Boolean or integer. Controls verbosity and returns run times.
+#' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
+#' verbosity.
 #'
 #' @return The object with added KNN matrix.
 #'
@@ -728,6 +843,7 @@ find_neighbours_sc <- S7::new_generic(
     object,
     embd_to_use = "pca",
     no_embd_to_use = NULL,
+    modality = c("rna", "adt"),
     neighbours_params = params_sc_neighbours(),
     seed = 42L,
     .verbose = TRUE
@@ -749,6 +865,10 @@ find_neighbours_sc <- S7::new_generic(
 #' @param res Numeric. The resolution parameter for [igraph::cluster_leiden()]
 #' or [igraph::cluster_louvain()].
 #' @param name String. The name to add to the obs table in the DuckDB.
+#' @param modality String. On which modality to run the UMAP. One of
+#' `c("rna", "adt", "wnn")`. The two latter options are only available for
+#' multi-modal versions with the added data.
+#' @param seed Integer. For reproducibility.
 #'
 #' @return The object with added clustering in the obs table.
 #'
@@ -760,7 +880,9 @@ find_clusters_sc <- S7::new_generic(
     object,
     cluster_algorithm = c("leiden", "louvain"),
     res = 1.0,
-    name = "leiden_clustering"
+    name = "leiden_clustering",
+    modality = c("rna", "adt", "wnn"),
+    seed = 42L
   ) {
     S7::S7_dispatch()
   }
@@ -783,9 +905,12 @@ find_clusters_sc <- S7::new_generic(
 #' respective gene sets.
 #' @param auc_type String. Which type of AUC to calculate. Choice of
 #' `c("wilcox", "auroc")`.
-#' @param streaming Boolean. Shall the cell data be streamed in. Useful for
-#' larger data sets. Ignored when applied to `MetaCells`.
-#' @param .verbose Boolean. Controls the verbosity of the function.
+#' @param streaming Optional Boolean. Shall the data be streamed in. Useful for
+#' larger data sets where you wish to avoid loading in the whole data. If
+#' `NULL`, will automatically detect. Ignored when applied to `MetaCells`.
+#' @param .verbose Boolean or integer. Controls verbosity and returns run times.
+#' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
+#' verbosity.
 #'
 #' @return AUCell results in form of a matrix that is cells x gene sets or as
 #' `ScMatrixRes` pending the input.
@@ -800,7 +925,7 @@ aucell_sc <- S7::new_generic(
     object,
     gs_list,
     auc_type = c("wilcox", "auroc"),
-    streaming = FALSE,
+    streaming = NULL,
     .verbose = TRUE
   ) {
     S7::S7_dispatch()
@@ -824,7 +949,9 @@ aucell_sc <- S7::new_generic(
 #' by this function.
 #' @param cells_to_take Optional string vector. Cell identifiers to restrict
 #' to. If `NULL`, defaults to all filtered cells in the class.
-#' @param .verbose Boolean. Controls verbosity. Defaults to `TRUE`.
+#' @param .verbose Boolean or integer. Controls verbosity and returns run times.
+#' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
+#' verbosity.
 #'
 #' @returns A character vector of gene identifiers passing the SCENIC
 #' inclusion criteria.
@@ -864,11 +991,13 @@ scenic_gene_filter_sc <- S7::new_generic(
 #' thresholds in `scenic_params`.
 #' @param cells_to_take Optional string vector. Cell identifiers to restrict
 #' to. If `NULL`, defaults to all filtered cells in the class.
-#' @param streaming Boolean. Whether to use the streaming implementation to
-#' bound memory usage. Useful for large datasets. Defaults to `FALSE`. Ignored
-#' when applied to `MetaCells`.
+#' @param streaming Optional Boolean. Shall the data be streamed in. Useful for
+#' larger data sets where you wish to avoid loading in the whole data. If
+#' `NULL`, will automatically detect. Ignored when applied to `MetaCells`.
 #' @param random_seed Integer. Used for reproducibility. Defaults to `42L`.
-#' @param .verbose Boolean. Controls verbosity. Defaults to `TRUE`.
+#' @param .verbose Boolean or integer. Controls verbosity and returns run times.
+#' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
+#' verbosity.
 #'
 #' @returns A `ScenicGrn` object.
 #'
@@ -900,9 +1029,203 @@ scenic_grn_sc <- S7::new_generic(
     scenic_params = params_scenic(),
     genes_to_take = NULL,
     cells_to_take = NULL,
-    streaming = FALSE,
+    streaming = NULL,
     random_seed = 42L,
     .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#### nmf -----------------------------------------------------------------------
+
+## generics --------------------------------------------------------------------
+
+#' Run single-run NMF on single cell or meta cell data
+#'
+#' @description
+#' Runs a single HALS NMF on a chosen subset of cells and genes. For
+#' `SingleCells`, the counts are streamed from disk via the Rust binary
+#' files; for `MetaCells`, the in-memory sparse counts are used.
+#'
+#' @param object `SingleCells` or `MetaCells` class.
+#' @param k Integer. Number of latent factors to return.
+#' @param cell_ids Optional character. Cell ids (or meta cell ids) to restrict
+#' the NMF to. If `NULL`, uses [get_cells_to_keep()] for `SingleCells` and all
+#' meta cells for `MetaCells`.
+#' @param gene_ids Optional character. Gene ids to restrict the NMF to. If
+#' `NULL`, uses [get_hvg()] on the object.
+#' @param preprocessing String. One of `c("none", "sd", "sqrt_sd")`.
+#' @param use_second_layer Boolean. If `TRUE`, runs NMF on the normalised
+#' counts (recommended); if `FALSE`, on the raw counts.
+#' @param nmf_hals_params List, see [params_nmf_hals()].
+#' @param seed Integer. Random seed for initialisation.
+#' @param .verbose Boolean or integer. Verbosity.
+#'
+#' @returns An `NmfResult` object.
+#'
+#' @export
+nmf_sc <- S7::new_generic(
+  name = "nmf_sc",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    k,
+    cell_ids = NULL,
+    gene_ids = NULL,
+    preprocessing = "none",
+    use_second_layer = TRUE,
+    nmf_hals_params = params_nmf_hals(),
+    seed = 42L,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' Run stabilised (multi-run) NMF on single cell or meta cell data
+#'
+#' @description
+#' Runs `n_runs` HALS NMF with random initialisations seeded by `seed + i`.
+#' The `nmf_init` field in `nmf_hals_params` is ignored; random init is
+#' always used.
+#'
+#' @inheritParams nmf_sc
+#' @param n_runs Integer. Number of random restarts.
+#'
+#' @returns A `StabilisedNmfResult` object.
+#'
+#' @export
+stabilised_nmf_sc <- S7::new_generic(
+  name = "stabilised_nmf_sc",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    k,
+    cell_ids = NULL,
+    gene_ids = NULL,
+    preprocessing = "none",
+    use_second_layer = TRUE,
+    nmf_hals_params = params_nmf_hals(),
+    n_runs = 30L,
+    seed = 42L,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#### i/o -----------------------------------------------------------------------
+
+#' Save memory-bound data to disk
+#'
+#' @description
+#' Helper function that stores the memory-bound data to disk for checkpointing
+#' or when you close the session for quick recovery of prior work. You have the
+#' option to save as `".rds"` or `".qs2"` (you need to have the package `"qs2"`
+#' installed for this option!).
+#'
+#' @param object `SingleCells`, `MetaCells` or `SingleCellsMultiModal` class.
+#' @param type String. One of `c("qs2", "rds")`. Defines which binary format to
+#' use. Will default to `"qs2"` for speed.
+#'
+#' @returns The object with added information on the data on disk.
+#'
+#' @export
+save_sc_exp_to_disk <- S7::new_generic(
+  name = "save_sc_exp_to_disk",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    type = c("qs2", "rds")
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' Load an existing SingleCells from disk
+#'
+#' @description
+#' Helper function that can load the parameters to access the on-disk stored
+#' data into the class.
+#'
+#' @param object `SingleCells`, `MetaCells` or `SingleCellsMultiModal` class.
+#'
+#' @returns The object with added information on the data on disk.
+#'
+#' @export
+load_existing <- S7::new_generic(
+  name = "load_existing",
+  dispatch_args = "object",
+  fun = function(
+    object
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#### plotting ------------------------------------------------------------------
+
+#' Extract grouped gene statistics for dot plots
+#'
+#' @description
+#' Extracts per-group mean expression and percentage of expressing cells for a
+#' set of genes. Returns a long-format data.table suitable for dot plots.
+#'
+#' @param object A single cell class.
+#' @param features Character vector. Gene IDs to extract.
+#' @param grouping_variable String. Column name in the obs table to group by.
+#' @param scale_exp Boolean. Whether to min-max scale mean expression per gene.
+#' @param modality String. One of `c("rna", "adt")`. ADT is only available for
+#' `SingleCellsMultiModal`.
+#'
+#' @return A data.table with columns: gene, group, mean_exp, scaled_exp, pct_exp.
+#'
+#' @export
+extract_dot_plot_data <- S7::new_generic(
+  name = "extract_dot_plot_data",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    features,
+    grouping_variable,
+    scale_exp = TRUE,
+    modality = c("rna", "adt")
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' Extract normalised gene expression for plotting
+#'
+#' @description
+#' Extracts dense normalised (log1p) expression values for a set of genes,
+#' optionally with additional observation metadata columns.
+#'
+#' @param object A single cell class.
+#' @param features Character vector. Gene IDs to extract.
+#' @param obs_cols Optional character vector. Column names from the obs table
+#' to include.
+#' @param scale Boolean. Whether to z-score the expression values.
+#' @param clip Optional numeric. If `scale = TRUE`, clip z-scores to
+#' `[-clip, clip]`.
+#' @param modality String. One of `c("rna", "adt")`. ADT is only available for
+#' `SingleCellsMultiModal`.
+#'
+#' @return A data.table with a `cell_id` column, one column per gene, and
+#' any requested obs columns.
+#'
+#' @export
+extract_gene_expression <- S7::new_generic(
+  name = "extract_gene_expression",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    features,
+    obs_cols = NULL,
+    scale = FALSE,
+    clip = NULL,
+    modality = c("rna", "adt")
   ) {
     S7::S7_dispatch()
   }

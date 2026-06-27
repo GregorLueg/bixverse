@@ -7,14 +7,12 @@
 rs_compare_knn(knn_data_a, knn_data_b)
 }
 \arguments{
-\item{knn_mat_a}{Integer matrix. The indices of the first kNN graph to
-compare. Should be samples x neighbours. This will be treated as ground
-truth.}
+\item{knn_data_a}{Named list. This contains the kNN data (including
+distances) of the first kNN graph. This one will be treated as the ground
+truth}
 
-\item{knn_mat_b}{Integer matrix. The indices of the second kNN graph to
-compare. Should be samples x neighbours.}
-
-\item{knn_dist_a}{Numeric matrix.}
+\item{knn_data_b}{Named list. This contains the kNN data (including
+distances) of the second kNN graph.}
 }
 \value{
 A list with the following elements:
@@ -27,5 +25,7 @@ across all samples
 }
 }
 \description{
-Helper to compare kNN graphs
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+Compare two kNN graphs and return the distance ratios and overlaps of
+k-nearest neighbours between them.
 }

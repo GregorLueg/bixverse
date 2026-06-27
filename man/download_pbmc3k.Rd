@@ -13,6 +13,6 @@ download_pbmc3k(quiet = FALSE)
 String. The path to the extracted PBMC3K data.
 }
 \description{
-This function downloads the PBMC3K dataset from 10x Genomics (uploaded
-on Zenodo) and extracts it and returns the (temporary) paths.
+This function downloads the PBMC3K dataset from 10x Genomics (uploaded on
+Zenodo) and extracts it and returns the (temporary) paths.
 }

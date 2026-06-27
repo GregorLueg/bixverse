@@ -16,11 +16,13 @@ integer that represents the batch effects you wish to regress out.}
 
 \item{seed}{Integer. Seed for reproducibility purposes.}
 
-\item{verbose}{Boolean. Controls verbosity of the function.}
+\item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
+detailed verbosity.}
 }
 \value{
 The batch-corrected Harmony embedding space.
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 This function implements the Harmony algorithm from Korsunsky et al., 2019.
 }

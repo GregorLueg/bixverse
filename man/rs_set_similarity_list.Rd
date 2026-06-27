@@ -21,6 +21,7 @@ A list with the following items:
 }
 }
 \description{
-This function calculates the set similarity via Jaccard or
-overlap coefficient across all permutations of one list.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+This function calculates the set similarity via Jaccard or overlap
+coefficient across all permutations of one list.
 }

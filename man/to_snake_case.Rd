@@ -10,8 +10,7 @@ to_snake_case(x, ignore_na = FALSE)
 \item{x}{String. The string (vector) you wish to transform to snake_case.}
 
 \item{ignore_na}{Boolean. Shall the function just ignore \code{NA} values and
-return \code{NA} at this position.
-Defaults to \code{FALSE}.}
+return \code{NA} at this position. Defaults to \code{FALSE}.}
 }
 \value{
 Returns the string in snake_case format.

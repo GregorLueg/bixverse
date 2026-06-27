@@ -4,7 +4,7 @@
 \alias{rs_h5ad_data}
 \title{Load in h5ad data via Rust}
 \usage{
-rs_h5ad_data(f_path, cs_type, nrows, ncols, cell_quality, verbose)
+rs_h5ad_data(f_path, cs_type, nrows, ncols, cell_quality, slot, verbose)
 }
 \arguments{
 \item{f_path}{File path. The path to the h5ad file.}
@@ -17,6 +17,8 @@ rs_h5ad_data(f_path, cs_type, nrows, ncols, cell_quality, verbose)
 
 \item{cell_quality}{List. Specifiying the cell quality. Please refer
 to \code{\link[=params_sc_min_quality]{params_sc_min_quality()}}.}
+
+\item{slot}{String. In which slot the raw data can be found.}
 
 \item{verbose}{Boolean. Controls verbosity of the function}
 }
@@ -31,6 +33,7 @@ A list with:
 }
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 Loads in h5ad data within Rust and automatically converts the data into
 CSR with cells x genes.
 }

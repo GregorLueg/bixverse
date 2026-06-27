@@ -14,7 +14,8 @@ cells to aggregate per element.}
 
 \item{assay}{String. One of \code{c("raw", "norm")}. Which counts to normalise.}
 
-\item{verbose}{Controls verbosity of the function}
+\item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
+detailed verbosity.}
 }
 \value{
 A list with the following elements (easy to convert into CSR in R)
@@ -27,8 +28,10 @@ A list with the following elements (easy to convert into CSR in R)
 }
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 This function will return a sparse matrix of
 \verb{length(cell_indices_ls) x number of genes} (in list form in CSR).
 The function has the option to return the sum of the sum of the raw counts
 or the average of the normalised counts.
 }
+\keyword{internal}

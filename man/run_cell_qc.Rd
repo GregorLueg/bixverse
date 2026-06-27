@@ -4,27 +4,44 @@
 \alias{run_cell_qc}
 \title{Run MAD outlier detection on per-cell QC metrics}
 \usage{
-run_cell_qc(metrics, directions = NULL, threshold = 3)
+run_cell_qc(
+  metrics,
+  cells_to_keep,
+  directions = NULL,
+  threshold = 3,
+  groups = NULL
+)
 }
 \arguments{
 \item{metrics}{Named list of numeric vectors. Each element is a QC metric
 to check (e.g. \code{list(log10_lib_size = log10(lib_size), MT = mt_pct)}).}
+
+\item{cells_to_keep}{Integer. Which cells were included in the analysis.
+0-indices for Rust.}
 
 \item{directions}{Named character vector mapping metric names to direction.
 One of \code{"twosided"}, \code{"below"}, \code{"above"}. Defaults to \code{"twosided"} for
 all metrics if \code{NULL}.}
 
 \item{threshold}{Numeric. Number of MADs to use for outlier detection.}
+
+\item{groups}{Optional grouping variable. An atomic vector of length equal to
+the metrics. Per-group outlier detection only runs when more than one group
+is present.}
 }
 \value{
 An object of class \code{CellQc} containing:
 \describe{
+\item{cell_idx}{Integer vector of 1-indexed cell positions.}
 \item{metrics}{The input metrics list.}
+\item{groups}{Character vector of group labels.}
 \item{per_metric}{Named list of per-metric results from
 \code{\link{per_cell_qc_outlier}}.}
 \item{outlier_mat}{Logical matrix with one column per metric.}
 \item{combined}{Logical vector. \code{TRUE} if a cell is an outlier in any
 metric.}
+\item{per_group_stats}{A \code{data.table} of per-group outlier statistics
+(see \code{\link{per_group_qc_outlier}}), or \code{NULL} for a single group.}
 }
 }
 \description{

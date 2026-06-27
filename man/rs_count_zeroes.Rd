@@ -19,6 +19,7 @@ A list with:
 }
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 Calculates in a single matrix pass the total number of zeroes, the row
 zeroes and column zeroes.
 }

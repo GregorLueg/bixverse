@@ -35,13 +35,16 @@ an sNN graph.}
 
 \item{seed}{Integer. For reproducibility.}
 
-\item{verbose}{Boolean. Controls the verbosity of the function.}
+\item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
+detailed verbosity.}
 }
 \value{
 A list with the memberships per resolution.
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 Runs first k-means clustering, followed by a kNN detection on the centroids
 to then run Louvain clustering on the graph and propagate the membership
 back to the original data.
 }
+\keyword{internal}

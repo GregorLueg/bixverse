@@ -10,8 +10,8 @@ rs_sc_doublet_detection(
   cells_to_keep,
   boost_params,
   seed,
-  streaming,
-  verbose
+  verbose,
+  streaming
 )
 }
 \arguments{
@@ -27,10 +27,11 @@ to include in this analysis.}
 
 \item{seed}{Integer. Seed for reproducibility purposes.}
 
+\item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
+detailed verbosity.}
+
 \item{streaming}{Boolean. Shall the data be streamed for the HVG
 calculations.}
-
-\item{verbose}{Boolean. Controls verbosity}
 }
 \value{
 A list with
@@ -43,5 +44,7 @@ a doublet for the observed cells.
 }
 }
 \description{
-Detect Doublets via BoostClassifier (in Rust)
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+Implementation of BoostClassifier in Rust.
 }
+\keyword{internal}

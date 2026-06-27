@@ -9,6 +9,7 @@ params_sc_supercell(
   graining_factor = 20,
   use_kernel = TRUE,
   k_ith = NULL,
+  max_support = NULL,
   knn = list()
 )
 }
@@ -24,14 +25,19 @@ final dataset). Defaults to \code{20.0}. (One meta cell per 20 cells.)}
 akin to the approach in SuperCell2, see Hérault, et al., bioRxiv, 2026 and
 van Dijk, et al., Cell, 2018.}
 
+\item{k_ith}{Optional integer. The k-ith neighbour to use for the kernel.
+Defaults to \code{k \%/\% 2}.}
+
+\item{max_support}{Optional integer. Caps each cell's walk-probability vector
+to its top entries by mass, bounding memory at ~\code{max_support * n_cells} on
+large data. Makes the result an approximation. \code{NULL} (default) keeps the
+walks exact.}
+
 \item{knn}{List. Optional overrides for kNN parameters. See
 \code{\link[=params_knn_defaults]{params_knn_defaults()}} for available parameters: \code{k},
 \code{knn_method}, \code{ann_dist}, \code{search_budget}, \code{n_trees}, \code{delta},
 \code{diversify_prob}, \code{ef_budget}, \code{m}, \code{ef_construction}, \code{ef_search}, \code{n_list}
 and \code{n_probe}.}
-
-\item{k_ith_neighbour}{Optional integer. The k-ith neighbour to use for
-the kernel. Defaults to \code{k \%/\% 2}.}
 }
 \value{
 A list with the SuperCell parameters.

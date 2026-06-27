@@ -42,7 +42,8 @@ the meta cells. Typically \code{1e4}.}
 
 \item{seed}{Integer. For reproducibility purposes.}
 
-\item{verbose}{Boolean. Controls verbosity of the function.}
+\item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
+detailed verbosity.}
 }
 \value{
 A list with the following elements:
@@ -55,6 +56,7 @@ nrow, ncol in sparse format.
 }
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 This function implements the approach from Bilous, et al.
 to generate meta cells or called here SuperCells. You can provide
 pre-computed kNN data (indices + distances) via \code{knn_data}, or an
@@ -64,3 +66,4 @@ supplied, the kNN graph is always regenerated on the subset and any
 \code{knn_data} is ignored. Distances are required when the SuperCell
 parameters request the kernel-weighted graph.
 }
+\keyword{internal}

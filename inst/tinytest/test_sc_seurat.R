@@ -55,11 +55,11 @@ sc_object <- load_seurat(
     min_lib_size = min_lib_size,
     min_cells = min_cells_exp
   ),
-  streaming = FALSE,
+  streaming = 0L,
   .verbose = FALSE
 )
 
-# subset here... Seurat is weird as f--k
+# subset here... Seurat is weird...
 # also, otherwise dual filtering is happening
 seurat_obj <- subset(
   seurat_obj,
@@ -235,7 +235,7 @@ seurat_obj <- Seurat::RunPCA(
 sc_object <- calculate_pca_sc(
   object = sc_object,
   no_pcs = no_pcs,
-  randomised_svd = FALSE,
+  pca_params = params_sc_pca(randomised = FALSE),
   .verbose = FALSE
 )
 
@@ -253,7 +253,7 @@ expect_true(
 sc_object <- calculate_pca_sc(
   object = sc_object,
   no_pcs = no_pcs,
-  randomised_svd = TRUE,
+  pca_params = params_sc_pca(),
   .verbose = FALSE
 )
 

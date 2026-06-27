@@ -52,7 +52,9 @@ for available parameters and their defaults.
 
 \item{seed}{Integer. Random seed.}
 
-\item{.verbose}{Boolean. Controls the verbosity of the function.}
+\item{.verbose}{Boolean or integer. Controls verbosity and returns run times.
+\code{FALSE} -> quiet, \code{TRUE} or \code{1L} -> normal verbosity, \code{2L} -> detailed
+verbosity.}
 }
 \value{
 The object with added kNN matrix based on BBKNN and the graph based

@@ -8,9 +8,12 @@ load_h5ad(
   object,
   h5_path,
   sc_qc_param = params_sc_min_quality(),
-  streaming = TRUE,
+  streaming = 1L,
+  raw_count_slot = c("auto", "X", "raw.X", "layers.counts"),
   cell_id_col = NULL,
   batch_size = 1000L,
+  max_genes_in_memory = 2000L,
+  cell_batch_size = 100000L,
   .verbose = TRUE
 )
 }
@@ -31,14 +34,26 @@ detected to be included.
 \item target_size - Float. Target size to normalise to. Defaults to \code{1e5}.
 }}
 
-\item{streaming}{Boolean. Shall the data be streamed during the conversion
-of CSR to CSC. Defaults to \code{TRUE} and should be used for larger data sets.}
+\item{streaming}{Integer. \code{0L} -> all cells loaded in memory then transposed
+(fastest, highest memory), \code{1L} -> light streaming with cell batching, \code{2L}
+-> heavy streaming with memory upper boundaries on the gene side. Controls
+memory pressure during the CSR-to-CSC conversion. Defaults to \code{1L}.}
 
-\item{cell_id_col}{Optional string. If a specific column in the h5ad
-obs data is representing the cell identifiers, you can specify it here.}
+\item{raw_count_slot}{Where raw counts live. \code{"auto"} detects per file via
+\code{\link[=detect_raw_count_slot]{detect_raw_count_slot()}}; otherwise one of \code{"X"}, \code{"raw.X"},
+\code{"layers.counts"}.}
 
-\item{batch_size}{Integer. If \code{streaming = TRUE}, how many cells to process
-in one batch. Defaults to \code{1000L}.}
+\item{cell_id_col}{Optional string. If a specific column in the h5ad obs
+data is representing the cell identifiers, you can specify it here.}
+
+\item{batch_size}{Integer. Cell batch size when \code{streaming = 1L}. Defaults
+to \code{1000L}.}
+
+\item{max_genes_in_memory}{Integer. Maximum genes held in memory at once
+when \code{streaming = 2L}. Defaults to \code{2000L}.}
+
+\item{cell_batch_size}{Integer. Cell batch size when \code{streaming = 2L}.
+Defaults to \code{100000L}.}
 
 \item{.verbose}{Boolean. Controls the verbosity of the function.}
 }

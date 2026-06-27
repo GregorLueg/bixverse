@@ -67,7 +67,7 @@ sc_object <- load_r_data(
     min_lib_size = min_lib_size,
     min_cells = min_cells_exp
   ),
-  streaming = FALSE,
+  streaming = 0L,
   .verbose = FALSE
 )
 
@@ -80,7 +80,6 @@ sc_object <- find_hvg_sc(
 sc_object <- calculate_pca_sc(
   object = sc_object,
   no_pcs = no_pcs,
-  randomised_svd = TRUE,
   .verbose = FALSE
 )
 
@@ -308,7 +307,6 @@ expect_true(
   current = all(right_cell_types),
   info = "no unexpected cell types in subsetted version - hdwgcna"
 )
-
 
 ### seacells -------------------------------------------------------------------
 

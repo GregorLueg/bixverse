@@ -2,7 +2,7 @@
 % Please edit documentation in R/functions_h5ad.R
 \name{get_h5ad_dimensions}
 \alias{get_h5ad_dimensions}
-\title{Helper function to get the dimensions and compressed sparse format}
+\title{Helper function to get the dimensions and storage format}
 \usage{
 get_h5ad_dimensions(f_path)
 }
@@ -10,13 +10,12 @@ get_h5ad_dimensions(f_path)
 \item{f_path}{File path to the \code{.h5ad} file.}
 }
 \value{
-A list with the following elements:
-\itemize{
-\item dims - Dimensions of the stored data in the h5ad file.
-\item type - Was the data stored in CSR (indptr = cells) or CSC (indptr =
-genes).
-}
+A list with \code{dims} (named integer \code{c(obs, var)}) and \code{type} (one of
+\code{"CSR"}, \code{"CSC"}, \code{"DENSE_ROW"}, \code{"DENSE_COL"}).
 }
 \description{
-Helper function to get the dimensions and compressed sparse format
+Distinguishes sparse (\code{CSR}/\code{CSC}) from dense storage. For dense \code{X} the
+orientation is inferred by comparing the matrix dims against the obs and
+var lengths (\code{DENSE_ROW} = cells x genes, \code{DENSE_COL} = genes x cells).
+Ties (\code{no_obs == no_var}) fall back to the AnnData convention (\code{DENSE_ROW}).
 }

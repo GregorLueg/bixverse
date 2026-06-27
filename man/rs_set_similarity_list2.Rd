@@ -21,5 +21,6 @@ A matrix of the Jaccard similarities between the elements. The rows
 represent \code{s_1_list} and the column \code{s_2_list}.
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 This function calculates the Jaccard or similarity index between two lists.
 }

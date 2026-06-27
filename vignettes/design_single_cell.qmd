@@ -55,6 +55,15 @@ Some quotes from recent papers:
 >
 > — [Li, et al., Nat Comm, 2025](https://www.nature.com/articles/s41467-025-56424-6)
 
+> <u>Recommendations for executing the Scanpy analysis</u> 
+> 
+> To avoid computer crashes and program failures, we recommend you execute the 
+> Python code on a cloud computing platform. The instance you select on the 
+> cloud platform to run this analysis should consist of at **least 8 threads and 
+> 160 GB of RAM.**
+>
+> - [Parse biosciences](https://support.parsebiosciences.com/hc/en-us/articles/7704577188500-How-to-analyze-a-1-million-cell-data-set-using-Scanpy-and-Harmony) 
+
 Anyone who has worked with more than 500k cells can attest to it being painful. 
 Actually VERY painful. The question is... why? Why can analytical engines like 
 [DuckDB](https://duckdb.org) and [polars](https://pola.rs) handle massive data 
@@ -147,14 +156,14 @@ Okay, everything so far reads like a rant. What is the solution, mate?
 
 If we think this through, we can arrive at a solution. Ideally, we want an 
 interface from an interpreted, dynamically typed language: going all-in on Rust 
-is just too heavy. The average person does not want to deal with the borrow 
-checker, does not want to compile code, and wants to quickly analyse and 
-iterate over data. The average bioinformatician lives in blissful ignorance and 
-will not be able to comment on `f32` vs `f64` float representation in memory, 
-and frankly should not have to. That means the interface should be a dynamically 
-typed, interpreted language. This opens the package up to more people and 
-makes plotting (ggplot2 for the win) much easier. From there we can make some 
-design decisions.
+is just too heavy. The average single cell enthuasist does not want to deal with 
+the borrow checker, does not want to compile code, and wants to quickly analyse 
+and iterate over data. The average bioinformatician lives in blissful ignorance 
+and  will not be able to comment on `f32` vs `f64` float representation in 
+memory, when to use which and frankly should not have to. That means the 
+interface should be a dynamically typed, interpreted language. This opens the 
+package up to more people and makes plotting (ggplot2 and its extensions for the 
+win) much easier. From there we can make some design decisions.
 
 1. **_We do not keep data in memory if not needed!_** Most analyses 
 leveraging counts only need subsets of cells and genes. We can also avoid 
@@ -178,14 +187,17 @@ load-everything, then-filter, then-normalise pattern.
 `f32` or even `f64` precision for storage. For raw counts, `u16` is sufficient 
 most of the time. The ML field has shown that you can get away with `f16`, which 
 reduces memory pressure and I/O substantially — and they are pushing 
-quantisation even further than that.
+quantisation even further than that. We will accept the precision loss when
+upcasting to `f64` to avoid catastrophic cancellation issues at large N.
 
 4. **_We are not doing any heavy calculations in R (or Python — future 
 roadmap)._** Rust is superior for speed and optimisation: aggressive 
 multi-threading, no copy-on-modify semantics, tight memory control, and SIMD 
 acceleration for specific bottlenecks (distance calculations, averaging, 
 summing, normalising). R here is just an interface, telling the underlying Rust 
-code what to do.
+code what to do. We pay for this with some long compile time while installing
+the package, but the speed-ups across the board are so substantial that it is
+worth it.
 
 But if the data is not in memory, will this not be slow? Well, no. We store data 
 in structures like this. One for cells:
@@ -255,9 +267,9 @@ single cell. Some examples:
 
 - Custom implementation of various kNN searches, all running in Rust: 
 [ann-search-rs](https://crates.io/crates/ann-search-rs). No on-disk index round 
-trips, SIMD-accelerated distance calculations, aggressive optimisations with 
-single cell in mind. Since kNN graphs underlie a lot of downstream methods, 
-speeding this up has a wide impact.
+trips, SIMD-accelerated distance calculations, optimised memory layouts, 
+aggressive optimisations with single cell in mind. Since kNN graphs underlie a 
+lot of downstream methods, speeding this up has a wide impact.
 
 - PCA underlies a lot of algorithms, is a key dimensionality reduction step, 
 and — perhaps embarrassingly — [still beats fancy foundation models](https://arxiv.org/abs/2410.13956). 
@@ -274,7 +286,8 @@ A few tricks make it fast:
 generation: [manifoldsR](https://github.com/GregorLueg/manifoldsR). Same 
 philosophy: parallelise what can be parallelised, use CPU-friendly memory 
 layouts, avoid round trips to the interpreter. Million-cell UMAP? Done in 
-minutes on a laptop.
+minutes on a laptop. Even good old tSNE, infamous for being slow has an 
+FFT-accelerated version (see [Linderman, et al.](https://www.nature.com/articles/s41592-018-0308-4))
 
 - [SCENIC](https://pubmed.ncbi.nlm.nih.gov/32561888/) infers gene regulatory 
 networks by asking, for each target gene: which transcription factors best 
@@ -368,7 +381,9 @@ what they are doing and cuBLAS is insanely fast, in ways that simply cannot be
 matched on CPUs. However, most people do not have several B200s lying around at 
 home, so the aim is to make better use of the powerful GPUs in Apple Silicon, 
 for example. I have had some first attempts writing GPU kernels via 
-[cubeCL](https://github.com/tracel-ai/cubecl) for nearest neighbour searches, 
-which makes exhaustive searches brutally fast. There is likely room to run kNN 
-searches on the GPU to really squeeze out better times — first tentative 
-attempts [here](https://github.com/GregorLueg/ann-search-rs/blob/main/docs/benchmarks_gpu.md).
+[cubecl](https://github.com/tracel-ai/cubecl) for nearest neighbour searches, 
+which makes exhaustive searches brutally fast. First tentative attempts to 
+leverage GPU-acceleration can be found in the 
+[sister package](https://github.com/GregorLueg/bixverse.gpu)... We have
+GPU-accelerated kNN searches; randomised sparse SVD (with the GEMM being
+executed on the GPU) and a GPU-accelerated Harmony.

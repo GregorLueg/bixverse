@@ -36,13 +36,15 @@ module.}
 \item{streaming}{Logical. If TRUE, processes cells and genes are read in in
 chunks to reduce memory usage.}
 
-\item{verbose}{Logical. Controls verbosity of the function.}
+\item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
+detailed verbosity.}
 }
 \value{
 Matrix of module scores (modules x cells). Each row corresponds to a
 module from gs_list, each column to a cell from cells_to_keep.
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 Calculates module activity scores following Seurat's \code{AddModuleScore}.
 For each module (gene set), computes the average expression of genes in the
 set minus the average expression of randomly selected control genes from the
@@ -52,3 +54,4 @@ across cells to ensure controls are expression-matched.
 \references{
 Tirosh et al, Science (2016)
 }
+\keyword{internal}

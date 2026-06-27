@@ -72,6 +72,7 @@ new_obs <- data.table::rbindlist(list(
   syn_data$obs[, doublet := FALSE],
   doublet_obs
 ))
+new_obs[, sample_id := rep(c("sample_A", "sample_B"), length.out = .N)]
 
 ## generate the object ---------------------------------------------------------
 
@@ -90,7 +91,7 @@ sc_object <- load_r_data(
     min_lib_size = 0L,
     min_cells = 0L
   ),
-  streaming = FALSE,
+  streaming = 0L,
   .verbose = FALSE
 )
 
@@ -99,9 +100,6 @@ sc_object <- load_r_data(
 ## rust logic ------------------------------------------------------------------
 
 ### optimal parameters according to the original paper -------------------------
-
-# log transform WITHOUT Z-scoring was seen to be optimal
-# see their page https://github.com/swolock/scrublet/blob/master/examples/demuxlet_example.ipynb
 
 optimal_params <- params_scrublet(
   normalisation = list(target_size = 1e4),
@@ -118,7 +116,7 @@ scrublet_res <- rs_sc_scrublet(
   cells_to_keep = get_cells_to_keep(sc_object),
   scrublet_params = optimal_params,
   seed = 42L,
-  verbose = FALSE,
+  verbose = 0L,
   streaming = FALSE,
   return_combined_pca = TRUE,
   return_pairs = TRUE
@@ -216,7 +214,7 @@ scrublet_res.full_norm <- rs_sc_scrublet(
   cells_to_keep = get_cells_to_keep(sc_object),
   scrublet_params = params_full_norm,
   seed = 42L,
-  verbose = FALSE,
+  verbose = 0L,
   streaming = FALSE,
   return_combined_pca = FALSE,
   return_pairs = FALSE
@@ -302,7 +300,7 @@ expect_true(
   info = "rust scrublet: 'good' recall on synthetic data"
 )
 
-obs_data <- get_obs_data(obj_res.up)
+obs_data <- get_data(obj_res.up)
 
 expect_true(
   current = checkmate::testDataTable(obs_data),
@@ -315,6 +313,113 @@ expect_true(
     must.include = c("doublet", "doublet_score", "cell_idx")
   ),
   info = "getter on scrublet res working - expected columns"
+)
+
+## s7 method with grouping ----------------------------------------------------
+
+obj_res_grp <- scrublet_sc(
+  sc_object,
+  scrublet_params = optimal_params,
+  group_by = "sample_id",
+  .verbose = FALSE
+)
+
+expect_true(
+  current = checkmate::testClass(obj_res_grp, "ScrubletRes"),
+  info = "S7 scrublet grouped: correct class returned"
+)
+
+expect_true(
+  current = isTRUE(attr(obj_res_grp, "grouped")),
+  info = "S7 scrublet grouped: grouped attribute set"
+)
+
+expect_true(
+  current = identical(attr(obj_res_grp, "group_by_col"), "sample_id"),
+  info = "S7 scrublet grouped: group_by_col attribute set"
+)
+
+expect_true(
+  current = checkmate::testNumeric(
+    obj_res_grp$threshold,
+    names = "named",
+    len = 2L
+  ),
+  info = "S7 scrublet grouped: threshold is a named numeric vector"
+)
+
+expect_true(
+  current = setequal(names(obj_res_grp$threshold), c("sample_A", "sample_B")),
+  info = "S7 scrublet grouped: threshold has the expected sample names"
+)
+
+expect_true(
+  current = checkmate::testCharacter(
+    obj_res_grp$cell_groups,
+    len = length(obj_res_grp$predicted_doublets)
+  ),
+  info = "S7 scrublet grouped: cell_groups aligns with cells"
+)
+
+expect_true(
+  current = !is.unsorted(attr(obj_res_grp, "cell_indices")),
+  info = "S7 scrublet grouped: cell_indices sorted ascending"
+)
+
+# call_doublets_manual on a specific sample
+obj_res_grp.up <- call_doublets_manual(
+  obj_res_grp,
+  threshold = 0.2,
+  for_sample = "sample_A",
+  .verbose = FALSE
+)
+
+expect_true(
+  current = obj_res_grp.up$threshold[["sample_A"]] == 0.2,
+  info = "S7 scrublet grouped: threshold updated for the targeted sample"
+)
+
+expect_equivalent(
+  current = obj_res_grp.up$threshold[["sample_B"]],
+  target = obj_res_grp$threshold[["sample_B"]],
+  info = "S7 scrublet grouped: other sample threshold untouched"
+)
+
+# default for_sample falls back to first
+obj_res_grp.up2 <- call_doublets_manual(
+  obj_res_grp,
+  threshold = 0.2,
+  .verbose = FALSE
+)
+
+expect_true(
+  current = obj_res_grp.up2$threshold[[1L]] == 0.2,
+  info = "S7 scrublet grouped: default for_sample updates first group"
+)
+
+expect_true(
+  current = checkmate::testClass(plot(obj_res_grp), "ggplot"),
+  info = "S7 scrublet grouped: plot works without for_sample"
+)
+
+expect_true(
+  current = checkmate::testClass(
+    plot(obj_res_grp, for_sample = "sample_B"),
+    "ggplot"
+  ),
+  info = "S7 scrublet grouped: plot works with explicit for_sample"
+)
+
+obs_data_grp <- get_data(obj_res_grp)
+
+expect_true(
+  current = checkmate::testDataTable(obs_data_grp),
+  info = "S7 scrublet grouped: get_data works"
+)
+
+expect_true(
+  current = nrow(obs_data_grp) == length(obj_res_grp$predicted_doublets),
+  info = "S7 scrublet grouped: get_data row count matches cells"
 )
 
 # test doublet detection -------------------------------------------------------
@@ -336,7 +441,7 @@ doublet_detection_res <- rs_sc_doublet_detection(
   cells_to_keep = get_cells_to_keep(sc_object),
   boost_params = boost_params,
   seed = 42L,
-  verbose = FALSE,
+  verbose = 0L,
   streaming = FALSE
 )
 
@@ -415,7 +520,7 @@ expect_equivalent(
   info = "S7 boost: no weird changes during generation (called doublets)"
 )
 
-obs_data <- get_obs_data(obj_res)
+obs_data <- get_data(obj_res)
 
 expect_true(
   current = checkmate::testDataTable(obs_data),
@@ -428,6 +533,63 @@ expect_true(
     must.include = c("doublet", "doublet_score", "cell_idx")
   ),
   info = "getter on boost res working - expected columns"
+)
+
+## s7 method with grouping ----------------------------------------------------
+
+obj_res_grp <- doublet_detection_boost_sc(
+  sc_object,
+  boost_params = boost_params,
+  group_by = "sample_id",
+  .verbose = FALSE
+)
+
+expect_true(
+  current = checkmate::testClass(obj_res_grp, "BoostRes"),
+  info = "S7 boost grouped: correct class returned"
+)
+
+expect_true(
+  current = isTRUE(attr(obj_res_grp, "grouped")),
+  info = "S7 boost grouped: grouped attribute set"
+)
+
+expect_true(
+  current = identical(attr(obj_res_grp, "group_by_col"), "sample_id"),
+  info = "S7 boost grouped: group_by_col attribute set"
+)
+
+expect_true(
+  current = checkmate::testCharacter(
+    obj_res_grp$cell_groups,
+    len = length(obj_res_grp$doublet)
+  ),
+  info = "S7 boost grouped: cell_groups aligns with cells"
+)
+
+expect_true(
+  current = setequal(
+    unique(obj_res_grp$cell_groups),
+    c("sample_A", "sample_B")
+  ),
+  info = "S7 boost grouped: cell_groups contains expected samples"
+)
+
+expect_true(
+  current = !is.unsorted(attr(obj_res_grp, "cell_indices")),
+  info = "S7 boost grouped: cell_indices sorted ascending"
+)
+
+expect_true(
+  current = length(obj_res_grp$doublet) == nrow(new_obs),
+  info = "S7 boost grouped: all cells accounted for"
+)
+
+obs_data_grp <- get_data(obj_res_grp)
+
+expect_true(
+  current = checkmate::testDataTable(obs_data_grp),
+  info = "S7 boost grouped: get_data works"
 )
 
 # test scdblfinder -------------------------------------------------------------
@@ -449,8 +611,7 @@ scdblfinder_res <- rs_sc_scdblfinder(
   seed = 42L,
   return_features = FALSE,
   streaming = FALSE,
-  verbose = FALSE,
-  debug = FALSE
+  verbose = 0L
 )
 
 expect_true(
@@ -542,7 +703,7 @@ expect_equivalent(
   info = "S7 scDblFinder: no weird changes during generation (called doublets)"
 )
 
-obs_data <- get_obs_data(obj_res)
+obs_data <- get_data(obj_res)
 
 expect_true(
   current = checkmate::testDataTable(obs_data),
@@ -584,6 +745,99 @@ expect_true(
     nrows = 1200L
   ),
   info = "get_features_mat() returns a feature matrix"
+)
+
+weighted_scores <- get_scores(obj_res, score_type = "weighted")
+
+cxds_scores <- get_scores(obj_res, score_type = "cxds_scores")
+
+expect_true(
+  current = checkmate::qtest(weighted_scores, "N1200[0,1]"),
+  info = "get_scores() returns a numeric of right length - weighted"
+)
+
+expect_true(
+  current = checkmate::qtest(cxds_scores, "N1200[0,1]"),
+  info = "get_scores() returns a numeric of right length - cxds"
+)
+
+## s7 method with grouping ----------------------------------------------------
+
+obj_res_grp <- scdblfinder_sc(
+  object = sc_object,
+  scdblfinder_params = scdblfinder_params,
+  group_by = "sample_id",
+  .verbose = FALSE
+)
+
+expect_true(
+  current = checkmate::testClass(obj_res_grp, "ScDblFinderRes"),
+  info = "S7 scDblFinder grouped: correct class returned"
+)
+
+expect_true(
+  current = isTRUE(attr(obj_res_grp, "grouped")),
+  info = "S7 scDblFinder grouped: grouped attribute set"
+)
+
+expect_true(
+  current = identical(attr(obj_res_grp, "group_by_col"), "sample_id"),
+  info = "S7 scDblFinder grouped: group_by_col attribute set"
+)
+
+expect_true(
+  current = checkmate::testNumeric(
+    obj_res_grp$threshold,
+    names = "named",
+    len = 2L
+  ),
+  info = "S7 scDblFinder grouped: threshold is a named numeric vector"
+)
+
+expect_true(
+  current = setequal(names(obj_res_grp$threshold), c("sample_A", "sample_B")),
+  info = "S7 scDblFinder grouped: threshold has the expected sample names"
+)
+
+expect_true(
+  current = checkmate::testCharacter(
+    obj_res_grp$cell_groups,
+    len = length(obj_res_grp$predicted_doublets)
+  ),
+  info = "S7 scDblFinder grouped: cell_groups aligns with cells"
+)
+
+expect_true(
+  current = !is.unsorted(attr(obj_res_grp, "cell_indices")),
+  info = "S7 scDblFinder grouped: cell_indices sorted ascending"
+)
+
+# cluster labels prefixed with sample name
+expect_true(
+  current = all(grepl("^(sample_A|sample_B)_", obj_res_grp$cluster_labels)),
+  info = "S7 scDblFinder grouped: cluster labels prefixed with sample"
+)
+
+obs_data_grp <- get_data(obj_res_grp)
+
+expect_true(
+  current = checkmate::testDataTable(obs_data_grp),
+  info = "S7 scDblFinder grouped: get_data works"
+)
+
+expect_true(
+  current = checkmate::testNames(
+    names(obs_data_grp),
+    must.include = c(
+      "predicted_doublets",
+      "doublet_score",
+      "cxds_scores",
+      "weighted",
+      "cluster_labels",
+      "cell_idx"
+    )
+  ),
+  info = "S7 scDblFinder grouped: get_data columns present"
 )
 
 # clean up ---------------------------------------------------------------------

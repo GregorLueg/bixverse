@@ -4,7 +4,7 @@
 \alias{rs_batch_silhouette_width}
 \title{Calculate batch silhouette width from an embedding}
 \usage{
-rs_batch_silhouette_width(embedding, batch_vector, max_cells, seed)
+rs_batch_silhouette_width(embedding, batch_vector, max_cells, verbose, seed)
 }
 \arguments{
 \item{embedding}{Numeric matrix. The embedding to assess (e.g. PCA or
@@ -15,6 +15,8 @@ batch a given cell belongs.}
 
 \item{max_cells}{Integer or NULL. If not NULL, subsample to this many
 cells for performance. Defaults to 5000.}
+
+\item{verbose}{Boolean. Controls verbosity of the function.}
 
 \item{seed}{Integer. Seed for subsampling reproducibility.}
 }
@@ -27,6 +29,7 @@ A list with the following items
 }
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 Computes the average silhouette width on batch labels using pairwise
 distances in the embedding space. Values near 0 indicate good batch
 mixing, values near 1 indicate batch separation.

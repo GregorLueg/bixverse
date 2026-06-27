@@ -4,7 +4,7 @@
 \alias{rs_kbet}
 \title{Calculate kBET type scores}
 \usage{
-rs_kbet(knn_mat, batch_vector)
+rs_kbet(knn_mat, batch_vector, verbose)
 }
 \arguments{
 \item{knn_mat}{Integer matrix. The rows represent the cells and the
@@ -12,6 +12,8 @@ columns the neighbour indices.}
 
 \item{batch_vector}{Integer vector. The integers indicate to which
 batch a given cell belongs.}
+
+\item{verbose}{Boolean. Controls verbosity of the function.}
 }
 \value{
 A list with the following items
@@ -23,6 +25,7 @@ A list with the following items
 }
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 The function takes in a kNN matrix and a batch vector indicating which
 cell belongs to which batch. The function will check for the neighbourhood
 of each cell if the proportion of represented batches are different from

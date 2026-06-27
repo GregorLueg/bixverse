@@ -12,7 +12,7 @@ calculate_batch_lisi_sc(object, batch_column, .verbose = TRUE)
 \item{batch_column}{String. The column with the batch information in the
 obs data of the class.}
 
-\item{.verbose}{Boolean. Controls the verbosity of the function.}
+\item{.verbose}{Boolean. Controls verbosity of the function.}
 }
 \value{
 A \code{BatchLisiScores} object with the following elements

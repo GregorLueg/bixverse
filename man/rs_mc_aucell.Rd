@@ -7,23 +7,24 @@
 rs_mc_aucell(sparse_data, gs_list, auc_type, verbose)
 }
 \arguments{
+\item{sparse_data}{A named list that needs to have \code{data}, \code{indptr},
+\code{indices}, \code{nrow}, \code{ncol} and \code{format}.}
+
 \item{gs_list}{List. List with the gene set indices (0-indexed!) of the
 genes of interest.}
 
 \item{auc_type}{String. One of \code{"wilcox"} or \code{"auroc"}, pending on
 which statistic you wish to calculate.}
 
-\item{verbose}{Boolean. Controls verbosity of the function.}
-
-\item{cells_to_keep}{Integer. Vector of indices of the cells to keep.}
-
-\item{streaming}{Boolean. Shall the data be streamed.}
+\item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
+detailed verbosity.}
 }
 \value{
 A matrix of cells x gene sets with the values representing the
 AUC.
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 The function will take in a list of gene set indices (0-indexed!) and
 calculate an AUCell type statistic. Two options here: calculate this
 with proper AUROC calculations (useful for marker gene expression) or

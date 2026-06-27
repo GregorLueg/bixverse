@@ -18,16 +18,16 @@ upper_triangular_sym_mat <- R6::R6Class(
     #' @param values Numerical vector. The correlation coefficients of the
     #' upper triangular correlation matrix stored as a row-major vector
     #' @param features String vector. The features of the correlation matrix.
-    #' @param shift Integer. Was a shift applied during the calculation of the
-    #' upper triangular matrix. Typically 0 (diagonal included) or 1 (diagonal
-    #' not included)
+    #' @param shift Bollean Was a shift applied during the calculation of the
+    #' upper triangular matrix. If `FALSE`, the diagonal was included, if
+    #' `TRUE`, the diagonal was removed.
     #'
     #' @return Returns the initialised class.
     initialize = function(values, features, shift) {
       # Checks
       checkmate::qassert(values, "N+")
       checkmate::qassert(features, "S+")
-      checkmate::qassert(shift, "I1")
+      checkmate::qassert(shift, "B1")
       # Gauss trick to calculate what would be expected in terms of number of
       # features given the length of the correlation coefficients and shift
       no_features <- length(features) - shift

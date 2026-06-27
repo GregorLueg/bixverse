@@ -31,11 +31,14 @@ SCENIC.}
 
 \item{seed}{Integer. Controls reproducibility of the function.}
 
-\item{verbose}{Boolean. Controls the verbosity of the function.}
+\item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
+detailed verbosity.}
 }
 \value{
 A gene x TF importance matrix
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 Loads the genes in as chunks to avoid high memory pressure.
 }
+\keyword{internal}

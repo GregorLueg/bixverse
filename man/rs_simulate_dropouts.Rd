@@ -37,6 +37,7 @@ function.}
 The sparsified matrix based on the provided parameters.
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 This function takes in a (raw) count matrix (for example from the synthetic
 data in bixverse) and applies sparsification to it based on two possible
 functions:
@@ -67,3 +68,4 @@ with the following characteristics:
 \item More uniform dropout across expression range
 }
 }
+\keyword{internal}

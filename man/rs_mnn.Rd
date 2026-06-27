@@ -6,6 +6,7 @@
 \usage{
 rs_mnn(
   f_path_gene,
+  f_path_cell,
   cell_indices,
   gene_indices,
   batch_indices,
@@ -17,6 +18,9 @@ rs_mnn(
 }
 \arguments{
 \item{f_path_gene}{String. Path to the \code{counts_genes.bin} file.}
+
+\item{f_path_cell}{String. Path to the \code{counts_cells.bin} file. Used if
+you wish to use the PFlogPF transformation during the optional PCA step.}
 
 \item{cell_indices}{Integer. The cell indices to use. (0-indexed!)}
 
@@ -31,7 +35,8 @@ pre-computed matrix.}
 
 \item{mnn_params}{List. Contains all of the fastMNN parameters.}
 
-\item{verbose}{Boolean. Controls verbosity of the function.}
+\item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
+detailed verbosity.}
 
 \item{seed}{Integer. Seed for reproducibility purposes.}
 }
@@ -39,7 +44,9 @@ pre-computed matrix.}
 The batch-corrected embedding space.
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 This function implements the (fast) MNN algorithm from Haghverdi, et al.
 Instead of working on the full matrix, it uses under the hood PCA and
 generates a batch-aligned embedding space.
 }
+\keyword{internal}

@@ -84,7 +84,7 @@ obs_filtered <- single_cell_test_data$obs[cells_pass, ]
 
 vars_filtered <- single_cell_test_data$var[genes_pass, ]
 
-sc_qc_param = params_sc_min_quality(
+sc_qc_param <- params_sc_min_quality(
   min_unique_genes = min_genes_exp,
   min_lib_size = min_lib_size,
   min_cells = min_cells_exp
@@ -217,7 +217,7 @@ sc_object <- load_mtx(
   object = sc_object,
   sc_mtx_io_param = params_cells_rows_csv,
   sc_qc_param = sc_qc_param,
-  streaming = FALSE,
+  mtx_streaming = FALSE,
   .verbose = FALSE
 )
 
@@ -325,7 +325,7 @@ sc_object <- load_mtx(
   object = sc_object,
   sc_mtx_io_param = params_cells_rows_csv,
   sc_qc_param = sc_qc_param,
-  streaming = TRUE,
+  mtx_streaming = TRUE,
   .verbose = FALSE
 )
 
@@ -525,7 +525,7 @@ sc_object <- load_mtx(
   object = sc_object,
   sc_mtx_io_param = params_genes_rows_tsv,
   sc_qc_param = sc_qc_param,
-  streaming = FALSE,
+  mtx_streaming = FALSE,
   .verbose = FALSE
 )
 
@@ -635,7 +635,7 @@ sc_object <- load_mtx(
   object = sc_object,
   sc_mtx_io_param = params_genes_rows_tsv,
   sc_qc_param = sc_qc_param,
-  streaming = TRUE,
+  mtx_streaming = TRUE,
   .verbose = FALSE
 )
 
@@ -735,6 +735,258 @@ expect_equal(
   current = gene_names_obj,
   target = vars_filtered$gene_id,
   info = "correct gene names"
+)
+
+## multi file read -------------------------------------------------------------
+
+### file 1 ---------------------------------------------------------------------
+
+single_cell_test_data_1 <- generate_single_cell_test_data(seed = 1L)
+
+dir_mtx_1 <- file.path(test_temp_dir, "mtx_1")
+dir.create(dir_mtx_1, showWarnings = FALSE, recursive = TRUE)
+
+write_cellranger_output(
+  f_path = dir_mtx_1,
+  counts = single_cell_test_data_1$counts,
+  obs = single_cell_test_data_1$obs,
+  var = single_cell_test_data_1$var,
+  rows = "genes",
+  format_type = "tsv",
+  .verbose = FALSE
+)
+
+### file 2 ---------------------------------------------------------------------
+
+single_cell_test_data_2 <- generate_single_cell_test_data(seed = 2L)
+
+dir_mtx_2 <- file.path(test_temp_dir, "mtx_2")
+dir.create(dir_mtx_2, showWarnings = FALSE, recursive = TRUE)
+
+write_cellranger_output(
+  f_path = dir_mtx_2,
+  counts = single_cell_test_data_2$counts,
+  obs = single_cell_test_data_2$obs,
+  var = single_cell_test_data_2$var,
+  rows = "genes",
+  format_type = "tsv",
+  .verbose = FALSE
+)
+
+## tests -----------------------------------------------------------------------
+
+### prescan --------------------------------------------------------------------
+
+mtx_dirs <- c(dir_mtx_1, dir_mtx_2)
+exp_ids <- c("exp1", "exp2")
+
+prescan_result <- prescan_mtx_dirs(
+  dirs = mtx_dirs,
+  exp_ids = exp_ids,
+  cells_as_rows = FALSE,
+  has_hdr = TRUE
+)
+
+expect_true(
+  current = checkmate::testList(prescan_result),
+  info = "prescan_mtx_dirs returns a list"
+)
+
+expect_true(
+  current = checkmate::testNames(
+    names(prescan_result),
+    must.include = c("universe", "universe_size", "file_tasks", "temp_files")
+  ),
+  info = "prescan_mtx_dirs returns expected names"
+)
+
+expect_equal(
+  current = prescan_result$universe_size,
+  target = length(prescan_result$universe),
+  info = "prescan_mtx_dirs - universe size matches universe length"
+)
+
+expect_equal(
+  current = length(prescan_result$file_tasks),
+  target = 2L,
+  info = "prescan_mtx_dirs - one task per directory"
+)
+
+expect_equal(
+  current = sapply(prescan_result$file_tasks, function(t) t$exp_id),
+  target = exp_ids,
+  info = "prescan_mtx_dirs - exp_ids preserved in order",
+  check.attributes = FALSE
+)
+
+### test rust direct -----------------------------------------------------------
+
+sc_object <- SingleCells(dir_data = test_temp_dir)
+
+rust_con <- get_sc_rust_ptr(sc_object)
+
+rust_tasks <- lapply(prescan_result$file_tasks, function(t) {
+  list(
+    exp_id = t$exp_id,
+    mtx_path = t$mtx_path,
+    cells_as_rows = t$cells_as_rows,
+    gene_local_to_universe = t$gene_local_to_universe
+  )
+})
+
+file_res <- rust_con$multi_mtx_to_file(
+  file_tasks = rust_tasks,
+  universe_size = as.integer(prescan_result$universe_size),
+  qc_params = sc_qc_param,
+  verbose = FALSE
+)
+
+expect_true(
+  current = checkmate::testList(file_res),
+  info = "multi_mtx_to_file returns a list"
+)
+
+expect_true(
+  current = checkmate::testNames(
+    names(file_res),
+    must.include = c(
+      "global_gene_indices",
+      "total_cells",
+      "total_genes",
+      "per_file"
+    )
+  ),
+  info = "multi_mtx_to_file - expected structure"
+)
+
+expect_true(
+  current = file_res$total_cells > 1000L,
+  info = "multi_mtx_to_file - more than 1000 cells written"
+)
+
+expect_equal(
+  current = length(file_res$per_file),
+  target = 2L,
+  info = "multi_mtx_to_file - one per_file entry per input"
+)
+
+rust_con$generate_gene_based_data_streaming(
+  batch_size = 1000L,
+  verbose = FALSE
+)
+
+counts <- rust_con$return_full_mat(
+  assay = "raw",
+  cell_based = FALSE,
+  verbose = FALSE
+)
+
+expect_equal(
+  current = counts$no_cells,
+  target = file_res$total_cells,
+  info = "rust counts cells match multi_mtx_to_file"
+)
+
+expect_equal(
+  current = counts$no_genes,
+  target = file_res$total_genes,
+  info = "rust counts genes match multi_mtx_to_file"
+)
+
+### test duckdb direct ---------------------------------------------------------
+
+duckdb_con <- get_sc_duckdb(sc_object)
+
+per_file_obs <- lapply(seq_along(prescan_result$file_tasks), function(i) {
+  t <- prescan_result$file_tasks[[i]]
+  list(
+    f_path = t$barcodes_path,
+    exp_id = t$exp_id,
+    has_hdr = t$has_hdr,
+    cell_filter = as.integer(file_res$per_file[[i]]$cell_indices + 1L)
+  )
+})
+
+duckdb_con$populate_obs_from_multi_plain_text(per_file_info = per_file_obs)
+
+obs_direct <- duckdb_con$get_obs_table()
+
+expect_true(
+  current = checkmate::testDataTable(obs_direct),
+  info = "obs table correctly being written"
+)
+
+expect_true(
+  current = nrow(obs_direct) == counts$no_cells,
+  info = "counts and obs match in multi-mtx import"
+)
+
+expect_true(
+  current = "exp_id" %in% names(obs_direct),
+  info = "obs table contains exp_id column"
+)
+
+expect_equal(
+  current = sort(unique(obs_direct$exp_id)),
+  target = sort(exp_ids),
+  info = "obs table exp_id values match"
+)
+
+final_gene_names <- prescan_result$universe[file_res$global_gene_indices + 1L]
+
+duckdb_con$populate_var_minimal(final_gene_names = final_gene_names)
+var_direct <- duckdb_con$get_vars_table()
+
+expect_true(
+  current = checkmate::testDataTable(var_direct),
+  info = "var table correctly being written"
+)
+
+expect_true(
+  current = nrow(var_direct) == counts$no_genes,
+  info = "counts and vars match in multi-mtx import"
+)
+
+expect_equal(
+  current = var_direct$gene_id,
+  target = final_gene_names,
+  info = "var table gene order matches final_gene_names"
+)
+
+### main method ----------------------------------------------------------------
+
+sc_object <- SingleCells(dir_data = test_temp_dir)
+
+prescan_result <- prescan_mtx_dirs(
+  dirs = mtx_dirs,
+  exp_ids = exp_ids,
+  cells_as_rows = FALSE,
+  has_hdr = TRUE
+)
+
+sc_object <- load_multi_mtx(
+  object = sc_object,
+  prescan_result = prescan_result,
+  sc_qc_param = sc_qc_param,
+  .verbose = FALSE
+)
+
+expect_equal(
+  current = sc_object[[colnames(obs_direct)]],
+  target = obs_direct,
+  info = "load_multi_mtx returns expected obs table"
+)
+
+expect_equal(
+  current = dim(sc_object[]),
+  target = c(counts$no_cells, counts$no_genes),
+  info = "load_multi_mtx returns expected counts dimensions"
+)
+
+expect_equal(
+  current = get_sc_var(sc_object)[, colnames(var_direct), with = FALSE],
+  target = var_direct,
+  info = "load_multi_mtx returns expected var table"
 )
 
 # clean up ---------------------------------------------------------------------

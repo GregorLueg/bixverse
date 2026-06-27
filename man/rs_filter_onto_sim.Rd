@@ -23,6 +23,8 @@ A list with:
 }
 }
 \description{
-This function takes the similarity values as the upper triangle,
-the row/column names and filtering the values down based on the threshold.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+This function takes the similarity values as the upper triangle, the
+row/column names and filtering the values down based on the threshold.
 }
+\keyword{internal}
