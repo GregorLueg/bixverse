@@ -423,6 +423,8 @@ params_boost <- function(
 #' as classifier features. Defaults to `19L`.
 #' @param expected_doublet_rate Optional numeric. Expected doublet rate as a
 #' percentage. If not provided, will be calculated internally.
+#' @param cxds_genes Optional integer. Number of CXDS genes to consider. If not
+#' provided, defaults to `500L`.
 #' @param manual_threshold Optional numeric. Manual score threshold. If `NULL`
 #' (default), expected-rate thresholding is used.
 #' @param normalisation List. Optional overrides for normalisation parameters.
@@ -944,8 +946,8 @@ params_sc_seacells <- function(
 #' @param use_kernel Boolean. Shall a kernel function akin to MAGIC be applied
 #' akin to the approach in SuperCell2, see Hérault, et al., bioRxiv, 2026 and
 #' van Dijk, et al., Cell, 2018.
-#' @param k_ith_neighbour Optional integer. The k-ith neighbour to use for
-#' the kernel. Defaults to `k %/% 2`.
+#' @param k_ith Optional integer. The k-ith neighbour to use for the kernel.
+#' Defaults to `k %/% 2`.
 #' @param max_support Optional integer. Caps each cell's walk-probability vector
 #' to its top entries by mass, bounding memory at ~`max_support * n_cells` on
 #' large data. Makes the result an approximation. `NULL` (default) keeps the

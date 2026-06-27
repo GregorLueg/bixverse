@@ -26,11 +26,6 @@ experiment.}
 \item{n_comp}{Integer. Number of k-means cluster to identify.}
 
 \item{random_seed}{Integer. For reproducibility purposes.}
-
-\item{no_cores}{Optional integer. Number of sessions to use for the
-\code{\link[mirai:mirai_map]{mirai::mirai_map()}} approach during generation of the random gene sets.
-If not provided, will default to half of the available cores with a maximum
-of \code{8L}.}
 }
 \value{
 A list with the following elements:

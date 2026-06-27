@@ -16,8 +16,7 @@ get_sc_counts(
 )
 }
 \arguments{
-\item{object}{\code{SingleCells}, \code{SingleCellsGrps},\code{MetaCells},
-\code{SingleCellsMultiModal} class.}
+\item{object}{\code{SingleCells}, \code{MetaCells}, \code{SingleCellsMultiModal} class.}
 
 \item{assay}{String. Which slot to return. One of \code{c("raw", "norm")}.
 Defaults to \code{"raw"}.}

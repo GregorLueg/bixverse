@@ -8,7 +8,7 @@ SingleCells(dir_data)
 }
 \arguments{
 \item{dir_data}{String. This is the directory in which the experimental files
-will be saved}
+will be}
 }
 \value{
 Returns the \code{SingleCells} class for further operations.

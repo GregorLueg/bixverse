@@ -7,7 +7,7 @@
 calculate_batch_lisi_sc(object, batch_column, .verbose = TRUE)
 }
 \arguments{
-\item{object}{\code{SingleCells} or \code{SingleCellsSubset} class.}
+\item{object}{\code{SingleCells} class.}
 
 \item{batch_column}{String. The column with the batch information in the
 obs data of the class.}

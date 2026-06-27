@@ -383,7 +383,7 @@ get_adt_names.ADTCounts <- function(x) {
 #' streaming engines powered by Rust and DuckDB to run the analysis.
 #'
 #' @param dir_data String. This is the directory in which the experimental files
-#' will be stored
+#' will be
 #'
 #' @section Properties:
 #' \describe{
@@ -467,21 +467,7 @@ SingleCellsMultiModal <- S7::new_class(
 
 ## primitives ------------------------------------------------------------------
 
-#' @name print.SingleCellsMultiModal
-#'
-#' @title print Method for SingleCellsMultiModal object
-#'
-#' @description
-#' Print a SingleCellsMultiModal object.
-#'
-#' @param x An object of class `SingleCellsMultiModal`.
-#' @param ... Additional arguments (currently not used).
-#'
-#' @returns Invisibly returns `x`.
-#'
-#' @method print SingleCellsMultiModal
-#'
-#' @keywords internal
+#' @noRd
 S7::method(print, SingleCellsMultiModal) <- function(x, ...) {
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsMultiModal))
 

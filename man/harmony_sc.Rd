@@ -15,7 +15,7 @@ harmony_sc(
 )
 }
 \arguments{
-\item{object}{\code{SingleCells} or \code{SingleCellsSubset} class.}
+\item{object}{\code{SingleCells} class.}
 
 \item{batch_column}{String. Column name in the object containing the primary
 batch labels.}

@@ -180,10 +180,6 @@ S7::method(aucell_sc, SingleCells) <- function(
 #' @param n_perm Integer. Number of random permutations to generate.
 #' @param n_comp Integer. Number of k-means cluster to identify.
 #' @param random_seed Integer. For reproducibility purposes.
-#' @param no_cores Optional integer. Number of sessions to use for the
-#' [mirai::mirai_map()] approach during generation of the random gene sets.
-#' If not provided, will default to half of the available cores with a maximum
-#' of `8L`.
 #'
 #' @returns A list with the following elements:
 #' \itemize{

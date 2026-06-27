@@ -46,8 +46,7 @@ functions:
 
 With dropout probability defined as:
 
-\if{html}{\out{<div class="sourceCode">}}\preformatted{P(dropout) = clamp(1 / (1 + exp(shape * (ln(exp+1) - ln(midpoint+1)))), 0.3, 0.8) * (1 - global_sparsity) + global_sparsity
-}\if{html}{\out{</div>}}
+\code{P(dropout) = clamp(1 / (1 + exp(shape * (ln(exp+1) - ln(midpoint+1)))), 0.3, 0.8) * (1 - global_sparsity) + global_sparsity}
 
 with the following characteristics:
 \itemize{
@@ -60,8 +59,7 @@ with the following characteristics:
 
 With dropout probability defined as:
 
-\if{html}{\out{<div class="sourceCode">}}\preformatted{P(dropout) = (midpoint / (exp + midpoint))^power * scale_factor * (1 - global_sparsity) + global_sparsity
-}\if{html}{\out{</div>}}
+\code{P(dropout) = (midpoint / (exp + midpoint))^power * scale_factor * (1 - global_sparsity) + global_sparsity}
 
 with the following characteristics:
 \itemize{

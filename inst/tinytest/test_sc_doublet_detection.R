@@ -747,6 +747,20 @@ expect_true(
   info = "get_features_mat() returns a feature matrix"
 )
 
+weighted_scores <- get_scores(obj_res, score_type = "weighted")
+
+cxds_scores <- get_scores(obj_res, score_type = "cxds_scores")
+
+expect_true(
+  current = checkmate::qtest(weighted_scores, "N1200[0,1]"),
+  info = "get_scores() returns a numeric of right length - weighted"
+)
+
+expect_true(
+  current = checkmate::qtest(cxds_scores, "N1200[0,1]"),
+  info = "get_scores() returns a numeric of right length - cxds"
+)
+
 ## s7 method with grouping ----------------------------------------------------
 
 obj_res_grp <- scdblfinder_sc(
