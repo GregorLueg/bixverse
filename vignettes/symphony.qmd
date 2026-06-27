@@ -373,10 +373,7 @@ Symphony is built for.
 ```{r}
 #| label: load query
 #| code-fold: true
-# TODO: replace with the proper download function once pbmc8k is on Zenodo.
-# pbmc8k_path <- download_pbmc8k()
-
-pbmc8k_path <- "~/Desktop/zenodo_data/pmbc-8k/"
+pbmc8k_path <- download_pbmc8k()
 
 tempdir_query <- file.path(tempdir(), "symphony_query")
 dir.create(tempdir_query, showWarnings = FALSE, recursive = TRUE)
