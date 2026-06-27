@@ -245,9 +245,9 @@ keep_ppi <- ppi_network$from %in%
 keep_grn <- grn_network$from %in%
   names(symbol_to_ensembl) &
   grn_network$to %in% names(symbol_to_ensembl)
-keep_lr <- lr_network$ligand %in%
+keep_lr <- lr_network$from %in%
   names(symbol_to_ensembl) &
-  lr_network$receptor %in% names(symbol_to_ensembl)
+  lr_network$to %in% names(symbol_to_ensembl)
 
 ppi_network <- ppi_network[keep_ppi]
 grn_network <- grn_network[keep_grn]

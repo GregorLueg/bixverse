@@ -27,6 +27,8 @@ Following things were added:
 * [Symphony](https://www.nature.com/articles/s41467-021-25957-x) for label 
   transfer of cell types.
 * Grouping column for doublet detection methods.
+* [NicheNet](https://www.nature.com/articles/s41592-019-0667-5) implementation 
+  for ligand receptor analysis
 
 ## Bug fixes
 
@@ -64,7 +66,9 @@ calculate_pca_sc(
 ```
 
 This gives you way more control over how to run the PCA normalisation (mean
-centering, variance normalisation or now also the new PFLogPF normalisation).
+centering, variance normalisation or now also the new 
+[PFLogPF](https://www.biorxiv.org/content/10.1101/2022.05.06.490859v4) 
+normalisation).
 
 # bixverse 0.3.2
 

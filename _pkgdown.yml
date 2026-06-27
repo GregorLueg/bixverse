@@ -58,6 +58,8 @@ navbar:
         - text: "More advanced analysis methods"
         - text: "'Bag of genes' methods for single cell in bixverse"
           href: articles/bag_of_genes_single_cells.html
+        - text: "Ligand receptor analysis"
+          href: articles/nichenet.html
         - text: "Meta cells - generation and analysis"
           href: articles/meta_cells.html
         - text: "Reference mapping via Symphony"
@@ -111,6 +113,7 @@ articles:
       - multi_modal_single_cells
       - single_cell_visualisation
       - symphony
+      - nichenet
 
 reference:
   # General getters shared across classes
