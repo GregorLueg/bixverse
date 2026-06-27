@@ -409,15 +409,25 @@ assertExpTable <- function(x, name) {
 
 #' Resolve prioritisation weights from the scenario or validate a user vector
 #'
-#' @param weights ...
-#' @param scenario ...
-#' @param has_condition_de ...
+#' @param weights Optional named numeric.
+#' @param scenario String. One of `c("case_control", "one_condition")`.
+#' @param has_condition_de Boolean. If `scenario = "case_control"`, validates
+#' that the corresponding weights are non-zero.
 #'
-#' @returns ...
+#' @returns Final weights
 #'
 #' @keywords internal
-resolve_weights <- function(weights, scenario, has_condition_de) {
-  weight_names <- c(
+resolve_weights <- function(weights = NULL, scenario, has_condition_de) {
+  # checks
+  checkmate::assert(
+    checkmate::testNull(weights),
+    checkmate::testNumeric(weights, names = "named")
+  )
+  checkmate::assertChoice(scenario, c("case_control", "one_condition"))
+  checkmate::qassert(has_condition_de, "B1")
+
+  # internal consts
+  WEIGHT_NAMES <- c(
     "de_ligand",
     "de_receptor",
     "activity_scaled",
@@ -426,11 +436,16 @@ resolve_weights <- function(weights, scenario, has_condition_de) {
     "ligand_condition_specificity",
     "receptor_condition_specificity"
   )
+  COND_KEYS <- c(
+    "ligand_condition_specificity",
+    "receptor_condition_specificity"
+  )
+
   if (is.null(weights)) {
     weights <- switch(
       scenario,
-      "case_control" = setNames(rep(1, 7), weight_names),
-      "one_condition" = setNames(c(1, 1, 1, 1, 1, 0, 0), weight_names)
+      "case_control" = setNames(rep(1, 7), WEIGHT_NAMES),
+      "one_condition" = setNames(c(1, 1, 1, 1, 1, 0, 0), WEIGHT_NAMES)
     )
   } else {
     checkmate::assertNumeric(
@@ -439,20 +454,10 @@ resolve_weights <- function(weights, scenario, has_condition_de) {
       finite = TRUE,
       names = "named"
     )
-    missing_names <- setdiff(weight_names, names(weights))
-    if (length(missing_names) > 0L) {
-      stop(sprintf(
-        "weights is missing: %s",
-        paste(missing_names, collapse = ", ")
-      ))
-    }
-    weights <- weights[weight_names]
+    checkmate::assertNames(names(weights), must.include = WEIGHT_NAMES)
+    weights <- weights[WEIGHT_NAMES]
   }
-  cond_keys <- c(
-    "ligand_condition_specificity",
-    "receptor_condition_specificity"
-  )
-  if (!has_condition_de && any(weights[cond_keys] > 0)) {
+  if (!has_condition_de && any(weights[COND_KEYS] > 0)) {
     stop("Non-zero condition-specificity weights require `condition_de`.")
   }
   weights
@@ -511,11 +516,15 @@ compute_expression_info_sc <- function(
   }
   gene_indices <- unname(gene_to_idx[genes])
 
-  obs <- get_sc_obs(object, filtered = TRUE)
-  checkmate::assertNames(names(obs), must.include = celltype_colname)
-  if (!is.null(condition_colname)) {
-    checkmate::assertNames(names(obs_keep), must.include = condition_colname)
-    obs_keep <- obs_keep[get(condition_colname) == condition_oi]
+  columns_to_take <- c("cell_idx", celltype_colname, condition_colname)
+
+  obs <- get_sc_obs(object, cols = columns_to_take, filtered = TRUE)
+  # get the Rust indices
+  obs[, .cell_idx := cell_idx - 1L]
+  obs_keep <- if (!is.null(condition_colname)) {
+    obs[get(condition_colname) == condition_oi]
+  } else {
+    obs
   }
   if (nrow(obs_keep) == 0L) {
     stop("No cells remain after filtering by `to_keep` and condition.")
@@ -524,12 +533,12 @@ compute_expression_info_sc <- function(
   cluster_labels <- obs_keep[[celltype_colname]]
   cluster_levels <- sort(unique(cluster_labels))
   clusters <- lapply(cluster_levels, function(cl) {
-    obs_keep[cluster_labels == cl, .cell_idx]
+    as.integer(obs_keep[cluster_labels == cl, .cell_idx])
   })
 
   res <- rs_compute_cluster_expr_stats(
     f_path_gene = bixverse:::get_rust_count_gene_f_path(object),
-    gene_indices = gene_indices,
+    gene_indices = as.integer(gene_indices),
     clusters = clusters
   )
 
@@ -651,7 +660,9 @@ prioritise_interactions <- function(
       p_val_adapted_ligand := -log10(pmax(pval_ligand, .Machine$double.xmin)) *
         sign(lfc_ligand)
     ]
-    sender_de[, scaled_p_val_adapted_ligand := rank_scale(p_val_adapted_ligand)]
+    sender_de[,
+      scaled_p_val_adapted_ligand := .rank_scale(p_val_adapted_ligand)
+    ]
   }
 
   # 2. receiver receptor DE
@@ -673,7 +684,7 @@ prioritise_interactions <- function(
         sign(lfc_receptor)
     ]
     receiver_de[,
-      scaled_p_val_adapted_receptor := rank_scale(p_val_adapted_receptor)
+      scaled_p_val_adapted_receptor := .rank_scale(p_val_adapted_receptor)
     ]
   }
 
@@ -684,7 +695,7 @@ prioritise_interactions <- function(
   ]
   if (w["exprs_ligand"] > 0 && nrow(ligand_expr) > 0L) {
     ligand_expr[,
-      scaled_avg_exprs_ligand := scale_quantile_adapted(avg_ligand),
+      scaled_avg_exprs_ligand := .scale_quantile_adapted(avg_ligand),
       by = ligand
     ]
   }
@@ -696,7 +707,7 @@ prioritise_interactions <- function(
   ]
   if (w["exprs_receptor"] > 0 && nrow(receptor_expr) > 0L) {
     receptor_expr[,
-      scaled_avg_exprs_receptor := scale_quantile_adapted(avg_receptor),
+      scaled_avg_exprs_receptor := .scale_quantile_adapted(avg_receptor),
       by = receptor
     ]
   }
@@ -705,9 +716,9 @@ prioritise_interactions <- function(
   la <- data.table::copy(ligand_activities)
   la_keep <- c("ligand", "aupr_corrected")
   if (w["activity_scaled"] > 0) {
-    la[, activity_zscore := scaling_zscore(aupr_corrected)]
+    la[, activity_zscore := .scaling_zscore(aupr_corrected)]
     la[,
-      scaled_activity := scale_quantile_adapted(
+      scaled_activity := .scale_quantile_adapted(
         aupr_corrected,
         outlier_cutoff = 0.01
       )
@@ -734,7 +745,7 @@ prioritise_interactions <- function(
           sign(lfc_ligand_group)
       ]
       ligand_cond[,
-        scaled_p_val_adapted_ligand_group := rank_scale(
+        scaled_p_val_adapted_ligand_group := .rank_scale(
           p_val_adapted_ligand_group
         )
       ]
@@ -752,7 +763,7 @@ prioritise_interactions <- function(
           sign(lfc_receptor_group)
       ]
       receptor_cond[,
-        scaled_p_val_adapted_receptor_group := rank_scale(
+        scaled_p_val_adapted_receptor_group := .rank_scale(
           p_val_adapted_receptor_group
         )
       ]

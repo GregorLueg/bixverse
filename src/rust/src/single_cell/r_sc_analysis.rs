@@ -1690,7 +1690,9 @@ fn rs_compute_cluster_expr_stats(
         let vec_i = elem_i
             .as_integer_vector()
             .ok_or_else(|| {
-                Error::Other("One of the ligand seeds could not be transformed to integers.".into())
+                Error::Other(
+                    "One of the cluster cell indices could not be transformed to integers.".into(),
+                )
             })?
             .r_int_convert();
 
