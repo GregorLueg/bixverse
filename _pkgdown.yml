@@ -533,10 +533,12 @@ reference:
       Classes, functions and generics/methods for ligand receptor analysis for
       single cell.
     contents:
+      - compute_expression_info_sc
       - generate_ligand_target_influence
       - get_influence
       - ligand_activity_scores
       - params_ligand_target
+      - prioritise_interactions
   # Single cell plotting helpers
   - title: Single cell plotting stuff
     desc: 
