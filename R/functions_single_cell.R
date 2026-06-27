@@ -146,10 +146,16 @@ get_cell_ranger_params <- function(dir_data) {
 #' }
 get_seurat_counts_to_list <- function(seurat_obj) {
   # checks
+  if (!requireNamespace("Seurat", quietly = TRUE)) {
+    stop(
+      "Package 'Seurat' required. Install with: BiocManager::install('Seurat')"
+    )
+  }
+
   checkmate::assertClass(seurat_obj, "Seurat")
 
   assay <- seurat_obj@assays$RNA
-  if (methods::.hasSlot(assay, "layers")) {
+  if (.hasSlot(assay, "layers")) {
     raw_counts <- assay@layers$counts
   } else {
     raw_counts <- assay@counts
@@ -634,7 +640,7 @@ extract_embedding_data <- function(object, embedding, obs_cols = NULL, ...) {
 #' @param embedding String. Name of the embedding.
 #' @param scale Boolean. Whether to z-score the expression values.
 #' @param clip Optional numeric. Clip z-scores if `scale = TRUE`.
-#' @param obs_cols Optional character vector. Obs columns to attach.
+#' @param obs_col Optional character vector. Obs columns to attach.
 #' @param expr_modality String. Modality the expression is pulled from. One of
 #' `c("rna", "adt")`.
 #' @param embd_modality String. Modality the embedding is pulled from. One of

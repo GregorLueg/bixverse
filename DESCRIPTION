@@ -73,6 +73,7 @@ Imports:
 Suggests: 
     biomaRt,
     BiocParallel,
+    bixverse.plots,
     cluster,
     e1071,
     fgsea,
@@ -81,6 +82,7 @@ Suggests:
     knitr,
     microbenchmark,
     mitch,
+    methods,
     msigdbr,
     ontologyIndex,
     ontologySimilarity,
@@ -99,6 +101,7 @@ Depends:
     R (>= 4.2)
 LazyData: true
 Remotes:
-    GregorLueg/manifoldsR
+    GregorLueg/manifoldsR,
+    GregorLueg/bixverse.plots
 Config/roxygen2/version: 8.0.0
 RoxygenNote: 8.0.0

@@ -1258,10 +1258,8 @@ fn rs_importance_threshold(matrix: RMatrix<f64>, n_sd: f64, min_value: Option<f6
 /// (including distances). The user has to ensure consistency! If provided, this
 /// will be used.
 /// @param meld_params Named list. Contains the parameters to use for MELD.
-/// @param landmark Boolean. Shall a landmark method be used for accelerated
-/// MELD.
-/// @param n_landmarks Integer. If `landmark = TRUE`, how many landmarks to use.
 /// @param labels Integer. The labels of the different groups. (1-indexed!)
+/// @param n_labels Integer. Number of labels represented in the data.
 /// @param seed Integer. For reproducibility.
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.

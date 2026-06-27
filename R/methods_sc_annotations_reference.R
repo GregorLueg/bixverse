@@ -8,7 +8,7 @@
 #' Implements the approach from
 #'
 #' @param object `SingleCells` or `SingleCellsMultiModal`
-#' @param cell_marker A list, see [prepare_cell_markers()].
+#' @param cell_marker_list A list, see [prepare_cell_markers()].
 #' @param sensitivity Boolean. Shall shared marker genes be downweighted (like
 #' in the original reference). Defaults to `TRUE`.
 #' @param weight_floor Optional numeric. A value between 0 to 1 and sets the

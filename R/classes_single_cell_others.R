@@ -810,9 +810,10 @@ get_data.ScDblFinderRes <- function(x, ...) {
 #'
 #' @param x An object to get the feature matrix from. This will only include
 #' the values of the observed cells.
+#' @param ... Additional parameters to forward to the method.
 #'
 #' @export
-get_feature_mat <- function(x) {
+get_feature_mat <- function(x, ...) {
   UseMethod("get_feature_mat")
 }
 

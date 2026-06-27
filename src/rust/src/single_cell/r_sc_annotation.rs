@@ -151,7 +151,8 @@ fn rs_sc_type_cluster_assignment(sc_type_res: List, cluster_labels: Vec<i32>) ->
 /// `r lifecycle::badge("experimental")`
 /// Builds the Symphony reference in Rust, see Kang et al.
 ///
-/// @param f_path String. Path to the gene-based binary file.
+/// @param f_path_gene String. Path to the gene-based binary file.
+/// @param f_path_cell String. Path to the cell-based binary file.
 /// @param cell_indices Integer vector. 0-based cell indices.
 /// @param hvg_indices Integer vector. 0-based HVG indices.
 /// @param batch_labels List of 0-indexed integer vectors (one per batch
@@ -161,9 +162,9 @@ fn rs_sc_type_cluster_assignment(sc_type_res: List, cluster_labels: Vec<i32>) ->
 /// @param harmony_params List. Output of `params_sc_harmony()` or
 /// `params_sc_harmony_v2()`.
 /// @param harmony_version String. "v1" or "v2".
-/// @param clr_offsets Numerical vector. Length-0 for None.
 /// @param seed Integer.
-/// @param verbose Integer. 0/1/2.
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
 ///
 /// @return A list with gene_means, gene_sds, loadings, z_orig, z_corr, r,
 /// centroids, nr, c.
@@ -275,8 +276,10 @@ fn rs_build_symphony_ref(
 /// the 0-based query gene index, or `NA_integer_` if absent.
 /// @param batch_labels_query List of 0-indexed integer vectors (empty = no
 /// batch correction).
-/// @param sigma,lambda Mapping parameters.
-/// @param verbose Integer. 0/1/2.
+/// @param params_symphony Named list. Contains the parameters for the referemce
+/// generation.
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
 ///
 /// @return A list with z_pca, z_corr, r.
 ///

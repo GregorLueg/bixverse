@@ -15,34 +15,25 @@
 #' via `label_columns` in [build_symphony_ref()] or attached post-hoc via
 #' [add_symphony_labels()]. For details on the method, refer to Kang et al.
 #'
-#' @section Properties:
-#' \describe{
-#'   \item{hvg_gene_names}{Character vector of HVG gene names in reference
-#'   loading order.}
-#'   \item{gene_means}{Per-HVG mean of the normalised reference data.}
-#'   \item{gene_sds}{Per-HVG standard deviation of the normalised reference
-#'   data.}
-#'   \item{loadings}{PCA gene loadings matrix (n_hvgs x d).}
-#'   \item{z_orig}{Pre-Harmony PCA scores (N x d). `NULL` in slim
-#'   references.}
-#'   \item{z_corr}{Post-Harmony corrected embedding (N x d). Always kept,
-#'   even in slim references, since it backs kNN label transfer.}
-#'   \item{r}{Soft cluster assignments (K x N). `NULL` in slim references.}
-#'   \item{centroids}{Cosine-normalised reference centroids (K x d). Used for
-#'   query soft clustering.}
-#'   \item{nr}{Reference cluster sizes; row-sums of `r` (length K).}
-#'   \item{c_cache}{Cached `R * Z_corr` compression term (K x d).}
-#'   \item{no_pcs}{Number of principal components.}
-#'   \item{harmony_backend}{Which Harmony variant was used to build the
-#'   reference (`"v1"` or `"v2"`).}
-#'   \item{batch_vars}{Names of the batch variables used during reference
-#'   construction.}
-#'   \item{slim}{Logical; if `TRUE`, `z_orig` and `r` are dropped to reduce
-#'   memory footprint.}
-#'   \item{labels}{Optional `data.table` of reference cell labels with
-#'   `nrow(z_corr)` rows, one column per label. `NULL` if no labels were
-#'   stored.}
-#' }
+#' @param hvg_gene_names Character vector of HVG gene names in reference
+#'   loading order.
+#' @param gene_means Per-HVG mean of the normalised reference data.
+#' @param gene_sds Per-HVG standard deviation of the normalised reference data.
+#' @param loadings PCA gene loadings matrix (n_hvgs x d).
+#' @param z_corr Post-Harmony corrected embedding (N x d).
+#' @param centroids Cosine-normalised reference centroids (K x d).
+#' @param nr Reference cluster sizes; row-sums of `r` (length K).
+#' @param c_cache Cached `R * Z_corr` compression term (K x d).
+#' @param no_pcs Number of principal components.
+#' @param harmony_backend Which Harmony variant was used (`"v1"` or `"v2"`).
+#' @param batch_vars Names of the batch variables used during reference
+#'   construction.
+#' @param slim Logical; if `TRUE`, `z_orig` and `r` are dropped. Default
+#'   `FALSE`.
+#' @param z_orig Pre-Harmony PCA scores (N x d). `NULL` in slim references.
+#' @param r Soft cluster assignments (K x N). `NULL` in slim references.
+#' @param labels Optional `data.table` of reference cell labels with
+#'   `nrow(z_corr)` rows, one column per label. `NULL` if no labels stored.
 #'
 #' @return Returns the `SymphonyReference` class for further operations.
 #'
@@ -67,7 +58,43 @@ SymphonyReference <- S7::new_class(
     batch_vars = S7::class_character,
     slim = S7::class_logical,
     labels = S7::class_any
-  )
+  ),
+  constructor = function(
+    hvg_gene_names,
+    gene_means,
+    gene_sds,
+    loadings,
+    z_corr,
+    centroids,
+    nr,
+    c_cache,
+    no_pcs,
+    harmony_backend,
+    batch_vars,
+    slim = FALSE,
+    z_orig = NULL,
+    r = NULL,
+    labels = NULL
+  ) {
+    S7::new_object(
+      S7::S7_object(),
+      hvg_gene_names = hvg_gene_names,
+      gene_means = as.numeric(gene_means),
+      gene_sds = as.numeric(gene_sds),
+      loadings = loadings,
+      z_orig = z_orig,
+      z_corr = z_corr,
+      r = r,
+      centroids = centroids,
+      nr = as.numeric(nr),
+      c_cache = c_cache,
+      no_pcs = as.integer(no_pcs),
+      harmony_backend = harmony_backend,
+      batch_vars = batch_vars,
+      slim = slim,
+      labels = labels
+    )
+  }
 )
 
 ## methods ---------------------------------------------------------------------
@@ -131,21 +158,7 @@ S7::method(get_symphony_labels, SymphonyReference) <- function(object) {
 
 ### print ----------------------------------------------------------------------
 
-#' @name print.SymphonyReference
-#'
-#' @title print Method for SymphonyReference object
-#'
-#' @description
-#' Print a SymphonyReference object.
-#'
-#' @param x An object of class `SymphonyReference`.
-#' @param ... Additional arguments (currently not used).
-#'
-#' @returns Invisibly returns `x`.
-#'
-#' @method print SymphonyReference
-#'
-#' @keywords internal
+#' @noRd
 S7::method(print, SymphonyReference) <- function(x, ...) {
   loadings <- S7::prop(x, "loadings")
   centroids <- S7::prop(x, "centroids")

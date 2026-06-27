@@ -16,17 +16,14 @@
 
 ### Description
 
-This is an *opionated* package making various bioinformatics workflows in R (or
-ported from Python) much faster via low-level implementations in Rust. The core 
-idea is to take different methods, write implementations in a compiled,
-memory-managed language with minimal kernel round trips and leverage R purely as 
-an orchestraction layer.
+This is an *opionated* package taking various bioinformatics and computational
+biology workflows from R and Python, making them substantially faster via 
+low-level implementations in Rust and exposing them via thin R wrappers. 
 Result? Blazingly fast performance with low memory usage, making large-scale
-analyses feasable without any cloud compute. Over time more and more methods
-will be added. The aim will be to come a `tidyverse` equivalent for various
-compuational biology methods. 
+analysis feasable without any cloud compute. Over time more and more methods
+will be added.  
 
-Two sister packages are also in the process of being built:
+Two sister packages are also in the process of being built and maintained:
 
 - [bixverse.plots](https://github.com/GregorLueg/bixverse.plots) package for - 
   you guessed it - plotting. Contains especially a large number of plotting
@@ -46,7 +43,9 @@ Additional packages that might be of interest interest to you:
   Rust under the hood. This package is used for all of the 2D visualisations
   for the single cell suite.
 - [genewalkR](https://github.com/GregorLueg/genewalkR). This one is a bit more
-  graph-heavy but has some cool methods in there.
+  graph-heavy but has some cool methods in there... Also, it provides a data
+  base with different gene <> gene interaction and regulatory networks. For
+  sure useful for different computational biology workflows.
 
 ### Release notes
 
@@ -55,7 +54,7 @@ Additional packages that might be of interest interest to you:
 Major release with `"0.4.0"`. The single cell suite has been further improved. 
 The key changes are:
 
-- Performance improvements across several axis. A lot of the underlying Rust
+- Performance improvements across several axes. A lot of the underlying Rust
   code was made even faster and more performant. The goal of analysing a 1m
   single cell data set on a MacBook Air with 24 GB memory has been achieved.
 - Multi-modal support. There is now a `SingleCellsMultiModal` class that allows
@@ -70,6 +69,7 @@ The key changes are:
   [bixverse.gpu](https://github.com/GregorLueg/bixverse.gpu)): enabling 
   GPU-accelerated methods (Harmony, PCA) and a large number of plotting helpers.
 - Updates to various vignettes to reflect the changes with this release.
+- More methods added... Symphony, NicheNet, sparse NMF for single cells!
 
 [Please checkout out the website of the package for details](https://gregorlueg.github.io/bixverse/) -> 
 particularly the sections around single cell (design choices and vignettes.)
@@ -148,7 +148,8 @@ local compute.
 ### General methods
 
 - [x] Addition of an NMF method for dense and sparse matrices. After some 
-  research likely a combination HALS + NNDSVD initialisation
+  research likely a combination HALS + NNDSVD initialisation. Partially done,
+  the single cell part is ready.
 
 ### Further cross integration with other packages
 
