@@ -4,7 +4,7 @@
 \alias{get_symphony_hvg_names}
 \title{Getter for the HVG gene names of a Symphony reference}
 \usage{
-get_symphony_hvg_names(object, ...)
+get_symphony_hvg_names(object)
 }
 \arguments{
 \item{object}{\code{SymphonyReference} class.}

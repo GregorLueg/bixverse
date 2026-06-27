@@ -16,7 +16,7 @@
 #' [add_symphony_labels()]. For details on the method, refer to Kang et al.
 #'
 #' @param hvg_gene_names Character vector of HVG gene names in reference
-#'   loading order.
+#' loading order.
 #' @param gene_means Per-HVG mean of the normalised reference data.
 #' @param gene_sds Per-HVG standard deviation of the normalised reference data.
 #' @param loadings PCA gene loadings matrix (n_hvgs x d).
@@ -27,13 +27,13 @@
 #' @param no_pcs Number of principal components.
 #' @param harmony_backend Which Harmony variant was used (`"v1"` or `"v2"`).
 #' @param batch_vars Names of the batch variables used during reference
-#'   construction.
+#' construction.
 #' @param slim Logical; if `TRUE`, `z_orig` and `r` are dropped. Default
-#'   `FALSE`.
+#' `FALSE`.
 #' @param z_orig Pre-Harmony PCA scores (N x d). `NULL` in slim references.
 #' @param r Soft cluster assignments (K x N). `NULL` in slim references.
 #' @param labels Optional `data.table` of reference cell labels with
-#'   `nrow(z_corr)` rows, one column per label. `NULL` if no labels stored.
+#' `nrow(z_corr)` rows, one column per label. `NULL` if no labels stored.
 #'
 #' @return Returns the `SymphonyReference` class for further operations.
 #'
@@ -108,7 +108,13 @@ SymphonyReference <- S7::new_class(
 #' @return The PCA gene loadings matrix (n_hvgs x d).
 #'
 #' @export
-get_symphony_loadings <- S7::new_generic("get_symphony_loadings", "object")
+get_symphony_loadings <- S7::new_generic(
+  name = "get_symphony_loadings",
+  dispatch_args = "object",
+  fun = function(object) {
+    S7::S7_dispatch()
+  }
+)
 
 S7::method(get_symphony_loadings, SymphonyReference) <- function(object) {
   S7::prop(object, "loadings")
@@ -121,7 +127,13 @@ S7::method(get_symphony_loadings, SymphonyReference) <- function(object) {
 #' @return The post-Harmony corrected embedding (N x d).
 #'
 #' @export
-get_symphony_z_corr <- S7::new_generic("get_symphony_z_corr", "object")
+get_symphony_z_corr <- S7::new_generic(
+  name = "get_symphony_z_corr",
+  dispatch_args = "object",
+  fun = function(object) {
+    S7::S7_dispatch()
+  }
+)
 
 S7::method(get_symphony_z_corr, SymphonyReference) <- function(object) {
   S7::prop(object, "z_corr")
@@ -134,7 +146,13 @@ S7::method(get_symphony_z_corr, SymphonyReference) <- function(object) {
 #' @return Character vector of HVG gene names in reference loading order.
 #'
 #' @export
-get_symphony_hvg_names <- S7::new_generic("get_symphony_hvg_names", "object")
+get_symphony_hvg_names <- S7::new_generic(
+  name = "get_symphony_hvg_names",
+  dispatch_args = "object",
+  fun = function(object) {
+    S7::S7_dispatch()
+  }
+)
 
 S7::method(get_symphony_hvg_names, SymphonyReference) <- function(object) {
   S7::prop(object, "hvg_gene_names")
@@ -148,7 +166,13 @@ S7::method(get_symphony_hvg_names, SymphonyReference) <- function(object) {
 #' `NULL` if no labels are stored.
 #'
 #' @export
-get_symphony_labels <- S7::new_generic("get_symphony_labels", "object")
+get_symphony_labels <- S7::new_generic(
+  name = "get_symphony_labels",
+  dispatch_args = "object",
+  fun = function(object) {
+    S7::S7_dispatch()
+  }
+)
 
 S7::method(get_symphony_labels, SymphonyReference) <- function(object) {
   S7::prop(object, "labels")

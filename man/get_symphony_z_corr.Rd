@@ -4,7 +4,7 @@
 \alias{get_symphony_z_corr}
 \title{Getter for the corrected embedding of a Symphony reference}
 \usage{
-get_symphony_z_corr(object, ...)
+get_symphony_z_corr(object)
 }
 \arguments{
 \item{object}{\code{SymphonyReference} class.}

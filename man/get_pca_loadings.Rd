@@ -13,7 +13,7 @@ get_pca_loadings(x, ...)
 ## S7 method for class <bixverse::MetaCells>
 get_pca_loadings(x, ...)
 
-\method{get_pca_loadings}{ScCache}(x)
+\method{get_pca_loadings}{ScCache}(x, ...)
 
 ## S7 method for class <bixverse::SingleCells>
 get_pca_loadings(x, ...)

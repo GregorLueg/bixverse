@@ -14,12 +14,12 @@ get_knn_dist(x, ...)
 ## S7 method for class <bixverse::MetaCells>
 get_knn_dist(x, ...)
 
-\method{get_knn_dist}{ScCache}(x)
+\method{get_knn_dist}{ScCache}(x, ...)
 
 ## S7 method for class <bixverse::SingleCells>
 get_knn_dist(x, ...)
 
-\method{get_knn_dist}{SingleCellNearestNeighbour}(x)
+\method{get_knn_dist}{SingleCellNearestNeighbour}(x, ...)
 }
 \arguments{
 \item{x}{An object to get the kNN distances from.}

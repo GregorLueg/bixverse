@@ -18,15 +18,12 @@ will be used.}
 
 \item{labels}{Integer. The labels of the different groups. (1-indexed!)}
 
+\item{n_labels}{Integer. Number of labels represented in the data.}
+
 \item{seed}{Integer. For reproducibility.}
 
 \item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
 detailed verbosity.}
-
-\item{landmark}{Boolean. Shall a landmark method be used for accelerated
-MELD.}
-
-\item{n_landmarks}{Integer. If \code{landmark = TRUE}, how many landmarks to use.}
 }
 \value{
 A list with the following items

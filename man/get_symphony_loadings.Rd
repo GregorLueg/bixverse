@@ -4,7 +4,7 @@
 \alias{get_symphony_loadings}
 \title{Getter for the PCA loadings of a Symphony reference}
 \usage{
-get_symphony_loadings(object, ...)
+get_symphony_loadings(object)
 }
 \arguments{
 \item{object}{\code{SymphonyReference} class.}

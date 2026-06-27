@@ -1198,7 +1198,6 @@ fn rs_sc_snn(
 /// truth
 /// @param knn_data_b Named list. This contains the kNN data (including
 /// distances) of the second kNN graph.
-/// @param knn_dist_a Numeric matrix.
 ///
 /// @returns A list with the following elements:
 /// \itemize{

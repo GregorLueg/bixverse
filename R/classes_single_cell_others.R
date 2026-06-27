@@ -98,7 +98,7 @@ print.SingleCellNearestNeighbour <- function(x, ...) {
 #' @rdname get_knn_mat
 #'
 #' @export
-get_knn_mat.SingleCellNearestNeighbour <- function(x) {
+get_knn_mat.SingleCellNearestNeighbour <- function(x, ...) {
   # checks
   checkmate::assertClass(x, "SingleCellNearestNeighbour")
 
@@ -108,7 +108,7 @@ get_knn_mat.SingleCellNearestNeighbour <- function(x) {
 #' @rdname get_knn_dist
 #'
 #' @export
-get_knn_dist.SingleCellNearestNeighbour <- function(x) {
+get_knn_dist.SingleCellNearestNeighbour <- function(x, ...) {
   # checks
   checkmate::assertClass(x, "SingleCellNearestNeighbour")
 

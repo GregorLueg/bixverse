@@ -5,22 +5,57 @@
 \title{bixverse SymphonyReference class}
 \usage{
 SymphonyReference(
-  hvg_gene_names = character(0),
-  gene_means = integer(0),
-  gene_sds = integer(0),
-  loadings = NULL,
+  hvg_gene_names,
+  gene_means,
+  gene_sds,
+  loadings,
+  z_corr,
+  centroids,
+  nr,
+  c_cache,
+  no_pcs,
+  harmony_backend,
+  batch_vars,
+  slim = FALSE,
   z_orig = NULL,
-  z_corr = NULL,
   r = NULL,
-  centroids = NULL,
-  nr = integer(0),
-  c_cache = NULL,
-  no_pcs = integer(0),
-  harmony_backend = character(0),
-  batch_vars = character(0),
-  slim = logical(0),
   labels = NULL
 )
+}
+\arguments{
+\item{hvg_gene_names}{Character vector of HVG gene names in reference
+loading order.}
+
+\item{gene_means}{Per-HVG mean of the normalised reference data.}
+
+\item{gene_sds}{Per-HVG standard deviation of the normalised reference data.}
+
+\item{loadings}{PCA gene loadings matrix (n_hvgs x d).}
+
+\item{z_corr}{Post-Harmony corrected embedding (N x d).}
+
+\item{centroids}{Cosine-normalised reference centroids (K x d).}
+
+\item{nr}{Reference cluster sizes; row-sums of \code{r} (length K).}
+
+\item{c_cache}{Cached \code{R * Z_corr} compression term (K x d).}
+
+\item{no_pcs}{Number of principal components.}
+
+\item{harmony_backend}{Which Harmony variant was used (\code{"v1"} or \code{"v2"}).}
+
+\item{batch_vars}{Names of the batch variables used during reference
+construction.}
+
+\item{slim}{Logical; if \code{TRUE}, \code{z_orig} and \code{r} are dropped. Default
+\code{FALSE}.}
+
+\item{z_orig}{Pre-Harmony PCA scores (N x d). \code{NULL} in slim references.}
+
+\item{r}{Soft cluster assignments (K x N). \code{NULL} in slim references.}
+
+\item{labels}{Optional \code{data.table} of reference cell labels with
+\code{nrow(z_corr)} rows, one column per label. \code{NULL} if no labels stored.}
 }
 \value{
 Returns the \code{SymphonyReference} class for further operations.
@@ -34,37 +69,6 @@ cell labels (e.g. cell type annotations) can be snapshotted at build time
 via \code{label_columns} in \code{\link[=build_symphony_ref]{build_symphony_ref()}} or attached post-hoc via
 \code{\link[=add_symphony_labels]{add_symphony_labels()}}. For details on the method, refer to Kang et al.
 }
-\section{Properties}{
-
-\describe{
-\item{hvg_gene_names}{Character vector of HVG gene names in reference
-loading order.}
-\item{gene_means}{Per-HVG mean of the normalised reference data.}
-\item{gene_sds}{Per-HVG standard deviation of the normalised reference
-data.}
-\item{loadings}{PCA gene loadings matrix (n_hvgs x d).}
-\item{z_orig}{Pre-Harmony PCA scores (N x d). \code{NULL} in slim
-references.}
-\item{z_corr}{Post-Harmony corrected embedding (N x d). Always kept,
-even in slim references, since it backs kNN label transfer.}
-\item{r}{Soft cluster assignments (K x N). \code{NULL} in slim references.}
-\item{centroids}{Cosine-normalised reference centroids (K x d). Used for
-query soft clustering.}
-\item{nr}{Reference cluster sizes; row-sums of \code{r} (length K).}
-\item{c_cache}{Cached \code{R * Z_corr} compression term (K x d).}
-\item{no_pcs}{Number of principal components.}
-\item{harmony_backend}{Which Harmony variant was used to build the
-reference (\code{"v1"} or \code{"v2"}).}
-\item{batch_vars}{Names of the batch variables used during reference
-construction.}
-\item{slim}{Logical; if \code{TRUE}, \code{z_orig} and \code{r} are dropped to reduce
-memory footprint.}
-\item{labels}{Optional \code{data.table} of reference cell labels with
-\code{nrow(z_corr)} rows, one column per label. \code{NULL} if no labels were
-stored.}
-}
-}
-
 \references{
 Kang et al., Nat. Commun., 2021
 }

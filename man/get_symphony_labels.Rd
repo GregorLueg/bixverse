@@ -4,7 +4,7 @@
 \alias{get_symphony_labels}
 \title{Getter for the stored labels of a Symphony reference}
 \usage{
-get_symphony_labels(object, ...)
+get_symphony_labels(object)
 }
 \arguments{
 \item{object}{\code{SymphonyReference} class.}
