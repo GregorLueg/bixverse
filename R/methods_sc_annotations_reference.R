@@ -8,7 +8,7 @@
 #' Implements the approach from
 #'
 #' @param object `SingleCells` or `SingleCellsMultiModal`
-#' @param cell_marker A list, see [prepare_cell_markers()].
+#' @param cell_marker_list A list, see [prepare_cell_markers()].
 #' @param sensitivity Boolean. Shall shared marker genes be downweighted (like
 #' in the original reference). Defaults to `TRUE`.
 #' @param weight_floor Optional numeric. A value between 0 to 1 and sets the
@@ -64,6 +64,26 @@ S7::method(calc_sc_type_scores, SingleCells) <- function(
 
 ## symphony --------------------------------------------------------------------
 
+### internal helpers -----------------------------------------------------------
+
+#' Read named obs columns in cells_to_keep order, return a data.table.
+#'
+#' @param sc_object `SingleCells` class
+#' @param columns String. The columns to extract
+#'
+#' @returns A data.table with the desired columns.
+#'
+#' @keywords internal
+.read_label_columns <- function(sc_object, columns) {
+  label_obs <- get_sc_obs(sc_object, cols = columns, filtered = TRUE)
+  data.table::as.data.table(
+    stats::setNames(
+      lapply(columns, function(col) unlist(label_obs[[col]])),
+      columns
+    )
+  )
+}
+
 ### build symphony reference ---------------------------------------------------
 
 #' Build a Symphony reference from a SingleCells object
@@ -72,6 +92,8 @@ S7::method(calc_sc_type_scores, SingleCells) <- function(
 #' Runs sparse PCA over the provided HVGs, runs Harmony for batch correction,
 #' and compresses the result into the cached terms used at query time. The
 #' Harmony version is auto-detected from the class of `harmony_params`.
+#' Optionally snapshots one or more obs columns (e.g. cell type annotations)
+#' into the reference's `labels` slot for downstream label transfer.
 #'
 #' @param object `SingleCells` (the reference).
 #' @param batch_column String. Primary batch column in the obs table.
@@ -84,6 +106,10 @@ S7::method(calc_sc_type_scores, SingleCells) <- function(
 #' @param no_pcs Integer. Number of principal components.
 #' @param slim Boolean. If `TRUE`, drops `z_orig` and `r` from the returned
 #' reference. `z_corr` is always kept (needed for kNN label transfer).
+#' @param label_columns Optional character vector of obs column names to
+#' snapshot into the reference. Read in `cells_to_keep` order to align with
+#' `z_corr`. Required for [transfer_labels_symphony()] unless populated
+#' later via [add_symphony_labels()].
 #' @param seed Integer.
 #' @param .verbose Boolean or integer.
 #'
@@ -102,6 +128,7 @@ build_symphony_ref <- S7::new_generic(
     pca_params = params_sc_pca(),
     no_pcs = 30L,
     slim = FALSE,
+    label_columns = NULL,
     seed = 42L,
     .verbose = TRUE
   ) {
@@ -121,6 +148,7 @@ S7::method(build_symphony_ref, SingleCells) <- function(
   pca_params = params_sc_pca(),
   no_pcs = 30L,
   slim = FALSE,
+  label_columns = NULL,
   seed = 42L,
   .verbose = TRUE
 ) {
@@ -131,6 +159,7 @@ S7::method(build_symphony_ref, SingleCells) <- function(
   assertScPca(pca_params)
   checkmate::qassert(no_pcs, "I1[1,)")
   checkmate::qassert(slim, "B1")
+  checkmate::qassert(label_columns, c("S+", "0"))
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
@@ -198,6 +227,15 @@ S7::method(build_symphony_ref, SingleCells) <- function(
   z_orig <- if (slim) NULL else ref_rs$z_orig
   r_field <- if (slim) NULL else ref_rs$r
 
+  # snapshot labels in cells_to_keep order to match z_corr
+  labels_dt <- if (is.null(label_columns)) {
+    NULL
+  } else {
+    dt <- .read_label_columns(object, label_columns)
+    checkmate::assertTRUE(nrow(dt) == length(cells_to_keep))
+    dt
+  }
+
   SymphonyReference(
     hvg_gene_names = hvg_gene_names,
     gene_means = as.numeric(ref_rs$gene_means),
@@ -212,8 +250,93 @@ S7::method(build_symphony_ref, SingleCells) <- function(
     no_pcs = as.integer(no_pcs),
     harmony_backend = harmony_version,
     batch_vars = batch_columns_all,
-    slim = slim
+    slim = slim,
+    labels = labels_dt
   )
+}
+
+### add labels post-hoc --------------------------------------------------------
+
+#' Add labels to a Symphony reference post-hoc
+#'
+#' @description
+#' Reads one or more obs columns from a `SingleCells` object and stores them
+#' in the reference's `labels` slot for use by [transfer_labels_symphony()].
+#' The provided `sc_object` must have `cells_to_keep` matching the cells used
+#' at reference-build time; this is enforced by a length check against
+#' `nrow(z_corr)`.
+#'
+#' @param reference `SymphonyReference`.
+#' @param sc_object `SingleCells` to read labels from. Typically the same
+#' object passed to [build_symphony_ref()].
+#' @param columns Character vector of obs column names.
+#' @param overwrite Boolean. If `TRUE`, existing label columns of the same
+#' name are replaced; otherwise an error is raised on collision.
+#'
+#' @return The `reference` with updated `labels`.
+#'
+#' @export
+add_symphony_labels <- S7::new_generic(
+  name = "add_symphony_labels",
+  dispatch_args = "reference",
+  fun = function(reference, sc_object, columns, overwrite = FALSE) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method add_symphony_labels SymphonyReference
+#'
+#' @export
+S7::method(add_symphony_labels, SymphonyReference) <- function(
+  reference,
+  sc_object,
+  columns,
+  overwrite = FALSE
+) {
+  checkmate::assertTRUE(S7::S7_inherits(sc_object, SingleCells))
+  checkmate::qassert(columns, "S+")
+  checkmate::qassert(overwrite, "B1")
+
+  z_corr <- S7::prop(reference, "z_corr")
+  if (is.null(z_corr)) {
+    stop("Reference has no z_corr; cannot store labels.")
+  }
+
+  new_dt <- .read_label_columns(sc_object, columns)
+
+  if (nrow(new_dt) != nrow(z_corr)) {
+    stop(sprintf(
+      paste(
+        "z_corr has %d rows but sc_object provides %d labels;",
+        "cells_to_keep on the sc_object may have changed",
+        "since the reference was built."
+      ),
+      nrow(z_corr),
+      nrow(new_dt)
+    ))
+  }
+
+  existing <- S7::prop(reference, "labels")
+  combined <- if (is.null(existing)) {
+    new_dt
+  } else {
+    overlap <- intersect(columns, names(existing))
+    if (length(overlap) > 0L && !overwrite) {
+      stop(sprintf(
+        "Label column(s) already present: %s. Use overwrite = TRUE to replace.",
+        paste(overlap, collapse = ", ")
+      ))
+    }
+    # copy: avoid mutating the data.table held by the input reference
+    existing <- data.table::copy(existing)
+    if (length(overlap) > 0L) {
+      existing[, (overlap) := NULL]
+    }
+    cbind(existing, new_dt)
+  }
+
+  S7::prop(reference, "labels") <- combined
+  reference
 }
 
 ### map symphony query ---------------------------------------------------------
@@ -341,17 +464,18 @@ S7::method(map_symphony_query, SymphonyReference) <- function(
 #' @description
 #' kNN majority vote on the Harmony-corrected embeddings. The reference's
 #' `z_corr` is the searchable index; the query's `"symphony"` embedding is
-#' what gets queried. Reference labels are read from `reference_object`'s
-#' obs in `cells_to_keep` order — that must match the cells used at
-#' reference-build time.
+#' what gets queried. Reference labels come from the reference's stored
+#' `labels` slot — populate it via the `label_columns` argument to
+#' [build_symphony_ref()] or post-hoc via [add_symphony_labels()].
 #'
 #' Distances on `z_corr` are typically Euclidean — set `knn_params$ann_dist`
 #' to `"euclidean"` unless you have a reason to use cosine.
 #'
-#' @param reference `SymphonyReference` (must have `z_corr`).
-#' @param reference_object `SingleCells` used to build the reference.
+#' @param reference `SymphonyReference` (must have `z_corr` and stored
+#' labels).
 #' @param query `SingleCells` with a `"symphony"` embedding attached.
-#' @param label_column String. Column in the reference obs table.
+#' @param label_column String. Name of a column in the reference's stored
+#' labels.
 #' @param knn_params List. Output of [params_sc_knn()].
 #' @param seed Integer.
 #' @param .verbose Boolean or integer.
@@ -365,7 +489,6 @@ transfer_labels_symphony <- S7::new_generic(
   dispatch_args = "reference",
   fun = function(
     reference,
-    reference_object,
     query,
     label_column,
     knn_params = params_sc_knn(),
@@ -381,14 +504,12 @@ transfer_labels_symphony <- S7::new_generic(
 #' @export
 S7::method(transfer_labels_symphony, SymphonyReference) <- function(
   reference,
-  reference_object,
   query,
   label_column,
   knn_params = params_sc_knn(),
   seed = 42L,
   .verbose = TRUE
 ) {
-  checkmate::assertTRUE(S7::S7_inherits(reference_object, SingleCells))
   checkmate::assertTRUE(S7::S7_inherits(query, SingleCells))
   checkmate::qassert(label_column, "S1")
   assertScKnn(knn_params)
@@ -400,26 +521,30 @@ S7::method(transfer_labels_symphony, SymphonyReference) <- function(
     stop("SymphonyReference has no z_corr. Rebuild with slim = FALSE.")
   }
 
+  labels <- S7::prop(reference, "labels")
+  if (is.null(labels)) {
+    stop(
+      paste(
+        "SymphonyReference has no stored labels.",
+        "Use `label_columns` in build_symphony_ref()",
+        "or attach them via add_symphony_labels()."
+      )
+    )
+  }
+  if (!label_column %in% names(labels)) {
+    stop(sprintf(
+      "Label column '%s' not found in reference. Available: %s",
+      label_column,
+      paste(names(labels), collapse = ", ")
+    ))
+  }
+
   query_embd <- get_embedding(query, "symphony")
   if (is.null(query_embd)) {
     stop("Query has no 'symphony' embedding. Run map_symphony_query first.")
   }
 
-  ref_obs <- get_sc_obs(reference_object, cols = label_column, filtered = TRUE)
-  ref_labels_raw <- unlist(ref_obs[[label_column]])
-
-  if (nrow(ref_z_corr) != length(ref_labels_raw)) {
-    stop(sprintf(
-      paste(
-        "z_corr has %d rows but reference labels have %d entries;",
-        "cells_to_keep on the reference object may have changed",
-        "since the reference was built."
-      ),
-      nrow(ref_z_corr),
-      length(ref_labels_raw)
-    ))
-  }
-
+  ref_labels_raw <- unlist(labels[[label_column]])
   ref_label_factor <- factor(ref_labels_raw)
   ref_label_idx <- as.integer(ref_label_factor) - 1L
 

@@ -601,14 +601,16 @@ get_knn_obj <- function(x, ...) {
 #' in the given analysis + the values that are to be added to the obs table
 #' in the DuckDB.
 #'
-#' @param x An object to set gene mapping for
+#' @param x An object to get the data from.
+#' @param columns Optional string. For some of the functions you can decide
+#' to only extract specific columns.
 #' @param ... Other parameters
 #'
 #' @returns Returns a data.table with a cell_idx column for the cells included
 #' in the analysis and additional columns to be added to the obs table.
 #'
 #' @export
-get_data <- function(x, ...) {
+get_data <- function(x, columns = NULL, ...) {
   UseMethod("get_data")
 }
 

@@ -34,8 +34,6 @@ selection of the top genes.}
 
 \item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
 detailed verbosity.}
-
-\item{debug}{Boolean. Additional verbosity for debugging purposes.}
 }
 \value{
 A list with predicted_doublets, doublet_scores, threshold,

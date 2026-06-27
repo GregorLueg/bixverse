@@ -13,7 +13,7 @@ remove_snn_graph(x, ...)
 ## S7 method for class <bixverse::MetaCells>
 remove_snn_graph(x, ...)
 
-\method{remove_snn_graph}{ScCache}(x)
+\method{remove_snn_graph}{ScCache}(x, ...)
 
 ## S7 method for class <bixverse::SingleCells>
 remove_snn_graph(x, ...)

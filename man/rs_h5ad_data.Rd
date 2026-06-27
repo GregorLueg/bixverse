@@ -18,6 +18,8 @@ rs_h5ad_data(f_path, cs_type, nrows, ncols, cell_quality, slot, verbose)
 \item{cell_quality}{List. Specifiying the cell quality. Please refer
 to \code{\link[=params_sc_min_quality]{params_sc_min_quality()}}.}
 
+\item{slot}{String. In which slot the raw data can be found.}
+
 \item{verbose}{Boolean. Controls verbosity of the function}
 }
 \value{

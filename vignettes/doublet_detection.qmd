@@ -94,7 +94,7 @@ mtx_io_params$cells_as_rows <- TRUE
 sc_object <- load_mtx(
   object = sc_object,
   sc_mtx_io_param = mtx_io_params,
-  streaming = FALSE
+  streaming = 0L
 )
 
 sc_object
@@ -168,7 +168,7 @@ sc_object <- add_sc_new_obs(
   obs_data = get_data(scrublet)
 )
 
-sc_object[[1:5]]
+head(sc_object)
 ```
 
 As we can see with added now the Scrublet data
@@ -320,7 +320,7 @@ the doublets like this.
 
 ```{r}
 #| label: weighted scores from scdblfinder
-weighted_scores <- get_scores(scdblfinder)
+weighted_scores <- get_scores(scdblfinder, score_type = "weighted")
 
 weighted_scores_threshold <- find_threshold_otsu(x = weighted_scores)
 

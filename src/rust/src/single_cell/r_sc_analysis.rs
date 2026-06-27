@@ -1,6 +1,7 @@
 use bixverse_rs::core::math::stats::calc_fdr;
 use bixverse_rs::methods::nmf_hals::HalsOpts;
 use bixverse_rs::prelude::*;
+use bixverse_rs::single_cell::sc_analysis::nichenet::prioritisation::ClusterExpressionStats;
 use bixverse_rs::single_cell::sc_analysis::{
     dge_pathway_scores::*,
     hotspot::*,
@@ -9,6 +10,7 @@ use bixverse_rs::single_cell::sc_analysis::{
     module_scoring::*,
     nichenet::activity_scoring::*,
     nichenet::ligand_regulatory_potential::*,
+    nichenet::prioritisation::compute_cluster_expression_stats,
     nmf_sc::{nmf_multiple_run_sc, nmf_single_run_sc},
     scenic::*,
     vision::*,
@@ -56,6 +58,7 @@ extendr_module! {
     // nichenet
     fn rs_generate_ligand_target_influence;
     fn rs_ligand_activity_scores;
+    fn rs_compute_cluster_expr_stats;
 }
 
 //////////
@@ -1255,10 +1258,8 @@ fn rs_importance_threshold(matrix: RMatrix<f64>, n_sd: f64, min_value: Option<f6
 /// (including distances). The user has to ensure consistency! If provided, this
 /// will be used.
 /// @param meld_params Named list. Contains the parameters to use for MELD.
-/// @param landmark Boolean. Shall a landmark method be used for accelerated
-/// MELD.
-/// @param n_landmarks Integer. If `landmark = TRUE`, how many landmarks to use.
 /// @param labels Integer. The labels of the different groups. (1-indexed!)
+/// @param n_labels Integer. Number of labels represented in the data.
 /// @param seed Integer. For reproducibility.
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
@@ -1505,6 +1506,33 @@ fn rs_nmf_multi_sc(
 // NicheNet //
 //////////////
 
+/////////////
+// Helpers //
+/////////////
+
+/// [LigandActivityScores] to R list Helper
+///
+/// ### Params
+///
+/// * `scores` - The [LigandActivityScores] structure to transform
+///
+/// ### Returns
+///
+/// The list with the results
+fn activity_to_list(scores: &LigandActivityScores<f64>) -> List {
+    list!(
+        auroc = scores.auroc.clone(),
+        aupr = scores.aupr.clone(),
+        aupr_corrected = scores.aupr_corrected.clone(),
+        pearson = scores.pearson.clone(),
+        spearman = scores.spearman.clone()
+    )
+}
+
+//////////
+// Main //
+//////////
+
 /// Generate the ligand to target influence matrices
 ///
 /// @description
@@ -1569,25 +1597,6 @@ fn rs_generate_ligand_target_influence(
     Ok(faer_to_r_matrix(ligand_influence_matrix.as_ref()))
 }
 
-/// [LigandActivityScores] to R list Helper
-///
-/// ### Params
-///
-/// * `scores` - The [LigandActivityScores] structure to transform
-///
-/// ### Returns
-///
-/// The list with the results
-fn activity_to_list(scores: &LigandActivityScores<f64>) -> List {
-    list!(
-        auroc = scores.auroc.clone(),
-        aupr = scores.aupr.clone(),
-        aupr_corrected = scores.aupr_corrected.clone(),
-        pearson = scores.pearson.clone(),
-        spearman = scores.spearman.clone()
-    )
-}
-
 /// Calculate the NicheNet ligand activity scores
 ///
 /// @description
@@ -1641,4 +1650,60 @@ fn rs_ligand_activity_scores(ligand_influence: RMatrix<f64>, in_gene_sets: List)
     }
 
     Ok(res)
+}
+
+/// Compute cluster statistics for NicheNet prioritisation
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Helper function to pull out average expression and fraction of cells for
+/// genes of interest.
+///
+/// @param f_path_gene Path to the `counts_genes.bin` file.
+/// @param gene_indices Integer vector. 0-indexed(!) positions of the genes
+/// to include.
+/// @param clusters List. A list that contains within the cell indices of the
+/// clusters of interest (0-indexed).
+///
+/// @returns A list with two matrices
+/// \itemize{
+///   \item mean - The average expression. Shape genes x clusters.
+///   \item frac - The fraction of cells expressing. Shape genes x clusters.
+/// }
+///
+/// @export
+///
+/// @keywords internal
+#[extendr]
+fn rs_compute_cluster_expr_stats(
+    f_path_gene: &str,
+    gene_indices: &[i32],
+    clusters: List,
+) -> Result<List> {
+    let gene_indices = gene_indices.r_int_convert();
+    let mut cluster_vec = Vec::with_capacity(clusters.len());
+
+    for i in 0..clusters.len() {
+        let elem_i = clusters.elt(i)?;
+        let vec_i = elem_i
+            .as_integer_vector()
+            .ok_or_else(|| {
+                Error::Other(
+                    "One of the cluster cell indices could not be transformed to integers.".into(),
+                )
+            })?
+            .r_int_convert();
+
+        cluster_vec.push(vec_i);
+    }
+
+    let reader = ParallelSparseReader::new(f_path_gene).to_extendr()?;
+
+    let cluster_res: ClusterExpressionStats<f64> =
+        compute_cluster_expression_stats(&reader, &gene_indices, &cluster_vec).to_extendr()?;
+
+    Ok(list!(
+        mean = faer_to_r_matrix(cluster_res.mean.as_ref()),
+        frac = faer_to_r_matrix(cluster_res.frac.as_ref())
+    ))
 }

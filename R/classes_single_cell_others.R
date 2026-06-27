@@ -98,7 +98,7 @@ print.SingleCellNearestNeighbour <- function(x, ...) {
 #' @rdname get_knn_mat
 #'
 #' @export
-get_knn_mat.SingleCellNearestNeighbour <- function(x) {
+get_knn_mat.SingleCellNearestNeighbour <- function(x, ...) {
   # checks
   checkmate::assertClass(x, "SingleCellNearestNeighbour")
 
@@ -108,7 +108,7 @@ get_knn_mat.SingleCellNearestNeighbour <- function(x) {
 #' @rdname get_knn_dist
 #'
 #' @export
-get_knn_dist.SingleCellNearestNeighbour <- function(x) {
+get_knn_dist.SingleCellNearestNeighbour <- function(x, ...) {
   # checks
   checkmate::assertClass(x, "SingleCellNearestNeighbour")
 
@@ -810,9 +810,10 @@ get_data.ScDblFinderRes <- function(x, ...) {
 #'
 #' @param x An object to get the feature matrix from. This will only include
 #' the values of the observed cells.
+#' @param ... Additional parameters to forward to the method.
 #'
 #' @export
-get_feature_mat <- function(x) {
+get_feature_mat <- function(x, ...) {
   UseMethod("get_feature_mat")
 }
 
@@ -832,16 +833,9 @@ get_feature_mat.ScDblFinderRes <- function(x, ...) {
   return(x$features)
 }
 
-#' Get either the cxds or weighted scores
-#'
-#' @param x An object to get the weighted or cxds scores from.
-#'
-#' @export
-get_scores <- function(x, ..., score_type = c("weighted", "cxds_scores")) {
-  UseMethod("get_scores")
-}
-
 #' @rdname get_scores
+#'
+#' @param score_type Either `"weighted"` or `"cxds_scores"`.
 #'
 #' @export
 get_scores.ScDblFinderRes <- function(
@@ -850,10 +844,7 @@ get_scores.ScDblFinderRes <- function(
   score_type = c("weighted", "cxds_scores")
 ) {
   score_type <- match.arg(score_type)
-
   checkmate::assertClass(x, "ScDblFinderRes")
-  checkmate::assertChoice(score_type, c("weighted", "cxds_scores"))
-
   x[[score_type]]
 }
 
@@ -2457,28 +2448,14 @@ print.SingleCellFastClusters <- function(x, ...) {
 
 ### getters --------------------------------------------------------------------
 
-#' Get the ScType score matrix
-#'
-#' @param x `ScTypeResults` object.
+#' @rdname get_scores
 #'
 #' @returns A numeric matrix of cells x cell types.
 #'
 #' @export
-get_scores <- function(x) {
-  UseMethod("get_scores")
-}
-
-#' @rdname get_scores
-#'
-#' @export
-get_scores.ScTypeResults <- function(x) {
+get_scores.ScTypeResults <- function(x, ...) {
   checkmate::assertClass(x, "ScTypeResults")
-  m <- matrix(
-    x$scores,
-    nrow = x$n_cells,
-    ncol = x$n_cell_types,
-    byrow = TRUE
-  )
+  m <- matrix(x$scores, nrow = x$n_cells, ncol = x$n_cell_types, byrow = TRUE)
   colnames(m) <- x$cell_types
   m
 }

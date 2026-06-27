@@ -11,7 +11,7 @@ knitr:
     collapse: true
     comment: '#>'
 author: 
-  - name: "Grant Neilson, Gregor Lueg, Liesbeth François"
+  - name: "Grant Neilson, Gregor Lueg and Liesbeth François"
 ---
 
 ## Intro
@@ -148,7 +148,9 @@ The `CellQc` class has a few associated plotting functions using the output of `
 #| label: violin qc plots
 #| fig-width: 12
 #| fig-height: 4
-violin_plot_sc(qc)
+plots <- violin_plot_sc(qc)
+
+plots$log10_lib_size + plots$log10_nnz + plots$MT
 ```
 
 - `joint_plot_sc` method that compares the genes versus UMIs per cell.
@@ -266,7 +268,13 @@ kmeans_membership <- get_kmeans_clusters(fast_cluster_res)
 You can add the data to the object via:
 
 ```{r}
-#| label: fast cluster
+#| label: fast cluster add 
+sc_object <- add_sc_new_obs(
+  object = sc_object,
+  obs_data = get_data(fast_cluster_res)
+)
+
+head(sc_object)
 ```
 
 ### Dimensionality reduction
@@ -283,9 +291,11 @@ sc_object <- tsne_sc(
 )
 ```
 
-We can use `bixverse.plots` package which provides some basic plotting functions such as:
+We can use `bixverse.plots` package which provides some basic plotting functions 
+such as:
 
-- Plotting the embedding using `embedding_plot_sc` to check out the UMAP embeddings:
+- Plotting the embedding using `embedding_plot_sc` to check out the UMAP 
+  embeddings:
 
 ```{r}
 #| label: umap plot
@@ -300,7 +310,7 @@ embedding_plot_sc(
 )
 ```
 
-Let's check out tSNE
+- Let's check out tSNE
 
 ```{r}
 #| label: tsne plot
@@ -315,7 +325,8 @@ embedding_plot_sc(
 )
 ```
 
-- We can also plot a gene expression on the embedding space using `feature_plot_sc`:
+- We can also plot a gene expression on the embedding space using 
+  `feature_plot_sc`:
 
 ```{r}
 feature_plot_sc(
@@ -359,7 +370,13 @@ cell_markers <- c(
 )
 ```
 
-Let's annotate the PBMCs using the scType cell type annotation algorithm by [Ianevski et al. (2022)](https://doi.org/10.1038/s41467-022-28803-w). We first prepare the cell type markers into the right format using `prepare_cell_markers` helper functions. Subsequently calculate the scType score using `calc_sc_type_scores`and summarize on cluster level to get the annotated cell type using `score_clusters`. Finally, we can assign back the cell type annotation into the `sc_object`.
+Let's annotate the PBMCs using the scType cell type annotation algorithm by 
+[Ianevski et al. (2022)](https://doi.org/10.1038/s41467-022-28803-w). We first 
+prepare the cell type markers into the right format using `prepare_cell_markers` 
+helper functions. Subsequently calculate the scType score using 
+`calc_sc_type_scores` and summarise on cluster level to get the annotated cell 
+type using `score_clusters`. Finally, we can assign back the cell type 
+annotation into the `sc_object`.
 
 ```{r}
 cell_markers_dt <- stack(cell_markers) %>%
@@ -415,7 +432,7 @@ Alternatively, we can also show the expression levels of the cell type markers u
 
 ```{r}
 features_vec <- setdiff(symbol_to_ensembl[names(cell_markers)], NA)
-feature_labels = ensembl_to_symbol[features_vec]
+feature_labels <- ensembl_to_symbol[features_vec]
 
 dot_plot_sc(
   object = sc_object,

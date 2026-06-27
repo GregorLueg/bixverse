@@ -85,12 +85,12 @@ fn rs_mc_scenic(
 /// measurs). This version works on MetaCell counts which are stored in memory
 /// directly.
 ///
+/// @param sparse_data A named list that needs to have `data`, `indptr`,
+/// `indices`, `nrow`, `ncol` and `format`.
 /// @param gs_list List. List with the gene set indices (0-indexed!) of the
 /// genes of interest.
-/// @param cells_to_keep Integer. Vector of indices of the cells to keep.
 /// @param auc_type String. One of `"wilcox"` or `"auroc"`, pending on
 /// which statistic you wish to calculate.
-/// @param streaming Boolean. Shall the data be streamed.
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
 ///

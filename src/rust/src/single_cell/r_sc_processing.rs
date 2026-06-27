@@ -218,7 +218,6 @@ fn rs_sc_doublet_detection(
 /// @param seed Integer. Seed for reproducibility.
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
-/// @param debug Boolean. Additional verbosity for debugging purposes.
 ///
 /// @returns A list with predicted_doublets, doublet_scores, threshold,
 /// cluster_labels and detected_doublet_rate.
@@ -1194,12 +1193,11 @@ fn rs_sc_snn(
 /// Compare two kNN graphs and return the distance ratios and overlaps of
 /// k-nearest neighbours between them.
 ///
-/// @param knn_mat_a Integer matrix. The indices of the first kNN graph to
-/// compare. Should be samples x neighbours. This will be treated as ground
-/// truth.
-/// @param knn_mat_b Integer matrix. The indices of the second kNN graph to
-/// compare. Should be samples x neighbours.
-/// @param knn_dist_a Numeric matrix.
+/// @param knn_data_a Named list. This contains the kNN data (including
+/// distances) of the first kNN graph. This one will be treated as the ground
+/// truth
+/// @param knn_data_b Named list. This contains the kNN data (including
+/// distances) of the second kNN graph.
 ///
 /// @returns A list with the following elements:
 /// \itemize{

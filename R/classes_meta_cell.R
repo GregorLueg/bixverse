@@ -113,21 +113,7 @@ MetaCells <- S7::new_class(
 
 ## primitives ------------------------------------------------------------------
 
-#' @name print.MetaCells
-#'
-#' @title print Method for MetaCells object
-#'
-#' @description
-#' Print a MetaCells object.
-#'
-#' @param x An object of class `MetaCells`.
-#' @param ... Additional arguments (currently not used).
-#'
-#' @returns Invisibly returns `x`.
-#'
-#' @method print MetaCells
-#'
-#' @keywords internal
+#' @noRd
 S7::method(print, MetaCells) <- function(x, ...) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))
@@ -167,23 +153,8 @@ S7::method(print, MetaCells) <- function(x, ...) {
   invisible(x)
 }
 
-#' @name head.MetaCells
-#'
-#' @title head Method for MetaCells object
-#'
-#' @description
-#' Returns the first `n` rows of the obs table from a `MetaCells` object.
-#'
-#' @param x An object of class `MetaCells`.
-#' @param n Integer. Number of rows to return. Defaults to `6L`.
-#' @param ... Additional arguments (currently not used).
-#'
-#' @returns A data.table with the first `n` rows of the obs table.
-#'
-#' @method head MetaCells
-#'
-#' @keywords internal
-S7::method(head, MetaCells) <- function(x, n = 6L, ...) {
+#' @noRd
+S7::method(head, MetaCells) <- function(x, ..., n = 6L) {
   checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))
   checkmate::qassert(n, "I1[1,)")
   get_sc_obs(x, indices = seq_len(n), filtered = FALSE)

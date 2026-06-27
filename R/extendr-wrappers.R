@@ -882,6 +882,7 @@ rs_synthetic_sc_adt_with_cell_types <- function(n_cells, n_proteins, n_batches, 
 #' @param ncols Integer. Number of columns in the file.
 #' @param cell_quality List. Specifiying the cell quality. Please refer
 #' to [bixverse::params_sc_min_quality()].
+#' @param slot String. In which slot the raw data can be found.
 #' @param verbose Boolean. Controls verbosity of the function
 #'
 #' @returns A list with:
@@ -2293,7 +2294,8 @@ rs_sc_type_cluster_assignment <- function(sc_type_res, cluster_labels) .Call(wra
 #' `r lifecycle::badge("experimental")`
 #' Builds the Symphony reference in Rust, see Kang et al.
 #'
-#' @param f_path String. Path to the gene-based binary file.
+#' @param f_path_gene String. Path to the gene-based binary file.
+#' @param f_path_cell String. Path to the cell-based binary file.
 #' @param cell_indices Integer vector. 0-based cell indices.
 #' @param hvg_indices Integer vector. 0-based HVG indices.
 #' @param batch_labels List of 0-indexed integer vectors (one per batch
@@ -2303,9 +2305,9 @@ rs_sc_type_cluster_assignment <- function(sc_type_res, cluster_labels) .Call(wra
 #' @param harmony_params List. Output of `params_sc_harmony()` or
 #' `params_sc_harmony_v2()`.
 #' @param harmony_version String. "v1" or "v2".
-#' @param clr_offsets Numerical vector. Length-0 for None.
 #' @param seed Integer.
-#' @param verbose Integer. 0/1/2.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
 #'
 #' @return A list with gene_means, gene_sds, loadings, z_orig, z_corr, r,
 #' centroids, nr, c.
@@ -2336,8 +2338,10 @@ rs_build_symphony_ref <- function(f_path_gene, f_path_cell, cell_indices, hvg_in
 #' the 0-based query gene index, or `NA_integer_` if absent.
 #' @param batch_labels_query List of 0-indexed integer vectors (empty = no
 #' batch correction).
-#' @param sigma,lambda Mapping parameters.
-#' @param verbose Integer. 0/1/2.
+#' @param params_symphony Named list. Contains the parameters for the referemce
+#' generation.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
 #'
 #' @return A list with z_pca, z_corr, r.
 #'
@@ -2665,7 +2669,6 @@ rs_sc_doublet_detection <- function(f_path_gene, f_path_cell, cells_to_keep, boo
 #' @param seed Integer. Seed for reproducibility.
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
-#' @param debug Boolean. Additional verbosity for debugging purposes.
 #'
 #' @returns A list with predicted_doublets, doublet_scores, threshold,
 #' cluster_labels and detected_doublet_rate.
@@ -3024,12 +3027,11 @@ rs_sc_snn <- function(knn_mat, snn_method, limited_graph, pruning, verbose) .Cal
 #' Compare two kNN graphs and return the distance ratios and overlaps of
 #' k-nearest neighbours between them.
 #'
-#' @param knn_mat_a Integer matrix. The indices of the first kNN graph to
-#' compare. Should be samples x neighbours. This will be treated as ground
-#' truth.
-#' @param knn_mat_b Integer matrix. The indices of the second kNN graph to
-#' compare. Should be samples x neighbours.
-#' @param knn_dist_a Numeric matrix.
+#' @param knn_data_a Named list. This contains the kNN data (including
+#' distances) of the first kNN graph. This one will be treated as the ground
+#' truth
+#' @param knn_data_b Named list. This contains the kNN data (including
+#' distances) of the second kNN graph.
 #'
 #' @returns A list with the following elements:
 #' \itemize{
@@ -3362,10 +3364,8 @@ rs_make_milor_nhoods <- function(embd, knn_indices, milor_params, seed, verbose)
 #' (including distances). The user has to ensure consistency! If provided, this
 #' will be used.
 #' @param meld_params Named list. Contains the parameters to use for MELD.
-#' @param landmark Boolean. Shall a landmark method be used for accelerated
-#' MELD.
-#' @param n_landmarks Integer. If `landmark = TRUE`, how many landmarks to use.
 #' @param labels Integer. The labels of the different groups. (1-indexed!)
+#' @param n_labels Integer. Number of labels represented in the data.
 #' @param seed Integer. For reproducibility.
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
@@ -3681,6 +3681,30 @@ rs_generate_ligand_target_influence <- function(ligand_seeds, ppi_network, grn_n
 #'
 #' @export
 rs_ligand_activity_scores <- function(ligand_influence, in_gene_sets) .Call(wrap__rs_ligand_activity_scores, ligand_influence, in_gene_sets)
+
+#' Compute cluster statistics for NicheNet prioritisation
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Helper function to pull out average expression and fraction of cells for
+#' genes of interest.
+#'
+#' @param f_path_gene Path to the `counts_genes.bin` file.
+#' @param gene_indices Integer vector. 0-indexed(!) positions of the genes
+#' to include.
+#' @param clusters List. A list that contains within the cell indices of the
+#' clusters of interest (0-indexed).
+#'
+#' @returns A list with two matrices
+#' \itemize{
+#'   \item mean - The average expression. Shape genes x clusters.
+#'   \item frac - The fraction of cells expressing. Shape genes x clusters.
+#' }
+#'
+#' @export
+#'
+#' @keywords internal
+rs_compute_cluster_expr_stats <- function(f_path_gene, gene_indices, clusters) .Call(wrap__rs_compute_cluster_expr_stats, f_path_gene, gene_indices, clusters)
 
 #' Generate meta cells (hdWGCNA method)
 #'
@@ -4131,12 +4155,12 @@ rs_mc_scenic <- function(sparse_data, tf_indices, scenic_params, seed, verbose) 
 #' measurs). This version works on MetaCell counts which are stored in memory
 #' directly.
 #'
+#' @param sparse_data A named list that needs to have `data`, `indptr`,
+#' `indices`, `nrow`, `ncol` and `format`.
 #' @param gs_list List. List with the gene set indices (0-indexed!) of the
 #' genes of interest.
-#' @param cells_to_keep Integer. Vector of indices of the cells to keep.
 #' @param auc_type String. One of `"wilcox"` or `"auroc"`, pending on
 #' which statistic you wish to calculate.
-#' @param streaming Boolean. Shall the data be streamed.
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
 #'
