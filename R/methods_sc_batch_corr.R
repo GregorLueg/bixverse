@@ -13,7 +13,7 @@
 #' Large number of positive tests indicate bad mixing overall. For more details,
 #' please see Büttner et al.
 #'
-#' @param object `SingleCells` class.
+#' @param object `SingleCells` or `SingleCellsSubset` class.
 #' @param batch_column String. The column with the batch information in the
 #' obs data of the class.
 #' @param threshold Numeric. Number between 0 and 1. Below this threshold, the
@@ -50,22 +50,17 @@ calculate_kbet_sc <- S7::new_generic(
   }
 )
 
-#' @method calculate_kbet_sc SingleCells
-#'
-#' @export
-S7::method(calculate_kbet_sc, SingleCells) <- function(
+#' @method calculate_kbet_sc ScOrScSubset
+S7::method(calculate_kbet_sc, ScOrScSubset) <- function(
   object,
   batch_column,
   threshold = 0.05,
   .verbose = TRUE
 ) {
-  # check
-  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::qassert(batch_column, "S1")
   checkmate::qassert(threshold, "N1[0, 1]")
   checkmate::qassert(.verbose, "B1")
 
-  # function
   batch_index <- unlist(object[[batch_column]])
 
   if (!length(levels(factor(batch_index))) > 1) {
@@ -88,7 +83,7 @@ S7::method(calculate_kbet_sc, SingleCells) <- function(
     verbose = .verbose
   )
 
-  res <- structure(
+  structure(
     list(
       kbet_score = sum(rs_res$pval <= threshold) / length(rs_res$pval),
       significant_tests = rs_res$pval <= threshold,
@@ -101,8 +96,6 @@ S7::method(calculate_kbet_sc, SingleCells) <- function(
     ),
     class = "KbetScores"
   )
-
-  return(res)
 }
 
 ### kbet print -----------------------------------------------------------------
@@ -160,7 +153,7 @@ print.KbetScores <- function(x, ...) {
 #' For graph-based methods like BBKNN, consider using
 #' [bixverse::calculate_batch_lisi_sc()] instead.
 #'
-#' @param object `SingleCells` class.
+#' @param object `SingleCells` or `SingleCellsSubset` class.
 #' @param batch_column String. The column with the batch information in the
 #' obs data of the class.
 #' @param embd_to_use String. Which embedding to compute the ASW on. One of
@@ -196,10 +189,8 @@ calculate_batch_asw_sc <- S7::new_generic(
   }
 )
 
-#' @method calculate_batch_asw_sc SingleCells
-#'
-#' @export
-S7::method(calculate_batch_asw_sc, SingleCells) <- function(
+#' @method calculate_batch_asw_sc ScOrScSubset
+S7::method(calculate_batch_asw_sc, ScOrScSubset) <- function(
   object,
   batch_column,
   embd_to_use = "pca",
@@ -207,8 +198,6 @@ S7::method(calculate_batch_asw_sc, SingleCells) <- function(
   seed = 42L,
   .verbose = TRUE
 ) {
-  # checks
-  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::qassert(batch_column, "S1")
   checkmate::qassert(embd_to_use, "S1")
   checkmate::qassert(max_cells, c("I1", "0"))
@@ -222,14 +211,12 @@ S7::method(calculate_batch_asw_sc, SingleCells) <- function(
     return(NULL)
   }
 
-  # early return
   if (!embd_to_use %in% get_available_embeddings(object)) {
     warning("The desired embedding was not found. Returning class as is.")
     return(object)
   }
-  # get embedding
-  embd <- get_embedding(x = object, embd_name = embd_to_use)
 
+  embd <- get_embedding(x = object, embd_name = embd_to_use)
   n_batches <- length(levels(factor(batch_index)))
 
   rs_res <- rs_batch_silhouette_width(
@@ -240,7 +227,7 @@ S7::method(calculate_batch_asw_sc, SingleCells) <- function(
     verbose = .verbose
   )
 
-  res <- structure(
+  structure(
     list(
       per_cell = rs_res$per_cell,
       mean_asw = rs_res$mean_asw,
@@ -250,8 +237,6 @@ S7::method(calculate_batch_asw_sc, SingleCells) <- function(
     ),
     class = "BatchSilhouetteScores"
   )
-
-  return(res)
 }
 
 ### batch silhouette print -----------------------------------------------------
@@ -290,7 +275,7 @@ print.BatchSilhouetteScores <- function(x, ...) {
 #' against global batch proportions, making it suitable for graph-based
 #' correction methods like BBKNN.
 #'
-#' @param object `SingleCells` class.
+#' @param object `SingleCells` or `SingleCellsSubset` class.
 #' @param batch_column String. The column with the batch information in the
 #' obs data of the class.
 #' @param .verbose Boolean. Controls verbosity of the function.
@@ -318,16 +303,12 @@ calculate_batch_lisi_sc <- S7::new_generic(
   }
 )
 
-#' @method calculate_batch_lisi_sc SingleCells
-#'
-#' @export
-S7::method(calculate_batch_lisi_sc, SingleCells) <- function(
+#' @method calculate_batch_lisi_sc ScOrScSubset
+S7::method(calculate_batch_lisi_sc, ScOrScSubset) <- function(
   object,
   batch_column,
   .verbose = TRUE
 ) {
-  # checks
-  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::qassert(batch_column, "S1")
   checkmate::qassert(.verbose, "B1")
 
@@ -353,7 +334,7 @@ S7::method(calculate_batch_lisi_sc, SingleCells) <- function(
     verbose = .verbose
   )
 
-  res <- structure(
+  structure(
     list(
       per_cell = rs_res$per_cell,
       mean_lisi = rs_res$mean_lisi,
@@ -362,8 +343,6 @@ S7::method(calculate_batch_lisi_sc, SingleCells) <- function(
     ),
     class = "BatchLisiScores"
   )
-
-  return(res)
 }
 
 ### batch lisi print -----------------------------------------------------------
@@ -405,7 +384,7 @@ print.BatchLisiScores <- function(x, ...) {
 #' amongst the Top X HVG in all batches. Important. The function returns
 #' 0-indices for the genes!
 #'
-#' @param object `SingleCells` class.
+#' @param object `SingleCells` or `SingleCellsSubset` class.
 #' @param batch_column String. The column name of the batch column in the obs
 #' table.
 #' @param hvg_no Integer. Number of highly variable genes to include. Defaults
@@ -455,10 +434,8 @@ find_hvg_batch_aware_sc <- S7::new_generic(
   }
 )
 
-#' @method find_hvg_batch_aware_sc SingleCells
-#'
-#' @export
-S7::method(find_hvg_batch_aware_sc, SingleCells) <- function(
+#' @method find_hvg_batch_aware_sc ScOrScSubset
+S7::method(find_hvg_batch_aware_sc, ScOrScSubset) <- function(
   object,
   batch_column,
   hvg_no = 2000L,
@@ -469,7 +446,6 @@ S7::method(find_hvg_batch_aware_sc, SingleCells) <- function(
 ) {
   gene_comb_method <- match.arg(gene_comb_method)
 
-  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::qassert(batch_column, "S1")
   checkmate::qassert(hvg_no, "I1")
   checkmate::assertChoice(
@@ -548,11 +524,11 @@ S7::method(find_hvg_batch_aware_sc, SingleCells) <- function(
   )
   hvg_genes <- get_gene_names_from_idx(x = object, gene_idx = hvg_gene_idx)
 
-  return(list(
+  list(
     hvg_genes = hvg_genes,
     hvg_gene_idx = hvg_gene_idx,
     hvg_data = batch_hvgs_dt
-  ))
+  )
 }
 
 ## BBKNN -----------------------------------------------------------------------
@@ -566,7 +542,7 @@ S7::method(find_hvg_batch_aware_sc, SingleCells) <- function(
 #' Subsequently, it leverages UMAP connectivity calculations to reduce spurious
 #' connections. For more details, please refer to Polański, et al.
 #'
-#' @param object `SingleCells` class.
+#' @param object `SingleCells` or `SingleCellsSubset` class.
 #' @param batch_column String. The column with the batch information in the
 #' obs data of the class.
 #' @param no_neighbours_to_keep Integer. Maximum number of neighbours to keep
@@ -622,10 +598,8 @@ bbknn_sc <- S7::new_generic(
   }
 )
 
-#' @method bbknn_sc SingleCells
-#'
-#' @export
-S7::method(bbknn_sc, SingleCells) <- function(
+#' @method bbknn_sc ScOrScSubset
+S7::method(bbknn_sc, ScOrScSubset) <- function(
   object,
   batch_column,
   no_neighbours_to_keep = 5L,
@@ -635,8 +609,6 @@ S7::method(bbknn_sc, SingleCells) <- function(
   seed = 42L,
   .verbose = TRUE
 ) {
-  # checks
-  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::qassert(batch_column, "S1")
   checkmate::assertChoice(embd_to_use, c("pca"))
   checkmate::qassert(no_embd_to_use, c("I1", "0"))
@@ -644,7 +616,6 @@ S7::method(bbknn_sc, SingleCells) <- function(
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
-  # function body
   if (!is.null(get_knn_mat(object))) {
     warning("Prior kNN matrix found. Will be overwritten.")
   }
@@ -652,12 +623,10 @@ S7::method(bbknn_sc, SingleCells) <- function(
   embd <- switch(embd_to_use, pca = get_pca_factors(object))
 
   if (is.null(embd)) {
-    warning(
-      paste(
-        "The desired embedding was not found. Please check the parameters.",
-        "Returning NULL."
-      )
-    )
+    warning(paste(
+      "The desired embedding was not found. Please check the parameters.",
+      "Returning NULL."
+    ))
     return(NULL)
   }
 
@@ -699,8 +668,6 @@ S7::method(bbknn_sc, SingleCells) <- function(
     verbose = parse_verbosity(.verbose)
   )
 
-  # extract kNN indices and distances
-  # In bbknn_sc, replace the if/else with:
   knn_data <- {
     no_k <- min(no_neighbours_to_keep, no_generated_neighbours)
     filtered <- rs_bbknn_filtering(
@@ -722,7 +689,6 @@ S7::method(bbknn_sc, SingleCells) <- function(
   sc_knn <- new_sc_knn(knn_data = knn_data, used_cells = used_cells)
   object <- set_knn(object, knn = sc_knn)
 
-  # build graph from BBKNN connectivities
   if (.verbose) {
     message(paste(
       "Generating graph based on BBKNN connectivities.",
@@ -750,7 +716,7 @@ S7::method(bbknn_sc, SingleCells) <- function(
 
   object <- set_snn_graph(object, snn_graph = snn_graph)
 
-  return(object)
+  object
 }
 
 ## fastMNN ---------------------------------------------------------------------
@@ -764,7 +730,7 @@ S7::method(bbknn_sc, SingleCells) <- function(
 #' iterate through the batches, identify the MNN and generate correction vectors
 #' and generate a corrected embedding which is added to the function.
 #'
-#' @param object `SingleCells` class.
+#' @param object `SingleCells` or `SingleCellsSubset` class.
 #' @param batch_column String. The column with the batch information in the
 #' obs data of the class.
 #' @param batch_hvg_genes Integer vector. These are the highly variable genes,
@@ -815,10 +781,8 @@ fast_mnn_sc <- S7::new_generic(
   }
 )
 
-#' @method fast_mnn_sc SingleCells
-#'
-#' @export
-S7::method(fast_mnn_sc, SingleCells) <- function(
+#' @method fast_mnn_sc ScOrScSubset
+S7::method(fast_mnn_sc, ScOrScSubset) <- function(
   object,
   batch_column,
   batch_hvg_genes,
@@ -827,8 +791,6 @@ S7::method(fast_mnn_sc, SingleCells) <- function(
   seed = 42L,
   .verbose = TRUE
 ) {
-  # checks
-  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::qassert(batch_column, "S1")
   checkmate::qassert(batch_hvg_genes, "I+")
   assertScFastmnn(fastmnn_params)
@@ -836,7 +798,6 @@ S7::method(fast_mnn_sc, SingleCells) <- function(
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
-  # function body
   batch_indices <- unlist(object[[batch_column]])
   batch_factor <- factor(batch_indices)
   batch_indices <- as.integer(batch_factor) - 1L
@@ -864,9 +825,7 @@ S7::method(fast_mnn_sc, SingleCells) <- function(
 
   colnames(mnn_embd) <- sprintf("mnn_%s", 1:ncol(mnn_embd))
 
-  object <- set_embedding(x = object, embd = mnn_embd, name = "mnn")
-
-  return(object)
+  set_embedding(x = object, embd = mnn_embd, name = "mnn")
 }
 
 ## harmony ---------------------------------------------------------------------
@@ -878,7 +837,7 @@ S7::method(fast_mnn_sc, SingleCells) <- function(
 #' batch correction on PCA embeddings and stores the result as a `"harmony"`
 #' embedding in the object.
 #'
-#' @param object `SingleCells` class.
+#' @param object `SingleCells` or `SingleCellsSubset` class.
 #' @param batch_column String. Column name in the object containing the primary
 #' batch labels.
 #' @param additional_batch_columns Optional character vector. Additional batch
@@ -911,10 +870,8 @@ harmony_sc <- S7::new_generic(
   }
 )
 
-#' @method harmony_sc SingleCells
-#'
-#' @export
-S7::method(harmony_sc, SingleCells) <- function(
+#' @method harmony_sc ScOrScSubset
+S7::method(harmony_sc, ScOrScSubset) <- function(
   object,
   batch_column,
   additional_batch_columns = NULL,
@@ -925,8 +882,6 @@ S7::method(harmony_sc, SingleCells) <- function(
 ) {
   modality <- match.arg(modality)
 
-  # checks
-  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::qassert(batch_column, "S1")
   checkmate::qassert(additional_batch_columns, c("S+", "0"))
   assertScHarmonyParams(harmony_params)
@@ -940,18 +895,12 @@ S7::method(harmony_sc, SingleCells) <- function(
     ))
   }
 
-  # early return
   if (is.null(get_pca_factors(object, modality = modality))) {
-    warning(paste(
-      "No PCA embeddings found in the object. Returning class as is"
-    ))
+    warning("No PCA embeddings found in the object. Returning class as is")
     return(object)
-  } else {
-    pca_data <- get_pca_factors(object, modality = modality)
   }
+  pca_data <- get_pca_factors(object, modality = modality)
 
-  # function body
-  # main batch
   batch_index_ls <- list()
 
   batch_indices <- unlist(object[[batch_column]])
@@ -960,13 +909,11 @@ S7::method(harmony_sc, SingleCells) <- function(
 
   batch_index_ls[[1]] <- batch_indices
 
-  # add optional batch effects to regress out
   if (!is.null(additional_batch_columns)) {
     for (i in seq_along(additional_batch_columns)) {
       batch_indices_i <- unlist(object[[additional_batch_columns[[i]]]])
       batch_factor_i <- factor(batch_indices_i)
       batch_indices_i <- as.integer(batch_factor_i) - 1L
-
       batch_index_ls[[i + 1]] <- batch_indices_i
     }
   }
@@ -995,14 +942,12 @@ S7::method(harmony_sc, SingleCells) <- function(
 
   colnames(harmony_embd) <- sprintf("harmony_%s", 1:ncol(harmony_embd))
 
-  object <- set_embedding(
+  set_embedding(
     x = object,
     embd = harmony_embd,
     name = "harmony",
     modality = modality
   )
-
-  return(object)
 }
 
 ## harmony v2 ------------------------------------------------------------------
@@ -1014,7 +959,7 @@ S7::method(harmony_sc, SingleCells) <- function(
 #' Performs batch correction on PCA embeddings and stores the result as a
 #' `"harmony_v2"` embedding in the object.
 #'
-#' @param object `SingleCells` class.
+#' @param object `SingleCells` or `SingleCellsSubset` class.
 #' @param batch_column String. Column name in the object containing the primary
 #' batch labels.
 #' @param additional_batch_columns Optional character vector. Additional batch
@@ -1047,10 +992,8 @@ harmony_v2_sc <- S7::new_generic(
   }
 )
 
-#' @method harmony_v2_sc SingleCells
-#'
-#' @export
-S7::method(harmony_v2_sc, SingleCells) <- function(
+#' @method harmony_v2_sc ScOrScSubset
+S7::method(harmony_v2_sc, ScOrScSubset) <- function(
   object,
   batch_column,
   additional_batch_columns = NULL,
@@ -1061,8 +1004,6 @@ S7::method(harmony_v2_sc, SingleCells) <- function(
 ) {
   modality <- match.arg(modality)
 
-  # checks
-  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::qassert(batch_column, "S1")
   checkmate::qassert(additional_batch_columns, c("S+", "0"))
   assertScHarmonyParamsV2(harmony_params)
@@ -1076,18 +1017,12 @@ S7::method(harmony_v2_sc, SingleCells) <- function(
     ))
   }
 
-  # early return
   if (is.null(get_pca_factors(object, modality = modality))) {
-    warning(paste(
-      "No PCA embeddings found in the object. Returning class as is"
-    ))
+    warning("No PCA embeddings found in the object. Returning class as is")
     return(object)
-  } else {
-    pca_data <- get_pca_factors(object, modality = modality)
   }
+  pca_data <- get_pca_factors(object, modality = modality)
 
-  # function body
-  # main batch
   batch_index_ls <- list()
 
   batch_indices <- unlist(object[[batch_column]])
@@ -1096,13 +1031,11 @@ S7::method(harmony_v2_sc, SingleCells) <- function(
 
   batch_index_ls[[1]] <- batch_indices
 
-  # add optional batch effects to regress out
   if (!is.null(additional_batch_columns)) {
     for (i in seq_along(additional_batch_columns)) {
       batch_indices_i <- unlist(object[[additional_batch_columns[[i]]]])
       batch_factor_i <- factor(batch_indices_i)
       batch_indices_i <- as.integer(batch_factor_i) - 1L
-
       batch_index_ls[[i + 1]] <- batch_indices_i
     }
   }
@@ -1131,12 +1064,10 @@ S7::method(harmony_v2_sc, SingleCells) <- function(
 
   colnames(harmony_embd) <- sprintf("harmony_v2_%s", 1:ncol(harmony_embd))
 
-  object <- set_embedding(
+  set_embedding(
     x = object,
     embd = harmony_embd,
     name = "harmony_v2",
     modality = modality
   )
-
-  return(object)
 }

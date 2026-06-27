@@ -10,7 +10,6 @@ generate_supercells_sc(
   regenerate_knn = FALSE,
   embd_to_use = "pca",
   no_embd_to_use = NULL,
-  group = NULL,
   cells_to_use = NULL,
   target_size = 1e+05,
   seed = 42L,
@@ -37,14 +36,11 @@ for available parameters and their defaults.
 \item{regenerate_knn}{Boolean. Shall a kNN graph be regenerated.}
 
 \item{embd_to_use}{String. The embedding to use. Only relevant if you set
-regenerate_knn to \code{TRUE}. (Default: "pca").}
+regenerate_knn to \code{TRUE}.}
 
 \item{no_embd_to_use}{Optional integer. Number of embedding dimensions to
 use. If \code{NULL} all will be used. Only relevant if you set regenerate_knn to
 \code{TRUE}.}
-
-\item{group}{Optional string. Name of the obs column to regenerate the kNN graph
-by this variable.}
 
 \item{cells_to_use}{Optional string. Names of the cells to use for the
 generation of the meta-cells. If provided, this function will regenerate the

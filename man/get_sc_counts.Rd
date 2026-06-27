@@ -6,7 +6,6 @@
 \usage{
 get_sc_counts(
   object,
-  group = NULL,
   assay = c("raw", "norm"),
   return_format = c("cell", "gene"),
   cell_indices = NULL,
@@ -19,9 +18,6 @@ get_sc_counts(
 \arguments{
 \item{object}{\code{SingleCells}, \code{SingleCellsGrps},\code{MetaCells},
 \code{SingleCellsMultiModal} class.}
-
-\item{group}{String. Which group to return counts for, only relevant
-for the \code{SingleCellsGrps}class.}
 
 \item{assay}{String. Which slot to return. One of \code{c("raw", "norm")}.
 Defaults to \code{"raw"}.}
