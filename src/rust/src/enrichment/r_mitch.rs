@@ -1,6 +1,6 @@
-use crate::hotfix::mitch_hotfix::*;
 use bixverse_rs::core::math::stats::calc_fdr;
 use bixverse_rs::enrichment::enrichment_r_wrapper::prepare_mitch_pathways;
+use bixverse_rs::enrichment::mitch::*;
 use bixverse_rs::prelude::*;
 use bixverse_rs::utils::vec_utils::flatten_vector;
 use extendr_api::prelude::*;
