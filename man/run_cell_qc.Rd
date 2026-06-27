@@ -25,17 +25,23 @@ all metrics if \code{NULL}.}
 
 \item{threshold}{Numeric. Number of MADs to use for outlier detection.}
 
-\item{groups}{Optional grouping variable. A string.}
+\item{groups}{Optional grouping variable. An atomic vector of length equal to
+the metrics. Per-group outlier detection only runs when more than one group
+is present.}
 }
 \value{
 An object of class \code{CellQc} containing:
 \describe{
+\item{cell_idx}{Integer vector of 1-indexed cell positions.}
 \item{metrics}{The input metrics list.}
+\item{groups}{Character vector of group labels.}
 \item{per_metric}{Named list of per-metric results from
 \code{\link{per_cell_qc_outlier}}.}
 \item{outlier_mat}{Logical matrix with one column per metric.}
 \item{combined}{Logical vector. \code{TRUE} if a cell is an outlier in any
 metric.}
+\item{per_group_stats}{A \code{data.table} of per-group outlier statistics
+(see \code{\link{per_group_qc_outlier}}), or \code{NULL} for a single group.}
 }
 }
 \description{

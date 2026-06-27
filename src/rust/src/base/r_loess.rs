@@ -17,6 +17,9 @@ extendr_module! {
 
 /// Rust implementation of a Loess function
 ///
+/// @description
+/// `r lifecycle::badge("experimental")`
+///
 /// @param x Numeric. The x values to fit.
 /// @param y Numeric. The y values to fit.
 /// @param span Numeric. The span parameter. Needs to be between 0.1 and 1.

@@ -113,21 +113,7 @@ MetaCells <- S7::new_class(
 
 ## primitives ------------------------------------------------------------------
 
-#' @name print.MetaCells
-#'
-#' @title print Method for MetaCells object
-#'
-#' @description
-#' Print a MetaCells object.
-#'
-#' @param x An object of class `MetaCells`.
-#' @param ... Additional arguments (currently not used).
-#'
-#' @returns Invisibly returns `x`.
-#'
-#' @method print MetaCells
-#'
-#' @keywords internal
+#' @noRd
 S7::method(print, MetaCells) <- function(x, ...) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))
@@ -165,6 +151,13 @@ S7::method(print, MetaCells) <- function(x, ...) {
     sep = ""
   )
   invisible(x)
+}
+
+#' @noRd
+S7::method(head, MetaCells) <- function(x, ..., n = 6L) {
+  checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))
+  checkmate::qassert(n, "I1[1,)")
+  get_sc_obs(x, indices = seq_len(n), filtered = FALSE)
 }
 
 ## getters ---------------------------------------------------------------------
@@ -387,6 +380,49 @@ S7::method(mc_counts_to_list, MetaCells) <- function(
     nrow = nrow(x),
     ncol = ncol(x)
   )
+}
+
+#' Get the offsets for the CLR/PFlogPF transformation prior PCA
+#'
+#' @description
+#' Helper function to get the offsets for the CLR/PFlogPF transformation.
+#'
+#' @param object `MetaCells` class.
+#' @param cell_indices Optional integer. Defines the indices of the (meta)cells
+#' to use for the calculation.
+#'
+#' @returns A vector of length cell_indices which contains the CLR offsets
+#'
+#' @keywords internal
+#'
+#' @export
+mc_get_clr_offsets <- S7::new_generic(
+  name = "mc_counts_to_list",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    cell_indices = NULL
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method mc_get_clr_offsets MetaCells
+#'
+#' @export
+S7::method(mc_get_clr_offsets, MetaCells) <- function(
+  object,
+  cell_indices = NULL
+) {
+  checkmate::assertTRUE(S7::S7_inherits(object, MetaCells))
+
+  x <- object[cell_indices, , assay = "raw"]
+
+  s <- rowSums(x)
+  u <- counts / s
+  clr_offsets <- rowMeans(log1p(u))
+
+  clr_offsets
 }
 
 ## setters ---------------------------------------------------------------------

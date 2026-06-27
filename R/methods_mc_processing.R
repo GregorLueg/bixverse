@@ -160,6 +160,8 @@ S7::method(calc_diffusion_coordinates, MetaCells) <- function(
 #' that compactness indicates how tight the metacell spans the manifold, whereas
 #' separation indicates how well the different metacells span the manifold.
 #'
+#' @param object `MetaCells` class for which to calculate the different metrics.
+#'
 #' @returns The class with the compactness and separation scores added.
 #'
 #' @export
@@ -219,6 +221,8 @@ S7::method(calc_manifold_metrics, MetaCells) <- function(
 
 ### hvg ------------------------------------------------------------------------
 
+#### with object state ---------------------------------------------------------
+
 # generic found in R/base_generics_sc.R
 
 #' @method find_hvg_sc MetaCells
@@ -231,13 +235,13 @@ S7::method(find_hvg_sc, MetaCells) <- function(
   object,
   hvg_no = 2000L,
   hvg_params = params_sc_hvg(),
-  streaming = FALSE,
+  streaming = NULL,
   .verbose = TRUE
 ) {
   checkmate::assertTRUE(S7::S7_inherits(object, MetaCells))
   checkmate::qassert(hvg_no, "I1")
   assertScHvg(hvg_params)
-  checkmate::qassert(streaming, "B1")
+  checkmate::qassert(streaming, c("B1", "0"))
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   assay <- if (hvg_params$method == "vst") {
@@ -275,6 +279,63 @@ S7::method(find_hvg_sc, MetaCells) <- function(
   return(object)
 }
 
+#### without changing object state ---------------------------------------------
+
+#' @method get_hvg_data_sc MetaCells
+#'
+#' @export
+S7::method(get_hvg_data_sc, MetaCells) <- function(
+  object,
+  cell_ids = NULL,
+  hvg_no = 3000L,
+  hvg_params = params_sc_hvg(),
+  streaming = NULL,
+  .verbose = TRUE
+) {
+  checkmate::assertTRUE(S7::S7_inherits(object, MetaCells))
+  checkmate::qassert(cell_ids, c("0", "S+"))
+  checkmate::qassert(hvg_no, "I1")
+  assertScHvg(hvg_params)
+  checkmate::qassert(streaming, c("B1", "0"))
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
+
+  cell_indices <- if (is.null(cell_ids)) {
+    NULL
+  } else {
+    get_cell_indices(object, cell_ids = cell_ids, rust_index = FALSE)
+  }
+
+  assay <- if (hvg_params$method == "vst") "raw" else "norm"
+
+  count_list <- mc_counts_to_list(
+    object = object,
+    cell_indices = cell_indices,
+    assay = assay
+  )
+
+  res <- with(
+    hvg_params,
+    rs_mc_hvg(
+      sparse_data = count_list,
+      hvg_method = method,
+      loess_span = loess_span,
+      binning = bin_method,
+      n_bins = num_bin,
+      clip_max = NULL
+    )
+  )
+
+  var_table <- get_sc_var(object, cols = c("gene_idx", "gene_id"))
+
+  build_hvg_table(
+    var_table = var_table,
+    res = res,
+    hvg_no = hvg_no,
+    hvg_method = hvg_params$method
+  )
+}
+
+
 ### pca ------------------------------------------------------------------------
 
 # generic found in R/base_generics_sc.R
@@ -288,7 +349,7 @@ S7::method(find_hvg_sc, MetaCells) <- function(
 S7::method(calculate_pca_sc, MetaCells) <- function(
   object,
   no_pcs,
-  randomised_svd = TRUE,
+  pca_params = params_sc_pca(),
   sparse_svd = FALSE,
   hvg = NULL,
   seed = 42L,
@@ -296,7 +357,7 @@ S7::method(calculate_pca_sc, MetaCells) <- function(
 ) {
   checkmate::assertTRUE(S7::S7_inherits(object, MetaCells))
   checkmate::qassert(no_pcs, "I1")
-  checkmate::qassert(randomised_svd, "B1")
+  assertScPca(pca_params)
   checkmate::qassert(sparse_svd, "B1")
   checkmate::qassert(hvg, c("I+", "0"))
   checkmate::qassert(seed, "I1")
@@ -333,12 +394,19 @@ S7::method(calculate_pca_sc, MetaCells) <- function(
     assay = "norm"
   )
 
+  clr_offsets <- if (pca_params$clr) {
+    mc_get_clr_offsets(object)
+  } else {
+    NULL
+  }
+
   zeallot::`%<-%`(
     c(pca_factors, pca_loadings, singular_values),
     rs_mc_pca(
       sparse_data = count_list,
       no_pcs = no_pcs,
-      random_svd = randomised_svd,
+      pca_params = pca_params,
+      clr_offsets = clr_offsets,
       seed = seed
     )
   )

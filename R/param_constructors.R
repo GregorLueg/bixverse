@@ -423,6 +423,8 @@ params_boost <- function(
 #' as classifier features. Defaults to `19L`.
 #' @param expected_doublet_rate Optional numeric. Expected doublet rate as a
 #' percentage. If not provided, will be calculated internally.
+#' @param cxds_genes Optional integer. Number of CXDS genes to consider. If not
+#' provided, defaults to `500L`.
 #' @param manual_threshold Optional numeric. Manual score threshold. If `NULL`
 #' (default), expected-rate thresholding is used.
 #' @param normalisation List. Optional overrides for normalisation parameters.
@@ -552,10 +554,10 @@ params_scdblfinder <- function(
 #'
 #' @export
 params_sc_neighbours <- function(
-  full_snn = FALSE,
+  full_snn = TRUE,
   pruning = 1 / 12,
   snn_similarity = c("jaccard", "rank"),
-  knn = list(ann_dist = "cosine")
+  knn = list()
 ) {
   snn_similarity <- match.arg(snn_similarity)
 
@@ -944,8 +946,12 @@ params_sc_seacells <- function(
 #' @param use_kernel Boolean. Shall a kernel function akin to MAGIC be applied
 #' akin to the approach in SuperCell2, see Hérault, et al., bioRxiv, 2026 and
 #' van Dijk, et al., Cell, 2018.
-#' @param k_ith_neighbour Optional integer. The k-ith neighbour to use for
-#' the kernel. Defaults to `k %/% 2`.
+#' @param k_ith Optional integer. The k-ith neighbour to use for the kernel.
+#' Defaults to `k %/% 2`.
+#' @param max_support Optional integer. Caps each cell's walk-probability vector
+#' to its top entries by mass, bounding memory at ~`max_support * n_cells` on
+#' large data. Makes the result an approximation. `NULL` (default) keeps the
+#' walks exact.
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
@@ -960,6 +966,7 @@ params_sc_supercell <- function(
   graining_factor = 20.0,
   use_kernel = TRUE,
   k_ith = NULL,
+  max_support = NULL,
   knn = list()
 ) {
   checkmate::qassert(walk_length, "I1")
@@ -978,7 +985,8 @@ params_sc_supercell <- function(
       walk_length = walk_length,
       graining_factor = graining_factor,
       use_kernel = use_kernel,
-      k_ith = k_ith
+      k_ith = k_ith,
+      max_support = max_support
     ),
     knn_params
   )
@@ -1049,12 +1057,14 @@ params_sc_bbknn <- function(
 #' distances. Defaults to `TRUE`.
 #' @param no_pcs Integer. Number of PCs to use for MNN calculations.
 #' Defaults to `30L`.
-#' @param random_svd Logical. Use randomised SVD. Defaults to `TRUE`.
+#' @param sparse_svd Boolean. Shall the sparse SVD be used.
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
 #' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
 #' and `n_probe`.
+#' @param pca Named list. Parameters to feed through to the optional
+#' recalculation of the PCA, see [params_sc_pca()].
 #'
 #' @returns A list with the fastMNN parameters.
 #'
@@ -1063,14 +1073,13 @@ params_sc_fastmnn <- function(
   ndist = 3.0,
   cos_norm = TRUE,
   no_pcs = 30L,
-  random_svd = TRUE,
   sparse_svd = TRUE,
-  knn = list(k = 20L)
+  knn = list(k = 20L),
+  pca = params_sc_pca()
 ) {
   checkmate::qassert(ndist, "N1(0,)")
   checkmate::qassert(cos_norm, "B1")
   checkmate::qassert(no_pcs, "I1")
-  checkmate::qassert(random_svd, "B1")
   checkmate::qassert(sparse_svd, "B1")
 
   knn_params <- modifyList(
@@ -1084,10 +1093,10 @@ params_sc_fastmnn <- function(
       ndist = ndist,
       cos_norm = cos_norm,
       no_pcs = no_pcs,
-      random_svd = random_svd,
       sparse_svd = sparse_svd
     ),
-    knn_params
+    knn_params,
+    pca
   )
 }
 
@@ -1129,7 +1138,7 @@ params_sc_harmony <- function(
   sigma = 0.1,
   theta = 2.0,
   lambda = 1.0,
-  block_size = 0.05,
+  block_size = 0.2,
   max_iter_kmeans = 20L,
   max_iter_harmony = 10L,
   epsilon_kmeans = 1e-5,
@@ -1155,7 +1164,7 @@ params_sc_harmony <- function(
     keep.null = TRUE
   )
 
-  c(
+  res <- c(
     list(
       k = k,
       sigma = sigma,
@@ -1170,6 +1179,9 @@ params_sc_harmony <- function(
     ),
     kmeans_params
   )
+  # for easier detection down the line
+  class(res) <- c("params_sc_harmony", "list")
+  res
 }
 
 ### harmony (version 2) --------------------------------------------------------
@@ -1219,7 +1231,7 @@ params_sc_harmony_v2 <- function(
   sigma = 0.1,
   theta = 2.0,
   lambda = 1.0,
-  block_size = 0.05,
+  block_size = 0.2,
   max_iter_kmeans = 4L,
   max_iter_harmony = 10L,
   epsilon_kmeans = 1e-3,
@@ -1253,7 +1265,7 @@ params_sc_harmony_v2 <- function(
     keep.null = TRUE
   )
 
-  c(
+  res <- c(
     list(
       k = k,
       sigma = sigma,
@@ -1272,6 +1284,11 @@ params_sc_harmony_v2 <- function(
     ),
     kmeans_params
   )
+
+  # for some tricks with symphony
+  class(res) <- c("params_sc_harmony_v2", "list")
+
+  res
 }
 
 ## scenic ----------------------------------------------------------------------
@@ -1450,4 +1467,151 @@ params_scenic <- function(
   )
 
   params
+}
+
+## meld ------------------------------------------------------------------------
+
+#' Constructor for MELD parameters
+#'
+#' @param beta Numeric. Smoothing strength; larger values produce smoother
+#' densities. Must be strictly positive. Defaults to `60.0`.
+#' @param offset Numeric. Shift of the filter centre in the rescaled spectrum.
+#' Must be in `[0, 1]`. Defaults to `0.0`.
+#' @param order Numeric. Filter falloff sharpness; larger values approach a
+#' square low-pass. Must be strictly positive. Defaults to `1.0`.
+#' @param filter Character. Filter family to use. One of `"heat"` or
+#' `"laplacian"`. Defaults to `"heat"`.
+#' @param chebyshev_order Integer. Number of Chebyshev coefficients (polynomial
+#' terms). Must be >= 2. Defaults to `50L`.
+#' @param lap_type Character. Type of Laplacian to use for spectral filtering.
+#' One of `"combinatorial"` or `"normalised"`. Defaults to `"combinatorial"`.
+#' @param normalise_indicators Logical. If `TRUE`, each column of the indicator
+#' matrix is divided by its column sum before filtering, making
+#' cross-condition densities comparable regardless of cells-per-condition.
+#' Defaults to `TRUE`.
+#' @param knn List. Optional overrides for kNN parameters. See
+#' [bixverse::params_knn_defaults()] for available parameters: `k`,
+#' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
+#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`,
+#' `n_list` and `n_probe`.
+#'
+#' @returns A named flat list with all MELD parameters.
+#'
+#' @export
+params_meld <- function(
+  beta = 60.0,
+  offset = 0.0,
+  order = 1.0,
+  filter = "heat",
+  chebyshev_order = 50L,
+  lap_type = "combinatorial",
+  normalise_indicators = TRUE,
+  knn = list()
+) {
+  checkmate::qassert(beta, "N1(0,)")
+  checkmate::qassert(offset, "N1[0,1]")
+  checkmate::qassert(order, "N1(0,)")
+  checkmate::assert_choice(filter, c("heat", "laplacian"))
+  checkmate::qassert(chebyshev_order, "I1[2,)")
+  checkmate::assert_choice(lap_type, c("combinatorial", "normalised"))
+  checkmate::qassert(normalise_indicators, "B1")
+
+  params <- list(
+    knn = modifyList(params_knn_defaults(), knn, keep.null = TRUE),
+    beta = beta,
+    offset = offset,
+    order = order,
+    filter = filter,
+    chebyshev_order = chebyshev_order,
+    lap_type = lap_type,
+    normalise_indicators = normalise_indicators
+  )
+
+  params <- purrr::list_flatten(params, name_spec = "{inner}")
+
+  params
+}
+
+## multi-modal -----------------------------------------------------------------
+
+### wnn ------------------------------------------------------------------------
+
+#' Wrapper function for WNN parameters
+#'
+#' @param k_nn Integer. Final number of multimodal neighbours per cell. Defaults
+#' to `20L`.
+#' @param knn_range Integer. Candidate pool size per modality. Each cell's kNN
+#' input must contain at least this many neighbours. Defaults to `100L`.
+#' @param sigma_method String. Bandwidth method. One of
+#' `c("snn_farthest", "sigma_idx")`. Defaults to `"snn_farthest"`.
+#' @param sigma_idx Integer. `"sigma_idx"` only: 0-based kNN index for
+#' bandwidth. Defaults to `19L` (i.e. `k_nn - 1`).
+#' @param snn_type String. sNN type. One of `c("full_connection", "limited")`.
+#' The limited version only considers edges that exist in the kNN. Defaults to
+#' `"full_connection"`.
+#' @param s_nn Integer. `"snn_farthest"` only: kNN size used to build the SNN
+#' graph. Defaults to `20L`.
+#' @param sd_scale Numeric. Multiplier on sigma. Defaults to `1.0`.
+#' @param kernel_power Numeric. Kernel exponent power. Defaults to `1.0`.
+#' @param cross_const Numeric. Cross-modality kernel stabiliser. Defaults to
+#' `1e-4`.
+#' @param sigma_floor Numeric. Minimum sigma value (avoids division by zero).
+#' Defaults to `1e-8`.
+#' @param knn List. Optional overrides for kNN parameters. See
+#' [bixverse::params_knn_defaults()] for available parameters: `k`,
+#' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
+#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
+#' and `n_probe`.
+#'
+#' @returns A list with the WNN parameters.
+#'
+#' @export
+params_sc_wnn <- function(
+  k_nn = 20L,
+  knn_range = 200L,
+  sigma_method = c("snn_farthest", "sigma_idx"),
+  sigma_idx = 19L,
+  snn_type = c("full_connection", "limited"),
+  s_nn = 20L,
+  sd_scale = 1.0,
+  kernel_power = 1.0,
+  cross_const = 1e-4,
+  sigma_floor = 1e-8,
+  knn = list()
+) {
+  sigma_method <- match.arg(sigma_method)
+  snn_type <- match.arg(snn_type)
+
+  checkmate::qassert(k_nn, "I1[1,)")
+  checkmate::qassert(knn_range, "I1[1,)")
+  checkmate::assertChoice(sigma_method, c("snn_farthest", "sigma_idx"))
+  checkmate::qassert(sigma_idx, "I1[0,)")
+  checkmate::assertChoice(snn_type, c("full_connection", "limited"))
+  checkmate::qassert(s_nn, "I1[1,)")
+  checkmate::qassert(sd_scale, "N1(0,)")
+  checkmate::qassert(kernel_power, "N1(0,)")
+  checkmate::qassert(cross_const, "N1[0,)")
+  checkmate::qassert(sigma_floor, "N1(0,)")
+
+  knn_params <- modifyList(
+    params_knn_defaults(),
+    knn,
+    keep.null = TRUE
+  )
+
+  c(
+    list(
+      k_nn = k_nn,
+      knn_range = knn_range,
+      sigma_method = sigma_method,
+      sigma_idx = sigma_idx,
+      snn_type = snn_type,
+      s_nn = s_nn,
+      sd_scale = sd_scale,
+      kernel_power = kernel_power,
+      cross_const = cross_const,
+      sigma_floor = sigma_floor
+    ),
+    knn_params
+  )
 }

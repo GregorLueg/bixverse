@@ -37,9 +37,9 @@ if need be.
       \item{\code{values}}{Numerical vector. The correlation coefficients of the
 upper triangular correlation matrix stored as a row-major vector}
       \item{\code{features}}{String vector. The features of the correlation matrix.}
-      \item{\code{shift}}{Integer. Was a shift applied during the calculation of the
-upper triangular matrix. Typically 0 (diagonal included) or 1 (diagonal
-not included)}
+      \item{\code{shift}}{Bollean Was a shift applied during the calculation of the
+upper triangular matrix. If \code{FALSE}, the diagonal was included, if
+\code{TRUE}, the diagonal was removed.}
     }
     \if{html}{\out{</div>}}
   }

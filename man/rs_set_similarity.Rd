@@ -7,13 +7,17 @@
 rs_set_similarity(s_1, s_2, overlap_coefficient)
 }
 \arguments{
-\item{s_1}{The String vector against which to calculate the set similarities.}
+\item{s_1}{The String vector against which to calculate the set
+similarities.}
 
-\item{s_2}{The String vector against which to calculate the set similarities.}
+\item{s_2}{The String vector against which to calculate the set
+similarities.}
 
-\item{overlap_coefficient}{Boolean. Use the overlap coefficient instead of the Jaccard similarity be calculated.}
+\item{overlap_coefficient}{Boolean. Use the overlap coefficient instead of
+the Jaccard similarity be calculated.}
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 This function calculates the Jaccard or similarity index between a two given
 string vector and a  of other string vectors.
 }

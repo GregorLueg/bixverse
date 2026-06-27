@@ -6,6 +6,15 @@ use bixverse_rs::utils::vec_utils::flatten_vector;
 use extendr_api::prelude::*;
 use rayon::prelude::*;
 
+/////////////
+// extendR //
+/////////////
+
+extendr_module! {
+    mod r_mitch;
+    fn rs_mitch_calc;
+}
+
 /// Calculate mitch enrichment leveraging Rust under the hood
 ///
 /// @param x Numerical matrix. Each column represents on the contrasts you
@@ -82,9 +91,4 @@ fn rs_mitch_calc(
         s_dist = s_dist,
         sd = sd
     ))
-}
-
-extendr_module! {
-    mod r_mitch;
-    fn rs_mitch_calc;
 }

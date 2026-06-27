@@ -34,13 +34,13 @@ selection of the top genes.}
 
 \item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
 detailed verbosity.}
-
-\item{debug}{Boolean. Additional verbosity for debugging purposes.}
 }
 \value{
 A list with predicted_doublets, doublet_scores, threshold,
 cluster_labels and detected_doublet_rate.
 }
 \description{
-Run scDblFinder doublet detection
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+Implementation of scDblFinder in Rust.
 }
+\keyword{internal}

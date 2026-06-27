@@ -70,7 +70,9 @@ n_batches).
 }
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 Batch-aware highly variable gene detection. Calculates HVG statistics
 separately for each batch, allowing for downstream selection strategies
 such as union of top genes per batch.
 }
+\keyword{internal}

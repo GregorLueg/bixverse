@@ -3,14 +3,35 @@ use bixverse_rs::core::math::pca_svd::*;
 use bixverse_rs::prelude::*;
 use bixverse_rs::utils::matrix_utils::nested_vector_to_faer_mat;
 use extendr_api::prelude::*;
+use faer::Mat;
+
+/////////////
+// extendR //
+/////////////
+
+extendr_module! {
+    mod r_svd_pca;
+    fn rs_prcomp;
+    fn rs_random_svd;
+    fn rs_contrastive_pca;
+}
+
+//////////
+// SVDs //
+//////////
 
 /// Rust implementation of prcomp
 ///
-/// @description Runs the singular value decomposition over the matrix x.
-/// Assumes that samples = rows, and columns = features.
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Runs the singular value decomposition over the matrix x. Assumes that
+/// samples = rows, and columns = features.
 ///
 /// @param x Numeric matrix. Rows = samples, columns = features.
-/// @param scale Boolean. Shall the columns additionally be scaled.
+/// @param scale Boolean. Shall the columns be variance normalised. (Mean
+/// centering will automatically occur.)
+/// @param top_pcs Optional integer. Only return the top PCs (under the hood
+/// all of them will be calculated).
 ///
 /// @return A list with:
 /// \itemize{
@@ -22,26 +43,31 @@ use extendr_api::prelude::*;
 ///
 /// @export
 #[extendr]
-fn rs_prcomp(x: RMatrix<f64>, scale: bool) -> Result<List, extendr_api::Error> {
+fn rs_prcomp(
+    x: RMatrix<f64>,
+    scale: bool,
+    top_pcs: Option<usize>,
+) -> Result<List, extendr_api::Error> {
     let x = r_matrix_to_faer(&x);
     let x_scaled = scale_matrix_col(&x.as_ref(), scale);
     let nrow = x_scaled.nrows() as f64;
     let svd_res = x_scaled
         .thin_svd()
-        .map_err(|_| BixverseErrors::FaerSvdError)
+        .map_err(|e| BixverseErrors::FaerSvdError(format!("{e:?}")))
         .to_extendr()?;
     let scores = x_scaled * svd_res.V();
-    let s = svd_res
+    let n = top_pcs.unwrap_or(scores.ncols());
+    let sdev: Vec<f64> = svd_res
         .S()
         .column_vector()
         .iter()
-        .cloned()
-        .collect::<Vec<f64>>();
-    let sdev: Vec<f64> = s.iter().map(|x| x / (nrow as f64 - 1.0).sqrt()).collect();
+        .take(n)
+        .map(|x| x / (nrow - 1.0).sqrt())
+        .collect();
 
     Ok(list!(
-        scores = faer_to_r_matrix(scores.as_ref()),
-        v = faer_to_r_matrix(svd_res.V().as_ref()),
+        scores = faer_to_r_matrix(scores.as_ref().subcols(0, n)),
+        v = faer_to_r_matrix(svd_res.V().subcols(0, n)),
         s = sdev,
         scaled = scale,
     ))
@@ -49,12 +75,16 @@ fn rs_prcomp(x: RMatrix<f64>, scale: bool) -> Result<List, extendr_api::Error> {
 
 /// Run randomised SVD over a matrix
 ///
-/// @description Runs a randomised singular value decomposition over a matrix.
-/// This implementation is faster than the full SVD on large data sets, with
-/// slight loss in precision.
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Runs a randomised singular value decomposition over a matrix. This
+/// implementation is faster than the full SVD on large data sets, with slight
+/// loss in precision.
 ///
 /// @param x Numeric matrix. Rows = samples, columns = features.
 /// @param rank Integer. The rank to use.
+/// @param scale Boolean. Shall the columns be variance normalised. (Mean
+/// centering will automatically occur.)
 /// @param seed Integer. Random seed for reproducibility.
 /// @param oversampling Integer. Defaults to `10L` if nothing is provided.
 /// @param n_power_iter Integer. How often shall the QR decomposition be
@@ -71,30 +101,39 @@ fn rs_prcomp(x: RMatrix<f64>, scale: bool) -> Result<List, extendr_api::Error> {
 #[extendr]
 fn rs_random_svd(
     x: RMatrix<f64>,
+    scale: bool,
     rank: usize,
     seed: usize,
     oversampling: Option<usize>,
     n_power_iter: Option<usize>,
 ) -> extendr_api::Result<List> {
     let x = r_matrix_to_faer(&x);
-    let random_svd_res = randomised_svd(x, rank, seed, oversampling, n_power_iter).to_extendr()?;
+    let x_scaled = scale_matrix_col(&x.as_ref(), scale);
+    let res =
+        randomised_svd(x_scaled.as_ref(), rank, seed, oversampling, n_power_iter).to_extendr()?;
+    let scores = Mat::<f64>::from_fn(res.u.nrows(), rank, |i, j| res.u[(i, j)] * res.s[j]);
 
     Ok(list!(
-        u = faer_to_r_matrix(random_svd_res.u.as_ref()),
-        v = faer_to_r_matrix(random_svd_res.v.as_ref()),
-        s = random_svd_res.s
+        scores = faer_to_r_matrix(scores.as_ref()),
+        v = faer_to_r_matrix(res.v.as_ref()),
+        s = res.s,
+        scaled = scale
     ))
 }
 
+//////////////////////
+// Constrastive PCA //
+//////////////////////
+
 /// Calculate the contrastive PCA
 ///
-/// @description This function calculate the contrastive PCA given a target
-/// covariance matrix and the background covariance matrix you wish to subtract.
-/// The alpha parameter controls how much of the background covariance you wish
-/// to remove. You have the options to return the feature loadings and you can
-/// specificy the number of cPCAs to return. WARNING! Incorrect use can cause
-/// kernel crashes. Wrapper around the Rust functions with type checks are
-/// provided in the package.
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// This function calculate the contrastive PCA given a target covariance matrix
+/// and the background covariance matrix you wish to subtract. The alpha
+/// parameter controls how much of the background covariance you wish to remove.
+/// You have the options to return the feature loadings and you can specificy
+/// the number of cPCAs to return.
 ///
 /// @param target_covar The co-variance matrix of the target data set.
 /// @param background_covar The co-variance matrix of the background data set.
@@ -146,11 +185,4 @@ fn rs_contrastive_pca(
             loadings = r!(NULL)
         ))
     }
-}
-
-extendr_module! {
-    mod r_svd_pca;
-    fn rs_prcomp;
-    fn rs_random_svd;
-    fn rs_contrastive_pca;
 }

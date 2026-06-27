@@ -12,7 +12,8 @@
 #' of for example correlation-based methods to identify co-regulated genes.
 #'
 #' @param object `SingleCells` class.
-#' @param sc_meta_cell_params List. Output of [bixverse::params_sc_metacells()].
+#' @param sc_meta_cell_params List. Output of
+#' [bixverse::params_sc_bt_metacells()].
 #' A list with the following items:
 #' \itemize{
 #'   \item max_shared - Maximum number of allowed shared neighbours for

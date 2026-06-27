@@ -20,5 +20,6 @@ fuse together.}
 The final affinity matrix after the fusion.
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 This function iteratively fuses the affinity matrices together.
 }

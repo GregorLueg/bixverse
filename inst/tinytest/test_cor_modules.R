@@ -7,7 +7,7 @@ library(magrittr)
 ### data -----------------------------------------------------------------------
 
 cor_data <- c(0.7, 0.3, 0.2, -0.1, 0.25, -0.5)
-cor_mat <- rs_upper_triangle_to_dense(cor_data, 1L, 4)
+cor_mat <- rs_upper_triangle_to_dense(cor_data, TRUE, 4)
 
 tom_signed_v1 <- c(
   0.306382979,
@@ -72,7 +72,7 @@ tom_v2_unsigned_mat <- calculate_tom(
 )
 
 expect_equal(
-  current = rs_dense_to_upper_triangle(tom_v1_signed_mat, 1),
+  current = rs_dense_to_upper_triangle(tom_v1_signed_mat, TRUE),
   target = tom_signed_v1,
   info = paste(
     "TOM calculation version 1 - signed"
@@ -81,7 +81,7 @@ expect_equal(
 )
 
 expect_equal(
-  current = rs_dense_to_upper_triangle(tom_v2_signed_mat, 1),
+  current = rs_dense_to_upper_triangle(tom_v2_signed_mat, TRUE),
   target = tom_signed_v2,
   info = paste(
     "TOM calculation version 2 - signed"
@@ -90,7 +90,7 @@ expect_equal(
 )
 
 expect_equal(
-  current = rs_dense_to_upper_triangle(tom_v1_unsigned_mat, 1),
+  current = rs_dense_to_upper_triangle(tom_v1_unsigned_mat, TRUE),
   target = tom_unsigned_v1,
   info = paste(
     "TOM calculation version 1 - unsigned"
@@ -99,7 +99,7 @@ expect_equal(
 )
 
 expect_equal(
-  current = rs_dense_to_upper_triangle(tom_v2_unsigned_mat, 1),
+  current = rs_dense_to_upper_triangle(tom_v2_unsigned_mat, TRUE),
   target = tom_unsigned_v2,
   info = paste(
     "TOM calculation version 2 - unsigned"

@@ -90,6 +90,7 @@ impl LabelPropParams {
 /// kNN label propagation
 ///
 /// @description
+/// `r lifecycle::badge("experimental")`
 /// The function is a helper function to do kNN label propagation. This can
 /// be useful for semi-supervised tasks. It implements the label spreading
 /// method.
@@ -173,6 +174,7 @@ fn rs_knn_label_propagation(
 /// Flatten kNN matrix to edge list
 ///
 /// @description
+/// `r lifecycle::badge("experimental")`
 /// Helper function to leverage Rust to transform a kNN matrix into two vectors
 /// of from, to
 ///
@@ -215,6 +217,7 @@ fn rs_knn_mat_to_edge_list(knn_mat: RMatrix<i32>, one_index: bool) -> Vec<i32> {
 /// Flatten kNN matrix to edge list
 ///
 /// @description
+/// `r lifecycle::badge("experimental")`
 /// Helper function to leverage Rust to transform a kNN matrix into an edge
 /// list.
 ///
@@ -230,6 +233,8 @@ fn rs_knn_mat_to_edge_list(knn_mat: RMatrix<i32>, one_index: bool) -> Vec<i32> {
 /// }
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_knn_mat_to_edge_pairs(knn_mat: RMatrix<i32>, one_index: bool) -> List {
     let n = knn_mat.nrows();

@@ -223,7 +223,7 @@ get_go_levels <- function(edge_dt) {
 #'
 #' @param upper_triangle_vals Numerical vector. The values of the upper triangle
 #' stored in a row major format.
-#' @param shift Integer. Did you shift the diagonal up.
+#' @param shift Boolean. Did you exclude the diagonal.
 #' @param n Integer. Number of columns and rows of the symmetric matrix.
 #' @param type String. One of `c("csc", "csr")`. Which type of of sparse matrix
 #' to return.
@@ -241,14 +241,14 @@ upper_triangle_to_sparse <- function(
 
   # checks
   checkmate::qassert(upper_triangle_vals, "N+")
-  checkmate::qassert(shift, "I1")
+  checkmate::qassert(shift, "B1")
   checkmate::qassert(n, "I1")
   checkmate::assertChoice(type, c("csc", "csr"))
 
   # functions
   data <- rs_upper_triangle_to_sparse(
     value = upper_triangle_vals,
-    shift = as.integer(shift),
+    shift = shift,
     n = n,
     cs_type = type
   )

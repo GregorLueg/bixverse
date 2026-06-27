@@ -10,9 +10,10 @@
 \alias{get_data.BoostRes}
 \alias{get_data.ScDblFinderRes}
 \alias{get_data.SingleCellFastClusters}
+\alias{get_data.NmfResult}
 \title{Get the ready obs data from various sub method}
 \usage{
-get_data(x, ...)
+get_data(x, columns = NULL, ...)
 
 \method{get_data}{CellQc}(x, ...)
 
@@ -27,9 +28,14 @@ get_data(x, ...)
 \method{get_data}{ScDblFinderRes}(x, ...)
 
 \method{get_data}{SingleCellFastClusters}(x, ...)
+
+\method{get_data}{NmfResult}(x, ...)
 }
 \arguments{
-\item{x}{An object to set gene mapping for}
+\item{x}{An object to get the data from.}
+
+\item{columns}{Optional string. For some of the functions you can decide
+to only extract specific columns.}
 
 \item{...}{Other parameters}
 }

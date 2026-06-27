@@ -25,5 +25,7 @@ to keep.}
 The dense vector of expression values for this gene.
 }
 \description{
-Helper to extract single cell counts as a dense vector for plotting
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+Extract dense counts for this given gene.
 }
+\keyword{internal}

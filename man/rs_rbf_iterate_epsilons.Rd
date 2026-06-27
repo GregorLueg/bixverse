@@ -15,8 +15,8 @@ to.}
 \item{original_dim}{Integer. The original dimensions of the symmetric
 distance matrix.}
 
-\item{shift}{Integer. Was the matrix shifted up (0 = diagonal included; 1
-diagonal not incldued).}
+\item{shift}{Boolean. Was the matrix shifted up (false = diagonal included;
+true diagonal not incldued).}
 
 \item{rbf_type}{String. One of \code{c('gaussian', 'bump', 'inverse_quadratic')}
 for the currently implemented RBF function. Weird strings will default
@@ -27,11 +27,12 @@ A matrix with rows being the epsilons tested, and columns
 representing the summed affinity to other features.
 }
 \description{
-This function will take a distance vector from the upper
-triangle of a symmetric distance matrix and apply the desired RBF with the
-supplied epsilon from epsilon vec. Subsequently, the column sums will be
-measured to identify the total similarity of each feature with other
-features. This data can be used to see if the data follows scale-free
-topology for example to identify the right epsilon parameter with the given
-RBF.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+This function will take a distance vector from the upper triangle of a
+symmetric distance matrix and apply the desired RBF with the supplied
+epsilon from epsilon vec. Subsequently, the column sums will be measured to
+identify the total similarity of each feature with other features. This data
+can be used to see if the data follows scale-free topology for example to
+identify the right epsilon parameter with the given RBF.
 }
+\keyword{internal}

@@ -16,5 +16,5 @@ variables as numerical values.}
 The Gower distance matrix between the rows
 }
 \description{
-Calculates the Gower distance for a given matrix
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 }

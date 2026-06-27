@@ -35,8 +35,9 @@ distances.
 \item var_adj - Logical. Apply variance adjustment to avoid kissing
 effects.
 \item no_pcs - Integer. Number of PCs to use for MNN calculations.
-\item random_svd - Logical. Use randomised SVD.
 \item knn - List of kNN parameters. See \code{\link[=params_knn_defaults]{params_knn_defaults()}}
+for available parameters and their defaults.
+\item pca - List of PCA parameters, see \code{\link[=params_sc_pca]{params_sc_pca()}}
 for available parameters and their defaults.
 }}
 

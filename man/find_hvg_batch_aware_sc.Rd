@@ -10,7 +10,7 @@ find_hvg_batch_aware_sc(
   hvg_no = 2000L,
   gene_comb_method = c("union", "average", "intersection"),
   hvg_params = params_sc_hvg(),
-  streaming = FALSE,
+  streaming = NULL,
   .verbose = TRUE
 )
 }
@@ -38,9 +38,9 @@ variance
 implemented yet.
 }}
 
-\item{streaming}{Boolean. Shall the genes be streamed in. Useful for larger
-data sets where you wish to avoid loading in the whole data. Defaults to
-\code{FALSE}.}
+\item{streaming}{Optional Boolean. Shall the data be streamed in. Useful for
+larger data sets where you wish to avoid loading in the whole data. If
+\code{NULL}, will automatically detect.}
 
 \item{.verbose}{Boolean or integer. Controls verbosity and returns run times.
 \code{FALSE} -> quiet, \code{TRUE} or \code{1L} -> normal verbosity, \code{2L} -> detailed
@@ -49,7 +49,8 @@ verbosity.}
 \value{
 This function will return a list with:
 \itemize{
-\item hvg_indices - The indices of the batch-aware HVG.
+\item hvg_genes - The gene names of the HVGs.
+\item hvg_gene_idx - The (0-index) gene features.
 \item batch_hvg_data - data.table with the detailed information of the
 variance per batch.
 }

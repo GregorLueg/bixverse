@@ -3,14 +3,27 @@ use bixverse_rs::methods::diffcor::*;
 use bixverse_rs::prelude::*;
 use extendr_api::prelude::*;
 
+/////////////
+// extendR //
+/////////////
+
+extendr_module! {
+    mod r_diffcor;
+    fn rs_differential_cor;
+}
+
+///////////////
+// Functions //
+///////////////
+
 /// Calculate the column wise differential correlation between two sets of data.
 ///
-/// @description This function calculates the differential correlation based on
-/// the Fisher method. For speed purposes, the function will only calculate the
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// This function calculates the differential correlation based on the Fisher
+/// method. For speed purposes, the function will only calculate the
 /// differential correlation on the upper triangle of the two correlation
 /// matrices.
-/// WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust
-/// functions with type checks are provided in the package.
 ///
 /// @param x_a R matrix a to be used for the differential correlation analysis.
 /// @param x_b R matrix a to be used for the differential correlation analysis.
@@ -58,9 +71,4 @@ fn rs_differential_cor(
         z_score = diff_cor.z_score,
         p_val = diff_cor.p_vals
     ))
-}
-
-extendr_module! {
-    mod r_diffcor;
-    fn rs_differential_cor;
 }

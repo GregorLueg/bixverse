@@ -41,22 +41,37 @@ navbar:
     singlecells:
       text: Single Cells
       menu:
-        - text: Thinking about single cells the bixverse way
+        - text: "Intro vignettes"
+        - text: "Thinking about single cells the bixverse way"
           href: articles/thinking_single_cell.html
-        - text: PBMC analysis with the bixverse single cell framework
+        - text: "PBMC analysis with the bixverse single cell framework"
           href: articles/pbmc_single_cell.html
-        - text: Doublet detection in bixverse
+        - text: "Reading data in (single-cell I/O)"
+          href: articles/single_cell_io.html
+        - text: "Doublet detection in bixverse"
           href: articles/doublet_detection.html
-        - text: Batch corrections
+        - text: "Batch corrections"
           href: articles/single_cell_batch_corrections.html
-        - text: "'Bag of genes' methods for single cell in bixverse"
-          href: articles/analysis_single_cell.html
         - text: "kNN searches for single cells in bixverse"
           href: articles/knn_searches.html
+        - text: -------
+        - text: "More advanced analysis methods"
+        - text: "'Bag of genes' methods for single cell in bixverse"
+          href: articles/bag_of_genes_single_cells.html
+        - text: "Ligand receptor analysis"
+          href: articles/nichenet.html
         - text: "Meta cells - generation and analysis"
           href: articles/meta_cells.html
+        - text: "Reference mapping via Symphony"
+          href: articles/symphomy.html
+        - text: "Multi-modal analysis"
+          href: articles/multi_modal_single_cell.html
+        - text: -------
+        - text: "Others"
         - text: Analysing big data on a powerful laptop (example)
           href: articles/single_cell_big_data.html
+        - text: Plotting helpers
+          href: articles/single_cell_visualisation.html
     articles:
       text: Articles
       menu:
@@ -87,13 +102,18 @@ articles:
     navbar: Single Cells
     contents:
       - thinking_single_cell
+      - single_cell_io
       - pbmc_single_cell
       - doublet_detection
       - single_cell_batch_corrections
-      - analysis_single_cell
+      - bag_of_genes_single_cells
       - knn_searches
       - meta_cells
       - single_cell_big_data
+      - multi_modal_single_cells
+      - single_cell_visualisation
+      - symphony
+      - nichenet
 
 reference:
   # General getters shared across classes
@@ -283,7 +303,7 @@ reference:
       - params_community_detection
       - params_snf
   # Single cell classes and getters
-  - title: Single cell classe and getters
+  - title: Single cell class and getters
     desc: 
       THE single cell class with a large number of getters.
     contents:
@@ -300,6 +320,7 @@ reference:
       - get_embedding
       - get_gene_indices
       - get_gene_names
+      - get_cell_info
       - get_hvg
       - get_knn_mat
       - get_knn_obj
@@ -313,6 +334,24 @@ reference:
       - set_sc_new_obs_col
       - set_sc_new_obs_col_multiple
       - set_sc_new_var_cols
+      - drop_cols_sc
+  # Single cell classes and getters
+  - title: Single cell class for multi-modal data and getters
+    desc: 
+      This version allows you to also work ADT counts
+    contents:
+      - SingleCellsMultiModal
+      - new_adt_counts_clr
+      - new_adt_counts_dsb
+      - add_adt_counts_sc
+      - detect_adt_isotypes
+      - get_adt_feature_info
+      - get_adt_names
+      - get_adt_sample_info
+      - params_sc_dsb
+      - read_multi_tenx_h5_adt
+      - read_tenx_h5_adt
+      - remove_adt_isotypes
   # Meta cell generation, classes and generation
   - title: Meta cell-related generation, classes and methods
     desc: 
@@ -337,18 +376,25 @@ reference:
       - get_cell_ranger_params
       - get_h5ad_dimensions
       - prescan_h5ad_files
+      - prescan_mtx_dirs
+      - prescan_tenx_h5_files
+      - read_tenx_h5_metadata
       - load_existing
       - load_h5ad
       - load_h5ad_norm
       - load_mtx
+      - load_multi_mtx
       - load_multi_h5ad
       - stream_h5ad
       - load_r_data
       - load_seurat
+      - load_tenx_h5
+      - load_multi_tenx_h5
       - read_h5ad_metadata
       - read_h5ad_x_summary
       - save_sc_exp_to_disk
       - sc_old_file_conversion
+      - merge_sc_experiments
       - params_sc_min_quality
       - params_sc_mtx_io
   # Processing of single cell
@@ -366,6 +412,7 @@ reference:
       - run_cell_qc
       - find_hvg_sc
       - find_hvg_batch_aware_sc
+      - get_hvg_data_sc
       - calculate_pca_sc
       - generate_sc_knn
       - find_neighbours_sc
@@ -380,6 +427,7 @@ reference:
       - params_norm_doublets_defaults
       - params_boost
       - params_sc_hvg
+      - params_sc_pca
       - params_scrublet
       - params_sc_bbknn
       - params_sc_fast_cluster
@@ -391,6 +439,8 @@ reference:
       - params_hvg_defaults
       - params_pca_defaults
       - params_knn_defaults
+      - params_sc_knn
+      - params_kmeans_defaults
       - params_fast_cluster_default
   # Single cell analysis
   - title: Single cell analysis methods
@@ -413,6 +463,7 @@ reference:
       - generate_hotspot_membership
       - get_hotspot_membership
       - get_miloR_abundances_sc
+      - meld_sc
       - get_index_cells
       - add_nhoods_info
       - test_nhoods
@@ -425,6 +476,11 @@ reference:
       - get_tf_to_gene
       - tf_to_genes_correlations
       - tf_to_genes_motif_enrichment
+      - nmf_sc
+      - stabilised_nmf_sc
+      - get_best_run
+      - get_w
+      - get_h
       - params_sc_hotspot
       - params_sc_miloR
       - params_sc_vision
@@ -432,6 +488,16 @@ reference:
       - params_scenic_extra_trees_defaults
       - params_scenic_gradient_boosting_defaults
       - params_scenic_random_forest_defaults
+      - params_meld
+      - params_nmf_hals
+  # Single cell analysis
+  - title: Single cell multi-modal analysis methods
+    desc: 
+      Methods to analyse multi-modal single cell data
+    contents:
+      - calculate_pca_adt_sc
+      - generate_wnn_graph_sc
+      - params_sc_wnn
   # Other single cell class methods
   - title: Single-cell related classes and methods
     desc: 
@@ -445,8 +511,39 @@ reference:
       - get_data
       - get_scores
       - new_sc_knn
+  # Single cell reference mapping
+  - title: Reference mapping and cell type annotations in single cell
+    desc:
+      Helpers to do reference mapping and cell type identification in single 
+      cell
+    contents:
+      - SymphonyReference
+      - add_symphony_labels
+      - build_symphony_ref
+      - transfer_labels_symphony
+      - get_symphony_hvg_names
+      - get_symphony_labels
+      - get_symphony_loadings
+      - get_symphony_z_corr
+      - map_symphony_query
+      - prepare_cell_markers
+      - calc_sc_type_scores
+      - score_clusters
+      - params_symphony_map
+  # Single cell ligand receptor
+  - title: Single cell ligand receptor 
+    desc: 
+      Classes, functions and generics/methods for ligand receptor analysis for
+      single cell.
+    contents:
+      - compute_expression_info_sc
+      - generate_ligand_target_influence
+      - get_influence
+      - ligand_activity_scores
+      - params_ligand_target
+      - prioritise_interactions
   # Single cell plotting helpers
-  - title: Single-cell plotting stuff
+  - title: Single cell plotting stuff
     desc: 
       Various helpers that generate data for plotting single cell, such as 2D 
       embeddings, or extract specific columns from the metadata or genes (and
@@ -458,6 +555,11 @@ reference:
       - phate_sc
       - extract_dot_plot_data
       - extract_gene_expression
+      - extract_embedding_data
+      - extract_feature_pair
+      - extract_feature_plot_data
+      - extract_gene_violin_data
+  
   # Different statistical functions
   - title: Stastical functions
     desc: 
@@ -506,6 +608,7 @@ reference:
       - cell_cycle_genes
       - write_cellranger_output
       - write_h5ad_sc
+      - write_h5ad_sc_dense
       - params_sc_synthetic_data
       - synthetic_signal_matrix
       - simulate_dropouts
@@ -527,55 +630,33 @@ reference:
       - to_snake_case
   - title: Rust wrappers
     desc: 
-      Everything rusty - only use this if you know what you are doing... Maybe 
+      Everything Rusty - only use this if you know what you are doing... Maybe 
       useful for your own package? Use with care and read the documentation!
+      The ones exposed here are general enough to be useful in other packages. 
+      There is a lot more under the hood... 
     contents:
-      - rs_aucell
+      - rs_2d_loess
       - rs_batch_lisi
       - rs_batch_silhouette_width
-      - rs_bbknn
-      - rs_bbknn_filtering
-      - rs_calc_es
-      - rs_calc_gsea_stat_cumulative_batch
-      - rs_calc_gsea_stat_traditional_batch
-      - rs_calc_gsea_stats
-      - rs_calc_multi_level
-      - rs_calculate_dge_mann_whitney
       - rs_cistarget
-      - rs_cluster_stability
       - rs_compare_knn
       - rs_constrained_page_rank
       - rs_constrained_page_rank_list
       - rs_contrastive_pca
       - rs_cor
       - rs_cor2
-      - rs_coremo_quality
-      - rs_coremo_stability
       - rs_cor_upper_triangle
       - rs_cos
       - rs_count_zeroes
       - rs_cov2cor
       - rs_covariance
-      - rs_create_random_aucs
-      - rs_critval
-      - rs_critval_mat
       - rs_dense_to_upper_triangle
       - rs_differential_cor
       - rs_dist
-      - rs_extract_grouped_gene_stats
-      - rs_extract_several_genes_plots
-      - rs_extract_counts_plots
       - rs_fast_auc
-      - rs_fast_cluster_sc
-      - rs_fast_cluster_sc_grid
       - rs_fast_ica
       - rs_fdr_adjustment
-      - rs_filter_onto_sim
-      - rs_generate_bulk_rnaseq
       - rs_geom_elim_fgsea_simple
-      - rs_get_gs_indices
-      - rs_get_metacells_bootstrapped
-      - rs_get_seacells
       - rs_gower_dist
       - rs_gse_geom_elim
       - rs_gse_geom_elim_list
@@ -585,35 +666,25 @@ reference:
       - rs_harmony
       - rs_harmony_v2
       - rs_hedges_g
-      - rs_hotspot_autocor
-      - rs_hotspot_cluster_genes
-      - rs_hotspot_gene_cor
-      - rs_hedges_g
-      - rs_hotspot_autocor
-      - rs_hotspot_cluster_genes
       - rs_hypergeom_test
       - rs_hypergeom_test_list
       - rs_ica_iters
       - rs_ica_iters_cv
-      - rs_importance_threshold
       - rs_jaccard_row_integers
       - rs_kbet
       - rs_knn_label_propagation
       - rs_knn_mat_to_edge_list
-      - rs_knn_mat_to_edge_pairs
+      - rs_generate_ligand_target_influence
+      - rs_ligand_activity_scores
       - rs_mad_outlier
-      - rs_make_milor_nhoods
       - rs_mc_aucell
       - rs_mc_hvg
       - rs_mc_pca
       - rs_mc_scenic
-      - rs_metacell_compactness
-      - rs_metacell_density
-      - rs_metacell_separation
       - rs_mitch_calc
-      - rs_mnn
-      - rs_module_scoring
       - rs_mutual_info
+      - rs_nmf_multi_mc
+      - rs_nmf_single_mc
       - rs_onto_semantic_sim
       - rs_onto_semantic_sim_mat
       - rs_onto_sim_wang
@@ -621,66 +692,30 @@ reference:
       - rs_ot_harmonic_sum
       - rs_page_rank
       - rs_page_rank_parallel
-      - rs_pairwise_gene_cors
       - rs_phyper
       - rs_pointwise_mutual_info
       - rs_prcomp
-      - rs_prepare_gsva_gs
       - rs_prepare_whitening
-      - rs_pseudobulk_cells_dense
-      - rs_pseudobulk_cells_sparse
       - rs_random_svd
       - rs_range_norm
       - rs_rbf_function
       - rs_rbf_function_mat
-      - rs_rbf_iterate_epsilons
       - rs_rbh_cor
       - rs_rbh_sets
-      - rs_sample_ids_for_cell_types
-      - rs_sc_scdblfinder
-      - rs_sc_doublet_detection
-      - rs_sc_get_gene_set_perc
-      - rs_sc_get_top_genes_perc
-      - rs_sc_hvg
-      - rs_sc_hvg_batch_aware
       - rs_sc_knn
       - rs_sc_knn_w_dist
-      - rs_sc_otsu_method
-      - rs_sc_pca
-      - rs_sc_pca_sparse
-      - rs_sc_scdblfinder
-      - rs_sc_scrublet
       - rs_sc_snn
-      - rs_scenic_gene_filter
-      - rs_scenic_grn
-      - rs_sc_snn
-      - rs_scenic_gene_filter
-      - rs_scenic_grn
-      - rs_scenic_grn_streaming
       - rs_set_similarity
       - rs_set_similarity_list
       - rs_set_similarity_list2
-      - rs_simple_and_multi_err
-      - rs_simulate_dropouts
       - rs_snf
-      - rs_snf_affinity_cat
-      - rs_snf_affinity_continuous
-      - rs_snf_affinity_mixed
       - rs_sparse_dict_dgrdl
       - rs_sparse_dict_dgrdl_grid_search
       - rs_spectral_clustering
       - rs_spectral_clustering_sim
-      - rs_split_cor_signs
       - rs_ssgsea
-      - rs_supercell
-      - rs_synthetic_sc_data_csc
-      - rs_synthetic_sc_data_csr
-      - rs_synthetic_sc_data_with_cell_types
       - rs_tied_diffusion_parallel
       - rs_tom
-      - rs_top_k_targets
       - rs_upper_triangle_to_dense
       - rs_upper_triangle_to_sparse
-      - rs_vision
-      - rs_vision_with_autocorrelation
-      - rs_2d_loess
+      - rs_wnn

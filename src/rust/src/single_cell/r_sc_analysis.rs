@@ -1,17 +1,27 @@
 use bixverse_rs::core::math::stats::calc_fdr;
+use bixverse_rs::methods::nmf_hals::HalsOpts;
 use bixverse_rs::prelude::*;
-use bixverse_rs::single_cell::sc_analysis::dge_pathway_scores::*;
-use bixverse_rs::single_cell::sc_analysis::hotspot::*;
-use bixverse_rs::single_cell::sc_analysis::milo_r::*;
-use bixverse_rs::single_cell::sc_analysis::module_scoring::*;
-use bixverse_rs::single_cell::sc_analysis::scenic::*;
-use bixverse_rs::single_cell::sc_analysis::vision::*;
+use bixverse_rs::single_cell::sc_analysis::nichenet::prioritisation::ClusterExpressionStats;
+use bixverse_rs::single_cell::sc_analysis::{
+    dge_pathway_scores::*,
+    hotspot::*,
+    meld::*,
+    milo_r::*,
+    module_scoring::*,
+    nichenet::activity_scoring::*,
+    nichenet::ligand_regulatory_potential::*,
+    nichenet::prioritisation::compute_cluster_expression_stats,
+    nmf_sc::{nmf_multiple_run_sc, nmf_single_run_sc},
+    scenic::*,
+    vision::*,
+};
 use extendr_api::*;
 use faer::Mat;
 use rand::prelude::*;
+use rayon::prelude::*;
 use std::cmp::Ordering;
 
-use crate::single_cell::utils::knn_data_to_rust;
+use crate::single_cell::utils::{knn_data_to_rust, panel_size_from_mem, prep_nichenet_network};
 
 ////////////////////
 // extendr Module //
@@ -31,6 +41,8 @@ extendr_module! {
     fn rs_module_scoring;
     // miloR
     fn rs_make_milor_nhoods;
+    // MELD
+    fn rs_meld_sc;
     // vision
     fn rs_vision;
     fn rs_vision_with_autocorrelation;
@@ -40,6 +52,13 @@ extendr_module! {
     fn rs_scenic_grn_streaming;
     fn rs_top_k_targets;
     fn rs_importance_threshold;
+    // nmf
+    fn rs_nmf_single_sc;
+    fn rs_nmf_multi_sc;
+    // nichenet
+    fn rs_generate_ligand_target_influence;
+    fn rs_ligand_activity_scores;
+    fn rs_compute_cluster_expr_stats;
 }
 
 //////////
@@ -49,6 +68,7 @@ extendr_module! {
 /// Calculate DGEs between cells based on Mann Whitney stats
 ///
 /// @description
+/// `r lifecycle::badge("experimental")`
 /// The function will take two sets of cell indices and calculate the
 /// differential gene expression based on the Mann Whitney test between the
 /// two groups.
@@ -77,6 +97,8 @@ extendr_module! {
 /// }
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_calculate_dge_mann_whitney(
     f_path: String,
@@ -135,6 +157,7 @@ fn rs_calculate_dge_mann_whitney(
 /// Calculate module activity scores in Rust
 ///
 /// @description
+/// `r lifecycle::badge("experimental")`
 /// Calculates module activity scores following Seurat's `AddModuleScore`.
 /// For each module (gene set), computes the average expression of genes in the
 /// set minus the average expression of randomly selected control genes from the
@@ -162,6 +185,8 @@ fn rs_calculate_dge_mann_whitney(
 /// Tirosh et al, Science (2016)
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 #[allow(clippy::too_many_arguments)]
 fn rs_module_scoring(
@@ -213,6 +238,7 @@ fn rs_module_scoring(
 /// Calculate AUCell in Rust
 ///
 /// @description
+/// `r lifecycle::badge("experimental")`
 /// The function will take in a list of gene set indices (0-indexed!) and
 /// calculate an AUCell type statistic. Two options here: calculate this
 /// with proper AUROC calculations (useful for marker gene expression) or
@@ -234,6 +260,8 @@ fn rs_module_scoring(
 /// AUC.
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_aucell(
     f_path: String,
@@ -271,6 +299,7 @@ fn rs_aucell(
 /// Calculate VISION pathway scores in Rust
 ///
 /// @description
+/// `r lifecycle::badge("experimental")`
 /// The function will take in a list of gene sets that contains lists of `"pos"`
 /// and `"neg"` gene indices (0-indexed). You don't have to provide the `"neg"`,
 /// but it can be useful to classify the delta of two stats (EMT, Th1; Th2) etc.
@@ -286,6 +315,8 @@ fn rs_aucell(
 /// @return A matrix of cells x vision scores per gene set.
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_vision(
     f_path: String,
@@ -312,6 +343,7 @@ fn rs_vision(
 /// Calculate VISION pathway scores in Rust with auto-correlation
 ///
 /// @description
+/// `r lifecycle::badge("experimental")`
 /// The function will take in a list of gene sets that contains lists of `"pos"`
 /// and `"neg"` gene indices (0-indexed). You don't have to provide the `"neg"`,
 /// but it can be useful to classify the delta of two stats (EMT, Th1; Th2) etc.
@@ -348,6 +380,8 @@ fn rs_vision(
 /// }
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 #[allow(clippy::too_many_arguments)]
 fn rs_vision_with_autocorrelation(
@@ -479,6 +513,7 @@ fn rs_vision_with_autocorrelation(
 /// Calculate gene spatial auto-correlations
 ///
 /// @description
+/// `r lifecycle::badge("experimental")`
 /// This function implements the HotSpot auto-correlation functionality and
 /// will return to what extent a given gene shows auto-correlation in the
 /// generated kNN-graph from the embeddings. For details see DeTomaso, et al.
@@ -515,6 +550,8 @@ fn rs_vision_with_autocorrelation(
 /// @export
 ///
 /// @references DeTomaso, et al., Cell Systems, 2021
+///
+/// @keywords internal
 #[extendr]
 #[allow(clippy::too_many_arguments)]
 fn rs_hotspot_autocor(
@@ -578,7 +615,8 @@ fn rs_hotspot_autocor(
         &cells_to_keep,
         &knn_indices,
         &mut knn_dist,
-    );
+    )
+    .to_extendr()?;
 
     let res: HotSpotGeneRes = if streaming {
         hotspot
@@ -609,9 +647,10 @@ fn rs_hotspot_autocor(
     ))
 }
 
-/// Calculate gene<>gene spatial correlations
+/// Calculate gene to gene spatial correlations
 ///
 /// @description
+/// `r lifecycle::badge("experimental")`
 /// This function implements the HotSpot gene <> gene local correlation
 /// functionality from HotSpot, see DeTomaso, et al.
 ///
@@ -628,6 +667,10 @@ fn rs_hotspot_autocor(
 /// as the embedding matrix.
 /// @param genes_to_use Integer vector. 0-index vector indicating which genes
 /// to include.
+/// @param working_mem_gb Numeric. Approximate working memory (GB) the streaming
+/// pair path may use for resident gene panels. Ignored when `streaming` is
+/// `FALSE`. Larger values mean fewer disk re-reads. Note this excludes the two
+/// dense N_genes x N_genes output matrices, which scale with `genes_to_use`.
 /// @param streaming Boolean. Shall the data be streamed in chunks. Useful
 /// for large data sets.
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
@@ -645,6 +688,8 @@ fn rs_hotspot_autocor(
 /// @export
 ///
 /// @references DeTomaso, et al., Cell Systems, 2021
+///
+/// @keywords internal
 #[extendr]
 #[allow(clippy::too_many_arguments)]
 fn rs_hotspot_gene_cor(
@@ -655,6 +700,7 @@ fn rs_hotspot_gene_cor(
     hotspot_params: List,
     cells_to_keep: Vec<i32>,
     genes_to_use: Vec<i32>,
+    working_mem_gb: f64,
     streaming: bool,
     verbose: usize,
     seed: usize,
@@ -703,14 +749,27 @@ fn rs_hotspot_gene_cor(
         &cells_to_keep,
         &knn_indices,
         &mut knn_dist,
-    );
+    )
+    .to_extendr()?;
 
     let res: HotSpotPairRes = if streaming {
-        hotspot.compute_gene_cor_streaming(&genes_to_use, &hotspot_params.model, verbose)
+        const STREAM_BATCH_SIZE: usize = 1000;
+        let n_cells = knn_indices.len();
+        let panel_size = panel_size_from_mem(working_mem_gb, n_cells, genes_to_use.len());
+        hotspot
+            .compute_gene_cor_streaming(
+                &genes_to_use,
+                &hotspot_params.model,
+                STREAM_BATCH_SIZE,
+                panel_size,
+                verbose,
+            )
+            .to_extendr()?
     } else {
-        hotspot.compute_gene_cor(&genes_to_use, &hotspot_params.model, verbose)
-    }
-    .unwrap();
+        hotspot
+            .compute_gene_cor(&genes_to_use, &hotspot_params.model, verbose)
+            .to_extendr()?
+    };
 
     Ok(list!(
         cor = faer_to_r_matrix(res.cor.as_ref()),
@@ -720,6 +779,9 @@ fn rs_hotspot_gene_cor(
 
 /// Cluster the genes by Z-score together
 ///
+/// @description
+/// `r lifecycle::badge("experimental")`
+///
 /// @param z_matrix Numerical matrix representing the Z-scores.
 /// @param fdr_threshold Float. The FDR thresholds in terms of the Z-scores.
 /// @param min_size Integer. Minimum cluster size.
@@ -728,6 +790,8 @@ fn rs_hotspot_gene_cor(
 /// thresholds and has not been assigned.
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_hotspot_cluster_genes(
     z_matrix: RMatrix<f64>,
@@ -745,7 +809,8 @@ fn rs_hotspot_cluster_genes(
 
 /// Generate the neighbourhoods akin to the miloR approach
 ///
-/// @description Rust version of the
+/// @description
+/// `r lifecycle::badge("experimental")`
 ///
 /// @param embd Numeric matrix. Represents the matrix used to generate the kNN
 /// graph and will be used to refine the neighbourhoods.
@@ -772,6 +837,8 @@ fn rs_hotspot_cluster_genes(
 /// }
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_make_milor_nhoods(
     embd: RMatrix<f64>,
@@ -885,6 +952,9 @@ fn rs_make_milor_nhoods(
 
 /// Identifies genes to include into a SCENIC analysis
 ///
+/// @description
+/// `r lifecycle::badge("experimental")`
+///
 /// @param f_path_genes Path to the `counts_genes.bin` file.
 /// @param cell_indices Integer vector. 0-indexed(!) positions of cells to
 /// include in the analysis
@@ -897,6 +967,8 @@ fn rs_make_milor_nhoods(
 /// analysis.
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_scenic_gene_filter(
     f_path_genes: String,
@@ -916,6 +988,9 @@ fn rs_scenic_gene_filter(
 
 /// SCENIC: Generating gene-regulatory networks
 ///
+/// @description
+/// `r lifecycle::badge("experimental")`
+///
 /// @param f_path_genes Path to the `counts_genes.bin` file.
 /// @param cell_indices Integer vector. 0-indexed(!) positions of cells to
 /// include in the analysis
@@ -932,6 +1007,8 @@ fn rs_scenic_gene_filter(
 /// @returns A gene x TF importance matrix
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_scenic_grn(
     f_path_genes: String,
@@ -964,7 +1041,9 @@ fn rs_scenic_grn(
 
 /// SCENIC: Generating gene-regulatory networks (streaming version)
 ///
-/// @description Loads the genes in as chunks to avoid high memory pressure.
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Loads the genes in as chunks to avoid high memory pressure.
 ///
 /// @param f_path_genes Path to the `counts_genes.bin` file.
 /// @param cell_indices Integer vector. 0-indexed(!) positions of cells to
@@ -982,6 +1061,8 @@ fn rs_scenic_grn(
 /// @returns A gene x TF importance matrix
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_scenic_grn_streaming(
     f_path_genes: String,
@@ -1014,6 +1095,9 @@ fn rs_scenic_grn_streaming(
 
 /// SCENIC: Select the Top TF <> Gene pairs
 ///
+/// @description
+/// `r lifecycle::badge("experimental")`
+///
 /// @param matrix Numeric matrix with genes x TF importance values
 /// @param k Integer. Number of top genes / TFs to extract.
 /// @param margin If set to 1, the top k TFs per gene are used. If set to 2, the
@@ -1023,6 +1107,8 @@ fn rs_scenic_grn_streaming(
 /// @returns A list with three vectors: tf, gene, importance
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_top_k_targets(matrix: RMatrix<f64>, k: i32, margin: i32, min_value: Option<f64>) -> List {
     let nrow = matrix.nrows();
@@ -1097,6 +1183,8 @@ fn rs_top_k_targets(matrix: RMatrix<f64>, k: i32, margin: i32, min_value: Option
 
 /// SCENIC: Select TF-gene pairs by per-gene importance threshold
 ///
+/// @description
+/// `r lifecycle::badge("experimental")`
 /// For each gene (row), computes mean + n_sd * SD of the importance scores
 /// across all TFs and retains only pairs exceeding that threshold.
 ///
@@ -1110,6 +1198,8 @@ fn rs_top_k_targets(matrix: RMatrix<f64>, k: i32, margin: i32, min_value: Option
 /// @returns A list with three vectors: tf, gene, importance
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_importance_threshold(matrix: RMatrix<f64>, n_sd: f64, min_value: Option<f64>) -> List {
     let nrow = matrix.nrows();
@@ -1149,4 +1239,471 @@ fn rs_importance_threshold(matrix: RMatrix<f64>, n_sd: f64, min_value: Option<f6
     }
 
     list!(tf = tfs, gene = genes, importance = importances)
+}
+
+//////////
+// MELD //
+//////////
+
+/// Run MELD
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// This implements a Rust-based version of the MELD algorithm, see Burkhardt,
+/// et al. Nat. Biotechnol., 2021.
+///
+/// @param embd Numeric matrix. The original embedding that was used to generate
+/// the kNN graph.
+/// @param knn_data Optional named list. This contains pre-computed kNN data
+/// (including distances). The user has to ensure consistency! If provided, this
+/// will be used.
+/// @param meld_params Named list. Contains the parameters to use for MELD.
+/// @param labels Integer. The labels of the different groups. (1-indexed!)
+/// @param n_labels Integer. Number of labels represented in the data.
+/// @param seed Integer. For reproducibility.
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
+///
+/// @returns A list with the following items
+/// \itemize{
+///   \item raw_scores - The raw MELD scores
+///   \item norm_scores - Negative values were clamped to 0 and the rows L1
+///   normalised. This yields probability-like values.
+/// }
+///
+/// @export
+///
+/// @keywords internal
+#[extendr]
+#[allow(clippy::too_many_arguments)]
+fn rs_meld_sc(
+    embd: RMatrix<f64>,
+    knn_data: Nullable<List>,
+    meld_params: List,
+    labels: &[i32],
+    n_labels: usize,
+    seed: usize,
+    verbose: usize,
+) -> Result<List> {
+    let embd = r_matrix_to_faer_fp32(&embd);
+    let meld_params = MeldParams::from_r_list(meld_params)?;
+    let labels = labels.r_int_convert_shift();
+    let verbosity = parse_verbosity_level(verbose);
+
+    // deal with kNN
+    let knn_provided = knn_data != extendr_api::Nullable::Null;
+
+    let (knn_indices, knn_dist, dist) = if knn_provided {
+        if verbosity.normal_verbosity() {
+            println!("Using provided kNN graph...")
+        }
+        let knn_data = knn_data
+            .into_robj()
+            .as_list()
+            .ok_or_else(|| Error::Other("'knn_data' is not a list".into()))?;
+        let (knn_indices, knn_dist, _, dist) = knn_data_to_rust(knn_data)?;
+
+        (knn_indices, knn_dist, dist)
+    } else {
+        if verbosity.normal_verbosity() {
+            println!("Generating a kNN graph from scratch")
+        }
+
+        let (knn_indices, knn_dist) = generate_knn_with_dist(
+            embd.as_ref(),
+            &meld_params.knn_params,
+            true,
+            false,
+            seed,
+            verbosity.detailed_verbosity(),
+        )
+        .to_extendr()?;
+
+        (
+            knn_indices,
+            knn_dist.unwrap(),
+            meld_params.knn_params.ann_dist.clone(),
+        )
+    };
+
+    let is_squared_distance = dist == "euclidean";
+
+    let (meld_raw, meld_norm) = meld(
+        &knn_indices,
+        &knn_dist,
+        &labels,
+        n_labels,
+        is_squared_distance,
+        &meld_params,
+        seed as u64,
+        verbose,
+    )
+    .to_extendr()?;
+
+    Ok(list!(
+        raw_scores = faer_to_r_matrix(meld_raw.as_ref()),
+        norm_scores = faer_to_r_matrix(meld_norm.as_ref())
+    ))
+}
+
+/////////
+// NMF //
+/////////
+
+/// Run NMF (HALS) over a set of single cells and genes
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Runs a single NMF (HALS) run with the specified initialisation.
+///
+/// @param f_path_gene Path to the `counts_genes.bin` file.
+/// @param gene_indices Integer vector. 0-indexed(!) positions of the genes
+/// to include.
+/// @param cell_indices Integer vector. 0-indexed(!) positions of cells to
+/// include in the analysis.
+/// @param k Integer. Number of latent factors to return.
+/// @param preprocessing String. One of `c("none", "sd", "sqrt_sd")`. Takes the
+/// data as is, or scales by standard deviation or squared standard deviation
+/// per feature.
+/// @param use_second_layer Boolean. If `TRUE`, runs NMF on the normalised
+/// counts; if `FALSE`, on the raw counts.
+/// @param nmf_hals_params Named list. Contains the NMF parameters.
+/// @param seed Integer. Random seed for initialisation.
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
+///
+/// @returns A list with the following items
+/// \itemize{
+///   \item w - The left factor matrix (n_features x k)
+///   \item h - The right factor matrix (k x n_samples)
+///   \item final_loss - Loss at the final iteration
+///   \item n_iter - Number of iterations the algorithm run for
+///   \item converged - Did the NMF algorithm converge
+/// }
+///
+/// @export
+///
+/// @keywords internal
+#[extendr]
+#[allow(clippy::too_many_arguments)]
+fn rs_nmf_single_sc(
+    f_path_gene: &str,
+    gene_indices: &[i32],
+    cell_indices: &[i32],
+    k: usize,
+    preprocessing: &str,
+    use_second_layer: bool,
+    nmf_hals_params: List,
+    seed: usize,
+    verbose: usize,
+) -> Result<List> {
+    let cell_indices = cell_indices.r_int_convert();
+    let gene_indices = gene_indices.r_int_convert();
+    let nmf_hals_opt: HalsOpts<f32> = HalsOpts::from_r_list(nmf_hals_params, seed).to_extendr()?;
+    let nmf_res = nmf_single_run_sc(
+        f_path_gene,
+        &gene_indices,
+        &cell_indices,
+        k,
+        preprocessing,
+        use_second_layer,
+        Some(nmf_hals_opt),
+        verbose,
+    )
+    .to_extendr()?;
+    Ok(list!(
+        w = faer_to_r_matrix(nmf_res.w.as_ref()),
+        h = faer_to_r_matrix(nmf_res.h.as_ref()),
+        final_loss = nmf_res.final_loss as f64,
+        n_iter = nmf_res.n_iter,
+        converged = nmf_res.converged
+    ))
+}
+
+/// Run multiple NMF (HALS) restarts over a set of single cells and genes
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Runs `n_runs` HALS NMF with random initialisations seeded by `seed + i`.
+/// The `nmf_init` field in `nmf_hals_params` is ignored; random init is always
+/// used. The returned `w_all` is the column-binding of all run W matrices.
+///
+/// @param f_path_gene Path to the `counts_genes.bin` file.
+/// @param gene_indices Integer vector. 0-indexed(!) positions of the genes
+/// to include.
+/// @param cell_indices Integer vector. 0-indexed(!) positions of cells to
+/// include in the analysis.
+/// @param k Integer. Number of latent factors per run.
+/// @param preprocessing String. One of `c("none", "sd", "sqrt_sd")`.
+/// @param use_second_layer Boolean. If `TRUE`, runs NMF on the normalised
+/// counts; if `FALSE`, on the raw counts.
+/// @param nmf_hals_params Named list. Contains the NMF parameters.
+/// @param n_runs Integer. Number of random restarts.
+/// @param seed Integer. Base random seed. Run `i` uses `seed + i`.
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
+///
+/// @returns A list with the following items
+/// \itemize{
+///   \item w_all - Column-bound W matrices across all runs,
+///   shape `n_features x (k * n_runs)`. Columns `i*k+1..(i+1)*k` are run `i`'s
+///   components (1-indexed).
+///   \item h_per_run - List of H matrices, each `k x n_cells`.
+///   \item losses - Numeric vector. Final reconstruction loss per run.
+///   \item converged - Logical vector. Convergence flag per run.
+///   \item best_idx - Integer. 1-indexed position of the run with the lowest
+///   final loss.
+/// }
+///
+/// @export
+///
+/// @keywords internal
+#[extendr]
+#[allow(clippy::too_many_arguments)]
+fn rs_nmf_multi_sc(
+    f_path_gene: &str,
+    gene_indices: &[i32],
+    cell_indices: &[i32],
+    k: usize,
+    preprocessing: &str,
+    use_second_layer: bool,
+    nmf_hals_params: List,
+    n_runs: usize,
+    seed: usize,
+    verbose: usize,
+) -> Result<List> {
+    let gene_indices = gene_indices.r_int_convert();
+    let cell_indices = cell_indices.r_int_convert();
+    let nmf_hals_opt: HalsOpts<f32> = HalsOpts::from_r_list(nmf_hals_params, seed).to_extendr()?;
+    let nmf_res = nmf_multiple_run_sc(
+        f_path_gene,
+        &gene_indices,
+        &cell_indices,
+        k,
+        preprocessing,
+        use_second_layer,
+        Some(nmf_hals_opt),
+        n_runs,
+        seed,
+        verbose,
+    )
+    .to_extendr()?;
+    let h_per_run: List = nmf_res
+        .h_per_run
+        .iter()
+        .map(|h| faer_to_r_matrix(h.as_ref()))
+        .collect();
+    Ok(list!(
+        w_all = faer_to_r_matrix(nmf_res.w_all.as_ref()),
+        h_per_run = h_per_run,
+        losses = nmf_res.losses.r_float_convert(),
+        converged = nmf_res.converged,
+        best_idx = (nmf_res.best_idx + 1) as i32
+    ))
+}
+
+//////////////
+// NicheNet //
+//////////////
+
+/////////////
+// Helpers //
+/////////////
+
+/// [LigandActivityScores] to R list Helper
+///
+/// ### Params
+///
+/// * `scores` - The [LigandActivityScores] structure to transform
+///
+/// ### Returns
+///
+/// The list with the results
+fn activity_to_list(scores: &LigandActivityScores<f64>) -> List {
+    list!(
+        auroc = scores.auroc.clone(),
+        aupr = scores.aupr.clone(),
+        aupr_corrected = scores.aupr_corrected.clone(),
+        pearson = scores.pearson.clone(),
+        spearman = scores.spearman.clone()
+    )
+}
+
+//////////
+// Main //
+//////////
+
+/// Generate the ligand to target influence matrices
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Helper function to generate the ligand to target influence matrix for the
+/// NicheNet like approach.
+///
+/// @param ligand_seeds List. Contains the indices of the seeds, i.e., ligands.
+/// @param ppi_network Named list. Contains the PPI network with the ligand
+/// to receptor to signalling to TFs. Must contain from (indices), to
+/// (indices), and edge weights.
+/// @param grn_network Named list. Contains the gene regulatory network with the
+/// TF to target gene network. Must contain from (indices), to (indices), and
+/// edge weights.
+/// @param n_nodes Integer. Number of total nodes.
+/// @param params Named list.
+///
+/// @returns A dense matrix of ligands x genes that contains the influence
+/// scores of each
+///
+/// @export
+#[extendr]
+fn rs_generate_ligand_target_influence(
+    ligand_seeds: List,
+    ppi_network: List,
+    grn_network: List,
+    n_nodes: usize,
+    params: List,
+) -> Result<RMatrix<f64>> {
+    let (sig_from, sig_to, sig_weight) = prep_nichenet_network(ppi_network)?;
+    let (grn_from, grn_to, grn_weight) = prep_nichenet_network(grn_network)?;
+    let mut seed_vec = Vec::with_capacity(ligand_seeds.len());
+
+    for i in 0..ligand_seeds.len() {
+        let elem_i = ligand_seeds.elt(i)?;
+        let vec_i = elem_i
+            .as_integer_vector()
+            .ok_or_else(|| {
+                Error::Other("One of the ligand seeds could not be transformed to integers.".into())
+            })?
+            .iter()
+            .map(|x| *x as u32)
+            .collect();
+        seed_vec.push(vec_i);
+    }
+
+    let params: LigandTargetParams<f64> = LigandTargetParams::from_r_list(params)?;
+
+    let ligand_influence_matrix = construct_ligand_target_mat(
+        n_nodes,
+        &sig_from,
+        &sig_to,
+        &sig_weight,
+        &grn_from,
+        &grn_to,
+        &grn_weight,
+        &seed_vec,
+        &params,
+    )
+    .to_extendr()?;
+
+    Ok(faer_to_r_matrix(ligand_influence_matrix.as_ref()))
+}
+
+/// Calculate the NicheNet ligand activity scores
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
+///
+/// @param ligand_influence A ligand x background genes matrix that measures the
+/// ligand to target gene influence.
+/// @param in_gene_sets A list of logicals with the genes of interest being set
+/// to `TRUE` and the background genes set to `FALSE`.
+///
+/// @returns A list with internal lists with:
+/// \itemize{
+///   \item `auroc` - The Area Under the Receiver Operating Characteristic for
+///   that ligand
+///   \item `aupr` - The Area Under the Precision-Recall curve for that ligand.
+///   \item `aupr_corrected` - The corrected AUPR
+///   \item `pearson` - The Pearson correlations
+///   \item `spearman` - The Spearman correlations
+/// }
+///
+/// @export
+#[extendr]
+fn rs_ligand_activity_scores(ligand_influence: RMatrix<f64>, in_gene_sets: List) -> Result<List> {
+    let ligand_influence = r_matrix_to_faer(&ligand_influence);
+
+    let mut in_gene_sets_vec = Vec::with_capacity(in_gene_sets.len());
+
+    for i in 0..in_gene_sets.len() {
+        let elem_i = in_gene_sets.elt(i)?;
+        let vec_i: Vec<bool> = elem_i
+            .as_logical_vector()
+            .ok_or_else(|| {
+                Error::Other("One of the ligand seeds could not be transformed to integers.".into())
+            })?
+            .iter()
+            .map(|x| x.to_bool())
+            .collect();
+        in_gene_sets_vec.push(vec_i);
+    }
+
+    let scores: Vec<LigandActivityScores<f64>> = in_gene_sets_vec
+        .par_iter()
+        .map(|x| ligand_activity_scores(&ligand_influence.as_ref(), x))
+        .collect();
+
+    let mut res = List::new(scores.len());
+
+    for i in 0..res.len() {
+        let res_i = activity_to_list(&scores[i]);
+        res.set_elt(i, res_i.into())?;
+    }
+
+    Ok(res)
+}
+
+/// Compute cluster statistics for NicheNet prioritisation
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Helper function to pull out average expression and fraction of cells for
+/// genes of interest.
+///
+/// @param f_path_gene Path to the `counts_genes.bin` file.
+/// @param gene_indices Integer vector. 0-indexed(!) positions of the genes
+/// to include.
+/// @param clusters List. A list that contains within the cell indices of the
+/// clusters of interest (0-indexed).
+///
+/// @returns A list with two matrices
+/// \itemize{
+///   \item mean - The average expression. Shape genes x clusters.
+///   \item frac - The fraction of cells expressing. Shape genes x clusters.
+/// }
+///
+/// @export
+///
+/// @keywords internal
+#[extendr]
+fn rs_compute_cluster_expr_stats(
+    f_path_gene: &str,
+    gene_indices: &[i32],
+    clusters: List,
+) -> Result<List> {
+    let gene_indices = gene_indices.r_int_convert();
+    let mut cluster_vec = Vec::with_capacity(clusters.len());
+
+    for i in 0..clusters.len() {
+        let elem_i = clusters.elt(i)?;
+        let vec_i = elem_i
+            .as_integer_vector()
+            .ok_or_else(|| {
+                Error::Other(
+                    "One of the cluster cell indices could not be transformed to integers.".into(),
+                )
+            })?
+            .r_int_convert();
+
+        cluster_vec.push(vec_i);
+    }
+
+    let reader = ParallelSparseReader::new(f_path_gene).to_extendr()?;
+
+    let cluster_res: ClusterExpressionStats<f64> =
+        compute_cluster_expression_stats(&reader, &gene_indices, &cluster_vec).to_extendr()?;
+
+    Ok(list!(
+        mean = faer_to_r_matrix(cluster_res.mean.as_ref()),
+        frac = faer_to_r_matrix(cluster_res.frac.as_ref())
+    ))
 }

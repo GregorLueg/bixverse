@@ -60,5 +60,5 @@ genes for this given GO term.
 }
 }
 \description{
-Run fgsea simple method for gene ontology with elimination method
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 }

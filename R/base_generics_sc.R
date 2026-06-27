@@ -549,6 +549,7 @@ get_embedding <- function(x, embd_name, ...) {
 #' used for the single cell-related classes and methods.
 #'
 #' @param x An object to get embedding from
+#' @param ... Other parameters.
 #'
 #' @return Get the names of the available embeddings.
 #'
@@ -600,14 +601,16 @@ get_knn_obj <- function(x, ...) {
 #' in the given analysis + the values that are to be added to the obs table
 #' in the DuckDB.
 #'
-#' @param x An object to set gene mapping for
+#' @param x An object to get the data from.
+#' @param columns Optional string. For some of the functions you can decide
+#' to only extract specific columns.
 #' @param ... Other parameters
 #'
 #' @returns Returns a data.table with a cell_idx column for the cells included
 #' in the analysis and additional columns to be added to the obs table.
 #'
 #' @export
-get_data <- function(x, ...) {
+get_data <- function(x, columns = NULL, ...) {
   UseMethod("get_data")
 }
 
@@ -663,9 +666,9 @@ get_knn_dist <- function(x, ...) {
 #'   \item bin_method - String. One of `c("equal_width", "equal_freq")`. Not
 #'   implemented yet.
 #' }
-#' @param streaming Boolean. Shall the genes be streamed in. Useful for larger
-#' data sets where you wish to avoid loading in the whole data. Defaults to
-#' `FALSE`. Not used for `MetaCells`.
+#' @param streaming Optional Boolean. Shall the data be streamed in. Useful for
+#' larger data sets where you wish to avoid loading in the whole data. If
+#' `NULL`, will automatically detect. Not used for `MetaCells`.
 #' @param .verbose Boolean or integer. Controls verbosity and returns run times.
 #' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
 #' verbosity.
@@ -681,7 +684,45 @@ find_hvg_sc <- S7::new_generic(
     object,
     hvg_no = 2000L,
     hvg_params = params_sc_hvg(),
-    streaming = FALSE,
+    streaming = NULL,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' Identify HVGs without mutating object state
+#'
+#' @description
+#' Like [find_hvg_sc()] but does not mutate `object`. Returns a data.table
+#' with per-gene HVG statistics plus `is_hvg`/`hvg_rank` for the top `hvg_no`
+#' genes. Useful for computing HVGs on a subset of cells (e.g. a specific
+#' cell type) for downstream methods like NMF, without overwriting the HVGs
+#' stored on the object.
+#'
+#' @param object `SingleCells` or `MetaCells` class.
+#' @param cell_ids Optional character. Cell ids (or meta cell ids) to restrict
+#' the HVG calculation to. If `NULL`, uses [get_cells_to_keep()] for
+#' `SingleCells` and all meta cells for `MetaCells`.
+#' @param hvg_no Integer. Number of top HVGs to flag. Defaults to `3000L`.
+#' @param hvg_params List, see [params_sc_hvg()].
+#' @param streaming Optional Boolean. Stream the data. Ignored for `MetaCells`.
+#' @param .verbose Boolean or integer. Verbosity.
+#'
+#' @return data.table with `gene_idx`, `gene_id`, the HVG statistics returned
+#' by the Rust HVG function, an `is_hvg` boolean and an `hvg_rank` integer
+#' (`NA` for non-HVGs).
+#'
+#' @export
+get_hvg_data_sc <- S7::new_generic(
+  name = "get_hvg_data_sc",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    cell_ids = NULL,
+    hvg_no = 3000L,
+    hvg_params = params_sc_hvg(),
+    streaming = NULL,
     .verbose = TRUE
   ) {
     S7::S7_dispatch()
@@ -699,8 +740,8 @@ find_hvg_sc <- S7::new_generic(
 #'
 #' @param object `SingleCells`, `MetaCells` (or potentially other) class.
 #' @param no_pcs Integer. Number of PCs to calculate.
-#' @param randomised_svd Boolean. Shall randomised SVD be used. Faster, but
-#' less precise.
+#' @param pca_params Named list. Controls the parameters to be used for the
+#' PCA calculation which is single cell-specific, see [params_sc_pca()]
 #' @param sparse_svd Boolean. Shall sparse solvers be used that do not do
 #' scaling. If set to yes, in the case of `random_svd = FALSE`, Lanczos
 #' iterations are used to solve the sparse SVD. With `random_svd = TRUE`, the
@@ -727,7 +768,7 @@ calculate_pca_sc <- S7::new_generic(
   fun = function(
     object,
     no_pcs,
-    randomised_svd = TRUE,
+    pca_params = params_sc_pca(),
     sparse_svd = FALSE,
     hvg = NULL,
     seed = 42L,
@@ -771,6 +812,8 @@ calculate_pca_sc <- S7::new_generic(
 #' needs to be part of the object.
 #' @param no_embd_to_use Optional integer. Number of embedding dimensions to
 #' use. If `NULL` all will be used.
+#' @param modality String. One of `c("rna", "adt")`. You can only use `"adt"`
+#' on `SingleCellsMultiModal` class.
 #' @param neighbours_params List. Output of [bixverse::params_sc_neighbours()].
 #' A list with the following items:
 #' \itemize{
@@ -800,6 +843,7 @@ find_neighbours_sc <- S7::new_generic(
     object,
     embd_to_use = "pca",
     no_embd_to_use = NULL,
+    modality = c("rna", "adt"),
     neighbours_params = params_sc_neighbours(),
     seed = 42L,
     .verbose = TRUE
@@ -821,6 +865,10 @@ find_neighbours_sc <- S7::new_generic(
 #' @param res Numeric. The resolution parameter for [igraph::cluster_leiden()]
 #' or [igraph::cluster_louvain()].
 #' @param name String. The name to add to the obs table in the DuckDB.
+#' @param modality String. On which modality to run the UMAP. One of
+#' `c("rna", "adt", "wnn")`. The two latter options are only available for
+#' multi-modal versions with the added data.
+#' @param seed Integer. For reproducibility.
 #'
 #' @return The object with added clustering in the obs table.
 #'
@@ -832,7 +880,9 @@ find_clusters_sc <- S7::new_generic(
     object,
     cluster_algorithm = c("leiden", "louvain"),
     res = 1.0,
-    name = "leiden_clustering"
+    name = "leiden_clustering",
+    modality = c("rna", "adt", "wnn"),
+    seed = 42L
   ) {
     S7::S7_dispatch()
   }
@@ -855,8 +905,9 @@ find_clusters_sc <- S7::new_generic(
 #' respective gene sets.
 #' @param auc_type String. Which type of AUC to calculate. Choice of
 #' `c("wilcox", "auroc")`.
-#' @param streaming Boolean. Shall the cell data be streamed in. Useful for
-#' larger data sets. Ignored when applied to `MetaCells`.
+#' @param streaming Optional Boolean. Shall the data be streamed in. Useful for
+#' larger data sets where you wish to avoid loading in the whole data. If
+#' `NULL`, will automatically detect. Ignored when applied to `MetaCells`.
 #' @param .verbose Boolean or integer. Controls verbosity and returns run times.
 #' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
 #' verbosity.
@@ -874,7 +925,7 @@ aucell_sc <- S7::new_generic(
     object,
     gs_list,
     auc_type = c("wilcox", "auroc"),
-    streaming = FALSE,
+    streaming = NULL,
     .verbose = TRUE
   ) {
     S7::S7_dispatch()
@@ -940,9 +991,9 @@ scenic_gene_filter_sc <- S7::new_generic(
 #' thresholds in `scenic_params`.
 #' @param cells_to_take Optional string vector. Cell identifiers to restrict
 #' to. If `NULL`, defaults to all filtered cells in the class.
-#' @param streaming Boolean. Whether to use the streaming implementation to
-#' bound memory usage. Useful for large datasets. Defaults to `FALSE`. Ignored
-#' when applied to `MetaCells`.
+#' @param streaming Optional Boolean. Shall the data be streamed in. Useful for
+#' larger data sets where you wish to avoid loading in the whole data. If
+#' `NULL`, will automatically detect. Ignored when applied to `MetaCells`.
 #' @param random_seed Integer. Used for reproducibility. Defaults to `42L`.
 #' @param .verbose Boolean or integer. Controls verbosity and returns run times.
 #' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
@@ -978,8 +1029,86 @@ scenic_grn_sc <- S7::new_generic(
     scenic_params = params_scenic(),
     genes_to_take = NULL,
     cells_to_take = NULL,
-    streaming = FALSE,
+    streaming = NULL,
     random_seed = 42L,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#### nmf -----------------------------------------------------------------------
+
+## generics --------------------------------------------------------------------
+
+#' Run single-run NMF on single cell or meta cell data
+#'
+#' @description
+#' Runs a single HALS NMF on a chosen subset of cells and genes. For
+#' `SingleCells`, the counts are streamed from disk via the Rust binary
+#' files; for `MetaCells`, the in-memory sparse counts are used.
+#'
+#' @param object `SingleCells` or `MetaCells` class.
+#' @param k Integer. Number of latent factors to return.
+#' @param cell_ids Optional character. Cell ids (or meta cell ids) to restrict
+#' the NMF to. If `NULL`, uses [get_cells_to_keep()] for `SingleCells` and all
+#' meta cells for `MetaCells`.
+#' @param gene_ids Optional character. Gene ids to restrict the NMF to. If
+#' `NULL`, uses [get_hvg()] on the object.
+#' @param preprocessing String. One of `c("none", "sd", "sqrt_sd")`.
+#' @param use_second_layer Boolean. If `TRUE`, runs NMF on the normalised
+#' counts (recommended); if `FALSE`, on the raw counts.
+#' @param nmf_hals_params List, see [params_nmf_hals()].
+#' @param seed Integer. Random seed for initialisation.
+#' @param .verbose Boolean or integer. Verbosity.
+#'
+#' @returns An `NmfResult` object.
+#'
+#' @export
+nmf_sc <- S7::new_generic(
+  name = "nmf_sc",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    k,
+    cell_ids = NULL,
+    gene_ids = NULL,
+    preprocessing = "none",
+    use_second_layer = TRUE,
+    nmf_hals_params = params_nmf_hals(),
+    seed = 42L,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' Run stabilised (multi-run) NMF on single cell or meta cell data
+#'
+#' @description
+#' Runs `n_runs` HALS NMF with random initialisations seeded by `seed + i`.
+#' The `nmf_init` field in `nmf_hals_params` is ignored; random init is
+#' always used.
+#'
+#' @inheritParams nmf_sc
+#' @param n_runs Integer. Number of random restarts.
+#'
+#' @returns A `StabilisedNmfResult` object.
+#'
+#' @export
+stabilised_nmf_sc <- S7::new_generic(
+  name = "stabilised_nmf_sc",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    k,
+    cell_ids = NULL,
+    gene_ids = NULL,
+    preprocessing = "none",
+    use_second_layer = TRUE,
+    nmf_hals_params = params_nmf_hals(),
+    n_runs = 30L,
+    seed = 42L,
     .verbose = TRUE
   ) {
     S7::S7_dispatch()
@@ -1030,6 +1159,73 @@ load_existing <- S7::new_generic(
   dispatch_args = "object",
   fun = function(
     object
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#### plotting ------------------------------------------------------------------
+
+#' Extract grouped gene statistics for dot plots
+#'
+#' @description
+#' Extracts per-group mean expression and percentage of expressing cells for a
+#' set of genes. Returns a long-format data.table suitable for dot plots.
+#'
+#' @param object A single cell class.
+#' @param features Character vector. Gene IDs to extract.
+#' @param grouping_variable String. Column name in the obs table to group by.
+#' @param scale_exp Boolean. Whether to min-max scale mean expression per gene.
+#' @param modality String. One of `c("rna", "adt")`. ADT is only available for
+#' `SingleCellsMultiModal`.
+#'
+#' @return A data.table with columns: gene, group, mean_exp, scaled_exp, pct_exp.
+#'
+#' @export
+extract_dot_plot_data <- S7::new_generic(
+  name = "extract_dot_plot_data",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    features,
+    grouping_variable,
+    scale_exp = TRUE,
+    modality = c("rna", "adt")
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' Extract normalised gene expression for plotting
+#'
+#' @description
+#' Extracts dense normalised (log1p) expression values for a set of genes,
+#' optionally with additional observation metadata columns.
+#'
+#' @param object A single cell class.
+#' @param features Character vector. Gene IDs to extract.
+#' @param obs_cols Optional character vector. Column names from the obs table
+#' to include.
+#' @param scale Boolean. Whether to z-score the expression values.
+#' @param clip Optional numeric. If `scale = TRUE`, clip z-scores to
+#' `[-clip, clip]`.
+#' @param modality String. One of `c("rna", "adt")`. ADT is only available for
+#' `SingleCellsMultiModal`.
+#'
+#' @return A data.table with a `cell_id` column, one column per gene, and
+#' any requested obs columns.
+#'
+#' @export
+extract_gene_expression <- S7::new_generic(
+  name = "extract_gene_expression",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    features,
+    obs_cols = NULL,
+    scale = FALSE,
+    clip = NULL,
+    modality = c("rna", "adt")
   ) {
     S7::S7_dispatch()
   }

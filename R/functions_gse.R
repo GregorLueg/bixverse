@@ -260,13 +260,13 @@ simplify_hypergeom_res <- function(
   checkmate::qassert(min_sim, "N1[0, 1]")
 
   # function body
-  ancestry <- get_ontology_ancestry(go_parent_child_dt)
+  ancestry <- get_ontology_ancestry(parent_child_dt)
 
   descendants <- ancestry$descendants
 
   wang_sims <- calculate_wang_sim(
     terms = res$gene_set_name,
-    parent_child_dt = go_parent_child_dt,
+    parent_child_dt = parent_child_dt,
     weights = weights,
     add_self = TRUE
   )
@@ -300,8 +300,8 @@ simplify_hypergeom_res <- function(
         descendants[subset$gene_set_name],
         length
       )
-      to_select_desc <- which(no_descendants == min(no_descendants))
-      to_remove <- append(to_remove, subset$gene_set_name[-to_select])
+      to_select_desc <- which.min(no_descendants)
+      to_remove <- append(to_remove, subset$gene_set_name[-to_select_desc])
     }
   }
 

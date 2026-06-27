@@ -41,11 +41,13 @@ extendr_module! {
 
 /// Generate meta cells (hdWGCNA method)
 ///
-/// @description This function implements the approach from Morabito, et al.
-/// to generate meta cells. You can provide an already pre-computed kNN matrix
-/// or an embedding to regenerate the kNN matrix with specified parameters in
-/// the meta_cell_params. If `knn_mat` is provided, this one will be used. You
-/// need to at least provide `knn_mat` or `embd`!
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// This function implements the approach from Morabito, et al. to generate meta
+/// cells. You can provide an already pre-computed kNN matrix or an embedding to
+/// regenerate the kNN matrix with specified parameters in the meta_cell_params.
+/// If `knn_mat` is provided, this one will be used. You need to at least
+/// provide `knn_mat` or `embd`!
 ///
 /// @param f_path String. Path to the `counts_cells.bin` file.
 /// @param knn_mat Optional integer matrix. The kNN matrix you wish to use
@@ -75,6 +77,8 @@ extendr_module! {
 /// }
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 #[allow(clippy::too_many_arguments)]
 fn rs_get_metacells_bootstrapped(
@@ -266,11 +270,13 @@ fn rs_get_metacells_bootstrapped(
 
 /// Generate SEACells
 ///
-/// @description This function implements the SEACells algorithm for generating
-/// meta cells from Persad et al. An embedding matrix must be provided which is
-/// used to construct the kNN graph and kernel matrix for the SEACells
-/// algorithm. This version is highly memory and speed-optimised and will
-/// truncate small values during matrix operations which can affect convergence.
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// This function implements the SEACells algorithm for generating meta cells
+/// from Persad et al. An embedding matrix must be provided which is used to
+/// construct the kNN graph and kernel matrix for the SEACells algorithm. This
+/// version is highly memory and speed-optimised and will truncate small values
+/// during matrix operations which can affect convergence.
 ///
 /// @param f_path String. Path to the `counts_cells.bin` file.
 /// @param embd Numerical matrix. The embedding matrix (for example PCA embedding)
@@ -303,6 +309,8 @@ fn rs_get_metacells_bootstrapped(
 /// @export
 ///
 /// @references Persad, et al., Nat. Biotechnol., 2023.
+///
+/// @keywords internal
 #[extendr]
 #[allow(clippy::too_many_arguments)]
 fn rs_get_seacells(
@@ -558,7 +566,9 @@ fn rs_get_seacells(
 
 /// Generate SuperCells.
 ///
-/// @description This function implements the approach from Bilous, et al.
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// This function implements the approach from Bilous, et al.
 /// to generate meta cells or called here SuperCells. You can provide
 /// pre-computed kNN data (indices + distances) via `knn_data`, or an
 /// embedding via `embd` from which the kNN graph will be generated. You
@@ -597,6 +607,8 @@ fn rs_get_seacells(
 /// }
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 #[allow(clippy::too_many_arguments)]
 fn rs_supercell(
@@ -834,6 +846,11 @@ fn rs_supercell(
 
 /// Calculates diffusion maps for density calculations for meta cells
 ///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Generates diffusion maps and identifies in which density region a given
+/// cell sits (defined as distance to k-nearest neighbours quite).
+///
 /// @param knn_data Named list. Needs to have the relevant data from the kNN
 /// graph.
 /// @param n_dcs Integer. The number of diffusion coordinates to return.
@@ -852,6 +869,12 @@ fn rs_supercell(
 ///   \item density_distances - Density distances at `k_density` neighbours.
 ///   \item regions - Region of the manifold where this given cell is.
 /// }
+///
+/// @export
+///
+/// @references Persad, et al., Nat. Biotechnol., 2023.
+///
+/// @keywords internal
 #[extendr]
 fn rs_metacell_density(
     knn_data: List,
@@ -900,12 +923,18 @@ fn rs_metacell_density(
 /// Calculates the compactness of the MetaCells based on diffusion map
 /// coordinates
 ///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Calculates the meta cell compactness based on the diffusion map coordinates.
+///
 /// @param dc Numerical matrix. The diffusion map coordinates.
 /// @param meta_cells List. The cell indices of the meta cells.
 ///
 /// @returns The compactness results
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_metacell_compactness(dc: RMatrix<f64>, meta_cells: List) -> Result<Vec<f64>> {
     let dc = r_matrix_to_faer_fp32(&dc);
@@ -928,12 +957,19 @@ fn rs_metacell_compactness(dc: RMatrix<f64>, meta_cells: List) -> Result<Vec<f64
 /// Calculates the separation of the centroids of the MetaCells based on
 /// diffusion map coordinates.
 ///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Calculates the separation of the single cells of a given meta cell based on
+/// the diffusion map.
+///
 /// @param dc Numerical matrix. The diffusion map coordinates.
 /// @param meta_cells List. The cell indices of the meta cells.
 ///
 /// @returns The separation results
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_metacell_separation(dc: RMatrix<f64>, meta_cells: List) -> Result<Vec<f64>> {
     let dc = r_matrix_to_faer_fp32(&dc);
@@ -959,7 +995,9 @@ fn rs_metacell_separation(dc: RMatrix<f64>, meta_cells: List) -> Result<Vec<f64>
 
 /// Pseudo-bulk a set of cells (dense)
 ///
-/// @description This function will return a dense matrix of
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// This function will return a dense matrix of
 /// `length(cell_indices_ls) x number of genes`. The function has the option
 /// to return the sum of the sum of the raw counts or the average of the
 /// normalised counts.
@@ -974,6 +1012,8 @@ fn rs_metacell_separation(dc: RMatrix<f64>, meta_cells: List) -> Result<Vec<f64>
 /// @returns A dense matrix with the pseudo-bulked data.
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_pseudobulk_cells_dense(
     f_path: String,
@@ -999,7 +1039,9 @@ fn rs_pseudobulk_cells_dense(
 
 /// Pseudo-bulk a set of cells (sparse)
 ///
-/// @description This function will return a sparse matrix of
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// This function will return a sparse matrix of
 /// `length(cell_indices_ls) x number of genes` (in list form in CSR).
 /// The function has the option to return the sum of the sum of the raw counts
 /// or the average of the normalised counts.
@@ -1021,6 +1063,8 @@ fn rs_pseudobulk_cells_dense(
 /// }
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_pseudobulk_cells_sparse(
     f_path: String,

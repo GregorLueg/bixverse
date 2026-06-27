@@ -4,7 +4,7 @@
 \alias{rs_mc_pca}
 \title{PCA on MetaCells (sparse data)}
 \usage{
-rs_mc_pca(sparse_data, no_pcs, random_svd, seed)
+rs_mc_pca(sparse_data, no_pcs, pca_params, clr_offsets, seed)
 }
 \arguments{
 \item{sparse_data}{A named list that needs to have \code{data}, \code{indptr},
@@ -12,7 +12,11 @@ rs_mc_pca(sparse_data, no_pcs, random_svd, seed)
 
 \item{no_pcs}{Integer. Number of PCs to return.}
 
-\item{random_svd}{Boolean. Shall randomised SVD be used.}
+\item{pca_params}{Named list. Contains the parameters to use for this PCA
+run.}
+
+\item{clr_offsets}{Optional numeric. If you wish to use the \code{PFlogPF}
+normalisation prior to PCA from Booeshaghi, et al.}
 
 \item{seed}{Integer. Random seed for the randomised SVD.}
 }
@@ -28,7 +32,11 @@ SVD).
 }
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 Calculates PCA for MetaCells or more generally speaking sparse
 data. This is happening in-memory compared to the (usually much) larger
 single cell data sets.
+}
+\references{
+Booeshaghi, et al., bioRxive, 2026.
 }

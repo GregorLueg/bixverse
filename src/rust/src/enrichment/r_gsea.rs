@@ -4,11 +4,29 @@ use extendr_api::prelude::*;
 use rayon::prelude::*;
 use rustc_hash::FxHashMap;
 
+/////////////
+// extendR //
+/////////////
+
+extendr_module! {
+    mod r_gsea;
+    fn rs_calc_es;
+    fn rs_get_gs_indices;
+    fn rs_calc_gsea_stats;
+    fn rs_calc_gsea_stat_cumulative_batch;
+    fn rs_calc_gsea_stat_traditional_batch;
+    fn rs_calc_multi_level;
+    fn rs_simple_and_multi_err;
+}
+
 //////////////////////
 // Helper functions //
 //////////////////////
 
 /// Calculates the traditional GSEA enrichment score
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
 ///
 /// @param stats Named numerical vector. Needs to be sorted. The gene level statistics.
 /// @param pathway_r String vector. The genes in the pathway.
@@ -16,6 +34,8 @@ use rustc_hash::FxHashMap;
 /// @return The enrichment score
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_calc_es(stats: Robj, pathway_r: Vec<String>) -> extendr_api::Result<f64> {
     let vec_data = r_named_vec_data(stats)?;
@@ -32,6 +52,9 @@ fn rs_calc_es(stats: Robj, pathway_r: Vec<String>) -> extendr_api::Result<f64> {
 
 /// Helper function to rapidly retrieve the indices of the gene set members
 ///
+/// @description
+/// `r lifecycle::badge("experimental")`
+///
 /// @param gene_universe Character Vector. The genes represented in the gene universe.
 /// @param pathway_list List. A named list with each element containing the genes for this
 /// pathway.
@@ -40,6 +63,8 @@ fn rs_calc_es(stats: Robj, pathway_r: Vec<String>) -> extendr_api::Result<f64> {
 /// Importantly, these are indexed to R's 1-indexing!
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_get_gs_indices(gene_universe: Vec<String>, pathway_list: List) -> extendr_api::Result<List> {
     // HashMap for fast look ups
@@ -81,6 +106,9 @@ fn rs_get_gs_indices(gene_universe: Vec<String>, pathway_list: List) -> extendr_
 
 /// Rust implementation of the fgsea::calcGseaStat() function
 ///
+/// @description
+/// `r lifecycle::badge("experimental")`
+///
 /// @param stats Numeric vector. The gene level statistic. Needs to
 /// sorted in descending nature.
 /// @param gs_idx Integer vector. The indices of the gene set genes.
@@ -98,6 +126,8 @@ fn rs_get_gs_indices(gene_universe: Vec<String>, pathway_list: List) -> extendr_
 /// }
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_calc_gsea_stats(
     stats: &[f64],
@@ -125,6 +155,9 @@ fn rs_calc_gsea_stats(
 
 /// Helper function to generate traditional GSEA-based permutations
 ///
+/// @description
+/// `r lifecycle::badge("experimental")`
+///
 /// @param stats Numeric vector. The gene level statistic. Needs to
 /// sorted in descending nature.
 /// @param pathway_scores Numeric vector. The enrichment scores for the
@@ -144,6 +177,8 @@ fn rs_calc_gsea_stats(
 /// }
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_calc_gsea_stat_traditional_batch(
     stats: &[f64],
@@ -170,6 +205,9 @@ fn rs_calc_gsea_stat_traditional_batch(
 }
 
 /// Helper function to generate fgsea simple-based permutations
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
 ///
 /// @param stats Numeric vector. The gene level statistic. Needs to
 /// sorted in descending nature.
@@ -200,6 +238,8 @@ fn rs_calc_gsea_stat_traditional_batch(
 /// }
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_calc_gsea_stat_cumulative_batch(
     stats: &[f64],
@@ -250,6 +290,9 @@ fn rs_calc_gsea_stat_cumulative_batch(
 
 /// Calculates p-values for pre-processed data
 ///
+/// @description
+/// `r lifecycle::badge("experimental")`
+///
 /// @param stats Named numerical vector. Needs to be sorted. The gene level statistics.
 /// @param es Numerical vector. The enrichment scores of the pathways of that specific size
 /// @param pathway_size Integer. The size of the pathways to test.
@@ -266,6 +309,8 @@ fn rs_calc_gsea_stat_cumulative_batch(
 /// }
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 #[allow(clippy::too_many_arguments)]
 fn rs_calc_multi_level(
@@ -315,6 +360,9 @@ fn rs_calc_multi_level(
 
 /// Calculates the simple and multi error for fgsea multi level
 ///
+/// @description
+/// `r lifecycle::badge("experimental")`
+///
 /// @param n_more_extreme Integer vector. The number of times the ES was larger than the
 /// permutations.
 /// @param nperm Integer. Number of permutations.
@@ -327,6 +375,8 @@ fn rs_calc_multi_level(
 /// }
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_simple_and_multi_err(n_more_extreme: &[i32], nperm: usize, sample_size: usize) -> List {
     // Conversion needed
@@ -336,15 +386,4 @@ fn rs_simple_and_multi_err(n_more_extreme: &[i32], nperm: usize, sample_size: us
         calc_simple_and_multi_error(&n_more_extreme, nperm, sample_size);
 
     list!(simple_err = res.0, multi_err = res.1)
-}
-
-extendr_module! {
-    mod r_gsea;
-    fn rs_calc_es;
-    fn rs_get_gs_indices;
-    fn rs_calc_gsea_stats;
-    fn rs_calc_gsea_stat_cumulative_batch;
-    fn rs_calc_gsea_stat_traditional_batch;
-    fn rs_calc_multi_level;
-    fn rs_simple_and_multi_err;
 }

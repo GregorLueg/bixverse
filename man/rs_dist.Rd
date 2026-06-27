@@ -17,6 +17,7 @@ column distances.}
 The calculated distance matrix
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 This function allows to calculate pairwise between all columns the specified
 distance metric.
 }

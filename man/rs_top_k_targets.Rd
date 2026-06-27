@@ -20,5 +20,6 @@ top k genes per TF are used. Both versions were used in the original paper.}
 A list with three vectors: tf, gene, importance
 }
 \description{
-SCENIC: Select the Top TF <> Gene pairs
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 }
+\keyword{internal}

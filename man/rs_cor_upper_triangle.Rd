@@ -2,7 +2,7 @@
 % Please edit documentation in R/extendr-wrappers.R
 \name{rs_cor_upper_triangle}
 \alias{rs_cor_upper_triangle}
-\title{Calculate the column wise correlations.}
+\title{Calculate the column wise correlations and returns the upper triangle}
 \usage{
 rs_cor_upper_triangle(x, spearman, shift)
 }
@@ -12,16 +12,16 @@ rs_cor_upper_triangle(x, spearman, shift)
 \item{spearman}{Shall the Spearman correlation be calculated instead of
 Pearson.}
 
-\item{shift}{Shall a shift be applied to the matrix. 0 = the diagonal will
-be included. 1 = the diagonal will not be included.}
+\item{shift}{Boolean. If you applied a shift, i.e. included the diagonal
+values. If \code{true}, assumes the diagonal values are \code{1}, otherwise derives
+them from the data.}
 }
 \value{
 The upper triangle of the correlation matrix iterating through the
 rows, shifted by one (the diagonal will not be returned).
 }
 \description{
-Calculates the correlation matrix of the columns. This function
-will return the upper triangle. WARNING! Incorrect use can cause kernel
-crashes. Wrapper around the Rust functions with type checks are provided in
-the package.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+Calculates the correlation matrix of the columns, but returns the upper
+triangle only as a flat vector.
 }

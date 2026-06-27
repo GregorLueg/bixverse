@@ -5,13 +5,15 @@
 \alias{get_feature_mat.ScDblFinderRes}
 \title{Get the feature matrix used for the classifier}
 \usage{
-get_feature_mat(x)
+get_feature_mat(x, ...)
 
 \method{get_feature_mat}{ScDblFinderRes}(x, ...)
 }
 \arguments{
 \item{x}{An object to get the feature matrix from. This will only include
 the values of the observed cells.}
+
+\item{...}{Additional parameters to forward to the method.}
 }
 \description{
 Get the feature matrix used for the classifier

@@ -7,13 +7,9 @@ use thousands::Separable;
 
 use bixverse_rs::prelude::*;
 use bixverse_rs::single_cell::sc_data::{
-    bin_merge_io::*, data_io::*, h5ad_io::*, h5ad_multifile_io::*, mtx_io::*, mtx_multifile_io::*,
-    r_obj_io::*,
+    bin_merge_io::*, data_io::*, h5_10x_io::*, h5_10x_multifile_io::*, h5ad_io::*,
+    h5ad_multifile_io::*, mtx_io::*, mtx_multifile_io::*, r_obj_io::*,
 };
-
-// Extendr unfortunately cannot do Roxygen2 manipulation of R6 type
-// classes. This will have to be done manually in R... Documentation
-// still here to make it easier.
 
 /////////////
 // extendR //
@@ -103,6 +99,17 @@ impl AssayData {
 /////////////
 
 /// Retrieve cell data for a given assay type
+///
+/// ### Params
+///
+/// * `indices` - The indices for which cells to return the data
+/// * `data_raw` - The raw counts.
+/// * `data_norm` - The normalised counts.
+/// * `assay_type` - Which assay type to return, see [AssayType]
+///
+/// ### Returns
+///
+/// A tuple of indices and the assay data.
 fn get_cell_data(
     indices: &[u32],
     data_raw: &RawCounts,
@@ -129,6 +136,17 @@ fn get_cell_data(
 }
 
 /// Retrieve gene data for a given assay type
+///
+/// ### Params
+///
+/// * `indices` - The indices for which genes to return the data
+/// * `data_raw` - The raw counts.
+/// * `data_norm` - The normalised counts.
+/// * `assay_type` - Which assay type to return, see [AssayType]
+///
+/// ### Returns
+///
+/// A tuple of indices and the assay data.
 fn get_gene_data(
     indices: &[u32],
     data_raw: &RawCounts,
@@ -155,6 +173,14 @@ fn get_gene_data(
 }
 
 /// Parse a count type string into an `AssayType`
+///
+/// ### Params
+///
+/// * `s` - String to parse. One of `"raw"` or `"norm"`.
+///
+/// ### Returns
+///
+/// The optional [AssayType]
 fn parse_count_type(s: &str) -> Option<AssayType> {
     match s.to_lowercase().as_str() {
         "raw" => Some(AssayType::Raw),
@@ -170,6 +196,7 @@ fn parse_count_type(s: &str) -> Option<AssayType> {
 /// Single cell count data handler
 ///
 /// @description
+/// `r lifecycle::badge("experimental")`
 /// A class for handling single cell count data stored on disk in two
 /// complementary binary representations: a CSR-like layout (`f_path_cells`)
 /// for fast cell-wise access and a CSC-like layout (`f_path_genes`) for fast
@@ -334,11 +361,15 @@ impl SingleCellCountData {
     /// Number of genes in the h5ad file.
     /// @param qc_params (`list`)\cr
     /// Quality control parameters parseable into `MinCellQuality`.
+    /// @param slot (`character`)\cr
+    /// Where to find the raw counts. One of `"X"` or `"raw.X"` (for CellXGene
+    /// data).
     /// @param verbose (`logical`)\cr
     /// Controls verbosity of the function.
     ///
     /// @return A list with `cell_indices`, `gene_indices`, `lib_size` and
     /// `nnz`.
+    #[allow(clippy::too_many_arguments)]
     pub fn h5ad_to_file(
         &mut self,
         cs_type: String,
@@ -346,9 +377,18 @@ impl SingleCellCountData {
         no_cells: usize,
         no_genes: usize,
         qc_params: List,
+        slot: String,
         verbose: bool,
     ) -> extendr_api::Result<List> {
         let qc_params = MinCellQuality::from_r_list(qc_params)?;
+
+        let raw_slot = parse_raw_slot(&slot).unwrap_or_else(|| {
+            println!(
+                "The provided string ({:?}) could not be matched. Defaulting to X",
+                slot
+            );
+            RawDataSlot::default()
+        });
 
         let (no_cells, no_genes, cell_qc) = write_h5_counts(
             &h5_path,
@@ -357,6 +397,7 @@ impl SingleCellCountData {
             no_cells,
             no_genes,
             qc_params,
+            raw_slot,
             verbose,
         )
         .to_extendr()?;
@@ -453,11 +494,15 @@ impl SingleCellCountData {
     /// Number of genes in the h5 file.
     /// @param qc_params (`list`)\cr
     /// Quality control parameters parseable into `MinCellQuality`.
+    /// @param slot (`character`)\cr
+    /// Where to find the raw counts. One of `"X"` or `"raw.X"` (for CellXGene
+    /// data).
     /// @param verbose (`logical`)\cr
     /// Controls verbosity of the function.
     ///
     /// @return A list with `cell_indices`, `gene_indices`, `lib_size` and
     /// `nnz`.
+    #[allow(clippy::too_many_arguments)]
     pub fn h5ad_to_file_streaming(
         &mut self,
         cs_type: String,
@@ -465,9 +510,18 @@ impl SingleCellCountData {
         no_cells: usize,
         no_genes: usize,
         qc_params: List,
+        slot: String,
         verbose: bool,
     ) -> extendr_api::Result<List> {
         let qc_params = MinCellQuality::from_r_list(qc_params)?;
+
+        let raw_slot = parse_raw_slot(&slot).unwrap_or_else(|| {
+            println!(
+                "The provided string ({:?}) could not be matched. Defaulting to X",
+                slot
+            );
+            RawDataSlot::default()
+        });
 
         let (no_cells, no_genes, cell_qc) = stream_h5_counts(
             &h5_path,
@@ -476,6 +530,7 @@ impl SingleCellCountData {
             no_cells,
             no_genes,
             qc_params,
+            raw_slot,
             verbose,
         )
         .to_extendr()?;
@@ -520,7 +575,7 @@ impl SingleCellCountData {
         let tasks: Vec<H5adFileTask> = file_tasks
             .into_iter()
             .map(|(_, robj)| {
-                let inner_list = List::try_from(robj).expect("Each file_task must be a list");
+                let inner_list = List::try_from(robj)?;
                 H5adFileTask::from_r_list(inner_list)
             })
             .collect::<Result<Vec<_>, _>>()?;
@@ -674,12 +729,161 @@ impl SingleCellCountData {
         let tasks: Vec<MtxFileTask> = file_tasks
             .into_iter()
             .map(|(_, robj)| {
-                let inner = List::try_from(robj).expect("Each file_task must be a list");
+                let inner = List::try_from(robj)?;
                 MtxFileTask::from_r_list(inner)
             })
             .collect::<Result<Vec<_>, _>>()?;
 
         let result = multi_mtx_to_file(
+            &tasks,
+            &self.f_path_cells,
+            universe_size as usize,
+            &qc,
+            verbose,
+        )
+        .to_extendr()?;
+
+        self.n_cells = result.total_cells;
+        self.n_genes = result.total_genes;
+
+        let per_file: List = result
+            .per_file
+            .into_iter()
+            .map(|f| {
+                list!(
+                    exp_id = f.exp_id,
+                    cell_indices = f.cells_to_keep,
+                    lib_size = f.lib_size,
+                    nnz = f.nnz
+                )
+            })
+            .collect::<List>();
+
+        Ok(list!(
+            global_gene_indices = result.global_gene_indices,
+            total_cells = result.total_cells,
+            total_genes = result.total_genes,
+            per_file = per_file
+        ))
+    }
+
+    /////////////////////////
+    // From h5 10x outputs //
+    /////////////////////////
+
+    /// Write a 10x CellRanger h5 file to the cells binary file using streaming
+    ///
+    /// @description
+    /// Ingests the gene-expression modality from a CellRanger v2/v3 h5 file.
+    /// Other modalities (e.g. Antibody Capture) are filtered out via
+    /// `feature_type`.
+    ///
+    /// @param h5_path (`character`)\cr
+    /// Path to the 10x h5 file.
+    /// @param version (`character`)\cr
+    /// One of `"auto"`, `"v2"` or `"v3"`. `"auto"` detects the layout from the
+    /// file.
+    /// @param no_cells (`integer`)\cr
+    /// Number of cells (columns) in the file.
+    /// @param no_genes (`integer`)\cr
+    /// Number of features (rows), including all modalities.
+    /// @param qc_params (`list`)\cr
+    /// Quality control parameters parseable into `MinCellQuality`.
+    /// @param feature_type (`character` or `NULL`)\cr
+    /// Target modality for v3. Defaults to `"Gene Expression"` when `NULL`.
+    /// @param verbose (`logical`)\cr
+    /// Controls verbosity of the function.
+    ///
+    /// @return A list with `cell_indices`, `gene_indices`, `lib_size` and
+    /// `nnz`.
+    #[allow(clippy::too_many_arguments)]
+    pub fn tenx_h5_to_file_streaming(
+        &mut self,
+        h5_path: String,
+        version: String,
+        no_cells: usize,
+        no_genes: usize,
+        qc_params: List,
+        feature_type: Option<String>,
+        verbose: bool,
+    ) -> extendr_api::Result<List> {
+        let qc_params = MinCellQuality::from_r_list(qc_params)?;
+
+        let version = match version.to_lowercase().as_str() {
+            "auto" => None,
+            other => match parse_tenx_version(other) {
+                Some(v) => Some(v),
+                None => {
+                    println!(
+                            "The provided version ({:?}) could not be matched. Falling back to auto-detection.",
+                            version
+                        );
+                    None
+                }
+            },
+        };
+
+        let (no_cells, no_genes, cell_qc) = stream_h5_tenx_counts(
+            &h5_path,
+            &self.f_path_cells,
+            version,
+            no_cells,
+            no_genes,
+            qc_params,
+            feature_type.as_deref(),
+            verbose,
+        )
+        .to_extendr()?;
+
+        self.n_cells = no_cells;
+        self.n_genes = no_genes;
+
+        Ok(list!(
+            cell_indices = cell_qc.cell_indices,
+            gene_indices = cell_qc.gene_indices,
+            lib_size = cell_qc.lib_size,
+            nnz = cell_qc.nnz
+        ))
+    }
+
+    /// Load multiple 10x CellRanger h5 files into a single binary
+    ///
+    /// @param file_tasks (`list`)\cr
+    /// A list of lists, each produced by the R prescan function. Each inner
+    /// list must contain `exp_id`, `h5_path`, `version` (`"v2"` or `"v3"`),
+    /// `no_cells`, `no_genes`, `gene_local_to_universe` (integer vector, `NA`
+    /// for unmapped / non-gene features) and `feature_type` (optional string,
+    /// defaults to `"Gene Expression"`).
+    ///
+    /// @param universe_size (`integer`)\cr
+    /// Total number of genes in the universe.
+    /// @param qc_params (`list`)\cr
+    /// Quality control parameters (`min_unique_genes`, `min_lib_size`,
+    /// `min_cells`, `target_size`).
+    /// @param verbose (`logical`)\cr
+    /// Controls verbosity.
+    ///
+    /// @return A list with `global_gene_indices`, `total_cells`, `total_genes`
+    /// and `per_file` (a list of lists with `exp_id`, `cell_indices`,
+    /// `lib_size`, `nnz`).
+    pub fn multi_tenx_h5_to_file(
+        &mut self,
+        file_tasks: List,
+        universe_size: i32,
+        qc_params: List,
+        verbose: bool,
+    ) -> Result<List, extendr_api::Error> {
+        let qc = MinCellQuality::from_r_list(qc_params)?;
+
+        let tasks: Vec<TenxFileTask> = file_tasks
+            .into_iter()
+            .map(|(_, robj)| {
+                let inner = List::try_from(robj).expect("Each file_task must be a list");
+                TenxFileTask::from_r_list(inner)
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+
+        let result = multi_10x_h5_to_file(
             &tasks,
             &self.f_path_cells,
             universe_size as usize,
@@ -738,7 +942,9 @@ impl SingleCellCountData {
         let mut data: Vec<AssayData> = Vec::new();
         let mut indices: Vec<Vec<i32>> = Vec::new();
         let mut indptr: Vec<usize> = Vec::new();
-        let assay_type = parse_count_type(assay).unwrap();
+        let assay_type = parse_count_type(assay).ok_or_else(|| {
+            extendr_api::Error::Other(format!("Invalid assay '{assay}'. Use 'raw' or 'norm'."))
+        })?;
 
         if cell_based {
             let reader = ParallelSparseReader::new(&self.f_path_cells).to_extendr()?;
@@ -813,7 +1019,9 @@ impl SingleCellCountData {
         assay: &str,
     ) -> Result<List, extendr_api::Error> {
         let reader = ParallelSparseReader::new(&self.f_path_cells).to_extendr()?;
-        let assay_type = parse_count_type(assay).unwrap();
+        let assay_type = parse_count_type(assay).ok_or_else(|| {
+            extendr_api::Error::Other(format!("Invalid assay '{assay}'. Use 'raw' or 'norm'."))
+        })?;
 
         let indices: Vec<usize> = indices.iter().map(|x| (*x - 1) as usize).collect();
 
@@ -885,16 +1093,16 @@ impl SingleCellCountData {
         let mut data: Vec<Vec<u32>> = Vec::new();
         let mut data_2: Vec<Vec<F16>> = Vec::new();
         let mut col_idx: Vec<Vec<u32>> = Vec::new();
-        let mut row_ptr: Vec<usize> = Vec::new();
+        let mut row_ptr: Vec<u32> = Vec::new();
 
-        let mut current_row_ptr = 0_usize;
+        let mut current_row_ptr = 0_u32;
         row_ptr.push(current_row_ptr);
 
         for cell in all_cells {
             let data_i: Vec<u32> = cell.data_raw.iter().collect();
             let data_norm_i = cell.data_norm;
 
-            let len_data_i = data_i.len();
+            let len_data_i = data_i.len() as u32;
             current_row_ptr += len_data_i;
             data.push(data_i);
             data_2.push(data_norm_i);
@@ -905,7 +1113,6 @@ impl SingleCellCountData {
         let data = flatten_vector(data);
         let data_2 = flatten_vector(data_2);
         let col_idx = flatten_vector(col_idx);
-        let col_idx = col_idx.iter().map(|x| *x as usize).collect::<Vec<usize>>();
 
         let sparse_data = CompressedSparseData2::new_csr(
             &data,
@@ -922,14 +1129,14 @@ impl SingleCellCountData {
             .to_extendr()?;
 
         for i in 0..no_genes {
-            let start_i = sparse_data.indptr[i];
-            let end_i = sparse_data.indptr[i + 1];
+            let start_i = sparse_data.indptr[i] as usize;
+            let end_i = sparse_data.indptr[i + 1] as usize;
 
             let raw_slice = &sparse_data.data[start_i..end_i];
             let chunk_i = CscGeneChunk::from_conversion(
                 RawCounts::from_u32_auto(raw_slice),
                 &data_2[start_i..end_i],
-                &sparse_data.indices[start_i..end_i],
+                &sparse_data.indices[start_i..end_i].index_cast(),
                 i,
                 true,
             );
@@ -1207,7 +1414,7 @@ impl SingleCellCountData {
                         gene_id,
                         true,
                     );
-                    writer.write_gene_chunk(chunk).unwrap();
+                    writer.write_gene_chunk(chunk).to_extendr()?;
                 } else {
                     let empty_chunk = CscGeneChunk::from_conversion(
                         RawCounts::U16(Vec::new()),
@@ -1262,7 +1469,9 @@ impl SingleCellCountData {
     ) -> Result<List, extendr_api::Error> {
         let reader = ParallelSparseReader::new(&self.f_path_genes).to_extendr()?;
 
-        let assay_type = parse_count_type(assay).unwrap();
+        let assay_type = parse_count_type(assay).ok_or_else(|| {
+            extendr_api::Error::Other(format!("Invalid assay '{assay}'. Use 'raw' or 'norm'."))
+        })?;
 
         let no_cells = reader.get_header().total_cells;
 

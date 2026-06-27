@@ -34,7 +34,7 @@ SingleCellDuckDBBase <- R6::R6Class(
       checkmate::qassert(db_name, "S1")
 
       # define the path
-      private$db_path = file.path(db_dir, db_name)
+      private$db_path <- file.path(db_dir, db_name)
     },
 
     ###########
@@ -416,7 +416,11 @@ SingleCellDuckDBBase <- R6::R6Class(
       cols_to_exclude <- intersect(existing_cols, new_cols)
 
       exclude_clause <- if (length(cols_to_exclude) > 0) {
-        paste0(" EXCLUDE(", paste(cols_to_exclude, collapse = ", "), ")")
+        paste0(
+          " EXCLUDE(",
+          paste(paste0('"', cols_to_exclude, '"'), collapse = ", "),
+          ")"
+        )
       } else {
         ""
       }
@@ -470,7 +474,11 @@ SingleCellDuckDBBase <- R6::R6Class(
       cols_to_exclude <- intersect(existing_cols, new_cols)
 
       exclude_clause <- if (length(cols_to_exclude) > 0) {
-        paste0(" EXCLUDE(", paste(cols_to_exclude, collapse = ", "), ")")
+        paste0(
+          " EXCLUDE(",
+          paste(paste0('"', cols_to_exclude, '"'), collapse = ", "),
+          ")"
+        )
       } else {
         ""
       }
@@ -550,7 +558,11 @@ SingleCellDuckDBBase <- R6::R6Class(
       cols_to_exclude <- intersect(existing_cols, new_cols)
 
       exclude_clause <- if (length(cols_to_exclude) > 0) {
-        paste0(" EXCLUDE(", paste(cols_to_exclude, collapse = ", "), ")")
+        paste0(
+          " EXCLUDE(",
+          paste(paste0('"', cols_to_exclude, '"'), collapse = ", "),
+          ")"
+        )
       } else {
         ""
       }
@@ -1180,12 +1192,13 @@ SingleCellDuckDB <- R6::R6Class(
         obs_parts[[i]] <- obs_dt
       }
 
-      shared_cols <- Reduce(intersect, lapply(obs_parts, names))
-      obs_parts <- lapply(obs_parts, function(dt) {
-        dt[, .SD, .SDcols = shared_cols]
-      })
-
-      obs_combined <- data.table::rbindlist(obs_parts, use.names = TRUE)
+      # keep the union of all obs columns; columns absent from a given file are
+      # NA-filled rather than silently dropped (cell_id / exp_id always present)
+      obs_combined <- data.table::rbindlist(
+        obs_parts,
+        use.names = TRUE,
+        fill = TRUE
+      )
       obs_combined[, cell_idx := .I]
       data.table::setcolorder(
         obs_combined,
@@ -1210,30 +1223,32 @@ SingleCellDuckDB <- R6::R6Class(
     },
 
     #' @description
-    #' Populate the var table from an h5ad file, filtered and reordered to
-    #' match a target gene set.
+    #' Populate a minimal var table for multi-file ingestion: gene_idx and
+    #' gene_id only. Per-file var annotations are intentionally not merged;
+    #' downstream annotation is the caller's responsibility (e.g. via an
+    #' external reference and a future enrich_var()).
     #'
-    #' @param h5_path String. Path to the reference h5ad file.
-    #' @param final_gene_names Character vector. Gene names in the desired
-    #'   final order.
+    #' @param final_gene_names Character vector. Gene ids in the final order
+    #' (matches the Rust binary gene axis).
     #'
-    #' @return Invisible self. Populates the var table in DuckDB.
-    populate_vars_from_h5ad_reordered = function(h5_path, final_gene_names) {
-      checkmate::assertFileExists(h5_path)
+    #' @return Invisible self.
+    populate_var_minimal = function(final_gene_names) {
       checkmate::assertCharacter(final_gene_names, min.len = 1L)
 
-      self$populate_vars_from_h5ad(h5_path = h5_path, filter = NULL)
-
-      var_dt <- self$get_vars_table()
-      var_dt <- var_dt[match(final_gene_names, gene_id)]
-      var_dt[, gene_idx := .I]
+      var_dt <- data.table::data.table(
+        gene_idx = seq_along(final_gene_names),
+        gene_id = final_gene_names
+      )
 
       con <- private$connect_db()
-      on.exit({
-        if (exists("con") && !is.null(con)) {
-          tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
-        }
-      })
+      on.exit(
+        {
+          if (exists("con") && !is.null(con)) {
+            tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
+          }
+        },
+        add = TRUE
+      )
 
       DBI::dbWriteTable(con, "var", var_dt, overwrite = TRUE)
 
@@ -1605,6 +1620,186 @@ SingleCellDuckDB <- R6::R6Class(
       invisible(self)
     },
 
+    ##################
+    # Readers 10x h5 #
+    ##################
+
+    #' @description
+    #' Populate the obs table from the barcodes in a 10x CellRanger h5 file.
+    #'
+    #' @param h5_path String. Path to the 10x h5 file.
+    #' @param version String. One of `"v2"` or `"v3"`.
+    #' @param filter Optional integer. 1-indexed positions of cells to keep.
+    #'
+    #' @return Invisible self. Populates the obs table in DuckDB.
+    populate_obs_from_tenx_h5 = function(h5_path, version, filter = NULL) {
+      checkmate::assertFileExists(h5_path)
+      checkmate::assertChoice(version, c("v2", "v3"))
+      checkmate::qassert(filter, c("I+", "0"))
+
+      on.exit(
+        tryCatch(rhdf5::h5closeAll(), error = function(e) invisible()),
+        add = TRUE
+      )
+
+      barcodes_path <- if (version == "v3") "matrix/barcodes" else "barcodes"
+      barcodes <- as.character(rhdf5::h5read(h5_path, barcodes_path))
+
+      obs_dt <- data.table::data.table(cell_id = barcodes)
+
+      if (!is.null(filter)) {
+        obs_dt <- obs_dt[filter]
+      }
+      obs_dt[, cell_idx := .I]
+      data.table::setcolorder(obs_dt, c("cell_idx", "cell_id"))
+
+      con <- private$connect_db()
+      on.exit(
+        {
+          if (exists("con") && !is.null(con)) {
+            tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
+          }
+        },
+        add = TRUE
+      )
+
+      DBI::dbWriteTable(con, "obs", obs_dt, overwrite = TRUE)
+
+      invisible(self)
+    },
+
+    #' @description
+    #' Populate the var table from the features in a 10x CellRanger h5 file.
+    #'
+    #' Features are read in full file order (all modalities); `filter` selects
+    #' the gene-expression features that survived QC.
+    #'
+    #' @param h5_path String. Path to the 10x h5 file.
+    #' @param version String. One of `"v2"` or `"v3"`.
+    #' @param filter Optional integer. 1-indexed positions of features to keep.
+    #'
+    #' @return Invisible self. Populates the var table in DuckDB.
+    populate_vars_from_tenx_h5 = function(h5_path, version, filter = NULL) {
+      checkmate::assertFileExists(h5_path)
+      checkmate::assertChoice(version, c("v2", "v3"))
+      checkmate::qassert(filter, c("I+", "0"))
+
+      on.exit(
+        tryCatch(rhdf5::h5closeAll(), error = function(e) invisible()),
+        add = TRUE
+      )
+
+      var_dt <- if (version == "v3") {
+        data.table::data.table(
+          gene_id = as.character(rhdf5::h5read(h5_path, "matrix/features/id")),
+          gene_name = as.character(rhdf5::h5read(
+            h5_path,
+            "matrix/features/name"
+          )),
+          feature_type = as.character(
+            rhdf5::h5read(h5_path, "matrix/features/feature_type")
+          )
+        )
+      } else {
+        data.table::data.table(
+          gene_id = as.character(rhdf5::h5read(h5_path, "genes")),
+          gene_name = as.character(rhdf5::h5read(h5_path, "gene_names"))
+        )
+      }
+
+      if (!is.null(filter)) {
+        var_dt <- var_dt[filter]
+      }
+      var_dt[, gene_idx := .I]
+      data.table::setcolorder(
+        var_dt,
+        c(
+          "gene_idx",
+          "gene_id",
+          setdiff(names(var_dt), c("gene_idx", "gene_id"))
+        )
+      )
+
+      con <- private$connect_db()
+      on.exit(
+        {
+          if (exists("con") && !is.null(con)) {
+            tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
+          }
+        },
+        add = TRUE
+      )
+
+      DBI::dbWriteTable(con, "var", var_dt, overwrite = TRUE)
+
+      invisible(self)
+    },
+
+    #' @description
+    #' Populate the obs table from multiple 10x CellRanger h5 files.
+    #'
+    #' Reads each input's barcodes, applies the cell filter, prefixes
+    #' `cell_id` with `exp_id`, and rbindlists.
+    #'
+    #' @param per_file_info List of lists; each must contain `h5_path`
+    #' (string), `version` (`"v2"` or `"v3"`), `exp_id` (string) and
+    #' `cell_filter` (1-indexed integer vector).
+    #'
+    #' @return Invisible self.
+    populate_obs_from_multi_tenx_h5 = function(per_file_info) {
+      checkmate::assertList(per_file_info, min.len = 2L)
+
+      on.exit(
+        tryCatch(rhdf5::h5closeAll(), error = function(e) invisible()),
+        add = TRUE
+      )
+
+      obs_parts <- vector("list", length(per_file_info))
+
+      for (i in seq_along(per_file_info)) {
+        fi <- per_file_info[[i]]
+        checkmate::assertFileExists(fi$h5_path)
+        checkmate::assertChoice(fi$version, c("v2", "v3"))
+        checkmate::qassert(fi$exp_id, "S1")
+        checkmate::qassert(fi$cell_filter, "I+")
+
+        barcodes_path <- if (fi$version == "v3") {
+          "matrix/barcodes"
+        } else {
+          "barcodes"
+        }
+        barcodes <- as.character(rhdf5::h5read(fi$h5_path, barcodes_path))
+
+        dt <- data.table::data.table(cell_id = barcodes)
+        dt <- dt[fi$cell_filter]
+        dt[, cell_id := paste(fi$exp_id, cell_id, sep = "_")]
+        dt[, exp_id := fi$exp_id]
+
+        obs_parts[[i]] <- dt
+      }
+
+      combined <- data.table::rbindlist(obs_parts, use.names = TRUE)
+      combined[, cell_idx := .I]
+      data.table::setcolorder(
+        combined,
+        c("cell_idx", "cell_id", "exp_id")
+      )
+
+      con <- private$connect_db()
+      on.exit(
+        {
+          if (exists("con") && !is.null(con)) {
+            tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
+          }
+        },
+        add = TRUE
+      )
+
+      DBI::dbWriteTable(con, "obs", combined, overwrite = TRUE)
+
+      invisible(self)
+    },
+
     #########################
     # From multiple DuckDBs #
     #########################
@@ -1666,12 +1861,13 @@ SingleCellDuckDB <- R6::R6Class(
         obs_parts[[i]] <- obs_dt
       }
 
-      shared_cols <- Reduce(intersect, lapply(obs_parts, names))
-      obs_parts <- lapply(obs_parts, function(dt) {
-        dt[, .SD, .SDcols = shared_cols]
-      })
-
-      obs_combined <- data.table::rbindlist(obs_parts, use.names = TRUE)
+      # keep the union of all obs columns; columns absent from a given file are
+      # NA-filled rather than silently dropped (cell_id / exp_id always present)
+      obs_combined <- data.table::rbindlist(
+        obs_parts,
+        use.names = TRUE,
+        fill = TRUE
+      )
       obs_combined[, cell_idx := .I]
       data.table::setcolorder(
         obs_combined,
@@ -1726,6 +1922,20 @@ SingleCellDuckDB <- R6::R6Class(
       )
 
       var_dt <- var_dt[match(final_gene_names, gene_id)]
+      # gene_universe = "union" can include genes absent from the var reference
+      # source; pin gene_id to the canonical universe id so the var <-> counts
+      # mapping is never NA-keyed (counts for those genes are ingested correctly)
+      n_missing_meta <- sum(is.na(var_dt$gene_id))
+      if (n_missing_meta > 0L) {
+        warning(sprintf(
+          paste(
+            "%d gene(s) absent from the var reference source; metadata limited",
+            "to gene_id (gene_universe = 'union')."
+          ),
+          n_missing_meta
+        ))
+      }
+      var_dt[, gene_id := final_gene_names]
 
       if ("gene_idx" %in% names(var_dt)) {
         var_dt[, gene_idx := NULL]
@@ -1826,12 +2036,13 @@ SingleCellDuckDB <- R6::R6Class(
         obs_parts[[i]] <- dt
       }
 
-      shared_cols <- Reduce(intersect, lapply(obs_parts, names))
-      obs_parts <- lapply(obs_parts, function(d) {
-        d[, .SD, .SDcols = shared_cols]
-      })
-
-      combined <- data.table::rbindlist(obs_parts, use.names = TRUE)
+      # keep the union of all obs columns; columns absent from a given file are
+      # NA-filled rather than silently dropped (cell_id / exp_id always present)
+      combined <- data.table::rbindlist(
+        obs_parts,
+        use.names = TRUE,
+        fill = TRUE
+      )
       combined[, cell_idx := .I]
       data.table::setcolorder(
         combined,
@@ -1844,70 +2055,6 @@ SingleCellDuckDB <- R6::R6Class(
       )
 
       DBI::dbWriteTable(con, "obs", combined, overwrite = TRUE)
-
-      invisible(self)
-    },
-
-    #' @description
-    #' Populate the var table from a single plain-text features file,
-    #' filtered and reordered to match a target gene set.
-    #'
-    #' @param f_path String. Path to one input's features file.
-    #' @param has_hdr Boolean.
-    #' @param final_gene_names Character vector. Gene IDs in the desired final
-    #' order.
-    #'
-    #' @return Invisible self.
-    populate_vars_from_plain_text_reordered = function(
-      f_path,
-      has_hdr,
-      final_gene_names
-    ) {
-      checkmate::assertFileExists(f_path)
-      checkmate::qassert(has_hdr, "B1")
-      checkmate::assertCharacter(final_gene_names, min.len = 1L)
-
-      delim <- if (grepl("\\.tsv(\\.gz)?$", f_path, ignore.case = TRUE)) {
-        "\t"
-      } else {
-        ","
-      }
-
-      dt <- data.table::fread(
-        file = f_path,
-        sep = delim,
-        header = has_hdr
-      )
-
-      if (has_hdr) {
-        data.table::setnames(dt, to_snake_case(names(dt)))
-        data.table::setnames(dt, names(dt)[1L], "gene_id")
-      } else {
-        data.table::setnames(dt, names(dt)[1L], "gene_id")
-      }
-
-      dt <- dt[match(final_gene_names, gene_id)]
-
-      if ("gene_idx" %in% names(dt)) {
-        dt[, gene_idx := NULL]
-      }
-      dt[, gene_idx := .I]
-      data.table::setcolorder(
-        dt,
-        c("gene_idx", "gene_id", setdiff(names(dt), c("gene_idx", "gene_id")))
-      )
-
-      con <- private$connect_db()
-      on.exit(
-        {
-          if (exists("con") && !is.null(con)) {
-            tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
-          }
-        },
-        add = TRUE
-      )
-
-      DBI::dbWriteTable(con, "var", dt, overwrite = TRUE)
 
       invisible(self)
     }

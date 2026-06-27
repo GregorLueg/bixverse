@@ -14,5 +14,5 @@ calculate the harmonic sum}
 Returns the harmonic sum according to the OT calculation.
 }
 \description{
-Calculate the OT harmonic sum
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 }

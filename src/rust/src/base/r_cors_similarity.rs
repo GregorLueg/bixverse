@@ -37,9 +37,9 @@ extendr_module! {
 
 /// Calculate the column-wise co-variance.
 ///
-/// @description Calculates the co-variance of the columns.
-/// WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust
-/// functions with type checks are provided in the package.
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Calculates the pairwise co-variance of the columns.
 ///
 /// @param x R matrix with doubles.
 ///
@@ -56,9 +56,9 @@ fn rs_covariance(x: RMatrix<f64>) -> RArray<f64, 2> {
 
 /// Calculate the column wise correlations.
 ///
-/// @description Calculates the correlation matrix of the columns.
-/// WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust
-/// functions with type checks are provided in the package.
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Calculates the pairwise correlations of the columns.
 ///
 /// @param x R matrix with doubles.
 /// @param spearman Shall the Spearman correlation be calculated instead of
@@ -78,7 +78,9 @@ fn rs_cor(x: RMatrix<f64>, spearman: bool) -> RArray<f64, 2> {
 
 /// Calculate the column wise cosine similarities
 ///
-/// @description Calculates the cosyne similarity matrix of the columns.
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Calculates the pairwise cosine similarity matrix of the columns.
 ///
 /// @param x R matrix with doubles.
 ///
@@ -96,8 +98,10 @@ fn rs_cos(x: RMatrix<f64>) -> RArray<f64, 2> {
 
 /// Calculate the column wise correlations.
 ///
-/// @description Calculates the correlation between the columns of two matrices.
-/// The number of rows need to be the same!
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Calculates the correlation between the columns of two matrices. The number
+/// of rows need to be the same!
 ///
 /// @param x R matrix with doubles.
 /// @param y R matrix with doubles.
@@ -119,8 +123,9 @@ fn rs_cor2(x: RMatrix<f64>, y: RMatrix<f64>, spearman: bool) -> RArray<f64, 2> {
 
 /// Calculates the correlation matrix from the co-variance matrix
 ///
-/// @description Calculates the correlation matrix from a co-variance
-/// matrix
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Calculates the correlation matrix from a co-variance matrix.
 ///
 /// @param x R matrix with doubles that is the co-variance matrix
 ///
@@ -138,8 +143,9 @@ fn rs_cov2cor(x: RMatrix<f64>) -> RArray<f64, 2> {
 
 /// Calculates the mutual information matrix
 ///
-/// @description Calculates the mutual information across all columns in the
-/// data.
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Calculates the pairwise mutual information across all columns in the data.
 ///
 /// @param x R matrix with doubles for which to calculate the mutual information
 /// @param n_bins Optional integer. Number of bins to use. If `NULL` is provided
@@ -169,9 +175,11 @@ fn rs_mutual_info(
 
 /// Calculates the point wise mutual information
 ///
-/// @description Calculates the pointwise mutual information (can be also
-/// normalised) across all columns of the data. This can be used to identify
-/// (dis)similar samples based on Boolean characteristics.
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Calculates the pointwise mutual information (can be also normalised) across
+/// all columns of the data. This can be used to identify (dis)similar samples
+/// based on Boolean characteristics.
 ///
 /// @param x Logical matrix. The columns represent features and the rows
 /// represent samples
@@ -193,6 +201,7 @@ fn rs_pointwise_mutual_info(x: RMatrix<Rbool>, normalise: bool) -> RArray<f64, 2
 /// Calculate the pairwise column distance in a matrix
 ///
 /// @description
+/// `r lifecycle::badge("experimental")`
 /// This function allows to calculate pairwise between all columns the specified
 /// distance metric.
 ///
@@ -221,25 +230,27 @@ fn rs_dist(x: RMatrix<f64>, distance_type: String) -> extendr_api::Result<RArray
     Ok(faer_to_r_matrix(res.as_ref()))
 }
 
-/// Calculate the column wise correlations.
+/// Calculate the column wise correlations and returns the upper triangle
 ///
-/// @description Calculates the correlation matrix of the columns. This function
-/// will return the upper triangle. WARNING! Incorrect use can cause kernel
-/// crashes. Wrapper around the Rust functions with type checks are provided in
-/// the package.
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Calculates the correlation matrix of the columns, but returns the upper
+/// triangle only as a flat vector.
 ///
 /// @param x R matrix with doubles.
 /// @param spearman Shall the Spearman correlation be calculated instead of
 /// Pearson.
-/// @param shift Shall a shift be applied to the matrix. 0 = the diagonal will
-/// be included. 1 = the diagonal will not be included.
+/// @param shift Boolean. If you applied a shift, i.e. included the diagonal
+/// values. If `true`, assumes the diagonal values are `1`, otherwise derives
+/// them from the data.
 ///
 /// @returns The upper triangle of the correlation matrix iterating through the
 /// rows, shifted by one (the diagonal will not be returned).
 ///
 /// @export
 #[extendr]
-fn rs_cor_upper_triangle(x: RMatrix<f64>, spearman: bool, shift: usize) -> Vec<f64> {
+fn rs_cor_upper_triangle(x: RMatrix<f64>, spearman: bool, shift: bool) -> Vec<f64> {
+    let shift = if shift { 1usize } else { 0usize };
     // Calculate the correlations
     let mat = r_matrix_to_faer(&x);
     let cor = column_pairwise_cor(&mat, spearman);
@@ -258,12 +269,17 @@ fn rs_cor_upper_triangle(x: RMatrix<f64>, spearman: bool, shift: usize) -> Vec<f
 
 /// Set similarities
 ///
+/// @description
+/// `r lifecycle::badge("experimental")`
 /// This function calculates the Jaccard or similarity index between a two given
 /// string vector and a  of other string vectors.
 ///
-/// @param s_1 The String vector against which to calculate the set similarities.
-/// @param s_2 The String vector against which to calculate the set similarities.
-/// @param overlap_coefficient Boolean. Use the overlap coefficient instead of the Jaccard similarity be calculated.
+/// @param s_1 The String vector against which to calculate the set
+/// similarities.
+/// @param s_2 The String vector against which to calculate the set
+/// similarities.
+/// @param overlap_coefficient Boolean. Use the overlap coefficient instead of
+/// the Jaccard similarity be calculated.
 ///
 /// @export
 #[extendr]
@@ -284,6 +300,7 @@ fn rs_set_similarity(s_1: Vec<String>, s_2: Vec<String>, overlap_coefficient: bo
 /// Set similarities over two list
 ///
 /// @description
+/// `r lifecycle::badge("experimental")`
 /// This function calculates the Jaccard or similarity index between two lists.
 ///
 /// @param s_1_list R list. The first list of string elements you want to
@@ -328,8 +345,10 @@ fn rs_set_similarity_list2(
 
 /// Set similarities over one list
 ///
-/// @description This function calculates the set similarity via Jaccard or
-/// overlap coefficient across all permutations of one list.
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// This function calculates the set similarity via Jaccard or overlap
+/// coefficient across all permutations of one list.
 ///
 /// @param list A named R list.
 /// @param overlap_coefficient Boolean. Use the overlap coefficient instead of
@@ -369,8 +388,10 @@ fn rs_set_similarity_list(list: List, overlap_coefficient: bool) -> extendr_api:
 
 /// Calculate rapidbly Jaccard similarities between rows
 ///
-/// @description Helper function to quickly calculate the Jaccard similarity
-/// between the rows across the two matrices.
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Helper function to quickly calculate the Jaccard similarity between the rows
+/// across the two matrices.
 ///
 /// @param data_1 Integer matrix. The first matrix to compare.
 /// @param data_2 Integer matrix. The second matrix to compare.
@@ -403,6 +424,9 @@ fn rs_jaccard_row_integers(data_1: RMatrix<i32>, data_2: RMatrix<i32>) -> f64 {
 
 /// Calculates the Hamming distance between categorical columns
 ///
+/// @description
+/// `r lifecycle::badge("experimental")`
+///
 /// @param x Integer matrix. The integers represent the factor data.
 ///
 /// @return The Hamming distance matrix
@@ -418,6 +442,9 @@ fn rs_hamming_dist(x: RMatrix<i32>) -> RArray<f64, 2> {
 }
 
 /// Calculates the Gower distance for a given matrix
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
 ///
 /// @param x Numerical matrix. Converted matrix of continuous and categorical
 /// variables as numerical values.

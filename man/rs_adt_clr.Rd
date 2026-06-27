@@ -2,16 +2,20 @@
 % Please edit documentation in R/extendr-wrappers.R
 \name{rs_adt_clr}
 \alias{rs_adt_clr}
-\title{Applies CLR normalisation on ADT counts (Seurat-style, per cell)}
+\title{Applies CLR normalisation on ADT counts}
 \usage{
-rs_adt_clr(counts)
+rs_adt_clr(counts, seurat_clr)
 }
 \arguments{
 \item{counts}{R matrix of shape cells x features.}
+
+\item{seurat_clr}{Logical; if TRUE uses the Seurat variant (non-negative),
+if FALSE uses proper CLR (mean-centred log, can be negative).}
 }
 \value{
 CLR-transformed matrix.
 }
 \description{
-Applies CLR normalisation on ADT counts (Seurat-style, per cell)
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 }
+\keyword{internal}

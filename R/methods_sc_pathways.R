@@ -19,8 +19,9 @@
 #' @param n_ctrl Integer. Number of control genes to use per gene for each gene
 #' set. Defaults to `100L`.
 #' @param seed Integer. The random seed.
-#' @param streaming Boolean. Shall the cell and gene data be streamed in.
-#' Useful for larger data sets.
+#' @param streaming Optional Boolean. Shall the data be streamed in. Useful for
+#' larger data sets where you wish to avoid loading in the whole data. If
+#' `NULL`, will automatically detect.
 #' @param .verbose Boolean or integer. Controls verbosity and returns run times.
 #' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
 #' verbosity.
@@ -40,7 +41,7 @@ module_scores_sc <- S7::new_generic(
     n_bins = 24L,
     n_ctrl = 100L,
     seed = 42L,
-    streaming = FALSE,
+    streaming = NULL,
     .verbose = TRUE
   ) {
     S7::S7_dispatch()
@@ -56,7 +57,7 @@ S7::method(module_scores_sc, SingleCells) <- function(
   n_bins = 24L,
   n_ctrl = 100L,
   seed = 42L,
-  streaming = FALSE,
+  streaming = NULL,
   .verbose = TRUE
 ) {
   # checks
@@ -65,8 +66,14 @@ S7::method(module_scores_sc, SingleCells) <- function(
   checkmate::qassert(n_bins, "I1")
   checkmate::qassert(n_ctrl, "I1")
   checkmate::qassert(seed, "I1")
-  checkmate::qassert(streaming, "B1")
+  checkmate::qassert(streaming, c("B1", "0"))
   checkmate::qassert(.verbose, c("B1", "I1[0,1]"))
+
+  streaming <- auto_streaming(
+    n_cells = nrow(object),
+    streaming = streaming,
+    .verbose = .verbose
+  )
 
   # get the gene indices
   gs_list <- purrr::map(gs_list, \(e) {
@@ -106,16 +113,22 @@ S7::method(aucell_sc, SingleCells) <- function(
   object,
   gs_list,
   auc_type = c("wilcox", "auroc"),
-  streaming = FALSE,
+  streaming = NULL,
   .verbose = TRUE
 ) {
   auc_type <- match.arg(auc_type)
+
+  streaming <- auto_streaming(
+    n_cells = nrow(object),
+    streaming = streaming,
+    .verbose = .verbose
+  )
 
   # checks
   checkmate::checkTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::assertList(gs_list, types = "character", names = "named")
   checkmate::assertChoice(auc_type, c("wilcox", "auroc"))
-  checkmate::qassert(streaming, "B1")
+  checkmate::qassert(streaming, c("B1", "0"))
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   # get the gene indices
@@ -167,10 +180,6 @@ S7::method(aucell_sc, SingleCells) <- function(
 #' @param n_perm Integer. Number of random permutations to generate.
 #' @param n_comp Integer. Number of k-means cluster to identify.
 #' @param random_seed Integer. For reproducibility purposes.
-#' @param no_cores Optional integer. Number of sessions to use for the
-#' [mirai::mirai_map()] approach during generation of the random gene sets.
-#' If not provided, will default to half of the available cores with a maximum
-#' of `8L`.
 #'
 #' @returns A list with the following elements:
 #' \itemize{
@@ -180,13 +189,12 @@ S7::method(aucell_sc, SingleCells) <- function(
 #' }
 #'
 #' @keywords internal
-generate_null_perm_gs <- function(
+.generate_null_perm_gs <- function(
   gs_list,
   expr_genes,
   n_perm = 500L,
   n_comp = 5L,
-  random_seed = 42L,
-  no_cores = NULL
+  random_seed = 42L
 ) {
   # checks
   checkmate::assertList(gs_list, types = "list", names = "named")
@@ -194,11 +202,6 @@ generate_null_perm_gs <- function(
   checkmate::qassert(n_perm, "I1")
   checkmate::qassert(n_comp, "I1")
   checkmate::qassert(random_seed, "I1")
-  checkmate::qassert(no_cores, c("0", "I1"))
-
-  if (is.null(no_cores)) {
-    no_cores <- get_cores()
-  }
 
   # function
   sig_data_signed <- purrr::map(gs_list, \(gs) {
@@ -235,41 +238,28 @@ generate_null_perm_gs <- function(
 
   centers[, "sig_sizes"] <- round(10**centers[, "sig_sizes"])
 
-  mirai::daemons(no_cores)
+  set.seed(random_seed)
 
-  random_sigs <- mirai::mirai_map(
-    seq_len(nrow(centers)),
-    .f = function(i, n_perm, centers, random_seed, gene_names) {
-      size <- centers[i, "sig_sizes"]
-      balance <- centers[i, "sig_balance"]
-      n_pos_genes <- ceiling(balance * size)
-      n_neg_genes <- size - n_pos_genes
+  random_sigs <- lapply(seq_len(nrow(centers)), function(i) {
+    size <- centers[i, "sig_sizes"]
+    balance <- centers[i, "sig_balance"]
+    n_pos_genes <- ceiling(balance * size)
+    n_neg_genes <- size - n_pos_genes
 
-      lapply(seq_len(n_perm), function(iter) {
-        set.seed(random_seed + (i - 1) * 1e6 + iter)
-        genes <- sample(gene_names, size)
-
-        if (n_pos_genes == size) {
-          list(pos = genes)
-        } else if (n_neg_genes == size) {
-          list(neg = genes)
-        } else {
-          list(
-            pos = genes[1:n_pos_genes],
-            neg = genes[(n_pos_genes + 1):size]
-          )
-        }
-      })
-    },
-    .args = list(
-      n_perm = n_perm,
-      centers = centers,
-      random_seed = random_seed,
-      gene_names = expr_genes
-    )
-  )[]
-
-  mirai::daemons(0)
+    lapply(seq_len(n_perm), function(iter) {
+      genes <- sample(expr_genes, size)
+      if (n_pos_genes == size) {
+        list(pos = genes)
+      } else if (n_neg_genes == size) {
+        list(neg = genes)
+      } else {
+        list(
+          pos = genes[1:n_pos_genes],
+          neg = genes[(n_pos_genes + 1):size]
+        )
+      }
+    })
+  })
 
   res <- list(
     random_signatures = random_sigs,
@@ -294,8 +284,9 @@ generate_null_perm_gs <- function(
 #' the respective gene sets and have the option to have a `"pos"` and `"neg"`
 #' gene sets. The names need to be part of the variables of the
 #' `SingleCells` class.
-#' @param streaming Boolean. Shall the cell data be streamed in. Useful for
-#' larger data sets.
+#' @param streaming Optional Boolean. Shall the data be streamed in. Useful for
+#' larger data sets where you wish to avoid loading in the whole data. If
+#' `NULL`, will automatically detect.
 #' @param .verbose Boolean or integer. Controls verbosity and returns run times.
 #' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
 #' verbosity.
@@ -311,7 +302,7 @@ vision_sc <- S7::new_generic(
   fun = function(
     object,
     gs_list,
-    streaming = FALSE,
+    streaming = NULL,
     .verbose = TRUE
   ) {
     S7::S7_dispatch()
@@ -324,14 +315,20 @@ vision_sc <- S7::new_generic(
 S7::method(vision_sc, SingleCells) <- function(
   object,
   gs_list,
-  streaming = FALSE,
+  streaming = NULL,
   .verbose = TRUE
 ) {
   # checks
   checkmate::checkTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::assertList(gs_list, types = "list", names = "named")
-  checkmate::qassert(streaming, "B1")
+  checkmate::qassert(streaming, c("B1", "0"))
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
+
+  streaming <- auto_streaming(
+    n_cells = nrow(object),
+    streaming = streaming,
+    .verbose = .verbose
+  )
 
   # no one sees this...
   vision_gs_clean <- purrr::map(gs_list, \(ls) {
@@ -391,8 +388,9 @@ S7::method(vision_sc, SingleCells) <- function(
 #' @param use_knn Boolean. Shall the internal kNN be used. If set to yes, you
 #' need to ensure consistency.
 #' @param random_seed Integer. The random seed.
-#' @param streaming Boolean. Shall the cell data be streamed in. Useful for
-#' larger data sets.
+#' @param streaming Optional Boolean. Shall the data be streamed in. Useful for
+#' larger data sets where you wish to avoid loading in the whole data. If
+#' `NULL`, will automatically detect.
 #' @param .verbose Boolean or integer. Controls verbosity and returns run times.
 #' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
 #' verbosity.
@@ -413,7 +411,7 @@ vision_w_autocor_sc <- S7::new_generic(
     no_embd_to_use = NULL,
     use_knn = TRUE,
     vision_params = params_sc_vision(),
-    streaming = FALSE,
+    streaming = NULL,
     random_seed = 42L,
     .verbose = TRUE
   ) {
@@ -431,7 +429,7 @@ S7::method(vision_w_autocor_sc, SingleCells) <- function(
   no_embd_to_use = NULL,
   use_knn = TRUE,
   vision_params = params_sc_vision(),
-  streaming = FALSE,
+  streaming = NULL,
   random_seed = 42L,
   .verbose = TRUE
 ) {
@@ -440,8 +438,14 @@ S7::method(vision_w_autocor_sc, SingleCells) <- function(
   checkmate::qassert(embd_to_use, "S1")
   checkmate::qassert(no_embd_to_use, c("I1", "0"))
   assertScVision(vision_params)
-  checkmate::qassert(streaming, "B1")
+  checkmate::qassert(streaming, c("B1", "0"))
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
+
+  streaming <- auto_streaming(
+    n_cells = nrow(object),
+    streaming = streaming,
+    .verbose = .verbose
+  )
 
   # get the embedding
   checkmate::assertTRUE(embd_to_use %in% get_available_embeddings(object))
@@ -467,7 +471,7 @@ S7::method(vision_w_autocor_sc, SingleCells) <- function(
   c(random_gs, cluster_membership) %<-%
     with(
       vision_params,
-      generate_null_perm_gs(
+      .generate_null_perm_gs(
         gs_list = gs_list,
         expr_genes = get_gene_names(object),
         n_perm = n_perm,
@@ -552,8 +556,9 @@ S7::method(vision_w_autocor_sc, SingleCells) <- function(
 #' @param genes_to_take Optional string vector. If you wish to limit the
 #' search to a subset of genes. If `NULL` will default to all genes in the
 #' class.
-#' @param streaming Boolean. Shall the data be streamed in. Useful for larger
-#' data sets.
+#' @param streaming Optional Boolean. Shall the data be streamed in. Useful for
+#' larger data sets where you wish to avoid loading in the whole data. If
+#' `NULL`, will automatically detect.
 #' @param random_seed Integer. Used for reproducibility.
 #' @param .verbose Boolean or integer. Controls verbosity and returns run times.
 #' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
@@ -581,7 +586,7 @@ hotspot_autocor_sc <- S7::new_generic(
     no_embd_to_use = NULL,
     cells_to_take = NULL,
     genes_to_take = NULL,
-    streaming = FALSE,
+    streaming = NULL,
     random_seed = 42L,
     .verbose = TRUE
   ) {
@@ -600,7 +605,7 @@ S7::method(hotspot_autocor_sc, SingleCells) <- function(
   no_embd_to_use = NULL,
   cells_to_take = NULL,
   genes_to_take = NULL,
-  streaming = FALSE,
+  streaming = NULL,
   random_seed = 42L,
   .verbose = TRUE
 ) {
@@ -611,7 +616,7 @@ S7::method(hotspot_autocor_sc, SingleCells) <- function(
   checkmate::qassert(no_embd_to_use, c("0", "I1"))
   checkmate::qassert(cells_to_take, c("S+", "0"))
   checkmate::qassert(genes_to_take, c("S+", "0"))
-  checkmate::qassert(streaming, "B1")
+  checkmate::qassert(streaming, c("B1", "0"))
   checkmate::qassert(random_seed, "I1")
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
@@ -630,6 +635,12 @@ S7::method(hotspot_autocor_sc, SingleCells) <- function(
     # if the user overwrites this specifically, recreate the kNN data internally
     use_knn <- FALSE
   }
+
+  streaming <- auto_streaming(
+    n_cells = length(cells_to_take),
+    streaming = streaming,
+    .verbose = .verbose
+  )
 
   if (is.null(genes_to_take)) {
     genes_to_take <- get_gene_names(object)
@@ -711,8 +722,14 @@ S7::method(hotspot_autocor_sc, SingleCells) <- function(
 #' @param genes_to_take Optional string vector. If you wish to limit the
 #' search to a subset of genes. If `NULL` will default to all genes in the
 #' class.
-#' @param streaming Boolean. Shall the data be streamed in. Useful for larger
-#' data sets.
+#' @param streaming Optional Boolean. Shall the data be streamed in. Useful for
+#' larger data sets where you wish to avoid loading in the whole data. If
+#' `NULL`, will automatically detect.
+#' @param working_mem_gb Numeric. Approximate working memory (GB) the streaming
+#'  pair path may use for resident gene panels. Ignored when `streaming` is
+#'  `FALSE`. Larger values mean fewer disk re-reads. Note this excludes the two
+#' dense N_genes x N_genes output matrices, which scale with `genes_to_use`.
+#' Defaults to `4` (4 GB of memory allocated).
 #' @param random_seed Integer. Used for reproducibility.
 #' @param .verbose Boolean or integer. Controls verbosity and returns run times.
 #' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
@@ -738,7 +755,8 @@ hotspot_gene_cor_sc <- S7::new_generic(
     no_embd_to_use = NULL,
     cells_to_take = NULL,
     genes_to_take = NULL,
-    streaming = FALSE,
+    streaming = NULL,
+    working_mem_gb = 4,
     random_seed = 42L,
     .verbose = TRUE
   ) {
@@ -757,7 +775,8 @@ S7::method(hotspot_gene_cor_sc, SingleCells) <- function(
   no_embd_to_use = NULL,
   cells_to_take = NULL,
   genes_to_take = NULL,
-  streaming = FALSE,
+  streaming = NULL,
+  working_mem_gb = 4,
   random_seed = 42L,
   .verbose = TRUE
 ) {
@@ -768,7 +787,7 @@ S7::method(hotspot_gene_cor_sc, SingleCells) <- function(
   checkmate::qassert(no_embd_to_use, c("0", "I1"))
   checkmate::qassert(cells_to_take, c("S+", "0"))
   checkmate::qassert(genes_to_take, c("S+", "0"))
-  checkmate::qassert(streaming, "B1")
+  checkmate::qassert(streaming, c("B1", "0"))
   checkmate::qassert(random_seed, "I1")
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
@@ -787,6 +806,12 @@ S7::method(hotspot_gene_cor_sc, SingleCells) <- function(
     # if the user overwrites this specifically, recreate the kNN data internally
     use_knn <- FALSE
   }
+
+  streaming <- auto_streaming(
+    n_cells = length(cells_to_take),
+    streaming = streaming,
+    .verbose = .verbose
+  )
 
   if (is.null(genes_to_take)) {
     genes_to_take <- get_gene_names(object)
@@ -824,6 +849,7 @@ S7::method(hotspot_gene_cor_sc, SingleCells) <- function(
       rust_index = TRUE
     ),
     streaming = streaming,
+    working_mem_gb = working_mem_gb,
     verbose = parse_verbosity(.verbose),
     seed = random_seed
   )
@@ -892,7 +918,7 @@ S7::method(scenic_grn_sc, SingleCells) <- function(
   scenic_params = params_scenic(),
   genes_to_take = NULL,
   cells_to_take = NULL,
-  streaming = FALSE,
+  streaming = NULL,
   random_seed = 42L,
   .verbose = TRUE
 ) {
@@ -902,7 +928,7 @@ S7::method(scenic_grn_sc, SingleCells) <- function(
   assertScenicParams(scenic_params)
   checkmate::qassert(genes_to_take, c("S+", "0"))
   checkmate::qassert(cells_to_take, c("S+", "0"))
-  checkmate::qassert(streaming, "B1")
+  checkmate::qassert(streaming, c("B1", "0"))
   checkmate::qassert(random_seed, "I1")
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
@@ -910,6 +936,12 @@ S7::method(scenic_grn_sc, SingleCells) <- function(
   if (is.null(cells_to_take)) {
     cells_to_take <- get_cell_names(object, filtered = TRUE)
   }
+
+  streaming <- auto_streaming(
+    n_cells = length(cells_to_take),
+    streaming = streaming,
+    .verbose = .verbose
+  )
 
   cell_indices <- get_cell_indices(
     object,
@@ -1009,4 +1041,173 @@ S7::method(scenic_grn_sc, SingleCells) <- function(
   )
 
   return(result)
+}
+
+## nmf -------------------------------------------------------------------------
+
+### helpers --------------------------------------------------------------------
+
+#' Resolve cell and gene selection for NMF on SingleCells
+#'
+#' @param object `SingleCells` class.
+#' @param cell_ids Optional string vector. The cells to include.
+#' @param gene_ids Optional string vector. The genes to include.
+#'
+#' @returns A list with the following items:
+#' \itemize{
+#'  \item cell_indices - The Rust-based cell indices.
+#'  \item gene_indices - The Rust-based gene indices.
+#'  \item cell_ids - The cell identifiers.
+#'  \item gene_ids - The gene identifiers.
+#' }
+#'
+#' @keywords internal
+.resolve_sc_nmf_selection <- function(object, cell_ids, gene_ids) {
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  checkmate::qassert(cell_ids, c("S+", "0"))
+  checkmate::qassert(gene_ids, c("S+", "0"))
+
+  cell_indices <- if (is.null(cell_ids)) {
+    get_cells_to_keep(object)
+  } else {
+    get_cell_indices(object, cell_ids = cell_ids, rust_index = TRUE)
+  }
+
+  gene_indices <- if (is.null(gene_ids)) {
+    get_hvg(object)
+  } else {
+    get_gene_indices(object, gene_ids = gene_ids, rust_index = TRUE)
+  }
+
+  resolved_cell_ids <- get_cell_names(object)[cell_indices + 1L]
+  resolved_gene_ids <- get_gene_names(object)[gene_indices + 1L]
+
+  list(
+    cell_indices = as.integer(cell_indices),
+    gene_indices = as.integer(gene_indices),
+    cell_ids = resolved_cell_ids,
+    gene_ids = resolved_gene_ids
+  )
+}
+
+### methods --------------------------------------------------------------------
+
+#' @method nmf_sc SingleCells
+#'
+#' @export
+S7::method(nmf_sc, SingleCells) <- function(
+  object,
+  k,
+  cell_ids = NULL,
+  gene_ids = NULL,
+  preprocessing = "none",
+  use_second_layer = TRUE,
+  nmf_hals_params = params_nmf_hals(),
+  seed = 42L,
+  .verbose = TRUE
+) {
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  checkmate::qassert(k, "I1[1,)")
+  checkmate::qassert(cell_ids, c("0", "S+"))
+  checkmate::qassert(gene_ids, c("0", "S+"))
+  checkmate::assertChoice(preprocessing, c("none", "sd", "sqrt_sd"))
+  checkmate::qassert(use_second_layer, "B1")
+  assertNmfHals(nmf_hals_params)
+  checkmate::qassert(seed, "I1")
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
+
+  sel <- .resolve_sc_nmf_selection(object, cell_ids, gene_ids)
+
+  nmf_res <- rs_nmf_single_sc(
+    f_path_gene = get_rust_count_gene_f_path(object),
+    gene_indices = sel$gene_indices,
+    cell_indices = sel$cell_indices,
+    k = k,
+    preprocessing = preprocessing,
+    use_second_layer = use_second_layer,
+    nmf_hals_params = nmf_hals_params,
+    seed = seed,
+    verbose = parse_verbosity(.verbose)
+  )
+
+  params <- c(
+    nmf_hals_params,
+    list(
+      k = k,
+      preprocessing = preprocessing,
+      use_second_layer = use_second_layer,
+      seed = seed
+    )
+  )
+
+  new_nmf_result(
+    nmf_res = nmf_res,
+    gene_ids = sel$gene_ids,
+    cell_ids = sel$cell_ids,
+    cell_indices = sel$cell_indices,
+    source_class = "SingleCells",
+    params = params
+  )
+}
+
+#' @method stabilised_nmf_sc SingleCells
+#'
+#' @export
+S7::method(stabilised_nmf_sc, SingleCells) <- function(
+  object,
+  k,
+  cell_ids = NULL,
+  gene_ids = NULL,
+  preprocessing = "none",
+  use_second_layer = TRUE,
+  nmf_hals_params = params_nmf_hals(),
+  n_runs = 30L,
+  seed = 42L,
+  .verbose = TRUE
+) {
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  checkmate::qassert(k, "I1[1,)")
+  checkmate::qassert(cell_ids, c("0", "S+"))
+  checkmate::qassert(gene_ids, c("0", "S+"))
+  checkmate::assertChoice(preprocessing, c("none", "sd", "sqrt_sd"))
+  checkmate::qassert(use_second_layer, "B1")
+  assertNmfHals(nmf_hals_params)
+  checkmate::qassert(n_runs, "I1[1,)")
+  checkmate::qassert(seed, "I1")
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
+
+  sel <- .resolve_sc_nmf_selection(object, cell_ids, gene_ids)
+
+  nmf_res <- rs_nmf_multi_sc(
+    f_path_gene = get_rust_count_gene_f_path(object),
+    gene_indices = sel$gene_indices,
+    cell_indices = sel$cell_indices,
+    k = k,
+    preprocessing = preprocessing,
+    use_second_layer = use_second_layer,
+    nmf_hals_params = nmf_hals_params,
+    n_runs = n_runs,
+    seed = seed,
+    verbose = parse_verbosity(.verbose)
+  )
+
+  params <- c(
+    nmf_hals_params,
+    list(
+      k = k,
+      preprocessing = preprocessing,
+      use_second_layer = use_second_layer,
+      n_runs = n_runs,
+      seed = seed
+    )
+  )
+
+  new_stabilised_nmf_result(
+    nmf_res = nmf_res,
+    gene_ids = sel$gene_ids,
+    cell_ids = sel$cell_ids,
+    cell_indices = sel$cell_indices,
+    source_class = "SingleCells",
+    params = params
+  )
 }

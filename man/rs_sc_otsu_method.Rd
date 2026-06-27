@@ -16,7 +16,9 @@ threshold.}
 The threshold based on Otsu's method
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 Maximises between-class variance of the observed score distribution to
 find the optimal binary split. Robust to both bimodal and skewed
 distributions.
 }
+\keyword{internal}

@@ -4,11 +4,13 @@
 \alias{.get_manifoldsr_knn}
 \title{Helper function to generate manifoldsR nearest neighbours}
 \usage{
-.get_manifoldsr_knn(x)
+.get_manifoldsr_knn(x, modality = c("rna", "adt"))
 }
 \arguments{
 \item{x}{\code{SingleCells}, \code{MetaCells} object from which to extract the kNN
 data.}
+
+\item{modality}{String. One of \code{c("rna", "adt")}.}
 }
 \value{
 The manifoldsR \code{NearestNeigbours} if possible

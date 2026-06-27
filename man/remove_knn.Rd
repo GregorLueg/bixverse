@@ -13,7 +13,7 @@ remove_knn(x, ...)
 ## S7 method for class <bixverse::MetaCells>
 remove_knn(x, ...)
 
-\method{remove_knn}{ScCache}(x)
+\method{remove_knn}{ScCache}(x, ...)
 
 ## S7 method for class <bixverse::SingleCells>
 remove_knn(x, ...)

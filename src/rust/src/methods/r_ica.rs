@@ -2,11 +2,29 @@ use bixverse_rs::methods::ica::*;
 use bixverse_rs::prelude::*;
 use extendr_api::prelude::*;
 
+/////////////
+// extendR //
+/////////////
+
+extendr_module! {
+  mod r_ica;
+  fn rs_prepare_whitening;
+  fn rs_fast_ica;
+  fn rs_ica_iters;
+  fn rs_ica_iters_cv;
+}
+
+///////////////
+// Functions //
+///////////////
+
 /// Prepare the data for whitening
 ///
-/// @description Prepares the data for subsequent usag in ICA. Incorrect use can
-/// cause kernel crashes. Wrapper around the Rust functions with type checks are
-/// provided in the package.
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Prepares the data for subsequent usag in ICA. Incorrect use can cause kernel
+/// crashes. Wrapper around the Rust functions with type checks are provided in
+/// the package.
 ///
 /// @param x The matrix to whiten. The whitening will happen over the columns.
 /// @param fast_svd Boolean. Shall a randomised SVD be used. This is way faster
@@ -52,10 +70,10 @@ fn rs_prepare_whitening(
 
 /// Run the Rust implementation of fast ICA.
 ///
-/// @description This function serves as a wrapper over the fast ICA
-/// implementations in Rust. It assumes a whitened matrix and also an
-/// intialised w_init. WARNING! Incorrect use can cause kernel crashes. Wrapper
-/// around the Rust functions with type checks are provided in the package.
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// This function serves as a wrapper over the fast ICA implementations in Rust.
+/// It assumes a whitened matrix and also an intialised w_init.
 ///
 /// @param whiten Numerical matrix. The whitened matrix.
 /// @param w_init Numerical matrix. The initial unmixing matrix. ncols need to
@@ -123,11 +141,13 @@ fn rs_fast_ica(
 
 /// Run ICA over a given no_comp with random initilisations of w_init
 ///
-/// @description This function implements a stabilised ICA like algorithm in
-/// Rust. Briefly, it generates random w_init matrices (total number being
-/// no_random_init) and runs ICA given the x_processed and k data over these.
-/// The function returns combined S from the different runs and a boolean
-/// vector indicating if this specific run converged.
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// This function implements a stabilised ICA like algorithm in Rust. Briefly,
+/// it generates random w_init matrices (total number being no_random_init) and
+/// runs ICA given the x_processed and k data over these. The function returns
+/// combined S from the different runs and a boolean vector indicating if this
+/// specific run converged.
 ///
 /// @param x1 Numerical matrix. The processed matrix (but not yet
 /// whitened!)
@@ -198,8 +218,10 @@ fn rs_ica_iters(
 
 /// Run ICA with cross-validation and random initialsiation
 ///
-/// @description This function will split the data into `no_folds` and apply
-/// ICA with `no_random_inits` over that fold.
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// This function will split the data into `no_folds` and apply ICA with
+/// `no_random_inits` over that fold.
 ///
 /// @param x Numeric matrix. The processed data (no whitening function has
 /// been applied yet.)
@@ -258,12 +280,4 @@ fn rs_ica_iters_cv(
         s_combined = faer_to_r_matrix(s_combined.as_ref()),
         converged = converged
     ))
-}
-
-extendr_module! {
-  mod r_ica;
-  fn rs_prepare_whitening;
-  fn rs_fast_ica;
-  fn rs_ica_iters;
-  fn rs_ica_iters_cv;
 }

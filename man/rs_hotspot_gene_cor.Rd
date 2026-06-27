@@ -2,7 +2,7 @@
 % Please edit documentation in R/extendr-wrappers.R
 \name{rs_hotspot_gene_cor}
 \alias{rs_hotspot_gene_cor}
-\title{Calculate gene<>gene spatial correlations}
+\title{Calculate gene to gene spatial correlations}
 \usage{
 rs_hotspot_gene_cor(
   f_path_genes,
@@ -12,6 +12,7 @@ rs_hotspot_gene_cor(
   hotspot_params,
   cells_to_keep,
   genes_to_use,
+  working_mem_gb,
   streaming,
   verbose,
   seed
@@ -38,6 +39,11 @@ as the embedding matrix.}
 \item{genes_to_use}{Integer vector. 0-index vector indicating which genes
 to include.}
 
+\item{working_mem_gb}{Numeric. Approximate working memory (GB) the streaming
+pair path may use for resident gene panels. Ignored when \code{streaming} is
+\code{FALSE}. Larger values mean fewer disk re-reads. Note this excludes the two
+dense N_genes x N_genes output matrices, which scale with \code{genes_to_use}.}
+
 \item{streaming}{Boolean. Shall the data be streamed in chunks. Useful
 for large data sets.}
 
@@ -56,9 +62,11 @@ local correlations between two genes.
 }
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 This function implements the HotSpot gene <> gene local correlation
 functionality from HotSpot, see DeTomaso, et al.
 }
 \references{
 DeTomaso, et al., Cell Systems, 2021
 }
+\keyword{internal}

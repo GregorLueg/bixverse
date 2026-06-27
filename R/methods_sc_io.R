@@ -25,6 +25,7 @@
 #' to `FALSE` (10x convention: genes are rows).
 #' @param has_hdr Boolean. Whether the barcodes/features files have a
 #' header row. Applied uniformly. Defaults to `FALSE` (10x convention).
+#' @param .verbose Boolean. Controls verbosity of the function.
 #'
 #' @return A list with:
 #' \itemize{
@@ -41,7 +42,8 @@ prescan_mtx_dirs <- function(
   dirs,
   exp_ids,
   cells_as_rows = FALSE,
-  has_hdr = FALSE
+  has_hdr = FALSE,
+  .verbose = TRUE
 ) {
   checkmate::assertCharacter(dirs, min.len = 2L)
   for (d in dirs) {
@@ -50,12 +52,12 @@ prescan_mtx_dirs <- function(
   checkmate::assertCharacter(exp_ids, len = length(dirs), unique = TRUE)
   checkmate::qassert(cells_as_rows, "B1")
   checkmate::qassert(has_hdr, "B1")
+  checkmate::qassert(.verbose, "B1")
 
   temp_dir <- tempfile(pattern = "bixverse_mtx_prescan_")
   dir.create(temp_dir)
   temp_files <- character()
 
-  # locate the trio inside each directory
   locate <- function(dir, pat) {
     files <- list.files(
       dir,
@@ -72,7 +74,6 @@ prescan_mtx_dirs <- function(
     files
   }
 
-  # gunzip helper - returns decompressed path, registers temp file
   gunzip_to_temp <- function(path) {
     out_name <- sub("\\.gz$", "", basename(path), ignore.case = TRUE)
     out_path <- file.path(
@@ -102,7 +103,15 @@ prescan_mtx_dirs <- function(
   gene_sets <- vector("list", length(dirs))
   file_tasks <- vector("list", length(dirs))
 
+  if (.verbose) {
+    cli::cli_progress_bar("Prescanning mtx directories", total = length(dirs))
+  }
+
   for (i in seq_along(dirs)) {
+    if (.verbose) {
+      cli::cli_progress_update(status = exp_ids[i])
+    }
+
     d <- dirs[i]
     mtx_path <- locate(d, "\\.mtx(\\.gz)?$")
     features_path <- locate(d, "(features|genes)\\.(tsv|csv)(\\.gz)?$")
@@ -136,6 +145,10 @@ prescan_mtx_dirs <- function(
       has_hdr = has_hdr,
       local_gene_ids = gene_ids
     )
+  }
+
+  if (.verbose) {
+    cli::cli_progress_done()
   }
 
   universe <- Reduce(intersect, gene_sets)
@@ -277,11 +290,6 @@ load_seurat <- S7::new_generic(
 )
 
 #' @method load_seurat SingleCells
-#'
-#' @export
-#'
-#' @importFrom zeallot `%<-%`
-#' @importFrom magrittr `%>%`
 S7::method(load_seurat, SingleCells) <- function(
   object,
   seurat,
@@ -429,11 +437,6 @@ load_r_data <- S7::new_generic(
 )
 
 #' @method load_r_data SingleCells
-#'
-#' @export
-#'
-#' @importFrom zeallot `%<-%`
-#' @importFrom magrittr `%>%`
 S7::method(load_r_data, SingleCells) <- function(
   object,
   counts,
@@ -522,7 +525,7 @@ S7::method(load_r_data, SingleCells) <- function(
 
 ### h5ad -----------------------------------------------------------------------
 
-#### fast ----------------------------------------------------------------------
+#### general -------------------------------------------------------------------
 
 #' Load in h5ad to `SingleCells`
 #'
@@ -551,6 +554,9 @@ S7::method(load_r_data, SingleCells) <- function(
 #' (fastest, highest memory), `1L` -> light streaming with cell batching, `2L`
 #' -> heavy streaming with memory upper boundaries on the gene side. Controls
 #' memory pressure during the CSR-to-CSC conversion. Defaults to `1L`.
+#' @param raw_count_slot Where raw counts live. `"auto"` detects per file via
+#' [detect_raw_count_slot()]; otherwise one of `"X"`, `"raw.X"`,
+#' `"layers.counts"`.
 #' @param batch_size Integer. Cell batch size when `streaming = 1L`. Defaults
 #' to `1000L`.
 #' @param max_genes_in_memory Integer. Maximum genes held in memory at once
@@ -571,6 +577,7 @@ load_h5ad <- S7::new_generic(
     h5_path,
     sc_qc_param = params_sc_min_quality(),
     streaming = 1L,
+    raw_count_slot = c("auto", "X", "raw.X", "layers.counts"),
     cell_id_col = NULL,
     batch_size = 1000L,
     max_genes_in_memory = 2000L,
@@ -592,18 +599,41 @@ S7::method(load_h5ad, SingleCells) <- function(
   h5_path,
   sc_qc_param = params_sc_min_quality(),
   streaming = 1L,
+  raw_count_slot = c("auto", "X", "raw.X", "layers.counts"),
   cell_id_col = NULL,
   batch_size = 1000L,
   max_genes_in_memory = 2000L,
   cell_batch_size = 100000L,
   .verbose = TRUE
 ) {
+  raw_count_slot <- match.arg(raw_count_slot)
+
   # checks
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   assertScMinQC(sc_qc_param)
   checkmate::qassert(streaming, "I1")
   checkmate::assertTRUE(streaming %in% c(0L, 1L, 2L))
+  checkmate::assertChoice(
+    raw_count_slot,
+    c("auto", "X", "raw.X", "layers.counts")
+  )
+  checkmate::qassert(batch_size, "I1")
+  checkmate::qassert(max_genes_in_memory, "I1")
+  checkmate::qassert(cell_batch_size, "I1")
   checkmate::qassert(.verbose, "B1")
+
+  raw_count_slot <- if (raw_count_slot == "auto") {
+    resolved_slot <- detect_raw_count_slot(h5_path)
+    if (is.na(resolved_slot)) {
+      stop(paste(
+        "No raw count slot could be found in the object!",
+        "Please validate the h5ad file"
+      ))
+    }
+    resolved_slot
+  } else {
+    raw_count_slot
+  }
 
   h5_path <- path.expand(h5_path)
 
@@ -617,6 +647,7 @@ S7::method(load_h5ad, SingleCells) <- function(
     no_cells = h5_meta$dims["obs"],
     no_genes = h5_meta$dims["var"],
     qc_params = sc_qc_param,
+    slot = raw_count_slot,
     verbose = .verbose
   )
 
@@ -823,6 +854,9 @@ S7::method(load_h5ad_norm, SingleCells) <- function(
 #' @param object `SingleCells` class.
 #' @param h5_path File path to the h5ad object.
 #' @param sc_qc_param List. Output of [bixverse::params_sc_min_quality()].
+#' @param raw_count_slot Where raw counts live. `"auto"` detects per file via
+#' [detect_raw_count_slot()]; otherwise one of `"X"`, `"raw.X"`,
+#' `"layers.counts"`.
 #' @param max_genes_in_memory Integer. Genes held in memory at once. Defaults
 #' to `2000L`.
 #' @param cell_batch_size Integer. Cell batch size. Defaults to `100000L`.
@@ -838,6 +872,7 @@ stream_h5ad <- S7::new_generic(
     object,
     h5_path,
     sc_qc_param = params_sc_min_quality(),
+    raw_count_slot = c("auto", "X", "raw.X", "layers.counts"),
     max_genes_in_memory = 2000L,
     cell_batch_size = 100000L,
     .verbose = TRUE
@@ -853,6 +888,7 @@ S7::method(stream_h5ad, SingleCells) <- function(
   object,
   h5_path,
   sc_qc_param = params_sc_min_quality(),
+  raw_count_slot = c("auto", "X", "raw.X", "layers.counts"),
   max_genes_in_memory = 2000L,
   cell_batch_size = 100000L,
   .verbose = TRUE
@@ -861,6 +897,7 @@ S7::method(stream_h5ad, SingleCells) <- function(
     object = object,
     h5_path = h5_path,
     sc_qc_param = sc_qc_param,
+    raw_count_slot = raw_count_slot,
     streaming = 2L,
     max_genes_in_memory = max_genes_in_memory,
     cell_batch_size = cell_batch_size,
@@ -982,11 +1019,7 @@ S7::method(load_multi_h5ad, SingleCells) <- function(
   }
 
   final_gene_names <- prescan_result$universe[file_res$global_gene_indices + 1L]
-
-  duckdb_con$populate_vars_from_h5ad_reordered(
-    h5_path = prescan_result$file_tasks[[1L]]$h5_path,
-    final_gene_names = final_gene_names
-  )
+  duckdb_con$populate_var_minimal(final_gene_names = final_gene_names)
 
   per_file_qc <- lapply(file_res$per_file, function(f) {
     data.table::data.table(nnz = f$nnz, lib_size = f$lib_size)
@@ -1281,11 +1314,268 @@ S7::method(load_multi_mtx, SingleCells) <- function(
   }
   final_gene_names <-
     prescan_result$universe[file_res$global_gene_indices + 1L]
-  duckdb_con$populate_vars_from_plain_text_reordered(
-    f_path = prescan_result$file_tasks[[1L]]$features_path,
-    has_hdr = prescan_result$file_tasks[[1L]]$has_hdr,
-    final_gene_names = final_gene_names
+  duckdb_con$populate_var_minimal(final_gene_names = final_gene_names)
+
+  per_file_qc <- lapply(file_res$per_file, function(f) {
+    data.table::data.table(nnz = f$nnz, lib_size = f$lib_size)
+  })
+  cell_res_dt <- data.table::rbindlist(per_file_qc)
+
+  duckdb_con$add_data_obs(new_data = cell_res_dt)
+  duckdb_con$add_data_var(new_data = gene_nnz_dt)
+  duckdb_con$set_to_keep_column()
+
+  cell_map <- duckdb_con$get_obs_index_map()
+  gene_map <- duckdb_con$get_var_index_map()
+
+  S7::prop(object, "dims") <- as.integer(rust_con$get_shape())
+  object <- set_cell_mapping(x = object, cell_map = cell_map)
+  object <- set_gene_mapping(x = object, gene_map = gene_map)
+
+  return(object)
+}
+
+### h5 10x outputs -------------------------------------------------------------
+
+#' Load in a 10x CellRanger h5 file to `SingleCells`
+#'
+#' @description
+#' Loads the gene-expression modality from a CellRanger v2/v3 h5 file. The
+#' counts go into the Rust-binarised format (with log normalisation applied on
+#' read) and the barcodes/features into the DuckDB. Non-gene modalities (e.g.
+#' Antibody Capture) are filtered out via `feature_type`.
+#'
+#' @param object `SingleCells` class.
+#' @param h5_path File path to the 10x h5 file.
+#' @param sc_qc_param List. Output of [bixverse::params_sc_min_quality()].
+#' @param feature_type String. Modality to keep. Defaults to
+#' `"Gene Expression"`. Ignored for v2 (single modality).
+#' @param streaming Integer. CSR-to-CSC conversion mode. `0L` -> in-memory,
+#' `1L` -> light streaming, `2L` -> heavy streaming. Defaults to `1L`.
+#' @param batch_size Integer. Cell batch size when `streaming = 1L`. Defaults
+#' to `1000L`.
+#' @param max_genes_in_memory Integer. Maximum genes held in memory at once
+#' when `streaming = 2L`. Defaults to `2000L`.
+#' @param cell_batch_size Integer. Cell batch size when `streaming = 2L`.
+#' Defaults to `100000L`.
+#' @param .verbose Boolean.
+#'
+#' @return The class with updated shape information.
+#'
+#' @export
+load_tenx_h5 <- S7::new_generic(
+  name = "load_tenx_h5",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    h5_path,
+    sc_qc_param = params_sc_min_quality(),
+    feature_type = "Gene Expression",
+    streaming = 1L,
+    batch_size = 1000L,
+    max_genes_in_memory = 2000L,
+    cell_batch_size = 100000L,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method load_tenx_h5 SingleCells
+#'
+#' @export
+S7::method(load_tenx_h5, SingleCells) <- function(
+  object,
+  h5_path,
+  sc_qc_param = params_sc_min_quality(),
+  feature_type = "Gene Expression",
+  streaming = 1L,
+  batch_size = 1000L,
+  max_genes_in_memory = 2000L,
+  cell_batch_size = 100000L,
+  .verbose = TRUE
+) {
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  assertScMinQC(sc_qc_param)
+  checkmate::qassert(feature_type, c("S1", "0"))
+  checkmate::qassert(streaming, "I1")
+  checkmate::assertTRUE(streaming %in% c(0L, 1L, 2L))
+  checkmate::qassert(.verbose, "B1")
+
+  h5_path <- path.expand(h5_path)
+  meta <- get_tenx_h5_metadata(h5_path)
+
+  rust_con <- get_sc_rust_ptr(object)
+
+  file_res <- rust_con$tenx_h5_to_file_streaming(
+    h5_path = h5_path,
+    version = meta$version,
+    no_cells = meta$n_cells,
+    no_genes = meta$n_genes,
+    qc_params = sc_qc_param,
+    feature_type = feature_type,
+    verbose = .verbose
   )
+
+  .dispatch_gene_based_data(
+    rust_con = rust_con,
+    streaming = streaming,
+    batch_size = batch_size,
+    max_genes_in_memory = max_genes_in_memory,
+    cell_batch_size = cell_batch_size,
+    .verbose = .verbose
+  )
+
+  gene_nnz <- rust_con$get_nnz_genes(gene_indices = NULL)
+  gene_nnz_dt <- data.table::data.table(no_cells_exp = gene_nnz)
+
+  duckdb_con <- get_sc_duckdb(object)
+
+  if (.verbose) {
+    message("Loading barcodes from 10x h5 into the DuckDB.")
+  }
+  duckdb_con$populate_obs_from_tenx_h5(
+    h5_path = h5_path,
+    version = meta$version,
+    filter = as.integer(file_res$cell_indices + 1)
+  )
+
+  if (.verbose) {
+    message("Loading features from 10x h5 into the DuckDB.")
+  }
+  duckdb_con$populate_vars_from_tenx_h5(
+    h5_path = h5_path,
+    version = meta$version,
+    filter = as.integer(file_res$gene_indices + 1)
+  )
+
+  cell_res_dt <- data.table::setDT(file_res[c("nnz", "lib_size")])
+
+  duckdb_con$add_data_obs(new_data = cell_res_dt)
+  duckdb_con$add_data_var(new_data = gene_nnz_dt)
+  duckdb_con$set_to_keep_column()
+  cell_map <- duckdb_con$get_obs_index_map()
+  gene_map <- duckdb_con$get_var_index_map()
+
+  S7::prop(object, "dims") <- as.integer(rust_con$get_shape())
+  object <- set_cell_mapping(x = object, cell_map = cell_map)
+  object <- set_gene_mapping(x = object, gene_map = gene_map)
+
+  return(object)
+}
+
+### multiple h5 10x outputs ----------------------------------------------------
+
+#' Load multiple 10x CellRanger h5 files into a single `SingleCells`
+#'
+#' @description
+#' Takes the result of [bixverse::prescan_tenx_h5_files()] and loads all
+#' inputs into a single experiment with global gene QC and sequential cell
+#' indexing. The feature space is determined by the prescan
+#' (intersection or union of gene ids).
+#'
+#' @param object `SingleCells` class.
+#' @param prescan_result Output of [bixverse::prescan_tenx_h5_files()].
+#' @param sc_qc_param List. Output of [bixverse::params_sc_min_quality()].
+#' @param streaming Integer. CSR-to-CSC conversion mode. `0L` -> in-memory,
+#' `1L` -> light streaming, `2L` -> heavy streaming with memory upper
+#' boundaries. Defaults to `1L`.
+#' @param batch_size Integer. Cell batch size when `streaming = 1L`.
+#' Defaults to `1000L`.
+#' @param max_genes_in_memory Integer. Maximum genes held in memory at
+#' once when `streaming = 2L`. Defaults to `2000L`.
+#' @param cell_batch_size Integer. Cell batch size when `streaming = 2L`.
+#' Defaults to `100000L`.
+#' @param .verbose Boolean.
+#'
+#' @return The class with updated shape and populated DuckDB.
+#'
+#' @export
+load_multi_tenx_h5 <- S7::new_generic(
+  name = "load_multi_tenx_h5",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    prescan_result,
+    sc_qc_param = params_sc_min_quality(),
+    streaming = 1L,
+    batch_size = 1000L,
+    max_genes_in_memory = 2000L,
+    cell_batch_size = 100000L,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method load_multi_tenx_h5 SingleCells
+#'
+#' @export
+S7::method(load_multi_tenx_h5, SingleCells) <- function(
+  object,
+  prescan_result,
+  sc_qc_param = params_sc_min_quality(),
+  streaming = 1L,
+  batch_size = 1000L,
+  max_genes_in_memory = 2000L,
+  cell_batch_size = 100000L,
+  .verbose = TRUE
+) {
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  assertScMinQC(sc_qc_param)
+  checkmate::assertList(prescan_result)
+  checkmate::assertTRUE(all(
+    c("universe", "universe_size", "file_tasks") %in% names(prescan_result)
+  ))
+  checkmate::qassert(streaming, "I1")
+  checkmate::assertTRUE(streaming %in% c(0L, 1L, 2L))
+  checkmate::qassert(.verbose, "B1")
+
+  rust_con <- get_sc_rust_ptr(object)
+
+  file_res <- rust_con$multi_tenx_h5_to_file(
+    file_tasks = prescan_result$file_tasks,
+    universe_size = as.integer(prescan_result$universe_size),
+    qc_params = sc_qc_param,
+    verbose = .verbose
+  )
+
+  .dispatch_gene_based_data(
+    rust_con = rust_con,
+    streaming = streaming,
+    batch_size = batch_size,
+    max_genes_in_memory = max_genes_in_memory,
+    cell_batch_size = cell_batch_size,
+    .verbose = .verbose
+  )
+
+  gene_nnz <- rust_con$get_nnz_genes(gene_indices = NULL)
+  gene_nnz_dt <- data.table::data.table(no_cells_exp = gene_nnz)
+
+  duckdb_con <- get_sc_duckdb(object)
+
+  if (.verbose) {
+    message("Loading barcodes from 10x h5 files into DuckDB.")
+  }
+
+  per_file_info <- lapply(file_res$per_file, function(f) {
+    task <- prescan_result$file_tasks[[f$exp_id]]
+    list(
+      h5_path = task$h5_path,
+      version = task$version,
+      exp_id = f$exp_id,
+      cell_filter = as.integer(f$cell_indices + 1L)
+    )
+  })
+
+  duckdb_con$populate_obs_from_multi_tenx_h5(per_file_info = per_file_info)
+
+  if (.verbose) {
+    message("Loading features into DuckDB.")
+  }
+
+  final_gene_names <- prescan_result$universe[file_res$global_gene_indices + 1L]
+  duckdb_con$populate_var_minimal(final_gene_names = final_gene_names)
 
   per_file_qc <- lapply(file_res$per_file, function(f) {
     data.table::data.table(nnz = f$nnz, lib_size = f$lib_size)

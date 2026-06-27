@@ -24,7 +24,9 @@ A list with \code{length(indices)} elements, each containing the distance
 minus the given sample.
 }
 \description{
-This function is a helper for the leave-on-out stability
-assessment of CoReMo clusters. The function will generate the distance
-vectors based on leaving out the samples defined in indices one by one.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+This function is a helper for the leave-on-out stability assessment of
+CoReMo clusters. The function will generate the distance vectors based on
+leaving out the samples defined in indices one by one.
 }
+\keyword{internal}

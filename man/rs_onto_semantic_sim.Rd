@@ -26,7 +26,7 @@ A list with:
 }
 }
 \description{
-This function calculates the specified semantic similarity and
-returns the full vector (only calculating the upper triangle) for the given
-similarity.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+This function calculates the specified semantic similarity and returns the
+full vector (only calculating the upper triangle) for the given similarity.
 }

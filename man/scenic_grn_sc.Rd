@@ -10,7 +10,7 @@ scenic_grn_sc(
   scenic_params = params_scenic(),
   genes_to_take = NULL,
   cells_to_take = NULL,
-  streaming = FALSE,
+  streaming = NULL,
   random_seed = 42L,
   .verbose = TRUE
 )
@@ -33,9 +33,9 @@ thresholds in \code{scenic_params}.}
 \item{cells_to_take}{Optional string vector. Cell identifiers to restrict
 to. If \code{NULL}, defaults to all filtered cells in the class.}
 
-\item{streaming}{Boolean. Whether to use the streaming implementation to
-bound memory usage. Useful for large datasets. Defaults to \code{FALSE}. Ignored
-when applied to \code{MetaCells}.}
+\item{streaming}{Optional Boolean. Shall the data be streamed in. Useful for
+larger data sets where you wish to avoid loading in the whole data. If
+\code{NULL}, will automatically detect. Ignored when applied to \code{MetaCells}.}
 
 \item{random_seed}{Integer. Used for reproducibility. Defaults to \code{42L}.}
 

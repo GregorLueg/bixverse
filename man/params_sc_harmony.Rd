@@ -9,7 +9,7 @@ params_sc_harmony(
   sigma = 0.1,
   theta = 2,
   lambda = 1,
-  block_size = 0.05,
+  block_size = 0.2,
   max_iter_kmeans = 20L,
   max_iter_harmony = 10L,
   epsilon_kmeans = 1e-05,

@@ -23,6 +23,7 @@ detailed verbosity.}
 The batch-corrected Harmony (v2) embedding space.
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 This function implements the version 2 Harmony algorithm from Patikas, et
 al., 2026.
 }

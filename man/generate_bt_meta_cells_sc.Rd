@@ -19,7 +19,8 @@ generate_bt_meta_cells_sc(
 \arguments{
 \item{object}{\code{SingleCells} class.}
 
-\item{sc_meta_cell_params}{List. Output of \code{\link[=params_sc_metacells]{params_sc_metacells()}}.
+\item{sc_meta_cell_params}{List. Output of
+\code{\link[=params_sc_bt_metacells]{params_sc_bt_metacells()}}.
 A list with the following items:
 \itemize{
 \item max_shared - Maximum number of allowed shared neighbours for

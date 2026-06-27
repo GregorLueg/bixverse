@@ -44,6 +44,7 @@ of \code{diffusion_scores_1} and  \code{diffusion_scores_2} lists (in order), an
 column representing the value of the tied diffusion for this node.
 }
 \description{
-Helper function to calculate in parallel on the same (unweighted)
-network the tied diffusions as fast as possible. Can be used for permutation.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+Helper function to calculate in parallel on the same (unweighted) network
+the tied diffusions as fast as possible. Can be used for permutation.
 }

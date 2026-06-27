@@ -262,11 +262,19 @@ S7::method(ica_evaluate_comp, BulkCoExp) <- function(
   all_mutual_information <- c()
 
   if (.verbose) {
-    pb <- txtProgressBar(initial = 0, max = length(n_comp_vector), style = 3)
+    cli::cli_progress_bar(
+      "Evaluating ICA components",
+      total = length(n_comp_vector)
+    )
   }
 
   for (i in seq_along(n_comp_vector)) {
     no_comp <- n_comp_vector[[i]]
+
+    if (.verbose) {
+      cli::cli_progress_update(status = sprintf("n_comp = %i", no_comp))
+    }
+
     # Get the combined S matrix and convergence information
     c(s_combined, converged) %<-%
       with(
@@ -306,12 +314,10 @@ S7::method(ica_evaluate_comp, BulkCoExp) <- function(
     all_scores <- append(all_scores, sort(stability_scores, decreasing = TRUE))
     all_convergence <- append(all_convergence, converged)
     all_mutual_information <- append(all_mutual_information, mutual_information)
-
-    if (.verbose) setTxtProgressBar(pb, i)
   }
 
   if (.verbose) {
-    close(pb)
+    cli::cli_progress_done()
   }
 
   ica_comps_rep <- purrr::map(n_comp_vector, \(x) {
@@ -377,7 +383,6 @@ S7::method(ica_evaluate_comp, BulkCoExp) <- function(
 
   return(object)
 }
-
 
 #' @title Identify stability inflection point
 #'
@@ -1002,7 +1007,7 @@ component_mutual_information <- function(centrotype) {
       strategy = "equal_width",
       normalise = TRUE
     ),
-    1L
+    TRUE
   )
   total_mi <- sum(mi_data) / length(mi_data)
 
