@@ -10,7 +10,7 @@ download_cd34_data(quiet = FALSE)
 \item{quiet}{Boolean. If the download shall be quiet.}
 }
 \value{
-String. The path to the extracted doublet detection data.
+String. The path to CD34 SEACells data set.
 }
 \description{
 This function downloads the CD34 data set from the SEACells paper into the

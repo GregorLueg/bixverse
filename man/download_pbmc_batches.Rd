@@ -10,7 +10,7 @@ download_pbmc_batches(quiet = FALSE)
 \item{quiet}{Boolean. If the download shall be quiet.}
 }
 \value{
-String. The path to the extracted doublet detection data.
+String. The path to the directory with the PBMC h5ad files.
 }
 \description{
 This function downloads two different h5ad files for testing batch correction
