@@ -50,7 +50,7 @@ Additional packages that might be of interest interest to you:
 ### Release notes
 
 ![atlas scale on small
-compute](/reference/figures/bixverse_single_cell.png)
+compute](reference/figures/bixverse_single_cell.png)
 
 Major release with `"0.4.0"`. The single cell suite has been further
 improved. The key changes are:

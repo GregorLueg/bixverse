@@ -189,10 +189,6 @@ plots$log10_lib_size + plots$log10_nnz + plots$MT
 ``` r
 
 joint_plot_sc(qc)
-#> Warning: Computation failed in `stat_binhex()`.
-#> Computation failed in `stat_binhex()`.
-#> Caused by error in `compute_group()`:
-#> ! The package "hexbin" is required for `stat_bin_hex()`.
 ```
 
 ![](pbmc_single_cell_files/figure-html/joint%20qc%20plots-1.png)

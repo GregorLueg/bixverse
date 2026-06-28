@@ -113,10 +113,6 @@ compares the number of features and number of counts per cell similar to
 ``` r
 
 joint_plot_sc(qc)
-#> Warning: Computation failed in `stat_binhex()`.
-#> Computation failed in `stat_binhex()`.
-#> Caused by error in `compute_group()`:
-#> ! The package "hexbin" is required for `stat_bin_hex()`.
 ```
 
 ![](single_cell_visualisation_files/figure-html/joint-plot-1.png)
