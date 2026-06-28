@@ -76,22 +76,7 @@ GeneOntologyElim <- S7::new_class(
 
 ## print ------------------------------------------------------------------------
 
-#' @name print.GeneOntologyElim
-#'
-#' @title print Method for GeneOntologyElim object
-#'
-#' @description
-#' Print a GeneOntologyElim object.
-#'
-#' @param x An object of class `GeneOntologyElim`, see
-#' [bixverse::GeneOntologyElim()].
-#' @param ... Additional arguments (currently not used).
-#'
-#' @returns Invisibly returns `x`.
-#'
-#' @method print GeneOntologyElim
-#'
-#' @keywords internal
+#' @noRd
 S7::method(print, GeneOntologyElim) <- function(x, ...) {
   # Get necessary parameters
   number_levels <- length(S7::prop(x, "levels"))
@@ -182,21 +167,7 @@ OntologySim <- S7::new_class(
 
 ## print -----------------------------------------------------------------------
 
-#' @name print.OntologySim
-#'
-#' @title print Method for OntologySim object
-#'
-#' @description
-#' Print a OntologySim object.
-#'
-#' @param x An object of class `OntologySim`, see [bixverse::OntologySim()].
-#' @param ... Additional arguments (currently not used).
-#'
-#' @returns Invisibly returns `x`.
-#'
-#' @method print OntologySim
-#'
-#' @keywords internal
+#' @noRd
 S7::method(print, OntologySim) <- function(x, ...) {
   # Get necessary parameters
   ontology_size <- S7::prop(x, "params")[["ontology_data"]][["total_size"]]

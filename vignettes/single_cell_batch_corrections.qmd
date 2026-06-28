@@ -11,7 +11,7 @@ knitr:
     collapse: true
     comment: '#>'
 author: 
-  - name: "Grant Neilson, Gregor Lueg, Liesbeth François"
+  - name: "Grant Neilson, Gregor Lueg and Liesbeth François"
 ---
 
 ## Intro
@@ -106,9 +106,22 @@ gene proportions and library complexity metrics.
 #| code-fold: true
 var <- get_sc_var(sc_object)
 
+# let's get the gene symbols from one of the h5ad files - in multi file import
+# additional columns are dropped from the vars
+h5_metadata <- read_h5ad_metadata(h5ad_paths[[1]])
+
+var <- merge(
+  var,
+  h5_metadata$var[, c("ENSEMBL_ID", "Symbol_TENx")],
+  by.x = "gene_id",
+  by.y = "ENSEMBL_ID"
+)
+
+setnames(var, old = "Symbol_TENx", new = "gene_symbol", skip_absent = TRUE)
+
 gs_of_interest <- list(
-  MT = var[grepl("^MT-", symbol_tenx), gene_id],
-  Ribo = var[grepl("^RPS|^RPL", symbol_tenx), gene_id]
+  MT = var[grepl("^MT-", gene_symbol), gene_id],
+  Ribo = var[grepl("^RPS|^RPL", gene_symbol), gene_id]
 )
 
 sc_object <- gene_set_proportions_sc(
@@ -235,7 +248,7 @@ batch_aware_hvg <- find_hvg_batch_aware_sc(
 
 sc_object <- fast_mnn_sc(
   object = sc_object,
-  batch_hvg_genes = batch_aware_hvg$hvg_genes,
+  batch_hvg_genes = batch_aware_hvg$hvg_gene_idx,
   batch_column = "exp_id"
 )
 
@@ -516,8 +529,8 @@ There is no universally best batch correction method. Some practical guidance:
 directly, and handles multiple batch variables simultaneously. It tends to work
 well when batch effects are moderate and cell type composition is broadly
 similar across batches. Version 2 is quite an improvement and necessitates less
-that the same cells are available across the batches and is even faster when
-you provide only one batch effect to regress out.
+that the same cells are available across the batches and is substantially faster 
+when you provide only one batch effect to regress out.
 
 - **fastMNN** is worth considering when cell type composition differs
 substantially across batches. The mutual nearest neighbour approach is less

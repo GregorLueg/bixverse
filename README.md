@@ -1,6 +1,6 @@
 # bixverse package
 
-![r_package](https://img.shields.io/badge/R_package-0.3.2-orange) 
+![r_package](https://img.shields.io/badge/R_package-0.4.0-orange) 
 [![CI](https://github.com/GregorLueg/bixverse/actions/workflows/R-cmd-check.yml/badge.svg)](https://github.com/GregorLueg/bixverse/actions/workflows/R-cmd-check.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![pkgdown](https://img.shields.io/badge/pkgdown-website-1b5e9f?logo=github)](https://gregorlueg.github.io/bixverse/)
@@ -16,33 +16,52 @@
 
 ### Description
 
-This is an *opionated* package making various bioinformatics workflows in R (or
-ported from Python) much faster via low-level implementations in Rust. The core 
-idea is to take different methods, write implementations in a compiled,
-memory-managed language with minimal kernel round trips and leverage R purely as 
-an orchestraction layer.
+This is an *opionated* package taking various bioinformatics and computational
+biology workflows from R and Python, making them substantially faster via 
+low-level implementations in Rust and exposing them via thin R wrappers. 
 Result? Blazingly fast performance with low memory usage, making large-scale
-analyses feasable without any cloud compute. Over time more and more methods
-will be added. The aim will be to come a `tidyverse` equivalent, but for
-a lot of downstream methods post WGS processing (with a strong emphasis on 
-transcriptomics, think single cell and RNASeq for now). There is a sister 
-package for plotting functions being build in parallel, see 
-[here](https://github.com/GregorLueg/bixverse.plots) (that one is in alpha
-phase).
+analysis feasable without any cloud compute. Over time more and more methods
+will be added.  
 
-<img src="/man/figures/bixverse_single_cell.png" width="500" height="500" alt="atlas scale on small compute">
+Two sister packages are also in the process of being built and maintained:
+
+- [bixverse.plots](https://github.com/GregorLueg/bixverse.plots) package for - 
+  you guessed it - plotting. Contains especially a large number of plotting
+  helpers for single cell now.
+- [bixverse.gpu](https://github.com/GregorLueg/bixverse.gpu) package for -
+  you guessed it again - GPU-accelerated methods. In this case, it leverages
+  [cubecl](https://github.com/tracel-ai/cubecl)/[Burn](https://burn.dev) under 
+  the hood with wgpu backends which means it will work on (theoretically) any
+  GPU.
+
+Additional packages that might be of interest interest to you:
+
+- [manifoldsR](https://github.com/GregorLueg/manifoldsR). This package 
+  specialises on methods for manifold learning for visualisations, think UMAP,
+  tSNE, diffusion maps, etc. Additionally, it is home to a cool clustering 
+  method called [EVoC](https://github.com/TutteInstitute/evoc) leveraging
+  Rust under the hood. This package is used for all of the 2D visualisations
+  for the single cell suite.
+- [genewalkR](https://github.com/GregorLueg/genewalkR). This one is a bit more
+  graph-heavy but has some cool methods in there... Also, it provides a data
+  base with different gene <> gene interaction and regulatory networks. For
+  sure useful for different computational biology workflows.
 
 ### Release notes
 
-Major release with `"0.4.0". The single cell suite has been further improved. 
+<img src="man/figures/bixverse_single_cell.png" width="500" height="500" alt="atlas scale on small compute">
+
+Major release with `"0.4.0"`. The single cell suite has been further improved. 
 The key changes are:
-- Performance improvements across several axis. A lot of the underlying Rust
+
+- Performance improvements across several axes. A lot of the underlying Rust
   code was made even faster and more performant. The goal of analysing a 1m
   single cell data set on a MacBook Air with 24 GB memory has been achieved.
 - Multi-modal support. There is now a `SingleCellsMultiModal` class that allows
   you to (for now only) also add ADT counts. Some readers have been added to
   load in the data. This also includes support for new methods in this space:
-  * [DSB normalisation](https://www.nature.com/articles/s41467-022-29356-8) for ADT counts
+  * [DSB normalisation](https://www.nature.com/articles/s41467-022-29356-8) for
+    ADT counts
   * [WNN generation](https://www.cell.com/cell/fulltext/S0092-8674(21)00583-3) 
     for generation of multi-modal graphs.
   * Large number of methods and updates to support multi-model analysis
@@ -50,6 +69,7 @@ The key changes are:
   [bixverse.gpu](https://github.com/GregorLueg/bixverse.gpu)): enabling 
   GPU-accelerated methods (Harmony, PCA) and a large number of plotting helpers.
 - Updates to various vignettes to reflect the changes with this release.
+- More methods added... Symphony, NicheNet, sparse NMF for single cells!
 
 [Please checkout out the website of the package for details](https://gregorlueg.github.io/bixverse/) -> 
 particularly the sections around single cell (design choices and vignettes.)
@@ -115,7 +135,7 @@ and trade-offs. The various vignettes will show you how to analyse data.
 - [ ] Implementation of [Palantir](https://www.nature.com/articles/s41587-019-0068-4) and
   [Slingshot](https://pubmed.ncbi.nlm.nih.gov/29914354/) for trajectory
   analysis
-- [ ] Port over [NicheNet](https://www.nature.com/articles/s41592-019-0667-5).
+- [x] Port over [NicheNet](https://www.nature.com/articles/s41592-019-0667-5).
 - [ ] Easy interoperability that chunks of data can be read in for neural 
   network training in the corresponding deep learning frameworks.
 
@@ -127,15 +147,16 @@ local compute.
 
 ### General methods
 
-- [ ] Addition of an NMF method for dense and sparse matrices. After some 
-  research likely a combination HALS + NNDSVD initialisation
+- [x] Addition of an NMF method for dense and sparse matrices. After some 
+  research likely a combination HALS + NNDSVD initialisation. Partially done,
+  the single cell part is ready.
 
 ### Further cross integration with other packages
 
 Two sister packages are in active development: 
 [GPU-accelerated methods](https://github.com/GregorLueg/bixverse.gpu) and a
 dedicated [plotting package](https://github.com/GregorLueg/bixverse.plots). 
-Further improved cross integration is on the to-do list.
+Further improved cross-integration is on the to-do list.
 
 ### Documentation
 

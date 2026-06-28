@@ -19,6 +19,10 @@ rs_build_symphony_ref(
 )
 }
 \arguments{
+\item{f_path_gene}{String. Path to the gene-based binary file.}
+
+\item{f_path_cell}{String. Path to the cell-based binary file.}
+
 \item{cell_indices}{Integer vector. 0-based cell indices.}
 
 \item{hvg_indices}{Integer vector. 0-based HVG indices.}
@@ -37,11 +41,8 @@ variable).}
 
 \item{seed}{Integer.}
 
-\item{verbose}{Integer. 0/1/2.}
-
-\item{f_path}{String. Path to the gene-based binary file.}
-
-\item{clr_offsets}{Numerical vector. Length-0 for None.}
+\item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
+detailed verbosity.}
 }
 \value{
 A list with gene_means, gene_sds, loadings, z_orig, z_corr, r,

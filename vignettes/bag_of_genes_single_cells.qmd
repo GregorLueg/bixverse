@@ -245,7 +245,7 @@ sc_object <- add_sc_new_obs(
   obs_data = get_data(module_scores)
 )
 
-sc_object[[1:5]]
+head(sc_object)
 ```
 
 As we can appreciate, this has now added the new columns. 
@@ -658,6 +658,7 @@ We will use the AUC scores from earlier to pull out the T cell population.
 data-driven threshold for the bimodal AUC distribution.
 
 ```{r}
+#| label: define t-cell threshold
 otsu_t_cell <- find_threshold_otsu(auc_dt$`T cell`)
 
 ggplot(data = auc_dt, mapping = aes(x = `T cell`)) +
@@ -679,7 +680,8 @@ the HVGs stored on the object. Convenient when you want HVGs for a specific
 downstream analysis without disturbing the global state.
 
 ```{r}
-t_cell_ids = otsu_t_cell, cell_id]
+#| label: define the t-cells and hvg
+t_cell_ids <- auc_dt[`T cell` >= otsu_t_cell, cell_id]
 
 hvg_t_cell_data <- get_hvg_data_sc(object = sc_object, cell_ids = t_cell_ids)
 
@@ -693,6 +695,7 @@ initialisation is NNDSVD, which is deterministic and usually gives a sensible
 starting point.
 
 ```{r}
+#| label: run nmf on t-cells
 t_cell_nmf_results <- nmf_sc(
   object = sc_object,
   k = 10L,
@@ -706,10 +709,12 @@ The result is an `NmfResult` carrying the `W` gene-loading matrix
 plus the parameters and convergence info.
 
 ```{r}
+#| label: get nmf w matrix
 get_w(t_cell_nmf_results)[1:5, 1:5]
 ```
 
 ```{r}
+#| label: get nmf h matrix
 get_h(t_cell_nmf_results)[1:5, 1:5]
 ```
 
@@ -722,6 +727,7 @@ Looking at this stabilised data allows you to identify components that
 constantly show up between random initialisations.
 
 ```{r}
+#| label: run stabilised nmf
 t_cell_nmf_results_stabilised <- stabilised_nmf_sc(
   object = sc_object,
   k = 10L,
@@ -736,6 +742,7 @@ columns corresponds to one run. You can then use it for downstream consensus
 analyses.
 
 ```{r}
+#| label: get nmf w matrix (stabilised)
 get_w(t_cell_nmf_results_stabilised)
 ```
 
@@ -744,6 +751,7 @@ different cell-activation pattern (components are not aligned across runs
 without further work).
 
 ```{r}
+#| label: get nmf h matrix (stabilised)
 str(get_h(t_cell_nmf_results_stabilised))
 ```
 
@@ -752,6 +760,7 @@ point for a single-run analysis. `get_best_run()` returns it as an
 `NmfResult`, identical in shape to the output of `nmf_sc()`.
 
 ```{r}
+#| label: get stabilised nmf best run
 best_run <- get_best_run(t_cell_nmf_results_stabilised)
 best_run
 ```

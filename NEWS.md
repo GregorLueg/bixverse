@@ -7,6 +7,7 @@ Following things were added:
 * Merging of SingleCells object possible
 * Multi file reading in for .mtx files
 * Possibility to read in densely stored h5ad files.
+* 10x h5 files can be read in.
 * Multi-model single cell support set up
   - New multi-model class for single cells: `SingleCellsMultiModal`.
   - You can no add the ADT counts to that one (in the future maybe also ATAC-
@@ -27,6 +28,8 @@ Following things were added:
 * [Symphony](https://www.nature.com/articles/s41467-021-25957-x) for label 
   transfer of cell types.
 * Grouping column for doublet detection methods.
+* [NicheNet](https://www.nature.com/articles/s41592-019-0667-5) implementation 
+  for ligand receptor analysis
 
 ## Bug fixes
 
@@ -35,6 +38,7 @@ Following things were added:
   the var reference file does not contain every gene in the universe. The
   `gene_id` is now pinned to the canonical universe id and additional data found 
   in the vars is dropped. The user has to add them subsequently.
+* Properly dealt with the mitch bug and removed the hotfix part.
 
 ## Breaking changes
 
@@ -64,7 +68,16 @@ calculate_pca_sc(
 ```
 
 This gives you way more control over how to run the PCA normalisation (mean
-centering, variance normalisation or now also the new PFLogPF normalisation).
+centering, variance normalisation or now also the new 
+[PFLogPF](https://www.biorxiv.org/content/10.1101/2022.05.06.490859v4) 
+normalisation).
+
+# bixverse 0.3.3
+
+## Fixes
+
+- Hotfix coded in that made mitch explode on larger data sets. Will be properly
+  fixed on the `bixverse-rs` side in the next release, but needed now.
 
 # bixverse 0.3.2
 

@@ -13,7 +13,7 @@ set_knn(x, knn, ...)
 ## S7 method for class <bixverse::MetaCells>
 set_knn(x, knn, ...)
 
-\method{set_knn}{ScCache}(x, knn)
+\method{set_knn}{ScCache}(x, knn, ...)
 
 ## S7 method for class <bixverse::SingleCells>
 set_knn(x, knn, ...)

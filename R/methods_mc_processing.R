@@ -160,6 +160,8 @@ S7::method(calc_diffusion_coordinates, MetaCells) <- function(
 #' that compactness indicates how tight the metacell spans the manifold, whereas
 #' separation indicates how well the different metacells span the manifold.
 #'
+#' @param object `MetaCells` class for which to calculate the different metrics.
+#'
 #' @returns The class with the compactness and separation scores added.
 #'
 #' @export

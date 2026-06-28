@@ -49,7 +49,7 @@ metadata first to confirm what is in there before committing to anything.
 ```{r}
 #| label: paths
 # NEEDS UPDATE
-h5_10x_path <- "~/Desktop/zenodo_data/multi-omics-data/10k_Human_PBMC_TotalSeqB.h5"
+h5_10x_path <- download_pbmc_totalseq_data()
 
 tempdir_10x_total_seq <- tempdir()
 ```

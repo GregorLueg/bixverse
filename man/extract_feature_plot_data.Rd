@@ -28,6 +28,8 @@ extract_feature_plot_data(
 
 \item{clip}{Optional numeric. Clip z-scores if \code{scale = TRUE}.}
 
+\item{obs_col}{Optional character vector. Obs columns to attach.}
+
 \item{expr_modality}{String. Modality the expression is pulled from. One of
 \code{c("rna", "adt")}.}
 
@@ -37,8 +39,6 @@ extract_feature_plot_data(
 \item{...}{Additional arguments forwarded to \code{\link[=extract_embedding_data]{extract_embedding_data()}} and
 onward to \code{\link[=get_embedding]{get_embedding()}}. Do not pass \code{modality} here; the embedding
 modality is set via \code{embd_modality} and passing it again will error.}
-
-\item{obs_cols}{Optional character vector. Obs columns to attach.}
 }
 \value{
 A long data.table with \code{cell_id}, \verb{dim_*}, \code{gene} and \code{expression}.
