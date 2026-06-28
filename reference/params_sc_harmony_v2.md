@@ -10,7 +10,7 @@ params_sc_harmony_v2(
   sigma = 0.1,
   theta = 2,
   lambda = 1,
-  block_size = 0.05,
+  block_size = 0.2,
   max_iter_kmeans = 4L,
   max_iter_harmony = 10L,
   epsilon_kmeans = 0.001,
@@ -19,7 +19,8 @@ params_sc_harmony_v2(
   alpha = 0.2,
   tau = 0,
   batch_proportion_cutoff = 1e-05,
-  use_dynamic_lambda = FALSE
+  use_dynamic_lambda = FALSE,
+  kmeans = list()
 )
 ```
 
@@ -96,6 +97,13 @@ params_sc_harmony_v2(
 
   Boolean. If `TRUE`, lambda is estimated dynamically per cluster
   instead of using the fixed `lambda` value.
+
+- kmeans:
+
+  List. Optional overrides for the k-means clustering algorithm Possible
+  parameters are `"k_means_iter"`, `"k_means_init"`, `"gemm"` and
+  `"hamerly"`, see
+  [`params_kmeans_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_kmeans_defaults.md).
 
 ## Value
 

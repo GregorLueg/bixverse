@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -31,14 +31,24 @@
   </ul></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-single-cells" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Single Cells</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-single-cells"><li><a class="dropdown-item" href="../articles/thinking_single_cell.html">Thinking about single cells the bixverse way</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-single-cells"><li><h6 class="dropdown-header" data-toc-skip>Intro vignettes</h6></li>
+    <li><a class="dropdown-item" href="../articles/thinking_single_cell.html">Thinking about single cells the bixverse way</a></li>
     <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">PBMC analysis with the bixverse single cell framework</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_io.html">Reading data in (single-cell I/O)</a></li>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
-    <li><a class="dropdown-item" href="../articles/analysis_single_cell.html">'Bag of genes' methods for single cell in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/knn_searches.html">kNN searches for single cells in bixverse</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>More advanced analysis methods</h6></li>
+    <li><a class="dropdown-item" href="../articles/bag_of_genes_single_cells.html">'Bag of genes' methods for single cell in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/nichenet.html">Ligand receptor analysis</a></li>
     <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/symphomy.html">Reference mapping via Symphony</a></li>
+    <li><a class="dropdown-item" href="../articles/multi_modal_single_cell.html">Multi-modal analysis</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Others</h6></li>
     <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing big data on a powerful laptop (example)</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_visualisation.html">Plotting helpers</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -74,7 +84,7 @@
 
         <dt>
 
-          <code><a href="get_params.html">get_params()</a></code> <code><a href="get_params.html">get_params.Hotspot()</a></code> <code><a href="get_params.html">get_params.miloR()</a></code> <code><a href="get_params.html">get_params.ScenicGrn()</a></code>
+          <code><a href="get_params.html">get_params()</a></code> <code><a href="get_params.html">get_params.Hotspot()</a></code> <code><a href="get_params.html">get_params.miloR()</a></code> <code><a href="get_params.html">get_params.ScenicGrn()</a></code> <code><a href="get_params.html">get_params.NmfResult()</a></code> <code><a href="get_params.html">get_params.StabilisedNmfResult()</a></code>
 
         </dt>
         <dd>Get the parameters that were used.</dd>
@@ -1033,7 +1043,7 @@
         </dt>
         <dd>Wrapper function to generate SNF parameters</dd>
       </dl></div><div class="section level2">
-      <h2 id="single-cell-classe-and-getters">Single cell classe and getters<a class="anchor" aria-label="anchor" href="#single-cell-classe-and-getters"></a></h2>
+      <h2 id="single-cell-class-and-getters">Single cell class and getters<a class="anchor" aria-label="anchor" href="#single-cell-class-and-getters"></a></h2>
 
       <div class="section-desc"><p>THE single cell class with a large number of getters.</p></div>
 
@@ -1047,14 +1057,14 @@
           <code><a href="SingleCells.html">SingleCells()</a></code>
 
         </dt>
-        <dd>bixverse single cell class</dd>
+        <dd>bixverse SingleCells class</dd>
 
         <dt>
 
-          <code><a href="SingleCellCountData.html">SingleCellCountData</a></code>
-
+          <code><a href="SingleCellCountData.html">SingleCellCountData</a></code> <code><a href="SingleCellCountData.html">$.SingleCellCountData</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
-        <dd>A class for handling single cell count data</dd>
+        <dd>Single cell count data handler</dd>
 
         <dt>
 
@@ -1132,6 +1142,13 @@
 
         </dt>
         <dd>Get the gene names</dd>
+
+        <dt>
+
+          <code><a href="get_cell_info.html">get_cell_info()</a></code>
+
+        </dt>
+        <dd>Get the cell idx (R-based) and cell names</dd>
 
         <dt>
 
@@ -1223,6 +1240,106 @@
 
         </dt>
         <dd>Add a new column to the var table</dd>
+
+        <dt>
+
+          <code><a href="drop_cols_sc.html">drop_cols_sc()</a></code>
+
+        </dt>
+        <dd>Drop columns from the obs or var table</dd>
+      </dl></div><div class="section level2">
+      <h2 id="single-cell-class-for-multi-modal-data-and-getters">Single cell class for multi-modal data and getters<a class="anchor" aria-label="anchor" href="#single-cell-class-for-multi-modal-data-and-getters"></a></h2>
+
+      <div class="section-desc"><p>This version allows you to also work ADT counts</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="SingleCellsMultiModal.html">SingleCellsMultiModal()</a></code>
+
+        </dt>
+        <dd>bixverse SingleCells (multi modal) class</dd>
+
+        <dt>
+
+          <code><a href="new_adt_counts_clr.html">new_adt_counts_clr()</a></code>
+
+        </dt>
+        <dd>Generates a new <code>ADTCounts</code> class</dd>
+
+        <dt>
+
+          <code><a href="new_adt_counts_dsb.html">new_adt_counts_dsb()</a></code>
+
+        </dt>
+        <dd>Generates a new <code>ADTCounts</code> class via DSB normalisation</dd>
+
+        <dt>
+
+          <code><a href="add_adt_counts_sc.html">add_adt_counts_sc()</a></code>
+
+        </dt>
+        <dd>Add ADT counts to <code>SingleCellsMultiModal</code></dd>
+
+        <dt>
+
+          <code><a href="detect_adt_isotypes.html">detect_adt_isotypes()</a></code>
+
+        </dt>
+        <dd>Detect likely isotype-control features by name pattern</dd>
+
+        <dt>
+
+          <code><a href="get_adt_feature_info.html">get_adt_feature_info()</a></code>
+
+        </dt>
+        <dd>Get the ADT feature info</dd>
+
+        <dt>
+
+          <code><a href="get_adt_names.html">get_adt_names()</a></code>
+
+        </dt>
+        <dd>Get the ADT feature names</dd>
+
+        <dt>
+
+          <code><a href="get_adt_sample_info.html">get_adt_sample_info()</a></code>
+
+        </dt>
+        <dd>Get the ADT sample info</dd>
+
+        <dt>
+
+          <code><a href="params_sc_dsb.html">params_sc_dsb()</a></code>
+
+        </dt>
+        <dd>Default parameters for DSB ADT normalisation</dd>
+
+        <dt>
+
+          <code><a href="read_multi_tenx_h5_adt.html">read_multi_tenx_h5_adt()</a></code>
+
+        </dt>
+        <dd>Read in 10x h5 ADT data from multiple files</dd>
+
+        <dt>
+
+          <code><a href="read_tenx_h5_adt.html">read_tenx_h5_adt()</a></code>
+
+        </dt>
+        <dd>Read in 10x h5 ADT data</dd>
+
+        <dt>
+
+          <code><a href="remove_adt_isotypes.html">remove_adt_isotypes()</a></code>
+
+        </dt>
+        <dd>Return the ADT feature names removing the isotypes</dd>
       </dl></div><div class="section level2">
       <h2 id="meta-cell-related-generation-classes-and-methods">Meta cell-related generation, classes and methods<a class="anchor" aria-label="anchor" href="#meta-cell-related-generation-classes-and-methods"></a></h2>
 
@@ -1324,7 +1441,7 @@
           <code><a href="get_h5ad_dimensions.html">get_h5ad_dimensions()</a></code>
 
         </dt>
-        <dd>Helper function to get the dimensions and compressed sparse format</dd>
+        <dd>Helper function to get the dimensions and storage format</dd>
 
         <dt>
 
@@ -1332,6 +1449,27 @@
 
         </dt>
         <dd>Pre-scan multiple h5ad files for multi-sample loading</dd>
+
+        <dt>
+
+          <code><a href="prescan_mtx_dirs.html">prescan_mtx_dirs()</a></code>
+
+        </dt>
+        <dd>Prescan multiple mtx directories for a multi-load</dd>
+
+        <dt>
+
+          <code><a href="prescan_tenx_h5_files.html">prescan_tenx_h5_files()</a></code>
+
+        </dt>
+        <dd>Pre-scan multiple 10x CellRanger h5 files for multi-sample loading</dd>
+
+        <dt>
+
+          <code><a href="read_tenx_h5_metadata.html">read_tenx_h5_metadata()</a></code>
+
+        </dt>
+        <dd>Read barcode and feature tables and metadata from a 10x h5 file</dd>
 
         <dt>
 
@@ -1363,6 +1501,13 @@
 
         <dt>
 
+          <code><a href="load_multi_mtx.html">load_multi_mtx()</a></code>
+
+        </dt>
+        <dd>Load multiple mtx directories into a single <code>SingleCells</code></dd>
+
+        <dt>
+
           <code><a href="load_multi_h5ad.html">load_multi_h5ad()</a></code>
 
         </dt>
@@ -1373,7 +1518,7 @@
           <code><a href="stream_h5ad.html">stream_h5ad()</a></code>
 
         </dt>
-        <dd>Stream in h5ad to <code>SingleCells</code></dd>
+        <dd>Stream in h5ad to <code>SingleCells</code> (alias)</dd>
 
         <dt>
 
@@ -1388,6 +1533,20 @@
 
         </dt>
         <dd>Load in Seurat to <code>SingleCells</code></dd>
+
+        <dt>
+
+          <code><a href="load_tenx_h5.html">load_tenx_h5()</a></code>
+
+        </dt>
+        <dd>Load in a 10x CellRanger h5 file to <code>SingleCells</code></dd>
+
+        <dt>
+
+          <code><a href="load_multi_tenx_h5.html">load_multi_tenx_h5()</a></code>
+
+        </dt>
+        <dd>Load multiple 10x CellRanger h5 files into a single <code>SingleCells</code></dd>
 
         <dt>
 
@@ -1416,6 +1575,13 @@
 
         </dt>
         <dd>Convert legacy v2 single-cell data files to v3 format</dd>
+
+        <dt>
+
+          <code><a href="merge_sc_experiments.html">merge_sc_experiments()</a></code>
+
+        </dt>
+        <dd>Merge multiple <code>SingleCells</code> experiments into one</dd>
 
         <dt>
 
@@ -1452,7 +1618,7 @@
           <code><a href="call_doublets_manual.html">call_doublets_manual()</a></code>
 
         </dt>
-        <dd>Helper function to manually readjust Scrublet thresholds</dd>
+        <dd>Manually readjust Scrublet doublet call thresholds</dd>
 
         <dt>
 
@@ -1502,6 +1668,13 @@
 
         </dt>
         <dd>Identify HVGs (batch aware)</dd>
+
+        <dt>
+
+          <code><a href="get_hvg_data_sc.html">get_hvg_data_sc()</a></code>
+
+        </dt>
+        <dd>Identify HVGs without mutating object state</dd>
 
         <dt>
 
@@ -1603,6 +1776,13 @@
 
         <dt>
 
+          <code><a href="params_sc_pca.html">params_sc_pca()</a></code>
+
+        </dt>
+        <dd>Wrapper for PCA specifically designed for single cells</dd>
+
+        <dt>
+
           <code><a href="params_scrublet.html">params_scrublet()</a></code>
 
         </dt>
@@ -1680,6 +1860,20 @@
 
         <dt>
 
+          <code><a href="params_sc_knn.html">params_sc_knn()</a></code>
+
+        </dt>
+        <dd>Parameters for single cell kNN searches</dd>
+
+        <dt>
+
+          <code><a href="params_kmeans_defaults.html">params_kmeans_defaults()</a></code>
+
+        </dt>
+        <dd>K-mean parameter defaults.</dd>
+
+        <dt>
+
           <code><a href="params_fast_cluster_default.html">params_fast_cluster_default()</a></code>
 
         </dt>
@@ -1748,7 +1942,7 @@
           <code><a href="generate_knn_sc.html">generate_knn_sc()</a></code>
 
         </dt>
-        <dd>Generate the KNN data with distances</dd>
+        <dd>Generate a <code>SingleCellNearestNeighbour</code> from a single cell class</dd>
 
         <dt>
 
@@ -1791,6 +1985,13 @@
 
         </dt>
         <dd>Generate an miloR abundance object for differential abundance testing</dd>
+
+        <dt>
+
+          <code><a href="meld_sc.html">meld_sc()</a></code>
+
+        </dt>
+        <dd>Run MELD signal smoothing for differential abundance estimation</dd>
 
         <dt>
 
@@ -1878,6 +2079,41 @@
 
         <dt>
 
+          <code><a href="nmf_sc.html">nmf_sc()</a></code>
+
+        </dt>
+        <dd>Run single-run NMF on single cell or meta cell data</dd>
+
+        <dt>
+
+          <code><a href="stabilised_nmf_sc.html">stabilised_nmf_sc()</a></code>
+
+        </dt>
+        <dd>Run stabilised (multi-run) NMF on single cell or meta cell data</dd>
+
+        <dt>
+
+          <code><a href="get_best_run.html">get_best_run()</a></code>
+
+        </dt>
+        <dd>Get the best run from a stabilised NMF result</dd>
+
+        <dt>
+
+          <code><a href="get_w.html">get_w()</a></code>
+
+        </dt>
+        <dd>Get the W (gene loadings) matrix</dd>
+
+        <dt>
+
+          <code><a href="get_h.html">get_h()</a></code>
+
+        </dt>
+        <dd>Get the H (cell activations) matrix</dd>
+
+        <dt>
+
           <code><a href="params_sc_hotspot.html">params_sc_hotspot()</a></code>
 
         </dt>
@@ -1924,6 +2160,50 @@
 
         </dt>
         <dd>Default parameters for the SCENIC RandomForest regression learner</dd>
+
+        <dt>
+
+          <code><a href="params_meld.html">params_meld()</a></code>
+
+        </dt>
+        <dd>Constructor for MELD parameters</dd>
+
+        <dt>
+
+          <code><a href="params_nmf_hals.html">params_nmf_hals()</a></code>
+
+        </dt>
+        <dd>Wrapper function for NMF (HALS) parameters</dd>
+      </dl></div><div class="section level2">
+      <h2 id="single-cell-multi-modal-analysis-methods">Single cell multi-modal analysis methods<a class="anchor" aria-label="anchor" href="#single-cell-multi-modal-analysis-methods"></a></h2>
+
+      <div class="section-desc"><p>Methods to analyse multi-modal single cell data</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="calculate_pca_adt_sc.html">calculate_pca_adt_sc()</a></code>
+
+        </dt>
+        <dd>Calculate the PCA on top of the normalised ADT counts</dd>
+
+        <dt>
+
+          <code><a href="generate_wnn_graph_sc.html">generate_wnn_graph_sc()</a></code>
+
+        </dt>
+        <dd>Generate a weighted nearest neighbour (WNN) graph</dd>
+
+        <dt>
+
+          <code><a href="params_sc_wnn.html">params_sc_wnn()</a></code>
+
+        </dt>
+        <dd>Wrapper function for WNN parameters</dd>
       </dl></div><div class="section level2">
       <h2 id="single-cell-related-classes-and-methods">Single-cell related classes and methods<a class="anchor" aria-label="anchor" href="#single-cell-related-classes-and-methods"></a></h2>
 
@@ -1971,7 +2251,7 @@
 
         <dt>
 
-          <code><a href="get_obs_data.html">get_obs_data()</a></code>
+          <code><a href="get_data.html">get_data()</a></code>
 
         </dt>
         <dd>Get the ready obs data from various sub method</dd>
@@ -1981,7 +2261,7 @@
           <code><a href="get_scores.html">get_scores()</a></code>
 
         </dt>
-        <dd>Get either the cxds or weighted scores</dd>
+        <dd>Get scores</dd>
 
         <dt>
 
@@ -1990,7 +2270,158 @@
         </dt>
         <dd>Helper function to generate kNN data with distances</dd>
       </dl></div><div class="section level2">
-      <h2 id="single-cell-plotting-stuff">Single-cell plotting stuff<a class="anchor" aria-label="anchor" href="#single-cell-plotting-stuff"></a></h2>
+      <h2 id="reference-mapping-and-cell-type-annotations-in-single-cell">Reference mapping and cell type annotations in single cell<a class="anchor" aria-label="anchor" href="#reference-mapping-and-cell-type-annotations-in-single-cell"></a></h2>
+
+      <div class="section-desc"><p>Helpers to do reference mapping and cell type identification in single cell</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="SymphonyReference.html">SymphonyReference()</a></code>
+
+        </dt>
+        <dd>bixverse SymphonyReference class</dd>
+
+        <dt>
+
+          <code><a href="add_symphony_labels.html">add_symphony_labels()</a></code>
+
+        </dt>
+        <dd>Add labels to a Symphony reference post-hoc</dd>
+
+        <dt>
+
+          <code><a href="build_symphony_ref.html">build_symphony_ref()</a></code>
+
+        </dt>
+        <dd>Build a Symphony reference from a SingleCells object</dd>
+
+        <dt>
+
+          <code><a href="transfer_labels_symphony.html">transfer_labels_symphony()</a></code>
+
+        </dt>
+        <dd>Transfer labels from a Symphony reference to a query via kNN majority vote</dd>
+
+        <dt>
+
+          <code><a href="get_symphony_hvg_names.html">get_symphony_hvg_names()</a></code>
+
+        </dt>
+        <dd>Getter for the HVG gene names of a Symphony reference</dd>
+
+        <dt>
+
+          <code><a href="get_symphony_labels.html">get_symphony_labels()</a></code>
+
+        </dt>
+        <dd>Getter for the stored labels of a Symphony reference</dd>
+
+        <dt>
+
+          <code><a href="get_symphony_loadings.html">get_symphony_loadings()</a></code>
+
+        </dt>
+        <dd>Getter for the PCA loadings of a Symphony reference</dd>
+
+        <dt>
+
+          <code><a href="get_symphony_z_corr.html">get_symphony_z_corr()</a></code>
+
+        </dt>
+        <dd>Getter for the corrected embedding of a Symphony reference</dd>
+
+        <dt>
+
+          <code><a href="map_symphony_query.html">map_symphony_query()</a></code>
+
+        </dt>
+        <dd>Map a SingleCells query onto a Symphony reference</dd>
+
+        <dt>
+
+          <code><a href="prepare_cell_markers.html">prepare_cell_markers()</a></code>
+
+        </dt>
+        <dd>Helper function to prepare cell markers</dd>
+
+        <dt>
+
+          <code><a href="calc_sc_type_scores.html">calc_sc_type_scores()</a></code>
+
+        </dt>
+        <dd>Calculate ScType scores per cell</dd>
+
+        <dt>
+
+          <code><a href="score_clusters.html">score_clusters()</a></code>
+
+        </dt>
+        <dd>Score clusters based on ScType</dd>
+
+        <dt>
+
+          <code><a href="params_symphony_map.html">params_symphony_map()</a></code>
+
+        </dt>
+        <dd>Default parameters for Symphony query mapping</dd>
+      </dl></div><div class="section level2">
+      <h2 id="single-cell-ligand-receptor">Single cell ligand receptor<a class="anchor" aria-label="anchor" href="#single-cell-ligand-receptor"></a></h2>
+
+      <div class="section-desc"><p>Classes, functions and generics/methods for ligand receptor analysis for single cell.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="compute_expression_info_sc.html">compute_expression_info_sc()</a></code>
+
+        </dt>
+        <dd>Compute per-cluster mean expression and expressing fraction for a gene set</dd>
+
+        <dt>
+
+          <code><a href="generate_ligand_target_influence.html">generate_ligand_target_influence()</a></code>
+
+        </dt>
+        <dd>Generate the ligand to target influence matrix</dd>
+
+        <dt>
+
+          <code><a href="get_influence.html">get_influence()</a></code>
+
+        </dt>
+        <dd>Get the ligand-target influence matrix</dd>
+
+        <dt>
+
+          <code><a href="ligand_activity_scores.html">ligand_activity_scores()</a></code>
+
+        </dt>
+        <dd>Compute ligand activity scores against gene sets</dd>
+
+        <dt>
+
+          <code><a href="params_ligand_target.html">params_ligand_target()</a></code>
+
+        </dt>
+        <dd>Parameters for ligand to target influence computation</dd>
+
+        <dt>
+
+          <code><a href="prioritise_interactions.html">prioritise_interactions()</a></code>
+
+        </dt>
+        <dd>Prioritise sender-ligand-receiver-receptor interactions</dd>
+      </dl></div><div class="section level2">
+      <h2 id="single-cell-plotting-stuff">Single cell plotting stuff<a class="anchor" aria-label="anchor" href="#single-cell-plotting-stuff"></a></h2>
 
       <div class="section-desc"><p>Various helpers that generate data for plotting single cell, such as 2D embeddings, or extract specific columns from the metadata or genes (and their summaries) from the binary storage files.</p></div>
 
@@ -2040,6 +2471,34 @@
 
         </dt>
         <dd>Extract normalised gene expression for plotting</dd>
+
+        <dt>
+
+          <code><a href="extract_embedding_data.html">extract_embedding_data()</a></code>
+
+        </dt>
+        <dd>Extract embedding coordinates for plotting</dd>
+
+        <dt>
+
+          <code><a href="extract_feature_pair.html">extract_feature_pair()</a></code>
+
+        </dt>
+        <dd>Extract a pair of features for scatter / hex plots</dd>
+
+        <dt>
+
+          <code><a href="extract_feature_plot_data.html">extract_feature_plot_data()</a></code>
+
+        </dt>
+        <dd>Extract per-cell expression mapped onto an embedding</dd>
+
+        <dt>
+
+          <code><a href="extract_gene_violin_data.html">extract_gene_violin_data()</a></code>
+
+        </dt>
+        <dd>Extract per-cell expression grouped for violin plots</dd>
       </dl></div><div class="section level2">
       <h2 id="stastical-functions">Stastical functions<a class="anchor" aria-label="anchor" href="#stastical-functions"></a></h2>
 
@@ -2252,6 +2711,20 @@
 
         <dt>
 
+          <code><a href="download_pbmc_totalseq_data.html">download_pbmc_totalseq_data()</a></code>
+
+        </dt>
+        <dd>Download the PBMC TotalSeq data with ADT counts</dd>
+
+        <dt>
+
+          <code><a href="download_pbmc8k.html">download_pbmc8k()</a></code>
+
+        </dt>
+        <dd>Download PBMC8K data from Zenodo</dd>
+
+        <dt>
+
           <code><a href="calculate_sparsity_stats.html">calculate_sparsity_stats()</a></code>
 
         </dt>
@@ -2294,10 +2767,17 @@
 
         <dt>
 
+          <code><a href="write_h5ad_sc_dense.html">write_h5ad_sc_dense()</a></code>
+
+        </dt>
+        <dd>Helper function to write data to a dense h5ad file</dd>
+
+        <dt>
+
           <code><a href="params_sc_synthetic_data.html">params_sc_synthetic_data()</a></code>
 
         </dt>
-        <dd>Default parameters for generation of synthetic data</dd>
+        <dd>Default parameters for generation of synthetic single cell data (RNA)</dd>
 
         <dt>
 
@@ -2401,7 +2881,7 @@
       </dl></div><div class="section level2">
       <h2 id="rust-wrappers">Rust wrappers<a class="anchor" aria-label="anchor" href="#rust-wrappers"></a></h2>
 
-      <div class="section-desc"><p>Everything rusty - only use this if you know what you are doing… Maybe useful for your own package? Use with care and read the documentation!</p></div>
+      <div class="section-desc"><p>Everything Rusty - only use this if you know what you are doing… Maybe useful for your own package? Use with care and read the documentation! The ones exposed here are general enough to be useful in other packages. There is a lot more under the hood…</p></div>
 
       <dl></dl></div><div class="section level2">
 
@@ -2410,542 +2890,325 @@
 
       <dl><dt>
 
-          <code><a href="rs_aucell.html">rs_aucell()</a></code>
-
+          <code><a href="rs_2d_loess.html">rs_2d_loess()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
-        <dd>Calculate AUCell in Rust</dd>
+        <dd>Rust implementation of a Loess function</dd>
 
         <dt>
 
           <code><a href="rs_batch_lisi.html">rs_batch_lisi()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Calculate batch LISI scores</dd>
 
         <dt>
 
           <code><a href="rs_batch_silhouette_width.html">rs_batch_silhouette_width()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Calculate batch silhouette width from an embedding</dd>
 
         <dt>
 
-          <code><a href="rs_bbknn.html">rs_bbknn()</a></code>
-
-        </dt>
-        <dd>BBKNN implementation in Rust</dd>
-
-        <dt>
-
-          <code><a href="rs_bbknn_filtering.html">rs_bbknn_filtering()</a></code>
-
-        </dt>
-        <dd>Reduce BBKNN results to Top X neighbours</dd>
-
-        <dt>
-
-          <code><a href="rs_calc_es.html">rs_calc_es()</a></code>
-
-        </dt>
-        <dd>Calculates the traditional GSEA enrichment score</dd>
-
-        <dt>
-
-          <code><a href="rs_calc_gsea_stat_cumulative_batch.html">rs_calc_gsea_stat_cumulative_batch()</a></code>
-
-        </dt>
-        <dd>Helper function to generate fgsea simple-based permutations</dd>
-
-        <dt>
-
-          <code><a href="rs_calc_gsea_stat_traditional_batch.html">rs_calc_gsea_stat_traditional_batch()</a></code>
-
-        </dt>
-        <dd>Helper function to generate traditional GSEA-based permutations</dd>
-
-        <dt>
-
-          <code><a href="rs_calc_gsea_stats.html">rs_calc_gsea_stats()</a></code>
-
-        </dt>
-        <dd>Rust implementation of the fgsea::calcGseaStat() function</dd>
-
-        <dt>
-
-          <code><a href="rs_calc_multi_level.html">rs_calc_multi_level()</a></code>
-
-        </dt>
-        <dd>Calculates p-values for pre-processed data</dd>
-
-        <dt>
-
-          <code><a href="rs_calculate_dge_mann_whitney.html">rs_calculate_dge_mann_whitney()</a></code>
-
-        </dt>
-        <dd>Calculate DGEs between cells based on Mann Whitney stats</dd>
-
-        <dt>
-
           <code><a href="rs_cistarget.html">rs_cistarget()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Run CisTarget motif enrichment analysis</dd>
 
         <dt>
 
-          <code><a href="rs_cluster_stability.html">rs_cluster_stability()</a></code>
-
-        </dt>
-        <dd>Helper function to assess cluster stability</dd>
-
-        <dt>
-
           <code><a href="rs_compare_knn.html">rs_compare_knn()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Helper to compare kNN graphs</dd>
 
         <dt>
 
           <code><a href="rs_constrained_page_rank.html">rs_constrained_page_rank()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Calculate a constrained page-rank score</dd>
 
         <dt>
 
           <code><a href="rs_constrained_page_rank_list.html">rs_constrained_page_rank_list()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Calculate a constrained page-rank score over a list.</dd>
 
         <dt>
 
           <code><a href="rs_contrastive_pca.html">rs_contrastive_pca()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Calculate the contrastive PCA</dd>
 
         <dt>
 
           <code><a href="rs_cor.html">rs_cor()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Calculate the column wise correlations.</dd>
 
         <dt>
 
           <code><a href="rs_cor2.html">rs_cor2()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Calculate the column wise correlations.</dd>
-
-        <dt>
-
-          <code><a href="rs_coremo_quality.html">rs_coremo_quality()</a></code>
-
-        </dt>
-        <dd>Helper function to assess CoReMo cluster quality</dd>
-
-        <dt>
-
-          <code><a href="rs_coremo_stability.html">rs_coremo_stability()</a></code>
-
-        </dt>
-        <dd>Helper function to assess CoReMo cluster stability</dd>
 
         <dt>
 
           <code><a href="rs_cor_upper_triangle.html">rs_cor_upper_triangle()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
-        <dd>Calculate the column wise correlations.</dd>
+        <dd>Calculate the column wise correlations and returns the upper triangle</dd>
 
         <dt>
 
           <code><a href="rs_cos.html">rs_cos()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Calculate the column wise cosine similarities</dd>
 
         <dt>
 
           <code><a href="rs_count_zeroes.html">rs_count_zeroes()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Helper to get zero stats from a given matrix</dd>
 
         <dt>
 
           <code><a href="rs_cov2cor.html">rs_cov2cor()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Calculates the correlation matrix from the co-variance matrix</dd>
 
         <dt>
 
           <code><a href="rs_covariance.html">rs_covariance()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Calculate the column-wise co-variance.</dd>
 
         <dt>
 
-          <code><a href="rs_create_random_aucs.html">rs_create_random_aucs()</a></code>
-
-        </dt>
-        <dd>Create random AUCs</dd>
-
-        <dt>
-
-          <code><a href="rs_critval.html">rs_critval()</a></code>
-
-        </dt>
-        <dd>Calculate the critical value</dd>
-
-        <dt>
-
-          <code><a href="rs_critval_mat.html">rs_critval_mat()</a></code>
-
-        </dt>
-        <dd>Calculate the critical value</dd>
-
-        <dt>
-
           <code><a href="rs_dense_to_upper_triangle.html">rs_dense_to_upper_triangle()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Generate a vector-based representation of the upper triangle of a matrix</dd>
 
         <dt>
 
           <code><a href="rs_differential_cor.html">rs_differential_cor()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Calculate the column wise differential correlation between two sets of data.</dd>
 
         <dt>
 
           <code><a href="rs_dist.html">rs_dist()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Calculate the pairwise column distance in a matrix</dd>
 
         <dt>
 
-          <code><a href="rs_extract_grouped_gene_stats.html">rs_extract_grouped_gene_stats()</a></code>
-
-        </dt>
-        <dd>Calculates the gene statistics for a set of cell groups and genes</dd>
-
-        <dt>
-
-          <code><a href="rs_extract_several_genes_plots.html">rs_extract_several_genes_plots()</a></code>
-
-        </dt>
-        <dd>Helper to extract single cell counts for several genes</dd>
-
-        <dt>
-
-          <code><a href="rs_extract_counts_plots.html">rs_extract_counts_plots()</a></code>
-
-        </dt>
-        <dd>Helper to extract single cell counts as a dense vector for plotting</dd>
-
-        <dt>
-
           <code><a href="rs_fast_auc.html">rs_fast_auc()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Fast AUC calculation</dd>
 
         <dt>
 
-          <code><a href="rs_fast_cluster_sc.html">rs_fast_cluster_sc()</a></code>
-
-        </dt>
-        <dd>Runs fast Louvain cluster on the data</dd>
-
-        <dt>
-
-          <code><a href="rs_fast_cluster_sc_grid.html">rs_fast_cluster_sc_grid()</a></code>
-
-        </dt>
-        <dd>Runs fast Louvain cluster on the data (with multiple seeds)</dd>
-
-        <dt>
-
           <code><a href="rs_fast_ica.html">rs_fast_ica()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Run the Rust implementation of fast ICA.</dd>
 
         <dt>
 
           <code><a href="rs_fdr_adjustment.html">rs_fdr_adjustment()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Calculate a BH-based FDR</dd>
 
         <dt>
 
-          <code><a href="rs_filter_onto_sim.html">rs_filter_onto_sim()</a></code>
-
-        </dt>
-        <dd>Filter the term similarities for a specific critical value</dd>
-
-        <dt>
-
-          <code><a href="rs_generate_bulk_rnaseq.html">rs_generate_bulk_rnaseq()</a></code>
-
-        </dt>
-        <dd>Generation of bulkRNAseq-like data with optional correlation structure</dd>
-
-        <dt>
-
           <code><a href="rs_geom_elim_fgsea_simple.html">rs_geom_elim_fgsea_simple()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Run fgsea simple method for gene ontology with elimination method</dd>
 
         <dt>
 
-          <code><a href="rs_get_gs_indices.html">rs_get_gs_indices()</a></code>
-
-        </dt>
-        <dd>Helper function to rapidly retrieve the indices of the gene set members</dd>
-
-        <dt>
-
-          <code><a href="rs_get_metacells_bootstrapped.html">rs_get_metacells_bootstrapped()</a></code>
-
-        </dt>
-        <dd>Generate meta cells (hdWGCNA method)</dd>
-
-        <dt>
-
-          <code><a href="rs_get_seacells.html">rs_get_seacells()</a></code>
-
-        </dt>
-        <dd>Generate SEACells</dd>
-
-        <dt>
-
           <code><a href="rs_gower_dist.html">rs_gower_dist()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Calculates the Gower distance for a given matrix</dd>
 
         <dt>
 
           <code><a href="rs_gse_geom_elim.html">rs_gse_geom_elim()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Run hypergeometric enrichment over the gene ontology</dd>
 
         <dt>
 
           <code><a href="rs_gse_geom_elim_list.html">rs_gse_geom_elim_list()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Run hypergeometric enrichment a list of target genes over the gene ontology</dd>
 
         <dt>
 
           <code><a href="rs_gsva.html">rs_gsva()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Rust version of the GSVA algorithm</dd>
 
         <dt>
 
           <code><a href="rs_h5ad_data.html">rs_h5ad_data()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Load in h5ad data via Rust</dd>
 
         <dt>
 
           <code><a href="rs_hamming_dist.html">rs_hamming_dist()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Calculates the Hamming distance between categorical columns</dd>
 
         <dt>
 
           <code><a href="rs_harmony.html">rs_harmony()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Harmony batch correction in Rust</dd>
 
         <dt>
 
           <code><a href="rs_harmony_v2.html">rs_harmony_v2()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Harmony batch correction in Rust (version 2)</dd>
 
         <dt>
 
           <code><a href="rs_hedges_g.html">rs_hedges_g()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Calculate the Hedge's G effect</dd>
 
         <dt>
 
-          <code><a href="rs_hotspot_autocor.html">rs_hotspot_autocor()</a></code>
-
-        </dt>
-        <dd>Calculate gene spatial auto-correlations</dd>
-
-        <dt>
-
-          <code><a href="rs_hotspot_cluster_genes.html">rs_hotspot_cluster_genes()</a></code>
-
-        </dt>
-        <dd>Cluster the genes by Z-score together</dd>
-
-        <dt>
-
-          <code><a href="rs_hotspot_gene_cor.html">rs_hotspot_gene_cor()</a></code>
-
-        </dt>
-        <dd>Calculate gene&lt;&gt;gene spatial correlations</dd>
-
-        <dt>
-
           <code><a href="rs_hypergeom_test.html">rs_hypergeom_test()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Run a single hypergeometric test.</dd>
 
         <dt>
 
           <code><a href="rs_hypergeom_test_list.html">rs_hypergeom_test_list()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Run a hypergeometric test over a list of target genes</dd>
 
         <dt>
 
           <code><a href="rs_ica_iters.html">rs_ica_iters()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Run ICA over a given no_comp with random initilisations of w_init</dd>
 
         <dt>
 
           <code><a href="rs_ica_iters_cv.html">rs_ica_iters_cv()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Run ICA with cross-validation and random initialsiation</dd>
 
         <dt>
 
-          <code><a href="rs_importance_threshold.html">rs_importance_threshold()</a></code>
-
-        </dt>
-        <dd>SCENIC: Select TF-gene pairs by per-gene importance threshold</dd>
-
-        <dt>
-
           <code><a href="rs_jaccard_row_integers.html">rs_jaccard_row_integers()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Calculate rapidbly Jaccard similarities between rows</dd>
 
         <dt>
 
           <code><a href="rs_kbet.html">rs_kbet()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Calculate kBET type scores</dd>
 
         <dt>
 
           <code><a href="rs_knn_label_propagation.html">rs_knn_label_propagation()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>kNN label propagation</dd>
 
         <dt>
 
           <code><a href="rs_knn_mat_to_edge_list.html">rs_knn_mat_to_edge_list()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Flatten kNN matrix to edge list</dd>
 
         <dt>
 
-          <code><a href="rs_knn_mat_to_edge_pairs.html">rs_knn_mat_to_edge_pairs()</a></code>
-
+          <code><a href="rs_generate_ligand_target_influence.html">rs_generate_ligand_target_influence()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
-        <dd>Flatten kNN matrix to edge list</dd>
+        <dd>Generate the ligand to target influence matrices</dd>
+
+        <dt>
+
+          <code><a href="rs_ligand_activity_scores.html">rs_ligand_activity_scores()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Calculate the NicheNet ligand activity scores</dd>
 
         <dt>
 
           <code><a href="rs_mad_outlier.html">rs_mad_outlier()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Calculate MAD outlier detection in Rust.</dd>
 
         <dt>
 
-          <code><a href="rs_make_milor_nhoods.html">rs_make_milor_nhoods()</a></code>
-
-        </dt>
-        <dd>Generate the neighbourhoods akin to the miloR approach</dd>
-
-        <dt>
-
           <code><a href="rs_mc_aucell.html">rs_mc_aucell()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Calculate AUCell in Rust (for meta cells)</dd>
 
         <dt>
 
           <code><a href="rs_mc_hvg.html">rs_mc_hvg()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Meta cells highly variable genes</dd>
 
         <dt>
 
           <code><a href="rs_mc_pca.html">rs_mc_pca()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>PCA on MetaCells (sparse data)</dd>
 
         <dt>
 
           <code><a href="rs_mc_scenic.html">rs_mc_scenic()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>SCENIC on MetaCells</dd>
-
-        <dt>
-
-          <code><a href="rs_metacell_compactness.html">rs_metacell_compactness()</a></code>
-
-        </dt>
-        <dd>Calculates the compactness of the MetaCells based on diffusion map coordinates</dd>
-
-        <dt>
-
-          <code><a href="rs_metacell_density.html">rs_metacell_density()</a></code>
-
-        </dt>
-        <dd>Calculates diffusion maps for density calculations for meta cells</dd>
-
-        <dt>
-
-          <code><a href="rs_metacell_separation.html">rs_metacell_separation()</a></code>
-
-        </dt>
-        <dd>Calculates the separation of the centroids of the MetaCells based on diffusion map coordinates.</dd>
 
         <dt>
 
@@ -2956,486 +3219,262 @@
 
         <dt>
 
-          <code><a href="rs_mnn.html">rs_mnn()</a></code>
-
-        </dt>
-        <dd>FastMNN batch correction in Rust</dd>
-
-        <dt>
-
-          <code><a href="rs_module_scoring.html">rs_module_scoring()</a></code>
-
-        </dt>
-        <dd>Calculate module activity scores in Rust</dd>
-
-        <dt>
-
           <code><a href="rs_mutual_info.html">rs_mutual_info()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Calculates the mutual information matrix</dd>
 
         <dt>
 
-          <code><a href="rs_onto_semantic_sim.html">rs_onto_semantic_sim()</a></code>
+          <code><a href="rs_nmf_multi_mc.html">rs_nmf_multi_mc()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Run multiple NMF (HALS) restarts on MetaCells</dd>
 
+        <dt>
+
+          <code><a href="rs_nmf_single_mc.html">rs_nmf_single_mc()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Run NMF (HALS) on MetaCells</dd>
+
+        <dt>
+
+          <code><a href="rs_onto_semantic_sim.html">rs_onto_semantic_sim()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Calculate the semantic similarity in an ontology</dd>
 
         <dt>
 
           <code><a href="rs_onto_semantic_sim_mat.html">rs_onto_semantic_sim_mat()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Calculate the semantic similarity in an ontology</dd>
 
         <dt>
 
           <code><a href="rs_onto_sim_wang.html">rs_onto_sim_wang()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Calculate the Wang similarity for specific terms</dd>
 
         <dt>
 
           <code><a href="rs_onto_sim_wang_mat.html">rs_onto_sim_wang_mat()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Calculate the Wang similarity matrix for an ontology</dd>
 
         <dt>
 
           <code><a href="rs_ot_harmonic_sum.html">rs_ot_harmonic_sum()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Calculate the OT harmonic sum</dd>
 
         <dt>
 
           <code><a href="rs_page_rank.html">rs_page_rank()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Rust version of calcaluting the personalised page rank</dd>
 
         <dt>
 
           <code><a href="rs_page_rank_parallel.html">rs_page_rank_parallel()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Calculate massively parallelised personalised page rank scores</dd>
 
         <dt>
 
-          <code><a href="rs_pairwise_gene_cors.html">rs_pairwise_gene_cors()</a></code>
-
-        </dt>
-        <dd>Calculates pairwise gene correlations in single cell</dd>
-
-        <dt>
-
           <code><a href="rs_phyper.html">rs_phyper()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
-        <dd>Calculate the hypergeometric rest in Rust</dd>
+        <dd>Calculate the hypergeometric test in Rust</dd>
 
         <dt>
 
           <code><a href="rs_pointwise_mutual_info.html">rs_pointwise_mutual_info()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Calculates the point wise mutual information</dd>
 
         <dt>
 
           <code><a href="rs_prcomp.html">rs_prcomp()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Rust implementation of prcomp</dd>
 
         <dt>
 
-          <code><a href="rs_prepare_gsva_gs.html">rs_prepare_gsva_gs()</a></code>
-
-        </dt>
-        <dd>Prepare a pathway list for GSVA</dd>
-
-        <dt>
-
           <code><a href="rs_prepare_whitening.html">rs_prepare_whitening()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Prepare the data for whitening</dd>
 
         <dt>
 
-          <code><a href="rs_pseudobulk_cells_dense.html">rs_pseudobulk_cells_dense()</a></code>
-
-        </dt>
-        <dd>Pseudo-bulk a set of cells (dense)</dd>
-
-        <dt>
-
-          <code><a href="rs_pseudobulk_cells_sparse.html">rs_pseudobulk_cells_sparse()</a></code>
-
-        </dt>
-        <dd>Pseudo-bulk a set of cells (sparse)</dd>
-
-        <dt>
-
           <code><a href="rs_random_svd.html">rs_random_svd()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Run randomised SVD over a matrix</dd>
 
         <dt>
 
           <code><a href="rs_range_norm.html">rs_range_norm()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Apply a range normalisation on a vector.</dd>
 
         <dt>
 
           <code><a href="rs_rbf_function.html">rs_rbf_function()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Apply a Radial Basis Function</dd>
 
         <dt>
 
           <code><a href="rs_rbf_function_mat.html">rs_rbf_function_mat()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Apply a Radial Basis Function (to a matrix)</dd>
 
         <dt>
 
-          <code><a href="rs_rbf_iterate_epsilons.html">rs_rbf_iterate_epsilons()</a></code>
-
-        </dt>
-        <dd>Helper to identify the right epsilon parameter</dd>
-
-        <dt>
-
           <code><a href="rs_rbh_cor.html">rs_rbh_cor()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Generate reciprocal best hits based on correlations</dd>
 
         <dt>
 
           <code><a href="rs_rbh_sets.html">rs_rbh_sets()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Generate reciprocal best hits based on set similarities</dd>
 
         <dt>
 
-          <code><a href="rs_sample_ids_for_cell_types.html">rs_sample_ids_for_cell_types()</a></code>
-
-        </dt>
-        <dd>Helper function to generate sample identifiers based on cells</dd>
-
-        <dt>
-
-          <code><a href="rs_sc_scdblfinder.html">rs_sc_scdblfinder()</a></code>
-
-        </dt>
-        <dd>Run scDblFinder doublet detection</dd>
-
-        <dt>
-
-          <code><a href="rs_sc_doublet_detection.html">rs_sc_doublet_detection()</a></code>
-
-        </dt>
-        <dd>Detect Doublets via BoostClassifier (in Rust)</dd>
-
-        <dt>
-
-          <code><a href="rs_sc_get_gene_set_perc.html">rs_sc_get_gene_set_perc()</a></code>
-
-        </dt>
-        <dd>Calculate the percentage of gene sets in the cells</dd>
-
-        <dt>
-
-          <code><a href="rs_sc_get_top_genes_perc.html">rs_sc_get_top_genes_perc()</a></code>
-
-        </dt>
-        <dd>Calculates the cumulative proportion of the top X genes</dd>
-
-        <dt>
-
-          <code><a href="rs_sc_hvg.html">rs_sc_hvg()</a></code>
-
-        </dt>
-        <dd>Calculate the percentage of gene sets in the cells</dd>
-
-        <dt>
-
-          <code><a href="rs_sc_hvg_batch_aware.html">rs_sc_hvg_batch_aware()</a></code>
-
-        </dt>
-        <dd>Calculate HVG per batch</dd>
-
-        <dt>
-
           <code><a href="rs_sc_knn.html">rs_sc_knn()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Generates the kNN graph</dd>
 
         <dt>
 
           <code><a href="rs_sc_knn_w_dist.html">rs_sc_knn_w_dist()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Generates the kNN graph with additional distances</dd>
 
         <dt>
 
-          <code><a href="rs_sc_otsu_method.html">rs_sc_otsu_method()</a></code>
-
-        </dt>
-        <dd>Run Otsu's method</dd>
-
-        <dt>
-
-          <code><a href="rs_sc_pca.html">rs_sc_pca()</a></code>
-
-        </dt>
-        <dd>Calculates PCA for single cell</dd>
-
-        <dt>
-
-          <code><a href="rs_sc_pca_sparse.html">rs_sc_pca_sparse()</a></code>
-
-        </dt>
-        <dd>Calculates sparse PCA for single cell</dd>
-
-        <dt>
-
-          <code><a href="rs_sc_scrublet.html">rs_sc_scrublet()</a></code>
-
-        </dt>
-        <dd>Scrublet Rust interface</dd>
-
-        <dt>
-
           <code><a href="rs_sc_snn.html">rs_sc_snn()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Generates the sNN graph for igraph</dd>
 
         <dt>
 
-          <code><a href="rs_scenic_gene_filter.html">rs_scenic_gene_filter()</a></code>
-
-        </dt>
-        <dd>Identifies genes to include into a SCENIC analysis</dd>
-
-        <dt>
-
-          <code><a href="rs_scenic_grn.html">rs_scenic_grn()</a></code>
-
-        </dt>
-        <dd>SCENIC: Generating gene-regulatory networks</dd>
-
-        <dt>
-
-          <code><a href="rs_scenic_grn_streaming.html">rs_scenic_grn_streaming()</a></code>
-
-        </dt>
-        <dd>SCENIC: Generating gene-regulatory networks (streaming version)</dd>
-
-        <dt>
-
           <code><a href="rs_set_similarity.html">rs_set_similarity()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Set similarities</dd>
 
         <dt>
 
           <code><a href="rs_set_similarity_list.html">rs_set_similarity_list()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Set similarities over one list</dd>
 
         <dt>
 
           <code><a href="rs_set_similarity_list2.html">rs_set_similarity_list2()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Set similarities over two list</dd>
 
         <dt>
 
-          <code><a href="rs_simple_and_multi_err.html">rs_simple_and_multi_err()</a></code>
-
-        </dt>
-        <dd>Calculates the simple and multi error for fgsea multi level</dd>
-
-        <dt>
-
-          <code><a href="rs_simulate_dropouts.html">rs_simulate_dropouts()</a></code>
-
-        </dt>
-        <dd>Sparsify bulkRNAseq like data</dd>
-
-        <dt>
-
           <code><a href="rs_snf.html">rs_snf()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Similarity network fusion</dd>
 
         <dt>
 
-          <code><a href="rs_snf_affinity_cat.html">rs_snf_affinity_cat()</a></code>
-
-        </dt>
-        <dd>Calculate the SNF affinity matrix for categorical values</dd>
-
-        <dt>
-
-          <code><a href="rs_snf_affinity_continuous.html">rs_snf_affinity_continuous()</a></code>
-
-        </dt>
-        <dd>Calculate the SNF affinity matrix for continuous values</dd>
-
-        <dt>
-
-          <code><a href="rs_snf_affinity_mixed.html">rs_snf_affinity_mixed()</a></code>
-
-        </dt>
-        <dd>Calculate the SNF affinity matrix for mixed values</dd>
-
-        <dt>
-
           <code><a href="rs_sparse_dict_dgrdl.html">rs_sparse_dict_dgrdl()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Generate a sparse dictionary with DGRDL</dd>
 
         <dt>
 
           <code><a href="rs_sparse_dict_dgrdl_grid_search.html">rs_sparse_dict_dgrdl_grid_search()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Generate a sparse dictionary with DGRDL</dd>
 
         <dt>
 
           <code><a href="rs_spectral_clustering.html">rs_spectral_clustering()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Rust implementation of spectral clustering</dd>
 
         <dt>
 
           <code><a href="rs_spectral_clustering_sim.html">rs_spectral_clustering_sim()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Rust implementation of spectral clustering</dd>
 
         <dt>
 
-          <code><a href="rs_split_cor_signs.html">rs_split_cor_signs()</a></code>
-
-        </dt>
-        <dd>Helper function to split correlation matrices by sign</dd>
-
-        <dt>
-
           <code><a href="rs_ssgsea.html">rs_ssgsea()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Rust version of the ssGSEA algorithm</dd>
 
         <dt>
 
-          <code><a href="rs_supercell.html">rs_supercell()</a></code>
-
-        </dt>
-        <dd>Generate SuperCells.</dd>
-
-        <dt>
-
-          <code><a href="rs_synthetic_sc_data_csc.html">rs_synthetic_sc_data_csc()</a></code>
-
-        </dt>
-        <dd>Generate synthetic single cell data (Seurat type)</dd>
-
-        <dt>
-
-          <code><a href="rs_synthetic_sc_data_csr.html">rs_synthetic_sc_data_csr()</a></code>
-
-        </dt>
-        <dd>Generate synthetic single cell data (h5ad type)</dd>
-
-        <dt>
-
-          <code><a href="rs_synthetic_sc_data_with_cell_types.html">rs_synthetic_sc_data_with_cell_types()</a></code>
-
-        </dt>
-        <dd>Generates synthetic data for single cell</dd>
-
-        <dt>
-
           <code><a href="rs_tied_diffusion_parallel.html">rs_tied_diffusion_parallel()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Calculate massively parallelised tied diffusion scores</dd>
 
         <dt>
 
           <code><a href="rs_tom.html">rs_tom()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Calculates the TOM over an affinity matrix</dd>
 
         <dt>
 
-          <code><a href="rs_top_k_targets.html">rs_top_k_targets()</a></code>
-
-        </dt>
-        <dd>SCENIC: Select the Top TF &lt;&gt; Gene pairs</dd>
-
-        <dt>
-
           <code><a href="rs_upper_triangle_to_dense.html">rs_upper_triangle_to_dense()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Reconstruct a matrix from a flattened upper triangle vector</dd>
 
         <dt>
 
           <code><a href="rs_upper_triangle_to_sparse.html">rs_upper_triangle_to_sparse()</a></code>
-
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Generate sparse data from an upper triangle</dd>
 
         <dt>
 
-          <code><a href="rs_vision.html">rs_vision()</a></code>
-
+          <code><a href="rs_wnn.html">rs_wnn()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
-        <dd>Calculate VISION pathway scores in Rust</dd>
-
-        <dt>
-
-          <code><a href="rs_vision_with_autocorrelation.html">rs_vision_with_autocorrelation()</a></code>
-
-        </dt>
-        <dd>Calculate VISION pathway scores in Rust with auto-correlation</dd>
-
-        <dt>
-
-          <code><a href="rs_2d_loess.html">rs_2d_loess()</a></code>
-
-        </dt>
-        <dd>Rust implementation of a Loess function</dd>
+        <dd>Run the weighted nearest neighbour algorithm</dd>
       </dl></div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>

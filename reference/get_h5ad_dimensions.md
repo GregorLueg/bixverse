@@ -1,6 +1,10 @@
-# Helper function to get the dimensions and compressed sparse format
+# Helper function to get the dimensions and storage format
 
-Helper function to get the dimensions and compressed sparse format
+Distinguishes sparse (`CSR`/`CSC`) from dense storage. For dense `X` the
+orientation is inferred by comparing the matrix dims against the obs and
+var lengths (`DENSE_ROW` = cells x genes, `DENSE_COL` = genes x cells).
+Ties (`no_obs == no_var`) fall back to the AnnData convention
+(`DENSE_ROW`).
 
 ## Usage
 
@@ -16,9 +20,5 @@ get_h5ad_dimensions(f_path)
 
 ## Value
 
-A list with the following elements:
-
-- dims - Dimensions of the stored data in the h5ad file.
-
-- type - Was the data stored in CSR (indptr = cells) or CSC (indptr =
-  genes).
+A list with `dims` (named integer `c(obs, var)`) and `type` (one of
+`"CSR"`, `"CSC"`, `"DENSE_ROW"`, `"DENSE_COL"`).

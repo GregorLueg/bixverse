@@ -14,6 +14,8 @@ checks, etc.
 
 - [`SingleCellDuckDBBase$get_vars_table()`](#method-SingleCellDuckDBBase-get_vars_table)
 
+- [`SingleCellDuckDBBase$get_vars_adt_table()`](#method-SingleCellDuckDBBase-get_vars_adt_table)
+
 - [`SingleCellDuckDBBase$get_obs_index_map()`](#method-SingleCellDuckDBBase-get_obs_index_map)
 
 - [`SingleCellDuckDBBase$get_var_index_map()`](#method-SingleCellDuckDBBase-get_var_index_map)
@@ -35,6 +37,8 @@ checks, etc.
 - [`SingleCellDuckDBBase$add_data_var()`](#method-SingleCellDuckDBBase-add_data_var)
 
 - [`SingleCellDuckDBBase$rename_column()`](#method-SingleCellDuckDBBase-rename_column)
+
+- [`SingleCellDuckDBBase$drop_columns()`](#method-SingleCellDuckDBBase-drop_columns)
 
 - [`SingleCellDuckDBBase$clone()`](#method-SingleCellDuckDBBase-clone)
 
@@ -99,7 +103,7 @@ selected indices and/or columns.
 
 ### `SingleCellDuckDBBase$get_vars_table()`
 
-Returns the full var table from the DuckDB.
+Returns the var table from the DuckDB.
 
 #### Usage
 
@@ -118,6 +122,31 @@ Returns the full var table from the DuckDB.
 #### Returns
 
 The var table (if found) as a data.table with optionally selected
+indices and/or columns.
+
+------------------------------------------------------------------------
+
+### `SingleCellDuckDBBase$get_vars_adt_table()`
+
+Returns the var table specific for the ADTs from the DuckDB.
+
+#### Usage
+
+    SingleCellDuckDBBase$get_vars_adt_table(indices = NULL, cols = NULL)
+
+#### Arguments
+
+- `indices`:
+
+  Optional ADT/var indices.
+
+- `cols`:
+
+  Optional column names to return.
+
+#### Returns
+
+The var adt table (if found) as a data.table with optionally selected
 indices and/or columns.
 
 ------------------------------------------------------------------------
@@ -257,7 +286,7 @@ DuckDB.
 
 ### `SingleCellDuckDBBase$set_to_keep_column()`
 
-Indepenent of the loader, set the to_keep column to `TRUE` initially
+Independent of the loader, set the to_keep column to `TRUE` initially
 
 #### Usage
 
@@ -308,6 +337,34 @@ Rename a column in the obs or var table.
 - `new`:
 
   String. The desired new column name.
+
+#### Returns
+
+Invisible self.
+
+------------------------------------------------------------------------
+
+### `SingleCellDuckDBBase$drop_columns()`
+
+Drop columns from the obs or var table.
+
+Refuses to drop the protected identifier and bookkeeping columns
+(`cell_idx`, `cell_id`, `to_keep` for obs; `gene_idx`, `gene_id` for
+var). Columns that do not exist trigger a warning and are skipped.
+
+#### Usage
+
+    SingleCellDuckDBBase$drop_columns(table = c("obs", "var"), cols)
+
+#### Arguments
+
+- `table`:
+
+  String. Either "obs" or "var".
+
+- `cols`:
+
+  Character vector. The column names to drop.
 
 #### Returns
 

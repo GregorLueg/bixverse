@@ -1,8 +1,8 @@
 # Create random AUCs
 
-This function creates a random set of AUCs based on a score vector and a
-size of the positive set. This can be used for permutation- based
-estimation of Z-scores and subsequently p-values.
+**\[experimental\]** This function creates a random set of AUCs based on
+a score vector and a size of the positive set. This can be used for
+permutation-based estimation of Z-scores and subsequently p-values.
 
 ## Usage
 

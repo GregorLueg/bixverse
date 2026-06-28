@@ -1,6 +1,7 @@
 # Similarity network fusion
 
-This function iteratively fuses the affinity matrices together.
+**\[experimental\]** This function iteratively fuses the affinity
+matrices together.
 
 ## Usage
 

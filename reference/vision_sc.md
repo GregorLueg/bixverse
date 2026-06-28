@@ -8,7 +8,7 @@ mesenchymal gene signature, etc.
 ## Usage
 
 ``` r
-vision_sc(object, gs_list, streaming = FALSE, .verbose = TRUE)
+vision_sc(object, gs_list, streaming = NULL, .verbose = TRUE)
 ```
 
 ## Arguments
@@ -26,12 +26,15 @@ vision_sc(object, gs_list, streaming = FALSE, .verbose = TRUE)
 
 - streaming:
 
-  Boolean. Shall the cell data be streamed in. Useful for larger data
-  sets.
+  Optional Boolean. Shall the data be streamed in. Useful for larger
+  data sets where you wish to avoid loading in the whole data. If
+  `NULL`, will automatically detect.
 
 - .verbose:
 
-  Boolean. Controls the verbosity of the function.
+  Boolean or integer. Controls verbosity and returns run times. `FALSE`
+  -\> quiet, `TRUE` or `1L` -\> normal verbosity, `2L` -\> detailed
+  verbosity.
 
 ## Value
 

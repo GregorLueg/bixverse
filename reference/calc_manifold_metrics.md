@@ -14,6 +14,12 @@ well the different metacells span the manifold.
 calc_manifold_metrics(object)
 ```
 
+## Arguments
+
+- object:
+
+  `MetaCells` class for which to calculate the different metrics.
+
 ## Value
 
 The class with the compactness and separation scores added.

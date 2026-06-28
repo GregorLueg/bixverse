@@ -15,6 +15,10 @@ get_params.Hotspot(object, to_json = FALSE, pretty_json = FALSE)
 get_params.miloR(object, to_json = FALSE, pretty_json = FALSE)
 
 get_params.ScenicGrn(object, to_json = FALSE, pretty_json = FALSE)
+
+get_params.NmfResult(object, to_json = FALSE, pretty_json = FALSE)
+
+get_params.StabilisedNmfResult(object, to_json = FALSE, pretty_json = FALSE)
 ```
 
 ## Arguments

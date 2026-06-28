@@ -17,4 +17,4 @@ download_pbmc_batches(quiet = FALSE)
 
 ## Value
 
-String. The path to the extracted doublet detection data.
+String. The path to the directory with the PBMC h5ad files.

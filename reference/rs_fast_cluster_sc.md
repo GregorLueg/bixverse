@@ -1,8 +1,8 @@
 # Runs fast Louvain cluster on the data
 
-Runs first k-means clustering, followed by a kNN detection on the
-centroids to then run Louvain clustering on the graph and propagate the
-membership back to the original data.
+**\[experimental\]** Runs first k-means clustering, followed by a kNN
+detection on the centroids to then run Louvain clustering on the graph
+and propagate the membership back to the original data.
 
 ## Usage
 
@@ -55,7 +55,8 @@ rs_fast_cluster_sc(
 
 - verbose:
 
-  Boolean. Controls the verbosity of the function.
+  Integer. `0L` - quiet; `1L` - normal verbosity; `2L` - detailed
+  verbosity.
 
 ## Value
 

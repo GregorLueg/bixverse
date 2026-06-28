@@ -1,9 +1,8 @@
 # Run the Rust implementation of fast ICA.
 
-This function serves as a wrapper over the fast ICA implementations in
-Rust. It assumes a whitened matrix and also an intialised w_init.
-WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust
-functions with type checks are provided in the package.
+**\[experimental\]** This function serves as a wrapper over the fast ICA
+implementations in Rust. It assumes a whitened matrix and also an
+intialised w_init.
 
 ## Usage
 

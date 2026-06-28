@@ -23,7 +23,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -53,14 +53,24 @@
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-single-cells" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Single Cells</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-single-cells">
-<li><a class="dropdown-item" href="../articles/thinking_single_cell.html">Thinking about single cells the bixverse way</a></li>
+<li><h6 class="dropdown-header" data-toc-skip>Intro vignettes</h6></li>
+    <li><a class="dropdown-item" href="../articles/thinking_single_cell.html">Thinking about single cells the bixverse way</a></li>
     <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">PBMC analysis with the bixverse single cell framework</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_io.html">Reading data in (single-cell I/O)</a></li>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
-    <li><a class="dropdown-item" href="../articles/analysis_single_cell.html">'Bag of genes' methods for single cell in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/knn_searches.html">kNN searches for single cells in bixverse</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>More advanced analysis methods</h6></li>
+    <li><a class="dropdown-item" href="../articles/bag_of_genes_single_cells.html">'Bag of genes' methods for single cell in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/nichenet.html">Ligand receptor analysis</a></li>
     <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/symphomy.html">Reference mapping via Symphony</a></li>
+    <li><a class="dropdown-item" href="../articles/multi_modal_single_cell.html">Multi-modal analysis</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Others</h6></li>
     <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing big data on a powerful laptop (example)</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_visualisation.html">Plotting helpers</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -82,7 +92,7 @@
       <h1>Technical design choices for the single cell implementation</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-06-15</p>
+      <p class="date">2026-06-28</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -108,6 +118,13 @@
 <blockquote>
 <p>For instance, a typical single-cell data analysis pipeline — encompassing data integration, clustering, visualisation, and differential expression analysis — requires about 16 h to process half a million cells on a standard desktop. When the cell number slightly increases to 600,000, <strong>the above pipeline can crash due to memory exceeding, even on a professional computing platform with 512 GB RAM</strong></p>
 <p>— <a href="https://www.nature.com/articles/s41467-025-56424-6" class="external-link">Li, et al., Nat Comm, 2025</a></p>
+</blockquote>
+<blockquote>
+<p><u>Recommendations for executing the Scanpy analysis</u></p>
+<p>To avoid computer crashes and program failures, we recommend you execute the Python code on a cloud computing platform. The instance you select on the cloud platform to run this analysis should consist of at <strong>least 8 threads and 160 GB of RAM.</strong></p>
+<ul>
+<li><a href="https://support.parsebiosciences.com/hc/en-us/articles/7704577188500-How-to-analyze-a-1-million-cell-data-set-using-Scanpy-and-Harmony" class="external-link">Parse biosciences</a></li>
+</ul>
 </blockquote>
 <p>Anyone who has worked with more than 500k cells can attest to it being painful. Actually VERY painful. The question is… why? Why can analytical engines like <a href="https://duckdb.org" class="external-link">DuckDB</a> and <a href="https://pola.rs" class="external-link">polars</a> handle massive data sets without needing fat memory machines? You can easily analyse hundreds of millions of rows on a local laptop with those two. Why can we not do the same with single cell? Is the answer really “Bro, just throw more cores, memory, and GPUs at the problem”? Or is it time to rethink <strong>HOW</strong> we are doing this.</p>
 </section><section class="level3"><h3 id="chapter-2-do-not-keep-data-in-memory">Chapter 2: Do not keep data in memory…<a class="anchor" aria-label="anchor" href="#chapter-2-do-not-keep-data-in-memory"></a>
@@ -156,12 +173,12 @@ Same as kNN graph ~244 MB</code></pre>
 <p>Okay, everything so far reads like a rant. What is the solution, mate?</p>
 <section class="level3"><h3 id="lets-not-keep-data-in-memory-to-start-with">Let’s not keep data in memory to start with … ?<a class="anchor" aria-label="anchor" href="#lets-not-keep-data-in-memory-to-start-with"></a>
 </h3>
-<p>If we think this through, we can arrive at a solution. Ideally, we want an interface from an interpreted, dynamically typed language: going all-in on Rust is just too heavy. The average person does not want to deal with the borrow checker, does not want to compile code, and wants to quickly analyse and iterate over data. The average bioinformatician lives in blissful ignorance and will not be able to comment on <code>f32</code> vs <code>f64</code> float representation in memory, and frankly should not have to. That means the interface should be a dynamically typed, interpreted language. This opens the package up to more people and makes plotting (ggplot2 for the win) much easier. From there we can make some design decisions.</p>
+<p>If we think this through, we can arrive at a solution. Ideally, we want an interface from an interpreted, dynamically typed language: going all-in on Rust is just too heavy. The average single cell enthuasist does not want to deal with the borrow checker, does not want to compile code, and wants to quickly analyse and iterate over data. The average bioinformatician lives in blissful ignorance and will not be able to comment on <code>f32</code> vs <code>f64</code> float representation in memory, when to use which and frankly should not have to. That means the interface should be a dynamically typed, interpreted language. This opens the package up to more people and makes plotting (ggplot2 and its extensions for the win) much easier. From there we can make some design decisions.</p>
 <ol type="1">
 <li><p><strong><em>We do not keep data in memory if not needed!</em></strong> Most analyses leveraging counts only need subsets of cells and genes. We can also avoid holding metadata in memory via DuckDB. Data will be streamed from disk when needed and Rust’s compiler will free memory once it is no longer needed — sometimes enforced explicitly with <code><a href="https://rdrr.io/r/base/drop.html" class="external-link">drop()</a></code>. Raw counts? Nope. Normalised counts? Nope. Scaled counts? Nope. We just removed 40 GB of unnecessary stuff from memory (in our 1M cell example). Data can be loaded into memory in milliseconds if need be.</p></li>
 <li><p><strong><em>We do not even load all data into memory to begin with.</em></strong> In 99.99% of cases, we know we do not want low quality cells with tiny library sizes and few unique features. We also almost always do the usual library-size-to-target-size normalisation with log transformation. (Anyone who has tried fancy Pearson residual modelling on large data sets knows what I am talking about.) That means when reading h5ad or mtx files, we can pre-scan them, take only what we want, and normalise in a single pass — avoiding the load-everything, then-filter, then-normalise pattern.</p></li>
-<li><p><strong><em>We accept that single cell is noisy</em></strong> and do not bother with <code>f32</code> or even <code>f64</code> precision for storage. For raw counts, <code>u16</code> is sufficient most of the time. The ML field has shown that you can get away with <code>f16</code>, which reduces memory pressure and I/O substantially — and they are pushing quantisation even further than that.</p></li>
-<li><p><strong><em>We are not doing any heavy calculations in R (or Python — future roadmap).</em></strong> Rust is superior for speed and optimisation: aggressive multi-threading, no copy-on-modify semantics, tight memory control, and SIMD acceleration for specific bottlenecks (distance calculations, averaging, summing, normalising). R here is just an interface, telling the underlying Rust code what to do.</p></li>
+<li><p><strong><em>We accept that single cell is noisy</em></strong> and do not bother with <code>f32</code> or even <code>f64</code> precision for storage. For raw counts, <code>u16</code> is sufficient most of the time. The ML field has shown that you can get away with <code>f16</code>, which reduces memory pressure and I/O substantially — and they are pushing quantisation even further than that. We will accept the precision loss when upcasting to <code>f64</code> to avoid catastrophic cancellation issues at large N.</p></li>
+<li><p><strong><em>We are not doing any heavy calculations in R (or Python — future roadmap).</em></strong> Rust is superior for speed and optimisation: aggressive multi-threading, no copy-on-modify semantics, tight memory control, and SIMD acceleration for specific bottlenecks (distance calculations, averaging, summing, normalising). R here is just an interface, telling the underlying Rust code what to do. We pay for this with some long compile time while installing the package, but the speed-ups across the board are so substantial that it is worth it.</p></li>
 </ol>
 <p>But if the data is not in memory, will this not be slow? Well, no. We store data in structures like this. One for cells:</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">/// CsrCellChunk</span></span>
@@ -201,7 +218,7 @@ Same as kNN graph ~244 MB</code></pre>
 </h3>
 <p>Continuing from step 4, we avoid round trips to R entirely. This sidesteps R quirks like copy-on-modify. The typical approximate nearest neighbour library used in R (Annoy) actually writes the index to disk — which was Spotify’s original design and made total sense for their use case — but why are we doing this in R? No idea. The core philosophy is to take a hard look at the algorithms and methods used and, where needed, implement a highly specialised version for single cell. Some examples:</p>
 <ul>
-<li><p>Custom implementation of various kNN searches, all running in Rust: <a href="https://crates.io/crates/ann-search-rs" class="external-link">ann-search-rs</a>. No on-disk index round trips, SIMD-accelerated distance calculations, aggressive optimisations with single cell in mind. Since kNN graphs underlie a lot of downstream methods, speeding this up has a wide impact.</p></li>
+<li><p>Custom implementation of various kNN searches, all running in Rust: <a href="https://crates.io/crates/ann-search-rs" class="external-link">ann-search-rs</a>. No on-disk index round trips, SIMD-accelerated distance calculations, optimised memory layouts, aggressive optimisations with single cell in mind. Since kNN graphs underlie a lot of downstream methods, speeding this up has a wide impact.</p></li>
 <li>
 <p>PCA underlies a lot of algorithms, is a key dimensionality reduction step, and — perhaps embarrassingly — <a href="https://arxiv.org/abs/2410.13956" class="external-link">still beats fancy foundation models</a>. A few tricks make it fast:</p>
 <ul>
@@ -210,7 +227,7 @@ Same as kNN graph ~244 MB</code></pre>
 <li>Smart scaling without ever densifying the matrix. As shown in the numbers above, densifying with 2k HVGs means holding a 16 GB matrix in memory for a million cells — 80 GB for five million. With smart matrix algebra, you never have to densify at all. An 80 GB problem becomes something closer to 10 GB.</li>
 </ul>
 </li>
-<li><p>Of course there is also a library for everyone’s favourite 2D embedding generation: <a href="https://github.com/GregorLueg/manifoldsR" class="external-link">manifoldsR</a>. Same philosophy: parallelise what can be parallelised, use CPU-friendly memory layouts, avoid round trips to the interpreter. Million-cell UMAP? Done in minutes on a laptop.</p></li>
+<li><p>Of course there is also a library for everyone’s favourite 2D embedding generation: <a href="https://github.com/GregorLueg/manifoldsR" class="external-link">manifoldsR</a>. Same philosophy: parallelise what can be parallelised, use CPU-friendly memory layouts, avoid round trips to the interpreter. Million-cell UMAP? Done in minutes on a laptop. Even good old tSNE, infamous for being slow has an FFT-accelerated version (see <a href="https://www.nature.com/articles/s41592-018-0308-4" class="external-link">Linderman, et al.</a>)</p></li>
 <li>
 <p><a href="https://pubmed.ncbi.nlm.nih.gov/32561888/" class="external-link">SCENIC</a> infers gene regulatory networks by asking, for each target gene: which transcription factors best predict its expression? It does this by training a tree ensemble per gene, using the importance scores from those trees as a proxy for regulatory influence. The trees themselves are then thrown away — only the importance scores matter. That means we can optimise purely for speed, without caring about prediction quality at all. A few tricks compound here:</p>
 <ul>
@@ -245,7 +262,7 @@ Same as kNN graph ~244 MB</code></pre>
 <ul>
 <li><p><strong>More methods:</strong> More methods will be implemented over time. So far, the approach was that I implemented what was needed or I considered interesting. I have my eyes on some trajectory methods, such as <a href="https://github.com/dpeerlab/Palantir" class="external-link">Palantir</a> from <a href="https://www.nature.com/articles/s41587-019-0068-4" class="external-link">Setty, et al.</a> and <a href="https://pubmed.ncbi.nlm.nih.gov/29914354/" class="external-link">Slingshot</a>.</p></li>
 <li><p><strong>Spatial transcriptomics:</strong> Spatial data does not (yet) reach the scale of the largest single cell data sets most of the time. However, if you are analysing many Visium or similar data sets, it can become quite heavy, and a lot of current frameworks are built on top of single cell ones anyway. There are also some interesting methods that leverage the spatial grid information directly, which I find genuinely exciting.</p></li>
-<li><p><strong>GPU acceleration:</strong> GPUs are becoming increasingly accessible, and if you have the budget for data-centre-scale GPUs, please do use them — Nvidia knows what they are doing and cuBLAS is insanely fast, in ways that simply cannot be matched on CPUs. However, most people do not have several B200s lying around at home, so the aim is to make better use of the powerful GPUs in Apple Silicon, for example. I have had some first attempts writing GPU kernels via <a href="https://github.com/tracel-ai/cubecl" class="external-link">cubeCL</a> for nearest neighbour searches, which makes exhaustive searches brutally fast. There is likely room to run kNN searches on the GPU to really squeeze out better times — first tentative attempts <a href="https://github.com/GregorLueg/ann-search-rs/blob/main/docs/benchmarks_gpu.md" class="external-link">here</a>.</p></li>
+<li><p><strong>GPU acceleration:</strong> GPUs are becoming increasingly accessible, and if you have the budget for data-centre-scale GPUs, please do use them — Nvidia knows what they are doing and cuBLAS is insanely fast, in ways that simply cannot be matched on CPUs. However, most people do not have several B200s lying around at home, so the aim is to make better use of the powerful GPUs in Apple Silicon, for example. I have had some first attempts writing GPU kernels via <a href="https://github.com/tracel-ai/cubecl" class="external-link">cubecl</a> for nearest neighbour searches, which makes exhaustive searches brutally fast. First tentative attempts to leverage GPU-acceleration can be found in the <a href="https://github.com/GregorLueg/bixverse.gpu" class="external-link">sister package</a>… We have GPU-accelerated kNN searches; randomised sparse SVD (with the GEMM being executed on the GPU) and a GPU-accelerated Harmony.</p></li>
 </ul></section><script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);

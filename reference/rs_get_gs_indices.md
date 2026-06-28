@@ -1,6 +1,6 @@
 # Helper function to rapidly retrieve the indices of the gene set members
 
-Helper function to rapidly retrieve the indices of the gene set members
+**\[experimental\]**
 
 ## Usage
 

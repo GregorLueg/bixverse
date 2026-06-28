@@ -1,8 +1,8 @@
 # Calculate DGEs between cells based on Mann Whitney stats
 
-The function will take two sets of cell indices and calculate the
-differential gene expression based on the Mann Whitney test between the
-two groups.
+**\[experimental\]** The function will take two sets of cell indices and
+calculate the differential gene expression based on the Mann Whitney
+test between the two groups.
 
 ## Usage
 
@@ -42,7 +42,8 @@ rs_calculate_dge_mann_whitney(
 
 - verbose:
 
-  Boolean. Controls verbosity of the function.
+  Integer. `0L` - quiet; `1L` - normal verbosity; `2L` - detailed
+  verbosity.
 
 ## Value
 

@@ -1,13 +1,13 @@
 # Generate SuperCells.
 
-This function implements the approach from Bilous, et al. to generate
-meta cells or called here SuperCells. You can provide pre-computed kNN
-data (indices + distances) via `knn_data`, or an embedding via `embd`
-from which the kNN graph will be generated. You need to at least provide
-`knn_data` or `embd`. When `cells_to_use` is supplied, the kNN graph is
-always regenerated on the subset and any `knn_data` is ignored.
-Distances are required when the SuperCell parameters request the
-kernel-weighted graph.
+**\[experimental\]** This function implements the approach from Bilous,
+et al. to generate meta cells or called here SuperCells. You can provide
+pre-computed kNN data (indices + distances) via `knn_data`, or an
+embedding via `embd` from which the kNN graph will be generated. You
+need to at least provide `knn_data` or `embd`. When `cells_to_use` is
+supplied, the kNN graph is always regenerated on the subset and any
+`knn_data` is ignored. Distances are required when the SuperCell
+parameters request the kernel-weighted graph.
 
 ## Usage
 
@@ -70,7 +70,8 @@ rs_supercell(
 
 - verbose:
 
-  Boolean. Controls verbosity of the function.
+  Integer. `0L` - quiet; `1L` - normal verbosity; `2L` - detailed
+  verbosity.
 
 ## Value
 

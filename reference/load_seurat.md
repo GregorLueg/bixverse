@@ -1,7 +1,8 @@
 # Load in Seurat to `SingleCells`
 
-This function takes a Seurat file and generates `SingleCells` class from
-it.
+This function takes a Seurat object and generates a `SingleCells` class
+from it. The raw counts are extracted, written to the Rust binary
+format, and the metadata is loaded into the DuckDB.
 
 ## Usage
 
@@ -10,8 +11,10 @@ load_seurat(
   object,
   seurat,
   sc_qc_param = params_sc_min_quality(),
+  streaming = 1L,
   batch_size = 1000L,
-  streaming = TRUE,
+  max_genes_in_memory = 2000L,
+  cell_batch_size = 100000L,
   .verbose = TRUE
 )
 ```
@@ -43,15 +46,24 @@ load_seurat(
 
   - target_size - Float. Target size to normalise to. Defaults to `1e5`.
 
-- batch_size:
-
-  Integer. If `streaming = TRUE`, how many cells to process in one
-  batch. Defaults to `1000L`.
-
 - streaming:
 
-  Boolean. Shall the data be streamed during the conversion of CSR to
-  CSC. Defaults to `TRUE` and should be used for larger data sets.
+  Integer. CSR-to-CSC conversion mode. `0L` -\> in-memory (fastest,
+  highest memory), `1L` -\> light streaming with cell batching, `2L` -\>
+  heavy streaming with memory upper boundaries. Defaults to `1L`.
+
+- batch_size:
+
+  Integer. Cell batch size when `streaming = 1L`. Defaults to `1000L`.
+
+- max_genes_in_memory:
+
+  Integer. Maximum genes held in memory at once when `streaming = 2L`.
+  Defaults to `2000L`.
+
+- cell_batch_size:
+
+  Integer. Cell batch size when `streaming = 2L`. Defaults to `100000L`.
 
 - .verbose:
 

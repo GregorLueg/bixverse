@@ -1,7 +1,7 @@
 # Set similarities
 
-This function calculates the Jaccard or similarity index between a two
-given string vector and a of other string vectors.
+**\[experimental\]** This function calculates the Jaccard or similarity
+index between a two given string vector and a of other string vectors.
 
 ## Usage
 

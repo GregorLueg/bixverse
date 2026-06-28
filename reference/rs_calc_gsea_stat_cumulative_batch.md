@@ -1,6 +1,6 @@
 # Helper function to generate fgsea simple-based permutations
 
-Helper function to generate fgsea simple-based permutations
+**\[experimental\]**
 
 ## Usage
 

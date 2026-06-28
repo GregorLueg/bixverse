@@ -6,16 +6,16 @@ for the single cell-related classes and methods.
 ## Usage
 
 ``` r
-get_pca_loadings(x)
+get_pca_loadings(x, ...)
 
 ## S7 method for class <bixverse::MetaCells>
-get_pca_loadings(x)
+get_pca_loadings(x, ...)
 
 # S3 method for class 'ScCache'
-get_pca_loadings(x)
+get_pca_loadings(x, ...)
 
 ## S7 method for class <bixverse::SingleCells>
-get_pca_loadings(x)
+get_pca_loadings(x, ...)
 ```
 
 ## Arguments
@@ -23,6 +23,10 @@ get_pca_loadings(x)
 - x:
 
   An object to get PCA loadings from.
+
+- ...:
+
+  Other parameters.
 
 ## Value
 

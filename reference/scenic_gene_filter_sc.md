@@ -34,7 +34,9 @@ scenic_gene_filter_sc(
 
 - .verbose:
 
-  Boolean. Controls verbosity. Defaults to `TRUE`.
+  Boolean or integer. Controls verbosity and returns run times. `FALSE`
+  -\> quiet, `TRUE` or `1L` -\> normal verbosity, `2L` -\> detailed
+  verbosity.
 
 ## Value
 

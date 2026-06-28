@@ -1,6 +1,6 @@
 # Generate the neighbourhoods akin to the miloR approach
 
-Rust version of the
+**\[experimental\]**
 
 ## Usage
 
@@ -30,7 +30,8 @@ rs_make_milor_nhoods(embd, knn_indices, milor_params, seed, verbose)
 
 - verbose:
 
-  Boolean. Controls verbosity of the function.
+  Integer. `0L` - quiet; `1L` - normal verbosity; `2L` - detailed
+  verbosity.
 
 ## Value
 

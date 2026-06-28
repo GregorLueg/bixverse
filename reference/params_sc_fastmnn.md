@@ -9,8 +9,9 @@ params_sc_fastmnn(
   ndist = 3,
   cos_norm = TRUE,
   no_pcs = 30L,
-  random_svd = TRUE,
-  knn = list(k = 20L)
+  sparse_svd = TRUE,
+  knn = list(k = 20L),
+  pca = params_sc_pca()
 )
 ```
 
@@ -30,9 +31,9 @@ params_sc_fastmnn(
 
   Integer. Number of PCs to use for MNN calculations. Defaults to `30L`.
 
-- random_svd:
+- sparse_svd:
 
-  Logical. Use randomised SVD. Defaults to `TRUE`.
+  Boolean. Shall the sparse SVD be used.
 
 - knn:
 
@@ -41,6 +42,12 @@ params_sc_fastmnn(
   for available parameters: `k`, `knn_method`, `ann_dist`,
   `search_budget`, `n_trees`, `delta`, `diversify_prob`, `ef_budget`,
   `m`, `ef_construction`, `ef_search`, `n_list` and `n_probe`.
+
+- pca:
+
+  Named list. Parameters to feed through to the optional recalculation
+  of the PCA, see
+  [`params_sc_pca()`](https://gregorlueg.github.io/bixverse/reference/params_sc_pca.md).
 
 ## Value
 

@@ -1,6 +1,7 @@
 # Calculate the column wise cosine similarities
 
-Calculates the cosyne similarity matrix of the columns.
+**\[experimental\]** Calculates the pairwise cosine similarity matrix of
+the columns.
 
 ## Usage
 

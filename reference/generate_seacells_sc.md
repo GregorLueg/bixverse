@@ -90,7 +90,9 @@ generate_seacells_sc(
 
 - .verbose:
 
-  Boolean. Controls verbosity of the function.
+  Boolean or integer. Controls verbosity and returns run times. `FALSE`
+  -\> quiet, `TRUE` or `1L` -\> normal verbosity, `2L` -\> detailed
+  verbosity.
 
 ## Value
 

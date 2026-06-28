@@ -1,7 +1,8 @@
 # Calculates the TOM over an affinity matrix
 
-Calculates the topological overlap measure for a given affinity matrix
-x. Has the option to calculate the signed and unsigned version.
+**\[experimental\]** Calculates the topological overlap measure for a
+given affinity matrix x. Has the option to calculate the signed and
+unsigned version.
 
 ## Usage
 

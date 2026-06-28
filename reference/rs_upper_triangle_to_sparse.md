@@ -1,7 +1,7 @@
 # Generate sparse data from an upper triangle
 
-This function takes the values from an upper triangle matrix the shift
-and the nrows/ncols and returns a list.
+**\[experimental\]** This function takes the values from an upper
+triangle matrix the shift and the nrows/ncols and returns a list.
 
 ## Usage
 
@@ -17,7 +17,8 @@ rs_upper_triangle_to_sparse(value, shift, n, cs_type)
 
 - shift:
 
-  Integer Did you apply a shift to remove the diagonal values?
+  Boolean. Was the matrix shifted up (false = diagonal included; true
+  diagonal not incldued).
 
 - n:
 

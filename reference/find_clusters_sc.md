@@ -10,7 +10,9 @@ find_clusters_sc(
   object,
   cluster_algorithm = c("leiden", "louvain"),
   res = 1,
-  name = "leiden_clustering"
+  name = "leiden_clustering",
+  modality = c("rna", "adt", "wnn"),
+  seed = 42L
 )
 ```
 
@@ -34,6 +36,16 @@ find_clusters_sc(
 - name:
 
   String. The name to add to the obs table in the DuckDB.
+
+- modality:
+
+  String. On which modality to run the UMAP. One of
+  `c("rna", "adt", "wnn")`. The two latter options are only available
+  for multi-modal versions with the added data.
+
+- seed:
+
+  Integer. For reproducibility.
 
 ## Value
 

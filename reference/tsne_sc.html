@@ -45,7 +45,7 @@ algorithm does not behave properly anymore, thus, will throw an error.'></head><
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -69,14 +69,24 @@ algorithm does not behave properly anymore, thus, will throw an error.'></head><
   </ul></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-single-cells" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Single Cells</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-single-cells"><li><a class="dropdown-item" href="../articles/thinking_single_cell.html">Thinking about single cells the bixverse way</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-single-cells"><li><h6 class="dropdown-header" data-toc-skip>Intro vignettes</h6></li>
+    <li><a class="dropdown-item" href="../articles/thinking_single_cell.html">Thinking about single cells the bixverse way</a></li>
     <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">PBMC analysis with the bixverse single cell framework</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_io.html">Reading data in (single-cell I/O)</a></li>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
-    <li><a class="dropdown-item" href="../articles/analysis_single_cell.html">'Bag of genes' methods for single cell in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/knn_searches.html">kNN searches for single cells in bixverse</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>More advanced analysis methods</h6></li>
+    <li><a class="dropdown-item" href="../articles/bag_of_genes_single_cells.html">'Bag of genes' methods for single cell in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/nichenet.html">Ligand receptor analysis</a></li>
     <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/symphomy.html">Reference mapping via Symphony</a></li>
+    <li><a class="dropdown-item" href="../articles/multi_modal_single_cell.html">Multi-modal analysis</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Others</h6></li>
     <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing big data on a powerful laptop (example)</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_visualisation.html">Plotting helpers</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -124,7 +134,9 @@ algorithm does not behave properly anymore, thus, will throw an error.</p>
 <span>  <span class="va">object</span>,</span>
 <span>  use_knn <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  embd_to_use <span class="op">=</span> <span class="st">"pca"</span>,</span>
+<span>  slot_name <span class="op">=</span> <span class="st">"tsne"</span>,</span>
 <span>  no_embd_to_use <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  modality <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rna"</span>, <span class="st">"adt"</span>, <span class="st">"wnn"</span><span class="op">)</span>,</span>
 <span>  n_dim <span class="op">=</span> <span class="fl">2L</span>,</span>
 <span>  perplexity <span class="op">=</span> <span class="fl">10</span>,</span>
 <span>  approx_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"bh"</span>, <span class="st">"fft"</span><span class="op">)</span>,</span>
@@ -154,9 +166,20 @@ algorithm does not behave properly anymore, thus, will throw an error.</p>
 in the object.</p></dd>
 
 
+<dt id="arg-slot-name">slot_name<a class="anchor" aria-label="anchor" href="#arg-slot-name"></a></dt>
+<dd><p>String. The name of this embedding within the object.
+Defaults to <code>"tsne"</code>.</p></dd>
+
+
 <dt id="arg-no-embd-to-use">no_embd_to_use<a class="anchor" aria-label="anchor" href="#arg-no-embd-to-use"></a></dt>
 <dd><p>Optional integer. Number of embedding dimensions to
 use. If <code>NULL</code> all will be used.</p></dd>
+
+
+<dt id="arg-modality">modality<a class="anchor" aria-label="anchor" href="#arg-modality"></a></dt>
+<dd><p>String. On which modality to run the UMAP. One of
+<code>c("rna", "adt", "wnn")</code>. The two latter options are only available for
+multi-modal versions with the added data.</p></dd>
 
 
 <dt id="arg-n-dim">n_dim<a class="anchor" aria-label="anchor" href="#arg-n-dim"></a></dt>

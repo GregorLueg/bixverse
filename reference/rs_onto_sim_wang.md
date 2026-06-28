@@ -1,7 +1,7 @@
 # Calculate the Wang similarity for specific terms
 
-This function calculates the Wang similarities between all permutations
-of a given set of terms.
+**\[experimental\]** This function calculates the Wang similarities
+between all permutations of a given set of terms.
 
 ## Usage
 

@@ -94,8 +94,9 @@ mtx_io_params$cells_as_rows <- TRUE
 sc_object <- load_mtx(
   object = sc_object,
   sc_mtx_io_param = mtx_io_params,
-  streaming = FALSE
+  streaming = 0L
 )
+#>  Loading data directly into memory for CSR to CSC conversion.
 #> Loading observations data from flat file into the DuckDB.
 #> Loading variable data from flat file into the DuckDB.
 
@@ -170,7 +171,7 @@ truth?
 
 ``` r
 
-scrublet_dt <- get_obs_data(scrublet)
+scrublet_dt <- get_data(scrublet)
 scrublet_dt[, Barcode := get_cell_names(sc_object)]
 scrublet_dt <- merge(scrublet_dt, demuxlet_data, by = "Barcode")
 
@@ -192,10 +193,10 @@ can just run:
 
 sc_object <- add_sc_new_obs(
   object = sc_object,
-  obs_data = get_obs_data(scrublet)
+  obs_data = get_data(scrublet)
 )
 
-sc_object[[1:5]]
+head(sc_object)
 #>    cell_idx          cell_id   nnz lib_size to_keep doublet doublet_score
 #>       <num>           <char> <num>    <num>  <lgcl>  <lgcl>         <num>
 #> 1:        1 AAACATACAATGCC-1   851     1313    TRUE    TRUE  0.3265306652
@@ -203,6 +204,7 @@ sc_object[[1:5]]
 #> 3:        3 AAACATACCAGAAA-1   713     1149    TRUE   FALSE  0.0209840816
 #> 4:        4 AAACATACCAGCTA-1   948     1588    TRUE    TRUE  0.3494623899
 #> 5:        5 AAACATACCATGCA-1   337      499    TRUE   FALSE  0.0006016847
+#> 6:        6 AAACATACCTCGCT-1   849     1494    TRUE   FALSE  0.0685483888
 ```
 
 As we can see with added now the Scrublet data
@@ -228,7 +230,7 @@ plot(scrublet_adj)
 
 ``` r
 
-scrublet_adj_dt <- get_obs_data(scrublet_adj)
+scrublet_adj_dt <- get_data(scrublet_adj)
 scrublet_adj_dt[, Barcode := get_cell_names(sc_object)]
 scrublet_adj_dt <- merge(scrublet_adj_dt, demuxlet_data, by = "Barcode")
 
@@ -250,6 +252,14 @@ We have made it worse here, but maybe there are cases where the scores
 are not very good. Compared to the original version, Otsu’s method is
 used to identify the perfect threshold, but it might fail in some
 situations.
+
+#### Running with grouping variables or within specific cell subsets
+
+Scrublet (and the other methods) have the two parameters if you wish to
+run the detection method within a specific set of cells (see the
+`cells_to_use = NULL` parameter )and/or want to use a grouping variable
+(like run the doublet detection within individual samples, see the
+`group_by = NULL` parameter).
 
 ### Boosted doublet detection
 
@@ -273,7 +283,7 @@ Let’s check how boosted works?
 
 ``` r
 
-boosted_dt <- get_obs_data(boosted_doublets)
+boosted_dt <- get_data(boosted_doublets)
 boosted_dt[, Barcode := get_cell_names(sc_object)]
 boosted_dt <- merge(boosted_dt, demuxlet_data, by = "Barcode")
 
@@ -316,7 +326,7 @@ boosted_doublets_fast <- doublet_detection_boost_sc(
 
 ``` r
 
-boosted_fast_dt <- get_obs_data(boosted_doublets_fast)
+boosted_fast_dt <- get_data(boosted_doublets_fast)
 boosted_fast_dt[, Barcode := get_cell_names(sc_object)]
 boosted_fast_dt <- merge(boosted_fast_dt, demuxlet_data, by = "Barcode")
 
@@ -325,13 +335,13 @@ doublet_metrics(
   actual = boosted_fast_dt$Call
 )
 #> $precision
-#> [1] 0.7220183
+#> [1] 0.7209515
 #> 
 #> $recall
-#> [1] 0.5048108
+#> [1] 0.5054522
 #> 
 #> $f1
-#> [1] 0.5941865
+#> [1] 0.5942685
 ```
 
 ### scDblFinder
@@ -360,7 +370,7 @@ The scores are similar to the other methods.
 
 ``` r
 
-scdblfinder_dt <- get_obs_data(scdblfinder)
+scdblfinder_dt <- get_data(scdblfinder)
 
 scdblfinder_dt[, Barcode := get_cell_names(sc_object)]
 scdblfinder_dt <- merge(scdblfinder_dt, demuxlet_data, by = "Barcode")
@@ -370,13 +380,13 @@ doublet_metrics(
   actual = scdblfinder_dt$Call
 )
 #> $precision
-#> [1] 0.5808705
+#> [1] 0.592613
 #> 
 #> $recall
-#> [1] 0.6933932
+#> [1] 0.6895446
 #> 
 #> $f1
-#> [1] 0.6321637
+#> [1] 0.6374148
 ```
 
 We can also extract the other scores from scDblFinder. We can for
@@ -385,7 +395,7 @@ method and check the doublets like this.
 
 ``` r
 
-weighted_scores <- get_scores(scdblfinder)
+weighted_scores <- get_scores(scdblfinder, score_type = "weighted")
 
 weighted_scores_threshold <- find_threshold_otsu(x = weighted_scores)
 
@@ -397,8 +407,8 @@ table(
 )
 #>         weighted
 #> lightgbm FALSE  TRUE
-#>    FALSE 12009   658
-#>    TRUE     56  1805
+#>    FALSE 12008   706
+#>    TRUE     52  1762
 ```
 
 Or alternatively, the cxds scores can also be extracted and used. These
@@ -420,8 +430,8 @@ table(
 )
 #>         cxds
 #> lightgbm FALSE  TRUE
-#>    FALSE 12440   227
-#>    TRUE    771  1090
+#>    FALSE 12464   250
+#>    TRUE    747  1067
 ```
 
 Should you observe that this is very flat or you only have a few data
@@ -438,14 +448,6 @@ data. In this example, Scrublet performed better compared to the other
 two methods; in a comparison paper scDblFinder is the best across
 different benchmark data sets, see
 [here](https://www.cell.com/cell-systems/fulltext/S2405-4712(20)30459-2).
-
-### Future outlook
-
-While Rust makes these methods blazingly fast (usually faster than the
-corresponding R or Python versions), they start feeling quite slow on
-large data sets. A potential approach via GPU acceleration, see
-[bixverse.gpu](https://github.com/GregorLueg/bixverse.gpu) could be an
-idea here to improve the speed
 
 ## Clean up
 

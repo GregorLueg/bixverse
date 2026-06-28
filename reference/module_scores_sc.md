@@ -16,7 +16,7 @@ module_scores_sc(
   n_bins = 24L,
   n_ctrl = 100L,
   seed = 42L,
-  streaming = FALSE,
+  streaming = NULL,
   .verbose = TRUE
 )
 ```
@@ -47,12 +47,15 @@ module_scores_sc(
 
 - streaming:
 
-  Boolean. Shall the cell and gene data be streamed in. Useful for
-  larger data sets.
+  Optional Boolean. Shall the data be streamed in. Useful for larger
+  data sets where you wish to avoid loading in the whole data. If
+  `NULL`, will automatically detect.
 
 - .verbose:
 
-  Boolean. Controls the verbosity of the function.
+  Boolean or integer. Controls verbosity and returns run times. `FALSE`
+  -\> quiet, `TRUE` or `1L` -\> normal verbosity, `2L` -\> detailed
+  verbosity.
 
 ## Value
 

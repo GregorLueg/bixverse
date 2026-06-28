@@ -1,6 +1,6 @@
 # Prepare a pathway list for GSVA
 
-Prepare a pathway list for GSVA
+**\[experimental\]**
 
 ## Usage
 

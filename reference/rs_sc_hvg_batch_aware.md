@@ -1,8 +1,8 @@
 # Calculate HVG per batch
 
-Batch-aware highly variable gene detection. Calculates HVG statistics
-separately for each batch, allowing for downstream selection strategies
-such as union of top genes per batch.
+**\[experimental\]** Batch-aware highly variable gene detection.
+Calculates HVG statistics separately for each batch, allowing for
+downstream selection strategies such as union of top genes per batch.
 
 ## Usage
 
@@ -65,7 +65,8 @@ rs_sc_hvg_batch_aware(
 
 - verbose:
 
-  Boolean. Controls verbosity of the function.
+  Integer. `0L` - quiet; `1L` - normal verbosity; `2L` - detailed
+  verbosity.
 
 ## Value
 

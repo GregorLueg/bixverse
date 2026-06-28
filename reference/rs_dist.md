@@ -1,7 +1,7 @@
 # Calculate the pairwise column distance in a matrix
 
-This function allows to calculate pairwise between all columns the
-specified distance metric.
+**\[experimental\]** This function allows to calculate pairwise between
+all columns the specified distance metric.
 
 ## Usage
 

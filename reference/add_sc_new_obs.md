@@ -17,7 +17,7 @@ add_sc_new_obs(object, obs_data)
 - obs_data:
 
   data.table. A data.table you generated with
-  [`get_obs_data()`](https://gregorlueg.github.io/bixverse/reference/get_obs_data.md)
+  [`get_data()`](https://gregorlueg.github.io/bixverse/reference/get_data.md)
   on some sub class.
 
 ## Value

@@ -10,6 +10,7 @@ params_sc_supercell(
   graining_factor = 20,
   use_kernel = TRUE,
   k_ith = NULL,
+  max_support = NULL,
   knn = list()
 )
 ```
@@ -32,6 +33,18 @@ params_sc_supercell(
   approach in SuperCell2, see Hérault, et al., bioRxiv, 2026 and van
   Dijk, et al., Cell, 2018.
 
+- k_ith:
+
+  Optional integer. The k-ith neighbour to use for the kernel. Defaults
+  to `k %/% 2`.
+
+- max_support:
+
+  Optional integer. Caps each cell's walk-probability vector to its top
+  entries by mass, bounding memory at ~`max_support * n_cells` on large
+  data. Makes the result an approximation. `NULL` (default) keeps the
+  walks exact.
+
 - knn:
 
   List. Optional overrides for kNN parameters. See
@@ -39,11 +52,6 @@ params_sc_supercell(
   for available parameters: `k`, `knn_method`, `ann_dist`,
   `search_budget`, `n_trees`, `delta`, `diversify_prob`, `ef_budget`,
   `m`, `ef_construction`, `ef_search`, `n_list` and `n_probe`.
-
-- k_ith_neighbour:
-
-  Optional integer. The k-ith neighbour to use for the kernel. Defaults
-  to `k %/% 2`.
 
 ## Value
 

@@ -10,6 +10,7 @@ of Jaccard similarity and to specify a minimum similarity.
 generate_rbh_graph(
   object,
   minimum_similarity,
+  k_best = 1L,
   overlap_coefficient = FALSE,
   spearman = FALSE
 )
@@ -25,6 +26,13 @@ generate_rbh_graph(
 - minimum_similarity:
 
   The minimum similarity to create an edge.
+
+- k_best:
+
+  Integer. Number of best neighbours to consider. If set to `1L`, this
+  behaves as the traditional reciprocal best hit. If you set this to
+  `3L` you consider edges if the modules is in the top 3 best modules by
+  similarity for each other.
 
 - overlap_coefficient:
 

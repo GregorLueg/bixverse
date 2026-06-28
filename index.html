@@ -23,7 +23,7 @@
 
     <a class="navbar-brand me-2" href="index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -53,14 +53,24 @@
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-single-cells" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Single Cells</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-single-cells">
-<li><a class="dropdown-item" href="articles/thinking_single_cell.html">Thinking about single cells the bixverse way</a></li>
+<li><h6 class="dropdown-header" data-toc-skip>Intro vignettes</h6></li>
+    <li><a class="dropdown-item" href="articles/thinking_single_cell.html">Thinking about single cells the bixverse way</a></li>
     <li><a class="dropdown-item" href="articles/pbmc_single_cell.html">PBMC analysis with the bixverse single cell framework</a></li>
+    <li><a class="dropdown-item" href="articles/single_cell_io.html">Reading data in (single-cell I/O)</a></li>
     <li><a class="dropdown-item" href="articles/doublet_detection.html">Doublet detection in bixverse</a></li>
     <li><a class="dropdown-item" href="articles/single_cell_batch_corrections.html">Batch corrections</a></li>
-    <li><a class="dropdown-item" href="articles/analysis_single_cell.html">'Bag of genes' methods for single cell in bixverse</a></li>
     <li><a class="dropdown-item" href="articles/knn_searches.html">kNN searches for single cells in bixverse</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>More advanced analysis methods</h6></li>
+    <li><a class="dropdown-item" href="articles/bag_of_genes_single_cells.html">'Bag of genes' methods for single cell in bixverse</a></li>
+    <li><a class="dropdown-item" href="articles/nichenet.html">Ligand receptor analysis</a></li>
     <li><a class="dropdown-item" href="articles/meta_cells.html">Meta cells - generation and analysis</a></li>
+    <li><a class="dropdown-item" href="articles/symphomy.html">Reference mapping via Symphony</a></li>
+    <li><a class="dropdown-item" href="articles/multi_modal_single_cell.html">Multi-modal analysis</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Others</h6></li>
     <li><a class="dropdown-item" href="articles/single_cell_big_data.html">Analysing big data on a powerful laptop (example)</a></li>
+    <li><a class="dropdown-item" href="articles/single_cell_visualisation.html">Plotting helpers</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">Changelog</a></li>
@@ -80,7 +90,7 @@
   <main id="main" class="col-md-9"><div class="section level1">
 <div class="page-header"><h1 id="bixverse-package">bixverse package<a class="anchor" aria-label="anchor" href="#bixverse-package"></a>
 </h1></div>
-<p><img src="https://img.shields.io/badge/R_package-0.3.2-orange" alt="r_package"><a href="https://github.com/GregorLueg/bixverse/actions/workflows/R-cmd-check.yml" class="external-link"><img src="https://github.com/GregorLueg/bixverse/actions/workflows/R-cmd-check.yml/badge.svg" alt="CI"></a> <a href="https://opensource.org/licenses/MIT" class="external-link"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a> <a href="https://gregorlueg.github.io/bixverse/"><img src="https://img.shields.io/badge/pkgdown-website-1b5e9f?logo=github" alt="pkgdown"></a> <a href="https://extendr.github.io/extendr/extendr_api/" class="external-link"><img src="https://img.shields.io/badge/extendr-%5E0.9.0-276DC2" alt="extendr"></a></p>
+<p><img src="https://img.shields.io/badge/R_package-0.4.0-orange" alt="r_package"><a href="https://github.com/GregorLueg/bixverse/actions/workflows/R-cmd-check.yml" class="external-link"><img src="https://github.com/GregorLueg/bixverse/actions/workflows/R-cmd-check.yml/badge.svg" alt="CI"></a> <a href="https://opensource.org/licenses/MIT" class="external-link"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a> <a href="https://gregorlueg.github.io/bixverse/"><img src="https://img.shields.io/badge/pkgdown-website-1b5e9f?logo=github" alt="pkgdown"></a> <a href="https://extendr.github.io/extendr/extendr_api/" class="external-link"><img src="https://img.shields.io/badge/extendr-%5E0.9.0-276DC2" alt="extendr"></a></p>
 <p></p>
 <p><img src="reference/figures/bixverse_logo.png" width="128" height="128" alt="bixverse logo"></p>
 <p></p>
@@ -90,12 +100,43 @@
 <div class="section level3">
 <h3 id="description">Description<a class="anchor" aria-label="anchor" href="#description"></a>
 </h3>
-<p>This is an <em>opionated</em> package making various bioinformatics workflows in R (or ported from Python) much faster via low-level implementations in Rust. The core idea is to take different methods, write implementations in a compiled, memory-managed language with minimal kernel round trips and leverage R purely as an orchestraction layer. Result? Blazingly fast performance with low memory usage, making large-scale analyses feasable without any cloud compute. Over time more and more methods will be added. The aim will be to come a <code>tidyverse</code> equivalent, but for a lot of downstream methods post WGS processing (with a strong emphasis on transcriptomics, think single cell and RNASeq for now). There is a sister package for plotting functions being build in parallel, see <a href="https://github.com/GregorLueg/bixverse.plots" class="external-link">here</a> (that one is in alpha phase).</p>
+<p>This is an <em>opionated</em> package taking various bioinformatics and computational biology workflows from R and Python, making them substantially faster via low-level implementations in Rust and exposing them via thin R wrappers. Result? Blazingly fast performance with low memory usage, making large-scale analysis feasable without any cloud compute. Over time more and more methods will be added.</p>
+<p>Two sister packages are also in the process of being built and maintained:</p>
+<ul>
+<li>
+<a href="https://github.com/GregorLueg/bixverse.plots" class="external-link">bixverse.plots</a> package for - you guessed it - plotting. Contains especially a large number of plotting helpers for single cell now.</li>
+<li>
+<a href="https://github.com/GregorLueg/bixverse.gpu" class="external-link">bixverse.gpu</a> package for - you guessed it again - GPU-accelerated methods. In this case, it leverages <a href="https://github.com/tracel-ai/cubecl" class="external-link">cubecl</a>/<a href="https://burn.dev" class="external-link">Burn</a> under the hood with wgpu backends which means it will work on (theoretically) any GPU.</li>
+</ul>
+<p>Additional packages that might be of interest interest to you:</p>
+<ul>
+<li>
+<a href="https://github.com/GregorLueg/manifoldsR" class="external-link">manifoldsR</a>. This package specialises on methods for manifold learning for visualisations, think UMAP, tSNE, diffusion maps, etc. Additionally, it is home to a cool clustering method called <a href="https://github.com/TutteInstitute/evoc" class="external-link">EVoC</a> leveraging Rust under the hood. This package is used for all of the 2D visualisations for the single cell suite.</li>
+<li>
+<a href="https://github.com/GregorLueg/genewalkR" class="external-link">genewalkR</a>. This one is a bit more graph-heavy but has some cool methods in there… Also, it provides a data base with different gene &lt;&gt; gene interaction and regulatory networks. For sure useful for different computational biology workflows.</li>
+</ul>
 </div>
 <div class="section level3">
 <h3 id="release-notes">Release notes<a class="anchor" aria-label="anchor" href="#release-notes"></a>
 </h3>
-<p>With the release of <code>0.3.0</code> a lot has happened. The lack of updates had a (big) reason… Some cooking has been going on… Since <code>0.3.0</code> the package contains a full release of the teasered single cell functionality suite that you can use to analyse millions of cells locally and implements already a large number of methods in this space into Rust and exposes them to R. <a href="https://gregorlueg.github.io/bixverse/">Please checkout out the website of the package for details</a>; particularly the sections around single cell (design choices and vignettes.)</p>
+<p><img src="/reference/figures/bixverse_single_cell.png" width="500" height="500" alt="atlas scale on small compute"></p>
+<p>Major release with <code>"0.4.0"</code>. The single cell suite has been further improved. The key changes are:</p>
+<ul>
+<li>Performance improvements across several axes. A lot of the underlying Rust code was made even faster and more performant. The goal of analysing a 1m single cell data set on a MacBook Air with 24 GB memory has been achieved.</li>
+<li>Multi-modal support. There is now a <code>SingleCellsMultiModal</code> class that allows you to (for now only) also add ADT counts. Some readers have been added to load in the data. This also includes support for new methods in this space:
+<ul>
+<li>
+<a href="https://www.nature.com/articles/s41467-022-29356-8" class="external-link">DSB normalisation</a> for ADT counts</li>
+<li>
+<a href="https://www.cell.com/cell/fulltext/S0092-8674(21)00583-3" class="external-link">WNN generation</a> for generation of multi-modal graphs.</li>
+<li>Large number of methods and updates to support multi-model analysis</li>
+</ul>
+</li>
+<li>Massive improvements on the two sister packages (<a href="https://github.com/GregorLueg/bixverse.plots" class="external-link">bixverse.plots</a> and <a href="https://github.com/GregorLueg/bixverse.gpu" class="external-link">bixverse.gpu</a>): enabling GPU-accelerated methods (Harmony, PCA) and a large number of plotting helpers.</li>
+<li>Updates to various vignettes to reflect the changes with this release.</li>
+<li>More methods added… Symphony, NicheNet, sparse NMF for single cells!</li>
+</ul>
+<p><a href="https://gregorlueg.github.io/bixverse/">Please checkout out the website of the package for details</a> -&gt; particularly the sections around single cell (design choices and vignettes.)</p>
 </div>
 </div>
 <div class="section level2">
@@ -137,27 +178,35 @@
 <div class="section level3">
 <h3 id="single-and-spatial-transcriptomics">Single and spatial transcriptomics:<a class="anchor" aria-label="anchor" href="#single-and-spatial-transcriptomics"></a>
 </h3>
-<ul>
-<li>For single cell the following stuff will be hopefully soon’ish implemented:
-<ul>
-<li>More multi-file read in support. At the moment, multiple h5ad files are possible, but not yet for other file formats.</li>
-<li>h5 file i/o (provided by CellRanger).</li>
-<li>Saving data to h5ad for easier interoperability with Python.</li>
-<li>Something cool with <a href="https://zarr.dev" class="external-link">Zarr</a> … ?</li>
-<li>Methods on top of the meta cells: co-expression network detection etc.</li>
-<li>Expansion of the <a href="https://github.com/GregorLueg/bixverse.plots" class="external-link">sister package</a> to have plotting helpers in there for single cell.</li>
-<li>Helpers to slice and dice the data easier and add new data - this will be a larger piece of work.</li>
-<li>Implementations of <a href="https://www.nature.com/articles/s41587-019-0068-4" class="external-link">Palantir</a> and <a href="https://pubmed.ncbi.nlm.nih.gov/29914354/" class="external-link">Slingshot</a>.</li>
-<li>Port over <a href="https://www.nature.com/articles/s41592-019-0667-5" class="external-link">NicheNet</a>
-</li>
-<li>Add more GPU-acceleration via <a href="(https://github.com/tracel-ai/cubecl)" class="external-link">cubecl/WGPU backend</a> for GPU-agnostic acceleration where deemed appropriate, see another <a href="https://github.com/GregorLueg/bixverse.gpu" class="external-link">sister package</a>
-</li>
-<li>Generate a Python package that interfaces into Deep Learning libraries for training neural networks on top of the data. This will need some thinking however.</li>
+<div class="section level4">
+<h4 id="general">General<a class="anchor" aria-label="anchor" href="#general"></a>
+</h4>
+<ul class="task-list">
+<li><label><input type="checkbox" checked>Multi h5 (10x output) i/o</label></li>
+<li><label><input type="checkbox">Save data to h5ad for easier interoperability with Python.</label></li>
+<li><label><input type="checkbox">Splitting a SingleCells into several sub directories for easier management</label></li>
+<li><label><input type="checkbox">Implementation of <a href="https://www.nature.com/articles/s41587-019-0068-4" class="external-link">Palantir</a> and <a href="https://pubmed.ncbi.nlm.nih.gov/29914354/" class="external-link">Slingshot</a> for trajectory analysis</label></li>
+<li><label><input type="checkbox" checked>Port over <a href="https://www.nature.com/articles/s41592-019-0667-5" class="external-link">NicheNet</a>.</label></li>
+<li><label><input type="checkbox">Easy interoperability that chunks of data can be read in for neural network training in the corresponding deep learning frameworks.</label></li>
 </ul>
-</li>
-<li>Leverage the current infrastructure and add dedicated support and methods for spatial transcriptomics. There are some cool methods in that space that for sure could benefit from the speed that a compiled, memory-managed language offers. Especially when analysing more data sets.</li>
-<li>Add other interesting methods that I can find (and have a use-case for).</li>
+</div>
+<div class="section level4">
+<h4 id="spatial">Spatial<a class="anchor" aria-label="anchor" href="#spatial"></a>
+</h4>
+<p>Full support of spatial transcriptomics via a dedicated <code>SpatialSpots</code> class leveraging the current Rust-based infrastructure for large scale analysis on local compute.</p>
+</div>
+</div>
+<div class="section level3">
+<h3 id="general-methods">General methods<a class="anchor" aria-label="anchor" href="#general-methods"></a>
+</h3>
+<ul class="task-list">
+<li><label><input type="checkbox" checked>Addition of an NMF method for dense and sparse matrices. After some research likely a combination HALS + NNDSVD initialisation. Partially done, the single cell part is ready.</label></li>
 </ul>
+</div>
+<div class="section level3">
+<h3 id="further-cross-integration-with-other-packages">Further cross integration with other packages<a class="anchor" aria-label="anchor" href="#further-cross-integration-with-other-packages"></a>
+</h3>
+<p>Two sister packages are in active development: <a href="https://github.com/GregorLueg/bixverse.gpu" class="external-link">GPU-accelerated methods</a> and a dedicated <a href="https://github.com/GregorLueg/bixverse.plots" class="external-link">plotting package</a>. Further improved cross-integration is on the to-do list.</p>
 </div>
 <div class="section level3">
 <h3 id="documentation">Documentation<a class="anchor" aria-label="anchor" href="#documentation"></a>

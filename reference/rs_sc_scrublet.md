@@ -1,6 +1,6 @@
 # Scrublet Rust interface
 
-Scrublet Rust interface
+**\[experimental\]** Implementation of Scrublet in Rust.
 
 ## Usage
 
@@ -44,7 +44,8 @@ rs_sc_scrublet(
 
 - verbose:
 
-  Boolean. Controls verbosity
+  Integer. `0L` - quiet; `1L` - normal verbosity; `2L` - detailed
+  verbosity.
 
 - streaming:
 

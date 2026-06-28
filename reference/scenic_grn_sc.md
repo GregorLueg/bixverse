@@ -13,7 +13,7 @@ scenic_grn_sc(
   scenic_params = params_scenic(),
   genes_to_take = NULL,
   cells_to_take = NULL,
-  streaming = FALSE,
+  streaming = NULL,
   random_seed = 42L,
   .verbose = TRUE
 )
@@ -50,9 +50,10 @@ scenic_grn_sc(
 
 - streaming:
 
-  Boolean. Whether to use the streaming implementation to bound memory
-  usage. Useful for large datasets. Defaults to `FALSE`. Ignored when
-  applied to `MetaCells`.
+  Optional Boolean. Shall the data be streamed in. Useful for larger
+  data sets where you wish to avoid loading in the whole data. If
+  `NULL`, will automatically detect. Ignored when applied to
+  `MetaCells`.
 
 - random_seed:
 
@@ -60,7 +61,9 @@ scenic_grn_sc(
 
 - .verbose:
 
-  Boolean. Controls verbosity. Defaults to `TRUE`.
+  Boolean or integer. Controls verbosity and returns run times. `FALSE`
+  -\> quiet, `TRUE` or `1L` -\> normal verbosity, `2L` -\> detailed
+  verbosity.
 
 ## Value
 

@@ -1,21 +1,18 @@
 # Calculates sparse PCA for single cell
 
-Helper function that will calculate sparse PCA without scaling the data.
-This has the advantage that you avoid creating a large dense matrix due
-to scaling; however, it has the disadvantage that the first PC will be
-heavily influenced by average expression. If random_svd is set to
-`FALSE`, Lanczos iterations will be used to solve the SVD; if random_svd
-is set to `TRUE`, the randomised version will be used with
-multiplication of the initial sparse matrix with a much smaller random
-dense matrix, avoiding holding a large dense matrix in memory.
+**\[experimental\]** Helper function that will calculate sparse PCA
+without scaling the data. You have the option to do mean centering,
+variance normalisation and/or apply the new proposed transformation
+`PFlogPF` from Booeshaghi, et al. None of these will densify the matrix.
 
 ## Usage
 
 ``` r
 rs_sc_pca_sparse(
   f_path_gene,
+  f_path_cell,
   no_pcs,
-  random_svd,
+  pca_params,
   cell_indices,
   gene_indices,
   seed,
@@ -29,13 +26,18 @@ rs_sc_pca_sparse(
 
   String. Path to the `counts_genes.bin` file.
 
+- f_path_cell:
+
+  String. Path to the `counts_cells.bin` file. Used if you wish to use
+  the PFlogPF transformation.
+
 - no_pcs:
 
   Integer. Number of PCs to calculate.
 
-- random_svd:
+- pca_params:
 
-  Boolean. Shall randomised SVD be used.
+  Named list. Contains the parameters to use for this PCA run.
 
 - cell_indices:
 
@@ -51,7 +53,8 @@ rs_sc_pca_sparse(
 
 - verbose:
 
-  Boolean. Controls verbosity of the function.
+  Integer. `0L` - quiet; `1L` - normal verbosity; `2L` - detailed
+  verbosity.
 
 ## Value
 
@@ -65,3 +68,7 @@ A list with with the following items
 
 - singular_values - The singular values for the PCA (solved via sparse
   SVD).
+
+## References
+
+Booeshaghi, et al., bioRxive, 2026.

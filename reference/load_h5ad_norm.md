@@ -18,9 +18,11 @@ load_h5ad_norm(
   obs_lib_size_col,
   target_size,
   sc_qc_param = params_sc_min_quality(),
-  streaming = TRUE,
+  streaming = 1L,
   cell_id_col = NULL,
   batch_size = 1000L,
+  max_genes_in_memory = 2000L,
+  cell_batch_size = 100000L,
   .verbose = TRUE
 )
 ```
@@ -38,8 +40,7 @@ load_h5ad_norm(
 - obs_lib_size_col:
 
   String. Name of the obs column containing the total counts per cell or
-  spot (e.g. `"nCount_RNA"`). You will have to check the original obs
-  data for this.
+  spot (e.g. `"nCount_RNA"`).
 
 - target_size:
 
@@ -50,23 +51,12 @@ load_h5ad_norm(
 
   List. Output of
   [`params_sc_min_quality()`](https://gregorlueg.github.io/bixverse/reference/params_sc_min_quality.md).
-  A list with the following elements:
-
-  - min_unique_genes - Integer. Minimum number of genes to be detected
-    in the cell to be included.
-
-  - min_lib_size - Integer. Minimum library size in the cell to be
-    included.
-
-  - min_cells - Integer. Minimum number of cells a gene needs to be
-    detected to be included.
-
-  - target_size - Float. Target size to normalise to. Defaults to `1e5`.
 
 - streaming:
 
-  Boolean. Shall the data be streamed during the conversion of CSR to
-  CSC. Defaults to `TRUE` and should be used for larger data sets.
+  Integer. `0L` -\> in-memory, `1L` -\> light streaming, `2L` -\> heavy
+  streaming with memory upper boundaries. Controls memory pressure
+  during CSR-to-CSC conversion. Defaults to `1L`.
 
 - cell_id_col:
 
@@ -75,12 +65,20 @@ load_h5ad_norm(
 
 - batch_size:
 
-  Integer. If `streaming = TRUE`, how many cells to process in one
-  batch. Defaults to `1000L`.
+  Integer. Cell batch size when `streaming = 1L`. Defaults to `1000L`.
+
+- max_genes_in_memory:
+
+  Integer. Maximum genes held in memory at once when `streaming = 2L`.
+  Defaults to `2000L`.
+
+- cell_batch_size:
+
+  Integer. Cell batch size when `streaming = 2L`. Defaults to `100000L`.
 
 - .verbose:
 
-  Boolean. Controls the verbosity of the function.
+  Boolean.
 
 ## Value
 

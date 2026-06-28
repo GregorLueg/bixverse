@@ -7,19 +7,19 @@ combination with
 ## Usage
 
 ``` r
-get_knn_dist(x)
+get_knn_dist(x, ...)
 
 ## S7 method for class <bixverse::MetaCells>
-get_knn_dist(x)
+get_knn_dist(x, ...)
 
 # S3 method for class 'ScCache'
-get_knn_dist(x)
+get_knn_dist(x, ...)
 
 ## S7 method for class <bixverse::SingleCells>
-get_knn_dist(x)
+get_knn_dist(x, ...)
 
 # S3 method for class 'SingleCellNearestNeighbour'
-get_knn_dist(x)
+get_knn_dist(x, ...)
 ```
 
 ## Arguments
@@ -27,3 +27,7 @@ get_knn_dist(x)
 - x:
 
   An object to get the kNN distances from.
+
+- ...:
+
+  Other parameters.

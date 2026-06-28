@@ -1,7 +1,8 @@
 # SCENIC: Select TF-gene pairs by per-gene importance threshold
 
-For each gene (row), computes mean + n_sd \* SD of the importance scores
-across all TFs and retains only pairs exceeding that threshold.
+**\[experimental\]** For each gene (row), computes mean + n_sd \* SD of
+the importance scores across all TFs and retains only pairs exceeding
+that threshold.
 
 ## Usage
 

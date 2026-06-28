@@ -1,8 +1,9 @@
 # Generate a sparse dictionary with DGRDL
 
-This is the Rust implementation of dual graph regularised dictionary
-learning in the implementation of Pan, et al., Cell Systems, 2022. This
-helper function is designed to run a grid search over the data.
+**\[experimental\]** This is the Rust implementation of dual graph
+regularised dictionary learning in the implementation of Pan, et al.,
+Cell Systems, 2022. This helper function is designed to run a grid
+search over the data.
 
 ## Usage
 

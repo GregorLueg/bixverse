@@ -1,7 +1,7 @@
 # Generates the kNN graph
 
-This function is a wrapper over the Rust-based generation of the
-approximate nearest neighbours.
+**\[experimental\]** This function is a wrapper over the Rust-based
+generation of the approximate nearest neighbours.
 
 ## Usage
 
@@ -28,8 +28,8 @@ rs_sc_knn(embd, knn_params, validate_index, verbose, seed)
 
 - verbose:
 
-  Boolean. Controls verbosity of the function and returns how long
-  certain operations took.
+  Integer. `0L` - quiet; `1L` - normal verbosity; `2L` - detailed
+  verbosity.
 
 - seed:
 

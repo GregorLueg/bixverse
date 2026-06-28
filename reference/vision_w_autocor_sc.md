@@ -17,8 +17,9 @@ vision_w_autocor_sc(
   gs_list,
   embd_to_use,
   no_embd_to_use = NULL,
+  use_knn = TRUE,
   vision_params = params_sc_vision(),
-  streaming = FALSE,
+  streaming = NULL,
   random_seed = 42L,
   .verbose = TRUE
 )
@@ -47,6 +48,11 @@ vision_w_autocor_sc(
   Optional integer. Number of embedding dimensions to use. If `NULL` all
   will be used.
 
+- use_knn:
+
+  Boolean. Shall the internal kNN be used. If set to yes, you need to
+  ensure consistency.
+
 - vision_params:
 
   List with vision parameters, see
@@ -64,8 +70,9 @@ vision_w_autocor_sc(
 
 - streaming:
 
-  Boolean. Shall the cell data be streamed in. Useful for larger data
-  sets.
+  Optional Boolean. Shall the data be streamed in. Useful for larger
+  data sets where you wish to avoid loading in the whole data. If
+  `NULL`, will automatically detect.
 
 - random_seed:
 
@@ -73,7 +80,9 @@ vision_w_autocor_sc(
 
 - .verbose:
 
-  Boolean. Controls the verbosity of the function.
+  Boolean or integer. Controls verbosity and returns run times. `FALSE`
+  -\> quiet, `TRUE` or `1L` -\> normal verbosity, `2L` -\> detailed
+  verbosity.
 
 ## Value
 

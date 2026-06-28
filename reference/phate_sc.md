@@ -29,7 +29,9 @@ phate_sc(
   object,
   use_knn = TRUE,
   embd_to_use = "pca",
+  slot_name = "phate",
   no_embd_to_use = NULL,
+  modality = c("rna", "adt", "wnn"),
   n_dim = 2L,
   k = 5L,
   knn_method = c("kmknn", "hnsw", "balltree", "annoy", "nndescent", "exhaustive"),
@@ -56,10 +58,21 @@ phate_sc(
   String. The embedding to use for PHATE. Must be available in the
   object.
 
+- slot_name:
+
+  String. The name of this embedding within the object. Defaults to
+  `"phate"`.
+
 - no_embd_to_use:
 
   Optional integer. Number of embedding dimensions to use. If `NULL` all
   will be used.
+
+- modality:
+
+  String. On which modality to run the UMAP. One of
+  `c("rna", "adt", "wnn")`. The two latter options are only available
+  for multi-modal versions with the added data.
 
 - n_dim:
 

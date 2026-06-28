@@ -1,8 +1,8 @@
 # Calculate massively parallelised tied diffusion scores
 
-Helper function to calculate in parallel on the same (unweighted)
-network the tied diffusions as fast as possible. Can be used for
-permutation.
+**\[experimental\]** Helper function to calculate in parallel on the
+same (unweighted) network the tied diffusions as fast as possible. Can
+be used for permutation.
 
 ## Usage
 

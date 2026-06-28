@@ -1,6 +1,7 @@
 # SCENIC: Generating gene-regulatory networks (streaming version)
 
-Loads the genes in as chunks to avoid high memory pressure.
+**\[experimental\]** Loads the genes in as chunks to avoid high memory
+pressure.
 
 ## Usage
 
@@ -46,7 +47,8 @@ rs_scenic_grn_streaming(
 
 - verbose:
 
-  Boolean. Controls the verbosity of the function.
+  Integer. `0L` - quiet; `1L` - normal verbosity; `2L` - detailed
+  verbosity.
 
 ## Value
 

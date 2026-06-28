@@ -8,7 +8,9 @@ Pre-scan multiple h5ad files for multi-sample loading
 prescan_h5ad_files(
   h5_paths,
   gene_universe = c("intersection", "union"),
-  var_index = "_index"
+  var_index = "_index",
+  raw_count_slot = c("auto", "X", "raw.X", "layers.counts"),
+  .verbose = TRUE
 )
 ```
 
@@ -27,6 +29,16 @@ prescan_h5ad_files(
 
   String. The name within the h5ad var part in which the variable names
   are stored. Defaults to `"_index"`.
+
+- raw_count_slot:
+
+  Where raw counts live. `"auto"` detects per file via
+  [`detect_raw_count_slot()`](https://gregorlueg.github.io/bixverse/reference/detect_raw_count_slot.md);
+  otherwise one of `"X"`, `"raw.X"`, `"layers.counts"`.
+
+- .verbose:
+
+  Boolean. Controls verbosity of the function.
 
 ## Value
 

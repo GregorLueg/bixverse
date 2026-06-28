@@ -42,11 +42,11 @@ str(single_cell_test_data)
 #>   ..$ cell_id    : chr [1:1000] "cell_0001" "cell_0002" "cell_0003" "cell_0004" ...
 #>   ..$ cell_grp   : chr [1:1000] "cell_type_1" "cell_type_2" "cell_type_3" "cell_type_1" ...
 #>   ..$ batch_index: num [1:1000] 1 1 1 1 1 1 1 1 1 1 ...
-#>   ..- attr(*, ".internal.selfref")=<pointer: 0x55edb0540b20> 
+#>   ..- attr(*, ".internal.selfref")=<pointer: 0x56018fd90b40> 
 #>  $ var   :Classes 'data.table' and 'data.frame': 100 obs. of  2 variables:
 #>   ..$ gene_id   : chr [1:100] "gene_001" "gene_002" "gene_003" "gene_004" ...
 #>   ..$ ensembl_id: chr [1:100] "ens_001" "ens_002" "ens_003" "ens_004" ...
-#>   ..- attr(*, ".internal.selfref")=<pointer: 0x55edb0540b20>
+#>   ..- attr(*, ".internal.selfref")=<pointer: 0x56018fd90b40>
 ```
 
 We have a count matrix with pseudo raw counts, an obs table and a var
@@ -103,11 +103,12 @@ sc_object <- load_r_data(
     min_cells = 0L,
     target_size = 1e3 # target size of 1000
   ),
-  streaming = FALSE,
+  streaming = 0L,
   .verbose = TRUE
 )
 #> Writing counts to disk.
 #> Generating gene-based data.
+#>  Loading data directly into memory for CSR to CSC conversion.
 #> Writing to the DuckDB.
 #> Setting internal mapping.
 
@@ -170,11 +171,12 @@ sc_object <- load_r_data(
     min_cells = 500L, # the data is weird and a lot cells express genes
     target_size = 1e3 # target size of 1000
   ),
-  streaming = FALSE,
+  streaming = 0L,
   .verbose = TRUE
 )
 #> Writing counts to disk.
 #> Generating gene-based data.
+#>  Loading data directly into memory for CSR to CSC conversion.
 #> Writing to the DuckDB.
 #> Setting internal mapping.
 
@@ -265,6 +267,20 @@ sc_object[[1:3L]]
 
 ``` r
 
+# for a quick glimpse in the obs metadata
+head(sc_object)
+#>    cell_idx   cell_id    cell_grp batch_index   nnz lib_size to_keep
+#>       <int>    <char>      <char>       <num> <num>    <num>  <lgcl>
+#> 1:        1 cell_0001 cell_type_1           1    52      371    TRUE
+#> 2:        2 cell_0003 cell_type_3           1    52      495    TRUE
+#> 3:        3 cell_0004 cell_type_1           1    48      551    TRUE
+#> 4:        4 cell_0005 cell_type_2           1    53      422    TRUE
+#> 5:        5 cell_0006 cell_type_3           1    57      394    TRUE
+#> 6:        6 cell_0007 cell_type_1           1    49      593    TRUE
+```
+
+``` r
+
 # a more R-native way: specific columns
 sc_object[[c("cell_idx", "cell_id", "cell_grp")]]
 #>      cell_idx   cell_id    cell_grp
@@ -327,33 +343,23 @@ If we now look at the obs again:
 
 ``` r
 
-sc_object[[]]
-#>      cell_idx   cell_id    cell_grp batch_index   nnz lib_size to_keep
-#>         <int>    <char>      <char>       <num> <num>    <num>  <lgcl>
-#>   1:        1 cell_0001 cell_type_1           1    52      371    TRUE
-#>   2:        2 cell_0003 cell_type_3           1    52      495    TRUE
-#>   3:        3 cell_0004 cell_type_1           1    48      551    TRUE
-#>   4:        4 cell_0005 cell_type_2           1    53      422    TRUE
-#>   5:        5 cell_0006 cell_type_3           1    57      394    TRUE
-#>  ---                                                                  
-#> 925:      925 cell_0995 cell_type_2           1    53      548    TRUE
-#> 926:      926 cell_0996 cell_type_3           1    57      545    TRUE
-#> 927:      927 cell_0997 cell_type_1           1    56      543    TRUE
-#> 928:      928 cell_0998 cell_type_2           1    49      487    TRUE
-#> 929:      929 cell_1000 cell_type_1           1    60      474    TRUE
-#>             gs_1        gs_2
-#>            <num>       <num>
-#>   1: 0.156334236 0.008086253
-#>   2: 0.022222223 0.006060606
-#>   3: 0.181488201 0.000000000
-#>   4: 0.007109005 0.033175357
-#>   5: 0.017766498 0.015228426
-#>  ---                        
-#> 925: 0.021897810 0.041970804
-#> 926: 0.007339450 0.034862384
-#> 927: 0.267034978 0.173112333
-#> 928: 0.016427105 0.047227927
-#> 929: 0.187763706 0.040084388
+head(sc_object)
+#>    cell_idx   cell_id    cell_grp batch_index   nnz lib_size to_keep
+#>       <int>    <char>      <char>       <num> <num>    <num>  <lgcl>
+#> 1:        1 cell_0001 cell_type_1           1    52      371    TRUE
+#> 2:        2 cell_0003 cell_type_3           1    52      495    TRUE
+#> 3:        3 cell_0004 cell_type_1           1    48      551    TRUE
+#> 4:        4 cell_0005 cell_type_2           1    53      422    TRUE
+#> 5:        5 cell_0006 cell_type_3           1    57      394    TRUE
+#> 6:        6 cell_0007 cell_type_1           1    49      593    TRUE
+#>           gs_1        gs_2
+#>          <num>       <num>
+#> 1: 0.156334236 0.008086253
+#> 2: 0.022222223 0.006060606
+#> 3: 0.181488201 0.000000000
+#> 4: 0.007109005 0.033175357
+#> 5: 0.017766498 0.015228426
+#> 6: 0.242833048 0.079258010
 ```
 
 We now have two new columns here! That worked well… Let’s now do
@@ -467,10 +473,10 @@ microbenchmark::microbenchmark(
   },
   times = 10L
 )
-#> Unit: milliseconds
-#>               expr      min       lq     mean   median       uq      max neval
-#>    the_correct_way 1.402528 1.422526 1.634182 1.457921 1.473541 3.134961    10
-#>  the_incorrect_way 2.304131 2.332974 2.398138 2.359218 2.422952 2.647552    10
+#> Unit: microseconds
+#>               expr      min       lq      mean    median       uq     max neval
+#>    the_correct_way  739.163  757.951  806.9916  793.9395  830.358  924.87    10
+#>  the_incorrect_way 1243.124 1381.712 1531.7786 1408.2465 1441.070 2768.36    10
 ```
 
 The difference seems marginal here, but it WILL bite you if you do this

@@ -1,8 +1,8 @@
 # Calculate massively parallelised personalised page rank scores
 
-Helper function to calculate in parallel on the same (unweighted)
-network the personalised page rank as fast as possible. Can be used for
-permutations type approaches.
+**\[experimental\]** Helper function to calculate in parallel on the
+same (unweighted) network the personalised page rank as fast as
+possible. Can be used for permutations type approaches.
 
 ## Usage
 

@@ -7,16 +7,16 @@ classes and methods.
 ## Usage
 
 ``` r
-get_pca_singular_val(x)
+get_pca_singular_val(x, ...)
 
 ## S7 method for class <bixverse::MetaCells>
-get_pca_singular_val(x)
+get_pca_singular_val(x, ...)
 
 # S3 method for class 'ScCache'
-get_pca_singular_val(x)
+get_pca_singular_val(x, ...)
 
 ## S7 method for class <bixverse::SingleCells>
-get_pca_singular_val(x)
+get_pca_singular_val(x, ...)
 ```
 
 ## Arguments
@@ -24,6 +24,10 @@ get_pca_singular_val(x)
 - x:
 
   An object to get PCA singular values from.
+
+- ...:
+
+  Other parameters.
 
 ## Value
 

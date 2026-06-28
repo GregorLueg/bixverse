@@ -1,6 +1,7 @@
 # Helper to extract single cell counts for several genes
 
-Helper to extract single cell counts for several genes
+**\[experimental\]** Extract the single cell counts of several genes at
+ones.
 
 ## Usage
 

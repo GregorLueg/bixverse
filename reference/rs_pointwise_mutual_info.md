@@ -1,8 +1,8 @@
 # Calculates the point wise mutual information
 
-Calculates the pointwise mutual information (can be also normalised)
-across all columns of the data. This can be used to identify
-(dis)similar samples based on Boolean characteristics.
+**\[experimental\]** Calculates the pointwise mutual information (can be
+also normalised) across all columns of the data. This can be used to
+identify (dis)similar samples based on Boolean characteristics.
 
 ## Usage
 

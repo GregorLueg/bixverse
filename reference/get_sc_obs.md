@@ -12,7 +12,7 @@ get_sc_obs(object, indices = NULL, cols = NULL, filtered = FALSE)
 
 - object:
 
-  `SingleCells`, `MetaCells` (or potentially other) class.
+  `SingleCells`, `MetaCells`, `SingleCellsMultiModal` class.
 
 - indices:
 

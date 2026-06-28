@@ -1,6 +1,6 @@
 # SCENIC: Generating gene-regulatory networks
 
-SCENIC: Generating gene-regulatory networks
+**\[experimental\]**
 
 ## Usage
 
@@ -46,7 +46,8 @@ rs_scenic_grn(
 
 - verbose:
 
-  Boolean. Controls the verbosity of the function.
+  Integer. `0L` - quiet; `1L` - normal verbosity; `2L` - detailed
+  verbosity.
 
 ## Value
 

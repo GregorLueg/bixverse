@@ -5,16 +5,16 @@ Set/add KNN
 ## Usage
 
 ``` r
-set_knn(x, knn)
+set_knn(x, knn, ...)
 
 ## S7 method for class <bixverse::MetaCells>
-set_knn(x, knn)
+set_knn(x, knn, ...)
 
 # S3 method for class 'ScCache'
-set_knn(x, knn)
+set_knn(x, knn, ...)
 
 ## S7 method for class <bixverse::SingleCells>
-set_knn(x, knn)
+set_knn(x, knn, ...)
 ```
 
 ## Arguments
@@ -26,3 +26,7 @@ set_knn(x, knn)
 - knn:
 
   `SingleCellNearestNeighbour` class to add to the classes.
+
+- ...:
+
+  Other parameters.

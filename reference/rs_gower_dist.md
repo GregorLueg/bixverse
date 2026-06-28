@@ -1,6 +1,6 @@
 # Calculates the Gower distance for a given matrix
 
-Calculates the Gower distance for a given matrix
+**\[experimental\]**
 
 ## Usage
 

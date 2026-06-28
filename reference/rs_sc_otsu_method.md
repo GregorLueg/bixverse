@@ -1,8 +1,8 @@
 # Run Otsu's method
 
-Maximises between-class variance of the observed score distribution to
-find the optimal binary split. Robust to both bimodal and skewed
-distributions.
+**\[experimental\]** Maximises between-class variance of the observed
+score distribution to find the optimal binary split. Robust to both
+bimodal and skewed distributions.
 
 ## Usage
 

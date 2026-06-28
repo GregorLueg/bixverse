@@ -1,7 +1,7 @@
 # Calculate the column wise correlations.
 
-Calculates the correlation between the columns of two matrices. The
-number of rows need to be the same!
+**\[experimental\]** Calculates the correlation between the columns of
+two matrices. The number of rows need to be the same!
 
 ## Usage
 

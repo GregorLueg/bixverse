@@ -119,6 +119,11 @@ params_scdblfinder(
   Optional numeric. Expected doublet rate as a percentage. If not
   provided, will be calculated internally.
 
+- cxds_genes:
+
+  Optional integer. Number of CXDS genes to consider. If not provided,
+  defaults to `500L`.
+
 - manual_threshold:
 
   Optional numeric. Manual score threshold. If `NULL` (default),

@@ -1,7 +1,7 @@
 # Calculates the separation of the centroids of the MetaCells based on diffusion map coordinates.
 
-Calculates the separation of the centroids of the MetaCells based on
-diffusion map coordinates.
+**\[experimental\]** Calculates the separation of the single cells of a
+given meta cell based on the diffusion map.
 
 ## Usage
 

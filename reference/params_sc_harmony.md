@@ -10,12 +10,13 @@ params_sc_harmony(
   sigma = 0.1,
   theta = 2,
   lambda = 1,
-  block_size = 0.05,
+  block_size = 0.2,
   max_iter_kmeans = 20L,
   max_iter_harmony = 10L,
   epsilon_kmeans = 1e-05,
   epsilon_harmony = 1e-04,
-  window_size = 2L
+  window_size = 2L,
+  kmeans = list()
 )
 ```
 
@@ -72,6 +73,13 @@ params_sc_harmony(
 
   Integer. Number of previous iterations to consider when checking
   convergence.
+
+- kmeans:
+
+  List. Optional overrides for the k-means clustering algorithm Possible
+  parameters are `"k_means_iter"`, `"k_means_init"`, `"gemm"` and
+  `"hamerly"`, see
+  [`params_kmeans_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_kmeans_defaults.md).
 
 ## Value
 

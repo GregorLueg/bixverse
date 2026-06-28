@@ -15,7 +15,7 @@ save_sc_exp_to_disk(object, type = c("qs2", "rds"))
 
 - object:
 
-  `SingleCells` class.
+  `SingleCells`, `MetaCells` or `SingleCellsMultiModal` class.
 
 - type:
 

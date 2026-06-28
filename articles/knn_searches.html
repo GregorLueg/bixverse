@@ -23,7 +23,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -53,14 +53,24 @@
 <li class="active nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-single-cells" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Single Cells</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-single-cells">
-<li><a class="dropdown-item" href="../articles/thinking_single_cell.html">Thinking about single cells the bixverse way</a></li>
+<li><h6 class="dropdown-header" data-toc-skip>Intro vignettes</h6></li>
+    <li><a class="dropdown-item" href="../articles/thinking_single_cell.html">Thinking about single cells the bixverse way</a></li>
     <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">PBMC analysis with the bixverse single cell framework</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_io.html">Reading data in (single-cell I/O)</a></li>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
-    <li><a class="dropdown-item" href="../articles/analysis_single_cell.html">'Bag of genes' methods for single cell in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/knn_searches.html">kNN searches for single cells in bixverse</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>More advanced analysis methods</h6></li>
+    <li><a class="dropdown-item" href="../articles/bag_of_genes_single_cells.html">'Bag of genes' methods for single cell in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/nichenet.html">Ligand receptor analysis</a></li>
     <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/symphomy.html">Reference mapping via Symphony</a></li>
+    <li><a class="dropdown-item" href="../articles/multi_modal_single_cell.html">Multi-modal analysis</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Others</h6></li>
     <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing big data on a powerful laptop (example)</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_visualisation.html">Plotting helpers</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -82,7 +92,7 @@
       <h1>KNN searches for single cell</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-06-15</p>
+      <p class="date">2026-06-28</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -124,9 +134,10 @@
 <span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/load_mtx.html">load_mtx</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">sc_object</span>,</span>
 <span>  sc_mtx_io_param <span class="op">=</span> <span class="va">mtx_io_params</span>,</span>
-<span>  streaming <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  streaming <span class="op">=</span> <span class="fl">0L</span>,</span>
 <span>  .verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
+<span><span class="co">#&gt;  Loading data directly into memory for CSR to CSC conversion.</span></span>
 <span><span class="co">#&gt; Loading observations data from flat file into the DuckDB.</span></span>
 <span><span class="co">#&gt; Loading variable data from flat file into the DuckDB.</span></span>
 <span></span>
@@ -152,7 +163,6 @@
 <span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/gene_set_proportions_sc.html">gene_set_proportions_sc</a></span><span class="op">(</span></span>
 <span>  <span class="va">sc_object</span>,</span>
 <span>  <span class="va">gs_of_interest</span>,</span>
-<span>  streaming <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  .verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
@@ -170,7 +180,12 @@
 <span>  MT <span class="op">=</span> <span class="st">"above"</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">qc</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/run_cell_qc.html">run_cell_qc</a></span><span class="op">(</span><span class="va">metrics</span>, <span class="va">directions</span>, threshold <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span>
+<span><span class="va">qc</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/run_cell_qc.html">run_cell_qc</a></span><span class="op">(</span></span>
+<span>  metrics <span class="op">=</span> <span class="va">metrics</span>,</span>
+<span>  cells_to_keep <span class="op">=</span> <span class="fu"><a href="../reference/get_cells_to_keep.html">get_cells_to_keep</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span>,</span>
+<span>  directions <span class="op">=</span> <span class="va">directions</span>,</span>
+<span>  threshold <span class="op">=</span> <span class="fl">3</span></span>
+<span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">sc_object</span><span class="op">[[</span><span class="st">"outlier"</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">qc</span><span class="op">$</span><span class="va">combined</span></span>
 <span></span>
@@ -382,7 +397,7 @@
 <span>  <span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Generating sNN graph (full: FALSE).</span></span>
+<span><span class="co">#&gt; Generating sNN graph (full: TRUE).</span></span>
 <span><span class="co">#&gt; Transforming sNN data to igraph.</span></span></code></pre></div>
 </div>
 <p>You can however also generate the kNN indices like this:</p>

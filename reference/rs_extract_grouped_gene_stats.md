@@ -1,6 +1,7 @@
 # Calculates the gene statistics for a set of cell groups and genes
 
-Helper function to extract data for dot plots and/or heatmaps.
+**\[experimental\]** Helper function to extract data for dot plots
+and/or heatmaps.
 
 ## Usage
 

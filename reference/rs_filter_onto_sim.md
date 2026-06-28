@@ -1,7 +1,8 @@
 # Filter the term similarities for a specific critical value
 
-This function takes the similarity values as the upper triangle, the
-row/column names and filtering the values down based on the threshold.
+**\[experimental\]** This function takes the similarity values as the
+upper triangle, the row/column names and filtering the values down based
+on the threshold.
 
 ## Usage
 

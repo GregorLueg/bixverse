@@ -11,6 +11,7 @@ harmony_sc(
   object,
   batch_column,
   additional_batch_columns = NULL,
+  modality = c("rna", "adt"),
   harmony_params = params_sc_harmony(),
   seed = 42L,
   .verbose = TRUE
@@ -32,6 +33,11 @@ harmony_sc(
   Optional character vector. Additional batch columns to regress out. If
   `NULL`, only the primary batch column is used.
 
+- modality:
+
+  String. One of `c("rna", "adt")`. You can only use `"adt"` on
+  `SingleCellsMultiModal` class.
+
 - harmony_params:
 
   List. Output of
@@ -43,7 +49,9 @@ harmony_sc(
 
 - .verbose:
 
-  Boolean. Controls verbosity.
+  Boolean or integer. Controls verbosity and returns run times. `FALSE`
+  -\> quiet, `TRUE` or `1L` -\> normal verbosity, `2L` -\> detailed
+  verbosity.
 
 ## Value
 

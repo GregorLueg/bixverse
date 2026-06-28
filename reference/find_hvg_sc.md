@@ -10,7 +10,7 @@ find_hvg_sc(
   object,
   hvg_no = 2000L,
   hvg_params = params_sc_hvg(),
-  streaming = FALSE,
+  streaming = NULL,
   .verbose = TRUE
 )
 ```
@@ -45,13 +45,15 @@ find_hvg_sc(
 
 - streaming:
 
-  Boolean. Shall the genes be streamed in. Useful for larger data sets
-  where you wish to avoid loading in the whole data. Defaults to
-  `FALSE`. Not used for `MetaCells`.
+  Optional Boolean. Shall the data be streamed in. Useful for larger
+  data sets where you wish to avoid loading in the whole data. If
+  `NULL`, will automatically detect. Not used for `MetaCells`.
 
 - .verbose:
 
-  Boolean. Controls verbosity and returns run times.
+  Boolean or integer. Controls verbosity and returns run times. `FALSE`
+  -\> quiet, `TRUE` or `1L` -\> normal verbosity, `2L` -\> detailed
+  verbosity.
 
 ## Value
 

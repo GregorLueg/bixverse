@@ -1,7 +1,8 @@
 # Generate a sparse dictionary with DGRDL
 
-This is the Rust implementation of dual graph regularised dictionary
-learning in the implementation of Pan, et al., Cell Systems, 2022.
+**\[experimental\]** This is the Rust implementation of dual graph
+regularised dictionary learning in the implementation of Pan, et al.,
+Cell Systems, 2022.
 
 ## Usage
 

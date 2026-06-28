@@ -1,11 +1,12 @@
 # Helper to identify the right epsilon parameter
 
-This function will take a distance vector from the upper triangle of a
-symmetric distance matrix and apply the desired RBF with the supplied
-epsilon from epsilon vec. Subsequently, the column sums will be measured
-to identify the total similarity of each feature with other features.
-This data can be used to see if the data follows scale-free topology for
-example to identify the right epsilon parameter with the given RBF.
+**\[experimental\]** This function will take a distance vector from the
+upper triangle of a symmetric distance matrix and apply the desired RBF
+with the supplied epsilon from epsilon vec. Subsequently, the column
+sums will be measured to identify the total similarity of each feature
+with other features. This data can be used to see if the data follows
+scale-free topology for example to identify the right epsilon parameter
+with the given RBF.
 
 ## Usage
 
@@ -29,8 +30,8 @@ rs_rbf_iterate_epsilons(dist, epsilon_vec, original_dim, shift, rbf_type)
 
 - shift:
 
-  Integer. Was the matrix shifted up (0 = diagonal included; 1 diagonal
-  not incldued).
+  Boolean. Was the matrix shifted up (false = diagonal included; true
+  diagonal not incldued).
 
 - rbf_type:
 

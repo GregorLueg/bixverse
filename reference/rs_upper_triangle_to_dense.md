@@ -1,26 +1,27 @@
 # Reconstruct a matrix from a flattened upper triangle vector
 
-This function takes a flattened vector of the upper triangle from a
-symmetric matrix (think correlation matrix) and reconstructs the full
-dense matrix for you.
+**\[experimental\]** This function takes a flattened vector of the upper
+triangle from a symmetric matrix (think correlation matrix) and
+reconstructs the full dense matrix for you.
 
 ## Usage
 
 ``` r
-rs_upper_triangle_to_dense(cor_vector, shift, n)
+rs_upper_triangle_to_dense(data, shift, n)
 ```
 
 ## Arguments
 
-- cor_vector:
+- data:
 
-  Numeric vector. The vector of correlation coefficients that you want
-  to use to go back to a dense matrix.
+  Numeric vector. The vector of for example correlation coefficients
+  that you want to use to go back to a dense matrix.
 
 - shift:
 
-  Integer. If you applied a shift, i.e. included the diagonal values =
-  0; or excluded the diagonal values = 1.
+  Boolean. If you applied a shift, i.e. included the diagonal values. If
+  `true`, assumes the diagonal values are `1`, otherwise derives them
+  from the data.
 
 - n:
 

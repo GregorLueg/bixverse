@@ -1,14 +1,12 @@
 # Run hypergeometric enrichment a list of target genes over the gene ontology
 
-This function implements a Rust version of the gene ontology enrichment
-with elimination: the starting point are the leafs of the ontology and
-hypergeometric tests will first conducted there. Should the
-hypergeometric test p-value be below a certain threshold, the genes of
-that gene ontology term will be removed from all ancestors. This
-function is designed to leverage Rust-based threading for parallel
-processing of a list of target genes. WARNING! Incorrect use can cause
-kernel crashes. Wrapper around the Rust functions with type checks are
-provided in the package.
+**\[experimental\]** This function implements a Rust version of the gene
+ontology enrichment with elimination: the starting point are the leafs
+of the ontology and hypergeometric tests will first conducted there.
+Should the hypergeometric test p-value be below a certain threshold, the
+genes of that gene ontology term will be removed from all ancestors.
+This function is designed to leverage Rust-based threading for parallel
+processing of a list of target genes.
 
 ## Usage
 
@@ -38,8 +36,8 @@ rs_gse_geom_elim_list(
 
 - go_obj:
 
-  The gene_ontology_data S7 class. See
-  [`gene_ontology_data()`](https://gregorlueg.github.io/bixverse/reference/gene_ontology_data.md).
+  The `GeneOntologyElim` S7 class. See
+  [`GeneOntologyElim()`](https://gregorlueg.github.io/bixverse/reference/GeneOntologyElim.md).
 
 - gene_universe_length:
 

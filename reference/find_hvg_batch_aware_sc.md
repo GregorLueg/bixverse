@@ -18,7 +18,7 @@ find_hvg_batch_aware_sc(
   hvg_no = 2000L,
   gene_comb_method = c("union", "average", "intersection"),
   hvg_params = params_sc_hvg(),
-  streaming = FALSE,
+  streaming = NULL,
   .verbose = TRUE
 )
 ```
@@ -62,19 +62,23 @@ find_hvg_batch_aware_sc(
 
 - streaming:
 
-  Boolean. Shall the genes be streamed in. Useful for larger data sets
-  where you wish to avoid loading in the whole data. Defaults to
-  `FALSE`.
+  Optional Boolean. Shall the data be streamed in. Useful for larger
+  data sets where you wish to avoid loading in the whole data. If
+  `NULL`, will automatically detect.
 
 - .verbose:
 
-  Boolean. Controls verbosity and returns run times.
+  Boolean or integer. Controls verbosity and returns run times. `FALSE`
+  -\> quiet, `TRUE` or `1L` -\> normal verbosity, `2L` -\> detailed
+  verbosity.
 
 ## Value
 
 This function will return a list with:
 
-- hvg_indices - The indices of the batch-aware HVG.
+- hvg_genes - The gene names of the HVGs.
+
+- hvg_gene_idx - The (0-index) gene features.
 
 - batch_hvg_data - data.table with the detailed information of the
   variance per batch.

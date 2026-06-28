@@ -1,8 +1,8 @@
 # Generate a vector-based representation of the upper triangle of a matrix
 
-This function generates a vector from the upper triangle of a given
-symmetric matrix. You have the option to remove the diagonal with
-setting shift to 1.
+**\[experimental\]** This function generates a vector from the upper
+triangle of a given symmetric matrix. You have the option to remove the
+diagonal with setting shift to 1.
 
 ## Usage
 
@@ -19,8 +19,9 @@ rs_dense_to_upper_triangle(x, shift)
 
 - shift:
 
-  Integer. If you want to apply a shift, i.e. included the diagonal
-  values = 0; or excluded the diagonal values = 1.
+  Boolean. If you applied a shift, i.e. included the diagonal values. If
+  `true`, assumes the diagonal values are `1`, otherwise derives them
+  from the data.
 
 ## Value
 

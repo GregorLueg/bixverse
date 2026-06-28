@@ -23,7 +23,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -53,14 +53,24 @@
 <li class="active nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-single-cells" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Single Cells</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-single-cells">
-<li><a class="dropdown-item" href="../articles/thinking_single_cell.html">Thinking about single cells the bixverse way</a></li>
+<li><h6 class="dropdown-header" data-toc-skip>Intro vignettes</h6></li>
+    <li><a class="dropdown-item" href="../articles/thinking_single_cell.html">Thinking about single cells the bixverse way</a></li>
     <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">PBMC analysis with the bixverse single cell framework</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_io.html">Reading data in (single-cell I/O)</a></li>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
-    <li><a class="dropdown-item" href="../articles/analysis_single_cell.html">'Bag of genes' methods for single cell in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/knn_searches.html">kNN searches for single cells in bixverse</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>More advanced analysis methods</h6></li>
+    <li><a class="dropdown-item" href="../articles/bag_of_genes_single_cells.html">'Bag of genes' methods for single cell in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/nichenet.html">Ligand receptor analysis</a></li>
     <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/symphomy.html">Reference mapping via Symphony</a></li>
+    <li><a class="dropdown-item" href="../articles/multi_modal_single_cell.html">Multi-modal analysis</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Others</h6></li>
     <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing big data on a powerful laptop (example)</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_visualisation.html">Plotting helpers</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -82,7 +92,7 @@
       <h1>Thinking about single cells the bixverse way</h1>
 
       <p class="author">Gregor Lueg and Grant Neilson</p>
-      <p class="date">2026-06-15</p>
+      <p class="date">2026-06-28</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -122,11 +132,11 @@
 <span><span class="co">#&gt;   ..$ cell_id    : chr [1:1000] "cell_0001" "cell_0002" "cell_0003" "cell_0004" ...</span></span>
 <span><span class="co">#&gt;   ..$ cell_grp   : chr [1:1000] "cell_type_1" "cell_type_2" "cell_type_3" "cell_type_1" ...</span></span>
 <span><span class="co">#&gt;   ..$ batch_index: num [1:1000] 1 1 1 1 1 1 1 1 1 1 ...</span></span>
-<span><span class="co">#&gt;   ..- attr(*, ".internal.selfref")=&lt;pointer: 0x55edb0540b20&gt; </span></span>
+<span><span class="co">#&gt;   ..- attr(*, ".internal.selfref")=&lt;pointer: 0x56018fd90b40&gt; </span></span>
 <span><span class="co">#&gt;  $ var   :Classes 'data.table' and 'data.frame': 100 obs. of  2 variables:</span></span>
 <span><span class="co">#&gt;   ..$ gene_id   : chr [1:100] "gene_001" "gene_002" "gene_003" "gene_004" ...</span></span>
 <span><span class="co">#&gt;   ..$ ensembl_id: chr [1:100] "ens_001" "ens_002" "ens_003" "ens_004" ...</span></span>
-<span><span class="co">#&gt;   ..- attr(*, ".internal.selfref")=&lt;pointer: 0x55edb0540b20&gt;</span></span></code></pre></div>
+<span><span class="co">#&gt;   ..- attr(*, ".internal.selfref")=&lt;pointer: 0x56018fd90b40&gt;</span></span></code></pre></div>
 </div>
 <p>We have a count matrix with pseudo raw counts, an obs table and a var table. Let us load this into a <code>bixverse</code> SingleCell class and explore what’s actually happening.</p>
 </section><section class="level3"><h3 id="loading-in-data">Loading in data<a class="anchor" aria-label="anchor" href="#loading-in-data"></a>
@@ -171,11 +181,12 @@
 <span>    min_cells <span class="op">=</span> <span class="fl">0L</span>,</span>
 <span>    target_size <span class="op">=</span> <span class="fl">1e3</span> <span class="co"># target size of 1000</span></span>
 <span>  <span class="op">)</span>,</span>
-<span>  streaming <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  streaming <span class="op">=</span> <span class="fl">0L</span>,</span>
 <span>  .verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Writing counts to disk.</span></span>
 <span><span class="co">#&gt; Generating gene-based data.</span></span>
+<span><span class="co">#&gt;  Loading data directly into memory for CSR to CSC conversion.</span></span>
 <span><span class="co">#&gt; Writing to the DuckDB.</span></span>
 <span><span class="co">#&gt; Setting internal mapping.</span></span>
 <span></span>
@@ -220,11 +231,12 @@
 <span>    min_cells <span class="op">=</span> <span class="fl">500L</span>, <span class="co"># the data is weird and a lot cells express genes</span></span>
 <span>    target_size <span class="op">=</span> <span class="fl">1e3</span> <span class="co"># target size of 1000</span></span>
 <span>  <span class="op">)</span>,</span>
-<span>  streaming <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  streaming <span class="op">=</span> <span class="fl">0L</span>,</span>
 <span>  .verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Writing counts to disk.</span></span>
 <span><span class="co">#&gt; Generating gene-based data.</span></span>
+<span><span class="co">#&gt;  Loading data directly into memory for CSR to CSC conversion.</span></span>
 <span><span class="co">#&gt; Writing to the DuckDB.</span></span>
 <span><span class="co">#&gt; Setting internal mapping.</span></span>
 <span></span>
@@ -292,6 +304,19 @@
 </div>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># for a quick glimpse in the obs metadata</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span></span>
+<span><span class="co">#&gt;    cell_idx   cell_id    cell_grp batch_index   nnz lib_size to_keep</span></span>
+<span><span class="co">#&gt;       &lt;int&gt;    &lt;char&gt;      &lt;char&gt;       &lt;num&gt; &lt;num&gt;    &lt;num&gt;  &lt;lgcl&gt;</span></span>
+<span><span class="co">#&gt; 1:        1 cell_0001 cell_type_1           1    52      371    TRUE</span></span>
+<span><span class="co">#&gt; 2:        2 cell_0003 cell_type_3           1    52      495    TRUE</span></span>
+<span><span class="co">#&gt; 3:        3 cell_0004 cell_type_1           1    48      551    TRUE</span></span>
+<span><span class="co">#&gt; 4:        4 cell_0005 cell_type_2           1    53      422    TRUE</span></span>
+<span><span class="co">#&gt; 5:        5 cell_0006 cell_type_3           1    57      394    TRUE</span></span>
+<span><span class="co">#&gt; 6:        6 cell_0007 cell_type_1           1    49      593    TRUE</span></span></code></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># a more R-native way: specific columns</span></span>
 <span><span class="va">sc_object</span><span class="op">[[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"cell_idx"</span>, <span class="st">"cell_id"</span>, <span class="st">"cell_grp"</span><span class="op">)</span><span class="op">]</span><span class="op">]</span></span>
 <span><span class="co">#&gt;      cell_idx   cell_id    cell_grp</span></span>
@@ -310,7 +335,7 @@
 </div>
 <p>All of these ways above call R primitives. There is also a more general getter here:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/get_sc_obs.html">get_sc_obs</a></span><span class="op">(</span><span class="va">sc_object</span>, filtered <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="co">#&gt;      cell_idx   cell_id    cell_grp batch_index   nnz lib_size to_keep</span></span>
 <span><span class="co">#&gt;         &lt;int&gt;    &lt;char&gt;      &lt;char&gt;       &lt;num&gt; &lt;num&gt;    &lt;num&gt;  &lt;lgcl&gt;</span></span>
@@ -329,7 +354,7 @@
 </div>
 <p>Let’s pretend we want to do mitochondrial (or other gene set-based removal)</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># pseudo gene sets</span></span>
 <span><span class="va">gs_of_interest</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  gs_1 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"gene_001"</span>, <span class="st">"gene_002"</span>, <span class="st">"gene_003"</span>, <span class="st">"gene_004"</span><span class="op">)</span>,</span>
@@ -345,38 +370,28 @@
 </div>
 <p>If we now look at the obs again:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb15"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">sc_object</span><span class="op">[[</span><span class="op">]</span><span class="op">]</span></span>
-<span><span class="co">#&gt;      cell_idx   cell_id    cell_grp batch_index   nnz lib_size to_keep</span></span>
-<span><span class="co">#&gt;         &lt;int&gt;    &lt;char&gt;      &lt;char&gt;       &lt;num&gt; &lt;num&gt;    &lt;num&gt;  &lt;lgcl&gt;</span></span>
-<span><span class="co">#&gt;   1:        1 cell_0001 cell_type_1           1    52      371    TRUE</span></span>
-<span><span class="co">#&gt;   2:        2 cell_0003 cell_type_3           1    52      495    TRUE</span></span>
-<span><span class="co">#&gt;   3:        3 cell_0004 cell_type_1           1    48      551    TRUE</span></span>
-<span><span class="co">#&gt;   4:        4 cell_0005 cell_type_2           1    53      422    TRUE</span></span>
-<span><span class="co">#&gt;   5:        5 cell_0006 cell_type_3           1    57      394    TRUE</span></span>
-<span><span class="co">#&gt;  ---                                                                  </span></span>
-<span><span class="co">#&gt; 925:      925 cell_0995 cell_type_2           1    53      548    TRUE</span></span>
-<span><span class="co">#&gt; 926:      926 cell_0996 cell_type_3           1    57      545    TRUE</span></span>
-<span><span class="co">#&gt; 927:      927 cell_0997 cell_type_1           1    56      543    TRUE</span></span>
-<span><span class="co">#&gt; 928:      928 cell_0998 cell_type_2           1    49      487    TRUE</span></span>
-<span><span class="co">#&gt; 929:      929 cell_1000 cell_type_1           1    60      474    TRUE</span></span>
-<span><span class="co">#&gt;             gs_1        gs_2</span></span>
-<span><span class="co">#&gt;            &lt;num&gt;       &lt;num&gt;</span></span>
-<span><span class="co">#&gt;   1: 0.156334236 0.008086253</span></span>
-<span><span class="co">#&gt;   2: 0.022222223 0.006060606</span></span>
-<span><span class="co">#&gt;   3: 0.181488201 0.000000000</span></span>
-<span><span class="co">#&gt;   4: 0.007109005 0.033175357</span></span>
-<span><span class="co">#&gt;   5: 0.017766498 0.015228426</span></span>
-<span><span class="co">#&gt;  ---                        </span></span>
-<span><span class="co">#&gt; 925: 0.021897810 0.041970804</span></span>
-<span><span class="co">#&gt; 926: 0.007339450 0.034862384</span></span>
-<span><span class="co">#&gt; 927: 0.267034978 0.173112333</span></span>
-<span><span class="co">#&gt; 928: 0.016427105 0.047227927</span></span>
-<span><span class="co">#&gt; 929: 0.187763706 0.040084388</span></span></code></pre></div>
+<div class="sourceCode cell-code" id="cb16"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span></span>
+<span><span class="co">#&gt;    cell_idx   cell_id    cell_grp batch_index   nnz lib_size to_keep</span></span>
+<span><span class="co">#&gt;       &lt;int&gt;    &lt;char&gt;      &lt;char&gt;       &lt;num&gt; &lt;num&gt;    &lt;num&gt;  &lt;lgcl&gt;</span></span>
+<span><span class="co">#&gt; 1:        1 cell_0001 cell_type_1           1    52      371    TRUE</span></span>
+<span><span class="co">#&gt; 2:        2 cell_0003 cell_type_3           1    52      495    TRUE</span></span>
+<span><span class="co">#&gt; 3:        3 cell_0004 cell_type_1           1    48      551    TRUE</span></span>
+<span><span class="co">#&gt; 4:        4 cell_0005 cell_type_2           1    53      422    TRUE</span></span>
+<span><span class="co">#&gt; 5:        5 cell_0006 cell_type_3           1    57      394    TRUE</span></span>
+<span><span class="co">#&gt; 6:        6 cell_0007 cell_type_1           1    49      593    TRUE</span></span>
+<span><span class="co">#&gt;           gs_1        gs_2</span></span>
+<span><span class="co">#&gt;          &lt;num&gt;       &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1: 0.156334236 0.008086253</span></span>
+<span><span class="co">#&gt; 2: 0.022222223 0.006060606</span></span>
+<span><span class="co">#&gt; 3: 0.181488201 0.000000000</span></span>
+<span><span class="co">#&gt; 4: 0.007109005 0.033175357</span></span>
+<span><span class="co">#&gt; 5: 0.017766498 0.015228426</span></span>
+<span><span class="co">#&gt; 6: 0.242833048 0.079258010</span></span></code></pre></div>
 </div>
 <p>We now have two new columns here! That worked well… Let’s now do filtering to really understand what’s happening under the hood:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">threshold</span> <span class="op">&lt;-</span> <span class="fl">0.05</span></span>
 <span></span>
 <span><span class="va">cells_to_keep</span> <span class="op">&lt;-</span> <span class="va">sc_object</span><span class="op">[[</span><span class="op">]</span><span class="op">]</span><span class="op">[</span><span class="va">gs_2</span> <span class="op">&lt;</span> <span class="va">threshold</span>, <span class="va">cell_id</span><span class="op">]</span></span>
@@ -396,7 +411,7 @@
 </div>
 <p>The print changed now! We have now told the class that only a subset of 682 cells shall be used in any downstream analyses. This is very important! Most functions will only return and work on the filtered cells, and you have to carefully think and remember what you did when. Also:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">obs_unfiltered</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_sc_obs.html">get_sc_obs</a></span><span class="op">(</span><span class="va">sc_object</span>, filtered <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">obs_filtered</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_sc_obs.html">get_sc_obs</a></span><span class="op">(</span><span class="va">sc_object</span>, filtered <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
@@ -415,7 +430,7 @@
 </h4>
 <p>You have actually two files on disk… If you read the design doc you know why (if you don’t, please read it!). Now let’s look into what it ACTUALLY means… Let’s say you are interested in the first 50 cells.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">raw_counts_from_cells</span> <span class="op">&lt;-</span> <span class="va">sc_object</span><span class="op">[</span></span>
 <span>  <span class="fl">1</span><span class="op">:</span><span class="fl">50L</span>,</span>
 <span>  ,</span>
@@ -442,7 +457,7 @@
 </div>
 <p>What is happening here? In both cases, we are pulling the raw counts. In the first case, we do it smartly… Rows -&gt; cells, so, we are telling R to tell Rust to retrieve this as CSR. Which means we ONLY load the cells in that are needed. The second approach is the stupid way… We are telling R to tell Rust to load in ALL genes and then filter to the desired cells. The impact of this can be seen here:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb19"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">microbenchmark</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/microbenchmark/man/microbenchmark.html" class="external-link">microbenchmark</a></span><span class="op">(</span></span>
 <span>  the_correct_way <span class="op">=</span> <span class="op">{</span></span>
 <span>    <span class="va">sc_object</span><span class="op">[</span></span>
@@ -462,14 +477,14 @@
 <span>  <span class="op">}</span>,</span>
 <span>  times <span class="op">=</span> <span class="fl">10L</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Unit: milliseconds</span></span>
-<span><span class="co">#&gt;               expr      min       lq     mean   median       uq      max neval</span></span>
-<span><span class="co">#&gt;    the_correct_way 1.402528 1.422526 1.634182 1.457921 1.473541 3.134961    10</span></span>
-<span><span class="co">#&gt;  the_incorrect_way 2.304131 2.332974 2.398138 2.359218 2.422952 2.647552    10</span></span></code></pre></div>
+<span><span class="co">#&gt; Unit: microseconds</span></span>
+<span><span class="co">#&gt;               expr      min       lq      mean    median       uq     max neval</span></span>
+<span><span class="co">#&gt;    the_correct_way  739.163  757.951  806.9916  793.9395  830.358  924.87    10</span></span>
+<span><span class="co">#&gt;  the_incorrect_way 1243.124 1381.712 1531.7786 1408.2465 1441.070 2768.36    10</span></span></code></pre></div>
 </div>
 <p>The difference seems marginal here, but it WILL bite you if you do this on large data sets. Also, the memory advantages this approach gives you usually will disappear if you force the wrong format. Also, another thing to REALLY consider… The indices you supply in R should match what the Rust files have and again you need to THINK about the cells to keep. A nasty example here:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb20"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">counts_filtered</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_sc_counts.html">get_sc_counts</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">sc_object</span>,</span>
 <span>  assay <span class="op">=</span> <span class="st">"raw"</span>,</span>
@@ -507,7 +522,7 @@
 </div>
 <p>Wait, what happened here … ? Because we set the cells to keep in the step with the pseudo mitochondrial counts, these indices are now “bad cells”. <strong>They are not filtered, they are just not returned.</strong> You can control this also via the primitive syntax.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb21"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">filtered_counts</span> <span class="op">&lt;-</span> <span class="va">sc_object</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">10L</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">10L</span>, use_cells_to_keep <span class="op">=</span> <span class="cn">TRUE</span><span class="op">]</span></span>
 <span></span>
 <span><span class="va">unfiltered_counts</span> <span class="op">&lt;-</span> <span class="va">sc_object</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">10L</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">10L</span>, use_cells_to_keep <span class="op">=</span> <span class="cn">FALSE</span><span class="op">]</span></span>
@@ -527,7 +542,7 @@
 </div>
 <p>If you want to avoid thinking about indices altogether (which is recommended), just use:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb22"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># just use cell labels and genes directly...</span></span>
 <span><span class="va">sc_object</span><span class="op">[</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"cell_0001"</span>, <span class="st">"cell_0003"</span>, <span class="st">"cell_0100"</span>, <span class="st">"cell_0117"</span><span class="op">)</span>,</span>

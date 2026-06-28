@@ -1,6 +1,7 @@
 # Calculates the mutual information matrix
 
-Calculates the mutual information across all columns in the data.
+**\[experimental\]** Calculates the pairwise mutual information across
+all columns in the data.
 
 ## Usage
 

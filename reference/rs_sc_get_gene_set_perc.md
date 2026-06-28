@@ -1,7 +1,8 @@
 # Calculate the percentage of gene sets in the cells
 
-This function allows to calculate for example the proportion of
-mitochondrial genes, or ribosomal genes in the cells for QC purposes.
+**\[experimental\]** This function allows to calculate for example the
+proportion of mitochondrial genes, or ribosomal genes in the cells for
+QC purposes.
 
 ## Usage
 
@@ -37,7 +38,8 @@ rs_sc_get_gene_set_perc(
 
 - verbose:
 
-  Boolean. Controls verbosity of the function.
+  Integer. `0L` - quiet; `1L` - normal verbosity; `2L` - detailed
+  verbosity.
 
 ## Value
 

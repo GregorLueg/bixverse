@@ -11,7 +11,8 @@ scdblfinder_sc(
   scdblfinder_params = params_scdblfinder(),
   return_features = FALSE,
   cells_to_use = NULL,
-  streaming = FALSE,
+  group_by = NULL,
+  streaming = NULL,
   seed = 42L,
   .verbose = TRUE
 )
@@ -39,10 +40,16 @@ scdblfinder_sc(
   individual batches within your data. The object returned will be
   specifically using these cells.
 
+- group_by:
+
+  Optional grouping variable. Useful if you want to run the method on a
+  per-sample basis.
+
 - streaming:
 
-  Boolean. Shall the gene data be streamed in. Useful on large data
-  sets.
+  Optional Boolean. Shall the data be streamed in. Useful for larger
+  data sets where you wish to avoid loading in the whole data. If
+  `NULL`, will automatically detect.
 
 - seed:
 
@@ -50,7 +57,9 @@ scdblfinder_sc(
 
 - .verbose:
 
-  Boolean. Controls verbosity.
+  Boolean or integer. Controls verbosity and returns run times. `FALSE`
+  -\> quiet, `TRUE` or `1L` -\> normal verbosity, `2L` -\> detailed
+  verbosity.
 
 ## Value
 

@@ -10,7 +10,7 @@ for very large data sets to avoid memory pressure.
 calculate_pca_sc(
   object,
   no_pcs,
-  randomised_svd = TRUE,
+  pca_params = params_sc_pca(),
   sparse_svd = FALSE,
   hvg = NULL,
   seed = 42L,
@@ -28,9 +28,11 @@ calculate_pca_sc(
 
   Integer. Number of PCs to calculate.
 
-- randomised_svd:
+- pca_params:
 
-  Boolean. Shall randomised SVD be used. Faster, but less precise.
+  Named list. Controls the parameters to be used for the PCA calculation
+  which is single cell-specific, see
+  [`params_sc_pca()`](https://gregorlueg.github.io/bixverse/reference/params_sc_pca.md)
 
 - sparse_svd:
 
@@ -56,7 +58,9 @@ calculate_pca_sc(
 
 - .verbose:
 
-  Boolean. Controls verbosity and returns run times.
+  Boolean or integer. Controls verbosity and returns run times. `FALSE`
+  -\> quiet, `TRUE` or `1L` -\> normal verbosity, `2L` -\> detailed
+  verbosity.
 
 ## Value
 

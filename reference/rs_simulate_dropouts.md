@@ -1,8 +1,8 @@
 # Sparsify bulkRNAseq like data
 
-This function takes in a (raw) count matrix (for example from the
-synthetic data in bixverse) and applies sparsification to it based on
-two possible functions:
+**\[experimental\]** This function takes in a (raw) count matrix (for
+example from the synthetic data in bixverse) and applies sparsification
+to it based on two possible functions:
 
 **Logistic function:**
 

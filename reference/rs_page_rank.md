@@ -1,6 +1,6 @@
 # Rust version of calcaluting the personalised page rank
 
-Rust version of calcaluting the personalised page rank
+**\[experimental\]**
 
 ## Usage
 

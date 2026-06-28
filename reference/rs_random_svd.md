@@ -1,13 +1,13 @@
 # Run randomised SVD over a matrix
 
-Runs a randomised singular value decomposition over a matrix. This
-implementation is faster than the full SVD on large data sets, with
-slight loss in precision.
+**\[experimental\]** Runs a randomised singular value decomposition over
+a matrix. This implementation is faster than the full SVD on large data
+sets, with slight loss in precision.
 
 ## Usage
 
 ``` r
-rs_random_svd(x, rank, seed, oversampling, n_power_iter)
+rs_random_svd(x, scale, rank, seed, oversampling, n_power_iter)
 ```
 
 ## Arguments
@@ -15,6 +15,11 @@ rs_random_svd(x, rank, seed, oversampling, n_power_iter)
 - x:
 
   Numeric matrix. Rows = samples, columns = features.
+
+- scale:
+
+  Boolean. Shall the columns be variance normalised. (Mean centering
+  will automatically occur.)
 
 - rank:
 

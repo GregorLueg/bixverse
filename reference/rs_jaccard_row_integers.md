@@ -1,7 +1,7 @@
 # Calculate rapidbly Jaccard similarities between rows
 
-Helper function to quickly calculate the Jaccard similarity between the
-rows across the two matrices.
+**\[experimental\]** Helper function to quickly calculate the Jaccard
+similarity between the rows across the two matrices.
 
 ## Usage
 

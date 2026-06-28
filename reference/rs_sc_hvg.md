@@ -1,7 +1,7 @@
 # Calculate the percentage of gene sets in the cells
 
-This function identifies highly variable genes with the three methods
-known in Seurat.
+**\[experimental\]** This function identifies highly variable genes with
+the three methods known in Seurat.
 
 ## Usage
 
@@ -58,7 +58,8 @@ rs_sc_hvg(
 
 - verbose:
 
-  Boolean. Controls verbosity of the function.
+  Integer. `0L` - quiet; `1L` - normal verbosity; `2L` - detailed
+  verbosity.
 
 ## Value
 

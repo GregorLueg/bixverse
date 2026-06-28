@@ -1,7 +1,7 @@
 # Helper to get zero stats from a given matrix
 
-Calculates in a single matrix pass the total number of zeroes, the row
-zeroes and column zeroes.
+**\[experimental\]** Calculates in a single matrix pass the total number
+of zeroes, the row zeroes and column zeroes.
 
 ## Usage
 

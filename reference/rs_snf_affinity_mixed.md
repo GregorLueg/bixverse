@@ -1,6 +1,6 @@
 # Calculate the SNF affinity matrix for mixed values
 
-Calculate the SNF affinity matrix for mixed values
+**\[experimental\]**
 
 ## Usage
 

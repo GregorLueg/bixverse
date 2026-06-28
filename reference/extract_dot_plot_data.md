@@ -7,14 +7,20 @@ plots.
 ## Usage
 
 ``` r
-extract_dot_plot_data(object, features, grouping_variable, scale_exp = TRUE)
+extract_dot_plot_data(
+  object,
+  features,
+  grouping_variable,
+  scale_exp = TRUE,
+  modality = c("rna", "adt")
+)
 ```
 
 ## Arguments
 
 - object:
 
-  `SingleCells` class.
+  A single cell class.
 
 - features:
 
@@ -27,6 +33,11 @@ extract_dot_plot_data(object, features, grouping_variable, scale_exp = TRUE)
 - scale_exp:
 
   Boolean. Whether to min-max scale mean expression per gene.
+
+- modality:
+
+  String. One of `c("rna", "adt")`. ADT is only available for
+  `SingleCellsMultiModal`.
 
 ## Value
 

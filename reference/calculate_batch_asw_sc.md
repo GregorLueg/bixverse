@@ -54,7 +54,7 @@ calculate_batch_asw_sc(
 
 - .verbose:
 
-  Boolean. Controls the verbosity of the function.
+  Boolean. Controls verbosity of the function.
 
 ## Value
 

@@ -1,6 +1,6 @@
 # Calculate the SNF affinity matrix for categorical values
 
-Calculate the SNF affinity matrix for categorical values
+**\[experimental\]**
 
 ## Usage
 

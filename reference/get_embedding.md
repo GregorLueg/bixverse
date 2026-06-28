@@ -7,16 +7,16 @@ classes and methods.
 ## Usage
 
 ``` r
-get_embedding(x, embd_name)
+get_embedding(x, embd_name, ...)
 
 ## S7 method for class <bixverse::MetaCells>
-get_embedding(x, embd_name)
+get_embedding(x, embd_name, ...)
 
 # S3 method for class 'ScCache'
-get_embedding(x, embd_name)
+get_embedding(x, embd_name, ...)
 
 ## S7 method for class <bixverse::SingleCells>
-get_embedding(x, embd_name)
+get_embedding(x, embd_name, ...)
 ```
 
 ## Arguments
@@ -29,6 +29,10 @@ get_embedding(x, embd_name)
 
   String. The name of the embedding to return. The function will throw
   an error if the embedding does not exist.
+
+- ...:
+
+  Other parameters.
 
 ## Value
 

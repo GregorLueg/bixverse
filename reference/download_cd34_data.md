@@ -17,7 +17,7 @@ download_cd34_data(quiet = FALSE)
 
 ## Value
 
-String. The path to the extracted doublet detection data.
+String. The path to CD34 SEACells data set.
 
 ## References
 

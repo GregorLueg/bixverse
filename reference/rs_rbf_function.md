@@ -1,7 +1,8 @@
 # Apply a Radial Basis Function
 
-Applies a radial basis function (RBF) to a given distance vector. Has at
-the option to apply a Gaussian, Bump or Inverse Quadratic RBF.
+**\[experimental\]** Applies a radial basis function (RBF) to a given
+distance vector. Has at the option to apply a Gaussian, Bump or Inverse
+Quadratic RBF.
 
 ## Usage
 

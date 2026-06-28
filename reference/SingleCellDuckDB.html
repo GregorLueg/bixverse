@@ -9,7 +9,7 @@ observation/cell metadata and the feature/gene metadata."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -33,14 +33,24 @@ observation/cell metadata and the feature/gene metadata."></head><body>
   </ul></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-single-cells" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Single Cells</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-single-cells"><li><a class="dropdown-item" href="../articles/thinking_single_cell.html">Thinking about single cells the bixverse way</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-single-cells"><li><h6 class="dropdown-header" data-toc-skip>Intro vignettes</h6></li>
+    <li><a class="dropdown-item" href="../articles/thinking_single_cell.html">Thinking about single cells the bixverse way</a></li>
     <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">PBMC analysis with the bixverse single cell framework</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_io.html">Reading data in (single-cell I/O)</a></li>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
-    <li><a class="dropdown-item" href="../articles/analysis_single_cell.html">'Bag of genes' methods for single cell in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/knn_searches.html">kNN searches for single cells in bixverse</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>More advanced analysis methods</h6></li>
+    <li><a class="dropdown-item" href="../articles/bag_of_genes_single_cells.html">'Bag of genes' methods for single cell in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/nichenet.html">Ligand receptor analysis</a></li>
     <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/symphomy.html">Reference mapping via Symphony</a></li>
+    <li><a class="dropdown-item" href="../articles/multi_modal_single_cell.html">Multi-modal analysis</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Others</h6></li>
     <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing big data on a powerful laptop (example)</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_visualisation.html">Plotting helpers</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -74,34 +84,43 @@ observation/cell metadata and the feature/gene metadata.</p>
 
 <div class="section">
 <h3 id="public-methods">Public methods<a class="anchor" aria-label="anchor" href="#public-methods"></a></h3>
-<p></p><ul><li><p><a href="#method-SingleCellDuckDB-populate_obs_from_h5"><code>SingleCellDuckDB$populate_obs_from_h5()</code></a></p></li>
-<li><p><a href="#method-SingleCellDuckDB-populate_vars_from_h5"><code>SingleCellDuckDB$populate_vars_from_h5()</code></a></p></li>
-<li><p><a href="#method-SingleCellDuckDB-populate_obs_from_multi_h5"><code>SingleCellDuckDB$populate_obs_from_multi_h5()</code></a></p></li>
-<li><p><a href="#method-SingleCellDuckDB-populate_vars_from_h5_reordered"><code>SingleCellDuckDB$populate_vars_from_h5_reordered()</code></a></p></li>
+<p></p><ul><li><p><a href="#method-SingleCellDuckDB-populate_obs_from_h5ad"><code>SingleCellDuckDB$populate_obs_from_h5ad()</code></a></p></li>
+<li><p><a href="#method-SingleCellDuckDB-populate_vars_from_h5ad"><code>SingleCellDuckDB$populate_vars_from_h5ad()</code></a></p></li>
+<li><p><a href="#method-SingleCellDuckDB-populate_obs_from_multi_h5ad"><code>SingleCellDuckDB$populate_obs_from_multi_h5ad()</code></a></p></li>
+<li><p><a href="#method-SingleCellDuckDB-populate_var_minimal"><code>SingleCellDuckDB$populate_var_minimal()</code></a></p></li>
 <li><p><a href="#method-SingleCellDuckDB-populate_obs_from_plain_text"><code>SingleCellDuckDB$populate_obs_from_plain_text()</code></a></p></li>
 <li><p><a href="#method-SingleCellDuckDB-populate_var_from_plain_text"><code>SingleCellDuckDB$populate_var_from_plain_text()</code></a></p></li>
 <li><p><a href="#method-SingleCellDuckDB-populate_obs_from_data.table"><code>SingleCellDuckDB$populate_obs_from_data.table()</code></a></p></li>
 <li><p><a href="#method-SingleCellDuckDB-populate_var_from_data.table"><code>SingleCellDuckDB$populate_var_from_data.table()</code></a></p></li>
+<li><p><a href="#method-SingleCellDuckDB-populate_var_adt_from_data.table"><code>SingleCellDuckDB$populate_var_adt_from_data.table()</code></a></p></li>
+<li><p><a href="#method-SingleCellDuckDB-populate_obs_from_tenx_h5"><code>SingleCellDuckDB$populate_obs_from_tenx_h5()</code></a></p></li>
+<li><p><a href="#method-SingleCellDuckDB-populate_vars_from_tenx_h5"><code>SingleCellDuckDB$populate_vars_from_tenx_h5()</code></a></p></li>
+<li><p><a href="#method-SingleCellDuckDB-populate_obs_from_multi_tenx_h5"><code>SingleCellDuckDB$populate_obs_from_multi_tenx_h5()</code></a></p></li>
+<li><p><a href="#method-SingleCellDuckDB-populate_obs_from_multi_duckdb"><code>SingleCellDuckDB$populate_obs_from_multi_duckdb()</code></a></p></li>
+<li><p><a href="#method-SingleCellDuckDB-populate_vars_from_duckdb_reordered"><code>SingleCellDuckDB$populate_vars_from_duckdb_reordered()</code></a></p></li>
+<li><p><a href="#method-SingleCellDuckDB-populate_obs_from_multi_plain_text"><code>SingleCellDuckDB$populate_obs_from_multi_plain_text()</code></a></p></li>
 <li><p><a href="#method-SingleCellDuckDB-clone"><code>SingleCellDuckDB$clone()</code></a></p></li>
 </ul></div><p><details><summary>Inherited methods</summary><ul><li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="add_data_obs"><a href="SingleCellDuckDBBase.html#method-add_data_obs"><code>SingleCellDuckDBBase$add_data_obs()</code></a></span></li>
   <li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="add_data_var"><a href="SingleCellDuckDBBase.html#method-add_data_var"><code>SingleCellDuckDBBase$add_data_var()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="drop_columns"><a href="SingleCellDuckDBBase.html#method-drop_columns"><code>SingleCellDuckDBBase$drop_columns()</code></a></span></li>
   <li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="filter_var_table"><a href="SingleCellDuckDBBase.html#method-filter_var_table"><code>SingleCellDuckDBBase$filter_var_table()</code></a></span></li>
   <li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="get_cells_to_keep"><a href="SingleCellDuckDBBase.html#method-get_cells_to_keep"><code>SingleCellDuckDBBase$get_cells_to_keep()</code></a></span></li>
   <li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="get_obs_cols"><a href="SingleCellDuckDBBase.html#method-get_obs_cols"><code>SingleCellDuckDBBase$get_obs_cols()</code></a></span></li>
   <li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="get_obs_index_map"><a href="SingleCellDuckDBBase.html#method-get_obs_index_map"><code>SingleCellDuckDBBase$get_obs_index_map()</code></a></span></li>
   <li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="get_obs_table"><a href="SingleCellDuckDBBase.html#method-get_obs_table"><code>SingleCellDuckDBBase$get_obs_table()</code></a></span></li>
   <li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="get_var_index_map"><a href="SingleCellDuckDBBase.html#method-get_var_index_map"><code>SingleCellDuckDBBase$get_var_index_map()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="get_vars_adt_table"><a href="SingleCellDuckDBBase.html#method-get_vars_adt_table"><code>SingleCellDuckDBBase$get_vars_adt_table()</code></a></span></li>
   <li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="get_vars_table"><a href="SingleCellDuckDBBase.html#method-get_vars_table"><code>SingleCellDuckDBBase$get_vars_table()</code></a></span></li>
   <li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="initialize"><a href="SingleCellDuckDBBase.html#method-initialize"><code>SingleCellDuckDBBase$initialize()</code></a></span></li>
   <li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="join_data_obs"><a href="SingleCellDuckDBBase.html#method-join_data_obs"><code>SingleCellDuckDBBase$join_data_obs()</code></a></span></li>
   <li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="rename_column"><a href="SingleCellDuckDBBase.html#method-rename_column"><code>SingleCellDuckDBBase$rename_column()</code></a></span></li>
   <li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="set_cells_to_keep"><a href="SingleCellDuckDBBase.html#method-set_cells_to_keep"><code>SingleCellDuckDBBase$set_cells_to_keep()</code></a></span></li>
   <li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="set_to_keep_column"><a href="SingleCellDuckDBBase.html#method-set_to_keep_column"><code>SingleCellDuckDBBase$set_to_keep_column()</code></a></span></li>
-</ul></details></p><hr><a id="method-SingleCellDuckDB-populate_obs_from_h5"></a><div class="section">
-<h3 id="singlecellduckdb-populate-obs-from-h-"><code>SingleCellDuckDB$populate_obs_from_h5()</code><a class="anchor" aria-label="anchor" href="#singlecellduckdb-populate-obs-from-h-"></a></h3>
+</ul></details></p><hr><a id="method-SingleCellDuckDB-populate_obs_from_h5ad"></a><div class="section">
+<h3 id="singlecellduckdb-populate-obs-from-h-ad-"><code>SingleCellDuckDB$populate_obs_from_h5ad()</code><a class="anchor" aria-label="anchor" href="#singlecellduckdb-populate-obs-from-h-ad-"></a></h3>
 <p>This function populates the obs table from an h5 file (if found).</p><div class="section">
 <h4 id="usage">Usage<a class="anchor" aria-label="anchor" href="#usage"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SingleCellDuckDB</span><span class="op">$</span><span class="fu">populate_obs_from_h5</span><span class="op">(</span></span>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SingleCellDuckDB</span><span class="op">$</span><span class="fu">populate_obs_from_h5ad</span><span class="op">(</span></span>
 <span>  <span class="va">h5_path</span>,</span>
 <span>  filter <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  cell_id_col <span class="op">=</span> <span class="cn">NULL</span></span>
@@ -130,11 +149,11 @@ obs data from the h5ad file into the DuckDB.</p>
 
 </div>
 
-<p></p><hr><a id="method-SingleCellDuckDB-populate_vars_from_h5"></a><div class="section">
-<h3 id="singlecellduckdb-populate-vars-from-h-"><code>SingleCellDuckDB$populate_vars_from_h5()</code><a class="anchor" aria-label="anchor" href="#singlecellduckdb-populate-vars-from-h-"></a></h3>
+<p></p><hr><a id="method-SingleCellDuckDB-populate_vars_from_h5ad"></a><div class="section">
+<h3 id="singlecellduckdb-populate-vars-from-h-ad-"><code>SingleCellDuckDB$populate_vars_from_h5ad()</code><a class="anchor" aria-label="anchor" href="#singlecellduckdb-populate-vars-from-h-ad-"></a></h3>
 <p>This populates the vars table from an h5 file (if found.)</p><div class="section">
 <h4 id="usage-1">Usage<a class="anchor" aria-label="anchor" href="#usage-1"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SingleCellDuckDB</span><span class="op">$</span><span class="fu">populate_vars_from_h5</span><span class="op">(</span><span class="va">h5_path</span>, filter <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SingleCellDuckDB</span><span class="op">$</span><span class="fu">populate_vars_from_h5ad</span><span class="op">(</span><span class="va">h5_path</span>, filter <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div><p></p><div class="section">
 <h4 id="arguments-1">Arguments<a class="anchor" aria-label="anchor" href="#arguments-1"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>h5_path</code></dt>
@@ -154,11 +173,14 @@ obs data from the h5ad file into the DuckDB.</p>
 
 </div>
 
-<p></p><hr><a id="method-SingleCellDuckDB-populate_obs_from_multi_h5"></a><div class="section">
-<h3 id="singlecellduckdb-populate-obs-from-multi-h-"><code>SingleCellDuckDB$populate_obs_from_multi_h5()</code><a class="anchor" aria-label="anchor" href="#singlecellduckdb-populate-obs-from-multi-h-"></a></h3>
+<p></p><hr><a id="method-SingleCellDuckDB-populate_obs_from_multi_h5ad"></a><div class="section">
+<h3 id="singlecellduckdb-populate-obs-from-multi-h-ad-"><code>SingleCellDuckDB$populate_obs_from_multi_h5ad()</code><a class="anchor" aria-label="anchor" href="#singlecellduckdb-populate-obs-from-multi-h-ad-"></a></h3>
 <p>Populate the obs table from multiple h5ad files.</p><div class="section">
 <h4 id="usage-2">Usage<a class="anchor" aria-label="anchor" href="#usage-2"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SingleCellDuckDB</span><span class="op">$</span><span class="fu">populate_obs_from_multi_h5</span><span class="op">(</span><span class="va">per_file_info</span>, cell_id_col <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SingleCellDuckDB</span><span class="op">$</span><span class="fu">populate_obs_from_multi_h5ad</span><span class="op">(</span></span>
+<span>  <span class="va">per_file_info</span>,</span>
+<span>  cell_id_col <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div><p></p><div class="section">
 <h4 id="arguments-2">Arguments<a class="anchor" aria-label="anchor" href="#arguments-2"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>per_file_info</code></dt>
@@ -177,26 +199,25 @@ cell_filter (1-indexed integer vector of cells to keep).</p></dd>
 
 </div>
 
-<p></p><hr><a id="method-SingleCellDuckDB-populate_vars_from_h5_reordered"></a><div class="section">
-<h3 id="singlecellduckdb-populate-vars-from-h-reordered-"><code>SingleCellDuckDB$populate_vars_from_h5_reordered()</code><a class="anchor" aria-label="anchor" href="#singlecellduckdb-populate-vars-from-h-reordered-"></a></h3>
-<p>Populate the var table from an h5ad file, filtered and reordered to
-match a target gene set.</p><div class="section">
+<p></p><hr><a id="method-SingleCellDuckDB-populate_var_minimal"></a><div class="section">
+<h3 id="singlecellduckdb-populate-var-minimal-"><code>SingleCellDuckDB$populate_var_minimal()</code><a class="anchor" aria-label="anchor" href="#singlecellduckdb-populate-var-minimal-"></a></h3>
+<p>Populate a minimal var table for multi-file ingestion: gene_idx and
+gene_id only. Per-file var annotations are intentionally not merged;
+downstream annotation is the caller's responsibility (e.g. via an
+external reference and a future enrich_var()).</p><div class="section">
 <h4 id="usage-3">Usage<a class="anchor" aria-label="anchor" href="#usage-3"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SingleCellDuckDB</span><span class="op">$</span><span class="fu">populate_vars_from_h5_reordered</span><span class="op">(</span><span class="va">h5_path</span>, <span class="va">final_gene_names</span><span class="op">)</span></span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SingleCellDuckDB</span><span class="op">$</span><span class="fu">populate_var_minimal</span><span class="op">(</span><span class="va">final_gene_names</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div><p></p><div class="section">
 <h4 id="arguments-3">Arguments<a class="anchor" aria-label="anchor" href="#arguments-3"></a></h4>
-<p></p><div class="arguments"><dl><dt><code>h5_path</code></dt>
-<dd><p>String. Path to the reference h5ad file.</p></dd>
-
-      <dt><code>final_gene_names</code></dt>
-<dd><p>Character vector. Gene names in the desired
-final order.</p></dd>
+<p></p><div class="arguments"><dl><dt><code>final_gene_names</code></dt>
+<dd><p>Character vector. Gene ids in the final order
+(matches the Rust binary gene axis).</p></dd>
 
 
 </dl><p></p></div>
 </div><p></p><div class="section">
 <h4 id="returns-3">Returns<a class="anchor" aria-label="anchor" href="#returns-3"></a></h4>
-<p>Invisible self. Populates the var table in DuckDB.
+<p>Invisible self.
 Function to populate the obs table from plain text files</p>
 </div>
 
@@ -294,7 +315,180 @@ Function to populate the var table from R</p>
 </dl><p></p></div>
 </div><p></p><div class="section">
 <h4 id="returns-7">Returns<a class="anchor" aria-label="anchor" href="#returns-7"></a></h4>
-<p>Invisible self and populates the internal obs table.</p>
+<p>Invisible self and populates the internal obs table.
+Function to populate the var_adt table from R</p>
+</div>
+
+</div>
+
+<p></p><hr><a id="method-SingleCellDuckDB-populate_var_adt_from_data.table"></a><div class="section">
+<h3 id="singlecellduckdb-populate-var-adt-from-data-table-"><code>SingleCellDuckDB$populate_var_adt_from_data.table()</code><a class="anchor" aria-label="anchor" href="#singlecellduckdb-populate-var-adt-from-data-table-"></a></h3>
+<p></p><div class="section">
+<h4 id="usage-8">Usage<a class="anchor" aria-label="anchor" href="#usage-8"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SingleCellDuckDB</span><span class="op">$</span><span class="fu">populate_var_adt_from_data.table</span><span class="op">(</span><span class="va">var_dt</span>, filter <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div><p></p><div class="section">
+<h4 id="arguments-8">Arguments<a class="anchor" aria-label="anchor" href="#arguments-8"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>var_dt</code></dt>
+<dd><p>data.table with <code>feature_idx</code> and <code>feature_id</code> columns.</p></dd>
+
+      <dt><code>filter</code></dt>
+<dd><p>Optional integer. Row indices to keep.</p></dd>
+
+
+</dl><p></p></div>
+</div><p></p><div class="section">
+<h4 id="returns-8">Returns<a class="anchor" aria-label="anchor" href="#returns-8"></a></h4>
+<p>Invisible self and populates the internal var_adt table.</p>
+</div>
+
+</div>
+
+<p></p><hr><a id="method-SingleCellDuckDB-populate_obs_from_tenx_h5"></a><div class="section">
+<h3 id="singlecellduckdb-populate-obs-from-tenx-h-"><code>SingleCellDuckDB$populate_obs_from_tenx_h5()</code><a class="anchor" aria-label="anchor" href="#singlecellduckdb-populate-obs-from-tenx-h-"></a></h3>
+<p>Populate the obs table from the barcodes in a 10x CellRanger h5 file.</p><div class="section">
+<h4 id="usage-9">Usage<a class="anchor" aria-label="anchor" href="#usage-9"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SingleCellDuckDB</span><span class="op">$</span><span class="fu">populate_obs_from_tenx_h5</span><span class="op">(</span><span class="va">h5_path</span>, <span class="va">version</span>, filter <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div><p></p><div class="section">
+<h4 id="arguments-9">Arguments<a class="anchor" aria-label="anchor" href="#arguments-9"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>h5_path</code></dt>
+<dd><p>String. Path to the 10x h5 file.</p></dd>
+
+      <dt><code>version</code></dt>
+<dd><p>String. One of <code>"v2"</code> or <code>"v3"</code>.</p></dd>
+
+      <dt><code>filter</code></dt>
+<dd><p>Optional integer. 1-indexed positions of cells to keep.</p></dd>
+
+
+</dl><p></p></div>
+</div><p></p><div class="section">
+<h4 id="returns-9">Returns<a class="anchor" aria-label="anchor" href="#returns-9"></a></h4>
+<p>Invisible self. Populates the obs table in DuckDB.</p>
+</div>
+
+</div>
+
+<p></p><hr><a id="method-SingleCellDuckDB-populate_vars_from_tenx_h5"></a><div class="section">
+<h3 id="singlecellduckdb-populate-vars-from-tenx-h-"><code>SingleCellDuckDB$populate_vars_from_tenx_h5()</code><a class="anchor" aria-label="anchor" href="#singlecellduckdb-populate-vars-from-tenx-h-"></a></h3>
+<p>Populate the var table from the features in a 10x CellRanger h5 file.</p>
+<p>Features are read in full file order (all modalities); <code>filter</code> selects
+the gene-expression features that survived QC.</p><div class="section">
+<h4 id="usage-10">Usage<a class="anchor" aria-label="anchor" href="#usage-10"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SingleCellDuckDB</span><span class="op">$</span><span class="fu">populate_vars_from_tenx_h5</span><span class="op">(</span><span class="va">h5_path</span>, <span class="va">version</span>, filter <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div><p></p><div class="section">
+<h4 id="arguments-10">Arguments<a class="anchor" aria-label="anchor" href="#arguments-10"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>h5_path</code></dt>
+<dd><p>String. Path to the 10x h5 file.</p></dd>
+
+      <dt><code>version</code></dt>
+<dd><p>String. One of <code>"v2"</code> or <code>"v3"</code>.</p></dd>
+
+      <dt><code>filter</code></dt>
+<dd><p>Optional integer. 1-indexed positions of features to keep.</p></dd>
+
+
+</dl><p></p></div>
+</div><p></p><div class="section">
+<h4 id="returns-10">Returns<a class="anchor" aria-label="anchor" href="#returns-10"></a></h4>
+<p>Invisible self. Populates the var table in DuckDB.</p>
+</div>
+
+</div>
+
+<p></p><hr><a id="method-SingleCellDuckDB-populate_obs_from_multi_tenx_h5"></a><div class="section">
+<h3 id="singlecellduckdb-populate-obs-from-multi-tenx-h-"><code>SingleCellDuckDB$populate_obs_from_multi_tenx_h5()</code><a class="anchor" aria-label="anchor" href="#singlecellduckdb-populate-obs-from-multi-tenx-h-"></a></h3>
+<p>Populate the obs table from multiple 10x CellRanger h5 files.</p>
+<p>Reads each input's barcodes, applies the cell filter, prefixes
+<code>cell_id</code> with <code>exp_id</code>, and rbindlists.</p><div class="section">
+<h4 id="usage-11">Usage<a class="anchor" aria-label="anchor" href="#usage-11"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SingleCellDuckDB</span><span class="op">$</span><span class="fu">populate_obs_from_multi_tenx_h5</span><span class="op">(</span><span class="va">per_file_info</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div><p></p><div class="section">
+<h4 id="arguments-11">Arguments<a class="anchor" aria-label="anchor" href="#arguments-11"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>per_file_info</code></dt>
+<dd><p>List of lists; each must contain <code>h5_path</code>
+(string), <code>version</code> (<code>"v2"</code> or <code>"v3"</code>), <code>exp_id</code> (string) and
+<code>cell_filter</code> (1-indexed integer vector).</p></dd>
+
+
+</dl><p></p></div>
+</div><p></p><div class="section">
+<h4 id="returns-11">Returns<a class="anchor" aria-label="anchor" href="#returns-11"></a></h4>
+<p>Invisible self.</p>
+</div>
+
+</div>
+
+<p></p><hr><a id="method-SingleCellDuckDB-populate_obs_from_multi_duckdb"></a><div class="section">
+<h3 id="singlecellduckdb-populate-obs-from-multi-duckdb-"><code>SingleCellDuckDB$populate_obs_from_multi_duckdb()</code><a class="anchor" aria-label="anchor" href="#singlecellduckdb-populate-obs-from-multi-duckdb-"></a></h3>
+<p>Populate the obs table by merging obs from multiple source DuckDBs.</p>
+<p>Reads obs rows where <code>to_keep = TRUE</code> from each source, ordered by
+<code>cell_idx</code> ascending (matching the order used in the Rust bin merge).
+Prefixes <code>cell_id</code> with <code>exp_id</code>, intersects column names across all
+inputs, and rbindlists.</p><div class="section">
+<h4 id="usage-12">Usage<a class="anchor" aria-label="anchor" href="#usage-12"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SingleCellDuckDB</span><span class="op">$</span><span class="fu">populate_obs_from_multi_duckdb</span><span class="op">(</span><span class="va">per_file_info</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div><p></p><div class="section">
+<h4 id="arguments-12">Arguments<a class="anchor" aria-label="anchor" href="#arguments-12"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>per_file_info</code></dt>
+<dd><p>List of lists; each must contain <code>db_path</code>
+(string) and <code>exp_id</code> (string).</p></dd>
+
+
+</dl><p></p></div>
+</div><p></p><div class="section">
+<h4 id="returns-12">Returns<a class="anchor" aria-label="anchor" href="#returns-12"></a></h4>
+<p>Invisible self.</p>
+</div>
+
+</div>
+
+<p></p><hr><a id="method-SingleCellDuckDB-populate_vars_from_duckdb_reordered"></a><div class="section">
+<h3 id="singlecellduckdb-populate-vars-from-duckdb-reordered-"><code>SingleCellDuckDB$populate_vars_from_duckdb_reordered()</code><a class="anchor" aria-label="anchor" href="#singlecellduckdb-populate-vars-from-duckdb-reordered-"></a></h3>
+<p>Populate the var table from a source DuckDB, filtered and reordered
+to match a target gene set.</p><div class="section">
+<h4 id="usage-13">Usage<a class="anchor" aria-label="anchor" href="#usage-13"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SingleCellDuckDB</span><span class="op">$</span><span class="fu">populate_vars_from_duckdb_reordered</span><span class="op">(</span></span>
+<span>  <span class="va">source_db_path</span>,</span>
+<span>  <span class="va">final_gene_names</span></span>
+<span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div><p></p><div class="section">
+<h4 id="arguments-13">Arguments<a class="anchor" aria-label="anchor" href="#arguments-13"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>source_db_path</code></dt>
+<dd><p>String. Path to the source DuckDB.</p></dd>
+
+      <dt><code>final_gene_names</code></dt>
+<dd><p>Character vector. Gene names in the desired
+final order.</p></dd>
+
+
+</dl><p></p></div>
+</div><p></p><div class="section">
+<h4 id="returns-13">Returns<a class="anchor" aria-label="anchor" href="#returns-13"></a></h4>
+<p>Invisible self.</p>
+</div>
+
+</div>
+
+<p></p><hr><a id="method-SingleCellDuckDB-populate_obs_from_multi_plain_text"></a><div class="section">
+<h3 id="singlecellduckdb-populate-obs-from-multi-plain-text-"><code>SingleCellDuckDB$populate_obs_from_multi_plain_text()</code><a class="anchor" aria-label="anchor" href="#singlecellduckdb-populate-obs-from-multi-plain-text-"></a></h3>
+<p>Populate obs from multiple plain-text barcode files.</p>
+<p>Reads each input's barcodes file, filters to the cells that passed QC,
+prefixes <code>cell_id</code> with <code>exp_id</code>, intersects column names across inputs,
+and rbindlists.</p><div class="section">
+<h4 id="usage-14">Usage<a class="anchor" aria-label="anchor" href="#usage-14"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SingleCellDuckDB</span><span class="op">$</span><span class="fu">populate_obs_from_multi_plain_text</span><span class="op">(</span><span class="va">per_file_info</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div><p></p><div class="section">
+<h4 id="arguments-14">Arguments<a class="anchor" aria-label="anchor" href="#arguments-14"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>per_file_info</code></dt>
+<dd><p>List of lists; each must contain <code>f_path</code> (string),
+<code>exp_id</code> (string), <code>has_hdr</code> (boolean), <code>cell_filter</code> (1-indexed integer
+vector).</p></dd>
+
+
+</dl><p></p></div>
+</div><p></p><div class="section">
+<h4 id="returns-14">Returns<a class="anchor" aria-label="anchor" href="#returns-14"></a></h4>
+<p>Invisible self.</p>
 </div>
 
 </div>
@@ -302,10 +496,10 @@ Function to populate the var table from R</p>
 <p></p><hr><a id="method-SingleCellDuckDB-clone"></a><div class="section">
 <h3 id="singlecellduckdb-clone-"><code>SingleCellDuckDB$clone()</code><a class="anchor" aria-label="anchor" href="#singlecellduckdb-clone-"></a></h3>
 <p>The objects of this class are cloneable with this method.</p><div class="section">
-<h4 id="usage-8">Usage<a class="anchor" aria-label="anchor" href="#usage-8"></a></h4>
+<h4 id="usage-15">Usage<a class="anchor" aria-label="anchor" href="#usage-15"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SingleCellDuckDB</span><span class="op">$</span><span class="fu">clone</span><span class="op">(</span>deep <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div><p></p><div class="section">
-<h4 id="arguments-8">Arguments<a class="anchor" aria-label="anchor" href="#arguments-8"></a></h4>
+<h4 id="arguments-15">Arguments<a class="anchor" aria-label="anchor" href="#arguments-15"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>deep</code></dt>
 <dd><p>Whether to make a deep clone.</p></dd>
 

@@ -1,14 +1,14 @@
 # Calculate batch LISI scores
 
-Computes the Local Inverse Simpson's Index on batch labels using the kNN
-graph. Measures the effective number of batches in each cell's
-neighbourhood. Under perfect mixing LISI equals the number of batches,
-under no mixing LISI equals 1.
+**\[experimental\]** Computes the Local Inverse Simpson's Index on batch
+labels using the kNN graph. Measures the effective number of batches in
+each cell's neighbourhood. Under perfect mixing LISI equals the number
+of batches, under no mixing LISI equals 1.
 
 ## Usage
 
 ``` r
-rs_batch_lisi(knn_mat, batch_vector)
+rs_batch_lisi(knn_mat, batch_vector, verbose)
 ```
 
 ## Arguments
@@ -22,6 +22,10 @@ rs_batch_lisi(knn_mat, batch_vector)
 
   Integer vector. The integers indicate to which batch a given cell
   belongs.
+
+- verbose:
+
+  Boolean. Controls verbosity of the function.
 
 ## Value
 

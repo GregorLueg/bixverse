@@ -1,9 +1,8 @@
 # Run a single hypergeometric test.
 
-Given a set of target genes, this is a Rust implementation of an
-hypergeometric test testing for overenrichment of the target genes in
-the gene sets. WARNING! Incorrect use can cause kernel crashes. Wrapper
-around the Rust functions with type checks are provided in the package.
+**\[experimental\]** Given a set of target genes, this is a Rust
+implementation of an hypergeometric test testing for overenrichment of
+the target genes in the gene sets.
 
 ## Usage
 

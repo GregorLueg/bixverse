@@ -1,10 +1,11 @@
 # Calculate module activity scores in Rust
 
-Calculates module activity scores following Seurat's `AddModuleScore`.
-For each module (gene set), computes the average expression of genes in
-the set minus the average expression of randomly selected control genes
-from the same expression bins. Genes are binned based on their average
-expression across cells to ensure controls are expression-matched.
+**\[experimental\]** Calculates module activity scores following
+Seurat's `AddModuleScore`. For each module (gene set), computes the
+average expression of genes in the set minus the average expression of
+randomly selected control genes from the same expression bins. Genes are
+binned based on their average expression across cells to ensure controls
+are expression-matched.
 
 ## Usage
 
@@ -60,7 +61,8 @@ rs_module_scoring(
 
 - verbose:
 
-  Logical. Controls verbosity of the function.
+  Integer. `0L` - quiet; `1L` - normal verbosity; `2L` - detailed
+  verbosity.
 
 ## Value
 

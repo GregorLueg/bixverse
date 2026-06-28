@@ -1,6 +1,6 @@
 # Helper function to assess cluster stability
 
-Helper function to assess cluster stability
+**\[experimental\]**
 
 ## Usage
 

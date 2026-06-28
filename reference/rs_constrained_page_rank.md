@@ -1,9 +1,9 @@
 # Calculate a constrained page-rank score
 
-This function can be used to get constrainted personalised page-rank
-scores akin to Ruiz, et al. You can provide optionally `sink_nodes`
-(node types that will force a reset) and/or `sink_edges` (edge types
-that will force a reset).
+**\[experimental\]** This function can be used to get constrainted
+personalised page-rank scores akin to Ruiz, et al. You can provide
+optionally `sink_nodes` (node types that will force a reset) and/or
+`sink_edges` (edge types that will force a reset).
 
 ## Usage
 

@@ -1,10 +1,8 @@
 # Run a hypergeometric test over a list of target genes
 
-Given a list of target gene sets, this function will test for each of
-the individual target genes the hypergeoemetric enrichment against the
-specified gene sets. WARNING! Incorrect use can cause kernel crashes.
-Wrapper around the Rust functions with type checks are provided in the
-package.
+**\[experimental\]** Given a list of target gene sets, this function
+will test for each of the individual target genes the hypergeoemetric
+enrichment against the specified gene sets.
 
 ## Usage
 

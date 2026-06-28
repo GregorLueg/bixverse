@@ -1,6 +1,7 @@
 # Helper to compare kNN graphs
 
-Helper to compare kNN graphs
+**\[experimental\]** Compare two kNN graphs and return the distance
+ratios and overlaps of k-nearest neighbours between them.
 
 ## Usage
 
@@ -10,19 +11,15 @@ rs_compare_knn(knn_data_a, knn_data_b)
 
 ## Arguments
 
-- knn_mat_a:
+- knn_data_a:
 
-  Integer matrix. The indices of the first kNN graph to compare. Should
-  be samples x neighbours. This will be treated as ground truth.
+  Named list. This contains the kNN data (including distances) of the
+  first kNN graph. This one will be treated as the ground truth
 
-- knn_mat_b:
+- knn_data_b:
 
-  Integer matrix. The indices of the second kNN graph to compare. Should
-  be samples x neighbours.
-
-- knn_dist_a:
-
-  Numeric matrix.
+  Named list. This contains the kNN data (including distances) of the
+  second kNN graph.
 
 ## Value
 

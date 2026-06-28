@@ -1,6 +1,6 @@
 # Run fgsea simple method for gene ontology with elimination method
 
-Run fgsea simple method for gene ontology with elimination method
+**\[experimental\]**
 
 ## Usage
 

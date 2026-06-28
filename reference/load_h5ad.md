@@ -12,9 +12,12 @@ load_h5ad(
   object,
   h5_path,
   sc_qc_param = params_sc_min_quality(),
-  streaming = TRUE,
+  streaming = 1L,
+  raw_count_slot = c("auto", "X", "raw.X", "layers.counts"),
   cell_id_col = NULL,
   batch_size = 1000L,
+  max_genes_in_memory = 2000L,
+  cell_batch_size = 100000L,
   .verbose = TRUE
 )
 ```
@@ -48,8 +51,17 @@ load_h5ad(
 
 - streaming:
 
-  Boolean. Shall the data be streamed during the conversion of CSR to
-  CSC. Defaults to `TRUE` and should be used for larger data sets.
+  Integer. `0L` -\> all cells loaded in memory then transposed (fastest,
+  highest memory), `1L` -\> light streaming with cell batching, `2L` -\>
+  heavy streaming with memory upper boundaries on the gene side.
+  Controls memory pressure during the CSR-to-CSC conversion. Defaults to
+  `1L`.
+
+- raw_count_slot:
+
+  Where raw counts live. `"auto"` detects per file via
+  [`detect_raw_count_slot()`](https://gregorlueg.github.io/bixverse/reference/detect_raw_count_slot.md);
+  otherwise one of `"X"`, `"raw.X"`, `"layers.counts"`.
 
 - cell_id_col:
 
@@ -58,8 +70,16 @@ load_h5ad(
 
 - batch_size:
 
-  Integer. If `streaming = TRUE`, how many cells to process in one
-  batch. Defaults to `1000L`.
+  Integer. Cell batch size when `streaming = 1L`. Defaults to `1000L`.
+
+- max_genes_in_memory:
+
+  Integer. Maximum genes held in memory at once when `streaming = 2L`.
+  Defaults to `2000L`.
+
+- cell_batch_size:
+
+  Integer. Cell batch size when `streaming = 2L`. Defaults to `100000L`.
 
 - .verbose:
 

@@ -29,8 +29,9 @@ generate_bt_meta_cells_sc(
 
 - sc_meta_cell_params:
 
-  List. Output of `params_sc_metacells()`. A list with the following
-  items:
+  List. Output of
+  [`params_sc_bt_metacells()`](https://gregorlueg.github.io/bixverse/reference/params_sc_bt_metacells.md).
+  A list with the following items:
 
   - max_shared - Maximum number of allowed shared neighbours for the
     meta cell to be considered.
@@ -74,7 +75,9 @@ generate_bt_meta_cells_sc(
 
 - .verbose:
 
-  Boolean. Controls verbosity of the function.
+  Boolean or integer. Controls verbosity and returns run times. `FALSE`
+  -\> quiet, `TRUE` or `1L` -\> normal verbosity, `2L` -\> detailed
+  verbosity.
 
 ## Value
 

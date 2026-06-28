@@ -1,6 +1,8 @@
 # Calculates diffusion maps for density calculations for meta cells
 
-Calculates diffusion maps for density calculations for meta cells
+**\[experimental\]** Generates diffusion maps and identifies in which
+density region a given cell sits (defined as distance to k-nearest
+neighbours quite).
 
 ## Usage
 
@@ -31,7 +33,8 @@ rs_metacell_density(knn_data, n_dcs, k_density, knn_params, verbose, seed)
 
 - verbose:
 
-  Boolean. Controls verbosity of the the function.
+  Integer. `0L` - quiet; `1L` - normal verbosity; `2L` - detailed
+  verbosity.
 
 - seed:
 
@@ -46,3 +49,7 @@ A list with the following items
 - density_distances - Density distances at `k_density` neighbours.
 
 - regions - Region of the manifold where this given cell is.
+
+## References
+
+Persad, et al., Nat. Biotechnol., 2023.

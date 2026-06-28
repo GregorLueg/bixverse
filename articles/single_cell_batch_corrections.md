@@ -51,6 +51,7 @@ quality:
 ``` r
 
 library(bixverse)
+library(bixverse.plots)
 library(data.table)
 #> 
 #> Attaching package: 'data.table'
@@ -67,6 +68,8 @@ library(ggplot2)
 We use two PBMC datasets (pbmc3k and pbmc4k) as a standard benchmark for
 batch correction. These come from the same tissue but differ in
 sequencing depth and cell counts, introducing a clear batch effect.
+
+Code
 
 ``` r
 
@@ -89,6 +92,7 @@ sc_object <- load_multi_h5ad(
   prescan_result = h5_tasks,
   .verbose = TRUE
 )
+#>  Using light streaming for the CSR to CSC conversion.
 #> Loading observation data from h5ad files into DuckDB.
 #> Loading variable data into DuckDB.
 ```
@@ -98,13 +102,28 @@ sc_object <- load_multi_h5ad(
 Before batch correction, we filter out low-quality cells using
 mitochondrial gene proportions and library complexity metrics.
 
+Code
+
 ``` r
 
 var <- get_sc_var(sc_object)
 
+# let's get the gene symbols from one of the h5ad files - in multi file import
+# additional columns are dropped from the vars
+h5_metadata <- read_h5ad_metadata(h5ad_paths[[1]])
+
+var <- merge(
+  var,
+  h5_metadata$var[, c("ENSEMBL_ID", "Symbol_TENx")],
+  by.x = "gene_id",
+  by.y = "ENSEMBL_ID"
+)
+
+setnames(var, old = "Symbol_TENx", new = "gene_symbol", skip_absent = TRUE)
+
 gs_of_interest <- list(
-  MT = var[grepl("^MT-", symbol_tenx), gene_id],
-  Ribo = var[grepl("^RPS|^RPL", symbol_tenx), gene_id]
+  MT = var[grepl("^MT-", gene_symbol), gene_id],
+  Ribo = var[grepl("^RPS|^RPL", gene_symbol), gene_id]
 )
 
 sc_object <- gene_set_proportions_sc(
@@ -127,31 +146,14 @@ directions <- c(
   MT = "above"
 )
 
-qc <- run_cell_qc(metrics, directions, threshold = 3)
+qc <- run_cell_qc(
+  metrics = metrics,
+  cells_to_keep = get_cells_to_keep(sc_object),
+  directions = directions,
+  threshold = 3
+)
 
-qc
-#> CellQc: 7040 cells, 1199 outliers (17.0%)
-#> Metrics:
-#>   - log10_lib_size: 450 outliers [lower = 3.07, upper = 3.93]
-#>   - log10_nnz: 483 outliers [lower = 2.71, upper = 3.34]
-#>   - MT: 728 outliers [upper = 0.05]
-```
-
-Let’s plot the metrics:
-
-``` r
-
-plots <- plot(qc, qc_df)
-
-plots$log10_lib_size + plots$log10_nnz + plots$MT
-```
-
-![](single_cell_batch_corrections_files/figure-html/qc%20plots-1.png)
-
-Set the cells to keep
-
-``` r
-
+# Set the cells to keep
 sc_object[["outlier"]] <- qc$combined
 cells_to_keep <- qc_df[!qc$combined, cell_id]
 sc_object <- set_cells_to_keep(sc_object, cells_to_keep)
@@ -160,6 +162,8 @@ sc_object <- set_cells_to_keep(sc_object, cells_to_keep)
 ### Pre-processing
 
 Standard pre-processing: HVG selection, PCA, and neighbour computation.
+
+Code
 
 ``` r
 
@@ -180,7 +184,7 @@ sc_object <- find_neighbours_sc(
   neighbours_params = params_sc_neighbours()
 )
 #> 
-#> Generating sNN graph (full: FALSE).
+#> Generating sNN graph (full: TRUE).
 #> Transforming sNN data to igraph.
 ```
 
@@ -197,11 +201,6 @@ compute baseline metrics.
 
 sc_object <- tsne_sc(object = sc_object)
 #> Running t-SNE.
-
-tsne_dt_pre <- as.data.table(
-  get_embedding(sc_object, "tsne"),
-  keep.rownames = "cell_id"
-)[, batch := sc_object[["sample"]]]
 ```
 
 tSNE plot (tSNE’s usually look prettier… It’s anyway not a good way to
@@ -210,15 +209,17 @@ the eye).
 
 ``` r
 
-ggplot(tsne_dt_pre, aes(x = tsne_1, y = tsne_2)) +
-  geom_point(aes(colour = as.factor(batch)), alpha = 0.5, size = 0.5) +
+embedding_plot_sc(
+  sc_object,
+  embedding = "tsne",
+  colour_by = "exp_id",
+  label_by = "exp_id",
+  discrete = TRUE
+) +
   labs(
-    x = "tSNE1",
-    y = "tSNE2",
     title = "Before batch correction",
     colour = "Batch:"
-  ) +
-  theme_bw()
+  )
 ```
 
 ![](single_cell_batch_corrections_files/figure-html/uncorrected%20plot-1.png)
@@ -227,25 +228,25 @@ Batch correction stats:
 
 ``` r
 
-kbet_score_prior <- calculate_kbet_sc(sc_object, batch_column = "sample")
-asw_score_prior <- calculate_batch_asw_sc(sc_object, batch_column = "sample")
-lisi_score_prior <- calculate_batch_lisi_sc(sc_object, batch_column = "sample")
+kbet_score_prior <- calculate_kbet_sc(sc_object, batch_column = "exp_id")
+asw_score_prior <- calculate_batch_asw_sc(sc_object, batch_column = "exp_id")
+lisi_score_prior <- calculate_batch_lisi_sc(sc_object, batch_column = "exp_id")
 
 kbet_score_prior
 #> kBET Scores
 #>   Cells: 5841 | Batches: 2 | Threshold: 0.050
-#>   Rejection rate:      0.9858 (5758 / 5841)
-#>   Mean Chi-Square:     12.7899 (expected under H0: 1)
+#>   Rejection rate:      0.9882 (5772 / 5841)
+#>   Mean Chi-Square:     12.8160 (expected under H0: 1)
 #>   Median Chi-Square:   8.7578
 asw_score_prior
 #> Batch Silhouette Width
 #>   Cells: 5000 | Batches: 2
-#>   Mean ASW:    0.1103 (0 = perfect mixing, 1 = separated)
+#>   Mean ASW:    0.1103 (-1 = strong intermixing, 0 = mixed, 1 = separated)
 #>   Median ASW:  0.1213
 lisi_score_prior
 #> Batch LISI Scores
 #>   Cells: 5841 | Batches: 2
-#>   Mean LISI:    1.0143 (1 = no mixing, 2 = perfect mixing)
+#>   Mean LISI:    1.0130 (1 = no mixing, 2 = perfect mixing)
 #>   Median LISI:  1.0000
 ```
 
@@ -266,13 +267,13 @@ algorithm
 
 batch_aware_hvg <- find_hvg_batch_aware_sc(
   object = sc_object,
-  batch_column = "sample"
+  batch_column = "exp_id"
 )
 
 sc_object <- fast_mnn_sc(
   object = sc_object,
-  batch_hvg_genes = batch_aware_hvg$hvg_genes,
-  batch_column = "sample"
+  batch_hvg_genes = batch_aware_hvg$hvg_gene_idx,
+  batch_column = "exp_id"
 )
 
 sc_object <- find_neighbours_sc(
@@ -281,7 +282,7 @@ sc_object <- find_neighbours_sc(
   neighbours_params = params_sc_neighbours()
 )
 #> 
-#> Generating sNN graph (full: FALSE).
+#> Generating sNN graph (full: TRUE).
 #> Transforming sNN data to igraph.
 ```
 
@@ -289,33 +290,33 @@ sc_object <- find_neighbours_sc(
 
 kbet_score_post_mnn <- calculate_kbet_sc(
   sc_object,
-  batch_column = "sample"
+  batch_column = "exp_id"
 )
 asw_score_post_mnn <- calculate_batch_asw_sc(
   sc_object,
   embd_to_use = "mnn",
-  batch_column = "sample"
+  batch_column = "exp_id"
 )
 lisi_score_post_mnn <- calculate_batch_lisi_sc(
   sc_object,
-  batch_column = "sample"
+  batch_column = "exp_id"
 )
 
 kbet_score_post_mnn
 #> kBET Scores
 #>   Cells: 5841 | Batches: 2 | Threshold: 0.050
-#>   Rejection rate:      0.2405 (1405 / 5841)
-#>   Mean Chi-Square:     2.8564 (expected under H0: 1)
-#>   Median Chi-Square:   1.9151
+#>   Rejection rate:      0.3487 (2037 / 5841)
+#>   Mean Chi-Square:     3.5937 (expected under H0: 1)
+#>   Median Chi-Square:   3.6444
 asw_score_post_mnn
 #> Batch Silhouette Width
 #>   Cells: 5000 | Batches: 2
-#>   Mean ASW:    0.0186 (0 = perfect mixing, 1 = separated)
+#>   Mean ASW:    0.0186 (-1 = strong intermixing, 0 = mixed, 1 = separated)
 #>   Median ASW:  0.0428
 lisi_score_post_mnn
 #> Batch LISI Scores
 #>   Cells: 5841 | Batches: 2
-#>   Mean LISI:    1.5323 (1 = no mixing, 2 = perfect mixing)
+#>   Mean LISI:    1.4449 (1 = no mixing, 2 = perfect mixing)
 #>   Median LISI:  1.4706
 ```
 
@@ -325,27 +326,24 @@ batches).
 
 ``` r
 
-sc_object <- tsne_sc(object = sc_object, use_knn = TRUE)
+sc_object <- tsne_sc(object = sc_object, slot_name = "tsne_mnn", use_knn = TRUE)
 #> Running t-SNE.
 #> Using provided kNN graph.
-
-tsne_dt_mnn <- as.data.table(
-  get_embedding(sc_object, "tsne"),
-  keep.rownames = "cell_id"
-)[, batch := sc_object[["sample"]]]
 ```
 
 ``` r
 
-ggplot(tsne_dt_mnn, aes(x = tsne_1, y = tsne_2)) +
-  geom_point(aes(colour = as.factor(batch)), alpha = 0.5, size = 0.5) +
+embedding_plot_sc(
+  sc_object,
+  embedding = "tsne_mnn",
+  colour_by = "exp_id",
+  label_by = "exp_id",
+  discrete = TRUE
+) +
   labs(
-    x = "tSNE1",
-    y = "tSNE2",
     title = "fastMNN batch correction",
     colour = "Batch:"
-  ) +
-  theme_bw()
+  )
 ```
 
 ![](single_cell_batch_corrections_files/figure-html/fastmnn%20plot-1.png)
@@ -367,7 +365,7 @@ original:
 
 sc_object <- harmony_sc(
   object = sc_object,
-  batch_column = "sample",
+  batch_column = "exp_id",
   harmony_params = params_sc_harmony()
 )
 #>  Auto-determined number of Harmony clusters: 100
@@ -378,7 +376,7 @@ sc_object <- find_neighbours_sc(
   neighbours_params = params_sc_neighbours()
 )
 #> 
-#> Generating sNN graph (full: FALSE).
+#> Generating sNN graph (full: TRUE).
 #> Transforming sNN data to igraph.
 ```
 
@@ -388,33 +386,33 @@ Let’s calculate the batch correction-related scores
 
 kbet_score_post_harmony <- calculate_kbet_sc(
   sc_object,
-  batch_column = "sample"
+  batch_column = "exp_id"
 )
 asw_score_post_harmony <- calculate_batch_asw_sc(
   sc_object,
   embd_to_use = "harmony",
-  batch_column = "sample"
+  batch_column = "exp_id"
 )
 lisi_score_post_harmony <- calculate_batch_lisi_sc(
   sc_object,
-  batch_column = "sample"
+  batch_column = "exp_id"
 )
 
 kbet_score_post_harmony
 #> kBET Scores
 #>   Cells: 5841 | Batches: 2 | Threshold: 0.050
-#>   Rejection rate:      0.0781 (456 / 5841)
-#>   Mean Chi-Square:     1.4970 (expected under H0: 1)
+#>   Rejection rate:      0.1442 (842 / 5841)
+#>   Mean Chi-Square:     2.0567 (expected under H0: 1)
 #>   Median Chi-Square:   0.7374
 asw_score_post_harmony
 #> Batch Silhouette Width
 #>   Cells: 5000 | Batches: 2
-#>   Mean ASW:    0.0196 (0 = perfect mixing, 1 = separated)
-#>   Median ASW:  0.0346
+#>   Mean ASW:    0.0196 (-1 = strong intermixing, 0 = mixed, 1 = separated)
+#>   Median ASW:  0.0345
 lisi_score_post_harmony
 #> Batch LISI Scores
 #>   Cells: 5841 | Batches: 2
-#>   Mean LISI:    1.6761 (1 = no mixing, 2 = perfect mixing)
+#>   Mean LISI:    1.5958 (1 = no mixing, 2 = perfect mixing)
 #>   Median LISI:  1.6423
 ```
 
@@ -422,27 +420,28 @@ Also here, we observe improvements across the board.
 
 ``` r
 
-sc_object <- tsne_sc(object = sc_object, use_knn = TRUE)
+sc_object <- tsne_sc(
+  object = sc_object,
+  slot_name = "tsne_harm",
+  use_knn = TRUE
+)
 #> Running t-SNE.
 #> Using provided kNN graph.
-
-tsne_dt_harmony <- as.data.table(
-  get_embedding(sc_object, "tsne"),
-  keep.rownames = "cell_id"
-)[, batch := sc_object[["sample"]]]
 ```
 
 ``` r
 
-ggplot(tsne_dt_harmony, aes(x = tsne_1, y = tsne_2)) +
-  geom_point(aes(colour = as.factor(batch)), alpha = 0.5, size = 0.5) +
+embedding_plot_sc(
+  sc_object,
+  embedding = "tsne_harm",
+  colour_by = "exp_id",
+  label_by = "exp_id",
+  discrete = TRUE
+) +
   labs(
-    x = "tSNE1",
-    y = "tSNE2",
     title = "Harmony batch correction",
     colour = "Batch:"
-  ) +
-  theme_bw()
+  )
 ```
 
 ![](single_cell_batch_corrections_files/figure-html/harmony%20plot-1.png)
@@ -467,7 +466,7 @@ Overall, this makes v2 more amenable and faster on big data sets than v1
 
 sc_object <- harmony_v2_sc(
   object = sc_object,
-  batch_column = "sample",
+  batch_column = "exp_id",
   harmony_params = params_sc_harmony_v2()
 )
 #>  Auto-determined number of Harmony clusters: 100
@@ -478,7 +477,7 @@ sc_object <- find_neighbours_sc(
   neighbours_params = params_sc_neighbours()
 )
 #> 
-#> Generating sNN graph (full: FALSE).
+#> Generating sNN graph (full: TRUE).
 #> Transforming sNN data to igraph.
 ```
 
@@ -488,59 +487,60 @@ Let’s calculate the batch correction-related scores
 
 kbet_score_post_harmony <- calculate_kbet_sc(
   sc_object,
-  batch_column = "sample"
+  batch_column = "exp_id"
 )
 asw_score_post_harmony <- calculate_batch_asw_sc(
   sc_object,
   embd_to_use = "harmony_v2",
-  batch_column = "sample"
+  batch_column = "exp_id"
 )
 lisi_score_post_harmony <- calculate_batch_lisi_sc(
   sc_object,
-  batch_column = "sample"
+  batch_column = "exp_id"
 )
 
 kbet_score_post_harmony
 #> kBET Scores
 #>   Cells: 5841 | Batches: 2 | Threshold: 0.050
-#>   Rejection rate:      0.1002 (585 / 5841)
-#>   Mean Chi-Square:     1.6947 (expected under H0: 1)
+#>   Rejection rate:      0.1438 (840 / 5841)
+#>   Mean Chi-Square:     2.0986 (expected under H0: 1)
 #>   Median Chi-Square:   0.7374
 asw_score_post_harmony
 #> Batch Silhouette Width
 #>   Cells: 5000 | Batches: 2
-#>   Mean ASW:    0.0211 (0 = perfect mixing, 1 = separated)
-#>   Median ASW:  0.0497
+#>   Mean ASW:    0.0185 (-1 = strong intermixing, 0 = mixed, 1 = separated)
+#>   Median ASW:  0.0513
 lisi_score_post_harmony
 #> Batch LISI Scores
 #>   Cells: 5841 | Batches: 2
-#>   Mean LISI:    1.6488 (1 = no mixing, 2 = perfect mixing)
+#>   Mean LISI:    1.5961 (1 = no mixing, 2 = perfect mixing)
 #>   Median LISI:  1.6423
 ```
 
 ``` r
 
-sc_object <- tsne_sc(object = sc_object, use_knn = TRUE)
+sc_object <- tsne_sc(
+  object = sc_object,
+  slot_name = "tsne_harm_v2",
+  use_knn = TRUE
+)
 #> Running t-SNE.
 #> Using provided kNN graph.
-
-tsne_dt_harmony <- as.data.table(
-  get_embedding(sc_object, "tsne"),
-  keep.rownames = "cell_id"
-)[, batch := sc_object[["sample"]]]
 ```
 
 ``` r
 
-ggplot(tsne_dt_harmony, aes(x = tsne_1, y = tsne_2)) +
-  geom_point(aes(colour = as.factor(batch)), alpha = 0.5, size = 0.5) +
+embedding_plot_sc(
+  sc_object,
+  embedding = "tsne_harm_v2",
+  colour_by = "exp_id",
+  label_by = "exp_id",
+  discrete = TRUE
+) +
   labs(
-    x = "tSNE1",
-    y = "tSNE2",
     title = "Harmony (version 2) batch correction",
     colour = "Batch:"
-  ) +
-  theme_bw()
+  )
 ```
 
 ![](single_cell_batch_corrections_files/figure-html/harmony%20(v2)%20plot-1.png)
@@ -563,7 +563,7 @@ stored kNN is the most appropriate metric here.
 
 sc_object <- bbknn_sc(
   object = sc_object,
-  batch_column = "sample",
+  batch_column = "exp_id",
   no_neighbours_to_keep = 15L,
   bbknn_params = params_sc_bbknn(neighbours_within_batch = 10L)
 )
@@ -577,11 +577,11 @@ sc_object <- bbknn_sc(
 
 kbet_score_post_bbknn <- calculate_kbet_sc(
   sc_object,
-  batch_column = "sample"
+  batch_column = "exp_id"
 )
 lisi_score_post_bbknn <- calculate_batch_lisi_sc(
   sc_object,
-  batch_column = "sample"
+  batch_column = "exp_id"
 )
 
 kbet_score_post_bbknn
@@ -602,24 +602,21 @@ lisi_score_post_bbknn
 sc_object <- tsne_sc(object = sc_object, use_knn = TRUE)
 #> Running t-SNE.
 #> Using provided kNN graph.
-
-tsne_dt_bbknn <- as.data.table(
-  get_embedding(sc_object, "tsne"),
-  keep.rownames = "cell_id"
-)[, batch := sc_object[["sample"]]]
 ```
 
 ``` r
 
-ggplot(tsne_dt_bbknn, aes(x = tsne_1, y = tsne_2)) +
-  geom_point(aes(colour = as.factor(batch)), alpha = 0.5, size = 0.5) +
+embedding_plot_sc(
+  sc_object,
+  embedding = "tsne",
+  colour_by = "exp_id",
+  label_by = "exp_id",
+  discrete = TRUE
+) +
   labs(
-    x = "tSNE1",
-    y = "tSNE2",
     title = "BBKNN batch correction",
     colour = "Batch:"
-  ) +
-  theme_bw()
+  )
 ```
 
 ![](single_cell_batch_corrections_files/figure-html/bbknn%20plot-1.png)
@@ -632,7 +629,10 @@ guidance:
 - **Harmony** is a good default. It is fast, operates on the PCA
   embedding directly, and handles multiple batch variables
   simultaneously. It tends to work well when batch effects are moderate
-  and cell type composition is broadly similar across batches.
+  and cell type composition is broadly similar across batches. Version 2
+  is quite an improvement and necessitates less that the same cells are
+  available across the batches and is substantially faster when you
+  provide only one batch effect to regress out.
 
 - **fastMNN** is worth considering when cell type composition differs
   substantially across batches. The mutual nearest neighbour approach is
@@ -650,7 +650,7 @@ everything – kBET and ASW measure different aspects of embedding-based
 correction, and LISI is most informative for graph-based methods. UMAPs
 and tSNE assessments should be taken with a big pinch of salt, see
 [Chari, et
-al.](https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1011288).
+al.](https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1011288)
 Admittedly, they do look pretty however.
 
 ## Clean up

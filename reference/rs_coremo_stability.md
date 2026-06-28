@@ -1,8 +1,9 @@
 # Helper function to assess CoReMo cluster stability
 
-This function is a helper for the leave-on-out stability assessment of
-CoReMo clusters. The function will generate the distance vectors based
-on leaving out the samples defined in indices one by one.
+**\[experimental\]** This function is a helper for the leave-on-out
+stability assessment of CoReMo clusters. The function will generate the
+distance vectors based on leaving out the samples defined in indices one
+by one.
 
 ## Usage
 

@@ -56,10 +56,12 @@ fast_mnn_sc(
 
   - no_pcs - Integer. Number of PCs to use for MNN calculations.
 
-  - random_svd - Logical. Use randomised SVD.
-
   - knn - List of kNN parameters. See
     [`params_knn_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_knn_defaults.md)
+    for available parameters and their defaults.
+
+  - pca - List of PCA parameters, see
+    [`params_sc_pca()`](https://gregorlueg.github.io/bixverse/reference/params_sc_pca.md)
     for available parameters and their defaults.
 
 - use_precomputed_pca:
@@ -74,7 +76,9 @@ fast_mnn_sc(
 
 - .verbose:
 
-  Boolean. Controls the verbosity of the function.
+  Boolean or integer. Controls verbosity and returns run times. `FALSE`
+  -\> quiet, `TRUE` or `1L` -\> normal verbosity, `2L` -\> detailed
+  verbosity.
 
 ## Value
 

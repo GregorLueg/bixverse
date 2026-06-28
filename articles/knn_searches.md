@@ -40,9 +40,10 @@ mtx_io_params <- get_cell_ranger_params(pbmc3k_path)
 sc_object <- load_mtx(
   object = sc_object,
   sc_mtx_io_param = mtx_io_params,
-  streaming = FALSE,
+  streaming = 0L,
   .verbose = TRUE
 )
+#>  Loading data directly into memory for CSR to CSC conversion.
 #> Loading observations data from flat file into the DuckDB.
 #> Loading variable data from flat file into the DuckDB.
 
@@ -68,7 +69,6 @@ gs_of_interest <- list(
 sc_object <- gene_set_proportions_sc(
   sc_object,
   gs_of_interest,
-  streaming = FALSE,
   .verbose = TRUE
 )
 
@@ -86,7 +86,12 @@ directions <- c(
   MT = "above"
 )
 
-qc <- run_cell_qc(metrics, directions, threshold = 3)
+qc <- run_cell_qc(
+  metrics = metrics,
+  cells_to_keep = get_cells_to_keep(sc_object),
+  directions = directions,
+  threshold = 3
+)
 
 sc_object[["outlier"]] <- qc$combined
 
@@ -194,7 +199,7 @@ sc_object <- find_neighbours_sc(
   )
 )
 #> 
-#> Generating sNN graph (full: FALSE).
+#> Generating sNN graph (full: TRUE).
 #> Transforming sNN data to igraph.
 ```
 

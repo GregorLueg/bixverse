@@ -1,6 +1,6 @@
 # Run scDblFinder doublet detection
 
-Run scDblFinder doublet detection
+**\[experimental\]** Implementation of scDblFinder in Rust.
 
 ## Usage
 
@@ -13,8 +13,7 @@ rs_sc_scdblfinder(
   return_features,
   streaming,
   seed,
-  verbose,
-  debug
+  verbose
 )
 ```
 
@@ -52,11 +51,8 @@ rs_sc_scdblfinder(
 
 - verbose:
 
-  Boolean. Controls verbosity.
-
-- debug:
-
-  Boolean. Additional verbosity for debugging purposes.
+  Integer. `0L` - quiet; `1L` - normal verbosity; `2L` - detailed
+  verbosity.
 
 ## Value
 

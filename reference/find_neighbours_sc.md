@@ -37,6 +37,7 @@ find_neighbours_sc(
   object,
   embd_to_use = "pca",
   no_embd_to_use = NULL,
+  modality = c("rna", "adt"),
   neighbours_params = params_sc_neighbours(),
   seed = 42L,
   .verbose = TRUE
@@ -58,6 +59,11 @@ find_neighbours_sc(
 
   Optional integer. Number of embedding dimensions to use. If `NULL` all
   will be used.
+
+- modality:
+
+  String. One of `c("rna", "adt")`. You can only use `"adt"` on
+  `SingleCellsMultiModal` class.
 
 - neighbours_params:
 
@@ -86,7 +92,9 @@ find_neighbours_sc(
 
 - .verbose:
 
-  Boolean. Controls verbosity and returns run times.
+  Boolean or integer. Controls verbosity and returns run times. `FALSE`
+  -\> quiet, `TRUE` or `1L` -\> normal verbosity, `2L` -\> detailed
+  verbosity.
 
 ## Value
 

@@ -1,6 +1,6 @@
 # Helper function to generate traditional GSEA-based permutations
 
-Helper function to generate traditional GSEA-based permutations
+**\[experimental\]**
 
 ## Usage
 

@@ -35,7 +35,8 @@ tf_to_genes_correlations(
 
 - object:
 
-  `SingleCells` object that was used to generate the original GRNs.
+  `SingleCells` or `MetaCells` object that was used to generate the
+  original GRNs.
 
 - cor_filter:
 

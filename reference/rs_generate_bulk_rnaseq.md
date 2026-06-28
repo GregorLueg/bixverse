@@ -1,8 +1,8 @@
 # Generation of bulkRNAseq-like data with optional correlation structure
 
-Function generates synthetic bulkRNAseq data with heteroskedasticity
-(lowly expressed genes show higher variance) and can optionally add
-correlation structures for testing purposes.
+**\[experimental\]** Function generates synthetic bulkRNAseq data with
+heteroskedasticity (lowly expressed genes show higher variance) and can
+optionally add correlation structures for testing purposes.
 
 ## Usage
 

@@ -1,6 +1,7 @@
 # BBKNN implementation in Rust
 
-This function implements the BBKNN algorithm from Polański, et al.
+**\[experimental\]** This function implements the BBKNN algorithm from
+Polański, et al.
 
 ## Usage
 
@@ -29,7 +30,8 @@ rs_bbknn(embd, batch_labels, bbknn_params, seed, verbose)
 
 - verbose:
 
-  Boolean. Controls verbosity of the function.
+  Integer. `0L` - quiet; `1L` - normal verbosity; `2L` - detailed
+  verbosity.
 
 ## Value
 

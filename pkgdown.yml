@@ -2,7 +2,7 @@ pandoc: 3.8.3
 pkgdown: 2.2.0
 pkgdown_sha: ~
 articles:
-  analysis_single_cell: analysis_single_cell.html
+  bag_of_genes_single_cells: bag_of_genes_single_cells.html
   cpca: cpca.html
   design_single_cell: design_single_cell.html
   doublet_detection: doublet_detection.html
@@ -10,14 +10,19 @@ articles:
   gse_methods: gse_methods.html
   knn_searches: knn_searches.html
   meta_cells: meta_cells.html
+  multi_modal_single_cells: multi_modal_single_cells.html
+  nichenet: nichenet.html
   ontologies: ontologies.html
   pathway_activity: pathway_activity.html
   pbmc_single_cell: pbmc_single_cell.html
   rust_functions: rust_functions.html
   single_cell_batch_corrections: single_cell_batch_corrections.html
   single_cell_big_data: single_cell_big_data.html
+  single_cell_io: single_cell_io.html
+  single_cell_visualisation: single_cell_visualisation.html
+  symphony: symphony.html
   thinking_single_cell: thinking_single_cell.html
-last_built: 2026-06-15T14:58Z
+last_built: 2026-06-28T09:30Z
 urls:
   reference: https://gregorlueg.github.io/bixverse/reference
   article: https://gregorlueg.github.io/bixverse/articles

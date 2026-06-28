@@ -1,6 +1,7 @@
 # Generates synthetic data for single cell
 
-Helper function to generate synthetic single cell data with optional
+**\[experimental\]** Helper function to generate synthetic single cell
+data with optional bathc effects and sample bias.
 
 ## Usage
 

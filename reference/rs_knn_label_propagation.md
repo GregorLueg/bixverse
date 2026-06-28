@@ -1,8 +1,8 @@
 # kNN label propagation
 
-The function is a helper function to do kNN label propagation. This can
-be useful for semi-supervised tasks. It implements the label spreading
-method.
+**\[experimental\]** The function is a helper function to do kNN label
+propagation. This can be useful for semi-supervised tasks. It implements
+the label spreading method.
 
 ## Usage
 

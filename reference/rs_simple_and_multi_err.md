@@ -1,6 +1,6 @@
 # Calculates the simple and multi error for fgsea multi level
 
-Calculates the simple and multi error for fgsea multi level
+**\[experimental\]**
 
 ## Usage
 

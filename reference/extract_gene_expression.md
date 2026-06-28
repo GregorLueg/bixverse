@@ -11,7 +11,8 @@ extract_gene_expression(
   features,
   obs_cols = NULL,
   scale = FALSE,
-  clip = NULL
+  clip = NULL,
+  modality = c("rna", "adt")
 )
 ```
 
@@ -19,7 +20,7 @@ extract_gene_expression(
 
 - object:
 
-  `SingleCells` class.
+  A single cell class.
 
 - features:
 
@@ -36,6 +37,11 @@ extract_gene_expression(
 - clip:
 
   Optional numeric. If `scale = TRUE`, clip z-scores to `[-clip, clip]`.
+
+- modality:
+
+  String. One of `c("rna", "adt")`. ADT is only available for
+  `SingleCellsMultiModal`.
 
 ## Value
 

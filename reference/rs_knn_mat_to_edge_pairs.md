@@ -1,7 +1,7 @@
 # Flatten kNN matrix to edge list
 
-Helper function to leverage Rust to transform a kNN matrix into an edge
-list.
+**\[experimental\]** Helper function to leverage Rust to transform a kNN
+matrix into an edge list.
 
 ## Usage
 

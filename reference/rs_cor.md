@@ -1,8 +1,7 @@
 # Calculate the column wise correlations.
 
-Calculates the correlation matrix of the columns. WARNING! Incorrect use
-can cause kernel crashes. Wrapper around the Rust functions with type
-checks are provided in the package.
+**\[experimental\]** Calculates the pairwise correlations of the
+columns.
 
 ## Usage
 

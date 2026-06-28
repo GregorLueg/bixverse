@@ -11,7 +11,7 @@ the obs table.
 top_genes_perc_sc(
   object,
   top_n_vals = c(25L, 50L, 100L),
-  streaming = FALSE,
+  streaming = NULL,
   .verbose = TRUE
 )
 ```
@@ -28,12 +28,15 @@ top_genes_perc_sc(
 
 - streaming:
 
-  Boolean. Shall the cells be streamed in. Useful for larger data sets
-  where you wish to avoid loading in the whole data. Default to `FALSE`.
+  Optional Boolean. Shall the data be streamed in. Useful for larger
+  data sets where you wish to avoid loading in the whole data. If
+  `NULL`, will automatically detect.
 
 - .verbose:
 
-  Boolean. Controls verbosity of the function.
+  Boolean or integer. Controls verbosity and returns run times. `FALSE`
+  -\> quiet, `TRUE` or `1L` -\> normal verbosity, `2L` -\> detailed
+  verbosity.
 
 ## Value
 

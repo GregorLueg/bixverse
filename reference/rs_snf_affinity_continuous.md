@@ -1,6 +1,6 @@
 # Calculate the SNF affinity matrix for continuous values
 
-Calculate the SNF affinity matrix for continuous values
+**\[experimental\]**
 
 ## Usage
 

@@ -1,29 +1,43 @@
-# Helper function to manually readjust Scrublet thresholds
+# Manually readjust Scrublet doublet call thresholds
 
-Can update the Scrublet thresholding after manual introspection of the
-histogram.
+Updates doublet calls and associated summary statistics in a
+`ScrubletRes` object using a user-supplied threshold. Intended for use
+after visual inspection of the score histograms via
+[`plot.ScrubletRes()`](https://gregorlueg.github.io/bixverse/reference/plot.ScrubletRes.md).
 
 ## Usage
 
 ``` r
-call_doublets_manual(scrublet_res, threshold, .verbose = TRUE)
+call_doublets_manual(
+  scrublet_res,
+  threshold,
+  for_sample = NULL,
+  .verbose = TRUE
+)
 ```
 
 ## Arguments
 
 - scrublet_res:
 
-  `ScrubletRes` result class.
+  A `ScrubletRes` object.
 
 - threshold:
 
-  Numeric. The new threshold to use.
+  Numeric in `[0, 1]`. The new threshold to apply.
+
+- for_sample:
+
+  Optional character. For grouped results, the name of the group to
+  update. Defaults to the first group if `NULL`. Ignored for ungrouped
+  results.
 
 - .verbose:
 
-  Boolean. Controls the verbosity of the function.
+  Logical. If `TRUE`, prints updated rate summaries to the console.
 
 ## Value
 
-`ScrubletRes` class with updated doublet calls based on the new
-threshold.
+The `ScrubletRes` object with updated `predicted_doublets`, `z_scores`,
+`threshold`, `detected_doublet_rate`, `detectable_doublet_fraction`, and
+`overall_doublet_rate`.

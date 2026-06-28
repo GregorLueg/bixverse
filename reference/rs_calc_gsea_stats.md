@@ -1,6 +1,6 @@
 # Rust implementation of the fgsea::calcGseaStat() function
 
-Rust implementation of the fgsea::calcGseaStat() function
+**\[experimental\]**
 
 ## Usage
 

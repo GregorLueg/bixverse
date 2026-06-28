@@ -1,7 +1,7 @@
 # Set similarities over one list
 
-This function calculates the set similarity via Jaccard or overlap
-coefficient across all permutations of one list.
+**\[experimental\]** This function calculates the set similarity via
+Jaccard or overlap coefficient across all permutations of one list.
 
 ## Usage
 

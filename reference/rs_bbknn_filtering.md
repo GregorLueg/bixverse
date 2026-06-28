@@ -1,6 +1,6 @@
 # Reduce BBKNN results to Top X neighbours
 
-Reduce BBKNN results to Top X neighbours
+**\[experimental\]**
 
 ## Usage
 

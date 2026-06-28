@@ -74,7 +74,9 @@ get_miloR_abundances_sc(
 
 - .verbose:
 
-  Boolean. Controls verbosity of the method.
+  Boolean or integer. Controls verbosity and returns run times. `FALSE`
+  -\> quiet, `TRUE` or `1L` -\> normal verbosity, `2L` -\> detailed
+  verbosity.
 
 ## References
 

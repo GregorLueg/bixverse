@@ -32,7 +32,7 @@ calculate_kbet_sc(object, batch_column, threshold = 0.05, .verbose = TRUE)
 
 - .verbose:
 
-  Boolean. Controls the verbosity of the function.
+  Boolean. Controls verbosity of the function.
 
 ## Value
 

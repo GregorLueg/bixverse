@@ -13,7 +13,7 @@ files are being used to store the counts."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -37,14 +37,24 @@ files are being used to store the counts."></head><body>
   </ul></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-single-cells" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Single Cells</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-single-cells"><li><a class="dropdown-item" href="../articles/thinking_single_cell.html">Thinking about single cells the bixverse way</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-single-cells"><li><h6 class="dropdown-header" data-toc-skip>Intro vignettes</h6></li>
+    <li><a class="dropdown-item" href="../articles/thinking_single_cell.html">Thinking about single cells the bixverse way</a></li>
     <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">PBMC analysis with the bixverse single cell framework</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_io.html">Reading data in (single-cell I/O)</a></li>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
-    <li><a class="dropdown-item" href="../articles/analysis_single_cell.html">'Bag of genes' methods for single cell in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/knn_searches.html">kNN searches for single cells in bixverse</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>More advanced analysis methods</h6></li>
+    <li><a class="dropdown-item" href="../articles/bag_of_genes_single_cells.html">'Bag of genes' methods for single cell in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/nichenet.html">Ligand receptor analysis</a></li>
     <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/symphomy.html">Reference mapping via Symphony</a></li>
+    <li><a class="dropdown-item" href="../articles/multi_modal_single_cell.html">Multi-modal analysis</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Others</h6></li>
     <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing big data on a powerful laptop (example)</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_visualisation.html">Plotting helpers</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -76,8 +86,11 @@ files are being used to store the counts.</p>
 <span>  <span class="va">object</span>,</span>
 <span>  sc_mtx_io_param <span class="op">=</span> <span class="fu"><a href="params_sc_mtx_io.html">params_sc_mtx_io</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  sc_qc_param <span class="op">=</span> <span class="fu"><a href="params_sc_min_quality.html">params_sc_min_quality</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  streaming <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  mtx_streaming <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  streaming <span class="op">=</span> <span class="fl">1L</span>,</span>
 <span>  batch_size <span class="op">=</span> <span class="fl">1000L</span>,</span>
+<span>  max_genes_in_memory <span class="op">=</span> <span class="fl">2000L</span>,</span>
+<span>  cell_batch_size <span class="op">=</span> <span class="fl">100000L</span>,</span>
 <span>  .verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -92,44 +105,47 @@ files are being used to store the counts.</p>
 
 <dt id="arg-sc-mtx-io-param">sc_mtx_io_param<a class="anchor" aria-label="anchor" href="#arg-sc-mtx-io-param"></a></dt>
 <dd><p>List. Please generate this one via
-<code><a href="params_sc_mtx_io.html">params_sc_mtx_io()</a></code>. Needs to contain:</p><ul><li><p>path_mtx - String. Path to the .mtx file</p></li>
-<li><p>path_obs - String. Path to the file containing cell/barcode info.</p></li>
-<li><p>path_var - String. String. Path to the file containing gene/variable
-info.</p></li>
-<li><p>cells_as_rows - Boolean. Do cells represent the rows or columns.</p></li>
-</ul></dd>
+<code><a href="params_sc_mtx_io.html">params_sc_mtx_io()</a></code>.</p></dd>
 
 
 <dt id="arg-sc-qc-param">sc_qc_param<a class="anchor" aria-label="anchor" href="#arg-sc-qc-param"></a></dt>
-<dd><p>List. Output of <code><a href="params_sc_min_quality.html">params_sc_min_quality()</a></code>. A
-list with the following elements:</p><ul><li><p>min_unique_genes - Integer. Minimum number of genes to be detected
-in the cell to be included.</p></li>
-<li><p>min_lib_size - Integer. Minimum library size in the cell to be
-included.</p></li>
-<li><p>min_cells - Integer. Minimum number of cells a gene needs to be
-detected to be included.</p></li>
-<li><p>target_size - Float. Target size to normalise to. Defaults to <code>1e5</code>.</p></li>
-</ul></dd>
+<dd><p>List. Output of <code><a href="params_sc_min_quality.html">params_sc_min_quality()</a></code>.</p></dd>
+
+
+<dt id="arg-mtx-streaming">mtx_streaming<a class="anchor" aria-label="anchor" href="#arg-mtx-streaming"></a></dt>
+<dd><p>Boolean. Shall the .mtx file ingestion itself be
+streamed (via temp-file bucketing). Recommended for large mtx files.
+Defaults to <code>TRUE</code>.</p></dd>
 
 
 <dt id="arg-streaming">streaming<a class="anchor" aria-label="anchor" href="#arg-streaming"></a></dt>
-<dd><p>Boolean. Shall the data be streamed during the conversion
-of CSR to CSC. Defaults to <code>TRUE</code> and should be used for larger data sets.</p></dd>
+<dd><p>Integer. CSR-to-CSC conversion mode. <code>0L</code> -&gt; in-memory,
+<code>1L</code> -&gt; light streaming, <code>2L</code> -&gt; heavy streaming with memory upper
+boundaries. Defaults to <code>1L</code>.</p></dd>
 
 
 <dt id="arg-batch-size">batch_size<a class="anchor" aria-label="anchor" href="#arg-batch-size"></a></dt>
-<dd><p>Integer. If <code>streaming = TRUE</code>, how many cells to process
-in one batch. Defaults to <code>1000L</code>.</p></dd>
+<dd><p>Integer. Cell batch size when <code>streaming = 1L</code>. Defaults
+to <code>1000L</code>.</p></dd>
+
+
+<dt id="arg-max-genes-in-memory">max_genes_in_memory<a class="anchor" aria-label="anchor" href="#arg-max-genes-in-memory"></a></dt>
+<dd><p>Integer. Maximum genes held in memory at once
+when <code>streaming = 2L</code>. Defaults to <code>2000L</code>.</p></dd>
+
+
+<dt id="arg-cell-batch-size">cell_batch_size<a class="anchor" aria-label="anchor" href="#arg-cell-batch-size"></a></dt>
+<dd><p>Integer. Cell batch size when <code>streaming = 2L</code>.
+Defaults to <code>100000L</code>.</p></dd>
 
 
 <dt id="arg--verbose">.verbose<a class="anchor" aria-label="anchor" href="#arg--verbose"></a></dt>
-<dd><p>Boolean. Controls the verbosity of the function.</p></dd>
+<dd><p>Boolean.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>It will populate the files on disk and return the class with updated
-shape information.</p>
+    <p>The class with updated shape information.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

@@ -1,7 +1,7 @@
 # Set similarities over two list
 
-This function calculates the Jaccard or similarity index between two
-lists.
+**\[experimental\]** This function calculates the Jaccard or similarity
+index between two lists.
 
 ## Usage
 

@@ -1,6 +1,6 @@
 # Apply a range normalisation on a vector.
 
-Applies a range normalisation on an R vector.
+**\[experimental\]** Applies a range normalisation on an R vector.
 
 ## Usage
 

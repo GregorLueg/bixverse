@@ -1,9 +1,8 @@
 # Calculate the Hedge's G effect
 
-Calculates the Hedge's G effect for two sets of matrices. The function
-assumes that rows = samples and columns = features. WARNING! Incorrect
-use can cause kernel crashes. Wrapper around the Rust functions with
-type checks are provided in the package.
+**\[experimental\]** Calculates the Hedge's G effect for two sets of
+matrices. The function assumes that rows = samples and columns =
+features.
 
 ## Usage
 

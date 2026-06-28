@@ -1,13 +1,13 @@
 # PCA on MetaCells (sparse data)
 
-Calculates PCA for MetaCells or more generally speaking sparse data.
-This is happening in-memory compared to the (usually much) larger single
-cell data sets.
+**\[experimental\]** Calculates PCA for MetaCells or more generally
+speaking sparse data. This is happening in-memory compared to the
+(usually much) larger single cell data sets.
 
 ## Usage
 
 ``` r
-rs_mc_pca(sparse_data, no_pcs, random_svd, seed)
+rs_mc_pca(sparse_data, no_pcs, pca_params, clr_offsets, seed)
 ```
 
 ## Arguments
@@ -21,9 +21,14 @@ rs_mc_pca(sparse_data, no_pcs, random_svd, seed)
 
   Integer. Number of PCs to return.
 
-- random_svd:
+- pca_params:
 
-  Boolean. Shall randomised SVD be used.
+  Named list. Contains the parameters to use for this PCA run.
+
+- clr_offsets:
+
+  Optional numeric. If you wish to use the `PFlogPF` normalisation prior
+  to PCA from Booeshaghi, et al.
 
 - seed:
 
@@ -41,3 +46,7 @@ A list with with the following items
 
 - singular_values - The singular values for the PCA (solved via sparse
   SVD).
+
+## References
+
+Booeshaghi, et al., bioRxive, 2026.

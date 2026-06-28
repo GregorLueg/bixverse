@@ -1,6 +1,6 @@
 # Helper function to generate sample identifiers based on cells
 
-Extract out of
+**\[experimental\]** Extract out of
 [`rs_synthetic_sc_data_with_cell_types()`](https://gregorlueg.github.io/bixverse/reference/rs_synthetic_sc_data_with_cell_types.md)
 to quickly iterate over different sample to cell type patterns
 

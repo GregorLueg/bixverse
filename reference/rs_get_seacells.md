@@ -1,11 +1,11 @@
 # Generate SEACells
 
-This function implements the SEACells algorithm for generating meta
-cells from Persad et al. An embedding matrix must be provided which is
-used to construct the kNN graph and kernel matrix for the SEACells
-algorithm. This version is highly memory and speed-optimised and will
-truncate small values during matrix operations which can affect
-convergence.
+**\[experimental\]** This function implements the SEACells algorithm for
+generating meta cells from Persad et al. An embedding matrix must be
+provided which is used to construct the kNN graph and kernel matrix for
+the SEACells algorithm. This version is highly memory and
+speed-optimised and will truncate small values during matrix operations
+which can affect convergence.
 
 ## Usage
 
@@ -64,7 +64,8 @@ rs_get_seacells(
 
 - verbose:
 
-  Boolean. Controls verbosity of the function.
+  Integer. `0L` - quiet; `1L` - normal verbosity; `2L` - detailed
+  verbosity.
 
 ## Value
 

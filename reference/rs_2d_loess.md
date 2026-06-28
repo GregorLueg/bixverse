@@ -1,6 +1,6 @@
 # Rust implementation of a Loess function
 
-Rust implementation of a Loess function
+**\[experimental\]**
 
 ## Usage
 

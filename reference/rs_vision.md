@@ -1,9 +1,9 @@
 # Calculate VISION pathway scores in Rust
 
-The function will take in a list of gene sets that contains lists of
-`"pos"` and `"neg"` gene indices (0-indexed). You don't have to provide
-the `"neg"`, but it can be useful to classify the delta of two stats
-(EMT, Th1; Th2) etc.
+**\[experimental\]** The function will take in a list of gene sets that
+contains lists of `"pos"` and `"neg"` gene indices (0-indexed). You
+don't have to provide the `"neg"`, but it can be useful to classify the
+delta of two stats (EMT, Th1; Th2) etc.
 
 ## Usage
 
@@ -32,7 +32,8 @@ rs_vision(f_path, gs_list, cells_to_keep, streaming, verbose)
 
 - verbose:
 
-  Boolean. Controls verbosity of the function.
+  Integer. `0L` - quiet; `1L` - normal verbosity; `2L` - detailed
+  verbosity.
 
 ## Value
 

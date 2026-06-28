@@ -1,8 +1,8 @@
 # Calculates the cumulative proportion of the top X genes
 
-This calculates the cumulative proportion of the top X genes, for
-example Top10, 50, 100. High values here indicate low complexity
-samples, i.e., bad quality.
+**\[experimental\]** This calculates the cumulative proportion of the
+top X genes, for example Top10, 50, 100. High values here indicate low
+complexity samples, i.e., bad quality.
 
 ## Usage
 
@@ -37,7 +37,8 @@ rs_sc_get_top_genes_perc(
 
 - verbose:
 
-  Boolean. Controls verbosity of the function.
+  Integer. `0L` - quiet; `1L` - normal verbosity; `2L` - detailed
+  verbosity.
 
 ## Value
 

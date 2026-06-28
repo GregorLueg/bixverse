@@ -1,7 +1,7 @@
 # Calculate the Wang similarity matrix for an ontology
 
-This function calculates the Wang similarity matrix for a given
-ontology.
+**\[experimental\]** This function calculates the Wang similarity matrix
+for a given ontology.
 
 ## Usage
 

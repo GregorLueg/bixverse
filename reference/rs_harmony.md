@@ -1,7 +1,7 @@
 # Harmony batch correction in Rust
 
-This function implements the Harmony algorithm from Korsunsky et al.,
-2019.
+**\[experimental\]** This function implements the Harmony algorithm from
+Korsunsky et al., 2019.
 
 ## Usage
 
@@ -30,7 +30,8 @@ rs_harmony(pca, harmony_params, batch_labels, seed, verbose)
 
 - verbose:
 
-  Boolean. Controls verbosity of the function.
+  Integer. `0L` - quiet; `1L` - normal verbosity; `2L` - detailed
+  verbosity.
 
 ## Value
 

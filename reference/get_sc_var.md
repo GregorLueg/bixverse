@@ -5,14 +5,14 @@ Getter the var table
 ## Usage
 
 ``` r
-get_sc_var(object, indices = NULL, cols = NULL)
+get_sc_var(object, indices = NULL, cols = NULL, modality = c("rna", "adt"))
 ```
 
 ## Arguments
 
 - object:
 
-  `SingleCells`, `MetaCells` (or potentially other) class.
+  `SingleCells`, `MetaCells`, `SingleCellsMultiModal` class.
 
 - indices:
 
@@ -21,6 +21,10 @@ get_sc_var(object, indices = NULL, cols = NULL)
 - cols:
 
   Optional string vector. The columns from the var table to return.
+
+- modality:
+
+  String. The modality to return. One of `c("rna", "adt")`.
 
 ## Value
 

@@ -1,7 +1,7 @@
 # Generates the sNN graph for igraph
 
-This function takes a kNN matrix and generates the inputs for an SNN
-graph based on it.
+**\[experimental\]** This function takes a kNN matrix and generates the
+inputs for an SNN graph based on it.
 
 ## Usage
 
@@ -33,7 +33,8 @@ rs_sc_snn(knn_mat, snn_method, limited_graph, pruning, verbose)
 
 - verbose:
 
-  Boolean. Controls verbosity of the function.
+  Integer. `0L` - quiet; `1L` - normal verbosity; `2L` - detailed
+  verbosity.
 
 ## Value
 

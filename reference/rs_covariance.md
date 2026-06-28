@@ -1,8 +1,6 @@
 # Calculate the column-wise co-variance.
 
-Calculates the co-variance of the columns. WARNING! Incorrect use can
-cause kernel crashes. Wrapper around the Rust functions with type checks
-are provided in the package.
+**\[experimental\]** Calculates the pairwise co-variance of the columns.
 
 ## Usage
 

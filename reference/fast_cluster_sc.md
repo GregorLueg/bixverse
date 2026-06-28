@@ -82,7 +82,9 @@ fast_cluster_sc(
 
 - .verbose:
 
-  Boolean. Verbosity.
+  Boolean or integer. Controls verbosity and returns run times. `FALSE`
+  -\> quiet, `TRUE` or `1L` -\> normal verbosity, `2L` -\> detailed
+  verbosity.
 
 ## Value
 

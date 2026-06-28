@@ -1,7 +1,7 @@
 # Calculate a BH-based FDR
 
-Rust implementation that will be faster if you have an terrifying amount
-of p-values to adjust.
+**\[experimental\]** Rust implementation that will be faster if you have
+an terrifying amount of p-values to adjust.
 
 ## Usage
 

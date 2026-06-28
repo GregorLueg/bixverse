@@ -1,6 +1,6 @@
 # Calculates pairwise gene correlations in single cell
 
-Calculates pairwise gene correlations in single cell
+**\[experimental\]** Calculates the correlations between sets of genes.
 
 ## Usage
 

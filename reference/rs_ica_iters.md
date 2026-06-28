@@ -1,10 +1,10 @@
 # Run ICA over a given no_comp with random initilisations of w_init
 
-This function implements a stabilised ICA like algorithm in Rust.
-Briefly, it generates random w_init matrices (total number being
-no_random_init) and runs ICA given the x_processed and k data over
-these. The function returns combined S from the different runs and a
-boolean vector indicating if this specific run converged.
+**\[experimental\]** This function implements a stabilised ICA like
+algorithm in Rust. Briefly, it generates random w_init matrices (total
+number being no_random_init) and runs ICA given the x_processed and k
+data over these. The function returns combined S from the different runs
+and a boolean vector indicating if this specific run converged.
 
 ## Usage
 

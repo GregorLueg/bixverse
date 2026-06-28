@@ -1,7 +1,7 @@
 # Calculates the compactness of the MetaCells based on diffusion map coordinates
 
-Calculates the compactness of the MetaCells based on diffusion map
-coordinates
+**\[experimental\]** Calculates the meta cell compactness based on the
+diffusion map coordinates.
 
 ## Usage
 

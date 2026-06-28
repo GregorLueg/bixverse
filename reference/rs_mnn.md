@@ -1,14 +1,15 @@
 # FastMNN batch correction in Rust
 
-This function implements the (fast) MNN algorithm from Haghverdi, et al.
-Instead of working on the full matrix, it uses under the hood PCA and
-generates a batch-aligned embedding space.
+**\[experimental\]** This function implements the (fast) MNN algorithm
+from Haghverdi, et al. Instead of working on the full matrix, it uses
+under the hood PCA and generates a batch-aligned embedding space.
 
 ## Usage
 
 ``` r
 rs_mnn(
   f_path_gene,
+  f_path_cell,
   cell_indices,
   gene_indices,
   batch_indices,
@@ -24,6 +25,11 @@ rs_mnn(
 - f_path_gene:
 
   String. Path to the `counts_genes.bin` file.
+
+- f_path_cell:
+
+  String. Path to the `counts_cells.bin` file. Used if you wish to use
+  the PFlogPF transformation during the optional PCA step.
 
 - cell_indices:
 
@@ -48,7 +54,8 @@ rs_mnn(
 
 - verbose:
 
-  Boolean. Controls verbosity of the function.
+  Integer. `0L` - quiet; `1L` - normal verbosity; `2L` - detailed
+  verbosity.
 
 - seed:
 

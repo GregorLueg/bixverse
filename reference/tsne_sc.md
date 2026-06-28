@@ -33,7 +33,9 @@ tsne_sc(
   object,
   use_knn = FALSE,
   embd_to_use = "pca",
+  slot_name = "tsne",
   no_embd_to_use = NULL,
+  modality = c("rna", "adt", "wnn"),
   n_dim = 2L,
   perplexity = 10,
   approx_type = c("bh", "fft"),
@@ -61,10 +63,21 @@ tsne_sc(
   String. The embedding to use for t-SNE. Must be available in the
   object.
 
+- slot_name:
+
+  String. The name of this embedding within the object. Defaults to
+  `"tsne"`.
+
 - no_embd_to_use:
 
   Optional integer. Number of embedding dimensions to use. If `NULL` all
   will be used.
+
+- modality:
+
+  String. On which modality to run the UMAP. One of
+  `c("rna", "adt", "wnn")`. The two latter options are only available
+  for multi-modal versions with the added data.
 
 - n_dim:
 

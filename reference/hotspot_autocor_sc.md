@@ -11,11 +11,12 @@ strong local correlations and vary across the kNN graph.
 hotspot_autocor_sc(
   object,
   embd_to_use = "pca",
+  use_knn = TRUE,
   hotspot_params = params_sc_hotspot(),
   no_embd_to_use = NULL,
   cells_to_take = NULL,
   genes_to_take = NULL,
-  streaming = FALSE,
+  streaming = NULL,
   random_seed = 42L,
   .verbose = TRUE
 )
@@ -30,6 +31,12 @@ hotspot_autocor_sc(
 - embd_to_use:
 
   String. The embedding to use. Defaults to `"pca"`.
+
+- use_knn:
+
+  Boolean. Shall the internal kNN be used. If set to yes, you need to
+  ensure consistency. If you provide `cells_to_take`, the function will
+  regenerate the kNN graph with these cells.
 
 - hotspot_params:
 
@@ -63,7 +70,9 @@ hotspot_autocor_sc(
 
 - streaming:
 
-  Boolean. Shall the data be streamed in. Useful for larger data sets.
+  Optional Boolean. Shall the data be streamed in. Useful for larger
+  data sets where you wish to avoid loading in the whole data. If
+  `NULL`, will automatically detect.
 
 - random_seed:
 
@@ -71,7 +80,9 @@ hotspot_autocor_sc(
 
 - .verbose:
 
-  Boolean. Controls verbosity of the function.
+  Boolean or integer. Controls verbosity and returns run times. `FALSE`
+  -\> quiet, `TRUE` or `1L` -\> normal verbosity, `2L` -\> detailed
+  verbosity.
 
 ## Value
 

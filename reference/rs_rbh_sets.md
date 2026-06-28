@@ -1,15 +1,14 @@
 # Generate reciprocal best hits based on set similarities
 
-This function takes a nested list that contains gene modules/ sets
-derived from various methods and generate identifies reciprocal best
-hits between gene modules/sets across the different origins. WARNING!
-Incorrect use can cause kernel crashes. Wrapper around the Rust
-functions with type checks are provided in the package.
+**\[experimental\]** This function takes a nested list that contains
+gene modules/sets derived from various methods and generate identifies
+(k-th) reciprocal best hits between gene modules/sets across the
+different origins.
 
 ## Usage
 
 ``` r
-rs_rbh_sets(module_list, overlap_coefficient, min_similarity)
+rs_rbh_sets(module_list, k_best, overlap_coefficient, min_similarity)
 ```
 
 ## Arguments
@@ -19,6 +18,13 @@ rs_rbh_sets(module_list, overlap_coefficient, min_similarity)
   A nested named list. The outer list should contain the origin of the
   gene modules, the inner list the names of the gene modules and the
   respective genes in them.
+
+- k_best:
+
+  Integer. Number of best neighbours to consider. If set to `1L`, this
+  behaves as the traditional reciprocal best hit. If you set this to
+  `3L` you consider edges if the modules is in the top 3 best modules by
+  similarity for each other.
 
 - overlap_coefficient:
 

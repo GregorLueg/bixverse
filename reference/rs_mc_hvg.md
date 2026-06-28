@@ -1,8 +1,8 @@
 # Meta cells highly variable genes
 
-Calculates highly variable genes for MetaCells or more generally
-speaking sparse data. This is happening in-memory compared to the
-(usually much) larger single cell data sets.
+**\[experimental\]** Calculates highly variable genes for MetaCells or
+more generally speaking sparse data. This is happening in-memory
+compared to the (usually much) larger single cell data sets.
 
 ## Usage
 

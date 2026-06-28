@@ -26,7 +26,7 @@ calculate_batch_lisi_sc(object, batch_column, .verbose = TRUE)
 
 - .verbose:
 
-  Boolean. Controls the verbosity of the function.
+  Boolean. Controls verbosity of the function.
 
 ## Value
 

@@ -1,6 +1,9 @@
-# Default parameters for generation of synthetic data
+# Default parameters for generation of synthetic single cell data (RNA)
 
-Default parameters for generation of synthetic data
+For the generation of synthetic single cell data mostly for testing or
+showcasing purposes. The default configurations generates 1000 cells x
+100 genes with genes 1:10 being cell markers for cell type 1, genes
+11:20 for cell type 2 and genes 21:30 for cell type.
 
 ## Usage
 

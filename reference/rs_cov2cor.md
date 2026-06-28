@@ -1,6 +1,7 @@
 # Calculates the correlation matrix from the co-variance matrix
 
-Calculates the correlation matrix from a co-variance matrix
+**\[experimental\]** Calculates the correlation matrix from a
+co-variance matrix.
 
 ## Usage
 

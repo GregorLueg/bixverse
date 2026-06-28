@@ -5,16 +5,16 @@ Set/add PCA factors
 ## Usage
 
 ``` r
-set_pca_factors(x, pca_factor)
+set_pca_factors(x, pca_factor, ...)
 
 ## S7 method for class <bixverse::MetaCells>
-set_pca_factors(x, pca_factor)
+set_pca_factors(x, pca_factor, ...)
 
 # S3 method for class 'ScCache'
-set_pca_factors(x, pca_factor)
+set_pca_factors(x, pca_factor, ...)
 
 ## S7 method for class <bixverse::SingleCells>
-set_pca_factors(x, pca_factor)
+set_pca_factors(x, pca_factor, ...)
 ```
 
 ## Arguments
@@ -26,3 +26,7 @@ set_pca_factors(x, pca_factor)
 - pca_factor:
 
   Numerical matrix. The matrix with the PCA factors.
+
+- ...:
+
+  Other parameters.

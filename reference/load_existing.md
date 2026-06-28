@@ -13,7 +13,7 @@ load_existing(object)
 
 - object:
 
-  `SingleCells` class.
+  `SingleCells`, `MetaCells` or `SingleCellsMultiModal` class.
 
 ## Value
 

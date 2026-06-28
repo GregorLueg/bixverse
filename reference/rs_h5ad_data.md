@@ -1,12 +1,12 @@
 # Load in h5ad data via Rust
 
-Loads in h5ad data within Rust and automatically converts the data into
-CSR with cells x genes.
+**\[experimental\]** Loads in h5ad data within Rust and automatically
+converts the data into CSR with cells x genes.
 
 ## Usage
 
 ``` r
-rs_h5ad_data(f_path, cs_type, nrows, ncols, cell_quality, verbose)
+rs_h5ad_data(f_path, cs_type, nrows, ncols, cell_quality, slot, verbose)
 ```
 
 ## Arguments
@@ -31,6 +31,10 @@ rs_h5ad_data(f_path, cs_type, nrows, ncols, cell_quality, verbose)
 
   List. Specifiying the cell quality. Please refer to
   [`params_sc_min_quality()`](https://gregorlueg.github.io/bixverse/reference/params_sc_min_quality.md).
+
+- slot:
+
+  String. In which slot the raw data can be found.
 
 - verbose:
 

@@ -1,6 +1,6 @@
 # Detect Doublets via BoostClassifier (in Rust)
 
-Detect Doublets via BoostClassifier (in Rust)
+**\[experimental\]** Implementation of BoostClassifier in Rust.
 
 ## Usage
 
@@ -11,8 +11,8 @@ rs_sc_doublet_detection(
   cells_to_keep,
   boost_params,
   seed,
-  streaming,
-  verbose
+  verbose,
+  streaming
 )
 ```
 
@@ -40,13 +40,14 @@ rs_sc_doublet_detection(
 
   Integer. Seed for reproducibility purposes.
 
+- verbose:
+
+  Integer. `0L` - quiet; `1L` - normal verbosity; `2L` - detailed
+  verbosity.
+
 - streaming:
 
   Boolean. Shall the data be streamed for the HVG calculations.
-
-- verbose:
-
-  Boolean. Controls verbosity
 
 ## Value
 

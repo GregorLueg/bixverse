@@ -11,6 +11,8 @@ co-expression module detection, graph-based clustering, etc.
   [`get_params.Hotspot()`](https://gregorlueg.github.io/bixverse/reference/get_params.md)
   [`get_params.miloR()`](https://gregorlueg.github.io/bixverse/reference/get_params.md)
   [`get_params.ScenicGrn()`](https://gregorlueg.github.io/bixverse/reference/get_params.md)
+  [`get_params.NmfResult()`](https://gregorlueg.github.io/bixverse/reference/get_params.md)
+  [`get_params.StabilisedNmfResult()`](https://gregorlueg.github.io/bixverse/reference/get_params.md)
   : Get the parameters that were used.
 - [`get_results()`](https://gregorlueg.github.io/bixverse/reference/get_results.md)
   : Get the final results from the class
@@ -320,14 +322,15 @@ network fusion.
 - [`params_snf()`](https://gregorlueg.github.io/bixverse/reference/params_snf.md)
   : Wrapper function to generate SNF parameters
 
-## Single cell classe and getters
+## Single cell class and getters
 
 THE single cell class with a large number of getters.
 
 - [`SingleCells()`](https://gregorlueg.github.io/bixverse/reference/SingleCells.md)
-  : bixverse single cell class
+  : bixverse SingleCells class
 - [`SingleCellCountData`](https://gregorlueg.github.io/bixverse/reference/SingleCellCountData.md)
-  : A class for handling single cell count data
+  [`$.SingleCellCountData`](https://gregorlueg.github.io/bixverse/reference/SingleCellCountData.md)
+  **\[experimental\]** : Single cell count data handler
 - [`add_sc_new_obs()`](https://gregorlueg.github.io/bixverse/reference/add_sc_new_obs.md)
   : Add an obs table derived from a method to the SingleCells.
 - [`get_sc_obs()`](https://gregorlueg.github.io/bixverse/reference/get_sc_obs.md)
@@ -350,6 +353,8 @@ THE single cell class with a large number of getters.
   : Get the index position for a gene
 - [`get_gene_names()`](https://gregorlueg.github.io/bixverse/reference/get_gene_names.md)
   : Get the gene names
+- [`get_cell_info()`](https://gregorlueg.github.io/bixverse/reference/get_cell_info.md)
+  : Get the cell idx (R-based) and cell names
 - [`get_hvg()`](https://gregorlueg.github.io/bixverse/reference/get_hvg.md)
   : Get the HVG
 - [`get_knn_mat()`](https://gregorlueg.github.io/bixverse/reference/get_knn_mat.md)
@@ -376,6 +381,54 @@ THE single cell class with a large number of getters.
   : Add multiple new columns to the obs table
 - [`set_sc_new_var_cols()`](https://gregorlueg.github.io/bixverse/reference/set_sc_new_var_cols.md)
   : Add a new column to the var table
+- [`drop_cols_sc()`](https://gregorlueg.github.io/bixverse/reference/drop_cols_sc.md)
+  : Drop columns from the obs or var table
+
+## Single cell class for multi-modal data and getters
+
+This version allows you to also work ADT counts
+
+- [`SingleCellsMultiModal()`](https://gregorlueg.github.io/bixverse/reference/SingleCellsMultiModal.md)
+  : bixverse SingleCells (multi modal) class
+
+- [`new_adt_counts_clr()`](https://gregorlueg.github.io/bixverse/reference/new_adt_counts_clr.md)
+  :
+
+  Generates a new `ADTCounts` class
+
+- [`new_adt_counts_dsb()`](https://gregorlueg.github.io/bixverse/reference/new_adt_counts_dsb.md)
+  :
+
+  Generates a new `ADTCounts` class via DSB normalisation
+
+- [`add_adt_counts_sc()`](https://gregorlueg.github.io/bixverse/reference/add_adt_counts_sc.md)
+  :
+
+  Add ADT counts to `SingleCellsMultiModal`
+
+- [`detect_adt_isotypes()`](https://gregorlueg.github.io/bixverse/reference/detect_adt_isotypes.md)
+  : Detect likely isotype-control features by name pattern
+
+- [`get_adt_feature_info()`](https://gregorlueg.github.io/bixverse/reference/get_adt_feature_info.md)
+  : Get the ADT feature info
+
+- [`get_adt_names()`](https://gregorlueg.github.io/bixverse/reference/get_adt_names.md)
+  : Get the ADT feature names
+
+- [`get_adt_sample_info()`](https://gregorlueg.github.io/bixverse/reference/get_adt_sample_info.md)
+  : Get the ADT sample info
+
+- [`params_sc_dsb()`](https://gregorlueg.github.io/bixverse/reference/params_sc_dsb.md)
+  : Default parameters for DSB ADT normalisation
+
+- [`read_multi_tenx_h5_adt()`](https://gregorlueg.github.io/bixverse/reference/read_multi_tenx_h5_adt.md)
+  : Read in 10x h5 ADT data from multiple files
+
+- [`read_tenx_h5_adt()`](https://gregorlueg.github.io/bixverse/reference/read_tenx_h5_adt.md)
+  : Read in 10x h5 ADT data
+
+- [`remove_adt_isotypes()`](https://gregorlueg.github.io/bixverse/reference/remove_adt_isotypes.md)
+  : Return the ADT feature names removing the isotypes
 
 ## Meta cell-related generation, classes and methods
 
@@ -427,10 +480,19 @@ Rust and the DuckDB supporting the metadata.
   : Helper to generate cell ranger input parameters
 
 - [`get_h5ad_dimensions()`](https://gregorlueg.github.io/bixverse/reference/get_h5ad_dimensions.md)
-  : Helper function to get the dimensions and compressed sparse format
+  : Helper function to get the dimensions and storage format
 
 - [`prescan_h5ad_files()`](https://gregorlueg.github.io/bixverse/reference/prescan_h5ad_files.md)
   : Pre-scan multiple h5ad files for multi-sample loading
+
+- [`prescan_mtx_dirs()`](https://gregorlueg.github.io/bixverse/reference/prescan_mtx_dirs.md)
+  : Prescan multiple mtx directories for a multi-load
+
+- [`prescan_tenx_h5_files()`](https://gregorlueg.github.io/bixverse/reference/prescan_tenx_h5_files.md)
+  : Pre-scan multiple 10x CellRanger h5 files for multi-sample loading
+
+- [`read_tenx_h5_metadata()`](https://gregorlueg.github.io/bixverse/reference/read_tenx_h5_metadata.md)
+  : Read barcode and feature tables and metadata from a 10x h5 file
 
 - [`load_existing()`](https://gregorlueg.github.io/bixverse/reference/load_existing.md)
   : Load an existing SingleCells from disk
@@ -450,6 +512,11 @@ Rust and the DuckDB supporting the metadata.
 
   Load in mtx/plain text files to `SingleCells`
 
+- [`load_multi_mtx()`](https://gregorlueg.github.io/bixverse/reference/load_multi_mtx.md)
+  :
+
+  Load multiple mtx directories into a single `SingleCells`
+
 - [`load_multi_h5ad()`](https://gregorlueg.github.io/bixverse/reference/load_multi_h5ad.md)
   :
 
@@ -458,7 +525,7 @@ Rust and the DuckDB supporting the metadata.
 - [`stream_h5ad()`](https://gregorlueg.github.io/bixverse/reference/stream_h5ad.md)
   :
 
-  Stream in h5ad to `SingleCells`
+  Stream in h5ad to `SingleCells` (alias)
 
 - [`load_r_data()`](https://gregorlueg.github.io/bixverse/reference/load_r_data.md)
   : Load in data directly from R objects.
@@ -467,6 +534,16 @@ Rust and the DuckDB supporting the metadata.
   :
 
   Load in Seurat to `SingleCells`
+
+- [`load_tenx_h5()`](https://gregorlueg.github.io/bixverse/reference/load_tenx_h5.md)
+  :
+
+  Load in a 10x CellRanger h5 file to `SingleCells`
+
+- [`load_multi_tenx_h5()`](https://gregorlueg.github.io/bixverse/reference/load_multi_tenx_h5.md)
+  :
+
+  Load multiple 10x CellRanger h5 files into a single `SingleCells`
 
 - [`read_h5ad_metadata()`](https://gregorlueg.github.io/bixverse/reference/read_h5ad_metadata.md)
   : Read obs and var tables and metadata from an h5ad file
@@ -479,6 +556,11 @@ Rust and the DuckDB supporting the metadata.
 
 - [`sc_old_file_conversion()`](https://gregorlueg.github.io/bixverse/reference/sc_old_file_conversion.md)
   : Convert legacy v2 single-cell data files to v3 format
+
+- [`merge_sc_experiments()`](https://gregorlueg.github.io/bixverse/reference/merge_sc_experiments.md)
+  :
+
+  Merge multiple `SingleCells` experiments into one
 
 - [`params_sc_min_quality()`](https://gregorlueg.github.io/bixverse/reference/params_sc_min_quality.md)
   : Wrapper function to generate QC metric params for single cell
@@ -494,7 +576,7 @@ gene sets, HVG (batch-aware), PCA and batch corrections.
 - [`scrublet_sc()`](https://gregorlueg.github.io/bixverse/reference/scrublet_sc.md)
   : Doublet detection with Scrublet
 - [`call_doublets_manual()`](https://gregorlueg.github.io/bixverse/reference/call_doublets_manual.md)
-  : Helper function to manually readjust Scrublet thresholds
+  : Manually readjust Scrublet doublet call thresholds
 - [`doublet_detection_boost_sc()`](https://gregorlueg.github.io/bixverse/reference/doublet_detection_boost_sc.md)
   : Doublet detection with boosted doublet classification
 - [`scdblfinder_sc()`](https://gregorlueg.github.io/bixverse/reference/scdblfinder_sc.md)
@@ -509,6 +591,8 @@ gene sets, HVG (batch-aware), PCA and batch corrections.
   : Identify HVGs
 - [`find_hvg_batch_aware_sc()`](https://gregorlueg.github.io/bixverse/reference/find_hvg_batch_aware_sc.md)
   : Identify HVGs (batch aware)
+- [`get_hvg_data_sc()`](https://gregorlueg.github.io/bixverse/reference/get_hvg_data_sc.md)
+  : Identify HVGs without mutating object state
 - [`calculate_pca_sc()`](https://gregorlueg.github.io/bixverse/reference/calculate_pca_sc.md)
   : Run PCA for single cell
 - [`generate_sc_knn()`](https://gregorlueg.github.io/bixverse/reference/generate_sc_knn.md)
@@ -538,6 +622,8 @@ gene sets, HVG (batch-aware), PCA and batch corrections.
   : Wrapper function for Boost parameters
 - [`params_sc_hvg()`](https://gregorlueg.github.io/bixverse/reference/params_sc_hvg.md)
   : Wrapper function for HVG detection parameters.
+- [`params_sc_pca()`](https://gregorlueg.github.io/bixverse/reference/params_sc_pca.md)
+  : Wrapper for PCA specifically designed for single cells
 - [`params_scrublet()`](https://gregorlueg.github.io/bixverse/reference/params_scrublet.md)
   : Wrapper function for Scrublet doublet detection parameters
 - [`params_sc_bbknn()`](https://gregorlueg.github.io/bixverse/reference/params_sc_bbknn.md)
@@ -561,6 +647,10 @@ gene sets, HVG (batch-aware), PCA and batch corrections.
   : Helper function to generate default parameters for PCA
 - [`params_knn_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_knn_defaults.md)
   : Helper function to generate kNN defaults
+- [`params_sc_knn()`](https://gregorlueg.github.io/bixverse/reference/params_sc_knn.md)
+  : Parameters for single cell kNN searches
+- [`params_kmeans_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_kmeans_defaults.md)
+  : K-mean parameter defaults.
 - [`params_fast_cluster_default()`](https://gregorlueg.github.io/bixverse/reference/params_fast_cluster_default.md)
   : Helper function to generate default parameters for the fast
   clustering for the doublet detection methods
@@ -573,72 +663,141 @@ count extraction, miloR, Hotspot, VISION and SCENIC.
 
 - [`aucell_sc()`](https://gregorlueg.github.io/bixverse/reference/aucell_sc.md)
   : Calculate AUC scores (akin to AUCell)
+
 - [`module_scores_sc()`](https://gregorlueg.github.io/bixverse/reference/module_scores_sc.md)
   : Calculate module activity scores
+
 - [`fast_cluster_sc()`](https://gregorlueg.github.io/bixverse/reference/fast_cluster_sc.md)
   : Run fast Louvain clustering on a SingleCells object
+
 - [`find_clusters_sc()`](https://gregorlueg.github.io/bixverse/reference/find_clusters_sc.md)
   : Graph-based clustering of cells on the sNN graph
+
 - [`find_markers_sc()`](https://gregorlueg.github.io/bixverse/reference/find_markers_sc.md)
   : Calculate DGE between two cell groups
+
 - [`find_all_markers_sc()`](https://gregorlueg.github.io/bixverse/reference/find_all_markers_sc.md)
   : Find all markers
+
 - [`get_pseudobulked_sc()`](https://gregorlueg.github.io/bixverse/reference/get_pseudobulked_sc.md)
   : Generate pseudo-bulked matrices
+
 - [`generate_knn_sc()`](https://gregorlueg.github.io/bixverse/reference/generate_knn_sc.md)
-  : Generate the KNN data with distances
+  :
+
+  Generate a `SingleCellNearestNeighbour` from a single cell class
+
 - [`get_differential_abundance_res()`](https://gregorlueg.github.io/bixverse/reference/get_differential_abundance_res.md)
   : Get the differential abundance results
+
 - [`hotspot_autocor_sc()`](https://gregorlueg.github.io/bixverse/reference/hotspot_autocor_sc.md)
   : Calculate the local auto-correlation of a gene
+
 - [`hotspot_gene_cor_sc()`](https://gregorlueg.github.io/bixverse/reference/hotspot_gene_cor_sc.md)
   : Calculate the local pairwise gene-gene correlation
+
 - [`generate_hotspot_membership()`](https://gregorlueg.github.io/bixverse/reference/generate_hotspot_membership.md)
   : Identify hotspot gene clusters
+
 - [`get_hotspot_membership()`](https://gregorlueg.github.io/bixverse/reference/get_hotspot_membership.md)
   : Get the hotspot gene membership table
+
 - [`get_miloR_abundances_sc()`](https://gregorlueg.github.io/bixverse/reference/get_miloR_abundances_sc.md)
   : Generate an miloR abundance object for differential abundance
   testing
+
+- [`meld_sc()`](https://gregorlueg.github.io/bixverse/reference/meld_sc.md)
+  : Run MELD signal smoothing for differential abundance estimation
+
 - [`get_index_cells()`](https://gregorlueg.github.io/bixverse/reference/get_index_cells.md)
   : Get the index cells
+
 - [`add_nhoods_info()`](https://gregorlueg.github.io/bixverse/reference/add_nhoods_info.md)
   : Add neighbourhood info on majority cell type
+
 - [`test_nhoods()`](https://gregorlueg.github.io/bixverse/reference/test_nhoods.md)
   : Test neighbourhoods for differential abundance
+
 - [`vision_sc()`](https://gregorlueg.github.io/bixverse/reference/vision_sc.md)
   : Calculate VISION scores
+
 - [`vision_w_autocor_sc()`](https://gregorlueg.github.io/bixverse/reference/vision_w_autocor_sc.md)
   : Calculate VISION scores (with auto-correlation scores)
+
 - [`identify_tf_to_genes()`](https://gregorlueg.github.io/bixverse/reference/identify_tf_to_genes.md)
   : Identify the TF to gene regulation
+
 - [`scenic_gene_filter_sc()`](https://gregorlueg.github.io/bixverse/reference/scenic_gene_filter_sc.md)
   : Filter genes for SCENIC GRN inference
+
 - [`scenic_grn_sc()`](https://gregorlueg.github.io/bixverse/reference/scenic_grn_sc.md)
   : Run SCENIC GRN inference
+
 - [`get_cistarget_res()`](https://gregorlueg.github.io/bixverse/reference/get_cistarget_res.md)
   : Extract the TF to gene data from the ScenicGrn object
+
 - [`get_tf_to_gene()`](https://gregorlueg.github.io/bixverse/reference/get_tf_to_gene.md)
   : Extract the TF to gene data from the ScenicGrn object
+
 - [`tf_to_genes_correlations()`](https://gregorlueg.github.io/bixverse/reference/tf_to_genes_correlations.md)
   : Generate TF to gene correlations
+
 - [`tf_to_genes_motif_enrichment()`](https://gregorlueg.github.io/bixverse/reference/tf_to_genes_motif_enrichment.md)
   : Run the SCENIC motif enrichment
+
+- [`nmf_sc()`](https://gregorlueg.github.io/bixverse/reference/nmf_sc.md)
+  : Run single-run NMF on single cell or meta cell data
+
+- [`stabilised_nmf_sc()`](https://gregorlueg.github.io/bixverse/reference/stabilised_nmf_sc.md)
+  : Run stabilised (multi-run) NMF on single cell or meta cell data
+
+- [`get_best_run()`](https://gregorlueg.github.io/bixverse/reference/get_best_run.md)
+  : Get the best run from a stabilised NMF result
+
+- [`get_w()`](https://gregorlueg.github.io/bixverse/reference/get_w.md)
+  : Get the W (gene loadings) matrix
+
+- [`get_h()`](https://gregorlueg.github.io/bixverse/reference/get_h.md)
+  : Get the H (cell activations) matrix
+
 - [`params_sc_hotspot()`](https://gregorlueg.github.io/bixverse/reference/params_sc_hotspot.md)
   : Wrapper function for parameters for HotSpot
+
 - [`params_sc_miloR()`](https://gregorlueg.github.io/bixverse/reference/params_sc_miloR.md)
   : Wrapper function for parameters for MiloR
+
 - [`params_sc_vision()`](https://gregorlueg.github.io/bixverse/reference/params_sc_vision.md)
   : Wrapper function for parameters for VISION with auto-correlation
+
 - [`params_scenic()`](https://gregorlueg.github.io/bixverse/reference/params_scenic.md)
   : Constructor for SCENIC parameters
+
 - [`params_scenic_extra_trees_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_scenic_extra_trees_defaults.md)
   : Default parameters for the SCENIC ExtraTrees regression learner
+
 - [`params_scenic_gradient_boosting_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_scenic_gradient_boosting_defaults.md)
   : Default parameters for the SCENIC GradientBoosting (GRNBoost2)
   regression learner
+
 - [`params_scenic_random_forest_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_scenic_random_forest_defaults.md)
   : Default parameters for the SCENIC RandomForest regression learner
+
+- [`params_meld()`](https://gregorlueg.github.io/bixverse/reference/params_meld.md)
+  : Constructor for MELD parameters
+
+- [`params_nmf_hals()`](https://gregorlueg.github.io/bixverse/reference/params_nmf_hals.md)
+  : Wrapper function for NMF (HALS) parameters
+
+## Single cell multi-modal analysis methods
+
+Methods to analyse multi-modal single cell data
+
+- [`calculate_pca_adt_sc()`](https://gregorlueg.github.io/bixverse/reference/calculate_pca_adt_sc.md)
+  : Calculate the PCA on top of the normalised ADT counts
+- [`generate_wnn_graph_sc()`](https://gregorlueg.github.io/bixverse/reference/generate_wnn_graph_sc.md)
+  : Generate a weighted nearest neighbour (WNN) graph
+- [`params_sc_wnn()`](https://gregorlueg.github.io/bixverse/reference/params_sc_wnn.md)
+  : Wrapper function for WNN parameters
 
 ## Single-cell related classes and methods
 
@@ -654,14 +813,66 @@ Additional helpers for specific small sub classes used in single cell.
   : Get k-means cluster assignments from a fast cluster result
 - [`get_knn_dist()`](https://gregorlueg.github.io/bixverse/reference/get_knn_dist.md)
   : Get the KNN distance
-- [`get_obs_data()`](https://gregorlueg.github.io/bixverse/reference/get_obs_data.md)
+- [`get_data()`](https://gregorlueg.github.io/bixverse/reference/get_data.md)
   : Get the ready obs data from various sub method
 - [`get_scores()`](https://gregorlueg.github.io/bixverse/reference/get_scores.md)
-  : Get either the cxds or weighted scores
+  : Get scores
 - [`new_sc_knn()`](https://gregorlueg.github.io/bixverse/reference/new_sc_knn.md)
   : Helper function to generate kNN data with distances
 
-## Single-cell plotting stuff
+## Reference mapping and cell type annotations in single cell
+
+Helpers to do reference mapping and cell type identification in single
+cell
+
+- [`SymphonyReference()`](https://gregorlueg.github.io/bixverse/reference/SymphonyReference.md)
+  : bixverse SymphonyReference class
+- [`add_symphony_labels()`](https://gregorlueg.github.io/bixverse/reference/add_symphony_labels.md)
+  : Add labels to a Symphony reference post-hoc
+- [`build_symphony_ref()`](https://gregorlueg.github.io/bixverse/reference/build_symphony_ref.md)
+  : Build a Symphony reference from a SingleCells object
+- [`transfer_labels_symphony()`](https://gregorlueg.github.io/bixverse/reference/transfer_labels_symphony.md)
+  : Transfer labels from a Symphony reference to a query via kNN
+  majority vote
+- [`get_symphony_hvg_names()`](https://gregorlueg.github.io/bixverse/reference/get_symphony_hvg_names.md)
+  : Getter for the HVG gene names of a Symphony reference
+- [`get_symphony_labels()`](https://gregorlueg.github.io/bixverse/reference/get_symphony_labels.md)
+  : Getter for the stored labels of a Symphony reference
+- [`get_symphony_loadings()`](https://gregorlueg.github.io/bixverse/reference/get_symphony_loadings.md)
+  : Getter for the PCA loadings of a Symphony reference
+- [`get_symphony_z_corr()`](https://gregorlueg.github.io/bixverse/reference/get_symphony_z_corr.md)
+  : Getter for the corrected embedding of a Symphony reference
+- [`map_symphony_query()`](https://gregorlueg.github.io/bixverse/reference/map_symphony_query.md)
+  : Map a SingleCells query onto a Symphony reference
+- [`prepare_cell_markers()`](https://gregorlueg.github.io/bixverse/reference/prepare_cell_markers.md)
+  : Helper function to prepare cell markers
+- [`calc_sc_type_scores()`](https://gregorlueg.github.io/bixverse/reference/calc_sc_type_scores.md)
+  : Calculate ScType scores per cell
+- [`score_clusters()`](https://gregorlueg.github.io/bixverse/reference/score_clusters.md)
+  : Score clusters based on ScType
+- [`params_symphony_map()`](https://gregorlueg.github.io/bixverse/reference/params_symphony_map.md)
+  : Default parameters for Symphony query mapping
+
+## Single cell ligand receptor
+
+Classes, functions and generics/methods for ligand receptor analysis for
+single cell.
+
+- [`compute_expression_info_sc()`](https://gregorlueg.github.io/bixverse/reference/compute_expression_info_sc.md)
+  : Compute per-cluster mean expression and expressing fraction for a
+  gene set
+- [`generate_ligand_target_influence()`](https://gregorlueg.github.io/bixverse/reference/generate_ligand_target_influence.md)
+  : Generate the ligand to target influence matrix
+- [`get_influence()`](https://gregorlueg.github.io/bixverse/reference/get_influence.md)
+  : Get the ligand-target influence matrix
+- [`ligand_activity_scores()`](https://gregorlueg.github.io/bixverse/reference/ligand_activity_scores.md)
+  : Compute ligand activity scores against gene sets
+- [`params_ligand_target()`](https://gregorlueg.github.io/bixverse/reference/params_ligand_target.md)
+  : Parameters for ligand to target influence computation
+- [`prioritise_interactions()`](https://gregorlueg.github.io/bixverse/reference/prioritise_interactions.md)
+  : Prioritise sender-ligand-receiver-receptor interactions
+
+## Single cell plotting stuff
 
 Various helpers that generate data for plotting single cell, such as 2D
 embeddings, or extract specific columns from the metadata or genes (and
@@ -679,6 +890,14 @@ their summaries) from the binary storage files.
   : Extract grouped gene statistics for dot plots
 - [`extract_gene_expression()`](https://gregorlueg.github.io/bixverse/reference/extract_gene_expression.md)
   : Extract normalised gene expression for plotting
+- [`extract_embedding_data()`](https://gregorlueg.github.io/bixverse/reference/extract_embedding_data.md)
+  : Extract embedding coordinates for plotting
+- [`extract_feature_pair()`](https://gregorlueg.github.io/bixverse/reference/extract_feature_pair.md)
+  : Extract a pair of features for scatter / hex plots
+- [`extract_feature_plot_data()`](https://gregorlueg.github.io/bixverse/reference/extract_feature_plot_data.md)
+  : Extract per-cell expression mapped onto an embedding
+- [`extract_gene_violin_data()`](https://gregorlueg.github.io/bixverse/reference/extract_gene_violin_data.md)
+  : Extract per-cell expression grouped for violin plots
 
 ## Stastical functions
 
@@ -747,6 +966,10 @@ Functions and helpers to download or generate synthetic data.
   : Download PBMCs with demuxlet doublet information
 - [`download_pbmc_batches()`](https://gregorlueg.github.io/bixverse/reference/download_pbmc_batches.md)
   : Download two different PBMC data sets for batch correction testing
+- [`download_pbmc_totalseq_data()`](https://gregorlueg.github.io/bixverse/reference/download_pbmc_totalseq_data.md)
+  : Download the PBMC TotalSeq data with ADT counts
+- [`download_pbmc8k()`](https://gregorlueg.github.io/bixverse/reference/download_pbmc8k.md)
+  : Download PBMC8K data from Zenodo
 - [`calculate_sparsity_stats()`](https://gregorlueg.github.io/bixverse/reference/calculate_sparsity_stats.md)
   : Helper function to calculate the induced sparsity
 - [`generate_gene_module_data()`](https://gregorlueg.github.io/bixverse/reference/generate_gene_module_data.md)
@@ -759,8 +982,11 @@ Functions and helpers to download or generate synthetic data.
   : Helper function to write data to a cell ranger like output
 - [`write_h5ad_sc()`](https://gregorlueg.github.io/bixverse/reference/write_h5ad_sc.md)
   : Helper function to write data to h5ad format
+- [`write_h5ad_sc_dense()`](https://gregorlueg.github.io/bixverse/reference/write_h5ad_sc_dense.md)
+  : Helper function to write data to a dense h5ad file
 - [`params_sc_synthetic_data()`](https://gregorlueg.github.io/bixverse/reference/params_sc_synthetic_data.md)
-  : Default parameters for generation of synthetic data
+  : Default parameters for generation of synthetic single cell data
+  (RNA)
 - [`synthetic_signal_matrix()`](https://gregorlueg.github.io/bixverse/reference/synthetic_signal_matrix.md)
   : Generates a simple synthetic, pseudo gene expression matrix
 - [`simulate_dropouts()`](https://gregorlueg.github.io/bixverse/reference/simulate_dropouts.md)
@@ -795,307 +1021,204 @@ All types of other random helpers without a clear pattern
 
 ## Rust wrappers
 
-Everything rusty - only use this if you know what you are doing… Maybe
+Everything Rusty - only use this if you know what you are doing… Maybe
 useful for your own package? Use with care and read the documentation!
+The ones exposed here are general enough to be useful in other packages.
+There is a lot more under the hood…
 
-- [`rs_aucell()`](https://gregorlueg.github.io/bixverse/reference/rs_aucell.md)
-  : Calculate AUCell in Rust
+- [`rs_2d_loess()`](https://gregorlueg.github.io/bixverse/reference/rs_2d_loess.md)
+  **\[experimental\]** : Rust implementation of a Loess function
 - [`rs_batch_lisi()`](https://gregorlueg.github.io/bixverse/reference/rs_batch_lisi.md)
-  : Calculate batch LISI scores
+  **\[experimental\]** : Calculate batch LISI scores
 - [`rs_batch_silhouette_width()`](https://gregorlueg.github.io/bixverse/reference/rs_batch_silhouette_width.md)
-  : Calculate batch silhouette width from an embedding
-- [`rs_bbknn()`](https://gregorlueg.github.io/bixverse/reference/rs_bbknn.md)
-  : BBKNN implementation in Rust
-- [`rs_bbknn_filtering()`](https://gregorlueg.github.io/bixverse/reference/rs_bbknn_filtering.md)
-  : Reduce BBKNN results to Top X neighbours
-- [`rs_calc_es()`](https://gregorlueg.github.io/bixverse/reference/rs_calc_es.md)
-  : Calculates the traditional GSEA enrichment score
-- [`rs_calc_gsea_stat_cumulative_batch()`](https://gregorlueg.github.io/bixverse/reference/rs_calc_gsea_stat_cumulative_batch.md)
-  : Helper function to generate fgsea simple-based permutations
-- [`rs_calc_gsea_stat_traditional_batch()`](https://gregorlueg.github.io/bixverse/reference/rs_calc_gsea_stat_traditional_batch.md)
-  : Helper function to generate traditional GSEA-based permutations
-- [`rs_calc_gsea_stats()`](https://gregorlueg.github.io/bixverse/reference/rs_calc_gsea_stats.md)
-  : Rust implementation of the fgsea::calcGseaStat() function
-- [`rs_calc_multi_level()`](https://gregorlueg.github.io/bixverse/reference/rs_calc_multi_level.md)
-  : Calculates p-values for pre-processed data
-- [`rs_calculate_dge_mann_whitney()`](https://gregorlueg.github.io/bixverse/reference/rs_calculate_dge_mann_whitney.md)
-  : Calculate DGEs between cells based on Mann Whitney stats
+  **\[experimental\]** : Calculate batch silhouette width from an
+  embedding
 - [`rs_cistarget()`](https://gregorlueg.github.io/bixverse/reference/rs_cistarget.md)
-  : Run CisTarget motif enrichment analysis
-- [`rs_cluster_stability()`](https://gregorlueg.github.io/bixverse/reference/rs_cluster_stability.md)
-  : Helper function to assess cluster stability
+  **\[experimental\]** : Run CisTarget motif enrichment analysis
 - [`rs_compare_knn()`](https://gregorlueg.github.io/bixverse/reference/rs_compare_knn.md)
-  : Helper to compare kNN graphs
+  **\[experimental\]** : Helper to compare kNN graphs
 - [`rs_constrained_page_rank()`](https://gregorlueg.github.io/bixverse/reference/rs_constrained_page_rank.md)
-  : Calculate a constrained page-rank score
+  **\[experimental\]** : Calculate a constrained page-rank score
 - [`rs_constrained_page_rank_list()`](https://gregorlueg.github.io/bixverse/reference/rs_constrained_page_rank_list.md)
-  : Calculate a constrained page-rank score over a list.
+  **\[experimental\]** : Calculate a constrained page-rank score over a
+  list.
 - [`rs_contrastive_pca()`](https://gregorlueg.github.io/bixverse/reference/rs_contrastive_pca.md)
-  : Calculate the contrastive PCA
+  **\[experimental\]** : Calculate the contrastive PCA
 - [`rs_cor()`](https://gregorlueg.github.io/bixverse/reference/rs_cor.md)
-  : Calculate the column wise correlations.
+  **\[experimental\]** : Calculate the column wise correlations.
 - [`rs_cor2()`](https://gregorlueg.github.io/bixverse/reference/rs_cor2.md)
-  : Calculate the column wise correlations.
-- [`rs_coremo_quality()`](https://gregorlueg.github.io/bixverse/reference/rs_coremo_quality.md)
-  : Helper function to assess CoReMo cluster quality
-- [`rs_coremo_stability()`](https://gregorlueg.github.io/bixverse/reference/rs_coremo_stability.md)
-  : Helper function to assess CoReMo cluster stability
+  **\[experimental\]** : Calculate the column wise correlations.
 - [`rs_cor_upper_triangle()`](https://gregorlueg.github.io/bixverse/reference/rs_cor_upper_triangle.md)
-  : Calculate the column wise correlations.
+  **\[experimental\]** : Calculate the column wise correlations and
+  returns the upper triangle
 - [`rs_cos()`](https://gregorlueg.github.io/bixverse/reference/rs_cos.md)
-  : Calculate the column wise cosine similarities
+  **\[experimental\]** : Calculate the column wise cosine similarities
 - [`rs_count_zeroes()`](https://gregorlueg.github.io/bixverse/reference/rs_count_zeroes.md)
-  : Helper to get zero stats from a given matrix
+  **\[experimental\]** : Helper to get zero stats from a given matrix
 - [`rs_cov2cor()`](https://gregorlueg.github.io/bixverse/reference/rs_cov2cor.md)
-  : Calculates the correlation matrix from the co-variance matrix
+  **\[experimental\]** : Calculates the correlation matrix from the
+  co-variance matrix
 - [`rs_covariance()`](https://gregorlueg.github.io/bixverse/reference/rs_covariance.md)
-  : Calculate the column-wise co-variance.
-- [`rs_create_random_aucs()`](https://gregorlueg.github.io/bixverse/reference/rs_create_random_aucs.md)
-  : Create random AUCs
-- [`rs_critval()`](https://gregorlueg.github.io/bixverse/reference/rs_critval.md)
-  : Calculate the critical value
-- [`rs_critval_mat()`](https://gregorlueg.github.io/bixverse/reference/rs_critval_mat.md)
-  : Calculate the critical value
+  **\[experimental\]** : Calculate the column-wise co-variance.
 - [`rs_dense_to_upper_triangle()`](https://gregorlueg.github.io/bixverse/reference/rs_dense_to_upper_triangle.md)
-  : Generate a vector-based representation of the upper triangle of a
-  matrix
+  **\[experimental\]** : Generate a vector-based representation of the
+  upper triangle of a matrix
 - [`rs_differential_cor()`](https://gregorlueg.github.io/bixverse/reference/rs_differential_cor.md)
-  : Calculate the column wise differential correlation between two sets
-  of data.
+  **\[experimental\]** : Calculate the column wise differential
+  correlation between two sets of data.
 - [`rs_dist()`](https://gregorlueg.github.io/bixverse/reference/rs_dist.md)
-  : Calculate the pairwise column distance in a matrix
-- [`rs_extract_grouped_gene_stats()`](https://gregorlueg.github.io/bixverse/reference/rs_extract_grouped_gene_stats.md)
-  : Calculates the gene statistics for a set of cell groups and genes
-- [`rs_extract_several_genes_plots()`](https://gregorlueg.github.io/bixverse/reference/rs_extract_several_genes_plots.md)
-  : Helper to extract single cell counts for several genes
-- [`rs_extract_counts_plots()`](https://gregorlueg.github.io/bixverse/reference/rs_extract_counts_plots.md)
-  : Helper to extract single cell counts as a dense vector for plotting
+  **\[experimental\]** : Calculate the pairwise column distance in a
+  matrix
 - [`rs_fast_auc()`](https://gregorlueg.github.io/bixverse/reference/rs_fast_auc.md)
-  : Fast AUC calculation
-- [`rs_fast_cluster_sc()`](https://gregorlueg.github.io/bixverse/reference/rs_fast_cluster_sc.md)
-  : Runs fast Louvain cluster on the data
-- [`rs_fast_cluster_sc_grid()`](https://gregorlueg.github.io/bixverse/reference/rs_fast_cluster_sc_grid.md)
-  : Runs fast Louvain cluster on the data (with multiple seeds)
+  **\[experimental\]** : Fast AUC calculation
 - [`rs_fast_ica()`](https://gregorlueg.github.io/bixverse/reference/rs_fast_ica.md)
-  : Run the Rust implementation of fast ICA.
+  **\[experimental\]** : Run the Rust implementation of fast ICA.
 - [`rs_fdr_adjustment()`](https://gregorlueg.github.io/bixverse/reference/rs_fdr_adjustment.md)
-  : Calculate a BH-based FDR
-- [`rs_filter_onto_sim()`](https://gregorlueg.github.io/bixverse/reference/rs_filter_onto_sim.md)
-  : Filter the term similarities for a specific critical value
-- [`rs_generate_bulk_rnaseq()`](https://gregorlueg.github.io/bixverse/reference/rs_generate_bulk_rnaseq.md)
-  : Generation of bulkRNAseq-like data with optional correlation
-  structure
+  **\[experimental\]** : Calculate a BH-based FDR
 - [`rs_geom_elim_fgsea_simple()`](https://gregorlueg.github.io/bixverse/reference/rs_geom_elim_fgsea_simple.md)
-  : Run fgsea simple method for gene ontology with elimination method
-- [`rs_get_gs_indices()`](https://gregorlueg.github.io/bixverse/reference/rs_get_gs_indices.md)
-  : Helper function to rapidly retrieve the indices of the gene set
-  members
-- [`rs_get_metacells_bootstrapped()`](https://gregorlueg.github.io/bixverse/reference/rs_get_metacells_bootstrapped.md)
-  : Generate meta cells (hdWGCNA method)
-- [`rs_get_seacells()`](https://gregorlueg.github.io/bixverse/reference/rs_get_seacells.md)
-  : Generate SEACells
+  **\[experimental\]** : Run fgsea simple method for gene ontology with
+  elimination method
 - [`rs_gower_dist()`](https://gregorlueg.github.io/bixverse/reference/rs_gower_dist.md)
-  : Calculates the Gower distance for a given matrix
+  **\[experimental\]** : Calculates the Gower distance for a given
+  matrix
 - [`rs_gse_geom_elim()`](https://gregorlueg.github.io/bixverse/reference/rs_gse_geom_elim.md)
-  : Run hypergeometric enrichment over the gene ontology
-- [`rs_gse_geom_elim_list()`](https://gregorlueg.github.io/bixverse/reference/rs_gse_geom_elim_list.md)
-  : Run hypergeometric enrichment a list of target genes over the gene
+  **\[experimental\]** : Run hypergeometric enrichment over the gene
   ontology
+- [`rs_gse_geom_elim_list()`](https://gregorlueg.github.io/bixverse/reference/rs_gse_geom_elim_list.md)
+  **\[experimental\]** : Run hypergeometric enrichment a list of target
+  genes over the gene ontology
 - [`rs_gsva()`](https://gregorlueg.github.io/bixverse/reference/rs_gsva.md)
-  : Rust version of the GSVA algorithm
+  **\[experimental\]** : Rust version of the GSVA algorithm
 - [`rs_h5ad_data()`](https://gregorlueg.github.io/bixverse/reference/rs_h5ad_data.md)
-  : Load in h5ad data via Rust
+  **\[experimental\]** : Load in h5ad data via Rust
 - [`rs_hamming_dist()`](https://gregorlueg.github.io/bixverse/reference/rs_hamming_dist.md)
-  : Calculates the Hamming distance between categorical columns
+  **\[experimental\]** : Calculates the Hamming distance between
+  categorical columns
 - [`rs_harmony()`](https://gregorlueg.github.io/bixverse/reference/rs_harmony.md)
-  : Harmony batch correction in Rust
+  **\[experimental\]** : Harmony batch correction in Rust
 - [`rs_harmony_v2()`](https://gregorlueg.github.io/bixverse/reference/rs_harmony_v2.md)
-  : Harmony batch correction in Rust (version 2)
+  **\[experimental\]** : Harmony batch correction in Rust (version 2)
 - [`rs_hedges_g()`](https://gregorlueg.github.io/bixverse/reference/rs_hedges_g.md)
-  : Calculate the Hedge's G effect
-- [`rs_hotspot_autocor()`](https://gregorlueg.github.io/bixverse/reference/rs_hotspot_autocor.md)
-  : Calculate gene spatial auto-correlations
-- [`rs_hotspot_cluster_genes()`](https://gregorlueg.github.io/bixverse/reference/rs_hotspot_cluster_genes.md)
-  : Cluster the genes by Z-score together
-- [`rs_hotspot_gene_cor()`](https://gregorlueg.github.io/bixverse/reference/rs_hotspot_gene_cor.md)
-  : Calculate gene\<\>gene spatial correlations
+  **\[experimental\]** : Calculate the Hedge's G effect
 - [`rs_hypergeom_test()`](https://gregorlueg.github.io/bixverse/reference/rs_hypergeom_test.md)
-  : Run a single hypergeometric test.
+  **\[experimental\]** : Run a single hypergeometric test.
 - [`rs_hypergeom_test_list()`](https://gregorlueg.github.io/bixverse/reference/rs_hypergeom_test_list.md)
-  : Run a hypergeometric test over a list of target genes
+  **\[experimental\]** : Run a hypergeometric test over a list of target
+  genes
 - [`rs_ica_iters()`](https://gregorlueg.github.io/bixverse/reference/rs_ica_iters.md)
-  : Run ICA over a given no_comp with random initilisations of w_init
+  **\[experimental\]** : Run ICA over a given no_comp with random
+  initilisations of w_init
 - [`rs_ica_iters_cv()`](https://gregorlueg.github.io/bixverse/reference/rs_ica_iters_cv.md)
-  : Run ICA with cross-validation and random initialsiation
-- [`rs_importance_threshold()`](https://gregorlueg.github.io/bixverse/reference/rs_importance_threshold.md)
-  : SCENIC: Select TF-gene pairs by per-gene importance threshold
+  **\[experimental\]** : Run ICA with cross-validation and random
+  initialsiation
 - [`rs_jaccard_row_integers()`](https://gregorlueg.github.io/bixverse/reference/rs_jaccard_row_integers.md)
-  : Calculate rapidbly Jaccard similarities between rows
+  **\[experimental\]** : Calculate rapidbly Jaccard similarities between
+  rows
 - [`rs_kbet()`](https://gregorlueg.github.io/bixverse/reference/rs_kbet.md)
-  : Calculate kBET type scores
+  **\[experimental\]** : Calculate kBET type scores
 - [`rs_knn_label_propagation()`](https://gregorlueg.github.io/bixverse/reference/rs_knn_label_propagation.md)
-  : kNN label propagation
+  **\[experimental\]** : kNN label propagation
 - [`rs_knn_mat_to_edge_list()`](https://gregorlueg.github.io/bixverse/reference/rs_knn_mat_to_edge_list.md)
-  : Flatten kNN matrix to edge list
-- [`rs_knn_mat_to_edge_pairs()`](https://gregorlueg.github.io/bixverse/reference/rs_knn_mat_to_edge_pairs.md)
-  : Flatten kNN matrix to edge list
+  **\[experimental\]** : Flatten kNN matrix to edge list
+- [`rs_generate_ligand_target_influence()`](https://gregorlueg.github.io/bixverse/reference/rs_generate_ligand_target_influence.md)
+  **\[experimental\]** : Generate the ligand to target influence
+  matrices
+- [`rs_ligand_activity_scores()`](https://gregorlueg.github.io/bixverse/reference/rs_ligand_activity_scores.md)
+  **\[experimental\]** : Calculate the NicheNet ligand activity scores
 - [`rs_mad_outlier()`](https://gregorlueg.github.io/bixverse/reference/rs_mad_outlier.md)
-  : Calculate MAD outlier detection in Rust.
-- [`rs_make_milor_nhoods()`](https://gregorlueg.github.io/bixverse/reference/rs_make_milor_nhoods.md)
-  : Generate the neighbourhoods akin to the miloR approach
+  **\[experimental\]** : Calculate MAD outlier detection in Rust.
 - [`rs_mc_aucell()`](https://gregorlueg.github.io/bixverse/reference/rs_mc_aucell.md)
-  : Calculate AUCell in Rust (for meta cells)
+  **\[experimental\]** : Calculate AUCell in Rust (for meta cells)
 - [`rs_mc_hvg()`](https://gregorlueg.github.io/bixverse/reference/rs_mc_hvg.md)
-  : Meta cells highly variable genes
+  **\[experimental\]** : Meta cells highly variable genes
 - [`rs_mc_pca()`](https://gregorlueg.github.io/bixverse/reference/rs_mc_pca.md)
-  : PCA on MetaCells (sparse data)
+  **\[experimental\]** : PCA on MetaCells (sparse data)
 - [`rs_mc_scenic()`](https://gregorlueg.github.io/bixverse/reference/rs_mc_scenic.md)
-  : SCENIC on MetaCells
-- [`rs_metacell_compactness()`](https://gregorlueg.github.io/bixverse/reference/rs_metacell_compactness.md)
-  : Calculates the compactness of the MetaCells based on diffusion map
-  coordinates
-- [`rs_metacell_density()`](https://gregorlueg.github.io/bixverse/reference/rs_metacell_density.md)
-  : Calculates diffusion maps for density calculations for meta cells
-- [`rs_metacell_separation()`](https://gregorlueg.github.io/bixverse/reference/rs_metacell_separation.md)
-  : Calculates the separation of the centroids of the MetaCells based on
-  diffusion map coordinates.
+  **\[experimental\]** : SCENIC on MetaCells
 - [`rs_mitch_calc()`](https://gregorlueg.github.io/bixverse/reference/rs_mitch_calc.md)
   : Calculate mitch enrichment leveraging Rust under the hood
-- [`rs_mnn()`](https://gregorlueg.github.io/bixverse/reference/rs_mnn.md)
-  : FastMNN batch correction in Rust
-- [`rs_module_scoring()`](https://gregorlueg.github.io/bixverse/reference/rs_module_scoring.md)
-  : Calculate module activity scores in Rust
 - [`rs_mutual_info()`](https://gregorlueg.github.io/bixverse/reference/rs_mutual_info.md)
-  : Calculates the mutual information matrix
+  **\[experimental\]** : Calculates the mutual information matrix
+- [`rs_nmf_multi_mc()`](https://gregorlueg.github.io/bixverse/reference/rs_nmf_multi_mc.md)
+  **\[experimental\]** : Run multiple NMF (HALS) restarts on MetaCells
+- [`rs_nmf_single_mc()`](https://gregorlueg.github.io/bixverse/reference/rs_nmf_single_mc.md)
+  **\[experimental\]** : Run NMF (HALS) on MetaCells
 - [`rs_onto_semantic_sim()`](https://gregorlueg.github.io/bixverse/reference/rs_onto_semantic_sim.md)
-  : Calculate the semantic similarity in an ontology
+  **\[experimental\]** : Calculate the semantic similarity in an
+  ontology
 - [`rs_onto_semantic_sim_mat()`](https://gregorlueg.github.io/bixverse/reference/rs_onto_semantic_sim_mat.md)
-  : Calculate the semantic similarity in an ontology
+  **\[experimental\]** : Calculate the semantic similarity in an
+  ontology
 - [`rs_onto_sim_wang()`](https://gregorlueg.github.io/bixverse/reference/rs_onto_sim_wang.md)
-  : Calculate the Wang similarity for specific terms
+  **\[experimental\]** : Calculate the Wang similarity for specific
+  terms
 - [`rs_onto_sim_wang_mat()`](https://gregorlueg.github.io/bixverse/reference/rs_onto_sim_wang_mat.md)
-  : Calculate the Wang similarity matrix for an ontology
+  **\[experimental\]** : Calculate the Wang similarity matrix for an
+  ontology
 - [`rs_ot_harmonic_sum()`](https://gregorlueg.github.io/bixverse/reference/rs_ot_harmonic_sum.md)
-  : Calculate the OT harmonic sum
+  **\[experimental\]** : Calculate the OT harmonic sum
 - [`rs_page_rank()`](https://gregorlueg.github.io/bixverse/reference/rs_page_rank.md)
-  : Rust version of calcaluting the personalised page rank
+  **\[experimental\]** : Rust version of calcaluting the personalised
+  page rank
 - [`rs_page_rank_parallel()`](https://gregorlueg.github.io/bixverse/reference/rs_page_rank_parallel.md)
-  : Calculate massively parallelised personalised page rank scores
-- [`rs_pairwise_gene_cors()`](https://gregorlueg.github.io/bixverse/reference/rs_pairwise_gene_cors.md)
-  : Calculates pairwise gene correlations in single cell
+  **\[experimental\]** : Calculate massively parallelised personalised
+  page rank scores
 - [`rs_phyper()`](https://gregorlueg.github.io/bixverse/reference/rs_phyper.md)
-  : Calculate the hypergeometric rest in Rust
+  **\[experimental\]** : Calculate the hypergeometric test in Rust
 - [`rs_pointwise_mutual_info()`](https://gregorlueg.github.io/bixverse/reference/rs_pointwise_mutual_info.md)
-  : Calculates the point wise mutual information
+  **\[experimental\]** : Calculates the point wise mutual information
 - [`rs_prcomp()`](https://gregorlueg.github.io/bixverse/reference/rs_prcomp.md)
-  : Rust implementation of prcomp
-- [`rs_prepare_gsva_gs()`](https://gregorlueg.github.io/bixverse/reference/rs_prepare_gsva_gs.md)
-  : Prepare a pathway list for GSVA
+  **\[experimental\]** : Rust implementation of prcomp
 - [`rs_prepare_whitening()`](https://gregorlueg.github.io/bixverse/reference/rs_prepare_whitening.md)
-  : Prepare the data for whitening
-- [`rs_pseudobulk_cells_dense()`](https://gregorlueg.github.io/bixverse/reference/rs_pseudobulk_cells_dense.md)
-  : Pseudo-bulk a set of cells (dense)
-- [`rs_pseudobulk_cells_sparse()`](https://gregorlueg.github.io/bixverse/reference/rs_pseudobulk_cells_sparse.md)
-  : Pseudo-bulk a set of cells (sparse)
+  **\[experimental\]** : Prepare the data for whitening
 - [`rs_random_svd()`](https://gregorlueg.github.io/bixverse/reference/rs_random_svd.md)
-  : Run randomised SVD over a matrix
+  **\[experimental\]** : Run randomised SVD over a matrix
 - [`rs_range_norm()`](https://gregorlueg.github.io/bixverse/reference/rs_range_norm.md)
-  : Apply a range normalisation on a vector.
+  **\[experimental\]** : Apply a range normalisation on a vector.
 - [`rs_rbf_function()`](https://gregorlueg.github.io/bixverse/reference/rs_rbf_function.md)
-  : Apply a Radial Basis Function
+  **\[experimental\]** : Apply a Radial Basis Function
 - [`rs_rbf_function_mat()`](https://gregorlueg.github.io/bixverse/reference/rs_rbf_function_mat.md)
-  : Apply a Radial Basis Function (to a matrix)
-- [`rs_rbf_iterate_epsilons()`](https://gregorlueg.github.io/bixverse/reference/rs_rbf_iterate_epsilons.md)
-  : Helper to identify the right epsilon parameter
+  **\[experimental\]** : Apply a Radial Basis Function (to a matrix)
 - [`rs_rbh_cor()`](https://gregorlueg.github.io/bixverse/reference/rs_rbh_cor.md)
-  : Generate reciprocal best hits based on correlations
+  **\[experimental\]** : Generate reciprocal best hits based on
+  correlations
 - [`rs_rbh_sets()`](https://gregorlueg.github.io/bixverse/reference/rs_rbh_sets.md)
-  : Generate reciprocal best hits based on set similarities
-- [`rs_sample_ids_for_cell_types()`](https://gregorlueg.github.io/bixverse/reference/rs_sample_ids_for_cell_types.md)
-  : Helper function to generate sample identifiers based on cells
-- [`rs_sc_scdblfinder()`](https://gregorlueg.github.io/bixverse/reference/rs_sc_scdblfinder.md)
-  : Run scDblFinder doublet detection
-- [`rs_sc_doublet_detection()`](https://gregorlueg.github.io/bixverse/reference/rs_sc_doublet_detection.md)
-  : Detect Doublets via BoostClassifier (in Rust)
-- [`rs_sc_get_gene_set_perc()`](https://gregorlueg.github.io/bixverse/reference/rs_sc_get_gene_set_perc.md)
-  : Calculate the percentage of gene sets in the cells
-- [`rs_sc_get_top_genes_perc()`](https://gregorlueg.github.io/bixverse/reference/rs_sc_get_top_genes_perc.md)
-  : Calculates the cumulative proportion of the top X genes
-- [`rs_sc_hvg()`](https://gregorlueg.github.io/bixverse/reference/rs_sc_hvg.md)
-  : Calculate the percentage of gene sets in the cells
-- [`rs_sc_hvg_batch_aware()`](https://gregorlueg.github.io/bixverse/reference/rs_sc_hvg_batch_aware.md)
-  : Calculate HVG per batch
+  **\[experimental\]** : Generate reciprocal best hits based on set
+  similarities
 - [`rs_sc_knn()`](https://gregorlueg.github.io/bixverse/reference/rs_sc_knn.md)
-  : Generates the kNN graph
+  **\[experimental\]** : Generates the kNN graph
 - [`rs_sc_knn_w_dist()`](https://gregorlueg.github.io/bixverse/reference/rs_sc_knn_w_dist.md)
-  : Generates the kNN graph with additional distances
-- [`rs_sc_otsu_method()`](https://gregorlueg.github.io/bixverse/reference/rs_sc_otsu_method.md)
-  : Run Otsu's method
-- [`rs_sc_pca()`](https://gregorlueg.github.io/bixverse/reference/rs_sc_pca.md)
-  : Calculates PCA for single cell
-- [`rs_sc_pca_sparse()`](https://gregorlueg.github.io/bixverse/reference/rs_sc_pca_sparse.md)
-  : Calculates sparse PCA for single cell
-- [`rs_sc_scrublet()`](https://gregorlueg.github.io/bixverse/reference/rs_sc_scrublet.md)
-  : Scrublet Rust interface
+  **\[experimental\]** : Generates the kNN graph with additional
+  distances
 - [`rs_sc_snn()`](https://gregorlueg.github.io/bixverse/reference/rs_sc_snn.md)
-  : Generates the sNN graph for igraph
-- [`rs_scenic_gene_filter()`](https://gregorlueg.github.io/bixverse/reference/rs_scenic_gene_filter.md)
-  : Identifies genes to include into a SCENIC analysis
-- [`rs_scenic_grn()`](https://gregorlueg.github.io/bixverse/reference/rs_scenic_grn.md)
-  : SCENIC: Generating gene-regulatory networks
-- [`rs_scenic_grn_streaming()`](https://gregorlueg.github.io/bixverse/reference/rs_scenic_grn_streaming.md)
-  : SCENIC: Generating gene-regulatory networks (streaming version)
+  **\[experimental\]** : Generates the sNN graph for igraph
 - [`rs_set_similarity()`](https://gregorlueg.github.io/bixverse/reference/rs_set_similarity.md)
-  : Set similarities
+  **\[experimental\]** : Set similarities
 - [`rs_set_similarity_list()`](https://gregorlueg.github.io/bixverse/reference/rs_set_similarity_list.md)
-  : Set similarities over one list
+  **\[experimental\]** : Set similarities over one list
 - [`rs_set_similarity_list2()`](https://gregorlueg.github.io/bixverse/reference/rs_set_similarity_list2.md)
-  : Set similarities over two list
-- [`rs_simple_and_multi_err()`](https://gregorlueg.github.io/bixverse/reference/rs_simple_and_multi_err.md)
-  : Calculates the simple and multi error for fgsea multi level
-- [`rs_simulate_dropouts()`](https://gregorlueg.github.io/bixverse/reference/rs_simulate_dropouts.md)
-  : Sparsify bulkRNAseq like data
+  **\[experimental\]** : Set similarities over two list
 - [`rs_snf()`](https://gregorlueg.github.io/bixverse/reference/rs_snf.md)
-  : Similarity network fusion
-- [`rs_snf_affinity_cat()`](https://gregorlueg.github.io/bixverse/reference/rs_snf_affinity_cat.md)
-  : Calculate the SNF affinity matrix for categorical values
-- [`rs_snf_affinity_continuous()`](https://gregorlueg.github.io/bixverse/reference/rs_snf_affinity_continuous.md)
-  : Calculate the SNF affinity matrix for continuous values
-- [`rs_snf_affinity_mixed()`](https://gregorlueg.github.io/bixverse/reference/rs_snf_affinity_mixed.md)
-  : Calculate the SNF affinity matrix for mixed values
+  **\[experimental\]** : Similarity network fusion
 - [`rs_sparse_dict_dgrdl()`](https://gregorlueg.github.io/bixverse/reference/rs_sparse_dict_dgrdl.md)
-  : Generate a sparse dictionary with DGRDL
+  **\[experimental\]** : Generate a sparse dictionary with DGRDL
 - [`rs_sparse_dict_dgrdl_grid_search()`](https://gregorlueg.github.io/bixverse/reference/rs_sparse_dict_dgrdl_grid_search.md)
-  : Generate a sparse dictionary with DGRDL
+  **\[experimental\]** : Generate a sparse dictionary with DGRDL
 - [`rs_spectral_clustering()`](https://gregorlueg.github.io/bixverse/reference/rs_spectral_clustering.md)
-  : Rust implementation of spectral clustering
+  **\[experimental\]** : Rust implementation of spectral clustering
 - [`rs_spectral_clustering_sim()`](https://gregorlueg.github.io/bixverse/reference/rs_spectral_clustering_sim.md)
-  : Rust implementation of spectral clustering
-- [`rs_split_cor_signs()`](https://gregorlueg.github.io/bixverse/reference/rs_split_cor_signs.md)
-  : Helper function to split correlation matrices by sign
+  **\[experimental\]** : Rust implementation of spectral clustering
 - [`rs_ssgsea()`](https://gregorlueg.github.io/bixverse/reference/rs_ssgsea.md)
-  : Rust version of the ssGSEA algorithm
-- [`rs_supercell()`](https://gregorlueg.github.io/bixverse/reference/rs_supercell.md)
-  : Generate SuperCells.
-- [`rs_synthetic_sc_data_csc()`](https://gregorlueg.github.io/bixverse/reference/rs_synthetic_sc_data_csc.md)
-  : Generate synthetic single cell data (Seurat type)
-- [`rs_synthetic_sc_data_csr()`](https://gregorlueg.github.io/bixverse/reference/rs_synthetic_sc_data_csr.md)
-  : Generate synthetic single cell data (h5ad type)
-- [`rs_synthetic_sc_data_with_cell_types()`](https://gregorlueg.github.io/bixverse/reference/rs_synthetic_sc_data_with_cell_types.md)
-  : Generates synthetic data for single cell
+  **\[experimental\]** : Rust version of the ssGSEA algorithm
 - [`rs_tied_diffusion_parallel()`](https://gregorlueg.github.io/bixverse/reference/rs_tied_diffusion_parallel.md)
-  : Calculate massively parallelised tied diffusion scores
+  **\[experimental\]** : Calculate massively parallelised tied diffusion
+  scores
 - [`rs_tom()`](https://gregorlueg.github.io/bixverse/reference/rs_tom.md)
-  : Calculates the TOM over an affinity matrix
-- [`rs_top_k_targets()`](https://gregorlueg.github.io/bixverse/reference/rs_top_k_targets.md)
-  : SCENIC: Select the Top TF \<\> Gene pairs
+  **\[experimental\]** : Calculates the TOM over an affinity matrix
 - [`rs_upper_triangle_to_dense()`](https://gregorlueg.github.io/bixverse/reference/rs_upper_triangle_to_dense.md)
-  : Reconstruct a matrix from a flattened upper triangle vector
+  **\[experimental\]** : Reconstruct a matrix from a flattened upper
+  triangle vector
 - [`rs_upper_triangle_to_sparse()`](https://gregorlueg.github.io/bixverse/reference/rs_upper_triangle_to_sparse.md)
-  : Generate sparse data from an upper triangle
-- [`rs_vision()`](https://gregorlueg.github.io/bixverse/reference/rs_vision.md)
-  : Calculate VISION pathway scores in Rust
-- [`rs_vision_with_autocorrelation()`](https://gregorlueg.github.io/bixverse/reference/rs_vision_with_autocorrelation.md)
-  : Calculate VISION pathway scores in Rust with auto-correlation
-- [`rs_2d_loess()`](https://gregorlueg.github.io/bixverse/reference/rs_2d_loess.md)
-  : Rust implementation of a Loess function
+  **\[experimental\]** : Generate sparse data from an upper triangle
+- [`rs_wnn()`](https://gregorlueg.github.io/bixverse/reference/rs_wnn.md)
+  **\[experimental\]** : Run the weighted nearest neighbour algorithm

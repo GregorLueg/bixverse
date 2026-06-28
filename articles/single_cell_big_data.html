@@ -23,7 +23,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -53,14 +53,24 @@
 <li class="active nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-single-cells" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Single Cells</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-single-cells">
-<li><a class="dropdown-item" href="../articles/thinking_single_cell.html">Thinking about single cells the bixverse way</a></li>
+<li><h6 class="dropdown-header" data-toc-skip>Intro vignettes</h6></li>
+    <li><a class="dropdown-item" href="../articles/thinking_single_cell.html">Thinking about single cells the bixverse way</a></li>
     <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">PBMC analysis with the bixverse single cell framework</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_io.html">Reading data in (single-cell I/O)</a></li>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
-    <li><a class="dropdown-item" href="../articles/analysis_single_cell.html">'Bag of genes' methods for single cell in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/knn_searches.html">kNN searches for single cells in bixverse</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>More advanced analysis methods</h6></li>
+    <li><a class="dropdown-item" href="../articles/bag_of_genes_single_cells.html">'Bag of genes' methods for single cell in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/nichenet.html">Ligand receptor analysis</a></li>
     <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/symphomy.html">Reference mapping via Symphony</a></li>
+    <li><a class="dropdown-item" href="../articles/multi_modal_single_cell.html">Multi-modal analysis</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Others</h6></li>
     <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing big data on a powerful laptop (example)</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_visualisation.html">Plotting helpers</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -82,7 +92,7 @@
       <h1>Scaling to millions of cells with bixverse</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-06-15</p>
+      <p class="date">2026-06-28</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -95,87 +105,116 @@
 
     <section class="level2"><h2 id="intro">Intro<a class="anchor" aria-label="anchor" href="#intro"></a>
 </h2>
-<p>This vignette demonstrates how to run a single cell analysis on a data set containing nearly 3 million cells on a local machine - in this case a MacBook Pro M1 Max - without exhausting memory. If you have not read the <a href="https://gregorlueg.github.io/bixverse/articles/design_single_cell.html">design choices</a> and the <a href="https://gregorlueg.github.io/bixverse/articles/thinking_single_cell.html">introductory vignette</a>, please do so first. The <a href="https://gregorlueg.github.io/bixverse/articles/pbmc_single_cell.html">PBMC3k walkthrough</a> covers every step in detail on a small data set; here we focus on what changes when the cell count moves from thousands to millions.</p>
-<p>The data set used is one of the h5ad of the <a href="https://www.biorxiv.org/content/10.1101/2025.02.20.639398v3" class="external-link">100 million cell Tahoe</a> data set from Parse Biosciences. The original file has 5.5m cells; after quality control roughly 2.9 million cells are retained and read in. It was for me large enough data set to test out what can be done on a laptop.</p>
+<p>This vignette demonstrates how to run a single cell analysis on a data set containing nearly 1 million cells on a local machine… In this case, a MacBook Air with 24 GBs (if you think <em>“IMPOSSIBLE!”</em>, you would not be wrong coming from other languages/frameworks). If you have not read the <a href="https://gregorlueg.github.io/bixverse/articles/design_single_cell.html">design choices</a> and the <a href="https://gregorlueg.github.io/bixverse/articles/thinking_single_cell.html">introductory vignette</a>, please do so first. The <a href="https://gregorlueg.github.io/bixverse/articles/pbmc_single_cell.html">PBMC3k walkthrough</a> covers every step in detail on a small data set; here we focus on what changes when the cell count moves from thousands to a million.</p>
+<p>The data used here is the 1 million cell PBMC data set from Parse Biosciences, a commonly used reference for showing large single cell analyses, see the original article <a href="https://support.parsebiosciences.com/hc/en-us/articles/7704577188500-How-to-analyze-a-1-million-cell-data-set-using-Scanpy-and-Harmony" class="external-link">here</a>. <strong>The important bit here is that this was run successfully on a MacBook Air with 24 GB (M3)</strong>. And please contrast that with the following line for the analysis of this data:</p>
+<p><i>To avoid computer crashes and program failures, we recommend you execute the Python code on a cloud computing platform. The instance you select on the cloud platform to run this analysis should consist of at least 8 threads and 160 GB of RAM.</i> - Parse Biosciences</p>
 <div>
 <blockquote>
 <p><strong>Note</strong></p>
-<p>None of the code chunks below are evaluated. This vignette is a reference for how one <em>would</em> run such an analysis, not a live rendering - the data set is far too large for CI/CD runners and Microsoft would not be happy.</p>
+<p>None of the code chunks below are evaluated. This vignette is a reference for how one <em>would</em> run such an analysis, not a live rendering - the data set is far too large for CI/CD runners and GitHub would not be happy.</p>
 </blockquote>
 </div>
-<p>If you want to reproduce this, download one of the h5ad files from Tahoe 100m. Or use large enough data you always wanted to analyse.</p>
+<p>If you want to reproduce this, download the data from Parse Biosciences (or any other fat data set you have) and go have fun.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">bixverse</span><span class="op">)</span></span>
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">wget</span> <span class="st">"https://cdn.parsebiosciences.com/1M_PBMC_T1D_Parse.zip"</span></span></code></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># main packages</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">bixverse</span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://gregorlueg.github.io/bixverse.plots/">bixverse.plots</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># GPU-acceleration (experimental)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">bixverse.gpu</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Plotting, data manipulation</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-datatable.com" class="external-link">data.table</a></span><span class="op">)</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="loading-the-data">Loading the data<a class="anchor" aria-label="anchor" href="#loading-the-data"></a>
 </h2>
-<p>For large <code>.h5ad</code> files the key entry point is <code>stream_h5ad</code>, which streams the sparse matrix into the Rust binary files and the internal DuckDB. Once the data has been streamed once, subsequent sessions can reconnect via <code>load_existing</code>.</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">h5_path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/path.expand.html" class="external-link">path.expand</a></span><span class="op">(</span></span>
-<span>  <span class="st">"PATH TO H5AD/plate1_filt_Vevo_Tahoe100M_WServicesFrom_ParseGigalab.h5ad"</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">dir_files</span> <span class="op">&lt;-</span> <span class="st">"PATH TO WHERE TO SAVE THE FILES"</span></span>
-<span></span>
-<span><span class="co"># Quick sanity check on dimensions before committing to the stream</span></span>
-<span><span class="va">meta</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_h5ad_dimensions.html">get_h5ad_dimensions</a></span><span class="op">(</span><span class="va">h5_path</span><span class="op">)</span></span>
-<span><span class="va">meta</span></span>
-<span></span>
-<span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/SingleCells.html">SingleCells</a></span><span class="op">(</span></span>
-<span>  dir_data <span class="op">=</span> <span class="va">dir_files</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/stream_h5ad.html">stream_h5ad</a></span><span class="op">(</span>object <span class="op">=</span> <span class="va">sc_object</span>, h5_path <span class="op">=</span> <span class="va">h5_path</span><span class="op">)</span></span></code></pre></div>
-</div>
-<p>This step is slow. Ca. 10 minutes. The function does 4 things on the counts.</p>
-<ul>
-<li>First, (streaming) scan to understand in how many cells a gene is expressed. Only keep genes that are expressed in whatever you set to <code>min_cells</code> (for me ca. 90 seconds).</li>
-<li>Second, (streaming) scan, given the genes from the first step, which cells to include based on minimum library size and minimum features. (For me ca. 2 min).</li>
-<li>Third, now that it’s clear which cells/genes to include, load the data in chunks and write into a CSR style format for easy cell-retrieval while also directly normalising the data. (Ca. 3 to 4 minutes for me.)</li>
-<li>Lastly, load in the cell data in small chunks and do a transpose to a CSC style format for easy gene retrieval. (Ca. 3 to 4 minutes for me.)</li>
-</ul>
-<p>The DuckDB also gets populated with the metadata in the observations (based on what has been filtered) and the vars (add another 1 to 2 minutes here). This step takes the most time and is partially bound by the field going for h5 as the go-to file storage. Go have a coffee while this is running, listen to a podcast, watch something on the side. If you have already loaded in the data and it exists on-disk from a previous session, skip the streaming step entirely and reconnect. This is the one (very) slow part in <code>bixverse</code> single cell… To be fair, I have no idea how long it would take to load in the full h5ad file in Python or R – I do not want to try with 64 GB memory.</p>
+<p>Once you have unzipped the data, we can start streaming it into memory and writing the files to disk.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/SingleCells.html">SingleCells</a></span><span class="op">(</span></span>
-<span>  dir_data <span class="op">=</span> <span class="va">dir_files</span></span>
+<code class="sourceCode R"><span><span class="va">data_path</span> <span class="op">&lt;-</span> <span class="st">"~/Desktop/parse_pbmc_1m/"</span></span>
+<span></span>
+<span><span class="va">load_params</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/params_sc_mtx_io.html">params_sc_mtx_io</a></span><span class="op">(</span></span>
+<span>  path_mtx <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/path.expand.html" class="external-link">path.expand</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data_path</span>, <span class="st">"DGE_1M_PBMC.mtx"</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  path_obs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/path.expand.html" class="external-link">path.expand</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data_path</span>, <span class="st">"cell_metadata_1M_PBMC.csv"</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  path_var <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/path.expand.html" class="external-link">path.expand</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">data_path</span>, <span class="st">"all_genes_1M_PBMC.csv"</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  cells_as_rows <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  has_hdr <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/load_existing.html">load_existing</a></span><span class="op">(</span>object <span class="op">=</span> <span class="va">sc_object</span><span class="op">)</span></span></code></pre></div>
+<span><span class="co"># We will write everything into the temporary directory</span></span>
+<span><span class="va">sce</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/SingleCells.html">SingleCells</a></span><span class="op">(</span>dir_data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># We enforce level 2 streaming here which will run for a bit longer, but ensure</span></span>
+<span><span class="co"># your memory never blows up</span></span>
+<span><span class="va">sce</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/load_mtx.html">load_mtx</a></span><span class="op">(</span>object <span class="op">=</span> <span class="va">sce</span>, sc_mtx_io_param <span class="op">=</span> <span class="va">load_params</span>, streaming <span class="op">=</span> <span class="fl">2L</span><span class="op">)</span></span></code></pre></div>
 </div>
+<p>This step is the slowest… A lot of things are actually happening here.</p>
+<ul>
+<li>First, (streaming) scan to understand in how many cells a gene is expressed. Only keep genes that are expressed in whatever you set to <code>min_cells</code>.</li>
+<li>Second, (streaming) scan, given the genes from the first step, which cells to include based on minimum library size and minimum features.</li>
+<li>Third, now that it’s clear which cells/genes to include, create quick temp files with the cells to keep with the genes already re-indexed. This way we avoid loading in the massive MTX file in one go into memory. These files are automatically cleaned up at the end and loaded sequentially and written to the CSR-type file (while the normalisation is also done on the fly).</li>
+<li>Lastly, load in the cell data in small chunks and do a transpose to a CSC style format for easy gene retrieval.</li>
+</ul>
+<p>This approach avoids loading the whole data into memory at any point. The DuckDB also gets populated with the metadata in the observations (based on what has been filtered) and the vars. This part - streaming the data and processing it - is usually what takes quite a bit of time. If you have already loaded in the data and it exists on-disk from a previous session, skip the streaming step entirely and reconnect. On a MacBook Air with 24 GB and an M3 chip, this takes ~3.5 minutes.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># the folder is hopefully not temp...</span></span>
+<span><span class="va">sce</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/SingleCells.html">SingleCells</a></span><span class="op">(</span>dir_data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">sce</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/load_existing.html">load_existing</a></span><span class="op">(</span>object <span class="op">=</span> <span class="va">sce</span><span class="op">)</span></span></code></pre></div>
+</div>
+</section><section class="level2"><h2 id="doublet-detection">Doublet detection<a class="anchor" aria-label="anchor" href="#doublet-detection"></a>
+</h2>
+<p>Before any QC on library sizes and gene-set proportions, we run Scrublet to flag doublets. Doublets are called per sample via the <code>group_by</code> argument, which is what you want when sample-level differences in capture rates would otherwise distort a single global score. Results are merged back onto the cell metadata and the doublets are dropped from the set of cells to keep. The runs over the individual samples are occuring sequentially to not overwhelm memory and each run is massively parallelised internally in Rust.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">scrublet_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/scrublet_sc.html">scrublet_sc</a></span><span class="op">(</span>object <span class="op">=</span> <span class="va">sce</span>, group_by <span class="op">=</span> <span class="st">"sample"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">sce</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/add_sc_new_obs.html">add_sc_new_obs</a></span><span class="op">(</span></span>
+<span>  object <span class="op">=</span> <span class="va">sce</span>,</span>
+<span>  obs_data <span class="op">=</span> <span class="fu"><a href="../reference/get_data.html">get_data</a></span><span class="op">(</span><span class="va">scrublet_res</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">cells_without_doublets</span> <span class="op">&lt;-</span> <span class="va">sce</span><span class="op">[[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"doublet"</span>, <span class="st">"cell_id"</span><span class="op">)</span><span class="op">]</span><span class="op">]</span><span class="op">[</span></span>
+<span>  <span class="op">!</span><span class="op">(</span><span class="va">doublet</span><span class="op">)</span>,</span>
+<span>  <span class="va">cell_id</span></span>
+<span><span class="op">]</span></span>
+<span></span>
+<span><span class="va">sce</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/set_cells_to_keep.html">set_cells_to_keep</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">sce</span>, cells_to_keep <span class="op">=</span> <span class="va">cells_without_doublets</span><span class="op">)</span></span></code></pre></div>
+</div>
+<p>Due to having run over 24 samples in this case, this will take ~15 minutes. Ideal moment for a podcast, video of your favourite YouTuber and/or coffee - which ever floats your boat. Once you have passed this, things will get substantially faster.</p>
 </section><section class="level2"><h2 id="quality-control">Quality control<a class="anchor" aria-label="anchor" href="#quality-control"></a>
 </h2>
 <section class="level3"><h3 id="gene-set-proportions">Gene set proportions<a class="anchor" aria-label="anchor" href="#gene-set-proportions"></a>
 </h3>
-<p>The same gene set proportion logic from the PBMC3k vignette applies, but the <code>streaming</code> argument <strong>must</strong> be set to <code>TRUE</code> so that proportions are computed in batches rather than pulling the entire count matrix into Rust… The memory pressure you should observe should remain minimal.</p>
+<p>The same gene set proportion logic from the PBMC3k vignette applies. The functions automatically recognise if you have more than 100k cells and will leverage the streaming engine by default in this case. You do have more manual control via the <code>streaming = NULL</code> parameter. If you have a fat memory machine, you can set this to <code>FALSE</code> despite a large data set.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">var</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_sc_var.html">get_sc_var</a></span><span class="op">(</span>object <span class="op">=</span> <span class="va">sc_object</span><span class="op">)</span></span>
+<div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">var</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_sc_var.html">get_sc_var</a></span><span class="op">(</span>object <span class="op">=</span> <span class="va">sce</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">gs_of_interest</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>  MT <span class="op">=</span> <span class="va">var</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"^MT-"</span>, <span class="va">gene_id</span><span class="op">)</span>, <span class="va">gene_id</span><span class="op">]</span>,</span>
-<span>  Ribo <span class="op">=</span> <span class="va">var</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"^RPS|^RPL"</span>, <span class="va">gene_id</span><span class="op">)</span>, <span class="va">gene_id</span><span class="op">]</span></span>
+<span>  MT <span class="op">=</span> <span class="va">var</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"^MT-"</span>, <span class="va">gene_name</span><span class="op">)</span>, <span class="va">gene_id</span><span class="op">]</span>,</span>
+<span>  Ribo <span class="op">=</span> <span class="va">var</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"^RPS|^RPL"</span>, <span class="va">gene_name</span><span class="op">)</span>, <span class="va">gene_id</span><span class="op">]</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/gene_set_proportions_sc.html">gene_set_proportions_sc</a></span><span class="op">(</span></span>
-<span>  object <span class="op">=</span> <span class="va">sc_object</span>,</span>
+<span><span class="va">sce</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/gene_set_proportions_sc.html">gene_set_proportions_sc</a></span><span class="op">(</span></span>
+<span>  object <span class="op">=</span> <span class="va">sce</span>,</span>
 <span>  gene_set_list <span class="op">=</span> <span class="va">gs_of_interest</span>,</span>
-<span>  streaming <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  .verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">sc_object</span><span class="op">[[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5L</span><span class="op">]</span><span class="op">]</span></span></code></pre></div>
+<span><span class="op">)</span></span></code></pre></div>
 </div>
+<p>This is where the streaming engine comes really into play. Done under &lt;10 seconds.</p>
 </section><section class="level3"><h3 id="mad-outlier-detection">MAD outlier detection<a class="anchor" aria-label="anchor" href="#mad-outlier-detection"></a>
 </h3>
-<p>Outlier detection works identically to the small-data case. The QC metrics table is modest in size (one row per cell, a handful of columns) and fits comfortably in memory even at millions of cells.</p>
+<p>Outlier detection on library size, the number of detected genes, and mitochondrial proportion. We compute outliers per sample (<code>groups = sample</code>), which matters once batches have non-trivial differences in sequencing depth - a global threshold would otherwise penalise whole batches rather than individual cells within them.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">qc_df</span> <span class="op">&lt;-</span> <span class="va">sc_object</span><span class="op">[[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"cell_id"</span>, <span class="st">"lib_size"</span>, <span class="st">"nnz"</span>, <span class="st">"MT"</span><span class="op">)</span><span class="op">]</span><span class="op">]</span></span>
+<div class="sourceCode cell-code" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">qc_df</span> <span class="op">&lt;-</span> <span class="va">sce</span><span class="op">[[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"cell_id"</span>, <span class="st">"sample"</span>, <span class="st">"lib_size"</span>, <span class="st">"nnz"</span>, <span class="st">"MT"</span><span class="op">)</span><span class="op">]</span><span class="op">]</span></span>
 <span></span>
 <span><span class="va">metrics</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  log10_lib_size <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log10</a></span><span class="op">(</span><span class="va">qc_df</span><span class="op">$</span><span class="va">lib_size</span><span class="op">)</span>,</span>
@@ -184,87 +223,215 @@
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">directions</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
-<span>  log10_lib_size <span class="op">=</span> <span class="st">"twosided"</span>,</span>
-<span>  log10_nnz <span class="op">=</span> <span class="st">"twosided"</span>,</span>
+<span>  log10_lib_size <span class="op">=</span> <span class="st">"below"</span>,</span>
+<span>  log10_nnz <span class="op">=</span> <span class="st">"below"</span>,</span>
 <span>  MT <span class="op">=</span> <span class="st">"above"</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">qc</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/run_cell_qc.html">run_cell_qc</a></span><span class="op">(</span><span class="va">metrics</span>, <span class="va">directions</span>, threshold <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span>
+<span><span class="va">qc</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/run_cell_qc.html">run_cell_qc</a></span><span class="op">(</span></span>
+<span>  metrics <span class="op">=</span> <span class="va">metrics</span>,</span>
+<span>  cells_to_keep <span class="op">=</span> <span class="fu"><a href="../reference/get_cells_to_keep.html">get_cells_to_keep</a></span><span class="op">(</span><span class="va">sce</span><span class="op">)</span>,</span>
+<span>  directions <span class="op">=</span> <span class="va">directions</span>,</span>
+<span>  threshold <span class="op">=</span> <span class="fl">3</span>,</span>
+<span>  groups <span class="op">=</span> <span class="va">qc_df</span><span class="op">$</span><span class="va">sample</span></span>
+<span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># not needed anymore</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/rm.html" class="external-link">rm</a></span><span class="op">(</span><span class="va">qc_df</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">qc</span></span></code></pre></div>
+<span><span class="va">sce</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/add_sc_new_obs.html">add_sc_new_obs</a></span><span class="op">(</span><span class="va">sce</span>, obs_data <span class="op">=</span> <span class="fu"><a href="../reference/get_data.html">get_data</a></span><span class="op">(</span><span class="va">qc</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 </div>
-<p>I cannot recommend trying to plot this naively… ggplot2 will not be happy.</p>
+<p>I cannot recommend trying to plot the metric distributions naively… ggplot2 will not be happy at this cell count.</p>
 </section><section class="level3"><h3 id="filtering-cells">Filtering cells<a class="anchor" aria-label="anchor" href="#filtering-cells"></a>
 </h3>
-<p>Usual filters.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">sc_object</span><span class="op">[[</span><span class="st">"outlier"</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">qc</span><span class="op">$</span><span class="va">combined</span></span>
+<div class="sourceCode cell-code" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">cells_to_keep</span> <span class="op">&lt;-</span> <span class="va">sce</span><span class="op">[[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"global_outlier"</span>, <span class="st">"cell_id"</span><span class="op">)</span><span class="op">]</span><span class="op">]</span><span class="op">[</span></span>
+<span>  <span class="op">!</span><span class="op">(</span><span class="va">global_outlier</span><span class="op">)</span>,</span>
+<span>  <span class="va">cell_id</span></span>
+<span><span class="op">]</span></span>
 <span></span>
-<span><span class="va">cells_to_keep</span> <span class="op">&lt;-</span> <span class="va">qc_df</span><span class="op">[</span><span class="op">!</span><span class="va">qc</span><span class="op">$</span><span class="va">combined</span>, <span class="va">cell_id</span><span class="op">]</span></span>
-<span></span>
-<span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/set_cells_to_keep.html">set_cells_to_keep</a></span><span class="op">(</span><span class="va">sc_object</span>, <span class="va">cells_to_keep</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">sc_object</span></span></code></pre></div>
+<span><span class="va">sce</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/set_cells_to_keep.html">set_cells_to_keep</a></span><span class="op">(</span><span class="va">sce</span>, <span class="va">cells_to_keep</span><span class="op">)</span></span></code></pre></div>
 </div>
 </section></section><section class="level2"><h2 id="feature-selection-and-pca">Feature selection and PCA<a class="anchor" aria-label="anchor" href="#feature-selection-and-pca"></a>
 </h2>
-<p>HVG selection at this scale again requires <code>streaming = TRUE</code>. There is two data passes to avoid materialising large data in memory. First pass will calculate the means and standard deviations. Second pass will do the variance stabilisation. PCA uses a sparse SVD, which is automatically selected when cell counts exceed 500k but can be set explicitly.</p>
+<p>HVG selection at this scale again requires <code>streaming = TRUE</code> (if left as is, the auto-detection will take care of this and automatically use streaming when more than <code>1e5</code> cells are detected). There are two data passes to avoid materialising large data in memory: the first calculates means and standard deviations, and the second does the variance stabilisation. Again, the streaming keeps memory pressure low and the function runs in ~10 seconds on the mentioned MacBook Air.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/find_hvg_sc.html">find_hvg_sc</a></span><span class="op">(</span></span>
-<span>  object <span class="op">=</span> <span class="va">sc_object</span>,</span>
-<span>  streaming <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">sce</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/find_hvg_sc.html">find_hvg_sc</a></span><span class="op">(</span></span>
+<span>  object <span class="op">=</span> <span class="va">sce</span>,</span>
+<span>  hvg_no <span class="op">=</span> <span class="fl">2000L</span>,</span>
 <span>  .verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calculate_pca_sc.html">calculate_pca_sc</a></span><span class="op">(</span></span>
-<span>  object <span class="op">=</span> <span class="va">sc_object</span>,</span>
-<span>  no_pcs <span class="op">=</span> <span class="fl">30L</span>,</span>
-<span>  sparse_svd <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 </div>
+<p>PCA is one of the points where GPU acceleration starts to noticeably matter (if you want to install the GPU-accelerated versions… If you have some VRAM or unified memory to spare it will make a difference). Both implementations share the same parameter interface, so swapping between them is a one-line change. The leading components should agree up to sign between the two, which is worth a quick visual check.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">sce</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calculate_pca_sc.html">calculate_pca_sc</a></span><span class="op">(</span></span>
+<span>  object <span class="op">=</span> <span class="va">sce</span>,</span>
+<span>  pca_params <span class="op">=</span> <span class="fu"><a href="../reference/params_sc_pca.html">params_sc_pca</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  no_pcs <span class="op">=</span> <span class="fl">32L</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">cpu_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_pca_factors.html">get_pca_factors</a></span><span class="op">(</span><span class="va">sce</span><span class="op">)</span></span>
+<span><span class="va">cpu_s</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_pca_singular_val.html">get_pca_singular_val</a></span><span class="op">(</span><span class="va">sce</span><span class="op">)</span></span></code></pre></div>
+</div>
+<p>This runs in ~25 seconds. Let’s compare this against the GPU-accelerated version. In this case, the GEMMs prior to the thin SVD on the massively reduced matrix in the randomised SVD are run on the GPU. You pay for moving the data, but you should still see an acceleration compared to the CPU form.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">sce</span> <span class="op">&lt;-</span> <span class="fu">calculate_pca_gpu_sc</span><span class="op">(</span></span>
+<span>  object <span class="op">=</span> <span class="va">sce</span>,</span>
+<span>  pca_params <span class="op">=</span> <span class="fu"><a href="../reference/params_sc_pca.html">params_sc_pca</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  no_pcs <span class="op">=</span> <span class="fl">32L</span>,</span>
+<span>  .verbose <span class="op">=</span> <span class="fl">2L</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">gpu_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_pca_factors.html">get_pca_factors</a></span><span class="op">(</span><span class="va">sce</span><span class="op">)</span></span>
+<span><span class="va">gpu_s</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_pca_singular_val.html">get_pca_singular_val</a></span><span class="op">(</span><span class="va">sce</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># sanity check on the leading component</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">cpu_res</span><span class="op">[</span>, <span class="fl">1</span><span class="op">]</span>, <span class="va">gpu_res</span><span class="op">[</span>, <span class="fl">1</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
+</div>
+<p>On the test MacBook Air, this runs in 15 seconds. In practice you would pick one. The GPU path becomes the more attractive option as cell counts grow; on this data set you can feel the difference (if VRAM permits). You will see some slight differences due to floating operation differences between CPU and GPU.</p>
 </section><section class="level2"><h2 id="nearest-neighbours-gpu-accelerated">Nearest neighbours (GPU-accelerated)<a class="anchor" aria-label="anchor" href="#nearest-neighbours-gpu-accelerated"></a>
 </h2>
-<p>At nearly 3 million cells, nearest neighbour search is the main computational bottleneck. The companion package <a href="https://github.com/GregorLueg/bixverse.gpu" class="external-link">bixverse.gpu</a> exposes a CAGRA-style GPU-accelerated approximate nearest neighbour search that makes this quite fast on a laptop with a discrete GPU - thanks to CubeCL and WGPU as long as you can fit the data into VRAM (should be feasible with 8 GBs - I think?) this should run quite fast. CPU-side alternatives such as <code>"nndescent"</code> or <code>"hnsw"</code> also work but will be considerably slower at this scale. For (empirical reference):</p>
-<ul>
-<li>GPU version on M1 Max with 64 GB takes ~1 minute.</li>
-<li>HNSW somewhere between 3 to 4 minutes.</li>
-</ul>
-<p>Likely still comparably much faster if you are used to the more established single cell methods in terms of CPU speed, but yeah… If you have a GPU, go use that.</p>
+<p>The companion package <a href="https://github.com/GregorLueg/bixverse.gpu" class="external-link">bixverse.gpu</a> exposes a CAGRA-style GPU-accelerated approximate nearest neighbour search that makes this quite fast on a laptop with a discrete GPU - thanks to CubeCL and WGPU, as long as you can fit the data into VRAM. The time the GPU version takes is &lt;30 seconds. CPU version with <code>HNSW</code> takes ~90 seconds.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">bixverse.gpu</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu">find_neighbours_cagra_sc</span><span class="op">(</span></span>
-<span>  object <span class="op">=</span> <span class="va">sc_object</span>,</span>
-<span>  cagra_params <span class="op">=</span> <span class="fu">params_sc_cagra</span><span class="op">(</span>k_query <span class="op">=</span> <span class="fl">15L</span>, ann_dist <span class="op">=</span> <span class="st">"cosine"</span><span class="op">)</span>,</span>
+<div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">sce</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/find_neighbours_sc.html">find_neighbours_sc</a></span><span class="op">(</span></span>
+<span>  object <span class="op">=</span> <span class="va">sce</span>,</span>
+<span>  embd_to_use <span class="op">=</span> <span class="st">"pca"</span>,</span>
+<span>  neighbours_params <span class="op">=</span> <span class="fu"><a href="../reference/params_sc_neighbours.html">params_sc_neighbours</a></span><span class="op">(</span>knn <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>knn_method <span class="op">=</span> <span class="st">"hnsw"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">sce</span> <span class="op">&lt;-</span> <span class="fu">find_neighbours_cagra_sc</span><span class="op">(</span></span>
+<span>  object <span class="op">=</span> <span class="va">sce</span>,</span>
+<span>  embd_to_use <span class="op">=</span> <span class="st">"pca"</span>,</span>
+<span>  cagra_params <span class="op">=</span> <span class="fu">params_sc_cagra</span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  extract_knn <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  .verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 </div>
-</section><section class="level2"><h2 id="visualisation">Visualisation<a class="anchor" aria-label="anchor" href="#visualisation"></a>
+</section><section class="level2"><h2 id="embeddings-before-batch-correction">Embeddings before batch correction<a class="anchor" aria-label="anchor" href="#embeddings-before-batch-correction"></a>
 </h2>
-<p>Running UMAP on the shared nearest neighbour graph built from ~2.8 million cells and 65 million+ edges takes time but does complete on a single machine (embedding optimisation with parallel Adam optimisation done in &lt;3 minutes for me).</p>
+<section class="level3"><h3 id="batch-effect-quantification">Batch effect quantification<a class="anchor" aria-label="anchor" href="#batch-effect-quantification"></a>
+</h3>
+<p>A kBET score on the uncorrected neighbour graph gives a quantitative baseline to compare against once batch correction is applied…</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/umap_sc.html">umap_sc</a></span><span class="op">(</span>object <span class="op">=</span> <span class="va">sc_object</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode cell-code" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">kbet_prior</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calculate_kbet_sc.html">calculate_kbet_sc</a></span><span class="op">(</span>object <span class="op">=</span> <span class="va">sce</span>, batch_column <span class="op">=</span> <span class="st">"sample"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">kbet_prior</span></span></code></pre></div>
+</div>
+</section><section class="level3"><h3 id="plots">Plots<a class="anchor" aria-label="anchor" href="#plots"></a>
+</h3>
+<p>Or if you are a visual person, let’s check UMAP and tSNE</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb15"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">sce</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/umap_sc.html">umap_sc</a></span><span class="op">(</span></span>
+<span>  <span class="va">sce</span>,</span>
+<span>  slot_name <span class="op">=</span> <span class="st">"umap_prior"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb16"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">sce</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tsne_sc.html">tsne_sc</a></span><span class="op">(</span></span>
+<span>  <span class="va">sce</span>,</span>
+<span>  slot_name <span class="op">=</span> <span class="st">"tsne_prior"</span>,</span>
+<span>  <span class="co"># use FFT here! It will make a massive difference</span></span>
+<span>  approx_type <span class="op">=</span> <span class="st">"fft"</span>,</span>
+<span>  knn_method <span class="op">=</span> <span class="st">"hnsw"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+</div>
+<p>You might wonder why in the case of tSNE we regenerate the kNN graph. You do not have to, but the rule-of-thumb is <code>k_neighbours = perplexity * 3.0</code>. With the default perplexity, we would need 30 neighbours, but we previously only returned 15. So, we just rerun this. Skip tSNE if you don’t need it, but the FFT-accelerated version is substantially faster than you would expect from tSNE.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb17"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://gregorlueg.github.io/bixverse.plots/reference/embedding_plot_sc.html">embedding_plot_sc</a></span><span class="op">(</span></span>
+<span>  <span class="va">sce</span>,</span>
+<span>  embedding <span class="op">=</span> <span class="st">"umap_prior"</span>,</span>
+<span>  colour_by <span class="op">=</span> <span class="st">"sample"</span>,</span>
+<span>  discrete <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span></span>
+<span>    title <span class="op">=</span> <span class="st">"No batch correction"</span>,</span>
+<span>    colour <span class="op">=</span> <span class="st">"Batch:"</span></span>
+<span>  <span class="op">)</span></span></code></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb18"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://gregorlueg.github.io/bixverse.plots/reference/embedding_plot_sc.html">embedding_plot_sc</a></span><span class="op">(</span></span>
+<span>  <span class="va">sce</span>,</span>
+<span>  embedding <span class="op">=</span> <span class="st">"tsne_prior"</span>,</span>
+<span>  colour_by <span class="op">=</span> <span class="st">"sample"</span>,</span>
+<span>  discrete <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span></span>
+<span>    title <span class="op">=</span> <span class="st">"No batch correction"</span>,</span>
+<span>    colour <span class="op">=</span> <span class="st">"Batch:"</span></span>
+<span>  <span class="op">)</span></span></code></pre></div>
+</div>
+</section></section><section class="level2"><h2 id="batch-correction">Batch correction<a class="anchor" aria-label="anchor" href="#batch-correction"></a>
+</h2>
+<p>Okay, there is clearly a big sample batch effect. Let’s remove that one. Again you have two options here… Harmony (<a href="">version 2</a> - recommended) on CPU or a GPU-accelerated version. Let’s check out the CPU version first… (~ 40 seconds)</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb19"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">sce</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/harmony_v2_sc.html">harmony_v2_sc</a></span><span class="op">(</span>object <span class="op">=</span> <span class="va">sce</span>, batch_column <span class="op">=</span> <span class="st">"sample"</span><span class="op">)</span></span></code></pre></div>
+</div>
+<p>If you have a GPU at hand, you can also just use the GPU version (15 seconds). Again, you will observe some slight numerical differences… This is due to the GPU implementation, but the overall structure of the data will be recovered in the same way.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb20"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">sce</span> <span class="op">&lt;-</span> <span class="fu">harmony_v2_gpu_sc</span><span class="op">(</span>object <span class="op">=</span> <span class="va">sce</span>, batch_column <span class="op">=</span> <span class="st">"sample"</span><span class="op">)</span></span></code></pre></div>
+</div>
+<p>Let’s overwrite the kNN graph with the now batch-corrected embedding:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb21"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">sce</span> <span class="op">&lt;-</span> <span class="fu">find_neighbours_cagra_sc</span><span class="op">(</span></span>
+<span>  object <span class="op">=</span> <span class="va">sce</span>,</span>
+<span>  embd_to_use <span class="op">=</span> <span class="st">"harmony_gpu"</span>, <span class="co"># or harmony_v2 if you just did the CPU version</span></span>
+<span>  cagra_params <span class="op">=</span> <span class="fu">params_sc_cagra</span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  extract_knn <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  .verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+</div>
+<section class="level3"><h3 id="batch-correction-quantification">Batch correction quantification<a class="anchor" aria-label="anchor" href="#batch-correction-quantification"></a>
+</h3>
+<p>Let’s requantify the kBET scores and see if we removed some of the batch effects…</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb22"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">kbet_post_gpu</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calculate_kbet_sc.html">calculate_kbet_sc</a></span><span class="op">(</span>object <span class="op">=</span> <span class="va">sce</span>, batch_column <span class="op">=</span> <span class="st">"sample"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">kbet_post_gpu</span></span></code></pre></div>
+</div>
+</section></section><section class="level2"><h2 id="cell-type-annotations">Cell type annotations<a class="anchor" aria-label="anchor" href="#cell-type-annotations"></a>
+</h2>
+<p>This is a nice data set where the fast clustering makes a lot of sense… We use the k-means clustering to quantise the data to representative centroids and run the Louvain clustering specifically for the centroids and project the community membership back.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb23"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">fast_cluster_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fast_cluster_sc.html">fast_cluster_sc</a></span><span class="op">(</span></span>
+<span>  object <span class="op">=</span> <span class="va">sce</span>,</span>
+<span>  embd_to_use <span class="op">=</span> <span class="st">"harmony_gpu"</span>, <span class="co"># or harmony_v2 if you just did the CPU version</span></span>
+<span>  return_kmeans <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  grid_search <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  .verbose <span class="op">=</span> <span class="fl">2L</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">sce</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/add_sc_new_obs.html">add_sc_new_obs</a></span><span class="op">(</span></span>
+<span>  object <span class="op">=</span> <span class="va">sce</span>,</span>
+<span>  obs_data <span class="op">=</span> <span class="fu"><a href="../reference/get_data.html">get_data</a></span><span class="op">(</span><span class="va">fast_cluster_res</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">sce</span><span class="op">)</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="differential-gene-expression">Differential gene expression<a class="anchor" aria-label="anchor" href="#differential-gene-expression"></a>
 </h2>
-<p>With metadata stored in the obs table, subsetting cells for a pairwise comparison is straightforward. Here we compare two drug treatment conditions. Again, we leverage the streaming here… Instead of holding the full data set in memory, we just load in the two groups (each roughly 30k cells), do a fast ranking in Rust and do the DGE. Easy peezy, done in ca. 3 seconds.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">meta_data</span> <span class="op">&lt;-</span> <span class="va">sc_object</span><span class="op">[[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"cell_id"</span>, <span class="st">"cell_name"</span>, <span class="st">"drug"</span><span class="op">)</span><span class="op">]</span><span class="op">]</span></span>
+<div class="sourceCode cell-code" id="cb24"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">meta_data</span> <span class="op">&lt;-</span> <span class="va">sce</span><span class="op">[[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"cell_id"</span>, <span class="st">"res_2"</span><span class="op">)</span><span class="op">]</span><span class="op">]</span></span>
 <span></span>
-<span><span class="va">cells_grp_a</span> <span class="op">&lt;-</span> <span class="va">meta_data</span><span class="op">[</span><span class="va">drug</span> <span class="op">==</span> <span class="st">"AT7519"</span>, <span class="va">cell_id</span><span class="op">]</span></span>
-<span><span class="va">cells_grp_b</span> <span class="op">&lt;-</span> <span class="va">meta_data</span><span class="op">[</span><span class="va">drug</span> <span class="op">==</span> <span class="st">"palbociclib"</span>, <span class="va">cell_id</span><span class="op">]</span></span>
+<span><span class="va">cells_grp_a</span> <span class="op">&lt;-</span> <span class="va">meta_data</span><span class="op">[</span><span class="va">res_2</span> <span class="op">==</span> <span class="st">"1"</span>, <span class="va">cell_id</span><span class="op">]</span></span>
+<span><span class="va">cells_grp_b</span> <span class="op">&lt;-</span> <span class="va">meta_data</span><span class="op">[</span><span class="va">res_2</span> <span class="op">==</span> <span class="st">"2"</span>, <span class="va">cell_id</span><span class="op">]</span></span>
 <span></span>
 <span><span class="va">dge_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/find_markers_sc.html">find_markers_sc</a></span><span class="op">(</span></span>
-<span>  object <span class="op">=</span> <span class="va">sc_object</span>,</span>
+<span>  object <span class="op">=</span> <span class="va">sce</span>,</span>
 <span>  cells_1 <span class="op">=</span> <span class="va">cells_grp_a</span>,</span>
 <span>  cells_2 <span class="op">=</span> <span class="va">cells_grp_b</span></span>
 <span><span class="op">)</span></span>
@@ -273,20 +440,23 @@
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">dge_results</span>, <span class="fl">25L</span><span class="op">)</span></span></code></pre></div>
 </div>
+<p>The data is again streamed from disk, which makes this very fast…</p>
 </section><section class="level2"><h2 id="key-differences-from-the-small-data-workflow">Key differences from the small-data workflow<a class="anchor" aria-label="anchor" href="#key-differences-from-the-small-data-workflow"></a>
 </h2>
 <p>The API surface is intentionally identical to the PBMC3k walkthrough. The meaningful differences when working at the million-cell scale are:</p>
 <ol type="1">
 <li>
-<strong>Streaming I/O.</strong> Use <code>stream_h5ad</code> instead of <code>load_h5ad</code>, and set <code>streaming = TRUE</code> on <code>gene_set_proportions_sc</code> and <code>find_hvg_sc</code>. This is VERY important. This is also what makes this package actually quite cool.</li>
+<strong>Streaming I/O.</strong> Use <code>load_mtx(..., streaming = 2L)</code> (or the equivalent on whatever loader fits your input), and the streaming behaviour propagates through <code>gene_set_proportions_sc</code> and <code>find_hvg_sc</code>. This is what makes working with this data set on a laptop possible at all.</li>
 <li>
-<strong>On-disk persistence.</strong> <code>load_existing</code> lets you reconnect to a previously streamed data set without re-reading the <code>.h5ad</code>. (Btw, works for any data.)</li>
+<strong>On-disk persistence.</strong> <code>load_existing</code> lets you reconnect to a previously streamed data set without re-reading the source. (Works for any data.)</li>
 <li>
-<strong>Sparse SVD.</strong> Automatically enabled above 500k cells; can be forced explicitly via <code>sparse_svd = TRUE</code> (slower on small data sets… Modern BLAS just eats up small matrix multiplications in <code>faer</code>).</li>
+<strong>Per-sample QC.</strong> With batches comes the need to compute outliers per sample rather than globally.</li>
 <li>
-<strong>GPU-accelerated kNN.</strong> <code>bixverse.gpu</code> provides CAGRA-based nearest neighbour search (also others) that scales comfortably to millions of cells and makes it run in a minute or so. The CPU versions are still highly optimised with SIMD and memory layouts specifically designed to avoid cache misses.</li>
+<strong>Doublet detection per sample.</strong> Scrublet (or any other doublet detection) can be run with <code>group_by</code>, which matters once capture rates differ between batches.</li>
+<li>
+<strong>GPU-accelerated PCA and kNN.</strong> <code>bixverse.gpu</code> provides GPU paths for PCA, CAGRA-based nearest neighbour search, and Harmony. The CPU versions remain highly optimised with SIMD and cache-aware memory layouts, but the GPU paths get faster as the data scales.</li>
 </ol>
-<p>For context… Running this on my machine took (MacBook Pro M1 Max with 64 GB) took a grand total of ca. 20 minutes from start to finish, with basically half of the time being spent on data I/O. Memory pressure remained green through out the whole thing.</p>
+<p>For context… The whole workflow here was run on a MacBook Air and did not cause any substantial memory pressure.</p>
 </section><script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);

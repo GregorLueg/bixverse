@@ -76,6 +76,7 @@ tempdir_cd34 <- tempdir()
 sc_object <- SingleCells(dir_data = tempdir_cd34)
 
 sc_object <- load_h5ad(object = sc_object, h5_path = cd34_path)
+#>  Using light streaming for the CSR to CSC conversion.
 #> Loading observations data from h5ad into the DuckDB.
 #> Loading variables data from h5ad into the DuckDB.
 ```
@@ -104,7 +105,7 @@ sc_object <- find_neighbours_sc(
   )
 )
 #> 
-#> Generating sNN graph (full: FALSE).
+#> Generating sNN graph (full: TRUE).
 #> Transforming sNN data to igraph.
 
 # we need the kNN object for the diffusion maps
@@ -248,6 +249,44 @@ We will also add the diffusion coordinates to this one
 seacells <- calc_diffusion_coordinates(object = seacells, knn_data = knn_object)
 ```
 
+#### SEACells on large data
+
+SEACells is quite infamous for being very slow and difficult to run on
+larger data sets. bixverse offers some tricks here which make the
+generation of SEACells feasible on large data sets:
+
+1.  The initialisation is the part of the original algorithm that scales
+    the worst. The greedy column subset selection needs a full `K^2`
+    column for every candidate cell, which is `O(N2)` and simply will
+    not finish on millions of cells. `bixverse` therefore switches
+    strategy by size: above `greedy_threshold` it drops the greedy
+    top-up and samples the archetypes at random, which is effectively
+    free. When a better-than-random start is wanted but the greedy pass
+    is still out of reach, setting `n_landmarks` enables a Nyström
+    route: a small set of density-weighted landmarks is chosen, the
+    diffusion operator is built and eigendecomposed on those landmarks
+    alone, and the multiscale embedding is then carried to all cells via
+    a Nyström extension before the usual max-min waypoint sampling. The
+    expensive eigendecomposition stays at landmark scale `L x L` instead
+    of `N x N`.
+2.  The optimisation loop itself runs in bounded memory. `K^2` is never
+    formed; every `K^2 * X` term is evaluated as `K (K x X)` so memory
+    stays bounded by the number of non-zeros in `K` rather `N^2`. The
+    Frank-Wolfe gradients are computed one column at a time and in
+    parallel, so the full `k x N` gradient never has to exist at once,
+    and pruning keeps A and B sparse across iterations.
+3.  The RSS for the convergence check is computed differently above
+    20,000 cells. Rather than materialising the `N x N` reconstruction
+    `K x B x A`, the squared residual is expanded with the trace
+    identity and evaluated through cyclic reordering, so every
+    intermediate is at most `N x k` or `k x k`. The value is the same
+    Frobenius norm, just without the dense reconstruction. Together
+    these are what made it possible to run on a million cells locally,
+    which the original implementation cannot do.
+
+If you want to run SEACells on larger data sets, these are the knobs you
+have to make this run in a reasonable time on a powerful laptop.
+
 ### SuperCells
 
 SuperCells runs walktrap on the kNN graph. The number of meta cells is
@@ -304,6 +343,40 @@ supercells <- calc_diffusion_coordinates(
 )
 ```
 
+#### SuperCells on large data
+
+SuperCell is already far cheaper than SEACells on large data: there is
+no archetypal analysis, just Walktrap community detection on the kNN
+graph. The one part that does not scale naively is the random-walk
+representation. `compute_walk_probabilities()` within the Rust code
+gives every cell a sparse vector of landing probabilities for a
+`walk_length`-step walk; on a well-connected graph these vectors spread
+to touch a large fraction of cells after only a few steps, so the store
+drifts towards dense and memory grows as `O(n × support)`.
+
+`max_support` caps this. With `max_support = k` each initial walk vector
+keeps only its `k` largest entries (the dropped tail holds negligible
+walk mass), bounding the store at roughly `k × n` regardless of how far
+the walks spread. This makes the run an approximation: the Ward merge
+criterion is driven by distances between walk vectors, and truncating
+them can shift the merge order slightly, so you may get marginally
+different communities than the exact run. With `max_support = NULL` (the
+default) the walks are kept exact. Beyond saving memory, a smaller `k`
+also speeds up every distance and merge operation, since both are linear
+in the support.
+
+``` r
+
+supercells_large <- generate_supercells_sc(
+  object = sc_object,
+  sc_supercell_params = params_sc_supercell(
+    graining_factor = 30,
+    max_support = 256L # would bound the walk vectors to 256
+  ),
+  .verbose = TRUE
+)
+```
+
 ## Metrics
 
 ### Purity
@@ -336,7 +409,7 @@ purity_dt[, .(mean = mean(purity), median = median(purity)), by = method]
 #>        method      mean    median
 #>        <char>     <num>     <num>
 #> 1:    hdWGCNA 0.8947692 1.0000000
-#> 2:   SEACells 0.9069044 1.0000000
+#> 2:   SEACells 0.9043347 1.0000000
 #> 3: SuperCells 0.8979310 0.9806216
 ```
 
@@ -461,12 +534,12 @@ metrics_dt[,
 #>        method mean_separation median_separation mean_compactness
 #>        <char>           <num>             <num>            <num>
 #> 1:    hdWGCNA       0.1255286        0.08895643      0.007053792
-#> 2:   SEACells       0.1812701        0.16665603      0.010719557
+#> 2:   SEACells       0.1757102        0.15544200      0.010682394
 #> 3: SuperCells       0.2016617        0.15913163      0.006335426
 #>    median_compactness
 #>                 <num>
 #> 1:        0.004067266
-#> 2:        0.004839745
+#> 2:        0.004824280
 #> 3:        0.003216350
 ```
 
@@ -493,9 +566,9 @@ setorder(per_region_stats, method, region)
 per_region_stats[]
 #>        method region mean_separation median_separation mean_compactness
 #>        <char> <fctr>           <num>             <num>            <num>
-#> 1:   SEACells   high      0.04082516        0.03779426     0.0006808851
-#> 2:   SEACells    mid      0.14490457        0.14926913     0.0043163556
-#> 3:   SEACells    low      0.24011688        0.21419820     0.0179080193
+#> 1:   SEACells   high      0.04515726        0.04905651     0.0007130436
+#> 2:   SEACells    mid      0.13940649        0.14085424     0.0044342592
+#> 3:   SEACells    low      0.23163398        0.21059144     0.0176287556
 #> 4: SuperCells   high      0.04950358        0.05186578     0.0006019381
 #> 5: SuperCells    mid      0.14154094        0.13623749     0.0031448643
 #> 6: SuperCells    low      0.30667216        0.25426194     0.0113716719
@@ -504,9 +577,9 @@ per_region_stats[]
 #> 9:    hdWGCNA    low      0.26961609        0.19062942     0.0168331578
 #>    median_compactness
 #>                 <num>
-#> 1:       0.0006516402
-#> 2:       0.0033217826
-#> 3:       0.0076342011
+#> 1:       0.0006717899
+#> 2:       0.0034732595
+#> 3:       0.0076465828
 #> 4:       0.0005725418
 #> 5:       0.0024108913
 #> 6:       0.0055384417
@@ -641,7 +714,7 @@ seacells <- find_neighbours_sc(
   )
 )
 #> 
-#> Generating sNN graph (full: FALSE).
+#> Generating sNN graph (full: TRUE).
 #> Transforming sNN data to igraph.
 
 seacells <- find_clusters_sc(seacells, res = 1.0, name = "leiden_clusters")
@@ -690,14 +763,15 @@ tf_dt <- data.table::fread(
   col.names = "tf"
 )
 
-vars <- get_sc_var(seacells)
-
 scenic_res <- scenic_grn_sc(
   object = seacells,
   tf_ids = tf_dt$tf,
   scenic_params = params_scenic(
     learner_type = "randomforest",
-    gene_batch_size = 64L
+    gene_batch_size = 64L,
+    # due to the small data set size, we should set 'min_samples_leaf' lower
+    # than for a massive single cell data set
+    learner_params = list(min_samples_leaf = 10L)
   ),
   .verbose = TRUE
 )
@@ -719,7 +793,7 @@ scenic_res <- identify_tf_to_genes(
 
 scenic_res <- tf_to_genes_correlations(
   x = scenic_res,
-  object = sc_object,
+  object = seacells,
   cor_filter = 0.01,
   .verbose = TRUE
 )
@@ -745,26 +819,24 @@ auc_res <- aucell_sc(
   gs_list = tf_to_gene_ls
 )
 
-umap_dt[, `:=`(IRF7 = auc_res[, "IRF7"], IRF9 = auc_res[, "IRF9"])]
+umap_dt[, `:=`(IRF1 = auc_res[, "IRF1"], TCF4 = auc_res[, "TCF4"])]
 
 p1 <- ggplot(umap_dt, aes(x = umap_1, y = umap_2)) +
-  geom_point(aes(colour = IRF7), size = 1.5) +
+  geom_point(aes(fill = IRF1), size = 2.5, shape = 21) +
   theme_bw() +
-  labs(colour = "IRF7 AUC")
+  labs(fill = "IRF1 AUC") +
+  scale_fill_viridis_c()
 
 p2 <- ggplot(umap_dt, aes(x = umap_1, y = umap_2)) +
-  geom_point(aes(colour = IRF9), size = 1.5) +
+  geom_point(aes(fill = TCF4), size = 2.5, shape = 21) +
   theme_bw() +
-  labs(colour = "IRF9 AUC")
+  labs(fill = "TCF4 AUC") +
+  scale_fill_viridis_c()
 
 p1 + p2
 ```
 
 ![](meta_cells_files/figure-html/run%20AUCell%20on%20meta%20cells-1.png)
-
-As we can appreciate, IRF7 and 9 seem more active in a subset of the
-meta cells. Other methods that could benefit from the meta cell approach
-are the correlation-based methods and/or NMF. Both on the roadmap… !
 
 ## Pseudo-bulking
 

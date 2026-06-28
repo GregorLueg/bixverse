@@ -12,8 +12,9 @@ doublet_detection_boost_sc(
   object,
   boost_params = params_boost(),
   cells_to_use = NULL,
+  group_by = NULL,
   seed = 42L,
-  streaming = FALSE,
+  streaming = NULL,
   .verbose = TRUE
 )
 ```
@@ -37,18 +38,26 @@ doublet_detection_boost_sc(
   individual batches within your data. The object returned will be
   specifically using these cells.
 
+- group_by:
+
+  Optional grouping variable. Useful if you want to run the method on a
+  per-sample basis.
+
 - seed:
 
   Integer. Random seed.
 
 - streaming:
 
-  Boolean. Shall streaming be used during the HVG calculations. Slower,
-  but less memory usage.
+  Optional Boolean. Shall the data be streamed in. Useful for larger
+  data sets where you wish to avoid loading in the whole data. If
+  `NULL`, will automatically detect.
 
 - .verbose:
 
-  Boolean. Controls verbosity of the function.
+  Boolean or integer. Controls verbosity and returns run times. `FALSE`
+  -\> quiet, `TRUE` or `1L` -\> normal verbosity, `2L` -\> detailed
+  verbosity.
 
 ## Value
 

@@ -1,6 +1,7 @@
 # Load in data directly from R objects.
 
-This function loads in data directly from R objects.
+This function loads in data directly from R objects. The counts matrix
+must be a `dgRMatrix` (rows = cells, columns = genes).
 
 ## Usage
 
@@ -11,8 +12,10 @@ load_r_data(
   obs,
   var,
   sc_qc_param = params_sc_min_quality(),
+  streaming = 1L,
   batch_size = 1000L,
-  streaming = TRUE,
+  max_genes_in_memory = 2000L,
+  cell_batch_size = 100000L,
   .verbose = TRUE
 )
 ```
@@ -25,18 +28,18 @@ load_r_data(
 
 - counts:
 
-  Sparse matrix. The cells represent the rows, the genes the indices.
-  Needs to be `"dgRMatrix"`.
+  Sparse matrix. The cells represent the rows, the genes the columns.
+  Needs to be a `"dgRMatrix"`.
 
 - obs:
 
-  data.table. The data.table representing the observations, i.e., cell
-  information.
+  data.table. Cell metadata. Must have one row per cell in the same
+  order as `counts`.
 
 - var:
 
-  data.table. The data.table representing the features, i.e., the
-  feature information.
+  data.table. Feature metadata. Must have one row per gene in the same
+  order as `counts`.
 
 - sc_qc_param:
 
@@ -55,15 +58,24 @@ load_r_data(
 
   - target_size - Float. Target size to normalise to. Defaults to `1e5`.
 
-- batch_size:
-
-  Integer. If `streaming = TRUE`, how many cells to process in one
-  batch. Defaults to `1000L`.
-
 - streaming:
 
-  Boolean. Shall the data be streamed during the conversion of CSR to
-  CSC. Defaults to `TRUE` and should be used for larger data sets.
+  Integer. CSR-to-CSC conversion mode. `0L` -\> in-memory (fastest,
+  highest memory), `1L` -\> light streaming with cell batching, `2L` -\>
+  heavy streaming with memory upper boundaries. Defaults to `1L`.
+
+- batch_size:
+
+  Integer. Cell batch size when `streaming = 1L`. Defaults to `1000L`.
+
+- max_genes_in_memory:
+
+  Integer. Maximum genes held in memory at once when `streaming = 2L`.
+  Defaults to `2000L`.
+
+- cell_batch_size:
+
+  Integer. Cell batch size when `streaming = 2L`. Defaults to `100000L`.
 
 - .verbose:
 

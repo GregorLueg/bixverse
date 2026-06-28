@@ -46,7 +46,9 @@ calc_diffusion_coordinates(
 
 - .verbose:
 
-  Boolean. Controls verbosity.
+  Boolean or integer. Controls verbosity and returns run times. `FALSE`
+  -\> quiet, `TRUE` or `1L` -\> normal verbosity, `2L` -\> detailed
+  verbosity.
 
 ## Value
 

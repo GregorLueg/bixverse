@@ -1,7 +1,7 @@
 # Run ICA with cross-validation and random initialsiation
 
-This function will split the data into `no_folds` and apply ICA with
-`no_random_inits` over that fold.
+**\[experimental\]** This function will split the data into `no_folds`
+and apply ICA with `no_random_inits` over that fold.
 
 ## Usage
 

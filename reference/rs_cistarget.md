@@ -1,6 +1,7 @@
 # Run CisTarget motif enrichment analysis
 
-Core Rust function for motif enrichment analysis using recovery curves.
+**\[experimental\]** Core Rust function for motif enrichment analysis
+using recovery curves.
 
 ## Usage
 

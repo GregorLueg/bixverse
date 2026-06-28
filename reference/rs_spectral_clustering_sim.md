@@ -1,6 +1,7 @@
 # Rust implementation of spectral clustering
 
-Spectral clustering on a pre-calculated similarity matrix.
+**\[experimental\]** Spectral clustering on a pre-calculated similarity
+matrix.
 
 ## Usage
 

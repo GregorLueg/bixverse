@@ -1,6 +1,6 @@
 # Identifies genes to include into a SCENIC analysis
 
-Identifies genes to include into a SCENIC analysis
+**\[experimental\]**
 
 ## Usage
 
@@ -25,7 +25,8 @@ rs_scenic_gene_filter(f_path_genes, cell_indices, scenic_params, verbose)
 
 - verbose:
 
-  Boolean. Controls the verbosity of the function.
+  Integer. `0L` - quiet; `1L` - normal verbosity; `2L` - detailed
+  verbosity.
 
 ## Value
 

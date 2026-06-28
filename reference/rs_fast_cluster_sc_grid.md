@@ -1,10 +1,10 @@
 # Runs fast Louvain cluster on the data (with multiple seeds)
 
-Runs first k-means clustering, followed by a kNN detection on the
-centroids to then run Louvain clustering with several seeds (based on
-the original one) on the graph and propagate the membership back to the
-original data. Returns additional metrics around cluster stability and
-community conductance.
+**\[experimental\]** Runs first k-means clustering, followed by a kNN
+detection on the centroids to then run Louvain clustering with several
+seeds (based on the original one) on the graph and propagate the
+membership back to the original data. Returns additional metrics around
+cluster stability and community conductance.
 
 ## Usage
 
@@ -62,7 +62,8 @@ rs_fast_cluster_sc_grid(
 
 - verbose:
 
-  Boolean. Controls the verbosity of the function.
+  Integer. `0L` - quiet; `1L` - normal verbosity; `2L` - detailed
+  verbosity.
 
 ## Value
 

@@ -1,9 +1,7 @@
-# Calculate the column wise correlations.
+# Calculate the column wise correlations and returns the upper triangle
 
-Calculates the correlation matrix of the columns. This function will
-return the upper triangle. WARNING! Incorrect use can cause kernel
-crashes. Wrapper around the Rust functions with type checks are provided
-in the package.
+**\[experimental\]** Calculates the correlation matrix of the columns,
+but returns the upper triangle only as a flat vector.
 
 ## Usage
 
@@ -23,8 +21,9 @@ rs_cor_upper_triangle(x, spearman, shift)
 
 - shift:
 
-  Shall a shift be applied to the matrix. 0 = the diagonal will be
-  included. 1 = the diagonal will not be included.
+  Boolean. If you applied a shift, i.e. included the diagonal values. If
+  `true`, assumes the diagonal values are `1`, otherwise derives them
+  from the data.
 
 ## Value
 

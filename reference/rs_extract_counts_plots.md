@@ -1,6 +1,6 @@
 # Helper to extract single cell counts as a dense vector for plotting
 
-Helper to extract single cell counts as a dense vector for plotting
+**\[experimental\]** Extract dense counts for this given gene.
 
 ## Usage
 

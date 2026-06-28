@@ -14,7 +14,7 @@ aucell_sc(
   object,
   gs_list,
   auc_type = c("wilcox", "auroc"),
-  streaming = FALSE,
+  streaming = NULL,
   .verbose = TRUE
 )
 ```
@@ -37,12 +37,16 @@ aucell_sc(
 
 - streaming:
 
-  Boolean. Shall the cell data be streamed in. Useful for larger data
-  sets. Ignored when applied to `MetaCells`.
+  Optional Boolean. Shall the data be streamed in. Useful for larger
+  data sets where you wish to avoid loading in the whole data. If
+  `NULL`, will automatically detect. Ignored when applied to
+  `MetaCells`.
 
 - .verbose:
 
-  Boolean. Controls the verbosity of the function.
+  Boolean or integer. Controls verbosity and returns run times. `FALSE`
+  -\> quiet, `TRUE` or `1L` -\> normal verbosity, `2L` -\> detailed
+  verbosity.
 
 ## Value
 

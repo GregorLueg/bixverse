@@ -46,9 +46,9 @@ Initialises the R6 class.
 
 - `shift`:
 
-  Integer. Was a shift applied during the calculation of the upper
-  triangular matrix. Typically 0 (diagonal included) or 1 (diagonal not
-  included)
+  Bollean Was a shift applied during the calculation of the upper
+  triangular matrix. If `FALSE`, the diagonal was included, if `TRUE`,
+  the diagonal was removed.
 
 #### Returns
 

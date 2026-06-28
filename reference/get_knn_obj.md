@@ -6,16 +6,16 @@ is used for the single cell-related classes and methods.
 ## Usage
 
 ``` r
-get_knn_obj(x)
+get_knn_obj(x, ...)
 
 ## S7 method for class <bixverse::MetaCells>
-get_knn_obj(x)
+get_knn_obj(x, ...)
 
 # S3 method for class 'ScCache'
-get_knn_obj(x)
+get_knn_obj(x, ...)
 
 ## S7 method for class <bixverse::SingleCells>
-get_knn_obj(x)
+get_knn_obj(x, ...)
 ```
 
 ## Arguments
@@ -23,6 +23,10 @@ get_knn_obj(x)
 - x:
 
   An object to get the KNN class from.
+
+- ...:
+
+  Other parameters.
 
 ## Value
 

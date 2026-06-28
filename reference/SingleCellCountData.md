@@ -1,319 +1,711 @@
-# A class for handling single cell count data
+# Single cell count data handler
 
-### Params
+**\[experimental\]** A class for handling single cell count data stored
+on disk in two complementary binary representations: a CSR-like layout
+(`f_path_cells`) for fast cell-wise access and a CSC-like layout
+(`f_path_genes`) for fast gene-wise access. Both raw counts and
+log-normalised counts are stored side by side. Provides methods for
+ingesting data from R, `h5ad`, and `mtx` sources (including multi-file
+workflows), converting between layouts, retrieving slices of the matrix,
+and merging existing binary objects.
 
-## Usage
+## Arguments
 
-``` r
-SingleCellCountData
-```
+- f_path_cells:
 
-## Details
+  (`character`)  
+  Path to the `.bin` file for the cell-based (CSR-like) representation.
 
-- `f_path_cells` - Path to the .bin file for the cells.
+- f_path_genes:
 
-- `f_path_genes` - Path to the .bin file for the genes.
+  (`character`)  
+  Path to the `.bin` file for the gene-based (CSC-like) representation.
 
-- `n_cells` - No of cells represented in the data.
+- n_cells:
 
-- `n_genes` - No of genes represented in the data.
+  (`integer`)  
+  Number of cells represented in the data.
+
+- n_genes:
+
+  (`integer`)  
+  Number of genes represented in the data.
+
+## Value
+
+A new instance of the `SingleCellCountData` class.
 
 ## Methods
 
 ### Method `new`
 
-Create new instance of the class
+Create a new instance of the class
 
-#### Params
+#### Arguments
 
-- `f_path_cells` - Path to the .bin file for the cells.
+- `f_path_cells`:
 
-- `f_path_genes` - Path to the .bin file for the genes.
+  (`character`)  
+  Path to the `.bin` file for the cell-based representation.
 
-#### Method `get_shape`
+- `f_path_genes`:
 
-Get the shape
+  (`character`)  
+  Path to the `.bin` file for the gene-based representation.
 
-#### Returns
+#### return
 
-Vector with rows x cells
+A new `SingleCellCountData` instance with `n_cells` and `n_genes`
+initialised to zero.
 
-#### Method `r_data_to_file`
+### Method `get_shape`
 
-Write data from R CSR to disk
+Get the shape of the matrix
 
-Helper function to write CSR matrices from R to disk.
+#### return
 
-#### Params
+An integer vector `c(n_cells, n_genes)`.
 
-- `r_data` - A list that can be transformed into CompressedSparseData2.
-  Needs to have following elements: `"indptr"`, `"indices"`, `"data"`,
-  `"nrow"`, `"ncol"` and `"format"`.
+### Method `set_from_file`
 
-- `qc_params` - List with the quality control parameters.
+Populate `n_cells` and `n_genes` from the cells binary file
 
-- `verbose` - Controls verbosity of the function.
+#### description
 
-#### Returns
+Reads the header of the file at `f_path_cells` and updates the `n_cells`
+and `n_genes` fields accordingly. Useful when reconnecting to an
+existing object on disk.
 
-A list with QC parameters.
+#### return
 
-#### Method `h5_to_file`
+Invisible `NULL`.
 
-Save h5 to file
+### Method `r_data_to_file`
 
-#### Params
+Write a CSR matrix from R to the cells binary file
 
-- `cs_type` - How was the h5 data saved. CSC or CSR.
+#### Arguments
 
-- `h5_path` - Path to the h5 file.
+- `r_data`:
 
-- `no_cells` - Number of cells in the h5 file.
+  (`list`)  
+  A list convertible into `CompressedSparseData2`. Must contain the
+  elements `"indptr"`, `"indices"`, `"data"`, `"nrow"`, `"ncol"` and
+  `"format"`.
 
-- `no_genes` - Number of genes in the h5 file.
+- `qc_params`:
 
-- `qc_params` - List with the quality control parameters.
+  (`list`)  
+  Quality control parameters parseable into `MinCellQuality`.
 
-- `verbose` - Controls verbosity of the function.
+- `verbose`:
 
-#### Returns
+  (`logical`)  
+  Controls verbosity of the function.
 
-A list with qc parameters.
+#### description
 
-#### Method `norm_h5_to_file`
+Ingest a sparse matrix passed in from R, apply per-cell QC, and write
+the result to `f_path_cells`.
 
-Save h5 with normalised counts to file
+#### return
 
-For datasets where only normalised counts are available in X. Reads
-library sizes from a specified obs column to reconstruct raw counts.
+A list with `cell_indices`, `gene_indices`, `lib_size` and `nnz`.
 
-#### Params
+### Method `h5ad_to_file`
 
-- `cs_type` - How was the h5 data saved. CSC or CSR.
+Write an h5ad file to the cells binary file
 
-- `h5_path` - Path to the h5 file.
+#### Arguments
 
-- `no_cells` - Number of cells in the h5 file.
+- `cs_type`:
 
-- `no_genes` - Number of genes in the h5 file.
+  (`character`)  
+  Storage layout of the h5ad data. One of `"CSC"` or `"CSR"`.
 
-- `obs_lib_size_col` - Name of the obs column containing total counts
-  per cell (e.g. "nCount_RNA").
+- `h5_path`:
 
-- `target_size` - Target size used in the original normalisation (e.g.
-  1e4).
+  (`character`)  
+  Path to the h5ad file.
 
-- `qc_params` - List with the quality control parameters.
+- `no_cells`:
 
-- `verbose` - Controls verbosity of the function.
+  (`integer`)  
+  Number of cells in the h5ad file.
 
-#### Returns
+- `no_genes`:
 
-A list with qc parameters.
+  (`integer`)  
+  Number of genes in the h5ad file.
 
-#### Method `h5_to_file_streaming`
+- `qc_params`:
 
-Save h5 to file
+  (`list`)  
+  Quality control parameters parseable into `MinCellQuality`.
 
-Slower version that is less memory heavy and will make usage of
-streaming where possible.
+- `slot`:
 
-#### Params
+  (`character`)  
+  Where to find the raw counts. One of `"X"` or `"raw.X"` (for CellXGene
+  data).
 
-- `cs_type` - How was the h5 data saved. CSC or CSR.
+- `verbose`:
 
-- `h5_path` - Path to the h5 file.
+  (`logical`)  
+  Controls verbosity of the function.
 
-- `no_cells` - Number of cells in the h5 file.
+#### return
 
-- `no_genes` - Number of genes in the h5 file.
+A list with `cell_indices`, `gene_indices`, `lib_size` and `nnz`.
 
-- `qc_params` - List with the quality control parameters.
+### Method `norm_h5ad_to_file`
 
-- `verbose` - Controls verbosity of the function.
+Write an h5ad file with normalised counts to the cells binary file
 
-#### Returns
+#### Arguments
 
-A list with qc parameters.
+- `cs_type`:
 
-#### Method `multi_h5_to_file`
+  (`character`)  
+  Storage layout of the h5 data. One of `"CSC"` or `"CSR"`.
+
+- `h5_path`:
+
+  (`character`)  
+  Path to the h5 file.
+
+- `no_cells`:
+
+  (`integer`)  
+  Number of cells in the h5 file.
+
+- `no_genes`:
+
+  (`integer`)  
+  Number of genes in the h5 file.
+
+- `obs_lib_size_col`:
+
+  (`character`)  
+  Name of the `obs` column containing total counts per cell (e.g.
+  `"nCount_RNA"`).
+
+- `target_size`:
+
+  (`numeric`)  
+  Target size used in the original normalisation (e.g. `1e4`).
+
+- `qc_params`:
+
+  (`list`)  
+  Quality control parameters parseable into `MinCellQuality`.
+
+- `verbose`:
+
+  (`logical`)  
+  Controls verbosity of the function.
+
+#### description
+
+For data sets where only normalised counts are available in `X`. Reads
+library sizes from a specified `obs` column to reconstruct raw counts
+before writing.
+
+#### return
+
+A list with `cell_indices`, `gene_indices`, `lib_size` and `nnz`.
+
+### Method `h5ad_to_file_streaming`
+
+Write an h5ad file to disk using streaming
+
+#### Arguments
+
+- `cs_type`:
+
+  (`character`)  
+  Storage layout of the h5 data. One of `"CSC"` or `"CSR"`.
+
+- `h5_path`:
+
+  (`character`)  
+  Path to the h5 file.
+
+- `no_cells`:
+
+  (`integer`)  
+  Number of cells in the h5 file.
+
+- `no_genes`:
+
+  (`integer`)  
+  Number of genes in the h5 file.
+
+- `qc_params`:
+
+  (`list`)  
+  Quality control parameters parseable into `MinCellQuality`.
+
+- `slot`:
+
+  (`character`)  
+  Where to find the raw counts. One of `"X"` or `"raw.X"` (for CellXGene
+  data).
+
+- `verbose`:
+
+  (`logical`)  
+  Controls verbosity of the function.
+
+#### description
+
+Slower but lighter on memory than `h5ad_to_file`; streams the input
+where possible.
+
+#### return
+
+A list with `cell_indices`, `gene_indices`, `lib_size` and `nnz`.
+
+### Method `multi_h5ad_to_file`
 
 Load multiple h5ad files into a single binary
 
-#### Params
+#### Arguments
 
-- `file_tasks` - R list of lists, each produced by the R prescan
-  function. Each inner list must contain: exp_id, h5_path, cs_type,
-  no_cells, no_genes, gene_local_to_universe.
+- `file_tasks`:
 
-- `universe_size` - Total number of genes in the universe.
+  (`list`)  
+  A list of lists, each produced by the R prescan function. Each inner
+  list must contain `exp_id`, `h5_path`, `cs_type`, `no_cells`,
+  `no_genes` and `gene_local_to_universe`.
 
-- `qc_params` - List with QC parameters (min_unique_genes, min_lib_size,
-  min_cells, target_size).
+- `universe_size`:
 
-- `verbose` - Controls verbosity.
+  (`integer`)  
+  Total number of genes in the universe.
 
-#### Returns
+- `qc_params`:
 
-A list with: global_gene_indices, total_cells, total_genes, per_file
-(list of lists with exp_id, cell_indices, lib_size, nnz).
+  (`list`)  
+  Quality control parameters (`min_unique_genes`, `min_lib_size`,
+  `min_cells`, `target_size`).
 
-#### Method `mtx_to_file`
+- `verbose`:
 
-Save mtx to file
+  (`logical`)  
+  Controls verbosity.
 
-#### Params
+#### return
 
-- `mtx_path` - Path to the mtx file.
+A list with `global_gene_indices`, `total_cells`, `total_genes` and
+`per_file` (a list of lists with `exp_id`, `cell_indices`, `lib_size`,
+`nnz`).
 
-- `qc_params` - List with the quality control parameters.
+### Method `mtx_to_file`
 
-- `cells_as_rows` - Do the cells represent rows (= TRUE) or columns.
+Write an mtx file to the cells binary file
 
-- `verbose` - Controls verbosity of the function.
+#### Arguments
 
-#### Returns
+- `mtx_path`:
 
-A list with qc parameters.
+  (`character`)  
+  Path to the mtx file.
 
-#### Method `mtx_to_file_streaming`
+- `qc_params`:
 
-Save mtx to file - streaming version
+  (`list`)  
+  Quality control parameters parseable into `MinCellQuality`.
 
-#### Params
+- `cells_as_rows`:
 
-- `mtx_path` - Path to the mtx file.
+  (`logical`)  
+  `TRUE` if cells are rows in the mtx file, `FALSE` if cells are
+  columns.
 
-- `qc_params` - List with the quality control parameters.
+- `verbose`:
 
-- `cells_as_rows` - Do the cells represent rows (= TRUE) or columns.
+  (`logical`)  
+  Controls verbosity of the function.
 
-- `verbose` - Controls verbosity of the function.
+#### return
 
-#### Returns
+A list with `cell_indices`, `gene_indices`, `lib_size` and `nnz`.
 
-A list with qc parameters.
+### Method `mtx_to_file_streaming`
 
-#### Method `return_full_mat`
+Write an mtx file to the cells binary file using streaming
 
-Returns the full matrix
+#### Arguments
 
-#### Params
+- `mtx_path`:
 
-- `assay` - String. Return the raw counts or log-normalised counts. One
-  of `"raw"` or `"norm"`.
+  (`character`)  
+  Path to the mtx file.
 
-- `cell_based` - Boolean. Shall the data be returned in CSR or CSC.
+- `qc_params`:
 
-- `verbose` - Boolean. Verbosity of the function.
+  (`list`)  
+  Quality control parameters parseable into `MinCellQuality`.
 
-#### Returns
+- `cells_as_rows`:
 
-An R list with all of the info that was stored in the .bin file
+  (`logical`)  
+  `TRUE` if cells are rows in the mtx file, `FALSE` if cells are
+  columns.
 
-#### Method `get_cells_by_indices`
+- `verbose`:
+
+  (`logical`)  
+  Controls verbosity of the function.
+
+#### return
+
+A list with `cell_indices`, `gene_indices`, `lib_size` and `nnz`.
+
+### Method `multi_mtx_to_file`
+
+Load multiple mtx files into a single binary
+
+#### Arguments
+
+- `file_tasks`:
+
+  (`list`)  
+  A list of lists, each containing `exp_id`, `mtx_path`, `cells_as_rows`
+  and `gene_local_to_universe` (integer vector, `NA` for unmapped
+  genes).
+
+- `universe_size`:
+
+  (`integer`)  
+  Number of genes in the intersection universe.
+
+- `qc_params`:
+
+  (`list`)  
+  Quality control parameters parseable into `MinCellQuality`.
+
+- `verbose`:
+
+  (`logical`)  
+  Controls verbosity.
+
+#### return
+
+A list with `global_gene_indices`, `total_cells`, `total_genes` and
+`per_file` (a list of lists with `exp_id`, `cell_indices`, `lib_size`,
+`nnz`).
+
+### Method `tenx_h5_to_file_streaming`
+
+Write a 10x CellRanger h5 file to the cells binary file using streaming
+
+#### Arguments
+
+- `h5_path`:
+
+  (`character`)  
+  Path to the 10x h5 file.
+
+- `version`:
+
+  (`character`)  
+  One of `"auto"`, `"v2"` or `"v3"`. `"auto"` detects the layout from
+  the file.
+
+- `no_cells`:
+
+  (`integer`)  
+  Number of cells (columns) in the file.
+
+- `no_genes`:
+
+  (`integer`)  
+  Number of features (rows), including all modalities.
+
+- `qc_params`:
+
+  (`list`)  
+  Quality control parameters parseable into `MinCellQuality`.
+
+- `feature_type`:
+
+  (`character` or `NULL`)  
+  Target modality for v3. Defaults to `"Gene Expression"` when `NULL`.
+
+- `verbose`:
+
+  (`logical`)  
+  Controls verbosity of the function.
+
+#### description
+
+Ingests the gene-expression modality from a CellRanger v2/v3 h5 file.
+Other modalities (e.g. Antibody Capture) are filtered out via
+`feature_type`.
+
+#### return
+
+A list with `cell_indices`, `gene_indices`, `lib_size` and `nnz`.
+
+### Method `multi_tenx_h5_to_file`
+
+Load multiple 10x CellRanger h5 files into a single binary
+
+#### Arguments
+
+- `file_tasks`:
+
+  (`list`)  
+  A list of lists, each produced by the R prescan function. Each inner
+  list must contain `exp_id`, `h5_path`, `version` (`"v2"` or `"v3"`),
+  `no_cells`, `no_genes`, `gene_local_to_universe` (integer vector, `NA`
+  for unmapped / non-gene features) and `feature_type` (optional string,
+  defaults to `"Gene Expression"`).
+
+- `universe_size`:
+
+  (`integer`)  
+  Total number of genes in the universe.
+
+- `qc_params`:
+
+  (`list`)  
+  Quality control parameters (`min_unique_genes`, `min_lib_size`,
+  `min_cells`, `target_size`).
+
+- `verbose`:
+
+  (`logical`)  
+  Controls verbosity.
+
+#### return
+
+A list with `global_gene_indices`, `total_cells`, `total_genes` and
+`per_file` (a list of lists with `exp_id`, `cell_indices`, `lib_size`,
+`nnz`).
+
+### Method `return_full_mat`
+
+Return the full count matrix
+
+#### Arguments
+
+- `assay`:
+
+  (`character`)  
+  One of `"raw"` or `"norm"`. Selects whether raw counts or
+  log-normalised counts are returned.
+
+- `cell_based`:
+
+  (`logical`)  
+  If `TRUE`, the data is returned in CSR layout (cells as rows). If
+  `FALSE`, the data is returned in CSC layout (genes as columns).
+
+- `verbose`:
+
+  (`logical`)  
+  Controls verbosity of the function.
+
+#### return
+
+A list with `indptr`, `indices`, `data`, `no_cells` and `no_genes`,
+parseable into a sparse matrix in R.
+
+### Method `get_cells_by_indices`
 
 Return cells by index positions
 
-Leverages the CSR-stored data for fast cell retrieval
+#### Arguments
 
-#### Params
+- `indices`:
 
-- `indices` - The cell indices which to return (1-indexed).
+  (`integer`)  
+  The cell indices to return (1-indexed).
 
-- `assay` - Shall the raw or norm counts be returned
+- `assay`:
 
-#### Returns
+  (`character`)  
+  One of `"raw"` or `"norm"`.
 
-A list that can be parsed into a CSR matrix in R
+#### description
 
-#### Method `generate_gene_based_data`
+Leverages the CSR-stored data for fast cell retrieval.
 
-Transforms already written cell data also into the gene data
+#### return
 
-This function will read the .bin file at `self.f_path_cells` and
-transform the data into the gene-based file format. This happens for the
-full data set in memory and might cause memory pressure, pending the
-size of the data.
+A list with `indptr`, `indices`, `data`, `no_cells` and `no_genes`,
+parseable into a CSR matrix in R.
 
-#### Params
+### Method `generate_gene_based_data`
 
-- `qc_params` - List with the quality control parameters.
+Generate gene-based data from the cells binary file
 
-- `verbose` - Controls verbosity of the function.
+#### Arguments
 
-#### Method `generate_gene_based_data_streaming`
+- `verbose`:
 
-Generate gene-based data with streaming to reduce memory pressure
+  (`logical`)  
+  Controls verbosity of the function.
 
-This approach builds CSC format directly without creating intermediate
-CSR structures. Ideal for very large data sets.
+#### description
 
-#### Params
+Reads the `.bin` file at `f_path_cells` and writes a gene-friendly (CSC)
+representation to `f_path_genes`. The conversion happens fully in memory
+and may cause memory pressure on large data sets; see
+`generate_gene_based_data_streaming` or
+`generate_gene_based_data_memory_bounded` for lighter alternatives.
 
-- `batch_size` - Size of the batch to process in one go. The larger, the
-  more memory pressure will occur.
+#### return
 
-- `verbose` - Controls verbosity of the function.
+Invisible `NULL`.
 
-#### Method `generate_gene_based_data_memory_bounded`
+### Method `generate_gene_based_data_streaming`
+
+Generate gene-based data with streaming
+
+#### Arguments
+
+- `batch_size`:
+
+  (`integer`)  
+  Number of cells processed per batch. Larger values increase memory
+  pressure but reduce overhead.
+
+- `verbose`:
+
+  (`logical`)  
+  Controls verbosity of the function.
+
+#### description
+
+Builds the CSC representation directly without creating intermediate CSR
+structures. Suitable for very large data sets where the all-in- memory
+path is too costly.
+
+#### return
+
+Invisible `NULL`.
+
+### Method `generate_gene_based_data_memory_bounded`
 
 Generate gene-based data with memory-bounded accumulation
 
-This processes genes in phases to limit memory usage. Each phase:
+#### Arguments
 
-1.  Reads all cells (unavoidable for CSC conversion)
+- `max_genes_in_memory`:
 
-2.  Only accumulates data for genes in current phase
+  (`integer`)  
+  Maximum number of genes to accumulate at once (e.g. `2000`).
 
-3.  Writes those genes to disk
+- `cell_batch_size`:
 
-4.  Clears memory and moves to next phase
+  (`integer`)  
+  Number of cells to process at once (e.g. `100000`).
 
-#### Params
+- `verbose`:
 
-- `max_genes_in_memory` - Maximum genes to accumulate at once (e.g.,
-  2000)
+  (`logical`)  
+  Controls verbosity.
 
-- `cell_batch_size` - How many cells to process at once (e.g., 100000)
+#### description
 
-- `verbose` - Controls verbosity
+Processes genes in phases to cap memory usage. Each phase:
 
-#### Method `get_genes_by_indices`
+1.  reads all cells (unavoidable for CSC conversion);
+
+2.  only accumulates data for genes in the current phase;
+
+3.  writes those genes to disk;
+
+4.  clears memory and moves to the next phase.
+
+#### return
+
+Invisible `NULL`.
+
+### Method `get_genes_by_indices`
 
 Return genes by index positions
 
-Leverages the CSC-stored data for fast gene retrieval
+#### Arguments
 
-#### Params
+- `indices`:
 
-- `indices` - The gene indices which to return (1-indexed).
+  (`integer`)  
+  The gene indices to return (1-indexed).
 
-- `assay` - Shall the raw or norm counts be returned
+- `assay`:
 
-#### Returns
+  (`character`)  
+  One of `"raw"` or `"norm"`.
 
-A list that can be parsed into a CSC matrix in R
+#### description
 
-#### Method `set_from_file`
+Leverages the CSC-stored data for fast gene retrieval.
 
-Set cell numbers and genes
+#### return
 
-#### Params
+A list with `indptr`, `indices`, `data`, `no_cells` and `no_genes`,
+parseable into a CSC matrix in R.
 
-- `cell_no` - No of cells
+### Method `get_nnz_genes`
 
-- `gene_no` - No of genes
+Get the number of cells expressing each gene
 
-#### Method `get_nnz_genes`
+#### Arguments
 
-Helper function to get the number of cells expressing a gene
+- `gene_indices`:
 
-#### Params
-
-- `gene_indices` - Optional gene indices (1-indexed!). If None, returns
+  (`integer` or `NULL`)  
+  Optional 1-indexed gene indices. If `NULL`, results are returned for
   all genes.
 
-#### Returns
+#### return
 
-A vector of NNZ for the genes.
+An integer vector of NNZ counts for the requested genes.
+
+### Method `merge_sc_files`
+
+Merge multiple existing bin files into the cells binary file
+
+#### Arguments
+
+- `merge_tasks`:
+
+  (`list`)  
+  A list of lists. Each inner list must contain `exp_id`,
+  `bin_cells_path`, `cells_to_keep` (0-indexed integer vector) and
+  `gene_local_to_universe` (integer vector, `-1` for genes absent from
+  the universe).
+
+- `universe_size`:
+
+  (`integer`)  
+  Number of genes in the intersection universe.
+
+- `renormalise`:
+
+  (`logical`)  
+  If `TRUE`, recompute `data_norm` against `target_size` using each
+  cell's surviving raw counts. If `FALSE`, pass `data_norm` through
+  untouched; the caller must guarantee all inputs were normalised
+  against the same `target_size`.
+
+- `target_size`:
+
+  (`numeric`)  
+  Target library size for renormalisation. Ignored when
+  `renormalise = FALSE`.
+
+- `verbose`:
+
+  (`logical`)  
+  Controls verbosity.
+
+#### return
+
+A list with `total_cells`, `total_genes` and `per_file` (a list of lists
+with `exp_id`, `lib_size`, `nnz`).

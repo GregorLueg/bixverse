@@ -1,6 +1,6 @@
 # Pseudo-bulk a set of cells (sparse)
 
-This function will return a sparse matrix of
+**\[experimental\]** This function will return a sparse matrix of
 `length(cell_indices_ls) x number of genes` (in list form in CSR). The
 function has the option to return the sum of the sum of the raw counts
 or the average of the normalised counts.
@@ -28,7 +28,8 @@ rs_pseudobulk_cells_sparse(f_path, cell_indices_ls, assay, verbose)
 
 - verbose:
 
-  Controls verbosity of the function
+  Integer. `0L` - quiet; `1L` - normal verbosity; `2L` - detailed
+  verbosity.
 
 ## Value
 

@@ -1,6 +1,6 @@
 # Calculate MAD outlier detection in Rust.
 
-Calculate MAD outlier detection in Rust.
+**\[experimental\]**
 
 ## Usage
 

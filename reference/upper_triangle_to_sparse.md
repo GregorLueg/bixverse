@@ -17,7 +17,7 @@ upper_triangle_to_sparse(upper_triangle_vals, shift, n, type = c("csc", "csr"))
 
 - shift:
 
-  Integer. Did you shift the diagonal up.
+  Boolean. Did you exclude the diagonal.
 
 - n:
 

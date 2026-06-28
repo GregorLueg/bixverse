@@ -1,10 +1,11 @@
 # Generate meta cells (hdWGCNA method)
 
-This function implements the approach from Morabito, et al. to generate
-meta cells. You can provide an already pre-computed kNN matrix or an
-embedding to regenerate the kNN matrix with specified parameters in the
-meta_cell_params. If `knn_mat` is provided, this one will be used. You
-need to at least provide `knn_mat` or `embd`!
+**\[experimental\]** This function implements the approach from
+Morabito, et al. to generate meta cells. You can provide an already
+pre-computed kNN matrix or an embedding to regenerate the kNN matrix
+with specified parameters in the meta_cell_params. If `knn_mat` is
+provided, this one will be used. You need to at least provide `knn_mat`
+or `embd`!
 
 ## Usage
 
@@ -58,10 +59,6 @@ rs_get_metacells_bootstrapped(
 
   Numeric. Target library size for re-normalisation of the meta cells.
   Typically `1e4`.
-
-- seed:
-
-  Integer. For reproducibility purposes.
 
 - verbose:
 

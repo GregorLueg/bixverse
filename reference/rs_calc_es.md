@@ -1,6 +1,6 @@
 # Calculates the traditional GSEA enrichment score
 
-Calculates the traditional GSEA enrichment score
+**\[experimental\]**
 
 ## Usage
 

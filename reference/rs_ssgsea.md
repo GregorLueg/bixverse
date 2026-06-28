@@ -1,8 +1,8 @@
 # Rust version of the ssGSEA algorithm
 
-Rust-based implementation of the popular single sample GSEA algorithm.
-Has further performance optimisations compared to the original
-implementation.
+**\[experimental\]** Rust-based implementation of the popular single
+sample GSEA algorithm. Has further performance optimisations compared to
+the original implementation.
 
 ## Usage
 

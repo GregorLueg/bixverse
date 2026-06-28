@@ -1,6 +1,6 @@
 # Calculates the Hamming distance between categorical columns
 
-Calculates the Hamming distance between categorical columns
+**\[experimental\]**
 
 ## Usage
 

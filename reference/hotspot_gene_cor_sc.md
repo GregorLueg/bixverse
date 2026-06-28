@@ -9,11 +9,13 @@ calculate the local gene-gene correlations and their Z-scores.
 hotspot_gene_cor_sc(
   object,
   embd_to_use = "pca",
+  use_knn = TRUE,
   hotspot_params = params_sc_hotspot(),
   no_embd_to_use = NULL,
   cells_to_take = NULL,
   genes_to_take = NULL,
-  streaming = FALSE,
+  streaming = NULL,
+  working_mem_gb = 4,
   random_seed = 42L,
   .verbose = TRUE
 )
@@ -28,6 +30,12 @@ hotspot_gene_cor_sc(
 - embd_to_use:
 
   String. The embedding to use. Defaults to `"pca"`.
+
+- use_knn:
+
+  Boolean. Shall the internal kNN be used. If set to yes, you need to
+  ensure consistency. If you provide `cells_to_take`, the function will
+  regenerate the kNN graph with these cells.
 
 - hotspot_params:
 
@@ -61,7 +69,17 @@ hotspot_gene_cor_sc(
 
 - streaming:
 
-  Boolean. Shall the data be streamed in. Useful for larger data sets.
+  Optional Boolean. Shall the data be streamed in. Useful for larger
+  data sets where you wish to avoid loading in the whole data. If
+  `NULL`, will automatically detect.
+
+- working_mem_gb:
+
+  Numeric. Approximate working memory (GB) the streaming pair path may
+  use for resident gene panels. Ignored when `streaming` is `FALSE`.
+  Larger values mean fewer disk re-reads. Note this excludes the two
+  dense N_genes x N_genes output matrices, which scale with
+  `genes_to_use`. Defaults to `4` (4 GB of memory allocated).
 
 - random_seed:
 
@@ -69,7 +87,9 @@ hotspot_gene_cor_sc(
 
 - .verbose:
 
-  Boolean. Controls verbosity of the function.
+  Boolean or integer. Controls verbosity and returns run times. `FALSE`
+  -\> quiet, `TRUE` or `1L` -\> normal verbosity, `2L` -\> detailed
+  verbosity.
 
 ## Value
 

@@ -1,6 +1,7 @@
 # Fast AUC calculation
 
-This function calculates rapidly AUCs based on an approximation.
+**\[experimental\]** This function calculates rapidly AUCs based on an
+approximation.
 
 ## Usage
 

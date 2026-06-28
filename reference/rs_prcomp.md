@@ -1,12 +1,12 @@
 # Rust implementation of prcomp
 
-Runs the singular value decomposition over the matrix x. Assumes that
-samples = rows, and columns = features.
+**\[experimental\]** Runs the singular value decomposition over the
+matrix x. Assumes that samples = rows, and columns = features.
 
 ## Usage
 
 ``` r
-rs_prcomp(x, scale)
+rs_prcomp(x, scale, top_pcs)
 ```
 
 ## Arguments
@@ -17,7 +17,13 @@ rs_prcomp(x, scale)
 
 - scale:
 
-  Boolean. Shall the columns additionally be scaled.
+  Boolean. Shall the columns be variance normalised. (Mean centering
+  will automatically occur.)
+
+- top_pcs:
+
+  Optional integer. Only return the top PCs (under the hood all of them
+  will be calculated).
 
 ## Value
 

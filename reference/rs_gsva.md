@@ -1,7 +1,8 @@
 # Rust version of the GSVA algorithm
 
-Rust-based implementation of the popular GSVA algorithm. Has further
-performance optimisations compared to the original implementation.
+**\[experimental\]** Rust-based implementation of the popular GSVA
+algorithm. Has further performance optimisations compared to the
+original implementation.
 
 ## Usage
 

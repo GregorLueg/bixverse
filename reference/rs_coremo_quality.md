@@ -1,9 +1,9 @@
 # Helper function to assess CoReMo cluster quality
 
-This function assesses the quality of the clusters with a given cut `k`.
-Returns the median R2 (cor^2) and the median absolute deviation (MAD) of
-the clusters. Large clusters (≥1000) are subsampled to a random set of
-1000 genes.
+**\[experimental\]** This function assesses the quality of the clusters
+with a given cut `k`. Returns the median R2 (cor^2) and the median
+absolute deviation (MAD) of the clusters. Large clusters (≥1000) are
+subsampled to a random set of 1000 genes.
 
 ## Usage
 

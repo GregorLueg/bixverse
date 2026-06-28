@@ -1,8 +1,8 @@
 # Prepare the data for whitening
 
-Prepares the data for subsequent usag in ICA. Incorrect use can cause
-kernel crashes. Wrapper around the Rust functions with type checks are
-provided in the package.
+**\[experimental\]** Prepares the data for subsequent usag in ICA.
+Incorrect use can cause kernel crashes. Wrapper around the Rust
+functions with type checks are provided in the package.
 
 ## Usage
 

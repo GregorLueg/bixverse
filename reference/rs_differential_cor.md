@@ -1,10 +1,9 @@
 # Calculate the column wise differential correlation between two sets of data.
 
-This function calculates the differential correlation based on the
-Fisher method. For speed purposes, the function will only calculate the
-differential correlation on the upper triangle of the two correlation
-matrices. WARNING! Incorrect use can cause kernel crashes. Wrapper
-around the Rust functions with type checks are provided in the package.
+**\[experimental\]** This function calculates the differential
+correlation based on the Fisher method. For speed purposes, the function
+will only calculate the differential correlation on the upper triangle
+of the two correlation matrices.
 
 ## Usage
 

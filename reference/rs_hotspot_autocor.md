@@ -1,9 +1,9 @@
 # Calculate gene spatial auto-correlations
 
-This function implements the HotSpot auto-correlation functionality and
-will return to what extent a given gene shows auto-correlation in the
-generated kNN-graph from the embeddings. For details see DeTomaso, et
-al.
+**\[experimental\]** This function implements the HotSpot
+auto-correlation functionality and will return to what extent a given
+gene shows auto-correlation in the generated kNN-graph from the
+embeddings. For details see DeTomaso, et al.
 
 ## Usage
 
@@ -12,6 +12,7 @@ rs_hotspot_autocor(
   f_path_genes,
   f_path_cells,
   embd,
+  knn_data,
   hotspot_params,
   cells_to_keep,
   genes_to_use,
@@ -36,6 +37,12 @@ rs_hotspot_autocor(
   Numerical matrix. The embedding matrix from which to generate the kNN
   graph.
 
+- knn_data:
+
+  Optional list. This contains pre-computed kNN data (including
+  distances). The user has to ensure consistency! If provided, this will
+  be used.
+
 - hotspot_params:
 
   List. The HotSpot parameter list.
@@ -57,7 +64,8 @@ rs_hotspot_autocor(
 
 - verbose:
 
-  Boolean. Controls verbosity of the function.
+  Integer. `0L` - quiet; `1L` - normal verbosity; `2L` - detailed
+  verbosity.
 
 - seed:
 

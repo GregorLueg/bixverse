@@ -1,6 +1,6 @@
-# Calculate the hypergeometric rest in Rust
+# Calculate the hypergeometric test in Rust
 
-Calculate the hypergeometric rest in Rust
+**\[experimental\]**
 
 ## Usage
 

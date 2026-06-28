@@ -12,8 +12,11 @@ load_mtx(
   object,
   sc_mtx_io_param = params_sc_mtx_io(),
   sc_qc_param = params_sc_min_quality(),
-  streaming = TRUE,
+  mtx_streaming = TRUE,
+  streaming = 1L,
   batch_size = 1000L,
+  max_genes_in_memory = 2000L,
+  cell_batch_size = 100000L,
   .verbose = TRUE
 )
 ```
@@ -28,49 +31,41 @@ load_mtx(
 
   List. Please generate this one via
   [`params_sc_mtx_io()`](https://gregorlueg.github.io/bixverse/reference/params_sc_mtx_io.md).
-  Needs to contain:
-
-  - path_mtx - String. Path to the .mtx file
-
-  - path_obs - String. Path to the file containing cell/barcode info.
-
-  - path_var - String. String. Path to the file containing gene/variable
-    info.
-
-  - cells_as_rows - Boolean. Do cells represent the rows or columns.
 
 - sc_qc_param:
 
   List. Output of
   [`params_sc_min_quality()`](https://gregorlueg.github.io/bixverse/reference/params_sc_min_quality.md).
-  A list with the following elements:
 
-  - min_unique_genes - Integer. Minimum number of genes to be detected
-    in the cell to be included.
+- mtx_streaming:
 
-  - min_lib_size - Integer. Minimum library size in the cell to be
-    included.
-
-  - min_cells - Integer. Minimum number of cells a gene needs to be
-    detected to be included.
-
-  - target_size - Float. Target size to normalise to. Defaults to `1e5`.
+  Boolean. Shall the .mtx file ingestion itself be streamed (via
+  temp-file bucketing). Recommended for large mtx files. Defaults to
+  `TRUE`.
 
 - streaming:
 
-  Boolean. Shall the data be streamed during the conversion of CSR to
-  CSC. Defaults to `TRUE` and should be used for larger data sets.
+  Integer. CSR-to-CSC conversion mode. `0L` -\> in-memory, `1L` -\>
+  light streaming, `2L` -\> heavy streaming with memory upper
+  boundaries. Defaults to `1L`.
 
 - batch_size:
 
-  Integer. If `streaming = TRUE`, how many cells to process in one
-  batch. Defaults to `1000L`.
+  Integer. Cell batch size when `streaming = 1L`. Defaults to `1000L`.
+
+- max_genes_in_memory:
+
+  Integer. Maximum genes held in memory at once when `streaming = 2L`.
+  Defaults to `2000L`.
+
+- cell_batch_size:
+
+  Integer. Cell batch size when `streaming = 2L`. Defaults to `100000L`.
 
 - .verbose:
 
-  Boolean. Controls the verbosity of the function.
+  Boolean.
 
 ## Value
 
-It will populate the files on disk and return the class with updated
-shape information.
+The class with updated shape information.

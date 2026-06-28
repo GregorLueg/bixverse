@@ -23,7 +23,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -53,14 +53,24 @@
 <li class="active nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-single-cells" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Single Cells</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-single-cells">
-<li><a class="dropdown-item" href="../articles/thinking_single_cell.html">Thinking about single cells the bixverse way</a></li>
+<li><h6 class="dropdown-header" data-toc-skip>Intro vignettes</h6></li>
+    <li><a class="dropdown-item" href="../articles/thinking_single_cell.html">Thinking about single cells the bixverse way</a></li>
     <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">PBMC analysis with the bixverse single cell framework</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_io.html">Reading data in (single-cell I/O)</a></li>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
-    <li><a class="dropdown-item" href="../articles/analysis_single_cell.html">'Bag of genes' methods for single cell in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/knn_searches.html">kNN searches for single cells in bixverse</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>More advanced analysis methods</h6></li>
+    <li><a class="dropdown-item" href="../articles/bag_of_genes_single_cells.html">'Bag of genes' methods for single cell in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/nichenet.html">Ligand receptor analysis</a></li>
     <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/symphomy.html">Reference mapping via Symphony</a></li>
+    <li><a class="dropdown-item" href="../articles/multi_modal_single_cell.html">Multi-modal analysis</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Others</h6></li>
     <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing big data on a powerful laptop (example)</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_visualisation.html">Plotting helpers</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -82,7 +92,7 @@
       <h1>Meta cells with bixverse</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-06-15</p>
+      <p class="date">2026-06-28</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -128,6 +138,7 @@
 <span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/SingleCells.html">SingleCells</a></span><span class="op">(</span>dir_data <span class="op">=</span> <span class="va">tempdir_cd34</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/load_h5ad.html">load_h5ad</a></span><span class="op">(</span>object <span class="op">=</span> <span class="va">sc_object</span>, h5_path <span class="op">=</span> <span class="va">cd34_path</span><span class="op">)</span></span>
+<span><span class="co">#&gt;  Using light streaming for the CSR to CSC conversion.</span></span>
 <span><span class="co">#&gt; Loading observations data from h5ad into the DuckDB.</span></span>
 <span><span class="co">#&gt; Loading variables data from h5ad into the DuckDB.</span></span></code></pre></div>
 </div>
@@ -154,7 +165,7 @@
 <span>  <span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Generating sNN graph (full: FALSE).</span></span>
+<span><span class="co">#&gt; Generating sNN graph (full: TRUE).</span></span>
 <span><span class="co">#&gt; Transforming sNN data to igraph.</span></span>
 <span></span>
 <span><span class="co"># we need the kNN object for the diffusion maps</span></span>
@@ -266,7 +277,16 @@
 <div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">seacells</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calc_diffusion_coordinates.html">calc_diffusion_coordinates</a></span><span class="op">(</span>object <span class="op">=</span> <span class="va">seacells</span>, knn_data <span class="op">=</span> <span class="va">knn_object</span><span class="op">)</span></span></code></pre></div>
 </div>
-</section><section class="level3"><h3 id="supercells">SuperCells<a class="anchor" aria-label="anchor" href="#supercells"></a>
+<section class="level4"><h4 id="seacells-on-large-data">SEACells on large data<a class="anchor" aria-label="anchor" href="#seacells-on-large-data"></a>
+</h4>
+<p>SEACells is quite infamous for being very slow and difficult to run on larger data sets. bixverse offers some tricks here which make the generation of SEACells feasible on large data sets:</p>
+<ol type="1">
+<li>The initialisation is the part of the original algorithm that scales the worst. The greedy column subset selection needs a full <code>K^2</code> column for every candidate cell, which is <code>O(N2)</code> and simply will not finish on millions of cells. <code>bixverse</code> therefore switches strategy by size: above <code>greedy_threshold</code> it drops the greedy top-up and samples the archetypes at random, which is effectively free. When a better-than-random start is wanted but the greedy pass is still out of reach, setting <code>n_landmarks</code> enables a Nyström route: a small set of density-weighted landmarks is chosen, the diffusion operator is built and eigendecomposed on those landmarks alone, and the multiscale embedding is then carried to all cells via a Nyström extension before the usual max-min waypoint sampling. The expensive eigendecomposition stays at landmark scale <code>L x L</code> instead of <code>N x N</code>.</li>
+<li>The optimisation loop itself runs in bounded memory. <code>K^2</code> is never formed; every <code>K^2 * X</code> term is evaluated as <code>K (K x X)</code> so memory stays bounded by the number of non-zeros in <code>K</code> rather <code>N^2</code>. The Frank-Wolfe gradients are computed one column at a time and in parallel, so the full <code>k x N</code> gradient never has to exist at once, and pruning keeps A and B sparse across iterations.</li>
+<li>The RSS for the convergence check is computed differently above 20,000 cells. Rather than materialising the <code>N x N</code> reconstruction <code>K x B x A</code>, the squared residual is expanded with the trace identity and evaluated through cyclic reordering, so every intermediate is at most <code>N x k</code> or <code>k x k</code>. The value is the same Frobenius norm, just without the dense reconstruction. Together these are what made it possible to run on a million cells locally, which the original implementation cannot do.</li>
+</ol>
+<p>If you want to run SEACells on larger data sets, these are the knobs you have to make this run in a reasonable time on a powerful laptop.</p>
+</section></section><section class="level3"><h3 id="supercells">SuperCells<a class="anchor" aria-label="anchor" href="#supercells"></a>
 </h3>
 <p>SuperCells runs walktrap on the kNN graph. The number of meta cells is set indirectly through <code>graining_factor</code>: with a factor of 30 over ~6800 cells you should get roughly ~230 meta cells.</p>
 <div class="cell">
@@ -318,13 +338,28 @@
 <span>  knn_data <span class="op">=</span> <span class="va">knn_object</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 </div>
-</section></section><section class="level2"><h2 id="metrics">Metrics<a class="anchor" aria-label="anchor" href="#metrics"></a>
+<section class="level4"><h4 id="supercells-on-large-data">SuperCells on large data<a class="anchor" aria-label="anchor" href="#supercells-on-large-data"></a>
+</h4>
+<p>SuperCell is already far cheaper than SEACells on large data: there is no archetypal analysis, just Walktrap community detection on the kNN graph. The one part that does not scale naively is the random-walk representation. <code>compute_walk_probabilities()</code> within the Rust code gives every cell a sparse vector of landing probabilities for a <code>walk_length</code>-step walk; on a well-connected graph these vectors spread to touch a large fraction of cells after only a few steps, so the store drifts towards dense and memory grows as <code>O(n × support)</code>.</p>
+<p><code>max_support</code> caps this. With <code>max_support = k</code> each initial walk vector keeps only its <code>k</code> largest entries (the dropped tail holds negligible walk mass), bounding the store at roughly <code>k × n</code> regardless of how far the walks spread. This makes the run an approximation: the Ward merge criterion is driven by distances between walk vectors, and truncating them can shift the merge order slightly, so you may get marginally different communities than the exact run. With <code>max_support = NULL</code> (the default) the walks are kept exact. Beyond saving memory, a smaller <code>k</code> also speeds up every distance and merge operation, since both are linear in the support.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">supercells_large</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/generate_supercells_sc.html">generate_supercells_sc</a></span><span class="op">(</span></span>
+<span>  object <span class="op">=</span> <span class="va">sc_object</span>,</span>
+<span>  sc_supercell_params <span class="op">=</span> <span class="fu"><a href="../reference/params_sc_supercell.html">params_sc_supercell</a></span><span class="op">(</span></span>
+<span>    graining_factor <span class="op">=</span> <span class="fl">30</span>,</span>
+<span>    max_support <span class="op">=</span> <span class="fl">256L</span> <span class="co"># would bound the walk vectors to 256</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  .verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+</div>
+</section></section></section><section class="level2"><h2 id="metrics">Metrics<a class="anchor" aria-label="anchor" href="#metrics"></a>
 </h2>
 <section class="level3"><h3 id="purity">Purity<a class="anchor" aria-label="anchor" href="#purity"></a>
 </h3>
 <p>A simple sanity check is to ask, for each meta cell, what fraction of its constituent cells share the same underlying label. We use the Leiden clusters from the parent <code>SingleCells</code> object as a proxy for cell type identity. The labels themselves are imperfect, so absolute numbers should be read with that caveat, but relative differences between methods are reasonably indicative.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">cell_labels</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/unlist.html" class="external-link">unlist</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">[[</span><span class="st">"celltype"</span><span class="op">]</span><span class="op">]</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">as.character</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">hdwgcna</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calc_meta_cell_purity.html">calc_meta_cell_purity</a></span><span class="op">(</span><span class="va">hdwgcna</span>, original_cell_type <span class="op">=</span> <span class="va">cell_labels</span><span class="op">)</span></span>
@@ -344,11 +379,11 @@
 <span><span class="co">#&gt;        method      mean    median</span></span>
 <span><span class="co">#&gt;        &lt;char&gt;     &lt;num&gt;     &lt;num&gt;</span></span>
 <span><span class="co">#&gt; 1:    hdWGCNA 0.8947692 1.0000000</span></span>
-<span><span class="co">#&gt; 2:   SEACells 0.9069044 1.0000000</span></span>
+<span><span class="co">#&gt; 2:   SEACells 0.9043347 1.0000000</span></span>
 <span><span class="co">#&gt; 3: SuperCells 0.8979310 0.9806216</span></span></code></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">purity_dt</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">method</span>, y <span class="op">=</span> <span class="va">purity</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_violin.html" class="external-link">geom_violin</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>fill <span class="op">=</span> <span class="va">method</span><span class="op">)</span>, alpha <span class="op">=</span> <span class="fl">0.6</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_boxplot.html" class="external-link">geom_boxplot</a></span><span class="op">(</span>width <span class="op">=</span> <span class="fl">0.05</span>, outlier.size <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span> <span class="op">+</span></span>
@@ -368,7 +403,7 @@
 </h3>
 <p>We called the <code><a href="../reference/calc_diffusion_coordinates.html">calc_diffusion_coordinates()</a></code> with the kNN graph on the data. This will tell us which parts of the manifold are being sampled here, i.e., for example high, medium or low density regions (based on the diffusion map and distance to the 150k-th neighbour within that). This gives an idea how many rare cell states the meta cells capture.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">hdwgcna_regions</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/data.table/man/as.data.table.html" class="external-link">as.data.table</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">hdwgcna</span><span class="op">[[</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">density_region</span><span class="op">)</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">hdwgcna</span><span class="op">[[</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="op">)</span><span class="op">[</span>, <span class="va">method</span> <span class="op">:=</span> <span class="st">"hdWGCNA"</span><span class="op">]</span></span>
@@ -387,7 +422,7 @@
 <span><span class="fu"><a href="https://rdrr.io/pkg/data.table/man/setattr.html" class="external-link">setnames</a></span><span class="op">(</span><span class="va">region_dt</span>, old <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"V1"</span>, <span class="st">"N"</span><span class="op">)</span>, new <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"region"</span>, <span class="st">"proportion"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">region_dt</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">method</span>, y <span class="op">=</span> <span class="va">proportion</span>, fill <span class="op">=</span> <span class="va">region</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_bar.html" class="external-link">geom_bar</a></span><span class="op">(</span>stat <span class="op">=</span> <span class="st">"identity"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_bw</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
@@ -410,14 +445,14 @@
 </h3>
 <p>We can also assess other metrics on the manifold representation. Compactness (how close are the cells within a given metacell to the centroid) and separation (how far is the closest centroid). The first gives an (unbiased) indication of purity; the latter of diversity captured in the manifold. We can do this trivially via:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">hdwgcna</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calc_manifold_metrics.html">calc_manifold_metrics</a></span><span class="op">(</span><span class="va">hdwgcna</span><span class="op">)</span></span>
 <span><span class="va">seacells</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calc_manifold_metrics.html">calc_manifold_metrics</a></span><span class="op">(</span><span class="va">seacells</span><span class="op">)</span></span>
 <span><span class="va">supercells</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calc_manifold_metrics.html">calc_manifold_metrics</a></span><span class="op">(</span><span class="va">supercells</span><span class="op">)</span></span></code></pre></div>
 </div>
 <p>Let’s generate a plotting data.table</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">metrics_dt</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/pkg/data.table/man/data.table.html" class="external-link">data.table</a></span><span class="op">(</span></span>
 <span>    method <span class="op">=</span> <span class="st">"hdWGCNA"</span>,</span>
@@ -451,17 +486,17 @@
 <span><span class="co">#&gt;        method mean_separation median_separation mean_compactness</span></span>
 <span><span class="co">#&gt;        &lt;char&gt;           &lt;num&gt;             &lt;num&gt;            &lt;num&gt;</span></span>
 <span><span class="co">#&gt; 1:    hdWGCNA       0.1255286        0.08895643      0.007053792</span></span>
-<span><span class="co">#&gt; 2:   SEACells       0.1812701        0.16665603      0.010719557</span></span>
+<span><span class="co">#&gt; 2:   SEACells       0.1757102        0.15544200      0.010682394</span></span>
 <span><span class="co">#&gt; 3: SuperCells       0.2016617        0.15913163      0.006335426</span></span>
 <span><span class="co">#&gt;    median_compactness</span></span>
 <span><span class="co">#&gt;                 &lt;num&gt;</span></span>
 <span><span class="co">#&gt; 1:        0.004067266</span></span>
-<span><span class="co">#&gt; 2:        0.004839745</span></span>
+<span><span class="co">#&gt; 2:        0.004824280</span></span>
 <span><span class="co">#&gt; 3:        0.003216350</span></span></code></pre></div>
 </div>
 <p>Some differences are visible here. hdWGCNA has the worst separation and best compactness (not unexpected given the bootstrapping method only sampling direct neighbours). SEACells has the worst compactness across the three methods (not unsurprising as the meta cells here capture more sparse regions of the manifold) and middling separation; SuperCells (version 2.0, the default setting here) is in the middle.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb19"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">per_region_stats</span> <span class="op">&lt;-</span> <span class="va">metrics_dt</span><span class="op">[</span>,</span>
 <span>  <span class="fu">.</span><span class="op">(</span></span>
 <span>    mean_separation <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">separation</span><span class="op">)</span>,</span>
@@ -476,9 +511,9 @@
 <span><span class="va">per_region_stats</span><span class="op">[</span><span class="op">]</span></span>
 <span><span class="co">#&gt;        method region mean_separation median_separation mean_compactness</span></span>
 <span><span class="co">#&gt;        &lt;char&gt; &lt;fctr&gt;           &lt;num&gt;             &lt;num&gt;            &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1:   SEACells   high      0.04082516        0.03779426     0.0006808851</span></span>
-<span><span class="co">#&gt; 2:   SEACells    mid      0.14490457        0.14926913     0.0043163556</span></span>
-<span><span class="co">#&gt; 3:   SEACells    low      0.24011688        0.21419820     0.0179080193</span></span>
+<span><span class="co">#&gt; 1:   SEACells   high      0.04515726        0.04905651     0.0007130436</span></span>
+<span><span class="co">#&gt; 2:   SEACells    mid      0.13940649        0.14085424     0.0044342592</span></span>
+<span><span class="co">#&gt; 3:   SEACells    low      0.23163398        0.21059144     0.0176287556</span></span>
 <span><span class="co">#&gt; 4: SuperCells   high      0.04950358        0.05186578     0.0006019381</span></span>
 <span><span class="co">#&gt; 5: SuperCells    mid      0.14154094        0.13623749     0.0031448643</span></span>
 <span><span class="co">#&gt; 6: SuperCells    low      0.30667216        0.25426194     0.0113716719</span></span>
@@ -487,9 +522,9 @@
 <span><span class="co">#&gt; 9:    hdWGCNA    low      0.26961609        0.19062942     0.0168331578</span></span>
 <span><span class="co">#&gt;    median_compactness</span></span>
 <span><span class="co">#&gt;                 &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1:       0.0006516402</span></span>
-<span><span class="co">#&gt; 2:       0.0033217826</span></span>
-<span><span class="co">#&gt; 3:       0.0076342011</span></span>
+<span><span class="co">#&gt; 1:       0.0006717899</span></span>
+<span><span class="co">#&gt; 2:       0.0034732595</span></span>
+<span><span class="co">#&gt; 3:       0.0076465828</span></span>
 <span><span class="co">#&gt; 4:       0.0005725418</span></span>
 <span><span class="co">#&gt; 5:       0.0024108913</span></span>
 <span><span class="co">#&gt; 6:       0.0055384417</span></span>
@@ -501,7 +536,7 @@
 <section class="level4"><h4 id="compactness-plots">Compactness plots<a class="anchor" aria-label="anchor" href="#compactness-plots"></a>
 </h4>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb20"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">metrics_dt</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">method</span>, y <span class="op">=</span> <span class="va">compactness</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_violin.html" class="external-link">geom_violin</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>fill <span class="op">=</span> <span class="va">method</span><span class="op">)</span>, alpha <span class="op">=</span> <span class="fl">0.6</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_boxplot.html" class="external-link">geom_boxplot</a></span><span class="op">(</span>width <span class="op">=</span> <span class="fl">0.05</span>, outlier.size <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span> <span class="op">+</span></span>
@@ -516,7 +551,7 @@
 </div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb21"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">metrics_dt</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">method</span>, y <span class="op">=</span> <span class="va">compactness</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_boxplot.html" class="external-link">geom_boxplot</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>fill <span class="op">=</span> <span class="va">region</span><span class="op">)</span>, outlier.size <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_bw</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
@@ -537,7 +572,7 @@
 </section><section class="level4"><h4 id="separation-plots">Separation plots<a class="anchor" aria-label="anchor" href="#separation-plots"></a>
 </h4>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb22"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">metrics_dt</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">method</span>, y <span class="op">=</span> <span class="va">separation</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_violin.html" class="external-link">geom_violin</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>fill <span class="op">=</span> <span class="va">method</span><span class="op">)</span>, alpha <span class="op">=</span> <span class="fl">0.6</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_boxplot.html" class="external-link">geom_boxplot</a></span><span class="op">(</span>width <span class="op">=</span> <span class="fl">0.05</span>, outlier.size <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span> <span class="op">+</span></span>
@@ -552,7 +587,7 @@
 </div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb23"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">metrics_dt</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">method</span>, y <span class="op">=</span> <span class="va">separation</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_boxplot.html" class="external-link">geom_boxplot</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>fill <span class="op">=</span> <span class="va">region</span><span class="op">)</span>, outlier.size <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_bw</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
@@ -583,7 +618,7 @@
 </h3>
 <p>The same HVG and PCA method dispatches you know from single cells work here…</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb24"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">seacells</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/find_hvg_sc.html">find_hvg_sc</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">seacells</span>,</span>
 <span>  hvg_no <span class="op">=</span> <span class="fl">2000L</span>,</span>
@@ -599,7 +634,7 @@
 </h3>
 <p>And also the same interfaces for neighbours, (Leiden) clustering and UMAP can be used here.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb25"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">seacells</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/find_neighbours_sc.html">find_neighbours_sc</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">seacells</span>,</span>
 <span>  neighbours_params <span class="op">=</span> <span class="fu"><a href="../reference/params_sc_neighbours.html">params_sc_neighbours</a></span><span class="op">(</span></span>
@@ -607,7 +642,7 @@
 <span>  <span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Generating sNN graph (full: FALSE).</span></span>
+<span><span class="co">#&gt; Generating sNN graph (full: TRUE).</span></span>
 <span><span class="co">#&gt; Transforming sNN data to igraph.</span></span>
 <span></span>
 <span><span class="va">seacells</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/find_clusters_sc.html">find_clusters_sc</a></span><span class="op">(</span><span class="va">seacells</span>, res <span class="op">=</span> <span class="fl">1.0</span>, name <span class="op">=</span> <span class="st">"leiden_clusters"</span><span class="op">)</span></span>
@@ -618,7 +653,7 @@
 <span><span class="co">#&gt; Using provided kNN graph.</span></span></code></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb26"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb27"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">umap_dt</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/data.table/man/as.data.table.html" class="external-link">as.data.table</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="../reference/get_embedding.html">get_embedding</a></span><span class="op">(</span><span class="va">seacells</span>, <span class="st">"umap"</span><span class="op">)</span>,</span>
 <span>  keep.rownames <span class="op">=</span> <span class="st">"meta_cell_id"</span></span>
@@ -641,21 +676,22 @@
 <p>Meta cells compress information and reduce sparsity. That makes them ideal for co-expression module detection methods and we can use a SCENIC implementation within bixverse <a href="https://gregorlueg.github.io/bixverse/articles/analysis_single_cell.html#scenic">akin to the single cell version</a> also on MetaCells.</p>
 <p>Let’s run this quickly…</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb27"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb28"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">tf_dt</span> <span class="op">&lt;-</span> <span class="fu">data.table</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/data.table/man/fread.html" class="external-link">fread</a></span><span class="op">(</span></span>
 <span>  <span class="st">"https://resources.aertslab.org/cistarget/tf_lists/allTFs_hg38.txt"</span>,</span>
 <span>  header <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  col.names <span class="op">=</span> <span class="st">"tf"</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">vars</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_sc_var.html">get_sc_var</a></span><span class="op">(</span><span class="va">seacells</span><span class="op">)</span></span>
-<span></span>
 <span><span class="va">scenic_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/scenic_grn_sc.html">scenic_grn_sc</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">seacells</span>,</span>
 <span>  tf_ids <span class="op">=</span> <span class="va">tf_dt</span><span class="op">$</span><span class="va">tf</span>,</span>
 <span>  scenic_params <span class="op">=</span> <span class="fu"><a href="../reference/params_scenic.html">params_scenic</a></span><span class="op">(</span></span>
 <span>    learner_type <span class="op">=</span> <span class="st">"randomforest"</span>,</span>
-<span>    gene_batch_size <span class="op">=</span> <span class="fl">64L</span></span>
+<span>    gene_batch_size <span class="op">=</span> <span class="fl">64L</span>,</span>
+<span>    <span class="co"># due to the small data set size, we should set 'min_samples_leaf' lower</span></span>
+<span>    <span class="co"># than for a massive single cell data set</span></span>
+<span>    learner_params <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>min_samples_leaf <span class="op">=</span> <span class="fl">10L</span><span class="op">)</span></span>
 <span>  <span class="op">)</span>,</span>
 <span>  .verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
@@ -666,7 +702,7 @@
 <span><span class="co">#&gt; SCENIC: 12464 target genes, 1282 TFs, 250 cells</span></span></code></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb28"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb29"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">scenic_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/identify_tf_to_genes.html">identify_tf_to_genes</a></span><span class="op">(</span></span>
 <span>  <span class="va">scenic_res</span>,</span>
 <span>  n_sd <span class="op">=</span> <span class="fl">2</span>,</span>
@@ -676,7 +712,7 @@
 <span></span>
 <span><span class="va">scenic_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tf_to_genes_correlations.html">tf_to_genes_correlations</a></span><span class="op">(</span></span>
 <span>  x <span class="op">=</span> <span class="va">scenic_res</span>,</span>
-<span>  object <span class="op">=</span> <span class="va">sc_object</span>,</span>
+<span>  object <span class="op">=</span> <span class="va">seacells</span>,</span>
 <span>  cor_filter <span class="op">=</span> <span class="fl">0.01</span>,</span>
 <span>  .verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
@@ -691,23 +727,25 @@
 </div>
 <p>In a proper situation we would filter down the TF to gene associations via motifs, please refer to the details in this <a href="https://gregorlueg.github.io/bixverse/articles/analysis_single_cell.html#scenic">vignette</a>. We will skip this step for now and just run AUCell to show how it works.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb29"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb30"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">auc_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/aucell_sc.html">aucell_sc</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">seacells</span>,</span>
 <span>  gs_list <span class="op">=</span> <span class="va">tf_to_gene_ls</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">umap_dt</span><span class="op">[</span>, <span class="fu">`:=`</span><span class="op">(</span>IRF7 <span class="op">=</span> <span class="va">auc_res</span><span class="op">[</span>, <span class="st">"IRF7"</span><span class="op">]</span>, IRF9 <span class="op">=</span> <span class="va">auc_res</span><span class="op">[</span>, <span class="st">"IRF9"</span><span class="op">]</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="va">umap_dt</span><span class="op">[</span>, <span class="fu">`:=`</span><span class="op">(</span>IRF1 <span class="op">=</span> <span class="va">auc_res</span><span class="op">[</span>, <span class="st">"IRF1"</span><span class="op">]</span>, TCF4 <span class="op">=</span> <span class="va">auc_res</span><span class="op">[</span>, <span class="st">"TCF4"</span><span class="op">]</span><span class="op">)</span><span class="op">]</span></span>
 <span></span>
 <span><span class="va">p1</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">umap_dt</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">umap_1</span>, y <span class="op">=</span> <span class="va">umap_2</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>colour <span class="op">=</span> <span class="va">IRF7</span><span class="op">)</span>, size <span class="op">=</span> <span class="fl">1.5</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>fill <span class="op">=</span> <span class="va">IRF1</span><span class="op">)</span>, size <span class="op">=</span> <span class="fl">2.5</span>, shape <span class="op">=</span> <span class="fl">21</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_bw</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>colour <span class="op">=</span> <span class="st">"IRF7 AUC"</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>fill <span class="op">=</span> <span class="st">"IRF1 AUC"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_viridis.html" class="external-link">scale_fill_viridis_c</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">p2</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">umap_dt</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">umap_1</span>, y <span class="op">=</span> <span class="va">umap_2</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>colour <span class="op">=</span> <span class="va">IRF9</span><span class="op">)</span>, size <span class="op">=</span> <span class="fl">1.5</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>fill <span class="op">=</span> <span class="va">TCF4</span><span class="op">)</span>, size <span class="op">=</span> <span class="fl">2.5</span>, shape <span class="op">=</span> <span class="fl">21</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_bw</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>colour <span class="op">=</span> <span class="st">"IRF9 AUC"</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>fill <span class="op">=</span> <span class="st">"TCF4 AUC"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_viridis.html" class="external-link">scale_fill_viridis_c</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">p1</span> <span class="op">+</span> <span class="va">p2</span></span></code></pre></div>
 <div class="cell-output-display">
@@ -717,13 +755,12 @@
 </div>
 </div>
 </div>
-<p>As we can appreciate, IRF7 and 9 seem more active in a subset of the meta cells. Other methods that could benefit from the meta cell approach are the correlation-based methods and/or NMF. Both on the roadmap… !</p>
 </section></section><section class="level2"><h2 id="pseudo-bulking">Pseudo-bulking<a class="anchor" aria-label="anchor" href="#pseudo-bulking"></a>
 </h2>
 <p>Pseudo-bulks are conceptually adjacent but solve a different problem. Where meta cells are dense aggregates designed to feed into co-expression and archetype methods, pseudo-bulks are coarse summaries (typically one bulk per sample-by-cluster combination) used as input to bulk-style DGE tools such as limma-voom, edgeR or DESeq2 to get around pseudo-replication problems and p-value inflation in cell-based DGEs, see <a href="https://www.nature.com/articles/s41467-021-21038-1" class="external-link">Zimmerman et al.</a></p>
 <p><code>get_pseudobulked_sc</code> takes a named list of cell IDs and returns either a dense matrix or a sparse <code>dgRMatrix</code>. With <code>assay = "raw"</code> it sums raw counts (what bulk DGE tools expect); with <code>assay = "norm"</code> it averages normalised counts.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb30"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb31"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">cl_dt</span> <span class="op">&lt;-</span> <span class="va">sc_object</span><span class="op">[[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"leiden"</span>, <span class="st">"cell_id"</span><span class="op">)</span><span class="op">]</span><span class="op">]</span></span>
 <span><span class="va">cell_list</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/split.html" class="external-link">split</a></span><span class="op">(</span><span class="va">cl_dt</span><span class="op">$</span><span class="va">cell_id</span>, <span class="va">cl_dt</span><span class="op">$</span><span class="va">leiden</span><span class="op">)</span></span>
 <span></span>
@@ -742,7 +779,7 @@
 </section><section class="level2"><h2 id="clean-up">Clean up<a class="anchor" aria-label="anchor" href="#clean-up"></a>
 </h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb31"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb32"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">tempdir_cd34</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span>, force <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 </div>
 </section><script id="quarto-html-after-body" type="application/javascript">

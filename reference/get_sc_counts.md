@@ -12,6 +12,7 @@ get_sc_counts(
   cell_indices = NULL,
   gene_indices = NULL,
   use_cells_to_keep = TRUE,
+  modality = c("rna", "adt"),
   .verbose = TRUE
 )
 ```
@@ -20,7 +21,7 @@ get_sc_counts(
 
 - object:
 
-  `SingleCells`, `MetaCells` (or potentially other) class.
+  `SingleCells`, `MetaCells`, `SingleCellsMultiModal` class.
 
 - assay:
 
@@ -45,6 +46,10 @@ get_sc_counts(
 
   Boolean. Shall cells to keep be found in the class, shall the counts
   be reduced to these. Not relevant for `MetaCells`.
+
+- modality:
+
+  String. The modality to return. One of `c("rna", "adt")`.
 
 - .verbose:
 

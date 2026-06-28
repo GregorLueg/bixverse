@@ -1,7 +1,7 @@
 # SCENIC on MetaCells
 
-Assumes that the sparse data is pre-filtered for the genes you wish to
-include. The indices need to be 0-indexed.
+**\[experimental\]** Assumes that the sparse data is pre-filtered for
+the genes you wish to include. The indices need to be 0-indexed.
 
 ## Usage
 
@@ -30,7 +30,8 @@ rs_mc_scenic(sparse_data, tf_indices, scenic_params, seed, verbose)
 
 - verbose:
 
-  Boolean. Controls the verbosity of the function.
+  Integer. `0L` - quiet; `1L` - normal verbosity; `2L` - detailed
+  verbosity.
 
 ## Value
 

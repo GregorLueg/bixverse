@@ -1,7 +1,7 @@
-# Calculate gene\<\>gene spatial correlations
+# Calculate gene to gene spatial correlations
 
-This function implements the HotSpot gene \<\> gene local correlation
-functionality from HotSpot, see DeTomaso, et al.
+**\[experimental\]** This function implements the HotSpot gene \<\> gene
+local correlation functionality from HotSpot, see DeTomaso, et al.
 
 ## Usage
 
@@ -10,9 +10,11 @@ rs_hotspot_gene_cor(
   f_path_genes,
   f_path_cells,
   embd,
+  knn_data,
   hotspot_params,
   cells_to_keep,
   genes_to_use,
+  working_mem_gb,
   streaming,
   verbose,
   seed
@@ -34,6 +36,12 @@ rs_hotspot_gene_cor(
   Numerical matrix. The embedding matrix from which to generate the kNN
   graph.
 
+- knn_data:
+
+  Optional list. This contains pre-computed kNN data (including
+  distances). The user has to ensure consistency! If provided, this will
+  be used.
+
 - hotspot_params:
 
   List. The HotSpot parameter list.
@@ -48,6 +56,14 @@ rs_hotspot_gene_cor(
 
   Integer vector. 0-index vector indicating which genes to include.
 
+- working_mem_gb:
+
+  Numeric. Approximate working memory (GB) the streaming pair path may
+  use for resident gene panels. Ignored when `streaming` is `FALSE`.
+  Larger values mean fewer disk re-reads. Note this excludes the two
+  dense N_genes x N_genes output matrices, which scale with
+  `genes_to_use`.
+
 - streaming:
 
   Boolean. Shall the data be streamed in chunks. Useful for large data
@@ -55,7 +71,8 @@ rs_hotspot_gene_cor(
 
 - verbose:
 
-  Boolean. Controls verbosity of the function.
+  Integer. `0L` - quiet; `1L` - normal verbosity; `2L` - detailed
+  verbosity.
 
 - seed:
 

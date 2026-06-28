@@ -5,20 +5,24 @@ Remove the KNN data
 ## Usage
 
 ``` r
-remove_knn(x)
+remove_knn(x, ...)
 
 ## S7 method for class <bixverse::MetaCells>
-remove_knn(x)
+remove_knn(x, ...)
 
 # S3 method for class 'ScCache'
-remove_knn(x)
+remove_knn(x, ...)
 
 ## S7 method for class <bixverse::SingleCells>
-remove_knn(x)
+remove_knn(x, ...)
 ```
 
 ## Arguments
 
 - x:
 
-  An object from which to remove the kNN data
+  An object from which to remove the kNN data.
+
+- ...:
+
+  Other parameters.

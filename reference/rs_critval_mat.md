@@ -1,7 +1,7 @@
 # Calculate the critical value
 
-This function calculates the critical value for a given set based on
-random permutations and a given alpha value.
+**\[experimental\]** This function calculates the critical value for a
+given set based on random permutations and a given alpha value.
 
 ## Usage
 

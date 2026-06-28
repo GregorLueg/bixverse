@@ -5,24 +5,28 @@ Set/add KNN
 ## Usage
 
 ``` r
-set_snn_graph(x, snn_graph)
+set_snn_graph(x, snn_graph, ...)
 
 ## S7 method for class <bixverse::MetaCells>
-set_snn_graph(x, snn_graph)
+set_snn_graph(x, snn_graph, ...)
 
 # S3 method for class 'ScCache'
-set_snn_graph(x, snn_graph)
+set_snn_graph(x, snn_graph, ...)
 
 ## S7 method for class <bixverse::SingleCells>
-set_snn_graph(x, snn_graph)
+set_snn_graph(x, snn_graph, ...)
 ```
 
 ## Arguments
 
 - x:
 
-  An object to add the KNN data to
+  An object to add the KNN data to.
 
 - snn_graph:
 
   Igraph. The sNN graph for subsequent clustering.
+
+- ...:
+
+  Other parameters.

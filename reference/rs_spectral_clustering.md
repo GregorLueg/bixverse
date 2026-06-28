@@ -1,6 +1,7 @@
 # Rust implementation of spectral clustering
 
-Rust implementation of spectral clustering
+**\[experimental\]** This version can take in data as is and will
+calculate the distance matrix internally.
 
 ## Usage
 

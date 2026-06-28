@@ -1,13 +1,13 @@
 # Calculate batch silhouette width from an embedding
 
-Computes the average silhouette width on batch labels using pairwise
-distances in the embedding space. Values near 0 indicate good batch
-mixing, values near 1 indicate batch separation.
+**\[experimental\]** Computes the average silhouette width on batch
+labels using pairwise distances in the embedding space. Values near 0
+indicate good batch mixing, values near 1 indicate batch separation.
 
 ## Usage
 
 ``` r
-rs_batch_silhouette_width(embedding, batch_vector, max_cells, seed)
+rs_batch_silhouette_width(embedding, batch_vector, max_cells, verbose, seed)
 ```
 
 ## Arguments
@@ -26,6 +26,10 @@ rs_batch_silhouette_width(embedding, batch_vector, max_cells, seed)
 
   Integer or NULL. If not NULL, subsample to this many cells for
   performance. Defaults to 5000.
+
+- verbose:
+
+  Boolean. Controls verbosity of the function.
 
 - seed:
 
