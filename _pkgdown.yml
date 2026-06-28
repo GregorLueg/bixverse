@@ -602,6 +602,8 @@ reference:
       - download_pbmc3k
       - download_demuxlet_pbmc
       - download_pbmc_batches
+      - download_pbmc_totalseq_data
+      - download_pbmc8k
       - calculate_sparsity_stats
       - generate_gene_module_data
       - generate_single_cell_test_data
