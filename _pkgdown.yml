@@ -68,7 +68,7 @@ navbar:
           href: articles/multi_modal_single_cells.html
         - text: -------
         - text: "Others"
-        - text: Analysing big data on a powerful laptop (example)
+        - text: Analysing 1 million cells on a laptop
           href: articles/single_cell_big_data.html
         - text: Plotting helpers
           href: articles/single_cell_visualisation.html
