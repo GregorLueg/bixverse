@@ -2,3 +2,7 @@ h2#citation ~ pre {
   background-color: #0d1b2e !important;
   color: #839496 !important;
 }
+
+input[type="checkbox"] {
+  pointer-events: none;
+}
