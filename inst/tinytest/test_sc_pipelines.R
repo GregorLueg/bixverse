@@ -169,8 +169,8 @@ obj_before <- sc_object
 obj_after <- apply_pipeline(sc_pipeline(), sc_object)
 
 expect_equal(
-  current = get_hvg(obj_after),
-  target = get_hvg(obj_before),
+  current = suppressWarnings(get_hvg(obj_after)),
+  target = suppressWarnings(get_hvg(obj_before)),
   info = "empty pipeline leaves object unchanged"
 )
 
@@ -192,7 +192,11 @@ p_hvg_pca <- sc_pipeline() %>>%
   step_hvg_sc(hvg_no = hvg_to_keep, .verbose = FALSE) %>>%
   step_pca_sc(no_pcs = no_pcs, .verbose = FALSE)
 
-sc_object_2 <- apply_pipeline(p_hvg_pca, SingleCells(dir_data = test_temp_dir))
+reload <- SingleCells(dir_data = test_temp_dir)
+reload <- load_existing(reload)
+
+sc_object_2 <- apply_pipeline(p_hvg_pca, reload)
+
 # reload counts on the fresh handle
 sc_object_2 <- load_r_data(
   object = sc_object_2,
@@ -223,8 +227,15 @@ p_wrong <- sc_pipeline() %>>%
   step_pca_sc(no_pcs = no_pcs, .verbose = FALSE) %>>%
   step_hvg_sc(hvg_no = hvg_to_keep, .verbose = FALSE)
 
-fresh <- SingleCells(dir_data = file.path(tempdir(), "sc_pipeline_wrong"))
-dir.create(dirname(fresh@dir_data), recursive = TRUE, showWarnings = FALSE)
+f_path_fresh <- file.path(tempdir(), "sc_pipeline_wrong")
+
+dir.create(
+  f_path_fresh,
+  recursive = TRUE,
+  showWarnings = FALSE
+)
+
+fresh <- SingleCells(dir_data = f_path_fresh)
 fresh <- load_r_data(
   object = fresh,
   counts = single_cell_test_data$counts,

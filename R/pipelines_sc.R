@@ -222,7 +222,7 @@ apply_pipeline_per_group <- function(
 #' @return An `ScStep`.
 #'
 #' @export
-step_hvg <- function(
+step_hvg_sc <- function(
   hvg_no = 2000L,
   hvg_params = params_sc_hvg(),
   streaming = NULL,
@@ -252,7 +252,7 @@ step_hvg <- function(
 #' @return An `ScStep`.
 #'
 #' @export
-step_pca <- function(
+step_pca_sc <- function(
   no_pcs = 30L,
   pca_params = params_sc_pca(),
   sparse_svd = FALSE,
@@ -286,7 +286,7 @@ step_pca <- function(
 #' @return An `ScStep`.
 #'
 #' @export
-step_neighbours <- function(
+step_neighbours_sc <- function(
   embd_to_use = "pca",
   no_embd_to_use = NULL,
   modality = c("rna", "adt"),
@@ -320,7 +320,7 @@ step_neighbours <- function(
 #' @return An `ScStep`.
 #'
 #' @export
-step_clusters <- function(
+step_clusters_sc <- function(
   cluster_algorithm = c("leiden", "louvain"),
   res = 1.0,
   name = "leiden_clustering",
@@ -352,7 +352,7 @@ step_clusters <- function(
 #' @return An `ScStep`.
 #'
 #' @export
-step_harmony <- function(
+step_harmony_sc <- function(
   batch_column,
   additional_batch_columns = NULL,
   modality = c("rna", "adt"),
@@ -373,8 +373,6 @@ step_harmony <- function(
     )
   )
 }
-
-### harmony v2 -----------------------------------------------------------------
 
 #' Pipeline step: Harmony v2 batch correction
 #'
@@ -418,7 +416,7 @@ step_harmony_v2_sc <- function(
 #' @return An `ScStep`.
 #'
 #' @export
-step_bbknn <- function(
+step_bbknn_sc <- function(
   batch_column,
   no_neighbours_to_keep = 5L,
   embd_to_use = "pca",
@@ -452,7 +450,7 @@ step_bbknn <- function(
 #' @return An `ScStep`.
 #'
 #' @export
-step_fast_mnn <- function(
+step_fast_mnn_sc <- function(
   batch_column,
   batch_hvg_genes,
   fastmnn_params = params_sc_fastmnn(),
