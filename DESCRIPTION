@@ -89,6 +89,7 @@ Suggests:
     ontologySimilarity,
     qs2,
     quarto,
+    singscore,
     StatMatch,
     Seurat,
     tictoc,
