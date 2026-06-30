@@ -147,7 +147,7 @@ fn rs_coremo_quality(
             }
 
             let r2_med = median(&vals).unwrap_or(0.0);
-            let r2_mad = mad(&vals).unwrap_or(0.0);
+            let r2_mad = mad(&vals, Some(MAD_SCALE)).unwrap_or(0.0);
 
             (r2_med, r2_mad)
         })

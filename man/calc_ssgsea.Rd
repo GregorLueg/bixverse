@@ -30,5 +30,8 @@ A matrix of shape pathways (that passed the thresholds) x samples.
 }
 \description{
 Implementation of the bixverse version of the single sample gene set
-enrichment analysis (ssGSEA)
+enrichment analysis (ssGSEA), see Barbie et al.
+}
+\references{
+Barbie et al., Nature, 2009
 }

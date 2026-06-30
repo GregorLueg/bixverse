@@ -1094,8 +1094,8 @@ rs_prepare_gsva_gs <- function(feature_names, pathway_list, min_size, max_size) 
 #' (needs to be null indexed). See [bixverse::rs_prepare_gsva_gs()].
 #' @param tau Float. Tau parameter, usual recommendation is to use `1.0` here.
 #' Larger values emphasise the tails more.
-#' @param gaussian Boolean. If `TRUE` the Gaussian kernel will be used, if
-#' `FALSE` the Poisson kernel will be used.
+#' @param kernel String. One of `c("gaussian", "poisson", "none")`. The
+#' kernel function to use.
 #' @param max_diff Boolean. Scoring mode: `TRUE` = difference, `FALSE` = larger
 #' absolute value
 #' @param abs_rank Booelan. If `TRUE` = pos-neg, `FALSE` = pos+neg
@@ -1104,7 +1104,7 @@ rs_prepare_gsva_gs <- function(feature_names, pathway_list, min_size, max_size) 
 #' @return Returns a matrix of gene set ES scores x samples.
 #'
 #' @export
-rs_gsva <- function(exp, gs_list, tau, gaussian, max_diff, abs_rank, timings) .Call(wrap__rs_gsva, exp, gs_list, tau, gaussian, max_diff, abs_rank, timings)
+rs_gsva <- function(exp, gs_list, tau, kernel, max_diff, abs_rank, timings) .Call(wrap__rs_gsva, exp, gs_list, tau, kernel, max_diff, abs_rank, timings)
 
 #' Rust version of the ssGSEA algorithm
 #'
@@ -1214,6 +1214,112 @@ rs_hypergeom_test <- function(target_genes, gene_sets, gene_universe, min_overla
 #'
 #' @export
 rs_hypergeom_test_list <- function(target_genes_list, gene_sets, gene_universe, min_overlap, fdr_threshold) .Call(wrap__rs_hypergeom_test_list, target_genes_list, gene_sets, gene_universe, min_overlap, fdr_threshold)
+
+#' Gene rank matrix
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Ranks the columns of a matrix with the tie method.
+#'
+#' @param exp Numerical matrix. The expression matrix (rows = genes, columns =
+#' samples).
+#'
+#' @return Returns a matrix of ranks with the same shape as `exp`.
+#'
+#' @export
+rs_rank_matrix_col <- function(exp) .Call(wrap__rs_rank_matrix_col, exp)
+
+#' Stable-gene rank matrix
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Unit-normalised column ranks computed against a set of stable genes. Use
+#' with the `stable = TRUE` setting of the singscore functions.
+#'
+#' @param exp Numerical matrix. The expression matrix (rows = genes, columns =
+#' samples).
+#' @param stable_gene_indices Integer vector of stable genes. One-indexed.
+#'
+#' @return Returns a matrix of normalised ranks with the same shape as `exp`.
+#'
+#' @export
+rs_rank_matrix_col_stable <- function(exp, stable_gene_indices) .Call(wrap__rs_rank_matrix_col_stable, exp, stable_gene_indices)
+
+#' Rust version of singscore for a single gene set
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Rust-based implementation of singscore for a single up-regulated gene set
+#' with an optional paired down-regulated set.
+#'
+#' @param ranks Numerical matrix. The ranked expression matrix (rows = genes,
+#' columns = samples). Produce with column-wise ranks (standard) or with
+#' [bixverse::rs_rank_matrix_col_stable()] (stable).
+#' @param up_set Integer vector. One-indexed gene indices of the up set.
+#' @param down_set Integer vector or NULL. One-indexed gene indices of the
+#' optional down set.
+#' @param center_score Boolean. Centre scores around 0. Disabled internally
+#' when `known_direction = FALSE`.
+#' @param known_direction Boolean. Whether the up-set direction is known.
+#' Becomes irrelevant when `down_set` is also provided.
+#' @param stable Boolean. If `TRUE`, use stable-gene score bounds.
+#'
+#' @return A named list with `TotalScore`, `TotalDispersion`, and (when
+#' `down_set` is provided) `UpScore`, `UpDispersion`, `DownScore`,
+#' `DownDispersion`.
+#'
+#' @export
+rs_singscore_single <- function(ranks, up_set, down_set, center_score, known_direction, stable) .Call(wrap__rs_singscore_single, ranks, up_set, down_set, center_score, known_direction, stable)
+
+#' Rust version of singscore for many gene sets
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Rust-based implementation of singscore over many gene sets with optional
+#' paired down sets.
+#'
+#' @param ranks Numerical matrix. The ranked expression matrix.
+#' @param up_list List. Up gene sets as zero-indexed indices. See
+#' [bixverse::rs_prepare_gsva_gs()].
+#' @param down_list List or NULL. Paired down gene sets, same length and
+#' ordering as `up_list`.
+#' @param center_score Boolean.
+#' @param known_direction Boolean.
+#' @param stable Boolean.
+#'
+#' @return A named list with
+#' \itemize{
+#'   \item `scores` - Numerical matrix with the scores
+#'   \item `dispersion` - Numerical matrix with the dispersions
+#' }
+#' Both matrices are of shape gene_sets × samples.
+#'
+#' @export
+rs_singscore_multi <- function(ranks, up_list, down_list, center_score, known_direction, stable) .Call(wrap__rs_singscore_multi, ranks, up_list, down_list, center_score, known_direction, stable)
+
+#' Rust version of the singscore permutation test
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' For `n_permutations` iterations, draws random gene indices of the same
+#' total size as the real gene set(s), scores them with the same options as
+#' the real call, and builds a per-sample null distribution. Returns empirical
+#' one-tailed p-values: `max(1 / n_permutations, mean(null > observed))`.
+#'
+#' @param ranks Numerical matrix. The ranked expression matrix.
+#' @param up_set Integer vector. Zero-indexed.
+#' @param down_set Integer vector or NULL.
+#' @param center_score,known_direction,stable Booleans. Should match the
+#' values used for the real [bixverse::rs_singscore_single()] call.
+#' @param n_permutations Integer. Number of random draws (B).
+#' @param seed Integer. RNG seed.
+#'
+#' @return A named list with `observed_scores` (length n_samples),
+#' `null_distribution` (B × n_samples matrix), and `p_values`
+#' (length n_samples).
+#'
+#' @export
+rs_singscore_permutation_test <- function(ranks, up_set, down_set, center_score, known_direction, stable, n_permutations, seed) .Call(wrap__rs_singscore_permutation_test, ranks, up_set, down_set, center_score, known_direction, stable, n_permutations, seed)
 
 #' Rust version of calcaluting the personalised page rank
 #'

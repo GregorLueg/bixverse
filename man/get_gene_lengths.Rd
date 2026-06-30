@@ -2,8 +2,12 @@
 % Please edit documentation in R/functions_bulk.R
 \name{get_gene_lengths}
 \alias{get_gene_lengths}
+\alias{get_gene_lengths,bixverse::BulkCoExp-method}
 \title{Get the gene lengths}
 \usage{
+get_gene_lengths(x, species = c("human", "mouse", "rat"), ...)
+
+## S7 method for class <bixverse::BulkCoExp>
 get_gene_lengths(x, species = c("human", "mouse", "rat"), ...)
 }
 \arguments{

@@ -1,3 +1,11 @@
+# bixverse 0.4.1
+
+## Features
+
+* Added singscore, see 
+  [Foroutan et al.](https://link.springer.com/article/10.1186/s12859-018-2435-4),
+  as another option to score single samples and their pathway activity.
+
 # bixverse 0.4.0
 
 ## Features

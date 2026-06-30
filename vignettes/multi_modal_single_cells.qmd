@@ -370,6 +370,7 @@ to overlay obs columns (clusters, donor IDs, cell type calls) on a particular
 modality's embedding:
 
 ```{r}
+#| label: show leiden on adt tsne
 embedding_plot_sc(
   object = sc_object,
   embedding = "tsne",
@@ -403,6 +404,7 @@ resulting graph lands under `other_data$wnn` and can be embedded just like
 any other modality.
 
 ```{r}
+#| label: generate the wnn graph
 sc_object <- generate_wnn_graph_sc(
   sc_object,
   wnn_params = params_sc_wnn(sd_scale = 1)
@@ -410,6 +412,7 @@ sc_object <- generate_wnn_graph_sc(
 ```
 
 ```{r}
+#| label: tsne on wnn graph
 sc_object <- tsne_sc(
   sc_object,
   modality = "wnn"
@@ -422,6 +425,7 @@ should largely agree — even though they come from completely independent
 measurements.
 
 ```{r}
+#| label: plots on tsne wnn
 p1 <- feature_plot_sc(
   sc_object,
   features = "ENSG00000167286",

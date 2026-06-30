@@ -108,7 +108,7 @@ gaussian <- rs_gsva(
   exp = data,
   gs_list = gs_indices,
   tau = 1.0,
-  gaussian = TRUE,
+  kernel = "gaussian",
   max_diff = TRUE,
   abs_rank = FALSE,
   timings = FALSE
@@ -126,7 +126,7 @@ gaussian_v2 <- rs_gsva(
   exp = data,
   gs_list = gs_indices_2,
   tau = 1.0,
-  gaussian = TRUE,
+  kernel = "gaussian",
   max_diff = TRUE,
   abs_rank = FALSE,
   timings = FALSE
@@ -176,7 +176,7 @@ poisson <- rs_gsva(
   exp = data_2,
   gs_list = gs_indices,
   tau = 1.0,
-  gaussian = FALSE,
+  kernel = "poisson",
   max_diff = TRUE,
   abs_rank = FALSE,
   timings = FALSE
@@ -194,7 +194,7 @@ poisson_v2 <- rs_gsva(
   exp = data_2,
   gs_list = gs_indices_2,
   tau = 1.0,
-  gaussian = TRUE,
+  kernel = "poisson",
   max_diff = TRUE,
   abs_rank = FALSE,
   timings = FALSE
@@ -211,7 +211,7 @@ expect_equal(
 r_poisson <- calc_gsva(
   exp = data_2,
   pathways = random_gene_sets,
-  gaussian = FALSE
+  kernel = "poisson"
 )
 
 expect_equivalent(
@@ -220,6 +220,16 @@ expect_equivalent(
   info = "GSVA Poisson kernel test - R wrapper"
 )
 
+#### deprecation warning -------------------------------------------------------
+
+expect_warning(
+  current = calc_gsva(
+    exp = data_2,
+    pathways = random_gene_sets,
+    gaussian = TRUE
+  ),
+  info = "GSVA deprecation warning working"
+)
 
 ## tests ssgsea ----------------------------------------------------------------
 
