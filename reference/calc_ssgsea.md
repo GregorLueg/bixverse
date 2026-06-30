@@ -1,7 +1,7 @@
 # Bixverse implementation of ssGSEA
 
 Implementation of the bixverse version of the single sample gene set
-enrichment analysis (ssGSEA)
+enrichment analysis (ssGSEA), see Barbie et al.
 
 ## Usage
 
@@ -43,3 +43,7 @@ calc_ssgsea(exp, pathways, ssgsea_params = params_ssgsea(), .verbose = FALSE)
 ## Value
 
 A matrix of shape pathways (that passed the thresholds) x samples.
+
+## References
+
+Barbie et al., Nature, 2009

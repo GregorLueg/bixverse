@@ -39,6 +39,12 @@ enrichments; hypergeometric tests, GSVA, (ss)GSEA.
   : Bixverse implementation of GSVA
 - [`calc_ssgsea()`](https://gregorlueg.github.io/bixverse/reference/calc_ssgsea.md)
   : Bixverse implementation of ssGSEA
+- [`calc_singscore()`](https://gregorlueg.github.io/bixverse/reference/calc_singscore.md)
+  : Bixverse implementation of singscore (single gene set)
+- [`calc_singscore_multi()`](https://gregorlueg.github.io/bixverse/reference/calc_singscore_multi.md)
+  : Bixverse implementation of singscore (multiple gene sets)
+- [`calc_singscore_rank()`](https://gregorlueg.github.io/bixverse/reference/calc_singscore_rank.md)
+  : Rank an expression matrix for singscore
 - [`params_gsea()`](https://gregorlueg.github.io/bixverse/reference/params_gsea.md)
   : Wrapper function to generate GSEA parameters
 - [`params_gsva()`](https://gregorlueg.github.io/bixverse/reference/params_gsva.md)
@@ -1175,6 +1181,10 @@ There is a lot more under the hood…
   **\[experimental\]** : Run randomised SVD over a matrix
 - [`rs_range_norm()`](https://gregorlueg.github.io/bixverse/reference/rs_range_norm.md)
   **\[experimental\]** : Apply a range normalisation on a vector.
+- [`rs_rank_matrix_col()`](https://gregorlueg.github.io/bixverse/reference/rs_rank_matrix_col.md)
+  **\[experimental\]** : Gene rank matrix
+- [`rs_rank_matrix_col_stable()`](https://gregorlueg.github.io/bixverse/reference/rs_rank_matrix_col_stable.md)
+  **\[experimental\]** : Stable-gene rank matrix
 - [`rs_rbf_function()`](https://gregorlueg.github.io/bixverse/reference/rs_rbf_function.md)
   **\[experimental\]** : Apply a Radial Basis Function
 - [`rs_rbf_function_mat()`](https://gregorlueg.github.io/bixverse/reference/rs_rbf_function_mat.md)
@@ -1198,6 +1208,12 @@ There is a lot more under the hood…
   **\[experimental\]** : Set similarities over one list
 - [`rs_set_similarity_list2()`](https://gregorlueg.github.io/bixverse/reference/rs_set_similarity_list2.md)
   **\[experimental\]** : Set similarities over two list
+- [`rs_singscore_multi()`](https://gregorlueg.github.io/bixverse/reference/rs_singscore_multi.md)
+  **\[experimental\]** : Rust version of singscore for many gene sets
+- [`rs_singscore_permutation_test()`](https://gregorlueg.github.io/bixverse/reference/rs_singscore_permutation_test.md)
+  **\[experimental\]** : Rust version of the singscore permutation test
+- [`rs_singscore_single()`](https://gregorlueg.github.io/bixverse/reference/rs_singscore_single.md)
+  **\[experimental\]** : Rust version of singscore for a single gene set
 - [`rs_snf()`](https://gregorlueg.github.io/bixverse/reference/rs_snf.md)
   **\[experimental\]** : Similarity network fusion
 - [`rs_sparse_dict_dgrdl()`](https://gregorlueg.github.io/bixverse/reference/rs_sparse_dict_dgrdl.md)

@@ -118,6 +118,9 @@
 <url><loc>https://gregorlueg.github.io/bixverse/reference/calc_meta_cell_purity.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/calc_mitch.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/calc_sc_type_scores.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/calc_singscore.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/calc_singscore_multi.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/calc_singscore_rank.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/calc_ssgsea.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/calculate_all_dges.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/calculate_batch_asw_sc.html</loc></url>
@@ -346,7 +349,6 @@
 <url><loc>https://gregorlueg.github.io/bixverse/reference/get_feature_mat.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/get_fpkm_counts.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/get_gene_indices.html</loc></url>
-<url><loc>https://gregorlueg.github.io/bixverse/reference/get_gene_lengths.BulkCoExp.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/get_gene_lengths.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/get_gene_lengths.matrix.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/get_gene_names.html</loc></url>
@@ -682,6 +684,8 @@
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_pseudobulk_cells_sparse.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_random_svd.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_range_norm.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/rs_rank_matrix_col.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/rs_rank_matrix_col_stable.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_rbf_function.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_rbf_function_mat.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_rbf_iterate_epsilons.html</loc></url>
@@ -712,6 +716,9 @@
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_set_similarity_list2.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_simple_and_multi_err.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_simulate_dropouts.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/rs_singscore_multi.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/rs_singscore_permutation_test.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/rs_singscore_single.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_snf.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_snf_affinity_cat.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_snf_affinity_continuous.html</loc></url>

@@ -435,7 +435,7 @@ embedding_plot_sc(
 )
 ```
 
-![](multi_modal_single_cells_files/figure-html/unnamed-chunk-1-1.png)
+![](multi_modal_single_cells_files/figure-html/show%20leiden%20on%20adt%20tsne-1.png)
 
 ## WNN
 
@@ -511,7 +511,7 @@ p2 <- feature_plot_sc(
 p1 + p2
 ```
 
-![](multi_modal_single_cells_files/figure-html/unnamed-chunk-4-1.png)
+![](multi_modal_single_cells_files/figure-html/plots%20on%20tsne%20wnn-1.png)
 
 From here, the rest of the pipeline (clustering, marker detection, cell
 type annotation) works exactly as in the standard vignette — just point

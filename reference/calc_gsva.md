@@ -1,7 +1,7 @@
 # Bixverse implementation of GSVA
 
 Implementation of the bixverse version of the gene set variation
-analysis (GSVA).
+analysis (GSVA), see Hänzelmann, et al.
 
 ## Usage
 
@@ -9,7 +9,8 @@ analysis (GSVA).
 calc_gsva(
   exp,
   pathways,
-  gaussian = TRUE,
+  kernel = c("gaussian", "poisson", "none"),
+  gaussian = deprecated(),
   gsva_params = params_gsva(),
   .verbose = FALSE
 )
@@ -27,10 +28,14 @@ calc_gsva(
   List. A named list with each element containing the genes for this
   pathway.
 
+- kernel:
+
+  String. One of `c("gaussian", "poisson", "none")`. The kernel to use.
+
 - gaussian:
 
   Boolean. If set to `TRUE` the Gaussian kernel will be used, if `FALSE`
-  the Poisson will be used.
+  the Poisson will be used. **\[deprecated\]**
 
 - gsva_params:
 
@@ -58,3 +63,7 @@ calc_gsva(
 ## Value
 
 A matrix of shape pathways (that passed the thresholds) x samples.
+
+## References
+
+see Hänzelmann, et al. Bmc Bioinformatics, 2013

@@ -6,6 +6,9 @@ Get the gene lengths
 
 ``` r
 get_gene_lengths(x, species = c("human", "mouse", "rat"), ...)
+
+## S7 method for class <bixverse::BulkCoExp>
+get_gene_lengths(x, species = c("human", "mouse", "rat"), ...)
 ```
 
 ## Arguments

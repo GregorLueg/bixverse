@@ -7,7 +7,7 @@ original implementation.
 ## Usage
 
 ``` r
-rs_gsva(exp, gs_list, tau, gaussian, max_diff, abs_rank, timings)
+rs_gsva(exp, gs_list, tau, kernel, max_diff, abs_rank, timings)
 ```
 
 ## Arguments
@@ -28,10 +28,10 @@ rs_gsva(exp, gs_list, tau, gaussian, max_diff, abs_rank, timings)
   Float. Tau parameter, usual recommendation is to use `1.0` here.
   Larger values emphasise the tails more.
 
-- gaussian:
+- kernel:
 
-  Boolean. If `TRUE` the Gaussian kernel will be used, if `FALSE` the
-  Poisson kernel will be used.
+  String. One of `c("gaussian", "poisson", "none")`. The kernel function
+  to use.
 
 - max_diff:
 

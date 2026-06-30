@@ -11,7 +11,7 @@ performance optimisations compared to the original implementation."></head><body
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -79,7 +79,7 @@ performance optimisations compared to the original implementation.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">rs_gsva</span><span class="op">(</span><span class="va">exp</span>, <span class="va">gs_list</span>, <span class="va">tau</span>, <span class="va">gaussian</span>, <span class="va">max_diff</span>, <span class="va">abs_rank</span>, <span class="va">timings</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">rs_gsva</span><span class="op">(</span><span class="va">exp</span>, <span class="va">gs_list</span>, <span class="va">tau</span>, <span class="va">kernel</span>, <span class="va">max_diff</span>, <span class="va">abs_rank</span>, <span class="va">timings</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -101,9 +101,9 @@ columns = samples</p></dd>
 Larger values emphasise the tails more.</p></dd>
 
 
-<dt id="arg-gaussian">gaussian<a class="anchor" aria-label="anchor" href="#arg-gaussian"></a></dt>
-<dd><p>Boolean. If <code>TRUE</code> the Gaussian kernel will be used, if
-<code>FALSE</code> the Poisson kernel will be used.</p></dd>
+<dt id="arg-kernel">kernel<a class="anchor" aria-label="anchor" href="#arg-kernel"></a></dt>
+<dd><p>String. One of <code>c("gaussian", "poisson", "none")</code>. The
+kernel function to use.</p></dd>
 
 
 <dt id="arg-max-diff">max_diff<a class="anchor" aria-label="anchor" href="#arg-max-diff"></a></dt>

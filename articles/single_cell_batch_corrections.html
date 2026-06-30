@@ -23,7 +23,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -92,7 +92,7 @@
       <h1>Batch correction with bixverse</h1>
 
       <p class="author">Grant Neilson, Gregor Lueg and Liesbeth François</p>
-      <p class="date">2026-06-29</p>
+      <p class="date">2026-06-30</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -123,7 +123,7 @@
 </ul>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">bixverse</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://gregorlueg.github.io/bixverse">bixverse</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://gregorlueg.github.io/bixverse.plots/">bixverse.plots</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-datatable.com" class="external-link">data.table</a></span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -436,7 +436,7 @@
 <span><span class="co">#&gt; kBET Scores</span></span>
 <span><span class="co">#&gt;   Cells: 5841 | Batches: 2 | Threshold: 0.050</span></span>
 <span><span class="co">#&gt;   Rejection rate:      0.1442 (842 / 5841)</span></span>
-<span><span class="co">#&gt;   Mean Chi-Square:     2.0567 (expected under H0: 1)</span></span>
+<span><span class="co">#&gt;   Mean Chi-Square:     2.0565 (expected under H0: 1)</span></span>
 <span><span class="co">#&gt;   Median Chi-Square:   0.7374</span></span>
 <span><span class="va">asw_score_post_harmony</span></span>
 <span><span class="co">#&gt; Batch Silhouette Width</span></span>
@@ -446,7 +446,7 @@
 <span><span class="va">lisi_score_post_harmony</span></span>
 <span><span class="co">#&gt; Batch LISI Scores</span></span>
 <span><span class="co">#&gt;   Cells: 5841 | Batches: 2</span></span>
-<span><span class="co">#&gt;   Mean LISI:    1.5958 (1 = no mixing, 2 = perfect mixing)</span></span>
+<span><span class="co">#&gt;   Mean LISI:    1.5959 (1 = no mixing, 2 = perfect mixing)</span></span>
 <span><span class="co">#&gt;   Median LISI:  1.6423</span></span></code></pre></div>
 </div>
 <p>Also here, we observe improvements across the board.</p>

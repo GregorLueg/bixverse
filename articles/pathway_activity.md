@@ -69,16 +69,16 @@ expression values (log-CPM, microarray intensities, etc.). Running it in
 bixverse_res_gaussian <- calc_gsva(
   exp = X,
   pathways = gs,
-  gaussian = TRUE
+  kernel = "gaussian"
 )
 
 bixverse_res_gaussian[1:5, 1:5]
-#>              s1           s2          s3           s4           s5
-#> gs1  0.09692848 -0.139914696  0.41764731 -0.187406733 -0.233547131
-#> gs2  0.19851696  0.006562067 -0.14409769  0.132402252  0.083892122
-#> gs3  0.02199603 -0.046482340 -0.27195906  0.263120423 -0.249337046
-#> gs4  0.07307252  0.112837361 -0.06937667  0.004405652 -0.150542182
-#> gs5 -0.02464635  0.118011640  0.00478767 -0.191177003  0.007726636
+#>              s1          s2           s3          s4          s5
+#> gs1  0.17327073 -0.08214502  0.034150294 -0.04867519 -0.16191350
+#> gs2 -0.23524540  0.01394045 -0.089631349 -0.09903421  0.14116134
+#> gs3 -0.08728309 -0.17442608  0.084217923  0.16409131 -0.07034172
+#> gs4  0.05214923 -0.09128403 -0.002212442 -0.04105305 -0.06345825
+#> gs5  0.01260639  0.14683535  0.115485849  0.06082644 -0.04619782
 ```
 
 If the original `GSVA` Bioconductor package is available we can verify
@@ -114,35 +114,37 @@ microbenchmark::microbenchmark(
     gsvaPar <- gsvaParam(X, gs)
     gsva(gsvaPar, verbose = FALSE)
   },
-  bixverse = calc_gsva(exp = X, pathways = gs, gaussian = TRUE),
+  bixverse = calc_gsva(exp = X, pathways = gs, kernel = "gaussian"),
   times = 3L
 )
 #> Unit: milliseconds
-#>      expr       min        lq      mean    median        uq       max neval
-#>      gsva 2509.2009 2513.6436 2527.2689 2518.0863 2536.3029 2554.5194     3
-#>  bixverse  556.5616  557.0066  557.6255  557.4516  558.1574  558.8632     3
+#>      expr      min        lq      mean    median        uq       max neval
+#>      gsva 2192.184 2197.3285 2204.3142 2202.4726 2210.3791 2218.2855     3
+#>  bixverse  478.761  479.2119  479.9334  479.6627  480.5196  481.3765     3
 ```
 
 ### Poisson kernel
 
 For count data a Poisson kernel is more appropriate. The only change is
-setting `gaussian = FALSE`:
+setting `kernel = "poisson` (to note: prior to `"0.4.1"`, this was
+controlled via a Boolean flag `gaussian = FALSE` - this still works, but
+will throw a deprecation warning now):
 
 ``` r
 
 bixverse_res_poisson <- calc_gsva(
   exp = X_counts,
   pathways = gs,
-  gaussian = FALSE
+  kernel = "poisson"
 )
 
 bixverse_res_poisson[1:5, 1:5]
-#>              s1          s2          s3           s4          s5
-#> gs1 -0.37041802 -0.12410365  0.04003962 -0.188968796  0.05646557
-#> gs2 -0.03243990  0.20769455  0.07756624  0.108018727  0.12248528
-#> gs3 -0.04345095 -0.08305948  0.29864172 -0.005901069 -0.22250672
-#> gs4  0.11894162  0.14299360 -0.05995536  0.020203846 -0.15929537
-#> gs5 -0.01211707 -0.03322786 -0.05905846  0.063871209 -0.01815919
+#>              s1          s2           s3          s4         s5
+#> gs1 -0.17864318  0.06203697 -0.120391948 -0.16332488 0.08564274
+#> gs2 -0.34656272  0.23621587 -0.008192236  0.07562219 0.02157461
+#> gs3 -0.13671588 -0.17229846  0.307269178  0.02591309 0.12189638
+#> gs4 -0.09233385 -0.01281847  0.111087533  0.12166383 0.12041590
+#> gs5  0.14520305 -0.15692430  0.151497132 -0.30443143 0.06165994
 ```
 
 And vs. the original
@@ -171,13 +173,13 @@ microbenchmark::microbenchmark(
     gsvaPar <- gsvaParam(X_counts, gs, kcdf = "Poisson")
     gsva(gsvaPar, verbose = FALSE)
   },
-  bixverse = calc_gsva(exp = X_counts, pathways = gs, gaussian = FALSE),
+  bixverse = calc_gsva(exp = X_counts, pathways = gs, kernel = "poisson"),
   times = 3L
 )
 #> Unit: seconds
-#>      expr       min        lq      mean   median        uq       max neval
-#>      gsva 18.904164 18.912136 18.915082 18.92011 18.920541 18.920975     3
-#>  bixverse  2.694148  2.694414  2.695938  2.69468  2.696833  2.698986     3
+#>      expr      min        lq      mean    median        uq       max neval
+#>      gsva 14.96282 14.965428 14.984737 14.968032 14.995694 15.023356     3
+#>  bixverse  2.24174  2.242077  2.243702  2.242414  2.244683  2.246951     3
 ```
 
 ## ssGSEA
@@ -195,12 +197,12 @@ bixverse_res_ssgsea <- calc_ssgsea(
 )
 
 bixverse_res_ssgsea[1:5, 1:5]
-#>             s1          s2          s3         s4           s5
-#> gs1 0.18182063 -0.06524226 0.361293682 0.06303744 -0.116695483
-#> gs2 0.15176759  0.11281682 0.044045192 0.11319731  0.118079709
-#> gs3 0.09893521  0.05599180 0.007053606 0.15767608 -0.043563738
-#> gs4 0.11515782  0.13413340 0.035168559 0.06866811  0.009829044
-#> gs5 0.07597297  0.18842677 0.108706592 0.02932925  0.185237953
+#>              s1         s2         s3         s4         s5
+#> gs1  0.16531920 0.10463030 0.14081016 0.06593839 0.05412237
+#> gs2 -0.06656523 0.13433883 0.03793980 0.09271859 0.17837934
+#> gs3  0.12309027 0.03415123 0.08553504 0.17130144 0.10144050
+#> gs4  0.15274683 0.11388487 0.09036733 0.06398620 0.06596740
+#> gs5  0.15399239 0.15286903 0.10370760 0.16065481 0.11816183
 ```
 
 Let’s compare again against the GSVA version:
@@ -233,9 +235,203 @@ microbenchmark::microbenchmark(
   times = 3L
 )
 #> Unit: milliseconds
-#>      expr      min       lq     mean   median       uq      max neval
-#>      gsva 610.7358 612.3230 620.6016 613.9101 625.5344 637.1588     3
-#>  bixverse 114.2488 114.3565 115.0905 114.4642 115.5114 116.5586     3
+#>      expr       min        lq      mean    median        uq       max neval
+#>      gsva 523.44990 526.81846 531.05590 530.18702 534.85889 539.53077     3
+#>  bixverse  93.56694  93.67025  94.11807  93.77356  94.39364  95.01371     3
+```
+
+## singscore
+
+[singscore](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/s12859-018-2435-4)
+takes a different angle than GSVA or ssGSEA: rather than estimating a
+null distribution over samples or genes, it scores each sample
+independently using only the ranks of the genes in the signature. This
+makes it well-suited to scoring single samples in isolation and to
+working with directional signatures (separate up- and down-regulated
+gene sets). `bixverse` provides a Rust-accelerated implementation.
+
+### Ranking
+
+singscore operates on a ranked expression matrix rather than the raw
+values, so the first step is to compute per-sample ranks:
+
+``` r
+
+ranks <- calc_singscore_rank(exp = X)
+
+ranks[1:5, 1:5]
+#>      s1   s2   s3   s4   s5
+#> g1 5029 8163 7621 3616 1558
+#> g2  883 8032 4046 1253 9106
+#> g3 3043 1860  830 2821 9756
+#> g4  638 1987 9799 7259  948
+#> g5 9479 2970 4126 3233 2209
+```
+
+If your data comes from a small targeted panel (NanoString, RT-qPCR)
+rather than a transcriptome-wide assay, you can pass a set of stable
+genes to `calc_singscore_rank` to use the stable-gene ranking approach
+from [Bhuva et
+al.](https://academic.oup.com/nar/article/48/16/e97/5882020):
+
+``` r
+
+ranks_stable <- calc_singscore_rank(
+  exp = X,
+  stable_genes = c("g1", "g2", "g3", "g4", "g5")
+)
+```
+
+The `stable` attribute on the rank matrix is read automatically by the
+downstream scoring functions to pick the appropriate bounds formula.
+
+### Scoring a single signature
+
+For a single signature, `calc_singscore` returns one score and
+dispersion per sample. Below we use one of our random gene sets as the
+up-regulated set and another as the down-regulated set:
+
+``` r
+
+up_set <- gs[[1]]
+down_set <- gs[[2]]
+
+singscore_res <- calc_singscore(
+  ranks = ranks,
+  up_set = up_set,
+  down_set = down_set
+)
+
+head(singscore_res)
+#>     total_score total_dispersion     up_score up_dispersion  down_score
+#>           <num>            <num>        <num>         <num>       <num>
+#> 1:  0.137065331         3058.979  0.041882560      3388.487  0.09518277
+#> 2: -0.029680829         4205.401 -0.013524446      4421.120 -0.01615638
+#> 3:  0.046034084         3898.132  0.004484627      4399.622  0.04154946
+#> 4:  0.008373127         3732.080 -0.016387349      3793.238  0.02476048
+#> 5: -0.068448255         4352.179 -0.042045111      4152.769 -0.02640314
+#> 6: -0.064852318         3664.622 -0.030002520      3999.319 -0.03484980
+#>    down_dispersion sample_id
+#>              <num>    <char>
+#> 1:        2729.471        s1
+#> 2:        3989.683        s2
+#> 3:        3396.642        s3
+#> 4:        3670.923        s4
+#> 5:        4551.589        s5
+#> 6:        3329.925        s6
+```
+
+If the direction of the signature is unknown (a gene ontology term, for
+example), pass only `up_set` and set `known_direction = FALSE`. The
+scoring function then transforms ranks around their median so that genes
+at either extreme contribute symmetrically.
+
+### Permutation testing
+
+To assess whether an observed score is larger than would be expected by
+chance for a random gene set of the same size, set `n_permutations` to a
+positive integer. The function draws random gene sets matching the size
+of the real signature, scores them, and returns empirical one-tailed
+p-values alongside the scores. The full null distribution is attached as
+an attribute for inspection or plotting.
+
+``` r
+
+singscore_perm <- calc_singscore(
+  ranks = ranks,
+  up_set = up_set,
+  down_set = down_set,
+  n_permutations = 1000L,
+  seed = 42L
+)
+
+head(singscore_perm)
+#>     total_score total_dispersion     up_score up_dispersion  down_score
+#>           <num>            <num>        <num>         <num>       <num>
+#> 1:  0.137065331         3058.979  0.041882560      3388.487  0.09518277
+#> 2: -0.029680829         4205.401 -0.013524446      4421.120 -0.01615638
+#> 3:  0.046034084         3898.132  0.004484627      4399.622  0.04154946
+#> 4:  0.008373127         3732.080 -0.016387349      3793.238  0.02476048
+#> 5: -0.068448255         4352.179 -0.042045111      4152.769 -0.02640314
+#> 6: -0.064852318         3664.622 -0.030002520      3999.319 -0.03484980
+#>    down_dispersion sample_id  pval
+#>              <num>    <char> <num>
+#> 1:        2729.471        s1 0.001
+#> 2:        3989.683        s2 1.000
+#> 3:        3396.642        s3 1.000
+#> 4:        3670.923        s4 0.985
+#> 5:        4551.589        s5 0.001
+#> 6:        3329.925        s6 1.000
+
+dim(attr(singscore_perm, "null_distribution"))
+#> [1] 1000  100
+```
+
+The seed argument makes the permutations reproducible.
+
+### Scoring many signatures
+
+When you have many signatures to score at once, `calc_singscore_multi`
+avoids the per-call overhead and parallelises across gene sets. It
+accepts a named list of up-regulated sets, optionally paired with a list
+of down-regulated sets keyed by the same names:
+
+``` r
+
+singscore_multi_res <- calc_singscore_multi(
+  ranks = ranks,
+  up_pathways = gs[1:10]
+)
+
+singscore_multi_res$scores[1:5, 1:5]
+#>               s1           s2           s3          s4           s5
+#> gs1  0.041882560 -0.013524446  0.004484627 -0.01638735 -0.042045111
+#> gs2 -0.095182771  0.016156384 -0.041549457 -0.02476048  0.026403144
+#> gs3 -0.005905865 -0.056419495  0.005316914  0.03123335 -0.004381137
+#> gs4  0.017718540 -0.009668218 -0.008453250 -0.01987436 -0.016105796
+#> gs5  0.016758297  0.027189462  0.002743110  0.01959226  0.009541926
+```
+
+The returned list contains a `scores` matrix and a matching
+`dispersions` matrix, both with shape gene sets × samples.
+
+### Comparison with singscore
+
+When the original `singscore` package is available we can confirm that
+the two implementations agree closely. One detail worth noting:
+`singscore` uses `ties.method = "min"` when ranking, while `bixverse`
+uses average ranks. For continuous data the difference is negligible,
+but it can introduce small discrepancies on heavily tied data.
+
+``` r
+
+library(singscore)
+
+sing_ranks <- rankGenes(X)
+sing_res <- simpleScore(
+  rankData = sing_ranks,
+  upSet = up_set,
+  downSet = down_set
+)
+
+cor(singscore_res$total_score, sing_res$TotalScore)
+```
+
+And the speed difference:
+
+``` r
+
+microbenchmark::microbenchmark(
+  singscore = {
+    sing_ranks <- rankGenes(X)
+    simpleScore(rankData = sing_ranks, upSet = up_set, downSet = down_set)
+  },
+  bixverse = {
+    ranks <- calc_singscore_rank(exp = X)
+    calc_singscore(ranks = ranks, up_set = up_set, down_set = down_set)
+  },
+  times = 5L
+)
 ```
 
 ## Multi-contrast enrichment (mitch)
@@ -333,9 +529,9 @@ microbenchmark::microbenchmark(
   times = 5L
 )
 #> Unit: milliseconds
-#>      expr        min         lq       mean     median         uq        max
-#>     mitch 140.254564 143.369965 145.555294 147.507267 148.301906 148.342767
-#>  bixverse   3.414536   3.434483   4.395183   3.469939   5.204969   6.451987
+#>      expr        min        lq       mean     median         uq        max
+#>     mitch 125.259156 125.82071 127.818110 126.263042 129.264488 132.483155
+#>  bixverse   2.833107   2.84892   3.802683   3.528226   4.123017   5.680144
 #>  neval
 #>      5
 #>      5
