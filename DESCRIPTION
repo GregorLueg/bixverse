@@ -36,6 +36,7 @@ Description:
     compute.
 License: MIT + file LICENSE
 Encoding: UTF-8
+URL: https://gregorlueg.github.io/bixverse
 Roxygen: list(markdown = TRUE)
 Config/rextendr/version: 0.5.0
 biocViews:

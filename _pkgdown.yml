@@ -139,6 +139,9 @@ reference:
       - calc_mitch
       - calc_gsva
       - calc_ssgsea
+      - calc_singscore
+      - calc_singscore_multi
+      - calc_singscore_rank
       - params_gsea
       - params_gsva
       - params_ssgsea
@@ -700,6 +703,8 @@ reference:
       - rs_prepare_whitening
       - rs_random_svd
       - rs_range_norm
+      - rs_rank_matrix_col
+      - rs_rank_matrix_col_stable
       - rs_rbf_function
       - rs_rbf_function_mat
       - rs_rbh_cor
@@ -710,6 +715,9 @@ reference:
       - rs_set_similarity
       - rs_set_similarity_list
       - rs_set_similarity_list2
+      - rs_singscore_multi
+      - rs_singscore_permutation_test
+      - rs_singscore_single
       - rs_snf
       - rs_sparse_dict_dgrdl
       - rs_sparse_dict_dgrdl_grid_search
