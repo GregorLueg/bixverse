@@ -83,7 +83,7 @@ single call:
 bixverse_res_gaussian <- calc_gsva(
   exp = X,
   pathways = gs,
-  gaussian = TRUE
+  kernel = "gaussian"
 )
 
 bixverse_res_gaussian[1:5, 1:5]
@@ -122,7 +122,7 @@ microbenchmark::microbenchmark(
     gsvaPar <- gsvaParam(X, gs)
     gsva(gsvaPar, verbose = FALSE)
   },
-  bixverse = calc_gsva(exp = X, pathways = gs, gaussian = TRUE),
+  bixverse = calc_gsva(exp = X, pathways = gs, kernel = "gaussian"),
   times = 3L
 )
 ```
@@ -130,14 +130,16 @@ microbenchmark::microbenchmark(
 ### Poisson kernel
 
 For count data a Poisson kernel is more appropriate. The only change is
-setting `gaussian = FALSE`:
+setting `kernel = "poisson` (to note: prior to `"0.4.1"`, this was controlled
+via a Boolean flag `gaussian = FALSE` - this still works, but will throw a
+deprecation warning now):
 
 ```{r}
 #| label: bixverse-gsva-poisson
 bixverse_res_poisson <- calc_gsva(
   exp = X_counts,
   pathways = gs,
-  gaussian = FALSE
+  kernel = "poisson"
 )
 
 bixverse_res_poisson[1:5, 1:5]
@@ -170,7 +172,7 @@ microbenchmark::microbenchmark(
     gsvaPar <- gsvaParam(X_counts, gs, kcdf = "Poisson")
     gsva(gsvaPar, verbose = FALSE)
   },
-  bixverse = calc_gsva(exp = X_counts, pathways = gs, gaussian = FALSE),
+  bixverse = calc_gsva(exp = X_counts, pathways = gs, kernel = "poisson"),
   times = 3L
 )
 ```
@@ -220,6 +222,157 @@ microbenchmark::microbenchmark(
   },
   bixverse = calc_ssgsea(exp = X, pathways = gs),
   times = 3L
+)
+```
+
+## singscore
+
+[singscore](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/s12859-018-2435-4)
+takes a different angle than GSVA or ssGSEA: rather than estimating a null
+distribution over samples or genes, it scores each sample independently using
+only the ranks of the genes in the signature. This makes it well-suited to
+scoring single samples in isolation and to working with directional signatures
+(separate up- and down-regulated gene sets). `bixverse` provides a
+Rust-accelerated implementation.
+
+### Ranking
+
+singscore operates on a ranked expression matrix rather than the raw values,
+so the first step is to compute per-sample ranks:
+
+```{r}
+#| label: bixverse-singscore-rank
+ranks <- calc_singscore_rank(exp = X)
+
+ranks[1:5, 1:5]
+```
+
+If your data comes from a small targeted panel (NanoString, RT-qPCR) rather
+than a transcriptome-wide assay, you can pass a set of stable genes to
+`calc_singscore_rank` to use the stable-gene ranking approach from
+[Bhuva et al.](https://academic.oup.com/nar/article/48/16/e97/5882020):
+
+```{r}
+#| label: bixverse-singscore-rank-stable
+#| eval: false
+ranks_stable <- calc_singscore_rank(
+  exp = X,
+  stable_genes = c("g1", "g2", "g3", "g4", "g5")
+)
+```
+
+The `stable` attribute on the rank matrix is read automatically by the
+downstream scoring functions to pick the appropriate bounds formula.
+
+### Scoring a single signature
+
+For a single signature, `calc_singscore` returns one score and dispersion per
+sample. Below we use one of our random gene sets as the up-regulated set and
+another as the down-regulated set:
+
+```{r}
+#| label: bixverse-singscore-single
+up_set <- gs[[1]]
+down_set <- gs[[2]]
+
+singscore_res <- calc_singscore(
+  ranks = ranks,
+  up_set = up_set,
+  down_set = down_set
+)
+
+head(singscore_res)
+```
+
+If the direction of the signature is unknown (a gene ontology term, for
+example), pass only `up_set` and set `known_direction = FALSE`. The scoring
+function then transforms ranks around their median so that genes at either
+extreme contribute symmetrically.
+
+### Permutation testing
+
+To assess whether an observed score is larger than would be expected by chance
+for a random gene set of the same size, set `n_permutations` to a positive
+integer. The function draws random gene sets matching the size of the real
+signature, scores them, and returns empirical one-tailed p-values alongside
+the scores. The full null distribution is attached as an attribute for
+inspection or plotting.
+
+```{r}
+#| label: bixverse-singscore-permutations
+singscore_perm <- calc_singscore(
+  ranks = ranks,
+  up_set = up_set,
+  down_set = down_set,
+  n_permutations = 1000L,
+  seed = 42L
+)
+
+head(singscore_perm)
+
+dim(attr(singscore_perm, "null_distribution"))
+```
+
+The seed argument makes the permutations reproducible.
+
+### Scoring many signatures
+
+When you have many signatures to score at once, `calc_singscore_multi` avoids
+the per-call overhead and parallelises across gene sets. It accepts a named
+list of up-regulated sets, optionally paired with a list of down-regulated
+sets keyed by the same names:
+
+```{r}
+#| label: bixverse-singscore-multi
+singscore_multi_res <- calc_singscore_multi(
+  ranks = ranks,
+  up_pathways = gs[1:10]
+)
+
+singscore_multi_res$scores[1:5, 1:5]
+```
+
+The returned list contains a `scores` matrix and a matching `dispersions`
+matrix, both with shape gene sets × samples.
+
+### Comparison with singscore
+
+When the original `singscore` package is available we can confirm that the
+two implementations agree closely. One detail worth noting: `singscore` uses
+`ties.method = "min"` when ranking, while `bixverse` uses average ranks. For
+continuous data the difference is negligible, but it can introduce small
+discrepancies on heavily tied data.
+
+```{r}
+#| label: singscore-comparison
+#| eval: !expr requireNamespace("singscore", quietly = TRUE)
+library(singscore)
+
+sing_ranks <- rankGenes(X)
+sing_res <- simpleScore(
+  rankData = sing_ranks,
+  upSet = up_set,
+  downSet = down_set
+)
+
+cor(singscore_res$total_score, sing_res$TotalScore)
+```
+
+And the speed difference:
+
+```{r}
+#| label: singscore-speed
+#| eval: !expr requireNamespace(c("singscore", "microbenchmark"), quietly = TRUE)
+microbenchmark::microbenchmark(
+  singscore = {
+    sing_ranks <- rankGenes(X)
+    simpleScore(rankData = sing_ranks, upSet = up_set, downSet = down_set)
+  },
+  bixverse = {
+    ranks <- calc_singscore_rank(exp = X)
+    calc_singscore(ranks = ranks, up_set = up_set, down_set = down_set)
+  },
+  times = 5L
 )
 ```
 

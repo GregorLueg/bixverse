@@ -161,7 +161,7 @@ gse_hypergeometric_list <- function(
     gene_universe <- unique(c(unlist(gene_set_list), unlist(target_genes_list)))
   }
 
-  target_set_lengths = sapply(target_genes_list, length)
+  target_set_lengths <- sapply(target_genes_list, length)
 
   rs_gse_results <- rs_hypergeom_test_list(
     target_genes_list = target_genes_list,
@@ -314,14 +314,16 @@ simplify_hypergeom_res <- function(
 #'
 #' @description
 #' Implementation of the bixverse version of the gene set variation analysis
-#' (GSVA).
+#' (GSVA), see Hänzelmann, et al.
 #'
 #' @param exp Numerical matrix. Rows represents the features, columns the
 #' features/genes.
 #' @param pathways List. A named list with each element containing the genes for
 #' this pathway.
+#' @param kernel String. One of `c("gaussian", "poisson", "none")`. The kernel
+#' to use.
 #' @param gaussian Boolean. If set to `TRUE` the Gaussian kernel will be used,
-#' if `FALSE` the Poisson will be used.
+#' if `FALSE` the Poisson will be used. `r lifecycle::badge("deprecated")`
 #' @param gsva_params List. The GSVA parameters, see [bixverse::params_gsva()]
 #' wrapper function. This function generates a list containing:
 #' \itemize{
@@ -339,13 +341,18 @@ simplify_hypergeom_res <- function(
 #' @return A matrix of shape pathways (that passed the thresholds) x samples.
 #'
 #' @export
+#'
+#' @references see Hänzelmann, et al. Bmc Bioinformatics, 2013
 calc_gsva <- function(
   exp,
   pathways,
-  gaussian = TRUE,
+  kernel = c("gaussian", "poisson", "none"),
+  gaussian = deprecated(),
   gsva_params = params_gsva(),
   .verbose = FALSE
 ) {
+  kernel <- match.arg(kernel)
+
   # checks
   checkmate::assertMatrix(
     exp,
@@ -354,8 +361,23 @@ calc_gsva <- function(
     col.names = "named"
   )
   checkmate::assertList(pathways, types = "character", names = "named")
-  checkmate::qassert(gaussian, "B1")
+
   assertGSVAParams(gsva_params)
+
+  # deprecated parameter
+  if (lifecycle::is_present(gaussian)) {
+    checkmate::qassert(gaussian, "B1")
+    deprecate_warn(
+      "0.4.1",
+      "foo::calc_gsva(gaussian = )",
+      "foo::calc_gsva(kernel = )",
+      always = TRUE
+    )
+
+    kernel <- ifelse(gaussian, "gaussian", "poisson")
+  }
+
+  checkmate::assertChoice(kernel, c("gaussian", "poisson", "none"))
 
   # function body
   gs_indices <- with(
@@ -374,7 +396,7 @@ calc_gsva <- function(
       exp = exp,
       gs_list = gs_indices,
       tau = tau,
-      gaussian = gaussian,
+      kernel = kernel,
       max_diff = max_diff,
       abs_rank = abs_rank,
       timings = .verbose
@@ -393,7 +415,7 @@ calc_gsva <- function(
 #'
 #' @description
 #' Implementation of the bixverse version of the single sample gene set
-#' enrichment analysis (ssGSEA)
+#' enrichment analysis (ssGSEA), see Barbie et al.
 #'
 #' @param exp Numerical matrix. Rows represents the features, columns the
 #' features/genes.
@@ -413,6 +435,8 @@ calc_gsva <- function(
 #' @return A matrix of shape pathways (that passed the thresholds) x samples.
 #'
 #' @export
+#'
+#' @references Barbie et al., Nature, 2009
 calc_ssgsea <- function(
   exp,
   pathways,
@@ -501,7 +525,7 @@ calc_ssgsea <- function(
 #' }
 #'
 #' @export
-calc_gsea_traditional = function(
+calc_gsea_traditional <- function(
   stats,
   pathways,
   nperm = 2000L,
@@ -613,7 +637,7 @@ calc_gsea_traditional = function(
 #' @export
 #'
 #' @references Korotkevich, et al., bioRxiv
-calc_fgsea_simple = function(
+calc_fgsea_simple <- function(
   stats,
   pathways,
   nperm = 2000L,
@@ -828,7 +852,7 @@ calc_fgsea <- function(
     rs_err_res$multi_err < rs_err_res$simple_err
   ][, "denom_prob" := (mode_fraction + 1) / (nperm + 1)]
 
-  rs_res = with(
+  rs_res <- with(
     gsea_params,
     rs_calc_multi_level(
       stats = stats,
@@ -841,7 +865,7 @@ calc_fgsea <- function(
     )
   )
 
-  dt_multi_level = dt_multi_level[, pvals := rs_res$pvals] %>%
+  dt_multi_level <- dt_multi_level[, pvals := rs_res$pvals] %>%
     data.table::as.data.table() %>%
     .[, pvals := pmin(1, pvals / denom_prob)] %>%
     .[,
@@ -1018,4 +1042,253 @@ calc_mitch <- function(contrast_mat, gene_set_list, min_size = 5L) {
   data.table::setorder(res, manova_pval)
 
   return(res)
+}
+
+## singscore -------------------------------------------------------------------
+
+### ranking --------------------------------------------------------------------
+
+#' Rank an expression matrix for singscore
+#'
+#' @description
+#' Column-ranks an expression matrix. If `stable_genes` is provided, uses the
+#' stable-genes ranking method (unit-normalised ranks against a small set of
+#' stable genes); otherwise standard column ranks. Sets `attr(., "stable")` so
+#' downstream singscore functions know which bounds formula to use.
+#'
+#' @param exp Numerical matrix. Rows = genes, columns = samples.
+#' @param stable_genes Character vector or NULL. Gene names of stable genes.
+#' Defaults to `NULL` (standard ranking).
+#'
+#' @return A rank matrix with the same shape as `exp` and `attr(., "stable")`
+#' set to `TRUE` or `FALSE`.
+#'
+#' @export
+#'
+#' @references 1.) Foroutan et al., BMC Bioinformatics, 2018.; 2.) Bhuva,
+#' et al., Nucleic Acids Res., 2020
+calc_singscore_rank <- function(exp, stable_genes = NULL) {
+  checkmate::assertMatrix(
+    exp,
+    mode = "numeric",
+    row.names = "named",
+    col.names = "named"
+  )
+  checkmate::assertCharacter(stable_genes, min.len = 1, null.ok = TRUE)
+
+  if (is.null(stable_genes)) {
+    ranks <- rs_rank_matrix_col(exp = exp)
+    attr(ranks, "stable") <- FALSE
+  } else {
+    bg <- rownames(exp)
+    idx <- match(stable_genes, bg)
+    idx <- idx[!is.na(idx)]
+    stopifnot(length(idx) > 0)
+    ranks <- rs_rank_matrix_col_stable(
+      exp = exp,
+      stable_gene_indices = as.integer(idx)
+    )
+    attr(ranks, "stable") <- TRUE
+  }
+
+  rownames(ranks) <- rownames(exp)
+  colnames(ranks) <- colnames(exp)
+
+  return(ranks)
+}
+
+### single ---------------------------------------------------------------------
+
+#' Bixverse implementation of singscore (single gene set)
+#'
+#' @description
+#' Scores all samples against one up-regulated gene set with an optional
+#' paired down-regulated set. When `n_permutations > 0`, additionally runs a
+#' permutation test and includes empirical p-values.
+#'
+#' @param ranks Numerical matrix. Output of [bixverse::calc_singscore_rank()].
+#' @param up_set Character vector. Gene names of the up-regulated set.
+#' @param down_set Character vector or NULL. Optional paired down-regulated set.
+#' @param center_score Boolean. Centre scores around 0. Ignored when
+#' `known_direction = FALSE`.
+#' @param known_direction Boolean. Whether the up-set direction is known.
+#' Becomes irrelevant when `down_set` is also provided.
+#' @param n_permutations Integer. Number of permutations. `0` disables the
+#' permutation test.
+#' @param seed Integer. RNG seed for the permutation test.
+#'
+#' @return A data.table with one row per sample. Columns: `total_score`,
+#' `total_dispersion`, optionally `up_score`, `up_dispersion`, `down_score`,
+#' `down_dispersion`, and (when permutations are run) `pval`. With
+#' permutations, the null distribution is attached as
+#' `attr(., "null_distribution")`.
+#'
+#' @export
+#'
+#' @references Foroutan et al., BMC Bioinformatics, 2018.
+calc_singscore <- function(
+  ranks,
+  up_set,
+  down_set = NULL,
+  center_score = TRUE,
+  known_direction = TRUE,
+  n_permutations = 0L,
+  seed = 42L
+) {
+  checkmate::assertMatrix(
+    ranks,
+    mode = "numeric",
+    row.names = "named",
+    col.names = "named"
+  )
+  checkmate::assertCharacter(up_set, min.len = 1)
+  checkmate::assertCharacter(down_set, min.len = 1, null.ok = TRUE)
+  checkmate::qassert(center_score, "B1")
+  checkmate::qassert(known_direction, "B1")
+  checkmate::qassert(n_permutations, "X1[0,)")
+  checkmate::qassert(seed, "X1")
+
+  stable <- isTRUE(attr(ranks, "stable"))
+  bg <- rownames(ranks)
+
+  # 0-indexing is done on the Rust side
+  up_idx <- match(up_set, bg)
+  up_idx <- up_idx[!is.na(up_idx)]
+  stopifnot(length(up_idx) > 0)
+
+  if (!is.null(down_set)) {
+    down_idx <- match(down_set, bg)
+    down_idx <- down_idx[!is.na(down_idx)]
+    if (length(down_idx) == 0) down_idx <- NULL
+  } else {
+    down_idx <- NULL
+  }
+
+  scored <- rs_singscore_single(
+    ranks = ranks,
+    up_set = as.integer(up_idx),
+    down_set = if (is.null(down_idx)) NULL else as.integer(down_idx),
+    center_score = center_score,
+    known_direction = known_direction,
+    stable = stable
+  )
+
+  scored <- scored[!sapply(scored, is.null)]
+  res <- data.table::setDT(scored)
+  res[, sample_id := colnames(ranks)]
+
+  if (n_permutations > 0) {
+    perm <- rs_singscore_permutation_test(
+      ranks = ranks,
+      up_set = as.integer(up_idx),
+      down_set = if (is.null(down_idx)) NULL else as.integer(down_idx),
+      center_score = center_score,
+      known_direction = known_direction,
+      stable = stable,
+      n_permutations = n_permutations,
+      seed = seed
+    )
+    res$pval <- perm$p_values
+
+    data.table::setattr(res, "null_distribution", perm$null_distribution)
+  }
+
+  return(res)
+}
+
+### multiple -------------------------------------------------------------------
+
+#' Bixverse implementation of singscore (multiple gene sets)
+#'
+#' @description
+#' Scores all samples against many up-regulated gene sets with optional paired
+#' down-regulated sets. Down sets are paired with up sets by name; unmatched
+#' names are dropped.
+#'
+#' @param ranks Numerical matrix. Output of [bixverse::calc_singscore_rank()].
+#' @param up_pathways Named list of character vectors. Up-regulated gene sets.
+#' @param down_pathways Named list or NULL. Paired down-regulated gene sets.
+#' @param center_score Boolean. Centre scores around 0. Ignored when
+#' `known_direction = FALSE`.
+#' @param known_direction Boolean. Whether the up-set direction is known.
+#' Becomes irrelevant when `down_set` is also provided.
+#' @param min_size Integer. Minimum gene-set size after dropping missing genes.
+#' @param max_size Integer. Maximum gene-set size.
+#'
+#' @return A named list with two matrices, `scores` and `dispersions`, each of
+#' shape gene_sets × samples.
+#'
+#' @export
+#'
+#' @references Foroutan et al., BMC Bioinformatics, 2018.
+calc_singscore_multi <- function(
+  ranks,
+  up_pathways,
+  down_pathways = NULL,
+  center_score = TRUE,
+  known_direction = TRUE,
+  min_size = 1L,
+  max_size = 500L
+) {
+  checkmate::assertMatrix(
+    ranks,
+    mode = "numeric",
+    row.names = "named",
+    col.names = "named"
+  )
+  checkmate::assertList(up_pathways, types = "character", names = "named")
+  checkmate::assertList(
+    down_pathways,
+    types = "character",
+    names = "named",
+    null.ok = TRUE
+  )
+  checkmate::qassert(center_score, "B1")
+  checkmate::qassert(known_direction, "B1")
+  checkmate::qassert(min_size, "X1[1,)")
+  checkmate::qassert(max_size, "X1[1,)")
+
+  stable <- isTRUE(attr(ranks, "stable"))
+
+  up_idx <- rs_prepare_gsva_gs(
+    feature_names = rownames(ranks),
+    pathway_list = up_pathways,
+    min_size = min_size,
+    max_size = max_size
+  )
+
+  if (!is.null(down_pathways)) {
+    common <- intersect(names(up_idx), names(down_pathways))
+    if (length(common) == 0) {
+      stop("No matching names between up_pathways and down_pathways.")
+    }
+    up_idx <- up_idx[common]
+    down_idx <- rs_prepare_gsva_gs(
+      feature_names = rownames(ranks),
+      pathway_list = down_pathways[common],
+      min_size = 1L,
+      max_size = .Machine$integer.max
+    )
+    common <- intersect(names(up_idx), names(down_idx))
+    up_idx <- up_idx[common]
+    down_idx <- down_idx[common]
+  } else {
+    down_idx <- NULL
+  }
+
+  result <- rs_singscore_multi(
+    ranks = ranks,
+    up_list = up_idx,
+    down_list = down_idx,
+    center_score = center_score,
+    known_direction = known_direction,
+    stable = stable
+  )
+
+  rownames(result$scores) <- names(up_idx)
+  colnames(result$scores) <- colnames(ranks)
+  rownames(result$dispersions) <- names(up_idx)
+  colnames(result$dispersions) <- colnames(ranks)
+
+  return(result)
 }

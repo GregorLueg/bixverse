@@ -1,3 +1,7 @@
+# bixverse 0.4.1
+
+## Features
+
 # bixverse 0.4.0
 
 ## Features

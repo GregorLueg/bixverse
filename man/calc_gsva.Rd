@@ -7,7 +7,8 @@
 calc_gsva(
   exp,
   pathways,
-  gaussian = TRUE,
+  kernel = c("gaussian", "poisson", "none"),
+  gaussian = deprecated(),
   gsva_params = params_gsva(),
   .verbose = FALSE
 )
@@ -19,8 +20,11 @@ features/genes.}
 \item{pathways}{List. A named list with each element containing the genes for
 this pathway.}
 
+\item{kernel}{String. One of \code{c("gaussian", "poisson", "none")}. The kernel
+to use.}
+
 \item{gaussian}{Boolean. If set to \code{TRUE} the Gaussian kernel will be used,
-if \code{FALSE} the Poisson will be used.}
+if \code{FALSE} the Poisson will be used. \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}}
 
 \item{gsva_params}{List. The GSVA parameters, see \code{\link[=params_gsva]{params_gsva()}}
 wrapper function. This function generates a list containing:
@@ -42,5 +46,8 @@ A matrix of shape pathways (that passed the thresholds) x samples.
 }
 \description{
 Implementation of the bixverse version of the gene set variation analysis
-(GSVA).
+(GSVA), see Hänzelmann, et al.
+}
+\references{
+see Hänzelmann, et al. Bmc Bioinformatics, 2013
 }

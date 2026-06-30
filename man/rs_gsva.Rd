@@ -4,7 +4,7 @@
 \alias{rs_gsva}
 \title{Rust version of the GSVA algorithm}
 \usage{
-rs_gsva(exp, gs_list, tau, gaussian, max_diff, abs_rank, timings)
+rs_gsva(exp, gs_list, tau, kernel, max_diff, abs_rank, timings)
 }
 \arguments{
 \item{exp}{Numerical matrix. The expression matrix with rows = genes, and
@@ -16,8 +16,8 @@ columns = samples}
 \item{tau}{Float. Tau parameter, usual recommendation is to use \code{1.0} here.
 Larger values emphasise the tails more.}
 
-\item{gaussian}{Boolean. If \code{TRUE} the Gaussian kernel will be used, if
-\code{FALSE} the Poisson kernel will be used.}
+\item{kernel}{String. One of \code{c("gaussian", "poisson", "none")}. The
+kernel function to use.}
 
 \item{max_diff}{Boolean. Scoring mode: \code{TRUE} = difference, \code{FALSE} = larger
 absolute value}
