@@ -213,7 +213,7 @@ rs_results_example <- gse_hypergeometric_list(
   gene_set_list = gene_sets
 )
 tictoc::toc()
-#> 0.535 sec elapsed
+#> 0.555 sec elapsed
 ```
 
 ## Gene Ontology-aware enrichment: the elimination method
@@ -342,7 +342,7 @@ rs_results_example <- gse_go_elim_method_list(
   target_gene_list = go_target_gene_sets
 )
 tictoc::toc()
-#> 1.469 sec elapsed
+#> 1.455 sec elapsed
 ```
 
 ## Alternative: post-hoc simplification of GO results
@@ -552,8 +552,8 @@ microbenchmark::microbenchmark(
 )
 #> Unit: seconds
 #>   expr      min       lq     mean   median       uq      max neval
-#>  fgsea 2.886993 3.046387 3.251164 3.285614 3.341806 3.695017     5
-#>   rust 2.179531 2.189834 2.192611 2.190340 2.194087 2.209262     5
+#>  fgsea 2.864418 3.022483 3.216846 3.218639 3.299722 3.678967     5
+#>   rust 2.174302 2.185948 2.187906 2.186484 2.186853 2.205945     5
 ```
 
 ## GO-aware GSEA: the elimination method

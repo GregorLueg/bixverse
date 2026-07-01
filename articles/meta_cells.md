@@ -409,7 +409,7 @@ purity_dt[, .(mean = mean(purity), median = median(purity)), by = method]
 #>        method      mean    median
 #>        <char>     <num>     <num>
 #> 1:    hdWGCNA 0.8947692 1.0000000
-#> 2:   SEACells 0.9043347 1.0000000
+#> 2:   SEACells 0.9025032 1.0000000
 #> 3: SuperCells 0.8979310 0.9806216
 ```
 
@@ -534,12 +534,12 @@ metrics_dt[,
 #>        method mean_separation median_separation mean_compactness
 #>        <char>           <num>             <num>            <num>
 #> 1:    hdWGCNA       0.1255286        0.08895643      0.007053792
-#> 2:   SEACells       0.1757102        0.15544200      0.010682394
+#> 2:   SEACells       0.1802643        0.15110685      0.011203591
 #> 3: SuperCells       0.2016617        0.15913163      0.006335426
 #>    median_compactness
 #>                 <num>
 #> 1:        0.004067266
-#> 2:        0.004824280
+#> 2:        0.004984010
 #> 3:        0.003216350
 ```
 
@@ -566,9 +566,9 @@ setorder(per_region_stats, method, region)
 per_region_stats[]
 #>        method region mean_separation median_separation mean_compactness
 #>        <char> <fctr>           <num>             <num>            <num>
-#> 1:   SEACells   high      0.04515726        0.04905651     0.0007130436
-#> 2:   SEACells    mid      0.13940649        0.14085424     0.0044342592
-#> 3:   SEACells    low      0.23163398        0.21059144     0.0176287556
+#> 1:   SEACells   high      0.04633167        0.05101920     0.0007073069
+#> 2:   SEACells    mid      0.13877805        0.13594331     0.0044319796
+#> 3:   SEACells    low      0.24090206        0.21325481     0.0186658600
 #> 4: SuperCells   high      0.04950358        0.05186578     0.0006019381
 #> 5: SuperCells    mid      0.14154094        0.13623749     0.0031448643
 #> 6: SuperCells    low      0.30667216        0.25426194     0.0113716719
@@ -577,9 +577,9 @@ per_region_stats[]
 #> 9:    hdWGCNA    low      0.26961609        0.19062942     0.0168331578
 #>    median_compactness
 #>                 <num>
-#> 1:       0.0006717899
-#> 2:       0.0034732595
-#> 3:       0.0076465828
+#> 1:       0.0006614107
+#> 2:       0.0033688664
+#> 3:       0.0076578967
 #> 4:       0.0005725418
 #> 5:       0.0024108913
 #> 6:       0.0055384417

@@ -42,11 +42,11 @@ str(single_cell_test_data)
 #>   ..$ cell_id    : chr [1:1000] "cell_0001" "cell_0002" "cell_0003" "cell_0004" ...
 #>   ..$ cell_grp   : chr [1:1000] "cell_type_1" "cell_type_2" "cell_type_3" "cell_type_1" ...
 #>   ..$ batch_index: num [1:1000] 1 1 1 1 1 1 1 1 1 1 ...
-#>   ..- attr(*, ".internal.selfref")=<pointer: 0x560a6c920b40> 
+#>   ..- attr(*, ".internal.selfref")=<pointer: 0x560bd3d51b40> 
 #>  $ var   :Classes 'data.table' and 'data.frame': 100 obs. of  2 variables:
 #>   ..$ gene_id   : chr [1:100] "gene_001" "gene_002" "gene_003" "gene_004" ...
 #>   ..$ ensembl_id: chr [1:100] "ens_001" "ens_002" "ens_003" "ens_004" ...
-#>   ..- attr(*, ".internal.selfref")=<pointer: 0x560a6c920b40>
+#>   ..- attr(*, ".internal.selfref")=<pointer: 0x560bd3d51b40>
 ```
 
 We have a count matrix with pseudo raw counts, an obs table and a var
@@ -474,9 +474,9 @@ microbenchmark::microbenchmark(
   times = 10L
 )
 #> Unit: milliseconds
-#>               expr      min       lq     mean   median       uq      max neval
-#>    the_correct_way 1.335225 1.407975 1.600413 1.467701 1.560709 2.711034    10
-#>  the_incorrect_way 2.388161 2.495011 2.521841 2.525022 2.552868 2.645452    10
+#>               expr     min       lq     mean   median       uq      max neval
+#>    the_correct_way 1.37112 1.383583 1.563886 1.429839 1.557921 2.630742    10
+#>  the_incorrect_way 2.26568 2.424266 2.466427 2.452669 2.524773 2.649557    10
 ```
 
 The difference seems marginal here, but it WILL bite you if you do this
