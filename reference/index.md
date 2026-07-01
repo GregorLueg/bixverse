@@ -905,7 +905,7 @@ their summaries) from the binary storage files.
 - [`extract_gene_violin_data()`](https://gregorlueg.github.io/bixverse/reference/extract_gene_violin_data.md)
   : Extract per-cell expression grouped for violin plots
 
-## Stastical functions
+## Statistical functions
 
 Any types of functions that help with statistics
 
