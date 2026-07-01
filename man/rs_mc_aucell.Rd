@@ -7,6 +7,9 @@
 rs_mc_aucell(sparse_data, gs_list, auc_type, verbose)
 }
 \arguments{
+\item{sparse_data}{A named list that needs to have \code{data}, \code{indptr},
+\code{indices}, \code{nrow}, \code{ncol} and \code{format}.}
+
 \item{gs_list}{List. List with the gene set indices (0-indexed!) of the
 genes of interest.}
 
@@ -15,10 +18,6 @@ which statistic you wish to calculate.}
 
 \item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
 detailed verbosity.}
-
-\item{cells_to_keep}{Integer. Vector of indices of the cells to keep.}
-
-\item{streaming}{Boolean. Shall the data be streamed.}
 }
 \value{
 A matrix of cells x gene sets with the values representing the

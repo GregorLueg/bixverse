@@ -86,7 +86,7 @@ sc_object <- load_r_data(
     min_cells = 0L,
     target_size = 1e3 # target size of 1000
   ),
-  streaming = FALSE,
+  streaming = 0L,
   .verbose = TRUE
 )
 
@@ -138,7 +138,7 @@ sc_object <- load_r_data(
     min_cells = 500L, # the data is weird and a lot cells express genes
     target_size = 1e3 # target size of 1000
   ),
-  streaming = FALSE,
+  streaming = 0L,
   .verbose = TRUE
 )
 
@@ -193,6 +193,12 @@ sc_object[[1:3L]]
 ```
 
 ```{r}
+#| label: head the obs table
+# for a quick glimpse in the obs metadata
+head(sc_object)
+```
+
+```{r}
 #| label: accessing the obs - column selection
 # a more R-native way: specific columns
 sc_object[[c("cell_idx", "cell_id", "cell_grp")]]
@@ -229,7 +235,7 @@ If we now look at the obs again:
 
 ```{r}
 #| label: accessing the obs - new data added
-sc_object[[]]
+head(sc_object)
 ```
 
 We now have two new columns here! That worked well... Let's now do filtering
@@ -371,6 +377,7 @@ Wait, what happened here ... ? Because we set the cells to keep in the step
 with the pseudo mitochondrial counts, these indices are now "bad cells". **They
 are not filtered, they are just not returned.** You can control this also via
 the primitive syntax.
+
 ```{r}
 #| label: filtering with primitives
 filtered_counts <- sc_object[1:10L, 1:10L, use_cells_to_keep = TRUE]

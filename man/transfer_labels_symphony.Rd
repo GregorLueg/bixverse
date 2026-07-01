@@ -6,7 +6,6 @@
 \usage{
 transfer_labels_symphony(
   reference,
-  reference_object,
   query,
   label_column,
   knn_params = params_sc_knn(),
@@ -15,13 +14,13 @@ transfer_labels_symphony(
 )
 }
 \arguments{
-\item{reference}{\code{SymphonyReference} (must have \code{z_corr}).}
-
-\item{reference_object}{\code{SingleCells} used to build the reference.}
+\item{reference}{\code{SymphonyReference} (must have \code{z_corr} and stored
+labels).}
 
 \item{query}{\code{SingleCells} with a \code{"symphony"} embedding attached.}
 
-\item{label_column}{String. Column in the reference obs table.}
+\item{label_column}{String. Name of a column in the reference's stored
+labels.}
 
 \item{knn_params}{List. Output of \code{\link[=params_sc_knn]{params_sc_knn()}}.}
 
@@ -36,9 +35,9 @@ A data.table with columns \verb{predicted_<label_column>} and
 \description{
 kNN majority vote on the Harmony-corrected embeddings. The reference's
 \code{z_corr} is the searchable index; the query's \code{"symphony"} embedding is
-what gets queried. Reference labels are read from \code{reference_object}'s
-obs in \code{cells_to_keep} order — that must match the cells used at
-reference-build time.
+what gets queried. Reference labels come from the reference's stored
+\code{labels} slot — populate it via the \code{label_columns} argument to
+\code{\link[=build_symphony_ref]{build_symphony_ref()}} or post-hoc via \code{\link[=add_symphony_labels]{add_symphony_labels()}}.
 
 Distances on \code{z_corr} are typically Euclidean — set \code{knn_params$ann_dist}
 to \code{"euclidean"} unless you have a reason to use cosine.

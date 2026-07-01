@@ -43,7 +43,6 @@
     "ADTCounts",
     print.ADTCounts
   )
-  registerS3method("merge", "MetaCells", merge.MetaCells)
   registerS3method(
     "print",
     "NmfResult",

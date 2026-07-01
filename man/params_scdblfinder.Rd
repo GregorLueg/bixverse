@@ -84,6 +84,9 @@ as classifier features. Defaults to \code{19L}.}
 \item{expected_doublet_rate}{Optional numeric. Expected doublet rate as a
 percentage. If not provided, will be calculated internally.}
 
+\item{cxds_genes}{Optional integer. Number of CXDS genes to consider. If not
+provided, defaults to \code{500L}.}
+
 \item{manual_threshold}{Optional numeric. Manual score threshold. If \code{NULL}
 (default), expected-rate thresholding is used.}
 

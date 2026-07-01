@@ -92,8 +92,7 @@ MetaCells <- S7::new_class(
       list()
     }
 
-    ## can't use the helper function, S7 requires new_object()
-    obj <- S7::new_object(
+    S7::new_object(
       S7::S7_object(),
       obs_table = obs_data,
       var_table = var_data,
@@ -112,191 +111,9 @@ MetaCells <- S7::new_class(
   }
 )
 
-#' Merging of MetaCell objects
-#'
-#' A named list of `MetaCells` objects can be provided. `MetaCells`
-#' objects will be merged by concatenating the counts and obs table.
-#' The meta_cell_id is renamed using the names of the list.
-#'
-#' @param x List. Named list of `MetaCells` objects to merge
-#' @param feature_space String. How do deal with different set of features
-#' across samples, can be either using the "intersect" or the "union".
-#' (Default: "union")
-#'
-#' @rdname merge
-#'
-#' @export
-merge.MetaCells <- function(
-  x,
-  feature_space = c("union")
-) {
-  # --- Input validation ---
-  checkmate::assertList(x, types = "bixverse::MetaCells", min.len = 2)
-  checkmate::assertNamed(x, type = "unique")
-  checkmate::assertChoice(feature_space, choices = c("union", "intersect"))
-
-  # Ensure all objects used the same metacell method
-  methods <- vapply(x, function(obj) obj@meta_cell_method, character(1))
-  if (length(unique(methods)) > 1) {
-    stop(sprintf(
-      "All MetaCells objects must use the same meta_cell_method. Found: %s",
-      paste(unique(methods), collapse = ", ")
-    ))
-  }
-  meta_cell_method <- methods[[1]]
-
-  # --- Merge obs_table ---
-  ## re-index the merged obs table
-  idx_offset <- 0L
-  ot_list <- list()
-  for (s in names(x)) {
-    ot <- x[[s]]@obs_table
-    original_max <- max(ot$meta_cell_idx)
-
-    ot$meta_cell_idx_original <- ot$meta_cell_idx
-    ot$meta_cell_idx <- ot$meta_cell_idx + idx_offset
-    ot$meta_cell_id <- paste0(s, "_", ot$meta_cell_id)
-
-    ot_list[[s]] <- ot
-    idx_offset <- idx_offset + original_max
-  }
-  merged_obs_table <- data.table::rbindlist(ot_list)
-
-  # --- Determine common feature space ---
-  set_fn <- if (feature_space == "union") union else intersect
-  all_genes <- lapply(x, function(obj) colnames(obj@data$raw))
-  common_genes <- sort(Reduce(set_fn, all_genes))
-
-  if (length(common_genes) == 0) {
-    stop(
-      "No common genes found across MetaCells objects after applying feature_space = '",
-      feature_space,
-      "'."
-    )
-  }
-
-  # --- Merge raw counts ---
-  ## need to reindex
-  merged_raw_counts <- Reduce(
-    MatrixExtra::rbind_csr,
-    lapply(names(x), function(s) {
-      m <- x[[s]]@data$raw
-      rownames(m) <- paste0(s, "_", rownames(m))
-      as(as(m, "CsparseMatrix")[, common_genes, drop = FALSE], "RsparseMatrix")
-    })
-  )
-
-  # --- Merge norm counts ---
-  ## need to reindex
-  merged_norm_counts <- Reduce(
-    MatrixExtra::rbind_csr,
-    lapply(names(x), function(s) {
-      m <- x[[s]]@data$norm
-      rownames(m) <- paste0(s, "_", rownames(m))
-      as(as(m, "CsparseMatrix")[, common_genes, drop = FALSE], "RsparseMatrix")
-    })
-  )
-
-  # --- Merge var_table ---
-  merged_var_table <- unique(data.table::rbindlist(
-    lapply(x, function(obj) obj@var_table),
-    fill = TRUE
-  ))
-  merged_var_table <- merged_var_table[
-    match(gene_id, colnames(merged_raw_counts)),
-  ] %>%
-    .[, gene_idx := .I]
-
-  # --- Merge original_assignment ---
-  original_assignment_merged <- list(
-    assignments = do.call(
-      c,
-      lapply(x, function(obj) obj@original_assignment$assignments)
-    ),
-    n_cells = do.call(
-      sum,
-      lapply(x, function(obj) obj@original_assignment$n_cells)
-    ),
-    n_metacells = do.call(
-      sum,
-      lapply(x, function(obj) obj@original_assignment$n_metacells)
-    ),
-    n_unassigned = do.call(
-      sum,
-      lapply(x, function(obj) obj@original_assignment$n_unassigned)
-    )
-  )
-
-  # --- Merge other_data (seacell only) ---
-  other_data <- if (meta_cell_method == "seacell") {
-    list(
-      rss = lapply(x, function(obj) obj@other_data$rss),
-      archetypes = lapply(x, function(obj) obj@other_data$archetypes)
-    )
-  } else {
-    list()
-  }
-
-  # --- Construct merged MetaCells object ---
-  obj <- .create_MetaCells_obj(
-    obs_table = merged_obs_table,
-    var_table = merged_var_table,
-    data = list(raw = merged_raw_counts, norm = merged_norm_counts),
-    sc_cache = new_sc_cache(),
-    original_assignment = original_assignment_merged,
-    dims = as.integer(c(nrow(merged_raw_counts), ncol(merged_norm_counts))),
-    other_data = other_data,
-    meta_cell_method = meta_cell_method
-  )
-  return(obj)
-}
-
-# Internal helper — calls new_object() from within its own constructor context
-.create_MetaCells_obj <- S7::new_class(
-  name = "MetaCells", # same name = same class
-  parent = MetaCells,
-  constructor = function(
-    obs_table,
-    var_table,
-    data,
-    sc_cache,
-    original_assignment,
-    dims,
-    other_data,
-    meta_cell_method
-  ) {
-    S7::new_object(
-      S7::S7_object(),
-      obs_table = obs_table,
-      var_table = var_table,
-      data = data,
-      sc_cache = sc_cache,
-      original_assignment = original_assignment,
-      dims = dims,
-      other_data = other_data,
-      meta_cell_method = meta_cell_method
-    )
-  }
-)
-
-
 ## primitives ------------------------------------------------------------------
 
-#' @name print.MetaCells
-#'
-#' @title print Method for MetaCells object
-#'
-#' @description
-#' Print a MetaCells object.
-#'
-#' @param x An object of class `MetaCells`.
-#' @param ... Additional arguments (currently not used).
-#'
-#' @returns Invisibly returns `x`.
-#'
-#' @method print MetaCells
-#'
-#' @keywords internal
+#' @noRd
 S7::method(print, MetaCells) <- function(x, ...) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))
@@ -336,23 +153,8 @@ S7::method(print, MetaCells) <- function(x, ...) {
   invisible(x)
 }
 
-#' @name head.MetaCells
-#'
-#' @title head Method for MetaCells object
-#'
-#' @description
-#' Returns the first `n` rows of the obs table from a `MetaCells` object.
-#'
-#' @param x An object of class `MetaCells`.
-#' @param n Integer. Number of rows to return. Defaults to `6L`.
-#' @param ... Additional arguments (currently not used).
-#'
-#' @returns A data.table with the first `n` rows of the obs table.
-#'
-#' @method head MetaCells
-#'
-#' @keywords internal
-S7::method(head, MetaCells) <- function(x, n = 6L, ...) {
+#' @noRd
+S7::method(head, MetaCells) <- function(x, ..., n = 6L) {
   checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))
   checkmate::qassert(n, "I1[1,)")
   get_sc_obs(x, indices = seq_len(n), filtered = FALSE)

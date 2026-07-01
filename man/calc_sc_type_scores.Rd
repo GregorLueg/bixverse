@@ -15,6 +15,8 @@ calc_sc_type_scores(
 \arguments{
 \item{object}{\code{SingleCells} or \code{SingleCellsMultiModal}}
 
+\item{cell_marker_list}{A list, see \code{\link[=prepare_cell_markers]{prepare_cell_markers()}}.}
+
 \item{sensitivity}{Boolean. Shall shared marker genes be downweighted (like
 in the original reference). Defaults to \code{TRUE}.}
 
@@ -25,8 +27,6 @@ floor for the weights if \code{sensitivity = TRUE}. If not provided, defaults to
 \item{.verbose}{Boolean or integer. Controls verbosity and returns run times.
 \code{FALSE} -> quiet, \code{TRUE} or \code{1L} -> normal verbosity, \code{2L} -> detailed
 verbosity.}
-
-\item{cell_marker}{A list, see \code{\link[=prepare_cell_markers]{prepare_cell_markers()}}.}
 }
 \value{
 An \code{ScTypeResults} results class

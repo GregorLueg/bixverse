@@ -15,7 +15,7 @@ find_hvg_batch_aware_sc(
 )
 }
 \arguments{
-\item{object}{\code{SingleCells} class.}
+\item{object}{\code{SingleCells} or \code{SingleCellsSubset} class.}
 
 \item{batch_column}{String. The column name of the batch column in the obs
 table.}

@@ -40,9 +40,11 @@ the 0-based query gene index, or \code{NA_integer_} if absent.}
 \item{batch_labels_query}{List of 0-indexed integer vectors (empty = no
 batch correction).}
 
-\item{verbose}{Integer. 0/1/2.}
+\item{params_symphony}{Named list. Contains the parameters for the referemce
+generation.}
 
-\item{sigma, lambda}{Mapping parameters.}
+\item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
+detailed verbosity.}
 }
 \value{
 A list with z_pca, z_corr, r.

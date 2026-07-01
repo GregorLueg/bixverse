@@ -627,8 +627,8 @@ write_tenx_h5_sc <- function(
 #' Download PBMC3K data from Zenodo
 #'
 #' @description
-#' This function downloads the PBMC3K dataset from 10x Genomics (uploaded
-#' on Zenodo) and extracts it and returns the (temporary) paths.
+#' This function downloads the PBMC3K dataset from 10x Genomics (uploaded on
+#' Zenodo) and extracts it and returns the (temporary) paths.
 #'
 #' @param quiet Boolean. If the download shall be quiet.
 #'
@@ -638,13 +638,40 @@ write_tenx_h5_sc <- function(
 download_pbmc3k <- function(quiet = FALSE) {
   temp_dir <- tempdir()
   dest_file <- file.path(temp_dir, "pbmc3k.tar.gz")
-  url <- "https://zenodo.org/records/20113571/files/pbmc3k_filtered_gene_bc_matrices.tar.gz?download=1"
+  url <- "https://zenodo.org/records/20977604/files/pbmc3k_filtered_gene_bc_matrices.tar.gz?download=1"
 
   download.file(url, dest_file, mode = "wb", quiet = quiet)
   untar(dest_file, exdir = temp_dir)
 
   # add headers to genes.tsv
   data_path <- file.path(temp_dir, "filtered_gene_bc_matrices", "hg19")
+
+  data_path
+}
+
+### pbmc8k ---------------------------------------------------------------------
+
+#' Download PBMC8K data from Zenodo
+#'
+#' @description
+#' This function downloads the PBMC8k dataset from 10x Genomics (uploaded on
+#' Zenodo) and extracts it and returns the (temporary) paths.
+#'
+#' @param quiet Boolean. If the download shall be quiet.
+#'
+#' @returns String. The path to the extracted PBMC8K data.
+#'
+#' @export
+download_pbmc8k <- function(quiet = FALSE) {
+  temp_dir <- tempdir()
+  dest_file <- file.path(temp_dir, "pmbc-8k.tar.gz")
+  url <- "https://zenodo.org/records/20977604/files/pmbc-8k.tar.gz?download=1"
+
+  download.file(url, dest_file, mode = "wb", quiet = quiet)
+  untar(dest_file, exdir = temp_dir)
+
+  # add headers to genes.tsv
+  data_path <- file.path(temp_dir, "pmbc-8k")
 
   data_path
 }
@@ -665,7 +692,7 @@ download_pbmc3k <- function(quiet = FALSE) {
 download_demuxlet_pbmc <- function(quiet = FALSE) {
   temp_dir <- tempdir()
   dest_file <- file.path(temp_dir, "demuxlet_PBMCs.tar.gz")
-  url <- "https://zenodo.org/records/20113571/files/demuxlet_PBMCs.tar.gz?download=1"
+  url <- "https://zenodo.org/records/20977604/files/demuxlet_PBMCs.tar.gz?download=1"
 
   download.file(url, dest_file, mode = "wb", quiet = quiet)
   untar(dest_file, exdir = temp_dir)
@@ -685,13 +712,13 @@ download_demuxlet_pbmc <- function(quiet = FALSE) {
 #'
 #' @param quiet Boolean. If the download shall be quiet.
 #'
-#' @returns String. The path to the extracted doublet detection data.
+#' @returns String. The path to the directory with the PBMC h5ad files.
 #'
 #' @export
 download_pbmc_batches <- function(quiet = FALSE) {
   temp_dir <- tempdir()
   dest_file <- file.path(temp_dir, "pbmc_batches.tar.gz")
-  url <- "https://zenodo.org/records/20113571/files/pbmc_batches.tar.gz?download=1"
+  url <- "https://zenodo.org/records/20977604/files/pbmc_batches.tar.gz?download=1"
 
   download.file(url, dest_file, mode = "wb", quiet = quiet)
   untar(dest_file, exdir = temp_dir)
@@ -712,7 +739,7 @@ download_pbmc_batches <- function(quiet = FALSE) {
 #'
 #' @param quiet Boolean. If the download shall be quiet.
 #'
-#' @returns String. The path to the extracted doublet detection data.
+#' @returns String. The path to CD34 SEACells data set.
 #'
 #' @export
 #'
@@ -720,10 +747,32 @@ download_pbmc_batches <- function(quiet = FALSE) {
 download_cd34_data <- function(quiet = FALSE) {
   temp_dir <- tempdir()
   dest_file <- file.path(temp_dir, "cd34_multiome_rna.h5ad.gz")
-  url <- "https://zenodo.org/records/20113571/files/cd34_multiome_rna.h5ad.gz?download=1"
+  url <- "https://zenodo.org/records/20977604/files/cd34_multiome_rna.h5ad.gz?download=1"
 
   download.file(url, dest_file, mode = "wb", quiet = quiet)
   R.utils::gunzip(dest_file, remove = TRUE)
 
   file.path(temp_dir, "cd34_multiome_rna.h5ad")
+}
+
+### pbmc totalseq --------------------------------------------------------------
+
+#' Download the PBMC TotalSeq data with ADT counts
+#'
+#' @description
+#' This function downloads the PBMC TotalSeq data set.
+#'
+#' @param quiet Boolean. If the download shall be quiet.
+#'
+#' @returns String. The path to the TotalSeq data.
+#'
+#' @export
+download_pbmc_totalseq_data <- function(quiet = FALSE) {
+  temp_dir <- tempdir()
+  dest_file <- file.path(temp_dir, "10k_Human_PBMC_TotalSeqB.h5")
+  url <- "https://zenodo.org/records/20977604/files/10k_Human_PBMC_TotalSeqB.h5?download=1"
+
+  download.file(url, dest_file, mode = "wb", quiet = quiet)
+
+  file.path(temp_dir, "10k_Human_PBMC_TotalSeqB.h5")
 }

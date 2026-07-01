@@ -6,6 +6,9 @@
 \usage{
 calc_manifold_metrics(object)
 }
+\arguments{
+\item{object}{\code{MetaCells} class for which to calculate the different metrics.}
+}
 \value{
 The class with the compactness and separation scores added.
 }

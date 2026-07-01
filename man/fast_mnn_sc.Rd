@@ -15,7 +15,7 @@ fast_mnn_sc(
 )
 }
 \arguments{
-\item{object}{\code{SingleCells} class.}
+\item{object}{\code{SingleCells} or \code{SingleCellsSubset} class.}
 
 \item{batch_column}{String. The column with the batch information in the
 obs data of the class.}
@@ -37,7 +37,7 @@ effects.
 \item no_pcs - Integer. Number of PCs to use for MNN calculations.
 \item knn - List of kNN parameters. See \code{\link[=params_knn_defaults]{params_knn_defaults()}}
 for available parameters and their defaults.
-\item pca - List of PCA parameters, see \code{\link[=param_sc_pca]{param_sc_pca()}}
+\item pca - List of PCA parameters, see \code{\link[=params_sc_pca]{params_sc_pca()}}
 for available parameters and their defaults.
 }}
 

@@ -29,6 +29,7 @@ extendr_module! {
 /// @param ncols Integer. Number of columns in the file.
 /// @param cell_quality List. Specifiying the cell quality. Please refer
 /// to [bixverse::params_sc_min_quality()].
+/// @param slot String. In which slot the raw data can be found.
 /// @param verbose Boolean. Controls verbosity of the function
 ///
 /// @returns A list with:

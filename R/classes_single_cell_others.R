@@ -98,7 +98,7 @@ print.SingleCellNearestNeighbour <- function(x, ...) {
 #' @rdname get_knn_mat
 #'
 #' @export
-get_knn_mat.SingleCellNearestNeighbour <- function(x) {
+get_knn_mat.SingleCellNearestNeighbour <- function(x, ...) {
   # checks
   checkmate::assertClass(x, "SingleCellNearestNeighbour")
 
@@ -108,7 +108,7 @@ get_knn_mat.SingleCellNearestNeighbour <- function(x) {
 #' @rdname get_knn_dist
 #'
 #' @export
-get_knn_dist.SingleCellNearestNeighbour <- function(x) {
+get_knn_dist.SingleCellNearestNeighbour <- function(x, ...) {
   # checks
   checkmate::assertClass(x, "SingleCellNearestNeighbour")
 
@@ -810,9 +810,10 @@ get_data.ScDblFinderRes <- function(x, ...) {
 #'
 #' @param x An object to get the feature matrix from. This will only include
 #' the values of the observed cells.
+#' @param ... Additional parameters to forward to the method.
 #'
 #' @export
-get_feature_mat <- function(x) {
+get_feature_mat <- function(x, ...) {
   UseMethod("get_feature_mat")
 }
 
@@ -832,16 +833,9 @@ get_feature_mat.ScDblFinderRes <- function(x, ...) {
   return(x$features)
 }
 
-#' Get either the cxds or weighted scores
-#'
-#' @param x An object to get the weighted or cxds scores from.
-#'
-#' @export
-get_scores <- function(x, ..., score_type = c("weighted", "cxds_scores")) {
-  UseMethod("get_scores")
-}
-
 #' @rdname get_scores
+#'
+#' @param score_type Either `"weighted"` or `"cxds_scores"`.
 #'
 #' @export
 get_scores.ScDblFinderRes <- function(
@@ -850,10 +844,7 @@ get_scores.ScDblFinderRes <- function(
   score_type = c("weighted", "cxds_scores")
 ) {
   score_type <- match.arg(score_type)
-
   checkmate::assertClass(x, "ScDblFinderRes")
-  checkmate::assertChoice(score_type, c("weighted", "cxds_scores"))
-
   x[[score_type]]
 }
 
@@ -959,7 +950,7 @@ new_sc_hotspot_res <- function(hotspot_res, used_genes, used_cells) {
       hotspot_res$cor %>% `rownames<-`(used_genes) %>% `colnames<-`(used_genes)
     },
     params = list(used_cells = used_cells),
-    module_membership = NULL
+    module_memership = NULL
   )
 
   class(sc_hotspot) <- "Hotspot"
@@ -979,14 +970,14 @@ new_sc_hotspot_res <- function(hotspot_res, used_genes, used_cells) {
 print.Hotspot <- function(x, ...) {
   n_genes <- nrow(x$z)
   n_cells <- length(x$params$used_cells)
-  has_modules <- !is.null(x$module_membership)
+  has_modules <- !is.null(x$module_memership)
 
   cat("Hotspot gene-gene local correlation results\n")
   cat(sprintf("  Genes: %d\n", n_genes))
   cat(sprintf("  Cells: %d\n", n_cells))
 
   if (has_modules) {
-    membership <- x$module_membership
+    membership <- x$module_memership
     n_assigned <- sum(!is.na(membership$cluster_member))
     n_modules <- length(unique(na.omit(membership$cluster_member)))
     cat(sprintf(
@@ -1036,8 +1027,8 @@ plot.Hotspot <- function(x, max_genes = 500L, seed = 42L, ...) {
 
   z_mat <- x$z
 
-  if (!is.null(x$module_membership)) {
-    membership <- data.table::copy(x$module_membership)
+  if (!is.null(x$module_memership)) {
+    membership <- data.table::copy(x$module_memership)
     membership <- membership[!is.na(cluster_member)]
     data.table::setorder(membership, cluster_member)
 
@@ -1154,7 +1145,7 @@ get_hotspot_membership.Hotspot <- function(
   # checks
   checkmate::assertClass(x, "Hotspot")
 
-  x[["module_membership"]]
+  x[["module_memership"]]
 }
 
 #### methods -------------------------------------------------------------------
@@ -1197,7 +1188,7 @@ generate_hotspot_membership.Hotspot <- function(
     )
   )
 
-  x[["module_membership"]] <- gene_membership
+  x[["module_memership"]] <- gene_membership
 
   x
 }
@@ -2457,28 +2448,14 @@ print.SingleCellFastClusters <- function(x, ...) {
 
 ### getters --------------------------------------------------------------------
 
-#' Get the ScType score matrix
-#'
-#' @param x `ScTypeResults` object.
+#' @rdname get_scores
 #'
 #' @returns A numeric matrix of cells x cell types.
 #'
 #' @export
-get_scores <- function(x) {
-  UseMethod("get_scores")
-}
-
-#' @rdname get_scores
-#'
-#' @export
-get_scores.ScTypeResults <- function(x) {
+get_scores.ScTypeResults <- function(x, ...) {
   checkmate::assertClass(x, "ScTypeResults")
-  m <- matrix(
-    x$scores,
-    nrow = x$n_cells,
-    ncol = x$n_cell_types,
-    byrow = TRUE
-  )
+  m <- matrix(x$scores, nrow = x$n_cells, ncol = x$n_cell_types, byrow = TRUE)
   colnames(m) <- x$cell_types
   m
 }

@@ -110,7 +110,7 @@ sc_query <- load_r_data(
 
 # tests ------------------------------------------------------------------------
 
-## build reference (harmony v1) ------------------------------------------------
+## build reference (harmony v1, with labels) -----------------------------------
 
 ref_v1 <- build_symphony_ref(
   object = sc_ref,
@@ -119,6 +119,7 @@ ref_v1 <- build_symphony_ref(
   harmony_params = params_sc_harmony(k = harmony_k),
   pca_params = params_sc_pca(randomised = FALSE),
   no_pcs = no_pcs,
+  label_columns = "cell_grp",
   seed = 42L,
   .verbose = FALSE
 )
@@ -178,6 +179,27 @@ expect_equal(
   info = "build_symphony_ref - centroids dimensions"
 )
 
+## stored labels at build time -------------------------------------------------
+
+ref_labels_dt <- get_symphony_labels(ref_v1)
+
+expect_true(
+  current = data.table::is.data.table(ref_labels_dt),
+  info = "build_symphony_ref - labels stored as data.table"
+)
+
+expect_equal(
+  current = names(ref_labels_dt),
+  target = "cell_grp",
+  info = "build_symphony_ref - label column names match label_columns"
+)
+
+expect_equal(
+  current = nrow(ref_labels_dt),
+  target = n_ref_cells,
+  info = "build_symphony_ref - one label row per reference cell"
+)
+
 ## build reference (harmony v2) ------------------------------------------------
 
 ref_v2 <- build_symphony_ref(
@@ -203,7 +225,7 @@ expect_equal(
   info = "build_symphony_ref v2 - z_corr dimensions"
 )
 
-## slim reference --------------------------------------------------------------
+## slim reference (no labels at build) -----------------------------------------
 
 ref_slim <- build_symphony_ref(
   object = sc_ref,
@@ -235,6 +257,11 @@ expect_false(
 expect_true(
   current = S7::prop(ref_slim, "slim"),
   info = "slim - slim flag set"
+)
+
+expect_true(
+  current = is.null(get_symphony_labels(ref_slim)),
+  info = "slim - no labels stored when label_columns is NULL"
 )
 
 ## error: bad harmony_params class ---------------------------------------------
@@ -311,7 +338,6 @@ expect_equivalent(
 
 labels <- transfer_labels_symphony(
   reference = ref_v1,
-  reference_object = sc_ref,
   query = sc_query_mapped,
   label_column = "cell_grp",
   knn_params = params_sc_knn(),
@@ -352,11 +378,65 @@ expect_true(
   info = "transfer_labels_symphony - confidence in [0, 1]"
 )
 
-## label transfer with slim reference ------------------------------------------
+## transfer errors when reference has no labels --------------------------------
+
+expect_error(
+  current = transfer_labels_symphony(
+    reference = ref_slim,
+    query = sc_query_mapped,
+    label_column = "cell_grp",
+    knn_params = params_sc_knn(),
+    seed = 42L,
+    .verbose = FALSE
+  ),
+  info = "transfer_labels_symphony - errors when no labels stored"
+)
+
+## transfer errors on unknown label column -------------------------------------
+
+expect_error(
+  current = transfer_labels_symphony(
+    reference = ref_v1,
+    query = sc_query_mapped,
+    label_column = "not_a_column",
+    knn_params = params_sc_knn(),
+    seed = 42L,
+    .verbose = FALSE
+  ),
+  info = "transfer_labels_symphony - errors on unknown label_column"
+)
+
+## add_symphony_labels post-hoc ------------------------------------------------
+
+ref_slim <- add_symphony_labels(
+  reference = ref_slim,
+  sc_object = sc_ref,
+  columns = "cell_grp"
+)
+
+ref_slim_labels <- get_symphony_labels(ref_slim)
+
+expect_true(
+  current = data.table::is.data.table(ref_slim_labels),
+  info = "add_symphony_labels - labels stored as data.table"
+)
+
+expect_equal(
+  current = names(ref_slim_labels),
+  target = "cell_grp",
+  info = "add_symphony_labels - column attached"
+)
+
+expect_equal(
+  current = nrow(ref_slim_labels),
+  target = n_ref_cells,
+  info = "add_symphony_labels - one row per reference cell"
+)
+
+## label transfer with slim reference (post-hoc labels) ------------------------
 
 labels_slim <- transfer_labels_symphony(
   reference = ref_slim,
-  reference_object = sc_ref,
   query = sc_query_mapped,
   label_column = "cell_grp",
   knn_params = params_sc_knn(),
@@ -368,7 +448,37 @@ accuracy_slim <- mean(true_labels == labels_slim$predicted_cell_grp)
 
 expect_true(
   current = accuracy_slim > 0.9,
-  info = "transfer_labels_symphony - slim reference still recovers labels"
+  info = "transfer_labels_symphony - slim ref + post-hoc labels recovers labels"
+)
+
+## add_symphony_labels collision -----------------------------------------------
+
+expect_error(
+  current = add_symphony_labels(
+    reference = ref_v1,
+    sc_object = sc_ref,
+    columns = "cell_grp"
+  ),
+  info = "add_symphony_labels - errors on collision without overwrite"
+)
+
+ref_v1_overwritten <- add_symphony_labels(
+  reference = ref_v1,
+  sc_object = sc_ref,
+  columns = "cell_grp",
+  overwrite = TRUE
+)
+
+expect_equal(
+  current = names(get_symphony_labels(ref_v1_overwritten)),
+  target = "cell_grp",
+  info = "add_symphony_labels - overwrite=TRUE replaces existing column"
+)
+
+expect_equal(
+  current = nrow(get_symphony_labels(ref_v1_overwritten)),
+  target = n_ref_cells,
+  info = "add_symphony_labels - overwritten labels still match z_corr rows"
 )
 
 # clean up ---------------------------------------------------------------------

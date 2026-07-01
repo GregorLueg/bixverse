@@ -598,7 +598,7 @@ expect_equivalent(
 
 expect_true(
   current = sum(
-    !is.na(hotspot_gene_gene_cor$module_membership$cluster_member)
+    !is.na(hotspot_gene_gene_cor$module_memership$cluster_member)
   ) ==
     30L,
   info = paste(

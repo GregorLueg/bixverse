@@ -1,38 +1,38 @@
-# single cell with grouping class --------------------------------------------------------------
+# single cell subset class -----------------------------------------------------
 
 ## s7 object -------------------------------------------------------------------
 
-#' @title bixverse single cell with grouping class
+#' @title bixverse single cell subset class
 #'
 #' @description
-#' This is the `bixverse`-based single cell class with grouping variable.
-#' It is generated internally when requesting grouping based meta-cell generating
-#' functions on top of the main single cell class.
-#' The class is derived from the original single cell class, pointing
-#' to the original count matrix. To prevent issues with state management
-#' of the single cell object, the obs and var are kept in memory.
-#'
-#' @param dir_data String. This is the directory in which the experimental files
-#' will be saved
-#' @param obs_data data.table with the original obs table.
-#' @param var_data data.table with the variable/feature informations.
-#' @param grouping String describing the grouping variable.
+#' Subset view onto a [bixverse::SingleCells()] object, restricted to cells
+#' belonging to a single level of a grouping variable. The Rust count
+#' connection is shared with the parent (no data copy). `obs_table` and
+#' `var_table` are held in memory; `sc_map` is rebuilt to point only at the
+#' subset cells but stays in the original index space so Rust calls remain
+#' valid without further translation.
 #'
 #' @section Properties:
 #' \describe{
-#'   \item{count_connection}{This contains an R6-like environment that points
-#'   to Rust functions that can work on the RNAseq counts more specifically.}
-#'   \item{obs_table}{The single cell observation table.}
-#'   \item{var_table}{The single cell variable table.}
-#'   \item{grouping_variable}{The grouping variable.}
-#'   \item{sc_cache}{Class with embeddings, kNN/sNN graphs, etc. Shared with
-#'   [bixverse::SingleCells()].}
-#'   \item{dims}{Dimensions of the original data.}
-#'   \item{other_data}{List that contains additional data and results, such
-#'   as for example the hvg indices}
+#'   \item{count_connection}{Shared Rust pointer to the on-disk counts.}
+#'   \item{dir_data}{Directory holding the binary count files.}
+#'   \item{obs_table}{Subset obs (rows for the chosen group only).
+#'   `cell_idx` keeps the original 1-indexed position in the parent.}
+#'   \item{var_table}{Variable/feature table (unchanged from parent).}
+#'   \item{grouping_column}{Column in obs used to define the subset.}
+#'   \item{group}{Value of `grouping_column` represented by this subset.}
+#'   \item{sc_cache}{Fresh `ScCache` for subset-specific PCA, kNN, sNN,
+#'   embeddings.}
+#'   \item{sc_map}{`ScMap` restricted to the subset cells. `cell_mapping`
+#'   stays 1-indexed and `cells_to_keep_idx` stays 0-indexed, both in the
+#'   original parent index space.}
+#'   \item{subset_to_original}{Integer vector. 1-indexed original cell
+#'   positions, in subset row order. `subset_to_original[i]` is the parent
+#'   position of subset row `i`.}
+#'   \item{dims}{`c(n_cells_subset, n_genes)`.}
 #' }
 #'
-#' @return Returns the `SingleCellsSubset` class for further operations.
+#' @return A `SingleCellsSubset` object.
 #'
 #' @export
 SingleCellsSubset <- S7::new_class(
@@ -46,44 +46,52 @@ SingleCellsSubset <- S7::new_class(
     group = S7::class_character,
     sc_cache = S7::class_any,
     sc_map = S7::class_any,
-    dims = S7::class_integer,
-    other_data = S7::class_list
+    subset_to_original = S7::class_integer,
+    dims = S7::class_integer
   ),
   constructor = function(
     sc_object,
     grouping_column,
-    group,
-    other_data = list()
+    group
   ) {
-    # checks
     checkmate::assertClass(sc_object, "bixverse::SingleCells")
+    checkmate::assertString(grouping_column)
+    checkmate::assertString(group)
 
     dir_data <- S7::prop(sc_object, "dir_data")
     sc_map <- S7::prop(sc_object, "sc_map")
-    obs_table <- get_sc_obs(sc_object) %>%
-      .[get(grouping_column) == group, ]
-    var_table <- get_sc_var(sc_object)
+    count_connection <- sc_object@count_connection
 
-    checkmate::assertString(grouping_column)
+    obs_table <- get_sc_obs(sc_object, filtered = TRUE)
     checkmate::assertNames(
       x = colnames(obs_table),
       must.include = grouping_column
     )
-    # function body
-    # generate the Rust pointer
-    count_connection <- sc_object@count_connection
-    # subset indices
-    sc_map$cell_mapping <- sc_map$cell_mapping[
-      sc_map$cell_mapping %in%
-        obs_table$cell_idx
-    ]
+    obs_table <- obs_table[get(grouping_column) == group, ]
+
+    if (nrow(obs_table) == 0L) {
+      stop(sprintf(
+        "No cells found for group '%s' in column '%s'.",
+        group,
+        grouping_column
+      ))
+    }
+
+    var_table <- get_sc_var(sc_object)
+
+    # 1-indexed original positions per subset row. Mirrors obs_table$cell_idx
+    # but exposed as a first-class property so translation does not depend on
+    # an obs column name.
+    subset_to_original <- as.integer(obs_table$cell_idx)
+
     if (!is.null(sc_map$cells_to_keep_idx)) {
+      # cells_to_keep_idx is 0-indexed; compare to 0-indexed subset positions
       sc_map$cells_to_keep_idx <- sc_map$cells_to_keep_idx[
-        sc_map$cells_to_keep_idx %in%
-          obs_table$cell_idx
+        sc_map$cells_to_keep_idx %in% (subset_to_original - 1L)
       ]
     }
-    sc_map["hvg_gene_indices"] <- list(NULL)
+    # HVG is subset-specific
+    sc_map$hvg_gene_indices <- NULL
 
     S7::new_object(
       S7::S7_object(),
@@ -95,8 +103,8 @@ SingleCellsSubset <- S7::new_class(
       group = group,
       sc_cache = new_sc_cache(),
       sc_map = sc_map,
-      dims = c(nrow(obs_table), nrow(var_table)),
-      other_data = other_data
+      subset_to_original = subset_to_original,
+      dims = c(nrow(obs_table), nrow(var_table))
     )
   }
 )
@@ -107,9 +115,6 @@ SingleCellsSubset <- S7::new_class(
 #'
 #' @title print Method for SingleCellsSubset object
 #'
-#' @description
-#' Print a SingleCellsSubset object.
-#'
 #' @param x An object of class `SingleCellsSubset`.
 #' @param ... Additional arguments (currently not used).
 #'
@@ -119,15 +124,14 @@ SingleCellsSubset <- S7::new_class(
 #'
 #' @keywords internal
 S7::method(print, SingleCellsSubset) <- function(x, ...) {
-  # checks
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
 
-  # various params
   dims <- S7::prop(x, "dims")
   group <- S7::prop(x, "group")
+  grouping_column <- S7::prop(x, "grouping_column")
   sc_cache <- S7::prop(x, "sc_cache")
-  other_data <- S7::prop(x, "other_data")
-  hvg_calculated <- !is.null(other_data[["hvg"]])
+  sc_map <- S7::prop(x, "sc_map")
+  hvg_calculated <- !is.null(sc_map[["hvg_gene_indices"]])
   pca_calculated <- !is.null(sc_cache[["pca_factors"]])
   knn_generated <- !is.null(sc_cache[["knn"]])
   snn_generated <- !is.null(sc_cache[["snn_graph"]])
@@ -138,12 +142,11 @@ S7::method(print, SingleCellsSubset) <- function(x, ...) {
     "none"
   }
 
-  # print
   cat(
-    "Single cell experiment (Groups).\n",
+    "Single cell experiment (subset).\n",
     sprintf("  No cells: %i\n", dims[1]),
     sprintf("  No genes: %i\n", dims[2]),
-    sprintf("  Represented subset: %s\n", group),
+    sprintf("  Group: %s = %s\n", grouping_column, group),
     sprintf("  HVG calculated: %s\n", hvg_calculated),
     sprintf("  PCA calculated: %s\n", pca_calculated),
     sprintf("  Other embeddings: %s\n", other_embeddings_str),
@@ -158,10 +161,6 @@ S7::method(print, SingleCellsSubset) <- function(x, ...) {
 #'
 #' @title dim Method for SingleCellsSubset object
 #'
-#' @description
-#' Returns the dimensions of a SingleCellsSubset object. (Only taking into
-#' consideration the cells to keep).
-#'
 #' @param x An object of class `SingleCellsSubset`.
 #'
 #' @returns An integer vector of length 2 with the number of cells and genes.
@@ -170,17 +169,12 @@ S7::method(print, SingleCellsSubset) <- function(x, ...) {
 #'
 #' @keywords internal
 S7::method(dim, SingleCellsSubset) <- function(x) {
-  n_cells <- nrow(S7::prop(x, "obs_table"))
-  n_genes <- nrow(S7::prop(x, "var_table"))
-  c(n_cells, n_genes)
+  c(nrow(S7::prop(x, "obs_table")), nrow(S7::prop(x, "var_table")))
 }
 
 #' @name head.SingleCellsSubset
 #'
 #' @title head Method for SingleCellsSubset object
-#'
-#' @description
-#' Returns the first `n` rows of the obs table from a `SingleCellsSubset` object.
 #'
 #' @param x An object of class `SingleCellsSubset`.
 #' @param n Integer. Number of rows to return. Defaults to `6L`.
@@ -194,7 +188,8 @@ S7::method(dim, SingleCellsSubset) <- function(x) {
 S7::method(head, SingleCellsSubset) <- function(x, n = 6L, ...) {
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
   checkmate::qassert(n, "I1[1,)")
-  get_sc_obs(x, indices = seq_len(n), filtered = FALSE)
+  n <- min(n, nrow(S7::prop(x, "obs_table")))
+  get_sc_obs(x, indices = seq_len(n))
 }
 
 ## getters ---------------------------------------------------------------------
@@ -214,17 +209,15 @@ S7::method(get_sc_obs, SingleCellsSubset) <- function(
   checkmate::qassert(indices, c("0", "I+"))
   checkmate::qassert(filtered, "B1")
 
-  grouping_variable <- S7::prop(object, "grouping_column")
+  # `filtered` kept for parent API parity; the subset is always filtered.
   obs_table <- data.table::copy(S7::prop(object, "obs_table"))
-
   if (!is.null(indices)) {
     obs_table <- obs_table[indices, ]
   }
-
   if (!is.null(cols)) {
     obs_table <- obs_table[, cols, with = FALSE]
   }
-  return(obs_table)
+  obs_table
 }
 
 #' @method `[[` SingleCellsSubset
@@ -235,11 +228,11 @@ S7::method(`[[`, SingleCellsSubset) <- function(x, i, ...) {
     i <- NULL
   }
   if (checkmate::qtest(i, "S+")) {
-    get_sc_obs(x, cols = i, filtered = FALSE)
+    get_sc_obs(x, cols = i)
   } else if (checkmate::qtest(i, "I+")) {
-    get_sc_obs(x, indices = i, filtered = FALSE)
+    get_sc_obs(x, indices = i)
   } else if (checkmate::qtest(i, "0")) {
-    get_sc_obs(x, filtered = FALSE)
+    get_sc_obs(x)
   } else {
     stop("Invalid type")
   }
@@ -263,24 +256,18 @@ S7::method(get_sc_var, SingleCellsSubset) <- function(
 
   if (modality != "rna") {
     stop(
-      paste(
-        "SingleCellsSubset only supports modality = 'rna'.",
-        "Use SingleCellsMultiModal for ADT."
-      )
+      "SingleCellsSubset only supports modality = 'rna'."
     )
   }
 
   var_table <- object@var_table
-
   if (!is.null(indices)) {
     var_table <- var_table[indices, ]
   }
-
   if (!is.null(cols)) {
     var_table <- var_table[, cols, with = FALSE]
   }
-
-  return(var_table)
+  var_table
 }
 
 ### counts ---------------------------------------------------------------------
@@ -302,15 +289,9 @@ S7::method(get_sc_counts, SingleCellsSubset) <- function(
   return_format <- match.arg(return_format)
   modality <- match.arg(modality)
   if (modality != "rna") {
-    stop(
-      paste(
-        "SingleCellsSubset only supports modality = 'rna'.",
-        "Use SingleCellsMultiModal for ADT."
-      )
-    )
+    stop("SingleCellsSubset only supports modality = 'rna'.")
   }
 
-  # checks
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCellsSubset))
   checkmate::assertChoice(assay, c("raw", "norm"))
   checkmate::assertChoice(return_format, c("cell", "gene"))
@@ -321,62 +302,65 @@ S7::method(get_sc_counts, SingleCellsSubset) <- function(
   requireNamespace("Matrix", quietly = TRUE)
 
   rust_con <- get_sc_rust_ptr(object)
-
   sc_map <- get_sc_map(object)
+  subset_to_original <- S7::prop(object, "subset_to_original")
 
-  cells_to_keep <- get_cells_to_keep(object)
+  # `cell_indices` arrives as 1-indexed SUBSET positions. Translate to
+  # 1-indexed ORIGINAL positions before any Rust interaction.
+  original_cell_indices <- if (!is.null(cell_indices)) {
+    if (any(cell_indices < 1L | cell_indices > length(subset_to_original))) {
+      stop("cell_indices out of bounds for the subset.")
+    }
+    as.integer(subset_to_original[cell_indices])
+  } else {
+    NULL
+  }
+
+  cells_to_keep <- get_cells_to_keep(object) # 0-indexed original space
 
   if (use_cells_to_keep) {
-    if (!is.null(cell_indices) & length(cells_to_keep) > 0) {
-      # deal with the case that the cells to keep where specified
-      cell_indices <- as.integer(intersect(cell_indices, cells_to_keep + 1))
-    } else if (length(cells_to_keep) > 0) {
-      cell_indices <- as.integer(cells_to_keep + 1)
+    if (!is.null(original_cell_indices) && length(cells_to_keep) > 0L) {
+      original_cell_indices <- as.integer(
+        intersect(original_cell_indices, cells_to_keep + 1L)
+      )
+    } else if (length(cells_to_keep) > 0L) {
+      original_cell_indices <- as.integer(cells_to_keep + 1L)
     }
   }
 
-  # Get raw data from Rust
   count_data <- get_counts_from_rust(
     rust_con = rust_con,
     assay = assay,
     return_format = return_format,
-    cell_indices = cell_indices,
+    cell_indices = original_cell_indices,
     gene_indices = gene_indices,
     .verbose = .verbose
   )
 
-  # Create sparse matrix
   count_data <- create_sparse_matrix(
     count_data = count_data,
     return_format = return_format
   )
 
-  # Set names and subset if needed
   count_data <- finalise_matrix(
     matrix = count_data,
     return_format = return_format,
-    cell_indices = cell_indices,
+    cell_indices = original_cell_indices,
     gene_indices = gene_indices,
     sc_map = sc_map
   )
 
-  return(count_data)
+  count_data
 }
 
 ### map getter -----------------------------------------------------------------
 
-#' @method get_sc_var SingleCellsSubset
+#' @method get_sc_map SingleCellsSubset
 #'
 #' @export
-S7::method(get_sc_map, SingleCellsSubset) <- function(
-  object
-) {
-  # checks
+S7::method(get_sc_map, SingleCellsSubset) <- function(object) {
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCellsSubset))
-
-  res <- S7::prop(object, "sc_map")
-
-  return(res)
+  S7::prop(object, "sc_map")
 }
 
 #' @name get_cells_to_keep.SingleCellsSubset
@@ -384,23 +368,39 @@ S7::method(get_sc_map, SingleCellsSubset) <- function(
 #' @rdname get_cells_to_keep
 #'
 #' @method get_cells_to_keep SingleCellsSubset
-S7::method(get_cells_to_keep, SingleCellsSubset) <- function(
-  x
-) {
-  # checks
+S7::method(get_cells_to_keep, SingleCellsSubset) <- function(x) {
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
-
-  # forward to S3
-  res <- get_cells_to_keep(
-    x = S7::prop(x, "sc_map")
-  )
-  # special case that this has not been set. Return all cell indices then
+  res <- get_cells_to_keep(x = S7::prop(x, "sc_map"))
   if (length(res) == 0) {
-    res <- unlist(S7::prop(x, "sc_map")["cell_mapping"]) - 1
-    # 0 index for Rust
+    res <- S7::prop(x, "subset_to_original") - 1L
   }
+  as.integer(res)
+}
 
-  return(as.integer(res))
+#' @name get_cell_names.SingleCellsSubset
+#'
+#' @rdname get_cell_names
+#'
+#' @method get_cell_names SingleCellsSubset
+S7::method(get_cell_names, SingleCellsSubset) <- function(x, filtered = FALSE) {
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
+  # subset obs is already filtered to the group; `filtered` accepted for parity
+  S7::prop(x, "obs_table")$cell_id
+}
+
+#' @name get_gene_names_from_idx.SingleCellsSubset
+#'
+#' @rdname get_gene_names_from_idx
+#'
+#' @method get_gene_names_from_idx SingleCellsSubset
+S7::method(get_gene_names_from_idx, SingleCellsSubset) <- function(
+  x,
+  gene_idx,
+  rust_based = TRUE
+) {
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
+  idx <- if (rust_based) gene_idx + 1L else gene_idx
+  S7::prop(x, "var_table")$gene_id[idx]
 }
 
 #### env getters ---------------------------------------------------------------
@@ -409,35 +409,24 @@ S7::method(get_cells_to_keep, SingleCellsSubset) <- function(
 #'
 #' @export
 S7::method(get_sc_rust_ptr, SingleCellsSubset) <- function(object) {
-  # checks
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCellsSubset))
-
-  return(S7::prop(object, "count_connection"))
+  S7::prop(object, "count_connection")
 }
 
 #' @method get_rust_count_gene_f_path SingleCellsSubset
 #'
 #' @export
 S7::method(get_rust_count_gene_f_path, SingleCellsSubset) <- function(object) {
-  # checks
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCellsSubset))
-
-  f_path <- file.path(S7::prop(object, "dir_data"), "counts_genes.bin")
-
-  return(f_path)
+  file.path(S7::prop(object, "dir_data"), "counts_genes.bin")
 }
-
 
 #' @method get_rust_count_cell_f_path SingleCellsSubset
 #'
 #' @export
 S7::method(get_rust_count_cell_f_path, SingleCellsSubset) <- function(object) {
-  # checks
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCellsSubset))
-
-  f_path <- file.path(S7::prop(object, "dir_data"), "counts_cells.bin")
-
-  return(f_path)
+  file.path(S7::prop(object, "dir_data"), "counts_cells.bin")
 }
 
 #' @method `[` SingleCellsSubset
@@ -459,7 +448,6 @@ S7::method(`[`, SingleCellsSubset) <- function(
   }
   assay <- match.arg(assay)
 
-  # transform (meta)cell ids and gene ids to indices
   if (checkmate::qtest(i, "S+")) {
     i <- get_cell_indices(x = x, cell_ids = i, rust_index = FALSE)
   }
@@ -475,10 +463,10 @@ S7::method(`[`, SingleCellsSubset) <- function(
     object = x,
     assay = assay,
     cell_indices = i,
-    gene_indices = j
+    gene_indices = j,
+    ...
   )
 }
-
 
 ## setters ---------------------------------------------------------------------
 
@@ -498,76 +486,65 @@ S7::method(`[[<-`, SingleCellsSubset) <- function(x, i, ..., value) {
     checkmate::assertList(value, names = "named", types = "atomic")
     S7::prop(x, "obs_table")[, (i) := value]
   }
-
-  return(x)
+  x
 }
 
-### others ---------------------------------------------------------------------
-
-#### setters -------------------------------------------------------------------
+### hvg ------------------------------------------------------------------------
 
 #' @name set_hvg.SingleCellsSubset
 #'
 #' @rdname set_hvg
 #'
 #' @method set_hvg SingleCellsSubset
-S7::method(set_hvg, SingleCellsSubset) <- function(
-  x,
-  hvg
-) {
-  # checks
+S7::method(set_hvg, SingleCellsSubset) <- function(x, hvg) {
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
   checkmate::qassert(hvg, c("I+", "S+"))
 
   var_table <- S7::prop(x, "var_table")
 
-  res <- if (is.numeric(hvg)) {
+  # Resolve to 1-indexed first
+  idx_1 <- if (is.numeric(hvg)) {
     as.integer(hvg)
   } else {
-    idx <- match(hvg, var_table$gene_id)
-    missing <- is.na(idx)
+    m <- match(hvg, var_table$gene_id)
+    missing <- is.na(m)
     if (any(missing)) {
       warning(sprintf(
         "With the provided hvg gene_ids a total of %i could not be matched.",
         sum(missing)
       ))
-      idx <- idx[!missing]
+      m <- m[!missing]
     }
-    if (length(idx) == 0) {
+    if (length(m) == 0L) {
       stop(
         "The HVG indices have length 0. Please double check provided parameters!"
       )
     }
-    as.integer(idx)
+    as.integer(m)
   }
 
-  other_data <- S7::prop(x, "other_data")
-  other_data[["hvg"]] <- res
-  S7::prop(x, "other_data") <- other_data
-
-  return(x)
+  # Store 0-indexed (parent SingleCells convention)
+  sc_map <- S7::prop(x, "sc_map")
+  sc_map$hvg_gene_indices <- idx_1 - 1L
+  S7::prop(x, "sc_map") <- sc_map
+  x
 }
-
-#### getters -------------------------------------------------------------------
 
 #' @name get_hvg.SingleCellsSubset
 #'
 #' @rdname get_hvg
 #'
 #' @method get_hvg SingleCellsSubset
-S7::method(get_hvg, SingleCellsSubset) <- function(
-  x
-) {
-  # checks
+S7::method(get_hvg, SingleCellsSubset) <- function(x) {
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
-
-  hvg_indices <- as.integer(S7::prop(x, "other_data")[["hvg"]])
-  if (length(hvg_indices) == 0) {
+  hvg <- as.integer(S7::prop(x, "sc_map")[["hvg_gene_indices"]])
+  if (length(hvg) == 0L) {
     warning("No highly variable features found in the class.")
   }
-
-  return(hvg_indices)
+  hvg
 }
+
+### cell / gene index lookup ---------------------------------------------------
 
 #' @name get_cell_indices.SingleCellsSubset
 #'
@@ -579,23 +556,33 @@ S7::method(get_cell_indices, SingleCellsSubset) <- function(
   cell_ids,
   rust_index
 ) {
-  # checks
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
   checkmate::qassert(cell_ids, "S+")
   checkmate::qassert(rust_index, "B1")
 
-  indices <- match(cell_ids, x@obs_table[["meta_cell_id"]])
+  obs_table <- S7::prop(x, "obs_table")
+  subset_pos <- match(cell_ids, obs_table[["cell_id"]])
 
-  missing <- is.na(indices)
+  missing <- is.na(subset_pos)
   if (any(missing)) {
     warning(sprintf(
-      "With the provided meta_cell_ids a total of %i could not be matched.",
+      "With the provided cell_ids a total of %i could not be matched.",
       sum(missing)
     ))
-    indices <- indices[!missing]
+    subset_pos <- subset_pos[!missing]
+  }
+  if (length(subset_pos) == 0L) {
+    stop("The cell indices have length 0.")
   }
 
-  return(indices)
+  if (rust_index) {
+    # Translate subset position -> 0-indexed ORIGINAL position
+    subset_to_original <- S7::prop(x, "subset_to_original")
+    as.integer(subset_to_original[subset_pos] - 1L)
+  } else {
+    # Return 1-indexed SUBSET position (what `[` and `[[` expect)
+    as.integer(subset_pos)
+  }
 }
 
 #' @name get_gene_indices.SingleCellsSubset
@@ -608,11 +595,11 @@ S7::method(get_gene_indices, SingleCellsSubset) <- function(
   gene_ids,
   rust_index
 ) {
-  # checks
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
   checkmate::qassert(gene_ids, "S+")
   checkmate::qassert(rust_index, "B1")
 
+  # Gene space is unchanged in the subset, so no translation needed.
   indices <- match(gene_ids, x@var_table[["gene_id"]])
 
   missing <- is.na(indices)
@@ -623,18 +610,13 @@ S7::method(get_gene_indices, SingleCellsSubset) <- function(
     ))
     indices <- indices[!missing]
   }
-
-  if (rust_index) {
-    indices <- indices - 1L
-  }
-
-  if (length(indices) == 0) {
+  if (length(indices) == 0L) {
     stop(
       "The gene indices have length 0. Please double check provided parameters!"
     )
   }
 
-  return(indices)
+  if (rust_index) as.integer(indices - 1L) else as.integer(indices)
 }
 
 ### sc cache -------------------------------------------------------------------
@@ -651,16 +633,13 @@ S7::method(set_pca_factors, SingleCellsSubset) <- function(
   pca_factor,
   ...
 ) {
-  # checks
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
   checkmate::assertMatrix(pca_factor, mode = "numeric")
-
   S7::prop(x, "sc_cache") <- set_pca_factors(
     x = S7::prop(x, "sc_cache"),
     pca_factor = pca_factor
   )
-
-  return(x)
+  x
 }
 
 #' @name set_pca_loadings.SingleCellsSubset
@@ -673,16 +652,13 @@ S7::method(set_pca_loadings, SingleCellsSubset) <- function(
   pca_loading,
   ...
 ) {
-  # checks
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
   checkmate::assertMatrix(pca_loading, mode = "numeric")
-
   S7::prop(x, "sc_cache") <- set_pca_loadings(
     x = S7::prop(x, "sc_cache"),
     pca_loading = pca_loading
   )
-
-  return(x)
+  x
 }
 
 #' @name set_pca_singular_vals.SingleCellsSubset
@@ -695,16 +671,13 @@ S7::method(set_pca_singular_vals, SingleCellsSubset) <- function(
   singular_vals,
   ...
 ) {
-  # checks
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
   checkmate::qassert(singular_vals, "N+")
-
   S7::prop(x, "sc_cache") <- set_pca_singular_vals(
     x = S7::prop(x, "sc_cache"),
     singular_vals = singular_vals
   )
-
-  return(x)
+  x
 }
 
 #' @name set_embedding.SingleCellsSubset
@@ -718,18 +691,15 @@ S7::method(set_embedding, SingleCellsSubset) <- function(
   name,
   ...
 ) {
-  # checks
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
   checkmate::assertMatrix(embd, mode = "numeric")
   checkmate::qassert(name, "S1")
-
   S7::prop(x, "sc_cache") <- set_embedding(
     x = S7::prop(x, "sc_cache"),
     embd = embd,
     name = name
   )
-
-  return(x)
+  x
 }
 
 #' @name set_knn.SingleCellsSubset
@@ -737,21 +707,14 @@ S7::method(set_embedding, SingleCellsSubset) <- function(
 #' @rdname set_knn
 #'
 #' @method set_knn SingleCellsSubset
-S7::method(set_knn, SingleCellsSubset) <- function(
-  x,
-  knn,
-  ...
-) {
-  # checks
+S7::method(set_knn, SingleCellsSubset) <- function(x, knn, ...) {
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
   checkmate::assertClass(knn, "SingleCellNearestNeighbour")
-
   S7::prop(x, "sc_cache") <- set_knn(
     x = S7::prop(x, "sc_cache"),
     knn = knn
   )
-
-  return(x)
+  x
 }
 
 #' @name set_snn_graph.SingleCellsSubset
@@ -759,21 +722,14 @@ S7::method(set_knn, SingleCellsSubset) <- function(
 #' @rdname set_snn_graph
 #'
 #' @method set_snn_graph SingleCellsSubset
-S7::method(set_snn_graph, SingleCellsSubset) <- function(
-  x,
-  snn_graph,
-  ...
-) {
-  # checks
+S7::method(set_snn_graph, SingleCellsSubset) <- function(x, snn_graph, ...) {
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
   checkmate::assertClass(snn_graph, "igraph")
-
   S7::prop(x, "sc_cache") <- set_snn_graph(
     x = S7::prop(x, "sc_cache"),
     snn_graph = snn_graph
   )
-
-  return(x)
+  x
 }
 
 #' @name remove_knn.SingleCellsSubset
@@ -781,18 +737,10 @@ S7::method(set_snn_graph, SingleCellsSubset) <- function(
 #' @rdname remove_knn
 #'
 #' @method remove_knn SingleCellsSubset
-S7::method(remove_knn, SingleCellsSubset) <- function(
-  x,
-  ...
-) {
-  # checks
+S7::method(remove_knn, SingleCellsSubset) <- function(x, ...) {
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
-
-  S7::prop(x, "sc_cache") <- remove_knn(
-    x = S7::prop(x, "sc_cache")
-  )
-
-  return(x)
+  S7::prop(x, "sc_cache") <- remove_knn(x = S7::prop(x, "sc_cache"))
+  x
 }
 
 #' @name remove_snn_graph.SingleCellsSubset
@@ -800,18 +748,10 @@ S7::method(remove_knn, SingleCellsSubset) <- function(
 #' @rdname remove_snn_graph
 #'
 #' @method remove_snn_graph SingleCellsSubset
-S7::method(remove_snn_graph, SingleCellsSubset) <- function(
-  x,
-  ...
-) {
-  # checks
+S7::method(remove_snn_graph, SingleCellsSubset) <- function(x, ...) {
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
-
-  S7::prop(x, "sc_cache") <- remove_snn_graph(
-    x = S7::prop(x, "sc_cache")
-  )
-
-  return(x)
+  S7::prop(x, "sc_cache") <- remove_snn_graph(x = S7::prop(x, "sc_cache"))
+  x
 }
 
 #### getters -------------------------------------------------------------------
@@ -821,25 +761,16 @@ S7::method(remove_snn_graph, SingleCellsSubset) <- function(
 #' @rdname get_pca_factors
 #'
 #' @method get_pca_factors SingleCellsSubset
-S7::method(get_pca_factors, SingleCellsSubset) <- function(
-  x,
-  ...
-) {
-  # checks
+S7::method(get_pca_factors, SingleCellsSubset) <- function(x, ...) {
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
-
-  res <- get_pca_factors(
-    x = S7::prop(x, "sc_cache")
-  )
-
+  res <- get_pca_factors(x = S7::prop(x, "sc_cache"))
   if (is.null(res)) {
     return(NULL)
   }
-
-  rownames(res) <- S7::prop(x, "obs_table")$meta_cell_id
-  colnames(res) <- sprintf("PC_%i", 1:ncol(res))
-
-  return(res)
+  # TODO: confirm cell id column name
+  rownames(res) <- S7::prop(x, "obs_table")$cell_id
+  colnames(res) <- sprintf("PC_%i", seq_len(ncol(res)))
+  res
 }
 
 #' @name get_pca_loadings.SingleCellsSubset
@@ -847,25 +778,17 @@ S7::method(get_pca_factors, SingleCellsSubset) <- function(
 #' @rdname get_pca_loadings
 #'
 #' @method get_pca_loadings SingleCellsSubset
-S7::method(get_pca_loadings, SingleCellsSubset) <- function(
-  x,
-  ...
-) {
-  # checks
+S7::method(get_pca_loadings, SingleCellsSubset) <- function(x, ...) {
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
-
-  res <- get_pca_loadings(
-    x = S7::prop(x, "sc_cache")
-  )
-
+  res <- get_pca_loadings(x = S7::prop(x, "sc_cache"))
   if (is.null(res)) {
     return(NULL)
   }
-
-  colnames(res) <- sprintf("PC_%i", 1:ncol(res))
-  rownames(res) <- S7::prop(x, "var_table")$gene_id[get_hvg(x)]
-
-  return(res)
+  colnames(res) <- sprintf("PC_%i", seq_len(ncol(res)))
+  # get_hvg returns 0-indexed; +1 for R subsetting
+  hvg <- get_hvg(x) + 1L
+  rownames(res) <- S7::prop(x, "var_table")$gene_id[hvg]
+  res
 }
 
 #' @name get_pca_singular_val.SingleCellsSubset
@@ -873,18 +796,9 @@ S7::method(get_pca_loadings, SingleCellsSubset) <- function(
 #' @rdname get_pca_singular_val
 #'
 #' @method get_pca_singular_val SingleCellsSubset
-S7::method(get_pca_singular_val, SingleCellsSubset) <- function(
-  x,
-  ...
-) {
-  # checks
+S7::method(get_pca_singular_val, SingleCellsSubset) <- function(x, ...) {
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
-
-  res <- get_pca_singular_val(
-    x = S7::prop(x, "sc_cache")
-  )
-
-  return(res)
+  get_pca_singular_val(x = S7::prop(x, "sc_cache"))
 }
 
 #' @name get_embedding.SingleCellsSubset
@@ -892,23 +806,16 @@ S7::method(get_pca_singular_val, SingleCellsSubset) <- function(
 #' @rdname get_embedding
 #'
 #' @method get_embedding SingleCellsSubset
-S7::method(get_embedding, SingleCellsSubset) <- function(
-  x,
-  embd_name,
-  ...
-) {
-  # checks
+S7::method(get_embedding, SingleCellsSubset) <- function(x, embd_name, ...) {
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
   checkmate::qassert(embd_name, "S1")
-
-  res <- get_embedding(
-    x = S7::prop(x, "sc_cache"),
-    embd_name = embd_name
-  )
-
-  rownames(res) <- S7::prop(x, "obs_table")$meta_cell_id
-
-  return(res)
+  res <- get_embedding(x = S7::prop(x, "sc_cache"), embd_name = embd_name)
+  if (is.null(res)) {
+    return(NULL)
+  }
+  # TODO: confirm cell id column name
+  rownames(res) <- S7::prop(x, "obs_table")$cell_id
+  res
 }
 
 #' @name get_available_embeddings.SingleCellsSubset
@@ -916,18 +823,9 @@ S7::method(get_embedding, SingleCellsSubset) <- function(
 #' @rdname get_available_embeddings
 #'
 #' @method get_available_embeddings SingleCellsSubset
-S7::method(get_available_embeddings, SingleCellsSubset) <- function(
-  x,
-  ...
-) {
-  # checks
+S7::method(get_available_embeddings, SingleCellsSubset) <- function(x, ...) {
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
-
-  res <- get_available_embeddings(
-    x = S7::prop(x, "sc_cache")
-  )
-
-  return(res)
+  get_available_embeddings(x = S7::prop(x, "sc_cache"))
 }
 
 #' @name get_knn_mat.SingleCellsSubset
@@ -935,18 +833,9 @@ S7::method(get_available_embeddings, SingleCellsSubset) <- function(
 #' @rdname get_knn_mat
 #'
 #' @method get_knn_mat SingleCellsSubset
-S7::method(get_knn_mat, SingleCellsSubset) <- function(
-  x,
-  ...
-) {
-  # checks
+S7::method(get_knn_mat, SingleCellsSubset) <- function(x, ...) {
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
-
-  res <- get_knn_mat(
-    x = S7::prop(x, "sc_cache")
-  )
-
-  return(res)
+  get_knn_mat(x = S7::prop(x, "sc_cache"))
 }
 
 #' @name get_knn_dist.SingleCellsSubset
@@ -954,18 +843,9 @@ S7::method(get_knn_mat, SingleCellsSubset) <- function(
 #' @rdname get_knn_dist
 #'
 #' @method get_knn_dist SingleCellsSubset
-S7::method(get_knn_dist, SingleCellsSubset) <- function(
-  x,
-  ...
-) {
-  # checks
+S7::method(get_knn_dist, SingleCellsSubset) <- function(x, ...) {
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
-
-  res <- get_knn_dist(
-    x = S7::prop(x, "sc_cache")
-  )
-
-  return(res)
+  get_knn_dist(x = S7::prop(x, "sc_cache"))
 }
 
 #' @name get_knn_obj.SingleCellsSubset
@@ -973,18 +853,9 @@ S7::method(get_knn_dist, SingleCellsSubset) <- function(
 #' @rdname get_knn_obj
 #'
 #' @method get_knn_obj SingleCellsSubset
-S7::method(get_knn_obj, SingleCellsSubset) <- function(
-  x,
-  ...
-) {
-  # checks
+S7::method(get_knn_obj, SingleCellsSubset) <- function(x, ...) {
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
-
-  res <- get_knn_obj(
-    x = S7::prop(x, "sc_cache")
-  )
-
-  return(res)
+  get_knn_obj(x = S7::prop(x, "sc_cache"))
 }
 
 #' @name get_snn_graph.SingleCellsSubset
@@ -992,16 +863,7 @@ S7::method(get_knn_obj, SingleCellsSubset) <- function(
 #' @rdname get_snn_graph
 #'
 #' @method get_snn_graph SingleCellsSubset
-S7::method(get_snn_graph, SingleCellsSubset) <- function(
-  x,
-  ...
-) {
-  # checks
+S7::method(get_snn_graph, SingleCellsSubset) <- function(x, ...) {
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
-
-  res <- get_snn_graph(
-    x = S7::prop(x, "sc_cache")
-  )
-
-  return(res)
+  get_snn_graph(x = S7::prop(x, "sc_cache"))
 }

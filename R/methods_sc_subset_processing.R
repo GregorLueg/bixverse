@@ -1,11 +1,10 @@
+# single cell subset processing methods ----------------------------------------
+
 ## hvg -------------------------------------------------------------------------
 
-# generic found in R/base_generics_sc.R
+# generic in R/base_generics_sc.R
 
 #' @method find_hvg_sc SingleCellsSubset
-#'
-#' @importFrom zeallot `%<-%`
-#' @importFrom magrittr `%>%`
 S7::method(find_hvg_sc, SingleCellsSubset) <- function(
   object,
   hvg_no = 2000L,
@@ -17,7 +16,7 @@ S7::method(find_hvg_sc, SingleCellsSubset) <- function(
   checkmate::qassert(hvg_no, "I1")
   assertScHvg(hvg_params)
   checkmate::qassert(streaming, c("B1", "0"))
-  checkmate::qassert(.verbose, c("B1", "I1[0, 2]"))
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   streaming <- auto_streaming(
     n_cells = nrow(object),
@@ -48,25 +47,20 @@ S7::method(find_hvg_sc, SingleCellsSubset) <- function(
     stop("Unknown HVG method: ", hvg_params$method)
   )
 
-  object <- set_hvg(object, hvg = hvg)
-
-  return(object)
+  set_hvg(object, hvg = hvg)
 }
 
-## dimension reduction and knn/snn ---------------------------------------------
+## pca -------------------------------------------------------------------------
 
-### pca ------------------------------------------------------------------------
-
-# generic found in R/base_generics_sc.R
+# generic in R/base_generics_sc.R
 
 #' @method calculate_pca_sc SingleCellsSubset
 #'
 #' @importFrom zeallot `%<-%`
-#' @importFrom magrittr `%>%`
 S7::method(calculate_pca_sc, SingleCellsSubset) <- function(
   object,
   no_pcs,
-  randomised_svd = TRUE,
+  pca_params = params_sc_pca(),
   sparse_svd = FALSE,
   hvg = NULL,
   seed = 42L,
@@ -74,7 +68,7 @@ S7::method(calculate_pca_sc, SingleCellsSubset) <- function(
 ) {
   checkmate::assertClass(object, "bixverse::SingleCellsSubset")
   checkmate::qassert(no_pcs, "I1")
-  checkmate::qassert(randomised_svd, "B1")
+  assertScPca(pca_params)
   checkmate::qassert(sparse_svd, "B1")
   checkmate::qassert(hvg, c("I+", "0"))
   checkmate::qassert(seed, "I1")
@@ -83,7 +77,7 @@ S7::method(calculate_pca_sc, SingleCellsSubset) <- function(
   if ((length(get_hvg(object)) == 0) && is.null(hvg)) {
     warning(paste(
       "No HVGs identified in the object nor provided.",
-      "Please run find_hvg_sc() or provide the indices of the HVG",
+      "Please run find_hvg_sc() or provide the indices of the HVG.",
       "Returning object as is."
     ))
     return(object)
@@ -91,47 +85,40 @@ S7::method(calculate_pca_sc, SingleCellsSubset) <- function(
 
   selected_hvg <- if (!is.null(hvg)) {
     if (.verbose) {
-      message(
-        paste(
-          "HVGs provided.",
-          "Will use these ones and set the internal HVG to the provided genes."
-        )
-      )
+      message(paste(
+        "HVGs provided.",
+        "Will use these and overwrite the internal HVG."
+      ))
     }
-    object <- set_hvg(object, hvg) # this one deals with zero/one indexing internally
+    object <- set_hvg(object, hvg) # set_hvg takes 1-indexed, stores 0-indexed
     hvg - 1L
   } else {
-    get_hvg(object)
+    get_hvg(object) # already 0-indexed
   }
 
-  # swap to sparse SVD for large data sets
   n_cells <- length(get_cells_to_keep(object))
-
-  if (n_cells > 500000 & !sparse_svd) {
+  if (n_cells > 500000L && !sparse_svd) {
     message(paste(
-      "More than 500,000 cells with sparse SVD = FALSE",
+      "More than 500,000 cells with sparse SVD = FALSE.",
       "Setting sparse SVD to TRUE to avoid high memory pressure."
     ))
-
     sparse_svd <- TRUE
   }
 
-  # dense path
   if (!sparse_svd) {
     if (.verbose) {
-      message(
-        sprintf(
-          "Using dense SVD solving on scaled data on %i HVG.",
-          length(selected_hvg)
-        )
-      )
+      message(sprintf(
+        "Using dense SVD on scaled data with %i HVG.",
+        length(selected_hvg)
+      ))
     }
     zeallot::`%<-%`(
       c(pca_factors, pca_loadings, singular_values, scaled),
       rs_sc_pca(
         f_path_gene = get_rust_count_gene_f_path(object),
+        f_path_cell = get_rust_count_cell_f_path(object),
         no_pcs = no_pcs,
-        random_svd = randomised_svd,
+        pca_params = pca_params,
         cell_indices = get_cells_to_keep(object),
         gene_indices = selected_hvg,
         seed = seed,
@@ -143,104 +130,36 @@ S7::method(calculate_pca_sc, SingleCellsSubset) <- function(
     object <- set_pca_factors(object, pca_factors)
     object <- set_pca_loadings(object, pca_loadings)
     object <- set_pca_singular_vals(object, singular_values[1:no_pcs])
-
-    return(object)
-  } else {
-    if (.verbose) {
-      message(
-        sprintf(
-          "Using sparse SVD solving on scaled data on %i HVG.",
-          length(selected_hvg)
-        )
-      )
-    }
-
-    zeallot::`%<-%`(
-      c(sparse_pca_factors, sparse_pca_loadings, sparse_pca_eigenvals),
-      rs_sc_pca_sparse(
-        f_path_gene = bixverse:::get_rust_count_gene_f_path(object),
-        no_pcs = no_pcs,
-        random_svd = randomised_svd,
-        cell_indices = get_cells_to_keep(object),
-        gene_indices = selected_hvg,
-        seed = seed,
-        verbose = parse_verbosity(.verbose)
-      )
-    )
-
-    object <- set_pca_factors(object, sparse_pca_factors)
-    object <- set_pca_loadings(object, sparse_pca_loadings)
-    object <- set_pca_singular_vals(
-      object,
-      sparse_pca_eigenvals[1:no_pcs]
-    )
-
     return(object)
   }
+
+  if (.verbose) {
+    message(sprintf(
+      "Using sparse SVD on scaled data with %i HVG.",
+      length(selected_hvg)
+    ))
+  }
+  zeallot::`%<-%`(
+    c(sparse_pca_factors, sparse_pca_loadings, sparse_pca_eigenvals),
+    rs_sc_pca_sparse(
+      f_path_gene = get_rust_count_gene_f_path(object),
+      f_path_cell = get_rust_count_cell_f_path(object),
+      no_pcs = no_pcs,
+      pca_params = pca_params,
+      cell_indices = get_cells_to_keep(object),
+      gene_indices = selected_hvg,
+      seed = seed,
+      verbose = parse_verbosity(.verbose)
+    )
+  )
+
+  object <- set_pca_factors(object, sparse_pca_factors)
+  object <- set_pca_loadings(object, sparse_pca_loadings)
+  object <- set_pca_singular_vals(object, sparse_pca_eigenvals[1:no_pcs])
+  object
 }
 
-### fast clustering ------------------------------------------------------------
-
-#' Run fast Louvain clustering on a SingleCellsSubset object
-#'
-#' @description
-#' Runs k-means on the chosen embedding, builds a kNN graph on the centroids,
-#' applies Louvain clustering and propagates memberships back to the cells.
-#' Optionally runs a grid over multiple seeds and returns stability statistics.
-#'
-#' @param object `SingleCellsSubset` class.
-#' @param embd_to_use String. Embedding name. Defaults to `"pca"`.
-#' @param no_embd_to_use Optional integer. Number of dimensions to keep.
-#' @param resolutions Numeric vector. Louvain resolutions.
-#' @param km_type String. One of `c("kmeans", "minibatch")`. The former runs
-#' standard k-means, the latter a mini-batch version that can be useful for
-#' large data sets.
-#' @param n_centroids Optional integer. Number of k-means centroids. Defaults
-#' to `sqrt(n_cells)` Rust-side if `NULL`.
-#' @param fc_params List. Output of [params_sc_fast_cluster()].
-#' @param snn Boolean. Convert kNN to sNN.
-#' @param return_kmeans Boolean. Return k-means assignments and centroids.
-#' @param grid_search Boolean. Run multi-seed grid version.
-#' @param no_seeds Integer. Number of additional seeds (only used when
-#' `grid_search = TRUE`).
-#' @param seed Integer. Reproducibility.
-#' @param .verbose Boolean or integer. Controls verbosity and returns run times.
-#' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
-#' verbosity.
-#'
-#' @returns `SingleCellFastClusters` S3 object with:
-#' \describe{
-#'   \item{memberships}{data.table with `cell_idx` and one column per
-#'   resolution (`res_<value>`).}
-#'   \item{stats}{data.table of grid statistics, or `NULL`.}
-#'   \item{k_means_cluster}{Integer vector of k-means assignments, or `NULL`.}
-#'   \item{centroids}{Numeric matrix of centroids, or `NULL`.}
-#'   \item{resolutions}{Resolutions used.}
-#' }
-#' with `cell_indices` stored as an attribute (0-indexed).
-#'
-#' @export
-fast_cluster_sc <- S7::new_generic(
-  name = "fast_cluster_sc",
-  dispatch_args = "object",
-  fun = function(
-    object,
-    embd_to_use = "pca",
-    no_embd_to_use = NULL,
-    resolutions = c(2.0, 1.0, 0.5),
-    km_type = c("kmeans", "minibatch"),
-    n_centroids = NULL,
-    fc_params = params_sc_fast_cluster(),
-    snn = TRUE,
-    return_kmeans = FALSE,
-    grid_search = FALSE,
-    no_seeds = 10L,
-    seed = 42L,
-    .verbose = TRUE
-  ) {
-    S7::S7_dispatch()
-  }
-)
+## fast clustering -------------------------------------------------------------
 
 #' @method fast_cluster_sc SingleCellsSubset
 #'
@@ -262,7 +181,7 @@ S7::method(fast_cluster_sc, SingleCellsSubset) <- function(
 ) {
   km_type <- match.arg(km_type)
 
-  checkmate::assertTRUE(S7::S7_inherits(object, SingleCellsSubset))
+  checkmate::assertClass(object, "bixverse::SingleCellsSubset")
   checkmate::qassert(embd_to_use, "S1")
   checkmate::qassert(no_embd_to_use, c("I1", "0"))
   checkmate::qassert(resolutions, "N+")
@@ -318,6 +237,7 @@ S7::method(fast_cluster_sc, SingleCellsSubset) <- function(
     stats <- NULL
   }
 
+  # cell_idx is 1-indexed ORIGINAL positions; matches obs_table$cell_idx
   membership_dt <- data.table::data.table(cell_idx = cells_to_use + 1L)
   membership_dt[, (paste0("res_", resolutions)) := memberships]
 
