@@ -28,14 +28,21 @@ navbar:
     tutorials:
       text: Tutorials
       menu:
+        - text: "Gene set enrichment and pathway activity methods"
         - text: Gene Set Enrichment Methods
           href: articles/gse_methods.html
         - text: Pathway activity functions
           href: articles/pathway_activity.html
+        - text: -------
+        - text: "Network methods"
         - text: Genetic diffusion and community detections
           href: articles/genetic_diffusions.html
+        - text: -------
+        - text: "Co-expression module detection methods"
         - text: Contrastive PCA
           href: articles/cpca.html
+        - text: -------
+        - text: "Ontologies"
         - text: Semantic similarities on ontologies
           href: articles/ontologies.html
     singlecells:
@@ -75,8 +82,11 @@ navbar:
     articles:
       text: Articles
       menu:
+        - text: "Rust to R"
         - text: Bixverse R <> Rust interface
           href: articles/rust_functions.html
+        - text: -------
+        - text: "Package design"
         - text: Technical design choices for single cell
           href: articles/design_single_cell.html
     github:
@@ -533,6 +543,7 @@ reference:
       - calc_sc_type_scores
       - score_clusters
       - params_symphony_map
+
   # Single cell ligand receptor
   - title: Single cell ligand receptor 
     desc: 
@@ -564,7 +575,7 @@ reference:
       - extract_gene_violin_data
   
   # Different statistical functions
-  - title: Stastical functions
+  - title: Statistical functions
     desc: 
       Any types of functions that help with statistics
     contents:
