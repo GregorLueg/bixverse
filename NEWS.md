@@ -1,3 +1,11 @@
+# bixverse 0.4.1
+
+## Features
+
+* `SingleCellsSubset` class that can split from the main class and allows for
+  analysis of e.g., a subset of cell types, etc.
+* ``
+
 # bixverse 0.4.0
 
 ## Features

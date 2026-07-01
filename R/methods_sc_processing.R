@@ -1382,7 +1382,9 @@ S7::method(find_neighbours_sc, ScOrMc) <- function(
   modality <- match.arg(modality)
 
   checkmate::assertTRUE(
-    S7::S7_inherits(object, SingleCells) || S7::S7_inherits(object, MetaCells)
+    S7::S7_inherits(object, SingleCells) ||
+      S7::S7_inherits(object, MetaCells) ||
+      S7::S7_inherits(object, SingleCellsSubset)
   )
   checkmate::qassert(embd_to_use, "S1")
   checkmate::qassert(no_embd_to_use, c("I1", "0"))
@@ -1474,7 +1476,9 @@ S7::method(find_clusters_sc, ScOrMc) <- function(
   modality <- match.arg(modality)
 
   checkmate::assertTRUE(
-    S7::S7_inherits(object, SingleCells) || S7::S7_inherits(object, MetaCells)
+    S7::S7_inherits(object, SingleCells) ||
+      S7::S7_inherits(object, MetaCells) ||
+      S7::S7_inherits(object, SingleCellsSubset)
   )
   checkmate::qassert(res, "N1")
   checkmate::qassert(name, "S1")

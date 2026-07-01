@@ -49,7 +49,7 @@ Additional packages that might be of interest interest to you:
 
 ### Release notes
 
-<img src="/man/figures/bixverse_single_cell.png" width="500" height="500" alt="atlas scale on small compute">
+<img src="man/figures/bixverse_single_cell.png" width="500" height="500" alt="atlas scale on small compute">
 
 Major release with `"0.4.0"`. The single cell suite has been further improved. 
 The key changes are:

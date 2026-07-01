@@ -63,9 +63,9 @@ navbar:
         - text: "Meta cells - generation and analysis"
           href: articles/meta_cells.html
         - text: "Reference mapping via Symphony"
-          href: articles/symphomy.html
+          href: articles/symphony.html
         - text: "Multi-modal analysis"
-          href: articles/multi_modal_single_cell.html
+          href: articles/multi_modal_single_cells.html
         - text: -------
         - text: "Others"
         - text: Analysing big data on a powerful laptop (example)
@@ -602,6 +602,8 @@ reference:
       - download_pbmc3k
       - download_demuxlet_pbmc
       - download_pbmc_batches
+      - download_pbmc_totalseq_data
+      - download_pbmc8k
       - calculate_sparsity_stats
       - generate_gene_module_data
       - generate_single_cell_test_data
