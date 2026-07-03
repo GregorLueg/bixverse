@@ -18,7 +18,7 @@ calc_fgsea(
 \item{pathways}{List. A named list with each element containing the genes for
 this pathway.}
 
-\item{nperm}{Integer. Number of permutation tests. Defaults to \code{2000L}.}
+\item{nperm}{Integer. Number of permutation tests. Defaults to \code{1000L}.}
 
 \item{gsea_params}{List. The GSEA parameters, see \code{\link[=params_gsea]{params_gsea()}}
 wrapper function. This function generates a list containing:

@@ -636,6 +636,10 @@ write_tenx_h5_sc <- function(
 #'
 #' @export
 download_pbmc3k <- function(quiet = FALSE) {
+  old_timeout <- getOption("timeout")
+  options(timeout = max(300, old_timeout))
+  on.exit(options(timeout = old_timeout))
+
   temp_dir <- tempdir()
   dest_file <- file.path(temp_dir, "pbmc3k.tar.gz")
   url <- "https://zenodo.org/records/20977604/files/pbmc3k_filtered_gene_bc_matrices.tar.gz?download=1"
@@ -663,6 +667,10 @@ download_pbmc3k <- function(quiet = FALSE) {
 #'
 #' @export
 download_pbmc8k <- function(quiet = FALSE) {
+  old_timeout <- getOption("timeout")
+  options(timeout = max(300, old_timeout))
+  on.exit(options(timeout = old_timeout))
+
   temp_dir <- tempdir()
   dest_file <- file.path(temp_dir, "pmbc-8k.tar.gz")
   url <- "https://zenodo.org/records/20977604/files/pmbc-8k.tar.gz?download=1"
@@ -690,6 +698,10 @@ download_pbmc8k <- function(quiet = FALSE) {
 #'
 #' @export
 download_demuxlet_pbmc <- function(quiet = FALSE) {
+  old_timeout <- getOption("timeout")
+  options(timeout = max(300, old_timeout))
+  on.exit(options(timeout = old_timeout))
+
   temp_dir <- tempdir()
   dest_file <- file.path(temp_dir, "demuxlet_PBMCs.tar.gz")
   url <- "https://zenodo.org/records/20977604/files/demuxlet_PBMCs.tar.gz?download=1"
@@ -716,6 +728,10 @@ download_demuxlet_pbmc <- function(quiet = FALSE) {
 #'
 #' @export
 download_pbmc_batches <- function(quiet = FALSE) {
+  old_timeout <- getOption("timeout")
+  options(timeout = max(300, old_timeout))
+  on.exit(options(timeout = old_timeout))
+
   temp_dir <- tempdir()
   dest_file <- file.path(temp_dir, "pbmc_batches.tar.gz")
   url <- "https://zenodo.org/records/20977604/files/pbmc_batches.tar.gz?download=1"
@@ -745,6 +761,10 @@ download_pbmc_batches <- function(quiet = FALSE) {
 #'
 #' @references Persad, et al., Nat. Biotechnol., 2023
 download_cd34_data <- function(quiet = FALSE) {
+  old_timeout <- getOption("timeout")
+  options(timeout = max(300, old_timeout))
+  on.exit(options(timeout = old_timeout))
+
   temp_dir <- tempdir()
   dest_file <- file.path(temp_dir, "cd34_multiome_rna.h5ad.gz")
   url <- "https://zenodo.org/records/20977604/files/cd34_multiome_rna.h5ad.gz?download=1"
@@ -768,6 +788,10 @@ download_cd34_data <- function(quiet = FALSE) {
 #'
 #' @export
 download_pbmc_totalseq_data <- function(quiet = FALSE) {
+  old_timeout <- getOption("timeout")
+  options(timeout = max(300, old_timeout))
+  on.exit(options(timeout = old_timeout))
+
   temp_dir <- tempdir()
   dest_file <- file.path(temp_dir, "10k_Human_PBMC_TotalSeqB.h5")
   url <- "https://zenodo.org/records/20977604/files/10k_Human_PBMC_TotalSeqB.h5?download=1"
