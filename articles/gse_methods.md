@@ -213,7 +213,7 @@ rs_results_example <- gse_hypergeometric_list(
   gene_set_list = gene_sets
 )
 tictoc::toc()
-#> 0.555 sec elapsed
+#> 0.608 sec elapsed
 ```
 
 ## Gene Ontology-aware enrichment: the elimination method
@@ -342,7 +342,7 @@ rs_results_example <- gse_go_elim_method_list(
   target_gene_list = go_target_gene_sets
 )
 tictoc::toc()
-#> 1.455 sec elapsed
+#> 1.513 sec elapsed
 ```
 
 ## Alternative: post-hoc simplification of GO results
@@ -552,8 +552,8 @@ microbenchmark::microbenchmark(
 )
 #> Unit: seconds
 #>   expr      min       lq     mean   median       uq      max neval
-#>  fgsea 2.864418 3.022483 3.216846 3.218639 3.299722 3.678967     5
-#>   rust 2.174302 2.185948 2.187906 2.186484 2.186853 2.205945     5
+#>  fgsea 2.884771 3.023535 3.243635 3.278077 3.334515 3.697276     5
+#>   rust 2.113492 2.134171 2.138652 2.135248 2.154350 2.155997     5
 ```
 
 ## GO-aware GSEA: the elimination method
@@ -586,26 +586,34 @@ go_gsea_res <- fgsea_go_elim(
 head(go_gsea_res)
 #>         go_id         es       nes  size        pvals n_more_extreme
 #>        <char>      <num>     <num> <num>        <num>          <num>
-#> 1: GO:0031465 -0.9025468 -1.925965     6 6.165332e-05              0
-#> 2: GO:0050877  0.5116421  1.950886    44 2.410338e-04              2
-#> 3: GO:0072675 -0.8744037 -1.865910     6 2.625170e-04              0
-#> 4: GO:0006066 -0.6718553 -2.026201    18 2.712234e-04              0
-#> 5: GO:0071392 -0.5217830 -1.904151    36 3.788231e-04              0
-#> 6: GO:0002090 -0.8302363 -1.868975     7 6.827804e-04              3
+#> 1: GO:0031465 -0.9025468 -1.925965     6 0.0001685687              0
+#> 2: GO:0006066 -0.6718553 -2.026201    18 0.0003026040              0
+#> 3: GO:0050877  0.5116421  1.950886    44 0.0003041065              2
+#> 4: GO:0035036  0.6952306  2.009366    15 0.0003469882              0
+#> 5: GO:0060213  0.7161644  1.991512    13 0.0004621245              1
+#> 6: GO:0072675 -0.8744037 -1.865910     6 0.0005366457              0
 #>                                                                                               leading_edge
 #>                                                                                                     <list>
 #> 1:                                                         ENSG00000110844,ENSG00000180370,ENSG00000160685
-#> 2: ENSG00000131263,ENSG00000229674,ENSG00000172987,ENSG00000108878,ENSG00000050165,ENSG00000143061,...[19]
-#> 3:                                                                                         ENSG00000170613
-#> 4:  ENSG00000287395,ENSG00000139354,ENSG00000211659,ENSG00000160345,ENSG00000007237,ENSG00000139679,...[7]
-#> 5: ENSG00000118193,ENSG00000134531,ENSG00000166897,ENSG00000162980,ENSG00000170348,ENSG00000103018,...[17]
-#> 6:                                         ENSG00000061938,ENSG00000169507,ENSG00000289721,ENSG00000083814
-#>      log2err       fdr                                 go_name
-#>        <num>     <num>                                  <char>
-#> 1: 0.5384341 0.4815124  Cul4B-RING E3 ubiquitin ligase complex
-#> 2: 0.5188481 0.5295637                  nervous system process
-#> 3: 0.4984931 0.5295637                       osteoclast fusion
-#> 4: 0.4984931 0.5295637               alcohol metabolic process
-#> 5: 0.4984931 0.5917217 cellular response to estradiol stimulus
-#> 6: 0.4772708 0.8290480  regulation of receptor internalization
+#> 2:  ENSG00000287395,ENSG00000139354,ENSG00000211659,ENSG00000160345,ENSG00000007237,ENSG00000139679,...[7]
+#> 3: ENSG00000131263,ENSG00000229674,ENSG00000172987,ENSG00000108878,ENSG00000050165,ENSG00000143061,...[19]
+#> 4:  ENSG00000023516,ENSG00000136011,ENSG00000198821,ENSG00000239080,ENSG00000280498,ENSG00000173442,...[9]
+#> 5:  ENSG00000197540,ENSG00000176732,ENSG00000196109,ENSG00000144230,ENSG00000152642,ENSG00000079385,...[8]
+#> 6:                                                                                         ENSG00000170613
+#>      log2err       fdr
+#>        <num>     <num>
+#> 1: 0.5188481 0.6774944
+#> 2: 0.4984931 0.6774944
+#> 3: 0.4984931 0.6774944
+#> 4: 0.4984931 0.6774944
+#> 5: 0.4984931 0.6985338
+#> 6: 0.4772708 0.6985338
+#>                                                                    go_name
+#>                                                                     <char>
+#> 1:                                  Cul4B-RING E3 ubiquitin ligase complex
+#> 2:                                               alcohol metabolic process
+#> 3:                                                  nervous system process
+#> 4:                                                   sperm-egg recognition
+#> 5: positive regulation of nuclear-transcribed mRNA poly(A) tail shortening
+#> 6:                                                       osteoclast fusion
 ```

@@ -811,7 +811,7 @@ Additional helpers for specific small sub classes used in single cell.
 
 - [`calc_knn_metrics()`](https://gregorlueg.github.io/bixverse/reference/calc_knn_metrics.md)
   : Calculate recall at k and distance ratio
-- [`get_centroids()`](https://gregorlueg.github.io/bixverse/reference/get_centroids.md)
+- [`get_centroids_sc()`](https://gregorlueg.github.io/bixverse/reference/get_centroids_sc.md)
   : Get k-means centroids from a fast cluster result
 - [`get_feature_mat()`](https://gregorlueg.github.io/bixverse/reference/get_feature_mat.md)
   : Get the feature matrix used for the classifier

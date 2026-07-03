@@ -3,8 +3,14 @@
 Your favourite methods used in bioinformatics and computational biology
 made VERY fast via Rust. Contains various gene set enrichment methods,
 graph- based methods, co-expression module detection and much more.
-Additionally, has now single cell functionality, enabling million cell
-analysis on local compute.
+Additionally, has now a single cell analysis suite, enabling million
+cell analysis on local compute.
+
+## See also
+
+Useful links:
+
+- <https://gregorlueg.github.io/bixverse>
 
 ## Author
 

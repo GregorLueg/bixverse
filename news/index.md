@@ -1,5 +1,23 @@
 # Changelog
 
+## bixverse 0.4.2
+
+### Features
+
+- Faster fgsea multi-level implementation with less unnecessary
+  allocations and faster computations.
+
+### Fix
+
+- Edge case in fgsea multi-level fixed that broke the beta-value
+  calculations.
+
+### Breaking changes
+
+`get_centroids()` was renamed to
+[`get_centroids_sc()`](https://gregorlueg.github.io/bixverse/reference/get_centroids_sc.md)
+for the usage on the fast clustering algorithms.
+
 ## bixverse 0.4.1
 
 ### Features

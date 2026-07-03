@@ -30,7 +30,7 @@ calc_fgsea(
 
 - nperm:
 
-  Integer. Number of permutation tests. Defaults to `2000L`.
+  Integer. Number of permutation tests. Defaults to `1000L`.
 
 - gsea_params:
 

@@ -23,7 +23,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -102,7 +102,7 @@
       <h1>Gene Set Enrichment Methods</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-07-01</p>
+      <p class="date">2026-07-03</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -264,7 +264,7 @@
 <span>  gene_set_list <span class="op">=</span> <span class="va">gene_sets</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu">tictoc</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tictoc/man/tic.html" class="external-link">toc</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 0.555 sec elapsed</span></span></code></pre></div>
+<span><span class="co">#&gt; 0.608 sec elapsed</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="gene-ontology-aware-enrichment-the-elimination-method">Gene Ontology-aware enrichment: the elimination method<a class="anchor" aria-label="anchor" href="#gene-ontology-aware-enrichment-the-elimination-method"></a>
 </h2>
@@ -365,7 +365,7 @@
 <span>  target_gene_list <span class="op">=</span> <span class="va">go_target_gene_sets</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu">tictoc</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tictoc/man/tic.html" class="external-link">toc</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 1.455 sec elapsed</span></span></code></pre></div>
+<span><span class="co">#&gt; 1.513 sec elapsed</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="alternative-post-hoc-simplification-of-go-results">Alternative: post-hoc simplification of GO results<a class="anchor" aria-label="anchor" href="#alternative-post-hoc-simplification-of-go-results"></a>
 </h2>
@@ -546,8 +546,8 @@
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: seconds</span></span>
 <span><span class="co">#&gt;   expr      min       lq     mean   median       uq      max neval</span></span>
-<span><span class="co">#&gt;  fgsea 2.864418 3.022483 3.216846 3.218639 3.299722 3.678967     5</span></span>
-<span><span class="co">#&gt;   rust 2.174302 2.185948 2.187906 2.186484 2.186853 2.205945     5</span></span></code></pre></div>
+<span><span class="co">#&gt;  fgsea 2.884771 3.023535 3.243635 3.278077 3.334515 3.697276     5</span></span>
+<span><span class="co">#&gt;   rust 2.113492 2.134171 2.138652 2.135248 2.154350 2.155997     5</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="go-aware-gsea-the-elimination-method">GO-aware GSEA: the elimination method<a class="anchor" aria-label="anchor" href="#go-aware-gsea-the-elimination-method"></a>
 </h2>
@@ -571,28 +571,36 @@
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">go_gsea_res</span><span class="op">)</span></span>
 <span><span class="co">#&gt;         go_id         es       nes  size        pvals n_more_extreme</span></span>
 <span><span class="co">#&gt;        &lt;char&gt;      &lt;num&gt;     &lt;num&gt; &lt;num&gt;        &lt;num&gt;          &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1: GO:0031465 -0.9025468 -1.925965     6 6.165332e-05              0</span></span>
-<span><span class="co">#&gt; 2: GO:0050877  0.5116421  1.950886    44 2.410338e-04              2</span></span>
-<span><span class="co">#&gt; 3: GO:0072675 -0.8744037 -1.865910     6 2.625170e-04              0</span></span>
-<span><span class="co">#&gt; 4: GO:0006066 -0.6718553 -2.026201    18 2.712234e-04              0</span></span>
-<span><span class="co">#&gt; 5: GO:0071392 -0.5217830 -1.904151    36 3.788231e-04              0</span></span>
-<span><span class="co">#&gt; 6: GO:0002090 -0.8302363 -1.868975     7 6.827804e-04              3</span></span>
+<span><span class="co">#&gt; 1: GO:0031465 -0.9025468 -1.925965     6 0.0001685687              0</span></span>
+<span><span class="co">#&gt; 2: GO:0006066 -0.6718553 -2.026201    18 0.0003026040              0</span></span>
+<span><span class="co">#&gt; 3: GO:0050877  0.5116421  1.950886    44 0.0003041065              2</span></span>
+<span><span class="co">#&gt; 4: GO:0035036  0.6952306  2.009366    15 0.0003469882              0</span></span>
+<span><span class="co">#&gt; 5: GO:0060213  0.7161644  1.991512    13 0.0004621245              1</span></span>
+<span><span class="co">#&gt; 6: GO:0072675 -0.8744037 -1.865910     6 0.0005366457              0</span></span>
 <span><span class="co">#&gt;                                                                                               leading_edge</span></span>
 <span><span class="co">#&gt;                                                                                                     &lt;list&gt;</span></span>
 <span><span class="co">#&gt; 1:                                                         ENSG00000110844,ENSG00000180370,ENSG00000160685</span></span>
-<span><span class="co">#&gt; 2: ENSG00000131263,ENSG00000229674,ENSG00000172987,ENSG00000108878,ENSG00000050165,ENSG00000143061,...[19]</span></span>
-<span><span class="co">#&gt; 3:                                                                                         ENSG00000170613</span></span>
-<span><span class="co">#&gt; 4:  ENSG00000287395,ENSG00000139354,ENSG00000211659,ENSG00000160345,ENSG00000007237,ENSG00000139679,...[7]</span></span>
-<span><span class="co">#&gt; 5: ENSG00000118193,ENSG00000134531,ENSG00000166897,ENSG00000162980,ENSG00000170348,ENSG00000103018,...[17]</span></span>
-<span><span class="co">#&gt; 6:                                         ENSG00000061938,ENSG00000169507,ENSG00000289721,ENSG00000083814</span></span>
-<span><span class="co">#&gt;      log2err       fdr                                 go_name</span></span>
-<span><span class="co">#&gt;        &lt;num&gt;     &lt;num&gt;                                  &lt;char&gt;</span></span>
-<span><span class="co">#&gt; 1: 0.5384341 0.4815124  Cul4B-RING E3 ubiquitin ligase complex</span></span>
-<span><span class="co">#&gt; 2: 0.5188481 0.5295637                  nervous system process</span></span>
-<span><span class="co">#&gt; 3: 0.4984931 0.5295637                       osteoclast fusion</span></span>
-<span><span class="co">#&gt; 4: 0.4984931 0.5295637               alcohol metabolic process</span></span>
-<span><span class="co">#&gt; 5: 0.4984931 0.5917217 cellular response to estradiol stimulus</span></span>
-<span><span class="co">#&gt; 6: 0.4772708 0.8290480  regulation of receptor internalization</span></span></code></pre></div>
+<span><span class="co">#&gt; 2:  ENSG00000287395,ENSG00000139354,ENSG00000211659,ENSG00000160345,ENSG00000007237,ENSG00000139679,...[7]</span></span>
+<span><span class="co">#&gt; 3: ENSG00000131263,ENSG00000229674,ENSG00000172987,ENSG00000108878,ENSG00000050165,ENSG00000143061,...[19]</span></span>
+<span><span class="co">#&gt; 4:  ENSG00000023516,ENSG00000136011,ENSG00000198821,ENSG00000239080,ENSG00000280498,ENSG00000173442,...[9]</span></span>
+<span><span class="co">#&gt; 5:  ENSG00000197540,ENSG00000176732,ENSG00000196109,ENSG00000144230,ENSG00000152642,ENSG00000079385,...[8]</span></span>
+<span><span class="co">#&gt; 6:                                                                                         ENSG00000170613</span></span>
+<span><span class="co">#&gt;      log2err       fdr</span></span>
+<span><span class="co">#&gt;        &lt;num&gt;     &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1: 0.5188481 0.6774944</span></span>
+<span><span class="co">#&gt; 2: 0.4984931 0.6774944</span></span>
+<span><span class="co">#&gt; 3: 0.4984931 0.6774944</span></span>
+<span><span class="co">#&gt; 4: 0.4984931 0.6774944</span></span>
+<span><span class="co">#&gt; 5: 0.4984931 0.6985338</span></span>
+<span><span class="co">#&gt; 6: 0.4772708 0.6985338</span></span>
+<span><span class="co">#&gt;                                                                    go_name</span></span>
+<span><span class="co">#&gt;                                                                     &lt;char&gt;</span></span>
+<span><span class="co">#&gt; 1:                                  Cul4B-RING E3 ubiquitin ligase complex</span></span>
+<span><span class="co">#&gt; 2:                                               alcohol metabolic process</span></span>
+<span><span class="co">#&gt; 3:                                                  nervous system process</span></span>
+<span><span class="co">#&gt; 4:                                                   sperm-egg recognition</span></span>
+<span><span class="co">#&gt; 5: positive regulation of nuclear-transcribed mRNA poly(A) tail shortening</span></span>
+<span><span class="co">#&gt; 6:                                                       osteoclast fusion</span></span></code></pre></div>
 </div>
 </section><script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
