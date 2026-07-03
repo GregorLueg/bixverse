@@ -180,7 +180,7 @@ expected_bottom_values <- c(
   0.82825000
 )
 
-rs_gsea_stats_pos = rs_calc_gsea_stats(
+rs_gsea_stats_pos <- rs_calc_gsea_stats(
   stats = stats,
   gs_idx = rs_indices$pathway_pos,
   gsea_param = 1.0,
@@ -188,7 +188,7 @@ rs_gsea_stats_pos = rs_calc_gsea_stats(
   return_all_extremes = FALSE
 )
 
-rs_gsea_stats_pos_v2 = rs_calc_gsea_stats(
+rs_gsea_stats_pos_v2 <- rs_calc_gsea_stats(
   stats = stats,
   gs_idx = rs_indices$pathway_pos,
   gsea_param = 1.0,
@@ -196,7 +196,7 @@ rs_gsea_stats_pos_v2 = rs_calc_gsea_stats(
   return_all_extremes = FALSE
 )
 
-rs_gsea_stats_pos_v3 = rs_calc_gsea_stats(
+rs_gsea_stats_pos_v3 <- rs_calc_gsea_stats(
   stats = stats,
   gs_idx = rs_indices$pathway_pos,
   gsea_param = 1.0,
@@ -204,7 +204,7 @@ rs_gsea_stats_pos_v3 = rs_calc_gsea_stats(
   return_all_extremes = TRUE
 )
 
-rs_gsea_stats_neg = rs_calc_gsea_stats(
+rs_gsea_stats_neg <- rs_calc_gsea_stats(
   stats = stats,
   gs_idx = rs_indices$pathway_neg,
   gsea_param = 1.0,

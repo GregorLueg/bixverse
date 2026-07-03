@@ -725,7 +725,7 @@ calc_fgsea_simple <- function(
 #' @param stats Named numeric vector. The gene level statistic.
 #' @param pathways List. A named list with each element containing the genes for
 #' this pathway.
-#' @param nperm Integer. Number of permutation tests. Defaults to `2000L`.
+#' @param nperm Integer. Number of permutation tests. Defaults to `1000L`.
 #' @param gsea_params List. The GSEA parameters, see [bixverse::params_gsea()]
 #' wrapper function. This function generates a list containing:
 #' \itemize{

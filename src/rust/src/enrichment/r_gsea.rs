@@ -378,12 +378,16 @@ fn rs_calc_multi_level(
 ///
 /// @keywords internal
 #[extendr]
-fn rs_simple_and_multi_err(n_more_extreme: &[i32], nperm: usize, sample_size: usize) -> List {
+fn rs_simple_and_multi_err(
+    n_more_extreme: &[i32],
+    nperm: usize,
+    sample_size: usize,
+) -> Result<List, extendr_api::Error> {
     // Conversion needed
     let n_more_extreme: Vec<usize> = n_more_extreme.iter().map(|x| *x as usize).collect();
 
     let res: MultiLevelErrRes<f64> =
-        calc_simple_and_multi_error(&n_more_extreme, nperm, sample_size);
+        calc_simple_and_multi_error(&n_more_extreme, nperm, sample_size).to_extendr()?;
 
-    list!(simple_err = res.0, multi_err = res.1)
+    Ok(list!(simple_err = res.0, multi_err = res.1))
 }

@@ -1,3 +1,14 @@
+# bixverse 0.4.2
+
+## Features
+
+* Faster fgsea multi-level implementation with less unnecessary allocations
+  and faster computations.
+
+## Fix
+
+* Edge case in fgsea multi-level fixed that broke the beta-value calculations.
+
 # bixverse 0.4.1
 
 ## Features
