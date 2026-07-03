@@ -517,7 +517,7 @@ reference:
       Additional helpers for specific small sub classes used in single cell.
     contents:
       - calc_knn_metrics
-      - get_centroids
+      - get_centroids_sc
       - get_feature_mat
       - get_kmeans_clusters
       - get_knn_dist

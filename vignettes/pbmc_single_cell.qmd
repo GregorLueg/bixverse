@@ -260,7 +260,7 @@ for this.
 
 ```{r}
 #| label: fast cluster k-means data
-centroids <- get_centroids(fast_cluster_res)
+centroids <- get_centroids_sc(fast_cluster_res)
 
 kmeans_membership <- get_kmeans_clusters(fast_cluster_res)
 ```

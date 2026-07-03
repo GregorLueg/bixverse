@@ -9,6 +9,11 @@
 
 * Edge case in fgsea multi-level fixed that broke the beta-value calculations.
 
+## Breaking changes
+
+`get_centroids()` was renamed to `get_centroids_sc()` for the usage on the fast
+clustering algorithms.
+
 # bixverse 0.4.1
 
 ## Features

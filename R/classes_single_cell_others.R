@@ -2385,14 +2385,14 @@ get_data.SingleCellFastClusters <- function(x, ...) {
 #' @param x `SingleCellFastClusters` object.
 #'
 #' @export
-get_centroids <- function(x) {
-  UseMethod("get_centroids")
+get_centroids_sc <- function(x) {
+  UseMethod("get_centroids_sc")
 }
 
-#' @rdname get_centroids
+#' @rdname get_centroids_sc
 #'
 #' @export
-get_centroids.SingleCellFastClusters <- function(x) {
+get_centroids_sc.SingleCellFastClusters <- function(x) {
   checkmate::assertClass(x, "SingleCellFastClusters")
   if (is.null(x$centroids)) {
     warning(paste(
