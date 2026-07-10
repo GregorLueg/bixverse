@@ -1,3 +1,10 @@
+# bixverse 0.4.3
+
+## Fix
+
+* Bumped version of `bixverse-rs` that has a fix for the IVF-type approximate
+  nearest neighbour seraches.
+
 # bixverse 0.4.2
 
 ## Features
