@@ -1,5 +1,5 @@
 pandoc: 3.8.3
-pkgdown: 2.2.0
+pkgdown: 2.2.1
 pkgdown_sha: ~
 articles:
   bag_of_genes_single_cells: bag_of_genes_single_cells.html
@@ -22,7 +22,7 @@ articles:
   single_cell_visualisation: single_cell_visualisation.html
   symphony: symphony.html
   thinking_single_cell: thinking_single_cell.html
-last_built: 2026-07-03T14:59Z
+last_built: 2026-07-10T18:01Z
 urls:
   reference: https://gregorlueg.github.io/bixverse/reference
   article: https://gregorlueg.github.io/bixverse/articles
