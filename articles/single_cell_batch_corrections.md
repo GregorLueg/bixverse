@@ -402,7 +402,7 @@ kbet_score_post_harmony
 #> kBET Scores
 #>   Cells: 5841 | Batches: 2 | Threshold: 0.050
 #>   Rejection rate:      0.1442 (842 / 5841)
-#>   Mean Chi-Square:     2.0567 (expected under H0: 1)
+#>   Mean Chi-Square:     2.0565 (expected under H0: 1)
 #>   Median Chi-Square:   0.7374
 asw_score_post_harmony
 #> Batch Silhouette Width
@@ -412,7 +412,7 @@ asw_score_post_harmony
 lisi_score_post_harmony
 #> Batch LISI Scores
 #>   Cells: 5841 | Batches: 2
-#>   Mean LISI:    1.5958 (1 = no mixing, 2 = perfect mixing)
+#>   Mean LISI:    1.5959 (1 = no mixing, 2 = perfect mixing)
 #>   Median LISI:  1.6423
 ```
 
