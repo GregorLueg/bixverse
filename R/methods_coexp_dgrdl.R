@@ -87,10 +87,10 @@ S7::method(dgrdl_grid_search, BulkCoExp) <- function(
     length(seed_vec)
 
   if (.verbose) {
-    message(
+    message(sprintf(
       "A total of %i parameters will be tested in a grid search for DGRDL.",
       total_params
-    )
+    ))
   }
 
   # do the grid search
@@ -120,6 +120,7 @@ S7::method(dgrdl_grid_search, BulkCoExp) <- function(
   )
 
   S7::prop(object, "params")[["grid_search_params"]] <- grid_search_params
+  S7::prop(object, "params")[["detection_method"]] <- "dgrdl-based"
   S7::prop(object, "outputs")[["grid_search_res"]] <- grid_search_res
 
   return(object)
@@ -237,6 +238,7 @@ S7::method(dgrdl_result, BulkCoExp) <- function(
   )
 
   S7::prop(object, "params")[["fit_params"]] <- fit_params
+  S7::prop(object, "params")[["detection_method"]] <- "dgrdl-based"
   S7::prop(object, "final_results") <- results
 
   return(object)

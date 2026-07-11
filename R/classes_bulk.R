@@ -281,7 +281,7 @@ S7::method(remove_samples, BulkDge) <-
 #' @description
 #' This function will update the specified columns in the metadata of an
 #' [bixverse::BulkDge()] or [bixverse::BulkCoExp()] to be conform with R standard
-#' naming convetions. This is useful to do before running DGE methods as they
+#' naming conventions. This is useful to do before running DGE methods as they
 #' expect standardised names.
 #'
 #' @param object The underlying object, either [bixverse::BulkCoExp()] or
@@ -676,7 +676,7 @@ S7::method(get_fpkm_counts, BulkDge) <-
     fpkm_counts <- S7::prop(object, "outputs")[['fpkm_counts']]
     if (is.null(fpkm_counts)) {
       warning(paste(
-        "No TPM counts found. Did you run normalise_bulk_dge()",
+        "No FPKM counts found. Did you run normalise_bulk_dge()",
         "with calc_fpkm = TRUE? Returning NULL"
       ))
     }
@@ -803,7 +803,11 @@ change_gene_identifier <- S7::new_generic(
 #' @method change_gene_identifier BulkDge
 #'
 #' @export
-function(object, alternative_gene_id, variable_info = NULL) {
+S7::method(change_gene_identifier, BulkDge) <- function(
+  object,
+  alternative_gene_id,
+  variable_info = NULL
+) {
   # Checks
   checkmate::assertClass(
     object,
@@ -845,7 +849,7 @@ S7::method(add_new_metadata, BulkDge) <-
 
     raw_counts <- S7::prop(object, "raw_counts")
 
-    checkmate::assertTRUE(all(colnames(raw_counts) %in% meta_data$sample_id))
+    checkmate::assertTRUE(all(colnames(raw_counts) %in% new_metadata$sample_id))
 
     S7::prop(object, "meta_data") <- new_metadata
 
@@ -857,9 +861,14 @@ S7::method(add_new_metadata, BulkDge) <-
 #' @noRd
 S7::method(print, BulkCoExp) <- function(x, ...) {
   . <- hvg <- NULL
-  # Pre-processing
+
+  params <- S7::prop(x, "params")
+  outputs <- S7::prop(x, "outputs")
+  final_results <- S7::prop(x, "final_results")
+
+  # Pre-processing summary
   preprocessed <- !is.null(S7::prop(x, "processed_data")[["processed_data"]])
-  features <- if (preprocessed) {
+  hvg_line <- if (preprocessed) {
     no_features <- S7::prop(x, "processed_data")[["feature_meta"]] %>%
       .[(hvg)] %>%
       nrow()
@@ -867,34 +876,164 @@ S7::method(print, BulkCoExp) <- function(x, ...) {
   } else {
     ""
   }
-  # Prints for different methods
-  method_info <- if (is.null(S7::prop(x, "params")[["detection_method"]])) {
-    # Case of nothing has been applied
+
+  detection_method <- params[["detection_method"]]
+
+  method_info <- if (is.null(detection_method)) {
     ""
-  } else if (S7::prop(x, "params")[["detection_method"]] == "c_pca") {
+  } else if (detection_method == "c_pca") {
     # Contrastive PCA
-    no_intersecting_features <- length(S7::prop(x, "params")[["c_pca_params"]][[
+    no_intersecting_features <- length(params[["c_pca_params"]][[
       "intersecting_features"
     ]])
     paste0(
       " Detection method: contrastive PCA.\n",
       sprintf("  No of intersecting features: %i.\n", no_intersecting_features)
     )
-  } else if (
-    S7::prop(x, "params")[["detection_method"]] == "correlation-based"
-  ) {
-    # For simple correlations
-    non_parametric <- S7::prop(x, "params")[["correlation_params"]][[
-      "spearman"
-    ]]
-    graph_generated <- !is.null(S7::prop(x, "params")[["correlation_graph"]][[
-      "no_nodes"
-    ]])
-    paste0(
-      " Detection method: correlation based.\n",
-      sprintf("  Non-parametric correlation applied: %s.\n", non_parametric),
-      sprintf("  Graph generated: %s.\n", graph_generated)
+  } else if (detection_method == "correlation-based") {
+    # Simple correlations + optional TOM + optional graph + optional CoReMo
+    non_parametric <- params[["correlation_params"]][["spearman"]]
+    tom_applied <- isTRUE(params[["correlation_params"]][["TOM"]])
+    graph_generated <- !is.null(params[["correlation_graph"]][["no_nodes"]])
+    coremo_run <- !is.null(outputs[["final_modules"]])
+    leiden_run <- !is.null(params[["module_final_gen"]])
+
+    lines <- c(
+      " Detection method: correlation-based.\n",
+      sprintf("  Spearman correlation: %s.\n", non_parametric),
+      sprintf("  TOM applied: %s.\n", tom_applied),
+      sprintf("  Correlation graph built: %s.\n", graph_generated)
     )
+    if (coremo_run) {
+      no_modules <- length(unique(outputs[["final_modules"]]$cluster_id))
+      lines <- c(
+        lines,
+        sprintf("  CoReMo modules identified: %i.\n", no_modules)
+      )
+    }
+    if (leiden_run) {
+      no_modules <- if (is.data.frame(final_results)) {
+        length(unique(final_results$cluster_id))
+      } else {
+        NA_integer_
+      }
+      lines <- c(
+        lines,
+        sprintf("  Leiden modules identified: %i.\n", no_modules)
+      )
+    }
+    paste(lines, collapse = "")
+  } else if (detection_method == "differential correlation-based") {
+    non_parametric <- params[["correlation_params"]][["spearman"]]
+    n_shared <- params[["correlation_params"]][["no_intersecting_features"]]
+    graph_generated <- !is.null(params[["correlation_graph"]][["no_nodes"]])
+    modules_found <- is.data.frame(final_results) && nrow(final_results) > 0
+    lines <- c(
+      " Detection method: differential correlation-based.\n",
+      sprintf("  Spearman correlation: %s.\n", non_parametric),
+      sprintf("  Shared features between target and background: %s.\n", n_shared),
+      sprintf("  Differential correlation graph built: %s.\n", graph_generated)
+    )
+    if (modules_found) {
+      no_modules <- length(unique(final_results$cluster_id))
+      lines <- c(
+        lines,
+        sprintf("  Differential modules identified: %i.\n", no_modules)
+      )
+    }
+    paste(lines, collapse = "")
+  } else if (detection_method == "ICA-based") {
+    ica_assessment <- params[["ica_stability_assessment"]]
+    ica_final <- params[["ica_final_gen"]]
+    tested_ncomps <- ica_assessment[["tested_ncomps"]]
+    optimal_ncomp <- ica_assessment[["optimal_ncomp"]]
+    lines <- c(
+      " Detection method: ICA-based.\n"
+    )
+    if (!is.null(tested_ncomps)) {
+      lines <- c(
+        lines,
+        sprintf("  Tested ncomps: %i.\n", length(tested_ncomps))
+      )
+    }
+    if (!is.null(optimal_ncomp) && !is.na(optimal_ncomp)) {
+      lines <- c(
+        lines,
+        sprintf("  Optimal ncomp: %i.\n", optimal_ncomp)
+      )
+    }
+    if (!is.null(ica_final)) {
+      lines <- c(
+        lines,
+        sprintf("  Stabilised ICA fitted with %i components.\n",
+                ica_final[["no_comp"]])
+      )
+    }
+    paste(lines, collapse = "")
+  } else if (detection_method == "dgrdl-based") {
+    fit_params <- params[["fit_params"]]
+    grid <- params[["grid_search_params"]]
+    lines <- c(
+      " Detection method: DGRDL (dual graph-regularised dictionary learning).\n"
+    )
+    if (!is.null(grid)) {
+      total <- length(grid[["tested_dict_sizes"]]) *
+        length(grid[["tested_k_neighbours"]]) *
+        length(grid[["tested_seeds"]])
+      lines <- c(
+        lines,
+        sprintf("  Grid search: %i parameter combinations tested.\n", total)
+      )
+    }
+    if (!is.null(fit_params)) {
+      lines <- c(
+        lines,
+        sprintf(
+          "  Fitted dictionary: size = %i, k_neighbours = %i, sparsity = %i.\n",
+          fit_params[["dict_size"]],
+          fit_params[["k_neighbours"]],
+          fit_params[["sparsity"]]
+        )
+      )
+    }
+    paste(lines, collapse = "")
+  } else if (detection_method == "nmf-based") {
+    nmf_params <- params[["nmf_fit"]]
+    stabilised <- isTRUE(nmf_params[["stabilised"]])
+    lines <- c(
+      sprintf(
+        " Detection method: %sNMF (HALS).\n",
+        if (stabilised) "stabilised " else ""
+      )
+    )
+    if (!is.null(nmf_params)) {
+      lines <- c(
+        lines,
+        sprintf(
+          "  k = %i, preprocessing = %s.\n",
+          nmf_params[["k"]],
+          nmf_params[["preprocessing"]]
+        )
+      )
+      if (stabilised) {
+        lines <- c(
+          lines,
+          sprintf("  n_runs = %i.\n", nmf_params[["n_runs"]])
+        )
+      } else if (!is.null(nmf_params[["converged"]])) {
+        lines <- c(
+          lines,
+          sprintf(
+            "  Converged: %s, iterations: %i.\n",
+            nmf_params[["converged"]],
+            nmf_params[["n_iter"]]
+          )
+        )
+      }
+    }
+    paste(lines, collapse = "")
+  } else {
+    sprintf(" Detection method: %s.\n", detection_method)
   }
 
   cat(
@@ -902,7 +1041,7 @@ S7::method(print, BulkCoExp) <- function(x, ...) {
     " Pre-processing done: ",
     preprocessed,
     ".\n",
-    features,
+    hvg_line,
     method_info,
     sep = ""
   )
@@ -910,4 +1049,46 @@ S7::method(print, BulkCoExp) <- function(x, ...) {
   invisible(x)
 }
 
-# TODO write print for BulkDge
+#' @noRd
+S7::method(print, BulkDge) <- function(x, ...) {
+  params <- S7::prop(x, "params")
+  outputs <- S7::prop(x, "outputs")
+
+  original_dim <- params[["original_dim"]]
+  n_samples <- nrow(S7::prop(x, "meta_data"))
+  variable_info <- S7::prop(x, "variable_info")
+  has_variable_info <- !is.null(variable_info)
+
+  # Downstream steps and their marker outputs
+  step_flags <- list(
+    "qc_bulk_dge()" = !is.null(outputs[["dge_list"]]),
+    "normalise_bulk_dge()" = !is.null(outputs[["normalised_counts"]]),
+    "batch_correction_bulk_dge()" =
+      !is.null(outputs[["normalised_counts_corrected"]]),
+    "calculate_pca_bulk_dge()" = !is.null(outputs[["pca"]]),
+    "calculate_dge_limma()" = !is.null(outputs[["limma_voom_res"]]),
+    "calculate_dge_hedges()" = !is.null(outputs[["hedges_g_res"]]),
+    "TPM normalisation" = !is.null(outputs[["tpm_counts"]]),
+    "FPKM normalisation" = !is.null(outputs[["fpkm_counts"]])
+  )
+
+  step_lines <- purrr::imap_chr(step_flags, \(flag, name) {
+    sprintf("  %s: %s.\n", name, flag)
+  })
+
+  cat(
+    "Bulk differential gene expression class (BulkDge).\n",
+    sprintf(
+      " Raw counts: %i genes x %i samples.\n",
+      original_dim[1],
+      original_dim[2]
+    ),
+    sprintf(" Meta-data rows: %i.\n", n_samples),
+    sprintf(" Variable info provided: %s.\n", has_variable_info),
+    " Applied steps:\n",
+    paste(step_lines, collapse = ""),
+    sep = ""
+  )
+
+  invisible(x)
+}

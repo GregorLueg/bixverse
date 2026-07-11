@@ -256,7 +256,7 @@ S7::method(diffcor_module_processing, BulkCoExp) <- function(
           "A total of %i shared features were",
           length(shared_features)
         ),
-        "identified and used for differential correlation.",
+        "identified and used for differential correlation."
       )
     )
   }
@@ -363,7 +363,7 @@ S7::method(cor_module_check_epsilon, BulkCoExp) <- function(
     warning(
       paste(
         "This class does not seem to be set for correlation-based module",
-        "detection. Returning class as is.",
+        "detection. Returning class as is."
       )
     )
     return(object)
@@ -751,8 +751,8 @@ S7::method(cor_module_graph_final_modules, BulkCoExp) <- function(
 
   # Early return
   if (
-    is.null(detection_method) &&
-      detection_method %in%
+    is.null(detection_method) ||
+      !detection_method %in%
         c("correlation-based", "differential correlation-based")
   ) {
     warning(
@@ -891,14 +891,12 @@ S7::method(cor_module_graph_final_modules, BulkCoExp) <- function(
           cluster_id
         ]
 
-        good_clusters <- subclusters[cluster_id %in% clusters_small_enough] %>%
-          dplyr::mutate(
-            cluster_id = paste0(
-              i,
-              paste(rep("sub", l), collapse = ""),
-              cluster_id
-            )
-          )
+        good_clusters <- subclusters[cluster_id %in% clusters_small_enough]
+        good_clusters[, cluster_id := paste0(
+          i,
+          paste(rep("sub", l), collapse = ""),
+          cluster_id
+        )]
 
         finalised_clusters <- rbind(finalised_clusters, good_clusters)
 
@@ -1285,7 +1283,7 @@ S7::method(cor_module_coremo_stability, BulkCoExp) <- function(
 
   if (.verbose) {
     message(
-      "Assessing stability of gene membership within leave-one-out resamling."
+      "Assessing stability of gene membership within leave-one-out resampling."
     )
   }
 
@@ -2112,6 +2110,7 @@ S7::method(plot_optimal_cuts, BulkCoExp) <- function(object) {
       "Did you run cor_module_coremo_clustering()?",
       "Returning NULL."
     ))
+    return(invisible(NULL))
   }
 
   data.table::setorder(plot_df, gradient_change)

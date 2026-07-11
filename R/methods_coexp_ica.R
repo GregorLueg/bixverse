@@ -79,7 +79,7 @@ S7::method(ica_processing, BulkCoExp) <- function(
 
   S7::prop(object, "processed_data")[["X1"]] <- X1
   S7::prop(object, "processed_data")[["K"]] <- K
-  S7::prop(object, "params")["detection_method"] <- "ICA-based"
+  S7::prop(object, "params")[["detection_method"]] <- "ICA-based"
 
   return(object)
 }
@@ -184,12 +184,12 @@ S7::method(ica_evaluate_comp, BulkCoExp) <- function(
 
   # Early return
   if (
-    is.null(detection_method) &&
+    is.null(detection_method) ||
       detection_method != "ICA-based"
   ) {
     warning(
       paste(
-        "This class does not seem to be set for ICA-based module detection",
+        "This class does not seem to be set for ICA-based module detection.",
         "Returning class as is."
       )
     )
@@ -393,7 +393,7 @@ S7::method(ica_evaluate_comp, BulkCoExp) <- function(
 #' a product of the median stability, orthogonality and proportion of convergence
 #' and add these info to the object. Should the loess function raise a warning
 #' (e.g., singularity), the class will be returned as is and manual
-#' determination of optimal ncomp is warrented. Additionally, you have the
+#' determination of optimal ncomp is warranted. Additionally, you have the
 #' option to plot the loess function for additional control over the span
 #' parameter (defaults to `TRUE`).
 #'
@@ -438,6 +438,7 @@ S7::method(ica_optimal_ncomp, BulkCoExp) <- function(
   # checks
   checkmate::assertClass(object, "bixverse::BulkCoExp")
   checkmate::qassert(span, "N1[0.1, 1.0]")
+  checkmate::qassert(show_plot, "B1")
   checkmate::qassert(.verbose, "B1")
 
   # function
@@ -616,12 +617,12 @@ S7::method(ica_stabilised_results, BulkCoExp) <- function(
 
   # Early return
   if (
-    is.null(detection_method) &&
+    is.null(detection_method) ||
       detection_method != "ICA-based"
   ) {
     warning(
       paste(
-        "This class does not seem to be set for ICA-based module detection",
+        "This class does not seem to be set for ICA-based module detection.",
         "Returning class as is."
       )
     )
@@ -669,7 +670,7 @@ S7::method(ica_stabilised_results, BulkCoExp) <- function(
           ica_params = ica_params
         ),
         rs_ica_iters_cv(
-          x = X_raw,
+          x = X,
           no_comp = no_comp,
           no_folds = folds,
           no_random_init = random_init,
@@ -1029,14 +1030,10 @@ component_mutual_information <- function(centrotype) {
 #'
 #' @keywords internal
 flip_ica_loading_signs <- function(x) {
-  feature_sign <- sign(x)
-  max_val_sign <- feature_sign[which(abs(x) == max(abs(x)))]
-  y <- if (max_val_sign == 1) {
-    x
-  } else {
-    -x
-  }
-  y
+  # which.max() returns the first index at ties; guards against the
+  # length > 1 warning that `if (multi_index_vector == 1)` would emit.
+  max_val_sign <- sign(x[which.max(abs(x))])
+  if (max_val_sign == 1) x else -x
 }
 
 ## getters ---------------------------------------------------------------------

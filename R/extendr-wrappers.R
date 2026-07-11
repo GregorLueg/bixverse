@@ -2003,6 +2003,68 @@ rs_ica_iters <- function(x1, k, no_comp, no_random_init, ica_type, random_seed, 
 #' @export
 rs_ica_iters_cv <- function(x, no_comp, no_folds, no_random_init, ica_type, random_seed, ica_params) .Call(wrap__rs_ica_iters_cv, x, no_comp, no_folds, no_random_init, ica_type, random_seed, ica_params)
 
+#' Run NMF (HALS) on a bulk expression matrix (single run)
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Runs a single HALS-NMF fit on a dense matrix. Expects samples x features.
+#' The resulting decomposition `V ~ W H` places `W` (samples x k) as
+#' sample-side factors and `H` (k x features) as feature loadings.
+#'
+#' @param x Numerical matrix. Rows = samples, columns = features.
+#' @param k Integer. Number of latent factors.
+#' @param preprocessing String. One of `c("none", "sd", "sqrt_sd")`.
+#' @param nmf_hals_params Named list. See [bixverse::params_nmf_hals()].
+#' @param seed Integer. Random seed for the NMF initialisation.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @returns A list with the following items
+#' \itemize{
+#'   \item w - The `W` matrix of shape `n_samples x k`.
+#'   \item h - The `H` matrix of shape `k x n_features`.
+#'   \item final_loss - Final reconstruction loss.
+#'   \item n_iter - Number of iterations the algorithm ran for.
+#'   \item converged - Did the NMF algorithm converge.
+#' }
+#'
+#' @export
+#'
+#' @keywords internal
+rs_nmf_single_bulk <- function(x, k, preprocessing, nmf_hals_params, seed, verbose) .Call(wrap__rs_nmf_single_bulk, x, k, preprocessing, nmf_hals_params, seed, verbose)
+
+#' Run multiple NMF (HALS) restarts on a bulk expression matrix
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Runs `n_runs` HALS-NMF fits with random initialisations seeded by
+#' `seed + i`. Expects samples x features.
+#'
+#' @param x Numerical matrix. Rows = samples, columns = features.
+#' @param k Integer. Number of latent factors per run.
+#' @param preprocessing String. One of `c("none", "sd", "sqrt_sd")`.
+#' @param nmf_hals_params Named list. See [bixverse::params_nmf_hals()].
+#' @param n_runs Integer. Number of random restarts.
+#' @param seed Integer. Base random seed. Run `i` uses `seed + i`.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @returns A list with the following items
+#' \itemize{
+#'   \item w_all - Column-bound `W` matrices across all runs, shape
+#'   `n_samples x (k * n_runs)`.
+#'   \item h_per_run - List of `H` matrices, each `k x n_features`.
+#'   \item losses - Numeric vector. Final reconstruction loss per run.
+#'   \item converged - Logical vector. Convergence flag per run.
+#'   \item best_idx - Integer. 1-indexed position of the run with the lowest
+#'   final loss.
+#' }
+#'
+#' @export
+#'
+#' @keywords internal
+rs_nmf_multi_bulk <- function(x, k, preprocessing, nmf_hals_params, n_runs, seed, verbose) .Call(wrap__rs_nmf_multi_bulk, x, k, preprocessing, nmf_hals_params, n_runs, seed, verbose)
+
 #' Generate reciprocal best hits based on set similarities
 #'
 #' @description
