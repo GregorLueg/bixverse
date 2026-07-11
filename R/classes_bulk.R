@@ -866,6 +866,14 @@ S7::method(print, BulkCoExp) <- function(x, ...) {
   outputs <- S7::prop(x, "outputs")
   final_results <- S7::prop(x, "final_results")
 
+  n_modules_from_result <- if (
+    inherits(final_results, "BulkModuleResult")
+  ) {
+    length(unique(get_modules(final_results)$module_id))
+  } else {
+    NA_integer_
+  }
+
   # Pre-processing summary
   preprocessed <- !is.null(S7::prop(x, "processed_data")[["processed_data"]])
   hvg_line <- if (preprocessed) {
@@ -912,14 +920,12 @@ S7::method(print, BulkCoExp) <- function(x, ...) {
       )
     }
     if (leiden_run) {
-      no_modules <- if (is.data.frame(final_results)) {
-        length(unique(final_results$cluster_id))
-      } else {
-        NA_integer_
-      }
       lines <- c(
         lines,
-        sprintf("  Leiden modules identified: %i.\n", no_modules)
+        sprintf(
+          "  Leiden modules identified: %i.\n",
+          n_modules_from_result
+        )
       )
     }
     paste(lines, collapse = "")
@@ -927,7 +933,7 @@ S7::method(print, BulkCoExp) <- function(x, ...) {
     non_parametric <- params[["correlation_params"]][["spearman"]]
     n_shared <- params[["correlation_params"]][["no_intersecting_features"]]
     graph_generated <- !is.null(params[["correlation_graph"]][["no_nodes"]])
-    modules_found <- is.data.frame(final_results) && nrow(final_results) > 0
+    modules_found <- !is.na(n_modules_from_result)
     lines <- c(
       " Detection method: differential correlation-based.\n",
       sprintf("  Spearman correlation: %s.\n", non_parametric),
@@ -935,10 +941,12 @@ S7::method(print, BulkCoExp) <- function(x, ...) {
       sprintf("  Differential correlation graph built: %s.\n", graph_generated)
     )
     if (modules_found) {
-      no_modules <- length(unique(final_results$cluster_id))
       lines <- c(
         lines,
-        sprintf("  Differential modules identified: %i.\n", no_modules)
+        sprintf(
+          "  Differential modules identified: %i.\n",
+          n_modules_from_result
+        )
       )
     }
     paste(lines, collapse = "")
@@ -969,6 +977,12 @@ S7::method(print, BulkCoExp) <- function(x, ...) {
                 ica_final[["no_comp"]])
       )
     }
+    if (!is.na(n_modules_from_result)) {
+      lines <- c(
+        lines,
+        sprintf("  Modules identified: %i.\n", n_modules_from_result)
+      )
+    }
     paste(lines, collapse = "")
   } else if (detection_method == "dgrdl-based") {
     fit_params <- params[["fit_params"]]
@@ -994,6 +1008,12 @@ S7::method(print, BulkCoExp) <- function(x, ...) {
           fit_params[["k_neighbours"]],
           fit_params[["sparsity"]]
         )
+      )
+    }
+    if (!is.na(n_modules_from_result)) {
+      lines <- c(
+        lines,
+        sprintf("  Modules identified: %i.\n", n_modules_from_result)
       )
     }
     paste(lines, collapse = "")
@@ -1030,6 +1050,12 @@ S7::method(print, BulkCoExp) <- function(x, ...) {
           )
         )
       }
+    }
+    if (!is.na(n_modules_from_result)) {
+      lines <- c(
+        lines,
+        sprintf("  Modules identified: %i.\n", n_modules_from_result)
+      )
     }
     paste(lines, collapse = "")
   } else {

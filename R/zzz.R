@@ -54,4 +54,7 @@
     "LigandTargetInfluence",
     print.LigandTargetInfluence
   )
+  registerS3method("print", "BulkModuleResult", print.BulkModuleResult)
+  registerS3method("format", "BulkModuleResult", format.BulkModuleResult)
+  registerS3method("dim", "BulkModuleResult", dim.BulkModuleResult)
 }

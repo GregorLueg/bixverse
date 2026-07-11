@@ -156,8 +156,8 @@ coexp_leiden <- cor_module_graph_final_modules(
   .verbose      = FALSE
 )
 
-leiden_modules <- get_results(coexp_leiden)
-leiden_modules[, .N, by = cluster_id]
+leiden_modules <- get_modules(get_results(coexp_leiden))
+leiden_modules[, .N, by = module_id]
 ```
 
 ## Method 3: ICA
@@ -186,22 +186,19 @@ coexp_ica <- ica_evaluate_comp(
 coexp_ica <- ica_optimal_ncomp(coexp_ica, span = 0.4, show_plot = FALSE, .verbose = FALSE)
 coexp_ica <- ica_stabilised_results(coexp_ica, iter_params = iter_params, .verbose = FALSE)
 
-ica_res <- S7::prop(coexp_ica, "final_results")
-dim(ica_res$S)
+ica_res <- get_results(coexp_ica)
+ica_gene_loadings <- get_factors(ica_res, which = "gene_loadings")
+dim(ica_gene_loadings)
 ```
 
-The S matrix is `ncomp x genes` — each row is an independent gene loading.
-To derive module membership we assign each gene to the component with the
-largest absolute loading:
+`gene_loadings` is the `genes x k` matrix (transposed from the raw ICA `S`
+convention of `k x genes`). Module membership comes straight from
+`get_modules()`:
 
 ```{r}
 #| label: ica-modules
-ica_S <- ica_res$S
-ica_modules <- data.table(
-  gene       = colnames(ica_S),
-  cluster_id = sprintf("IC_%02i", apply(abs(ica_S), 2, which.max))
-)
-ica_modules[, .N, by = cluster_id][order(-N)]
+ica_modules <- get_modules(ica_res)
+ica_modules[, .N, by = module_id][order(-N)]
 ```
 
 ## Method 4: DGRDL
@@ -243,22 +240,17 @@ coexp_dgrdl <- dgrdl_result(
   .verbose     = FALSE
 )
 
-dgrdl_res <- S7::prop(coexp_dgrdl, "final_results")
-dim(dgrdl_res$dictionary)
-dim(dgrdl_res$loadings)
+dgrdl_res <- get_results(coexp_dgrdl)
+dim(get_factors(dgrdl_res, which = "dictionary"))
+dim(get_factors(dgrdl_res, which = "loadings"))
 ```
 
-For a rough module view we can assign each gene to the dictionary atom that
-loads it most strongly:
+`get_modules()` handles the "gene to strongest atom" assignment:
 
 ```{r}
 #| label: dgrdl-modules
-dgrdl_modules <- data.table(
-  gene       = colnames(dgrdl_res$loadings),
-  cluster_id = sprintf("dict_%02i",
-                       apply(abs(dgrdl_res$loadings), 2, which.max))
-)
-dgrdl_modules[, .N, by = cluster_id][order(-N)]
+dgrdl_modules <- get_modules(dgrdl_res)
+dgrdl_modules[, .N, by = module_id][order(-N)]
 ```
 
 ## Method 5: NMF (HALS)
@@ -342,8 +334,8 @@ truth_split <- split(truth$gene, truth$membership)
 truth_split <- truth_split[names(truth_split) != "0"]
 
 best_jaccard_per_planted <- function(assignments) {
-  # assignments: data.table with columns `gene`, `cluster_id`
-  detected <- split(assignments$gene, assignments$cluster_id)
+  # assignments: data.table with columns `gene`, `module_id`
+  detected <- split(assignments$gene, assignments$module_id)
   purrr::map_dbl(truth_split, \(planted) {
     max(purrr::map_dbl(detected, \(det) {
       length(intersect(planted, det)) / length(union(planted, det))
@@ -354,11 +346,13 @@ best_jaccard_per_planted <- function(assignments) {
 recovery <- data.table(
   method = c("CoReMo", "Leiden", "ICA", "DGRDL", "NMF"),
   score  = c(
-    mean(best_jaccard_per_planted(coremo_modules[, .(gene, cluster_id)])),
-    mean(best_jaccard_per_planted(leiden_modules[, .(gene = node_id, cluster_id)])),
+    mean(best_jaccard_per_planted(
+      coremo_modules[, .(gene, module_id = cluster_id)]
+    )),
+    mean(best_jaccard_per_planted(leiden_modules)),
     mean(best_jaccard_per_planted(ica_modules)),
     mean(best_jaccard_per_planted(dgrdl_modules)),
-    mean(best_jaccard_per_planted(nmf_modules[, .(gene, cluster_id = module_id)]))
+    mean(best_jaccard_per_planted(nmf_modules))
   )
 )
 

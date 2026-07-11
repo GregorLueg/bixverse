@@ -229,7 +229,7 @@ meta_data <- data.table::data.table(
 ica_test <- BulkCoExp(raw_data = data, meta_data = meta_data)
 
 expect_warning(
-  current = ica_processing(ica_test, .verbose = FALSE),
+  current = ica_processing(ica_test, .verbose = TRUE),
   info = "ica bulk coexp - warning without pre-processed"
 )
 
@@ -326,16 +326,26 @@ ica_test <- ica_stabilised_results(ica_test, no_comp = 3L, ica_type = "logcosh")
 
 results <- get_results(ica_test)
 
-expect_equal(
-  current = results$S,
-  target = expected_ica_s_logcosh_mat,
-  info = paste("ICA class - S matrix (logcosh)")
+expect_true(
+  current = inherits(results, "BulkModuleResult"),
+  info = "ICA class - final_results is a BulkModuleResult"
 )
 
 expect_equal(
-  current = results$A,
+  current = get_factors(results, which = "gene_loadings"),
+  target = t(expected_ica_s_logcosh_mat),
+  info = paste("ICA class - gene_loadings (logcosh, transposed S)")
+)
+
+expect_equal(
+  current = get_factors(results, which = "sample_activity"),
   target = expected_ica_a_logcosh_mat,
-  info = paste("ICA class - A matrix (logcosh)")
+  info = paste("ICA class - sample_activity (logcosh, A)")
+)
+
+expect_true(
+  current = data.table::is.data.table(get_modules(results)),
+  info = "ICA class - get_modules() returns a data.table (logcosh)"
 )
 
 ### class (exp) ----------------------------------------------------------------
@@ -345,13 +355,13 @@ ica_test <- ica_stabilised_results(ica_test, no_comp = 3L, ica_type = "exp")
 results <- get_results(ica_test)
 
 expect_equal(
-  current = results$S,
-  target = expected_ica_s_exp_mat,
-  info = paste("ICA class - S matrix (exp)")
+  current = get_factors(results, which = "gene_loadings"),
+  target = t(expected_ica_s_exp_mat),
+  info = paste("ICA class - gene_loadings (exp, transposed S)")
 )
 
 expect_equal(
-  current = results$A,
+  current = get_factors(results, which = "sample_activity"),
   target = expected_ica_a_exp_mat,
-  info = paste("ICA class - A matrix (exp)")
+  info = paste("ICA class - sample_activity (exp, A)")
 )

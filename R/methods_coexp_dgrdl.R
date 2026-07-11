@@ -75,12 +75,17 @@ S7::method(dgrdl_grid_search, BulkCoExp) <- function(
   checkmate::qassert(.verbose, "B1")
 
   # function body
-  if (purrr::is_empty(S7::prop(object, "processed_data")[["processed_data"]])) {
-    warning("No pre-processed data found. Defaulting to the raw data.")
-    target_mat <- S7::prop(object, "raw_data")
-  } else {
-    target_mat <- S7::prop(object, "processed_data")[["processed_data"]]
+  detection_method <- .assert_bulk_detection_method(
+    object,
+    "dgrdl-based",
+    "dgrdl-based",
+    allow_unset = TRUE
+  )
+  if (is.null(detection_method)) {
+    return(object)
   }
+
+  target_mat <- .get_bulk_target_mat(object, .verbose = .verbose)
 
   total_params <- length(neighbours_vec) *
     length(dict_size_vec) *
@@ -189,14 +194,18 @@ S7::method(dgrdl_result, BulkCoExp) <- function(
   checkmate::qassert(.verbose, "B1")
 
   # function body
-  if (purrr::is_empty(S7::prop(object, "processed_data")[["processed_data"]])) {
-    warning("No pre-processed data found. Defaulting to the raw data.")
-    target_mat <- S7::prop(object, "raw_data")
-  } else {
-    target_mat <- S7::prop(object, "processed_data")[["processed_data"]]
+  detection_method <- .assert_bulk_detection_method(
+    object,
+    "dgrdl-based",
+    "dgrdl-based",
+    allow_unset = TRUE
+  )
+  if (is.null(detection_method)) {
+    return(object)
   }
 
-  # function body
+  target_mat <- .get_bulk_target_mat(object, .verbose = .verbose)
+
   results <- rs_sparse_dict_dgrdl(
     x = target_mat,
     dgrdl_params = dgrdl_params,
@@ -230,16 +239,40 @@ S7::method(dgrdl_result, BulkCoExp) <- function(
     target_mat
   )
 
-  results <- list(
-    dictionary = dictionary,
-    loadings = loadings,
-    feature_laplacian = feature_laplacian,
-    sample_laplacian = sample_laplacian
-  )
-
   S7::prop(object, "params")[["fit_params"]] <- fit_params
   S7::prop(object, "params")[["detection_method"]] <- "dgrdl-based"
-  S7::prop(object, "final_results") <- results
+
+  # derive modules from loadings. loadings is dict_size x gene, transpose to
+  # gene x dict_size then assign each gene to argmax abs atom.
+  gene_loadings <- t(loadings)
+  min_loading <- 0
+  module_idx <- apply(abs(gene_loadings), 1L, which.max)
+  gene_names <- rownames(gene_loadings)
+  atom_names <- colnames(gene_loadings)
+  loading_vals <- gene_loadings[cbind(seq_along(module_idx), module_idx)]
+  keep <- abs(loading_vals) > min_loading
+
+  modules_dt <- data.table::data.table(
+    gene = gene_names[keep],
+    module_id = atom_names[module_idx[keep]],
+    loading = loading_vals[keep],
+    sign = ifelse(loading_vals[keep] >= 0, "pos", "neg")
+  )
+
+  S7::prop(object, "final_results") <- new_bulk_module_result(
+    modules = modules_dt,
+    factors = list(
+      dictionary = dictionary,
+      loadings = loadings,
+      gene_loadings = gene_loadings
+    ),
+    method = "dgrdl-based",
+    params = S7::prop(object, "params"),
+    diagnostics = list(
+      feature_laplacian = feature_laplacian,
+      sample_laplacian = sample_laplacian
+    )
+  )
 
   return(object)
 }

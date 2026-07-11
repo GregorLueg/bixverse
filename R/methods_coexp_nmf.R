@@ -86,13 +86,19 @@ S7::method(nmf_bulk, BulkCoExp) <- function(
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
-  # target matrix (samples x features)
-  if (purrr::is_empty(S7::prop(object, "processed_data")[["processed_data"]])) {
-    warning("No pre-processed data found. Defaulting to the raw data.")
-    target_mat <- S7::prop(object, "raw_data")
-  } else {
-    target_mat <- S7::prop(object, "processed_data")[["processed_data"]]
+  # early return
+  detection_method <- .assert_bulk_detection_method(
+    object,
+    "nmf-based",
+    "nmf-based",
+    allow_unset = TRUE
+  )
+  if (is.null(detection_method)) {
+    return(object)
   }
+
+  # target matrix (samples x features)
+  target_mat <- .get_bulk_target_mat(object, .verbose = .verbose)
 
   if (any(target_mat < 0, na.rm = TRUE)) {
     stop(paste(
@@ -141,18 +147,23 @@ S7::method(nmf_bulk, BulkCoExp) <- function(
     )
   )
 
-  results <- list(
-    modules = modules,
-    gene_loadings = gene_loadings,
-    sample_activity = sample_activity,
-    final_loss = nmf_res$final_loss,
-    n_iter = nmf_res$n_iter,
-    converged = nmf_res$converged
-  )
-
   S7::prop(object, "params")[["nmf_fit"]] <- fit_params
   S7::prop(object, "params")[["detection_method"]] <- "nmf-based"
-  S7::prop(object, "final_results") <- results
+
+  S7::prop(object, "final_results") <- new_bulk_module_result(
+    modules = modules,
+    factors = list(
+      gene_loadings = gene_loadings,
+      sample_activity = sample_activity
+    ),
+    method = "nmf-based",
+    params = S7::prop(object, "params"),
+    diagnostics = list(
+      final_loss = nmf_res$final_loss,
+      n_iter = nmf_res$n_iter,
+      converged = nmf_res$converged
+    )
+  )
 
   return(object)
 }
@@ -227,13 +238,19 @@ S7::method(stabilised_nmf_bulk, BulkCoExp) <- function(
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
-  # target matrix (samples x features)
-  if (purrr::is_empty(S7::prop(object, "processed_data")[["processed_data"]])) {
-    warning("No pre-processed data found. Defaulting to the raw data.")
-    target_mat <- S7::prop(object, "raw_data")
-  } else {
-    target_mat <- S7::prop(object, "processed_data")[["processed_data"]]
+  # early return
+  detection_method <- .assert_bulk_detection_method(
+    object,
+    "nmf-based",
+    "nmf-based",
+    allow_unset = TRUE
+  )
+  if (is.null(detection_method)) {
+    return(object)
   }
+
+  # target matrix (samples x features)
+  target_mat <- .get_bulk_target_mat(object, .verbose = .verbose)
 
   if (any(target_mat < 0, na.rm = TRUE)) {
     stop(paste(
@@ -287,20 +304,25 @@ S7::method(stabilised_nmf_bulk, BulkCoExp) <- function(
     )
   )
 
-  results <- list(
-    modules = modules,
-    gene_loadings = best_gene_loadings,
-    sample_activity = best_sample_activity,
-    losses = nmf_res$losses,
-    converged = nmf_res$converged,
-    best_idx = best_idx,
-    w_all_runs = nmf_res$w_all,
-    h_per_run = nmf_res$h_per_run
-  )
-
   S7::prop(object, "params")[["nmf_fit"]] <- fit_params
   S7::prop(object, "params")[["detection_method"]] <- "nmf-based"
-  S7::prop(object, "final_results") <- results
+
+  S7::prop(object, "final_results") <- new_bulk_module_result(
+    modules = modules,
+    factors = list(
+      gene_loadings = best_gene_loadings,
+      sample_activity = best_sample_activity
+    ),
+    method = "nmf-based",
+    params = S7::prop(object, "params"),
+    diagnostics = list(
+      losses = nmf_res$losses,
+      converged = nmf_res$converged,
+      best_idx = best_idx,
+      w_all_runs = nmf_res$w_all,
+      h_per_run = nmf_res$h_per_run
+    )
+  )
 
   return(object)
 }
@@ -368,14 +390,14 @@ get_nmf_gene_loadings <- S7::new_generic(
 S7::method(get_nmf_gene_loadings, BulkCoExp) <- function(object) {
   checkmate::assertClass(object, "bixverse::BulkCoExp")
   final_results <- S7::prop(object, "final_results")
-  loadings <- if (is.list(final_results)) final_results[["gene_loadings"]]
-  if (is.null(loadings)) {
+  if (!inherits(final_results, "BulkModuleResult")) {
     warning(paste(
       "No NMF gene loadings found. Did you run nmf_bulk() or",
       "stabilised_nmf_bulk()? Returning NULL."
     ))
+    return(NULL)
   }
-  return(loadings)
+  get_factors(final_results, which = "gene_loadings")
 }
 
 #' @title Get the NMF sample activity
@@ -402,14 +424,14 @@ get_nmf_sample_activity <- S7::new_generic(
 S7::method(get_nmf_sample_activity, BulkCoExp) <- function(object) {
   checkmate::assertClass(object, "bixverse::BulkCoExp")
   final_results <- S7::prop(object, "final_results")
-  activity <- if (is.list(final_results)) final_results[["sample_activity"]]
-  if (is.null(activity)) {
+  if (!inherits(final_results, "BulkModuleResult")) {
     warning(paste(
       "No NMF sample activity found. Did you run nmf_bulk() or",
       "stabilised_nmf_bulk()? Returning NULL."
     ))
+    return(NULL)
   }
-  return(activity)
+  get_factors(final_results, which = "sample_activity")
 }
 
 #' @title Get the NMF module membership data.table
@@ -437,14 +459,14 @@ get_nmf_modules <- S7::new_generic(
 S7::method(get_nmf_modules, BulkCoExp) <- function(object) {
   checkmate::assertClass(object, "bixverse::BulkCoExp")
   final_results <- S7::prop(object, "final_results")
-  modules <- if (is.list(final_results)) final_results[["modules"]]
-  if (is.null(modules)) {
+  if (!inherits(final_results, "BulkModuleResult")) {
     warning(paste(
       "No NMF modules found. Did you run nmf_bulk() or",
       "stabilised_nmf_bulk()? Returning NULL."
     ))
+    return(NULL)
   }
-  return(modules)
+  get_modules(final_results)
 }
 
 #' @title Get the stabilised NMF diagnostics
@@ -472,16 +494,24 @@ get_nmf_stability <- S7::new_generic(
 S7::method(get_nmf_stability, BulkCoExp) <- function(object) {
   checkmate::assertClass(object, "bixverse::BulkCoExp")
   final_results <- S7::prop(object, "final_results")
-  if (!is.list(final_results) || is.null(final_results[["losses"]])) {
+  if (!inherits(final_results, "BulkModuleResult")) {
     warning(paste(
       "No stabilised NMF diagnostics found. Did you run",
       "stabilised_nmf_bulk()? Returning NULL."
     ))
     return(NULL)
   }
-  return(list(
-    losses = final_results[["losses"]],
-    converged = final_results[["converged"]],
-    best_idx = final_results[["best_idx"]]
-  ))
+  diagnostics <- get_diagnostics(final_results)
+  if (is.null(diagnostics[["losses"]])) {
+    warning(paste(
+      "No stabilised NMF diagnostics found. Did you run",
+      "stabilised_nmf_bulk()? Returning NULL."
+    ))
+    return(NULL)
+  }
+  list(
+    losses = diagnostics[["losses"]],
+    converged = diagnostics[["converged"]],
+    best_idx = diagnostics[["best_idx"]]
+  )
 }
