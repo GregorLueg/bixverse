@@ -80,7 +80,11 @@ print.BulkModuleResult <- function(x, ...) {
   ))
   cat(sprintf(
     "  Factor keys:      %s\n",
-    if (length(x$factors) == 0L) "<none>" else paste(names(x$factors), collapse = ", ")
+    if (length(x$factors) == 0L) {
+      "<none>"
+    } else {
+      paste(names(x$factors), collapse = ", ")
+    }
   ))
   cat(sprintf(
     "  Diagnostics keys: %s\n",
@@ -185,7 +189,11 @@ S7::method(get_factors, S7::new_S3_class("BulkModuleResult")) <-
       warning(sprintf(
         "Factor `%s` not found in this BulkModuleResult. Available: %s. Returning NULL.",
         which,
-        if (length(factors) == 0L) "<none>" else paste(names(factors), collapse = ", ")
+        if (length(factors) == 0L) {
+          "<none>"
+        } else {
+          paste(names(factors), collapse = ", ")
+        }
       ))
       return(NULL)
     }

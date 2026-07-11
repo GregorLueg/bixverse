@@ -1123,7 +1123,14 @@ checkKnnParams <- function(x, required_params = NULL) {
   apply_choice_rules(
     x,
     list(
-      knn_method = c("annoy", "hnsw", "nndescent", "exhaustive", "ivf", "kmknn"),
+      knn_method = c(
+        "annoy",
+        "hnsw",
+        "nndescent",
+        "exhaustive",
+        "ivf",
+        "kmknn"
+      ),
       ann_dist = c("euclidean", "cosine")
     ),
     label = "kNN params"
@@ -1989,7 +1996,14 @@ checkScKnn <- function(x) {
   apply_choice_rules(
     x,
     list(
-      knn_method = c("kmknn", "hnsw", "annoy", "nndescent", "ivf", "exhaustive"),
+      knn_method = c(
+        "kmknn",
+        "hnsw",
+        "annoy",
+        "nndescent",
+        "ivf",
+        "exhaustive"
+      ),
       ann_dist = c("cosine", "euclidean")
     ),
     label = "kNN params"
@@ -2328,7 +2342,12 @@ assertScSupercell <- checkmate::makeAssertionFunction(checkScSupercell)
 checkScBbknn <- function(x) {
   res <- check_list_shape(
     x,
-    c("neighbours_within_batch", "set_op_mix_ratio", "local_connectivity", "trim")
+    c(
+      "neighbours_within_batch",
+      "set_op_mix_ratio",
+      "local_connectivity",
+      "trim"
+    )
   )
   if (!isTRUE(res)) {
     return(res)

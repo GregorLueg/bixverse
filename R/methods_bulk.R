@@ -91,10 +91,10 @@ S7::method(qc_bulk_dge, BulkDge) <- function(
   p1_nb_genes_cohort <- plot_preprocessing_genes(samples, group_col)
 
   ## outlier detection
-  sd_samples = sd(samples$perc_detected_genes, na.rm = TRUE)
-  min_perc = mean(samples$perc_detected_genes, na.rm = TRUE) -
+  sd_samples <- sd(samples$perc_detected_genes, na.rm = TRUE)
+  min_perc <- mean(samples$perc_detected_genes, na.rm = TRUE) -
     outlier_threshold * sd_samples
-  max_perc = mean(samples$perc_detected_genes, na.rm = TRUE) +
+  max_perc <- mean(samples$perc_detected_genes, na.rm = TRUE) +
     outlier_threshold * sd_samples
   outliers <- samples$perc_detected_genes <= min_perc
 
@@ -719,7 +719,7 @@ S7::method(batch_correction_bulk_dge, BulkDge) <- function(
   batch_data <- factor(sample_info[[batch_col]])
 
   design <- model.matrix(~ 0 + factor(sample_info[[contrast_column]]))
-  colnames(design) = unique(sample_info[[contrast_column]])
+  colnames(design) <- unique(sample_info[[contrast_column]])
 
   normalised_counts_corrected <- limma::removeBatchEffect(
     x = normalised_counts,

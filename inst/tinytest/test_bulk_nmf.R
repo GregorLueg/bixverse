@@ -45,8 +45,10 @@ expect_true(
 )
 
 expect_true(
-  current = all(c("gene", "module_id", "loading", "sign") %in%
-    names(nmf_modules_dt)),
+  current = all(
+    c("gene", "module_id", "loading", "sign") %in%
+      names(nmf_modules_dt)
+  ),
   info = "nmf_bulk - modules DT has gene/module_id/loading/sign"
 )
 
@@ -123,8 +125,10 @@ expect_true(
 nmf_stab_diagnostics <- get_diagnostics(nmf_stab_result)
 
 expect_true(
-  current = all(c("losses", "converged", "best_idx") %in%
-    names(nmf_stab_diagnostics)),
+  current = all(
+    c("losses", "converged", "best_idx") %in%
+      names(nmf_stab_diagnostics)
+  ),
   info = "stabilised_nmf_bulk - diagnostics has losses/converged/best_idx"
 )
 

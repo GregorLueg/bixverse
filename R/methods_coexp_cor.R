@@ -857,11 +857,13 @@ S7::method(cor_module_graph_final_modules, BulkCoExp) <- function(
         ]
 
         good_clusters <- subclusters[cluster_id %in% clusters_small_enough]
-        good_clusters[, cluster_id := paste0(
-          i,
-          paste(rep("sub", l), collapse = ""),
-          cluster_id
-        )]
+        good_clusters[,
+          cluster_id := paste0(
+            i,
+            paste(rep("sub", l), collapse = ""),
+            cluster_id
+          )
+        ]
 
         finalised_clusters <- rbind(finalised_clusters, good_clusters)
 

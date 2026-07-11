@@ -866,9 +866,7 @@ S7::method(print, BulkCoExp) <- function(x, ...) {
   outputs <- S7::prop(x, "outputs")
   final_results <- S7::prop(x, "final_results")
 
-  n_modules_from_result <- if (
-    inherits(final_results, "BulkModuleResult")
-  ) {
+  n_modules_from_result <- if (inherits(final_results, "BulkModuleResult")) {
     length(unique(get_modules(final_results)$module_id))
   } else {
     NA_integer_
@@ -937,7 +935,10 @@ S7::method(print, BulkCoExp) <- function(x, ...) {
     lines <- c(
       " Detection method: differential correlation-based.\n",
       sprintf("  Spearman correlation: %s.\n", non_parametric),
-      sprintf("  Shared features between target and background: %s.\n", n_shared),
+      sprintf(
+        "  Shared features between target and background: %s.\n",
+        n_shared
+      ),
       sprintf("  Differential correlation graph built: %s.\n", graph_generated)
     )
     if (modules_found) {
@@ -973,8 +974,10 @@ S7::method(print, BulkCoExp) <- function(x, ...) {
     if (!is.null(ica_final)) {
       lines <- c(
         lines,
-        sprintf("  Stabilised ICA fitted with %i components.\n",
-                ica_final[["no_comp"]])
+        sprintf(
+          "  Stabilised ICA fitted with %i components.\n",
+          ica_final[["no_comp"]]
+        )
       )
     }
     if (!is.na(n_modules_from_result)) {
@@ -1089,8 +1092,9 @@ S7::method(print, BulkDge) <- function(x, ...) {
   step_flags <- list(
     "qc_bulk_dge()" = !is.null(outputs[["dge_list"]]),
     "normalise_bulk_dge()" = !is.null(outputs[["normalised_counts"]]),
-    "batch_correction_bulk_dge()" =
-      !is.null(outputs[["normalised_counts_corrected"]]),
+    "batch_correction_bulk_dge()" = !is.null(outputs[[
+      "normalised_counts_corrected"
+    ]]),
     "calculate_pca_bulk_dge()" = !is.null(outputs[["pca"]]),
     "calculate_dge_limma()" = !is.null(outputs[["limma_voom_res"]]),
     "calculate_dge_hedges()" = !is.null(outputs[["hedges_g_res"]]),

@@ -25,7 +25,7 @@ single_cell_test_data <- generate_single_cell_test_data()
 
 ## generate the object ---------------------------------------------------------
 
-sc_qc_param = params_sc_min_quality(
+sc_qc_param <- params_sc_min_quality(
   min_unique_genes = min_genes_exp,
   min_lib_size = min_lib_size,
   min_cells = min_cells_exp,
