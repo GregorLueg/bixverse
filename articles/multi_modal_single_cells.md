@@ -77,6 +77,10 @@ sc_object <- SingleCellsMultiModal(dir_data = tempdir_10x_total_seq)
 sc_object <- load_tenx_h5(object = sc_object, h5_path = h5_10x_path)
 #>  Using light streaming for the CSR to CSC conversion.
 #> Loading barcodes from 10x h5 into the DuckDB.
+#> duckdb is keeping downloaded extensions in a temporary directory:
+#> ℹ /tmp/Rtmp6vGZA6/duckdb/extensions
+#> This is removed when the R session ends, so extensions are re-downloaded each session.
+#> ℹ To keep them, point `options(duckdb.extension_directory =)` or the `DUCKDB_EXTENSION_DIRECTORY` environment variable at a permanent path.
 #> Loading features from 10x h5 into the DuckDB.
 
 head(sc_object)

@@ -42,11 +42,11 @@ str(single_cell_test_data)
 #>   ..$ cell_id    : chr [1:1000] "cell_0001" "cell_0002" "cell_0003" "cell_0004" ...
 #>   ..$ cell_grp   : chr [1:1000] "cell_type_1" "cell_type_2" "cell_type_3" "cell_type_1" ...
 #>   ..$ batch_index: num [1:1000] 1 1 1 1 1 1 1 1 1 1 ...
-#>   ..- attr(*, ".internal.selfref")=<pointer: 0x55a5bf73fb40> 
+#>   ..- attr(*, ".internal.selfref")=<pointer: 0x558c129d9b40> 
 #>  $ var   :Classes 'data.table' and 'data.frame': 100 obs. of  2 variables:
 #>   ..$ gene_id   : chr [1:100] "gene_001" "gene_002" "gene_003" "gene_004" ...
 #>   ..$ ensembl_id: chr [1:100] "ens_001" "ens_002" "ens_003" "ens_004" ...
-#>   ..- attr(*, ".internal.selfref")=<pointer: 0x55a5bf73fb40>
+#>   ..- attr(*, ".internal.selfref")=<pointer: 0x558c129d9b40>
 ```
 
 We have a count matrix with pseudo raw counts, an obs table and a var
@@ -110,6 +110,10 @@ sc_object <- load_r_data(
 #> Generating gene-based data.
 #>  Loading data directly into memory for CSR to CSC conversion.
 #> Writing to the DuckDB.
+#> duckdb is keeping downloaded extensions in a temporary directory:
+#> ℹ /tmp/RtmpFTJsXK/duckdb/extensions
+#> This is removed when the R session ends, so extensions are re-downloaded each session.
+#> ℹ To keep them, point `options(duckdb.extension_directory =)` or the `DUCKDB_EXTENSION_DIRECTORY` environment variable at a permanent path.
 #> Setting internal mapping.
 
 list.files(test_dir)
@@ -475,8 +479,8 @@ microbenchmark::microbenchmark(
 )
 #> Unit: milliseconds
 #>               expr      min       lq     mean   median       uq      max neval
-#>    the_correct_way 1.357864 1.385476 1.524693 1.393261 1.468812 2.575558    10
-#>  the_incorrect_way 2.266451 2.378099 2.432788 2.438732 2.491621 2.588141    10
+#>    the_correct_way 1.336947 1.379287 1.436346 1.413906 1.456120 1.668367    10
+#>  the_incorrect_way 2.368795 2.485232 2.652227 2.537369 2.697693 3.664694    10
 ```
 
 The difference seems marginal here, but it WILL bite you if you do this
