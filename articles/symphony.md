@@ -78,7 +78,7 @@ sc_ref <- load_multi_h5ad(
 #>  Using light streaming for the CSR to CSC conversion.
 #> Loading observation data from h5ad files into DuckDB.
 #> duckdb is keeping downloaded extensions in a temporary directory:
-#> ℹ /tmp/RtmpM5fWMi/duckdb/extensions
+#> ℹ /tmp/RtmpelesiS/duckdb/extensions
 #> This is removed when the R session ends, so extensions are re-downloaded each session.
 #> ℹ To keep them, point `options(duckdb.extension_directory =)` or the `DUCKDB_EXTENSION_DIRECTORY` environment variable at a permanent path.
 #> Loading variable data into DuckDB.
