@@ -20,8 +20,8 @@ Bulk co-expression module detection tries to find groups of genes that vary
 together across samples. `bixverse` ships five approaches for this on a shared
 `BulkCoExp` class:
 
-- **CoReMo** ([Srivastava, et al.](https://www.nature.com/articles/s41467-018-06008-4))
-  — hierarchical clustering on an RBF-transformed correlation matrix. Fast,
+- **CoReMo** ([Srivastava, et al.](https://www.nature.com/articles/s41467-018-06008-4):
+  hierarchical clustering on an RBF-transformed correlation matrix. Fast,
   deterministic, gives you signed modules and per-sample eigengenes.
 - **Graph-based Leiden** ([Barrio-Hernandez, et al.](https://www.nature.com/articles/s41588-023-01327-9))
   — build a sparse affinity graph from correlations, then cluster with Leiden.
@@ -57,11 +57,11 @@ at the end.
 ```{r}
 #| label: synth-data
 synth <- synthetic_bulk_cor_matrix(
-  num_samples  = 100L,
-  num_genes    = 1000L,
-  add_modules  = TRUE,
+  num_samples = 100L,
+  num_genes = 1000L,
+  add_modules = TRUE,
   module_sizes = c(100L, 100L, 100L),
-  seed         = 123L
+  seed = 123L
 )
 
 truth <- synth$module_data
@@ -76,7 +76,7 @@ separate object from the raw counts for it.
 ```{r}
 #| label: normalise
 norm_counts <- edgeR::cpm(synth$counts, log = TRUE)
-raw_cpm     <- edgeR::cpm(synth$counts, log = FALSE)
+raw_cpm <- edgeR::cpm(synth$counts, log = FALSE)
 
 data_log <- t(norm_counts)
 data_raw <- t(raw_cpm)
@@ -101,16 +101,34 @@ correlations — you usually tune it against a scale-free topology fit.
 
 ```{r}
 #| label: coremo-workflow
-coexp_coremo <- cor_module_processing(coexp, cor_method = "spearman", .verbose = FALSE)
-coexp_coremo <- cor_module_check_epsilon(coexp_coremo, rbf_func = "gaussian", .verbose = FALSE)
+coexp_coremo <- cor_module_processing(
+  coexp,
+  cor_method = "spearman",
+  .verbose = TRUE
+)
 
-epsilon_pick <- get_epsilon_res(coexp_coremo)[r2_vals == max(r2_vals), epsilon][1]
+coexp_coremo@processed_data$correlation_res$get_data_table() %$% hist(sim)
+
+coexp_coremo <- cor_module_check_epsilon(
+  coexp_coremo,
+  rbf_func = "gaussian",
+  .verbose = TRUE
+)
+
+plot_epsilon_res(coexp_coremo)
+
+epsilon_pick <- get_epsilon_res(coexp_coremo)[r2_vals == max(r2_vals), epsilon][
+  1
+]
+
+epsilon_pick <- 2
+
 coremo_params <- params_coremo(epsilon = epsilon_pick, rbf_func = "gaussian")
 
 coexp_coremo <- cor_module_coremo_clustering(
   coexp_coremo,
   coremo_params = coremo_params,
-  .verbose      = FALSE
+  .verbose = TRUE
 )
 coexp_coremo <- cor_module_coremo_stability(coexp_coremo, .verbose = FALSE)
 coexp_coremo <- cor_module_coremo_cor_sign(coexp_coremo, .verbose = FALSE)
@@ -132,28 +150,41 @@ resolution grid; large communities can be sub-clustered recursively.
 
 ```{r}
 #| label: leiden-workflow
-coexp_leiden <- cor_module_processing(coexp, cor_method = "spearman", .verbose = FALSE)
-coexp_leiden <- cor_module_check_epsilon(coexp_leiden, rbf_func = "bump", .verbose = FALSE)
+coexp_leiden <- cor_module_processing(
+  coexp,
+  cor_method = "spearman",
+  .verbose = TRUE
+)
+
+coexp_leiden <- cor_module_check_epsilon(
+  coexp_leiden,
+  rbf_func = "bump",
+  .verbose = TRUE
+)
+
+plot_epsilon_res(coexp_leiden)
 
 graph_params <- params_cor_graph(
-  epsilon = get_epsilon_res(coexp_leiden)[r2_vals == max(r2_vals), epsilon][1]
+  epsilon = 2
 )
 
 coexp_leiden <- cor_module_graph_check_res(
   coexp_leiden,
   resolution_params = params_graph_resolution(),
-  graph_params      = graph_params,
-  parallel          = FALSE,
-  .verbose          = FALSE
+  graph_params = graph_params,
+  parallel = FALSE,
+  .verbose = TRUE
 )
+
+plot_resolution_res(coexp_leiden)
 
 coexp_leiden <- cor_module_graph_final_modules(
   coexp_leiden,
-  min_size     = 10L,
-  max_size     = 500L,
+  min_size = 10L,
+  max_size = 500L,
   subclustering = TRUE,
   .graph_params = graph_params,
-  .verbose      = FALSE
+  .verbose = FALSE
 )
 
 leiden_modules <- get_modules(get_results(coexp_leiden))
@@ -173,18 +204,30 @@ number of components gives you an "optimal" `ncomp`.
 coexp_ica <- ica_processing(coexp, fast_svd = TRUE, .verbose = FALSE)
 
 ncomp_params <- params_ica_ncomp(max_no_comp = 20L, steps = 5L)
-iter_params  <- params_ica_randomisation(cross_validate = FALSE, random_init = 20L)
+iter_params <- params_ica_randomisation(
+  cross_validate = FALSE,
+  random_init = 20L
+)
 
 coexp_ica <- ica_evaluate_comp(
   coexp_ica,
-  ica_type     = "logcosh",
-  iter_params  = iter_params,
+  ica_type = "logcosh",
+  iter_params = iter_params,
   ncomp_params = ncomp_params,
-  .verbose     = FALSE
+  .verbose = FALSE
 )
 
-coexp_ica <- ica_optimal_ncomp(coexp_ica, span = 0.4, show_plot = FALSE, .verbose = FALSE)
-coexp_ica <- ica_stabilised_results(coexp_ica, iter_params = iter_params, .verbose = FALSE)
+coexp_ica <- ica_optimal_ncomp(
+  coexp_ica,
+  span = 0.4,
+  show_plot = FALSE,
+  .verbose = FALSE
+)
+coexp_ica <- ica_stabilised_results(
+  coexp_ica,
+  iter_params = iter_params,
+  .verbose = FALSE
+)
 
 ica_res <- get_results(coexp_ica)
 ica_gene_loadings <- get_factors(ica_res, which = "gene_loadings")
@@ -212,15 +255,15 @@ search helps pick `dict_size` and `k_neighbours` before the final fit.
 coexp_dgrdl <- dgrdl_grid_search(
   coexp,
   neighbours_vec = c(5L, 10L),
-  dict_size_vec  = c(4L, 6L),
-  seed_vec       = c(1L, 2L),
-  dgrdl_params   = params_dgrdl(),
-  .verbose       = FALSE
+  dict_size_vec = c(4L, 6L),
+  seed_vec = c(1L, 2L),
+  dgrdl_params = params_dgrdl(),
+  .verbose = TRUE
 )
 
 grid_res <- get_grid_search_res(coexp_dgrdl)
 setorder(grid_res, reconstruction_errs)
-head(grid_res, 3)
+head(grid_res)
 ```
 
 Pick the top row and fit the final DGRDL model:
@@ -229,15 +272,15 @@ Pick the top row and fit the final DGRDL model:
 #| label: dgrdl-final
 top <- grid_res[1L]
 dgrdl_params_final <- params_dgrdl(
-  dict_size    = as.integer(top$dict_size),
+  dict_size = as.integer(top$dict_size),
   k_neighbours = as.integer(top$k_neighbours)
 )
 
 coexp_dgrdl <- dgrdl_result(
   coexp_dgrdl,
   dgrdl_params = dgrdl_params_final,
-  seed         = as.integer(top$seed),
-  .verbose     = FALSE
+  seed = as.integer(top$seed),
+  .verbose = FALSE
 )
 
 dgrdl_res <- get_results(coexp_dgrdl)
@@ -267,11 +310,11 @@ coexp_nmf <- preprocess_bulk_coexp(coexp_nmf, hvg = 0.5, .verbose = FALSE)
 
 coexp_nmf <- nmf_bulk(
   coexp_nmf,
-  k              = 4L,
-  preprocessing  = "none",
+  k = 4L,
+  preprocessing = "none",
   nmf_hals_params = params_nmf_hals(max_iter = 300L, tol = 1e-4),
-  seed           = 42L,
-  .verbose       = FALSE
+  seed = 42L,
+  .verbose = FALSE
 )
 
 nmf_modules <- get_nmf_modules(coexp_nmf)
@@ -292,8 +335,12 @@ top_genes <- unique(unlist(lapply(seq_len(ncol(loadings)), \(j) {
 })))
 
 heat_dt <- as.data.table(loadings[top_genes, , keep.rownames = "gene"])
-heat_long <- melt(heat_dt, id.vars = "gene",
-                  variable.name = "component", value.name = "loading")
+heat_long <- melt(
+  heat_dt,
+  id.vars = "gene",
+  variable.name = "component",
+  value.name = "loading"
+)
 
 ggplot(heat_long, aes(component, gene, fill = loading)) +
   geom_tile() +
@@ -309,12 +356,12 @@ returns per-run losses via `get_nmf_stability()`.
 #| label: nmf-stabilised
 coexp_nmf_stab <- stabilised_nmf_bulk(
   coexp_nmf,
-  k               = 4L,
-  n_runs          = 5L,
-  preprocessing   = "none",
+  k = 4L,
+  n_runs = 5L,
+  preprocessing = "none",
   nmf_hals_params = params_nmf_hals(max_iter = 200L, tol = 1e-3),
-  seed            = 7L,
-  .verbose        = FALSE
+  seed = 7L,
+  .verbose = FALSE
 )
 
 stab <- get_nmf_stability(coexp_nmf_stab)
@@ -345,7 +392,7 @@ best_jaccard_per_planted <- function(assignments) {
 
 recovery <- data.table(
   method = c("CoReMo", "Leiden", "ICA", "DGRDL", "NMF"),
-  score  = c(
+  score = c(
     mean(best_jaccard_per_planted(
       coremo_modules[, .(gene, module_id = cluster_id)]
     )),

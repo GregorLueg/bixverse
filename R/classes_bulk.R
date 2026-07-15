@@ -1,6 +1,8 @@
 # classes ----------------------------------------------------------------------
 
-## BulkCoExp -------------------------------------------------------------------
+## s7 --------------------------------------------------------------------------
+
+### BulkCoExp ------------------------------------------------------------------
 
 #' @title Bulk RNAseq co-expression modules
 #'
@@ -178,9 +180,9 @@ BulkDge <- S7::new_class(
   }
 )
 
-# additional constructors ------------------------------------------------------
+## additional constructors -----------------------------------------------------
 
-## BulkDge ---------------------------------------------------------------------
+### BulkDge --------------------------------------------------------------------
 
 #' Wrapper function to generate BulkDge object from h5ad
 #'
@@ -207,7 +209,7 @@ bulk_dge_from_h5ad <- function(
   checkmate::qassert(h5_path, "S1")
   checkmate::assertFileExists(h5_path)
 
-  h5_obj <- anndata_parser$new(h5_path)
+  h5_obj <- AnnDataParser$new(h5_path)
   if (.verbose) {
     message("Loading data from the h5ad object")
   }
@@ -220,9 +222,9 @@ bulk_dge_from_h5ad <- function(
   return(bulk_dge_obj)
 }
 
-# utils ------------------------------------------------------------------------
+### utils ----------------------------------------------------------------------
 
-## object manipulation ---------------------------------------------------------
+#### object manipulation -------------------------------------------------------
 
 #' Remove samples from object
 #'
@@ -303,21 +305,20 @@ fix_meta_data_column <- S7::new_generic(
 #' @method fix_meta_data_column BulkDge
 #'
 #' @export
-S7::method(fix_meta_data_column, BulkDge) <-
-  function(object, col_names) {
-    checkmate::assertClass(
-      object,
-      "bixverse::BulkDge"
-    )
-    # Data
-    S7::prop(object, "meta_data") <- S7::prop(object, "meta_data")[,
-      (col_names) := lapply(.SD, fix_contrast_names),
-      .SDcols = col_names
-    ]
+S7::method(fix_meta_data_column, BulkDge) <- function(object, col_names) {
+  checkmate::assertClass(
+    object,
+    "bixverse::BulkDge"
+  )
+  # Data
+  S7::prop(object, "meta_data") <- S7::prop(object, "meta_data")[,
+    (col_names) := lapply(.SD, fix_contrast_names),
+    .SDcols = col_names
+  ]
 
-    # Return
-    return(object)
-  }
+  # Return
+  return(object)
+}
 
 
 #' Replace values in a metadata column
@@ -348,27 +349,30 @@ update_metadata_values <- S7::new_generic(
 #' @method update_metadata_values BulkDge
 #'
 #' @export
-S7::method(update_metadata_values, BulkDge) <-
-  function(object, column, replacement) {
-    meta_data <- S7::prop(object, "meta_data")
+S7::method(update_metadata_values, BulkDge) <- function(
+  object,
+  column,
+  replacement
+) {
+  meta_data <- S7::prop(object, "meta_data")
 
-    checkmate::assertClass(
-      object,
-      "bixverse::BulkDge"
-    )
-    checkmate::assertTRUE(
-      all(meta_data[[column]] %in% names(replacement))
-    )
+  checkmate::assertClass(
+    object,
+    "bixverse::BulkDge"
+  )
+  checkmate::assertTRUE(
+    all(meta_data[[column]] %in% names(replacement))
+  )
 
-    meta_data[[column]] <- replacement[meta_data[[column]]]
+  meta_data[[column]] <- replacement[meta_data[[column]]]
 
-    S7::prop(object, "meta_data") <- meta_data
+  S7::prop(object, "meta_data") <- meta_data
 
-    # Return
-    return(object)
-  }
+  # Return
+  return(object)
+}
 
-## common getters --------------------------------------------------------------
+### common getters -------------------------------------------------------------
 
 #' Return the metadata
 #'
@@ -394,34 +398,30 @@ get_metadata <- S7::new_generic(
 #' @method get_metadata BulkCoExp
 #'
 #' @export
-S7::method(get_metadata, BulkCoExp) <-
-  function(object, ...) {
-    # Checks
-    checkmate::assertClass(
-      object,
-      "bixverse::BulkCoExp"
-    )
+S7::method(get_metadata, BulkCoExp) <- function(object, ...) {
+  # Checks
+  checkmate::assertClass(
+    object,
+    "bixverse::BulkCoExp"
+  )
 
-    # Return
-    return(S7::prop(object, "meta_data"))
-  }
-
+  # Return
+  return(S7::prop(object, "meta_data"))
+}
 
 #' @method get_metadata BulkDge
 #'
 #' @export
-S7::method(get_metadata, BulkDge) <-
-  function(object) {
-    # Checks
-    checkmate::assertClass(
-      object,
-      "bixverse::BulkDge"
-    )
+S7::method(get_metadata, BulkDge) <- function(object) {
+  # Checks
+  checkmate::assertClass(
+    object,
+    "bixverse::BulkDge"
+  )
 
-    # Return
-    return(S7::prop(object, "meta_data"))
-  }
-
+  # Return
+  return(S7::prop(object, "meta_data"))
+}
 
 #' Return the outputs
 #'
@@ -444,41 +444,37 @@ get_outputs <- S7::new_generic(
   }
 )
 
-
 #' @method get_outputs BulkCoExp
 #'
 #' @export
-S7::method(get_outputs, BulkCoExp) <-
-  function(object, ...) {
-    # Checks
-    checkmate::assertClass(
-      object,
-      "bixverse::BulkCoExp"
-    )
+S7::method(get_outputs, BulkCoExp) <- function(object, ...) {
+  # Checks
+  checkmate::assertClass(
+    object,
+    "bixverse::BulkCoExp"
+  )
 
-    # Return
-    return(S7::prop(object, "outputs"))
-  }
-
+  # Return
+  return(S7::prop(object, "outputs"))
+}
 
 #' @method get_outputs BulkDge
 #'
 #' @export
-S7::method(get_outputs, BulkDge) <-
-  function(object, ...) {
-    # Checks
-    checkmate::assertClass(
-      object,
-      "bixverse::BulkDge"
-    )
+S7::method(get_outputs, BulkDge) <- function(object, ...) {
+  # Checks
+  checkmate::assertClass(
+    object,
+    "bixverse::BulkDge"
+  )
 
-    # Return
-    return(S7::prop(object, "outputs"))
-  }
+  # Return
+  return(S7::prop(object, "outputs"))
+}
 
-## individual getters ----------------------------------------------------------
+### individual getters ---------------------------------------------------------
 
-### bulk dge class -------------------------------------------------------------
+#### bulk dge class ------------------------------------------------------------
 
 #' Return the DGEList
 #'
@@ -502,18 +498,16 @@ get_dge_list <- S7::new_generic(
 #' @method get_dge_list BulkDge
 #'
 #' @export
-S7::method(get_dge_list, BulkDge) <-
-  function(object) {
-    # Checks
-    checkmate::assertClass(
-      object,
-      "bixverse::BulkDge"
-    )
+S7::method(get_dge_list, BulkDge) <- function(object) {
+  # Checks
+  checkmate::assertClass(
+    object,
+    "bixverse::BulkDge"
+  )
 
-    # Return
-    return(S7::prop(object, "outputs")[['dge_list']])
-  }
-
+  # Return
+  return(S7::prop(object, "outputs")[['dge_list']])
+}
 
 #' Return the Limma Voom results
 #'
@@ -534,30 +528,27 @@ get_dge_limma_voom <- S7::new_generic(
   }
 )
 
-
 #' @method get_dge_limma_voom BulkDge
 #'
 #' @export
-S7::method(get_dge_limma_voom, BulkDge) <-
-  function(object) {
-    # Checks
-    checkmate::assertClass(
-      object,
-      "bixverse::BulkDge"
-    )
+S7::method(get_dge_limma_voom, BulkDge) <- function(object) {
+  # Checks
+  checkmate::assertClass(
+    object,
+    "bixverse::BulkDge"
+  )
 
-    limma_res <- S7::prop(object, "outputs")[['limma_voom_res']]
-    if (is.null(limma_res)) {
-      warning(paste(
-        "No results found. Did you run get_dge_limma_voom()?",
-        "Returning NULL"
-      ))
-    }
-
-    # Return
-    return(limma_res)
+  limma_res <- S7::prop(object, "outputs")[['limma_voom_res']]
+  if (is.null(limma_res)) {
+    warning(paste(
+      "No results found. Did you run get_dge_limma_voom()?",
+      "Returning NULL"
+    ))
   }
 
+  # Return
+  return(limma_res)
+}
 
 #' Return the effect size results
 #'
@@ -581,25 +572,24 @@ get_dge_effect_sizes <- S7::new_generic(
 #' @method get_dge_effect_sizes BulkDge
 #'
 #' @export
-S7::method(get_dge_effect_sizes, BulkDge) <-
-  function(object) {
-    # Checks
-    checkmate::assertClass(
-      object,
-      "bixverse::BulkDge"
-    )
+S7::method(get_dge_effect_sizes, BulkDge) <- function(object) {
+  # Checks
+  checkmate::assertClass(
+    object,
+    "bixverse::BulkDge"
+  )
 
-    hedges_g_res <- S7::prop(object, "outputs")[['hedges_g_res']]
-    if (is.null(hedges_g_res)) {
-      warning(paste(
-        "No results found. Did you run calculate_dge_hedges()?",
-        "Returning NULL"
-      ))
-    }
-
-    # Return
-    return(hedges_g_res)
+  hedges_g_res <- S7::prop(object, "outputs")[['hedges_g_res']]
+  if (is.null(hedges_g_res)) {
+    warning(paste(
+      "No results found. Did you run calculate_dge_hedges()?",
+      "Returning NULL"
+    ))
   }
+
+  # Return
+  return(hedges_g_res)
+}
 
 #' Return the TPM-normalised counts
 #'
@@ -623,25 +613,24 @@ get_tpm_counts <- S7::new_generic(
 #' @method get_tpm_counts BulkDge
 #'
 #' @export
-S7::method(get_tpm_counts, BulkDge) <-
-  function(object) {
-    # Checks
-    checkmate::assertClass(
-      object,
-      "bixverse::BulkDge"
-    )
+S7::method(get_tpm_counts, BulkDge) <- function(object) {
+  # Checks
+  checkmate::assertClass(
+    object,
+    "bixverse::BulkDge"
+  )
 
-    tpm_counts <- S7::prop(object, "outputs")[['tpm_counts']]
-    if (is.null(tpm_counts)) {
-      warning(paste(
-        "No TPM counts found. Did you run normalise_bulk_dge()",
-        "with calc_tpm = TRUE? Returning NULL"
-      ))
-    }
-
-    # Return
-    return(tpm_counts)
+  tpm_counts <- S7::prop(object, "outputs")[['tpm_counts']]
+  if (is.null(tpm_counts)) {
+    warning(paste(
+      "No TPM counts found. Did you run normalise_bulk_dge()",
+      "with calc_tpm = TRUE? Returning NULL"
+    ))
   }
+
+  # Return
+  return(tpm_counts)
+}
 
 #' Return the FPKM-normalised counts
 #'
@@ -665,27 +654,26 @@ get_fpkm_counts <- S7::new_generic(
 #' @method get_fpkm_counts BulkDge
 #'
 #' @export
-S7::method(get_fpkm_counts, BulkDge) <-
-  function(object) {
-    # Checks
-    checkmate::assertClass(
-      object,
-      "bixverse::BulkDge"
-    )
+S7::method(get_fpkm_counts, BulkDge) <- function(object) {
+  # Checks
+  checkmate::assertClass(
+    object,
+    "bixverse::BulkDge"
+  )
 
-    fpkm_counts <- S7::prop(object, "outputs")[['fpkm_counts']]
-    if (is.null(fpkm_counts)) {
-      warning(paste(
-        "No FPKM counts found. Did you run normalise_bulk_dge()",
-        "with calc_fpkm = TRUE? Returning NULL"
-      ))
-    }
-
-    # Return
-    return(fpkm_counts)
+  fpkm_counts <- S7::prop(object, "outputs")[['fpkm_counts']]
+  if (is.null(fpkm_counts)) {
+    warning(paste(
+      "No FPKM counts found. Did you run normalise_bulk_dge()",
+      "with calc_fpkm = TRUE? Returning NULL"
+    ))
   }
 
-### bulk coexp class -----------------------------------------------------------
+  # Return
+  return(fpkm_counts)
+}
+
+#### bulk coexp class ----------------------------------------------------------
 
 #' Return the epsilon data
 #'
@@ -709,27 +697,26 @@ get_epsilon_res <- S7::new_generic(
 #' @method get_epsilon_res BulkCoExp
 #'
 #' @export
-S7::method(get_epsilon_res, BulkCoExp) <-
-  function(object) {
-    # checks
-    checkmate::assertClass(
-      object,
-      "bixverse::BulkCoExp"
-    )
-    # body
-    epsilon_results <- S7::prop(object, "outputs")[['epsilon_data']]
-    if (is.null(epsilon_results)) {
-      warning(
-        paste(
-          "No epsilon results found.",
-          "Did you run cor_module_check_epsilon()? Returning NULL."
-        )
+S7::method(get_epsilon_res, BulkCoExp) <- function(object) {
+  # checks
+  checkmate::assertClass(
+    object,
+    "bixverse::BulkCoExp"
+  )
+  # body
+  epsilon_results <- S7::prop(object, "outputs")[['epsilon_data']]
+  if (is.null(epsilon_results)) {
+    warning(
+      paste(
+        "No epsilon results found.",
+        "Did you run cor_module_check_epsilon()? Returning NULL."
       )
-    }
-
-    # return
-    return(epsilon_results)
+    )
   }
+
+  # return
+  return(epsilon_results)
+}
 
 #' @title Return the resolution results
 #'
@@ -769,9 +756,9 @@ S7::method(get_resolution_res, BulkCoExp) <- function(object) {
   resolution_results
 }
 
-## individual setters ----------------------------------------------------------
+### individual setters ---------------------------------------------------------
 
-### bulk dge class -------------------------------------------------------------
+#### bulk dge class ------------------------------------------------------------
 
 #' Change the primary gene identifier of BulkDge
 #'
@@ -835,28 +822,29 @@ S7::method(change_gene_identifier, BulkDge) <- function(
 #' @method add_new_metadata BulkDge
 #'
 #' @export
-S7::method(add_new_metadata, BulkDge) <-
-  function(object, new_metadata, ...) {
-    # Checks
-    checkmate::assertClass(
-      object,
-      "bixverse::BulkDge"
-    )
-    checkmate::assertNames(
-      names(new_metadata),
-      must.include = c("sample_id")
-    )
+S7::method(add_new_metadata, BulkDge) <- function(object, new_metadata, ...) {
+  # Checks
+  checkmate::assertClass(
+    object,
+    "bixverse::BulkDge"
+  )
+  checkmate::assertNames(
+    names(new_metadata),
+    must.include = c("sample_id")
+  )
 
-    raw_counts <- S7::prop(object, "raw_counts")
+  raw_counts <- S7::prop(object, "raw_counts")
 
-    checkmate::assertTRUE(all(colnames(raw_counts) %in% new_metadata$sample_id))
+  checkmate::assertTRUE(all(colnames(raw_counts) %in% new_metadata$sample_id))
 
-    S7::prop(object, "meta_data") <- new_metadata
+  S7::prop(object, "meta_data") <- new_metadata
 
-    return(object)
-  }
+  return(object)
+}
 
-## prints ----------------------------------------------------------------------
+### primitives -----------------------------------------------------------------
+
+#### prints --------------------------------------------------------------------
 
 #' @noRd
 S7::method(print, BulkCoExp) <- function(x, ...) {
@@ -1121,4 +1109,266 @@ S7::method(print, BulkDge) <- function(x, ...) {
   )
 
   invisible(x)
+}
+
+## s3 --------------------------------------------------------------------------
+
+### BulkModuleResult -----------------------------------------------------------
+
+#### constructor ---------------------------------------------------------------
+
+#' Constructor for a bulk co-expression module result
+#'
+#' @description
+#' Uniform container for the terminal output of every bulk co-expression
+#' method. Stores the module membership (gene to module_id assignment), the
+#' method-specific factor matrices (gene loadings, sample activities,
+#' eigengenes, dictionaries), the fit parameters, and method-specific
+#' diagnostics.
+#'
+#' @param modules data.table. Module membership. Must contain `gene` and
+#' `module_id` columns. Method-specific extras (`sign`, `stability`,
+#' `loading`, ...) are allowed.
+#' @param factors Named list of matrices. Method-agnostic keys shared across
+#' methods: `gene_loadings`, `sample_activity`, `module_eigengenes`,
+#' `dictionary`, `loadings`, `gene_to_eigengene_cor`. May be empty for
+#' methods that produce no factor matrices (e.g. Leiden).
+#' @param method String. One of `c("correlation-based",`
+#' `"differential correlation-based", "ICA-based", "dgrdl-based",`
+#' `"nmf-based")`.
+#' @param params List. The `params_xxx()` list that produced the fit.
+#' @param diagnostics Named list. Method-specific diagnostics (stability
+#' data.table, resolution used, per-run losses, laplacians, ...).
+#'
+#' @returns An object of class `BulkModuleResult`.
+#'
+#' @keywords internal
+new_bulk_module_result <- function(
+  modules,
+  factors = list(),
+  method,
+  params = list(),
+  diagnostics = list()
+) {
+  checkmate::assertDataTable(modules)
+  checkmate::assertNames(
+    names(modules),
+    must.include = c("gene", "module_id")
+  )
+  checkmate::assertList(factors, names = "named", null.ok = FALSE)
+  checkmate::assertChoice(
+    method,
+    c(
+      "correlation-based",
+      "differential correlation-based",
+      "ICA-based",
+      "dgrdl-based",
+      "nmf-based"
+    )
+  )
+  checkmate::assertList(params)
+  checkmate::assertList(diagnostics, names = "named", null.ok = FALSE)
+
+  res <- list(
+    modules = modules,
+    factors = factors,
+    method = method,
+    params = params,
+    diagnostics = diagnostics
+  )
+  class(res) <- "BulkModuleResult"
+  res
+}
+
+### primitives -----------------------------------------------------------------
+
+#' @method print BulkModuleResult
+#'
+#' @export
+print.BulkModuleResult <- function(x, ...) {
+  cat("BulkModuleResult\n")
+  cat(sprintf("  Method:           %s\n", x$method))
+  cat(sprintf("  No genes:         %d\n", length(unique(x$modules$gene))))
+  cat(sprintf(
+    "  No modules:       %d\n",
+    length(unique(x$modules$module_id))
+  ))
+  cat(sprintf(
+    "  Factor keys:      %s\n",
+    if (length(x$factors) == 0L) {
+      "<none>"
+    } else {
+      paste(names(x$factors), collapse = ", ")
+    }
+  ))
+  cat(sprintf(
+    "  Diagnostics keys: %s\n",
+    if (length(x$diagnostics) == 0L) {
+      "<none>"
+    } else {
+      paste(names(x$diagnostics), collapse = ", ")
+    }
+  ))
+  invisible(x)
+}
+
+#' @export
+#'
+#' @keywords internal
+format.BulkModuleResult <- function(x, ...) {
+  sprintf(
+    "BulkModuleResult (%s, %d genes, %d modules)",
+    x$method,
+    length(unique(x$modules$gene)),
+    length(unique(x$modules$module_id))
+  )
+}
+
+#' @export
+#'
+#' @keywords internal
+dim.BulkModuleResult <- function(x) {
+  c(
+    length(unique(x$modules$gene)),
+    length(unique(x$modules$module_id))
+  )
+}
+
+### generics -------------------------------------------------------------------
+
+#' Get the module membership from a BulkModuleResult
+#'
+#' @description
+#' Returns the data.table of gene to module_id assignments. The exact
+#' columns depend on the method that produced the result (CoReMo adds
+#' `sign` and `stability`; NMF/ICA/DGRDL add `loading` and `sign`;
+#' Leiden adds only `module_id`).
+#'
+#' @param object A `BulkModuleResult`.
+#'
+#' @returns data.table with at minimum `gene` and `module_id` columns.
+#'
+#' @export
+get_modules <- S7::new_generic(
+  name = "get_modules",
+  dispatch_args = "object",
+  fun = function(object) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method get_modules BulkModuleResult
+#'
+#' @export
+S7::method(get_modules, S7::new_S3_class("BulkModuleResult")) <- function(
+  object
+) {
+  checkmate::assertClass(object, "BulkModuleResult")
+  object[["modules"]]
+}
+
+#' Get factor matrices from a BulkModuleResult
+#'
+#' @description
+#' Returns one factor matrix by key, or the whole named list of factor
+#' matrices if `which` is `NULL`. Keys are method-specific; see the
+#' `factors` argument of `new_bulk_module_result()` for the shared vocabulary.
+#'
+#' @param object A `BulkModuleResult`.
+#' @param which String or `NULL`. Name of the factor matrix to return. If
+#' `NULL`, returns the whole list.
+#'
+#' @returns A matrix, the named list of matrices, or `NULL` (with warning)
+#' if `which` is not among the stored factor keys.
+#'
+#' @export
+get_factors <- S7::new_generic(
+  name = "get_factors",
+  dispatch_args = "object",
+  fun = function(object, which = NULL) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method get_factors BulkModuleResult
+#'
+#' @export
+S7::method(get_factors, S7::new_S3_class("BulkModuleResult")) <- function(
+  object,
+  which = NULL
+) {
+  checkmate::assertClass(object, "BulkModuleResult")
+  checkmate::qassert(which, c("0", "S1"))
+  factors <- object[["factors"]]
+  if (is.null(which)) {
+    return(factors)
+  }
+  if (!(which %in% names(factors))) {
+    warning(sprintf(
+      "Factor `%s` not found in this BulkModuleResult. Available: %s. Returning NULL.",
+      which,
+      if (length(factors) == 0L) {
+        "<none>"
+      } else {
+        paste(names(factors), collapse = ", ")
+      }
+    ))
+    return(NULL)
+  }
+  factors[[which]]
+}
+
+#' Get diagnostics from a BulkModuleResult
+#'
+#' @description
+#' Returns one diagnostic by key, or the whole named list if `which` is
+#' `NULL`. Contents are method-specific: CoReMo stores `stability` and
+#' `cluster_quality`; Leiden stores `resolution_used` and `modularity`; ICA
+#' stores `ica_meta` and `stability_scores`; DGRDL stores
+#' `feature_laplacian`, `sample_laplacian`, and the grid-search table; NMF
+#' stores `final_loss`, `n_iter`, `converged`, and (for stabilised runs)
+#' `losses`, `best_idx`.
+#'
+#' @param object A `BulkModuleResult`.
+#' @param which String or `NULL`. Name of the diagnostic to return. If
+#' `NULL`, returns the whole list.
+#'
+#' @returns The requested diagnostic, the named list, or `NULL` (with
+#' warning) if `which` is not among the stored diagnostic keys.
+#'
+#' @export
+get_diagnostics <- S7::new_generic(
+  name = "get_diagnostics",
+  dispatch_args = "object",
+  fun = function(object, which = NULL) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method get_diagnostics BulkModuleResult
+#'
+#' @export
+S7::method(get_diagnostics, S7::new_S3_class("BulkModuleResult")) <- function(
+  object,
+  which = NULL
+) {
+  checkmate::assertClass(object, "BulkModuleResult")
+  checkmate::qassert(which, c("0", "S1"))
+  diagnostics <- object[["diagnostics"]]
+  if (is.null(which)) {
+    return(diagnostics)
+  }
+  if (!(which %in% names(diagnostics))) {
+    warning(sprintf(
+      "Diagnostic `%s` not found in this BulkModuleResult. Available: %s. Returning NULL.",
+      which,
+      if (length(diagnostics) == 0L) {
+        "<none>"
+      } else {
+        paste(names(diagnostics), collapse = ", ")
+      }
+    ))
+    return(NULL)
+  }
+  diagnostics[[which]]
 }
