@@ -31,6 +31,7 @@ pub use enrichment::r_gsea;
 pub use enrichment::r_gsva;
 pub use enrichment::r_mitch;
 pub use enrichment::r_oea;
+pub use enrichment::r_singscore;
 
 // graphs
 pub use graph::r_graph_clustering;
@@ -90,6 +91,7 @@ extendr_module! {
     use r_gsva;
     use r_mitch;
     use r_oea;
+    use r_singscore;
 
     // graphs
     use r_page_rank;

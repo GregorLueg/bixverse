@@ -987,7 +987,7 @@ expect_true(
 )
 
 expect_warning(
-  current = get_centroids(fast_cluster_res),
+  current = get_centroids_sc(fast_cluster_res),
   info = "fast clustering: warning without k-means data"
 )
 
@@ -1005,7 +1005,7 @@ fast_cluster_res <- fast_cluster_sc(
   .verbose = FALSE
 )
 
-centroids <- get_centroids(fast_cluster_res)
+centroids <- get_centroids_sc(fast_cluster_res)
 
 kmeans_clusters <- get_kmeans_clusters(fast_cluster_res)
 

@@ -132,23 +132,7 @@ get_gene_lengths.matrix <- function(
   return(gene_lengths)
 }
 
-#' @name get_gene_lengths.BulkCoExp
-#'
-#' @title Get gene set lengths for a BulkCoExp class
-#'
-#' @description
-#' Get gene lengths for a BulkCoExp object by extracting the count matrix
-#' and delegating to the matrix method.
-#'
-#' @param x An object of class `BulkCoExp`.
-#' @param species String. One of `c("human", "mouse", "rat")`.
-#' @param ... Additional parameters. Not in use atm.
-#'
-#' @returns Named numeric representing the gene lengths.
-#'
-#' @method get_gene_lengths BulkCoExp
-#'
-#' @keywords internal
+#' @rdname get_gene_lengths
 S7::method(get_gene_lengths, BulkCoExp) <- function(
   x,
   species = c("human", "mouse", "rat"),
@@ -452,7 +436,7 @@ hedges_g_dge <- function(
     combinations_to_test <- purrr::map_vec(
       contrast_list,
       ~ {
-        x = stringr::str_split(.x, pattern = "-")
+        x <- stringr::str_split(.x, pattern = "-")
       }
     )
   }

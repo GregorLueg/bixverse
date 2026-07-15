@@ -743,7 +743,7 @@ analyses.
 
 ```{r}
 #| label: get nmf w matrix (stabilised)
-get_w(t_cell_nmf_results_stabilised)
+get_w(t_cell_nmf_results_stabilised)[1:5, 1:5]
 ```
 
 The H matrices are kept per-run, since each random initialisation gives a
@@ -762,7 +762,6 @@ point for a single-run analysis. `get_best_run()` returns it as an
 ```{r}
 #| label: get stabilised nmf best run
 best_run <- get_best_run(t_cell_nmf_results_stabilised)
-best_run
 ```
 
 ### Downstream analysis

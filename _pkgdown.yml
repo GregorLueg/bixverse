@@ -28,14 +28,21 @@ navbar:
     tutorials:
       text: Tutorials
       menu:
+        - text: "Gene set enrichment and pathway activity methods"
         - text: Gene Set Enrichment Methods
           href: articles/gse_methods.html
         - text: Pathway activity functions
           href: articles/pathway_activity.html
+        - text: -------
+        - text: "Network methods"
         - text: Genetic diffusion and community detections
           href: articles/genetic_diffusions.html
+        - text: -------
+        - text: "Co-expression module detection methods"
         - text: Contrastive PCA
           href: articles/cpca.html
+        - text: -------
+        - text: "Ontologies"
         - text: Semantic similarities on ontologies
           href: articles/ontologies.html
     singlecells:
@@ -68,15 +75,18 @@ navbar:
           href: articles/multi_modal_single_cells.html
         - text: -------
         - text: "Others"
-        - text: Analysing big data on a powerful laptop (example)
+        - text: Analysing 1 million cells on a laptop
           href: articles/single_cell_big_data.html
         - text: Plotting helpers
           href: articles/single_cell_visualisation.html
     articles:
       text: Articles
       menu:
+        - text: "Rust to R"
         - text: Bixverse R <> Rust interface
           href: articles/rust_functions.html
+        - text: -------
+        - text: "Package design"
         - text: Technical design choices for single cell
           href: articles/design_single_cell.html
     github:
@@ -139,6 +149,9 @@ reference:
       - calc_mitch
       - calc_gsva
       - calc_ssgsea
+      - calc_singscore
+      - calc_singscore_multi
+      - calc_singscore_rank
       - params_gsea
       - params_gsva
       - params_ssgsea
@@ -504,7 +517,7 @@ reference:
       Additional helpers for specific small sub classes used in single cell.
     contents:
       - calc_knn_metrics
-      - get_centroids
+      - get_centroids_sc
       - get_feature_mat
       - get_kmeans_clusters
       - get_knn_dist
@@ -530,6 +543,7 @@ reference:
       - calc_sc_type_scores
       - score_clusters
       - params_symphony_map
+
   # Single cell ligand receptor
   - title: Single cell ligand receptor 
     desc: 
@@ -561,7 +575,7 @@ reference:
       - extract_gene_violin_data
   
   # Different statistical functions
-  - title: Stastical functions
+  - title: Statistical functions
     desc: 
       Any types of functions that help with statistics
     contents:
@@ -700,6 +714,8 @@ reference:
       - rs_prepare_whitening
       - rs_random_svd
       - rs_range_norm
+      - rs_rank_matrix_col
+      - rs_rank_matrix_col_stable
       - rs_rbf_function
       - rs_rbf_function_mat
       - rs_rbh_cor
@@ -710,6 +726,9 @@ reference:
       - rs_set_similarity
       - rs_set_similarity_list
       - rs_set_similarity_list2
+      - rs_singscore_multi
+      - rs_singscore_permutation_test
+      - rs_singscore_single
       - rs_snf
       - rs_sparse_dict_dgrdl
       - rs_sparse_dict_dgrdl_grid_search
