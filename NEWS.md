@@ -1,3 +1,9 @@
+# bixverse 0.4.4
+
+## Features
+
+* Improved cell quality control functions.
+
 # bixverse 0.4.3
 
 ## Fix

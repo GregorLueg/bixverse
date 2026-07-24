@@ -1264,7 +1264,8 @@ S7::method(calculate_pca_sc, SingleCells) <- function(
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
-  if ((length(get_hvg(object)) == 0) && is.null(hvg)) {
+  # dual warning - not needed
+  if ((length(suppressWarnings(get_hvg(object))) == 0) && is.null(hvg)) {
     warning(paste(
       "No HVGs identified in the object nor provided.",
       "Please run find_hvg_sc() or provide the indices of the HVG",
