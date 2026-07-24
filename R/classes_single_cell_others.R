@@ -115,27 +115,7 @@ get_knn_dist.SingleCellNearestNeighbour <- function(x, ...) {
   return(x[["dist"]])
 }
 
-#### converstion ---------------------------------------------------------------
-
-#' @export
-print.SingleCellNearestNeighbour <- function(x, ...) {
-  cat(
-    sprintf("SingleCellNearestNeighbour: %i cells, k = %i\n", x$n, x$k),
-    sprintf("  Distance metric: %s\n", x$dist_metric),
-    sprintf(
-      "  Index range: [%i, %i]\n",
-      min(x$indices, na.rm = TRUE),
-      max(x$indices, na.rm = TRUE)
-    ),
-    sprintf(
-      "  Distance range: [%.4f, %.4f]\n",
-      min(x$dist, na.rm = TRUE),
-      max(x$dist, na.rm = TRUE)
-    ),
-    sep = ""
-  )
-  invisible(x)
-}
+#### conversion ----------------------------------------------------------------
 
 #' Convert SingleCellNearestNeighbour to manifoldsR NearestNeighbours
 #'
