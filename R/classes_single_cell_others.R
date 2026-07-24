@@ -163,17 +163,91 @@ sc_knn_to_nearest_neighbours <- function(x) {
 
 ## single cell qc results ------------------------------------------------------
 
-### R primitives ---------------------------------------------------------------
+### modifiers ------------------------------------------------------------------
 
-#' Print a CellQc object
+#' Rescue MAD-flagged cells that fall within safe bounds
+#'
+#' For each metric in `rescue_thresholds`, cells whose value is within
+#' `[lower, upper]` are un-flagged from MAD. Hard-threshold flags are not
+#' cleared; a warning is issued when overlaps occur. Calling `rescue_cells`
+#' overwrites any prior rescue set for the metrics named.
 #'
 #' @param x A `CellQc` object.
-#' @param ... Ignored.
+#' @param rescue_thresholds Named list of numeric vectors with `lower`
+#' and/or `upper`.
 #'
-#' @return Invisible `x`.
+#' @return Updated `CellQc`.
 #'
 #' @export
+rescue_cells <- function(x, rescue_thresholds) {
+  checkmate::assertClass(x, "CellQc")
+  checkmate::assertList(rescue_thresholds, types = "numeric", names = "unique")
+  checkmate::assertNames(
+    names(rescue_thresholds),
+    subset.of = colnames(x$outlier_mat)
+  )
+  if (length(x$per_metric) == 0L) {
+    stop("No MAD results to rescue from.")
+  }
+
+  for (nm in names(rescue_thresholds)) {
+    within <- .within_bounds(x$metrics[[nm]], rescue_thresholds[[nm]])
+    x$rescued_mat[, nm] <- x$outlier_mat[, nm] & within
+    overlap <- x$rescued_mat[, nm] & x$hard_mat[, nm]
+    if (any(overlap)) {
+      warning(sprintf(
+        "`%s`: %d cell(s) match rescue bounds but remain flagged by hard threshold.",
+        nm,
+        sum(overlap)
+      ))
+    }
+  }
+
+  x$combined <- rowSums((x$outlier_mat & !x$rescued_mat) | x$hard_mat) > 0
+  x
+}
+
+#' Add hard-threshold flags to a CellQc object
 #'
+#' Unions new hard flags with existing ones per metric. Set `reset = TRUE`
+#' to clear existing hard flags first.
+#'
+#' @param x A `CellQc` object.
+#' @param hard_thresholds Named list. See `run_cell_qc`.
+#' @param reset Logical. Clear existing hard flags before applying.
+#'
+#' @return Updated `CellQc`.
+#'
+#' @export
+flag_cells <- function(x, hard_thresholds, reset = FALSE) {
+  checkmate::assertClass(x, "CellQc")
+  checkmate::assertList(hard_thresholds, types = "numeric", names = "unique")
+  checkmate::assertNames(
+    names(hard_thresholds),
+    subset.of = colnames(x$hard_mat)
+  )
+  checkmate::qassert(reset, "B1")
+
+  if (reset) {
+    x$hard_mat[] <- FALSE
+    x$hard_thresholds <- NULL
+  }
+
+  for (nm in names(hard_thresholds)) {
+    new_hits <- !.within_bounds(x$metrics[[nm]], hard_thresholds[[nm]])
+    x$hard_mat[, nm] <- x$hard_mat[, nm] | new_hits
+  }
+
+  existing <- if (is.null(x$hard_thresholds)) list() else x$hard_thresholds
+  x$hard_thresholds <- utils::modifyList(existing, hard_thresholds)
+
+  x$combined <- rowSums((x$outlier_mat & !x$rescued_mat) | x$hard_mat) > 0
+  x
+}
+
+### R primitives ---------------------------------------------------------------
+
+#' @export
 #' @keywords internal
 print.CellQc <- function(x, ...) {
   n_cells <- length(x$combined)
@@ -181,6 +255,7 @@ print.CellQc <- function(x, ...) {
   metric_names <- colnames(x$outlier_mat)
   group_levels <- unique(x$groups)
   grouped <- !(length(group_levels) == 1L && group_levels == "all")
+  has_mad <- length(x$per_metric) > 0L
 
   cat(sprintf(
     "CellQc: %d cells, %d outliers (%.1f%%)\n",
@@ -194,25 +269,56 @@ print.CellQc <- function(x, ...) {
   cat("Metrics:\n")
 
   for (nm in metric_names) {
-    n <- sum(x$outlier_mat[, nm])
-    cat(sprintf("  - %s: %d outliers\n", nm, n))
-    for (g in group_levels) {
-      thresholds <- x$per_metric[[nm]]$metrics[[g]]
-      parts <- character()
-      if (!is.na(thresholds["lower_threshold"])) {
-        parts <- c(
-          parts,
-          sprintf("lower = %.2f", thresholds["lower_threshold"])
-        )
+    n_mad <- sum(x$outlier_mat[, nm])
+    n_hard <- sum(x$hard_mat[, nm])
+    n_rescued <- sum(x$rescued_mat[, nm])
+    n_final <- sum(
+      (x$outlier_mat[, nm] & !x$rescued_mat[, nm]) | x$hard_mat[, nm]
+    )
+
+    parts <- character()
+    if (has_mad) {
+      parts <- c(parts, sprintf("mad = %d", n_mad))
+    }
+    if (n_rescued > 0L) {
+      parts <- c(parts, sprintf("rescued = %d", n_rescued))
+    }
+    if (!is.null(x$hard_thresholds[[nm]])) {
+      parts <- c(parts, sprintf("hard = %d", n_hard))
+    }
+    breakdown <- if (length(parts) > 0L) {
+      sprintf(" (%s)", paste(parts, collapse = ", "))
+    } else {
+      ""
+    }
+
+    cat(sprintf("  - %s: %d outliers%s\n", nm, n_final, breakdown))
+
+    if (has_mad) {
+      for (g in group_levels) {
+        thresholds <- x$per_metric[[nm]]$metrics[[g]]
+        tp <- character()
+        if (!is.na(thresholds["lower_threshold"])) {
+          tp <- c(tp, sprintf("lower = %.2f", thresholds["lower_threshold"]))
+        }
+        if (!is.na(thresholds["upper_threshold"])) {
+          tp <- c(tp, sprintf("upper = %.2f", thresholds["upper_threshold"]))
+        }
+        prefix <- if (grouped) sprintf("    MAD [%s] ", g) else "    MAD "
+        cat(sprintf("%s%s\n", prefix, paste(tp, collapse = ", ")))
       }
-      if (!is.na(thresholds["upper_threshold"])) {
-        parts <- c(
-          parts,
-          sprintf("upper = %.2f", thresholds["upper_threshold"])
-        )
+    }
+
+    hb <- x$hard_thresholds[[nm]]
+    if (!is.null(hb)) {
+      hp <- character()
+      if ("lower" %in% names(hb)) {
+        hp <- c(hp, sprintf("lower = %.2f", hb[["lower"]]))
       }
-      prefix <- if (grouped) sprintf("    [%s] ", g) else "    "
-      cat(sprintf("%s%s\n", prefix, paste(parts, collapse = ", ")))
+      if ("upper" %in% names(hb)) {
+        hp <- c(hp, sprintf("upper = %.2f", hb[["upper"]]))
+      }
+      cat(sprintf("    Hard %s\n", paste(hp, collapse = ", ")))
     }
   }
 
@@ -237,30 +343,25 @@ print.CellQc <- function(x, ...) {
 #'
 #' @export
 get_data.CellQc <- function(x, ...) {
-  # checks
   checkmate::assertClass(x, "CellQc")
 
-  # function body
-  obs_dt <- data.table::as.data.table(
-    x$metrics
-  )[, `:=`(
+  obs_dt <- data.table::as.data.table(x$metrics)[, `:=`(
     cell_idx = x$cell_idx,
     grp = x$groups,
-    global_outlier = apply(x$outlier_mat, 1, FUN = function(x) {
-      any(x)
-    })
+    global_outlier = x$combined
   )]
 
-  outlier <- data.table::as.data.table(x$outlier_mat)
-  colnames(outlier) <- sprintf("%s_is_outlier", colnames(outlier))
+  metric_names <- colnames(x$outlier_mat)
+  for (nm in metric_names) {
+    final <- (x$outlier_mat[, nm] & !x$rescued_mat[, nm]) | x$hard_mat[, nm]
+    obs_dt[, sprintf("%s_is_outlier", nm) := final]
+    obs_dt[, sprintf("%s_mad_outlier", nm) := x$outlier_mat[, nm]]
+    obs_dt[, sprintf("%s_hard_outlier", nm) := x$hard_mat[, nm]]
+    obs_dt[, sprintf("%s_rescued", nm) := x$rescued_mat[, nm]]
+  }
 
-  obs_dt <- cbind(obs_dt, outlier)
-
-  obs_dt <- .add_is_obs_attr(obs_dt)
-
-  return(obs_dt)
+  .add_is_obs_attr(obs_dt)
 }
-
 
 ## list results ----------------------------------------------------------------
 
