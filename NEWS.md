@@ -3,6 +3,7 @@
 ## Features
 
 * Improved cell quality control functions.
+* Refactor
 
 # bixverse 0.4.3
 

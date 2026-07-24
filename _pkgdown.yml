@@ -41,6 +41,8 @@ navbar:
         - text: "Co-expression module detection methods"
         - text: Contrastive PCA
           href: articles/cpca.html
+        - text: Bulk co-expression modules
+          href: articles/bulk_coexpression_modules.html
         - text: -------
         - text: "Ontologies"
         - text: Semantic similarities on ontologies
@@ -107,6 +109,7 @@ articles:
       - pathway_activity
       - genetic_diffusions
       - cpca
+      - bulk_coexpression_modules
       - ontologies
   - title: Single Cells
     navbar: Single Cells

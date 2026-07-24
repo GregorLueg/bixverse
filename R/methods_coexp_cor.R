@@ -43,12 +43,7 @@ S7::method(cor_module_processing, BulkCoExp) <- function(
   checkmate::qassert(.verbose, "B1")
 
   # Function body
-  if (purrr::is_empty(S7::prop(object, "processed_data")[["processed_data"]])) {
-    warning("No pre-processed data found. Defaulting to the raw data.")
-    target_mat <- S7::prop(object, "raw_data")
-  } else {
-    target_mat <- S7::prop(object, "processed_data")[["processed_data"]]
-  }
+  target_mat <- .get_bulk_target_mat(object, .verbose = .verbose)
 
   spearman <- if (cor_method == "pearson") {
     if (.verbose) {
@@ -135,17 +130,12 @@ S7::method(cor_module_tom, BulkCoExp) <- function(
   checkmate::qassert(.verbose, "B1")
 
   # early return
-  detection_method <- S7::prop(object, "params")[["detection_method"]]
-  if (
-    is.null(detection_method) ||
-      detection_method != "correlation-based"
-  ) {
-    warning(
-      paste(
-        "This class does not seem to be set for correlation-based module",
-        "detection. Returning class as is."
-      )
-    )
+  detection_method <- .assert_bulk_detection_method(
+    object,
+    "correlation-based",
+    "correlation-based"
+  )
+  if (is.null(detection_method)) {
     return(object)
   }
 
@@ -222,12 +212,7 @@ S7::method(diffcor_module_processing, BulkCoExp) <- function(
   checkmate::qassert(.verbose, "B1")
 
   # Function
-  if (purrr::is_empty(S7::prop(object, "processed_data")[["processed_data"]])) {
-    warning("No pre-processed data found. Defaulting to the raw data.")
-    target_mat <- S7::prop(object, "raw_data")
-  } else {
-    target_mat <- S7::prop(object, "processed_data")[["processed_data"]]
-  }
+  target_mat <- .get_bulk_target_mat(object, .verbose = .verbose)
 
   spearman <- if (cor_method == "pearson") {
     if (.verbose) {
@@ -256,7 +241,7 @@ S7::method(diffcor_module_processing, BulkCoExp) <- function(
           "A total of %i shared features were",
           length(shared_features)
         ),
-        "identified and used for differential correlation.",
+        "identified and used for differential correlation."
       )
     )
   }
@@ -353,19 +338,13 @@ S7::method(cor_module_check_epsilon, BulkCoExp) <- function(
   checkmate::qassert(.verbose, "B1")
   checkmate::assertChoice(rbf_func, c('bump', 'gaussian', 'inverse_quadratic'))
 
-  detection_method <- S7::prop(object, "params")[["detection_method"]]
-
   # Early return
-  if (
-    is.null(detection_method) ||
-      detection_method != "correlation-based"
-  ) {
-    warning(
-      paste(
-        "This class does not seem to be set for correlation-based module",
-        "detection. Returning class as is.",
-      )
-    )
+  detection_method <- .assert_bulk_detection_method(
+    object,
+    "correlation-based",
+    "correlation-based"
+  )
+  if (is.null(detection_method)) {
     return(object)
   }
 
@@ -498,20 +477,13 @@ S7::method(cor_module_graph_check_res, BulkCoExp) <- function(
   checkmate::qassert(max_workers, c("I1", "0"))
   checkmate::qassert(.verbose, "B1")
 
-  detection_method <- S7::prop(object, "params")[["detection_method"]]
-
   # Early return
-  if (
-    is.null(detection_method) ||
-      !detection_method %in%
-        c("correlation-based", "differential correlation-based")
-  ) {
-    warning(
-      paste(
-        "This class does not seem to be set for correlation-based module",
-        "detection. Returning class as is."
-      )
-    )
+  detection_method <- .assert_bulk_detection_method(
+    object,
+    c("correlation-based", "differential correlation-based"),
+    "correlation-based"
+  )
+  if (is.null(detection_method)) {
     return(object)
   }
 
@@ -747,20 +719,13 @@ S7::method(cor_module_graph_final_modules, BulkCoExp) <- function(
   checkmate::qassert(.max_iters, "I1")
   checkmate::qassert(.verbose, "B1")
 
-  detection_method <- S7::prop(object, "params")[["detection_method"]]
-
   # Early return
-  if (
-    is.null(detection_method) &&
-      detection_method %in%
-        c("correlation-based", "differential correlation-based")
-  ) {
-    warning(
-      paste(
-        "This class does not seem to be set for correlation-based module",
-        "detection. Returning class as is."
-      )
-    )
+  detection_method <- .assert_bulk_detection_method(
+    object,
+    c("correlation-based", "differential correlation-based"),
+    "correlation-based"
+  )
+  if (is.null(detection_method)) {
     return(object)
   }
 
@@ -891,14 +856,14 @@ S7::method(cor_module_graph_final_modules, BulkCoExp) <- function(
           cluster_id
         ]
 
-        good_clusters <- subclusters[cluster_id %in% clusters_small_enough] %>%
-          dplyr::mutate(
-            cluster_id = paste0(
-              i,
-              paste(rep("sub", l), collapse = ""),
-              cluster_id
-            )
+        good_clusters <- subclusters[cluster_id %in% clusters_small_enough]
+        good_clusters[,
+          cluster_id := paste0(
+            i,
+            paste(rep("sub", l), collapse = ""),
+            cluster_id
           )
+        ]
 
         finalised_clusters <- rbind(finalised_clusters, good_clusters)
 
@@ -948,8 +913,30 @@ S7::method(cor_module_graph_final_modules, BulkCoExp) <- function(
     max_iters = .max_iters
   )
 
-  S7::prop(object, "final_results") <- final_clusters_filtered
   S7::prop(object, "params")[["module_final_gen"]] <- results_param
+
+  # build the BulkModuleResult
+  modules_dt <- data.table::copy(final_clusters_filtered)
+  data.table::setnames(
+    modules_dt,
+    old = c("node_id", "cluster_id"),
+    new = c("gene", "module_id")
+  )
+
+  S7::prop(object, "final_results") <- new_bulk_module_result(
+    modules = modules_dt,
+    factors = list(),
+    method = detection_method,
+    params = S7::prop(object, "params"),
+    diagnostics = list(
+      resolution_used = final_resolution,
+      seed = random_seed,
+      min_size = min_size,
+      max_size = max_size,
+      max_iters = .max_iters,
+      n_modules = length(unique(modules_dt$module_id))
+    )
+  )
 
   return(object)
 }
@@ -1031,19 +1018,13 @@ S7::method(cor_module_coremo_clustering, BulkCoExp) <- function(
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, "B1")
 
-  detection_method <- S7::prop(object, "params")[["detection_method"]]
-
   # Early return
-  if (
-    is.null(detection_method) ||
-      detection_method != "correlation-based"
-  ) {
-    warning(
-      paste(
-        "This class does not seem to be set for correlation-based module",
-        "detection. Returning class as is."
-      )
-    )
+  detection_method <- .assert_bulk_detection_method(
+    object,
+    "correlation-based",
+    "correlation-based"
+  )
+  if (is.null(detection_method)) {
     return(object)
   }
 
@@ -1215,12 +1196,7 @@ S7::method(cor_module_coremo_stability, BulkCoExp) <- function(
     ))
     return(object)
   }
-  if (purrr::is_empty(S7::prop(object, "processed_data")[["processed_data"]])) {
-    warning("No pre-processed data found. Defaulting to the raw data.")
-    data_mat <- S7::prop(object, "raw_data")
-  } else {
-    data_mat <- S7::prop(object, "processed_data")[["processed_data"]]
-  }
+  data_mat <- .get_bulk_target_mat(object, .verbose = .verbose)
 
   # pull out the needed parameters
   coremo_params <- S7::prop(object, "params")[["coremo"]]
@@ -1285,7 +1261,7 @@ S7::method(cor_module_coremo_stability, BulkCoExp) <- function(
 
   if (.verbose) {
     message(
-      "Assessing stability of gene membership within leave-one-out resamling."
+      "Assessing stability of gene membership within leave-one-out resampling."
     )
   }
 
@@ -1529,6 +1505,34 @@ S7::method(cor_module_coremo_eigengene, BulkCoExp) <- function(
 
   S7::prop(object, "outputs")[["final_modules"]] <- module_data
   S7::prop(object, "outputs")[["eigengene_sample"]] <- eigengene_samples_dt
+
+  # build the BulkModuleResult
+  modules_dt <- data.table::copy(module_data)
+  data.table::setnames(modules_dt, old = "cluster_id", new = "module_id")
+  if ("cor" %in% names(modules_dt)) {
+    data.table::setnames(modules_dt, old = "cor", new = "eigengene_cor")
+  }
+  keep_cols <- intersect(
+    c("gene", "module_id", "sign", "stability", "eigengene_cor"),
+    names(modules_dt)
+  )
+  modules_dt <- modules_dt[, ..keep_cols]
+
+  sample_names <- eigengene_samples_dt$sample_name
+  mat_cols <- setdiff(names(eigengene_samples_dt), "sample_name")
+  module_eigengenes_mat <- as.matrix(eigengene_samples_dt[, ..mat_cols])
+  rownames(module_eigengenes_mat) <- sample_names
+
+  S7::prop(object, "final_results") <- new_bulk_module_result(
+    modules = modules_dt,
+    factors = list(module_eigengenes = module_eigengenes_mat),
+    method = "correlation-based",
+    params = S7::prop(object, "params"),
+    diagnostics = list(
+      n_modules = length(unique(modules_dt$module_id)),
+      n_genes_assigned = nrow(modules_dt)
+    )
+  )
 
   return(object)
 }
@@ -2112,6 +2116,7 @@ S7::method(plot_optimal_cuts, BulkCoExp) <- function(object) {
       "Did you run cor_module_coremo_clustering()?",
       "Returning NULL."
     ))
+    return(invisible(NULL))
   }
 
   data.table::setorder(plot_df, gradient_change)

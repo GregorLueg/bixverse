@@ -50,12 +50,7 @@ S7::method(ica_processing, BulkCoExp) <- function(
   checkmate::qassert(.verbose, "B1")
 
   # Function body
-  if (purrr::is_empty(S7::prop(object, "processed_data")[["processed_data"]])) {
-    warning("No pre-processed data found. Defaulting to the raw data")
-    target_mat <- S7::prop(object, "raw_data")
-  } else {
-    target_mat <- S7::prop(object, "processed_data")[["processed_data"]]
-  }
+  target_mat <- .get_bulk_target_mat(object, .verbose = .verbose)
 
   # Whiten the data
   if (.verbose) {
@@ -79,7 +74,7 @@ S7::method(ica_processing, BulkCoExp) <- function(
 
   S7::prop(object, "processed_data")[["X1"]] <- X1
   S7::prop(object, "processed_data")[["K"]] <- K
-  S7::prop(object, "params")["detection_method"] <- "ICA-based"
+  S7::prop(object, "params")[["detection_method"]] <- "ICA-based"
 
   return(object)
 }
@@ -180,19 +175,13 @@ S7::method(ica_evaluate_comp, BulkCoExp) <- function(
   assertIcaIterParams(iter_params)
   checkmate::qassert(.verbose, "B1")
 
-  detection_method <- S7::prop(object, "params")[["detection_method"]]
-
   # Early return
-  if (
-    is.null(detection_method) &&
-      detection_method != "ICA-based"
-  ) {
-    warning(
-      paste(
-        "This class does not seem to be set for ICA-based module detection",
-        "Returning class as is."
-      )
-    )
+  detection_method <- .assert_bulk_detection_method(
+    object,
+    "ICA-based",
+    "ICA-based"
+  )
+  if (is.null(detection_method)) {
     return(object)
   }
 
@@ -393,7 +382,7 @@ S7::method(ica_evaluate_comp, BulkCoExp) <- function(
 #' a product of the median stability, orthogonality and proportion of convergence
 #' and add these info to the object. Should the loess function raise a warning
 #' (e.g., singularity), the class will be returned as is and manual
-#' determination of optimal ncomp is warrented. Additionally, you have the
+#' determination of optimal ncomp is warranted. Additionally, you have the
 #' option to plot the loess function for additional control over the span
 #' parameter (defaults to `TRUE`).
 #'
@@ -438,6 +427,7 @@ S7::method(ica_optimal_ncomp, BulkCoExp) <- function(
   # checks
   checkmate::assertClass(object, "bixverse::BulkCoExp")
   checkmate::qassert(span, "N1[0.1, 1.0]")
+  checkmate::qassert(show_plot, "B1")
   checkmate::qassert(.verbose, "B1")
 
   # function
@@ -612,19 +602,13 @@ S7::method(ica_stabilised_results, BulkCoExp) <- function(
   checkmate::qassert(consistent_sign, "B1")
   checkmate::qassert(.verbose, "B1")
 
-  detection_method <- S7::prop(object, "params")[["detection_method"]]
-
   # Early return
-  if (
-    is.null(detection_method) &&
-      detection_method != "ICA-based"
-  ) {
-    warning(
-      paste(
-        "This class does not seem to be set for ICA-based module detection",
-        "Returning class as is."
-      )
-    )
+  detection_method <- .assert_bulk_detection_method(
+    object,
+    "ICA-based",
+    "ICA-based"
+  )
+  if (is.null(detection_method)) {
     return(object)
   }
 
@@ -669,7 +653,7 @@ S7::method(ica_stabilised_results, BulkCoExp) <- function(
           ica_params = ica_params
         ),
         rs_ica_iters_cv(
-          x = X_raw,
+          x = X,
           no_comp = no_comp,
           no_folds = folds,
           no_random_init = random_init,
@@ -706,8 +690,6 @@ S7::method(ica_stabilised_results, BulkCoExp) <- function(
   ) %>%
     data.table::setDT()
 
-  result <- list(S = S, A = A, ica_meta = ica_meta)
-
   result_params <- list(
     no_comp = no_comp,
     ica_type = ica_type,
@@ -718,8 +700,40 @@ S7::method(ica_stabilised_results, BulkCoExp) <- function(
     converged = converged
   )
 
-  S7::prop(object, "final_results") <- result
   S7::prop(object, "params")[["ica_final_gen"]] <- result_params
+
+  # derive modules from |S| loadings. S is k x gene, transpose to gene x k
+  # then assign each gene to argmax abs component.
+  gene_loadings <- t(S)
+  min_loading <- 0
+  module_idx <- apply(abs(gene_loadings), 1L, which.max)
+  gene_names <- rownames(gene_loadings)
+  comp_names <- colnames(gene_loadings)
+  loading_vals <- gene_loadings[cbind(seq_along(module_idx), module_idx)]
+  keep <- abs(loading_vals) > min_loading
+
+  modules_dt <- data.table::data.table(
+    gene = gene_names[keep],
+    module_id = comp_names[module_idx[keep]],
+    loading = loading_vals[keep],
+    sign = ifelse(loading_vals[keep] >= 0, "pos", "neg")
+  )
+
+  S7::prop(object, "final_results") <- new_bulk_module_result(
+    modules = modules_dt,
+    factors = list(
+      gene_loadings = gene_loadings,
+      sample_activity = A
+    ),
+    method = "ICA-based",
+    params = S7::prop(object, "params"),
+    diagnostics = list(
+      ica_meta = ica_meta,
+      stability_scores = stability_scores,
+      converged = converged,
+      no_comp = no_comp
+    )
+  )
 
   return(object)
 }
@@ -1029,14 +1043,10 @@ component_mutual_information <- function(centrotype) {
 #'
 #' @keywords internal
 flip_ica_loading_signs <- function(x) {
-  feature_sign <- sign(x)
-  max_val_sign <- feature_sign[which(abs(x) == max(abs(x)))]
-  y <- if (max_val_sign == 1) {
-    x
-  } else {
-    -x
-  }
-  y
+  # which.max() returns the first index at ties; guards against the
+  # length > 1 warning that `if (multi_index_vector == 1)` would emit.
+  max_val_sign <- sign(x[which.max(abs(x))])
+  if (max_val_sign == 1) x else -x
 }
 
 ## getters ---------------------------------------------------------------------

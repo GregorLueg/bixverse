@@ -175,7 +175,7 @@ AnnDataParser <- R6::R6Class(
     h5_path = NULL,
     # Returns the index stored for the samples
     get_obs_index = function() {
-      obs_index = private$h5_content[
+      obs_index <- private$h5_content[
         group == "/obs" & otype == "H5I_DATASET"
       ] %>%
         .[, path := paste(group, name, sep = "/")] %>%
@@ -191,7 +191,7 @@ AnnDataParser <- R6::R6Class(
     },
     # Returns the index stored for the variables
     get_var_index = function() {
-      var_index = private$h5_content[
+      var_index <- private$h5_content[
         group == "/var" & otype == "H5I_DATASET"
       ] %>%
         .[, path := paste(group, name, sep = "/")] %>%

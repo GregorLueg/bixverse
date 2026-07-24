@@ -1,0 +1,440 @@
+---
+title: "Bulk co-expression modules"
+date: last-modified
+date-format: YYYY-MM-DD
+vignette: >
+  %\VignetteIndexEntry{Bulk co-expression modules}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+knitr:
+  opts_chunk:
+    collapse: true
+    comment: '#>'
+author:
+  - name: Gregor Lueg
+---
+
+## Intro
+
+Bulk co-expression module detection tries to find groups of genes that vary
+together across samples. `bixverse` ships five approaches for this on a shared
+`BulkCoExp` class:
+
+- **CoReMo** ([Srivastava, et al.](https://www.nature.com/articles/s41467-018-06008-4):
+  hierarchical clustering on an RBF-transformed correlation matrix. Fast,
+  deterministic, gives you signed modules and per-sample eigengenes.
+- **Graph-based Leiden** ([Barrio-Hernandez, et al.](https://www.nature.com/articles/s41588-023-01327-9))
+  — build a sparse affinity graph from correlations, then cluster with Leiden.
+  Great when you want tunable resolution and hierarchical sub-clustering.
+- **ICA** — independent component analysis with stability across random
+  initialisations. Each component picks up an orthogonal signal; genes with
+  the largest absolute loadings define the module.
+- **DGRDL** ([Pan, et al.](https://doi.org/10.1016/j.cels.2022.09.005))
+  — dual graph-regularised dictionary learning. Sparse decomposition
+  regularised by feature- and sample-side Laplacians.
+- **NMF (HALS)** — non-negative matrix factorisation with hierarchical
+  alternating least squares. Non-negative loadings give a natural
+  "parts-based" module interpretation and per-sample module activity.
+
+None of these is uniformly best. This vignette walks through all five on the
+same synthetic dataset with planted ground-truth modules, so you can see the
+inputs, the outputs, and how well each recovers the true structure.
+
+```{r}
+#| label: setup
+library(bixverse)
+library(data.table)
+library(ggplot2)
+```
+
+## Data
+
+`synthetic_bulk_cor_matrix()` generates a bulk RNA-seq count matrix with
+heteroskedasticity plus a user-specified number of planted correlation modules.
+The `$module_data` table gives us ground truth for a recall/precision check
+at the end.
+
+```{r}
+#| label: synth-data
+synth <- synthetic_bulk_cor_matrix(
+  num_samples = 100L,
+  num_genes = 1000L,
+  add_modules = TRUE,
+  module_sizes = c(100L, 100L, 100L),
+  seed = 123L
+)
+
+truth <- synth$module_data
+truth[membership > 0, .N, by = membership]
+```
+
+Three planted modules of 100 genes each. The remaining 700 genes have no
+structure. For the correlation-based methods we work in log-CPM space
+(negative values are fine); NMF needs non-negative input so we'll build a
+separate object from the raw counts for it.
+
+```{r}
+#| label: normalise
+norm_counts <- edgeR::cpm(synth$counts, log = TRUE)
+raw_cpm <- edgeR::cpm(synth$counts, log = FALSE)
+
+data_log <- t(norm_counts)
+data_raw <- t(raw_cpm)
+
+meta_data <- data.table(sample_id = rownames(data_log))
+
+coexp <- BulkCoExp(raw_data = data_log, meta_data = meta_data)
+coexp <- preprocess_bulk_coexp(coexp, hvg = 0.5, .verbose = FALSE)
+coexp
+```
+
+Preprocessing keeps the top 50% of genes by MAD — 500 features carried through
+to the module-detection methods below. The `BulkCoExp` object mutates in place
+as each method runs, so we'll make copies for each branch.
+
+## Method 1: CoReMo
+
+CoReMo shrinks weak correlations via an RBF, hierarchically clusters the
+result, and picks the cut that maximises the within-module weighted median
+R². The epsilon parameter controls how aggressively the RBF suppresses weak
+correlations — you usually tune it against a scale-free topology fit.
+
+```{r}
+#| label: coremo-workflow
+coexp_coremo <- cor_module_processing(
+  coexp,
+  cor_method = "spearman",
+  .verbose = TRUE
+)
+
+coexp_coremo@processed_data$correlation_res$get_data_table() %$% hist(sim)
+
+coexp_coremo <- cor_module_check_epsilon(
+  coexp_coremo,
+  rbf_func = "gaussian",
+  .verbose = TRUE
+)
+
+plot_epsilon_res(coexp_coremo)
+
+epsilon_pick <- get_epsilon_res(coexp_coremo)[r2_vals == max(r2_vals), epsilon][
+  1
+]
+
+epsilon_pick <- 2
+
+coremo_params <- params_coremo(epsilon = epsilon_pick, rbf_func = "gaussian")
+
+coexp_coremo <- cor_module_coremo_clustering(
+  coexp_coremo,
+  coremo_params = coremo_params,
+  .verbose = TRUE
+)
+coexp_coremo <- cor_module_coremo_stability(coexp_coremo, .verbose = FALSE)
+coexp_coremo <- cor_module_coremo_cor_sign(coexp_coremo, .verbose = FALSE)
+coexp_coremo <- cor_module_coremo_eigengene(coexp_coremo, .verbose = FALSE)
+
+coremo_modules <- get_outputs(coexp_coremo)$final_modules
+coremo_modules[, .N, by = cluster_id]
+```
+
+Each module has a sign suffix (`_pos` / `_neg`) reflecting whether the
+member genes are positively or negatively correlated with the module
+eigengene, and a per-gene stability score from the leave-one-out resampling.
+
+## Method 2: Graph-based Leiden
+
+The Leiden branch keeps the same RBF-based affinity but treats the sparse
+non-zero pattern as an igraph. Modularity is optimised over a Leiden
+resolution grid; large communities can be sub-clustered recursively.
+
+```{r}
+#| label: leiden-workflow
+coexp_leiden <- cor_module_processing(
+  coexp,
+  cor_method = "spearman",
+  .verbose = TRUE
+)
+
+coexp_leiden <- cor_module_check_epsilon(
+  coexp_leiden,
+  rbf_func = "bump",
+  .verbose = TRUE
+)
+
+plot_epsilon_res(coexp_leiden)
+
+graph_params <- params_cor_graph(
+  epsilon = 2
+)
+
+coexp_leiden <- cor_module_graph_check_res(
+  coexp_leiden,
+  resolution_params = params_graph_resolution(),
+  graph_params = graph_params,
+  parallel = FALSE,
+  .verbose = TRUE
+)
+
+plot_resolution_res(coexp_leiden)
+
+coexp_leiden <- cor_module_graph_final_modules(
+  coexp_leiden,
+  min_size = 10L,
+  max_size = 500L,
+  subclustering = TRUE,
+  .graph_params = graph_params,
+  .verbose = FALSE
+)
+
+leiden_modules <- get_modules(get_results(coexp_leiden))
+leiden_modules[, .N, by = module_id]
+```
+
+## Method 3: ICA
+
+ICA whitens the data, then finds independent components across many random
+initialisations. The stability across restarts, the fraction of converged
+runs, and the mutual information between components combine into a
+`combined_score` — the loess inflection point of this score against the
+number of components gives you an "optimal" `ncomp`.
+
+```{r}
+#| label: ica-workflow
+coexp_ica <- ica_processing(coexp, fast_svd = TRUE, .verbose = FALSE)
+
+ncomp_params <- params_ica_ncomp(max_no_comp = 20L, steps = 5L)
+iter_params <- params_ica_randomisation(
+  cross_validate = FALSE,
+  random_init = 20L
+)
+
+coexp_ica <- ica_evaluate_comp(
+  coexp_ica,
+  ica_type = "logcosh",
+  iter_params = iter_params,
+  ncomp_params = ncomp_params,
+  .verbose = FALSE
+)
+
+coexp_ica <- ica_optimal_ncomp(
+  coexp_ica,
+  span = 0.4,
+  show_plot = FALSE,
+  .verbose = FALSE
+)
+coexp_ica <- ica_stabilised_results(
+  coexp_ica,
+  iter_params = iter_params,
+  .verbose = FALSE
+)
+
+ica_res <- get_results(coexp_ica)
+ica_gene_loadings <- get_factors(ica_res, which = "gene_loadings")
+dim(ica_gene_loadings)
+```
+
+`gene_loadings` is the `genes x k` matrix (transposed from the raw ICA `S`
+convention of `k x genes`). Module membership comes straight from
+`get_modules()`:
+
+```{r}
+#| label: ica-modules
+ica_modules <- get_modules(ica_res)
+ica_modules[, .N, by = module_id][order(-N)]
+```
+
+## Method 4: DGRDL
+
+DGRDL learns a sparse dictionary of features constrained by a k-nearest-
+neighbour Laplacian on both the feature and the sample side. The grid
+search helps pick `dict_size` and `k_neighbours` before the final fit.
+
+```{r}
+#| label: dgrdl-workflow
+coexp_dgrdl <- dgrdl_grid_search(
+  coexp,
+  neighbours_vec = c(5L, 10L),
+  dict_size_vec = c(4L, 6L),
+  seed_vec = c(1L, 2L),
+  dgrdl_params = params_dgrdl(),
+  .verbose = TRUE
+)
+
+grid_res <- get_grid_search_res(coexp_dgrdl)
+setorder(grid_res, reconstruction_errs)
+head(grid_res)
+```
+
+Pick the top row and fit the final DGRDL model:
+
+```{r}
+#| label: dgrdl-final
+top <- grid_res[1L]
+dgrdl_params_final <- params_dgrdl(
+  dict_size = as.integer(top$dict_size),
+  k_neighbours = as.integer(top$k_neighbours)
+)
+
+coexp_dgrdl <- dgrdl_result(
+  coexp_dgrdl,
+  dgrdl_params = dgrdl_params_final,
+  seed = as.integer(top$seed),
+  .verbose = FALSE
+)
+
+dgrdl_res <- get_results(coexp_dgrdl)
+dim(get_factors(dgrdl_res, which = "dictionary"))
+dim(get_factors(dgrdl_res, which = "loadings"))
+```
+
+`get_modules()` handles the "gene to strongest atom" assignment:
+
+```{r}
+#| label: dgrdl-modules
+dgrdl_modules <- get_modules(dgrdl_res)
+dgrdl_modules[, .N, by = module_id][order(-N)]
+```
+
+## Method 5: NMF (HALS)
+
+NMF needs non-negative input, so we build a fresh `BulkCoExp` from CPM
+(without the log transform). The single-run version is deterministic given
+NNDSVD initialisation; the stabilised version runs multiple random restarts
+and returns the run with the lowest reconstruction loss.
+
+```{r}
+#| label: nmf-workflow
+coexp_nmf <- BulkCoExp(raw_data = data_raw, meta_data = meta_data)
+coexp_nmf <- preprocess_bulk_coexp(coexp_nmf, hvg = 0.5, .verbose = FALSE)
+
+coexp_nmf <- nmf_bulk(
+  coexp_nmf,
+  k = 4L,
+  preprocessing = "none",
+  nmf_hals_params = params_nmf_hals(max_iter = 300L, tol = 1e-4),
+  seed = 42L,
+  .verbose = FALSE
+)
+
+nmf_modules <- get_nmf_modules(coexp_nmf)
+nmf_modules[, .N, by = module_id]
+```
+
+`get_nmf_gene_loadings()` gives the features x k matrix, and
+`get_nmf_sample_activity()` gives the samples x k matrix. A quick heatmap
+of gene loadings shows the parts-based decomposition:
+
+```{r}
+#| label: nmf-loadings-heatmap
+#| fig-cap: "NMF gene loadings, top 40 genes per component."
+loadings <- get_nmf_gene_loadings(coexp_nmf)
+
+top_genes <- unique(unlist(lapply(seq_len(ncol(loadings)), \(j) {
+  names(sort(loadings[, j], decreasing = TRUE))[1:40]
+})))
+
+heat_dt <- as.data.table(loadings[top_genes, , keep.rownames = "gene"])
+heat_long <- melt(
+  heat_dt,
+  id.vars = "gene",
+  variable.name = "component",
+  value.name = "loading"
+)
+
+ggplot(heat_long, aes(component, gene, fill = loading)) +
+  geom_tile() +
+  scale_fill_viridis_c() +
+  theme_minimal() +
+  theme(axis.text.y = element_blank(), axis.ticks.y = element_blank())
+```
+
+For a more robust fit, `stabilised_nmf_bulk()` runs several restarts and
+returns per-run losses via `get_nmf_stability()`.
+
+```{r}
+#| label: nmf-stabilised
+coexp_nmf_stab <- stabilised_nmf_bulk(
+  coexp_nmf,
+  k = 4L,
+  n_runs = 5L,
+  preprocessing = "none",
+  nmf_hals_params = params_nmf_hals(max_iter = 200L, tol = 1e-3),
+  seed = 7L,
+  .verbose = FALSE
+)
+
+stab <- get_nmf_stability(coexp_nmf_stab)
+stab
+```
+
+## Recovery of planted modules
+
+With ground truth in hand we can quantify how well each method recovered the
+three planted modules. For each method we compute the best-matching planted
+module per detected cluster (max Jaccard), then take the mean Jaccard across
+the three planted modules — a simple "recall" score.
+
+```{r}
+#| label: recovery
+truth_split <- split(truth$gene, truth$membership)
+truth_split <- truth_split[names(truth_split) != "0"]
+
+best_jaccard_per_planted <- function(assignments) {
+  # assignments: data.table with columns `gene`, `module_id`
+  detected <- split(assignments$gene, assignments$module_id)
+  purrr::map_dbl(truth_split, \(planted) {
+    max(purrr::map_dbl(detected, \(det) {
+      length(intersect(planted, det)) / length(union(planted, det))
+    }))
+  })
+}
+
+recovery <- data.table(
+  method = c("CoReMo", "Leiden", "ICA", "DGRDL", "NMF"),
+  score = c(
+    mean(best_jaccard_per_planted(
+      coremo_modules[, .(gene, module_id = cluster_id)]
+    )),
+    mean(best_jaccard_per_planted(leiden_modules)),
+    mean(best_jaccard_per_planted(ica_modules)),
+    mean(best_jaccard_per_planted(dgrdl_modules)),
+    mean(best_jaccard_per_planted(nmf_modules))
+  )
+)
+
+setorder(recovery, -score)
+recovery
+```
+
+```{r}
+#| label: recovery-plot
+#| fig-cap: "Mean best-Jaccard across the three planted modules."
+ggplot(recovery, aes(x = reorder(method, score), y = score)) +
+  geom_col(fill = "steelblue") +
+  coord_flip() +
+  ylim(0, 1) +
+  theme_minimal() +
+  xlab("") +
+  ylab("Mean best Jaccard vs. planted modules")
+```
+
+## Wrap-up
+
+Different methods suit different questions:
+
+- **CoReMo** if you want signed modules with per-sample eigengenes and a
+  fast, deterministic pipeline. Solid default for standard bulk data.
+- **Graph-based Leiden** if you want tunable resolution or hierarchical
+  sub-clustering. Handles very heterogeneous module sizes better than CoReMo.
+- **ICA** if you want components that decompose independent, potentially
+  overlapping biological signals. Interpretation is per-component, not
+  per-gene.
+- **DGRDL** if you want a sparse dictionary regularised by feature and sample
+  neighbour graphs. Sparsity is a tunable constraint, not a byproduct.
+- **NMF** if you want non-negative, parts-based decompositions with a natural
+  interpretation as "how strongly is each sample expressing each module".
+
+For a real dataset, run more than one and cross-check. The synthetic setup
+here has a clean signal to noise regime — real bulk data (GTEx, TCGA,
+recount3) will happily show larger gaps between methods.

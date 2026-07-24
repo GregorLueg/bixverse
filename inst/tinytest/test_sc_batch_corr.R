@@ -62,7 +62,7 @@ single_cell_test_data.strong_batch_effect <- generate_single_cell_test_data(
 )
 
 # generate QC parameters
-sc_qc_param = params_sc_min_quality(
+sc_qc_param <- params_sc_min_quality(
   min_unique_genes = min_genes_exp,
   min_lib_size = min_lib_size,
   min_cells = min_cells_exp
@@ -706,7 +706,7 @@ expect_true(
 #   - neighbours_corrected: count of same-type neighbours per cell (corrected)
 assess_fast_mnn_impact <- function(object) {
   # remove any knns and regenerate
-  object = find_neighbours_sc(
+  object <- find_neighbours_sc(
     object,
     neighbours_params = params_sc_neighbours(knn = list(k = 10L)),
     .verbose = FALSE
@@ -736,7 +736,7 @@ assess_fast_mnn_impact <- function(object) {
   kbet_score_original <- sum(kbet_original$pval <= 0.05) /
     length(kbet_original$pval)
 
-  batch_aware_hvg = find_hvg_batch_aware_sc(
+  batch_aware_hvg <- find_hvg_batch_aware_sc(
     object,
     hvg_no = 30L,
     batch_column = "batch_index",
@@ -744,7 +744,7 @@ assess_fast_mnn_impact <- function(object) {
     .verbose = FALSE
   )
 
-  object = fast_mnn_sc(
+  object <- fast_mnn_sc(
     object = object,
     batch_column = "batch_index",
     batch_hvg_genes = batch_aware_hvg$hvg_gene_idx,
@@ -858,7 +858,7 @@ expect_true(
 
 test_mnn_pca <- sc_object.medium_batch_effect
 
-batch_aware_hvg = find_hvg_batch_aware_sc(
+batch_aware_hvg <- find_hvg_batch_aware_sc(
   test_mnn_pca,
   hvg_no = 30L,
   batch_column = "batch_index",
@@ -879,7 +879,7 @@ expect_equal(
   info = "batch aware hvg update worked"
 )
 
-test_mnn_pca = fast_mnn_sc(
+test_mnn_pca <- fast_mnn_sc(
   object = test_mnn_pca,
   batch_column = "batch_index",
   batch_hvg_genes = batch_aware_hvg$hvg_gene_idx,
@@ -889,7 +889,7 @@ test_mnn_pca = fast_mnn_sc(
 
 internal_result <- get_embedding(test_mnn_pca, "mnn")
 
-test_mnn_pca = fast_mnn_sc(
+test_mnn_pca <- fast_mnn_sc(
   object = test_mnn_pca,
   batch_column = "batch_index",
   batch_hvg_genes = batch_aware_hvg$hvg_gene_idx,
@@ -925,7 +925,7 @@ expect_equal(
 #   - neighbours_corrected: count of same-type neighbours per cell (corrected)
 assess_harmony_impact <- function(object) {
   # remove any knns and regenerate
-  object = find_neighbours_sc(
+  object <- find_neighbours_sc(
     object,
     neighbours_params = params_sc_neighbours(knn = list(k = 10L)),
     .verbose = FALSE
@@ -955,7 +955,7 @@ assess_harmony_impact <- function(object) {
   kbet_score_original <- sum(kbet_original$pval <= 0.05) /
     length(kbet_original$pval)
 
-  object = harmony_sc(
+  object <- harmony_sc(
     object = object,
     batch_column = "batch_index",
     harmony_params = params_sc_harmony(),
@@ -1017,7 +1017,7 @@ assess_harmony_impact <- function(object) {
 #   - neighbours_corrected: count of same-type neighbours per cell (corrected)
 assess_harmony_impact_v2 <- function(object) {
   # remove any knns and regenerate
-  object = find_neighbours_sc(
+  object <- find_neighbours_sc(
     object,
     neighbours_params = params_sc_neighbours(knn = list(k = 10L)),
     .verbose = FALSE
@@ -1047,7 +1047,7 @@ assess_harmony_impact_v2 <- function(object) {
   kbet_score_original <- sum(kbet_original$pval <= 0.05) /
     length(kbet_original$pval)
 
-  object = harmony_v2_sc(
+  object <- harmony_v2_sc(
     object = object,
     batch_column = "batch_index",
     harmony_params = params_sc_harmony_v2(),

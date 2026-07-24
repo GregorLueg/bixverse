@@ -18,9 +18,13 @@
     "NmfResult",
     "StabilisedNmfResult",
     "LigandTargetInfluence",
-    "ScTypeResults"
+    "ScTypeResults",
+    "BulkModuleResult"
   )
   for (cls in classes) {
     registerS3method("print", cls, get(paste0("print.", cls)))
   }
+
+  registerS3method("format", "BulkModuleResult", format.BulkModuleResult)
+  registerS3method("dim", "BulkModuleResult", dim.BulkModuleResult)
 }

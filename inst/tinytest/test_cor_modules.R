@@ -365,6 +365,32 @@ expect_true(
   info = "CoReMo - per sample values for the eigengene added."
 )
 
+### BulkModuleResult -----------------------------------------------------------
+
+coremo_result <- get_results(cor_test)
+
+expect_true(
+  current = inherits(coremo_result, "BulkModuleResult"),
+  info = "CoReMo - final_results is a BulkModuleResult"
+)
+
+coremo_modules_dt <- get_modules(coremo_result)
+
+expect_true(
+  current = data.table::is.data.table(coremo_modules_dt),
+  info = "CoReMo - get_modules() returns a data.table"
+)
+
+expect_true(
+  current = all(c("gene", "module_id") %in% names(coremo_modules_dt)),
+  info = "CoReMo - modules DT has gene and module_id"
+)
+
+expect_true(
+  current = "module_eigengenes" %in% names(get_factors(coremo_result)),
+  info = "CoReMo - factors contains module_eigengenes"
+)
+
 ## graph-based clustering ------------------------------------------------------
 
 ### expected data --------------------------------------------------------------
@@ -372,6 +398,16 @@ expect_true(
 expected_cor_graph_res <- qs2::qs_read(
   "./test_data/cor_graph_final_res.qs"
 )
+
+# rename pre-migration fixture cols on the fly. Regenerate with REGEN=1 to
+# make this a no-op.
+if ("node_id" %in% names(expected_cor_graph_res)) {
+  data.table::setnames(
+    expected_cor_graph_res,
+    old = c("node_id", "cluster_id"),
+    new = c("gene", "module_id")
+  )
+}
 
 ### regenerate the data --------------------------------------------------------
 
@@ -432,10 +468,34 @@ cor_test <- cor_module_graph_final_modules(
 
 final_cor_graph_res <- get_results(cor_test)
 
+expect_true(
+  current = inherits(final_cor_graph_res, "BulkModuleResult"),
+  info = "graph-based clustering - final_results is a BulkModuleResult"
+)
+
+final_cor_graph_modules <- get_modules(final_cor_graph_res)
+
+expect_true(
+  current = data.table::is.data.table(final_cor_graph_modules),
+  info = "graph-based clustering - get_modules() returns a data.table"
+)
+
+expect_true(
+  current = all(c("gene", "module_id") %in% names(final_cor_graph_modules)),
+  info = "graph-based clustering - modules DT has gene and module_id"
+)
+
 expect_equivalent(
-  current = final_cor_graph_res,
+  current = final_cor_graph_modules,
   target = expected_cor_graph_res,
   info = paste(
     "Testing expected final results from the graph-based cor results"
   )
 )
+
+if (identical(Sys.getenv("REGEN"), "1")) {
+  qs2::qs_save(
+    final_cor_graph_modules,
+    "./test_data/cor_graph_final_res.qs"
+  )
+}

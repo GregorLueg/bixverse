@@ -54,7 +54,7 @@ expect_true(
   info = "sc processing - sensible amount of cells pass"
 )
 
-sc_qc_param = params_sc_min_quality(
+sc_qc_param <- params_sc_min_quality(
   min_unique_genes = min_genes_exp,
   min_lib_size = min_lib_size,
   min_cells = min_cells_exp,

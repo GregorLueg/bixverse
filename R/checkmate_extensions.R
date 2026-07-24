@@ -20,6 +20,110 @@ KNN_PARAM_NAMES <- c(
   "n_probe"
 )
 
+# internal helpers -------------------------------------------------------------
+
+#' Check that a value is a list with the required names
+#'
+#' @description Boilerplate guard used at the top of most parameter checkers in
+#' this file: verifies `x` is a list and that all `required_names` are present
+#' in `names(x)`.
+#'
+#' @param x The object to check.
+#' @param required_names Character vector of names that must be present in
+#' `names(x)`.
+#'
+#' @return `TRUE` if the check was successful, otherwise a checkmate-style error
+#' string.
+#'
+#' @keywords internal
+check_list_shape <- function(x, required_names) {
+  res <- checkmate::checkList(x)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+  checkmate::checkNames(names(x), must.include = required_names)
+}
+
+#' Apply qtest rules by name
+#'
+#' @description Validates the elements of a named list `x` against per-field
+#' [checkmate::qtest()] patterns. Fields whose names are not in `rules` are
+#' skipped. On failure, returns an error string naming the first offending
+#' element and appending an optional `hint`.
+#'
+#' @param x Named list of parameters to validate.
+#' @param rules Named list mapping field name to a qtest pattern (or vector of
+#' patterns passed to `qtest`).
+#' @param label Short human-readable label used in the error message
+#' (e.g. `"GSEA params"`).
+#' @param hint Optional string appended to the error message to describe the
+#' expected types/ranges. Defaults to `NULL` (no hint).
+#'
+#' @return `TRUE` if all checked fields pass, otherwise a string of the form
+#' `` "The element `<field>` in <label> is invalid. <hint>" ``.
+#'
+#' @keywords internal
+apply_qtest_rules <- function(x, rules, label, hint = NULL) {
+  res <- purrr::imap_lgl(x, \(val, name) {
+    if (name %in% names(rules)) {
+      checkmate::qtest(val, rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+  if (all(res)) {
+    return(TRUE)
+  }
+  broken <- names(res)[!res][1]
+  msg <- sprintf("The element `%s` in %s is invalid.", broken, label)
+  if (!is.null(hint)) {
+    msg <- paste(msg, hint)
+  }
+  msg
+}
+
+#' Apply testChoice rules by name
+#'
+#' @description Validates the elements of a named list `x` against per-field
+#' [checkmate::testChoice()] choice sets. Fields whose names are not in `rules`
+#' are skipped. On failure, returns an error string naming the first offending
+#' element and appending an optional `hint`.
+#'
+#' @param x Named list of parameters to validate.
+#' @param rules Named list mapping field name to the character vector of
+#' allowed choices.
+#' @param label Short human-readable label used in the error message
+#' (e.g. `"MELD params"`).
+#' @param hint Optional string appended to the error message. Defaults to
+#' `NULL` (no hint).
+#'
+#' @return `TRUE` if all checked fields pass, otherwise a string of the form
+#' `` "The element `<field>` in <label> is not one of the expected choices. <hint>" ``.
+#'
+#' @keywords internal
+apply_choice_rules <- function(x, rules, label, hint = NULL) {
+  res <- purrr::imap_lgl(x, \(val, name) {
+    if (name %in% names(rules)) {
+      checkmate::testChoice(val, rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+  if (all(res)) {
+    return(TRUE)
+  }
+  broken <- names(res)[!res][1]
+  msg <- sprintf(
+    "The element `%s` in %s is not one of the expected choices.",
+    broken,
+    label
+  )
+  if (!is.null(hint)) {
+    msg <- paste(msg, hint)
+  }
+  msg
+}
+
 ## checks ----------------------------------------------------------------------
 
 ### others ---------------------------------------------------------------------
@@ -40,17 +144,11 @@ checkFilesExist <- function(x, file_names) {
   res <- purrr::map(file_names, \(file) {
     checkmate::checkFileExists(file.path(x, file))
   })
-  res <- purrr::keep(
-    res,
-    ~ {
-      !is.logical(.x)
-    }
-  )
+  res <- purrr::keep(res, \(r) !is.logical(r))
   if (length(res) == 0) {
     return(TRUE)
-  } else {
-    return(res[[1]])
   }
+  res[[1]]
 }
 
 #' Assert that files exist
@@ -82,41 +180,28 @@ assertFileExists <- checkmate::makeAssertionFunction(checkFilesExist)
 #'
 #' @keywords internal
 checkCorGraphParams <- function(x) {
-  # Checkmate extension
-  res <- checkmate::checkList(x)
-  if (!isTRUE(res)) {
-    return(res)
-  }
-  res <- checkmate::checkNames(
-    names(x),
-    must.include = c("epsilon", "min_cor", "fdr_threshold", "verbose")
+  res <- check_list_shape(
+    x,
+    c("epsilon", "min_cor", "fdr_threshold", "verbose")
   )
   if (!isTRUE(res)) {
     return(res)
   }
-  rules <- list(
-    "epsilon" = "R1",
-    "min_cor" = "R1[0, 1]",
-    "fdr_threshold" = "R1[0, 1]",
-    "verbose" = "B1"
-  )
-  res <- purrr::imap_lgl(x, \(x, name) {
-    checkmate::qtest(x, rules[[name]])
-  })
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(
-      sprintf(
-        paste(
-          "The following element `%s` in graph params does not conform to the",
-          "expected format. min_cor and fdr_threshold need to be between 0 and",
-          "1, epsilon a double and .verbose a boolean."
-        ),
-        broken_elem
-      )
+
+  apply_qtest_rules(
+    x,
+    list(
+      epsilon = "R1",
+      min_cor = "R1[0, 1]",
+      fdr_threshold = "R1[0, 1]",
+      verbose = "B1"
+    ),
+    label = "correlation graph params",
+    hint = paste(
+      "min_cor and fdr_threshold must be in [0, 1];",
+      "epsilon must be a double; verbose must be a boolean."
     )
-  }
-  return(TRUE)
+  )
 }
 
 #' Assert correlation graph parameters
@@ -148,36 +233,17 @@ assertCorGraphParams <- checkmate::makeAssertionFunction(checkCorGraphParams)
 #'
 #' @keywords internal
 checkGraphResParams <- function(x) {
-  # Checkmate extension
-  res <- checkmate::checkList(x)
+  res <- check_list_shape(x, c("min_res", "max_res", "number_res"))
   if (!isTRUE(res)) {
     return(res)
   }
-  res <- checkmate::checkNames(
-    names(x),
-    must.include = c("min_res", "max_res", "number_res")
+
+  apply_qtest_rules(
+    x,
+    list(min_res = "R1", max_res = "R1", number_res = "I1"),
+    label = "resolution params",
+    hint = "min_res and max_res must be doubles; number_res must be an integer."
   )
-  if (!isTRUE(res)) {
-    return(res)
-  }
-  rules <- list("min_res" = "R1", "max_res" = "R1", "number_res" = "I1")
-  res <- purrr::imap_lgl(x, \(x, name) {
-    checkmate::qtest(x, rules[[name]])
-  })
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(
-      sprintf(
-        paste(
-          "The following element `%s` in resolution params does not conform to",
-          "the expected format. min_res and max_res need to be doubles and",
-          "number res needs to be an integer."
-        ),
-        broken_elem
-      )
-    )
-  }
-  return(TRUE)
 }
 
 #' Assert resolution graph parameters
@@ -211,41 +277,25 @@ assertGraphResParams <- checkmate::makeAssertionFunction(checkGraphResParams)
 #'
 #' @keywords internal
 checkIcaParams <- function(x) {
-  # Checkmate extension
-  res <- checkmate::checkList(x)
+  res <- check_list_shape(x, c("maxit", "alpha", "max_tol", "verbose"))
   if (!isTRUE(res)) {
     return(res)
   }
-  res <- checkmate::checkNames(
-    names(x),
-    must.include = c("maxit", "alpha", "max_tol", "verbose")
-  )
-  if (!isTRUE(res)) {
-    return(res)
-  }
-  rules <- list(
-    "maxit" = "I1",
-    "alpha" = "R1[1, 2]",
-    "max_tol" = "R1(0, 1)",
-    "verbose" = "B1"
-  )
-  res <- purrr::imap_lgl(x, \(x, name) {
-    checkmate::qtest(x, rules[[name]])
-  })
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(
-      sprintf(
-        paste(
-          "The following element `%s` in resolution params does not conform to",
-          "the expected format. maxit needs to be an integer, alpha between 1",
-          "and 2, 0 < max_tol < 1, and verbose a boolean."
-        ),
-        broken_elem
-      )
+
+  apply_qtest_rules(
+    x,
+    list(
+      maxit = "I1",
+      alpha = "R1[1, 2]",
+      max_tol = "R1(0, 1)",
+      verbose = "B1"
+    ),
+    label = "ICA params",
+    hint = paste(
+      "maxit must be an integer; alpha must be in [1, 2];",
+      "0 < max_tol < 1; verbose must be a boolean."
     )
-  }
-  return(TRUE)
+  )
 }
 
 #' Assert ICA parameters
@@ -277,40 +327,24 @@ assertIcaParams <- checkmate::makeAssertionFunction(checkIcaParams)
 #'
 #' @keywords internal
 checkIcaNcomps <- function(x) {
-  # Checkmate extension
-  res <- checkmate::checkList(x)
+  res <- check_list_shape(x, c("max_no_comp", "steps", "custom_seq"))
   if (!isTRUE(res)) {
     return(res)
   }
-  res <- checkmate::checkNames(
-    names(x),
-    must.include = c("max_no_comp", "steps", "custom_seq")
-  )
-  if (!isTRUE(res)) {
-    return(res)
-  }
-  rules <- list(
-    "max_no_comp" = "I1",
-    "steps" = "I1",
-    "custom_seq" = c("0", "I+")
-  )
-  res <- purrr::imap_lgl(x, \(x, name) {
-    checkmate::qtest(x, rules[[name]])
-  })
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(
-      sprintf(
-        paste(
-          "The following element `%s` in resolution params does not conform to",
-          "the expected format. max_no_comp and steps need to be integers, and",
-          "custom sequence either NULL or a vector of integers."
-        ),
-        broken_elem
-      )
+
+  apply_qtest_rules(
+    x,
+    list(
+      max_no_comp = "I1",
+      steps = "I1",
+      custom_seq = c("0", "I+")
+    ),
+    label = "ICA n-components params",
+    hint = paste(
+      "max_no_comp and steps must be integers;",
+      "custom_seq must be NULL or a vector of integers."
     )
-  }
-  return(TRUE)
+  )
 }
 
 #' Assert ICA no of component parameters
@@ -343,40 +377,24 @@ assertIcaNcomps <- checkmate::makeAssertionFunction(checkIcaNcomps)
 #'
 #' @keywords internal
 checkIcaIterParams <- function(x) {
-  # Checkmate extension
-  res <- checkmate::checkList(x)
+  res <- check_list_shape(x, c("cross_validate", "random_init", "folds"))
   if (!isTRUE(res)) {
     return(res)
   }
-  res <- checkmate::checkNames(
-    names(x),
-    must.include = c("cross_validate", "random_init", "folds")
-  )
-  if (!isTRUE(res)) {
-    return(res)
-  }
-  rules <- list(
-    "cross_validate" = "B1",
-    "random_init" = "I1",
-    "folds" = "I1"
-  )
-  res <- purrr::imap_lgl(x, \(x, name) {
-    checkmate::qtest(x, rules[[name]])
-  })
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(
-      sprintf(
-        paste(
-          "The following element `%s` in resolution params does not conform to",
-          "the expected format. random_init and steps folds need to be",
-          "integers, and cross_validate a boolean."
-        ),
-        broken_elem
-      )
+
+  apply_qtest_rules(
+    x,
+    list(
+      cross_validate = "B1",
+      random_init = "I1",
+      folds = "I1"
+    ),
+    label = "ICA randomisation params",
+    hint = paste(
+      "random_init and folds must be integers;",
+      "cross_validate must be a boolean."
     )
-  }
-  return(TRUE)
+  )
 }
 
 #' Assert ICA randomisation parameters
@@ -409,14 +427,9 @@ assertIcaIterParams <- checkmate::makeAssertionFunction(checkIcaIterParams)
 #'
 #' @keywords internal
 checkCommunityParams <- function(x) {
-  # Checkmate extension
-  res <- checkmate::checkList(x)
-  if (!isTRUE(res)) {
-    return(res)
-  }
-  res <- checkmate::checkNames(
-    names(x),
-    must.include = c(
+  res <- check_list_shape(
+    x,
+    c(
       "max_nodes",
       "min_nodes",
       "min_seed_nodes",
@@ -429,44 +442,33 @@ checkCommunityParams <- function(x) {
   if (!isTRUE(res)) {
     return(res)
   }
-  res <- checkmate::checkChoice(
-    x[['threshold_type']],
-    c("prop_based", "pval_based")
+
+  res <- apply_choice_rules(
+    x,
+    list(threshold_type = c("prop_based", "pval_based")),
+    label = "community params"
   )
   if (!isTRUE(res)) {
     return(res)
   }
-  q_rules <- list(
-    "max_nodes" = sprintf("I1[%i,)", x$min_nodes),
-    "min_nodes" = "I1",
-    "min_seed_nodes" = "I1",
-    "initial_res" = "N1",
-    "network_threshold" = "N1(0, 1]",
-    "pval_threshold" = "N1(0, 1]"
-  )
-  res <- purrr::imap_lgl(x, \(x, name) {
-    if (name %in% names(q_rules)) {
-      checkmate::qtest(x, q_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
 
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(
-      sprintf(
-        paste(
-          "The following element `%s` in community params does not conform to",
-          "the expected format. min_nodes, max_nodes and min_seed_genes need to",
-          "be integers (with max_nodes > min_nodes), initial resolution a",
-          "double, and network_threshold and pval_threshold doubles between 0 and 1."
-        ),
-        broken_elem
-      )
+  apply_qtest_rules(
+    x,
+    list(
+      max_nodes = sprintf("I1[%i,)", x$min_nodes),
+      min_nodes = "I1",
+      min_seed_nodes = "I1",
+      initial_res = "N1",
+      network_threshold = "N1(0, 1]",
+      pval_threshold = "N1(0, 1]"
+    ),
+    label = "community params",
+    hint = paste(
+      "min_nodes, max_nodes and min_seed_nodes must be integers",
+      "(with max_nodes >= min_nodes); initial_res must be a double;",
+      "network_threshold and pval_threshold must be in (0, 1]."
     )
-  }
-  return(TRUE)
+  )
 }
 
 #' Assert community detection parameter
@@ -499,43 +501,30 @@ assertCommunityParams <- checkmate::makeAssertionFunction(checkCommunityParams)
 #'
 #' @keywords internal
 checkGSEAParams <- function(x) {
-  # Checkmate extension
-  res <- checkmate::checkList(x)
-  if (!isTRUE(res)) {
-    return(res)
-  }
-  res <- checkmate::checkNames(
-    names(x),
-    must.include = c("min_size", "max_size", "gsea_param", "sample_size", "eps")
+  res <- check_list_shape(
+    x,
+    c("min_size", "max_size", "gsea_param", "sample_size", "eps")
   )
   if (!isTRUE(res)) {
     return(res)
   }
-  rules <- list(
-    "min_size" = "I1[3,)",
-    "max_size" = "I1[4,)",
-    "gsea_param" = "N1",
-    "sample_size" = "I1",
-    "eps" = "N1"
-  )
-  res <- purrr::imap_lgl(x, \(x, name) {
-    checkmate::qtest(x, rules[[name]])
-  })
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(
-      sprintf(
-        paste(
-          "The following element `%s` in GSEA params does not conform to the",
-          "expected format. min_size and max_size need to be integers (with",
-          "max_size > min_size and min_size >= 3L),",
-          "gsea_param being a double, sample_size an integer and eps a float."
-        ),
-        broken_elem
-      )
+
+  apply_qtest_rules(
+    x,
+    list(
+      min_size = "I1[3,)",
+      max_size = "I1[4,)",
+      gsea_param = "N1",
+      sample_size = "I1",
+      eps = "N1"
+    ),
+    label = "GSEA params",
+    hint = paste(
+      "min_size and max_size must be integers (with max_size > min_size",
+      "and min_size >= 3); gsea_param must be a double;",
+      "sample_size must be an integer; eps must be a float."
     )
-  }
-  return(TRUE)
+  )
 }
 
 #' Assert GSEA parameter
@@ -568,49 +557,30 @@ assertGSEAParams <- checkmate::makeAssertionFunction(checkGSEAParams)
 #'
 #' @keywords internal
 checkGSVAParams <- function(x) {
-  # Checkmate extension
-  res <- checkmate::checkList(x)
-  if (!isTRUE(res)) {
-    return(res)
-  }
-  res <- checkmate::checkNames(
-    names(x),
-    must.include = c(
-      "tau",
-      "min_size",
-      "max_size",
-      "max_diff",
-      "abs_rank"
-    )
+  res <- check_list_shape(
+    x,
+    c("tau", "min_size", "max_size", "max_diff", "abs_rank")
   )
   if (!isTRUE(res)) {
     return(res)
   }
-  rules <- list(
-    "tau" = "N1",
-    "min_size" = "I1[3,)",
-    "max_size" = "I1[4,)",
-    "max_diff" = "B1",
-    "abs_rank" = "B1"
-  )
-  res <- purrr::imap_lgl(x, \(x, name) {
-    checkmate::qtest(x, rules[[name]])
-  })
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(
-      sprintf(
-        paste(
-          "The following element `%s` in GSVA params does not conform to the",
-          "expected format. min_size and max_size need to be integers (with",
-          "max_size > min_size and min_size >= 3L),",
-          "tau being a double, max_diff and abs_rank booleans."
-        ),
-        broken_elem
-      )
+
+  apply_qtest_rules(
+    x,
+    list(
+      tau = "N1",
+      min_size = "I1[3,)",
+      max_size = "I1[4,)",
+      max_diff = "B1",
+      abs_rank = "B1"
+    ),
+    label = "GSVA params",
+    hint = paste(
+      "min_size and max_size must be integers (with max_size > min_size",
+      "and min_size >= 3); tau must be a double;",
+      "max_diff and abs_rank must be booleans."
     )
-  }
-  return(TRUE)
+  )
 }
 
 #' Assert GSVA parameter
@@ -643,47 +613,29 @@ assertGSVAParams <- checkmate::makeAssertionFunction(checkGSVAParams)
 #'
 #' @keywords internal
 checkSingleSampleGSEAparams <- function(x) {
-  # Checkmate extension
-  res <- checkmate::checkList(x)
-  if (!isTRUE(res)) {
-    return(res)
-  }
-  res <- checkmate::checkNames(
-    names(x),
-    must.include = c(
-      "alpha",
-      "min_size",
-      "max_size",
-      "normalise"
-    )
+  res <- check_list_shape(
+    x,
+    c("alpha", "min_size", "max_size", "normalise")
   )
   if (!isTRUE(res)) {
     return(res)
   }
-  rules <- list(
-    "alpha" = "N1(0,1)",
-    "min_size" = "I1[3,)",
-    "max_size" = "I1[4,)",
-    "normalise" = "B1"
-  )
-  res <- purrr::imap_lgl(x, \(x, name) {
-    checkmate::qtest(x, rules[[name]])
-  })
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(
-      sprintf(
-        paste(
-          "The following element `%s` in ssGSEA params does not conform to the",
-          "expected format. min_size and max_size need to be integers (with",
-          "max_size > min_size and min_size >= 3L),",
-          "alpha being a double (between 0 and 1), and normalise a boolean."
-        ),
-        broken_elem
-      )
+
+  apply_qtest_rules(
+    x,
+    list(
+      alpha = "N1(0,1)",
+      min_size = "I1[3,)",
+      max_size = "I1[4,)",
+      normalise = "B1"
+    ),
+    label = "ssGSEA params",
+    hint = paste(
+      "min_size and max_size must be integers (with max_size > min_size",
+      "and min_size >= 3); alpha must be a double in (0, 1);",
+      "normalise must be a boolean."
     )
-  }
-  return(TRUE)
+  )
 }
 
 #' Assert ssGSEA parameter
@@ -717,14 +669,9 @@ assertSingleSampleGSEAparams <- checkmate::makeAssertionFunction(
 #'
 #' @keywords internal
 checkCoReMoParams <- function(x) {
-  # Checkmate extension
-  res <- checkmate::checkList(x)
-  if (!isTRUE(res)) {
-    return(res)
-  }
-  res <- checkmate::checkNames(
-    names(x),
-    must.include = c(
+  res <- check_list_shape(
+    x,
+    c(
       "epsilon",
       "k_min",
       "k_max",
@@ -737,59 +684,34 @@ checkCoReMoParams <- function(x) {
   if (!isTRUE(res)) {
     return(res)
   }
-  # qtest checks
-  qtest_rules <- list(
-    epsilon = "N1",
-    k_min = "I1",
-    k_max = "I1",
-    junk_module_threshold = "N1",
-    min_size = c("I1", "0")
-  )
-  q_test_res <- purrr::imap_lgl(x, \(x, name) {
-    if (name %in% names(qtest_rules)) {
-      checkmate::qtest(x, qtest_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-  if (!isTRUE(all(q_test_res))) {
-    broken_elem <- names(q_test_res)[which(!q_test_res)][1]
-    return(
-      sprintf(
-        paste(
-          "The following element `%s` in CoReMo params does not conform to the",
-          "expected format k_min and k_max need to be integers, min_size an",
-          "integer or NULL, junk_module_threshold a float and epsilon a float."
-        ),
-        broken_elem
-      )
+
+  res <- apply_qtest_rules(
+    x,
+    list(
+      epsilon = "N1",
+      k_min = "I1",
+      k_max = "I1",
+      junk_module_threshold = "N1",
+      min_size = c("I1", "0")
+    ),
+    label = "CoReMo params",
+    hint = paste(
+      "k_min and k_max must be integers; min_size must be an integer or NULL;",
+      "junk_module_threshold and epsilon must be floats."
     )
-  }
-  # test
-  test_choice_rules <- list(
-    rbf_func = c("gaussian", "inverse_quadratic", "bump"),
-    cor_method = c("spearman", "pearson")
   )
-  test_choice_res <- purrr::imap_lgl(x, \(x, name) {
-    if (name %in% names(test_choice_rules)) {
-      checkmate::testChoice(x, test_choice_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-  if (!isTRUE(all(test_choice_res))) {
-    broken_elem <- names(test_choice_res)[which(!test_choice_res)][1]
-    return(
-      sprintf(
-        paste0(
-          "The following element `%s` in CoReMo params does not use one of the",
-          "expected choices. Please double check the documentation."
-        ),
-        broken_elem
-      )
-    )
+  if (!isTRUE(res)) {
+    return(res)
   }
-  return(TRUE)
+
+  apply_choice_rules(
+    x,
+    list(
+      rbf_func = c("gaussian", "inverse_quadratic", "bump"),
+      cor_method = c("spearman", "pearson")
+    ),
+    label = "CoReMo params"
+  )
 }
 
 #' Assert CoReMo parameter
@@ -821,14 +743,9 @@ assertCoReMoParams <- checkmate::makeAssertionFunction(checkCoReMoParams)
 #'
 #' @keywords internal
 checkDGRDLparams <- function(x) {
-  # Checkmate extension
-  res <- checkmate::checkList(x)
-  if (!isTRUE(res)) {
-    return(res)
-  }
-  res <- checkmate::checkNames(
-    names(x),
-    must.include = c(
+  res <- check_list_shape(
+    x,
+    c(
       "sparsity",
       "dict_size",
       "alpha",
@@ -842,34 +759,25 @@ checkDGRDLparams <- function(x) {
   if (!isTRUE(res)) {
     return(res)
   }
-  rules <- list(
-    "sparsity" = "I1",
-    "dict_size" = "I1",
-    "alpha" = "N1",
-    "beta" = "N1",
-    "max_iter" = "I1",
-    "k_neighbours" = "I1",
-    "admm_iter" = "I1",
-    "rho" = "N1"
-  )
-  res <- purrr::imap_lgl(x, \(x, name) {
-    checkmate::qtest(x, rules[[name]])
-  })
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(
-      sprintf(
-        paste(
-          "The following element `%s` in DGRDL params does not conform to the",
-          "expected format. sparsity, dict_size, max_iter, k_neighbours, and",
-          "admm_iter are expected to be integers; alpha, beta, rho are",
-          "expected to be floats."
-        ),
-        broken_elem
-      )
+
+  apply_qtest_rules(
+    x,
+    list(
+      sparsity = "I1",
+      dict_size = "I1",
+      alpha = "N1",
+      beta = "N1",
+      max_iter = "I1",
+      k_neighbours = "I1",
+      admm_iter = "I1",
+      rho = "N1"
+    ),
+    label = "DGRDL params",
+    hint = paste(
+      "sparsity, dict_size, max_iter, k_neighbours and admm_iter must be",
+      "integers; alpha, beta and rho must be floats."
     )
-  }
-  return(TRUE)
+  )
 }
 
 #' Assert DGRDL parameter
@@ -902,56 +810,37 @@ assertDGRDLparams <- checkmate::makeAssertionFunction(checkDGRDLparams)
 #'
 #' @keywords internal
 checkNmfHals <- function(x) {
-  res <- checkmate::checkList(x)
-  if (!isTRUE(res)) {
-    return(res)
-  }
-  res <- checkmate::checkNames(
-    names(x),
-    must.include = c(
-      "max_iter",
-      "tol",
-      "eps",
-      "check_every",
-      "nmf_init"
-    )
+  res <- check_list_shape(
+    x,
+    c("max_iter", "tol", "eps", "check_every", "nmf_init")
   )
   if (!isTRUE(res)) {
     return(res)
-  }
-  rules <- list(
-    "max_iter" = "I1[1,)",
-    "tol" = "N1(0,)",
-    "eps" = "N1(0,)",
-    "check_every" = "I1[1,)"
-  )
-  res <- purrr::imap_lgl(x, \(x, name) {
-    if (name %in% names(rules)) {
-      checkmate::qtest(x, rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(
-      sprintf(
-        paste(
-          "The following element `%s` in NMF HALS params is incorrect:",
-          "max_iter and check_every must be positive integers;",
-          "tol and eps must be positive numerics."
-        ),
-        broken_elem
-      )
-    )
-  }
-  if (!checkmate::testChoice(x$nmf_init, c("nndsvd", "svd", "random"))) {
-    return(
-      "nmf_init must be one of 'nndsvd', 'svd' or 'random'."
-    )
   }
 
-  return(TRUE)
+  res <- apply_qtest_rules(
+    x,
+    list(
+      max_iter = "I1[1,)",
+      tol = "N1(0,)",
+      eps = "N1(0,)",
+      check_every = "I1[1,)"
+    ),
+    label = "NMF HALS params",
+    hint = paste(
+      "max_iter and check_every must be positive integers;",
+      "tol and eps must be positive numerics."
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  apply_choice_rules(
+    x,
+    list(nmf_init = c("nndsvd", "svd", "random")),
+    label = "NMF HALS params"
+  )
 }
 
 #' Assert NMF HALS parameters
@@ -981,86 +870,38 @@ assertNmfHals <- checkmate::makeAssertionFunction(checkNmfHals)
 #'
 #' @keywords internal
 checkSNFParams <- function(x) {
-  # Check it's a list
-  res <- checkmate::checkList(x)
-  if (!isTRUE(res)) {
-    return(res)
-  }
-
-  # Check required names
-  res <- checkmate::checkNames(
-    names(x),
-    must.include = c(
-      "k",
-      "t",
-      "mu",
-      "alpha",
-      "normalise",
-      "distance_metric"
-    )
+  res <- check_list_shape(
+    x,
+    c("k", "t", "mu", "alpha", "normalise", "distance_metric")
   )
   if (!isTRUE(res)) {
     return(res)
   }
 
-  # qtest checks
-  qtest_rules <- list(
-    k = "I1",
-    t = "I1",
-    mu = "N1[0,1]",
-    alpha = "N1",
-    normalise = "B1"
-  )
-
-  q_test_res <- purrr::imap_lgl(x, \(x, name) {
-    if (name %in% names(qtest_rules)) {
-      checkmate::qtest(x, qtest_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-
-  if (!isTRUE(all(q_test_res))) {
-    broken_elem <- names(q_test_res)[which(!q_test_res)][1]
-    return(
-      sprintf(
-        paste(
-          "The following element `%s` in SNF params does not conform to the",
-          "expected format. k and t need to be positive integers, mu a float",
-          "in [0, 1], alpha a float, and normalise a boolean."
-        ),
-        broken_elem
-      )
+  res <- apply_qtest_rules(
+    x,
+    list(
+      k = "I1",
+      t = "I1",
+      mu = "N1[0,1]",
+      alpha = "N1",
+      normalise = "B1"
+    ),
+    label = "SNF params",
+    hint = paste(
+      "k and t must be positive integers; mu must be a float in [0, 1];",
+      "alpha must be a float; normalise must be a boolean."
     )
+  )
+  if (!isTRUE(res)) {
+    return(res)
   }
 
-  # test choice rules
-  test_choice_rules <- list(
-    distance_metric = c("euclidean", "manhattan", "canberra", "cosine")
+  apply_choice_rules(
+    x,
+    list(distance_metric = c("euclidean", "manhattan", "canberra", "cosine")),
+    label = "SNF params"
   )
-
-  test_choice_res <- purrr::imap_lgl(x, \(x, name) {
-    if (name %in% names(test_choice_rules)) {
-      checkmate::testChoice(x, test_choice_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-
-  if (!isTRUE(all(test_choice_res))) {
-    broken_elem <- names(test_choice_res)[which(!test_choice_res)][1]
-    return(
-      sprintf(
-        paste0(
-          "The following element `%s` in SNF params does not use one of the",
-          " expected choices. Please double check the documentation."
-        ),
-        broken_elem
-      )
-    )
-  }
-
-  return(TRUE)
 }
 
 #' Assert SNF parameter
@@ -1098,16 +939,9 @@ testSNFParams <- checkmate::makeTestFunction(checkSNFParams)
 #'
 #' @keywords internal
 checkCistargetParams <- function(x) {
-  # Check it's a list
-  res <- checkmate::checkList(x)
-  if (!isTRUE(res)) {
-    return(res)
-  }
-
-  # Check required names
-  res <- checkmate::checkNames(
-    names(x),
-    must.include = c(
+  res <- check_list_shape(
+    x,
+    c(
       "auc_threshold",
       "nes_threshold",
       "rcc_method",
@@ -1119,39 +953,31 @@ checkCistargetParams <- function(x) {
     return(res)
   }
 
-  # Validate types
-  rules <- list(
-    "auc_threshold" = "N1[0,1]",
-    "nes_threshold" = "N1",
-    "rcc_method" = "S1",
-    "high_conf_cats" = "S+",
-    "low_conf_cats" = "S+"
-  )
-
-  res <- purrr::imap_lgl(x, \(val, name) {
-    checkmate::qtest(val, rules[[name]])
-  })
-
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(
-      sprintf(
-        paste(
-          "The following element `%s` in CisTarget params does not conform to",
-          "the expected format. auc_threshold must be numeric [0,1];",
-          "nes_threshold must be numeric; rcc_method must be a single string;",
-          "high_conf_cats and low_conf_cats must be character vectors."
-        ),
-        broken_elem
-      )
+  res <- apply_qtest_rules(
+    x,
+    list(
+      auc_threshold = "N1[0,1]",
+      nes_threshold = "N1",
+      rcc_method = "S1",
+      high_conf_cats = "S+",
+      low_conf_cats = "S+"
+    ),
+    label = "CisTarget params",
+    hint = paste(
+      "auc_threshold must be numeric [0, 1]; nes_threshold must be numeric;",
+      "rcc_method must be a single string;",
+      "high_conf_cats and low_conf_cats must be character vectors."
     )
+  )
+  if (!isTRUE(res)) {
+    return(res)
   }
 
-  if (!checkmate::testChoice(x$rcc_method, c("approx", "icistarget"))) {
-    return("rcc_method must be either 'approx' or 'icistarget'")
-  }
-
-  return(TRUE)
+  apply_choice_rules(
+    x,
+    list(rcc_method = c("approx", "icistarget")),
+    label = "CisTarget params"
+  )
 }
 
 #' Assert CisTarget parameters
@@ -1182,46 +1008,32 @@ assertCistargetParams <- checkmate::makeAssertionFunction(checkCistargetParams)
 #'
 #' @keywords internal
 checkLabelPropParams <- function(x) {
-  res <- checkmate::checkList(x)
+  res <- check_list_shape(
+    x,
+    c("alpha", "iter", "tolerance", "symmetrise", "symmetry_strategy")
+  )
   if (!isTRUE(res)) {
     return(res)
   }
 
-  res <- checkmate::checkNames(
-    names(x),
-    must.include = c(
-      "alpha",
-      "iter",
-      "tolerance",
-      "symmetrise",
-      "symmetry_strategy"
+  res <- apply_qtest_rules(
+    x,
+    list(
+      alpha = "R1[0, 1]",
+      iter = "I1[1,]",
+      tolerance = "R1",
+      symmetrise = "B1",
+      symmetry_strategy = "S1"
+    ),
+    label = "label propagation params",
+    hint = paste(
+      "alpha must be in [0, 1]; iter must be a positive integer;",
+      "tolerance must be a double; symmetrise must be a boolean;",
+      "symmetry_strategy must be a string."
     )
   )
   if (!isTRUE(res)) {
     return(res)
-  }
-
-  rules <- list(
-    "alpha" = "R1[0, 1]",
-    "iter" = "I1[1,]",
-    "tolerance" = "R1",
-    "symmetrise" = "B1",
-    "symmetry_strategy" = "S1"
-  )
-  res <- purrr::imap_lgl(x[names(rules)], \(x, name) {
-    checkmate::qtest(x, rules[[name]])
-  })
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(sprintf(
-      paste(
-        "The following element `%s` in label propagation params does not",
-        "conform to the expected format. alpha must be in [0, 1], iter a",
-        "positive integer, tolerance a double, symmetrise a boolean, and",
-        "symmetry_strategy a string."
-      ),
-      broken_elem
-    ))
   }
 
   if (
@@ -1230,7 +1042,7 @@ checkLabelPropParams <- function(x) {
     return("`max_hops` must be a positive integer or NULL.")
   }
 
-  return(TRUE)
+  TRUE
 }
 
 #' Assert label propagation parameters
@@ -1264,7 +1076,6 @@ assertLabelPropParams <- checkmate::makeAssertionFunction(checkLabelPropParams)
 #'
 #' @keywords internal
 checkKnnParams <- function(x, required_params = NULL) {
-  # If required_params not specified, check all that are present
   if (!is.null(required_params)) {
     res <- checkmate::checkNames(names(x), must.include = required_params)
     if (!isTRUE(res)) {
@@ -1272,93 +1083,58 @@ checkKnnParams <- function(x, required_params = NULL) {
     }
   }
 
-  # integer rules
-  integer_rules <- list(
-    "k" = "I1[0,)",
-    "n_trees" = "I1[1,)",
-    "search_budget" = c("0", "I1[1,)"),
-    "m" = "I1[1,)",
-    "ef_construction" = "I1[1,)",
-    "ef_search" = "I1[1,)",
-    "ef_budget" = c("0", "I1[1,)"),
-    "n_list" = c("0", "I1[1,)"),
-    "n_probe" = c("0", "I1[1,)")
-  )
-
-  res <- purrr::imap_lgl(x, \(val, name) {
-    if (name %in% names(integer_rules)) {
-      checkmate::qtest(val, integer_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(
-      sprintf(
-        paste(
-          "The following kNN parameter `%s` is incorrect:",
-          "k must be >= 0; n_trees, m, ef_construction, ef_search must be >= 1;",
-          "search_budget, ef_budget, n_list and n_probe must be NULL or >= 1;"
-        ),
-        broken_elem
-      )
+  res <- apply_qtest_rules(
+    x,
+    list(
+      k = "I1[0,)",
+      n_trees = "I1[1,)",
+      search_budget = c("0", "I1[1,)"),
+      m = "I1[1,)",
+      ef_construction = "I1[1,)",
+      ef_search = "I1[1,)",
+      ef_budget = c("0", "I1[1,)"),
+      n_list = c("0", "I1[1,)"),
+      n_probe = c("0", "I1[1,)")
+    ),
+    label = "kNN params",
+    hint = paste(
+      "k must be >= 0;",
+      "n_trees, m, ef_construction and ef_search must be >= 1;",
+      "search_budget, ef_budget, n_list and n_probe must be NULL or >= 1."
     )
+  )
+  if (!isTRUE(res)) {
+    return(res)
   }
 
-  # numeric rules
-  numeric_rules <- list(
-    "delta" = "N1[0,1]",
-    "diversify_prob" = "N1[0,1]"
+  res <- apply_qtest_rules(
+    x,
+    list(
+      delta = "N1[0,1]",
+      diversify_prob = "N1[0,1]"
+    ),
+    label = "kNN params",
+    hint = "delta and diversify_prob must be in [0, 1]."
   )
-
-  res <- purrr::imap_lgl(x, \(val, name) {
-    if (name %in% names(numeric_rules)) {
-      checkmate::qtest(val, numeric_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(
-      sprintf(
-        "The kNN parameter `%s` must be in [0,1].",
-        broken_elem
-      )
-    )
+  if (!isTRUE(res)) {
+    return(res)
   }
 
-  # choice rules
-  test_choice_rules <- list(
-    knn_method = c("annoy", "hnsw", "nndescent", "exhaustive", "ivf", "kmknn"),
-    ann_dist = c("euclidean", "cosine")
+  apply_choice_rules(
+    x,
+    list(
+      knn_method = c(
+        "annoy",
+        "hnsw",
+        "nndescent",
+        "exhaustive",
+        "ivf",
+        "kmknn"
+      ),
+      ann_dist = c("euclidean", "cosine")
+    ),
+    label = "kNN params"
   )
-
-  test_choice_res <- purrr::imap_lgl(x, \(val, name) {
-    if (name %in% names(test_choice_rules)) {
-      checkmate::testChoice(val, test_choice_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-
-  if (!isTRUE(all(test_choice_res))) {
-    broken_elem <- names(test_choice_res)[which(!test_choice_res)][1]
-    return(
-      sprintf(
-        paste(
-          "The kNN parameter `%s` is not one of the expected choices.",
-          "Please check the documentation."
-        ),
-        broken_elem
-      )
-    )
-  }
-
-  return(TRUE)
 }
 
 #' Check FastCluster default parameters
@@ -1379,23 +1155,28 @@ checkFastClusterDefaultParams <- function(x) {
     return(res)
   }
 
-  res <- checkmate::qtest(x[["batch_size"]], "I1") &
-    checkmate::qtest(x[["kmeans_iters"]], "I1")
-  if (!isTRUE(res)) {
-    return(paste("batch_size and kmeans_iters must be integers"))
-  }
-
-  res <- checkmate::qtest(x[["n_centroids"]], c("I1", "0"))
-  if (!isTRUE(res)) {
-    return(paste("n_centroids must be an integer or NULL."))
-  }
-
-  res <- checkmate::checkChoice(x[["km_type"]], c("minibatch", "standard"))
+  res <- apply_qtest_rules(
+    x,
+    list(
+      batch_size = "I1",
+      kmeans_iters = "I1",
+      n_centroids = c("I1", "0")
+    ),
+    label = "FastCluster params",
+    hint = paste(
+      "batch_size and kmeans_iters must be integers;",
+      "n_centroids must be an integer or NULL."
+    )
+  )
   if (!isTRUE(res)) {
     return(res)
   }
 
-  return(TRUE)
+  apply_choice_rules(
+    x,
+    list(km_type = c("minibatch", "standard")),
+    label = "FastCluster params"
+  )
 }
 
 #' Check k-means method parameters
@@ -1417,40 +1198,28 @@ checkKMeansParams <- function(x) {
     return(res)
   }
 
-  res <- checkmate::qtest(x[["k_means_iter"]], "I1")
-  if (!isTRUE(res)) {
-    return("k_means_iter must be an integer.")
-  }
-
-  # integer rules
-  boolean_null_rules <- list(
-    "gemm" = c("0", "B1"),
-    "hamerly" = c("0", "B1")
-  )
-
-  res <- purrr::imap_lgl(x, \(val, name) {
-    if (name %in% names(boolean_null_rules)) {
-      checkmate::qtest(val, boolean_null_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(
-      paste("'gemm' and 'hamerly' needs to be a boolean or NULL.")
+  res <- apply_qtest_rules(
+    x,
+    list(
+      k_means_iter = "I1",
+      gemm = c("0", "B1"),
+      hamerly = c("0", "B1")
+    ),
+    label = "k-means params",
+    hint = paste(
+      "k_means_iter must be an integer;",
+      "gemm and hamerly must be booleans or NULL."
     )
-  }
-
-  # choice rules
-  res <- checkmate::testChoice(x[["k_means_init"]], c("parallel", "random"))
-
+  )
   if (!isTRUE(res)) {
-    return("'k_means_init' needs to be one of 'parallel' or 'random'.")
+    return(res)
   }
 
-  return(TRUE)
+  apply_choice_rules(
+    x,
+    list(k_means_init = c("parallel", "random")),
+    label = "k-means params"
+  )
 }
 
 #### synthetic data ------------------------------------------------------------
@@ -1468,14 +1237,9 @@ checkKMeansParams <- function(x) {
 #'
 #' @keywords internal
 checkScSyntheticData <- function(x) {
-  res <- checkmate::checkList(x)
-  if (!isTRUE(res)) {
-    return(res)
-  }
-
-  res <- checkmate::checkNames(
-    names(x),
-    must.include = c(
+  res <- check_list_shape(
+    x,
+    c(
       "n_cells",
       "n_genes",
       "marker_genes",
@@ -1489,65 +1253,50 @@ checkScSyntheticData <- function(x) {
     return(res)
   }
 
-  rules <- list(
-    "n_cells" = "I1",
-    "n_genes" = "I1",
-    "n_batches" = "I1",
-    "n_samples" = c("0", "I1")
-  )
-
-  res <- purrr::imap_lgl(x, \(x, name) {
-    if (name %in% names(rules)) {
-      checkmate::qtest(x, rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(
-      sprintf(
-        paste(
-          "The following element `%s` in synthetic data is incorrect:",
-          "n_cells, n_genes and n_batches need to be integers. n_samples an",
-          "integer or NULL."
-        ),
-        broken_elem
-      )
+  res <- apply_qtest_rules(
+    x,
+    list(
+      n_cells = "I1",
+      n_genes = "I1",
+      n_batches = "I1",
+      n_samples = c("0", "I1")
+    ),
+    label = "synthetic data params",
+    hint = paste(
+      "n_cells, n_genes and n_batches must be integers;",
+      "n_samples must be an integer or NULL."
     )
+  )
+  if (!isTRUE(res)) {
+    return(res)
   }
 
-  res <- checkmate::checkList(
-    x$marker_genes,
-    types = "list",
-    names = "named"
-  )
+  res <- checkmate::checkList(x$marker_genes, types = "list", names = "named")
   if (!isTRUE(res)) {
     return("marker_genes must be a named list of lists.")
   }
 
-  res <- checkmate::checkChoice(
-    x[["batch_effect_strength"]],
-    c("strong", "medium", "weak")
+  res <- apply_choice_rules(
+    x,
+    list(batch_effect_strength = c("strong", "medium", "weak")),
+    label = "synthetic data params"
   )
   if (!isTRUE(res)) {
     return(res)
   }
 
-  res <- if (!is.null(x[["sample_bias"]])) {
-    checkmate::checkChoice(
-      x[["sample_bias"]],
-      c("even", "slightly_uneven", "very_uneven")
+  if (!is.null(x[["sample_bias"]])) {
+    res <- apply_choice_rules(
+      x,
+      list(sample_bias = c("even", "slightly_uneven", "very_uneven")),
+      label = "synthetic data params"
     )
-  } else {
-    TRUE
-  }
-  if (!isTRUE(res)) {
-    return(res)
+    if (!isTRUE(res)) {
+      return(res)
+    }
   }
 
-  return(TRUE)
+  TRUE
 }
 
 #' Assert synthetic data parameters
@@ -1580,14 +1329,9 @@ assertScSyntheticData <- checkmate::makeAssertionFunction(checkScSyntheticData)
 #'
 #' @keywords internal
 checkScSyntheticDataAdt <- function(x) {
-  res <- checkmate::checkList(x)
-  if (!isTRUE(res)) {
-    return(res)
-  }
-
-  res <- checkmate::checkNames(
-    names(x),
-    must.include = c(
+  res <- check_list_shape(
+    x,
+    c(
       "n_cells",
       "n_proteins",
       "marker_genes",
@@ -1600,53 +1344,34 @@ checkScSyntheticDataAdt <- function(x) {
     return(res)
   }
 
-  rules <- list(
-    "n_cells" = "I1",
-    "n_proteins" = "I1",
-    "n_batches" = "I1",
-    "isotype_controls" = "I+"
-  )
-
-  res <- purrr::imap_lgl(x, \(x, name) {
-    if (name %in% names(rules)) {
-      checkmate::qtest(x, rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(
-      sprintf(
-        paste(
-          "The following element `%s` in synthetic ADT data is incorrect:",
-          "n_cells, n_proteins and n_batches need to be integers.",
-          "isotype_controls a non-empty integer vector."
-        ),
-        broken_elem
-      )
+  res <- apply_qtest_rules(
+    x,
+    list(
+      n_cells = "I1",
+      n_proteins = "I1",
+      n_batches = "I1",
+      isotype_controls = "I+"
+    ),
+    label = "synthetic ADT params",
+    hint = paste(
+      "n_cells, n_proteins and n_batches must be integers;",
+      "isotype_controls must be a non-empty integer vector."
     )
-  }
-
-  res <- checkmate::checkList(
-    x$marker_genes,
-    types = "list",
-    names = "named"
-  )
-  if (!isTRUE(res)) {
-    return("marker_genes must be a named list of lists.")
-  }
-
-  res <- checkmate::checkChoice(
-    x[["batch_effect_strength"]],
-    c("strong", "medium", "weak")
   )
   if (!isTRUE(res)) {
     return(res)
   }
 
-  return(TRUE)
+  res <- checkmate::checkList(x$marker_genes, types = "list", names = "named")
+  if (!isTRUE(res)) {
+    return("marker_genes must be a named list of lists.")
+  }
+
+  apply_choice_rules(
+    x,
+    list(batch_effect_strength = c("strong", "medium", "weak")),
+    label = "synthetic ADT params"
+  )
 }
 
 #' Assert synthetic ADT data parameters
@@ -1680,41 +1405,30 @@ assertScSyntheticDataAdt <- checkmate::makeAssertionFunction(
 #'
 #' @keywords internal
 checkScMtxIO <- function(x) {
-  res <- checkmate::checkList(x)
-  if (!isTRUE(res)) {
-    return(res)
-  }
-  res <- checkmate::checkNames(
-    names(x),
-    must.include = c(
-      "path_mtx",
-      "path_obs",
-      "path_var",
-      "cells_as_rows",
-      "has_hdr"
-    )
+  res <- check_list_shape(
+    x,
+    c("path_mtx", "path_obs", "path_var", "cells_as_rows", "has_hdr")
   )
   if (!isTRUE(res)) {
     return(res)
   }
-  res <- purrr::map_lgl(c("path_mtx", "path_obs", "path_var"), \(n) {
+
+  files_ok <- purrr::map_lgl(c("path_mtx", "path_obs", "path_var"), \(n) {
     checkmate::testFileExists(x[[n]])
   })
-  if (!isTRUE(all(res))) {
+  if (!all(files_ok)) {
     return(paste(
-      "Some of the files specified in the config for mtx ingest are not",
-      "existing. Please check the provided params."
+      "Some of the files specified in the config for mtx ingest do not exist.",
+      "Please check the provided params."
     ))
   }
-  res <- checkmate::qtest(x[["cells_as_rows"]], "B1")
-  if (!isTRUE(res)) {
-    return(res)
-  }
-  res <- checkmate::qtest(x[["has_hdr"]], "B1")
-  if (!isTRUE(res)) {
-    return(res)
-  }
-  return(TRUE)
+
+  apply_qtest_rules(
+    x,
+    list(cells_as_rows = "B1", has_hdr = "B1"),
+    label = "MTX IO params",
+    hint = "cells_as_rows and has_hdr must be booleans."
+  )
 }
 
 #' Assert SC MTX load parameters
@@ -1746,46 +1460,28 @@ assertScMtxIO <- checkmate::makeAssertionFunction(checkScMtxIO)
 #'
 #' @keywords internal
 checkScMinQC <- function(x) {
-  # Checkmate extension
-  res <- checkmate::checkList(x)
-  if (!isTRUE(res)) {
-    return(res)
-  }
-  res <- checkmate::checkNames(
-    names(x),
-    must.include = c(
-      "min_unique_genes",
-      "min_lib_size",
-      "min_cells",
-      "target_size"
-    )
+  res <- check_list_shape(
+    x,
+    c("min_unique_genes", "min_lib_size", "min_cells", "target_size")
   )
   if (!isTRUE(res)) {
     return(res)
   }
-  rules <- list(
-    "min_unique_genes" = "I1",
-    "min_lib_size" = "I1",
-    "min_cells" = "I1",
-    "target_size" = "N1"
-  )
-  res <- purrr::imap_lgl(x, \(x, name) {
-    checkmate::qtest(x, rules[[name]])
-  })
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(
-      sprintf(
-        paste(
-          "The following element `%s` in min single cell QC params does not 
-          conform to the expected format. min_unique_genes, min_lib_size, ",
-          "min_cells need to be integers and target_size needs to be float."
-        ),
-        broken_elem
-      )
+
+  apply_qtest_rules(
+    x,
+    list(
+      min_unique_genes = "I1",
+      min_lib_size = "I1",
+      min_cells = "I1",
+      target_size = "N1"
+    ),
+    label = "single cell QC params",
+    hint = paste(
+      "min_unique_genes, min_lib_size and min_cells must be integers;",
+      "target_size must be a float."
     )
-  }
-  return(TRUE)
+  )
 }
 
 #' Assert SC minimum QC parameters
@@ -1817,14 +1513,9 @@ assertScMinQC <- checkmate::makeAssertionFunction(checkScMinQC)
 #'
 #' @keywords internal
 checkScScrublet <- function(x) {
-  res <- checkmate::checkList(x)
-  if (!isTRUE(res)) {
-    return(res)
-  }
-
-  res <- checkmate::checkNames(
-    names(x),
-    must.include = c(
+  res <- check_list_shape(
+    x,
+    c(
       "log_transform",
       "mean_center",
       "normalise_variance",
@@ -1848,138 +1539,51 @@ checkScScrublet <- function(x) {
     return(res)
   }
 
-  # Check kNN parameters
-  knn_params <- x[names(x) %in% KNN_PARAM_NAMES]
-  res <- checkKnnParams(knn_params)
+  res <- checkKnnParams(x[names(x) %in% KNN_PARAM_NAMES])
   if (!isTRUE(res)) {
     return(res)
   }
 
-  # Integer rules (non-kNN)
-  integer_rules <- list(
-    "no_pcs" = "I1[1,)",
-    "n_bins_histogram" = "I1[10,)",
-    "n_bins" = "I1[1,)"
-  )
-
-  res <- purrr::imap_lgl(x, \(x, name) {
-    if (name %in% names(integer_rules)) {
-      checkmate::qtest(x, integer_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(
-      sprintf(
-        paste(
-          "The following element `%s` in Scrublet parameters is incorrect:",
-          "no_pcs must be >= 1; n_bins must be >= 10."
-        ),
-        broken_elem
-      )
+  res <- apply_qtest_rules(
+    x,
+    list(
+      no_pcs = "I1[1,)",
+      n_bins_histogram = "I1[10,)",
+      n_bins = "I1[1,)",
+      min_gene_var_pctl = "N1[0,1]",
+      loess_span = "N1(0,)",
+      sim_doublet_ratio = "N1(0,)",
+      expected_doublet_rate = "N1[0,1]",
+      stdev_doublet_rate = "N1[0,1]",
+      target_size = "N1[0,)",
+      log_transform = "B1",
+      mean_center = "B1",
+      normalise_variance = "B1",
+      random_svd = "B1",
+      clip_max = c("0", "N1(0,)"),
+      manual_threshold = c("0", "N1[0,)")
+    ),
+    label = "Scrublet params",
+    hint = paste(
+      "no_pcs must be >= 1; n_bins_histogram must be >= 10; n_bins must be >= 1;",
+      "min_gene_var_pctl, expected_doublet_rate and stdev_doublet_rate must be in [0, 1];",
+      "loess_span and sim_doublet_ratio must be > 0; target_size must be >= 0;",
+      "log_transform, mean_center, normalise_variance and random_svd must be booleans;",
+      "clip_max and manual_threshold must be NULL or positive numerics."
     )
-  }
-
-  # Numeric rules (non-kNN)
-  numeric_rules <- list(
-    "min_gene_var_pctl" = "N1[0,1]",
-    "loess_span" = "N1(0,)",
-    "sim_doublet_ratio" = "N1(0,)",
-    "expected_doublet_rate" = "N1[0,1]",
-    "stdev_doublet_rate" = "N1[0,1]",
-    "target_size" = "N1[0,)"
-  )
-
-  res <- purrr::imap_lgl(x, \(x, name) {
-    if (name %in% names(numeric_rules)) {
-      checkmate::qtest(x, numeric_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(
-      sprintf(
-        paste(
-          "The following element `%s` in Scrublet parameters is incorrect:",
-          "min_gene_var_pctl, expected_doublet_rate and stdev_doublet_rate",
-          "must be in [0,1]; loess_span and sim_doublet_ratio must be > 0;",
-          "target_size must be a numeric >= 1"
-        ),
-        broken_elem
-      )
-    )
-  }
-
-  # Boolean rules
-  boolean_rules <- c(
-    "random_svd",
-    "log_transform",
-    "mean_center",
-    "normalise_variance"
-  )
-
-  res <- purrr::map_lgl(boolean_rules, \(name) {
-    checkmate::qtest(x[[name]], "B1")
-  })
-
-  if (!isTRUE(all(res))) {
-    broken_elem <- boolean_rules[which(!res)][1]
-    return(
-      sprintf(
-        "The element `%s` in Scrublet parameters must be a boolean (TRUE/FALSE).",
-        broken_elem
-      )
-    )
-  }
-
-  # Optional numeric rules (can be NULL)
-  optional_rules <- list(
-    "clip_max" = c("0", "N1(0,)"),
-    "manual_threshold" = c("0", "N1[0,)")
-  )
-
-  res <- purrr::imap_lgl(x, \(x, name) {
-    if (name %in% names(optional_rules)) {
-      checkmate::qtest(x, optional_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(
-      sprintf(
-        paste(
-          "The following element `%s` in Scrublet parameters is incorrect:",
-          "clip_max and manual_threshold must be NULL or positive numeric",
-          "values."
-        ),
-        broken_elem
-      )
-    )
-  }
-
-  # Choice rules
-  res <- checkmate::testChoice(x[["hvg_method"]], c("vst", "mvb", "dispersion"))
-  if (!isTRUE(res)) {
-    return("hvg_method must be one of: vst, mvb, dispersion.")
-  }
-  res <- checkmate::testChoice(
-    x[["binning_strategy"]],
-    c("equal_width", "equal_frequency")
   )
   if (!isTRUE(res)) {
-    return("hvg_method must be one of: equal_width, equal_frequency")
+    return(res)
   }
 
-  return(TRUE)
+  apply_choice_rules(
+    x,
+    list(
+      hvg_method = c("vst", "mvb", "dispersion"),
+      binning_strategy = c("equal_width", "equal_frequency")
+    ),
+    label = "Scrublet params"
+  )
 }
 
 #' Assert Scrublet parameters
@@ -2010,14 +1614,9 @@ assertScScrublet <- checkmate::makeAssertionFunction(checkScScrublet)
 #'
 #' @keywords internal
 checkScBoost <- function(x) {
-  res <- checkmate::checkList(x)
-  if (!isTRUE(res)) {
-    return(res)
-  }
-
-  res <- checkmate::checkNames(
-    names(x),
-    must.include = c(
+  res <- check_list_shape(
+    x,
+    c(
       "log_transform",
       "mean_center",
       "normalise_variance",
@@ -2043,9 +1642,7 @@ checkScBoost <- function(x) {
     return(res)
   }
 
-  # kNN
-  knn_params <- x[names(x) %in% KNN_PARAM_NAMES]
-  res <- checkKnnParams(knn_params)
+  res <- checkKnnParams(x[names(x) %in% KNN_PARAM_NAMES])
   if (!isTRUE(res)) {
     return(res)
   }
@@ -2055,132 +1652,49 @@ checkScBoost <- function(x) {
     return(res)
   }
 
-  # Integer rules
-  integer_rules <- list(
-    "no_pcs" = "I1[1,)",
-    "n_iters" = "I1[1,)",
-    "n_bins" = "I1[1,)"
-  )
-
-  res <- purrr::imap_lgl(x, \(x, name) {
-    if (name %in% names(integer_rules)) {
-      checkmate::qtest(x, integer_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(
-      sprintf(
-        paste(
-          "The following element `%s` in Boost parameters is incorrect:",
-          "no_pcs, n_bins, and n_iters must be >= 1."
-        ),
-        broken_elem
-      )
+  res <- apply_qtest_rules(
+    x,
+    list(
+      no_pcs = "I1[1,)",
+      n_iters = "I1[1,)",
+      n_bins = "I1[1,)",
+      min_gene_var_pctl = "N1[0,1]",
+      loess_span = "N1(0,)",
+      boost_rate = "N1[0,1]",
+      resolution = "N1(0,)",
+      p_thresh = "N1(0,)",
+      voter_thresh = "N1[0,1]",
+      target_size = "N1(0,)",
+      log_transform = "B1",
+      mean_center = "B1",
+      normalise_variance = "B1",
+      replace = "B1",
+      random_svd = "B1",
+      fast_cluster = "B1",
+      clip_max = c("0", "N1(0,)")
+    ),
+    label = "Boost params",
+    hint = paste(
+      "no_pcs, n_bins and n_iters must be >= 1;",
+      "min_gene_var_pctl, boost_rate and voter_thresh must be in [0, 1];",
+      "loess_span, resolution and p_thresh must be > 0; target_size must be > 0;",
+      "log_transform, mean_center, normalise_variance, replace, random_svd and",
+      "fast_cluster must be booleans;",
+      "clip_max must be NULL or a positive numeric."
     )
-  }
-
-  # Numeric rules
-  numeric_rules <- list(
-    "min_gene_var_pctl" = "N1[0,1]",
-    "loess_span" = "N1(0,)",
-    "boost_rate" = "N1[0,1]",
-    "resolution" = "N1(0,)",
-    "p_thresh" = "N1(0,)",
-    "voter_thresh" = "N1[0,1]",
-    "target_size" = "N1(0,)"
-  )
-
-  res <- purrr::imap_lgl(x, \(x, name) {
-    if (name %in% names(numeric_rules)) {
-      checkmate::qtest(x, numeric_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(
-      sprintf(
-        paste(
-          "The following element `%s` in Boost parameters is incorrect:",
-          "min_gene_var_pctl, boost_rate and voter_thresh must be in [0,1];",
-          "loess_span, resolution and p_thresh must be > 0;",
-          "target_size must be > 1."
-        ),
-        broken_elem
-      )
-    )
-  }
-
-  # Boolean rules
-  boolean_rules <- c(
-    "log_transform",
-    "mean_center",
-    "normalise_variance",
-    "replace",
-    "random_svd",
-    "fast_cluster"
-  )
-
-  res <- purrr::map_lgl(boolean_rules, \(name) {
-    checkmate::qtest(x[[name]], "B1")
-  })
-
-  if (!isTRUE(all(res))) {
-    broken_elem <- boolean_rules[which(!res)][1]
-    return(
-      sprintf(
-        "The element `%s` in Boost parameters must be a boolean (TRUE/FALSE).",
-        broken_elem
-      )
-    )
-  }
-
-  # Optional numeric rules (can be NULL)
-  optional_rules <- list(
-    "clip_max" = c("0", "N1(0,)")
-  )
-
-  res <- purrr::imap_lgl(x, \(x, name) {
-    if (name %in% names(optional_rules)) {
-      checkmate::qtest(x, optional_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(
-      sprintf(
-        paste(
-          "The following element `%s` in Boost parameters is incorrect:",
-          "clip_max must be NULL or a positive numeric value."
-        ),
-        broken_elem
-      )
-    )
-  }
-
-  # Choice rules
-  res <- checkmate::testChoice(x[["hvg_method"]], c("vst", "mvb", "dispersion"))
-  if (!isTRUE(res)) {
-    return("hvg_method must be one of: vst, mvb, dispersion.")
-  }
-  res <- checkmate::testChoice(
-    x[["binning_strategy"]],
-    c("equal_width", "equal_frequency")
   )
   if (!isTRUE(res)) {
-    return("hvg_method must be one of: equal_width, equal_frequency")
+    return(res)
   }
 
-  return(TRUE)
+  apply_choice_rules(
+    x,
+    list(
+      hvg_method = c("vst", "mvb", "dispersion"),
+      binning_strategy = c("equal_width", "equal_frequency")
+    ),
+    label = "Boost params"
+  )
 }
 
 #' Assert Boost parameters
@@ -2211,13 +1725,9 @@ assertScBoost <- checkmate::makeAssertionFunction(checkScBoost)
 #'
 #' @keywords internal
 checkScDblFinder <- function(x) {
-  res <- checkmate::checkList(x)
-  if (!isTRUE(res)) {
-    return(res)
-  }
-  res <- checkmate::checkNames(
-    names(x),
-    must.include = c(
+  res <- check_list_shape(
+    x,
+    c(
       "log_transform",
       "mean_center",
       "normalise_variance",
@@ -2246,102 +1756,49 @@ checkScDblFinder <- function(x) {
   if (!isTRUE(res)) {
     return(res)
   }
-  knn_params <- x[names(x) %in% KNN_PARAM_NAMES]
-  res <- checkKnnParams(knn_params)
+
+  res <- checkKnnParams(x[names(x) %in% KNN_PARAM_NAMES])
   if (!isTRUE(res)) {
     return(res)
   }
+
   res <- checkFastClusterDefaultParams(x)
   if (!isTRUE(res)) {
     return(res)
   }
 
-  integer_rules <- list(
-    "n_genes" = "I1[1,)",
-    "no_pcs" = "I1[1,)",
-    "cluster_iters" = "I1[1,)",
-    "n_iterations" = "I1[1,)",
-    "n_trees" = "I1[1,)",
-    "max_depth" = "I1[1,)",
-    "min_samples_leaf" = "I1[1,)",
-    "cv_folds" = "I1[2,)",
-    "cv_early_stop" = "I1[1,)",
-    "include_pcs" = "I1[1,)"
+  apply_qtest_rules(
+    x,
+    list(
+      n_genes = "I1[1,)",
+      no_pcs = "I1[1,)",
+      cluster_iters = "I1[1,)",
+      n_iterations = "I1[1,)",
+      n_trees = "I1[1,)",
+      max_depth = "I1[1,)",
+      min_samples_leaf = "I1[1,)",
+      cv_folds = "I1[2,)",
+      cv_early_stop = "I1[1,)",
+      include_pcs = "I1[1,)",
+      doublet_ratio = "N1(0,)",
+      heterotypic_bias = "N1[0,1]",
+      cluster_resolution = "N1(0,)",
+      learning_rate = "N1(0,)",
+      subsample_rate = "N1(0,1]",
+      se_fraction = "N1[0,)",
+      target_size = "N1(0,)",
+      log_transform = "B1",
+      mean_center = "B1",
+      normalise_variance = "B1",
+      random_svd = "B1",
+      fast_cluster = "B1",
+      expected_doublet_rate = c("0", "N1(0,1]"),
+      manual_threshold = c("0", "N1[0,)"),
+      cxds_genes = c("0", "I1")
+    ),
+    label = "scDblFinder params",
+    hint = "Please check the documentation for the expected type/range."
   )
-  res <- purrr::imap_lgl(x, \(x, name) {
-    if (name %in% names(integer_rules)) {
-      checkmate::qtest(x, integer_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(sprintf(
-      "The element `%s` in scDblFinder parameters is incorrect.",
-      broken_elem
-    ))
-  }
-  numeric_rules <- list(
-    "doublet_ratio" = "N1(0,)",
-    "heterotypic_bias" = "N1[0,1]",
-    "cluster_resolution" = "N1(0,)",
-    "learning_rate" = "N1(0,)",
-    "subsample_rate" = "N1(0,1]",
-    "se_fraction" = "N1[0,)",
-    "target_size" = "N1(0,)"
-  )
-  res <- purrr::imap_lgl(x, \(x, name) {
-    if (name %in% names(numeric_rules)) {
-      checkmate::qtest(x, numeric_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(sprintf(
-      "The element `%s` in scDblFinder parameters has an invalid value.",
-      broken_elem
-    ))
-  }
-  boolean_rules <- c(
-    "log_transform",
-    "mean_center",
-    "normalise_variance",
-    "random_svd",
-    "fast_cluster"
-  )
-  res <- purrr::map_lgl(boolean_rules, \(name) {
-    checkmate::qtest(x[[name]], "B1")
-  })
-  if (!isTRUE(all(res))) {
-    broken_elem <- boolean_rules[which(!res)][1]
-    return(sprintf(
-      "The element `%s` in scDblFinder parameters must be TRUE or FALSE.",
-      broken_elem
-    ))
-  }
-  optional_rules <- list(
-    "expected_doublet_rate" = c("0", "N1(0,1]"),
-    "manual_threshold" = c("0", "N1[0,)"),
-    "cxds_genes" = c("0", "I1")
-  )
-  res <- purrr::imap_lgl(x, \(x, name) {
-    if (name %in% names(optional_rules)) {
-      checkmate::qtest(x, optional_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(sprintf(
-      "The element `%s` in scDblFinder parameters is incorrect. Please check.",
-      broken_elem
-    ))
-  }
-  return(TRUE)
 }
 
 #' Assert scDblFinder parameters
@@ -2371,73 +1828,35 @@ assertScDblFinder <- checkmate::makeAssertionFunction(checkScDblFinder)
 #'
 #' @keywords internal
 checkScHvg <- function(x) {
-  # Checkmate extension
-  res <- checkmate::checkList(x)
-  if (!isTRUE(res)) {
-    return(res)
-  }
-  res <- checkmate::checkNames(
-    names(x),
-    must.include = c(
-      "method",
-      "loess_span",
-      "num_bin",
-      "bin_method"
-    )
+  res <- check_list_shape(
+    x,
+    c("method", "loess_span", "num_bin", "bin_method")
   )
   if (!isTRUE(res)) {
     return(res)
-  }
-  rules <- list(
-    "loess_span" = "N1[0.1, 1]",
-    "num_bin" = "I1"
-  )
-  res <- purrr::imap_lgl(x, \(x, name) {
-    if (name %in% names(rules)) {
-      checkmate::qtest(x, rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(
-      sprintf(
-        paste(
-          "The following element `%s` in single cell HVG selection is",
-          "incorrect: loess_span needs to be between 0.1 and 1 and num_bin",
-          "an integer."
-        ),
-        broken_elem
-      )
-    )
-  }
-  # test
-  test_choice_rules <- list(
-    method = c("vst", "meanvarbin", "dispersion"),
-    bin_method = c("equal_width", "equal_freq")
-  )
-  test_choice_res <- purrr::imap_lgl(x, \(x, name) {
-    if (name %in% names(test_choice_rules)) {
-      checkmate::testChoice(x, test_choice_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-  if (!isTRUE(all(test_choice_res))) {
-    broken_elem <- names(test_choice_res)[which(!test_choice_res)][1]
-    return(
-      sprintf(
-        paste0(
-          "The following element `%s` in HVG params is not one of the",
-          "expected choices. Please double check the documentation."
-        ),
-        broken_elem
-      )
-    )
   }
 
-  return(TRUE)
+  res <- apply_qtest_rules(
+    x,
+    list(
+      loess_span = "N1[0.1, 1]",
+      num_bin = "I1"
+    ),
+    label = "HVG params",
+    hint = "loess_span must be in [0.1, 1]; num_bin must be an integer."
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  apply_choice_rules(
+    x,
+    list(
+      method = c("vst", "meanvarbin", "dispersion"),
+      bin_method = c("equal_width", "equal_freq")
+    ),
+    label = "HVG params"
+  )
 }
 
 #' Assert HVG selection parameters
@@ -2470,51 +1889,29 @@ assertScHvg <- checkmate::makeAssertionFunction(checkScHvg)
 #'
 #' @keywords internal
 checkScPca <- function(x) {
-  res <- checkmate::checkList(x)
-  if (!isTRUE(res)) {
-    return(res)
-  }
-  res <- checkmate::checkNames(
-    names(x),
-    must.include = c(
-      "mean_center",
-      "normalise_variance",
-      "randomised",
-      "clr",
-      "size_factor"
-    )
+  res <- check_list_shape(
+    x,
+    c("mean_center", "normalise_variance", "randomised", "clr", "size_factor")
   )
   if (!isTRUE(res)) {
     return(res)
   }
-  rules <- list(
-    mean_center = "B1",
-    normalise_variance = "B1",
-    randomised = "B1",
-    clr = "B1",
-    size_factor = "N1"
-  )
-  res <- purrr::imap_lgl(x, \(x, name) {
-    if (name %in% names(rules)) {
-      checkmate::qtest(x, rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(
-      sprintf(
-        paste(
-          "The following element `%s` in single cell PCA parameters is",
-          "incorrect: mean_center, normalise_variance, randomised, and clr",
-          "must be single booleans; size_factor must be a single numeric."
-        ),
-        broken_elem
-      )
+
+  apply_qtest_rules(
+    x,
+    list(
+      mean_center = "B1",
+      normalise_variance = "B1",
+      randomised = "B1",
+      clr = "B1",
+      size_factor = "N1"
+    ),
+    label = "single cell PCA params",
+    hint = paste(
+      "mean_center, normalise_variance, randomised and clr must be single",
+      "booleans; size_factor must be a single numeric."
     )
-  }
-  return(TRUE)
+  )
 }
 
 #' Assert PCA parameters for single cell
@@ -2547,14 +1944,9 @@ assertScPca <- checkmate::makeAssertionFunction(checkScPca)
 #'
 #' @keywords internal
 checkScKnn <- function(x) {
-  res <- checkmate::checkList(x)
-  if (!isTRUE(res)) {
-    return(res)
-  }
-
-  res <- checkmate::checkNames(
-    names(x),
-    must.include = c(
+  res <- check_list_shape(
+    x,
+    c(
       "k",
       "knn_method",
       "ann_dist",
@@ -2574,63 +1966,48 @@ checkScKnn <- function(x) {
     return(res)
   }
 
-  rules <- list(
-    "k" = "I1[1,)",
-    "n_trees" = "I1[1,)",
-    "delta" = "N1(0,)",
-    "diversify_prob" = "N1[0,1]",
-    "m" = "I1[1,)",
-    "ef_construction" = "I1[1,)",
-    "ef_search" = "I1[1,)"
+  res <- apply_qtest_rules(
+    x,
+    list(
+      k = "I1[1,)",
+      n_trees = "I1[1,)",
+      delta = "N1(0,)",
+      diversify_prob = "N1[0,1]",
+      m = "I1[1,)",
+      ef_construction = "I1[1,)",
+      ef_search = "I1[1,)",
+      search_budget = c("0", "I1[1,)"),
+      ef_budget = c("0", "I1[1,)"),
+      n_list = c("0", "I1[1,)"),
+      n_probe = c("0", "I1[1,)")
+    ),
+    label = "kNN params",
+    hint = paste(
+      "k, n_trees, m, ef_construction and ef_search must be positive integers;",
+      "delta must be a positive numeric;",
+      "diversify_prob must be a numeric in [0, 1];",
+      "search_budget, ef_budget, n_list and n_probe must be NULL or positive integers."
+    )
   )
-
-  res <- purrr::imap_lgl(x, \(x, name) {
-    if (name %in% names(rules)) {
-      checkmate::qtest(x, rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(
-      sprintf(
-        paste(
-          "The following element `%s` in kNN params is incorrect:",
-          "k, n_trees, m, ef_construction and ef_search must be positive",
-          "integers; delta must be a positive numeric;",
-          "diversify_prob must be a numeric in [0, 1]."
-        ),
-        broken_elem
-      )
-    )
+  if (!isTRUE(res)) {
+    return(res)
   }
 
-  if (
-    !checkmate::testChoice(
-      x$knn_method,
-      c("kmknn", "hnsw", "annoy", "nndescent", "ivf", "exhaustive")
-    )
-  ) {
-    return(
-      "knn_method must be one of 'kmknn', 'hnsw', 'annoy', 'nndescent', 'ivf' or 'exhaustive'."
-    )
-  }
-
-  if (!checkmate::testChoice(x$ann_dist, c("cosine", "euclidean"))) {
-    return("ann_dist must be one of 'cosine' or 'euclidean'.")
-  }
-
-  nullable_int_fields <- c("search_budget", "ef_budget", "n_list", "n_probe")
-  for (field in nullable_int_fields) {
-    val <- x[[field]]
-    if (!is.null(val) && !checkmate::testInt(val, lower = 1L)) {
-      return(sprintf("`%s` must be a positive integer or NULL.", field))
-    }
-  }
-
-  return(TRUE)
+  apply_choice_rules(
+    x,
+    list(
+      knn_method = c(
+        "kmknn",
+        "hnsw",
+        "annoy",
+        "nndescent",
+        "ivf",
+        "exhaustive"
+      ),
+      ann_dist = c("cosine", "euclidean")
+    ),
+    label = "kNN params"
+  )
 }
 
 #' Assert single cell kNN parameters
@@ -2663,62 +2040,34 @@ assertScKnn <- checkmate::makeAssertionFunction(checkScKnn)
 #'
 #' @keywords internal
 checkScNeighbours <- function(x) {
-  res <- checkmate::checkList(x)
-  if (!isTRUE(res)) {
-    return(res)
-  }
-  res <- checkmate::checkNames(
-    names(x),
-    must.include = c(
-      "full_snn",
-      "pruning",
-      "snn_similarity",
-      "ann_dist"
-    )
+  res <- check_list_shape(
+    x,
+    c("full_snn", "pruning", "snn_similarity", "ann_dist")
   )
   if (!isTRUE(res)) {
     return(res)
   }
-  # KNN params
-  knn_params <- x[names(x) %in% KNN_PARAM_NAMES]
-  res <- checkKnnParams(knn_params)
+
+  res <- checkKnnParams(x[names(x) %in% KNN_PARAM_NAMES])
   if (!isTRUE(res)) {
     return(res)
   }
 
-  # Check non-kNN parameters
-  rules <- list(
-    "full_snn" = "B1",
-    "pruning" = "N1[0, 1]"
+  res <- apply_qtest_rules(
+    x,
+    list(full_snn = "B1", pruning = "N1[0, 1]"),
+    label = "neighbour params",
+    hint = "full_snn must be a boolean; pruning must be in [0, 1]."
   )
-
-  res <- purrr::imap_lgl(x, \(val, name) {
-    if (name %in% names(rules)) {
-      checkmate::qtest(val, rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(
-      sprintf(
-        paste(
-          "The following parameter `%s` is incorrect:",
-          "full_snn must be boolean, pruning must be in [0,1]."
-        ),
-        broken_elem
-      )
-    )
-  }
-
-  res <- checkmate::testChoice(x[["snn_similarity"]], c("rank", "jaccard"))
   if (!isTRUE(res)) {
-    return("snn_similarity must be either 'rank' or 'jaccard'.")
+    return(res)
   }
 
-  return(TRUE)
+  apply_choice_rules(
+    x,
+    list(snn_similarity = c("rank", "jaccard")),
+    label = "neighbour params"
+  )
 }
 
 #' Assert neighbour generation parameters
@@ -2758,19 +2107,15 @@ checkCellsExist <- function(x, cell_names) {
   }
   res <- checkmate::qtest(cell_names, "S+")
   if (!isTRUE(res)) {
-    return("The cell names need be a string vector.")
+    return("The cell names need to be a string vector.")
   }
-  all_cell_names <- get_cell_names(x)
-  res <- all(cell_names %in% all_cell_names)
-  if (!isTRUE(res)) {
-    return(
-      paste(
-        "Some of the provided cell names do not exist in the object.",
-        "Please check."
-      )
-    )
+  if (!all(cell_names %in% get_cell_names(x))) {
+    return(paste(
+      "Some of the provided cell names do not exist in the object.",
+      "Please check."
+    ))
   }
-  return(TRUE)
+  TRUE
 }
 
 #' Assert neighbour generation parameters
@@ -2803,59 +2148,29 @@ assertCellsExist <- checkmate::makeAssertionFunction(checkCellsExist)
 #'
 #' @keywords internal
 checkScBootstrappedMetacells <- function(x) {
-  res <- checkmate::checkList(x)
-  if (!isTRUE(res)) {
-    return(res)
-  }
-
-  res <- checkmate::checkNames(
-    names(x),
-    must.include = c(
-      "max_shared",
-      "target_no_metacells",
-      "max_iter"
-    )
+  res <- check_list_shape(
+    x,
+    c("max_shared", "target_no_metacells", "max_iter")
   )
   if (!isTRUE(res)) {
     return(res)
   }
 
-  # knn
-  knn_params <- x[names(x) %in% KNN_PARAM_NAMES]
-  res <- checkKnnParams(knn_params)
+  res <- checkKnnParams(x[names(x) %in% KNN_PARAM_NAMES])
   if (!isTRUE(res)) {
     return(res)
   }
 
-  # integers
-  integer_rules <- list(
-    "max_shared" = "I1[1,)",
-    "target_no_metacells" = "I1[1,)",
-    "max_iter" = "I1[1,)"
+  apply_qtest_rules(
+    x,
+    list(
+      max_shared = "I1[1,)",
+      target_no_metacells = "I1[1,)",
+      max_iter = "I1[1,)"
+    ),
+    label = "bootstrapped metacell params",
+    hint = "max_shared, target_no_metacells and max_iter must be integers >= 1."
   )
-
-  res <- purrr::imap_lgl(x, \(val, name) {
-    if (name %in% names(integer_rules)) {
-      checkmate::qtest(val, integer_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(
-      sprintf(
-        paste(
-          "The following element `%s` in bootstrapped metacell generation is incorrect:",
-          "max_shared, target_no_metacells and max_iter need to be integers >= 1."
-        ),
-        broken_elem
-      )
-    )
-  }
-
-  return(TRUE)
 }
 
 #' Assert (bootstrapped) metacell generation parameters
@@ -2889,14 +2204,9 @@ assertScBootstrappedMetacells <- checkmate::makeAssertionFunction(
 #'
 #' @keywords internal
 checkScSeacells <- function(x) {
-  res <- checkmate::checkList(x)
-  if (!isTRUE(res)) {
-    return(res)
-  }
-
-  res <- checkmate::checkNames(
-    names(x),
-    must.include = c(
+  res <- check_list_shape(
+    x,
+    c(
       "n_sea_cells",
       "max_fw_iters",
       "convergence_epsilon",
@@ -2913,89 +2223,34 @@ checkScSeacells <- function(x) {
     return(res)
   }
 
-  # knn
-  knn_params <- x[names(x) %in% KNN_PARAM_NAMES]
-  res <- checkKnnParams(knn_params)
+  res <- checkKnnParams(x[names(x) %in% KNN_PARAM_NAMES])
   if (!isTRUE(res)) {
     return(res)
   }
 
-  # Check non-kNN integer parameters
-  integer_rules <- list(
-    "n_sea_cells" = "I1[1,)",
-    "max_fw_iters" = "I1[1,)",
-    "max_iter" = "I1[1,)",
-    "min_iter" = "I1[1,)",
-    "greedy_threshold" = "I1[1,)"
-  )
-
-  res <- purrr::imap_lgl(x, \(val, name) {
-    if (name %in% names(integer_rules)) {
-      checkmate::qtest(val, integer_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(
-      sprintf(
-        paste(
-          "The following element `%s` in SEACells parameters is incorrect:",
-          "n_sea_cells, max_fw_iters, max_iter, min_iter and greedy_threshold",
-          "need to be integers >= 1."
-        ),
-        broken_elem
-      )
+  apply_qtest_rules(
+    x,
+    list(
+      n_sea_cells = "I1[1,)",
+      max_fw_iters = "I1[1,)",
+      max_iter = "I1[1,)",
+      min_iter = "I1[1,)",
+      greedy_threshold = "I1[1,)",
+      convergence_epsilon = "N1",
+      pruning_threshold = "N1",
+      pruning = "B1",
+      graph_building = "S1",
+      n_landmarks = c("0", "I1")
+    ),
+    label = "SEACells params",
+    hint = paste(
+      "n_sea_cells, max_fw_iters, max_iter, min_iter and greedy_threshold",
+      "must be integers >= 1;",
+      "convergence_epsilon and pruning_threshold must be numeric;",
+      "pruning must be a boolean; graph_building must be a string;",
+      "n_landmarks must be an integer or NULL."
     )
-  }
-
-  # Check numeric parameters
-  numeric_rules <- list(
-    "convergence_epsilon" = "N1",
-    "pruning_threshold" = "N1"
   )
-
-  res <- purrr::imap_lgl(x, \(val, name) {
-    if (name %in% names(numeric_rules)) {
-      checkmate::qtest(val, numeric_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(
-      sprintf(
-        paste(
-          "The following element `%s` in SEACells parameters is incorrect:",
-          "convergence_epsilon and pruning_threshold need to be numeric."
-        ),
-        broken_elem
-      )
-    )
-  }
-
-  # Check boolean parameters
-  res <- checkmate::qtest(x[["pruning"]], "B1")
-  if (!isTRUE(res)) {
-    return("pruning needs to be a boolean.")
-  }
-
-  # Check string parameters
-  res <- checkmate::qtest(x[["graph_building"]], "S1")
-  if (!isTRUE(res)) {
-    return("graph_building needs to be a string.")
-  }
-
-  res <- checkmate::qtest(x[["n_landmarks"]], c("0", "I1"))
-  if (!isTRUE(res)) {
-    return("n_landmarks needs to be an integer or NULL.")
-  }
-
-  TRUE
 }
 
 #' Assert SEACells parameters
@@ -3026,66 +2281,35 @@ assertScSeacells <- checkmate::makeAssertionFunction(checkScSeacells)
 #'
 #' @keywords internal
 checkScSupercell <- function(x) {
-  res <- checkmate::checkList(x)
+  res <- check_list_shape(
+    x,
+    c("walk_length", "graining_factor", "use_kernel", "k_ith", "max_support")
+  )
   if (!isTRUE(res)) {
     return(res)
   }
-  res <- checkmate::checkNames(
-    names(x),
-    must.include = c(
-      "walk_length",
-      "graining_factor",
-      "use_kernel",
-      "k_ith",
-      "max_support"
+
+  res <- checkKnnParams(x[names(x) %in% KNN_PARAM_NAMES])
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  apply_qtest_rules(
+    x,
+    list(
+      walk_length = "I1[1,)",
+      k_ith = c("I1", "0"),
+      max_support = c("I1[1,)", "0"),
+      graining_factor = "N1",
+      use_kernel = "B1"
+    ),
+    label = "SuperCell params",
+    hint = paste(
+      "walk_length must be an integer >= 1;",
+      "k_ith and max_support must be an integer or NULL;",
+      "graining_factor must be numeric; use_kernel must be a boolean."
     )
   )
-  if (!isTRUE(res)) {
-    return(res)
-  }
-
-  # knn
-  knn_params <- x[names(x) %in% KNN_PARAM_NAMES]
-  res <- checkKnnParams(knn_params)
-  if (!isTRUE(res)) {
-    return(res)
-  }
-
-  # Check non-kNN integer parameters
-  integer_rules <- list(
-    "walk_length" = "I1[1,)",
-    "k_ith" = c("I1", "0"),
-    "max_support" = c("I1[1,)", "0")
-  )
-
-  res <- purrr::imap_lgl(x, \(val, name) {
-    if (name %in% names(integer_rules)) {
-      checkmate::qtest(val, integer_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-
-  if (!isTRUE(all(res))) {
-    return(paste(
-      "walk_length needs to be an integer >= 1.",
-      "kith_neighbour and max_support needs to be an integer or NULL."
-    ))
-  }
-
-  # Check numeric parameters
-  res <- checkmate::qtest(x[["graining_factor"]], "N1")
-  if (!isTRUE(res)) {
-    return("graining_factor needs to be numeric.")
-  }
-
-  # Check choice parameters
-  res <- checkmate::qtest(x[["use_kernel"]], "B1")
-  if (!isTRUE(res)) {
-    return("use_kernel needs to be a boolean.")
-  }
-
-  return(TRUE)
 }
 
 #' Assert SuperCell parameters
@@ -3116,14 +2340,9 @@ assertScSupercell <- checkmate::makeAssertionFunction(checkScSupercell)
 #'
 #' @keywords internal
 checkScBbknn <- function(x) {
-  res <- checkmate::checkList(x)
-  if (!isTRUE(res)) {
-    return(res)
-  }
-
-  res <- checkmate::checkNames(
-    names(x),
-    must.include = c(
+  res <- check_list_shape(
+    x,
+    c(
       "neighbours_within_batch",
       "set_op_mix_ratio",
       "local_connectivity",
@@ -3134,36 +2353,27 @@ checkScBbknn <- function(x) {
     return(res)
   }
 
-  # knn
-  knn_params <- x[names(x) %in% KNN_PARAM_NAMES]
-  res <- checkKnnParams(knn_params)
+  res <- checkKnnParams(x[names(x) %in% KNN_PARAM_NAMES])
   if (!isTRUE(res)) {
     return(res)
   }
 
-  # Check integer parameters
-  res <- checkmate::qtest(x[["neighbours_within_batch"]], "I1[1,)")
-  if (!isTRUE(res)) {
-    return("neighbours_within_batch needs to be an integer >= 1.")
-  }
-
-  res <- checkmate::qtest(x[["trim"]], c("0", "I1[1,)"))
-  if (!isTRUE(res)) {
-    return("trim needs to be NULL or an integer >= 1.")
-  }
-
-  # Check numeric parameters
-  res <- checkmate::qtest(x[["set_op_mix_ratio"]], "N1[0,1]")
-  if (!isTRUE(res)) {
-    return("set_op_mix_ratio needs to be numeric between 0 and 1.")
-  }
-
-  res <- checkmate::qtest(x[["local_connectivity"]], "N1")
-  if (!isTRUE(res)) {
-    return("local_connectivity needs to be numeric.")
-  }
-
-  return(TRUE)
+  apply_qtest_rules(
+    x,
+    list(
+      neighbours_within_batch = "I1[1,)",
+      trim = c("0", "I1[1,)"),
+      set_op_mix_ratio = "N1[0,1]",
+      local_connectivity = "N1"
+    ),
+    label = "BBKNN params",
+    hint = paste(
+      "neighbours_within_batch must be an integer >= 1;",
+      "trim must be NULL or an integer >= 1;",
+      "set_op_mix_ratio must be a numeric in [0, 1];",
+      "local_connectivity must be numeric."
+    )
+  )
 }
 
 #' Assert BBKNN parameters
@@ -3194,13 +2404,9 @@ assertScBbknn <- checkmate::makeAssertionFunction(checkScBbknn)
 #'
 #' @keywords internal
 checkScFastmnn <- function(x) {
-  res <- checkmate::checkList(x)
-  if (!isTRUE(res)) {
-    return(res)
-  }
-  res <- checkmate::checkNames(
-    names(x),
-    must.include = c(
+  res <- check_list_shape(
+    x,
+    c(
       "ndist",
       "cos_norm",
       "no_pcs",
@@ -3215,48 +2421,33 @@ checkScFastmnn <- function(x) {
   if (!isTRUE(res)) {
     return(res)
   }
-  # knn
-  knn_params <- x[names(x) %in% KNN_PARAM_NAMES]
-  res <- checkKnnParams(knn_params)
+
+  res <- checkKnnParams(x[names(x) %in% KNN_PARAM_NAMES])
   if (!isTRUE(res)) {
-    return(res)
-  }
-  # Check integer parameters
-  res <- checkmate::qtest(x[["no_pcs"]], "I1[1,)")
-  if (!isTRUE(res)) {
-    return("no_pcs needs to be an integer >= 1.")
-  }
-  # Check numeric parameters
-  res <- checkmate::qtest(x[["ndist"]], "N1(0,)")
-  if (!isTRUE(res)) {
-    return("ndist needs to be a positive numeric.")
-  }
-  # Check logical parameters
-  logical_params <- c(
-    "cos_norm",
-    "randomised",
-    "sparse_svd",
-    "mean_center",
-    "normalise_variance",
-    "clr"
-  )
-  res <- purrr::map_lgl(logical_params, \(param) {
-    checkmate::qtest(x[[param]], "B1")
-  })
-  if (!isTRUE(all(res))) {
-    broken_param <- logical_params[which(!res)][1]
-    return(sprintf(
-      "%s needs to be logical.",
-      broken_param
-    ))
-  }
-  # Check numerical parameters
-  res <- checkmate::checkNumber(x[["size_factor"]])
-  if (!isTRUE(all(res))) {
     return(res)
   }
 
-  return(TRUE)
+  apply_qtest_rules(
+    x,
+    list(
+      no_pcs = "I1[1,)",
+      ndist = "N1(0,)",
+      size_factor = "N1",
+      cos_norm = "B1",
+      randomised = "B1",
+      sparse_svd = "B1",
+      mean_center = "B1",
+      normalise_variance = "B1",
+      clr = "B1"
+    ),
+    label = "fastMNN params",
+    hint = paste(
+      "no_pcs must be an integer >= 1; ndist must be a positive numeric;",
+      "size_factor must be numeric;",
+      "cos_norm, randomised, sparse_svd, mean_center, normalise_variance",
+      "and clr must be booleans."
+    )
+  )
 }
 
 #' Assert fastMNN parameters
@@ -3489,56 +2680,25 @@ assertScSeuratRpca <- checkmate::makeAssertionFunction(checkScSeuratRpca)
 #'
 #' @keywords internal
 checkScVision <- function(x) {
-  res <- checkmate::checkList(x)
+  res <- check_list_shape(x, c("n_perm", "n_cluster"))
   if (!isTRUE(res)) {
     return(res)
   }
-  res <- checkmate::checkNames(
-    names(x),
-    must.include = c(
-      "n_perm",
-      "n_cluster"
-    )
+
+  res <- checkKnnParams(x[names(x) %in% KNN_PARAM_NAMES])
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  apply_qtest_rules(
+    x,
+    list(
+      n_perm = "I1[1,)",
+      n_cluster = "I1[1,)"
+    ),
+    label = "VISION params",
+    hint = "n_perm and n_cluster must be integers >= 1."
   )
-  if (!isTRUE(res)) {
-    return(res)
-  }
-
-  # knn
-  knn_params <- x[names(x) %in% KNN_PARAM_NAMES]
-  res <- checkKnnParams(knn_params)
-  if (!isTRUE(res)) {
-    return(res)
-  }
-
-  # Check non-kNN integer parameters
-  integer_rules <- list(
-    "n_perm" = "I1[1,)",
-    "n_cluster" = "I1[1,)"
-  )
-
-  res <- purrr::imap_lgl(x, \(val, name) {
-    if (name %in% names(integer_rules)) {
-      checkmate::qtest(val, integer_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(
-      sprintf(
-        paste(
-          "The following element `%s` in VISION parameters is incorrect:",
-          "n_perm and n_cluster need to be integers >= 1."
-        ),
-        broken_elem
-      )
-    )
-  }
-
-  return(TRUE)
 }
 
 #' Assert VISION parameters
@@ -3569,42 +2729,31 @@ assertScVision <- checkmate::makeAssertionFunction(checkScVision)
 #'
 #' @keywords internal
 checkScHotspot <- function(x) {
-  res <- checkmate::checkList(x)
+  res <- check_list_shape(x, c("model", "normalise"))
   if (!isTRUE(res)) {
     return(res)
   }
 
-  res <- checkmate::checkNames(
-    names(x),
-    must.include = c(
-      "model",
-      "normalise"
-    )
+  res <- checkKnnParams(x[names(x) %in% KNN_PARAM_NAMES])
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- apply_qtest_rules(
+    x,
+    list(normalise = "B1"),
+    label = "HotSpot params",
+    hint = "normalise must be a boolean."
   )
   if (!isTRUE(res)) {
     return(res)
   }
 
-  # knn
-  knn_params <- x[names(x) %in% KNN_PARAM_NAMES]
-  res <- checkKnnParams(knn_params)
-  if (!isTRUE(res)) {
-    return(res)
-  }
-
-  # Check choice parameters
-  res <- checkmate::testChoice(x[["model"]], c("danb", "bernoulli", "normal"))
-  if (!isTRUE(res)) {
-    return("model must be one of: danb, bernoulli, normal.")
-  }
-
-  # Check boolean parameters
-  res <- checkmate::qtest(x[["normalise"]], "B1")
-  if (!isTRUE(res)) {
-    return("normalise needs to be a boolean.")
-  }
-
-  return(TRUE)
+  apply_choice_rules(
+    x,
+    list(model = c("danb", "bernoulli", "normal")),
+    label = "HotSpot params"
+  )
 }
 
 #' Assert HotSpot parameters
@@ -3635,71 +2784,40 @@ assertScHotspot <- checkmate::makeAssertionFunction(checkScHotspot)
 #'
 #' @keywords internal
 checkScMiloR <- function(x) {
-  res <- checkmate::checkList(x)
-  if (!isTRUE(res)) {
-    return(res)
-  }
-
-  res <- checkmate::checkNames(
-    names(x),
-    must.include = c(
-      "prop",
-      "k_refine",
-      "refinement_strategy",
-      "index_type"
-    )
+  res <- check_list_shape(
+    x,
+    c("prop", "k_refine", "refinement_strategy", "index_type")
   )
   if (!isTRUE(res)) {
     return(res)
   }
 
-  # knn
-  knn_params <- x[names(x) %in% KNN_PARAM_NAMES]
-  res <- checkKnnParams(knn_params)
+  res <- checkKnnParams(x[names(x) %in% KNN_PARAM_NAMES])
   if (!isTRUE(res)) {
     return(res)
   }
 
-  # Check non-kNN integer parameters
-  res <- checkmate::qtest(x[["k_refine"]], "I1[1,)")
-  if (!isTRUE(res)) {
-    return("k_refine must be an integer >= 1.")
-  }
-
-  # Check numeric parameters
-  res <- checkmate::qtest(x[["prop"]], "N1(0,1)")
-  if (!isTRUE(res)) {
-    return("prop must be in (0,1).")
-  }
-
-  # Check choice parameters
-  test_choice_rules <- list(
-    refinement_strategy = c("approximate", "bruteforce", "index"),
-    index_type = c("nndescent", "ivf", "hnsw", "annoy")
+  res <- apply_qtest_rules(
+    x,
+    list(
+      k_refine = "I1[1,)",
+      prop = "N1(0,1)"
+    ),
+    label = "MiloR params",
+    hint = "k_refine must be an integer >= 1; prop must be in (0, 1)."
   )
-
-  test_choice_res <- purrr::imap_lgl(x, \(val, name) {
-    if (name %in% names(test_choice_rules)) {
-      checkmate::testChoice(val, test_choice_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-
-  if (!isTRUE(all(test_choice_res))) {
-    broken_elem <- names(test_choice_res)[which(!test_choice_res)][1]
-    return(
-      sprintf(
-        paste(
-          "The following element `%s` in MiloR parameters is not one of the",
-          "expected choices. Please check the documentation."
-        ),
-        broken_elem
-      )
-    )
+  if (!isTRUE(res)) {
+    return(res)
   }
 
-  return(TRUE)
+  apply_choice_rules(
+    x,
+    list(
+      refinement_strategy = c("approximate", "bruteforce", "index"),
+      index_type = c("nndescent", "ivf", "hnsw", "annoy")
+    ),
+    label = "MiloR params"
+  )
 }
 
 #' Assert MiloR parameters
@@ -3759,95 +2877,29 @@ checkScHarmonyParams <- function(x) {
     return(res)
   }
 
-  # Integer rules
-  integer_rules <- list(
-    "k" = c("I1[1,)", "0"),
-    "max_iter_kmeans" = "I1[1,)",
-    "max_iter_harmony" = "I1[1,)",
-    "window_size" = "I1[1,)"
-  )
-
-  res <- purrr::imap_lgl(x, \(x, name) {
-    if (name %in% names(integer_rules)) {
-      checkmate::qtest(x, integer_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(
-      sprintf(
-        paste(
-          "The following element `%s` in Harmony parameters is incorrect:",
-          "max_iter_kmeans, max_iter_harmony,",
-          "and window_size must be integers >= 1. k must be NULL or an integer."
-        ),
-        broken_elem
-      )
+  apply_qtest_rules(
+    x,
+    list(
+      k = c("I1[1,)", "0"),
+      max_iter_kmeans = "I1[1,)",
+      max_iter_harmony = "I1[1,)",
+      window_size = "I1[1,)",
+      sigma = "N+[0,)",
+      theta = "N+[0,)",
+      lambda = "N+[0,)",
+      block_size = "N1(0,1]",
+      epsilon_kmeans = "N1(0,)",
+      epsilon_harmony = "N1(0,)"
+    ),
+    label = "Harmony params",
+    hint = paste(
+      "max_iter_kmeans, max_iter_harmony and window_size must be integers >= 1;",
+      "k must be NULL or an integer;",
+      "sigma, theta and lambda must be numeric vectors with non-negative values;",
+      "block_size must be in (0, 1];",
+      "epsilon_kmeans and epsilon_harmony must be > 0."
     )
-  }
-
-  # Numeric vector rules (can be length 1 or longer)
-  vector_rules <- list(
-    "sigma" = "N+[0,)",
-    "theta" = "N+[0,)",
-    "lambda" = "N+[0,)"
   )
-
-  res <- purrr::imap_lgl(x, \(x, name) {
-    if (name %in% names(vector_rules)) {
-      checkmate::qtest(x, vector_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(
-      sprintf(
-        paste(
-          "The following element `%s` in Harmony parameters is incorrect:",
-          "sigma, theta, and lambda must be numeric vectors",
-          "with non-negative values."
-        ),
-        broken_elem
-      )
-    )
-  }
-
-  # Scalar numeric rules
-  scalar_rules <- list(
-    "block_size" = "N1(0,1]",
-    "epsilon_kmeans" = "N1(0,)",
-    "epsilon_harmony" = "N1(0,)"
-  )
-
-  res <- purrr::imap_lgl(x, \(x, name) {
-    if (name %in% names(scalar_rules)) {
-      checkmate::qtest(x, scalar_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(
-      sprintf(
-        paste(
-          "The following element `%s` in Harmony parameters is incorrect:",
-          "block_size must be in (0,1]; epsilon_kmeans",
-          "and epsilon_harmony must be > 0."
-        ),
-        broken_elem
-      )
-    )
-  }
-
-  return(TRUE)
 }
 
 #' Assert Harmony parameters
@@ -3911,125 +2963,35 @@ checkScHarmonyParamsV2 <- function(x) {
     return(res)
   }
 
-  # Integer rules
-  integer_rules <- list(
-    "k" = c("I1[1,)", "0"),
-    "max_iter_kmeans" = "I1[1,)",
-    "max_iter_harmony" = "I1[1,)",
-    "window_size" = "I1[1,)"
-  )
-
-  res <- purrr::imap_lgl(x, \(x, name) {
-    if (name %in% names(integer_rules)) {
-      checkmate::qtest(x, integer_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(
-      sprintf(
-        paste(
-          "The following element `%s` in Harmony v2 parameters is incorrect:",
-          "max_iter_kmeans, max_iter_harmony,",
-          "and window_size must be integers >= 1. k must be NULL or an integer."
-        ),
-        broken_elem
-      )
+  apply_qtest_rules(
+    x,
+    list(
+      k = c("I1[1,)", "0"),
+      max_iter_kmeans = "I1[1,)",
+      max_iter_harmony = "I1[1,)",
+      window_size = "I1[1,)",
+      sigma = "N+[0,)",
+      theta = "N+[0,)",
+      lambda = "N+[0,)",
+      block_size = "N1(0,1]",
+      epsilon_kmeans = "N1(0,)",
+      epsilon_harmony = "N1(0,)",
+      alpha = "N1(0,1)",
+      tau = "N1[0,)",
+      batch_proportion_cutoff = "N1(0,)",
+      use_dynamic_lambda = "B1"
+    ),
+    label = "Harmony v2 params",
+    hint = paste(
+      "max_iter_kmeans, max_iter_harmony and window_size must be integers >= 1;",
+      "k must be NULL or an integer;",
+      "sigma, theta and lambda must be numeric vectors with non-negative values;",
+      "block_size must be in (0, 1];",
+      "epsilon_kmeans, epsilon_harmony and batch_proportion_cutoff must be > 0;",
+      "alpha must be in (0, 1); tau must be >= 0;",
+      "use_dynamic_lambda must be a single logical."
     )
-  }
-
-  # Numeric vector rules (can be length 1 or longer)
-  vector_rules <- list(
-    "sigma" = "N+[0,)",
-    "theta" = "N+[0,)",
-    "lambda" = "N+[0,)"
   )
-
-  res <- purrr::imap_lgl(x, \(x, name) {
-    if (name %in% names(vector_rules)) {
-      checkmate::qtest(x, vector_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(
-      sprintf(
-        paste(
-          "The following element `%s` in Harmony v2 parameters is incorrect:",
-          "sigma, theta, and lambda must be numeric vectors",
-          "with non-negative values."
-        ),
-        broken_elem
-      )
-    )
-  }
-
-  # Scalar numeric rules
-  scalar_rules <- list(
-    "block_size" = "N1(0,1]",
-    "epsilon_kmeans" = "N1(0,)",
-    "epsilon_harmony" = "N1(0,)",
-    "alpha" = "N1(0,1)",
-    "tau" = "N1[0,)",
-    "batch_proportion_cutoff" = "N1(0,)"
-  )
-
-  res <- purrr::imap_lgl(x, \(x, name) {
-    if (name %in% names(scalar_rules)) {
-      checkmate::qtest(x, scalar_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(
-      sprintf(
-        paste(
-          "The following element `%s` in Harmony v2 parameters is incorrect:",
-          "block_size must be in (0,1]; epsilon_kmeans, epsilon_harmony,",
-          "and batch_proportion_cutoff must be > 0;",
-          "alpha must be in (0,1); tau must be >= 0."
-        ),
-        broken_elem
-      )
-    )
-  }
-
-  # Boolean rules
-  bool_rules <- list(
-    "use_dynamic_lambda" = "B1"
-  )
-
-  res <- purrr::imap_lgl(x, \(x, name) {
-    if (name %in% names(bool_rules)) {
-      checkmate::qtest(x, bool_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(
-      sprintf(
-        paste(
-          "The following element `%s` in Harmony v2 parameters is incorrect:",
-          "use_dynamic_lambda must be a single logical."
-        ),
-        broken_elem
-      )
-    )
-  }
-
-  return(TRUE)
 }
 
 #' Assert Harmony v2 parameters
@@ -4063,41 +3025,17 @@ assertScHarmonyParamsV2 <- checkmate::makeAssertionFunction(
 #'
 #' @keywords internal
 checkSymphonyMap <- function(x) {
-  res <- checkmate::checkList(x)
+  res <- check_list_shape(x, c("sigma", "lambda"))
   if (!isTRUE(res)) {
     return(res)
   }
-  res <- checkmate::checkNames(
-    names(x),
-    must.include = c("sigma", "lambda")
+
+  apply_qtest_rules(
+    x,
+    list(sigma = "N1[0,)", lambda = "N1[0,)"),
+    label = "Symphony map params",
+    hint = "sigma and lambda must be non-negative numerics."
   )
-  if (!isTRUE(res)) {
-    return(res)
-  }
-  rules <- list(
-    "sigma" = "N1[0,)",
-    "lambda" = "N1[0,)"
-  )
-  res <- purrr::imap_lgl(x, \(x, name) {
-    if (name %in% names(rules)) {
-      checkmate::qtest(x, rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(
-      sprintf(
-        paste(
-          "The following element `%s` in Symphony map params is incorrect:",
-          "sigma and lambda must be non-negative numerics."
-        ),
-        broken_elem
-      )
-    )
-  }
-  return(TRUE)
 }
 
 #' Assert Symphony map parameters
@@ -4127,83 +3065,56 @@ assertSymphonyMap <- checkmate::makeAssertionFunction(checkSymphonyMap)
 #'
 #' @keywords internal
 checkScenicParams <- function(x) {
-  res <- checkmate::checkList(x)
+  res <- check_list_shape(
+    x,
+    c(
+      "min_counts",
+      "min_cells",
+      "learner_type",
+      "gene_batch_strategy",
+      "n_pcs",
+      "n_subsample",
+      "min_samples_leaf",
+      "n_features_split",
+      "max_depth"
+    )
+  )
   if (!isTRUE(res)) {
     return(res)
   }
 
-  # Fields shared across all learner types
-  required_names <- c(
-    "min_counts",
-    "min_cells",
-    "learner_type",
-    "gene_batch_strategy",
-    "n_pcs",
-    "n_subsample",
-    "min_samples_leaf",
-    "n_features_split",
-    "max_depth"
+  res <- apply_choice_rules(
+    x,
+    list(
+      learner_type = c("randomforest", "extratrees", "grnboost2"),
+      gene_batch_strategy = c("random", "correlated")
+    ),
+    label = "SCENIC params"
   )
-  res <- checkmate::checkNames(names(x), must.include = required_names)
   if (!isTRUE(res)) {
     return(res)
   }
 
-  res <- checkmate::checkChoice(
-    x$learner_type,
-    c("randomforest", "extratrees", "grnboost2")
+  res <- apply_qtest_rules(
+    x,
+    list(
+      min_counts = "I1[1,)",
+      n_pcs = "I1[1,)",
+      n_subsample = "I1[1,)",
+      min_samples_leaf = "I1[1,)",
+      n_features_split = "I1[0,)",
+      max_depth = "I1[1,)",
+      min_cells = "N1(0,1]"
+    ),
+    label = "SCENIC params",
+    hint = paste(
+      "min_counts, n_pcs, n_subsample, min_samples_leaf and max_depth must be",
+      "integers >= 1; n_features_split must be an integer >= 0;",
+      "min_cells must be in (0, 1]."
+    )
   )
   if (!isTRUE(res)) {
-    return(paste("learner_type:", res))
-  }
-
-  res <- checkmate::checkChoice(
-    x$gene_batch_strategy,
-    c("random", "correlated")
-  )
-  if (!isTRUE(res)) {
-    return(paste("gene_batch_strategy:", res))
-  }
-
-  # Integer validation shared across all types
-  integer_rules <- list(
-    min_counts = "I1[1,)",
-    n_pcs = "I1[1,)",
-    n_subsample = "I1[1,)",
-    min_samples_leaf = "I1[1,)",
-    n_features_split = "I1[0,)",
-    max_depth = "I1[1,)"
-  )
-  res <- purrr::imap_lgl(x, \(val, name) {
-    if (name %in% names(integer_rules)) {
-      checkmate::qtest(val, integer_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-  if (!all(res)) {
-    return(sprintf(
-      "Element `%s` in SCENIC parameters failed integer validation.",
-      names(res)[!res][1]
-    ))
-  }
-
-  # Numeric validation shared across all types
-  scalar_numeric_rules <- list(
-    min_cells = "N1(0,1]"
-  )
-  res <- purrr::imap_lgl(x, \(val, name) {
-    if (name %in% names(scalar_numeric_rules)) {
-      checkmate::qtest(val, scalar_numeric_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-  if (!all(res)) {
-    return(sprintf(
-      "Element `%s` in SCENIC parameters failed numeric validation.",
-      names(res)[!res][1]
-    ))
+    return(res)
   }
 
   if (!is.null(x$gene_batch_size)) {
@@ -4226,10 +3137,11 @@ checkScenicParams <- function(x) {
     if (is.null(x$bootstrap) || !checkmate::qtest(x$bootstrap, "B1")) {
       return("bootstrap must be a single logical for randomforest.")
     }
-    if (!is.null(x$subsample_frac)) {
-      if (!checkmate::qtest(x$subsample_frac, "N1(0,1]")) {
-        return("subsample_frac must be a numeric in (0, 1] or NULL.")
-      }
+    if (
+      !is.null(x$subsample_frac) &&
+        !checkmate::qtest(x$subsample_frac, "N1(0,1]")
+    ) {
+      return("subsample_frac must be a numeric in (0, 1] or NULL.")
     }
   }
 
@@ -4243,18 +3155,16 @@ checkScenicParams <- function(x) {
     ) {
       return("n_thresholds must be a positive integer for extratrees.")
     }
-    if (!is.null(x$subsample_frac)) {
-      if (!checkmate::qtest(x$subsample_frac, "N1(0,1]")) {
-        return("subsample_frac must be a numeric in (0, 1] or NULL.")
-      }
+    if (
+      !is.null(x$subsample_frac) &&
+        !checkmate::qtest(x$subsample_frac, "N1(0,1]")
+    ) {
+      return("subsample_frac must be a numeric in (0, 1] or NULL.")
     }
   }
 
   if (x$learner_type == "grnboost2") {
-    if (
-      is.null(x$n_trees_max) ||
-        !checkmate::qtest(x$n_trees_max, "I1[1,)")
-    ) {
+    if (is.null(x$n_trees_max) || !checkmate::qtest(x$n_trees_max, "I1[1,)")) {
       return("n_trees_max must be a positive integer for grnboost2.")
     }
     if (
@@ -4308,14 +3218,9 @@ assertScenicParams <- checkmate::makeAssertionFunction(checkScenicParams)
 #'
 #' @keywords internal
 checkScFastCluster <- function(x) {
-  res <- checkmate::checkList(x)
-  if (!isTRUE(res)) {
-    return(res)
-  }
-
-  res <- checkmate::checkNames(
-    names(x),
-    must.include = c(
+  res <- check_list_shape(
+    x,
+    c(
       "kmeans_iters",
       "batch_size",
       "drift_threshold",
@@ -4330,87 +3235,39 @@ checkScFastCluster <- function(x) {
     return(res)
   }
 
-  knn_params <- x[names(x) %in% KNN_PARAM_NAMES]
-  res <- checkKnnParams(knn_params)
+  res <- checkKnnParams(x[names(x) %in% KNN_PARAM_NAMES])
   if (!isTRUE(res)) {
     return(res)
   }
 
-  integer_rules <- list(
-    "kmeans_iters" = "I1[1,)",
-    "batch_size" = "I1[1,)",
-    "louvain_iters" = "I1[1,)"
-  )
-
-  res <- purrr::imap_lgl(x, \(val, name) {
-    if (name %in% names(integer_rules)) {
-      checkmate::qtest(val, integer_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(sprintf(
-      paste(
-        "The element `%s` in fast clustering parameters is incorrect:",
-        "kmeans_iters, batch_size and louvain_iters must be >= 1."
-      ),
-      broken_elem
-    ))
-  }
-
-  numeric_rules <- list(
-    "drift_threshold" = "N1",
-    "lr_alpha" = "N1"
-  )
-
-  res <- purrr::imap_lgl(x, \(val, name) {
-    if (name %in% names(numeric_rules)) {
-      checkmate::qtest(val, numeric_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(sprintf(
-      paste(
-        "The element `%s` in fast clustering parameters",
-        "must be a single numeric value."
-      ),
-      broken_elem
-    ))
-  }
-
-  res <- checkmate::qtest(x[["full_snn"]], "B1")
-  if (!isTRUE(res)) {
-    return(
-      paste(
-        "The element `full_snn` in fast clustering parameters",
-        "must be a boolean (TRUE/FALSE)."
-      )
+  res <- apply_qtest_rules(
+    x,
+    list(
+      kmeans_iters = "I1[1,)",
+      batch_size = "I1[1,)",
+      louvain_iters = "I1[1,)",
+      drift_threshold = "N1",
+      lr_alpha = "N1",
+      full_snn = "B1",
+      pruning = c("0", "N1")
+    ),
+    label = "fast clustering params",
+    hint = paste(
+      "kmeans_iters, batch_size and louvain_iters must be integers >= 1;",
+      "drift_threshold and lr_alpha must be single numerics;",
+      "full_snn must be a boolean;",
+      "pruning must be NULL or a single numeric."
     )
-  }
-
-  res <- checkmate::qtest(x[["pruning"]], c("0", "N1"))
+  )
   if (!isTRUE(res)) {
-    return(
-      paste(
-        "The element `pruning` in fast clustering parameters must be NULL",
-        "or a single numeric value."
-      )
-    )
+    return(res)
   }
 
-  res <- checkmate::testChoice(x[["snn_similarity"]], c("jaccard", "rank"))
-  if (!isTRUE(res)) {
-    return("snn_similarity must be one of: jaccard, rank.")
-  }
-
-  return(TRUE)
+  apply_choice_rules(
+    x,
+    list(snn_similarity = c("jaccard", "rank")),
+    label = "fast clustering params"
+  )
 }
 
 #' Assert SC fast clustering parameters
@@ -4482,7 +3339,7 @@ checkCellMarkerList <- function(x) {
     }
   }
 
-  return(TRUE)
+  TRUE
 }
 
 #' Assert cell marker list
@@ -4513,69 +3370,55 @@ assertCellMarkerList <- checkmate::makeAssertionFunction(checkCellMarkerList)
 #'
 #' @keywords internal
 checkMeldParams <- function(x) {
-  res <- checkmate::checkList(x)
-  if (!isTRUE(res)) {
-    return(res)
-  }
-
-  required_names <- c(
-    "beta",
-    "offset",
-    "order",
-    "filter",
-    "chebyshev_order",
-    "lap_type",
-    "normalise_indicators"
+  res <- check_list_shape(
+    x,
+    c(
+      "beta",
+      "offset",
+      "order",
+      "filter",
+      "chebyshev_order",
+      "lap_type",
+      "normalise_indicators"
+    )
   )
-  res <- checkmate::checkNames(names(x), must.include = required_names)
   if (!isTRUE(res)) {
     return(res)
   }
 
-  knn_params <- x[names(x) %in% KNN_PARAM_NAMES]
-  res <- checkKnnParams(knn_params)
+  res <- checkKnnParams(x[names(x) %in% KNN_PARAM_NAMES])
   if (!isTRUE(res)) {
     return(res)
   }
 
-  numeric_rules <- list(
-    beta = "N1(0,)",
-    offset = "N1[0,1]",
-    order = "N1(0,)"
+  res <- apply_qtest_rules(
+    x,
+    list(
+      beta = "N1(0,)",
+      offset = "N1[0,1]",
+      order = "N1(0,)",
+      chebyshev_order = "I1[2,)",
+      normalise_indicators = "B1"
+    ),
+    label = "MELD params",
+    hint = paste(
+      "beta and order must be positive numerics; offset must be in [0, 1];",
+      "chebyshev_order must be an integer >= 2;",
+      "normalise_indicators must be a single logical."
+    )
   )
-  res <- purrr::imap_lgl(x, \(val, name) {
-    if (name %in% names(numeric_rules)) {
-      checkmate::qtest(val, numeric_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-  if (!all(res)) {
-    return(sprintf(
-      "Element `%s` in MELD parameters failed numeric validation.",
-      names(res)[!res][1]
-    ))
-  }
-
-  res <- checkmate::checkChoice(x$filter, c("heat", "laplacian"))
   if (!isTRUE(res)) {
-    return(paste("filter:", res))
+    return(res)
   }
 
-  if (!checkmate::qtest(x$chebyshev_order, "I1[2,)")) {
-    return("chebyshev_order must be an integer >= 2.")
-  }
-
-  res <- checkmate::checkChoice(x$lap_type, c("combinatorial", "normalised"))
-  if (!isTRUE(res)) {
-    return(paste("lap_type:", res))
-  }
-
-  if (!checkmate::qtest(x$normalise_indicators, "B1")) {
-    return("normalise_indicators must be a single logical.")
-  }
-
-  TRUE
+  apply_choice_rules(
+    x,
+    list(
+      filter = c("heat", "laplacian"),
+      lap_type = c("combinatorial", "normalised")
+    ),
+    label = "MELD params"
+  )
 }
 
 #' Assert MELD parameters
@@ -4608,14 +3451,9 @@ assertMeldParams <- checkmate::makeAssertionFunction(checkMeldParams)
 #'
 #' @keywords internal
 checkScDsbParams <- function(x) {
-  res <- checkmate::checkList(x)
-  if (!isTRUE(res)) {
-    return(res)
-  }
-
-  res <- checkmate::checkNames(
-    names(x),
-    must.include = c(
+  res <- check_list_shape(
+    x,
+    c(
       "denoise_counts",
       "use_isotype_controls",
       "pseudocount",
@@ -4627,92 +3465,29 @@ checkScDsbParams <- function(x) {
     return(res)
   }
 
-  # Boolean rules
-  bool_rules <- list(
-    "denoise_counts" = "B1",
-    "use_isotype_controls" = "B1"
-  )
-
-  res <- purrr::imap_lgl(x, \(x, name) {
-    if (name %in% names(bool_rules)) {
-      checkmate::qtest(x, bool_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(
-      sprintf(
-        paste(
-          "The following element `%s` in DSB parameters is incorrect:",
-          "denoise_counts and use_isotype_controls must be single logicals."
-        ),
-        broken_elem
-      )
+  res <- apply_qtest_rules(
+    x,
+    list(
+      denoise_counts = "B1",
+      use_isotype_controls = "B1",
+      pseudocount = "N1(0,)",
+      quantile_low = c("N1[0,1)", "0"),
+      quantile_high = c("N1(0,1]", "0")
+    ),
+    label = "DSB params",
+    hint = paste(
+      "denoise_counts and use_isotype_controls must be single logicals;",
+      "pseudocount must be a single numeric > 0;",
+      "quantile_low must be NULL or in [0, 1);",
+      "quantile_high must be NULL or in (0, 1]."
     )
+  )
+  if (!isTRUE(res)) {
+    return(res)
   }
 
-  # Scalar numeric rules
-  scalar_rules <- list(
-    "pseudocount" = "N1(0,)"
-  )
-
-  res <- purrr::imap_lgl(x, \(x, name) {
-    if (name %in% names(scalar_rules)) {
-      checkmate::qtest(x, scalar_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(
-      sprintf(
-        paste(
-          "The following element `%s` in DSB parameters is incorrect:",
-          "pseudocount must be a single numeric > 0."
-        ),
-        broken_elem
-      )
-    )
-  }
-
-  # Quantile rules: either both NULL or both numeric in valid ranges
-  quantile_rules <- list(
-    "quantile_low" = c("N1[0,1)", "0"),
-    "quantile_high" = c("N1(0,1]", "0")
-  )
-
-  res <- purrr::imap_lgl(x, \(x, name) {
-    if (name %in% names(quantile_rules)) {
-      checkmate::qtest(x, quantile_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(
-      sprintf(
-        paste(
-          "The following element `%s` in DSB parameters is incorrect:",
-          "quantile_low must be NULL or in [0, 1);",
-          "quantile_high must be NULL or in (0, 1]."
-        ),
-        broken_elem
-      )
-    )
-  }
-
-  # Cross-field rules for the quantile pair
   if (xor(is.null(x$quantile_low), is.null(x$quantile_high))) {
-    return(
-      "quantile_low and quantile_high must both be provided or both NULL."
-    )
+    return("quantile_low and quantile_high must both be provided or both NULL.")
   }
   if (
     !is.null(x$quantile_low) &&
@@ -4722,7 +3497,7 @@ checkScDsbParams <- function(x) {
     return("quantile_low must be strictly less than quantile_high.")
   }
 
-  return(TRUE)
+  TRUE
 }
 
 #' Assert DSB parameters
@@ -4782,95 +3557,38 @@ checkScWnnParams <- function(x) {
     return(res)
   }
 
-  # Integer rules
-  integer_rules <- list(
-    "k_nn" = "I1[1,)",
-    "knn_range" = "I1[1,)",
-    "sigma_idx" = "I1[0,)",
-    "s_nn" = "I1[1,)"
-  )
-
-  res <- purrr::imap_lgl(x, \(x, name) {
-    if (name %in% names(integer_rules)) {
-      checkmate::qtest(x, integer_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(
-      sprintf(
-        paste(
-          "The following element `%s` in WNN parameters is incorrect:",
-          "k_nn, knn_range, and s_nn must be integers >= 1;",
-          "sigma_idx must be an integer >= 0."
-        ),
-        broken_elem
-      )
+  res <- apply_qtest_rules(
+    x,
+    list(
+      k_nn = "I1[1,)",
+      knn_range = "I1[1,)",
+      sigma_idx = "I1[0,)",
+      s_nn = "I1[1,)",
+      sd_scale = "N1(0,)",
+      kernel_power = "N1(0,)",
+      cross_const = "N1[0,)",
+      sigma_floor = "N1(0,)"
+    ),
+    label = "WNN params",
+    hint = paste(
+      "k_nn, knn_range and s_nn must be integers >= 1;",
+      "sigma_idx must be an integer >= 0;",
+      "sd_scale, kernel_power and sigma_floor must be > 0;",
+      "cross_const must be >= 0."
     )
+  )
+  if (!isTRUE(res)) {
+    return(res)
   }
 
-  # Scalar numeric rules
-  scalar_rules <- list(
-    "sd_scale" = "N1(0,)",
-    "kernel_power" = "N1(0,)",
-    "cross_const" = "N1[0,)",
-    "sigma_floor" = "N1(0,)"
+  apply_choice_rules(
+    x,
+    list(
+      sigma_method = c("snn_farthest", "sigma_idx"),
+      snn_type = c("full_connection", "limited")
+    ),
+    label = "WNN params"
   )
-
-  res <- purrr::imap_lgl(x, \(x, name) {
-    if (name %in% names(scalar_rules)) {
-      checkmate::qtest(x, scalar_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(
-      sprintf(
-        paste(
-          "The following element `%s` in WNN parameters is incorrect:",
-          "sd_scale, kernel_power, and sigma_floor must be > 0;",
-          "cross_const must be >= 0."
-        ),
-        broken_elem
-      )
-    )
-  }
-
-  # String choice rules
-  choice_rules <- list(
-    "sigma_method" = c("snn_farthest", "sigma_idx"),
-    "snn_type" = c("full_connection", "limited")
-  )
-
-  res <- purrr::imap_lgl(x, \(x, name) {
-    if (name %in% names(choice_rules)) {
-      checkmate::testChoice(x, choice_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(
-      sprintf(
-        paste(
-          "The following element `%s` in WNN parameters is incorrect:",
-          "sigma_method must be one of c('snn_farthest', 'sigma_idx');",
-          "snn_type must be one of c('full_connection', 'limited')."
-        ),
-        broken_elem
-      )
-    )
-  }
-
-  return(TRUE)
 }
 
 #' Assert WNN parameters
@@ -4903,13 +3621,9 @@ assertScWnnParams <- checkmate::makeAssertionFunction(checkScWnnParams)
 #'
 #' @keywords internal
 checkLigandTarget <- function(x) {
-  res <- checkmate::checkList(x)
-  if (!isTRUE(res)) {
-    return(res)
-  }
-  res <- checkmate::checkNames(
-    names(x),
-    must.include = c(
+  res <- check_list_shape(
+    x,
+    c(
       "lr_sig_hub",
       "gr_hub",
       "ltf_cutoff",
@@ -4923,39 +3637,27 @@ checkLigandTarget <- function(x) {
   if (!isTRUE(res)) {
     return(res)
   }
-  rules <- list(
-    lr_sig_hub = "N1[0,1]",
-    gr_hub = "N1[0,1]",
-    ltf_cutoff = "N1[0,1]",
-    damping_factor = "N1[0,1]",
-    tol = "N1(0,)",
-    max_iter = "X1[1,)",
-    topology_correction = "B1",
-    secondary_targets = "B1"
-  )
-  res <- purrr::imap_lgl(x, \(x, name) {
-    if (name %in% names(rules)) {
-      checkmate::qtest(x, rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(
-      sprintf(
-        paste(
-          "The following element `%s` in ligand-target parameters is",
-          "incorrect: lr_sig_hub, gr_hub, ltf_cutoff and damping_factor must",
-          "be single numerics in [0, 1]; tol must be a single positive",
-          "numeric; max_iter must be a single positive integer;",
-          "topology_correction and secondary_targets must be single booleans."
-        ),
-        broken_elem
-      )
+
+  apply_qtest_rules(
+    x,
+    list(
+      lr_sig_hub = "N1[0,1]",
+      gr_hub = "N1[0,1]",
+      ltf_cutoff = "N1[0,1]",
+      damping_factor = "N1[0,1]",
+      tol = "N1(0,)",
+      max_iter = "X1[1,)",
+      topology_correction = "B1",
+      secondary_targets = "B1"
+    ),
+    label = "ligand-target params",
+    hint = paste(
+      "lr_sig_hub, gr_hub, ltf_cutoff and damping_factor must be single",
+      "numerics in [0, 1]; tol must be a single positive numeric;",
+      "max_iter must be a single positive integer;",
+      "topology_correction and secondary_targets must be single booleans."
     )
-  }
-  return(TRUE)
+  )
 }
 
 #' Assert ligand-target influence parameters

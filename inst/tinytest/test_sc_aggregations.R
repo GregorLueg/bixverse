@@ -285,7 +285,7 @@ hdwgcna_small <- calc_meta_cell_purity(
   original_cell_type = unlist(sc_object[["cell_grp"]])
 )
 
-original_cell_type = unlist(sc_object[["cell_grp"]])
+original_cell_type <- unlist(sc_object[["cell_grp"]])
 
 right_cell_types <- purrr::map_lgl(
   hdwgcna_small[[]]$original_cell_idx,

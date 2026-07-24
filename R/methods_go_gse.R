@@ -484,7 +484,7 @@ S7::method(fgsea_go_elim, GeneOntologyElim) <-
       rs_err_res$multi_err < rs_err_res$simple_err
     ][, "denom_prob" := (mode_fraction + 1) / (nperm + 1)]
 
-    rs_multi_level_res = with(
+    rs_multi_level_res <- with(
       gsea_params,
       rs_calc_multi_level(
         stats = stats,
@@ -497,7 +497,7 @@ S7::method(fgsea_go_elim, GeneOntologyElim) <-
       )
     )
 
-    dt_multi_level = dt_multi_level[, pvals := rs_multi_level_res$pvals] %>%
+    dt_multi_level <- dt_multi_level[, pvals := rs_multi_level_res$pvals] %>%
       data.table::as.data.table() %>%
       .[, pvals := pmin(1, pvals / denom_prob)] %>%
       .[,
