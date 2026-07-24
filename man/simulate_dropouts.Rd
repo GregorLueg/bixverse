@@ -2,34 +2,24 @@
 % Please edit documentation in R/data_synthetic_bulk.R
 \name{simulate_dropouts}
 \alias{simulate_dropouts}
-\title{Simulate dropouts via different functions on synthetic bulk data}
+\title{Simulate sequencing-depth dropouts on synthetic bulk data}
 \usage{
 simulate_dropouts(
   object,
-  dropout_function = c("log", "powerdecay"),
-  dropout_midpoint = 5,
-  dropout_shape = 0.5,
-  power_factor = 0.3,
-  global_sparsity = 0.25,
+  target_library_size = 20000,
+  capture_efficiency_sigma = 0.5,
   seed = 123L
 )
 }
 \arguments{
 \item{object}{The \code{synthetic_bulk_data} class.}
 
-\item{dropout_function}{String. One of \code{c("log", "powerdecay")}. These
-are the two options to cause dropout in the bulk data.}
+\item{target_library_size}{Numeric. Reference library size per sample.
+Defaults to \code{20000}.}
 
-\item{dropout_midpoint}{Numeric. Controls the midpoint parameter of the
-logistic and power decay function.}
-
-\item{dropout_shape}{Numeric. Controls the shape parameter of the logistic
-function.}
-
-\item{power_factor}{Numeric. Controls the power factor of the power decay
-function.}
-
-\item{global_sparsity}{Numeric. The global sparsity parameter.}
+\item{capture_efficiency_sigma}{Numeric. Standard deviation of the LogNormal
+size-factor distribution. Larger values spread the library sizes further
+apart. Defaults to \code{0.5}.}
 
 \item{seed}{Integer. Random seed for reproducibility purposes.}
 }
@@ -37,34 +27,14 @@ function.}
 \code{synthetic_bulk_data} with added sparse data.
 }
 \description{
-This function induces expression-level dependent sparsity on the data. The
-two possible functions are:
-
-\strong{Logistic function:}
-
-With dropout probability defined as:
-
-\if{html}{\out{<div class="sourceCode">}}\preformatted{P(dropout) = clamp(1 / (1 + exp(shape * (ln(exp+1) - ln(midpoint+1)))), 0.3, 0.8) * (1 - global_sparsity) + global_sparsity
-}\if{html}{\out{</div>}}
-
-with the following characteristics:
-\itemize{
-\item Plateaus at global_sparsity dropout for high expression genes
-\item Partial dropout preserves count structure via binomial thinning
-\item Good for preserving variance-mean relationships
+This function induces Splatter-style sequencing-depth sparsity on the data.
+Per sample a size factor \code{s_j ~ LogNormal(0, capture_efficiency_sigma)} is
+drawn, giving a target library size of \code{target_library_size * s_j}. Each gene
+is then binomially thinned to approach that target, so dropout falls out of
+the library size rather than an explicit per-gene dropout curve. Retention
+probability is capped at 1, meaning samples already below their target are
+left alone rather than upsampled.
 }
-
-\strong{Power Decay function:}
-
-With dropout probability defined as:
-
-\if{html}{\out{<div class="sourceCode">}}\preformatted{P(dropout) = (midpoint / (exp + midpoint))^power * scale_factor * (1 - global_sparsity) + global_sparsity
-}\if{html}{\out{</div>}}
-
-with the following characteristics:
-\itemize{
-\item No plateau - high expression genes get substantial dropout
-\item Complete dropout only (no partial dropout)
-\item More uniform dropout across expression range
-}
+\references{
+Zappia, et al., Genome Biol, 2017
 }

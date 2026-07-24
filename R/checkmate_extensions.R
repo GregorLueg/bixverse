@@ -3275,6 +3275,208 @@ checkScFastmnn <- function(x) {
 #' @keywords internal
 assertScFastmnn <- checkmate::makeAssertionFunction(checkScFastmnn)
 
+#### seurat CCA ----------------------------------------------------------------
+
+#' Check Seurat CCA parameters
+#'
+#' @description Checkmate extension for checking the Seurat CCA parameters.
+#'
+#' @param x The list to check/assert
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
+checkScSeuratCca <- function(x) {
+  res <- checkmate::checkList(x)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+  res <- checkmate::checkNames(
+    names(x),
+    must.include = c(
+      "num_cc",
+      "dims",
+      "k_anchor",
+      "k_filter",
+      "k_score",
+      "k_weight",
+      "n_top_features",
+      "l2_norm",
+      "sd",
+      "randomised",
+      "mean_center",
+      "normalise_variance",
+      "clr",
+      "size_factor"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+  # knn
+  knn_params <- x[names(x) %in% KNN_PARAM_NAMES]
+  res <- checkKnnParams(knn_params)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+  # Check integer parameters. k_filter may be 0 to disable the filter step.
+  int_params <- c(
+    "num_cc",
+    "dims",
+    "k_anchor",
+    "k_score",
+    "k_weight",
+    "n_top_features"
+  )
+  res <- purrr::map_lgl(int_params, \(param) {
+    checkmate::qtest(x[[param]], "I1[1,)")
+  })
+  if (!isTRUE(all(res))) {
+    broken_param <- int_params[which(!res)][1]
+    return(sprintf("%s needs to be an integer >= 1.", broken_param))
+  }
+  res <- checkmate::qtest(x[["k_filter"]], "I1[0,)")
+  if (!isTRUE(res)) {
+    return("k_filter needs to be an integer >= 0.")
+  }
+  # Check numeric parameters
+  res <- checkmate::qtest(x[["sd"]], "N1(0,)")
+  if (!isTRUE(res)) {
+    return("sd needs to be a positive numeric.")
+  }
+  res <- checkmate::checkNumber(x[["size_factor"]])
+  if (!isTRUE(res)) {
+    return(res)
+  }
+  # Check logical parameters
+  logical_params <- c(
+    "l2_norm",
+    "randomised",
+    "mean_center",
+    "normalise_variance",
+    "clr"
+  )
+  res <- purrr::map_lgl(logical_params, \(param) {
+    checkmate::qtest(x[[param]], "B1")
+  })
+  if (!isTRUE(all(res))) {
+    broken_param <- logical_params[which(!res)][1]
+    return(sprintf("%s needs to be logical.", broken_param))
+  }
+
+  return(TRUE)
+}
+
+#' Assert Seurat CCA parameters
+#'
+#' @description Checkmate extension for asserting the Seurat CCA parameters.
+#'
+#' @inheritParams checkScSeuratCca
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
+assertScSeuratCca <- checkmate::makeAssertionFunction(checkScSeuratCca)
+
+#### seurat rPCA ---------------------------------------------------------------
+
+#' Check Seurat rPCA parameters
+#'
+#' @description Checkmate extension for checking the Seurat rPCA parameters.
+#'
+#' @param x The list to check/assert
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
+checkScSeuratRpca <- function(x) {
+  res <- checkmate::checkList(x)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+  res <- checkmate::checkNames(
+    names(x),
+    must.include = c(
+      "dims",
+      "k_anchor",
+      "k_score",
+      "k_weight",
+      "l2_norm",
+      "sd",
+      "randomised",
+      "mean_center",
+      "normalise_variance",
+      "clr",
+      "size_factor"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+  # knn
+  knn_params <- x[names(x) %in% KNN_PARAM_NAMES]
+  res <- checkKnnParams(knn_params)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+  # Check integer parameters
+  int_params <- c("dims", "k_anchor", "k_score", "k_weight")
+  res <- purrr::map_lgl(int_params, \(param) {
+    checkmate::qtest(x[[param]], "I1[1,)")
+  })
+  if (!isTRUE(all(res))) {
+    broken_param <- int_params[which(!res)][1]
+    return(sprintf("%s needs to be an integer >= 1.", broken_param))
+  }
+  # Check numeric parameters
+  res <- checkmate::qtest(x[["sd"]], "N1(0,)")
+  if (!isTRUE(res)) {
+    return("sd needs to be a positive numeric.")
+  }
+  res <- checkmate::checkNumber(x[["size_factor"]])
+  if (!isTRUE(res)) {
+    return(res)
+  }
+  # Check logical parameters
+  logical_params <- c(
+    "l2_norm",
+    "randomised",
+    "mean_center",
+    "normalise_variance",
+    "clr"
+  )
+  res <- purrr::map_lgl(logical_params, \(param) {
+    checkmate::qtest(x[[param]], "B1")
+  })
+  if (!isTRUE(all(res))) {
+    broken_param <- logical_params[which(!res)][1]
+    return(sprintf("%s needs to be logical.", broken_param))
+  }
+
+  return(TRUE)
+}
+
+#' Assert Seurat rPCA parameters
+#'
+#' @description Checkmate extension for asserting the Seurat rPCA parameters.
+#'
+#' @inheritParams checkScSeuratRpca
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
+assertScSeuratRpca <- checkmate::makeAssertionFunction(checkScSeuratRpca)
+
 #### VISION --------------------------------------------------------------------
 
 #' Check VISION parameters

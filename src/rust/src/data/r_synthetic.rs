@@ -58,26 +58,42 @@ fn rs_generate_bulk_rnaseq(
     seed: usize,
     add_modules: bool,
     module_sizes: Option<Vec<i32>>,
-) -> List {
-    // r cannot deal with usize
-    let module_sizes: Vec<usize> = module_sizes
-        .unwrap_or(vec![300, 250, 200, 300, 500])
-        .iter()
-        .map(|x| *x as usize)
-        .collect();
+) -> extendr_api::Result<List> {
+    // r cannot deal with usize; empty module sizes means no modules
+    let module_sizes: Vec<usize> = if add_modules {
+        module_sizes
+            .unwrap_or(vec![300, 250, 200, 300, 500])
+            .iter()
+            .map(|x| *x as usize)
+            .collect()
+    } else {
+        Vec::new()
+    };
 
-    let data: SyntheticRnaSeqData<f64> = generate_bulk_rnaseq(
+    // Pinned to reproduce the pre-0.3.8 generator this binding used to call:
+    // Beta(5, 2) loadings on a Normal factor of std 0.7 and no per-gene noise
+    // on the latent log-signal. The crate defaults differ on all three
+    // (HubModular, factor_std 0.3, noise_std 0.3) and give within-module
+    // correlations too weak for the downstream module-detection tests.
+    let params: SyntheticRnaSeqParams<f64> = SyntheticRnaSeqParams {
         num_samples,
         num_genes,
-        seed as u64,
-        add_modules,
-        Some(module_sizes),
-    );
+        seed: seed as u64,
+        module_sizes,
+        generator: BulkDataGenerator::Modular(ModularConfig { factor_std: 0.7 }),
+        noise_std: 0.0,
+        ..Default::default()
+    };
+
+    let data: SyntheticRnaSeqData<f64> = generate_bulk_rnaseq(&params).to_extendr()?;
 
     let matrix = faer_to_r_matrix(data.count_matrix.as_ref());
     let module_membership: Vec<i32> = data.gene_modules.iter().map(|x| *x as i32).collect();
 
-    list!(counts = matrix, module_membership = module_membership)
+    Ok(list!(
+        counts = matrix,
+        module_membership = module_membership
+    ))
 }
 
 /// Sparsify bulkRNAseq like data
@@ -85,81 +101,44 @@ fn rs_generate_bulk_rnaseq(
 /// @description
 /// `r lifecycle::badge("experimental")`
 /// This function takes in a (raw) count matrix (for example from the synthetic
-/// data in bixverse) and applies sparsification to it based on two possible
-/// functions:
+/// data in bixverse) and applies Splatter-style sequencing-depth dropout to it.
+/// Per sample a size factor `s_j ~ LogNormal(0, capture_efficiency_sigma)` is
+/// drawn, giving a target library size of `target_library_size * s_j`. Each
+/// gene is then binomially thinned to approach that target. Retention
+/// probability is capped at 1, so samples below their target are left alone
+/// rather than upsampled.
 ///
-/// **Logistic function:**
-///
-/// With dropout probability defined as:
-///
-/// `P(dropout) = clamp(1 / (1 + exp(shape * (ln(exp+1) - ln(midpoint+1)))), 0.3, 0.8) * (1 - global_sparsity) + global_sparsity`
-///
-/// with the following characteristics:
-///
-/// - Plateaus at global_sparsity dropout for high expression genes
-/// - Partial dropout preserves count structure via binomial thinning
-/// - Good for preserving variance-mean relationships
-///
-/// **Power Decay function:**
-///
-/// With dropout probability defined as:
-///
-/// `P(dropout) = (midpoint / (exp + midpoint))^power * scale_factor * (1 - global_sparsity) + global_sparsity`
-///
-/// with the following characteristics:
-///
-/// - No plateau - high expression genes get substantial dropout
-/// - Complete dropout only (no partial dropout)
-/// - More uniform dropout across expression range
-///
-/// @param count_mat Numerical matrix. Original numeric matrix.
-/// @param dropout_function String. One of `c("log", "powerdecay")`. Defines
-/// which function will be used to induce the sparsity.
-/// @param dropout_midpoint Numeric. Controls the midpoint parameter of the
-/// logistic and power decay function.
-/// @param dropout_shape Numeric. Controls the shape parameter of the logistic
-/// function.
-/// @param power_factor Numeric. Controls the power factor of the power decay
-/// function.
-/// @param global_sparsity Numeric. The global sparsity parameter.
+/// @param count_mat Numerical matrix. Original numeric matrix. Rows are genes,
+/// columns are samples.
+/// @param target_library_size Numeric. Reference library size per sample.
+/// @param capture_efficiency_sigma Numeric. Standard deviation of the
+/// LogNormal size-factor distribution.
 /// @param seed Integer. Seed for reproducibility.
 ///
 /// @return The sparsified matrix based on the provided parameters.
 ///
 /// @export
 ///
+/// @references Zappia, et al., Genome Biol, 2017
+///
 /// @keywords internal
 #[extendr]
 fn rs_simulate_dropouts(
     count_mat: RMatrix<f64>,
-    dropout_function: String,
-    dropout_midpoint: f64,
-    dropout_shape: f64,
-    power_factor: f64,
-    global_sparsity: f64,
+    target_library_size: f64,
+    capture_efficiency_sigma: f64,
     seed: usize,
 ) -> extendr_api::Result<RArray<f64, 2>> {
     let data = r_matrix_to_faer(&count_mat);
 
-    let dropout_type = parse_sparsification(&dropout_function)
-        .ok_or_else(|| format!("Invalid dropout_function type: {}", dropout_function))?;
-
-    let sparse_data = match dropout_type {
-        SparsityFunction::Logistic => simulate_dropouts_logistic(
-            &data,
-            dropout_midpoint,
-            dropout_shape,
-            global_sparsity,
-            seed as u64,
-        ),
-        SparsityFunction::PowerDecay => simulate_dropouts_power_decay(
-            &data,
-            dropout_midpoint,
-            power_factor,
-            global_sparsity,
-            seed as u64,
-        ),
+    let params: SparsityParams<f64> = SparsityParams {
+        target_library_size,
+        capture_efficiency_sigma,
+        seed: seed as u64,
+        ..Default::default()
     };
+
+    let sparse_data = apply_dropout(data.as_ref(), &params).to_extendr()?;
 
     Ok(faer_to_r_matrix(sparse_data.as_ref()))
 }

@@ -1225,6 +1225,372 @@ expect_true(
   )
 )
 
+## seurat anchor methods -------------------------------------------------------
+
+### helper function to assess the anchor methods -------------------------------
+
+# Assess batch correction impact of the Seurat anchor methods
+#
+# Same contract as assess_fast_mnn_impact(), but dispatches to either
+# seurat_cca_sc() or seurat_rpca_sc() and reads back the matching embedding.
+#
+# The baseline is deliberately matched to what the anchor correction actually
+# operates on: a PCA over the batch-aware HVGs at the same number of dims.
+# Comparing against the object's stock PCA would confound the anchor correction
+# with the change in gene set and dimensionality.
+#
+# @param object A SingleCells object with PCA factors, batch labels,
+#   and cell type annotations
+# @param method String. One of c("cca", "rpca").
+# @param dims Integer. Embedding dimensions, shared by baseline and correction.
+#
+# @return A list with:
+#   - kbet_original: kBET score on the matched baseline embedding
+#   - kbet_correct: kBET score after correction
+#   - neighbours_original: count of same-type neighbours per cell (uncorrected)
+#   - neighbours_corrected: count of same-type neighbours per cell (corrected)
+assess_seurat_anchor_impact <- function(
+  object,
+  method = c("cca", "rpca"),
+  dims = 10L
+) {
+  method <- match.arg(method)
+
+  batch_aware_hvg <- find_hvg_batch_aware_sc(
+    object,
+    hvg_no = 30L,
+    batch_column = "batch_index",
+    gene_comb_method = "union",
+    .verbose = FALSE
+  )
+
+  # matched baseline, needs the 1-indexed genes
+  object <- calculate_pca_sc(
+    object,
+    no_pcs = dims,
+    hvg = unique(batch_aware_hvg$hvg_gene_idx) + 1L,
+    .verbose = FALSE
+  )
+
+  object <- find_neighbours_sc(
+    object,
+    neighbours_params = params_sc_neighbours(knn = list(k = 10L)),
+    .verbose = FALSE
+  )
+
+  knn_original <- get_knn_mat(object)
+  cell_types <- unlist(object[["cell_grp"]])
+  batch_effects <- unlist(object[["batch_index"]])
+
+  correct_neighbours_uncor <- purrr::map_dbl(
+    seq_along(cell_types),
+    \(cell_idx) {
+      sum(cell_types[knn_original[cell_idx, ] + 1] == cell_types[cell_idx])
+    }
+  )
+
+  kbet_original <- rs_kbet(
+    knn_mat = knn_original,
+    batch_vector = as.integer(batch_effects),
+    verbose = FALSE
+  )
+
+  kbet_score_original <- sum(kbet_original$pval <= 0.05) /
+    length(kbet_original$pval)
+
+  object <- switch(
+    method,
+    cca = seurat_cca_sc(
+      object = object,
+      batch_column = "batch_index",
+      batch_hvg_genes = batch_aware_hvg$hvg_gene_idx,
+      cca_params = params_sc_seurat_cca(num_cc = dims, dims = dims),
+      .verbose = FALSE
+    ),
+    rpca = seurat_rpca_sc(
+      object = object,
+      batch_column = "batch_index",
+      batch_hvg_genes = batch_aware_hvg$hvg_gene_idx,
+      rpca_params = params_sc_seurat_rpca(dims = dims),
+      .verbose = FALSE
+    )
+  )
+
+  object <- find_neighbours_sc(
+    object,
+    embd_to_use = method,
+    neighbours_params = params_sc_neighbours(knn = list(k = 10L)),
+    .verbose = FALSE
+  )
+
+  knn_corrected <- get_knn_mat(object)
+
+  kbet_corrected <- rs_kbet(
+    knn_mat = knn_corrected,
+    batch_vector = as.integer(batch_effects),
+    verbose = FALSE
+  )
+
+  kbet_score_corrected <- sum(kbet_corrected$pval <= 0.05) /
+    length(kbet_corrected$pval)
+
+  correct_neighbours_cor <- purrr::map_dbl(
+    seq_along(cell_types),
+    \(cell_idx) {
+      sum(cell_types[knn_corrected[cell_idx, ] + 1] == cell_types[cell_idx])
+    }
+  )
+
+  res <- list(
+    kbet_original = kbet_score_original,
+    kbet_correct = kbet_score_corrected,
+    neighbours_original = correct_neighbours_uncor,
+    neighbours_corrected = correct_neighbours_cor
+  )
+
+  return(res)
+}
+
+### seurat CCA -----------------------------------------------------------------
+
+#### weak batch effects --------------------------------------------------------
+
+# No kBET assertion here. With a weak batch effect the baseline embedding
+# already mixes well, so anchor integration has nothing to gain and the
+# correction only adds a little noise. What must hold is that it does not
+# destroy the biological structure.
+
+weak_batch_effect_res <- assess_seurat_anchor_impact(
+  object = sc_object.weak_batch_effect,
+  method = "cca"
+)
+
+expect_true(
+  current = mean(weak_batch_effect_res$neighbours_corrected) >
+    (mean(weak_batch_effect_res$neighbours_original) - 1),
+  info = paste(
+    "seurat cca - biological signal is not regressed out",
+    "(weak batch effect)"
+  )
+)
+
+#### medium batch effects ------------------------------------------------------
+
+medium_batch_effect_res <- assess_seurat_anchor_impact(
+  object = sc_object.medium_batch_effect,
+  method = "cca"
+)
+
+expect_true(
+  current = medium_batch_effect_res$kbet_original >
+    medium_batch_effect_res$kbet_correct,
+  info = "seurat cca - medium batch effects get regressed out"
+)
+
+expect_true(
+  current = mean(medium_batch_effect_res$neighbours_corrected) >
+    (mean(medium_batch_effect_res$neighbours_original) - 1),
+  info = paste(
+    "seurat cca - biological signal is not regressed out",
+    "(medium batch effect)"
+  )
+)
+
+#### strong batch effects ------------------------------------------------------
+
+strong_batch_effect_res <- assess_seurat_anchor_impact(
+  object = sc_object.strong_batch_effect,
+  method = "cca"
+)
+
+expect_true(
+  current = strong_batch_effect_res$kbet_original >
+    strong_batch_effect_res$kbet_correct,
+  info = "seurat cca - strong batch effects get regressed out"
+)
+
+expect_true(
+  current = mean(strong_batch_effect_res$neighbours_corrected) >
+    (mean(strong_batch_effect_res$neighbours_original) - 1),
+  info = paste(
+    "seurat cca - biological signal is not regressed out",
+    "(strong batch effect)"
+  )
+)
+
+### seurat rPCA ----------------------------------------------------------------
+
+#### weak batch effects --------------------------------------------------------
+
+# Same as for CCA, no kBET assertion on the weakly-batched data.
+
+weak_batch_effect_res <- assess_seurat_anchor_impact(
+  object = sc_object.weak_batch_effect,
+  method = "rpca"
+)
+
+expect_true(
+  current = mean(weak_batch_effect_res$neighbours_corrected) >
+    (mean(weak_batch_effect_res$neighbours_original) - 1),
+  info = paste(
+    "seurat rpca - biological signal is not regressed out",
+    "(weak batch effect)"
+  )
+)
+
+#### medium batch effects ------------------------------------------------------
+
+medium_batch_effect_res <- assess_seurat_anchor_impact(
+  object = sc_object.medium_batch_effect,
+  method = "rpca"
+)
+
+expect_true(
+  current = medium_batch_effect_res$kbet_original >
+    medium_batch_effect_res$kbet_correct,
+  info = "seurat rpca - medium batch effects get regressed out"
+)
+
+expect_true(
+  current = mean(medium_batch_effect_res$neighbours_corrected) >
+    (mean(medium_batch_effect_res$neighbours_original) - 1),
+  info = paste(
+    "seurat rpca - biological signal is not regressed out",
+    "(medium batch effect)"
+  )
+)
+
+#### strong batch effects ------------------------------------------------------
+
+strong_batch_effect_res <- assess_seurat_anchor_impact(
+  object = sc_object.strong_batch_effect,
+  method = "rpca"
+)
+
+expect_true(
+  current = strong_batch_effect_res$kbet_original >
+    strong_batch_effect_res$kbet_correct,
+  info = "seurat rpca - strong batch effects get regressed out"
+)
+
+expect_true(
+  current = mean(strong_batch_effect_res$neighbours_corrected) >
+    (mean(strong_batch_effect_res$neighbours_original) - 1),
+  info = paste(
+    "seurat rpca - biological signal is not regressed out",
+    "(strong batch effect)"
+  )
+)
+
+### return structure and parameters --------------------------------------------
+
+test_anchor_object <- sc_object.medium_batch_effect
+
+batch_aware_hvg <- find_hvg_batch_aware_sc(
+  test_anchor_object,
+  hvg_no = 30L,
+  batch_column = "batch_index",
+  gene_comb_method = "union",
+  .verbose = FALSE
+)
+
+test_anchor_object <- seurat_cca_sc(
+  object = test_anchor_object,
+  batch_column = "batch_index",
+  batch_hvg_genes = batch_aware_hvg$hvg_gene_idx,
+  cca_params = params_sc_seurat_cca(num_cc = 10L, dims = 10L),
+  .verbose = FALSE
+)
+
+test_anchor_object <- seurat_rpca_sc(
+  object = test_anchor_object,
+  batch_column = "batch_index",
+  batch_hvg_genes = batch_aware_hvg$hvg_gene_idx,
+  rpca_params = params_sc_seurat_rpca(dims = 10L),
+  .verbose = FALSE
+)
+
+cca_embd <- get_embedding(test_anchor_object, "cca")
+rpca_embd <- get_embedding(test_anchor_object, "rpca")
+
+expect_true(
+  current = all(
+    c("cca", "rpca") %in%
+      get_available_embeddings(test_anchor_object)
+  ),
+  info = "seurat anchor methods add their embeddings to the object"
+)
+
+expect_equal(
+  current = dim(cca_embd),
+  target = c(nrow(test_anchor_object), 10L),
+  info = "seurat cca returns dims columns for every cell"
+)
+
+expect_equal(
+  current = dim(rpca_embd),
+  target = c(nrow(test_anchor_object), 10L),
+  info = "seurat rpca returns dims columns for every cell"
+)
+
+expect_true(
+  current = all(is.finite(cca_embd)) && all(is.finite(rpca_embd)),
+  info = "seurat anchor embeddings contain no NA or Inf"
+)
+
+expect_equal(
+  current = colnames(cca_embd),
+  target = sprintf("cca_%s", 1:10),
+  info = "seurat cca column names"
+)
+
+expect_equal(
+  current = colnames(rpca_embd),
+  target = sprintf("rpca_%s", 1:10),
+  info = "seurat rpca column names"
+)
+
+### reproducibility ------------------------------------------------------------
+
+rerun_object <- seurat_rpca_sc(
+  object = sc_object.medium_batch_effect,
+  batch_column = "batch_index",
+  batch_hvg_genes = batch_aware_hvg$hvg_gene_idx,
+  rpca_params = params_sc_seurat_rpca(dims = 10L),
+  seed = 42L,
+  .verbose = FALSE
+)
+
+expect_equal(
+  current = get_embedding(rerun_object, "rpca"),
+  target = rpca_embd,
+  info = "seurat rpca is reproducible with the same seed"
+)
+
+### parameter assertions -------------------------------------------------------
+
+expect_error(
+  current = seurat_cca_sc(
+    object = sc_object.medium_batch_effect,
+    batch_column = "batch_index",
+    batch_hvg_genes = batch_aware_hvg$hvg_gene_idx,
+    cca_params = params_sc_seurat_cca()[-1],
+    .verbose = FALSE
+  ),
+  info = "seurat cca rejects incomplete parameter lists"
+)
+
+expect_error(
+  current = seurat_rpca_sc(
+    object = sc_object.medium_batch_effect,
+    batch_column = "batch_index",
+    batch_hvg_genes = batch_aware_hvg$hvg_gene_idx,
+    rpca_params = params_sc_seurat_rpca()[-1],
+    .verbose = FALSE
+  ),
+  info = "seurat rpca rejects incomplete parameter lists"
+)
+
 # clean up ---------------------------------------------------------------------
 
 on.exit(unlink(test_temp_dir, recursive = TRUE, force = TRUE), add = TRUE)

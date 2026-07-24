@@ -1140,3 +1140,265 @@ S7::method(harmony_v2_sc, SingleCells) <- function(
 
   return(object)
 }
+
+## seurat CCA ------------------------------------------------------------------
+
+#' Run Seurat CCA integration
+#'
+#' @description
+#' This function implements the canonical correlation analysis (CCA) anchor
+#' integration from Stuart, et al. For each pair of batches a shared CCA
+#' embedding is computed, mutual nearest neighbours in that embedding become
+#' anchors, these are filtered in gene space, scored by shared neighbours and
+#' finally used to apply a kernel-weighted correction on the union PCA
+#' embedding. Batches are merged in the order of their pairwise anchor counts.
+#'
+#' This port deviates from Seurat in two places. It skips the per-gene
+#' `ScaleData` step and works from per-cell standardised log-normalised HVG
+#' expression, and it never materialises the `N1 x N2` cross-product (the
+#' canonical correlations come from a matrix-free randomised SVD). The
+#' correction runs on the embedding, not on full log-expression. In practice
+#' the anchor structure comes out close to identical at a fraction of the
+#' memory.
+#'
+#' @param object `SingleCells` class.
+#' @param batch_column String. The column with the batch information in the
+#' obs data of the class.
+#' @param batch_hvg_genes Integer vector. These are the highly variable genes,
+#' identified by a batch-aware method. Please refer to
+#' [bixverse::find_hvg_batch_aware_sc()] for more details. These genes have to
+#' be 0-indexed!
+#' @param cca_params A list, please see [bixverse::params_sc_seurat_cca()]. The
+#' list has the following parameters:
+#' \itemize{
+#'   \item num_cc - Integer. Number of canonical correlation dimensions. The
+#'   effective rank used is `max(num_cc, dims)`.
+#'   \item dims - Integer. Dimensions used for the anchor kNN queries and size
+#'   of the returned embedding.
+#'   \item k_anchor - Integer. Neighbourhood size for the anchor search.
+#'   \item k_filter - Integer. Neighbourhood size for the gene-space filter.
+#'   \item k_score - Integer. Neighbourhood size for the anchor scoring.
+#'   \item k_weight - Integer. Neighbourhood size for the kernel weights.
+#'   \item n_top_features - Integer. Top-loading genes for the gene-space
+#'   filter.
+#'   \item l2_norm - Logical. L2-normalise the CCA embedding per cell.
+#'   \item sd - Numeric. Bandwidth divisor of the Gaussian kernel.
+#'   \item knn - List of kNN parameters. See [bixverse::params_knn_defaults()]
+#'   for available parameters and their defaults.
+#'   \item pca - List of PCA parameters, see [bixverse::params_sc_pca()]
+#'   for available parameters and their defaults.
+#' }
+#' @param use_precomputed_pca Boolean. Should the PCA in the object be used
+#' if found. If you decide to do this, make sure that you have run the PCA
+#' on the batch-aware HVG ideally. Note that CCA still needs the PCA loadings
+#' for the gene-space filter, so this saves less work than it does for fastMNN.
+#' @param seed Integer. Random seed.
+#' @param .verbose Boolean or integer. Controls verbosity and returns run times.
+#' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
+#' verbosity.
+#'
+#' @returns The object with the added `"cca"` embedding.
+#'
+#' @export
+#'
+#' @references Stuart, et al., Cell, 2019
+seurat_cca_sc <- S7::new_generic(
+  name = "seurat_cca_sc",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    batch_column,
+    batch_hvg_genes,
+    cca_params = params_sc_seurat_cca(),
+    use_precomputed_pca = FALSE,
+    seed = 42L,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method seurat_cca_sc SingleCells
+#'
+#' @export
+S7::method(seurat_cca_sc, SingleCells) <- function(
+  object,
+  batch_column,
+  batch_hvg_genes,
+  cca_params = params_sc_seurat_cca(),
+  use_precomputed_pca = FALSE,
+  seed = 42L,
+  .verbose = TRUE
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  checkmate::qassert(batch_column, "S1")
+  checkmate::qassert(batch_hvg_genes, "I+")
+  assertScSeuratCca(cca_params)
+  checkmate::qassert(use_precomputed_pca, "B1")
+  checkmate::qassert(seed, "I1")
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
+
+  # function body
+  batch_indices <- unlist(object[[batch_column]])
+  batch_factor <- factor(batch_indices)
+  batch_indices <- as.integer(batch_factor) - 1L
+
+  if (!length(levels(batch_factor)) > 1) {
+    warning("The batch column only has one batch. Returning object as is.")
+    return(object)
+  }
+
+  pca_data <- if (use_precomputed_pca && !is.null(get_pca_factors(object))) {
+    if (.verbose) {
+      message("Using pre-computed PCA found in the object")
+    }
+    get_pca_factors(object)
+  } else {
+    NULL
+  }
+
+  cca_embd <- rs_seurat_cca(
+    f_path_gene = get_rust_count_gene_f_path(object),
+    f_path_cell = get_rust_count_cell_f_path(object),
+    cell_indices = get_cells_to_keep(object),
+    gene_indices = as.integer(batch_hvg_genes),
+    batch_indices = batch_indices,
+    precomputed_pca = pca_data,
+    cca_params = cca_params,
+    verbose = parse_verbosity(.verbose),
+    seed = seed
+  )
+
+  colnames(cca_embd) <- sprintf("cca_%s", 1:ncol(cca_embd))
+
+  object <- set_embedding(x = object, embd = cca_embd, name = "cca")
+
+  return(object)
+}
+
+## seurat rPCA -----------------------------------------------------------------
+
+#' Run Seurat rPCA integration
+#'
+#' @description
+#' This function implements the reciprocal PCA (rPCA) anchor integration from
+#' Stuart, et al. It runs the same anchor pipeline as
+#' [bixverse::seurat_cca_sc()] but builds a cheaper per-pair anchor space: each
+#' batch keeps its own PCA basis and the other batch's HVG expression is
+#' projected into it. Cross-batch mutual nearest neighbours are then found in
+#' these projected bases.
+#'
+#' rPCA is faster than CCA and corrects less aggressively, which makes it the
+#' safer choice when batches share most of their cell types. As in Seurat, no
+#' gene-space anchor filter is applied, that step is CCA-only.
+#'
+#' @param object `SingleCells` class.
+#' @param batch_column String. The column with the batch information in the
+#' obs data of the class.
+#' @param batch_hvg_genes Integer vector. These are the highly variable genes,
+#' identified by a batch-aware method. Please refer to
+#' [bixverse::find_hvg_batch_aware_sc()] for more details. These genes have to
+#' be 0-indexed!
+#' @param rpca_params A list, please see [bixverse::params_sc_seurat_rpca()].
+#' The list has the following parameters:
+#' \itemize{
+#'   \item dims - Integer. Dimensions used for the per-batch projections, the
+#'   anchor kNN queries and the size of the returned embedding.
+#'   \item k_anchor - Integer. Neighbourhood size for the anchor search.
+#'   \item k_score - Integer. Neighbourhood size for the anchor scoring.
+#'   \item k_weight - Integer. Neighbourhood size for the kernel weights.
+#'   \item l2_norm - Logical. L2-normalise the projected embeddings per cell.
+#'   \item sd - Numeric. Bandwidth divisor of the Gaussian kernel.
+#'   \item knn - List of kNN parameters. See [bixverse::params_knn_defaults()]
+#'   for available parameters and their defaults.
+#'   \item pca - List of PCA parameters, see [bixverse::params_sc_pca()]
+#'   for available parameters and their defaults.
+#' }
+#' @param use_precomputed_pca Boolean. Should the PCA in the object be used
+#' if found. This only applies to the union PCA that gets corrected, the
+#' per-batch PCAs are always recomputed because rPCA needs them.
+#' @param seed Integer. Random seed.
+#' @param .verbose Boolean or integer. Controls verbosity and returns run times.
+#' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
+#' verbosity.
+#'
+#' @returns The object with the added `"rpca"` embedding.
+#'
+#' @export
+#'
+#' @references Stuart, et al., Cell, 2019
+seurat_rpca_sc <- S7::new_generic(
+  name = "seurat_rpca_sc",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    batch_column,
+    batch_hvg_genes,
+    rpca_params = params_sc_seurat_rpca(),
+    use_precomputed_pca = FALSE,
+    seed = 42L,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method seurat_rpca_sc SingleCells
+#'
+#' @export
+S7::method(seurat_rpca_sc, SingleCells) <- function(
+  object,
+  batch_column,
+  batch_hvg_genes,
+  rpca_params = params_sc_seurat_rpca(),
+  use_precomputed_pca = FALSE,
+  seed = 42L,
+  .verbose = TRUE
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  checkmate::qassert(batch_column, "S1")
+  checkmate::qassert(batch_hvg_genes, "I+")
+  assertScSeuratRpca(rpca_params)
+  checkmate::qassert(use_precomputed_pca, "B1")
+  checkmate::qassert(seed, "I1")
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
+
+  # function body
+  batch_indices <- unlist(object[[batch_column]])
+  batch_factor <- factor(batch_indices)
+  batch_indices <- as.integer(batch_factor) - 1L
+
+  if (!length(levels(batch_factor)) > 1) {
+    warning("The batch column only has one batch. Returning object as is.")
+    return(object)
+  }
+
+  pca_data <- if (use_precomputed_pca && !is.null(get_pca_factors(object))) {
+    if (.verbose) {
+      message("Using pre-computed PCA found in the object")
+    }
+    get_pca_factors(object)
+  } else {
+    NULL
+  }
+
+  rpca_embd <- rs_seurat_rpca(
+    f_path_gene = get_rust_count_gene_f_path(object),
+    f_path_cell = get_rust_count_cell_f_path(object),
+    cell_indices = get_cells_to_keep(object),
+    gene_indices = as.integer(batch_hvg_genes),
+    batch_indices = batch_indices,
+    precomputed_pca = pca_data,
+    rpca_params = rpca_params,
+    verbose = parse_verbosity(.verbose),
+    seed = seed
+  )
+
+  colnames(rpca_embd) <- sprintf("rpca_%s", 1:ncol(rpca_embd))
+
+  object <- set_embedding(x = object, embd = rpca_embd, name = "rpca")
+
+  return(object)
+}

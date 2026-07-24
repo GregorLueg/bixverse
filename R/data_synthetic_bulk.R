@@ -200,81 +200,46 @@ synthetic_bulk_cor_matrix <- function(
 
 #### sparsification ------------------------------------------------------------
 
-#' Simulate dropouts via different functions on synthetic bulk data
+#' Simulate sequencing-depth dropouts on synthetic bulk data
 #'
 #' @description
-#' This function induces expression-level dependent sparsity on the data. The
-#' two possible functions are:
-#'
-#' **Logistic function:**
-#'
-#' With dropout probability defined as:
-#'
-#' ```
-#' P(dropout) = clamp(1 / (1 + exp(shape * (ln(exp+1) - ln(midpoint+1)))), 0.3, 0.8) * (1 - global_sparsity) + global_sparsity
-#' ```
-#'
-#' with the following characteristics:
-#'
-#' - Plateaus at global_sparsity dropout for high expression genes
-#' - Partial dropout preserves count structure via binomial thinning
-#' - Good for preserving variance-mean relationships
-#'
-#'**Power Decay function:**
-#'
-#' With dropout probability defined as:
-#'
-#' ```
-#' P(dropout) = (midpoint / (exp + midpoint))^power * scale_factor * (1 - global_sparsity) + global_sparsity
-#' ```
-#'
-#' with the following characteristics:
-#'
-#' - No plateau - high expression genes get substantial dropout
-#' - Complete dropout only (no partial dropout)
-#' - More uniform dropout across expression range
+#' This function induces Splatter-style sequencing-depth sparsity on the data.
+#' Per sample a size factor `s_j ~ LogNormal(0, capture_efficiency_sigma)` is
+#' drawn, giving a target library size of `target_library_size * s_j`. Each gene
+#' is then binomially thinned to approach that target, so dropout falls out of
+#' the library size rather than an explicit per-gene dropout curve. Retention
+#' probability is capped at 1, meaning samples already below their target are
+#' left alone rather than upsampled.
 #'
 #' @param object The `synthetic_bulk_data` class.
-#' @param dropout_function String. One of `c("log", "powerdecay")`. These
-#' are the two options to cause dropout in the bulk data.
-#' @param dropout_midpoint Numeric. Controls the midpoint parameter of the
-#' logistic and power decay function.
-#' @param dropout_shape Numeric. Controls the shape parameter of the logistic
-#' function.
-#' @param power_factor Numeric. Controls the power factor of the power decay
-#' function.
-#' @param global_sparsity Numeric. The global sparsity parameter.
+#' @param target_library_size Numeric. Reference library size per sample.
+#' Defaults to `20000`.
+#' @param capture_efficiency_sigma Numeric. Standard deviation of the LogNormal
+#' size-factor distribution. Larger values spread the library sizes further
+#' apart. Defaults to `0.5`.
 #' @param seed Integer. Random seed for reproducibility purposes.
 #'
 #' @return `synthetic_bulk_data` with added sparse data.
 #'
 #' @export
+#'
+#' @references Zappia, et al., Genome Biol, 2017
 simulate_dropouts <- function(
   object,
-  dropout_function = c("log", "powerdecay"),
-  dropout_midpoint = 5,
-  dropout_shape = 0.5,
-  power_factor = 0.3,
-  global_sparsity = 0.25,
+  target_library_size = 20000,
+  capture_efficiency_sigma = 0.5,
   seed = 123L
 ) {
-  dropout_function <- match.arg(dropout_function)
-
   # checks
   checkmate::assertClass(object, "synthetic_bulk_data")
-  checkmate::assertChoice(dropout_function, c("log", "powerdecay"))
-  checkmate::qassert(dropout_midpoint, "N1")
-  checkmate::qassert(dropout_shape, "N1")
-  checkmate::qassert(power_factor, "N1[0, 1]")
+  checkmate::qassert(target_library_size, "N1(0,)")
+  checkmate::qassert(capture_efficiency_sigma, "N1(0,)")
   checkmate::qassert(seed, "I1")
 
   sparse_counts <- rs_simulate_dropouts(
     count_mat = object$counts,
-    dropout_function = dropout_function,
-    dropout_midpoint = dropout_midpoint,
-    dropout_shape = dropout_shape,
-    power_factor = power_factor,
-    global_sparsity = global_sparsity,
+    target_library_size = target_library_size,
+    capture_efficiency_sigma = capture_efficiency_sigma,
     seed = seed
   )
 
@@ -282,11 +247,8 @@ simulate_dropouts <- function(
   colnames(sparse_counts) <- colnames(object$counts)
 
   sparsification_params <- list(
-    dropout_function = dropout_function,
-    dropout_midpoint = dropout_midpoint,
-    dropout_shape = dropout_shape,
-    power_factor = power_factor,
-    global_sparsity = global_sparsity,
+    target_library_size = target_library_size,
+    capture_efficiency_sigma = capture_efficiency_sigma,
     seed = seed
   )
 

@@ -715,51 +715,28 @@ rs_generate_bulk_rnaseq <- function(num_samples, num_genes, seed, add_modules, m
 #' @description
 #' `r lifecycle::badge("experimental")`
 #' This function takes in a (raw) count matrix (for example from the synthetic
-#' data in bixverse) and applies sparsification to it based on two possible
-#' functions:
+#' data in bixverse) and applies Splatter-style sequencing-depth dropout to it.
+#' Per sample a size factor `s_j ~ LogNormal(0, capture_efficiency_sigma)` is
+#' drawn, giving a target library size of `target_library_size * s_j`. Each
+#' gene is then binomially thinned to approach that target. Retention
+#' probability is capped at 1, so samples below their target are left alone
+#' rather than upsampled.
 #'
-#' **Logistic function:**
-#'
-#' With dropout probability defined as:
-#'
-#' `P(dropout) = clamp(1 / (1 + exp(shape * (ln(exp+1) - ln(midpoint+1)))), 0.3, 0.8) * (1 - global_sparsity) + global_sparsity`
-#'
-#' with the following characteristics:
-#'
-#' - Plateaus at global_sparsity dropout for high expression genes
-#' - Partial dropout preserves count structure via binomial thinning
-#' - Good for preserving variance-mean relationships
-#'
-#' **Power Decay function:**
-#'
-#' With dropout probability defined as:
-#'
-#' `P(dropout) = (midpoint / (exp + midpoint))^power * scale_factor * (1 - global_sparsity) + global_sparsity`
-#'
-#' with the following characteristics:
-#'
-#' - No plateau - high expression genes get substantial dropout
-#' - Complete dropout only (no partial dropout)
-#' - More uniform dropout across expression range
-#'
-#' @param count_mat Numerical matrix. Original numeric matrix.
-#' @param dropout_function String. One of `c("log", "powerdecay")`. Defines
-#' which function will be used to induce the sparsity.
-#' @param dropout_midpoint Numeric. Controls the midpoint parameter of the
-#' logistic and power decay function.
-#' @param dropout_shape Numeric. Controls the shape parameter of the logistic
-#' function.
-#' @param power_factor Numeric. Controls the power factor of the power decay
-#' function.
-#' @param global_sparsity Numeric. The global sparsity parameter.
+#' @param count_mat Numerical matrix. Original numeric matrix. Rows are genes,
+#' columns are samples.
+#' @param target_library_size Numeric. Reference library size per sample.
+#' @param capture_efficiency_sigma Numeric. Standard deviation of the
+#' LogNormal size-factor distribution.
 #' @param seed Integer. Seed for reproducibility.
 #'
 #' @return The sparsified matrix based on the provided parameters.
 #'
 #' @export
 #'
+#' @references Zappia, et al., Genome Biol, 2017
+#'
 #' @keywords internal
-rs_simulate_dropouts <- function(count_mat, dropout_function, dropout_midpoint, dropout_shape, power_factor, global_sparsity, seed) .Call(wrap__rs_simulate_dropouts, count_mat, dropout_function, dropout_midpoint, dropout_shape, power_factor, global_sparsity, seed)
+rs_simulate_dropouts <- function(count_mat, target_library_size, capture_efficiency_sigma, seed) .Call(wrap__rs_simulate_dropouts, count_mat, target_library_size, capture_efficiency_sigma, seed)
 
 #' Generates synthetic data for single cell
 #'
@@ -2668,6 +2645,74 @@ rs_harmony <- function(pca, harmony_params, batch_labels, seed, verbose) .Call(w
 #'
 #' @export
 rs_harmony_v2 <- function(pca, harmony_params, batch_labels, seed, verbose) .Call(wrap__rs_harmony_v2, pca, harmony_params, batch_labels, seed, verbose)
+
+#' Seurat CCA batch correction in Rust
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' This function implements the canonical correlation analysis (CCA) anchor
+#' integration from Stuart, et al. Anchors are identified in a per-pair
+#' L2-normalised canonical correlation embedding, scored via shared
+#' neighbours, filtered in gene space and then used to apply a kernel-weighted
+#' correction on the union PCA embedding.
+#'
+#' @param f_path_gene String. Path to the `counts_genes.bin` file.
+#' @param f_path_cell String. Path to the `counts_cells.bin` file. Used if
+#' you wish to use the PFlogPF transformation during the optional PCA step.
+#' @param cell_indices Integer. The cell indices to use. (0-indexed!)
+#' @param gene_indices Integer. The gene indices to use. (0-indexed!) Ideally
+#' these are batch-aware highly variable genes.
+#' @param batch_indices Integer vector. These represent to which batch a given
+#' cell belongs. Need to be 0-indexed and contiguous.
+#' @param precomputed_pca Optional PCA matrix. If you want to provide a
+#' pre-computed matrix.
+#' @param cca_params List. Contains all of the Seurat CCA parameters.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#' @param seed Integer. Seed for reproducibility purposes.
+#'
+#' @return The batch-corrected embedding space.
+#'
+#' @export
+#'
+#' @references Stuart, et al., Cell, 2019
+#'
+#' @keywords internal
+rs_seurat_cca <- function(f_path_gene, f_path_cell, cell_indices, gene_indices, batch_indices, precomputed_pca, cca_params, verbose, seed) .Call(wrap__rs_seurat_cca, f_path_gene, f_path_cell, cell_indices, gene_indices, batch_indices, precomputed_pca, cca_params, verbose, seed)
+
+#' Seurat rPCA batch correction in Rust
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' This function implements the reciprocal PCA (rPCA) anchor integration from
+#' Stuart, et al. Each batch keeps its own PCA basis and the other batch's
+#' expression is projected into it. Anchors live in these projected spaces and
+#' are then used to apply a kernel-weighted correction on the union PCA
+#' embedding. Cheaper than CCA and less aggressive in its correction.
+#'
+#' @param f_path_gene String. Path to the `counts_genes.bin` file.
+#' @param f_path_cell String. Path to the `counts_cells.bin` file. Used if
+#' you wish to use the PFlogPF transformation during the optional PCA step.
+#' @param cell_indices Integer. The cell indices to use. (0-indexed!)
+#' @param gene_indices Integer. The gene indices to use. (0-indexed!) Ideally
+#' these are batch-aware highly variable genes.
+#' @param batch_indices Integer vector. These represent to which batch a given
+#' cell belongs. Need to be 0-indexed and contiguous.
+#' @param precomputed_pca Optional PCA matrix. If you want to provide a
+#' pre-computed matrix. The per-batch PCAs are always recomputed.
+#' @param rpca_params List. Contains all of the Seurat rPCA parameters.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#' @param seed Integer. Seed for reproducibility purposes.
+#'
+#' @return The batch-corrected embedding space.
+#'
+#' @export
+#'
+#' @references Stuart, et al., Cell, 2019
+#'
+#' @keywords internal
+rs_seurat_rpca <- function(f_path_gene, f_path_cell, cell_indices, gene_indices, batch_indices, precomputed_pca, rpca_params, verbose, seed) .Call(wrap__rs_seurat_rpca, f_path_gene, f_path_cell, cell_indices, gene_indices, batch_indices, precomputed_pca, rpca_params, verbose, seed)
 
 #' Scrublet Rust interface
 #'

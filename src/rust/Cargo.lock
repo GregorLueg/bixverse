@@ -171,9 +171,7 @@ dependencies = [
 
 [[package]]
 name = "bixverse-rs"
-version = "0.3.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "321a22c01c378a9a35bd4a02498c739b104e2e7f74cd55f0108b86f52d0efc2c"
+version = "0.3.8"
 dependencies = [
  "ann-search-rs",
  "approx",

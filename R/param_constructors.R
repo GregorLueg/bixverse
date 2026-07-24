@@ -1291,6 +1291,159 @@ params_sc_harmony_v2 <- function(
   res
 }
 
+### seurat CCA -----------------------------------------------------------------
+
+#' Wrapper function for the Seurat CCA parameters
+#'
+#' @param num_cc Integer. Number of canonical correlation dimensions to compute
+#' for the anchor space. Defaults to `30L`. The effective rank used is
+#' `max(num_cc, dims)`.
+#' @param dims Integer. Number of dimensions used for the anchor kNN queries
+#' and the size of the returned embedding. Defaults to `30L`.
+#' @param k_anchor Integer. Neighbourhood size for the mutual nearest neighbour
+#' anchor search. Defaults to `5L`.
+#' @param k_filter Integer. Neighbourhood size for the gene-space anchor filter.
+#' Defaults to `200L`.
+#' @param k_score Integer. Neighbourhood size for the shared-neighbour anchor
+#' scoring. Defaults to `30L`.
+#' @param k_weight Integer. Neighbourhood size for the kernel weights applied
+#' during the correction. Defaults to `100L`.
+#' @param n_top_features Integer. Number of top-loading genes used for the
+#' gene-space anchor filter. Defaults to `200L`.
+#' @param l2_norm Boolean. Shall the canonical correlation embedding be
+#' L2-normalised per cell. Defaults to `TRUE`.
+#' @param sd Numeric. Bandwidth divisor of the Gaussian kernel used for the
+#' anchor weights. Defaults to `1.0`.
+#' @param knn List. Optional overrides for kNN parameters. See
+#' [bixverse::params_knn_defaults()] for available parameters: `k`,
+#' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
+#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
+#' and `n_probe`. Note that `k` is unused here, the neighbourhood sizes come
+#' from `k_anchor`, `k_filter`, `k_score` and `k_weight`.
+#' @param pca Named list. Parameters to feed through to the optional
+#' recalculation of the PCA, see [params_sc_pca()].
+#'
+#' @returns A list with the Seurat CCA parameters.
+#'
+#' @export
+#'
+#' @references Stuart, et al., Cell, 2019
+params_sc_seurat_cca <- function(
+  num_cc = 30L,
+  dims = 30L,
+  k_anchor = 5L,
+  k_filter = 200L,
+  k_score = 30L,
+  k_weight = 100L,
+  n_top_features = 200L,
+  l2_norm = TRUE,
+  sd = 1.0,
+  knn = list(),
+  pca = params_sc_pca()
+) {
+  checkmate::qassert(num_cc, "I1[1,)")
+  checkmate::qassert(dims, "I1[1,)")
+  checkmate::qassert(k_anchor, "I1[1,)")
+  checkmate::qassert(k_filter, "I1[0,)")
+  checkmate::qassert(k_score, "I1[1,)")
+  checkmate::qassert(k_weight, "I1[1,)")
+  checkmate::qassert(n_top_features, "I1[1,)")
+  checkmate::qassert(l2_norm, "B1")
+  checkmate::qassert(sd, "N1(0,)")
+
+  knn_params <- modifyList(
+    params_knn_defaults(),
+    modifyList(list(ann_dist = "cosine"), knn, keep.null = TRUE),
+    keep.null = TRUE
+  )
+
+  c(
+    list(
+      num_cc = num_cc,
+      dims = dims,
+      k_anchor = k_anchor,
+      k_filter = k_filter,
+      k_score = k_score,
+      k_weight = k_weight,
+      n_top_features = n_top_features,
+      l2_norm = l2_norm,
+      sd = sd
+    ),
+    knn_params,
+    pca
+  )
+}
+
+### seurat rPCA ----------------------------------------------------------------
+
+#' Wrapper function for the Seurat rPCA parameters
+#'
+#' @param dims Integer. Number of dimensions used for the per-batch PCA
+#' projections, the anchor kNN queries and the size of the returned embedding.
+#' Defaults to `30L`.
+#' @param k_anchor Integer. Neighbourhood size for the mutual nearest neighbour
+#' anchor search. Defaults to `5L`.
+#' @param k_score Integer. Neighbourhood size for the shared-neighbour anchor
+#' scoring. Defaults to `30L`.
+#' @param k_weight Integer. Neighbourhood size for the kernel weights applied
+#' during the correction. Defaults to `100L`.
+#' @param l2_norm Boolean. Shall the projected embeddings be L2-normalised per
+#' cell. Defaults to `TRUE`.
+#' @param sd Numeric. Bandwidth divisor of the Gaussian kernel used for the
+#' anchor weights. Defaults to `1.0`.
+#' @param knn List. Optional overrides for kNN parameters. See
+#' [bixverse::params_knn_defaults()] for available parameters: `k`,
+#' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
+#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
+#' and `n_probe`. Note that `k` is unused here, the neighbourhood sizes come
+#' from `k_anchor`, `k_score` and `k_weight`.
+#' @param pca Named list. Parameters to feed through to the optional
+#' recalculation of the PCA, see [params_sc_pca()].
+#'
+#' @returns A list with the Seurat rPCA parameters. Note that rPCA has no
+#' `num_cc`, `k_filter` or `n_top_features`, the gene-space anchor filter is
+#' CCA-only in Seurat.
+#'
+#' @export
+#'
+#' @references Stuart, et al., Cell, 2019
+params_sc_seurat_rpca <- function(
+  dims = 30L,
+  k_anchor = 5L,
+  k_score = 30L,
+  k_weight = 100L,
+  l2_norm = TRUE,
+  sd = 1.0,
+  knn = list(),
+  pca = params_sc_pca()
+) {
+  checkmate::qassert(dims, "I1[1,)")
+  checkmate::qassert(k_anchor, "I1[1,)")
+  checkmate::qassert(k_score, "I1[1,)")
+  checkmate::qassert(k_weight, "I1[1,)")
+  checkmate::qassert(l2_norm, "B1")
+  checkmate::qassert(sd, "N1(0,)")
+
+  knn_params <- modifyList(
+    params_knn_defaults(),
+    modifyList(list(ann_dist = "cosine"), knn, keep.null = TRUE),
+    keep.null = TRUE
+  )
+
+  c(
+    list(
+      dims = dims,
+      k_anchor = k_anchor,
+      k_score = k_score,
+      k_weight = k_weight,
+      l2_norm = l2_norm,
+      sd = sd
+    ),
+    knn_params,
+    pca
+  )
+}
+
 ## scenic ----------------------------------------------------------------------
 
 ### regression learner params --------------------------------------------------
