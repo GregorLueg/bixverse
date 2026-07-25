@@ -26,8 +26,7 @@ codegen-units = 4
 strip = true
 
 [dependencies]
-# TODO: revert to `version = "0.3.8"` once bixverse-rs is published to crates.io
-bixverse-rs = { path = "/Users/gregorlueg/repos/shared/bixverse-rs", features = [
+bixverse-rs = { version = "0.3.8", features = [
   "single-cell",
   "multi-modal",
 ] }
