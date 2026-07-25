@@ -63,6 +63,8 @@ navbar:
           href: articles/single_cell_batch_corrections.html
         - text: "kNN searches for single cells in bixverse"
           href: articles/knn_searches.html
+        - text: "Sub-clustering and per-group pipelines"
+          href: articles/single_cell_subsets.html
         - text: -------
         - text: "More advanced analysis methods"
         - text: "'Bag of genes' methods for single cell in bixverse"
@@ -121,6 +123,7 @@ articles:
       - single_cell_batch_corrections
       - bag_of_genes_single_cells
       - knn_searches
+      - single_cell_subsets
       - meta_cells
       - single_cell_big_data
       - multi_modal_single_cells

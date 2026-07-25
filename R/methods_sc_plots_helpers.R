@@ -16,7 +16,9 @@
 .get_manifoldsr_knn <- function(x, modality = c("rna", "adt")) {
   modality <- match.arg(modality)
   checkmate::assertTRUE(
-    S7::S7_inherits(x, SingleCells) || S7::S7_inherits(x, MetaCells)
+    S7::S7_inherits(x, SingleCells) ||
+      S7::S7_inherits(x, MetaCells) ||
+      S7::S7_inherits(x, SingleCellsSubset)
   )
 
   knn_obj <- get_knn_obj(x, modality = modality)
@@ -164,7 +166,9 @@ S7::method(umap_sc, ScOrMc) <- function(
 
   # checks
   checkmate::assertTRUE(
-    S7::S7_inherits(object, SingleCells) || S7::S7_inherits(object, MetaCells)
+    S7::S7_inherits(object, SingleCells) ||
+      S7::S7_inherits(object, MetaCells) ||
+      S7::S7_inherits(object, SingleCellsSubset)
   )
   checkmate::qassert(use_knn, "B1")
   checkmate::qassert(embd_to_use, "S1")
@@ -355,7 +359,9 @@ S7::method(tsne_sc, ScOrMc) <- function(
 
   # checks
   checkmate::assertTRUE(
-    S7::S7_inherits(object, SingleCells) || S7::S7_inherits(object, MetaCells)
+    S7::S7_inherits(object, SingleCells) ||
+      S7::S7_inherits(object, MetaCells) ||
+      S7::S7_inherits(object, SingleCellsSubset)
   )
   checkmate::qassert(embd_to_use, "S1")
   checkmate::qassert(slot_name, "S1")
@@ -534,7 +540,9 @@ S7::method(phate_sc, ScOrMc) <- function(
 
   # checks
   checkmate::assertTRUE(
-    S7::S7_inherits(object, SingleCells) || S7::S7_inherits(object, MetaCells)
+    S7::S7_inherits(object, SingleCells) ||
+      S7::S7_inherits(object, MetaCells) ||
+      S7::S7_inherits(object, SingleCellsSubset)
   )
   checkmate::qassert(embd_to_use, "S1")
   checkmate::qassert(slot_name, "S1")
@@ -733,10 +741,8 @@ S7::method(phate_sc, ScOrMc) <- function(
 
 # generic in base_generics_sc.R
 
-#' @method extract_dot_plot_data SingleCells
-#'
-#' @export
-S7::method(extract_dot_plot_data, SingleCells) <- function(
+#' @method extract_dot_plot_data ScOrScSubset
+S7::method(extract_dot_plot_data, ScOrScSubset) <- function(
   object,
   features,
   grouping_variable,
@@ -744,7 +750,10 @@ S7::method(extract_dot_plot_data, SingleCells) <- function(
   modality = c("rna", "adt")
 ) {
   modality <- match.arg(modality)
-  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  checkmate::assertTRUE(
+    S7::S7_inherits(object, SingleCells) ||
+      S7::S7_inherits(object, SingleCellsSubset)
+  )
   checkmate::qassert(features, "S+")
   checkmate::qassert(grouping_variable, "S1")
   checkmate::qassert(scale_exp, "B1")
@@ -762,13 +771,22 @@ S7::method(extract_dot_plot_data, SingleCells) <- function(
     rust_index = TRUE
   )
 
+  cell_idx <- get_cells_to_keep(object)
   grouping <- as.factor(
     unlist(object[[grouping_variable]], use.names = FALSE)
   )
 
+  # NA group codes turn into an out-of-bounds usize Rust-side, so drop them
+  keep <- !is.na(grouping)
+  if (!any(keep)) {
+    stop(sprintf("Grouping variable `%s` is entirely NA.", grouping_variable))
+  }
+  cell_idx <- cell_idx[keep]
+  grouping <- droplevels(grouping[keep])
+
   gene_res <- rs_extract_grouped_gene_stats(
     f_path = get_rust_count_gene_f_path(object),
-    cell_indices = get_cells_to_keep(object),
+    cell_indices = cell_idx,
     gene_indices = gene_idx,
     group_ids = as.integer(grouping) - 1L,
     group_levels = levels(grouping)
@@ -799,7 +817,7 @@ S7::method(extract_dot_plot_data, SingleCellsMultiModal) <- function(
   modality <- match.arg(modality)
 
   if (modality == "rna") {
-    rna_method <- S7::method(extract_dot_plot_data, SingleCells)
+    rna_method <- S7::method(extract_dot_plot_data, ScOrScSubset)
     return(rna_method(
       object = object,
       features = features,
@@ -863,10 +881,8 @@ S7::method(extract_dot_plot_data, MetaCells) <- function(
 
 ### individual cells -----------------------------------------------------------
 
-#' @method extract_gene_expression SingleCells
-#'
-#' @export
-S7::method(extract_gene_expression, SingleCells) <- function(
+#' @method extract_gene_expression ScOrScSubset
+S7::method(extract_gene_expression, ScOrScSubset) <- function(
   object,
   features,
   obs_cols = NULL,
@@ -875,7 +891,10 @@ S7::method(extract_gene_expression, SingleCells) <- function(
   modality = c("rna", "adt")
 ) {
   modality <- match.arg(modality)
-  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  checkmate::assertTRUE(
+    S7::S7_inherits(object, SingleCells) ||
+      S7::S7_inherits(object, SingleCellsSubset)
+  )
   checkmate::qassert(features, "S+")
   checkmate::qassert(obs_cols, c("0", "S+"))
   checkmate::qassert(scale, "B1")
@@ -933,7 +952,7 @@ S7::method(extract_gene_expression, SingleCellsMultiModal) <- function(
   modality <- match.arg(modality)
 
   if (modality == "rna") {
-    rna_method <- S7::method(extract_gene_expression, SingleCells)
+    rna_method <- S7::method(extract_gene_expression, ScOrScSubset)
     return(rna_method(
       object = object,
       features = features,

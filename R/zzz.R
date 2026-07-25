@@ -19,7 +19,9 @@
     "StabilisedNmfResult",
     "LigandTargetInfluence",
     "ScTypeResults",
-    "BulkModuleResult"
+    "BulkModuleResult",
+    "ScPipeline",
+    "ScStep"
   )
   for (cls in classes) {
     registerS3method("print", cls, get(paste0("print.", cls)))

@@ -7,7 +7,7 @@
 assertCellsExist(x, cell_names, .var.name = checkmate::vname(x), add = NULL)
 }
 \arguments{
-\item{x}{The \code{SingleCells} object to check/assert.}
+\item{x}{The \code{SingleCells} or \code{SingleCellsSubset} object to check/assert.}
 
 \item{cell_names}{String. The provided cell names.}
 

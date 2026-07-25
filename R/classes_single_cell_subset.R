@@ -388,6 +388,17 @@ S7::method(get_cell_names, SingleCellsSubset) <- function(x, filtered = FALSE) {
   S7::prop(x, "obs_table")$cell_id
 }
 
+#' @name get_gene_names.SingleCellsSubset
+#'
+#' @rdname get_gene_names
+#'
+#' @method get_gene_names SingleCellsSubset
+S7::method(get_gene_names, SingleCellsSubset) <- function(x) {
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
+  # gene space is unchanged in the subset
+  S7::prop(x, "var_table")$gene_id
+}
+
 #' @name get_gene_names_from_idx.SingleCellsSubset
 #'
 #' @rdname get_gene_names_from_idx

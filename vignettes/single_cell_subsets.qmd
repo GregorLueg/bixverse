@@ -1,0 +1,571 @@
+---
+title: "Sub-clustering and per-group pipelines"
+date: last-modified
+date-format: YYYY-MM-DD
+vignette: >
+  %\VignetteIndexEntry{Sub-clustering and per-group pipelines}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+knitr:
+  opts_chunk:
+    collapse: true
+    comment: '#>'
+author:
+  - name: "Gregor Lueg"
+---
+
+## Intro
+
+Your first pass of clustering gives you lineages: T cells, B cells, monocytes.
+What it does not give you is the structure inside those lineages. The
+highly variable genes and the principal components were chosen to separate a
+monocyte from a B cell, and on that axis every T cell looks the same. If you
+crank up the Leiden resolution on the full object you mostly get the lineages
+chopped into arbitrary pieces, not naive versus memory CD4.
+
+The fix is to throw the global feature selection away and redo it on the cells
+you actually care about. That is what `SingleCellsSubset` is for. It gives you a
+view onto a subset of a [`SingleCells`](https://gregorlueg.github.io/bixverse/reference/SingleCells.html)
+object that shares the on-disk counts with the parent, but carries its own
+empty cache, so HVG, PCA, neighbours and clusters all get recomputed from
+scratch on the subset alone.
+
+This vignette assumes you have read the
+[design choices](https://gregorlueg.github.io/bixverse/articles/design_single_cell.html)
+and the [PBMC walkthrough](https://gregorlueg.github.io/bixverse/articles/pbmc_single_cell.html).
+The standard chain is not re-explained here.
+
+```{r}
+#| label: setup
+library(bixverse)
+library(ggplot2)
+library(data.table)
+library(bixverse.plots)
+library(magrittr)
+```
+
+## A coarse first pass
+
+Same PBMC3k data set as the main walkthrough, run through QC, HVG, PCA,
+neighbours and Leiden without commentary.
+
+```{r}
+#| label: load and process
+pbmc3k_path <- download_pbmc3k()
+
+tempdir_pbmc <- tempdir()
+
+sc_object <- SingleCells(dir_data = tempdir_pbmc)
+
+sc_object <- load_mtx(
+  object = sc_object,
+  sc_mtx_io_param = get_cell_ranger_params(pbmc3k_path),
+  mtx_streaming = FALSE,
+  .verbose = FALSE
+)
+
+setnames_sc(
+  object = sc_object,
+  table = "var",
+  old = "column1",
+  new = "gene_symbol"
+)
+
+var <- get_sc_var(sc_object)
+
+ensembl_to_symbol <- setNames(var$gene_symbol, var$gene_id)
+symbol_to_ensembl <- setNames(var$gene_id, var$gene_symbol)
+```
+
+Mitochondrial proportions, MAD outliers, cells to keep.
+
+```{r}
+#| label: qc
+gs_of_interest <- list(
+  MT = var[grepl("^MT-", gene_symbol), gene_id]
+)
+
+sc_object <- gene_set_proportions_sc(
+  sc_object,
+  gs_of_interest,
+  streaming = FALSE,
+  .verbose = FALSE
+)
+
+qc_df <- sc_object[[c("cell_id", "lib_size", "nnz", "MT")]]
+
+qc <- run_cell_qc(
+  metrics = list(
+    log10_lib_size = log10(qc_df$lib_size),
+    log10_nnz = log10(qc_df$nnz),
+    MT = qc_df$MT
+  ),
+  cells_to_keep = get_cells_to_keep(sc_object),
+  directions = c(
+    log10_lib_size = "twosided",
+    log10_nnz = "twosided",
+    MT = "above"
+  ),
+  threshold = 3
+)
+
+sc_object <- set_cells_to_keep(sc_object, qc_df[!qc$combined, cell_id])
+```
+
+Now the standard chain. The data is tiny, so exhaustive kNN beats building an
+index.
+
+```{r}
+#| label: global chain
+sc_object <- find_hvg_sc(sc_object, hvg_no = 2000L, .verbose = FALSE)
+
+sc_object <- calculate_pca_sc(
+  object = sc_object,
+  no_pcs = 30L,
+  sparse_svd = TRUE,
+  .verbose = FALSE
+)
+
+sc_object <- find_neighbours_sc(
+  object = sc_object,
+  neighbours_params = params_sc_neighbours(
+    knn = list(knn_method = "exhaustive")
+  ),
+  .verbose = FALSE
+)
+
+sc_object <- find_clusters_sc(sc_object, res = 1, name = "leiden_global")
+
+sc_object <- umap_sc(sc_object, .verbose = FALSE)
+```
+
+For the annotation we deliberately stay coarse. No CD4 versus CD8 split, no
+naive versus memory. Lineage only, because the fine structure is exactly what
+we want the subset to recover.
+
+```{r}
+#| label: coarse annotation
+coarse_markers <- c(
+  CD3D = "T cells",
+  CD3E = "T cells",
+  CD3G = "T cells",
+  TRAC = "T cells",
+  MS4A1 = "B cells",
+  CD79A = "B cells",
+  CD19 = "B cells",
+  CD14 = "Monocytes",
+  LYZ = "Monocytes",
+  S100A8 = "Monocytes",
+  FCGR3A = "Monocytes",
+  GNLY = "NK",
+  NKG7 = "NK",
+  KLRD1 = "NK",
+  FCER1A = "DC",
+  CD1C = "DC",
+  LILRA4 = "DC",
+  PPBP = "Platelet",
+  PF4 = "Platelet"
+)
+
+coarse_dt <- stack(coarse_markers) %>%
+  as.data.table() %>%
+  setnames(., c("values", "ind"), c("cell_type", "gene_symbol")) %>%
+  .[, gene_symbol := as.character(gene_symbol)] %>%
+  .[, gene_id := var$gene_id[match(gene_symbol, var$gene_symbol)]] %>%
+  .[!is.na(gene_id), ]
+
+sctype_scores <- calc_sc_type_scores(
+  object = sc_object,
+  cell_marker_list = prepare_cell_markers(sc_object, coarse_dt)
+)
+
+cell_type_anno <- score_clusters(
+  sctype_scores,
+  sc_object[[]][["leiden_global"]]
+)
+
+obs <- get_sc_obs(sc_object, filtered = TRUE)
+
+sc_object[["cell_type"]] <- cell_type_anno$cell_type[match(
+  obs$leiden_global,
+  cell_type_anno$cluster_id
+)]
+
+get_sc_obs(sc_object, filtered = TRUE)[, .N, by = cell_type][order(-N)]
+```
+
+```{r}
+#| label: global umap
+#| fig-width: 7
+#| fig-height: 5
+embedding_plot_sc(
+  sc_object,
+  embedding = "umap",
+  colour_by = "cell_type",
+  label_by = "cell_type",
+  discrete = TRUE
+) +
+  labs(colour = "Cell type")
+```
+
+## Taking a subset
+
+The constructor takes the parent, a column in obs, and the level you want.
+
+```{r}
+#| label: make subset
+t_cells <- SingleCellsSubset(
+  sc_object = sc_object,
+  grouping_column = "cell_type",
+  group = "T cells"
+)
+
+t_cells
+```
+
+The print method tells you the important bit: HVG, PCA, kNN and sNN are all
+`FALSE`. Nothing was inherited. The subset shares the Rust count connection with
+the parent, so no counts were copied and no files were written, but the
+`ScCache` is brand new and the parent's HVG selection was dropped on purpose.
+
+Everything else behaves like the parent object. The obs table is filtered to
+the group, the var table is untouched, and the usual getters work.
+
+```{r}
+#| label: subset getters
+dim(t_cells)
+
+head(t_cells)[, .(cell_id, cell_idx, lib_size, cell_type)]
+```
+
+### A note on indices
+
+This is the one place where you can shoot yourself in the foot, so it is worth
+being explicit. The subset keeps two index spaces around:
+
+- **Subset positions** are 1-indexed rows of the subset's own obs table. This is
+  what `[` and `[[` take.
+- **Original positions** are the parent's index space. `subset_to_original` and
+  the `cell_idx` obs column both hold these, 1-indexed. Everything that reaches
+  Rust gets translated into this space, 0-indexed, before the call.
+
+`get_cell_indices()` lets you ask for either.
+
+```{r}
+#| label: index spaces
+first_three <- get_cell_names(t_cells)[1:3]
+
+# 1-indexed position within the subset
+get_cell_indices(t_cells, cell_ids = first_three, rust_index = FALSE)
+
+# 0-indexed position in the parent, which is what Rust sees
+get_cell_indices(t_cells, cell_ids = first_three, rust_index = TRUE)
+```
+
+The practical upshot: you never translate manually. Hand cell IDs or subset
+positions to the getters and let the class deal with it. The `cell_idx` column
+is there so you can join results back onto the parent later, which is exactly
+what we do further down.
+
+## Re-running the chain
+
+Same functions as on the parent. They dispatch on the subset.
+
+```{r}
+#| label: subset chain
+t_cells <- find_hvg_sc(t_cells, hvg_no = 2000L, .verbose = FALSE)
+
+t_cells <- calculate_pca_sc(
+  object = t_cells,
+  no_pcs = 20L,
+  sparse_svd = TRUE,
+  .verbose = FALSE
+)
+
+t_cells <- find_neighbours_sc(
+  object = t_cells,
+  neighbours_params = params_sc_neighbours(
+    knn = list(knn_method = "exhaustive")
+  ),
+  .verbose = FALSE
+)
+
+t_cells <- find_clusters_sc(t_cells, res = 0.6, name = "t_subcluster")
+
+t_cells <- umap_sc(t_cells, .verbose = FALSE)
+
+t_cells
+```
+
+Was any of that worth it? Check how much the feature selection actually moved.
+
+```{r}
+#| label: hvg overlap
+global_hvg <- get_hvg(sc_object)
+subset_hvg <- get_hvg(t_cells)
+
+length(intersect(global_hvg, subset_hvg))
+```
+
+Around a thousand of the 2000 genes are different, and the ones that dropped out
+are the monocyte and B cell markers that were carrying the global PCA. The
+subset PCA is built on genes that vary *within* T cells, which is the whole
+point.
+
+```{r}
+#| label: subset umap
+#| fig-width: 7
+#| fig-height: 5
+embedding_plot_sc(
+  t_cells,
+  embedding = "umap",
+  colour_by = "t_subcluster",
+  label_by = "t_subcluster",
+  discrete = TRUE
+) +
+  labs(colour = "Sub-cluster")
+```
+
+## Markers for the sub-clusters
+
+Differential expression dispatches on the subset, so the comparison is
+automatically confined to it. Each sub-cluster is tested against the other T
+sub-clusters, not against every monocyte in the data set.
+
+```{r}
+#| label: subcluster markers
+sub_markers <- find_all_markers_sc(
+  object = t_cells,
+  column_of_interest = "t_subcluster",
+  .verbose = FALSE
+)
+
+sub_markers[, gene_symbol := ensembl_to_symbol[gene_id]]
+
+sub_markers[fdr <= 0.05][order(grp, -lfc)][,
+  head(.SD, 5),
+  by = grp,
+  .SDcols = c("gene_symbol", "lfc", "fdr")
+]
+```
+
+S100A4, ANXA1 and IL32 on one side, CCR7, SELL and CD8B on the other. That is
+the memory versus naive split, and the global clustering had no way of seeing
+it. Cluster 2 is two cells, which is Leiden being Leiden at this resolution.
+
+The expression plots work on the subset too, so you can go straight to a dot
+plot without touching the parent.
+
+```{r}
+#| label: subcluster dotplot
+#| fig-width: 8
+#| fig-height: 4
+t_features <- setdiff(
+  symbol_to_ensembl[c(
+    "CCR7",
+    "LEF1",
+    "SELL",
+    "IL7R",
+    "S100A4",
+    "IL32",
+    "CD8A",
+    "CD8B",
+    "GZMK",
+    "NKG7"
+  )],
+  NA
+)
+
+dot_plot_sc(
+  object = t_cells,
+  features = t_features,
+  feature_labels = ensembl_to_symbol[t_features],
+  grouping_variable = "t_subcluster",
+  scale_exp = TRUE,
+  cluster_groups = TRUE
+)
+```
+
+## Getting the labels back to the parent
+
+So far everything lives in the subset, in memory. To make the labels permanent,
+or to plot them on the parent's global UMAP, push them into the parent's DuckDB
+joining on `cell_idx`. `add_sc_new_obs()` expects a table that carries the
+`is_obs` tag, so we set it by hand.
+
+```{r}
+#| label: write back
+sub_labels <- get_sc_obs(t_cells)[, .(
+  cell_idx,
+  t_subcluster = paste0("T_", t_subcluster)
+)]
+
+data.table::setattr(sub_labels, "is_obs", TRUE)
+
+sc_object <- add_sc_new_obs(sc_object, sub_labels)
+
+get_sc_obs(sc_object, filtered = TRUE)[, .N, by = t_subcluster][order(t_subcluster)]
+```
+
+The join is a left join, so every cell that was not a T cell gets `NA`. That is
+the behaviour you want, and the downstream methods respect it.
+
+Note that if you go via `fast_cluster_sc()` instead, the write-back is a
+one-liner. That method already returns memberships keyed on `cell_idx` in parent
+space, and `get_data()` tags the result for you.
+
+```{r}
+#| label: fast cluster route
+fast_sub <- fast_cluster_sc(
+  object = t_cells,
+  resolutions = c(1, 0.5),
+  .verbose = FALSE
+)
+
+sc_object <- add_sc_new_obs(sc_object, get_data(fast_sub))
+
+head(sc_object)[, .(cell_id, cell_type, t_subcluster, res_1, res_0.5)]
+```
+
+## Pipelines
+
+Once you are doing this for more than one cell type, writing out HVG, PCA,
+neighbours and clusters by hand five times gets old. `sc_pipeline()` lets you
+declare the chain once.
+
+```{r}
+#| label: build pipeline
+subcluster_pipeline <- sc_pipeline() %>>%
+  step_hvg_sc(hvg_no = 2000L, .verbose = FALSE) %>>%
+  step_pca_sc(no_pcs = 20L, sparse_svd = TRUE, .verbose = FALSE) %>>%
+  step_neighbours_sc(
+    neighbours_params = params_sc_neighbours(
+      knn = list(knn_method = "exhaustive")
+    ),
+    .verbose = FALSE
+  ) %>>%
+  step_clusters_sc(res = 0.6, name = "subcluster")
+
+subcluster_pipeline
+```
+
+Pipelines are inert. Nothing runs until you apply one, and the same pipeline
+works on a `SingleCells` or a `SingleCellsSubset` because dispatch happens
+inside each step.
+
+```{r}
+#| label: apply pipeline
+b_cells <- SingleCellsSubset(
+  sc_object = sc_object,
+  grouping_column = "cell_type",
+  group = "B cells"
+)
+
+b_cells <- apply_pipeline(subcluster_pipeline, b_cells)
+
+b_cells
+```
+
+### One pipeline, every group
+
+`apply_pipeline_per_group()` builds the subset for you and returns a named list.
+
+Sizing matters here. PCA with 20 components needs more than 20 cells, so a rare
+population that the annotation happened to call will fall over and take the
+whole run with it. Restrict the groups explicitly rather than hoping for the
+best. On this data set the coarse annotation only returned four lineages and
+all of them clear the bar, so nothing gets dropped, but the guard costs nothing.
+
+```{r}
+#| label: pick groups
+cell_counts <- get_sc_obs(sc_object, filtered = TRUE)[, .N, by = cell_type][
+  order(-N)
+]
+
+groups_to_run <- cell_counts[N >= 100, cell_type]
+
+groups_to_run
+```
+
+```{r}
+#| label: per group
+per_group <- apply_pipeline_per_group(
+  pipeline = subcluster_pipeline,
+  object = sc_object,
+  group_col = "cell_type",
+  groups = groups_to_run
+)
+
+summary_dt <- data.table::rbindlist(purrr::imap(per_group, \(x, name) {
+  data.table(
+    cell_type = name,
+    n_cells = dim(x)[1],
+    n_subclusters = length(unique(get_sc_obs(x)$subcluster)),
+    hvg_shared_with_global = length(intersect(get_hvg(x), global_hvg))
+  )
+}))
+
+summary_dt[order(-n_cells)]
+```
+
+Every lineage picked a different feature set, and the shared fraction with the
+global HVGs is nowhere near complete. Running one global PCA and hoping it
+resolves everything was never going to work.
+
+Writing all of that back is the same join as before, once per group.
+
+```{r}
+#| label: write back per group
+all_labels <- data.table::rbindlist(purrr::imap(per_group, \(x, name) {
+  get_sc_obs(x)[, .(
+    cell_idx,
+    fine_label = sprintf("%s_%s", name, subcluster)
+  )]
+}))
+
+data.table::setattr(all_labels, "is_obs", TRUE)
+
+sc_object <- add_sc_new_obs(sc_object, all_labels)
+
+get_sc_obs(sc_object, filtered = TRUE)[, .N, by = fine_label][order(fine_label)]
+```
+
+```{r}
+#| label: fine umap
+#| fig-width: 8
+#| fig-height: 5
+embedding_plot_sc(
+  sc_object,
+  embedding = "umap",
+  colour_by = "fine_label",
+  discrete = TRUE
+) +
+  labs(colour = "Fine label")
+```
+
+## Caveats and what is next
+
+A few sharp edges to be aware of before you build on this.
+
+Metacell generation via `generate_bt_meta_cells_sc()` is still parent-only,
+which is a shame given per-sample metacells are the obvious use for
+`apply_pipeline_per_group()`. That one needs real work rather than a dispatch
+widening, so it is on the list.
+
+Subsets are RNA only. If you hand `modality = "adt"` to a getter you get an
+error, so multi-modal work stays on
+[`SingleCellsMultiModal`](https://gregorlueg.github.io/bixverse/articles/multi_modal_single_cells.html).
+
+The `setattr(dt, "is_obs", TRUE)` dance for the write-back is a placeholder. A
+proper `merge_subset_obs()` helper belongs in the package and is on the list.
+
+Subsets nest conceptually but not in code: you cannot build a
+`SingleCellsSubset` from another `SingleCellsSubset`. If you want a third level,
+write the labels back to the parent and subset from there.
+
+## Clean up
+
+```{r}
+#| label: clean up
+unlink(tempdir_pbmc, recursive = TRUE, force = TRUE)
+```

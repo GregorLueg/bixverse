@@ -2324,14 +2324,17 @@ assertScNeighbours <- checkmate::makeAssertionFunction(checkScNeighbours)
 #' @description Checkmate extension for checking if the prodivided cell names
 #' exist in the object.
 #'
-#' @param x The `SingleCells` object to check/assert.
+#' @param x The `SingleCells` or `SingleCellsSubset` object to check/assert.
 #' @param cell_names String. The provided cell names.
 #'
 #' @return \code{TRUE} if the check was successful, otherwise an error message.
 #'
 #' @keywords internal
 checkCellsExist <- function(x, cell_names) {
-  res <- checkmate::checkClass(x, "bixverse::SingleCells")
+  res <- checkmate::checkMultiClass(
+    x,
+    c("bixverse::SingleCells", "bixverse::SingleCellsSubset")
+  )
   if (!isTRUE(res)) {
     return(res)
   }
