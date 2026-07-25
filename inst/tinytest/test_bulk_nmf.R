@@ -4,12 +4,17 @@ library(magrittr)
 
 ## data ------------------------------------------------------------------------
 
+# The Gamma-factor generator gives NMF a non-negative ground truth it can
+# actually reach. All four generators land within 0.71 to 0.83 recall here, so
+# this is the theoretically matched choice rather than the flattering one.
 synth <- synthetic_bulk_cor_matrix(
-  num_samples = 60L,
-  num_genes = 300L,
-  add_modules = TRUE,
-  module_sizes = c(50L, 50L, 50L),
-  seed = 123L
+  params_synthetic_bulk_rnaseq(
+    num_samples = 60L,
+    num_genes = 300L,
+    module_sizes = c(50L, 50L, 50L),
+    generator = "non_negative_factor",
+    seed = 123L
+  )
 )
 
 counts <- synth$counts
@@ -155,9 +160,41 @@ best_jaccard <- function(assignments) {
 recall <- mean(best_jaccard(nmf_modules_dt))
 
 expect_true(
-  current = recall >= 0.5,
+  current = recall >= 0.6,
   info = sprintf(
-    "nmf_bulk - recall vs planted modules >= 0.5 (got %.3f)",
+    "nmf_bulk - recall vs planted modules >= 0.6 (got %.3f)",
     recall
   )
+)
+
+## membership is sparse and non-exclusive --------------------------------------
+
+expect_true(
+  current = data.table::uniqueN(nmf_modules_dt$gene) < nrow(truth),
+  info = "nmf_bulk - membership is sparse, background genes are not assigned"
+)
+
+expect_true(
+  current = all(nmf_modules_dt$sign == "pos"),
+  info = "nmf_bulk - non-negative loadings give an upper-tail-only test"
+)
+
+expect_true(
+  current = "z" %in% names(nmf_modules_dt),
+  info = "nmf_bulk - the zscore threshold statistic is reported"
+)
+
+# A tighter cutoff must keep strictly fewer genes.
+nmf_strict <- nmf_bulk(
+  BulkCoExp(raw_data = t(counts), meta_data = meta_data) %>%
+    preprocess_bulk_coexp(scaling = FALSE, hvg = NULL, .verbose = FALSE),
+  k = 5L,
+  membership_params = params_module_membership(cutoff = 6),
+  seed = 42L,
+  .verbose = FALSE
+)
+
+expect_true(
+  current = nrow(get_modules(get_results(nmf_strict))) < nrow(nmf_modules_dt),
+  info = "nmf_bulk - a stricter membership cutoff keeps fewer genes"
 )

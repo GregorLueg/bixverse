@@ -156,6 +156,10 @@ S7::method(dgrdl_grid_search, BulkCoExp) <- function(
 #'   \item{admm_iter - Integer. ADMM iterations for sparse coding.}
 #'   \item{rho - Float. ADMM step size.}
 #' }
+#' @param membership_params List. Controls how the atom loadings are turned into
+#' module membership, see [bixverse::params_module_membership()]. Membership is
+#' not exclusive: a gene active in several atoms appears in several modules, and
+#' a gene in no tail appears in none.
 #' @param seed Integer. Seed for the initialisation of the dictionary.
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
@@ -168,6 +172,7 @@ dgrdl_result <- S7::new_generic(
   fun = function(
     object,
     dgrdl_params = params_dgrdl(),
+    membership_params = params_module_membership(),
     seed = 42L,
     .verbose = TRUE
   ) {
@@ -184,6 +189,7 @@ dgrdl_result <- S7::new_generic(
 S7::method(dgrdl_result, BulkCoExp) <- function(
   object,
   dgrdl_params = params_dgrdl(),
+  membership_params = params_module_membership(),
   seed = 42L,
   .verbose = TRUE
 ) {
@@ -191,6 +197,7 @@ S7::method(dgrdl_result, BulkCoExp) <- function(
   checkmate::assertClass(object, "bixverse::BulkCoExp")
   checkmate::qassert(seed, "I1")
   assertDGRDLparams(dgrdl_params)
+  assertModuleMembershipParams(membership_params)
   checkmate::qassert(.verbose, "B1")
 
   # function body
@@ -243,21 +250,10 @@ S7::method(dgrdl_result, BulkCoExp) <- function(
   S7::prop(object, "params")[["detection_method"]] <- "dgrdl-based"
 
   # derive modules from loadings. loadings is dict_size x gene, transpose to
-  # gene x dict_size then assign each gene to argmax abs atom.
+  # gene x dict_size and keep the tails per atom. A gene may be active in
+  # several atoms, so it may appear in several modules.
   gene_loadings <- t(loadings)
-  min_loading <- 0
-  module_idx <- apply(abs(gene_loadings), 1L, which.max)
-  gene_names <- rownames(gene_loadings)
-  atom_names <- colnames(gene_loadings)
-  loading_vals <- gene_loadings[cbind(seq_along(module_idx), module_idx)]
-  keep <- abs(loading_vals) > min_loading
-
-  modules_dt <- data.table::data.table(
-    gene = gene_names[keep],
-    module_id = atom_names[module_idx[keep]],
-    loading = loading_vals[keep],
-    sign = ifelse(loading_vals[keep] >= 0, "pos", "neg")
-  )
+  modules_dt <- .modules_from_loadings(gene_loadings, membership_params)
 
   S7::prop(object, "final_results") <- new_bulk_module_result(
     modules = modules_dt,

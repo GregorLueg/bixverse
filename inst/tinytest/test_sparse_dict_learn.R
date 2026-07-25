@@ -383,6 +383,23 @@ expect_true(
   info = "DGRDL class - get_modules() returns a data.table"
 )
 
+dgrdl_modules_dt <- get_modules(s7_res)
+
+expect_true(
+  current = all(c("loading", "sign", "z") %in% names(dgrdl_modules_dt)),
+  info = "DGRDL class - membership reports loading, sign and the threshold statistic"
+)
+
+# Dictionary learning lets a gene be active in several atoms, so membership must
+# not be an exclusive partition that force-assigns every feature. Note the
+# stored `loadings` are dict_size x gene, so features are the columns.
+n_features <- ncol(get_factors(s7_res, which = "loadings"))
+
+expect_true(
+  current = data.table::uniqueN(dgrdl_modules_dt$gene) < n_features,
+  info = "DGRDL class - membership is sparse, not every feature is assigned"
+)
+
 ## check with scaling of the data ----------------------------------------------
 
 s7_obj <- preprocess_bulk_coexp(

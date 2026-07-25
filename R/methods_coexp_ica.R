@@ -547,6 +547,10 @@ S7::method(ica_optimal_ncomp, BulkCoExp) <- function(
 #'  \item max_tol - Maximum tolerance of the algorithm.
 #'  \item verbose - Controls verbosity of the function.
 #' }
+#' @param membership_params List. Controls how the component loadings are turned
+#' into module membership, see [bixverse::params_module_membership()]. Membership
+#' is not exclusive: a gene loading strongly on several components will appear in
+#' several modules, and a gene in no tail appears in none.
 #' @param random_seed Integer. For reproducibility.
 #' @param consistent_sign Boolean. If set to `TRUE`, for each source the absolute
 #' maximum value will be positive, i.e., the sign will be inverted so that the
@@ -566,6 +570,7 @@ ica_stabilised_results <- S7::new_generic(
     ica_type = c("logcosh", "exp"),
     iter_params = params_ica_randomisation(),
     ica_params = params_ica_general(),
+    membership_params = params_module_membership(),
     random_seed = 42L,
     consistent_sign = TRUE,
     .verbose = TRUE
@@ -588,16 +593,20 @@ S7::method(ica_stabilised_results, BulkCoExp) <- function(
   ica_type = c("logcosh", "exp"),
   iter_params = params_ica_randomisation(),
   ica_params = params_ica_general(),
+  membership_params = params_module_membership(),
   random_seed = 42L,
   consistent_sign = TRUE,
   .verbose = TRUE
 ) {
+  ica_type <- match.arg(ica_type)
+
   # Checks
   checkmate::assertClass(object, "bixverse::BulkCoExp")
   checkmate::qassert(no_comp, c("0", "I1"))
   checkmate::assertChoice(ica_type, c("logcosh", "exp"))
   assertIcaIterParams(iter_params)
   assertIcaParams(ica_params)
+  assertModuleMembershipParams(membership_params)
   checkmate::qassert(random_seed, "I1")
   checkmate::qassert(consistent_sign, "B1")
   checkmate::qassert(.verbose, "B1")
@@ -702,22 +711,11 @@ S7::method(ica_stabilised_results, BulkCoExp) <- function(
 
   S7::prop(object, "params")[["ica_final_gen"]] <- result_params
 
-  # derive modules from |S| loadings. S is k x gene, transpose to gene x k
-  # then assign each gene to argmax abs component.
+  # derive modules from the S loadings. S is k x gene, transpose to gene x k and
+  # keep the tails per component. A gene may load on several components, so it
+  # may appear in several modules.
   gene_loadings <- t(S)
-  min_loading <- 0
-  module_idx <- apply(abs(gene_loadings), 1L, which.max)
-  gene_names <- rownames(gene_loadings)
-  comp_names <- colnames(gene_loadings)
-  loading_vals <- gene_loadings[cbind(seq_along(module_idx), module_idx)]
-  keep <- abs(loading_vals) > min_loading
-
-  modules_dt <- data.table::data.table(
-    gene = gene_names[keep],
-    module_id = comp_names[module_idx[keep]],
-    loading = loading_vals[keep],
-    sign = ifelse(loading_vals[keep] >= 0, "pos", "neg")
-  )
+  modules_dt <- .modules_from_loadings(gene_loadings, membership_params)
 
   S7::prop(object, "final_results") <- new_bulk_module_result(
     modules = modules_dt,

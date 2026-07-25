@@ -4,20 +4,20 @@
 \alias{.nmf_modules_from_w}
 \title{Derive gene-to-module assignments from an NMF loadings matrix}
 \usage{
-.nmf_modules_from_w(w, min_loading = 0)
+.nmf_modules_from_w(w, membership_params = params_module_membership())
 }
 \arguments{
 \item{w}{Numeric matrix. Gene loadings (features x k).}
 
-\item{min_loading}{Numeric. Minimum fraction of the global max loading a
-gene must reach to be assigned to a module.}
+\item{membership_params}{List. See
+\code{\link[=params_module_membership]{params_module_membership()}}.}
 }
 \value{
-A data.table with columns \code{gene}, \code{module_id}, \code{loading}, \code{sign}.
+A data.table with one row per surviving (gene, component) pair.
 }
 \description{
 Each gene is assigned to the component whose absolute loading is highest.
-Genes whose top loading is below \verb{min_loading * max(|W|)} are labelled as
-\code{"unassigned"} and excluded from the module table.
+Thin wrapper over \code{\link[=.modules_from_loadings]{.modules_from_loadings()}}. NMF loadings are
+non-negative, so the \code{"auto"} tail setting resolves to an upper-tail test.
 }
 \keyword{internal}

@@ -30,69 +30,50 @@ extendr_module! {
 /// @description
 /// `r lifecycle::badge("experimental")`
 /// Function generates synthetic bulkRNAseq data with heteroskedasticity (lowly
-/// expressed genes show higher variance) and can optionally add correlation
-/// structures for testing purposes.
+/// expressed genes show higher variance) and optional co-expression modules
+/// planted on a latent factor. Alongside the counts it returns the ground truth
+/// (module membership, hub genes, per-gene loadings and the latent factors), so
+/// downstream methods can be scored against what was actually simulated.
 ///
-/// @param num_samples Integer. Number of samples to simulate.
-/// @param num_genes Integer. Number of genes to simulate.
-/// @param seed Integer. Seed for reproducibility.
-/// @param add_modules Boolean. Shall correlation structures be added to the
-/// data.
-/// @param module_sizes `NULL` or vector of sizes of the gene modules. When
-/// `NULL` defaults to `c(300, 250, 200, 300, 500)`. Warning! The sum of this
-/// vector must be ≤ num_genes!
+/// @param synthetic_params List. The synthetic data parameters, see
+/// [bixverse::params_synthetic_bulk_rnaseq()]. Expected elements are
+/// `num_samples`, `num_genes`, `module_sizes` (integer vector, empty means no
+/// modules), `generator` (one of `c("hub_modular", "modular",
+/// "non_negative_factor", "non_gaussian_factor")`), `seed`,
+/// `mean_exp_gamma_shape`, `mean_exp_gamma_scale`, `disp_intercept`,
+/// `disp_slope`, `noise_std`, `factor_std`, `factor_shape`, `factor_scale`,
+/// `loading_mu`, `loading_sigma` and `hub_percentile`.
 ///
 /// @return List with the following elements
 /// \itemize{
-///     \item counts The matrix of simulated counts.
-///     \item module_membership Vector defining the module membership.
+///     \item counts The matrix of simulated counts. Rows are genes, columns
+///     are samples.
+///     \item module_membership Vector defining the module membership. `0` is
+///     background, `1..K` the module identifier.
+///     \item module_hubs 1-indexed positions of the genes flagged as hubs.
+///     Empty for the `"modular"` generator, which plants no hubs.
+///     \item loadings Per-gene loading on its module's latent factor. `0` for
+///     background genes.
+///     \item module_factors The latent factor matrix. Rows are modules,
+///     columns are samples.
 /// }
 ///
 /// @export
 ///
 /// @keywords internal
 #[extendr]
-fn rs_generate_bulk_rnaseq(
-    num_samples: usize,
-    num_genes: usize,
-    seed: usize,
-    add_modules: bool,
-    module_sizes: Option<Vec<i32>>,
-) -> extendr_api::Result<List> {
-    // r cannot deal with usize; empty module sizes means no modules
-    let module_sizes: Vec<usize> = if add_modules {
-        module_sizes
-            .unwrap_or(vec![300, 250, 200, 300, 500])
-            .iter()
-            .map(|x| *x as usize)
-            .collect()
-    } else {
-        Vec::new()
-    };
-
-    // Pinned to reproduce the pre-0.3.8 generator this binding used to call:
-    // Beta(5, 2) loadings on a Normal factor of std 0.7 and no per-gene noise
-    // on the latent log-signal. The crate defaults differ on all three
-    // (HubModular, factor_std 0.3, noise_std 0.3) and give within-module
-    // correlations too weak for the downstream module-detection tests.
-    let params: SyntheticRnaSeqParams<f64> = SyntheticRnaSeqParams {
-        num_samples,
-        num_genes,
-        seed: seed as u64,
-        module_sizes,
-        generator: BulkDataGenerator::Modular(ModularConfig { factor_std: 0.7 }),
-        noise_std: 0.0,
-        ..Default::default()
-    };
+fn rs_generate_bulk_rnaseq(synthetic_params: List) -> extendr_api::Result<List> {
+    let params: SyntheticRnaSeqParams<f64> = SyntheticRnaSeqParams::from_r_list(synthetic_params)?;
 
     let data: SyntheticRnaSeqData<f64> = generate_bulk_rnaseq(&params).to_extendr()?;
 
-    let matrix = faer_to_r_matrix(data.count_matrix.as_ref());
-    let module_membership: Vec<i32> = data.gene_modules.iter().map(|x| *x as i32).collect();
-
     Ok(list!(
-        counts = matrix,
-        module_membership = module_membership
+        counts = faer_to_r_matrix(data.count_matrix.as_ref()),
+        module_membership = data.gene_modules.r_int_convert(),
+        // Rust hands back 0-indexed gene positions; R wants 1-indexed
+        module_hubs = data.module_hubs.r_int_convert_shift(),
+        loadings = data.loadings,
+        module_factors = faer_to_r_matrix(data.module_factors.as_ref())
     ))
 }
 
@@ -110,10 +91,9 @@ fn rs_generate_bulk_rnaseq(
 ///
 /// @param count_mat Numerical matrix. Original numeric matrix. Rows are genes,
 /// columns are samples.
-/// @param target_library_size Numeric. Reference library size per sample.
-/// @param capture_efficiency_sigma Numeric. Standard deviation of the
-/// LogNormal size-factor distribution.
-/// @param seed Integer. Seed for reproducibility.
+/// @param sparsity_params List. The sparsity parameters, see
+/// [bixverse::params_bulk_sparsity()]. Expected elements are `strategy`,
+/// `target_library_size`, `capture_efficiency_sigma` and `seed`.
 ///
 /// @return The sparsified matrix based on the provided parameters.
 ///
@@ -125,18 +105,11 @@ fn rs_generate_bulk_rnaseq(
 #[extendr]
 fn rs_simulate_dropouts(
     count_mat: RMatrix<f64>,
-    target_library_size: f64,
-    capture_efficiency_sigma: f64,
-    seed: usize,
+    sparsity_params: List,
 ) -> extendr_api::Result<RArray<f64, 2>> {
     let data = r_matrix_to_faer(&count_mat);
 
-    let params: SparsityParams<f64> = SparsityParams {
-        target_library_size,
-        capture_efficiency_sigma,
-        seed: seed as u64,
-        ..Default::default()
-    };
+    let params: SparsityParams<f64> = SparsityParams::from_r_list(sparsity_params)?;
 
     let sparse_data = apply_dropout(data.as_ref(), &params).to_extendr()?;
 

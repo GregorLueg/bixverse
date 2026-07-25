@@ -27,14 +27,21 @@ together across samples. `bixverse` ships five approaches for this on a shared
   — build a sparse affinity graph from correlations, then cluster with Leiden.
   Great when you want tunable resolution and hierarchical sub-clustering.
 - **ICA** — independent component analysis with stability across random
-  initialisations. Each component picks up an orthogonal signal; genes with
-  the largest absolute loadings define the module.
+  initialisations. Each component picks up an independent signal; the genes in
+  the tails of a component's loading distribution define its module.
 - **DGRDL** ([Pan, et al.](https://doi.org/10.1016/j.cels.2022.09.005))
   — dual graph-regularised dictionary learning. Sparse decomposition
   regularised by feature- and sample-side Laplacians.
 - **NMF (HALS)** — non-negative matrix factorisation with hierarchical
   alternating least squares. Non-negative loadings give a natural
   "parts-based" module interpretation and per-sample module activity.
+
+One structural difference matters throughout. CoReMo and Leiden partition genes:
+one gene, one module. The three factorisation methods do not, and should not. A
+gene can load on several components, so `get_modules()` returns one row per
+(gene, component) pair for ICA, NMF and DGRDL, and genes in no component's tail
+appear nowhere. `params_module_membership()` controls that thresholding. Do not
+assume `gene` is a unique key.
 
 None of these is uniformly best. This vignette walks through all five on the
 same synthetic dataset with planted ground-truth modules, so you can see the
@@ -44,34 +51,83 @@ inputs, the outputs, and how well each recovers the true structure.
 #| label: setup
 library(bixverse)
 library(data.table)
+library(magrittr)
 library(ggplot2)
 ```
 
 ## Data
 
 `synthetic_bulk_cor_matrix()` generates a bulk RNA-seq count matrix with
-heteroskedasticity plus a user-specified number of planted correlation modules.
-The `$module_data` table gives us ground truth for a recall/precision check
-at the end.
+heteroskedasticity plus a user-specified number of planted co-expression
+modules. Counts come from a negative binomial with a mean-dispersion trend, and
+a module is built by putting its genes on a shared latent factor.
+
+`params_synthetic_bulk_rnaseq()` controls the whole thing. The parameter that
+matters most here is `generator`, which picks how loadings and factors are
+drawn:
+
+- **`hub_modular`** — LogNormal loadings on a Normal factor. Some genes end up
+  far more connected than others, which is the WGCNA-style default and our
+  starting point.
+- **`modular`** — Beta(5, 2) loadings on a Normal factor. Homogeneous
+  within-module correlation, no hubs.
+- **`non_negative_factor`** — LogNormal loadings on a Gamma factor. The activity
+  matrix is non-negative by construction, so NMF has a ground truth it can
+  reach.
+- **`non_gaussian_factor`** — LogNormal loadings on a Laplace factor.
+  Non-Gaussian sources satisfy ICA identifiability.
+
+We'll start with `hub_modular` for the head-to-head, then come back to the
+generator choice at the end. It turns out to matter more than you'd guess.
 
 ```{r}
 #| label: synth-data
-synth <- synthetic_bulk_cor_matrix(
+synth_params <- params_synthetic_bulk_rnaseq(
   num_samples = 100L,
   num_genes = 1000L,
-  add_modules = TRUE,
   module_sizes = c(100L, 100L, 100L),
+  generator = "hub_modular",
   seed = 123L
 )
+
+synth <- synthetic_bulk_cor_matrix(synth_params)
 
 truth <- synth$module_data
 truth[membership > 0, .N, by = membership]
 ```
 
-Three planted modules of 100 genes each. The remaining 700 genes have no
-structure. For the correlation-based methods we work in log-CPM space
-(negative values are fine); NMF needs non-negative input so we'll build a
-separate object from the raw counts for it.
+Three planted modules of 100 genes each. The remaining 700 genes are
+background: no loading, never a hub.
+
+The ground truth comes back with the counts, so we can score a recovered module
+against what was actually simulated rather than eyeballing a heatmap. Per gene
+we get its module, its loading on that module's factor, and whether it ranked as
+a hub:
+
+```{r}
+#| label: ground-truth
+truth[membership > 0, .(
+  n_genes = .N,
+  n_hubs = sum(is_hub),
+  mean_loading = round(mean(loading), 3)
+), by = membership]
+```
+
+Hubs are ranked on loading globally across all module genes rather than per
+module, so the counts per module don't have to be equal. On top of that,
+`$module_factors` holds the latent factors themselves, one row per module:
+
+```{r}
+#| label: true-factors
+dim(synth$module_factors)
+```
+
+That matrix is what a module eigengene, an ICA component or an NMF activity
+column is trying to recover, and we use it for a second scoring pass later on.
+
+For the correlation-based methods we work in log-CPM space (negative values are
+fine); NMF needs non-negative input so we'll build a separate object from the
+raw counts for it.
 
 ```{r}
 #| label: normalise
@@ -117,13 +173,45 @@ coexp_coremo <- cor_module_check_epsilon(
 
 plot_epsilon_res(coexp_coremo)
 
-epsilon_pick <- get_epsilon_res(coexp_coremo)[r2_vals == max(r2_vals), epsilon][
-  1
-]
+epsilon_sf <- get_epsilon_res(coexp_coremo)[r2_vals == max(r2_vals), epsilon][1]
+epsilon_sf
+```
 
-epsilon_pick <- 2
+Here is a wrinkle worth knowing about, and one the ground truth lets us actually
+diagnose. The scale-free R² criterion picks a high epsilon, but epsilon controls
+how aggressively the RBF suppresses weak correlations, so a high value throws
+genes out of modules entirely. Counting how many of the 500 features survive
+into a module tells the story:
 
-coremo_params <- params_coremo(epsilon = epsilon_pick, rbf_func = "gaussian")
+```{r}
+#| label: coremo-epsilon-tradeoff
+epsilon_scan <- rbindlist(lapply(c(1, 2, 3, 4, 6, epsilon_sf), \(eps) {
+  fitted <- coexp_coremo %>%
+    cor_module_coremo_clustering(
+      coremo_params = params_coremo(epsilon = eps, rbf_func = "gaussian"),
+      .verbose = FALSE
+    ) %>%
+    cor_module_coremo_stability(.verbose = FALSE) %>%
+    cor_module_coremo_cor_sign(.verbose = FALSE)
+
+  mods <- get_outputs(fitted)$final_modules
+  data.table(
+    epsilon = eps,
+    n_modules = uniqueN(mods$cluster_id),
+    genes_assigned = nrow(mods)
+  )
+}))
+
+epsilon_scan
+```
+
+The scale-free fit and "keep as many real module genes as possible" pull in
+opposite directions on this data. We go with a low epsilon deliberately, because
+the planted modules are what we are trying to find:
+
+```{r}
+#| label: coremo-workflow-2
+coremo_params <- params_coremo(epsilon = 2, rbf_func = "gaussian")
 
 coexp_coremo <- cor_module_coremo_clustering(
   coexp_coremo,
@@ -141,6 +229,9 @@ coremo_modules[, .N, by = cluster_id]
 Each module has a sign suffix (`_pos` / `_neg`) reflecting whether the
 member genes are positively or negatively correlated with the module
 eigengene, and a per-gene stability score from the leave-one-out resampling.
+Since the generator draws strictly positive loadings, essentially everything
+lands in a `_pos` module; the odd `_neg` singleton is an anti-correlated
+background gene getting split off, which is correct behaviour.
 
 ## Method 2: Graph-based Leiden
 
@@ -203,7 +294,9 @@ number of components gives you an "optimal" `ncomp`.
 #| label: ica-workflow
 coexp_ica <- ica_processing(coexp, fast_svd = TRUE, .verbose = FALSE)
 
-ncomp_params <- params_ica_ncomp(max_no_comp = 20L, steps = 5L)
+# A dense enough grid that the loess in ica_optimal_ncomp() has something to
+# fit. On a handful of points it gives up and warns instead.
+ncomp_params <- params_ica_ncomp(max_no_comp = 30L, steps = 2L)
 iter_params <- params_ica_randomisation(
   cross_validate = FALSE,
   random_init = 20L
@@ -235,13 +328,20 @@ dim(ica_gene_loadings)
 ```
 
 `gene_loadings` is the `genes x k` matrix (transposed from the raw ICA `S`
-convention of `k x genes`). Module membership comes straight from
-`get_modules()`:
+convention of `k x genes`). Module membership keeps the tails of each component,
+so a gene may appear more than once and many genes not at all:
 
 ```{r}
 #| label: ica-modules
 ica_modules <- get_modules(ica_res)
 ica_modules[, .N, by = module_id][order(-N)]
+
+# Sparse and overlapping, which is the whole point of a factorisation.
+data.table(
+  rows = nrow(ica_modules),
+  unique_genes = uniqueN(ica_modules$gene),
+  in_multiple_modules = ica_modules[, .N, by = gene][N > 1, .N]
+)
 ```
 
 ## Method 4: DGRDL
@@ -250,10 +350,23 @@ DGRDL learns a sparse dictionary of features constrained by a k-nearest-
 neighbour Laplacian on both the feature and the sample side. The grid
 search helps pick `dict_size` and `k_neighbours` before the final fit.
 
+Unlike the other four, DGRDL needs **centred** input. Handed unscaled log-CPM it
+spends its dictionary explaining the per-gene mean offset instead of the
+covariance: atoms come out as near-duplicates of each other, and the loadings
+become a large constant plus noise. So we build a scaled object for it.
+
 ```{r}
 #| label: dgrdl-workflow
+coexp_dgrdl <- BulkCoExp(raw_data = data_log, meta_data = meta_data) %>%
+  preprocess_bulk_coexp(
+    hvg = 0.5,
+    scaling = TRUE,
+    scaling_type = "normal",
+    .verbose = FALSE
+  )
+
 coexp_dgrdl <- dgrdl_grid_search(
-  coexp,
+  coexp_dgrdl,
   neighbours_vec = c(5L, 10L),
   dict_size_vec = c(4L, 6L),
   seed_vec = c(1L, 2L),
@@ -288,7 +401,8 @@ dim(get_factors(dgrdl_res, which = "dictionary"))
 dim(get_factors(dgrdl_res, which = "loadings"))
 ```
 
-`get_modules()` handles the "gene to strongest atom" assignment:
+`get_modules()` keeps the tails of each dictionary atom, so a gene active in
+several atoms shows up in several modules:
 
 ```{r}
 #| label: dgrdl-modules
@@ -334,7 +448,10 @@ top_genes <- unique(unlist(lapply(seq_len(ncol(loadings)), \(j) {
   names(sort(loadings[, j], decreasing = TRUE))[1:40]
 })))
 
-heat_dt <- as.data.table(loadings[top_genes, , keep.rownames = "gene"])
+heat_dt <- as.data.table(
+  loadings[top_genes, , drop = FALSE],
+  keep.rownames = "gene"
+)
 heat_long <- melt(
   heat_dt,
   id.vars = "gene",
@@ -377,15 +494,16 @@ the three planted modules — a simple "recall" score.
 
 ```{r}
 #| label: recovery
-truth_split <- split(truth$gene, truth$membership)
-truth_split <- truth_split[names(truth_split) != "0"]
-
-best_jaccard_per_planted <- function(assignments) {
-  # assignments: data.table with columns `gene`, `module_id`
+# assignments: data.table with columns `gene` and `module_id`.
+# Returns one score per planted module: the best Jaccard any detected cluster
+# manages against it.
+best_jaccard_vs <- function(assignments, truth_dt) {
+  planted <- split(truth_dt$gene, truth_dt$membership)
+  planted <- planted[names(planted) != "0"]
   detected <- split(assignments$gene, assignments$module_id)
-  purrr::map_dbl(truth_split, \(planted) {
-    max(purrr::map_dbl(detected, \(det) {
-      length(intersect(planted, det)) / length(union(planted, det))
+  purrr::map_dbl(planted, \(p) {
+    max(purrr::map_dbl(detected, \(d) {
+      length(intersect(p, d)) / length(union(p, d))
     }))
   })
 }
@@ -393,13 +511,14 @@ best_jaccard_per_planted <- function(assignments) {
 recovery <- data.table(
   method = c("CoReMo", "Leiden", "ICA", "DGRDL", "NMF"),
   score = c(
-    mean(best_jaccard_per_planted(
-      coremo_modules[, .(gene, module_id = cluster_id)]
+    mean(best_jaccard_vs(
+      coremo_modules[, .(gene, module_id = cluster_id)],
+      truth
     )),
-    mean(best_jaccard_per_planted(leiden_modules)),
-    mean(best_jaccard_per_planted(ica_modules)),
-    mean(best_jaccard_per_planted(dgrdl_modules)),
-    mean(best_jaccard_per_planted(nmf_modules))
+    mean(best_jaccard_vs(leiden_modules, truth)),
+    mean(best_jaccard_vs(ica_modules, truth)),
+    mean(best_jaccard_vs(dgrdl_modules, truth)),
+    mean(best_jaccard_vs(nmf_modules, truth))
   )
 )
 
@@ -419,6 +538,236 @@ ggplot(recovery, aes(x = reorder(method, score), y = score)) +
   ylab("Mean best Jaccard vs. planted modules")
 ```
 
+## Scoring against the latent factors
+
+Jaccard on gene sets only asks whether a method found the right genes. The
+latent factors let us ask a sharper question: did it recover the right
+*signal*? For CoReMo we can correlate each per-sample eigengene against the
+factor the module was actually built on.
+
+```{r}
+#| label: factor-recovery
+# activity: samples x k matrix of per-sample scores (eigengenes, ICA sample
+# activity, NMF sample activity). Returns one score per true factor: the best
+# absolute correlation any recovered column manages against it.
+#
+# Index the factor matrix by rownames(activity), not by column position: these
+# per-sample matrices come back in lexicographic sample order (sample_1,
+# sample_10, sample_100, ...) while module_factors is in numeric order. Line them
+# up positionally and you get correlations near zero for no good reason.
+best_factor_cor <- function(activity, module_factors) {
+  purrr::map_dbl(seq_len(nrow(module_factors)), \(k) {
+    true_factor <- module_factors[k, rownames(activity)]
+    max(apply(activity, 2, \(a) {
+      abs(cor(a, true_factor, method = "spearman"))
+    }))
+  })
+}
+
+eigengenes <- get_factors(get_results(coexp_coremo))$module_eigengenes
+
+data.table(
+  module = rownames(synth$module_factors),
+  best_abs_cor = round(best_factor_cor(eigengenes, synth$module_factors), 3)
+)
+```
+
+Those sit far higher than the Jaccard scores, and the gap is the interesting
+part: CoReMo reconstructs the module's *signal* almost exactly even where it
+disagrees with the planted gene list at the edges. If what you care about is a
+per-sample module score to regress against a phenotype, the eigengene is doing
+its job well before the gene membership is perfect.
+
+## Does the generator matter?
+
+A lot, and the answer depends on what you measure. `non_negative_factor`
+advertises itself as NMF-friendly and `non_gaussian_factor` as ICA-friendly, so
+the obvious guess is that each method wins on its matched generator. We score two
+ways to see whether that holds:
+
+- **Jaccard**, as above: a hard partition of genes into modules, compared against
+  the planted gene sets.
+- **Factor recovery**: the best absolute correlation any recovered per-sample
+  activity column achieves against a true latent factor.
+
+The distinction matters because "ICA-friendly" is a claim about *identifiability
+of the factorisation*, that is, recovering the sources up to permutation and
+scaling. It says nothing about whether assigning each gene to its
+strongest-loading component reproduces a planted block. Three methods rather than
+five here, to keep the render time honest: Leiden and DGRDL both carry a
+parameter search on top.
+
+```{r}
+#| label: generator-grid
+#| cache: true
+run_methods <- function(generator) {
+  params <- params_synthetic_bulk_rnaseq(
+    num_samples = 100L,
+    num_genes = 1000L,
+    module_sizes = c(100L, 100L, 100L),
+    generator = generator,
+    seed = 123L
+  )
+  synth_g <- synthetic_bulk_cor_matrix(params)
+  meta_g <- data.table(sample_id = colnames(synth_g$counts))
+
+  log_obj <- BulkCoExp(
+    raw_data = t(edgeR::cpm(synth_g$counts, log = TRUE)),
+    meta_data = meta_g
+  ) %>%
+    preprocess_bulk_coexp(hvg = 0.5, .verbose = FALSE)
+
+  raw_obj <- BulkCoExp(
+    raw_data = t(edgeR::cpm(synth_g$counts, log = FALSE)),
+    meta_data = meta_g
+  ) %>%
+    preprocess_bulk_coexp(hvg = 0.5, .verbose = FALSE)
+
+  coremo_g <- log_obj %>%
+    cor_module_processing(cor_method = "spearman", .verbose = FALSE) %>%
+    cor_module_coremo_clustering(
+      coremo_params = params_coremo(epsilon = 2),
+      .verbose = FALSE
+    ) %>%
+    cor_module_coremo_stability(.verbose = FALSE) %>%
+    cor_module_coremo_cor_sign(.verbose = FALSE) %>%
+    cor_module_coremo_eigengene(.verbose = FALSE)
+
+  ica_g <- log_obj %>%
+    ica_processing(fast_svd = TRUE, .verbose = FALSE) %>%
+    ica_evaluate_comp(
+      ica_type = "logcosh",
+      iter_params = iter_params,
+      ncomp_params = ncomp_params,
+      .verbose = FALSE
+    ) %>%
+    ica_optimal_ncomp(span = 0.4, show_plot = FALSE, .verbose = FALSE) %>%
+    ica_stabilised_results(iter_params = iter_params, .verbose = FALSE)
+
+  nmf_g <- nmf_bulk(
+    raw_obj,
+    k = 4L,
+    preprocessing = "none",
+    seed = 42L,
+    .verbose = FALSE
+  )
+
+  truth_g <- synth_g$module_data
+  coremo_mods <- get_outputs(coremo_g)$final_modules
+  coremo_res_g <- get_results(coremo_g)
+  ica_res_g <- get_results(ica_g)
+
+  jacc <- \(assign) round(mean(best_jaccard_vs(assign, truth_g)), 3)
+  fcor <- \(act) round(mean(best_factor_cor(act, synth_g$module_factors)), 3)
+
+  data.table(
+    generator = generator,
+    metric = c("jaccard", "factor_cor"),
+    CoReMo = c(
+      jacc(coremo_mods[, .(gene, module_id = cluster_id)]),
+      fcor(get_factors(coremo_res_g)$module_eigengenes)
+    ),
+    ICA = c(
+      jacc(get_modules(ica_res_g)),
+      fcor(get_factors(ica_res_g, which = "sample_activity"))
+    ),
+    NMF = c(
+      jacc(get_nmf_modules(nmf_g)),
+      fcor(get_nmf_sample_activity(nmf_g))
+    )
+  )
+}
+
+grid_res <- rbindlist(lapply(
+  c("hub_modular", "modular", "non_negative_factor", "non_gaussian_factor"),
+  run_methods
+))
+
+grid_res
+```
+
+```{r}
+#| label: generator-grid-plot
+#| fig-cap: "Recovery by generator, method and metric. Note how the two panels disagree."
+grid_long <- melt(
+  grid_res,
+  id.vars = c("generator", "metric"),
+  variable.name = "method",
+  value.name = "score"
+)
+
+ggplot(grid_long, aes(x = generator, y = method, fill = score)) +
+  geom_tile() +
+  geom_text(aes(label = sprintf("%.2f", score)), colour = "white") +
+  scale_fill_viridis_c(limits = c(0, 1)) +
+  facet_wrap(~metric) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 30, hjust = 1)) +
+  xlab("") +
+  ylab("")
+```
+
+Two things to read out of that.
+
+**ICA's factor recovery is best on `non_gaussian_factor`, exactly as
+advertised.** The Laplace-factor generator is the one built for ICA and it wins
+on the metric identifiability is actually about. NMF's factor recovery sits above
+0.96 on all four, so that metric does not discriminate for NMF at all: it
+recovers per-sample activity almost perfectly regardless.
+
+**ICA's Jaccard on `modular` collapses, and the reason is instructive.**
+Membership for the factorisation methods comes from keeping the tails of each
+component's loading distribution, which quietly assumes there *is* a tail. That
+assumption depends entirely on how the loadings were drawn:
+
+```{r}
+#| label: loading-kurtosis
+#| cache: true
+excess_kurtosis <- function(x) {
+  centred <- x - mean(x)
+  mean(centred^4) / (mean(centred^2)^2) - 3
+}
+
+rbindlist(lapply(
+  c("hub_modular", "modular", "non_negative_factor", "non_gaussian_factor"),
+  \(gen) {
+    synth_g <- synthetic_bulk_cor_matrix(params_synthetic_bulk_rnaseq(
+      num_samples = 100L,
+      num_genes = 1000L,
+      module_sizes = c(100L, 100L, 100L),
+      generator = gen,
+      seed = 123L
+    ))
+    loadings_g <- synth_g$module_data[membership > 0, loading]
+    data.table(
+      generator = gen,
+      loading_cv = round(sd(loadings_g) / mean(loadings_g), 2),
+      loading_kurtosis = round(excess_kurtosis(loadings_g), 2)
+    )
+  }
+))
+```
+
+`modular` draws Beta(5, 2), so module-gene loadings have a coefficient of
+variation around 0.23: a tight, homogeneous block. Push that through ICA and the
+resulting component loadings come out *sub*-Gaussian, with negative excess
+kurtosis, and essentially nothing clears `abs(z) > 3`. There is no tail, so a
+tail-based rule finds nothing and Jaccard bottoms out. The three LogNormal
+generators have a loading CV around 0.8 and produce strongly leptokurtic
+components, where the rule works as designed.
+
+So `modular` is a good benchmark for correlation and graph clustering, which
+threshold a similarity, and a poor one for matrix factorisation, which thresholds
+a loading tail. That is a property of the *generator and metric pairing*, not a
+verdict on any method.
+
+Two practical lessons. Pick the generator that matches the property you are
+measuring and state which one you used, because a method that looks twice as good
+as another may simply have been handed a friendlier dataset. And if a
+factorisation returns almost no modules, check the kurtosis of its loadings before
+blaming the algorithm: you may just need a different `cutoff` in
+`params_module_membership()`, or a generator whose loadings have a tail at all.
+
 ## Wrap-up
 
 Different methods suit different questions:
@@ -431,10 +780,15 @@ Different methods suit different questions:
   overlapping biological signals. Interpretation is per-component, not
   per-gene.
 - **DGRDL** if you want a sparse dictionary regularised by feature and sample
-  neighbour graphs. Sparsity is a tunable constraint, not a byproduct.
+  neighbour graphs. Sparsity is a tunable constraint, not a byproduct. It comes
+  last on recovery here, and note that `dgrdl_grid_search()` ranks by
+  reconstruction error, which is not the same objective as recovering planted
+  modules. Remember to centre the input.
 - **NMF** if you want non-negative, parts-based decompositions with a natural
   interpretation as "how strongly is each sample expressing each module".
 
-For a real dataset, run more than one and cross-check. The synthetic setup
-here has a clean signal to noise regime — real bulk data (GTEx, TCGA,
-recount3) will happily show larger gaps between methods.
+For a real dataset, run more than one and cross-check. The synthetic setup here
+has a clean signal to noise regime; real bulk data (GTEx, TCGA, recount3) will
+happily show larger gaps between methods. `simulate_dropouts()` is the next
+knob to turn if you want to see how far each method degrades once you thin the
+library sizes towards single-cell-like sparsity.

@@ -4,24 +4,13 @@
 \alias{simulate_dropouts}
 \title{Simulate sequencing-depth dropouts on synthetic bulk data}
 \usage{
-simulate_dropouts(
-  object,
-  target_library_size = 20000,
-  capture_efficiency_sigma = 0.5,
-  seed = 123L
-)
+simulate_dropouts(object, sparsity_params = params_bulk_sparsity())
 }
 \arguments{
 \item{object}{The \code{synthetic_bulk_data} class.}
 
-\item{target_library_size}{Numeric. Reference library size per sample.
-Defaults to \code{20000}.}
-
-\item{capture_efficiency_sigma}{Numeric. Standard deviation of the LogNormal
-size-factor distribution. Larger values spread the library sizes further
-apart. Defaults to \code{0.5}.}
-
-\item{seed}{Integer. Random seed for reproducibility purposes.}
+\item{sparsity_params}{List. The sparsification parameters, see
+\code{\link[=params_bulk_sparsity]{params_bulk_sparsity()}}.}
 }
 \value{
 \code{synthetic_bulk_data} with added sparse data.

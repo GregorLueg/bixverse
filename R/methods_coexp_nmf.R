@@ -13,8 +13,9 @@
 #'  \item `gene_loadings` (features x k) captures per-module gene contributions.
 #'  \item `sample_activity` (samples x k) captures per-module sample activity.
 #' }
-#' Module membership is derived per gene by `which.max` over `abs(gene_loadings)`
-#' with a minimum-loading threshold.
+#' Module membership is derived by keeping the upper tail of each component's
+#' gene loadings, see [bixverse::params_module_membership()]. A gene can belong
+#' to several modules, and a gene in no tail belongs to none.
 #'
 #' @param object The class, see [bixverse::BulkCoExp()]. Ideally, you should
 #' run [bixverse::preprocess_bulk_coexp()] before applying this function. The
@@ -31,9 +32,10 @@
 #'  \item check_every - Integer. Convergence check interval.
 #'  \item nmf_init - String. One of `c("nndsvd", "svd", "random")`.
 #' }
-#' @param min_loading Float in `[0, 1]`. Minimum fraction of the top loading a
-#' gene must reach to be assigned to any module. Genes falling below the
-#' threshold are labelled `"unassigned"`. Defaults to `0`.
+#' @param membership_params List. Controls how the gene loadings are turned into
+#' module membership, see [bixverse::params_module_membership()]. Membership is
+#' not exclusive: a gene loading strongly on several components appears in
+#' several modules, and a gene in no tail appears in none.
 #' @param seed Integer. Random seed for the NMF initialisation. Defaults to
 #' `42L`.
 #' @param .verbose Boolean or integer `0L`/`1L`/`2L`. Controls verbosity.
@@ -53,7 +55,7 @@ nmf_bulk <- S7::new_generic(
     k,
     preprocessing = c("none", "sd", "sqrt_sd"),
     nmf_hals_params = params_nmf_hals(),
-    min_loading = 0,
+    membership_params = params_module_membership(),
     seed = 42L,
     .verbose = TRUE
   ) {
@@ -71,7 +73,7 @@ S7::method(nmf_bulk, BulkCoExp) <- function(
   k,
   preprocessing = c("none", "sd", "sqrt_sd"),
   nmf_hals_params = params_nmf_hals(),
-  min_loading = 0,
+  membership_params = params_module_membership(),
   seed = 42L,
   .verbose = TRUE
 ) {
@@ -82,7 +84,7 @@ S7::method(nmf_bulk, BulkCoExp) <- function(
   checkmate::qassert(k, "I1[1,)")
   checkmate::assertChoice(preprocessing, c("none", "sd", "sqrt_sd"))
   assertNmfHals(nmf_hals_params)
-  checkmate::qassert(min_loading, "N1[0, 1]")
+  assertModuleMembershipParams(membership_params)
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
@@ -131,7 +133,7 @@ S7::method(nmf_bulk, BulkCoExp) <- function(
   colnames(sample_activity) <- colnames(gene_loadings) <-
     sprintf("comp_%02i", seq_len(k))
 
-  modules <- .nmf_modules_from_w(gene_loadings, min_loading)
+  modules <- .nmf_modules_from_w(gene_loadings, membership_params)
 
   fit_params <- c(
     nmf_hals_params,
@@ -139,7 +141,7 @@ S7::method(nmf_bulk, BulkCoExp) <- function(
       k = k,
       preprocessing = preprocessing,
       seed = seed,
-      min_loading = min_loading,
+      membership_params = membership_params,
       stabilised = FALSE,
       final_loss = nmf_res$final_loss,
       n_iter = nmf_res$n_iter,
@@ -185,7 +187,8 @@ S7::method(nmf_bulk, BulkCoExp) <- function(
 #' @param nmf_hals_params List. Output of [bixverse::params_nmf_hals()]. Note
 #' that `nmf_init` is ignored for the stabilised variant, which always uses
 #' random initialisation seeded by `seed + i`.
-#' @param min_loading Float in `[0, 1]`. See [bixverse::nmf_bulk()].
+#' @param membership_params List. Controls how the gene loadings are turned into
+#' module membership, see [bixverse::params_module_membership()].
 #' @param seed Integer. Base random seed.
 #' @param .verbose Boolean or integer `0L`/`1L`/`2L`. Controls verbosity.
 #'
@@ -203,7 +206,7 @@ stabilised_nmf_bulk <- S7::new_generic(
     n_runs = 30L,
     preprocessing = c("none", "sd", "sqrt_sd"),
     nmf_hals_params = params_nmf_hals(),
-    min_loading = 0,
+    membership_params = params_module_membership(),
     seed = 42L,
     .verbose = TRUE
   ) {
@@ -222,7 +225,7 @@ S7::method(stabilised_nmf_bulk, BulkCoExp) <- function(
   n_runs = 30L,
   preprocessing = c("none", "sd", "sqrt_sd"),
   nmf_hals_params = params_nmf_hals(),
-  min_loading = 0,
+  membership_params = params_module_membership(),
   seed = 42L,
   .verbose = TRUE
 ) {
@@ -234,7 +237,7 @@ S7::method(stabilised_nmf_bulk, BulkCoExp) <- function(
   checkmate::qassert(n_runs, "I1[1,)")
   checkmate::assertChoice(preprocessing, c("none", "sd", "sqrt_sd"))
   assertNmfHals(nmf_hals_params)
-  checkmate::qassert(min_loading, "N1[0, 1]")
+  assertModuleMembershipParams(membership_params)
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
@@ -288,7 +291,7 @@ S7::method(stabilised_nmf_bulk, BulkCoExp) <- function(
   colnames(best_sample_activity) <- colnames(best_gene_loadings) <-
     sprintf("comp_%02i", seq_len(k))
 
-  modules <- .nmf_modules_from_w(best_gene_loadings, min_loading)
+  modules <- .nmf_modules_from_w(best_gene_loadings, membership_params)
 
   fit_params <- c(
     nmf_hals_params,
@@ -296,7 +299,7 @@ S7::method(stabilised_nmf_bulk, BulkCoExp) <- function(
       k = k,
       preprocessing = preprocessing,
       seed = seed,
-      min_loading = min_loading,
+      membership_params = membership_params,
       stabilised = TRUE,
       n_runs = n_runs,
       best_idx = best_idx,
@@ -333,34 +336,21 @@ S7::method(stabilised_nmf_bulk, BulkCoExp) <- function(
 #'
 #' @description
 #' Each gene is assigned to the component whose absolute loading is highest.
-#' Genes whose top loading is below `min_loading * max(|W|)` are labelled as
-#' `"unassigned"` and excluded from the module table.
+#' Thin wrapper over [bixverse::.modules_from_loadings()]. NMF loadings are
+#' non-negative, so the `"auto"` tail setting resolves to an upper-tail test.
 #'
 #' @param w Numeric matrix. Gene loadings (features x k).
-#' @param min_loading Numeric. Minimum fraction of the global max loading a
-#' gene must reach to be assigned to a module.
+#' @param membership_params List. See
+#' [bixverse::params_module_membership()].
 #'
-#' @returns A data.table with columns `gene`, `module_id`, `loading`, `sign`.
+#' @returns A data.table with one row per surviving (gene, component) pair.
 #'
 #' @keywords internal
-.nmf_modules_from_w <- function(w, min_loading = 0) {
-  checkmate::assertMatrix(w, mode = "numeric", row.names = "named")
-  checkmate::qassert(min_loading, "N1[0, 1]")
-
-  abs_w <- abs(w)
-  top_idx <- apply(abs_w, 1L, which.max)
-  top_val <- abs_w[cbind(seq_len(nrow(w)), top_idx)]
-  sign_val <- sign(w[cbind(seq_len(nrow(w)), top_idx)])
-
-  cutoff <- min_loading * max(abs_w)
-  keep <- top_val >= cutoff
-
-  data.table::data.table(
-    gene = rownames(w)[keep],
-    module_id = colnames(w)[top_idx[keep]],
-    loading = top_val[keep],
-    sign = sign_val[keep]
-  )
+.nmf_modules_from_w <- function(
+  w,
+  membership_params = params_module_membership()
+) {
+  .modules_from_loadings(w, membership_params)
 }
 
 ## getters ---------------------------------------------------------------------

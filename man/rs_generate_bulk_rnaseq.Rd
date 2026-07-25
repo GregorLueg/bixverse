@@ -4,39 +4,38 @@
 \alias{rs_generate_bulk_rnaseq}
 \title{Generation of bulkRNAseq-like data with optional correlation structure}
 \usage{
-rs_generate_bulk_rnaseq(
-  num_samples,
-  num_genes,
-  seed,
-  add_modules,
-  module_sizes
-)
+rs_generate_bulk_rnaseq(synthetic_params)
 }
 \arguments{
-\item{num_samples}{Integer. Number of samples to simulate.}
-
-\item{num_genes}{Integer. Number of genes to simulate.}
-
-\item{seed}{Integer. Seed for reproducibility.}
-
-\item{add_modules}{Boolean. Shall correlation structures be added to the
-data.}
-
-\item{module_sizes}{\code{NULL} or vector of sizes of the gene modules. When
-\code{NULL} defaults to \code{c(300, 250, 200, 300, 500)}. Warning! The sum of this
-vector must be ≤ num_genes!}
+\item{synthetic_params}{List. The synthetic data parameters, see
+\code{\link[=params_synthetic_bulk_rnaseq]{params_synthetic_bulk_rnaseq()}}. Expected elements are
+\code{num_samples}, \code{num_genes}, \code{module_sizes} (integer vector, empty means no
+modules), \code{generator} (one of \code{c("hub_modular", "modular", "non_negative_factor", "non_gaussian_factor")}), \code{seed},
+\code{mean_exp_gamma_shape}, \code{mean_exp_gamma_scale}, \code{disp_intercept},
+\code{disp_slope}, \code{noise_std}, \code{factor_std}, \code{factor_shape}, \code{factor_scale},
+\code{loading_mu}, \code{loading_sigma} and \code{hub_percentile}.}
 }
 \value{
 List with the following elements
 \itemize{
-\item counts The matrix of simulated counts.
-\item module_membership Vector defining the module membership.
+\item counts The matrix of simulated counts. Rows are genes, columns
+are samples.
+\item module_membership Vector defining the module membership. \code{0} is
+background, \verb{1..K} the module identifier.
+\item module_hubs 1-indexed positions of the genes flagged as hubs.
+Empty for the \code{"modular"} generator, which plants no hubs.
+\item loadings Per-gene loading on its module's latent factor. \code{0} for
+background genes.
+\item module_factors The latent factor matrix. Rows are modules,
+columns are samples.
 }
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 Function generates synthetic bulkRNAseq data with heteroskedasticity (lowly
-expressed genes show higher variance) and can optionally add correlation
-structures for testing purposes.
+expressed genes show higher variance) and optional co-expression modules
+planted on a latent factor. Alongside the counts it returns the ground truth
+(module membership, hub genes, per-gene loadings and the latent factors), so
+downstream methods can be scored against what was actually simulated.
 }
 \keyword{internal}

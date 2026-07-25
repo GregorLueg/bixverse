@@ -10,7 +10,7 @@ stabilised_nmf_bulk(
   n_runs = 30L,
   preprocessing = c("none", "sd", "sqrt_sd"),
   nmf_hals_params = params_nmf_hals(),
-  min_loading = 0,
+  membership_params = params_module_membership(),
   seed = 42L,
   .verbose = TRUE
 )
@@ -28,7 +28,8 @@ stabilised_nmf_bulk(
 that \code{nmf_init} is ignored for the stabilised variant, which always uses
 random initialisation seeded by \code{seed + i}.}
 
-\item{min_loading}{Float in \verb{[0, 1]}. See \code{\link[=nmf_bulk]{nmf_bulk()}}.}
+\item{membership_params}{List. Controls how the gene loadings are turned into
+module membership, see \code{\link[=params_module_membership]{params_module_membership()}}.}
 
 \item{seed}{Integer. Base random seed.}
 

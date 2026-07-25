@@ -4,23 +4,15 @@
 \alias{rs_simulate_dropouts}
 \title{Sparsify bulkRNAseq like data}
 \usage{
-rs_simulate_dropouts(
-  count_mat,
-  target_library_size,
-  capture_efficiency_sigma,
-  seed
-)
+rs_simulate_dropouts(count_mat, sparsity_params)
 }
 \arguments{
 \item{count_mat}{Numerical matrix. Original numeric matrix. Rows are genes,
 columns are samples.}
 
-\item{target_library_size}{Numeric. Reference library size per sample.}
-
-\item{capture_efficiency_sigma}{Numeric. Standard deviation of the
-LogNormal size-factor distribution.}
-
-\item{seed}{Integer. Seed for reproducibility.}
+\item{sparsity_params}{List. The sparsity parameters, see
+\code{\link[=params_bulk_sparsity]{params_bulk_sparsity()}}. Expected elements are \code{strategy},
+\code{target_library_size}, \code{capture_efficiency_sigma} and \code{seed}.}
 }
 \value{
 The sparsified matrix based on the provided parameters.

@@ -612,6 +612,254 @@ params_label_propagation <- function(
   )
 }
 
+## module membership (matrix factorisations) ------------------------------------
+
+#' Wrapper function to generate module membership parameters
+#'
+#' @description
+#' Controls how a `gene x k` loading matrix from ICA, NMF or DGRDL is turned into
+#' module membership. Genes are kept where they sit in the tail of a component's
+#' loading distribution, which means membership is not exclusive: a gene loading
+#' strongly on three components belongs to three modules. Genes in no tail belong
+#' to nothing, which is the background category an argmax assignment cannot give
+#' you.
+#'
+#' @param method String. `"zscore"` standardises each component robustly (median
+#' and MAD) and keeps `abs(z) > cutoff`. `"fdr"` converts to two-sided p-values
+#' against a Normal null fitted the same way, Benjamini-Hochberg adjusts, and
+#' keeps `padj < fdr`. Defaults to `"zscore"`.
+#' @param cutoff Float. Absolute z threshold for `method = "zscore"`. Defaults
+#' to `3.0`.
+#' @param fdr Float. Adjusted p-value threshold for `method = "fdr"`. Defaults
+#' to `0.05`.
+#' @param tails String. `"auto"` uses an upper-tail-only test when every loading
+#' is non-negative (the NMF case) and a two-sided one otherwise. `"upper"` and
+#' `"both"` force the choice. Defaults to `"auto"`.
+#'
+#' @returns A list with the parameters for usage in subsequent functions.
+#'
+#' @references Biton, et al., Cell Rep, 2014
+#'
+#' @export
+params_module_membership <- function(
+  method = c("zscore", "fdr"),
+  cutoff = 3.0,
+  fdr = 0.05,
+  tails = c("auto", "upper", "both")
+) {
+  # Standard choices
+  method <- match.arg(method)
+  tails <- match.arg(tails)
+  # Checks
+  checkmate::assertChoice(method, c("zscore", "fdr"))
+  checkmate::assertChoice(tails, c("auto", "upper", "both"))
+  checkmate::qassert(cutoff, "N1(0,)")
+  checkmate::qassert(fdr, "N1(0,1]")
+  # Return
+  return(
+    list(
+      method = method,
+      cutoff = cutoff,
+      fdr = fdr,
+      tails = tails
+    )
+  )
+}
+
+## synthetic data (bulk) -------------------------------------------------------
+
+### generator ------------------------------------------------------------------
+
+#' Wrapper function to generate synthetic bulk RNAseq parameters
+#'
+#' @description
+#' Parameters for [bixverse::synthetic_bulk_cor_matrix()]. Counts come from a
+#' negative binomial with a mean-dispersion trend; co-expression modules are
+#' planted by putting each module's genes on a shared latent factor. The
+#' `generator` picks how loadings and factors are drawn, which is what makes a
+#' given dataset a fair or unfair benchmark for a given method:
+#'
+#' \itemize{
+#'  \item `"hub_modular"` - LogNormal loadings on a Normal factor. Some genes
+#'  end up far more connected than others, so this is the WGCNA-style default.
+#'  \item `"modular"` - Beta(5, 2) loadings on a Normal factor. Homogeneous
+#'  within-module correlation and no hubs.
+#'  \item `"non_negative_factor"` - LogNormal loadings on a Gamma factor. The
+#'  activity matrix is non-negative by construction, so NMF has a ground truth
+#'  it can actually reach.
+#'  \item `"non_gaussian_factor"` - LogNormal loadings on a Laplace factor.
+#'  Non-Gaussian sources satisfy ICA identifiability.
+#' }
+#'
+#' @param num_samples Integer. Number of samples (columns) to simulate.
+#' @param num_genes Integer. Number of genes (rows) to simulate.
+#' @param module_sizes Integer vector. Sizes of the co-expression modules. The
+#' sum must be smaller or equal to `num_genes`. Genes are assigned in
+#' contiguous blocks from the first gene onwards, any remainder is background.
+#' Use `integer(0)` for no modules. Must be an integer vector, see the note
+#' below.
+#' @param generator String. Which topology and distribution family to plant.
+#' One of `c("hub_modular", "modular", "non_negative_factor",
+#' "non_gaussian_factor")`, see the description. Defaults to `"hub_modular"`.
+#' @param seed Integer. Seed for reproducibility purposes.
+#' @param mean_exp_gamma_shape,mean_exp_gamma_scale Float. Shape and scale of
+#' the Gamma the per-gene mean expression is drawn from.
+#' @param disp_intercept,disp_slope Float. Intercept and slope of the negative
+#' binomial dispersion trend `disp = 1 / (a + b * mean)`. This is what gives you
+#' heteroskedasticity: lowly expressed genes show higher variance.
+#' @param noise_std Float. Per-gene per-sample noise standard deviation on the
+#' latent log-signal. Smaller values track the module factor more tightly and
+#' give stronger within-module correlation. Defaults to `0.1` rather than the
+#' crate's `0.3`, see the note below.
+#' @param factor_std Float. Standard deviation of the Normal factor. Only used
+#' by `"hub_modular"` and `"modular"`; the other two generators draw their
+#' factor from `factor_shape`/`factor_scale` instead. Defaults to `0.5` rather
+#' than the crate's `0.3`, see the note below.
+#' @param factor_shape,factor_scale Float. Shape and scale of the Gamma factor
+#' for `"non_negative_factor"`. `factor_scale` doubles as the Laplace scale for
+#' `"non_gaussian_factor"`.
+#' @param loading_mu,loading_sigma Float. Location and scale of the LogNormal
+#' the loadings are drawn from. Unused by `"modular"`, which draws Beta(5, 2).
+#' @param hub_percentile Float. Top fraction of module genes flagged as hubs by
+#' loading rank. Must be in `(0, 1]`.
+#'
+#' @returns A list with the parameters for usage in subsequent functions.
+#'
+#' @details
+#' `noise_std` and `factor_std` default to `0.1` and `0.5`, not to the
+#' `bixverse-rs` values of `0.3` and `0.3`. At the crate defaults the
+#' `"modular"` generator plants modules too weakly to detect at 1000 genes by
+#' 100 samples: the within-module minus cross-module mean absolute Spearman gap
+#' comes out around `0.06`, against `0.17` to `0.23` for the other three. The
+#' values here put all four generators in the `0.30` to `0.39` band, so a
+#' comparison across generators reflects the method rather than the signal
+#' strength it happened to be handed. Pass the crate values explicitly if you
+#' want a harder problem.
+#'
+#' @references Zhang & Horvath, Stat Appl Genet Mol Biol, 2005
+#'
+#' @export
+params_synthetic_bulk_rnaseq <- function(
+  num_samples = 100L,
+  num_genes = 1000L,
+  module_sizes = c(100L, 100L, 100L),
+  generator = c(
+    "hub_modular",
+    "modular",
+    "non_negative_factor",
+    "non_gaussian_factor"
+  ),
+  seed = 123L,
+  mean_exp_gamma_shape = 5.0,
+  mean_exp_gamma_scale = 10.0,
+  disp_intercept = 0.2,
+  disp_slope = 0.3,
+  noise_std = 0.1,
+  factor_std = 0.5,
+  factor_shape = 2.0,
+  factor_scale = 0.3,
+  loading_mu = 0.0,
+  loading_sigma = 0.7,
+  hub_percentile = 0.1
+) {
+  # Standard choices
+  generator <- match.arg(generator)
+  # Checks
+  checkmate::qassert(num_samples, "I1[1,)")
+  checkmate::qassert(num_genes, "I1[1,)")
+  # `module_sizes` reaches Rust via `as_integer_slice()`. A double vector reads
+  # as absent there and silently falls back to the crate default, so the
+  # integer type is load-bearing rather than cosmetic. Same story for
+  # `generator`, where an unknown string quietly resolves to "hub_modular".
+  checkmate::qassert(module_sizes, "I*")
+  checkmate::assertChoice(
+    generator,
+    c("hub_modular", "modular", "non_negative_factor", "non_gaussian_factor")
+  )
+  checkmate::qassert(seed, "I1[0,)")
+  checkmate::qassert(mean_exp_gamma_shape, "N1(0,)")
+  checkmate::qassert(mean_exp_gamma_scale, "N1(0,)")
+  checkmate::qassert(disp_intercept, "N1(0,)")
+  checkmate::qassert(disp_slope, "N1(0,)")
+  checkmate::qassert(noise_std, "N1[0,)")
+  checkmate::qassert(factor_std, "N1(0,)")
+  checkmate::qassert(factor_shape, "N1(0,)")
+  checkmate::qassert(factor_scale, "N1(0,)")
+  checkmate::qassert(loading_mu, "N1")
+  checkmate::qassert(loading_sigma, "N1(0,)")
+  checkmate::qassert(hub_percentile, "N1(0,1]")
+  checkmate::assertTRUE(sum(module_sizes) <= num_genes)
+  # Return
+  return(
+    list(
+      num_samples = num_samples,
+      num_genes = num_genes,
+      module_sizes = module_sizes,
+      generator = generator,
+      seed = seed,
+      mean_exp_gamma_shape = mean_exp_gamma_shape,
+      mean_exp_gamma_scale = mean_exp_gamma_scale,
+      disp_intercept = disp_intercept,
+      disp_slope = disp_slope,
+      noise_std = noise_std,
+      factor_std = factor_std,
+      factor_shape = factor_shape,
+      factor_scale = factor_scale,
+      loading_mu = loading_mu,
+      loading_sigma = loading_sigma,
+      hub_percentile = hub_percentile
+    )
+  )
+}
+
+### sparsity -------------------------------------------------------------------
+
+#' Wrapper function to generate bulk sparsification parameters
+#'
+#' @description
+#' Parameters for [bixverse::simulate_dropouts()]. Dropout falls out of the
+#' library size rather than an explicit per-gene dropout curve: a size factor
+#' `s_j ~ LogNormal(0, capture_efficiency_sigma)` is drawn per sample, giving a
+#' target library size of `target_library_size * s_j`, and each gene is
+#' binomially thinned towards that target.
+#'
+#' @param strategy String. Which dropout strategy to apply. Currently only
+#' `"seq_depth"`.
+#' @param target_library_size Float. Reference library size per sample.
+#' @param capture_efficiency_sigma Float. Standard deviation of the LogNormal
+#' size-factor distribution. Larger values spread the library sizes further
+#' apart.
+#' @param seed Integer. Seed for reproducibility purposes.
+#'
+#' @returns A list with the parameters for usage in subsequent functions.
+#'
+#' @references Zappia, et al., Genome Biol, 2017
+#'
+#' @export
+params_bulk_sparsity <- function(
+  strategy = c("seq_depth"),
+  target_library_size = 20000,
+  capture_efficiency_sigma = 0.5,
+  seed = 123L
+) {
+  # Standard choices
+  strategy <- match.arg(strategy)
+  # Checks
+  checkmate::assertChoice(strategy, c("seq_depth"))
+  checkmate::qassert(target_library_size, "N1(0,)")
+  checkmate::qassert(capture_efficiency_sigma, "N1(0,)")
+  checkmate::qassert(seed, "I1[0,)")
+  # Return
+  return(
+    list(
+      strategy = strategy,
+      target_library_size = target_library_size,
+      capture_efficiency_sigma = capture_efficiency_sigma,
+      seed = seed
+    )
+  )
+}
+
 ## single cell -----------------------------------------------------------------
 
 ### general --------------------------------------------------------------------

@@ -1061,6 +1061,236 @@ checkLabelPropParams <- function(x) {
 #' @keywords internal
 assertLabelPropParams <- checkmate::makeAssertionFunction(checkLabelPropParams)
 
+### module membership ----------------------------------------------------------
+
+#' Check module membership parameters
+#'
+#' @description Checkmate extension for checking the module membership
+#' parameters, see [bixverse::params_module_membership()].
+#'
+#' @param x The list to check/assert
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
+checkModuleMembershipParams <- function(x) {
+  res <- check_list_shape(x, c("method", "cutoff", "fdr", "tails"))
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- apply_qtest_rules(
+    x,
+    list(cutoff = "N1(0,)", fdr = "N1(0,1]"),
+    label = "module membership params",
+    hint = "cutoff must be a positive float; fdr must sit in (0, 1]."
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  apply_choice_rules(
+    x,
+    list(
+      method = c("zscore", "fdr"),
+      tails = c("auto", "upper", "both")
+    ),
+    label = "module membership params"
+  )
+}
+
+#' Assert module membership parameters
+#'
+#' @description Checkmate extension for asserting the module membership
+#' parameters.
+#'
+#' @inheritParams checkModuleMembershipParams
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
+assertModuleMembershipParams <- checkmate::makeAssertionFunction(
+  checkModuleMembershipParams
+)
+
+### synthetic data (bulk) ------------------------------------------------------
+
+#' Check synthetic bulk RNAseq parameters
+#'
+#' @description Checkmate extension for checking the synthetic bulk RNAseq
+#' parameters, see [bixverse::params_synthetic_bulk_rnaseq()].
+#'
+#' @param x The list to check/assert
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
+checkSyntheticBulkParams <- function(x) {
+  res <- check_list_shape(
+    x,
+    c(
+      "num_samples",
+      "num_genes",
+      "module_sizes",
+      "generator",
+      "seed",
+      "mean_exp_gamma_shape",
+      "mean_exp_gamma_scale",
+      "disp_intercept",
+      "disp_slope",
+      "noise_std",
+      "factor_std",
+      "factor_shape",
+      "factor_scale",
+      "loading_mu",
+      "loading_sigma",
+      "hub_percentile"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- apply_qtest_rules(
+    x,
+    list(
+      num_samples = "I1[1,)",
+      num_genes = "I1[1,)",
+      module_sizes = "I*",
+      seed = "I1[0,)",
+      mean_exp_gamma_shape = "N1(0,)",
+      mean_exp_gamma_scale = "N1(0,)",
+      disp_intercept = "N1(0,)",
+      disp_slope = "N1(0,)",
+      noise_std = "N1[0,)",
+      factor_std = "N1(0,)",
+      factor_shape = "N1(0,)",
+      factor_scale = "N1(0,)",
+      loading_mu = "N1",
+      loading_sigma = "N1(0,)",
+      hub_percentile = "N1(0,1]"
+    ),
+    label = "synthetic bulk params",
+    hint = paste(
+      "num_samples, num_genes and seed must be integers; module_sizes must be",
+      "an integer vector (a double vector is silently ignored downstream);",
+      "hub_percentile must sit in (0, 1]; the remaining distribution",
+      "parameters must be positive floats."
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- apply_choice_rules(
+    x,
+    list(
+      generator = c(
+        "hub_modular",
+        "modular",
+        "non_negative_factor",
+        "non_gaussian_factor"
+      )
+    ),
+    label = "synthetic bulk params"
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  if (sum(x[["module_sizes"]]) > x[["num_genes"]]) {
+    return("The sum of `module_sizes` must not exceed `num_genes`.")
+  }
+
+  TRUE
+}
+
+#' Assert synthetic bulk RNAseq parameters
+#'
+#' @description Checkmate extension for asserting the synthetic bulk RNAseq
+#' parameters.
+#'
+#' @inheritParams checkSyntheticBulkParams
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
+assertSyntheticBulkParams <- checkmate::makeAssertionFunction(
+  checkSyntheticBulkParams
+)
+
+#' Check bulk sparsification parameters
+#'
+#' @description Checkmate extension for checking the bulk sparsification
+#' parameters, see [bixverse::params_bulk_sparsity()].
+#'
+#' @param x The list to check/assert
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
+checkBulkSparsityParams <- function(x) {
+  res <- check_list_shape(
+    x,
+    c("strategy", "target_library_size", "capture_efficiency_sigma", "seed")
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- apply_qtest_rules(
+    x,
+    list(
+      target_library_size = "N1(0,)",
+      capture_efficiency_sigma = "N1(0,)",
+      seed = "I1[0,)"
+    ),
+    label = "bulk sparsity params",
+    hint = paste(
+      "target_library_size and capture_efficiency_sigma must be positive",
+      "floats; seed must be a positive integer."
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  apply_choice_rules(
+    x,
+    list(strategy = c("seq_depth")),
+    label = "bulk sparsity params"
+  )
+}
+
+#' Assert bulk sparsification parameters
+#'
+#' @description Checkmate extension for asserting the bulk sparsification
+#' parameters.
+#'
+#' @inheritParams checkBulkSparsityParams
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
+assertBulkSparsityParams <- checkmate::makeAssertionFunction(
+  checkBulkSparsityParams
+)
+
 ### single cell ----------------------------------------------------------------
 
 #### general -------------------------------------------------------------------

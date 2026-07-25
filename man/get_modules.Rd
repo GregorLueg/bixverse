@@ -10,11 +10,19 @@ get_modules(object)
 \item{object}{A \code{BulkModuleResult}.}
 }
 \value{
-data.table with at minimum \code{gene} and \code{module_id} columns.
+data.table with at minimum \code{gene} and \code{module_id} columns. One row
+per (gene, module) pair.
 }
 \description{
 Returns the data.table of gene to module_id assignments. The exact
 columns depend on the method that produced the result (CoReMo adds
-\code{sign} and \code{stability}; NMF/ICA/DGRDL add \code{loading} and \code{sign};
-Leiden adds only \code{module_id}).
+\code{sign} and \code{stability}; NMF/ICA/DGRDL add \code{loading}, \code{sign} and the
+thresholding score; Leiden adds only \code{module_id}).
+
+\code{gene} is \strong{not} a unique key for the matrix factorisation methods. ICA, NMF
+and DGRDL assign membership by keeping the tails of each component's loading
+distribution, so a gene loading strongly on three components appears in three
+rows, and a gene in no tail appears in none. That is the point of a
+factorisation. The partition-based methods (CoReMo, Leiden) do emit one row
+per gene. Do not assume uniqueness without checking \code{method}.
 }

@@ -1470,7 +1470,9 @@ S7::method(cor_module_coremo_eigengene, BulkCoExp) <- function(
     module_i <- module_membership[[i]]
     name_i <- names(module_membership)[[i]]
 
-    data_i <- processed_data[, module_i]
+    # drop = FALSE: a single-gene module would otherwise collapse to a vector
+    # and rs_prcomp() rejects it
+    data_i <- processed_data[, module_i, drop = FALSE]
 
     pc_scores_i <- rs_prcomp(data_i, scale = TRUE, top_pcs = NULL)
 

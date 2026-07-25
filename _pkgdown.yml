@@ -230,6 +230,7 @@ reference:
       - ica_processing
       - ica_stabilised_results
       - params_dgrdl
+      - params_module_membership
       - params_ica_general
       - params_ica_ncomp
       - params_ica_randomisation
@@ -629,6 +630,8 @@ reference:
       - write_h5ad_sc
       - write_h5ad_sc_dense
       - params_sc_synthetic_data
+      - params_synthetic_bulk_rnaseq
+      - params_bulk_sparsity
       - synthetic_signal_matrix
       - simulate_dropouts
       - synthetic_bulk_cor_matrix

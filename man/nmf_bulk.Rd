@@ -9,7 +9,7 @@ nmf_bulk(
   k,
   preprocessing = c("none", "sd", "sqrt_sd"),
   nmf_hals_params = params_nmf_hals(),
-  min_loading = 0,
+  membership_params = params_module_membership(),
   seed = 42L,
   .verbose = TRUE
 )
@@ -34,9 +34,10 @@ inside the Rust kernel to the input matrix before the HALS updates.}
 \item nmf_init - String. One of \code{c("nndsvd", "svd", "random")}.
 }}
 
-\item{min_loading}{Float in \verb{[0, 1]}. Minimum fraction of the top loading a
-gene must reach to be assigned to any module. Genes falling below the
-threshold are labelled \code{"unassigned"}. Defaults to \code{0}.}
+\item{membership_params}{List. Controls how the gene loadings are turned into
+module membership, see \code{\link[=params_module_membership]{params_module_membership()}}. Membership is
+not exclusive: a gene loading strongly on several components appears in
+several modules, and a gene in no tail appears in none.}
 
 \item{seed}{Integer. Random seed for the NMF initialisation. Defaults to
 \code{42L}.}
@@ -57,8 +58,9 @@ rearranged so that:
 \item \code{gene_loadings} (features x k) captures per-module gene contributions.
 \item \code{sample_activity} (samples x k) captures per-module sample activity.
 }
-Module membership is derived per gene by \code{which.max} over \code{abs(gene_loadings)}
-with a minimum-loading threshold.
+Module membership is derived by keeping the upper tail of each component's
+gene loadings, see \code{\link[=params_module_membership]{params_module_membership()}}. A gene can belong
+to several modules, and a gene in no tail belongs to none.
 }
 \references{
 Cichocki & Phan, IEICE Trans., 2009.

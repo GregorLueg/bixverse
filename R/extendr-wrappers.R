@@ -687,28 +687,38 @@ rs_count_zeroes <- function(x) .Call(wrap__rs_count_zeroes, x)
 #' @description
 #' `r lifecycle::badge("experimental")`
 #' Function generates synthetic bulkRNAseq data with heteroskedasticity (lowly
-#' expressed genes show higher variance) and can optionally add correlation
-#' structures for testing purposes.
+#' expressed genes show higher variance) and optional co-expression modules
+#' planted on a latent factor. Alongside the counts it returns the ground truth
+#' (module membership, hub genes, per-gene loadings and the latent factors), so
+#' downstream methods can be scored against what was actually simulated.
 #'
-#' @param num_samples Integer. Number of samples to simulate.
-#' @param num_genes Integer. Number of genes to simulate.
-#' @param seed Integer. Seed for reproducibility.
-#' @param add_modules Boolean. Shall correlation structures be added to the
-#' data.
-#' @param module_sizes `NULL` or vector of sizes of the gene modules. When
-#' `NULL` defaults to `c(300, 250, 200, 300, 500)`. Warning! The sum of this
-#' vector must be ≤ num_genes!
+#' @param synthetic_params List. The synthetic data parameters, see
+#' [bixverse::params_synthetic_bulk_rnaseq()]. Expected elements are
+#' `num_samples`, `num_genes`, `module_sizes` (integer vector, empty means no
+#' modules), `generator` (one of `c("hub_modular", "modular",
+#' "non_negative_factor", "non_gaussian_factor")`), `seed`,
+#' `mean_exp_gamma_shape`, `mean_exp_gamma_scale`, `disp_intercept`,
+#' `disp_slope`, `noise_std`, `factor_std`, `factor_shape`, `factor_scale`,
+#' `loading_mu`, `loading_sigma` and `hub_percentile`.
 #'
 #' @return List with the following elements
 #' \itemize{
-#'     \item counts The matrix of simulated counts.
-#'     \item module_membership Vector defining the module membership.
+#'     \item counts The matrix of simulated counts. Rows are genes, columns
+#'     are samples.
+#'     \item module_membership Vector defining the module membership. `0` is
+#'     background, `1..K` the module identifier.
+#'     \item module_hubs 1-indexed positions of the genes flagged as hubs.
+#'     Empty for the `"modular"` generator, which plants no hubs.
+#'     \item loadings Per-gene loading on its module's latent factor. `0` for
+#'     background genes.
+#'     \item module_factors The latent factor matrix. Rows are modules,
+#'     columns are samples.
 #' }
 #'
 #' @export
 #'
 #' @keywords internal
-rs_generate_bulk_rnaseq <- function(num_samples, num_genes, seed, add_modules, module_sizes) .Call(wrap__rs_generate_bulk_rnaseq, num_samples, num_genes, seed, add_modules, module_sizes)
+rs_generate_bulk_rnaseq <- function(synthetic_params) .Call(wrap__rs_generate_bulk_rnaseq, synthetic_params)
 
 #' Sparsify bulkRNAseq like data
 #'
@@ -724,10 +734,9 @@ rs_generate_bulk_rnaseq <- function(num_samples, num_genes, seed, add_modules, m
 #'
 #' @param count_mat Numerical matrix. Original numeric matrix. Rows are genes,
 #' columns are samples.
-#' @param target_library_size Numeric. Reference library size per sample.
-#' @param capture_efficiency_sigma Numeric. Standard deviation of the
-#' LogNormal size-factor distribution.
-#' @param seed Integer. Seed for reproducibility.
+#' @param sparsity_params List. The sparsity parameters, see
+#' [bixverse::params_bulk_sparsity()]. Expected elements are `strategy`,
+#' `target_library_size`, `capture_efficiency_sigma` and `seed`.
 #'
 #' @return The sparsified matrix based on the provided parameters.
 #'
@@ -736,7 +745,7 @@ rs_generate_bulk_rnaseq <- function(num_samples, num_genes, seed, add_modules, m
 #' @references Zappia, et al., Genome Biol, 2017
 #'
 #' @keywords internal
-rs_simulate_dropouts <- function(count_mat, target_library_size, capture_efficiency_sigma, seed) .Call(wrap__rs_simulate_dropouts, count_mat, target_library_size, capture_efficiency_sigma, seed)
+rs_simulate_dropouts <- function(count_mat, sparsity_params) .Call(wrap__rs_simulate_dropouts, count_mat, sparsity_params)
 
 #' Generates synthetic data for single cell
 #'

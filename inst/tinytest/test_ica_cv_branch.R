@@ -5,11 +5,13 @@ library(magrittr)
 ## data ------------------------------------------------------------------------
 
 synth <- synthetic_bulk_cor_matrix(
-  num_samples = 30L,
-  num_genes = 150L,
-  add_modules = TRUE,
-  module_sizes = c(30L, 30L),
-  seed = 42L
+  params_synthetic_bulk_rnaseq(
+    num_samples = 30L,
+    num_genes = 150L,
+    module_sizes = c(30L, 30L),
+    generator = "non_gaussian_factor",
+    seed = 42L
+  )
 )
 
 counts <- synth$counts
