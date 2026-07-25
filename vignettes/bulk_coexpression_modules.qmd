@@ -96,8 +96,8 @@ truth <- synth$module_data
 truth[membership > 0, .N, by = membership]
 ```
 
-Three planted modules of 100 genes each. The remaining 700 genes are
-background: no loading, never a hub.
+Three planted modules of 100 genes each. The remaining 700 genes are background: 
+no loading, never a hub.
 
 The ground truth comes back with the counts, so we can score a recovered module
 against what was actually simulated rather than eyeballing a heatmap. Per gene
@@ -106,11 +106,15 @@ a hub:
 
 ```{r}
 #| label: ground-truth
-truth[membership > 0, .(
-  n_genes = .N,
-  n_hubs = sum(is_hub),
-  mean_loading = round(mean(loading), 3)
-), by = membership]
+truth[
+  membership > 0,
+  .(
+    n_genes = .N,
+    n_hubs = sum(is_hub),
+    mean_loading = round(mean(loading), 3)
+  ),
+  by = membership
+]
 ```
 
 Hubs are ranked on loading globally across all module genes rather than per
@@ -144,7 +148,7 @@ coexp <- preprocess_bulk_coexp(coexp, hvg = 0.5, .verbose = FALSE)
 coexp
 ```
 
-Preprocessing keeps the top 50% of genes by MAD — 500 features carried through
+Preprocessing keeps the top 50% of genes by MAD; 500 features carried through
 to the module-detection methods below. The `BulkCoExp` object mutates in place
 as each method runs, so we'll make copies for each branch.
 
@@ -163,6 +167,7 @@ coexp_coremo <- cor_module_processing(
   .verbose = TRUE
 )
 
+# show correlation structure
 coexp_coremo@processed_data$correlation_res$get_data_table() %$% hist(sim)
 
 coexp_coremo <- cor_module_check_epsilon(
@@ -226,16 +231,16 @@ coremo_modules <- get_outputs(coexp_coremo)$final_modules
 coremo_modules[, .N, by = cluster_id]
 ```
 
-Each module has a sign suffix (`_pos` / `_neg`) reflecting whether the
-member genes are positively or negatively correlated with the module
-eigengene, and a per-gene stability score from the leave-one-out resampling.
-Since the generator draws strictly positive loadings, essentially everything
-lands in a `_pos` module; the odd `_neg` singleton is an anti-correlated
-background gene getting split off, which is correct behaviour.
+Each module has a sign suffix (`_pos` / `_neg`) reflecting whether the member 
+genes are positively or negatively correlated with the module eigengene, and a 
+per-gene stability score from the leave-one-out resampling. Since the generator 
+draws strictly positive loadings, essentially everything lands in a `_pos` 
+module; the odd `_neg` singleton is an anti-correlated background gene getting 
+split off, which is correct behaviour.
 
 ## Method 2: Graph-based Leiden
 
-The Leiden branch keeps the same RBF-based affinity but treats the sparse
+The Leiden branch keeps the same RBF-based affinity but treats the sparse 
 non-zero pattern as an igraph. Modularity is optimised over a Leiden
 resolution grid; large communities can be sub-clustered recursively.
 
@@ -287,8 +292,9 @@ leiden_modules[, .N, by = module_id]
 ICA whitens the data, then finds independent components across many random
 initialisations. The stability across restarts, the fraction of converged
 runs, and the mutual information between components combine into a
-`combined_score` — the loess inflection point of this score against the
-number of components gives you an "optimal" `ncomp`.
+`combined_score`: the loess inflection point of this score against the
+number of components gives you an "optimal" `ncomp`. (Please explore your data
+and see how it looks...)
 
 ```{r}
 #| label: ica-workflow
@@ -347,8 +353,8 @@ data.table(
 ## Method 4: DGRDL
 
 DGRDL learns a sparse dictionary of features constrained by a k-nearest-
-neighbour Laplacian on both the feature and the sample side. The grid
-search helps pick `dict_size` and `k_neighbours` before the final fit.
+neighbour Laplacian on both the feature and the sample side. The grid search 
+helps pick `dict_size` and `k_neighbours` before the final fit.
 
 Unlike the other four, DGRDL needs **centred** input. Handed unscaled log-CPM it
 spends its dictionary explaining the per-gene mean offset instead of the
@@ -384,6 +390,7 @@ Pick the top row and fit the final DGRDL model:
 ```{r}
 #| label: dgrdl-final
 top <- grid_res[1L]
+
 dgrdl_params_final <- params_dgrdl(
   dict_size = as.integer(top$dict_size),
   k_neighbours = as.integer(top$k_neighbours)
@@ -412,10 +419,10 @@ dgrdl_modules[, .N, by = module_id][order(-N)]
 
 ## Method 5: NMF (HALS)
 
-NMF needs non-negative input, so we build a fresh `BulkCoExp` from CPM
-(without the log transform). The single-run version is deterministic given
-NNDSVD initialisation; the stabilised version runs multiple random restarts
-and returns the run with the lowest reconstruction loss.
+NMF needs non-negative input, so we build a fresh `BulkCoExp` from CPM (without 
+the log transform). The single-run version is deterministic given NNDSVD 
+initialisation; the stabilised version runs multiple random restarts and returns 
+the run with the lowest reconstruction loss.
 
 ```{r}
 #| label: nmf-workflow
@@ -490,7 +497,7 @@ stab
 With ground truth in hand we can quantify how well each method recovered the
 three planted modules. For each method we compute the best-matching planted
 module per detected cluster (max Jaccard), then take the mean Jaccard across
-the three planted modules — a simple "recall" score.
+the three planted modules.... A simple "recall" score.
 
 ```{r}
 #| label: recovery
@@ -582,11 +589,11 @@ its job well before the gene membership is perfect.
 
 A lot, and the answer depends on what you measure. `non_negative_factor`
 advertises itself as NMF-friendly and `non_gaussian_factor` as ICA-friendly, so
-the obvious guess is that each method wins on its matched generator. We score two
-ways to see whether that holds:
+the obvious guess is that each method wins on its matched generator. We score 
+two ways to see whether that holds:
 
-- **Jaccard**, as above: a hard partition of genes into modules, compared against
-  the planted gene sets.
+- **Jaccard**, as above: a hard partition of genes into modules, compared 
+  against the planted gene sets.
 - **Factor recovery**: the best absolute correlation any recovered per-sample
   activity column achieves against a true latent factor.
 
@@ -709,10 +716,10 @@ ggplot(grid_long, aes(x = generator, y = method, fill = score)) +
 
 Two things to read out of that.
 
-**ICA's factor recovery is best on `non_gaussian_factor`, exactly as
+**ICA's factor recovery is best on `non_gaussian_factor`, exactly as 
 advertised.** The Laplace-factor generator is the one built for ICA and it wins
-on the metric identifiability is actually about. NMF's factor recovery sits above
-0.96 on all four, so that metric does not discriminate for NMF at all: it
+on the metric identifiability is actually about. NMF's factor recovery sits 
+above 0.96 on all four, so that metric does not discriminate for NMF at all: it
 recovers per-sample activity almost perfectly regardless.
 
 **ICA's Jaccard on `modular` collapses, and the reason is instructive.**
@@ -772,8 +779,8 @@ blaming the algorithm: you may just need a different `cutoff` in
 
 Different methods suit different questions:
 
-- **CoReMo** if you want signed modules with per-sample eigengenes and a
-  fast, deterministic pipeline. Solid default for standard bulk data.
+- **CoReMo** if you want signed modules with per-sample eigengenes and a fast, 
+  deterministic pipeline. Solid default for standard bulk data.
 - **Graph-based Leiden** if you want tunable resolution or hierarchical
   sub-clustering. Handles very heterogeneous module sizes better than CoReMo.
 - **ICA** if you want components that decompose independent, potentially
@@ -783,7 +790,7 @@ Different methods suit different questions:
   neighbour graphs. Sparsity is a tunable constraint, not a byproduct. It comes
   last on recovery here, and note that `dgrdl_grid_search()` ranks by
   reconstruction error, which is not the same objective as recovering planted
-  modules. Remember to centre the input.
+  modules. Remember to centre the input!
 - **NMF** if you want non-negative, parts-based decompositions with a natural
   interpretation as "how strongly is each sample expressing each module".
 
