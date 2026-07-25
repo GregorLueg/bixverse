@@ -12,6 +12,172 @@ use std::time::Instant;
 
 use crate::single_cell::utils::{knn_data_to_rust, knn_indices_processing};
 
+///////////////////
+// Index mapping //
+///////////////////
+
+/// Resolved mapping between working space and the original count file.
+///
+/// Two index spaces meet in the meta cell entry points and conflating them
+/// silently aggregates the wrong cells. *Working space* is the row space of the
+/// embedding or kNN graph handed over from R, holding one row per cell that
+/// passed QC. *Original space* is the row space of `counts_cells.bin`, which is
+/// what [`aggregate_meta_cells`] indexes into and what R reports back as
+/// `original_cell_idx`. The two coincide only when every cell in the file
+/// passed QC, so memberships are always translated through this mapping before
+/// they are aggregated or returned.
+pub struct CellMapping {
+    /// Working rows to retain, in output order. `None` means every working row
+    /// is used and the embedding needs no subsetting.
+    pub rows_to_use: Option<Vec<usize>>,
+    /// Maps a working row onto its row in the original count file.
+    pub subset_to_orig: Vec<usize>,
+    /// Number of cells in the original count file, i.e. the size of the space
+    /// `subset_to_orig` points into.
+    pub n_total: usize,
+}
+
+impl CellMapping {
+    /// Whether the incoming embedding or kNN graph has to be subset before use.
+    ///
+    /// ### Returns
+    ///
+    /// `true` when a narrowed set of cells was requested, which also implies the
+    /// kNN graph has to be rebuilt on those cells.
+    pub fn needs_subsetting(&self) -> bool {
+        self.rows_to_use.is_some()
+    }
+}
+
+/// Work out how working-space rows map back onto the original count file.
+///
+/// Resolves the identity case (no QC filtering), the QC-filtered case, and the
+/// narrowed case where only a subset of the QC-passing cells is requested.
+/// Requested cells that are absent from `cells_to_keep` are dropped silently,
+/// since the caller may legitimately ask for cells that failed QC.
+///
+/// ### Params
+///
+/// * `cells_to_keep` - Original row indices the embedding was built from, in
+///   embedding row order, 0-indexed. `None` assumes the embedding covers the
+///   count file one-to-one.
+/// * `cells_to_use` - Optional further narrowing, given in original space and
+///   0-indexed. `None` keeps every working row.
+/// * `n_working_rows` - Number of embedding or kNN rows supplied by R.
+/// * `n_total` - Number of cells in the count file.
+///
+/// ### Returns
+///
+/// A [`CellMapping`], or an error when `cells_to_keep` disagrees with
+/// `n_working_rows` or when none of the requested cells survive the mapping.
+fn resolve_cell_mapping(
+    cells_to_keep: Option<&[i32]>,
+    cells_to_use: Option<&[i32]>,
+    n_working_rows: usize,
+    n_total: usize,
+) -> extendr_api::Result<CellMapping> {
+    // Working row i corresponds to cells_to_keep[i]. Without it we can only
+    // assume the embedding covers the file one-to-one.
+    let keep: Vec<usize> = match cells_to_keep {
+        Some(keep) => {
+            if keep.len() != n_working_rows {
+                return Err(format!(
+                    "'cells_to_keep' has {} entries but the embedding/kNN has {} rows",
+                    keep.len(),
+                    n_working_rows
+                )
+                .into());
+            }
+            keep.iter().map(|&x| x as usize).collect()
+        }
+        None => (0..n_working_rows).collect(),
+    };
+
+    match cells_to_use {
+        Some(use_cells) => {
+            let orig_to_working: FxHashMap<usize, usize> = keep
+                .iter()
+                .enumerate()
+                .map(|(working_row, &orig_idx)| (orig_idx, working_row))
+                .collect();
+
+            let mut rows_to_use = Vec::with_capacity(use_cells.len());
+            let mut subset_to_orig = Vec::with_capacity(use_cells.len());
+
+            for &orig_idx in use_cells {
+                let orig_idx = orig_idx as usize;
+                if let Some(&working_row) = orig_to_working.get(&orig_idx) {
+                    rows_to_use.push(working_row);
+                    subset_to_orig.push(orig_idx);
+                }
+            }
+
+            if subset_to_orig.is_empty() {
+                return Err(
+                    "None of the requested 'cells_to_use' are part of 'cells_to_keep'".into(),
+                );
+            }
+
+            Ok(CellMapping {
+                rows_to_use: Some(rows_to_use),
+                subset_to_orig,
+                n_total,
+            })
+        }
+        // Still a remap whenever cells_to_keep is not the identity.
+        None => Ok(CellMapping {
+            rows_to_use: None,
+            subset_to_orig: keep,
+            n_total,
+        }),
+    }
+}
+
+/// Gather selected rows of an R embedding matrix into a faer matrix.
+///
+/// R matrices are column-major, so the source element for row `i`, column `j`
+/// sits at `rows_to_use[i] + j * nrow`. Downcast to `f32` matches the precision
+/// the meta cell algorithms work in; the embedding is a PCA projection, so the
+/// dynamic range is small enough for this to be safe.
+///
+/// ### Params
+///
+/// * `embd` - Column-major embedding matrix as handed over from R, with one row
+///   per working-space cell.
+/// * `rows_to_use` - Working row indices to gather, in output order.
+///
+/// ### Returns
+///
+/// A `rows_to_use.len()` by `embd.ncols()` matrix holding the selected rows.
+fn subset_embedding(embd: &RMatrix<f64>, rows_to_use: &[usize]) -> Mat<f32> {
+    let ncol = embd.ncols();
+    let nrow = embd.nrows();
+    let data = embd.data();
+
+    Mat::from_fn(rows_to_use.len(), ncol, |i, j| {
+        data[rows_to_use[i] + j * nrow] as f32
+    })
+}
+
+/// Read the number of cells recorded in a `counts_cells.bin` header.
+///
+/// Opens the file purely to size the original index space. The aggregation step
+/// opens its own reader later, so this handle is dropped immediately.
+///
+/// ### Params
+///
+/// * `f_path` - Path to the `counts_cells.bin` file.
+///
+/// ### Returns
+///
+/// The total number of cells stored in the file, or an error when the file
+/// cannot be opened.
+fn count_file_n_cells(f_path: &str) -> extendr_api::Result<usize> {
+    let reader = ParallelSparseReader::new(f_path)
+        .map_err(|e| Error::Other(format!("Could not open '{}': {:?}", f_path, e)))?;
+    Ok(reader.get_header().total_cells)
+}
+
 /////////////
 // extendR //
 /////////////
@@ -102,58 +268,39 @@ fn rs_get_metacells_bootstrapped(
         );
     }
 
-    let (subset_to_orig, n_total_cells, knn_graph) = match cells_to_use {
-        Some(ref use_cells) => {
-            let cells_to_keep = cells_to_keep.unwrap();
-            let embd = embd.unwrap();
+    let n_working_rows = match (&knn_mat, &embd) {
+        (Some(mat), _) => mat.nrows(),
+        (_, Some(em)) => em.nrows(),
+        _ => return Err("Must provide either 'knn_mat' or 'embd' parameter".into()),
+    };
 
-            let qc_cells: Vec<usize> = cells_to_keep.iter().map(|&x| x as usize).collect();
-            let use_cells: Vec<usize> = use_cells.iter().map(|&x| x as usize).collect();
+    let mapping = resolve_cell_mapping(
+        cells_to_keep.as_deref(),
+        cells_to_use.as_deref(),
+        n_working_rows,
+        count_file_n_cells(&f_path)?,
+    )?;
 
-            let orig_to_pca: FxHashMap<usize, usize> = qc_cells
-                .iter()
-                .enumerate()
-                .map(|(pca_row, &orig_idx)| (orig_idx, pca_row))
-                .collect();
-
-            let mut pca_rows_to_use = Vec::new();
-            let mut subset_to_orig = Vec::new();
-
-            for &orig_idx in &use_cells {
-                if let Some(&pca_row) = orig_to_pca.get(&orig_idx) {
-                    pca_rows_to_use.push(pca_row);
-                    subset_to_orig.push(orig_idx);
-                }
-            }
-
-            let n_total = use_cells.iter().max().map(|&x| x + 1).unwrap_or(0);
+    let knn_graph = match &mapping.rows_to_use {
+        // Narrowed to a set of cells, so the kNN has to be rebuilt on them.
+        Some(rows_to_use) => {
+            let embd = embd.as_ref().ok_or_else(|| {
+                Error::Other("When using 'cells_to_use', 'embd' must be provided".into())
+            })?;
 
             if verbosity.normal_verbosity() {
                 println!(
                     "Subsetting to {} cells (from {} QC-passing cells) and regenerating kNN graph",
-                    pca_rows_to_use.len(),
-                    qc_cells.len()
+                    rows_to_use.len(),
+                    n_working_rows
                 );
             }
 
-            let ncol = embd.ncols();
-            let nrow = embd.nrows();
-            let data = embd.data();
-
-            let subset_data: Vec<f64> = pca_rows_to_use
-                .iter()
-                .flat_map(|&row| (0..ncol).map(move |col| data[row + col * nrow]))
-                .collect();
-
-            let embd_subset = Mat::from_fn(pca_rows_to_use.len(), ncol, |i, j| {
-                subset_data[i * ncol + j] as f32
-            });
-
-            let knn_params = meta_cell_params.knn_params;
+            let embd_subset = subset_embedding(embd, rows_to_use);
 
             let (knn, _) = generate_knn_with_dist(
                 embd_subset.as_ref(),
-                &knn_params,
+                &meta_cell_params.knn_params,
                 false,
                 false,
                 seed,
@@ -161,52 +308,42 @@ fn rs_get_metacells_bootstrapped(
             )
             .to_extendr()?;
 
-            (subset_to_orig, n_total, knn)
+            knn
         }
-        None => {
-            let n_total = match (&knn_mat, &embd) {
-                (Some(mat), _) => mat.nrows(),
-                (_, Some(em)) => em.nrows(),
-                _ => return Err("Must provide either 'knn_mat' or 'embd' parameter".into()),
-            };
-            let knn = match (knn_mat, embd) {
-                (Some(knn_mat), _) => {
-                    if verbosity.normal_verbosity() {
-                        println!("Using provided kNN matrix");
-                    }
-                    knn_indices_processing(knn_mat)
+        None => match (knn_mat, embd) {
+            (Some(knn_mat), _) => {
+                if verbosity.normal_verbosity() {
+                    println!("Using provided kNN matrix");
                 }
-                (None, Some(embd)) => {
-                    if verbosity.normal_verbosity() {
-                        println!("Calculating the kNN matrix from the provided data.");
-                    }
-
-                    let knn_params = meta_cell_params.knn_params;
-
-                    let embd = r_matrix_to_faer_fp32(&embd);
-
-                    let (knn, _) = generate_knn_with_dist(
-                        embd.as_ref(),
-                        &knn_params,
-                        false,
-                        false,
-                        seed,
-                        verbosity.detailed_verbosity(),
-                    )
-                    .to_extendr()?;
-
-                    knn
+                knn_indices_processing(knn_mat)
+            }
+            (None, Some(embd)) => {
+                if verbosity.normal_verbosity() {
+                    println!("Calculating the kNN matrix from the provided data.");
                 }
-                (None, None) => {
-                    return Err("Must provide either 'knn_mat' or 'embd' parameter".into());
-                }
-            };
 
-            ((0..n_total).collect(), n_total, knn)
-        }
+                let embd = r_matrix_to_faer_fp32(&embd);
+
+                let (knn, _) = generate_knn_with_dist(
+                    embd.as_ref(),
+                    &meta_cell_params.knn_params,
+                    false,
+                    false,
+                    seed,
+                    verbosity.detailed_verbosity(),
+                )
+                .to_extendr()?;
+
+                knn
+            }
+            (None, None) => {
+                return Err("Must provide either 'knn_mat' or 'embd' parameter".into());
+            }
+        },
     };
 
-    let is_subset = cells_to_use.is_some();
+    let subset_to_orig = mapping.subset_to_orig;
+    let n_total_cells = mapping.n_total;
 
     let nn_map = build_nn_map(&knn_graph);
 
@@ -225,17 +362,14 @@ fn rs_get_metacells_bootstrapped(
 
     let metacells_subset: Vec<Vec<usize>> = assign_bootstrapped_meta_cells(&centres, &nn_map);
 
-    let metacells_original: Vec<Vec<usize>> = if is_subset {
-        remap_metacells_to_original(
-            &metacells_subset
-                .iter()
-                .map(|v| v.as_slice())
-                .collect::<Vec<_>>(),
-            &subset_to_orig,
-        )
-    } else {
-        metacells_subset
-    };
+    // Always remap: the aggregation reader and R both work in original space.
+    let metacells_original: Vec<Vec<usize>> = remap_metacells_to_original(
+        &metacells_subset
+            .iter()
+            .map(|v| v.as_slice())
+            .collect::<Vec<_>>(),
+        &subset_to_orig,
+    );
 
     let assignment_list: List = metacells_to_r_list(&metacells_original, n_total_cells);
 
@@ -336,64 +470,30 @@ fn rs_get_seacells(
         );
     }
 
-    let (subset_to_orig, n_total_cells, embd_mat) = match cells_to_use {
-        Some(ref use_cells) => {
-            let cells_to_keep = cells_to_keep.as_ref().ok_or_else(|| {
-                Error::Other("When using 'cells_to_use', 'cells_to_keep' must be provided".into())
-            })?;
+    let mapping = resolve_cell_mapping(
+        cells_to_keep.as_deref(),
+        cells_to_use.as_deref(),
+        embd.nrows(),
+        count_file_n_cells(&f_path)?,
+    )?;
 
-            let qc_cells: Vec<usize> = cells_to_keep.iter().map(|&x| x as usize).collect();
-            let use_cells: Vec<usize> = use_cells.iter().map(|&x| x as usize).collect();
-
-            let orig_to_pca: FxHashMap<usize, usize> = qc_cells
-                .iter()
-                .enumerate()
-                .map(|(pca_row, &orig_idx)| (orig_idx, pca_row))
-                .collect();
-
-            let mut pca_rows_to_use = Vec::new();
-            let mut subset_to_orig = Vec::new();
-
-            for &orig_idx in &use_cells {
-                if let Some(&pca_row) = orig_to_pca.get(&orig_idx) {
-                    pca_rows_to_use.push(pca_row);
-                    subset_to_orig.push(orig_idx);
-                }
-            }
-
-            let n_total = use_cells.iter().max().map(|&x| x + 1).unwrap_or(0);
-
+    let embd_mat = match &mapping.rows_to_use {
+        Some(rows_to_use) => {
             if verbosity.normal_verbosity() {
                 println!(
                     "Subsetting to {} cells (from {} QC-passing cells)",
-                    pca_rows_to_use.len(),
-                    qc_cells.len()
+                    rows_to_use.len(),
+                    embd.nrows()
                 );
             }
-
-            let ncol = embd.ncols();
-            let nrow = embd.nrows();
-            let data = embd.data();
-
-            let subset_data: Vec<f64> = pca_rows_to_use
-                .iter()
-                .flat_map(|&row| (0..ncol).map(move |col| data[row + col * nrow]))
-                .collect();
-
-            let embd_subset = Mat::from_fn(pca_rows_to_use.len(), ncol, |i, j| {
-                subset_data[i * ncol + j] as f32
-            });
-
-            (subset_to_orig, n_total, embd_subset)
+            subset_embedding(&embd, rows_to_use)
         }
-        None => {
-            let n = embd.nrows();
-            let embd_full = r_matrix_to_faer_fp32(&embd);
-            ((0..n).collect(), n, embd_full)
-        }
+        None => r_matrix_to_faer_fp32(&embd),
     };
 
-    let is_subset = cells_to_use.is_some();
+    let is_subset = mapping.needs_subsetting();
+    let subset_to_orig = mapping.subset_to_orig;
+    let n_total_cells = mapping.n_total;
 
     let (knn_indices, knn_dist, dist_squared) = if knn_provided && !is_subset {
         if verbosity.normal_verbosity() {
@@ -503,20 +603,14 @@ fn rs_get_seacells(
     let assignments_subset_opt: Vec<Option<usize>> =
         assignments_raw.iter().map(|&old| id_remap[old]).collect();
 
-    let assignments_full: Vec<Option<usize>> = if is_subset {
-        remap_assignments_to_original(&assignments_subset_opt, &subset_to_orig, n_total_cells)
-    } else {
-        assignments_subset_opt
-    };
+    // Always remap: the aggregation reader and R both work in original space.
+    let assignments_full: Vec<Option<usize>> =
+        remap_assignments_to_original(&assignments_subset_opt, &subset_to_orig, n_total_cells);
 
-    let archetypes_original: Vec<usize> = if is_subset {
-        archetypes_kept
-            .iter()
-            .map(|&idx| subset_to_orig[idx])
-            .collect()
-    } else {
-        archetypes_kept
-    };
+    let archetypes_original: Vec<usize> = archetypes_kept
+        .iter()
+        .map(|&idx| subset_to_orig[idx])
+        .collect();
 
     let assignment_list = assignments_to_r_list(&assignments_full, n_total_cells);
 
@@ -524,14 +618,10 @@ fn rs_get_seacells(
         println!("Aggregating meta cells.");
     }
 
-    let metacells_original: Vec<Vec<usize>> = if is_subset {
-        remap_metacells_to_original(
-            &groups_kept.iter().map(|v| v.as_slice()).collect::<Vec<_>>(),
-            &subset_to_orig,
-        )
-    } else {
-        groups_kept
-    };
+    let metacells_original: Vec<Vec<usize>> = remap_metacells_to_original(
+        &groups_kept.iter().map(|v| v.as_slice()).collect::<Vec<_>>(),
+        &subset_to_orig,
+    );
 
     let metacells_refs: Vec<&[usize]> = metacells_original.iter().map(|v| v.as_slice()).collect();
 
@@ -644,51 +734,40 @@ fn rs_supercell(
         return Err("Must provide either 'knn_data' or 'embd'".into());
     }
 
-    let (subset_to_orig, n_total_cells, knn_indices, knn_dist, dist_squared) = match cells_to_use {
-        Some(ref use_cells) => {
-            let cells_to_keep = cells_to_keep.as_ref().unwrap();
-            let embd = embd.as_ref().unwrap();
+    // kNN rows define the working space when no embedding was handed over.
+    let n_working_rows = match (&knn_data, &embd) {
+        (_, Some(em)) => em.nrows(),
+        _ => {
+            let knn_list = knn_data
+                .clone()
+                .into_robj()
+                .as_list()
+                .ok_or_else(|| Error::Other("'knn_data' is not a list".into()))?;
+            knn_data_to_rust(knn_list)?.0.len()
+        }
+    };
 
-            let qc_cells: Vec<usize> = cells_to_keep.iter().map(|&x| x as usize).collect();
-            let use_cells: Vec<usize> = use_cells.iter().map(|&x| x as usize).collect();
+    let mapping = resolve_cell_mapping(
+        cells_to_keep.as_deref(),
+        cells_to_use.as_deref(),
+        n_working_rows,
+        count_file_n_cells(&f_path)?,
+    )?;
 
-            let orig_to_pca: FxHashMap<usize, usize> = qc_cells
-                .iter()
-                .enumerate()
-                .map(|(pca_row, &orig_idx)| (orig_idx, pca_row))
-                .collect();
-
-            let mut pca_rows_to_use = Vec::new();
-            let mut subset_to_orig = Vec::new();
-
-            for &orig_idx in &use_cells {
-                if let Some(&pca_row) = orig_to_pca.get(&orig_idx) {
-                    pca_rows_to_use.push(pca_row);
-                    subset_to_orig.push(orig_idx);
-                }
-            }
-
-            let n_total = use_cells.iter().max().map(|&x| x + 1).unwrap_or(0);
+    let (knn_indices, knn_dist, dist_squared) = match &mapping.rows_to_use {
+        Some(rows_to_use) => {
+            let embd = embd.as_ref().ok_or_else(|| {
+                Error::Other("When using 'cells_to_use', 'embd' must be provided".into())
+            })?;
 
             if verbosity.normal_verbosity() {
                 println!(
                     "Subsetting to {} cells and regenerating kNN graph",
-                    pca_rows_to_use.len()
+                    rows_to_use.len()
                 );
             }
 
-            let ncol = embd.ncols();
-            let nrow = embd.nrows();
-            let data = embd.data();
-
-            let subset_data: Vec<f64> = pca_rows_to_use
-                .iter()
-                .flat_map(|&row| (0..ncol).map(move |col| data[row + col * nrow]))
-                .collect();
-
-            let embd_subset = Mat::from_fn(pca_rows_to_use.len(), ncol, |i, j| {
-                subset_data[i * ncol + j] as f32
-            });
+            let embd_subset = subset_embedding(embd, rows_to_use);
 
             let start_knn = Instant::now();
             let (knn_idx, knn_d) = generate_knn_with_dist(
@@ -711,7 +790,7 @@ fn rs_supercell(
                 );
             }
 
-            (subset_to_orig, n_total, knn_idx, knn_d, dist_sq)
+            (knn_idx, knn_d, dist_sq)
         }
         None => {
             if knn_provided {
@@ -732,12 +811,9 @@ fn rs_supercell(
                     }
                 }
 
-                let dist_sq = distance == "euclidean";
-                let n_total = knn_idx.len();
-                ((0..n_total).collect(), n_total, knn_idx, knn_d, dist_sq)
+                (knn_idx, knn_d, distance == "euclidean")
             } else {
                 let embd = embd.unwrap();
-                let n_total = embd.nrows();
                 let embd_mat = r_matrix_to_faer_fp32(&embd);
 
                 if verbosity.normal_verbosity() {
@@ -765,10 +841,13 @@ fn rs_supercell(
                     );
                 }
 
-                ((0..n_total).collect(), n_total, knn_idx, knn_d, dist_sq)
+                (knn_idx, knn_d, dist_sq)
             }
         }
     };
+
+    let subset_to_orig = mapping.subset_to_orig;
+    let n_total_cells = mapping.n_total;
 
     let n_meta_cells =
         (knn_indices.len() as f64 / supercell_params.graining_factor).ceil() as usize;
@@ -789,11 +868,9 @@ fn rs_supercell(
     let assignments_subset_opt: Vec<Option<usize>> =
         membership_subset.iter().map(|&x| Some(x)).collect();
 
-    let assignments_full = if is_subset {
-        remap_assignments_to_original(&assignments_subset_opt, &subset_to_orig, n_total_cells)
-    } else {
-        assignments_subset_opt
-    };
+    // Always remap: the aggregation reader and R both work in original space.
+    let assignments_full =
+        remap_assignments_to_original(&assignments_subset_opt, &subset_to_orig, n_total_cells);
 
     let assignment_list = assignments_to_r_list(&assignments_full, n_total_cells);
 
@@ -803,17 +880,13 @@ fn rs_supercell(
 
     let meta_cell_indices = assignments_to_metacells(&membership_subset, n_meta_cells);
 
-    let metacells_original: Vec<Vec<usize>> = if is_subset {
-        remap_metacells_to_original(
-            &meta_cell_indices
-                .iter()
-                .map(|v| v.as_slice())
-                .collect::<Vec<_>>(),
-            &subset_to_orig,
-        )
-    } else {
-        meta_cell_indices
-    };
+    let metacells_original: Vec<Vec<usize>> = remap_metacells_to_original(
+        &meta_cell_indices
+            .iter()
+            .map(|v| v.as_slice())
+            .collect::<Vec<_>>(),
+        &subset_to_orig,
+    );
 
     let metacells_refs: Vec<&[usize]> = metacells_original.iter().map(|v| v.as_slice()).collect();
 

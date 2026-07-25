@@ -338,7 +338,9 @@ caveat, but relative differences between methods are reasonably indicative.
 
 ```{r}
 #| label: purity
-cell_labels <- unlist(sc_object[["celltype"]]) %>% as.character()
+# memberships are positions in the full obs table, so the labels have to come
+# from the unfiltered obs rather than from `sc_object[[...]]`
+cell_labels <- as.character(get_sc_obs(sc_object)$celltype)
 
 hdwgcna <- calc_meta_cell_purity(hdwgcna, original_cell_type = cell_labels)
 seacells <- calc_meta_cell_purity(seacells, original_cell_type = cell_labels)

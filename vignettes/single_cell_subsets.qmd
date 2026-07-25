@@ -547,10 +547,12 @@ embedding_plot_sc(
 
 A few sharp edges to be aware of before you build on this.
 
-Metacell generation via `generate_bt_meta_cells_sc()` is still parent-only,
-which is a shame given per-sample metacells are the obvious use for
-`apply_pipeline_per_group()`. That one needs real work rather than a dispatch
-widening, so it is on the list.
+Metacell generation works on subsets too, so `generate_bt_meta_cells_sc()`,
+`generate_seacells_sc()` and `generate_supercells_sc()` can all be pointed
+straight at a `SingleCellsSubset`, as can `get_pseudobulked_sc()`. Combined with
+`apply_pipeline_per_group()` that gives you per-cell-type metacells in a few
+lines. Note that meta cell memberships come back as positions in the *parent*
+obs table, which is what makes them joinable back onto the original object.
 
 Subsets are RNA only. If you hand `modality = "adt"` to a getter you get an
 error, so multi-modal work stays on
