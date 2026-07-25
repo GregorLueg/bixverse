@@ -32,6 +32,8 @@ clustering algorithms.
 
 ## Features
 
+* `SingleCellsSubset` class that can split from the main class and allows for
+  analysis of e.g., a subset of cell types, etc.
 * Added singscore, see 
   [Foroutan et al.](https://link.springer.com/article/10.1186/s12859-018-2435-4),
   as another option to score single samples and their pathway activity.
