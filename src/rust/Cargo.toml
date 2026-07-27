@@ -26,7 +26,7 @@ codegen-units = 4
 strip = true
 
 [dependencies]
-bixverse-rs = { path = "/Users/gregorlueg/repos/shared/bixverse-rs", features = [
+bixverse-rs = { version = "0.3.9", features = [
   "single-cell",
   "multi-modal",
 ] }
