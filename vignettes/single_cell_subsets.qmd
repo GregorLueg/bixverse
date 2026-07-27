@@ -389,32 +389,34 @@ dot_plot_sc(
 ## Getting the labels back to the parent
 
 So far everything lives in the subset, in memory. To make the labels permanent,
-or to plot them on the parent's global UMAP, push them into the parent's DuckDB
-joining on `cell_idx`. `add_sc_new_obs()` expects a table that carries the
-`is_obs` tag, so we set it by hand.
+or to plot them on the parent's global UMAP, push them into the parent's DuckDB.
+`merge_subset_obs()` does the join on `cell_idx` for you.
 
 ```{r}
 #| label: write back
-sub_labels <- get_sc_obs(t_cells)[, .(
-  cell_idx,
-  t_subcluster = paste0("T_", t_subcluster)
-)]
-
-data.table::setattr(sub_labels, "is_obs", TRUE)
-
-sc_object <- add_sc_new_obs(sc_object, sub_labels)
+sc_object <- merge_subset_obs(
+  object = sc_object,
+  subsets = t_cells,
+  cols = "t_subcluster",
+  prefix_values = TRUE
+)
 
 get_sc_obs(sc_object, filtered = TRUE)[, .N, by = t_subcluster][order(
   t_subcluster
 )]
 ```
 
+`prefix_values = TRUE` stamps the subset's group onto every value, so you get
+`T cells_0` rather than a bare `0`. Drop it if you want the raw labels. Leave
+`cols` out and everything the subset gained that the parent does not have yet
+gets merged, which after a pipeline run is exactly the new columns.
+
 The join is a left join, so every cell that was not a T cell gets `NA`. That is
 the behaviour you want, and the downstream methods respect it.
 
-Note that if you go via `fast_cluster_sc()` instead, the write-back is a
-one-liner. That method already returns memberships keyed on `cell_idx` in parent
-space, and `get_data()` tags the result for you.
+Results that already carry their own `cell_idx` skip the helper entirely.
+`fast_cluster_sc()` returns memberships keyed in parent space, so
+`add_sc_new_obs()` takes them directly.
 
 ```{r}
 #| label: fast cluster route
@@ -514,23 +516,26 @@ Every lineage picked a different feature set, and the shared fraction with the
 global HVGs is nowhere near complete. Running one global PCA and hoping it
 resolves everything was never going to work.
 
-Writing all of that back is the same join as before, once per group.
+Writing all of that back is one call. `merge_subset_obs()` takes the list
+straight from `apply_pipeline_per_group()`, checks that no cell shows up twice,
+and does a single join.
 
 ```{r}
 #| label: write back per group
-all_labels <- data.table::rbindlist(purrr::imap(per_group, \(x, name) {
-  get_sc_obs(x)[, .(
-    cell_idx,
-    fine_label = sprintf("%s_%s", name, subcluster)
-  )]
-}))
-
-data.table::setattr(all_labels, "is_obs", TRUE)
-
-sc_object <- add_sc_new_obs(sc_object, all_labels)
+sc_object <- merge_subset_obs(
+  object = sc_object,
+  subsets = per_group,
+  cols = "subcluster",
+  new_names = "fine_label",
+  prefix_values = TRUE
+)
 
 get_sc_obs(sc_object, filtered = TRUE)[, .N, by = fine_label][order(fine_label)]
 ```
+
+The prefix is doing real work here. Every group's Leiden run starts counting at
+zero, so without it the T cell `1` and the B cell `1` collapse into one label.
+Leave it out and you get a warning naming the values that clash.
 
 ```{r}
 #| label: fine umap
@@ -559,9 +564,6 @@ obs table, which is what makes them joinable back onto the original object.
 Subsets are RNA only. If you hand `modality = "adt"` to a getter you get an
 error, so multi-modal work stays on
 [`SingleCellsMultiModal`](https://gregorlueg.github.io/bixverse/articles/multi_modal_single_cells.html).
-
-The `setattr(dt, "is_obs", TRUE)` dance for the write-back is a placeholder. A
-proper `merge_subset_obs()` helper belongs in the package and is on the list.
 
 Subsets nest conceptually but not in code: you cannot build a
 `SingleCellsSubset` from another `SingleCellsSubset`. If you want a third level,

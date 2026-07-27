@@ -878,3 +878,185 @@ S7::method(get_snn_graph, SingleCellsSubset) <- function(x, ...) {
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
   get_snn_graph(x = S7::prop(x, "sc_cache"))
 }
+
+## write-back ------------------------------------------------------------------
+
+#' Merge obs columns from subsets back into the parent object
+#'
+#' @description
+#' Takes columns computed on one or more [bixverse::SingleCellsSubset()]
+#' objects and writes them into the parent's obs table in the DuckDB, joining
+#' on `cell_idx`. The join is a left join, so every parent cell that is not
+#' part of any of the provided subsets ends up as `NA`.
+#'
+#' Pass a single subset or a list of them, e.g. the output of
+#' [apply_pipeline_per_group()]. All subsets are written in a single join, and
+#' the function refuses to run if two subsets claim the same cell.
+#'
+#' @param object `SingleCells` class. The parent the subsets were derived from.
+#' @param subsets A `SingleCellsSubset` or a list of them. Every element must
+#' originate from `object`; this is verified against the cell names.
+#' @param cols Optional character vector. Columns in the subset obs tables to
+#' merge. If `NULL`, every column that is present in all subsets but absent
+#' from the parent obs table is taken, which after a pipeline run is exactly
+#' the set of newly generated columns.
+#' @param new_names Optional character vector. Names to give the merged columns
+#' in the parent obs table. Same length as `cols`, which must be given
+#' explicitly if this is used.
+#' @param prefix_values Boolean. Prefix every merged value with the subset's
+#' group, i.e. `"<group>_<value>"`. Coerces the columns to character, so this
+#' only makes sense for discrete labels. Needed when merging a list of subsets
+#' into a shared column, since sub-cluster `1` of one group and sub-cluster `1`
+#' of another are otherwise indistinguishable.
+#' @param overwrite Boolean. Allow merged columns to replace existing columns
+#' of the same name in the parent obs table. Defaults to `FALSE`, in which case
+#' a name clash is an error.
+#' @param .verbose Boolean. Controls verbosity.
+#'
+#' @returns The parent `SingleCells` object with the merged columns added to
+#' the obs table in the DuckDB.
+#'
+#' @seealso [add_sc_new_obs()] for the equivalent on result objects that carry
+#' their own `cell_idx`, such as [fast_cluster_sc()].
+#'
+#' @export
+merge_subset_obs <- function(
+  object,
+  subsets,
+  cols = NULL,
+  new_names = NULL,
+  prefix_values = FALSE,
+  overwrite = FALSE,
+  .verbose = TRUE
+) {
+  # checks
+  checkmate::assertClass(object, "bixverse::SingleCells")
+  if (S7::S7_inherits(subsets, SingleCellsSubset)) {
+    subsets <- list(subsets)
+  }
+  checkmate::assertList(subsets, min.len = 1L)
+  purrr::walk(
+    subsets,
+    \(x) checkmate::assertClass(x, "bixverse::SingleCellsSubset")
+  )
+  checkmate::qassert(cols, c("0", "S+"))
+  checkmate::qassert(new_names, c("0", "S+"))
+  checkmate::qassert(prefix_values, "B1")
+  checkmate::qassert(overwrite, "B1")
+  checkmate::qassert(.verbose, "B1")
+
+  parent_names <- get_cell_names(object, filtered = FALSE)
+  parent_cols <- get_sc_duckdb(object)$get_obs_cols()
+
+  # cell_idx is a 1-indexed position into the parent's full obs table. Verify
+  # that assumption holds before writing anything into the DuckDB.
+  purrr::iwalk(subsets, \(sub, i) {
+    idx <- S7::prop(sub, "subset_to_original")
+    if (max(idx) > length(parent_names) || min(idx) < 1L) {
+      stop(sprintf("Subset %s has cell indices outside of the parent.", i))
+    }
+    if (!identical(get_cell_names(sub), parent_names[idx])) {
+      stop(sprintf(
+        "Subset %s does not originate from the provided parent object.",
+        i
+      ))
+    }
+  })
+
+  shared_cols <- Reduce(
+    intersect,
+    purrr::map(subsets, \(x) names(S7::prop(x, "obs_table")))
+  )
+
+  if (is.null(cols)) {
+    if (!is.null(new_names)) {
+      stop("`cols` needs to be given explicitly when using `new_names`.")
+    }
+    cols <- setdiff(shared_cols, c(parent_cols, "cell_idx"))
+    if (length(cols) == 0) {
+      stop("No new obs columns found in the subset(s). Nothing to merge.")
+    }
+  } else {
+    if ("cell_idx" %in% cols) {
+      stop("`cell_idx` is the join key and cannot be merged.")
+    }
+    missing_cols <- setdiff(cols, shared_cols)
+    if (length(missing_cols) > 0) {
+      stop(sprintf(
+        "Column(s) %s missing from at least one subset obs table.",
+        toString(sprintf("`%s`", missing_cols))
+      ))
+    }
+  }
+
+  if (is.null(new_names)) {
+    new_names <- cols
+  }
+  checkmate::assertTRUE(length(new_names) == length(cols))
+
+  clashes <- intersect(new_names, parent_cols)
+  if (length(clashes) > 0 && !overwrite) {
+    stop(sprintf(
+      "Column(s) %s already exist in the parent obs. Set overwrite = TRUE.",
+      toString(sprintf("`%s`", clashes))
+    ))
+  }
+
+  to_merge <- purrr::map(subsets, \(sub) {
+    dt <- get_sc_obs(sub, cols = c("cell_idx", cols))
+    if (prefix_values) {
+      grp <- S7::prop(sub, "group")
+      dt[,
+        (cols) := lapply(.SD, \(v) sprintf("%s_%s", grp, v)),
+        .SDcols = cols
+      ]
+    }
+    data.table::setnames(dt, cols, new_names)
+    dt
+  })
+
+  if (length(to_merge) > 1 && !prefix_values) {
+    purrr::walk(new_names, \(col) {
+      seen <- unlist(purrr::map(
+        to_merge,
+        \(dt) unique(as.character(dt[[col]]))
+      ))
+      shared <- unique(seen[duplicated(seen)])
+      shared <- shared[!is.na(shared)]
+      if (length(shared) > 0) {
+        warning(sprintf(
+          paste(
+            "Value(s) %s of column `%s` appear in more than one subset.",
+            "Set prefix_values = TRUE to disambiguate them."
+          ),
+          toString(sprintf(
+            "`%s`",
+            shared[seq_len(min(5L, length(shared)))]
+          )),
+          col
+        ))
+      }
+    })
+  }
+
+  merged <- data.table::rbindlist(to_merge, use.names = TRUE)
+
+  if (anyDuplicated(merged$cell_idx) > 0) {
+    stop("Duplicated cells across the subsets. Cells can be merged only once.")
+  }
+
+  merged <- .add_is_obs_attr(merged)
+
+  get_sc_duckdb(object)$join_data_obs(merged)
+
+  if (.verbose) {
+    message(sprintf(
+      "Merged %i column(s) for %i cells into obs (%i cells left as NA).",
+      length(new_names),
+      nrow(merged),
+      length(parent_names) - nrow(merged)
+    ))
+  }
+
+  return(object)
+}

@@ -355,6 +355,25 @@ reference:
       - set_sc_new_obs_col_multiple
       - set_sc_new_var_cols
       - drop_cols_sc
+  # Single cell subsets and pipelines
+  - title: Single cell subsets and pipelines
+    desc:
+      Sub-clustering a group of cells and running the same chain per group.
+    contents:
+      - SingleCellsSubset
+      - merge_subset_obs
+      - sc_pipeline
+      - "%>>%"
+      - apply_pipeline
+      - apply_pipeline_per_group
+      - step_hvg_sc
+      - step_pca_sc
+      - step_neighbours_sc
+      - step_clusters_sc
+      - step_bbknn_sc
+      - step_fast_mnn_sc
+      - step_harmony_sc
+      - step_harmony_v2_sc
   # Single cell classes and getters
   - title: Single cell class for multi-modal data and getters
     desc: 

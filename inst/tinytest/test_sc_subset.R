@@ -397,6 +397,229 @@ expect_true(
   info = "parent PCA cache not mutated by subset calculate_pca_sc"
 )
 
+## merge_subset_obs ------------------------------------------------------------
+
+subset_b <- SingleCellsSubset(
+  sc_object = sc_object,
+  grouping_column = "cell_grp",
+  group = "cell_type_2"
+)
+
+# batch_index has a single level, so this subset covers every cell and overlaps
+# with the cell type subsets
+subset_all <- SingleCellsSubset(
+  sc_object = sc_object,
+  grouping_column = "batch_index",
+  group = "1"
+)
+
+### single subset round trip ---------------------------------------------------
+
+sub_labels <- sprintf(
+  "lab_%s",
+  get_sc_obs(subset_obj)$leiden_clustering
+)
+
+subset_obj[["merge_label"]] <- sub_labels
+
+sc_object <- merge_subset_obs(
+  object = sc_object,
+  subsets = subset_obj,
+  cols = "merge_label",
+  .verbose = FALSE
+)
+
+obs_merged <- get_sc_obs(sc_object)
+
+expect_equal(
+  current = obs_merged[match(s_to_o, cell_idx), merge_label],
+  target = sub_labels,
+  info = "merge_subset_obs: values land on the right parent cells"
+)
+
+expect_true(
+  current = all(is.na(obs_merged[!cell_idx %in% s_to_o, merge_label])),
+  info = "merge_subset_obs: cells outside the subset become NA"
+)
+
+### cols = NULL ----------------------------------------------------------------
+
+cols_before <- colnames(get_sc_obs(sc_object))
+new_in_subset <- setdiff(colnames(get_sc_obs(subset_obj)), cols_before)
+
+expect_true(
+  current = "leiden_clustering" %in% new_in_subset,
+  info = "merge_subset_obs: subset holds columns the parent does not have"
+)
+
+sc_object <- merge_subset_obs(
+  object = sc_object,
+  subsets = subset_obj,
+  .verbose = FALSE
+)
+
+expect_equal(
+  current = setdiff(colnames(get_sc_obs(sc_object)), cols_before),
+  target = new_in_subset,
+  info = "merge_subset_obs: cols = NULL takes exactly the new subset columns"
+)
+
+expect_error(
+  current = merge_subset_obs(
+    object = sc_object,
+    subsets = subset_obj,
+    .verbose = FALSE
+  ),
+  info = "merge_subset_obs: cols = NULL errors when nothing is new"
+)
+
+### prefix and overlap ---------------------------------------------------------
+
+subset_obj[["sub_cluster"]] <- rep(
+  c("1", "2"),
+  length.out = nrow(get_sc_obs(subset_obj))
+)
+
+subset_b[["sub_cluster"]] <- rep(
+  c("1", "2"),
+  length.out = nrow(get_sc_obs(subset_b))
+)
+
+expect_warning(
+  current = merge_subset_obs(
+    object = sc_object,
+    subsets = list(subset_obj, subset_b),
+    cols = "sub_cluster",
+    .verbose = FALSE
+  ),
+  info = "merge_subset_obs: warns on label overlap between subsets"
+)
+
+sc_object <- merge_subset_obs(
+  object = sc_object,
+  subsets = list(subset_obj, subset_b),
+  cols = "sub_cluster",
+  new_names = "fine_label",
+  prefix_values = TRUE,
+  .verbose = FALSE
+)
+
+obs_merged <- get_sc_obs(sc_object)
+
+expect_true(
+  current = setequal(
+    unique(obs_merged[!is.na(fine_label), fine_label]),
+    c(
+      "cell_type_1_1",
+      "cell_type_1_2",
+      "cell_type_2_1",
+      "cell_type_2_2"
+    )
+  ),
+  info = "merge_subset_obs: prefix_values disambiguates across subsets"
+)
+
+expect_equal(
+  current = sum(!is.na(obs_merged$fine_label)),
+  target = nrow(get_sc_obs(subset_obj)) + nrow(get_sc_obs(subset_b)),
+  info = "merge_subset_obs: exactly the merged cells carry a label"
+)
+
+### guards ---------------------------------------------------------------------
+
+subset_obj[["dup_label"]] <- "subset"
+subset_all[["dup_label"]] <- "everything"
+
+expect_error(
+  current = merge_subset_obs(
+    object = sc_object,
+    subsets = list(subset_obj, subset_all),
+    cols = "dup_label",
+    .verbose = FALSE
+  ),
+  info = "merge_subset_obs: errors when two subsets claim the same cell"
+)
+
+expect_error(
+  current = merge_subset_obs(
+    object = sc_object,
+    subsets = subset_obj,
+    cols = "cell_idx",
+    .verbose = FALSE
+  ),
+  info = "merge_subset_obs: cell_idx cannot be merged"
+)
+
+expect_error(
+  current = merge_subset_obs(
+    object = sc_object,
+    subsets = subset_obj,
+    cols = "not_a_column",
+    .verbose = FALSE
+  ),
+  info = "merge_subset_obs: errors on columns missing from the subset"
+)
+
+### wrong parent ---------------------------------------------------------------
+
+alt_temp_dir <- file.path(tempdir(), "subset_processing_alt")
+dir.create(alt_temp_dir, recursive = TRUE, showWarnings = FALSE)
+
+alt_obs <- data.table::copy(single_cell_test_data$obs)
+alt_obs[, cell_id := paste0("alt_", cell_id)]
+
+alt_counts <- single_cell_test_data$counts
+rownames(alt_counts) <- alt_obs$cell_id
+
+sc_alt <- load_r_data(
+  object = SingleCells(dir_data = alt_temp_dir),
+  counts = alt_counts,
+  obs = alt_obs,
+  var = single_cell_test_data$var,
+  sc_qc_param = sc_qc_param,
+  streaming = 0L,
+  .verbose = FALSE
+)
+
+expect_error(
+  current = merge_subset_obs(
+    object = sc_alt,
+    subsets = subset_obj,
+    cols = "dup_label",
+    .verbose = FALSE
+  ),
+  info = "merge_subset_obs: errors when the subset is not from the parent"
+)
+
+### overwrite ------------------------------------------------------------------
+
+# destructive, keep last: cell_grp is only kept for the subset cells afterwards
+expect_error(
+  current = merge_subset_obs(
+    object = sc_object,
+    subsets = subset_obj,
+    cols = "cell_grp",
+    .verbose = FALSE
+  ),
+  info = "merge_subset_obs: refuses to overwrite an existing obs column"
+)
+
+sc_object <- merge_subset_obs(
+  object = sc_object,
+  subsets = subset_obj,
+  cols = "cell_grp",
+  overwrite = TRUE,
+  .verbose = FALSE
+)
+
+expect_true(
+  current = all(
+    is.na(get_sc_obs(sc_object)[!cell_idx %in% s_to_o, cell_grp])
+  ),
+  info = "merge_subset_obs: overwrite = TRUE replaces the parent column"
+)
+
 # cleanup ----------------------------------------------------------------------
 
 on.exit(unlink(test_temp_dir, recursive = TRUE, force = TRUE), add = TRUE)
+on.exit(unlink(alt_temp_dir, recursive = TRUE, force = TRUE), add = TRUE)
