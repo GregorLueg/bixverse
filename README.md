@@ -32,7 +32,8 @@ Two sister packages are also in the process of being built and maintained:
   you guessed it again - GPU-accelerated methods. In this case, it leverages
   [cubecl](https://github.com/tracel-ai/cubecl)/[Burn](https://burn.dev) under 
   the hood with wgpu backends which means it will work on (theoretically) any
-  GPU.
+  GPU. If you do single cell stuff, have a look... Some of the implementations
+  in there make everything substantially faster.
 
 Additional packages that might be of interest interest to you:
 
@@ -51,7 +52,7 @@ Additional packages that might be of interest interest to you:
 
 <img src="man/figures/bixverse_single_cell.png" width="500" height="500" alt="atlas scale on small compute">
 
-Major release with `"0.4.0"`. The single cell suite has been further improved. 
+Major release with `"0.4.0+"`. The single cell suite has been further improved. 
 The key changes are:
 
 - Performance improvements across several axes. A lot of the underlying Rust
@@ -67,7 +68,8 @@ The key changes are:
   * Large number of methods and updates to support multi-model analysis
 - Massive improvements on the two sister packages ([bixverse.plots](https://github.com/GregorLueg/bixverse.plots) and 
   [bixverse.gpu](https://github.com/GregorLueg/bixverse.gpu)): enabling 
-  GPU-accelerated methods (Harmony, PCA) and a large number of plotting helpers.
+  GPU-accelerated methods (Harmony, PCA, kNN searches) and a large number of 
+  plotting helpers.
 - Updates to various vignettes to reflect the changes with this release.
 - More methods added... Symphony, NicheNet, sparse NMF for single cells!
 
@@ -130,12 +132,13 @@ and trade-offs. The various vignettes will show you how to analyse data.
 #### General
 
 - [x] Multi h5 (10x output) i/o
-- [ ] Save data to h5ad for easier interoperability with Python.
-- [ ] Splitting a SingleCells into several sub directories for easier management
+- [x] ~~Splitting a SingleCells into several sub directories for easier management.~~
+  Subset class enabled with views. The direct splitting is maybe not needed ... ?
+- [x] Port over [NicheNet](https://www.nature.com/articles/s41592-019-0667-5).
 - [ ] Implementation of [Palantir](https://www.nature.com/articles/s41587-019-0068-4) and
   [Slingshot](https://pubmed.ncbi.nlm.nih.gov/29914354/) for trajectory
-  analysis
-- [x] Port over [NicheNet](https://www.nature.com/articles/s41592-019-0667-5).
+  analysis.
+- [ ] Save data to h5ad for easier interoperability with Python.
 - [ ] Easy interoperability that chunks of data can be read in for neural 
   network training in the corresponding deep learning frameworks.
 
