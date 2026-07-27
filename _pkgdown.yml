@@ -520,6 +520,7 @@ reference:
       - get_best_run
       - get_w
       - get_h
+      - params_sc_aucell
       - params_sc_hotspot
       - params_sc_miloR
       - params_sc_vision

@@ -700,13 +700,18 @@ tf_to_gene_ls <- split(tf_gene_dt$gene, tf_gene_dt$tf)
 In a proper situation we would filter down the TF to gene associations via
 motifs, please refer to the details in this 
 [vignette](https://gregorlueg.github.io/bixverse/articles/analysis_single_cell.html#scenic).
-We will skip this step for now and just run AUCell to show how it works.
+We will skip this step for now and just run AUCell to show how it works. Which
+statistic you get is controlled by `params_sc_aucell()`; the default is the
+Mann-Whitney AUC, which we stick with here. `"recovery"` (the original AUCell
+recovery curve) and `"ap"` (average precision) are the other two options and
+weight the top of the ranking more heavily.
 
 ```{r}
 #| label: run AUCell on meta cells
 auc_res <- aucell_sc(
   object = seacells,
-  gs_list = tf_to_gene_ls
+  gs_list = tf_to_gene_ls,
+  aucell_params = params_sc_aucell(auc_type = "wilcox")
 )
 
 umap_dt[, `:=`(IRF1 = auc_res[, "IRF1"], TCF4 = auc_res[, "TCF4"])]

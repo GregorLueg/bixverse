@@ -16,6 +16,17 @@
   - Seurat-inspired rPCA anchor-based batch correction
 * `SingleCellsSubset` class. This class creates a view into a subset of cells,
   think doing further analysis on T cells within your data set.
+* AUCell reworked. `aucell_sc()` now takes a `params_sc_aucell()` list instead
+  of an `auc_type` string, and offers three statistics: `"wilcox"` (the
+  Mann-Whitney AUC, still the default), `"recovery"` (the recovery-curve AUC of
+  Aibar et al., with a `max_rank` cutoff) and `"ap"` (average precision).
+  Scores can be z-scored per gene set via `standardise`.
+
+## Breaking changes
+
+* `aucell_sc(auc_type = ...)` is gone, use
+  `aucell_sc(aucell_params = params_sc_aucell(auc_type = ...))`. The `"auroc"`
+  value has been dropped and now errors. `"wilcox"` results are unchanged.
 
 # bixverse 0.4.3
 
