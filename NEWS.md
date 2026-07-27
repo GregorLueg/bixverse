@@ -2,8 +2,20 @@
 
 ## Features
 
+### General
+
+* NMF implemented for bulk co-expression module detection and updated vignette.
+* Synthetic data generators for bulk updated to create different data 
+  structures.
+
+### Single cells
+
 * Improved cell quality control functions.
-* Refactor
+* Additional single cell batch correction methods:
+  - Seurat-inspired CCA anchor-based batch correction
+  - Seurat-inspired rPCA anchor-based batch correction
+* `SingleCellsSubset` class. This class creates a view into a subset of cells,
+  think doing further analysis on T cells within your data set.
 
 # bixverse 0.4.3
 

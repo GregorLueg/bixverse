@@ -17,18 +17,18 @@ author:
 ## Intro
 
 Your first pass of clustering gives you lineages: T cells, B cells, monocytes.
-What it does not give you is the structure inside those lineages. The
-highly variable genes and the principal components were chosen to separate a
-monocyte from a B cell, and on that axis every T cell looks the same. If you
-crank up the Leiden resolution on the full object you mostly get the lineages
-chopped into arbitrary pieces, not naive versus memory CD4.
+What it does not give you is the structure inside those lineages. The highly 
+variable genes and the principal components were chosen to separate a monocyte 
+from a B cell, and on that axis every T cell looks the same. If you crank up the 
+Leiden resolution on the full object you mostly get the lineages chopped into 
+arbitrary pieces, not naive versus memory CD4.
 
 The fix is to throw the global feature selection away and redo it on the cells
 you actually care about. That is what `SingleCellsSubset` is for. It gives you a
 view onto a subset of a [`SingleCells`](https://gregorlueg.github.io/bixverse/reference/SingleCells.html)
-object that shares the on-disk counts with the parent, but carries its own
-empty cache, so HVG, PCA, neighbours and clusters all get recomputed from
-scratch on the subset alone.
+object that shares the on-disk counts with the parent, but carries its own empty 
+cache, so HVG, PCA, neighbours and clusters all get recomputed from scratch on 
+the subset alone.
 
 This vignette assumes you have read the
 [design choices](https://gregorlueg.github.io/bixverse/articles/design_single_cell.html)
@@ -139,7 +139,7 @@ sc_object <- find_clusters_sc(sc_object, res = 1, name = "leiden_global")
 sc_object <- umap_sc(sc_object, .verbose = FALSE)
 ```
 
-For the annotation we deliberately stay coarse. No CD4 versus CD8 split, no
+For the annotation we deliberately stay coarse. No CD4 versus CD8 split, no 
 naive versus memory. Lineage only, because the fine structure is exactly what
 we want the subset to recover.
 
@@ -225,7 +225,7 @@ t_cells
 
 The print method tells you the important bit: HVG, PCA, kNN and sNN are all
 `FALSE`. Nothing was inherited. The subset shares the Rust count connection with
-the parent, so no counts were copied and no files were written, but the
+the parent, so no counts were copied and no files were written, but the 
 `ScCache` is brand new and the parent's HVG selection was dropped on purpose.
 
 Everything else behaves like the parent object. The obs table is filtered to
@@ -290,7 +290,7 @@ t_cells <- find_neighbours_sc(
   .verbose = FALSE
 )
 
-t_cells <- find_clusters_sc(t_cells, res = 0.6, name = "t_subcluster")
+t_cells <- find_clusters_sc(t_cells, res = 0.5, name = "t_subcluster")
 
 t_cells <- umap_sc(t_cells, .verbose = FALSE)
 
@@ -404,7 +404,9 @@ data.table::setattr(sub_labels, "is_obs", TRUE)
 
 sc_object <- add_sc_new_obs(sc_object, sub_labels)
 
-get_sc_obs(sc_object, filtered = TRUE)[, .N, by = t_subcluster][order(t_subcluster)]
+get_sc_obs(sc_object, filtered = TRUE)[, .N, by = t_subcluster][order(
+  t_subcluster
+)]
 ```
 
 The join is a left join, so every cell that was not a T cell gets `NA`. That is
@@ -444,7 +446,7 @@ subcluster_pipeline <- sc_pipeline() %>>%
     ),
     .verbose = FALSE
   ) %>>%
-  step_clusters_sc(res = 0.6, name = "subcluster")
+  step_clusters_sc(res = 0.5, name = "subcluster")
 
 subcluster_pipeline
 ```
