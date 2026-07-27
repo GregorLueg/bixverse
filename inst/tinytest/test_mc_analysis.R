@@ -424,81 +424,68 @@ expect_error(
   current = suppressWarnings(aucell_sc(
     object = mc_object,
     gs_list = bad_list,
-    auc_type = "auroc",
     .verbose = FALSE
   )),
   info = "mc aucell - error when no gene set entries match"
 )
 
-auc_res_wilcox <- aucell_sc(
-  object = mc_object,
-  gs_list = auc_gene_sets,
-  auc_type = "wilcox",
-  .verbose = FALSE
-)
+auc_methods <- c("wilcox", "recovery", "ap")
 
-auc_res_auroc <- aucell_sc(
-  object = mc_object,
-  gs_list = auc_gene_sets,
-  auc_type = "auroc",
-  .verbose = FALSE
-)
-
-expect_true(
-  current = checkmate::testMatrix(
-    auc_res_wilcox,
-    mode = "numeric",
-    nrows = target_n_metacells,
-    ncols = length(auc_gene_sets),
-    row.names = "named",
-    col.names = "named"
-  ),
-  info = "mc aucell wilcox - correct matrix shape and naming"
-)
-
-expect_true(
-  current = checkmate::testMatrix(
-    auc_res_auroc,
-    mode = "numeric",
-    nrows = target_n_metacells,
-    ncols = length(auc_gene_sets),
-    row.names = "named",
-    col.names = "named"
-  ),
-  info = "mc aucell auroc - correct matrix shape and naming"
-)
+auc_res <- purrr::map(auc_methods, \(m) {
+  aucell_sc(
+    object = mc_object,
+    gs_list = auc_gene_sets,
+    aucell_params = params_sc_aucell(auc_type = m),
+    .verbose = FALSE
+  )
+})
+names(auc_res) <- auc_methods
 
 # meta cells dominated by a given cell type should score higher on the
 # matching marker set
 mc_ids <- mc_object[[]]$meta_cell_id
 
-for (ct in c("cell_type_1", "cell_type_2", "cell_type_3")) {
-  mc_in <- mc_ids[mc_dominant_type == ct]
-  mc_out <- mc_ids[mc_dominant_type != ct]
-  marker_col <- sprintf("markers_%s", ct)
-
+for (m in auc_methods) {
   expect_true(
-    current = mean(auc_res_wilcox[mc_in, marker_col]) >
-      mean(auc_res_wilcox[mc_out, marker_col]),
-    info = sprintf(
-      "mc aucell wilcox - %s markers higher in matching meta cells",
-      ct
-    )
+    current = checkmate::testMatrix(
+      auc_res[[m]],
+      mode = "numeric",
+      nrows = target_n_metacells,
+      ncols = length(auc_gene_sets),
+      row.names = "named",
+      col.names = "named"
+    ),
+    info = sprintf("mc aucell %s - correct matrix shape and naming", m)
   )
 
-  expect_true(
-    current = mean(auc_res_auroc[mc_in, marker_col]) >
-      mean(auc_res_auroc[mc_out, marker_col]),
-    info = sprintf(
-      "mc aucell auroc - %s markers higher in matching meta cells",
-      ct
+  for (ct in c("cell_type_1", "cell_type_2", "cell_type_3")) {
+    mc_in <- mc_ids[mc_dominant_type == ct]
+    mc_out <- mc_ids[mc_dominant_type != ct]
+    marker_col <- sprintf("markers_%s", ct)
+
+    expect_true(
+      current = mean(auc_res[[m]][mc_in, marker_col]) >
+        mean(auc_res[[m]][mc_out, marker_col]),
+      info = sprintf(
+        "mc aucell %s - %s markers higher in matching meta cells",
+        m,
+        ct
+      )
     )
-  )
+  }
 }
 
+auc_res_std <- aucell_sc(
+  object = mc_object,
+  gs_list = auc_gene_sets,
+  aucell_params = params_sc_aucell(auc_type = "ap", standardise = TRUE),
+  .verbose = FALSE
+)
+
 expect_true(
-  current = all(diag(cor(auc_res_wilcox, auc_res_auroc)) >= 0.99),
-  info = "mc aucell - wilcox and auroc highly correlated"
+  current = all(abs(colMeans(auc_res_std)) < 1e-3) &&
+    all(abs(apply(auc_res_std, 2, sd) - 1) < 1e-2),
+  info = "mc aucell standardise - the gene set columns are z-scored"
 )
 
 ## scenic ----------------------------------------------------------------------

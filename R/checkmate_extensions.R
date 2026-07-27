@@ -2950,6 +2950,62 @@ checkScVision <- function(x) {
 #' @keywords internal
 assertScVision <- checkmate::makeAssertionFunction(checkScVision)
 
+#### AUCell --------------------------------------------------------------------
+
+#' Check AUCell parameters
+#'
+#' @description Checkmate extension for checking the AUCell parameters.
+#'
+#' @param x The list to check/assert
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
+checkScAucell <- function(x) {
+  res <- check_list_shape(x, c("auc_type", "max_rank", "standardise"))
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- apply_qtest_rules(
+    x,
+    list(
+      max_rank = c("N1[1,)", "0"),
+      standardise = "B1"
+    ),
+    label = "AUCell params",
+    hint = paste(
+      "max_rank must be NULL or a single numeric >= 1;",
+      "standardise must be a single logical."
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  apply_choice_rules(
+    x,
+    list(auc_type = c("wilcox", "recovery", "ap")),
+    label = "AUCell params"
+  )
+}
+
+#' Assert AUCell parameters
+#'
+#' @description Checkmate extension for asserting the AUCell parameters.
+#'
+#' @inheritParams checkScAucell
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
+assertScAucell <- checkmate::makeAssertionFunction(checkScAucell)
+
 #### HotSpot -------------------------------------------------------------------
 
 #' Check HotSpot parameters

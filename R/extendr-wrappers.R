@@ -3370,18 +3370,17 @@ rs_calculate_dge_mann_whitney <- function(f_path, cell_indices_1, cell_indices_2
 #' @description
 #' `r lifecycle::badge("experimental")`
 #' The function will take in a list of gene set indices (0-indexed!) and
-#' calculate an AUCell type statistic. Two options here: calculate this
-#' with proper AUROC calculations (useful for marker gene expression) or
-#' based on the Mann-Whitney statistic (useful for pathway activity
-#' measurs). Data can be streamed in chunks of 50k cells per or loaded in
-#' in one go.
+#' calculate an AUCell type statistic. Three options here: the recovery-curve
+#' AUC of Aibar, et al. (the actual AUCell statistic), an AUC derived from the
+#' Mann-Whitney statistic, or average precision. Data can be streamed in
+#' chunks of 50k cells per or loaded in in one go.
 #'
 #' @param f_path String. Path to the `counts_cells.bin` file.
 #' @param gs_list List. List with the gene set indices (0-indexed!) of the
 #' genes of interest.
 #' @param cells_to_keep Integer. Vector of indices of the cells to keep.
-#' @param auc_type String. One of `"wilcox"` or `"auroc"`, pending on
-#' which statistic you wish to calculate.
+#' @param aucell_params List. The AUCell parameters, see
+#' [bixverse::params_sc_aucell()].
 #' @param streaming Boolean. Shall the data be streamed.
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
@@ -3392,7 +3391,7 @@ rs_calculate_dge_mann_whitney <- function(f_path, cell_indices_1, cell_indices_2
 #' @export
 #'
 #' @keywords internal
-rs_aucell <- function(f_path, gs_list, cells_to_keep, auc_type, streaming, verbose) .Call(wrap__rs_aucell, f_path, gs_list, cells_to_keep, auc_type, streaming, verbose)
+rs_aucell <- function(f_path, gs_list, cells_to_keep, aucell_params, streaming, verbose) .Call(wrap__rs_aucell, f_path, gs_list, cells_to_keep, aucell_params, streaming, verbose)
 
 #' Calculate gene spatial auto-correlations
 #'
@@ -4367,18 +4366,17 @@ rs_mc_scenic <- function(sparse_data, tf_indices, scenic_params, seed, verbose) 
 #' @description
 #' `r lifecycle::badge("experimental")`
 #' The function will take in a list of gene set indices (0-indexed!) and
-#' calculate an AUCell type statistic. Two options here: calculate this
-#' with proper AUROC calculations (useful for marker gene expression) or
-#' based on the Mann-Whitney statistic (useful for pathway activity
-#' measurs). This version works on MetaCell counts which are stored in memory
-#' directly.
+#' calculate an AUCell type statistic. Three options here: the recovery-curve
+#' AUC of Aibar, et al. (the actual AUCell statistic), an AUC derived from the
+#' Mann-Whitney statistic, or average precision. This version works on
+#' MetaCell counts which are stored in memory directly.
 #'
 #' @param sparse_data A named list that needs to have `data`, `indptr`,
 #' `indices`, `nrow`, `ncol` and `format`.
 #' @param gs_list List. List with the gene set indices (0-indexed!) of the
 #' genes of interest.
-#' @param auc_type String. One of `"wilcox"` or `"auroc"`, pending on
-#' which statistic you wish to calculate.
+#' @param aucell_params List. The AUCell parameters, see
+#' [bixverse::params_sc_aucell()].
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
 #'
@@ -4386,7 +4384,7 @@ rs_mc_scenic <- function(sparse_data, tf_indices, scenic_params, seed, verbose) 
 #' AUC.
 #'
 #' @export
-rs_mc_aucell <- function(sparse_data, gs_list, auc_type, verbose) .Call(wrap__rs_mc_aucell, sparse_data, gs_list, auc_type, verbose)
+rs_mc_aucell <- function(sparse_data, gs_list, aucell_params, verbose) .Call(wrap__rs_mc_aucell, sparse_data, gs_list, aucell_params, verbose)
 
 #' Run NMF (HALS) on MetaCells
 #'

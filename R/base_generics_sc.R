@@ -894,17 +894,31 @@ find_clusters_sc <- S7::new_generic(
 #'
 #' @description
 #' Calculates an AUC-type score akin to AUCell across the gene sets, see Aibar
-#' et al. You have the options to calculate the AUC. Two options here: calculate
-#' this with proper AUROC calculations (useful for marker gene expression, use
-#' the `"auroc"` version) or based on the Mann-Whitney statistic (useful for
-#' pathway activity measurs, use the `"wilcox"`). Data can be streamed in chunks
-#' of 50k cells per or loaded in in one go.
+#' et al. Three statistics are on offer, all consuming the same within-cell
+#' ranking but weighting it differently. `"wilcox"` (the default) is the AUC
+#' derived from the Mann-Whitney U statistic over the full ranking; its null
+#' sits at 0.5 for any gene set size, which makes it a good fit for pathway
+#' activity. `"recovery"` is the recovery-curve AUC under a rank cutoff, i.e.
+#' the actual AUCell statistic of Aibar, et al., and is top-heavy: only genes
+#' inside the top `max_rank` of the cell contribute. `"ap"` is average
+#' precision, the most top-heavy of the three, but its null tracks the gene set
+#' prevalence, so raw values are not comparable across gene sets of different
+#' size unless `standardise` is on. Data can be streamed in chunks of 50k cells
+#' per or loaded in in one go.
 #'
 #' @param object `SingleCells`, `MetaCells` (or potentially other) class.
 #' @param gs_list Named list. The elements have the gene identifiers of the
 #' respective gene sets.
-#' @param auc_type String. Which type of AUC to calculate. Choice of
-#' `c("wilcox", "auroc")`.
+#' @param aucell_params List with the AUCell parameters, see
+#' [bixverse::params_sc_aucell()] with the following elements:
+#' \itemize{
+#'   \item auc_type - String. Which statistic to calculate. One of
+#'   `c("wilcox", "recovery", "ap")`.
+#'   \item max_rank - Optional numeric. Rank cutoff for `"recovery"`. If `NULL`,
+#'   the top 5% of the gene universe is used. Ignored by the other statistics.
+#'   \item standardise - Boolean. Shall each gene set's scores be z-scored
+#'   across the cells.
+#' }
 #' @param streaming Optional Boolean. Shall the data be streamed in. Useful for
 #' larger data sets where you wish to avoid loading in the whole data. If
 #' `NULL`, will automatically detect. Ignored when applied to `MetaCells`.
@@ -924,7 +938,7 @@ aucell_sc <- S7::new_generic(
   fun = function(
     object,
     gs_list,
-    auc_type = c("wilcox", "auroc"),
+    aucell_params = params_sc_aucell(),
     streaming = NULL,
     .verbose = TRUE
   ) {

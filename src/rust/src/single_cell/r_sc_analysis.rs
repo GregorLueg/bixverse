@@ -240,18 +240,17 @@ fn rs_module_scoring(
 /// @description
 /// `r lifecycle::badge("experimental")`
 /// The function will take in a list of gene set indices (0-indexed!) and
-/// calculate an AUCell type statistic. Two options here: calculate this
-/// with proper AUROC calculations (useful for marker gene expression) or
-/// based on the Mann-Whitney statistic (useful for pathway activity
-/// measurs). Data can be streamed in chunks of 50k cells per or loaded in
-/// in one go.
+/// calculate an AUCell type statistic. Three options here: the recovery-curve
+/// AUC of Aibar, et al. (the actual AUCell statistic), an AUC derived from the
+/// Mann-Whitney statistic, or average precision. Data can be streamed in
+/// chunks of 50k cells per or loaded in in one go.
 ///
 /// @param f_path String. Path to the `counts_cells.bin` file.
 /// @param gs_list List. List with the gene set indices (0-indexed!) of the
 /// genes of interest.
 /// @param cells_to_keep Integer. Vector of indices of the cells to keep.
-/// @param auc_type String. One of `"wilcox"` or `"auroc"`, pending on
-/// which statistic you wish to calculate.
+/// @param aucell_params List. The AUCell parameters, see
+/// [bixverse::params_sc_aucell()].
 /// @param streaming Boolean. Shall the data be streamed.
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
@@ -267,11 +266,12 @@ fn rs_aucell(
     f_path: String,
     gs_list: List,
     cells_to_keep: Vec<i32>,
-    auc_type: &str,
+    aucell_params: List,
     streaming: bool,
     verbose: usize,
 ) -> Result<RArray<f64, 2>> {
     let cells_to_keep = cells_to_keep.r_int_convert();
+    let aucell_params = AucellParams::from_r_list(aucell_params)?;
 
     let mut gs_indices: Vec<Vec<usize>> = Vec::with_capacity(gs_list.len());
     for i in 0..gs_list.len() {
@@ -286,10 +286,23 @@ fn rs_aucell(
     }
 
     let res = if streaming {
-        calculate_aucell_streaming(&f_path, &gs_indices, &cells_to_keep, auc_type, verbose)
-            .to_extendr()?
+        calculate_aucell_streaming(
+            &f_path,
+            &gs_indices,
+            &cells_to_keep,
+            Some(aucell_params),
+            verbose,
+        )
+        .to_extendr()?
     } else {
-        calculate_aucell(&f_path, &gs_indices, &cells_to_keep, auc_type, verbose).to_extendr()?
+        calculate_aucell(
+            &f_path,
+            &gs_indices,
+            &cells_to_keep,
+            Some(aucell_params),
+            verbose,
+        )
+        .to_extendr()?
     };
 
     let auc_mat = Mat::from_fn(res[0].len(), res.len(), |i, j| res[j][i] as f64);

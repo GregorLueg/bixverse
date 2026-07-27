@@ -703,6 +703,55 @@ params_sc_vision <- function(
   )
 }
 
+## aucell ----------------------------------------------------------------------
+
+#' Wrapper function for parameters for AUCell
+#'
+#' @description
+#' The three statistics consume the same within-cell ranking, but weight it
+#' very differently. `"wilcox"` is a pure function of the gene set's rank sum,
+#' so a gene at rank 2 and one at rank 200 count for almost the same thing.
+#' `"recovery"` and `"ap"` are top-heavy.
+#'
+#' @param auc_type String. Which statistic to calculate. One of
+#' `c("wilcox", "recovery", "ap")`. `"wilcox"` is the AUC derived from the
+#' Mann-Whitney U statistic over the full ranking, with the null at 0.5 for any
+#' gene set size. `"recovery"` is the recovery-curve AUC under a rank cutoff,
+#' i.e. the actual AUCell statistic of Aibar, et al. `"ap"` is average
+#' precision, the most top-heavy of the three, but its null tracks the gene set
+#' prevalence so raw values are not comparable across gene sets of different
+#' size unless `standardise` is on. Defaults to `"wilcox"`.
+#' @param max_rank Optional numeric. Rank cutoff for `"recovery"`, counted from
+#' the top of the within-cell ranking. If `NULL`, resolves to the top 5% of the
+#' gene universe, following Aibar, et al. Ignored by the other two statistics.
+#' @param standardise Boolean. Shall each gene set's scores be z-scored across
+#' the cells. This is what makes `"ap"` comparable across gene sets of
+#' different size. Defaults to `FALSE`.
+#'
+#' @returns A list with the AUCell parameters.
+#'
+#' @references Aibar, et al., Nat Methods, 2017
+#'
+#' @export
+params_sc_aucell <- function(
+  auc_type = c("wilcox", "recovery", "ap"),
+  max_rank = NULL,
+  standardise = FALSE
+) {
+  auc_type <- match.arg(auc_type)
+  checkmate::assertChoice(auc_type, c("wilcox", "recovery", "ap"))
+  checkmate::qassert(max_rank, c("N1[1,)", "0"))
+  checkmate::qassert(standardise, "B1")
+
+  # Rust parses this one with as_real(), so an integer would silently be
+  # dropped and fall back to the automatic cutoff
+  list(
+    auc_type = auc_type,
+    max_rank = if (is.null(max_rank)) NULL else as.double(max_rank),
+    standardise = standardise
+  )
+}
+
 ## hotspot ---------------------------------------------------------------------
 
 #' Wrapper function for parameters for HotSpot
