@@ -56,6 +56,7 @@ importantly, it is simply less data.
 ```{r}
 #| label: setup
 library(bixverse)
+library(bixverse.plots)
 library(ggplot2)
 library(data.table)
 library(patchwork)
@@ -628,15 +629,13 @@ seacells <- umap_sc(seacells, k = 10L, knn_method = "exhaustive")
 #| label: mc umap plot
 #| fig-width: 7
 #| fig-height: 5
-umap_dt <- as.data.table(
-  get_embedding(seacells, "umap"),
-  keep.rownames = "meta_cell_id"
-)[, leiden_clusters := seacells[["leiden_clusters"]]]
 
-ggplot(umap_dt, aes(x = umap_1, y = umap_2)) +
-  geom_point(aes(colour = as.factor(leiden_clusters)), size = 1.5) +
-  theme_bw() +
-  labs(colour = "MetaCell cluster")
+embedding_plot_sc(
+  object = seacells,
+  embedding = "umap",
+  colour_by = "leiden_clusters",
+  discrete = TRUE
+)
 ```
 
 The plot is much sparser than the equivalent UMAP on the original cells,
@@ -712,6 +711,11 @@ auc_res <- aucell_sc(
   object = seacells,
   gs_list = tf_to_gene_ls,
   aucell_params = params_sc_aucell(auc_type = "wilcox")
+)
+
+umap_dt <- as.data.table(
+  get_embedding(seacells, "umap"),
+  keep.rownames = "meta_cell_id"
 )
 
 umap_dt[, `:=`(IRF1 = auc_res[, "IRF1"], TCF4 = auc_res[, "TCF4"])]

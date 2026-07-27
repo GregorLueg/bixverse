@@ -428,7 +428,8 @@ embedding_plot_sc(
   theme(legend.position = "bottom")
 ```
 
-Alternatively, we can also show the expression levels of the cell type markers using the dotplot plotting function `dot_plot_sc` from `bixverse.plots`. 
+Alternatively, we can also show the expression levels of the cell type markers 
+using the dotplot plotting function `dot_plot_sc` from `bixverse.plots`. 
 
 ```{r}
 features_vec <- setdiff(symbol_to_ensembl[names(cell_markers)], NA)
