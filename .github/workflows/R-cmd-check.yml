@@ -50,6 +50,14 @@ jobs:
             any::rextendr
           needs: check
 
+      # RSPM's macOS stringfish binary is linked against the legacy TBB 2020 ABI
+      # (tbb::internal::NFS_Allocate), which oneTBB in current RcppParallel no
+      # longer exports. Rebuild from source against the installed RcppParallel.
+      - name: Rebuild stringfish/qs2 from source (macOS)
+        if: runner.os == 'macOS'
+        run: install.packages(c("stringfish", "qs2"), type = "source", repos = "https://cloud.r-project.org")
+        shell: Rscript {0}
+
       - name: Install system dependencies (Linux)
         if: runner.os == 'Linux'
         run: |
