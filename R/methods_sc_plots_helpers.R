@@ -817,7 +817,9 @@ S7::method(extract_dot_plot_data, SingleCellsMultiModal) <- function(
   modality <- match.arg(modality)
 
   if (modality == "rna") {
-    rna_method <- S7::method(extract_dot_plot_data, ScOrScSubset)
+    # lookup by concrete class: S7 expands unions at registration, but
+    # S7::method() refuses to retrieve by one
+    rna_method <- S7::method(extract_dot_plot_data, SingleCells)
     return(rna_method(
       object = object,
       features = features,
@@ -952,7 +954,9 @@ S7::method(extract_gene_expression, SingleCellsMultiModal) <- function(
   modality <- match.arg(modality)
 
   if (modality == "rna") {
-    rna_method <- S7::method(extract_gene_expression, ScOrScSubset)
+    # lookup by concrete class: S7 expands unions at registration, but
+    # S7::method() refuses to retrieve by one
+    rna_method <- S7::method(extract_gene_expression, SingleCells)
     return(rna_method(
       object = object,
       features = features,
