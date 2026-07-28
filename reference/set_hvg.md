@@ -16,6 +16,9 @@ set_hvg(x, hvg)
 
 ## S7 method for class <bixverse::SingleCells>
 set_hvg(x, hvg)
+
+## S7 method for class <bixverse::SingleCellsSubset>
+set_hvg(x, hvg)
 ```
 
 ## Arguments

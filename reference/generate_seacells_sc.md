@@ -25,7 +25,7 @@ generate_seacells_sc(
 
 - object:
 
-  `SingleCells` class.
+  `SingleCells` or `SingleCellsSubset` class.
 
 - seacell_params:
 

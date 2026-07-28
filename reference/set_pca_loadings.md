@@ -15,6 +15,9 @@ set_pca_loadings(x, pca_loading, ...)
 
 ## S7 method for class <bixverse::SingleCells>
 set_pca_loadings(x, pca_loading, ...)
+
+## S7 method for class <bixverse::SingleCellsSubset>
+set_pca_loadings(x, pca_loading, ...)
 ```
 
 ## Arguments

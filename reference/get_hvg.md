@@ -16,6 +16,9 @@ get_hvg(x)
 
 ## S7 method for class <bixverse::SingleCells>
 get_hvg(x)
+
+## S7 method for class <bixverse::SingleCellsSubset>
+get_hvg(x)
 ```
 
 ## Arguments

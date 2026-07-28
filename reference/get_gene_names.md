@@ -12,6 +12,9 @@ get_gene_names(x)
 
 ## S7 method for class <bixverse::SingleCells>
 get_gene_names(x)
+
+## S7 method for class <bixverse::SingleCellsSubset>
+get_gene_names(x)
 ```
 
 ## Arguments

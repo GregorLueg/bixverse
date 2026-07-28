@@ -1,16 +1,16 @@
 # Calculate AUCell in Rust (for meta cells)
 
 **\[experimental\]** The function will take in a list of gene set
-indices (0-indexed!) and calculate an AUCell type statistic. Two options
-here: calculate this with proper AUROC calculations (useful for marker
-gene expression) or based on the Mann-Whitney statistic (useful for
-pathway activity measurs). This version works on MetaCell counts which
-are stored in memory directly.
+indices (0-indexed!) and calculate an AUCell type statistic. Three
+options here: the recovery-curve AUC of Aibar, et al. (the actual AUCell
+statistic), an AUC derived from the Mann-Whitney statistic, or average
+precision. This version works on MetaCell counts which are stored in
+memory directly.
 
 ## Usage
 
 ``` r
-rs_mc_aucell(sparse_data, gs_list, auc_type, verbose)
+rs_mc_aucell(sparse_data, gs_list, aucell_params, verbose)
 ```
 
 ## Arguments
@@ -25,10 +25,10 @@ rs_mc_aucell(sparse_data, gs_list, auc_type, verbose)
   List. List with the gene set indices (0-indexed!) of the genes of
   interest.
 
-- auc_type:
+- aucell_params:
 
-  String. One of `"wilcox"` or `"auroc"`, pending on which statistic you
-  wish to calculate.
+  List. The AUCell parameters, see
+  [`params_sc_aucell()`](https://gregorlueg.github.io/bixverse/reference/params_sc_aucell.md).
 
 - verbose:
 

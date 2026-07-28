@@ -16,6 +16,9 @@ get_knn_obj(x, ...)
 
 ## S7 method for class <bixverse::SingleCells>
 get_knn_obj(x, ...)
+
+## S7 method for class <bixverse::SingleCellsSubset>
+get_knn_obj(x, ...)
 ```
 
 ## Arguments

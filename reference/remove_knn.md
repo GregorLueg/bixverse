@@ -15,6 +15,9 @@ remove_knn(x, ...)
 
 ## S7 method for class <bixverse::SingleCells>
 remove_knn(x, ...)
+
+## S7 method for class <bixverse::SingleCellsSubset>
+remove_knn(x, ...)
 ```
 
 ## Arguments

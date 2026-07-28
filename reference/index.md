@@ -91,16 +91,47 @@ Functions related to CisTarget enrichment.
 - [`params_cistarget()`](https://gregorlueg.github.io/bixverse/reference/params_cistarget.md)
   : Wrapper function to CisTarget parameters
 
-## Correlation-based gene module detections
+## Co-expression methods for bulk RNAseq
 
-Methods to identify co-expression modules via correlations in the data.
-Includes methods for differential correlations, some graph-based and
-some hierarchical clustering based ones.
+Methods to identify co-expression modules via correlations or matrix
+factorisations.
 
 - [`BulkCoExp()`](https://gregorlueg.github.io/bixverse/reference/BulkCoExp.md)
   : Bulk RNAseq co-expression modules
 - [`preprocess_bulk_coexp()`](https://gregorlueg.github.io/bixverse/reference/preprocess_bulk_coexp.md)
   : Process the raw data
+- [`get_diagnostics()`](https://gregorlueg.github.io/bixverse/reference/get_diagnostics.md)
+  : Get diagnostics from a BulkModuleResult
+- [`get_factors()`](https://gregorlueg.github.io/bixverse/reference/get_factors.md)
+  : Get factor matrices from a BulkModuleResult
+- [`get_nmf_gene_loadings()`](https://gregorlueg.github.io/bixverse/reference/get_nmf_gene_loadings.md)
+  : Get the NMF gene loadings
+- [`get_nmf_modules()`](https://gregorlueg.github.io/bixverse/reference/get_nmf_modules.md)
+  : Get the NMF module membership data.table
+- [`get_nmf_sample_activity()`](https://gregorlueg.github.io/bixverse/reference/get_nmf_sample_activity.md)
+  : Get the NMF sample activity
+- [`get_nmf_stability()`](https://gregorlueg.github.io/bixverse/reference/get_nmf_stability.md)
+  : Get the stabilised NMF diagnostics
+- [`get_c_pca_factors()`](https://gregorlueg.github.io/bixverse/reference/get_c_pca_factors.md)
+  : Get the contrastive PCA factors
+- [`get_c_pca_loadings()`](https://gregorlueg.github.io/bixverse/reference/get_c_pca_loadings.md)
+  : Get the contrastive PCA loadings
+- [`get_ica_stability_res()`](https://gregorlueg.github.io/bixverse/reference/get_ica_stability_res.md)
+  : Get the ICA component data (stability, convergence, nMI)
+- [`get_grid_search_res()`](https://gregorlueg.github.io/bixverse/reference/get_grid_search_res.md)
+  : Get the grid search results
+- [`get_cor_graph()`](https://gregorlueg.github.io/bixverse/reference/get_cor_graph.md)
+  : Get correlation-based graph
+- [`get_diffcor_graph()`](https://gregorlueg.github.io/bixverse/reference/get_diffcor_graph.md)
+  : Get differential correlation-based graph
+- [`get_epsilon_res()`](https://gregorlueg.github.io/bixverse/reference/get_epsilon_res.md)
+  : Return the epsilon data
+- [`get_resolution_res()`](https://gregorlueg.github.io/bixverse/reference/get_resolution_res.md)
+  : Return the resolution results
+- [`get_outputs()`](https://gregorlueg.github.io/bixverse/reference/get_outputs.md)
+  : Return the outputs
+- [`get_modules()`](https://gregorlueg.github.io/bixverse/reference/get_modules.md)
+  : Get the module membership from a BulkModuleResult
 - [`cor_module_check_epsilon()`](https://gregorlueg.github.io/bixverse/reference/cor_module_check_epsilon.md)
   : Iterate through different epsilon parameters
 - [`cor_module_coremo_clustering()`](https://gregorlueg.github.io/bixverse/reference/cor_module_coremo_clustering.md)
@@ -122,45 +153,16 @@ some hierarchical clustering based ones.
   : Update the correlation matrix to a TOM
 - [`diffcor_module_processing()`](https://gregorlueg.github.io/bixverse/reference/diffcor_module_processing.md)
   : Prepare differential correlation-based module detection
-- [`get_cor_graph()`](https://gregorlueg.github.io/bixverse/reference/get_cor_graph.md)
-  : Get correlation-based graph
-- [`get_diffcor_graph()`](https://gregorlueg.github.io/bixverse/reference/get_diffcor_graph.md)
-  : Get differential correlation-based graph
-- [`get_epsilon_res()`](https://gregorlueg.github.io/bixverse/reference/get_epsilon_res.md)
-  : Return the epsilon data
-- [`get_resolution_res()`](https://gregorlueg.github.io/bixverse/reference/get_resolution_res.md)
-  : Return the resolution results
-- [`get_outputs()`](https://gregorlueg.github.io/bixverse/reference/get_outputs.md)
-  : Return the outputs
-- [`params_cor_graph()`](https://gregorlueg.github.io/bixverse/reference/params_cor_graph.md)
-  : Wrapper function for graph generation
-- [`params_coremo()`](https://gregorlueg.github.io/bixverse/reference/params_coremo.md)
-  : Wrapper function to generate CoReMo parameters
-
-## Matrix factorisation methods
-
-Methods to identify co-expression via matrix factorisations. Uses the
-same class as the correlation-based ones. You have contrastive PCA, ICA
-and dual graph-regularised dictionary learning as methods.
-
 - [`contrastive_pca_processing()`](https://gregorlueg.github.io/bixverse/reference/contrastive_pca_processing.md)
   : Prepare class for contrastive PCA
 - [`c_pca_plot_alphas()`](https://gregorlueg.github.io/bixverse/reference/c_pca_plot_alphas.md)
   : Plot various alphas for the contrastive PCA
 - [`contrastive_pca()`](https://gregorlueg.github.io/bixverse/reference/contrastive_pca.md)
   : Apply contrastive PCA.
-- [`get_c_pca_factors()`](https://gregorlueg.github.io/bixverse/reference/get_c_pca_factors.md)
-  : Get the contrastive PCA factors
-- [`get_c_pca_loadings()`](https://gregorlueg.github.io/bixverse/reference/get_c_pca_loadings.md)
-  : Get the contrastive PCA loadings
 - [`dgrdl_grid_search()`](https://gregorlueg.github.io/bixverse/reference/dgrdl_grid_search.md)
   : Grid search over DGRDL parameters
 - [`dgrdl_result()`](https://gregorlueg.github.io/bixverse/reference/dgrdl_result.md)
   : Run DGRDL with the specified parameters
-- [`get_ica_stability_res()`](https://gregorlueg.github.io/bixverse/reference/get_ica_stability_res.md)
-  : Get the ICA component data (stability, convergence, nMI)
-- [`get_grid_search_res()`](https://gregorlueg.github.io/bixverse/reference/get_grid_search_res.md)
-  : Get the grid search results
 - [`ica_evaluate_comp()`](https://gregorlueg.github.io/bixverse/reference/ica_evaluate_comp.md)
   : Iterate over different ncomp parameters for ICA
 - [`ica_optimal_ncomp()`](https://gregorlueg.github.io/bixverse/reference/ica_optimal_ncomp.md)
@@ -169,8 +171,18 @@ and dual graph-regularised dictionary learning as methods.
   : Prepare class for ICA
 - [`ica_stabilised_results()`](https://gregorlueg.github.io/bixverse/reference/ica_stabilised_results.md)
   : Run stabilised ICA with a given number of components
+- [`nmf_bulk()`](https://gregorlueg.github.io/bixverse/reference/nmf_bulk.md)
+  : Run non-negative matrix factorisation on a BulkCoExp
+- [`stabilised_nmf_bulk()`](https://gregorlueg.github.io/bixverse/reference/stabilised_nmf_bulk.md)
+  : Run stabilised (multi-restart) NMF on a BulkCoExp
+- [`params_cor_graph()`](https://gregorlueg.github.io/bixverse/reference/params_cor_graph.md)
+  : Wrapper function for graph generation
+- [`params_coremo()`](https://gregorlueg.github.io/bixverse/reference/params_coremo.md)
+  : Wrapper function to generate CoReMo parameters
 - [`params_dgrdl()`](https://gregorlueg.github.io/bixverse/reference/params_dgrdl.md)
   : Wrapper function to generate DGRDL parameters
+- [`params_module_membership()`](https://gregorlueg.github.io/bixverse/reference/params_module_membership.md)
+  : Wrapper function to generate module membership parameters
 - [`params_ica_general()`](https://gregorlueg.github.io/bixverse/reference/params_ica_general.md)
   : Wrapper function for standard ICA parameters
 - [`params_ica_ncomp()`](https://gregorlueg.github.io/bixverse/reference/params_ica_ncomp.md)
@@ -390,6 +402,54 @@ THE single cell class with a large number of getters.
 - [`drop_cols_sc()`](https://gregorlueg.github.io/bixverse/reference/drop_cols_sc.md)
   : Drop columns from the obs or var table
 
+## Single cell subsets and pipelines
+
+Sub-clustering a group of cells and running the same chain per group.
+
+- [`SingleCellsSubset()`](https://gregorlueg.github.io/bixverse/reference/SingleCellsSubset.md)
+  : bixverse single cell subset class
+
+- [`merge_subset_obs()`](https://gregorlueg.github.io/bixverse/reference/merge_subset_obs.md)
+  : Merge obs columns from subsets back into the parent object
+
+- [`sc_pipeline()`](https://gregorlueg.github.io/bixverse/reference/sc_pipeline.md)
+  : Construct an empty single cell pipeline
+
+- [`` `%>>%` ``](https://gregorlueg.github.io/bixverse/reference/grapes-greater-than-greater-than-grapes.md)
+  : Append a step to a pipeline
+
+- [`apply_pipeline()`](https://gregorlueg.github.io/bixverse/reference/apply_pipeline.md)
+  : Apply a pipeline to a single cell object
+
+- [`apply_pipeline_per_group()`](https://gregorlueg.github.io/bixverse/reference/apply_pipeline_per_group.md)
+  :
+
+  Apply a pipeline independently to each group of a `SingleCells` object
+
+- [`step_hvg_sc()`](https://gregorlueg.github.io/bixverse/reference/step_hvg_sc.md)
+  : Pipeline step: identify highly variable genes
+
+- [`step_pca_sc()`](https://gregorlueg.github.io/bixverse/reference/step_pca_sc.md)
+  : Pipeline step: PCA
+
+- [`step_neighbours_sc()`](https://gregorlueg.github.io/bixverse/reference/step_neighbours_sc.md)
+  : Pipeline step: nearest neighbours
+
+- [`step_clusters_sc()`](https://gregorlueg.github.io/bixverse/reference/step_clusters_sc.md)
+  : Pipeline step: graph-based clustering
+
+- [`step_bbknn_sc()`](https://gregorlueg.github.io/bixverse/reference/step_bbknn_sc.md)
+  : Pipeline step: BBKNN batch correction
+
+- [`step_fast_mnn_sc()`](https://gregorlueg.github.io/bixverse/reference/step_fast_mnn_sc.md)
+  : Pipeline step: fastMNN batch correction
+
+- [`step_harmony_sc()`](https://gregorlueg.github.io/bixverse/reference/step_harmony_sc.md)
+  : Pipeline step: Harmony batch correction
+
+- [`step_harmony_v2_sc()`](https://gregorlueg.github.io/bixverse/reference/step_harmony_v2_sc.md)
+  : Pipeline step: Harmony v2 batch correction
+
 ## Single cell class for multi-modal data and getters
 
 This version allows you to also work ADT counts
@@ -592,7 +652,13 @@ gene sets, HVG (batch-aware), PCA and batch corrections.
 - [`per_cell_qc_outlier()`](https://gregorlueg.github.io/bixverse/reference/per_cell_qc_outlier.md)
   : Use MAD outlier detection on per-cell QC metrics
 - [`run_cell_qc()`](https://gregorlueg.github.io/bixverse/reference/run_cell_qc.md)
-  : Run MAD outlier detection on per-cell QC metrics
+  : Run outlier detection on per-cell QC metrics
+- [`run_cell_qc_fixed()`](https://gregorlueg.github.io/bixverse/reference/run_cell_qc_fixed.md)
+  : Fixed-threshold cell QC
+- [`rescue_cells()`](https://gregorlueg.github.io/bixverse/reference/rescue_cells.md)
+  : Rescue MAD-flagged cells that fall within safe bounds
+- [`flag_cells()`](https://gregorlueg.github.io/bixverse/reference/flag_cells.md)
+  : Add hard-threshold flags to a CellQc object
 - [`find_hvg_sc()`](https://gregorlueg.github.io/bixverse/reference/find_hvg_sc.md)
   : Identify HVGs
 - [`find_hvg_batch_aware_sc()`](https://gregorlueg.github.io/bixverse/reference/find_hvg_batch_aware_sc.md)
@@ -607,20 +673,6 @@ gene sets, HVG (batch-aware), PCA and batch corrections.
   : Find the neighbours for single cell.
 - [`top_genes_perc_sc()`](https://gregorlueg.github.io/bixverse/reference/top_genes_perc_sc.md)
   : Calculate the proportions of reads for the Top N genes
-- [`fast_mnn_sc()`](https://gregorlueg.github.io/bixverse/reference/fast_mnn_sc.md)
-  : Run fastMNN
-- [`harmony_sc()`](https://gregorlueg.github.io/bixverse/reference/harmony_sc.md)
-  : Run Harmony
-- [`harmony_v2_sc()`](https://gregorlueg.github.io/bixverse/reference/harmony_v2_sc.md)
-  : Run Harmony v2
-- [`bbknn_sc()`](https://gregorlueg.github.io/bixverse/reference/bbknn_sc.md)
-  : Run BBKNN
-- [`calculate_kbet_sc()`](https://gregorlueg.github.io/bixverse/reference/calculate_kbet_sc.md)
-  : Calculate kBET scores
-- [`calculate_batch_asw_sc()`](https://gregorlueg.github.io/bixverse/reference/calculate_batch_asw_sc.md)
-  : Calculate batch average silhouette width
-- [`calculate_batch_lisi_sc()`](https://gregorlueg.github.io/bixverse/reference/calculate_batch_lisi_sc.md)
-  : Calculate batch LISI scores
 - [`params_norm_doublets_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_norm_doublets_defaults.md)
   : Helper function to generate normalisation defaults for doublet
   detection.
@@ -632,16 +684,8 @@ gene sets, HVG (batch-aware), PCA and batch corrections.
   : Wrapper for PCA specifically designed for single cells
 - [`params_scrublet()`](https://gregorlueg.github.io/bixverse/reference/params_scrublet.md)
   : Wrapper function for Scrublet doublet detection parameters
-- [`params_sc_bbknn()`](https://gregorlueg.github.io/bixverse/reference/params_sc_bbknn.md)
-  : Wrapper function for the BBKNN parameters
 - [`params_sc_fast_cluster()`](https://gregorlueg.github.io/bixverse/reference/params_sc_fast_cluster.md)
   : Fast single cell clustering parameters
-- [`params_sc_fastmnn()`](https://gregorlueg.github.io/bixverse/reference/params_sc_fastmnn.md)
-  : Wrapper function for the fastMNN parameters
-- [`params_sc_harmony()`](https://gregorlueg.github.io/bixverse/reference/params_sc_harmony.md)
-  : Default parameters for Harmony batch correction
-- [`params_sc_harmony_v2()`](https://gregorlueg.github.io/bixverse/reference/params_sc_harmony_v2.md)
-  : Default parameters for Harmony v2 batch correction
 - [`params_sc_neighbours()`](https://gregorlueg.github.io/bixverse/reference/params_sc_neighbours.md)
   : Wrapper function for parameters for neighbour identification in
   single cell
@@ -660,6 +704,41 @@ gene sets, HVG (batch-aware), PCA and batch corrections.
 - [`params_fast_cluster_default()`](https://gregorlueg.github.io/bixverse/reference/params_fast_cluster_default.md)
   : Helper function to generate default parameters for the fast
   clustering for the doublet detection methods
+
+## Single cell batch correction methods
+
+Batch correction methods and metrics for single cell
+
+- [`fast_mnn_sc()`](https://gregorlueg.github.io/bixverse/reference/fast_mnn_sc.md)
+  : Run fastMNN
+- [`harmony_sc()`](https://gregorlueg.github.io/bixverse/reference/harmony_sc.md)
+  : Run Harmony
+- [`harmony_v2_sc()`](https://gregorlueg.github.io/bixverse/reference/harmony_v2_sc.md)
+  : Run Harmony v2
+- [`bbknn_sc()`](https://gregorlueg.github.io/bixverse/reference/bbknn_sc.md)
+  : Run BBKNN
+- [`seurat_cca_sc()`](https://gregorlueg.github.io/bixverse/reference/seurat_cca_sc.md)
+  : Run Seurat CCA integration
+- [`seurat_rpca_sc()`](https://gregorlueg.github.io/bixverse/reference/seurat_rpca_sc.md)
+  : Run Seurat rPCA integration
+- [`calculate_kbet_sc()`](https://gregorlueg.github.io/bixverse/reference/calculate_kbet_sc.md)
+  : Calculate kBET scores
+- [`calculate_batch_asw_sc()`](https://gregorlueg.github.io/bixverse/reference/calculate_batch_asw_sc.md)
+  : Calculate batch average silhouette width
+- [`calculate_batch_lisi_sc()`](https://gregorlueg.github.io/bixverse/reference/calculate_batch_lisi_sc.md)
+  : Calculate batch LISI scores
+- [`params_sc_fastmnn()`](https://gregorlueg.github.io/bixverse/reference/params_sc_fastmnn.md)
+  : Wrapper function for the fastMNN parameters
+- [`params_sc_harmony()`](https://gregorlueg.github.io/bixverse/reference/params_sc_harmony.md)
+  : Default parameters for Harmony batch correction
+- [`params_sc_harmony_v2()`](https://gregorlueg.github.io/bixverse/reference/params_sc_harmony_v2.md)
+  : Default parameters for Harmony v2 batch correction
+- [`params_sc_bbknn()`](https://gregorlueg.github.io/bixverse/reference/params_sc_bbknn.md)
+  : Wrapper function for the BBKNN parameters
+- [`params_sc_seurat_cca()`](https://gregorlueg.github.io/bixverse/reference/params_sc_seurat_cca.md)
+  : Wrapper function for the Seurat CCA parameters
+- [`params_sc_seurat_rpca()`](https://gregorlueg.github.io/bixverse/reference/params_sc_seurat_rpca.md)
+  : Wrapper function for the Seurat rPCA parameters
 
 ## Single cell analysis methods
 
@@ -765,6 +844,9 @@ count extraction, miloR, Hotspot, VISION and SCENIC.
 
 - [`get_h()`](https://gregorlueg.github.io/bixverse/reference/get_h.md)
   : Get the H (cell activations) matrix
+
+- [`params_sc_aucell()`](https://gregorlueg.github.io/bixverse/reference/params_sc_aucell.md)
+  : Wrapper function for parameters for AUCell
 
 - [`params_sc_hotspot()`](https://gregorlueg.github.io/bixverse/reference/params_sc_hotspot.md)
   : Wrapper function for parameters for HotSpot
@@ -993,10 +1075,14 @@ Functions and helpers to download or generate synthetic data.
 - [`params_sc_synthetic_data()`](https://gregorlueg.github.io/bixverse/reference/params_sc_synthetic_data.md)
   : Default parameters for generation of synthetic single cell data
   (RNA)
+- [`params_synthetic_bulk_rnaseq()`](https://gregorlueg.github.io/bixverse/reference/params_synthetic_bulk_rnaseq.md)
+  : Wrapper function to generate synthetic bulk RNAseq parameters
+- [`params_bulk_sparsity()`](https://gregorlueg.github.io/bixverse/reference/params_bulk_sparsity.md)
+  : Wrapper function to generate bulk sparsification parameters
 - [`synthetic_signal_matrix()`](https://gregorlueg.github.io/bixverse/reference/synthetic_signal_matrix.md)
   : Generates a simple synthetic, pseudo gene expression matrix
 - [`simulate_dropouts()`](https://gregorlueg.github.io/bixverse/reference/simulate_dropouts.md)
-  : Simulate dropouts via different functions on synthetic bulk data
+  : Simulate sequencing-depth dropouts on synthetic bulk data
 - [`synthetic_bulk_cor_matrix()`](https://gregorlueg.github.io/bixverse/reference/synthetic_bulk_cor_matrix.md)
   : Generates synthetic bulk RNAseq data
 - [`synthetic_c_pca_data()`](https://gregorlueg.github.io/bixverse/reference/synthetic_c_pca_data.md)

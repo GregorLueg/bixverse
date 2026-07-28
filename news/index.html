@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,6 +35,7 @@
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Co-expression module detection methods</h6></li>
     <li><a class="dropdown-item" href="../articles/cpca.html">Contrastive PCA</a></li>
+    <li><a class="dropdown-item" href="../articles/bulk_coexpression_modules.html">Bulk co-expression modules</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Ontologies</h6></li>
     <li><a class="dropdown-item" href="../articles/ontologies.html">Semantic similarities on ontologies</a></li>
@@ -48,6 +49,7 @@
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
     <li><a class="dropdown-item" href="../articles/knn_searches.html">kNN searches for single cells in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_subsets.html">Sub-clustering and per-group pipelines</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>More advanced analysis methods</h6></li>
     <li><a class="dropdown-item" href="../articles/bag_of_genes_single_cells.html">'Bag of genes' methods for single cell in bixverse</a></li>
@@ -77,6 +79,33 @@
     </div>
 
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.4.4" id="bixverse-044">bixverse 0.4.4<a class="anchor" aria-label="anchor" href="#bixverse-044"></a></h2>
+<div class="section level3">
+<h3 id="features-0-4-4">Features<a class="anchor" aria-label="anchor" href="#features-0-4-4"></a></h3>
+<div class="section level4">
+<h4 id="general-0-4-4">General<a class="anchor" aria-label="anchor" href="#general-0-4-4"></a></h4>
+<ul><li>NMF implemented for bulk co-expression module detection and updated vignette.</li>
+<li>Synthetic data generators for bulk updated to create different data structures.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="single-cells-0-4-4">Single cells<a class="anchor" aria-label="anchor" href="#single-cells-0-4-4"></a></h4>
+<ul><li>Improved cell quality control functions.</li>
+<li>Additional single cell batch correction methods:
+<ul><li>Seurat-inspired CCA anchor-based batch correction</li>
+<li>Seurat-inspired rPCA anchor-based batch correction</li>
+</ul></li>
+<li>
+<code>SingleCellsSubset</code> class. This class creates a view into a subset of cells, think doing further analysis on T cells within your data set.</li>
+<li>AUCell reworked. <code><a href="../reference/aucell_sc.html">aucell_sc()</a></code> now takes a <code><a href="../reference/params_sc_aucell.html">params_sc_aucell()</a></code> list instead of an <code>auc_type</code> string, and offers three statistics: <code>"wilcox"</code> (the Mann-Whitney AUC, still the default), <code>"recovery"</code> (the recovery-curve AUC of Aibar et al., with a <code>max_rank</code> cutoff) and <code>"ap"</code> (average precision). Scores can be z-scored per gene set via <code>standardise</code>.</li>
+</ul></div>
+</div>
+<div class="section level3">
+<h3 id="breaking-changes-0-4-4">Breaking changes<a class="anchor" aria-label="anchor" href="#breaking-changes-0-4-4"></a></h3>
+<ul><li>
+<code>aucell_sc(auc_type = ...)</code> is gone, use <code>aucell_sc(aucell_params = params_sc_aucell(auc_type = ...))</code>. The <code>"auroc"</code> value has been dropped and now errors. <code>"wilcox"</code> results are unchanged.</li>
+</ul></div>
+</div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.4.3" id="bixverse-043">bixverse 0.4.3<a class="anchor" aria-label="anchor" href="#bixverse-043"></a></h2>
 <div class="section level3">
 <h3 id="fix-0-4-3">Fix<a class="anchor" aria-label="anchor" href="#fix-0-4-3"></a></h3>
@@ -102,7 +131,9 @@
 <h2 class="pkg-version" data-toc-text="0.4.1" id="bixverse-041">bixverse 0.4.1<a class="anchor" aria-label="anchor" href="#bixverse-041"></a></h2>
 <div class="section level3">
 <h3 id="features-0-4-1">Features<a class="anchor" aria-label="anchor" href="#features-0-4-1"></a></h3>
-<ul><li>Added singscore, see <a href="https://link.springer.com/article/10.1186/s12859-018-2435-4" class="external-link">Foroutan et al.</a>, as another option to score single samples and their pathway activity.</li>
+<ul><li>
+<code>SingleCellsSubset</code> class that can split from the main class and allows for analysis of e.g., a subset of cell types, etc.</li>
+<li>Added singscore, see <a href="https://link.springer.com/article/10.1186/s12859-018-2435-4" class="external-link">Foroutan et al.</a>, as another option to score single samples and their pathway activity.</li>
 </ul></div>
 </div>
     <div class="section level2">

@@ -1,51 +1,41 @@
 # Generates synthetic bulk RNAseq data
 
 Function generates synthetic bulkRNAseq data with heteroskedasticity
-(lowly expressed genes show higher variance) and can optionally add gene
-~ gene correlations for testing purposes of module detection methods.
+(lowly expressed genes show higher variance) and optional co-expression
+modules for testing module detection methods. The ground truth comes
+back with the counts, so a recovered module or eigengene can be scored
+against what was actually simulated. Which generator to pick and what
+each parameter does is documented in
+[`params_synthetic_bulk_rnaseq()`](https://gregorlueg.github.io/bixverse/reference/params_synthetic_bulk_rnaseq.md).
 
 ## Usage
 
 ``` r
-synthetic_bulk_cor_matrix(
-  num_samples = 100L,
-  num_genes = 1000L,
-  add_modules = TRUE,
-  module_sizes = c(100L, 100L, 100L),
-  seed = 123L
-)
+synthetic_bulk_cor_matrix(synthetic_params = params_synthetic_bulk_rnaseq())
 ```
 
 ## Arguments
 
-- num_samples:
+- synthetic_params:
 
-  Integer. Number of samples.
-
-- num_genes:
-
-  Integer. Number of genes.
-
-- add_modules:
-
-  Boolean. Shall gene modules with correlation structures be generated.
-
-- module_sizes:
-
-  Integer vector. Sizes of the different correlation modules. The sum
-  needs be smaller than `num_genes`.
-
-- seed:
-
-  Integer. Seed for reproducibility purposes.
+  List. The synthetic data parameters, see
+  [`params_synthetic_bulk_rnaseq()`](https://gregorlueg.github.io/bixverse/reference/params_synthetic_bulk_rnaseq.md).
 
 ## Value
 
 A `synthetic_bulk_data` class containing:
 
-- counts - The count matrix
+- counts - The count matrix. Rows are genes, columns are samples.
 
 - sparse_counts - A slot for sparse counts that can be added later, see
   [`simulate_dropouts()`](https://gregorlueg.github.io/bixverse/reference/simulate_dropouts.md).
 
-- module_data - The module membership of the genes
+- module_data - Per-gene ground truth: the gene identifier, its
+  `membership` (`0` for background), its `loading` on the module factor
+  and whether it is a hub gene.
+
+- module_factors - The latent factors the modules were built on. Rows
+  are modules, columns are samples. This is what a module eigengene or
+  an ICA/NMF component is trying to recover.
+
+The parameters used are stored on the `synthetic_params` attribute.

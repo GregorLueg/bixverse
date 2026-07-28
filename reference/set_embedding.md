@@ -15,6 +15,9 @@ set_embedding(x, embd, name, ...)
 
 ## S7 method for class <bixverse::SingleCells>
 set_embedding(x, embd, name, ...)
+
+## S7 method for class <bixverse::SingleCellsSubset>
+set_embedding(x, embd, name, ...)
 ```
 
 ## Arguments

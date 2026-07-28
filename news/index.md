@@ -1,5 +1,41 @@
 # Changelog
 
+## bixverse 0.4.4
+
+### Features
+
+#### General
+
+- NMF implemented for bulk co-expression module detection and updated
+  vignette.
+- Synthetic data generators for bulk updated to create different data
+  structures.
+
+#### Single cells
+
+- Improved cell quality control functions.
+- Additional single cell batch correction methods:
+  - Seurat-inspired CCA anchor-based batch correction
+  - Seurat-inspired rPCA anchor-based batch correction
+- `SingleCellsSubset` class. This class creates a view into a subset of
+  cells, think doing further analysis on T cells within your data set.
+- AUCell reworked.
+  [`aucell_sc()`](https://gregorlueg.github.io/bixverse/reference/aucell_sc.md)
+  now takes a
+  [`params_sc_aucell()`](https://gregorlueg.github.io/bixverse/reference/params_sc_aucell.md)
+  list instead of an `auc_type` string, and offers three statistics:
+  `"wilcox"` (the Mann-Whitney AUC, still the default), `"recovery"`
+  (the recovery-curve AUC of Aibar et al., with a `max_rank` cutoff) and
+  `"ap"` (average precision). Scores can be z-scored per gene set via
+  `standardise`.
+
+### Breaking changes
+
+- `aucell_sc(auc_type = ...)` is gone, use
+  `aucell_sc(aucell_params = params_sc_aucell(auc_type = ...))`. The
+  `"auroc"` value has been dropped and now errors. `"wilcox"` results
+  are unchanged.
+
 ## bixverse 0.4.3
 
 ### Fix
@@ -29,6 +65,8 @@ for the usage on the fast clustering algorithms.
 
 ### Features
 
+- `SingleCellsSubset` class that can split from the main class and
+  allows for analysis of e.g., a subset of cell types, etc.
 - Added singscore, see [Foroutan et
   al.](https://link.springer.com/article/10.1186/s12859-018-2435-4), as
   another option to score single samples and their pathway activity.

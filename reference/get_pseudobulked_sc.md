@@ -21,7 +21,7 @@ get_pseudobulked_sc(
 
 - object:
 
-  `SingleCells` class.
+  `SingleCells` or `SingleCellsSubset` class.
 
 - cell_list:
 

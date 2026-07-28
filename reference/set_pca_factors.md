@@ -15,6 +15,9 @@ set_pca_factors(x, pca_factor, ...)
 
 ## S7 method for class <bixverse::SingleCells>
 set_pca_factors(x, pca_factor, ...)
+
+## S7 method for class <bixverse::SingleCellsSubset>
+set_pca_factors(x, pca_factor, ...)
 ```
 
 ## Arguments

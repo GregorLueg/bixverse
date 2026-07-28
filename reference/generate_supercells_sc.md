@@ -24,7 +24,7 @@ generate_supercells_sc(
 
 - object:
 
-  `SingleCells` class.
+  `SingleCells` or `SingleCellsSubset` class.
 
 - sc_supercell_params:
 

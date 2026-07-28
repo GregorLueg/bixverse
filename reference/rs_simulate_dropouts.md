@@ -1,83 +1,38 @@
 # Sparsify bulkRNAseq like data
 
 **\[experimental\]** This function takes in a (raw) count matrix (for
-example from the synthetic data in bixverse) and applies sparsification
-to it based on two possible functions:
-
-**Logistic function:**
-
-With dropout probability defined as:
-
-`P(dropout) = clamp(1 / (1 + exp(shape * (ln(exp+1) - ln(midpoint+1)))), 0.3, 0.8) * (1 - global_sparsity) + global_sparsity`
-
-with the following characteristics:
-
-- Plateaus at global_sparsity dropout for high expression genes
-
-- Partial dropout preserves count structure via binomial thinning
-
-- Good for preserving variance-mean relationships
-
-**Power Decay function:**
-
-With dropout probability defined as:
-
-`P(dropout) = (midpoint / (exp + midpoint))^power * scale_factor * (1 - global_sparsity) + global_sparsity`
-
-with the following characteristics:
-
-- No plateau - high expression genes get substantial dropout
-
-- Complete dropout only (no partial dropout)
-
-- More uniform dropout across expression range
+example from the synthetic data in bixverse) and applies Splatter-style
+sequencing-depth dropout to it. Per sample a size factor
+`s_j ~ LogNormal(0, capture_efficiency_sigma)` is drawn, giving a target
+library size of `target_library_size * s_j`. Each gene is then
+binomially thinned to approach that target. Retention probability is
+capped at 1, so samples below their target are left alone rather than
+upsampled.
 
 ## Usage
 
 ``` r
-rs_simulate_dropouts(
-  count_mat,
-  dropout_function,
-  dropout_midpoint,
-  dropout_shape,
-  power_factor,
-  global_sparsity,
-  seed
-)
+rs_simulate_dropouts(count_mat, sparsity_params)
 ```
 
 ## Arguments
 
 - count_mat:
 
-  Numerical matrix. Original numeric matrix.
+  Numerical matrix. Original numeric matrix. Rows are genes, columns are
+  samples.
 
-- dropout_function:
+- sparsity_params:
 
-  String. One of `c("log", "powerdecay")`. Defines which function will
-  be used to induce the sparsity.
-
-- dropout_midpoint:
-
-  Numeric. Controls the midpoint parameter of the logistic and power
-  decay function.
-
-- dropout_shape:
-
-  Numeric. Controls the shape parameter of the logistic function.
-
-- power_factor:
-
-  Numeric. Controls the power factor of the power decay function.
-
-- global_sparsity:
-
-  Numeric. The global sparsity parameter.
-
-- seed:
-
-  Integer. Seed for reproducibility.
+  List. The sparsity parameters, see
+  [`params_bulk_sparsity()`](https://gregorlueg.github.io/bixverse/reference/params_bulk_sparsity.md).
+  Expected elements are `strategy`, `target_library_size`,
+  `capture_efficiency_sigma` and `seed`.
 
 ## Value
 
 The sparsified matrix based on the provided parameters.
+
+## References
+
+Zappia, et al., Genome Biol, 2017

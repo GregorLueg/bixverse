@@ -16,6 +16,9 @@ get_cell_indices(x, cell_ids, rust_index)
 
 ## S7 method for class <bixverse::SingleCells>
 get_cell_indices(x, cell_ids, rust_index)
+
+## S7 method for class <bixverse::SingleCellsSubset>
+get_cell_indices(x, cell_ids, rust_index)
 ```
 
 ## Arguments

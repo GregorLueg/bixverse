@@ -13,7 +13,7 @@ memberships to graph-based clustering, etc."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -41,6 +41,7 @@ memberships to graph-based clustering, etc."></head><body>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Co-expression module detection methods</h6></li>
     <li><a class="dropdown-item" href="../articles/cpca.html">Contrastive PCA</a></li>
+    <li><a class="dropdown-item" href="../articles/bulk_coexpression_modules.html">Bulk co-expression modules</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Ontologies</h6></li>
     <li><a class="dropdown-item" href="../articles/ontologies.html">Semantic similarities on ontologies</a></li>
@@ -54,6 +55,7 @@ memberships to graph-based clustering, etc."></head><body>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
     <li><a class="dropdown-item" href="../articles/knn_searches.html">kNN searches for single cells in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_subsets.html">Sub-clustering and per-group pipelines</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>More advanced analysis methods</h6></li>
     <li><a class="dropdown-item" href="../articles/bag_of_genes_single_cells.html">'Bag of genes' methods for single cell in bixverse</a></li>
@@ -105,8 +107,10 @@ memberships to graph-based clustering, etc.</p>
 
 <dt id="arg-original-cell-type">original_cell_type<a class="anchor" aria-label="anchor" href="#arg-original-cell-type"></a></dt>
 <dd><p>Character vector. The original cell type
-annotations. The indices need to match with the original cell indices used
-to generate the meta-cells! (1-indexed)</p></dd>
+annotations, in the row order of the full (unfiltered) obs table of the
+object the meta cells came from, i.e. <code>get_sc_obs(x)$&lt;column&gt;</code>. Meta cell
+memberships are stored as 1-indexed positions in that space, so a vector
+restricted to the QC-passing cells will silently give wrong purities.</p></dd>
 
 </dl></div>
     <div class="section level2">

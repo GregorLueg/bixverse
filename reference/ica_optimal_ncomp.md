@@ -7,7 +7,7 @@ a loess function fitted `ncomp ~ combined_score` with the combined score
 being a product of the median stability, orthogonality and proportion of
 convergence and add these info to the object. Should the loess function
 raise a warning (e.g., singularity), the class will be returned as is
-and manual determination of optimal ncomp is warrented. Additionally,
+and manual determination of optimal ncomp is warranted. Additionally,
 you have the option to plot the loess function for additional control
 over the span parameter (defaults to `TRUE`).
 

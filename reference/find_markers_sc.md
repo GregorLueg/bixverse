@@ -22,7 +22,7 @@ find_markers_sc(
 
 - object:
 
-  `SingleCells` class.
+  `SingleCells` or `SingleCellsSubset` class.
 
 - cells_1:
 

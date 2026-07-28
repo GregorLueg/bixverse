@@ -3,6 +3,7 @@ pkgdown: 2.2.1
 pkgdown_sha: ~
 articles:
   bag_of_genes_single_cells: bag_of_genes_single_cells.html
+  bulk_coexpression_modules: bulk_coexpression_modules.html
   cpca: cpca.html
   design_single_cell: design_single_cell.html
   doublet_detection: doublet_detection.html
@@ -19,10 +20,11 @@ articles:
   single_cell_batch_corrections: single_cell_batch_corrections.html
   single_cell_big_data: single_cell_big_data.html
   single_cell_io: single_cell_io.html
+  single_cell_subsets: single_cell_subsets.html
   single_cell_visualisation: single_cell_visualisation.html
   symphony: symphony.html
   thinking_single_cell: thinking_single_cell.html
-last_built: 2026-07-13T11:39Z
+last_built: 2026-07-28T08:12Z
 urls:
   reference: https://gregorlueg.github.io/bixverse/reference
   article: https://gregorlueg.github.io/bixverse/articles

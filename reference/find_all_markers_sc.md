@@ -27,7 +27,7 @@ find_all_markers_sc(
 
 - object:
 
-  `SingleCells` class.
+  `SingleCells` or `SingleCellsSubset` class.
 
 - column_of_interest:
 

@@ -15,6 +15,9 @@ set_knn(x, knn, ...)
 
 ## S7 method for class <bixverse::SingleCells>
 set_knn(x, knn, ...)
+
+## S7 method for class <bixverse::SingleCellsSubset>
+set_knn(x, knn, ...)
 ```
 
 ## Arguments

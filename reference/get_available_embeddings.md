@@ -16,6 +16,9 @@ get_available_embeddings(x, ...)
 
 ## S7 method for class <bixverse::SingleCells>
 get_available_embeddings(x, ...)
+
+## S7 method for class <bixverse::SingleCellsSubset>
+get_available_embeddings(x, ...)
 ```
 
 ## Arguments

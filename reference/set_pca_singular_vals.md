@@ -15,6 +15,9 @@ set_pca_singular_vals(x, singular_vals, ...)
 
 ## S7 method for class <bixverse::SingleCells>
 set_pca_singular_vals(x, singular_vals, ...)
+
+## S7 method for class <bixverse::SingleCellsSubset>
+set_pca_singular_vals(x, singular_vals, ...)
 ```
 
 ## Arguments

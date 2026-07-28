@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,6 +35,7 @@
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Co-expression module detection methods</h6></li>
     <li><a class="dropdown-item" href="../articles/cpca.html">Contrastive PCA</a></li>
+    <li><a class="dropdown-item" href="../articles/bulk_coexpression_modules.html">Bulk co-expression modules</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Ontologies</h6></li>
     <li><a class="dropdown-item" href="../articles/ontologies.html">Semantic similarities on ontologies</a></li>
@@ -48,6 +49,7 @@
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
     <li><a class="dropdown-item" href="../articles/knn_searches.html">kNN searches for single cells in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_subsets.html">Sub-clustering and per-group pipelines</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>More advanced analysis methods</h6></li>
     <li><a class="dropdown-item" href="../articles/bag_of_genes_single_cells.html">'Bag of genes' methods for single cell in bixverse</a></li>
@@ -329,9 +331,9 @@
         </dt>
         <dd>Wrapper function to CisTarget parameters</dd>
       </dl></div><div class="section level2">
-      <h2 id="correlation-based-gene-module-detections">Correlation-based gene module detections<a class="anchor" aria-label="anchor" href="#correlation-based-gene-module-detections"></a></h2>
+      <h2 id="co-expression-methods-for-bulk-rnaseq">Co-expression methods for bulk RNAseq<a class="anchor" aria-label="anchor" href="#co-expression-methods-for-bulk-rnaseq"></a></h2>
 
-      <div class="section-desc"><p>Methods to identify co-expression modules via correlations in the data. Includes methods for differential correlations, some graph-based and some hierarchical clustering based ones.</p></div>
+      <div class="section-desc"><p>Methods to identify co-expression modules via correlations or matrix factorisations.</p></div>
 
       <dl></dl></div><div class="section level2">
 
@@ -351,6 +353,118 @@
 
         </dt>
         <dd>Process the raw data</dd>
+
+        <dt>
+
+          <code><a href="get_diagnostics.html">get_diagnostics()</a></code>
+
+        </dt>
+        <dd>Get diagnostics from a BulkModuleResult</dd>
+
+        <dt>
+
+          <code><a href="get_factors.html">get_factors()</a></code>
+
+        </dt>
+        <dd>Get factor matrices from a BulkModuleResult</dd>
+
+        <dt>
+
+          <code><a href="get_nmf_gene_loadings.html">get_nmf_gene_loadings()</a></code>
+
+        </dt>
+        <dd>Get the NMF gene loadings</dd>
+
+        <dt>
+
+          <code><a href="get_nmf_modules.html">get_nmf_modules()</a></code>
+
+        </dt>
+        <dd>Get the NMF module membership data.table</dd>
+
+        <dt>
+
+          <code><a href="get_nmf_sample_activity.html">get_nmf_sample_activity()</a></code>
+
+        </dt>
+        <dd>Get the NMF sample activity</dd>
+
+        <dt>
+
+          <code><a href="get_nmf_stability.html">get_nmf_stability()</a></code>
+
+        </dt>
+        <dd>Get the stabilised NMF diagnostics</dd>
+
+        <dt>
+
+          <code><a href="get_c_pca_factors.html">get_c_pca_factors()</a></code>
+
+        </dt>
+        <dd>Get the contrastive PCA factors</dd>
+
+        <dt>
+
+          <code><a href="get_c_pca_loadings.html">get_c_pca_loadings()</a></code>
+
+        </dt>
+        <dd>Get the contrastive PCA loadings</dd>
+
+        <dt>
+
+          <code><a href="get_ica_stability_res.html">get_ica_stability_res()</a></code>
+
+        </dt>
+        <dd>Get the ICA component data (stability, convergence, nMI)</dd>
+
+        <dt>
+
+          <code><a href="get_grid_search_res.html">get_grid_search_res()</a></code>
+
+        </dt>
+        <dd>Get the grid search results</dd>
+
+        <dt>
+
+          <code><a href="get_cor_graph.html">get_cor_graph()</a></code>
+
+        </dt>
+        <dd>Get correlation-based graph</dd>
+
+        <dt>
+
+          <code><a href="get_diffcor_graph.html">get_diffcor_graph()</a></code>
+
+        </dt>
+        <dd>Get differential correlation-based graph</dd>
+
+        <dt>
+
+          <code><a href="get_epsilon_res.html">get_epsilon_res()</a></code>
+
+        </dt>
+        <dd>Return the epsilon data</dd>
+
+        <dt>
+
+          <code><a href="get_resolution_res.html">get_resolution_res()</a></code>
+
+        </dt>
+        <dd>Return the resolution results</dd>
+
+        <dt>
+
+          <code><a href="get_outputs.html">get_outputs()</a></code>
+
+        </dt>
+        <dd>Return the outputs</dd>
+
+        <dt>
+
+          <code><a href="get_modules.html">get_modules()</a></code>
+
+        </dt>
+        <dd>Get the module membership from a BulkModuleResult</dd>
 
         <dt>
 
@@ -424,64 +538,6 @@
 
         <dt>
 
-          <code><a href="get_cor_graph.html">get_cor_graph()</a></code>
-
-        </dt>
-        <dd>Get correlation-based graph</dd>
-
-        <dt>
-
-          <code><a href="get_diffcor_graph.html">get_diffcor_graph()</a></code>
-
-        </dt>
-        <dd>Get differential correlation-based graph</dd>
-
-        <dt>
-
-          <code><a href="get_epsilon_res.html">get_epsilon_res()</a></code>
-
-        </dt>
-        <dd>Return the epsilon data</dd>
-
-        <dt>
-
-          <code><a href="get_resolution_res.html">get_resolution_res()</a></code>
-
-        </dt>
-        <dd>Return the resolution results</dd>
-
-        <dt>
-
-          <code><a href="get_outputs.html">get_outputs()</a></code>
-
-        </dt>
-        <dd>Return the outputs</dd>
-
-        <dt>
-
-          <code><a href="params_cor_graph.html">params_cor_graph()</a></code>
-
-        </dt>
-        <dd>Wrapper function for graph generation</dd>
-
-        <dt>
-
-          <code><a href="params_coremo.html">params_coremo()</a></code>
-
-        </dt>
-        <dd>Wrapper function to generate CoReMo parameters</dd>
-      </dl></div><div class="section level2">
-      <h2 id="matrix-factorisation-methods">Matrix factorisation methods<a class="anchor" aria-label="anchor" href="#matrix-factorisation-methods"></a></h2>
-
-      <div class="section-desc"><p>Methods to identify co-expression via matrix factorisations. Uses the same class as the correlation-based ones. You have contrastive PCA, ICA and dual graph-regularised dictionary learning as methods.</p></div>
-
-      <dl></dl></div><div class="section level2">
-
-
-
-
-      <dl><dt>
-
           <code><a href="contrastive_pca_processing.html">contrastive_pca_processing()</a></code>
 
         </dt>
@@ -503,20 +559,6 @@
 
         <dt>
 
-          <code><a href="get_c_pca_factors.html">get_c_pca_factors()</a></code>
-
-        </dt>
-        <dd>Get the contrastive PCA factors</dd>
-
-        <dt>
-
-          <code><a href="get_c_pca_loadings.html">get_c_pca_loadings()</a></code>
-
-        </dt>
-        <dd>Get the contrastive PCA loadings</dd>
-
-        <dt>
-
           <code><a href="dgrdl_grid_search.html">dgrdl_grid_search()</a></code>
 
         </dt>
@@ -528,20 +570,6 @@
 
         </dt>
         <dd>Run DGRDL with the specified parameters</dd>
-
-        <dt>
-
-          <code><a href="get_ica_stability_res.html">get_ica_stability_res()</a></code>
-
-        </dt>
-        <dd>Get the ICA component data (stability, convergence, nMI)</dd>
-
-        <dt>
-
-          <code><a href="get_grid_search_res.html">get_grid_search_res()</a></code>
-
-        </dt>
-        <dd>Get the grid search results</dd>
 
         <dt>
 
@@ -573,10 +601,45 @@
 
         <dt>
 
+          <code><a href="nmf_bulk.html">nmf_bulk()</a></code>
+
+        </dt>
+        <dd>Run non-negative matrix factorisation on a BulkCoExp</dd>
+
+        <dt>
+
+          <code><a href="stabilised_nmf_bulk.html">stabilised_nmf_bulk()</a></code>
+
+        </dt>
+        <dd>Run stabilised (multi-restart) NMF on a BulkCoExp</dd>
+
+        <dt>
+
+          <code><a href="params_cor_graph.html">params_cor_graph()</a></code>
+
+        </dt>
+        <dd>Wrapper function for graph generation</dd>
+
+        <dt>
+
+          <code><a href="params_coremo.html">params_coremo()</a></code>
+
+        </dt>
+        <dd>Wrapper function to generate CoReMo parameters</dd>
+
+        <dt>
+
           <code><a href="params_dgrdl.html">params_dgrdl()</a></code>
 
         </dt>
         <dd>Wrapper function to generate DGRDL parameters</dd>
+
+        <dt>
+
+          <code><a href="params_module_membership.html">params_module_membership()</a></code>
+
+        </dt>
+        <dd>Wrapper function to generate module membership parameters</dd>
 
         <dt>
 
@@ -1279,6 +1342,113 @@
         </dt>
         <dd>Drop columns from the obs or var table</dd>
       </dl></div><div class="section level2">
+      <h2 id="single-cell-subsets-and-pipelines">Single cell subsets and pipelines<a class="anchor" aria-label="anchor" href="#single-cell-subsets-and-pipelines"></a></h2>
+
+      <div class="section-desc"><p>Sub-clustering a group of cells and running the same chain per group.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="SingleCellsSubset.html">SingleCellsSubset()</a></code>
+
+        </dt>
+        <dd>bixverse single cell subset class</dd>
+
+        <dt>
+
+          <code><a href="merge_subset_obs.html">merge_subset_obs()</a></code>
+
+        </dt>
+        <dd>Merge obs columns from subsets back into the parent object</dd>
+
+        <dt>
+
+          <code><a href="sc_pipeline.html">sc_pipeline()</a></code>
+
+        </dt>
+        <dd>Construct an empty single cell pipeline</dd>
+
+        <dt>
+
+          <code><a href="grapes-greater-than-greater-than-grapes.html">`%&gt;&gt;%`</a></code>
+
+        </dt>
+        <dd>Append a step to a pipeline</dd>
+
+        <dt>
+
+          <code><a href="apply_pipeline.html">apply_pipeline()</a></code>
+
+        </dt>
+        <dd>Apply a pipeline to a single cell object</dd>
+
+        <dt>
+
+          <code><a href="apply_pipeline_per_group.html">apply_pipeline_per_group()</a></code>
+
+        </dt>
+        <dd>Apply a pipeline independently to each group of a <code>SingleCells</code> object</dd>
+
+        <dt>
+
+          <code><a href="step_hvg_sc.html">step_hvg_sc()</a></code>
+
+        </dt>
+        <dd>Pipeline step: identify highly variable genes</dd>
+
+        <dt>
+
+          <code><a href="step_pca_sc.html">step_pca_sc()</a></code>
+
+        </dt>
+        <dd>Pipeline step: PCA</dd>
+
+        <dt>
+
+          <code><a href="step_neighbours_sc.html">step_neighbours_sc()</a></code>
+
+        </dt>
+        <dd>Pipeline step: nearest neighbours</dd>
+
+        <dt>
+
+          <code><a href="step_clusters_sc.html">step_clusters_sc()</a></code>
+
+        </dt>
+        <dd>Pipeline step: graph-based clustering</dd>
+
+        <dt>
+
+          <code><a href="step_bbknn_sc.html">step_bbknn_sc()</a></code>
+
+        </dt>
+        <dd>Pipeline step: BBKNN batch correction</dd>
+
+        <dt>
+
+          <code><a href="step_fast_mnn_sc.html">step_fast_mnn_sc()</a></code>
+
+        </dt>
+        <dd>Pipeline step: fastMNN batch correction</dd>
+
+        <dt>
+
+          <code><a href="step_harmony_sc.html">step_harmony_sc()</a></code>
+
+        </dt>
+        <dd>Pipeline step: Harmony batch correction</dd>
+
+        <dt>
+
+          <code><a href="step_harmony_v2_sc.html">step_harmony_v2_sc()</a></code>
+
+        </dt>
+        <dd>Pipeline step: Harmony v2 batch correction</dd>
+      </dl></div><div class="section level2">
       <h2 id="single-cell-class-for-multi-modal-data-and-getters">Single cell class for multi-modal data and getters<a class="anchor" aria-label="anchor" href="#single-cell-class-for-multi-modal-data-and-getters"></a></h2>
 
       <div class="section-desc"><p>This version allows you to also work ADT counts</p></div>
@@ -1684,7 +1854,28 @@
           <code><a href="run_cell_qc.html">run_cell_qc()</a></code>
 
         </dt>
-        <dd>Run MAD outlier detection on per-cell QC metrics</dd>
+        <dd>Run outlier detection on per-cell QC metrics</dd>
+
+        <dt>
+
+          <code><a href="run_cell_qc_fixed.html">run_cell_qc_fixed()</a></code>
+
+        </dt>
+        <dd>Fixed-threshold cell QC</dd>
+
+        <dt>
+
+          <code><a href="rescue_cells.html">rescue_cells()</a></code>
+
+        </dt>
+        <dd>Rescue MAD-flagged cells that fall within safe bounds</dd>
+
+        <dt>
+
+          <code><a href="flag_cells.html">flag_cells()</a></code>
+
+        </dt>
+        <dd>Add hard-threshold flags to a CellQc object</dd>
 
         <dt>
 
@@ -1737,55 +1928,6 @@
 
         <dt>
 
-          <code><a href="fast_mnn_sc.html">fast_mnn_sc()</a></code>
-
-        </dt>
-        <dd>Run fastMNN</dd>
-
-        <dt>
-
-          <code><a href="harmony_sc.html">harmony_sc()</a></code>
-
-        </dt>
-        <dd>Run Harmony</dd>
-
-        <dt>
-
-          <code><a href="harmony_v2_sc.html">harmony_v2_sc()</a></code>
-
-        </dt>
-        <dd>Run Harmony v2</dd>
-
-        <dt>
-
-          <code><a href="bbknn_sc.html">bbknn_sc()</a></code>
-
-        </dt>
-        <dd>Run BBKNN</dd>
-
-        <dt>
-
-          <code><a href="calculate_kbet_sc.html">calculate_kbet_sc()</a></code>
-
-        </dt>
-        <dd>Calculate kBET scores</dd>
-
-        <dt>
-
-          <code><a href="calculate_batch_asw_sc.html">calculate_batch_asw_sc()</a></code>
-
-        </dt>
-        <dd>Calculate batch average silhouette width</dd>
-
-        <dt>
-
-          <code><a href="calculate_batch_lisi_sc.html">calculate_batch_lisi_sc()</a></code>
-
-        </dt>
-        <dd>Calculate batch LISI scores</dd>
-
-        <dt>
-
           <code><a href="params_norm_doublets_defaults.html">params_norm_doublets_defaults()</a></code>
 
         </dt>
@@ -1821,38 +1963,10 @@
 
         <dt>
 
-          <code><a href="params_sc_bbknn.html">params_sc_bbknn()</a></code>
-
-        </dt>
-        <dd>Wrapper function for the BBKNN parameters</dd>
-
-        <dt>
-
           <code><a href="params_sc_fast_cluster.html">params_sc_fast_cluster()</a></code>
 
         </dt>
         <dd>Fast single cell clustering parameters</dd>
-
-        <dt>
-
-          <code><a href="params_sc_fastmnn.html">params_sc_fastmnn()</a></code>
-
-        </dt>
-        <dd>Wrapper function for the fastMNN parameters</dd>
-
-        <dt>
-
-          <code><a href="params_sc_harmony.html">params_sc_harmony()</a></code>
-
-        </dt>
-        <dd>Default parameters for Harmony batch correction</dd>
-
-        <dt>
-
-          <code><a href="params_sc_harmony_v2.html">params_sc_harmony_v2()</a></code>
-
-        </dt>
-        <dd>Default parameters for Harmony v2 batch correction</dd>
 
         <dt>
 
@@ -1909,6 +2023,120 @@
 
         </dt>
         <dd>Helper function to generate default parameters for the fast clustering for the doublet detection methods</dd>
+      </dl></div><div class="section level2">
+      <h2 id="single-cell-batch-correction-methods">Single cell batch correction methods<a class="anchor" aria-label="anchor" href="#single-cell-batch-correction-methods"></a></h2>
+
+      <div class="section-desc"><p>Batch correction methods and metrics for single cell</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="fast_mnn_sc.html">fast_mnn_sc()</a></code>
+
+        </dt>
+        <dd>Run fastMNN</dd>
+
+        <dt>
+
+          <code><a href="harmony_sc.html">harmony_sc()</a></code>
+
+        </dt>
+        <dd>Run Harmony</dd>
+
+        <dt>
+
+          <code><a href="harmony_v2_sc.html">harmony_v2_sc()</a></code>
+
+        </dt>
+        <dd>Run Harmony v2</dd>
+
+        <dt>
+
+          <code><a href="bbknn_sc.html">bbknn_sc()</a></code>
+
+        </dt>
+        <dd>Run BBKNN</dd>
+
+        <dt>
+
+          <code><a href="seurat_cca_sc.html">seurat_cca_sc()</a></code>
+
+        </dt>
+        <dd>Run Seurat CCA integration</dd>
+
+        <dt>
+
+          <code><a href="seurat_rpca_sc.html">seurat_rpca_sc()</a></code>
+
+        </dt>
+        <dd>Run Seurat rPCA integration</dd>
+
+        <dt>
+
+          <code><a href="calculate_kbet_sc.html">calculate_kbet_sc()</a></code>
+
+        </dt>
+        <dd>Calculate kBET scores</dd>
+
+        <dt>
+
+          <code><a href="calculate_batch_asw_sc.html">calculate_batch_asw_sc()</a></code>
+
+        </dt>
+        <dd>Calculate batch average silhouette width</dd>
+
+        <dt>
+
+          <code><a href="calculate_batch_lisi_sc.html">calculate_batch_lisi_sc()</a></code>
+
+        </dt>
+        <dd>Calculate batch LISI scores</dd>
+
+        <dt>
+
+          <code><a href="params_sc_fastmnn.html">params_sc_fastmnn()</a></code>
+
+        </dt>
+        <dd>Wrapper function for the fastMNN parameters</dd>
+
+        <dt>
+
+          <code><a href="params_sc_harmony.html">params_sc_harmony()</a></code>
+
+        </dt>
+        <dd>Default parameters for Harmony batch correction</dd>
+
+        <dt>
+
+          <code><a href="params_sc_harmony_v2.html">params_sc_harmony_v2()</a></code>
+
+        </dt>
+        <dd>Default parameters for Harmony v2 batch correction</dd>
+
+        <dt>
+
+          <code><a href="params_sc_bbknn.html">params_sc_bbknn()</a></code>
+
+        </dt>
+        <dd>Wrapper function for the BBKNN parameters</dd>
+
+        <dt>
+
+          <code><a href="params_sc_seurat_cca.html">params_sc_seurat_cca()</a></code>
+
+        </dt>
+        <dd>Wrapper function for the Seurat CCA parameters</dd>
+
+        <dt>
+
+          <code><a href="params_sc_seurat_rpca.html">params_sc_seurat_rpca()</a></code>
+
+        </dt>
+        <dd>Wrapper function for the Seurat rPCA parameters</dd>
       </dl></div><div class="section level2">
       <h2 id="single-cell-analysis-methods">Single cell analysis methods<a class="anchor" aria-label="anchor" href="#single-cell-analysis-methods"></a></h2>
 
@@ -2142,6 +2370,13 @@
 
         </dt>
         <dd>Get the H (cell activations) matrix</dd>
+
+        <dt>
+
+          <code><a href="params_sc_aucell.html">params_sc_aucell()</a></code>
+
+        </dt>
+        <dd>Wrapper function for parameters for AUCell</dd>
 
         <dt>
 
@@ -2812,6 +3047,20 @@
 
         <dt>
 
+          <code><a href="params_synthetic_bulk_rnaseq.html">params_synthetic_bulk_rnaseq()</a></code>
+
+        </dt>
+        <dd>Wrapper function to generate synthetic bulk RNAseq parameters</dd>
+
+        <dt>
+
+          <code><a href="params_bulk_sparsity.html">params_bulk_sparsity()</a></code>
+
+        </dt>
+        <dd>Wrapper function to generate bulk sparsification parameters</dd>
+
+        <dt>
+
           <code><a href="synthetic_signal_matrix.html">synthetic_signal_matrix()</a></code>
 
         </dt>
@@ -2822,7 +3071,7 @@
           <code><a href="simulate_dropouts.html">simulate_dropouts()</a></code>
 
         </dt>
-        <dd>Simulate dropouts via different functions on synthetic bulk data</dd>
+        <dd>Simulate sequencing-depth dropouts on synthetic bulk data</dd>
 
         <dt>
 

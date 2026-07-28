@@ -16,6 +16,9 @@ get_snn_graph(x, ...)
 
 ## S7 method for class <bixverse::SingleCells>
 get_snn_graph(x, ...)
+
+## S7 method for class <bixverse::SingleCellsSubset>
+get_snn_graph(x, ...)
 ```
 
 ## Arguments

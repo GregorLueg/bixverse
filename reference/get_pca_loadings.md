@@ -16,6 +16,9 @@ get_pca_loadings(x, ...)
 
 ## S7 method for class <bixverse::SingleCells>
 get_pca_loadings(x, ...)
+
+## S7 method for class <bixverse::SingleCellsSubset>
+get_pca_loadings(x, ...)
 ```
 
 ## Arguments

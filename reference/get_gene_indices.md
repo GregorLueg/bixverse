@@ -16,6 +16,9 @@ get_gene_indices(x, gene_ids, rust_index)
 
 ## S7 method for class <bixverse::SingleCells>
 get_gene_indices(x, gene_ids, rust_index)
+
+## S7 method for class <bixverse::SingleCellsSubset>
+get_gene_indices(x, gene_ids, rust_index)
 ```
 
 ## Arguments

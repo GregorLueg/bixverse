@@ -22,7 +22,7 @@ harmony_sc(
 
 - object:
 
-  `SingleCells` class.
+  `SingleCells` or `SingleCellsSubset` class.
 
 - batch_column:
 

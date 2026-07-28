@@ -4,7 +4,7 @@ This function will update the specified columns in the metadata of an
 [`BulkDge()`](https://gregorlueg.github.io/bixverse/reference/BulkDge.md)
 or
 [`BulkCoExp()`](https://gregorlueg.github.io/bixverse/reference/BulkCoExp.md)
-to be conform with R standard naming convetions. This is useful to do
+to be conform with R standard naming conventions. This is useful to do
 before running DGE methods as they expect standardised names.
 
 ## Usage

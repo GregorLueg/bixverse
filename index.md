@@ -1,6 +1,6 @@
 # bixverse package
 
-![r_package](https://img.shields.io/badge/R_package-0.4.3-orange)[![CI](https://github.com/GregorLueg/bixverse/actions/workflows/R-cmd-check.yml/badge.svg)](https://github.com/GregorLueg/bixverse/actions/workflows/R-cmd-check.yml)
+![r_package](https://img.shields.io/badge/R_package-0.4.4-orange)[![CI](https://github.com/GregorLueg/bixverse/actions/workflows/R-cmd-check.yml/badge.svg)](https://github.com/GregorLueg/bixverse/actions/workflows/R-cmd-check.yml)
 [![License:
 MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![pkgdown](https://img.shields.io/badge/pkgdown-website-1b5e9f?logo=github)](https://gregorlueg.github.io/bixverse/)
@@ -30,7 +30,9 @@ maintained:
   leverages
   [cubecl](https://github.com/tracel-ai/cubecl)/[Burn](https://burn.dev)
   under the hood with wgpu backends which means it will work on
-  (theoretically) any GPU.
+  (theoretically) any GPU. If you do single cell stuff, have a look…
+  Some of the implementations in there make everything substantially
+  faster.
 
 Additional packages that might be of interest interest to you:
 
@@ -52,7 +54,7 @@ Additional packages that might be of interest interest to you:
 ![atlas scale on small
 compute](reference/figures/bixverse_single_cell.png)
 
-Major release with `"0.4.0"`. The single cell suite has been further
+Major release with `"0.4.0+"`. The single cell suite has been further
 improved. The key changes are:
 
 - Performance improvements across several axes. A lot of the underlying
@@ -73,8 +75,8 @@ improved. The key changes are:
 - Massive improvements on the two sister packages
   ([bixverse.plots](https://github.com/GregorLueg/bixverse.plots) and
   [bixverse.gpu](https://github.com/GregorLueg/bixverse.gpu)): enabling
-  GPU-accelerated methods (Harmony, PCA) and a large number of plotting
-  helpers.
+  GPU-accelerated methods (Harmony, PCA, kNN searches) and a large
+  number of plotting helpers.
 - Updates to various vignettes to reflect the changes with this release.
 - More methods added… Symphony, NicheNet, sparse NMF for single cells!
 
@@ -148,17 +150,18 @@ analyse data.
 
 Multi h5 (10x output) i/o
 
-Save data to h5ad for easier interoperability with Python.
+~~Splitting a SingleCells into several sub directories for easier
+management.~~ Subset class enabled with views. The direct splitting is
+maybe not needed … ?
 
-Splitting a SingleCells into several sub directories for easier
-management
+Port over [NicheNet](https://www.nature.com/articles/s41592-019-0667-5).
 
 Implementation of
 [Palantir](https://www.nature.com/articles/s41587-019-0068-4) and
 [Slingshot](https://pubmed.ncbi.nlm.nih.gov/29914354/) for trajectory
-analysis
+analysis.
 
-Port over [NicheNet](https://www.nature.com/articles/s41592-019-0667-5).
+Save data to h5ad for easier interoperability with Python.
 
 Easy interoperability that chunks of data can be read in for neural
 network training in the corresponding deep learning frameworks.

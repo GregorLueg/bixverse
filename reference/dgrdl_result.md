@@ -10,6 +10,7 @@ hyperparamters. To determine the hyperparameters, you can use
 dgrdl_result(
   object,
   dgrdl_params = params_dgrdl(),
+  membership_params = params_module_membership(),
   seed = 42L,
   .verbose = TRUE
 )
@@ -48,6 +49,14 @@ dgrdl_result(
   - admm_iter - Integer. ADMM iterations for sparse coding.
 
   - rho - Float. ADMM step size.
+
+- membership_params:
+
+  List. Controls how the atom loadings are turned into module
+  membership, see
+  [`params_module_membership()`](https://gregorlueg.github.io/bixverse/reference/params_module_membership.md).
+  Membership is not exclusive: a gene active in several atoms appears in
+  several modules, and a gene in no tail appears in none.
 
 - seed:
 

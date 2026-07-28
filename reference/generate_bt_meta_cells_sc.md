@@ -25,7 +25,7 @@ generate_bt_meta_cells_sc(
 
 - object:
 
-  `SingleCells` class.
+  `SingleCells` or `SingleCellsSubset` class.
 
 - sc_meta_cell_params:
 

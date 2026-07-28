@@ -18,6 +18,9 @@ get_knn_mat(x, ...)
 
 # S3 method for class 'SingleCellNearestNeighbour'
 get_knn_mat(x, ...)
+
+## S7 method for class <bixverse::SingleCellsSubset>
+get_knn_mat(x, ...)
 ```
 
 ## Arguments

@@ -17,6 +17,9 @@ get_embedding(x, embd_name, ...)
 
 ## S7 method for class <bixverse::SingleCells>
 get_embedding(x, embd_name, ...)
+
+## S7 method for class <bixverse::SingleCellsSubset>
+get_embedding(x, embd_name, ...)
 ```
 
 ## Arguments

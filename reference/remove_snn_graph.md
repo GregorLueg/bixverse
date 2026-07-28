@@ -15,6 +15,9 @@ remove_snn_graph(x, ...)
 
 ## S7 method for class <bixverse::SingleCells>
 remove_snn_graph(x, ...)
+
+## S7 method for class <bixverse::SingleCellsSubset>
+remove_snn_graph(x, ...)
 ```
 
 ## Arguments

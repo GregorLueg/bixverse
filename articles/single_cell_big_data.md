@@ -299,7 +299,7 @@ The companion package
 CAGRA-style GPU-accelerated approximate nearest neighbour search that
 makes this quite fast on a laptop with a discrete GPU - thanks to CubeCL
 and WGPU, as long as you can fit the data into VRAM. The time the GPU
-version takes is \<30 seconds. CPU version with `HNSW` takes ~90
+version takes is \<30 seconds. CPU version with `NNDescent` takes ~90
 seconds.
 
 ``` r
@@ -307,7 +307,7 @@ seconds.
 sce <- find_neighbours_sc(
   object = sce,
   embd_to_use = "pca",
-  neighbours_params = params_sc_neighbours(knn = list(knn_method = "hnsw"))
+  neighbours_params = params_sc_neighbours(knn = list(knn_method = "nndescent"))
 )
 ```
 
@@ -317,7 +317,6 @@ sce <- find_neighbours_cagra_sc(
   object = sce,
   embd_to_use = "pca",
   cagra_params = params_sc_cagra(),
-  extract_knn = FALSE,
   .verbose = TRUE
 )
 ```
@@ -355,7 +354,7 @@ sce <- tsne_sc(
   slot_name = "tsne_prior",
   # use FFT here! It will make a massive difference
   approx_type = "fft",
-  knn_method = "hnsw"
+  knn_method = "nndescent"
 )
 ```
 
@@ -364,7 +363,17 @@ You do not have to, but the rule-of-thumb is
 `k_neighbours = perplexity * 3.0`. With the default perplexity, we would
 need 30 neighbours, but we previously only returned 15. So, we just
 rerun this. Skip tSNE if you don’t need it, but the FFT-accelerated
-version is substantially faster than you would expect from tSNE.
+version is substantially faster than you would expect from tSNE. Also,
+if you want to, `bixverse.gpu` provides (since `"0.2.1"`) a
+GPU-accelerated Adam optimiser. You can run this via:
+
+``` r
+
+sce <- umap_sc_gpu(
+  sce,
+  slot_name = "umap_prior_gpu"
+)
+```
 
 ``` r
 
@@ -398,9 +407,9 @@ embedding_plot_sc(
 
 Okay, there is clearly a big sample batch effect. Let’s remove that one.
 Again you have two options here… Harmony ([version
-2](https://gregorlueg.github.io/bixverse/articles/) - recommended) on
-CPU or a GPU-accelerated version. Let’s check out the CPU version first…
-(~ 40 seconds)
+2](https://www.biorxiv.org/content/10.64898/2026.03.16.711825v2) -
+recommended) on CPU or a GPU-accelerated version. Let’s check out the
+CPU version first… (~ 40 seconds)
 
 ``` r
 

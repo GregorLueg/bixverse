@@ -12,6 +12,9 @@ get_cells_to_keep(x)
 
 ## S7 method for class <bixverse::SingleCells>
 get_cells_to_keep(x)
+
+## S7 method for class <bixverse::SingleCellsSubset>
+get_cells_to_keep(x)
 ```
 
 ## Arguments

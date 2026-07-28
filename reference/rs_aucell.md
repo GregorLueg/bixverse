@@ -1,16 +1,16 @@
 # Calculate AUCell in Rust
 
 **\[experimental\]** The function will take in a list of gene set
-indices (0-indexed!) and calculate an AUCell type statistic. Two options
-here: calculate this with proper AUROC calculations (useful for marker
-gene expression) or based on the Mann-Whitney statistic (useful for
-pathway activity measurs). Data can be streamed in chunks of 50k cells
-per or loaded in in one go.
+indices (0-indexed!) and calculate an AUCell type statistic. Three
+options here: the recovery-curve AUC of Aibar, et al. (the actual AUCell
+statistic), an AUC derived from the Mann-Whitney statistic, or average
+precision. Data can be streamed in chunks of 50k cells per or loaded in
+in one go.
 
 ## Usage
 
 ``` r
-rs_aucell(f_path, gs_list, cells_to_keep, auc_type, streaming, verbose)
+rs_aucell(f_path, gs_list, cells_to_keep, aucell_params, streaming, verbose)
 ```
 
 ## Arguments
@@ -28,10 +28,10 @@ rs_aucell(f_path, gs_list, cells_to_keep, auc_type, streaming, verbose)
 
   Integer. Vector of indices of the cells to keep.
 
-- auc_type:
+- aucell_params:
 
-  String. One of `"wilcox"` or `"auroc"`, pending on which statistic you
-  wish to calculate.
+  List. The AUCell parameters, see
+  [`params_sc_aucell()`](https://gregorlueg.github.io/bixverse/reference/params_sc_aucell.md).
 
 - streaming:
 

@@ -48,6 +48,7 @@ importantly, it is simply less data.
 ``` r
 
 library(bixverse)
+library(bixverse.plots)
 library(ggplot2)
 library(data.table)
 #> 
@@ -78,11 +79,136 @@ sc_object <- SingleCells(dir_data = tempdir_cd34)
 sc_object <- load_h5ad(object = sc_object, h5_path = cd34_path)
 #>  Using light streaming for the CSR to CSC conversion.
 #> Loading observations data from h5ad into the DuckDB.
-#> duckdb is keeping downloaded extensions in a temporary directory:
-#> ℹ /tmp/RtmpNQw17B/duckdb/extensions
-#> This is removed when the R session ends, so extensions are re-downloaded each session.
-#> ℹ To keep them, point `options(duckdb.extension_directory =)` or the `DUCKDB_EXTENSION_DIRECTORY` environment variable at a permanent path.
+#> duckdb keeps downloaded extensions and secrets in a temporary directory:
+#> ℹ /tmp/RtmpTAf27f/duckdb
+#> This is removed when the R session ends.
+#> • Extensions are re-downloaded each session.
+#> • Secrets are lost.
+#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
+#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
+#> ℹ See ?duckdb_storage for details and alternatives.
 #> Loading variables data from h5ad into the DuckDB.
+#> 
+#> duckdb keeps downloaded extensions and secrets in a temporary directory:
+#> ℹ /tmp/RtmpTAf27f/duckdb
+#> This is removed when the R session ends.
+#> • Extensions are re-downloaded each session.
+#> • Secrets are lost.
+#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
+#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
+#> ℹ See ?duckdb_storage for details and alternatives.
+#> duckdb keeps downloaded extensions and secrets in a temporary directory:
+#> ℹ /tmp/RtmpTAf27f/duckdb
+#> This is removed when the R session ends.
+#> • Extensions are re-downloaded each session.
+#> • Secrets are lost.
+#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
+#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
+#> ℹ See ?duckdb_storage for details and alternatives.
+#> duckdb keeps downloaded extensions and secrets in a temporary directory:
+#> ℹ /tmp/RtmpTAf27f/duckdb
+#> This is removed when the R session ends.
+#> • Extensions are re-downloaded each session.
+#> • Secrets are lost.
+#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
+#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
+#> ℹ See ?duckdb_storage for details and alternatives.
+#> duckdb keeps downloaded extensions and secrets in a temporary directory:
+#> ℹ /tmp/RtmpTAf27f/duckdb
+#> This is removed when the R session ends.
+#> • Extensions are re-downloaded each session.
+#> • Secrets are lost.
+#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
+#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
+#> ℹ See ?duckdb_storage for details and alternatives.
+#> duckdb keeps downloaded extensions and secrets in a temporary directory:
+#> ℹ /tmp/RtmpTAf27f/duckdb
+#> This is removed when the R session ends.
+#> • Extensions are re-downloaded each session.
+#> • Secrets are lost.
+#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
+#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
+#> ℹ See ?duckdb_storage for details and alternatives.
+#> duckdb keeps downloaded extensions and secrets in a temporary directory:
+#> ℹ /tmp/RtmpTAf27f/duckdb
+#> This is removed when the R session ends.
+#> • Extensions are re-downloaded each session.
+#> • Secrets are lost.
+#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
+#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
+#> ℹ See ?duckdb_storage for details and alternatives.
+#> duckdb keeps downloaded extensions and secrets in a temporary directory:
+#> ℹ /tmp/RtmpTAf27f/duckdb
+#> This is removed when the R session ends.
+#> • Extensions are re-downloaded each session.
+#> • Secrets are lost.
+#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
+#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
+#> ℹ See ?duckdb_storage for details and alternatives.
+#> duckdb keeps downloaded extensions and secrets in a temporary directory:
+#> ℹ /tmp/RtmpTAf27f/duckdb
+#> This is removed when the R session ends.
+#> • Extensions are re-downloaded each session.
+#> • Secrets are lost.
+#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
+#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
+#> ℹ See ?duckdb_storage for details and alternatives.
+#> duckdb keeps downloaded extensions and secrets in a temporary directory:
+#> ℹ /tmp/RtmpTAf27f/duckdb
+#> This is removed when the R session ends.
+#> • Extensions are re-downloaded each session.
+#> • Secrets are lost.
+#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
+#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
+#> ℹ See ?duckdb_storage for details and alternatives.
+#> duckdb keeps downloaded extensions and secrets in a temporary directory:
+#> ℹ /tmp/RtmpTAf27f/duckdb
+#> This is removed when the R session ends.
+#> • Extensions are re-downloaded each session.
+#> • Secrets are lost.
+#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
+#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
+#> ℹ See ?duckdb_storage for details and alternatives.
+#> duckdb keeps downloaded extensions and secrets in a temporary directory:
+#> ℹ /tmp/RtmpTAf27f/duckdb
+#> This is removed when the R session ends.
+#> • Extensions are re-downloaded each session.
+#> • Secrets are lost.
+#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
+#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
+#> ℹ See ?duckdb_storage for details and alternatives.
+#> duckdb keeps downloaded extensions and secrets in a temporary directory:
+#> ℹ /tmp/RtmpTAf27f/duckdb
+#> This is removed when the R session ends.
+#> • Extensions are re-downloaded each session.
+#> • Secrets are lost.
+#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
+#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
+#> ℹ See ?duckdb_storage for details and alternatives.
+#> duckdb keeps downloaded extensions and secrets in a temporary directory:
+#> ℹ /tmp/RtmpTAf27f/duckdb
+#> This is removed when the R session ends.
+#> • Extensions are re-downloaded each session.
+#> • Secrets are lost.
+#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
+#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
+#> ℹ See ?duckdb_storage for details and alternatives.
+#> duckdb keeps downloaded extensions and secrets in a temporary directory:
+#> ℹ /tmp/RtmpTAf27f/duckdb
+#> This is removed when the R session ends.
+#> • Extensions are re-downloaded each session.
+#> • Secrets are lost.
+#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
+#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
+#> ℹ See ?duckdb_storage for details and alternatives.
+#> duckdb keeps downloaded extensions and secrets in a temporary directory:
+#> ℹ /tmp/RtmpTAf27f/duckdb
+#> This is removed when the R session ends.
+#> • Extensions are re-downloaded each session.
+#> • Secrets are lost.
+#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
+#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
+#> ℹ See ?duckdb_storage for details and alternatives.
 ```
 
 Let’s run HVG detection, PCA and kNN (+ sNN) generation.
@@ -94,6 +220,38 @@ sc_object <- find_hvg_sc(
   hvg_no = 2000L,
   .verbose = FALSE
 )
+#> duckdb keeps downloaded extensions and secrets in a temporary directory:
+#> ℹ /tmp/RtmpTAf27f/duckdb
+#> This is removed when the R session ends.
+#> • Extensions are re-downloaded each session.
+#> • Secrets are lost.
+#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
+#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
+#> ℹ See ?duckdb_storage for details and alternatives.
+#> duckdb keeps downloaded extensions and secrets in a temporary directory:
+#> ℹ /tmp/RtmpTAf27f/duckdb
+#> This is removed when the R session ends.
+#> • Extensions are re-downloaded each session.
+#> • Secrets are lost.
+#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
+#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
+#> ℹ See ?duckdb_storage for details and alternatives.
+#> duckdb keeps downloaded extensions and secrets in a temporary directory:
+#> ℹ /tmp/RtmpTAf27f/duckdb
+#> This is removed when the R session ends.
+#> • Extensions are re-downloaded each session.
+#> • Secrets are lost.
+#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
+#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
+#> ℹ See ?duckdb_storage for details and alternatives.
+#> duckdb keeps downloaded extensions and secrets in a temporary directory:
+#> ℹ /tmp/RtmpTAf27f/duckdb
+#> This is removed when the R session ends.
+#> • Extensions are re-downloaded each session.
+#> • Secrets are lost.
+#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
+#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
+#> ℹ See ?duckdb_storage for details and alternatives.
 
 sc_object <- calculate_pca_sc(
   object = sc_object,
@@ -145,14 +303,30 @@ hdwgcna <- generate_bt_meta_cells_sc(
   regenerate_knn = TRUE, # regenerate kNN graph with 25 neighbours
   .verbose = TRUE
 )
+#> duckdb keeps downloaded extensions and secrets in a temporary directory:
+#> ℹ /tmp/RtmpTAf27f/duckdb
+#> This is removed when the R session ends.
+#> • Extensions are re-downloaded each session.
+#> • Secrets are lost.
+#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
+#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
+#> ℹ See ?duckdb_storage for details and alternatives.
+#> duckdb keeps downloaded extensions and secrets in a temporary directory:
+#> ℹ /tmp/RtmpTAf27f/duckdb
+#> This is removed when the R session ends.
+#> • Extensions are re-downloaded each session.
+#> • Secrets are lost.
+#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
+#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
+#> ℹ See ?duckdb_storage for details and alternatives.
 
 hdwgcna
 #> Single cell experiment (Meta Cells).
 #>   Meta cell method: meta_cells_hdwgcna
 #>   No meta cells: 250
 #>   No genes: 12464
-#>   No original cells: 6881
-#>   No unassigned cells: 2977
+#>   No cells aggregated: 3904
+#>   No obs rows in source: 6881
 #>   HVG calculated: FALSE
 #>   PCA calculated: FALSE
 #>   Other embeddings: none
@@ -214,14 +388,30 @@ seacells <- generate_seacells_sc(
   ),
   .verbose = TRUE
 )
+#> duckdb keeps downloaded extensions and secrets in a temporary directory:
+#> ℹ /tmp/RtmpTAf27f/duckdb
+#> This is removed when the R session ends.
+#> • Extensions are re-downloaded each session.
+#> • Secrets are lost.
+#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
+#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
+#> ℹ See ?duckdb_storage for details and alternatives.
+#> duckdb keeps downloaded extensions and secrets in a temporary directory:
+#> ℹ /tmp/RtmpTAf27f/duckdb
+#> This is removed when the R session ends.
+#> • Extensions are re-downloaded each session.
+#> • Secrets are lost.
+#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
+#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
+#> ℹ See ?duckdb_storage for details and alternatives.
 
 seacells
 #> Single cell experiment (Meta Cells).
 #>   Meta cell method: seacell
 #>   No meta cells: 250
 #>   No genes: 12464
-#>   No original cells: 6881
-#>   No unassigned cells: 0
+#>   No cells aggregated: 6881
+#>   No obs rows in source: 6881
 #>   HVG calculated: FALSE
 #>   PCA calculated: FALSE
 #>   Other embeddings: none
@@ -306,14 +496,30 @@ supercells <- generate_supercells_sc(
   ),
   .verbose = TRUE
 )
+#> duckdb keeps downloaded extensions and secrets in a temporary directory:
+#> ℹ /tmp/RtmpTAf27f/duckdb
+#> This is removed when the R session ends.
+#> • Extensions are re-downloaded each session.
+#> • Secrets are lost.
+#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
+#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
+#> ℹ See ?duckdb_storage for details and alternatives.
+#> duckdb keeps downloaded extensions and secrets in a temporary directory:
+#> ℹ /tmp/RtmpTAf27f/duckdb
+#> This is removed when the R session ends.
+#> • Extensions are re-downloaded each session.
+#> • Secrets are lost.
+#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
+#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
+#> ℹ See ?duckdb_storage for details and alternatives.
 
 supercells
 #> Single cell experiment (Meta Cells).
 #>   Meta cell method: supercells
 #>   No meta cells: 230
 #>   No genes: 12464
-#>   No original cells: 6881
-#>   No unassigned cells: 0
+#>   No cells aggregated: 6881
+#>   No obs rows in source: 6881
 #>   HVG calculated: FALSE
 #>   PCA calculated: FALSE
 #>   Other embeddings: none
@@ -394,7 +600,25 @@ methods are reasonably indicative.
 
 ``` r
 
-cell_labels <- unlist(sc_object[["celltype"]]) %>% as.character()
+# memberships are positions in the full obs table, so the labels have to come
+# from the unfiltered obs rather than from `sc_object[[...]]`
+cell_labels <- as.character(get_sc_obs(sc_object)$celltype)
+#> duckdb keeps downloaded extensions and secrets in a temporary directory:
+#> ℹ /tmp/RtmpTAf27f/duckdb
+#> This is removed when the R session ends.
+#> • Extensions are re-downloaded each session.
+#> • Secrets are lost.
+#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
+#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
+#> ℹ See ?duckdb_storage for details and alternatives.
+#> duckdb keeps downloaded extensions and secrets in a temporary directory:
+#> ℹ /tmp/RtmpTAf27f/duckdb
+#> This is removed when the R session ends.
+#> • Extensions are re-downloaded each session.
+#> • Secrets are lost.
+#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
+#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
+#> ℹ See ?duckdb_storage for details and alternatives.
 
 hdwgcna <- calc_meta_cell_purity(hdwgcna, original_cell_type = cell_labels)
 seacells <- calc_meta_cell_purity(seacells, original_cell_type = cell_labels)
@@ -413,7 +637,7 @@ purity_dt[, .(mean = mean(purity), median = median(purity)), by = method]
 #>        method      mean    median
 #>        <char>     <num>     <num>
 #> 1:    hdWGCNA 0.8947692 1.0000000
-#> 2:   SEACells 0.9025032 1.0000000
+#> 2:   SEACells 0.9043347 1.0000000
 #> 3: SuperCells 0.8979310 0.9806216
 ```
 
@@ -538,12 +762,12 @@ metrics_dt[,
 #>        method mean_separation median_separation mean_compactness
 #>        <char>           <num>             <num>            <num>
 #> 1:    hdWGCNA       0.1255286        0.08895643      0.007053792
-#> 2:   SEACells       0.1802643        0.15110685      0.011203591
+#> 2:   SEACells       0.1757102        0.15544200      0.010682394
 #> 3: SuperCells       0.2016617        0.15913163      0.006335426
 #>    median_compactness
 #>                 <num>
 #> 1:        0.004067266
-#> 2:        0.004984010
+#> 2:        0.004824280
 #> 3:        0.003216350
 ```
 
@@ -570,9 +794,9 @@ setorder(per_region_stats, method, region)
 per_region_stats[]
 #>        method region mean_separation median_separation mean_compactness
 #>        <char> <fctr>           <num>             <num>            <num>
-#> 1:   SEACells   high      0.04633167        0.05101920     0.0007073069
-#> 2:   SEACells    mid      0.13877805        0.13594331     0.0044319796
-#> 3:   SEACells    low      0.24090206        0.21325481     0.0186658600
+#> 1:   SEACells   high      0.04515726        0.04905651     0.0007130436
+#> 2:   SEACells    mid      0.13940649        0.14085424     0.0044342592
+#> 3:   SEACells    low      0.23163398        0.21059144     0.0176287556
 #> 4: SuperCells   high      0.04950358        0.05186578     0.0006019381
 #> 5: SuperCells    mid      0.14154094        0.13623749     0.0031448643
 #> 6: SuperCells    low      0.30667216        0.25426194     0.0113716719
@@ -581,9 +805,9 @@ per_region_stats[]
 #> 9:    hdWGCNA    low      0.26961609        0.19062942     0.0168331578
 #>    median_compactness
 #>                 <num>
-#> 1:       0.0006614107
-#> 2:       0.0033688664
-#> 3:       0.0076578967
+#> 1:       0.0006717899
+#> 2:       0.0034732595
+#> 3:       0.0076465828
 #> 4:       0.0005725418
 #> 5:       0.0024108913
 #> 6:       0.0055384417
@@ -731,15 +955,12 @@ seacells <- umap_sc(seacells, k = 10L, knn_method = "exhaustive")
 
 ``` r
 
-umap_dt <- as.data.table(
-  get_embedding(seacells, "umap"),
-  keep.rownames = "meta_cell_id"
-)[, leiden_clusters := seacells[["leiden_clusters"]]]
-
-ggplot(umap_dt, aes(x = umap_1, y = umap_2)) +
-  geom_point(aes(colour = as.factor(leiden_clusters)), size = 1.5) +
-  theme_bw() +
-  labs(colour = "MetaCell cluster")
+embedding_plot_sc(
+  object = seacells,
+  embedding = "umap",
+  colour_by = "leiden_clusters",
+  discrete = TRUE
+)
 ```
 
 ![](meta_cells_files/figure-html/mc%20umap%20plot-1.png)
@@ -815,12 +1036,24 @@ In a proper situation we would filter down the TF to gene associations
 via motifs, please refer to the details in this
 [vignette](https://gregorlueg.github.io/bixverse/articles/analysis_single_cell.html#scenic).
 We will skip this step for now and just run AUCell to show how it works.
+Which statistic you get is controlled by
+[`params_sc_aucell()`](https://gregorlueg.github.io/bixverse/reference/params_sc_aucell.md);
+the default is the Mann-Whitney AUC, which we stick with here.
+`"recovery"` (the original AUCell recovery curve) and `"ap"` (average
+precision) are the other two options and weight the top of the ranking
+more heavily.
 
 ``` r
 
 auc_res <- aucell_sc(
   object = seacells,
-  gs_list = tf_to_gene_ls
+  gs_list = tf_to_gene_ls,
+  aucell_params = params_sc_aucell(auc_type = "wilcox")
+)
+
+umap_dt <- as.data.table(
+  get_embedding(seacells, "umap"),
+  keep.rownames = "meta_cell_id"
 )
 
 umap_dt[, `:=`(IRF1 = auc_res[, "IRF1"], TCF4 = auc_res[, "TCF4"])]
@@ -861,6 +1094,22 @@ normalised counts.
 ``` r
 
 cl_dt <- sc_object[[c("leiden", "cell_id")]]
+#> duckdb keeps downloaded extensions and secrets in a temporary directory:
+#> ℹ /tmp/RtmpTAf27f/duckdb
+#> This is removed when the R session ends.
+#> • Extensions are re-downloaded each session.
+#> • Secrets are lost.
+#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
+#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
+#> ℹ See ?duckdb_storage for details and alternatives.
+#> duckdb keeps downloaded extensions and secrets in a temporary directory:
+#> ℹ /tmp/RtmpTAf27f/duckdb
+#> This is removed when the R session ends.
+#> • Extensions are re-downloaded each session.
+#> • Secrets are lost.
+#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
+#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
+#> ℹ See ?duckdb_storage for details and alternatives.
 cell_list <- split(cl_dt$cell_id, cl_dt$leiden)
 
 pb_counts <- get_pseudobulked_sc(

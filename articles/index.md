@@ -17,6 +17,8 @@
   detections](https://gregorlueg.github.io/bixverse/articles/genetic_diffusions.md):
 - [Contrastive
   PCA](https://gregorlueg.github.io/bixverse/articles/cpca.md):
+- [Bulk co-expression
+  modules](https://gregorlueg.github.io/bixverse/articles/bulk_coexpression_modules.md):
 - [Ontologies](https://gregorlueg.github.io/bixverse/articles/ontologies.md):
 
 ### Single Cells
@@ -35,6 +37,8 @@
   PBMCs](https://gregorlueg.github.io/bixverse/articles/bag_of_genes_single_cells.md):
 - [KNN searches for single
   cell](https://gregorlueg.github.io/bixverse/articles/knn_searches.md):
+- [Sub-clustering and per-group
+  pipelines](https://gregorlueg.github.io/bixverse/articles/single_cell_subsets.md):
 - [Meta cells with
   bixverse](https://gregorlueg.github.io/bixverse/articles/meta_cells.md):
 - [Scaling to millions of cells with

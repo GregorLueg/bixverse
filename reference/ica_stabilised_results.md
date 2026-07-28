@@ -11,6 +11,7 @@ ica_stabilised_results(
   ica_type = c("logcosh", "exp"),
   iter_params = params_ica_randomisation(),
   ica_params = params_ica_general(),
+  membership_params = params_module_membership(),
   random_seed = 42L,
   consistent_sign = TRUE,
   .verbose = TRUE
@@ -71,6 +72,15 @@ ica_stabilised_results(
   - max_tol - Maximum tolerance of the algorithm.
 
   - verbose - Controls verbosity of the function.
+
+- membership_params:
+
+  List. Controls how the component loadings are turned into module
+  membership, see
+  [`params_module_membership()`](https://gregorlueg.github.io/bixverse/reference/params_module_membership.md).
+  Membership is not exclusive: a gene loading strongly on several
+  components will appear in several modules, and a gene in no tail
+  appears in none.
 
 - random_seed:
 

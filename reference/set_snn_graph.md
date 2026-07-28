@@ -15,6 +15,9 @@ set_snn_graph(x, snn_graph, ...)
 
 ## S7 method for class <bixverse::SingleCells>
 set_snn_graph(x, snn_graph, ...)
+
+## S7 method for class <bixverse::SingleCellsSubset>
+set_snn_graph(x, snn_graph, ...)
 ```
 
 ## Arguments

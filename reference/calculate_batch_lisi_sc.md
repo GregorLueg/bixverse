@@ -17,7 +17,7 @@ calculate_batch_lisi_sc(object, batch_column, .verbose = TRUE)
 
 - object:
 
-  `SingleCells` class.
+  `SingleCells` or `SingleCellsSubset` class.
 
 - batch_column:
 

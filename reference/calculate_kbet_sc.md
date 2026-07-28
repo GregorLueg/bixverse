@@ -18,7 +18,7 @@ calculate_kbet_sc(object, batch_column, threshold = 0.05, .verbose = TRUE)
 
 - object:
 
-  `SingleCells` class.
+  `SingleCells` or `SingleCellsSubset` class.
 
 - batch_column:
 

@@ -23,7 +23,7 @@
 
     <a class="navbar-brand me-2" href="index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -55,6 +55,7 @@
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Co-expression module detection methods</h6></li>
     <li><a class="dropdown-item" href="articles/cpca.html">Contrastive PCA</a></li>
+    <li><a class="dropdown-item" href="articles/bulk_coexpression_modules.html">Bulk co-expression modules</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Ontologies</h6></li>
     <li><a class="dropdown-item" href="articles/ontologies.html">Semantic similarities on ontologies</a></li>
@@ -70,6 +71,7 @@
     <li><a class="dropdown-item" href="articles/doublet_detection.html">Doublet detection in bixverse</a></li>
     <li><a class="dropdown-item" href="articles/single_cell_batch_corrections.html">Batch corrections</a></li>
     <li><a class="dropdown-item" href="articles/knn_searches.html">kNN searches for single cells in bixverse</a></li>
+    <li><a class="dropdown-item" href="articles/single_cell_subsets.html">Sub-clustering and per-group pipelines</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>More advanced analysis methods</h6></li>
     <li><a class="dropdown-item" href="articles/bag_of_genes_single_cells.html">'Bag of genes' methods for single cell in bixverse</a></li>
@@ -100,7 +102,7 @@
   <main id="main" class="col-md-9"><div class="section level1">
 <div class="page-header"><h1 id="bixverse-package">bixverse package<a class="anchor" aria-label="anchor" href="#bixverse-package"></a>
 </h1></div>
-<p><img src="https://img.shields.io/badge/R_package-0.4.3-orange" alt="r_package"><a href="https://github.com/GregorLueg/bixverse/actions/workflows/R-cmd-check.yml" class="external-link"><img src="https://github.com/GregorLueg/bixverse/actions/workflows/R-cmd-check.yml/badge.svg" alt="CI"></a> <a href="https://opensource.org/licenses/MIT" class="external-link"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a> <a href="https://gregorlueg.github.io/bixverse/"><img src="https://img.shields.io/badge/pkgdown-website-1b5e9f?logo=github" alt="pkgdown"></a> <a href="https://extendr.github.io/extendr/extendr_api/" class="external-link"><img src="https://img.shields.io/badge/extendr-%5E0.9.0-276DC2" alt="extendr"></a></p>
+<p><img src="https://img.shields.io/badge/R_package-0.4.4-orange" alt="r_package"><a href="https://github.com/GregorLueg/bixverse/actions/workflows/R-cmd-check.yml" class="external-link"><img src="https://github.com/GregorLueg/bixverse/actions/workflows/R-cmd-check.yml/badge.svg" alt="CI"></a> <a href="https://opensource.org/licenses/MIT" class="external-link"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a> <a href="https://gregorlueg.github.io/bixverse/"><img src="https://img.shields.io/badge/pkgdown-website-1b5e9f?logo=github" alt="pkgdown"></a> <a href="https://extendr.github.io/extendr/extendr_api/" class="external-link"><img src="https://img.shields.io/badge/extendr-%5E0.9.0-276DC2" alt="extendr"></a></p>
 <p></p>
 <p><img src="reference/figures/bixverse_logo.png" width="128" height="128" alt="bixverse logo"></p>
 <p></p>
@@ -116,7 +118,7 @@
 <li>
 <a href="https://github.com/GregorLueg/bixverse.plots" class="external-link">bixverse.plots</a> package for - you guessed it - plotting. Contains especially a large number of plotting helpers for single cell now.</li>
 <li>
-<a href="https://github.com/GregorLueg/bixverse.gpu" class="external-link">bixverse.gpu</a> package for - you guessed it again - GPU-accelerated methods. In this case, it leverages <a href="https://github.com/tracel-ai/cubecl" class="external-link">cubecl</a>/<a href="https://burn.dev" class="external-link">Burn</a> under the hood with wgpu backends which means it will work on (theoretically) any GPU.</li>
+<a href="https://github.com/GregorLueg/bixverse.gpu" class="external-link">bixverse.gpu</a> package for - you guessed it again - GPU-accelerated methods. In this case, it leverages <a href="https://github.com/tracel-ai/cubecl" class="external-link">cubecl</a>/<a href="https://burn.dev" class="external-link">Burn</a> under the hood with wgpu backends which means it will work on (theoretically) any GPU. If you do single cell stuff, have a look… Some of the implementations in there make everything substantially faster.</li>
 </ul>
 <p>Additional packages that might be of interest interest to you:</p>
 <ul>
@@ -130,7 +132,7 @@
 <h3 id="release-notes">Release notes<a class="anchor" aria-label="anchor" href="#release-notes"></a>
 </h3>
 <p><img src="reference/figures/bixverse_single_cell.png" width="500" height="500" alt="atlas scale on small compute"></p>
-<p>Major release with <code>"0.4.0"</code>. The single cell suite has been further improved. The key changes are:</p>
+<p>Major release with <code>"0.4.0+"</code>. The single cell suite has been further improved. The key changes are:</p>
 <ul>
 <li>Performance improvements across several axes. A lot of the underlying Rust code was made even faster and more performant. The goal of analysing a 1m single cell data set on a MacBook Air with 24 GB memory has been achieved.</li>
 <li>Multi-modal support. There is now a <code>SingleCellsMultiModal</code> class that allows you to (for now only) also add ADT counts. Some readers have been added to load in the data. This also includes support for new methods in this space:
@@ -142,7 +144,7 @@
 <li>Large number of methods and updates to support multi-model analysis</li>
 </ul>
 </li>
-<li>Massive improvements on the two sister packages (<a href="https://github.com/GregorLueg/bixverse.plots" class="external-link">bixverse.plots</a> and <a href="https://github.com/GregorLueg/bixverse.gpu" class="external-link">bixverse.gpu</a>): enabling GPU-accelerated methods (Harmony, PCA) and a large number of plotting helpers.</li>
+<li>Massive improvements on the two sister packages (<a href="https://github.com/GregorLueg/bixverse.plots" class="external-link">bixverse.plots</a> and <a href="https://github.com/GregorLueg/bixverse.gpu" class="external-link">bixverse.gpu</a>): enabling GPU-accelerated methods (Harmony, PCA, kNN searches) and a large number of plotting helpers.</li>
 <li>Updates to various vignettes to reflect the changes with this release.</li>
 <li>More methods added… Symphony, NicheNet, sparse NMF for single cells!</li>
 </ul>
@@ -193,10 +195,10 @@
 </h4>
 <ul class="task-list">
 <li><label><input type="checkbox" checked>Multi h5 (10x output) i/o</label></li>
-<li><label><input type="checkbox">Save data to h5ad for easier interoperability with Python.</label></li>
-<li><label><input type="checkbox">Splitting a SingleCells into several sub directories for easier management</label></li>
-<li><label><input type="checkbox">Implementation of <a href="https://www.nature.com/articles/s41587-019-0068-4" class="external-link">Palantir</a> and <a href="https://pubmed.ncbi.nlm.nih.gov/29914354/" class="external-link">Slingshot</a> for trajectory analysis</label></li>
+<li><label><input type="checkbox" checked><del>Splitting a SingleCells into several sub directories for easier management.</del> Subset class enabled with views. The direct splitting is maybe not needed … ?</label></li>
 <li><label><input type="checkbox" checked>Port over <a href="https://www.nature.com/articles/s41592-019-0667-5" class="external-link">NicheNet</a>.</label></li>
+<li><label><input type="checkbox">Implementation of <a href="https://www.nature.com/articles/s41587-019-0068-4" class="external-link">Palantir</a> and <a href="https://pubmed.ncbi.nlm.nih.gov/29914354/" class="external-link">Slingshot</a> for trajectory analysis.</label></li>
+<li><label><input type="checkbox">Save data to h5ad for easier interoperability with Python.</label></li>
 <li><label><input type="checkbox">Easy interoperability that chunks of data can be read in for neural network training in the corresponding deep learning frameworks.</label></li>
 </ul>
 </div>

@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,6 +35,7 @@
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Co-expression module detection methods</h6></li>
     <li><a class="dropdown-item" href="../articles/cpca.html">Contrastive PCA</a></li>
+    <li><a class="dropdown-item" href="../articles/bulk_coexpression_modules.html">Bulk co-expression modules</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Ontologies</h6></li>
     <li><a class="dropdown-item" href="../articles/ontologies.html">Semantic similarities on ontologies</a></li>
@@ -48,6 +49,7 @@
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
     <li><a class="dropdown-item" href="../articles/knn_searches.html">kNN searches for single cells in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_subsets.html">Sub-clustering and per-group pipelines</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>More advanced analysis methods</h6></li>
     <li><a class="dropdown-item" href="../articles/bag_of_genes_single_cells.html">'Bag of genes' methods for single cell in bixverse</a></li>
@@ -89,6 +91,7 @@
 <span>  ica_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"logcosh"</span>, <span class="st">"exp"</span><span class="op">)</span>,</span>
 <span>  iter_params <span class="op">=</span> <span class="fu"><a href="params_ica_randomisation.html">params_ica_randomisation</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  ica_params <span class="op">=</span> <span class="fu"><a href="params_ica_general.html">params_ica_general</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  membership_params <span class="op">=</span> <span class="fu"><a href="params_module_membership.html">params_module_membership</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  random_seed <span class="op">=</span> <span class="fl">42L</span>,</span>
 <span>  consistent_sign <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  .verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
@@ -137,6 +140,13 @@ Should be between 1 to 2.</p></li>
 <li><p>max_tol - Maximum tolerance of the algorithm.</p></li>
 <li><p>verbose - Controls verbosity of the function.</p></li>
 </ul></dd>
+
+
+<dt id="arg-membership-params">membership_params<a class="anchor" aria-label="anchor" href="#arg-membership-params"></a></dt>
+<dd><p>List. Controls how the component loadings are turned
+into module membership, see <code><a href="params_module_membership.html">params_module_membership()</a></code>. Membership
+is not exclusive: a gene loading strongly on several components will appear in
+several modules, and a gene in no tail appears in none.</p></dd>
 
 
 <dt id="arg-random-seed">random_seed<a class="anchor" aria-label="anchor" href="#arg-random-seed"></a></dt>

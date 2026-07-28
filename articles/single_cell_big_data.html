@@ -23,7 +23,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -55,6 +55,7 @@
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Co-expression module detection methods</h6></li>
     <li><a class="dropdown-item" href="../articles/cpca.html">Contrastive PCA</a></li>
+    <li><a class="dropdown-item" href="../articles/bulk_coexpression_modules.html">Bulk co-expression modules</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Ontologies</h6></li>
     <li><a class="dropdown-item" href="../articles/ontologies.html">Semantic similarities on ontologies</a></li>
@@ -70,6 +71,7 @@
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
     <li><a class="dropdown-item" href="../articles/knn_searches.html">kNN searches for single cells in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_subsets.html">Sub-clustering and per-group pipelines</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>More advanced analysis methods</h6></li>
     <li><a class="dropdown-item" href="../articles/bag_of_genes_single_cells.html">'Bag of genes' methods for single cell in bixverse</a></li>
@@ -102,7 +104,7 @@
       <h1>Scaling to millions of cells with bixverse</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-07-13</p>
+      <p class="date">2026-07-28</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -302,13 +304,13 @@
 <p>On the test MacBook Air, this runs in 15 seconds. In practice you would pick one. The GPU path becomes the more attractive option as cell counts grow; on this data set you can feel the difference (if VRAM permits). You will see some slight differences due to floating operation differences between CPU and GPU.</p>
 </section><section class="level2"><h2 id="nearest-neighbours-gpu-accelerated">Nearest neighbours (GPU-accelerated)<a class="anchor" aria-label="anchor" href="#nearest-neighbours-gpu-accelerated"></a>
 </h2>
-<p>The companion package <a href="https://github.com/GregorLueg/bixverse.gpu" class="external-link">bixverse.gpu</a> exposes a CAGRA-style GPU-accelerated approximate nearest neighbour search that makes this quite fast on a laptop with a discrete GPU - thanks to CubeCL and WGPU, as long as you can fit the data into VRAM. The time the GPU version takes is &lt;30 seconds. CPU version with <code>HNSW</code> takes ~90 seconds.</p>
+<p>The companion package <a href="https://github.com/GregorLueg/bixverse.gpu" class="external-link">bixverse.gpu</a> exposes a CAGRA-style GPU-accelerated approximate nearest neighbour search that makes this quite fast on a laptop with a discrete GPU - thanks to CubeCL and WGPU, as long as you can fit the data into VRAM. The time the GPU version takes is &lt;30 seconds. CPU version with <code>NNDescent</code> takes ~90 seconds.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sce</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/find_neighbours_sc.html">find_neighbours_sc</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">sce</span>,</span>
 <span>  embd_to_use <span class="op">=</span> <span class="st">"pca"</span>,</span>
-<span>  neighbours_params <span class="op">=</span> <span class="fu"><a href="../reference/params_sc_neighbours.html">params_sc_neighbours</a></span><span class="op">(</span>knn <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>knn_method <span class="op">=</span> <span class="st">"hnsw"</span><span class="op">)</span><span class="op">)</span></span>
+<span>  neighbours_params <span class="op">=</span> <span class="fu"><a href="../reference/params_sc_neighbours.html">params_sc_neighbours</a></span><span class="op">(</span>knn <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>knn_method <span class="op">=</span> <span class="st">"nndescent"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="cell">
@@ -317,7 +319,6 @@
 <span>  object <span class="op">=</span> <span class="va">sce</span>,</span>
 <span>  embd_to_use <span class="op">=</span> <span class="st">"pca"</span>,</span>
 <span>  cagra_params <span class="op">=</span> <span class="fu">params_sc_cagra</span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  extract_knn <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  .verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 </div>
@@ -349,12 +350,19 @@
 <span>  slot_name <span class="op">=</span> <span class="st">"tsne_prior"</span>,</span>
 <span>  <span class="co"># use FFT here! It will make a massive difference</span></span>
 <span>  approx_type <span class="op">=</span> <span class="st">"fft"</span>,</span>
-<span>  knn_method <span class="op">=</span> <span class="st">"hnsw"</span></span>
+<span>  knn_method <span class="op">=</span> <span class="st">"nndescent"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 </div>
-<p>You might wonder why in the case of tSNE we regenerate the kNN graph. You do not have to, but the rule-of-thumb is <code>k_neighbours = perplexity * 3.0</code>. With the default perplexity, we would need 30 neighbours, but we previously only returned 15. So, we just rerun this. Skip tSNE if you don’t need it, but the FFT-accelerated version is substantially faster than you would expect from tSNE.</p>
+<p>You might wonder why in the case of tSNE we regenerate the kNN graph. You do not have to, but the rule-of-thumb is <code>k_neighbours = perplexity * 3.0</code>. With the default perplexity, we would need 30 neighbours, but we previously only returned 15. So, we just rerun this. Skip tSNE if you don’t need it, but the FFT-accelerated version is substantially faster than you would expect from tSNE. Also, if you want to, <code>bixverse.gpu</code> provides (since <code>"0.2.1"</code>) a GPU-accelerated Adam optimiser. You can run this via:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb17"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">sce</span> <span class="op">&lt;-</span> <span class="fu">umap_sc_gpu</span><span class="op">(</span></span>
+<span>  <span class="va">sce</span>,</span>
+<span>  slot_name <span class="op">=</span> <span class="st">"umap_prior_gpu"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://gregorlueg.github.io/bixverse.plots/reference/embedding_plot_sc.html">embedding_plot_sc</a></span><span class="op">(</span></span>
 <span>  <span class="va">sce</span>,</span>
 <span>  embedding <span class="op">=</span> <span class="st">"umap_prior"</span>,</span>
@@ -367,7 +375,7 @@
 <span>  <span class="op">)</span></span></code></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://gregorlueg.github.io/bixverse.plots/reference/embedding_plot_sc.html">embedding_plot_sc</a></span><span class="op">(</span></span>
 <span>  <span class="va">sce</span>,</span>
 <span>  embedding <span class="op">=</span> <span class="st">"tsne_prior"</span>,</span>
@@ -381,19 +389,19 @@
 </div>
 </section></section><section class="level2"><h2 id="batch-correction">Batch correction<a class="anchor" aria-label="anchor" href="#batch-correction"></a>
 </h2>
-<p>Okay, there is clearly a big sample batch effect. Let’s remove that one. Again you have two options here… Harmony (<a href="">version 2</a> - recommended) on CPU or a GPU-accelerated version. Let’s check out the CPU version first… (~ 40 seconds)</p>
+<p>Okay, there is clearly a big sample batch effect. Let’s remove that one. Again you have two options here… Harmony (<a href="https://www.biorxiv.org/content/10.64898/2026.03.16.711825v2" class="external-link">version 2</a> - recommended) on CPU or a GPU-accelerated version. Let’s check out the CPU version first… (~ 40 seconds)</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb19"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sce</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/harmony_v2_sc.html">harmony_v2_sc</a></span><span class="op">(</span>object <span class="op">=</span> <span class="va">sce</span>, batch_column <span class="op">=</span> <span class="st">"sample"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <p>If you have a GPU at hand, you can also just use the GPU version (15 seconds). Again, you will observe some slight numerical differences… This is due to the GPU implementation, but the overall structure of the data will be recovered in the same way.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb20"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sce</span> <span class="op">&lt;-</span> <span class="fu">harmony_v2_gpu_sc</span><span class="op">(</span>object <span class="op">=</span> <span class="va">sce</span>, batch_column <span class="op">=</span> <span class="st">"sample"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <p>Let’s overwrite the kNN graph with the now batch-corrected embedding:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb21"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sce</span> <span class="op">&lt;-</span> <span class="fu">find_neighbours_cagra_sc</span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">sce</span>,</span>
 <span>  embd_to_use <span class="op">=</span> <span class="st">"harmony_gpu"</span>, <span class="co"># or harmony_v2 if you just did the CPU version</span></span>
@@ -406,7 +414,7 @@
 </h3>
 <p>Let’s requantify the kBET scores and see if we removed some of the batch effects…</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb22"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">kbet_post_gpu</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calculate_kbet_sc.html">calculate_kbet_sc</a></span><span class="op">(</span>object <span class="op">=</span> <span class="va">sce</span>, batch_column <span class="op">=</span> <span class="st">"sample"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">kbet_post_gpu</span></span></code></pre></div>
@@ -415,7 +423,7 @@
 </h2>
 <p>This is a nice data set where the fast clustering makes a lot of sense… We use the k-means clustering to quantise the data to representative centroids and run the Louvain clustering specifically for the centroids and project the community membership back.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb23"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fast_cluster_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fast_cluster_sc.html">fast_cluster_sc</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">sce</span>,</span>
 <span>  embd_to_use <span class="op">=</span> <span class="st">"harmony_gpu"</span>, <span class="co"># or harmony_v2 if you just did the CPU version</span></span>
@@ -434,7 +442,7 @@
 </section><section class="level2"><h2 id="differential-gene-expression">Differential gene expression<a class="anchor" aria-label="anchor" href="#differential-gene-expression"></a>
 </h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb24"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">meta_data</span> <span class="op">&lt;-</span> <span class="va">sce</span><span class="op">[[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"cell_id"</span>, <span class="st">"res_2"</span><span class="op">)</span><span class="op">]</span><span class="op">]</span></span>
 <span></span>
 <span><span class="va">cells_grp_a</span> <span class="op">&lt;-</span> <span class="va">meta_data</span><span class="op">[</span><span class="va">res_2</span> <span class="op">==</span> <span class="st">"1"</span>, <span class="va">cell_id</span><span class="op">]</span></span>
