@@ -186,15 +186,31 @@ reference:
       - read_motif_ranking
       - run_cistarget
       - params_cistarget
-  # Correlation-based gene module stuff
-  - title: Correlation-based gene module detections
+
+  # Bulk co-expression methods
+  - title: Co-expression methods for bulk RNAseq
     desc: 
-      Methods to identify co-expression modules via correlations in the data.
-      Includes methods for differential correlations, some graph-based and some
-      hierarchical clustering based ones.
+      Methods to identify co-expression modules via correlations or matrix
+      factorisations.
     contents:
       - BulkCoExp
       - preprocess_bulk_coexp
+      - get_diagnostics
+      - get_factors
+      - get_nmf_gene_loadings
+      - get_nmf_modules
+      - get_nmf_sample_activity
+      - get_nmf_stability
+      - get_c_pca_factors
+      - get_c_pca_loadings
+      - get_ica_stability_res
+      - get_grid_search_res
+      - get_cor_graph
+      - get_diffcor_graph
+      - get_epsilon_res
+      - get_resolution_res
+      - get_outputs
+      - get_modules
       - cor_module_check_epsilon
       - cor_module_coremo_clustering
       - cor_module_coremo_cor_sign
@@ -205,38 +221,25 @@ reference:
       - cor_module_processing
       - cor_module_tom
       - diffcor_module_processing
-      - get_cor_graph
-      - get_diffcor_graph
-      - get_epsilon_res
-      - get_resolution_res
-      - get_outputs
-      - params_cor_graph
-      - params_coremo
-  # Matrix factorisations for gene module detection
-  - title: Matrix factorisation methods
-    desc: 
-      Methods to identify co-expression via matrix factorisations. Uses the same 
-      class as the correlation-based ones. You have contrastive PCA, ICA and
-      dual graph-regularised dictionary learning as methods.
-    contents:
       - contrastive_pca_processing
       - c_pca_plot_alphas
       - contrastive_pca
-      - get_c_pca_factors
-      - get_c_pca_loadings
       - dgrdl_grid_search
       - dgrdl_result
-      - get_ica_stability_res
-      - get_grid_search_res
       - ica_evaluate_comp
       - ica_optimal_ncomp
       - ica_processing
       - ica_stabilised_results
+      - nmf_bulk
+      - stabilised_nmf_bulk
+      - params_cor_graph
+      - params_coremo
       - params_dgrdl
       - params_module_membership
       - params_ica_general
       - params_ica_ncomp
       - params_ica_randomisation
+
   # Differential gene expression
   - title: Helpers for differential gene expression
     desc: 
@@ -449,6 +452,9 @@ reference:
       - gene_set_proportions_sc
       - per_cell_qc_outlier
       - run_cell_qc
+      - run_cell_qc_fixed
+      - rescue_cells
+      - flag_cells
       - find_hvg_sc
       - find_hvg_batch_aware_sc
       - get_hvg_data_sc
@@ -456,23 +462,12 @@ reference:
       - generate_sc_knn
       - find_neighbours_sc
       - top_genes_perc_sc
-      - fast_mnn_sc
-      - harmony_sc
-      - harmony_v2_sc
-      - bbknn_sc
-      - calculate_kbet_sc
-      - calculate_batch_asw_sc
-      - calculate_batch_lisi_sc
       - params_norm_doublets_defaults
       - params_boost
       - params_sc_hvg
       - params_sc_pca
       - params_scrublet
-      - params_sc_bbknn
       - params_sc_fast_cluster
-      - params_sc_fastmnn
-      - params_sc_harmony
-      - params_sc_harmony_v2
       - params_sc_neighbours
       - params_scdblfinder
       - params_hvg_defaults
@@ -481,6 +476,25 @@ reference:
       - params_sc_knn
       - params_kmeans_defaults
       - params_fast_cluster_default
+
+  - title: Single cell batch correction methods
+    desc: Batch correction methods and metrics for single cell
+    contents:
+      - fast_mnn_sc
+      - harmony_sc
+      - harmony_v2_sc
+      - bbknn_sc
+      - seurat_cca_sc
+      - seurat_rpca_sc
+      - calculate_kbet_sc
+      - calculate_batch_asw_sc
+      - calculate_batch_lisi_sc
+      - params_sc_fastmnn
+      - params_sc_harmony
+      - params_sc_harmony_v2
+      - params_sc_bbknn
+      - params_sc_seurat_cca
+      - params_sc_seurat_rpca      
   # Single cell analysis
   - title: Single cell analysis methods
     desc: 
@@ -551,6 +565,7 @@ reference:
       - get_data
       - get_scores
       - new_sc_knn
+
   # Single cell reference mapping
   - title: Reference mapping and cell type annotations in single cell
     desc:
@@ -583,6 +598,7 @@ reference:
       - ligand_activity_scores
       - params_ligand_target
       - prioritise_interactions
+
   # Single cell plotting helpers
   - title: Single cell plotting stuff
     desc: 
