@@ -2161,5 +2161,12 @@ S7::method(dim, SingleCells) <- function(x) {
 S7::method(head, SingleCells) <- function(x, ..., n = 6L) {
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
   checkmate::qassert(n, "I1[1,)")
-  get_sc_obs(x, indices = seq_len(n), filtered = TRUE)
+
+  cell_to_keeps_idx <- get_cells_to_keep(x)
+
+  get_sc_obs(
+    x,
+    indices = cell_to_keeps_idx[1:(min(n, length(cell_to_keeps_idx)))] + 1L,
+    filtered = TRUE
+  )
 }

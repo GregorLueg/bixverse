@@ -19,7 +19,11 @@ get_cells_to_keep(x)
 get_cells_to_keep(x)
 }
 \arguments{
-\item{x}{An object to get the gene index from.}
+\item{x}{An object from which to get the cells to keep from. These are
+0-indexed.}
+}
+\value{
+Integer vector with 0-indices of the cells to keep.
 }
 \description{
 Get the cells to keep
