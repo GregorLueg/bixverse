@@ -72,9 +72,10 @@ fn rs_sc_type(
 ) -> Result<List> {
     let cell_markers: Vec<CellTypeMarkers> = process_cell_markers(cell_markers)?;
     let cell_indices = cell_indices.r_int_convert();
+    let reader = ParallelSparseReader::new(f_path).to_extendr()?;
 
     let res: SctypeRes = run_sctype(
-        f_path,
+        &reader,
         &cell_indices,
         &cell_markers,
         sensitivity,
@@ -408,6 +409,7 @@ fn rs_build_symphony_ref(
     }
 
     let pca_params = SingleCellPcaParams::from_r_list(pca_params)?;
+    let gene_reader = ParallelSparseReader::new(&f_path_gene).to_extendr()?;
 
     let harmony_backend = match harmony_version.as_str() {
         "v1" => HarmonyBackend::V1(HarmonyParams::from_r_list(harmony_params)?),
@@ -434,7 +436,7 @@ fn rs_build_symphony_ref(
     };
 
     let reference = build_symphony_reference(
-        &f_path_gene,
+        &gene_reader,
         &cell_indices,
         &hvg_indices,
         &batch_indices,
@@ -540,9 +542,10 @@ fn rs_symphony_map_query(
     let c_cache = r_matrix_to_faer_fp32(&c_cache);
 
     let params = SymphonyMapParams::from_r_list(params_symphony)?;
+    let query_reader = ParallelSparseReader::new(&f_path_query).to_extendr()?;
 
     let res = symphony_map_query_parts(
-        &f_path_query,
+        &query_reader,
         &cell_indices_query,
         &gene_means_f32,
         &gene_sds_f32,

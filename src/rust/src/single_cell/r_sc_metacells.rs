@@ -159,25 +159,6 @@ fn subset_embedding(embd: &RMatrix<f64>, rows_to_use: &[usize]) -> Mat<f32> {
     })
 }
 
-/// Read the number of cells recorded in a `counts_cells.bin` header.
-///
-/// Opens the file purely to size the original index space. The aggregation step
-/// opens its own reader later, so this handle is dropped immediately.
-///
-/// ### Params
-///
-/// * `f_path` - Path to the `counts_cells.bin` file.
-///
-/// ### Returns
-///
-/// The total number of cells stored in the file, or an error when the file
-/// cannot be opened.
-fn count_file_n_cells(f_path: &str) -> extendr_api::Result<usize> {
-    let reader = ParallelSparseReader::new(f_path)
-        .map_err(|e| Error::Other(format!("Could not open '{}': {:?}", f_path, e)))?;
-    Ok(reader.get_header().total_cells)
-}
-
 /////////////
 // extendR //
 /////////////
@@ -262,6 +243,8 @@ fn rs_get_metacells_bootstrapped(
 
     let verbosity = parse_verbosity_level(verbose);
 
+    let reader = ParallelSparseReader::new(&f_path).to_extendr()?;
+
     if cells_to_use.is_some() && (cells_to_keep.is_none() || embd.is_none()) {
         return Err(
             "When using 'cells_to_use', both 'cells_to_keep' and 'embd' must be provided".into(),
@@ -278,7 +261,7 @@ fn rs_get_metacells_bootstrapped(
         cells_to_keep.as_deref(),
         cells_to_use.as_deref(),
         n_working_rows,
-        count_file_n_cells(&f_path)?,
+        reader.get_header().total_cells,
     )?;
 
     let knn_graph = match &mapping.rows_to_use {
@@ -377,7 +360,6 @@ fn rs_get_metacells_bootstrapped(
         println!("Aggregating meta cells.");
     }
 
-    let reader = ParallelSparseReader::new(&f_path).unwrap();
     let n_genes = reader.get_header().total_genes;
 
     let metacells_refs: Vec<&[usize]> = metacells_original.iter().map(|v| v.as_slice()).collect();
@@ -464,6 +446,8 @@ fn rs_get_seacells(
     let verbosity = parse_verbosity_level(verbose);
     let knn_provided = knn_data != extendr_api::Nullable::Null;
 
+    let reader = ParallelSparseReader::new(&f_path).to_extendr()?;
+
     if cells_to_use.is_some() && knn_provided {
         println!(
             "[WARNING!] 'knn_data' is ignored when 'cells_to_use' is set; the kNN graph will be regenerated on the subset"
@@ -474,7 +458,7 @@ fn rs_get_seacells(
         cells_to_keep.as_deref(),
         cells_to_use.as_deref(),
         embd.nrows(),
-        count_file_n_cells(&f_path)?,
+        reader.get_header().total_cells,
     )?;
 
     let embd_mat = match &mapping.rows_to_use {
@@ -625,7 +609,6 @@ fn rs_get_seacells(
 
     let metacells_refs: Vec<&[usize]> = metacells_original.iter().map(|v| v.as_slice()).collect();
 
-    let reader = ParallelSparseReader::new(&f_path).unwrap();
     let n_genes = reader.get_header().total_genes;
 
     let aggregated: CompressedSparseData2<u32, f32> =
@@ -715,6 +698,8 @@ fn rs_supercell(
     let supercell_params = SuperCellParams::from_r_list(supercell_params)?;
     let verbosity = parse_verbosity_level(verbose);
 
+    let reader = ParallelSparseReader::new(&f_path).to_extendr()?;
+
     if cells_to_use.is_some() && (cells_to_keep.is_none() || embd.is_none()) {
         return Err(
             "When using 'cells_to_use', both 'cells_to_keep' and 'embd' must be provided".into(),
@@ -751,7 +736,7 @@ fn rs_supercell(
         cells_to_keep.as_deref(),
         cells_to_use.as_deref(),
         n_working_rows,
-        count_file_n_cells(&f_path)?,
+        reader.get_header().total_cells,
     )?;
 
     let (knn_indices, knn_dist, dist_squared) = match &mapping.rows_to_use {
@@ -890,7 +875,6 @@ fn rs_supercell(
 
     let metacells_refs: Vec<&[usize]> = metacells_original.iter().map(|v| v.as_slice()).collect();
 
-    let reader = ParallelSparseReader::new(&f_path).unwrap();
     let n_genes = reader.get_header().total_genes;
 
     let aggregated: CompressedSparseData2<u32, f32> =
@@ -1104,8 +1088,10 @@ fn rs_pseudobulk_cells_dense(
         cell_indices.push(vec_i);
     }
 
+    let reader = ParallelSparseReader::new(&f_path).to_extendr()?;
+
     let data =
-        get_pseudo_bulked_counts_dense(&f_path, &cell_indices, bulk_type, verbose).to_extendr()?;
+        get_pseudo_bulked_counts_dense(&reader, &cell_indices, bulk_type, verbose).to_extendr()?;
 
     Ok(faer_to_r_matrix(data.as_ref()))
 }
@@ -1155,8 +1141,10 @@ fn rs_pseudobulk_cells_sparse(
         cell_indices.push(vec_i);
     }
 
+    let reader = ParallelSparseReader::new(&f_path).to_extendr()?;
+
     let data: CompressedSparseData2<f64> =
-        get_pseudo_bulked_counts_sparse(&f_path, &cell_indices, bulk_type, verbose).to_extendr()?;
+        get_pseudo_bulked_counts_sparse(&reader, &cell_indices, bulk_type, verbose).to_extendr()?;
 
     Ok(list!(
         indptr = data.indptr,
