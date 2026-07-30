@@ -13,7 +13,7 @@
 #' in the original reference). Defaults to `TRUE`.
 #' @param weight_floor Optional numeric. A value between 0 to 1 and sets the
 #' floor for the weights if `sensitivity = TRUE`. If not provided, defaults to
-#' `0` as in the original implementation.
+#' `0.1`.
 #' @param .verbose Boolean or integer. Controls verbosity and returns run times.
 #' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
 #' verbosity.
@@ -46,6 +46,8 @@ S7::method(calc_sc_type_scores, SingleCells) <- function(
   # checks
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   assertCellMarkerList(cell_marker_list)
+  checkmate::qassert(sensitivity, "B1")
+  checkmate::qassert(weight_floor, c("0", "N1[0,1]"))
   checkmate::qassert(.verbose, c("I1", "B1"))
 
   res <- rs_sc_type(
@@ -60,6 +62,108 @@ S7::method(calc_sc_type_scores, SingleCells) <- function(
   class(res) <- "ScTypeResults"
 
   return(res)
+}
+
+#' Assign cell types per cell based on ScType
+#'
+#' @description
+#' The cluster-level ScType path ([score_clusters()]) stamps one label on every
+#' cell of a cluster, so a minority population sharing a Leiden community with a
+#' bigger one gets absorbed without anything flagging it. This runs the scoring
+#' per cell instead: the score matrix is smoothed over the sNN graph via label
+#' spreading (Zhou et al.), then each cell takes its own argmax. Cells whose best
+#' score falls below `score_floor` come back as `NA`.
+#'
+#' Pass `cluster_col` to also get the per-cluster composition (purity, entropy,
+#' runner-up cell type) and the hybrid assignment, where clusters at or above
+#' `purity_threshold` keep the blanket cluster-level call and mixed clusters fall
+#' back to the per-cell calls.
+#'
+#' @param object `SingleCells`.
+#' @param sc_type_res `ScTypeResults`, see [calc_sc_type_scores()].
+#' @param cluster_col Optional string. Name of the obs column with the cluster
+#' assignment. If provided, the composition and hybrid assignment are returned
+#' on top of the per-cell calls.
+#' @param sctype_cell_params List. Output of [params_sctype_cells()].
+#' @param .verbose Boolean or integer. Controls verbosity.
+#'
+#' @returns An `ScTypeCellResults` results class.
+#'
+#' @references Ianevski et al., Nat Comm, 2022. Zhou et al., NIPS, 2004.
+#'
+#' @export
+assign_sc_type <- S7::new_generic(
+  name = "assign_sc_type",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    sc_type_res,
+    cluster_col = NULL,
+    sctype_cell_params = params_sctype_cells(),
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method assign_sc_type SingleCells
+S7::method(assign_sc_type, SingleCells) <- function(
+  object,
+  sc_type_res,
+  cluster_col = NULL,
+  sctype_cell_params = params_sctype_cells(),
+  .verbose = TRUE
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  checkmate::assertClass(sc_type_res, "ScTypeResults")
+  checkmate::qassert(cluster_col, c("0", "S1"))
+  assertSctypeCellParams(sctype_cell_params)
+  checkmate::qassert(.verbose, c("I1", "B1"))
+
+  snn_graph <- get_snn_graph(object)
+  if (is.null(snn_graph)) {
+    warning(paste(
+      "No sNN graph found. Did you run find_neighbours_sc()?",
+      "Scoring without smoothing."
+    ))
+    edges <- NULL
+  } else {
+    if (igraph::vcount(snn_graph) != sc_type_res$n_cells) {
+      stop(sprintf(
+        "The sNN graph has %d nodes, but the ScType results %d cells.",
+        igraph::vcount(snn_graph),
+        sc_type_res$n_cells
+      ))
+    }
+    edges <- igraph::as_edgelist(snn_graph, names = FALSE)
+  }
+
+  cluster_labels <- NULL
+  if (!is.null(cluster_col)) {
+    cluster_labels <- .read_label_columns(object, cluster_col)[[cluster_col]]
+    checkmate::assertIntegerish(cluster_labels, len = sc_type_res$n_cells)
+    # Rust expects 0-based cluster ids, matching find_clusters_sc()
+    cluster_labels <- as.integer(cluster_labels)
+  }
+
+  if (.verbose) {
+    message(sprintf(
+      "Assigning cell types per cell (smoothing: %s).",
+      !is.null(edges)
+    ))
+  }
+
+  res <- rs_sc_type_assign_cells(
+    sc_type_res = sc_type_res,
+    from = if (is.null(edges)) NULL else as.integer(edges[, 1]),
+    to = if (is.null(edges)) NULL else as.integer(edges[, 2]),
+    weights = if (is.null(snn_graph)) NULL else igraph::E(snn_graph)$weight,
+    cluster_labels = cluster_labels,
+    params = sctype_cell_params
+  )
+
+  new_sc_type_cell_results(res)
 }
 
 ## symphony --------------------------------------------------------------------

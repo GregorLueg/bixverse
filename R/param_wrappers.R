@@ -1302,6 +1302,62 @@ params_sc_dsb <- function(
   )
 }
 
+### sctype ---------------------------------------------------------------------
+
+#' Parameters for the per-cell ScType assignment
+#'
+#' @description
+#' Controls the per-cell path of [assign_sc_type()]: how the raw ScType scores
+#' are rescaled, how hard the scores get smoothed over the sNN graph, and where
+#' the cut-offs for an Unknown call and for a mixed cluster sit.
+#'
+#' @param alpha Numeric in `[0, 1]`. Self-retention during smoothing. Each
+#' iteration computes `alpha * original + (1 - alpha) * neighbour_average`.
+#' @param iterations Integer >= 0. Number of smoothing iterations. `0` disables
+#' smoothing.
+#' @param tolerance Numeric > 0. Convergence tolerance for the smoothing.
+#' @param calibration String. One of `c("none", "column_z")`. `"column_z"`
+#' standardises each cell type's score column across cells, which removes the
+#' bias towards cell types whose marker sets happen to produce larger scores.
+#' @param score_floor Numeric >= 0. Minimum score for a cell to get a call
+#' instead of `NA`.
+#' @param purity_threshold Numeric in `[0, 1]`. Cluster purity above which the
+#' hybrid assignment keeps the cluster-level call.
+#'
+#' @returns A list with the parameters for usage in subsequent functions.
+#'
+#' @references Zhou et al., NIPS, 2004.
+#'
+#' @export
+params_sctype_cells <- function(
+  alpha = 0.5,
+  iterations = 2L,
+  tolerance = 1e-4,
+  calibration = c("none", "column_z"),
+  score_floor = 0.25,
+  purity_threshold = 0.9
+) {
+  calibration <- match.arg(calibration)
+  # checks
+  checkmate::qassert(alpha, "N1[0,1]")
+  checkmate::qassert(iterations, "I1[0,)")
+  checkmate::qassert(tolerance, "N1(0,)")
+  checkmate::qassert(score_floor, "N1[0,)")
+  checkmate::qassert(purity_threshold, "N1[0,1]")
+  checkmate::assertChoice(calibration, c("none", "column_z"))
+  # return
+  res <- list(
+    alpha = alpha,
+    iterations = as.integer(iterations),
+    tolerance = tolerance,
+    calibration = calibration,
+    score_floor = score_floor,
+    purity_threshold = purity_threshold
+  )
+  class(res) <- c("params_sctype_cells", "list")
+  res
+}
+
 ### symphony -------------------------------------------------------------------
 
 #' Default parameters for Symphony query mapping

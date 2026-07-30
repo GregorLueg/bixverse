@@ -2573,7 +2573,117 @@ score_clusters.ScTypeResults <- function(x, cluster_labels) {
   return(res)
 }
 
+### per-cell assignment --------------------------------------------------------
+
+#' Map 1-based ScType indices onto cell type names
+#'
+#' @param idx Integer vector. 1-based indices, `0L` denoting Unknown.
+#' @param cell_types Character vector. The cell type names.
+#'
+#' @returns A character vector with `NA_character_` for the Unknowns.
+#'
+#' @keywords internal
+.sc_type_labels <- function(idx, cell_types) {
+  labels <- rep(NA_character_, length(idx))
+  called <- idx > 0L
+  labels[called] <- cell_types[idx[called]]
+  labels
+}
+
+#' Constructor for the per-cell ScType results
+#'
+#' @param res List. The raw output of `rs_sc_type_assign_cells()`.
+#'
+#' @returns An `ScTypeCellResults` object, a list with
+#' \itemize{
+#'   \item cell_types - Character vector. The scored cell types.
+#'   \item assignments - Character vector. Per-cell call, `NA` for Unknown.
+#'   \item scores - Numeric vector. Winning score per cell.
+#'   \item margins - Numeric vector. Best minus second best score per cell. A
+#'   small margin flags an ambiguous call.
+#'   \item agreement - Numeric vector. Fraction of sNN neighbours sharing the
+#'   call. `NULL` if no graph was used.
+#'   \item hybrid - Character vector. The hybrid call, `NULL` if no cluster
+#'   column was provided.
+#'   \item composition - A `data.table` with the per-cluster composition, or
+#'   `NULL`.
+#'   \item counts - Cluster by cell type count matrix, or `NULL`.
+#' }
+#'
+#' @keywords internal
+new_sc_type_cell_results <- function(res) {
+  cell_types <- res$cell_types
+
+  out <- list(
+    cell_types = cell_types,
+    assignments = .sc_type_labels(res$assignments, cell_types),
+    scores = res$scores,
+    margins = res$margins,
+    agreement = res$agreement,
+    hybrid = NULL,
+    composition = NULL,
+    counts = NULL
+  )
+
+  if (!is.null(res$composition)) {
+    comp <- res$composition
+    out$hybrid <- .sc_type_labels(res$hybrid_assignments, cell_types)
+    out$composition <- data.table::data.table(
+      cluster_id = comp$cluster_id,
+      n_cells = comp$n_cells,
+      n_unknown = comp$n_unknown,
+      dominant = .sc_type_labels(comp$dominant, cell_types),
+      purity = comp$purity,
+      second = .sc_type_labels(comp$second, cell_types),
+      second_fraction = comp$second_fraction,
+      entropy = comp$entropy,
+      cluster_mixed = comp$cluster_mixed
+    )
+    out$counts <- comp$counts
+    colnames(out$counts) <- cell_types
+    rownames(out$counts) <- comp$cluster_id
+  }
+
+  class(out) <- "ScTypeCellResults"
+
+  out
+}
+
+#' @rdname get_scores
+#'
+#' @returns A numeric vector with the winning score per cell.
+#'
+#' @export
+get_scores.ScTypeCellResults <- function(x, ...) {
+  checkmate::assertClass(x, "ScTypeCellResults")
+  x$scores
+}
+
 ### primitives -----------------------------------------------------------------
+
+#' @export
+#'
+#' @keywords internal
+print.ScTypeCellResults <- function(x, ...) {
+  cat(sprintf(
+    "ScTypeCellResults: %d cells, %d cell types\n",
+    length(x$assignments),
+    length(x$cell_types)
+  ))
+  cat(sprintf("  Unknown cells:  %d\n", sum(is.na(x$assignments))))
+  cat(sprintf("  Smoothing used: %s\n", !is.null(x$agreement)))
+  if (is.null(x$composition)) {
+    cat("  Cluster composition: not calculated\n")
+  } else {
+    cat(sprintf(
+      "  Mixed clusters: %d out of %d\n",
+      sum(x$composition$cluster_mixed),
+      nrow(x$composition)
+    ))
+  }
+
+  invisible(x)
+}
 
 #' @export
 #'

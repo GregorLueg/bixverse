@@ -19,6 +19,7 @@
     "StabilisedNmfResult",
     "LigandTargetInfluence",
     "ScTypeResults",
+    "ScTypeCellResults",
     "BulkModuleResult",
     "ScPipeline",
     "ScStep"
