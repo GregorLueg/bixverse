@@ -43,7 +43,7 @@ S7::method(cor_module_processing, BulkCoExp) <- function(
   checkmate::qassert(.verbose, "B1")
 
   # Function body
-  target_mat <- .get_bulk_target_mat(object, .verbose = .verbose)
+  target_mat <- .get_bulk_target_mat(object)
 
   spearman <- if (cor_method == "pearson") {
     if (.verbose) {
@@ -212,7 +212,7 @@ S7::method(diffcor_module_processing, BulkCoExp) <- function(
   checkmate::qassert(.verbose, "B1")
 
   # Function
-  target_mat <- .get_bulk_target_mat(object, .verbose = .verbose)
+  target_mat <- .get_bulk_target_mat(object)
 
   spearman <- if (cor_method == "pearson") {
     if (.verbose) {
@@ -1196,7 +1196,7 @@ S7::method(cor_module_coremo_stability, BulkCoExp) <- function(
     ))
     return(object)
   }
-  data_mat <- .get_bulk_target_mat(object, .verbose = .verbose)
+  data_mat <- .get_bulk_target_mat(object)
 
   # pull out the needed parameters
   coremo_params <- S7::prop(object, "params")[["coremo"]]

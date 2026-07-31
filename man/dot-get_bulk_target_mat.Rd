@@ -4,12 +4,10 @@
 \alias{.get_bulk_target_mat}
 \title{Resolve the target matrix for a BulkCoExp method}
 \usage{
-.get_bulk_target_mat(object, .verbose = TRUE)
+.get_bulk_target_mat(object)
 }
 \arguments{
 \item{object}{The class, see \code{\link[=BulkCoExp]{BulkCoExp()}}.}
-
-\item{.verbose}{Boolean. If \code{FALSE}, suppresses the fallback warning.}
 }
 \value{
 Numeric matrix.
