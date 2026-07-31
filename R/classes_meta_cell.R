@@ -424,9 +424,10 @@ S7::method(mc_get_clr_offsets, MetaCells) <- function(
 
   x <- object[cell_indices, , assay = "raw"]
 
-  s <- rowSums(x)
-  u <- counts / s
-  clr_offsets <- rowMeans(log1p(u))
+  s <- Matrix::rowSums(x)
+  # divides row i by s[i]; recycling on a matrix runs down the columns
+  u <- x / s
+  clr_offsets <- Matrix::rowMeans(log1p(u))
 
   clr_offsets
 }
