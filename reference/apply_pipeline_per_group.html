@@ -15,7 +15,7 @@ generation followed by an external merge."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.5</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -129,8 +129,10 @@ generation followed by an external merge.</p>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>Named list of <code>SingleCellsSubset</code> objects, names being the group
-values.</p>
+    <p>Named list of processed objects, names being the group values.
+Usually <code>SingleCellsSubset</code>, or <code>MetaCells</code> if the pipeline ends on
+<code><a href="step_metacells_sc.html">step_metacells_sc()</a></code>, in which case <code><a href="merge_meta_cells.html">merge_meta_cells()</a></code> puts them back
+together.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

@@ -426,6 +426,12 @@ Sub-clustering a group of cells and running the same chain per group.
 
   Apply a pipeline independently to each group of a `SingleCells` object
 
+- [`validate_pipeline()`](https://gregorlueg.github.io/bixverse/reference/validate_pipeline.md)
+  : Check that a pipeline can run on a given class
+
+- [`meta_cells_per_group()`](https://gregorlueg.github.io/bixverse/reference/meta_cells_per_group.md)
+  : Generate source-pure meta cells and merge them
+
 - [`step_hvg_sc()`](https://gregorlueg.github.io/bixverse/reference/step_hvg_sc.md)
   : Pipeline step: identify highly variable genes
 
@@ -449,6 +455,9 @@ Sub-clustering a group of cells and running the same chain per group.
 
 - [`step_harmony_v2_sc()`](https://gregorlueg.github.io/bixverse/reference/step_harmony_v2_sc.md)
   : Pipeline step: Harmony v2 batch correction
+
+- [`step_metacells_sc()`](https://gregorlueg.github.io/bixverse/reference/step_metacells_sc.md)
+  : Pipeline step: generate meta cells
 
 ## Single cell class for multi-modal data and getters
 
@@ -526,6 +535,9 @@ Generating meta cells.
   :
 
   Generate meta cells based on SEACells and return a `MetaCells` object
+
+- [`merge_meta_cells()`](https://gregorlueg.github.io/bixverse/reference/merge_meta_cells.md)
+  : Merge meta cell objects into one
 
 - [`params_sc_supercell()`](https://gregorlueg.github.io/bixverse/reference/params_sc_supercell.md)
   : Wrapper function for parameters for SuperCell generation

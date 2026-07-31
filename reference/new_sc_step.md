@@ -7,7 +7,13 @@ together with the captured arguments and a short human-readable name.
 ## Usage
 
 ``` r
-new_sc_step(name, fn, args)
+new_sc_step(
+  name,
+  fn,
+  args,
+  accepts = c("SingleCells", "SingleCellsSubset"),
+  returns = "input"
+)
 ```
 
 ## Arguments
@@ -26,6 +32,18 @@ new_sc_step(name, fn, args)
 
   Named list. Arguments passed to `fn` at apply time (object is
   prepended automatically).
+
+- accepts:
+
+  Character vector. Class names the underlying generic has methods for.
+  Checked by
+  [`validate_pipeline()`](https://gregorlueg.github.io/bixverse/reference/validate_pipeline.md)
+  before anything runs.
+
+- returns:
+
+  String. Class name the step returns, or `"input"` if it hands back
+  whatever it was given.
 
 ## Value
 

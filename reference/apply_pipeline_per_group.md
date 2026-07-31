@@ -33,4 +33,9 @@ apply_pipeline_per_group(pipeline, object, group_col, groups = NULL)
 
 ## Value
 
-Named list of `SingleCellsSubset` objects, names being the group values.
+Named list of processed objects, names being the group values. Usually
+`SingleCellsSubset`, or `MetaCells` if the pipeline ends on
+[`step_metacells_sc()`](https://gregorlueg.github.io/bixverse/reference/step_metacells_sc.md),
+in which case
+[`merge_meta_cells()`](https://gregorlueg.github.io/bixverse/reference/merge_meta_cells.md)
+puts them back together.
