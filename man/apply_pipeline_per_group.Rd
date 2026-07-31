@@ -17,8 +17,10 @@ apply_pipeline_per_group(pipeline, object, group_col, groups = NULL)
 \code{NULL}, all unique values of \code{group_col} are used.}
 }
 \value{
-Named list of \code{SingleCellsSubset} objects, names being the group
-values.
+Named list of processed objects, names being the group values.
+Usually \code{SingleCellsSubset}, or \code{MetaCells} if the pipeline ends on
+\code{\link[=step_metacells_sc]{step_metacells_sc()}}, in which case \code{\link[=merge_meta_cells]{merge_meta_cells()}} puts them back
+together.
 }
 \description{
 Splits \code{object} by \code{group_col}, applies \code{pipeline} to each subset, and

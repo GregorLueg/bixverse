@@ -9,14 +9,16 @@ apply_pipeline(pipeline, object)
 \arguments{
 \item{pipeline}{\code{ScPipeline}.}
 
-\item{object}{\code{SingleCells} or \code{SingleCellsSubset}. Dispatch happens inside
-each step's underlying generic, so the same pipeline works on either.}
+\item{object}{\code{SingleCells}, \code{SingleCellsSubset} or \code{MetaCells}. Dispatch
+happens inside each step's underlying generic, so the same pipeline works on
+any class its steps have methods for.}
 }
 \value{
 The object after all steps have run.
 }
 \description{
 Runs each step in order. The first step receives \code{object}; subsequent steps
-receive the result of the previous step. Errors propagate; nothing is
-caught.
+receive the result of the previous step. The chain is validated against the
+class of \code{object} before anything runs, see \code{\link[=validate_pipeline]{validate_pipeline()}}.
+Errors propagate; nothing is caught.
 }
