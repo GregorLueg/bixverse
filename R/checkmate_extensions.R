@@ -3647,6 +3647,68 @@ checkCellMarkerList <- function(x) {
 #' @keywords internal
 assertCellMarkerList <- checkmate::makeAssertionFunction(checkCellMarkerList)
 
+#' Check per-cell ScType parameters
+#'
+#' @description Checkmate extension for checking the per-cell ScType parameters
+#' as returned by [params_sctype_cells()].
+#'
+#' @param x The list to check.
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
+checkSctypeCellParams <- function(x) {
+  res <- checkmate::checkList(x)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  rules <- list(
+    "alpha" = "N1[0,1]",
+    "iterations" = "I1[0,)",
+    "tolerance" = "N1(0,)",
+    "calibration" = "S1",
+    "score_floor" = "N1[0,)",
+    "purity_threshold" = "N1[0,1]"
+  )
+
+  res <- checkmate::checkNames(names(x), must.include = names(rules))
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- purrr::imap_lgl(x, \(x, name) checkmate::qtest(x, rules[[name]]))
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(sprintf("Element `%s` does not conform.", broken_elem))
+  }
+
+  res <- checkmate::checkChoice(x$calibration, c("none", "column_z"))
+  if (!isTRUE(res)) {
+    return(sprintf("Element `calibration`: %s", res))
+  }
+
+  TRUE
+}
+
+#' Assert per-cell ScType parameters
+#'
+#' @description Checkmate extension for asserting the per-cell ScType parameters
+#' as returned by [params_sctype_cells()].
+#'
+#' @param x The list to assert.
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns \code{x} if the assertion is successful.
+#'
+#' @keywords internal
+assertSctypeCellParams <- checkmate::makeAssertionFunction(
+  checkSctypeCellParams
+)
+
 #### meld ----------------------------------------------------------------------
 
 #' Check MELD parameters

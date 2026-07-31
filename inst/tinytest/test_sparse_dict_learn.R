@@ -187,8 +187,6 @@ expect_equal(
   info = "DGRDL synthetic data 2 expected coefficients"
 )
 
-dim(synthetic_data_2$data)
-
 expect_equal(
   current = res_bio$feature_laplacian,
   target = expected_feat_laplacian,
@@ -280,7 +278,7 @@ expect_warning(
     neighbours_vec = neighbours_vector[1],
     dict_size_vec = dict_size[1],
     seed_vec = seed_vector,
-    .verbose = TRUE
+    .verbose = FALSE
   ),
   info = "DGRDL class - pre-processing warning."
 )

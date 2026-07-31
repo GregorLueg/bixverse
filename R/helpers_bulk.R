@@ -8,19 +8,16 @@
 #' method to remove duplicated preamble.
 #'
 #' @param object The class, see [bixverse::BulkCoExp()].
-#' @param .verbose Boolean. If `FALSE`, suppresses the fallback warning.
 #'
 #' @returns Numeric matrix.
 #'
 #' @keywords internal
-.get_bulk_target_mat <- function(object, .verbose = TRUE) {
+.get_bulk_target_mat <- function(object) {
   checkmate::assertClass(object, "bixverse::BulkCoExp")
-  checkmate::qassert(.verbose, "B1")
   processed <- S7::prop(object, "processed_data")[["processed_data"]]
   if (purrr::is_empty(processed)) {
-    if (.verbose) {
-      warning("No pre-processed data found. Defaulting to the raw data.")
-    }
+    warning("No pre-processed data found. Defaulting to the raw data.")
+
     return(S7::prop(object, "raw_data"))
   }
   processed

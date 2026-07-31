@@ -345,10 +345,11 @@ fn rs_mnn(
         None
     };
 
+    let gene_reader = ParallelSparseReader::new(f_path_gene).to_extendr()?;
     let pre_computed_pca = precomputed_pca.map(|embd| r_matrix_to_faer_fp32(&embd));
 
     let corrected_embd = fast_mnn_main(
-        f_path_gene,
+        &gene_reader,
         &cell_indices,
         &gene_indices,
         &batch_indices,
@@ -536,10 +537,11 @@ fn rs_seurat_cca(
         None
     };
 
+    let gene_reader = ParallelSparseReader::new(f_path_gene).to_extendr()?;
     let pre_computed_pca = precomputed_pca.map(|embd| r_matrix_to_faer_fp32(&embd));
 
     let corrected_embd = seurat_cca_integration(
-        f_path_gene,
+        &gene_reader,
         &cell_indices,
         &gene_indices,
         &batch_indices,
@@ -624,10 +626,11 @@ fn rs_seurat_rpca(
         None
     };
 
+    let gene_reader = ParallelSparseReader::new(f_path_gene).to_extendr()?;
     let pre_computed_pca = precomputed_pca.map(|embd| r_matrix_to_faer_fp32(&embd));
 
     let corrected_embd = seurat_rpca_integration(
-        f_path_gene,
+        &gene_reader,
         &cell_indices,
         &gene_indices,
         &batch_indices,

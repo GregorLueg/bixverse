@@ -345,7 +345,10 @@ get_cell_info <- function(x, filtered = TRUE) {
 
 #' @title Get the cells to keep
 #'
-#' @param x An object to get the gene index from.
+#' @param x An object from which to get the cells to keep from. These are
+#' 0-indexed.
+#'
+#' @returns Integer vector with 0-indices of the cells to keep.
 #'
 #' @export
 get_cells_to_keep <- function(x) {

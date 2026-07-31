@@ -50,7 +50,7 @@ S7::method(ica_processing, BulkCoExp) <- function(
   checkmate::qassert(.verbose, "B1")
 
   # Function body
-  target_mat <- .get_bulk_target_mat(object, .verbose = .verbose)
+  target_mat <- .get_bulk_target_mat(object)
 
   # Whiten the data
   if (.verbose) {

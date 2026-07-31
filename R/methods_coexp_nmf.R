@@ -100,7 +100,7 @@ S7::method(nmf_bulk, BulkCoExp) <- function(
   }
 
   # target matrix (samples x features)
-  target_mat <- .get_bulk_target_mat(object, .verbose = .verbose)
+  target_mat <- .get_bulk_target_mat(object)
 
   if (any(target_mat < 0, na.rm = TRUE)) {
     stop(paste(
@@ -253,7 +253,7 @@ S7::method(stabilised_nmf_bulk, BulkCoExp) <- function(
   }
 
   # target matrix (samples x features)
-  target_mat <- .get_bulk_target_mat(object, .verbose = .verbose)
+  target_mat <- .get_bulk_target_mat(object)
 
   if (any(target_mat < 0, na.rm = TRUE)) {
     stop(paste(

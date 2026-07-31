@@ -2,17 +2,11 @@ url: https://gregorlueg.github.io/bixverse/
 
 template:
   bootstrap: 5
-  bootswatch: darkly
+  bootswatch: lux
+  light-switch: true
   bslib:
-    bg: "#0d1b2e"
-    fg: "#e0e0e0"
-    primary: "#e07a5a"
-    secondary: "#7ba7bc"
-    navbar-bg: "#08111e"
-    code-bg: "#0a1628"
-    border-radius: 0.4rem
-    btn-border-radius: 0.4rem
-  css: pkgdown/extra.css
+    # lux uses navbar-padding-y: 1.5rem, so pkgdown's 56px default is too small
+    pkgdown-nav-height: 104px
 
 home:
   title: bixverse
@@ -22,8 +16,8 @@ home:
     compute.
 navbar:
   structure:
-    left: [intro, reference, articles, tutorials, singlecells, news]
-    right: [search, github]
+    left: [intro, reference, news, articles, tutorials, singlecells]
+    right: [search, lightswitch, github]
   components:
     tutorials:
       text: Tutorials
@@ -584,6 +578,8 @@ reference:
       - prepare_cell_markers
       - calc_sc_type_scores
       - score_clusters
+      - assign_sc_type
+      - params_sctype_cells
       - params_symphony_map
 
   # Single cell ligand receptor

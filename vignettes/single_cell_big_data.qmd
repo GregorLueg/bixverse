@@ -388,7 +388,7 @@ GPU-accelerated Adam optimiser. You can run this via:
 #| label: embeddings prior umap (gpu)
 #| eval: false
 
-sce <- umap_sc_gpu(
+sce <- umap_gpu_sc(
   sce,
   slot_name = "umap_prior_gpu"
 )

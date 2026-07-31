@@ -85,7 +85,7 @@ S7::method(dgrdl_grid_search, BulkCoExp) <- function(
     return(object)
   }
 
-  target_mat <- .get_bulk_target_mat(object, .verbose = .verbose)
+  target_mat <- .get_bulk_target_mat(object)
 
   total_params <- length(neighbours_vec) *
     length(dict_size_vec) *
@@ -211,7 +211,7 @@ S7::method(dgrdl_result, BulkCoExp) <- function(
     return(object)
   }
 
-  target_mat <- .get_bulk_target_mat(object, .verbose = .verbose)
+  target_mat <- .get_bulk_target_mat(object)
 
   results <- rs_sparse_dict_dgrdl(
     x = target_mat,

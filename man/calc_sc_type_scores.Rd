@@ -22,7 +22,7 @@ in the original reference). Defaults to \code{TRUE}.}
 
 \item{weight_floor}{Optional numeric. A value between 0 to 1 and sets the
 floor for the weights if \code{sensitivity = TRUE}. If not provided, defaults to
-\code{0} as in the original implementation.}
+\code{0.1}.}
 
 \item{.verbose}{Boolean or integer. Controls verbosity and returns run times.
 \code{FALSE} -> quiet, \code{TRUE} or \code{1L} -> normal verbosity, \code{2L} -> detailed
