@@ -33,7 +33,7 @@
 #'
 #' @export
 module_scores_sc <- S7::new_generic(
-  name = "aucell_sc",
+  name = "module_scores_sc",
   dispatch_args = "object",
   fun = function(
     object,
@@ -61,7 +61,7 @@ S7::method(module_scores_sc, SingleCells) <- function(
   .verbose = TRUE
 ) {
   # checks
-  checkmate::checkTRUE(S7::S7_inherits(object, SingleCells))
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::assertList(gs_list, types = "character", names = "named")
   checkmate::qassert(n_bins, "I1")
   checkmate::qassert(n_ctrl, "I1")
@@ -112,24 +112,22 @@ S7::method(module_scores_sc, SingleCells) <- function(
 S7::method(aucell_sc, SingleCells) <- function(
   object,
   gs_list,
-  auc_type = c("wilcox", "auroc"),
+  aucell_params = params_sc_aucell(),
   streaming = NULL,
   .verbose = TRUE
 ) {
-  auc_type <- match.arg(auc_type)
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  checkmate::assertList(gs_list, types = "character", names = "named")
+  assertScAucell(aucell_params)
+  checkmate::qassert(streaming, c("B1", "0"))
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   streaming <- auto_streaming(
     n_cells = nrow(object),
     streaming = streaming,
     .verbose = .verbose
   )
-
-  # checks
-  checkmate::checkTRUE(S7::S7_inherits(object, SingleCells))
-  checkmate::assertList(gs_list, types = "character", names = "named")
-  checkmate::assertChoice(auc_type, c("wilcox", "auroc"))
-  checkmate::qassert(streaming, c("B1", "0"))
-  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   # get the gene indices
   gs_list <- purrr::map(gs_list, \(e) {
@@ -140,7 +138,7 @@ S7::method(aucell_sc, SingleCells) <- function(
     f_path = get_rust_count_cell_f_path(object),
     gs_list = gs_list,
     cells_to_keep = get_cells_to_keep(object),
-    auc_type = auc_type,
+    aucell_params = aucell_params,
     streaming = streaming,
     verbose = parse_verbosity(.verbose)
   )
@@ -319,7 +317,7 @@ S7::method(vision_sc, SingleCells) <- function(
   .verbose = TRUE
 ) {
   # checks
-  checkmate::checkTRUE(S7::S7_inherits(object, SingleCells))
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::assertList(gs_list, types = "list", names = "named")
   checkmate::qassert(streaming, c("B1", "0"))
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))

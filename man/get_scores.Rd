@@ -5,6 +5,7 @@
 \alias{get_scores}
 \alias{get_scores.ScDblFinderRes}
 \alias{get_scores.ScTypeResults}
+\alias{get_scores.ScTypeCellResults}
 \title{Get scores}
 \usage{
 get_scores(x, ...)
@@ -12,6 +13,8 @@ get_scores(x, ...)
 \method{get_scores}{ScDblFinderRes}(x, ..., score_type = c("weighted", "cxds_scores"))
 
 \method{get_scores}{ScTypeResults}(x, ...)
+
+\method{get_scores}{ScTypeCellResults}(x, ...)
 }
 \arguments{
 \item{x}{An object to get scores from.}
@@ -22,6 +25,8 @@ get_scores(x, ...)
 }
 \value{
 A numeric matrix of cells x cell types.
+
+A numeric vector with the winning score per cell.
 }
 \description{
 Get scores

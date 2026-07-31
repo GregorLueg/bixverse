@@ -17,7 +17,7 @@ generate_supercells_sc(
 )
 }
 \arguments{
-\item{object}{\code{SingleCells} class.}
+\item{object}{\code{SingleCells} or \code{SingleCellsSubset} class.}
 
 \item{sc_supercell_params}{List. Output of \code{\link[=params_sc_supercell]{params_sc_supercell()}}.
 A list with the following items:

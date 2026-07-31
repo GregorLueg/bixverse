@@ -4,38 +4,32 @@
 \alias{synthetic_bulk_cor_matrix}
 \title{Generates synthetic bulk RNAseq data}
 \usage{
-synthetic_bulk_cor_matrix(
-  num_samples = 100L,
-  num_genes = 1000L,
-  add_modules = TRUE,
-  module_sizes = c(100L, 100L, 100L),
-  seed = 123L
-)
+synthetic_bulk_cor_matrix(synthetic_params = params_synthetic_bulk_rnaseq())
 }
 \arguments{
-\item{num_samples}{Integer. Number of samples.}
-
-\item{num_genes}{Integer. Number of genes.}
-
-\item{add_modules}{Boolean. Shall gene modules with correlation structures
-be generated.}
-
-\item{module_sizes}{Integer vector. Sizes of the different correlation
-modules. The sum needs be smaller than \code{num_genes}.}
-
-\item{seed}{Integer. Seed for reproducibility purposes.}
+\item{synthetic_params}{List. The synthetic data parameters, see
+\code{\link[=params_synthetic_bulk_rnaseq]{params_synthetic_bulk_rnaseq()}}.}
 }
 \value{
 A \code{synthetic_bulk_data} class containing:
 \itemize{
-\item counts - The count matrix
+\item counts - The count matrix. Rows are genes, columns are samples.
 \item sparse_counts - A slot for sparse counts that can be added later, see
 \code{\link[=simulate_dropouts]{simulate_dropouts()}}.
-\item module_data - The module membership of the genes
+\item module_data - Per-gene ground truth: the gene identifier, its
+\code{membership} (\code{0} for background), its \code{loading} on the module factor and
+whether it is a hub gene.
+\item module_factors - The latent factors the modules were built on. Rows
+are modules, columns are samples. This is what a module eigengene or an
+ICA/NMF component is trying to recover.
 }
+The parameters used are stored on the \code{synthetic_params} attribute.
 }
 \description{
 Function generates synthetic bulkRNAseq data with heteroskedasticity (lowly
-expressed genes show higher variance) and can optionally add gene ~ gene
-correlations for testing purposes of module detection methods.
+expressed genes show higher variance) and optional co-expression modules for
+testing module detection methods. The ground truth comes back with the
+counts, so a recovered module or eigengene can be scored against what was
+actually simulated. Which generator to pick and what each parameter does is
+documented in \code{\link[=params_synthetic_bulk_rnaseq]{params_synthetic_bulk_rnaseq()}}.
 }

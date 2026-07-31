@@ -1,5 +1,6 @@
 //! Functions related to cell type label transfer or cell type annotations
 
+use bixverse_rs::graph::graph_label_propagations::{KnnLabPropGraph, SymmetryWeightStrategy};
 use bixverse_rs::prelude::*;
 use bixverse_rs::single_cell::sc_annotation::sc_type::*;
 use bixverse_rs::single_cell::sc_annotation::symphony::*;
@@ -20,6 +21,7 @@ extendr_module! {
     // sctype
     fn rs_sc_type;
     fn rs_sc_type_cluster_assignment;
+    fn rs_sc_type_assign_cells;
     // symphony
     fn rs_build_symphony_ref;
     fn rs_symphony_map_query;
@@ -70,9 +72,10 @@ fn rs_sc_type(
 ) -> Result<List> {
     let cell_markers: Vec<CellTypeMarkers> = process_cell_markers(cell_markers)?;
     let cell_indices = cell_indices.r_int_convert();
+    let reader = ParallelSparseReader::new(f_path).to_extendr()?;
 
     let res: SctypeRes = run_sctype(
-        f_path,
+        &reader,
         &cell_indices,
         &cell_markers,
         sensitivity,
@@ -141,6 +144,210 @@ fn rs_sc_type_cluster_assignment(sc_type_res: List, cluster_labels: Vec<i32>) ->
     ))
 }
 
+/// Per-cell ScType assignment with optional kNN smoothing
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Assigns cell types per cell instead of per cluster. If a graph is provided,
+/// the score matrix is smoothed via label spreading over that graph before the
+/// per-cell argmax. If cluster labels are provided, the per-cluster composition
+/// and the hybrid assignment (pure clusters keep the cluster-level call, mixed
+/// clusters fall back to the per-cell calls) are returned on top.
+///
+/// @param sc_type_res List. The ScType results, see `rs_sc_type()`.
+/// @param from,to Optional integer vectors. 1-indexed(!) edges of the sNN
+/// graph. If `NULL`, no smoothing is applied.
+/// @param weights Optional numeric vector. Edge weights, same length as `from`.
+/// @param cluster_labels Optional integer vector. 0-indexed(!) cluster
+/// assignment, of length of the scored cells.
+/// @param params List. The output of `params_sctype_cells()`.
+///
+/// @returns A list with
+/// \itemize{
+///   \item cell_types - String vector. The cell types.
+///   \item assignments - Integer vector. 1-based index into `cell_types` per
+///   cell, `0L` denoting Unknown.
+///   \item scores - Numeric vector. Winning score per cell.
+///   \item margins - Numeric vector. Best minus second best score per cell.
+///   \item agreement - Numeric vector. Fraction of graph neighbours sharing the
+///   call. `NULL` if no graph was provided.
+///   \item hybrid_assignments - Integer vector, as `assignments`. Only present
+///   if `cluster_labels` was provided.
+///   \item composition - List with the per-cluster composition. Only present if
+///   `cluster_labels` was provided.
+/// }
+///
+/// @references
+/// Ianevski et al., Nat Comm, 2022. Zhou et al., NIPS, 2004.
+///
+/// @export
+///
+/// @keywords internal
+#[extendr]
+fn rs_sc_type_assign_cells(
+    sc_type_res: List,
+    from: Option<Vec<i32>>,
+    to: Option<Vec<i32>>,
+    weights: Option<Vec<f64>>,
+    cluster_labels: Option<Vec<i32>>,
+    params: List,
+) -> Result<List> {
+    let sc_res = SctypeRes::from_r_list(sc_type_res)?;
+    let cell_params = ScTypeCellParams::from_r_list(params)?;
+    let n_nodes = sc_res.n_cells;
+
+    // the sNN graph arrives as an undirected igraph edge list, i.e. each edge
+    // shows up once, so it needs symmetrising on the way in
+    let graph = match (from, to) {
+        (Some(from), Some(to)) => {
+            let from = from.r_int_convert_shift();
+            let to = to.r_int_convert_shift();
+            Some(match weights {
+                Some(w) => KnnLabPropGraph::from_weighted_node_pairs(
+                    &from,
+                    &to,
+                    &w.r_float_convert(),
+                    n_nodes,
+                    Some(SymmetryWeightStrategy::Average),
+                ),
+                None => KnnLabPropGraph::from_node_pairs(&from, &to, n_nodes, true),
+            })
+        }
+        _ => None,
+    };
+
+    let cell_res = assign_cells(&sc_res, graph.as_ref(), Some(cell_params)).to_extendr()?;
+
+    let (hybrid_assignments, composition) = match cluster_labels {
+        Some(cluster_labels) => {
+            let cluster_labels = cluster_labels.r_int_convert();
+
+            let hybrid = assign_hybrid(
+                &sc_res,
+                &cell_res,
+                &cluster_labels,
+                Some(cell_params.purity_threshold),
+            )
+            .to_extendr()?;
+
+            (
+                Some(assignment_to_r(&hybrid.assignments)),
+                Some(composition_to_r(&hybrid, cell_res.cell_types.len())),
+            )
+        }
+        None => (None, None),
+    };
+
+    Ok(list!(
+        cell_types = cell_res.cell_types,
+        assignments = assignment_to_r(&cell_res.assignments),
+        scores = cell_res.scores.r_float_convert(),
+        margins = cell_res.margins.r_float_convert(),
+        agreement = opt_to_r(cell_res.agreement.map(|x| x.r_float_convert())),
+        hybrid_assignments = opt_to_r(hybrid_assignments),
+        composition = opt_to_r(composition)
+    ))
+}
+
+/// Turn optional cell type indices into an R-friendly integer vector
+///
+/// ### Params
+///
+/// * `assignments` - The per-cell assignments, `None` denoting Unknown.
+///
+/// ### Returns
+///
+/// 1-based indices with `0` for Unknown. The R wrapper maps the zeros to
+/// `NA_character_`.
+fn assignment_to_r(assignments: &[Option<usize>]) -> Vec<i32> {
+    assignments.iter().copied().map(opt_index_to_r).collect()
+}
+
+/// Shift an optional cell type index to 1-based, `None` becoming `0`
+///
+/// `r_int_convert_shift()` cannot be used here: the Unknowns need a sentinel
+/// rather than a shift.
+///
+/// ### Params
+///
+/// * `idx` - The 0-based index, `None` denoting Unknown.
+///
+/// ### Returns
+///
+/// The 1-based index, or `0` for Unknown.
+fn opt_index_to_r(idx: Option<usize>) -> i32 {
+    idx.map(|i| i as i32 + 1).unwrap_or(0)
+}
+
+/// Turn an optional value into an R object, `None` becoming `NULL`
+///
+/// ### Params
+///
+/// * `x` - The optional value.
+///
+/// ### Returns
+/// The Robj, or `NULL`.
+fn opt_to_r<T: Into<Robj>>(x: Option<T>) -> Robj {
+    x.map(|v| v.into()).unwrap_or_else(|| r!(NULL))
+}
+
+/// Flatten the per-cluster composition into an R list
+///
+/// `cluster_mixed` is indexed by cluster id upstream, but the composition skips
+/// empty clusters. It gets re-aligned here so every field lines up row by row.
+///
+/// ### Params
+///
+/// * `hybrid` - The [ScTypeHybridRes] to flatten.
+/// * `n_ct` - Number of cell types, i.e. the column count of the count matrix.
+///
+/// ### Returns
+///
+/// A list with one entry per composition field, plus the cluster x cell type
+/// count matrix.
+fn composition_to_r(hybrid: &ScTypeHybridRes, n_ct: usize) -> List {
+    let n_clusters = hybrid.composition.len();
+
+    let mut cluster_id: Vec<usize> = Vec::with_capacity(n_clusters);
+    let mut n_cells: Vec<usize> = Vec::with_capacity(n_clusters);
+    let mut n_unknown: Vec<usize> = Vec::with_capacity(n_clusters);
+    let mut dominant: Vec<i32> = Vec::with_capacity(n_clusters);
+    let mut second: Vec<i32> = Vec::with_capacity(n_clusters);
+    let mut purity: Vec<f64> = Vec::with_capacity(n_clusters);
+    let mut second_fraction: Vec<f64> = Vec::with_capacity(n_clusters);
+    let mut entropy: Vec<f64> = Vec::with_capacity(n_clusters);
+    let mut cluster_mixed: Vec<bool> = Vec::with_capacity(n_clusters);
+
+    for comp in &hybrid.composition {
+        cluster_id.push(comp.cluster);
+        n_cells.push(comp.n_cells);
+        n_unknown.push(comp.n_unknown);
+        dominant.push(opt_index_to_r(comp.dominant));
+        second.push(opt_index_to_r(comp.second));
+        purity.push(comp.purity as f64);
+        second_fraction.push(comp.second_fraction as f64);
+        entropy.push(comp.entropy as f64);
+        cluster_mixed.push(hybrid.cluster_mixed[comp.cluster]);
+    }
+
+    let counts = RMatrix::new_matrix(n_clusters, n_ct, |r, c| {
+        hybrid.composition[r].counts[c] as i32
+    });
+
+    list!(
+        cluster_id = cluster_id.r_int_convert(),
+        n_cells = n_cells.r_int_convert(),
+        n_unknown = n_unknown.r_int_convert(),
+        dominant = dominant,
+        second = second,
+        purity = purity,
+        second_fraction = second_fraction,
+        entropy = entropy,
+        cluster_mixed = cluster_mixed,
+        counts = counts
+    )
+}
+
 //////////////
 // Symphony //
 //////////////
@@ -202,6 +409,7 @@ fn rs_build_symphony_ref(
     }
 
     let pca_params = SingleCellPcaParams::from_r_list(pca_params)?;
+    let gene_reader = ParallelSparseReader::new(&f_path_gene).to_extendr()?;
 
     let harmony_backend = match harmony_version.as_str() {
         "v1" => HarmonyBackend::V1(HarmonyParams::from_r_list(harmony_params)?),
@@ -228,7 +436,7 @@ fn rs_build_symphony_ref(
     };
 
     let reference = build_symphony_reference(
-        &f_path_gene,
+        &gene_reader,
         &cell_indices,
         &hvg_indices,
         &batch_indices,
@@ -334,9 +542,10 @@ fn rs_symphony_map_query(
     let c_cache = r_matrix_to_faer_fp32(&c_cache);
 
     let params = SymphonyMapParams::from_r_list(params_symphony)?;
+    let query_reader = ParallelSparseReader::new(&f_path_query).to_extendr()?;
 
     let res = symphony_map_query_parts(
-        &f_path_query,
+        &query_reader,
         &cell_indices_query,
         &gene_means_f32,
         &gene_sds_f32,

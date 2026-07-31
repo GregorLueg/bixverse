@@ -17,7 +17,7 @@ generate_seacells_sc(
 )
 }
 \arguments{
-\item{object}{\code{SingleCells} class.}
+\item{object}{\code{SingleCells} or \code{SingleCellsSubset} class.}
 
 \item{seacell_params}{List. Output of \code{\link[=params_sc_seacells]{params_sc_seacells()}}.
 A list with the following items:

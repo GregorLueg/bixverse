@@ -10,8 +10,10 @@ calc_meta_cell_purity(object, original_cell_type)
 \item{object}{\code{MetaCells} class.}
 
 \item{original_cell_type}{Character vector. The original cell type
-annotations. The indices need to match with the original cell indices used
-to generate the meta-cells! (1-indexed)}
+annotations, in the row order of the full (unfiltered) obs table of the
+object the meta cells came from, i.e. \verb{get_sc_obs(x)$<column>}. Meta cell
+memberships are stored as 1-indexed positions in that space, so a vector
+restricted to the QC-passing cells will silently give wrong purities.}
 }
 \value{
 The \code{MetaCells} with an added columns to the observation table

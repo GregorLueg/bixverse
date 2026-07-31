@@ -8,22 +8,20 @@
 S7::method(aucell_sc, MetaCells) <- function(
   object,
   gs_list,
-  auc_type = c("wilcox", "auroc"),
+  aucell_params = params_sc_aucell(),
   streaming = NULL,
   .verbose = TRUE
 ) {
-  auc_type <- match.arg(auc_type)
-
   # checks
   checkmate::assertTRUE(S7::S7_inherits(object, MetaCells))
   checkmate::assertList(gs_list, types = "character", names = "named")
-  checkmate::assertChoice(auc_type, c("wilcox", "auroc"))
+  assertScAucell(aucell_params)
   checkmate::qassert(streaming, c("B1", "0"))
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   # 0-indexed gene indices for Rust
   gs_indices <- purrr::map(gs_list, \(e) {
-    get_gene_indices(x = object, gene_ids = e, rust_index = FALSE) - 1L
+    get_gene_indices(x = object, gene_ids = e, rust_index = TRUE)
   })
 
   sparse_data <- mc_counts_to_list(object, assay = "raw")
@@ -31,7 +29,7 @@ S7::method(aucell_sc, MetaCells) <- function(
   auc_res <- rs_mc_aucell(
     sparse_data = sparse_data,
     gs_list = gs_indices,
-    auc_type = auc_type,
+    aucell_params = aucell_params,
     verbose = parse_verbosity(.verbose)
   )
 

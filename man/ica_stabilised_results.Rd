@@ -10,6 +10,7 @@ ica_stabilised_results(
   ica_type = c("logcosh", "exp"),
   iter_params = params_ica_randomisation(),
   ica_params = params_ica_general(),
+  membership_params = params_module_membership(),
   random_seed = 42L,
   consistent_sign = TRUE,
   .verbose = TRUE
@@ -49,6 +50,11 @@ Should be between 1 to 2.
 \item max_tol - Maximum tolerance of the algorithm.
 \item verbose - Controls verbosity of the function.
 }}
+
+\item{membership_params}{List. Controls how the component loadings are turned
+into module membership, see \code{\link[=params_module_membership]{params_module_membership()}}. Membership
+is not exclusive: a gene loading strongly on several components will appear in
+several modules, and a gene in no tail appears in none.}
 
 \item{random_seed}{Integer. For reproducibility.}
 

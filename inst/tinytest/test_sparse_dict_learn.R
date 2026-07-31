@@ -187,8 +187,6 @@ expect_equal(
   info = "DGRDL synthetic data 2 expected coefficients"
 )
 
-dim(synthetic_data_2$data)
-
 expect_equal(
   current = res_bio$feature_laplacian,
   target = expected_feat_laplacian,
@@ -349,26 +347,55 @@ s7_obj <- suppressWarnings(dgrdl_result(
 
 s7_res <- get_results(s7_obj)
 
+expect_true(
+  current = inherits(s7_res, "BulkModuleResult"),
+  info = "DGRDL class - final_results is a BulkModuleResult"
+)
+
 expect_equivalent(
-  current = s7_res$dictionary,
+  current = get_factors(s7_res, which = "dictionary"),
   target = expected_dictionary,
   info = "DGRDL class - expected dictionary"
 )
 
 expect_equivalent(
-  current = s7_res$loadings,
+  current = get_factors(s7_res, which = "loadings"),
   target = expected_coefficients,
   info = "DGRDL class - expected coefficients"
 )
 
 expect_true(
-  current = class(s7_res$feature_laplacian) == "dgRMatrix",
+  current = class(get_diagnostics(s7_res, which = "feature_laplacian")) ==
+    "dgRMatrix",
   info = "DGRDL class - feature laplacian class"
 )
 
 expect_true(
-  current = class(s7_res$sample_laplacian) == "dgRMatrix",
+  current = class(get_diagnostics(s7_res, which = "sample_laplacian")) ==
+    "dgRMatrix",
   info = "DGRDL class - sample laplacian class"
+)
+
+expect_true(
+  current = data.table::is.data.table(get_modules(s7_res)),
+  info = "DGRDL class - get_modules() returns a data.table"
+)
+
+dgrdl_modules_dt <- get_modules(s7_res)
+
+expect_true(
+  current = all(c("loading", "sign", "z") %in% names(dgrdl_modules_dt)),
+  info = "DGRDL class - membership reports loading, sign and the threshold statistic"
+)
+
+# Dictionary learning lets a gene be active in several atoms, so membership must
+# not be an exclusive partition that force-assigns every feature. Note the
+# stored `loadings` are dict_size x gene, so features are the columns.
+n_features <- ncol(get_factors(s7_res, which = "loadings"))
+
+expect_true(
+  current = data.table::uniqueN(dgrdl_modules_dt$gene) < n_features,
+  info = "DGRDL class - membership is sparse, not every feature is assigned"
 )
 
 ## check with scaling of the data ----------------------------------------------
@@ -416,19 +443,19 @@ s7_obj <- dgrdl_result(
 s7_res <- get_results(s7_obj)
 
 expect_equal(
-  current = dim(s7_res$dictionary),
+  current = dim(get_factors(s7_res, which = "dictionary")),
   target = dim(expected_dictionary),
   info = "DGRDL class - dictionary on scaled data has expected dimensions"
 )
 
 expect_equal(
-  current = sum(s7_res$loadings == 0),
+  current = sum(get_factors(s7_res, which = "loadings") == 0),
   target = sum(expected_coefficients == 0),
   info = "DGRDL class - loadings have expected sparsity"
 )
 
 expect_equal(
-  current = dim(s7_res$loadings),
+  current = dim(get_factors(s7_res, which = "loadings")),
   target = dim(expected_coefficients),
   info = "DGRDL class - loadings have expected sparsity"
 )

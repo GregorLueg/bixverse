@@ -30,54 +30,51 @@ extendr_module! {
 /// @description
 /// `r lifecycle::badge("experimental")`
 /// Function generates synthetic bulkRNAseq data with heteroskedasticity (lowly
-/// expressed genes show higher variance) and can optionally add correlation
-/// structures for testing purposes.
+/// expressed genes show higher variance) and optional co-expression modules
+/// planted on a latent factor. Alongside the counts it returns the ground truth
+/// (module membership, hub genes, per-gene loadings and the latent factors), so
+/// downstream methods can be scored against what was actually simulated.
 ///
-/// @param num_samples Integer. Number of samples to simulate.
-/// @param num_genes Integer. Number of genes to simulate.
-/// @param seed Integer. Seed for reproducibility.
-/// @param add_modules Boolean. Shall correlation structures be added to the
-/// data.
-/// @param module_sizes `NULL` or vector of sizes of the gene modules. When
-/// `NULL` defaults to `c(300, 250, 200, 300, 500)`. Warning! The sum of this
-/// vector must be ≤ num_genes!
+/// @param synthetic_params List. The synthetic data parameters, see
+/// [bixverse::params_synthetic_bulk_rnaseq()]. Expected elements are
+/// `num_samples`, `num_genes`, `module_sizes` (integer vector, empty means no
+/// modules), `generator` (one of `c("hub_modular", "modular",
+/// "non_negative_factor", "non_gaussian_factor")`), `seed`,
+/// `mean_exp_gamma_shape`, `mean_exp_gamma_scale`, `disp_intercept`,
+/// `disp_slope`, `noise_std`, `factor_std`, `factor_shape`, `factor_scale`,
+/// `loading_mu`, `loading_sigma` and `hub_percentile`.
 ///
 /// @return List with the following elements
 /// \itemize{
-///     \item counts The matrix of simulated counts.
-///     \item module_membership Vector defining the module membership.
+///     \item counts The matrix of simulated counts. Rows are genes, columns
+///     are samples.
+///     \item module_membership Vector defining the module membership. `0` is
+///     background, `1..K` the module identifier.
+///     \item module_hubs 1-indexed positions of the genes flagged as hubs.
+///     Empty for the `"modular"` generator, which plants no hubs.
+///     \item loadings Per-gene loading on its module's latent factor. `0` for
+///     background genes.
+///     \item module_factors The latent factor matrix. Rows are modules,
+///     columns are samples.
 /// }
 ///
 /// @export
 ///
 /// @keywords internal
 #[extendr]
-fn rs_generate_bulk_rnaseq(
-    num_samples: usize,
-    num_genes: usize,
-    seed: usize,
-    add_modules: bool,
-    module_sizes: Option<Vec<i32>>,
-) -> List {
-    // r cannot deal with usize
-    let module_sizes: Vec<usize> = module_sizes
-        .unwrap_or(vec![300, 250, 200, 300, 500])
-        .iter()
-        .map(|x| *x as usize)
-        .collect();
+fn rs_generate_bulk_rnaseq(synthetic_params: List) -> extendr_api::Result<List> {
+    let params: SyntheticRnaSeqParams<f64> = SyntheticRnaSeqParams::from_r_list(synthetic_params)?;
 
-    let data: SyntheticRnaSeqData<f64> = generate_bulk_rnaseq(
-        num_samples,
-        num_genes,
-        seed as u64,
-        add_modules,
-        Some(module_sizes),
-    );
+    let data: SyntheticRnaSeqData<f64> = generate_bulk_rnaseq(&params).to_extendr()?;
 
-    let matrix = faer_to_r_matrix(data.count_matrix.as_ref());
-    let module_membership: Vec<i32> = data.gene_modules.iter().map(|x| *x as i32).collect();
-
-    list!(counts = matrix, module_membership = module_membership)
+    Ok(list!(
+        counts = faer_to_r_matrix(data.count_matrix.as_ref()),
+        module_membership = data.gene_modules.r_int_convert(),
+        // Rust hands back 0-indexed gene positions; R wants 1-indexed
+        module_hubs = data.module_hubs.r_int_convert_shift(),
+        loadings = data.loadings,
+        module_factors = faer_to_r_matrix(data.module_factors.as_ref())
+    ))
 }
 
 /// Sparsify bulkRNAseq like data
@@ -85,81 +82,36 @@ fn rs_generate_bulk_rnaseq(
 /// @description
 /// `r lifecycle::badge("experimental")`
 /// This function takes in a (raw) count matrix (for example from the synthetic
-/// data in bixverse) and applies sparsification to it based on two possible
-/// functions:
+/// data in bixverse) and applies Splatter-style sequencing-depth dropout to it.
+/// Per sample a size factor `s_j ~ LogNormal(0, capture_efficiency_sigma)` is
+/// drawn, giving a target library size of `target_library_size * s_j`. Each
+/// gene is then binomially thinned to approach that target. Retention
+/// probability is capped at 1, so samples below their target are left alone
+/// rather than upsampled.
 ///
-/// **Logistic function:**
-///
-/// With dropout probability defined as:
-///
-/// `P(dropout) = clamp(1 / (1 + exp(shape * (ln(exp+1) - ln(midpoint+1)))), 0.3, 0.8) * (1 - global_sparsity) + global_sparsity`
-///
-/// with the following characteristics:
-///
-/// - Plateaus at global_sparsity dropout for high expression genes
-/// - Partial dropout preserves count structure via binomial thinning
-/// - Good for preserving variance-mean relationships
-///
-/// **Power Decay function:**
-///
-/// With dropout probability defined as:
-///
-/// `P(dropout) = (midpoint / (exp + midpoint))^power * scale_factor * (1 - global_sparsity) + global_sparsity`
-///
-/// with the following characteristics:
-///
-/// - No plateau - high expression genes get substantial dropout
-/// - Complete dropout only (no partial dropout)
-/// - More uniform dropout across expression range
-///
-/// @param count_mat Numerical matrix. Original numeric matrix.
-/// @param dropout_function String. One of `c("log", "powerdecay")`. Defines
-/// which function will be used to induce the sparsity.
-/// @param dropout_midpoint Numeric. Controls the midpoint parameter of the
-/// logistic and power decay function.
-/// @param dropout_shape Numeric. Controls the shape parameter of the logistic
-/// function.
-/// @param power_factor Numeric. Controls the power factor of the power decay
-/// function.
-/// @param global_sparsity Numeric. The global sparsity parameter.
-/// @param seed Integer. Seed for reproducibility.
+/// @param count_mat Numerical matrix. Original numeric matrix. Rows are genes,
+/// columns are samples.
+/// @param sparsity_params List. The sparsity parameters, see
+/// [bixverse::params_bulk_sparsity()]. Expected elements are `strategy`,
+/// `target_library_size`, `capture_efficiency_sigma` and `seed`.
 ///
 /// @return The sparsified matrix based on the provided parameters.
 ///
 /// @export
 ///
+/// @references Zappia, et al., Genome Biol, 2017
+///
 /// @keywords internal
 #[extendr]
 fn rs_simulate_dropouts(
     count_mat: RMatrix<f64>,
-    dropout_function: String,
-    dropout_midpoint: f64,
-    dropout_shape: f64,
-    power_factor: f64,
-    global_sparsity: f64,
-    seed: usize,
+    sparsity_params: List,
 ) -> extendr_api::Result<RArray<f64, 2>> {
     let data = r_matrix_to_faer(&count_mat);
 
-    let dropout_type = parse_sparsification(&dropout_function)
-        .ok_or_else(|| format!("Invalid dropout_function type: {}", dropout_function))?;
+    let params: SparsityParams<f64> = SparsityParams::from_r_list(sparsity_params)?;
 
-    let sparse_data = match dropout_type {
-        SparsityFunction::Logistic => simulate_dropouts_logistic(
-            &data,
-            dropout_midpoint,
-            dropout_shape,
-            global_sparsity,
-            seed as u64,
-        ),
-        SparsityFunction::PowerDecay => simulate_dropouts_power_decay(
-            &data,
-            dropout_midpoint,
-            power_factor,
-            global_sparsity,
-            seed as u64,
-        ),
-    };
+    let sparse_data = apply_dropout(data.as_ref(), &params).to_extendr()?;
 
     Ok(faer_to_r_matrix(sparse_data.as_ref()))
 }

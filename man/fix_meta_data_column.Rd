@@ -20,6 +20,6 @@ Returns the object with the respective metadata columns updated.
 \description{
 This function will update the specified columns in the metadata of an
 \code{\link[=BulkDge]{BulkDge()}} or \code{\link[=BulkCoExp]{BulkCoExp()}} to be conform with R standard
-naming convetions. This is useful to do before running DGE methods as they
+naming conventions. This is useful to do before running DGE methods as they
 expect standardised names.
 }

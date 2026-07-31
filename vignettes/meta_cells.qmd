@@ -56,6 +56,7 @@ importantly, it is simply less data.
 ```{r}
 #| label: setup
 library(bixverse)
+library(bixverse.plots)
 library(ggplot2)
 library(data.table)
 library(patchwork)
@@ -338,7 +339,9 @@ caveat, but relative differences between methods are reasonably indicative.
 
 ```{r}
 #| label: purity
-cell_labels <- unlist(sc_object[["celltype"]]) %>% as.character()
+# memberships are positions in the full obs table, so the labels have to come
+# from the unfiltered obs rather than from `sc_object[[...]]`
+cell_labels <- as.character(get_sc_obs(sc_object)$celltype)
 
 hdwgcna <- calc_meta_cell_purity(hdwgcna, original_cell_type = cell_labels)
 seacells <- calc_meta_cell_purity(seacells, original_cell_type = cell_labels)
@@ -626,15 +629,13 @@ seacells <- umap_sc(seacells, k = 10L, knn_method = "exhaustive")
 #| label: mc umap plot
 #| fig-width: 7
 #| fig-height: 5
-umap_dt <- as.data.table(
-  get_embedding(seacells, "umap"),
-  keep.rownames = "meta_cell_id"
-)[, leiden_clusters := seacells[["leiden_clusters"]]]
 
-ggplot(umap_dt, aes(x = umap_1, y = umap_2)) +
-  geom_point(aes(colour = as.factor(leiden_clusters)), size = 1.5) +
-  theme_bw() +
-  labs(colour = "MetaCell cluster")
+embedding_plot_sc(
+  object = seacells,
+  embedding = "umap",
+  colour_by = "leiden_clusters",
+  discrete = TRUE
+)
 ```
 
 The plot is much sparser than the equivalent UMAP on the original cells,
@@ -698,13 +699,23 @@ tf_to_gene_ls <- split(tf_gene_dt$gene, tf_gene_dt$tf)
 In a proper situation we would filter down the TF to gene associations via
 motifs, please refer to the details in this 
 [vignette](https://gregorlueg.github.io/bixverse/articles/analysis_single_cell.html#scenic).
-We will skip this step for now and just run AUCell to show how it works.
+We will skip this step for now and just run AUCell to show how it works. Which
+statistic you get is controlled by `params_sc_aucell()`; the default is the
+Mann-Whitney AUC, which we stick with here. `"recovery"` (the original AUCell
+recovery curve) and `"ap"` (average precision) are the other two options and
+weight the top of the ranking more heavily.
 
 ```{r}
 #| label: run AUCell on meta cells
 auc_res <- aucell_sc(
   object = seacells,
-  gs_list = tf_to_gene_ls
+  gs_list = tf_to_gene_ls,
+  aucell_params = params_sc_aucell(auc_type = "wilcox")
+)
+
+umap_dt <- as.data.table(
+  get_embedding(seacells, "umap"),
+  keep.rownames = "meta_cell_id"
 )
 
 umap_dt[, `:=`(IRF1 = auc_res[, "IRF1"], TCF4 = auc_res[, "TCF4"])]

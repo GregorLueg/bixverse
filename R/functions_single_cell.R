@@ -227,6 +227,58 @@ get_meta_cell_matrices <- function(meta_cell_data) {
 
 ## qc --------------------------------------------------------------------------
 
+### helpers --------------------------------------------------------------------
+
+#' Check whether values fall within named bounds
+#'
+#' @param x Numeric vector.
+#' @param bounds Named numeric vector with `lower` and/or `upper`. At least one
+#' must be present.
+#'
+#' @return Logical vector of length `length(x)`. `TRUE` where the value is
+#' within the supplied bounds (inclusive on both ends).
+#'
+#' @keywords internal
+.within_bounds <- function(x, bounds) {
+  checkmate::assertNumeric(bounds, min.len = 1L, names = "unique")
+  checkmate::assertSubset(names(bounds), c("lower", "upper"))
+  ok <- rep(TRUE, length(x))
+  if ("lower" %in% names(bounds)) {
+    ok <- ok & x >= bounds[["lower"]]
+  }
+  if ("upper" %in% names(bounds)) {
+    ok <- ok & x <= bounds[["upper"]]
+  }
+  ok
+}
+
+#' Validate hard bounds against MAD direction
+#'
+#' Errors if the supplied bounds contradict the metric's MAD direction (e.g. a
+#' `lower` bound on a metric only checked from above).
+#'
+#' @param bounds Named numeric vector with `lower` and/or `upper`.
+#' @param direction String. One of `"twosided"`, `"below"`, `"above"`.
+#' @param metric_name String. Used in the error message.
+#'
+#' @return Invisible `NULL`. Called for its side effect.
+#'
+#' @keywords internal
+.check_bounds_direction <- function(bounds, direction, metric_name) {
+  if (direction == "above" && "lower" %in% names(bounds)) {
+    stop(sprintf(
+      "`%s`: direction is 'above' but `lower` bound supplied.",
+      metric_name
+    ))
+  }
+  if (direction == "below" && "upper" %in% names(bounds)) {
+    stop(sprintf(
+      "`%s`: direction is 'below' but `upper` bound supplied.",
+      metric_name
+    ))
+  }
+}
+
 ### per cell outliers ----------------------------------------------------------
 
 #' Use MAD outlier detection on per-cell QC metrics
@@ -316,33 +368,25 @@ per_group_qc_outlier <- function(metrics, groups, directions, threshold = 3) {
 
 ### multiple metrics -----------------------------------------------------------
 
-#' Run MAD outlier detection on per-cell QC metrics
+#' Run outlier detection on per-cell QC metrics
 #'
-#' @param metrics Named list of numeric vectors. Each element is a QC metric
-#' to check (e.g. `list(log10_lib_size = log10(lib_size), MT = mt_pct)`).
-#' @param cells_to_keep Integer. Which cells were included in the analysis.
-#' 0-indices for Rust.
-#' @param directions Named character vector mapping metric names to direction.
-#' One of `"twosided"`, `"below"`, `"above"`. Defaults to `"twosided"` for
-#' all metrics if `NULL`.
-#' @param threshold Numeric. Number of MADs to use for outlier detection.
-#' @param groups Optional grouping variable. An atomic vector of length equal to
-#' the metrics. Per-group outlier detection only runs when more than one group
-#' is present.
+#' @description
+#' Helper function to run initial quality control on cells.
 #'
-#' @return An object of class `CellQc` containing:
-#' \describe{
-#'   \item{cell_idx}{Integer vector of 1-indexed cell positions.}
-#'   \item{metrics}{The input metrics list.}
-#'   \item{groups}{Character vector of group labels.}
-#'   \item{per_metric}{Named list of per-metric results from
-#'     \code{\link{per_cell_qc_outlier}}.}
-#'   \item{outlier_mat}{Logical matrix with one column per metric.}
-#'   \item{combined}{Logical vector. `TRUE` if a cell is an outlier in any
-#'     metric.}
-#'   \item{per_group_stats}{A `data.table` of per-group outlier statistics
-#'     (see \code{\link{per_group_qc_outlier}}), or `NULL` for a single group.}
-#' }
+#'
+#' @param metrics Named list of numeric vectors.
+#' @param cells_to_keep Integer. 0-indexed cell positions.
+#' @param directions Named character vector, one of `"twosided"`, `"below"`,
+#' `"above"`. Defaults to `"twosided"`.
+#' @param threshold Numeric. MADs for MAD outlier detection.
+#' @param groups Optional grouping vector.
+#' @param hard_thresholds Optional named list of numeric vectors with `lower`
+#' and/or `upper` bounds, e.g. `list(MT = c(upper = 15))`. Applied independent
+#' of groups.
+#' @param mad Logical. If `FALSE`, skip MAD entirely; `hard_thresholds` must
+#' then be supplied.
+#'
+#' @return A `CellQc` object.
 #'
 #' @export
 run_cell_qc <- function(
@@ -350,68 +394,142 @@ run_cell_qc <- function(
   cells_to_keep,
   directions = NULL,
   threshold = 3,
-  groups = NULL
+  groups = NULL,
+  hard_thresholds = NULL,
+  mad = TRUE
 ) {
   checkmate::assertList(metrics, types = "numeric", names = "unique")
   checkmate::qassert(cells_to_keep, "I+")
   checkmate::qassert(threshold, "N1")
+  checkmate::qassert(mad, "B1")
+
+  if (!mad && is.null(hard_thresholds)) {
+    stop("Nothing to do: `mad = FALSE` and no `hard_thresholds` supplied.")
+  }
 
   n <- length(metrics[[1]])
+  metric_names <- names(metrics)
+
   if (is.null(groups)) {
     groups <- rep("all", n)
   }
   checkmate::assertAtomic(groups, len = n, any.missing = FALSE)
   groups <- as.character(groups)
-
-  if (is.null(directions)) {
-    directions <- setNames(rep("twosided", length(metrics)), names(metrics))
-  }
-
-  checkmate::assertNames(names(directions), must.include = names(metrics))
-
-  directions <- directions[names(metrics)]
   group_levels <- unique(groups)
 
-  results <- Map(
-    function(x, dir) {
-      outlier <- logical(n)
-      thresholds <- list()
-      for (g in group_levels) {
-        idx <- which(groups == g)
-        res <- per_cell_qc_outlier(
-          metric = x[idx],
-          threshold = threshold,
-          direction = dir
-        )
-        outlier[idx] <- res$outlier
-        thresholds[[g]] <- res$metrics
+  if (is.null(directions)) {
+    directions <- setNames(rep("twosided", length(metrics)), metric_names)
+  }
+  checkmate::assertNames(names(directions), must.include = metric_names)
+  directions <- directions[metric_names]
+
+  if (!is.null(hard_thresholds)) {
+    checkmate::assertList(hard_thresholds, types = "numeric", names = "unique")
+    checkmate::assertNames(names(hard_thresholds), subset.of = metric_names)
+    if (mad) {
+      for (nm in names(hard_thresholds)) {
+        .check_bounds_direction(hard_thresholds[[nm]], directions[[nm]], nm)
       }
-      list(outlier = outlier, metrics = thresholds)
-    },
-    metrics,
-    directions
+    }
+  }
+
+  # MAD
+  if (mad) {
+    per_metric <- Map(
+      function(x, dir) {
+        outlier <- logical(n)
+        thresholds <- list()
+        for (g in group_levels) {
+          idx <- which(groups == g)
+          res <- per_cell_qc_outlier(
+            metric = x[idx],
+            threshold = threshold,
+            direction = dir
+          )
+          outlier[idx] <- res$outlier
+          thresholds[[g]] <- res$metrics
+        }
+        list(outlier = outlier, metrics = thresholds)
+      },
+      metrics,
+      directions
+    )
+    outlier_mat <- do.call(cbind, lapply(per_metric, `[[`, "outlier"))
+    per_group_stats <- if (length(group_levels) > 1L) {
+      per_group_qc_outlier(metrics, groups, directions, threshold)
+    } else {
+      NULL
+    }
+  } else {
+    per_metric <- list()
+    outlier_mat <- matrix(
+      FALSE,
+      nrow = n,
+      ncol = length(metrics),
+      dimnames = list(NULL, metric_names)
+    )
+    per_group_stats <- NULL
+  }
+
+  # hard
+  hard_mat <- matrix(
+    FALSE,
+    nrow = n,
+    ncol = length(metrics),
+    dimnames = list(NULL, metric_names)
+  )
+  if (!is.null(hard_thresholds)) {
+    for (nm in names(hard_thresholds)) {
+      hard_mat[, nm] <- !.within_bounds(metrics[[nm]], hard_thresholds[[nm]])
+    }
+  }
+
+  rescued_mat <- matrix(
+    FALSE,
+    nrow = n,
+    ncol = length(metrics),
+    dimnames = list(NULL, metric_names)
   )
 
-  outlier_mat <- do.call(cbind, lapply(results, `[[`, "outlier"))
-  combined <- rowSums(outlier_mat) > 0
-
-  per_group_stats <- if (length(group_levels) > 1L) {
-    per_group_qc_outlier(metrics, groups, directions, threshold)
-  } else {
-    NULL
-  }
+  combined <- rowSums((outlier_mat & !rescued_mat) | hard_mat) > 0
 
   structure(
     list(
       cell_idx = cells_to_keep + 1L,
       metrics = metrics,
       groups = groups,
-      per_metric = results,
+      per_metric = per_metric,
       outlier_mat = outlier_mat,
+      hard_mat = hard_mat,
+      rescued_mat = rescued_mat,
+      hard_thresholds = hard_thresholds,
       combined = combined,
       per_group_stats = per_group_stats
     ),
     class = "CellQc"
+  )
+}
+
+#' Fixed-threshold cell QC
+#'
+#' Thin wrapper around `run_cell_qc` with MAD disabled.
+#'
+#' @inheritParams run_cell_qc
+#' @param hard_thresholds Required. See `run_cell_qc`.
+#'
+#' @export
+run_cell_qc_fixed <- function(
+  metrics,
+  cells_to_keep,
+  hard_thresholds,
+  groups = NULL
+) {
+  run_cell_qc(
+    metrics = metrics,
+    cells_to_keep = cells_to_keep,
+    groups = groups,
+    hard_thresholds = hard_thresholds,
+    mad = FALSE
   )
 }
 

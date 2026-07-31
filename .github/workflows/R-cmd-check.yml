@@ -16,8 +16,8 @@ jobs:
       fail-fast: true
       matrix:
         config:
-          - {os: macOS-latest,   r: 'release'} 
-          - {os: ubuntu-latest,   r: 'release'}
+          - {os: macOS-latest, r: 'release'} 
+          - {os: ubuntu-22.04, r: 'release'}
 
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
@@ -49,6 +49,14 @@ jobs:
             any::knitr
             any::rextendr
           needs: check
+
+      # RSPM's macOS stringfish binary is linked against the legacy TBB 2020 ABI
+      # (tbb::internal::NFS_Allocate), which oneTBB in current RcppParallel no
+      # longer exports. Rebuild from source against the installed RcppParallel.
+      - name: Rebuild stringfish/qs2 from source (macOS)
+        if: runner.os == 'macOS'
+        run: install.packages(c("stringfish", "qs2"), type = "source", repos = "https://cloud.r-project.org")
+        shell: Rscript {0}
 
       - name: Install system dependencies (Linux)
         if: runner.os == 'Linux'

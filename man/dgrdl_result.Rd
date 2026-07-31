@@ -7,6 +7,7 @@
 dgrdl_result(
   object,
   dgrdl_params = params_dgrdl(),
+  membership_params = params_module_membership(),
   seed = 42L,
   .verbose = TRUE
 )
@@ -29,6 +30,11 @@ feature and sample Laplacian.}
 \item{admm_iter - Integer. ADMM iterations for sparse coding.}
 \item{rho - Float. ADMM step size.}
 }}
+
+\item{membership_params}{List. Controls how the atom loadings are turned into
+module membership, see \code{\link[=params_module_membership]{params_module_membership()}}. Membership is
+not exclusive: a gene active in several atoms appears in several modules, and
+a gene in no tail appears in none.}
 
 \item{seed}{Integer. Seed for the initialisation of the dictionary.}
 

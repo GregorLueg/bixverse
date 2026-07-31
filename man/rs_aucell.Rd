@@ -4,7 +4,7 @@
 \alias{rs_aucell}
 \title{Calculate AUCell in Rust}
 \usage{
-rs_aucell(f_path, gs_list, cells_to_keep, auc_type, streaming, verbose)
+rs_aucell(f_path, gs_list, cells_to_keep, aucell_params, streaming, verbose)
 }
 \arguments{
 \item{f_path}{String. Path to the \code{counts_cells.bin} file.}
@@ -14,8 +14,8 @@ genes of interest.}
 
 \item{cells_to_keep}{Integer. Vector of indices of the cells to keep.}
 
-\item{auc_type}{String. One of \code{"wilcox"} or \code{"auroc"}, pending on
-which statistic you wish to calculate.}
+\item{aucell_params}{List. The AUCell parameters, see
+\code{\link[=params_sc_aucell]{params_sc_aucell()}}.}
 
 \item{streaming}{Boolean. Shall the data be streamed.}
 
@@ -29,10 +29,9 @@ AUC.
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 The function will take in a list of gene set indices (0-indexed!) and
-calculate an AUCell type statistic. Two options here: calculate this
-with proper AUROC calculations (useful for marker gene expression) or
-based on the Mann-Whitney statistic (useful for pathway activity
-measurs). Data can be streamed in chunks of 50k cells per or loaded in
-in one go.
+calculate an AUCell type statistic. Three options here: the recovery-curve
+AUC of Aibar, et al. (the actual AUCell statistic), an AUC derived from the
+Mann-Whitney statistic, or average precision. Data can be streamed in
+chunks of 50k cells per or loaded in in one go.
 }
 \keyword{internal}
