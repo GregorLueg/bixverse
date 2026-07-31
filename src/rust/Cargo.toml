@@ -26,11 +26,7 @@ codegen-units = 4
 strip = true
 
 [dependencies]
-# TODO: flip back to `version = "0.3.10"` once bixverse-rs is on crates.io
-bixverse-rs = { path = "/Users/gregorlueg/repos/shared/bixverse-rs", features = [
-  "single-cell",
-  "multi-modal",
-] }
+bixverse-rs = { version = "0.3.11", features = [ "single-cell", "multi-modal", ] }
 extendr-api = "0.9.0"
 either = "1.15.0"
 faer = { version = '0.23.2' }
