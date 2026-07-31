@@ -1,3 +1,12 @@
+# bixverse 0.4.5
+
+## Features
+
+### Single cells
+
+* Further improvements to the pipelines with meta cells enabled. 
+* Merging of meta cells together.
+
 # bixverse 0.4.4
 
 ## Features
