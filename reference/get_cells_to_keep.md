@@ -21,4 +21,9 @@ get_cells_to_keep(x)
 
 - x:
 
-  An object to get the gene index from.
+  An object from which to get the cells to keep from. These are
+  0-indexed.
+
+## Value
+
+Integer vector with 0-indices of the cells to keep.

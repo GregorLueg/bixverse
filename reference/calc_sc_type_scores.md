@@ -33,8 +33,7 @@ calc_sc_type_scores(
 - weight_floor:
 
   Optional numeric. A value between 0 to 1 and sets the floor for the
-  weights if `sensitivity = TRUE`. If not provided, defaults to `0` as
-  in the original implementation.
+  weights if `sensitivity = TRUE`. If not provided, defaults to `0.1`.
 
 - .verbose:
 

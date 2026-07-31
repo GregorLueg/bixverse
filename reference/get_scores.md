@@ -12,6 +12,9 @@ get_scores(x, ..., score_type = c("weighted", "cxds_scores"))
 
 # S3 method for class 'ScTypeResults'
 get_scores(x, ...)
+
+# S3 method for class 'ScTypeCellResults'
+get_scores(x, ...)
 ```
 
 ## Arguments
@@ -31,3 +34,5 @@ get_scores(x, ...)
 ## Value
 
 A numeric matrix of cells x cell types.
+
+A numeric vector with the winning score per cell.

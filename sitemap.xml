@@ -108,9 +108,11 @@
 <url><loc>https://gregorlueg.github.io/bixverse/reference/assertScVision.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/assertScWnnParams.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/assertScenicParams.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/assertSctypeCellParams.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/assertSingleSampleGSEAparams.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/assertSymphonyMap.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/assertSyntheticBulkParams.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/assign_sc_type.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/aucell_sc.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/auto_streaming.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/batch_correction_bulk_dge.html</loc></url>
@@ -215,6 +217,7 @@
 <url><loc>https://gregorlueg.github.io/bixverse/reference/checkScVision.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/checkScWnnParams.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/checkScenicParams.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/checkSctypeCellParams.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/checkSingleSampleGSEAparams.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/checkSymphonyMap.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/checkSyntheticBulkParams.html</loc></url>
@@ -283,6 +286,7 @@
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-resolve_mc_nmf_selection.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-resolve_sc_nmf_selection.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-run_per_group.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/dot-sc_type_labels.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-scale_and_clip_expr.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-scale_quantile_adapted.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-scaling_zscore.html</loc></url>
@@ -497,6 +501,7 @@
 <url><loc>https://gregorlueg.github.io/bixverse/reference/new_sc_matrix.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/new_sc_miloR_res.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/new_sc_step.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/new_sc_type_cell_results.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/new_scenic_grn.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/new_stabilised_nmf_result.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/nmf_bulk.html</loc></url>
@@ -559,6 +564,7 @@
 <url><loc>https://gregorlueg.github.io/bixverse/reference/params_scenic_gradient_boosting_defaults.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/params_scenic_random_forest_defaults.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/params_scrublet.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/params_sctype_cells.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/params_snf.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/params_ssgsea.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/params_symphony_map.html</loc></url>
@@ -758,6 +764,7 @@
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_sc_scrublet.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_sc_snn.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_sc_type.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/rs_sc_type_assign_cells.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_sc_type_cluster_assignment.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_scenic_gene_filter.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_scenic_grn.html</loc></url>

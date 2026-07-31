@@ -938,6 +938,10 @@ cell
   : Calculate ScType scores per cell
 - [`score_clusters()`](https://gregorlueg.github.io/bixverse/reference/score_clusters.md)
   : Score clusters based on ScType
+- [`assign_sc_type()`](https://gregorlueg.github.io/bixverse/reference/assign_sc_type.md)
+  : Assign cell types per cell based on ScType
+- [`params_sctype_cells()`](https://gregorlueg.github.io/bixverse/reference/params_sctype_cells.md)
+  : Parameters for the per-cell ScType assignment
 - [`params_symphony_map()`](https://gregorlueg.github.io/bixverse/reference/params_symphony_map.md)
   : Default parameters for Symphony query mapping
 

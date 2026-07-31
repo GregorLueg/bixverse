@@ -28,6 +28,9 @@
   (the recovery-curve AUC of Aibar et al., with a `max_rank` cutoff) and
   `"ap"` (average precision). Scores can be z-scored per gene set via
   `standardise`.
+- Something is cooking for the single cell stuff. There has been a major
+  refactor on the Rust side that will enable some very, very, very cool
+  future features. *Watch the space…*
 
 ### Breaking changes
 

@@ -7,7 +7,7 @@ method to remove duplicated preamble.
 ## Usage
 
 ``` r
-.get_bulk_target_mat(object, .verbose = TRUE)
+.get_bulk_target_mat(object)
 ```
 
 ## Arguments
@@ -16,10 +16,6 @@ method to remove duplicated preamble.
 
   The class, see
   [`BulkCoExp()`](https://gregorlueg.github.io/bixverse/reference/BulkCoExp.md).
-
-- .verbose:
-
-  Boolean. If `FALSE`, suppresses the fallback warning.
 
 ## Value
 

@@ -369,7 +369,7 @@ GPU-accelerated Adam optimiser. You can run this via:
 
 ``` r
 
-sce <- umap_sc_gpu(
+sce <- umap_gpu_sc(
   sce,
   slot_name = "umap_prior_gpu"
 )
