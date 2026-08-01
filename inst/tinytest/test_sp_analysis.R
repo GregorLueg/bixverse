@@ -1,172 +1,44 @@
 # spatial subset and analysis methods ------------------------------------------
 
+source("helper_sp.R", local = TRUE)
+
 test_temp_dir <- file.path(tempdir(), "sp_analysis")
 dir.create(test_temp_dir, recursive = TRUE, showWarnings = FALSE)
 stopifnot("Test directory does not exist" = dir.exists(test_temp_dir))
 
 ## fixture ---------------------------------------------------------------------
 
-### a visium hex lattice -------------------------------------------------------
-
 # Standard Visium geometry: `array_col` steps by two inside a row and the rows
 # are offset by one, so an interior spot has exactly six neighbours. Anything
 # that gets the parity wrong drops to four.
+#
+# The barcode ordering trap comes with the fixture: `barcodes.tsv.gz` is
+# lexicographic while `tissue_positions.csv` is in array raster order, so
+# anything that joins the two by position scrambles the coordinates.
 n_array_rows <- 12L
-n_per_row <- 12L
-n_spots <- n_array_rows * n_per_row
 n_genes <- 60L
 
-sf_json <- list(
-  regist_target_img_scalef = 0.2,
-  tissue_hires_scalef = 0.1,
-  tissue_lowres_scalef = 0.05,
-  fiducial_diameter_fullres = 100,
-  spot_diameter_fullres = 40
+fixture <- sp_make_visium(
+  file.path(test_temp_dir, "sample_a"),
+  layout = "hex",
+  n_rows = n_array_rows,
+  n_cols = 12L,
+  n_genes = n_genes,
+  seed = 11L,
+  image_size = 200L
 )
 
-grid <- data.table::rbindlist(lapply(seq_len(n_array_rows) - 1L, \(r) {
-  data.table::data.table(
-    array_row = r,
-    array_col = seq(r %% 2L, by = 2L, length.out = n_per_row)
-  )
-}))
-grid[, pxl_col_in_fullres := as.integer(200L + array_col * 50L)]
-grid[, pxl_row_in_fullres := as.integer(200L + array_row * 87L)]
+n_spots <- fixture$n_spots
+gene_ids <- fixture$gene_ids
 
-set.seed(11L)
-barcodes_raster_order <- vapply(
-  seq_len(n_spots),
-  \(i)
-    sprintf(
-      "%s-1",
-      paste(sample(c("A", "C", "G", "T"), 16L, TRUE), collapse = "")
-    ),
-  character(1)
-)
-stopifnot(!anyDuplicated(barcodes_raster_order))
-barcodes_matrix_order <- sort(barcodes_raster_order)
+# the image assertions need a readable PNG *and* the Rust image backend behind
+# it. Gating on `png` alone hard-errors on a build without OpenSlide.
+image_ok <- fixture$png_written && sp_image_backend_ok()
 
-positions <- data.table::data.table(
-  barcode = barcodes_raster_order,
-  in_tissue = 1L,
-  array_row = grid$array_row,
-  array_col = grid$array_col,
-  pxl_row_in_fullres = grid$pxl_row_in_fullres,
-  pxl_col_in_fullres = grid$pxl_col_in_fullres
-)
-data.table::setkey(positions, barcode)
-
-# Counts in matrix (barcode) order, with a planted north/south gradient on gene
-# 1 and pure noise on gene 2. The gradient is kept modest on purpose: Moran's I
-# runs on normalised counts by default, so a gene big enough to move the library
-# size drags spatial structure into every other gene through the denominator.
-pos_in_matrix_order <- positions[barcodes_matrix_order]
-north <- pos_in_matrix_order$array_row < n_array_rows / 2L
-
-set.seed(22L)
-counts <- matrix(
-  rpois(n_genes * n_spots, lambda = 4),
-  nrow = n_genes,
-  ncol = n_spots
-)
-counts[1L, ] <- ifelse(north, 30L, 3L)
-counts[2L, ] <- rpois(n_spots, lambda = 20)
-gene_ids <- sprintf("ENSGSP%05i", seq_len(n_genes))
-
-### writing it out -------------------------------------------------------------
-
-write_png_or_stub <- function(path, width, height) {
-  if (requireNamespace("png", quietly = TRUE)) {
-    set.seed(33L)
-    png::writePNG(
-      array(runif(height * width * 3L), dim = c(height, width, 3L)),
-      target = path
-    )
-    return(TRUE)
-  }
-  con <- file(path, "wb")
-  on.exit(close(con), add = TRUE)
-  writeBin(as.raw(c(137, 80, 78, 71, 13, 10, 26, 10)), con)
-  writeBin(13L, con, size = 4L, endian = "big")
-  writeBin(charToRaw("IHDR"), con)
-  writeBin(width, con, size = 4L, endian = "big")
-  writeBin(height, con, size = 4L, endian = "big")
-  FALSE
-}
-
-visium_dir <- file.path(test_temp_dir, "sample_a")
-matrix_dir <- file.path(visium_dir, "raw_feature_bc_matrix")
-spatial_dir <- file.path(visium_dir, "spatial")
-dir.create(matrix_dir, recursive = TRUE, showWarnings = FALSE)
-dir.create(spatial_dir, recursive = TRUE, showWarnings = FALSE)
-
-triplets <- which(counts > 0, arr.ind = TRUE)
-con <- gzfile(file.path(matrix_dir, "matrix.mtx.gz"), "w")
-writeLines("%%MatrixMarket matrix coordinate integer general", con)
-writeLines(
-  sprintf("%d %d %d", nrow(counts), ncol(counts), nrow(triplets)),
-  con
-)
-writeLines(
-  sprintf(
-    "%d %d %d",
-    triplets[, "row"],
-    triplets[, "col"],
-    as.integer(counts[triplets])
-  ),
-  con
-)
-close(con)
-
-data.table::fwrite(
-  data.table::data.table(barcodes_matrix_order),
-  file.path(matrix_dir, "barcodes.tsv.gz"),
-  col.names = FALSE
-)
-data.table::fwrite(
-  data.table::data.table(
-    gene_ids,
-    sprintf("SYM%03i", seq_along(gene_ids)),
-    "Gene Expression"
-  ),
-  file.path(matrix_dir, "features.tsv.gz"),
-  sep = "\t",
-  col.names = FALSE
-)
-data.table::fwrite(
-  positions,
-  file.path(spatial_dir, "tissue_positions.csv"),
-  col.names = TRUE
-)
-writeLines(
-  jsonlite::toJSON(sf_json, auto_unbox = TRUE),
-  file.path(spatial_dir, "scalefactors_json.json")
-)
-# hires covers the full-res frame (max x 1350, max y 1157) at 0.1
-png_written <- write_png_or_stub(
-  file.path(spatial_dir, "tissue_hires_image.png"),
-  200L,
-  200L
-)
-
-### loading --------------------------------------------------------------------
-
-data_dir <- file.path(test_temp_dir, "out")
-unlink(data_dir, recursive = TRUE)
-dir.create(data_dir, recursive = TRUE, showWarnings = FALSE)
-
-object <- SpatialSpot(dir_data = data_dir)
-object <- load_visium(
-  object,
-  visium_dir = visium_dir,
-  sp_io_param = params_sp_visium_io(),
-  sc_qc_param = params_sc_min_quality(
-    min_unique_genes = 0L,
-    min_lib_size = 0L,
-    min_cells = 0L
-  ),
-  exp_id = "sample_a",
-  .verbose = FALSE
+object <- sp_load_visium_fixture(
+  fixture,
+  file.path(test_temp_dir, "out"),
+  exp_id = "sample_a"
 )
 
 ## parameters ------------------------------------------------------------------
@@ -302,10 +174,33 @@ expect_equal(
   info = "sp analysis - the subset reports the same global 0-based indices"
 )
 
+# Anchored on the fixture's own positions file, matched by barcode. Comparing
+# the subset's cached coords with `get_spatial_coords(object, ...)` says
+# nothing: the subset property was assigned from that very call, so both sides
+# move together whatever the parent does.
+obs_parent <- sp_obs_in_graph_order(object, "sample_a")
+coords_parent <- get_spatial_coords(object, "sample_a")
+truth <- fixture$positions[match(
+  obs_parent[["cell_id"]],
+  fixture$positions[["barcode"]]
+)]
+
+expect_equal(
+  current = as.numeric(coords_parent[, "x"]),
+  target = as.numeric(truth[["pxl_col_in_fullres"]]),
+  info = "sp analysis - the coords x come off the positions file by barcode"
+)
+
+expect_equal(
+  current = as.numeric(coords_parent[, "y"]),
+  target = as.numeric(truth[["pxl_row_in_fullres"]]),
+  info = "sp analysis - and so do the coords y"
+)
+
 expect_equal(
   current = get_spatial_coords(subset_obj, "sample_a"),
-  target = get_spatial_coords(object, "sample_a"),
-  info = "sp analysis - the cached coords match the parent"
+  target = coords_parent,
+  info = "sp analysis - the subset carries the parent's coordinates"
 )
 
 # coordinates have to line up with the obs rows, per spot, not just in count
@@ -436,10 +331,19 @@ expect_equal(
   info = "sp analysis - every gene was tested"
 )
 
+# `get_gene_names()` is where `gene_id` is taken from in the first place, so
+# comparing the two is a tautology. The features file is the external
+# reference: a permuted var read breaks this and nothing else in the suite.
 expect_equal(
   current = morans$gene_id,
-  target = get_gene_names(subset_obj),
-  info = "sp analysis - the gene ids come back in var table order"
+  target = fixture$gene_ids,
+  info = "sp analysis - the gene labels are the features file in file order"
+)
+
+expect_equal(
+  current = morans$gene_idx,
+  target = seq_len(n_genes) - 1L,
+  info = "sp analysis - paired with the on-disk index they were computed at"
 )
 
 expect_true(
@@ -492,9 +396,18 @@ expect_true(
 
 ## neighbourhood enrichment ----------------------------------------------------
 
-obs_labels <- bixverse:::.sp_obs_for_exp(subset_obj, "sample_a")
+# The labels come off the fixture's positions file by barcode, not out of
+# `.sp_obs_for_exp()`. Building them with the same helper `nhood_enrichment_sp`
+# reads them back with means any row-ordering change permutes the write and the
+# read identically and the assertions below never notice.
+obs_labels <- get_sc_obs(subset_obj)
+data.table::setorderv(obs_labels, "cell_idx")
+label_rows <- fixture$positions[match(
+  obs_labels[["cell_id"]],
+  fixture$positions[["barcode"]]
+)]
 subset_obj[["band"]] <- ifelse(
-  obs_labels$array_row < n_array_rows / 2L,
+  label_rows[["array_row"]] < n_array_rows / 2L,
   "north",
   "south"
 )
@@ -546,7 +459,7 @@ expect_error(
 
 ## image features --------------------------------------------------------------
 
-if (png_written) {
+if (image_ok) {
   subset_obj <- image_features_sp(
     subset_obj,
     resolution = "hires",
@@ -608,7 +521,7 @@ expect_equal(
   info = "sp analysis - enrichment nests by exp_id then label column"
 )
 
-if (png_written) {
+if (image_ok) {
   expect_equal(
     current = names(sp_cache$per_sample_image_features$sample_a),
     target = "hires",
