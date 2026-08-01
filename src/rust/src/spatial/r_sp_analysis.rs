@@ -5,6 +5,7 @@ use bixverse_rs::prelude::*;
 use bixverse_rs::spatial::sp_analysis::nhood_enrichment::{
     compute_nhood_enrichment, NhoodEnrichmentParams, NhoodEnrichmentRes,
 };
+use bixverse_rs::spatial::sp_validate::validate_adjacency;
 use extendr_api::*;
 use std::time::Instant;
 
@@ -93,7 +94,11 @@ fn rs_sp_nhood_enrichment(
 
     // The crate takes the symmetric CSR rather than the adjacency pair, so the
     // collapse-and-scatter that `build_spatial_graph_csr` does internally
-    // happens here instead.
+    // happens here instead. That bypasses `MoransI::new`, which is where the
+    // adjacency would otherwise be validated, so do it explicitly: a 1-based or
+    // out-of-range neighbour list panics out of bounds inside the CSR scatter.
+    validate_adjacency(&neighbours, &weights, labels.len()).to_extendr()?;
+
     let non_redundant = make_weights_non_redundant(&neighbours, &weights);
     let graph = GraphCsr::from_non_redundant(&neighbours, &non_redundant);
 
