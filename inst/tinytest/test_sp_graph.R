@@ -346,7 +346,7 @@ expect_error(
     seed = 42L,
     verbose = 0L
   ),
-  info = "sp graph - an unknown layout errors"
+  info = "sp graph - an unknown layout is rejected before it reaches Rust"
 )
 
 ## through the class -----------------------------------------------------------

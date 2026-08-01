@@ -397,6 +397,47 @@ expect_true(
   info = "sp processing - the one varying gene still gets a number"
 )
 
+### the result class on derived tables -----------------------------------------
+
+# `SpMoransRes` sits in front of a data.table, and `[` and merge() carry the
+# class onto whatever comes out. A summary built off a result is then still an
+# SpMoransRes without the columns the print method wants, so the print method
+# has to survive that rather than error in somebody's face.
+
+derived <- merge(
+  morans_raw[, c("gene_id", "fdr"), with = FALSE],
+  data.table::data.table(
+    gene_id = get_per_sample_sparkx(
+      sparkx_sp(object, .verbose = FALSE),
+      "sample_a"
+    )$gene_id,
+    sparkx_fdr = 1
+  ),
+  by = "gene_id"
+)
+
+expect_true(
+  current = inherits(derived, "SpMoransRes"),
+  info = "sp processing - merge carries the result class onto the output"
+)
+
+expect_silent(
+  current = print(derived[, list(n = .N)]),
+  info = "sp processing - printing a derived table without the columns is fine"
+)
+
+expect_equal(
+  current = class(bixverse:::.sp_strip_result_class(morans_raw)),
+  target = c("data.table", "data.frame"),
+  info = "sp processing - the result class can be dropped back to a data.table"
+)
+
+expect_equal(
+  current = class(morans_raw)[1L],
+  target = "SpMoransRes",
+  info = "sp processing - and dropping it does not touch the original"
+)
+
 ## space ranger ----------------------------------------------------------------
 
 # Correlation rather than equality: Space Ranger builds its own neighbour graph,
