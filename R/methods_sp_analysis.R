@@ -227,7 +227,13 @@
     cols <- unique(c("cell_idx", "exp_id", cols))
   }
   obs <- get_sc_obs(object, cols = cols, filtered = TRUE)
-  obs <- obs[get("exp_id") == exp_id, ]
+  # The mask is built outside the `[` call on purpose. The whole `i` expression
+  # is evaluated with the columns in scope, and `obs` has a column named
+  # `exp_id` while this function has an argument of the same name. Inside `i`
+  # the column wins on both sides, so `obs[get("exp_id") == exp_id, ]` compares
+  # the column with itself and quietly keeps every sample.
+  keep <- obs[["exp_id"]] == exp_id
+  obs <- obs[keep, ]
   data.table::setorderv(obs, "cell_idx")
 
   return(obs)

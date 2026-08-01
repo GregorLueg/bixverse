@@ -81,7 +81,11 @@ SpatialSpotSubset <- S7::new_class(
 
     obs_table <- get_sc_obs(sp_object, filtered = TRUE)
     checkmate::assertNames(x = colnames(obs_table), must.include = "exp_id")
-    obs_table <- obs_table[get("exp_id") == exp_id, ]
+    # mask built outside the `[` call: inside `i` the `exp_id` column shadows
+    # the `exp_id` argument on both sides, so the comparison would be column
+    # against column and every sample would survive it
+    keep <- obs_table[["exp_id"]] == exp_id
+    obs_table <- obs_table[keep, ]
 
     if (nrow(obs_table) == 0L) {
       stop(sprintf("No spots found for exp_id '%s'.", exp_id))
