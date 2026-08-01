@@ -512,7 +512,7 @@ sp_cache <- get_sp_cache(subset_obj)
 
 expect_true(
   current = "per_sample_image_features" %in% names(sp_cache),
-  info = "sp analysis - the SpCache has the sixth slot"
+  info = "sp analysis - the SpCache has the image feature slot"
 )
 
 expect_equal(
