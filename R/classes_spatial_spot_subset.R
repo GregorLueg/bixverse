@@ -208,6 +208,30 @@ S7::method(print, SpatialSpotSubset) <- function(x, ...) {
 
 ## getters ---------------------------------------------------------------------
 
+#' Assert an exp_id is the one a subset holds
+#'
+#' @description
+#' A subset carries exactly one experiment, so anything else is a caller
+#' mistake rather than a lookup miss.
+#'
+#' @param object A [bixverse::SpatialSpotSubset()].
+#' @param exp_id String. The experiment identifier to check.
+#'
+#' @return Invisibly `TRUE`, otherwise it errors.
+#'
+#' @keywords internal
+.sp_subset_assert_exp_id <- function(object, exp_id) {
+  checkmate::qassert(exp_id, "S1")
+  if (!identical(exp_id, S7::prop(object, "group"))) {
+    stop(sprintf(
+      "The subset holds exp_id '%s', not '%s'.",
+      S7::prop(object, "group"),
+      exp_id
+    ))
+  }
+  invisible(TRUE)
+}
+
 ### samples --------------------------------------------------------------------
 
 #' @method get_samples SpatialSpotSubset
@@ -225,15 +249,8 @@ S7::method(get_samples, SpatialSpotSubset) <- function(object) {
 #' @export
 S7::method(get_sample, SpatialSpotSubset) <- function(object, exp_id) {
   checkmate::assertTRUE(S7::S7_inherits(object, SpatialSpotSubset))
-  checkmate::qassert(exp_id, "S1")
+  .sp_subset_assert_exp_id(object, exp_id)
 
-  if (!identical(exp_id, S7::prop(object, "group"))) {
-    stop(sprintf(
-      "The subset holds exp_id '%s', not '%s'.",
-      S7::prop(object, "group"),
-      exp_id
-    ))
-  }
   return(S7::prop(object, "sample"))
 }
 
@@ -267,9 +284,9 @@ S7::method(get_spot_indices_for_exp, SpatialSpotSubset) <- function(
 ) {
   checkmate::assertTRUE(S7::S7_inherits(object, SpatialSpotSubset))
   checkmate::qassert(filtered, "B1")
+  .sp_subset_assert_exp_id(object, exp_id)
 
   # `filtered` kept for parent API parity; the subset is always filtered.
-  invisible(get_sample(object, exp_id))
   return(S7::prop(object, "subset_to_original") - 1L)
 }
 
@@ -285,8 +302,8 @@ S7::method(get_spatial_coords, SpatialSpotSubset) <- function(
 ) {
   checkmate::assertTRUE(S7::S7_inherits(object, SpatialSpotSubset))
   checkmate::qassert(filtered, "B1")
+  .sp_subset_assert_exp_id(object, exp_id)
 
-  invisible(get_sample(object, exp_id))
   return(S7::prop(object, "coords"))
 }
 
