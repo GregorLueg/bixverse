@@ -43,3 +43,11 @@ into one experiment with global gene QC and sequential spot indexing. The
 feature space is the \strong{intersection} of input gene IDs. Each input is
 registered as its own \code{SpatialSample}.
 }
+\section{In-tissue filtering}{
+
+Unlike \code{\link[=load_visium]{load_visium()}}, this path still applies \code{in_tissue_only}
+through the \code{to_keep} flag after the counts are written. The multi-file
+reader has no cell allowlist, so global gene QC across inputs sees the
+off-tissue counts.
+}
+

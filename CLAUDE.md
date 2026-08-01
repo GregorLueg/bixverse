@@ -58,10 +58,27 @@ before building: branches under active development often point at a sibling
 `bixverse-rs` checkout, which must exist at that path for the build to work.
 Everything under `src/rust/src/` is a thin extendr binding layer, one module per domain
 (`base`, `data`, `enrichment`, `graph`, `meta_cell`, `methods`, `ontology`,
-`single_cell`), registered in `src/rust/src/lib.rs` via `extendr_module!`.
+`single_cell`, `spatial`), registered in `src/rust/src/lib.rs` via `extendr_module!`.
 
 Algorithmic work belongs in `bixverse-rs`; this repo gets the binding plus the R
 wrapper.
+
+#### Local `bixverse-rs` path override, `clean-up` branch only
+
+On `clean-up` the dependency is a local `path` override pointing at
+`~/repos/shared/bixverse-rs`, with features `single-cell`, `multi-modal`,
+`spatial` and `spatial-image`. This is deliberate, not the accident it
+resembles. The spatial stack lives on the `skunk-works-spatial` branch of
+`bixverse-rs` and is unpublished, so the bindings in `src/rust/src/spatial/`
+cannot build against a crates.io version.
+
+**Swap it back to a version pin before anything is released.** Merging this to
+`main` with the override in place ships a package that only builds on one
+laptop. `src/rust/Cargo.lock` carries the matching churn and goes back with it.
+
+`spatial-image` also needs the OpenSlide C library at build and run time
+(`brew install openslide`, `apt install libopenslide-dev`). That is a new system
+dependency and has to reach `SystemRequirements` and CI before release.
 
 `R/extendr-wrappers.R` is **generated** during compilation (`cargo run --bin
 document`, see `src/rust/document.rs`). Never edit it by hand. Exposed Rust

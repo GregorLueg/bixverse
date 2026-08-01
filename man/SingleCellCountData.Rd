@@ -207,6 +207,38 @@ A list with \code{cell_indices}, \code{gene_indices}, \code{lib_size} and
 }
 }
 
+\subsection{Method \code{mtx_to_file_streaming_subset}}{
+Write a subset of an mtx file to the cells binary file using streaming
+
+\subsection{Arguments}{
+\describe{
+\item{\code{mtx_path}}{(\code{character})\cr Path to the mtx file.}
+\item{\code{qc_params}}{(\code{list})\cr Quality control parameters parseable into \code{MinCellQuality}.}
+\item{\code{cells_as_rows}}{(\code{logical})\cr \code{TRUE} if cells are rows in the mtx file, \code{FALSE} if cells are columns.}
+\item{\code{cell_allowlist}}{(\code{integer})\cr 0-based cell indices to admit, in mtx column (or row) order.}
+\item{\code{verbose}}{(\code{logical})\cr Controls verbosity of the function. }
+}}
+\subsection{description}{
+Same as \code{mtx_to_file_streaming()} with a cell allowlist applied before
+anything is counted. Cells outside the allowlist never reach the gene
+statistics, so \code{min_cells} is computed over the admitted cells only,
+and they are never written to the binary store. Doing it afterwards
+through a \code{to_keep} flag leaves gene QC looking at cells the caller
+asked to drop.
+
+The allowlist indexes the mtx file's own cell axis: the rows when
+\code{cells_as_rows}, the columns otherwise. For 10x output that is the
+order of \code{barcodes.tsv.gz}, which is \strong{not} the order of
+\code{tissue_positions.csv}.
+
+}
+\subsection{return}{
+A list with \code{cell_indices}, \code{gene_indices}, \code{lib_size} and
+\code{nnz}. \code{cell_indices} are still indices into the mtx file, so they are
+a subset of \code{cell_allowlist}.
+}
+}
+
 \subsection{Method \code{multi_mtx_to_file}}{
 Load multiple mtx files into a single binary
 

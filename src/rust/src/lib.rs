@@ -12,6 +12,7 @@ pub mod meta_cell;
 pub mod methods;
 pub mod ontology;
 pub mod single_cell;
+pub mod spatial;
 
 // base
 pub use base::r_cors_similarity;
@@ -63,6 +64,12 @@ pub use single_cell::r_sc_metacells;
 pub use single_cell::r_sc_multimodal;
 pub use single_cell::r_sc_plot_extraction;
 pub use single_cell::r_sc_processing;
+
+// spatial
+pub use spatial::r_sp_analysis;
+pub use spatial::r_sp_graph;
+pub use spatial::r_sp_image;
+pub use spatial::r_sp_processing;
 
 // meta cell
 pub use meta_cell::r_mc_analysis;
@@ -121,6 +128,12 @@ extendr_module! {
     use r_sc_analysis;
     use r_sc_metacells;
     use r_sc_plot_extraction;
+
+    // spatial
+    use r_sp_graph;
+    use r_sp_processing;
+    use r_sp_analysis;
+    use r_sp_image;
 
     // meta cell
     use r_mc_processing;

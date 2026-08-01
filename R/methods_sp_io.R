@@ -640,6 +640,47 @@
   )
 }
 
+#' Resolve the in-tissue spots to mtx cell indices
+#'
+#' @description
+#' The allowlist the Rust mtx reader takes indexes the mtx file's own cell
+#' axis, which for 10x output is the order of `barcodes.tsv.gz` and nothing
+#' else. `tissue_positions.csv` is in array raster order, so this joins on the
+#' barcode string and returns positions in the barcode vector, never positions
+#' in the positions table.
+#'
+#' @param barcodes Character vector of barcodes, in matrix column order.
+#' @param positions `data.table` from [.read_visium_positions()].
+#' @param exp_id String. The experiment identifier, for the error message.
+#'
+#' @return Integer vector of 0-based mtx cell indices with `in_tissue == 1`.
+#'
+#' @keywords internal
+.visium_in_tissue_allowlist <- function(barcodes, positions, exp_id) {
+  # checks
+  checkmate::qassert(barcodes, "S+")
+  checkmate::assertDataTable(positions)
+  checkmate::qassert(exp_id, "S1")
+
+  idx <- match(barcodes, positions[["barcode"]])
+  if (anyNA(idx)) {
+    stop(sprintf(
+      "%i barcode(s) of experiment '%s' have no row in the positions file.",
+      sum(is.na(idx)),
+      exp_id
+    ))
+  }
+
+  in_tissue <- as.integer(positions[["in_tissue"]][idx])
+  allowlist <- which(in_tissue == 1L) - 1L
+
+  if (length(allowlist) == 0L) {
+    stop(sprintf("No spot of experiment '%s' sits on tissue.", exp_id))
+  }
+
+  return(as.integer(allowlist))
+}
+
 #' Apply the in-tissue filter to a loaded spatial object
 #'
 #' @description
@@ -668,7 +709,10 @@
     stop("No spots left after the in-tissue filter.")
   }
 
-  if (.verbose && in_tissue_only) {
+  # silent when nothing was dropped: `load_visium()` already excludes
+  # off-tissue spots at ingest, so this is a no-op there and saying so twice
+  # reads like the filter ran twice.
+  if (.verbose && in_tissue_only && length(keep) < nrow(obs_tbl)) {
     message(sprintf(
       " Keeping %i of %i spots that sit on tissue.",
       length(keep),
@@ -729,11 +773,14 @@
 #' @param .verbose Boolean. Controls the verbosity of the function.
 #'
 #' @section In-tissue filtering:
-#' `in_tissue_only` is applied through the `to_keep` flag after the counts are
-#' written, not before. Every spot in the input stays on disk and stays
-#' addressable by index; the off-tissue ones simply drop out of the filtered
-#' accessors and out of [bixverse::get_spatial_coords()]. Gene-level QC in
-#' `sc_qc_param` therefore still sees the off-tissue counts.
+#' `in_tissue_only` is applied at ingest, not afterwards. Off-tissue spots are
+#' resolved to mtx cell indices by barcode and handed to the Rust reader as an
+#' allowlist, so they never reach the gene statistics and never get written.
+#' Gene-level QC in `sc_qc_param`, `min_cells` in particular, therefore sees
+#' in-tissue spots only, and `dims[1]` is the in-tissue count rather than the
+#' full capture area.
+#'
+#' With `in_tissue_only = FALSE` every spot is written, exactly as before.
 #'
 #' @section Image resolutions:
 #' `lowres` and `hires` map onto `tissue_lowres_scalef` and
@@ -805,12 +852,37 @@ S7::method(load_visium, SpatialSpot) <- function(
 
   rust_con <- get_sc_rust_ptr(object)
 
-  file_res <- rust_con$mtx_to_file_streaming(
-    mtx_path = scan$mtx_path,
-    qc_params = sc_qc_param,
-    cells_as_rows = scan$cells_as_rows,
-    verbose = .verbose
-  )
+  # off-tissue spots are excluded before the counts are written, so gene QC
+  # never sees them. Anything after the fact would still compute `min_cells`
+  # against the full capture area.
+  file_res <- if (sp_io_param$in_tissue_only) {
+    allowlist <- .visium_in_tissue_allowlist(
+      barcodes = scan$barcodes,
+      positions = scan$positions,
+      exp_id = exp_id
+    )
+    if (.verbose) {
+      message(sprintf(
+        "Ingesting %i of %i spots that sit on tissue.",
+        length(allowlist),
+        length(scan$barcodes)
+      ))
+    }
+    rust_con$mtx_to_file_streaming_subset(
+      mtx_path = scan$mtx_path,
+      qc_params = sc_qc_param,
+      cells_as_rows = scan$cells_as_rows,
+      cell_allowlist = allowlist,
+      verbose = .verbose
+    )
+  } else {
+    rust_con$mtx_to_file_streaming(
+      mtx_path = scan$mtx_path,
+      qc_params = sc_qc_param,
+      cells_as_rows = scan$cells_as_rows,
+      verbose = .verbose
+    )
+  }
 
   .dispatch_gene_based_data(
     rust_con = rust_con,
@@ -997,6 +1069,12 @@ prescan_visium_dirs <- function(dirs, exp_ids, .verbose = TRUE) {
 #' @param streaming Integer. CSR-to-CSC conversion mode. `0L` -> in-memory,
 #' `1L` -> light streaming, `2L` -> heavy streaming. Defaults to `1L`.
 #' @param .verbose Boolean. Controls the verbosity of the function.
+#'
+#' @section In-tissue filtering:
+#' Unlike [bixverse::load_visium()], this path still applies `in_tissue_only`
+#' through the `to_keep` flag after the counts are written. The multi-file
+#' reader has no cell allowlist, so global gene QC across inputs sees the
+#' off-tissue counts.
 #'
 #' @return The class with updated shape, a populated DuckDB and one
 #' `SpatialSample` per input.

@@ -701,6 +701,68 @@ impl SingleCellCountData {
         ))
     }
 
+    /// Write a subset of an mtx file to the cells binary file using streaming
+    ///
+    /// @description
+    /// Same as `mtx_to_file_streaming()` with a cell allowlist applied before
+    /// anything is counted. Cells outside the allowlist never reach the gene
+    /// statistics, so `min_cells` is computed over the admitted cells only,
+    /// and they are never written to the binary store. Doing it afterwards
+    /// through a `to_keep` flag leaves gene QC looking at cells the caller
+    /// asked to drop.
+    ///
+    /// The allowlist indexes the mtx file's own cell axis: the rows when
+    /// `cells_as_rows`, the columns otherwise. For 10x output that is the
+    /// order of `barcodes.tsv.gz`, which is **not** the order of
+    /// `tissue_positions.csv`.
+    ///
+    /// @param mtx_path (`character`)\cr
+    /// Path to the mtx file.
+    /// @param qc_params (`list`)\cr
+    /// Quality control parameters parseable into `MinCellQuality`.
+    /// @param cells_as_rows (`logical`)\cr
+    /// `TRUE` if cells are rows in the mtx file, `FALSE` if cells are
+    /// columns.
+    /// @param cell_allowlist (`integer`)\cr
+    /// 0-based cell indices to admit, in mtx column (or row) order.
+    /// @param verbose (`logical`)\cr
+    /// Controls verbosity of the function.
+    ///
+    /// @return A list with `cell_indices`, `gene_indices`, `lib_size` and
+    /// `nnz`. `cell_indices` are still indices into the mtx file, so they are
+    /// a subset of `cell_allowlist`.
+    pub fn mtx_to_file_streaming_subset(
+        &mut self,
+        mtx_path: String,
+        qc_params: List,
+        cells_as_rows: bool,
+        cell_allowlist: Vec<i32>,
+        verbose: bool,
+    ) -> extendr_api::Result<List> {
+        let qc_params = MinCellQuality::from_r_list(qc_params)?;
+        let cell_allowlist: Vec<usize> = cell_allowlist.r_int_convert();
+
+        let mut mtx_reader = MtxReader::new(&mtx_path, qc_params, cells_as_rows)
+            .to_extendr()?
+            .with_cell_allowlist(cell_allowlist);
+
+        let mtx_quality_data = mtx_reader.parse_mtx_quality(verbose).to_extendr()?;
+
+        let mtx_res: MtxFinalData = mtx_reader
+            .process_mtx_and_write_bin_streaming(&self.f_path_cells, &mtx_quality_data, verbose)
+            .to_extendr()?;
+
+        self.n_cells = mtx_res.no_cells;
+        self.n_genes = mtx_res.no_genes;
+
+        Ok(list!(
+            cell_indices = mtx_res.cell_qc.cell_indices,
+            gene_indices = mtx_res.cell_qc.gene_indices,
+            lib_size = mtx_res.cell_qc.lib_size,
+            nnz = mtx_res.cell_qc.nnz
+        ))
+    }
+
     /// Load multiple mtx files into a single binary
     ///
     /// @param file_tasks (`list`)\cr

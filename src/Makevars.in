@@ -1,7 +1,11 @@
 TARGET_DIR = ./rust/target
 LIBDIR = $(TARGET_DIR)/@LIBDIR@
 STATLIB = $(LIBDIR)/libbixverse.a
-PKG_LIBS = -L$(LIBDIR) -lbixverse
+# The trailing placeholder carries the dynamic C libraries the Rust static lib
+# expects the final link to provide. Currently just OpenSlide, pulled in by the
+# `spatial-image` feature of bixverse-rs. `tools/config.R` resolves it through
+# pkg-config.
+PKG_LIBS = -L$(LIBDIR) -lbixverse @SYS_LIBS@
 
 all: $(SHLIB) rust_clean
 

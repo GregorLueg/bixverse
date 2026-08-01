@@ -4289,6 +4289,291 @@ rs_extract_several_genes_plots <- function(f_path, cell_indices, gene_indices, s
 #' @keywords internal
 rs_extract_grouped_gene_stats <- function(f_path, cell_indices, gene_indices, group_ids, group_levels) .Call(wrap__rs_extract_grouped_gene_stats, f_path, cell_indices, gene_indices, group_ids, group_levels)
 
+#' Build the spatial neighbourhood graph for one sample
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Maps per-spot coordinates onto the `(neighbours, weights)` adjacency pair
+#' that every other spatial statistic in this package consumes. Four layouts:
+#' the two Visium lattices are exact table look-ups and never compute a
+#' distance, kNN and fixed-radius cover irregular geometries like Xenium or
+#' MERFISH.
+#'
+#' The returned indices are **local**: entry `i` describes the spot at row `i`
+#' of `coords`, and the indices inside it position against that same matrix.
+#' They are not global spot ids.
+#'
+#' @param coords Numeric matrix. Two columns, `x` then `y`, in full-resolution
+#' pixels. One row per spot.
+#' @param graph_params List. Layout and weighting. Flat list with:
+#' \itemize{
+#'   \item layout - String. One of `c("hex", "square", "knn", "radius")`.
+#'   \item array_row, array_col - Integer. Lattice coordinates, needed by
+#'   `"hex"` and `"square"`.
+#'   \item connectivity - Integer. `4L` or `8L`, needed by `"square"`.
+#'   \item k - Integer. Neighbours per spot, needed by `"knn"`.
+#'   \item radius - Float. Cut-off in full-res pixels, needed by `"radius"`.
+#'   \item weighting - String. One of
+#'   `c("binary", "inverse_distance", "gaussian")`.
+#'   \item power - Float. Decay exponent for `"inverse_distance"`.
+#'   \item bandwidth - Float or `NULL`. Gaussian bandwidth; `NULL` resolves to
+#'   the median nearest-neighbour distance.
+#'   \item row_normalise - Boolean. spdep `style = "W"`.
+#' }
+#' @param knn_params List or `NULL`. ANN settings for the `"knn"` layout, see
+#' [bixverse::params_sc_knn()]. Ignored by every other layout. `k` and the
+#' distance metric are overridden from the layout and the 2D geometry.
+#' @param seed Integer. Seed for the ANN index, for reproducibility.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @return A list with the following elements
+#' \itemize{
+#'   \item indices - List of integer vectors. Local 0-based neighbour indices,
+#'   sorted ascending, one element per spot.
+#'   \item weights - List of numeric vectors. Edge weights, aligned element
+#'   for element with `indices`.
+#'   \item degree - Numeric. Weighted degree per spot, taken over the
+#'   symmetrised graph `W + t(W)` that every statistic downstream consumes.
+#'   A reciprocal edge therefore contributes `w_ij + w_ji`, so a binary
+#'   layout with mutual neighbours gives twice the neighbour count.
+#' }
+#'
+#' @export
+#'
+#' @keywords internal
+rs_sp_build_graph <- function(coords, graph_params, knn_params, seed, verbose) .Call(wrap__rs_sp_build_graph, coords, graph_params, knn_params, seed, verbose)
+
+#' Detect spatially variable genes with Moran's I
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Per-gene Moran's I against a precomputed spatial graph, tested under the
+#' Cliff-Ord normality null. Expectation and variance depend only on the spot
+#' count and the graph weights, so both are scalars across genes and get
+#' computed once. Per-gene work is a single sparse quadratic form.
+#'
+#' Index spaces differ between the two spot arguments and mixing them up is
+#' the classic failure here. `spots_to_keep` is **global** (0-based positions
+#' in the count store), while `neighbours` and `weights` are **local**
+#' (0-based, positional against `spots_to_keep`). The output of
+#' [bixverse::rs_sp_build_graph()] is already local, so the two compose.
+#'
+#' @param f_path_gene String. Path to the `counts_genes.bin` file.
+#' @param spots_to_keep Integer. Global 0-based spot indices making up this
+#' sample.
+#' @param neighbours List of integer vectors. Local 0-based neighbour indices,
+#' one element per spot. Must be as long as `spots_to_keep`.
+#' @param weights List of numeric vectors. Edge weights, aligned element for
+#' element with `neighbours`.
+#' @param gene_indices Integer. On-disk 0-based gene indices to test.
+#' @param svg_params List. With element `assay`, one of `c("raw", "norm")`.
+#' @param streaming Logical. If `TRUE`, gene chunks are loaded in batches of
+#' 1000 rather than all at once.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @return A list with the following elements
+#' \itemize{
+#'   \item gene_idx - Integer. On-disk gene indices that were tested.
+#'   \item i - Numeric. Moran's I per gene. `NaN` for constant genes.
+#'   \item e_i - Numeric scalar. Expected I under the null.
+#'   \item var_i - Numeric scalar. Variance of I under the null.
+#'   \item z - Numeric. Standardised statistic per gene.
+#'   \item pval - Numeric. Two-sided p-value per gene.
+#'   \item fdr - Numeric. BH-adjusted p-value per gene.
+#' }
+#'
+#' @references
+#' Cliff & Ord, Spatial Autocorrelation, 1973
+#'
+#' @export
+#'
+#' @keywords internal
+rs_sp_morans_i <- function(f_path_gene, spots_to_keep, neighbours, weights, gene_indices, svg_params, streaming, verbose) .Call(wrap__rs_sp_morans_i, f_path_gene, spots_to_keep, neighbours, weights, gene_indices, svg_params, streaming, verbose)
+
+#' Detect spatially variable genes with SPARK-X
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Kernel-based non-parametric test for spatial expression patterns. Each
+#' kernel gets a low-rank factorisation of the centred kernel matrix, the
+#' per-gene statistic comes out of a projection against that factor, and the
+#' per-kernel p-values are combined with the Cauchy test.
+#'
+#' An empty kernel bank triggers the paper-default five Gaussian plus five
+#' cosine bandwidths, derived from quantiles of the pairwise coordinate
+#' distance distribution on a sub-sample.
+#'
+#' @param f_path_gene String. Path to the `counts_genes.bin` file.
+#' @param spots_to_keep Integer. Global 0-based spot indices making up this
+#' sample.
+#' @param coords Numeric matrix. Two columns, `x` then `y`, in full-resolution
+#' pixels. One row per spot, aligned with `spots_to_keep`.
+#' @param gene_indices Integer. On-disk 0-based gene indices to test.
+#' @param sparkx_params List. With the following elements:
+#' \itemize{
+#'   \item kernels - List or `NULL`. Each element a list with `kernel`
+#'   (`"gaussian"` or `"cosine"`) and `bandwidth`. `NULL` or empty uses the
+#'   defaults derived from the coordinates.
+#'   \item n_landmarks - Integer. Nystroem landmarks per Gaussian kernel.
+#'   \item bandwidth_subsample - Integer. Sub-sample size for the default
+#'   bandwidth estimation.
+#' }
+#' @param seed Integer. Seed for landmark selection and bandwidth
+#' sub-sampling.
+#' @param streaming Logical. If `TRUE`, gene chunks are loaded in batches of
+#' 1000 rather than all at once.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @return A list with the following elements
+#' \itemize{
+#'   \item gene_idx - Integer. On-disk gene indices that were tested.
+#'   \item kernels - Character. Kernel labels, one per column of the two
+#'   matrices below.
+#'   \item stat_per_kernel - Numeric matrix, genes x kernels.
+#'   \item pval_per_kernel - Numeric matrix, genes x kernels.
+#'   \item pval_combined - Numeric. Cauchy-combined p-value per gene.
+#'   \item fdr - Numeric. BH-adjusted `pval_combined`.
+#' }
+#'
+#' @references
+#' Zhu, Sun & Zhou, Genome Biology, 2021
+#'
+#' @export
+#'
+#' @keywords internal
+rs_sp_sparkx <- function(f_path_gene, spots_to_keep, coords, gene_indices, sparkx_params, seed, streaming, verbose) .Call(wrap__rs_sp_sparkx, f_path_gene, spots_to_keep, coords, gene_indices, sparkx_params, seed, streaming, verbose)
+
+#' Neighbourhood enrichment between spot labels
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Asks whether each pair of labels shows up as spatial neighbours more or
+#' less often than chance. The graph is fixed and only the label assignment is
+#' permuted, so the null keeps the spatial structure and tests the labelling
+#' against it.
+#'
+#' Each undirected edge contributes once to a diagonal entry and to both
+#' off-diagonal entries, which keeps the count matrix symmetric throughout.
+#'
+#' @param indices List of integer vectors. Local 0-based neighbour indices,
+#' one element per spot. The output of [bixverse::rs_sp_build_graph()].
+#' @param weights List of numeric vectors. Edge weights, aligned element for
+#' element with `indices`.
+#' @param labels Integer. Label code per spot, 0-based and local, so
+#' `length(labels)` must equal `length(indices)`. Codes must be in
+#' `0:(length(label_levels) - 1)`.
+#' @param label_levels Character. Name per code, in encoding order.
+#' @param nhood_params List. With the following elements:
+#' \itemize{
+#'   \item n_perm - Integer. Number of permutations.
+#'   \item symmetrise - Boolean. Average `Z` with its transpose at the end.
+#' }
+#' @param seed Integer. Seed for the permutations.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @return A list with the following elements
+#' \itemize{
+#'   \item label_levels - Character. Levels in encoding order, matching the
+#'   row and column order of every matrix below.
+#'   \item observed - Numeric matrix, K x K. Observed edge counts.
+#'   \item perm_mean - Numeric matrix, K x K. Permutation mean.
+#'   \item perm_sd - Numeric matrix, K x K. Permutation standard deviation.
+#'   \item z_scores - Numeric matrix, K x K. Z-scores.
+#' }
+#'
+#' @export
+#'
+#' @keywords internal
+rs_sp_nhood_enrichment <- function(indices, weights, labels, label_levels, nhood_params, seed, verbose) .Call(wrap__rs_sp_nhood_enrichment, indices, weights, labels, label_levels, nhood_params, seed, verbose)
+
+#' Per-spot histology image features
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Cuts one tile per spot out of the histology image and reduces it to a fixed
+#' feature vector: first-order statistics per colour channel, mean optical
+#' density, and Haralick texture features off a grey-level co-occurrence
+#' matrix. Reading and reduction are fused, so peak memory is one tile per
+#' thread rather than one per spot.
+#'
+#' Spots whose tile falls entirely off the image are dropped rather than
+#' failing the run, which is why `spot_idx` can be shorter than the input.
+#'
+#' The image backend is picked by probing the file, not by its extension.
+#' OpenSlide gets first refusal; anything it declines is decoded whole.
+#'
+#' @param image_path String. Path to the histology image.
+#' @param image_scalef Float. Scale from full-resolution coordinates into the
+#' image's own pixel space, e.g. `tissue_hires_scalef` out of
+#' `scalefactors_json.json`. Use `1.0` if the file already is full-res. On a
+#' slide this also selects the pyramid level.
+#' @param coords Numeric matrix. Two columns, `x` then `y`, in
+#' **full-resolution** pixels. One row per spot. The scale factor is applied
+#' inside, do not pre-scale.
+#' @param spot_diameter_fullres Float. Spot diameter in full-res pixels, i.e.
+#' `spot_diameter_fullres` out of `scalefactors_json.json`.
+#' @param image_params List. With the following elements:
+#' \itemize{
+#'   \item tile_scale - Float. Multiplier on the spot diameter when cutting a
+#'   tile. `1.0` takes the spot, larger pulls in context.
+#'   \item glcm_levels - Integer. Grey levels the GLCM quantises to, 2 to 255.
+#'   \item glcm_offsets_dy, glcm_offsets_dx - Integer. Neighbour offsets, given
+#'   as two aligned vectors. Both or neither.
+#'   \item stain_haem, stain_eosin - Numeric, length 3 each. Stain basis for
+#'   colour deconvolution. Both or neither; defaults to Ruifrok-Johnston H&E.
+#' }
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @return A list with the following elements
+#' \itemize{
+#'   \item spot_idx - Integer. 0-based positional indices into `coords` for
+#'   the spots that produced features.
+#'   \item feature_names - Character. One name per column of `values`.
+#'   \item values - Numeric matrix, spots x features.
+#' }
+#'
+#' @references
+#' Ruifrok & Johnston, Anal Quant Cytol Histol, 2001
+#'
+#' Haralick, Shanmugam & Dinstein, IEEE Trans Syst Man Cybern, 1973
+#'
+#' @export
+#'
+#' @keywords internal
+rs_sp_image_features <- function(image_path, image_scalef, coords, spot_diameter_fullres, image_params, verbose) .Call(wrap__rs_sp_image_features, image_path, image_scalef, coords, spot_diameter_fullres, image_params, verbose)
+
+#' Describe a histology image without decoding it
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Reads the header, or the pyramid table on a whole-slide image. Cheap enough
+#' to call before deciding which resolution to work at. A plain PNG or JPEG
+#' reports one level, a downsample of `1.0` and no vendor, so the shape is the
+#' same either way.
+#'
+#' @param image_path String. Path to the image.
+#'
+#' @return A list with the following elements
+#' \itemize{
+#'   \item width - Integer. Width of level 0, in pixels.
+#'   \item height - Integer. Height of level 0, in pixels.
+#'   \item n_levels - Integer. Number of pyramid levels. `1L` for a plain
+#'   image.
+#'   \item level_dims - Integer matrix, levels x 2. Width then height.
+#'   \item downsamples - Numeric. Downsample per level, relative to level 0.
+#'   \item vendor - String. OpenSlide vendor, `NA` for a plain image.
+#' }
+#'
+#' @export
+#'
+#' @keywords internal
+rs_sp_image_metadata <- function(image_path) .Call(wrap__rs_sp_image_metadata, image_path)
+
 #' Meta cells highly variable genes
 #'
 #' @description
@@ -4801,6 +5086,38 @@ rs_wnn <- function(modality_emb_one, modality_emb_two, wnn_params, seed, verbose
 #'}
 #'}
 #'
+#'\subsection{Method `mtx_to_file_streaming_subset`}{
+#'Write a subset of an mtx file to the cells binary file using streaming
+#'
+#' \subsection{Arguments}{
+#'\describe{
+#'\item{`mtx_path`}{(`character`)\cr Path to the mtx file.}
+#'\item{`qc_params`}{(`list`)\cr Quality control parameters parseable into `MinCellQuality`.}
+#'\item{`cells_as_rows`}{(`logical`)\cr `TRUE` if cells are rows in the mtx file, `FALSE` if cells are columns.}
+#'\item{`cell_allowlist`}{(`integer`)\cr 0-based cell indices to admit, in mtx column (or row) order.}
+#'\item{`verbose`}{(`logical`)\cr Controls verbosity of the function. }
+#'}}
+#' \subsection{description}{
+#'Same as `mtx_to_file_streaming()` with a cell allowlist applied before
+#'anything is counted. Cells outside the allowlist never reach the gene
+#'statistics, so `min_cells` is computed over the admitted cells only,
+#'and they are never written to the binary store. Doing it afterwards
+#'through a `to_keep` flag leaves gene QC looking at cells the caller
+#'asked to drop.
+#'
+#'The allowlist indexes the mtx file's own cell axis: the rows when
+#'`cells_as_rows`, the columns otherwise. For 10x output that is the
+#'order of `barcodes.tsv.gz`, which is **not** the order of
+#'`tissue_positions.csv`.
+#'
+#'}
+#' \subsection{return}{
+#'A list with `cell_indices`, `gene_indices`, `lib_size` and
+#'`nnz`. `cell_indices` are still indices into the mtx file, so they are
+#'a subset of `cell_allowlist`.
+#'}
+#'}
+#'
 #'\subsection{Method `multi_mtx_to_file`}{
 #'Load multiple mtx files into a single binary
 #'
@@ -5024,6 +5341,8 @@ SingleCellCountData$multi_h5ad_to_file <- function(file_tasks, universe_size, qc
 SingleCellCountData$mtx_to_file <- function(mtx_path, qc_params, cells_as_rows, verbose) .Call(wrap__SingleCellCountData__mtx_to_file, self, mtx_path, qc_params, cells_as_rows, verbose)
 
 SingleCellCountData$mtx_to_file_streaming <- function(mtx_path, qc_params, cells_as_rows, verbose) .Call(wrap__SingleCellCountData__mtx_to_file_streaming, self, mtx_path, qc_params, cells_as_rows, verbose)
+
+SingleCellCountData$mtx_to_file_streaming_subset <- function(mtx_path, qc_params, cells_as_rows, cell_allowlist, verbose) .Call(wrap__SingleCellCountData__mtx_to_file_streaming_subset, self, mtx_path, qc_params, cells_as_rows, cell_allowlist, verbose)
 
 SingleCellCountData$multi_mtx_to_file <- function(file_tasks, universe_size, qc_params, verbose) .Call(wrap__SingleCellCountData__multi_mtx_to_file, self, file_tasks, universe_size, qc_params, verbose)
 

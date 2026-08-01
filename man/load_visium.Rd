@@ -72,11 +72,14 @@ position: \code{barcodes.tsv.gz} is sorted lexicographically while
 }
 \section{In-tissue filtering}{
 
-\code{in_tissue_only} is applied through the \code{to_keep} flag after the counts are
-written, not before. Every spot in the input stays on disk and stays
-addressable by index; the off-tissue ones simply drop out of the filtered
-accessors and out of \code{\link[=get_spatial_coords]{get_spatial_coords()}}. Gene-level QC in
-\code{sc_qc_param} therefore still sees the off-tissue counts.
+\code{in_tissue_only} is applied at ingest, not afterwards. Off-tissue spots are
+resolved to mtx cell indices by barcode and handed to the Rust reader as an
+allowlist, so they never reach the gene statistics and never get written.
+Gene-level QC in \code{sc_qc_param}, \code{min_cells} in particular, therefore sees
+in-tissue spots only, and \code{dims[1]} is the in-tissue count rather than the
+full capture area.
+
+With \code{in_tissue_only = FALSE} every spot is written, exactly as before.
 }
 
 \section{Image resolutions}{

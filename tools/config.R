@@ -71,6 +71,23 @@ cfg <- if (is_debug) "debug" else "release"
   ""
 )
 
+# Dynamic C libraries the Rust static lib leaves for the final link to
+# resolve. OpenSlide arrives through the `spatial-image` feature of
+# bixverse-rs and is LGPL, so it has to stay dynamically linked and the
+# shared object has to name it. Used to replace @SYS_LIBS@.
+.sys_libs <- local({
+  out <- suppressWarnings(tryCatch(
+    system2("pkg-config", c("--libs", "openslide"), stdout = TRUE),
+    error = \(e) character()
+  ))
+  if (length(out) == 0L || !is.null(attr(out, "status"))) {
+    message("pkg-config could not resolve OpenSlide. Linking will fail.")
+    ""
+  } else {
+    paste(out, collapse = " ")
+  }
+})
+
 # read in the Makevars.in file checking
 is_windows <- .Platform[["OS.type"]] == "windows"
 
@@ -102,6 +119,7 @@ new_txt <- gsub("@CRAN_FLAGS@", .cran_flags, mv_txt) |>
   gsub("@PROFILE@", .profile, x = _) |>
   gsub("@CLEAN_TARGET@", .clean_targets, x = _) |>
   gsub("@LIBDIR@", .libdir, x = _) |>
+  gsub("@SYS_LIBS@", .sys_libs, x = _) |>
   gsub("@TARGET@", .target, x = _) |>
   gsub("@PANIC_EXPORTS@", .panic_exports, x = _)
 
