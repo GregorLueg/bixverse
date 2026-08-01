@@ -227,6 +227,29 @@ expect_true(
   info = "sp graph - a k = 5 knn is not the same graph as the hex lattice"
 )
 
+# Neighbour counts alone cannot tell the k nearest from the k farthest, and kNN
+# is the one layout with no lattice reference to check against. Scattered
+# points instead of a lattice, because a lattice is full of exact distance ties
+# and the tie-break is not part of anyone's contract.
+set.seed(99L)
+scatter_coords <- matrix(
+  c(stats::runif(60L, 0, 1000), stats::runif(60L, 0, 1000)),
+  ncol = 2L,
+  dimnames = list(NULL, c("x", "y"))
+)
+scatter_dist <- as.matrix(stats::dist(scatter_coords))
+diag(scatter_dist) <- Inf
+scatter_knn <- build(scatter_coords, params_sp_graph("knn", "binary", k = 4L))
+
+expect_equal(
+  current = lapply(scatter_knn$indices, \(x) sort(as.integer(x))),
+  target = lapply(
+    seq_len(nrow(scatter_coords)),
+    \(i) sort(order(scatter_dist[i, ])[1:4] - 1L)
+  ),
+  info = "sp graph - the knn neighbours are the nearest four, by distance"
+)
+
 # in-row hex neighbours sit 100 px apart, the out-of-row ones 100.34 px, so a
 # 110 px cut-off takes the full honeycomb and nothing beyond it
 radius_graph <- build(
