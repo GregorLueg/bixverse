@@ -431,8 +431,7 @@ expect_true(
 # the outer two bands never touch, the middle one touches both, so a K x K
 # indexing slip shows up here and nowhere in a two-level test
 expect_true(
-  current = nhood_a$z_scores["low", "high"] <
-    nhood_a$z_scores["low", "mid"] &&
+  current = nhood_a$z_scores["low", "high"] < nhood_a$z_scores["low", "mid"] &&
     nhood_a$z_scores["low", "high"] < nhood_a$z_scores["mid", "high"],
   info = "sp index - the two outer bands avoid each other most"
 )
