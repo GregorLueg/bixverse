@@ -18,5 +18,11 @@ Two slots go one level deeper, because one sample can carry several of them:
 \code{per_sample_nhood_enrichment} is keyed by \code{exp_id} then by the obs column the
 labels came from, and \code{per_sample_image_features} by \code{exp_id} then by the
 image resolution the tiles were cut from.
+
+\code{per_sample_graph_spots} holds a hash of the spot index vector each graph was
+built over. The graph itself is in the local index space and carries no
+record of which spots those were, so without the hash a \code{to_keep} change to a
+different set of the same size pairs expression, labels and adjacency against
+three different spots and every downstream number stays finite and plausible.
 }
 \keyword{internal}

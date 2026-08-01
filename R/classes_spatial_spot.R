@@ -271,6 +271,12 @@ print.SpatialSample <- function(x, ...) {
 #' labels came from, and `per_sample_image_features` by `exp_id` then by the
 #' image resolution the tiles were cut from.
 #'
+#' `per_sample_graph_spots` holds a hash of the spot index vector each graph was
+#' built over. The graph itself is in the local index space and carries no
+#' record of which spots those were, so without the hash a `to_keep` change to a
+#' different set of the same size pairs expression, labels and adjacency against
+#' three different spots and every downstream number stays finite and plausible.
+#'
 #' @return An empty `SpCache` S3 object.
 #'
 #' @export
@@ -279,6 +285,7 @@ print.SpatialSample <- function(x, ...) {
 new_sp_cache <- function() {
   sp_cache <- list(
     per_sample_spatial_graph = list(),
+    per_sample_graph_spots = list(),
     per_sample_pca = list(),
     per_sample_morans_i = list(),
     per_sample_sparkx = list(),
@@ -296,12 +303,33 @@ new_sp_cache <- function() {
 #' @rdname set_per_sample_spatial_graph
 #'
 #' @export
-set_per_sample_spatial_graph.SpCache <- function(x, exp_id, graph, ...) {
+set_per_sample_spatial_graph.SpCache <- function(
+  x,
+  exp_id,
+  graph,
+  spot_idx = NULL,
+  ...
+) {
   checkmate::assertClass(x, "SpCache")
   checkmate::qassert(exp_id, "S1")
   checkmate::assertClass(graph, "CsparseMatrix")
+  checkmate::qassert(spot_idx, c("0", "I+"))
+  if (!is.null(spot_idx) && length(spot_idx) != nrow(graph)) {
+    stop(sprintf(
+      "Got %i spot indices for a %i x %i graph of exp_id '%s'.",
+      length(spot_idx),
+      nrow(graph),
+      ncol(graph),
+      exp_id
+    ))
+  }
 
   x[["per_sample_spatial_graph"]][[exp_id]] <- graph
+  x[["per_sample_graph_spots"]][[exp_id]] <- if (is.null(spot_idx)) {
+    NULL
+  } else {
+    rlang::hash(as.integer(spot_idx))
+  }
 
   return(x)
 }
@@ -779,13 +807,15 @@ S7::method(set_per_sample_spatial_graph, SpatialSpot) <- function(
   x,
   exp_id,
   graph,
+  spot_idx = NULL,
   ...
 ) {
   checkmate::assertTRUE(S7::S7_inherits(x, SpatialSpot))
   S7::prop(x, "sp_cache") <- set_per_sample_spatial_graph(
     x = S7::prop(x, "sp_cache"),
     exp_id = exp_id,
-    graph = graph
+    graph = graph,
+    spot_idx = spot_idx
   )
   return(x)
 }

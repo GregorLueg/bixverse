@@ -4,18 +4,26 @@
 \alias{.sp_require_graph}
 \title{Fetch the cached spatial graph or fail with a pointed message}
 \usage{
-.sp_require_graph(object, exp_id)
+.sp_require_graph(object, exp_id, spot_idx)
 }
 \arguments{
 \item{object}{A \code{\link[=SpatialSpot]{SpatialSpot()}} or
 \code{\link[=SpatialSpotSubset]{SpatialSpotSubset()}}.}
 
 \item{exp_id}{String. The experiment identifier.}
+
+\item{spot_idx}{Integer vector. The 0-based global spot indices the caller
+is about to run against.}
 }
 \value{
 A list with \code{indices} and \code{weights}.
 }
 \description{
-Fetch the cached spatial graph or fail with a pointed message
+The graph is stored in the local index space: row \code{i} is the \code{i}-th spot of
+\code{spot_idx} as it stood when the graph was built. Nothing in the matrix
+records which spots those were, so a \code{to_keep} change to a different set of
+the same size would pair expression, labels and adjacency against three
+different spots and still return finite, plausible numbers. The hash stored
+next to the graph is what turns that into an error.
 }
 \keyword{internal}

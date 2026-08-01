@@ -241,18 +241,57 @@
 
 #' Fetch the cached spatial graph or fail with a pointed message
 #'
+#' @description
+#' The graph is stored in the local index space: row `i` is the `i`-th spot of
+#' `spot_idx` as it stood when the graph was built. Nothing in the matrix
+#' records which spots those were, so a `to_keep` change to a different set of
+#' the same size would pair expression, labels and adjacency against three
+#' different spots and still return finite, plausible numbers. The hash stored
+#' next to the graph is what turns that into an error.
+#'
 #' @param object A [bixverse::SpatialSpot()] or
 #' [bixverse::SpatialSpotSubset()].
 #' @param exp_id String. The experiment identifier.
+#' @param spot_idx Integer vector. The 0-based global spot indices the caller
+#' is about to run against.
 #'
 #' @return A list with `indices` and `weights`.
 #'
 #' @keywords internal
-.sp_require_graph <- function(object, exp_id) {
+.sp_require_graph <- function(object, exp_id, spot_idx) {
+  checkmate::qassert(spot_idx, "I+")
+
   graph <- get_per_sample_spatial_graph(object, exp_id = exp_id)
   if (is.null(graph)) {
     stop(sprintf(
       "No spatial graph for exp_id '%s'. Run build_spatial_graph_sp() first.",
+      exp_id
+    ))
+  }
+  if (nrow(graph) != length(spot_idx)) {
+    stop(sprintf(
+      "The cached graph of '%s' has %i spots, the object %i.",
+      exp_id,
+      nrow(graph),
+      length(spot_idx)
+    ))
+  }
+
+  stored_key <- get_sp_cache(object)[["per_sample_graph_spots"]][[exp_id]]
+  if (is.null(stored_key)) {
+    warning(sprintf(
+      paste(
+        "The cached graph of '%s' records no spot identity, so only its spot",
+        "count can be checked. Rebuild it with build_spatial_graph_sp()."
+      ),
+      exp_id
+    ))
+  } else if (!identical(stored_key, rlang::hash(as.integer(spot_idx)))) {
+    stop(sprintf(
+      paste(
+        "The cached graph of '%s' was built over a different set of spots.",
+        "Re-run build_spatial_graph_sp() after changing `to_keep`."
+      ),
       exp_id
     ))
   }
@@ -322,11 +361,17 @@ S7::method(build_spatial_graph_sp, SpOrSpSubset) <- function(
     sample <- get_sample(object, id)
     coords <- get_spatial_coords(object, exp_id = id, filtered = TRUE)
     obs <- .sp_obs_for_exp(object, id)
+    spots_to_keep <- get_spot_indices_for_exp(
+      object,
+      exp_id = id,
+      filtered = TRUE
+    )
 
-    if (nrow(obs) != nrow(coords)) {
+    if (nrow(obs) != nrow(coords) || length(spots_to_keep) != nrow(coords)) {
       stop(sprintf(
-        "Got %i obs rows for %i coordinates of exp_id '%s'.",
+        "Got %i obs rows and %i spot indices for %i coordinates of '%s'.",
         nrow(obs),
+        length(spots_to_keep),
         nrow(coords),
         id
       ))
@@ -372,7 +417,8 @@ S7::method(build_spatial_graph_sp, SpOrSpSubset) <- function(
         indices = res$indices,
         weights = res$weights,
         n_spots = nrow(coords)
-      )
+      ),
+      spot_idx = as.integer(spots_to_keep)
     )
   }
 
@@ -401,21 +447,12 @@ S7::method(morans_i_sp, SpOrSpSubset) <- function(
   f_path_gene <- get_rust_count_gene_f_path(object)
 
   for (id in exp_ids) {
-    adjacency <- .sp_require_graph(object, id)
     spots_to_keep <- get_spot_indices_for_exp(
       object,
       exp_id = id,
       filtered = TRUE
     )
-
-    if (length(adjacency$indices) != length(spots_to_keep)) {
-      stop(sprintf(
-        "The cached graph of '%s' has %i spots, the object %i.",
-        id,
-        length(adjacency$indices),
-        length(spots_to_keep)
-      ))
-    }
+    adjacency <- .sp_require_graph(object, id, as.integer(spots_to_keep))
 
     if (verbosity > 0L) {
       message(sprintf(
@@ -544,7 +581,12 @@ S7::method(nhood_enrichment_sp, SpOrSpSubset) <- function(
   verbosity <- parse_verbosity(.verbose)
 
   for (id in exp_ids) {
-    adjacency <- .sp_require_graph(object, id)
+    spots_to_keep <- get_spot_indices_for_exp(
+      object,
+      exp_id = id,
+      filtered = TRUE
+    )
+    adjacency <- .sp_require_graph(object, id, as.integer(spots_to_keep))
     obs <- .sp_obs_for_exp(object, id, cols = label_col)
 
     if (nrow(obs) != length(adjacency$indices)) {

@@ -12,12 +12,24 @@
 #' @param exp_id String. The experiment identifier.
 #' @param graph A `dgCMatrix` (CSR-style sparse matrix) representing the
 #' spatial graph for this sample.
+#' @param spot_idx Optional integer vector. The 0-based global spot indices the
+#' graph was built over, in graph row order, i.e. what
+#' [bixverse::get_spot_indices_for_exp()] returned. A hash of it is stored
+#' alongside the graph so the downstream statistics can refuse a graph built
+#' over a different set of spots. Without it they fall back to a spot count
+#' check, which a `to_keep` change of the same size walks straight past.
 #' @param ... Other parameters.
 #'
 #' @export
 #'
 #' @keywords internal
-set_per_sample_spatial_graph <- function(x, exp_id, graph, ...) {
+set_per_sample_spatial_graph <- function(
+  x,
+  exp_id,
+  graph,
+  spot_idx = NULL,
+  ...
+) {
   UseMethod("set_per_sample_spatial_graph")
 }
 

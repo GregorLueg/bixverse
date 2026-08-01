@@ -355,13 +355,15 @@ S7::method(set_per_sample_spatial_graph, SpatialSpotSubset) <- function(
   x,
   exp_id,
   graph,
+  spot_idx = NULL,
   ...
 ) {
   checkmate::assertTRUE(S7::S7_inherits(x, SpatialSpotSubset))
   S7::prop(x, "sp_cache") <- set_per_sample_spatial_graph(
     x = S7::prop(x, "sp_cache"),
     exp_id = exp_id,
-    graph = graph
+    graph = graph,
+    spot_idx = spot_idx
   )
   return(x)
 }

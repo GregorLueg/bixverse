@@ -8,15 +8,15 @@
 \alias{set_per_sample_spatial_graph,bixverse::SpatialSpotSubset-method}
 \title{Set the per-sample spatial graph}
 \usage{
-set_per_sample_spatial_graph(x, exp_id, graph, ...)
+set_per_sample_spatial_graph(x, exp_id, graph, spot_idx = NULL, ...)
 
-\method{set_per_sample_spatial_graph}{SpCache}(x, exp_id, graph, ...)
+\method{set_per_sample_spatial_graph}{SpCache}(x, exp_id, graph, spot_idx = NULL, ...)
 
 ## S7 method for class <bixverse::SpatialSpot>
-set_per_sample_spatial_graph(x, exp_id, graph, ...)
+set_per_sample_spatial_graph(x, exp_id, graph, spot_idx = NULL, ...)
 
 ## S7 method for class <bixverse::SpatialSpotSubset>
-set_per_sample_spatial_graph(x, exp_id, graph, ...)
+set_per_sample_spatial_graph(x, exp_id, graph, spot_idx = NULL, ...)
 }
 \arguments{
 \item{x}{An object with a \code{SpCache} slot or an \code{SpCache} itself.}
@@ -25,6 +25,13 @@ set_per_sample_spatial_graph(x, exp_id, graph, ...)
 
 \item{graph}{A \code{dgCMatrix} (CSR-style sparse matrix) representing the
 spatial graph for this sample.}
+
+\item{spot_idx}{Optional integer vector. The 0-based global spot indices the
+graph was built over, in graph row order, i.e. what
+\code{\link[=get_spot_indices_for_exp]{get_spot_indices_for_exp()}} returned. A hash of it is stored
+alongside the graph so the downstream statistics can refuse a graph built
+over a different set of spots. Without it they fall back to a spot count
+check, which a \code{to_keep} change of the same size walks straight past.}
 
 \item{...}{Other parameters.}
 }
