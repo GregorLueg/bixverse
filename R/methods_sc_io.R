@@ -58,48 +58,6 @@ prescan_mtx_dirs <- function(
   dir.create(temp_dir)
   temp_files <- character()
 
-  locate <- function(dir, pat) {
-    files <- list.files(
-      dir,
-      pattern = pat,
-      full.names = TRUE,
-      ignore.case = TRUE
-    )
-    if (length(files) == 0L) {
-      stop(sprintf("No file matching '%s' in %s", pat, dir))
-    }
-    if (length(files) > 1L) {
-      stop(sprintf("Multiple files matching '%s' in %s", pat, dir))
-    }
-    files
-  }
-
-  gunzip_to_temp <- function(path) {
-    out_name <- sub("\\.gz$", "", basename(path), ignore.case = TRUE)
-    out_path <- file.path(
-      temp_dir,
-      paste0(
-        tools::file_path_sans_ext(out_name),
-        "_",
-        basename(tempfile("")),
-        ".",
-        tools::file_ext(out_name)
-      )
-    )
-    con_in <- gzfile(path, open = "rb")
-    on.exit(close(con_in), add = TRUE)
-    con_out <- file(out_path, open = "wb")
-    on.exit(close(con_out), add = TRUE)
-    repeat {
-      chunk <- readBin(con_in, "raw", n = 8 * 1024 * 1024)
-      if (length(chunk) == 0L) {
-        break
-      }
-      writeBin(chunk, con_out)
-    }
-    out_path
-  }
-
   gene_sets <- vector("list", length(dirs))
   file_tasks <- vector("list", length(dirs))
 
@@ -118,7 +76,7 @@ prescan_mtx_dirs <- function(
     barcodes_path <- locate(d, "barcodes\\.(tsv|csv)(\\.gz)?$")
 
     if (grepl("\\.gz$", mtx_path, ignore.case = TRUE)) {
-      decompressed <- gunzip_to_temp(mtx_path)
+      decompressed <- gunzip_to_temp(mtx_path, temp_dir)
       temp_files <- c(temp_files, decompressed)
       mtx_path <- decompressed
     }
