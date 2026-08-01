@@ -14,6 +14,7 @@ checkSpatialSample(x)
 string.
 }
 \description{
-Checkmate extension for \code{\link[=SpatialSample]{SpatialSample()}}.
+Checkmate extension for the \code{SpatialSample} S3 class built by
+\code{\link[=new_spatial_sample]{new_spatial_sample()}}.
 }
 \keyword{internal}

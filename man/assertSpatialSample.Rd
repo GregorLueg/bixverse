@@ -19,6 +19,7 @@ Invisibly returns the checked object if the assertion is
 successful.
 }
 \description{
-Checkmate assertion for \code{\link[=SpatialSample]{SpatialSample()}}.
+Checkmate assertion for the \code{SpatialSample} S3 class built by
+\code{\link[=new_spatial_sample]{new_spatial_sample()}}.
 }
 \keyword{internal}

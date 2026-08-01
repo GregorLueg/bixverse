@@ -4030,7 +4030,8 @@ assertLigandTarget <- checkmate::makeAssertionFunction(checkLigandTarget)
 
 #' Check that an object is a valid SpatialSample
 #'
-#' @description Checkmate extension for [bixverse::SpatialSample()].
+#' @description Checkmate extension for the `SpatialSample` S3 class built by
+#' [bixverse::new_spatial_sample()].
 #'
 #' @param x The object to check.
 #'
@@ -4045,7 +4046,8 @@ checkSpatialSample <- function(x) {
 
 #' Assert that an object is a valid SpatialSample
 #'
-#' @description Checkmate assertion for [bixverse::SpatialSample()].
+#' @description Checkmate assertion for the `SpatialSample` S3 class built by
+#' [bixverse::new_spatial_sample()].
 #'
 #' @inheritParams checkSpatialSample
 #'

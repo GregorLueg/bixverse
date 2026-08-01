@@ -24,3 +24,4 @@
 ^vignettes/\.quarto$
 ^[.]?air[.]toml$
 ^\.vscode$
+^\.claude$
