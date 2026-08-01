@@ -1427,3 +1427,50 @@ params_ligand_target <- function(
     secondary_targets = secondary_targets
   )
 }
+
+## spatial ---------------------------------------------------------------------
+
+### io -------------------------------------------------------------------------
+
+#' Wrapper function to provide the Visium ingest parameters
+#'
+#' @description
+#' Controls how [bixverse::load_visium()] resolves a Space Ranger output
+#' directory. `in_tissue_only` matters more than it looks: roughly a fifth of
+#' the spots on a standard capture area sit off-tissue, carry a handful of
+#' counts each and drag every downstream summary around if you keep them.
+#'
+#' @param in_tissue_only Boolean. Keep only spots with `in_tissue == 1` in the
+#' tissue positions file. Defaults to `TRUE`.
+#' @param matrix_type String. One of `c("auto", "raw", "filtered")`. Which of
+#' `raw_feature_bc_matrix/` and `filtered_feature_bc_matrix/` to read.
+#' `"auto"` prefers the filtered matrix and falls back to the raw one.
+#' @param slide_file Optional string. Path to a user-supplied full-resolution
+#' scanner slide. Space Ranger does not ship one; if given, it registers under
+#' the `fullres` image key. Defaults to `NULL`.
+#'
+#' @returns A list with the Visium ingest parameters for usage in subsequent
+#' functions.
+#'
+#' @export
+params_sp_visium_io <- function(
+  in_tissue_only = TRUE,
+  matrix_type = c("auto", "raw", "filtered"),
+  slide_file = NULL
+) {
+  matrix_type <- match.arg(matrix_type)
+
+  # checks
+  checkmate::qassert(in_tissue_only, "B1")
+  checkmate::assertChoice(matrix_type, c("auto", "raw", "filtered"))
+  checkmate::qassert(slide_file, c("0", "S1"))
+  if (!is.null(slide_file)) {
+    checkmate::assertFileExists(slide_file)
+  }
+
+  list(
+    in_tissue_only = in_tissue_only,
+    matrix_type = matrix_type,
+    slide_file = if (is.null(slide_file)) NULL else path.expand(slide_file)
+  )
+}

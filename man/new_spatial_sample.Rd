@@ -55,9 +55,13 @@ pixel coordinates onto that image:
 \itemize{
 \item \code{lowres} -> \code{tissue_lowres_scalef}
 \item \code{hires} -> \code{tissue_hires_scalef}
-\item \code{cytassist} -> \code{regist_target_img_scalef}
+\item \code{cytassist} -> \code{cytassist_scalef}
 \item \code{fullres} -> \code{1.0} (the scanner slide, no rescaling)
 }
+\code{cytassist_scalef} is derived by \code{\link[=load_visium]{load_visium()}} and is \strong{not}
+\code{regist_target_img_scalef}. That key describes the registration target,
+which is larger than the \code{cytassist_image.tiff} Space Ranger ships.
+
 \code{cytassist} can be registered here, but the CytAssist image ships as a
 TIFF and \code{\link[=get_image]{get_image()}} cannot read TIFFs yet, so it is not
 displayable. Register it now, load it once TIFF support lands.

@@ -4060,3 +4060,64 @@ checkSpatialSample <- function(x) {
 #'
 #' @keywords internal
 assertSpatialSample <- checkmate::makeAssertionFunction(checkSpatialSample)
+
+#' Check Visium ingest parameters
+#'
+#' @description Checkmate extension for checking the Visium ingest parameters
+#' built by [bixverse::params_sp_visium_io()].
+#'
+#' @param x The list to check/assert
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
+checkSpVisiumIo <- function(x) {
+  res <- check_list_shape(
+    x,
+    c("in_tissue_only", "matrix_type", "slide_file")
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- apply_qtest_rules(
+    x,
+    list(
+      in_tissue_only = "B1",
+      matrix_type = "S1",
+      slide_file = c("0", "S1")
+    ),
+    label = "Visium IO params",
+    hint = paste(
+      "in_tissue_only must be a single boolean, matrix_type a single string",
+      "and slide_file either NULL or a single string."
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  apply_choice_rules(
+    x,
+    list(matrix_type = c("auto", "raw", "filtered")),
+    label = "Visium IO params",
+    hint = "matrix_type must be one of 'auto', 'raw' or 'filtered'."
+  )
+}
+
+#' Assert Visium ingest parameters
+#'
+#' @description Checkmate assertion for the Visium ingest parameters built by
+#' [bixverse::params_sp_visium_io()].
+#'
+#' @inheritParams checkSpVisiumIo
+#'
+#' @param .var.name Name of the checked object to print in assertions.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is
+#' successful.
+#'
+#' @keywords internal
+assertSpVisiumIo <- checkmate::makeAssertionFunction(checkSpVisiumIo)

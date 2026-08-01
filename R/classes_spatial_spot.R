@@ -39,9 +39,13 @@
 #' \itemize{
 #'   \item `lowres` -> `tissue_lowres_scalef`
 #'   \item `hires` -> `tissue_hires_scalef`
-#'   \item `cytassist` -> `regist_target_img_scalef`
+#'   \item `cytassist` -> `cytassist_scalef`
 #'   \item `fullres` -> `1.0` (the scanner slide, no rescaling)
 #' }
+#' `cytassist_scalef` is derived by [bixverse::load_visium()] and is **not**
+#' `regist_target_img_scalef`. That key describes the registration target,
+#' which is larger than the `cytassist_image.tiff` Space Ranger ships.
+#'
 #' `cytassist` can be registered here, but the CytAssist image ships as a
 #' TIFF and [bixverse::get_image()] cannot read TIFFs yet, so it is not
 #' displayable. Register it now, load it once TIFF support lands.
