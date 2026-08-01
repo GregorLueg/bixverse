@@ -363,6 +363,8 @@ reference:
       - "%>>%"
       - apply_pipeline
       - apply_pipeline_per_group
+      - validate_pipeline
+      - meta_cells_per_group
       - step_hvg_sc
       - step_pca_sc
       - step_neighbours_sc
@@ -371,6 +373,7 @@ reference:
       - step_fast_mnn_sc
       - step_harmony_sc
       - step_harmony_v2_sc
+      - step_metacells_sc
   # Single cell classes and getters
   - title: Single cell class for multi-modal data and getters
     desc: 
@@ -400,6 +403,7 @@ reference:
       - generate_supercells_sc
       - generate_bt_meta_cells_sc
       - generate_seacells_sc
+      - merge_meta_cells
       - params_sc_supercell
       - params_sc_bt_metacells
       - params_sc_seacells

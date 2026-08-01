@@ -4,7 +4,13 @@
 \alias{new_sc_step}
 \title{Constructor for a single pipeline step}
 \usage{
-new_sc_step(name, fn, args)
+new_sc_step(
+  name,
+  fn,
+  args,
+  accepts = c("SingleCells", "SingleCellsSubset"),
+  returns = "input"
+)
 }
 \arguments{
 \item{name}{String. Short identifier shown when printing the pipeline.}
@@ -14,6 +20,12 @@ takes the object as the first argument.}
 
 \item{args}{Named list. Arguments passed to \code{fn} at apply time (object is
 prepended automatically).}
+
+\item{accepts}{Character vector. Class names the underlying generic has
+methods for. Checked by \code{\link[=validate_pipeline]{validate_pipeline()}} before anything runs.}
+
+\item{returns}{String. Class name the step returns, or \code{"input"} if it hands
+back whatever it was given.}
 }
 \value{
 An \code{ScStep} object.

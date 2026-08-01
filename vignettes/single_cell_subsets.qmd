@@ -550,16 +550,68 @@ embedding_plot_sc(
   labs(colour = "Fine label")
 ```
 
+## Source-pure meta cells
+
+All three meta cell generators run on a subset, so you can aggregate per
+patient and never mix two donors into one meta cell. The catch used to be the
+last step: you ended up with one `MetaCells` object per patient and no way to
+run SCENIC or NMF across the lot. `merge_meta_cells()` closes that.
+
+`step_metacells_sc()` puts the generation into the chain itself. It is the one
+step that changes the class of the object, so a pipeline that ends on it hands
+you `MetaCells` rather than `SingleCellsSubset`. Everything before it still runs
+per patient, which is the point when your samples are split over two plates and
+need correcting within a donor.
+
+```{r}
+#| label: source pure meta cells
+#| eval: false
+mc_pipeline <- sc_pipeline() %>>%
+  step_hvg_sc(hvg_no = 2000L) %>>%
+  step_pca_sc(no_pcs = 20L) %>>%
+  step_harmony_sc(batch_column = "plate") %>>%
+  step_neighbours_sc(embd_to_use = "harmony") %>>%
+  step_metacells_sc(
+    "bootstrapped",
+    sc_meta_cell_params = params_sc_bt_metacells(target_no_metacells = 100L)
+  )
+
+per_patient <- apply_pipeline_per_group(
+  pipeline = mc_pipeline,
+  object = sc_object,
+  group_col = "patient_id"
+)
+
+meta_cells <- merge_meta_cells(per_patient)
+```
+
+A few things worth knowing:
+
+- `meta_cells_per_group()` does the whole thing in one call if you do not need
+  the per-patient objects. Same arguments, plus `method` and `mc_params`.
+- The merged obs table gains a `source_id` column and the meta cell ids are
+  prefixed with it. `original_cell_idx` stays in the index space of its own
+  source, so it is only meaningful alongside `source_id`.
+- Gene spaces are reconciled by `intersect` (the default) or `union`, the
+  latter zero-filling genes an input lacks. Both are no-ops when every input
+  came from the same parent object.
+- Counts are carried over untouched. Normalisation is per meta cell, so
+  row-binding leaves it valid.
+- PCA, kNN, sNN and HVG are dropped on merge. They were fitted per patient and
+  mean nothing side by side. Recompute them on the merged object, which is the
+  whole reason for merging.
+- `validate_pipeline()` checks a chain against a starting class before anything
+  runs. `apply_pipeline()` and `apply_pipeline_per_group()` call it for you, so
+  putting `step_harmony_sc()` after `step_metacells_sc()` errors immediately
+  instead of after twenty minutes of PCA.
+
 ## Caveats and what is next
 
 A few sharp edges to be aware of before you build on this.
 
-Metacell generation works on subsets too, so `generate_bt_meta_cells_sc()`,
-`generate_seacells_sc()` and `generate_supercells_sc()` can all be pointed
-straight at a `SingleCellsSubset`, as can `get_pseudobulked_sc()`. Combined with
-`apply_pipeline_per_group()` that gives you per-cell-type metacells in a few
-lines. Note that meta cell memberships come back as positions in the *parent*
-obs table, which is what makes them joinable back onto the original object.
+Meta cell memberships come back as positions in the *parent* obs table, which is
+what makes them joinable back onto the original object. `get_pseudobulked_sc()`
+runs on subsets too if aggregation is all you are after.
 
 Subsets are RNA only. If you hand `modality = "adt"` to a getter you get an
 error, so multi-modal work stays on

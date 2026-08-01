@@ -45,7 +45,21 @@ S7::method(calc_meta_cell_purity, MetaCells) <- function(
 
   # memberships index into the full obs space; a short vector would silently
   # recycle or produce NA rather than error
-  n_cells <- S7::prop(object, "original_assignment")$n_cells
+  assignment <- S7::prop(object, "original_assignment")
+  n_cells <- assignment$n_cells
+
+  # a merged object only has one obs space if all its sources shared a parent
+  if (isTRUE(S7::prop(object, "other_data")$merged)) {
+    source_cells <- unique(purrr::map_dbl(assignment$per_source, "n_cells"))
+    if (length(source_cells) > 1L) {
+      stop(paste(
+        "The meta cells were merged from sources with different obs spaces,",
+        "so `original_cell_idx` cannot be resolved against a single column.",
+        "Calculate the purity per source before merging."
+      ))
+    }
+  }
+
   if (length(original_cell_type) != n_cells) {
     stop(sprintf(
       paste(

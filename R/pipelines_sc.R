@@ -1,5 +1,8 @@
 # single cell pipeline ---------------------------------------------------------
 
+# Classes a pipeline step can consume or produce.
+SC_STEP_CLASSES <- c("SingleCells", "SingleCellsSubset", "MetaCells")
+
 ## classes ---------------------------------------------------------------------
 
 ### step -----------------------------------------------------------------------
@@ -16,17 +19,35 @@
 #' takes the object as the first argument.
 #' @param args Named list. Arguments passed to `fn` at apply time (object is
 #' prepended automatically).
+#' @param accepts Character vector. Class names the underlying generic has
+#' methods for. Checked by [validate_pipeline()] before anything runs.
+#' @param returns String. Class name the step returns, or `"input"` if it hands
+#' back whatever it was given.
 #'
 #' @return An `ScStep` object.
 #'
 #' @keywords internal
-new_sc_step <- function(name, fn, args) {
+new_sc_step <- function(
+  name,
+  fn,
+  args,
+  accepts = c("SingleCells", "SingleCellsSubset"),
+  returns = "input"
+) {
   checkmate::qassert(name, "S1")
   checkmate::assertFunction(fn)
   checkmate::assertList(args, names = "unique")
+  checkmate::assertSubset(accepts, SC_STEP_CLASSES)
+  checkmate::assertChoice(returns, c("input", SC_STEP_CLASSES))
 
   structure(
-    list(name = name, fn = fn, args = args),
+    list(
+      name = name,
+      fn = fn,
+      args = args,
+      accepts = accepts,
+      returns = returns
+    ),
     class = "ScStep"
   )
 }
@@ -135,18 +156,79 @@ format_step_args <- function(args) {
   paste(parts, collapse = ", ")
 }
 
+# Internal: short class name of a single cell object, e.g. "bixverse::MetaCells"
+# becomes "MetaCells".
+.sc_object_class <- function(object) {
+  cls <- sub("^bixverse::", "", class(object)[1])
+  if (!cls %in% SC_STEP_CLASSES) {
+    stop(sprintf(
+      "Pipelines run on %s, not on a `%s`.",
+      paste(SC_STEP_CLASSES, collapse = ", "),
+      cls
+    ))
+  }
+  cls
+}
+
 ## apply -----------------------------------------------------------------------
+
+#' Check that a pipeline can run on a given class
+#'
+#' @description
+#' Walks the pipeline and tracks which class each step would receive. Steps
+#' declare the classes their generic has methods for, and most steps hand back
+#' what they were given; [step_metacells_sc()] does not, it turns a
+#' `SingleCells`/`SingleCellsSubset` into a `MetaCells`. Without this you would
+#' only find out about a mismatch when S7 fails to dispatch, i.e. after the
+#' expensive steps already ran.
+#'
+#' @param pipeline `ScPipeline`.
+#' @param class String. Class of the object the pipeline would start on. One of
+#' `c("SingleCells", "SingleCellsSubset", "MetaCells")`.
+#'
+#' @return Invisibly, the class the pipeline would return.
+#'
+#' @export
+validate_pipeline <- function(pipeline, class) {
+  checkmate::assertClass(pipeline, "ScPipeline")
+  checkmate::assertChoice(class, SC_STEP_CLASSES)
+
+  current <- class
+  for (i in seq_along(pipeline$steps)) {
+    step <- pipeline$steps[[i]]
+    if (!current %in% step$accepts) {
+      stop(sprintf(
+        paste(
+          "Step %d ('%s') cannot run on a `%s`. It has methods for: %s.",
+          "\nThe pipeline started on a `%s`."
+        ),
+        i,
+        step$name,
+        current,
+        paste(step$accepts, collapse = ", "),
+        class
+      ))
+    }
+    if (step$returns != "input") {
+      current <- step$returns
+    }
+  }
+
+  invisible(current)
+}
 
 #' Apply a pipeline to a single cell object
 #'
 #' @description
 #' Runs each step in order. The first step receives `object`; subsequent steps
-#' receive the result of the previous step. Errors propagate; nothing is
-#' caught.
+#' receive the result of the previous step. The chain is validated against the
+#' class of `object` before anything runs, see [validate_pipeline()].
+#' Errors propagate; nothing is caught.
 #'
 #' @param pipeline `ScPipeline`.
-#' @param object `SingleCells` or `SingleCellsSubset`. Dispatch happens inside
-#' each step's underlying generic, so the same pipeline works on either.
+#' @param object `SingleCells`, `SingleCellsSubset` or `MetaCells`. Dispatch
+#' happens inside each step's underlying generic, so the same pipeline works on
+#' any class its steps have methods for.
 #'
 #' @return The object after all steps have run.
 #'
@@ -156,6 +238,7 @@ apply_pipeline <- function(pipeline, object) {
   if (length(pipeline$steps) == 0L) {
     return(object)
   }
+  validate_pipeline(pipeline, .sc_object_class(object))
   Reduce(
     function(obj, step) do.call(step$fn, c(list(obj), step$args)),
     pipeline$steps,
@@ -178,8 +261,10 @@ apply_pipeline <- function(pipeline, object) {
 #' @param groups Optional character vector. Restrict to these group values; if
 #' `NULL`, all unique values of `group_col` are used.
 #'
-#' @return Named list of `SingleCellsSubset` objects, names being the group
-#' values.
+#' @return Named list of processed objects, names being the group values.
+#' Usually `SingleCellsSubset`, or `MetaCells` if the pipeline ends on
+#' [step_metacells_sc()], in which case [merge_meta_cells()] puts them back
+#' together.
 #'
 #' @export
 apply_pipeline_per_group <- function(
@@ -192,6 +277,9 @@ apply_pipeline_per_group <- function(
   checkmate::assertClass(object, "bixverse::SingleCells")
   checkmate::qassert(group_col, "S1")
   checkmate::qassert(groups, c("S+", "0"))
+
+  # fail before any subset is built rather than on the first group
+  validate_pipeline(pipeline, "SingleCellsSubset")
 
   obs <- get_sc_obs(object, filtered = TRUE)
   checkmate::assertNames(colnames(obs), must.include = group_col)
@@ -206,6 +294,107 @@ apply_pipeline_per_group <- function(
   })
   names(out) <- groups
   out
+}
+
+## meta cells ------------------------------------------------------------------
+
+#' Generate source-pure meta cells and merge them
+#'
+#' @description
+#' Splits `object` by `group_col`, optionally runs `pipeline` on each subset,
+#' generates meta cells per group and merges the results into a single
+#' [bixverse::MetaCells()] object. This gives you meta cells that never mix
+#' cells from two patients/samples, while still being one object you can run
+#' SCENIC, AUCell or NMF over.
+#'
+#' The meta cell generators need an embedding, so `pipeline` will normally be
+#' `step_hvg_sc() %>>% step_pca_sc() %>>% step_neighbours_sc()` unless every
+#' subset already carries one.
+#'
+#' @param object `SingleCells`.
+#' @param group_col String. Column in obs used to split.
+#' @param method String. One of `c("bootstrapped", "seacells", "supercells")`.
+#' Picks the meta cell generator.
+#' @param mc_params Named list. Arguments passed on to the generator, e.g.
+#' `list(sc_meta_cell_params = params_sc_bt_metacells(), target_size = 1e5)`.
+#' @param pipeline Optional `ScPipeline` applied to each subset before the meta
+#' cells are generated.
+#' @param groups Optional character vector. Restrict to these group values; if
+#' `NULL`, all unique values of `group_col` are used.
+#' @param feature_space String. One of `c("intersect", "union")`. Passed to
+#' [merge_meta_cells()]. Irrelevant here as all groups share the gene space of
+#' the parent object.
+#' @param .verbose Boolean. Controls verbosity of the function.
+#'
+#' @returns A merged [bixverse::MetaCells()] object with a `source_id` column
+#' in its observation table.
+#'
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' prep <- step_hvg_sc() %>>% step_pca_sc(no_pcs = 20L) %>>% step_neighbours_sc()
+#' mc <- meta_cells_per_group(
+#'   object = sc_obj,
+#'   group_col = "patient_id",
+#'   method = "bootstrapped",
+#'   pipeline = prep
+#' )
+#' }
+meta_cells_per_group <- function(
+  object,
+  group_col,
+  method = c("bootstrapped", "seacells", "supercells"),
+  mc_params = list(),
+  pipeline = NULL,
+  groups = NULL,
+  feature_space = c("intersect", "union"),
+  .verbose = TRUE
+) {
+  method <- match.arg(method)
+  feature_space <- match.arg(feature_space)
+
+  # checks
+  checkmate::assertClass(object, "bixverse::SingleCells")
+  checkmate::qassert(group_col, "S1")
+  checkmate::assertChoice(method, c("bootstrapped", "seacells", "supercells"))
+  checkmate::assertList(mc_params, names = "unique")
+  if (!is.null(pipeline)) {
+    checkmate::assertClass(pipeline, "ScPipeline")
+  }
+  checkmate::qassert(groups, c("S+", "0"))
+  checkmate::qassert(.verbose, "B1")
+
+  obs <- get_sc_obs(object, filtered = TRUE)
+  checkmate::assertNames(colnames(obs), must.include = group_col)
+
+  if (is.null(groups)) {
+    groups <- unique(as.character(obs[[group_col]]))
+  }
+
+  if (!is.null(pipeline)) {
+    validate_pipeline(pipeline, "SingleCellsSubset")
+  }
+
+  mc_fn <- .sc_metacell_generator(method)
+
+  meta_cells <- lapply(groups, function(g) {
+    if (.verbose) {
+      message(sprintf("Generating meta cells for group '%s'.", g))
+    }
+    sub <- SingleCellsSubset(object, grouping_column = group_col, group = g)
+    if (!is.null(pipeline)) {
+      sub <- apply_pipeline(pipeline, sub)
+    }
+    do.call(mc_fn, c(list(sub), mc_params))
+  })
+
+  merge_meta_cells(
+    inputs = meta_cells,
+    source_ids = groups,
+    feature_space = feature_space,
+    .verbose = .verbose
+  )
 }
 
 ## steps -----------------------------------------------------------------------
@@ -236,7 +425,8 @@ step_hvg_sc <- function(
       hvg_params = hvg_params,
       streaming = streaming,
       .verbose = .verbose
-    )
+    ),
+    accepts = SC_STEP_CLASSES
   )
 }
 
@@ -270,7 +460,8 @@ step_pca_sc <- function(
       hvg = hvg,
       seed = seed,
       .verbose = .verbose
-    )
+    ),
+    accepts = SC_STEP_CLASSES
   )
 }
 
@@ -304,7 +495,8 @@ step_neighbours_sc <- function(
       neighbours_params = neighbours_params,
       seed = seed,
       .verbose = .verbose
-    )
+    ),
+    accepts = SC_STEP_CLASSES
   )
 }
 
@@ -336,7 +528,8 @@ step_clusters_sc <- function(
       name = name,
       modality = modality,
       seed = seed
-    )
+    ),
+    accepts = SC_STEP_CLASSES
   )
 }
 
@@ -469,5 +662,64 @@ step_fast_mnn_sc <- function(
       seed = seed,
       .verbose = .verbose
     )
+  )
+}
+
+### meta cells -----------------------------------------------------------------
+
+#' Pipeline step: generate meta cells
+#'
+#' @description
+#' Wraps the meta cell generators as an `ScStep`. Unlike the other steps this
+#' one changes the class of the object: it takes a `SingleCells` or
+#' `SingleCellsSubset` and returns a [bixverse::MetaCells()]. Steps that follow
+#' it need `MetaCells` methods, which [validate_pipeline()] checks up front.
+#'
+#' Combined with [apply_pipeline_per_group()] this gives you per-group
+#' pre-processing (HVG, PCA, batch correction within a patient, kNN) followed by
+#' source-pure meta cells, which you then hand to [merge_meta_cells()].
+#'
+#' @param method String. One of `c("bootstrapped", "seacells", "supercells")`.
+#' @param ... Arguments passed on to the generator, e.g.
+#' `sc_meta_cell_params`, `target_size` or `.verbose`.
+#'
+#' @return An `ScStep`.
+#'
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' pipeline <- step_hvg_sc() %>>%
+#'   step_pca_sc(no_pcs = 20L) %>>%
+#'   step_harmony_sc(batch_column = "plate") %>>%
+#'   step_neighbours_sc(embd_to_use = "harmony") %>>%
+#'   step_metacells_sc("bootstrapped")
+#'
+#' per_patient <- apply_pipeline_per_group(pipeline, sc_obj, "patient_id")
+#' mc <- merge_meta_cells(per_patient)
+#' }
+step_metacells_sc <- function(
+  method = c("bootstrapped", "seacells", "supercells"),
+  ...
+) {
+  method <- match.arg(method)
+  checkmate::assertChoice(method, c("bootstrapped", "seacells", "supercells"))
+
+  new_sc_step(
+    sprintf("metacells (%s)", method),
+    .sc_metacell_generator(method),
+    list(...),
+    accepts = c("SingleCells", "SingleCellsSubset"),
+    returns = "MetaCells"
+  )
+}
+
+# Internal: the generic behind a meta cell method.
+.sc_metacell_generator <- function(method) {
+  switch(
+    method,
+    "bootstrapped" = generate_bt_meta_cells_sc,
+    "seacells" = generate_seacells_sc,
+    "supercells" = generate_supercells_sc
   )
 }
