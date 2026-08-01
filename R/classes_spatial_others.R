@@ -9,6 +9,28 @@
 
 # spatial result classes -------------------------------------------------------
 
+## helpers ---------------------------------------------------------------------
+
+#' Drop a spatial result class back to a plain `data.table`
+#'
+#' @description
+#' `SpMoransRes` and `SpSparkxRes` sit in front of a `data.table`, and
+#' `[.data.table` and [base::merge()] carry that class onto anything derived
+#' from them. A one-row summary is then still an `SpMoransRes` as far as
+#' dispatch is concerned, without any of the columns the print method wants.
+#'
+#' @param x A `data.table` carrying a spatial result class.
+#'
+#' @return A copy of `x` as a plain `data.table`.
+#'
+#' @keywords internal
+.sp_strip_result_class <- function(x) {
+  out <- data.table::copy(x)
+  data.table::setattr(out, "class", c("data.table", "data.frame"))
+
+  return(out)
+}
+
 ## moran's i -------------------------------------------------------------------
 
 #' Helper function to generate Moran's I results
@@ -66,6 +88,14 @@ new_sp_morans_res <- function(morans_res, gene_ids, exp_id) {
 #'
 #' @keywords internal
 print.SpMoransRes <- function(x, ...) {
+  # `[.data.table` and merge() carry the class onto derived tables, so a
+  # summary built off a result still claims to be an SpMoransRes without
+  # carrying its columns. Print it as the data.table it now is rather than
+  # erroring in somebody's face.
+  if (!all(c("gene_id", "morans_i", "fdr") %in% names(x))) {
+    return(print(.sp_strip_result_class(x), ...))
+  }
+
   cat("Moran's I spatially variable genes\n")
   cat(sprintf("  Experiment: %s\n", attr(x, "exp_id")))
   cat(sprintf("  Genes tested: %i\n", nrow(x)))
@@ -211,6 +241,11 @@ new_sp_sparkx_res <- function(sparkx_res, gene_ids, exp_id) {
 #'
 #' @keywords internal
 print.SpSparkxRes <- function(x, ...) {
+  # see the note on print.SpMoransRes
+  if (!all(c("gene_id", "pval", "fdr") %in% names(x))) {
+    return(print(.sp_strip_result_class(x), ...))
+  }
+
   cat("SPARK-X spatially variable genes\n")
   cat(sprintf("  Experiment: %s\n", attr(x, "exp_id")))
   cat(sprintf("  Genes tested: %i\n", nrow(x)))
