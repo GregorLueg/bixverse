@@ -250,6 +250,23 @@ expect_equal(
   info = "sp graph - the knn neighbours are the nearest four, by distance"
 )
 
+# Orientation of the stored matrix against something outside it. Both
+# round-trip tests are transpose-invariant and every graph that reaches the
+# `SpCache` elsewhere in the suite is a symmetric lattice, so swapping `i` and
+# `j` in `.sp_adjacency_to_sparse()` goes unnoticed. kNN has out-degree k and
+# in-degree whatever, which tells the two apart.
+scatter_sparse <- bixverse:::.sp_adjacency_to_sparse(
+  scatter_knn$indices,
+  scatter_knn$weights,
+  nrow(scatter_coords)
+)
+
+expect_true(
+  current = all(Matrix::rowSums(scatter_sparse != 0) == 4L) &&
+    !all(Matrix::colSums(scatter_sparse != 0) == 4L),
+  info = "sp graph - row i of the stored matrix holds spot i's neighbours"
+)
+
 # in-row hex neighbours sit 100 px apart, the out-of-row ones 100.34 px, so a
 # 110 px cut-off takes the full honeycomb and nothing beyond it
 radius_graph <- build(
