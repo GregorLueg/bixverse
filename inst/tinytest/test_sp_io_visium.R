@@ -441,6 +441,12 @@ expect_equal(
   info = "visium io - technology recorded as visium"
 )
 
+expect_equal(
+  current = get_sample(object, "sample_a")$n_spots,
+  target = n_in_tissue,
+  info = "visium io - the sample records its own kept spot count"
+)
+
 ## the barcode join ------------------------------------------------------------
 
 # The single most important behaviour in the reader. `barcodes.tsv.gz` is
@@ -692,6 +698,45 @@ visium_dir_b <- write_visium_fixture(
   gene_ids = gene_ids
 )
 
+### the wrong way ------------------------------------------------------------
+
+# `load_visium()` rewrites the counts, the obs table and the var table of the
+# whole store, while `add_spatial_sample()` merges. A second `exp_id` therefore
+# used to leave an object claiming two samples over one sample's data, with the
+# first sample's cached results still keyed against a gene axis that had just
+# been replaced. It has to refuse instead.
+expect_error(
+  current = load_visium(
+    object,
+    visium_dir = visium_dir_b,
+    sp_io_param = params_sp_visium_io(),
+    sc_qc_param = qc_permissive,
+    exp_id = "sample_b",
+    .verbose = FALSE
+  ),
+  info = "visium io - a second exp_id through load_visium errors"
+)
+
+expect_equal(
+  current = get_sample_ids(object),
+  target = "sample_a",
+  info = "visium io - and the refused load leaves the registration alone"
+)
+
+# re-running the same exp_id is the QC tweak loop and has to keep working
+expect_equal(
+  current = get_sample_ids(load_visium(
+    object,
+    visium_dir = visium_dir,
+    sp_io_param = params_sp_visium_io(),
+    sc_qc_param = qc_permissive,
+    exp_id = "sample_a",
+    .verbose = FALSE
+  )),
+  target = "sample_a",
+  info = "visium io - re-running the same exp_id is still allowed"
+)
+
 prescan <- prescan_visium_dirs(
   dirs = c(visium_dir, visium_dir_b),
   exp_ids = c("sample_a", "sample_b"),
@@ -729,6 +774,23 @@ expect_equal(
   current = sort(get_sample_ids(object_multi)),
   target = c("sample_a", "sample_b"),
   info = "visium io - both samples are registered"
+)
+
+# the invariant the load_visium guard exists to keep: what the object claims to
+# hold and what the store actually holds
+expect_equal(
+  current = sort(get_sample_ids(object_multi)),
+  target = sort(unique(get_sc_obs(object_multi, filtered = TRUE)$exp_id)),
+  info = "visium io - the registered samples match the exp_ids in obs"
+)
+
+expect_equal(
+  current = purrr::map_int(
+    get_samples(object_multi),
+    \(s) s$n_spots
+  )[["sample_b"]],
+  target = n_in_tissue,
+  info = "visium io - n_spots is counted per sample, not object-wide"
 )
 
 expect_equal(

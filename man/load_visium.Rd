@@ -82,6 +82,21 @@ full capture area.
 With \code{in_tissue_only = FALSE} every spot is written, exactly as before.
 }
 
+\section{One sample per object}{
+
+This loader rewrites the whole store: the binary count files, the obs table
+and the var table are all replaced. Registration is the only additive part,
+so calling it twice with two different \code{exp_id}s would leave an object that
+claims two samples while holding one sample's counts, with the first
+sample's cached results still keyed against a gene axis that no longer
+exists. It therefore errors when the object already carries a different
+sample. Use \code{\link[=prescan_visium_dirs]{prescan_visium_dirs()}} plus
+\code{\link[=load_multi_visium]{load_multi_visium()}} for several sections.
+
+Re-running with the \strong{same} \code{exp_id} is fine and is the intended way to
+redo an ingest with different QC.
+}
+
 \section{Image resolutions}{
 
 \code{lowres} and \code{hires} map onto \code{tissue_lowres_scalef} and

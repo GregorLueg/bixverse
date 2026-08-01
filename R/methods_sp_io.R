@@ -782,6 +782,19 @@
 #'
 #' With `in_tissue_only = FALSE` every spot is written, exactly as before.
 #'
+#' @section One sample per object:
+#' This loader rewrites the whole store: the binary count files, the obs table
+#' and the var table are all replaced. Registration is the only additive part,
+#' so calling it twice with two different `exp_id`s would leave an object that
+#' claims two samples while holding one sample's counts, with the first
+#' sample's cached results still keyed against a gene axis that no longer
+#' exists. It therefore errors when the object already carries a different
+#' sample. Use [bixverse::prescan_visium_dirs()] plus
+#' [bixverse::load_multi_visium()] for several sections.
+#'
+#' Re-running with the **same** `exp_id` is fine and is the intended way to
+#' redo an ingest with different QC.
+#'
 #' @section Image resolutions:
 #' `lowres` and `hires` map onto `tissue_lowres_scalef` and
 #' `tissue_hires_scalef`. `cytassist` maps onto the derived `cytassist_scalef`,
@@ -833,6 +846,24 @@ S7::method(load_visium, SpatialSpot) <- function(
   checkmate::qassert(streaming, "I1")
   checkmate::assertTRUE(streaming %in% c(0L, 1L, 2L))
   checkmate::qassert(.verbose, "B1")
+
+  # The ingest below is destructive (counts, obs and var are all rewritten)
+  # while `add_spatial_sample()` merges. A second `exp_id` would therefore
+  # register a sample whose data has just been overwritten by the incoming one.
+  # Guard before anything is written; re-running the same `exp_id` is fine.
+  registered <- get_sample_ids(object)
+  if (length(registered) > 0L && !identical(registered, exp_id)) {
+    stop(sprintf(
+      paste(
+        "The object already holds sample(s) %s. `load_visium()` rewrites the",
+        "whole store, so it cannot add '%s' on top. Use",
+        "`prescan_visium_dirs()` and `load_multi_visium()` for several",
+        "sections."
+      ),
+      toString(sprintf("'%s'", registered)),
+      exp_id
+    ))
+  }
 
   temp_dir <- tempfile(pattern = "bixverse_visium_")
   dir.create(temp_dir)
@@ -952,10 +983,16 @@ S7::method(load_visium, SpatialSpot) <- function(
     .verbose = .verbose
   )
 
+  # per sample, not object-wide, matching `load_multi_visium()`
+  kept_exp_ids <- duckdb_con$get_obs_table(
+    cols = "exp_id",
+    filtered = TRUE
+  )[["exp_id"]]
+
   sample <- new_spatial_sample(
     exp_id = exp_id,
     technology = "visium",
-    n_spots = length(get_cells_to_keep(object)),
+    n_spots = sum(kept_exp_ids == exp_id),
     scale_factors = scan$scale_factors,
     image_paths = image_paths
   )
