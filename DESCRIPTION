@@ -98,8 +98,8 @@ Suggests:
     tinytest,
     furrr,
     future
-SystemRequirements: 
-    Cargo (Rust's package manager), rustc
+SystemRequirements:
+    Cargo (Rust's package manager), rustc, OpenSlide (>= 4.0)
 VignetteBuilder: quarto
 Depends: 
     R (>= 4.2)
