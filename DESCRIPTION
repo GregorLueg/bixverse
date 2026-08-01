@@ -92,6 +92,7 @@ Suggests:
     qs2,
     quarto,
     singscore,
+    spdep,
     StatMatch,
     Seurat,
     tictoc,
