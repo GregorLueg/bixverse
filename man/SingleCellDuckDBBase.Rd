@@ -87,7 +87,7 @@ selected indices and/or columns.
 \if{html}{\out{<a id="method-SingleCellDuckDBBase-get_vars_table"></a>}}
 \if{latex}{\out{\hypertarget{method-SingleCellDuckDBBase-get_vars_table}{}}}
 \subsection{\code{SingleCellDuckDBBase$get_vars_table()}}{
-  Returns the var table from the DuckDB.
+  Returns the var table from the DuckDB, sorted by \code{gene_idx}.
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}
     \preformatted{SingleCellDuckDBBase$get_vars_table(indices = NULL, cols = NULL)}
@@ -103,7 +103,7 @@ selected indices and/or columns.
   }
   \subsection{Returns}{
     The var table (if found) as a data.table with optionally
-selected indices and/or columns.
+selected indices and/or columns, ascending in \code{gene_idx}.
   }
 }
 
@@ -135,7 +135,8 @@ selected indices and/or columns.
 \if{html}{\out{<a id="method-SingleCellDuckDBBase-get_obs_index_map"></a>}}
 \if{latex}{\out{\hypertarget{method-SingleCellDuckDBBase-get_obs_index_map}{}}}
 \subsection{\code{SingleCellDuckDBBase$get_obs_index_map()}}{
-  Returns a mapping between cell index and cell names/barcodes.
+  Returns a mapping between cell index and cell names/barcodes. Ascending
+\code{cell_idx}, i.e. the on-disk cell order.
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}
     \preformatted{SingleCellDuckDBBase$get_obs_index_map()}
@@ -150,7 +151,9 @@ selected indices and/or columns.
 \if{html}{\out{<a id="method-SingleCellDuckDBBase-get_var_index_map"></a>}}
 \if{latex}{\out{\hypertarget{method-SingleCellDuckDBBase-get_var_index_map}{}}}
 \subsection{\code{SingleCellDuckDBBase$get_var_index_map()}}{
-  Returns a mapping between variable index and variable names.
+  Returns a mapping between variable index and variable names. Ascending
+\code{gene_idx}, i.e. the on-disk gene order. Callers resolve genes by
+position in this vector, so the order is part of the contract.
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}
     \preformatted{SingleCellDuckDBBase$get_var_index_map()}
@@ -165,7 +168,8 @@ selected indices and/or columns.
 \if{html}{\out{<a id="method-SingleCellDuckDBBase-get_cells_to_keep"></a>}}
 \if{latex}{\out{\hypertarget{method-SingleCellDuckDBBase-get_cells_to_keep}{}}}
 \subsection{\code{SingleCellDuckDBBase$get_cells_to_keep()}}{
-  Returns the indices of the cells that have to_keep = TRUE in the DB.
+  Returns the indices of the cells that have to_keep = TRUE in the DB,
+ascending.
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}
     \preformatted{SingleCellDuckDBBase$get_cells_to_keep()}

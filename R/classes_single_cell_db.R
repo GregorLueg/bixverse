@@ -106,13 +106,13 @@ SingleCellDuckDBBase <- R6::R6Class(
     },
 
     #' @description
-    #' Returns the var table from the DuckDB.
+    #' Returns the var table from the DuckDB, sorted by `gene_idx`.
     #'
     #' @param indices Optional gene/var indices.
     #' @param cols Optional column names to return.
     #'
     #' @return The var table (if found) as a data.table with optionally
-    #' selected indices and/or columns.
+    #' selected indices and/or columns, ascending in `gene_idx`.
     get_vars_table = function(indices = NULL, cols = NULL) {
       # checks
       checkmate::qassert(indices, c("0", "I+"))
@@ -134,12 +134,15 @@ SingleCellDuckDBBase <- R6::R6Class(
         paste(sprintf('"%s"', cols), collapse = ", ")
       }
 
+      # `ORDER BY` is load-bearing: callers resolve a gene by its *position* in
+      # this read and hand that position to Rust as an on-disk gene index.
+      # DuckDB only preserves insertion order by accident of its defaults.
       sql_query <- if (is.null(indices)) {
-        sprintf("SELECT %s FROM var", col_part)
+        sprintf("SELECT %s FROM var ORDER BY gene_idx", col_part)
       } else {
         placeholders <- paste(rep("?", length(indices)), collapse = ", ")
         sprintf(
-          "SELECT %s FROM var WHERE gene_idx IN (%s)",
+          "SELECT %s FROM var WHERE gene_idx IN (%s) ORDER BY gene_idx",
           col_part,
           placeholders
         )
@@ -183,12 +186,16 @@ SingleCellDuckDBBase <- R6::R6Class(
         paste(sprintf('"%s"', cols), collapse = ", ")
       }
 
+      # the ADT var table is keyed on `feature_idx`, not `gene_idx`
       sql_query <- if (is.null(indices)) {
-        sprintf("SELECT %s FROM var_adt", col_part)
+        sprintf("SELECT %s FROM var_adt ORDER BY feature_idx", col_part)
       } else {
         placeholders <- paste(rep("?", length(indices)), collapse = ", ")
         sprintf(
-          "SELECT %s FROM var_adt WHERE gene_idx IN (%s)",
+          paste(
+            "SELECT %s FROM var_adt WHERE feature_idx IN (%s)",
+            "ORDER BY feature_idx"
+          ),
           col_part,
           placeholders
         )
@@ -204,7 +211,8 @@ SingleCellDuckDBBase <- R6::R6Class(
     },
 
     #' @description
-    #' Returns a mapping between cell index and cell names/barcodes.
+    #' Returns a mapping between cell index and cell names/barcodes. Ascending
+    #' `cell_idx`, i.e. the on-disk cell order.
     #'
     #' @return A named numeric containing the cell index mapping.
     get_obs_index_map = function() {
@@ -222,7 +230,7 @@ SingleCellDuckDBBase <- R6::R6Class(
 
       data <- data.table::setDT(DBI::dbGetQuery(
         conn = con,
-        statement = 'SELECT cell_idx, cell_id FROM obs'
+        statement = 'SELECT cell_idx, cell_id FROM obs ORDER BY cell_idx'
       )) %>%
         `colnames<-`(c("index", "id"))
 
@@ -230,7 +238,9 @@ SingleCellDuckDBBase <- R6::R6Class(
     },
 
     #' @description
-    #' Returns a mapping between variable index and variable names.
+    #' Returns a mapping between variable index and variable names. Ascending
+    #' `gene_idx`, i.e. the on-disk gene order. Callers resolve genes by
+    #' position in this vector, so the order is part of the contract.
     #'
     #' @return A named numeric containing the gene index mapping.
     get_var_index_map = function() {
@@ -248,7 +258,7 @@ SingleCellDuckDBBase <- R6::R6Class(
 
       data <- data.table::setDT(DBI::dbGetQuery(
         conn = con,
-        statement = 'SELECT gene_idx, gene_id FROM var'
+        statement = 'SELECT gene_idx, gene_id FROM var ORDER BY gene_idx'
       )) %>%
         `colnames<-`(c("index", "id"))
 
@@ -256,7 +266,8 @@ SingleCellDuckDBBase <- R6::R6Class(
     },
 
     #' @description
-    #' Returns the indices of the cells that have to_keep = TRUE in the DB.
+    #' Returns the indices of the cells that have to_keep = TRUE in the DB,
+    #' ascending.
     #'
     #' @return The index positions (1-index) of the cells to keep.
     get_cells_to_keep = function() {
@@ -274,7 +285,7 @@ SingleCellDuckDBBase <- R6::R6Class(
 
       data <- data.table::setDT(DBI::dbGetQuery(
         conn = con,
-        statement = 'SELECT cell_idx FROM obs WHERE to_keep'
+        statement = 'SELECT cell_idx FROM obs WHERE to_keep ORDER BY cell_idx'
       ))
 
       return(as.integer(data$cell_idx))
