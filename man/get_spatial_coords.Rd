@@ -15,8 +15,20 @@ get_spatial_coords(object, exp_id, filtered = TRUE)
 only; ignored for MetaSpot). Defaults to \code{TRUE}.}
 }
 \value{
-A numeric matrix with two columns \code{x} and \code{y}.
+A numeric matrix with two columns \code{x} and \code{y}, one row per spot,
+ordered as described under \verb{Row order}.
 }
 \description{
-Get spatial coordinates for an experiment
+Returns the spot coordinates in physical units for one experiment.
 }
+\section{Row order}{
+
+For a \code{\link[=SpatialSpot]{SpatialSpot()}} the rows come back in exactly the order
+returned by \code{\link[=get_spot_indices_for_exp]{get_spot_indices_for_exp()}} called with the same
+\code{exp_id} and \code{filtered}, which is ascending \code{cell_idx} (equivalently,
+ascending original obs position). Row \code{i} of the coordinate matrix
+therefore pairs with element \code{i} of the index vector, so counts pulled
+with those indices align by position. For a \code{\link[=MetaSpot]{MetaSpot()}} the
+rows are in metaspot order as stored at aggregation time.
+}
+

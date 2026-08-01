@@ -4,19 +4,28 @@
 \alias{get_image}
 \title{Get the spatial image for an experiment}
 \usage{
-get_image(object, exp_id, resolution = c("lowres", "hires", "fullres"))
+get_image(
+  object,
+  exp_id,
+  resolution = c("lowres", "hires", "cytassist", "fullres")
+)
 }
 \arguments{
 \item{object}{A \code{\link[=SpatialSpot]{SpatialSpot()}}.}
 
 \item{exp_id}{String. The experiment identifier.}
 
-\item{resolution}{String. One of \code{c("lowres", "hires", "fullres")}.}
+\item{resolution}{String. One of \code{c("lowres", "hires", "cytassist", "fullres")}. Must have been registered in the \code{image_paths} of the
+corresponding \code{\link[=new_spatial_sample]{new_spatial_sample()}}.}
 }
 \value{
 A numeric array as returned by \code{\link[png:readPNG]{png::readPNG()}} or
 \code{\link[jpeg:readJPEG]{jpeg::readJPEG()}}.
 }
 \description{
-Get the spatial image for an experiment
+Loads a registered slide image off disk. Only PNG and JPEG are readable.
+\code{cytassist} is accepted so the path can be requested symmetrically with
+the other resolutions, but Space Ranger writes that one as a TIFF and
+TIFF reading is not implemented, so it errors on load. Same for a
+\code{fullres} slide handed over as a TIFF.
 }

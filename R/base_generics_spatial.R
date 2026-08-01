@@ -238,12 +238,25 @@ get_spot_indices_for_exp <- S7::new_generic(
 
 #' Get spatial coordinates for an experiment
 #'
+#' @description
+#' Returns the spot coordinates in physical units for one experiment.
+#'
+#' @section Row order:
+#' For a [bixverse::SpatialSpot()] the rows come back in exactly the order
+#' returned by [bixverse::get_spot_indices_for_exp()] called with the same
+#' `exp_id` and `filtered`, which is ascending `cell_idx` (equivalently,
+#' ascending original obs position). Row `i` of the coordinate matrix
+#' therefore pairs with element `i` of the index vector, so counts pulled
+#' with those indices align by position. For a [bixverse::MetaSpot()] the
+#' rows are in metaspot order as stored at aggregation time.
+#'
 #' @param object A [bixverse::SpatialSpot()] or [bixverse::MetaSpot()].
 #' @param exp_id String. The experiment identifier.
 #' @param filtered Boolean. Honour the `to_keep` filter (SpatialSpot
 #' only; ignored for MetaSpot). Defaults to `TRUE`.
 #'
-#' @return A numeric matrix with two columns `x` and `y`.
+#' @return A numeric matrix with two columns `x` and `y`, one row per spot,
+#' ordered as described under `Row order`.
 #'
 #' @export
 get_spatial_coords <- S7::new_generic(
@@ -256,9 +269,18 @@ get_spatial_coords <- S7::new_generic(
 
 #' Get the spatial image for an experiment
 #'
+#' @description
+#' Loads a registered slide image off disk. Only PNG and JPEG are readable.
+#' `cytassist` is accepted so the path can be requested symmetrically with
+#' the other resolutions, but Space Ranger writes that one as a TIFF and
+#' TIFF reading is not implemented, so it errors on load. Same for a
+#' `fullres` slide handed over as a TIFF.
+#'
 #' @param object A [bixverse::SpatialSpot()].
 #' @param exp_id String. The experiment identifier.
-#' @param resolution String. One of `c("lowres", "hires", "fullres")`.
+#' @param resolution String. One of `c("lowres", "hires", "cytassist",
+#' "fullres")`. Must have been registered in the `image_paths` of the
+#' corresponding [bixverse::new_spatial_sample()].
 #'
 #' @return A numeric array as returned by [png::readPNG()] or
 #' [jpeg::readJPEG()].
@@ -270,7 +292,7 @@ get_image <- S7::new_generic(
   fun = function(
     object,
     exp_id,
-    resolution = c("lowres", "hires", "fullres")
+    resolution = c("lowres", "hires", "cytassist", "fullres")
   ) {
     S7::S7_dispatch()
   }

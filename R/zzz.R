@@ -22,7 +22,9 @@
     "ScTypeCellResults",
     "BulkModuleResult",
     "ScPipeline",
-    "ScStep"
+    "ScStep",
+    "SpCache",
+    "SpatialSample"
   )
   for (cls in classes) {
     registerS3method("print", cls, get(paste0("print.", cls)))

@@ -6,7 +6,7 @@
 \usage{
 new_spatial_sample(
   exp_id,
-  technology = c("visium", "xenium", "visum_hd"),
+  technology = c("visium", "xenium", "visium_hd"),
   n_spots,
   coord_cols = c(x = "pxl_col_in_fullres", y = "pxl_row_in_fullres"),
   array_cols = c(row = "array_row", col = "array_col"),
@@ -18,8 +18,8 @@ new_spatial_sample(
 \item{exp_id}{String. The experiment identifier (matches \code{exp_id} in the obs
 table of the parent \code{\link[=SpatialSpot]{SpatialSpot()}}).}
 
-\item{technology}{String. One of \code{c("visium", "xenium", "visum_hd")}. MERFISH
-and Stereo-seq will be added in later milestones.}
+\item{technology}{String. One of \code{c("visium", "xenium", "visium_hd")}.
+MERFISH and Stereo-seq will be added in later milestones.}
 
 \item{n_spots}{Integer. Number of spots in this experiment.}
 
@@ -36,7 +36,7 @@ Visium; named list of relevant scaling info for Xenium. Validated via
 \code{\link[=validate_scale_factors]{validate_scale_factors()}}.}
 
 \item{image_paths}{Named list of file paths RELATIVE to the parent
-\code{dir_data}. Valid names are a subset of \code{c("lowres", "hires", "fullres")}. Empty list for Xenium.}
+\code{dir_data}. Valid names are a subset of \code{c("lowres", "hires", "cytassist", "fullres")}. Empty list for Xenium.}
 }
 \value{
 A \code{SpatialSample} S3 object.
@@ -48,3 +48,18 @@ coordinates, the parsed scale factors and (relative) paths to the images on
 disk. Image paths are expected to be RELATIVE to the SpatialSpot \code{dir_data}
 so the directory is portable.
 }
+\section{Image resolutions}{
+
+Each key maps to the \code{scale_factors} entry that takes full-resolution
+pixel coordinates onto that image:
+\itemize{
+\item \code{lowres} -> \code{tissue_lowres_scalef}
+\item \code{hires} -> \code{tissue_hires_scalef}
+\item \code{cytassist} -> \code{regist_target_img_scalef}
+\item \code{fullres} -> \code{1.0} (the scanner slide, no rescaling)
+}
+\code{cytassist} can be registered here, but the CytAssist image ships as a
+TIFF and \code{\link[=get_image]{get_image()}} cannot read TIFFs yet, so it is not
+displayable. Register it now, load it once TIFF support lands.
+}
+

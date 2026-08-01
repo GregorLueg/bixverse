@@ -17,8 +17,8 @@
 #'
 #' @param exp_id String. The experiment identifier (matches `exp_id` in the obs
 #' table of the parent [bixverse::SpatialSpot()]).
-#' @param technology String. One of `c("visium", "xenium", "visum_hd")`. MERFISH
-#' and Stereo-seq will be added in later milestones.
+#' @param technology String. One of `c("visium", "xenium", "visium_hd")`.
+#' MERFISH and Stereo-seq will be added in later milestones.
 #' @param n_spots Integer. Number of spots in this experiment.
 #' @param coord_cols Named character vector of length 2 with names `c("x", "y")`
 #' giving the obs column names holding the spatial coordinates in physical
@@ -31,14 +31,27 @@
 #' [bixverse::validate_scale_factors()].
 #' @param image_paths Named list of file paths RELATIVE to the parent
 #' `dir_data`. Valid names are a subset of `c("lowres", "hires",
-#' "fullres")`. Empty list for Xenium.
+#' "cytassist", "fullres")`. Empty list for Xenium.
+#'
+#' @section Image resolutions:
+#' Each key maps to the `scale_factors` entry that takes full-resolution
+#' pixel coordinates onto that image:
+#' \itemize{
+#'   \item `lowres` -> `tissue_lowres_scalef`
+#'   \item `hires` -> `tissue_hires_scalef`
+#'   \item `cytassist` -> `regist_target_img_scalef`
+#'   \item `fullres` -> `1.0` (the scanner slide, no rescaling)
+#' }
+#' `cytassist` can be registered here, but the CytAssist image ships as a
+#' TIFF and [bixverse::get_image()] cannot read TIFFs yet, so it is not
+#' displayable. Register it now, load it once TIFF support lands.
 #'
 #' @return A `SpatialSample` S3 object.
 #'
 #' @export
 new_spatial_sample <- function(
   exp_id,
-  technology = c("visium", "xenium", "visum_hd"),
+  technology = c("visium", "xenium", "visium_hd"),
   n_spots,
   coord_cols = c(x = "pxl_col_in_fullres", y = "pxl_row_in_fullres"),
   array_cols = c(row = "array_row", col = "array_col"),
@@ -64,7 +77,7 @@ new_spatial_sample <- function(
   if (length(image_paths) > 0) {
     checkmate::assertSubset(
       names(image_paths),
-      choices = c("lowres", "hires", "fullres")
+      choices = c("lowres", "hires", "cytassist", "fullres")
     )
     checkmate::qassert(unlist(image_paths), "S+")
   }
@@ -129,8 +142,10 @@ validate_spatial_sample <- function(x) {
   if (!is.character(x$exp_id) || length(x$exp_id) != 1L) {
     return("'exp_id' must be a single string.")
   }
-  if (!x$technology %in% c("visium", "xenium")) {
-    return("'technology' must be one of c('visium', 'xenium').")
+  if (!x$technology %in% c("visium", "xenium", "visium_hd")) {
+    return(
+      "'technology' must be one of c('visium', 'xenium', 'visium_hd')."
+    )
   }
   if (!is.integer(x$n_spots) || x$n_spots < 1L) {
     return("'n_spots' must be a positive integer.")
@@ -600,15 +615,27 @@ S7::method(get_spatial_coords, SpatialSpot) <- function(
   )
   indices_r <- as.integer(indices_rust + 1L)
 
+  # `get_obs_table()` has no ORDER BY, so DuckDB row order is arbitrary.
+  # Pull `cell_idx` back and reorder against the index vector, otherwise
+  # the coordinates silently stop lining up with the counts.
   obs_sub <- duckdb_con$get_obs_table(
     indices = indices_r,
-    cols = c(coord_cols[["x"]], coord_cols[["y"]]),
+    cols = c("cell_idx", coord_cols[["x"]], coord_cols[["y"]]),
     filtered = FALSE
   )
 
+  row_order <- match(indices_r, as.integer(obs_sub[["cell_idx"]]))
+  if (anyNA(row_order)) {
+    stop(sprintf(
+      "obs table is missing %i spot(s) for exp_id '%s'.",
+      sum(is.na(row_order)),
+      exp_id
+    ))
+  }
+
   coords <- cbind(
-    x = as.numeric(obs_sub[[coord_cols[["x"]]]]),
-    y = as.numeric(obs_sub[[coord_cols[["y"]]]])
+    x = as.numeric(obs_sub[[coord_cols[["x"]]]][row_order]),
+    y = as.numeric(obs_sub[[coord_cols[["y"]]]][row_order])
   )
 
   return(coords)
@@ -622,11 +649,15 @@ S7::method(get_spatial_coords, SpatialSpot) <- function(
 S7::method(get_image, SpatialSpot) <- function(
   object,
   exp_id,
-  resolution = c("lowres", "hires", "fullres")
+  resolution = c("lowres", "hires", "cytassist", "fullres")
 ) {
   resolution <- match.arg(resolution)
 
   checkmate::assertTRUE(S7::S7_inherits(object, SpatialSpot))
+  checkmate::assertChoice(
+    resolution,
+    c("lowres", "hires", "cytassist", "fullres")
+  )
   checkmate::qassert(exp_id, "S1")
 
   sample <- get_sample(object, exp_id)
@@ -658,9 +689,14 @@ S7::method(get_image, SpatialSpot) <- function(
       jpeg::readJPEG(abs_path)
     },
     tif = ,
-    tiff = stop(
-      "TIFF images are not yet supported. Provide a PNG or JPEG."
-    ),
+    tiff = stop(sprintf(
+      paste(
+        "Image '%s' for exp_id '%s' is a TIFF. TIFFs can be registered",
+        "but not yet loaded. Provide a PNG or JPEG."
+      ),
+      resolution,
+      exp_id
+    )),
     stop(sprintf("Unsupported image extension '%s'.", ext))
   )
 
