@@ -8,7 +8,7 @@ new_sc_step(
   name,
   fn,
   args,
-  accepts = c("SingleCells", "SingleCellsSubset"),
+  accepts = c("SingleCells", "SingleCellsSubset", "SpatialSpot", "SpatialSpotSubset"),
   returns = "input"
 )
 }
@@ -22,7 +22,10 @@ takes the object as the first argument.}
 prepended automatically).}
 
 \item{accepts}{Character vector. Class names the underlying generic has
-methods for. Checked by \code{\link[=validate_pipeline]{validate_pipeline()}} before anything runs.}
+methods for. Checked by \code{\link[=validate_pipeline]{validate_pipeline()}} before anything runs.
+\code{SpatialSpot} and \code{SpatialSpotSubset} sit in the default because they
+inherit from \code{SingleCells} and \code{SingleCellsSubset} respectively, so every
+single-cell generic dispatches for them too.}
 
 \item{returns}{String. Class name the step returns, or \code{"input"} if it hands
 back whatever it was given.}

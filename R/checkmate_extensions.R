@@ -4121,3 +4121,352 @@ checkSpVisiumIo <- function(x) {
 #'
 #' @keywords internal
 assertSpVisiumIo <- checkmate::makeAssertionFunction(checkSpVisiumIo)
+
+#' Check spatial graph parameters
+#'
+#' @description Checkmate extension for checking the spatial graph parameters
+#' built by [bixverse::params_sp_graph()].
+#'
+#' @param x The list to check/assert
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
+checkSpGraph <- function(x) {
+  res <- check_list_shape(
+    x,
+    c(
+      "layout",
+      "weighting",
+      "connectivity",
+      "k",
+      "radius",
+      "power",
+      "bandwidth",
+      "row_normalise"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- apply_qtest_rules(
+    x,
+    list(
+      layout = "S1",
+      weighting = "S1",
+      connectivity = "I1",
+      k = "I1[1,)",
+      radius = c("0", "N1(0,)"),
+      power = "N1(0,)",
+      bandwidth = c("0", "N1(0,)"),
+      row_normalise = "B1"
+    ),
+    label = "spatial graph params",
+    hint = paste(
+      "layout and weighting must be single strings, connectivity and k single",
+      "integers, power a positive float, radius and bandwidth either NULL or a",
+      "positive float and row_normalise a single boolean."
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- apply_choice_rules(
+    x,
+    list(
+      layout = c("hex", "square", "knn", "radius"),
+      weighting = c("binary", "inverse_distance", "gaussian"),
+      connectivity = c(4L, 8L)
+    ),
+    label = "spatial graph params",
+    hint = paste(
+      "layout must be one of 'hex', 'square', 'knn' or 'radius', weighting one",
+      "of 'binary', 'inverse_distance' or 'gaussian' and connectivity 4 or 8."
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  if (identical(x$layout, "radius") && is.null(x$radius)) {
+    return("The layout 'radius' in spatial graph params needs a `radius`.")
+  }
+
+  return(TRUE)
+}
+
+#' Assert spatial graph parameters
+#'
+#' @description Checkmate assertion for the spatial graph parameters built by
+#' [bixverse::params_sp_graph()].
+#'
+#' @inheritParams checkSpGraph
+#'
+#' @param .var.name Name of the checked object to print in assertions.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is
+#' successful.
+#'
+#' @keywords internal
+assertSpGraph <- checkmate::makeAssertionFunction(checkSpGraph)
+
+#' Check Moran's I parameters
+#'
+#' @description Checkmate extension for checking the Moran's I parameters built
+#' by [bixverse::params_sp_svg()].
+#'
+#' @param x The list to check/assert
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
+checkSpSvg <- function(x) {
+  res <- check_list_shape(x, "assay")
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- apply_qtest_rules(
+    x,
+    list(assay = "S1"),
+    label = "Moran's I params",
+    hint = "assay must be a single string."
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  apply_choice_rules(
+    x,
+    list(assay = c("raw", "norm")),
+    label = "Moran's I params",
+    hint = "assay must be either 'raw' or 'norm'."
+  )
+}
+
+#' Assert Moran's I parameters
+#'
+#' @description Checkmate assertion for the Moran's I parameters built by
+#' [bixverse::params_sp_svg()].
+#'
+#' @inheritParams checkSpSvg
+#'
+#' @param .var.name Name of the checked object to print in assertions.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is
+#' successful.
+#'
+#' @keywords internal
+assertSpSvg <- checkmate::makeAssertionFunction(checkSpSvg)
+
+#' Check SPARK-X parameters
+#'
+#' @description Checkmate extension for checking the SPARK-X parameters built by
+#' [bixverse::params_sp_sparkx()].
+#'
+#' @param x The list to check/assert
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
+checkSpSparkx <- function(x) {
+  res <- check_list_shape(
+    x,
+    c("kernels", "n_landmarks", "bandwidth_subsample")
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- apply_qtest_rules(
+    x,
+    list(
+      kernels = c("0", "l+"),
+      n_landmarks = "I1[1,)",
+      bandwidth_subsample = "I1[1,)"
+    ),
+    label = "SPARK-X params",
+    hint = paste(
+      "kernels must be NULL or a non-empty list, n_landmarks and",
+      "bandwidth_subsample positive integers."
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  if (is.null(x$kernels)) {
+    return(TRUE)
+  }
+
+  ok <- purrr::map_lgl(x$kernels, \(kernel) {
+    checkmate::testList(kernel) &&
+      all(c("kernel", "bandwidth") %in% names(kernel)) &&
+      checkmate::testChoice(kernel$kernel, c("gaussian", "cosine")) &&
+      checkmate::qtest(kernel$bandwidth, "N1(0,)")
+  })
+  if (!all(ok)) {
+    return(sprintf(
+      paste(
+        "Kernel %i in SPARK-X params is invalid. Every kernel needs a `kernel`",
+        "of 'gaussian' or 'cosine' and a positive `bandwidth`."
+      ),
+      which(!ok)[1]
+    ))
+  }
+
+  return(TRUE)
+}
+
+#' Assert SPARK-X parameters
+#'
+#' @description Checkmate assertion for the SPARK-X parameters built by
+#' [bixverse::params_sp_sparkx()].
+#'
+#' @inheritParams checkSpSparkx
+#'
+#' @param .var.name Name of the checked object to print in assertions.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is
+#' successful.
+#'
+#' @keywords internal
+assertSpSparkx <- checkmate::makeAssertionFunction(checkSpSparkx)
+
+#' Check neighbourhood enrichment parameters
+#'
+#' @description Checkmate extension for checking the neighbourhood enrichment
+#' parameters built by [bixverse::params_sp_nhood()].
+#'
+#' @param x The list to check/assert
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
+checkSpNhood <- function(x) {
+  res <- check_list_shape(x, c("n_perm", "symmetrise"))
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  apply_qtest_rules(
+    x,
+    list(n_perm = "I1[1,)", symmetrise = "B1"),
+    label = "neighbourhood enrichment params",
+    hint = "n_perm must be a positive integer and symmetrise a single boolean."
+  )
+}
+
+#' Assert neighbourhood enrichment parameters
+#'
+#' @description Checkmate assertion for the neighbourhood enrichment parameters
+#' built by [bixverse::params_sp_nhood()].
+#'
+#' @inheritParams checkSpNhood
+#'
+#' @param .var.name Name of the checked object to print in assertions.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is
+#' successful.
+#'
+#' @keywords internal
+assertSpNhood <- checkmate::makeAssertionFunction(checkSpNhood)
+
+#' Check histology image feature parameters
+#'
+#' @description Checkmate extension for checking the image feature parameters
+#' built by [bixverse::params_sp_image()].
+#'
+#' @param x The list to check/assert
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
+checkSpImage <- function(x) {
+  res <- check_list_shape(
+    x,
+    c(
+      "tile_scale",
+      "glcm_levels",
+      "glcm_offsets_dy",
+      "glcm_offsets_dx",
+      "stain_haem",
+      "stain_eosin"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- apply_qtest_rules(
+    x,
+    list(
+      tile_scale = "N1(0,)",
+      glcm_levels = "I1[2,255]",
+      glcm_offsets_dy = c("0", "I+"),
+      glcm_offsets_dx = c("0", "I+"),
+      stain_haem = c("0", "N3"),
+      stain_eosin = c("0", "N3")
+    ),
+    label = "image feature params",
+    hint = paste(
+      "tile_scale must be a positive float, glcm_levels an integer between 2",
+      "and 255, the GLCM offsets NULL or integer vectors and the stain vectors",
+      "NULL or numerics of length three."
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  if (is.null(x$glcm_offsets_dy) != is.null(x$glcm_offsets_dx)) {
+    return(paste(
+      "`glcm_offsets_dy` and `glcm_offsets_dx` in image feature params must be",
+      "given together."
+    ))
+  }
+  if (
+    !is.null(x$glcm_offsets_dy) &&
+      length(x$glcm_offsets_dy) != length(x$glcm_offsets_dx)
+  ) {
+    return(paste(
+      "`glcm_offsets_dy` and `glcm_offsets_dx` in image feature params must",
+      "have the same length."
+    ))
+  }
+  if (is.null(x$stain_haem) != is.null(x$stain_eosin)) {
+    return(paste(
+      "`stain_haem` and `stain_eosin` in image feature params must be given",
+      "together."
+    ))
+  }
+
+  return(TRUE)
+}
+
+#' Assert histology image feature parameters
+#'
+#' @description Checkmate assertion for the image feature parameters built by
+#' [bixverse::params_sp_image()].
+#'
+#' @inheritParams checkSpImage
+#'
+#' @param .var.name Name of the checked object to print in assertions.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is
+#' successful.
+#'
+#' @keywords internal
+assertSpImage <- checkmate::makeAssertionFunction(checkSpImage)

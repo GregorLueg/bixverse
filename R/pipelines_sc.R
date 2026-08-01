@@ -1,7 +1,16 @@
 # single cell pipeline ---------------------------------------------------------
 
 # Classes a pipeline step can consume or produce.
-SC_STEP_CLASSES <- c("SingleCells", "SingleCellsSubset", "MetaCells")
+SC_STEP_CLASSES <- c(
+  "SingleCells",
+  "SingleCellsSubset",
+  "MetaCells",
+  "SpatialSpot",
+  "SpatialSpotSubset"
+)
+
+# Classes the spatial steps have methods for.
+SP_STEP_CLASSES <- c("SpatialSpot", "SpatialSpotSubset")
 
 ## classes ---------------------------------------------------------------------
 
@@ -21,6 +30,9 @@ SC_STEP_CLASSES <- c("SingleCells", "SingleCellsSubset", "MetaCells")
 #' prepended automatically).
 #' @param accepts Character vector. Class names the underlying generic has
 #' methods for. Checked by [validate_pipeline()] before anything runs.
+#' `SpatialSpot` and `SpatialSpotSubset` sit in the default because they
+#' inherit from `SingleCells` and `SingleCellsSubset` respectively, so every
+#' single-cell generic dispatches for them too.
 #' @param returns String. Class name the step returns, or `"input"` if it hands
 #' back whatever it was given.
 #'
@@ -31,7 +43,12 @@ new_sc_step <- function(
   name,
   fn,
   args,
-  accepts = c("SingleCells", "SingleCellsSubset"),
+  accepts = c(
+    "SingleCells",
+    "SingleCellsSubset",
+    "SpatialSpot",
+    "SpatialSpotSubset"
+  ),
   returns = "input"
 ) {
   checkmate::qassert(name, "S1")
@@ -721,5 +738,169 @@ step_metacells_sc <- function(
     "bootstrapped" = generate_bt_meta_cells_sc,
     "seacells" = generate_seacells_sc,
     "supercells" = generate_supercells_sc
+  )
+}
+
+### spatial --------------------------------------------------------------------
+
+#' Pipeline step: build the spatial neighbourhood graph
+#'
+#' @description
+#' Wraps [build_spatial_graph_sp()] as an `ScStep`. Only runs on a
+#' [bixverse::SpatialSpot()] or [bixverse::SpatialSpotSubset()].
+#'
+#' @inheritParams build_spatial_graph_sp
+#'
+#' @return An `ScStep`.
+#'
+#' @export
+step_spatial_graph_sp <- function(
+  exp_id = NULL,
+  graph_params = params_sp_graph(),
+  knn_params = NULL,
+  seed = 42L,
+  .verbose = TRUE
+) {
+  new_sc_step(
+    "spatial_graph",
+    build_spatial_graph_sp,
+    list(
+      exp_id = exp_id,
+      graph_params = graph_params,
+      knn_params = knn_params,
+      seed = seed,
+      .verbose = .verbose
+    ),
+    accepts = SP_STEP_CLASSES
+  )
+}
+
+#' Pipeline step: Moran's I
+#'
+#' @description
+#' Wraps [morans_i_sp()] as an `ScStep`. Needs [step_spatial_graph_sp()]
+#' earlier in the chain.
+#'
+#' @inheritParams morans_i_sp
+#'
+#' @return An `ScStep`.
+#'
+#' @export
+step_morans_i_sp <- function(
+  exp_id = NULL,
+  genes = NULL,
+  svg_params = params_sp_svg(),
+  streaming = TRUE,
+  .verbose = TRUE
+) {
+  new_sc_step(
+    "morans_i",
+    morans_i_sp,
+    list(
+      exp_id = exp_id,
+      genes = genes,
+      svg_params = svg_params,
+      streaming = streaming,
+      .verbose = .verbose
+    ),
+    accepts = SP_STEP_CLASSES
+  )
+}
+
+#' Pipeline step: SPARK-X
+#'
+#' @description
+#' Wraps [sparkx_sp()] as an `ScStep`. Works straight off the coordinates and
+#' needs no graph.
+#'
+#' @inheritParams sparkx_sp
+#'
+#' @return An `ScStep`.
+#'
+#' @export
+step_sparkx_sp <- function(
+  exp_id = NULL,
+  genes = NULL,
+  sparkx_params = params_sp_sparkx(),
+  seed = 42L,
+  streaming = TRUE,
+  .verbose = TRUE
+) {
+  new_sc_step(
+    "sparkx",
+    sparkx_sp,
+    list(
+      exp_id = exp_id,
+      genes = genes,
+      sparkx_params = sparkx_params,
+      seed = seed,
+      streaming = streaming,
+      .verbose = .verbose
+    ),
+    accepts = SP_STEP_CLASSES
+  )
+}
+
+#' Pipeline step: neighbourhood enrichment
+#'
+#' @description
+#' Wraps [nhood_enrichment_sp()] as an `ScStep`. Needs
+#' [step_spatial_graph_sp()] earlier in the chain and an obs column holding the
+#' labels, which is usually what [step_clusters_sc()] just wrote.
+#'
+#' @inheritParams nhood_enrichment_sp
+#'
+#' @return An `ScStep`.
+#'
+#' @export
+step_nhood_enrichment_sp <- function(
+  label_col,
+  exp_id = NULL,
+  nhood_params = params_sp_nhood(),
+  seed = 42L,
+  .verbose = TRUE
+) {
+  new_sc_step(
+    "nhood_enrichment",
+    nhood_enrichment_sp,
+    list(
+      label_col = label_col,
+      exp_id = exp_id,
+      nhood_params = nhood_params,
+      seed = seed,
+      .verbose = .verbose
+    ),
+    accepts = SP_STEP_CLASSES
+  )
+}
+
+#' Pipeline step: histology image features
+#'
+#' @description
+#' Wraps [image_features_sp()] as an `ScStep`.
+#'
+#' @inheritParams image_features_sp
+#'
+#' @return An `ScStep`.
+#'
+#' @export
+step_image_features_sp <- function(
+  exp_id = NULL,
+  resolution = c("hires", "lowres", "cytassist", "fullres"),
+  image_params = params_sp_image(),
+  .verbose = TRUE
+) {
+  resolution <- match.arg(resolution)
+
+  new_sc_step(
+    "image_features",
+    image_features_sp,
+    list(
+      exp_id = exp_id,
+      resolution = resolution,
+      image_params = image_params,
+      .verbose = .verbose
+    ),
+    accepts = SP_STEP_CLASSES
   )
 }

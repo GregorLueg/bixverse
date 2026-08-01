@@ -1474,3 +1474,258 @@ params_sp_visium_io <- function(
     slide_file = if (is.null(slide_file)) NULL else path.expand(slide_file)
   )
 }
+
+### graph ----------------------------------------------------------------------
+
+#' Wrapper function to provide the spatial graph parameters
+#'
+#' @description
+#' Controls how [bixverse::build_spatial_graph_sp()] turns spot coordinates into
+#' the neighbour and weight lists every other spatial statistic consumes. The
+#' two lattice layouts are exact table look-ups over the array coordinates and
+#' never compute a distance, which is both faster and more robust than a kNN on
+#' a regular grid. `"knn"` and `"radius"` cover irregular geometries.
+#'
+#' `array_row` and `array_col` are not arguments here. They come out of the obs
+#' table of the object and are injected by the method.
+#'
+#' @param layout String. One of `c("hex", "square", "knn", "radius")`. `"hex"`
+#' is the Visium lattice, `"square"` the Visium HD one.
+#' @param weighting String. One of `c("binary", "inverse_distance",
+#' "gaussian")`.
+#' @param connectivity Integer. `4L` or `8L`. Only used by `"square"`.
+#' @param k Integer. Neighbours per spot. Only used by `"knn"`.
+#' @param radius Float or `NULL`. Cut-off in full-resolution pixels. Required by
+#' `"radius"` and ignored otherwise.
+#' @param power Float. Decay exponent for `"inverse_distance"`.
+#' @param bandwidth Float or `NULL`. Gaussian bandwidth. `NULL` resolves to the
+#' median nearest-neighbour distance inside Rust.
+#' @param row_normalise Boolean. Normalise the weights per row, i.e. spdep's
+#' `style = "W"`.
+#'
+#' @returns A list with the spatial graph parameters for usage in subsequent
+#' functions.
+#'
+#' @export
+params_sp_graph <- function(
+  layout = c("hex", "square", "knn", "radius"),
+  weighting = c("binary", "inverse_distance", "gaussian"),
+  connectivity = 4L,
+  k = 6L,
+  radius = NULL,
+  power = 1.0,
+  bandwidth = NULL,
+  row_normalise = FALSE
+) {
+  layout <- match.arg(layout)
+  weighting <- match.arg(weighting)
+
+  # checks
+  checkmate::assertChoice(layout, c("hex", "square", "knn", "radius"))
+  checkmate::assertChoice(
+    weighting,
+    c("binary", "inverse_distance", "gaussian")
+  )
+  checkmate::qassert(connectivity, "I1")
+  checkmate::assertChoice(connectivity, c(4L, 8L))
+  checkmate::qassert(k, "I1[1,)")
+  checkmate::qassert(radius, c("0", "N1(0,)"))
+  checkmate::qassert(power, "N1(0,)")
+  checkmate::qassert(bandwidth, c("0", "N1(0,)"))
+  checkmate::qassert(row_normalise, "B1")
+
+  if (layout == "radius" && is.null(radius)) {
+    stop("`layout = 'radius'` needs a `radius`.")
+  }
+
+  list(
+    layout = layout,
+    weighting = weighting,
+    connectivity = as.integer(connectivity),
+    k = as.integer(k),
+    radius = radius,
+    power = power,
+    bandwidth = bandwidth,
+    row_normalise = row_normalise
+  )
+}
+
+### svg ------------------------------------------------------------------------
+
+#' Wrapper function to provide the Moran's I parameters
+#'
+#' @description
+#' Everything Moran's I needs beyond the graph itself, which is one thing: the
+#' assay the counts come off. `"norm"` is the sane default for autocorrelation,
+#' `"raw"` is there for comparing against implementations that skip
+#' normalisation.
+#'
+#' @param assay String. One of `c("raw", "norm")`.
+#'
+#' @returns A list with the Moran's I parameters for usage in subsequent
+#' functions.
+#'
+#' @export
+params_sp_svg <- function(assay = c("norm", "raw")) {
+  assay <- match.arg(assay)
+
+  # checks
+  checkmate::assertChoice(assay, c("norm", "raw"))
+
+  list(assay = assay)
+}
+
+#' Wrapper function to provide the SPARK-X parameters
+#'
+#' @description
+#' An empty kernel bank triggers the paper defaults: five Gaussian plus five
+#' cosine bandwidths, taken from quantiles of the pairwise distance
+#' distribution on a sub-sample of the coordinates. Leave `kernels` at `NULL`
+#' unless you know which bandwidths you want.
+#'
+#' @param kernels List or `NULL`. Each element a list with `kernel`
+#' (`"gaussian"` or `"cosine"`) and `bandwidth` (a positive float).
+#' @param n_landmarks Integer. Nystroem landmarks per Gaussian kernel.
+#' @param bandwidth_subsample Integer. Sub-sample size used to derive the
+#' default bandwidths.
+#'
+#' @returns A list with the SPARK-X parameters for usage in subsequent
+#' functions.
+#'
+#' @export
+params_sp_sparkx <- function(
+  kernels = NULL,
+  n_landmarks = 20L,
+  bandwidth_subsample = 1000L
+) {
+  # checks
+  checkmate::qassert(n_landmarks, "I1[1,)")
+  checkmate::qassert(bandwidth_subsample, "I1[1,)")
+  if (!is.null(kernels)) {
+    checkmate::assertList(kernels, min.len = 1L)
+    purrr::walk(kernels, \(kernel) {
+      checkmate::assertList(kernel)
+      checkmate::assertNames(
+        names(kernel),
+        must.include = c("kernel", "bandwidth")
+      )
+      checkmate::assertChoice(kernel$kernel, c("gaussian", "cosine"))
+      checkmate::qassert(kernel$bandwidth, "N1(0,)")
+    })
+  }
+
+  list(
+    kernels = kernels,
+    n_landmarks = as.integer(n_landmarks),
+    bandwidth_subsample = as.integer(bandwidth_subsample)
+  )
+}
+
+### nhood ----------------------------------------------------------------------
+
+#' Wrapper function to provide the neighbourhood enrichment parameters
+#'
+#' @description
+#' The permutation shuffles the labels and keeps the graph, so the null carries
+#' the spatial structure of the slide. `n_perm` is the only knob that costs
+#' anything.
+#'
+#' @param n_perm Integer. Number of label permutations.
+#' @param symmetrise Boolean. Average the Z-score matrix with its transpose.
+#'
+#' @returns A list with the neighbourhood enrichment parameters for usage in
+#' subsequent functions.
+#'
+#' @export
+params_sp_nhood <- function(n_perm = 1000L, symmetrise = TRUE) {
+  # checks
+  checkmate::qassert(n_perm, "I1[1,)")
+  checkmate::qassert(symmetrise, "B1")
+
+  list(
+    n_perm = as.integer(n_perm),
+    symmetrise = symmetrise
+  )
+}
+
+### image ----------------------------------------------------------------------
+
+#' Wrapper function to provide the histology image feature parameters
+#'
+#' @description
+#' Controls the tile cut around each spot and the Haralick texture features
+#' taken off it. `tile_scale = 1.0` takes the spot itself; anything larger
+#' pulls in surrounding context, which usually helps for tissue architecture
+#' and hurts for anything spot-resolved.
+#'
+#' The GLCM offsets are two aligned vectors rather than one interleaved one.
+#' An interleaved vector transposes the whole offset set when the order gets
+#' mixed up and nothing downstream would notice.
+#'
+#' @param tile_scale Float. Multiplier on the spot diameter when cutting a
+#' tile.
+#' @param glcm_levels Integer. Grey levels the GLCM quantises to, 2 to 255.
+#' @param glcm_offsets_dy Integer vector or `NULL`. Row offsets. Must be given
+#' together with `glcm_offsets_dx`. `NULL` uses the four offsets at distance
+#' one.
+#' @param glcm_offsets_dx Integer vector or `NULL`. Column offsets, aligned
+#' with `glcm_offsets_dy`.
+#' @param stain_haem Numeric of length 3 or `NULL`. Haematoxylin stain vector
+#' for the colour deconvolution. Must be given together with `stain_eosin`.
+#' `NULL` uses the Ruifrok-Johnston H&E basis.
+#' @param stain_eosin Numeric of length 3 or `NULL`. Eosin stain vector.
+#'
+#' @returns A list with the image feature parameters for usage in subsequent
+#' functions.
+#'
+#' @references
+#' Ruifrok & Johnston, Anal Quant Cytol Histol, 2001
+#'
+#' Haralick, Shanmugam & Dinstein, IEEE Trans Syst Man Cybern, 1973
+#'
+#' @export
+params_sp_image <- function(
+  tile_scale = 1.0,
+  glcm_levels = 32L,
+  glcm_offsets_dy = NULL,
+  glcm_offsets_dx = NULL,
+  stain_haem = NULL,
+  stain_eosin = NULL
+) {
+  # checks
+  checkmate::qassert(tile_scale, "N1(0,)")
+  checkmate::qassert(glcm_levels, "I1[2,255]")
+  checkmate::qassert(glcm_offsets_dy, c("0", "I+"))
+  checkmate::qassert(glcm_offsets_dx, c("0", "I+"))
+  checkmate::qassert(stain_haem, c("0", "N3"))
+  checkmate::qassert(stain_eosin, c("0", "N3"))
+
+  if (is.null(glcm_offsets_dy) != is.null(glcm_offsets_dx)) {
+    stop("`glcm_offsets_dy` and `glcm_offsets_dx` must be given together.")
+  }
+  if (!is.null(glcm_offsets_dy)) {
+    checkmate::assertTRUE(
+      length(glcm_offsets_dy) == length(glcm_offsets_dx)
+    )
+  }
+  if (is.null(stain_haem) != is.null(stain_eosin)) {
+    stop("`stain_haem` and `stain_eosin` must be given together.")
+  }
+
+  list(
+    tile_scale = tile_scale,
+    glcm_levels = as.integer(glcm_levels),
+    glcm_offsets_dy = if (is.null(glcm_offsets_dy)) {
+      NULL
+    } else {
+      as.integer(glcm_offsets_dy)
+    },
+    glcm_offsets_dx = if (is.null(glcm_offsets_dx)) {
+      NULL
+    } else {
+      as.integer(glcm_offsets_dx)
+    },
+    stain_haem = stain_haem,
+    stain_eosin = stain_eosin
+  )
+}

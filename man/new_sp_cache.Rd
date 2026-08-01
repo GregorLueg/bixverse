@@ -13,5 +13,10 @@ An empty \code{SpCache} S3 object.
 Helper that builds the per-sample spatial cache used by
 \code{\link[=SpatialSpot]{SpatialSpot()}}. Each slot is a named list keyed by the experiment
 identifier (\code{exp_id}).
+
+Two slots go one level deeper, because one sample can carry several of them:
+\code{per_sample_nhood_enrichment} is keyed by \code{exp_id} then by the obs column the
+labels came from, and \code{per_sample_image_features} by \code{exp_id} then by the
+image resolution the tiles were cut from.
 }
 \keyword{internal}

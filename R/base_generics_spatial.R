@@ -85,6 +85,29 @@ set_per_sample_nhood_enrichment <- function(
   UseMethod("set_per_sample_nhood_enrichment")
 }
 
+#' Set the per-sample histology image features
+#'
+#' @param x An object with a `SpCache` slot or an `SpCache` itself.
+#' @param exp_id String. The experiment identifier.
+#' @param resolution String. The image resolution the features were cut from,
+#' one of `c("lowres", "hires", "cytassist", "fullres")`.
+#' @param features The image feature result, see
+#' [bixverse::new_sp_image_features_res()].
+#' @param ... Other parameters.
+#'
+#' @export
+#'
+#' @keywords internal
+set_per_sample_image_features <- function(
+  x,
+  exp_id,
+  resolution,
+  features,
+  ...
+) {
+  UseMethod("set_per_sample_image_features")
+}
+
 ## sp_cache getters ------------------------------------------------------------
 
 #' Get the per-sample spatial graph
@@ -142,6 +165,19 @@ get_per_sample_sparkx <- function(x, exp_id, ...) {
 #' @export
 get_per_sample_nhood_enrichment <- function(x, exp_id, label_col, ...) {
   UseMethod("get_per_sample_nhood_enrichment")
+}
+
+#' Get the per-sample histology image features
+#'
+#' @param x An object with a `SpCache` slot or an `SpCache` itself.
+#' @param exp_id String. The experiment identifier.
+#' @param resolution String. The image resolution the features were cut from,
+#' one of `c("lowres", "hires", "cytassist", "fullres")`.
+#' @param ... Other parameters.
+#'
+#' @export
+get_per_sample_image_features <- function(x, exp_id, resolution, ...) {
+  UseMethod("get_per_sample_image_features")
 }
 
 ## S7 generics (SpatialSpot / MetaSpot) ----------------------------------------
@@ -326,6 +362,206 @@ get_per_sample_graph <- S7::new_generic(
   name = "get_per_sample_graph",
   dispatch_args = "object",
   fun = function(object, exp_id) {
+    S7::S7_dispatch()
+  }
+)
+
+## S7 generics (spatial analysis) ----------------------------------------------
+
+# Methods are registered in methods_sp_analysis.R against the SpOrSpSubset
+# union, so a SpatialSpot and a SpatialSpotSubset behave identically apart from
+# how `exp_id` is resolved.
+
+#' Build the spatial neighbourhood graph
+#'
+#' @description
+#' Turns spot coordinates into the neighbour and weight lists every other
+#' spatial statistic in this package consumes. The result lands in the
+#' `per_sample_spatial_graph` slot of the `SpCache` as a sparse adjacency, one
+#' entry per sample.
+#'
+#' @param object A [bixverse::SpatialSpot()] or
+#' [bixverse::SpatialSpotSubset()].
+#' @param exp_id Optional string. Restrict to one experiment. `NULL` runs over
+#' every registered sample. A `SpatialSpotSubset` only ever has one.
+#' @param graph_params List. Output of [bixverse::params_sp_graph()].
+#' @param knn_params List or `NULL`. Output of [bixverse::params_sc_knn()],
+#' only used by `layout = "knn"`.
+#' @param seed Integer. Seed for the ANN index.
+#' @param .verbose Boolean or integer. Controls verbosity.
+#'
+#' @return The object with the graph(s) cached.
+#'
+#' @export
+build_spatial_graph_sp <- S7::new_generic(
+  name = "build_spatial_graph_sp",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    exp_id = NULL,
+    graph_params = params_sp_graph(),
+    knn_params = NULL,
+    seed = 42L,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' Detect spatially variable genes with Moran's I
+#'
+#' @description
+#' Per-gene Moran's I against the cached spatial graph, tested under the
+#' Cliff-Ord normality null. Needs [bixverse::build_spatial_graph_sp()] to have
+#' run first. Results land in the `per_sample_morans_i` slot of the `SpCache`.
+#'
+#' @param object A [bixverse::SpatialSpot()] or
+#' [bixverse::SpatialSpotSubset()].
+#' @param exp_id Optional string. Restrict to one experiment. `NULL` runs over
+#' every registered sample.
+#' @param genes Optional character vector or integer vector. Genes to test.
+#' Characters are matched against the var table, integers are taken as
+#' 1-indexed positions in it. `NULL` tests every gene.
+#' @param svg_params List. Output of [bixverse::params_sp_svg()].
+#' @param streaming Boolean. Load the gene chunks in batches of 1000 rather
+#' than all at once.
+#' @param .verbose Boolean or integer. Controls verbosity.
+#'
+#' @return The object with the Moran's I results cached.
+#'
+#' @references
+#' Cliff & Ord, Spatial Autocorrelation, 1973
+#'
+#' @export
+morans_i_sp <- S7::new_generic(
+  name = "morans_i_sp",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    exp_id = NULL,
+    genes = NULL,
+    svg_params = params_sp_svg(),
+    streaming = TRUE,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' Detect spatially variable genes with SPARK-X
+#'
+#' @description
+#' Kernel-based non-parametric test for spatial expression patterns. Works
+#' straight off the coordinates and needs no graph. Results land in the
+#' `per_sample_sparkx` slot of the `SpCache`.
+#'
+#' @param object A [bixverse::SpatialSpot()] or
+#' [bixverse::SpatialSpotSubset()].
+#' @param exp_id Optional string. Restrict to one experiment. `NULL` runs over
+#' every registered sample.
+#' @param genes Optional character vector or integer vector. Genes to test.
+#' Characters are matched against the var table, integers are taken as
+#' 1-indexed positions in it. `NULL` tests every gene.
+#' @param sparkx_params List. Output of [bixverse::params_sp_sparkx()].
+#' @param seed Integer. Seed for landmark selection and bandwidth
+#' sub-sampling.
+#' @param streaming Boolean. Load the gene chunks in batches of 1000 rather
+#' than all at once.
+#' @param .verbose Boolean or integer. Controls verbosity.
+#'
+#' @return The object with the SPARK-X results cached.
+#'
+#' @references
+#' Zhu, Sun & Zhou, Genome Biology, 2021
+#'
+#' @export
+sparkx_sp <- S7::new_generic(
+  name = "sparkx_sp",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    exp_id = NULL,
+    genes = NULL,
+    sparkx_params = params_sp_sparkx(),
+    seed = 42L,
+    streaming = TRUE,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' Neighbourhood enrichment between spot labels
+#'
+#' @description
+#' Asks whether each pair of labels shows up as spatial neighbours more or less
+#' often than chance. Only the labels are permuted, so the null keeps the
+#' spatial structure of the slide. Needs [bixverse::build_spatial_graph_sp()] to
+#' have run first. Results land in the `per_sample_nhood_enrichment` slot of the
+#' `SpCache`, keyed by `exp_id` and then by `label_col`.
+#'
+#' @param object A [bixverse::SpatialSpot()] or
+#' [bixverse::SpatialSpotSubset()].
+#' @param label_col String. Column in the obs table holding the spot labels.
+#' @param exp_id Optional string. Restrict to one experiment. `NULL` runs over
+#' every registered sample.
+#' @param nhood_params List. Output of [bixverse::params_sp_nhood()].
+#' @param seed Integer. Seed for the permutations.
+#' @param .verbose Boolean or integer. Controls verbosity.
+#'
+#' @return The object with the enrichment results cached.
+#'
+#' @export
+nhood_enrichment_sp <- S7::new_generic(
+  name = "nhood_enrichment_sp",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    label_col,
+    exp_id = NULL,
+    nhood_params = params_sp_nhood(),
+    seed = 42L,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' Per-spot histology image features
+#'
+#' @description
+#' Cuts one tile per spot out of a registered slide image and reduces it to
+#' first-order colour statistics, mean optical density and Haralick texture
+#' features. Results land in the `per_sample_image_features` slot of the
+#' `SpCache`, keyed by `exp_id` and then by `resolution`.
+#'
+#' @param object A [bixverse::SpatialSpot()] or
+#' [bixverse::SpatialSpotSubset()].
+#' @param exp_id Optional string. Restrict to one experiment. `NULL` runs over
+#' every registered sample.
+#' @param resolution String. Which registered image to cut the tiles from. One
+#' of `c("hires", "lowres", "cytassist", "fullres")`.
+#' @param image_params List. Output of [bixverse::params_sp_image()].
+#' @param .verbose Boolean or integer. Controls verbosity.
+#'
+#' @return The object with the image features cached.
+#'
+#' @references
+#' Ruifrok & Johnston, Anal Quant Cytol Histol, 2001
+#'
+#' Haralick, Shanmugam & Dinstein, IEEE Trans Syst Man Cybern, 1973
+#'
+#' @export
+image_features_sp <- S7::new_generic(
+  name = "image_features_sp",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    exp_id = NULL,
+    resolution = c("hires", "lowres", "cytassist", "fullres"),
+    image_params = params_sp_image(),
+    .verbose = TRUE
+  ) {
     S7::S7_dispatch()
   }
 )

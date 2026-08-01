@@ -24,7 +24,11 @@
     "ScPipeline",
     "ScStep",
     "SpCache",
-    "SpatialSample"
+    "SpatialSample",
+    "SpMoransRes",
+    "SpSparkxRes",
+    "SpNhoodRes",
+    "SpImageFeatures"
   )
   for (cls in classes) {
     registerS3method("print", cls, get(paste0("print.", cls)))
@@ -32,4 +36,9 @@
 
   registerS3method("format", "BulkModuleResult", format.BulkModuleResult)
   registerS3method("dim", "BulkModuleResult", dim.BulkModuleResult)
+
+  # same S3 <> S7 story for the plot methods on the spatial result classes
+  for (cls in c("SpMoransRes", "SpSparkxRes", "SpNhoodRes")) {
+    registerS3method("plot", cls, get(paste0("plot.", cls)))
+  }
 }

@@ -266,6 +266,11 @@ print.SpatialSample <- function(x, ...) {
 #' [bixverse::SpatialSpot()]. Each slot is a named list keyed by the experiment
 #' identifier (`exp_id`).
 #'
+#' Two slots go one level deeper, because one sample can carry several of them:
+#' `per_sample_nhood_enrichment` is keyed by `exp_id` then by the obs column the
+#' labels came from, and `per_sample_image_features` by `exp_id` then by the
+#' image resolution the tiles were cut from.
+#'
 #' @return An empty `SpCache` S3 object.
 #'
 #' @export
@@ -277,7 +282,8 @@ new_sp_cache <- function() {
     per_sample_pca = list(),
     per_sample_morans_i = list(),
     per_sample_sparkx = list(),
-    per_sample_nhood_enrichment = list()
+    per_sample_nhood_enrichment = list(),
+    per_sample_image_features = list()
   )
 
   class(sp_cache) <- "SpCache"
@@ -365,6 +371,28 @@ set_per_sample_nhood_enrichment.SpCache <- function(
   return(x)
 }
 
+#' @rdname set_per_sample_image_features
+#'
+#' @export
+set_per_sample_image_features.SpCache <- function(
+  x,
+  exp_id,
+  resolution,
+  features,
+  ...
+) {
+  checkmate::assertClass(x, "SpCache")
+  checkmate::qassert(exp_id, "S1")
+  checkmate::qassert(resolution, "S1")
+
+  if (is.null(x[["per_sample_image_features"]][[exp_id]])) {
+    x[["per_sample_image_features"]][[exp_id]] <- list()
+  }
+  x[["per_sample_image_features"]][[exp_id]][[resolution]] <- features
+
+  return(x)
+}
+
 ## getters (SpCache) -----------------------------------------------------------
 
 #' @rdname get_per_sample_spatial_graph
@@ -421,6 +449,22 @@ get_per_sample_nhood_enrichment.SpCache <- function(
   checkmate::qassert(label_col, "S1")
 
   return(x[["per_sample_nhood_enrichment"]][[exp_id]][[label_col]])
+}
+
+#' @rdname get_per_sample_image_features
+#'
+#' @export
+get_per_sample_image_features.SpCache <- function(
+  x,
+  exp_id,
+  resolution,
+  ...
+) {
+  checkmate::assertClass(x, "SpCache")
+  checkmate::qassert(exp_id, "S1")
+  checkmate::qassert(resolution, "S1")
+
+  return(x[["per_sample_image_features"]][[exp_id]][[resolution]])
 }
 
 ## primitives ------------------------------------------------------------------
@@ -647,6 +691,49 @@ S7::method(get_spatial_coords, SpatialSpot) <- function(
 
 ### images ---------------------------------------------------------------------
 
+#' Read a registered slide image off disk
+#'
+#' @description
+#' Dispatches on the file extension. PNG and JPEG load; TIFF is registerable but
+#' not readable, which is why the CytAssist image errors here.
+#'
+#' @param abs_path String. Absolute path to the image.
+#'
+#' @return A numeric array as returned by [png::readPNG()] or
+#' [jpeg::readJPEG()].
+#'
+#' @keywords internal
+.read_spatial_image <- function(abs_path) {
+  checkmate::assertFileExists(abs_path)
+
+  ext <- tolower(tools::file_ext(abs_path))
+  switch(
+    ext,
+    png = {
+      if (!requireNamespace("png", quietly = TRUE)) {
+        stop("Reading PNG images requires the 'png' package.")
+      }
+      png::readPNG(abs_path)
+    },
+    jpg = ,
+    jpeg = {
+      if (!requireNamespace("jpeg", quietly = TRUE)) {
+        stop("Reading JPEG images requires the 'jpeg' package.")
+      }
+      jpeg::readJPEG(abs_path)
+    },
+    tif = ,
+    tiff = stop(sprintf(
+      paste(
+        "Image '%s' is a TIFF. TIFFs can be registered but not yet loaded.",
+        "Provide a PNG or JPEG."
+      ),
+      abs_path
+    )),
+    stop(sprintf("Unsupported image extension '%s'.", ext))
+  )
+}
+
 #' @method get_image SpatialSpot
 #'
 #' @export
@@ -674,45 +761,21 @@ S7::method(get_image, SpatialSpot) <- function(
     ))
   }
   abs_path <- file.path(S7::prop(object, "dir_data"), rel_path)
-  checkmate::assertFileExists(abs_path)
 
-  ext <- tolower(tools::file_ext(abs_path))
-  img <- switch(
-    ext,
-    png = {
-      if (!requireNamespace("png", quietly = TRUE)) {
-        stop("Reading PNG images requires the 'png' package.")
-      }
-      png::readPNG(abs_path)
-    },
-    jpg = ,
-    jpeg = {
-      if (!requireNamespace("jpeg", quietly = TRUE)) {
-        stop("Reading JPEG images requires the 'jpeg' package.")
-      }
-      jpeg::readJPEG(abs_path)
-    },
-    tif = ,
-    tiff = stop(sprintf(
-      paste(
-        "Image '%s' for exp_id '%s' is a TIFF. TIFFs can be registered",
-        "but not yet loaded. Provide a PNG or JPEG."
-      ),
-      resolution,
-      exp_id
-    )),
-    stop(sprintf("Unsupported image extension '%s'.", ext))
-  )
-
-  return(img)
+  return(.read_spatial_image(abs_path))
 }
 
 ## sp_cache forwarding (SpatialSpot -> SpCache) --------------------------------
 
+# These are S3 generics but the target is an S7 class, so they have to be
+# registered through `S7::method()`. A plain `set_per_sample_pca.SpatialSpot`
+# never dispatches: `class()` of an S7 object is `"bixverse::SpatialSpot"`, not
+# `"SpatialSpot"`.
+
 #' @rdname set_per_sample_spatial_graph
 #'
 #' @export
-set_per_sample_spatial_graph.SpatialSpot <- function(
+S7::method(set_per_sample_spatial_graph, SpatialSpot) <- function(
   x,
   exp_id,
   graph,
@@ -730,7 +793,7 @@ set_per_sample_spatial_graph.SpatialSpot <- function(
 #' @rdname set_per_sample_pca
 #'
 #' @export
-set_per_sample_pca.SpatialSpot <- function(x, exp_id, pca, ...) {
+S7::method(set_per_sample_pca, SpatialSpot) <- function(x, exp_id, pca, ...) {
   checkmate::assertTRUE(S7::S7_inherits(x, SpatialSpot))
   S7::prop(x, "sp_cache") <- set_per_sample_pca(
     x = S7::prop(x, "sp_cache"),
@@ -743,7 +806,12 @@ set_per_sample_pca.SpatialSpot <- function(x, exp_id, pca, ...) {
 #' @rdname set_per_sample_morans_i
 #'
 #' @export
-set_per_sample_morans_i.SpatialSpot <- function(x, exp_id, morans_i, ...) {
+S7::method(set_per_sample_morans_i, SpatialSpot) <- function(
+  x,
+  exp_id,
+  morans_i,
+  ...
+) {
   checkmate::assertTRUE(S7::S7_inherits(x, SpatialSpot))
   S7::prop(x, "sp_cache") <- set_per_sample_morans_i(
     x = S7::prop(x, "sp_cache"),
@@ -756,7 +824,12 @@ set_per_sample_morans_i.SpatialSpot <- function(x, exp_id, morans_i, ...) {
 #' @rdname set_per_sample_sparkx
 #'
 #' @export
-set_per_sample_sparkx.SpatialSpot <- function(x, exp_id, sparkx, ...) {
+S7::method(set_per_sample_sparkx, SpatialSpot) <- function(
+  x,
+  exp_id,
+  sparkx,
+  ...
+) {
   checkmate::assertTRUE(S7::S7_inherits(x, SpatialSpot))
   S7::prop(x, "sp_cache") <- set_per_sample_sparkx(
     x = S7::prop(x, "sp_cache"),
@@ -769,7 +842,7 @@ set_per_sample_sparkx.SpatialSpot <- function(x, exp_id, sparkx, ...) {
 #' @rdname set_per_sample_nhood_enrichment
 #'
 #' @export
-set_per_sample_nhood_enrichment.SpatialSpot <- function(
+S7::method(set_per_sample_nhood_enrichment, SpatialSpot) <- function(
   x,
   exp_id,
   label_col,
@@ -786,10 +859,34 @@ set_per_sample_nhood_enrichment.SpatialSpot <- function(
   return(x)
 }
 
+#' @rdname set_per_sample_image_features
+#'
+#' @export
+S7::method(set_per_sample_image_features, SpatialSpot) <- function(
+  x,
+  exp_id,
+  resolution,
+  features,
+  ...
+) {
+  checkmate::assertTRUE(S7::S7_inherits(x, SpatialSpot))
+  S7::prop(x, "sp_cache") <- set_per_sample_image_features(
+    x = S7::prop(x, "sp_cache"),
+    exp_id = exp_id,
+    resolution = resolution,
+    features = features
+  )
+  return(x)
+}
+
 #' @rdname get_per_sample_spatial_graph
 #'
 #' @export
-get_per_sample_spatial_graph.SpatialSpot <- function(x, exp_id, ...) {
+S7::method(get_per_sample_spatial_graph, SpatialSpot) <- function(
+  x,
+  exp_id,
+  ...
+) {
   checkmate::assertTRUE(S7::S7_inherits(x, SpatialSpot))
   return(get_per_sample_spatial_graph(
     x = S7::prop(x, "sp_cache"),
@@ -800,7 +897,7 @@ get_per_sample_spatial_graph.SpatialSpot <- function(x, exp_id, ...) {
 #' @rdname get_per_sample_pca
 #'
 #' @export
-get_per_sample_pca.SpatialSpot <- function(x, exp_id, ...) {
+S7::method(get_per_sample_pca, SpatialSpot) <- function(x, exp_id, ...) {
   checkmate::assertTRUE(S7::S7_inherits(x, SpatialSpot))
   return(get_per_sample_pca(
     x = S7::prop(x, "sp_cache"),
@@ -811,7 +908,7 @@ get_per_sample_pca.SpatialSpot <- function(x, exp_id, ...) {
 #' @rdname get_per_sample_morans_i
 #'
 #' @export
-get_per_sample_morans_i.SpatialSpot <- function(x, exp_id, ...) {
+S7::method(get_per_sample_morans_i, SpatialSpot) <- function(x, exp_id, ...) {
   checkmate::assertTRUE(S7::S7_inherits(x, SpatialSpot))
   return(get_per_sample_morans_i(
     x = S7::prop(x, "sp_cache"),
@@ -822,7 +919,7 @@ get_per_sample_morans_i.SpatialSpot <- function(x, exp_id, ...) {
 #' @rdname get_per_sample_sparkx
 #'
 #' @export
-get_per_sample_sparkx.SpatialSpot <- function(x, exp_id, ...) {
+S7::method(get_per_sample_sparkx, SpatialSpot) <- function(x, exp_id, ...) {
   checkmate::assertTRUE(S7::S7_inherits(x, SpatialSpot))
   return(get_per_sample_sparkx(
     x = S7::prop(x, "sp_cache"),
@@ -833,7 +930,7 @@ get_per_sample_sparkx.SpatialSpot <- function(x, exp_id, ...) {
 #' @rdname get_per_sample_nhood_enrichment
 #'
 #' @export
-get_per_sample_nhood_enrichment.SpatialSpot <- function(
+S7::method(get_per_sample_nhood_enrichment, SpatialSpot) <- function(
   x,
   exp_id,
   label_col,
@@ -846,6 +943,24 @@ get_per_sample_nhood_enrichment.SpatialSpot <- function(
     label_col = label_col
   ))
 }
+
+#' @rdname get_per_sample_image_features
+#'
+#' @export
+S7::method(get_per_sample_image_features, SpatialSpot) <- function(
+  x,
+  exp_id,
+  resolution,
+  ...
+) {
+  checkmate::assertTRUE(S7::S7_inherits(x, SpatialSpot))
+  return(get_per_sample_image_features(
+    x = S7::prop(x, "sp_cache"),
+    exp_id = exp_id,
+    resolution = resolution
+  ))
+}
+
 
 ## sample registration --------------------------------------------------------
 
