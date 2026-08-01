@@ -1,3 +1,78 @@
+# bixverse 0.4.5
+
+## Features
+
+### Single cells
+
+* Further improvements to the pipelines with meta cells enabled. 
+* Merging of meta cells together.
+
+# bixverse 0.4.4
+
+## Features
+
+### General
+
+* NMF implemented for bulk co-expression module detection and updated vignette.
+* Synthetic data generators for bulk updated to create different data 
+  structures.
+
+### Single cells
+
+* Improved cell quality control functions.
+* Additional single cell batch correction methods:
+  - Seurat-inspired CCA anchor-based batch correction
+  - Seurat-inspired rPCA anchor-based batch correction
+* `SingleCellsSubset` class. This class creates a view into a subset of cells,
+  think doing further analysis on T cells within your data set.
+* AUCell reworked. `aucell_sc()` now takes a `params_sc_aucell()` list instead
+  of an `auc_type` string, and offers three statistics: `"wilcox"` (the
+  Mann-Whitney AUC, still the default), `"recovery"` (the recovery-curve AUC of
+  Aibar et al., with a `max_rank` cutoff) and `"ap"` (average precision).
+  Scores can be z-scored per gene set via `standardise`.
+* Something is cooking for the single cell stuff. There has been a major 
+  refactor on the Rust side that will enable some very, very, very cool future
+  features. *Watch the space...*
+
+## Breaking changes
+
+* `aucell_sc(auc_type = ...)` is gone, use
+  `aucell_sc(aucell_params = params_sc_aucell(auc_type = ...))`. The `"auroc"`
+  value has been dropped and now errors. `"wilcox"` results are unchanged.
+
+# bixverse 0.4.3
+
+## Fix
+
+* Bumped version of `bixverse-rs` that has a fix for the IVF-type approximate
+  nearest neighbour seraches.
+
+# bixverse 0.4.2
+
+## Features
+
+* Faster fgsea multi-level implementation with less unnecessary allocations
+  and faster computations.
+
+## Fix
+
+* Edge case in fgsea multi-level fixed that broke the beta-value calculations.
+
+## Breaking changes
+
+`get_centroids()` was renamed to `get_centroids_sc()` for the usage on the fast
+clustering algorithms.
+
+# bixverse 0.4.1
+
+## Features
+
+* `SingleCellsSubset` class that can split from the main class and allows for
+  analysis of e.g., a subset of cell types, etc.
+* Added singscore, see 
+  [Foroutan et al.](https://link.springer.com/article/10.1186/s12859-018-2435-4),
+  as another option to score single samples and their pathway activity.
+
 # bixverse 0.4.0
 
 ## Features

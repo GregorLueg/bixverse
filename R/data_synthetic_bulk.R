@@ -139,159 +139,114 @@ synthetic_signal_matrix <- function(
 #'
 #' @description
 #' Function generates synthetic bulkRNAseq data with heteroskedasticity (lowly
-#' expressed genes show higher variance) and can optionally add gene ~ gene
-#' correlations for testing purposes of module detection methods.
+#' expressed genes show higher variance) and optional co-expression modules for
+#' testing module detection methods. The ground truth comes back with the
+#' counts, so a recovered module or eigengene can be scored against what was
+#' actually simulated. Which generator to pick and what each parameter does is
+#' documented in [bixverse::params_synthetic_bulk_rnaseq()].
 #'
-#' @param num_samples Integer. Number of samples.
-#' @param num_genes Integer. Number of genes.
-#' @param add_modules Boolean. Shall gene modules with correlation structures
-#' be generated.
-#' @param module_sizes Integer vector. Sizes of the different correlation
-#' modules. The sum needs be smaller than `num_genes`.
-#' @param seed Integer. Seed for reproducibility purposes.
+#' @param synthetic_params List. The synthetic data parameters, see
+#' [bixverse::params_synthetic_bulk_rnaseq()].
 #'
 #' @return A `synthetic_bulk_data` class containing:
 #' \itemize{
-#'  \item counts - The count matrix
+#'  \item counts - The count matrix. Rows are genes, columns are samples.
 #'  \item sparse_counts - A slot for sparse counts that can be added later, see
 #'  [bixverse::simulate_dropouts()].
-#'  \item module_data - The module membership of the genes
+#'  \item module_data - Per-gene ground truth: the gene identifier, its
+#'  `membership` (`0` for background), its `loading` on the module factor and
+#'  whether it is a hub gene.
+#'  \item module_factors - The latent factors the modules were built on. Rows
+#'  are modules, columns are samples. This is what a module eigengene or an
+#'  ICA/NMF component is trying to recover.
 #' }
+#' The parameters used are stored on the `synthetic_params` attribute.
 #'
 #' @export
 synthetic_bulk_cor_matrix <- function(
-  num_samples = 100L,
-  num_genes = 1000L,
-  add_modules = TRUE,
-  module_sizes = c(100L, 100L, 100L),
-  seed = 123L
+  synthetic_params = params_synthetic_bulk_rnaseq()
 ) {
   # checks
-  checkmate::qassert(num_samples, "I1")
-  checkmate::qassert(num_genes, "I1")
-  checkmate::qassert(add_modules, "B1")
-  checkmate::qassert(module_sizes, "I+")
-  checkmate::qassert(seed, "I1")
-  checkmate::assertTRUE(sum(module_sizes) <= num_genes)
+  assertSyntheticBulkParams(synthetic_params)
 
   # body
-  c(counts, module_membership) %<-%
-    rs_generate_bulk_rnaseq(
-      num_samples = num_samples,
-      num_genes = num_genes,
-      seed = seed,
-      add_modules = add_modules,
-      module_sizes = module_sizes
-    )
+  res <- rs_generate_bulk_rnaseq(synthetic_params)
 
+  num_genes <- synthetic_params$num_genes
+  num_samples <- synthetic_params$num_samples
+
+  counts <- res$counts
   rownames(counts) <- sprintf("gene_%i", 1:num_genes)
   colnames(counts) <- sprintf("sample_%i", 1:num_samples)
 
   module_dt <- data.table::data.table(
     gene = rownames(counts),
-    membership = module_membership
+    membership = res$module_membership,
+    loading = res$loadings,
+    # `module_hubs` arrives 1-indexed from the Rust side
+    is_hub = seq_len(num_genes) %in% res$module_hubs
   )
 
-  result <- list(counts = counts, sparse_counts = NULL, module_data = module_dt)
+  module_factors <- res$module_factors
+  if (nrow(module_factors) > 0) {
+    rownames(module_factors) <- sprintf("module_%i", seq_len(nrow(
+      module_factors
+    )))
+  }
+  colnames(module_factors) <- colnames(counts)
+
+  result <- list(
+    counts = counts,
+    sparse_counts = NULL,
+    module_data = module_dt,
+    module_factors = module_factors
+  )
   class(result) <- "synthetic_bulk_data"
+  attr(result, "synthetic_params") <- synthetic_params
 
   return(result)
 }
 
 #### sparsification ------------------------------------------------------------
 
-#' Simulate dropouts via different functions on synthetic bulk data
+#' Simulate sequencing-depth dropouts on synthetic bulk data
 #'
 #' @description
-#' This function induces expression-level dependent sparsity on the data. The
-#' two possible functions are:
-#'
-#' **Logistic function:**
-#'
-#' With dropout probability defined as:
-#'
-#' ```
-#' P(dropout) = clamp(1 / (1 + exp(shape * (ln(exp+1) - ln(midpoint+1)))), 0.3, 0.8) * (1 - global_sparsity) + global_sparsity
-#' ```
-#'
-#' with the following characteristics:
-#'
-#' - Plateaus at global_sparsity dropout for high expression genes
-#' - Partial dropout preserves count structure via binomial thinning
-#' - Good for preserving variance-mean relationships
-#'
-#'**Power Decay function:**
-#'
-#' With dropout probability defined as:
-#'
-#' ```
-#' P(dropout) = (midpoint / (exp + midpoint))^power * scale_factor * (1 - global_sparsity) + global_sparsity
-#' ```
-#'
-#' with the following characteristics:
-#'
-#' - No plateau - high expression genes get substantial dropout
-#' - Complete dropout only (no partial dropout)
-#' - More uniform dropout across expression range
+#' This function induces Splatter-style sequencing-depth sparsity on the data.
+#' Per sample a size factor `s_j ~ LogNormal(0, capture_efficiency_sigma)` is
+#' drawn, giving a target library size of `target_library_size * s_j`. Each gene
+#' is then binomially thinned to approach that target, so dropout falls out of
+#' the library size rather than an explicit per-gene dropout curve. Retention
+#' probability is capped at 1, meaning samples already below their target are
+#' left alone rather than upsampled.
 #'
 #' @param object The `synthetic_bulk_data` class.
-#' @param dropout_function String. One of `c("log", "powerdecay")`. These
-#' are the two options to cause dropout in the bulk data.
-#' @param dropout_midpoint Numeric. Controls the midpoint parameter of the
-#' logistic and power decay function.
-#' @param dropout_shape Numeric. Controls the shape parameter of the logistic
-#' function.
-#' @param power_factor Numeric. Controls the power factor of the power decay
-#' function.
-#' @param global_sparsity Numeric. The global sparsity parameter.
-#' @param seed Integer. Random seed for reproducibility purposes.
+#' @param sparsity_params List. The sparsification parameters, see
+#' [bixverse::params_bulk_sparsity()].
 #'
 #' @return `synthetic_bulk_data` with added sparse data.
 #'
 #' @export
+#'
+#' @references Zappia, et al., Genome Biol, 2017
 simulate_dropouts <- function(
   object,
-  dropout_function = c("log", "powerdecay"),
-  dropout_midpoint = 5,
-  dropout_shape = 0.5,
-  power_factor = 0.3,
-  global_sparsity = 0.25,
-  seed = 123L
+  sparsity_params = params_bulk_sparsity()
 ) {
-  dropout_function <- match.arg(dropout_function)
-
   # checks
   checkmate::assertClass(object, "synthetic_bulk_data")
-  checkmate::assertChoice(dropout_function, c("log", "powerdecay"))
-  checkmate::qassert(dropout_midpoint, "N1")
-  checkmate::qassert(dropout_shape, "N1")
-  checkmate::qassert(power_factor, "N1[0, 1]")
-  checkmate::qassert(seed, "I1")
+  assertBulkSparsityParams(sparsity_params)
 
   sparse_counts <- rs_simulate_dropouts(
     count_mat = object$counts,
-    dropout_function = dropout_function,
-    dropout_midpoint = dropout_midpoint,
-    dropout_shape = dropout_shape,
-    power_factor = power_factor,
-    global_sparsity = global_sparsity,
-    seed = seed
+    sparsity_params = sparsity_params
   )
 
   rownames(sparse_counts) <- rownames(object$counts)
   colnames(sparse_counts) <- colnames(object$counts)
 
-  sparsification_params <- list(
-    dropout_function = dropout_function,
-    dropout_midpoint = dropout_midpoint,
-    dropout_shape = dropout_shape,
-    power_factor = power_factor,
-    global_sparsity = global_sparsity,
-    seed = seed
-  )
-
   object$sparse_counts <- sparse_counts
-  attr(object, "dropout_params") <- sparsification_params
+  attr(object, "dropout_params") <- sparsity_params
 
   return(object)
 }

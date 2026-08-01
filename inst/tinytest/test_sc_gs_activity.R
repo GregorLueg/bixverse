@@ -84,19 +84,17 @@ auc_gene_sets <- list(
 
 bad_list <- list(markers = sample(letters, 10))
 
-auc_res_wilcox <- aucell_sc(
-  object = sc_object,
-  gs_list = auc_gene_sets,
-  auc_type = "wilcox",
-  .verbose = FALSE
-)
+auc_methods <- c("wilcox", "recovery", "ap")
 
-auc_res_auroc <- aucell_sc(
-  object = sc_object,
-  gs_list = auc_gene_sets,
-  auc_type = "auroc",
-  .verbose = FALSE
-)
+auc_res <- purrr::map(auc_methods, \(m) {
+  aucell_sc(
+    object = sc_object,
+    gs_list = auc_gene_sets,
+    aucell_params = params_sc_aucell(auc_type = m),
+    .verbose = FALSE
+  )
+})
+names(auc_res) <- auc_methods
 
 obs_table_red <- sc_object[[c("cell_id", "cell_grp")]]
 
@@ -109,99 +107,104 @@ expect_error(
   current = suppressWarnings(aucell_sc(
     object = sc_object,
     gs_list = bad_list,
-    auc_type = "auroc",
     .verbose = FALSE
   )),
   info = paste("aucell: error when provided a list where nothing matches.")
 )
 
-expect_true(
-  current = checkmate::testMatrix(
-    auc_res_wilcox,
-    mode = "numeric",
-    ncols = length(auc_gene_sets),
-    nrows = length(get_cells_to_keep(sc_object)),
-    col.names = "named",
-    row.names = "named"
-  ),
-  info = paste(
-    "aucell results wilcox statistic what you'd expect"
+expect_error(
+  current = params_sc_aucell(auc_type = "auroc"),
+  info = "aucell: the removed auroc statistic errors"
+)
+
+for (m in auc_methods) {
+  expect_true(
+    current = checkmate::testMatrix(
+      auc_res[[m]],
+      mode = "numeric",
+      ncols = length(auc_gene_sets),
+      nrows = length(get_cells_to_keep(sc_object)),
+      col.names = "named",
+      row.names = "named"
+    ),
+    info = sprintf("aucell %s - correct matrix shape and naming", m)
   )
+
+  for (ct in names(cells_per_cluster)) {
+    cells_out <- setdiff(
+      get_cell_names(sc_object, filtered = TRUE),
+      cells_per_cluster[[ct]]
+    )
+    marker_col <- sprintf("markers_%s", ct)
+
+    expect_true(
+      current = mean(auc_res[[m]][cells_per_cluster[[ct]], marker_col]) >=
+        mean(auc_res[[m]][cells_out, marker_col]),
+      info = sprintf(
+        "aucell %s - %s markers score higher in the matching cells",
+        m,
+        ct
+      )
+    )
+  }
+}
+
+# standardisation z-scores each gene set across the cells
+auc_res_std <- aucell_sc(
+  object = sc_object,
+  gs_list = auc_gene_sets,
+  aucell_params = params_sc_aucell(auc_type = "ap", standardise = TRUE),
+  .verbose = FALSE
 )
 
 expect_true(
-  current = checkmate::testMatrix(
-    auc_res_auroc,
-    mode = "numeric",
-    ncols = length(auc_gene_sets),
-    nrows = length(get_cells_to_keep(sc_object)),
-    col.names = "named",
-    row.names = "named"
-  ),
-  info = paste(
-    "aucell results auroc statistic what you'd expect"
-  )
+  current = all(abs(colMeans(auc_res_std)) < 1e-3) &&
+    all(abs(apply(auc_res_std, 2, sd) - 1) < 1e-2),
+  info = "aucell standardise - the gene set columns are z-scored"
 )
 
-expect_true(
-  current = mean(auc_res_wilcox[
-    cells_per_cluster$cell_type_1,
-    "markers_cell_type_1"
-  ]) >=
-    mean(auc_res_wilcox[
-      setdiff(
-        get_cell_names(sc_object, filtered = TRUE),
-        cells_per_cluster$cell_type_1
-      ),
-      "markers_cell_type_1"
-    ]),
-  info = paste(
-    "auc values of expected cells",
-    "with expected genes is higher (cell type 1)"
-  )
+# max_rank only bites on the recovery curve
+auc_res_recovery_wide <- aucell_sc(
+  object = sc_object,
+  gs_list = auc_gene_sets,
+  aucell_params = params_sc_aucell(auc_type = "recovery", max_rank = 50),
+  .verbose = FALSE
 )
 
-expect_true(
-  current = mean(auc_res_wilcox[
-    cells_per_cluster$cell_type_2,
-    "markers_cell_type_2"
-  ]) >=
-    mean(auc_res_wilcox[
-      setdiff(
-        get_cell_names(sc_object, filtered = TRUE),
-        cells_per_cluster$cell_type_2
-      ),
-      "markers_cell_type_2"
-    ]),
-  info = paste(
-    "auc values of expected cells",
-    "with expected genes is higher (cell type 2)"
-  )
+expect_false(
+  current = isTRUE(all.equal(
+    auc_res_recovery_wide,
+    auc_res[["recovery"]],
+    check.attributes = FALSE
+  )),
+  info = "aucell max_rank - changes the recovery scores"
 )
 
-expect_true(
-  current = mean(auc_res_wilcox[
-    cells_per_cluster$cell_type_3,
-    "markers_cell_type_3"
-  ]) >=
-    mean(auc_res_wilcox[
-      setdiff(
-        get_cell_names(sc_object, filtered = TRUE),
-        cells_per_cluster$cell_type_3
-      ),
-      "markers_cell_type_3"
-    ]),
-  info = paste(
-    "auc values of expected cells",
-    "with expected genes is higher (cell type 3)"
-  )
+auc_res_wilcox_wide <- aucell_sc(
+  object = sc_object,
+  gs_list = auc_gene_sets,
+  aucell_params = params_sc_aucell(auc_type = "wilcox", max_rank = 50),
+  .verbose = FALSE
 )
 
-expect_true(
-  current = all(diag(cor(auc_res_wilcox, auc_res_auroc)) >= 0.99),
-  info = paste(
-    "auc values between the two methods are highly correlated"
-  )
+expect_equivalent(
+  current = auc_res_wilcox_wide,
+  target = auc_res[["wilcox"]],
+  info = "aucell max_rank - ignored by the wilcox statistic"
+)
+
+# the streamed path chunks the cells, the results must not care
+auc_res_streamed <- aucell_sc(
+  object = sc_object,
+  gs_list = auc_gene_sets,
+  streaming = TRUE,
+  .verbose = FALSE
+)
+
+expect_equivalent(
+  current = auc_res_streamed,
+  target = auc_res[["wilcox"]],
+  info = "aucell - streamed and in-memory paths agree"
 )
 
 

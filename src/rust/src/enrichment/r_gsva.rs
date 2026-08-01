@@ -101,8 +101,8 @@ fn rs_prepare_gsva_gs(
 /// (needs to be null indexed). See [bixverse::rs_prepare_gsva_gs()].
 /// @param tau Float. Tau parameter, usual recommendation is to use `1.0` here.
 /// Larger values emphasise the tails more.
-/// @param gaussian Boolean. If `TRUE` the Gaussian kernel will be used, if
-/// `FALSE` the Poisson kernel will be used.
+/// @param kernel String. One of `c("gaussian", "poisson", "none")`. The
+/// kernel function to use.
 /// @param max_diff Boolean. Scoring mode: `TRUE` = difference, `FALSE` = larger
 /// absolute value
 /// @param abs_rank Booelan. If `TRUE` = pos-neg, `FALSE` = pos+neg
@@ -116,7 +116,7 @@ fn rs_gsva(
     exp: RMatrix<f64>,
     gs_list: List,
     tau: f64,
-    gaussian: bool,
+    kernel: String,
     max_diff: bool,
     abs_rank: bool,
     timings: bool,
@@ -125,15 +125,15 @@ fn rs_gsva(
 
     let gs_indices = get_gsva_gs_indices(gs_list)?;
 
-    let results = gsva(
-        &exp,
-        &gs_indices,
-        gaussian,
-        tau,
-        max_diff,
-        abs_rank,
-        timings,
-    );
+    let kernel = parse_gsva_kernel(&kernel).unwrap_or_else(|| {
+        println!(
+            "Unknown string provided: {:?} - defaulting to Gaussian",
+            kernel,
+        );
+        GsvaKernel::default()
+    });
+
+    let results = gsva(&exp, &gs_indices, kernel, tau, max_diff, abs_rank, timings);
 
     Ok(faer_to_r_matrix(results.as_ref()))
 }

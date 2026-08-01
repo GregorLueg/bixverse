@@ -14,8 +14,10 @@
 #'
 #' @param object `MetaCells` class.
 #' @param original_cell_type Character vector. The original cell type
-#' annotations. The indices need to match with the original cell indices used
-#' to generate the meta-cells! (1-indexed)
+#' annotations, in the row order of the full (unfiltered) obs table of the
+#' object the meta cells came from, i.e. `get_sc_obs(x)$<column>`. Meta cell
+#' memberships are stored as 1-indexed positions in that space, so a vector
+#' restricted to the QC-passing cells will silently give wrong purities.
 #'
 #' @returns The `MetaCells` with an added columns to the observation table
 #' with the purity measures
@@ -40,6 +42,34 @@ S7::method(calc_meta_cell_purity, MetaCells) <- function(
   # checks
   checkmate::assertTRUE(S7::S7_inherits(object, MetaCells))
   checkmate::qassert(original_cell_type, "S+")
+
+  # memberships index into the full obs space; a short vector would silently
+  # recycle or produce NA rather than error
+  assignment <- S7::prop(object, "original_assignment")
+  n_cells <- assignment$n_cells
+
+  # a merged object only has one obs space if all its sources shared a parent
+  if (isTRUE(S7::prop(object, "other_data")$merged)) {
+    source_cells <- unique(purrr::map_dbl(assignment$per_source, "n_cells"))
+    if (length(source_cells) > 1L) {
+      stop(paste(
+        "The meta cells were merged from sources with different obs spaces,",
+        "so `original_cell_idx` cannot be resolved against a single column.",
+        "Calculate the purity per source before merging."
+      ))
+    }
+  }
+
+  if (length(original_cell_type) != n_cells) {
+    stop(sprintf(
+      paste(
+        "`original_cell_type` has %i entries but the meta cells were built",
+        "over %i original cells. Pass the unfiltered obs column."
+      ),
+      length(original_cell_type),
+      n_cells
+    ))
+  }
 
   # calculate purity
   purity <- purrr::map_dbl(

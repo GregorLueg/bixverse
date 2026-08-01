@@ -48,12 +48,13 @@ fn rs_extract_counts_plots(
     clip: Option<f32>,
 ) -> Result<Vec<f64>> {
     let cell_indices = cell_indices.r_int_convert();
+    let reader = ParallelSparseReader::new(f_path).to_extendr()?;
 
     let counts = if norm {
-        let raw_counts = extract_raw_counts(f_path, &cell_indices, gene_index).to_extendr()?;
+        let raw_counts = extract_raw_counts(&reader, &cell_indices, gene_index).to_extendr()?;
         raw_counts.iter().map(|x| *x as f32).collect()
     } else {
-        extract_norm_counts(f_path, &cell_indices, gene_index, scale, clip).to_extendr()?
+        extract_norm_counts(&reader, &cell_indices, gene_index, scale, clip).to_extendr()?
     };
 
     Ok(counts.r_float_convert())
@@ -88,8 +89,9 @@ fn rs_extract_several_genes_plots(
 ) -> Result<List> {
     let cell_indices = cell_indices.r_int_convert();
     let gene_indices = gene_indices.r_int_convert();
+    let reader = ParallelSparseReader::new(f_path).to_extendr()?;
 
-    let all_counts = extract_norm_counts_multi(f_path, &cell_indices, &gene_indices, scale, clip)
+    let all_counts = extract_norm_counts_multi(&reader, &cell_indices, &gene_indices, scale, clip)
         .to_extendr()?;
 
     let mut res = List::new(all_counts.len());
@@ -138,9 +140,10 @@ fn rs_extract_grouped_gene_stats(
     let cell_indices = cell_indices.r_int_convert();
     let gene_indices = gene_indices.r_int_convert();
     let group_ids = group_ids.r_int_convert();
+    let reader = ParallelSparseReader::new(f_path).to_extendr()?;
 
     let gene_res: GroupedGeneStats = extract_grouped_gene_stats(
-        f_path,
+        &reader,
         &cell_indices,
         &gene_indices,
         &group_ids,

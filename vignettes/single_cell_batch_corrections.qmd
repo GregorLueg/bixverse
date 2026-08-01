@@ -22,7 +22,7 @@ from multiple experiments, technologies, or laboratories are combined, cells
 tend to group by their source rather than by cell type. Batch correction methods
 aim to remove these technical artefacts whilst preserving biological variation.
 
-`bixverse` provides three batch correction approaches, each with different
+`bixverse` provides four batch correction approaches, each with different
 trade-offs:
 
 - **fastMNN** ([Haghverdi, et al., 2018](https://doi.org/10.1038/nbt.4091))
@@ -46,6 +46,15 @@ takes a fundamentally different approach. Rather than correcting an embedding,
 it constructs a batch-balanced k-nearest neighbour graph by building separate
 neighbour indices per batch. The corrected graph can then be used directly for
 clustering and visualisation.
+
+- **Seurat anchors** ([Stuart, et al., 2019](https://doi.org/10.1016/j.cell.2019.05.031))
+find pairs of cells that are mutual nearest neighbours in a space shared by two
+batches, score them by how much of their neighbourhood they share, and use them
+to pull one batch onto the other. Two flavours are available. CCA builds the
+shared space from canonical correlations and corrects hardest, which suits
+batches that don't share their cell types. rPCA projects each batch into the
+other's PCA basis instead: cheaper, gentler, and the better default when the
+batches broadly match. Both need batch-aware HVGs.
 
 `bixverse` also provides three metrics for assessing batch correction quality:
 
@@ -460,6 +469,170 @@ embedding_plot_sc(
   )
 ```
 
+### Seurat CCA
+
+Seurat's anchor methods take a different route. For each pair of batches they
+find cells that are mutual nearest neighbours in a shared space, treat those
+pairs as anchors, score them by how much of their neighbourhood they share, and
+then apply a kernel-weighted correction that pulls the query batch onto the
+reference. Batches get merged in the order of their pairwise anchor counts.
+
+For CCA the shared space is a canonical correlation embedding computed per
+batch pair. Anchors also get filtered in gene space before scoring, which is
+CCA-only in Seurat.
+
+A few things differ from Seurat's reference implementation:
+
+- The per-gene `ScaleData` step is skipped. We work directly from per-cell
+  standardised log-normalised HVG expression.
+- `M = X1^T @ X2` is never materialised. The canonical correlations come from a
+  matrix-free randomised SVD, so memory stays at `O((n1 + n2) * num_cc)` rather
+  than `n1 x n2`. On big batch pairs that is the difference between running and
+  not running.
+- The correction is applied to the embedding (dims x cells), not to full
+  log-expression.
+- The effective CC rank is `max(num_cc, dims)`, not `num_cc`.
+
+Anchor structure comes out close to identical. Like fastMNN, CCA wants
+batch-aware HVGs, so we reuse the ones computed above.
+
+```{r}
+#| label: seurat cca
+sc_object <- seurat_cca_sc(
+  object = sc_object,
+  batch_hvg_genes = batch_aware_hvg$hvg_gene_idx,
+  batch_column = "exp_id"
+)
+
+sc_object <- find_neighbours_sc(
+  object = sc_object,
+  embd_to_use = "cca",
+  neighbours_params = params_sc_neighbours()
+)
+```
+
+```{r}
+#| label: seurat cca metrics
+kbet_score_post_cca <- calculate_kbet_sc(
+  sc_object,
+  batch_column = "exp_id"
+)
+asw_score_post_cca <- calculate_batch_asw_sc(
+  sc_object,
+  embd_to_use = "cca",
+  batch_column = "exp_id"
+)
+lisi_score_post_cca <- calculate_batch_lisi_sc(
+  sc_object,
+  batch_column = "exp_id"
+)
+
+kbet_score_post_cca
+asw_score_post_cca
+lisi_score_post_cca
+```
+
+```{r}
+#| label: seurat cca tsne
+sc_object <- tsne_sc(object = sc_object, slot_name = "tsne_cca", use_knn = TRUE)
+```
+
+```{r}
+#| label: seurat cca plot
+#| fig-width: 7
+#| fig-height: 5
+embedding_plot_sc(
+  sc_object,
+  embedding = "tsne_cca",
+  colour_by = "exp_id",
+  label_by = "exp_id",
+  discrete = TRUE
+) +
+  labs(
+    title = "Seurat CCA batch correction",
+    colour = "Batch:"
+  )
+```
+
+### Seurat rPCA
+
+rPCA runs the same anchor pipeline on a cheaper shared space. Instead of
+computing canonical correlations, each batch keeps its own PCA basis and the
+other batch's expression is projected into it. Cross-batch neighbour queries
+then happen in these projected bases.
+
+The trade-off is the usual one: rPCA is faster and corrects less aggressively,
+which makes it the safer choice when your batches share most of their cell
+types. CCA is the one to reach for when they don't. As in Seurat, no gene-space
+anchor filter runs here, that step is CCA-only.
+
+```{r}
+#| label: seurat rpca
+sc_object <- seurat_rpca_sc(
+  object = sc_object,
+  batch_hvg_genes = batch_aware_hvg$hvg_gene_idx,
+  batch_column = "exp_id"
+)
+
+sc_object <- find_neighbours_sc(
+  object = sc_object,
+  embd_to_use = "rpca",
+  neighbours_params = params_sc_neighbours()
+)
+```
+
+```{r}
+#| label: seurat rpca metrics
+kbet_score_post_rpca <- calculate_kbet_sc(
+  sc_object,
+  batch_column = "exp_id"
+)
+asw_score_post_rpca <- calculate_batch_asw_sc(
+  sc_object,
+  embd_to_use = "rpca",
+  batch_column = "exp_id"
+)
+lisi_score_post_rpca <- calculate_batch_lisi_sc(
+  sc_object,
+  batch_column = "exp_id"
+)
+
+kbet_score_post_rpca
+asw_score_post_rpca
+lisi_score_post_rpca
+```
+
+```{r}
+#| label: seurat rpca tsne
+sc_object <- tsne_sc(
+  object = sc_object,
+  slot_name = "tsne_rpca",
+  use_knn = TRUE
+)
+```
+
+```{r}
+#| label: seurat rpca plot
+#| fig-width: 7
+#| fig-height: 5
+embedding_plot_sc(
+  sc_object,
+  embedding = "tsne_rpca",
+  colour_by = "exp_id",
+  label_by = "exp_id",
+  discrete = TRUE
+) +
+  labs(
+    title = "Seurat rPCA batch correction",
+    colour = "Batch:"
+  )
+```
+
+One caveat worth knowing about both anchor methods: on data that already mixes
+well they have nothing to gain, and the correction can nudge the batch metrics
+slightly in the wrong direction while still sharpening the cell type structure.
+Check your uncorrected metrics before reaching for them.
+
 ### BBKNN
 
 BBKNN constructs a batch-balanced kNN graph rather than correcting an
@@ -536,6 +709,13 @@ when you provide only one batch effect to regress out.
 substantially across batches. The mutual nearest neighbour approach is less
 sensitive to this because it only aligns cells that have a plausible biological
 match in another batch.
+
+- **Seurat CCA and rPCA** are the anchor-based options. Like fastMNN they only
+align cells with a plausible match in another batch, so they hold up when cell
+type composition differs. They are the heaviest of the five though, and on data
+that already mixes well they can make the batch metrics slightly worse. rPCA is
+the cheaper and gentler of the two and a sensible default; go to CCA when the
+batches genuinely don't share their cell types.
 
 - **BBKNN** is useful when you want to avoid modifying the embedding at all.
 The batch-balanced graph can be passed directly to graph-based clustering

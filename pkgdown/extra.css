@@ -1,4 +1,9 @@
-h2#citation ~ pre {
-  background-color: #0d1b2e !important;
-  color: #839496 !important;
+/* pandoc renders task lists as live checkboxes wrapped in <label>; freeze them
+   but keep the links inside clickable */
+.task-list label {
+  pointer-events: none;
+}
+
+.task-list label a {
+  pointer-events: auto;
 }

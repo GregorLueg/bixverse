@@ -179,11 +179,6 @@ expect_true(
 
 ### expected data --------------------------------------------------------------
 
-expected_ica_meta_logcosh <- data.table::data.table(
-  component = sprintf("IC_%i", 1:4),
-  stability = c(0.7642566, 0.7246840, 0.5724235, 0.7190692)
-)
-
 expected_ica_x1_mat <- qs2::qs_read("./test_data/ica_class_x1.qs")
 expected_ica_k_mat <- qs2::qs_read("./test_data/ica_class_k_mat.qs")
 expected_ica_stability_res <- qs2::qs_read(
@@ -204,18 +199,19 @@ expected_ica_a_exp_mat <- qs2::qs_read(
 
 ### gex synthetic data ---------------------------------------------------------
 
-test_data <- rs_generate_bulk_rnaseq(
-  num_samples = 100L,
-  num_genes = 1000L,
-  seed = 123L,
-  add_modules = TRUE,
-  module_sizes = c(100L, 100L, 100L)
+# The non-Gaussian generator is the one ICA is identifiable on, see
+# params_synthetic_bulk_rnaseq().
+test_data <- synthetic_bulk_cor_matrix(
+  params_synthetic_bulk_rnaseq(
+    num_samples = 100L,
+    num_genes = 1000L,
+    module_sizes = c(100L, 100L, 100L),
+    generator = "non_gaussian_factor",
+    seed = 123L
+  )
 )
 
 norm_counts <- edgeR::cpm(test_data$counts, log = TRUE)
-
-rownames(norm_counts) <- sprintf("gene_%i", 1:1000)
-colnames(norm_counts) <- sprintf("sample_%i", 1:100)
 
 data <- t(norm_counts)
 
@@ -229,7 +225,7 @@ meta_data <- data.table::data.table(
 ica_test <- BulkCoExp(raw_data = data, meta_data = meta_data)
 
 expect_warning(
-  current = ica_processing(ica_test, .verbose = FALSE),
+  current = ica_processing(ica_test, .verbose = TRUE),
   info = "ica bulk coexp - warning without pre-processed"
 )
 
@@ -250,6 +246,11 @@ expect_equal(
   target = expected_ica_x1_mat,
   info = "ica bulk coexp - x1 matrix"
 )
+
+if (identical(Sys.getenv("REGEN"), "1")) {
+  qs2::qs_save(ica_test@processed_data$K, "./test_data/ica_class_k_mat.qs")
+  qs2::qs_save(ica_test@processed_data$X1, "./test_data/ica_class_x1.qs")
+}
 
 ### ica runs -------------------------------------------------------------------
 
@@ -320,23 +321,80 @@ expect_true(
   info = paste("ica bulk coexp - stability: mutual info results")
 )
 
+if (identical(Sys.getenv("REGEN"), "1")) {
+  qs2::qs_save(ica_stability_res, "./test_data/ica_class_stability_res.qs")
+}
+
 ### class (logcosh) ------------------------------------------------------------
 
 ica_test <- ica_stabilised_results(ica_test, no_comp = 3L, ica_type = "logcosh")
 
 results <- get_results(ica_test)
 
-expect_equal(
-  current = results$S,
-  target = expected_ica_s_logcosh_mat,
-  info = paste("ICA class - S matrix (logcosh)")
+expect_true(
+  current = inherits(results, "BulkModuleResult"),
+  info = "ICA class - final_results is a BulkModuleResult"
 )
 
 expect_equal(
-  current = results$A,
-  target = expected_ica_a_logcosh_mat,
-  info = paste("ICA class - A matrix (logcosh)")
+  current = get_factors(results, which = "gene_loadings"),
+  target = t(expected_ica_s_logcosh_mat),
+  info = paste("ICA class - gene_loadings (logcosh, transposed S)")
 )
+
+expect_equal(
+  current = get_factors(results, which = "sample_activity"),
+  target = expected_ica_a_logcosh_mat,
+  info = paste("ICA class - sample_activity (logcosh, A)")
+)
+
+expect_true(
+  current = data.table::is.data.table(get_modules(results)),
+  info = "ICA class - get_modules() returns a data.table (logcosh)"
+)
+
+### membership is sparse and non-exclusive -------------------------------------
+
+ica_modules_dt <- get_modules(results)
+
+expect_true(
+  current = data.table::uniqueN(ica_modules_dt$gene) < ncol(data),
+  info = "ICA class - membership is sparse, not every feature is assigned"
+)
+
+expect_true(
+  current = ica_modules_dt[, .N, by = gene][N > 1, .N] > 0,
+  info = "ICA class - a gene can load on several components and belong to several modules"
+)
+
+expect_true(
+  current = all(c("loading", "sign", "z") %in% names(ica_modules_dt)),
+  info = "ICA class - membership reports loading, sign and the threshold statistic"
+)
+
+expect_true(
+  current = nrow(get_modules(get_results(ica_stabilised_results(
+    ica_test,
+    no_comp = 3L,
+    ica_type = "logcosh",
+    membership_params = params_module_membership(method = "fdr")
+  )))) >
+    0L,
+  info = "ICA class - the fdr membership method also returns modules"
+)
+
+# The fixtures keep the raw ICA `S` orientation (k x genes), hence the transpose
+# on the way in and on the way out.
+if (identical(Sys.getenv("REGEN"), "1")) {
+  qs2::qs_save(
+    t(get_factors(results, which = "gene_loadings")),
+    "./test_data/ica_s_matrix_logcosh.qs"
+  )
+  qs2::qs_save(
+    get_factors(results, which = "sample_activity"),
+    "./test_data/ica_a_matrix_logcosh.qs"
+  )
+}
 
 ### class (exp) ----------------------------------------------------------------
 
@@ -345,13 +403,24 @@ ica_test <- ica_stabilised_results(ica_test, no_comp = 3L, ica_type = "exp")
 results <- get_results(ica_test)
 
 expect_equal(
-  current = results$S,
-  target = expected_ica_s_exp_mat,
-  info = paste("ICA class - S matrix (exp)")
+  current = get_factors(results, which = "gene_loadings"),
+  target = t(expected_ica_s_exp_mat),
+  info = paste("ICA class - gene_loadings (exp, transposed S)")
 )
 
 expect_equal(
-  current = results$A,
+  current = get_factors(results, which = "sample_activity"),
   target = expected_ica_a_exp_mat,
-  info = paste("ICA class - A matrix (exp)")
+  info = paste("ICA class - sample_activity (exp, A)")
 )
+
+if (identical(Sys.getenv("REGEN"), "1")) {
+  qs2::qs_save(
+    t(get_factors(results, which = "gene_loadings")),
+    "./test_data/ica_s_matrix_exp.qs"
+  )
+  qs2::qs_save(
+    get_factors(results, which = "sample_activity"),
+    "./test_data/ica_a_matrix_exp.qs"
+  )
+}

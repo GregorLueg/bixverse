@@ -9,7 +9,7 @@ library(MetBrewer)
 ##
 
 ## Loading data
-data_path = "~/Datascience/spatial_rnaseq/data/ND_Rexach_2024"
+data_path <- "~/Datascience/spatial_rnaseq/data/ND_Rexach_2024"
 sc_object <- SingleCells(dir_data = data_path)
 params_sc_min_quality()
 sc_object <- bixverse::load_h5ad(

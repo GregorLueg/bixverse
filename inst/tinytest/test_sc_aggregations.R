@@ -215,7 +215,7 @@ hdwgcna <- generate_bt_meta_cells_sc(
 
 hdwgcna <- calc_meta_cell_purity(
   hdwgcna,
-  original_cell_type = unlist(sc_object[["cell_grp"]])
+  original_cell_type = as.character(get_sc_obs(sc_object)$cell_grp)
 )
 
 expect_true(
@@ -282,10 +282,10 @@ hdwgcna_small <- generate_bt_meta_cells_sc(
 
 hdwgcna_small <- calc_meta_cell_purity(
   hdwgcna_small,
-  original_cell_type = unlist(sc_object[["cell_grp"]])
+  original_cell_type = as.character(get_sc_obs(sc_object)$cell_grp)
 )
 
-original_cell_type = unlist(sc_object[["cell_grp"]])
+original_cell_type <- as.character(get_sc_obs(sc_object)$cell_grp)
 
 right_cell_types <- purrr::map_lgl(
   hdwgcna_small[[]]$original_cell_idx,
@@ -343,7 +343,7 @@ expect_true(
 
 seacells <- calc_meta_cell_purity(
   seacells,
-  original_cell_type = unlist(sc_object[["cell_grp"]])
+  original_cell_type = as.character(get_sc_obs(sc_object)$cell_grp)
 )
 
 expect_true(
@@ -386,7 +386,7 @@ seacells_small <- generate_seacells_sc(
 
 seacells_small <- calc_meta_cell_purity(
   seacells_small,
-  original_cell_type = unlist(sc_object[["cell_grp"]])
+  original_cell_type = as.character(get_sc_obs(sc_object)$cell_grp)
 )
 
 right_cell_types <- purrr::map_lgl(
@@ -449,7 +449,7 @@ expect_true(
 
 supercells <- calc_meta_cell_purity(
   supercells,
-  original_cell_type = unlist(sc_object[["cell_grp"]])
+  original_cell_type = as.character(get_sc_obs(sc_object)$cell_grp)
 )
 
 expect_true(
@@ -489,7 +489,7 @@ supercell_small <- generate_supercells_sc(
 
 supercell_small <- calc_meta_cell_purity(
   supercell_small,
-  original_cell_type = unlist(sc_object[["cell_grp"]])
+  original_cell_type = as.character(get_sc_obs(sc_object)$cell_grp)
 )
 
 right_cell_types <- purrr::map_lgl(
@@ -513,6 +513,266 @@ expect_true(
   info = "no unexpected cell types in subsetted version - supercell"
 )
 
+## non-contiguous cells to keep -------------------------------------------------
+
+# The tests above load with QC parameters, which drops failing cells at write
+# time and leaves cells_to_keep as 0..n. That hides any confusion between the
+# embedding row space and the count file row space. Here the data is loaded
+# unfiltered and narrowed afterwards via set_cells_to_keep, so cells_to_keep is
+# deliberately non-contiguous and the two spaces genuinely differ.
+
+gap_temp_dir <- file.path(tempdir(), "sc_aggregations_gaps")
+dir.create(gap_temp_dir, recursive = TRUE, showWarnings = FALSE)
+
+gap_object <- SingleCells(dir_data = gap_temp_dir)
+
+gap_object <- load_r_data(
+  object = gap_object,
+  counts = single_cell_test_data$counts,
+  obs = single_cell_test_data$obs,
+  var = single_cell_test_data$var,
+  sc_qc_param = params_sc_min_quality(
+    min_unique_genes = 1L,
+    min_lib_size = 1L,
+    min_cells = 1L
+  ),
+  streaming = 0L,
+  .verbose = FALSE
+)
+
+gap_all_ids <- get_sc_obs(gap_object)$cell_id
+gap_n_total <- length(gap_all_ids)
+
+# every other cell, so no working row lines up with its count file row
+gap_object <- set_cells_to_keep(
+  gap_object,
+  gap_all_ids[seq(1L, gap_n_total, by = 2L)]
+)
+
+gap_object <- find_hvg_sc(gap_object, hvg_no = hvg_to_keep, .verbose = FALSE)
+gap_object <- calculate_pca_sc(gap_object, no_pcs = no_pcs, .verbose = FALSE)
+gap_object <- find_neighbours_sc(
+  gap_object,
+  neighbours_params = params_sc_neighbours(knn = list(k = 15L)),
+  .verbose = FALSE
+)
+
+gap_keep_1idx <- get_cells_to_keep(gap_object) + 1L
+
+expect_false(
+  current = identical(gap_keep_1idx, seq_along(gap_keep_1idx)),
+  info = "gap fixture - cells_to_keep is genuinely non-contiguous"
+)
+
+# maps a count file row onto the row of the source matrix it was written from
+gap_file_to_src <- match(
+  get_sc_obs(gap_object)$cell_id,
+  rownames(single_cell_test_data$counts)
+)
+
+# Aggregated counts must equal the sum of the member cells' raw counts. This is
+# the check that actually catches a wrong index space, since misindexed members
+# still look plausible on their own.
+expect_counts_aggregate <- function(mc_obj, label) {
+  members <- mc_obj[[]]$original_cell_idx
+  raw <- get_sc_counts(mc_obj, assay = "raw")
+  gene_match <- match(colnames(raw), colnames(single_cell_test_data$counts))
+
+  to_check <- seq_len(min(5L, nrow(raw)))
+  agree <- purrr::map_lgl(to_check, function(i) {
+    src_rows <- gap_file_to_src[members[[i]]]
+    manual <- Matrix::colSums(
+      single_cell_test_data$counts[src_rows, , drop = FALSE]
+    )
+    isTRUE(all.equal(as.numeric(manual[gene_match]), as.numeric(raw[i, ])))
+  })
+
+  expect_true(
+    current = all(unlist(members) %in% gap_keep_1idx),
+    info = sprintf("%s - members stay inside cells_to_keep", label)
+  )
+
+  expect_true(
+    current = all(agree),
+    info = sprintf("%s - aggregated counts match the member cells", label)
+  )
+
+  expect_equal(
+    current = mc_obj@original_assignment$n_cells,
+    target = gap_n_total,
+    info = sprintf("%s - assignments span the full count file", label)
+  )
+}
+
+gap_hdwgcna <- generate_bt_meta_cells_sc(
+  gap_object,
+  sc_meta_cell_params = params_sc_bt_metacells(target_no_metacells = 50L),
+  .verbose = FALSE
+)
+
+expect_counts_aggregate(gap_hdwgcna, "hdwgcna non-contiguous")
+
+gap_seacells <- generate_seacells_sc(
+  gap_object,
+  seacell_params = params_sc_seacells(n_sea_cells = 10L),
+  .verbose = FALSE
+)
+
+expect_counts_aggregate(gap_seacells, "seacells non-contiguous")
+
+gap_supercells <- generate_supercells_sc(
+  gap_object,
+  sc_supercell_params = params_sc_supercell(knn = list(k = 10L)),
+  .verbose = FALSE
+)
+
+expect_counts_aggregate(gap_supercells, "supercell non-contiguous")
+
+### cells_to_use agrees with the default path ----------------------------------
+
+# Asking for every kept cell explicitly must land in the same index space as
+# asking for nothing at all.
+gap_hdwgcna_use <- generate_bt_meta_cells_sc(
+  gap_object,
+  sc_meta_cell_params = params_sc_bt_metacells(target_no_metacells = 50L),
+  cells_to_use = get_sc_obs(gap_object, filtered = TRUE)$cell_id,
+  .verbose = FALSE
+)
+
+expect_true(
+  current = all(
+    unlist(gap_hdwgcna_use[[]]$original_cell_idx) %in% gap_keep_1idx
+  ),
+  info = "hdwgcna - cells_to_use path uses the same index space as the default"
+)
+
+expect_equal(
+  current = gap_hdwgcna_use@original_assignment$n_cells,
+  target = gap_n_total,
+  info = "hdwgcna - cells_to_use path reports the full count file size"
+)
+
+### purity guards against the wrong label vector -------------------------------
+
+expect_error(
+  current = calc_meta_cell_purity(
+    gap_hdwgcna,
+    original_cell_type = unlist(gap_object[["cell_grp"]])
+  ),
+  info = paste(
+    "calc_meta_cell_purity rejects a filtered label vector, which would",
+    "otherwise silently mis-attribute cell types"
+  )
+)
+
+expect_silent(
+  current = calc_meta_cell_purity(
+    gap_hdwgcna,
+    original_cell_type = as.character(get_sc_obs(gap_object)$cell_grp)
+  ),
+  info = "calc_meta_cell_purity accepts the unfiltered label vector"
+)
+
+## meta cells on a subset -------------------------------------------------------
+
+subset_object <- SingleCellsSubset(
+  sc_object = sc_object,
+  grouping_column = "cell_grp",
+  group = "cell_type_1"
+)
+
+subset_object <- find_hvg_sc(
+  subset_object,
+  hvg_no = hvg_to_keep,
+  .verbose = FALSE
+)
+subset_object <- calculate_pca_sc(
+  subset_object,
+  no_pcs = no_pcs,
+  .verbose = FALSE
+)
+subset_object <- find_neighbours_sc(
+  subset_object,
+  neighbours_params = params_sc_neighbours(knn = list(k = 10L)),
+  .verbose = FALSE
+)
+
+subset_parent_rows <- get_cells_to_keep(subset_object) + 1L
+parent_cell_grp <- as.character(get_sc_obs(sc_object)$cell_grp)
+
+expect_subset_metacells <- function(mc_obj, label) {
+  members <- unlist(mc_obj[[]]$original_cell_idx)
+
+  expect_true(
+    current = all(members %in% subset_parent_rows),
+    info = sprintf("%s - members stay inside the subset", label)
+  )
+
+  expect_true(
+    current = all(parent_cell_grp[members] == "cell_type_1"),
+    info = sprintf("%s - members carry the subset group label", label)
+  )
+
+  expect_true(
+    current = checkmate::testDataTable(get_sc_var(mc_obj)),
+    info = sprintf("%s - var table survives the subset", label)
+  )
+}
+
+subset_hdwgcna <- generate_bt_meta_cells_sc(
+  subset_object,
+  sc_meta_cell_params = params_sc_bt_metacells(
+    target_no_metacells = 20L,
+    knn = list(k = 10L)
+  ),
+  .verbose = FALSE
+)
+
+expect_subset_metacells(subset_hdwgcna, "hdwgcna subset")
+
+subset_seacells <- generate_seacells_sc(
+  subset_object,
+  seacell_params = params_sc_seacells(n_sea_cells = 8L),
+  .verbose = FALSE
+)
+
+expect_subset_metacells(subset_seacells, "seacells subset")
+
+subset_supercells <- generate_supercells_sc(
+  subset_object,
+  sc_supercell_params = params_sc_supercell(knn = list(k = 10L)),
+  .verbose = FALSE
+)
+
+expect_subset_metacells(subset_supercells, "supercell subset")
+
+### pseudo bulking on a subset -------------------------------------------------
+
+subset_cell_ids <- get_sc_obs(subset_object)$cell_id
+
+subset_pseudobulk <- get_pseudobulked_sc(
+  object = subset_object,
+  cell_list = list(
+    grp_a = subset_cell_ids[1:20],
+    grp_b = subset_cell_ids[21:40]
+  ),
+  return_format = "dense",
+  .verbose = FALSE
+)
+
+expect_equal(
+  current = dim(subset_pseudobulk),
+  target = c(2L, nrow(get_sc_var(subset_object))),
+  info = "pseudo bulking on a subset returns groups x genes"
+)
+
+expect_equal(
+  current = rownames(subset_pseudobulk),
+  target = c("grp_a", "grp_b"),
+  info = "pseudo bulking on a subset keeps the group names"
+)
+
 # clean up ---------------------------------------------------------------------
 
 on.exit(unlink(test_temp_dir, recursive = TRUE, force = TRUE), add = TRUE)
+on.exit(unlink(gap_temp_dir, recursive = TRUE, force = TRUE), add = TRUE)

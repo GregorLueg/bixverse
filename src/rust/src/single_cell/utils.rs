@@ -313,7 +313,7 @@ pub fn process_cell_markers(r_list: List) -> Result<Vec<CellTypeMarkers>> {
         let element = r_list
             .elt(i)?
             .as_list()
-            .ok_or_else(|| Error::Other("missing 'k'".into()))?;
+            .ok_or_else(|| Error::Other(format!("Cell marker element {} is not a list", i)))?;
         let markers = CellTypeMarkers::from_r_list(element)?;
 
         res.push(markers);

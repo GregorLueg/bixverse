@@ -687,79 +687,65 @@ rs_count_zeroes <- function(x) .Call(wrap__rs_count_zeroes, x)
 #' @description
 #' `r lifecycle::badge("experimental")`
 #' Function generates synthetic bulkRNAseq data with heteroskedasticity (lowly
-#' expressed genes show higher variance) and can optionally add correlation
-#' structures for testing purposes.
+#' expressed genes show higher variance) and optional co-expression modules
+#' planted on a latent factor. Alongside the counts it returns the ground truth
+#' (module membership, hub genes, per-gene loadings and the latent factors), so
+#' downstream methods can be scored against what was actually simulated.
 #'
-#' @param num_samples Integer. Number of samples to simulate.
-#' @param num_genes Integer. Number of genes to simulate.
-#' @param seed Integer. Seed for reproducibility.
-#' @param add_modules Boolean. Shall correlation structures be added to the
-#' data.
-#' @param module_sizes `NULL` or vector of sizes of the gene modules. When
-#' `NULL` defaults to `c(300, 250, 200, 300, 500)`. Warning! The sum of this
-#' vector must be ≤ num_genes!
+#' @param synthetic_params List. The synthetic data parameters, see
+#' [bixverse::params_synthetic_bulk_rnaseq()]. Expected elements are
+#' `num_samples`, `num_genes`, `module_sizes` (integer vector, empty means no
+#' modules), `generator` (one of `c("hub_modular", "modular",
+#' "non_negative_factor", "non_gaussian_factor")`), `seed`,
+#' `mean_exp_gamma_shape`, `mean_exp_gamma_scale`, `disp_intercept`,
+#' `disp_slope`, `noise_std`, `factor_std`, `factor_shape`, `factor_scale`,
+#' `loading_mu`, `loading_sigma` and `hub_percentile`.
 #'
 #' @return List with the following elements
 #' \itemize{
-#'     \item counts The matrix of simulated counts.
-#'     \item module_membership Vector defining the module membership.
+#'     \item counts The matrix of simulated counts. Rows are genes, columns
+#'     are samples.
+#'     \item module_membership Vector defining the module membership. `0` is
+#'     background, `1..K` the module identifier.
+#'     \item module_hubs 1-indexed positions of the genes flagged as hubs.
+#'     Empty for the `"modular"` generator, which plants no hubs.
+#'     \item loadings Per-gene loading on its module's latent factor. `0` for
+#'     background genes.
+#'     \item module_factors The latent factor matrix. Rows are modules,
+#'     columns are samples.
 #' }
 #'
 #' @export
 #'
 #' @keywords internal
-rs_generate_bulk_rnaseq <- function(num_samples, num_genes, seed, add_modules, module_sizes) .Call(wrap__rs_generate_bulk_rnaseq, num_samples, num_genes, seed, add_modules, module_sizes)
+rs_generate_bulk_rnaseq <- function(synthetic_params) .Call(wrap__rs_generate_bulk_rnaseq, synthetic_params)
 
 #' Sparsify bulkRNAseq like data
 #'
 #' @description
 #' `r lifecycle::badge("experimental")`
 #' This function takes in a (raw) count matrix (for example from the synthetic
-#' data in bixverse) and applies sparsification to it based on two possible
-#' functions:
+#' data in bixverse) and applies Splatter-style sequencing-depth dropout to it.
+#' Per sample a size factor `s_j ~ LogNormal(0, capture_efficiency_sigma)` is
+#' drawn, giving a target library size of `target_library_size * s_j`. Each
+#' gene is then binomially thinned to approach that target. Retention
+#' probability is capped at 1, so samples below their target are left alone
+#' rather than upsampled.
 #'
-#' **Logistic function:**
-#'
-#' With dropout probability defined as:
-#'
-#' `P(dropout) = clamp(1 / (1 + exp(shape * (ln(exp+1) - ln(midpoint+1)))), 0.3, 0.8) * (1 - global_sparsity) + global_sparsity`
-#'
-#' with the following characteristics:
-#'
-#' - Plateaus at global_sparsity dropout for high expression genes
-#' - Partial dropout preserves count structure via binomial thinning
-#' - Good for preserving variance-mean relationships
-#'
-#' **Power Decay function:**
-#'
-#' With dropout probability defined as:
-#'
-#' `P(dropout) = (midpoint / (exp + midpoint))^power * scale_factor * (1 - global_sparsity) + global_sparsity`
-#'
-#' with the following characteristics:
-#'
-#' - No plateau - high expression genes get substantial dropout
-#' - Complete dropout only (no partial dropout)
-#' - More uniform dropout across expression range
-#'
-#' @param count_mat Numerical matrix. Original numeric matrix.
-#' @param dropout_function String. One of `c("log", "powerdecay")`. Defines
-#' which function will be used to induce the sparsity.
-#' @param dropout_midpoint Numeric. Controls the midpoint parameter of the
-#' logistic and power decay function.
-#' @param dropout_shape Numeric. Controls the shape parameter of the logistic
-#' function.
-#' @param power_factor Numeric. Controls the power factor of the power decay
-#' function.
-#' @param global_sparsity Numeric. The global sparsity parameter.
-#' @param seed Integer. Seed for reproducibility.
+#' @param count_mat Numerical matrix. Original numeric matrix. Rows are genes,
+#' columns are samples.
+#' @param sparsity_params List. The sparsity parameters, see
+#' [bixverse::params_bulk_sparsity()]. Expected elements are `strategy`,
+#' `target_library_size`, `capture_efficiency_sigma` and `seed`.
 #'
 #' @return The sparsified matrix based on the provided parameters.
 #'
 #' @export
 #'
+#' @references Zappia, et al., Genome Biol, 2017
+#'
 #' @keywords internal
-rs_simulate_dropouts <- function(count_mat, dropout_function, dropout_midpoint, dropout_shape, power_factor, global_sparsity, seed) .Call(wrap__rs_simulate_dropouts, count_mat, dropout_function, dropout_midpoint, dropout_shape, power_factor, global_sparsity, seed)
+rs_simulate_dropouts <- function(count_mat, sparsity_params) .Call(wrap__rs_simulate_dropouts, count_mat, sparsity_params)
 
 #' Generates synthetic data for single cell
 #'
@@ -1094,8 +1080,8 @@ rs_prepare_gsva_gs <- function(feature_names, pathway_list, min_size, max_size) 
 #' (needs to be null indexed). See [bixverse::rs_prepare_gsva_gs()].
 #' @param tau Float. Tau parameter, usual recommendation is to use `1.0` here.
 #' Larger values emphasise the tails more.
-#' @param gaussian Boolean. If `TRUE` the Gaussian kernel will be used, if
-#' `FALSE` the Poisson kernel will be used.
+#' @param kernel String. One of `c("gaussian", "poisson", "none")`. The
+#' kernel function to use.
 #' @param max_diff Boolean. Scoring mode: `TRUE` = difference, `FALSE` = larger
 #' absolute value
 #' @param abs_rank Booelan. If `TRUE` = pos-neg, `FALSE` = pos+neg
@@ -1104,7 +1090,7 @@ rs_prepare_gsva_gs <- function(feature_names, pathway_list, min_size, max_size) 
 #' @return Returns a matrix of gene set ES scores x samples.
 #'
 #' @export
-rs_gsva <- function(exp, gs_list, tau, gaussian, max_diff, abs_rank, timings) .Call(wrap__rs_gsva, exp, gs_list, tau, gaussian, max_diff, abs_rank, timings)
+rs_gsva <- function(exp, gs_list, tau, kernel, max_diff, abs_rank, timings) .Call(wrap__rs_gsva, exp, gs_list, tau, kernel, max_diff, abs_rank, timings)
 
 #' Rust version of the ssGSEA algorithm
 #'
@@ -1214,6 +1200,112 @@ rs_hypergeom_test <- function(target_genes, gene_sets, gene_universe, min_overla
 #'
 #' @export
 rs_hypergeom_test_list <- function(target_genes_list, gene_sets, gene_universe, min_overlap, fdr_threshold) .Call(wrap__rs_hypergeom_test_list, target_genes_list, gene_sets, gene_universe, min_overlap, fdr_threshold)
+
+#' Gene rank matrix
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Ranks the columns of a matrix with the tie method.
+#'
+#' @param exp Numerical matrix. The expression matrix (rows = genes, columns =
+#' samples).
+#'
+#' @return Returns a matrix of ranks with the same shape as `exp`.
+#'
+#' @export
+rs_rank_matrix_col <- function(exp) .Call(wrap__rs_rank_matrix_col, exp)
+
+#' Stable-gene rank matrix
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Unit-normalised column ranks computed against a set of stable genes. Use
+#' with the `stable = TRUE` setting of the singscore functions.
+#'
+#' @param exp Numerical matrix. The expression matrix (rows = genes, columns =
+#' samples).
+#' @param stable_gene_indices Integer vector of stable genes. One-indexed.
+#'
+#' @return Returns a matrix of normalised ranks with the same shape as `exp`.
+#'
+#' @export
+rs_rank_matrix_col_stable <- function(exp, stable_gene_indices) .Call(wrap__rs_rank_matrix_col_stable, exp, stable_gene_indices)
+
+#' Rust version of singscore for a single gene set
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Rust-based implementation of singscore for a single up-regulated gene set
+#' with an optional paired down-regulated set.
+#'
+#' @param ranks Numerical matrix. The ranked expression matrix (rows = genes,
+#' columns = samples). Produce with column-wise ranks (standard) or with
+#' [bixverse::rs_rank_matrix_col_stable()] (stable).
+#' @param up_set Integer vector. One-indexed gene indices of the up set.
+#' @param down_set Integer vector or NULL. One-indexed gene indices of the
+#' optional down set.
+#' @param center_score Boolean. Centre scores around 0. Disabled internally
+#' when `known_direction = FALSE`.
+#' @param known_direction Boolean. Whether the up-set direction is known.
+#' Becomes irrelevant when `down_set` is also provided.
+#' @param stable Boolean. If `TRUE`, use stable-gene score bounds.
+#'
+#' @return A named list with `TotalScore`, `TotalDispersion`, and (when
+#' `down_set` is provided) `UpScore`, `UpDispersion`, `DownScore`,
+#' `DownDispersion`.
+#'
+#' @export
+rs_singscore_single <- function(ranks, up_set, down_set, center_score, known_direction, stable) .Call(wrap__rs_singscore_single, ranks, up_set, down_set, center_score, known_direction, stable)
+
+#' Rust version of singscore for many gene sets
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Rust-based implementation of singscore over many gene sets with optional
+#' paired down sets.
+#'
+#' @param ranks Numerical matrix. The ranked expression matrix.
+#' @param up_list List. Up gene sets as zero-indexed indices. See
+#' [bixverse::rs_prepare_gsva_gs()].
+#' @param down_list List or NULL. Paired down gene sets, same length and
+#' ordering as `up_list`.
+#' @param center_score Boolean.
+#' @param known_direction Boolean.
+#' @param stable Boolean.
+#'
+#' @return A named list with
+#' \itemize{
+#'   \item `scores` - Numerical matrix with the scores
+#'   \item `dispersion` - Numerical matrix with the dispersions
+#' }
+#' Both matrices are of shape gene_sets × samples.
+#'
+#' @export
+rs_singscore_multi <- function(ranks, up_list, down_list, center_score, known_direction, stable) .Call(wrap__rs_singscore_multi, ranks, up_list, down_list, center_score, known_direction, stable)
+
+#' Rust version of the singscore permutation test
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' For `n_permutations` iterations, draws random gene indices of the same
+#' total size as the real gene set(s), scores them with the same options as
+#' the real call, and builds a per-sample null distribution. Returns empirical
+#' one-tailed p-values: `max(1 / n_permutations, mean(null > observed))`.
+#'
+#' @param ranks Numerical matrix. The ranked expression matrix.
+#' @param up_set Integer vector. Zero-indexed.
+#' @param down_set Integer vector or NULL.
+#' @param center_score,known_direction,stable Booleans. Should match the
+#' values used for the real [bixverse::rs_singscore_single()] call.
+#' @param n_permutations Integer. Number of random draws (B).
+#' @param seed Integer. RNG seed.
+#'
+#' @return A named list with `observed_scores` (length n_samples),
+#' `null_distribution` (B × n_samples matrix), and `p_values`
+#' (length n_samples).
+#'
+#' @export
+rs_singscore_permutation_test <- function(ranks, up_set, down_set, center_score, known_direction, stable, n_permutations, seed) .Call(wrap__rs_singscore_permutation_test, ranks, up_set, down_set, center_score, known_direction, stable, n_permutations, seed)
 
 #' Rust version of calcaluting the personalised page rank
 #'
@@ -1897,6 +1989,68 @@ rs_ica_iters <- function(x1, k, no_comp, no_random_init, ica_type, random_seed, 
 #' @export
 rs_ica_iters_cv <- function(x, no_comp, no_folds, no_random_init, ica_type, random_seed, ica_params) .Call(wrap__rs_ica_iters_cv, x, no_comp, no_folds, no_random_init, ica_type, random_seed, ica_params)
 
+#' Run NMF (HALS) on a bulk expression matrix (single run)
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Runs a single HALS-NMF fit on a dense matrix. Expects samples x features.
+#' The resulting decomposition `V ~ W H` places `W` (samples x k) as
+#' sample-side factors and `H` (k x features) as feature loadings.
+#'
+#' @param x Numerical matrix. Rows = samples, columns = features.
+#' @param k Integer. Number of latent factors.
+#' @param preprocessing String. One of `c("none", "sd", "sqrt_sd")`.
+#' @param nmf_hals_params Named list. See [bixverse::params_nmf_hals()].
+#' @param seed Integer. Random seed for the NMF initialisation.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @returns A list with the following items
+#' \itemize{
+#'   \item w - The `W` matrix of shape `n_samples x k`.
+#'   \item h - The `H` matrix of shape `k x n_features`.
+#'   \item final_loss - Final reconstruction loss.
+#'   \item n_iter - Number of iterations the algorithm ran for.
+#'   \item converged - Did the NMF algorithm converge.
+#' }
+#'
+#' @export
+#'
+#' @keywords internal
+rs_nmf_single_bulk <- function(x, k, preprocessing, nmf_hals_params, seed, verbose) .Call(wrap__rs_nmf_single_bulk, x, k, preprocessing, nmf_hals_params, seed, verbose)
+
+#' Run multiple NMF (HALS) restarts on a bulk expression matrix
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Runs `n_runs` HALS-NMF fits with random initialisations seeded by
+#' `seed + i`. Expects samples x features.
+#'
+#' @param x Numerical matrix. Rows = samples, columns = features.
+#' @param k Integer. Number of latent factors per run.
+#' @param preprocessing String. One of `c("none", "sd", "sqrt_sd")`.
+#' @param nmf_hals_params Named list. See [bixverse::params_nmf_hals()].
+#' @param n_runs Integer. Number of random restarts.
+#' @param seed Integer. Base random seed. Run `i` uses `seed + i`.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @returns A list with the following items
+#' \itemize{
+#'   \item w_all - Column-bound `W` matrices across all runs, shape
+#'   `n_samples x (k * n_runs)`.
+#'   \item h_per_run - List of `H` matrices, each `k x n_features`.
+#'   \item losses - Numeric vector. Final reconstruction loss per run.
+#'   \item converged - Logical vector. Convergence flag per run.
+#'   \item best_idx - Integer. 1-indexed position of the run with the lowest
+#'   final loss.
+#' }
+#'
+#' @export
+#'
+#' @keywords internal
+rs_nmf_multi_bulk <- function(x, k, preprocessing, nmf_hals_params, n_runs, seed, verbose) .Call(wrap__rs_nmf_multi_bulk, x, k, preprocessing, nmf_hals_params, n_runs, seed, verbose)
+
 #' Generate reciprocal best hits based on set similarities
 #'
 #' @description
@@ -2284,6 +2438,47 @@ rs_sc_type <- function(f_path, cell_indices, cell_markers, sensitivity, weight_f
 #' @keywords internal
 rs_sc_type_cluster_assignment <- function(sc_type_res, cluster_labels) .Call(wrap__rs_sc_type_cluster_assignment, sc_type_res, cluster_labels)
 
+#' Per-cell ScType assignment with optional kNN smoothing
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Assigns cell types per cell instead of per cluster. If a graph is provided,
+#' the score matrix is smoothed via label spreading over that graph before the
+#' per-cell argmax. If cluster labels are provided, the per-cluster composition
+#' and the hybrid assignment (pure clusters keep the cluster-level call, mixed
+#' clusters fall back to the per-cell calls) are returned on top.
+#'
+#' @param sc_type_res List. The ScType results, see `rs_sc_type()`.
+#' @param from,to Optional integer vectors. 1-indexed(!) edges of the sNN
+#' graph. If `NULL`, no smoothing is applied.
+#' @param weights Optional numeric vector. Edge weights, same length as `from`.
+#' @param cluster_labels Optional integer vector. 0-indexed(!) cluster
+#' assignment, of length of the scored cells.
+#' @param params List. The output of `params_sctype_cells()`.
+#'
+#' @returns A list with
+#' \itemize{
+#'   \item cell_types - String vector. The cell types.
+#'   \item assignments - Integer vector. 1-based index into `cell_types` per
+#'   cell, `0L` denoting Unknown.
+#'   \item scores - Numeric vector. Winning score per cell.
+#'   \item margins - Numeric vector. Best minus second best score per cell.
+#'   \item agreement - Numeric vector. Fraction of graph neighbours sharing the
+#'   call. `NULL` if no graph was provided.
+#'   \item hybrid_assignments - Integer vector, as `assignments`. Only present
+#'   if `cluster_labels` was provided.
+#'   \item composition - List with the per-cluster composition. Only present if
+#'   `cluster_labels` was provided.
+#' }
+#'
+#' @references
+#' Ianevski et al., Nat Comm, 2022. Zhou et al., NIPS, 2004.
+#'
+#' @export
+#'
+#' @keywords internal
+rs_sc_type_assign_cells <- function(sc_type_res, from, to, weights, cluster_labels, params) .Call(wrap__rs_sc_type_assign_cells, sc_type_res, from, to, weights, cluster_labels, params)
+
 #' Build a Symphony reference (Rust)
 #'
 #' @description
@@ -2562,6 +2757,74 @@ rs_harmony <- function(pca, harmony_params, batch_labels, seed, verbose) .Call(w
 #'
 #' @export
 rs_harmony_v2 <- function(pca, harmony_params, batch_labels, seed, verbose) .Call(wrap__rs_harmony_v2, pca, harmony_params, batch_labels, seed, verbose)
+
+#' Seurat CCA batch correction in Rust
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' This function implements the canonical correlation analysis (CCA) anchor
+#' integration from Stuart, et al. Anchors are identified in a per-pair
+#' L2-normalised canonical correlation embedding, scored via shared
+#' neighbours, filtered in gene space and then used to apply a kernel-weighted
+#' correction on the union PCA embedding.
+#'
+#' @param f_path_gene String. Path to the `counts_genes.bin` file.
+#' @param f_path_cell String. Path to the `counts_cells.bin` file. Used if
+#' you wish to use the PFlogPF transformation during the optional PCA step.
+#' @param cell_indices Integer. The cell indices to use. (0-indexed!)
+#' @param gene_indices Integer. The gene indices to use. (0-indexed!) Ideally
+#' these are batch-aware highly variable genes.
+#' @param batch_indices Integer vector. These represent to which batch a given
+#' cell belongs. Need to be 0-indexed and contiguous.
+#' @param precomputed_pca Optional PCA matrix. If you want to provide a
+#' pre-computed matrix.
+#' @param cca_params List. Contains all of the Seurat CCA parameters.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#' @param seed Integer. Seed for reproducibility purposes.
+#'
+#' @return The batch-corrected embedding space.
+#'
+#' @export
+#'
+#' @references Stuart, et al., Cell, 2019
+#'
+#' @keywords internal
+rs_seurat_cca <- function(f_path_gene, f_path_cell, cell_indices, gene_indices, batch_indices, precomputed_pca, cca_params, verbose, seed) .Call(wrap__rs_seurat_cca, f_path_gene, f_path_cell, cell_indices, gene_indices, batch_indices, precomputed_pca, cca_params, verbose, seed)
+
+#' Seurat rPCA batch correction in Rust
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' This function implements the reciprocal PCA (rPCA) anchor integration from
+#' Stuart, et al. Each batch keeps its own PCA basis and the other batch's
+#' expression is projected into it. Anchors live in these projected spaces and
+#' are then used to apply a kernel-weighted correction on the union PCA
+#' embedding. Cheaper than CCA and less aggressive in its correction.
+#'
+#' @param f_path_gene String. Path to the `counts_genes.bin` file.
+#' @param f_path_cell String. Path to the `counts_cells.bin` file. Used if
+#' you wish to use the PFlogPF transformation during the optional PCA step.
+#' @param cell_indices Integer. The cell indices to use. (0-indexed!)
+#' @param gene_indices Integer. The gene indices to use. (0-indexed!) Ideally
+#' these are batch-aware highly variable genes.
+#' @param batch_indices Integer vector. These represent to which batch a given
+#' cell belongs. Need to be 0-indexed and contiguous.
+#' @param precomputed_pca Optional PCA matrix. If you want to provide a
+#' pre-computed matrix. The per-batch PCAs are always recomputed.
+#' @param rpca_params List. Contains all of the Seurat rPCA parameters.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#' @param seed Integer. Seed for reproducibility purposes.
+#'
+#' @return The batch-corrected embedding space.
+#'
+#' @export
+#'
+#' @references Stuart, et al., Cell, 2019
+#'
+#' @keywords internal
+rs_seurat_rpca <- function(f_path_gene, f_path_cell, cell_indices, gene_indices, batch_indices, precomputed_pca, rpca_params, verbose, seed) .Call(wrap__rs_seurat_rpca, f_path_gene, f_path_cell, cell_indices, gene_indices, batch_indices, precomputed_pca, rpca_params, verbose, seed)
 
 #' Scrublet Rust interface
 #'
@@ -3148,18 +3411,17 @@ rs_calculate_dge_mann_whitney <- function(f_path, cell_indices_1, cell_indices_2
 #' @description
 #' `r lifecycle::badge("experimental")`
 #' The function will take in a list of gene set indices (0-indexed!) and
-#' calculate an AUCell type statistic. Two options here: calculate this
-#' with proper AUROC calculations (useful for marker gene expression) or
-#' based on the Mann-Whitney statistic (useful for pathway activity
-#' measurs). Data can be streamed in chunks of 50k cells per or loaded in
-#' in one go.
+#' calculate an AUCell type statistic. Three options here: the recovery-curve
+#' AUC of Aibar, et al. (the actual AUCell statistic), an AUC derived from the
+#' Mann-Whitney statistic, or average precision. Data can be streamed in
+#' chunks of 50k cells per or loaded in in one go.
 #'
 #' @param f_path String. Path to the `counts_cells.bin` file.
 #' @param gs_list List. List with the gene set indices (0-indexed!) of the
 #' genes of interest.
 #' @param cells_to_keep Integer. Vector of indices of the cells to keep.
-#' @param auc_type String. One of `"wilcox"` or `"auroc"`, pending on
-#' which statistic you wish to calculate.
+#' @param aucell_params List. The AUCell parameters, see
+#' [bixverse::params_sc_aucell()].
 #' @param streaming Boolean. Shall the data be streamed.
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
@@ -3170,7 +3432,7 @@ rs_calculate_dge_mann_whitney <- function(f_path, cell_indices_1, cell_indices_2
 #' @export
 #'
 #' @keywords internal
-rs_aucell <- function(f_path, gs_list, cells_to_keep, auc_type, streaming, verbose) .Call(wrap__rs_aucell, f_path, gs_list, cells_to_keep, auc_type, streaming, verbose)
+rs_aucell <- function(f_path, gs_list, cells_to_keep, aucell_params, streaming, verbose) .Call(wrap__rs_aucell, f_path, gs_list, cells_to_keep, aucell_params, streaming, verbose)
 
 #' Calculate gene spatial auto-correlations
 #'
@@ -4145,18 +4407,17 @@ rs_mc_scenic <- function(sparse_data, tf_indices, scenic_params, seed, verbose) 
 #' @description
 #' `r lifecycle::badge("experimental")`
 #' The function will take in a list of gene set indices (0-indexed!) and
-#' calculate an AUCell type statistic. Two options here: calculate this
-#' with proper AUROC calculations (useful for marker gene expression) or
-#' based on the Mann-Whitney statistic (useful for pathway activity
-#' measurs). This version works on MetaCell counts which are stored in memory
-#' directly.
+#' calculate an AUCell type statistic. Three options here: the recovery-curve
+#' AUC of Aibar, et al. (the actual AUCell statistic), an AUC derived from the
+#' Mann-Whitney statistic, or average precision. This version works on
+#' MetaCell counts which are stored in memory directly.
 #'
 #' @param sparse_data A named list that needs to have `data`, `indptr`,
 #' `indices`, `nrow`, `ncol` and `format`.
 #' @param gs_list List. List with the gene set indices (0-indexed!) of the
 #' genes of interest.
-#' @param auc_type String. One of `"wilcox"` or `"auroc"`, pending on
-#' which statistic you wish to calculate.
+#' @param aucell_params List. The AUCell parameters, see
+#' [bixverse::params_sc_aucell()].
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
 #'
@@ -4164,7 +4425,7 @@ rs_mc_scenic <- function(sparse_data, tf_indices, scenic_params, seed, verbose) 
 #' AUC.
 #'
 #' @export
-rs_mc_aucell <- function(sparse_data, gs_list, auc_type, verbose) .Call(wrap__rs_mc_aucell, sparse_data, gs_list, auc_type, verbose)
+rs_mc_aucell <- function(sparse_data, gs_list, aucell_params, verbose) .Call(wrap__rs_mc_aucell, sparse_data, gs_list, aucell_params, verbose)
 
 #' Run NMF (HALS) on MetaCells
 #'

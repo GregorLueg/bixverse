@@ -253,10 +253,22 @@ As we can appreciate, this has now added the new columns.
 ### AUCell
 
 [AUCell](https://www.nature.com/articles/nmeth.4463) ranks genes within each
-cell by expression and computes the area under the recovery curve for the gene
-set. This is more robust to outliers than a simple mean. `bixverse` provides
-two flavours: a Wilcoxon-statistic-based AUC and a standard AUROC. The two are
-highly correlated; we show the Wilcoxon variant here.
+cell by expression and summarises where the gene set lands in that ranking.
+More robust to outliers than a simple mean. `bixverse` gives you three
+statistics via `params_sc_aucell()`, all reading the same ranking but weighting
+it differently:
+
+- `"wilcox"`, the default, is the AUC from the Mann-Whitney U statistic over
+  the full ranking. Its null sits at 0.5 whatever the gene set size, which
+  makes it the safe pick for pathway activity.
+- `"recovery"` is the recovery-curve AUC under a rank cutoff, i.e. what Aibar
+  et al. actually published. Top-heavy: only genes inside the top `max_rank`
+  contribute, so it is the sharper instrument for marker sets.
+- `"ap"` is average precision. Most top-heavy of the three, but its null tracks
+  gene set prevalence, so don't compare raw values across sets of different
+  size unless you switch `standardise` on.
+
+We show the Wilcoxon variant here.
 
 ```{r}
 #| label: aucell
@@ -266,7 +278,7 @@ highly correlated; we show the Wilcoxon variant here.
 auc_scores <- aucell_sc(
   object = sc_object,
   gs_list = lineage_sets,
-  auc_type = "wilcox",
+  aucell_params = params_sc_aucell(auc_type = "wilcox"),
   .verbose = FALSE
 )
 
@@ -743,7 +755,7 @@ analyses.
 
 ```{r}
 #| label: get nmf w matrix (stabilised)
-get_w(t_cell_nmf_results_stabilised)
+get_w(t_cell_nmf_results_stabilised)[1:5, 1:5]
 ```
 
 The H matrices are kept per-run, since each random initialisation gives a
@@ -762,7 +774,6 @@ point for a single-run analysis. `get_best_run()` returns it as an
 ```{r}
 #| label: get stabilised nmf best run
 best_run <- get_best_run(t_cell_nmf_results_stabilised)
-best_run
 ```
 
 ### Downstream analysis

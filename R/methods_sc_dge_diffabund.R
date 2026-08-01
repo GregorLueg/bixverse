@@ -11,7 +11,7 @@
 #' between two groups in the single cell data. At the moment, it has only
 #' an implementation for the Wilcox-based rank statistic.
 #'
-#' @param object `SingleCells` class.
+#' @param object `SingleCells` or `SingleCellsSubset` class.
 #' @param cells_1 String. The names of the cells in group 1. Need to be part
 #' of the cell names in the object, see [bixverse::get_cell_names()].
 #' @param cells_2 String. The names of the cells in group 2. Need to be part
@@ -46,13 +46,11 @@ find_markers_sc <- S7::new_generic(
   }
 )
 
-#' @method find_markers_sc SingleCells
-#'
-#' @export
+#' @method find_markers_sc ScOrScSubset
 #'
 #' @importFrom zeallot `%<-%`
 #' @importFrom magrittr `%>%`
-S7::method(find_markers_sc, SingleCells) <- function(
+S7::method(find_markers_sc, ScOrScSubset) <- function(
   object,
   cells_1,
   cells_2,
@@ -64,7 +62,10 @@ S7::method(find_markers_sc, SingleCells) <- function(
   alternative <- match.arg(alternative)
 
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  checkmate::assertTRUE(
+    S7::S7_inherits(object, SingleCells) ||
+      S7::S7_inherits(object, SingleCellsSubset)
+  )
   assertCellsExist(object, cells_1)
   assertCellsExist(object, cells_2)
   checkmate::assertChoice(method, c("wilcox"))
@@ -132,7 +133,7 @@ S7::method(find_markers_sc, SingleCells) <- function(
 #' of 100,000 cells if it should exceed that. This automatic downsampling can
 #' be turned off however.
 #'
-#' @param object `SingleCells` class.
+#' @param object `SingleCells` or `SingleCellsSubset` class.
 #' @param column_of_interest String. The column you wish to use to identify
 #' the markers between all combination. Needs to be in the obs table
 #' @param method String. Which method to use for the calculations of the DGE.
@@ -170,13 +171,11 @@ find_all_markers_sc <- S7::new_generic(
   }
 )
 
-#' @method find_all_markers_sc SingleCells
-#'
-#' @export
+#' @method find_all_markers_sc ScOrScSubset
 #'
 #' @importFrom zeallot `%<-%`
 #' @importFrom magrittr `%>%`
-S7::method(find_all_markers_sc, SingleCells) <- function(
+S7::method(find_all_markers_sc, ScOrScSubset) <- function(
   object,
   column_of_interest,
   method = "wilcox",
@@ -189,7 +188,10 @@ S7::method(find_all_markers_sc, SingleCells) <- function(
   alternative <- match.arg(alternative)
 
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  checkmate::assertTRUE(
+    S7::S7_inherits(object, SingleCells) ||
+      S7::S7_inherits(object, SingleCellsSubset)
+  )
   checkmate::qassert(column_of_interest, "S1")
   checkmate::assertChoice(method, c("wilcox"))
   checkmate::assertChoice(alternative, c("twosided", "greater", "less"))

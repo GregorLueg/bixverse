@@ -7,6 +7,8 @@ use bixverse_rs::prelude::*;
 use bixverse_rs::single_cell::sc_batch_correction::bbknn::*;
 use bixverse_rs::single_cell::sc_batch_correction::fast_mnn::*;
 use bixverse_rs::single_cell::sc_batch_correction::harmony::*;
+use bixverse_rs::single_cell::sc_batch_correction::seurat_cca::*;
+use bixverse_rs::single_cell::sc_batch_correction::seurat_rpca::*;
 use bixverse_rs::single_cell::sc_processing::metrics::*;
 
 ////////////////////
@@ -25,6 +27,8 @@ extendr_module! {
     fn rs_mnn;
     fn rs_harmony;
     fn rs_harmony_v2;
+    fn rs_seurat_cca;
+    fn rs_seurat_rpca;
 }
 
 ///////////////
@@ -341,10 +345,11 @@ fn rs_mnn(
         None
     };
 
+    let gene_reader = ParallelSparseReader::new(f_path_gene).to_extendr()?;
     let pre_computed_pca = precomputed_pca.map(|embd| r_matrix_to_faer_fp32(&embd));
 
     let corrected_embd = fast_mnn_main(
-        f_path_gene,
+        &gene_reader,
         &cell_indices,
         &gene_indices,
         &batch_indices,
@@ -460,4 +465,182 @@ fn rs_harmony_v2(
     .to_extendr()?;
 
     Ok(faer_to_r_matrix(res.as_ref()))
+}
+
+/////////////////
+// Seurat CCA //
+////////////////
+
+/// Seurat CCA batch correction in Rust
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// This function implements the canonical correlation analysis (CCA) anchor
+/// integration from Stuart, et al. Anchors are identified in a per-pair
+/// L2-normalised canonical correlation embedding, scored via shared
+/// neighbours, filtered in gene space and then used to apply a kernel-weighted
+/// correction on the union PCA embedding.
+///
+/// @param f_path_gene String. Path to the `counts_genes.bin` file.
+/// @param f_path_cell String. Path to the `counts_cells.bin` file. Used if
+/// you wish to use the PFlogPF transformation during the optional PCA step.
+/// @param cell_indices Integer. The cell indices to use. (0-indexed!)
+/// @param gene_indices Integer. The gene indices to use. (0-indexed!) Ideally
+/// these are batch-aware highly variable genes.
+/// @param batch_indices Integer vector. These represent to which batch a given
+/// cell belongs. Need to be 0-indexed and contiguous.
+/// @param precomputed_pca Optional PCA matrix. If you want to provide a
+/// pre-computed matrix.
+/// @param cca_params List. Contains all of the Seurat CCA parameters.
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
+/// @param seed Integer. Seed for reproducibility purposes.
+///
+/// @return The batch-corrected embedding space.
+///
+/// @export
+///
+/// @references Stuart, et al., Cell, 2019
+///
+/// @keywords internal
+#[extendr]
+#[allow(clippy::too_many_arguments)]
+fn rs_seurat_cca(
+    f_path_gene: &str,
+    f_path_cell: &str,
+    cell_indices: Vec<i32>,
+    gene_indices: Vec<i32>,
+    batch_indices: Vec<i32>,
+    precomputed_pca: Option<RMatrix<f64>>,
+    cca_params: List,
+    verbose: usize,
+    seed: usize,
+) -> Result<RArray<f64, 2>> {
+    let verbosity = parse_verbosity_level(verbose);
+
+    let cell_indices = cell_indices.r_int_convert();
+    let gene_indices = gene_indices.r_int_convert();
+    let batch_indices = batch_indices.r_int_convert();
+    let cca_params = SeuratCcaParams::from_r_list(cca_params)?;
+
+    let offsets = if cca_params.pca_params.clr {
+        if verbosity.normal_verbosity() {
+            println!("PFlogPF-transformation requested. Loading offsets from disk.")
+        }
+
+        let reader = ParallelSparseReader::new(f_path_cell).to_extendr()?;
+
+        let offsets = reader.get_clr_offsets(&cell_indices, None).to_extendr()?;
+
+        Some(offsets)
+    } else {
+        None
+    };
+
+    let gene_reader = ParallelSparseReader::new(f_path_gene).to_extendr()?;
+    let pre_computed_pca = precomputed_pca.map(|embd| r_matrix_to_faer_fp32(&embd));
+
+    let corrected_embd = seurat_cca_integration(
+        &gene_reader,
+        &cell_indices,
+        &gene_indices,
+        &batch_indices,
+        pre_computed_pca,
+        offsets.as_deref(),
+        &cca_params,
+        verbose,
+        seed,
+    )
+    .to_extendr()?;
+
+    Ok(faer_to_r_matrix(corrected_embd.as_ref()))
+}
+
+//////////////////
+// Seurat rPCA //
+/////////////////
+
+/// Seurat rPCA batch correction in Rust
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// This function implements the reciprocal PCA (rPCA) anchor integration from
+/// Stuart, et al. Each batch keeps its own PCA basis and the other batch's
+/// expression is projected into it. Anchors live in these projected spaces and
+/// are then used to apply a kernel-weighted correction on the union PCA
+/// embedding. Cheaper than CCA and less aggressive in its correction.
+///
+/// @param f_path_gene String. Path to the `counts_genes.bin` file.
+/// @param f_path_cell String. Path to the `counts_cells.bin` file. Used if
+/// you wish to use the PFlogPF transformation during the optional PCA step.
+/// @param cell_indices Integer. The cell indices to use. (0-indexed!)
+/// @param gene_indices Integer. The gene indices to use. (0-indexed!) Ideally
+/// these are batch-aware highly variable genes.
+/// @param batch_indices Integer vector. These represent to which batch a given
+/// cell belongs. Need to be 0-indexed and contiguous.
+/// @param precomputed_pca Optional PCA matrix. If you want to provide a
+/// pre-computed matrix. The per-batch PCAs are always recomputed.
+/// @param rpca_params List. Contains all of the Seurat rPCA parameters.
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
+/// @param seed Integer. Seed for reproducibility purposes.
+///
+/// @return The batch-corrected embedding space.
+///
+/// @export
+///
+/// @references Stuart, et al., Cell, 2019
+///
+/// @keywords internal
+#[extendr]
+#[allow(clippy::too_many_arguments)]
+fn rs_seurat_rpca(
+    f_path_gene: &str,
+    f_path_cell: &str,
+    cell_indices: Vec<i32>,
+    gene_indices: Vec<i32>,
+    batch_indices: Vec<i32>,
+    precomputed_pca: Option<RMatrix<f64>>,
+    rpca_params: List,
+    verbose: usize,
+    seed: usize,
+) -> Result<RArray<f64, 2>> {
+    let verbosity = parse_verbosity_level(verbose);
+
+    let cell_indices = cell_indices.r_int_convert();
+    let gene_indices = gene_indices.r_int_convert();
+    let batch_indices = batch_indices.r_int_convert();
+    let rpca_params = SeuratRpcaParams::from_r_list(rpca_params)?;
+
+    let offsets = if rpca_params.pca_params.clr {
+        if verbosity.normal_verbosity() {
+            println!("PFlogPF-transformation requested. Loading offsets from disk.")
+        }
+
+        let reader = ParallelSparseReader::new(f_path_cell).to_extendr()?;
+
+        let offsets = reader.get_clr_offsets(&cell_indices, None).to_extendr()?;
+
+        Some(offsets)
+    } else {
+        None
+    };
+
+    let gene_reader = ParallelSparseReader::new(f_path_gene).to_extendr()?;
+    let pre_computed_pca = precomputed_pca.map(|embd| r_matrix_to_faer_fp32(&embd));
+
+    let corrected_embd = seurat_rpca_integration(
+        &gene_reader,
+        &cell_indices,
+        &gene_indices,
+        &batch_indices,
+        pre_computed_pca,
+        offsets.as_deref(),
+        &rpca_params,
+        verbose,
+        seed,
+    )
+    .to_extendr()?;
+
+    Ok(faer_to_r_matrix(corrected_embd.as_ref()))
 }

@@ -11,7 +11,7 @@ An empty \code{SpCache} S3 object.
 }
 \description{
 Helper that builds the per-sample spatial cache used by
-\code{\link[=SpatialSpot]{SpatialSpot()}}. Each slot is a named list keyed by the
-experiment identifier (\code{exp_id}).
+\code{\link[=SpatialSpot]{SpatialSpot()}}. Each slot is a named list keyed by the experiment
+identifier (\code{exp_id}).
 }
 \keyword{internal}

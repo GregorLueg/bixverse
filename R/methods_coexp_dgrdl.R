@@ -75,22 +75,27 @@ S7::method(dgrdl_grid_search, BulkCoExp) <- function(
   checkmate::qassert(.verbose, "B1")
 
   # function body
-  if (purrr::is_empty(S7::prop(object, "processed_data")[["processed_data"]])) {
-    warning("No pre-processed data found. Defaulting to the raw data.")
-    target_mat <- S7::prop(object, "raw_data")
-  } else {
-    target_mat <- S7::prop(object, "processed_data")[["processed_data"]]
+  detection_method <- .assert_bulk_detection_method(
+    object,
+    "dgrdl-based",
+    "dgrdl-based",
+    allow_unset = TRUE
+  )
+  if (is.null(detection_method)) {
+    return(object)
   }
+
+  target_mat <- .get_bulk_target_mat(object)
 
   total_params <- length(neighbours_vec) *
     length(dict_size_vec) *
     length(seed_vec)
 
   if (.verbose) {
-    message(
+    message(sprintf(
       "A total of %i parameters will be tested in a grid search for DGRDL.",
       total_params
-    )
+    ))
   }
 
   # do the grid search
@@ -120,6 +125,7 @@ S7::method(dgrdl_grid_search, BulkCoExp) <- function(
   )
 
   S7::prop(object, "params")[["grid_search_params"]] <- grid_search_params
+  S7::prop(object, "params")[["detection_method"]] <- "dgrdl-based"
   S7::prop(object, "outputs")[["grid_search_res"]] <- grid_search_res
 
   return(object)
@@ -150,6 +156,10 @@ S7::method(dgrdl_grid_search, BulkCoExp) <- function(
 #'   \item{admm_iter - Integer. ADMM iterations for sparse coding.}
 #'   \item{rho - Float. ADMM step size.}
 #' }
+#' @param membership_params List. Controls how the atom loadings are turned into
+#' module membership, see [bixverse::params_module_membership()]. Membership is
+#' not exclusive: a gene active in several atoms appears in several modules, and
+#' a gene in no tail appears in none.
 #' @param seed Integer. Seed for the initialisation of the dictionary.
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
@@ -162,6 +172,7 @@ dgrdl_result <- S7::new_generic(
   fun = function(
     object,
     dgrdl_params = params_dgrdl(),
+    membership_params = params_module_membership(),
     seed = 42L,
     .verbose = TRUE
   ) {
@@ -178,6 +189,7 @@ dgrdl_result <- S7::new_generic(
 S7::method(dgrdl_result, BulkCoExp) <- function(
   object,
   dgrdl_params = params_dgrdl(),
+  membership_params = params_module_membership(),
   seed = 42L,
   .verbose = TRUE
 ) {
@@ -185,17 +197,22 @@ S7::method(dgrdl_result, BulkCoExp) <- function(
   checkmate::assertClass(object, "bixverse::BulkCoExp")
   checkmate::qassert(seed, "I1")
   assertDGRDLparams(dgrdl_params)
+  assertModuleMembershipParams(membership_params)
   checkmate::qassert(.verbose, "B1")
 
   # function body
-  if (purrr::is_empty(S7::prop(object, "processed_data")[["processed_data"]])) {
-    warning("No pre-processed data found. Defaulting to the raw data.")
-    target_mat <- S7::prop(object, "raw_data")
-  } else {
-    target_mat <- S7::prop(object, "processed_data")[["processed_data"]]
+  detection_method <- .assert_bulk_detection_method(
+    object,
+    "dgrdl-based",
+    "dgrdl-based",
+    allow_unset = TRUE
+  )
+  if (is.null(detection_method)) {
+    return(object)
   }
 
-  # function body
+  target_mat <- .get_bulk_target_mat(object)
+
   results <- rs_sparse_dict_dgrdl(
     x = target_mat,
     dgrdl_params = dgrdl_params,
@@ -229,15 +246,29 @@ S7::method(dgrdl_result, BulkCoExp) <- function(
     target_mat
   )
 
-  results <- list(
-    dictionary = dictionary,
-    loadings = loadings,
-    feature_laplacian = feature_laplacian,
-    sample_laplacian = sample_laplacian
-  )
-
   S7::prop(object, "params")[["fit_params"]] <- fit_params
-  S7::prop(object, "final_results") <- results
+  S7::prop(object, "params")[["detection_method"]] <- "dgrdl-based"
+
+  # derive modules from loadings. loadings is dict_size x gene, transpose to
+  # gene x dict_size and keep the tails per atom. A gene may be active in
+  # several atoms, so it may appear in several modules.
+  gene_loadings <- t(loadings)
+  modules_dt <- .modules_from_loadings(gene_loadings, membership_params)
+
+  S7::prop(object, "final_results") <- new_bulk_module_result(
+    modules = modules_dt,
+    factors = list(
+      dictionary = dictionary,
+      loadings = loadings,
+      gene_loadings = gene_loadings
+    ),
+    method = "dgrdl-based",
+    params = S7::prop(object, "params"),
+    diagnostics = list(
+      feature_laplacian = feature_laplacian,
+      sample_laplacian = sample_laplacian
+    )
+  )
 
   return(object)
 }

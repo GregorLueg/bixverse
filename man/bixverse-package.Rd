@@ -6,7 +6,14 @@
 \alias{bixverse-package}
 \title{bixverse: Rust-accelerated standard bioinformatics, computational biology workflows}
 \description{
-Your favourite methods used in bioinformatics and computational biology made VERY fast via Rust. Contains various gene set enrichment methods, graph- based methods, co-expression module detection and much more. Additionally, has now single cell functionality, enabling million cell analysis on local compute.
+Your favourite methods used in bioinformatics and computational biology made VERY fast via Rust. Contains various gene set enrichment methods, graph- based methods, co-expression module detection and much more. Additionally, has now a single cell analysis suite, enabling million cell scale analysis on local compute.
+}
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://gregorlueg.github.io/bixverse}
+}
+
 }
 \author{
 \strong{Maintainer}: Gregor Lueg \email{gregorlueg@me.com}

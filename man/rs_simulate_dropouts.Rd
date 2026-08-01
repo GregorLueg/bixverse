@@ -4,34 +4,15 @@
 \alias{rs_simulate_dropouts}
 \title{Sparsify bulkRNAseq like data}
 \usage{
-rs_simulate_dropouts(
-  count_mat,
-  dropout_function,
-  dropout_midpoint,
-  dropout_shape,
-  power_factor,
-  global_sparsity,
-  seed
-)
+rs_simulate_dropouts(count_mat, sparsity_params)
 }
 \arguments{
-\item{count_mat}{Numerical matrix. Original numeric matrix.}
+\item{count_mat}{Numerical matrix. Original numeric matrix. Rows are genes,
+columns are samples.}
 
-\item{dropout_function}{String. One of \code{c("log", "powerdecay")}. Defines
-which function will be used to induce the sparsity.}
-
-\item{dropout_midpoint}{Numeric. Controls the midpoint parameter of the
-logistic and power decay function.}
-
-\item{dropout_shape}{Numeric. Controls the shape parameter of the logistic
-function.}
-
-\item{power_factor}{Numeric. Controls the power factor of the power decay
-function.}
-
-\item{global_sparsity}{Numeric. The global sparsity parameter.}
-
-\item{seed}{Integer. Seed for reproducibility.}
+\item{sparsity_params}{List. The sparsity parameters, see
+\code{\link[=params_bulk_sparsity]{params_bulk_sparsity()}}. Expected elements are \code{strategy},
+\code{target_library_size}, \code{capture_efficiency_sigma} and \code{seed}.}
 }
 \value{
 The sparsified matrix based on the provided parameters.
@@ -39,33 +20,14 @@ The sparsified matrix based on the provided parameters.
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 This function takes in a (raw) count matrix (for example from the synthetic
-data in bixverse) and applies sparsification to it based on two possible
-functions:
-
-\strong{Logistic function:}
-
-With dropout probability defined as:
-
-\code{P(dropout) = clamp(1 / (1 + exp(shape * (ln(exp+1) - ln(midpoint+1)))), 0.3, 0.8) * (1 - global_sparsity) + global_sparsity}
-
-with the following characteristics:
-\itemize{
-\item Plateaus at global_sparsity dropout for high expression genes
-\item Partial dropout preserves count structure via binomial thinning
-\item Good for preserving variance-mean relationships
+data in bixverse) and applies Splatter-style sequencing-depth dropout to it.
+Per sample a size factor \code{s_j ~ LogNormal(0, capture_efficiency_sigma)} is
+drawn, giving a target library size of \code{target_library_size * s_j}. Each
+gene is then binomially thinned to approach that target. Retention
+probability is capped at 1, so samples below their target are left alone
+rather than upsampled.
 }
-
-\strong{Power Decay function:}
-
-With dropout probability defined as:
-
-\code{P(dropout) = (midpoint / (exp + midpoint))^power * scale_factor * (1 - global_sparsity) + global_sparsity}
-
-with the following characteristics:
-\itemize{
-\item No plateau - high expression genes get substantial dropout
-\item Complete dropout only (no partial dropout)
-\item More uniform dropout across expression range
-}
+\references{
+Zappia, et al., Genome Biol, 2017
 }
 \keyword{internal}

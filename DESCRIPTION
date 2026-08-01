@@ -1,6 +1,6 @@
 Package: bixverse
 Title: Rust-accelerated standard bioinformatics, computational biology workflows
-Version: 0.4.0
+Version: 0.4.5
 Authors@R: 
     c(
       person(
@@ -32,10 +32,11 @@ Description:
     Your favourite methods used in bioinformatics and computational biology made 
     VERY fast via Rust. Contains various gene set enrichment methods, graph-
     based methods, co-expression module detection and much more. Additionally,
-    has now single cell functionality, enabling million cell analysis on local
-    compute.
+    has now a single cell analysis suite, enabling million cell scale analysis 
+    on local compute.
 License: MIT + file LICENSE
 Encoding: UTF-8
+URL: https://gregorlueg.github.io/bixverse
 Roxygen: list(markdown = TRUE)
 Config/rextendr/version: 0.5.0
 biocViews:
@@ -90,6 +91,7 @@ Suggests:
     png,
     qs2,
     quarto,
+    singscore,
     StatMatch,
     Seurat,
     tictoc,

@@ -2,17 +2,11 @@ url: https://gregorlueg.github.io/bixverse/
 
 template:
   bootstrap: 5
-  bootswatch: darkly
+  bootswatch: lux
+  light-switch: true
   bslib:
-    bg: "#0d1b2e"
-    fg: "#e0e0e0"
-    primary: "#e07a5a"
-    secondary: "#7ba7bc"
-    navbar-bg: "#08111e"
-    code-bg: "#0a1628"
-    border-radius: 0.4rem
-    btn-border-radius: 0.4rem
-  css: pkgdown/extra.css
+    # lux uses navbar-padding-y: 1.5rem, so pkgdown's 56px default is too small
+    pkgdown-nav-height: 104px
 
 home:
   title: bixverse
@@ -22,20 +16,29 @@ home:
     compute.
 navbar:
   structure:
-    left: [intro, reference, articles, tutorials, singlecells, news]
-    right: [search, github]
+    left: [intro, reference, news, articles, tutorials, singlecells]
+    right: [search, lightswitch, github]
   components:
     tutorials:
       text: Tutorials
       menu:
+        - text: "Gene set enrichment and pathway activity methods"
         - text: Gene Set Enrichment Methods
           href: articles/gse_methods.html
         - text: Pathway activity functions
           href: articles/pathway_activity.html
+        - text: -------
+        - text: "Network methods"
         - text: Genetic diffusion and community detections
           href: articles/genetic_diffusions.html
+        - text: -------
+        - text: "Co-expression module detection methods"
         - text: Contrastive PCA
           href: articles/cpca.html
+        - text: Bulk co-expression modules
+          href: articles/bulk_coexpression_modules.html
+        - text: -------
+        - text: "Ontologies"
         - text: Semantic similarities on ontologies
           href: articles/ontologies.html
     singlecells:
@@ -54,6 +57,8 @@ navbar:
           href: articles/single_cell_batch_corrections.html
         - text: "kNN searches for single cells in bixverse"
           href: articles/knn_searches.html
+        - text: "Sub-clustering and per-group pipelines"
+          href: articles/single_cell_subsets.html
         - text: -------
         - text: "More advanced analysis methods"
         - text: "'Bag of genes' methods for single cell in bixverse"
@@ -68,15 +73,18 @@ navbar:
           href: articles/multi_modal_single_cells.html
         - text: -------
         - text: "Others"
-        - text: Analysing big data on a powerful laptop (example)
+        - text: Analysing 1 million cells on a laptop
           href: articles/single_cell_big_data.html
         - text: Plotting helpers
           href: articles/single_cell_visualisation.html
     articles:
       text: Articles
       menu:
+        - text: "Rust to R"
         - text: Bixverse R <> Rust interface
           href: articles/rust_functions.html
+        - text: -------
+        - text: "Package design"
         - text: Technical design choices for single cell
           href: articles/design_single_cell.html
     github:
@@ -97,6 +105,7 @@ articles:
       - pathway_activity
       - genetic_diffusions
       - cpca
+      - bulk_coexpression_modules
       - ontologies
   - title: Single Cells
     navbar: Single Cells
@@ -108,6 +117,7 @@ articles:
       - single_cell_batch_corrections
       - bag_of_genes_single_cells
       - knn_searches
+      - single_cell_subsets
       - meta_cells
       - single_cell_big_data
       - multi_modal_single_cells
@@ -139,6 +149,9 @@ reference:
       - calc_mitch
       - calc_gsva
       - calc_ssgsea
+      - calc_singscore
+      - calc_singscore_multi
+      - calc_singscore_rank
       - params_gsea
       - params_gsva
       - params_ssgsea
@@ -167,15 +180,31 @@ reference:
       - read_motif_ranking
       - run_cistarget
       - params_cistarget
-  # Correlation-based gene module stuff
-  - title: Correlation-based gene module detections
+
+  # Bulk co-expression methods
+  - title: Co-expression methods for bulk RNAseq
     desc: 
-      Methods to identify co-expression modules via correlations in the data.
-      Includes methods for differential correlations, some graph-based and some
-      hierarchical clustering based ones.
+      Methods to identify co-expression modules via correlations or matrix
+      factorisations.
     contents:
       - BulkCoExp
       - preprocess_bulk_coexp
+      - get_diagnostics
+      - get_factors
+      - get_nmf_gene_loadings
+      - get_nmf_modules
+      - get_nmf_sample_activity
+      - get_nmf_stability
+      - get_c_pca_factors
+      - get_c_pca_loadings
+      - get_ica_stability_res
+      - get_grid_search_res
+      - get_cor_graph
+      - get_diffcor_graph
+      - get_epsilon_res
+      - get_resolution_res
+      - get_outputs
+      - get_modules
       - cor_module_check_epsilon
       - cor_module_coremo_clustering
       - cor_module_coremo_cor_sign
@@ -186,37 +215,25 @@ reference:
       - cor_module_processing
       - cor_module_tom
       - diffcor_module_processing
-      - get_cor_graph
-      - get_diffcor_graph
-      - get_epsilon_res
-      - get_resolution_res
-      - get_outputs
-      - params_cor_graph
-      - params_coremo
-  # Matrix factorisations for gene module detection
-  - title: Matrix factorisation methods
-    desc: 
-      Methods to identify co-expression via matrix factorisations. Uses the same 
-      class as the correlation-based ones. You have contrastive PCA, ICA and
-      dual graph-regularised dictionary learning as methods.
-    contents:
       - contrastive_pca_processing
       - c_pca_plot_alphas
       - contrastive_pca
-      - get_c_pca_factors
-      - get_c_pca_loadings
       - dgrdl_grid_search
       - dgrdl_result
-      - get_ica_stability_res
-      - get_grid_search_res
       - ica_evaluate_comp
       - ica_optimal_ncomp
       - ica_processing
       - ica_stabilised_results
+      - nmf_bulk
+      - stabilised_nmf_bulk
+      - params_cor_graph
+      - params_coremo
       - params_dgrdl
+      - params_module_membership
       - params_ica_general
       - params_ica_ncomp
       - params_ica_randomisation
+
   # Differential gene expression
   - title: Helpers for differential gene expression
     desc: 
@@ -335,6 +352,28 @@ reference:
       - set_sc_new_obs_col_multiple
       - set_sc_new_var_cols
       - drop_cols_sc
+  # Single cell subsets and pipelines
+  - title: Single cell subsets and pipelines
+    desc:
+      Sub-clustering a group of cells and running the same chain per group.
+    contents:
+      - SingleCellsSubset
+      - merge_subset_obs
+      - sc_pipeline
+      - "%>>%"
+      - apply_pipeline
+      - apply_pipeline_per_group
+      - validate_pipeline
+      - meta_cells_per_group
+      - step_hvg_sc
+      - step_pca_sc
+      - step_neighbours_sc
+      - step_clusters_sc
+      - step_bbknn_sc
+      - step_fast_mnn_sc
+      - step_harmony_sc
+      - step_harmony_v2_sc
+      - step_metacells_sc
   # Single cell classes and getters
   - title: Single cell class for multi-modal data and getters
     desc: 
@@ -364,6 +403,7 @@ reference:
       - generate_supercells_sc
       - generate_bt_meta_cells_sc
       - generate_seacells_sc
+      - merge_meta_cells
       - params_sc_supercell
       - params_sc_bt_metacells
       - params_sc_seacells
@@ -410,6 +450,9 @@ reference:
       - gene_set_proportions_sc
       - per_cell_qc_outlier
       - run_cell_qc
+      - run_cell_qc_fixed
+      - rescue_cells
+      - flag_cells
       - find_hvg_sc
       - find_hvg_batch_aware_sc
       - get_hvg_data_sc
@@ -417,23 +460,12 @@ reference:
       - generate_sc_knn
       - find_neighbours_sc
       - top_genes_perc_sc
-      - fast_mnn_sc
-      - harmony_sc
-      - harmony_v2_sc
-      - bbknn_sc
-      - calculate_kbet_sc
-      - calculate_batch_asw_sc
-      - calculate_batch_lisi_sc
       - params_norm_doublets_defaults
       - params_boost
       - params_sc_hvg
       - params_sc_pca
       - params_scrublet
-      - params_sc_bbknn
       - params_sc_fast_cluster
-      - params_sc_fastmnn
-      - params_sc_harmony
-      - params_sc_harmony_v2
       - params_sc_neighbours
       - params_scdblfinder
       - params_hvg_defaults
@@ -442,6 +474,25 @@ reference:
       - params_sc_knn
       - params_kmeans_defaults
       - params_fast_cluster_default
+
+  - title: Single cell batch correction methods
+    desc: Batch correction methods and metrics for single cell
+    contents:
+      - fast_mnn_sc
+      - harmony_sc
+      - harmony_v2_sc
+      - bbknn_sc
+      - seurat_cca_sc
+      - seurat_rpca_sc
+      - calculate_kbet_sc
+      - calculate_batch_asw_sc
+      - calculate_batch_lisi_sc
+      - params_sc_fastmnn
+      - params_sc_harmony
+      - params_sc_harmony_v2
+      - params_sc_bbknn
+      - params_sc_seurat_cca
+      - params_sc_seurat_rpca      
   # Single cell analysis
   - title: Single cell analysis methods
     desc: 
@@ -481,6 +532,7 @@ reference:
       - get_best_run
       - get_w
       - get_h
+      - params_sc_aucell
       - params_sc_hotspot
       - params_sc_miloR
       - params_sc_vision
@@ -504,13 +556,14 @@ reference:
       Additional helpers for specific small sub classes used in single cell.
     contents:
       - calc_knn_metrics
-      - get_centroids
+      - get_centroids_sc
       - get_feature_mat
       - get_kmeans_clusters
       - get_knn_dist
       - get_data
       - get_scores
       - new_sc_knn
+
   # Single cell reference mapping
   - title: Reference mapping and cell type annotations in single cell
     desc:
@@ -529,7 +582,10 @@ reference:
       - prepare_cell_markers
       - calc_sc_type_scores
       - score_clusters
+      - assign_sc_type
+      - params_sctype_cells
       - params_symphony_map
+
   # Single cell ligand receptor
   - title: Single cell ligand receptor 
     desc: 
@@ -542,6 +598,7 @@ reference:
       - ligand_activity_scores
       - params_ligand_target
       - prioritise_interactions
+
   # Single cell plotting helpers
   - title: Single cell plotting stuff
     desc: 
@@ -561,7 +618,7 @@ reference:
       - extract_gene_violin_data
   
   # Different statistical functions
-  - title: Stastical functions
+  - title: Statistical functions
     desc: 
       Any types of functions that help with statistics
     contents:
@@ -612,6 +669,8 @@ reference:
       - write_h5ad_sc
       - write_h5ad_sc_dense
       - params_sc_synthetic_data
+      - params_synthetic_bulk_rnaseq
+      - params_bulk_sparsity
       - synthetic_signal_matrix
       - simulate_dropouts
       - synthetic_bulk_cor_matrix
@@ -700,6 +759,8 @@ reference:
       - rs_prepare_whitening
       - rs_random_svd
       - rs_range_norm
+      - rs_rank_matrix_col
+      - rs_rank_matrix_col_stable
       - rs_rbf_function
       - rs_rbf_function_mat
       - rs_rbh_cor
@@ -710,6 +771,9 @@ reference:
       - rs_set_similarity
       - rs_set_similarity_list
       - rs_set_similarity_list2
+      - rs_singscore_multi
+      - rs_singscore_permutation_test
+      - rs_singscore_single
       - rs_snf
       - rs_sparse_dict_dgrdl
       - rs_sparse_dict_dgrdl_grid_search

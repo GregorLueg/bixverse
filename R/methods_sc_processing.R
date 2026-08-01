@@ -1264,7 +1264,8 @@ S7::method(calculate_pca_sc, SingleCells) <- function(
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
-  if ((length(get_hvg(object)) == 0) && is.null(hvg)) {
+  # dual warning - not needed
+  if ((length(suppressWarnings(get_hvg(object))) == 0) && is.null(hvg)) {
     warning(paste(
       "No HVGs identified in the object nor provided.",
       "Please run find_hvg_sc() or provide the indices of the HVG",
@@ -1382,7 +1383,9 @@ S7::method(find_neighbours_sc, ScOrMc) <- function(
   modality <- match.arg(modality)
 
   checkmate::assertTRUE(
-    S7::S7_inherits(object, SingleCells) || S7::S7_inherits(object, MetaCells)
+    S7::S7_inherits(object, SingleCells) ||
+      S7::S7_inherits(object, MetaCells) ||
+      S7::S7_inherits(object, SingleCellsSubset)
   )
   checkmate::qassert(embd_to_use, "S1")
   checkmate::qassert(no_embd_to_use, c("I1", "0"))
@@ -1474,7 +1477,9 @@ S7::method(find_clusters_sc, ScOrMc) <- function(
   modality <- match.arg(modality)
 
   checkmate::assertTRUE(
-    S7::S7_inherits(object, SingleCells) || S7::S7_inherits(object, MetaCells)
+    S7::S7_inherits(object, SingleCells) ||
+      S7::S7_inherits(object, MetaCells) ||
+      S7::S7_inherits(object, SingleCellsSubset)
   )
   checkmate::qassert(res, "N1")
   checkmate::qassert(name, "S1")

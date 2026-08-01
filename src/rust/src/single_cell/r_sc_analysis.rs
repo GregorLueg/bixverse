@@ -117,8 +117,10 @@ fn rs_calculate_dge_mann_whitney(
         .map(|x| *x as usize)
         .collect::<Vec<usize>>();
 
+    let reader = ParallelSparseReader::new(&f_path).to_extendr()?;
+
     let dge_results: DgeMannWhitneyRes = calculate_dge_grps_mann_whitney(
-        &f_path,
+        &reader,
         &cell_indices_1,
         &cell_indices_2,
         min_prop as f32,
@@ -214,9 +216,12 @@ fn rs_module_scoring(
         gs_indices.push(int);
     }
 
+    let gene_reader = ParallelSparseReader::new(&f_path_genes).to_extendr()?;
+    let cell_reader = ParallelSparseReader::new(&f_path_cells).to_extendr()?;
+
     let module_scores = calculate_module_scores_main(
-        &f_path_genes,
-        &f_path_cells,
+        &gene_reader,
+        &cell_reader,
         &gs_indices,
         &cells_to_keep,
         nbin,
@@ -240,18 +245,17 @@ fn rs_module_scoring(
 /// @description
 /// `r lifecycle::badge("experimental")`
 /// The function will take in a list of gene set indices (0-indexed!) and
-/// calculate an AUCell type statistic. Two options here: calculate this
-/// with proper AUROC calculations (useful for marker gene expression) or
-/// based on the Mann-Whitney statistic (useful for pathway activity
-/// measurs). Data can be streamed in chunks of 50k cells per or loaded in
-/// in one go.
+/// calculate an AUCell type statistic. Three options here: the recovery-curve
+/// AUC of Aibar, et al. (the actual AUCell statistic), an AUC derived from the
+/// Mann-Whitney statistic, or average precision. Data can be streamed in
+/// chunks of 50k cells per or loaded in in one go.
 ///
 /// @param f_path String. Path to the `counts_cells.bin` file.
 /// @param gs_list List. List with the gene set indices (0-indexed!) of the
 /// genes of interest.
 /// @param cells_to_keep Integer. Vector of indices of the cells to keep.
-/// @param auc_type String. One of `"wilcox"` or `"auroc"`, pending on
-/// which statistic you wish to calculate.
+/// @param aucell_params List. The AUCell parameters, see
+/// [bixverse::params_sc_aucell()].
 /// @param streaming Boolean. Shall the data be streamed.
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
@@ -267,11 +271,12 @@ fn rs_aucell(
     f_path: String,
     gs_list: List,
     cells_to_keep: Vec<i32>,
-    auc_type: &str,
+    aucell_params: List,
     streaming: bool,
     verbose: usize,
 ) -> Result<RArray<f64, 2>> {
     let cells_to_keep = cells_to_keep.r_int_convert();
+    let aucell_params = AucellParams::from_r_list(aucell_params)?;
 
     let mut gs_indices: Vec<Vec<usize>> = Vec::with_capacity(gs_list.len());
     for i in 0..gs_list.len() {
@@ -285,11 +290,26 @@ fn rs_aucell(
         gs_indices.push(int);
     }
 
+    let reader = ParallelSparseReader::new(&f_path).to_extendr()?;
+
     let res = if streaming {
-        calculate_aucell_streaming(&f_path, &gs_indices, &cells_to_keep, auc_type, verbose)
-            .to_extendr()?
+        calculate_aucell_streaming(
+            &reader,
+            &gs_indices,
+            &cells_to_keep,
+            Some(aucell_params),
+            verbose,
+        )
+        .to_extendr()?
     } else {
-        calculate_aucell(&f_path, &gs_indices, &cells_to_keep, auc_type, verbose).to_extendr()?
+        calculate_aucell(
+            &reader,
+            &gs_indices,
+            &cells_to_keep,
+            Some(aucell_params),
+            verbose,
+        )
+        .to_extendr()?
     };
 
     let auc_mat = Mat::from_fn(res[0].len(), res.len(), |i, j| res[j][i] as f64);
@@ -328,11 +348,13 @@ fn rs_vision(
     let cells_to_keep = cells_to_keep.r_int_convert();
     let gene_signatures = r_list_to_sig_genes(gs_list)?;
 
+    let reader = ParallelSparseReader::new(&f_path).to_extendr()?;
+
     let res = if streaming {
-        calculate_vision_streaming(&f_path, &gene_signatures, &cells_to_keep, verbose)
+        calculate_vision_streaming(&reader, &gene_signatures, &cells_to_keep, verbose)
             .to_extendr()?
     } else {
-        calculate_vision(&f_path, &gene_signatures, &cells_to_keep, verbose).to_extendr()?
+        calculate_vision(&reader, &gene_signatures, &cells_to_keep, verbose).to_extendr()?
     };
 
     let vision_mat = Mat::from_fn(res.len(), res[0].len(), |i, j| res[i][j] as f64);
@@ -411,11 +433,13 @@ fn rs_vision_with_autocorrelation(
     let cells_to_keep = cells_to_keep.r_int_convert();
     let gene_signatures = r_list_to_sig_genes(gs_list).unwrap();
 
+    let reader = ParallelSparseReader::new(&f_path).to_extendr()?;
+
     let res = if streaming {
-        calculate_vision_streaming(&f_path, &gene_signatures, &cells_to_keep, verbose)
+        calculate_vision_streaming(&reader, &gene_signatures, &cells_to_keep, verbose)
             .to_extendr()?
     } else {
-        calculate_vision(&f_path, &gene_signatures, &cells_to_keep, verbose).to_extendr()?
+        calculate_vision(&reader, &gene_signatures, &cells_to_keep, verbose).to_extendr()?
     };
 
     if verbosity.normal_verbosity() {
@@ -433,10 +457,10 @@ fn rs_vision_with_autocorrelation(
         let cluster_signatures = r_list_to_sig_genes(cluster_sigs).unwrap();
 
         let cluster_random_scores = if streaming {
-            calculate_vision_streaming(&f_path, &cluster_signatures, &cells_to_keep, verbose)
+            calculate_vision_streaming(&reader, &cluster_signatures, &cells_to_keep, verbose)
                 .to_extendr()?
         } else {
-            calculate_vision(&f_path, &cluster_signatures, &cells_to_keep, verbose).to_extendr()?
+            calculate_vision(&reader, &cluster_signatures, &cells_to_keep, verbose).to_extendr()?
         };
 
         random_scores_by_cluster.push(cluster_random_scores);
@@ -609,9 +633,12 @@ fn rs_hotspot_autocor(
         (knn_indices, knn_dist.unwrap())
     };
 
+    let gene_reader = ParallelSparseReader::new(&f_path_genes).to_extendr()?;
+    let cell_reader = ParallelSparseReader::new(&f_path_cells).to_extendr()?;
+
     let mut hotspot = Hotspot::new(
-        f_path_genes,
-        f_path_cells,
+        &gene_reader,
+        &cell_reader,
         &cells_to_keep,
         &knn_indices,
         &mut knn_dist,
@@ -743,9 +770,12 @@ fn rs_hotspot_gene_cor(
         (knn_indices, knn_dist.unwrap())
     };
 
+    let gene_reader = ParallelSparseReader::new(&f_path_genes).to_extendr()?;
+    let cell_reader = ParallelSparseReader::new(&f_path_cells).to_extendr()?;
+
     let mut hotspot = Hotspot::new(
-        f_path_genes,
-        f_path_cells,
+        &gene_reader,
+        &cell_reader,
         &cells_to_keep,
         &knn_indices,
         &mut knn_dist,
@@ -980,8 +1010,10 @@ fn rs_scenic_gene_filter(
 
     let scenic_params = ScenicParams::from_r_list(scenic_params)?;
 
+    let reader = ParallelSparseReader::new(&f_path_genes).to_extendr()?;
+
     let genes_to_use =
-        scenic_gene_filter(&f_path_genes, &cell_indices, &scenic_params, verbose).to_extendr()?;
+        scenic_gene_filter(&reader, &cell_indices, &scenic_params, verbose).to_extendr()?;
 
     Ok(genes_to_use.r_int_convert())
 }
@@ -1025,8 +1057,10 @@ fn rs_scenic_grn(
 
     let scenic_params = ScenicParams::from_r_list(scenic_params)?;
 
+    let reader = ParallelSparseReader::new(&f_path_genes).to_extendr()?;
+
     let grn_matrix = run_scenic_grn(
-        &f_path_genes,
+        &reader,
         &cell_indices,
         &gene_indices,
         &tf_indices,
@@ -1079,8 +1113,10 @@ fn rs_scenic_grn_streaming(
 
     let scenic_params = ScenicParams::from_r_list(scenic_params)?;
 
+    let reader = ParallelSparseReader::new(&f_path_genes).to_extendr()?;
+
     let grn_matrix = run_scenic_grn_streaming(
-        &f_path_genes,
+        &reader,
         &cell_indices,
         &gene_indices,
         &tf_indices,
@@ -1400,8 +1436,9 @@ fn rs_nmf_single_sc(
     let cell_indices = cell_indices.r_int_convert();
     let gene_indices = gene_indices.r_int_convert();
     let nmf_hals_opt: HalsOpts<f32> = HalsOpts::from_r_list(nmf_hals_params, seed).to_extendr()?;
+    let reader = ParallelSparseReader::new(f_path_gene).to_extendr()?;
     let nmf_res = nmf_single_run_sc(
-        f_path_gene,
+        &reader,
         &gene_indices,
         &cell_indices,
         k,
@@ -1475,8 +1512,9 @@ fn rs_nmf_multi_sc(
     let gene_indices = gene_indices.r_int_convert();
     let cell_indices = cell_indices.r_int_convert();
     let nmf_hals_opt: HalsOpts<f32> = HalsOpts::from_r_list(nmf_hals_params, seed).to_extendr()?;
+    let reader = ParallelSparseReader::new(f_path_gene).to_extendr()?;
     let nmf_res = nmf_multiple_run_sc(
-        f_path_gene,
+        &reader,
         &gene_indices,
         &cell_indices,
         k,

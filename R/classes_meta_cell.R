@@ -141,8 +141,14 @@ S7::method(print, MetaCells) <- function(x, ...) {
     sprintf("  Meta cell method: %s\n", meta_cell_method),
     sprintf("  No meta cells: %i\n", dims[1]),
     sprintf("  No genes: %i\n", dims[2]),
-    sprintf("  No original cells: %i\n", original_assignment$n_cells),
-    sprintf("  No unassigned cells: %i\n", original_assignment$n_unassigned),
+    # n_unassigned counts every obs row without a meta cell, which lumps
+    # QC-dropped cells in with genuinely unassigned ones, so report the
+    # aggregated count directly instead.
+    sprintf(
+      "  No cells aggregated: %i\n",
+      original_assignment$n_cells - original_assignment$n_unassigned
+    ),
+    sprintf("  No obs rows in source: %i\n", original_assignment$n_cells),
     sprintf("  HVG calculated: %s\n", hvg_calculated),
     sprintf("  PCA calculated: %s\n", pca_calculated),
     sprintf("  Other embeddings: %s\n", other_embeddings_str),
@@ -418,9 +424,10 @@ S7::method(mc_get_clr_offsets, MetaCells) <- function(
 
   x <- object[cell_indices, , assay = "raw"]
 
-  s <- rowSums(x)
-  u <- counts / s
-  clr_offsets <- rowMeans(log1p(u))
+  s <- Matrix::rowSums(x)
+  # divides row i by s[i]; recycling on a matrix runs down the columns
+  u <- x / s
+  clr_offsets <- Matrix::rowMeans(log1p(u))
 
   clr_offsets
 }

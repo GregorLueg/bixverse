@@ -260,7 +260,7 @@ for this.
 
 ```{r}
 #| label: fast cluster k-means data
-centroids <- get_centroids(fast_cluster_res)
+centroids <- get_centroids_sc(fast_cluster_res)
 
 kmeans_membership <- get_kmeans_clusters(fast_cluster_res)
 ```
@@ -428,7 +428,8 @@ embedding_plot_sc(
   theme(legend.position = "bottom")
 ```
 
-Alternatively, we can also show the expression levels of the cell type markers using the dotplot plotting function `dot_plot_sc` from `bixverse.plots`. 
+Alternatively, we can also show the expression levels of the cell type markers 
+using the dotplot plotting function `dot_plot_sc` from `bixverse.plots`. 
 
 ```{r}
 features_vec <- setdiff(symbol_to_ensembl[names(cell_markers)], NA)

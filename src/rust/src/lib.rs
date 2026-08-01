@@ -31,6 +31,7 @@ pub use enrichment::r_gsea;
 pub use enrichment::r_gsva;
 pub use enrichment::r_mitch;
 pub use enrichment::r_oea;
+pub use enrichment::r_singscore;
 
 // graphs
 pub use graph::r_graph_clustering;
@@ -44,6 +45,7 @@ pub use methods::r_coremo;
 pub use methods::r_dgrdl;
 pub use methods::r_diffcor;
 pub use methods::r_ica;
+pub use methods::r_nmf_bulk;
 pub use methods::r_rbh;
 
 // ontology
@@ -90,6 +92,7 @@ extendr_module! {
     use r_gsva;
     use r_mitch;
     use r_oea;
+    use r_singscore;
 
     // graphs
     use r_page_rank;
@@ -102,6 +105,7 @@ extendr_module! {
     use r_dgrdl;
     use r_diffcor;
     use r_ica;
+    use r_nmf_bulk;
     use r_rbh;
     use r_cistarget;
 

@@ -147,7 +147,7 @@ expect_equivalent(
   info = "merged object - norm counts correctly merged"
 )
 
-norm_counts_without_renormalisation = sc_object_merged[,, assay = "norm"]
+norm_counts_without_renormalisation <- sc_object_merged[,, assay = "norm"]
 
 ## merge with renormalisation --------------------------------------------------
 
@@ -183,7 +183,7 @@ expect_equivalent(
   info = "merged object - raw counts correctly merged"
 )
 
-norm_counts_with_renormalisation = sc_object_merged[,, assay = "norm"]
+norm_counts_with_renormalisation <- sc_object_merged[,, assay = "norm"]
 
 expect_true(
   current = any(

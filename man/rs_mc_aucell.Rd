@@ -4,7 +4,7 @@
 \alias{rs_mc_aucell}
 \title{Calculate AUCell in Rust (for meta cells)}
 \usage{
-rs_mc_aucell(sparse_data, gs_list, auc_type, verbose)
+rs_mc_aucell(sparse_data, gs_list, aucell_params, verbose)
 }
 \arguments{
 \item{sparse_data}{A named list that needs to have \code{data}, \code{indptr},
@@ -13,8 +13,8 @@ rs_mc_aucell(sparse_data, gs_list, auc_type, verbose)
 \item{gs_list}{List. List with the gene set indices (0-indexed!) of the
 genes of interest.}
 
-\item{auc_type}{String. One of \code{"wilcox"} or \code{"auroc"}, pending on
-which statistic you wish to calculate.}
+\item{aucell_params}{List. The AUCell parameters, see
+\code{\link[=params_sc_aucell]{params_sc_aucell()}}.}
 
 \item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
 detailed verbosity.}
@@ -26,9 +26,8 @@ AUC.
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 The function will take in a list of gene set indices (0-indexed!) and
-calculate an AUCell type statistic. Two options here: calculate this
-with proper AUROC calculations (useful for marker gene expression) or
-based on the Mann-Whitney statistic (useful for pathway activity
-measurs). This version works on MetaCell counts which are stored in memory
-directly.
+calculate an AUCell type statistic. Three options here: the recovery-curve
+AUC of Aibar, et al. (the actual AUCell statistic), an AUC derived from the
+Mann-Whitney statistic, or average precision. This version works on
+MetaCell counts which are stored in memory directly.
 }

@@ -17,7 +17,7 @@ generate_bt_meta_cells_sc(
 )
 }
 \arguments{
-\item{object}{\code{SingleCells} class.}
+\item{object}{\code{SingleCells} or \code{SingleCellsSubset} class.}
 
 \item{sc_meta_cell_params}{List. Output of
 \code{\link[=params_sc_bt_metacells]{params_sc_bt_metacells()}}.
