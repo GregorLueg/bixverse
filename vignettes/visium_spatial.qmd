@@ -1,0 +1,454 @@
+---
+title: "Analysing a Visium slide with bixverse"
+date: last-modified
+date-format: YYYY-MM-DD
+vignette: >
+  %\VignetteIndexEntry{Analysing a Visium slide with bixverse}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+knitr:
+  opts_chunk:
+    collapse: true
+    comment: '#>'
+author:
+  - name: "Gregor Lueg"
+---
+
+## Intro
+
+A full pass over one Visium capture area: ingest, spatial graph, spatially
+variable genes by two methods, clustering, neighbourhood enrichment and per-spot
+histology features.
+
+This assumes you have read the
+[I/O vignette](https://gregorlueg.github.io/bixverse/articles/spatial_io.html),
+and that you are comfortable with how `SingleCells` keeps counts on disk. The
+[design doc](https://gregorlueg.github.io/bixverse/articles/design_spatial.html)
+covers why the spatial layer looks the way it does, including the bits that are
+not finished.
+
+```{r}
+#| label: setup
+library(bixverse)
+library(data.table)
+library(ggplot2)
+library(magrittr)
+```
+
+Point this at your own Space Ranger output.
+
+```{r}
+#| label: load
+visium_dir <- path.expand("~/Desktop/visium_example_data")
+
+data_dir <- file.path(tempdir(), "visium_worked")
+dir.create(data_dir, recursive = TRUE, showWarnings = FALSE)
+
+object <- load_visium(
+  SpatialSpot(dir_data = data_dir),
+  visium_dir = visium_dir,
+  sp_io_param = params_sp_visium_io(),
+  sc_qc_param = params_sc_min_quality(),
+  exp_id = "example",
+  .verbose = FALSE
+)
+
+object
+```
+
+3,827 in-tissue spots and 18,945 genes after the default QC. Off-tissue spots
+were dropped at ingest, so the gene filter never saw them.
+
+## A first look
+
+The coordinates are just obs columns, so plotting is `ggplot2` and nothing else.
+
+```{r}
+#| label: qc plot
+#| fig-width: 7
+#| fig-height: 6
+obs <- get_sc_obs(object)
+
+ggplot(obs, aes(x = pxl_col_in_fullres, y = -pxl_row_in_fullres)) +
+  geom_point(aes(colour = log10(lib_size)), size = 0.7) +
+  scale_colour_viridis_c(name = expression(log[10] ~ "counts")) +
+  coord_fixed() +
+  theme_minimal() +
+  labs(x = NULL, y = NULL, title = "Library size across the capture area")
+```
+
+The `y` axis is negated because pixel rows count downwards from the top of the
+image while `ggplot2` counts upwards.
+
+## The spatial graph
+
+Everything except SPARK-X needs to know which spots touch. On Visium the capture
+geometry is known exactly, so the graph is a table look-up over the array
+coordinates rather than a distance computation.
+
+```{r}
+#| label: graph
+object <- build_spatial_graph_sp(
+  object,
+  graph_params = params_sp_graph(layout = "hex", weighting = "binary"),
+  .verbose = TRUE
+)
+```
+
+22,302 directed edges, a median of 6 neighbours per spot, and a median
+symmetrised degree of 12. Those last two are different numbers describing the
+same thing: `degree` is the row sum of `W + Wᵀ`, so on a reciprocal binary
+lattice it is exactly twice the neighbour count. If you want a neighbour count,
+count the neighbours.
+
+```{r}
+#| label: graph shape
+graph <- get_per_sample_spatial_graph(object, "example")
+dim(graph)
+
+neighbour_counts <- diff(Matrix::t(graph)@p)
+table(neighbour_counts)
+```
+
+The spots with fewer than six neighbours are on the tissue boundary, which is
+most of the perimeter of any real section.
+
+## Spatially variable genes
+
+### Moran's I
+
+Classic spatial autocorrelation against the graph you just built, tested under
+the Cliff-Ord normality null. This is the same statistic and the same null as
+`spdep::moran.test(randomisation = FALSE)`.
+
+```{r}
+#| label: morans
+object <- morans_i_sp(object, .verbose = FALSE)
+morans <- get_per_sample_morans_i(object, "example")
+morans
+```
+
+Under 300 ms for 18,945 genes. `E[I]` and `Var[I]` depend only on the number of
+spots and the graph weights, so they get computed once and per-gene work reduces
+to a single sparse quadratic form.
+
+```{r}
+#| label: morans top
+# plain data.table on the way out: `SpMoransRes` sits in front of a data.table
+# and `[` carries the class onto anything derived from it, so a slice would
+# still print through the result class rather than as the table it now is
+morans_dt <- data.table(
+  gene_id = morans$gene_id,
+  morans_i = morans$morans_i,
+  fdr = morans$fdr
+)
+
+morans_dt[is.finite(morans_i)][order(-morans_i)][1:10]
+```
+
+```{r}
+#| label: morans plot
+#| fig-width: 7
+#| fig-height: 5
+plot(morans)
+```
+
+Worth a caveat: a gene with zero variance across spots has no defined `I`, comes
+back as `NaN`, and the FDR adjustment currently maps it to zero rather than
+`NaN`. With the default `min_cells = 10` there are no constant genes here, so it
+does not arise. Drop `min_cells` to zero and it will, so filter on
+`is.finite(morans_i)` before you read the FDR column.
+
+### How does that compare to Space Ranger?
+
+Space Ranger computes its own Moran's I and ships it as
+`spatial_enrichment.csv`. It builds its own neighbour graph, so this is a rank
+comparison rather than an equality check.
+
+```{r}
+#| label: space ranger
+sr <- fread(file.path(visium_dir, "spatial", "spatial_enrichment.csv"))
+setnames(sr, c("Feature ID", "I"), c("gene_id", "space_ranger_i"))
+
+joined <- merge(
+  morans_dt[, .(gene_id, bixverse_i = morans_i)],
+  sr[, .(gene_id, space_ranger_i)],
+  by = "gene_id"
+)
+joined <- joined[is.finite(bixverse_i) & is.finite(space_ranger_i)]
+
+nrow(joined)
+cor(joined$bixverse_i, joined$space_ranger_i, method = "spearman")
+```
+
+```{r}
+#| label: space ranger plot
+#| fig-width: 6
+#| fig-height: 5
+ggplot(joined, aes(x = space_ranger_i, y = bixverse_i)) +
+  geom_point(size = 0.4, alpha = 0.3) +
+  geom_abline(slope = 1, intercept = 0, colour = "#B2182B") +
+  theme_minimal() +
+  labs(x = "Space Ranger", y = "bixverse", title = "Moran's I")
+```
+
+Rank correlation around 0.99. The points sit off the diagonal because the two
+graphs differ, not because the statistic does.
+
+### SPARK-X
+
+Kernel-based and non-parametric. It needs no graph, working straight off the
+coordinates with ten kernels by default: five Gaussian, five cosine, bandwidths
+taken from quantiles of the pairwise distance distribution.
+
+```{r}
+#| label: sparkx
+object <- sparkx_sp(object, .verbose = FALSE)
+sparkx <- get_per_sample_sparkx(object, "example")
+sparkx
+```
+
+```{r}
+#| label: sparkx plot
+#| fig-width: 7
+#| fig-height: 4
+plot(sparkx)
+```
+
+```{r}
+#| label: overlap
+both <- merge(
+  morans_dt[is.finite(morans_i), .(gene_id, moran_fdr = fdr)],
+  data.table(gene_id = sparkx$gene_id, sparkx_fdr = sparkx$fdr),
+  by = "gene_id"
+)
+
+both[, .(
+  moran_only = sum(moran_fdr < 0.05 & sparkx_fdr >= 0.05),
+  sparkx_only = sum(sparkx_fdr < 0.05 & moran_fdr >= 0.05),
+  both = sum(moran_fdr < 0.05 & sparkx_fdr < 0.05)
+)]
+```
+
+SPARK-X is much the more liberal of the two. It is testing a different null:
+Moran's I asks whether neighbouring spots agree, SPARK-X asks whether expression
+covaries with position under any of ten smooth kernels, and on real tissue almost
+everything expressed does a bit of the latter. Take the intersection when you
+want a short list.
+
+```{r}
+#| label: top svg plot
+#| fig-width: 9
+#| fig-height: 4
+top_genes <- morans_dt[is.finite(morans_i)][order(-morans_i)][1:2]$gene_id
+
+expr <- extract_gene_expression(
+  object,
+  features = top_genes,
+  obs_cols = c("pxl_col_in_fullres", "pxl_row_in_fullres")
+)
+
+plot_dt <- melt(
+  expr,
+  id.vars = c("cell_id", "pxl_col_in_fullres", "pxl_row_in_fullres"),
+  variable.name = "gene",
+  value.name = "norm_expr"
+)
+plot_dt[, x := pxl_col_in_fullres]
+plot_dt[, y := -pxl_row_in_fullres]
+plot_dt[, value := log1p(norm_expr)]
+
+ggplot(plot_dt, aes(x = x, y = y, colour = value)) +
+  geom_point(size = 0.5) +
+  scale_colour_viridis_c(name = "log1p(norm)") +
+  facet_wrap(~gene) +
+  coord_fixed() +
+  theme_minimal() +
+  labs(x = NULL, y = NULL)
+```
+
+## Clustering the spots
+
+`SpatialSpot` inherits from `SingleCells`, so the standard pipeline works
+unchanged. Nothing about this step is spatially aware: it clusters on expression
+and the spatial coherence you see afterwards is earned, not imposed.
+
+```{r}
+#| label: clustering
+object <- object %>%
+  find_hvg_sc(hvg_no = 2000L, .verbose = FALSE) %>%
+  calculate_pca_sc(no_pcs = 30L, .verbose = FALSE) %>%
+  find_neighbours_sc(.verbose = FALSE)
+
+object <- find_clusters_sc(object, res = 0.8, name = "spot_cluster")
+
+table(get_sc_obs(object)$spot_cluster)
+```
+
+```{r}
+#| label: cluster plot
+#| fig-width: 7
+#| fig-height: 6
+obs <- get_sc_obs(object)
+
+ggplot(obs, aes(x = pxl_col_in_fullres, y = -pxl_row_in_fullres)) +
+  geom_point(aes(colour = factor(spot_cluster)), size = 0.7) +
+  coord_fixed() +
+  theme_minimal() +
+  labs(x = NULL, y = NULL, colour = "cluster")
+```
+
+## Neighbourhood enrichment
+
+Do those clusters sit next to each other more or less often than chance? The
+permutation shuffles the labels and keeps the graph, so the null carries the
+spatial structure of the slide rather than destroying it.
+
+```{r}
+#| label: nhood
+object <- nhood_enrichment_sp(
+  object,
+  label_col = "spot_cluster",
+  nhood_params = params_sp_nhood(n_perm = 1000L),
+  seed = 42L,
+  .verbose = FALSE
+)
+
+nhood <- get_per_sample_nhood_enrichment(object, "example", "spot_cluster")
+nhood
+```
+
+```{r}
+#| label: nhood plot
+#| fig-width: 7
+#| fig-height: 6
+plot(nhood)
+```
+
+A strong positive diagonal is what spatially coherent domains look like: a
+cluster's spots are overwhelmingly neighboured by its own. The entries worth
+reading are the positive off-diagonal ones, which are the compartments that
+actually touch.
+
+Results nest by `exp_id` and then by label column, so running this against
+pathologist annotations as well keeps both.
+
+## Image features
+
+One tile per spot out of a registered slide image, reduced to 29 numbers: first
+order statistics per colour channel, the same after haematoxylin/eosin colour
+deconvolution, mean optical density, and Haralick texture off a grey-level
+co-occurrence matrix.
+
+```{r}
+#| label: image features
+object <- image_features_sp(
+  object,
+  resolution = "hires",
+  image_params = params_sp_image(tile_scale = 1.0),
+  .verbose = FALSE
+)
+
+features <- get_per_sample_image_features(object, "example", "hires")
+features
+features$feature_names
+```
+
+The result joins straight back onto the obs table.
+
+```{r}
+#| label: join features
+object <- add_sc_new_obs(object, get_data(features))
+obs <- get_sc_obs(object)
+
+ggplot(obs, aes(x = pxl_col_in_fullres, y = -pxl_row_in_fullres)) +
+  geom_point(aes(colour = haem_mean), size = 0.7) +
+  scale_colour_viridis_c(option = "magma", name = "haematoxylin") +
+  coord_fixed() +
+  theme_minimal() +
+  labs(x = NULL, y = NULL)
+```
+
+### Read the texture features with suspicion
+
+The spot is 256 px across at full resolution. In the `hires` PNG that is 14.4 px,
+and in the CytAssist frame 21.6 px.
+
+```{r}
+#| label: spot size
+sample <- get_sample(object, "example")
+spot_fullres <- sample$scale_factors[["spot_diameter_fullres"]]
+
+data.table(
+  resolution = c("lowres", "hires", "cytassist"),
+  scale_factor = c(
+    sample$scale_factors[["tissue_lowres_scalef"]],
+    sample$scale_factors[["tissue_hires_scalef"]],
+    sample$scale_factors[["cytassist_scalef"]]
+  )
+)[, spot_px := round(spot_fullres * scale_factor, 1)][]
+```
+
+Colour statistics on a 14 px tile are fine. A grey-level co-occurrence matrix on
+one is close to noise: about 200 pixels, quantised to 32 grey levels, and you are
+asking for a second-order statistic off that. The `glcm_*` columns come back
+finite and they do not mean much.
+
+Texture becomes worth reading once a real scanner slide is registered under
+`fullres` through `params_sp_visium_io(slide_file = ...)`. Space Ranger does not
+ship one, and this data set offers nothing above 21.6 px.
+
+One more thing that catches people out. The CytAssist frame is a TIFF, and the
+Rust image backend reads TIFF while the R side does not:
+
+```{r}
+#| label: cytassist
+#| error: true
+get_image(object, "example", "cytassist")
+```
+
+```{r}
+#| label: cytassist features
+object <- image_features_sp(
+  object,
+  resolution = "cytassist",
+  .verbose = FALSE
+)
+
+get_per_sample_image_features(object, "example", "cytassist")
+```
+
+Features off an image you cannot load into R. Both statements are true and the
+asymmetry is where the two halves happened to land, not a decision anyone made.
+
+## As a pipeline
+
+The spatial steps chain like the single cell ones, which matters once you have
+more than one capture area and want the same treatment applied to each.
+
+```{r}
+#| label: pipeline
+pipeline <- step_spatial_graph_sp(.verbose = FALSE) %>>%
+  step_morans_i_sp(.verbose = FALSE) %>>%
+  step_sparkx_sp(.verbose = FALSE)
+
+validate_pipeline(pipeline, "SpatialSpotSubset")
+
+subset_obj <- apply_pipeline(
+  pipeline,
+  SpatialSpotSubset(object, exp_id = "example")
+)
+
+get_per_sample_morans_i(subset_obj, "example")
+```
+
+`SpatialSpotSubset` carries exactly one capture area and shares the count
+connection with its parent rather than copying it, so this is cheap.
+
+## What is not here yet
+
+Per-sample PCA has a slot in the cache and nothing fills it. There is no
+spatially aware aggregation into superspots. Ingest wants a Space Ranger
+directory, so h5ad from squidpy and image-free counts have no path in. And no
+vendor slide format has been through the image code, so `fullres` currently means
+generic tiled TIFF and nothing else.

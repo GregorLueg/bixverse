@@ -1,0 +1,340 @@
+---
+title: "Spatial data I/O in bixverse"
+date: last-modified
+date-format: YYYY-MM-DD
+vignette: >
+  %\VignetteIndexEntry{Spatial data I/O in bixverse}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+knitr:
+  opts_chunk:
+    collapse: true
+    comment: '#>'
+author:
+  - name: "Gregor Lueg"
+---
+
+## Intro
+
+`SpatialSpot` inherits from `SingleCells`, so counts land in the same on-disk
+Rust binaries and the same DuckDB, and every reader in the single cell I/O
+vignette still applies. What the spatial layer adds is geometry: spot
+coordinates, the scale factors that relate them to the slide images, and the
+images themselves.
+
+Right now there is exactly one way in, `load_visium()`, and it wants a Space
+Ranger output directory. Reading counts and coordinates from anywhere else is
+not implemented yet. See the
+[design doc](https://gregorlueg.github.io/bixverse/articles/design_spatial.html)
+for what else is missing.
+
+```{r}
+#| label: setup
+library(bixverse)
+library(data.table)
+library(magrittr)
+```
+
+Point this at your own Space Ranger output. Everything below runs against a
+standard CytAssist FFPE capture area.
+
+```{r}
+#| label: paths
+visium_dir <- path.expand("~/Desktop/visium_example_data")
+list.files(visium_dir)
+```
+
+## What Space Ranger writes
+
+Two directories matter.
+
+```{r}
+#| label: layout
+list.files(file.path(visium_dir, "spatial"))
+list.files(file.path(visium_dir, "raw_feature_bc_matrix"))
+```
+
+`spatial/` carries the geometry. `tissue_positions.csv` has one row per spot on
+the capture area with its array coordinates, its full-resolution pixel
+coordinates and an `in_tissue` flag. `scalefactors_json.json` relates
+full-resolution pixels to each shipped image. The rest are images.
+
+`*_feature_bc_matrix/` is a plain 10x MTX triplet, exactly as the single cell
+readers expect it.
+
+```{r}
+#| label: positions
+positions <- fread(file.path(visium_dir, "spatial", "tissue_positions.csv"))
+head(positions, 3)
+positions[, .N, by = in_tissue]
+```
+
+Just over a fifth of the 4,992 spots on the capture area sit off tissue. They
+carry a handful of counts each and drag every downstream summary around if you
+keep them.
+
+## The barcode join
+
+This is the single most important thing the reader does, and it is easy to get
+silently wrong.
+
+`barcodes.tsv.gz` is sorted lexicographically. `tissue_positions.csv` is in array
+raster order. They contain the same barcodes in different orders.
+
+```{r}
+#| label: orders
+barcodes <- fread(
+  file.path(visium_dir, "raw_feature_bc_matrix", "barcodes.tsv.gz"),
+  header = FALSE
+)$V1
+
+head(barcodes, 3)
+head(positions$barcode, 3)
+identical(sort(barcodes), sort(positions$barcode))
+identical(barcodes, positions$barcode)
+```
+
+Same set, different order. Anything that zips the two together by position
+assigns every spot somebody else's coordinates. The result still plots, still
+clusters, and is wrong everywhere. `load_visium()` joins on the barcode, and
+there is a test that builds a fixture where the two orders are a derangement of
+each other, so a positional zip would be wrong for every single spot rather than
+accidentally right for a few.
+
+## Loading one sample
+
+```{r}
+#| label: load
+data_dir <- file.path(tempdir(), "visium_io")
+dir.create(data_dir, recursive = TRUE, showWarnings = FALSE)
+
+object <- SpatialSpot(dir_data = data_dir)
+
+object <- load_visium(
+  object,
+  visium_dir = visium_dir,
+  sp_io_param = params_sp_visium_io(),
+  sc_qc_param = params_sc_min_quality(),
+  exp_id = "example",
+  .verbose = FALSE
+)
+
+object
+```
+
+`params_sp_visium_io()` controls three things.
+
+```{r}
+#| label: io params
+str(params_sp_visium_io())
+```
+
+`matrix_type` picks between `raw_feature_bc_matrix/` and
+`filtered_feature_bc_matrix/`; `"auto"` prefers the filtered one and falls back.
+`slide_file` registers a user-supplied full-resolution scanner slide, which
+Space Ranger does not ship. `in_tissue_only` is the one that changes the numbers.
+
+### in_tissue filtering happens at ingest
+
+With `in_tissue_only = TRUE`, off-tissue spots are resolved to matrix column
+indices by barcode and handed to the Rust reader as an allowlist. They never
+reach the gene statistics and never get written. So `min_cells` in the QC
+parameters sees in-tissue spots only, and `dims[1]` is the in-tissue count rather
+than the full capture area.
+
+```{r}
+#| label: in tissue
+S7::prop(object, "dims")
+positions[in_tissue == 1, .N]
+```
+
+Turn it off and every spot is written:
+
+```{r}
+#| label: all spots
+all_spots_dir <- file.path(tempdir(), "visium_io_all")
+dir.create(all_spots_dir, recursive = TRUE, showWarnings = FALSE)
+
+all_spots <- load_visium(
+  SpatialSpot(dir_data = all_spots_dir),
+  visium_dir = visium_dir,
+  sp_io_param = params_sp_visium_io(in_tissue_only = FALSE),
+  exp_id = "example",
+  copy_images = FALSE,
+  .verbose = FALSE
+)
+
+S7::prop(all_spots, "dims")
+```
+
+More spots, and a different gene count, because gene QC now sees the off-tissue
+background too.
+
+## The sample record
+
+Each loaded capture area is registered as a `SpatialSample`.
+
+```{r}
+#| label: sample
+sample <- get_sample(object, "example")
+sample
+```
+
+It holds the scale factors verbatim from the JSON, plus one derived entry.
+
+```{r}
+#| label: scale factors
+str(sample$scale_factors)
+```
+
+`cytassist_scalef` is not in the file. Space Ranger writes
+`regist_target_img_scalef`, which describes the registration *target*, not the
+CytAssist image it actually ships. The reader derives the real one from the
+dimensions of the file on disk. Use `regist_target_img_scalef` for the CytAssist
+frame and your tiles land in the wrong place.
+
+## Coordinates
+
+```{r}
+#| label: coords
+coords <- get_spatial_coords(object, "example")
+head(coords, 3)
+dim(coords)
+```
+
+Two columns, `x` then `y`, in full-resolution pixels. Rows come back in ascending
+`cell_idx`, which is the same order as `get_spot_indices_for_exp()` and the same
+order the spatial graph is indexed in. Row `i` of the coordinate matrix pairs
+with element `i` of the index vector.
+
+Note the crossing: `x` is `pxl_col_in_fullres` and `y` is `pxl_row_in_fullres`.
+Naming in the positions file is row-first, plotting is x-first, and the two are
+deliberately swapped here so the coordinate matrix plots the right way up.
+
+```{r}
+#| label: coord check
+obs <- get_sc_obs(object)
+setorderv(obs, "cell_idx")
+identical(as.numeric(coords[, "x"]), as.numeric(obs$pxl_col_in_fullres))
+```
+
+## Images
+
+Images get copied into `<dir_data>/images/<exp_id>/` at ingest and the sample
+stores paths relative to the data directory, so the whole thing stays portable.
+
+```{r}
+#| label: image paths
+sample$image_paths
+```
+
+```{r}
+#| label: get image
+hires <- get_image(object, "example", "hires")
+dim(hires)
+```
+
+`get_image()` reads PNG and JPEG. It does not read TIFF, and Space Ranger ships
+the CytAssist frame as a TIFF:
+
+```{r}
+#| label: cytassist fails
+#| error: true
+get_image(object, "example", "cytassist")
+```
+
+The Rust image backend has no such problem. It reads the header without decoding
+the file:
+
+```{r}
+#| label: image metadata
+cytassist_path <- file.path(
+  S7::prop(object, "dir_data"),
+  sample$image_paths[["cytassist"]]
+)
+str(rs_sp_image_metadata(cytassist_path))
+```
+
+`n_levels` is 1 and `vendor` is `NA` because this is a plain TIFF rather than a
+pyramidal whole-slide image. On a real slide those would report the pyramid
+table and the scanner vendor. And `image_features_sp(resolution = "cytassist")`
+works on this data even though `get_image()` cannot touch it, which surprises
+everyone including me.
+
+With `copy_images = FALSE` nothing gets registered at all, since the class only
+stores paths under the data directory:
+
+```{r}
+#| label: no images
+get_sample(all_spots, "example")$image_paths
+```
+
+## Several samples
+
+Multiple capture areas go through a prescan that builds the gene intersection
+across inputs, then a single load with global gene QC and sequential spot
+indexing.
+
+```{r}
+#| label: prescan
+multi_dir <- file.path(tempdir(), "visium_io_multi")
+dir.create(multi_dir, recursive = TRUE, showWarnings = FALSE)
+
+# the same slide twice, purely so this runs with one download
+prescan <- prescan_visium_dirs(
+  dirs = c(visium_dir, visium_dir),
+  exp_ids = c("slide_a", "slide_b"),
+  .verbose = FALSE
+)
+
+prescan$universe_size
+names(prescan$file_tasks)
+```
+
+```{r}
+#| label: load multi
+multi <- load_multi_visium(
+  SpatialSpot(dir_data = multi_dir),
+  prescan_result = prescan,
+  sc_qc_param = params_sc_min_quality(),
+  copy_images = FALSE,
+  .verbose = FALSE
+)
+
+multi
+get_sample_ids(multi)
+```
+
+Each input is registered as its own `SpatialSample`, and the obs table carries an
+`exp_id` column so everything downstream can split on it.
+
+```{r}
+#| label: multi obs
+get_sc_obs(multi)[, .N, by = exp_id]
+```
+
+### The gene QC differs from the single-sample path
+
+`load_visium()` applies `in_tissue_only` at ingest through a cell allowlist.
+`load_multi_visium()` cannot: the multi-file reader has no allowlist, so it
+writes every spot and applies the filter afterwards through the `to_keep` flag.
+
+Global gene QC therefore sees the off-tissue counts, and `min_cells` is evaluated
+against the full capture areas rather than the in-tissue ones. The two paths give
+different gene sets on the same input:
+
+```{r}
+#| label: gene counts
+S7::prop(object, "dims")[2]
+S7::prop(multi, "dims")[2]
+```
+
+Not a large difference on this slide, and not something you would notice unless
+you looked. Worth knowing if you compare a single-sample run against a
+multi-sample one.
+
+## Where to go next
+
+The [worked example](https://gregorlueg.github.io/bixverse/articles/visium_spatial.html)
+takes this object through the spatial graph, spatially variable genes,
+neighbourhood enrichment and image features.

@@ -1,0 +1,331 @@
+---
+title: "Technical design choices for the spatial implementation"
+date: last-modified
+date-format: YYYY-MM-DD
+format:
+  html:
+    toc: true
+    toc-depth: 3
+knitr:
+  opts_chunk:
+    collapse: true
+    comment: '#>'
+    eval: false
+author:
+  - name: Gregor Lueg
+---
+
+*Opinionated piece, same caveat as the single cell design doc. These are my
+views, not anyone's employer's.*
+
+## Spatial is single cell with coordinates attached
+
+That sentence is either a useful simplification or a trap, depending on which
+part of the stack you are looking at.
+
+For storage it is exactly right. A Visium spot is a barcode with counts against
+it. The `SingleCells` class already keeps counts on disk in Rust binaries with
+the metadata in a DuckDB, streams them in as needed, and scales to millions of
+barcodes. Rebuilding all of that for spatial data would be daft. So
+`SpatialSpot` inherits from `SingleCells` and gets the whole on-disk machinery
+for free, plus HVG, PCA, neighbours and clustering, which all work on spots
+without modification.
+
+For the statistics it is wrong. Every spatial method in this package needs to
+know which spots sit next to which other spots, and that information does not
+live in the count matrix. It lives in the capture geometry. So the spatial layer
+adds exactly two things: per-sample geometry and per-sample results keyed by
+what produced them.
+
+## The class
+
+```r
+SpatialSpot          # extends SingleCells
+  samples            # named list of SpatialSample, keyed by exp_id
+  sp_cache           # SpCache, per-sample results
+```
+
+A `SpatialSample` is a small S3 record: the technology, the spot count, the
+scale factors out of `scalefactors_json.json`, which obs columns hold the
+coordinates, and the relative paths of any registered slide images. One per
+capture area. It carries no counts and no coordinates, only the metadata needed
+to interpret them.
+
+The coordinates themselves stay in the obs table, as `pxl_row_in_fullres` and
+`pxl_col_in_fullres`. That is deliberate. They are per-spot metadata like any
+other column, they survive filtering by the same mechanism, and a user who wants
+to plot them can pull them with `get_sc_obs()` without learning a new accessor.
+`get_spatial_coords()` exists as a convenience that returns them as a two-column
+`(x, y)` matrix in graph order.
+
+The `SpCache` holds six slots, all keyed by `exp_id` first:
+
+```
+per_sample_spatial_graph      exp_id -> dgCMatrix
+per_sample_pca                exp_id -> list
+per_sample_morans_i           exp_id -> SpMoransRes
+per_sample_sparkx             exp_id -> SpSparkxRes
+per_sample_nhood_enrichment   exp_id -> label_col -> SpNhoodRes
+per_sample_image_features     exp_id -> resolution -> SpImageFeatures
+```
+
+The last two nest a second level because the result is not a property of the
+sample alone. Neighbourhood enrichment against cluster labels and against
+pathologist annotations are two different answers about the same slide, and both
+are worth keeping. Same for image features cut from `hires` and from
+`cytassist`.
+
+### Why per sample and not global
+
+Two capture areas have two coordinate systems. Spot 1 of sample A and spot 1 of
+sample B are unrelated points, and a graph built over the union of their
+coordinates would happily connect them if the pixel ranges overlap, which they
+usually do. Nothing about that failure is loud. You get a graph, the statistics
+run, and the numbers are nonsense.
+
+So the graph is per sample, the statistics loop over samples, and there is no
+global spatial anything.
+
+### Results are data.tables wearing a hat
+
+`SpMoransRes` and `SpSparkxRes` are `data.table`s with an extra class in front.
+That is on purpose: users want a `data.table`, and the class only buys a `print`
+method that does not dump 19,000 rows and a diagnostic `plot`.
+
+The cost is that `[.data.table` and `merge()` carry the class onto anything
+derived from the result. Merge a Moran's I table with a SPARK-X one, summarise
+it to a single row, and the summary is still an `SpMoransRes` as far as dispatch
+is concerned, without any of the columns the print method wants. The print
+methods fall back to printing the plain table when the columns are missing, so
+this is cosmetic rather than fatal, but the tidiest habit is to pull the columns
+you want into a fresh `data.table` before you start deriving from them.
+
+### The S3-on-S7 trap
+
+The `SpCache` getters and setters are S3 generics. `class()` of an S7 object is
+`c("bixverse::SpatialSpot", "bixverse::SingleCells", "S7_object")`, so a method
+named `get_per_sample_spatial_graph.SpatialSpot` never dispatches. It is not an
+error. R finds no method, falls through to the default, and you get `NULL`
+forever.
+
+This has bitten three separate times in this codebase. The methods have to be
+registered through `S7::method()`, and there is a test asserting that the getter
+comes back `NULL` before the graph is built and non-`NULL` after, which is the
+only cheap way to catch a generic that silently does nothing.
+
+## Index spaces
+
+Five index spaces cross the R/Rust boundary here, and they are not the same.
+
+| thing                        | base | space                                |
+|------------------------------|------|--------------------------------------|
+| DuckDB `cell_idx`            | 1    | global                               |
+| `get_spot_indices_for_exp()` | 0    | global                               |
+| `spots_to_keep` into Rust    | 0    | global                               |
+| neighbour / weight lists     | 0    | local, positional vs `spots_to_keep` |
+| labels into the permutation  | 0    | local                                |
+| coordinates                  | n/a  | full-res pixels, `(x, y)`            |
+
+The one worth internalising: the neighbour lists are **local**. Entry `i`
+describes the spot at row `i` of the coordinate matrix, and the indices inside
+it position against that same matrix. They are not global spot ids. That is what
+makes `MoransI::new()`'s check `neighbours.len() == spots_to_keep.len()` a real
+check rather than a coincidence.
+
+Coordinates are always in full-resolution pixels, never pre-scaled. The image
+scale factor is applied inside Rust. Pre-scaling on the R side and then handing
+over a scale factor as well is the obvious way to get tiles at the wrong place,
+and it produces plausible-looking features rather than an error.
+
+## The spatial graph
+
+Four layouts. Two of them are exact.
+
+`hex` and `square` are table look-ups over the array coordinates and never
+compute a distance. On the Visium honeycomb `array_col` steps by two inside a
+row and odd rows are offset by one, so the six neighbours of `(r, c)` are
+`(r, c ± 2)` and `(r ± 1, c ± 1)`. A corollary is that
+`array_row % 2 == array_col % 2` holds for every spot, which is why the offsets
+never leave the lattice. Getting the parity wrong drops an interior spot to four
+neighbours and nothing complains.
+
+A kNN with `k = 6` on the same lattice gets close but not identical, because the
+pixel pitch is anisotropic: in-row neighbours sit 100 px apart on the fixture
+geometry and out-of-row ones 100.34 px. Close enough that a kNN mostly works and
+occasionally does not. If the capture geometry is known, use it.
+
+`knn` and `radius` are there for Xenium and MERFISH, where there is no lattice
+to exploit.
+
+### W versus W + Wᵀ
+
+The `SpCache` stores the graph as the raw directed adjacency, exactly as the
+builder returned it. Every statistic symmetrises internally: reciprocal entries
+`(i, j)` and `(j, i)` get folded into `w_ij + w_ji` and scattered back into both
+rows, so what the statistics actually see is always `W + Wᵀ`.
+
+This matters for one number. `rs_sp_build_graph()` returns
+`list(indices, weights, degree)`, and **`degree` is the row sum of the
+symmetrised graph, not the neighbour count**. On a reciprocal binary lattice it
+is exactly twice the neighbour count: median 6 neighbours, median degree 12. Use
+`lengths(indices)` if you want a count of neighbours. The two are not the same
+number and only one of them is called something that sounds like it.
+
+Row normalisation makes this worse, in the sense of more confusing: with
+`row_normalise = TRUE` every row sums to one, so the degree is 2 everywhere and
+carries no information at all.
+
+Moran's I is invariant to a uniform scaling of `W`, so doubling the whole matrix
+changes nothing about `I`, `E[I]` or `Var[I]`. That is what makes the
+symmetrisation free rather than a decision.
+
+## Moran's I
+
+```
+I = (N / S0) * sum_ij w_ij (x_i - mean)(x_j - mean) / sum_i (x_i - mean)^2
+```
+
+with the normality null, not the randomisation one:
+
+```
+E[I]   = -1 / (N - 1)
+Var[I] = (N^2 S1 - N S2 + 3 S0^2) / (S0^2 (N^2 - 1)) - E[I]^2
+```
+
+This is the Cliff-Ord closed form, and it is chosen specifically so the answer
+matches `spdep::moran.test(randomisation = FALSE)`. There is a test pinning it
+against spdep on a synthetic lattice: `E[I]` and `Var[I]` agree to ten decimal
+places and `I` to the limit of the `f32` the kernel runs in, about six
+significant figures. A second pin takes the rank correlation against Space
+Ranger's own `spatial_enrichment.csv` on a real slide, which comes out at 0.99.
+
+`E[I]` and `Var[I]` are scalars across genes. They depend on `N` and on the
+graph weights and on nothing else, so they get computed once and per-gene work
+collapses to one sparse quadratic form plus a sum of squares. 18,945 genes over
+3,827 spots takes about 200 ms.
+
+### The normalisation trap
+
+Moran's I runs on normalised counts by default, and that couples every gene to
+every other gene through the library size. Plant one loud marker on half the
+slide, big enough to shift the library size where it is expressed, and the
+denominator drags spatial structure into genes that have none. The first
+synthetic fixture written for this had a pure-noise gene scoring `I = 0.19`.
+
+For real data this is the right default: you want autocorrelation of expression,
+not of sequencing depth. For building a test fixture it is a trap, and
+`params_sp_svg(assay = "raw")` is the way out.
+
+### Constant genes
+
+A gene with zero variance has no defined `I`. Rust emits `NaN` and the `Z` and
+p-value follow. The BH step then maps those `NaN` p-values to an FDR of zero, so
+constant genes come back looking significant and lead the top-gene table in the
+`print` method. Filter on `is.finite(morans_i)` before you read the FDR column.
+With the default gene QC (`min_cells = 10`) there are no constant genes and the
+issue never shows up; drop `min_cells` to zero and roughly half the feature space
+is constant.
+
+## SPARK-X
+
+Kernel-based, non-parametric, and it needs no graph at all: it works straight off
+the coordinates. Ten kernels by default, five Gaussian and five cosine, with
+bandwidths taken from quantiles of the pairwise distance distribution on a
+sub-sample. Per-kernel p-values get Cauchy-combined.
+
+It is much more liberal than Moran's I on the same data. On the example slide
+Moran's I calls 11,980 genes at 5% FDR and SPARK-X calls 17,401, with 11,737 in
+common. That is not a bug in either; they are testing different nulls. Moran's I
+asks whether neighbouring spots agree, SPARK-X asks whether expression covaries
+with position under any of ten smooth kernels, and almost everything expressed
+does a bit of the latter.
+
+Run both. Take the intersection when you want a short list.
+
+## Neighbourhood enrichment
+
+Permute the labels, keep the graph. The null then carries the spatial structure
+of the slide, which is the whole point: a label that happens to sit on 40% of
+the spots will co-occur with itself a lot under any null, and a null that
+reshuffled the graph instead would not know that.
+
+The output is a K x K Z-score matrix. On the example slide, Leiden clusters at
+resolution 0.8 give a diagonal with a median Z of 61 and an off-diagonal median
+of -8, which is what spatially coherent domains look like. The interesting
+entries are the positive off-diagonal ones: those are compartments that touch.
+
+## Images
+
+The honest section.
+
+### The resolution problem
+
+Space Ranger ships a `hires` PNG, a `lowres` PNG and a CytAssist TIFF. On the
+example slide a spot is 256 px across at full resolution, which becomes:
+
+| resolution | scale factor | spot diameter |
+|------------|--------------|---------------|
+| `lowres`   | 0.0168       | 4.3 px        |
+| `hires`    | 0.0561       | 14.4 px       |
+| `cytassist`| 0.0842       | 21.6 px       |
+
+First-order colour statistics on a 14 px tile are fine. Haralick texture off a
+grey-level co-occurrence matrix on a 14 px tile is close to noise: you have
+roughly 200 pixels, you are quantising them to 32 grey levels, and you are asking
+for a second-order statistic. The numbers come back, they are finite, and they
+mean very little.
+
+Texture features do not become meaningful until a real scanner slide is
+registered under `fullres`, and Space Ranger does not ship one. The example data
+offers nothing above 21.6 px. So the texture block exists, it is correct, and on
+the data most people have it is not worth reading.
+
+### The formats
+
+Generic tiled TIFF is the only container that has actually been through this
+code. **No vendor slide format has ever been tested.** Not SVS, not NDPI, not
+MIRAX. The backend probes the file rather than trusting its extension and hands
+it to OpenSlide first, so in principle a vendor slide should work and the pyramid
+table should come back populated. In practice nobody has run one through it, and
+"in principle" is not a claim worth making about file formats.
+
+The `spatial-image` feature also means OpenSlide is a hard build and run
+dependency. That is a C library, it has to be present at compile time, and it is
+new as a `SystemRequirements` entry for this package.
+
+### The asymmetry that looks like a bug
+
+```r
+get_image(object, "example", "cytassist")
+#> Error: ... is a TIFF. TIFFs can be registered but not yet loaded.
+
+image_features_sp(object, resolution = "cytassist")
+#> works fine
+```
+
+Both are true at once. The R side reads PNG and JPEG through `png` and `jpeg`
+and has no TIFF reader. The Rust side reads TIFF perfectly well, because that is
+what the image backend is for. So you can compute features off the CytAssist
+frame but you cannot pull it into R to look at it.
+
+This is not a deliberate design. It is where the two halves happened to land, and
+it is worth knowing before you spend an afternoon on it.
+
+## What is deliberately not here
+
+**Per-sample PCA.** The `SpCache` has the slot and nothing fills it. Global PCA
+across samples works today through the inherited `calculate_pca_sc()`, and that
+is the right default for anything you then want to cluster jointly. Per-sample
+PCA is for when you do not.
+
+**Superspots.** `MetaSpot` exists and holds aggregated counts at metaspot
+resolution, but there is no `generate_superspot_*` to produce one. Spatially
+aware aggregation is a different problem from the kNN-based meta cell methods,
+and doing it badly is worse than not doing it.
+
+**Image-free ingest.** `load_visium()` wants a Space Ranger directory. If you
+have counts and coordinates and no slide, there is currently no path in.
+
+**h5ad.** Squidpy and scanpy write spatial data into `adata.obsm['spatial']` and
+`adata.uns['spatial']`. Reading that is the obvious next thing and it is not
+done.

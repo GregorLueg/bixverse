@@ -16,7 +16,7 @@ home:
     compute.
 navbar:
   structure:
-    left: [intro, reference, news, articles, tutorials, singlecells]
+    left: [intro, reference, news, articles, tutorials, singlecells, spatial]
     right: [search, lightswitch, github]
   components:
     tutorials:
@@ -77,6 +77,16 @@ navbar:
           href: articles/single_cell_big_data.html
         - text: Plotting helpers
           href: articles/single_cell_visualisation.html
+    spatial:
+      text: Spatial
+      menu:
+        - text: "Spatial transcriptomics"
+        - text: "Technical design choices for spatial"
+          href: articles/design_spatial.html
+        - text: "Reading data in (spatial I/O)"
+          href: articles/spatial_io.html
+        - text: "Analysing a Visium slide"
+          href: articles/visium_spatial.html
     articles:
       text: Articles
       menu:
@@ -124,6 +134,12 @@ articles:
       - single_cell_visualisation
       - symphony
       - nichenet
+  - title: Spatial
+    navbar: Spatial
+    contents:
+      - design_spatial
+      - spatial_io
+      - visium_spatial
 
 reference:
   # General getters shared across classes
@@ -675,6 +691,67 @@ reference:
       - simulate_dropouts
       - synthetic_bulk_cor_matrix
       - synthetic_c_pca_data
+  # Spatial classes and getters
+  - title: Spatial transcriptomics classes and getters
+    desc:
+      The spot-resolved spatial class, the per-experiment subset and the
+      metaspot aggregate, plus the getters for coordinates, samples and
+      slide images.
+    contents:
+      - SpatialSpot
+      - SpatialSpotSubset
+      - MetaSpot
+      - new_spatial_sample
+      - validate_spatial_sample
+      - validate_scale_factors
+      - add_spatial_sample
+      - get_sample
+      - get_samples
+      - get_sample_ids
+      - get_spatial_coords
+      - get_spot_indices_for_exp
+      - get_image
+      - get_sp_cache
+      - get_per_sample_graph
+      - print.SpatialSample
+      - print.SpCache
+  # Spatial i/o
+  - title: Spatial i/o
+    desc:
+      Reading Space Ranger output directories into the on-disk layout. One
+      sample or many.
+    contents:
+      - load_visium
+      - load_multi_visium
+      - prescan_visium_dirs
+      - params_sp_visium_io
+  # Spatial analysis
+  - title: Spatial analysis methods
+    desc:
+      Neighbourhood graphs, spatially variable genes via Moran's I and
+      SPARK-X, label co-occurrence and per-spot histology image features.
+    contents:
+      - build_spatial_graph_sp
+      - morans_i_sp
+      - sparkx_sp
+      - nhood_enrichment_sp
+      - image_features_sp
+      - get_per_sample_spatial_graph
+      - get_per_sample_morans_i
+      - get_per_sample_sparkx
+      - get_per_sample_nhood_enrichment
+      - get_per_sample_image_features
+      - get_per_sample_pca
+      - params_sp_graph
+      - params_sp_svg
+      - params_sp_sparkx
+      - params_sp_nhood
+      - params_sp_image
+      - step_spatial_graph_sp
+      - step_morans_i_sp
+      - step_sparkx_sp
+      - step_nhood_enrichment_sp
+      - step_image_features_sp
   # General utils
   - title: Utils
     desc: 
