@@ -45,7 +45,7 @@ data_dir <- file.path(tempdir(), "visium_worked")
 dir.create(data_dir, recursive = TRUE, showWarnings = FALSE)
 
 object <- load_visium(
-  SpatialSpot(dir_data = data_dir),
+  object = SpatialSpot(dir_data = data_dir),
   visium_dir = visium_dir,
   sp_io_param = params_sp_visium_io(),
   sc_qc_param = params_sc_min_quality(),
@@ -311,7 +311,7 @@ object <- nhood_enrichment_sp(
   label_col = "spot_cluster",
   nhood_params = params_sp_nhood(n_perm = 1000L),
   seed = 42L,
-  .verbose = FALSE
+  .verbose = TRUE
 )
 
 nhood <- get_per_sample_nhood_enrichment(object, "example", "spot_cluster")
@@ -346,7 +346,7 @@ object <- image_features_sp(
   object,
   resolution = "hires",
   image_params = params_sp_image(tile_scale = 1.0),
-  .verbose = FALSE
+  .verbose = TRUE
 )
 
 features <- get_per_sample_image_features(object, "example", "hires")

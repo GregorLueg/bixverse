@@ -116,7 +116,7 @@ object <- load_visium(
   sp_io_param = params_sp_visium_io(),
   sc_qc_param = params_sc_min_quality(),
   exp_id = "example",
-  .verbose = FALSE
+  .verbose = TRUE
 )
 
 object
@@ -161,7 +161,7 @@ all_spots <- load_visium(
   sp_io_param = params_sp_visium_io(in_tissue_only = FALSE),
   exp_id = "example",
   copy_images = FALSE,
-  .verbose = FALSE
+  .verbose = TRUE
 )
 
 S7::prop(all_spots, "dims")
