@@ -12,14 +12,24 @@ validate_scale_factors(
 \arguments{
 \item{scale_factors}{Named list. Parsed scale factors.}
 
-\item{technology}{String. One of \code{c("visium", "xenium", "visium_hd")}.}
+\item{technology}{String. One of \code{c("visium", "xenium", "visium_hd")}.
+Accepted for symmetry with \code{\link[=new_spatial_sample]{new_spatial_sample()}}; no key is
+mandatory under any of them.}
 }
 \value{
 Invisibly \code{TRUE} if the validation passes, otherwise throws an
 informative error.
 }
 \description{
-Enforces the expected keys in a \code{scale_factors} list. For Visium this
-matches the contents of \code{scalefactors_json.json}. For Xenium a small
-set of pixel-size related keys is required.
+Checks the shape of what is there. It does \strong{not} require anything: every
+Visium scale factor describes the image frame, and a sample can carry
+coordinates and no image at all. An h5ad shared without its \code{uns/spatial}
+group is exactly that, and there is no reason it should be unregisterable
+when the graph, Moran's I, SPARK-X and neighbourhood enrichment would all
+run on it unchanged.
+
+The functions that genuinely need a scale factor assert it at call time,
+where the message can name the missing one:
+\code{\link[=image_features_sp]{image_features_sp()}} for \code{spot_diameter_fullres} and the
+per-resolution scale factor.
 }

@@ -67,6 +67,7 @@ pub use single_cell::r_sc_processing;
 
 // spatial
 pub use spatial::r_sp_analysis;
+pub use spatial::r_sp_data;
 pub use spatial::r_sp_graph;
 pub use spatial::r_sp_image;
 pub use spatial::r_sp_processing;
@@ -130,6 +131,7 @@ extendr_module! {
     use r_sc_plot_extraction;
 
     // spatial
+    use r_sp_data;
     use r_sp_graph;
     use r_sp_processing;
     use r_sp_analysis;

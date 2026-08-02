@@ -1475,6 +1475,63 @@ params_sp_visium_io <- function(
   )
 }
 
+#' Wrapper function to provide the spatial h5ad ingest parameters
+#'
+#' @description
+#' Controls how [bixverse::load_spatial_h5ad()] reads the spatial extras of an
+#' h5ad. Counts, obs and var go through [bixverse::load_h5ad()] and are not
+#' configured here.
+#'
+#' `assume_orientation` is the one worth reading about. Nothing in the AnnData
+#' spec fixes the column order of `obsm/spatial`, so the reader works it out
+#' from the file: whether the spots land on the tissue in the shipped image,
+#' failing that whether they fit inside its frame, failing that the `obs`
+#' `pxl_*_in_fullres` labels. This parameter is only consulted when none of
+#' that applies, which is a file with no image and no pixel columns. `"xy"` is
+#' what `scanpy.read_visium` produces and what all 236 files in the survey this
+#' reader was built against hold.
+#'
+#' Getting the order wrong costs nothing statistically: a swap of `x` and `y`
+#' is a reflection, so the graph, Moran's I and SPARK-X are unchanged. It costs
+#' everything for [bixverse::image_features_sp()], which would cut every tile
+#' from the transpose of the spot.
+#'
+#' @param library_id Optional string. Which `uns/spatial` library to read.
+#' `NULL` takes the only one and errors when the file holds several.
+#' @param assume_orientation String. One of `c("xy", "yx")`. Column order of
+#' `obsm/spatial` to fall back on when the file settles nothing.
+#' @param in_tissue_only Boolean. Keep only spots with `in_tissue == 1`, when
+#' the obs table carries that column. Defaults to `TRUE`.
+#' @param technology String. One of `c("visium", "visium_hd", "xenium")`.
+#' Recorded on the resulting [bixverse::new_spatial_sample()].
+#'
+#' @returns A list with the h5ad ingest parameters for usage in subsequent
+#' functions.
+#'
+#' @export
+params_sp_h5ad_io <- function(
+  library_id = NULL,
+  assume_orientation = c("xy", "yx"),
+  in_tissue_only = TRUE,
+  technology = c("visium", "visium_hd", "xenium")
+) {
+  assume_orientation <- match.arg(assume_orientation)
+  technology <- match.arg(technology)
+
+  # checks
+  checkmate::qassert(library_id, c("0", "S1"))
+  checkmate::assertChoice(assume_orientation, c("xy", "yx"))
+  checkmate::qassert(in_tissue_only, "B1")
+  checkmate::assertChoice(technology, c("visium", "visium_hd", "xenium"))
+
+  list(
+    library_id = library_id,
+    assume_orientation = assume_orientation,
+    in_tissue_only = in_tissue_only,
+    technology = technology
+  )
+}
+
 ### graph ----------------------------------------------------------------------
 
 #' Wrapper function to provide the spatial graph parameters

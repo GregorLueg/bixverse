@@ -4122,6 +4122,74 @@ checkSpVisiumIo <- function(x) {
 #' @keywords internal
 assertSpVisiumIo <- checkmate::makeAssertionFunction(checkSpVisiumIo)
 
+#' Check spatial h5ad ingest parameters
+#'
+#' @description Checkmate extension for checking the spatial h5ad ingest
+#' parameters built by [bixverse::params_sp_h5ad_io()].
+#'
+#' @param x The list to check/assert
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
+checkSpH5adIo <- function(x) {
+  res <- check_list_shape(
+    x,
+    c("library_id", "assume_orientation", "in_tissue_only", "technology")
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- apply_qtest_rules(
+    x,
+    list(
+      library_id = c("0", "S1"),
+      assume_orientation = "S1",
+      in_tissue_only = "B1",
+      technology = "S1"
+    ),
+    label = "spatial h5ad IO params",
+    hint = paste(
+      "library_id must be NULL or a single string, assume_orientation and",
+      "technology single strings and in_tissue_only a single boolean."
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  apply_choice_rules(
+    x,
+    list(
+      assume_orientation = c("xy", "yx"),
+      technology = c("visium", "visium_hd", "xenium")
+    ),
+    label = "spatial h5ad IO params",
+    hint = paste(
+      "assume_orientation must be 'xy' or 'yx' and technology one of",
+      "'visium', 'visium_hd' or 'xenium'."
+    )
+  )
+}
+
+#' Assert spatial h5ad ingest parameters
+#'
+#' @description Checkmate assertion for the spatial h5ad ingest parameters
+#' built by [bixverse::params_sp_h5ad_io()].
+#'
+#' @inheritParams checkSpH5adIo
+#'
+#' @param .var.name Name of the checked object to print in assertions.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is
+#' successful.
+#'
+#' @keywords internal
+assertSpH5adIo <- checkmate::makeAssertionFunction(checkSpH5adIo)
+
 #' Check spatial graph parameters
 #'
 #' @description Checkmate extension for checking the spatial graph parameters

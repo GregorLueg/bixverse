@@ -582,7 +582,9 @@ S7::method(load_h5ad, SingleCells) <- function(
 
   raw_count_slot <- if (raw_count_slot == "auto") {
     resolved_slot <- detect_raw_count_slot(h5_path)
-    if (is.na(resolved_slot)) {
+    # `detect_raw_count_slot()` returns NULL when no slot qualifies, and
+    # `if (is.na(NULL))` is a length-zero condition rather than a message.
+    if (is.null(resolved_slot) || is.na(resolved_slot)) {
       stop(paste(
         "No raw count slot could be found in the object!",
         "Please validate the h5ad file"

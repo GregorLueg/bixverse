@@ -6,6 +6,7 @@
 //! with coordinates attached.
 
 pub mod r_sp_analysis;
+pub mod r_sp_data;
 pub mod r_sp_graph;
 pub mod r_sp_image;
 pub mod r_sp_processing;

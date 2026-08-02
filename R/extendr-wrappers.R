@@ -4289,6 +4289,68 @@ rs_extract_several_genes_plots <- function(f_path, cell_indices, gene_indices, s
 #' @keywords internal
 rs_extract_grouped_gene_stats <- function(f_path, cell_indices, gene_indices, group_ids, group_levels) .Call(wrap__rs_extract_grouped_gene_stats, f_path, cell_indices, gene_indices, group_ids, group_levels)
 
+#' Read the spatial extras out of an h5ad file
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Pulls `obsm/spatial` and whatever survived in `uns/spatial`, and resolves
+#' which column of the coordinate array is `x`.
+#'
+#' **The column order is not fixed by the AnnData spec.** It gets worked out
+#' from the file rather than assumed, strongest evidence first:
+#'
+#' \itemize{
+#'   \item `"image_tissue"` - one order puts the spots on the tissue in the
+#'   shipped image and the other does not. The only test that measures the
+#'   thing that has a consequence.
+#'   \item `"image_frame"` - one order keeps every spot inside the frame the
+#'   image implies, the other pushes spots off the edge.
+#'   \item `"obs_pixel_columns"` - `obs` carries `pxl_row_in_fullres` and
+#'   `pxl_col_in_fullres` and one matched a column exactly. Weaker than it
+#'   looks: `scanpy.read_visium` swaps those two names relative to Space
+#'   Ranger, so the labels mean the opposite in a file that went through it.
+#'   \item `"assumed"` - nothing in the file settled it, so `orientation` was
+#'   taken as given.
+#' }
+#'
+#' Getting it wrong costs nothing statistically. A swap of `x` and `y` is a
+#' reflection, and every distance survives it, so the graph, Moran's I and
+#' SPARK-X all come out identical. It costs everything for image features,
+#' which would then be cut from the transpose of each spot.
+#'
+#' @param h5_path String. Path to the `.h5ad` file.
+#' @param library_id String or `NULL`. Which `uns/spatial` library to read.
+#' `NULL` takes the only one and errors when there is a choice to make.
+#' @param orientation String. `"xy"` or `"yx"`. The column order to fall back
+#' on when nothing in the file settles it. `"xy"` is what
+#' `scanpy.read_visium` produces.
+#'
+#' @return A list with the following elements
+#' \itemize{
+#'   \item coords - Numeric matrix, spots x 2. Columns `x` then `y`, in
+#'   full-resolution pixels, already in the contract order.
+#'   \item orientation - String. The column order that was used.
+#'   \item evidence - String. What settled it, see above.
+#'   \item obsm_keys - Character. Every key under `obsm`.
+#'   \item library_id - String. The `uns/spatial` library read, or `NA`.
+#'   \item library_ids - Character. Every library the file holds.
+#'   \item scale_factor_names, scale_factor_values - Character and numeric.
+#'   The scale factors, passed through untouched.
+#'   \item image_keys - Character. Images present under the library.
+#'   \item image_heights, image_widths - Integer. Their pixel dimensions,
+#'   aligned with `image_keys`.
+#'   \item metadata_keys - Character. Keys under the library's `metadata`.
+#'   \item has_array_indices - Boolean. Whether `obs` carries `array_row` and
+#'   `array_col`, which the hex and square graph layouts need.
+#'   \item has_pixel_columns - Boolean. Whether `obs` carries the
+#'   `pxl_*_in_fullres` pair.
+#' }
+#'
+#' @export
+#'
+#' @keywords internal
+rs_sp_read_h5ad_spatial <- function(h5_path, library_id, orientation) .Call(wrap__rs_sp_read_h5ad_spatial, h5_path, library_id, orientation)
+
 #' Build the spatial neighbourhood graph for one sample
 #'
 #' @description

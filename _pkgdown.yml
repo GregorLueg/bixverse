@@ -718,13 +718,16 @@ reference:
   # Spatial i/o
   - title: Spatial i/o
     desc:
-      Reading Space Ranger output directories into the on-disk layout. One
-      sample or many.
+      Reading Space Ranger output directories into the on-disk layout, one
+      sample or many, plus the h5ad path for the coordinates-only files
+      academics actually share.
     contents:
       - load_visium
       - load_multi_visium
       - prescan_visium_dirs
       - params_sp_visium_io
+      - load_spatial_h5ad
+      - params_sp_h5ad_io
   # Spatial analysis
   - title: Spatial analysis methods
     desc:

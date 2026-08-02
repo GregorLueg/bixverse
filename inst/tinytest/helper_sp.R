@@ -391,3 +391,238 @@ sp_obs_in_graph_order <- function(object, exp_id) {
 
   return(obs)
 }
+
+## the h5ad fixture ------------------------------------------------------------
+
+#' Write a synthetic spatial h5ad
+#'
+#' Enough of the AnnData layout for [bixverse::load_spatial_h5ad()] to swallow
+#' it: a CSR `X`, an `obs` and `var` with `_index`, `obsm/spatial` and
+#' optionally a `uns/spatial` library with scale factors and a `lowres` image.
+#'
+#' Two traps are baked in on purpose.
+#'
+#' The lattice is anisotropic, so `x` spans several times what `y` does and a
+#' transposed read moves every spot rather than mirroring it. The image, when
+#' asked for, gets a dark block exactly where the spots are under the correct
+#' order, so a transposed read puts them on blank slide.
+#'
+#' `rhdf5::h5write()` reverses the dimensions of an R array on the way out
+#' unless `native = TRUE`, which would hand the reader a 2 x N `obsm/spatial`.
+#' Everything with a shape below therefore goes out native.
+#'
+#' @param h5_path String. File to write. Overwritten.
+#' @param layout String. `"hex"` or `"square"`.
+#' @param n_rows,n_cols Integer. Lattice shape.
+#' @param n_genes Integer. Number of genes.
+#' @param seed Integer. Seed for the barcodes and the counts.
+#' @param orientation String. `"xy"` or `"yx"`. Column order written into
+#' `obsm/spatial`.
+#' @param obs_pixel_cols String. `"none"` for no `pxl_*_in_fullres` columns,
+#' `"spaceranger"` for the 10x meaning of those names, `"scanpy"` for the
+#' swapped meaning `scanpy.read_visium` gives them.
+#' @param with_array_cols Boolean. Write `array_row` / `array_col`.
+#' @param with_uns Boolean. Write a `uns/spatial` library at all.
+#' @param with_image Boolean. Write a `lowres` image under that library.
+#' @param image_scalef Float. `tissue_lowres_scalef` for that image.
+#' @param in_tissue Integer vector or `NULL`. Per-spot `in_tissue`, in lattice
+#' raster order. `NULL` writes all ones.
+#' @param low_count_spots Integer vector or `NULL`. 1-based lattice positions
+#' to strip down to a single count, so they fall out under any `min_lib_size`
+#' above one. What makes the obs/`obsm` row mapping actually get tested.
+#'
+#' @return A list describing the fixture.
+sp_make_spatial_h5ad <- function(
+  h5_path,
+  layout = c("hex", "square"),
+  n_rows = 12L,
+  n_cols = 12L,
+  n_genes = 40L,
+  seed = 11L,
+  orientation = c("xy", "yx"),
+  obs_pixel_cols = c("none", "spaceranger", "scanpy"),
+  with_array_cols = TRUE,
+  with_uns = TRUE,
+  with_image = FALSE,
+  image_scalef = 0.05,
+  in_tissue = NULL,
+  low_count_spots = NULL
+) {
+  layout <- match.arg(layout)
+  orientation <- match.arg(orientation)
+  obs_pixel_cols <- match.arg(obs_pixel_cols)
+
+  grid <- sp_lattice_positions(layout, n_rows, n_cols)
+  n_spots <- nrow(grid)
+
+  # x runs from 200 to 200 + 50 * (last array_col); y from 200 in steps of 87.
+  # Stretch x so the two ranges cannot be confused for one another.
+  x <- as.numeric(grid$pxl_col_in_fullres) * 6
+  y <- as.numeric(grid$pxl_row_in_fullres)
+
+  set.seed(seed)
+  barcodes <- vapply(
+    seq_len(n_spots),
+    \(i) {
+      sprintf(
+        "%s-1",
+        paste(sample(c("A", "C", "G", "T"), 16L, TRUE), collapse = "")
+      )
+    },
+    character(1)
+  )
+  stopifnot("Duplicated fixture barcodes" = !anyDuplicated(barcodes))
+
+  set.seed(seed + 11L)
+  counts <- sp_default_counts(grid, n_genes, n_rows)
+  if (!is.null(low_count_spots)) {
+    counts[, low_count_spots] <- 0L
+    counts[3L, low_count_spots] <- 1L
+  }
+  gene_ids <- sprintf("ENSGSH%05i", seq_len(n_genes))
+
+  # CSR over cells: row `i` is spot `i`, columns are genes.
+  cells_by_genes <- t(counts)
+  indptr <- c(0L, cumsum(apply(cells_by_genes, 1L, \(r) sum(r > 0))))
+  nz <- lapply(seq_len(n_spots), \(i) which(cells_by_genes[i, ] > 0))
+  indices <- as.integer(unlist(nz, use.names = FALSE) - 1L)
+  data_vals <- as.numeric(unlist(
+    lapply(seq_len(n_spots), \(i) cells_by_genes[i, nz[[i]]]),
+    use.names = FALSE
+  ))
+
+  unlink(h5_path)
+  rhdf5::h5createFile(h5_path)
+  on.exit(tryCatch(rhdf5::h5closeAll(), error = function(e) invisible()))
+
+  rhdf5::h5createGroup(h5_path, "X")
+  rhdf5::h5write(data_vals, h5_path, "X/data")
+  rhdf5::h5write(indices, h5_path, "X/indices")
+  rhdf5::h5write(as.integer(indptr), h5_path, "X/indptr")
+
+  rhdf5::h5createGroup(h5_path, "obs")
+  rhdf5::h5write(barcodes, h5_path, "obs/_index")
+  rhdf5::h5write(
+    if (is.null(in_tissue)) rep(1L, n_spots) else as.integer(in_tissue),
+    h5_path,
+    "obs/in_tissue"
+  )
+  if (with_array_cols) {
+    rhdf5::h5write(as.integer(grid$array_row), h5_path, "obs/array_row")
+    rhdf5::h5write(as.integer(grid$array_col), h5_path, "obs/array_col")
+  }
+  if (obs_pixel_cols != "none") {
+    # Space Ranger means row = y, column = x. `scanpy.read_visium` renames the
+    # positions columns positionally and ends up meaning the opposite.
+    under_row <- if (obs_pixel_cols == "spaceranger") y else x
+    under_col <- if (obs_pixel_cols == "spaceranger") x else y
+    rhdf5::h5write(under_row, h5_path, "obs/pxl_row_in_fullres")
+    rhdf5::h5write(under_col, h5_path, "obs/pxl_col_in_fullres")
+  }
+
+  rhdf5::h5createGroup(h5_path, "var")
+  rhdf5::h5write(gene_ids, h5_path, "var/_index")
+
+  coords <- if (orientation == "xy") cbind(x, y) else cbind(y, x)
+  rhdf5::h5createGroup(h5_path, "obsm")
+  rhdf5::h5write(coords, h5_path, "obsm/spatial", native = TRUE)
+
+  if (with_uns) {
+    rhdf5::h5createGroup(h5_path, "uns")
+    rhdf5::h5createGroup(h5_path, "uns/spatial")
+    rhdf5::h5createGroup(h5_path, "uns/spatial/fixture_lib")
+    rhdf5::h5createGroup(h5_path, "uns/spatial/fixture_lib/scalefactors")
+    sf <- list(
+      spot_diameter_fullres = 40,
+      tissue_hires_scalef = 0.1,
+      tissue_lowres_scalef = image_scalef,
+      fiducial_diameter_fullres = 100
+    )
+    for (k in names(sf)) {
+      rhdf5::h5write(
+        sf[[k]],
+        h5_path,
+        sprintf("uns/spatial/fixture_lib/scalefactors/%s", k)
+      )
+    }
+    if (with_image) {
+      # Big enough for every spot under the right order and only just: the
+      # transpose puts x where the height is and runs off the bottom.
+      img_h <- as.integer(ceiling(max(y) * image_scalef)) + 6L
+      img_w <- as.integer(ceiling(max(x) * image_scalef)) + 6L
+      img <- array(1.0, dim = c(img_h, img_w, 3L))
+      rows <- pmin(pmax(round(y * image_scalef), 0L), img_h - 1L) + 1L
+      cols <- pmin(pmax(round(x * image_scalef), 0L), img_w - 1L) + 1L
+      for (i in seq_len(n_spots)) {
+        rr <- max(1L, rows[i] - 1L):min(img_h, rows[i] + 1L)
+        cc <- max(1L, cols[i] - 1L):min(img_w, cols[i] + 1L)
+        img[rr, cc, ] <- 0.2
+      }
+      rhdf5::h5createGroup(h5_path, "uns/spatial/fixture_lib/images")
+      rhdf5::h5write(
+        img,
+        h5_path,
+        "uns/spatial/fixture_lib/images/lowres",
+        native = TRUE
+      )
+    }
+  }
+
+  rhdf5::h5closeAll()
+
+  list(
+    h5_path = h5_path,
+    layout = layout,
+    n_rows = n_rows,
+    n_cols = n_cols,
+    n_spots = n_spots,
+    n_genes = n_genes,
+    gene_ids = gene_ids,
+    barcodes = barcodes,
+    grid = grid,
+    x = x,
+    y = y,
+    counts = counts,
+    orientation = orientation,
+    in_tissue = if (is.null(in_tissue)) rep(1L, n_spots) else in_tissue,
+    low_count_spots = low_count_spots
+  )
+}
+
+#' Ingest a fixture written by [sp_make_spatial_h5ad()]
+#'
+#' QC is switched off so the spot and gene counts stay what went in.
+#'
+#' @param fixture List. Output of [sp_make_spatial_h5ad()].
+#' @param data_dir String. Where the on-disk store goes. Wiped first.
+#' @param exp_id String. Experiment identifier.
+#' @param sp_io_param List. Output of [bixverse::params_sp_h5ad_io()].
+#' @param min_lib_size Integer. Library size QC floor. Above one this drops the
+#' `low_count_spots` of the fixture, which is what exercises the mapping from
+#' the loaded obs rows back onto the rows of `obsm/spatial`.
+#'
+#' @return A [bixverse::SpatialSpot()].
+sp_load_h5ad_fixture <- function(
+  fixture,
+  data_dir,
+  exp_id = "h5ad_a",
+  sp_io_param = params_sp_h5ad_io(),
+  min_lib_size = 0L
+) {
+  unlink(data_dir, recursive = TRUE)
+  dir.create(data_dir, recursive = TRUE, showWarnings = FALSE)
+
+  object <- SpatialSpot(dir_data = data_dir)
+  suppressWarnings(load_spatial_h5ad(
+    object,
+    h5_path = fixture$h5_path,
+    sp_io_param = sp_io_param,
+    sc_qc_param = params_sc_min_quality(
+      min_unique_genes = 0L,
+      min_lib_size = min_lib_size,
+      min_cells = 0L
+    ),
+    exp_id = exp_id,
+    .verbose = FALSE
+  ))
+}

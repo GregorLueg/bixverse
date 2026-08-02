@@ -164,15 +164,48 @@ validate_spatial_sample <- function(x) {
   return(TRUE)
 }
 
+#' Every scale factor key this package knows how to use
+#'
+#' @description
+#' The union across the supported technologies. The set on any given file is
+#' open, so anything not in here is carried through untouched rather than
+#' rejected: Vanderbilt's h5ad files ship a `tissue_hires_trim_scalef` that
+#' nothing here has an opinion about.
+#'
+#' @return Character vector of keys.
+#'
+#' @keywords internal
+.sp_known_scale_factors <- function() {
+  c(
+    "spot_diameter_fullres",
+    "tissue_hires_scalef",
+    "tissue_lowres_scalef",
+    "fiducial_diameter_fullres",
+    "cytassist_scalef",
+    "regist_target_img_scalef",
+    "pixel_size"
+  )
+}
+
 #' Validate spatial scale factors for a given technology
 #'
 #' @description
-#' Enforces the expected keys in a `scale_factors` list. For Visium this
-#' matches the contents of `scalefactors_json.json`. For Xenium a small
-#' set of pixel-size related keys is required.
+#' Checks the shape of what is there. It does **not** require anything: every
+#' Visium scale factor describes the image frame, and a sample can carry
+#' coordinates and no image at all. An h5ad shared without its `uns/spatial`
+#' group is exactly that, and there is no reason it should be unregisterable
+#' when the graph, Moran's I, SPARK-X and neighbourhood enrichment would all
+#' run on it unchanged.
+#'
+#' The functions that genuinely need a scale factor assert it at call time,
+#' where the message can name the missing one:
+#' [bixverse::image_features_sp()] for `spot_diameter_fullres` and the
+#' per-resolution scale factor.
 #'
 #' @param scale_factors Named list. Parsed scale factors.
 #' @param technology String. One of `c("visium", "xenium", "visium_hd")`.
+#' Accepted for symmetry with [bixverse::new_spatial_sample()]; no key is
+#' mandatory under any of them.
 #'
 #' @return Invisibly `TRUE` if the validation passes, otherwise throws an
 #' informative error.
@@ -184,34 +217,11 @@ validate_scale_factors <- function(
 ) {
   technology <- match.arg(technology)
   checkmate::assertList(scale_factors, names = "named")
+  checkmate::assertChoice(technology, c("visium", "xenium", "visium_hd"))
 
-  required <- switch(
-    technology,
-    visium = c(
-      "spot_diameter_fullres",
-      "tissue_hires_scalef",
-      "tissue_lowres_scalef",
-      "fiducial_diameter_fullres"
-    ),
-    xenium = c("pixel_size"),
-    visium_hd = c(
-      "spot_diameter_fullres",
-      "tissue_hires_scalef",
-      "tissue_lowres_scalef",
-      "fiducial_diameter_fullres"
-    )
-  )
+  present <- intersect(.sp_known_scale_factors(), names(scale_factors))
 
-  missing_keys <- setdiff(required, names(scale_factors))
-  if (length(missing_keys) > 0) {
-    stop(sprintf(
-      "scale_factors for technology '%s' missing key(s): %s",
-      technology,
-      paste(missing_keys, collapse = ", ")
-    ))
-  }
-
-  for (k in required) {
+  for (k in present) {
     val <- scale_factors[[k]]
     if (!is.numeric(val) || length(val) != 1L || !is.finite(val)) {
       stop(sprintf(
