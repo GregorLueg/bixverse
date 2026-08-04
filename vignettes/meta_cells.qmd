@@ -172,10 +172,11 @@ the kNN graph and runs an iterative kernel archetypal analysis. `n_sea_cells`
 sets the number of archetypes; `min_iter`/`max_iter` bound the optimisation; 
 `convergence_epsilon` sets the early stopping threshold relative to the initial 
 RSS. The algorithm was aggressively optimised to be faster. With 
-`pruning = TRUE` small values are set to zero, reducing calculations... The rule
-of thumb by the authors is one SEACell per 75 cells, i.e., 90 SEACells for
-this experiment. We will set this higher here to `250L` to make this a bit
-more comparable with the other methods...
+`pruning = TRUE` (default) small values are set to zero, removing basically dust 
+and accelerating the calculations substantially. The rule of thumb by the 
+authors is one SEACell per 75 cells, i.e., 90 SEACells for this experiment. We 
+will set this higher here to `250L` to make this a bit more comparable with the 
+other methods...
 
 ```{r}
 #| label: seacells
@@ -184,8 +185,7 @@ seacells <- generate_seacells_sc(
   seacell_params = params_sc_seacells(
     n_sea_cells = 250L,
     min_iter = 10L,
-    convergence_epsilon = 0.001,
-    pruning = TRUE
+    convergence_epsilon = 0.001
   ),
   .verbose = TRUE
 )

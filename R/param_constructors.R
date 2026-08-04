@@ -921,8 +921,7 @@ params_sc_bt_metacells <- function(
 #' rapid random selection of archetypes. Defaults to `20000L`.
 #' @param graph_building String. Graph building method. Defaults to `"union"`.
 #' @param pruning Boolean. Shall tiny values be pruned during Franke-Wolfe
-#' updates. This will reduce memory pressure and can be a good option on
-#' large data sets. Defaults to `FALSE`.
+#' updates. Defaults to `TRUE`.
 #' @param pruning_threshold Float. If `pruning = TRUE` values below which
 #' threshold shall be pruned.
 #' @param n_landmarks Optional integer. If provided, it will use the Nystroem
@@ -944,7 +943,7 @@ params_sc_seacells <- function(
   min_iter = 10L,
   greedy_threshold = 20000L,
   graph_building = "union",
-  pruning = FALSE,
+  pruning = TRUE,
   pruning_threshold = 1e-7,
   n_landmarks = NULL,
   knn = list()
