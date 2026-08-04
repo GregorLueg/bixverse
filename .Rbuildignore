@@ -12,7 +12,9 @@
 ^data-raw$
 ^doc$
 ^docs$
+^info$
 ^misc$
+^scratch.*\.R$
 ^pkgdown$
 ^src/Makevars$
 ^src/Makevars\.win$
