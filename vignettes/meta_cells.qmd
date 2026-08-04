@@ -93,14 +93,15 @@ sc_object <- find_hvg_sc(
 sc_object <- calculate_pca_sc(
   object = sc_object,
   no_pcs = 30L,
-  sparse_svd = FALSE
+  .verbose = FALSE
 )
 
 sc_object <- find_neighbours_sc(
   object = sc_object,
   neighbours_params = params_sc_neighbours(
     knn = list(ann_dist = "euclidean", knn_method = "kmknn")
-  )
+  ),
+  .verbose = FALSE
 )
 
 # we need the kNN object for the diffusion maps
@@ -276,7 +277,10 @@ cannot do.
 
 SuperCells runs walktrap on the kNN graph. The number of meta cells is set
 indirectly through `graining_factor`: with a factor of 30 over ~6800 cells
-you should get roughly ~230 meta cells.
+you should get roughly ~230 meta cells. The option to run the kernel-based
+version of SuperCells 2.0 from [Hérault et al.](https://www.biorxiv.org/content/10.64898/2026.02.19.706848v1)
+is enabled by default. (The multi-modal versions are still to come. Watch the
+space...)
 
 ```{r}
 #| label: supercells
@@ -592,7 +596,7 @@ Based on this, we can conclude the following:
   compactness, slightly ahead of hdWGCNA and SEACells. Separation is comparable
   between SuperCells and SEACells, with hdWGCNA noticeably lower.
 - The methods differ markedly in where they place metacells. SEACells assigns 
-  50% of metacells to low-density regions versus 24% for hdWGCNA and 37% for 
+  50% of metacells to low-density regions versus 24% for hdWGCNA and 41% for 
   SuperCells, consistent with its kernel archetypal formulation seeking out 
   underrepresented states.
 - Method choice should reflect the downstream question. For tight aggregation in 
