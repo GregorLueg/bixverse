@@ -217,38 +217,60 @@ seacells <- calc_diffusion_coordinates(object = seacells, knn_data = knn_object)
 
 #### SEACells on large data
 
-SEACells is quite infamous for being very slow and difficult to run on larger 
-data sets. bixverse offers some tricks here which make the generation of 
-SEACells feasible on large data sets:
+SEACells is infamous for being very slow and difficult to run on larger data
+sets. Most of the hot path has been rewritten in `bixverse`, which is what makes
+the algorithm feasible beyond a few tens of thousands of cells:
 
-1. The initialisation is the part of the original algorithm that scales the 
-   worst. The greedy column subset selection needs a full `K^2` column for 
-   every candidate cell, which is `O(N2)` and simply will not finish on millions 
-   of cells. `bixverse` therefore switches strategy by size: above 
-   `greedy_threshold` it drops the greedy top-up and samples the archetypes at 
-   random, which is effectively free. When a better-than-random start is wanted 
-   but the greedy pass is still out of reach, setting `n_landmarks` enables a 
-   Nyström route: a small set of density-weighted landmarks is chosen, the 
-   diffusion operator is built and eigendecomposed on those landmarks alone, and 
-   the multiscale embedding is then carried to all cells via a Nyström extension 
-   before the usual max-min waypoint sampling. The expensive eigendecomposition 
-   stays at landmark scale `L x L` instead of `N x N`.
-2. The optimisation loop itself runs in bounded memory. `K^2` is never formed; 
-   every `K^2 * X` term is evaluated as `K (K x X)` so memory stays bounded by 
-   the number of non-zeros in `K` rather `N^2`. The Frank-Wolfe gradients are 
-   computed one column at a time and in parallel, so the full `k x N` gradient 
-   never has to exist at once, and pruning keeps A and B sparse across 
-   iterations.
-3. The RSS for the convergence check is computed differently above 20,000 cells. 
-   Rather than materialising the `N x N` reconstruction `K x B x A`, the squared 
-   residual is expanded with the trace identity and evaluated through cyclic 
-   reordering, so every intermediate is at most `N x k` or `k x k`. The value is 
-   the same Frobenius norm, just without the dense reconstruction. Together 
-   these are what made it possible to run on a million cells locally, which the 
-   original implementation cannot do.
+1. The initialisation is the part of the original algorithm that scales the
+   worst. The greedy column subset selection needs a full `K^2` column for
+   every candidate cell, which is `O(N^2)` and simply will not finish on
+   millions of cells. `bixverse` therefore switches strategy by size: above
+   `greedy_threshold` (20,000 cells by default) it drops the greedy top-up and
+   samples the archetypes at random, which is effectively free. When a
+   better-than-random start is wanted but the greedy pass is still out of reach,
+   setting `n_landmarks` enables a Nyström route: a small set of
+   density-weighted landmarks is chosen (5 to 10 times `n_sea_cells` is a
+   sensible range), the diffusion operator is built and eigendecomposed on
+   those landmarks alone, and the multiscale embedding is carried to all cells
+   via a Nyström extension before the usual max-min waypoint sampling. The
+   eigendecomposition stays at landmark scale `L x L` instead of `N x N`.
+2. The optimisation loop itself runs in bounded memory. `K^2` is never formed;
+   every `K^2 X` term is evaluated as `K (K X)`, so memory stays bounded by the
+   number of non-zeros in `K` rather than `N^2`. Neither Frank-Wolfe gradient is
+   ever materialised. The A update runs cell-major: a column of `A` is a convex
+   combination of at most `max_fw_iters` one-hot atoms, so the solver carries
+   `(index, weight)` pairs and patches the gradient with rank-1 corrections
+   instead of rebuilding it from the sparse `A` on every iteration. The argmin
+   over the two gradient terms is fused and runs on SIMD (NEON on Apple Silicon,
+   SSE2, AVX-2 or AVX-512 picked at runtime on x86). The B update walks one
+   gradient column per archetype in the same spirit. Everything is chunked
+   across rayon threads.
+3. `K^2 B` is the one product the inner loop needs on every single iteration,
+   so it is cached rather than recomputed. A Frank-Wolfe step changes `B` by a
+   rank-k update, and the matching change to `K^2 B` is the same scaling plus
+   one weighted column of `K^2` per archetype; the pruning corrections fold into
+   the same delta. The update is exact, and a full recompute still runs every
+   eight iterations to bound floating point drift and the sparsity pattern. The
+   B loop stops early once the relative Frank-Wolfe duality gap drops below
+   `1e-3`.
+4. `pruning` is on by default and should stay on. The Frank-Wolfe updates only
+   ever add atoms, so without pruning the non-zeros in `A` and `B` climb
+   monotonically across the whole fit and the time per iteration keeps rising
+   instead of settling. The accuracy cost sits in `pruning_threshold`, not in
+   the flag. Keep it below the smallest weight the schedule can produce,
+   `2 / (T (T + 1))` for `T = max_fw_iters`; above that you start deleting live
+   mass and shift the solution. The default `1e-7` removes numerical dust only.
+5. The RSS for the convergence check never materialises the `N x N`
+   reconstruction `K B A`. The squared residual is expanded with the trace
+   identity and evaluated through cyclic reordering, so every intermediate is at
+   most `N x k` or `k x k`. Same Frobenius norm, just without the dense
+   reconstruction.
 
-If you want to run SEACells on larger data sets, these are the knobs you have
-to make this run in a reasonable time on a powerful laptop.
+Most of that is automatic. The knobs you actually reach for on large data are
+`greedy_threshold` and `n_landmarks` for the initialisation, and
+`pruning`/`pruning_threshold` for the loop. Together they are what made it
+possible to run a million cells locally, which the original implementation
+cannot do.
 
 ### SuperCells
 
