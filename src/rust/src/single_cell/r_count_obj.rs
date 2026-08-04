@@ -328,7 +328,7 @@ impl SingleCellCountData {
         }
 
         let (no_cells, no_genes, cell_qc): (usize, usize, CellQuality) =
-            write_r_counts(&self.f_path_cells, compressed_data, qc_params, verbose);
+            write_r_counts(&self.f_path_cells, compressed_data, qc_params, verbose).to_extendr()?;
 
         if verbose {
             println!(" Done in {:.2?}", start.elapsed())
@@ -1125,8 +1125,16 @@ impl SingleCellCountData {
         let sparse_data = sparse_data.transform();
         let data_2 = sparse_data.get_data2_unsafe();
 
-        let mut writer = CellGeneSparseWriter::new(&self.f_path_genes, false, no_cells, no_genes)
-            .to_extendr()?;
+        // The gene file inherits the cell file's normalisation, so it has to
+        // carry the same target size in its header.
+        let mut writer = CellGeneSparseWriter::new(
+            &self.f_path_genes,
+            false,
+            no_cells,
+            no_genes,
+            reader.target_size().unwrap_or(0.0),
+        )
+        .to_extendr()?;
 
         for i in 0..no_genes {
             let start_i = sparse_data.indptr[i] as usize;
@@ -1192,8 +1200,16 @@ impl SingleCellCountData {
 
         let total_batches = no_cells.div_ceil(batch_size);
 
-        let mut writer = CellGeneSparseWriter::new(&self.f_path_genes, false, no_cells, no_genes)
-            .to_extendr()?;
+        // The gene file inherits the cell file's normalisation, so it has to
+        // carry the same target size in its header.
+        let mut writer = CellGeneSparseWriter::new(
+            &self.f_path_genes,
+            false,
+            no_cells,
+            no_genes,
+            reader.target_size().unwrap_or(0.0),
+        )
+        .to_extendr()?;
 
         for batch_idx in 0..total_batches {
             let start_cell = batch_idx * batch_size;
@@ -1323,8 +1339,16 @@ impl SingleCellCountData {
 
         let start_conversion = Instant::now();
 
-        let mut writer = CellGeneSparseWriter::new(&self.f_path_genes, false, no_cells, no_genes)
-            .to_extendr()?;
+        // The gene file inherits the cell file's normalisation, so it has to
+        // carry the same target size in its header.
+        let mut writer = CellGeneSparseWriter::new(
+            &self.f_path_genes,
+            false,
+            no_cells,
+            no_genes,
+            reader.target_size().unwrap_or(0.0),
+        )
+        .to_extendr()?;
 
         let num_phases = no_genes.div_ceil(max_genes_in_memory);
 

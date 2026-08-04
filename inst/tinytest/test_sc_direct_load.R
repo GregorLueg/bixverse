@@ -136,7 +136,11 @@ expect_equivalent(
 # add data to the object
 sc_object <- find_hvg_sc(sc_object, hvg_no = 30L, .verbose = FALSE)
 
-sc_object <- calculate_pca_sc(sc_object, no_pcs = 5L, .verbose = FALSE)
+sc_object <- calculate_pca_sc(
+  sc_object,
+  no_pcs = 5L,
+  .verbose = FALSE
+)
 
 hvg_genes_initial <- get_hvg(sc_object)
 pca_factors_initial <- get_pca_factors(sc_object)
