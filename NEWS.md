@@ -4,8 +4,10 @@
 
 ### Single cells
 
-* `bixverse-rs` version bump for better performance in SEACells
-* The pruning operation has been set to `TRUE` by default in SEACells.
+* `bixverse-rs` version bump for better performance in SEACells.
+* The pruning operation has been set to `TRUE` by default in SEACells after
+  further benchmarking.
+* Updated vignettes.
 
 ### Documentation
 
