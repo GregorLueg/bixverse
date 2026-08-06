@@ -1,3 +1,11 @@
+# bixverse 0.4.7
+
+## Features
+
+### Single cells
+
+* Faster HVG detection across the board (batch-aware, streaming, one-pass).
+
 # bixverse 0.4.6
 
 ## Features

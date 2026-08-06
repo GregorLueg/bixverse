@@ -682,6 +682,22 @@ step_fast_mnn_sc <- function(
 
 ### meta cells -----------------------------------------------------------------
 
+#' Internal: the generic behind a meta cell method.
+#'
+#' @param method String. To which of the methods to dispatch.
+#'
+#' @returns The method
+#'
+#' @keywords internal
+.sc_metacell_generator <- function(method) {
+  switch(
+    method,
+    "bootstrapped" = generate_bt_meta_cells_sc,
+    "seacells" = generate_seacells_sc,
+    "supercells" = generate_supercells_sc
+  )
+}
+
 #' Pipeline step: generate meta cells
 #'
 #' @description
@@ -726,15 +742,5 @@ step_metacells_sc <- function(
     list(...),
     accepts = c("SingleCells", "SingleCellsSubset"),
     returns = "MetaCells"
-  )
-}
-
-# Internal: the generic behind a meta cell method.
-.sc_metacell_generator <- function(method) {
-  switch(
-    method,
-    "bootstrapped" = generate_bt_meta_cells_sc,
-    "seacells" = generate_seacells_sc,
-    "supercells" = generate_supercells_sc
   )
 }

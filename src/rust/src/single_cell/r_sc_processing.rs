@@ -507,8 +507,10 @@ fn rs_pairwise_gene_cors(
 /// @param hvg_method String. Which HVG detection method to use. One of
 /// `c("vst", "meanvarbin", "dispersion")`.
 /// @param cell_indices Integer positions (0-indexed!) that defines the cells
-/// to keep.
-/// @param loess_span Numeric. The span parameter for the loess function.
+/// to keep. Must be unique and within the store; duplicates or out-of-range
+/// positions raise an error.
+/// @param loess_span Numeric. The span parameter for the loess function. Must
+/// be within `(0, 1]`.
 /// @param clip_max Optional clipping number. Defaults to `sqrt(no_cells)` if
 /// not provided.
 /// @param binning String. The binning strategy for the `meanvarbin` method. One
@@ -617,10 +619,14 @@ fn rs_sc_hvg(
 /// @param hvg_method String. Which HVG detection method to use. One of
 /// `c("vst", "meanvarbin", "dispersion")`.
 /// @param cell_indices Integer positions (0-indexed!) that defines the cells
-/// to keep.
+/// to keep. Must be unique and within the store; duplicates or out-of-range
+/// positions raise an error.
 /// @param batch_labels Integer vector (0-indexed!) defining batch membership
-/// for each cell. Must be same length as `cell_indices`.
-/// @param loess_span Numeric. The span parameter for the loess function.
+/// for each cell. Must be the same length as `cell_indices` and densely cover
+/// `0:(n_batches - 1)`; a length mismatch or an empty batch raises an error.
+/// `as.integer(factor(x)) - 1L` always satisfies this.
+/// @param loess_span Numeric. The span parameter for the loess function. Must
+/// be within `(0, 1]`.
 /// @param clip_max Optional clipping number. Defaults to `sqrt(no_cells)` per
 /// batch if not provided.
 /// @param binning String. The binning strategy for the `meanvarbin` method. One
@@ -701,7 +707,7 @@ fn rs_sc_hvg_batch_aware(
             }
             .to_extendr()?;
 
-            let n_genes = results[0].mean.len();
+            let n_genes = results.first().map_or(0, |res| res.mean.len());
             let total_len = n_genes * results.len();
             let mut mean_flat = Vec::with_capacity(total_len);
             let mut var_flat = Vec::with_capacity(total_len);
