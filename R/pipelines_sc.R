@@ -285,7 +285,7 @@ apply_pipeline_per_group <- function(
   # fail before any subset is built rather than on the first group
   validate_pipeline(pipeline, "SingleCellsSubset")
 
-  group_vec <- unlist(get_sc_obs[[c("group_col")]], use.names = FALSE)
+  group_vec <- unlist(object[[c(group_col)]], use.names = FALSE)
   checkmate::qassert(group_vec, "S+")
 
   if (is.null(groups)) {

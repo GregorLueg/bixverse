@@ -23,9 +23,11 @@ rs_sc_hvg(
 \code{c("vst", "meanvarbin", "dispersion")}.}
 
 \item{cell_indices}{Integer positions (0-indexed!) that defines the cells
-to keep.}
+to keep. Must be unique and within the store; duplicates or out-of-range
+positions raise an error.}
 
-\item{loess_span}{Numeric. The span parameter for the loess function.}
+\item{loess_span}{Numeric. The span parameter for the loess function. Must
+be within \verb{(0, 1]}.}
 
 \item{binning}{String. The binning strategy for the \code{meanvarbin} method. One
 of \code{c("equal_width", "equal_frequency")}.}

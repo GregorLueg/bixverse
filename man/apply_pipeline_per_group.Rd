@@ -4,7 +4,13 @@
 \alias{apply_pipeline_per_group}
 \title{Apply a pipeline independently to each group of a \code{SingleCells} object}
 \usage{
-apply_pipeline_per_group(pipeline, object, group_col, groups = NULL)
+apply_pipeline_per_group(
+  pipeline,
+  object,
+  group_col,
+  groups = NULL,
+  progress = FALSE
+)
 }
 \arguments{
 \item{pipeline}{\code{ScPipeline}.}
@@ -15,6 +21,9 @@ apply_pipeline_per_group(pipeline, object, group_col, groups = NULL)
 
 \item{groups}{Optional character vector. Restrict to these group values; if
 \code{NULL}, all unique values of \code{group_col} are used.}
+
+\item{progress}{Boolean. Shall big progress messages be printed to the
+console. Defaults to \code{FALSE}.}
 }
 \value{
 Named list of processed objects, names being the group values.
