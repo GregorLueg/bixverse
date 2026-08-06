@@ -45,7 +45,7 @@ gse_go_elim_method <- S7::new_generic(
 #' @export
 #'
 #' @import data.table
-#' @importFrom magrittr `%>%`
+#' @importFrom magrittr %>%
 #'
 #' @method gse_go_elim_method GeneOntologyElim
 S7::method(gse_go_elim_method, GeneOntologyElim) <-
@@ -157,7 +157,7 @@ gse_go_elim_method_list <- S7::new_generic(
 #' @export
 #'
 #' @import data.table
-#' @importFrom magrittr `%>%`
+#' @importFrom magrittr %>%
 #'
 #' @method gse_go_elim_method_list GeneOntologyElim
 S7::method(gse_go_elim_method_list, GeneOntologyElim) <-
@@ -294,7 +294,7 @@ fgsea_simple_go_elim <- S7::new_generic(
 #' @export
 #'
 #' @import data.table
-#' @importFrom magrittr `%>%`
+#' @importFrom magrittr %>%
 #'
 #' @method fgsea_simple_go_elim GeneOntologyElim
 S7::method(fgsea_simple_go_elim, GeneOntologyElim) <-
@@ -409,7 +409,7 @@ fgsea_go_elim <- S7::new_generic(
 #' @export
 #'
 #' @import data.table
-#' @importFrom magrittr `%>%`
+#' @importFrom magrittr %>%
 #'
 #' @method fgsea_go_elim GeneOntologyElim
 S7::method(fgsea_go_elim, GeneOntologyElim) <-

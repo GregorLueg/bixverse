@@ -25,7 +25,7 @@ pre_process_sim_onto <- S7::new_generic(
 #' @export
 #'
 #' @import data.table
-#' @importFrom magrittr `%>%`
+#' @importFrom magrittr %>%
 #'
 #' @method pre_process_sim_onto OntologySim
 S7::method(pre_process_sim_onto, OntologySim) <- function(
@@ -88,7 +88,7 @@ calculate_semantic_sim_onto <- S7::new_generic(
 #' @export
 #'
 #' @import data.table
-#' @importFrom magrittr `%>%`
+#' @importFrom magrittr %>%
 #'
 #' @method calculate_semantic_sim_onto OntologySim
 S7::method(calculate_semantic_sim_onto, OntologySim) <-
@@ -181,8 +181,8 @@ calculate_wang_sim_onto <- S7::new_generic(
 #' @export
 #'
 #' @import data.table
-#' @importFrom magrittr `%>%`
-#' @importFrom zeallot `%<-%`
+#' @importFrom magrittr %>%
+#' @importFrom zeallot %<-%
 #'
 #' @method calculate_wang_sim_onto OntologySim
 S7::method(calculate_wang_sim_onto, OntologySim) <- function(
@@ -285,7 +285,7 @@ filter_similarities <- S7::new_generic(
 #' @export
 #'
 #' @import data.table
-#' @importFrom magrittr `%>%`
+#' @importFrom magrittr %>%
 #'
 #' @method calculate_wang_sim_onto OntologySim
 S7::method(filter_similarities, OntologySim) <- function(

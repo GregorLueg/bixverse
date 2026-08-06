@@ -35,7 +35,7 @@ diffuse_seed_nodes <- S7::new_generic(
 
 #' @export
 #'
-#' @importFrom magrittr `%>%`
+#' @importFrom magrittr %>%
 #'
 #' @method diffuse_seed_nodes NetworkDiffusions
 S7::method(diffuse_seed_nodes, NetworkDiffusions) <-
@@ -134,7 +134,7 @@ tied_diffusion <- S7::new_generic(
 
 #' @export
 #'
-#' @importFrom magrittr `%>%`
+#' @importFrom magrittr %>%
 #'
 #' @method tied_diffusion NetworkDiffusions
 S7::method(tied_diffusion, NetworkDiffusions) <-
@@ -283,7 +283,7 @@ permute_seed_nodes <- S7::new_generic(
 
 #' @export
 #'
-#' @importFrom magrittr `%>%`
+#' @importFrom magrittr %>%
 #'
 #' @method permute_seed_nodes NetworkDiffusions
 S7::method(permute_seed_nodes, NetworkDiffusions) <- function(
@@ -452,7 +452,7 @@ community_detection <- S7::new_generic(
 #' @export
 #'
 #' @import data.table
-#' @importFrom magrittr `%>%`
+#' @importFrom magrittr %>%
 #'
 #' @method community_detection NetworkDiffusions
 S7::method(community_detection, NetworkDiffusions) <- function(
@@ -769,7 +769,7 @@ calculate_diffusion_auc <- S7::new_generic(
 
 #' @export
 #'
-#' @importFrom magrittr `%>%`
+#' @importFrom magrittr %>%
 #'
 #' @method tied_diffusion NetworkDiffusions
 S7::method(calculate_diffusion_auc, NetworkDiffusions) <-
@@ -843,7 +843,7 @@ S7::method(calculate_diffusion_auc, NetworkDiffusions) <-
 #'
 #' @return List with the permutations.
 #'
-#' @importFrom magrittr `%$%`
+#' @importFrom magrittr %$%
 #'
 #' @keywords internal
 generate_perm_diffusion_vecs <- function(
@@ -898,7 +898,7 @@ generate_perm_diffusion_vecs <- function(
 #'
 #' @return Named numeric.
 #'
-#' @importFrom magrittr `%$%`
+#' @importFrom magrittr %$%
 #'
 #' @keywords internal
 summarise_scores <- function(
@@ -971,7 +971,7 @@ generate_rbh_graph <- S7::new_generic(
 
 #' @export
 #'
-#' @importFrom magrittr `%>%`
+#' @importFrom magrittr %>%
 #'
 #' @method generate_rbh_graph RbhGraph
 S7::method(generate_rbh_graph, RbhGraph) <- function(
@@ -1118,7 +1118,7 @@ find_rbh_communities <- S7::new_generic(
 
 #' @export
 #'
-#' @importFrom magrittr `%>%`
+#' @importFrom magrittr %>%
 #' @import data.table
 #'
 #' @method find_rbh_communities RbhGraph
@@ -1298,7 +1298,7 @@ add_snf_data_modality <- S7::new_generic(
 
 #' @export
 #'
-#' @importFrom magrittr `%>%`
+#' @importFrom magrittr %>%
 #' @import data.table
 #'
 #' @method add_snf_data_modality SimilarityNetworkFusion
@@ -1394,7 +1394,7 @@ run_snf <- S7::new_generic(
 
 #' @export
 #'
-#' @importFrom magrittr `%>%`
+#' @importFrom magrittr %>%
 #' @import data.table
 #'
 #' @method run_snf SimilarityNetworkFusion
@@ -1474,7 +1474,7 @@ check_dim <- S7::new_generic(
 
 #' @export
 #'
-#' @importFrom magrittr `%>%`
+#' @importFrom magrittr %>%
 #' @import data.table
 #'
 #' @method check_dim SimilarityNetworkFusion

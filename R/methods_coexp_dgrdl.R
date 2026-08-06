@@ -55,7 +55,7 @@ dgrdl_grid_search <- S7::new_generic(
 #' @export
 #'
 #' @import data.table
-#' @importFrom magrittr `%>%`
+#' @importFrom magrittr %>%
 #'
 #' @method dgrdl_grid_search BulkCoExp
 S7::method(dgrdl_grid_search, BulkCoExp) <- function(
@@ -183,7 +183,7 @@ dgrdl_result <- S7::new_generic(
 #' @export
 #'
 #' @import data.table
-#' @importFrom magrittr `%>%`
+#' @importFrom magrittr %>%
 #'
 #' @method dgrdl_result BulkCoExp
 S7::method(dgrdl_result, BulkCoExp) <- function(

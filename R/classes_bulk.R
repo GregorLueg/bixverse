@@ -197,7 +197,7 @@ BulkDge <- S7::new_class(
 #'
 #' @export
 #'
-#' @importFrom zeallot `%<-%`
+#' @importFrom zeallot %<-%
 bulk_dge_from_h5ad <- function(
   h5_path,
   .verbose = TRUE

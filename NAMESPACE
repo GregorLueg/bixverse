@@ -727,10 +727,16 @@ export(write_tenx_h5_sc)
 import(data.table)
 import(ggplot2)
 import(patchwork)
-importFrom(lifecycle,deprecate_warn)
-importFrom(lifecycle,deprecated)
-importFrom(magrittr,`%$%`)
-importFrom(magrittr,`%>%`)
-importFrom(zeallot,`%->%`)
-importFrom(zeallot,`%<-%`)
+importFrom(lifecycle,
+  deprecate_warn,
+  deprecated
+)
+importFrom(magrittr,
+  "%$%",
+  "%>%"
+)
+importFrom(zeallot,
+  "%->%",
+  "%<-%"
+)
 useDynLib(bixverse, .registration = TRUE)

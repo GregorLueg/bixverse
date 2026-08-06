@@ -592,8 +592,8 @@ load_h5ad <- S7::new_generic(
 #'
 #' @export
 #'
-#' @importFrom zeallot `%<-%`
-#' @importFrom magrittr `%>%`
+#' @importFrom zeallot %<-%
+#' @importFrom magrittr %>%
 S7::method(load_h5ad, SingleCells) <- function(
   object,
   h5_path,
@@ -757,8 +757,8 @@ load_h5ad_norm <- S7::new_generic(
 #'
 #' @export
 #'
-#' @importFrom zeallot `%<-%`
-#' @importFrom magrittr `%>%`
+#' @importFrom zeallot %<-%
+#' @importFrom magrittr %>%
 S7::method(load_h5ad_norm, SingleCells) <- function(
   object,
   h5_path,
@@ -1093,8 +1093,8 @@ load_mtx <- S7::new_generic(
 #'
 #' @export
 #'
-#' @importFrom zeallot `%<-%`
-#' @importFrom magrittr `%>%`
+#' @importFrom zeallot %<-%
+#' @importFrom magrittr %>%
 S7::method(load_mtx, SingleCells) <- function(
   object,
   sc_mtx_io_param = params_sc_mtx_io(),
@@ -1637,8 +1637,8 @@ S7::method(save_sc_exp_to_disk, SingleCells) <- function(
 #'
 #' @export
 #'
-#' @importFrom zeallot `%<-%`
-#' @importFrom magrittr `%>%`
+#' @importFrom zeallot %<-%
+#' @importFrom magrittr %>%
 S7::method(load_existing, SingleCells) <- function(object) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
@@ -1764,8 +1764,8 @@ S7::method(save_sc_exp_to_disk, SingleCellsMultiModal) <- function(
 #'
 #' @export
 #'
-#' @importFrom zeallot `%<-%`
-#' @importFrom magrittr `%>%`
+#' @importFrom zeallot %<-%
+#' @importFrom magrittr %>%
 S7::method(load_existing, SingleCellsMultiModal) <- function(object) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCellsMultiModal))

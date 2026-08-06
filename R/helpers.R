@@ -63,7 +63,7 @@ load_go_human_data <- function() {
 #'
 #' @export
 #' @import data.table
-#' @importFrom magrittr `%>%`
+#' @importFrom magrittr %>%
 process_go_data <- function(go_info, go_genes, go_relationships) {
   # scope
   . <- ind <- NULL

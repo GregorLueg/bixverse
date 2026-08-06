@@ -155,7 +155,7 @@ constrained_page_rank_ls <- function(
 #'
 #' @export
 #'
-#' @importFrom magrittr `%>%`
+#' @importFrom magrittr %>%
 generate_personalisation_vec <- function(graph, node_weights) {
   # checks
   checkmate::assertClass(graph, "igraph")

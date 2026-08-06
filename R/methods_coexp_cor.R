@@ -321,8 +321,8 @@ cor_module_check_epsilon <- S7::new_generic(
 
 #' @export
 #'
-#' @importFrom magrittr `%>%`
-#' @importFrom zeallot `%->%`
+#' @importFrom magrittr %>%
+#' @importFrom zeallot %->%
 #' @import data.table
 #'
 #' @method cor_module_check_epsilon BulkCoExp
@@ -451,8 +451,8 @@ cor_module_graph_check_res <- S7::new_generic(
 
 #' @export
 #'
-#' @importFrom magrittr `%>%`
-#' @importFrom zeallot `%->%`
+#' @importFrom magrittr %>%
+#' @importFrom zeallot %->%
 #' @import data.table
 #'
 #' @method cor_module_graph_check_res BulkCoExp
@@ -690,8 +690,8 @@ cor_module_graph_final_modules <- S7::new_generic(
 
 #' @export
 #'
-#' @importFrom magrittr `%>%`
-#' @importFrom zeallot `%->%`
+#' @importFrom magrittr %>%
+#' @importFrom zeallot %->%
 #' @import data.table
 #'
 #' @method cor_module_graph_final_modules BulkCoExp
@@ -998,8 +998,8 @@ cor_module_coremo_clustering <- S7::new_generic(
 
 #' @export
 #'
-#' @importFrom magrittr `%>%`
-#' @importFrom zeallot `%<-%`
+#' @importFrom magrittr %>%
+#' @importFrom zeallot %<-%
 #' @import data.table
 #'
 #' @method cor_module_coremo_clustering BulkCoExp
@@ -1798,7 +1798,7 @@ coremo_cluster_quality <- function(modules, cor_mat, random_seed = 10101L) {
 #'
 #' @return A vector with module membership.
 #'
-#' @importFrom magrittr `%>%`
+#' @importFrom magrittr %>%
 #'
 #' @keywords internal
 coremo_tree_cut <- function(
@@ -1877,7 +1877,7 @@ coremo_tree_cut <- function(
 #' @return a data.table with stats (median size of the clusters, median weighted
 #' R^2, and median R^2) on the varying levels of k.
 #'
-#' @importFrom magrittr `%>%`
+#' @importFrom magrittr %>%
 #' @import data.table
 #'
 #' @keywords internal

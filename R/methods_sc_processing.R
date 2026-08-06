@@ -997,8 +997,8 @@ top_genes_perc_sc <- S7::new_generic(
 #'
 #' @export
 #'
-#' @importFrom zeallot `%<-%`
-#' @importFrom magrittr `%>%`
+#' @importFrom zeallot %<-%
+#' @importFrom magrittr %>%
 S7::method(top_genes_perc_sc, SingleCells) <- function(
   object,
   top_n_vals = c(25L, 50L, 100L),
@@ -1080,8 +1080,8 @@ gene_set_proportions_sc <- S7::new_generic(
 #'
 #' @export
 #'
-#' @importFrom zeallot `%<-%`
-#' @importFrom magrittr `%>%`
+#' @importFrom zeallot %<-%
+#' @importFrom magrittr %>%
 S7::method(gene_set_proportions_sc, SingleCells) <- function(
   object,
   gene_set_list,
@@ -1129,8 +1129,8 @@ S7::method(gene_set_proportions_sc, SingleCells) <- function(
 
 #' @method find_hvg_sc SingleCells
 #'
-#' @importFrom zeallot `%<-%`
-#' @importFrom magrittr `%>%`
+#' @importFrom zeallot %<-%
+#' @importFrom magrittr %>%
 S7::method(find_hvg_sc, SingleCells) <- function(
   object,
   hvg_no = 2000L,
@@ -1245,8 +1245,8 @@ S7::method(get_hvg_data_sc, SingleCells) <- function(
 
 #' @method calculate_pca_sc SingleCells
 #'
-#' @importFrom zeallot `%<-%`
-#' @importFrom magrittr `%>%`
+#' @importFrom zeallot %<-%
+#' @importFrom magrittr %>%
 S7::method(calculate_pca_sc, SingleCells) <- function(
   object,
   no_pcs,
@@ -1755,8 +1755,8 @@ generate_knn_sc <- S7::new_generic(
 #'
 #' @export
 #'
-#' @importFrom zeallot `%<-%`
-#' @importFrom magrittr `%>%`
+#' @importFrom zeallot %<-%
+#' @importFrom magrittr %>%
 S7::method(generate_knn_sc, SingleCells) <- function(
   object,
   embd_to_use = "pca",

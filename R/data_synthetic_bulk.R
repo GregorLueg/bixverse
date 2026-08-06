@@ -346,7 +346,7 @@ calculate_sparsity_stats <- function(object, no_exp_bins = 10L) {
 #'  \item target_labels - The target labels
 #' }
 #'
-#' @importFrom magrittr `%>%`
+#' @importFrom magrittr %>%
 #'
 #' @export
 synthetic_c_pca_data <- function(seed = 10101L) {
@@ -422,7 +422,7 @@ synthetic_c_pca_data <- function(seed = 10101L) {
 #'  \item metadata - The sample metadata.
 #' }
 #'
-#' @importFrom magrittr `%>%`
+#' @importFrom magrittr %>%
 #'
 #' @export
 generate_gene_module_data <- function(
@@ -578,7 +578,7 @@ plot.synthetic_matrix_simple <- function(x, ...) {
 #'
 #' @import patchwork
 #' @import ggplot2
-#' @importFrom magrittr `%>%`
+#' @importFrom magrittr %>%
 #'
 #' @keywords internal
 plot.cpca_synthetic_data <- function(x, ...) {

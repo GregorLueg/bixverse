@@ -1013,7 +1013,7 @@ print.ScDblFinderRes <- function(x, ...) {
 #'
 #' @export
 #'
-#' @importFrom magrittr `%>%`
+#' @importFrom magrittr %>%
 #'
 #' @keywords internal
 new_sc_hotspot_res <- function(hotspot_res, used_genes, used_cells) {

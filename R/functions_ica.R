@@ -35,7 +35,7 @@
 #'
 #' @export
 #'
-#' @importFrom zeallot `%<-%`
+#' @importFrom zeallot %<-%
 fast_ica_rust <- function(
   X,
   n_icas,
@@ -112,7 +112,7 @@ fast_ica_rust <- function(
 #'
 #' @export
 #'
-#' @importFrom zeallot `%<-%`
+#' @importFrom zeallot %<-%
 fast_ica_rust_helper <- function(
   X,
   K,

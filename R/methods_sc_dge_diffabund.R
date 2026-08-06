@@ -48,8 +48,8 @@ find_markers_sc <- S7::new_generic(
 
 #' @method find_markers_sc ScOrScSubset
 #'
-#' @importFrom zeallot `%<-%`
-#' @importFrom magrittr `%>%`
+#' @importFrom zeallot %<-%
+#' @importFrom magrittr %>%
 S7::method(find_markers_sc, ScOrScSubset) <- function(
   object,
   cells_1,
@@ -173,8 +173,8 @@ find_all_markers_sc <- S7::new_generic(
 
 #' @method find_all_markers_sc ScOrScSubset
 #'
-#' @importFrom zeallot `%<-%`
-#' @importFrom magrittr `%>%`
+#' @importFrom zeallot %<-%
+#' @importFrom magrittr %>%
 S7::method(find_all_markers_sc, ScOrScSubset) <- function(
   object,
   column_of_interest,
@@ -358,8 +358,8 @@ get_miloR_abundances_sc <- S7::new_generic(
 #'
 #' @export
 #'
-#' @importFrom zeallot `%<-%`
-#' @importFrom magrittr `%>%`
+#' @importFrom zeallot %<-%
+#' @importFrom magrittr %>%
 S7::method(get_miloR_abundances_sc, SingleCells) <- function(
   object,
   sample_id_col,
@@ -524,8 +524,8 @@ meld_sc <- S7::new_generic(
 #'
 #' @export
 #'
-#' @importFrom zeallot `%<-%`
-#' @importFrom magrittr `%>%`
+#' @importFrom zeallot %<-%
+#' @importFrom magrittr %>%
 S7::method(meld_sc, SingleCells) <- function(
   object,
   sample_id_col,

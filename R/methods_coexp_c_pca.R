@@ -26,8 +26,8 @@ contrastive_pca_processing <- S7::new_generic(
   }
 )
 
-#' @importFrom magrittr `%>%`
-#' @importFrom magrittr `%$%`
+#' @importFrom magrittr %>%
+#' @importFrom magrittr %$%
 #' @import data.table
 #'
 #' @export
@@ -132,8 +132,8 @@ contrastive_pca <- S7::new_generic(
   }
 )
 
-#' @importFrom magrittr `%>%`
-#' @importFrom magrittr `%$%`
+#' @importFrom magrittr %>%
+#' @importFrom magrittr %$%
 #' @import data.table
 #'
 #' @export
@@ -299,9 +299,9 @@ c_pca_plot_alphas <- S7::new_generic(
 
 #' @export
 #'
-#' @importFrom magrittr `%>%`
-#' @importFrom magrittr `%$%`
-#' @importFrom zeallot `%<-%`
+#' @importFrom magrittr %>%
+#' @importFrom magrittr %$%
+#' @importFrom zeallot %<-%
 #' @import data.table
 #' @import ggplot2
 #'

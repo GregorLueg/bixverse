@@ -26,8 +26,8 @@
 #'
 #' @export
 #'
-#' @importFrom magrittr `%>%`
-#' @importFrom magrittr `%$%`
+#' @importFrom magrittr %>%
+#' @importFrom magrittr %$%
 #' @import data.table
 gse_hypergeometric <- function(
   target_genes,
@@ -128,8 +128,8 @@ gse_hypergeometric <- function(
 #'
 #' @export
 #'
-#' @importFrom magrittr `%>%`
-#' @importFrom magrittr `%$%`
+#' @importFrom magrittr %>%
+#' @importFrom magrittr %$%
 #' @import data.table
 gse_hypergeometric_list <- function(
   target_genes_list,
@@ -237,8 +237,8 @@ gse_hypergeometric_list <- function(
 #'
 #' @export
 #'
-#' @importFrom magrittr `%>%`
-#' @importFrom magrittr `%$%`
+#' @importFrom magrittr %>%
+#' @importFrom magrittr %$%
 #' @import data.table
 simplify_hypergeom_res <- function(
   res,

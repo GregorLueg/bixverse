@@ -194,7 +194,7 @@ read_motif_annotation_file <- function(annot_file) {
 #'
 #' @export
 #'
-#' @importFrom magrittr `%>%`
+#' @importFrom magrittr %>%
 read_motif_ranking <- function(ranking_file) {
   # checks
   checkmate::assertFileExists(ranking_file)

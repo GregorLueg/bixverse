@@ -28,8 +28,8 @@
 #' @export
 #'
 #' @import data.table
-#' @importFrom magrittr `%>%`
-#' @importFrom magrittr `%$%`
+#' @importFrom magrittr %>%
+#' @importFrom magrittr %$%
 qc_bulk_dge <- S7::new_generic(
   "qc_bulk_dge",
   "object",
@@ -181,8 +181,8 @@ S7::method(qc_bulk_dge, BulkDge) <- function(
 #' @export
 #'
 #' @import data.table
-#' @importFrom magrittr `%>%`
-#' @importFrom magrittr `%$%`
+#' @importFrom magrittr %>%
+#' @importFrom magrittr %$%
 normalise_bulk_dge <- S7::new_generic(
   "normalise_bulk_dge",
   "object",
@@ -333,8 +333,8 @@ S7::method(normalise_bulk_dge, BulkDge) <- function(
 #' @export
 #'
 #' @import data.table
-#' @importFrom magrittr `%>%`
-#' @importFrom magrittr `%$%`
+#' @importFrom magrittr %>%
+#' @importFrom magrittr %$%
 preprocess_bulk_coexp <- S7::new_generic(
   "preprocess_bulk_coexp",
   "object",
@@ -494,8 +494,8 @@ calculate_pca_bulk_dge <- S7::new_generic(
 #' @export
 #'
 #' @import data.table
-#' @importFrom magrittr `%>%`
-#' @importFrom magrittr `%$%`
+#' @importFrom magrittr %>%
+#' @importFrom magrittr %$%
 S7::method(calculate_pca_bulk_dge, BulkDge) <- function(
   object,
   scale_genes = FALSE,
@@ -670,8 +670,8 @@ batch_correction_bulk_dge <- S7::new_generic(
 #' @export
 #'
 #' @import data.table
-#' @importFrom magrittr `%>%`
-#' @importFrom magrittr `%$%`
+#' @importFrom magrittr %>%
+#' @importFrom magrittr %$%
 #' @import patchwork
 #' @import ggplot2
 S7::method(batch_correction_bulk_dge, BulkDge) <- function(
@@ -851,8 +851,8 @@ calculate_dge_limma <- S7::new_generic(
 #' @export
 #'
 #' @import data.table
-#' @importFrom magrittr `%>%`
-#' @importFrom magrittr `%$%`
+#' @importFrom magrittr %>%
+#' @importFrom magrittr %$%
 S7::method(calculate_dge_limma, BulkDge) <- function(
   object,
   contrast_column,
@@ -1007,8 +1007,8 @@ calculate_dge_hedges <- S7::new_generic(
 #' @export
 #'
 #' @import data.table
-#' @importFrom magrittr `%>%`
-#' @importFrom magrittr `%$%`
+#' @importFrom magrittr %>%
+#' @importFrom magrittr %$%
 S7::method(calculate_dge_hedges, BulkDge) <- function(
   object,
   contrast_column,
@@ -1147,8 +1147,8 @@ S7::method(calculate_dge_hedges, BulkDge) <- function(
 #' @export
 #'
 #' @import data.table
-#' @importFrom magrittr `%>%`
-#' @importFrom magrittr `%$%`
+#' @importFrom magrittr %>%
+#' @importFrom magrittr %$%
 preprocess_bulk_dge <- S7::new_generic(
   "preprocess_bulk_dge",
   "object",
@@ -1234,8 +1234,8 @@ calculate_all_dges <- S7::new_generic(
 #' @export
 #'
 #' @import data.table
-#' @importFrom magrittr `%>%`
-#' @importFrom magrittr `%$%`
+#' @importFrom magrittr %>%
+#' @importFrom magrittr %$%
 S7::method(calculate_all_dges, BulkDge) <- function(
   object,
   contrast_column,

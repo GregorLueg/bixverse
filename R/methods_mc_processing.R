@@ -259,8 +259,8 @@ S7::method(calc_manifold_metrics, MetaCells) <- function(
 #'
 #' @export
 #'
-#' @importFrom zeallot `%<-%`
-#' @importFrom magrittr `%>%`
+#' @importFrom zeallot %<-%
+#' @importFrom magrittr %>%
 S7::method(find_hvg_sc, MetaCells) <- function(
   object,
   hvg_no = 2000L,
@@ -374,8 +374,8 @@ S7::method(get_hvg_data_sc, MetaCells) <- function(
 #'
 #' @export
 #'
-#' @importFrom zeallot `%<-%`
-#' @importFrom magrittr `%>%`
+#' @importFrom zeallot %<-%
+#' @importFrom magrittr %>%
 S7::method(calculate_pca_sc, MetaCells) <- function(
   object,
   no_pcs,

@@ -326,8 +326,8 @@ plot_pca_res <- S7::new_generic(
 #'
 #' @import data.table
 #' @import ggplot2
-#' @importFrom magrittr `%>%`
-#' @importFrom magrittr `%$%`
+#' @importFrom magrittr %>%
+#' @importFrom magrittr %$%
 S7::method(plot_pca_res, BulkDge) <- function(
   object,
   cols_to_plot = c('contrast_info', 'sample_source'),
