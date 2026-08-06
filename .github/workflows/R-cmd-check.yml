@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ main ]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   R-CMD-check:
     runs-on: ${{ matrix.config.os }}
@@ -13,7 +17,7 @@ jobs:
     name: ${{ matrix.config.os }} (${{ matrix.config.r }})
 
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         config:
           - {os: macOS-latest, r: 'release'} 
@@ -40,9 +44,22 @@ jobs:
         with:
           toolchain: stable
 
+      - name: Setup sccache
+        uses: mozilla-actions/sccache-action@v0.0.10
+
+      - name: Cargo env
+        run: |
+          echo "SCCACHE_GHA_ENABLED=true" >> $GITHUB_ENV
+          echo "RUSTC_WRAPPER=sccache" >> $GITHUB_ENV
+          echo "CARGO_INCREMENTAL=0" >> $GITHUB_ENV
+          echo "CARGO_NET_RETRY=10" >> $GITHUB_ENV
+          echo "CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse" >> $GITHUB_ENV
+          echo "CARGO_TERM_COLOR=always" >> $GITHUB_ENV
+          echo "CARGO_PROFILE_RELEASE_LTO=false" >> $GITHUB_ENV
+          echo "CARGO_PROFILE_RELEASE_CODEGEN_UNITS=16" >> $GITHUB_ENV
+
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          cache: false
           extra-packages: |
             any::rcmdcheck
             any::rmarkdown
@@ -50,9 +67,6 @@ jobs:
             any::rextendr
           needs: check
 
-      # RSPM's macOS stringfish binary is linked against the legacy TBB 2020 ABI
-      # (tbb::internal::NFS_Allocate), which oneTBB in current RcppParallel no
-      # longer exports. Rebuild from source against the installed RcppParallel.
       - name: Rebuild stringfish/qs2 from source (macOS)
         if: runner.os == 'macOS'
         run: install.packages(c("stringfish", "qs2"), type = "source", repos = "https://cloud.r-project.org")
@@ -69,3 +83,7 @@ jobs:
           build_args: 'c("--no-manual","--no-build-vignettes")'
           args: 'c("--no-manual", "--no-vignettes")'
           error-on: '"error"'
+
+      - name: sccache stats
+        if: always()
+        run: sccache --show-stats

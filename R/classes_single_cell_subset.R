@@ -32,6 +32,11 @@
 #'   \item{dims}{`c(n_cells_subset, n_genes)`.}
 #' }
 #'
+#' @param sc_object A [bixverse::SingleCells()] object to subset.
+#' @param grouping_column String. Column in the obs table that defines the
+#' grouping.
+#' @param group String. Level of `grouping_column` to retain.
+#'
 #' @return A `SingleCellsSubset` object.
 #'
 #' @export
@@ -111,18 +116,7 @@ SingleCellsSubset <- S7::new_class(
 
 ## primitives ------------------------------------------------------------------
 
-#' @name print.SingleCellsSubset
-#'
-#' @title print Method for SingleCellsSubset object
-#'
-#' @param x An object of class `SingleCellsSubset`.
-#' @param ... Additional arguments (currently not used).
-#'
-#' @returns Invisibly returns `x`.
-#'
-#' @method print SingleCellsSubset
-#'
-#' @keywords internal
+#' @noRd
 S7::method(print, SingleCellsSubset) <- function(x, ...) {
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
 
@@ -157,35 +151,13 @@ S7::method(print, SingleCellsSubset) <- function(x, ...) {
   invisible(x)
 }
 
-#' @name dim.SingleCellsSubset
-#'
-#' @title dim Method for SingleCellsSubset object
-#'
-#' @param x An object of class `SingleCellsSubset`.
-#'
-#' @returns An integer vector of length 2 with the number of cells and genes.
-#'
-#' @method dim SingleCellsSubset
-#'
-#' @keywords internal
+#' @noRd
 S7::method(dim, SingleCellsSubset) <- function(x) {
   c(nrow(S7::prop(x, "obs_table")), nrow(S7::prop(x, "var_table")))
 }
 
-#' @name head.SingleCellsSubset
-#'
-#' @title head Method for SingleCellsSubset object
-#'
-#' @param x An object of class `SingleCellsSubset`.
-#' @param n Integer. Number of rows to return. Defaults to `6L`.
-#' @param ... Additional arguments (currently not used).
-#'
-#' @returns A data.table with the first `n` rows of the obs table.
-#'
-#' @method head SingleCellsSubset
-#'
-#' @keywords internal
-S7::method(head, SingleCellsSubset) <- function(x, n = 6L, ...) {
+#' @noRd
+S7::method(head, SingleCellsSubset) <- function(x, ..., n = 6L) {
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
   checkmate::qassert(n, "I1[1,)")
   n <- min(n, nrow(S7::prop(x, "obs_table")))
@@ -483,10 +455,13 @@ S7::method(`[`, SingleCellsSubset) <- function(
 
 ### obs table ------------------------------------------------------------------
 
-#' @method `[[<-` SingleCellsSubset
+# Registered as a plain S3 method instead of via `S7::method()`: S7 registers
+# base-generic methods dynamically with the function object, which makes
+# `R CMD check`'s replacement-function check choke on any `<-` generic.
+#' @exportS3Method "[[<-" "bixverse::SingleCellsSubset"
 #'
-#' @export
-S7::method(`[[<-`, SingleCellsSubset) <- function(x, i, ..., value) {
+#' @noRd
+`[[<-.bixverse::SingleCellsSubset` <- function(x, i, ..., value) {
   checkmate::assertClass(x, "bixverse::SingleCellsSubset")
   checkmate::qassert(i, "S+")
 

@@ -29,9 +29,9 @@ ica_processing <- S7::new_generic(
 
 #' @export
 #'
-#' @importFrom magrittr `%>%`
-#' @importFrom magrittr `%$%`
-#' @importFrom zeallot `%<-%`
+#' @importFrom magrittr %>%
+#' @importFrom magrittr %$%
+#' @importFrom zeallot %<-%
 #' @import data.table
 #'
 #' @method ica_processing BulkCoExp
@@ -149,8 +149,8 @@ ica_evaluate_comp <- S7::new_generic(
 )
 
 #' @import data.table
-#' @importFrom magrittr `%>%`
-#' @importFrom zeallot `%<-%`
+#' @importFrom magrittr %>%
+#' @importFrom zeallot %<-%
 #'
 #' @export
 #'
@@ -413,7 +413,7 @@ ica_optimal_ncomp <- S7::new_generic(
 #' @export
 #'
 #' @import data.table
-#' @importFrom zeallot `%<-%`
+#' @importFrom zeallot %<-%
 #'
 #' @method ica_optimal_ncomp BulkCoExp
 S7::method(ica_optimal_ncomp, BulkCoExp) <- function(
@@ -583,8 +583,8 @@ ica_stabilised_results <- S7::new_generic(
 #' @export
 #'
 #' @import data.table
-#' @importFrom magrittr `%>%`
-#' @importFrom zeallot `%<-%`
+#' @importFrom magrittr %>%
+#' @importFrom zeallot %<-%
 #'
 #' @method ica_stabilised_results BulkCoExp
 S7::method(ica_stabilised_results, BulkCoExp) <- function(

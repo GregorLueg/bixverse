@@ -373,8 +373,6 @@ meld_res <- meld_sc(
   .verbose = FALSE
 )
 
-meld_res$raw_scores
-
 expect_true(
   current = checkmate::testMatrix(
     meld_res$raw_scores,

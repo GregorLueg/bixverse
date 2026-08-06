@@ -289,7 +289,7 @@ get_ontology_ancestry <- function(parent_child_dt) {
 #' @export
 #'
 #' @import data.table
-#' @importFrom magrittr `%>%`
+#' @importFrom magrittr %>%
 calculate_information_content <- function(ancestor_list) {
   checkmate::assertList(ancestor_list)
   checkmate::assertNamed(ancestor_list)

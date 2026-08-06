@@ -207,7 +207,7 @@ get_sim_matrix <- S7::new_generic(
 #' @export
 #'
 #' @import data.table
-#' @importFrom magrittr `%>%`
+#' @importFrom magrittr %>%
 #'
 #' @method get_sim_matrix OntologySim
 S7::method(get_sim_matrix, OntologySim) <-

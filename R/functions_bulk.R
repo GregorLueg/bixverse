@@ -286,7 +286,7 @@ prep_limma_contrasts <- function(limma_fit, contrast_list) {
 #' @export
 #'
 #' @import data.table
-#' @importFrom magrittr `%>%`
+#' @importFrom magrittr %>%
 run_limma_voom <- function(
   meta_data,
   main_contrast,
@@ -400,7 +400,7 @@ run_limma_voom <- function(
 #' @export
 #'
 #' @import data.table
-#' @importFrom magrittr `%>%`
+#' @importFrom magrittr %>%
 hedges_g_dge <- function(
   meta_data,
   main_contrast,

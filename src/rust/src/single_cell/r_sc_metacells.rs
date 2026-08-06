@@ -941,7 +941,7 @@ fn rs_metacell_density(
     verbose: usize,
     seed: usize,
 ) -> Result<List> {
-    let (knn_indices, knn_distances, original_k, distance) = knn_data_to_rust(knn_data)?;
+    let (knn_indices, knn_distances, _, distance) = knn_data_to_rust(knn_data)?;
     let knn_params = KnnParams::from_r_list(knn_params)?;
     let squared_dist = distance == "euclidean";
 
@@ -949,7 +949,6 @@ fn rs_metacell_density(
         &knn_indices,
         &knn_distances,
         squared_dist,
-        original_k,
         n_dcs,
         k_density,
         &knn_params,

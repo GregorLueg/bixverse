@@ -1765,10 +1765,13 @@ S7::method(add_sc_new_obs, SingleCells) <- function(
   return(object)
 }
 
-#' @method `[[<-` SingleCells
+# Registered as a plain S3 method instead of via `S7::method()`: S7 registers
+# base-generic methods dynamically with the function object, which makes
+# `R CMD check`'s replacement-function check choke on any `<-` generic.
+#' @exportS3Method "[[<-" "bixverse::SingleCells"
 #'
-#' @export
-S7::method(`[[<-`, SingleCells) <- function(x, i, ..., value) {
+#' @noRd
+`[[<-.bixverse::SingleCells` <- function(x, i, ..., value) {
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
   checkmate::qassert(i, "S+")
 

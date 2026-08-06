@@ -315,7 +315,7 @@ expect_true(
   info = "getter on scrublet res working - expected columns"
 )
 
-## s7 method with grouping ----------------------------------------------------
+## s7 method with grouping -----------------------------------------------------
 
 obj_res_grp <- scrublet_sc(
   sc_object,
@@ -429,7 +429,7 @@ expect_true(
 boost_params <- params_boost(
   hvg = list(min_gene_var_pctl = 0.0),
   pca = list(no_pcs = 10L),
-  normalisation = list(target_size = 1e4),
+  normalisation = list(target_size = 1000),
   resolution = 0.5,
   voter_thresh = 0.25,
   n_iters = 10L
@@ -535,7 +535,7 @@ expect_true(
   info = "getter on boost res working - expected columns"
 )
 
-## s7 method with grouping ----------------------------------------------------
+## s7 method with grouping -----------------------------------------------------
 
 obj_res_grp <- doublet_detection_boost_sc(
   sc_object,
@@ -761,7 +761,7 @@ expect_true(
   info = "get_scores() returns a numeric of right length - cxds"
 )
 
-## s7 method with grouping ----------------------------------------------------
+## s7 method with grouping -----------------------------------------------------
 
 obj_res_grp <- scdblfinder_sc(
   object = sc_object,

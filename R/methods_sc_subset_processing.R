@@ -56,7 +56,7 @@ S7::method(find_hvg_sc, SingleCellsSubset) <- function(
 
 #' @method calculate_pca_sc SingleCellsSubset
 #'
-#' @importFrom zeallot `%<-%`
+#' @importFrom zeallot %<-%
 S7::method(calculate_pca_sc, SingleCellsSubset) <- function(
   object,
   no_pcs,

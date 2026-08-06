@@ -34,18 +34,19 @@ jobs:
         with:
           toolchain: stable
 
-      - name: Cache Rust
-        uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: "src/rust -> target"
-          shared-key: pkgdown
+      - name: Setup sccache
+        uses: mozilla-actions/sccache-action@v0.0.10
 
       - name: Cargo env
         run: |
+          echo "SCCACHE_GHA_ENABLED=true" >> $GITHUB_ENV
+          echo "RUSTC_WRAPPER=sccache" >> $GITHUB_ENV
           echo "CARGO_INCREMENTAL=0" >> $GITHUB_ENV
           echo "CARGO_NET_RETRY=10" >> $GITHUB_ENV
           echo "CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse" >> $GITHUB_ENV
           echo "CARGO_TERM_COLOR=always" >> $GITHUB_ENV
+          echo "CARGO_PROFILE_RELEASE_LTO=false" >> $GITHUB_ENV
+          echo "CARGO_PROFILE_RELEASE_CODEGEN_UNITS=16" >> $GITHUB_ENV
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
@@ -55,6 +56,10 @@ jobs:
       - name: Build site
         run: pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE, quiet = FALSE)
         shell: Rscript {0}
+
+      - name: sccache stats
+        if: always()
+        run: sccache --show-stats
 
       - name: Deploy to GitHub pages
         uses: JamesIves/github-pages-deploy-action@v4.5.0

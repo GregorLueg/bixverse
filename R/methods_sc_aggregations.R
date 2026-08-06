@@ -67,8 +67,8 @@ generate_bt_meta_cells_sc <- S7::new_generic(
 
 #' @method generate_bt_meta_cells_sc ScOrScSubset
 #'
-#' @importFrom zeallot `%<-%`
-#' @importFrom magrittr `%>%`
+#' @importFrom zeallot %<-%
+#' @importFrom magrittr %>%
 S7::method(generate_bt_meta_cells_sc, ScOrScSubset) <- function(
   object,
   sc_meta_cell_params = params_sc_bt_metacells(),
@@ -255,8 +255,8 @@ generate_seacells_sc <- S7::new_generic(
 
 #' @method generate_seacells_sc ScOrScSubset
 #'
-#' @importFrom zeallot `%<-%`
-#' @importFrom magrittr `%>%`
+#' @importFrom zeallot %<-%
+#' @importFrom magrittr %>%
 S7::method(generate_seacells_sc, ScOrScSubset) <- function(
   object,
   seacell_params = params_sc_seacells(),
@@ -521,7 +521,7 @@ S7::method(generate_supercells_sc, ScOrScSubset) <- function(
 #' @return Pending on your setting in return_format a dense matrix or sparse
 #' CSR matrix with aggregated cells x genes.
 #'
-#' @importFrom magrittr `%$%`
+#' @importFrom magrittr %$%
 #'
 #' @export
 get_pseudobulked_sc <- S7::new_generic(

@@ -1,6 +1,6 @@
 Package: bixverse
 Title: Rust-accelerated standard bioinformatics, computational biology workflows
-Version: 0.4.5
+Version: 0.4.6
 Authors@R: 
     c(
       person(
@@ -105,5 +105,4 @@ LazyData: true
 Remotes:
     GregorLueg/manifoldsR,
     GregorLueg/bixverse.plots
-Config/roxygen2/version: 8.0.0
-RoxygenNote: 8.0.0
+Config/roxygen2/version: 8.1.0

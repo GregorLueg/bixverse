@@ -108,7 +108,7 @@ get_diffusion_vector <- S7::new_generic(
 
 #' @export
 #'
-#' @importFrom magrittr `%>%`
+#' @importFrom magrittr %>%
 #'
 #' @method get_diffusion_vector NetworkDiffusions
 S7::method(get_diffusion_vector, NetworkDiffusions) <- function(object) {
@@ -142,7 +142,7 @@ get_diffusion_perms <- S7::new_generic(
 
 #' @export
 #'
-#' @importFrom magrittr `%>%`
+#' @importFrom magrittr %>%
 #'
 #' @method get_diffusion_perms NetworkDiffusions
 S7::method(get_diffusion_perms, NetworkDiffusions) <- function(object) {
@@ -294,7 +294,7 @@ get_rbh_res <- S7::new_generic(
 
 #' @export
 #'
-#' @importFrom magrittr `%>%`
+#' @importFrom magrittr %>%
 #'
 #' @method get_rbh_res RbhGraph
 S7::method(get_rbh_res, RbhGraph) <- function(object) {
@@ -452,7 +452,7 @@ get_snf_params <- S7::new_generic(
 
 #' @export
 #'
-#' @importFrom magrittr `%>%`
+#' @importFrom magrittr %>%
 #'
 #' @method get_snf_params SimilarityNetworkFusion
 S7::method(get_snf_params, SimilarityNetworkFusion) <- function(object) {
@@ -484,7 +484,7 @@ get_snf_adjcacency_mat <- S7::new_generic(
 
 #' @export
 #'
-#' @importFrom magrittr `%>%`
+#' @importFrom magrittr %>%
 #'
 #' @method get_snf_adjcacency_mat SimilarityNetworkFusion
 S7::method(get_snf_adjcacency_mat, SimilarityNetworkFusion) <- function(
@@ -522,7 +522,7 @@ get_snf_final_mat <- S7::new_generic(
 
 #' @export
 #'
-#' @importFrom magrittr `%>%`
+#' @importFrom magrittr %>%
 #'
 #' @method get_snf_final_mat SimilarityNetworkFusion
 S7::method(get_snf_final_mat, SimilarityNetworkFusion) <- function(object) {

@@ -436,10 +436,13 @@ S7::method(mc_get_clr_offsets, MetaCells) <- function(
 
 ### obs table ------------------------------------------------------------------
 
-#' @method `[[<-` MetaCells
+# Registered as a plain S3 method instead of via `S7::method()`: S7 registers
+# base-generic methods dynamically with the function object, which makes
+# `R CMD check`'s replacement-function check choke on any `<-` generic.
+#' @exportS3Method "[[<-" "bixverse::MetaCells"
 #'
-#' @export
-S7::method(`[[<-`, MetaCells) <- function(x, i, ..., value) {
+#' @noRd
+`[[<-.bixverse::MetaCells` <- function(x, i, ..., value) {
   checkmate::assertClass(x, "bixverse::MetaCells")
   checkmate::qassert(i, "S+")
 

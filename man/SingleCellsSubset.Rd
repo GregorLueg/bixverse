@@ -6,6 +6,14 @@
 \usage{
 SingleCellsSubset(sc_object, grouping_column, group)
 }
+\arguments{
+\item{sc_object}{A \code{\link[=SingleCells]{SingleCells()}} object to subset.}
+
+\item{grouping_column}{String. Column in the obs table that defines the
+grouping.}
+
+\item{group}{String. Level of \code{grouping_column} to retain.}
+}
 \value{
 A \code{SingleCellsSubset} object.
 }
