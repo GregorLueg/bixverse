@@ -1,5 +1,22 @@
 # Changelog
 
+## bixverse 0.4.6
+
+### Features
+
+#### Single cells
+
+- `bixverse-rs` version bump for better performance in SEACells and more
+  robust streaming engine. Old files will still behave, but the desired
+  target size is now encoded in the files.
+- The pruning operation has been set to `TRUE` by default in SEACells
+  after further benchmarking.
+- Updated vignettes that had stale information (especially meta cells).
+
+#### Documentation
+
+- Missing documentation fixes for parameters.
+
 ## bixverse 0.4.5
 
 ### Features

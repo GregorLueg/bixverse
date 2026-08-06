@@ -14,6 +14,22 @@ index space so Rust calls remain valid without further translation.
 SingleCellsSubset(sc_object, grouping_column, group)
 ```
 
+## Arguments
+
+- sc_object:
+
+  A
+  [`SingleCells()`](https://gregorlueg.github.io/bixverse/reference/SingleCells.md)
+  object to subset.
+
+- grouping_column:
+
+  String. Column in the obs table that defines the grouping.
+
+- group:
+
+  String. Level of `grouping_column` to retain.
+
 ## Value
 
 A `SingleCellsSubset` object.

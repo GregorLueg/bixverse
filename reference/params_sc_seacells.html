@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.6</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -99,7 +99,7 @@
 <span>  min_iter <span class="op">=</span> <span class="fl">10L</span>,</span>
 <span>  greedy_threshold <span class="op">=</span> <span class="fl">20000L</span>,</span>
 <span>  graph_building <span class="op">=</span> <span class="st">"union"</span>,</span>
-<span>  pruning <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  pruning <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  pruning_threshold <span class="op">=</span> <span class="fl">1e-07</span>,</span>
 <span>  n_landmarks <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  knn <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span></span>
@@ -145,8 +145,7 @@ rapid random selection of archetypes. Defaults to <code>20000L</code>.</p></dd>
 
 <dt id="arg-pruning">pruning<a class="anchor" aria-label="anchor" href="#arg-pruning"></a></dt>
 <dd><p>Boolean. Shall tiny values be pruned during Franke-Wolfe
-updates. This will reduce memory pressure and can be a good option on
-large data sets. Defaults to <code>FALSE</code>.</p></dd>
+updates. Defaults to <code>TRUE</code>.</p></dd>
 
 
 <dt id="arg-pruning-threshold">pruning_threshold<a class="anchor" aria-label="anchor" href="#arg-pruning-threshold"></a></dt>

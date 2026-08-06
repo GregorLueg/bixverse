@@ -251,7 +251,6 @@
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dgrdl_result.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/diffcor_module_processing.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/diffuse_seed_nodes.html</loc></url>
-<url><loc>https://gregorlueg.github.io/bixverse/reference/dim.SingleCellsSubset.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-add_is_obs_attr.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-adt_feature_names.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-assert_bulk_detection_method.html</loc></url>
@@ -458,7 +457,6 @@
 <url><loc>https://gregorlueg.github.io/bixverse/reference/gse_hypergeometric_list.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/harmony_sc.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/harmony_v2_sc.html</loc></url>
-<url><loc>https://gregorlueg.github.io/bixverse/reference/head.SingleCellsSubset.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/hedges_g_dge.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/hotspot_autocor_sc.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/hotspot_gene_cor_sc.html</loc></url>
@@ -613,7 +611,6 @@
 <url><loc>https://gregorlueg.github.io/bixverse/reference/print.ScDblFinderRes.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/print.ScenicGrn.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/print.ScrubletRes.html</loc></url>
-<url><loc>https://gregorlueg.github.io/bixverse/reference/print.SingleCellsSubset.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/prioritise_interactions.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/process_cistarget_res.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/process_go_data.html</loc></url>

@@ -13,7 +13,7 @@ params_sc_seacells(
   min_iter = 10L,
   greedy_threshold = 20000L,
   graph_building = "union",
-  pruning = FALSE,
+  pruning = TRUE,
   pruning_threshold = 1e-07,
   n_landmarks = NULL,
   knn = list()
@@ -55,9 +55,8 @@ params_sc_seacells(
 
 - pruning:
 
-  Boolean. Shall tiny values be pruned during Franke-Wolfe updates. This
-  will reduce memory pressure and can be a good option on large data
-  sets. Defaults to `FALSE`.
+  Boolean. Shall tiny values be pruned during Franke-Wolfe updates.
+  Defaults to `TRUE`.
 
 - pruning_threshold:
 

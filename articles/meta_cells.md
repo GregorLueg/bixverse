@@ -80,7 +80,7 @@ sc_object <- load_h5ad(object = sc_object, h5_path = cd34_path)
 #>  Using light streaming for the CSR to CSC conversion.
 #> Loading observations data from h5ad into the DuckDB.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/Rtmp1xX8gV/duckdb
+#> ℹ /tmp/RtmpHPyCef/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -90,7 +90,7 @@ sc_object <- load_h5ad(object = sc_object, h5_path = cd34_path)
 #> Loading variables data from h5ad into the DuckDB.
 #> 
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/Rtmp1xX8gV/duckdb
+#> ℹ /tmp/RtmpHPyCef/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -98,7 +98,7 @@ sc_object <- load_h5ad(object = sc_object, h5_path = cd34_path)
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/Rtmp1xX8gV/duckdb
+#> ℹ /tmp/RtmpHPyCef/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -106,7 +106,7 @@ sc_object <- load_h5ad(object = sc_object, h5_path = cd34_path)
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/Rtmp1xX8gV/duckdb
+#> ℹ /tmp/RtmpHPyCef/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -114,7 +114,7 @@ sc_object <- load_h5ad(object = sc_object, h5_path = cd34_path)
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/Rtmp1xX8gV/duckdb
+#> ℹ /tmp/RtmpHPyCef/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -122,7 +122,7 @@ sc_object <- load_h5ad(object = sc_object, h5_path = cd34_path)
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/Rtmp1xX8gV/duckdb
+#> ℹ /tmp/RtmpHPyCef/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -130,7 +130,7 @@ sc_object <- load_h5ad(object = sc_object, h5_path = cd34_path)
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/Rtmp1xX8gV/duckdb
+#> ℹ /tmp/RtmpHPyCef/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -138,7 +138,7 @@ sc_object <- load_h5ad(object = sc_object, h5_path = cd34_path)
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/Rtmp1xX8gV/duckdb
+#> ℹ /tmp/RtmpHPyCef/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -146,7 +146,7 @@ sc_object <- load_h5ad(object = sc_object, h5_path = cd34_path)
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/Rtmp1xX8gV/duckdb
+#> ℹ /tmp/RtmpHPyCef/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -154,7 +154,7 @@ sc_object <- load_h5ad(object = sc_object, h5_path = cd34_path)
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/Rtmp1xX8gV/duckdb
+#> ℹ /tmp/RtmpHPyCef/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -162,7 +162,7 @@ sc_object <- load_h5ad(object = sc_object, h5_path = cd34_path)
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/Rtmp1xX8gV/duckdb
+#> ℹ /tmp/RtmpHPyCef/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -170,7 +170,7 @@ sc_object <- load_h5ad(object = sc_object, h5_path = cd34_path)
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/Rtmp1xX8gV/duckdb
+#> ℹ /tmp/RtmpHPyCef/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -178,7 +178,7 @@ sc_object <- load_h5ad(object = sc_object, h5_path = cd34_path)
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/Rtmp1xX8gV/duckdb
+#> ℹ /tmp/RtmpHPyCef/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -186,7 +186,7 @@ sc_object <- load_h5ad(object = sc_object, h5_path = cd34_path)
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/Rtmp1xX8gV/duckdb
+#> ℹ /tmp/RtmpHPyCef/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -194,7 +194,7 @@ sc_object <- load_h5ad(object = sc_object, h5_path = cd34_path)
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/Rtmp1xX8gV/duckdb
+#> ℹ /tmp/RtmpHPyCef/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -202,7 +202,7 @@ sc_object <- load_h5ad(object = sc_object, h5_path = cd34_path)
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/Rtmp1xX8gV/duckdb
+#> ℹ /tmp/RtmpHPyCef/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -221,7 +221,7 @@ sc_object <- find_hvg_sc(
   .verbose = FALSE
 )
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/Rtmp1xX8gV/duckdb
+#> ℹ /tmp/RtmpHPyCef/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -229,7 +229,7 @@ sc_object <- find_hvg_sc(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/Rtmp1xX8gV/duckdb
+#> ℹ /tmp/RtmpHPyCef/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -237,7 +237,7 @@ sc_object <- find_hvg_sc(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/Rtmp1xX8gV/duckdb
+#> ℹ /tmp/RtmpHPyCef/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -245,7 +245,7 @@ sc_object <- find_hvg_sc(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/Rtmp1xX8gV/duckdb
+#> ℹ /tmp/RtmpHPyCef/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -256,19 +256,16 @@ sc_object <- find_hvg_sc(
 sc_object <- calculate_pca_sc(
   object = sc_object,
   no_pcs = 30L,
-  sparse_svd = FALSE
+  .verbose = FALSE
 )
-#> Using dense SVD solving on scaled data on 2000 HVG.
 
 sc_object <- find_neighbours_sc(
   object = sc_object,
   neighbours_params = params_sc_neighbours(
     knn = list(ann_dist = "euclidean", knn_method = "kmknn")
-  )
+  ),
+  .verbose = FALSE
 )
-#> 
-#> Generating sNN graph (full: TRUE).
-#> Transforming sNN data to igraph.
 
 # we need the kNN object for the diffusion maps
 knn_object <- get_knn_obj(x = sc_object)
@@ -304,7 +301,7 @@ hdwgcna <- generate_bt_meta_cells_sc(
   .verbose = TRUE
 )
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/Rtmp1xX8gV/duckdb
+#> ℹ /tmp/RtmpHPyCef/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -312,7 +309,7 @@ hdwgcna <- generate_bt_meta_cells_sc(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/Rtmp1xX8gV/duckdb
+#> ℹ /tmp/RtmpHPyCef/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -370,11 +367,12 @@ embedding) and the kNN graph and runs an iterative kernel archetypal
 analysis. `n_sea_cells` sets the number of archetypes;
 `min_iter`/`max_iter` bound the optimisation; `convergence_epsilon` sets
 the early stopping threshold relative to the initial RSS. The algorithm
-was aggressively optimised to be faster. With `pruning = TRUE` small
-values are set to zero, reducing calculations… The rule of thumb by the
-authors is one SEACell per 75 cells, i.e., 90 SEACells for this
-experiment. We will set this higher here to `250L` to make this a bit
-more comparable with the other methods…
+was aggressively optimised to be faster. With `pruning = TRUE` (default)
+small values are set to zero, removing basically dust and accelerating
+the calculations substantially. The rule of thumb by the authors is one
+SEACell per 75 cells, i.e., 90 SEACells for this experiment. We will set
+this higher here to `250L` to make this a bit more comparable with the
+other methods…
 
 ``` r
 
@@ -383,13 +381,12 @@ seacells <- generate_seacells_sc(
   seacell_params = params_sc_seacells(
     n_sea_cells = 250L,
     min_iter = 10L,
-    convergence_epsilon = 0.001,
-    pruning = TRUE
+    convergence_epsilon = 0.001
   ),
   .verbose = TRUE
 )
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/Rtmp1xX8gV/duckdb
+#> ℹ /tmp/RtmpHPyCef/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -397,7 +394,7 @@ seacells <- generate_seacells_sc(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/Rtmp1xX8gV/duckdb
+#> ℹ /tmp/RtmpHPyCef/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -408,7 +405,7 @@ seacells <- generate_seacells_sc(
 seacells
 #> Single cell experiment (Meta Cells).
 #>   Meta cell method: seacell
-#>   No meta cells: 250
+#>   No meta cells: 249
 #>   No genes: 12464
 #>   No cells aggregated: 6881
 #>   No obs rows in source: 6881
@@ -445,47 +442,77 @@ seacells <- calc_diffusion_coordinates(object = seacells, knn_data = knn_object)
 
 #### SEACells on large data
 
-SEACells is quite infamous for being very slow and difficult to run on
-larger data sets. bixverse offers some tricks here which make the
-generation of SEACells feasible on large data sets:
+SEACells is infamous for being very slow and difficult to run on larger
+data sets. Most of the hot path has been rewritten in `bixverse`, which
+is what makes the algorithm feasible beyond a few tens of thousands of
+cells:
 
 1.  The initialisation is the part of the original algorithm that scales
     the worst. The greedy column subset selection needs a full `K^2`
-    column for every candidate cell, which is `O(N2)` and simply will
+    column for every candidate cell, which is `O(N^2)` and simply will
     not finish on millions of cells. `bixverse` therefore switches
-    strategy by size: above `greedy_threshold` it drops the greedy
-    top-up and samples the archetypes at random, which is effectively
-    free. When a better-than-random start is wanted but the greedy pass
-    is still out of reach, setting `n_landmarks` enables a Nyström
-    route: a small set of density-weighted landmarks is chosen, the
+    strategy by size: above `greedy_threshold` (20,000 cells by default)
+    it drops the greedy top-up and samples the archetypes at random,
+    which is effectively free. When a better-than-random start is wanted
+    but the greedy pass is still out of reach, setting `n_landmarks`
+    enables a Nyström route: a small set of density-weighted landmarks
+    is chosen (5 to 10 times `n_sea_cells` is a sensible range), the
     diffusion operator is built and eigendecomposed on those landmarks
-    alone, and the multiscale embedding is then carried to all cells via
-    a Nyström extension before the usual max-min waypoint sampling. The
-    expensive eigendecomposition stays at landmark scale `L x L` instead
-    of `N x N`.
+    alone, and the multiscale embedding is carried to all cells via a
+    Nyström extension before the usual max-min waypoint sampling. The
+    eigendecomposition stays at landmark scale `L x L` instead of
+    `N x N`.
 2.  The optimisation loop itself runs in bounded memory. `K^2` is never
-    formed; every `K^2 * X` term is evaluated as `K (K x X)` so memory
-    stays bounded by the number of non-zeros in `K` rather `N^2`. The
-    Frank-Wolfe gradients are computed one column at a time and in
-    parallel, so the full `k x N` gradient never has to exist at once,
-    and pruning keeps A and B sparse across iterations.
-3.  The RSS for the convergence check is computed differently above
-    20,000 cells. Rather than materialising the `N x N` reconstruction
-    `K x B x A`, the squared residual is expanded with the trace
-    identity and evaluated through cyclic reordering, so every
-    intermediate is at most `N x k` or `k x k`. The value is the same
-    Frobenius norm, just without the dense reconstruction. Together
-    these are what made it possible to run on a million cells locally,
-    which the original implementation cannot do.
+    formed; every `K^2 X` term is evaluated as `K (K X)`, so memory
+    stays bounded by the number of non-zeros in `K` rather than `N^2`.
+    Neither Frank-Wolfe gradient is ever materialised. The A update runs
+    cell-major: a column of `A` is a convex combination of at most
+    `max_fw_iters` one-hot atoms, so the solver carries
+    `(index, weight)` pairs and patches the gradient with rank-1
+    corrections instead of rebuilding it from the sparse `A` on every
+    iteration. The argmin over the two gradient terms is fused and runs
+    on SIMD (NEON on Apple Silicon, SSE2, AVX-2 or AVX-512 picked at
+    runtime on x86). The B update walks one gradient column per
+    archetype in the same spirit. Everything is chunked across rayon
+    threads.
+3.  `K^2 B` is the one product the inner loop needs on every single
+    iteration, so it is cached rather than recomputed. A Frank-Wolfe
+    step changes `B` by a rank-k update, and the matching change to
+    `K^2 B` is the same scaling plus one weighted column of `K^2` per
+    archetype; the pruning corrections fold into the same delta. The
+    update is exact, and a full recompute still runs every eight
+    iterations to bound floating point drift and the sparsity pattern.
+    The B loop stops early once the relative Frank-Wolfe duality gap
+    drops below `1e-3`.
+4.  `pruning` is on by default and should stay on. The Frank-Wolfe
+    updates only ever add atoms, so without pruning the non-zeros in `A`
+    and `B` climb monotonically across the whole fit and the time per
+    iteration keeps rising instead of settling. The accuracy cost sits
+    in `pruning_threshold`, not in the flag. Keep it below the smallest
+    weight the schedule can produce, `2 / (T (T + 1))` for
+    `T = max_fw_iters`; above that you start deleting live mass and
+    shift the solution. The default `1e-7` removes numerical dust only.
+5.  The RSS for the convergence check never materialises the `N x N`
+    reconstruction `K B A`. The squared residual is expanded with the
+    trace identity and evaluated through cyclic reordering, so every
+    intermediate is at most `N x k` or `k x k`. Same Frobenius norm,
+    just without the dense reconstruction.
 
-If you want to run SEACells on larger data sets, these are the knobs you
-have to make this run in a reasonable time on a powerful laptop.
+Most of that is automatic. The knobs you actually reach for on large
+data are `greedy_threshold` and `n_landmarks` for the initialisation,
+and `pruning`/`pruning_threshold` for the loop. Together they are what
+made it possible to run a million cells locally, which the original
+implementation cannot do.
 
 ### SuperCells
 
 SuperCells runs walktrap on the kNN graph. The number of meta cells is
 set indirectly through `graining_factor`: with a factor of 30 over ~6800
-cells you should get roughly ~230 meta cells.
+cells you should get roughly ~230 meta cells. The option to run the
+kernel-based version of SuperCells 2.0 from [Hérault et
+al.](https://www.biorxiv.org/content/10.64898/2026.02.19.706848v1) is
+enabled by default. (The multi-modal versions are still to come. Watch
+the space…)
 
 ``` r
 
@@ -497,7 +524,7 @@ supercells <- generate_supercells_sc(
   .verbose = TRUE
 )
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/Rtmp1xX8gV/duckdb
+#> ℹ /tmp/RtmpHPyCef/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -505,7 +532,7 @@ supercells <- generate_supercells_sc(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/Rtmp1xX8gV/duckdb
+#> ℹ /tmp/RtmpHPyCef/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -604,7 +631,7 @@ methods are reasonably indicative.
 # from the unfiltered obs rather than from `sc_object[[...]]`
 cell_labels <- as.character(get_sc_obs(sc_object)$celltype)
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/Rtmp1xX8gV/duckdb
+#> ℹ /tmp/RtmpHPyCef/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -612,7 +639,7 @@ cell_labels <- as.character(get_sc_obs(sc_object)$celltype)
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/Rtmp1xX8gV/duckdb
+#> ℹ /tmp/RtmpHPyCef/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -637,7 +664,7 @@ purity_dt[, .(mean = mean(purity), median = median(purity)), by = method]
 #>        method      mean    median
 #>        <char>     <num>     <num>
 #> 1:    hdWGCNA 0.8947692 1.0000000
-#> 2:   SEACells 0.9025032 1.0000000
+#> 2:   SEACells 0.9015447 1.0000000
 #> 3: SuperCells 0.8979310 0.9806216
 ```
 
@@ -762,12 +789,12 @@ metrics_dt[,
 #>        method mean_separation median_separation mean_compactness
 #>        <char>           <num>             <num>            <num>
 #> 1:    hdWGCNA       0.1255286        0.08895643      0.007053792
-#> 2:   SEACells       0.1802643        0.15110685      0.011203591
+#> 2:   SEACells       0.1910464        0.16174975      0.011151615
 #> 3: SuperCells       0.2016617        0.15913163      0.006335426
 #>    median_compactness
 #>                 <num>
 #> 1:        0.004067266
-#> 2:        0.004984010
+#> 2:        0.004821036
 #> 3:        0.003216350
 ```
 
@@ -794,9 +821,9 @@ setorder(per_region_stats, method, region)
 per_region_stats[]
 #>        method region mean_separation median_separation mean_compactness
 #>        <char> <fctr>           <num>             <num>            <num>
-#> 1:   SEACells   high      0.04633167        0.05101920     0.0007073069
-#> 2:   SEACells    mid      0.13877805        0.13594331     0.0044319796
-#> 3:   SEACells    low      0.24090206        0.21325481     0.0186658600
+#> 1:   SEACells   high      0.04658237        0.04704881     0.0007426350
+#> 2:   SEACells    mid      0.14588716        0.14593907     0.0043850965
+#> 3:   SEACells    low      0.25798638        0.22870418     0.0185953694
 #> 4: SuperCells   high      0.04950358        0.05186578     0.0006019381
 #> 5: SuperCells    mid      0.14154094        0.13623749     0.0031448643
 #> 6: SuperCells    low      0.30667216        0.25426194     0.0113716719
@@ -805,9 +832,9 @@ per_region_stats[]
 #> 9:    hdWGCNA    low      0.26961609        0.19062942     0.0168331578
 #>    median_compactness
 #>                 <num>
-#> 1:       0.0006614107
-#> 2:       0.0033688664
-#> 3:       0.0076578967
+#> 1:       0.0006210522
+#> 2:       0.0034053826
+#> 3:       0.0068343803
 #> 4:       0.0005725418
 #> 5:       0.0024108913
 #> 6:       0.0055384417
@@ -890,7 +917,7 @@ Based on this, we can conclude the following:
   lower.
 - The methods differ markedly in where they place metacells. SEACells
   assigns 50% of metacells to low-density regions versus 24% for hdWGCNA
-  and 37% for SuperCells, consistent with its kernel archetypal
+  and 41% for SuperCells, consistent with its kernel archetypal
   formulation seeking out underrepresented states.
 - Method choice should reflect the downstream question. For tight
   aggregation in dense regions (e.g., bulk-like pseudo-replicates of
@@ -1004,7 +1031,7 @@ scenic_res <- scenic_grn_sc(
 #> SCENIC gene filter: 12464 / 12464 genes pass.
 #> Warning in `method(scenic_grn_sc, bixverse::MetaCells)`(object = <object>, :
 #> 610 TF identifier(s) not found in the object and dropped.
-#> SCENIC: 12464 target genes, 1282 TFs, 250 cells
+#> SCENIC: 12464 target genes, 1282 TFs, 249 cells
 ```
 
 ``` r
@@ -1095,7 +1122,7 @@ normalised counts.
 
 cl_dt <- sc_object[[c("leiden", "cell_id")]]
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/Rtmp1xX8gV/duckdb
+#> ℹ /tmp/RtmpHPyCef/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -1103,7 +1130,7 @@ cl_dt <- sc_object[[c("leiden", "cell_id")]]
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/Rtmp1xX8gV/duckdb
+#> ℹ /tmp/RtmpHPyCef/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
