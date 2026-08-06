@@ -34,8 +34,6 @@ jobs:
         with:
           toolchain: stable
 
-      # pak builds in temp dirs, so caching src/rust/target never hits.
-      # sccache caches per crate instead.
       - name: Setup sccache
         uses: mozilla-actions/sccache-action@v0.0.10
 

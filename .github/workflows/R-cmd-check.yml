@@ -44,14 +44,9 @@ jobs:
         with:
           toolchain: stable
 
-      # pak builds in temp dirs, so caching src/rust/target never hits.
-      # sccache caches per crate instead.
       - name: Setup sccache
         uses: mozilla-actions/sccache-action@v0.0.10
 
-      # Thin LTO over the bixverse-rs graph is the expensive part of the build
-      # and the part sccache cannot cache. CI only needs a working binary, not
-      # the fastest one; users still build with the Cargo.toml profile.
       - name: Cargo env
         run: |
           echo "SCCACHE_GHA_ENABLED=true" >> $GITHUB_ENV
@@ -72,9 +67,6 @@ jobs:
             any::rextendr
           needs: check
 
-      # RSPM's macOS stringfish binary is linked against the legacy TBB 2020 ABI
-      # (tbb::internal::NFS_Allocate), which oneTBB in current RcppParallel no
-      # longer exports. Rebuild from source against the installed RcppParallel.
       - name: Rebuild stringfish/qs2 from source (macOS)
         if: runner.os == 'macOS'
         run: install.packages(c("stringfish", "qs2"), type = "source", repos = "https://cloud.r-project.org")
