@@ -39,7 +39,8 @@ verbosity.}
 A \code{PalantirRes} S3 object with:
 \itemize{
 \item pseudotime - data.table with \code{cell_id}, \code{pseudotime} (min-max scaled
-to \verb{[0, 1]} with the start cell at 0) and \code{entropy}.
+to \verb{[0, 1]}; the start cell is not pinned to 0, and a start cell far from 0
+means the refinement disagreed with the anchor) and \code{entropy}.
 \item branch_probs - Numeric matrix of cells x terminal states with the
 fate probabilities. Rows need not sum to one, as sub-threshold values are
 zeroed without renormalisation.
@@ -50,8 +51,10 @@ element is the start cell.
 \item start_cell - String. The start cell that was actually used.
 \item multiscale - Numeric matrix of cells x components with the multiscale
 diffusion components.
-\item run_info - List with \code{iterations}, \code{converged}, \code{repair_edges},
-\code{stranded_waypoints}, \code{n_waypoints} and \code{modality}.
+\item run_info - List with \code{iterations}, \code{converged}, \code{eigen_converged},
+\code{eigen_residual}, \code{repair_edges}, \code{stranded_waypoints}, \code{n_waypoints} and
+\code{modality}. A \code{eigen_converged} of \code{FALSE} means the diffusion eigensolve
+ran out of restarts and the embedding is under-resolved.
 }
 }
 \description{

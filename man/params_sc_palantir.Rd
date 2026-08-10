@@ -10,7 +10,7 @@ params_sc_palantir(
   knn = 30L,
   num_waypoints = 1200L,
   scale_components = TRUE,
-  use_early_cell_as_start = FALSE,
+  use_early_cell_as_start = TRUE,
   max_iterations = 25L,
   branch_prob_threshold = 0.01,
   lanczos_basis_size = NULL,
@@ -23,8 +23,10 @@ params_sc_palantir(
 \item{n_dcs}{Integer. Diffusion components to extract before the multiscale
 scaling. Defaults to \code{10L}.}
 
-\item{n_eigs}{Optional integer. Multiscale components to retain. If \code{NULL},
-the count is picked from the largest eigengap, as the reference does.}
+\item{n_eigs}{Optional integer. Eigenvectors to retain, not components: the
+trivial leading eigenvector is counted here and then dropped, so \code{3L} leaves
+two multiscale components. If \code{NULL}, the count is picked from the largest
+eigengap, as the reference does.}
 
 \item{knn}{Integer. Neighbours for the geodesic graph over the multiscale
 space, in the reference's self-inclusive convention. Defaults to \code{30L}.}
@@ -37,7 +39,9 @@ Defaults to \code{1200L}.}
 
 \item{use_early_cell_as_start}{Boolean. Use the provided early cell directly
 rather than snapping it to the nearest diffusion-map boundary cell. Defaults
-to \code{FALSE}.}
+to \code{TRUE}, which deviates from the reference: the boundary candidate set is
+at most two cells per multiscale component, so on a branching manifold the
+snap can move a root cell onto a branch tip and run the trajectory backwards.}
 
 \item{max_iterations}{Integer. Iteration cap for the pseudotime refinement.
 Defaults to \code{25L}.}

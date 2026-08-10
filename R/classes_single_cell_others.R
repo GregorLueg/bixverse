@@ -3175,6 +3175,8 @@ new_palantir_res <- function(rs_res, used_cells, modality) {
     run_info = list(
       iterations = rs_res$iterations,
       converged = rs_res$converged,
+      eigen_converged = rs_res$eigen_converged,
+      eigen_residual = rs_res$eigen_residual,
       repair_edges = rs_res$repair_edges,
       stranded_waypoints = rs_res$stranded_waypoints,
       n_waypoints = length(waypoints),
@@ -3220,6 +3222,16 @@ print.PalantirRes <- function(x, ...) {
 
   if (info$repair_edges > 0) {
     cat("  Note: the kNN graph was disconnected. Consider a larger knn.\n")
+  }
+
+  if (!isTRUE(info$eigen_converged)) {
+    cat(sprintf(
+      paste(
+        "  Note: the diffusion eigensolve did not converge (residual %.2e).",
+        "\n         The embedding is under-resolved, raise lanczos_max_restarts.\n"
+      ),
+      info$eigen_residual
+    ))
   }
 
   invisible(x)

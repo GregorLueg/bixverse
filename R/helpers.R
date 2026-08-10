@@ -571,7 +571,7 @@ sparse_mat_to_list <- function(sparse_mat) {
       indptr = sparse_mat@p,
       indices = sparse_mat@i,
       data = sparse_mat@x,
-      format = "csc",
+      cs_type = "csc",
       nrow = sparse_mat@Dim[1],
       ncol = sparse_mat@Dim[2]
     )
@@ -580,7 +580,7 @@ sparse_mat_to_list <- function(sparse_mat) {
       indptr = sparse_mat@p,
       indices = sparse_mat@j,
       data = sparse_mat@x,
-      format = "csr",
+      cs_type = "csr",
       nrow = sparse_mat@Dim[1],
       ncol = sparse_mat@Dim[2]
     )

@@ -4321,7 +4321,8 @@ rs_extract_grouped_gene_stats <- function(f_path, cell_indices, gene_indices, gr
 #' @returns A list with
 #' \itemize{
 #'  \item pseudotime - Numerical vector with the pseudotime per cell, min-max
-#'  scaled to `[0, 1]` with the start cell at 0.
+#'  scaled to `[0, 1]`. The start cell is not pinned to 0; a start cell far
+#'  from 0 means the refinement disagreed with the anchor.
 #'  \item entropy - Numerical vector with the differentiation entropy per cell
 #'  (natural log).
 #'  \item branch_probs - Numerical matrix of cells x terminal states with the
@@ -4336,7 +4337,13 @@ rs_extract_grouped_gene_stats <- function(f_path, cell_indices, gene_indices, gr
 #'  \item multiscale - Numerical matrix of cells x components with the
 #'  multiscale diffusion components.
 #'  \item iterations - Integer. Refinement passes that were run.
-#'  \item converged - Boolean. Did the refinement converge before the cap.
+#'  \item converged - Boolean. Did the pseudotime refinement converge before
+#'  the cap.
+#'  \item eigen_converged - Boolean. Did the diffusion eigensolve meet its
+#'  tolerance rather than running out of restarts. `FALSE` means the embedding
+#'  is under-resolved and every distance taken on it is suspect.
+#'  \item eigen_residual - Numeric. Largest achieved
+#'  `||A x - lambda x||` from the diffusion eigensolve.
 #'  \item repair_edges - Integer. Bridging edges the connectivity repair had to
 #'  add. Anything non-zero means the kNN graph was disconnected.
 #'  \item stranded_waypoints - Integer. Waypoints from which no terminal state
@@ -4762,7 +4769,7 @@ rs_wnn <- function(modality_emb_one, modality_emb_two, wnn_params, seed, verbose
 #'
 #' \subsection{Arguments}{
 #'\describe{
-#'\item{`r_data`}{(`list`)\cr A list convertible into `CompressedSparseData2`. Must contain the elements `"indptr"`, `"indices"`, `"data"`, `"nrow"`, `"ncol"` and `"format"`.}
+#'\item{`r_data`}{(`list`)\cr A list convertible into `CompressedSparseData2`. Must contain the elements `"indptr"`, `"indices"`, `"data"`, `"nrow"`, `"ncol"` and `"cs_type"`.}
 #'\item{`qc_params`}{(`list`)\cr Quality control parameters parseable into `MinCellQuality`.}
 #'\item{`verbose`}{(`logical`)\cr Controls verbosity of the function. }
 #'}}

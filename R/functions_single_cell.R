@@ -165,7 +165,7 @@ get_seurat_counts_to_list <- function(seurat_obj) {
     indptr = raw_counts@p,
     indices = raw_counts@i,
     data = raw_counts@x,
-    format = "csr",
+    cs_type = "csr",
     nrow = raw_counts@Dim[2],
     ncol = raw_counts@Dim[1]
   )

@@ -91,9 +91,11 @@ expect_true(
   info = "sc trajectory - pseudotime is min-max scaled to [0, 1]"
 )
 
+# the start cell is not pinned to 0, the refinement can put the minimum on a
+# neighbour, but it should still sit at the very beginning of the trajectory
 expect_true(
-  current = linear_res$pseudotime[linear_res$start_cell + 1L] < 1e-6,
-  info = "sc trajectory - the start cell sits at pseudotime 0"
+  current = linear_res$pseudotime[linear_res$start_cell + 1L] < 0.05,
+  info = "sc trajectory - the start cell sits at the start of the trajectory"
 )
 
 expect_true(
@@ -310,7 +312,7 @@ expect_equal(
     knn = 30L,
     num_waypoints = 1200L,
     scale_components = TRUE,
-    use_early_cell_as_start = FALSE,
+    use_early_cell_as_start = TRUE,
     max_iterations = 25L,
     branch_prob_threshold = 0.01
   ),

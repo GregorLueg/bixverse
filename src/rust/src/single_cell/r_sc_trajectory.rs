@@ -52,7 +52,8 @@ extendr_module! {
 /// @returns A list with
 /// \itemize{
 ///  \item pseudotime - Numerical vector with the pseudotime per cell, min-max
-///  scaled to `[0, 1]` with the start cell at 0.
+///  scaled to `[0, 1]`. The start cell is not pinned to 0; a start cell far
+///  from 0 means the refinement disagreed with the anchor.
 ///  \item entropy - Numerical vector with the differentiation entropy per cell
 ///  (natural log).
 ///  \item branch_probs - Numerical matrix of cells x terminal states with the
@@ -67,7 +68,13 @@ extendr_module! {
 ///  \item multiscale - Numerical matrix of cells x components with the
 ///  multiscale diffusion components.
 ///  \item iterations - Integer. Refinement passes that were run.
-///  \item converged - Boolean. Did the refinement converge before the cap.
+///  \item converged - Boolean. Did the pseudotime refinement converge before
+///  the cap.
+///  \item eigen_converged - Boolean. Did the diffusion eigensolve meet its
+///  tolerance rather than running out of restarts. `FALSE` means the embedding
+///  is under-resolved and every distance taken on it is suspect.
+///  \item eigen_residual - Numeric. Largest achieved
+///  `||A x - lambda x||` from the diffusion eigensolve.
 ///  \item repair_edges - Integer. Bridging edges the connectivity repair had to
 ///  add. Anything non-zero means the kNN graph was disconnected.
 ///  \item stranded_waypoints - Integer. Waypoints from which no terminal state
@@ -119,6 +126,8 @@ fn rs_palantir(
         multiscale = faer_to_r_matrix(res.multiscale.as_ref()),
         iterations = res.iterations as i32,
         converged = res.converged,
+        eigen_converged = res.eigen_converged,
+        eigen_residual = res.eigen_residual,
         repair_edges = res.repair_edges as i32,
         stranded_waypoints = res.stranded_waypoints as i32
     ))
@@ -167,9 +176,12 @@ fn rs_paga(knn_mat: RMatrix<i32>, partitions: Vec<i32>, n_partitions: usize) -> 
     let res: PagaResult<f64> =
         run_paga(&knn_indices, &partitions, Some(n_partitions)).to_extendr()?;
 
+    let connectivities = sparse_data_to_list(res.connectivities).to_extendr()?;
+    let connectivities_tree = sparse_data_to_list(res.connectivities_tree).to_extendr()?;
+
     Ok(list!(
-        connectivities = sparse_data_to_list(res.connectivities),
-        connectivities_tree = sparse_data_to_list(res.connectivities_tree),
+        connectivities = connectivities,
+        connectivities_tree = connectivities_tree,
         sizes = res.sizes.as_slice().r_int_convert()
     ))
 }

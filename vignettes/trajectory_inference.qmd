@@ -254,12 +254,13 @@ the geodesic graph Palantir builds on the multiscale space (a different knob
 from the `k` of the input kNN graph), and `num_waypoints = 500` is the
 notebook's override of the 1200 default.
 
-`use_early_cell_as_start = TRUE` is a deliberate deviation. By default Palantir
-snaps your early cell to the nearest boundary cell of the diffusion map, and
-that candidate set is small, at most two cells per multiscale component. On a
-branching manifold it happily snaps a root cell onto a branch tip and runs the
-whole trajectory backwards. If you picked your start cell on marker expression,
-say so and keep it.
+One default does not mirror the reference. `use_early_cell_as_start` is `TRUE`
+here, so the early cell you name is the one that gets used. The reference snaps
+it to the nearest boundary cell of the diffusion map instead, and that candidate
+set is small, at most two cells per multiscale component. On a branching
+manifold the snap will cheerfully move a root cell onto a branch tip and run the
+whole trajectory backwards. It is spelled out below rather than left implicit,
+since it changes what you get.
 
 ```{r}
 #| label: run palantir
@@ -279,9 +280,12 @@ palantir_res <- run_palantir_sc(
 palantir_res
 ```
 
-Watch `repair_edges` in that print out. Anything above zero means the kNN graph
-was disconnected and had to be bridged, which usually means `k` is too small for
-the data.
+Two things to watch in that print out. `repair_edges` above zero means the kNN
+graph was disconnected and had to be bridged, which usually means `k` is too
+small for the data. A note about the diffusion eigensolve not converging means
+the embedding is under-resolved, and every distance taken on it is suspect;
+raise `lanczos_max_restarts` in `params_sc_palantir()` before believing
+anything downstream.
 
 ### Results back onto the object
 
@@ -492,20 +496,27 @@ ggplot(
 Palantir has more moving parts than most methods in this package, and a couple
 of them fail quietly.
 
-- **The start cell.** Covered above. `use_early_cell_as_start = FALSE` is the
-  reference default and it can move your root onto a branch tip. If pseudotime
-  comes back anti-correlated with what you expect, check `start_cell` on the
-  result object first.
+- **The start cell.** Covered above. Set `use_early_cell_as_start = FALSE` to
+  get the reference behaviour and it can move your root onto a branch tip. If
+  pseudotime comes back anti-correlated with what you expect, check `start_cell`
+  on the result object first. Note that pseudotime is not pinned to zero at the
+  start cell either: the refinement can put the minimum on a neighbour, and a
+  start cell far from zero means it disagreed with your anchor.
+- **`eigen_converged = FALSE`.** The diffusion eigensolve ran out of restarts,
+  so the multiscale embedding is under-resolved. Everything downstream converges
+  happily on noise, which is exactly why this is reported. Raise
+  `lanczos_max_restarts`.
 - **`repair_edges > 0`.** The kNN graph was disconnected and Palantir bridged it
   to carry on. Raise `k` on `find_neighbours_sc()` rather than living with the
   bridges.
 - **`stranded_waypoints > 0`.** Waypoints from which no terminal state is
   reachable. Their cells lose fate probability mass, so rows sum below one. A
   large count means the pseudotime-directed pruning cut too hard.
-- **`n_eigs`.** Left at `NULL` the component count comes from the largest
+- **`n_eigs`.** Left at `NULL` the eigenvector count comes from the largest
   eigengap. On small or thin manifolds that heuristic keeps too many, and the
   higher harmonics oscillate enough to swamp the pseudotime gaps. Pinning it to
-  3 is a reasonable first thing to try when results look like noise.
+  3, which leaves two multiscale components, is a reasonable first thing to try
+  when results look like noise.
 
 ## Not covered
 

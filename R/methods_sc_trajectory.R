@@ -96,7 +96,8 @@
 #' @returns A `PalantirRes` S3 object with:
 #' \itemize{
 #'   \item pseudotime - data.table with `cell_id`, `pseudotime` (min-max scaled
-#'   to `[0, 1]` with the start cell at 0) and `entropy`.
+#'   to `[0, 1]`; the start cell is not pinned to 0, and a start cell far from 0
+#'   means the refinement disagreed with the anchor) and `entropy`.
 #'   \item branch_probs - Numeric matrix of cells x terminal states with the
 #'   fate probabilities. Rows need not sum to one, as sub-threshold values are
 #'   zeroed without renormalisation.
@@ -107,8 +108,10 @@
 #'   \item start_cell - String. The start cell that was actually used.
 #'   \item multiscale - Numeric matrix of cells x components with the multiscale
 #'   diffusion components.
-#'   \item run_info - List with `iterations`, `converged`, `repair_edges`,
-#'   `stranded_waypoints`, `n_waypoints` and `modality`.
+#'   \item run_info - List with `iterations`, `converged`, `eigen_converged`,
+#'   `eigen_residual`, `repair_edges`, `stranded_waypoints`, `n_waypoints` and
+#'   `modality`. A `eigen_converged` of `FALSE` means the diffusion eigensolve
+#'   ran out of restarts and the embedding is under-resolved.
 #' }
 #'
 #' @references Setty, et al., Nat. Biotechnol., 2019.

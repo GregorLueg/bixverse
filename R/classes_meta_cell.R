@@ -382,7 +382,7 @@ S7::method(mc_counts_to_list, MetaCells) <- function(
     indptr = x@p,
     indices = x@j,
     data = x@x,
-    format = "csr",
+    cs_type = "csr",
     nrow = nrow(x),
     ncol = ncol(x)
   )
