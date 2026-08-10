@@ -1,0 +1,516 @@
+---
+title: "Trajectory inference with Palantir and PAGA"
+date: last-modified
+date-format: YYYY-MM-DD
+vignette: >
+  %\VignetteIndexEntry{Trajectory inference with Palantir and PAGA}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+knitr:
+  opts_chunk:
+    collapse: true
+    comment: '#>'
+author:
+  - name: "Gregor Lueg"
+---
+
+## Intro
+
+Two trajectory methods live in `bixverse`, both operating on the kNN graph you
+already built with `find_neighbours_sc()`.
+
+**Palantir** ([Setty et al.,
+2019](https://doi.org/10.1038/s41587-019-0068-4)) models differentiation as a
+Markov chain over a multiscale diffusion map of the cells. Out come a pseudotime
+per cell, the probability of each cell reaching each terminal state, and the
+differentiation entropy derived from those probabilities. It needs a start cell
+and, optionally, the terminal states.
+
+**PAGA** ([Wolf et al., 2019](https://doi.org/10.1186/s13059-019-1663-x))
+abstracts the cell-level graph into a cluster-level one, where the edge weight
+between two clusters measures how much more connected they are than a random
+null model expects. Its maximum spanning forest is the backbone people usually
+draw. PAGA needs a clustering and nothing else.
+
+The data set is the one from the [Palantir sample
+notebook](https://github.com/dpeerlab/Palantir/blob/master/notebooks/Palantir_sample_notebook.ipynb):
+4142 human CD34+ bone marrow cells across 16106 genes, already filtered. Three
+lineages come out of it, erythroid, monocyte and dendritic cell, all seeded from
+a haematopoietic stem cell pool.
+
+Two things from that notebook are not reproduced here. There is no MAGIC
+imputation in `bixverse` (and it is a contested step anyway), so the marker gene
+plots below are noisier than the published ones. There is also no Mellon-based
+gene trend estimator, so the expression-along-pseudotime section uses a plain
+loess instead. Everything upstream of that, the diffusion map, the waypoints,
+the Markov chain and the fate probabilities, is the same algorithm.
+
+```{r}
+#| label: setup
+library(bixverse)
+library(bixverse.plots)
+library(ggplot2)
+library(data.table)
+library(patchwork)
+library(magrittr)
+```
+
+## Loading the data
+
+```{r}
+#| label: data path
+# TODO: swap this for a download_marrow_cd34() helper once the Zenodo record
+# is live
+marrow_path <- path.expand(
+  "~/Desktop/zenodo_data/marrow_sample_scseq_counts.h5ad"
+)
+
+read_h5ad_metadata(marrow_path)$dims
+```
+
+The `var` index of this file is the gene symbol, so no Ensembl mapping is
+needed. Cell barcodes look like `Run4_120703408880541`, which matters later:
+the start cell and the terminal states from the reference notebook are given as
+barcodes.
+
+```{r}
+#| label: load h5ad
+sc_object <- SingleCells(dir_data = file.path(tempdir(), "marrow"))
+
+sc_object <- load_h5ad(
+  object = sc_object,
+  h5_path = marrow_path,
+  sc_qc_param = params_sc_min_quality(
+    min_unique_genes = 100L,
+    min_lib_size = 250L,
+    min_cells = 10L,
+    target_size = 10000
+  )
+)
+
+sc_object
+```
+
+The data ships pre-filtered, so there is no QC step here. On your own data you
+would run `run_cell_qc()` and `set_cells_to_keep()` first, as in the
+[PBMC vignette](https://gregorlueg.github.io/bixverse/articles/pbmc_single_cell.html).
+
+## Feature selection, PCA and neighbours
+
+Standard pipeline. The one choice worth spelling out is `k = 30` on the kNN
+graph: Palantir builds its diffusion kernel from whatever graph is stored on the
+object, and 30 neighbours is what the reference uses. The distance metric has to
+be euclidean, since that is how `bixverse` decides whether the stored distances
+are squared.
+
+```{r}
+#| label: hvg pca neighbours
+sc_object <- find_hvg_sc(
+  object = sc_object,
+  hvg_no = 1500L
+)
+
+sc_object <- calculate_pca_sc(
+  object = sc_object,
+  no_pcs = 30L
+)
+
+sc_object <- find_neighbours_sc(
+  object = sc_object,
+  neighbours_params = params_sc_neighbours(
+    knn = list(k = 30L, ann_dist = "euclidean")
+  )
+)
+
+sc_object <- find_clusters_sc(
+  sc_object,
+  res = 1.0,
+  name = "leiden_clusters"
+)
+
+sc_object <- umap_sc(sc_object)
+```
+
+```{r}
+#| label: umap clusters
+#| fig-width: 7
+#| fig-height: 5
+embedding_plot_sc(
+  sc_object,
+  embedding = "umap",
+  colour_by = "leiden_clusters",
+  label_by = "leiden_clusters",
+  discrete = TRUE
+)
+```
+
+The four markers the reference notebook uses: `CD34` for the stem pool, `MPO`
+for the myeloid arm, `GATA1` for the erythroid one and `IRF8` for the dendritic
+one. Without imputation these are sparse and speckled, but the gradients are
+visible.
+
+```{r}
+#| label: marker feature plots
+#| fig-width: 9
+#| fig-height: 7
+feature_plot_sc(
+  object = sc_object,
+  features = c("CD34", "MPO", "GATA1", "IRF8"),
+  embedding = "umap"
+)
+```
+
+## PAGA
+
+PAGA is the cheap one, so start there. It reads the kNN indices and a clustering,
+ignores the distances entirely, and gives back a clusters-by-clusters graph.
+
+```{r}
+#| label: run paga
+paga_res <- run_paga_sc(
+  sc_object,
+  cluster_col = "leiden_clusters"
+)
+
+paga_res
+```
+
+`connectivities` is the full abstracted graph, `connectivities_tree` its maximum
+spanning forest. Both are symmetric sparse matrices named by cluster, with a
+zero diagonal.
+
+```{r}
+#| label: paga sizes
+paga_res$sizes
+
+round(as.matrix(paga_res$connectivities), 3)
+```
+
+Hand either matrix to `igraph` to draw it. The forest is the readable one on
+anything above a handful of clusters, the full graph keeps the weak edges that
+the forest drops.
+
+```{r}
+#| label: paga plot
+#| fig-width: 10
+#| fig-height: 5
+paga_full <- igraph::graph_from_adjacency_matrix(
+  as.matrix(paga_res$connectivities),
+  mode = "undirected",
+  weighted = TRUE,
+  diag = FALSE
+)
+
+paga_tree <- igraph::graph_from_adjacency_matrix(
+  as.matrix(paga_res$connectivities_tree),
+  mode = "undirected",
+  weighted = TRUE,
+  diag = FALSE
+)
+
+set.seed(42L)
+layout <- igraph::layout_with_fr(paga_full)
+
+par(mfrow = c(1, 2))
+plot(
+  paga_full,
+  layout = layout,
+  edge.width = igraph::E(paga_full)$weight * 20,
+  vertex.size = sqrt(paga_res$sizes$n_cells),
+  vertex.color = "grey80",
+  main = "Abstracted graph"
+)
+plot(
+  paga_tree,
+  layout = layout,
+  edge.width = igraph::E(paga_tree)$weight * 20,
+  vertex.size = sqrt(paga_res$sizes$n_cells),
+  vertex.color = "grey80",
+  main = "Maximum spanning forest"
+)
+par(mfrow = c(1, 1))
+```
+
+## Palantir
+
+The start cell and the three terminal states come straight from the reference
+notebook. The start cell was picked there for high `CD34` expression; the
+terminal states are one cell each in the dendritic, monocyte and erythroid tips.
+
+```{r}
+#| label: palantir cells
+early_cell <- "Run5_164698952452459"
+
+terminal_states <- c(
+  DC = "Run5_131097901611291",
+  Mono = "Run5_134936662236454",
+  Ery = "Run4_200562869397916"
+)
+```
+
+`params_sc_palantir()` mirrors the reference defaults. `n_dcs = 5` matches
+`run_diffusion_maps(n_components = 5)`, `knn = 30` is the neighbour count for
+the geodesic graph Palantir builds on the multiscale space (a different knob
+from the `k` of the input kNN graph), and `num_waypoints = 500` is the
+notebook's override of the 1200 default.
+
+`use_early_cell_as_start = TRUE` is a deliberate deviation. By default Palantir
+snaps your early cell to the nearest boundary cell of the diffusion map, and
+that candidate set is small, at most two cells per multiscale component. On a
+branching manifold it happily snaps a root cell onto a branch tip and runs the
+whole trajectory backwards. If you picked your start cell on marker expression,
+say so and keep it.
+
+```{r}
+#| label: run palantir
+palantir_res <- run_palantir_sc(
+  sc_object,
+  early_cell = early_cell,
+  terminal_states = terminal_states,
+  palantir_params = params_sc_palantir(
+    n_dcs = 5L,
+    knn = 30L,
+    num_waypoints = 500L,
+    use_early_cell_as_start = TRUE
+  ),
+  seed = 42L
+)
+
+palantir_res
+```
+
+Watch `repair_edges` in that print out. Anything above zero means the kNN graph
+was disconnected and had to be bridged, which usually means `k` is too small for
+the data.
+
+### Results back onto the object
+
+`PalantirRes` is keyed by cell name, not position, so match it against the obs
+cell names rather than assuming the two are in the same order.
+
+```{r}
+#| label: results to obs
+obs_cells <- get_cell_names(sc_object, filtered = TRUE)
+idx <- match(obs_cells, palantir_res$pseudotime$cell_id)
+
+sc_object[["palantir_pseudotime"]] <- palantir_res$pseudotime$pseudotime[idx]
+sc_object[["palantir_entropy"]] <- palantir_res$pseudotime$entropy[idx]
+```
+
+The fate probability matrix has one column per terminal state, named by the
+terminal cell. Rename to the lineage labels and add the dominant fate per cell.
+
+```{r}
+#| label: fate probabilities
+fate_probs <- palantir_res$branch_probs[idx, ]
+colnames(fate_probs) <- names(terminal_states)[
+  match(colnames(fate_probs), terminal_states)
+]
+
+for (lineage in colnames(fate_probs)) {
+  sc_object[[paste0("fate_", lineage)]] <- fate_probs[, lineage]
+}
+
+sc_object[["palantir_branch"]] <- colnames(fate_probs)[
+  max.col(fate_probs, ties.method = "first")
+]
+
+head(round(fate_probs, 3))
+```
+
+Rows do not necessarily sum to one. Fate probabilities below
+`branch_prob_threshold` (0.01 by default) are zeroed without renormalisation,
+and cells whose waypoint weight sits on a stranded waypoint lose that mass
+entirely.
+
+### Pseudotime and entropy
+
+```{r}
+#| label: pseudotime plot
+#| fig-width: 7
+#| fig-height: 5
+embedding_plot_sc(
+  sc_object,
+  embedding = "umap",
+  colour_by = "palantir_pseudotime",
+  discrete = FALSE
+)
+```
+
+Entropy is high where a cell still has several fates open to it and drops to
+zero once it commits. On a clean three-lineage data set the stem pool should sit
+near `log(3)`.
+
+```{r}
+#| label: entropy plot
+#| fig-width: 7
+#| fig-height: 5
+embedding_plot_sc(
+  sc_object,
+  embedding = "umap",
+  colour_by = "palantir_entropy",
+  discrete = FALSE
+)
+```
+
+```{r}
+#| label: fate plots
+#| fig-width: 12
+#| fig-height: 4
+fate_plots <- lapply(colnames(fate_probs), \(lineage) {
+  embedding_plot_sc(
+    sc_object,
+    embedding = "umap",
+    colour_by = paste0("fate_", lineage),
+    discrete = FALSE
+  ) +
+    labs(title = lineage)
+})
+
+wrap_plots(fate_plots, nrow = 1)
+```
+
+```{r}
+#| label: branch plot
+#| fig-width: 7
+#| fig-height: 5
+embedding_plot_sc(
+  sc_object,
+  embedding = "umap",
+  colour_by = "palantir_branch",
+  label_by = "palantir_branch",
+  discrete = TRUE
+)
+```
+
+### Letting Palantir find the terminal states
+
+Drop `terminal_states` and they get detected from the waypoint Markov chain
+instead. Handy when you have no prior, but treat the result as a starting point
+rather than an answer: the detection reads extremes of the multiscale space, and
+on data sets this size those are not always well determined.
+
+```{r}
+#| label: palantir auto
+palantir_auto <- run_palantir_sc(
+  sc_object,
+  early_cell = early_cell,
+  palantir_params = params_sc_palantir(
+    n_dcs = 5L,
+    knn = 30L,
+    num_waypoints = 500L,
+    use_early_cell_as_start = TRUE
+  ),
+  seed = 42L
+)
+
+palantir_auto$terminal_states
+```
+
+Where did they land relative to the supplied ones?
+
+```{r}
+#| label: auto vs supplied
+data.table(
+  cell_id = palantir_auto$terminal_states,
+  branch = unlist(sc_object[["palantir_branch"]], use.names = FALSE)[
+    match(palantir_auto$terminal_states, obs_cells)
+  ],
+  pseudotime = round(
+    palantir_res$pseudotime$pseudotime[
+      match(palantir_auto$terminal_states, palantir_res$pseudotime$cell_id)
+    ],
+    3
+  )
+)
+```
+
+## Expression along pseudotime
+
+No Mellon here, so this is a loess through the normalised counts rather than a
+proper gene trend estimator. It is enough to see the ordering: `CD34` falling
+away from the root, `GATA1` climbing on the erythroid arm, `MPO` on the
+monocyte one, `IRF8` on the dendritic one.
+
+```{r}
+#| label: trend data
+markers <- c("CD34", "MPO", "GATA1", "IRF8")
+
+trend_dt <- extract_feature_plot_data(
+  object = sc_object,
+  features = markers,
+  embedding = "umap",
+  obs_col = c("palantir_pseudotime", "palantir_branch")
+)
+```
+
+```{r}
+#| label: trend plot
+#| fig-width: 9
+#| fig-height: 6
+ggplot(
+  trend_dt,
+  aes(x = palantir_pseudotime, y = expression, colour = palantir_branch)
+) +
+  geom_smooth(method = "loess", formula = y ~ x, se = TRUE, span = 0.6) +
+  facet_wrap(~gene, scales = "free_y") +
+  scale_color_bx() +
+  labs(
+    x = "Palantir pseudotime",
+    y = "Normalised expression",
+    colour = "Dominant fate"
+  ) +
+  theme_bx()
+```
+
+The same trick works with any per-cell quantity. Swap `expression` for the
+entropy column to watch commitment happen along the trajectory.
+
+```{r}
+#| label: entropy along pseudotime
+#| fig-width: 7
+#| fig-height: 4
+obs_dt <- get_sc_obs(sc_object, filtered = TRUE)
+
+ggplot(
+  obs_dt,
+  aes(x = palantir_pseudotime, y = palantir_entropy, colour = palantir_branch)
+) +
+  geom_point(size = 0.4, alpha = 0.3) +
+  geom_smooth(method = "loess", formula = y ~ x, se = FALSE, span = 0.6) +
+  scale_color_bx() +
+  labs(
+    x = "Palantir pseudotime",
+    y = "Differentiation entropy",
+    colour = "Dominant fate"
+  ) +
+  theme_bx()
+```
+
+## Where this can go wrong
+
+Palantir has more moving parts than most methods in this package, and a couple
+of them fail quietly.
+
+- **The start cell.** Covered above. `use_early_cell_as_start = FALSE` is the
+  reference default and it can move your root onto a branch tip. If pseudotime
+  comes back anti-correlated with what you expect, check `start_cell` on the
+  result object first.
+- **`repair_edges > 0`.** The kNN graph was disconnected and Palantir bridged it
+  to carry on. Raise `k` on `find_neighbours_sc()` rather than living with the
+  bridges.
+- **`stranded_waypoints > 0`.** Waypoints from which no terminal state is
+  reachable. Their cells lose fate probability mass, so rows sum below one. A
+  large count means the pseudotime-directed pruning cut too hard.
+- **`n_eigs`.** Left at `NULL` the component count comes from the largest
+  eigengap. On small or thin manifolds that heuristic keeps too many, and the
+  higher harmonics oscillate enough to swamp the pseudotime gaps. Pinning it to
+  3 is a reasonable first thing to try when results look like noise.
+
+## Not covered
+
+MAGIC imputation, Mellon gene trends and the branch cell selection from the
+reference notebook all have no equivalent here yet. Gene trends are the one
+worth adding: a proper function estimator over pseudotime would make the section
+above a real analysis rather than a sanity check. PAGA has no plotting helper
+either, hence the raw `igraph` calls, which is an obvious gap to close.
