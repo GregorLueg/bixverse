@@ -172,7 +172,6 @@ dependencies = [
 [[package]]
 name = "bixverse-rs"
 version = "0.4.1"
-source = "git+https://github.com/GregorLueg/bixverse-rs?branch=feat-faster-hvg#bad49d5a799c3996c7fc45aa83e2c467e6e1672e"
 dependencies = [
  "ann-search-rs",
  "approx",

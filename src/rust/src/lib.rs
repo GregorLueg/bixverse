@@ -63,6 +63,7 @@ pub use single_cell::r_sc_metacells;
 pub use single_cell::r_sc_multimodal;
 pub use single_cell::r_sc_plot_extraction;
 pub use single_cell::r_sc_processing;
+pub use single_cell::r_sc_trajectory;
 
 // meta cell
 pub use meta_cell::r_mc_analysis;
@@ -121,6 +122,7 @@ extendr_module! {
     use r_sc_analysis;
     use r_sc_metacells;
     use r_sc_plot_extraction;
+    use r_sc_trajectory;
 
     // meta cell
     use r_mc_processing;

@@ -3106,3 +3106,200 @@ get_params.StabilisedNmfResult <- function(
   }
   to_ret
 }
+
+## trajectory results ----------------------------------------------------------
+
+### palantir -------------------------------------------------------------------
+
+#' Helper function to generate the Palantir results
+#'
+#' @description
+#' Takes the raw Rust output of [bixverse::rs_palantir()] and maps every cell
+#' index back onto the cell names the kNN graph was built over.
+#'
+#' @param rs_res List. The raw return of [bixverse::rs_palantir()].
+#' @param used_cells Character vector. The cells the kNN graph was generated
+#' over, in kNN row order.
+#' @param modality String. The modality the kNN graph came from.
+#'
+#' @return Generates the `PalantirRes` class.
+#'
+#' @export
+#'
+#' @keywords internal
+new_palantir_res <- function(rs_res, used_cells, modality) {
+  # checks
+  checkmate::assertList(rs_res)
+  checkmate::assertNames(
+    names(rs_res),
+    must.include = c(
+      "pseudotime",
+      "entropy",
+      "branch_probs",
+      "terminal_states",
+      "waypoints",
+      "start_cell",
+      "multiscale"
+    )
+  )
+  checkmate::qassert(used_cells, "S+")
+  checkmate::qassert(modality, "S1")
+
+  # Rust hands back 0-indexed positions into used_cells
+  terminal_states <- used_cells[rs_res$terminal_states + 1L]
+  waypoints <- used_cells[rs_res$waypoints + 1L]
+  start_cell <- used_cells[rs_res$start_cell + 1L]
+
+  pseudotime <- data.table::data.table(
+    cell_id = used_cells,
+    pseudotime = rs_res$pseudotime,
+    entropy = rs_res$entropy
+  )
+
+  branch_probs <- rs_res$branch_probs
+  dimnames(branch_probs) <- list(used_cells, terminal_states)
+
+  multiscale <- rs_res$multiscale
+  dimnames(multiscale) <- list(
+    used_cells,
+    sprintf("MS_%i", seq_len(ncol(multiscale)))
+  )
+
+  palantir_res <- list(
+    pseudotime = pseudotime,
+    branch_probs = branch_probs,
+    terminal_states = terminal_states,
+    waypoints = waypoints,
+    start_cell = start_cell,
+    multiscale = multiscale,
+    run_info = list(
+      iterations = rs_res$iterations,
+      converged = rs_res$converged,
+      repair_edges = rs_res$repair_edges,
+      stranded_waypoints = rs_res$stranded_waypoints,
+      n_waypoints = length(waypoints),
+      modality = modality
+    )
+  )
+
+  class(palantir_res) <- "PalantirRes"
+
+  return(palantir_res)
+}
+
+#### primitives ----------------------------------------------------------------
+
+#' @export
+print.PalantirRes <- function(x, ...) {
+  info <- x[["run_info"]]
+  cat(
+    sprintf(
+      "PalantirRes: %i cells, %i terminal %s (%s modality)\n",
+      nrow(x$pseudotime),
+      length(x$terminal_states),
+      if (length(x$terminal_states) == 1L) "state" else "states",
+      info$modality
+    ),
+    sprintf(
+      "  Start cell: %s | waypoints: %i\n",
+      x$start_cell,
+      info$n_waypoints
+    ),
+    sprintf(
+      "  Converged: %s (%i iterations)\n",
+      info$converged,
+      info$iterations
+    ),
+    sprintf(
+      "  Repair edges: %i, stranded waypoints: %i\n",
+      info$repair_edges,
+      info$stranded_waypoints
+    ),
+    sep = ""
+  )
+
+  if (info$repair_edges > 0) {
+    cat("  Note: the kNN graph was disconnected. Consider a larger knn.\n")
+  }
+
+  invisible(x)
+}
+
+### paga -----------------------------------------------------------------------
+
+#' Helper function to generate the PAGA results
+#'
+#' @description
+#' Takes the raw Rust output of [bixverse::rs_paga()] and transforms the two
+#' abstracted graphs into sparse matrices with the cluster levels as dimnames.
+#'
+#' @param rs_res List. The raw return of [bixverse::rs_paga()].
+#' @param cluster_levels Character vector. The cluster levels, in the order the
+#' 0-indexed partition labels referred to.
+#' @param cluster_col String. The obs column the clustering came from.
+#' @param modality String. The modality the kNN graph came from.
+#'
+#' @return Generates the `PagaRes` class.
+#'
+#' @export
+#'
+#' @keywords internal
+new_paga_res <- function(rs_res, cluster_levels, cluster_col, modality) {
+  # checks
+  checkmate::assertList(rs_res)
+  checkmate::assertNames(
+    names(rs_res),
+    must.include = c("connectivities", "connectivities_tree", "sizes")
+  )
+  checkmate::qassert(cluster_levels, "S+")
+  checkmate::qassert(cluster_col, "S1")
+  checkmate::qassert(modality, "S1")
+
+  connectivities <- sparse_list_to_mat(rs_res$connectivities)
+  connectivities_tree <- sparse_list_to_mat(rs_res$connectivities_tree)
+
+  dimnames(connectivities) <- dimnames(connectivities_tree) <- list(
+    cluster_levels,
+    cluster_levels
+  )
+
+  paga_res <- list(
+    connectivities = connectivities,
+    connectivities_tree = connectivities_tree,
+    sizes = data.table::data.table(
+      cluster = cluster_levels,
+      n_cells = rs_res$sizes
+    ),
+    params = list(
+      cluster_col = cluster_col,
+      modality = modality
+    )
+  )
+
+  class(paga_res) <- "PagaRes"
+
+  return(paga_res)
+}
+
+#### primitives ----------------------------------------------------------------
+
+#' @export
+print.PagaRes <- function(x, ...) {
+  # both graphs are stored symmetrically, hence the halving
+  cat(
+    sprintf(
+      "PagaRes: %i clusters, %i cells (%s modality)\n",
+      nrow(x$sizes),
+      sum(x$sizes$n_cells),
+      x$params$modality
+    ),
+    sprintf("  Clustering: %s\n", x$params$cluster_col),
+    sprintf("  Abstracted edges: %.0f\n", length(x$connectivities@x) / 2),
+    sprintf(
+      "  Spanning forest edges: %.0f\n",
+      length(x$connectivities_tree@x) / 2
+    ),
+    sep = ""
+  )
+  invisible(x)
+}

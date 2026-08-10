@@ -3788,6 +3788,87 @@ checkMeldParams <- function(x) {
 #' @keywords internal
 assertMeldParams <- checkmate::makeAssertionFunction(checkMeldParams)
 
+#### palantir ------------------------------------------------------------------
+
+#' Check Palantir parameters
+#'
+#' @description Checkmate extension for checking Palantir parameters.
+#'
+#' @param x The list to check/assert.
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
+checkScPalantirParams <- function(x) {
+  res <- check_list_shape(
+    x,
+    c(
+      "n_dcs",
+      "n_eigs",
+      "knn",
+      "num_waypoints",
+      "scale_components",
+      "use_early_cell_as_start",
+      "max_iterations",
+      "branch_prob_threshold"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- checkKnnParams(x[names(x) %in% KNN_PARAM_NAMES])
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  # the lower bounds mirror the Rust-side minima (MIN_MULTISCALE_EIGS, MIN_KNN,
+  # MIN_MAX_ITERATIONS); violating them errors deep inside the algorithm
+  res <- apply_qtest_rules(
+    x,
+    list(
+      n_dcs = "I1[3,)",
+      n_eigs = c("0", "I1[3,)"),
+      knn = "I1[6,)",
+      num_waypoints = "I1[1,)",
+      scale_components = "B1",
+      use_early_cell_as_start = "B1",
+      max_iterations = "I1[2,)",
+      branch_prob_threshold = "N1[0,1]",
+      lanczos_basis_size = c("0", "I1[1,)"),
+      lanczos_max_restarts = "I1[1,)",
+      lanczos_tol = "N1(0,)"
+    ),
+    label = "Palantir params",
+    hint = paste(
+      "n_dcs must be >= 3; n_eigs must be NULL or >= 3; knn must be >= 6;",
+      "num_waypoints must be >= 1; max_iterations must be >= 2;",
+      "branch_prob_threshold must be in [0, 1];",
+      "scale_components and use_early_cell_as_start must be booleans."
+    )
+  )
+
+  res
+}
+
+#' Assert Palantir parameters
+#'
+#' @description Checkmate extension for asserting Palantir parameters.
+#'
+#' @inheritParams checkScPalantirParams
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
+assertScPalantirParams <- checkmate::makeAssertionFunction(
+  checkScPalantirParams
+)
+
 ### single cells (multi modal) -------------------------------------------------
 
 #### dsb count normalisation ---------------------------------------------------

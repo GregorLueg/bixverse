@@ -1816,3 +1816,104 @@ params_sc_wnn <- function(
     knn_params
   )
 }
+
+## trajectory ------------------------------------------------------------------
+
+### palantir -------------------------------------------------------------------
+
+#' Wrapper function for Palantir parameters
+#'
+#' @description
+#' Parameters controlling the Palantir trajectory inference. The kNN graph you
+#' hand to [bixverse::run_palantir_sc()] feeds the diffusion kernel. The
+#' geodesics are measured over a second kNN graph that Palantir builds
+#' internally on the multiscale space, and `knn` is what controls that one. It
+#' is a different knob from `k` in the kNN parameter block, which sizes the
+#' backend index. Palantir overrides `k` and `ann_dist` for its internal search,
+#' so only `knn_method` and the backend tuning parameters have an effect.
+#'
+#' @param n_dcs Integer. Diffusion components to extract before the multiscale
+#' scaling. Defaults to `10L`.
+#' @param n_eigs Optional integer. Multiscale components to retain. If `NULL`,
+#' the count is picked from the largest eigengap, as the reference does.
+#' @param knn Integer. Neighbours for the geodesic graph over the multiscale
+#' space, in the reference's self-inclusive convention. Defaults to `30L`.
+#' @param num_waypoints Integer. Target waypoint count for the max-min sampler.
+#' Defaults to `1200L`.
+#' @param scale_components Boolean. Min-max scale each multiscale component to
+#' `[0, 1]` before any distance is taken. Defaults to `TRUE`.
+#' @param use_early_cell_as_start Boolean. Use the provided early cell directly
+#' rather than snapping it to the nearest diffusion-map boundary cell. Defaults
+#' to `FALSE`.
+#' @param max_iterations Integer. Iteration cap for the pseudotime refinement.
+#' Defaults to `25L`.
+#' @param branch_prob_threshold Numeric. Fate probabilities below this are
+#' zeroed. Defaults to `0.01`.
+#' @param lanczos_basis_size Optional integer. Krylov basis vectors held at once
+#' during the diffusion-map eigendecomposition. If `NULL`, derived from the
+#' requested component count.
+#' @param lanczos_max_restarts Integer. Maximum restart cycles for the Lanczos
+#' solver. Defaults to `16L`.
+#' @param lanczos_tol Numeric. Relative residual tolerance for the Lanczos
+#' solver. Defaults to `1e-8`.
+#' @param knn_params List. Optional overrides for the kNN parameters of the
+#' internal multiscale search. See [bixverse::params_knn_defaults()] for
+#' available parameters: `k`, `knn_method`, `ann_dist`, `search_budget`,
+#' `n_trees`, `delta`, `diversify_prob`, `ef_budget`, `m`, `ef_construction`,
+#' `ef_search`, `n_list` and `n_probe`.
+#'
+#' @returns A named flat list with all Palantir parameters.
+#'
+#' @export
+#'
+#' @references Setty, et al., Nat. Biotechnol., 2019.
+params_sc_palantir <- function(
+  n_dcs = 10L,
+  n_eigs = NULL,
+  knn = 30L,
+  num_waypoints = 1200L,
+  scale_components = TRUE,
+  use_early_cell_as_start = FALSE,
+  max_iterations = 25L,
+  branch_prob_threshold = 0.01,
+  lanczos_basis_size = NULL,
+  lanczos_max_restarts = 16L,
+  lanczos_tol = 1e-8,
+  knn_params = list()
+) {
+  # checks
+  checkmate::qassert(n_dcs, "I1[3,)")
+  checkmate::qassert(n_eigs, c("0", "I1[3,)"))
+  checkmate::qassert(knn, "I1[6,)")
+  checkmate::qassert(num_waypoints, "I1[1,)")
+  checkmate::qassert(scale_components, "B1")
+  checkmate::qassert(use_early_cell_as_start, "B1")
+  checkmate::qassert(max_iterations, "I1[2,)")
+  checkmate::qassert(branch_prob_threshold, "N1[0,1]")
+  checkmate::qassert(lanczos_basis_size, c("0", "I1[1,)"))
+  checkmate::qassert(lanczos_max_restarts, "I1[1,)")
+  checkmate::qassert(lanczos_tol, "N1(0,)")
+
+  knn_defaults <- modifyList(
+    params_knn_defaults(),
+    knn_params,
+    keep.null = TRUE
+  )
+
+  c(
+    list(
+      n_dcs = n_dcs,
+      n_eigs = n_eigs,
+      knn = knn,
+      num_waypoints = num_waypoints,
+      scale_components = scale_components,
+      use_early_cell_as_start = use_early_cell_as_start,
+      max_iterations = max_iterations,
+      branch_prob_threshold = branch_prob_threshold,
+      lanczos_basis_size = lanczos_basis_size,
+      lanczos_max_restarts = lanczos_max_restarts,
+      lanczos_tol = lanczos_tol
+    ),
+    knn_defaults
+  )
+}

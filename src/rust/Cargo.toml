@@ -38,7 +38,8 @@ rustc-hash = "2.1.1"
 thousands = "*"
 
 [patch.crates-io]
-bixverse-rs = { git = "https://github.com/GregorLueg/bixverse-rs", branch = "feat-faster-hvg" }
+# local override while the trajectory work (Palantir, PAGA) is unpublished
+bixverse-rs = { path = "/Users/gregorlueg/repos/shared/bixverse-rs" }
 
 [[bin]]
 name = "document"
