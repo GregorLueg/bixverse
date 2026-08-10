@@ -75,7 +75,7 @@ barcodes.
 
 ```{r}
 #| label: load h5ad
-sc_object <- SingleCells(dir_data = file.path(tempdir(), "marrow"))
+sc_object <- SingleCells(dir_data = tempdir())
 
 sc_object <- load_h5ad(
   object = sc_object,
@@ -124,7 +124,7 @@ sc_object <- find_neighbours_sc(
 
 sc_object <- find_clusters_sc(
   sc_object,
-  res = 1.0,
+  res = 0.5,
   name = "leiden_clusters"
 )
 
@@ -156,7 +156,8 @@ visible.
 feature_plot_sc(
   object = sc_object,
   features = c("CD34", "MPO", "GATA1", "IRF8"),
-  embedding = "umap"
+  embedding = "umap",
+  scale = TRUE
 )
 ```
 
@@ -277,7 +278,9 @@ palantir_res <- run_palantir_sc(
   seed = 42L
 )
 
-palantir_res
+str(palantir_res)
+
+palantir_res$branch_probs
 ```
 
 Two things to watch in that print out. `repair_edges` above zero means the kNN
@@ -335,7 +338,7 @@ entirely.
 #| fig-height: 5
 embedding_plot_sc(
   sc_object,
-  embedding = "umap",
+  embedding = "tsne",
   colour_by = "palantir_pseudotime",
   discrete = FALSE
 )
@@ -351,7 +354,7 @@ near `log(3)`.
 #| fig-height: 5
 embedding_plot_sc(
   sc_object,
-  embedding = "umap",
+  embedding = "tsne",
   colour_by = "palantir_entropy",
   discrete = FALSE
 )
@@ -364,7 +367,7 @@ embedding_plot_sc(
 fate_plots <- lapply(colnames(fate_probs), \(lineage) {
   embedding_plot_sc(
     sc_object,
-    embedding = "umap",
+    embedding = "tsne",
     colour_by = paste0("fate_", lineage),
     discrete = FALSE
   ) +
@@ -380,7 +383,7 @@ wrap_plots(fate_plots, nrow = 1)
 #| fig-height: 5
 embedding_plot_sc(
   sc_object,
-  embedding = "umap",
+  embedding = "tsne",
   colour_by = "palantir_branch",
   label_by = "palantir_branch",
   discrete = TRUE

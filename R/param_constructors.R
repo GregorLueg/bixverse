@@ -403,7 +403,7 @@ params_boost <- function(
 #' proximity.
 #' @param n_iterations Integer. Number of refinement iterations. Typically 2-3.
 #' Defaults to `3L`.
-#' @param n_trees Integer. Maximum number of boosting rounds for the GBM
+#' @param gbm_n_trees Integer. Maximum number of boosting rounds for the GBM
 #' classifier. Defaults to `200L`.
 #' @param max_depth Integer. Maximum tree depth. Shallow trees (3-5) work best.
 #' Defaults to `4L`.
@@ -450,7 +450,7 @@ params_scdblfinder <- function(
   cluster_iters = 10L,
   fast_cluster = FALSE,
   n_iterations = 3L,
-  n_trees = 200L,
+  gbm_n_trees = 200L,
   max_depth = 4L,
   learning_rate = 0.3,
   min_samples_leaf = 20L,
@@ -475,7 +475,7 @@ params_scdblfinder <- function(
   checkmate::qassert(cluster_iters, "I1[1,)")
   checkmate::qassert(n_iterations, "I1[1,)")
   checkmate::qassert(fast_cluster, "B1")
-  checkmate::qassert(n_trees, "I1[1,)")
+  checkmate::qassert(gbm_n_trees, "I1[1,)")
   checkmate::qassert(max_depth, "I1[1,)")
   checkmate::qassert(learning_rate, "N1(0,)")
   checkmate::qassert(min_samples_leaf, "I1[1,)")
@@ -508,7 +508,7 @@ params_scdblfinder <- function(
     cluster_iters = cluster_iters,
     fast_cluster = fast_cluster,
     n_iterations = n_iterations,
-    n_trees = n_trees,
+    gbm_n_trees = gbm_n_trees,
     max_depth = max_depth,
     learning_rate = learning_rate,
     min_samples_leaf = min_samples_leaf,
