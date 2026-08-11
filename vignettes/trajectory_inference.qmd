@@ -107,7 +107,7 @@ are squared.
 #| label: hvg pca neighbours
 sc_object <- find_hvg_sc(
   object = sc_object,
-  hvg_no = 1500L
+  hvg_no = 2000L
 )
 
 sc_object <- calculate_pca_sc(
@@ -338,7 +338,7 @@ entirely.
 #| fig-height: 5
 embedding_plot_sc(
   sc_object,
-  embedding = "tsne",
+  embedding = "umap",
   colour_by = "palantir_pseudotime",
   discrete = FALSE
 )
@@ -354,7 +354,7 @@ near `log(3)`.
 #| fig-height: 5
 embedding_plot_sc(
   sc_object,
-  embedding = "tsne",
+  embedding = "umap",
   colour_by = "palantir_entropy",
   discrete = FALSE
 )
@@ -367,7 +367,7 @@ embedding_plot_sc(
 fate_plots <- lapply(colnames(fate_probs), \(lineage) {
   embedding_plot_sc(
     sc_object,
-    embedding = "tsne",
+    embedding = "umap",
     colour_by = paste0("fate_", lineage),
     discrete = FALSE
   ) +
@@ -383,7 +383,7 @@ wrap_plots(fate_plots, nrow = 1)
 #| fig-height: 5
 embedding_plot_sc(
   sc_object,
-  embedding = "tsne",
+  embedding = "umap",
   colour_by = "palantir_branch",
   label_by = "palantir_branch",
   discrete = TRUE

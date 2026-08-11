@@ -11,16 +11,24 @@
 
 ## globals ---------------------------------------------------------------------
 
-# attribute name under which every stamp is stored
+#' Attribute name under which every stamp is stored
+#'
+#' @keywords internal
 SC_STAMP_ATTR <- "bixverse_stamp"
 
-# artefact kinds a cache can hold
+#' Artefact kinds a cache can hold
+#'
+#' @keywords internal
 SC_ARTEFACTS <- c("pca", "embedding", "knn", "snn")
 
-# embedding names that would collide with an artefact label
+#' Embedding names that would collide with an artefact label
+#'
+#' @keywords internal
 SC_RESERVED_EMBEDDINGS <- c("pca", "knn", "snn")
 
-# monotonic counter so two stamps minted in the same clock tick still differ
+#' Monotonic counter so two stamps minted in the same clock tick still differ
+#'
+#' @keywords internal
 sc_stamp_env <- new.env(parent = emptyenv())
 sc_stamp_env$counter <- 0L
 
@@ -30,8 +38,7 @@ sc_stamp_env$counter <- 0L
 #'
 #' @description
 #' Builds a 16 character id from the wall clock, the process id and a package
-#' local counter. Deliberately avoids `runif()`/`sample()`: consuming the RNG
-#' stream would shift the results of every seeded test in the package.
+#' local counter.
 #'
 #' @returns String. A 16 character identifier.
 #'
