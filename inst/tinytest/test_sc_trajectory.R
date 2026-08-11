@@ -488,6 +488,202 @@ expect_equal(
   info = "sc trajectory - the cluster levels come back as names"
 )
 
+### paga plot data -------------------------------------------------------------
+
+# "pca" is a virtual embedding name, so this needs no manifold
+paga_pd <- extract_paga_plot_data(
+  sc_object,
+  paga_sc_res,
+  embedding = "pca"
+)
+
+expect_equal(
+  current = names(paga_pd),
+  target = c("nodes", "edges"),
+  info = "sc paga plot - the extractor returns nodes and edges"
+)
+
+expect_equal(
+  current = attr(paga_pd, "embedding"),
+  target = "pca",
+  info = "sc paga plot - the embedding rides along as an attribute"
+)
+
+expect_equal(
+  current = as.character(paga_pd$nodes$cluster),
+  target = paga_sc_res$sizes$cluster,
+  info = "sc paga plot - one node per cluster, in graph order"
+)
+
+expect_equal(
+  current = paga_pd$nodes$n_cells,
+  target = paga_sc_res$sizes$n_cells,
+  info = "sc paga plot - the node sizes come from the PAGA result"
+)
+
+# the node has to sit where its cells sit
+paga_embd <- extract_embedding_data(
+  sc_object,
+  embedding = "pca",
+  obs_cols = "clusters"
+)
+first_cluster <- as.character(paga_pd$nodes$cluster)[1]
+manual_centroid <- stats::median(
+  paga_embd$dim_1[as.character(paga_embd$clusters) == first_cluster]
+)
+
+expect_equal(
+  current = paga_pd$nodes$dim_1[1],
+  target = manual_centroid,
+  info = "sc paga plot - a node sits at the median of its cells"
+)
+
+expect_false(
+  current = isTRUE(all.equal(
+    extract_paga_plot_data(
+      sc_object,
+      paga_sc_res,
+      embedding = "pca",
+      centroid = "mean"
+    )$nodes$dim_1,
+    paga_pd$nodes$dim_1
+  )),
+  info = "sc paga plot - the mean and the median give different positions"
+)
+
+# both graphs are stored symmetrically, so every edge must appear exactly once
+edge_keys <- purrr::map2_chr(
+  paga_pd$edges$from,
+  paga_pd$edges$to,
+  \(a, b) paste(sort(c(a, b)), collapse = "|")
+)
+
+expect_equal(
+  current = length(unique(edge_keys)),
+  target = nrow(paga_pd$edges),
+  info = "sc paga plot - each undirected edge is emitted once"
+)
+
+expect_true(
+  current = all(paga_pd$edges$weight >= 0.01),
+  info = "sc paga plot - the default threshold is applied"
+)
+
+expect_true(
+  current = nrow(
+    extract_paga_plot_data(
+      sc_object,
+      paga_sc_res,
+      embedding = "pca",
+      threshold = 0
+    )$edges
+  ) >=
+    nrow(paga_pd$edges),
+  info = "sc paga plot - a lower threshold keeps at least as many edges"
+)
+
+# the edge coordinates are what a segment layer draws, so they have to agree
+# with the nodes they claim to join
+node_idx <- match(paga_pd$edges$from, as.character(paga_pd$nodes$cluster))
+
+expect_equal(
+  current = paga_pd$edges$x,
+  target = paga_pd$nodes$dim_1[node_idx],
+  info = "sc paga plot - the edge start matches its source node"
+)
+
+paga_tree_pd <- extract_paga_plot_data(
+  sc_object,
+  paga_sc_res,
+  embedding = "pca",
+  tree_only = TRUE
+)
+
+expect_true(
+  current = nrow(paga_tree_pd$edges) <= nrow(paga_pd$nodes) - 1L,
+  info = "sc paga plot - the spanning forest holds at most n - 1 edges"
+)
+
+### node statistics ------------------------------------------------------------
+
+sc_object[["paga_stat"]] <- seq_len(sc_knn$n) / sc_knn$n
+
+paga_stat_pd <- extract_paga_plot_data(
+  sc_object,
+  paga_sc_res,
+  embedding = "pca",
+  node_stat_col = "paga_stat"
+)
+
+expect_true(
+  current = "stat" %in% names(paga_stat_pd$nodes),
+  info = "sc paga plot - a node statistic column is added on request"
+)
+
+expect_equal(
+  current = paga_stat_pd$nodes$stat[1],
+  target = stats::median(
+    (seq_len(sc_knn$n) / sc_knn$n)[
+      as.character(paga_embd$clusters) == first_cluster
+    ]
+  ),
+  info = "sc paga plot - the node statistic uses the same summary as the position"
+)
+
+### guards ---------------------------------------------------------------------
+
+expect_error(
+  current = extract_paga_plot_data(
+    sc_object,
+    paga_sc_res,
+    embedding = "pca",
+    cluster_col = "not_the_one"
+  ),
+  pattern = "PAGA was run on",
+  info = "sc paga plot - a mismatched cluster column is refused"
+)
+
+# PAGA retains empty factor levels, and an empty cluster has no centroid
+paga_empty <- paga_sc_res
+n_clusters <- nrow(paga_empty$connectivities)
+
+pad_graph <- function(mat) {
+  padded <- matrix(
+    0,
+    nrow = n_clusters + 1L,
+    ncol = n_clusters + 1L,
+    dimnames = rep(list(c(rownames(mat), "phantom")), 2L)
+  )
+  padded[seq_len(n_clusters), seq_len(n_clusters)] <- as.matrix(mat)
+  Matrix::Matrix(padded, sparse = TRUE)
+}
+
+paga_empty$connectivities <- pad_graph(paga_empty$connectivities)
+paga_empty$connectivities_tree <- pad_graph(paga_empty$connectivities_tree)
+paga_empty$sizes <- rbind(
+  paga_empty$sizes,
+  data.table::data.table(cluster = "phantom", n_cells = 0L)
+)
+
+paga_empty_pd <- extract_paga_plot_data(
+  sc_object,
+  paga_empty,
+  embedding = "pca"
+)
+
+expect_false(
+  current = "phantom" %in% as.character(paga_empty_pd$nodes$cluster),
+  info = "sc paga plot - a cluster holding no cells is dropped"
+)
+
+expect_true(
+  current = all(is.finite(c(
+    paga_empty_pd$nodes$dim_1,
+    paga_empty_pd$nodes$dim_2
+  ))),
+  info = "sc paga plot - no NaN positions survive the empty cluster drop"
+)
+
 # a kNN graph over a subset of the cells no longer aligns with the obs table
 sc_object_short <- set_knn(
   sc_object,

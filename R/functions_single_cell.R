@@ -740,6 +740,196 @@ extract_embedding_data <- function(object, embedding, obs_cols = NULL, ...) {
   dt
 }
 
+#' Extract the PAGA graph positioned on an embedding
+#'
+#' @description
+#' Puts every cluster of a [run_paga_sc()] result at the centroid of its cells
+#' in an embedding and returns the abstracted graph as node and edge tables. A
+#' node-link plot drawn from these sits where the reader already knows the
+#' biology is, which a free layout of the abstracted graph does not.
+#'
+#' The abstracted graph is close to complete on real data, so `threshold` is
+#' doing real work. Drop it to zero and you get a hairball. `tree_only` is the
+#' shortcut to the backbone.
+#'
+#' @param object A single cell class.
+#' @param paga_res `PagaRes` class. The output of [run_paga_sc()], run on this
+#' object.
+#' @param embedding String. Name of the embedding to position the nodes in.
+#' @param cluster_col Optional string. The obs column holding the clustering.
+#' Defaults to the one the PAGA run used, and errors if a different one is
+#' given: nodes from one clustering with edges from another produce a plausible
+#' looking graph that is wrong.
+#' @param threshold Numeric. Edges below this connectivity are dropped.
+#' Defaults to `0.01`.
+#' @param tree_only Boolean. Use the maximum spanning forest rather than the
+#' full abstracted graph. Defaults to `FALSE`.
+#' @param centroid String. One of `c("median", "mean")`. How a cluster's
+#' position is summarised. Median by default, since embeddings throw stragglers
+#' that drag a mean off its cluster.
+#' @param node_stat_col Optional string. A numeric obs column to summarise per
+#' cluster with the same statistic, e.g. `"palantir_pseudotime"`, giving a
+#' `stat` column to colour the nodes by.
+#' @param ... Additional arguments forwarded to [extract_embedding_data()] and
+#' onward to [get_embedding()] (e.g. `modality`).
+#'
+#' @return A list with the embedding stored as an `embedding` attribute and
+#' \itemize{
+#'   \item nodes - data.table with `cluster` (a factor in graph order),
+#'   `dim_1`, `dim_2`, `n_cells` and, when `node_stat_col` is given, `stat`.
+#'   Clusters holding no cells are dropped, as they have no position.
+#'   \item edges - data.table with `from`, `to`, `weight` and the coordinates
+#'   `x`, `y`, `xend`, `yend` of both ends, ready for a segment layer. Each
+#'   edge appears once, despite the graph being stored symmetrically.
+#' }
+#'
+#' @references Wolf, et al., Genome Biol., 2019.
+#'
+#' @export
+extract_paga_plot_data <- function(
+  object,
+  paga_res,
+  embedding = "umap",
+  cluster_col = NULL,
+  threshold = 0.01,
+  tree_only = FALSE,
+  centroid = c("median", "mean"),
+  node_stat_col = NULL,
+  ...
+) {
+  centroid <- match.arg(centroid)
+
+  # checks
+  checkmate::assertClass(paga_res, "PagaRes")
+  checkmate::qassert(embedding, "S1")
+  checkmate::qassert(cluster_col, c("S1", "0"))
+  checkmate::qassert(threshold, "N1[0,)")
+  checkmate::qassert(tree_only, "B1")
+  checkmate::assertChoice(centroid, c("median", "mean"))
+  checkmate::qassert(node_stat_col, c("S1", "0"))
+
+  paga_col <- paga_res$params$cluster_col
+
+  if (!is.null(cluster_col) && !identical(cluster_col, paga_col)) {
+    stop(sprintf(
+      paste(
+        "PAGA was run on `%s` but `%s` was requested. Drawing one",
+        "clustering's nodes with another's edges gives a graph that looks",
+        "fine and is not."
+      ),
+      paga_col,
+      cluster_col
+    ))
+  }
+
+  cluster_col <- paga_col
+
+  conn <- if (tree_only) {
+    paga_res$connectivities_tree
+  } else {
+    paga_res$connectivities
+  }
+  levels_graph <- rownames(conn)
+
+  embd <- extract_embedding_data(
+    object = object,
+    embedding = embedding,
+    obs_cols = unique(c(cluster_col, node_stat_col)),
+    ...
+  )
+
+  grp <- factor(as.character(embd[[cluster_col]]), levels = levels_graph)
+
+  if (anyNA(grp)) {
+    stop(sprintf(
+      paste(
+        "%i cell(s) carry a `%s` value the PAGA result does not know about.",
+        "Re-run run_paga_sc() on the current clustering."
+      ),
+      sum(is.na(grp)),
+      cluster_col
+    ))
+  }
+
+  summarise <- if (identical(centroid, "median")) stats::median else mean
+
+  nodes <- data.table::data.table(
+    cluster = factor(levels_graph, levels = levels_graph),
+    dim_1 = purrr::map_dbl(split(embd$dim_1, grp), summarise),
+    dim_2 = purrr::map_dbl(split(embd$dim_2, grp), summarise),
+    n_cells = paga_res$sizes$n_cells[match(
+      levels_graph,
+      paga_res$sizes$cluster
+    )]
+  )
+
+  if (!is.null(node_stat_col)) {
+    stat_values <- embd[[node_stat_col]]
+    checkmate::assertNumeric(stat_values, .var.name = node_stat_col)
+    data.table::set(
+      nodes,
+      j = "stat",
+      value = purrr::map_dbl(split(stat_values, grp), \(v) {
+        summarise(v, na.rm = TRUE)
+      })
+    )
+  }
+
+  # `run_paga_sc()` retains empty factor levels, and an empty cluster has no
+  # centroid to sit on
+  nodes <- nodes[nodes$n_cells > 0L, ]
+
+  edges <- .paga_edges(conn, threshold, as.character(nodes$cluster))
+
+  for (end in list(c("from", "x", "y"), c("to", "xend", "yend"))) {
+    idx <- match(edges[[end[1]]], as.character(nodes$cluster))
+    data.table::set(edges, j = end[2], value = nodes$dim_1[idx])
+    data.table::set(edges, j = end[3], value = nodes$dim_2[idx])
+  }
+
+  res <- list(nodes = nodes, edges = edges)
+  data.table::setattr(res, "embedding", embedding)
+
+  res
+}
+
+#' Melt a PAGA connectivity matrix into a one-row-per-edge table
+#'
+#' @description
+#' Both abstracted graphs are stored symmetrically with a zero diagonal, so the
+#' lower triangle is dropped here. Keeping it would draw every edge twice, at
+#' twice the apparent width.
+#'
+#' @param conn Sparse matrix. The abstracted graph, named by cluster.
+#' @param threshold Numeric. Edges below this connectivity are dropped.
+#' @param keep Character vector. Clusters that survived the empty-cluster
+#' filter. Edges touching anything else are dropped, as they have no end point
+#' to attach to.
+#'
+#' @returns A data.table with `from`, `to` and `weight`.
+#'
+#' @keywords internal
+.paga_edges <- function(conn, threshold, keep) {
+  # triplet form reads the same whether the matrix came back row or column
+  # compressed, which `sparse_list_to_mat()` decides from the Rust side
+  trip <- Matrix::mat2triplet(conn)
+
+  cluster_names <- rownames(conn)
+  from <- cluster_names[trip$i]
+  to <- cluster_names[trip$j]
+
+  wanted <- trip$i < trip$j &
+    trip$x >= threshold &
+    from %in% keep &
+    to %in% keep
+
+  data.table::data.table(
+    from = from[wanted],
+    to = to[wanted],
+    weight = trip$x[wanted]
+  )
+}
+
 #' Extract per-cell expression mapped onto an embedding
 #'
 #' @description
