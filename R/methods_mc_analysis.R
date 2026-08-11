@@ -147,6 +147,13 @@ S7::method(scenic_grn_sc, MetaCells) <- function(
     )
   }
 
+  all_gene_names <- S7::prop(object, "var_table")$gene_id
+
+  # a supplied `genes_to_take` can name genes the object does not hold.
+  # `get_gene_indices()` drops those silently, which would leave the row labels
+  # of the importance matrix below one longer than the matrix itself
+  genes_to_take <- .match_features(genes_to_take, all_gene_names)
+
   gene_idx <- get_gene_indices(
     object,
     gene_ids = genes_to_take,
@@ -154,7 +161,6 @@ S7::method(scenic_grn_sc, MetaCells) <- function(
   )
 
   # resolve TFs
-  all_gene_names <- S7::prop(object, "var_table")$gene_id
   tf_found <- tf_ids[tf_ids %in% all_gene_names]
   n_dropped <- length(tf_ids) - length(tf_found)
   if (n_dropped > 0 && .verbose) {

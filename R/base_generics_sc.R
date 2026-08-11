@@ -508,6 +508,31 @@ remove_snn_graph <- function(x, ...) {
   UseMethod("remove_snn_graph")
 }
 
+#' Set/add the MAGIC imputed layer
+#'
+#' @param x An object to add the imputed layer to.
+#' @param magic `ScMagic` class with the imputed counts.
+#' @param ... Other parameters.
+#'
+#' @export
+#'
+#' @keywords internal
+set_magic <- function(x, magic, ...) {
+  UseMethod("set_magic")
+}
+
+#' Remove the MAGIC imputed layer
+#'
+#' @param x An object from which to remove the imputed layer.
+#' @param ... Other parameters.
+#'
+#' @export
+#'
+#' @keywords internal
+remove_magic <- function(x, ...) {
+  UseMethod("remove_magic")
+}
+
 #### getters -------------------------------------------------------------------
 
 #' @title Get the PCA factors
@@ -624,6 +649,22 @@ get_snn_graph <- function(x, ...) {
 #' @export
 get_knn_obj <- function(x, ...) {
   UseMethod("get_knn_obj")
+}
+
+#' Get the MAGIC imputed layer
+#'
+#' @description
+#' Returns the `ScMagic` layer written by [bixverse::run_magic_sc()]. This
+#' function is used for the single cell-related classes and methods.
+#'
+#' @param x An object to get the imputed layer from.
+#' @param ... Other parameters.
+#'
+#' @returns The `ScMagic` object, or `NULL` when nothing was imputed.
+#'
+#' @export
+get_magic <- function(x, ...) {
+  UseMethod("get_magic")
 }
 
 ### others ---------------------------------------------------------------------
@@ -1261,6 +1302,12 @@ extract_dot_plot_data <- S7::new_generic(
 #' `[-clip, clip]`.
 #' @param modality String. One of `c("rna", "adt")`. ADT is only available for
 #' `SingleCellsMultiModal`.
+#' @param layer String. One of `c("norm", "magic")`. With `"magic"` the values
+#' come from the imputed layer [bixverse::run_magic_sc()] wrote, which only
+#' holds the genes it was asked for. Imputation inflates gene-gene correlation,
+#' so this is for looking at things, not for measuring them. Note that
+#' [bixverse::extract_dot_plot_data()] deliberately has no such argument:
+#' group means of imputed values are exactly the quantity MAGIC manufactures.
 #'
 #' @return A data.table with a `cell_id` column, one column per gene, and
 #' any requested obs columns.
@@ -1275,7 +1322,8 @@ extract_gene_expression <- S7::new_generic(
     obs_cols = NULL,
     scale = FALSE,
     clip = NULL,
-    modality = c("rna", "adt")
+    modality = c("rna", "adt"),
+    layer = c("norm", "magic")
   ) {
     S7::S7_dispatch()
   }

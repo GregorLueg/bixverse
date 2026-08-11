@@ -348,6 +348,9 @@ reference:
       - get_hvg
       - get_knn_mat
       - get_knn_obj
+      - get_magic
+      - set_magic
+      - remove_magic
       - get_pca_singular_val
       - get_pca_loadings
       - get_pca_factors
@@ -466,7 +469,9 @@ reference:
       - calculate_pca_sc
       - generate_sc_knn
       - find_neighbours_sc
+      - run_magic_sc
       - top_genes_perc_sc
+      - params_sc_magic
       - params_norm_doublets_defaults
       - params_boost
       - params_sc_hvg
@@ -524,6 +529,7 @@ reference:
       - meld_sc
       - run_palantir_sc
       - run_paga_sc
+      - run_gene_trends_sc
       - get_index_cells
       - add_nhoods_info
       - test_nhoods
@@ -551,6 +557,8 @@ reference:
       - params_scenic_random_forest_defaults
       - params_meld
       - params_sc_palantir
+      - params_sc_branch_selection
+      - params_sc_gene_trends
       - params_nmf_hals
   # Single cell analysis
   - title: Single cell multi-modal analysis methods
@@ -727,6 +735,7 @@ reference:
       - rs_fast_auc
       - rs_fast_ica
       - rs_fdr_adjustment
+      - rs_gene_trends
       - rs_geom_elim_fgsea_simple
       - rs_gower_dist
       - rs_gse_geom_elim

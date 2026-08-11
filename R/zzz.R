@@ -24,7 +24,9 @@
     "ScPipeline",
     "ScStep",
     "PalantirRes",
-    "PagaRes"
+    "PagaRes",
+    "ScMagic",
+    "GeneTrendsRes"
   )
   for (cls in classes) {
     registerS3method("print", cls, get(paste0("print.", cls)))

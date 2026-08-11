@@ -84,7 +84,10 @@
 #' @param early_cell String. Name of the cell to start the trajectory from. Must
 #' be one of the cells the kNN graph was built over.
 #' @param terminal_states Optional character vector. Names of the terminal state
-#' cells. If `NULL`, they are detected from the waypoint Markov chain.
+#' cells. If `NULL`, they are detected from the waypoint Markov chain. Name the
+#' vector (e.g. `c(Ery = "Run4_2005...")`) and those labels become the column
+#' names of `branch_probs`, which saves relabelling the fate columns by hand
+#' downstream.
 #' @param modality String. One of `c("rna", "adt", "wnn")`. Which kNN graph to
 #' run over. Anything but `"rna"` requires a `SingleCellsMultiModal` object.
 #' @param palantir_params List. See [bixverse::params_sc_palantir()].
@@ -102,7 +105,8 @@
 #'   fate probabilities. Rows need not sum to one, as sub-threshold values are
 #'   zeroed without renormalisation.
 #'   \item terminal_states - Character vector with the terminal state cell
-#'   names. Sets the column order of `branch_probs`.
+#'   names, carrying the labels of a named `terminal_states` argument as its
+#'   own names. Sets the column order of `branch_probs`.
 #'   \item waypoints - Character vector with the waypoint cell names. The first
 #'   element is the start cell.
 #'   \item start_cell - String. The start cell that was actually used.
@@ -218,7 +222,8 @@ S7::method(run_palantir_sc, ScOrMc) <- function(
   new_palantir_res(
     rs_res = palantir_res,
     used_cells = knn_data$used_cells,
-    modality = modality
+    modality = modality,
+    terminal_labels = terminal_states
   )
 }
 
@@ -346,4 +351,224 @@ S7::method(run_paga_sc, ScOrMc) <- function(
     cluster_col = cluster_col,
     modality = modality
   )
+}
+
+# gene trends ------------------------------------------------------------------
+
+#' Fit gene trends over Palantir pseudotime
+#'
+#' @description
+#' Assigns cells to branches from their fate probabilities, then fits a
+#' landmark Gaussian process with a Matern-5/2 kernel per branch, which is the
+#' Mellon-based estimator of the reference rather than the legacy GAM. Out
+#' comes one smooth curve per gene and branch, on a common pseudotime grid.
+#'
+#' Whatever expression is handed over is what gets fitted. With
+#' `use_magic = FALSE` that is the normalised counts; with `TRUE` it is the
+#' imputed layer [bixverse::run_magic_sc()] wrote. Imputing first smooths
+#' twice, which is a defensible presentation choice and not usually a necessary
+#' one.
+#'
+#' @section On the defaults:
+#' Palantir's pseudotime is min-max scaled to `[0, 1]`, so the reference's
+#' `length_scale` of `1.0` spans the entire domain and its `sigma` of `1.0`
+#' sits at roughly the signal scale of log-normalised expression. The posterior
+#' is prior-dominated: it flattens genuine transient structure and resolves
+#' almost any gene into a smooth monotone or single-peaked curve. Shorten
+#' `length_scale` in [bixverse::params_sc_gene_trends()] before believing a
+#' bump.
+#'
+#' @param object One of `SingleCells`, `SingleCellsSubset`, `MetaCells` or
+#' `SingleCellsMultiModal`.
+#' @param palantir_res `PalantirRes` class. The output of
+#' [bixverse::run_palantir_sc()], run over the same cells.
+#' @param features Optional character vector. The genes to fit. If `NULL`,
+#' every gene in the imputed layer is used, which needs `use_magic = TRUE`.
+#' @param use_magic Boolean. Fit the MAGIC imputed layer rather than the
+#' normalised counts. Needs [bixverse::run_magic_sc()] to have been run.
+#' @param branch_params List. See [bixverse::params_sc_branch_selection()].
+#' @param gene_trend_params List. See [bixverse::params_sc_gene_trends()].
+#' @param .verbose Boolean or integer. Controls verbosity and returns run times.
+#' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
+#' verbosity.
+#'
+#' @returns A `GeneTrendsRes` S3 object with:
+#' \itemize{
+#'   \item trends - Long data.table with `branch`, `pseudotime`, `gene` and
+#'   `expression`, ready to facet.
+#'   \item branch_cells - Named list of the cell names selected for each
+#'   branch.
+#'   \item branches - Character vector with the branch names, taken from the
+#'   column names of the fate probability matrix.
+#'   \item params - List with the parameters the run used.
+#'   \item run_info - List with `n_cells` and `jitter_used` per branch and the
+#'   grid `resolution`.
+#' }
+#'
+#' @references Setty, et al., Nat. Biotechnol., 2019.
+#'
+#' @export
+run_gene_trends_sc <- S7::new_generic(
+  name = "run_gene_trends_sc",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    palantir_res,
+    features = NULL,
+    use_magic = FALSE,
+    branch_params = params_sc_branch_selection(),
+    gene_trend_params = params_sc_gene_trends(),
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+# method shared across SingleCells, SingleCellsSubset and MetaCells
+
+S7::method(run_gene_trends_sc, ScOrMc) <- function(
+  object,
+  palantir_res,
+  features = NULL,
+  use_magic = FALSE,
+  branch_params = params_sc_branch_selection(),
+  gene_trend_params = params_sc_gene_trends(),
+  .verbose = TRUE
+) {
+  # checks
+  checkmate::assertTRUE(
+    S7::S7_inherits(object, SingleCells) ||
+      S7::S7_inherits(object, MetaCells) ||
+      S7::S7_inherits(object, SingleCellsSubset)
+  )
+  checkmate::assertClass(palantir_res, "PalantirRes")
+  checkmate::qassert(features, c("S+", "0"))
+  checkmate::qassert(use_magic, "B1")
+  assertScBranchSelectionParams(branch_params)
+  assertScGeneTrendParams(gene_trend_params)
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
+
+  if (is.null(features) && !use_magic) {
+    stop("`features` is only optional when `use_magic = TRUE`.")
+  }
+
+  # the Palantir result is keyed by cell name, so align by name rather than
+  # trusting the two to be in the same order
+  obs_cells <- get_cell_names(object, filtered = TRUE)
+  idx <- match(obs_cells, palantir_res$pseudotime$cell_id)
+
+  if (anyNA(idx)) {
+    stop(sprintf(
+      paste(
+        "%i of the object's cells are missing from the Palantir result,",
+        "e.g. '%s'. The two disagree on their cell set; re-run",
+        "run_palantir_sc() on this object."
+      ),
+      sum(is.na(idx)),
+      obs_cells[which(is.na(idx))[1]]
+    ))
+  }
+
+  expr <- .gene_trends_expression(
+    object = object,
+    features = features,
+    use_magic = use_magic,
+    obs_cells = obs_cells
+  )
+
+  branch_probs <- palantir_res$branch_probs[idx, , drop = FALSE]
+  branches <- colnames(branch_probs)
+
+  if (.verbose) {
+    message(sprintf(
+      "Fitting gene trends over %i %s (%i cells, %i genes, %s).",
+      length(branches),
+      if (length(branches) == 1L) "branch" else "branches",
+      nrow(expr),
+      ncol(expr),
+      if (use_magic) "imputed counts" else "normalised counts"
+    ))
+  }
+
+  trends_res <- rs_gene_trends(
+    expression = expr,
+    pseudotime = palantir_res$pseudotime$pseudotime[idx],
+    branch_probs = branch_probs,
+    branch_params = branch_params,
+    gene_trend_params = gene_trend_params
+  )
+
+  new_gene_trends_res(
+    rs_res = trends_res,
+    features = colnames(expr),
+    used_cells = obs_cells,
+    branches = branches,
+    params = list(
+      use_magic = use_magic,
+      branch_params = branch_params,
+      gene_trend_params = gene_trend_params
+    )
+  )
+}
+
+#' Assemble the expression matrix a gene trend fit runs over
+#'
+#' @description
+#' Returns a cells x genes matrix in `obs_cells` order. The imputed layer is
+#' subset by name in both directions rather than positionally, since it carries
+#' its own dimnames and a stale one would otherwise slip through silently.
+#'
+#' @param object One of the single cell classes.
+#' @param features Optional character vector. The genes to pull.
+#' @param use_magic Boolean. Read the imputed layer rather than the counts.
+#' @param obs_cells Character vector. The kept cell names, in obs order.
+#'
+#' @returns A numeric matrix of cells x genes.
+#'
+#' @keywords internal
+.gene_trends_expression <- function(object, features, use_magic, obs_cells) {
+  if (!use_magic) {
+    dt <- extract_gene_expression(object = object, features = features)
+    mat <- as.matrix(dt[, setdiff(names(dt), "cell_id"), with = FALSE])
+    rownames(mat) <- dt[["cell_id"]]
+    return(mat[obs_cells, , drop = FALSE])
+  }
+
+  if (
+    !S7::S7_inherits(object, SingleCells) &&
+      !S7::S7_inherits(object, SingleCellsSubset)
+  ) {
+    stop(paste(
+      "MAGIC is only available for SingleCells and SingleCellsSubset.",
+      "Set use_magic = FALSE."
+    ))
+  }
+
+  # hard tier: a stale layer means the fit runs on cells that moved
+  assert_sc_state(object, artefacts = "magic")
+
+  magic <- get_magic(object)
+
+  if (is.null(magic)) {
+    stop(paste(
+      "No imputed layer found. Run run_magic_sc() first,",
+      "or set use_magic = FALSE."
+    ))
+  }
+
+  features <- features %||% magic[["features"]]
+  missing_genes <- setdiff(features, magic[["features"]])
+
+  if (length(missing_genes) > 0) {
+    stop(sprintf(
+      paste(
+        "%i gene(s) are not in the imputed layer, e.g. '%s'.",
+        "Re-run run_magic_sc() with the full set you want to fit."
+      ),
+      length(missing_genes),
+      missing_genes[1]
+    ))
+  }
+
+  magic[["data"]][obs_cells, features, drop = FALSE]
 }

@@ -3376,6 +3376,46 @@ rs_fast_cluster_sc <- function(embd, km_type, resolutions, n_centroids, fc_param
 #' @keywords internal
 rs_fast_cluster_sc_grid <- function(embd, km_type, resolutions, n_centroids, fc_params, snn, return_kmeans, no_seeds, seed, verbose) .Call(wrap__rs_fast_cluster_sc_grid, embd, km_type, resolutions, n_centroids, fc_params, snn, return_kmeans, no_seeds, seed, verbose)
 
+#' Impute a subset of genes with MAGIC
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Implementation of MAGIC in Rust. A row-stochastic diffusion operator is
+#' built over the provided kNN graph and applied `n_steps` times to the counts
+#' of the requested genes. The operator matches the one Palantir builds, i.e.
+#' an adaptive bandwidth taken from the `k/3`-th neighbour distance, which
+#' differs from the graphtools kernel the reference implementation uses.
+#'
+#' Deliberately restricted to a gene subset. The output is dense, and
+#' smoothing over overlapping neighbourhoods inflates gene-gene correlation,
+#' so imputed counts must not be fed into correlation-based methods such as
+#' Hotspot, SCENIC, differential correlation or CoReMo.
+#'
+#' @param f_path String. Path to the `counts_genes.bin` file.
+#' @param knn_data List. The `SingleCellNearestNeighbour` data with `indices`
+#' (0-indexed!), `dist`, `k` and `dist_metric`. The indices are positions
+#' within `cell_indices`, not global cell ids. Whether the distances are
+#' treated as squared is derived from `dist_metric`.
+#' @param cell_indices Integer vector. The global cell indices (0-indexed!)
+#' the kNN graph was built over, in kNN row order.
+#' @param total_cells Integer. The cell count of the binary store, not of the
+#' selection.
+#' @param gene_indices Integer vector. Gene indices (0-indexed!) to impute.
+#' @param magic_params List. Parameter list, see
+#' [bixverse::params_sc_magic()].
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @returns Numerical matrix of cells x genes with the imputed counts. Rows
+#' follow `cell_indices`, columns follow `gene_indices`.
+#'
+#' @references van Dijk, et al., Cell, 2018.
+#'
+#' @export
+#'
+#' @keywords internal
+rs_magic_impute <- function(f_path, knn_data, cell_indices, total_cells, gene_indices, magic_params, verbose) .Call(wrap__rs_magic_impute, f_path, knn_data, cell_indices, total_cells, gene_indices, magic_params, verbose)
+
 #' Calculate DGEs between cells based on Mann Whitney stats
 #'
 #' @description
@@ -4389,6 +4429,53 @@ rs_palantir <- function(knn_data, palantir_params, early_cell, terminal_states, 
 #'
 #' @keywords internal
 rs_paga <- function(knn_mat, partitions, n_partitions) .Call(wrap__rs_paga, knn_mat, partitions, n_partitions)
+
+#' Fit Palantir gene trends over pseudotime
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Selects the cells belonging to each branch from the fate probabilities, then
+#' fits a landmark Gaussian process with a Matern-5/2 kernel per branch. This
+#' is the Mellon-based estimator of the reference, not the legacy GAM.
+#'
+#' Whatever expression matrix is handed over is what gets fitted. Nothing here
+#' imputes; that decision belongs to the caller.
+#'
+#' The defaults are prior-dominated. Palantir's pseudotime is min-max scaled to
+#' `[0, 1]`, so a `length_scale` of `1.0` spans the whole domain and a `sigma`
+#' of `1.0` sits at roughly the signal scale of log-normalised expression. That
+#' resolves almost any gene into a smooth monotone or single-peaked curve.
+#' Shorten `length_scale` before believing a bump.
+#'
+#' @param expression Numerical matrix of cells x genes. All cells, in the same
+#' row order as `pseudotime`, not just the branch members.
+#' @param pseudotime Numerical vector. Pseudotime per cell.
+#' @param branch_probs Numerical matrix of cells x fates with the fate
+#' probabilities. Rows need not sum to one.
+#' @param branch_params List. Parameter list, see
+#' [bixverse::params_sc_branch_selection()].
+#' @param gene_trend_params List. Parameter list, see
+#' [bixverse::params_sc_gene_trends()].
+#'
+#' @returns A list with
+#' \itemize{
+#'  \item trends - List of numerical matrices, one per branch, each of
+#'  resolution x genes.
+#'  \item grids - List of numerical vectors with the pseudotime grid per
+#'  branch, running from the branch minimum to its maximum.
+#'  \item branch_cells - List of integer vectors with the cell indices
+#'  (0-indexed!) selected for each branch.
+#'  \item n_cells - Integer vector with the cell count per branch.
+#'  \item jitter_used - Numerical vector with the jitter each branch's
+#'  Cholesky needed.
+#' }
+#'
+#' @references Setty, et al., Nat. Biotechnol., 2019.
+#'
+#' @export
+#'
+#' @keywords internal
+rs_gene_trends <- function(expression, pseudotime, branch_probs, branch_params, gene_trend_params) .Call(wrap__rs_gene_trends, expression, pseudotime, branch_probs, branch_params, gene_trend_params)
 
 #' Meta cells highly variable genes
 #'

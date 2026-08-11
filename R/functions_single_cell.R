@@ -763,6 +763,9 @@ extract_embedding_data <- function(object, embedding, obs_cols = NULL, ...) {
 #' `c("rna", "adt")`.
 #' @param embd_modality String. Modality the embedding is pulled from. One of
 #' `c("rna", "adt", "wnn")`. Use `"wnn"` for WNN-derived embeddings.
+#' @param layer String. One of `c("norm", "magic")`, forwarded to
+#' [extract_gene_expression()]. Use `"magic"` to colour the embedding by the
+#' imputed layer [run_magic_sc()] wrote.
 #' @param ... Additional arguments forwarded to [extract_embedding_data()] and
 #' onward to [get_embedding()]. Do not pass `modality` here; the embedding
 #' modality is set via `embd_modality` and passing it again will error.
@@ -779,17 +782,20 @@ extract_feature_plot_data <- function(
   obs_col = NULL,
   expr_modality = c("rna", "adt"),
   embd_modality = c("rna", "adt", "wnn"),
+  layer = c("norm", "magic"),
   ...
 ) {
   expr_modality <- match.arg(expr_modality)
   embd_modality <- match.arg(embd_modality)
+  layer <- match.arg(layer)
 
   expr <- extract_gene_expression(
     object = object,
     features = features,
     scale = scale,
     clip = clip,
-    modality = expr_modality
+    modality = expr_modality,
+    layer = layer
   )
   embd <- extract_embedding_data(
     object,
@@ -828,6 +834,8 @@ extract_feature_plot_data <- function(
 #' @param scale Boolean. Whether to z-score the expression values.
 #' @param clip Optional numeric. Clip z-scores if `scale = TRUE`.
 #' @param modality String. One of `c("rna", "adt")`.
+#' @param layer String. One of `c("norm", "magic")`, forwarded to
+#' [extract_gene_expression()].
 #'
 #' @return A long data.table with `cell_id`, `group`, `gene` and `expression`.
 #' `gene` is an ordered factor following `features`.
@@ -839,9 +847,11 @@ extract_gene_violin_data <- function(
   grouping_variable,
   scale = FALSE,
   clip = NULL,
-  modality = c("rna", "adt")
+  modality = c("rna", "adt"),
+  layer = c("norm", "magic")
 ) {
   modality <- match.arg(modality)
+  layer <- match.arg(layer)
   checkmate::qassert(grouping_variable, "S1")
 
   expr <- extract_gene_expression(
@@ -850,7 +860,8 @@ extract_gene_violin_data <- function(
     obs_cols = grouping_variable,
     scale = scale,
     clip = clip,
-    modality = modality
+    modality = modality,
+    layer = layer
   )
 
   feature_cols <- setdiff(names(expr), c("cell_id", grouping_variable))
@@ -889,6 +900,9 @@ extract_gene_violin_data <- function(
 #' @param clip Optional numeric. Clip z-scores if `scale = TRUE`.
 #' @param modality String. Fallback modality for unsuffixed features. One of
 #' `c("rna", "adt")`.
+#' @param layer String. One of `c("norm", "magic")`, forwarded to
+#' [extract_gene_expression()]. Applies to both features, and an `_adt`
+#' suffixed one will error under `"magic"`.
 #'
 #' @return A data.table with `cell_id`, `feature_1`, `feature_2` and any
 #' requested obs columns. The original feature labels are stored in a
@@ -902,9 +916,11 @@ extract_feature_pair <- function(
   obs_cols = NULL,
   scale = FALSE,
   clip = NULL,
-  modality = c("rna", "adt")
+  modality = c("rna", "adt"),
+  layer = c("norm", "magic")
 ) {
   modality <- match.arg(modality)
+  layer <- match.arg(layer)
   checkmate::qassert(feature_1, "S1")
   checkmate::qassert(feature_2, "S1")
   checkmate::qassert(obs_cols, c("0", "S+"))
@@ -919,14 +935,16 @@ extract_feature_pair <- function(
     obs_cols = obs_cols,
     scale = scale,
     clip = clip,
-    modality = f1$modality
+    modality = f1$modality,
+    layer = layer
   )
   expr_2 <- extract_gene_expression(
     object = object,
     features = f2$id,
     scale = scale,
     clip = clip,
-    modality = f2$modality
+    modality = f2$modality,
+    layer = layer
   )
 
   data.table::setnames(expr_1, f1$id, "feature_1")

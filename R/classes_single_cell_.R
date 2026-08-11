@@ -50,7 +50,8 @@ new_sc_cache <- function() {
     pca_singular_vals = NULL,
     other_embeddings = list(),
     knn = NULL,
-    snn_graph = NULL
+    snn_graph = NULL,
+    magic = NULL
   )
 
   class(sc_cache) <- "ScCache"
@@ -243,6 +244,31 @@ remove_snn_graph.ScCache <- function(x, ...) {
   checkmate::assertClass(x, "ScCache")
 
   x[["snn_graph"]] <- NULL
+
+  return(x)
+}
+
+#' @rdname set_magic
+#'
+#' @export
+set_magic.ScCache <- function(x, magic, ...) {
+  # checks
+  checkmate::assertClass(x, "ScCache")
+  checkmate::assertClass(magic, "ScMagic")
+
+  x[["magic"]] <- magic
+
+  return(x)
+}
+
+#' @rdname remove_magic
+#'
+#' @export
+remove_magic.ScCache <- function(x, ...) {
+  # checks
+  checkmate::assertClass(x, "ScCache")
+
+  x[["magic"]] <- NULL
 
   return(x)
 }
@@ -539,6 +565,16 @@ get_snn_graph.ScCache <- function(x, ...) {
   checkmate::assertClass(x, "ScCache")
 
   return(x[["snn_graph"]])
+}
+
+#' @rdname get_magic
+#'
+#' @export
+get_magic.ScCache <- function(x, ...) {
+  # checks
+  checkmate::assertClass(x, "ScCache")
+
+  return(x[["magic"]])
 }
 
 # s7 ---------------------------------------------------------------------------
@@ -1568,6 +1604,28 @@ S7::method(get_snn_graph, SingleCells) <- function(
   return(.drop_stamp(res))
 }
 
+#' @name get_magic.SingleCells
+#'
+#' @rdname get_magic
+#'
+#' @method get_magic SingleCells
+S7::method(get_magic, SingleCells) <- function(
+  x,
+  ...
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
+
+  # forward to S3
+  res <- get_magic(
+    x = S7::prop(x, "sc_cache")
+  )
+
+  .warn_sc_state(x, artefact = "magic")
+
+  return(.drop_stamp(res))
+}
+
 #### available variables -------------------------------------------------------
 
 #' @method get_sc_available_features SingleCells
@@ -2193,6 +2251,51 @@ S7::method(remove_snn_graph, SingleCells) <- function(
   return(x)
 }
 
+#' @name set_magic.SingleCells
+#'
+#' @rdname set_magic
+#'
+#' @method set_magic SingleCells
+S7::method(set_magic, SingleCells) <- function(
+  x,
+  magic,
+  ...
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
+  checkmate::assertClass(magic, "ScMagic")
+
+  # add the data using the S3 method
+  S7::prop(x, "sc_cache") <- set_magic(
+    x = S7::prop(x, "sc_cache"),
+    magic = magic
+  )
+
+  x <- .stamp_artefact(x, artefact = "magic", from = .stamp_from(...))
+
+  return(x)
+}
+
+#' @name remove_magic.SingleCells
+#'
+#' @rdname remove_magic
+#'
+#' @method remove_magic SingleCells
+S7::method(remove_magic, SingleCells) <- function(
+  x,
+  ...
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
+
+  # add the data using the S3 method
+  S7::prop(x, "sc_cache") <- remove_magic(
+    x = S7::prop(x, "sc_cache")
+  )
+
+  return(x)
+}
+
 ### generic / primitives -------------------------------------------------------
 
 #' @noRd
@@ -2216,6 +2319,13 @@ S7::method(print, SingleCells) <- function(x, ...) {
     "none"
   }
 
+  magic <- sc_cache[["magic"]]
+  magic_str <- if (is.null(magic)) {
+    "none"
+  } else {
+    sprintf("%i genes", length(magic[["features"]]))
+  }
+
   cat(
     "Single cell experiment (Single Cells).\n",
     sprintf("  No cells (original): %i\n", dims[1]),
@@ -2226,6 +2336,7 @@ S7::method(print, SingleCells) <- function(x, ...) {
     sprintf("  Other embeddings: %s\n", other_embeddings_str),
     sprintf("  KNN generated: %s\n", knn_generated),
     sprintf("  SNN generated: %s\n", snn_generated),
+    sprintf("  MAGIC imputed: %s\n", magic_str),
     sprintf("  Stale artefacts: %s\n", .print_stale_str(x)),
     sep = ""
   )

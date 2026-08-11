@@ -1,8 +1,9 @@
 # single cell cache state ------------------------------------------------------
 
 # every artefact that lands in an `ScCache` (PCA factors, embeddings, the kNN
-# object, the sNN graph) carries a provenance stamp as an attribute on the
-# payload itself. the stamp records the cell set the artefact was computed on
+# object, the sNN graph, the MAGIC imputed layer) carries a provenance stamp as
+# an attribute on the payload itself. the stamp records the cell set it was
+# computed on
 # and the ids of the artefacts it was derived from, which is what lets us tell
 # a stale PCA from a fresh one after the cell filter moved.
 #
@@ -15,10 +16,10 @@
 SC_STAMP_ATTR <- "bixverse_stamp"
 
 # artefact kinds a cache can hold
-SC_ARTEFACTS <- c("pca", "embedding", "knn", "snn")
+SC_ARTEFACTS <- c("pca", "embedding", "knn", "snn", "magic")
 
 # embedding names that would collide with an artefact label
-SC_RESERVED_EMBEDDINGS <- c("pca", "knn", "snn")
+SC_RESERVED_EMBEDDINGS <- c("pca", "knn", "snn", "magic")
 
 # monotonic counter so two stamps minted in the same clock tick still differ
 sc_stamp_env <- new.env(parent = emptyenv())
@@ -237,7 +238,8 @@ S7::method(.sc_state_hash, MetaCells) <- function(x) {
 #' `other_embeddings`, hence the flag.
 #'
 #' @param cache The cache list.
-#' @param artefact String. One of `c("pca", "embedding", "knn", "snn")`.
+#' @param artefact String. One of `c("pca", "embedding", "knn", "snn",
+#' "magic")`.
 #' @param name String. Embedding name, only used when `artefact = "embedding"`.
 #' @param wnn Boolean. Whether `cache` is the `wnn` slot rather than an
 #' `ScCache`.
@@ -255,6 +257,9 @@ S7::method(.sc_state_hash, MetaCells) <- function(x) {
     pca = if (wnn) NULL else cache[["pca_factors"]],
     knn = cache[["knn"]],
     snn = if (wnn) cache[["snn"]] else cache[["snn_graph"]],
+    # the imputed layer is RNA expression whichever graph smoothed it, so it
+    # only ever lives in a real `ScCache`, never in the wnn pseudo cache
+    magic = if (wnn) NULL else cache[["magic"]],
     embedding = cache[[
       if (wnn) "embeddings" else "other_embeddings"
     ]][[name]],
@@ -276,6 +281,7 @@ S7::method(.sc_state_hash, MetaCells) <- function(x) {
     pca = "pca_factors",
     knn = "knn",
     snn = if (wnn) "snn" else "snn_graph",
+    magic = "magic",
     embedding = if (wnn) "embeddings" else "other_embeddings",
     stop(sprintf("Unknown artefact '%s'.", artefact))
   )
@@ -358,7 +364,8 @@ S7::method(.sc_state_hash, MetaCells) <- function(x) {
       list(list(artefact = "pca", name = NA_character_)),
       purrr::map(embd_names, \(nm) list(artefact = "embedding", name = nm)),
       list(list(artefact = "knn", name = NA_character_)),
-      list(list(artefact = "snn", name = NA_character_))
+      list(list(artefact = "snn", name = NA_character_)),
+      list(list(artefact = "magic", name = NA_character_))
     )
 
     for (entry in entries) {
@@ -464,7 +471,8 @@ S7::method(.sc_state_hash, MetaCells) <- function(x) {
 #' both the cache and the cell state. A no-op when the artefact is absent.
 #'
 #' @param x The object owning the cache.
-#' @param artefact String. One of `c("pca", "embedding", "knn", "snn")`.
+#' @param artefact String. One of `c("pca", "embedding", "knn", "snn",
+#' "magic")`.
 #' @param name String. Embedding name, only used when `artefact = "embedding"`.
 #' @param modality String. The modality the artefact was written to.
 #' @param from Character vector of parent artefact names.
@@ -578,7 +586,7 @@ S7::method(.sc_state_hash, MetaCells) <- function(x) {
 #' @returns A `data.table` with one row per present artefact and the columns
 #' \itemize{
 #'   \item modality - The modality the artefact lives in.
-#'   \item artefact - One of `pca`, `embedding`, `knn`, `snn`.
+#'   \item artefact - One of `pca`, `embedding`, `knn`, `snn`, `magic`.
 #'   \item name - The embedding name, `NA` for the others.
 #'   \item stamped - Whether the artefact carries a provenance stamp.
 #'   \item stale - Whether it disagrees with the current state.
@@ -710,7 +718,8 @@ S7::method(.sc_state_hash, MetaCells) <- function(x) {
 #' getters as presence probes on artefacts they are about to overwrite.
 #'
 #' @param x The object owning the cache.
-#' @param artefact String. One of `c("pca", "embedding", "knn", "snn")`.
+#' @param artefact String. One of `c("pca", "embedding", "knn", "snn",
+#' "magic")`.
 #' @param name String. Embedding name, only used when `artefact = "embedding"`.
 #' @param modality String. The modality read from.
 #'
@@ -857,8 +866,8 @@ S7::method(.sc_state_hash, MetaCells) <- function(x) {
 #' @param x `SingleCells`, `SingleCellsSubset`, `MetaCells` or
 #' `SingleCellsMultiModal` class.
 #' @param artefacts Character vector. Artefacts to check, either an artefact
-#' kind (`"pca"`, `"knn"`, `"snn"`) or an embedding name (`"umap"`). May be
-#' modality qualified (`"adt:pca"`).
+#' kind (`"pca"`, `"knn"`, `"snn"`, `"magic"`) or an embedding name
+#' (`"umap"`). May be modality qualified (`"adt:pca"`).
 #' @param modality String. Modality to resolve unqualified names against. One
 #' of `c("rna", "adt", "atac", "wnn")`.
 #'
@@ -956,7 +965,7 @@ assert_sc_state <- checkmate::makeAssertionFunction(check_sc_state)
 #' @returns A `data.table` with the columns
 #' \itemize{
 #'   \item modality - The modality the artefact lives in.
-#'   \item artefact - One of `pca`, `embedding`, `knn`, `snn`.
+#'   \item artefact - One of `pca`, `embedding`, `knn`, `snn`, `magic`.
 #'   \item name - The embedding name, `NA` for the others.
 #'   \item stamped - Whether the artefact carries a provenance stamp.
 #'   \item stale - Whether it disagrees with the current state.

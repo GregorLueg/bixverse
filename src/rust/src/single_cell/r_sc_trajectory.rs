@@ -6,6 +6,9 @@
 //! Every cell index that crosses this boundary, in and out, is 0-indexed.
 
 use bixverse_rs::prelude::*;
+use bixverse_rs::single_cell::sc_trajectory::gene_trends::{
+    compute_gene_trends, select_branch_cells, BranchSelectionParams, GeneTrendsParams,
+};
 use bixverse_rs::single_cell::sc_trajectory::paga::{run_paga, PagaResult};
 use bixverse_rs::single_cell::sc_trajectory::palantir::{run_palantir, PalantirParams};
 use extendr_api::*;
@@ -20,6 +23,7 @@ extendr_module! {
     mod r_sc_trajectory;
     fn rs_palantir;
     fn rs_paga;
+    fn rs_gene_trends;
 }
 
 //////////////
@@ -183,5 +187,103 @@ fn rs_paga(knn_mat: RMatrix<i32>, partitions: Vec<i32>, n_partitions: usize) -> 
         connectivities = connectivities,
         connectivities_tree = connectivities_tree,
         sizes = res.sizes.as_slice().r_int_convert()
+    ))
+}
+
+/////////////////
+// Gene trends //
+/////////////////
+
+/// Fit Palantir gene trends over pseudotime
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Selects the cells belonging to each branch from the fate probabilities, then
+/// fits a landmark Gaussian process with a Matern-5/2 kernel per branch. This
+/// is the Mellon-based estimator of the reference, not the legacy GAM.
+///
+/// Whatever expression matrix is handed over is what gets fitted. Nothing here
+/// imputes; that decision belongs to the caller.
+///
+/// The defaults are prior-dominated. Palantir's pseudotime is min-max scaled to
+/// `[0, 1]`, so a `length_scale` of `1.0` spans the whole domain and a `sigma`
+/// of `1.0` sits at roughly the signal scale of log-normalised expression. That
+/// resolves almost any gene into a smooth monotone or single-peaked curve.
+/// Shorten `length_scale` before believing a bump.
+///
+/// @param expression Numerical matrix of cells x genes. All cells, in the same
+/// row order as `pseudotime`, not just the branch members.
+/// @param pseudotime Numerical vector. Pseudotime per cell.
+/// @param branch_probs Numerical matrix of cells x fates with the fate
+/// probabilities. Rows need not sum to one.
+/// @param branch_params List. Parameter list, see
+/// [bixverse::params_sc_branch_selection()].
+/// @param gene_trend_params List. Parameter list, see
+/// [bixverse::params_sc_gene_trends()].
+///
+/// @returns A list with
+/// \itemize{
+///  \item trends - List of numerical matrices, one per branch, each of
+///  resolution x genes.
+///  \item grids - List of numerical vectors with the pseudotime grid per
+///  branch, running from the branch minimum to its maximum.
+///  \item branch_cells - List of integer vectors with the cell indices
+///  (0-indexed!) selected for each branch.
+///  \item n_cells - Integer vector with the cell count per branch.
+///  \item jitter_used - Numerical vector with the jitter each branch's
+///  Cholesky needed.
+/// }
+///
+/// @references Setty, et al., Nat. Biotechnol., 2019.
+///
+/// @export
+///
+/// @keywords internal
+#[extendr]
+fn rs_gene_trends(
+    expression: RMatrix<f64>,
+    pseudotime: &[f64],
+    branch_probs: RMatrix<f64>,
+    branch_params: List,
+    gene_trend_params: List,
+) -> Result<List> {
+    let selection = BranchSelectionParams::from_r_list(branch_params)?;
+    let params = GeneTrendsParams::from_r_list(gene_trend_params)?;
+
+    // the Rust side works in f32 for both, so this is the one copy we pay for
+    let pseudotime: Vec<f32> = pseudotime.iter().map(|x| *x as f32).collect();
+    let branch_probs = r_matrix_to_faer_fp32(&branch_probs);
+    let expression = r_matrix_to_faer(&expression);
+
+    let branch_cells =
+        select_branch_cells(&pseudotime, branch_probs.as_ref(), &selection).to_extendr()?;
+
+    let res = compute_gene_trends(
+        expression,
+        &pseudotime,
+        &branch_cells,
+        Some(branch_probs.as_ref()),
+        &params,
+    )
+    .to_extendr()?;
+
+    let n_branches = res.trends.len();
+
+    let mut trends = List::new(n_branches);
+    let mut grids = List::new(n_branches);
+    let mut cells = List::new(n_branches);
+
+    for i in 0..n_branches {
+        trends.set_elt(i, Robj::from(faer_to_r_matrix(res.trends[i].as_ref())))?;
+        grids.set_elt(i, Robj::from(res.grids[i].clone()))?;
+        cells.set_elt(i, Robj::from(branch_cells[i].as_slice().r_int_convert()))?;
+    }
+
+    Ok(list!(
+        trends = trends,
+        grids = grids,
+        branch_cells = cells,
+        n_cells = res.n_cells.as_slice().r_int_convert(),
+        jitter_used = res.jitter_used
     ))
 }

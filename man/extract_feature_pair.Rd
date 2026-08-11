@@ -11,7 +11,8 @@ extract_feature_pair(
   obs_cols = NULL,
   scale = FALSE,
   clip = NULL,
-  modality = c("rna", "adt")
+  modality = c("rna", "adt"),
+  layer = c("norm", "magic")
 )
 }
 \arguments{
@@ -30,6 +31,10 @@ colour the scatter).}
 
 \item{modality}{String. Fallback modality for unsuffixed features. One of
 \code{c("rna", "adt")}.}
+
+\item{layer}{String. One of \code{c("norm", "magic")}, forwarded to
+\code{\link[=extract_gene_expression]{extract_gene_expression()}}. Applies to both features, and an \verb{_adt}
+suffixed one will error under \code{"magic"}.}
 }
 \value{
 A data.table with \code{cell_id}, \code{feature_1}, \code{feature_2} and any

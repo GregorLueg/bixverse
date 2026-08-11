@@ -764,6 +764,32 @@ S7::method(remove_snn_graph, SingleCellsSubset) <- function(x, ...) {
   x
 }
 
+#' @name set_magic.SingleCellsSubset
+#'
+#' @rdname set_magic
+#'
+#' @method set_magic SingleCellsSubset
+S7::method(set_magic, SingleCellsSubset) <- function(x, magic, ...) {
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
+  checkmate::assertClass(magic, "ScMagic")
+  S7::prop(x, "sc_cache") <- set_magic(
+    x = S7::prop(x, "sc_cache"),
+    magic = magic
+  )
+  .stamp_artefact(x, artefact = "magic", from = .stamp_from(...))
+}
+
+#' @name remove_magic.SingleCellsSubset
+#'
+#' @rdname remove_magic
+#'
+#' @method remove_magic SingleCellsSubset
+S7::method(remove_magic, SingleCellsSubset) <- function(x, ...) {
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
+  S7::prop(x, "sc_cache") <- remove_magic(x = S7::prop(x, "sc_cache"))
+  x
+}
+
 #### getters -------------------------------------------------------------------
 
 #' @name get_pca_factors.SingleCellsSubset
@@ -887,6 +913,18 @@ S7::method(get_snn_graph, SingleCellsSubset) <- function(x, ...) {
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
   res <- get_snn_graph(x = S7::prop(x, "sc_cache"))
   .warn_sc_state(x, artefact = "snn")
+  .drop_stamp(res)
+}
+
+#' @name get_magic.SingleCellsSubset
+#'
+#' @rdname get_magic
+#'
+#' @method get_magic SingleCellsSubset
+S7::method(get_magic, SingleCellsSubset) <- function(x, ...) {
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
+  res <- get_magic(x = S7::prop(x, "sc_cache"))
+  .warn_sc_state(x, artefact = "magic")
   .drop_stamp(res)
 }
 

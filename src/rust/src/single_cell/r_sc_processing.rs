@@ -1,5 +1,8 @@
 use bixverse_rs::prelude::*;
 use bixverse_rs::single_cell::sc_analysis::fast_clusters::*;
+use bixverse_rs::single_cell::sc_processing::magic::{
+    magic_impute_genes, MagicOperator, MagicParams,
+};
 use bixverse_rs::single_cell::sc_processing::metrics::pairwise_gene_correlations;
 use bixverse_rs::single_cell::sc_processing::{
     doublet_detection::*, hvg::*, pca::*, qc::*, scdblfinder::*, scrublet::*, snn::*,
@@ -41,6 +44,8 @@ extendr_module! {
     // clustering
     fn rs_fast_cluster_sc;
     fn rs_fast_cluster_sc_grid;
+    // imputation
+    fn rs_magic_impute;
 }
 
 ///////////////////////
@@ -1464,4 +1469,85 @@ fn rs_fast_cluster_sc_grid(
         k_means_cluster = r!(k_means_cluster),
         centroids = r!(centroids),
     ))
+}
+
+///////////
+// MAGIC //
+///////////
+
+/// Impute a subset of genes with MAGIC
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Implementation of MAGIC in Rust. A row-stochastic diffusion operator is
+/// built over the provided kNN graph and applied `n_steps` times to the counts
+/// of the requested genes. The operator matches the one Palantir builds, i.e.
+/// an adaptive bandwidth taken from the `k/3`-th neighbour distance, which
+/// differs from the graphtools kernel the reference implementation uses.
+///
+/// Deliberately restricted to a gene subset. The output is dense, and
+/// smoothing over overlapping neighbourhoods inflates gene-gene correlation,
+/// so imputed counts must not be fed into correlation-based methods such as
+/// Hotspot, SCENIC, differential correlation or CoReMo.
+///
+/// @param f_path String. Path to the `counts_genes.bin` file.
+/// @param knn_data List. The `SingleCellNearestNeighbour` data with `indices`
+/// (0-indexed!), `dist`, `k` and `dist_metric`. The indices are positions
+/// within `cell_indices`, not global cell ids. Whether the distances are
+/// treated as squared is derived from `dist_metric`.
+/// @param cell_indices Integer vector. The global cell indices (0-indexed!)
+/// the kNN graph was built over, in kNN row order.
+/// @param total_cells Integer. The cell count of the binary store, not of the
+/// selection.
+/// @param gene_indices Integer vector. Gene indices (0-indexed!) to impute.
+/// @param magic_params List. Parameter list, see
+/// [bixverse::params_sc_magic()].
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
+///
+/// @returns Numerical matrix of cells x genes with the imputed counts. Rows
+/// follow `cell_indices`, columns follow `gene_indices`.
+///
+/// @references van Dijk, et al., Cell, 2018.
+///
+/// @export
+///
+/// @keywords internal
+#[extendr]
+fn rs_magic_impute(
+    f_path: &str,
+    knn_data: List,
+    cell_indices: &[i32],
+    total_cells: usize,
+    gene_indices: &[i32],
+    magic_params: List,
+    verbose: usize,
+) -> Result<RMatrix<f64>, extendr_api::Error> {
+    let (knn_indices, knn_distances, _, distance) = knn_data_to_rust(knn_data)?;
+    let params = MagicParams::from_r_list(magic_params)?;
+    let squared_dist = distance == "euclidean";
+
+    let cell_indices: Vec<usize> = cell_indices.r_int_convert();
+    let gene_indices: Vec<usize> = gene_indices.r_int_convert();
+
+    let operator = MagicOperator::from_knn(
+        &knn_indices,
+        &knn_distances,
+        squared_dist,
+        &cell_indices,
+        total_cells,
+    )
+    .to_extendr()?;
+
+    let reader = ParallelSparseReader::new(f_path).to_extendr()?;
+
+    let res = magic_impute_genes(&reader, &operator, &gene_indices, Some(params), verbose)
+        .to_extendr()?;
+
+    let n_genes = res.n_genes();
+
+    // `res.data` is row-major cells x genes; `new_matrix` fills column-major
+    Ok(RMatrix::new_matrix(res.n_cells, n_genes, |r, c| {
+        res.data[r * n_genes + c] as f64
+    }))
 }

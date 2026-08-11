@@ -4,7 +4,7 @@
 \alias{new_palantir_res}
 \title{Helper function to generate the Palantir results}
 \usage{
-new_palantir_res(rs_res, used_cells, modality)
+new_palantir_res(rs_res, used_cells, modality, terminal_labels = NULL)
 }
 \arguments{
 \item{rs_res}{List. The raw return of \code{\link[=rs_palantir]{rs_palantir()}}.}
@@ -13,6 +13,12 @@ new_palantir_res(rs_res, used_cells, modality)
 over, in kNN row order.}
 
 \item{modality}{String. The modality the kNN graph came from.}
+
+\item{terminal_labels}{Optional named character vector. The terminal states
+as the caller supplied them, i.e. lineage label to cell name. When given,
+the labels become the column names of \code{branch_probs} and the names of
+\code{terminal_states}. Detected terminal states have no labels to carry, so this
+is \code{NULL} for those runs.}
 }
 \value{
 Generates the \code{PalantirRes} class.

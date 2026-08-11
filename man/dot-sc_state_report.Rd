@@ -13,7 +13,7 @@
 A \code{data.table} with one row per present artefact and the columns
 \itemize{
 \item modality - The modality the artefact lives in.
-\item artefact - One of \code{pca}, \code{embedding}, \code{knn}, \code{snn}.
+\item artefact - One of \code{pca}, \code{embedding}, \code{knn}, \code{snn}, \code{magic}.
 \item name - The embedding name, \code{NA} for the others.
 \item stamped - Whether the artefact carries a provenance stamp.
 \item stale - Whether it disagrees with the current state.

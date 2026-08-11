@@ -555,3 +555,428 @@ expect_true(
   current = all(palantir_sc_res$terminal_states %in% sc_knn$used_cells),
   info = "sc trajectory - terminal states are reported as cell names"
 )
+
+### terminal state labels ------------------------------------------------------
+
+labelled_states <- palantir_sc_res$terminal_states
+names(labelled_states) <- sprintf("fate_%i", seq_along(labelled_states))
+
+palantir_labelled <- run_palantir_sc(
+  sc_object,
+  early_cell = sc_knn$used_cells[1],
+  terminal_states = labelled_states,
+  palantir_params = params_sc_palantir(
+    knn = 24L,
+    num_waypoints = 200L,
+    n_eigs = 3L,
+    use_early_cell_as_start = TRUE,
+    knn_params = list(knn_method = "exhaustive")
+  ),
+  .verbose = FALSE
+)
+
+expect_equal(
+  current = sort(colnames(palantir_labelled$branch_probs)),
+  target = sort(names(labelled_states)),
+  info = "sc trajectory - named terminal states label the fate columns"
+)
+
+expect_equal(
+  current = unname(palantir_labelled$terminal_states),
+  target = sort(unname(labelled_states)),
+  info = "sc trajectory - the labelled run keeps the cell names as values"
+)
+
+expect_null(
+  current = names(palantir_sc_res$terminal_states),
+  info = "sc trajectory - detected terminal states carry no labels"
+)
+
+# magic ------------------------------------------------------------------------
+
+## parameter wrappers ----------------------------------------------------------
+
+magic_defaults <- params_sc_magic()
+
+expect_equal(
+  current = magic_defaults,
+  target = list(
+    n_steps = 3L,
+    clip_threshold = 0.01,
+    gene_batch_size = 1000L,
+    layer = "norm",
+    allow_large = FALSE
+  ),
+  info = "sc magic - the defaults mirror the Rust defaults"
+)
+
+expect_true(
+  current = isTRUE(bixverse:::checkScMagicParams(magic_defaults)),
+  info = "sc magic - the default params pass the check"
+)
+
+expect_error(
+  current = params_sc_magic(n_steps = -1L),
+  info = "sc magic - a negative step count is rejected"
+)
+
+expect_true(
+  current = identical(params_sc_magic(n_steps = 0L)$n_steps, 0L),
+  info = "sc magic - zero steps is legal and means no imputation"
+)
+
+expect_error(
+  current = params_sc_magic(layer = "counts"),
+  info = "sc magic - an unknown layer is rejected"
+)
+
+broken_magic <- magic_defaults
+broken_magic$layer <- "logcounts"
+
+expect_false(
+  current = isTRUE(bixverse:::checkScMagicParams(broken_magic)),
+  info = "sc magic - the check catches a tampered layer"
+)
+
+## running it ------------------------------------------------------------------
+
+magic_genes <- get_gene_names(sc_object)[1:5]
+
+sc_object <- run_magic_sc(
+  sc_object,
+  features = magic_genes,
+  .verbose = FALSE
+)
+
+magic_layer <- get_magic(sc_object)
+
+expect_true(
+  current = checkmate::testClass(magic_layer, "ScMagic"),
+  info = "sc magic - run_magic_sc writes an ScMagic layer"
+)
+
+expect_equal(
+  current = dim(magic_layer$data),
+  target = c(sc_knn$n, length(magic_genes)),
+  info = "sc magic - the layer is cells x requested genes"
+)
+
+expect_equal(
+  current = dimnames(magic_layer$data),
+  target = list(get_cell_names(sc_object, filtered = TRUE), magic_genes),
+  info = "sc magic - the layer is named by cell and gene"
+)
+
+expect_true(
+  current = all(magic_layer$data >= 0),
+  info = "sc magic - smoothing non-negative counts stays non-negative"
+)
+
+### provenance -----------------------------------------------------------------
+
+magic_status <- get_sc_cache_status(sc_object)
+magic_row <- magic_status[magic_status$artefact == "magic", ]
+
+expect_equal(
+  current = nrow(magic_row),
+  target = 1L,
+  info = "sc magic - the layer shows up in the cache status"
+)
+
+expect_false(
+  current = magic_row$stale,
+  info = "sc magic - a freshly written layer is not stale"
+)
+
+expect_equal(
+  current = magic_row$from[[1]],
+  target = magic_status$id[magic_status$artefact == "knn"],
+  info = "sc magic - the layer records the kNN graph it came from"
+)
+
+sc_object_restale <- find_neighbours_sc(
+  object = sc_object,
+  neighbours_params = params_sc_neighbours(
+    knn = list(k = 15L, ann_dist = "euclidean")
+  ),
+  .verbose = FALSE
+)
+
+restale_status <- get_sc_cache_status(sc_object_restale)
+
+expect_true(
+  current = restale_status$stale[restale_status$artefact == "magic"],
+  info = "sc magic - re-running the neighbours marks the layer stale"
+)
+
+### the un-imputed path --------------------------------------------------------
+
+# `n_steps = 0` is the same code path with the operator applied zero times, so
+# it has to hand back exactly what the plain extractor reads off the store
+sc_object_raw <- run_magic_sc(
+  sc_object,
+  features = magic_genes,
+  magic_params = params_sc_magic(n_steps = 0L, clip_threshold = 0),
+  .verbose = FALSE
+)
+
+norm_dt <- extract_gene_expression(sc_object, features = magic_genes)
+
+expect_equal(
+  current = unname(get_magic(sc_object_raw)$data),
+  target = unname(as.matrix(norm_dt[, magic_genes, with = FALSE])),
+  info = "sc magic - zero steps reproduces the un-imputed counts"
+)
+
+### the layer argument ---------------------------------------------------------
+
+magic_dt <- extract_gene_expression(
+  sc_object,
+  features = magic_genes,
+  layer = "magic"
+)
+
+expect_equal(
+  current = magic_dt$cell_id,
+  target = norm_dt$cell_id,
+  info = "sc magic - the imputed layer keeps the cell order of the counts"
+)
+
+expect_false(
+  current = isTRUE(all.equal(magic_dt$gene_001, norm_dt$gene_001)),
+  info = "sc magic - three diffusion steps actually change the values"
+)
+
+expect_error(
+  current = extract_gene_expression(
+    sc_object,
+    features = magic_genes,
+    layer = "raw"
+  ),
+  info = "sc magic - an unknown layer is rejected by the extractor"
+)
+
+sc_object_no_magic <- remove_magic(sc_object)
+
+expect_error(
+  current = extract_gene_expression(
+    sc_object_no_magic,
+    features = magic_genes,
+    layer = "magic"
+  ),
+  pattern = "No imputed layer found",
+  info = "sc magic - reading a layer that was never written errors"
+)
+
+# gene trends ------------------------------------------------------------------
+
+## parameter wrappers ----------------------------------------------------------
+
+branch_defaults <- params_sc_branch_selection()
+
+expect_equal(
+  current = branch_defaults,
+  target = list(q = 0.01, eps = 0.01, resolution = 500L),
+  info = "sc gene trends - the branch selection defaults mirror the reference"
+)
+
+trend_defaults <- params_sc_gene_trends()
+
+expect_equal(
+  current = trend_defaults,
+  target = list(
+    resolution = 500L,
+    weighting = "hard_mask",
+    length_scale = 1.0,
+    sigma = 1.0,
+    jitter = 1e-6,
+    max_jitter_retries = 3L,
+    chunk_size = 2048L
+  ),
+  info = "sc gene trends - the trend defaults mirror the Rust defaults"
+)
+
+expect_true(
+  current = isTRUE(bixverse:::checkScGeneTrendParams(trend_defaults)),
+  info = "sc gene trends - the default trend params pass the check"
+)
+
+expect_error(
+  current = params_sc_gene_trends(length_scale = 0),
+  info = "sc gene trends - a zero length scale is rejected"
+)
+
+expect_error(
+  current = params_sc_gene_trends(weighting = "gam"),
+  info = "sc gene trends - an unknown weighting is rejected"
+)
+
+expect_error(
+  current = params_sc_branch_selection(q = 1.5),
+  info = "sc gene trends - an out-of-range quantile is rejected"
+)
+
+broken_trends <- trend_defaults
+broken_trends$sigma <- -1
+
+expect_false(
+  current = isTRUE(bixverse:::checkScGeneTrendParams(broken_trends)),
+  info = "sc gene trends - the check catches a tampered sigma"
+)
+
+## running it ------------------------------------------------------------------
+
+trend_resolution <- 50L
+
+trends_res <- run_gene_trends_sc(
+  sc_object,
+  palantir_res = palantir_sc_res,
+  features = magic_genes,
+  gene_trend_params = params_sc_gene_trends(resolution = trend_resolution),
+  .verbose = FALSE
+)
+
+expect_true(
+  current = checkmate::testClass(trends_res, "GeneTrendsRes"),
+  info = "sc gene trends - run_gene_trends_sc returns a GeneTrendsRes"
+)
+
+expect_equal(
+  current = trends_res$branches,
+  target = colnames(palantir_sc_res$branch_probs),
+  info = "sc gene trends - the branches follow the fate probability columns"
+)
+
+expect_equal(
+  current = nrow(trends_res$trends),
+  target = as.integer(trend_resolution) *
+    length(magic_genes) *
+    length(trends_res$branches),
+  info = "sc gene trends - one row per grid point, gene and branch"
+)
+
+expect_equal(
+  current = levels(trends_res$trends$gene),
+  target = magic_genes,
+  info = "sc gene trends - the gene factor follows the requested order"
+)
+
+expect_true(
+  current = all(is.finite(trends_res$trends$expression)),
+  info = "sc gene trends - the fitted values are finite"
+)
+
+expect_true(
+  current = all(purrr::map_lgl(
+    trends_res$branch_cells,
+    \(cells) all(cells %in% sc_knn$used_cells)
+  )),
+  info = "sc gene trends - the branch cells come back as cell names"
+)
+
+expect_equal(
+  current = purrr::map_int(trends_res$branch_cells, length),
+  target = trends_res$run_info$n_cells,
+  info = "sc gene trends - the reported cell counts match the selections"
+)
+
+### against the imputed layer --------------------------------------------------
+
+trends_magic <- run_gene_trends_sc(
+  sc_object,
+  palantir_res = palantir_sc_res,
+  use_magic = TRUE,
+  gene_trend_params = params_sc_gene_trends(resolution = trend_resolution),
+  .verbose = FALSE
+)
+
+expect_equal(
+  current = levels(trends_magic$trends$gene),
+  target = magic_genes,
+  info = "sc gene trends - a NULL feature list falls back to the whole layer"
+)
+
+expect_true(
+  current = trends_magic$params$use_magic,
+  info = "sc gene trends - the result records which source it fitted"
+)
+
+### weighting and smoothing ----------------------------------------------------
+
+# a different Rust path: every cell enters every branch weighted by its fate
+# probability rather than by a hard mask
+trends_weighted <- run_gene_trends_sc(
+  sc_object,
+  palantir_res = palantir_sc_res,
+  features = magic_genes,
+  gene_trend_params = params_sc_gene_trends(
+    resolution = trend_resolution,
+    weighting = "fate_probability"
+  ),
+  .verbose = FALSE
+)
+
+expect_true(
+  current = all(is.finite(trends_weighted$trends$expression)),
+  info = "sc gene trends - the fate probability weighting fits finite values"
+)
+
+trends_tight <- run_gene_trends_sc(
+  sc_object,
+  palantir_res = palantir_sc_res,
+  features = magic_genes,
+  gene_trend_params = params_sc_gene_trends(
+    resolution = trend_resolution,
+    length_scale = 0.1
+  ),
+  .verbose = FALSE
+)
+
+expect_false(
+  current = isTRUE(all.equal(
+    trends_tight$trends$expression,
+    trends_res$trends$expression
+  )),
+  info = "sc gene trends - a shorter length scale changes the posterior"
+)
+
+### guards ---------------------------------------------------------------------
+
+expect_error(
+  current = run_gene_trends_sc(
+    sc_object,
+    palantir_res = palantir_sc_res,
+    use_magic = TRUE,
+    features = c(magic_genes, "not_a_gene"),
+    .verbose = FALSE
+  ),
+  pattern = "not in the imputed layer",
+  info = "sc gene trends - genes outside the imputed layer are named"
+)
+
+expect_error(
+  current = run_gene_trends_sc(
+    sc_object,
+    palantir_res = palantir_sc_res,
+    .verbose = FALSE
+  ),
+  pattern = "only optional when",
+  info = "sc gene trends - a NULL feature list needs the imputed layer"
+)
+
+palantir_renamed <- palantir_sc_res
+palantir_renamed$pseudotime$cell_id <- sprintf(
+  "other_%i",
+  seq_len(nrow(palantir_renamed$pseudotime))
+)
+
+expect_error(
+  current = run_gene_trends_sc(
+    sc_object,
+    palantir_res = palantir_renamed,
+    features = magic_genes,
+    .verbose = FALSE
+  ),
+  pattern = "missing from the Palantir result",
+  info = "sc gene trends - a mismatched cell set is caught by name"
+)

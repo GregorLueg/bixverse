@@ -22,7 +22,10 @@ run_palantir_sc(
 be one of the cells the kNN graph was built over.}
 
 \item{terminal_states}{Optional character vector. Names of the terminal state
-cells. If \code{NULL}, they are detected from the waypoint Markov chain.}
+cells. If \code{NULL}, they are detected from the waypoint Markov chain. Name the
+vector (e.g. \code{c(Ery = "Run4_2005...")}) and those labels become the column
+names of \code{branch_probs}, which saves relabelling the fate columns by hand
+downstream.}
 
 \item{modality}{String. One of \code{c("rna", "adt", "wnn")}. Which kNN graph to
 run over. Anything but \code{"rna"} requires a \code{SingleCellsMultiModal} object.}
@@ -45,7 +48,8 @@ means the refinement disagreed with the anchor) and \code{entropy}.
 fate probabilities. Rows need not sum to one, as sub-threshold values are
 zeroed without renormalisation.
 \item terminal_states - Character vector with the terminal state cell
-names. Sets the column order of \code{branch_probs}.
+names, carrying the labels of a named \code{terminal_states} argument as its
+own names. Sets the column order of \code{branch_probs}.
 \item waypoints - Character vector with the waypoint cell names. The first
 element is the start cell.
 \item start_cell - String. The start cell that was actually used.

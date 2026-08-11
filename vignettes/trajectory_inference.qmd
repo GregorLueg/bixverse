@@ -38,12 +38,12 @@ notebook](https://github.com/dpeerlab/Palantir/blob/master/notebooks/Palantir_sa
 lineages come out of it, erythroid, monocyte and dendritic cell, all seeded from
 a haematopoietic stem cell pool.
 
-Two things from that notebook are not reproduced here. There is no MAGIC
-imputation in `bixverse` (and it is a contested step anyway), so the marker gene
-plots below are noisier than the published ones. There is also no Mellon-based
-gene trend estimator, so the expression-along-pseudotime section uses a plain
-loess instead. Everything upstream of that, the diffusion map, the waypoints,
-the Markov chain and the fate probabilities, is the same algorithm.
+The two supporting pieces from that notebook are here too. **MAGIC** ([van
+Dijk et al., 2018](https://doi.org/10.1016/j.cell.2018.05.061)) smooths counts
+over the same kNN graph, which is what makes the marker plots readable.
+**Gene trends** fit a landmark Gaussian process per branch, the Mellon-based
+estimator the reference uses rather than the legacy GAM. Both are restricted to
+a gene subset in `bixverse`, for reasons spelled out where they come up.
 
 ```{r}
 #| label: setup
@@ -146,19 +146,72 @@ embedding_plot_sc(
 
 The four markers the reference notebook uses: `CD34` for the stem pool, `MPO`
 for the myeloid arm, `GATA1` for the erythroid one and `IRF8` for the dendritic
-one. Without imputation these are sparse and speckled, but the gradients are
-visible.
+one. Raw, these are sparse and speckled, but the gradients are visible.
 
 ```{r}
 #| label: marker feature plots
 #| fig-width: 9
 #| fig-height: 7
+markers <- c("CD34", "MPO", "GATA1", "IRF8")
+
 feature_plot_sc(
   object = sc_object,
-  features = c("CD34", "MPO", "GATA1", "IRF8"),
+  features = markers,
   embedding = "umap",
   scale = TRUE
 )
+```
+
+## MAGIC imputation
+
+MAGIC builds a row-stochastic operator over the kNN graph and applies it three
+times, so every cell becomes a weighted average of its neighbourhood. It is the
+same adaptive-bandwidth kernel Palantir uses for its diffusion map, so the two
+agree on what a neighbourhood is.
+
+`run_magic_sc()` writes the result onto the object as a cached layer. It takes
+a gene list rather than doing everything, and that is deliberate: the output is
+dense, and the whole point of the on-disk store is not holding a dense
+cells-by-genes matrix. Pick the genes you want to look at.
+
+```{r}
+#| label: run magic
+sc_object <- run_magic_sc(sc_object, features = markers)
+
+get_magic(sc_object)
+```
+
+Every extractor takes `layer = "magic"`, and `feature_plot_sc()` passes it
+straight through.
+
+```{r}
+#| label: magic feature plots
+#| fig-width: 9
+#| fig-height: 7
+feature_plot_sc(
+  object = sc_object,
+  features = markers,
+  embedding = "umap",
+  scale = TRUE,
+  layer = "magic"
+)
+```
+
+That is the picture people know from the paper, and it is worth being clear
+about what produced it. Neighbourhoods overlap, so smoothing over them makes
+nearby cells resemble each other in every gene at once. Gene-gene correlation
+after imputation is inflated, badly, and the inflation is a property of the
+graph rather than of the biology. Do not feed these values into Hotspot,
+SCENIC, differential correlation or CoReMo: those methods measure exactly the
+quantity MAGIC manufactures, and they will report the graph back to you as a
+finding. `extract_dot_plot_data()` has no `layer` argument for the same reason.
+
+The layer is tracked like every other cached artefact, so it goes stale when
+the graph under it moves.
+
+```{r}
+#| label: magic provenance
+get_sc_cache_status(sc_object)
 ```
 
 ## PAGA
@@ -304,15 +357,13 @@ sc_object[["palantir_pseudotime"]] <- palantir_res$pseudotime$pseudotime[idx]
 sc_object[["palantir_entropy"]] <- palantir_res$pseudotime$entropy[idx]
 ```
 
-The fate probability matrix has one column per terminal state, named by the
-terminal cell. Rename to the lineage labels and add the dominant fate per cell.
+The fate probability matrix has one column per terminal state. Because
+`terminal_states` was a named vector, those names are already the column names,
+so all that is left is the dominant fate per cell.
 
 ```{r}
 #| label: fate probabilities
 fate_probs <- palantir_res$branch_probs[idx, ]
-colnames(fate_probs) <- names(terminal_states)[
-  match(colnames(fate_probs), terminal_states)
-]
 
 for (lineage in colnames(fate_probs)) {
   sc_object[[paste0("fate_", lineage)]] <- fate_probs[, lineage]
@@ -338,7 +389,7 @@ entirely.
 #| fig-height: 5
 embedding_plot_sc(
   sc_object,
-  embedding = "tsne",
+  embedding = "umap",
   colour_by = "palantir_pseudotime",
   discrete = FALSE
 )
@@ -354,7 +405,7 @@ near `log(3)`.
 #| fig-height: 5
 embedding_plot_sc(
   sc_object,
-  embedding = "tsne",
+  embedding = "umap",
   colour_by = "palantir_entropy",
   discrete = FALSE
 )
@@ -367,7 +418,7 @@ embedding_plot_sc(
 fate_plots <- lapply(colnames(fate_probs), \(lineage) {
   embedding_plot_sc(
     sc_object,
-    embedding = "tsne",
+    embedding = "umap",
     colour_by = paste0("fate_", lineage),
     discrete = FALSE
   ) +
@@ -383,7 +434,7 @@ wrap_plots(fate_plots, nrow = 1)
 #| fig-height: 5
 embedding_plot_sc(
   sc_object,
-  embedding = "tsne",
+  embedding = "umap",
   colour_by = "palantir_branch",
   label_by = "palantir_branch",
   discrete = TRUE
@@ -432,46 +483,62 @@ data.table(
 )
 ```
 
-## Expression along pseudotime
+## Gene trends
 
-No Mellon here, so this is a loess through the normalised counts rather than a
-proper gene trend estimator. It is enough to see the ordering: `CD34` falling
-away from the root, `GATA1` climbing on the erythroid arm, `MPO` on the
-monocyte one, `IRF8` on the dendritic one.
+`run_gene_trends_sc()` does two things. First it assigns cells to branches: for
+each fate, the probability threshold is an expanding quantile over the
+pseudotime-sorted cells, made monotone with a cumulative maximum, so a fate's
+bar can only rise as differentiation proceeds. Then it fits a landmark Gaussian
+process with a Matern-5/2 kernel per branch, on a 500 point pseudotime grid.
 
 ```{r}
-#| label: trend data
-markers <- c("CD34", "MPO", "GATA1", "IRF8")
-
-trend_dt <- extract_feature_plot_data(
-  object = sc_object,
-  features = markers,
-  embedding = "umap",
-  obs_col = c("palantir_pseudotime", "palantir_branch")
+#| label: gene trends
+trends <- run_gene_trends_sc(
+  sc_object,
+  palantir_res = palantir_res,
+  features = markers
 )
+
+trends
 ```
+
+`trends$trends` is a long data.table with `branch`, `pseudotime`, `gene` and
+`expression`, which is what a facet wants.
 
 ```{r}
 #| label: trend plot
 #| fig-width: 9
 #| fig-height: 6
 ggplot(
-  trend_dt,
-  aes(x = palantir_pseudotime, y = expression, colour = palantir_branch)
+  trends$trends,
+  aes(x = pseudotime, y = expression, colour = branch)
 ) +
-  geom_smooth(method = "loess", formula = y ~ x, se = TRUE, span = 0.6) +
+  geom_line(linewidth = 0.8) +
   facet_wrap(~gene, scales = "free_y") +
   scale_color_bx() +
   labs(
     x = "Palantir pseudotime",
     y = "Normalised expression",
-    colour = "Dominant fate"
+    colour = "Lineage"
   ) +
   theme_bx()
 ```
 
-The same trick works with any per-cell quantity. Swap `expression` for the
-entropy column to watch commitment happen along the trajectory.
+`CD34` falls away from the root, `GATA1` climbs on the erythroid arm, `MPO` on
+the monocyte one, `IRF8` on the dendritic one. Set `use_magic = TRUE` to fit
+the imputed layer instead, which is what the reference notebook does. Note that
+the GP already smooths over pseudotime, so imputing first smooths twice.
+
+`branch_cells` carries the selection itself, which is the branch cell set the
+reference notebook plots.
+
+```{r}
+#| label: branch cells
+purrr::map_int(trends$branch_cells, length)
+```
+
+The same trick works with any per-cell quantity. A loess through the entropy
+column watches commitment happen along the trajectory.
 
 ```{r}
 #| label: entropy along pseudotime
@@ -520,11 +587,24 @@ of them fail quietly.
   higher harmonics oscillate enough to swamp the pseudotime gaps. Pinning it to
   3, which leaves two multiscale components, is a reasonable first thing to try
   when results look like noise.
+- **The gene trend defaults are prior-dominated.** Pseudotime is min-max scaled
+  to `[0, 1]`, so the reference's `length_scale = 1` spans the entire domain and
+  its `sigma = 1` sits at roughly the signal scale of log-normalised expression.
+  Almost any gene resolves into a smooth monotone or single-peaked curve. That
+  is a presentation choice, not inference. Shorten `length_scale` in
+  `params_sc_gene_trends()` before believing a bump.
+- **Double smoothing.** MAGIC averages over the graph and the GP averages over
+  pseudotime. Running both is defensible for a figure and rarely necessary for
+  the trend itself. If a feature only shows up with `use_magic = TRUE`, that is
+  worth knowing about it.
+- **A stale imputed layer.** The layer is stamped against the kNN graph it came
+  from, so `get_sc_cache_status()` flags it once the graph or the cell filter
+  moves. `run_gene_trends_sc(use_magic = TRUE)` refuses to fit a stale one.
 
 ## Not covered
 
-MAGIC imputation, Mellon gene trends and the branch cell selection from the
-reference notebook all have no equivalent here yet. Gene trends are the one
-worth adding: a proper function estimator over pseudotime would make the section
-above a real analysis rather than a sanity check. PAGA has no plotting helper
-either, hence the raw `igraph` calls, which is an obvious gap to close.
+PAGA has no plotting helper, hence the raw `igraph` calls, which is an obvious
+gap to close. The gene trend estimator is the landmark GP only; the legacy GAM
+path of the reference is not ported, and `weighting = "fate_probability"` is
+the closest thing to it, weighting every cell by its fate probability rather
+than taking a hard branch mask.

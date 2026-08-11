@@ -9,7 +9,7 @@
 \arguments{
 \item{modality}{String. The modality the artefact lives in.}
 
-\item{artefact}{String. One of \code{c("pca", "embedding", "knn", "snn")}.}
+\item{artefact}{String. One of \code{c("pca", "embedding", "knn", "snn", "magic")}.}
 
 \item{name}{String. Embedding name, only used when \code{artefact = "embedding"}.}
 }
