@@ -231,8 +231,6 @@ paga_res <- run_paga_sc(
   sc_object,
   cluster_col = "leiden_clusters"
 )
-
-paga_res
 ```
 
 `connectivities` is the full abstracted graph, `connectivities_tree` its maximum
