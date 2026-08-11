@@ -162,11 +162,11 @@ get_cells_to_keep(sc_object)[1:10]
 
 What is cells to keep? Well, these are the (0-based) indices of cells that shall
 be included in the analysis, think HVG selection, PCA, kNN generation, etc. This
-is **THE** foot gun of this package. The `get_cells_to_keep()` indices will be
-the ones loaded in by Rust. The other cells are not lost, they are still on
-disk (a massive difference between filtering in memory and on-disk work!). Also
-the DuckDB state will get updated, but let's get to this later. We also have 
-other getters.
+used to be **THE** foot gun of this package, and it is still the thing to keep
+in your head. The `get_cells_to_keep()` indices will be the ones loaded in by
+Rust. The other cells are not lost, they are still on disk (a massive difference
+between filtering in memory and on-disk work!). Also the DuckDB state will get
+updated, but let's get to this later. We also have other getters.
 
 ```{r}
 #| label: getters
@@ -270,8 +270,98 @@ cat(sprintf("No of rows filtered: %i\n", nrow(obs_filtered)))
 cat(sprintf("No of rows from R primitive: %i\n", nrow(obs_r_primitive)))
 ```
 
-If you understand the concept shown above, you are good to go to analyse 
-millions of cells on small compute without having 100's of GB of memory 
+#### The cache knows when you've moved the goalposts
+
+Here is where the foot gun used to go off. Anything cached on the object, the
+PCA, the embeddings, the kNN, the sNN graph, was computed against a particular
+set of cells. Change the cell set and those artefacts describe a world that no
+longer exists. Re-run the PCA, forget the kNN, and you'd end up with a PCA over
+682 cells sitting next to a kNN over 929. Nothing complained. It either crashed
+somewhere deep in Rust or, worse, quietly gave you mis-aligned biology.
+
+Every cached artefact now carries a provenance stamp: a hash of the cell set it
+was computed on, plus pointers to whatever it was derived from. Let's build a
+small cache and look at it.
+
+```{r}
+#| label: build a cache
+sc_object <- find_hvg_sc(sc_object, hvg_no = 30L, .verbose = FALSE)
+sc_object <- calculate_pca_sc(sc_object, no_pcs = 10L, .verbose = FALSE)
+sc_object <- find_neighbours_sc(sc_object, .verbose = FALSE)
+
+get_sc_cache_status(sc_object)
+```
+
+The `from` column is what makes this more than a cell counter. The kNN records
+the id of the PCA it was built on, and the sNN records the kNN. So watch what
+happens if we re-run the PCA on the **same** cells, just with fewer components,
+and don't touch the neighbours:
+
+```{r}
+#| label: stale chain
+sc_object <- calculate_pca_sc(sc_object, no_pcs = 5L, .verbose = FALSE)
+
+get_sc_cache_status(sc_object)
+```
+
+The PCA is fine. The kNN is stale because the PCA it points at no longer exists,
+and the sNN is stale through the kNN, even though its own cell set never moved.
+A row-count check would have waved both of those through. The print says so too:
+
+```{r}
+#| label: print with stale artefacts
+sc_object
+```
+
+Reading a stale artefact warns. Anything that hands cached indices to Rust or
+writes a result back onto the object, `find_neighbours_sc()`,
+`find_clusters_sc()`, the meta cell generators, PAGA, Palantir, errors outright
+rather than computing nonsense:
+
+```{r}
+#| label: the hard tier
+#| error: true
+find_clusters_sc(sc_object)
+```
+
+Regenerating the neighbours puts the chain back together:
+
+```{r}
+#| label: repaired
+sc_object <- find_neighbours_sc(sc_object, .verbose = FALSE)
+
+get_sc_cache_status(sc_object)
+```
+
+`set_cells_to_keep()` warns about exactly the same thing, listing what it just
+invalidated. If you want everything to be an error, set
+`options(bixverse.cache_check = "error")`; `"none"` turns the lot off, at your
+own risk.
+
+Two things it deliberately does not do. Artefacts computed before this existed
+carry no stamp, so they report as `unknown` and pass, because nothing is known
+about them either way. And the stamp tracks provenance, not parameters: a kNN
+built on the first 5 PCs and one built on all 15 of the same PCA look identical
+to it. Neither of those can produce an index mismatch, which is what this is
+here to stop.
+
+If you want to go back to a clean slate, `reset_cells_to_keep()` restores every
+cell in the binary file and wipes the cache. It asks first, because a PCA that
+took forty minutes is not the package's to bin, and in a script you have to pass
+`force = TRUE` since there is nobody there to ask:
+
+```{r}
+#| label: reset
+#| eval: false
+sc_object <- reset_cells_to_keep(sc_object, force = TRUE)
+```
+
+Filtering never deleted anything, it only ever flipped a `to_keep` flag in the
+DuckDB, so nothing is lost by resetting. The cache has to go though: a PCA
+computed on 682 cells does not describe 929 of them.
+
+If you understand the concept shown above, you are good to go to analyse
+millions of cells on small compute without having 100's of GB of memory
 available. Let's just talk also about the 2nd big foot gun: **the counts**.
 
 #### Understanding count retrieval
