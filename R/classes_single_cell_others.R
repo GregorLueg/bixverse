@@ -3106,3 +3106,446 @@ get_params.StabilisedNmfResult <- function(
   }
   to_ret
 }
+
+## trajectory results ----------------------------------------------------------
+
+### palantir -------------------------------------------------------------------
+
+#' Helper function to generate the Palantir results
+#'
+#' @description
+#' Takes the raw Rust output of [bixverse::rs_palantir()] and maps every cell
+#' index back onto the cell names the kNN graph was built over.
+#'
+#' @param rs_res List. The raw return of [bixverse::rs_palantir()].
+#' @param used_cells Character vector. The cells the kNN graph was generated
+#' over, in kNN row order.
+#' @param modality String. The modality the kNN graph came from.
+#' @param terminal_labels Optional named character vector. The terminal states
+#' as the caller supplied them, i.e. lineage label to cell name. When given,
+#' the labels become the column names of `branch_probs` and the names of
+#' `terminal_states`. Detected terminal states have no labels to carry, so this
+#' is `NULL` for those runs.
+#'
+#' @return Generates the `PalantirRes` class.
+#'
+#' @export
+#'
+#' @keywords internal
+new_palantir_res <- function(
+  rs_res,
+  used_cells,
+  modality,
+  terminal_labels = NULL
+) {
+  # checks
+  checkmate::assertList(rs_res)
+  checkmate::assertNames(
+    names(rs_res),
+    must.include = c(
+      "pseudotime",
+      "entropy",
+      "branch_probs",
+      "terminal_states",
+      "waypoints",
+      "start_cell",
+      "multiscale"
+    )
+  )
+  checkmate::qassert(used_cells, "S+")
+  checkmate::qassert(modality, "S1")
+  checkmate::qassert(terminal_labels, c("S+", "0"))
+
+  # Rust hands back 0-indexed positions into used_cells
+  terminal_states <- used_cells[rs_res$terminal_states + 1L]
+  waypoints <- used_cells[rs_res$waypoints + 1L]
+  start_cell <- used_cells[rs_res$start_cell + 1L]
+
+  # the terminal states come back sorted, so the caller's labels are carried
+  # over by cell name rather than by position
+  if (!is.null(names(terminal_labels))) {
+    labels <- names(terminal_labels)[match(terminal_states, terminal_labels)]
+    names(terminal_states) <- ifelse(
+      is.na(labels),
+      terminal_states,
+      labels
+    )
+  }
+
+  pseudotime <- data.table::data.table(
+    cell_id = used_cells,
+    pseudotime = rs_res$pseudotime,
+    entropy = rs_res$entropy
+  )
+
+  branch_probs <- rs_res$branch_probs
+  dimnames(branch_probs) <- list(
+    used_cells,
+    names(terminal_states) %||% terminal_states
+  )
+
+  multiscale <- rs_res$multiscale
+  dimnames(multiscale) <- list(
+    used_cells,
+    sprintf("MS_%i", seq_len(ncol(multiscale)))
+  )
+
+  palantir_res <- list(
+    pseudotime = pseudotime,
+    branch_probs = branch_probs,
+    terminal_states = terminal_states,
+    waypoints = waypoints,
+    start_cell = start_cell,
+    multiscale = multiscale,
+    run_info = list(
+      iterations = rs_res$iterations,
+      converged = rs_res$converged,
+      eigen_converged = rs_res$eigen_converged,
+      eigen_residual = rs_res$eigen_residual,
+      repair_edges = rs_res$repair_edges,
+      stranded_waypoints = rs_res$stranded_waypoints,
+      n_waypoints = length(waypoints),
+      modality = modality
+    )
+  )
+
+  class(palantir_res) <- "PalantirRes"
+
+  return(palantir_res)
+}
+
+#### primitives ----------------------------------------------------------------
+
+#' @export
+print.PalantirRes <- function(x, ...) {
+  info <- x[["run_info"]]
+  cat(
+    sprintf(
+      "PalantirRes: %i cells, %i terminal %s (%s modality)\n",
+      nrow(x$pseudotime),
+      length(x$terminal_states),
+      if (length(x$terminal_states) == 1L) "state" else "states",
+      info$modality
+    ),
+    sprintf(
+      "  Start cell: %s | waypoints: %i\n",
+      x$start_cell,
+      info$n_waypoints
+    ),
+    sprintf(
+      "  Converged: %s (%i iterations)\n",
+      info$converged,
+      info$iterations
+    ),
+    sprintf(
+      "  Repair edges: %i, stranded waypoints: %i\n",
+      info$repair_edges,
+      info$stranded_waypoints
+    ),
+    sep = ""
+  )
+
+  if (info$repair_edges > 0) {
+    cat("  Note: the kNN graph was disconnected. Consider a larger knn.\n")
+  }
+
+  if (!isTRUE(info$eigen_converged)) {
+    cat(sprintf(
+      paste(
+        "  Note: the diffusion eigensolve did not converge (residual %.2e).",
+        "\n         The embedding is under-resolved, raise lanczos_max_restarts.\n"
+      ),
+      info$eigen_residual
+    ))
+  }
+
+  invisible(x)
+}
+
+### paga -----------------------------------------------------------------------
+
+#' Helper function to generate the PAGA results
+#'
+#' @description
+#' Takes the raw Rust output of [bixverse::rs_paga()] and transforms the two
+#' abstracted graphs into sparse matrices with the cluster levels as dimnames.
+#'
+#' @param rs_res List. The raw return of [bixverse::rs_paga()].
+#' @param cluster_levels Character vector. The cluster levels, in the order the
+#' 0-indexed partition labels referred to.
+#' @param cluster_col String. The obs column the clustering came from.
+#' @param modality String. The modality the kNN graph came from.
+#'
+#' @return Generates the `PagaRes` class.
+#'
+#' @export
+#'
+#' @keywords internal
+new_paga_res <- function(rs_res, cluster_levels, cluster_col, modality) {
+  # checks
+  checkmate::assertList(rs_res)
+  checkmate::assertNames(
+    names(rs_res),
+    must.include = c("connectivities", "connectivities_tree", "sizes")
+  )
+  checkmate::qassert(cluster_levels, "S+")
+  checkmate::qassert(cluster_col, "S1")
+  checkmate::qassert(modality, "S1")
+
+  connectivities <- sparse_list_to_mat(rs_res$connectivities)
+  connectivities_tree <- sparse_list_to_mat(rs_res$connectivities_tree)
+
+  dimnames(connectivities) <- dimnames(connectivities_tree) <- list(
+    cluster_levels,
+    cluster_levels
+  )
+
+  paga_res <- list(
+    connectivities = connectivities,
+    connectivities_tree = connectivities_tree,
+    sizes = data.table::data.table(
+      cluster = cluster_levels,
+      n_cells = rs_res$sizes
+    ),
+    params = list(
+      cluster_col = cluster_col,
+      modality = modality
+    )
+  )
+
+  class(paga_res) <- "PagaRes"
+
+  return(paga_res)
+}
+
+#### primitives ----------------------------------------------------------------
+
+#' @export
+print.PagaRes <- function(x, ...) {
+  # both graphs are stored symmetrically, hence the halving
+  cat(
+    sprintf(
+      "PagaRes: %i clusters, %i cells (%s modality)\n",
+      nrow(x$sizes),
+      sum(x$sizes$n_cells),
+      x$params$modality
+    ),
+    sprintf("  Clustering: %s\n", x$params$cluster_col),
+    sprintf("  Abstracted edges: %.0f\n", length(x$connectivities@x) / 2),
+    sprintf(
+      "  Spanning forest edges: %.0f\n",
+      length(x$connectivities_tree@x) / 2
+    ),
+    sep = ""
+  )
+  invisible(x)
+}
+
+### magic ----------------------------------------------------------------------
+
+#' Helper function to generate the MAGIC imputed layer
+#'
+#' @description
+#' Wraps the dense matrix [bixverse::rs_magic_impute()] returns. This is the
+#' payload [bixverse::run_magic_sc()] writes into the cache, not a free
+#' standing result, so it is read back with [bixverse::get_magic()].
+#'
+#' @param imputed Numeric matrix of cells x genes with the imputed counts.
+#' Needs both dimnames set.
+#' @param magic_params List. The parameters the run used, see
+#' [bixverse::params_sc_magic()].
+#' @param modality String. The modality of the kNN graph that did the
+#' smoothing. The values themselves are always RNA.
+#'
+#' @return Generates the `ScMagic` class.
+#'
+#' @export
+#'
+#' @keywords internal
+new_sc_magic <- function(imputed, magic_params, modality) {
+  # checks
+  checkmate::assertMatrix(
+    imputed,
+    mode = "numeric",
+    row.names = "unique",
+    col.names = "unique"
+  )
+  assertScMagicParams(magic_params)
+  checkmate::qassert(modality, "S1")
+
+  sc_magic <- list(
+    data = imputed,
+    features = colnames(imputed),
+    params = magic_params,
+    modality = modality
+  )
+
+  class(sc_magic) <- "ScMagic"
+
+  return(sc_magic)
+}
+
+#### primitives ----------------------------------------------------------------
+
+#' @export
+print.ScMagic <- function(x, ...) {
+  features <- x[["features"]]
+  shown <- if (length(features) > 8L) {
+    paste0(paste(features[1:8], collapse = ", "), ", ...")
+  } else {
+    paste(features, collapse = ", ")
+  }
+
+  cat(
+    sprintf(
+      "ScMagic: %i cells x %i genes (%s graph)\n",
+      nrow(x$data),
+      length(features),
+      x$modality
+    ),
+    sprintf(
+      "  Steps: %i | layer: %s | clip: %s\n",
+      x$params$n_steps,
+      x$params$layer,
+      format(x$params$clip_threshold)
+    ),
+    sprintf("  Genes: %s\n", shown),
+    sep = ""
+  )
+
+  if (identical(x$params$n_steps, 0L)) {
+    cat("  Note: n_steps = 0, these are the un-imputed values.\n")
+  }
+
+  invisible(x)
+}
+
+### gene trends ----------------------------------------------------------------
+
+#' Helper function to generate the gene trend results
+#'
+#' @description
+#' Takes the raw Rust output of [bixverse::rs_gene_trends()] and melts the
+#' per-branch grid matrices into one long table, mapping the 0-indexed branch
+#' cells back onto cell names.
+#'
+#' @param rs_res List. The raw return of [bixverse::rs_gene_trends()].
+#' @param features Character vector. The genes that were fitted, in column
+#' order of the expression matrix.
+#' @param used_cells Character vector. The cells the fit ran over, in row order
+#' of the expression matrix.
+#' @param branches Character vector. Branch names, in column order of the fate
+#' probability matrix.
+#' @param params List. The parameters the run used.
+#'
+#' @return Generates the `GeneTrendsRes` class.
+#'
+#' @export
+#'
+#' @keywords internal
+new_gene_trends_res <- function(
+  rs_res,
+  features,
+  used_cells,
+  branches,
+  params
+) {
+  # checks
+  checkmate::assertList(rs_res)
+  checkmate::assertNames(
+    names(rs_res),
+    must.include = c(
+      "trends",
+      "grids",
+      "branch_cells",
+      "n_cells",
+      "jitter_used"
+    )
+  )
+  checkmate::qassert(features, "S+")
+  checkmate::qassert(used_cells, "S+")
+  checkmate::qassert(branches, "S+")
+  checkmate::assertList(params)
+
+  # each trend matrix is grid points x genes, and `as.vector` unrolls it column
+  # major, i.e. the whole grid of gene 1, then gene 2, and so on
+  trends <- data.table::rbindlist(purrr::imap(rs_res$trends, \(mat, i) {
+    data.table::data.table(
+      branch = factor(branches[i], levels = branches),
+      pseudotime = rep(rs_res$grids[[i]], times = length(features)),
+      gene = factor(rep(features, each = nrow(mat)), levels = features),
+      expression = as.vector(mat)
+    )
+  }))
+
+  # Rust hands back 0-indexed positions into used_cells
+  branch_cells <- purrr::map(rs_res$branch_cells, \(idx) used_cells[idx + 1L])
+  names(branch_cells) <- branches
+
+  n_cells <- as.integer(rs_res$n_cells)
+  names(n_cells) <- branches
+  jitter_used <- rs_res$jitter_used
+  names(jitter_used) <- branches
+
+  gene_trends_res <- list(
+    trends = trends,
+    branch_cells = branch_cells,
+    branches = branches,
+    params = params,
+    run_info = list(
+      n_cells = n_cells,
+      jitter_used = jitter_used,
+      resolution = nrow(rs_res$trends[[1]])
+    )
+  )
+
+  class(gene_trends_res) <- "GeneTrendsRes"
+
+  return(gene_trends_res)
+}
+
+#### primitives ----------------------------------------------------------------
+
+#' @export
+print.GeneTrendsRes <- function(x, ...) {
+  info <- x[["run_info"]]
+
+  cat(
+    sprintf(
+      "GeneTrendsRes: %i %s, %i genes, %i grid points\n",
+      length(x$branches),
+      if (length(x$branches) == 1L) "branch" else "branches",
+      nlevels(x$trends$gene),
+      info$resolution
+    ),
+    sprintf(
+      "  Cells per branch: %s\n",
+      paste(
+        sprintf("%s (%i)", x$branches, info$n_cells),
+        collapse = ", "
+      )
+    ),
+    sprintf(
+      "  Source: %s\n",
+      if (isTRUE(x$params$use_magic)) {
+        "MAGIC imputed counts"
+      } else {
+        "normalised counts"
+      }
+    ),
+    sprintf(
+      "  Length scale: %s | sigma: %s\n",
+      format(x$params$gene_trend_params$length_scale),
+      format(x$params$gene_trend_params$sigma)
+    ),
+    sep = ""
+  )
+
+  if (any(info$jitter_used > x$params$gene_trend_params$jitter)) {
+    cat(
+      "  Note: the Cholesky needed extra jitter on at least one branch.\n"
+    )
+  }
+
+  invisible(x)
+}

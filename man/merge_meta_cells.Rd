@@ -30,9 +30,12 @@ identifier. If \code{FALSE}, duplicated identifiers across inputs are an error.}
 \item{.verbose}{Boolean. Controls verbosity of the function.}
 }
 \value{
-A single \code{MetaCells} object with all meta cells of the inputs. The
-observation table gains a \code{source_id} column; \code{original_cell_idx} stays in
-the index space of its own source.
+A single \code{MetaCells} object with all meta cells of the inputs and
+\code{is_merged} set to \code{TRUE}. The observation table gains a \code{source_id} column;
+\code{original_cell_idx} stays in the index space of its own source, which is why
+methods that resolve it against the source single cell data
+(\code{\link[=calc_diffusion_coordinates]{calc_diffusion_coordinates()}}, \code{\link[=calc_manifold_metrics]{calc_manifold_metrics()}}) refuse to run on
+the result. \code{other_data} holds the source identifiers under \code{sources}.
 }
 \description{
 Row-binds several \code{\link[=MetaCells]{MetaCells()}} objects into a single one. The

@@ -14,10 +14,11 @@
 #'
 #' @param object `MetaCells` class.
 #' @param original_cell_type Character vector. The original cell type
-#' annotations, in the row order of the full (unfiltered) obs table of the
-#' object the meta cells came from, i.e. `get_sc_obs(x)$<column>`. Meta cell
-#' memberships are stored as 1-indexed positions in that space, so a vector
-#' restricted to the QC-passing cells will silently give wrong purities.
+#' annotations of the object the meta cells came from. Either in the row order
+#' of its full (unfiltered) obs table, i.e. `get_sc_obs(x)$<column>`, or of the
+#' QC-passing cells only, i.e. `get_sc_obs(x, filtered = TRUE)$<column>`. Which
+#' one you passed is inferred from the length, so a vector matching neither is
+#' an error rather than a silently wrong purity.
 #'
 #' @returns The `MetaCells` with an added columns to the observation table
 #' with the purity measures
@@ -49,7 +50,7 @@ S7::method(calc_meta_cell_purity, MetaCells) <- function(
   n_cells <- assignment$n_cells
 
   # a merged object only has one obs space if all its sources shared a parent
-  if (isTRUE(S7::prop(object, "other_data")$merged)) {
+  if (isTRUE(S7::prop(object, "is_merged"))) {
     source_cells <- unique(purrr::map_dbl(assignment$per_source, "n_cells"))
     if (length(source_cells) > 1L) {
       stop(paste(
@@ -60,20 +61,30 @@ S7::method(calc_meta_cell_purity, MetaCells) <- function(
     }
   }
 
-  if (length(original_cell_type) != n_cells) {
+  # a full-obs vector indexes straight, a QC-passing one needs the memberships
+  # translated into the filtered row space
+  n_kept <- length(assignment$cells_to_keep)
+
+  mc_rows <- if (length(original_cell_type) == n_cells) {
+    S7::prop(object, "obs_table")$original_cell_idx
+  } else if (n_kept > 0L && length(original_cell_type) == n_kept) {
+    .mc_artefact_rows(object, n_kept)
+  } else {
     stop(sprintf(
       paste(
-        "`original_cell_type` has %i entries but the meta cells were built",
-        "over %i original cells. Pass the unfiltered obs column."
+        "`original_cell_type` has %i entries but the meta cells were built over",
+        "%i original cells%s. Pass the unfiltered obs column, or the",
+        "QC-passing one."
       ),
       length(original_cell_type),
-      n_cells
+      n_cells,
+      if (n_kept > 0L) sprintf(" of which %i pass QC", n_kept) else ""
     ))
   }
 
   # calculate purity
   purity <- purrr::map_dbl(
-    object[[]]$original_cell_idx,
+    mc_rows,
     function(idx) {
       types <- original_cell_type[idx]
       max(table(types)) / length(types)
@@ -147,6 +158,25 @@ S7::method(calc_diffusion_coordinates, MetaCells) <- function(
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
+  # every source keeps `original_cell_idx` in its own index space, so a single
+  # kNN over one source's cells cannot be resolved against the merged memberships
+  if (isTRUE(S7::prop(object, "is_merged"))) {
+    warning(
+      paste(
+        "The meta cells were merged, so `original_cell_idx` cannot be resolved",
+        "against a single kNN graph.",
+        "Run calc_diffusion_coordinates() per source before merging.",
+        "Returning object as is."
+      )
+    )
+
+    return(object)
+  }
+
+  # the kNN rows cover the QC-passing cells, the memberships index the full obs
+  # space. Resolve before the density computation so a mismatch fails fast.
+  mc_rows <- .mc_artefact_rows(object, length(knn_data$used_cells))
+
   # deal with knn params here
   knn_params <- params_knn_defaults()
   knn_params$k <- 1L
@@ -161,9 +191,9 @@ S7::method(calc_diffusion_coordinates, MetaCells) <- function(
   )
 
   density_region <- purrr::map_chr(
-    object[[]]$original_cell_idx,
-    function(idx) {
-      region <- res$regions[idx]
+    mc_rows,
+    function(rows) {
+      region <- res$regions[rows]
       names(which.max(table(region)))
     }
   )
@@ -215,6 +245,22 @@ S7::method(calc_manifold_metrics, MetaCells) <- function(
   # checks
   checkmate::assertTRUE(S7::S7_inherits(object, MetaCells))
 
+  # the diffusion map lives in the source's cell index space, which a merged
+  # object no longer has. Say so, rather than pointing at a function that will
+  # refuse as well.
+  if (isTRUE(S7::prop(object, "is_merged"))) {
+    warning(
+      paste(
+        "The meta cells were merged, so there is no single diffusion map to",
+        "resolve `original_cell_idx` against.",
+        "Run calc_manifold_metrics() per source before merging.",
+        "Returning object as is."
+      )
+    )
+
+    return(object)
+  }
+
   dcs <- S7::prop(object, "other_data")[["dcs"]]
 
   if (is.null(dcs)) {
@@ -229,16 +275,20 @@ S7::method(calc_manifold_metrics, MetaCells) <- function(
     return(object)
   }
 
+  # the diffusion map has one row per QC-passing cell, the memberships index the
+  # full obs space. Rust shifts these to 0-based itself, so hand it 1-based rows.
+  mc_rows <- .mc_artefact_rows(object, nrow(dcs))
+
   # calculate compactness
   compactness <- rs_metacell_compactness(
     dc = dcs,
-    object[[]]$original_cell_idx
+    mc_rows
   )
 
   # separation
   separation <- rs_metacell_separation(
     dc = dcs,
-    object[[]]$original_cell_idx
+    mc_rows
   )
 
   object[["compactness"]] <- compactness
@@ -294,7 +344,11 @@ S7::method(find_hvg_sc, MetaCells) <- function(
     )
   )
 
-  object@var_table[, names(res) := res]
+  # `:=` on the property alone silently no-ops once the data.table's
+  # over-allocation is gone, e.g. after a saveRDS/readRDS round trip
+  var_table <- data.table::copy(S7::prop(object, "var_table"))
+  var_table[, names(res) := res]
+  S7::prop(object, "var_table") <- var_table
 
   hvg <- switch(
     hvg_params$method,

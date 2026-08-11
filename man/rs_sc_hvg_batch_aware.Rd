@@ -24,12 +24,16 @@ rs_sc_hvg_batch_aware(
 \code{c("vst", "meanvarbin", "dispersion")}.}
 
 \item{cell_indices}{Integer positions (0-indexed!) that defines the cells
-to keep.}
+to keep. Must be unique and within the store; duplicates or out-of-range
+positions raise an error.}
 
 \item{batch_labels}{Integer vector (0-indexed!) defining batch membership
-for each cell. Must be same length as \code{cell_indices}.}
+for each cell. Must be the same length as \code{cell_indices} and densely cover
+\code{0:(n_batches - 1)}; a length mismatch or an empty batch raises an error.
+\code{as.integer(factor(x)) - 1L} always satisfies this.}
 
-\item{loess_span}{Numeric. The span parameter for the loess function.}
+\item{loess_span}{Numeric. The span parameter for the loess function. Must
+be within \verb{(0, 1]}.}
 
 \item{binning}{String. The binning strategy for the \code{meanvarbin} method. One
 of \code{c("equal_width", "equal_frequency")}.}

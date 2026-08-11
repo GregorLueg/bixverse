@@ -12,7 +12,7 @@ params_scdblfinder(
   cluster_iters = 10L,
   fast_cluster = FALSE,
   n_iterations = 3L,
-  n_trees = 200L,
+  gbm_n_trees = 200L,
   max_depth = 4L,
   learning_rate = 0.3,
   min_samples_leaf = 20L,
@@ -54,7 +54,7 @@ proximity.}
 \item{n_iterations}{Integer. Number of refinement iterations. Typically 2-3.
 Defaults to \code{3L}.}
 
-\item{n_trees}{Integer. Maximum number of boosting rounds for the GBM
+\item{gbm_n_trees}{Integer. Maximum number of boosting rounds for the GBM
 classifier. Defaults to \code{200L}.}
 
 \item{max_depth}{Integer. Maximum tree depth. Shallow trees (3-5) work best.

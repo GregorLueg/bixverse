@@ -4,22 +4,32 @@
 \alias{.merge_mc_counts}
 \title{Row-bind the count matrices of meta cell objects}
 \usage{
-.merge_mc_counts(inputs, gene_maps, meta_cell_ids, gene_ids)
+.merge_mc_counts(inputs, gene_maps, n_genes)
 }
 \arguments{
 \item{inputs}{List of \code{MetaCells} objects.}
 
 \item{gene_maps}{List of integer vectors mapping each input's gene positions
-onto the target gene space. \code{NA} marks genes to drop.}
+onto the target gene space, 1-indexed. \code{NA} marks genes to drop.}
 
-\item{meta_cell_ids}{Character vector with the merged meta cell identifiers.}
-
-\item{gene_ids}{Character vector with the target gene identifiers.}
+\item{n_genes}{Integer. Number of genes in the target gene space.}
 }
 \value{
-A list with the merged \code{raw} and \code{norm} CSR matrices.
+A list in the shape \code{get_meta_cell_matrices()} consumes:
+\itemize{
+\item indptr - Integer vector. 0-indexed CSR row pointer.
+\item indices - Integer vector. 0-indexed column indices.
+\item raw_counts - Numeric vector. Raw counts.
+\item norm_counts - Numeric vector. Normalised counts.
+\item nrow - Integer. Number of merged meta cells.
+\item ncol - Integer. Number of genes.
+}
 }
 \description{
-Row-bind the count matrices of meta cell objects
+The inputs are already CSR, so a row-bind is concatenation of their \verb{@p},
+\verb{@j} and \verb{@x} slots. No COO round-trip and no \code{Matrix::sparseMatrix(i, j, x)}
+call, which would sort and copy the whole index structure once per assay. The
+output vectors are allocated once off a counting pass, so peak memory is the
+result plus one input's scratch.
 }
 \keyword{internal}

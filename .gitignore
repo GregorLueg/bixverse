@@ -20,3 +20,6 @@ vendor.tar.xz
 # files
 scratch.R
 scratch_*.R
+
+# Claude
+.claude/*

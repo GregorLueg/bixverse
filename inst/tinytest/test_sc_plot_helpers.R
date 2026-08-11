@@ -220,3 +220,88 @@ expect_true(
   })),
   info = "extract_gene_expression clipped values within [-clip, clip]"
 )
+
+## unmatched features ----------------------------------------------------------
+
+# `get_gene_indices()` drops what it cannot match. Anything labelling a Rust
+# result by position has to follow that, or the labels slide off the values.
+
+mixed_features <- c(test_features[1:2], "not_a_gene", test_features[3])
+
+expect_warning(
+  current = extract_gene_expression(
+    object = sc_object,
+    features = mixed_features
+  ),
+  info = "extract_gene_expression warns about features it cannot match"
+)
+
+expr_dt_mixed <- suppressWarnings(extract_gene_expression(
+  object = sc_object,
+  features = mixed_features
+))
+
+expect_equal(
+  current = setdiff(names(expr_dt_mixed), "cell_id"),
+  target = test_features[c(1, 2, 3)],
+  info = "extract_gene_expression only names the columns it actually got"
+)
+
+expr_dt_clean <- extract_gene_expression(
+  object = sc_object,
+  features = test_features[c(1, 2, 3)]
+)
+
+expect_equal(
+  current = expr_dt_mixed,
+  target = expr_dt_clean,
+  info = "extract_gene_expression drops the unmatched gene without shifting"
+)
+
+dot_dt_mixed <- suppressWarnings(extract_dot_plot_data(
+  object = sc_object,
+  features = mixed_features,
+  grouping_variable = "cell_grp",
+  scale_exp = TRUE
+))
+
+expect_equal(
+  current = levels(dot_dt_mixed$gene),
+  target = test_features[c(1, 2, 3)],
+  info = "extract_dot_plot_data only labels the genes it actually got"
+)
+
+dot_dt_clean <- extract_dot_plot_data(
+  object = sc_object,
+  features = test_features[c(1, 2, 3)],
+  grouping_variable = "cell_grp",
+  scale_exp = TRUE
+)
+
+expect_equal(
+  current = dot_dt_mixed,
+  target = dot_dt_clean,
+  info = "extract_dot_plot_data drops the unmatched gene without shifting"
+)
+
+# two dropped out of four used to recycle cleanly and mislabel in silence
+two_missing <- c(test_features[1], "nope_1", test_features[2], "nope_2")
+
+dot_dt_two <- suppressWarnings(extract_dot_plot_data(
+  object = sc_object,
+  features = two_missing,
+  grouping_variable = "cell_grp",
+  scale_exp = TRUE
+))
+
+expect_equal(
+  current = levels(dot_dt_two$gene),
+  target = test_features[1:2],
+  info = "extract_dot_plot_data survives an evenly recycling drop"
+)
+
+expect_equal(
+  current = nrow(dot_dt_two),
+  target = 2L * n_clusters,
+  info = "extract_dot_plot_data returns one row per surviving gene and group"
+)

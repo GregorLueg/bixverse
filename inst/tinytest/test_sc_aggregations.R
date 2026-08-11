@@ -652,17 +652,21 @@ expect_equal(
   info = "hdwgcna - cells_to_use path reports the full count file size"
 )
 
-### purity guards against the wrong label vector -------------------------------
+### purity resolves either label vector ----------------------------------------
 
-expect_error(
+# The source `cells_to_keep` is recorded on the object, so a QC-passing label
+# vector is resolved into the filtered row space instead of mis-attributing cell
+# types. Both spaces address the same cells, so the purities must agree.
+expect_equal(
   current = calc_meta_cell_purity(
     gap_hdwgcna,
     original_cell_type = unlist(gap_object[["cell_grp"]])
-  ),
-  info = paste(
-    "calc_meta_cell_purity rejects a filtered label vector, which would",
-    "otherwise silently mis-attribute cell types"
-  )
+  )[["mc_purity"]]$mc_purity,
+  target = calc_meta_cell_purity(
+    gap_hdwgcna,
+    original_cell_type = as.character(get_sc_obs(gap_object)$cell_grp)
+  )[["mc_purity"]]$mc_purity,
+  info = "calc_meta_cell_purity agrees on the filtered and unfiltered vectors"
 )
 
 expect_silent(
@@ -671,6 +675,14 @@ expect_silent(
     original_cell_type = as.character(get_sc_obs(gap_object)$cell_grp)
   ),
   info = "calc_meta_cell_purity accepts the unfiltered label vector"
+)
+
+expect_error(
+  current = calc_meta_cell_purity(
+    gap_hdwgcna,
+    original_cell_type = as.character(get_sc_obs(gap_object)$cell_grp)[1:5]
+  ),
+  info = "calc_meta_cell_purity rejects a vector matching neither index space"
 )
 
 ## meta cells on a subset -------------------------------------------------------

@@ -295,5 +295,24 @@ S7::method(generate_wnn_graph_sc, SingleCellsMultiModal) <- function(
   )
   S7::prop(object, "other_data") <- other_data
 
+  # the wnn slot is built by hand rather than through the setters, so stamp
+  # both payloads here. the kNN is fused from two embeddings living in two
+  # different caches, hence the two parents.
+  object <- .stamp_artefact(
+    object,
+    artefact = "knn",
+    modality = "wnn",
+    from = c(
+      sprintf("%s:%s", modality_1, embd_to_use_1),
+      sprintf("%s:%s", modality_2, embd_to_use_2)
+    )
+  )
+  object <- .stamp_artefact(
+    object,
+    artefact = "snn",
+    modality = "wnn",
+    from = "wnn:knn"
+  )
+
   return(object)
 }

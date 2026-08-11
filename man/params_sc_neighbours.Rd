@@ -18,7 +18,13 @@ only neighbours.}
 
 \item{pruning}{Numeric. Weights below this threshold will be set to 0 in
 the generation of the sNN graph. Seurat uses for example \code{1/15} with
-\code{k = 20}. As the default k is set to 15, we set it to \code{1/12}.}
+\code{k = 20}. As the default k is set to 15, we set it to \code{1/12}.
+Track this against \code{k} rather than leaving it: the threshold is a share of
+the neighbourhood, so the same value prunes far harder at a larger \code{k}.
+Over-pruning fails quietly, in that you still get a clustering, but cells
+left with too few shared neighbours drop out as singleton communities, which
+then show up downstream as one-cell clusters with inflated
+\code{\link[=run_paga_sc]{run_paga_sc()}} connectivities.}
 
 \item{snn_similarity}{String. One of \code{c("rank", "jaccard")}. The Jaccard
 similarity calculates the Jaccard between the neighbours, whereas the rank

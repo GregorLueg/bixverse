@@ -403,7 +403,7 @@ params_boost <- function(
 #' proximity.
 #' @param n_iterations Integer. Number of refinement iterations. Typically 2-3.
 #' Defaults to `3L`.
-#' @param n_trees Integer. Maximum number of boosting rounds for the GBM
+#' @param gbm_n_trees Integer. Maximum number of boosting rounds for the GBM
 #' classifier. Defaults to `200L`.
 #' @param max_depth Integer. Maximum tree depth. Shallow trees (3-5) work best.
 #' Defaults to `4L`.
@@ -450,7 +450,7 @@ params_scdblfinder <- function(
   cluster_iters = 10L,
   fast_cluster = FALSE,
   n_iterations = 3L,
-  n_trees = 200L,
+  gbm_n_trees = 200L,
   max_depth = 4L,
   learning_rate = 0.3,
   min_samples_leaf = 20L,
@@ -475,7 +475,7 @@ params_scdblfinder <- function(
   checkmate::qassert(cluster_iters, "I1[1,)")
   checkmate::qassert(n_iterations, "I1[1,)")
   checkmate::qassert(fast_cluster, "B1")
-  checkmate::qassert(n_trees, "I1[1,)")
+  checkmate::qassert(gbm_n_trees, "I1[1,)")
   checkmate::qassert(max_depth, "I1[1,)")
   checkmate::qassert(learning_rate, "N1(0,)")
   checkmate::qassert(min_samples_leaf, "I1[1,)")
@@ -508,7 +508,7 @@ params_scdblfinder <- function(
     cluster_iters = cluster_iters,
     fast_cluster = fast_cluster,
     n_iterations = n_iterations,
-    n_trees = n_trees,
+    gbm_n_trees = gbm_n_trees,
     max_depth = max_depth,
     learning_rate = learning_rate,
     min_samples_leaf = min_samples_leaf,
@@ -537,6 +537,12 @@ params_scdblfinder <- function(
 #' @param pruning Numeric. Weights below this threshold will be set to 0 in
 #' the generation of the sNN graph. Seurat uses for example `1/15` with
 #' `k = 20`. As the default k is set to 15, we set it to `1/12`.
+#' Track this against `k` rather than leaving it: the threshold is a share of
+#' the neighbourhood, so the same value prunes far harder at a larger `k`.
+#' Over-pruning fails quietly, in that you still get a clustering, but cells
+#' left with too few shared neighbours drop out as singleton communities, which
+#' then show up downstream as one-cell clusters with inflated
+#' [bixverse::run_paga_sc()] connectivities.
 #' @param snn_similarity String. One of `c("rank", "jaccard")`. The Jaccard
 #' similarity calculates the Jaccard between the neighbours, whereas the rank
 #' method calculates edge weights based on the ranking of shared neighbours.
@@ -1814,5 +1820,274 @@ params_sc_wnn <- function(
       sigma_floor = sigma_floor
     ),
     knn_params
+  )
+}
+
+## trajectory ------------------------------------------------------------------
+
+### palantir -------------------------------------------------------------------
+
+#' Wrapper function for Palantir parameters
+#'
+#' @description
+#' Parameters controlling the Palantir trajectory inference. The kNN graph you
+#' hand to [bixverse::run_palantir_sc()] feeds the diffusion kernel. The
+#' geodesics are measured over a second kNN graph that Palantir builds
+#' internally on the multiscale space, and `knn` is what controls that one. It
+#' is a different knob from `k` in the kNN parameter block, which sizes the
+#' backend index. Palantir overrides `k` and `ann_dist` for its internal search,
+#' so only `knn_method` and the backend tuning parameters have an effect.
+#'
+#' @param n_dcs Integer. Diffusion components to extract before the multiscale
+#' scaling. Defaults to `10L`.
+#' @param n_eigs Optional integer. Eigenvectors to retain, not components: the
+#' trivial leading eigenvector is counted here and then dropped, so `3L` leaves
+#' two multiscale components. If `NULL`, the count is picked from the largest
+#' eigengap, as the reference does.
+#' @param knn Integer. Neighbours for the geodesic graph over the multiscale
+#' space, in the reference's self-inclusive convention. Defaults to `30L`.
+#' @param num_waypoints Integer. Target waypoint count for the max-min sampler.
+#' Defaults to `1200L`.
+#' @param scale_components Boolean. Min-max scale each multiscale component to
+#' `[0, 1]` before any distance is taken. Defaults to `TRUE`.
+#' @param use_early_cell_as_start Boolean. Use the provided early cell directly
+#' rather than snapping it to the nearest diffusion-map boundary cell. Defaults
+#' to `TRUE`, which deviates from the reference: the boundary candidate set is
+#' at most two cells per multiscale component, so on a branching manifold the
+#' snap can move a root cell onto a branch tip and run the trajectory backwards.
+#' @param max_iterations Integer. Iteration cap for the pseudotime refinement.
+#' Defaults to `25L`.
+#' @param branch_prob_threshold Numeric. Fate probabilities below this are
+#' zeroed. Defaults to `0.01`.
+#' @param lanczos_basis_size Optional integer. Krylov basis vectors held at once
+#' during the diffusion-map eigendecomposition. If `NULL`, derived from the
+#' requested component count.
+#' @param lanczos_max_restarts Integer. Maximum restart cycles for the Lanczos
+#' solver. Defaults to `16L`.
+#' @param lanczos_tol Numeric. Relative residual tolerance for the Lanczos
+#' solver. Defaults to `1e-8`.
+#' @param knn_params List. Optional overrides for the kNN parameters of the
+#' internal multiscale search. See [bixverse::params_knn_defaults()] for
+#' available parameters: `k`, `knn_method`, `ann_dist`, `search_budget`,
+#' `n_trees`, `delta`, `diversify_prob`, `ef_budget`, `m`, `ef_construction`,
+#' `ef_search`, `n_list` and `n_probe`.
+#'
+#' @returns A named flat list with all Palantir parameters.
+#'
+#' @export
+#'
+#' @references Setty, et al., Nat. Biotechnol., 2019.
+params_sc_palantir <- function(
+  n_dcs = 10L,
+  n_eigs = NULL,
+  knn = 30L,
+  num_waypoints = 1200L,
+  scale_components = TRUE,
+  use_early_cell_as_start = TRUE,
+  max_iterations = 25L,
+  branch_prob_threshold = 0.01,
+  lanczos_basis_size = NULL,
+  lanczos_max_restarts = 16L,
+  lanczos_tol = 1e-8,
+  knn_params = list()
+) {
+  # checks
+  checkmate::qassert(n_dcs, "I1[3,)")
+  checkmate::qassert(n_eigs, c("0", "I1[3,)"))
+  checkmate::qassert(knn, "I1[6,)")
+  checkmate::qassert(num_waypoints, "I1[1,)")
+  checkmate::qassert(scale_components, "B1")
+  checkmate::qassert(use_early_cell_as_start, "B1")
+  checkmate::qassert(max_iterations, "I1[2,)")
+  checkmate::qassert(branch_prob_threshold, "N1[0,1]")
+  checkmate::qassert(lanczos_basis_size, c("0", "I1[1,)"))
+  checkmate::qassert(lanczos_max_restarts, "I1[1,)")
+  checkmate::qassert(lanczos_tol, "N1(0,)")
+
+  knn_defaults <- modifyList(
+    params_knn_defaults(),
+    knn_params,
+    keep.null = TRUE
+  )
+
+  c(
+    list(
+      n_dcs = n_dcs,
+      n_eigs = n_eigs,
+      knn = knn,
+      num_waypoints = num_waypoints,
+      scale_components = scale_components,
+      use_early_cell_as_start = use_early_cell_as_start,
+      max_iterations = max_iterations,
+      branch_prob_threshold = branch_prob_threshold,
+      lanczos_basis_size = lanczos_basis_size,
+      lanczos_max_restarts = lanczos_max_restarts,
+      lanczos_tol = lanczos_tol
+    ),
+    knn_defaults
+  )
+}
+
+### magic ----------------------------------------------------------------------
+
+#' Wrapper function for MAGIC imputation parameters
+#'
+#' @description
+#' Parameters controlling the MAGIC imputation run by
+#' [bixverse::run_magic_sc()]. The defaults mirror the reference
+#' implementation.
+#'
+#' @param n_steps Integer. Diffusion steps applied to the counts. Defaults to
+#' `3L`. Zero is legal and hands back the un-imputed values, which is a cheap
+#' way to compare the two.
+#' @param clip_threshold Numeric. Imputed values below this are zeroed after
+#' the last step. Defaults to `0.01`.
+#' @param gene_batch_size Integer. Genes streamed off the binary store per
+#' block. Bounds the scratch memory and is clamped to the number of requested
+#' genes. Defaults to `1000L`.
+#' @param layer String. One of `c("norm", "raw")`. Which stored layer to
+#' impute. The operator preserves per-cell mass, so imputed values sit on the
+#' scale of whatever went in: imputing raw counts and imputing log-normalised
+#' counts are different operations rather than the same one rescaled. Defaults
+#' to `"norm"`.
+#' @param allow_large Boolean. Skip the output size guard. The dense output is
+#' capped at 1e9 elements, i.e. 4 GB of `f32`. Defaults to `FALSE`.
+#'
+#' @returns A named flat list with all MAGIC parameters.
+#'
+#' @export
+#'
+#' @references van Dijk, et al., Cell, 2018.
+params_sc_magic <- function(
+  n_steps = 3L,
+  clip_threshold = 0.01,
+  gene_batch_size = 1000L,
+  layer = c("norm", "raw"),
+  allow_large = FALSE
+) {
+  layer <- match.arg(layer)
+
+  # checks
+  checkmate::qassert(n_steps, "I1[0,)")
+  checkmate::qassert(clip_threshold, "N1[0,)")
+  checkmate::qassert(gene_batch_size, "I1[1,)")
+  checkmate::assertChoice(layer, c("norm", "raw"))
+  checkmate::qassert(allow_large, "B1")
+
+  list(
+    n_steps = n_steps,
+    clip_threshold = clip_threshold,
+    gene_batch_size = gene_batch_size,
+    layer = layer,
+    allow_large = allow_large
+  )
+}
+
+### gene trends ----------------------------------------------------------------
+
+#' Wrapper function for the branch cell selection parameters
+#'
+#' @description
+#' Parameters controlling which cells [bixverse::run_gene_trends_sc()] assigns
+#' to each branch. The threshold on a fate's probability is an expanding
+#' quantile over the pseudotime-sorted cells, made monotone with a cumulative
+#' maximum, so a fate's bar can only rise as differentiation proceeds. The
+#' defaults are the reference ones.
+#'
+#' @param q Numeric. Upper-tail quantile of the fate probability used as the
+#' threshold. Defaults to `0.01`.
+#' @param eps Numeric. Slack subtracted from the threshold before the
+#' comparison. Defaults to `0.01`.
+#' @param resolution Integer. Number of pseudotime buckets, capped at the cell
+#' count. Defaults to `500L`.
+#'
+#' @returns A named flat list with all branch selection parameters.
+#'
+#' @export
+#'
+#' @references Setty, et al., Nat. Biotechnol., 2019.
+params_sc_branch_selection <- function(
+  q = 0.01,
+  eps = 0.01,
+  resolution = 500L
+) {
+  # checks
+  checkmate::qassert(q, "N1[0,1]")
+  checkmate::qassert(eps, "N1[0,)")
+  checkmate::qassert(resolution, "I1[1,)")
+
+  list(
+    q = q,
+    eps = eps,
+    resolution = resolution
+  )
+}
+
+#' Wrapper function for gene trend parameters
+#'
+#' @description
+#' Parameters controlling the landmark Gaussian process that
+#' [bixverse::run_gene_trends_sc()] fits per branch. The kernel is a
+#' Matern-5/2 one and the prediction grid doubles as the landmark set.
+#'
+#' The defaults come from the reference and are prior-dominated. Palantir's
+#' pseudotime is min-max scaled to `[0, 1]`, so a `length_scale` of `1.0` spans
+#' the entire domain and a `sigma` of `1.0` sits at roughly the signal scale of
+#' log-normalised expression. The posterior will flatten genuine transient
+#' structure and resolve almost any gene into a smooth monotone or
+#' single-peaked curve. That is a presentation choice, not inference. Shorten
+#' `length_scale` before believing a bump.
+#'
+#' @param resolution Integer. Grid points per branch. Kept at the default even
+#' when a branch holds fewer cells, as the reference does. Defaults to `500L`.
+#' @param weighting String. One of `c("hard_mask", "fate_probability")`. With
+#' `"hard_mask"` every selected cell enters its branch's fit with equal weight,
+#' which is what the reference does. With `"fate_probability"` every cell
+#' enters every fit weighted by its fate probability, which is more defensible:
+#' a cell at 0.6 is not a member. Defaults to `"hard_mask"`.
+#' @param length_scale Numeric. Matern-5/2 length scale. Defaults to `1.0`.
+#' @param sigma Numeric. Noise standard deviation. Defaults to `1.0`.
+#' @param jitter Numeric. Added to the landmark covariance diagonal before the
+#' Cholesky. Defaults to `1e-6`.
+#' @param max_jitter_retries Integer. Times the jitter is raised and the
+#' Cholesky retried before giving up. Defaults to `3L`.
+#' @param chunk_size Integer. Training points held at once when accumulating
+#' the cross-covariance. Defaults to `2048L`.
+#'
+#' @returns A named flat list with all gene trend parameters. The Gaussian
+#' process hyperparameters sit at the same level as the trend ones, not in a
+#' nested block.
+#'
+#' @export
+#'
+#' @references Setty, et al., Nat. Biotechnol., 2019.
+params_sc_gene_trends <- function(
+  resolution = 500L,
+  weighting = c("hard_mask", "fate_probability"),
+  length_scale = 1.0,
+  sigma = 1.0,
+  jitter = 1e-6,
+  max_jitter_retries = 3L,
+  chunk_size = 2048L
+) {
+  weighting <- match.arg(weighting)
+
+  # checks
+  checkmate::qassert(resolution, "I1[2,)")
+  checkmate::assertChoice(weighting, c("hard_mask", "fate_probability"))
+  checkmate::qassert(length_scale, "N1(0,)")
+  checkmate::qassert(sigma, "N1(0,)")
+  checkmate::qassert(jitter, "N1[0,)")
+  checkmate::qassert(max_jitter_retries, "I1[0,)")
+  checkmate::qassert(chunk_size, "I1[1,)")
+
+  list(
+    resolution = resolution,
+    weighting = weighting,
+    length_scale = length_scale,
+    sigma = sigma,
+    jitter = jitter,
+    max_jitter_retries = max_jitter_retries,
+    chunk_size = chunk_size
   )
 }

@@ -341,6 +341,35 @@ SingleCellDuckDBBase <- R6::R6Class(
       invisible(self)
     },
 
+    #' Restore every cell in the obs table
+    #'
+    #' @description
+    #' Flips `to_keep` back on for every row. Filtering never deletes rows, it
+    #' only flips this flag, so nothing was lost and nothing needs rebuilding.
+    #' A single statement rather than a round trip through
+    #' `set_cells_to_keep()`, which would write a temp table the size of the
+    #' whole obs table just to switch every flag back on.
+    #'
+    #' @return Invisible self after resetting the to_keep column.
+    reset_cells_to_keep = function() {
+      # checks
+      private$check_obs_exists()
+
+      # get the connection
+      con <- private$connect_db()
+      on.exit(
+        {
+          if (exists("con") && !is.null(con)) {
+            tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
+          }
+        }
+      )
+
+      DBI::dbExecute(con, "UPDATE obs SET to_keep = TRUE")
+
+      invisible(self)
+    },
+
     #' Filter the var table and reset the gene idx
     #'
     #' @param filter_vec Boolean vector that will be used to filter the var

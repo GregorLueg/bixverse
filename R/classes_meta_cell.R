@@ -17,6 +17,17 @@
 #' additional information on the origin of the meta cells.
 #' @param var_data data.table with the variable/feature informations.
 #' @param meta_cell_method String describing the origin of the metacell.
+#' @param obs_ids Optional character vector of length `n_metacells` with the
+#' meta cell identifiers. Defaults to `meta_cell_0001`, `meta_cell_0002`, ...
+#' Used by [bixverse::merge_meta_cells()] so that the count matrices get their
+#' final row names at construction time rather than via a `rownames<-` that
+#' would duplicate them.
+#' @param cells_to_keep Optional integer vector. The source's
+#' [bixverse::get_cells_to_keep()], i.e. 0-indexed positions in its full obs
+#' table, in the row order its cached artefacts use. Recorded so that the meta
+#' cell memberships, which are positions in the *full* obs space, can be
+#' resolved against embeddings, kNN graphs and diffusion maps, whose rows only
+#' cover the QC-passing cells.
 #'
 #' @section Properties:
 #' \describe{
@@ -29,6 +40,10 @@
 #'   \item{dims}{Dimensions of the new meta cell matrices.}
 #'   \item{other_data}{Potential other data returned from the meta-cell
 #'   generating methods.}
+#'   \item{is_merged}{Boolean. `TRUE` for objects returned by
+#'   [bixverse::merge_meta_cells()]. Methods that need to resolve
+#'   `original_cell_idx` against the source single cell data use this to bail
+#'   out early.}
 #' }
 #'
 #' @return Returns the `MetaCells` class for further operations.
@@ -44,9 +59,16 @@ MetaCells <- S7::new_class(
     original_assignment = S7::class_list,
     dims = S7::class_integer,
     other_data = S7::class_list,
-    meta_cell_method = S7::class_character
+    meta_cell_method = S7::class_character,
+    is_merged = S7::class_logical
   ),
-  constructor = function(meta_cell_data, var_data, meta_cell_method) {
+  constructor = function(
+    meta_cell_data,
+    var_data,
+    meta_cell_method,
+    obs_ids = NULL,
+    cells_to_keep = NULL
+  ) {
     # checks
     checkmate::assertList(meta_cell_data)
     checkmate::assertNames(
@@ -59,17 +81,23 @@ MetaCells <- S7::new_class(
       must.include = c("gene_idx", "gene_id")
     )
     checkmate::qassert(meta_cell_method, "S1")
+    checkmate::qassert(obs_ids, c("S+", "0"))
+    checkmate::qassert(cells_to_keep, c("X+[0,)", "0"))
 
     # function body
-    n_digits <- nchar(as.character(meta_cell_data$assignments$n_metacells))
-    format_str <- sprintf("meta_cell_%%0%dd", n_digits)
+    n_metacells <- meta_cell_data$assignments$n_metacells
+
+    meta_cell_ids <- if (is.null(obs_ids)) {
+      n_digits <- nchar(as.character(n_metacells))
+      sprintf(sprintf("meta_cell_%%0%dd", n_digits), seq_len(n_metacells))
+    } else {
+      checkmate::assertCharacter(obs_ids, len = n_metacells)
+      obs_ids
+    }
 
     obs_data <- data.table::data.table(
-      meta_cell_idx = 1:meta_cell_data$assignments$n_metacells,
-      meta_cell_id = sprintf(
-        format_str,
-        1:meta_cell_data$assignments$n_metacells
-      ),
+      meta_cell_idx = seq_len(n_metacells),
+      meta_cell_id = meta_cell_ids,
       no_originating_cells = purrr::map_dbl(
         meta_cell_data$assignments$metacells,
         length
@@ -77,11 +105,13 @@ MetaCells <- S7::new_class(
       original_cell_idx = meta_cell_data$assignments$metacells
     )
 
+    # dimnames go in at construction; `rownames<-` afterwards duplicates both
+    # matrices, which for a merged object is the whole memory budget
     c(raw_counts, norm_counts) %<-%
-      get_meta_cell_matrices(meta_cell_data$aggregated)
-
-    rownames(raw_counts) <- rownames(norm_counts) <- obs_data$meta_cell_id
-    colnames(raw_counts) <- colnames(norm_counts) <- var_data$gene_id
+      get_meta_cell_matrices(
+        meta_cell_data$aggregated,
+        dimnames = list(meta_cell_ids, var_data$gene_id)
+      )
 
     other_data <- if (meta_cell_method == "seacell") {
       list(
@@ -98,15 +128,25 @@ MetaCells <- S7::new_class(
       var_table = var_data,
       data = list(raw = raw_counts, norm = norm_counts),
       sc_cache = new_sc_cache(),
-      original_assignment = meta_cell_data$assignments[c(
-        "assignments",
-        "n_cells",
-        "n_metacells",
-        "n_unassigned"
-      )],
+      original_assignment = c(
+        meta_cell_data$assignments[c(
+          "assignments",
+          "n_cells",
+          "n_metacells",
+          "n_unassigned"
+        )],
+        list(
+          cells_to_keep = if (is.null(cells_to_keep)) {
+            NULL
+          } else {
+            as.integer(cells_to_keep)
+          }
+        )
+      ),
       dims = as.integer(c(nrow(raw_counts), ncol(norm_counts))),
       other_data = other_data,
-      meta_cell_method = meta_cell_method
+      meta_cell_method = meta_cell_method,
+      is_merged = FALSE
     )
   }
 )
@@ -139,6 +179,7 @@ S7::method(print, MetaCells) <- function(x, ...) {
   cat(
     "Single cell experiment (Meta Cells).\n",
     sprintf("  Meta cell method: %s\n", meta_cell_method),
+    sprintf("  Merged: %s\n", isTRUE(S7::prop(x, "is_merged"))),
     sprintf("  No meta cells: %i\n", dims[1]),
     sprintf("  No genes: %i\n", dims[2]),
     # n_unassigned counts every obs row without a meta cell, which lumps
@@ -154,6 +195,7 @@ S7::method(print, MetaCells) <- function(x, ...) {
     sprintf("  Other embeddings: %s\n", other_embeddings_str),
     sprintf("  KNN generated: %s\n", knn_generated),
     sprintf("  SNN generated: %s\n", snn_generated),
+    sprintf("  Stale artefacts: %s\n", .print_stale_str(x)),
     sep = ""
   )
   invisible(x)
@@ -382,7 +424,7 @@ S7::method(mc_counts_to_list, MetaCells) <- function(
     indptr = x@p,
     indices = x@j,
     data = x@x,
-    format = "csr",
+    cs_type = "csr",
     nrow = nrow(x),
     ncol = ncol(x)
   )
@@ -403,7 +445,7 @@ S7::method(mc_counts_to_list, MetaCells) <- function(
 #'
 #' @export
 mc_get_clr_offsets <- S7::new_generic(
-  name = "mc_counts_to_list",
+  name = "mc_get_clr_offsets",
   dispatch_args = "object",
   fun = function(
     object,
@@ -448,11 +490,18 @@ S7::method(mc_get_clr_offsets, MetaCells) <- function(
 
   if (length(i) == 1) {
     checkmate::qassert(value, "a")
-    S7::prop(x, "obs_table")[, (i) := value]
   } else {
     checkmate::assertList(value, names = "named", types = "atomic")
-    S7::prop(x, "obs_table")[, (i) := value]
   }
+
+  # `:=` straight onto the property silently no-ops once the data.table's
+  # over-allocation is gone (e.g. after a saveRDS/readRDS round trip): it takes
+  # a shallow copy it cannot rebind, because the target is a call and not a
+  # symbol. Copy, mutate, assign back. The copy also keeps this out of the
+  # caller's object.
+  obs_table <- data.table::copy(S7::prop(x, "obs_table"))
+  obs_table[, (i) := value]
+  S7::prop(x, "obs_table") <- obs_table
 
   return(x)
 }
@@ -550,7 +599,13 @@ S7::method(get_cell_indices, MetaCells) <- function(
     indices <- indices[!missing]
   }
 
-  return(indices)
+  # no binary counts here, but the aggregated matrix is still handed to Rust
+  # 0-indexed, e.g. the `cell_indices` stored on an `NmfResult`
+  if (rust_index) {
+    indices <- indices - 1L
+  }
+
+  return(as.integer(indices))
 }
 
 #' @name get_gene_indices.MetaCells
@@ -596,6 +651,23 @@ S7::method(get_gene_indices, MetaCells) <- function(
 
 #### setters -------------------------------------------------------------------
 
+#' @name reset_cells_to_keep.MetaCells
+#'
+#' @rdname reset_cells_to_keep
+#'
+#' @method reset_cells_to_keep MetaCells
+#'
+#' @export
+S7::method(reset_cells_to_keep, MetaCells) <- function(
+  object,
+  force = FALSE
+) {
+  stop(paste(
+    "`MetaCells` have no cells to keep; their cell set is fixed when the meta",
+    "cells are generated. Re-generate them from the source object instead."
+  ))
+}
+
 #' @name set_pca_factors.MetaCells
 #'
 #' @rdname set_pca_factors
@@ -614,6 +686,8 @@ S7::method(set_pca_factors, MetaCells) <- function(
     x = S7::prop(x, "sc_cache"),
     pca_factor = pca_factor
   )
+
+  x <- .stamp_artefact(x, artefact = "pca", from = .stamp_from(...))
 
   return(x)
 }
@@ -684,6 +758,13 @@ S7::method(set_embedding, MetaCells) <- function(
     name = name
   )
 
+  x <- .stamp_artefact(
+    x,
+    artefact = "embedding",
+    name = name,
+    from = .stamp_from(...)
+  )
+
   return(x)
 }
 
@@ -706,6 +787,8 @@ S7::method(set_knn, MetaCells) <- function(
     knn = knn
   )
 
+  x <- .stamp_artefact(x, artefact = "knn", from = .stamp_from(...))
+
   return(x)
 }
 
@@ -727,6 +810,8 @@ S7::method(set_snn_graph, MetaCells) <- function(
     x = S7::prop(x, "sc_cache"),
     snn_graph = snn_graph
   )
+
+  x <- .stamp_artefact(x, artefact = "snn", from = .stamp_from(...))
 
   return(x)
 }
@@ -790,6 +875,9 @@ S7::method(get_pca_factors, MetaCells) <- function(
   if (is.null(res)) {
     return(NULL)
   }
+
+  .warn_sc_state(x, artefact = "pca")
+  res <- .drop_stamp(res)
 
   rownames(res) <- S7::prop(x, "obs_table")$meta_cell_id
   colnames(res) <- sprintf("PC_%i", 1:ncol(res))
@@ -861,6 +949,9 @@ S7::method(get_embedding, MetaCells) <- function(
     embd_name = embd_name
   )
 
+  .warn_sc_state(x, artefact = "embedding", name = embd_name)
+  res <- .drop_stamp(res)
+
   rownames(res) <- S7::prop(x, "obs_table")$meta_cell_id
 
   return(res)
@@ -901,6 +992,8 @@ S7::method(get_knn_mat, MetaCells) <- function(
     x = S7::prop(x, "sc_cache")
   )
 
+  .warn_sc_state(x, artefact = "knn")
+
   return(res)
 }
 
@@ -919,6 +1012,8 @@ S7::method(get_knn_dist, MetaCells) <- function(
   res <- get_knn_dist(
     x = S7::prop(x, "sc_cache")
   )
+
+  .warn_sc_state(x, artefact = "knn")
 
   return(res)
 }
@@ -939,7 +1034,9 @@ S7::method(get_knn_obj, MetaCells) <- function(
     x = S7::prop(x, "sc_cache")
   )
 
-  return(res)
+  .warn_sc_state(x, artefact = "knn")
+
+  return(.drop_stamp(res))
 }
 
 #' @name get_snn_graph.MetaCells
@@ -958,5 +1055,7 @@ S7::method(get_snn_graph, MetaCells) <- function(
     x = S7::prop(x, "sc_cache")
   )
 
-  return(res)
+  .warn_sc_state(x, artefact = "snn")
+
+  return(.drop_stamp(res))
 }

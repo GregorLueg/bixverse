@@ -522,6 +522,7 @@ S7::method(print, SingleCellsMultiModal) <- function(x, ...) {
     sprintf("    KNN generated: %s\n", adt_knn),
     sprintf("    SNN generated: %s\n", adt_snn),
     "  ATAC: not yet implemented\n",
+    sprintf("  Stale artefacts: %s\n", .print_stale_str(x)),
     sep = ""
   )
 
@@ -794,7 +795,12 @@ S7::method(set_pca_factors, SingleCellsMultiModal) <- function(
   slot <- .cache_slot_from_modality(modality)
   checkmate::assertMatrix(pca_factor, mode = "numeric")
   S7::prop(x, slot) <- set_pca_factors(S7::prop(x, slot), pca_factor)
-  x
+  .stamp_artefact(
+    x,
+    artefact = "pca",
+    modality = modality,
+    from = .stamp_from(...)
+  )
 }
 
 S7::method(set_pca_loadings, SingleCellsMultiModal) <- function(
@@ -841,7 +847,13 @@ S7::method(set_embedding, SingleCellsMultiModal) <- function(
     other_data <- S7::prop(x, "other_data")
     other_data[[modality]] <- slot_data
     S7::prop(x, "other_data") <- other_data
-    return(x)
+    return(.stamp_artefact(
+      x,
+      artefact = "embedding",
+      name = name,
+      modality = modality,
+      from = .stamp_from(...)
+    ))
   }
 
   slot <- .cache_slot_from_modality(modality)
@@ -850,7 +862,13 @@ S7::method(set_embedding, SingleCellsMultiModal) <- function(
     embd = embd,
     name = name
   )
-  x
+  .stamp_artefact(
+    x,
+    artefact = "embedding",
+    name = name,
+    modality = modality,
+    from = .stamp_from(...)
+  )
 }
 
 S7::method(set_knn, SingleCellsMultiModal) <- function(
@@ -863,7 +881,12 @@ S7::method(set_knn, SingleCellsMultiModal) <- function(
   slot <- .cache_slot_from_modality(modality)
   checkmate::assertClass(knn, "SingleCellNearestNeighbour")
   S7::prop(x, slot) <- set_knn(S7::prop(x, slot), knn)
-  x
+  .stamp_artefact(
+    x,
+    artefact = "knn",
+    modality = modality,
+    from = .stamp_from(...)
+  )
 }
 
 S7::method(set_snn_graph, SingleCellsMultiModal) <- function(
@@ -876,7 +899,12 @@ S7::method(set_snn_graph, SingleCellsMultiModal) <- function(
   slot <- .cache_slot_from_modality(modality)
   checkmate::assertClass(snn_graph, "igraph")
   S7::prop(x, slot) <- set_snn_graph(S7::prop(x, slot), snn_graph)
-  x
+  .stamp_artefact(
+    x,
+    artefact = "snn",
+    modality = modality,
+    from = .stamp_from(...)
+  )
 }
 
 S7::method(remove_knn, SingleCellsMultiModal) <- function(
@@ -901,6 +929,40 @@ S7::method(remove_snn_graph, SingleCellsMultiModal) <- function(
   x
 }
 
+#' @name reset_cells_to_keep.SingleCellsMultiModal
+#'
+#' @rdname reset_cells_to_keep
+#'
+#' @method reset_cells_to_keep SingleCellsMultiModal
+#'
+#' @export
+S7::method(reset_cells_to_keep, SingleCellsMultiModal) <- function(
+  object,
+  force = FALSE
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCellsMultiModal))
+  checkmate::qassert(force, "B1")
+
+  if (!.confirm_sc_reset(object, force = force)) {
+    message("Reset declined. Returning the object unchanged.")
+    return(object)
+  }
+
+  object <- .reset_sc_cells(object)
+
+  # every modality is aligned to the same kept cell set, so all of them go
+  S7::prop(object, "sc_cache") <- new_sc_cache()
+  S7::prop(object, "adt_cache") <- new_sc_cache()
+  S7::prop(object, "atac_cache") <- new_sc_cache()
+
+  other_data <- S7::prop(object, "other_data")
+  other_data[["wnn"]] <- NULL
+  S7::prop(object, "other_data") <- other_data
+
+  return(object)
+}
+
 #### getters -------------------------------------------------------------------
 
 S7::method(get_pca_factors, SingleCellsMultiModal) <- function(
@@ -914,6 +976,8 @@ S7::method(get_pca_factors, SingleCellsMultiModal) <- function(
   if (is.null(res)) {
     return(NULL)
   }
+  .warn_sc_state(x, artefact = "pca", modality = modality)
+  res <- .drop_stamp(res)
   rownames(res) <- get_cell_names(x, filtered = TRUE)
   colnames(res) <- sprintf("PC_%i", seq_len(ncol(res)))
   res
@@ -968,12 +1032,26 @@ S7::method(get_embedding, SingleCellsMultiModal) <- function(
         modality
       ))
     }
+    .warn_sc_state(
+      x,
+      artefact = "embedding",
+      name = embd_name,
+      modality = modality
+    )
+    res <- .drop_stamp(res)
     rownames(res) <- get_cell_names(x, filtered = TRUE)
     return(res)
   }
 
   slot <- .cache_slot_from_modality(modality)
   res <- get_embedding(S7::prop(x, slot), embd_name = embd_name)
+  .warn_sc_state(
+    x,
+    artefact = "embedding",
+    name = embd_name,
+    modality = modality
+  )
+  res <- .drop_stamp(res)
   rownames(res) <- get_cell_names(x, filtered = TRUE)
   res
 }
@@ -1006,10 +1084,14 @@ S7::method(get_knn_mat, SingleCellsMultiModal) <- function(
 ) {
   modality <- match.arg(modality)
   if (modality == "wnn") {
-    return(get_knn_mat(.integration_slot(x, modality)[["knn"]]))
+    res <- get_knn_mat(.integration_slot(x, modality)[["knn"]])
+    .warn_sc_state(x, artefact = "knn", modality = modality)
+    return(res)
   }
   slot <- .cache_slot_from_modality(modality)
-  get_knn_mat(S7::prop(x, slot))
+  res <- get_knn_mat(S7::prop(x, slot))
+  .warn_sc_state(x, artefact = "knn", modality = modality)
+  res
 }
 
 S7::method(get_knn_dist, SingleCellsMultiModal) <- function(
@@ -1019,10 +1101,14 @@ S7::method(get_knn_dist, SingleCellsMultiModal) <- function(
 ) {
   modality <- match.arg(modality)
   if (modality == "wnn") {
-    return(get_knn_dist(.integration_slot(x, modality)[["knn"]]))
+    res <- get_knn_dist(.integration_slot(x, modality)[["knn"]])
+    .warn_sc_state(x, artefact = "knn", modality = modality)
+    return(res)
   }
   slot <- .cache_slot_from_modality(modality)
-  get_knn_dist(S7::prop(x, slot))
+  res <- get_knn_dist(S7::prop(x, slot))
+  .warn_sc_state(x, artefact = "knn", modality = modality)
+  res
 }
 
 S7::method(get_knn_obj, SingleCellsMultiModal) <- function(
@@ -1033,10 +1119,14 @@ S7::method(get_knn_obj, SingleCellsMultiModal) <- function(
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsMultiModal))
   modality <- match.arg(modality)
   if (modality == "wnn") {
-    return(.integration_slot(x, modality)[["knn"]])
+    res <- .integration_slot(x, modality)[["knn"]]
+    .warn_sc_state(x, artefact = "knn", modality = modality)
+    return(.drop_stamp(res))
   }
   slot <- .cache_slot_from_modality(modality)
-  get_knn_obj(S7::prop(x, slot))
+  res <- get_knn_obj(S7::prop(x, slot))
+  .warn_sc_state(x, artefact = "knn", modality = modality)
+  .drop_stamp(res)
 }
 
 S7::method(get_snn_graph, SingleCellsMultiModal) <- function(
@@ -1047,10 +1137,14 @@ S7::method(get_snn_graph, SingleCellsMultiModal) <- function(
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsMultiModal))
   modality <- match.arg(modality)
   if (modality == "wnn") {
-    return(.integration_slot(x, modality)[["snn"]])
+    res <- .integration_slot(x, modality)[["snn"]]
+    .warn_sc_state(x, artefact = "snn", modality = modality)
+    return(.drop_stamp(res))
   }
   slot <- .cache_slot_from_modality(modality)
-  get_snn_graph(S7::prop(x, slot))
+  res <- get_snn_graph(S7::prop(x, slot))
+  .warn_sc_state(x, artefact = "snn", modality = modality)
+  .drop_stamp(res)
 }
 
 S7::method(get_adt_names, SingleCellsMultiModal) <- function(

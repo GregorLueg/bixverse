@@ -10,7 +10,8 @@ extract_gene_expression(
   obs_cols = NULL,
   scale = FALSE,
   clip = NULL,
-  modality = c("rna", "adt")
+  modality = c("rna", "adt"),
+  layer = c("norm", "magic")
 )
 }
 \arguments{
@@ -28,6 +29,13 @@ to include.}
 
 \item{modality}{String. One of \code{c("rna", "adt")}. ADT is only available for
 \code{SingleCellsMultiModal}.}
+
+\item{layer}{String. One of \code{c("norm", "magic")}. With \code{"magic"} the values
+come from the imputed layer \code{\link[=run_magic_sc]{run_magic_sc()}} wrote, which only
+holds the genes it was asked for. Imputation inflates gene-gene correlation,
+so this is for looking at things, not for measuring them. Note that
+\code{\link[=extract_dot_plot_data]{extract_dot_plot_data()}} deliberately has no such argument:
+group means of imputed values are exactly the quantity MAGIC manufactures.}
 }
 \value{
 A data.table with a \code{cell_id} column, one column per gene, and

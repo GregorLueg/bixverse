@@ -40,7 +40,7 @@ pub type NeighboursData = Result<(Vec<Vec<usize>>, Vec<Vec<f32>>, usize, String)
 ///
 /// The results list
 pub fn flatten_dispersion_batches(results: Vec<HvgDispersionRes>) -> List {
-    let n_genes = results[0].mean.len();
+    let n_genes = results.first().map_or(0, |res| res.mean.len());
     let total_len = n_genes * results.len();
     let mut mean_flat = Vec::with_capacity(total_len);
     let mut disp_flat = Vec::with_capacity(total_len);

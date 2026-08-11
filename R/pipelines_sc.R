@@ -260,6 +260,8 @@ apply_pipeline <- function(pipeline, object) {
 #' @param group_col String. Column in obs used to split.
 #' @param groups Optional character vector. Restrict to these group values; if
 #' `NULL`, all unique values of `group_col` are used.
+#' @param progress Boolean. Shall big progress messages be printed to the
+#' console. Defaults to `FALSE`.
 #'
 #' @return Named list of processed objects, names being the group values.
 #' Usually `SingleCellsSubset`, or `MetaCells` if the pipeline ends on
@@ -271,28 +273,46 @@ apply_pipeline_per_group <- function(
   pipeline,
   object,
   group_col,
-  groups = NULL
+  groups = NULL,
+  progress = FALSE
 ) {
   checkmate::assertClass(pipeline, "ScPipeline")
   checkmate::assertClass(object, "bixverse::SingleCells")
   checkmate::qassert(group_col, "S1")
   checkmate::qassert(groups, c("S+", "0"))
+  checkmate::qassert(progress, "B1")
 
   # fail before any subset is built rather than on the first group
   validate_pipeline(pipeline, "SingleCellsSubset")
 
-  obs <- get_sc_obs(object, filtered = TRUE)
-  checkmate::assertNames(colnames(obs), must.include = group_col)
+  group_vec <- unlist(object[[c(group_col)]], use.names = FALSE)
+  checkmate::qassert(group_vec, "S+")
 
   if (is.null(groups)) {
-    groups <- unique(as.character(obs[[group_col]]))
+    groups <- unique(group_vec)
   }
 
-  out <- lapply(groups, function(g) {
+  out <- vector(mode = "list", length = length(groups))
+
+  for (i in seq_along(groups)) {
+    g <- groups[[i]]
+    if (progress) {
+      cat(sprintf(
+        "\n=== Applying pipeline to %s (%i out of %i) === \n\n",
+        g,
+        i,
+        length(groups)
+      ))
+    }
+
     sub <- SingleCellsSubset(object, grouping_column = group_col, group = g)
-    apply_pipeline(pipeline, sub)
-  })
+    res <- apply_pipeline(pipeline, sub)
+
+    out[[i]] <- res
+  }
+
   names(out) <- groups
+
   out
 }
 
@@ -667,6 +687,22 @@ step_fast_mnn_sc <- function(
 
 ### meta cells -----------------------------------------------------------------
 
+#' Internal: the generic behind a meta cell method.
+#'
+#' @param method String. To which of the methods to dispatch.
+#'
+#' @returns The method
+#'
+#' @keywords internal
+.sc_metacell_generator <- function(method) {
+  switch(
+    method,
+    "bootstrapped" = generate_bt_meta_cells_sc,
+    "seacells" = generate_seacells_sc,
+    "supercells" = generate_supercells_sc
+  )
+}
+
 #' Pipeline step: generate meta cells
 #'
 #' @description
@@ -711,15 +747,5 @@ step_metacells_sc <- function(
     list(...),
     accepts = c("SingleCells", "SingleCellsSubset"),
     returns = "MetaCells"
-  )
-}
-
-# Internal: the generic behind a meta cell method.
-.sc_metacell_generator <- function(method) {
-  switch(
-    method,
-    "bootstrapped" = generate_bt_meta_cells_sc,
-    "seacells" = generate_seacells_sc,
-    "supercells" = generate_supercells_sc
   )
 }

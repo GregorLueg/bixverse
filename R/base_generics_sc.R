@@ -228,6 +228,39 @@ set_cells_to_keep <- function(x, cells_to_keep) {
   UseMethod("set_cells_to_keep")
 }
 
+#' @title Reset the cells to keep
+#'
+#' @description
+#' Restores every cell found in the binary count file and wipes the cache,
+#' taking the object back to a pristine state. Filtering only ever flips a
+#' `to_keep` flag in the DuckDB, so nothing was deleted and nothing is lost by
+#' resetting.
+#'
+#' Wiping the cache is not optional: a PCA or a kNN computed on a filtered
+#' subset does not describe the full cell set, and keeping it would recreate
+#' exactly the mismatch this guards against. With `force = FALSE` you are asked
+#' to confirm before that happens.
+#'
+#' @param object `SingleCells` or `SingleCellsMultiModal` class.
+#' @param force Boolean. Skip the confirmation prompt. Defaults to `FALSE`, in
+#' which case an interactive session asks before wiping the cache and a
+#' non-interactive one errors, because there is no one there to ask.
+#'
+#' @returns The object with every cell restored and an empty cache. Unchanged
+#' if the confirmation was declined.
+#'
+#' @export
+reset_cells_to_keep <- S7::new_generic(
+  name = "reset_cells_to_keep",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    force = FALSE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
 #' @title Set the HVG genes
 #'
 #' @description
@@ -475,6 +508,31 @@ remove_snn_graph <- function(x, ...) {
   UseMethod("remove_snn_graph")
 }
 
+#' Set/add the MAGIC imputed layer
+#'
+#' @param x An object to add the imputed layer to.
+#' @param magic `ScMagic` class with the imputed counts.
+#' @param ... Other parameters.
+#'
+#' @export
+#'
+#' @keywords internal
+set_magic <- function(x, magic, ...) {
+  UseMethod("set_magic")
+}
+
+#' Remove the MAGIC imputed layer
+#'
+#' @param x An object from which to remove the imputed layer.
+#' @param ... Other parameters.
+#'
+#' @export
+#'
+#' @keywords internal
+remove_magic <- function(x, ...) {
+  UseMethod("remove_magic")
+}
+
 #### getters -------------------------------------------------------------------
 
 #' @title Get the PCA factors
@@ -591,6 +649,22 @@ get_snn_graph <- function(x, ...) {
 #' @export
 get_knn_obj <- function(x, ...) {
   UseMethod("get_knn_obj")
+}
+
+#' Get the MAGIC imputed layer
+#'
+#' @description
+#' Returns the `ScMagic` layer written by [bixverse::run_magic_sc()]. This
+#' function is used for the single cell-related classes and methods.
+#'
+#' @param x An object to get the imputed layer from.
+#' @param ... Other parameters.
+#'
+#' @returns The `ScMagic` object, or `NULL` when nothing was imputed.
+#'
+#' @export
+get_magic <- function(x, ...) {
+  UseMethod("get_magic")
 }
 
 ### others ---------------------------------------------------------------------
@@ -1228,6 +1302,12 @@ extract_dot_plot_data <- S7::new_generic(
 #' `[-clip, clip]`.
 #' @param modality String. One of `c("rna", "adt")`. ADT is only available for
 #' `SingleCellsMultiModal`.
+#' @param layer String. One of `c("norm", "magic")`. With `"magic"` the values
+#' come from the imputed layer [bixverse::run_magic_sc()] wrote, which only
+#' holds the genes it was asked for. Imputation inflates gene-gene correlation,
+#' so this is for looking at things, not for measuring them. Note that
+#' [bixverse::extract_dot_plot_data()] deliberately has no such argument:
+#' group means of imputed values are exactly the quantity MAGIC manufactures.
 #'
 #' @return A data.table with a `cell_id` column, one column per gene, and
 #' any requested obs columns.
@@ -1242,7 +1322,8 @@ extract_gene_expression <- S7::new_generic(
     obs_cols = NULL,
     scale = FALSE,
     clip = NULL,
-    modality = c("rna", "adt")
+    modality = c("rna", "adt"),
+    layer = c("norm", "magic")
   ) {
     S7::S7_dispatch()
   }

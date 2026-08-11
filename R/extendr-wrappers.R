@@ -3038,8 +3038,10 @@ rs_pairwise_gene_cors <- function(f_path, gene_indices_1, gene_indices_2, cells_
 #' @param hvg_method String. Which HVG detection method to use. One of
 #' `c("vst", "meanvarbin", "dispersion")`.
 #' @param cell_indices Integer positions (0-indexed!) that defines the cells
-#' to keep.
-#' @param loess_span Numeric. The span parameter for the loess function.
+#' to keep. Must be unique and within the store; duplicates or out-of-range
+#' positions raise an error.
+#' @param loess_span Numeric. The span parameter for the loess function. Must
+#' be within `(0, 1]`.
 #' @param clip_max Optional clipping number. Defaults to `sqrt(no_cells)` if
 #' not provided.
 #' @param binning String. The binning strategy for the `meanvarbin` method. One
@@ -3083,10 +3085,14 @@ rs_sc_hvg <- function(f_path_gene, hvg_method, cell_indices, loess_span, binning
 #' @param hvg_method String. Which HVG detection method to use. One of
 #' `c("vst", "meanvarbin", "dispersion")`.
 #' @param cell_indices Integer positions (0-indexed!) that defines the cells
-#' to keep.
+#' to keep. Must be unique and within the store; duplicates or out-of-range
+#' positions raise an error.
 #' @param batch_labels Integer vector (0-indexed!) defining batch membership
-#' for each cell. Must be same length as `cell_indices`.
-#' @param loess_span Numeric. The span parameter for the loess function.
+#' for each cell. Must be the same length as `cell_indices` and densely cover
+#' `0:(n_batches - 1)`; a length mismatch or an empty batch raises an error.
+#' `as.integer(factor(x)) - 1L` always satisfies this.
+#' @param loess_span Numeric. The span parameter for the loess function. Must
+#' be within `(0, 1]`.
 #' @param clip_max Optional clipping number. Defaults to `sqrt(no_cells)` per
 #' batch if not provided.
 #' @param binning String. The binning strategy for the `meanvarbin` method. One
@@ -3369,6 +3375,46 @@ rs_fast_cluster_sc <- function(embd, km_type, resolutions, n_centroids, fc_param
 #'
 #' @keywords internal
 rs_fast_cluster_sc_grid <- function(embd, km_type, resolutions, n_centroids, fc_params, snn, return_kmeans, no_seeds, seed, verbose) .Call(wrap__rs_fast_cluster_sc_grid, embd, km_type, resolutions, n_centroids, fc_params, snn, return_kmeans, no_seeds, seed, verbose)
+
+#' Impute a subset of genes with MAGIC
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Implementation of MAGIC in Rust. A row-stochastic diffusion operator is
+#' built over the provided kNN graph and applied `n_steps` times to the counts
+#' of the requested genes. The operator matches the one Palantir builds, i.e.
+#' an adaptive bandwidth taken from the `k/3`-th neighbour distance, which
+#' differs from the graphtools kernel the reference implementation uses.
+#'
+#' Deliberately restricted to a gene subset. The output is dense, and
+#' smoothing over overlapping neighbourhoods inflates gene-gene correlation,
+#' so imputed counts must not be fed into correlation-based methods such as
+#' Hotspot, SCENIC, differential correlation or CoReMo.
+#'
+#' @param f_path String. Path to the `counts_genes.bin` file.
+#' @param knn_data List. The `SingleCellNearestNeighbour` data with `indices`
+#' (0-indexed!), `dist`, `k` and `dist_metric`. The indices are positions
+#' within `cell_indices`, not global cell ids. Whether the distances are
+#' treated as squared is derived from `dist_metric`.
+#' @param cell_indices Integer vector. The global cell indices (0-indexed!)
+#' the kNN graph was built over, in kNN row order.
+#' @param total_cells Integer. The cell count of the binary store, not of the
+#' selection.
+#' @param gene_indices Integer vector. Gene indices (0-indexed!) to impute.
+#' @param magic_params List. Parameter list, see
+#' [bixverse::params_sc_magic()].
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @returns Numerical matrix of cells x genes with the imputed counts. Rows
+#' follow `cell_indices`, columns follow `gene_indices`.
+#'
+#' @references van Dijk, et al., Cell, 2018.
+#'
+#' @export
+#'
+#' @keywords internal
+rs_magic_impute <- function(f_path, knn_data, cell_indices, total_cells, gene_indices, magic_params, verbose) .Call(wrap__rs_magic_impute, f_path, knn_data, cell_indices, total_cells, gene_indices, magic_params, verbose)
 
 #' Calculate DGEs between cells based on Mann Whitney stats
 #'
@@ -4289,6 +4335,148 @@ rs_extract_several_genes_plots <- function(f_path, cell_indices, gene_indices, s
 #' @keywords internal
 rs_extract_grouped_gene_stats <- function(f_path, cell_indices, gene_indices, group_ids, group_levels) .Call(wrap__rs_extract_grouped_gene_stats, f_path, cell_indices, gene_indices, group_ids, group_levels)
 
+#' Run Palantir trajectory inference over a kNN graph
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Implementation of Palantir in Rust. The provided kNN graph feeds the
+#' diffusion kernel. The geodesics themselves are measured over a second kNN
+#' graph that is built internally on the multiscale space, which is where the
+#' reference measures them.
+#'
+#' @param knn_data List. The `SingleCellNearestNeighbour` data with `indices`
+#' (0-indexed!), `dist`, `k` and `dist_metric`. Whether the distances are
+#' treated as squared is derived from `dist_metric`.
+#' @param palantir_params List. Parameter list, see
+#' [bixverse::params_sc_palantir()].
+#' @param early_cell Integer. Index (0-indexed!) of the early cell within the
+#' rows of the kNN data.
+#' @param terminal_states Optional integer vector. Indices (0-indexed!) of the
+#' terminal states. If `NULL`, they are detected from the waypoint Markov
+#' chain.
+#' @param seed Integer. Seed for reproducibility purposes.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @returns A list with
+#' \itemize{
+#'  \item pseudotime - Numerical vector with the pseudotime per cell, min-max
+#'  scaled to `[0, 1]`. The start cell is not pinned to 0; a start cell far
+#'  from 0 means the refinement disagreed with the anchor.
+#'  \item entropy - Numerical vector with the differentiation entropy per cell
+#'  (natural log).
+#'  \item branch_probs - Numerical matrix of cells x terminal states with the
+#'  fate probabilities. Rows need not sum to one, as sub-threshold values are
+#'  zeroed without renormalisation.
+#'  \item terminal_states - Integer vector with the terminal state cell indices
+#'  (0-indexed!). Sets the column order of `branch_probs`.
+#'  \item waypoints - Integer vector with the waypoint cell indices
+#'  (0-indexed!). The first element is the start cell.
+#'  \item start_cell - Integer. The start cell that was actually used
+#'  (0-indexed!).
+#'  \item multiscale - Numerical matrix of cells x components with the
+#'  multiscale diffusion components.
+#'  \item iterations - Integer. Refinement passes that were run.
+#'  \item converged - Boolean. Did the pseudotime refinement converge before
+#'  the cap.
+#'  \item eigen_converged - Boolean. Did the diffusion eigensolve meet its
+#'  tolerance rather than running out of restarts. `FALSE` means the embedding
+#'  is under-resolved and every distance taken on it is suspect.
+#'  \item eigen_residual - Numeric. Largest achieved
+#'  `||A x - lambda x||` from the diffusion eigensolve.
+#'  \item repair_edges - Integer. Bridging edges the connectivity repair had to
+#'  add. Anything non-zero means the kNN graph was disconnected.
+#'  \item stranded_waypoints - Integer. Waypoints from which no terminal state
+#'  is reachable.
+#' }
+#'
+#' @export
+#'
+#' @references Setty, et al., Nat. Biotechnol., 2019.
+#'
+#' @keywords internal
+rs_palantir <- function(knn_data, palantir_params, early_cell, terminal_states, seed, verbose) .Call(wrap__rs_palantir, knn_data, palantir_params, early_cell, terminal_states, seed, verbose)
+
+#' Run PAGA over a kNN graph and a clustering
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Implementation of PAGA in Rust. The kNN graph is read as a directed graph,
+#' with an edge running from cell `i` to each of its neighbours. Distances are
+#' not used, hence only the kNN index matrix is needed here.
+#'
+#' @param knn_mat Integer matrix. Rows represent cells and the columns
+#' represent the neighbours (0-indexed!).
+#' @param partitions Integer vector. Cluster label per cell (0-indexed!). Needs
+#' one entry per row of `knn_mat`.
+#' @param n_partitions Integer. Declared cluster count. Pass the number of
+#' factor levels to retain empty ones.
+#'
+#' @returns A list with
+#' \itemize{
+#'  \item connectivities - The abstracted graph, clusters x clusters, as a
+#'  symmetric CSR list with a zero diagonal. Use
+#'  [bixverse::sparse_list_to_mat()] to transform it into a sparse matrix.
+#'  \item connectivities_tree - Maximum spanning forest of `connectivities`,
+#'  carrying the original connectivity values on the retained edges. Same
+#'  format as above.
+#'  \item sizes - Integer vector with the number of cells per cluster.
+#' }
+#'
+#' @export
+#'
+#' @references Wolf, et al., Genome Biol., 2019.
+#'
+#' @keywords internal
+rs_paga <- function(knn_mat, partitions, n_partitions) .Call(wrap__rs_paga, knn_mat, partitions, n_partitions)
+
+#' Fit Palantir gene trends over pseudotime
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Selects the cells belonging to each branch from the fate probabilities, then
+#' fits a landmark Gaussian process with a Matern-5/2 kernel per branch. This
+#' is the Mellon-based estimator of the reference, not the legacy GAM.
+#'
+#' Whatever expression matrix is handed over is what gets fitted. Nothing here
+#' imputes; that decision belongs to the caller.
+#'
+#' The defaults are prior-dominated. Palantir's pseudotime is min-max scaled to
+#' `[0, 1]`, so a `length_scale` of `1.0` spans the whole domain and a `sigma`
+#' of `1.0` sits at roughly the signal scale of log-normalised expression. That
+#' resolves almost any gene into a smooth monotone or single-peaked curve.
+#' Shorten `length_scale` before believing a bump.
+#'
+#' @param expression Numerical matrix of cells x genes. All cells, in the same
+#' row order as `pseudotime`, not just the branch members.
+#' @param pseudotime Numerical vector. Pseudotime per cell.
+#' @param branch_probs Numerical matrix of cells x fates with the fate
+#' probabilities. Rows need not sum to one.
+#' @param branch_params List. Parameter list, see
+#' [bixverse::params_sc_branch_selection()].
+#' @param gene_trend_params List. Parameter list, see
+#' [bixverse::params_sc_gene_trends()].
+#'
+#' @returns A list with
+#' \itemize{
+#'  \item trends - List of numerical matrices, one per branch, each of
+#'  resolution x genes.
+#'  \item grids - List of numerical vectors with the pseudotime grid per
+#'  branch, running from the branch minimum to its maximum.
+#'  \item branch_cells - List of integer vectors with the cell indices
+#'  (0-indexed!) selected for each branch.
+#'  \item n_cells - Integer vector with the cell count per branch.
+#'  \item jitter_used - Numerical vector with the jitter each branch's
+#'  Cholesky needed.
+#' }
+#'
+#' @references Setty, et al., Nat. Biotechnol., 2019.
+#'
+#' @export
+#'
+#' @keywords internal
+rs_gene_trends <- function(expression, pseudotime, branch_probs, branch_params, gene_trend_params) .Call(wrap__rs_gene_trends, expression, pseudotime, branch_probs, branch_params, gene_trend_params)
+
 #' Meta cells highly variable genes
 #'
 #' @description
@@ -4668,7 +4856,7 @@ rs_wnn <- function(modality_emb_one, modality_emb_two, wnn_params, seed, verbose
 #'
 #' \subsection{Arguments}{
 #'\describe{
-#'\item{`r_data`}{(`list`)\cr A list convertible into `CompressedSparseData2`. Must contain the elements `"indptr"`, `"indices"`, `"data"`, `"nrow"`, `"ncol"` and `"format"`.}
+#'\item{`r_data`}{(`list`)\cr A list convertible into `CompressedSparseData2`. Must contain the elements `"indptr"`, `"indices"`, `"data"`, `"nrow"`, `"ncol"` and `"cs_type"`.}
 #'\item{`qc_params`}{(`list`)\cr Quality control parameters parseable into `MinCellQuality`.}
 #'\item{`verbose`}{(`logical`)\cr Controls verbosity of the function. }
 #'}}
