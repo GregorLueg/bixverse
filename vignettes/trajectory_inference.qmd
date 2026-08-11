@@ -59,11 +59,7 @@ library(magrittr)
 
 ```{r}
 #| label: data path
-# TODO: swap this for a download_marrow_cd34() helper once the Zenodo record
-# is live
-marrow_path <- path.expand(
-  "~/Desktop/zenodo_data/marrow_sample_scseq_counts.h5ad"
-)
+marrow_path <- download_marrow_cd34()
 
 read_h5ad_metadata(marrow_path)$dims
 ```

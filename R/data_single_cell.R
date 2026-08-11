@@ -775,6 +775,36 @@ download_cd34_data <- function(quiet = FALSE) {
   file.path(temp_dir, "cd34_multiome_rna.h5ad")
 }
 
+### marrow cd34 example data set -----------------------------------------------
+
+#' Download the marrow CD34 example data from Palantir
+#'
+#' @description
+#' This function downloads the bone marrow CD34 data set from the Palantir
+#' paper into the temporary directory.
+#'
+#' @param quiet Boolean. If the download shall be quiet.
+#'
+#' @returns String. The path to the marrow CD34 data set.
+#'
+#' @export
+#'
+#' @references Setty, et al., Nat. Biotechnol., 2019
+download_marrow_cd34 <- function(quiet = FALSE) {
+  old_timeout <- getOption("timeout")
+  options(timeout = max(300, old_timeout))
+  on.exit(options(timeout = old_timeout))
+
+  temp_dir <- tempdir()
+  dest_file <- file.path(temp_dir, "marrow_sample_scseq_counts.h5ad.gz")
+  url <- "https://zenodo.org/records/21892320/files/marrow_sample_scseq_counts.h5ad.gz?download=1"
+
+  download.file(url, dest_file, mode = "wb", quiet = quiet)
+  R.utils::gunzip(dest_file, remove = TRUE)
+
+  file.path(temp_dir, "marrow_sample_scseq_counts.h5ad")
+}
+
 ### pbmc totalseq --------------------------------------------------------------
 
 #' Download the PBMC TotalSeq data with ADT counts

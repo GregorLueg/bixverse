@@ -104,5 +104,5 @@ Depends:
 LazyData: true
 Remotes:
     GregorLueg/manifoldsR,
-    GregorLueg/bixverse.plots
+    GregorLueg/bixverse.plots@v0.2.2
 Config/roxygen2/version: 8.1.0

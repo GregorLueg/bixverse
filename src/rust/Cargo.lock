@@ -172,7 +172,8 @@ dependencies = [
 [[package]]
 name = "bixverse-rs"
 version = "0.4.1"
-source = "git+https://github.com/GregorLueg/bixverse-rs.git?branch=feat-faster-hvg#df02954d258049f116d7d3f1017b4ac1aaa1455c"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3c42bd72c1cfe722727d7bf20f0bded844ddf6c7b82bcf345bdc6937befa313d"
 dependencies = [
  "ann-search-rs",
  "approx",

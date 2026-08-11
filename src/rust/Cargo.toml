@@ -26,7 +26,7 @@ codegen-units = 4
 strip = true
 
 [dependencies]
-bixverse-rs = { version = "0.4.0", features = [ "single-cell", "multi-modal", ] }
+bixverse-rs = { version = "0.4.1", features = [ "single-cell", "multi-modal", ] }
 extendr-api = "0.9.0"
 either = "1.15.0"
 faer = { version = '0.23.2' }
@@ -36,10 +36,6 @@ rand = { version = "0.9.0", features = ["std"] }
 rayon = "1.11.0"
 rustc-hash = "2.1.1"
 thousands = "*"
-
-[patch.crates-io]
-# overwrite from a feature branch - needs to be resetted
-bixverse-rs = { git = "https://github.com/GregorLueg/bixverse-rs.git", branch = "feat-faster-hvg" }
 
 [[bin]]
 name = "document"
