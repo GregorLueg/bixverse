@@ -599,7 +599,13 @@ S7::method(get_cell_indices, MetaCells) <- function(
     indices <- indices[!missing]
   }
 
-  return(indices)
+  # no binary counts here, but the aggregated matrix is still handed to Rust
+  # 0-indexed, e.g. the `cell_indices` stored on an `NmfResult`
+  if (rust_index) {
+    indices <- indices - 1L
+  }
+
+  return(as.integer(indices))
 }
 
 #' @name get_gene_indices.MetaCells
