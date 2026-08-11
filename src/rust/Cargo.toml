@@ -38,7 +38,8 @@ rustc-hash = "2.1.1"
 thousands = "*"
 
 [patch.crates-io]
-bixverse-rs = { git = "https://github.com/GregorLueg/bixverse-rs", branch = "feat-faster-hvg" }
+# overwrite from a feature branch - needs to be resetted
+bixverse-rs = { git = "https://github.com/GregorLueg/bixverse-rs.git", branch = "feat-faster-hvg" }
 
 [[bin]]
 name = "document"

@@ -74,7 +74,7 @@ Write a CSR matrix from R to the cells binary file
 
 \subsection{Arguments}{
 \describe{
-\item{\code{r_data}}{(\code{list})\cr A list convertible into \code{CompressedSparseData2}. Must contain the elements \code{"indptr"}, \code{"indices"}, \code{"data"}, \code{"nrow"}, \code{"ncol"} and \code{"format"}.}
+\item{\code{r_data}}{(\code{list})\cr A list convertible into \code{CompressedSparseData2}. Must contain the elements \code{"indptr"}, \code{"indices"}, \code{"data"}, \code{"nrow"}, \code{"ncol"} and \code{"cs_type"}.}
 \item{\code{qc_params}}{(\code{list})\cr Quality control parameters parseable into \code{MinCellQuality}.}
 \item{\code{verbose}}{(\code{logical})\cr Controls verbosity of the function. }
 }}

@@ -13,6 +13,7 @@ extract_feature_plot_data(
   obs_col = NULL,
   expr_modality = c("rna", "adt"),
   embd_modality = c("rna", "adt", "wnn"),
+  layer = c("norm", "magic"),
   ...
 )
 }
@@ -35,6 +36,10 @@ extract_feature_plot_data(
 
 \item{embd_modality}{String. Modality the embedding is pulled from. One of
 \code{c("rna", "adt", "wnn")}. Use \code{"wnn"} for WNN-derived embeddings.}
+
+\item{layer}{String. One of \code{c("norm", "magic")}, forwarded to
+\code{\link[=extract_gene_expression]{extract_gene_expression()}}. Use \code{"magic"} to colour the embedding by the
+imputed layer \code{\link[=run_magic_sc]{run_magic_sc()}} wrote.}
 
 \item{...}{Additional arguments forwarded to \code{\link[=extract_embedding_data]{extract_embedding_data()}} and
 onward to \code{\link[=get_embedding]{get_embedding()}}. Do not pass \code{modality} here; the embedding

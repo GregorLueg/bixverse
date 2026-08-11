@@ -49,7 +49,9 @@ fn rs_upper_triangle_to_sparse(
     let cs_type = parse_compressed_sparse_format(cs_type)
         .ok_or_else(|| extendr_api::Error::Other("Invalid cs_type".into()))?;
     let sparse = CompressedSparseData2::from_upper_triangle_sym(value, n, !shift, cs_type);
-    Ok(sparse_data_to_list(sparse))
+    let res = sparse_data_to_list(sparse).to_extendr()?;
+
+    Ok(res)
 }
 
 /// Helper to get zero stats from a given matrix

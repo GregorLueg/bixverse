@@ -1971,7 +1971,7 @@ checkScDblFinder <- function(x) {
       "cluster_iters",
       "fast_cluster",
       "n_iterations",
-      "n_trees",
+      "gbm_n_trees",
       "max_depth",
       "learning_rate",
       "min_samples_leaf",
@@ -2004,7 +2004,7 @@ checkScDblFinder <- function(x) {
       no_pcs = "I1[1,)",
       cluster_iters = "I1[1,)",
       n_iterations = "I1[1,)",
-      n_trees = "I1[1,)",
+      gbm_n_trees = "I1[1,)",
       max_depth = "I1[1,)",
       min_samples_leaf = "I1[1,)",
       cv_folds = "I1[2,)",
@@ -3787,6 +3787,283 @@ checkMeldParams <- function(x) {
 #'
 #' @keywords internal
 assertMeldParams <- checkmate::makeAssertionFunction(checkMeldParams)
+
+#### palantir ------------------------------------------------------------------
+
+#' Check Palantir parameters
+#'
+#' @description Checkmate extension for checking Palantir parameters.
+#'
+#' @param x The list to check/assert.
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
+checkScPalantirParams <- function(x) {
+  res <- check_list_shape(
+    x,
+    c(
+      "n_dcs",
+      "n_eigs",
+      "knn",
+      "num_waypoints",
+      "scale_components",
+      "use_early_cell_as_start",
+      "max_iterations",
+      "branch_prob_threshold"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- checkKnnParams(x[names(x) %in% KNN_PARAM_NAMES])
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  # the lower bounds mirror the Rust-side minima (MIN_MULTISCALE_EIGS, MIN_KNN,
+  # MIN_MAX_ITERATIONS); violating them errors deep inside the algorithm
+  res <- apply_qtest_rules(
+    x,
+    list(
+      n_dcs = "I1[3,)",
+      n_eigs = c("0", "I1[3,)"),
+      knn = "I1[6,)",
+      num_waypoints = "I1[1,)",
+      scale_components = "B1",
+      use_early_cell_as_start = "B1",
+      max_iterations = "I1[2,)",
+      branch_prob_threshold = "N1[0,1]",
+      lanczos_basis_size = c("0", "I1[1,)"),
+      lanczos_max_restarts = "I1[1,)",
+      lanczos_tol = "N1(0,)"
+    ),
+    label = "Palantir params",
+    hint = paste(
+      "n_dcs must be >= 3; n_eigs must be NULL or >= 3; knn must be >= 6;",
+      "num_waypoints must be >= 1; max_iterations must be >= 2;",
+      "branch_prob_threshold must be in [0, 1];",
+      "scale_components and use_early_cell_as_start must be booleans."
+    )
+  )
+
+  res
+}
+
+#' Assert Palantir parameters
+#'
+#' @description Checkmate extension for asserting Palantir parameters.
+#'
+#' @inheritParams checkScPalantirParams
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
+assertScPalantirParams <- checkmate::makeAssertionFunction(
+  checkScPalantirParams
+)
+
+#### magic ---------------------------------------------------------------------
+
+#' Check MAGIC parameters
+#'
+#' @description Checkmate extension for checking MAGIC parameters.
+#'
+#' @param x The list to check/assert.
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
+checkScMagicParams <- function(x) {
+  res <- check_list_shape(
+    x,
+    c(
+      "n_steps",
+      "clip_threshold",
+      "gene_batch_size",
+      "layer",
+      "allow_large"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- apply_qtest_rules(
+    x,
+    list(
+      n_steps = "I1[0,)",
+      clip_threshold = "N1[0,)",
+      gene_batch_size = "I1[1,)",
+      layer = "S1",
+      allow_large = "B1"
+    ),
+    label = "MAGIC params",
+    hint = paste(
+      "n_steps must be >= 0 (0 returns the un-imputed values);",
+      "clip_threshold must be >= 0; gene_batch_size must be >= 1;",
+      "allow_large must be a boolean."
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  apply_choice_rules(
+    x,
+    list(layer = c("norm", "raw")),
+    label = "MAGIC params",
+    hint = "layer must be one of 'norm' or 'raw'."
+  )
+}
+
+#' Assert MAGIC parameters
+#'
+#' @description Checkmate extension for asserting MAGIC parameters.
+#'
+#' @inheritParams checkScMagicParams
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
+assertScMagicParams <- checkmate::makeAssertionFunction(checkScMagicParams)
+
+#### gene trends ---------------------------------------------------------------
+
+#' Check branch cell selection parameters
+#'
+#' @description Checkmate extension for checking the branch cell selection
+#' parameters.
+#'
+#' @param x The list to check/assert.
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
+checkScBranchSelectionParams <- function(x) {
+  res <- check_list_shape(x, c("q", "eps", "resolution"))
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  apply_qtest_rules(
+    x,
+    list(
+      q = "N1[0,1]",
+      eps = "N1[0,)",
+      resolution = "I1[1,)"
+    ),
+    label = "branch selection params",
+    hint = paste(
+      "q must be in [0, 1]; eps must be >= 0;",
+      "resolution must be >= 1."
+    )
+  )
+}
+
+#' Assert branch cell selection parameters
+#'
+#' @description Checkmate extension for asserting the branch cell selection
+#' parameters.
+#'
+#' @inheritParams checkScBranchSelectionParams
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
+assertScBranchSelectionParams <- checkmate::makeAssertionFunction(
+  checkScBranchSelectionParams
+)
+
+#' Check gene trend parameters
+#'
+#' @description Checkmate extension for checking the gene trend parameters.
+#'
+#' @param x The list to check/assert.
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
+checkScGeneTrendParams <- function(x) {
+  res <- check_list_shape(
+    x,
+    c(
+      "resolution",
+      "weighting",
+      "length_scale",
+      "sigma",
+      "jitter",
+      "max_jitter_retries",
+      "chunk_size"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- apply_qtest_rules(
+    x,
+    list(
+      resolution = "I1[2,)",
+      weighting = "S1",
+      length_scale = "N1(0,)",
+      sigma = "N1(0,)",
+      jitter = "N1[0,)",
+      max_jitter_retries = "I1[0,)",
+      chunk_size = "I1[1,)"
+    ),
+    label = "gene trend params",
+    hint = paste(
+      "resolution must be >= 2; length_scale and sigma must be > 0;",
+      "jitter must be >= 0; max_jitter_retries must be >= 0;",
+      "chunk_size must be >= 1."
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  apply_choice_rules(
+    x,
+    list(weighting = c("hard_mask", "fate_probability")),
+    label = "gene trend params",
+    hint = "weighting must be one of 'hard_mask' or 'fate_probability'."
+  )
+}
+
+#' Assert gene trend parameters
+#'
+#' @description Checkmate extension for asserting the gene trend parameters.
+#'
+#' @inheritParams checkScGeneTrendParams
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
+assertScGeneTrendParams <- checkmate::makeAssertionFunction(
+  checkScGeneTrendParams
+)
 
 ### single cells (multi modal) -------------------------------------------------
 

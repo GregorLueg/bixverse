@@ -146,6 +146,7 @@ S7::method(print, SingleCellsSubset) <- function(x, ...) {
     sprintf("  Other embeddings: %s\n", other_embeddings_str),
     sprintf("  KNN generated: %s\n", knn_generated),
     sprintf("  SNN generated: %s\n", snn_generated),
+    sprintf("  Stale artefacts: %s\n", .print_stale_str(x)),
     sep = ""
   )
   invisible(x)
@@ -607,6 +608,24 @@ S7::method(get_gene_indices, SingleCellsSubset) <- function(
 
 ### sc cache -------------------------------------------------------------------
 
+#' @name reset_cells_to_keep.SingleCellsSubset
+#'
+#' @rdname reset_cells_to_keep
+#'
+#' @method reset_cells_to_keep SingleCellsSubset
+#'
+#' @export
+S7::method(reset_cells_to_keep, SingleCellsSubset) <- function(
+  object,
+  force = FALSE
+) {
+  stop(paste(
+    "A `SingleCellsSubset` is defined by its cell set; restoring every cell",
+    "would stop it being a subset. Reset the parent object instead and build",
+    "the subset again."
+  ))
+}
+
 #### setters -------------------------------------------------------------------
 
 #' @name set_pca_factors.SingleCellsSubset
@@ -625,7 +644,7 @@ S7::method(set_pca_factors, SingleCellsSubset) <- function(
     x = S7::prop(x, "sc_cache"),
     pca_factor = pca_factor
   )
-  x
+  .stamp_artefact(x, artefact = "pca", from = .stamp_from(...))
 }
 
 #' @name set_pca_loadings.SingleCellsSubset
@@ -685,7 +704,12 @@ S7::method(set_embedding, SingleCellsSubset) <- function(
     embd = embd,
     name = name
   )
-  x
+  .stamp_artefact(
+    x,
+    artefact = "embedding",
+    name = name,
+    from = .stamp_from(...)
+  )
 }
 
 #' @name set_knn.SingleCellsSubset
@@ -700,7 +724,7 @@ S7::method(set_knn, SingleCellsSubset) <- function(x, knn, ...) {
     x = S7::prop(x, "sc_cache"),
     knn = knn
   )
-  x
+  .stamp_artefact(x, artefact = "knn", from = .stamp_from(...))
 }
 
 #' @name set_snn_graph.SingleCellsSubset
@@ -715,7 +739,7 @@ S7::method(set_snn_graph, SingleCellsSubset) <- function(x, snn_graph, ...) {
     x = S7::prop(x, "sc_cache"),
     snn_graph = snn_graph
   )
-  x
+  .stamp_artefact(x, artefact = "snn", from = .stamp_from(...))
 }
 
 #' @name remove_knn.SingleCellsSubset
@@ -740,6 +764,32 @@ S7::method(remove_snn_graph, SingleCellsSubset) <- function(x, ...) {
   x
 }
 
+#' @name set_magic.SingleCellsSubset
+#'
+#' @rdname set_magic
+#'
+#' @method set_magic SingleCellsSubset
+S7::method(set_magic, SingleCellsSubset) <- function(x, magic, ...) {
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
+  checkmate::assertClass(magic, "ScMagic")
+  S7::prop(x, "sc_cache") <- set_magic(
+    x = S7::prop(x, "sc_cache"),
+    magic = magic
+  )
+  .stamp_artefact(x, artefact = "magic", from = .stamp_from(...))
+}
+
+#' @name remove_magic.SingleCellsSubset
+#'
+#' @rdname remove_magic
+#'
+#' @method remove_magic SingleCellsSubset
+S7::method(remove_magic, SingleCellsSubset) <- function(x, ...) {
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
+  S7::prop(x, "sc_cache") <- remove_magic(x = S7::prop(x, "sc_cache"))
+  x
+}
+
 #### getters -------------------------------------------------------------------
 
 #' @name get_pca_factors.SingleCellsSubset
@@ -753,6 +803,8 @@ S7::method(get_pca_factors, SingleCellsSubset) <- function(x, ...) {
   if (is.null(res)) {
     return(NULL)
   }
+  .warn_sc_state(x, artefact = "pca")
+  res <- .drop_stamp(res)
   # TODO: confirm cell id column name
   rownames(res) <- S7::prop(x, "obs_table")$cell_id
   colnames(res) <- sprintf("PC_%i", seq_len(ncol(res)))
@@ -799,6 +851,8 @@ S7::method(get_embedding, SingleCellsSubset) <- function(x, embd_name, ...) {
   if (is.null(res)) {
     return(NULL)
   }
+  .warn_sc_state(x, artefact = "embedding", name = embd_name)
+  res <- .drop_stamp(res)
   # TODO: confirm cell id column name
   rownames(res) <- S7::prop(x, "obs_table")$cell_id
   res
@@ -821,7 +875,9 @@ S7::method(get_available_embeddings, SingleCellsSubset) <- function(x, ...) {
 #' @method get_knn_mat SingleCellsSubset
 S7::method(get_knn_mat, SingleCellsSubset) <- function(x, ...) {
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
-  get_knn_mat(x = S7::prop(x, "sc_cache"))
+  res <- get_knn_mat(x = S7::prop(x, "sc_cache"))
+  .warn_sc_state(x, artefact = "knn")
+  res
 }
 
 #' @name get_knn_dist.SingleCellsSubset
@@ -831,7 +887,9 @@ S7::method(get_knn_mat, SingleCellsSubset) <- function(x, ...) {
 #' @method get_knn_dist SingleCellsSubset
 S7::method(get_knn_dist, SingleCellsSubset) <- function(x, ...) {
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
-  get_knn_dist(x = S7::prop(x, "sc_cache"))
+  res <- get_knn_dist(x = S7::prop(x, "sc_cache"))
+  .warn_sc_state(x, artefact = "knn")
+  res
 }
 
 #' @name get_knn_obj.SingleCellsSubset
@@ -841,7 +899,9 @@ S7::method(get_knn_dist, SingleCellsSubset) <- function(x, ...) {
 #' @method get_knn_obj SingleCellsSubset
 S7::method(get_knn_obj, SingleCellsSubset) <- function(x, ...) {
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
-  get_knn_obj(x = S7::prop(x, "sc_cache"))
+  res <- get_knn_obj(x = S7::prop(x, "sc_cache"))
+  .warn_sc_state(x, artefact = "knn")
+  .drop_stamp(res)
 }
 
 #' @name get_snn_graph.SingleCellsSubset
@@ -851,7 +911,21 @@ S7::method(get_knn_obj, SingleCellsSubset) <- function(x, ...) {
 #' @method get_snn_graph SingleCellsSubset
 S7::method(get_snn_graph, SingleCellsSubset) <- function(x, ...) {
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
-  get_snn_graph(x = S7::prop(x, "sc_cache"))
+  res <- get_snn_graph(x = S7::prop(x, "sc_cache"))
+  .warn_sc_state(x, artefact = "snn")
+  .drop_stamp(res)
+}
+
+#' @name get_magic.SingleCellsSubset
+#'
+#' @rdname get_magic
+#'
+#' @method get_magic SingleCellsSubset
+S7::method(get_magic, SingleCellsSubset) <- function(x, ...) {
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCellsSubset))
+  res <- get_magic(x = S7::prop(x, "sc_cache"))
+  .warn_sc_state(x, artefact = "magic")
+  .drop_stamp(res)
 }
 
 ## write-back ------------------------------------------------------------------

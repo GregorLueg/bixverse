@@ -192,6 +192,13 @@ S7::method(umap_sc, ScOrMc) <- function(
   # wnn takes the integrated graph; embeddings still read/write the rna cache
   cache_modality <- if (modality == "wnn") "rna" else modality
 
+  # hard tier: the manifold is written back onto the object, and it is read
+  # from `cache_modality` while the kNN comes from `modality`
+  assert_sc_state(object, artefacts = embd_to_use, modality = cache_modality)
+  if (modality == "wnn" || use_knn) {
+    assert_sc_state(object, artefacts = "knn", modality = modality)
+  }
+
   # get the knn
   knn <- if (modality == "wnn") {
     .get_manifoldsr_knn_from_wnn(x = object)
@@ -240,7 +247,13 @@ S7::method(umap_sc, ScOrMc) <- function(
     x = object,
     embd = umap_embd,
     name = slot_name,
-    modality = modality
+    modality = modality,
+    from = .manifold_from(
+      embd_to_use = embd_to_use,
+      cache_modality = cache_modality,
+      modality = modality,
+      has_knn = !is.null(knn)
+    )
   )
 
   return(object)
@@ -382,6 +395,13 @@ S7::method(tsne_sc, ScOrMc) <- function(
 
   cache_modality <- if (modality == "wnn") "rna" else modality
 
+  # hard tier: the manifold is written back onto the object, and it is read
+  # from `cache_modality` while the kNN comes from `modality`
+  assert_sc_state(object, artefacts = embd_to_use, modality = cache_modality)
+  if (modality == "wnn" || use_knn) {
+    assert_sc_state(object, artefacts = "knn", modality = modality)
+  }
+
   # get the knn
   knn <- if (modality == "wnn") {
     .get_manifoldsr_knn_from_wnn(x = object)
@@ -429,7 +449,13 @@ S7::method(tsne_sc, ScOrMc) <- function(
     x = object,
     embd = tsne_embd,
     name = slot_name,
-    modality = modality
+    modality = modality,
+    from = .manifold_from(
+      embd_to_use = embd_to_use,
+      cache_modality = cache_modality,
+      modality = modality,
+      has_knn = !is.null(knn)
+    )
   )
 
   return(object)
@@ -562,6 +588,13 @@ S7::method(phate_sc, ScOrMc) <- function(
 
   cache_modality <- if (modality == "wnn") "rna" else modality
 
+  # hard tier: the manifold is written back onto the object, and it is read
+  # from `cache_modality` while the kNN comes from `modality`
+  assert_sc_state(object, artefacts = embd_to_use, modality = cache_modality)
+  if (modality == "wnn" || use_knn) {
+    assert_sc_state(object, artefacts = "knn", modality = modality)
+  }
+
   # get the knn
   knn <- if (modality == "wnn") {
     .get_manifoldsr_knn_from_wnn(x = object)
@@ -608,7 +641,13 @@ S7::method(phate_sc, ScOrMc) <- function(
     x = object,
     embd = phate_embd,
     name = slot_name,
-    modality = modality
+    modality = modality,
+    from = .manifold_from(
+      embd_to_use = embd_to_use,
+      cache_modality = cache_modality,
+      modality = modality,
+      has_knn = !is.null(knn)
+    )
   )
 
   return(object)
@@ -637,6 +676,40 @@ S7::method(phate_sc, ScOrMc) <- function(
     stop("No features matched. Please double check provided parameters!")
   }
   features
+}
+
+#' Resolve feature names to gene indices, keeping the two in step
+#'
+#' @description
+#' [get_gene_indices()] warns and silently drops anything it cannot match, so
+#' the caller is left holding a `features` vector longer than the indices it
+#' got back. Anything that labels a Rust result by position has to use the
+#' surviving names rather than the requested ones, otherwise the labels slide
+#' off the values. This is the in-memory `.match_features()` for the streaming
+#' paths.
+#'
+#' @param object `SingleCells` or `SingleCellsSubset` class.
+#' @param features Character vector. The requested gene ids.
+#'
+#' @returns A list with `features`, the surviving gene ids in request order,
+#' and `indices`, their 0-indexed positions for Rust.
+#'
+#' @keywords internal
+.resolve_gene_features <- function(object, features) {
+  gene_idx <- get_gene_indices(
+    x = object,
+    gene_ids = features,
+    rust_index = TRUE
+  )
+
+  list(
+    features = unname(get_gene_names_from_idx(
+      x = object,
+      gene_idx = gene_idx,
+      rust_based = TRUE
+    )),
+    indices = gene_idx
+  )
 }
 
 #' Z-score and optionally clip a numeric vector
@@ -765,11 +838,8 @@ S7::method(extract_dot_plot_data, ScOrScSubset) <- function(
     ))
   }
 
-  gene_idx <- get_gene_indices(
-    x = object,
-    gene_ids = features,
-    rust_index = TRUE
-  )
+  resolved <- .resolve_gene_features(object, features)
+  features <- resolved$features
 
   cell_idx <- get_cells_to_keep(object)
   grouping <- as.factor(
@@ -787,7 +857,7 @@ S7::method(extract_dot_plot_data, ScOrScSubset) <- function(
   gene_res <- rs_extract_grouped_gene_stats(
     f_path = get_rust_count_gene_f_path(object),
     cell_indices = cell_idx,
-    gene_indices = gene_idx,
+    gene_indices = resolved$indices,
     group_ids = as.integer(grouping) - 1L,
     group_levels = levels(grouping)
   )
@@ -890,9 +960,11 @@ S7::method(extract_gene_expression, ScOrScSubset) <- function(
   obs_cols = NULL,
   scale = FALSE,
   clip = NULL,
-  modality = c("rna", "adt")
+  modality = c("rna", "adt"),
+  layer = c("norm", "magic")
 ) {
   modality <- match.arg(modality)
+  layer <- match.arg(layer)
   checkmate::assertTRUE(
     S7::S7_inherits(object, SingleCells) ||
       S7::S7_inherits(object, SingleCellsSubset)
@@ -909,25 +981,34 @@ S7::method(extract_gene_expression, ScOrScSubset) <- function(
     ))
   }
 
-  gene_idx <- get_gene_indices(
-    x = object,
-    gene_ids = features,
-    rust_index = TRUE
-  )
+  dt <- if (identical(layer, "magic")) {
+    # the imputed layer is already dense and in memory, so it takes the same
+    # route as the ADT counts do
+    mat <- .magic_matrix(object)
+    .extract_expr_in_memory(
+      mat,
+      .match_features(features, colnames(mat)),
+      scale,
+      clip
+    )
+  } else {
+    resolved <- .resolve_gene_features(object, features)
 
-  counts <- rs_extract_several_genes_plots(
-    f_path = get_rust_count_gene_f_path(object),
-    cell_indices = get_cells_to_keep(object),
-    gene_indices = gene_idx,
-    scale = scale,
-    clip = clip
-  )
+    counts <- rs_extract_several_genes_plots(
+      f_path = get_rust_count_gene_f_path(object),
+      cell_indices = get_cells_to_keep(object),
+      gene_indices = resolved$indices,
+      scale = scale,
+      clip = clip
+    )
 
-  dt <- data.table::data.table(
-    cell_id = get_cell_names(object, filtered = TRUE)
-  )
-  for (i in seq_along(features)) {
-    data.table::set(dt, j = features[i], value = counts[[i]])
+    out <- data.table::data.table(
+      cell_id = get_cell_names(object, filtered = TRUE)
+    )
+    for (i in seq_along(resolved$features)) {
+      data.table::set(out, j = resolved$features[i], value = counts[[i]])
+    }
+    out
   }
 
   if (!is.null(obs_cols)) {
@@ -940,6 +1021,26 @@ S7::method(extract_gene_expression, ScOrScSubset) <- function(
   dt
 }
 
+#' Fetch the imputed matrix, with a pointer when it is missing
+#'
+#' @param object `SingleCells` or `SingleCellsSubset` class.
+#'
+#' @returns The cells x genes matrix held by the `ScMagic` layer.
+#'
+#' @keywords internal
+.magic_matrix <- function(object) {
+  magic <- get_magic(object)
+
+  if (is.null(magic)) {
+    stop(paste(
+      "No imputed layer found. Run run_magic_sc() first,",
+      "or use layer = 'norm'."
+    ))
+  }
+
+  magic[["data"]]
+}
+
 #' @method extract_gene_expression SingleCellsMultiModal
 #'
 #' @export
@@ -949,9 +1050,11 @@ S7::method(extract_gene_expression, SingleCellsMultiModal) <- function(
   obs_cols = NULL,
   scale = FALSE,
   clip = NULL,
-  modality = c("rna", "adt")
+  modality = c("rna", "adt"),
+  layer = c("norm", "magic")
 ) {
   modality <- match.arg(modality)
+  layer <- match.arg(layer)
 
   if (modality == "rna") {
     # lookup by concrete class: S7 expands unions at registration, but
@@ -963,11 +1066,19 @@ S7::method(extract_gene_expression, SingleCellsMultiModal) <- function(
       obs_cols = obs_cols,
       scale = scale,
       clip = clip,
-      modality = "rna"
+      modality = "rna",
+      layer = layer
     ))
   }
 
   # ADT path
+  if (identical(layer, "magic")) {
+    stop(paste(
+      "The imputed layer holds RNA counts.",
+      "Use modality = 'rna' or layer = 'norm'."
+    ))
+  }
+
   checkmate::qassert(features, "S+")
   checkmate::qassert(obs_cols, c("0", "S+"))
   checkmate::qassert(scale, "B1")
@@ -1001,9 +1112,11 @@ S7::method(extract_gene_expression, MetaCells) <- function(
   obs_cols = NULL,
   scale = FALSE,
   clip = NULL,
-  modality = c("rna", "adt")
+  modality = c("rna", "adt"),
+  layer = c("norm", "magic")
 ) {
   modality <- match.arg(modality)
+  layer <- match.arg(layer)
   checkmate::assertTRUE(S7::S7_inherits(object, MetaCells))
   checkmate::qassert(features, "S+")
   checkmate::qassert(obs_cols, c("0", "S+"))
@@ -1014,6 +1127,13 @@ S7::method(extract_gene_expression, MetaCells) <- function(
     stop(paste(
       "MetaCells only supports modality = 'rna'.",
       "Use SingleCellsMultiModal for ADT."
+    ))
+  }
+
+  if (identical(layer, "magic")) {
+    stop(paste(
+      "MAGIC is not available for MetaCells, which are already aggregated.",
+      "Use layer = 'norm'."
     ))
   }
 

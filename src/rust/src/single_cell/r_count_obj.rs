@@ -294,7 +294,7 @@ impl SingleCellCountData {
     /// @param r_data (`list`)\cr
     /// A list convertible into `CompressedSparseData2`. Must contain the
     /// elements `"indptr"`, `"indices"`, `"data"`, `"nrow"`, `"ncol"` and
-    /// `"format"`.
+    /// `"cs_type"`.
     /// @param qc_params (`list`)\cr
     /// Quality control parameters parseable into `MinCellQuality`.
     /// @param verbose (`logical`)\cr
