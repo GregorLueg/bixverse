@@ -107,7 +107,7 @@ are squared.
 #| label: hvg pca neighbours
 sc_object <- find_hvg_sc(
   object = sc_object,
-  hvg_no = 1500L
+  hvg_no = 2000L
 )
 
 sc_object <- calculate_pca_sc(
