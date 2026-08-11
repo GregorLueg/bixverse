@@ -21,6 +21,7 @@ etc.
     \item \href{#method-SingleCellDuckDBBase-get_cells_to_keep}{\code{SingleCellDuckDBBase$get_cells_to_keep()}}
     \item \href{#method-SingleCellDuckDBBase-get_obs_cols}{\code{SingleCellDuckDBBase$get_obs_cols()}}
     \item \href{#method-SingleCellDuckDBBase-set_cells_to_keep}{\code{SingleCellDuckDBBase$set_cells_to_keep()}}
+    \item \href{#method-SingleCellDuckDBBase-reset_cells_to_keep}{\code{SingleCellDuckDBBase$reset_cells_to_keep()}}
     \item \href{#method-SingleCellDuckDBBase-filter_var_table}{\code{SingleCellDuckDBBase$filter_var_table()}}
     \item \href{#method-SingleCellDuckDBBase-add_data_obs}{\code{SingleCellDuckDBBase$add_data_obs()}}
     \item \href{#method-SingleCellDuckDBBase-join_data_obs}{\code{SingleCellDuckDBBase$join_data_obs()}}
@@ -211,6 +212,26 @@ Needs to be 1-indexed!}
   }
   \subsection{Returns}{
     Invisible self after updating the to_keep column in the DuckDB.
+Restore every cell in the obs table
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SingleCellDuckDBBase-reset_cells_to_keep"></a>}}
+\if{latex}{\out{\hypertarget{method-SingleCellDuckDBBase-reset_cells_to_keep}{}}}
+\subsection{\code{SingleCellDuckDBBase$reset_cells_to_keep()}}{
+  Flips \code{to_keep} back on for every row. Filtering never deletes rows, it
+only flips this flag, so nothing was lost and nothing needs rebuilding.
+A single statement rather than a round trip through
+\code{set_cells_to_keep()}, which would write a temp table the size of the
+whole obs table just to switch every flag back on.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{SingleCellDuckDBBase$reset_cells_to_keep()}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    Invisible self after resetting the to_keep column.
 Filter the var table and reset the gene idx
   }
 }

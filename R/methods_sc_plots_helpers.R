@@ -192,6 +192,13 @@ S7::method(umap_sc, ScOrMc) <- function(
   # wnn takes the integrated graph; embeddings still read/write the rna cache
   cache_modality <- if (modality == "wnn") "rna" else modality
 
+  # hard tier: the manifold is written back onto the object, and it is read
+  # from `cache_modality` while the kNN comes from `modality`
+  assert_sc_state(object, artefacts = embd_to_use, modality = cache_modality)
+  if (modality == "wnn" || use_knn) {
+    assert_sc_state(object, artefacts = "knn", modality = modality)
+  }
+
   # get the knn
   knn <- if (modality == "wnn") {
     .get_manifoldsr_knn_from_wnn(x = object)
@@ -240,7 +247,13 @@ S7::method(umap_sc, ScOrMc) <- function(
     x = object,
     embd = umap_embd,
     name = slot_name,
-    modality = modality
+    modality = modality,
+    from = .manifold_from(
+      embd_to_use = embd_to_use,
+      cache_modality = cache_modality,
+      modality = modality,
+      has_knn = !is.null(knn)
+    )
   )
 
   return(object)
@@ -382,6 +395,13 @@ S7::method(tsne_sc, ScOrMc) <- function(
 
   cache_modality <- if (modality == "wnn") "rna" else modality
 
+  # hard tier: the manifold is written back onto the object, and it is read
+  # from `cache_modality` while the kNN comes from `modality`
+  assert_sc_state(object, artefacts = embd_to_use, modality = cache_modality)
+  if (modality == "wnn" || use_knn) {
+    assert_sc_state(object, artefacts = "knn", modality = modality)
+  }
+
   # get the knn
   knn <- if (modality == "wnn") {
     .get_manifoldsr_knn_from_wnn(x = object)
@@ -429,7 +449,13 @@ S7::method(tsne_sc, ScOrMc) <- function(
     x = object,
     embd = tsne_embd,
     name = slot_name,
-    modality = modality
+    modality = modality,
+    from = .manifold_from(
+      embd_to_use = embd_to_use,
+      cache_modality = cache_modality,
+      modality = modality,
+      has_knn = !is.null(knn)
+    )
   )
 
   return(object)
@@ -562,6 +588,13 @@ S7::method(phate_sc, ScOrMc) <- function(
 
   cache_modality <- if (modality == "wnn") "rna" else modality
 
+  # hard tier: the manifold is written back onto the object, and it is read
+  # from `cache_modality` while the kNN comes from `modality`
+  assert_sc_state(object, artefacts = embd_to_use, modality = cache_modality)
+  if (modality == "wnn" || use_knn) {
+    assert_sc_state(object, artefacts = "knn", modality = modality)
+  }
+
   # get the knn
   knn <- if (modality == "wnn") {
     .get_manifoldsr_knn_from_wnn(x = object)
@@ -608,7 +641,13 @@ S7::method(phate_sc, ScOrMc) <- function(
     x = object,
     embd = phate_embd,
     name = slot_name,
-    modality = modality
+    modality = modality,
+    from = .manifold_from(
+      embd_to_use = embd_to_use,
+      cache_modality = cache_modality,
+      modality = modality,
+      has_knn = !is.null(knn)
+    )
   )
 
   return(object)

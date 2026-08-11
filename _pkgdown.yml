@@ -337,6 +337,10 @@ reference:
       - get_cell_indices
       - get_cell_names
       - get_cells_to_keep
+      - reset_cells_to_keep
+      - get_sc_cache_status
+      - check_sc_state
+      - assert_sc_state
       - get_embedding
       - get_gene_indices
       - get_gene_names

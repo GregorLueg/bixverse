@@ -154,6 +154,7 @@ S7::method(print, MetaCells) <- function(x, ...) {
     sprintf("  Other embeddings: %s\n", other_embeddings_str),
     sprintf("  KNN generated: %s\n", knn_generated),
     sprintf("  SNN generated: %s\n", snn_generated),
+    sprintf("  Stale artefacts: %s\n", .print_stale_str(x)),
     sep = ""
   )
   invisible(x)
@@ -596,6 +597,23 @@ S7::method(get_gene_indices, MetaCells) <- function(
 
 #### setters -------------------------------------------------------------------
 
+#' @name reset_cells_to_keep.MetaCells
+#'
+#' @rdname reset_cells_to_keep
+#'
+#' @method reset_cells_to_keep MetaCells
+#'
+#' @export
+S7::method(reset_cells_to_keep, MetaCells) <- function(
+  object,
+  force = FALSE
+) {
+  stop(paste(
+    "`MetaCells` have no cells to keep; their cell set is fixed when the meta",
+    "cells are generated. Re-generate them from the source object instead."
+  ))
+}
+
 #' @name set_pca_factors.MetaCells
 #'
 #' @rdname set_pca_factors
@@ -614,6 +632,8 @@ S7::method(set_pca_factors, MetaCells) <- function(
     x = S7::prop(x, "sc_cache"),
     pca_factor = pca_factor
   )
+
+  x <- .stamp_artefact(x, artefact = "pca", from = .stamp_from(...))
 
   return(x)
 }
@@ -684,6 +704,13 @@ S7::method(set_embedding, MetaCells) <- function(
     name = name
   )
 
+  x <- .stamp_artefact(
+    x,
+    artefact = "embedding",
+    name = name,
+    from = .stamp_from(...)
+  )
+
   return(x)
 }
 
@@ -706,6 +733,8 @@ S7::method(set_knn, MetaCells) <- function(
     knn = knn
   )
 
+  x <- .stamp_artefact(x, artefact = "knn", from = .stamp_from(...))
+
   return(x)
 }
 
@@ -727,6 +756,8 @@ S7::method(set_snn_graph, MetaCells) <- function(
     x = S7::prop(x, "sc_cache"),
     snn_graph = snn_graph
   )
+
+  x <- .stamp_artefact(x, artefact = "snn", from = .stamp_from(...))
 
   return(x)
 }
@@ -790,6 +821,9 @@ S7::method(get_pca_factors, MetaCells) <- function(
   if (is.null(res)) {
     return(NULL)
   }
+
+  .warn_sc_state(x, artefact = "pca")
+  res <- .drop_stamp(res)
 
   rownames(res) <- S7::prop(x, "obs_table")$meta_cell_id
   colnames(res) <- sprintf("PC_%i", 1:ncol(res))
@@ -861,6 +895,9 @@ S7::method(get_embedding, MetaCells) <- function(
     embd_name = embd_name
   )
 
+  .warn_sc_state(x, artefact = "embedding", name = embd_name)
+  res <- .drop_stamp(res)
+
   rownames(res) <- S7::prop(x, "obs_table")$meta_cell_id
 
   return(res)
@@ -901,6 +938,8 @@ S7::method(get_knn_mat, MetaCells) <- function(
     x = S7::prop(x, "sc_cache")
   )
 
+  .warn_sc_state(x, artefact = "knn")
+
   return(res)
 }
 
@@ -919,6 +958,8 @@ S7::method(get_knn_dist, MetaCells) <- function(
   res <- get_knn_dist(
     x = S7::prop(x, "sc_cache")
   )
+
+  .warn_sc_state(x, artefact = "knn")
 
   return(res)
 }
@@ -939,7 +980,9 @@ S7::method(get_knn_obj, MetaCells) <- function(
     x = S7::prop(x, "sc_cache")
   )
 
-  return(res)
+  .warn_sc_state(x, artefact = "knn")
+
+  return(.drop_stamp(res))
 }
 
 #' @name get_snn_graph.MetaCells
@@ -958,5 +1001,7 @@ S7::method(get_snn_graph, MetaCells) <- function(
     x = S7::prop(x, "sc_cache")
   )
 
-  return(res)
+  .warn_sc_state(x, artefact = "snn")
+
+  return(.drop_stamp(res))
 }

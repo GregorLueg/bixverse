@@ -8,6 +8,19 @@
 \description{
 Your favourite methods used in bioinformatics and computational biology made VERY fast via Rust. Contains various gene set enrichment methods, graph- based methods, co-expression module detection and much more. Additionally, has now a single cell analysis suite, enabling million cell scale analysis on local compute.
 }
+\section{Options}{
+
+\describe{
+\item{\code{bixverse.cache_check}}{Controls how strictly the single cell
+classes police stale cached artefacts (PCA, embeddings, kNN, sNN) against
+the current cell set. Unset, the default, is two tier: the getters warn,
+while \code{\link[=assert_sc_state]{assert_sc_state()}} errors inside the functions that hand cached
+indices to Rust. \code{"error"} promotes the getter warnings to errors too,
+\code{"warn"} spells out the default getter behaviour, and \code{"none"} disables
+both tiers. See \code{\link[=get_sc_cache_status]{get_sc_cache_status()}}.}
+}
+}
+
 \seealso{
 Useful links:
 \itemize{

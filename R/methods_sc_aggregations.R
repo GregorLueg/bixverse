@@ -93,6 +93,12 @@ S7::method(generate_bt_meta_cells_sc, ScOrScSubset) <- function(
   checkmate::qassert(target_size, "N1")
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
+  # hard tier: cell indices from here go straight into Rust
+  assert_sc_state(
+    object,
+    artefacts = if (regenerate_knn) embd_to_use else "knn"
+  )
+
   # if the kNN graph shall be regenerated, get the emedding here...
   if (regenerate_knn) {
     embd <- get_embedding(x = object, embd_name = embd_to_use)
@@ -279,6 +285,12 @@ S7::method(generate_seacells_sc, ScOrScSubset) <- function(
   checkmate::qassert(target_size, "N1")
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
+  # hard tier: cell indices from here go straight into Rust
+  assert_sc_state(
+    object,
+    artefacts = c(embd_to_use, if (!regenerate_knn) "knn")
+  )
+
   # function body
   embd <- get_embedding(x = object, embd_name = embd_to_use)
 
@@ -412,6 +424,12 @@ S7::method(generate_supercells_sc, ScOrScSubset) <- function(
   checkmate::qassert(cells_to_use, c("S+", "0"))
   checkmate::qassert(target_size, "N1")
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
+
+  # hard tier: cell indices from here go straight into Rust
+  assert_sc_state(
+    object,
+    artefacts = if (regenerate_knn) embd_to_use else "knn"
+  )
 
   # if the kNN graph shall be regenerated, get the embedding here...
   if (regenerate_knn) {

@@ -376,6 +376,9 @@ S7::method(get_miloR_abundances_sc, SingleCells) <- function(
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
+  # hard tier: the neighbourhood counts are aligned to the kept cells
+  assert_sc_state(object, artefacts = c(embd_to_use, "knn"))
+
   samples <- unlist(object[[sample_id_col]], use.names = FALSE)
 
   embd <- get_embedding(x = object, embd_name = embd_to_use)
@@ -541,6 +544,9 @@ S7::method(meld_sc, SingleCells) <- function(
   assertMeldParams(meld_params)
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
+
+  # hard tier: the densities are returned per kept cell
+  assert_sc_state(object, artefacts = c(embd_to_use, "knn"))
 
   samples <- as.factor(unlist(object[[sample_id_col]], use.names = FALSE))
 

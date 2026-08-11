@@ -1405,6 +1405,9 @@ S7::method(find_neighbours_sc, ScOrMc) <- function(
     return(object)
   }
 
+  # hard tier: the kNN indices built here go straight to Rust downstream
+  assert_sc_state(object, artefacts = embd_to_use, modality = modality)
+
   embd <- get_embedding(
     x = object,
     embd_name = embd_to_use,
@@ -1426,7 +1429,12 @@ S7::method(find_neighbours_sc, ScOrMc) <- function(
     seed = seed,
     .verbose = .verbose
   )
-  object <- set_knn(object, knn_data, modality = modality)
+  object <- set_knn(
+    object,
+    knn_data,
+    modality = modality,
+    from = embd_to_use
+  )
 
   if (.verbose) {
     message(sprintf(
@@ -1455,7 +1463,12 @@ S7::method(find_neighbours_sc, ScOrMc) <- function(
     attr = list(weight = snn_graph_rs$weights)
   )
 
-  object <- set_snn_graph(object, snn_graph = snn_g, modality = modality)
+  object <- set_snn_graph(
+    object,
+    snn_graph = snn_g,
+    modality = modality,
+    from = "knn"
+  )
 
   return(object)
 }
@@ -1492,6 +1505,10 @@ S7::method(find_clusters_sc, ScOrMc) <- function(
       modality
     ))
   }
+
+  # hard tier: the cluster labels are written back aligned to the kept cells,
+  # so a graph over a different cell set silently mislabels
+  assert_sc_state(object, artefacts = "snn", modality = modality)
 
   snn_graph <- get_snn_graph(object, modality = modality)
   if (is.null(snn_graph)) {

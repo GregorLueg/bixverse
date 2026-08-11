@@ -228,6 +228,39 @@ set_cells_to_keep <- function(x, cells_to_keep) {
   UseMethod("set_cells_to_keep")
 }
 
+#' @title Reset the cells to keep
+#'
+#' @description
+#' Restores every cell found in the binary count file and wipes the cache,
+#' taking the object back to a pristine state. Filtering only ever flips a
+#' `to_keep` flag in the DuckDB, so nothing was deleted and nothing is lost by
+#' resetting.
+#'
+#' Wiping the cache is not optional: a PCA or a kNN computed on a filtered
+#' subset does not describe the full cell set, and keeping it would recreate
+#' exactly the mismatch this guards against. With `force = FALSE` you are asked
+#' to confirm before that happens.
+#'
+#' @param object `SingleCells` or `SingleCellsMultiModal` class.
+#' @param force Boolean. Skip the confirmation prompt. Defaults to `FALSE`, in
+#' which case an interactive session asks before wiping the cache and a
+#' non-interactive one errors, because there is no one there to ask.
+#'
+#' @returns The object with every cell restored and an empty cache. Unchanged
+#' if the confirmation was declined.
+#'
+#' @export
+reset_cells_to_keep <- S7::new_generic(
+  name = "reset_cells_to_keep",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    force = FALSE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
 #' @title Set the HVG genes
 #'
 #' @description

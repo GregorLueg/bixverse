@@ -616,9 +616,14 @@ S7::method(bbknn_sc, ScOrScSubset) <- function(
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
-  if (!is.null(get_knn_mat(object))) {
+  # presence probe, not a read: the kNN is about to be overwritten, so a stale
+  # one here is not a problem worth signalling about
+  if (.sc_has_artefact(object, "knn")) {
     warning("Prior kNN matrix found. Will be overwritten.")
   }
+
+  # hard tier: the kNN built here feeds the sNN and everything downstream
+  assert_sc_state(object, artefacts = embd_to_use)
 
   embd <- switch(embd_to_use, pca = get_pca_factors(object))
 
@@ -687,7 +692,7 @@ S7::method(bbknn_sc, ScOrScSubset) <- function(
 
   used_cells <- get_cell_names(object, filtered = TRUE)
   sc_knn <- new_sc_knn(knn_data = knn_data, used_cells = used_cells)
-  object <- set_knn(object, knn = sc_knn)
+  object <- set_knn(object, knn = sc_knn, from = "pca")
 
   if (.verbose) {
     message(paste(
@@ -714,7 +719,7 @@ S7::method(bbknn_sc, ScOrScSubset) <- function(
     weighted = TRUE
   )
 
-  object <- set_snn_graph(object, snn_graph = snn_graph)
+  object <- set_snn_graph(object, snn_graph = snn_graph, from = "knn")
 
   object
 }
@@ -802,6 +807,11 @@ S7::method(fast_mnn_sc, ScOrScSubset) <- function(
   batch_factor <- factor(batch_indices)
   batch_indices <- as.integer(batch_factor) - 1L
 
+  # hard tier, but only on the branch that actually consumes the PCA
+  if (use_precomputed_pca) {
+    assert_sc_state(object, artefacts = "pca")
+  }
+
   pca_data <- if (use_precomputed_pca && !is.null(get_pca_factors(object))) {
     if (.verbose) {
       message("Using pre-computed PCA found in the object")
@@ -825,7 +835,12 @@ S7::method(fast_mnn_sc, ScOrScSubset) <- function(
 
   colnames(mnn_embd) <- sprintf("mnn_%s", 1:ncol(mnn_embd))
 
-  set_embedding(x = object, embd = mnn_embd, name = "mnn")
+  set_embedding(
+    x = object,
+    embd = mnn_embd,
+    name = "mnn",
+    from = if (is.null(pca_data)) character() else "pca"
+  )
 }
 
 ## harmony ---------------------------------------------------------------------
@@ -895,6 +910,10 @@ S7::method(harmony_sc, ScOrScSubset) <- function(
     ))
   }
 
+  # hard tier: the corrected embedding is written back onto the object, so a
+  # stale PCA would silently produce a mis-aligned one
+  assert_sc_state(object, artefacts = "pca", modality = modality)
+
   if (is.null(get_pca_factors(object, modality = modality))) {
     warning("No PCA embeddings found in the object. Returning class as is")
     return(object)
@@ -946,7 +965,8 @@ S7::method(harmony_sc, ScOrScSubset) <- function(
     x = object,
     embd = harmony_embd,
     name = "harmony",
-    modality = modality
+    modality = modality,
+    from = "pca"
   )
 }
 
@@ -1017,6 +1037,10 @@ S7::method(harmony_v2_sc, ScOrScSubset) <- function(
     ))
   }
 
+  # hard tier: the corrected embedding is written back onto the object, so a
+  # stale PCA would silently produce a mis-aligned one
+  assert_sc_state(object, artefacts = "pca", modality = modality)
+
   if (is.null(get_pca_factors(object, modality = modality))) {
     warning("No PCA embeddings found in the object. Returning class as is")
     return(object)
@@ -1068,7 +1092,8 @@ S7::method(harmony_v2_sc, ScOrScSubset) <- function(
     x = object,
     embd = harmony_embd,
     name = "harmony_v2",
-    modality = modality
+    modality = modality,
+    from = "pca"
   )
 }
 
@@ -1180,6 +1205,11 @@ S7::method(seurat_cca_sc, SingleCells) <- function(
     return(object)
   }
 
+  # hard tier, but only on the branch that actually consumes the PCA
+  if (use_precomputed_pca) {
+    assert_sc_state(object, artefacts = "pca")
+  }
+
   pca_data <- if (use_precomputed_pca && !is.null(get_pca_factors(object))) {
     if (.verbose) {
       message("Using pre-computed PCA found in the object")
@@ -1203,7 +1233,12 @@ S7::method(seurat_cca_sc, SingleCells) <- function(
 
   colnames(cca_embd) <- sprintf("cca_%s", 1:ncol(cca_embd))
 
-  object <- set_embedding(x = object, embd = cca_embd, name = "cca")
+  object <- set_embedding(
+    x = object,
+    embd = cca_embd,
+    name = "cca",
+    from = if (is.null(pca_data)) character() else "pca"
+  )
 
   return(object)
 }
@@ -1306,6 +1341,11 @@ S7::method(seurat_rpca_sc, SingleCells) <- function(
     return(object)
   }
 
+  # hard tier, but only on the branch that actually consumes the PCA
+  if (use_precomputed_pca) {
+    assert_sc_state(object, artefacts = "pca")
+  }
+
   pca_data <- if (use_precomputed_pca && !is.null(get_pca_factors(object))) {
     if (.verbose) {
       message("Using pre-computed PCA found in the object")
@@ -1329,7 +1369,12 @@ S7::method(seurat_rpca_sc, SingleCells) <- function(
 
   colnames(rpca_embd) <- sprintf("rpca_%s", 1:ncol(rpca_embd))
 
-  object <- set_embedding(x = object, embd = rpca_embd, name = "rpca")
+  object <- set_embedding(
+    x = object,
+    embd = rpca_embd,
+    name = "rpca",
+    from = if (is.null(pca_data)) character() else "pca"
+  )
 
   return(object)
 }

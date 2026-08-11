@@ -160,6 +160,9 @@ S7::method(run_palantir_sc, ScOrMc) <- function(
 
   .assert_modality_available(object, modality)
 
+  # hard tier: the kNN indices are handed to Rust as is
+  assert_sc_state(object, artefacts = "knn", modality = modality)
+
   knn_data <- get_knn_obj(object, modality = modality)
 
   if (is.null(knn_data)) {
@@ -290,6 +293,9 @@ S7::method(run_paga_sc, ScOrMc) <- function(
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   .assert_modality_available(object, modality)
+
+  # hard tier: the kNN indices are handed to Rust as is
+  assert_sc_state(object, artefacts = "knn", modality = modality)
 
   knn_data <- get_knn_obj(object, modality = modality)
 
