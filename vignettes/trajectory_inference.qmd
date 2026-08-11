@@ -112,7 +112,7 @@ too few shared neighbours dropping out as one-cell clusters.
 #| label: hvg pca neighbours
 sc_object <- find_hvg_sc(
   object = sc_object,
-  hvg_no = 2000L
+  hvg_no = 1500L
 )
 
 sc_object <- calculate_pca_sc(
@@ -130,7 +130,7 @@ sc_object <- find_neighbours_sc(
 
 sc_object <- find_clusters_sc(
   sc_object,
-  res = 0.5,
+  res = 1.0,
   name = "leiden_clusters"
 )
 
@@ -164,7 +164,7 @@ feature_plot_sc(
   object = sc_object,
   features = markers,
   embedding = "umap",
-  scale = TRUE
+  palette = "spectral"
 )
 ```
 
@@ -198,7 +198,7 @@ feature_plot_sc(
   object = sc_object,
   features = markers,
   embedding = "umap",
-  scale = TRUE,
+  palette = "spectral",
   layer = "magic"
 )
 ```
@@ -383,6 +383,7 @@ embedding_plot_sc(
   sc_object,
   embedding = "umap",
   colour_by = "palantir_pseudotime",
+  palette = "spectral",
   discrete = FALSE
 )
 ```
@@ -401,6 +402,7 @@ paga_plot_sc(
   paga_res,
   embedding = "umap",
   node_colour_by = "palantir_pseudotime",
+  palette = "spectral",
   tree_only = TRUE
 )
 ```
@@ -417,6 +419,7 @@ embedding_plot_sc(
   sc_object,
   embedding = "umap",
   colour_by = "palantir_entropy",
+  palette = "spectral",
   discrete = FALSE
 )
 ```
@@ -430,6 +433,7 @@ fate_plots <- lapply(colnames(fate_probs), \(lineage) {
     sc_object,
     embedding = "umap",
     colour_by = paste0("fate_", lineage),
+    palette = "spectral",
     discrete = FALSE
   ) +
     labs(title = lineage)
@@ -626,16 +630,3 @@ them fail quietly rather than loudly. In rough order of how often they bite:
 - **A stale imputed layer.** The layer is stamped against the kNN graph it came
   from, so `get_sc_cache_status()` flags it once the graph or the cell filter
   moves. `run_gene_trends_sc(use_magic = TRUE)` refuses to fit a stale one.
-
-## Not covered
-
-The gene trend estimator is the landmark GP only. The legacy GAM path of the
-reference is not ported, and `weighting = "fate_probability"` is the closest
-thing to it, weighting every cell by its fate probability rather than taking a
-hard branch mask.
-
-The PAGA path heatmap is the obvious gap left. Pick a route through the
-spanning forest from the root cluster to a terminal one, order its cells by
-pseudotime and draw genes against pseudotime with a cluster annotation bar. The
-pieces are all here already, since `run_gene_trends_sc()` hands back a grid that
-can be the heatmap directly, which sidesteps the binning question entirely.
