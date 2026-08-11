@@ -297,7 +297,12 @@ apply_pipeline_per_group <- function(
   for (i in seq_along(groups)) {
     g <- groups[[i]]
     if (progress) {
-      cat(sprintf("\n=== Applying pipeline to %s\n ===", g))
+      cat(sprintf(
+        "\n=== Applying pipeline to %s (%i out of %i) === \n\n",
+        g,
+        i,
+        length(groups)
+      ))
     }
 
     sub <- SingleCellsSubset(object, grouping_column = group_col, group = g)
