@@ -10,6 +10,9 @@ knitr:
   opts_chunk:
     collapse: true
     comment: '#>'
+# TODO: drop this once bixverse.plots v0.2.3 is tagged; it needs paga_plot_sc
+execute:
+  eval: false
 author:
   - name: "Gregor Lueg"
 ---

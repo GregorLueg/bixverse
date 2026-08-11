@@ -67,6 +67,8 @@ navbar:
           href: articles/nichenet.html
         - text: "Meta cells - generation and analysis"
           href: articles/meta_cells.html
+        - text: "Trajectory inference with Palantir and PAGA"
+          href: articles/trajectory_inference.html
         - text: "Reference mapping via Symphony"
           href: articles/symphony.html
         - text: "Multi-modal analysis"
@@ -119,6 +121,7 @@ articles:
       - knn_searches
       - single_cell_subsets
       - meta_cells
+      - trajectory_inference
       - single_cell_big_data
       - multi_modal_single_cells
       - single_cell_visualisation

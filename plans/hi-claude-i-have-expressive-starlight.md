@@ -67,10 +67,22 @@ uncompressed path.
 **`vignettes/trajectory_inference.qmd`** (lines 60-68) - replace the hardcoded
 path and the `# TODO` comment with `marrow_path <- download_marrow_cd34()`.
 
-**`_pkgdown.yml`**
-- Add `download_marrow_cd34` to the download helper block at line 677.
-- Temporarily remove `trajectory_inference` from the `articles:` Single Cells
-  list (line 124) and its navbar entry (line 71). It goes back in step 3.
+**`_pkgdown.yml`** - add `download_marrow_cd34` to the download helper block at
+line 677. Leave the `articles:` list and navbar alone.
+
+**`vignettes/trajectory_inference.qmd`** - add a document-level
+`execute: eval: false` to the YAML header, so the article builds as code-only
+and needs neither bixverse.plots 0.2.3 nor the Zenodo download. Removed in
+step 3.
+
+Do **not** try to hold the vignette back by deleting it from the `articles:`
+index. pkgdown builds every `.qmd` in `vignettes/` regardless of the index, and
+`build_articles_index()` hard-errors if a vignette on disk is not listed:
+
+```
+Error in `build_articles_index()`:
+! In _pkgdown.yml, 1 vignette missing from index: "trajectory_inference".
+```
 
 Then `devtools::document()` and `air format .`.
 
@@ -93,8 +105,8 @@ Straight to main, no version bump. `auto-tag.yml` fires on the `DESCRIPTION`
 change but skips, since `v0.4.7` already exists.
 
 - `DESCRIPTION`: move the `Remotes` pin to `GregorLueg/bixverse.plots@v0.2.3`.
-- `_pkgdown.yml`: restore `trajectory_inference` to the `articles:` list and the
-  navbar.
+- `vignettes/trajectory_inference.qmd`: drop the `execute: eval: false` block
+  and its TODO comment from the YAML header.
 
 pkgdown re-renders with plots 0.2.3 and the trajectory vignette publishes.
 
