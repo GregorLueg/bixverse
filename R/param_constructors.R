@@ -537,6 +537,12 @@ params_scdblfinder <- function(
 #' @param pruning Numeric. Weights below this threshold will be set to 0 in
 #' the generation of the sNN graph. Seurat uses for example `1/15` with
 #' `k = 20`. As the default k is set to 15, we set it to `1/12`.
+#' Track this against `k` rather than leaving it: the threshold is a share of
+#' the neighbourhood, so the same value prunes far harder at a larger `k`.
+#' Over-pruning fails quietly, in that you still get a clustering, but cells
+#' left with too few shared neighbours drop out as singleton communities, which
+#' then show up downstream as one-cell clusters with inflated
+#' [bixverse::run_paga_sc()] connectivities.
 #' @param snn_similarity String. One of `c("rank", "jaccard")`. The Jaccard
 #' similarity calculates the Jaccard between the neighbours, whereas the rank
 #' method calculates edge weights based on the ranking of shared neighbours.
