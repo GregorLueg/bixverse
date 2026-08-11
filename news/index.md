@@ -1,5 +1,24 @@
 # Changelog
 
+## bixverse 0.4.7
+
+### Features
+
+#### Single cells
+
+- Faster HVG detection across the board (batch-aware, streaming,
+  one-pass) with faster Loess that uses interpolation now. Results
+  compared to prior runs for `"vst"` might be slightly different now.
+- Implementation of two trajectory methods:
+  [PAGA](https://link.springer.com/article/10.1186/s13059-019-1663-x)
+  and [Palantir](https://www.nature.com/articles/s41587-019-0068-4).
+- State management added for all of the single cell parts in the
+  `ScCache` part. Less foot guns in the future. This works still with
+  older objects, but good practice for the future.
+- Improvements on the meta-cells:
+  - `cells_to_keep` are stored now avoiding some problems with state.
+  - Less memory-hungry merging implemented.
+
 ## bixverse 0.4.6
 
 ### Features

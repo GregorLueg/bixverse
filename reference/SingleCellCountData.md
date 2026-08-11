@@ -91,7 +91,7 @@ Write a CSR matrix from R to the cells binary file
   (`list`)  
   A list convertible into `CompressedSparseData2`. Must contain the
   elements `"indptr"`, `"indices"`, `"data"`, `"nrow"`, `"ncol"` and
-  `"format"`.
+  `"cs_type"`.
 
 - `qc_params`:
 

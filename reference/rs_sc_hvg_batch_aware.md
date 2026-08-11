@@ -34,16 +34,21 @@ rs_sc_hvg_batch_aware(
 
 - cell_indices:
 
-  Integer positions (0-indexed!) that defines the cells to keep.
+  Integer positions (0-indexed!) that defines the cells to keep. Must be
+  unique and within the store; duplicates or out-of-range positions
+  raise an error.
 
 - batch_labels:
 
   Integer vector (0-indexed!) defining batch membership for each cell.
-  Must be same length as `cell_indices`.
+  Must be the same length as `cell_indices` and densely cover
+  `0:(n_batches - 1)`; a length mismatch or an empty batch raises an
+  error. `as.integer(factor(x)) - 1L` always satisfies this.
 
 - loess_span:
 
-  Numeric. The span parameter for the loess function.
+  Numeric. The span parameter for the loess function. Must be within
+  `(0, 1]`.
 
 - binning:
 

@@ -365,6 +365,14 @@ THE single cell class with a large number of getters.
   : Get the cell names
 - [`get_cells_to_keep()`](https://gregorlueg.github.io/bixverse/reference/get_cells_to_keep.md)
   : Get the cells to keep
+- [`reset_cells_to_keep()`](https://gregorlueg.github.io/bixverse/reference/reset_cells_to_keep.md)
+  : Reset the cells to keep
+- [`get_sc_cache_status()`](https://gregorlueg.github.io/bixverse/reference/get_sc_cache_status.md)
+  : Status of everything held in a single cell object's caches
+- [`check_sc_state()`](https://gregorlueg.github.io/bixverse/reference/check_sc_state.md)
+  : Check that cached artefacts still match the object's state
+- [`assert_sc_state()`](https://gregorlueg.github.io/bixverse/reference/assert_sc_state.md)
+  : Assert that cached artefacts still match the object's state
 - [`get_embedding()`](https://gregorlueg.github.io/bixverse/reference/get_embedding.md)
   : Get the embedding
 - [`get_gene_indices()`](https://gregorlueg.github.io/bixverse/reference/get_gene_indices.md)
@@ -379,6 +387,12 @@ THE single cell class with a large number of getters.
   : Get the KNN matrix
 - [`get_knn_obj()`](https://gregorlueg.github.io/bixverse/reference/get_knn_obj.md)
   : Get the KNN object
+- [`get_magic()`](https://gregorlueg.github.io/bixverse/reference/get_magic.md)
+  : Get the MAGIC imputed layer
+- [`set_magic()`](https://gregorlueg.github.io/bixverse/reference/set_magic.md)
+  : Set/add the MAGIC imputed layer
+- [`remove_magic()`](https://gregorlueg.github.io/bixverse/reference/remove_magic.md)
+  : Remove the MAGIC imputed layer
 - [`get_pca_singular_val()`](https://gregorlueg.github.io/bixverse/reference/get_pca_singular_val.md)
   : Get the PCA singular values
 - [`get_pca_loadings()`](https://gregorlueg.github.io/bixverse/reference/get_pca_loadings.md)
@@ -683,8 +697,12 @@ gene sets, HVG (batch-aware), PCA and batch corrections.
   : Generate a new SingleCellNearestNeighbour from data
 - [`find_neighbours_sc()`](https://gregorlueg.github.io/bixverse/reference/find_neighbours_sc.md)
   : Find the neighbours for single cell.
+- [`run_magic_sc()`](https://gregorlueg.github.io/bixverse/reference/run_magic_sc.md)
+  : Impute a subset of genes with MAGIC
 - [`top_genes_perc_sc()`](https://gregorlueg.github.io/bixverse/reference/top_genes_perc_sc.md)
   : Calculate the proportions of reads for the Top N genes
+- [`params_sc_magic()`](https://gregorlueg.github.io/bixverse/reference/params_sc_magic.md)
+  : Wrapper function for MAGIC imputation parameters
 - [`params_norm_doublets_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_norm_doublets_defaults.md)
   : Helper function to generate normalisation defaults for doublet
   detection.
@@ -806,6 +824,15 @@ count extraction, miloR, Hotspot, VISION and SCENIC.
 - [`meld_sc()`](https://gregorlueg.github.io/bixverse/reference/meld_sc.md)
   : Run MELD signal smoothing for differential abundance estimation
 
+- [`run_palantir_sc()`](https://gregorlueg.github.io/bixverse/reference/run_palantir_sc.md)
+  : Run Palantir trajectory inference
+
+- [`run_paga_sc()`](https://gregorlueg.github.io/bixverse/reference/run_paga_sc.md)
+  : Run PAGA graph abstraction
+
+- [`run_gene_trends_sc()`](https://gregorlueg.github.io/bixverse/reference/run_gene_trends_sc.md)
+  : Fit gene trends over Palantir pseudotime
+
 - [`get_index_cells()`](https://gregorlueg.github.io/bixverse/reference/get_index_cells.md)
   : Get the index cells
 
@@ -884,6 +911,15 @@ count extraction, miloR, Hotspot, VISION and SCENIC.
 
 - [`params_meld()`](https://gregorlueg.github.io/bixverse/reference/params_meld.md)
   : Constructor for MELD parameters
+
+- [`params_sc_palantir()`](https://gregorlueg.github.io/bixverse/reference/params_sc_palantir.md)
+  : Wrapper function for Palantir parameters
+
+- [`params_sc_branch_selection()`](https://gregorlueg.github.io/bixverse/reference/params_sc_branch_selection.md)
+  : Wrapper function for the branch cell selection parameters
+
+- [`params_sc_gene_trends()`](https://gregorlueg.github.io/bixverse/reference/params_sc_gene_trends.md)
+  : Wrapper function for gene trend parameters
 
 - [`params_nmf_hals()`](https://gregorlueg.github.io/bixverse/reference/params_nmf_hals.md)
   : Wrapper function for NMF (HALS) parameters
@@ -1002,6 +1038,8 @@ their summaries) from the binary storage files.
   : Extract per-cell expression mapped onto an embedding
 - [`extract_gene_violin_data()`](https://gregorlueg.github.io/bixverse/reference/extract_gene_violin_data.md)
   : Extract per-cell expression grouped for violin plots
+- [`extract_paga_plot_data()`](https://gregorlueg.github.io/bixverse/reference/extract_paga_plot_data.md)
+  : Extract the PAGA graph positioned on an embedding
 
 ## Statistical functions
 
@@ -1064,6 +1102,8 @@ Functions and helpers to download or generate synthetic data.
 
 - [`download_cd34_data()`](https://gregorlueg.github.io/bixverse/reference/download_cd34_data.md)
   : Download the CD34 example data from SEACells
+- [`download_marrow_cd34()`](https://gregorlueg.github.io/bixverse/reference/download_marrow_cd34.md)
+  : Download the marrow CD34 example data from Palantir
 - [`download_pbmc3k()`](https://gregorlueg.github.io/bixverse/reference/download_pbmc3k.md)
   : Download PBMC3K data from Zenodo
 - [`download_demuxlet_pbmc()`](https://gregorlueg.github.io/bixverse/reference/download_demuxlet_pbmc.md)
@@ -1183,6 +1223,8 @@ There is a lot more under the hood…
   **\[experimental\]** : Run the Rust implementation of fast ICA.
 - [`rs_fdr_adjustment()`](https://gregorlueg.github.io/bixverse/reference/rs_fdr_adjustment.md)
   **\[experimental\]** : Calculate a BH-based FDR
+- [`rs_gene_trends()`](https://gregorlueg.github.io/bixverse/reference/rs_gene_trends.md)
+  **\[experimental\]** : Fit Palantir gene trends over pseudotime
 - [`rs_geom_elim_fgsea_simple()`](https://gregorlueg.github.io/bixverse/reference/rs_geom_elim_fgsea_simple.md)
   **\[experimental\]** : Run fgsea simple method for gene ontology with
   elimination method

@@ -41,6 +41,8 @@
   pipelines](https://gregorlueg.github.io/bixverse/articles/single_cell_subsets.md):
 - [Meta cells with
   bixverse](https://gregorlueg.github.io/bixverse/articles/meta_cells.md):
+- [Trajectory inference with Palantir and
+  PAGA](https://gregorlueg.github.io/bixverse/articles/trajectory_inference.md):
 - [Scaling to millions of cells with
   bixverse](https://gregorlueg.github.io/bixverse/articles/single_cell_big_data.md):
 - [Multi-modal single cell analysis with

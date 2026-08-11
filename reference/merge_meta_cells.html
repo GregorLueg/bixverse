@@ -21,7 +21,7 @@ object."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -70,6 +70,7 @@ object."></head><body>
     <li><a class="dropdown-item" href="../articles/bag_of_genes_single_cells.html">'Bag of genes' methods for single cell in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/nichenet.html">Ligand receptor analysis</a></li>
     <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/trajectory_inference.html">Trajectory inference with Palantir and PAGA</a></li>
     <li><a class="dropdown-item" href="../articles/symphony.html">Reference mapping via Symphony</a></li>
     <li><a class="dropdown-item" href="../articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
     <li><hr class="dropdown-divider"></li>
@@ -153,9 +154,12 @@ identifier. If <code>FALSE</code>, duplicated identifiers across inputs are an e
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A single <code>MetaCells</code> object with all meta cells of the inputs. The
-observation table gains a <code>source_id</code> column; <code>original_cell_idx</code> stays in
-the index space of its own source.</p>
+    <p>A single <code>MetaCells</code> object with all meta cells of the inputs and
+<code>is_merged</code> set to <code>TRUE</code>. The observation table gains a <code>source_id</code> column;
+<code>original_cell_idx</code> stays in the index space of its own source, which is why
+methods that resolve it against the source single cell data
+(<code><a href="calc_diffusion_coordinates.html">calc_diffusion_coordinates()</a></code>, <code><a href="calc_manifold_metrics.html">calc_manifold_metrics()</a></code>) refuse to run on
+the result. <code>other_data</code> holds the source identifiers under <code>sources</code>.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

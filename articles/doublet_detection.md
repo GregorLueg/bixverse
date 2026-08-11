@@ -99,7 +99,7 @@ sc_object <- load_mtx(
 #>  Loading data directly into memory for CSR to CSC conversion.
 #> Loading observations data from flat file into the DuckDB.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/Rtmp00zU8j/duckdb
+#> ℹ /tmp/Rtmph7rwzp/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -109,7 +109,7 @@ sc_object <- load_mtx(
 #> Loading variable data from flat file into the DuckDB.
 #> 
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/Rtmp00zU8j/duckdb
+#> ℹ /tmp/Rtmph7rwzp/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -117,7 +117,7 @@ sc_object <- load_mtx(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/Rtmp00zU8j/duckdb
+#> ℹ /tmp/Rtmph7rwzp/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -125,7 +125,7 @@ sc_object <- load_mtx(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/Rtmp00zU8j/duckdb
+#> ℹ /tmp/Rtmph7rwzp/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -133,7 +133,7 @@ sc_object <- load_mtx(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/Rtmp00zU8j/duckdb
+#> ℹ /tmp/Rtmph7rwzp/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -141,7 +141,7 @@ sc_object <- load_mtx(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/Rtmp00zU8j/duckdb
+#> ℹ /tmp/Rtmph7rwzp/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -149,7 +149,7 @@ sc_object <- load_mtx(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/Rtmp00zU8j/duckdb
+#> ℹ /tmp/Rtmph7rwzp/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -157,7 +157,7 @@ sc_object <- load_mtx(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/Rtmp00zU8j/duckdb
+#> ℹ /tmp/Rtmph7rwzp/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -165,7 +165,7 @@ sc_object <- load_mtx(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/Rtmp00zU8j/duckdb
+#> ℹ /tmp/Rtmph7rwzp/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -173,7 +173,7 @@ sc_object <- load_mtx(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/Rtmp00zU8j/duckdb
+#> ℹ /tmp/Rtmph7rwzp/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -181,7 +181,7 @@ sc_object <- load_mtx(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/Rtmp00zU8j/duckdb
+#> ℹ /tmp/Rtmph7rwzp/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -189,7 +189,7 @@ sc_object <- load_mtx(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/Rtmp00zU8j/duckdb
+#> ℹ /tmp/Rtmph7rwzp/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -197,7 +197,7 @@ sc_object <- load_mtx(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/Rtmp00zU8j/duckdb
+#> ℹ /tmp/Rtmph7rwzp/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -205,7 +205,7 @@ sc_object <- load_mtx(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/Rtmp00zU8j/duckdb
+#> ℹ /tmp/Rtmph7rwzp/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -213,7 +213,7 @@ sc_object <- load_mtx(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/Rtmp00zU8j/duckdb
+#> ℹ /tmp/Rtmph7rwzp/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -221,7 +221,7 @@ sc_object <- load_mtx(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/Rtmp00zU8j/duckdb
+#> ℹ /tmp/Rtmph7rwzp/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -239,6 +239,8 @@ sc_object
 #>   Other embeddings: none
 #>   KNN generated: FALSE
 #>   SNN generated: FALSE
+#>   MAGIC imputed: none
+#>   Stale artefacts: none
 ```
 
 We also define a small helper to compute precision, recall and F1
@@ -276,11 +278,11 @@ scrublet <- scrublet_sc(
 )
 
 scrublet
-#> ScrubletRes: 14528 cells, 1802 doublets (12.4%)
-#>   Threshold:              0.2051
-#>   Detected doublet rate:  12.4%
-#>   Detectable fraction:    88.2%
-#>   Overall doublet rate:   14.1%
+#> ScrubletRes: 14528 cells, 1757 doublets (12.1%)
+#>   Threshold:              0.2185
+#>   Detected doublet rate:  12.1%
+#>   Detectable fraction:    87.8%
+#>   Overall doublet rate:   13.8%
 #>   Simulated doublets:     21792
 ```
 
@@ -306,13 +308,13 @@ scrublet_dt <- merge(scrublet_dt, demuxlet_data, by = "Barcode")
 
 doublet_metrics(predicted = scrublet_dt$doublet, actual = scrublet_dt$Call)
 #> $precision
-#> [1] 0.6553829
+#> [1] 0.6670461
 #> 
 #> $recall
-#> [1] 0.7575369
+#> [1] 0.751764
 #> 
 #> $f1
-#> [1] 0.702767
+#> [1] 0.7068758
 ```
 
 If you want to add the information to the DuckDB within the object, you
@@ -325,7 +327,7 @@ sc_object <- add_sc_new_obs(
   obs_data = get_data(scrublet)
 )
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/Rtmp00zU8j/duckdb
+#> ℹ /tmp/Rtmph7rwzp/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -333,7 +335,7 @@ sc_object <- add_sc_new_obs(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/Rtmp00zU8j/duckdb
+#> ℹ /tmp/Rtmph7rwzp/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -343,7 +345,7 @@ sc_object <- add_sc_new_obs(
 
 head(sc_object)
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/Rtmp00zU8j/duckdb
+#> ℹ /tmp/Rtmph7rwzp/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -351,7 +353,7 @@ head(sc_object)
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/Rtmp00zU8j/duckdb
+#> ℹ /tmp/Rtmph7rwzp/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -360,12 +362,12 @@ head(sc_object)
 #> ℹ See ?duckdb_storage for details and alternatives.
 #>    cell_idx          cell_id   nnz lib_size to_keep doublet doublet_score
 #>       <num>           <char> <num>    <num>  <lgcl>  <lgcl>         <num>
-#> 1:        1 AAACATACAATGCC-1   851     1313    TRUE    TRUE  0.3265306652
-#> 2:        2 AAACATACATTTCC-1   876     1537    TRUE   FALSE  0.0668662637
-#> 3:        3 AAACATACCAGAAA-1   713     1149    TRUE   FALSE  0.0209840816
-#> 4:        4 AAACATACCAGCTA-1   948     1588    TRUE    TRUE  0.3494623899
+#> 1:        1 AAACATACAATGCC-1   851     1313    TRUE    TRUE  0.4036143720
+#> 2:        2 AAACATACATTTCC-1   876     1537    TRUE   FALSE  0.0477031805
+#> 3:        3 AAACATACCAGAAA-1   713     1149    TRUE   FALSE  0.0236686375
+#> 4:        4 AAACATACCAGCTA-1   948     1588    TRUE   FALSE  0.1923076808
 #> 5:        5 AAACATACCATGCA-1   337      499    TRUE   FALSE  0.0006016847
-#> 6:        6 AAACATACCTCGCT-1   849     1494    TRUE   FALSE  0.0685483888
+#> 6:        6 AAACATACCTCGCT-1   849     1494    TRUE   FALSE  0.0335463248
 ```
 
 As we can see with added now the Scrublet data
@@ -379,10 +381,10 @@ lets you override it.
 ``` r
 
 scrublet_adj <- call_doublets_manual(scrublet, threshold = 0.25)
-#> Detected doublet rate = 11.3%
-#> Estimated detectable doublet fraction = 84.3%
+#> Detected doublet rate = 11.2%
+#> Estimated detectable doublet fraction = 84.9%
 #> Overall doublet rate:
-#>   Estimated = 13.4%
+#>   Estimated = 13.2%
 
 plot(scrublet_adj)
 ```
@@ -400,13 +402,13 @@ doublet_metrics(
   actual = scrublet_adj_dt$Call
 )
 #> $precision
-#> [1] 0.6829566
+#> [1] 0.6820418
 #> 
 #> $recall
-#> [1] 0.7171264
+#> [1] 0.7113534
 #> 
 #> $f1
-#> [1] 0.6996245
+#> [1] 0.6963893
 ```
 
 We have made it worse here, but maybe there are cases where the scores
@@ -450,13 +452,13 @@ boosted_dt <- merge(boosted_dt, demuxlet_data, by = "Barcode")
 
 doublet_metrics(predicted = boosted_dt$doublet, actual = boosted_dt$Call)
 #> $precision
-#> [1] 0.6626324
+#> [1] 0.68523
 #> 
 #> $recall
-#> [1] 0.5618987
+#> [1] 0.5445799
 #> 
 #> $f1
-#> [1] 0.6081222
+#> [1] 0.606862
 ```
 
 Overall, it takes longer and has worse performance (in this data set).
@@ -496,13 +498,13 @@ doublet_metrics(
   actual = boosted_fast_dt$Call
 )
 #> $precision
-#> [1] 0.7209515
+#> [1] 0.7121771
 #> 
 #> $recall
-#> [1] 0.5054522
+#> [1] 0.4951892
 #> 
 #> $f1
-#> [1] 0.5942685
+#> [1] 0.5841846
 ```
 
 ### scDblFinder

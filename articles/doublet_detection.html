@@ -23,7 +23,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -78,6 +78,7 @@
     <li><a class="dropdown-item" href="../articles/bag_of_genes_single_cells.html">'Bag of genes' methods for single cell in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/nichenet.html">Ligand receptor analysis</a></li>
     <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/trajectory_inference.html">Trajectory inference with Palantir and PAGA</a></li>
     <li><a class="dropdown-item" href="../articles/symphony.html">Reference mapping via Symphony</a></li>
     <li><a class="dropdown-item" href="../articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
     <li><hr class="dropdown-divider"></li>
@@ -112,7 +113,7 @@
       <h1>Doublet detection with bixverse</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-08-06</p>
+      <p class="date">2026-08-11</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -176,7 +177,7 @@
 <span><span class="co">#&gt;  Loading data directly into memory for CSR to CSC conversion.</span></span>
 <span><span class="co">#&gt; Loading observations data from flat file into the DuckDB.</span></span>
 <span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/Rtmp00zU8j/duckdb</span></span>
+<span><span class="co">#&gt; ℹ /tmp/Rtmph7rwzp/duckdb</span></span>
 <span><span class="co">#&gt; This is removed when the R session ends.</span></span>
 <span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
 <span><span class="co">#&gt; • Secrets are lost.</span></span>
@@ -186,7 +187,7 @@
 <span><span class="co">#&gt; Loading variable data from flat file into the DuckDB.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/Rtmp00zU8j/duckdb</span></span>
+<span><span class="co">#&gt; ℹ /tmp/Rtmph7rwzp/duckdb</span></span>
 <span><span class="co">#&gt; This is removed when the R session ends.</span></span>
 <span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
 <span><span class="co">#&gt; • Secrets are lost.</span></span>
@@ -194,7 +195,7 @@
 <span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
 <span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
 <span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/Rtmp00zU8j/duckdb</span></span>
+<span><span class="co">#&gt; ℹ /tmp/Rtmph7rwzp/duckdb</span></span>
 <span><span class="co">#&gt; This is removed when the R session ends.</span></span>
 <span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
 <span><span class="co">#&gt; • Secrets are lost.</span></span>
@@ -202,7 +203,7 @@
 <span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
 <span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
 <span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/Rtmp00zU8j/duckdb</span></span>
+<span><span class="co">#&gt; ℹ /tmp/Rtmph7rwzp/duckdb</span></span>
 <span><span class="co">#&gt; This is removed when the R session ends.</span></span>
 <span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
 <span><span class="co">#&gt; • Secrets are lost.</span></span>
@@ -210,7 +211,7 @@
 <span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
 <span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
 <span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/Rtmp00zU8j/duckdb</span></span>
+<span><span class="co">#&gt; ℹ /tmp/Rtmph7rwzp/duckdb</span></span>
 <span><span class="co">#&gt; This is removed when the R session ends.</span></span>
 <span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
 <span><span class="co">#&gt; • Secrets are lost.</span></span>
@@ -218,7 +219,7 @@
 <span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
 <span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
 <span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/Rtmp00zU8j/duckdb</span></span>
+<span><span class="co">#&gt; ℹ /tmp/Rtmph7rwzp/duckdb</span></span>
 <span><span class="co">#&gt; This is removed when the R session ends.</span></span>
 <span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
 <span><span class="co">#&gt; • Secrets are lost.</span></span>
@@ -226,7 +227,7 @@
 <span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
 <span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
 <span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/Rtmp00zU8j/duckdb</span></span>
+<span><span class="co">#&gt; ℹ /tmp/Rtmph7rwzp/duckdb</span></span>
 <span><span class="co">#&gt; This is removed when the R session ends.</span></span>
 <span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
 <span><span class="co">#&gt; • Secrets are lost.</span></span>
@@ -234,7 +235,7 @@
 <span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
 <span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
 <span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/Rtmp00zU8j/duckdb</span></span>
+<span><span class="co">#&gt; ℹ /tmp/Rtmph7rwzp/duckdb</span></span>
 <span><span class="co">#&gt; This is removed when the R session ends.</span></span>
 <span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
 <span><span class="co">#&gt; • Secrets are lost.</span></span>
@@ -242,7 +243,7 @@
 <span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
 <span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
 <span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/Rtmp00zU8j/duckdb</span></span>
+<span><span class="co">#&gt; ℹ /tmp/Rtmph7rwzp/duckdb</span></span>
 <span><span class="co">#&gt; This is removed when the R session ends.</span></span>
 <span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
 <span><span class="co">#&gt; • Secrets are lost.</span></span>
@@ -250,7 +251,7 @@
 <span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
 <span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
 <span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/Rtmp00zU8j/duckdb</span></span>
+<span><span class="co">#&gt; ℹ /tmp/Rtmph7rwzp/duckdb</span></span>
 <span><span class="co">#&gt; This is removed when the R session ends.</span></span>
 <span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
 <span><span class="co">#&gt; • Secrets are lost.</span></span>
@@ -258,7 +259,7 @@
 <span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
 <span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
 <span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/Rtmp00zU8j/duckdb</span></span>
+<span><span class="co">#&gt; ℹ /tmp/Rtmph7rwzp/duckdb</span></span>
 <span><span class="co">#&gt; This is removed when the R session ends.</span></span>
 <span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
 <span><span class="co">#&gt; • Secrets are lost.</span></span>
@@ -266,7 +267,7 @@
 <span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
 <span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
 <span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/Rtmp00zU8j/duckdb</span></span>
+<span><span class="co">#&gt; ℹ /tmp/Rtmph7rwzp/duckdb</span></span>
 <span><span class="co">#&gt; This is removed when the R session ends.</span></span>
 <span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
 <span><span class="co">#&gt; • Secrets are lost.</span></span>
@@ -274,7 +275,7 @@
 <span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
 <span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
 <span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/Rtmp00zU8j/duckdb</span></span>
+<span><span class="co">#&gt; ℹ /tmp/Rtmph7rwzp/duckdb</span></span>
 <span><span class="co">#&gt; This is removed when the R session ends.</span></span>
 <span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
 <span><span class="co">#&gt; • Secrets are lost.</span></span>
@@ -282,7 +283,7 @@
 <span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
 <span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
 <span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/Rtmp00zU8j/duckdb</span></span>
+<span><span class="co">#&gt; ℹ /tmp/Rtmph7rwzp/duckdb</span></span>
 <span><span class="co">#&gt; This is removed when the R session ends.</span></span>
 <span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
 <span><span class="co">#&gt; • Secrets are lost.</span></span>
@@ -290,7 +291,7 @@
 <span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
 <span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
 <span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/Rtmp00zU8j/duckdb</span></span>
+<span><span class="co">#&gt; ℹ /tmp/Rtmph7rwzp/duckdb</span></span>
 <span><span class="co">#&gt; This is removed when the R session ends.</span></span>
 <span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
 <span><span class="co">#&gt; • Secrets are lost.</span></span>
@@ -298,7 +299,7 @@
 <span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
 <span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
 <span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/Rtmp00zU8j/duckdb</span></span>
+<span><span class="co">#&gt; ℹ /tmp/Rtmph7rwzp/duckdb</span></span>
 <span><span class="co">#&gt; This is removed when the R session ends.</span></span>
 <span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
 <span><span class="co">#&gt; • Secrets are lost.</span></span>
@@ -315,7 +316,9 @@
 <span><span class="co">#&gt;   PCA calculated: FALSE</span></span>
 <span><span class="co">#&gt;   Other embeddings: none</span></span>
 <span><span class="co">#&gt;   KNN generated: FALSE</span></span>
-<span><span class="co">#&gt;   SNN generated: FALSE</span></span></code></pre></div>
+<span><span class="co">#&gt;   SNN generated: FALSE</span></span>
+<span><span class="co">#&gt;   MAGIC imputed: none</span></span>
+<span><span class="co">#&gt;   Stale artefacts: none</span></span></code></pre></div>
 </div>
 <p>We also define a small helper to compute precision, recall and F1 against the demuxlet calls.</p>
 <div class="cell">
@@ -348,11 +351,11 @@
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">scrublet</span></span>
-<span><span class="co">#&gt; ScrubletRes: 14528 cells, 1802 doublets (12.4%)</span></span>
-<span><span class="co">#&gt;   Threshold:              0.2051</span></span>
-<span><span class="co">#&gt;   Detected doublet rate:  12.4%</span></span>
-<span><span class="co">#&gt;   Detectable fraction:    88.2%</span></span>
-<span><span class="co">#&gt;   Overall doublet rate:   14.1%</span></span>
+<span><span class="co">#&gt; ScrubletRes: 14528 cells, 1757 doublets (12.1%)</span></span>
+<span><span class="co">#&gt;   Threshold:              0.2185</span></span>
+<span><span class="co">#&gt;   Detected doublet rate:  12.1%</span></span>
+<span><span class="co">#&gt;   Detectable fraction:    87.8%</span></span>
+<span><span class="co">#&gt;   Overall doublet rate:   13.8%</span></span>
 <span><span class="co">#&gt;   Simulated doublets:     21792</span></span></code></pre></div>
 </div>
 <p>The <code>plot</code> method shows the score distribution for observed and simulated cells. A clean separation between the two modes indicates the threshold is sensible.</p>
@@ -375,13 +378,13 @@
 <span></span>
 <span><span class="fu">doublet_metrics</span><span class="op">(</span>predicted <span class="op">=</span> <span class="va">scrublet_dt</span><span class="op">$</span><span class="va">doublet</span>, actual <span class="op">=</span> <span class="va">scrublet_dt</span><span class="op">$</span><span class="va">Call</span><span class="op">)</span></span>
 <span><span class="co">#&gt; $precision</span></span>
-<span><span class="co">#&gt; [1] 0.6553829</span></span>
+<span><span class="co">#&gt; [1] 0.6670461</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $recall</span></span>
-<span><span class="co">#&gt; [1] 0.7575369</span></span>
+<span><span class="co">#&gt; [1] 0.751764</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $f1</span></span>
-<span><span class="co">#&gt; [1] 0.702767</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 0.7068758</span></span></code></pre></div>
 </div>
 <p>If you want to add the information to the DuckDB within the object, you can just run:</p>
 <div class="cell">
@@ -391,7 +394,7 @@
 <span>  obs_data <span class="op">=</span> <span class="fu"><a href="../reference/get_data.html">get_data</a></span><span class="op">(</span><span class="va">scrublet</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/Rtmp00zU8j/duckdb</span></span>
+<span><span class="co">#&gt; ℹ /tmp/Rtmph7rwzp/duckdb</span></span>
 <span><span class="co">#&gt; This is removed when the R session ends.</span></span>
 <span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
 <span><span class="co">#&gt; • Secrets are lost.</span></span>
@@ -399,7 +402,7 @@
 <span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
 <span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
 <span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/Rtmp00zU8j/duckdb</span></span>
+<span><span class="co">#&gt; ℹ /tmp/Rtmph7rwzp/duckdb</span></span>
 <span><span class="co">#&gt; This is removed when the R session ends.</span></span>
 <span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
 <span><span class="co">#&gt; • Secrets are lost.</span></span>
@@ -409,7 +412,7 @@
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span></span>
 <span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/Rtmp00zU8j/duckdb</span></span>
+<span><span class="co">#&gt; ℹ /tmp/Rtmph7rwzp/duckdb</span></span>
 <span><span class="co">#&gt; This is removed when the R session ends.</span></span>
 <span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
 <span><span class="co">#&gt; • Secrets are lost.</span></span>
@@ -417,7 +420,7 @@
 <span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
 <span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
 <span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/Rtmp00zU8j/duckdb</span></span>
+<span><span class="co">#&gt; ℹ /tmp/Rtmph7rwzp/duckdb</span></span>
 <span><span class="co">#&gt; This is removed when the R session ends.</span></span>
 <span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
 <span><span class="co">#&gt; • Secrets are lost.</span></span>
@@ -426,12 +429,12 @@
 <span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
 <span><span class="co">#&gt;    cell_idx          cell_id   nnz lib_size to_keep doublet doublet_score</span></span>
 <span><span class="co">#&gt;       &lt;num&gt;           &lt;char&gt; &lt;num&gt;    &lt;num&gt;  &lt;lgcl&gt;  &lt;lgcl&gt;         &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1:        1 AAACATACAATGCC-1   851     1313    TRUE    TRUE  0.3265306652</span></span>
-<span><span class="co">#&gt; 2:        2 AAACATACATTTCC-1   876     1537    TRUE   FALSE  0.0668662637</span></span>
-<span><span class="co">#&gt; 3:        3 AAACATACCAGAAA-1   713     1149    TRUE   FALSE  0.0209840816</span></span>
-<span><span class="co">#&gt; 4:        4 AAACATACCAGCTA-1   948     1588    TRUE    TRUE  0.3494623899</span></span>
+<span><span class="co">#&gt; 1:        1 AAACATACAATGCC-1   851     1313    TRUE    TRUE  0.4036143720</span></span>
+<span><span class="co">#&gt; 2:        2 AAACATACATTTCC-1   876     1537    TRUE   FALSE  0.0477031805</span></span>
+<span><span class="co">#&gt; 3:        3 AAACATACCAGAAA-1   713     1149    TRUE   FALSE  0.0236686375</span></span>
+<span><span class="co">#&gt; 4:        4 AAACATACCAGCTA-1   948     1588    TRUE   FALSE  0.1923076808</span></span>
 <span><span class="co">#&gt; 5:        5 AAACATACCATGCA-1   337      499    TRUE   FALSE  0.0006016847</span></span>
-<span><span class="co">#&gt; 6:        6 AAACATACCTCGCT-1   849     1494    TRUE   FALSE  0.0685483888</span></span></code></pre></div>
+<span><span class="co">#&gt; 6:        6 AAACATACCTCGCT-1   849     1494    TRUE   FALSE  0.0335463248</span></span></code></pre></div>
 </div>
 <p>As we can see with added now the Scrublet data</p>
 <section class="level4"><h4 id="manual-threshold-adjustment">Manual threshold adjustment<a class="anchor" aria-label="anchor" href="#manual-threshold-adjustment"></a>
@@ -440,10 +443,10 @@
 <div class="cell">
 <div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">scrublet_adj</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/call_doublets_manual.html">call_doublets_manual</a></span><span class="op">(</span><span class="va">scrublet</span>, threshold <span class="op">=</span> <span class="fl">0.25</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Detected doublet rate = 11.3%</span></span>
-<span><span class="co">#&gt; Estimated detectable doublet fraction = 84.3%</span></span>
+<span><span class="co">#&gt; Detected doublet rate = 11.2%</span></span>
+<span><span class="co">#&gt; Estimated detectable doublet fraction = 84.9%</span></span>
 <span><span class="co">#&gt; Overall doublet rate:</span></span>
-<span><span class="co">#&gt;   Estimated = 13.4%</span></span>
+<span><span class="co">#&gt;   Estimated = 13.2%</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">scrublet_adj</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
@@ -464,13 +467,13 @@
 <span>  actual <span class="op">=</span> <span class="va">scrublet_adj_dt</span><span class="op">$</span><span class="va">Call</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; $precision</span></span>
-<span><span class="co">#&gt; [1] 0.6829566</span></span>
+<span><span class="co">#&gt; [1] 0.6820418</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $recall</span></span>
-<span><span class="co">#&gt; [1] 0.7171264</span></span>
+<span><span class="co">#&gt; [1] 0.7113534</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $f1</span></span>
-<span><span class="co">#&gt; [1] 0.6996245</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 0.6963893</span></span></code></pre></div>
 </div>
 <p>We have made it worse here, but maybe there are cases where the scores are not very good. Compared to the original version, Otsu’s method is used to identify the perfect threshold, but it might fail in some situations.</p>
 </section><section class="level4"><h4 id="running-with-grouping-variables-or-within-specific-cell-subsets">Running with grouping variables or within specific cell subsets<a class="anchor" aria-label="anchor" href="#running-with-grouping-variables-or-within-specific-cell-subsets"></a>
@@ -495,13 +498,13 @@
 <span></span>
 <span><span class="fu">doublet_metrics</span><span class="op">(</span>predicted <span class="op">=</span> <span class="va">boosted_dt</span><span class="op">$</span><span class="va">doublet</span>, actual <span class="op">=</span> <span class="va">boosted_dt</span><span class="op">$</span><span class="va">Call</span><span class="op">)</span></span>
 <span><span class="co">#&gt; $precision</span></span>
-<span><span class="co">#&gt; [1] 0.6626324</span></span>
+<span><span class="co">#&gt; [1] 0.68523</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $recall</span></span>
-<span><span class="co">#&gt; [1] 0.5618987</span></span>
+<span><span class="co">#&gt; [1] 0.5445799</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $f1</span></span>
-<span><span class="co">#&gt; [1] 0.6081222</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 0.606862</span></span></code></pre></div>
 </div>
 <p>Overall, it takes longer and has worse performance (in this data set). If you wish to have a partially orthogonal method, it can be worthwhile nonetheless. There is also an option to accelerate the algorithm via fast clustering. This will run k-means clustering with <code>sqrt(n_cells) * 4</code> centroids by default, run the kNN on these subset of centroids, Louvain on the smaller kNN and project back the Louvain membership for final scoring. However, this comes at cost of Recall, as you can see below. Generally speaking, you need to see how many centroids you need to represent your data properly. On smaller data sets, you can get away with <code>n_cells / 10</code> and compress 10 cells into one centroid… On larger data sets, you might want to compress further.</p>
 <div class="cell">
@@ -528,13 +531,13 @@
 <span>  actual <span class="op">=</span> <span class="va">boosted_fast_dt</span><span class="op">$</span><span class="va">Call</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; $precision</span></span>
-<span><span class="co">#&gt; [1] 0.7209515</span></span>
+<span><span class="co">#&gt; [1] 0.7121771</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $recall</span></span>
-<span><span class="co">#&gt; [1] 0.5054522</span></span>
+<span><span class="co">#&gt; [1] 0.4951892</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $f1</span></span>
-<span><span class="co">#&gt; [1] 0.5942685</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 0.5841846</span></span></code></pre></div>
 </div>
 </section><section class="level3"><h3 id="scdblfinder">scDblFinder<a class="anchor" aria-label="anchor" href="#scdblfinder"></a>
 </h3>

@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -56,6 +56,7 @@
     <li><a class="dropdown-item" href="../articles/bag_of_genes_single_cells.html">'Bag of genes' methods for single cell in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/nichenet.html">Ligand receptor analysis</a></li>
     <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/trajectory_inference.html">Trajectory inference with Palantir and PAGA</a></li>
     <li><a class="dropdown-item" href="../articles/symphony.html">Reference mapping via Symphony</a></li>
     <li><a class="dropdown-item" href="../articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
     <li><hr class="dropdown-divider"></li>
@@ -112,7 +113,13 @@ only neighbours.</p></dd>
 <dt id="arg-pruning">pruning<a class="anchor" aria-label="anchor" href="#arg-pruning"></a></dt>
 <dd><p>Numeric. Weights below this threshold will be set to 0 in
 the generation of the sNN graph. Seurat uses for example <code>1/15</code> with
-<code>k = 20</code>. As the default k is set to 15, we set it to <code>1/12</code>.</p></dd>
+<code>k = 20</code>. As the default k is set to 15, we set it to <code>1/12</code>.
+Track this against <code>k</code> rather than leaving it: the threshold is a share of
+the neighbourhood, so the same value prunes far harder at a larger <code>k</code>.
+Over-pruning fails quietly, in that you still get a clustering, but cells
+left with too few shared neighbours drop out as singleton communities, which
+then show up downstream as one-cell clusters with inflated
+<code><a href="run_paga_sc.html">run_paga_sc()</a></code> connectivities.</p></dd>
 
 
 <dt id="arg-snn-similarity">snn_similarity<a class="anchor" aria-label="anchor" href="#arg-snn-similarity"></a></dt>

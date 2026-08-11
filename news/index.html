@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -56,6 +56,7 @@
     <li><a class="dropdown-item" href="../articles/bag_of_genes_single_cells.html">'Bag of genes' methods for single cell in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/nichenet.html">Ligand receptor analysis</a></li>
     <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/trajectory_inference.html">Trajectory inference with Palantir and PAGA</a></li>
     <li><a class="dropdown-item" href="../articles/symphony.html">Reference mapping via Symphony</a></li>
     <li><a class="dropdown-item" href="../articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
     <li><hr class="dropdown-divider"></li>
@@ -84,6 +85,23 @@
 
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.4.7" id="bixverse-047">bixverse 0.4.7<a class="anchor" aria-label="anchor" href="#bixverse-047"></a></h2>
+<div class="section level3">
+<h3 id="features-0-4-7">Features<a class="anchor" aria-label="anchor" href="#features-0-4-7"></a></h3>
+<div class="section level4">
+<h4 id="single-cells-0-4-7">Single cells<a class="anchor" aria-label="anchor" href="#single-cells-0-4-7"></a></h4>
+<ul><li>Faster HVG detection across the board (batch-aware, streaming, one-pass) with faster Loess that uses interpolation now. Results compared to prior runs for <code>"vst"</code> might be slightly different now.</li>
+<li>Implementation of two trajectory methods: <a href="https://link.springer.com/article/10.1186/s13059-019-1663-x" class="external-link">PAGA</a> and <a href="https://www.nature.com/articles/s41587-019-0068-4" class="external-link">Palantir</a>.</li>
+<li>State management added for all of the single cell parts in the <code>ScCache</code> part. Less foot guns in the future. This works still with older objects, but good practice for the future.</li>
+<li>Improvements on the meta-cells:
+<ul><li>
+<code>cells_to_keep</code> are stored now avoiding some problems with state.</li>
+<li>Less memory-hungry merging implemented.</li>
+</ul></li>
+</ul></div>
+</div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.4.6" id="bixverse-046">bixverse 0.4.6<a class="anchor" aria-label="anchor" href="#bixverse-046"></a></h2>
 <div class="section level3">

@@ -18,7 +18,8 @@ extract_feature_pair(
   obs_cols = NULL,
   scale = FALSE,
   clip = NULL,
-  modality = c("rna", "adt")
+  modality = c("rna", "adt"),
+  layer = c("norm", "magic")
 )
 ```
 
@@ -53,6 +54,13 @@ extract_feature_pair(
 
   String. Fallback modality for unsuffixed features. One of
   `c("rna", "adt")`.
+
+- layer:
+
+  String. One of `c("norm", "magic")`, forwarded to
+  [`extract_gene_expression()`](https://gregorlueg.github.io/bixverse/reference/extract_gene_expression.md).
+  Applies to both features, and an `_adt` suffixed one will error under
+  `"magic"`.
 
 ## Value
 

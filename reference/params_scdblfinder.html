@@ -11,7 +11,7 @@ classifier trained on engineered features."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -60,6 +60,7 @@ classifier trained on engineered features."></head><body>
     <li><a class="dropdown-item" href="../articles/bag_of_genes_single_cells.html">'Bag of genes' methods for single cell in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/nichenet.html">Ligand receptor analysis</a></li>
     <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/trajectory_inference.html">Trajectory inference with Palantir and PAGA</a></li>
     <li><a class="dropdown-item" href="../articles/symphony.html">Reference mapping via Symphony</a></li>
     <li><a class="dropdown-item" href="../articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
     <li><hr class="dropdown-divider"></li>
@@ -105,7 +106,7 @@ classifier trained on engineered features.</p>
 <span>  cluster_iters <span class="op">=</span> <span class="fl">10L</span>,</span>
 <span>  fast_cluster <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  n_iterations <span class="op">=</span> <span class="fl">3L</span>,</span>
-<span>  n_trees <span class="op">=</span> <span class="fl">200L</span>,</span>
+<span>  gbm_n_trees <span class="op">=</span> <span class="fl">200L</span>,</span>
 <span>  max_depth <span class="op">=</span> <span class="fl">4L</span>,</span>
 <span>  learning_rate <span class="op">=</span> <span class="fl">0.3</span>,</span>
 <span>  min_samples_leaf <span class="op">=</span> <span class="fl">20L</span>,</span>
@@ -165,7 +166,7 @@ proximity.</p></dd>
 Defaults to <code>3L</code>.</p></dd>
 
 
-<dt id="arg-n-trees">n_trees<a class="anchor" aria-label="anchor" href="#arg-n-trees"></a></dt>
+<dt id="arg-gbm-n-trees">gbm_n_trees<a class="anchor" aria-label="anchor" href="#arg-gbm-n-trees"></a></dt>
 <dd><p>Integer. Maximum number of boosting rounds for the GBM
 classifier. Defaults to <code>200L</code>.</p></dd>
 

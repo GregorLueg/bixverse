@@ -5,7 +5,7 @@ Create sparse dgRMatrix matrices for raw and norm counts
 ## Usage
 
 ``` r
-get_meta_cell_matrices(meta_cell_data)
+get_meta_cell_matrices(meta_cell_data, dimnames = NULL)
 ```
 
 ## Arguments
@@ -14,6 +14,12 @@ get_meta_cell_matrices(meta_cell_data)
 
   Named list. This contains the indptr, indices and data for both raw
   counts and norm counts.
+
+- dimnames:
+
+  Optional list of two character vectors with the row and column names.
+  Set at construction time, as assigning them afterwards duplicates both
+  matrices.
 
 ## Value
 

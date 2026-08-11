@@ -32,11 +32,14 @@ rs_sc_hvg(
 
 - cell_indices:
 
-  Integer positions (0-indexed!) that defines the cells to keep.
+  Integer positions (0-indexed!) that defines the cells to keep. Must be
+  unique and within the store; duplicates or out-of-range positions
+  raise an error.
 
 - loess_span:
 
-  Numeric. The span parameter for the loess function.
+  Numeric. The span parameter for the loess function. Must be within
+  `(0, 1]`.
 
 - binning:
 

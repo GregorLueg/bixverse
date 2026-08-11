@@ -26,6 +26,8 @@ checks, etc.
 
 - [`SingleCellDuckDBBase$set_cells_to_keep()`](#method-SingleCellDuckDBBase-set_cells_to_keep)
 
+- [`SingleCellDuckDBBase$reset_cells_to_keep()`](#method-SingleCellDuckDBBase-reset_cells_to_keep)
+
 - [`SingleCellDuckDBBase$filter_var_table()`](#method-SingleCellDuckDBBase-filter_var_table)
 
 - [`SingleCellDuckDBBase$add_data_obs()`](#method-SingleCellDuckDBBase-add_data_obs)
@@ -222,8 +224,28 @@ cell idx
 
 #### Returns
 
-Invisible self after updating the to_keep column in the DuckDB. Filter
-the var table and reset the gene idx
+Invisible self after updating the to_keep column in the DuckDB. Restore
+every cell in the obs table
+
+------------------------------------------------------------------------
+
+### `SingleCellDuckDBBase$reset_cells_to_keep()`
+
+Flips `to_keep` back on for every row. Filtering never deletes rows, it
+only flips this flag, so nothing was lost and nothing needs rebuilding.
+A single statement rather than a round trip through
+[`set_cells_to_keep()`](https://gregorlueg.github.io/bixverse/reference/set_cells_to_keep.md),
+which would write a temp table the size of the whole obs table just to
+switch every flag back on.
+
+#### Usage
+
+    SingleCellDuckDBBase$reset_cells_to_keep()
+
+#### Returns
+
+Invisible self after resetting the to_keep column. Filter the var table
+and reset the gene idx
 
 ------------------------------------------------------------------------
 

@@ -60,6 +60,7 @@ Inherited methods
 - [`SingleCellDuckDBBase$initialize()`](https://gregorlueg.github.io/bixverse/reference/SingleCellDuckDBBase.html#method-initialize)
 - [`SingleCellDuckDBBase$join_data_obs()`](https://gregorlueg.github.io/bixverse/reference/SingleCellDuckDBBase.html#method-join_data_obs)
 - [`SingleCellDuckDBBase$rename_column()`](https://gregorlueg.github.io/bixverse/reference/SingleCellDuckDBBase.html#method-rename_column)
+- [`SingleCellDuckDBBase$reset_cells_to_keep()`](https://gregorlueg.github.io/bixverse/reference/SingleCellDuckDBBase.html#method-reset_cells_to_keep)
 - [`SingleCellDuckDBBase$set_cells_to_keep()`](https://gregorlueg.github.io/bixverse/reference/SingleCellDuckDBBase.html#method-set_cells_to_keep)
 - [`SingleCellDuckDBBase$set_to_keep_column()`](https://gregorlueg.github.io/bixverse/reference/SingleCellDuckDBBase.html#method-set_to_keep_column)
 

@@ -24,6 +24,7 @@ extract_feature_plot_data(
   obs_col = NULL,
   expr_modality = c("rna", "adt"),
   embd_modality = c("rna", "adt", "wnn"),
+  layer = c("norm", "magic"),
   ...
 )
 ```
@@ -64,6 +65,14 @@ extract_feature_plot_data(
 
   String. Modality the embedding is pulled from. One of
   `c("rna", "adt", "wnn")`. Use `"wnn"` for WNN-derived embeddings.
+
+- layer:
+
+  String. One of `c("norm", "magic")`, forwarded to
+  [`extract_gene_expression()`](https://gregorlueg.github.io/bixverse/reference/extract_gene_expression.md).
+  Use `"magic"` to colour the embedding by the imputed layer
+  [`run_magic_sc()`](https://gregorlueg.github.io/bixverse/reference/run_magic_sc.md)
+  wrote.
 
 - ...:
 

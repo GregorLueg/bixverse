@@ -13,7 +13,7 @@ such as union of top genes per batch."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -62,6 +62,7 @@ such as union of top genes per batch."></head><body>
     <li><a class="dropdown-item" href="../articles/bag_of_genes_single_cells.html">'Bag of genes' methods for single cell in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/nichenet.html">Ligand receptor analysis</a></li>
     <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/trajectory_inference.html">Trajectory inference with Palantir and PAGA</a></li>
     <li><a class="dropdown-item" href="../articles/symphony.html">Reference mapping via Symphony</a></li>
     <li><a class="dropdown-item" href="../articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
     <li><hr class="dropdown-divider"></li>
@@ -129,16 +130,20 @@ such as union of top genes per batch.</p>
 
 <dt id="arg-cell-indices">cell_indices<a class="anchor" aria-label="anchor" href="#arg-cell-indices"></a></dt>
 <dd><p>Integer positions (0-indexed!) that defines the cells
-to keep.</p></dd>
+to keep. Must be unique and within the store; duplicates or out-of-range
+positions raise an error.</p></dd>
 
 
 <dt id="arg-batch-labels">batch_labels<a class="anchor" aria-label="anchor" href="#arg-batch-labels"></a></dt>
 <dd><p>Integer vector (0-indexed!) defining batch membership
-for each cell. Must be same length as <code>cell_indices</code>.</p></dd>
+for each cell. Must be the same length as <code>cell_indices</code> and densely cover
+<code>0:(n_batches - 1)</code>; a length mismatch or an empty batch raises an error.
+<code>as.integer(factor(x)) - 1L</code> always satisfies this.</p></dd>
 
 
 <dt id="arg-loess-span">loess_span<a class="anchor" aria-label="anchor" href="#arg-loess-span"></a></dt>
-<dd><p>Numeric. The span parameter for the loess function.</p></dd>
+<dd><p>Numeric. The span parameter for the loess function. Must
+be within <code>(0, 1]</code>.</p></dd>
 
 
 <dt id="arg-binning">binning<a class="anchor" aria-label="anchor" href="#arg-binning"></a></dt>

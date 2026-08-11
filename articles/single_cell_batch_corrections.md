@@ -106,7 +106,7 @@ sc_object <- load_multi_h5ad(
 #>  Using light streaming for the CSR to CSC conversion.
 #> Loading observation data from h5ad files into DuckDB.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpebD0Du/duckdb
+#> ℹ /tmp/RtmpJiI05Z/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -116,7 +116,7 @@ sc_object <- load_multi_h5ad(
 #> Loading variable data into DuckDB.
 #> 
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpebD0Du/duckdb
+#> ℹ /tmp/RtmpJiI05Z/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -124,7 +124,7 @@ sc_object <- load_multi_h5ad(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpebD0Du/duckdb
+#> ℹ /tmp/RtmpJiI05Z/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -132,7 +132,7 @@ sc_object <- load_multi_h5ad(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpebD0Du/duckdb
+#> ℹ /tmp/RtmpJiI05Z/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -140,7 +140,7 @@ sc_object <- load_multi_h5ad(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpebD0Du/duckdb
+#> ℹ /tmp/RtmpJiI05Z/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -148,7 +148,7 @@ sc_object <- load_multi_h5ad(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpebD0Du/duckdb
+#> ℹ /tmp/RtmpJiI05Z/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -156,7 +156,7 @@ sc_object <- load_multi_h5ad(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpebD0Du/duckdb
+#> ℹ /tmp/RtmpJiI05Z/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -164,7 +164,7 @@ sc_object <- load_multi_h5ad(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpebD0Du/duckdb
+#> ℹ /tmp/RtmpJiI05Z/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -172,7 +172,7 @@ sc_object <- load_multi_h5ad(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpebD0Du/duckdb
+#> ℹ /tmp/RtmpJiI05Z/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -180,7 +180,7 @@ sc_object <- load_multi_h5ad(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpebD0Du/duckdb
+#> ℹ /tmp/RtmpJiI05Z/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -188,7 +188,7 @@ sc_object <- load_multi_h5ad(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpebD0Du/duckdb
+#> ℹ /tmp/RtmpJiI05Z/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -196,7 +196,7 @@ sc_object <- load_multi_h5ad(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpebD0Du/duckdb
+#> ℹ /tmp/RtmpJiI05Z/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -204,7 +204,7 @@ sc_object <- load_multi_h5ad(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpebD0Du/duckdb
+#> ℹ /tmp/RtmpJiI05Z/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -212,7 +212,7 @@ sc_object <- load_multi_h5ad(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpebD0Du/duckdb
+#> ℹ /tmp/RtmpJiI05Z/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -220,7 +220,7 @@ sc_object <- load_multi_h5ad(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpebD0Du/duckdb
+#> ℹ /tmp/RtmpJiI05Z/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -228,7 +228,7 @@ sc_object <- load_multi_h5ad(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpebD0Du/duckdb
+#> ℹ /tmp/RtmpJiI05Z/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -248,7 +248,7 @@ Code
 
 var <- get_sc_var(sc_object)
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpebD0Du/duckdb
+#> ℹ /tmp/RtmpJiI05Z/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -256,7 +256,7 @@ var <- get_sc_var(sc_object)
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpebD0Du/duckdb
+#> ℹ /tmp/RtmpJiI05Z/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -289,7 +289,7 @@ sc_object <- gene_set_proportions_sc(
   .verbose = TRUE
 )
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpebD0Du/duckdb
+#> ℹ /tmp/RtmpJiI05Z/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -297,7 +297,7 @@ sc_object <- gene_set_proportions_sc(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpebD0Du/duckdb
+#> ℹ /tmp/RtmpJiI05Z/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -307,7 +307,7 @@ sc_object <- gene_set_proportions_sc(
 
 qc_df <- sc_object[[c("cell_id", "lib_size", "nnz", "MT")]]
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpebD0Du/duckdb
+#> ℹ /tmp/RtmpJiI05Z/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -315,7 +315,7 @@ qc_df <- sc_object[[c("cell_id", "lib_size", "nnz", "MT")]]
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpebD0Du/duckdb
+#> ℹ /tmp/RtmpJiI05Z/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -344,7 +344,7 @@ qc <- run_cell_qc(
 # Set the cells to keep
 sc_object[["outlier"]] <- qc$combined
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpebD0Du/duckdb
+#> ℹ /tmp/RtmpJiI05Z/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -352,7 +352,7 @@ sc_object[["outlier"]] <- qc$combined
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpebD0Du/duckdb
+#> ℹ /tmp/RtmpJiI05Z/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -362,7 +362,7 @@ sc_object[["outlier"]] <- qc$combined
 cells_to_keep <- qc_df[!qc$combined, cell_id]
 sc_object <- set_cells_to_keep(sc_object, cells_to_keep)
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpebD0Du/duckdb
+#> ℹ /tmp/RtmpJiI05Z/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -370,7 +370,7 @@ sc_object <- set_cells_to_keep(sc_object, cells_to_keep)
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpebD0Du/duckdb
+#> ℹ /tmp/RtmpJiI05Z/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -393,7 +393,7 @@ sc_object <- find_hvg_sc(
   .verbose = TRUE
 )
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpebD0Du/duckdb
+#> ℹ /tmp/RtmpJiI05Z/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -401,7 +401,7 @@ sc_object <- find_hvg_sc(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpebD0Du/duckdb
+#> ℹ /tmp/RtmpJiI05Z/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -409,7 +409,7 @@ sc_object <- find_hvg_sc(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpebD0Du/duckdb
+#> ℹ /tmp/RtmpJiI05Z/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -417,7 +417,7 @@ sc_object <- find_hvg_sc(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpebD0Du/duckdb
+#> ℹ /tmp/RtmpJiI05Z/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -473,7 +473,7 @@ embedding_plot_sc(
     colour = "Batch:"
   )
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpebD0Du/duckdb
+#> ℹ /tmp/RtmpJiI05Z/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -481,7 +481,7 @@ embedding_plot_sc(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpebD0Du/duckdb
+#> ℹ /tmp/RtmpJiI05Z/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -498,7 +498,7 @@ Batch correction stats:
 
 kbet_score_prior <- calculate_kbet_sc(sc_object, batch_column = "exp_id")
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpebD0Du/duckdb
+#> ℹ /tmp/RtmpJiI05Z/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -506,7 +506,7 @@ kbet_score_prior <- calculate_kbet_sc(sc_object, batch_column = "exp_id")
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpebD0Du/duckdb
+#> ℹ /tmp/RtmpJiI05Z/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -515,7 +515,7 @@ kbet_score_prior <- calculate_kbet_sc(sc_object, batch_column = "exp_id")
 #> ℹ See ?duckdb_storage for details and alternatives.
 asw_score_prior <- calculate_batch_asw_sc(sc_object, batch_column = "exp_id")
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpebD0Du/duckdb
+#> ℹ /tmp/RtmpJiI05Z/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -523,7 +523,7 @@ asw_score_prior <- calculate_batch_asw_sc(sc_object, batch_column = "exp_id")
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpebD0Du/duckdb
+#> ℹ /tmp/RtmpJiI05Z/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -532,7 +532,7 @@ asw_score_prior <- calculate_batch_asw_sc(sc_object, batch_column = "exp_id")
 #> ℹ See ?duckdb_storage for details and alternatives.
 lisi_score_prior <- calculate_batch_lisi_sc(sc_object, batch_column = "exp_id")
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpebD0Du/duckdb
+#> ℹ /tmp/RtmpJiI05Z/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -540,7 +540,7 @@ lisi_score_prior <- calculate_batch_lisi_sc(sc_object, batch_column = "exp_id")
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpebD0Du/duckdb
+#> ℹ /tmp/RtmpJiI05Z/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -551,18 +551,18 @@ lisi_score_prior <- calculate_batch_lisi_sc(sc_object, batch_column = "exp_id")
 kbet_score_prior
 #> kBET Scores
 #>   Cells: 5841 | Batches: 2 | Threshold: 0.050
-#>   Rejection rate:      0.9882 (5772 / 5841)
-#>   Mean Chi-Square:     12.8160 (expected under H0: 1)
+#>   Rejection rate:      0.9885 (5774 / 5841)
+#>   Mean Chi-Square:     12.8259 (expected under H0: 1)
 #>   Median Chi-Square:   8.7578
 asw_score_prior
 #> Batch Silhouette Width
 #>   Cells: 5000 | Batches: 2
-#>   Mean ASW:    0.1103 (-1 = strong intermixing, 0 = mixed, 1 = separated)
-#>   Median ASW:  0.1213
+#>   Mean ASW:    0.1073 (-1 = strong intermixing, 0 = mixed, 1 = separated)
+#>   Median ASW:  0.1194
 lisi_score_prior
 #> Batch LISI Scores
 #>   Cells: 5841 | Batches: 2
-#>   Mean LISI:    1.0130 (1 = no mixing, 2 = perfect mixing)
+#>   Mean LISI:    1.0125 (1 = no mixing, 2 = perfect mixing)
 #>   Median LISI:  1.0000
 ```
 
@@ -586,7 +586,7 @@ batch_aware_hvg <- find_hvg_batch_aware_sc(
   batch_column = "exp_id"
 )
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpebD0Du/duckdb
+#> ℹ /tmp/RtmpJiI05Z/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -594,7 +594,7 @@ batch_aware_hvg <- find_hvg_batch_aware_sc(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpebD0Du/duckdb
+#> ℹ /tmp/RtmpJiI05Z/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -608,7 +608,7 @@ sc_object <- fast_mnn_sc(
   batch_column = "exp_id"
 )
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpebD0Du/duckdb
+#> ℹ /tmp/RtmpJiI05Z/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -616,7 +616,7 @@ sc_object <- fast_mnn_sc(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpebD0Du/duckdb
+#> ℹ /tmp/RtmpJiI05Z/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -641,7 +641,7 @@ kbet_score_post_mnn <- calculate_kbet_sc(
   batch_column = "exp_id"
 )
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpebD0Du/duckdb
+#> ℹ /tmp/RtmpJiI05Z/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -649,7 +649,7 @@ kbet_score_post_mnn <- calculate_kbet_sc(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpebD0Du/duckdb
+#> ℹ /tmp/RtmpJiI05Z/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -662,7 +662,7 @@ asw_score_post_mnn <- calculate_batch_asw_sc(
   batch_column = "exp_id"
 )
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpebD0Du/duckdb
+#> ℹ /tmp/RtmpJiI05Z/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -670,7 +670,7 @@ asw_score_post_mnn <- calculate_batch_asw_sc(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpebD0Du/duckdb
+#> ℹ /tmp/RtmpJiI05Z/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -682,7 +682,7 @@ lisi_score_post_mnn <- calculate_batch_lisi_sc(
   batch_column = "exp_id"
 )
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpebD0Du/duckdb
+#> ℹ /tmp/RtmpJiI05Z/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -690,7 +690,7 @@ lisi_score_post_mnn <- calculate_batch_lisi_sc(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpebD0Du/duckdb
+#> ℹ /tmp/RtmpJiI05Z/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -701,19 +701,19 @@ lisi_score_post_mnn <- calculate_batch_lisi_sc(
 kbet_score_post_mnn
 #> kBET Scores
 #>   Cells: 5841 | Batches: 2 | Threshold: 0.050
-#>   Rejection rate:      0.3487 (2037 / 5841)
-#>   Mean Chi-Square:     3.5937 (expected under H0: 1)
+#>   Rejection rate:      0.3551 (2074 / 5841)
+#>   Mean Chi-Square:     3.6749 (expected under H0: 1)
 #>   Median Chi-Square:   3.6444
 asw_score_post_mnn
 #> Batch Silhouette Width
 #>   Cells: 5000 | Batches: 2
-#>   Mean ASW:    0.0186 (-1 = strong intermixing, 0 = mixed, 1 = separated)
-#>   Median ASW:  0.0428
+#>   Mean ASW:    0.0192 (-1 = strong intermixing, 0 = mixed, 1 = separated)
+#>   Median ASW:  0.0423
 lisi_score_post_mnn
 #> Batch LISI Scores
 #>   Cells: 5841 | Batches: 2
-#>   Mean LISI:    1.4449 (1 = no mixing, 2 = perfect mixing)
-#>   Median LISI:  1.4706
+#>   Mean LISI:    1.4394 (1 = no mixing, 2 = perfect mixing)
+#>   Median LISI:  1.3006
 ```
 
 We can see clear improvements across all scores. Lower kBET scores,
@@ -741,7 +741,7 @@ embedding_plot_sc(
     colour = "Batch:"
   )
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpebD0Du/duckdb
+#> ℹ /tmp/RtmpJiI05Z/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -749,7 +749,7 @@ embedding_plot_sc(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpebD0Du/duckdb
+#> ℹ /tmp/RtmpJiI05Z/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -781,7 +781,7 @@ sc_object <- harmony_sc(
   harmony_params = params_sc_harmony()
 )
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpebD0Du/duckdb
+#> ℹ /tmp/RtmpJiI05Z/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -789,7 +789,7 @@ sc_object <- harmony_sc(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpebD0Du/duckdb
+#> ℹ /tmp/RtmpJiI05Z/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -817,7 +817,7 @@ kbet_score_post_harmony <- calculate_kbet_sc(
   batch_column = "exp_id"
 )
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpebD0Du/duckdb
+#> ℹ /tmp/RtmpJiI05Z/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -825,7 +825,7 @@ kbet_score_post_harmony <- calculate_kbet_sc(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpebD0Du/duckdb
+#> ℹ /tmp/RtmpJiI05Z/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -838,7 +838,7 @@ asw_score_post_harmony <- calculate_batch_asw_sc(
   batch_column = "exp_id"
 )
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpebD0Du/duckdb
+#> ℹ /tmp/RtmpJiI05Z/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -846,7 +846,7 @@ asw_score_post_harmony <- calculate_batch_asw_sc(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpebD0Du/duckdb
+#> ℹ /tmp/RtmpJiI05Z/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -858,7 +858,7 @@ lisi_score_post_harmony <- calculate_batch_lisi_sc(
   batch_column = "exp_id"
 )
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpebD0Du/duckdb
+#> ℹ /tmp/RtmpJiI05Z/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -866,7 +866,7 @@ lisi_score_post_harmony <- calculate_batch_lisi_sc(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpebD0Du/duckdb
+#> ℹ /tmp/RtmpJiI05Z/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -877,18 +877,18 @@ lisi_score_post_harmony <- calculate_batch_lisi_sc(
 kbet_score_post_harmony
 #> kBET Scores
 #>   Cells: 5841 | Batches: 2 | Threshold: 0.050
-#>   Rejection rate:      0.1442 (842 / 5841)
-#>   Mean Chi-Square:     2.0567 (expected under H0: 1)
+#>   Rejection rate:      0.1364 (797 / 5841)
+#>   Mean Chi-Square:     1.9905 (expected under H0: 1)
 #>   Median Chi-Square:   0.7374
 asw_score_post_harmony
 #> Batch Silhouette Width
 #>   Cells: 5000 | Batches: 2
-#>   Mean ASW:    0.0196 (-1 = strong intermixing, 0 = mixed, 1 = separated)
-#>   Median ASW:  0.0345
+#>   Mean ASW:    0.0194 (-1 = strong intermixing, 0 = mixed, 1 = separated)
+#>   Median ASW:  0.0359
 lisi_score_post_harmony
 #> Batch LISI Scores
 #>   Cells: 5841 | Batches: 2
-#>   Mean LISI:    1.5958 (1 = no mixing, 2 = perfect mixing)
+#>   Mean LISI:    1.6112 (1 = no mixing, 2 = perfect mixing)
 #>   Median LISI:  1.6423
 ```
 
@@ -919,7 +919,7 @@ embedding_plot_sc(
     colour = "Batch:"
   )
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpebD0Du/duckdb
+#> ℹ /tmp/RtmpJiI05Z/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -927,7 +927,7 @@ embedding_plot_sc(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpebD0Du/duckdb
+#> ℹ /tmp/RtmpJiI05Z/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -995,18 +995,18 @@ lisi_score_post_harmony <- calculate_batch_lisi_sc(
 kbet_score_post_harmony
 #> kBET Scores
 #>   Cells: 5841 | Batches: 2 | Threshold: 0.050
-#>   Rejection rate:      0.1438 (840 / 5841)
-#>   Mean Chi-Square:     2.0986 (expected under H0: 1)
+#>   Rejection rate:      0.1395 (815 / 5841)
+#>   Mean Chi-Square:     2.0085 (expected under H0: 1)
 #>   Median Chi-Square:   0.7374
 asw_score_post_harmony
 #> Batch Silhouette Width
 #>   Cells: 5000 | Batches: 2
-#>   Mean ASW:    0.0185 (-1 = strong intermixing, 0 = mixed, 1 = separated)
-#>   Median ASW:  0.0513
+#>   Mean ASW:    0.0208 (-1 = strong intermixing, 0 = mixed, 1 = separated)
+#>   Median ASW:  0.0511
 lisi_score_post_harmony
 #> Batch LISI Scores
 #>   Cells: 5841 | Batches: 2
-#>   Mean LISI:    1.5961 (1 = no mixing, 2 = perfect mixing)
+#>   Mean LISI:    1.6148 (1 = no mixing, 2 = perfect mixing)
 #>   Median LISI:  1.6423
 ```
 
@@ -1103,18 +1103,18 @@ lisi_score_post_cca <- calculate_batch_lisi_sc(
 kbet_score_post_cca
 #> kBET Scores
 #>   Cells: 5841 | Batches: 2 | Threshold: 0.050
-#>   Rejection rate:      0.3152 (1841 / 5841)
-#>   Mean Chi-Square:     3.2556 (expected under H0: 1)
+#>   Rejection rate:      0.3143 (1836 / 5841)
+#>   Mean Chi-Square:     3.2870 (expected under H0: 1)
 #>   Median Chi-Square:   1.9151
 asw_score_post_cca
 #> Batch Silhouette Width
 #>   Cells: 5000 | Batches: 2
-#>   Mean ASW:    0.0314 (-1 = strong intermixing, 0 = mixed, 1 = separated)
-#>   Median ASW:  0.0502
+#>   Mean ASW:    0.0328 (-1 = strong intermixing, 0 = mixed, 1 = separated)
+#>   Median ASW:  0.0503
 lisi_score_post_cca
 #> Batch LISI Scores
 #>   Cells: 5841 | Batches: 2
-#>   Mean LISI:    1.4802 (1 = no mixing, 2 = perfect mixing)
+#>   Mean LISI:    1.4757 (1 = no mixing, 2 = perfect mixing)
 #>   Median LISI:  1.4706
 ```
 
@@ -1192,18 +1192,18 @@ lisi_score_post_rpca <- calculate_batch_lisi_sc(
 kbet_score_post_rpca
 #> kBET Scores
 #>   Cells: 5841 | Batches: 2 | Threshold: 0.050
-#>   Rejection rate:      0.2173 (1269 / 5841)
-#>   Mean Chi-Square:     2.6264 (expected under H0: 1)
+#>   Rejection rate:      0.2248 (1313 / 5841)
+#>   Mean Chi-Square:     2.6978 (expected under H0: 1)
 #>   Median Chi-Square:   1.9151
 asw_score_post_rpca
 #> Batch Silhouette Width
 #>   Cells: 5000 | Batches: 2
-#>   Mean ASW:    0.0247 (-1 = strong intermixing, 0 = mixed, 1 = separated)
-#>   Median ASW:  0.0580
+#>   Mean ASW:    0.0299 (-1 = strong intermixing, 0 = mixed, 1 = separated)
+#>   Median ASW:  0.0616
 lisi_score_post_rpca
 #> Batch LISI Scores
 #>   Cells: 5841 | Batches: 2
-#>   Mean LISI:    1.5910 (1 = no mixing, 2 = perfect mixing)
+#>   Mean LISI:    1.5944 (1 = no mixing, 2 = perfect mixing)
 #>   Median LISI:  1.6423
 ```
 

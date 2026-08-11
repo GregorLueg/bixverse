@@ -15,7 +15,7 @@ params_scdblfinder(
   cluster_iters = 10L,
   fast_cluster = FALSE,
   n_iterations = 3L,
-  n_trees = 200L,
+  gbm_n_trees = 200L,
   max_depth = 4L,
   learning_rate = 0.3,
   min_samples_leaf = 20L,
@@ -73,7 +73,7 @@ params_scdblfinder(
   Integer. Number of refinement iterations. Typically 2-3. Defaults to
   `3L`.
 
-- n_trees:
+- gbm_n_trees:
 
   Integer. Maximum number of boosting rounds for the GBM classifier.
   Defaults to `200L`.

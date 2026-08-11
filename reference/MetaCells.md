@@ -10,7 +10,13 @@ module detection ones will be made available).
 ## Usage
 
 ``` r
-MetaCells(meta_cell_data, var_data, meta_cell_method)
+MetaCells(
+  meta_cell_data,
+  var_data,
+  meta_cell_method,
+  obs_ids = NULL,
+  cells_to_keep = NULL
+)
 ```
 
 ## Arguments
@@ -28,6 +34,25 @@ MetaCells(meta_cell_data, var_data, meta_cell_method)
 - meta_cell_method:
 
   String describing the origin of the metacell.
+
+- obs_ids:
+
+  Optional character vector of length `n_metacells` with the meta cell
+  identifiers. Defaults to `meta_cell_0001`, `meta_cell_0002`, ... Used
+  by
+  [`merge_meta_cells()`](https://gregorlueg.github.io/bixverse/reference/merge_meta_cells.md)
+  so that the count matrices get their final row names at construction
+  time rather than via a `rownames<-` that would duplicate them.
+
+- cells_to_keep:
+
+  Optional integer vector. The source's
+  [`get_cells_to_keep()`](https://gregorlueg.github.io/bixverse/reference/get_cells_to_keep.md),
+  i.e. 0-indexed positions in its full obs table, in the row order its
+  cached artefacts use. Recorded so that the meta cell memberships,
+  which are positions in the *full* obs space, can be resolved against
+  embeddings, kNN graphs and diffusion maps, whose rows only cover the
+  QC-passing cells.
 
 ## Value
 
@@ -63,3 +88,10 @@ Returns the `MetaCells` class for further operations.
 - other_data:
 
   Potential other data returned from the meta-cell generating methods.
+
+- is_merged:
+
+  Boolean. `TRUE` for objects returned by
+  [`merge_meta_cells()`](https://gregorlueg.github.io/bixverse/reference/merge_meta_cells.md).
+  Methods that need to resolve `original_cell_idx` against the source
+  single cell data use this to bail out early.

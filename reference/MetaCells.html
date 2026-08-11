@@ -17,7 +17,7 @@ detection ones will be made available)."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -66,6 +66,7 @@ detection ones will be made available)."></head><body>
     <li><a class="dropdown-item" href="../articles/bag_of_genes_single_cells.html">'Bag of genes' methods for single cell in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/nichenet.html">Ligand receptor analysis</a></li>
     <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/trajectory_inference.html">Trajectory inference with Palantir and PAGA</a></li>
     <li><a class="dropdown-item" href="../articles/symphony.html">Reference mapping via Symphony</a></li>
     <li><a class="dropdown-item" href="../articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
     <li><hr class="dropdown-divider"></li>
@@ -106,7 +107,13 @@ detection ones will be made available).</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">MetaCells</span><span class="op">(</span><span class="va">meta_cell_data</span>, <span class="va">var_data</span>, <span class="va">meta_cell_method</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">MetaCells</span><span class="op">(</span></span>
+<span>  <span class="va">meta_cell_data</span>,</span>
+<span>  <span class="va">var_data</span>,</span>
+<span>  <span class="va">meta_cell_method</span>,</span>
+<span>  obs_ids <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  cells_to_keep <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -125,6 +132,23 @@ additional information on the origin of the meta cells.</p></dd>
 
 <dt id="arg-meta-cell-method">meta_cell_method<a class="anchor" aria-label="anchor" href="#arg-meta-cell-method"></a></dt>
 <dd><p>String describing the origin of the metacell.</p></dd>
+
+
+<dt id="arg-obs-ids">obs_ids<a class="anchor" aria-label="anchor" href="#arg-obs-ids"></a></dt>
+<dd><p>Optional character vector of length <code>n_metacells</code> with the
+meta cell identifiers. Defaults to <code>meta_cell_0001</code>, <code>meta_cell_0002</code>, ...
+Used by <code><a href="merge_meta_cells.html">merge_meta_cells()</a></code> so that the count matrices get their
+final row names at construction time rather than via a <code>rownames&lt;-</code> that
+would duplicate them.</p></dd>
+
+
+<dt id="arg-cells-to-keep">cells_to_keep<a class="anchor" aria-label="anchor" href="#arg-cells-to-keep"></a></dt>
+<dd><p>Optional integer vector. The source's
+<code><a href="get_cells_to_keep.html">get_cells_to_keep()</a></code>, i.e. 0-indexed positions in its full obs
+table, in the row order its cached artefacts use. Recorded so that the meta
+cell memberships, which are positions in the <em>full</em> obs space, can be
+resolved against embeddings, kNN graphs and diffusion maps, whose rows only
+cover the QC-passing cells.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -157,6 +181,12 @@ additional information on the origin of the meta cells.</p></dd>
 <dt>other_data</dt>
 <dd><p>Potential other data returned from the meta-cell
 generating methods.</p></dd>
+
+<dt>is_merged</dt>
+<dd><p>Boolean. <code>TRUE</code> for objects returned by
+<code><a href="merge_meta_cells.html">merge_meta_cells()</a></code>. Methods that need to resolve
+<code>original_cell_idx</code> against the source single cell data use this to bail
+out early.</p></dd>
 
 
 </dl></div>

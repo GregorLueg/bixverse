@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -56,6 +56,7 @@
     <li><a class="dropdown-item" href="../articles/bag_of_genes_single_cells.html">'Bag of genes' methods for single cell in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/nichenet.html">Ligand receptor analysis</a></li>
     <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/trajectory_inference.html">Trajectory inference with Palantir and PAGA</a></li>
     <li><a class="dropdown-item" href="../articles/symphony.html">Reference mapping via Symphony</a></li>
     <li><a class="dropdown-item" href="../articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
     <li><hr class="dropdown-divider"></li>
@@ -1224,6 +1225,34 @@
 
         <dt>
 
+          <code><a href="reset_cells_to_keep.html">reset_cells_to_keep()</a></code>
+
+        </dt>
+        <dd>Reset the cells to keep</dd>
+
+        <dt>
+
+          <code><a href="get_sc_cache_status.html">get_sc_cache_status()</a></code>
+
+        </dt>
+        <dd>Status of everything held in a single cell object's caches</dd>
+
+        <dt>
+
+          <code><a href="check_sc_state.html">check_sc_state()</a></code>
+
+        </dt>
+        <dd>Check that cached artefacts still match the object's state</dd>
+
+        <dt>
+
+          <code><a href="assert_sc_state.html">assert_sc_state()</a></code>
+
+        </dt>
+        <dd>Assert that cached artefacts still match the object's state</dd>
+
+        <dt>
+
           <code><a href="get_embedding.html">get_embedding()</a></code>
 
         </dt>
@@ -1270,6 +1299,27 @@
 
         </dt>
         <dd>Get the KNN object</dd>
+
+        <dt>
+
+          <code><a href="get_magic.html">get_magic()</a></code>
+
+        </dt>
+        <dd>Get the MAGIC imputed layer</dd>
+
+        <dt>
+
+          <code><a href="set_magic.html">set_magic()</a></code>
+
+        </dt>
+        <dd>Set/add the MAGIC imputed layer</dd>
+
+        <dt>
+
+          <code><a href="remove_magic.html">remove_magic()</a></code>
+
+        </dt>
+        <dd>Remove the MAGIC imputed layer</dd>
 
         <dt>
 
@@ -1955,10 +2005,24 @@
 
         <dt>
 
+          <code><a href="run_magic_sc.html">run_magic_sc()</a></code>
+
+        </dt>
+        <dd>Impute a subset of genes with MAGIC</dd>
+
+        <dt>
+
           <code><a href="top_genes_perc_sc.html">top_genes_perc_sc()</a></code>
 
         </dt>
         <dd>Calculate the proportions of reads for the Top N genes</dd>
+
+        <dt>
+
+          <code><a href="params_sc_magic.html">params_sc_magic()</a></code>
+
+        </dt>
+        <dd>Wrapper function for MAGIC imputation parameters</dd>
 
         <dt>
 
@@ -2288,6 +2352,27 @@
 
         <dt>
 
+          <code><a href="run_palantir_sc.html">run_palantir_sc()</a></code>
+
+        </dt>
+        <dd>Run Palantir trajectory inference</dd>
+
+        <dt>
+
+          <code><a href="run_paga_sc.html">run_paga_sc()</a></code>
+
+        </dt>
+        <dd>Run PAGA graph abstraction</dd>
+
+        <dt>
+
+          <code><a href="run_gene_trends_sc.html">run_gene_trends_sc()</a></code>
+
+        </dt>
+        <dd>Fit gene trends over Palantir pseudotime</dd>
+
+        <dt>
+
           <code><a href="get_index_cells.html">get_index_cells()</a></code>
 
         </dt>
@@ -2467,6 +2552,27 @@
 
         </dt>
         <dd>Constructor for MELD parameters</dd>
+
+        <dt>
+
+          <code><a href="params_sc_palantir.html">params_sc_palantir()</a></code>
+
+        </dt>
+        <dd>Wrapper function for Palantir parameters</dd>
+
+        <dt>
+
+          <code><a href="params_sc_branch_selection.html">params_sc_branch_selection()</a></code>
+
+        </dt>
+        <dd>Wrapper function for the branch cell selection parameters</dd>
+
+        <dt>
+
+          <code><a href="params_sc_gene_trends.html">params_sc_gene_trends()</a></code>
+
+        </dt>
+        <dd>Wrapper function for gene trend parameters</dd>
 
         <dt>
 
@@ -2813,6 +2919,13 @@
 
         </dt>
         <dd>Extract per-cell expression grouped for violin plots</dd>
+
+        <dt>
+
+          <code><a href="extract_paga_plot_data.html">extract_paga_plot_data()</a></code>
+
+        </dt>
+        <dd>Extract the PAGA graph positioned on an embedding</dd>
       </dl></div><div class="section level2">
       <h2 id="statistical-functions">Statistical functions<a class="anchor" aria-label="anchor" href="#statistical-functions"></a></h2>
 
@@ -3001,6 +3114,13 @@
 
         </dt>
         <dd>Download the CD34 example data from SEACells</dd>
+
+        <dt>
+
+          <code><a href="download_marrow_cd34.html">download_marrow_cd34()</a></code>
+
+        </dt>
+        <dd>Download the marrow CD34 example data from Palantir</dd>
 
         <dt>
 
@@ -3362,6 +3482,13 @@
           <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Calculate a BH-based FDR</dd>
+
+        <dt>
+
+          <code><a href="rs_gene_trends.html">rs_gene_trends()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Fit Palantir gene trends over pseudotime</dd>
 
         <dt>
 

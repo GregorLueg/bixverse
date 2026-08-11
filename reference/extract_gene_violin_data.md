@@ -14,7 +14,8 @@ extract_gene_violin_data(
   grouping_variable,
   scale = FALSE,
   clip = NULL,
-  modality = c("rna", "adt")
+  modality = c("rna", "adt"),
+  layer = c("norm", "magic")
 )
 ```
 
@@ -43,6 +44,11 @@ extract_gene_violin_data(
 - modality:
 
   String. One of `c("rna", "adt")`.
+
+- layer:
+
+  String. One of `c("norm", "magic")`, forwarded to
+  [`extract_gene_expression()`](https://gregorlueg.github.io/bixverse/reference/extract_gene_expression.md).
 
 ## Value
 

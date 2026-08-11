@@ -55,6 +55,11 @@ merge_meta_cells(
 
 ## Value
 
-A single `MetaCells` object with all meta cells of the inputs. The
-observation table gains a `source_id` column; `original_cell_idx` stays
-in the index space of its own source.
+A single `MetaCells` object with all meta cells of the inputs and
+`is_merged` set to `TRUE`. The observation table gains a `source_id`
+column; `original_cell_idx` stays in the index space of its own source,
+which is why methods that resolve it against the source single cell data
+([`calc_diffusion_coordinates()`](https://gregorlueg.github.io/bixverse/reference/calc_diffusion_coordinates.md),
+[`calc_manifold_metrics()`](https://gregorlueg.github.io/bixverse/reference/calc_manifold_metrics.md))
+refuse to run on the result. `other_data` holds the source identifiers
+under `sources`.

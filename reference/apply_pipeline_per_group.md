@@ -9,7 +9,13 @@ metacell generation followed by an external merge.
 ## Usage
 
 ``` r
-apply_pipeline_per_group(pipeline, object, group_col, groups = NULL)
+apply_pipeline_per_group(
+  pipeline,
+  object,
+  group_col,
+  groups = NULL,
+  progress = FALSE
+)
 ```
 
 ## Arguments
@@ -30,6 +36,11 @@ apply_pipeline_per_group(pipeline, object, group_col, groups = NULL)
 
   Optional character vector. Restrict to these group values; if `NULL`,
   all unique values of `group_col` are used.
+
+- progress:
+
+  Boolean. Shall big progress messages be printed to the console.
+  Defaults to `FALSE`.
 
 ## Value
 

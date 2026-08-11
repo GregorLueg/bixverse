@@ -13,7 +13,7 @@ memberships to graph-based clustering, etc."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -62,6 +62,7 @@ memberships to graph-based clustering, etc."></head><body>
     <li><a class="dropdown-item" href="../articles/bag_of_genes_single_cells.html">'Bag of genes' methods for single cell in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/nichenet.html">Ligand receptor analysis</a></li>
     <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/trajectory_inference.html">Trajectory inference with Palantir and PAGA</a></li>
     <li><a class="dropdown-item" href="../articles/symphony.html">Reference mapping via Symphony</a></li>
     <li><a class="dropdown-item" href="../articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
     <li><hr class="dropdown-divider"></li>
@@ -113,10 +114,11 @@ memberships to graph-based clustering, etc.</p>
 
 <dt id="arg-original-cell-type">original_cell_type<a class="anchor" aria-label="anchor" href="#arg-original-cell-type"></a></dt>
 <dd><p>Character vector. The original cell type
-annotations, in the row order of the full (unfiltered) obs table of the
-object the meta cells came from, i.e. <code>get_sc_obs(x)$&lt;column&gt;</code>. Meta cell
-memberships are stored as 1-indexed positions in that space, so a vector
-restricted to the QC-passing cells will silently give wrong purities.</p></dd>
+annotations of the object the meta cells came from. Either in the row order
+of its full (unfiltered) obs table, i.e. <code>get_sc_obs(x)$&lt;column&gt;</code>, or of the
+QC-passing cells only, i.e. <code>get_sc_obs(x, filtered = TRUE)$&lt;column&gt;</code>. Which
+one you passed is inferred from the length, so a vector matching neither is
+an error rather than a silently wrong purity.</p></dd>
 
 </dl></div>
     <div class="section level2">
