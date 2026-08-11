@@ -184,6 +184,84 @@ merge_meta_cells <- function(
   merged
 }
 
+## index space bridge ----------------------------------------------------------
+
+#' Resolve meta cell memberships onto the row space of a source artefact
+#'
+#' @description
+#' `original_cell_idx` holds 1-indexed positions in the *full, unfiltered* obs
+#' table of the source object. Embeddings, kNN graphs and diffusion maps have
+#' one row per QC-passing cell, in `cells_to_keep` order (the invariant the
+#' cache stamps rely on). Indexing such an artefact with the memberships
+#' directly is silently off by the filtering the moment QC dropped a cell, which
+#' is why the source's `cells_to_keep` is recorded on the object at generation
+#' time. This resolves the one space into the other.
+#'
+#' @param object `MetaCells` class.
+#' @param n_rows Integer. Number of rows the artefact has, checked against the
+#' recorded cell mapping.
+#'
+#' @returns A list of integer vectors, one per meta cell, holding 1-indexed row
+#' positions in the artefact.
+#'
+#' @keywords internal
+.mc_artefact_rows <- function(object, n_rows) {
+  checkmate::assertTRUE(S7::S7_inherits(object, MetaCells))
+  checkmate::qassert(n_rows, "X1[0,)")
+
+  assignment <- S7::prop(object, "original_assignment")
+  keep <- assignment$cells_to_keep
+  n_cells <- assignment$n_cells
+  memberships <- S7::prop(object, "obs_table")$original_cell_idx
+
+  # meta cells generated before the mapping was recorded. Passing them through
+  # is only safe when nothing was filtered, as the two spaces then coincide.
+  if (is.null(keep)) {
+    if (n_rows != n_cells) {
+      stop(sprintf(
+        paste(
+          "This object does not record the source cell mapping, and the",
+          "artefact covers %i of the %i original cells, so the meta cell",
+          "memberships cannot be resolved against it. Regenerate the meta",
+          "cells to record the mapping."
+        ),
+        n_rows,
+        n_cells
+      ))
+    }
+
+    return(memberships)
+  }
+
+  if (n_rows != length(keep)) {
+    stop(sprintf(
+      paste(
+        "The artefact covers %i cells but the meta cells were built over the",
+        "%i QC-passing cells of the source. Regenerate it so the two agree."
+      ),
+      n_rows,
+      length(keep)
+    ))
+  }
+
+  # reverse lookup, so this stays linear instead of a `match()` per meta cell
+  lookup <- integer(n_cells)
+  lookup[keep + 1L] <- seq_along(keep)
+
+  rows <- purrr::map(memberships, \(idx) lookup[idx])
+
+  # 0 marks a member that is not part of the artefact at all, which cannot
+  # happen for memberships drawn from the kept cells
+  if (any(purrr::map_lgl(rows, \(r) any(r == 0L)))) {
+    stop(paste(
+      "Some meta cell members are absent from the recorded cell mapping.",
+      "The object is inconsistent; regenerate the meta cells."
+    ))
+  }
+
+  rows
+}
+
 ## internal helpers ------------------------------------------------------------
 
 #' Resolve the target gene space for a meta cell merge

@@ -181,7 +181,8 @@ S7::method(generate_bt_meta_cells_sc, ScOrScSubset) <- function(
   meta_cell_obj <- MetaCells(
     meta_cell_data = meta_cell_data,
     var_data = var_data,
-    meta_cell_method = "meta_cells_hdwgcna"
+    meta_cell_method = "meta_cells_hdwgcna",
+    cells_to_keep = get_cells_to_keep(object)
   )
 
   return(meta_cell_obj)
@@ -330,7 +331,8 @@ S7::method(generate_seacells_sc, ScOrScSubset) <- function(
   meta_cell_obj <- MetaCells(
     meta_cell_data = seacell_data,
     var_data = var_data,
-    meta_cell_method = "seacell"
+    meta_cell_method = "seacell",
+    cells_to_keep = get_cells_to_keep(object)
   )
 
   return(meta_cell_obj)
@@ -513,7 +515,8 @@ S7::method(generate_supercells_sc, ScOrScSubset) <- function(
   meta_cell_obj <- MetaCells(
     meta_cell_data = supercell_res,
     var_data = var_data,
-    meta_cell_method = "supercells"
+    meta_cell_method = "supercells",
+    cells_to_keep = get_cells_to_keep(object)
   )
 
   return(meta_cell_obj)

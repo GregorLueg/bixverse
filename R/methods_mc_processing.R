@@ -14,10 +14,11 @@
 #'
 #' @param object `MetaCells` class.
 #' @param original_cell_type Character vector. The original cell type
-#' annotations, in the row order of the full (unfiltered) obs table of the
-#' object the meta cells came from, i.e. `get_sc_obs(x)$<column>`. Meta cell
-#' memberships are stored as 1-indexed positions in that space, so a vector
-#' restricted to the QC-passing cells will silently give wrong purities.
+#' annotations of the object the meta cells came from. Either in the row order
+#' of its full (unfiltered) obs table, i.e. `get_sc_obs(x)$<column>`, or of the
+#' QC-passing cells only, i.e. `get_sc_obs(x, filtered = TRUE)$<column>`. Which
+#' one you passed is inferred from the length, so a vector matching neither is
+#' an error rather than a silently wrong purity.
 #'
 #' @returns The `MetaCells` with an added columns to the observation table
 #' with the purity measures
@@ -60,20 +61,30 @@ S7::method(calc_meta_cell_purity, MetaCells) <- function(
     }
   }
 
-  if (length(original_cell_type) != n_cells) {
+  # a full-obs vector indexes straight, a QC-passing one needs the memberships
+  # translated into the filtered row space
+  n_kept <- length(assignment$cells_to_keep)
+
+  mc_rows <- if (length(original_cell_type) == n_cells) {
+    S7::prop(object, "obs_table")$original_cell_idx
+  } else if (n_kept > 0L && length(original_cell_type) == n_kept) {
+    .mc_artefact_rows(object, n_kept)
+  } else {
     stop(sprintf(
       paste(
-        "`original_cell_type` has %i entries but the meta cells were built",
-        "over %i original cells. Pass the unfiltered obs column."
+        "`original_cell_type` has %i entries but the meta cells were built over",
+        "%i original cells%s. Pass the unfiltered obs column, or the",
+        "QC-passing one."
       ),
       length(original_cell_type),
-      n_cells
+      n_cells,
+      if (n_kept > 0L) sprintf(" of which %i pass QC", n_kept) else ""
     ))
   }
 
   # calculate purity
   purity <- purrr::map_dbl(
-    object[[]]$original_cell_idx,
+    mc_rows,
     function(idx) {
       types <- original_cell_type[idx]
       max(table(types)) / length(types)
@@ -162,6 +173,10 @@ S7::method(calc_diffusion_coordinates, MetaCells) <- function(
     return(object)
   }
 
+  # the kNN rows cover the QC-passing cells, the memberships index the full obs
+  # space. Resolve before the density computation so a mismatch fails fast.
+  mc_rows <- .mc_artefact_rows(object, length(knn_data$used_cells))
+
   # deal with knn params here
   knn_params <- params_knn_defaults()
   knn_params$k <- 1L
@@ -175,25 +190,10 @@ S7::method(calc_diffusion_coordinates, MetaCells) <- function(
     seed = seed
   )
 
-  # memberships index into the full obs space of the source, the kNN rows into
-  # the QC-passing cells only. Silently off whenever QC dropped anything.
-  n_cells <- S7::prop(object, "original_assignment")$n_cells
-  if (length(res$regions) != n_cells) {
-    stop(sprintf(
-      paste(
-        "The kNN graph covers %i cells but the meta cells were built over %i",
-        "original cells. `original_cell_idx` indexes the full, unfiltered obs",
-        "table, so the kNN has to span it as well."
-      ),
-      length(res$regions),
-      n_cells
-    ))
-  }
-
   density_region <- purrr::map_chr(
-    object[[]]$original_cell_idx,
-    function(idx) {
-      region <- res$regions[idx]
+    mc_rows,
+    function(rows) {
+      region <- res$regions[rows]
       names(which.max(table(region)))
     }
   )
@@ -275,16 +275,20 @@ S7::method(calc_manifold_metrics, MetaCells) <- function(
     return(object)
   }
 
+  # the diffusion map has one row per QC-passing cell, the memberships index the
+  # full obs space. Rust shifts these to 0-based itself, so hand it 1-based rows.
+  mc_rows <- .mc_artefact_rows(object, nrow(dcs))
+
   # calculate compactness
   compactness <- rs_metacell_compactness(
     dc = dcs,
-    object[[]]$original_cell_idx
+    mc_rows
   )
 
   # separation
   separation <- rs_metacell_separation(
     dc = dcs,
-    object[[]]$original_cell_idx
+    mc_rows
   )
 
   object[["compactness"]] <- compactness

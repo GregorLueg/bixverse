@@ -4,7 +4,13 @@
 \alias{MetaCells}
 \title{bixverse meta cell class}
 \usage{
-MetaCells(meta_cell_data, var_data, meta_cell_method, obs_ids = NULL)
+MetaCells(
+  meta_cell_data,
+  var_data,
+  meta_cell_method,
+  obs_ids = NULL,
+  cells_to_keep = NULL
+)
 }
 \arguments{
 \item{meta_cell_data}{Named list. Output of meta-cell generation Rust
@@ -20,6 +26,13 @@ meta cell identifiers. Defaults to \code{meta_cell_0001}, \code{meta_cell_0002},
 Used by \code{\link[=merge_meta_cells]{merge_meta_cells()}} so that the count matrices get their
 final row names at construction time rather than via a \verb{rownames<-} that
 would duplicate them.}
+
+\item{cells_to_keep}{Optional integer vector. The source's
+\code{\link[=get_cells_to_keep]{get_cells_to_keep()}}, i.e. 0-indexed positions in its full obs
+table, in the row order its cached artefacts use. Recorded so that the meta
+cell memberships, which are positions in the \emph{full} obs space, can be
+resolved against embeddings, kNN graphs and diffusion maps, whose rows only
+cover the QC-passing cells.}
 }
 \value{
 Returns the \code{MetaCells} class for further operations.

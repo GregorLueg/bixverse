@@ -22,6 +22,12 @@
 #' Used by [bixverse::merge_meta_cells()] so that the count matrices get their
 #' final row names at construction time rather than via a `rownames<-` that
 #' would duplicate them.
+#' @param cells_to_keep Optional integer vector. The source's
+#' [bixverse::get_cells_to_keep()], i.e. 0-indexed positions in its full obs
+#' table, in the row order its cached artefacts use. Recorded so that the meta
+#' cell memberships, which are positions in the *full* obs space, can be
+#' resolved against embeddings, kNN graphs and diffusion maps, whose rows only
+#' cover the QC-passing cells.
 #'
 #' @section Properties:
 #' \describe{
@@ -60,7 +66,8 @@ MetaCells <- S7::new_class(
     meta_cell_data,
     var_data,
     meta_cell_method,
-    obs_ids = NULL
+    obs_ids = NULL,
+    cells_to_keep = NULL
   ) {
     # checks
     checkmate::assertList(meta_cell_data)
@@ -75,6 +82,7 @@ MetaCells <- S7::new_class(
     )
     checkmate::qassert(meta_cell_method, "S1")
     checkmate::qassert(obs_ids, c("S+", "0"))
+    checkmate::qassert(cells_to_keep, c("X+[0,)", "0"))
 
     # function body
     n_metacells <- meta_cell_data$assignments$n_metacells
@@ -120,12 +128,21 @@ MetaCells <- S7::new_class(
       var_table = var_data,
       data = list(raw = raw_counts, norm = norm_counts),
       sc_cache = new_sc_cache(),
-      original_assignment = meta_cell_data$assignments[c(
-        "assignments",
-        "n_cells",
-        "n_metacells",
-        "n_unassigned"
-      )],
+      original_assignment = c(
+        meta_cell_data$assignments[c(
+          "assignments",
+          "n_cells",
+          "n_metacells",
+          "n_unassigned"
+        )],
+        list(
+          cells_to_keep = if (is.null(cells_to_keep)) {
+            NULL
+          } else {
+            as.integer(cells_to_keep)
+          }
+        )
+      ),
       dims = as.integer(c(nrow(raw_counts), ncol(norm_counts))),
       other_data = other_data,
       meta_cell_method = meta_cell_method,

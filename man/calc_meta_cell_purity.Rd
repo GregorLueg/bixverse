@@ -10,10 +10,11 @@ calc_meta_cell_purity(object, original_cell_type)
 \item{object}{\code{MetaCells} class.}
 
 \item{original_cell_type}{Character vector. The original cell type
-annotations, in the row order of the full (unfiltered) obs table of the
-object the meta cells came from, i.e. \verb{get_sc_obs(x)$<column>}. Meta cell
-memberships are stored as 1-indexed positions in that space, so a vector
-restricted to the QC-passing cells will silently give wrong purities.}
+annotations of the object the meta cells came from. Either in the row order
+of its full (unfiltered) obs table, i.e. \verb{get_sc_obs(x)$<column>}, or of the
+QC-passing cells only, i.e. \verb{get_sc_obs(x, filtered = TRUE)$<column>}. Which
+one you passed is inferred from the length, so a vector matching neither is
+an error rather than a silently wrong purity.}
 }
 \value{
 The \code{MetaCells} with an added columns to the observation table
