@@ -130,7 +130,7 @@ sc_object <- find_neighbours_sc(
 
 sc_object <- find_clusters_sc(
   sc_object,
-  res = 1.0,
+  res = 0.7,
   name = "leiden_clusters"
 )
 
@@ -316,16 +316,12 @@ palantir_res <- run_palantir_sc(
   terminal_states = terminal_states,
   palantir_params = params_sc_palantir(
     n_eigs = 10L,
-    knn = 30L,
-    num_waypoints = 500L,
-    use_early_cell_as_start = TRUE
+    knn = 30L
   ),
   seed = 42L
 )
 
-str(palantir_res)
-
-palantir_res$branch_probs
+palantir_res
 ```
 
 Two things to watch in that print out. `repair_edges` above zero means the kNN
@@ -470,7 +466,6 @@ palantir_auto <- run_palantir_sc(
   palantir_params = params_sc_palantir(
     n_eigs = 10L,
     knn = 30L,
-    num_waypoints = 500L,
     use_early_cell_as_start = TRUE
   ),
   seed = 42L
