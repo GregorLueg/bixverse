@@ -1,3 +1,5 @@
+name: pkgdown
+
 on:
   push:
     branches: [ main ]
@@ -7,65 +9,13 @@ on:
     types: [ published ]
   workflow_dispatch:
 
-name: pkgdown.yaml
-
-permissions: read-all
+permissions:
+  contents: write
 
 jobs:
   pkgdown:
-    runs-on: ubuntu-latest
-    concurrency:
-      group: pkgdown-${{ github.run_id }}
-    env:
-      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v5
-
-      - uses: r-lib/actions/setup-pandoc@v2
-
-      - uses: r-lib/actions/setup-r@v2
-        with:
-          use-public-rspm: true
-      
-      - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          toolchain: stable
-
-      - name: Setup sccache
-        uses: mozilla-actions/sccache-action@v0.0.10
-
-      - name: Cargo env
-        run: |
-          echo "SCCACHE_GHA_ENABLED=true" >> $GITHUB_ENV
-          echo "RUSTC_WRAPPER=sccache" >> $GITHUB_ENV
-          echo "CARGO_INCREMENTAL=0" >> $GITHUB_ENV
-          echo "CARGO_NET_RETRY=10" >> $GITHUB_ENV
-          echo "CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse" >> $GITHUB_ENV
-          echo "CARGO_TERM_COLOR=always" >> $GITHUB_ENV
-          echo "CARGO_PROFILE_RELEASE_LTO=false" >> $GITHUB_ENV
-          echo "CARGO_PROFILE_RELEASE_CODEGEN_UNITS=16" >> $GITHUB_ENV
-
-      - uses: r-lib/actions/setup-r-dependencies@v2
-        with:
-          extra-packages: any::pkgdown, local::.
-          needs: website
-
-      - name: Build site
-        run: pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE, quiet = FALSE)
-        shell: Rscript {0}
-
-      - name: sccache stats
-        if: always()
-        run: sccache --show-stats
-
-      - name: Deploy to GitHub pages
-        if: github.event_name != 'pull_request'
-        uses: JamesIves/github-pages-deploy-action@v4.5.0
-        with:
-          clean: false
-          branch: gh-pages
-          folder: docs
-
+    uses: GregorLueg/personal-actions/.github/workflows/r-pkgdown.yml@v1
+    with:
+      rust: true
+      gpu: false
+    secrets: inherit
