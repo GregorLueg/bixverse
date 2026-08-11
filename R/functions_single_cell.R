@@ -179,6 +179,9 @@ get_seurat_counts_to_list <- function(seurat_obj) {
 #'
 #' @param meta_cell_data Named list. This contains the indptr, indices and data
 #' for both raw counts and norm counts.
+#' @param dimnames Optional list of two character vectors with the row and
+#' column names. Set at construction time, as assigning them afterwards
+#' duplicates both matrices.
 #'
 #' @returns A list of two items
 #' \itemize{
@@ -187,7 +190,7 @@ get_seurat_counts_to_list <- function(seurat_obj) {
 #' }
 #'
 #' @keywords internal
-get_meta_cell_matrices <- function(meta_cell_data) {
+get_meta_cell_matrices <- function(meta_cell_data, dimnames = NULL) {
   checkmate::assertList(meta_cell_data, names = "named")
   checkmate::assertNames(
     names(meta_cell_data),
@@ -200,6 +203,12 @@ get_meta_cell_matrices <- function(meta_cell_data) {
       "ncol"
     )
   )
+  checkmate::assertList(
+    dimnames,
+    types = "character",
+    len = 2L,
+    null.ok = TRUE
+  )
 
   dims <- as.integer(c(meta_cell_data$nrow, meta_cell_data$ncol))
   p <- as.integer(meta_cell_data$indptr)
@@ -211,6 +220,7 @@ get_meta_cell_matrices <- function(meta_cell_data) {
       j = j,
       x = as.numeric(meta_cell_data$raw_counts),
       dims = dims,
+      dimnames = dimnames,
       repr = "R",
       index1 = FALSE
     ),
@@ -219,6 +229,7 @@ get_meta_cell_matrices <- function(meta_cell_data) {
       j = j,
       x = as.numeric(meta_cell_data$norm_counts),
       dims = dims,
+      dimnames = dimnames,
       repr = "R",
       index1 = FALSE
     )

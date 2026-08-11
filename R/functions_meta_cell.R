@@ -27,9 +27,12 @@
 #' identifier. If `FALSE`, duplicated identifiers across inputs are an error.
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
-#' @returns A single `MetaCells` object with all meta cells of the inputs. The
-#' observation table gains a `source_id` column; `original_cell_idx` stays in
-#' the index space of its own source.
+#' @returns A single `MetaCells` object with all meta cells of the inputs and
+#' `is_merged` set to `TRUE`. The observation table gains a `source_id` column;
+#' `original_cell_idx` stays in the index space of its own source, which is why
+#' methods that resolve it against the source single cell data
+#' ([calc_diffusion_coordinates()], [calc_manifold_metrics()]) refuse to run on
+#' the result. `other_data` holds the source identifiers under `sources`.
 #'
 #' @export
 merge_meta_cells <- function(
@@ -101,12 +104,22 @@ merge_meta_cells <- function(
   counts <- .merge_mc_counts(
     inputs = inputs,
     gene_maps = gene_maps,
-    meta_cell_ids = obs_merged$meta_cell_id,
-    gene_ids = target_genes
+    n_genes = length(target_genes)
   )
 
-  # provenance
-  per_source <- purrr::map(inputs, \(x) S7::prop(x, "original_assignment"))
+  # provenance. Only the scalars: the full `assignments` element holds one
+  # integer vector per cell of the *parent* count file, so keeping it per source
+  # costs O(sources * cells) vectors that nothing ever reads.
+  per_source <- purrr::map(
+    inputs,
+    \(x) {
+      S7::prop(x, "original_assignment")[c(
+        "n_cells",
+        "n_metacells",
+        "n_unassigned"
+      )]
+    }
+  )
   names(per_source) <- source_ids
 
   # sources built from the same parent share one obs space, so summing would
@@ -115,9 +128,14 @@ merge_meta_cells <- function(
   shared_parent <- length(unique(source_cells)) == 1L
   n_cells <- if (shared_parent) source_cells[[1]] else sum(source_cells)
   # meta cells can share originating cells, so count the union rather than the
-  # per meta cell totals
+  # per meta cell totals. A bitmap over the obs space beats unlist() + unique(),
+  # whose intermediate is a multiple of `n_cells` when meta cells overlap.
   n_unassigned <- if (shared_parent) {
-    n_cells - length(unique(unlist(obs_merged$original_cell_idx)))
+    seen <- logical(n_cells)
+    for (idx in obs_merged$original_cell_idx) {
+      seen[idx] <- TRUE
+    }
+    n_cells - sum(seen)
   } else {
     sum(purrr::map_dbl(per_source, "n_unassigned"))
   }
@@ -132,17 +150,12 @@ merge_meta_cells <- function(
   }
 
   # `S7::new_object()` can only be called from a constructor, so the merged
-  # object goes through `MetaCells()` and the merge-specific props are set after
+  # object goes through `MetaCells()` and the merge-specific props are set after.
+  # `obs_ids` makes the constructor build the count matrices with their final row
+  # names, so the merged pair is materialised exactly once.
   merged <- MetaCells(
     meta_cell_data = list(
-      aggregated = list(
-        indptr = counts$raw@p,
-        indices = counts$raw@j,
-        raw_counts = counts$raw@x,
-        norm_counts = counts$norm@x,
-        nrow = nrow(counts$raw),
-        ncol = ncol(counts$raw)
-      ),
+      aggregated = counts,
       assignments = list(
         # source-specific; there is no single index space to map back into
         assignments = NULL,
@@ -156,18 +169,97 @@ merge_meta_cells <- function(
       gene_idx = seq_along(target_genes),
       gene_id = target_genes
     ),
-    meta_cell_method = methods
+    meta_cell_method = methods,
+    obs_ids = obs_merged$meta_cell_id
   )
 
   S7::prop(merged, "obs_table") <- obs_merged
-  S7::prop(merged, "data") <- counts
   S7::prop(merged, "original_assignment") <- c(
     S7::prop(merged, "original_assignment"),
     list(per_source = per_source)
   )
-  S7::prop(merged, "other_data") <- list(merged = TRUE, sources = source_ids)
+  S7::prop(merged, "other_data") <- list(sources = source_ids)
+  S7::prop(merged, "is_merged") <- TRUE
 
   merged
+}
+
+## index space bridge ----------------------------------------------------------
+
+#' Resolve meta cell memberships onto the row space of a source artefact
+#'
+#' @description
+#' `original_cell_idx` holds 1-indexed positions in the *full, unfiltered* obs
+#' table of the source object. Embeddings, kNN graphs and diffusion maps have
+#' one row per QC-passing cell, in `cells_to_keep` order (the invariant the
+#' cache stamps rely on). Indexing such an artefact with the memberships
+#' directly is silently off by the filtering the moment QC dropped a cell, which
+#' is why the source's `cells_to_keep` is recorded on the object at generation
+#' time. This resolves the one space into the other.
+#'
+#' @param object `MetaCells` class.
+#' @param n_rows Integer. Number of rows the artefact has, checked against the
+#' recorded cell mapping.
+#'
+#' @returns A list of integer vectors, one per meta cell, holding 1-indexed row
+#' positions in the artefact.
+#'
+#' @keywords internal
+.mc_artefact_rows <- function(object, n_rows) {
+  checkmate::assertTRUE(S7::S7_inherits(object, MetaCells))
+  checkmate::qassert(n_rows, "X1[0,)")
+
+  assignment <- S7::prop(object, "original_assignment")
+  keep <- assignment$cells_to_keep
+  n_cells <- assignment$n_cells
+  memberships <- S7::prop(object, "obs_table")$original_cell_idx
+
+  # meta cells generated before the mapping was recorded. Passing them through
+  # is only safe when nothing was filtered, as the two spaces then coincide.
+  if (is.null(keep)) {
+    if (n_rows != n_cells) {
+      stop(sprintf(
+        paste(
+          "This object does not record the source cell mapping, and the",
+          "artefact covers %i of the %i original cells, so the meta cell",
+          "memberships cannot be resolved against it. Regenerate the meta",
+          "cells to record the mapping."
+        ),
+        n_rows,
+        n_cells
+      ))
+    }
+
+    return(memberships)
+  }
+
+  if (n_rows != length(keep)) {
+    stop(sprintf(
+      paste(
+        "The artefact covers %i cells but the meta cells were built over the",
+        "%i QC-passing cells of the source. Regenerate it so the two agree."
+      ),
+      n_rows,
+      length(keep)
+    ))
+  }
+
+  # reverse lookup, so this stays linear instead of a `match()` per meta cell
+  lookup <- integer(n_cells)
+  lookup[keep + 1L] <- seq_along(keep)
+
+  rows <- purrr::map(memberships, \(idx) lookup[idx])
+
+  # 0 marks a member that is not part of the artefact at all, which cannot
+  # happen for memberships drawn from the kept cells
+  if (any(purrr::map_lgl(rows, \(r) any(r == 0L)))) {
+    stop(paste(
+      "Some meta cell members are absent from the recorded cell mapping.",
+      "The object is inconsistent; regenerate the meta cells."
+    ))
+  }
+
+  rows
 }
 
 ## internal helpers ------------------------------------------------------------
@@ -208,10 +300,9 @@ merge_meta_cells <- function(
 #'
 #' @keywords internal
 .merge_mc_obs <- function(inputs, source_ids, prefix_ids) {
-  obs_list <- purrr::map(
-    inputs,
-    \(x) data.table::copy(S7::prop(x, "obs_table"))
-  )
+  # no `copy()` needed: `dt[, cols, with = FALSE]` below already copies every
+  # column, so the `:=` never reaches the caller's table
+  obs_list <- purrr::map(inputs, \(x) S7::prop(x, "obs_table"))
 
   shared <- Reduce(intersect, purrr::map(obs_list, names))
   cols <- names(obs_list[[1]])[names(obs_list[[1]]) %in% shared]
@@ -253,52 +344,126 @@ merge_meta_cells <- function(
 
 #' Row-bind the count matrices of meta cell objects
 #'
+#' @description
+#' The inputs are already CSR, so a row-bind is concatenation of their `@p`,
+#' `@j` and `@x` slots. No COO round-trip and no `Matrix::sparseMatrix(i, j, x)`
+#' call, which would sort and copy the whole index structure once per assay. The
+#' output vectors are allocated once off a counting pass, so peak memory is the
+#' result plus one input's scratch.
+#'
 #' @param inputs List of `MetaCells` objects.
 #' @param gene_maps List of integer vectors mapping each input's gene positions
-#' onto the target gene space. `NA` marks genes to drop.
-#' @param meta_cell_ids Character vector with the merged meta cell identifiers.
-#' @param gene_ids Character vector with the target gene identifiers.
+#' onto the target gene space, 1-indexed. `NA` marks genes to drop.
+#' @param n_genes Integer. Number of genes in the target gene space.
 #'
-#' @returns A list with the merged `raw` and `norm` CSR matrices.
+#' @returns A list in the shape `get_meta_cell_matrices()` consumes:
+#' \itemize{
+#'  \item indptr - Integer vector. 0-indexed CSR row pointer.
+#'  \item indices - Integer vector. 0-indexed column indices.
+#'  \item raw_counts - Numeric vector. Raw counts.
+#'  \item norm_counts - Numeric vector. Normalised counts.
+#'  \item nrow - Integer. Number of merged meta cells.
+#'  \item ncol - Integer. Number of genes.
+#' }
 #'
 #' @keywords internal
-.merge_mc_counts <- function(inputs, gene_maps, meta_cell_ids, gene_ids) {
-  n_rows <- purrr::map_int(inputs, \(x) nrow(S7::prop(x, "data")$raw))
-  offsets <- cumsum(c(0L, n_rows))
+.merge_mc_counts <- function(inputs, gene_maps, n_genes) {
+  checkmate::assertList(inputs, min.len = 1L)
+  checkmate::assertList(gene_maps, len = length(inputs))
+  checkmate::qassert(n_genes, "X1[1,)")
 
-  parts <- purrr::map(seq_along(inputs), \(k) {
+  n_rows <- purrr::map_int(inputs, \(x) nrow(S7::prop(x, "data")$raw))
+
+  # sources off one parent share its gene space, so the map is the identity and
+  # the column indices need no translation at all. That is the common case.
+  identity_map <- purrr::map_lgl(
+    gene_maps,
+    \(m) length(m) == n_genes && !anyNA(m) && all(m == seq_len(n_genes))
+  )
+
+  # pass 1: what each input contributes, so the output is allocated rather than
+  # grown. `map_dbl` keeps the sum out of integer range while we check it.
+  nnz_kept <- purrr::map_dbl(seq_along(inputs), \(k) {
+    raw <- S7::prop(inputs[[k]], "data")$raw
+    if (identity_map[[k]]) {
+      length(raw@x)
+    } else {
+      sum(!is.na(gene_maps[[k]][raw@j + 1L]))
+    }
+  })
+
+  total_nnz <- sum(nnz_kept)
+  if (total_nnz > .Machine$integer.max) {
+    stop(sprintf(
+      paste(
+        "The merged matrices would hold %.0f stored values, which overflows",
+        "the integer index of a sparse matrix. Merge fewer sources."
+      ),
+      total_nnz
+    ))
+  }
+
+  # pass 2: fill each input's span
+  indptr <- integer(sum(n_rows) + 1L)
+  indices <- integer(total_nnz)
+  raw_counts <- numeric(total_nnz)
+  norm_counts <- numeric(total_nnz)
+
+  row_offset <- 0L
+  nnz_offset <- 0L
+
+  for (k in seq_along(inputs)) {
     raw <- S7::prop(inputs[[k]], "data")$raw
     norm <- S7::prop(inputs[[k]], "data")$norm
     # raw and norm are built off one index structure; reuse it for both
     checkmate::assertTRUE(identical(raw@j, norm@j))
 
-    j <- gene_maps[[k]][raw@j + 1L]
-    keep <- !is.na(j)
+    if (identity_map[[k]]) {
+      j_new <- raw@j
+      p_new <- raw@p[-1L]
+      x_raw <- raw@x
+      x_norm <- norm@x
+    } else {
+      # `gene_maps` is 1-indexed, the CSR indices are 0-indexed
+      j_new <- gene_maps[[k]][raw@j + 1L] - 1L
+      keep <- !is.na(j_new)
+      # kept values per row straight off the CSR pointer, no row index needed
+      p_new <- c(0L, cumsum(keep))[raw@p[-1L] + 1L]
+      j_new <- j_new[keep]
+      x_raw <- raw@x[keep]
+      x_norm <- norm@x[keep]
 
-    list(
-      i = rep.int(seq_len(nrow(raw)), diff(raw@p))[keep] + offsets[k],
-      j = j[keep],
-      raw = raw@x[keep],
-      norm = norm@x[keep]
-    )
-  })
-
-  dims <- c(sum(n_rows), length(gene_ids))
-  dim_names <- list(meta_cell_ids, gene_ids)
-  i <- unlist(purrr::map(parts, "i"))
-  j <- unlist(purrr::map(parts, "j"))
-
-  purrr::map(
-    c(raw = "raw", norm = "norm"),
-    \(assay) {
-      Matrix::sparseMatrix(
-        i = i,
-        j = j,
-        x = unlist(purrr::map(parts, assay)),
-        dims = dims,
-        dimnames = dim_names,
-        repr = "R"
-      )
+      # a non-monotone map breaks the within-row ordering of the column indices,
+      # which only `feature_space = "union"` over differing gene orders can do
+      map_kept <- gene_maps[[k]][!is.na(gene_maps[[k]])]
+      if (is.unsorted(map_kept, strictly = TRUE)) {
+        row_ids <- rep.int(seq_along(p_new), diff(c(0L, p_new)))
+        ord <- order(row_ids, j_new)
+        j_new <- j_new[ord]
+        x_raw <- x_raw[ord]
+        x_norm <- x_norm[ord]
+      }
     }
+
+    n_new <- length(j_new)
+    if (n_new > 0L) {
+      span <- nnz_offset + seq_len(n_new)
+      indices[span] <- j_new
+      raw_counts[span] <- x_raw
+      norm_counts[span] <- x_norm
+    }
+    indptr[row_offset + seq_len(n_rows[[k]]) + 1L] <- p_new + nnz_offset
+
+    row_offset <- row_offset + n_rows[[k]]
+    nnz_offset <- nnz_offset + n_new
+  }
+
+  list(
+    indptr = indptr,
+    indices = indices,
+    raw_counts = raw_counts,
+    norm_counts = norm_counts,
+    nrow = sum(n_rows),
+    ncol = as.integer(n_genes)
   )
 }

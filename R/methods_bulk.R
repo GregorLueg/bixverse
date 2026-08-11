@@ -539,7 +539,11 @@ S7::method(calculate_pca_bulk_dge, BulkDge) <- function(
   hvg_genes <- hvg_data[1:no_hvg_genes, gene_id]
 
   if (!is.null(S7::prop(object, "variable_info"))) {
-    S7::prop(object, "variable_info")[, hvg := var_id %in% hvg_genes]
+    # `:=` on the property alone silently no-ops once the data.table's
+    # over-allocation is gone, e.g. after a saveRDS/readRDS round trip
+    variable_info <- data.table::copy(S7::prop(object, "variable_info"))
+    variable_info[, hvg := var_id %in% hvg_genes]
+    S7::prop(object, "variable_info") <- variable_info
   }
 
   input_genes <- t(normalised_counts[hvg_genes, ])
