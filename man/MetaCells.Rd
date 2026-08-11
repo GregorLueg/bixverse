@@ -4,7 +4,7 @@
 \alias{MetaCells}
 \title{bixverse meta cell class}
 \usage{
-MetaCells(meta_cell_data, var_data, meta_cell_method)
+MetaCells(meta_cell_data, var_data, meta_cell_method, obs_ids = NULL)
 }
 \arguments{
 \item{meta_cell_data}{Named list. Output of meta-cell generation Rust
@@ -14,6 +14,12 @@ additional information on the origin of the meta cells.}
 \item{var_data}{data.table with the variable/feature informations.}
 
 \item{meta_cell_method}{String describing the origin of the metacell.}
+
+\item{obs_ids}{Optional character vector of length \code{n_metacells} with the
+meta cell identifiers. Defaults to \code{meta_cell_0001}, \code{meta_cell_0002}, ...
+Used by \code{\link[=merge_meta_cells]{merge_meta_cells()}} so that the count matrices get their
+final row names at construction time rather than via a \verb{rownames<-} that
+would duplicate them.}
 }
 \value{
 Returns the \code{MetaCells} class for further operations.
@@ -38,6 +44,10 @@ detection ones will be made available).
 \item{dims}{Dimensions of the new meta cell matrices.}
 \item{other_data}{Potential other data returned from the meta-cell
 generating methods.}
+\item{is_merged}{Boolean. \code{TRUE} for objects returned by
+\code{\link[=merge_meta_cells]{merge_meta_cells()}}. Methods that need to resolve
+\code{original_cell_idx} against the source single cell data use this to bail
+out early.}
 }
 }
 

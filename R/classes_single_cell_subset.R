@@ -468,11 +468,16 @@ S7::method(`[`, SingleCellsSubset) <- function(
 
   if (length(i) == 1) {
     checkmate::qassert(value, "a")
-    S7::prop(x, "obs_table")[, (i) := value]
   } else {
     checkmate::assertList(value, names = "named", types = "atomic")
-    S7::prop(x, "obs_table")[, (i) := value]
   }
+
+  # see the note on `[[<-.bixverse::MetaCells`: `:=` on the property alone
+  # silently no-ops once the data.table's over-allocation is gone
+  obs_table <- data.table::copy(S7::prop(x, "obs_table"))
+  obs_table[, (i) := value]
+  S7::prop(x, "obs_table") <- obs_table
+
   x
 }
 

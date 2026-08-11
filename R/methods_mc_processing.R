@@ -49,7 +49,7 @@ S7::method(calc_meta_cell_purity, MetaCells) <- function(
   n_cells <- assignment$n_cells
 
   # a merged object only has one obs space if all its sources shared a parent
-  if (isTRUE(S7::prop(object, "other_data")$merged)) {
+  if (isTRUE(S7::prop(object, "is_merged"))) {
     source_cells <- unique(purrr::map_dbl(assignment$per_source, "n_cells"))
     if (length(source_cells) > 1L) {
       stop(paste(
@@ -147,6 +147,21 @@ S7::method(calc_diffusion_coordinates, MetaCells) <- function(
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
+  # every source keeps `original_cell_idx` in its own index space, so a single
+  # kNN over one source's cells cannot be resolved against the merged memberships
+  if (isTRUE(S7::prop(object, "is_merged"))) {
+    warning(
+      paste(
+        "The meta cells were merged, so `original_cell_idx` cannot be resolved",
+        "against a single kNN graph.",
+        "Run calc_diffusion_coordinates() per source before merging.",
+        "Returning object as is."
+      )
+    )
+
+    return(object)
+  }
+
   # deal with knn params here
   knn_params <- params_knn_defaults()
   knn_params$k <- 1L
@@ -159,6 +174,21 @@ S7::method(calc_diffusion_coordinates, MetaCells) <- function(
     verbose = parse_verbosity(.verbose),
     seed = seed
   )
+
+  # memberships index into the full obs space of the source, the kNN rows into
+  # the QC-passing cells only. Silently off whenever QC dropped anything.
+  n_cells <- S7::prop(object, "original_assignment")$n_cells
+  if (length(res$regions) != n_cells) {
+    stop(sprintf(
+      paste(
+        "The kNN graph covers %i cells but the meta cells were built over %i",
+        "original cells. `original_cell_idx` indexes the full, unfiltered obs",
+        "table, so the kNN has to span it as well."
+      ),
+      length(res$regions),
+      n_cells
+    ))
+  }
 
   density_region <- purrr::map_chr(
     object[[]]$original_cell_idx,
@@ -214,6 +244,22 @@ S7::method(calc_manifold_metrics, MetaCells) <- function(
 ) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(object, MetaCells))
+
+  # the diffusion map lives in the source's cell index space, which a merged
+  # object no longer has. Say so, rather than pointing at a function that will
+  # refuse as well.
+  if (isTRUE(S7::prop(object, "is_merged"))) {
+    warning(
+      paste(
+        "The meta cells were merged, so there is no single diffusion map to",
+        "resolve `original_cell_idx` against.",
+        "Run calc_manifold_metrics() per source before merging.",
+        "Returning object as is."
+      )
+    )
+
+    return(object)
+  }
 
   dcs <- S7::prop(object, "other_data")[["dcs"]]
 
@@ -294,7 +340,11 @@ S7::method(find_hvg_sc, MetaCells) <- function(
     )
   )
 
-  object@var_table[, names(res) := res]
+  # `:=` on the property alone silently no-ops once the data.table's
+  # over-allocation is gone, e.g. after a saveRDS/readRDS round trip
+  var_table <- data.table::copy(S7::prop(object, "var_table"))
+  var_table[, names(res) := res]
+  S7::prop(object, "var_table") <- var_table
 
   hvg <- switch(
     hvg_params$method,

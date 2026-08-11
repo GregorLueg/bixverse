@@ -17,6 +17,11 @@
 #' additional information on the origin of the meta cells.
 #' @param var_data data.table with the variable/feature informations.
 #' @param meta_cell_method String describing the origin of the metacell.
+#' @param obs_ids Optional character vector of length `n_metacells` with the
+#' meta cell identifiers. Defaults to `meta_cell_0001`, `meta_cell_0002`, ...
+#' Used by [bixverse::merge_meta_cells()] so that the count matrices get their
+#' final row names at construction time rather than via a `rownames<-` that
+#' would duplicate them.
 #'
 #' @section Properties:
 #' \describe{
@@ -29,6 +34,10 @@
 #'   \item{dims}{Dimensions of the new meta cell matrices.}
 #'   \item{other_data}{Potential other data returned from the meta-cell
 #'   generating methods.}
+#'   \item{is_merged}{Boolean. `TRUE` for objects returned by
+#'   [bixverse::merge_meta_cells()]. Methods that need to resolve
+#'   `original_cell_idx` against the source single cell data use this to bail
+#'   out early.}
 #' }
 #'
 #' @return Returns the `MetaCells` class for further operations.
@@ -44,9 +53,15 @@ MetaCells <- S7::new_class(
     original_assignment = S7::class_list,
     dims = S7::class_integer,
     other_data = S7::class_list,
-    meta_cell_method = S7::class_character
+    meta_cell_method = S7::class_character,
+    is_merged = S7::class_logical
   ),
-  constructor = function(meta_cell_data, var_data, meta_cell_method) {
+  constructor = function(
+    meta_cell_data,
+    var_data,
+    meta_cell_method,
+    obs_ids = NULL
+  ) {
     # checks
     checkmate::assertList(meta_cell_data)
     checkmate::assertNames(
@@ -59,17 +74,22 @@ MetaCells <- S7::new_class(
       must.include = c("gene_idx", "gene_id")
     )
     checkmate::qassert(meta_cell_method, "S1")
+    checkmate::qassert(obs_ids, c("S+", "0"))
 
     # function body
-    n_digits <- nchar(as.character(meta_cell_data$assignments$n_metacells))
-    format_str <- sprintf("meta_cell_%%0%dd", n_digits)
+    n_metacells <- meta_cell_data$assignments$n_metacells
+
+    meta_cell_ids <- if (is.null(obs_ids)) {
+      n_digits <- nchar(as.character(n_metacells))
+      sprintf(sprintf("meta_cell_%%0%dd", n_digits), seq_len(n_metacells))
+    } else {
+      checkmate::assertCharacter(obs_ids, len = n_metacells)
+      obs_ids
+    }
 
     obs_data <- data.table::data.table(
-      meta_cell_idx = 1:meta_cell_data$assignments$n_metacells,
-      meta_cell_id = sprintf(
-        format_str,
-        1:meta_cell_data$assignments$n_metacells
-      ),
+      meta_cell_idx = seq_len(n_metacells),
+      meta_cell_id = meta_cell_ids,
       no_originating_cells = purrr::map_dbl(
         meta_cell_data$assignments$metacells,
         length
@@ -77,11 +97,13 @@ MetaCells <- S7::new_class(
       original_cell_idx = meta_cell_data$assignments$metacells
     )
 
+    # dimnames go in at construction; `rownames<-` afterwards duplicates both
+    # matrices, which for a merged object is the whole memory budget
     c(raw_counts, norm_counts) %<-%
-      get_meta_cell_matrices(meta_cell_data$aggregated)
-
-    rownames(raw_counts) <- rownames(norm_counts) <- obs_data$meta_cell_id
-    colnames(raw_counts) <- colnames(norm_counts) <- var_data$gene_id
+      get_meta_cell_matrices(
+        meta_cell_data$aggregated,
+        dimnames = list(meta_cell_ids, var_data$gene_id)
+      )
 
     other_data <- if (meta_cell_method == "seacell") {
       list(
@@ -106,7 +128,8 @@ MetaCells <- S7::new_class(
       )],
       dims = as.integer(c(nrow(raw_counts), ncol(norm_counts))),
       other_data = other_data,
-      meta_cell_method = meta_cell_method
+      meta_cell_method = meta_cell_method,
+      is_merged = FALSE
     )
   }
 )
@@ -139,6 +162,7 @@ S7::method(print, MetaCells) <- function(x, ...) {
   cat(
     "Single cell experiment (Meta Cells).\n",
     sprintf("  Meta cell method: %s\n", meta_cell_method),
+    sprintf("  Merged: %s\n", isTRUE(S7::prop(x, "is_merged"))),
     sprintf("  No meta cells: %i\n", dims[1]),
     sprintf("  No genes: %i\n", dims[2]),
     # n_unassigned counts every obs row without a meta cell, which lumps
@@ -404,7 +428,7 @@ S7::method(mc_counts_to_list, MetaCells) <- function(
 #'
 #' @export
 mc_get_clr_offsets <- S7::new_generic(
-  name = "mc_counts_to_list",
+  name = "mc_get_clr_offsets",
   dispatch_args = "object",
   fun = function(
     object,
@@ -449,11 +473,18 @@ S7::method(mc_get_clr_offsets, MetaCells) <- function(
 
   if (length(i) == 1) {
     checkmate::qassert(value, "a")
-    S7::prop(x, "obs_table")[, (i) := value]
   } else {
     checkmate::assertList(value, names = "named", types = "atomic")
-    S7::prop(x, "obs_table")[, (i) := value]
   }
+
+  # `:=` straight onto the property silently no-ops once the data.table's
+  # over-allocation is gone (e.g. after a saveRDS/readRDS round trip): it takes
+  # a shallow copy it cannot rebind, because the target is a call and not a
+  # symbol. Copy, mutate, assign back. The copy also keeps this out of the
+  # caller's object.
+  obs_table <- data.table::copy(S7::prop(x, "obs_table"))
+  obs_table[, (i) := value]
+  S7::prop(x, "obs_table") <- obs_table
 
   return(x)
 }
