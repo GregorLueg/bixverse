@@ -11,7 +11,6 @@ String. A 16 character identifier.
 }
 \description{
 Builds a 16 character id from the wall clock, the process id and a package
-local counter. Deliberately avoids \code{runif()}/\code{sample()}: consuming the RNG
-stream would shift the results of every seeded test in the package.
+local counter.
 }
 \keyword{internal}
