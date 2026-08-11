@@ -103,6 +103,11 @@ object, and 30 neighbours is what the reference uses. The distance metric has to
 be euclidean, since that is how `bixverse` decides whether the stored distances
 are squared.
 
+`pruning` has to move with `k`. The default of `1/12` is set for the default
+`k = 15`, and since the threshold is a share of the neighbourhood, leaving it
+alone at `k = 30` prunes twice as hard. Nothing errors, you just get cells with
+too few shared neighbours dropping out as one-cell clusters.
+
 ```{r}
 #| label: hvg pca neighbours
 sc_object <- find_hvg_sc(
@@ -118,6 +123,7 @@ sc_object <- calculate_pca_sc(
 sc_object <- find_neighbours_sc(
   object = sc_object,
   neighbours_params = params_sc_neighbours(
+    pruning = 1 / 24,
     knn = list(k = 30L, ann_dist = "euclidean")
   )
 )
@@ -240,50 +246,32 @@ paga_res$sizes
 round(as.matrix(paga_res$connectivities), 3)
 ```
 
-Hand either matrix to `igraph` to draw it. The forest is the readable one on
-anything above a handful of clusters, the full graph keeps the weak edges that
-the forest drops.
+`paga_plot_sc()` puts every cluster at the centroid of its cells in an
+embedding and draws the graph over them. A free layout of the abstracted graph
+would put the nodes somewhere arbitrary, which you then have to relate back to
+the UMAP by eye.
 
 ```{r}
 #| label: paga plot
-#| fig-width: 10
-#| fig-height: 5
-paga_full <- igraph::graph_from_adjacency_matrix(
-  as.matrix(paga_res$connectivities),
-  mode = "undirected",
-  weighted = TRUE,
-  diag = FALSE
-)
-
-paga_tree <- igraph::graph_from_adjacency_matrix(
-  as.matrix(paga_res$connectivities_tree),
-  mode = "undirected",
-  weighted = TRUE,
-  diag = FALSE
-)
-
-set.seed(42L)
-layout <- igraph::layout_with_fr(paga_full)
-
-par(mfrow = c(1, 2))
-plot(
-  paga_full,
-  layout = layout,
-  edge.width = igraph::E(paga_full)$weight * 20,
-  vertex.size = sqrt(paga_res$sizes$n_cells),
-  vertex.color = "grey80",
-  main = "Abstracted graph"
-)
-plot(
-  paga_tree,
-  layout = layout,
-  edge.width = igraph::E(paga_tree)$weight * 20,
-  vertex.size = sqrt(paga_res$sizes$n_cells),
-  vertex.color = "grey80",
-  main = "Maximum spanning forest"
-)
-par(mfrow = c(1, 1))
+#| fig-width: 8
+#| fig-height: 6
+paga_plot_sc(sc_object, paga_res, embedding = "umap")
 ```
+
+Edge thresholding is not optional. The abstracted graph is close to complete on
+real data, so at `threshold = 0` you get a hairball. `tree_only = TRUE` is the
+shortcut to the backbone, and it is the readable one on anything above a
+handful of clusters.
+
+```{r}
+#| label: paga tree plot
+#| fig-width: 8
+#| fig-height: 6
+paga_plot_sc(sc_object, paga_res, embedding = "umap", tree_only = TRUE)
+```
+
+If you want the node and edge tables to draw yourself, they come out of
+`extract_paga_plot_data()`, which is what the plot is built on.
 
 ## Palantir
 
@@ -302,19 +290,25 @@ terminal_states <- c(
 )
 ```
 
-`params_sc_palantir()` mirrors the reference defaults. `n_dcs = 5` matches
-`run_diffusion_maps(n_components = 5)`, `knn = 30` is the neighbour count for
-the geodesic graph Palantir builds on the multiscale space (a different knob
-from the `k` of the input kNN graph), and `num_waypoints = 500` is the
-notebook's override of the 1200 default.
+`knn = 30` is the neighbour count for the geodesic graph Palantir builds on the
+multiscale space, a different knob from the `k` of the input kNN graph, and
+`num_waypoints = 500` is the notebook's override of the 1200 default.
 
-One default does not mirror the reference. `use_early_cell_as_start` is `TRUE`
-here, so the early cell you name is the one that gets used. The reference snaps
-it to the nearest boundary cell of the diffusion map instead, and that candidate
-set is small, at most two cells per multiscale component. On a branching
-manifold the snap will cheerfully move a root cell onto a branch tip and run the
-whole trajectory backwards. It is spelled out below rather than left implicit,
-since it changes what you get.
+Two things do not mirror the reference, and both change what you get.
+
+`use_early_cell_as_start` is `TRUE`, so the early cell you name is the one that
+gets used. The reference snaps it to the nearest boundary cell of the diffusion
+map instead, and that candidate set is small, at most two cells per multiscale
+component. On a branching manifold the snap will cheerfully move a root cell
+onto a branch tip and run the whole trajectory backwards.
+
+`n_eigs` is pinned at 10, leaving nine multiscale components. Left at `NULL`
+the count comes from the largest eigengap, which on this data picks 3, i.e. two
+components. Two components cannot resolve a three-way branch: the erythroid arm
+separates fine but the monocyte and dendritic fate probabilities end up
+correlated, their branch masks collapse onto each other, and the gene trends
+for those two lineages come out nearly identical. There is a section on that
+below.
 
 ```{r}
 #| label: run palantir
@@ -323,7 +317,7 @@ palantir_res <- run_palantir_sc(
   early_cell = early_cell,
   terminal_states = terminal_states,
   palantir_params = params_sc_palantir(
-    n_dcs = 5L,
+    n_eigs = 10L,
     knn = 30L,
     num_waypoints = 500L,
     use_early_cell_as_start = TRUE
@@ -395,6 +389,24 @@ embedding_plot_sc(
 )
 ```
 
+The same quantity on the abstracted graph is worth a look, because it is the
+cheapest check that the two methods agree. PAGA knows nothing about pseudotime,
+so if its backbone and the pseudotime gradient point in different directions,
+one of them is wrong.
+
+```{r}
+#| label: paga pseudotime
+#| fig-width: 8
+#| fig-height: 6
+paga_plot_sc(
+  sc_object,
+  paga_res,
+  embedding = "umap",
+  node_colour_by = "palantir_pseudotime",
+  tree_only = TRUE
+)
+```
+
 Entropy is high where a cell still has several fates open to it and drops to
 zero once it commits. On a clean three-lineage data set the stem pool should sit
 near `log(3)`.
@@ -454,7 +466,7 @@ palantir_auto <- run_palantir_sc(
   sc_object,
   early_cell = early_cell,
   palantir_params = params_sc_palantir(
-    n_dcs = 5L,
+    n_eigs = 10L,
     knn = 30L,
     num_waypoints = 500L,
     use_early_cell_as_start = TRUE
@@ -563,9 +575,14 @@ ggplot(
 
 ## Where this can go wrong
 
-Palantir has more moving parts than most methods in this package, and a couple
-of them fail quietly.
+Palantir has more moving parts than most methods in this package, and several of
+them fail quietly rather than loudly. In rough order of how often they bite:
 
+- **`pruning` left at its default.** Covered above, and the only one on this
+  list that is upstream of Palantir entirely. It costs you clusters, not
+  pseudotime, but a one-cell cluster then walks into PAGA and comes back out as
+  a fat edge into a dot, because the null model has almost no possible edges to
+  normalise against.
 - **The start cell.** Covered above. Set `use_early_cell_as_start = FALSE` to
   get the reference behaviour and it can move your root onto a branch tip. If
   pseudotime comes back anti-correlated with what you expect, check `start_cell`
@@ -582,11 +599,22 @@ of them fail quietly.
 - **`stranded_waypoints > 0`.** Waypoints from which no terminal state is
   reachable. Their cells lose fate probability mass, so rows sum below one. A
   large count means the pseudotime-directed pruning cut too hard.
-- **`n_eigs`.** Left at `NULL` the eigenvector count comes from the largest
-  eigengap. On small or thin manifolds that heuristic keeps too many, and the
-  higher harmonics oscillate enough to swamp the pseudotime gaps. Pinning it to
-  3, which leaves two multiscale components, is a reasonable first thing to try
-  when results look like noise.
+- **`n_eigs`.** The one that bites hardest, and it is silent. Left at `NULL` the
+  eigenvector count comes from the largest eigengap, which on this data picks 3,
+  leaving two multiscale components for a three-way branch. Nothing errors. What
+  happens instead is that two of the three fates stop separating: their
+  probabilities correlate, `select_branch_cells()` hands the two branches almost
+  the same cells, and their gene trends come out on top of each other. Here the
+  monocyte and dendritic masks shared 80% of their cells at the default, with
+  exactly one cell unique to the monocyte branch, and pinning `n_eigs` to 10 is
+  what fixes it. If two lineages give you the same curve, count the components
+  before you blame the estimator.
+- **Branch masks are permissive by design.** Even at a sensible `n_eigs`, a cell
+  belongs to a branch when its fate probability is near the top of what has been
+  seen up to its pseudotime, so the uncommitted trunk sits in every branch at
+  once. That is the reference's logic and it is the right one, but it means two
+  branches only diverge where their late cells differ. Check `branch_cells`
+  overlap before reading much into two curves that hug.
 - **The gene trend defaults are prior-dominated.** Pseudotime is min-max scaled
   to `[0, 1]`, so the reference's `length_scale = 1` spans the entire domain and
   its `sigma = 1` sits at roughly the signal scale of log-normalised expression.
@@ -603,8 +631,13 @@ of them fail quietly.
 
 ## Not covered
 
-PAGA has no plotting helper, hence the raw `igraph` calls, which is an obvious
-gap to close. The gene trend estimator is the landmark GP only; the legacy GAM
-path of the reference is not ported, and `weighting = "fate_probability"` is
-the closest thing to it, weighting every cell by its fate probability rather
-than taking a hard branch mask.
+The gene trend estimator is the landmark GP only. The legacy GAM path of the
+reference is not ported, and `weighting = "fate_probability"` is the closest
+thing to it, weighting every cell by its fate probability rather than taking a
+hard branch mask.
+
+The PAGA path heatmap is the obvious gap left. Pick a route through the
+spanning forest from the root cluster to a terminal one, order its cells by
+pseudotime and draw genes against pseudotime with a cluster annotation bar. The
+pieces are all here already, since `run_gene_trends_sc()` hands back a grid that
+can be the heatmap directly, which sidesteps the binning question entirely.
