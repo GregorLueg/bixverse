@@ -4,6 +4,8 @@
 
 ### meta cell purity -----------------------------------------------------------
 
+#### with object state ---------------------------------------------------------
+
 #' Calculate meta cell purity
 #'
 #' @description
@@ -12,6 +14,14 @@
 #' based on annotated cell types. These can be also just unsupervised
 #' memberships to graph-based clustering, etc.
 #'
+#' @details
+#' Ties for the top (or second) label resolve to whichever label sorts first,
+#' as the labels are factorised internally. The entropy is the Shannon entropy
+#' of the label distribution within a meta cell, divided by
+#' `log(<number of distinct labels in original_cell_type>)`, so it sits in
+#' `[0, 1]` and stays comparable between meta cells. It is `0` if there is only
+#' a single label in the data.
+#'
 #' @param object `MetaCells` class.
 #' @param original_cell_type Character vector. The original cell type
 #' annotations of the object the meta cells came from. Either in the row order
@@ -19,9 +29,26 @@
 #' QC-passing cells only, i.e. `get_sc_obs(x, filtered = TRUE)$<column>`. Which
 #' one you passed is inferred from the length, so a vector matching neither is
 #' an error rather than a silently wrong purity.
+#' @param add_additional_info String. Which label information to add on top of
+#' the purity. One of `c("none", "top_label", "top_two_labels")`. Defaults to
+#' `"none"`, i.e. the purity only.
+#' @param add_entropy Boolean. Shall the normalised Shannon entropy of the
+#' label distribution be added as a diversity measure. Defaults to `FALSE`.
 #'
-#' @returns The `MetaCells` with an added columns to the observation table
-#' with the purity measures
+#' @returns The `MetaCells` with added columns to the observation table:
+#' \itemize{
+#'   \item mc_purity - Fraction of the meta cell's cells that carry the most
+#'   abundant label. Always added.
+#'   \item mc_top_label - Name of the most abundant label. Added for
+#'   `add_additional_info %in% c("top_label", "top_two_labels")`.
+#'   \item mc_second_label - Name of the second most abundant label, `NA` for a
+#'   pure meta cell. Added for `add_additional_info = "top_two_labels"`.
+#'   \item mc_second_frac - Fraction of the meta cell's cells carrying that
+#'   second label, `0` for a pure meta cell. Added for
+#'   `add_additional_info = "top_two_labels"`.
+#'   \item mc_entropy - Normalised Shannon entropy of the label distribution,
+#'   see details. Added for `add_entropy = TRUE`.
+#' }
 #'
 #' @export
 calc_meta_cell_purity <- S7::new_generic(
@@ -29,7 +56,9 @@ calc_meta_cell_purity <- S7::new_generic(
   dispatch_args = "object",
   fun = function(
     object,
-    original_cell_type
+    original_cell_type,
+    add_additional_info = c("none", "top_label", "top_two_labels"),
+    add_entropy = FALSE
   ) {
     S7::S7_dispatch()
   }
@@ -38,62 +67,112 @@ calc_meta_cell_purity <- S7::new_generic(
 #' @method calc_meta_cell_purity MetaCells
 S7::method(calc_meta_cell_purity, MetaCells) <- function(
   object,
-  original_cell_type
+  original_cell_type,
+  add_additional_info = c("none", "top_label", "top_two_labels"),
+  add_entropy = FALSE
 ) {
-  # checks
-  checkmate::assertTRUE(S7::S7_inherits(object, MetaCells))
-  checkmate::qassert(original_cell_type, "S+")
+  add_additional_info <- match.arg(add_additional_info)
 
-  # memberships index into the full obs space; a short vector would silently
-  # recycle or produce NA rather than error
-  assignment <- S7::prop(object, "original_assignment")
-  n_cells <- assignment$n_cells
-
-  # a merged object only has one obs space if all its sources shared a parent
-  if (isTRUE(S7::prop(object, "is_merged"))) {
-    source_cells <- unique(purrr::map_dbl(assignment$per_source, "n_cells"))
-    if (length(source_cells) > 1L) {
-      stop(paste(
-        "The meta cells were merged from sources with different obs spaces,",
-        "so `original_cell_idx` cannot be resolved against a single column.",
-        "Calculate the purity per source before merging."
-      ))
-    }
-  }
-
-  # a full-obs vector indexes straight, a QC-passing one needs the memberships
-  # translated into the filtered row space
-  n_kept <- length(assignment$cells_to_keep)
-
-  mc_rows <- if (length(original_cell_type) == n_cells) {
-    S7::prop(object, "obs_table")$original_cell_idx
-  } else if (n_kept > 0L && length(original_cell_type) == n_kept) {
-    .mc_artefact_rows(object, n_kept)
-  } else {
-    stop(sprintf(
-      paste(
-        "`original_cell_type` has %i entries but the meta cells were built over",
-        "%i original cells%s. Pass the unfiltered obs column, or the",
-        "QC-passing one."
-      ),
-      length(original_cell_type),
-      n_cells,
-      if (n_kept > 0L) sprintf(" of which %i pass QC", n_kept) else ""
-    ))
-  }
-
-  # calculate purity
-  purity <- purrr::map_dbl(
-    mc_rows,
-    function(idx) {
-      types <- original_cell_type[idx]
-      max(table(types)) / length(types)
-    }
+  new_cols <- .mc_purity_cols(
+    object = object,
+    original_cell_type = original_cell_type,
+    add_additional_info = add_additional_info,
+    add_entropy = add_entropy
   )
 
-  object[["mc_purity"]] <- purity
+  # the single-column branch of `[[<-` asserts an atomic value
+  object[[names(new_cols)]] <- if (length(new_cols) == 1L) {
+    new_cols[[1L]]
+  } else {
+    new_cols
+  }
 
   return(object)
+}
+
+#### without changing object state ---------------------------------------------
+
+#' Calculate meta cell purity without mutating object state
+#'
+#' @description
+#' Like [calc_meta_cell_purity()] but does not mutate `object`. Returns a
+#' data.table with the purity per meta cell instead of stamping the columns onto
+#' the observation table. Useful for comparing several label columns, or for
+#' sweeping meta cell resolutions, without permanently annotating the object.
+#'
+#' @details
+#' Ties for the top (or second) label resolve to whichever label sorts first,
+#' as the labels are factorised internally. The entropy is the Shannon entropy
+#' of the label distribution within a meta cell, divided by
+#' `log(<number of distinct labels in original_cell_type>)`, so it sits in
+#' `[0, 1]` and stays comparable between meta cells. It is `0` if there is only
+#' a single label in the data.
+#'
+#' @param object `MetaCells` class.
+#' @param original_cell_type Character vector. The original cell type
+#' annotations of the object the meta cells came from. Either in the row order
+#' of its full (unfiltered) obs table, i.e. `get_sc_obs(x)$<column>`, or of the
+#' QC-passing cells only, i.e. `get_sc_obs(x, filtered = TRUE)$<column>`. Which
+#' one you passed is inferred from the length, so a vector matching neither is
+#' an error rather than a silently wrong purity.
+#' @param add_additional_info String. Which label information to add on top of
+#' the purity. One of `c("none", "top_label", "top_two_labels")`. Defaults to
+#' `"none"`, i.e. the purity only.
+#' @param add_entropy Boolean. Shall the normalised Shannon entropy of the
+#' label distribution be added as a diversity measure. Defaults to `FALSE`.
+#'
+#' @returns A data.table in observation table row order:
+#' \itemize{
+#'   \item meta_cell_idx - Index of the meta cell. Always returned.
+#'   \item meta_cell_id - Identifier of the meta cell. Always returned.
+#'   \item mc_purity - Fraction of the meta cell's cells that carry the most
+#'   abundant label. Always returned.
+#'   \item mc_top_label - Name of the most abundant label. Returned for
+#'   `add_additional_info %in% c("top_label", "top_two_labels")`.
+#'   \item mc_second_label - Name of the second most abundant label, `NA` for a
+#'   pure meta cell. Returned for `add_additional_info = "top_two_labels"`.
+#'   \item mc_second_frac - Fraction of the meta cell's cells carrying that
+#'   second label, `0` for a pure meta cell. Returned for
+#'   `add_additional_info = "top_two_labels"`.
+#'   \item mc_entropy - Normalised Shannon entropy of the label distribution,
+#'   see details. Returned for `add_entropy = TRUE`.
+#' }
+#'
+#' @export
+get_meta_cell_purity <- S7::new_generic(
+  name = "get_meta_cell_purity",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    original_cell_type,
+    add_additional_info = c("none", "top_label", "top_two_labels"),
+    add_entropy = FALSE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method get_meta_cell_purity MetaCells
+S7::method(get_meta_cell_purity, MetaCells) <- function(
+  object,
+  original_cell_type,
+  add_additional_info = c("none", "top_label", "top_two_labels"),
+  add_entropy = FALSE
+) {
+  add_additional_info <- match.arg(add_additional_info)
+
+  new_cols <- .mc_purity_cols(
+    object = object,
+    original_cell_type = original_cell_type,
+    add_additional_info = add_additional_info,
+    add_entropy = add_entropy
+  )
+
+  # `get_sc_obs()` hands back a copy, so the `:=` stays off the caller's object
+  dt <- get_sc_obs(object, cols = c("meta_cell_idx", "meta_cell_id"))
+  dt[, names(new_cols) := new_cols]
+
+  dt[]
 }
 
 ### meta cell diffusion coords -------------------------------------------------
@@ -340,7 +419,8 @@ S7::method(find_hvg_sc, MetaCells) <- function(
       loess_span = loess_span,
       binning = bin_method,
       n_bins = num_bin,
-      clip_max = NULL
+      clip_max = NULL,
+      verbose = parse_verbosity(.verbose)
     )
   )
 
@@ -405,7 +485,8 @@ S7::method(get_hvg_data_sc, MetaCells) <- function(
       loess_span = loess_span,
       binning = bin_method,
       n_bins = num_bin,
-      clip_max = NULL
+      clip_max = NULL,
+      verbose = parse_verbosity(.verbose)
     )
   )
 
@@ -491,7 +572,8 @@ S7::method(calculate_pca_sc, MetaCells) <- function(
       no_pcs = no_pcs,
       pca_params = pca_params,
       clr_offsets = clr_offsets,
-      seed = seed
+      seed = seed,
+      verbose = parse_verbosity(.verbose)
     )
   )
 

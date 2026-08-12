@@ -4497,6 +4497,8 @@ rs_gene_trends <- function(expression, pseudotime, branch_probs, branch_params, 
 #' `dispersion` methods. One of `c("equal_width", "equal_frequency")`.
 #' @param n_bins Integer. Number of bins for the `meanvarbin` and
 #' `dispersion` methods.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
 #'
 #' @return A list with the HVG statistics. If `hvg_method == "vst"`:
 #' \itemize{
@@ -4514,7 +4516,7 @@ rs_gene_trends <- function(expression, pseudotime, branch_probs, branch_params, 
 #' }
 #'
 #' @export
-rs_mc_hvg <- function(sparse_data, hvg_method, loess_span, binning, n_bins, clip_max) .Call(wrap__rs_mc_hvg, sparse_data, hvg_method, loess_span, binning, n_bins, clip_max)
+rs_mc_hvg <- function(sparse_data, hvg_method, loess_span, binning, n_bins, clip_max, verbose) .Call(wrap__rs_mc_hvg, sparse_data, hvg_method, loess_span, binning, n_bins, clip_max, verbose)
 
 #' PCA on MetaCells (sparse data)
 #'
@@ -4532,6 +4534,8 @@ rs_mc_hvg <- function(sparse_data, hvg_method, loess_span, binning, n_bins, clip
 #' @param clr_offsets Optional numeric. If you wish to use the `PFlogPF`
 #' normalisation prior to PCA from Booeshaghi, et al.
 #' @param seed Integer. Random seed for the randomised SVD.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
 #'
 #' @returns A list with with the following items
 #' \itemize{
@@ -4546,7 +4550,7 @@ rs_mc_hvg <- function(sparse_data, hvg_method, loess_span, binning, n_bins, clip
 #' @export
 #'
 #' @references Booeshaghi, et al., bioRxive, 2026.
-rs_mc_pca <- function(sparse_data, no_pcs, pca_params, clr_offsets, seed) .Call(wrap__rs_mc_pca, sparse_data, no_pcs, pca_params, clr_offsets, seed)
+rs_mc_pca <- function(sparse_data, no_pcs, pca_params, clr_offsets, seed, verbose) .Call(wrap__rs_mc_pca, sparse_data, no_pcs, pca_params, clr_offsets, seed, verbose)
 
 #' Calculate the pairwise gene-correlation for meta cells
 #'

@@ -1,3 +1,12 @@
+# bixverse 0.4.8
+
+## Features
+
+### Single cells
+
+* Improved speed for meta cell methods regarding HVG detection and PCA.
+* Additional functionalities around meta cell purities
+
 # bixverse 0.4.7
 
 ## Features

@@ -4,8 +4,9 @@
 # check the packages MSRV first
 source("tools/msrv.R")
 
-# check DEBUG and NOT_CRAN environment variables
+# check DEBUG, DEV_BUILD and NOT_CRAN environment variables
 env_debug <- Sys.getenv("DEBUG")
+env_dev <- Sys.getenv("DEV_BUILD")
 env_not_cran <- Sys.getenv("NOT_CRAN")
 
 # check if the vendored zip file exists
@@ -14,13 +15,30 @@ vendor_exists <- file.exists("src/rust/vendor.tar.xz")
 is_not_cran <- env_not_cran != ""
 is_debug <- env_debug != ""
 
+# DEV_BUILD keeps the cargo registry and the target dir warm between installs.
+# It must not engage on a vendored build: those need CARGO_HOME to stay local
+# so that vendor-config.toml is picked up.
+is_dev <- env_dev != "" && !vendor_exists && !dir.exists("src/vendor")
+
 if (is_debug) {
   # if we have DEBUG then we set not cran to true
   # CRAN is always release build
   is_not_cran <- TRUE
-  message("DEBUG requested but ignored - this package always builds release.")
+  message(
+    "DEBUG requested but ignored - this package always builds release. ",
+    "Set DEV_BUILD instead for a faster release build."
+  )
 }
 is_debug <- FALSE
+
+if (is_dev) {
+  is_not_cran <- TRUE
+  message(
+    "DEV_BUILD set: keeping `src/rust/target` and using the shared cargo ",
+    "registry. Still a release build, but without LTO - do not use this for ",
+    "benchmarking or for a submission."
+  )
+}
 
 if (!is_not_cran) {
   message("Building for CRAN.")
@@ -36,7 +54,32 @@ if (!is_not_cran) {
 
 # when DEBUG env var is present we use `--debug` build
 .profile <- ifelse(is_debug, "", "--release")
-.clean_targets <- ifelse(is_debug, "", "$(TARGET_DIR)")
+.clean_targets <- ifelse(is_debug || is_dev, "", "$(TARGET_DIR)")
+
+# used to replace @CARGO_HOME@. A CRAN build must not write outside the package,
+# so cargo home points at a throwaway `src/.cargo`, which means a cold registry
+# on every single install. Dev builds use the real one instead.
+#
+# The `rm -Rf` calls in Makevars deliberately reference CARGOTMP and not this,
+# or a dev build would delete the user's cargo home.
+.cargo_home <- ifelse(is_dev, "$(HOME)/.cargo", "$(CARGOTMP)")
+
+# used to replace @DEV_EXPORTS@. Profile overrides come from the environment
+# rather than a `[profile.release-dev]` because Cargo.toml is not owned by this
+# template. opt-level stays at whatever the package declares so testing on real
+# data remains feasible; what goes is the LTO link over the whole dependency
+# graph, plus the codegen-units and strip settings that only pay off in a
+# shipped build.
+.dev_exports <- ifelse(
+  is_dev,
+  paste0(
+    "CARGO_INCREMENTAL=1 ",
+    "CARGO_PROFILE_RELEASE_LTO=false ",
+    "CARGO_PROFILE_RELEASE_CODEGEN_UNITS=16 ",
+    "CARGO_PROFILE_RELEASE_STRIP=none "
+  ),
+  ""
+)
 
 # We specify this target when building for webR
 webr_target <- "wasm32-unknown-emscripten"
@@ -103,7 +146,9 @@ new_txt <- gsub("@CRAN_FLAGS@", .cran_flags, mv_txt) |>
   gsub("@CLEAN_TARGET@", .clean_targets, x = _) |>
   gsub("@LIBDIR@", .libdir, x = _) |>
   gsub("@TARGET@", .target, x = _) |>
-  gsub("@PANIC_EXPORTS@", .panic_exports, x = _)
+  gsub("@PANIC_EXPORTS@", .panic_exports, x = _) |>
+  gsub("@CARGO_HOME@", .cargo_home, x = _) |>
+  gsub("@DEV_EXPORTS@", .dev_exports, x = _)
 
 message("Writing `", mv_ofp, "`.")
 con <- file(mv_ofp, open = "wb")

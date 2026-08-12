@@ -262,6 +262,149 @@ merge_meta_cells <- function(
   rows
 }
 
+## purity ----------------------------------------------------------------------
+
+#' Build the meta cell purity columns
+#'
+#' @description
+#' Shared body of [bixverse::calc_meta_cell_purity()] and
+#' [bixverse::get_meta_cell_purity()]. Resolves the label vector against the
+#' right index space and tabulates the label distribution per meta cell.
+#'
+#' @param object `MetaCells` class.
+#' @param original_cell_type Character vector. The original cell type
+#' annotations, either in full obs order or in QC-passing order. Which one was
+#' passed is inferred from the length.
+#' @param add_additional_info String. One of
+#' `c("none", "top_label", "top_two_labels")`. Already resolved by `match.arg()`
+#' in the caller.
+#' @param add_entropy Boolean. Add the normalised Shannon entropy.
+#'
+#' @returns A named list of atomic vectors, one element per meta cell in
+#' `obs_table` row order:
+#' \itemize{
+#'   \item mc_purity - Fraction of the meta cell's cells that carry the most
+#'   abundant label. Always present.
+#'   \item mc_top_label - Name of the most abundant label. Present for
+#'   `add_additional_info %in% c("top_label", "top_two_labels")`.
+#'   \item mc_second_label - Name of the second most abundant label, `NA` for a
+#'   pure meta cell. Present for `add_additional_info = "top_two_labels"`.
+#'   \item mc_second_frac - Fraction of the meta cell's cells carrying that
+#'   second label, `0` for a pure meta cell. Present for
+#'   `add_additional_info = "top_two_labels"`.
+#'   \item mc_entropy - Normalised Shannon entropy of the label distribution.
+#'   Present for `add_entropy = TRUE`.
+#' }
+#'
+#' @keywords internal
+.mc_purity_cols <- function(
+  object,
+  original_cell_type,
+  add_additional_info,
+  add_entropy
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(object, MetaCells))
+  checkmate::qassert(original_cell_type, "S+")
+  checkmate::assertChoice(
+    add_additional_info,
+    c("none", "top_label", "top_two_labels")
+  )
+  checkmate::qassert(add_entropy, "B1")
+
+  # memberships index into the full obs space; a short vector would silently
+  # recycle or produce NA rather than error
+  assignment <- S7::prop(object, "original_assignment")
+  n_cells <- assignment$n_cells
+
+  # a merged object only has one obs space if all its sources shared a parent
+  if (isTRUE(S7::prop(object, "is_merged"))) {
+    source_cells <- unique(purrr::map_dbl(assignment$per_source, "n_cells"))
+    if (length(source_cells) > 1L) {
+      stop(paste(
+        "The meta cells were merged from sources with different obs spaces,",
+        "so `original_cell_idx` cannot be resolved against a single column.",
+        "Calculate the purity per source before merging."
+      ))
+    }
+  }
+
+  # a full-obs vector indexes straight, a QC-passing one needs the memberships
+  # translated into the filtered row space
+  n_kept <- length(assignment$cells_to_keep)
+
+  mc_rows <- if (length(original_cell_type) == n_cells) {
+    S7::prop(object, "obs_table")$original_cell_idx
+  } else if (n_kept > 0L && length(original_cell_type) == n_kept) {
+    .mc_artefact_rows(object, n_kept)
+  } else {
+    stop(sprintf(
+      paste(
+        "`original_cell_type` has %i entries but the meta cells were built over",
+        "%i original cells%s. Pass the unfiltered obs column, or the",
+        "QC-passing one."
+      ),
+      length(original_cell_type),
+      n_cells,
+      if (n_kept > 0L) sprintf(" of which %i pass QC", n_kept) else ""
+    ))
+  }
+
+  # one factor pass up front, so each meta cell becomes a tabulate() over
+  # integer codes instead of a table() rebuilding the level set every time
+  labels_fct <- factor(original_cell_type)
+  codes <- as.integer(labels_fct)
+  lvls <- levels(labels_fct)
+  n_labels <- length(lvls)
+
+  counts <- purrr::map(
+    mc_rows,
+    \(idx) tabulate(codes[idx], nbins = n_labels)
+  )
+  sizes <- purrr::map_int(mc_rows, length)
+
+  new_cols <- list(
+    mc_purity = purrr::map2_dbl(counts, sizes, \(cnt, n) max(cnt) / n)
+  )
+
+  if (add_additional_info != "none") {
+    new_cols$mc_top_label <- purrr::map_chr(counts, \(cnt) lvls[which.max(cnt)])
+  }
+
+  if (add_additional_info == "top_two_labels") {
+    # zero the winner and take the argmax again. An all-zero remainder means the
+    # meta cell only ever saw a single label
+    second <- purrr::map(counts, \(cnt) {
+      cnt[which.max(cnt)] <- 0L
+      cnt
+    })
+
+    new_cols$mc_second_label <- purrr::map_chr(
+      second,
+      \(cnt) if (max(cnt) == 0L) NA_character_ else lvls[which.max(cnt)]
+    )
+    new_cols$mc_second_frac <- purrr::map2_dbl(
+      second,
+      sizes,
+      \(cnt, n) max(cnt) / n
+    )
+  }
+
+  if (add_entropy) {
+    new_cols$mc_entropy <- if (n_labels < 2L) {
+      # log(1) would turn the normalisation into a NaN
+      rep(0, length(counts))
+    } else {
+      purrr::map2_dbl(counts, sizes, \(cnt, n) {
+        p <- cnt[cnt > 0L] / n
+        -sum(p * log(p)) / log(n_labels)
+      })
+    }
+  }
+
+  return(new_cols)
+}
+
 ## internal helpers ------------------------------------------------------------
 
 #' Resolve the target gene space for a meta cell merge
