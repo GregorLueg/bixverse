@@ -16,7 +16,6 @@ jobs:
     with:
       rust: true
       gpu: false
-      # No Windows: the HDF5 toolchain is the blocker.
       windows: false
       linux-runner: ubuntu-22.04
       rebuild-from-source: 'stringfish qs2'
