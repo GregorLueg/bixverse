@@ -963,7 +963,7 @@ prep_stats_pathways <- function(
 #' @keywords internal
 multilevel_error <- function(pval, sample_size) {
   # Checks
-  checkmate::qassert(pval, "N+")
+  checkmate::qassert(pval, "N*")
   checkmate::qassert(sample_size, "I1")
 
   # Function body
