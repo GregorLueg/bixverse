@@ -379,6 +379,32 @@ expect_true(
   )
 )
 
+### regression: nothing routed to multi-level -----------------------------------
+
+# purely random pathways, none of these should be significant enough to be
+# routed into the multi-level refinement step (dt_multi_level ends up with
+# 0 rows) - this used to error out in multilevel_error()
+
+pathway_list_random_only <- list(
+  random_p1 = pathway_random[[1]],
+  random_p2 = pathway_random[[2]],
+  random_p3 = pathway_random[[3]]
+)
+
+no_multi_level_res <- calc_fgsea(
+  stats = stats,
+  pathways = pathway_list_random_only
+)
+
+expect_equal(
+  current = nrow(no_multi_level_res),
+  target = length(pathway_list_random_only),
+  info = paste(
+    "fgsea (multi-level): does not error when no pathway is routed to",
+    "multi-level refinement"
+  )
+)
+
 ### comparison 2 ---------------------------------------------------------------
 
 # with higher number of permutations, the p-values for the random pathways

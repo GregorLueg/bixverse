@@ -359,3 +359,44 @@ expect_equal(
   ),
   tolerance = 10e-6
 )
+
+### regression: nothing routed to multi-level -----------------------------------
+
+# purely random GO terms, none of these should be significant enough to be
+# routed into the multi-level refinement step (dt_multi_level ends up with
+# 0 rows) - this used to error out in multilevel_error()
+
+set.seed(456)
+
+stats_random_only <- setNames(
+  sort(rnorm(stat_size), decreasing = TRUE),
+  sprintf("gene_%03d", 1:stat_size)
+)
+
+toy_go_data_random <- data.table::data.table(
+  go_id = sprintf("go_r%i", 1:3),
+  go_name = sprintf("go_name_r%s", letters[1:3]),
+  ancestors = list(c("go_r1"), c("go_r2"), c("go_r3")),
+  ensembl_id = list(
+    sample(names(stats_random_only), 30),
+    sample(names(stats_random_only), 40),
+    sample(names(stats_random_only), 25)
+  ),
+  depth = c(1, 1, 1)
+)
+
+object_random <- GeneOntologyElim(toy_go_data_random, min_genes = 3L)
+
+no_multi_level_go_res <- fgsea_go_elim(
+  object = object_random,
+  stats = stats_random_only
+)
+
+expect_equal(
+  current = nrow(no_multi_level_go_res),
+  target = nrow(toy_go_data_random),
+  info = paste(
+    "fgsea (multi level) with go elim: does not error when no term is",
+    "routed to multi-level refinement"
+  )
+)
