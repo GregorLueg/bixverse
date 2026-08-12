@@ -1,6 +1,6 @@
 Package: bixverse
 Title: Rust-accelerated standard bioinformatics, computational biology workflows
-Version: 0.4.7
+Version: 0.4.8
 Authors@R: 
     c(
       person(
