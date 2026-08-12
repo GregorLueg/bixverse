@@ -424,7 +424,8 @@ S7::method(find_hvg_sc, MetaCells) <- function(
       loess_span = loess_span,
       binning = bin_method,
       n_bins = num_bin,
-      clip_max = NULL
+      clip_max = NULL,
+      verbose = parse_verbosity(.verbose)
     )
   )
 
@@ -489,7 +490,8 @@ S7::method(get_hvg_data_sc, MetaCells) <- function(
       loess_span = loess_span,
       binning = bin_method,
       n_bins = num_bin,
-      clip_max = NULL
+      clip_max = NULL,
+      verbose = parse_verbosity(.verbose)
     )
   )
 
@@ -575,7 +577,8 @@ S7::method(calculate_pca_sc, MetaCells) <- function(
       no_pcs = no_pcs,
       pca_params = pca_params,
       clr_offsets = clr_offsets,
-      seed = seed
+      seed = seed,
+      verbose = parse_verbosity(.verbose)
     )
   )
 
