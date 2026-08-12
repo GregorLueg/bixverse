@@ -150,9 +150,9 @@ microbenchmark::microbenchmark(
   times = 10L
 )
 #> Unit: milliseconds
-#>  expr       min        lq      mean    median       uq       max neval
-#>     r 55.206705 55.624267 57.110616 56.403684 57.35025 62.614776    10
-#>  rust  4.074013  4.235138  4.844434  4.474379  5.40100  6.592633    10
+#>  expr        min         lq       mean     median         uq        max neval
+#>     r 144.296244 144.305147 144.492268 144.366093 144.436422 145.588840    10
+#>  rust   6.349399   6.375709   7.020661   6.594588   7.886116   8.828092    10
 ```
 
 #### Spearman’s correlation
@@ -179,9 +179,9 @@ microbenchmark::microbenchmark(
   times = 10L
 )
 #> Unit: milliseconds
-#>  expr       min        lq      mean    median        uq       max neval
-#>     r 81.616987 82.525767 84.855981 83.935756 85.032853 91.148869    10
-#>  rust  5.361406  5.836607  6.290084  6.085888  6.230517  8.907069    10
+#>  expr        min         lq       mean     median         uq       max neval
+#>     r 177.601569 177.813513 180.379678 181.167699 181.721034 184.75324    10
+#>  rust   7.602396   7.629076   8.363841   7.707006   7.981628  13.25866    10
 ```
 
 #### Covariance
@@ -208,9 +208,9 @@ microbenchmark::microbenchmark(
   times = 10L
 )
 #> Unit: milliseconds
-#>  expr      min        lq      mean    median        uq       max neval
-#>     r 55.08374 55.316529 55.785998 55.650487 56.212804 57.409173    10
-#>  rust  3.39636  3.574137  3.893477  3.646561  3.821241  5.242495    10
+#>  expr        min         lq      mean    median         uq        max neval
+#>     r 143.910923 143.942680 144.12282 143.96851 144.015138 145.363095    10
+#>  rust   4.923496   5.332312   5.90808   5.75599   5.915076   7.844074    10
 ```
 
 #### Covariance to correlation
@@ -238,8 +238,8 @@ microbenchmark::microbenchmark(
 )
 #> Unit: milliseconds
 #>  expr      min       lq     mean   median       uq      max neval
-#>     r 2.338627 2.371815 2.727696 2.562356 2.749608 3.809348    10
-#>  rust 1.380639 1.393942 1.584704 1.470104 1.825524 1.969361    10
+#>     r 2.398024 2.399556 3.081435 2.418449 2.553745 6.186848    10
+#>  rust 1.437971 1.503418 1.578975 1.592064 1.651908 1.726809    10
 ```
 
 #### Correlations between two matrices
@@ -284,9 +284,9 @@ microbenchmark::microbenchmark(
   times = 10L
 )
 #> Unit: milliseconds
-#>  expr       min        lq      mean   median        uq       max neval
-#>     r 88.231631 88.442164 89.133979 88.66208 89.481923 91.395027    10
-#>  rust  3.413709  3.723725  4.016138  3.83621  3.961108  5.843677    10
+#>  expr        min         lq       mean     median         uq        max neval
+#>     r 231.602283 231.715030 234.176593 231.834102 232.533894 253.184256    10
+#>  rust   5.321757   5.392782   5.711282   5.443337   5.555233   7.870083    10
 ```
 
 ### Distance metrics
@@ -328,9 +328,9 @@ microbenchmark::microbenchmark(
   times = 10L
 )
 #> Unit: milliseconds
-#>  expr       min        lq      mean    median        uq       max neval
-#>     r 79.114341 79.238818 79.787851 79.601195 80.005420 82.092637    10
-#>  rust  2.761062  2.886358  3.056879  3.068024  3.146264  3.495203    10
+#>  expr       min       lq      mean    median        uq       max neval
+#>     r 96.030809 96.47984 96.792252 96.583213 97.502189 97.714875    10
+#>  rust  4.673296  4.71682  4.896024  4.926325  4.990245  5.268297    10
 ```
 
 #### Manhattan distance
@@ -365,9 +365,9 @@ microbenchmark::microbenchmark(
   times = 10L
 )
 #> Unit: milliseconds
-#>  expr      min       lq     mean   median       uq      max neval
-#>     r 79.69440 79.89021 81.27797 80.62490 82.05698 84.84715    10
-#>  rust 14.93741 15.21139 15.55159 15.38622 15.97789 16.66993    10
+#>  expr      min       lq     mean   median       uq       max neval
+#>     r 93.93969 94.50006 97.37428 94.73939 95.27552 118.15497    10
+#>  rust 23.93918 24.64877 25.01057 24.69719 24.98321  28.29452    10
 ```
 
 #### Canberra distance
@@ -402,9 +402,9 @@ microbenchmark::microbenchmark(
   times = 10L
 )
 #> Unit: milliseconds
-#>  expr       min        lq     mean    median        uq       max neval
-#>     r 119.77420 120.05549 122.0690 120.72454 123.41764 129.77703    10
-#>  rust  28.29069  28.59505  29.1288  28.72437  29.46805  31.59931    10
+#>  expr       min        lq      mean    median        uq       max neval
+#>     r 131.66047 132.34041 134.65155 132.82196 133.73462 147.72087    10
+#>  rust  45.28359  50.58565  50.03315  50.84598  50.96367  52.51764    10
 ```
 
 ### Mutual information
@@ -463,9 +463,9 @@ microbenchmark::microbenchmark(
   times = 10L
 )
 #> Unit: milliseconds
-#>      expr      min       lq     mean   median       uq      max neval
-#>  infotheo 86.45275 86.93366 88.31693 88.27421 89.56145 91.39164    10
-#>      rust 12.87994 13.00160 13.16920 13.06136 13.34794 13.70863    10
+#>      expr       min        lq      mean   median       uq        max neval
+#>  infotheo 90.290642 91.096567 92.420113 91.76906 92.33787 100.416668    10
+#>      rust  3.500598  3.557212  3.705394  3.74825  3.79916   3.970534    10
 ```
 
 **Equal frequency:**
@@ -507,9 +507,12 @@ microbenchmark::microbenchmark(
   times = 10L
 )
 #> Unit: milliseconds
-#>      expr       min        lq      mean    median        uq       max neval
-#>  infotheo 105.33864 106.11424 108.32737 107.95803 109.97477 113.92115    10
-#>      rust  17.21206  17.49638  18.02582  18.18972  18.35258  18.96838    10
+#>      expr        min         lq       mean     median         uq        max
+#>  infotheo 108.331467 108.636740 109.247861 109.229458 109.861966 110.335447
+#>      rust   4.692003   4.754696   5.062518   4.967667   5.079717   6.058208
+#>  neval
+#>     10
+#>     10
 ```
 
 ### Set similarities
@@ -551,11 +554,14 @@ r_results <- purrr::map(
   },
   .progress = TRUE
 )
-#>  ■■■■■■■                           19% |  ETA: 14s
-#>  ■■■■■■■■■■■■                      37% |  ETA: 10s
-#>  ■■■■■■■■■■■■■■■■■■                56% |  ETA:  7s
-#>  ■■■■■■■■■■■■■■■■■■■■■■■           74% |  ETA:  4s
-#>  ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■     92% |  ETA:  1s
+#>  ■■■■■                             12% |  ETA: 22s
+#>  ■■■■■■■■                          24% |  ETA: 19s
+#>  ■■■■■■■■■■■■                      36% |  ETA: 16s
+#>  ■■■■■■■■■■■■■■■                   48% |  ETA: 13s
+#>  ■■■■■■■■■■■■■■■■■■■               60% |  ETA: 10s
+#>  ■■■■■■■■■■■■■■■■■■■■■■■           72% |  ETA:  7s
+#>  ■■■■■■■■■■■■■■■■■■■■■■■■■■        85% |  ETA:  4s
+#>  ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■    97% |  ETA:  1s
 
 similarity_matrix <- matrix(
   data = unlist(r_results),
@@ -565,7 +571,7 @@ similarity_matrix <- matrix(
 )
 
 tictoc::toc()
-#> 16.518 sec elapsed
+#> 24.709 sec elapsed
 ```
 
 Parallelising via [furrr](https://furrr.futureverse.org) gives a
@@ -593,7 +599,7 @@ similarity_matrix <- matrix(
 )
 
 tictoc::toc()
-#> 8.738 sec elapsed
+#> 11.689 sec elapsed
 
 future::plan(strategy = future::sequential())
 ```
@@ -626,7 +632,7 @@ similarity_matrix <- matrix(
 )
 
 tictoc::toc()
-#> 8.304 sec elapsed
+#> 11.808 sec elapsed
 
 mirai::daemons(0)
 ```
@@ -646,7 +652,7 @@ rust_res <- rs_set_similarity_list2(
 )
 
 tictoc::toc()
-#> 0.053 sec elapsed
+#> 0.056 sec elapsed
 
 all.equal(similarity_matrix, rust_res, tolerance = 1e-15)
 #> [1] TRUE

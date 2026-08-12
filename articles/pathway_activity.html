@@ -113,7 +113,7 @@
       <h1>Pathway activity functions</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-08-11</p>
+      <p class="date">2026-08-12</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -177,12 +177,12 @@
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">bixverse_res_gaussian</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span></span>
-<span><span class="co">#&gt;               s1           s2         s3         s4           s5</span></span>
-<span><span class="co">#&gt; gs1 -0.196955180 -0.071260842 -0.1384201 -0.1065546 -0.106456120</span></span>
-<span><span class="co">#&gt; gs2  0.071665945  0.101790536  0.1126608 -0.1616801 -0.072864440</span></span>
-<span><span class="co">#&gt; gs3 -0.009025531  0.002546304 -0.0893463  0.0206315  0.026877870</span></span>
-<span><span class="co">#&gt; gs4 -0.004486748  0.044597348  0.3480454 -0.4246240  0.037403625</span></span>
-<span><span class="co">#&gt; gs5  0.105944020 -0.090544479 -0.1687193 -0.1094248 -0.008610023</span></span></code></pre></div>
+<span><span class="co">#&gt;               s1          s2          s3           s4          s5</span></span>
+<span><span class="co">#&gt; gs1  0.066730195  0.14900248 -0.18957009  0.156879178  0.07281393</span></span>
+<span><span class="co">#&gt; gs2 -0.171047237  0.14998240  0.07847931  0.102223882  0.07596982</span></span>
+<span><span class="co">#&gt; gs3 -0.008491409 -0.06160899  0.19989447  0.096250961 -0.03784779</span></span>
+<span><span class="co">#&gt; gs4 -0.150269282 -0.32645465  0.12957542 -0.007915006  0.15417178</span></span>
+<span><span class="co">#&gt; gs5 -0.016136579 -0.21231091  0.04039611 -0.194340736  0.06206138</span></span></code></pre></div>
 </div>
 <p>If the original <code>GSVA</code> Bioconductor package is available we can verify that the results are essentially identical. Minor differences in numerical precision arise from optimisations on the Rust side, but per-pathway correlations between the two implementations are consistently above 0.99.</p>
 <div class="cell">
@@ -213,9 +213,9 @@
 <span>  times <span class="op">=</span> <span class="fl">3L</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: milliseconds</span></span>
-<span><span class="co">#&gt;      expr       min       lq      mean    median        uq       max neval</span></span>
-<span><span class="co">#&gt;      gsva 2003.8947 2009.377 2021.9627 2014.8603 2030.9967 2047.1331     3</span></span>
-<span><span class="co">#&gt;  bixverse  477.1677  480.445  487.5605  483.7224  492.7569  501.7914     3</span></span></code></pre></div>
+<span><span class="co">#&gt;      expr       min        lq      mean    median        uq      max neval</span></span>
+<span><span class="co">#&gt;      gsva 2822.5464 2829.9192 2841.4725 2837.2920 2850.9356 2864.579     3</span></span>
+<span><span class="co">#&gt;  bixverse  577.8323  578.0158  578.3138  578.1992  578.5546  578.910     3</span></span></code></pre></div>
 </div>
 </section><section class="level3"><h3 id="poisson-kernel">Poisson kernel<a class="anchor" aria-label="anchor" href="#poisson-kernel"></a>
 </h3>
@@ -229,12 +229,12 @@
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">bixverse_res_poisson</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span></span>
-<span><span class="co">#&gt;              s1          s2          s3          s4          s5</span></span>
-<span><span class="co">#&gt; gs1  0.06803789 -0.05134558 -0.20002396  0.23095818  0.12861447</span></span>
-<span><span class="co">#&gt; gs2 -0.06535358 -0.06499159 -0.02449482 -0.09632637  0.05507226</span></span>
-<span><span class="co">#&gt; gs3  0.10180657 -0.19158802 -0.10761351  0.08677916  0.19833982</span></span>
-<span><span class="co">#&gt; gs4  0.23437678  0.13907711  0.22008849 -0.11264505 -0.29093251</span></span>
-<span><span class="co">#&gt; gs5  0.20644899 -0.08027138 -0.05631855 -0.11500354  0.04362365</span></span></code></pre></div>
+<span><span class="co">#&gt;              s1           s2          s3          s4          s5</span></span>
+<span><span class="co">#&gt; gs1  0.21217815  0.007731887 -0.01204483 -0.02727569  0.01586994</span></span>
+<span><span class="co">#&gt; gs2  0.13096799 -0.002922110  0.31487285  0.17237207 -0.01700987</span></span>
+<span><span class="co">#&gt; gs3 -0.09509878 -0.208980156  0.09115048  0.06437434  0.05315383</span></span>
+<span><span class="co">#&gt; gs4  0.01982343 -0.220322687 -0.10059133 -0.08437465  0.05732886</span></span>
+<span><span class="co">#&gt; gs5  0.14005501  0.010503196  0.17006318 -0.06476749  0.05435167</span></span></code></pre></div>
 </div>
 <p>And vs. the original</p>
 <div class="cell">
@@ -263,9 +263,9 @@
 <span>  times <span class="op">=</span> <span class="fl">3L</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: seconds</span></span>
-<span><span class="co">#&gt;      expr       min       lq      mean    median       uq       max neval</span></span>
-<span><span class="co">#&gt;      gsva 13.963235 13.96870 13.993633 13.974162 14.00883 14.043502     3</span></span>
-<span><span class="co">#&gt;  bixverse  2.206707  2.21577  2.223016  2.224834  2.23117  2.237506     3</span></span></code></pre></div>
+<span><span class="co">#&gt;      expr      min        lq      mean    median        uq       max neval</span></span>
+<span><span class="co">#&gt;      gsva 19.29959 19.305120 19.308687 19.310644 19.313233 19.315822     3</span></span>
+<span><span class="co">#&gt;  bixverse  2.86968  2.869731  2.870342  2.869783  2.870672  2.871562     3</span></span></code></pre></div>
 </div>
 </section></section><section class="level2"><h2 id="ssgsea">ssGSEA<a class="anchor" aria-label="anchor" href="#ssgsea"></a>
 </h2>
@@ -278,12 +278,12 @@
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">bixverse_res_ssgsea</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span></span>
-<span><span class="co">#&gt;             s1         s2         s3          s4         s5</span></span>
-<span><span class="co">#&gt; gs1 0.02666381 0.08663404 0.02513438  0.07138957 0.02110635</span></span>
-<span><span class="co">#&gt; gs2 0.12641158 0.15793265 0.17924637  0.06959076 0.04880605</span></span>
-<span><span class="co">#&gt; gs3 0.13504084 0.08167479 0.09683337  0.11280475 0.13792381</span></span>
-<span><span class="co">#&gt; gs4 0.12788276 0.16781409 0.31966577 -0.12785395 0.10836309</span></span>
-<span><span class="co">#&gt; gs5 0.13401596 0.08609627 0.07310952  0.01906563 0.09308696</span></span></code></pre></div>
+<span><span class="co">#&gt;               s1          s2         s3         s4         s5</span></span>
+<span><span class="co">#&gt; gs1  0.110666631  0.16938854 0.03837082 0.16850694 0.06852188</span></span>
+<span><span class="co">#&gt; gs2  0.004250230  0.14046445 0.10522495 0.13096793 0.27442739</span></span>
+<span><span class="co">#&gt; gs3  0.086949605  0.05948209 0.15443117 0.17143803 0.11661352</span></span>
+<span><span class="co">#&gt; gs4 -0.002105411 -0.06574671 0.17844960 0.14559439 0.21943867</span></span>
+<span><span class="co">#&gt; gs5  0.090326270 -0.04870031 0.09074339 0.05146118 0.16658741</span></span></code></pre></div>
 </div>
 <p>Let’s compare again against the GSVA version:</p>
 <div class="cell">
@@ -312,9 +312,9 @@
 <span>  times <span class="op">=</span> <span class="fl">3L</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: milliseconds</span></span>
-<span><span class="co">#&gt;      expr       min        lq      mean    median       uq       max neval</span></span>
-<span><span class="co">#&gt;      gsva 507.01372 514.96249 524.05884 522.91127 532.5814 542.25154     3</span></span>
-<span><span class="co">#&gt;  bixverse  87.61168  88.32498  88.80296  89.03828  89.3986  89.75891     3</span></span></code></pre></div>
+<span><span class="co">#&gt;      expr      min       lq     mean   median       uq      max neval</span></span>
+<span><span class="co">#&gt;      gsva 673.4759 674.1403 677.7302 674.8047 679.8574 684.9101     3</span></span>
+<span><span class="co">#&gt;  bixverse 115.1110 117.5772 119.0573 120.0433 121.0304 122.0176     3</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="singscore">singscore<a class="anchor" aria-label="anchor" href="#singscore"></a>
 </h2>
@@ -328,11 +328,11 @@
 <span></span>
 <span><span class="va">ranks</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span></span>
 <span><span class="co">#&gt;      s1   s2   s3   s4   s5</span></span>
-<span><span class="co">#&gt; g1 4948 7206 5095  287  100</span></span>
-<span><span class="co">#&gt; g2 1563 2706 6417 1607 2839</span></span>
-<span><span class="co">#&gt; g3 7949 4975 8367 9373 9387</span></span>
-<span><span class="co">#&gt; g4 2236 2151 2080 1020 3634</span></span>
-<span><span class="co">#&gt; g5 8642 4601 9910 4796 6425</span></span></code></pre></div>
+<span><span class="co">#&gt; g1 1832 6358 3779 3690 3122</span></span>
+<span><span class="co">#&gt; g2 8079 2603 4512 3769 8787</span></span>
+<span><span class="co">#&gt; g3 4190 7408 6573 7190 4132</span></span>
+<span><span class="co">#&gt; g4 3164 9313 5776 4610 2084</span></span>
+<span><span class="co">#&gt; g5 6794 7472  811 2194 3981</span></span></code></pre></div>
 </div>
 <p>If your data comes from a small targeted panel (NanoString, RT-qPCR) rather than a transcriptome-wide assay, you can pass a set of stable genes to <code>calc_singscore_rank</code> to use the stable-gene ranking approach from <a href="https://academic.oup.com/nar/article/48/16/e97/5882020" class="external-link">Bhuva et al.</a>:</p>
 <div class="cell">
@@ -358,22 +358,22 @@
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">singscore_res</span><span class="op">)</span></span>
-<span><span class="co">#&gt;     total_score total_dispersion     up_score up_dispersion  down_score</span></span>
-<span><span class="co">#&gt;           &lt;num&gt;            &lt;num&gt;        &lt;num&gt;         &lt;num&gt;       &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1: -0.073464826         4081.233 -0.062341414      4251.362 -0.01112341</span></span>
-<span><span class="co">#&gt; 2: -0.038685825         4171.301 -0.023547475      4152.769 -0.01513835</span></span>
-<span><span class="co">#&gt; 3: -0.062877485         3812.141 -0.037583838      3430.000 -0.02529365</span></span>
-<span><span class="co">#&gt; 4:  0.020184234         3618.661 -0.024067677      3404.796  0.04425191</span></span>
-<span><span class="co">#&gt; 5: -0.003536377         3571.218 -0.048091919      3526.369  0.04455554</span></span>
-<span><span class="co">#&gt; 6: -0.017469497         3600.499 -0.006341414      3627.928 -0.01112808</span></span>
+<span><span class="co">#&gt;    total_score total_dispersion    up_score up_dispersion   down_score</span></span>
+<span><span class="co">#&gt;          &lt;num&gt;            &lt;num&gt;       &lt;num&gt;         &lt;num&gt;        &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1:  0.06450961         2890.704  0.01935430      2793.223  0.045155311</span></span>
+<span><span class="co">#&gt; 2:  0.01471416         3683.155  0.03382739      3448.533 -0.019113226</span></span>
+<span><span class="co">#&gt; 3: -0.04163099         3217.247 -0.03008290      3748.018 -0.011548096</span></span>
+<span><span class="co">#&gt; 4:  0.03514564         4061.589  0.04091217      3675.371 -0.005766533</span></span>
+<span><span class="co">#&gt; 5: -0.08432705         3375.885 -0.02758857      3579.002 -0.056738477</span></span>
+<span><span class="co">#&gt; 6: -0.01914601         4105.696 -0.01701174      3799.909 -0.002134269</span></span>
 <span><span class="co">#&gt;    down_dispersion sample_id</span></span>
 <span><span class="co">#&gt;              &lt;num&gt;    &lt;char&gt;</span></span>
-<span><span class="co">#&gt; 1:        3911.105        s1</span></span>
-<span><span class="co">#&gt; 2:        4189.834        s2</span></span>
-<span><span class="co">#&gt; 3:        4194.282        s3</span></span>
-<span><span class="co">#&gt; 4:        3832.527        s4</span></span>
-<span><span class="co">#&gt; 5:        3616.067        s5</span></span>
-<span><span class="co">#&gt; 6:        3573.071        s6</span></span></code></pre></div>
+<span><span class="co">#&gt; 1:        2988.185        s1</span></span>
+<span><span class="co">#&gt; 2:        3917.776        s2</span></span>
+<span><span class="co">#&gt; 3:        2686.475        s3</span></span>
+<span><span class="co">#&gt; 4:        4447.807        s4</span></span>
+<span><span class="co">#&gt; 5:        3172.769        s5</span></span>
+<span><span class="co">#&gt; 6:        4411.483        s6</span></span></code></pre></div>
 </div>
 <p>If the direction of the signature is unknown (a gene ontology term, for example), pass only <code>up_set</code> and set <code>known_direction = FALSE</code>. The scoring function then transforms ranks around their median so that genes at either extreme contribute symmetrically.</p>
 </section><section class="level3"><h3 id="permutation-testing">Permutation testing<a class="anchor" aria-label="anchor" href="#permutation-testing"></a>
@@ -390,22 +390,22 @@
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">singscore_perm</span><span class="op">)</span></span>
-<span><span class="co">#&gt;     total_score total_dispersion     up_score up_dispersion  down_score</span></span>
-<span><span class="co">#&gt;           &lt;num&gt;            &lt;num&gt;        &lt;num&gt;         &lt;num&gt;       &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1: -0.073464826         4081.233 -0.062341414      4251.362 -0.01112341</span></span>
-<span><span class="co">#&gt; 2: -0.038685825         4171.301 -0.023547475      4152.769 -0.01513835</span></span>
-<span><span class="co">#&gt; 3: -0.062877485         3812.141 -0.037583838      3430.000 -0.02529365</span></span>
-<span><span class="co">#&gt; 4:  0.020184234         3618.661 -0.024067677      3404.796  0.04425191</span></span>
-<span><span class="co">#&gt; 5: -0.003536377         3571.218 -0.048091919      3526.369  0.04455554</span></span>
-<span><span class="co">#&gt; 6: -0.017469497         3600.499 -0.006341414      3627.928 -0.01112808</span></span>
+<span><span class="co">#&gt;    total_score total_dispersion    up_score up_dispersion   down_score</span></span>
+<span><span class="co">#&gt;          &lt;num&gt;            &lt;num&gt;       &lt;num&gt;         &lt;num&gt;        &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1:  0.06450961         2890.704  0.01935430      2793.223  0.045155311</span></span>
+<span><span class="co">#&gt; 2:  0.01471416         3683.155  0.03382739      3448.533 -0.019113226</span></span>
+<span><span class="co">#&gt; 3: -0.04163099         3217.247 -0.03008290      3748.018 -0.011548096</span></span>
+<span><span class="co">#&gt; 4:  0.03514564         4061.589  0.04091217      3675.371 -0.005766533</span></span>
+<span><span class="co">#&gt; 5: -0.08432705         3375.885 -0.02758857      3579.002 -0.056738477</span></span>
+<span><span class="co">#&gt; 6: -0.01914601         4105.696 -0.01701174      3799.909 -0.002134269</span></span>
 <span><span class="co">#&gt;    down_dispersion sample_id  pval</span></span>
 <span><span class="co">#&gt;              &lt;num&gt;    &lt;char&gt; &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1:        3911.105        s1 0.991</span></span>
-<span><span class="co">#&gt; 2:        4189.834        s2 0.001</span></span>
-<span><span class="co">#&gt; 3:        4194.282        s3 1.000</span></span>
-<span><span class="co">#&gt; 4:        3832.527        s4 0.001</span></span>
-<span><span class="co">#&gt; 5:        3616.067        s5 0.002</span></span>
-<span><span class="co">#&gt; 6:        3573.071        s6 0.237</span></span>
+<span><span class="co">#&gt; 1:        2988.185        s1 1.000</span></span>
+<span><span class="co">#&gt; 2:        3917.776        s2 1.000</span></span>
+<span><span class="co">#&gt; 3:        2686.475        s3 0.018</span></span>
+<span><span class="co">#&gt; 4:        4447.807        s4 1.000</span></span>
+<span><span class="co">#&gt; 5:        3172.769        s5 1.000</span></span>
+<span><span class="co">#&gt; 6:        4411.483        s6 0.003</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">singscore_perm</span>, <span class="st">"null_distribution"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 1000  100</span></span></code></pre></div>
@@ -422,12 +422,12 @@
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">singscore_multi_res</span><span class="op">$</span><span class="va">scores</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span></span>
-<span><span class="co">#&gt;              s1          s2           s3           s4            s5</span></span>
-<span><span class="co">#&gt; gs1 -0.06234141 -0.02354747 -0.037583838 -0.024067677 -0.0480919192</span></span>
-<span><span class="co">#&gt; gs2  0.01112341  0.01513835  0.025293646 -0.044251911 -0.0445555423</span></span>
-<span><span class="co">#&gt; gs3  0.01232394 -0.02035714 -0.008029846  0.007456405  0.0196462106</span></span>
-<span><span class="co">#&gt; gs4  0.00927495  0.03089980  0.128787879 -0.109404326  0.0005056579</span></span>
-<span><span class="co">#&gt; gs5  0.02358922 -0.01411121 -0.028717177 -0.048535732 -0.0002010109</span></span></code></pre></div>
+<span><span class="co">#&gt;              s1          s2          s3           s4           s5</span></span>
+<span><span class="co">#&gt; gs1  0.01935430  0.03382739 -0.03008290  0.040912171 -0.027588575</span></span>
+<span><span class="co">#&gt; gs2 -0.04515531  0.01911323  0.01154810  0.005766533  0.056738477</span></span>
+<span><span class="co">#&gt; gs3 -0.01412462 -0.01298492  0.03714774  0.037883417  0.003764824</span></span>
+<span><span class="co">#&gt; gs4 -0.04799861 -0.10195167  0.03326653  0.010592639  0.062367687</span></span>
+<span><span class="co">#&gt; gs5  0.00214026 -0.07766267 -0.01889122 -0.039477657  0.013464296</span></span></code></pre></div>
 </div>
 <p>The returned list contains a <code>scores</code> matrix and a matching <code>dispersions</code> matrix, both with shape gene sets × samples.</p>
 </section><section class="level3"><h3 id="comparison-with-singscore">Comparison with singscore<a class="anchor" aria-label="anchor" href="#comparison-with-singscore"></a>
@@ -463,8 +463,8 @@
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: milliseconds</span></span>
 <span><span class="co">#&gt;       expr      min       lq     mean   median       uq      max neval</span></span>
-<span><span class="co">#&gt;  singscore 69.94172 70.12101 70.50827 70.50973 70.52601 71.44288     5</span></span>
-<span><span class="co">#&gt;   bixverse 17.37181 19.55909 20.56661 20.28736 21.15275 24.46204     5</span></span></code></pre></div>
+<span><span class="co">#&gt;  singscore 96.42513 96.61098 97.23367 97.62740 97.68510 97.81974     5</span></span>
+<span><span class="co">#&gt;   bixverse 17.73115 18.75063 22.06033 22.08489 23.20821 28.52676     5</span></span></code></pre></div>
 </div>
 </section></section><section class="level2"><h2 id="multi-contrast-enrichment-mitch">Multi-contrast enrichment (mitch)<a class="anchor" aria-label="anchor" href="#multi-contrast-enrichment-mitch"></a>
 </h2>
@@ -537,8 +537,8 @@
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: milliseconds</span></span>
 <span><span class="co">#&gt;      expr        min         lq       mean     median         uq        max</span></span>
-<span><span class="co">#&gt;     mitch 105.901037 107.486122 111.405244 108.880439 111.124648 123.633973</span></span>
-<span><span class="co">#&gt;  bixverse   3.168828   3.244259   3.967914   3.612163   4.302335   5.511984</span></span>
+<span><span class="co">#&gt;     mitch 148.807119 152.578978 158.431411 160.929203 162.510486 167.331270</span></span>
+<span><span class="co">#&gt;  bixverse   3.645132   3.692322   4.911148   3.945497   5.736521   7.536268</span></span>
 <span><span class="co">#&gt;  neval</span></span>
 <span><span class="co">#&gt;      5</span></span>
 <span><span class="co">#&gt;      5</span></span></code></pre></div>
