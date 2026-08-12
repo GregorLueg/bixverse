@@ -4,14 +4,17 @@
 use bixverse_rs::methods::nmf_hals::HalsOpts;
 use bixverse_rs::prelude::*;
 use bixverse_rs::single_cell::mc_analysis::aucell::calculate_aucell_metacells;
+use bixverse_rs::single_cell::mc_analysis::hotspot_mc::*;
 use bixverse_rs::single_cell::mc_analysis::nmf_mc::*;
 use bixverse_rs::single_cell::mc_analysis::scenic_metacells::run_scenic_grn_in_memory;
 use bixverse_rs::single_cell::sc_analysis::dge_pathway_scores::AucellParams;
+use bixverse_rs::single_cell::sc_analysis::hotspot::{HotSpotGeneRes, HotSpotPairRes, HotSpotParams};
 use bixverse_rs::single_cell::sc_analysis::scenic::ScenicParams;
 use extendr_api::*;
-use faer::Mat;
+use faer::{Mat, MatRef};
 
 use crate::meta_cell::utils::*;
+use crate::single_cell::utils::knn_data_to_rust;
 
 /////////////
 // extendR //
@@ -23,9 +26,87 @@ extendr_module! {
     fn rs_mc_scenic;
     // aucell
     fn rs_mc_aucell;
+    // hotspot
+    fn rs_mc_hotspot_autocor;
+    fn rs_mc_hotspot_gene_cor;
     // nmf
     fn rs_nmf_single_mc;
     fn rs_nmf_multi_mc;
+}
+
+/////////////
+// Helpers //
+/////////////
+
+/// Type for a resolved kNN graph
+///
+/// ### Fields
+///
+/// * `0` - Neighbour indices per meta cell, self excluded
+/// * `1` - The matching neighbour distances, ascending
+/// * `2` - Whether those distances hold `d^2`
+type ResolvedKnn = extendr_api::Result<(Vec<Vec<usize>>, Vec<Vec<f32>>, bool)>;
+
+/// Resolve the kNN graph the HotSpot kernel runs over.
+///
+/// Either the pre-computed graph handed over from R, or one built from the
+/// embedding. Whether the distances are pre-squared follows from the metric,
+/// which is read off the supplied graph rather than the parameter list: a
+/// cached graph may well have been built with a different metric than
+/// `ann_dist` says.
+///
+/// ### Params
+///
+/// * `knn_data` - Optional pre-computed kNN data with `indices`, `dist` and
+///   `dist_metric`
+/// * `embd` - The embedding, metacells x dimensions
+/// * `knn_params` - Parameters for the ANN search, only read when a graph is
+///   built
+/// * `seed` - Random seed for the ANN search
+/// * `verbosity` - Parsed verbosity level
+///
+/// ### Returns
+///
+/// The neighbour indices, their distances, and whether those distances hold
+/// `d^2`.
+fn resolve_knn_graph(
+    knn_data: Nullable<List>,
+    embd: MatRef<f32>,
+    knn_params: &KnnParams,
+    seed: usize,
+    verbosity: Verbosity,
+) -> ResolvedKnn {
+    if knn_data != extendr_api::Nullable::Null {
+        if verbosity.normal_verbosity() {
+            println!("Using provided kNN graph...")
+        }
+        let knn_data = knn_data
+            .into_robj()
+            .as_list()
+            .ok_or_else(|| Error::Other("'knn_data' is not a list".into()))?;
+        let (knn_indices, knn_dist, _, dist_metric) = knn_data_to_rust(knn_data)?;
+
+        Ok((knn_indices, knn_dist, distances_are_squared(&dist_metric)))
+    } else {
+        if verbosity.normal_verbosity() {
+            println!("Generating a kNN graph from scratch")
+        }
+        let (knn_indices, knn_dist) = generate_knn_with_dist(
+            embd,
+            knn_params,
+            true,
+            false,
+            seed,
+            verbosity.detailed_verbosity(),
+        )
+        .to_extendr()?;
+
+        Ok((
+            knn_indices,
+            knn_dist.unwrap(),
+            distances_are_squared(&knn_params.ann_dist),
+        ))
+    }
 }
 
 /////////////////////
@@ -128,6 +209,218 @@ fn rs_mc_aucell(
 
     let auc_mat = Mat::from_fn(res[0].len(), res.len(), |i, j| res[j][i] as f64);
     Ok(faer_to_r_matrix(auc_mat.as_ref()))
+}
+
+//////////////////////
+// Metacell HotSpot //
+//////////////////////
+
+/// Calculate gene spatial auto-correlations (for meta cells)
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// This function implements the HotSpot auto-correlation functionality and
+/// will return to what extent a given gene shows auto-correlation in the
+/// kNN-graph over the meta cells. For details see DeTomaso, et al. This version
+/// works on MetaCell counts which are stored in memory directly. There is no
+/// streaming variant: streaming bounds disk re-reads, which is not a problem
+/// an in-memory matrix has.
+///
+/// @param sparse_data A named list that needs to have `data`, `indptr`,
+/// `indices`, `nrow`, `ncol` and `format`. Shape is (metacells, genes) and the
+/// data are the raw counts.
+/// @param embd Numerical matrix. The embedding matrix from which to generate
+/// the kNN graph.
+/// @param knn_data Optional list. This contains pre-computed kNN data
+/// (including distances) and the `dist_metric` it was built with. The user has
+/// to ensure consistency! If provided, this will be used and whether the
+/// distances are treated as squared is derived from `dist_metric` rather than
+/// from the parameter list.
+/// @param hotspot_params List. The HotSpot parameter list. The kNN parameters
+/// are only read when no `knn_data` is provided.
+/// @param cells_to_keep Integer vector. 0-index vector indicating which meta
+/// cells to include in the analysis. Ensure that this is of same order/length
+/// as the embedding matrix.
+/// @param genes_to_use Integer vector. 0-index vector indicating which genes
+/// to include.
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
+/// @param seed Integer. Random seed for reproducibility.
+///
+/// @returns A list with the following elements.
+/// \itemize{
+///   \item gene_idx - 0-based integer indicating the gene index.
+///   \item gaerys_c - Gaery's C calculation for the autocorrelation
+///   coefficient.
+///   \item z_score - Z-score of the auto-correlation.
+///   \item pval - P-value derived from the Z-score.
+///   \item fdr - False discovery rate based on the p-value.
+/// }
+///
+/// @export
+///
+/// @references DeTomaso, et al., Cell Systems, 2021
+///
+/// @keywords internal
+#[extendr]
+#[allow(clippy::too_many_arguments)]
+fn rs_mc_hotspot_autocor(
+    sparse_data: List,
+    embd: RMatrix<f64>,
+    knn_data: Nullable<List>,
+    hotspot_params: List,
+    cells_to_keep: Vec<i32>,
+    genes_to_use: Vec<i32>,
+    verbose: usize,
+    seed: usize,
+) -> extendr_api::Result<List> {
+    assert!(
+        embd.nrows() == cells_to_keep.len(),
+        "The embedding matrix need to have the same nrow as the the cells to use."
+    );
+
+    let verbosity = parse_verbosity_level(verbose);
+    let mut hotspot_params = HotSpotParams::from_r_list(hotspot_params)?;
+
+    let embd = r_matrix_to_faer_fp32(&embd);
+    let cells_to_keep = cells_to_keep.r_int_convert();
+    let genes_to_use = genes_to_use.r_int_convert();
+
+    let (knn_indices, knn_dist, squared_distances) = resolve_knn_graph(
+        knn_data,
+        embd.as_ref(),
+        &hotspot_params.knn_params,
+        seed,
+        verbosity,
+    )?;
+
+    hotspot_params.graph_params.squared_distances = squared_distances;
+
+    // HotSpot only ever reads the raw counts and the per-cell library sizes, so
+    // the second layer the reader insists on can stay the copy of the raw one
+    // `list_to_sparse_matrix` puts there
+    let sparse: CompressedSparseData2<f64, f64> =
+        list_to_sparse_matrix(sparse_data, true).to_extendr()?;
+    let sparse = cast_compressed_sparse_data_u32(sparse);
+
+    let res: HotSpotGeneRes = hotspot_autocor_metacells(
+        &sparse,
+        &knn_indices,
+        &knn_dist,
+        &cells_to_keep,
+        &genes_to_use,
+        &hotspot_params,
+        verbose,
+    )
+    .to_extendr()?;
+
+    Ok(list!(
+        gene_idx = res.gene_idx,
+        gaerys_c = res.c,
+        z_score = res.z,
+        pval = res.pval,
+        fdr = res.fdr
+    ))
+}
+
+/// Calculate gene to gene spatial correlations (for meta cells)
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// This function implements the HotSpot gene <> gene local correlation
+/// functionality from HotSpot, see DeTomaso, et al. This version works on
+/// MetaCell counts which are stored in memory directly.
+///
+/// Three dense metacells x genes blocks are live at once, so keep
+/// `genes_to_use` to the panel actually of interest rather than the whole
+/// transcriptome.
+///
+/// @param sparse_data A named list that needs to have `data`, `indptr`,
+/// `indices`, `nrow`, `ncol` and `format`. Shape is (metacells, genes) and the
+/// data are the raw counts.
+/// @param embd Numerical matrix. The embedding matrix from which to generate
+/// the kNN graph.
+/// @param knn_data Optional list. This contains pre-computed kNN data
+/// (including distances) and the `dist_metric` it was built with. The user has
+/// to ensure consistency! If provided, this will be used and whether the
+/// distances are treated as squared is derived from `dist_metric` rather than
+/// from the parameter list.
+/// @param hotspot_params List. The HotSpot parameter list. The kNN parameters
+/// are only read when no `knn_data` is provided; `normalise` is unused on this
+/// path.
+/// @param cells_to_keep Integer vector. 0-index vector indicating which meta
+/// cells to include in the analysis. Ensure that this is of same order/length
+/// as the embedding matrix.
+/// @param genes_to_use Integer vector. 0-index vector indicating which genes
+/// to include.
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
+/// @param seed Integer. Random seed for reproducibility.
+///
+/// @returns A list with the following elements.
+/// \itemize{
+///   \item cor - The gene x gene local correlation matrix.
+///   \item z - The Z-scores of these local correlations.
+/// }
+///
+/// @export
+///
+/// @references DeTomaso, et al., Cell Systems, 2021
+///
+/// @keywords internal
+#[extendr]
+#[allow(clippy::too_many_arguments)]
+fn rs_mc_hotspot_gene_cor(
+    sparse_data: List,
+    embd: RMatrix<f64>,
+    knn_data: Nullable<List>,
+    hotspot_params: List,
+    cells_to_keep: Vec<i32>,
+    genes_to_use: Vec<i32>,
+    verbose: usize,
+    seed: usize,
+) -> extendr_api::Result<List> {
+    assert!(
+        embd.nrows() == cells_to_keep.len(),
+        "The embedding matrix need to have the same nrow as the the cells to use."
+    );
+
+    let verbosity = parse_verbosity_level(verbose);
+    let mut hotspot_params = HotSpotParams::from_r_list(hotspot_params)?;
+
+    let embd = r_matrix_to_faer_fp32(&embd);
+    let cells_to_keep = cells_to_keep.r_int_convert();
+    let genes_to_use = genes_to_use.r_int_convert();
+
+    let (knn_indices, knn_dist, squared_distances) = resolve_knn_graph(
+        knn_data,
+        embd.as_ref(),
+        &hotspot_params.knn_params,
+        seed,
+        verbosity,
+    )?;
+
+    hotspot_params.graph_params.squared_distances = squared_distances;
+
+    let sparse: CompressedSparseData2<f64, f64> =
+        list_to_sparse_matrix(sparse_data, true).to_extendr()?;
+    let sparse = cast_compressed_sparse_data_u32(sparse);
+
+    let res: HotSpotPairRes = hotspot_gene_cor_metacells(
+        &sparse,
+        &knn_indices,
+        &knn_dist,
+        &cells_to_keep,
+        &genes_to_use,
+        &hotspot_params,
+        verbose,
+    )
+    .to_extendr()?;
+
+    Ok(list!(
+        cor = faer_to_r_matrix(res.cor.as_ref()),
+        z = faer_to_r_matrix(res.z_scores.as_ref())
+    ))
 }
 
 /////////

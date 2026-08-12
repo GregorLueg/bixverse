@@ -761,6 +761,8 @@ reference:
       - rs_ligand_activity_scores
       - rs_mad_outlier
       - rs_mc_aucell
+      - rs_mc_hotspot_autocor
+      - rs_mc_hotspot_gene_cor
       - rs_mc_hvg
       - rs_mc_pca
       - rs_mc_scenic

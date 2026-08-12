@@ -762,9 +762,25 @@ params_sc_aucell <- function(
 
 #' Wrapper function for parameters for HotSpot
 #'
+#' @description
+#' `weighted_graph` controls how the kNN distances become edge weights. The
+#' default of `FALSE` follows the reference implementation: the distances only
+#' decide who is a neighbour and every retained edge weighs one. Set it to
+#' `TRUE` for the Gaussian kernel, whose width is the
+#' `ceil(k / neighborhood_factor)`-th neighbour distance.
+#'
+#' Whether the distances need squaring is derived from the metric, so it is not
+#' a parameter here. When a pre-computed kNN graph is handed to the method, the
+#' metric stored on that graph wins over `ann_dist`.
+#'
 #' @param model String. Model to use for modelling the GEX. One of
 #' `c("danb", "bernoulli", "normal")`. Defaults to `"danb"`.
 #' @param normalise Boolean. Shall the data be normalised. Defaults to `TRUE`.
+#' @param weighted_graph Boolean. Shall the Gaussian kernel be applied to the
+#' neighbour distances. Defaults to `FALSE`.
+#' @param neighborhood_factor Float. Kernel width is the
+#' `ceil(k / neighborhood_factor)`-th neighbour distance. Only read when
+#' `weighted_graph = TRUE`. Defaults to `3`.
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
@@ -773,14 +789,21 @@ params_sc_aucell <- function(
 #'
 #' @returns A list with the HotSpot parameters.
 #'
+#' @references DeTomaso and Yosef, Cell Systems, 2021
+#'
 #' @export
 params_sc_hotspot <- function(
   model = c("danb", "normal", "bernoulli"),
   normalise = TRUE,
-  knn = list(ann_dist = "cosine")
+  weighted_graph = FALSE,
+  neighborhood_factor = 3.0,
+  knn = list()
 ) {
   model <- match.arg(model)
+  checkmate::assertChoice(model, c("danb", "normal", "bernoulli"))
   checkmate::qassert(normalise, "B1")
+  checkmate::qassert(weighted_graph, "B1")
+  checkmate::qassert(neighborhood_factor, "R1(0,)")
 
   knn_params <- modifyList(
     params_knn_defaults(),
@@ -788,17 +811,14 @@ params_sc_hotspot <- function(
     keep.null = TRUE
   )
 
-  list(
-    knn_method = knn_params$knn_method,
-    ann_dist = knn_params$ann_dist,
-    k = knn_params$k,
-    n_tree = knn_params$n_trees,
-    search_budget = knn_params$search_budget,
-    max_iter = knn_params$nn_max_iter,
-    rho = knn_params$rho,
-    delta = knn_params$delta,
-    model = model,
-    normalise = normalise
+  c(
+    list(
+      model = model,
+      normalise = normalise,
+      weighted_graph = weighted_graph,
+      neighborhood_factor = neighborhood_factor
+    ),
+    knn_params
   )
 }
 

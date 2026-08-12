@@ -1264,8 +1264,8 @@ generate_hotspot_membership.Hotspot <- function(
     gene_id = rownames(x$z),
     cluster_member = rs_hotspot_cluster_genes(
       x$z,
-      fdr_threshold = 0.05,
-      10L
+      fdr_threshold = fdr_threshold,
+      min_size = min_size
     )
   )
 

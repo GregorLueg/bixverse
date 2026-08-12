@@ -3497,8 +3497,10 @@ rs_aucell <- function(f_path, gs_list, cells_to_keep, aucell_params, streaming, 
 #' to include in the analysis. Ensure that this is of same order/length
 #' as the embedding matrix.
 #' @param knn_data Optional list. This contains pre-computed kNN data
-#' (including distances). The user has to ensure consistency! If provided,
-#' this will be used.
+#' (including distances) and the `dist_metric` it was built with. The user has
+#' to ensure consistency! If provided, this will be used and whether the
+#' distances are treated as squared is derived from `dist_metric` rather than
+#' from the parameter list.
 #' @param genes_to_use Integer vector. 0-index vector indicating which genes
 #' to include.
 #' @param streaming Boolean. Shall the data be streamed in chunks. Useful
@@ -3553,8 +3555,10 @@ rs_hotspot_cluster_genes <- function(z_matrix, fdr_threshold, min_size) .Call(wr
 #' @param embd Numerical matrix. The embedding matrix from which to generate
 #' the kNN graph.
 #' @param knn_data Optional list. This contains pre-computed kNN data
-#' (including distances). The user has to ensure consistency! If provided,
-#' this will be used.
+#' (including distances) and the `dist_metric` it was built with. The user has
+#' to ensure consistency! If provided, this will be used and whether the
+#' distances are treated as squared is derived from `dist_metric` rather than
+#' from the parameter list.
 #' @param hotspot_params List. The HotSpot parameter list.
 #' @param cells_to_keep Integer vector. 0-index vector indicating which cells
 #' to include in the analysis. Ensure that this is of same order/length
@@ -3724,8 +3728,10 @@ rs_vision <- function(f_path, gs_list, cells_to_keep, streaming, verbose) .Call(
 #' @param embd Numerical matrix. The embedding matrix to use to generate the
 #' kNN graph.
 #' @param knn_data Optional list. This contains pre-computed kNN data
-#' (including distances). The user has to ensure consistency! If provided,
-#' this will be used.
+#' (including distances) and the `dist_metric` it was built with. The user has
+#' to ensure consistency! If provided, this will be used and whether the
+#' distances are treated as squared is derived from `dist_metric` rather than
+#' from the parameter list.
 #' @param gs_list Nested list. Each sublist contains the (0-indexed!) positive
 #' and negative gene indices of that specific gene set.
 #' @param random_gs_list Double-nested list. The outer list represents the
@@ -4618,6 +4624,102 @@ rs_mc_scenic <- function(sparse_data, tf_indices, scenic_params, seed, verbose) 
 #'
 #' @export
 rs_mc_aucell <- function(sparse_data, gs_list, aucell_params, verbose) .Call(wrap__rs_mc_aucell, sparse_data, gs_list, aucell_params, verbose)
+
+#' Calculate gene spatial auto-correlations (for meta cells)
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' This function implements the HotSpot auto-correlation functionality and
+#' will return to what extent a given gene shows auto-correlation in the
+#' kNN-graph over the meta cells. For details see DeTomaso, et al. This version
+#' works on MetaCell counts which are stored in memory directly. There is no
+#' streaming variant: streaming bounds disk re-reads, which is not a problem
+#' an in-memory matrix has.
+#'
+#' @param sparse_data A named list that needs to have `data`, `indptr`,
+#' `indices`, `nrow`, `ncol` and `format`. Shape is (metacells, genes) and the
+#' data are the raw counts.
+#' @param embd Numerical matrix. The embedding matrix from which to generate
+#' the kNN graph.
+#' @param knn_data Optional list. This contains pre-computed kNN data
+#' (including distances) and the `dist_metric` it was built with. The user has
+#' to ensure consistency! If provided, this will be used and whether the
+#' distances are treated as squared is derived from `dist_metric` rather than
+#' from the parameter list.
+#' @param hotspot_params List. The HotSpot parameter list. The kNN parameters
+#' are only read when no `knn_data` is provided.
+#' @param cells_to_keep Integer vector. 0-index vector indicating which meta
+#' cells to include in the analysis. Ensure that this is of same order/length
+#' as the embedding matrix.
+#' @param genes_to_use Integer vector. 0-index vector indicating which genes
+#' to include.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#' @param seed Integer. Random seed for reproducibility.
+#'
+#' @returns A list with the following elements.
+#' \itemize{
+#'   \item gene_idx - 0-based integer indicating the gene index.
+#'   \item gaerys_c - Gaery's C calculation for the autocorrelation
+#'   coefficient.
+#'   \item z_score - Z-score of the auto-correlation.
+#'   \item pval - P-value derived from the Z-score.
+#'   \item fdr - False discovery rate based on the p-value.
+#' }
+#'
+#' @export
+#'
+#' @references DeTomaso, et al., Cell Systems, 2021
+#'
+#' @keywords internal
+rs_mc_hotspot_autocor <- function(sparse_data, embd, knn_data, hotspot_params, cells_to_keep, genes_to_use, verbose, seed) .Call(wrap__rs_mc_hotspot_autocor, sparse_data, embd, knn_data, hotspot_params, cells_to_keep, genes_to_use, verbose, seed)
+
+#' Calculate gene to gene spatial correlations (for meta cells)
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' This function implements the HotSpot gene <> gene local correlation
+#' functionality from HotSpot, see DeTomaso, et al. This version works on
+#' MetaCell counts which are stored in memory directly.
+#'
+#' Three dense metacells x genes blocks are live at once, so keep
+#' `genes_to_use` to the panel actually of interest rather than the whole
+#' transcriptome.
+#'
+#' @param sparse_data A named list that needs to have `data`, `indptr`,
+#' `indices`, `nrow`, `ncol` and `format`. Shape is (metacells, genes) and the
+#' data are the raw counts.
+#' @param embd Numerical matrix. The embedding matrix from which to generate
+#' the kNN graph.
+#' @param knn_data Optional list. This contains pre-computed kNN data
+#' (including distances) and the `dist_metric` it was built with. The user has
+#' to ensure consistency! If provided, this will be used and whether the
+#' distances are treated as squared is derived from `dist_metric` rather than
+#' from the parameter list.
+#' @param hotspot_params List. The HotSpot parameter list. The kNN parameters
+#' are only read when no `knn_data` is provided; `normalise` is unused on this
+#' path.
+#' @param cells_to_keep Integer vector. 0-index vector indicating which meta
+#' cells to include in the analysis. Ensure that this is of same order/length
+#' as the embedding matrix.
+#' @param genes_to_use Integer vector. 0-index vector indicating which genes
+#' to include.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#' @param seed Integer. Random seed for reproducibility.
+#'
+#' @returns A list with the following elements.
+#' \itemize{
+#'   \item cor - The gene x gene local correlation matrix.
+#'   \item z - The Z-scores of these local correlations.
+#' }
+#'
+#' @export
+#'
+#' @references DeTomaso, et al., Cell Systems, 2021
+#'
+#' @keywords internal
+rs_mc_hotspot_gene_cor <- function(sparse_data, embd, knn_data, hotspot_params, cells_to_keep, genes_to_use, verbose, seed) .Call(wrap__rs_mc_hotspot_gene_cor, sparse_data, embd, knn_data, hotspot_params, cells_to_keep, genes_to_use, verbose, seed)
 
 #' Run NMF (HALS) on MetaCells
 #'

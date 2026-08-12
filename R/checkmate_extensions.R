@@ -3018,7 +3018,10 @@ assertScAucell <- checkmate::makeAssertionFunction(checkScAucell)
 #'
 #' @keywords internal
 checkScHotspot <- function(x) {
-  res <- check_list_shape(x, c("model", "normalise"))
+  res <- check_list_shape(
+    x,
+    c("model", "normalise", "weighted_graph", "neighborhood_factor")
+  )
   if (!isTRUE(res)) {
     return(res)
   }
@@ -3030,9 +3033,16 @@ checkScHotspot <- function(x) {
 
   res <- apply_qtest_rules(
     x,
-    list(normalise = "B1"),
+    list(
+      normalise = "B1",
+      weighted_graph = "B1",
+      neighborhood_factor = "R1(0,)"
+    ),
     label = "HotSpot params",
-    hint = "normalise must be a boolean."
+    hint = paste(
+      "normalise and weighted_graph must be booleans,",
+      "neighborhood_factor a positive number."
+    )
   )
   if (!isTRUE(res)) {
     return(res)
