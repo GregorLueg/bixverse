@@ -13,8 +13,8 @@ CARGOTMP = $(CURDIR)/.cargo
 VENDOR_DIR = $(CURDIR)/vendor
 
 
-# RUSTFLAGS appends --print=native-static-libs to ensure that 
-# the correct linkers are used. Use this for debugging if need. 
+# RUSTFLAGS appends --print=native-static-libs to ensure that
+# the correct linkers are used. Use this for debugging if need.
 #
 # CRAN note: Cargo and Rustc versions are reported during
 # configure via tools/msrv.R.
@@ -38,6 +38,9 @@ $(STATLIB):
 	export PATH="$(PATH):$(HOME)/.cargo/bin" && \
 	@PANIC_EXPORTS@RUSTFLAGS="$(RUSTFLAGS) --print=native-static-libs" cargo build @CRAN_FLAGS@ --lib @PROFILE@ --manifest-path=./rust/Cargo.toml --target-dir $(TARGET_DIR) @TARGET@
 
+	# @PROFILE@ matters here. config.R pins it to --release, and without it
+	# cargo builds the document bin into target/debug, recompiling the lib and
+	# every transitive dependency a second time just to emit the wrappers.
 	export CARGO_HOME=$(CARGOTMP) && \
 	export PATH="$(PATH):$(HOME)/.cargo/bin" && \
 	cargo run @CRAN_FLAGS@ @PROFILE@ --bin document --manifest-path=./rust/Cargo.toml --target-dir $(TARGET_DIR) @TARGET@
