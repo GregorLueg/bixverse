@@ -12,6 +12,14 @@
 #' based on annotated cell types. These can be also just unsupervised
 #' memberships to graph-based clustering, etc.
 #'
+#' @details
+#' Ties for the top (or second) label resolve to whichever label sorts first,
+#' as the labels are factorised internally. The entropy is the Shannon entropy
+#' of the label distribution within a meta cell, divided by
+#' `log(<number of distinct labels in original_cell_type>)`, so it sits in
+#' `[0, 1]` and stays comparable between meta cells. It is `0` if there is only
+#' a single label in the data.
+#'
 #' @param object `MetaCells` class.
 #' @param original_cell_type Character vector. The original cell type
 #' annotations of the object the meta cells came from. Either in the row order
@@ -19,9 +27,26 @@
 #' QC-passing cells only, i.e. `get_sc_obs(x, filtered = TRUE)$<column>`. Which
 #' one you passed is inferred from the length, so a vector matching neither is
 #' an error rather than a silently wrong purity.
+#' @param add_additional_info String. Which label information to add on top of
+#' the purity. One of `c("none", "top_label", "top_two_labels")`. Defaults to
+#' `"none"`, i.e. the purity only.
+#' @param add_entropy Boolean. Shall the normalised Shannon entropy of the
+#' label distribution be added as a diversity measure. Defaults to `FALSE`.
 #'
-#' @returns The `MetaCells` with an added columns to the observation table
-#' with the purity measures
+#' @returns The `MetaCells` with added columns to the observation table:
+#' \itemize{
+#'   \item mc_purity - Fraction of the meta cell's cells that carry the most
+#'   abundant label. Always added.
+#'   \item mc_top_label - Name of the most abundant label. Added for
+#'   `add_additional_info %in% c("top_label", "top_two_labels")`.
+#'   \item mc_second_label - Name of the second most abundant label, `NA` for a
+#'   pure meta cell. Added for `add_additional_info = "top_two_labels"`.
+#'   \item mc_second_frac - Fraction of the meta cell's cells carrying that
+#'   second label, `0` for a pure meta cell. Added for
+#'   `add_additional_info = "top_two_labels"`.
+#'   \item mc_entropy - Normalised Shannon entropy of the label distribution,
+#'   see details. Added for `add_entropy = TRUE`.
+#' }
 #'
 #' @export
 calc_meta_cell_purity <- S7::new_generic(
@@ -29,7 +54,9 @@ calc_meta_cell_purity <- S7::new_generic(
   dispatch_args = "object",
   fun = function(
     object,
-    original_cell_type
+    original_cell_type,
+    add_additional_info = c("none", "top_label", "top_two_labels"),
+    add_entropy = FALSE
   ) {
     S7::S7_dispatch()
   }
@@ -38,11 +65,20 @@ calc_meta_cell_purity <- S7::new_generic(
 #' @method calc_meta_cell_purity MetaCells
 S7::method(calc_meta_cell_purity, MetaCells) <- function(
   object,
-  original_cell_type
+  original_cell_type,
+  add_additional_info = c("none", "top_label", "top_two_labels"),
+  add_entropy = FALSE
 ) {
+  add_additional_info <- match.arg(add_additional_info)
+
   # checks
   checkmate::assertTRUE(S7::S7_inherits(object, MetaCells))
   checkmate::qassert(original_cell_type, "S+")
+  checkmate::assertChoice(
+    add_additional_info,
+    c("none", "top_label", "top_two_labels")
+  )
+  checkmate::qassert(add_entropy, "B1")
 
   # memberships index into the full obs space; a short vector would silently
   # recycle or produce NA rather than error
@@ -82,16 +118,64 @@ S7::method(calc_meta_cell_purity, MetaCells) <- function(
     ))
   }
 
-  # calculate purity
-  purity <- purrr::map_dbl(
+  # one factor pass up front, so each meta cell becomes a tabulate() over
+  # integer codes instead of a table() rebuilding the level set every time
+  labels_fct <- factor(original_cell_type)
+  codes <- as.integer(labels_fct)
+  lvls <- levels(labels_fct)
+  n_labels <- length(lvls)
+
+  counts <- purrr::map(
     mc_rows,
-    function(idx) {
-      types <- original_cell_type[idx]
-      max(table(types)) / length(types)
-    }
+    \(idx) tabulate(codes[idx], nbins = n_labels)
+  )
+  sizes <- purrr::map_int(mc_rows, length)
+
+  new_cols <- list(
+    mc_purity = purrr::map2_dbl(counts, sizes, \(cnt, n) max(cnt) / n)
   )
 
-  object[["mc_purity"]] <- purity
+  if (add_additional_info != "none") {
+    new_cols$mc_top_label <- purrr::map_chr(counts, \(cnt) lvls[which.max(cnt)])
+  }
+
+  if (add_additional_info == "top_two_labels") {
+    # zero the winner and take the argmax again. An all-zero remainder means the
+    # meta cell only ever saw a single label
+    second <- purrr::map(counts, \(cnt) {
+      cnt[which.max(cnt)] <- 0L
+      cnt
+    })
+
+    new_cols$mc_second_label <- purrr::map_chr(
+      second,
+      \(cnt) if (max(cnt) == 0L) NA_character_ else lvls[which.max(cnt)]
+    )
+    new_cols$mc_second_frac <- purrr::map2_dbl(
+      second,
+      sizes,
+      \(cnt, n) max(cnt) / n
+    )
+  }
+
+  if (add_entropy) {
+    new_cols$mc_entropy <- if (n_labels < 2L) {
+      # log(1) would turn the normalisation into a NaN
+      rep(0, length(counts))
+    } else {
+      purrr::map2_dbl(counts, sizes, \(cnt, n) {
+        p <- cnt[cnt > 0L] / n
+        -sum(p * log(p)) / log(n_labels)
+      })
+    }
+  }
+
+  # the single-column branch of `[[<-` asserts an atomic value
+  object[[names(new_cols)]] <- if (length(new_cols) == 1L) {
+    new_cols[[1L]]
+  } else {
+    new_cols
+  }
 
   return(object)
 }

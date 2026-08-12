@@ -4,7 +4,12 @@
 \alias{calc_meta_cell_purity}
 \title{Calculate meta cell purity}
 \usage{
-calc_meta_cell_purity(object, original_cell_type)
+calc_meta_cell_purity(
+  object,
+  original_cell_type,
+  add_additional_info = c("none", "top_label", "top_two_labels"),
+  add_entropy = FALSE
+)
 }
 \arguments{
 \item{object}{\code{MetaCells} class.}
@@ -15,14 +20,41 @@ of its full (unfiltered) obs table, i.e. \verb{get_sc_obs(x)$<column>}, or of th
 QC-passing cells only, i.e. \verb{get_sc_obs(x, filtered = TRUE)$<column>}. Which
 one you passed is inferred from the length, so a vector matching neither is
 an error rather than a silently wrong purity.}
+
+\item{add_additional_info}{String. Which label information to add on top of
+the purity. One of \code{c("none", "top_label", "top_two_labels")}. Defaults to
+\code{"none"}, i.e. the purity only.}
+
+\item{add_entropy}{Boolean. Shall the normalised Shannon entropy of the
+label distribution be added as a diversity measure. Defaults to \code{FALSE}.}
 }
 \value{
-The \code{MetaCells} with an added columns to the observation table
-with the purity measures
+The \code{MetaCells} with added columns to the observation table:
+\itemize{
+\item mc_purity - Fraction of the meta cell's cells that carry the most
+abundant label. Always added.
+\item mc_top_label - Name of the most abundant label. Added for
+\code{add_additional_info \%in\% c("top_label", "top_two_labels")}.
+\item mc_second_label - Name of the second most abundant label, \code{NA} for a
+pure meta cell. Added for \code{add_additional_info = "top_two_labels"}.
+\item mc_second_frac - Fraction of the meta cell's cells carrying that
+second label, \code{0} for a pure meta cell. Added for
+\code{add_additional_info = "top_two_labels"}.
+\item mc_entropy - Normalised Shannon entropy of the label distribution,
+see details. Added for \code{add_entropy = TRUE}.
+}
 }
 \description{
 A potential metric to see how well the meta cells are aggregated is their
 cell type purity. This helper function helps to plot the meta-cell purity
 based on annotated cell types. These can be also just unsupervised
 memberships to graph-based clustering, etc.
+}
+\details{
+Ties for the top (or second) label resolve to whichever label sorts first,
+as the labels are factorised internally. The entropy is the Shannon entropy
+of the label distribution within a meta cell, divided by
+\verb{log(<number of distinct labels in original_cell_type>)}, so it sits in
+\verb{[0, 1]} and stays comparable between meta cells. It is \code{0} if there is only
+a single label in the data.
 }
