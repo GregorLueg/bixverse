@@ -719,6 +719,20 @@ params_sc_vision <- function(
 #' so a gene at rank 2 and one at rank 200 count for almost the same thing.
 #' `"recovery"` and `"ap"` are top-heavy.
 #'
+#' For SCENIC use `"recovery"`, the default. `"wilcox"` is a bixverse addition
+#' and its flatter score does not separate into on/off populations, so it
+#' binarises badly.
+#'
+#' Ranking ties are averaged (midranks) rather than broken at random the way
+#' AUCell does it, which is why there is no need for SCENIC's trick of setting
+#' the cutoff to the 1st percentile of genes detected per cell. Undetected
+#' genes all collapse onto one rank well outside any sensible `max_rank`.
+#'
+#' Note the recovery AUC is normalised by `max_rank * length(gene_set)`,
+#' matching pySCENIC and AUCell's `normAUC = FALSE`. Modern AUCell divides by
+#' the attainable maximum instead, so absolute values differ by a per-gene-set
+#' constant. Cell ordering within a regulon is unaffected.
+#'
 #' @param auc_type String. Which statistic to calculate. One of
 #' `c("wilcox", "recovery", "ap")`. `"wilcox"` is the AUC derived from the
 #' Mann-Whitney U statistic over the full ranking, with the null at 0.5 for any
@@ -726,7 +740,7 @@ params_sc_vision <- function(
 #' i.e. the actual AUCell statistic of Aibar, et al. `"ap"` is average
 #' precision, the most top-heavy of the three, but its null tracks the gene set
 #' prevalence so raw values are not comparable across gene sets of different
-#' size unless `standardise` is on. Defaults to `"wilcox"`.
+#' size unless `standardise` is on. Defaults to `"recovery"`.
 #' @param max_rank Optional numeric. Rank cutoff for `"recovery"`, counted from
 #' the top of the within-cell ranking. If `NULL`, resolves to the top 5% of the
 #' gene universe, following Aibar, et al. Ignored by the other two statistics.
@@ -740,12 +754,12 @@ params_sc_vision <- function(
 #'
 #' @export
 params_sc_aucell <- function(
-  auc_type = c("wilcox", "recovery", "ap"),
+  auc_type = c("recovery", "wilcox", "ap"),
   max_rank = NULL,
   standardise = FALSE
 ) {
   auc_type <- match.arg(auc_type)
-  checkmate::assertChoice(auc_type, c("wilcox", "recovery", "ap"))
+  checkmate::assertChoice(auc_type, c("recovery", "wilcox", "ap"))
   checkmate::qassert(max_rank, c("N1[1,)", "0"))
   checkmate::qassert(standardise, "B1")
 
@@ -755,6 +769,50 @@ params_sc_aucell <- function(
     auc_type = auc_type,
     max_rank = if (is.null(max_rank)) NULL else as.double(max_rank),
     standardise = standardise
+  )
+}
+
+## scenic binarisation ---------------------------------------------------------
+
+#' Wrapper function for parameters for the SCENIC binarisation
+#'
+#' @description
+#' Each regulon gets its own threshold. A two-component Gaussian mixture is
+#' fitted and compared against a single Gaussian by BIC; if the mixture wins,
+#' the threshold is the kernel density minimum between the two component means,
+#' otherwise it falls back to `mean + 2 * sd`. This follows pySCENIC. AUCell
+#' fits six candidates and then lets the density trough override all of them
+#' whenever one exists, so the two land in much the same place.
+#'
+#' Turn `bw_adjust` up if shallow wobbles in the density are being picked up as
+#' troughs. AUCell effectively runs at `2`.
+#'
+#' @param bw_adjust Float. Multiplier on the Silverman bandwidth of the kernel
+#' density estimate. Higher values smooth more. Defaults to `1`.
+#' @param n_grid Integer. Number of points at which the density is evaluated
+#' between the two component means. Defaults to `512L`.
+#' @param n_bins Integer. Number of histogram bins used to approximate the
+#' density. Defaults to `512L`.
+#'
+#' @returns A list with the binarisation parameters.
+#'
+#' @references Aibar, et al., Nat Methods, 2017
+#'
+#' @export
+params_scenic_binarise <- function(
+  bw_adjust = 1,
+  n_grid = 512L,
+  n_bins = 512L
+) {
+  checkmate::qassert(bw_adjust, "N1(0,)")
+  checkmate::qassert(n_grid, "I1[3,)")
+  checkmate::qassert(n_bins, "I1[2,)")
+
+  # Rust parses these with as_real(), so integers need to go over as doubles
+  list(
+    bw_adjust = as.double(bw_adjust),
+    n_grid = as.double(n_grid),
+    n_bins = as.double(n_bins)
   )
 }
 

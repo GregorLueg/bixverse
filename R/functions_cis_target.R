@@ -149,14 +149,14 @@ read_motif_annotation_file <- function(annot_file) {
   # fcase is cool!
   motif_annotations[,
     annotationSource := data.table::fcase(
-      inferred_orthology & inferred_motif_sim  ,
-      "inferredBy_MotifSimilarity_n_Orthology" ,
-      inferred_motif_sim                       ,
-      "inferredBy_MotifSimilarity"             ,
-      inferred_orthology                       ,
-      "inferredBy_Orthology"                   ,
-      direct_annotation                        ,
-      "directAnnotation"                       ,
+      inferred_orthology & inferred_motif_sim,
+      "inferredBy_MotifSimilarity_n_Orthology",
+      inferred_motif_sim,
+      "inferredBy_MotifSimilarity",
+      inferred_orthology,
+      "inferredBy_Orthology",
+      direct_annotation,
+      "directAnnotation",
       default = ""
     )
   ]
@@ -303,9 +303,9 @@ run_cistarget <- function(
       gs_list = gs_indices,
       auc_threshold = as.integer(auc_threshold * nrow(rankings)),
       nes_threshold = nes_threshold,
-      max_rank = nrow(rankings),
-      method = "approx",
-      n_mean = 10L
+      max_rank = min(max_rank, nrow(rankings)),
+      method = rcc_method,
+      n_mean = n_mean
     )
   )
 
@@ -349,4 +349,88 @@ run_cistarget <- function(
   setorder(cis_res_final, gs_name, -nes)
 
   return(cis_res_final)
+}
+
+# binarisation -----------------------------------------------------------------
+
+#' Binarise regulon activity into on/off calls
+#'
+#' @description
+#' The last SCENIC step. Each regulon gets its own threshold derived from the
+#' shape of its AUC distribution across cells, and a cell counts as on when its
+#' score sits strictly above that threshold.
+#'
+#' The thresholds come back alongside the calls, so you can inspect them,
+#' override any that look wrong and re-apply the comparison yourself. SCENIC
+#' does the same, it writes them to an editable file between scoring and
+#' assignment.
+#'
+#' Regulons flagged as not bimodal fell back to `mean + 2 * sd`. If most of your
+#' regulons land there, the AUC distributions are too flat to separate, which
+#' usually points at the scoring statistic rather than the thresholding. Check
+#' you used `auc_type = "recovery"`, see [params_sc_aucell()].
+#'
+#' @param auc_matrix Numeric matrix of cells x regulons, or the `ScMatrixRes`
+#' returned by [aucell_sc()].
+#' @param binarise_params List. Output of [params_scenic_binarise()].
+#' @param .verbose Boolean. Controls verbosity of the function.
+#'
+#' @returns A list with:
+#' \itemize{
+#'   \item{binary - Logical matrix of cells x regulons, `TRUE` where the
+#'   regulon is on.}
+#'   \item{thresholds - data.table with one row per regulon, holding the
+#'   `threshold`, whether it was `bimodal` and the number of cells called on.}
+#' }
+#'
+#' @references Aibar, et al., Nat Methods, 2017
+#'
+#' @export
+binarise_regulon_activity <- function(
+  auc_matrix,
+  binarise_params = params_scenic_binarise(),
+  .verbose = TRUE
+) {
+  # ScMatrixRes is a classed matrix, so this just strips the attributes
+  if (inherits(auc_matrix, "ScMatrixRes")) {
+    auc_matrix <- unclass(auc_matrix)
+    attr(auc_matrix, "cell_indices") <- NULL
+  }
+
+  # checks
+  checkmate::assertMatrix(
+    auc_matrix,
+    mode = "numeric",
+    min.rows = 2,
+    min.cols = 1,
+    col.names = "named"
+  )
+  assertScenicBinariseParams(binarise_params)
+  checkmate::qassert(.verbose, "B1")
+
+  storage.mode(auc_matrix) <- "double"
+
+  res <- rs_regulon_thresholds(
+    auc_matrix = auc_matrix,
+    binarise_params = binarise_params
+  )
+
+  binary <- sweep(auc_matrix, 2L, res$thresholds, FUN = ">")
+
+  thresholds <- data.table::data.table(
+    regulon = colnames(auc_matrix),
+    threshold = res$thresholds,
+    bimodal = res$bimodal,
+    n_cells_on = colSums(binary)
+  )
+
+  if (.verbose) {
+    message(sprintf(
+      "Binarised %d regulons, %d of which were bimodal.",
+      ncol(auc_matrix),
+      sum(res$bimodal)
+    ))
+  }
+
+  return(list(binary = binary, thresholds = thresholds))
 }

@@ -944,6 +944,8 @@ checkCistargetParams <- function(x) {
     c(
       "auc_threshold",
       "nes_threshold",
+      "max_rank",
+      "n_mean",
       "rcc_method",
       "high_conf_cats",
       "low_conf_cats"
@@ -958,6 +960,8 @@ checkCistargetParams <- function(x) {
     list(
       auc_threshold = "N1[0,1]",
       nes_threshold = "N1",
+      max_rank = "I1[1,)",
+      n_mean = "I1[1,)",
       rcc_method = "S1",
       high_conf_cats = "S+",
       low_conf_cats = "S+"
@@ -965,6 +969,7 @@ checkCistargetParams <- function(x) {
     label = "CisTarget params",
     hint = paste(
       "auc_threshold must be numeric [0, 1]; nes_threshold must be numeric;",
+      "max_rank and n_mean must be positive integers;",
       "rcc_method must be a single string;",
       "high_conf_cats and low_conf_cats must be character vectors."
     )
@@ -3005,6 +3010,56 @@ checkScAucell <- function(x) {
 #'
 #' @keywords internal
 assertScAucell <- checkmate::makeAssertionFunction(checkScAucell)
+
+#### SCENIC binarisation -------------------------------------------------------
+
+#' Check SCENIC binarisation parameters
+#'
+#' @description Checkmate extension for checking the binarisation parameters.
+#'
+#' @param x The list to check/assert
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
+checkScenicBinariseParams <- function(x) {
+  res <- check_list_shape(x, c("bw_adjust", "n_grid", "n_bins"))
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  apply_qtest_rules(
+    x,
+    list(
+      bw_adjust = "N1(0,)",
+      n_grid = "N1[3,)",
+      n_bins = "N1[2,)"
+    ),
+    label = "SCENIC binarisation params",
+    hint = paste(
+      "bw_adjust must be a positive numeric; n_grid must be numeric >= 3;",
+      "n_bins must be numeric >= 2."
+    )
+  )
+}
+
+#' Assert SCENIC binarisation parameters
+#'
+#' @description Checkmate extension for asserting the binarisation parameters.
+#'
+#' @inheritParams checkScenicBinariseParams
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
+assertScenicBinariseParams <- checkmate::makeAssertionFunction(
+  checkScenicBinariseParams
+)
 
 #### HotSpot -------------------------------------------------------------------
 

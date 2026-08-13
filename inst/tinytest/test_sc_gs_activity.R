@@ -197,6 +197,7 @@ expect_equivalent(
 auc_res_streamed <- aucell_sc(
   object = sc_object,
   gs_list = auc_gene_sets,
+  aucell_params = params_sc_aucell(auc_type = "wilcox"),
   streaming = TRUE,
   .verbose = FALSE
 )
@@ -205,6 +206,12 @@ expect_equivalent(
   current = auc_res_streamed,
   target = auc_res[["wilcox"]],
   info = "aucell - streamed and in-memory paths agree"
+)
+
+expect_equal(
+  current = params_sc_aucell()$auc_type,
+  target = "recovery",
+  info = "aucell: the SCENIC recovery statistic is the default"
 )
 
 

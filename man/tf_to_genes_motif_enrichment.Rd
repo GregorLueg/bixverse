@@ -43,6 +43,10 @@ transcription factors. Must contain columns: \code{motif}, \code{TF}, and
 threshold calculation. Default 0.05 means top 5 percent of genes.}
 \item{nes_threshold - Numeric. Normalised Enrichment Score threshold for
 determining significant motifs. Default is 3.0.}
+\item{max_rank - Integer. Depth of the recovery curves used for the
+background and the leading edge. Default is 5000.}
+\item{n_mean - Integer. Rolling mean window for the approximate background
+curve. Default is 100.}
 \item{rcc_method - Character. Recovery curve calculation method: "approx"
 (approximate, faster) or "icistarget" (exact, slower).}
 \item{high_conf_cats - Character vector. Annotation categories considered

@@ -990,7 +990,7 @@ find_clusters_sc <- S7::new_generic(
 #' [bixverse::params_sc_aucell()] with the following elements:
 #' \itemize{
 #'   \item auc_type - String. Which statistic to calculate. One of
-#'   `c("wilcox", "recovery", "ap")`.
+#'   `c("recovery", "wilcox", "ap")`. `"recovery"` is the SCENIC one.
 #'   \item max_rank - Optional numeric. Rank cutoff for `"recovery"`. If `NULL`,
 #'   the top 5% of the gene universe is used. Ignored by the other statistics.
 #'   \item standardise - Boolean. Shall each gene set's scores be z-scored

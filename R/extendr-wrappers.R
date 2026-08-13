@@ -3538,6 +3538,28 @@ rs_calculate_dge_one_vs_many <- function(f_path, cell_indices_ref, cell_indices_
 #' @keywords internal
 rs_aucell <- function(f_path, gs_list, cells_to_keep, aucell_params, streaming, verbose) .Call(wrap__rs_aucell, f_path, gs_list, cells_to_keep, aucell_params, streaming, verbose)
 
+#' Derive the on/off threshold per regulon in Rust
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Fits a two-component Gaussian mixture per regulon and compares it against a
+#' single Gaussian by BIC. If the mixture wins, the threshold is the kernel
+#' density minimum between the two component means, otherwise it falls back to
+#' `mean + 2 * sd`. This follows pySCENIC rather than AUCell.
+#'
+#' @param auc_matrix Numeric matrix of cells x regulons, as returned by
+#' [bixverse::rs_aucell()].
+#' @param binarise_params List. The binarisation parameters, see
+#' [bixverse::params_scenic_binarise()].
+#'
+#' @return A list with `thresholds` (one per regulon) and `bimodal` (whether
+#' the mixture won the BIC comparison).
+#'
+#' @export
+#'
+#' @keywords internal
+rs_regulon_thresholds <- function(auc_matrix, binarise_params) .Call(wrap__rs_regulon_thresholds, auc_matrix, binarise_params)
+
 #' Calculate gene spatial auto-correlations
 #'
 #' @description

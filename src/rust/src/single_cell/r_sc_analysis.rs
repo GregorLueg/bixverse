@@ -12,6 +12,7 @@ use bixverse_rs::single_cell::sc_analysis::{
     nichenet::ligand_regulatory_potential::*,
     nichenet::prioritisation::compute_cluster_expression_stats,
     nmf_sc::{nmf_multiple_run_sc, nmf_single_run_sc},
+    regulon_binarise::{BinariseParams, derive_regulon_thresholds},
     scenic::*,
     vision::*,
 };
@@ -34,6 +35,7 @@ extendr_module! {
     fn rs_calculate_dge_one_vs_many;
     // aucell
     fn rs_aucell;
+    fn rs_regulon_thresholds;
     // hotspot
     fn rs_hotspot_autocor;
     fn rs_hotspot_cluster_genes;
@@ -438,6 +440,53 @@ fn rs_aucell(
 
     let auc_mat = Mat::from_fn(res[0].len(), res.len(), |i, j| res[j][i] as f64);
     Ok(faer_to_r_matrix(auc_mat.as_ref()))
+}
+
+/// Derive the on/off threshold per regulon in Rust
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Fits a two-component Gaussian mixture per regulon and compares it against a
+/// single Gaussian by BIC. If the mixture wins, the threshold is the kernel
+/// density minimum between the two component means, otherwise it falls back to
+/// `mean + 2 * sd`. This follows pySCENIC rather than AUCell.
+///
+/// @param auc_matrix Numeric matrix of cells x regulons, as returned by
+/// [bixverse::rs_aucell()].
+/// @param binarise_params List. The binarisation parameters, see
+/// [bixverse::params_scenic_binarise()].
+///
+/// @return A list with `thresholds` (one per regulon) and `bimodal` (whether
+/// the mixture won the BIC comparison).
+///
+/// @export
+///
+/// @keywords internal
+#[extendr]
+fn rs_regulon_thresholds(auc_matrix: RMatrix<f64>, binarise_params: List) -> Result<List> {
+    let params = BinariseParams::from_r_list(binarise_params)?;
+
+    let n_cells = auc_matrix.nrows();
+    let n_regulons = auc_matrix.ncols();
+    let data = auc_matrix.data();
+
+    // R hands over a column-major cells x regulons matrix, the crate wants one
+    // row of cell scores per regulon
+    let rows: Vec<Vec<f32>> = (0..n_regulons)
+        .map(|j| {
+            data[j * n_cells..(j + 1) * n_cells]
+                .iter()
+                .map(|&v| v as f32)
+                .collect()
+        })
+        .collect();
+
+    let res = derive_regulon_thresholds(&rows, Some(params)).to_extendr()?;
+
+    Ok(list!(
+        thresholds = res.thresholds,
+        bimodal = res.bimodal
+    ))
 }
 
 /// Calculate VISION pathway scores in Rust
