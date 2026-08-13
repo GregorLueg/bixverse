@@ -519,6 +519,7 @@ reference:
       - find_clusters_sc
       - find_markers_sc
       - find_all_markers_sc
+      - find_specific_markers_sc
       - get_pseudobulked_sc
       - generate_knn_sc
       - get_differential_abundance_res

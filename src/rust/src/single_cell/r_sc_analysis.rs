@@ -31,6 +31,7 @@ extendr_module! {
     mod r_sc_analysis;
     // dge
     fn rs_calculate_dge_mann_whitney;
+    fn rs_calculate_dge_one_vs_many;
     // aucell
     fn rs_aucell;
     // hotspot
@@ -148,6 +149,129 @@ fn rs_calculate_dge_mann_whitney(
         z_scores = dge_results.z_scores,
         p_values = dge_results.p_vals,
         fdr = dge_results.fdr,
+        genes_to_keep = dge_results.genes_to_keep
+    ))
+}
+
+/// Calculate one-vs-many AUROC DGEs for specific markers
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// The function scores one reference group of cells against each comparison
+/// group separately and summarises the results per gene across all of the
+/// comparisons. This is the marker question: a gene that is specific to the
+/// reference has to hold up against every rival, which a single pooled test
+/// cannot answer because it is dominated by whichever rival contributes the
+/// most cells. Genes are filtered once, globally, so every comparison's FDR is
+/// calculated over the same gene set.
+///
+/// @param f_path String. Path to the `counts_cells.bin` file.
+/// @param cell_indices_ref Integer. Index positions (0-indexed) of the cells
+/// of the reference group.
+/// @param cell_indices_other List. List of integer vectors, each containing the
+/// index positions (0-indexed) of the cells of one comparison group.
+/// @param min_prop Minimum proportion of expression in at least one of the
+/// groups to be tested.
+/// @param alternative String. One of `c("twosided", "greater", "less")`. Null
+/// hypothesis.
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
+///
+/// @return A list with the elements below. The per-comparison elements are
+/// flattened comparison-major, i.e., all genes of the first comparison, then
+/// all genes of the second, and so on.
+/// \itemize{
+///   \item comparison - Index (0-indexed) of the comparison group the
+///   per-comparison statistics belong to.
+///   \item auroc - AUROC of the reference against the comparison group.
+///   \item lfc - Log fold change of the reference against the comparison group.
+///   \item prop_other - Proportion of cells expressing the gene in the
+///   comparison group.
+///   \item z_scores - Z-scores based on the Mann Whitney statistic.
+///   \item p_values - P-values of the Mann Whitney statistic.
+///   \item fdr - False discovery rate after BH adjustment, per comparison.
+///   \item prop_ref - Proportion of reference cells expressing the gene.
+///   \item median_auroc - Median AUROC across the comparisons.
+///   \item min_auroc - Worst AUROC across the comparisons.
+///   \item mean_auroc - Mean AUROC across the comparisons.
+///   \item max_auroc - Best AUROC across the comparisons.
+///   \item worst_comparison - Index (0-indexed) of the comparison group
+///   achieving `min_auroc`.
+///   \item min_rank - Best rank the gene achieves in any single comparison when
+///   the genes are ordered by descending AUROC.
+///   \item simes_p - Simes-combined p-value across the comparisons.
+///   \item simes_fdr - False discovery rate over `simes_p`.
+///   \item max_p - Largest p-value across the comparisons.
+///   \item max_p_fdr - False discovery rate over `max_p`.
+///   \item genes_to_keep - Boolean indicating which genes were tested.
+/// }
+///
+/// @export
+///
+/// @keywords internal
+#[extendr]
+fn rs_calculate_dge_one_vs_many(
+    f_path: String,
+    cell_indices_ref: &[i32],
+    cell_indices_other: List,
+    min_prop: f64,
+    alternative: String,
+    verbose: usize,
+) -> extendr_api::Result<List> {
+    let cell_indices_ref = cell_indices_ref.r_int_convert();
+
+    let mut other_indices: Vec<Vec<usize>> = Vec::with_capacity(cell_indices_other.len());
+    for i in 0..cell_indices_other.len() {
+        let r_obj = cell_indices_other.elt(i)?;
+        let int = r_obj
+            .as_integer_vector()
+            .ok_or_else(|| {
+                extendr_api::Error::Other(format!(
+                    "Element {} of `cell_indices_other` is not an integer vector.",
+                    i + 1
+                ))
+            })?
+            .r_int_convert();
+        other_indices.push(int);
+    }
+
+    let reader = ParallelSparseReader::new(&f_path).to_extendr()?;
+
+    let dge_results: DgeAurocMultiRes = calculate_dge_one_vs_many_auroc(
+        &reader,
+        &cell_indices_ref,
+        &other_indices,
+        min_prop as f32,
+        &alternative,
+        verbose,
+    )
+    .to_extendr()?;
+
+    let no_genes_kept = dge_results.prop_ref.len();
+
+    let comparison = (0..other_indices.len())
+        .flat_map(|group| std::iter::repeat_n(group as i32, no_genes_kept))
+        .collect::<Vec<i32>>();
+
+    Ok(list!(
+        comparison = comparison,
+        auroc = dge_results.auroc.concat().r_float_convert(),
+        lfc = dge_results.lfc.concat().r_float_convert(),
+        prop_other = dge_results.prop_other.concat().r_float_convert(),
+        z_scores = dge_results.z_scores.concat(),
+        p_values = dge_results.p_vals.concat(),
+        fdr = dge_results.fdr.concat(),
+        prop_ref = dge_results.prop_ref.r_float_convert(),
+        median_auroc = dge_results.median_auroc.r_float_convert(),
+        min_auroc = dge_results.min_auroc.r_float_convert(),
+        mean_auroc = dge_results.mean_auroc.r_float_convert(),
+        max_auroc = dge_results.max_auroc.r_float_convert(),
+        worst_comparison = dge_results.worst_comparison.r_int_convert(),
+        min_rank = dge_results.min_rank.r_int_convert(),
+        simes_p = dge_results.simes_p,
+        simes_fdr = dge_results.simes_fdr,
+        max_p = dge_results.max_p,
+        max_p_fdr = dge_results.max_p_fdr,
         genes_to_keep = dge_results.genes_to_keep
     ))
 }

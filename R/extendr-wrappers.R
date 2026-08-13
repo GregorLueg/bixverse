@@ -3452,6 +3452,64 @@ rs_magic_impute <- function(f_path, knn_data, cell_indices, total_cells, gene_in
 #' @keywords internal
 rs_calculate_dge_mann_whitney <- function(f_path, cell_indices_1, cell_indices_2, min_prop, alternative, verbose) .Call(wrap__rs_calculate_dge_mann_whitney, f_path, cell_indices_1, cell_indices_2, min_prop, alternative, verbose)
 
+#' Calculate one-vs-many AUROC DGEs for specific markers
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' The function scores one reference group of cells against each comparison
+#' group separately and summarises the results per gene across all of the
+#' comparisons. This is the marker question: a gene that is specific to the
+#' reference has to hold up against every rival, which a single pooled test
+#' cannot answer because it is dominated by whichever rival contributes the
+#' most cells. Genes are filtered once, globally, so every comparison's FDR is
+#' calculated over the same gene set.
+#'
+#' @param f_path String. Path to the `counts_cells.bin` file.
+#' @param cell_indices_ref Integer. Index positions (0-indexed) of the cells
+#' of the reference group.
+#' @param cell_indices_other List. List of integer vectors, each containing the
+#' index positions (0-indexed) of the cells of one comparison group.
+#' @param min_prop Minimum proportion of expression in at least one of the
+#' groups to be tested.
+#' @param alternative String. One of `c("twosided", "greater", "less")`. Null
+#' hypothesis.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @return A list with the elements below. The per-comparison elements are
+#' flattened comparison-major, i.e., all genes of the first comparison, then
+#' all genes of the second, and so on.
+#' \itemize{
+#'   \item comparison - Index (0-indexed) of the comparison group the
+#'   per-comparison statistics belong to.
+#'   \item auroc - AUROC of the reference against the comparison group.
+#'   \item lfc - Log fold change of the reference against the comparison group.
+#'   \item prop_other - Proportion of cells expressing the gene in the
+#'   comparison group.
+#'   \item z_scores - Z-scores based on the Mann Whitney statistic.
+#'   \item p_values - P-values of the Mann Whitney statistic.
+#'   \item fdr - False discovery rate after BH adjustment, per comparison.
+#'   \item prop_ref - Proportion of reference cells expressing the gene.
+#'   \item median_auroc - Median AUROC across the comparisons.
+#'   \item min_auroc - Worst AUROC across the comparisons.
+#'   \item mean_auroc - Mean AUROC across the comparisons.
+#'   \item max_auroc - Best AUROC across the comparisons.
+#'   \item worst_comparison - Index (0-indexed) of the comparison group
+#'   achieving `min_auroc`.
+#'   \item min_rank - Best rank the gene achieves in any single comparison when
+#'   the genes are ordered by descending AUROC.
+#'   \item simes_p - Simes-combined p-value across the comparisons.
+#'   \item simes_fdr - False discovery rate over `simes_p`.
+#'   \item max_p - Largest p-value across the comparisons.
+#'   \item max_p_fdr - False discovery rate over `max_p`.
+#'   \item genes_to_keep - Boolean indicating which genes were tested.
+#' }
+#'
+#' @export
+#'
+#' @keywords internal
+rs_calculate_dge_one_vs_many <- function(f_path, cell_indices_ref, cell_indices_other, min_prop, alternative, verbose) .Call(wrap__rs_calculate_dge_one_vs_many, f_path, cell_indices_ref, cell_indices_other, min_prop, alternative, verbose)
+
 #' Calculate AUCell in Rust
 #'
 #' @description

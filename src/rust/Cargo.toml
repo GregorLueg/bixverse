@@ -39,7 +39,7 @@ thousands = "*"
 
 # To be updated!
 [patch.crates-io]
-bixverse-rs = { git = "https://github.com/GregorLueg/bixverse-rs", branch = "release-0.4.3" }
+bixverse-rs = { path = "/Users/gregorlueg/repos/shared/bixverse-rs" }
 
 [[bin]]
 name = "document"
