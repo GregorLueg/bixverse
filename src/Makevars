@@ -41,6 +41,10 @@ $(STATLIB):
 	# --release matters here. config.R pins it to --release, and without it
 	# cargo builds the document bin into target/debug, recompiling the lib and
 	# every transitive dependency a second time just to emit the wrappers.
+	#
+	# The dev profile overrides have to match the build above for the same
+	# reason: both invocations share one profile, so differing overrides mean a
+	# second full compile.
 	export CARGO_HOME=$(CARGOTMP) && \
 	export PATH="$(PATH):$(HOME)/.cargo/bin" && \
 	cargo run  --release --bin document --manifest-path=./rust/Cargo.toml --target-dir $(TARGET_DIR) 

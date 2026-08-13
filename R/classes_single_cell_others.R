@@ -3669,6 +3669,60 @@ new_sc_specific_markers <- function(summary, per_comparison, params) {
   return(sc_specific_markers)
 }
 
+### getters --------------------------------------------------------------------
+
+#' Get the per-gene marker summaries across all rivals
+#'
+#' @description
+#' Returns the summaries a marker is judged on: the AUROC of the reference
+#' against its rivals reduced to one row per gene and reference group. Rank on
+#' `median_auroc` for a marker that survives a single closely related rival, or
+#' on `min_auroc` when it has to beat every rival unambiguously.
+#'
+#' @param x `ScSpecificMarkers` object.
+#'
+#' @returns A copy of the summary data.table.
+#'
+#' @export
+get_marker_summary <- function(x) {
+  UseMethod("get_marker_summary")
+}
+
+#' @rdname get_marker_summary
+#'
+#' @export
+get_marker_summary.ScSpecificMarkers <- function(x) {
+  checkmate::assertClass(x, "ScSpecificMarkers")
+
+  data.table::copy(x$summary)
+}
+
+#' Get the per-rival marker statistics
+#'
+#' @description
+#' Returns the statistics that the summaries of
+#' [bixverse::get_marker_summary()] are built from, i.e., one row per gene,
+#' reference group and rival. Useful to find out which rival a gene fails
+#' against.
+#'
+#' @param x `ScSpecificMarkers` object.
+#'
+#' @returns A copy of the per comparison data.table.
+#'
+#' @export
+get_marker_comparisons <- function(x) {
+  UseMethod("get_marker_comparisons")
+}
+
+#' @rdname get_marker_comparisons
+#'
+#' @export
+get_marker_comparisons.ScSpecificMarkers <- function(x) {
+  checkmate::assertClass(x, "ScSpecificMarkers")
+
+  data.table::copy(x$per_comparison)
+}
+
 ### primitives -----------------------------------------------------------------
 
 #' @export

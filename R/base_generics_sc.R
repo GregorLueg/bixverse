@@ -1130,8 +1130,6 @@ scenic_grn_sc <- S7::new_generic(
 
 #### nmf -----------------------------------------------------------------------
 
-## generics --------------------------------------------------------------------
-
 #' Run single-run NMF on single cell or meta cell data
 #'
 #' @description
