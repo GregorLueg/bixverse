@@ -543,6 +543,8 @@ reference:
       - get_tf_to_gene
       - tf_to_genes_correlations
       - tf_to_genes_motif_enrichment
+      - binarise_regulon_activity
+      - build_regulons
       - nmf_sc
       - stabilised_nmf_sc
       - get_best_run
@@ -556,6 +558,7 @@ reference:
       - params_scenic_extra_trees_defaults
       - params_scenic_gradient_boosting_defaults
       - params_scenic_random_forest_defaults
+      - params_scenic_binarise
       - params_meld
       - params_sc_palantir
       - params_sc_branch_selection
