@@ -13,7 +13,7 @@ memberships to graph-based clustering, etc."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.8</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -101,7 +101,12 @@ memberships to graph-based clustering, etc.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">calc_meta_cell_purity</span><span class="op">(</span><span class="va">object</span>, <span class="va">original_cell_type</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">calc_meta_cell_purity</span><span class="op">(</span></span>
+<span>  <span class="va">object</span>,</span>
+<span>  <span class="va">original_cell_type</span>,</span>
+<span>  add_additional_info <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"none"</span>, <span class="st">"top_label"</span>, <span class="st">"top_two_labels"</span><span class="op">)</span>,</span>
+<span>  add_entropy <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -120,11 +125,40 @@ QC-passing cells only, i.e. <code>get_sc_obs(x, filtered = TRUE)$&lt;column&gt;<
 one you passed is inferred from the length, so a vector matching neither is
 an error rather than a silently wrong purity.</p></dd>
 
+
+<dt id="arg-add-additional-info">add_additional_info<a class="anchor" aria-label="anchor" href="#arg-add-additional-info"></a></dt>
+<dd><p>String. Which label information to add on top of
+the purity. One of <code>c("none", "top_label", "top_two_labels")</code>. Defaults to
+<code>"none"</code>, i.e. the purity only.</p></dd>
+
+
+<dt id="arg-add-entropy">add_entropy<a class="anchor" aria-label="anchor" href="#arg-add-entropy"></a></dt>
+<dd><p>Boolean. Shall the normalised Shannon entropy of the
+label distribution be added as a diversity measure. Defaults to <code>FALSE</code>.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>The <code>MetaCells</code> with an added columns to the observation table
-with the purity measures</p>
+    <p>The <code>MetaCells</code> with added columns to the observation table:</p><ul><li><p>mc_purity - Fraction of the meta cell's cells that carry the most
+abundant label. Always added.</p></li>
+<li><p>mc_top_label - Name of the most abundant label. Added for
+<code>add_additional_info %in% c("top_label", "top_two_labels")</code>.</p></li>
+<li><p>mc_second_label - Name of the second most abundant label, <code>NA</code> for a
+pure meta cell. Added for <code>add_additional_info = "top_two_labels"</code>.</p></li>
+<li><p>mc_second_frac - Fraction of the meta cell's cells carrying that
+second label, <code>0</code> for a pure meta cell. Added for
+<code>add_additional_info = "top_two_labels"</code>.</p></li>
+<li><p>mc_entropy - Normalised Shannon entropy of the label distribution,
+see details. Added for <code>add_entropy = TRUE</code>.</p></li>
+</ul></div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>Ties for the top (or second) label resolve to whichever label sorts first,
+as the labels are factorised internally. The entropy is the Shannon entropy
+of the label distribution within a meta cell, divided by
+<code>log(&lt;number of distinct labels in original_cell_type&gt;)</code>, so it sits in
+<code>[0, 1]</code> and stays comparable between meta cells. It is <code>0</code> if there is only
+a single label in the data.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

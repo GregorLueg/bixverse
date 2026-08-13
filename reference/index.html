@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.8</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -1658,6 +1658,13 @@
 
         <dt>
 
+          <code><a href="get_meta_cell_purity.html">get_meta_cell_purity()</a></code>
+
+        </dt>
+        <dd>Calculate meta cell purity without mutating object state</dd>
+
+        <dt>
+
           <code><a href="generate_supercells_sc.html">generate_supercells_sc()</a></code>
 
         </dt>
@@ -1853,13 +1860,6 @@
 
         </dt>
         <dd>Save memory-bound data to disk</dd>
-
-        <dt>
-
-          <code><a href="sc_old_file_conversion.html">sc_old_file_conversion()</a></code>
-
-        </dt>
-        <dd>Convert legacy v2 single-cell data files to v3 format</dd>
 
         <dt>
 
@@ -2289,6 +2289,13 @@
 
         <dt>
 
+          <code><a href="find_specific_markers_sc.html">find_specific_markers_sc()</a></code>
+
+        </dt>
+        <dd>Find markers that are specific to a cell group</dd>
+
+        <dt>
+
           <code><a href="get_pseudobulked_sc.html">get_pseudobulked_sc()</a></code>
 
         </dt>
@@ -2457,6 +2464,20 @@
 
         <dt>
 
+          <code><a href="binarise_regulon_activity.html">binarise_regulon_activity()</a></code>
+
+        </dt>
+        <dd>Binarise regulon activity into on/off calls</dd>
+
+        <dt>
+
+          <code><a href="build_regulons.html">build_regulons()</a></code>
+
+        </dt>
+        <dd>Build the final regulons</dd>
+
+        <dt>
+
           <code><a href="nmf_sc.html">nmf_sc()</a></code>
 
         </dt>
@@ -2545,6 +2566,13 @@
 
         </dt>
         <dd>Default parameters for the SCENIC RandomForest regression learner</dd>
+
+        <dt>
+
+          <code><a href="params_scenic_binarise.html">params_scenic_binarise()</a></code>
+
+        </dt>
+        <dd>Wrapper function for parameters for the SCENIC binarisation</dd>
 
         <dt>
 
@@ -2654,6 +2682,20 @@
 
         </dt>
         <dd>Get the KNN distance</dd>
+
+        <dt>
+
+          <code><a href="get_marker_summary.html">get_marker_summary()</a></code>
+
+        </dt>
+        <dd>Get the per-gene marker summaries across all rivals</dd>
+
+        <dt>
+
+          <code><a href="get_marker_comparisons.html">get_marker_comparisons()</a></code>
+
+        </dt>
+        <dd>Get the per-rival marker statistics</dd>
 
         <dt>
 
@@ -3643,6 +3685,20 @@
           <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Calculate AUCell in Rust (for meta cells)</dd>
+
+        <dt>
+
+          <code><a href="rs_mc_hotspot_autocor.html">rs_mc_hotspot_autocor()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Calculate gene spatial auto-correlations (for meta cells)</dd>
+
+        <dt>
+
+          <code><a href="rs_mc_hotspot_gene_cor.html">rs_mc_hotspot_gene_cor()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Calculate gene to gene spatial correlations (for meta cells)</dd>
 
         <dt>
 

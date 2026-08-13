@@ -13,7 +13,7 @@ local correlations and vary across the kNN graph."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.8</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -120,7 +120,7 @@ local correlations and vary across the kNN graph.</p>
 
 
 <dl><dt id="arg-object">object<a class="anchor" aria-label="anchor" href="#arg-object"></a></dt>
-<dd><p><code>SingleCells</code> class.</p></dd>
+<dd><p><code>SingleCells</code> or <code>MetaCells</code> class.</p></dd>
 
 
 <dt id="arg-embd-to-use">embd_to_use<a class="anchor" aria-label="anchor" href="#arg-embd-to-use"></a></dt>
@@ -138,6 +138,9 @@ will regenerate the kNN graph with these cells.</p></dd>
 <code><a href="params_sc_hotspot.html">params_sc_hotspot()</a></code> with the following elements:</p><ul><li><p>model - String. Which of the available models to use for the
 gene expression. Choices are one of <code>c("danb", "normal", "bernoulli")</code>.</p></li>
 <li><p>normalise - Boolean. Shall the data be normalised.</p></li>
+<li><p>weighted_graph - Boolean. Shall the Gaussian kernel be applied to
+the neighbour distances. If <code>FALSE</code>, every retained edge weighs one.</p></li>
+<li><p>neighborhood_factor - Float. Kernel width for <code>weighted_graph</code>.</p></li>
 <li><p>knn - List of kNN parameters. See <code><a href="params_knn_defaults.html">params_knn_defaults()</a></code>
 for available parameters and their defaults.</p></li>
 </ul></dd>
@@ -162,7 +165,8 @@ class.</p></dd>
 <dt id="arg-streaming">streaming<a class="anchor" aria-label="anchor" href="#arg-streaming"></a></dt>
 <dd><p>Optional Boolean. Shall the data be streamed in. Useful for
 larger data sets where you wish to avoid loading in the whole data. If
-<code>NULL</code>, will automatically detect.</p></dd>
+<code>NULL</code>, will automatically detect. Ignored for <code>MetaCells</code>, which are held
+in memory.</p></dd>
 
 
 <dt id="arg-random-seed">random_seed<a class="anchor" aria-label="anchor" href="#arg-random-seed"></a></dt>
@@ -187,6 +191,10 @@ automatically filtered out from the results. This can occur for example
 if you have filtered out the cells that contain a given gene. The underlying
 genes are still available, but the cells that might contain them are not
 included.</p>
+<p>Whether the neighbour distances need squaring before the kernel sees them
+follows from the metric. With <code>use_knn = TRUE</code> it is taken from the metric
+stored on the cached kNN graph, otherwise from <code>ann_dist</code> in
+<code>hotspot_params</code>.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

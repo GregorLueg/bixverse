@@ -535,6 +535,9 @@ Generating meta cells.
 - [`calc_meta_cell_purity()`](https://gregorlueg.github.io/bixverse/reference/calc_meta_cell_purity.md)
   : Calculate meta cell purity
 
+- [`get_meta_cell_purity()`](https://gregorlueg.github.io/bixverse/reference/get_meta_cell_purity.md)
+  : Calculate meta cell purity without mutating object state
+
 - [`generate_supercells_sc()`](https://gregorlueg.github.io/bixverse/reference/generate_supercells_sc.md)
   :
 
@@ -645,9 +648,6 @@ Rust and the DuckDB supporting the metadata.
 
 - [`save_sc_exp_to_disk()`](https://gregorlueg.github.io/bixverse/reference/save_sc_exp_to_disk.md)
   : Save memory-bound data to disk
-
-- [`sc_old_file_conversion()`](https://gregorlueg.github.io/bixverse/reference/sc_old_file_conversion.md)
-  : Convert legacy v2 single-cell data files to v3 format
 
 - [`merge_sc_experiments()`](https://gregorlueg.github.io/bixverse/reference/merge_sc_experiments.md)
   :
@@ -794,6 +794,9 @@ count extraction, miloR, Hotspot, VISION and SCENIC.
 - [`find_all_markers_sc()`](https://gregorlueg.github.io/bixverse/reference/find_all_markers_sc.md)
   : Find all markers
 
+- [`find_specific_markers_sc()`](https://gregorlueg.github.io/bixverse/reference/find_specific_markers_sc.md)
+  : Find markers that are specific to a cell group
+
 - [`get_pseudobulked_sc()`](https://gregorlueg.github.io/bixverse/reference/get_pseudobulked_sc.md)
   : Generate pseudo-bulked matrices
 
@@ -869,6 +872,12 @@ count extraction, miloR, Hotspot, VISION and SCENIC.
 - [`tf_to_genes_motif_enrichment()`](https://gregorlueg.github.io/bixverse/reference/tf_to_genes_motif_enrichment.md)
   : Run the SCENIC motif enrichment
 
+- [`binarise_regulon_activity()`](https://gregorlueg.github.io/bixverse/reference/binarise_regulon_activity.md)
+  : Binarise regulon activity into on/off calls
+
+- [`build_regulons()`](https://gregorlueg.github.io/bixverse/reference/build_regulons.md)
+  : Build the final regulons
+
 - [`nmf_sc()`](https://gregorlueg.github.io/bixverse/reference/nmf_sc.md)
   : Run single-run NMF on single cell or meta cell data
 
@@ -908,6 +917,9 @@ count extraction, miloR, Hotspot, VISION and SCENIC.
 
 - [`params_scenic_random_forest_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_scenic_random_forest_defaults.md)
   : Default parameters for the SCENIC RandomForest regression learner
+
+- [`params_scenic_binarise()`](https://gregorlueg.github.io/bixverse/reference/params_scenic_binarise.md)
+  : Wrapper function for parameters for the SCENIC binarisation
 
 - [`params_meld()`](https://gregorlueg.github.io/bixverse/reference/params_meld.md)
   : Constructor for MELD parameters
@@ -949,6 +961,10 @@ Additional helpers for specific small sub classes used in single cell.
   : Get k-means cluster assignments from a fast cluster result
 - [`get_knn_dist()`](https://gregorlueg.github.io/bixverse/reference/get_knn_dist.md)
   : Get the KNN distance
+- [`get_marker_summary()`](https://gregorlueg.github.io/bixverse/reference/get_marker_summary.md)
+  : Get the per-gene marker summaries across all rivals
+- [`get_marker_comparisons()`](https://gregorlueg.github.io/bixverse/reference/get_marker_comparisons.md)
+  : Get the per-rival marker statistics
 - [`get_data()`](https://gregorlueg.github.io/bixverse/reference/get_data.md)
   : Get the ready obs data from various sub method
 - [`get_scores()`](https://gregorlueg.github.io/bixverse/reference/get_scores.md)
@@ -1279,6 +1295,12 @@ There is a lot more under the hood…
   **\[experimental\]** : Calculate MAD outlier detection in Rust.
 - [`rs_mc_aucell()`](https://gregorlueg.github.io/bixverse/reference/rs_mc_aucell.md)
   **\[experimental\]** : Calculate AUCell in Rust (for meta cells)
+- [`rs_mc_hotspot_autocor()`](https://gregorlueg.github.io/bixverse/reference/rs_mc_hotspot_autocor.md)
+  **\[experimental\]** : Calculate gene spatial auto-correlations (for
+  meta cells)
+- [`rs_mc_hotspot_gene_cor()`](https://gregorlueg.github.io/bixverse/reference/rs_mc_hotspot_gene_cor.md)
+  **\[experimental\]** : Calculate gene to gene spatial correlations
+  (for meta cells)
 - [`rs_mc_hvg()`](https://gregorlueg.github.io/bixverse/reference/rs_mc_hvg.md)
   **\[experimental\]** : Meta cells highly variable genes
 - [`rs_mc_pca()`](https://gregorlueg.github.io/bixverse/reference/rs_mc_pca.md)

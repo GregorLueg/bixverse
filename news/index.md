@@ -1,5 +1,45 @@
 # Changelog
 
+## bixverse 0.4.8
+
+### Features
+
+#### Single cells
+
+**Meta cells:**
+
+- Improved speed for meta cell methods regarding HVG detection and PCA.
+- Additional functionalities around meta cell purities: you can return
+  entropy top label and second best label + proportions.
+- Hotspot can now also be applied on meta cells.
+
+**Single cells:**
+
+- Regulon binarisation for SCENIC.
+- AUCell now defaults to `"recovery"` a more top heavy score. If you
+  want the old behaviour, please use `"wilcox"`.
+- One-vs-many comparisons to identify cell type markers.
+
+#### Bug fixes
+
+- Various edge cases bug fixes in `bixverse-rs` that propagate into
+  here.
+
+#### Improved dev experience
+
+If you want to develop on the package, set:
+
+``` r
+
+Sys.setenv(DEV_BUILD = "true")
+devtools::document()
+devtools::install()
+```
+
+for local testing and exploration. It will optimise less aggressively in
+terms of performance, but still reach very good speeds this way, while
+massively reducing compile times.
+
 ## bixverse 0.4.7
 
 ### Features

@@ -13,7 +13,8 @@ rs_cistarget(
   nes_threshold,
   max_rank,
   method,
-  n_mean
+  n_mean,
+  verbose
 )
 ```
 
@@ -49,6 +50,10 @@ rs_cistarget(
 - n_mean:
 
   Number of points for averaging in approximate method.
+
+- verbose:
+
+  Controls verbosity of the function.
 
 ## Value
 

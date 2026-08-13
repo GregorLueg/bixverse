@@ -1,6 +1,14 @@
 # Wrapper function for parameters for HotSpot
 
-Wrapper function for parameters for HotSpot
+`weighted_graph` controls how the kNN distances become edge weights. The
+default of `FALSE` follows the reference implementation: the distances
+only decide who is a neighbour and every retained edge weighs one. Set
+it to `TRUE` for the Gaussian kernel, whose width is the
+`ceil(k / neighborhood_factor)`-th neighbour distance.
+
+Whether the distances need squaring is derived from the metric, so it is
+not a parameter here. When a pre-computed kNN graph is handed to the
+method, the metric stored on that graph wins over `ann_dist`.
 
 ## Usage
 
@@ -8,7 +16,9 @@ Wrapper function for parameters for HotSpot
 params_sc_hotspot(
   model = c("danb", "normal", "bernoulli"),
   normalise = TRUE,
-  knn = list(ann_dist = "cosine")
+  weighted_graph = FALSE,
+  neighborhood_factor = 3,
+  knn = list()
 )
 ```
 
@@ -23,6 +33,17 @@ params_sc_hotspot(
 
   Boolean. Shall the data be normalised. Defaults to `TRUE`.
 
+- weighted_graph:
+
+  Boolean. Shall the Gaussian kernel be applied to the neighbour
+  distances. Defaults to `FALSE`.
+
+- neighborhood_factor:
+
+  Float. Kernel width is the `ceil(k / neighborhood_factor)`-th
+  neighbour distance. Only read when `weighted_graph = TRUE`. Defaults
+  to `3`.
+
 - knn:
 
   List. Optional overrides for kNN parameters. See
@@ -34,3 +55,7 @@ params_sc_hotspot(
 ## Value
 
 A list with the HotSpot parameters.
+
+## References
+
+DeTomaso and Yosef, Cell Systems, 2021

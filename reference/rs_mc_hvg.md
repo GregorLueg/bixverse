@@ -7,7 +7,15 @@ compared to the (usually much) larger single cell data sets.
 ## Usage
 
 ``` r
-rs_mc_hvg(sparse_data, hvg_method, loess_span, binning, n_bins, clip_max)
+rs_mc_hvg(
+  sparse_data,
+  hvg_method,
+  loess_span,
+  binning,
+  n_bins,
+  clip_max,
+  verbose
+)
 ```
 
 ## Arguments
@@ -40,6 +48,11 @@ rs_mc_hvg(sparse_data, hvg_method, loess_span, binning, n_bins, clip_max)
 
   Optional clipping number. Defaults to `sqrt(no_cells)` if not provided
   (only used for `"vst"`).
+
+- verbose:
+
+  Integer. `0L` - quiet; `1L` - normal verbosity; `2L` - detailed
+  verbosity.
 
 ## Value
 

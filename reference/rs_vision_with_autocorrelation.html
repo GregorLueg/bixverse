@@ -19,7 +19,7 @@ significant patterns on the kNN graph generate on the provided embedding."></hea
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.8</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -140,8 +140,10 @@ kNN graph.</p></dd>
 
 <dt id="arg-knn-data">knn_data<a class="anchor" aria-label="anchor" href="#arg-knn-data"></a></dt>
 <dd><p>Optional list. This contains pre-computed kNN data
-(including distances). The user has to ensure consistency! If provided,
-this will be used.</p></dd>
+(including distances) and the <code>dist_metric</code> it was built with. The user has
+to ensure consistency! If provided, this will be used and whether the
+distances are treated as squared is derived from <code>dist_metric</code> rather than
+from the parameter list.</p></dd>
 
 
 <dt id="arg-gs-list">gs_list<a class="anchor" aria-label="anchor" href="#arg-gs-list"></a></dt>

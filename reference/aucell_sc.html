@@ -29,7 +29,7 @@ per or loaded in in one go.'></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.8</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -150,7 +150,7 @@ respective gene sets.</p></dd>
 <dt id="arg-aucell-params">aucell_params<a class="anchor" aria-label="anchor" href="#arg-aucell-params"></a></dt>
 <dd><p>List with the AUCell parameters, see
 <code><a href="params_sc_aucell.html">params_sc_aucell()</a></code> with the following elements:</p><ul><li><p>auc_type - String. Which statistic to calculate. One of
-<code>c("wilcox", "recovery", "ap")</code>.</p></li>
+<code>c("recovery", "wilcox", "ap")</code>. <code>"recovery"</code> is the SCENIC one.</p></li>
 <li><p>max_rank - Optional numeric. Rank cutoff for <code>"recovery"</code>. If <code>NULL</code>,
 the top 5% of the gene universe is used. Ignored by the other statistics.</p></li>
 <li><p>standardise - Boolean. Shall each gene set's scores be z-scored

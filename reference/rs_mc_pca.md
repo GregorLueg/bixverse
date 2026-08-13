@@ -7,7 +7,7 @@ speaking sparse data. This is happening in-memory compared to the
 ## Usage
 
 ``` r
-rs_mc_pca(sparse_data, no_pcs, pca_params, clr_offsets, seed)
+rs_mc_pca(sparse_data, no_pcs, pca_params, clr_offsets, seed, verbose)
 ```
 
 ## Arguments
@@ -33,6 +33,11 @@ rs_mc_pca(sparse_data, no_pcs, pca_params, clr_offsets, seed)
 - seed:
 
   Integer. Random seed for the randomised SVD.
+
+- verbose:
+
+  Integer. `0L` - quiet; `1L` - normal verbosity; `2L` - detailed
+  verbosity.
 
 ## Value
 

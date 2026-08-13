@@ -73,7 +73,7 @@ sc_object <- load_mtx(
   .verbose = FALSE
 )
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpqLnR8b/duckdb
+#> ℹ /tmp/RtmpALRjiV/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -81,7 +81,7 @@ sc_object <- load_mtx(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpqLnR8b/duckdb
+#> ℹ /tmp/RtmpALRjiV/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -89,7 +89,7 @@ sc_object <- load_mtx(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpqLnR8b/duckdb
+#> ℹ /tmp/RtmpALRjiV/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -97,7 +97,7 @@ sc_object <- load_mtx(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpqLnR8b/duckdb
+#> ℹ /tmp/RtmpALRjiV/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -105,7 +105,7 @@ sc_object <- load_mtx(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpqLnR8b/duckdb
+#> ℹ /tmp/RtmpALRjiV/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -113,7 +113,7 @@ sc_object <- load_mtx(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpqLnR8b/duckdb
+#> ℹ /tmp/RtmpALRjiV/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -121,7 +121,7 @@ sc_object <- load_mtx(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpqLnR8b/duckdb
+#> ℹ /tmp/RtmpALRjiV/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -129,7 +129,7 @@ sc_object <- load_mtx(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpqLnR8b/duckdb
+#> ℹ /tmp/RtmpALRjiV/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -137,7 +137,7 @@ sc_object <- load_mtx(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpqLnR8b/duckdb
+#> ℹ /tmp/RtmpALRjiV/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -145,7 +145,7 @@ sc_object <- load_mtx(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpqLnR8b/duckdb
+#> ℹ /tmp/RtmpALRjiV/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -153,7 +153,7 @@ sc_object <- load_mtx(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpqLnR8b/duckdb
+#> ℹ /tmp/RtmpALRjiV/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -161,7 +161,7 @@ sc_object <- load_mtx(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpqLnR8b/duckdb
+#> ℹ /tmp/RtmpALRjiV/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -169,7 +169,7 @@ sc_object <- load_mtx(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpqLnR8b/duckdb
+#> ℹ /tmp/RtmpALRjiV/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -177,7 +177,7 @@ sc_object <- load_mtx(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpqLnR8b/duckdb
+#> ℹ /tmp/RtmpALRjiV/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -185,7 +185,7 @@ sc_object <- load_mtx(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpqLnR8b/duckdb
+#> ℹ /tmp/RtmpALRjiV/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -193,7 +193,7 @@ sc_object <- load_mtx(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpqLnR8b/duckdb
+#> ℹ /tmp/RtmpALRjiV/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -203,7 +203,7 @@ sc_object <- load_mtx(
 
 setnames_sc(sc_object, table = "var", old = "column1", new = "gene_symbol")
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpqLnR8b/duckdb
+#> ℹ /tmp/RtmpALRjiV/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -211,7 +211,7 @@ setnames_sc(sc_object, table = "var", old = "column1", new = "gene_symbol")
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpqLnR8b/duckdb
+#> ℹ /tmp/RtmpALRjiV/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -221,7 +221,7 @@ setnames_sc(sc_object, table = "var", old = "column1", new = "gene_symbol")
 
 var <- get_sc_var(sc_object)
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpqLnR8b/duckdb
+#> ℹ /tmp/RtmpALRjiV/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -229,7 +229,7 @@ var <- get_sc_var(sc_object)
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpqLnR8b/duckdb
+#> ℹ /tmp/RtmpALRjiV/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -251,7 +251,7 @@ sc_object <- gene_set_proportions_sc(
   .verbose = FALSE
 )
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpqLnR8b/duckdb
+#> ℹ /tmp/RtmpALRjiV/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -259,7 +259,7 @@ sc_object <- gene_set_proportions_sc(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpqLnR8b/duckdb
+#> ℹ /tmp/RtmpALRjiV/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -270,7 +270,7 @@ sc_object <- gene_set_proportions_sc(
 # MAD QC
 qc_df <- sc_object[[c("cell_id", "lib_size", "nnz", "MT")]]
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpqLnR8b/duckdb
+#> ℹ /tmp/RtmpALRjiV/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -278,7 +278,7 @@ qc_df <- sc_object[[c("cell_id", "lib_size", "nnz", "MT")]]
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpqLnR8b/duckdb
+#> ℹ /tmp/RtmpALRjiV/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -303,7 +303,7 @@ qc <- run_cell_qc(
 )
 sc_object[["outlier"]] <- qc$combined
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpqLnR8b/duckdb
+#> ℹ /tmp/RtmpALRjiV/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -311,7 +311,7 @@ sc_object[["outlier"]] <- qc$combined
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpqLnR8b/duckdb
+#> ℹ /tmp/RtmpALRjiV/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -321,7 +321,7 @@ sc_object[["outlier"]] <- qc$combined
 cells_to_keep <- qc_df[!qc$combined, cell_id]
 sc_object <- set_cells_to_keep(sc_object, cells_to_keep)
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpqLnR8b/duckdb
+#> ℹ /tmp/RtmpALRjiV/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -329,7 +329,7 @@ sc_object <- set_cells_to_keep(sc_object, cells_to_keep)
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpqLnR8b/duckdb
+#> ℹ /tmp/RtmpALRjiV/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -340,7 +340,7 @@ sc_object <- set_cells_to_keep(sc_object, cells_to_keep)
 # HVG, PCA, neighbours, clustering, UMAP
 sc_object <- find_hvg_sc(sc_object, hvg_no = 2000L, .verbose = FALSE)
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpqLnR8b/duckdb
+#> ℹ /tmp/RtmpALRjiV/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -348,7 +348,7 @@ sc_object <- find_hvg_sc(sc_object, hvg_no = 2000L, .verbose = FALSE)
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpqLnR8b/duckdb
+#> ℹ /tmp/RtmpALRjiV/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -356,7 +356,7 @@ sc_object <- find_hvg_sc(sc_object, hvg_no = 2000L, .verbose = FALSE)
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpqLnR8b/duckdb
+#> ℹ /tmp/RtmpALRjiV/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -364,7 +364,7 @@ sc_object <- find_hvg_sc(sc_object, hvg_no = 2000L, .verbose = FALSE)
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpqLnR8b/duckdb
+#> ℹ /tmp/RtmpALRjiV/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -384,7 +384,7 @@ sc_object <- find_neighbours_sc(
 #> Transforming sNN data to igraph.
 sc_object <- find_clusters_sc(sc_object, res = 1.5, name = "leiden_clusters")
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpqLnR8b/duckdb
+#> ℹ /tmp/RtmpALRjiV/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -392,7 +392,7 @@ sc_object <- find_clusters_sc(sc_object, res = 1.5, name = "leiden_clusters")
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpqLnR8b/duckdb
+#> ℹ /tmp/RtmpALRjiV/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -500,12 +500,18 @@ ms_long <- melt(
   value.name = "score"
 )
 
+# scale the scores to make them more comparable across
+ms_long[,
+  score_scaled := (score - min(score)) / (max(score) - min(score)),
+  by = phase
+]
+
 ggplot(ms_long, aes(x = umap_1, y = umap_2)) +
-  geom_point(aes(colour = score), size = 0.3) +
+  geom_point(aes(colour = score_scaled), size = 0.3) +
   scale_colour_viridis_c() +
   facet_wrap(~phase, ncol = 2) +
   theme_bw() +
-  labs(colour = "Module\nscore")
+  labs(colour = "Module\nscore\n(scaled)")
 ```
 
 ![](bag_of_genes_single_cells_files/figure-html/module-scores-1.png)
@@ -524,7 +530,7 @@ sc_object <- add_sc_new_obs(
   obs_data = get_data(module_scores)
 )
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpqLnR8b/duckdb
+#> ℹ /tmp/RtmpALRjiV/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -532,7 +538,7 @@ sc_object <- add_sc_new_obs(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpqLnR8b/duckdb
+#> ℹ /tmp/RtmpALRjiV/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -542,7 +548,7 @@ sc_object <- add_sc_new_obs(
 
 head(sc_object)
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpqLnR8b/duckdb
+#> ℹ /tmp/RtmpALRjiV/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -550,7 +556,7 @@ head(sc_object)
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpqLnR8b/duckdb
+#> ℹ /tmp/RtmpALRjiV/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -586,25 +592,26 @@ you three statistics via
 [`params_sc_aucell()`](https://gregorlueg.github.io/bixverse/reference/params_sc_aucell.md),
 all reading the same ranking but weighting it differently:
 
-- `"wilcox"`, the default, is the AUC from the Mann-Whitney U statistic
-  over the full ranking. Its null sits at 0.5 whatever the gene set
-  size, which makes it the safe pick for pathway activity.
-- `"recovery"` is the recovery-curve AUC under a rank cutoff, i.e. what
-  Aibar et al. actually published. Top-heavy: only genes inside the top
-  `max_rank` contribute, so it is the sharper instrument for marker
-  sets.
+- `"recovery"`, the default, is the recovery-curve AUC under a rank
+  cutoff, i.e. what Aibar et al. published. Top-heavy: only genes inside
+  the top `max_rank` contribute, so it is the sharper instrument for
+  marker sets and the one to use for SCENIC.
+- `"wilcox"` is the AUC from the Mann-Whitney U statistic over the full
+  ranking. Its null sits at 0.5 whatever the gene set size, which makes
+  it a safe pick for pathway activity, but the flatter score does not
+  split into on/off populations.
 - `"ap"` is average precision. Most top-heavy of the three, but its null
   tracks gene set prevalence, so don’t compare raw values across sets of
   different size unless you switch `standardise` on.
 
-We show the Wilcoxon variant here.
+We stick with the default here.
 
 ``` r
 
 auc_scores <- aucell_sc(
   object = sc_object,
   gs_list = lineage_sets,
-  aucell_params = params_sc_aucell(auc_type = "wilcox"),
+  aucell_params = params_sc_aucell(),
   .verbose = FALSE
 )
 
@@ -663,10 +670,10 @@ vision_res <- vision_w_autocor_sc(
 head(vision_res$auto_cor_dt)
 #>    gene_set_name  auto_cor       p_val         fdr
 #>           <char>     <num>       <num>       <num>
-#> 1:        T cell 0.7624364 0.001996008 0.003992016
-#> 2:  Cytotoxic NK 0.4628806 0.009980040 0.009980040
-#> 3:        B cell 0.5634320 0.009980040 0.009980040
-#> 4:      Monocyte 0.5489113 0.001996008 0.003992016
+#> 1:        T cell 0.7612149 0.001996008 0.003992016
+#> 2:  Cytotoxic NK 0.4620488 0.009980040 0.009980040
+#> 3:        B cell 0.5621615 0.009980040 0.009980040
+#> 4:      Monocyte 0.5473183 0.001996008 0.003992016
 ```
 
 Unsurprisingly, all of these gene sets show highly significant spatial
@@ -698,35 +705,35 @@ hotspot_autocor <- hotspot_autocor_sc(
 hotspot_autocor[, gene_symbol := ensembl_to_symbol[gene_id]]
 
 head(hotspot_autocor[order(fdr)], 25L)
-#>             gene_id   gaerys_c   z_score  pval   fdr gene_symbol
-#>              <char>      <num>     <num> <num> <num>      <char>
-#>  1: ENSG00000117155 0.05250466 136.00143     0     0      SSX2IP
-#>  2: ENSG00000117586 0.04013693  58.32888     0     0      TNFSF4
-#>  3: ENSG00000150681 0.04720103  79.34353     0     0       RGS18
-#>  4: ENSG00000115523 0.60540509  49.43444     0     0        GNLY
-#>  5: ENSG00000187699 0.08428780 265.07220     0     0     C2orf88
-#>  6: ENSG00000168497 0.02263480  90.28507     0     0        SDPR
-#>  7: ENSG00000088726 0.09711633 151.35892     0     0      TMEM40
-#>  8: ENSG00000233276 0.17141581  52.90481     0     0        GPX1
-#>  9: ENSG00000169704 0.02320469  93.14027     0     0         GP9
-#> 10: ENSG00000159674 0.50192481  44.43885     0     0       SPON2
-#> 11: ENSG00000137441 0.46918777  47.06255     0     0      FGFBP2
-#> 12: ENSG00000163737 0.04969060 184.41382     0     0         PF4
-#> 13: ENSG00000163736 0.07938737 270.61267     0     0        PPBP
-#> 14: ENSG00000113140 0.05564750 180.06107     0     0       SPARC
-#> 15: ENSG00000176783 0.06510824 103.46748     0     0       RUFY1
-#> 16: ENSG00000180573 0.01705380  66.74285     0     0   HIST1H2AC
-#> 17: ENSG00000204420 0.11350039 142.66391     0     0     C6orf25
-#> 18: ENSG00000161911 0.10046790  60.92170     0     0      TREML1
-#> 19: ENSG00000223855 0.01808174  61.72699     0     0  AC147651.3
-#> 20: ENSG00000127920 0.02295148  89.70461     0     0       GNG11
-#> 21: ENSG00000130830 0.03670528  48.67996     0     0        MPP1
-#> 22: ENSG00000120885 0.10238372 220.08305     0     0         CLU
-#> 23: ENSG00000104267 0.01567231  42.49583     0     0         CA2
-#> 24: ENSG00000119326 0.12587246  73.24753     0     0     CTNNAL1
-#> 25: ENSG00000172889 0.11580265 113.99056     0     0       EGFL7
-#>             gene_id   gaerys_c   z_score  pval   fdr gene_symbol
-#>              <char>      <num>     <num> <num> <num>      <char>
+#>             gene_id  gaerys_c   z_score  pval   fdr gene_symbol
+#>              <char>     <num>     <num> <num> <num>      <char>
+#>  1: ENSG00000188290 0.3242266  39.66046     0     0        HES4
+#>  2: ENSG00000119535 0.3022016  49.27494     0     0       CSF3R
+#>  3: ENSG00000163131 0.5119517  63.60383     0     0        CTSS
+#>  4: ENSG00000163191 0.4122631  58.87283     0     0     S100A11
+#>  5: ENSG00000163220 0.6936087 109.61599     0     0      S100A9
+#>  6: ENSG00000143546 0.6563530 114.56873     0     0      S100A8
+#>  7: ENSG00000197956 0.6433797  98.70326     0     0      S100A6
+#>  8: ENSG00000196154 0.6429363  92.52890     0     0      S100A4
+#>  9: ENSG00000177954 0.6083654  94.29710     0     0       RPS27
+#> 10: ENSG00000158869 0.6997935  81.83833     0     0      FCER1G
+#> 11: ENSG00000203747 0.6159353  71.61398     0     0      FCGR3A
+#> 12: ENSG00000198821 0.2228819  59.91400     0     0       CD247
+#> 13: ENSG00000143185 0.3826069  53.56304     0     0        XCL2
+#> 14: ENSG00000143184 0.3719576  57.30895     0     0        XCL1
+#> 15: ENSG00000116667 0.2143988  43.89426     0     0     C1orf21
+#> 16: ENSG00000143947 0.3742483  57.71536     0     0      RPS27A
+#> 17: ENSG00000115523 0.5908421 126.38232     0     0        GNLY
+#> 18: ENSG00000153563 0.2527090  47.25644     0     0        CD8A
+#> 19: ENSG00000172116 0.2330091  39.71748     0     0        CD8B
+#> 20: ENSG00000071082 0.4138269  64.81413     0     0       RPL31
+#> 21: ENSG00000144713 0.3622806  61.70233     0     0       RPL32
+#> 22: ENSG00000168028 0.2855044  45.84666     0     0        RPSA
+#> 23: ENSG00000233276 0.4964235  64.97836     0     0        GPX1
+#> 24: ENSG00000163931 0.2321878  38.70044     0     0         TKT
+#> 25: ENSG00000196542 0.3874654  51.78241     0     0      SPTSSB
+#>             gene_id  gaerys_c   z_score  pval   fdr gene_symbol
+#>              <char>     <num>     <num> <num> <num>      <char>
 ```
 
 You should get a set of well known cell type markers here…
@@ -750,7 +757,7 @@ hotspot_cor <- hotspot_gene_cor_sc(
 
 hotspot_cor
 #> Hotspot gene-gene local correlation results
-#>   Genes: 943
+#>   Genes: 2320
 #>   Cells: 2163
 #>   Modules: not yet computed (see generate_hotspot_membership)
 ```
@@ -780,26 +787,26 @@ membership <- membership[!is.na(cluster_member)]
 head(membership[order(cluster_member)], 20L)
 #>             gene_id cluster_member gene_symbol
 #>              <char>          <num>      <char>
-#>  1: ENSG00000142765            353       SYTL1
-#>  2: ENSG00000183386            353        FHL3
-#>  3: ENSG00000162383            353      SLC1A7
-#>  4: ENSG00000143119            353        CD53
-#>  5: ENSG00000268172            353  AL590452.1
-#>  6: ENSG00000117281            353       CD160
-#>  7: ENSG00000027869            353      SH2D2A
-#>  8: ENSG00000163564            353      PYHIN1
-#>  9: ENSG00000181036            353       FCRL6
-#> 10: ENSG00000026751            353      SLAMF7
-#> 11: ENSG00000122223            353       CD244
-#> 12: ENSG00000198574            353      SH2D1B
-#> 13: ENSG00000198821            353       CD247
-#> 14: ENSG00000143185            353        XCL2
-#> 15: ENSG00000143184            353        XCL1
-#> 16: ENSG00000188404            353        SELL
-#> 17: ENSG00000117560            353       FASLG
-#> 18: ENSG00000116667            353     C1orf21
-#> 19: ENSG00000115738            353         ID2
-#> 20: ENSG00000205221            353         VIT
+#>  1: ENSG00000137959            477      IFI44L
+#>  2: ENSG00000134321            477       RSAD2
+#>  3: ENSG00000115415            477       STAT1
+#>  4: ENSG00000196141            477     SPATS2L
+#>  5: ENSG00000136514            477        RTP4
+#>  6: ENSG00000138642            477       HERC6
+#>  7: ENSG00000138646            477       HERC5
+#>  8: ENSG00000003147            477        ICA1
+#>  9: ENSG00000119917            477       IFIT3
+#> 10: ENSG00000185745            477       IFIT1
+#> 11: ENSG00000173456            477       RNF26
+#> 12: ENSG00000135114            477        OASL
+#> 13: ENSG00000140511            477      HAPLN3
+#> 14: ENSG00000157601            477         MX1
+#> 15: ENSG00000181817            515       LSM10
+#> 16: ENSG00000173193            515      PARP14
+#> 17: ENSG00000113719            515      ERGIC1
+#> 18: ENSG00000213722            515       DDAH2
+#> 19: ENSG00000146192            515        FGD2
+#> 20: ENSG00000112335            515        SNX3
 #>             gene_id cluster_member gene_symbol
 #>              <char>          <num>      <char>
 ```
@@ -989,11 +996,10 @@ scenic_res <- identify_tf_to_genes(
 scenic_res <- tf_to_genes_correlations(
   x = scenic_res,
   object = sc_object,
-  cor_filter = 0.01,
   .verbose = TRUE
 )
 #> Calculating the pairwise correlations between the TFs and genes
-#> Removing TF <> gene pairs with cors <= 0.010
+#> Keeping activating TF <> gene links at |rho| > 0.030
 #> Removing self loops (TF controlling its own expression
 
 tf_gene_dt <- get_tf_to_gene(scenic_res)
@@ -1001,13 +1007,13 @@ tf_gene_dt[, tf_symbol := ensembl_to_symbol[tf]]
 tf_gene_dt[, gene_symbol := ensembl_to_symbol[gene]]
 
 head(tf_gene_dt[order(-importance)], 5L)
-#>                 tf            gene importance pairwise_cor tf_symbol
-#>             <char>          <char>      <num>        <num>    <char>
-#> 1: ENSG00000171223 ENSG00000120129  0.2948482    0.3743879      JUNB
-#> 2: ENSG00000066336 ENSG00000107341  0.2746513    0.1772743      SPI1
-#> 3: ENSG00000170345 ENSG00000120129  0.2573821    0.3395905       FOS
-#> 4: ENSG00000066336 ENSG00000165025  0.2460342    0.1935515      SPI1
-#> 5: ENSG00000139187 ENSG00000153563  0.2453607    0.2090976     KLRG1
+#>                 tf            gene importance pairwise_cor cor_sign tf_symbol
+#>             <char>          <char>      <num>        <num>    <int>    <char>
+#> 1: ENSG00000171223 ENSG00000120129  0.2948482    0.3103157        1      JUNB
+#> 2: ENSG00000066336 ENSG00000107341  0.2746513    0.1931868        1      SPI1
+#> 3: ENSG00000170345 ENSG00000120129  0.2573821    0.3420300        1       FOS
+#> 4: ENSG00000066336 ENSG00000165025  0.2460342    0.2060715        1      SPI1
+#> 5: ENSG00000139187 ENSG00000153563  0.2453607    0.2005602        1     KLRG1
 #>    gene_symbol
 #>         <char>
 #> 1:       DUSP1
@@ -1024,7 +1030,7 @@ predicted TF-gene links against known motif binding sites. This requires
 downloading the CisTarget motif ranking database and motif-to-TF
 annotation files from the [Aerts lab
 resources](https://resources.aertslab.org/cistarget/), which together
-are roughly 1.5 GB. We therefore show the code but do not evaluate it by
+are roughly 400 MB. We therefore show the code but do not evaluate it by
 default.
 
 ``` r
@@ -1043,9 +1049,7 @@ scenic_res <- tf_to_genes_motif_enrichment(
   # we store everything as Ensembl... The SCENIC data has gene symbols, hence,
   # the need to provide conversion
   gene_id_to_symbol = ensembl_to_symbol,
-  cis_target_params = params_cistarget(
-    nes_threshold = 3.0
-  ),
+  cis_target_params = params_cistarget(),
   only_high_conf_tf = FALSE,
   .verbose = TRUE
 )
@@ -1059,6 +1063,40 @@ head(cistarget_dt[order(-nes)])
 tf_gene_final <- get_tf_to_gene(scenic_res)
 
 head(tf_gene_final[(in_leading_edge)][order(-importance)])
+```
+
+CisTarget is not a pass/fail filter on the module. Per enriched motif it
+builds a recovery curve, compares it against the mean + 2 SD curve
+across every motif in the database, and keeps only the genes above the
+point of maximum separation. So expect the regulons coming out of
+[`build_regulons()`](https://gregorlueg.github.io/bixverse/reference/build_regulons.md)
+to be a good deal smaller than the modules going in. This is how you
+would run the regulon binarisation.
+
+``` r
+
+# build_regulons() applies that filter, adds the TF back to its own set and
+# drops anything too small. This is what you hand to aucell_sc()
+regulons <- build_regulons(scenic_res)
+
+auc_regulons <- aucell_sc(
+  object = sc_object,
+  gs_list = regulons,
+  aucell_params = params_sc_aucell()
+)
+
+binarised_regulons <- binarise_regulon_activity(auc_regulons)
+
+binary_matrix <- binarised_regulons$binary
+colnames(binary_matrix) <- ensembl_to_symbol[colnames(binary_matrix)]
+
+sc_object[["STAT1_active"]] <- binary_matrix[, "STAT1"]
+
+embedding_plot_sc(
+  object = sc_object,
+  embedding = "umap",
+  colour_by = "STAT1_active"
+)
 ```
 
 This is how you work with all types of `"bag of genes"` analyses for
@@ -1142,7 +1180,7 @@ t_cell_ids <- auc_dt[`T cell` >= otsu_t_cell, cell_id]
 
 hvg_t_cell_data <- get_hvg_data_sc(object = sc_object, cell_ids = t_cell_ids)
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpqLnR8b/duckdb
+#> ℹ /tmp/RtmpALRjiV/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -1150,7 +1188,7 @@ hvg_t_cell_data <- get_hvg_data_sc(object = sc_object, cell_ids = t_cell_ids)
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpqLnR8b/duckdb
+#> ℹ /tmp/RtmpALRjiV/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -1185,35 +1223,29 @@ plus the parameters and convergence info.
 ``` r
 
 get_w(t_cell_nmf_results)[1:5, 1:5]
-#>                      comp_01      comp_02      comp_03      comp_04
-#> ENSG00000188976 2.756063e+00 1.516395e-01 9.978816e-11 3.985454e-01
-#> ENSG00000188290 9.983770e-11 1.001252e-10 9.978816e-11 7.743350e-02
-#> ENSG00000187608 9.983770e-11 2.746891e+00 1.624675e-01 9.984959e-11
-#> ENSG00000186827 9.983770e-11 1.001252e-10 7.541641e+00 9.984959e-11
-#> ENSG00000176022 9.073034e-01 7.618843e-03 1.844484e-01 9.984959e-11
-#>                      comp_05
-#> ENSG00000188976 3.031720e-01
-#> ENSG00000188290 1.000227e-10
-#> ENSG00000187608 1.000227e-10
-#> ENSG00000186827 1.000227e-10
-#> ENSG00000176022 1.000227e-10
+#>                      comp_01      comp_02   comp_03      comp_04      comp_05
+#> ENSG00000188976 2.558843e+00 9.992267e-11 0.3763380 2.132400e-01 9.993509e-11
+#> ENSG00000187608 9.983787e-11 9.992267e-11 0.5599045 9.981262e-11 9.993509e-11
+#> ENSG00000186827 9.983787e-11 9.992267e-11 7.3252878 9.981262e-11 9.993509e-11
+#> ENSG00000176022 1.122509e-01 2.855008e-02 0.1625732 9.981262e-11 9.993509e-11
+#> ENSG00000242485 2.209524e+00 2.744842e+00 4.3223567 6.435678e-01 1.557151e+00
 ```
 
 ``` r
 
 get_h(t_cell_nmf_results)[1:5, 1:5]
-#>         AAACATACAACCAC-1 AAACATTGATCAGC-1 AAACGCACTGGTAC-1 AAACGCTGGTTCTT-1
-#> comp_01      0.029081386      0.028246988     2.750896e-02     2.642107e-02
-#> comp_02      0.032824725      0.004165676     5.788849e-03     4.682988e-02
-#> comp_03      0.009732828      0.053273119     5.238250e-02     1.002123e-10
-#> comp_04      0.064907439      0.017416973     1.001506e-10     3.876425e-02
-#> comp_05      0.004365186      0.047877807     9.997731e-11     1.034970e-02
-#>         AAACTTGATCCAGA-1
-#> comp_01      0.032608394
-#> comp_02      0.002322582
-#> comp_03      0.007309178
-#> comp_04      0.018659674
-#> comp_05      0.049327463
+#>         AAACATACAACCAC-1 AAACATTGATCAGC-1 AAACGCTGGTTCTT-1 AAACTTGATCCAGA-1
+#> comp_01       0.03039108      0.028655788     2.779504e-02     0.0335300341
+#> comp_02       0.04223846      0.009922862     6.078151e-02     0.0007059687
+#> comp_03       0.01914044      0.041368406     1.002924e-10     0.0018196171
+#> comp_04       0.04766104      0.033128884     3.672349e-02     0.0398822948
+#> comp_05       0.03773499      0.001358267     4.147765e-02     0.0049292077
+#>         AAAGCCTGTATGCG-1
+#> comp_01       0.03014318
+#> comp_02       0.02215907
+#> comp_03       0.04835882
+#> comp_04       0.02421124
+#> comp_05       0.04118023
 ```
 
 ### Running multiple NMF runs
@@ -1244,17 +1276,17 @@ consensus analyses.
 
 get_w(t_cell_nmf_results_stabilised)[1:5, 1:5]
 #>                 run_01.comp_01 run_01.comp_02 run_01.comp_03 run_01.comp_04
-#> ENSG00000188976   2.047745e+00   6.750205e-01     0.42679164   1.000597e-10
-#> ENSG00000188290   2.618656e-02   1.000214e-10     0.13891089   1.000597e-10
-#> ENSG00000187608   9.990401e-11   1.000214e-10    29.44847107   1.000597e-10
-#> ENSG00000186827   9.990401e-11   1.000214e-10     2.02263689   7.260342e+00
-#> ENSG00000176022   6.144161e-01   3.268393e-01     0.03151787   1.432008e-02
+#> ENSG00000188976   8.834997e-01   1.168006e+00   4.921125e-01   9.998284e-11
+#> ENSG00000187608   9.988405e-11   1.000315e-10   4.467033e-02   9.998284e-11
+#> ENSG00000186827   9.988405e-11   1.000315e-10   9.998983e-11   9.998284e-11
+#> ENSG00000176022   4.819395e-01   1.243956e-01   9.209826e-02   9.998284e-11
+#> ENSG00000242485   7.240750e-01   1.973956e+00   1.215576e+00   6.745355e-01
 #>                 run_01.comp_05
-#> ENSG00000188976   9.101693e-01
-#> ENSG00000188290   1.698180e-01
-#> ENSG00000187608   3.292646e+00
-#> ENSG00000186827   1.002548e-10
-#> ENSG00000176022   1.002548e-10
+#> ENSG00000188976   9.488367e-01
+#> ENSG00000187608   1.238252e+00
+#> ENSG00000186827   1.001258e-10
+#> ENSG00000176022   1.001258e-10
+#> ENSG00000242485   1.621210e+00
 ```
 
 The H matrices are kept per-run, since each random initialisation gives
@@ -1265,46 +1297,46 @@ runs without further work).
 
 str(get_h(t_cell_nmf_results_stabilised))
 #> List of 10
-#>  $ run_01: num [1:10, 1:1150] 4.46e-02 1.84e-03 1.00e-10 2.27e-02 1.68e-02 ...
+#>  $ run_01: num [1:10, 1:1034] 0.03552 0.00777 0.01237 0.03586 0.03921 ...
 #>   ..- attr(*, "dimnames")=List of 2
 #>   .. ..$ : chr [1:10] "comp_01" "comp_02" "comp_03" "comp_04" ...
-#>   .. ..$ : chr [1:1150] "AAACATACAACCAC-1" "AAACATTGATCAGC-1" "AAACGCACTGGTAC-1" "AAACGCTGGTTCTT-1" ...
-#>  $ run_02: num [1:10, 1:1150] 3.71e-02 1.00e-10 4.35e-02 1.23e-02 2.78e-02 ...
+#>   .. ..$ : chr [1:1034] "AAACATACAACCAC-1" "AAACATTGATCAGC-1" "AAACGCTGGTTCTT-1" "AAACTTGATCCAGA-1" ...
+#>  $ run_02: num [1:10, 1:1034] 4.08e-02 4.75e-03 3.12e-02 4.11e-03 1.00e-10 ...
 #>   ..- attr(*, "dimnames")=List of 2
 #>   .. ..$ : chr [1:10] "comp_01" "comp_02" "comp_03" "comp_04" ...
-#>   .. ..$ : chr [1:1150] "AAACATACAACCAC-1" "AAACATTGATCAGC-1" "AAACGCACTGGTAC-1" "AAACGCTGGTTCTT-1" ...
-#>  $ run_03: num [1:10, 1:1150] 0.0218 0.031 0.016 0.0335 0.0346 ...
+#>   .. ..$ : chr [1:1034] "AAACATACAACCAC-1" "AAACATTGATCAGC-1" "AAACGCTGGTTCTT-1" "AAACTTGATCCAGA-1" ...
+#>  $ run_03: num [1:10, 1:1034] 4.34e-02 2.35e-03 1.00e-10 4.04e-02 1.00e-10 ...
 #>   ..- attr(*, "dimnames")=List of 2
 #>   .. ..$ : chr [1:10] "comp_01" "comp_02" "comp_03" "comp_04" ...
-#>   .. ..$ : chr [1:1150] "AAACATACAACCAC-1" "AAACATTGATCAGC-1" "AAACGCACTGGTAC-1" "AAACGCTGGTTCTT-1" ...
-#>  $ run_04: num [1:10, 1:1150] 1.83e-02 3.02e-02 3.60e-02 2.95e-02 1.00e-10 ...
+#>   .. ..$ : chr [1:1034] "AAACATACAACCAC-1" "AAACATTGATCAGC-1" "AAACGCTGGTTCTT-1" "AAACTTGATCCAGA-1" ...
+#>  $ run_04: num [1:10, 1:1034] 3.93e-02 1.00e-10 5.72e-02 1.35e-02 1.00e-10 ...
 #>   ..- attr(*, "dimnames")=List of 2
 #>   .. ..$ : chr [1:10] "comp_01" "comp_02" "comp_03" "comp_04" ...
-#>   .. ..$ : chr [1:1150] "AAACATACAACCAC-1" "AAACATTGATCAGC-1" "AAACGCACTGGTAC-1" "AAACGCTGGTTCTT-1" ...
-#>  $ run_05: num [1:10, 1:1150] 3.05e-02 3.28e-02 9.99e-11 1.00e-10 2.73e-02 ...
+#>   .. ..$ : chr [1:1034] "AAACATACAACCAC-1" "AAACATTGATCAGC-1" "AAACGCTGGTTCTT-1" "AAACTTGATCCAGA-1" ...
+#>  $ run_05: num [1:10, 1:1034] 4.20e-02 9.28e-04 1.00e-10 9.99e-11 2.34e-02 ...
 #>   ..- attr(*, "dimnames")=List of 2
 #>   .. ..$ : chr [1:10] "comp_01" "comp_02" "comp_03" "comp_04" ...
-#>   .. ..$ : chr [1:1150] "AAACATACAACCAC-1" "AAACATTGATCAGC-1" "AAACGCACTGGTAC-1" "AAACGCTGGTTCTT-1" ...
-#>  $ run_06: num [1:10, 1:1150] 0.03488 0.01592 0.00726 0.02896 0.03118 ...
+#>   .. ..$ : chr [1:1034] "AAACATACAACCAC-1" "AAACATTGATCAGC-1" "AAACGCTGGTTCTT-1" "AAACTTGATCCAGA-1" ...
+#>  $ run_06: num [1:10, 1:1034] 4.65e-02 1.00e-10 1.00e-10 4.25e-02 1.00e-10 ...
 #>   ..- attr(*, "dimnames")=List of 2
 #>   .. ..$ : chr [1:10] "comp_01" "comp_02" "comp_03" "comp_04" ...
-#>   .. ..$ : chr [1:1150] "AAACATACAACCAC-1" "AAACATTGATCAGC-1" "AAACGCACTGGTAC-1" "AAACGCTGGTTCTT-1" ...
-#>  $ run_07: num [1:10, 1:1150] 1.94e-02 4.54e-02 1.00e-10 1.19e-02 1.05e-02 ...
+#>   .. ..$ : chr [1:1034] "AAACATACAACCAC-1" "AAACATTGATCAGC-1" "AAACGCTGGTTCTT-1" "AAACTTGATCCAGA-1" ...
+#>  $ run_07: num [1:10, 1:1034] 4.60e-02 1.00e-10 1.00e-10 7.62e-02 4.03e-04 ...
 #>   ..- attr(*, "dimnames")=List of 2
 #>   .. ..$ : chr [1:10] "comp_01" "comp_02" "comp_03" "comp_04" ...
-#>   .. ..$ : chr [1:1150] "AAACATACAACCAC-1" "AAACATTGATCAGC-1" "AAACGCACTGGTAC-1" "AAACGCTGGTTCTT-1" ...
-#>  $ run_08: num [1:10, 1:1150] 3.70e-02 1.00e-10 3.70e-02 4.94e-02 3.10e-02 ...
+#>   .. ..$ : chr [1:1034] "AAACATACAACCAC-1" "AAACATTGATCAGC-1" "AAACGCTGGTTCTT-1" "AAACTTGATCCAGA-1" ...
+#>  $ run_08: num [1:10, 1:1034] 4.49e-02 2.58e-03 9.99e-11 3.42e-02 1.52e-02 ...
 #>   ..- attr(*, "dimnames")=List of 2
 #>   .. ..$ : chr [1:10] "comp_01" "comp_02" "comp_03" "comp_04" ...
-#>   .. ..$ : chr [1:1150] "AAACATACAACCAC-1" "AAACATTGATCAGC-1" "AAACGCACTGGTAC-1" "AAACGCTGGTTCTT-1" ...
-#>  $ run_09: num [1:10, 1:1150] 3.77e-02 1.00e-10 3.61e-02 1.22e-02 2.73e-02 ...
+#>   .. ..$ : chr [1:1034] "AAACATACAACCAC-1" "AAACATTGATCAGC-1" "AAACGCTGGTTCTT-1" "AAACTTGATCCAGA-1" ...
+#>  $ run_09: num [1:10, 1:1034] 2.87e-02 2.09e-02 3.28e-02 2.82e-02 1.00e-10 ...
 #>   ..- attr(*, "dimnames")=List of 2
 #>   .. ..$ : chr [1:10] "comp_01" "comp_02" "comp_03" "comp_04" ...
-#>   .. ..$ : chr [1:1150] "AAACATACAACCAC-1" "AAACATTGATCAGC-1" "AAACGCACTGGTAC-1" "AAACGCTGGTTCTT-1" ...
-#>  $ run_10: num [1:10, 1:1150] 4.28e-02 1.00e-10 1.72e-02 2.96e-02 5.73e-02 ...
+#>   .. ..$ : chr [1:1034] "AAACATACAACCAC-1" "AAACATTGATCAGC-1" "AAACGCTGGTTCTT-1" "AAACTTGATCCAGA-1" ...
+#>  $ run_10: num [1:10, 1:1034] 0.0102 0.0463 0.0281 0.0379 0.0254 ...
 #>   ..- attr(*, "dimnames")=List of 2
 #>   .. ..$ : chr [1:10] "comp_01" "comp_02" "comp_03" "comp_04" ...
-#>   .. ..$ : chr [1:1150] "AAACATACAACCAC-1" "AAACATTGATCAGC-1" "AAACGCACTGGTAC-1" "AAACGCTGGTTCTT-1" ...
+#>   .. ..$ : chr [1:1034] "AAACATACAACCAC-1" "AAACATTGATCAGC-1" "AAACGCTGGTTCTT-1" "AAACTTGATCCAGA-1" ...
 ```
 
 The run with the lowest final reconstruction loss is the most natural

@@ -23,7 +23,7 @@ the high confidence TFs (default), or also include the low confidence TFs
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.8</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -164,6 +164,10 @@ transcription factors. Must contain columns: <code>motif</code>, <code>TF</code>
 threshold calculation. Default 0.05 means top 5 percent of genes.</p></li>
 <li><p>nes_threshold - Numeric. Normalised Enrichment Score threshold for
 determining significant motifs. Default is 3.0.</p></li>
+<li><p>max_rank - Integer. Depth of the recovery curves used for the
+background and the leading edge. Default is 5000.</p></li>
+<li><p>n_mean - Integer. Rolling mean window for the approximate background
+curve. Default is 100.</p></li>
 <li><p>rcc_method - Character. Recovery curve calculation method: "approx"
 (approximate, faster) or "icistarget" (exact, slower).</p></li>
 <li><p>high_conf_cats - Character vector. Annotation categories considered

@@ -44,7 +44,7 @@ aucell_sc(
   with the following elements:
 
   - auc_type - String. Which statistic to calculate. One of
-    `c("wilcox", "recovery", "ap")`.
+    `c("recovery", "wilcox", "ap")`. `"recovery"` is the SCENIC one.
 
   - max_rank - Optional numeric. Rank cutoff for `"recovery"`. If
     `NULL`, the top 5% of the gene universe is used. Ignored by the

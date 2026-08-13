@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.8</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -85,6 +85,36 @@
 
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.4.8" id="bixverse-048">bixverse 0.4.8<a class="anchor" aria-label="anchor" href="#bixverse-048"></a></h2>
+<div class="section level3">
+<h3 id="features-0-4-8">Features<a class="anchor" aria-label="anchor" href="#features-0-4-8"></a></h3>
+<div class="section level4">
+<h4 id="single-cells-0-4-8">Single cells<a class="anchor" aria-label="anchor" href="#single-cells-0-4-8"></a></h4>
+<p><strong>Meta cells:</strong></p>
+<ul><li>Improved speed for meta cell methods regarding HVG detection and PCA.</li>
+<li>Additional functionalities around meta cell purities: you can return entropy top label and second best label + proportions.</li>
+<li>Hotspot can now also be applied on meta cells.</li>
+</ul><p><strong>Single cells:</strong></p>
+<ul><li>Regulon binarisation for SCENIC.</li>
+<li>AUCell now defaults to <code>"recovery"</code> a more top heavy score. If you want the old behaviour, please use <code>"wilcox"</code>.</li>
+<li>One-vs-many comparisons to identify cell type markers.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="bug-fixes-0-4-8">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-4-8"></a></h4>
+<ul><li>Various edge cases bug fixes in <code>bixverse-rs</code> that propagate into here.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="improved-dev-experience-0-4-8">Improved dev experience<a class="anchor" aria-label="anchor" href="#improved-dev-experience-0-4-8"></a></h4>
+<p>If you want to develop on the package, set:</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Sys.setenv.html" class="external-link">Sys.setenv</a></span><span class="op">(</span>DEV_BUILD <span class="op">=</span> <span class="st">"true"</span><span class="op">)</span></span>
+<span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">document</span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">install</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<p>for local testing and exploration. It will optimise less aggressively in terms of performance, but still reach very good speeds this way, while massively reducing compile times.</p>
+</div>
+</div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.4.7" id="bixverse-047">bixverse 0.4.7<a class="anchor" aria-label="anchor" href="#bixverse-047"></a></h2>
 <div class="section level3">

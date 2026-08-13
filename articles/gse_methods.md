@@ -213,7 +213,7 @@ rs_results_example <- gse_hypergeometric_list(
   gene_set_list = gene_sets
 )
 tictoc::toc()
-#> 0.725 sec elapsed
+#> 1.761 sec elapsed
 ```
 
 ## Gene Ontology-aware enrichment: the elimination method
@@ -263,20 +263,20 @@ go_aware_res <- gse_go_elim_method(
 head(go_aware_res)
 #>         go_id                                     go_name odds_ratios
 #>        <char>                                      <char>       <num>
-#> 1: GO:0003723                                 RNA binding   14.812443
+#> 1: GO:0003723                                 RNA binding   10.897512
 #> 2: GO:0032040                    small-subunit processome   44.202960
-#> 3: GO:0042274          ribosomal small subunit biogenesis   43.541132
-#> 4: GO:0005730                                   nucleolus    6.009426
-#> 5: GO:0000055 ribosomal large subunit export from nucleus  455.891304
-#> 6: GO:0031428    box C/D methylation guide snoRNP complex  455.891304
+#> 3: GO:0000055 ribosomal large subunit export from nucleus  455.891304
+#> 4: GO:0031428    box C/D methylation guide snoRNP complex  455.891304
+#> 5: GO:0000056 ribosomal small subunit export from nucleus  341.902174
+#> 6: GO:0005730                                   nucleolus    5.524423
 #>           pvals          fdr  hits gene_set_lengths
 #>           <num>        <num> <num>            <num>
-#> 1: 3.122680e-16 3.441817e-12    23             1205
-#> 2: 1.623943e-08 6.489265e-05     6               72
-#> 3: 1.766267e-08 6.489265e-05     6               73
-#> 4: 8.523856e-08 2.348748e-04    18             1866
-#> 5: 2.368116e-07 4.350230e-04     3                6
-#> 6: 2.368116e-07 4.350230e-04     3                6
+#> 1: 4.901798e-12 5.397860e-08    19             1171
+#> 2: 1.623943e-08 8.941431e-05     6               72
+#> 3: 2.368116e-07 6.519425e-04     3                6
+#> 4: 2.368116e-07 6.519425e-04     3                6
+#> 5: 4.137403e-07 8.639563e-04     3                7
+#> 6: 4.707354e-07 8.639563e-04    17             1857
 ```
 
 And the version for lists:
@@ -291,20 +291,20 @@ go_aware_res_2 <- gse_go_elim_method_list(
 head(go_aware_res_2)
 #>    target_set_name                                              go_name
 #>             <char>                                               <char>
-#> 1:           set_1                                          RNA binding
-#> 2:           set_2 cell surface receptor signaling pathway via JAK-STAT
+#> 1:           set_2 cell surface receptor signaling pathway via JAK-STAT
+#> 2:           set_2                                    cytokine activity
 #> 3:           set_2                                inflammatory response
-#> 4:           set_2                                    cytokine activity
+#> 4:           set_1                                          RNA binding
 #> 5:           set_2                                   chemokine activity
 #> 6:           set_2                     external side of plasma membrane
 #>         go_id odds_ratios        pvals          fdr  hits gene_set_lengths
 #>        <char>       <num>        <num>        <num> <num>            <num>
-#> 1: GO:0003723    14.81244 3.122680e-16 3.441817e-12    23             1205
-#> 2: GO:0007259    97.16563 8.704402e-15 9.588769e-11     9               66
-#> 3: GO:0006954    22.90818 1.408854e-13 7.759966e-10    14              447
-#> 4: GO:0005125    31.85212 1.130962e-12 4.152892e-09    11              235
-#> 5: GO:0008009    99.30420 6.201736e-12 1.707958e-08     7               48
-#> 6: GO:0009897    21.74176 9.192276e-12 2.025242e-08    12              379
+#> 1: GO:0007259    97.16563 8.704402e-15 9.576583e-11     9               66
+#> 2: GO:0005125    31.85212 1.130962e-12 6.221421e-09    11              235
+#> 3: GO:0006954    21.05918 2.285499e-12 8.381688e-09    13              436
+#> 4: GO:0003723    10.89751 4.901798e-12 5.397860e-08    19             1171
+#> 5: GO:0008009    99.30420 6.201736e-12 1.705787e-08     7               48
+#> 6: GO:0009897    21.74176 9.192276e-12 2.022668e-08    12              379
 ```
 
 The DAG traversal is inherently sequential per gene set (each level
@@ -342,7 +342,7 @@ rs_results_example <- gse_go_elim_method_list(
   target_gene_list = go_target_gene_sets
 )
 tictoc::toc()
-#> 1.662 sec elapsed
+#> 1.901 sec elapsed
 ```
 
 ## Alternative: post-hoc simplification of GO results
@@ -415,10 +415,20 @@ go_results_simplified <- simplify_hypergeom_res(
 head(go_results_simplified)
 #>    gene_set_name odds_ratios        pvals          fdr  hits gene_set_lengths
 #>           <char>       <num>        <num>        <num> <num>            <num>
-#> 1:    GO:0003723    22.12061 1.723343e-23 1.579099e-19    31             1546
+#> 1:    GO:0003723   22.120609 1.723343e-23 1.579099e-19    31             1546
+#> 2:    GO:0006364   35.837205 2.936032e-12 1.345143e-08    10              159
+#> 3:    GO:0005730    8.860092 6.601460e-12 1.581347e-08    23             1927
+#> 4:    GO:0042254   43.069954 6.903186e-12 1.581347e-08     9              118
+#> 5:    GO:0032040   44.202960 1.623943e-08 2.023038e-05     6               72
+#> 6:    GO:0000055  455.891304 2.368116e-07 2.169905e-04     3                6
 #>    target_set_lengths
 #>                 <int>
 #> 1:                 50
+#> 2:                 50
+#> 3:                 50
+#> 4:                 50
+#> 5:                 50
+#> 6:                 50
 ```
 
 ## GSEA
@@ -497,20 +507,20 @@ head(bixverse_fgsea)
 #> 6:                                        573389_NoRC_negatively_regulates_rRNA_expression
 #>            es        nes     pvals       fdr
 #>         <num>      <num>     <num>     <num>
-#> 1:  0.2885754  0.9321129 0.5588723 0.7359532
-#> 2:  0.2387284  0.8353752 0.7140600 0.8557113
-#> 3: -0.3640706 -1.3241710 0.1282051 0.2900703
-#> 4:  0.2516324  0.7211793 0.8109541 0.9063587
-#> 5:  0.2469065  1.0551934 0.3751804 0.5816288
-#> 6:  0.3607407  1.0338840 0.4204947 0.6207015
+#> 1:  0.2885754  0.9321969 0.5603306 0.7378735
+#> 2:  0.2387284  0.8369307 0.7098284 0.8577867
+#> 3: -0.3640706 -1.3124920 0.1328125 0.2999415
+#> 4:  0.2516324  0.7204316 0.8102837 0.9100339
+#> 5:  0.2469065  1.0514797 0.3806078 0.5884860
+#> 6:  0.3607407  1.0328122 0.4202128 0.6202637
 #>                                    leading_edge n_more_extreme    log2err
 #>                                          <list>          <num>      <num>
-#> 1:                      15270,12189,71846,19357            336 0.06407038
-#> 2:  17918,19341,20336,22628,22627,20619,...[15]            451 0.05029481
-#> 3: 76199,19014,26896,229003,17977,17978,...[12]             49 0.19991523
-#> 4:                            20893,59027,19883            458 0.04959020
-#> 5:  60406,19361,15270,20893,12189,68240,...[13]            259 0.07707367
-#> 6:                     60406,20018,245688,20017            237 0.08175156
+#> 1:                      15270,12189,71846,19357            338 0.06378454
+#> 2:  17918,19341,20336,22628,22627,20619,...[15]            454 0.04999139
+#> 3: 76199,19014,26896,229003,17977,17978,...[12]             50 0.19782202
+#> 4:                            20893,59027,19883            456 0.04979032
+#> 5:  60406,19361,15270,20893,12189,68240,...[13]            262 0.07647671
+#> 6:                     60406,20018,245688,20017            236 0.08197788
 ```
 
 The p-values from both implementations are in close agreement, as
@@ -552,8 +562,8 @@ microbenchmark::microbenchmark(
 )
 #> Unit: seconds
 #>   expr      min       lq     mean   median       uq      max neval
-#>  fgsea 3.170601 3.296714 3.557960 3.551973 3.670236 4.100274     5
-#>   rust 2.268978 2.269599 2.282325 2.285655 2.285672 2.301720     5
+#>  fgsea 3.122832 3.243980 3.509216 3.531519 3.621475 4.026276     5
+#>   rust 2.311833 2.312711 2.317525 2.315187 2.315860 2.332033     5
 ```
 
 ## GO-aware GSEA: the elimination method
@@ -586,12 +596,12 @@ go_gsea_res <- fgsea_go_elim(
 head(go_gsea_res)
 #>         go_id         es       nes  size        pvals n_more_extreme
 #>        <char>      <num>     <num> <num>        <num>          <num>
-#> 1: GO:0031465 -0.9025468 -1.925965     6 0.0001685687              0
-#> 2: GO:0006066 -0.6718553 -2.026201    18 0.0003026040              0
-#> 3: GO:0050877  0.5116421  1.950886    44 0.0003041065              2
-#> 4: GO:0035036  0.6952306  2.009366    15 0.0003469882              0
-#> 5: GO:0060213  0.7161644  1.991512    13 0.0004621245              1
-#> 6: GO:0072675 -0.8744037 -1.865910     6 0.0005366457              0
+#> 1: GO:0031465 -0.9025944 -1.925630     6 0.0001687356              0
+#> 2: GO:0006066 -0.6719029 -2.024665    18 0.0003035037              0
+#> 3: GO:0050877  0.5115945  1.948953    44 0.0003059293              2
+#> 4: GO:0035036  0.6951830  2.011786    15 0.0003466275              0
+#> 5: GO:0060213  0.7161168  1.993104    13 0.0004616471              0
+#> 6: GO:0072675 -0.8744512 -1.865588     6 0.0005371770              0
 #>                                                                                               leading_edge
 #>                                                                                                     <list>
 #> 1:                                                         ENSG00000110844,ENSG00000180370,ENSG00000160685
@@ -602,12 +612,12 @@ head(go_gsea_res)
 #> 6:                                                                                         ENSG00000170613
 #>      log2err       fdr
 #>        <num>     <num>
-#> 1: 0.5188481 0.6774944
-#> 2: 0.4984931 0.6774944
-#> 3: 0.4984931 0.6774944
-#> 4: 0.4984931 0.6774944
-#> 5: 0.4984931 0.6985338
-#> 6: 0.4772708 0.6985338
+#> 1: 0.5188481 0.6767902
+#> 2: 0.4984931 0.6767902
+#> 3: 0.4984931 0.6767902
+#> 4: 0.4984931 0.6767902
+#> 5: 0.4984931 0.6992254
+#> 6: 0.4772708 0.6992254
 #>                                                                    go_name
 #>                                                                     <char>
 #> 1:                                  Cul4B-RING E3 ubiquitin ligase complex

@@ -50,6 +50,47 @@ guards).
 `tools/config.R` templates `src/Makevars{,.win}` from the `.in` files at
 configure time. Builds are always release profile.
 
+### Local development
+
+Set `DEV_BUILD=true` before any build or `devtools::document()`. It
+keeps the cargo target directory around instead of wiping it, so you are
+not recompiling the whole dependency tree on every iteration.
+
+``` r
+
+Sys.setenv(DEV_BUILD = "true")
+devtools::document()
+devtools::install()
+```
+
+The `bixverse-rs` dependency is almost never developed against a
+released crates.io version. `src/rust/Cargo.toml` carries a
+`[patch.crates-io]` block that redirects it, and that patch is the knob
+to turn while a feature is in flight:
+
+``` toml
+# a branch on the remote, once the work is pushed
+[patch.crates-io]
+bixverse-rs = { git = "https://github.com/GregorLueg/bixverse-rs", branch = "some-branch" }
+
+# or a sibling checkout, for work that is not pushed yet
+[patch.crates-io]
+bixverse-rs = { path = "../../bixverse-rs" }
+```
+
+Check which of the two is active before building: a `path` override
+needs that checkout to actually exist at that path. With a `git` patch,
+new commits on the branch do not arrive on their own, the lock file pins
+a SHA:
+
+``` sh
+cargo update --manifest-path=src/rust/Cargo.toml -p bixverse-rs
+```
+
+The patch goes back to the published version only once the crate is
+released through CI/CD, at which point `src/rust/Cargo.toml` and the
+`version` in `[dependencies]` get bumped together.
+
 ## Architecture
 
 ### Two-layer Rust split
@@ -57,13 +98,11 @@ configure time. Builds are always release profile.
 The heavy numerical code does **not** live in this repo. It sits in the
 standalone [`bixverse-rs`](https://crates.io/crates/bixverse-rs) crate,
 declared in `src/rust/Cargo.toml` with features `single-cell` +
-`multi-modal`. Check whether that dependency is a published version or a
-local `path = ...` override before building: branches under active
-development often point at a sibling `bixverse-rs` checkout, which must
-exist at that path for the build to work. Everything under
-`src/rust/src/` is a thin extendr binding layer, one module per domain
-(`base`, `data`, `enrichment`, `graph`, `meta_cell`, `methods`,
-`ontology`, `single_cell`), registered in `src/rust/src/lib.rs` via
+`multi-modal`. It is usually redirected by a `[patch.crates-io]` block,
+see “Local development” above. Everything under `src/rust/src/` is a
+thin extendr binding layer, one module per domain (`base`, `data`,
+`enrichment`, `graph`, `meta_cell`, `methods`, `ontology`,
+`single_cell`), registered in `src/rust/src/lib.rs` via
 `extendr_module!`.
 
 Algorithmic work belongs in `bixverse-rs`; this repo gets the binding

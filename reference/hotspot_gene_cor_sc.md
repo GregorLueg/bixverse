@@ -25,7 +25,7 @@ hotspot_gene_cor_sc(
 
 - object:
 
-  `SingleCells` class.
+  `SingleCells` or `MetaCells` class.
 
 - embd_to_use:
 
@@ -47,6 +47,11 @@ hotspot_gene_cor_sc(
     expression. Choices are one of `c("danb", "normal", "bernoulli")`.
 
   - normalise - Boolean. Shall the data be normalised.
+
+  - weighted_graph - Boolean. Shall the Gaussian kernel be applied to
+    the neighbour distances. If `FALSE`, every retained edge weighs one.
+
+  - neighborhood_factor - Float. Kernel width for `weighted_graph`.
 
   - knn - List of kNN parameters. See
     [`params_knn_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_knn_defaults.md)
@@ -71,7 +76,8 @@ hotspot_gene_cor_sc(
 
   Optional Boolean. Shall the data be streamed in. Useful for larger
   data sets where you wish to avoid loading in the whole data. If
-  `NULL`, will automatically detect.
+  `NULL`, will automatically detect. Ignored for `MetaCells`, which are
+  held in memory.
 
 - working_mem_gb:
 
@@ -101,3 +107,8 @@ Should a gene not be found in sufficient cells, the pairs with this gene
 will be set to 0. Please ensure prior to running the function that you
 are only calculating gene-gene auto-correlations that occur in
 sufficient cells.
+
+Whether the neighbour distances need squaring before the kernel sees
+them follows from the metric. With `use_knn = TRUE` it is taken from the
+metric stored on the cached kNN graph, otherwise from `ann_dist` in
+`hotspot_params`.

@@ -14,7 +14,8 @@ run_cistarget(
   gs_list,
   rankings,
   annot_data,
-  cis_target_params = params_cistarget()
+  cis_target_params = params_cistarget(),
+  .verbose = TRUE
 )
 ```
 
@@ -55,6 +56,10 @@ run_cistarget(
 
   - low_conf_cats - Character vector. Annotation categories considered
     lower confidence (e.g., "inferredBy_MotifSimilarity").
+
+- .verbose:
+
+  Boolean. Controls verbosity of the function.
 
 ## Value
 

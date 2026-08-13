@@ -66,6 +66,12 @@ tf_to_genes_motif_enrichment(
   - nes_threshold - Numeric. Normalised Enrichment Score threshold for
     determining significant motifs. Default is 3.0.
 
+  - max_rank - Integer. Depth of the recovery curves used for the
+    background and the leading edge. Default is 5000.
+
+  - n_mean - Integer. Rolling mean window for the approximate background
+    curve. Default is 100.
+
   - rcc_method - Character. Recovery curve calculation method: "approx"
     (approximate, faster) or "icistarget" (exact, slower).
 

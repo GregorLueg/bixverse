@@ -40,8 +40,10 @@ rs_vision_with_autocorrelation(
 - knn_data:
 
   Optional list. This contains pre-computed kNN data (including
-  distances). The user has to ensure consistency! If provided, this will
-  be used.
+  distances) and the `dist_metric` it was built with. The user has to
+  ensure consistency! If provided, this will be used and whether the
+  distances are treated as squared is derived from `dist_metric` rather
+  than from the parameter list.
 
 - gs_list:
 
