@@ -149,14 +149,14 @@ read_motif_annotation_file <- function(annot_file) {
   # fcase is cool!
   motif_annotations[,
     annotationSource := data.table::fcase(
-      inferred_orthology & inferred_motif_sim,
-      "inferredBy_MotifSimilarity_n_Orthology",
-      inferred_motif_sim,
-      "inferredBy_MotifSimilarity",
-      inferred_orthology,
-      "inferredBy_Orthology",
-      direct_annotation,
-      "directAnnotation",
+      inferred_orthology & inferred_motif_sim  ,
+      "inferredBy_MotifSimilarity_n_Orthology" ,
+      inferred_motif_sim                       ,
+      "inferredBy_MotifSimilarity"             ,
+      inferred_orthology                       ,
+      "inferredBy_Orthology"                   ,
+      direct_annotation                        ,
+      "directAnnotation"                       ,
       default = ""
     )
   ]
@@ -247,6 +247,7 @@ read_motif_ranking <- function(ranking_file) {
 #'   \item{low_conf_cats - Character vector. Annotation categories considered
 #'   lower confidence (e.g., "inferredBy_MotifSimilarity").}
 #' }
+#' @param .verbose Boolean. Controls verbosity of the function.
 #'
 #' @return data.table with enriched motifs and corresponding statistics and
 #' high & low confidence TFs for each gene set.
@@ -258,7 +259,8 @@ run_cistarget <- function(
   gs_list,
   rankings,
   annot_data,
-  cis_target_params = params_cistarget()
+  cis_target_params = params_cistarget(),
+  .verbose = TRUE
 ) {
   # checks
   checkmate::assertList(gs_list, names = "named", types = "character")
@@ -305,7 +307,8 @@ run_cistarget <- function(
       nes_threshold = nes_threshold,
       max_rank = min(max_rank, nrow(rankings)),
       method = rcc_method,
-      n_mean = n_mean
+      n_mean = n_mean,
+      verbose = .verbose
     )
   )
 

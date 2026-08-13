@@ -2137,12 +2137,13 @@ rs_rbh_cor <- function(module_matrices, k_best, spearman, min_similarity) .Call(
 #' @param max_rank Maximum rank to consider (typically nrow(rankings)).
 #' @param method Recovery curve calculation method: "approx" or "icistarget".
 #' @param n_mean Number of points for averaging in approximate method.
+#' @param verbose Controls verbosity of the function.
 #'
 #' @return List of lists, one per gene set, each containing motif_idx, nes, auc,
 #' rank_at_max, n_enriched, and leading_edge.
 #'
 #' @export
-rs_cistarget <- function(rankings, gs_list, auc_threshold, nes_threshold, max_rank, method, n_mean) .Call(wrap__rs_cistarget, rankings, gs_list, auc_threshold, nes_threshold, max_rank, method, n_mean)
+rs_cistarget <- function(rankings, gs_list, auc_threshold, nes_threshold, max_rank, method, n_mean, verbose) .Call(wrap__rs_cistarget, rankings, gs_list, auc_threshold, nes_threshold, max_rank, method, n_mean, verbose)
 
 #' Run hypergeometric enrichment over the gene ontology
 #'

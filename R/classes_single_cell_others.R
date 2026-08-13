@@ -2432,7 +2432,8 @@ tf_to_genes_motif_enrichment.ScenicGrn <- function(
     gs_list = tf_gene_lists,
     rankings = motif_rankings,
     annot_data = annot_data,
-    cis_target_params = cis_target_params
+    cis_target_params = cis_target_params,
+    .verbose = .verbose
   )
   x[["cis_targets_results"]] <- cis_res
 

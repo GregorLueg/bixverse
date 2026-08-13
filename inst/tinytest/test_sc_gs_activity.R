@@ -873,6 +873,8 @@ expect_true(
 
 ##### add tf <> gene info ------------------------------------------------------
 
+cor_threshold <- 0.03
+
 expect_warning(
   current = get_tf_to_gene(rf_scenic_res_batch_32),
   info = "scenic grn: no tf to gene added yet warning"
@@ -901,7 +903,7 @@ nrow_before <- nrow(get_tf_to_gene(rf_scenic_res_batch_32))
 rf_scenic_res_batch_32 <- tf_to_genes_correlations(
   x = rf_scenic_res_batch_32,
   object = sc_object,
-  cor_filter = 0.05,
+  rho_threshold = cor_threshold,
   .verbose = FALSE
 )
 
@@ -922,7 +924,7 @@ expect_true(
 
 expect_true(
   current = all(
-    get_tf_to_gene(rf_scenic_res_batch_32)[["pairwise_cor"]] >= 0.05
+    get_tf_to_gene(rf_scenic_res_batch_32)[["pairwise_cor"]] >= cor_threshold
   ),
   info = "scenic grn: correlation filter behaves - test2"
 )

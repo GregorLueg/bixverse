@@ -11,7 +11,8 @@ rs_cistarget(
   nes_threshold,
   max_rank,
   method,
-  n_mean
+  n_mean,
+  verbose
 )
 }
 \arguments{
@@ -32,6 +33,8 @@ significant motifs}
 \item{method}{Recovery curve calculation method: "approx" or "icistarget".}
 
 \item{n_mean}{Number of points for averaging in approximate method.}
+
+\item{verbose}{Controls verbosity of the function.}
 }
 \value{
 List of lists, one per gene set, each containing motif_idx, nes, auc,

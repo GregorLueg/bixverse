@@ -34,9 +34,9 @@ $(STATLIB):
 		cp rust/vendor-config.toml $(CARGOTMP)/config.toml; \
 	fi
 
-	export CARGO_HOME=$(CARGOTMP) && \
+	export CARGO_HOME=$(HOME)/.cargo && \
 	export PATH="$(PATH):$(HOME)/.cargo/bin" && \
-	RUSTFLAGS="$(RUSTFLAGS) --print=native-static-libs" cargo build  --lib --release --manifest-path=./rust/Cargo.toml --target-dir $(TARGET_DIR) 
+	CARGO_INCREMENTAL=1 CARGO_PROFILE_RELEASE_LTO=false CARGO_PROFILE_RELEASE_CODEGEN_UNITS=16 CARGO_PROFILE_RELEASE_STRIP=none RUSTFLAGS="$(RUSTFLAGS) --print=native-static-libs" cargo build  --lib --release --manifest-path=./rust/Cargo.toml --target-dir $(TARGET_DIR) 
 
 	# --release matters here. config.R pins it to --release, and without it
 	# cargo builds the document bin into target/debug, recompiling the lib and
@@ -45,15 +45,15 @@ $(STATLIB):
 	# The dev profile overrides have to match the build above for the same
 	# reason: both invocations share one profile, so differing overrides mean a
 	# second full compile.
-	export CARGO_HOME=$(CARGOTMP) && \
+	export CARGO_HOME=$(HOME)/.cargo && \
 	export PATH="$(PATH):$(HOME)/.cargo/bin" && \
-	cargo run  --release --bin document --manifest-path=./rust/Cargo.toml --target-dir $(TARGET_DIR) 
+	CARGO_INCREMENTAL=1 CARGO_PROFILE_RELEASE_LTO=false CARGO_PROFILE_RELEASE_CODEGEN_UNITS=16 CARGO_PROFILE_RELEASE_STRIP=none cargo run  --release --bin document --manifest-path=./rust/Cargo.toml --target-dir $(TARGET_DIR) 
 
 	# Always clean up CARGOTMP
 	rm -Rf $(CARGOTMP);
 
 rust_clean: $(SHLIB)
-	rm -Rf $(CARGOTMP) $(VENDOR_DIR) $(TARGET_DIR)
+	rm -Rf $(CARGOTMP) $(VENDOR_DIR) 
 
 clean:
 	rm -Rf $(SHLIB) $(STATLIB) $(OBJECTS) $(TARGET_DIR) $(VENDOR_DIR)
