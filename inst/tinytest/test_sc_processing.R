@@ -1085,6 +1085,235 @@ expect_true(
   info = "all expected cell markers identified"
 )
 
+### find specific markers ------------------------------------------------------
+
+specific_markers <- find_specific_markers_sc(
+  object = sc_object,
+  column_of_interest = "cell_grp",
+  .verbose = FALSE
+)
+
+expect_true(
+  current = checkmate::testClass(specific_markers, "ScSpecificMarkers"),
+  info = "specific markers: ScSpecificMarkers returned"
+)
+
+expect_true(
+  current = checkmate::testDataTable(
+    specific_markers$summary,
+    types = c("character", "numeric", "integer")
+  ) &&
+    all(
+      c(
+        "ref_grp",
+        "gene_id",
+        "prop_ref",
+        "median_auroc",
+        "min_auroc",
+        "mean_auroc",
+        "max_auroc",
+        "worst_rival",
+        "min_rank",
+        "simes_p",
+        "simes_fdr",
+        "max_p",
+        "max_p_fdr"
+      ) %in%
+        names(specific_markers$summary)
+    ),
+  info = "specific markers: summary table has the expected columns"
+)
+
+expect_true(
+  current = checkmate::testDataTable(specific_markers$per_comparison) &&
+    all(
+      c(
+        "ref_grp",
+        "rival_grp",
+        "gene_id",
+        "auroc",
+        "lfc",
+        "prop_ref",
+        "prop_rival",
+        "z_scores",
+        "p_values",
+        "fdr"
+      ) %in%
+        names(specific_markers$per_comparison)
+    ),
+  info = "specific markers: per comparison table has the expected columns"
+)
+
+cell_types <- sprintf("cell_type_%i", 1:3)
+
+expect_equal(
+  current = sort(unique(specific_markers$summary$ref_grp)),
+  target = cell_types,
+  info = "specific markers: every group used as the reference"
+)
+
+# each reference has two rivals, so the per comparison table is twice as long
+expect_equal(
+  current = nrow(specific_markers$per_comparison),
+  target = 2L * nrow(specific_markers$summary),
+  info = "specific markers: one row per gene, reference and rival"
+)
+
+expect_true(
+  current = all(
+    specific_markers$per_comparison$rival_grp !=
+      specific_markers$per_comparison$ref_grp
+  ) &&
+    all(
+      specific_markers$summary$worst_rival != specific_markers$summary$ref_grp
+    ),
+  info = "specific markers: a group is never its own rival"
+)
+
+expect_true(
+  current = all(specific_markers$summary$min_rank >= 1L),
+  info = "specific markers: competition ranks start at 1"
+)
+
+# the point of the one vs. many approach: the synthetic marker blocks are
+# specific to one cell type each, so they have to beat both rivals, while
+# everything else should not separate the reference from either of them
+marker_blocks <- list(
+  cell_type_1 = sprintf("gene_%03d", 1:10),
+  cell_type_2 = sprintf("gene_%03d", 11:20),
+  cell_type_3 = sprintf("gene_%03d", 21:30)
+)
+
+for (cell_type in cell_types) {
+  summary_ct <- specific_markers$summary[ref_grp == cell_type]
+  own_block <- summary_ct[gene_id %in% marker_blocks[[cell_type]]]
+  other_genes <- summary_ct[!(gene_id %in% marker_blocks[[cell_type]])]
+
+  expect_equal(
+    current = nrow(own_block),
+    target = length(marker_blocks[[cell_type]]),
+    info = sprintf(
+      "specific markers: all %s markers survived the gene filter",
+      cell_type
+    )
+  )
+
+  expect_true(
+    current = all(own_block$min_auroc > 0.7) & all(own_block$simes_fdr <= 0.05),
+    info = sprintf("specific markers: %s markers beat both rivals", cell_type)
+  )
+
+  expect_true(
+    current = all(other_genes$min_auroc < 0.65),
+    info = sprintf(
+      "specific markers: non-markers do not separate %s from both rivals",
+      cell_type
+    )
+  )
+}
+
+### single reference group -----------------------------------------------------
+
+specific_markers_one <- find_specific_markers_sc(
+  object = sc_object,
+  column_of_interest = "cell_grp",
+  reference_group = "cell_type_1",
+  .verbose = FALSE
+)
+
+expect_equal(
+  current = unique(specific_markers_one$summary$ref_grp),
+  target = "cell_type_1",
+  info = "specific markers: only the requested reference group is returned"
+)
+
+# the rivals are unchanged, so the single arm has to reproduce the loop exactly
+expect_equal(
+  current = specific_markers_one$summary,
+  target = specific_markers$summary[ref_grp == "cell_type_1"],
+  info = "specific markers: single reference arm matches the full loop"
+)
+
+### agreement with the pairwise test -------------------------------------------
+
+# each gene is ranked independently of the others, so the per comparison
+# statistics must not depend on the shared gene filter and have to reproduce
+# find_markers_sc() on the genes both of them kept
+pairwise_dge <- find_markers_sc(
+  object = sc_object,
+  cells_1 = sc_object[[]][cell_grp == "cell_type_1", cell_id],
+  cells_2 = sc_object[[]][cell_grp == "cell_type_2", cell_id],
+  alternative = "greater",
+  .verbose = FALSE
+)
+
+one_vs_many_arm <- specific_markers$per_comparison[
+  ref_grp == "cell_type_1" & rival_grp == "cell_type_2"
+]
+
+shared_genes <- merge(
+  one_vs_many_arm[, .(gene_id, lfc, z_scores)],
+  pairwise_dge[, .(gene_id, lfc_pairwise = lfc, z_pairwise = z_scores)],
+  by = "gene_id"
+)
+
+expect_true(
+  current = nrow(shared_genes) > 0L,
+  info = "specific markers: genes shared with the pairwise test"
+)
+
+expect_equal(
+  current = shared_genes$lfc,
+  target = shared_genes$lfc_pairwise,
+  info = "specific markers: log fold changes match the pairwise test"
+)
+
+expect_equal(
+  current = shared_genes$z_scores,
+  target = shared_genes$z_pairwise,
+  info = "specific markers: Z-scores match the pairwise test"
+)
+
+### error handling -------------------------------------------------------------
+
+expect_error(
+  current = find_specific_markers_sc(
+    object = sc_object,
+    column_of_interest = "not_a_column"
+  ),
+  pattern = "not found in the obs table",
+  info = "specific markers: error if the column is not in the obs table"
+)
+
+expect_error(
+  current = find_specific_markers_sc(
+    object = sc_object,
+    column_of_interest = "cell_grp",
+    reference_group = "not_a_cell_type"
+  ),
+  pattern = "Must be element of set",
+  info = "specific markers: error if the reference group is not in the column"
+)
+
+expect_error(
+  current = find_specific_markers_sc(
+    object = sc_object,
+    column_of_interest = "batch_index"
+  ),
+  pattern = "fewer than two groups",
+  info = "specific markers: error if there is nothing to compare against"
+)
+
+expect_error(
+  current = find_specific_markers_sc(
+    object = sc_object,
+    column_of_interest = "cell_grp",
+    min_prop = 2
+  ),
+  pattern = "must be <= 1",
+  info = "specific markers: error on an out of range minimum proportion"
+)
+
 ## sparse pca ------------------------------------------------------------------
 
 ### direct rust functions ------------------------------------------------------

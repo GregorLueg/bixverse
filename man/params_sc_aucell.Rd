@@ -5,7 +5,7 @@
 \title{Wrapper function for parameters for AUCell}
 \usage{
 params_sc_aucell(
-  auc_type = c("wilcox", "recovery", "ap"),
+  auc_type = c("recovery", "wilcox", "ap"),
   max_rank = NULL,
   standardise = FALSE
 )
@@ -18,7 +18,7 @@ gene set size. \code{"recovery"} is the recovery-curve AUC under a rank cutoff,
 i.e. the actual AUCell statistic of Aibar, et al. \code{"ap"} is average
 precision, the most top-heavy of the three, but its null tracks the gene set
 prevalence so raw values are not comparable across gene sets of different
-size unless \code{standardise} is on. Defaults to \code{"wilcox"}.}
+size unless \code{standardise} is on. Defaults to \code{"recovery"}.}
 
 \item{max_rank}{Optional numeric. Rank cutoff for \code{"recovery"}, counted from
 the top of the within-cell ranking. If \code{NULL}, resolves to the top 5\% of the
@@ -36,6 +36,20 @@ The three statistics consume the same within-cell ranking, but weight it
 very differently. \code{"wilcox"} is a pure function of the gene set's rank sum,
 so a gene at rank 2 and one at rank 200 count for almost the same thing.
 \code{"recovery"} and \code{"ap"} are top-heavy.
+
+For SCENIC use \code{"recovery"}, the default. \code{"wilcox"} is a bixverse addition
+and its flatter score does not separate into on/off populations, so it
+binarises badly.
+
+Ranking ties are averaged (midranks) rather than broken at random the way
+AUCell does it, which is why there is no need for SCENIC's trick of setting
+the cutoff to the 1st percentile of genes detected per cell. Undetected
+genes all collapse onto one rank well outside any sensible \code{max_rank}.
+
+Note the recovery AUC is normalised by \code{max_rank * length(gene_set)},
+matching pySCENIC and AUCell's \code{normAUC = FALSE}. Modern AUCell divides by
+the attainable maximum instead, so absolute values differ by a per-gene-set
+constant. Cell ordering within a regulon is unaffected.
 }
 \references{
 Aibar, et al., Nat Methods, 2017

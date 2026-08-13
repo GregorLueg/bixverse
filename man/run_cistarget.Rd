@@ -8,7 +8,8 @@ run_cistarget(
   gs_list,
   rankings,
   annot_data,
-  cis_target_params = params_cistarget()
+  cis_target_params = params_cistarget(),
+  .verbose = TRUE
 )
 }
 \arguments{
@@ -36,6 +37,8 @@ high confidence (e.g., "directAnnotation", "inferredBy_Orthology").}
 \item{low_conf_cats - Character vector. Annotation categories considered
 lower confidence (e.g., "inferredBy_MotifSimilarity").}
 }}
+
+\item{.verbose}{Boolean. Controls verbosity of the function.}
 }
 \value{
 data.table with enriched motifs and corresponding statistics and

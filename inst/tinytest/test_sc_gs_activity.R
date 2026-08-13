@@ -197,6 +197,7 @@ expect_equivalent(
 auc_res_streamed <- aucell_sc(
   object = sc_object,
   gs_list = auc_gene_sets,
+  aucell_params = params_sc_aucell(auc_type = "wilcox"),
   streaming = TRUE,
   .verbose = FALSE
 )
@@ -205,6 +206,12 @@ expect_equivalent(
   current = auc_res_streamed,
   target = auc_res[["wilcox"]],
   info = "aucell - streamed and in-memory paths agree"
+)
+
+expect_equal(
+  current = params_sc_aucell()$auc_type,
+  target = "recovery",
+  info = "aucell: the SCENIC recovery statistic is the default"
 )
 
 
@@ -866,6 +873,8 @@ expect_true(
 
 ##### add tf <> gene info ------------------------------------------------------
 
+cor_threshold <- 0.03
+
 expect_warning(
   current = get_tf_to_gene(rf_scenic_res_batch_32),
   info = "scenic grn: no tf to gene added yet warning"
@@ -894,7 +903,7 @@ nrow_before <- nrow(get_tf_to_gene(rf_scenic_res_batch_32))
 rf_scenic_res_batch_32 <- tf_to_genes_correlations(
   x = rf_scenic_res_batch_32,
   object = sc_object,
-  cor_filter = 0.05,
+  rho_threshold = cor_threshold,
   .verbose = FALSE
 )
 
@@ -915,7 +924,7 @@ expect_true(
 
 expect_true(
   current = all(
-    get_tf_to_gene(rf_scenic_res_batch_32)[["pairwise_cor"]] >= 0.05
+    get_tf_to_gene(rf_scenic_res_batch_32)[["pairwise_cor"]] >= cor_threshold
   ),
   info = "scenic grn: correlation filter behaves - test2"
 )

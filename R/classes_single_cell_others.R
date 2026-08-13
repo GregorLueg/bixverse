@@ -1264,8 +1264,8 @@ generate_hotspot_membership.Hotspot <- function(
     gene_id = rownames(x$z),
     cluster_member = rs_hotspot_cluster_genes(
       x$z,
-      fdr_threshold = 0.05,
-      10L
+      fdr_threshold = fdr_threshold,
+      min_size = min_size
     )
   )
 
@@ -2108,7 +2108,7 @@ identify_tf_to_genes.ScenicGrn <- function(
     gene_indices_1 = as.integer(indices_1),
     gene_indices_2 = as.integer(indices_2),
     cells_to_keep = as.integer(get_cells_to_keep(object)),
-    spearman = FALSE
+    spearman = spearman
   )
 
   tf_to_gene[, pairwise_cor := pairwise_cors]
@@ -2171,27 +2171,45 @@ identify_tf_to_genes.ScenicGrn <- function(
 #' This function will calculate the correlations between the identified TF to
 #' gene pairs. You need to have run [identify_tf_to_genes()]!
 #'
+#' Following SCENIC, the correlation is turned into a three-level sign at
+#' `rho_threshold`: `+1` for activating links, `-1` for repressing ones and `0`
+#' for everything in the band between. `mode` then decides which of those you
+#' keep. The default keeps the activating links only, which is what SCENIC does
+#' with `onlyPositiveCorr = TRUE`.
+#'
 #' @param x `ScenicGrn` object for which to generate the TF to gene
 #' associations.
 #' @param object `SingleCells` or `MetaCells` object that was used to generate
 #' the original GRNs.
-#' @param cor_filter Optional float. If you wish to filter out TF genes below
-#' a certain correlation. If `NULL` all genes will be kept.
+#' @param rho_threshold Float. Absolute correlation above which a TF to gene
+#' link counts as activating or repressing. Defaults to `0.03`, the SCENIC
+#' value.
+#' @param mode String. Which links to keep. One of
+#' `c("activating", "repressing", "both")`. Defaults to `"activating"`.
 #' @param remove_self Boolean. Shall self loops (where TF controls its own
-#' expression) be removed. Defaults to `TRUE`.
+#' expression) be removed. Defaults to `TRUE`. Note that [build_regulons()]
+#' adds the TF back to its own regulon, which is also what SCENIC does.
 #' @param spearman Boolean. Shall Spearman correlation be used. Defaults to
 #' `TRUE`.
+#' @param cor_filter Deprecated. Use `rho_threshold` and `mode` instead. If
+#' given, it is treated as a one-sided lower bound on the correlation and
+#' `rho_threshold` and `mode` are ignored.
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
-#' @returns Adds the correlations coefficients between to the TF to gene.
+#' @returns Adds a `pairwise_cor` and a `cor_sign` column to the TF to gene
+#' results.
+#'
+#' @references Aibar, et al., Nat Methods, 2017
 #'
 #' @export
 tf_to_genes_correlations <- function(
   x,
   object,
-  cor_filter = NULL,
+  rho_threshold = 0.03,
+  mode = c("activating", "repressing", "both"),
   remove_self = TRUE,
   spearman = TRUE,
+  cor_filter = NULL,
   .verbose = TRUE
 ) {
   UseMethod("tf_to_genes_correlations")
@@ -2203,19 +2221,25 @@ tf_to_genes_correlations <- function(
 tf_to_genes_correlations.ScenicGrn <- function(
   x,
   object,
-  cor_filter = NULL,
+  rho_threshold = 0.03,
+  mode = c("activating", "repressing", "both"),
   remove_self = TRUE,
   spearman = TRUE,
+  cor_filter = NULL,
   .verbose = TRUE
 ) {
+  mode <- match.arg(mode)
+
   # checks
   checkmate::assertClass(x, "ScenicGrn")
   checkmate::assertTRUE(
     S7::S7_inherits(object, SingleCells) || S7::S7_inherits(object, MetaCells)
   )
-  checkmate::qassert(cor_filter, c("0", "N1"))
+  checkmate::qassert(rho_threshold, "N1[0, 1]")
+  checkmate::assertChoice(mode, c("activating", "repressing", "both"))
   checkmate::qassert(remove_self, "B1")
   checkmate::qassert(spearman, "B1")
+  checkmate::qassert(cor_filter, c("0", "N1"))
   checkmate::qassert(.verbose, "B1")
 
   # early return
@@ -2239,14 +2263,27 @@ tf_to_genes_correlations.ScenicGrn <- function(
     .tf_gene_cor_mc(tf_to_gene, object, spearman)
   }
 
+  tf_to_gene[,
+    cor_sign := as.integer(pairwise_cor > rho_threshold) -
+      as.integer(pairwise_cor < -rho_threshold)
+  ]
+
   if (!is.null(cor_filter)) {
+    warning(paste(
+      "`cor_filter` is deprecated, use `rho_threshold` and `mode`.",
+      "Applying it as a one-sided lower bound and ignoring `mode`."
+    ))
+    tf_to_gene <- tf_to_gene[pairwise_cor >= cor_filter]
+  } else {
+    keep <- switch(mode, activating = 1L, repressing = -1L, both = c(-1L, 1L))
     if (.verbose) {
       message(sprintf(
-        "Removing TF <> gene pairs with cors <= %.3f",
-        cor_filter
+        "Keeping %s TF <> gene links at |rho| > %.3f",
+        mode,
+        rho_threshold
       ))
     }
-    tf_to_gene <- tf_to_gene[pairwise_cor >= cor_filter]
+    tf_to_gene <- tf_to_gene[cor_sign %in% keep]
   }
 
   if (remove_self) {
@@ -2290,6 +2327,10 @@ tf_to_genes_correlations.ScenicGrn <- function(
 #'   threshold calculation. Default 0.05 means top 5 percent of genes.}
 #'   \item{nes_threshold - Numeric. Normalised Enrichment Score threshold for
 #'   determining significant motifs. Default is 3.0.}
+#'   \item{max_rank - Integer. Depth of the recovery curves used for the
+#'   background and the leading edge. Default is 5000.}
+#'   \item{n_mean - Integer. Rolling mean window for the approximate background
+#'   curve. Default is 100.}
 #'   \item{rcc_method - Character. Recovery curve calculation method: "approx"
 #'   (approximate, faster) or "icistarget" (exact, slower).}
 #'   \item{high_conf_cats - Character vector. Annotation categories considered
@@ -2391,7 +2432,8 @@ tf_to_genes_motif_enrichment.ScenicGrn <- function(
     gs_list = tf_gene_lists,
     rankings = motif_rankings,
     annot_data = annot_data,
-    cis_target_params = cis_target_params
+    cis_target_params = cis_target_params,
+    .verbose = .verbose
   )
   x[["cis_targets_results"]] <- cis_res
 
@@ -2443,6 +2485,156 @@ tf_to_genes_motif_enrichment.ScenicGrn <- function(
   data.table::setorder(tf_gene_dt, tf)
   x$tf_to_gene_results <- tf_gene_dt
   return(x)
+}
+
+### scenic regulons ------------------------------------------------------------
+
+#' Build the final regulons
+#'
+#' @description
+#' Turns the TF to gene table into the gene sets you hand to [aucell_sc()].
+#' [tf_to_genes_motif_enrichment()] only flags which pairs survived the
+#' CisTarget leading edge, it does not remove anything, so this is the step that
+#' applies that filter.
+#'
+#' Following SCENIC, the TF is added back to its own target list and regulons
+#' below `min_genes` are dropped. Note the CisTarget leading edge usually cuts
+#' hard: a module of a few hundred candidate targets typically ends up as a
+#' regulon of a few dozen.
+#'
+#' @param x `ScenicGrn` object. You need to have run
+#' [tf_to_genes_motif_enrichment()] for the leading edge filter to do anything.
+#' @param use_leading_edge Boolean. Shall only the TF to gene pairs inside the
+#' CisTarget leading edge be kept. Defaults to `TRUE`.
+#' @param add_tf Boolean. Shall the TF be added to its own regulon. Defaults to
+#' `TRUE`, following SCENIC.
+#' @param min_genes Integer. Regulons with fewer genes than this are dropped.
+#' Defaults to `10L`, the SCENIC value.
+#' @param mode String. Which links to keep, based on the `cor_sign` column
+#' added by [tf_to_genes_correlations()]. One of
+#' `c("activating", "repressing", "both")`. With `"both"` the regulon names get
+#' a `"_pos"` or `"_neg"` suffix so the two stay distinct. Defaults to
+#' `"activating"`.
+#' @param .verbose Boolean. Controls verbosity of the function.
+#'
+#' @returns A named list of character vectors, one per regulon.
+#'
+#' @references Aibar, et al., Nat Methods, 2017
+#'
+#' @export
+build_regulons <- function(
+  x,
+  use_leading_edge = TRUE,
+  add_tf = TRUE,
+  min_genes = 10L,
+  mode = c("activating", "repressing", "both"),
+  .verbose = TRUE
+) {
+  UseMethod("build_regulons")
+}
+
+#' @rdname build_regulons
+#'
+#' @export
+build_regulons.ScenicGrn <- function(
+  x,
+  use_leading_edge = TRUE,
+  add_tf = TRUE,
+  min_genes = 10L,
+  mode = c("activating", "repressing", "both"),
+  .verbose = TRUE
+) {
+  mode <- match.arg(mode)
+
+  # checks
+  checkmate::assertClass(x, "ScenicGrn")
+  checkmate::qassert(use_leading_edge, "B1")
+  checkmate::qassert(add_tf, "B1")
+  checkmate::qassert(min_genes, "I1[1,)")
+  checkmate::assertChoice(mode, c("activating", "repressing", "both"))
+  checkmate::qassert(.verbose, "B1")
+
+  tf_to_gene <- get_tf_to_gene(x)
+
+  # early return
+  if (is.null(tf_to_gene) || nrow(tf_to_gene) == 0) {
+    warning(paste(
+      "No TF to gene pairs found. Returning NULL.",
+      "Did you run identify_tf_to_genes()?"
+    ))
+    return(NULL)
+  }
+
+  if (use_leading_edge) {
+    if (!"in_leading_edge" %in% names(tf_to_gene)) {
+      warning(paste(
+        "No `in_leading_edge` column found, so the CisTarget filter is",
+        "skipped. Did you run tf_to_genes_motif_enrichment()?"
+      ))
+    } else {
+      tf_to_gene <- tf_to_gene[(in_leading_edge)]
+    }
+  }
+
+  # the sign is only there once tf_to_genes_correlations() has run
+  if ("cor_sign" %in% names(tf_to_gene)) {
+    keep <- switch(mode, activating = 1L, repressing = -1L, both = c(-1L, 1L))
+    tf_to_gene <- tf_to_gene[cor_sign %in% keep]
+  } else if (mode != "activating") {
+    warning(paste(
+      "No `cor_sign` column found, so `mode` is ignored.",
+      "Did you run tf_to_genes_correlations()?"
+    ))
+  }
+
+  if (nrow(tf_to_gene) == 0) {
+    warning("No TF to gene pairs survived the filters. Returning NULL.")
+    return(NULL)
+  }
+
+  # with mode = "both" a TF can carry an activating and a repressing regulon,
+  # so the sign has to be part of the name
+  split_key <- if (mode == "both" && "cor_sign" %in% names(tf_to_gene)) {
+    paste0(
+      tf_to_gene$tf,
+      data.table::fifelse(tf_to_gene$cor_sign > 0L, "_pos", "_neg")
+    )
+  } else {
+    tf_to_gene$tf
+  }
+
+  regulons <- split(tf_to_gene$gene, split_key)
+
+  if (add_tf) {
+    tf_per_regulon <- split(tf_to_gene$tf, split_key)
+    regulons <- purrr::map2(
+      regulons,
+      tf_per_regulon,
+      \(genes, tf) unique(c(tf[1], genes))
+    )
+  } else {
+    regulons <- purrr::map(regulons, unique)
+  }
+
+  n_before <- length(regulons)
+  regulons <- regulons[purrr::map_int(regulons, length) >= min_genes]
+
+  if (length(regulons) == 0) {
+    warning("No regulons left after the size filter. Returning NULL.")
+    return(NULL)
+  }
+
+  if (.verbose) {
+    message(sprintf(
+      "Built %d regulons (%d dropped below %d genes). Median size: %.0f",
+      length(regulons),
+      n_before - length(regulons),
+      min_genes,
+      stats::median(purrr::map_int(regulons, length))
+    ))
+  }
+
+  return(regulons)
 }
 
 ## fast clusters ---------------------------------------------------------------
@@ -3546,6 +3738,205 @@ print.GeneTrendsRes <- function(x, ...) {
       "  Note: the Cholesky needed extra jitter on at least one branch.\n"
     )
   }
+
+  invisible(x)
+}
+
+## specific markers ------------------------------------------------------------
+
+#' Melt one reference arm of the one-vs-many marker results
+#'
+#' @description
+#' Takes the raw Rust output of [bixverse::rs_calculate_dge_one_vs_many()] for a
+#' single reference group and splits it into the per-rival statistics and the
+#' per-gene summaries across those rivals. The per-comparison elements come back
+#' comparison-major, so the gene names are recycled and each rival name covers
+#' one block of genes.
+#'
+#' @param rs_res List. The raw return of
+#' [bixverse::rs_calculate_dge_one_vs_many()]. Must have at least one gene that
+#' passed the proportion filter.
+#' @param gene_names Character vector. All gene names in the original gene
+#' order, subset with `rs_res$genes_to_keep`.
+#' @param ref_grp String. Name of the reference group.
+#' @param rival_grps Character vector. Names of the comparison groups, in the
+#' order they were handed to Rust.
+#'
+#' @returns A list with elements `summary` and `per_comparison`, both
+#' data.tables.
+#'
+#' @keywords internal
+.melt_one_vs_many_res <- function(rs_res, gene_names, ref_grp, rival_grps) {
+  # checks
+  checkmate::assertList(rs_res)
+  checkmate::assertNames(
+    names(rs_res),
+    must.include = c(
+      "comparison",
+      "auroc",
+      "worst_comparison",
+      "min_rank",
+      "genes_to_keep"
+    )
+  )
+  checkmate::qassert(gene_names, "S+")
+  checkmate::qassert(ref_grp, "S1")
+  checkmate::qassert(rival_grps, "S+")
+
+  genes_kept <- gene_names[rs_res$genes_to_keep]
+  no_rivals <- length(rival_grps)
+
+  summary_dt <- data.table::data.table(
+    ref_grp = ref_grp,
+    gene_id = genes_kept,
+    prop_ref = rs_res$prop_ref,
+    median_auroc = rs_res$median_auroc,
+    min_auroc = rs_res$min_auroc,
+    mean_auroc = rs_res$mean_auroc,
+    max_auroc = rs_res$max_auroc,
+    # Rust returns the 0-indexed position within rival_grps
+    worst_rival = rival_grps[rs_res$worst_comparison + 1L],
+    min_rank = rs_res$min_rank,
+    simes_p = rs_res$simes_p,
+    simes_fdr = rs_res$simes_fdr,
+    max_p = rs_res$max_p,
+    max_p_fdr = rs_res$max_p_fdr
+  )
+
+  per_comparison_dt <- data.table::data.table(
+    ref_grp = ref_grp,
+    rival_grp = rival_grps[rs_res$comparison + 1L],
+    gene_id = rep(genes_kept, times = no_rivals),
+    auroc = rs_res$auroc,
+    lfc = rs_res$lfc,
+    prop_ref = rep(rs_res$prop_ref, times = no_rivals),
+    prop_rival = rs_res$prop_other,
+    z_scores = rs_res$z_scores,
+    p_values = rs_res$p_values,
+    fdr = rs_res$fdr
+  )
+
+  list(summary = summary_dt, per_comparison = per_comparison_dt)
+}
+
+#' Constructor for the one-vs-many specific marker results
+#'
+#' @description
+#' Holds the results of [bixverse::find_specific_markers_sc()]: the statistics
+#' of each reference group against each of its rivals separately, plus the
+#' per-gene summaries across those rivals. The summaries are the interesting
+#' part, as a gene only marks the reference if it holds up against every rival.
+#'
+#' @param summary data.table. The per-gene summaries across all rivals.
+#' @param per_comparison data.table. The per-rival statistics.
+#' @param params List. The parameters the run used.
+#'
+#' @returns Generates the `ScSpecificMarkers` class.
+#'
+#' @export
+#'
+#' @keywords internal
+new_sc_specific_markers <- function(summary, per_comparison, params) {
+  # checks
+  checkmate::assertDataTable(summary)
+  checkmate::assertDataTable(per_comparison)
+  checkmate::assertNames(
+    names(summary),
+    must.include = c("ref_grp", "gene_id", "median_auroc", "min_auroc")
+  )
+  checkmate::assertNames(
+    names(per_comparison),
+    must.include = c("ref_grp", "rival_grp", "gene_id", "auroc")
+  )
+  checkmate::assertList(params)
+
+  sc_specific_markers <- list(
+    summary = summary,
+    per_comparison = per_comparison,
+    params = params
+  )
+
+  class(sc_specific_markers) <- "ScSpecificMarkers"
+
+  return(sc_specific_markers)
+}
+
+### getters --------------------------------------------------------------------
+
+#' Get the per-gene marker summaries across all rivals
+#'
+#' @description
+#' Returns the summaries a marker is judged on: the AUROC of the reference
+#' against its rivals reduced to one row per gene and reference group. Rank on
+#' `median_auroc` for a marker that survives a single closely related rival, or
+#' on `min_auroc` when it has to beat every rival unambiguously.
+#'
+#' @param x `ScSpecificMarkers` object.
+#'
+#' @returns A copy of the summary data.table.
+#'
+#' @export
+get_marker_summary <- function(x) {
+  UseMethod("get_marker_summary")
+}
+
+#' @rdname get_marker_summary
+#'
+#' @export
+get_marker_summary.ScSpecificMarkers <- function(x) {
+  checkmate::assertClass(x, "ScSpecificMarkers")
+
+  data.table::copy(x$summary)
+}
+
+#' Get the per-rival marker statistics
+#'
+#' @description
+#' Returns the statistics that the summaries of
+#' [bixverse::get_marker_summary()] are built from, i.e., one row per gene,
+#' reference group and rival. Useful to find out which rival a gene fails
+#' against.
+#'
+#' @param x `ScSpecificMarkers` object.
+#'
+#' @returns A copy of the per comparison data.table.
+#'
+#' @export
+get_marker_comparisons <- function(x) {
+  UseMethod("get_marker_comparisons")
+}
+
+#' @rdname get_marker_comparisons
+#'
+#' @export
+get_marker_comparisons.ScSpecificMarkers <- function(x) {
+  checkmate::assertClass(x, "ScSpecificMarkers")
+
+  data.table::copy(x$per_comparison)
+}
+
+### primitives -----------------------------------------------------------------
+
+#' @export
+print.ScSpecificMarkers <- function(x, ...) {
+  refs <- unique(x$summary$ref_grp)
+
+  cat(
+    sprintf(
+      "ScSpecificMarkers: %i reference %s, %i genes tested\n",
+      length(refs),
+      if (length(refs) == 1L) "group" else "groups",
+      data.table::uniqueN(x$summary$gene_id)
+    ),
+    sprintf("  Column:      %s\n", x$params$column_of_interest),
+    sprintf("  References:  %s\n", paste(refs, collapse = ", ")),
+    sprintf(
+      "  Alternative: %s | min. proportion: %s\n",
+      x$params$alternative,
+      format(x$params$min_prop)
+    ),
+    sep = ""
+  )
 
   invisible(x)
 }

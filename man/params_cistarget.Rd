@@ -7,6 +7,8 @@
 params_cistarget(
   auc_threshold = 0.05,
   nes_threshold = 3,
+  max_rank = 5000L,
+  n_mean = 100L,
   rcc_method = c("approx", "icistarget"),
   high_conf_cats = c("directAnnotation", "inferredBy_Orthology"),
   low_conf_cats = c("inferredBy_MotifSimilarity",
@@ -19,6 +21,14 @@ for AUC threshold calculation. Default is 0.05 (5\% of genes).}
 
 \item{nes_threshold}{Numeric. Normalised Enrichment Score threshold for
 significant motifs. Default is 3.0.}
+
+\item{max_rank}{Integer. Depth of the recovery curves used to derive the
+background and the leading edge. Clamped to the number of genes in the
+ranking database. Default is 5000, the RcisTarget value.}
+
+\item{n_mean}{Integer. Window for the rolling mean smoothing the background
+recovery curve. Only read when \code{rcc_method = "approx"}. Default is 100, the
+RcisTarget value.}
 
 \item{rcc_method}{Character. Method for recovery curve calculation. Either
 "approx" (approximate, faster) or "icistarget" (exact, slower).}
@@ -34,5 +44,11 @@ lower confidence. Default includes motif similarity-based inferences.}
 A validated list of RcisTarget parameters.
 }
 \description{
-Wrapper function to CisTarget parameters
+\code{auc_threshold} and \code{max_rank} are two different cutoffs and are easy to
+confuse. The first truncates the recovery curve used to score motif
+enrichment, the second sets how deep into the ranking the background curve
+(mean + 2 SD across all motifs) is built, and therefore where the leading
+edge cuts. RcisTarget uses \code{maxRank = 5000} and \code{nMean = 100}; the defaults
+here follow it. \code{auc_threshold} follows pySCENIC at 5\%, RcisTarget itself
+uses 3\%.
 }

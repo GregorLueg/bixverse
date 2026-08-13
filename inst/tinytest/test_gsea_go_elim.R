@@ -57,12 +57,12 @@ levels <- names(S7::prop(object, "levels"))
 
 expected_sizes_wo_elim <- c(35, 40, 64, 97, 100, 125)
 expected_nes_wo_elim <- c(
-  2.970346,
-  -3.515364,
-  3.472927,
-  -3.759593,
-  4.060339,
-  -4.188695
+  3.005522,
+  -3.455451,
+  3.380403,
+  -3.724707,
+  4.102639,
+  -4.179020
 )
 
 rust_res_wo_elim <- rs_geom_elim_fgsea_simple(
@@ -99,12 +99,12 @@ expect_equal(
 # for later gene sets
 expected_sizes_with_elim <- c(35, 40, 39, 62, 50, 46)
 expected_nes_with_elim <- c(
-  2.970346,
-  -3.515364,
-  2.689328,
-  -3.014979,
-  3.248230,
-  -3.340476
+  3.005522,
+  -3.455451,
+  2.646268,
+  -3.030647,
+  3.305117,
+  -3.359911
 )
 
 rust_res_with_elim <- rs_geom_elim_fgsea_simple(
@@ -142,12 +142,12 @@ expect_equal(
 # order is different due to merging
 r_expected_size_without_elim <- c(100, 64, 35, 125, 97, 40)
 r_expected_nes_without_elim <- c(
-  4.060339,
-  3.472927,
-  2.970346,
-  -4.188695,
-  -3.759593,
-  -3.515364
+  4.102639,
+  3.380403,
+  3.005522,
+  -4.179020,
+  -3.724707,
+  -3.455451
 )
 
 r_results_without_elim <- fgsea_simple_go_elim(
@@ -180,12 +180,12 @@ expect_equal(
 
 r_expected_size_with_elim <- c(50, 39, 35, 46, 62, 40)
 r_expected_nes_with_elim <- c(
-  3.248230,
-  2.689328,
-  2.970346,
-  -3.340476,
-  -3.014979,
-  -3.515364
+  3.305117,
+  2.646268,
+  3.005522,
+  -3.359911,
+  -3.030647,
+  -3.455451
 )
 
 r_results_with_elim <- fgsea_simple_go_elim(
@@ -281,16 +281,16 @@ levels <- names(S7::prop(object, "levels"))
 
 # these are super significant due to the sampling...
 
-expected_sizes <- c(48, 44, 40, 61, 35, 38, 40, 50)
+expected_sizes <- c(48, 40, 44, 61, 35, 38, 40, 50)
 expected_err <- c(
   NA,
   NA,
   NA,
   1.09592929,
-  1.05746357,
+  1.04762600,
   0.80121557,
-  0.06299909,
-  0.03458907
+  0.06328757,
+  0.03462384
 )
 
 r_results <- fgsea_go_elim(
@@ -325,12 +325,12 @@ expected_sizes <- c(100, 64, 35, 40, 125, 97, 40, 50)
 expected_err <- c(
   NA,
   NA,
-  1.05746357,
-  0.06299909,
+  1.04762600,
+  0.06328757,
   NA,
   NA,
   NA,
-  0.03458907
+  0.03462384
 )
 
 r_results <- fgsea_go_elim(
@@ -358,4 +358,45 @@ expect_equal(
     "log2err in without elimination case"
   ),
   tolerance = 10e-6
+)
+
+### regression: nothing routed to multi-level -----------------------------------
+
+# purely random GO terms, none of these should be significant enough to be
+# routed into the multi-level refinement step (dt_multi_level ends up with
+# 0 rows) - this used to error out in multilevel_error()
+
+set.seed(456)
+
+stats_random_only <- setNames(
+  sort(rnorm(stat_size), decreasing = TRUE),
+  sprintf("gene_%03d", 1:stat_size)
+)
+
+toy_go_data_random <- data.table::data.table(
+  go_id = sprintf("go_r%i", 1:3),
+  go_name = sprintf("go_name_r%s", letters[1:3]),
+  ancestors = list(c("go_r1"), c("go_r2"), c("go_r3")),
+  ensembl_id = list(
+    sample(names(stats_random_only), 30),
+    sample(names(stats_random_only), 40),
+    sample(names(stats_random_only), 25)
+  ),
+  depth = c(1, 1, 1)
+)
+
+object_random <- GeneOntologyElim(toy_go_data_random, min_genes = 3L)
+
+no_multi_level_go_res <- fgsea_go_elim(
+  object = object_random,
+  stats = stats_random_only
+)
+
+expect_equal(
+  current = nrow(no_multi_level_go_res),
+  target = nrow(toy_go_data_random),
+  info = paste(
+    "fgsea (multi level) with go elim: does not error when no term is",
+    "routed to multi-level refinement"
+  )
 )

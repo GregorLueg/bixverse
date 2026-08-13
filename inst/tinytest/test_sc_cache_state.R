@@ -356,11 +356,13 @@ expect_stdout(
 
 # tinytest runs non-interactively, which is the branch that matters: there is
 # nobody to confirm to, so a destructive reset must refuse rather than guess
-expect_error(
-  current = reset_cells_to_keep(sc_filtered),
-  pattern = "force",
-  info = "a non-interactive reset without force errors instead of prompting"
-)
+if (!interactive()) {
+  expect_error(
+    current = reset_cells_to_keep(sc_filtered),
+    pattern = "force",
+    info = "a non-interactive reset without force errors instead of prompting"
+  )
+}
 
 sc_reset <- reset_cells_to_keep(sc_filtered, force = TRUE)
 

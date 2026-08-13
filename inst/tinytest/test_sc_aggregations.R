@@ -685,6 +685,91 @@ expect_error(
   info = "calc_meta_cell_purity rejects a vector matching neither index space"
 )
 
+### purity optional label and entropy columns ----------------------------------
+
+gap_labels <- as.character(get_sc_obs(gap_object)$cell_grp)
+
+purity_default <- calc_meta_cell_purity(
+  gap_hdwgcna,
+  original_cell_type = gap_labels
+)[[]]
+
+expect_true(
+  current = !any(
+    c("mc_top_label", "mc_second_label", "mc_second_frac", "mc_entropy") %in%
+      colnames(purity_default)
+  ),
+  info = "calc_meta_cell_purity defaults to the purity column only"
+)
+
+purity_top <- calc_meta_cell_purity(
+  gap_hdwgcna,
+  original_cell_type = gap_labels,
+  add_additional_info = "top_label"
+)[[]]
+
+expect_true(
+  current = all(purity_top$mc_top_label %in% gap_labels),
+  info = "calc_meta_cell_purity - the top label is one of the source labels"
+)
+
+# the fraction of the reported top label must be exactly the purity
+top_label_frac <- purrr::map2_dbl(
+  purity_top$original_cell_idx,
+  purity_top$mc_top_label,
+  \(idx, label) sum(gap_labels[idx] == label) / length(idx)
+)
+
+expect_equal(
+  current = top_label_frac,
+  target = purity_top$mc_purity,
+  info = "calc_meta_cell_purity - the top label carries the purity fraction"
+)
+
+purity_two <- calc_meta_cell_purity(
+  gap_hdwgcna,
+  original_cell_type = gap_labels,
+  add_additional_info = "top_two_labels",
+  add_entropy = TRUE
+)[[]]
+
+expect_true(
+  current = all(purity_two$mc_second_frac <= purity_two$mc_purity),
+  info = "calc_meta_cell_purity - the second label never beats the first"
+)
+
+expect_equal(
+  current = is.na(purity_two$mc_second_label),
+  target = purity_two$mc_purity == 1,
+  info = "calc_meta_cell_purity - a pure meta cell has no second label"
+)
+
+expect_true(
+  current = all(purity_two$mc_entropy >= 0 & purity_two$mc_entropy <= 1),
+  info = "calc_meta_cell_purity - the normalised entropy is bounded by [0, 1]"
+)
+
+expect_equal(
+  current = purity_two$mc_entropy == 0,
+  target = purity_two$mc_purity == 1,
+  info = "calc_meta_cell_purity - only a pure meta cell has zero entropy"
+)
+
+expect_equal(
+  current = purity_two$mc_purity,
+  target = purity_default$mc_purity,
+  info = "calc_meta_cell_purity - the purity is unaffected by the extra columns"
+)
+
+expect_error(
+  current = calc_meta_cell_purity(
+    gap_hdwgcna,
+    original_cell_type = gap_labels,
+    add_additional_info = "top_three_labels"
+  ),
+  info = "calc_meta_cell_purity rejects an unknown add_additional_info"
+)
+
 ## meta cells on a subset -------------------------------------------------------
 
 subset_object <- SingleCellsSubset(

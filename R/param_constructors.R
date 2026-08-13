@@ -719,6 +719,20 @@ params_sc_vision <- function(
 #' so a gene at rank 2 and one at rank 200 count for almost the same thing.
 #' `"recovery"` and `"ap"` are top-heavy.
 #'
+#' For SCENIC use `"recovery"`, the default. `"wilcox"` is a bixverse addition
+#' and its flatter score does not separate into on/off populations, so it
+#' binarises badly.
+#'
+#' Ranking ties are averaged (midranks) rather than broken at random the way
+#' AUCell does it, which is why there is no need for SCENIC's trick of setting
+#' the cutoff to the 1st percentile of genes detected per cell. Undetected
+#' genes all collapse onto one rank well outside any sensible `max_rank`.
+#'
+#' Note the recovery AUC is normalised by `max_rank * length(gene_set)`,
+#' matching pySCENIC and AUCell's `normAUC = FALSE`. Modern AUCell divides by
+#' the attainable maximum instead, so absolute values differ by a per-gene-set
+#' constant. Cell ordering within a regulon is unaffected.
+#'
 #' @param auc_type String. Which statistic to calculate. One of
 #' `c("wilcox", "recovery", "ap")`. `"wilcox"` is the AUC derived from the
 #' Mann-Whitney U statistic over the full ranking, with the null at 0.5 for any
@@ -726,7 +740,7 @@ params_sc_vision <- function(
 #' i.e. the actual AUCell statistic of Aibar, et al. `"ap"` is average
 #' precision, the most top-heavy of the three, but its null tracks the gene set
 #' prevalence so raw values are not comparable across gene sets of different
-#' size unless `standardise` is on. Defaults to `"wilcox"`.
+#' size unless `standardise` is on. Defaults to `"recovery"`.
 #' @param max_rank Optional numeric. Rank cutoff for `"recovery"`, counted from
 #' the top of the within-cell ranking. If `NULL`, resolves to the top 5% of the
 #' gene universe, following Aibar, et al. Ignored by the other two statistics.
@@ -740,12 +754,12 @@ params_sc_vision <- function(
 #'
 #' @export
 params_sc_aucell <- function(
-  auc_type = c("wilcox", "recovery", "ap"),
+  auc_type = c("recovery", "wilcox", "ap"),
   max_rank = NULL,
   standardise = FALSE
 ) {
   auc_type <- match.arg(auc_type)
-  checkmate::assertChoice(auc_type, c("wilcox", "recovery", "ap"))
+  checkmate::assertChoice(auc_type, c("recovery", "wilcox", "ap"))
   checkmate::qassert(max_rank, c("N1[1,)", "0"))
   checkmate::qassert(standardise, "B1")
 
@@ -758,13 +772,73 @@ params_sc_aucell <- function(
   )
 }
 
+## scenic binarisation ---------------------------------------------------------
+
+#' Wrapper function for parameters for the SCENIC binarisation
+#'
+#' @description
+#' Each regulon gets its own threshold. A two-component Gaussian mixture is
+#' fitted and compared against a single Gaussian by BIC; if the mixture wins,
+#' the threshold is the kernel density minimum between the two component means,
+#' otherwise it falls back to `mean + 2 * sd`. This follows pySCENIC. AUCell
+#' fits six candidates and then lets the density trough override all of them
+#' whenever one exists, so the two land in much the same place.
+#'
+#' Turn `bw_adjust` up if shallow wobbles in the density are being picked up as
+#' troughs. AUCell effectively runs at `2`.
+#'
+#' @param bw_adjust Float. Multiplier on the Silverman bandwidth of the kernel
+#' density estimate. Higher values smooth more. Defaults to `1`.
+#' @param n_grid Integer. Number of points at which the density is evaluated
+#' between the two component means. Defaults to `512L`.
+#' @param n_bins Integer. Number of histogram bins used to approximate the
+#' density. Defaults to `512L`.
+#'
+#' @returns A list with the binarisation parameters.
+#'
+#' @references Aibar, et al., Nat Methods, 2017
+#'
+#' @export
+params_scenic_binarise <- function(
+  bw_adjust = 1,
+  n_grid = 512L,
+  n_bins = 512L
+) {
+  checkmate::qassert(bw_adjust, "N1(0,)")
+  checkmate::qassert(n_grid, "I1[3,)")
+  checkmate::qassert(n_bins, "I1[2,)")
+
+  # Rust parses these with as_real(), so integers need to go over as doubles
+  list(
+    bw_adjust = as.double(bw_adjust),
+    n_grid = as.double(n_grid),
+    n_bins = as.double(n_bins)
+  )
+}
+
 ## hotspot ---------------------------------------------------------------------
 
 #' Wrapper function for parameters for HotSpot
 #'
+#' @description
+#' `weighted_graph` controls how the kNN distances become edge weights. The
+#' default of `FALSE` follows the reference implementation: the distances only
+#' decide who is a neighbour and every retained edge weighs one. Set it to
+#' `TRUE` for the Gaussian kernel, whose width is the
+#' `ceil(k / neighborhood_factor)`-th neighbour distance.
+#'
+#' Whether the distances need squaring is derived from the metric, so it is not
+#' a parameter here. When a pre-computed kNN graph is handed to the method, the
+#' metric stored on that graph wins over `ann_dist`.
+#'
 #' @param model String. Model to use for modelling the GEX. One of
 #' `c("danb", "bernoulli", "normal")`. Defaults to `"danb"`.
 #' @param normalise Boolean. Shall the data be normalised. Defaults to `TRUE`.
+#' @param weighted_graph Boolean. Shall the Gaussian kernel be applied to the
+#' neighbour distances. Defaults to `FALSE`.
+#' @param neighborhood_factor Float. Kernel width is the
+#' `ceil(k / neighborhood_factor)`-th neighbour distance. Only read when
+#' `weighted_graph = TRUE`. Defaults to `3`.
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
@@ -773,14 +847,21 @@ params_sc_aucell <- function(
 #'
 #' @returns A list with the HotSpot parameters.
 #'
+#' @references DeTomaso and Yosef, Cell Systems, 2021
+#'
 #' @export
 params_sc_hotspot <- function(
   model = c("danb", "normal", "bernoulli"),
   normalise = TRUE,
-  knn = list(ann_dist = "cosine")
+  weighted_graph = FALSE,
+  neighborhood_factor = 3.0,
+  knn = list()
 ) {
   model <- match.arg(model)
+  checkmate::assertChoice(model, c("danb", "normal", "bernoulli"))
   checkmate::qassert(normalise, "B1")
+  checkmate::qassert(weighted_graph, "B1")
+  checkmate::qassert(neighborhood_factor, "R1(0,)")
 
   knn_params <- modifyList(
     params_knn_defaults(),
@@ -788,17 +869,14 @@ params_sc_hotspot <- function(
     keep.null = TRUE
   )
 
-  list(
-    knn_method = knn_params$knn_method,
-    ann_dist = knn_params$ann_dist,
-    k = knn_params$k,
-    n_tree = knn_params$n_trees,
-    search_budget = knn_params$search_budget,
-    max_iter = knn_params$nn_max_iter,
-    rho = knn_params$rho,
-    delta = knn_params$delta,
-    model = model,
-    normalise = normalise
+  c(
+    list(
+      model = model,
+      normalise = normalise,
+      weighted_graph = weighted_graph,
+      neighborhood_factor = neighborhood_factor
+    ),
+    knn_params
   )
 }
 

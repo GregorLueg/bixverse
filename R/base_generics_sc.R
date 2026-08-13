@@ -990,7 +990,7 @@ find_clusters_sc <- S7::new_generic(
 #' [bixverse::params_sc_aucell()] with the following elements:
 #' \itemize{
 #'   \item auc_type - String. Which statistic to calculate. One of
-#'   `c("wilcox", "recovery", "ap")`.
+#'   `c("recovery", "wilcox", "ap")`. `"recovery"` is the SCENIC one.
 #'   \item max_rank - Optional numeric. Rank cutoff for `"recovery"`. If `NULL`,
 #'   the top 5% of the gene universe is used. Ignored by the other statistics.
 #'   \item standardise - Boolean. Shall each gene set's scores be z-scored
@@ -1129,8 +1129,6 @@ scenic_grn_sc <- S7::new_generic(
 )
 
 #### nmf -----------------------------------------------------------------------
-
-## generics --------------------------------------------------------------------
 
 #' Run single-run NMF on single cell or meta cell data
 #'
@@ -1324,6 +1322,162 @@ extract_gene_expression <- S7::new_generic(
     clip = NULL,
     modality = c("rna", "adt"),
     layer = c("norm", "magic")
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#### hotspot -------------------------------------------------------------------
+
+#' Calculate the local auto-correlation of a gene
+#'
+#' @description
+#' This method implements the HotSpot approach (see DeTomaso, et al.) to
+#' calculate the auto-correlation of a given gene in the kNN graph based on
+#' the chosen embedding. This can be used to identify genes that have strong
+#' local correlations and vary across the kNN graph.
+#'
+#' @param object `SingleCells` or `MetaCells` class.
+#' @param embd_to_use String. The embedding to use. Defaults to `"pca"`.
+#' @param use_knn Boolean. Shall the internal kNN be used. If set to yes, you
+#' need to ensure consistency. If you provide `cells_to_take`, the function
+#' will regenerate the kNN graph with these cells.
+#' @param hotspot_params List with hotspot parameters, see
+#' [bixverse::params_sc_hotspot()] with the following elements:
+#' \itemize{
+#'   \item model - String. Which of the available models to use for the
+#'   gene expression. Choices are one of `c("danb", "normal", "bernoulli")`.
+#'   \item normalise - Boolean. Shall the data be normalised.
+#'   \item weighted_graph - Boolean. Shall the Gaussian kernel be applied to
+#'   the neighbour distances. If `FALSE`, every retained edge weighs one.
+#'   \item neighborhood_factor - Float. Kernel width for `weighted_graph`.
+#'   \item knn - List of kNN parameters. See [bixverse::params_knn_defaults()]
+#'   for available parameters and their defaults.
+#' }
+#' @param no_embd_to_use Optional integer. Number of embedding dimensions to
+#' use. If `NULL` all will be used.
+#' @param cells_to_take Optional string vector. If you want to only use
+#' selected cells. If `NULL` will default to all cells_to_keep in the class.
+#' @param genes_to_take Optional string vector. If you wish to limit the
+#' search to a subset of genes. If `NULL` will default to all genes in the
+#' class.
+#' @param streaming Optional Boolean. Shall the data be streamed in. Useful for
+#' larger data sets where you wish to avoid loading in the whole data. If
+#' `NULL`, will automatically detect. Ignored for `MetaCells`, which are held
+#' in memory.
+#' @param random_seed Integer. Used for reproducibility.
+#' @param .verbose Boolean or integer. Controls verbosity and returns run times.
+#' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
+#' verbosity.
+#'
+#' @returns A data.table with the auto-correlations on a per gene basis and
+#' various statistics.
+#'
+#' @details
+#' Should a gene not be found in sufficient cells, the gene will be
+#' automatically filtered out from the results. This can occur for example
+#' if you have filtered out the cells that contain a given gene. The underlying
+#' genes are still available, but the cells that might contain them are not
+#' included.
+#'
+#' Whether the neighbour distances need squaring before the kernel sees them
+#' follows from the metric. With `use_knn = TRUE` it is taken from the metric
+#' stored on the cached kNN graph, otherwise from `ann_dist` in
+#' `hotspot_params`.
+#'
+#' @export
+hotspot_autocor_sc <- S7::new_generic(
+  name = "hotspot_autocor_sc",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    embd_to_use = "pca",
+    use_knn = TRUE,
+    hotspot_params = params_sc_hotspot(),
+    no_embd_to_use = NULL,
+    cells_to_take = NULL,
+    genes_to_take = NULL,
+    streaming = NULL,
+    random_seed = 42L,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' Calculate the local pairwise gene-gene correlation
+#'
+#' @description
+#' This method implements the HotSpot approach (see DeTomaso, et al.) to
+#' calculate the local gene-gene correlations and their Z-scores.
+#'
+#' @param object `SingleCells` or `MetaCells` class.
+#' @param embd_to_use String. The embedding to use. Defaults to `"pca"`.
+#' @param use_knn Boolean. Shall the internal kNN be used. If set to yes, you
+#' need to ensure consistency. If you provide `cells_to_take`, the function
+#' will regenerate the kNN graph with these cells.
+#' @param hotspot_params List with hotspot parameters, see
+#' [bixverse::params_sc_hotspot()] with the following elements:
+#' \itemize{
+#'   \item model - String. Which of the available models to use for the
+#'   gene expression. Choices are one of `c("danb", "normal", "bernoulli")`.
+#'   \item normalise - Boolean. Shall the data be normalised.
+#'   \item weighted_graph - Boolean. Shall the Gaussian kernel be applied to
+#'   the neighbour distances. If `FALSE`, every retained edge weighs one.
+#'   \item neighborhood_factor - Float. Kernel width for `weighted_graph`.
+#'   \item knn - List of kNN parameters. See [bixverse::params_knn_defaults()]
+#'   for available parameters and their defaults.
+#' }
+#' @param no_embd_to_use Optional integer. Number of embedding dimensions to
+#' use. If `NULL` all will be used.
+#' @param cells_to_take Optional string vector. If you want to only use
+#' selected cells. If `NULL` will default to all cells_to_keep in the class.
+#' @param genes_to_take Optional string vector. If you wish to limit the
+#' search to a subset of genes. If `NULL` will default to all genes in the
+#' class.
+#' @param streaming Optional Boolean. Shall the data be streamed in. Useful for
+#' larger data sets where you wish to avoid loading in the whole data. If
+#' `NULL`, will automatically detect. Ignored for `MetaCells`, which are held
+#' in memory.
+#' @param working_mem_gb Numeric. Approximate working memory (GB) the streaming
+#'  pair path may use for resident gene panels. Ignored when `streaming` is
+#'  `FALSE`. Larger values mean fewer disk re-reads. Note this excludes the two
+#' dense N_genes x N_genes output matrices, which scale with `genes_to_use`.
+#' Defaults to `4` (4 GB of memory allocated).
+#' @param random_seed Integer. Used for reproducibility.
+#' @param .verbose Boolean or integer. Controls verbosity and returns run times.
+#' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
+#' verbosity.
+#'
+#' @returns A `sc_hotspot` class that can be used for subsequent analysis.
+#'
+#' @details
+#' Should a gene not be found in sufficient cells, the pairs with this gene
+#' will be set to 0. Please ensure prior to running the function that you
+#' are only calculating gene-gene auto-correlations that occur in sufficient
+#' cells.
+#'
+#' Whether the neighbour distances need squaring before the kernel sees them
+#' follows from the metric. With `use_knn = TRUE` it is taken from the metric
+#' stored on the cached kNN graph, otherwise from `ann_dist` in
+#' `hotspot_params`.
+#'
+#' @export
+hotspot_gene_cor_sc <- S7::new_generic(
+  name = "hotspot_gene_cor_sc",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    embd_to_use = "pca",
+    use_knn = TRUE,
+    hotspot_params = params_sc_hotspot(),
+    no_embd_to_use = NULL,
+    cells_to_take = NULL,
+    genes_to_take = NULL,
+    streaming = NULL,
+    working_mem_gb = 4,
+    random_seed = 42L,
+    .verbose = TRUE
   ) {
     S7::S7_dispatch()
   }

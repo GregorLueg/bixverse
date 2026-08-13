@@ -19,18 +19,20 @@ pub fn cast_compressed_sparse_data_f32(
     let data_2_cast = sparse_mat.data_2.map(|x| x.r_float_convert());
 
     match sparse_mat.cs_type {
-        CompressedSparseFormat::Csc => CompressedSparseData2::new_csc(
-            &data_cast,
-            &sparse_mat.indices,
-            &sparse_mat.indptr,
-            data_2_cast.as_deref(),
+        CompressedSparseFormat::Csc => CompressedSparseData2::from_parts(
+            data_cast,
+            sparse_mat.indices,
+            sparse_mat.indptr,
+            data_2_cast,
+            CompressedSparseFormat::Csc,
             sparse_mat.shape,
         ),
-        CompressedSparseFormat::Csr => CompressedSparseData2::new_csr(
-            &data_cast,
-            &sparse_mat.indices,
-            &sparse_mat.indptr,
-            data_2_cast.as_deref(),
+        CompressedSparseFormat::Csr => CompressedSparseData2::from_parts(
+            data_cast,
+            sparse_mat.indices,
+            sparse_mat.indptr,
+            data_2_cast,
+            CompressedSparseFormat::Csr,
             sparse_mat.shape,
         ),
     }

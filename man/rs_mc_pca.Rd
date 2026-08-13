@@ -4,7 +4,7 @@
 \alias{rs_mc_pca}
 \title{PCA on MetaCells (sparse data)}
 \usage{
-rs_mc_pca(sparse_data, no_pcs, pca_params, clr_offsets, seed)
+rs_mc_pca(sparse_data, no_pcs, pca_params, clr_offsets, seed, verbose)
 }
 \arguments{
 \item{sparse_data}{A named list that needs to have \code{data}, \code{indptr},
@@ -19,6 +19,9 @@ run.}
 normalisation prior to PCA from Booeshaghi, et al.}
 
 \item{seed}{Integer. Random seed for the randomised SVD.}
+
+\item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
+detailed verbosity.}
 }
 \value{
 A list with with the following items

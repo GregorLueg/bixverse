@@ -9,6 +9,7 @@ use bixverse_rs::single_cell::sc_processing::hvg::*;
 use bixverse_rs::single_cell::sc_processing::pca::SingleCellPcaParams;
 use bixverse_rs::utils::r_rust_interface::list_to_sparse_matrix;
 use extendr_api::*;
+use std::time::Instant;
 
 use crate::meta_cell::utils::cast_compressed_sparse_data_f32;
 
@@ -49,6 +50,8 @@ extendr_module! {
 /// `dispersion` methods. One of `c("equal_width", "equal_frequency")`.
 /// @param n_bins Integer. Number of bins for the `meanvarbin` and
 /// `dispersion` methods.
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
 ///
 /// @return A list with the HVG statistics. If `hvg_method == "vst"`:
 /// \itemize{
@@ -74,16 +77,32 @@ fn rs_mc_hvg(
     binning: String,
     n_bins: usize,
     clip_max: Option<f32>,
+    verbose: usize,
 ) -> Result<List> {
+    let start = Instant::now();
+    let verbosity = parse_verbosity_level(verbose);
+
+    if verbosity.normal_verbosity() {
+        println!("Running HVG detection on meta cells.")
+    }
+
     let sparse: CompressedSparseData2<f64, f64> =
         list_to_sparse_matrix(sparse_data, true).to_extendr()?;
+
     let sparse = cast_compressed_sparse_data_f32(sparse);
+
+    if verbosity.detailed_verbosity() {
+        println!(
+            " MetaCell HVG: Finished data transformation in {:.2?}...",
+            start.elapsed()
+        )
+    }
 
     let hvg_type = parse_hvg_method(hvg_method)
         .ok_or_else(|| format!("Invalid HVG method: {}", hvg_method))
         .unwrap();
 
-    match hvg_type {
+    let res = match hvg_type {
         HvgMethod::Vst => {
             let res = get_hvg_vst_from_sparse(&sparse, loess_span as f32, clip_max);
             Ok(list!(
@@ -111,7 +130,16 @@ fn rs_mc_hvg(
                 bin = res.bin
             ))
         }
+    };
+
+    if verbosity.detailed_verbosity() {
+        println!(
+            " MetaCell HVG: Finished HVG calculations in {:.2?}...",
+            start.elapsed()
+        )
     }
+
+    res
 }
 
 /////////
@@ -134,6 +162,8 @@ fn rs_mc_hvg(
 /// @param clr_offsets Optional numeric. If you wish to use the `PFlogPF`
 /// normalisation prior to PCA from Booeshaghi, et al.
 /// @param seed Integer. Random seed for the randomised SVD.
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
 ///
 /// @returns A list with with the following items
 /// \itemize{
@@ -155,10 +185,26 @@ fn rs_mc_pca(
     pca_params: List,
     clr_offsets: Option<Vec<f64>>,
     seed: usize,
+    verbose: usize,
 ) -> Result<List> {
+    let start = Instant::now();
+    let verbosity = parse_verbosity_level(verbose);
+
+    if verbosity.normal_verbosity() {
+        println!("Running PCA calculation on meta cells.")
+    }
+
     let sparse: CompressedSparseData2<f64, f64> =
         list_to_sparse_matrix(sparse_data, true).to_extendr()?;
     let sparse = cast_compressed_sparse_data_f32(sparse);
+
+    if verbosity.detailed_verbosity() {
+        println!(
+            " MetaCell PCA: Finished data transformation in {:.2?}...",
+            start.elapsed()
+        )
+    }
+
     let pca_params = SingleCellPcaParams::from_r_list(pca_params)?;
 
     let offsets = if pca_params.clr {
@@ -170,6 +216,13 @@ fn rs_mc_pca(
 
     let res =
         pca_on_metacells(&sparse, no_pcs, &pca_params, offsets.as_deref(), seed).to_extendr()?;
+
+    if verbosity.detailed_verbosity() {
+        println!(
+            " MetaCell PCA: Finished SVD calculation in {:.2?}...",
+            start.elapsed()
+        )
+    }
 
     Ok(list!(
         scores = faer_to_r_matrix(res.0.as_ref()),

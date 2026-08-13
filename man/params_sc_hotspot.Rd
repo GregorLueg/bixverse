@@ -7,7 +7,9 @@
 params_sc_hotspot(
   model = c("danb", "normal", "bernoulli"),
   normalise = TRUE,
-  knn = list(ann_dist = "cosine")
+  weighted_graph = FALSE,
+  neighborhood_factor = 3,
+  knn = list()
 )
 }
 \arguments{
@@ -15,6 +17,13 @@ params_sc_hotspot(
 \code{c("danb", "bernoulli", "normal")}. Defaults to \code{"danb"}.}
 
 \item{normalise}{Boolean. Shall the data be normalised. Defaults to \code{TRUE}.}
+
+\item{weighted_graph}{Boolean. Shall the Gaussian kernel be applied to the
+neighbour distances. Defaults to \code{FALSE}.}
+
+\item{neighborhood_factor}{Float. Kernel width is the
+\code{ceil(k / neighborhood_factor)}-th neighbour distance. Only read when
+\code{weighted_graph = TRUE}. Defaults to \code{3}.}
 
 \item{knn}{List. Optional overrides for kNN parameters. See
 \code{\link[=params_knn_defaults]{params_knn_defaults()}} for available parameters: \code{k},
@@ -26,5 +35,16 @@ and \code{n_probe}.}
 A list with the HotSpot parameters.
 }
 \description{
-Wrapper function for parameters for HotSpot
+\code{weighted_graph} controls how the kNN distances become edge weights. The
+default of \code{FALSE} follows the reference implementation: the distances only
+decide who is a neighbour and every retained edge weighs one. Set it to
+\code{TRUE} for the Gaussian kernel, whose width is the
+\code{ceil(k / neighborhood_factor)}-th neighbour distance.
+
+Whether the distances need squaring is derived from the metric, so it is not
+a parameter here. When a pre-computed kNN graph is handed to the method, the
+metric stored on that graph wins over \code{ann_dist}.
+}
+\references{
+DeTomaso and Yosef, Cell Systems, 2021
 }

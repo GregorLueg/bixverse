@@ -522,10 +522,25 @@ params_snf <- function(
 
 #' Wrapper function to CisTarget parameters
 #'
+#' @description
+#' `auc_threshold` and `max_rank` are two different cutoffs and are easy to
+#' confuse. The first truncates the recovery curve used to score motif
+#' enrichment, the second sets how deep into the ranking the background curve
+#' (mean + 2 SD across all motifs) is built, and therefore where the leading
+#' edge cuts. RcisTarget uses `maxRank = 5000` and `nMean = 100`; the defaults
+#' here follow it. `auc_threshold` follows pySCENIC at 5%, RcisTarget itself
+#' uses 3%.
+#'
 #' @param auc_threshold Numeric between 0 and 1. Proportion of genes to use
 #' for AUC threshold calculation. Default is 0.05 (5% of genes).
 #' @param nes_threshold Numeric. Normalised Enrichment Score threshold for
 #' significant motifs. Default is 3.0.
+#' @param max_rank Integer. Depth of the recovery curves used to derive the
+#' background and the leading edge. Clamped to the number of genes in the
+#' ranking database. Default is 5000, the RcisTarget value.
+#' @param n_mean Integer. Window for the rolling mean smoothing the background
+#' recovery curve. Only read when `rcc_method = "approx"`. Default is 100, the
+#' RcisTarget value.
 #' @param rcc_method Character. Method for recovery curve calculation. Either
 #' "approx" (approximate, faster) or "icistarget" (exact, slower).
 #' @param high_conf_cats Character vector. Annotation categories considered
@@ -540,6 +555,8 @@ params_snf <- function(
 params_cistarget <- function(
   auc_threshold = 0.05,
   nes_threshold = 3.0,
+  max_rank = 5000L,
+  n_mean = 100L,
   rcc_method = c("approx", "icistarget"),
   high_conf_cats = c("directAnnotation", "inferredBy_Orthology"),
   low_conf_cats = c(
@@ -551,6 +568,8 @@ params_cistarget <- function(
 
   checkmate::qassert(auc_threshold, "N1[0, 1]")
   checkmate::qassert(nes_threshold, "N1")
+  checkmate::qassert(max_rank, "I1[1,)")
+  checkmate::qassert(n_mean, "I1[1,)")
   checkmate::assertChoice(rcc_method, c("approx", "icistarget"))
   checkmate::qassert(high_conf_cats, "S+")
   checkmate::qassert(low_conf_cats, "S+")
@@ -558,6 +577,8 @@ params_cistarget <- function(
   return(list(
     auc_threshold = auc_threshold,
     nes_threshold = nes_threshold,
+    max_rank = max_rank,
+    n_mean = n_mean,
     rcc_method = rcc_method,
     high_conf_cats = high_conf_cats,
     low_conf_cats = low_conf_cats

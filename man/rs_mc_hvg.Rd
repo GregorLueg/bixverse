@@ -4,7 +4,15 @@
 \alias{rs_mc_hvg}
 \title{Meta cells highly variable genes}
 \usage{
-rs_mc_hvg(sparse_data, hvg_method, loess_span, binning, n_bins, clip_max)
+rs_mc_hvg(
+  sparse_data,
+  hvg_method,
+  loess_span,
+  binning,
+  n_bins,
+  clip_max,
+  verbose
+)
 }
 \arguments{
 \item{sparse_data}{A named list that needs to have \code{data}, \code{indptr},
@@ -24,6 +32,9 @@ are \code{c("vst", "meanvarbin", "dispersion")}.}
 
 \item{clip_max}{Optional clipping number. Defaults to \code{sqrt(no_cells)} if
 not provided (only used for \code{"vst"}).}
+
+\item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
+detailed verbosity.}
 }
 \value{
 A list with the HVG statistics. If \code{hvg_method == "vst"}:

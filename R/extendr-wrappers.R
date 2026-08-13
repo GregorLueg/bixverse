@@ -2137,12 +2137,13 @@ rs_rbh_cor <- function(module_matrices, k_best, spearman, min_similarity) .Call(
 #' @param max_rank Maximum rank to consider (typically nrow(rankings)).
 #' @param method Recovery curve calculation method: "approx" or "icistarget".
 #' @param n_mean Number of points for averaging in approximate method.
+#' @param verbose Controls verbosity of the function.
 #'
 #' @return List of lists, one per gene set, each containing motif_idx, nes, auc,
 #' rank_at_max, n_enriched, and leading_edge.
 #'
 #' @export
-rs_cistarget <- function(rankings, gs_list, auc_threshold, nes_threshold, max_rank, method, n_mean) .Call(wrap__rs_cistarget, rankings, gs_list, auc_threshold, nes_threshold, max_rank, method, n_mean)
+rs_cistarget <- function(rankings, gs_list, auc_threshold, nes_threshold, max_rank, method, n_mean, verbose) .Call(wrap__rs_cistarget, rankings, gs_list, auc_threshold, nes_threshold, max_rank, method, n_mean, verbose)
 
 #' Run hypergeometric enrichment over the gene ontology
 #'
@@ -3452,6 +3453,64 @@ rs_magic_impute <- function(f_path, knn_data, cell_indices, total_cells, gene_in
 #' @keywords internal
 rs_calculate_dge_mann_whitney <- function(f_path, cell_indices_1, cell_indices_2, min_prop, alternative, verbose) .Call(wrap__rs_calculate_dge_mann_whitney, f_path, cell_indices_1, cell_indices_2, min_prop, alternative, verbose)
 
+#' Calculate one-vs-many AUROC DGEs for specific markers
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' The function scores one reference group of cells against each comparison
+#' group separately and summarises the results per gene across all of the
+#' comparisons. This is the marker question: a gene that is specific to the
+#' reference has to hold up against every rival, which a single pooled test
+#' cannot answer because it is dominated by whichever rival contributes the
+#' most cells. Genes are filtered once, globally, so every comparison's FDR is
+#' calculated over the same gene set.
+#'
+#' @param f_path String. Path to the `counts_cells.bin` file.
+#' @param cell_indices_ref Integer. Index positions (0-indexed) of the cells
+#' of the reference group.
+#' @param cell_indices_other List. List of integer vectors, each containing the
+#' index positions (0-indexed) of the cells of one comparison group.
+#' @param min_prop Minimum proportion of expression in at least one of the
+#' groups to be tested.
+#' @param alternative String. One of `c("twosided", "greater", "less")`. Null
+#' hypothesis.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @return A list with the elements below. The per-comparison elements are
+#' flattened comparison-major, i.e., all genes of the first comparison, then
+#' all genes of the second, and so on.
+#' \itemize{
+#'   \item comparison - Index (0-indexed) of the comparison group the
+#'   per-comparison statistics belong to.
+#'   \item auroc - AUROC of the reference against the comparison group.
+#'   \item lfc - Log fold change of the reference against the comparison group.
+#'   \item prop_other - Proportion of cells expressing the gene in the
+#'   comparison group.
+#'   \item z_scores - Z-scores based on the Mann Whitney statistic.
+#'   \item p_values - P-values of the Mann Whitney statistic.
+#'   \item fdr - False discovery rate after BH adjustment, per comparison.
+#'   \item prop_ref - Proportion of reference cells expressing the gene.
+#'   \item median_auroc - Median AUROC across the comparisons.
+#'   \item min_auroc - Worst AUROC across the comparisons.
+#'   \item mean_auroc - Mean AUROC across the comparisons.
+#'   \item max_auroc - Best AUROC across the comparisons.
+#'   \item worst_comparison - Index (0-indexed) of the comparison group
+#'   achieving `min_auroc`.
+#'   \item min_rank - Best rank the gene achieves in any single comparison when
+#'   the genes are ordered by descending AUROC.
+#'   \item simes_p - Simes-combined p-value across the comparisons.
+#'   \item simes_fdr - False discovery rate over `simes_p`.
+#'   \item max_p - Largest p-value across the comparisons.
+#'   \item max_p_fdr - False discovery rate over `max_p`.
+#'   \item genes_to_keep - Boolean indicating which genes were tested.
+#' }
+#'
+#' @export
+#'
+#' @keywords internal
+rs_calculate_dge_one_vs_many <- function(f_path, cell_indices_ref, cell_indices_other, min_prop, alternative, verbose) .Call(wrap__rs_calculate_dge_one_vs_many, f_path, cell_indices_ref, cell_indices_other, min_prop, alternative, verbose)
+
 #' Calculate AUCell in Rust
 #'
 #' @description
@@ -3480,6 +3539,28 @@ rs_calculate_dge_mann_whitney <- function(f_path, cell_indices_1, cell_indices_2
 #' @keywords internal
 rs_aucell <- function(f_path, gs_list, cells_to_keep, aucell_params, streaming, verbose) .Call(wrap__rs_aucell, f_path, gs_list, cells_to_keep, aucell_params, streaming, verbose)
 
+#' Derive the on/off threshold per regulon in Rust
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Fits a two-component Gaussian mixture per regulon and compares it against a
+#' single Gaussian by BIC. If the mixture wins, the threshold is the kernel
+#' density minimum between the two component means, otherwise it falls back to
+#' `mean + 2 * sd`. This follows pySCENIC rather than AUCell.
+#'
+#' @param auc_matrix Numeric matrix of cells x regulons, as returned by
+#' [bixverse::rs_aucell()].
+#' @param binarise_params List. The binarisation parameters, see
+#' [bixverse::params_scenic_binarise()].
+#'
+#' @return A list with `thresholds` (one per regulon) and `bimodal` (whether
+#' the mixture won the BIC comparison).
+#'
+#' @export
+#'
+#' @keywords internal
+rs_regulon_thresholds <- function(auc_matrix, binarise_params) .Call(wrap__rs_regulon_thresholds, auc_matrix, binarise_params)
+
 #' Calculate gene spatial auto-correlations
 #'
 #' @description
@@ -3497,8 +3578,10 @@ rs_aucell <- function(f_path, gs_list, cells_to_keep, aucell_params, streaming, 
 #' to include in the analysis. Ensure that this is of same order/length
 #' as the embedding matrix.
 #' @param knn_data Optional list. This contains pre-computed kNN data
-#' (including distances). The user has to ensure consistency! If provided,
-#' this will be used.
+#' (including distances) and the `dist_metric` it was built with. The user has
+#' to ensure consistency! If provided, this will be used and whether the
+#' distances are treated as squared is derived from `dist_metric` rather than
+#' from the parameter list.
 #' @param genes_to_use Integer vector. 0-index vector indicating which genes
 #' to include.
 #' @param streaming Boolean. Shall the data be streamed in chunks. Useful
@@ -3553,8 +3636,10 @@ rs_hotspot_cluster_genes <- function(z_matrix, fdr_threshold, min_size) .Call(wr
 #' @param embd Numerical matrix. The embedding matrix from which to generate
 #' the kNN graph.
 #' @param knn_data Optional list. This contains pre-computed kNN data
-#' (including distances). The user has to ensure consistency! If provided,
-#' this will be used.
+#' (including distances) and the `dist_metric` it was built with. The user has
+#' to ensure consistency! If provided, this will be used and whether the
+#' distances are treated as squared is derived from `dist_metric` rather than
+#' from the parameter list.
 #' @param hotspot_params List. The HotSpot parameter list.
 #' @param cells_to_keep Integer vector. 0-index vector indicating which cells
 #' to include in the analysis. Ensure that this is of same order/length
@@ -3724,8 +3809,10 @@ rs_vision <- function(f_path, gs_list, cells_to_keep, streaming, verbose) .Call(
 #' @param embd Numerical matrix. The embedding matrix to use to generate the
 #' kNN graph.
 #' @param knn_data Optional list. This contains pre-computed kNN data
-#' (including distances). The user has to ensure consistency! If provided,
-#' this will be used.
+#' (including distances) and the `dist_metric` it was built with. The user has
+#' to ensure consistency! If provided, this will be used and whether the
+#' distances are treated as squared is derived from `dist_metric` rather than
+#' from the parameter list.
 #' @param gs_list Nested list. Each sublist contains the (0-indexed!) positive
 #' and negative gene indices of that specific gene set.
 #' @param random_gs_list Double-nested list. The outer list represents the
@@ -4497,6 +4584,8 @@ rs_gene_trends <- function(expression, pseudotime, branch_probs, branch_params, 
 #' `dispersion` methods. One of `c("equal_width", "equal_frequency")`.
 #' @param n_bins Integer. Number of bins for the `meanvarbin` and
 #' `dispersion` methods.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
 #'
 #' @return A list with the HVG statistics. If `hvg_method == "vst"`:
 #' \itemize{
@@ -4514,7 +4603,7 @@ rs_gene_trends <- function(expression, pseudotime, branch_probs, branch_params, 
 #' }
 #'
 #' @export
-rs_mc_hvg <- function(sparse_data, hvg_method, loess_span, binning, n_bins, clip_max) .Call(wrap__rs_mc_hvg, sparse_data, hvg_method, loess_span, binning, n_bins, clip_max)
+rs_mc_hvg <- function(sparse_data, hvg_method, loess_span, binning, n_bins, clip_max, verbose) .Call(wrap__rs_mc_hvg, sparse_data, hvg_method, loess_span, binning, n_bins, clip_max, verbose)
 
 #' PCA on MetaCells (sparse data)
 #'
@@ -4532,6 +4621,8 @@ rs_mc_hvg <- function(sparse_data, hvg_method, loess_span, binning, n_bins, clip
 #' @param clr_offsets Optional numeric. If you wish to use the `PFlogPF`
 #' normalisation prior to PCA from Booeshaghi, et al.
 #' @param seed Integer. Random seed for the randomised SVD.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
 #'
 #' @returns A list with with the following items
 #' \itemize{
@@ -4546,7 +4637,7 @@ rs_mc_hvg <- function(sparse_data, hvg_method, loess_span, binning, n_bins, clip
 #' @export
 #'
 #' @references Booeshaghi, et al., bioRxive, 2026.
-rs_mc_pca <- function(sparse_data, no_pcs, pca_params, clr_offsets, seed) .Call(wrap__rs_mc_pca, sparse_data, no_pcs, pca_params, clr_offsets, seed)
+rs_mc_pca <- function(sparse_data, no_pcs, pca_params, clr_offsets, seed, verbose) .Call(wrap__rs_mc_pca, sparse_data, no_pcs, pca_params, clr_offsets, seed, verbose)
 
 #' Calculate the pairwise gene-correlation for meta cells
 #'
@@ -4614,6 +4705,102 @@ rs_mc_scenic <- function(sparse_data, tf_indices, scenic_params, seed, verbose) 
 #'
 #' @export
 rs_mc_aucell <- function(sparse_data, gs_list, aucell_params, verbose) .Call(wrap__rs_mc_aucell, sparse_data, gs_list, aucell_params, verbose)
+
+#' Calculate gene spatial auto-correlations (for meta cells)
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' This function implements the HotSpot auto-correlation functionality and
+#' will return to what extent a given gene shows auto-correlation in the
+#' kNN-graph over the meta cells. For details see DeTomaso, et al. This version
+#' works on MetaCell counts which are stored in memory directly. There is no
+#' streaming variant: streaming bounds disk re-reads, which is not a problem
+#' an in-memory matrix has.
+#'
+#' @param sparse_data A named list that needs to have `data`, `indptr`,
+#' `indices`, `nrow`, `ncol` and `format`. Shape is (metacells, genes) and the
+#' data are the raw counts.
+#' @param embd Numerical matrix. The embedding matrix from which to generate
+#' the kNN graph.
+#' @param knn_data Optional list. This contains pre-computed kNN data
+#' (including distances) and the `dist_metric` it was built with. The user has
+#' to ensure consistency! If provided, this will be used and whether the
+#' distances are treated as squared is derived from `dist_metric` rather than
+#' from the parameter list.
+#' @param hotspot_params List. The HotSpot parameter list. The kNN parameters
+#' are only read when no `knn_data` is provided.
+#' @param cells_to_keep Integer vector. 0-index vector indicating which meta
+#' cells to include in the analysis. Ensure that this is of same order/length
+#' as the embedding matrix.
+#' @param genes_to_use Integer vector. 0-index vector indicating which genes
+#' to include.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#' @param seed Integer. Random seed for reproducibility.
+#'
+#' @returns A list with the following elements.
+#' \itemize{
+#'   \item gene_idx - 0-based integer indicating the gene index.
+#'   \item gaerys_c - Gaery's C calculation for the autocorrelation
+#'   coefficient.
+#'   \item z_score - Z-score of the auto-correlation.
+#'   \item pval - P-value derived from the Z-score.
+#'   \item fdr - False discovery rate based on the p-value.
+#' }
+#'
+#' @export
+#'
+#' @references DeTomaso, et al., Cell Systems, 2021
+#'
+#' @keywords internal
+rs_mc_hotspot_autocor <- function(sparse_data, embd, knn_data, hotspot_params, cells_to_keep, genes_to_use, verbose, seed) .Call(wrap__rs_mc_hotspot_autocor, sparse_data, embd, knn_data, hotspot_params, cells_to_keep, genes_to_use, verbose, seed)
+
+#' Calculate gene to gene spatial correlations (for meta cells)
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' This function implements the HotSpot gene <> gene local correlation
+#' functionality from HotSpot, see DeTomaso, et al. This version works on
+#' MetaCell counts which are stored in memory directly.
+#'
+#' Three dense metacells x genes blocks are live at once, so keep
+#' `genes_to_use` to the panel actually of interest rather than the whole
+#' transcriptome.
+#'
+#' @param sparse_data A named list that needs to have `data`, `indptr`,
+#' `indices`, `nrow`, `ncol` and `format`. Shape is (metacells, genes) and the
+#' data are the raw counts.
+#' @param embd Numerical matrix. The embedding matrix from which to generate
+#' the kNN graph.
+#' @param knn_data Optional list. This contains pre-computed kNN data
+#' (including distances) and the `dist_metric` it was built with. The user has
+#' to ensure consistency! If provided, this will be used and whether the
+#' distances are treated as squared is derived from `dist_metric` rather than
+#' from the parameter list.
+#' @param hotspot_params List. The HotSpot parameter list. The kNN parameters
+#' are only read when no `knn_data` is provided; `normalise` is unused on this
+#' path.
+#' @param cells_to_keep Integer vector. 0-index vector indicating which meta
+#' cells to include in the analysis. Ensure that this is of same order/length
+#' as the embedding matrix.
+#' @param genes_to_use Integer vector. 0-index vector indicating which genes
+#' to include.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#' @param seed Integer. Random seed for reproducibility.
+#'
+#' @returns A list with the following elements.
+#' \itemize{
+#'   \item cor - The gene x gene local correlation matrix.
+#'   \item z - The Z-scores of these local correlations.
+#' }
+#'
+#' @export
+#'
+#' @references DeTomaso, et al., Cell Systems, 2021
+#'
+#' @keywords internal
+rs_mc_hotspot_gene_cor <- function(sparse_data, embd, knn_data, hotspot_params, cells_to_keep, genes_to_use, verbose, seed) .Call(wrap__rs_mc_hotspot_gene_cor, sparse_data, embd, knn_data, hotspot_params, cells_to_keep, genes_to_use, verbose, seed)
 
 #' Run NMF (HALS) on MetaCells
 #'

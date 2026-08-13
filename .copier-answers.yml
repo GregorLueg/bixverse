@@ -1,6 +1,6 @@
 # Managed by copier. Edits here are overwritten on the next update.
 # Change an answer with: copier update --data key=value
-_commit: v1.0.0
+_commit: v1.1.0
 _src_path: gh:GregorLueg/personal-templates
 ci_rust: true
 extra_sysdeps: ''

@@ -292,6 +292,260 @@ S7::method(find_all_markers_sc, ScOrScSubset) <- function(
   return(dge_dt_final)
 }
 
+### find specific markers ------------------------------------------------------
+
+#' Find markers that are specific to a cell group
+#'
+#' @description
+#' This function scores one group of cells against every other group of a column
+#' separately, instead of against all of them pooled together. That difference
+#' matters for markers. A pooled test is dominated by whichever rival
+#' contributes the most cells, so a gene that is high in the reference and just
+#' as high in one small rival still comes out looking like a clean marker. Here
+#' the gene has to hold up against every rival, and the per-gene summaries
+#' (`min_auroc`, `median_auroc`, `min_rank`) tell you whether it does.
+#'
+#' Leave `reference_group` as `NULL` to run every group of the column as the
+#' reference in turn, or name one group to only get that arm.
+#'
+#' The summaries rank on AUROC rather than the p-value on purpose. Group sizes
+#' vary a lot in practice and p-values scale with the group sizes, so a large
+#' rival would otherwise crowd out a small one regardless of effect size.
+#'
+#' @param object `SingleCells` or `SingleCellsSubset` class.
+#' @param column_of_interest String. The column in the obs table holding the
+#' groups, e.g. a cell type annotation or a clustering.
+#' @param reference_group Optional string. The group to use as the reference. If
+#' `NULL`, every group of `column_of_interest` is used as the reference in turn.
+#' @param method String. Which method to use for the calculations of the DGE.
+#' At the moment the only option is `"wilcox"`, but the parameter is reserved
+#' for future features.
+#' @param alternative String. Test alternative. One of
+#' `c("twosided", "greater", "less")`. This function will default to
+#' `"greater"`, i.e., genes upregulated in the reference group.
+#' @param min_prop Numeric. The minimum proportion of cells that need to express
+#' the gene in at least one of the groups. Applied once, globally, so every
+#' comparison's FDR is calculated over the same gene set.
+#' @param downsampling Boolean. If any group exceeds 100,000 cells, a random
+#' subsample of 100,000 cells is used for it. The subsample is drawn once per
+#' group, so a group is represented by the same cells in every arm.
+#' @param seed Integer. Seed that is used for the downsampling.
+#' @param .verbose Boolean or integer. Controls verbosity and returns run times.
+#' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
+#' verbosity.
+#'
+#' @return A `ScSpecificMarkers` class with the following elements
+#' \itemize{
+#'   \item summary - data.table. Per gene and reference group, the summaries
+#'   across all rivals: `prop_ref`, `median_auroc`, `min_auroc`, `mean_auroc`,
+#'   `max_auroc`, `worst_rival` (the rival achieving `min_auroc`), `min_rank`
+#'   (best AUROC rank the gene reaches against any single rival), the
+#'   Simes-combined p-value with its FDR, and the maximum p-value with its FDR.
+#'   \item per_comparison - data.table. Per gene, reference group and rival, the
+#'   underlying `auroc`, `lfc`, `prop_ref`, `prop_rival`, `z_scores`, `p_values`
+#'   and `fdr`.
+#'   \item params - List. The parameters the run used.
+#' }
+#'
+#' @references Soneson and Robinson, Nat Methods, 2018; Lun, et al.,
+#' F1000Research, 2016
+#'
+#' @export
+find_specific_markers_sc <- S7::new_generic(
+  name = "find_specific_markers_sc",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    column_of_interest,
+    reference_group = NULL,
+    method = "wilcox",
+    alternative = c("greater", "less", "twosided"),
+    min_prop = 0.05,
+    downsampling = TRUE,
+    seed = 42L,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method find_specific_markers_sc ScOrScSubset
+S7::method(find_specific_markers_sc, ScOrScSubset) <- function(
+  object,
+  column_of_interest,
+  reference_group = NULL,
+  method = "wilcox",
+  alternative = c("greater", "less", "twosided"),
+  min_prop = 0.05,
+  downsampling = TRUE,
+  seed = 42L,
+  .verbose = TRUE
+) {
+  alternative <- match.arg(alternative)
+
+  # checks
+  checkmate::assertTRUE(
+    S7::S7_inherits(object, SingleCells) ||
+      S7::S7_inherits(object, SingleCellsSubset)
+  )
+  checkmate::qassert(column_of_interest, "S1")
+  checkmate::qassert(reference_group, c("S1", "0"))
+  checkmate::assertChoice(method, c("wilcox"))
+  checkmate::assertChoice(alternative, c("twosided", "greater", "less"))
+  checkmate::qassert(min_prop, "N1[0, 1]")
+  checkmate::qassert(downsampling, "B1")
+  checkmate::qassert(seed, "I1")
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
+
+  .assert_group_by(object, column_of_interest)
+
+  obs_data <- get_sc_obs(
+    object,
+    cols = c("cell_idx", column_of_interest),
+    filtered = TRUE
+  )
+
+  grp_vec <- as.character(obs_data[[column_of_interest]])
+  annotated <- !is.na(grp_vec)
+
+  if (!all(annotated)) {
+    warning(sprintf(
+      "Dropping %i cell(s) with no '%s' annotation.",
+      sum(!annotated),
+      column_of_interest
+    ))
+  }
+
+  # obs cell_idx is 1-based, Rust wants 0-based. split() orders the groups by
+  # name, which keeps the downsampling seed stable across the reference arms
+  cell_groups <- split(
+    as.integer(obs_data$cell_idx[annotated] - 1L),
+    grp_vec[annotated]
+  )
+
+  if (length(cell_groups) < 2L) {
+    stop(sprintf(
+      "Column '%s' has fewer than two groups. Nothing to compare against.",
+      column_of_interest
+    ))
+  }
+
+  if (length(cell_groups) == 2L) {
+    warning(
+      paste(
+        "Only two groups found. With a single rival this collapses to the",
+        "pairwise case, see find_markers_sc()."
+      )
+    )
+  }
+
+  if (!is.null(reference_group)) {
+    checkmate::assertChoice(reference_group, names(cell_groups))
+  }
+
+  grp_names <- names(cell_groups)
+
+  if (downsampling) {
+    cell_groups <- purrr::imap(cell_groups, \(indices, grp) {
+      if (length(indices) <= 100000) {
+        return(indices)
+      }
+      if (.verbose) {
+        message(sprintf(
+          " Large number of cells in group '%s'. Downsampling to 100,000.",
+          grp
+        ))
+      }
+      set.seed(seed + which(grp_names == grp))
+      sample(indices, 100000)
+    })
+  }
+
+  ref_groups <- if (is.null(reference_group)) {
+    grp_names
+  } else {
+    reference_group
+  }
+
+  # the per-arm progress messages cover normal verbosity, so only hand the Rust
+  # side the detailed level where its per-comparison timings are wanted
+  rust_verbosity <- if (parse_verbosity(.verbose) >= 2L) 2L else 0L
+
+  summary_dts <- vector(mode = "list", length = length(ref_groups))
+  per_comparison_dts <- vector(mode = "list", length = length(ref_groups))
+
+  for (i in seq_along(ref_groups)) {
+    if (.verbose) {
+      message(sprintf(
+        "Processing reference group %i out of %i.",
+        i,
+        length(ref_groups)
+      ))
+    }
+
+    rival_grps <- setdiff(grp_names, ref_groups[i])
+
+    res_i <- switch(
+      method,
+      "wilcox" = rs_calculate_dge_one_vs_many(
+        f_path = get_rust_count_cell_f_path(object),
+        cell_indices_ref = cell_groups[[ref_groups[i]]],
+        cell_indices_other = cell_groups[rival_grps],
+        min_prop = min_prop,
+        alternative = alternative,
+        verbose = rust_verbosity
+      )
+    )
+
+    if (!any(res_i$genes_to_keep)) {
+      warning(sprintf(
+        "No gene passed the proportion filter for group '%s'. Skipping it.",
+        ref_groups[i]
+      ))
+      next
+    }
+
+    melted_i <- .melt_one_vs_many_res(
+      rs_res = res_i,
+      gene_names = get_gene_names(object),
+      ref_grp = ref_groups[i],
+      rival_grps = rival_grps
+    )
+
+    summary_dts[[i]] <- melted_i$summary
+    per_comparison_dts[[i]] <- melted_i$per_comparison
+  }
+
+  summary_dt <- data.table::rbindlist(summary_dts)
+
+  # early return if every arm was skipped by the proportion filter
+  if (nrow(summary_dt) == 0L) {
+    warning(
+      paste(
+        "No gene passed the proportion filter for any group.",
+        "Consider lowering min_prop. Returning NULL."
+      )
+    )
+    return(NULL)
+  }
+
+  params <- list(
+    method = method,
+    alternative = alternative,
+    min_prop = min_prop,
+    column_of_interest = column_of_interest,
+    reference_group = reference_group,
+    downsampling = downsampling,
+    seed = seed
+  )
+
+  new_sc_specific_markers(
+    summary = summary_dt,
+    per_comparison = data.table::rbindlist(per_comparison_dts),
+    params = params
+  )
+}
+
 ## differential abundance ------------------------------------------------------
 
 ### miloR ----------------------------------------------------------------------
