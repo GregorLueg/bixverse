@@ -12,6 +12,7 @@ use bixverse_rs::single_cell::sc_analysis::{
     nichenet::ligand_regulatory_potential::*,
     nichenet::prioritisation::compute_cluster_expression_stats,
     nmf_sc::{nmf_multiple_run_sc, nmf_single_run_sc},
+    regulon_binarise::{BinariseParams, derive_regulon_thresholds},
     scenic::*,
     vision::*,
 };
@@ -31,8 +32,10 @@ extendr_module! {
     mod r_sc_analysis;
     // dge
     fn rs_calculate_dge_mann_whitney;
+    fn rs_calculate_dge_one_vs_many;
     // aucell
     fn rs_aucell;
+    fn rs_regulon_thresholds;
     // hotspot
     fn rs_hotspot_autocor;
     fn rs_hotspot_cluster_genes;
@@ -148,6 +151,129 @@ fn rs_calculate_dge_mann_whitney(
         z_scores = dge_results.z_scores,
         p_values = dge_results.p_vals,
         fdr = dge_results.fdr,
+        genes_to_keep = dge_results.genes_to_keep
+    ))
+}
+
+/// Calculate one-vs-many AUROC DGEs for specific markers
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// The function scores one reference group of cells against each comparison
+/// group separately and summarises the results per gene across all of the
+/// comparisons. This is the marker question: a gene that is specific to the
+/// reference has to hold up against every rival, which a single pooled test
+/// cannot answer because it is dominated by whichever rival contributes the
+/// most cells. Genes are filtered once, globally, so every comparison's FDR is
+/// calculated over the same gene set.
+///
+/// @param f_path String. Path to the `counts_cells.bin` file.
+/// @param cell_indices_ref Integer. Index positions (0-indexed) of the cells
+/// of the reference group.
+/// @param cell_indices_other List. List of integer vectors, each containing the
+/// index positions (0-indexed) of the cells of one comparison group.
+/// @param min_prop Minimum proportion of expression in at least one of the
+/// groups to be tested.
+/// @param alternative String. One of `c("twosided", "greater", "less")`. Null
+/// hypothesis.
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
+///
+/// @return A list with the elements below. The per-comparison elements are
+/// flattened comparison-major, i.e., all genes of the first comparison, then
+/// all genes of the second, and so on.
+/// \itemize{
+///   \item comparison - Index (0-indexed) of the comparison group the
+///   per-comparison statistics belong to.
+///   \item auroc - AUROC of the reference against the comparison group.
+///   \item lfc - Log fold change of the reference against the comparison group.
+///   \item prop_other - Proportion of cells expressing the gene in the
+///   comparison group.
+///   \item z_scores - Z-scores based on the Mann Whitney statistic.
+///   \item p_values - P-values of the Mann Whitney statistic.
+///   \item fdr - False discovery rate after BH adjustment, per comparison.
+///   \item prop_ref - Proportion of reference cells expressing the gene.
+///   \item median_auroc - Median AUROC across the comparisons.
+///   \item min_auroc - Worst AUROC across the comparisons.
+///   \item mean_auroc - Mean AUROC across the comparisons.
+///   \item max_auroc - Best AUROC across the comparisons.
+///   \item worst_comparison - Index (0-indexed) of the comparison group
+///   achieving `min_auroc`.
+///   \item min_rank - Best rank the gene achieves in any single comparison when
+///   the genes are ordered by descending AUROC.
+///   \item simes_p - Simes-combined p-value across the comparisons.
+///   \item simes_fdr - False discovery rate over `simes_p`.
+///   \item max_p - Largest p-value across the comparisons.
+///   \item max_p_fdr - False discovery rate over `max_p`.
+///   \item genes_to_keep - Boolean indicating which genes were tested.
+/// }
+///
+/// @export
+///
+/// @keywords internal
+#[extendr]
+fn rs_calculate_dge_one_vs_many(
+    f_path: String,
+    cell_indices_ref: &[i32],
+    cell_indices_other: List,
+    min_prop: f64,
+    alternative: String,
+    verbose: usize,
+) -> extendr_api::Result<List> {
+    let cell_indices_ref = cell_indices_ref.r_int_convert();
+
+    let mut other_indices: Vec<Vec<usize>> = Vec::with_capacity(cell_indices_other.len());
+    for i in 0..cell_indices_other.len() {
+        let r_obj = cell_indices_other.elt(i)?;
+        let int = r_obj
+            .as_integer_vector()
+            .ok_or_else(|| {
+                extendr_api::Error::Other(format!(
+                    "Element {} of `cell_indices_other` is not an integer vector.",
+                    i + 1
+                ))
+            })?
+            .r_int_convert();
+        other_indices.push(int);
+    }
+
+    let reader = ParallelSparseReader::new(&f_path).to_extendr()?;
+
+    let dge_results: DgeAurocMultiRes = calculate_dge_one_vs_many_auroc(
+        &reader,
+        &cell_indices_ref,
+        &other_indices,
+        min_prop as f32,
+        &alternative,
+        verbose,
+    )
+    .to_extendr()?;
+
+    let no_genes_kept = dge_results.prop_ref.len();
+
+    let comparison = (0..other_indices.len())
+        .flat_map(|group| std::iter::repeat_n(group as i32, no_genes_kept))
+        .collect::<Vec<i32>>();
+
+    Ok(list!(
+        comparison = comparison,
+        auroc = dge_results.auroc.concat().r_float_convert(),
+        lfc = dge_results.lfc.concat().r_float_convert(),
+        prop_other = dge_results.prop_other.concat().r_float_convert(),
+        z_scores = dge_results.z_scores.concat(),
+        p_values = dge_results.p_vals.concat(),
+        fdr = dge_results.fdr.concat(),
+        prop_ref = dge_results.prop_ref.r_float_convert(),
+        median_auroc = dge_results.median_auroc.r_float_convert(),
+        min_auroc = dge_results.min_auroc.r_float_convert(),
+        mean_auroc = dge_results.mean_auroc.r_float_convert(),
+        max_auroc = dge_results.max_auroc.r_float_convert(),
+        worst_comparison = dge_results.worst_comparison.r_int_convert(),
+        min_rank = dge_results.min_rank.r_int_convert(),
+        simes_p = dge_results.simes_p,
+        simes_fdr = dge_results.simes_fdr,
+        max_p = dge_results.max_p,
+        max_p_fdr = dge_results.max_p_fdr,
         genes_to_keep = dge_results.genes_to_keep
     ))
 }
@@ -316,6 +442,53 @@ fn rs_aucell(
     Ok(faer_to_r_matrix(auc_mat.as_ref()))
 }
 
+/// Derive the on/off threshold per regulon in Rust
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Fits a two-component Gaussian mixture per regulon and compares it against a
+/// single Gaussian by BIC. If the mixture wins, the threshold is the kernel
+/// density minimum between the two component means, otherwise it falls back to
+/// `mean + 2 * sd`. This follows pySCENIC rather than AUCell.
+///
+/// @param auc_matrix Numeric matrix of cells x regulons, as returned by
+/// [bixverse::rs_aucell()].
+/// @param binarise_params List. The binarisation parameters, see
+/// [bixverse::params_scenic_binarise()].
+///
+/// @return A list with `thresholds` (one per regulon) and `bimodal` (whether
+/// the mixture won the BIC comparison).
+///
+/// @export
+///
+/// @keywords internal
+#[extendr]
+fn rs_regulon_thresholds(auc_matrix: RMatrix<f64>, binarise_params: List) -> Result<List> {
+    let params = BinariseParams::from_r_list(binarise_params)?;
+
+    let n_cells = auc_matrix.nrows();
+    let n_regulons = auc_matrix.ncols();
+    let data = auc_matrix.data();
+
+    // R hands over a column-major cells x regulons matrix, the crate wants one
+    // row of cell scores per regulon
+    let rows: Vec<Vec<f32>> = (0..n_regulons)
+        .map(|j| {
+            data[j * n_cells..(j + 1) * n_cells]
+                .iter()
+                .map(|&v| v as f32)
+                .collect()
+        })
+        .collect();
+
+    let res = derive_regulon_thresholds(&rows, Some(params)).to_extendr()?;
+
+    Ok(list!(
+        thresholds = res.thresholds,
+        bimodal = res.bimodal
+    ))
+}
+
 /// Calculate VISION pathway scores in Rust
 ///
 /// @description
@@ -377,8 +550,10 @@ fn rs_vision(
 /// @param embd Numerical matrix. The embedding matrix to use to generate the
 /// kNN graph.
 /// @param knn_data Optional list. This contains pre-computed kNN data
-/// (including distances). The user has to ensure consistency! If provided,
-/// this will be used.
+/// (including distances) and the `dist_metric` it was built with. The user has
+/// to ensure consistency! If provided, this will be used and whether the
+/// distances are treated as squared is derived from `dist_metric` rather than
+/// from the parameter list.
 /// @param gs_list Nested list. Each sublist contains the (0-indexed!) positive
 /// and negative gene indices of that specific gene set.
 /// @param random_gs_list Double-nested list. The outer list represents the
@@ -477,21 +652,21 @@ fn rs_vision_with_autocorrelation(
     let embd = r_matrix_to_faer_fp32(&embd);
     let knn_params = KnnParams::from_r_list(vision_params)?;
 
-    let (knn_indices, knn_dist) = if knn_provided {
+    let (knn_indices, knn_dist, squared_distances) = if knn_provided {
         if verbosity.normal_verbosity() {
-            println!("Using generated kNN graph.")
+            println!("Using provided kNN graph.")
         }
 
         let knn_data = knn_data
             .into_robj()
             .as_list()
             .ok_or_else(|| Error::Other("'knn_data' is not a list".into()))?;
-        let (knn_indices, knn_dist, _, _) = knn_data_to_rust(knn_data)?;
+        let (knn_indices, knn_dist, _, dist_metric) = knn_data_to_rust(knn_data)?;
 
-        (knn_indices, knn_dist)
+        (knn_indices, knn_dist, distances_are_squared(&dist_metric))
     } else {
         if verbosity.normal_verbosity() {
-            println!("Using generated kNN graph.")
+            println!("Generating a kNN graph from scratch.")
         }
 
         let (knn_indices, knn_dist) = generate_knn_with_dist(
@@ -504,7 +679,11 @@ fn rs_vision_with_autocorrelation(
         )
         .to_extendr()?;
 
-        (knn_indices, knn_dist.unwrap())
+        (
+            knn_indices,
+            knn_dist.unwrap(),
+            distances_are_squared(&knn_params.ann_dist),
+        )
     };
 
     let cluster_membership = cluster_membership.r_int_convert_shift();
@@ -515,6 +694,7 @@ fn rs_vision_with_autocorrelation(
         &cluster_membership,
         knn_indices,
         knn_dist,
+        squared_distances,
         verbose,
     );
 
@@ -551,8 +731,10 @@ fn rs_vision_with_autocorrelation(
 /// to include in the analysis. Ensure that this is of same order/length
 /// as the embedding matrix.
 /// @param knn_data Optional list. This contains pre-computed kNN data
-/// (including distances). The user has to ensure consistency! If provided,
-/// this will be used.
+/// (including distances) and the `dist_metric` it was built with. The user has
+/// to ensure consistency! If provided, this will be used and whether the
+/// distances are treated as squared is derived from `dist_metric` rather than
+/// from the parameter list.
 /// @param genes_to_use Integer vector. 0-index vector indicating which genes
 /// to include.
 /// @param streaming Boolean. Shall the data be streamed in chunks. Useful
@@ -598,13 +780,13 @@ fn rs_hotspot_autocor(
     let verbosity = parse_verbosity_level(verbose);
     let knn_provided = knn_data != extendr_api::Nullable::Null;
 
-    let hotspot_params = HotSpotParams::from_r_list(hotspot_params)?;
+    let mut hotspot_params = HotSpotParams::from_r_list(hotspot_params)?;
 
     let embd = r_matrix_to_faer_fp32(&embd);
     let cells_to_keep = cells_to_keep.r_int_convert();
     let genes_to_use = genes_to_use.r_int_convert();
 
-    let (knn_indices, mut knn_dist) = if knn_provided {
+    let (knn_indices, knn_dist, squared_distances) = if knn_provided {
         if verbosity.normal_verbosity() {
             println!("Using provided kNN graph...")
         }
@@ -612,9 +794,9 @@ fn rs_hotspot_autocor(
             .into_robj()
             .as_list()
             .ok_or_else(|| Error::Other("'knn_data' is not a list".into()))?;
-        let (knn_indices, knn_dist, _, _) = knn_data_to_rust(knn_data)?;
+        let (knn_indices, knn_dist, _, dist_metric) = knn_data_to_rust(knn_data)?;
 
-        (knn_indices, knn_dist)
+        (knn_indices, knn_dist, distances_are_squared(&dist_metric))
     } else {
         if verbosity.normal_verbosity() {
             println!("Generating a kNN graph from scratch")
@@ -630,8 +812,16 @@ fn rs_hotspot_autocor(
         )
         .to_extendr()?;
 
-        (knn_indices, knn_dist.unwrap())
+        (
+            knn_indices,
+            knn_dist.unwrap(),
+            distances_are_squared(&hotspot_params.knn_params.ann_dist),
+        )
     };
+
+    // the parsed params derive this from `ann_dist`, which is the wrong source
+    // when the graph came in pre-computed under a different metric
+    hotspot_params.graph_params.squared_distances = squared_distances;
 
     let gene_reader = ParallelSparseReader::new(&f_path_genes).to_extendr()?;
     let cell_reader = ParallelSparseReader::new(&f_path_cells).to_extendr()?;
@@ -641,7 +831,8 @@ fn rs_hotspot_autocor(
         &cell_reader,
         &cells_to_keep,
         &knn_indices,
-        &mut knn_dist,
+        &knn_dist,
+        Some(hotspot_params.graph_params),
     )
     .to_extendr()?;
 
@@ -686,8 +877,10 @@ fn rs_hotspot_autocor(
 /// @param embd Numerical matrix. The embedding matrix from which to generate
 /// the kNN graph.
 /// @param knn_data Optional list. This contains pre-computed kNN data
-/// (including distances). The user has to ensure consistency! If provided,
-/// this will be used.
+/// (including distances) and the `dist_metric` it was built with. The user has
+/// to ensure consistency! If provided, this will be used and whether the
+/// distances are treated as squared is derived from `dist_metric` rather than
+/// from the parameter list.
 /// @param hotspot_params List. The HotSpot parameter list.
 /// @param cells_to_keep Integer vector. 0-index vector indicating which cells
 /// to include in the analysis. Ensure that this is of same order/length
@@ -736,12 +929,12 @@ fn rs_hotspot_gene_cor(
     let cells_to_keep = cells_to_keep.r_int_convert();
     let genes_to_use = genes_to_use.r_int_convert();
 
-    let hotspot_params = HotSpotParams::from_r_list(hotspot_params)?;
+    let mut hotspot_params = HotSpotParams::from_r_list(hotspot_params)?;
 
     let verbosity = parse_verbosity_level(verbose);
     let knn_provided = knn_data != extendr_api::Nullable::Null;
 
-    let (knn_indices, mut knn_dist) = if knn_provided {
+    let (knn_indices, knn_dist, squared_distances) = if knn_provided {
         if verbosity.normal_verbosity() {
             println!("Using provided kNN graph...")
         }
@@ -749,9 +942,9 @@ fn rs_hotspot_gene_cor(
             .into_robj()
             .as_list()
             .ok_or_else(|| Error::Other("'knn_data' is not a list".into()))?;
-        let (knn_indices, knn_dist, _, _) = knn_data_to_rust(knn_data)?;
+        let (knn_indices, knn_dist, _, dist_metric) = knn_data_to_rust(knn_data)?;
 
-        (knn_indices, knn_dist)
+        (knn_indices, knn_dist, distances_are_squared(&dist_metric))
     } else {
         if verbosity.normal_verbosity() {
             println!("Generating a kNN graph from scratch")
@@ -767,8 +960,16 @@ fn rs_hotspot_gene_cor(
         )
         .to_extendr()?;
 
-        (knn_indices, knn_dist.unwrap())
+        (
+            knn_indices,
+            knn_dist.unwrap(),
+            distances_are_squared(&hotspot_params.knn_params.ann_dist),
+        )
     };
+
+    // the parsed params derive this from `ann_dist`, which is the wrong source
+    // when the graph came in pre-computed under a different metric
+    hotspot_params.graph_params.squared_distances = squared_distances;
 
     let gene_reader = ParallelSparseReader::new(&f_path_genes).to_extendr()?;
     let cell_reader = ParallelSparseReader::new(&f_path_cells).to_extendr()?;
@@ -778,7 +979,8 @@ fn rs_hotspot_gene_cor(
         &cell_reader,
         &cells_to_keep,
         &knn_indices,
-        &mut knn_dist,
+        &knn_dist,
+        Some(hotspot_params.graph_params),
     )
     .to_extendr()?;
 

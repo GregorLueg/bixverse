@@ -99,11 +99,28 @@ expect_equal(
 
 #### multiple ------------------------------------------------------------------
 
+# one hypergeometric test per target set. A single hit gives q = 0, which is
+# P(X >= 1) and a perfectly meaningful p-value, not the degenerate 1
+r_pvals_multiple <- vapply(
+  target_genes_list,
+  \(x) {
+    phyper(
+      q = length(intersect(x, gene_set[[1]])) - 1,
+      m = gene_set_length,
+      n = gene_universe_length - gene_set_length,
+      k = length(x),
+      lower.tail = FALSE
+    )
+  },
+  numeric(1),
+  USE.NAMES = FALSE
+)
+
 expected_res_multiple <- data.table::data.table(
   target_set_name = names(target_genes_list),
   odds_ratios = c(44, 11),
-  pvals = c(r_pval, 1),
-  fdr = c(r_pval, 1),
+  pvals = r_pvals_multiple,
+  fdr = r_pvals_multiple,
   hits = c(2, 1),
   gene_set_lengths = 3,
   gene_set_name = names(gene_set),
@@ -156,8 +173,12 @@ object <- GeneOntologyElim(toy_go_data, min_genes = 1L)
 expected_pval_no_elim_v1 <- c(0.7272727, 0.2121212, 0.1515152)
 expected_hits_no_elim_v1 <- c(3, 3, 2)
 
-expected_pval_with_elim_v1 <- c(1, 1, 0.1515152)
-expected_hits_with_elim_v1 <- c(1, 1, 2)
+# go_3 clears the threshold and eliminates a, b, c from its ancestors, leaving
+# go_2 with a single hit. That single hit is a real p-value rather than 1, so
+# go_2 now clears the threshold too and eliminates in turn, which strips the
+# last hit out of go_1
+expected_pval_with_elim_v1 <- c(1, 0.7878788, 0.1515152)
+expected_hits_with_elim_v1 <- c(0, 1, 2)
 
 #### scenario 2 data -----------------------------------------------------------
 
@@ -286,8 +307,10 @@ expect_equal(
 
 #### with elimination ----------------------------------------------------------
 
-expected_pval_multi_elim <- c(0.1515152, 1, 1, 1, 1, 0.5454545)
-expected_hits_multi_elim <- c(2, 1, 1, 0, 1, 5)
+# first_test cascades as in scenario 1. second_test eliminates nothing: go_3 has
+# no hits and go_2 covers so much of the universe that P(X >= 1) is exactly 1
+expected_pval_multi_elim <- c(0.1515152, 0.7878788, 1, 1, 1, 0.5454545)
+expected_hits_multi_elim <- c(2, 1, 0, 0, 1, 5)
 
 go_results_with_multiple_elim <- gse_go_elim_method_list(
   object = object,

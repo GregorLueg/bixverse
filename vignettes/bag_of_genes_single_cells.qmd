@@ -227,12 +227,18 @@ ms_long <- melt(
   value.name = "score"
 )
 
+# scale the scores to make them more comparable across
+ms_long[,
+  score_scaled := (score - min(score)) / (max(score) - min(score)),
+  by = phase
+]
+
 ggplot(ms_long, aes(x = umap_1, y = umap_2)) +
-  geom_point(aes(colour = score), size = 0.3) +
+  geom_point(aes(colour = score_scaled), size = 0.3) +
   scale_colour_viridis_c() +
   facet_wrap(~phase, ncol = 2) +
   theme_bw() +
-  labs(colour = "Module\nscore")
+  labs(colour = "Module\nscore\n(scaled)")
 ```
 
 Let's imagine you want to add the scores to the internal DB. There are helpers
@@ -258,17 +264,19 @@ More robust to outliers than a simple mean. `bixverse` gives you three
 statistics via `params_sc_aucell()`, all reading the same ranking but weighting
 it differently:
 
-- `"wilcox"`, the default, is the AUC from the Mann-Whitney U statistic over
-  the full ranking. Its null sits at 0.5 whatever the gene set size, which
-  makes it the safe pick for pathway activity.
-- `"recovery"` is the recovery-curve AUC under a rank cutoff, i.e. what Aibar
-  et al. actually published. Top-heavy: only genes inside the top `max_rank`
-  contribute, so it is the sharper instrument for marker sets.
+- `"recovery"`, the default, is the recovery-curve AUC under a rank cutoff,
+  i.e. what Aibar et al. published. Top-heavy: only genes inside the top 
+  `max_rank` contribute, so it is the sharper instrument for marker sets and the 
+  one to use for SCENIC.
+- `"wilcox"` is the AUC from the Mann-Whitney U statistic over the full
+  ranking. Its null sits at 0.5 whatever the gene set size, which makes it a
+  safe pick for pathway activity, but the flatter score does not split into
+  on/off populations.
 - `"ap"` is average precision. Most top-heavy of the three, but its null tracks
   gene set prevalence, so don't compare raw values across sets of different
   size unless you switch `standardise` on.
 
-We show the Wilcoxon variant here.
+We stick with the default here.
 
 ```{r}
 #| label: aucell
@@ -278,7 +286,7 @@ We show the Wilcoxon variant here.
 auc_scores <- aucell_sc(
   object = sc_object,
   gs_list = lineage_sets,
-  aucell_params = params_sc_aucell(auc_type = "wilcox"),
+  aucell_params = params_sc_aucell(),
   .verbose = FALSE
 )
 
@@ -573,7 +581,6 @@ scenic_res <- identify_tf_to_genes(
 scenic_res <- tf_to_genes_correlations(
   x = scenic_res,
   object = sc_object,
-  cor_filter = 0.01,
   .verbose = TRUE
 )
 
@@ -590,7 +597,7 @@ The final (and optional) step in the SCENIC pipeline validates the predicted
 TF-gene links against known motif binding sites. This requires downloading
 the CisTarget motif ranking database and motif-to-TF annotation files from
 the [Aerts lab resources](https://resources.aertslab.org/cistarget/), which
-together are roughly 1.5 GB. We therefore show the code but do not evaluate
+together are roughly 400 MB. We therefore show the code but do not evaluate
 it by default.
 
 ```{r}
@@ -610,9 +617,7 @@ scenic_res <- tf_to_genes_motif_enrichment(
   # we store everything as Ensembl... The SCENIC data has gene symbols, hence,
   # the need to provide conversion
   gene_id_to_symbol = ensembl_to_symbol,
-  cis_target_params = params_cistarget(
-    nes_threshold = 3.0
-  ),
+  cis_target_params = params_cistarget(),
   only_high_conf_tf = FALSE,
   .verbose = TRUE
 )
@@ -626,6 +631,41 @@ head(cistarget_dt[order(-nes)])
 tf_gene_final <- get_tf_to_gene(scenic_res)
 
 head(tf_gene_final[(in_leading_edge)][order(-importance)])
+```
+
+CisTarget is not a pass/fail filter on the module. Per enriched motif it builds
+a recovery curve, compares it against the mean + 2 SD curve across every motif
+in the database, and keeps only the genes above the point of maximum
+separation. So expect the regulons coming out of `build_regulons()` to be a
+good deal smaller than the modules going in. This is how you would run the
+regulon binarisation.
+
+```{r}
+#| label: scenic-regulon
+#| eval: false
+
+# build_regulons() applies that filter, adds the TF back to its own set and
+# drops anything too small. This is what you hand to aucell_sc()
+regulons <- build_regulons(scenic_res)
+
+auc_regulons <- aucell_sc(
+  object = sc_object,
+  gs_list = regulons,
+  aucell_params = params_sc_aucell()
+)
+
+binarised_regulons <- binarise_regulon_activity(auc_regulons)
+
+binary_matrix <- binarised_regulons$binary
+colnames(binary_matrix) <- ensembl_to_symbol[colnames(binary_matrix)]
+
+sc_object[["STAT1_active"]] <- binary_matrix[, "STAT1"]
+
+embedding_plot_sc(
+  object = sc_object,
+  embedding = "umap",
+  colour_by = "STAT1_active"
+)
 ```
 
 This is how you work with all types of `"bag of genes"` analyses for single

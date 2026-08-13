@@ -8,18 +8,22 @@
 tf_to_genes_correlations(
   x,
   object,
-  cor_filter = NULL,
+  rho_threshold = 0.03,
+  mode = c("activating", "repressing", "both"),
   remove_self = TRUE,
   spearman = TRUE,
+  cor_filter = NULL,
   .verbose = TRUE
 )
 
 \method{tf_to_genes_correlations}{ScenicGrn}(
   x,
   object,
-  cor_filter = NULL,
+  rho_threshold = 0.03,
+  mode = c("activating", "repressing", "both"),
   remove_self = TRUE,
   spearman = TRUE,
+  cor_filter = NULL,
   .verbose = TRUE
 )
 }
@@ -30,21 +34,40 @@ associations.}
 \item{object}{\code{SingleCells} or \code{MetaCells} object that was used to generate
 the original GRNs.}
 
-\item{cor_filter}{Optional float. If you wish to filter out TF genes below
-a certain correlation. If \code{NULL} all genes will be kept.}
+\item{rho_threshold}{Float. Absolute correlation above which a TF to gene
+link counts as activating or repressing. Defaults to \code{0.03}, the SCENIC
+value.}
+
+\item{mode}{String. Which links to keep. One of
+\code{c("activating", "repressing", "both")}. Defaults to \code{"activating"}.}
 
 \item{remove_self}{Boolean. Shall self loops (where TF controls its own
-expression) be removed. Defaults to \code{TRUE}.}
+expression) be removed. Defaults to \code{TRUE}. Note that \code{\link[=build_regulons]{build_regulons()}}
+adds the TF back to its own regulon, which is also what SCENIC does.}
 
 \item{spearman}{Boolean. Shall Spearman correlation be used. Defaults to
 \code{TRUE}.}
 
+\item{cor_filter}{Deprecated. Use \code{rho_threshold} and \code{mode} instead. If
+given, it is treated as a one-sided lower bound on the correlation and
+\code{rho_threshold} and \code{mode} are ignored.}
+
 \item{.verbose}{Boolean. Controls verbosity of the function.}
 }
 \value{
-Adds the correlations coefficients between to the TF to gene.
+Adds a \code{pairwise_cor} and a \code{cor_sign} column to the TF to gene
+results.
 }
 \description{
 This function will calculate the correlations between the identified TF to
 gene pairs. You need to have run \code{\link[=identify_tf_to_genes]{identify_tf_to_genes()}}!
+
+Following SCENIC, the correlation is turned into a three-level sign at
+\code{rho_threshold}: \code{+1} for activating links, \code{-1} for repressing ones and \code{0}
+for everything in the band between. \code{mode} then decides which of those you
+keep. The default keeps the activating links only, which is what SCENIC does
+with \code{onlyPositiveCorr = TRUE}.
+}
+\references{
+Aibar, et al., Nat Methods, 2017
 }

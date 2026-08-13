@@ -444,7 +444,6 @@ reference:
       - read_h5ad_metadata
       - read_h5ad_x_summary
       - save_sc_exp_to_disk
-      - sc_old_file_conversion
       - merge_sc_experiments
       - params_sc_min_quality
       - params_sc_mtx_io
@@ -519,6 +518,7 @@ reference:
       - find_clusters_sc
       - find_markers_sc
       - find_all_markers_sc
+      - find_specific_markers_sc
       - get_pseudobulked_sc
       - generate_knn_sc
       - get_differential_abundance_res
@@ -579,6 +579,8 @@ reference:
       - get_feature_mat
       - get_kmeans_clusters
       - get_knn_dist
+      - get_marker_summary
+      - get_marker_comparisons
       - get_data
       - get_scores
       - new_sc_knn
@@ -761,6 +763,8 @@ reference:
       - rs_ligand_activity_scores
       - rs_mad_outlier
       - rs_mc_aucell
+      - rs_mc_hotspot_autocor
+      - rs_mc_hotspot_gene_cor
       - rs_mc_hvg
       - rs_mc_pca
       - rs_mc_scenic

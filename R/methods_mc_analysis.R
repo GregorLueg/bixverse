@@ -39,6 +39,147 @@ S7::method(aucell_sc, MetaCells) <- function(
   return(auc_res)
 }
 
+## hotspot ---------------------------------------------------------------------
+
+### auto-correlation -----------------------------------------------------------
+
+# generics found in methods_sc_pathways.R
+
+#' @method hotspot_autocor_sc MetaCells
+#'
+#' @export
+S7::method(hotspot_autocor_sc, MetaCells) <- function(
+  object,
+  embd_to_use = "pca",
+  use_knn = TRUE,
+  hotspot_params = params_sc_hotspot(),
+  no_embd_to_use = NULL,
+  cells_to_take = NULL,
+  genes_to_take = NULL,
+  streaming = NULL,
+  random_seed = 42L,
+  .verbose = TRUE
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(object, MetaCells))
+  checkmate::qassert(embd_to_use, "S1")
+  checkmate::qassert(use_knn, "B1")
+  assertScHotspot(hotspot_params)
+  checkmate::qassert(no_embd_to_use, c("0", "I1"))
+  checkmate::qassert(cells_to_take, c("S+", "0"))
+  checkmate::qassert(genes_to_take, c("S+", "0"))
+  checkmate::qassert(streaming, c("B1", "0"))
+  checkmate::qassert(random_seed, "I1")
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
+
+  c(embd, cells_to_take, genes_to_take, knn_data) %<-%
+    .prep_mc_hotspot(
+      object = object,
+      embd_to_use = embd_to_use,
+      use_knn = use_knn,
+      no_embd_to_use = no_embd_to_use,
+      cells_to_take = cells_to_take,
+      genes_to_take = genes_to_take
+    )
+
+  hotspot_auto_cor <- rs_mc_hotspot_autocor(
+    sparse_data = mc_counts_to_list(object, assay = "raw"),
+    embd = embd,
+    knn_data = knn_data,
+    hotspot_params = hotspot_params,
+    cells_to_keep = get_cell_indices(
+      object,
+      cell_ids = cells_to_take,
+      rust_index = TRUE
+    ),
+    genes_to_use = get_gene_indices(
+      object,
+      gene_ids = genes_to_take,
+      rust_index = TRUE
+    ),
+    verbose = parse_verbosity(.verbose),
+    seed = random_seed
+  )
+
+  gene_ids <- S7::prop(object, "var_table")$gene_id[
+    as.integer(hotspot_auto_cor$gene_idx) + 1L
+  ]
+
+  hotspot_auto_cor_dt <- data.table::as.data.table(hotspot_auto_cor)[,
+    gene_id := gene_ids
+  ][, c("gene_id", "gaerys_c", "z_score", "pval", "fdr")]
+
+  return(hotspot_auto_cor_dt)
+}
+
+### gene <> gene local correlations --------------------------------------------
+
+#' @method hotspot_gene_cor_sc MetaCells
+#'
+#' @export
+S7::method(hotspot_gene_cor_sc, MetaCells) <- function(
+  object,
+  embd_to_use = "pca",
+  use_knn = TRUE,
+  hotspot_params = params_sc_hotspot(),
+  no_embd_to_use = NULL,
+  cells_to_take = NULL,
+  genes_to_take = NULL,
+  streaming = NULL,
+  working_mem_gb = 4,
+  random_seed = 42L,
+  .verbose = TRUE
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(object, MetaCells))
+  checkmate::qassert(embd_to_use, "S1")
+  checkmate::qassert(use_knn, "B1")
+  assertScHotspot(hotspot_params)
+  checkmate::qassert(no_embd_to_use, c("0", "I1"))
+  checkmate::qassert(cells_to_take, c("S+", "0"))
+  checkmate::qassert(genes_to_take, c("S+", "0"))
+  checkmate::qassert(streaming, c("B1", "0"))
+  checkmate::qassert(random_seed, "I1")
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
+
+  c(embd, cells_to_take, genes_to_take, knn_data) %<-%
+    .prep_mc_hotspot(
+      object = object,
+      embd_to_use = embd_to_use,
+      use_knn = use_knn,
+      no_embd_to_use = no_embd_to_use,
+      cells_to_take = cells_to_take,
+      genes_to_take = genes_to_take
+    )
+
+  hotspot_gene_cor <- rs_mc_hotspot_gene_cor(
+    sparse_data = mc_counts_to_list(object, assay = "raw"),
+    embd = embd,
+    knn_data = knn_data,
+    hotspot_params = hotspot_params,
+    cells_to_keep = get_cell_indices(
+      object,
+      cell_ids = cells_to_take,
+      rust_index = TRUE
+    ),
+    genes_to_use = get_gene_indices(
+      object,
+      gene_ids = genes_to_take,
+      rust_index = TRUE
+    ),
+    verbose = parse_verbosity(.verbose),
+    seed = random_seed
+  )
+
+  hotspot_obj <- new_sc_hotspot_res(
+    hotspot_res = hotspot_gene_cor,
+    used_genes = genes_to_take,
+    used_cells = cells_to_take
+  )
+
+  return(hotspot_obj)
+}
+
 ## scenic ----------------------------------------------------------------------
 
 ### filtering ------------------------------------------------------------------

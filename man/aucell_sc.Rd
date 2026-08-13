@@ -22,7 +22,7 @@ respective gene sets.}
 \code{\link[=params_sc_aucell]{params_sc_aucell()}} with the following elements:
 \itemize{
 \item auc_type - String. Which statistic to calculate. One of
-\code{c("wilcox", "recovery", "ap")}.
+\code{c("recovery", "wilcox", "ap")}. \code{"recovery"} is the SCENIC one.
 \item max_rank - Optional numeric. Rank cutoff for \code{"recovery"}. If \code{NULL},
 the top 5\% of the gene universe is used. Ignored by the other statistics.
 \item standardise - Boolean. Shall each gene set's scores be z-scored

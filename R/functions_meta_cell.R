@@ -610,3 +610,78 @@ merge_meta_cells <- function(
     ncol = as.integer(n_genes)
   )
 }
+
+## hotspot ---------------------------------------------------------------------
+
+#' Resolve the shared inputs of the meta cell HotSpot methods
+#'
+#' @description
+#' Both HotSpot entry points need the same four things resolved off the object
+#' before anything can go to Rust. Kept in one place so the two methods cannot
+#' drift apart.
+#'
+#' @param object `MetaCells` class.
+#' @param embd_to_use String. The embedding to use.
+#' @param use_knn Boolean. Shall the cached kNN graph be used. Forced to `FALSE`
+#' when `cells_to_take` is provided, since the cached graph covers all meta
+#' cells.
+#' @param no_embd_to_use Optional integer. Number of embedding dimensions to
+#' use. If `NULL` all will be used.
+#' @param cells_to_take Optional string vector. Meta cell identifiers. If `NULL`
+#' all meta cells are used.
+#' @param genes_to_take Optional string vector. If `NULL` all genes are used.
+#'
+#' @returns A list with the following elements:
+#' \itemize{
+#'   \item embd - The embedding matrix, subset to `cells_to_take`.
+#'   \item cells_to_take - The resolved meta cell identifiers.
+#'   \item genes_to_take - The resolved gene identifiers.
+#'   \item knn_data - The cached kNN object or `NULL`.
+#' }
+#'
+#' @keywords internal
+.prep_mc_hotspot <- function(
+  object,
+  embd_to_use,
+  use_knn,
+  no_embd_to_use,
+  cells_to_take,
+  genes_to_take
+) {
+  checkmate::assertTRUE(S7::S7_inherits(object, MetaCells))
+  checkmate::assertTRUE(embd_to_use %in% get_available_embeddings(object))
+
+  embd <- get_embedding(x = object, embd_name = embd_to_use)
+
+  if (!is.null(no_embd_to_use)) {
+    to_take <- min(c(no_embd_to_use, ncol(embd)))
+    embd <- embd[, 1:to_take]
+  }
+
+  if (is.null(cells_to_take)) {
+    cells_to_take <- S7::prop(object, "obs_table")$meta_cell_id
+  } else {
+    # if the user overwrites this specifically, recreate the kNN data internally
+    use_knn <- FALSE
+  }
+
+  if (is.null(genes_to_take)) {
+    genes_to_take <- S7::prop(object, "var_table")$gene_id
+  }
+
+  if (length(intersect(rownames(embd), cells_to_take)) == 0) {
+    stop(
+      paste(
+        "There is no intersection in the provided meta cell names and the",
+        "embedding space. Please double check your parameters!"
+      )
+    )
+  }
+
+  list(
+    embd = embd[cells_to_take, ],
+    cells_to_take = cells_to_take,
+    genes_to_take = genes_to_take,
+    knn_data = if (use_knn) get_knn_obj(object) else NULL
+  )
+}
