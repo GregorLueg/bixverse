@@ -37,10 +37,6 @@ rayon = "1.11.0"
 rustc-hash = "2.1.1"
 thousands = "*"
 
-# To be updated!
-[patch.crates-io]
-bixverse-rs = { git = "https://github.com/GregorLueg/bixverse-rs", branch = "release-0.4.3" }
-
 [[bin]]
 name = "document"
 path = "document.rs"
