@@ -1,33 +1,21 @@
 # sc cache provenance state ----------------------------------------------------
 
+source("helper_sc.R", local = TRUE)
+
 set.seed(123L)
 
-test_temp_dir <- file.path(tempdir(), "cache_state")
-
-dir.create(test_temp_dir, recursive = TRUE, showWarnings = FALSE)
-stopifnot("Test directory does not exist" = dir.exists(test_temp_dir))
+test_temp_dir <- sc_test_dir("cache_state")
 
 ## fixture ---------------------------------------------------------------------
 
-single_cell_test_data <- generate_single_cell_test_data()
+single_cell_test_data <- sc_test_fixture()
 
-sc_qc_param <- params_sc_min_quality(
-  min_unique_genes = 45L,
-  min_lib_size = 300L,
-  min_cells = 500L,
-  target_size = 1000
-)
+sc_qc_param <- sc_test_qc_params(single_cell_test_data, target_size = 1000)
 
-sc_object <- SingleCells(dir_data = test_temp_dir)
-
-sc_object <- load_r_data(
-  object = sc_object,
-  counts = single_cell_test_data$counts,
-  obs = single_cell_test_data$obs,
-  var = single_cell_test_data$var,
-  sc_qc_param = sc_qc_param,
-  streaming = 0L,
-  .verbose = FALSE
+sc_object <- sc_test_object(
+  test_temp_dir,
+  single_cell_test_data,
+  sc_qc_param = sc_qc_param
 )
 
 sc_object <- find_hvg_sc(sc_object, hvg_no = 30L, .verbose = FALSE)
@@ -426,3 +414,7 @@ expect_true(
   current = nrow(get_sc_cache_status(sc_subset)) == 0L,
   info = "a fresh subset starts with an empty cache"
 )
+
+# clean up ---------------------------------------------------------------------
+
+sc_test_cleanup(test_temp_dir)

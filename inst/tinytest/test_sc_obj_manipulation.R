@@ -1,14 +1,10 @@
 # sc obj merging/slicing -------------------------------------------------------
 
+source("helper_sc.R", local = TRUE)
+
 library(magrittr)
 
-test_temp_dir <- file.path(
-  tempdir(),
-  "obj_manipulation"
-)
-
-dir.create(test_temp_dir, recursive = TRUE, showWarnings = FALSE)
-stopifnot("Test directory does not exist" = dir.exists(test_temp_dir))
+test_temp_dir <- sc_test_dir("obj_manipulation")
 
 ## testing parameters ----------------------------------------------------------
 
@@ -17,55 +13,33 @@ min_lib_size <- 300L
 min_genes_exp <- 45L
 min_cells_exp <- 500L
 
-## helpers ---------------------------------------------------------------------
-
-get_obj_dir <- function(name, current_tmp_dir = test_temp_dir) {
-  # checks
-  checkmate::qassert(name, "S1")
-  checkmate::assertDirectoryExists(current_tmp_dir)
-
-  final_dir <- file.path(current_tmp_dir, name)
-  dir.create(final_dir, showWarnings = FALSE, recursive = TRUE)
-
-  final_dir
-}
-
 ## synthetic test data ---------------------------------------------------------
 
-single_cell_test_data_1 <- generate_single_cell_test_data(seed = 1L)
-
-single_cell_test_data_2 <- generate_single_cell_test_data(seed = 2L)
-
-sc_qc_param <- params_sc_min_quality(
-  min_unique_genes = min_genes_exp,
+single_cell_test_data_1 <- sc_test_fixture(
   min_lib_size = min_lib_size,
-  min_cells = min_cells_exp,
-  target_size = 1000
+  min_genes_exp = min_genes_exp,
+  min_cells_exp = min_cells_exp,
+  seed = 1L
 )
 
-path_obj_1 <- get_obj_dir(name = "obj1")
-path_obj_2 <- get_obj_dir(name = "obj2")
-path_merged <- get_obj_dir(name = "merged")
+single_cell_test_data_2 <- sc_test_fixture(
+  min_lib_size = min_lib_size,
+  min_genes_exp = min_genes_exp,
+  min_cells_exp = min_cells_exp,
+  seed = 2L
+)
+
+sc_qc_param <- sc_test_qc_params(single_cell_test_data_1, target_size = 1000)
+
+path_obj_1 <- sc_test_dir("obj1", test_temp_dir)
+path_obj_2 <- sc_test_dir("obj2", test_temp_dir)
+path_merged <- sc_test_dir("merged", test_temp_dir)
 
 ## generate the two objects to merge -------------------------------------------
 
 ### object 1 -------------------------------------------------------------------
 
-sc_object_1 <- SingleCells(dir_data = path_obj_1)
-
-sc_object_1 <- load_r_data(
-  object = sc_object_1,
-  counts = single_cell_test_data_1$counts,
-  obs = single_cell_test_data_1$obs,
-  var = single_cell_test_data_1$var,
-  sc_qc_param = params_sc_min_quality(
-    min_unique_genes = min_genes_exp,
-    min_lib_size = min_lib_size,
-    min_cells = min_cells_exp
-  ),
-  streaming = 0L,
-  .verbose = FALSE
-)
+sc_object_1 <- sc_test_object(path_obj_1, single_cell_test_data_1)
 
 features_1 <- get_sc_var(sc_object_1)[["gene_id"]]
 cells_1 <- get_cell_names(sc_object_1)
@@ -74,21 +48,7 @@ counts_norm_1 <- sc_object_1[,, assay = "norm"]
 
 ### object 2 -------------------------------------------------------------------
 
-sc_object_2 <- SingleCells(dir_data = path_obj_2)
-
-sc_object_2 <- load_r_data(
-  object = sc_object_2,
-  counts = single_cell_test_data_2$counts,
-  obs = single_cell_test_data_2$obs,
-  var = single_cell_test_data_2$var,
-  sc_qc_param = params_sc_min_quality(
-    min_unique_genes = min_genes_exp,
-    min_lib_size = min_lib_size,
-    min_cells = min_cells_exp
-  ),
-  streaming = 0L,
-  .verbose = FALSE
-)
+sc_object_2 <- sc_test_object(path_obj_2, single_cell_test_data_2)
 
 features_2 <- get_sc_var(sc_object_2)[["gene_id"]]
 cells_2 <- get_cell_names(sc_object_2)
@@ -200,3 +160,7 @@ expect_true(
   ),
   info = "renormalisation should change some of the values (2)"
 )
+
+# clean up ---------------------------------------------------------------------
+
+sc_test_cleanup(test_temp_dir)

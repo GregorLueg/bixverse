@@ -1,14 +1,10 @@
 # h5 io ------------------------------------------------------------------------
 
+source("helper_sc.R", local = TRUE)
+
 library(magrittr)
 
-test_temp_dir <- file.path(
-  tempdir(),
-  "io_h5"
-)
-
-dir.create(test_temp_dir, recursive = TRUE, showWarnings = FALSE)
-stopifnot("Test directory does not exist" = dir.exists(test_temp_dir))
+test_temp_dir <- sc_test_dir("io_h5")
 
 ## parameters ------------------------------------------------------------------
 
@@ -19,7 +15,11 @@ min_cells_exp <- 500L
 
 ## synthetic data --------------------------------------------------------------
 
-single_cell_test_data <- generate_single_cell_test_data()
+single_cell_test_data <- sc_test_fixture(
+  min_lib_size = min_lib_size,
+  min_genes_exp = min_genes_exp,
+  min_cells_exp = min_cells_exp
+)
 
 # CSR version
 f_path_csr <- file.path(test_temp_dir, "csr_test.h5ad")
@@ -972,4 +972,4 @@ expect_equal(
 
 # clean up ---------------------------------------------------------------------
 
-on.exit(unlink(test_temp_dir, recursive = TRUE, force = TRUE), add = TRUE)
+sc_test_cleanup(test_temp_dir)

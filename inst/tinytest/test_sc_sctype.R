@@ -1,10 +1,10 @@
 # sctype tests -----------------------------------------------------------------
 
+source("helper_sc.R", local = TRUE)
+
 set.seed(123L)
 
-test_temp_dir <- file.path(tempdir(), "sctype")
-dir.create(test_temp_dir, recursive = TRUE, showWarnings = FALSE)
-stopifnot("Test directory does not exist" = dir.exists(test_temp_dir))
+test_temp_dir <- sc_test_dir("sctype")
 
 ## testing parameters ----------------------------------------------------------
 
@@ -16,44 +16,30 @@ min_cells_exp <- 500L
 hvg_to_keep <- 30L
 no_pcs <- 15L
 
-## helpers ---------------------------------------------------------------------
-
-get_obj_dir <- function(name, current_tmp_dir = test_temp_dir) {
-  checkmate::qassert(name, "S1")
-  checkmate::assertDirectoryExists(current_tmp_dir)
-  final_dir <- file.path(current_tmp_dir, name)
-  dir.create(final_dir, showWarnings = FALSE, recursive = TRUE)
-  final_dir
-}
-
 ## synthetic test data ---------------------------------------------------------
 
 # the default configuration makes genes 1:10 markers of cell_type_1, 11:20 of
 # cell_type_2 and 21:30 of cell_type_3
-single_cell_test_data <- generate_single_cell_test_data(seed = 42L)
+single_cell_test_data <- sc_test_fixture(
+  min_lib_size = min_lib_size,
+  min_genes_exp = min_genes_exp,
+  min_cells_exp = min_cells_exp,
+  hvg_to_keep = hvg_to_keep,
+  no_pcs = no_pcs
+)
 
 marker_df <- data.table::data.table(
   cell_type = rep(sprintf("cell_type_%i", 1:3), each = 10),
   gene_id = sprintf("gene_%03d", 1:30)
 )
 
-sc_qc_param <- params_sc_min_quality(
-  min_unique_genes = min_genes_exp,
-  min_lib_size = min_lib_size,
-  min_cells = min_cells_exp,
-  target_size = 1000
-)
+sc_qc_param <- sc_test_qc_params(single_cell_test_data, target_size = 1000)
 
 load_sc_object <- function(name) {
-  object <- SingleCells(dir_data = get_obj_dir(name))
-  load_r_data(
-    object = object,
-    counts = single_cell_test_data$counts,
-    obs = single_cell_test_data$obs,
-    var = single_cell_test_data$var,
-    sc_qc_param = sc_qc_param,
-    streaming = 0L,
-    .verbose = FALSE
+  sc_test_object(
+    sc_test_dir(name, test_temp_dir),
+    single_cell_test_data,
+    sc_qc_param = sc_qc_param
   )
 }
 
@@ -338,3 +324,7 @@ expect_error(
   ),
   info = "assign_sc_type - incomplete parameter list is rejected"
 )
+
+# clean up ---------------------------------------------------------------------
+
+sc_test_cleanup(test_temp_dir)

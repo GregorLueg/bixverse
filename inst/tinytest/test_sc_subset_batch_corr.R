@@ -1,10 +1,10 @@
 # sc subset batch correction ---------------------------------------------------
 
+source("helper_sc.R", local = TRUE)
+
 library(magrittr)
 
-test_temp_dir <- file.path(tempdir(), "sc_subset_batch_corr")
-dir.create(test_temp_dir, recursive = TRUE, showWarnings = FALSE)
-stopifnot("Test directory does not exist" = dir.exists(test_temp_dir))
+test_temp_dir <- sc_test_dir("sc_subset_batch_corr")
 
 ## testing parameters ----------------------------------------------------------
 
@@ -14,58 +14,32 @@ min_cells_exp <- 450L
 hvg_to_keep <- 30L
 no_pcs <- 15L
 
-cell_markers <- list(
-  cell_type_1 = list(marker_genes = 0:8L),
-  cell_type_2 = list(marker_genes = 9:19L),
-  cell_type_3 = list(marker_genes = 20:29L),
-  cell_type_4 = list(marker_genes = 30:44L)
-)
-
 target_group <- "cell_type_1"
 
 ## helpers ---------------------------------------------------------------------
 
 # Build a SingleCellsSubset with HVG + PCA + kNN ready for batch testing.
 build_subset_for_batch <- function(strength, dir_data) {
-  test_data <- generate_single_cell_test_data(
-    syn_data_params = params_sc_synthetic_data(
-      n_cells = 900L,
-      marker_genes = cell_markers,
-      n_batches = 3L,
-      batch_effect_strength = strength
-    )
+  test_data <- sc_batch_fixture(
+    batch_effect_strength = strength,
+    min_lib_size = min_lib_size,
+    min_genes_exp = min_genes_exp,
+    min_cells_exp = min_cells_exp,
+    hvg_to_keep = hvg_to_keep,
+    no_pcs = no_pcs
   )
 
-  parent <- SingleCells(dir_data = dir_data)
-  parent <- load_r_data(
-    object = parent,
-    counts = test_data$counts,
-    obs = test_data$obs,
-    var = test_data$var,
-    sc_qc_param = params_sc_min_quality(
-      min_unique_genes = min_genes_exp,
-      min_lib_size = min_lib_size,
-      min_cells = min_cells_exp
+  parent <- sc_test_object(dir_data, test_data)
+
+  sc_test_prepped(
+    SingleCellsSubset(
+      sc_object = parent,
+      grouping_column = "cell_grp",
+      group = target_group
     ),
-    streaming = 0L,
-    .verbose = FALSE
+    test_data,
+    k = 10L
   )
-
-  subset_obj <- SingleCellsSubset(
-    sc_object = parent,
-    grouping_column = "cell_grp",
-    group = target_group
-  )
-
-  subset_obj <- find_hvg_sc(subset_obj, hvg_no = hvg_to_keep, .verbose = FALSE)
-  subset_obj <- calculate_pca_sc(subset_obj, no_pcs = no_pcs, .verbose = FALSE)
-  subset_obj <- find_neighbours_sc(
-    subset_obj,
-    neighbours_params = params_sc_neighbours(knn = list(k = 10L)),
-    .verbose = FALSE
-  )
-
-  subset_obj
 }
 
 # kBET rejection rate on the current kNN of a subset.
@@ -83,9 +57,7 @@ kbet_rate <- function(subset_obj) {
 
 dir_data <- list("weak" = NULL, "medium" = NULL, "strong" = NULL)
 dir_data <- purrr::imap(dir_data, \(elem, name) {
-  final_path <- file.path(test_temp_dir, name)
-  dir.create(final_path, showWarnings = FALSE)
-  final_path
+  sc_test_dir(name, test_temp_dir)
 })
 
 subset.weak <- build_subset_for_batch("weak", dir_data$weak)
@@ -550,4 +522,4 @@ expect_true(
 
 # clean up ---------------------------------------------------------------------
 
-on.exit(unlink(test_temp_dir, recursive = TRUE, force = TRUE), add = TRUE)
+sc_test_cleanup(test_temp_dir)

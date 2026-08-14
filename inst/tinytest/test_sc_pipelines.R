@@ -1,10 +1,10 @@
 # sc pipeline ------------------------------------------------------------------
 
+source("helper_sc.R", local = TRUE)
+
 set.seed(123L)
 
-test_temp_dir <- file.path(tempdir(), "sc_pipeline")
-dir.create(test_temp_dir, recursive = TRUE, showWarnings = FALSE)
-stopifnot("Test directory does not exist" = dir.exists(test_temp_dir))
+test_temp_dir <- sc_test_dir("sc_pipeline")
 
 ## parameters ------------------------------------------------------------------
 
@@ -16,25 +16,20 @@ no_pcs <- 15L
 
 ## set up parent object --------------------------------------------------------
 
-single_cell_test_data <- generate_single_cell_test_data()
-
-sc_qc_param <- params_sc_min_quality(
-  min_unique_genes = min_genes_exp,
+single_cell_test_data <- sc_test_fixture(
   min_lib_size = min_lib_size,
-  min_cells = min_cells_exp,
-  target_size = 1000
+  min_genes_exp = min_genes_exp,
+  min_cells_exp = min_cells_exp,
+  hvg_to_keep = hvg_to_keep,
+  no_pcs = no_pcs
 )
 
-sc_object <- SingleCells(dir_data = test_temp_dir)
+sc_qc_param <- sc_test_qc_params(single_cell_test_data, target_size = 1000)
 
-sc_object <- load_r_data(
-  object = sc_object,
-  counts = single_cell_test_data$counts,
-  obs = single_cell_test_data$obs,
-  var = single_cell_test_data$var,
-  sc_qc_param = sc_qc_param,
-  streaming = 0L,
-  .verbose = FALSE
+sc_object <- sc_test_object(
+  test_temp_dir,
+  single_cell_test_data,
+  sc_qc_param = sc_qc_param
 )
 
 # tests ------------------------------------------------------------------------
@@ -227,23 +222,12 @@ p_wrong <- sc_pipeline() %>>%
   step_pca_sc(no_pcs = no_pcs, .verbose = FALSE) %>>%
   step_hvg_sc(hvg_no = hvg_to_keep, .verbose = FALSE)
 
-f_path_fresh <- file.path(tempdir(), "sc_pipeline_wrong")
+f_path_fresh <- sc_test_dir("sc_pipeline_wrong")
 
-dir.create(
+fresh <- sc_test_object(
   f_path_fresh,
-  recursive = TRUE,
-  showWarnings = FALSE
-)
-
-fresh <- SingleCells(dir_data = f_path_fresh)
-fresh <- load_r_data(
-  object = fresh,
-  counts = single_cell_test_data$counts,
-  obs = single_cell_test_data$obs,
-  var = single_cell_test_data$var,
-  sc_qc_param = sc_qc_param,
-  streaming = 0L,
-  .verbose = FALSE
+  single_cell_test_data,
+  sc_qc_param = sc_qc_param
 )
 
 expect_warning(
@@ -343,9 +327,4 @@ expect_error(
 
 ## teardown --------------------------------------------------------------------
 
-unlink(test_temp_dir, recursive = TRUE, force = TRUE)
-unlink(
-  file.path(tempdir(), "sc_pipeline_wrong"),
-  recursive = TRUE,
-  force = TRUE
-)
+sc_test_cleanup(test_temp_dir, f_path_fresh)

@@ -8,15 +8,11 @@ if (!requireNamespace("Seurat", quietly = TRUE)) {
 # key differences are likely due to f16 vs f64 in terms of count storage
 # for norm counts
 
+source("helper_sc.R", local = TRUE)
+
 library(magrittr)
 
-test_temp_dir <- file.path(
-  tempdir(),
-  "seurat"
-)
-
-dir.create(test_temp_dir, recursive = TRUE, showWarnings = FALSE)
-stopifnot("Test directory does not exist" = dir.exists(test_temp_dir))
+test_temp_dir <- sc_test_dir("seurat")
 
 ## parameters ------------------------------------------------------------------
 
@@ -31,7 +27,13 @@ no_pcs <- 15L
 
 ## synthetic data --------------------------------------------------------------
 
-single_cell_test_data <- generate_single_cell_test_data()
+single_cell_test_data <- sc_test_fixture(
+  min_lib_size = min_lib_size,
+  min_genes_exp = min_genes_exp,
+  min_cells_exp = min_cells_exp,
+  hvg_to_keep = hvgs_to_keep,
+  no_pcs = no_pcs
+)
 counts_transposed <- Matrix::t(single_cell_test_data$counts)
 
 ## seurat tests ----------------------------------------------------------------
@@ -304,4 +306,4 @@ expect_true(
 
 # clean up ---------------------------------------------------------------------
 
-on.exit(unlink(test_temp_dir, recursive = TRUE, force = TRUE), add = TRUE)
+sc_test_cleanup(test_temp_dir)

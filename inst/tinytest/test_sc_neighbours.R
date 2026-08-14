@@ -10,15 +10,11 @@ if (
   exit_file("BiocNeighbors, bluster and cluster not available")
 }
 
+source("helper_sc.R", local = TRUE)
+
 library(magrittr)
 
-test_temp_dir <- file.path(
-  tempdir(),
-  "neighbours"
-)
-
-dir.create(test_temp_dir, recursive = TRUE, showWarnings = FALSE)
-stopifnot("Test directory does not exist" = dir.exists(test_temp_dir))
+test_temp_dir <- sc_test_dir("neighbours")
 
 ## test parameters -------------------------------------------------------------
 
@@ -31,45 +27,24 @@ no_pcs <- 15L
 
 ## synthetic test data ---------------------------------------------------------
 
-single_cell_test_data <- generate_single_cell_test_data()
-
-genes_pass <- which(
-  Matrix::colSums(single_cell_test_data$counts != 0) >= min_cells_exp
-)
-
-cells_pass <- which(
-  (Matrix::rowSums(single_cell_test_data$counts[, genes_pass]) >=
-    min_lib_size) &
-    (Matrix::rowSums(single_cell_test_data$counts[, genes_pass] != 0) >=
-      min_genes_exp)
-)
-
-expect_true(
-  current = length(genes_pass) > 80 & length(genes_pass) != 100,
-  info = "sc processing - sensible amount of genes pass"
-)
-
-expect_true(
-  current = length(cells_pass) > 800 & length(cells_pass) != 1000,
-  info = "sc processing - sensible amount of cells pass"
-)
-
-sc_qc_param <- params_sc_min_quality(
-  min_unique_genes = min_genes_exp,
+single_cell_test_data <- sc_test_fixture(
   min_lib_size = min_lib_size,
-  min_cells = min_cells_exp,
-  target_size = 1000
+  min_genes_exp = min_genes_exp,
+  min_cells_exp = min_cells_exp,
+  hvg_to_keep = hvg_to_keep,
+  no_pcs = no_pcs
 )
 
-sc_object <- SingleCells(dir_data = test_temp_dir)
+genes_pass <- single_cell_test_data$genes_pass
+cells_pass <- single_cell_test_data$cells_pass
 
-sc_object <- load_r_data(
-  object = sc_object,
-  counts = single_cell_test_data$counts,
-  obs = single_cell_test_data$obs,
-  var = single_cell_test_data$var,
+sc_qc_param <- sc_test_qc_params(single_cell_test_data, target_size = 1000)
+
+sc_object <- sc_test_object(
+  test_temp_dir,
+  single_cell_test_data,
   sc_qc_param = sc_qc_param,
-  .verbose = FALSE
+  streaming = 1L
 )
 
 sc_object <- set_cells_to_keep(sc_object, get_cell_names(sc_object))
@@ -668,4 +643,4 @@ expect_true(
 
 # clean up ---------------------------------------------------------------------
 
-on.exit(unlink(test_temp_dir, recursive = TRUE, force = TRUE), add = TRUE)
+sc_test_cleanup(test_temp_dir)
