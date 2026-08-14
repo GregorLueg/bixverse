@@ -14,5 +14,11 @@
 
 ## usethis namespace: start
 #' @importFrom lifecycle deprecated
+# Matrix is only ever called as `Matrix::`, which leaves its namespace unloaded
+# until the first such call. A `dgRMatrix` deserialised into that session has no
+# working S4 dispatch yet, so `nrow()` returns NULL and `[` refuses to subset,
+# and the first call after a readRDS/qs2 load fails. This import loads it with
+# the package.
+#' @importFrom Matrix sparseMatrix
 ## usethis namespace: end
 NULL
