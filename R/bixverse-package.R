@@ -14,5 +14,6 @@
 
 ## usethis namespace: start
 #' @importFrom lifecycle deprecated
+#' @importFrom Matrix sparseMatrix
 ## usethis namespace: end
 NULL

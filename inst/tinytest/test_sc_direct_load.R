@@ -1,14 +1,10 @@
 # generate synthetic data ------------------------------------------------------
 
+source("helper_sc.R", local = TRUE)
+
 library(magrittr)
 
-test_temp_dir <- file.path(
-  tempdir(),
-  "direct_load"
-)
-
-dir.create(test_temp_dir, recursive = TRUE, showWarnings = FALSE)
-stopifnot("Test directory does not exist" = dir.exists(test_temp_dir))
+test_temp_dir <- sc_test_dir("direct_load")
 
 ## params ----------------------------------------------------------------------
 
@@ -21,26 +17,21 @@ min_cells_exp <- 500L
 
 # test the load from disk
 
-single_cell_test_data <- generate_single_cell_test_data()
+single_cell_test_data <- sc_test_fixture(
+  min_lib_size = min_lib_size,
+  min_genes_exp = min_genes_exp,
+  min_cells_exp = min_cells_exp
+)
 
 ## generate the object ---------------------------------------------------------
 
-sc_qc_param <- params_sc_min_quality(
-  min_unique_genes = min_genes_exp,
-  min_lib_size = min_lib_size,
-  min_cells = min_cells_exp,
-  target_size = 1000
-)
+sc_qc_param <- sc_test_qc_params(single_cell_test_data, target_size = 1000)
 
-sc_object <- SingleCells(dir_data = test_temp_dir)
-
-sc_object <- load_r_data(
-  object = sc_object,
-  counts = single_cell_test_data$counts,
-  obs = single_cell_test_data$obs,
-  var = single_cell_test_data$var,
+sc_object <- sc_test_object(
+  test_temp_dir,
+  single_cell_test_data,
   sc_qc_param = sc_qc_param,
-  .verbose = FALSE
+  streaming = 1L
 )
 
 # do a filtering on the obs column
@@ -62,7 +53,7 @@ rm(sc_object)
 
 sc_object <- SingleCells(dir_data = test_temp_dir)
 
-sc_object <- suppressMessages(load_existing(sc_object))
+sc_object <- load_existing(sc_object, .verbose = FALSE)
 
 ## getter checks ---------------------------------------------------------------
 
@@ -169,7 +160,7 @@ sc_object <- SingleCells(dir_data = test_temp_dir)
 
 expect_message(current = load_existing(sc_object), info = "message working")
 
-sc_object <- suppressMessages(load_existing(sc_object))
+sc_object <- load_existing(sc_object, .verbose = FALSE)
 
 expect_equal(
   current = get_pca_factors(sc_object),
@@ -192,7 +183,7 @@ sc_object <- SingleCells(dir_data = test_temp_dir)
 # will force the function to load from rds
 removed <- file.remove(file.path(test_temp_dir, "memory.qs2"))
 
-sc_object <- suppressMessages(load_existing(sc_object))
+sc_object <- load_existing(sc_object, .verbose = FALSE)
 
 expect_equal(
   current = get_pca_factors(sc_object),
@@ -208,4 +199,4 @@ expect_equal(
 
 # clean up ---------------------------------------------------------------------
 
-on.exit(unlink(test_temp_dir, recursive = TRUE, force = TRUE), add = TRUE)
+sc_test_cleanup(test_temp_dir)

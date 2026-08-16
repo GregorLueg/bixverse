@@ -1,14 +1,10 @@
 # sc processing ----------------------------------------------------------------
 
+source("helper_sc.R", local = TRUE)
+
 set.seed(123L)
 
-test_temp_dir <- file.path(
-  tempdir(),
-  "processing"
-)
-
-dir.create(test_temp_dir, recursive = TRUE, showWarnings = FALSE)
-stopifnot("Test directory does not exist" = dir.exists(test_temp_dir))
+test_temp_dir <- sc_test_dir("processing")
 
 ## testing parameters ----------------------------------------------------------
 
@@ -23,19 +19,18 @@ no_pcs <- 15L
 
 ## synthetic test data ---------------------------------------------------------
 
-single_cell_test_data <- generate_single_cell_test_data()
-
-genes_pass <- which(
-  Matrix::colSums(single_cell_test_data$counts != 0) >= min_cells_exp
+single_cell_test_data <- sc_test_fixture(
+  min_lib_size = min_lib_size,
+  min_genes_exp = min_genes_exp,
+  min_cells_exp = min_cells_exp,
+  hvg_to_keep = hvg_to_keep,
+  no_pcs = no_pcs
 )
 
-cells_pass <- which(
-  (Matrix::rowSums(single_cell_test_data$counts[, genes_pass]) >=
-    min_lib_size) &
-    (Matrix::rowSums(single_cell_test_data$counts[, genes_pass] != 0) >=
-      min_genes_exp)
-)
+genes_pass <- single_cell_test_data$genes_pass
+cells_pass <- single_cell_test_data$cells_pass
 
+# the thresholds the whole single cell suite runs on, asserted once
 expect_true(
   current = length(genes_pass) > 80 & length(genes_pass) != 100,
   info = "sc processing - sensible amount of genes pass"
@@ -48,25 +43,14 @@ expect_true(
 
 counts_filtered <- single_cell_test_data$counts[cells_pass, genes_pass]
 
-sc_qc_param <- params_sc_min_quality(
-  min_unique_genes = min_genes_exp,
-  min_lib_size = min_lib_size,
-  min_cells = min_cells_exp,
-  target_size = 1000
-)
+sc_qc_param <- sc_test_qc_params(single_cell_test_data, target_size = 1000)
 
 ## underlying class ------------------------------------------------------------
 
-sc_object <- SingleCells(dir_data = test_temp_dir)
-
-sc_object <- load_r_data(
-  object = sc_object,
-  counts = single_cell_test_data$counts,
-  obs = single_cell_test_data$obs,
-  var = single_cell_test_data$var,
-  sc_qc_param = sc_qc_param,
-  streaming = 0L,
-  .verbose = FALSE
+sc_object <- sc_test_object(
+  test_temp_dir,
+  single_cell_test_data,
+  sc_qc_param = sc_qc_param
 )
 
 # tests ------------------------------------------------------------------------
@@ -1406,4 +1390,4 @@ expect_true(
 
 # clean up ---------------------------------------------------------------------
 
-on.exit(unlink(test_temp_dir, recursive = TRUE, force = TRUE), add = TRUE)
+sc_test_cleanup(test_temp_dir)

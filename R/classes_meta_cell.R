@@ -420,13 +420,15 @@ S7::method(mc_counts_to_list, MetaCells) <- function(
   # body
   x <- object[cell_indices, gene_indices, assay = assay]
 
+  # off the slot rather than `nrow()`/`ncol()`, matching `sparse_mat_to_list()`.
+  # Slot access needs no S4 dispatch, so it cannot hand Rust a NULL dimension
   list(
     indptr = x@p,
     indices = x@j,
     data = x@x,
     cs_type = "csr",
-    nrow = nrow(x),
-    ncol = ncol(x)
+    nrow = x@Dim[1],
+    ncol = x@Dim[2]
   )
 }
 

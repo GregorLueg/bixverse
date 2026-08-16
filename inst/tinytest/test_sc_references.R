@@ -1,10 +1,10 @@
 # symphony tests ---------------------------------------------------------------
 
+source("helper_sc.R", local = TRUE)
+
 library(magrittr)
 
-test_temp_dir <- file.path(tempdir(), "symphony")
-dir.create(test_temp_dir, recursive = TRUE, showWarnings = FALSE)
-stopifnot("Test directory does not exist" = dir.exists(test_temp_dir))
+test_temp_dir <- sc_test_dir("symphony")
 
 ## testing parameters ----------------------------------------------------------
 
@@ -17,20 +17,15 @@ hvg_to_keep <- 30L
 no_pcs <- 15L
 harmony_k <- 10L
 
-## helpers ---------------------------------------------------------------------
-
-get_obj_dir <- function(name, current_tmp_dir = test_temp_dir) {
-  checkmate::qassert(name, "S1")
-  checkmate::assertDirectoryExists(current_tmp_dir)
-  final_dir <- file.path(current_tmp_dir, name)
-  dir.create(final_dir, showWarnings = FALSE, recursive = TRUE)
-  final_dir
-}
-
 ## synthetic test data ---------------------------------------------------------
 
 # larger data set WITH batch effect
-ref_data <- generate_single_cell_test_data(
+ref_data <- sc_test_fixture(
+  min_lib_size = min_lib_size,
+  min_genes_exp = min_genes_exp,
+  min_cells_exp = min_cells_exp,
+  hvg_to_keep = hvg_to_keep,
+  no_pcs = no_pcs,
   syn_data_params = params_sc_synthetic_data(
     n_cells = 1000L,
     n_genes = 100L,
@@ -41,7 +36,12 @@ ref_data <- generate_single_cell_test_data(
 )
 
 # smaller data set
-query_data <- generate_single_cell_test_data(
+query_data <- sc_test_fixture(
+  min_lib_size = min_lib_size,
+  min_genes_exp = min_genes_exp,
+  min_cells_exp = 250L,
+  hvg_to_keep = hvg_to_keep,
+  no_pcs = no_pcs,
   syn_data_params = params_sc_synthetic_data(
     n_cells = 600L,
     n_genes = 100L,
@@ -51,33 +51,18 @@ query_data <- generate_single_cell_test_data(
   seed = 2L
 )
 
-sc_qc_param_ref <- params_sc_min_quality(
-  min_unique_genes = min_genes_exp,
-  min_lib_size = min_lib_size,
-  min_cells = min_cells_exp,
-  target_size = 1000
-)
+sc_qc_param_ref <- sc_test_qc_params(ref_data, target_size = 1000)
 
-sc_qc_param_query <- params_sc_min_quality(
-  min_unique_genes = min_genes_exp,
-  min_lib_size = min_lib_size,
-  min_cells = 250L,
-  target_size = 1000
-)
+sc_qc_param_query <- sc_test_qc_params(query_data, target_size = 1000)
 
 ## load reference --------------------------------------------------------------
 
-path_ref <- get_obj_dir(name = "ref")
-sc_ref <- SingleCells(dir_data = path_ref)
+path_ref <- sc_test_dir("ref", test_temp_dir)
 
-sc_ref <- load_r_data(
-  object = sc_ref,
-  counts = ref_data$counts,
-  obs = ref_data$obs,
-  var = ref_data$var,
-  sc_qc_param = sc_qc_param_ref,
-  streaming = 0L,
-  .verbose = FALSE
+sc_ref <- sc_test_object(
+  path_ref,
+  ref_data,
+  sc_qc_param = sc_qc_param_ref
 )
 
 batch_aware_hvg <- find_hvg_batch_aware_sc(
@@ -95,17 +80,12 @@ n_hvg_batch_aware <- length(ref_hvg)
 
 ## load query ------------------------------------------------------------------
 
-path_query <- get_obj_dir(name = "query")
-sc_query <- SingleCells(dir_data = path_query)
+path_query <- sc_test_dir("query", test_temp_dir)
 
-sc_query <- load_r_data(
-  object = sc_query,
-  counts = query_data$counts,
-  obs = query_data$obs,
-  var = query_data$var,
-  sc_qc_param = sc_qc_param_query,
-  streaming = 0L,
-  .verbose = FALSE
+sc_query <- sc_test_object(
+  path_query,
+  query_data,
+  sc_qc_param = sc_qc_param_query
 )
 
 # tests ------------------------------------------------------------------------
@@ -483,4 +463,4 @@ expect_equal(
 
 # clean up ---------------------------------------------------------------------
 
-on.exit(unlink(test_temp_dir, recursive = TRUE, force = TRUE), add = TRUE)
+sc_test_cleanup(test_temp_dir)

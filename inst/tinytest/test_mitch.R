@@ -101,7 +101,7 @@ local({
       genesetsExample,
       priority = 'significance',
       minsetsize = 5,
-      cores = 2
+      cores = 1,
     ))
 
     bixverse_res <- calc_mitch(

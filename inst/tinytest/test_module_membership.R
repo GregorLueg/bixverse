@@ -74,8 +74,10 @@ expect_true(
 )
 
 expect_true(
-  current = all(sprintf("gene_%i", 15:20) %in%
-    mods[module_id == "comp_1", gene]) &&
+  current = all(
+    sprintf("gene_%i", 15:20) %in%
+      mods[module_id == "comp_1", gene]
+  ) &&
     all(sprintf("gene_%i", 15:20) %in% mods[module_id == "comp_2", gene]),
   info = "membership - the overlapping block lands in both components"
 )
@@ -141,8 +143,10 @@ expect_true(
 )
 
 expect_true(
-  current = all(sprintf("gene_%i", 1:14) %in%
-    mods_fdr[module_id == "comp_1", gene]),
+  current = all(
+    sprintf("gene_%i", 1:14) %in%
+      mods_fdr[module_id == "comp_1", gene]
+  ),
   info = "membership - fdr method recovers the planted block"
 )
 

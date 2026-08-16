@@ -1,14 +1,10 @@
 # test data and params ---------------------------------------------------------
 
+source("helper_sc.R", local = TRUE)
+
 library(magrittr)
 
-test_temp_dir <- file.path(
-  tempdir(),
-  "doublet_detection"
-)
-
-dir.create(test_temp_dir, recursive = TRUE, showWarnings = FALSE)
-stopifnot("Test directory does not exist" = dir.exists(test_temp_dir))
+test_temp_dir <- sc_test_dir("doublet_detection")
 
 ## parameters ------------------------------------------------------------------
 
@@ -29,7 +25,7 @@ metrics_helper <- function(cm) {
 
 ## initial data ----------------------------------------------------------------
 
-syn_data <- generate_single_cell_test_data(seed = 123L)
+syn_data <- sc_test_fixture(seed = 123L)
 
 ct1_idx <- which(syn_data$obs$cell_grp == "cell_type_1")
 ct2_idx <- which(syn_data$obs$cell_grp == "cell_type_2")
@@ -76,23 +72,17 @@ new_obs[, sample_id := rep(c("sample_A", "sample_B"), length.out = .N)]
 
 ## generate the object ---------------------------------------------------------
 
-sc_object <- SingleCells(
-  dir_data = test_temp_dir
-)
-
 # keep all cells for the sake of this
-sc_object <- load_r_data(
-  object = sc_object,
-  counts = all_counts,
+sc_object <- sc_test_object(
+  test_temp_dir,
+  syn_data,
   obs = new_obs,
-  var = syn_data$var,
+  counts = all_counts,
   sc_qc_param = params_sc_min_quality(
     min_unique_genes = 0L,
     min_lib_size = 0L,
     min_cells = 0L
-  ),
-  streaming = 0L,
-  .verbose = FALSE
+  )
 )
 
 # test scrublet ----------------------------------------------------------------
@@ -842,4 +832,4 @@ expect_true(
 
 # clean up ---------------------------------------------------------------------
 
-on.exit(unlink(test_temp_dir, recursive = TRUE, force = TRUE), add = TRUE)
+sc_test_cleanup(test_temp_dir)

@@ -1,3 +1,16 @@
+# bixverse 0.4.9
+
+## Chores
+
+* Update to the test suite to have less redundancies, be cleaner.
+* Version bumps on the Rust side.
+* Simplified testing suite with less redundancies.
+
+## Fixes
+
+* Added `@importFrom Matrix sparseMatrix` to the package import to avoid issues
+  with meta cells and the conversions of the sparse matrices to lists for Rust.
+
 # bixverse 0.4.8
 
 ## Features
@@ -18,7 +31,7 @@
   old behaviour, please use `"wilcox"`.
 * One-vs-many comparisons to identify cell type markers.
 
-### Bug fixes
+## Fixes
 
 * Various edge cases bug fixes in `bixverse-rs` that propagate into here.
 

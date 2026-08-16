@@ -114,7 +114,10 @@ for (gen in names(all_generators)) {
   expect_true(
     current = all(synth$counts >= 0) &&
       all(synth$counts == round(synth$counts)),
-    info = sprintf("synthetic bulk (%s) - counts are non-negative integers", gen)
+    info = sprintf(
+      "synthetic bulk (%s) - counts are non-negative integers",
+      gen
+    )
   )
 
   expect_equal(
@@ -378,7 +381,10 @@ expect_identical(
 
 expect_false(
   current = identical(
-    simulate_dropouts(synth_hub, params_bulk_sparsity(seed = 99L))$sparse_counts,
+    simulate_dropouts(
+      synth_hub,
+      params_bulk_sparsity(seed = 99L)
+    )$sparse_counts,
     sparse_synth$sparse_counts
   ),
   info = "dropout - a different seed gives a different matrix"

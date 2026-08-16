@@ -4,10 +4,12 @@
 \alias{load_existing}
 \title{Load an existing SingleCells from disk}
 \usage{
-load_existing(object)
+load_existing(object, .verbose = TRUE)
 }
 \arguments{
 \item{object}{\code{SingleCells}, \code{MetaCells} or \code{SingleCellsMultiModal} class.}
+
+\item{.verbose}{Boolean. Controls verbosity of the function.}
 }
 \value{
 The object with added information on the data on disk.

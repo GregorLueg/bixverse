@@ -112,14 +112,13 @@ get_results <- S7::new_generic(
 #' @export
 #'
 #' @method get_results BixverseBaseClass
-S7::method(get_results, BixverseBaseClass) <-
-  function(object) {
-    # Checks
-    checkmate::assertClass(
-      object,
-      "bixverse::BixverseBaseClass"
-    )
+S7::method(get_results, BixverseBaseClass) <- function(object) {
+  # Checks
+  checkmate::assertClass(
+    object,
+    "bixverse::BixverseBaseClass"
+  )
 
-    # Return
-    return(S7::prop(object, "final_results"))
-  }
+  # Return
+  return(S7::prop(object, "final_results"))
+}

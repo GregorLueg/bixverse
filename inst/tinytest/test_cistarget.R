@@ -127,7 +127,8 @@ expect_error(
   run_cistarget(
     gs_list = list(c("gene_1")),
     rankings = synth_rankings,
-    annot_data = synth_annot
+    annot_data = synth_annot,
+    .verbose = FALSE
   ),
   info = "CisTarget - run_cistarget rejects unnamed gene set list"
 )
@@ -136,7 +137,8 @@ expect_error(
   run_cistarget(
     gs_list = synth_gs_list,
     rankings = bad_matrix,
-    annot_data = synth_annot
+    annot_data = synth_annot,
+    .verbose = FALSE
   ),
   info = "CisTarget - run_cistarget rejects bad matrix"
 )
@@ -147,7 +149,8 @@ expect_error(
   run_cistarget(
     gs_list = synth_gs_list,
     rankings = synth_rankings,
-    annot_data = bad_annot
+    annot_data = bad_annot,
+    .verbose = FALSE
   ),
   info = "CisTarget - run_cistarget rejects annotation without required columns"
 )
@@ -156,7 +159,8 @@ expect_warning(
   run_cistarget(
     gs_list = list(no_overlap = c("fake_gene_999")),
     rankings = synth_rankings,
-    annot_data = synth_annot
+    annot_data = synth_annot,
+    .verbose = FALSE
   ),
   info = "CisTarget - run_cistarget warns about gene sets with zero overlap"
 )
@@ -171,7 +175,8 @@ result <- suppressWarnings(
     cis_target_params = params_cistarget(
       auc_threshold = 1,
       nes_threshold = 0.2
-    )
+    ),
+    .verbose = FALSE
   )
 )
 
@@ -237,7 +242,8 @@ deep_max_rank <- suppressWarnings(
       auc_threshold = 1,
       nes_threshold = 0.2,
       max_rank = 1e6L
-    )
+    ),
+    .verbose = FALSE
   )
 )
 

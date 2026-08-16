@@ -22,4 +22,4 @@ scratch.R
 scratch_*.R
 
 # Claude
-.claude/*
+.claude/worktrees/*

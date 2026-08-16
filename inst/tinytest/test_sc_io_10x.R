@@ -1,11 +1,10 @@
 # tenx h5 io -------------------------------------------------------------------
 
+source("helper_sc.R", local = TRUE)
+
 library(magrittr)
 
-test_temp_dir <- file.path(tempdir(), "io_tenx")
-
-dir.create(test_temp_dir, recursive = TRUE, showWarnings = FALSE)
-stopifnot("Test directory does not exist" = dir.exists(test_temp_dir))
+test_temp_dir <- sc_test_dir("io_tenx")
 
 ## parameters ------------------------------------------------------------------
 
@@ -15,7 +14,11 @@ min_cells_exp <- 500L
 
 ## synthetic data --------------------------------------------------------------
 
-rna <- generate_single_cell_test_data()
+rna <- sc_test_fixture(
+  min_lib_size = min_lib_size,
+  min_genes_exp = min_genes_exp,
+  min_cells_exp = min_cells_exp
+)
 adt <- generate_single_cell_test_data_adt()
 
 stopifnot(all(rownames(rna$counts) == rownames(adt$counts)))
@@ -988,4 +991,4 @@ expect_true(
 
 # clean up ---------------------------------------------------------------------
 
-on.exit(unlink(test_temp_dir, recursive = TRUE, force = TRUE), add = TRUE)
+sc_test_cleanup(test_temp_dir)

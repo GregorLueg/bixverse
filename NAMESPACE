@@ -774,6 +774,7 @@ export(write_tenx_h5_sc)
 import(data.table)
 import(ggplot2)
 import(patchwork)
+importFrom(Matrix,sparseMatrix)
 importFrom(lifecycle,
   deprecate_warn,
   deprecated

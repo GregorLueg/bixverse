@@ -1,14 +1,10 @@
 # sc aggregations --------------------------------------------------------------
 
+source("helper_sc.R", local = TRUE)
+
 library(magrittr)
 
-test_temp_dir <- file.path(
-  tempdir(),
-  "sc_aggregations"
-)
-
-dir.create(test_temp_dir, recursive = TRUE, showWarnings = FALSE)
-stopifnot("Test directory does not exist" = dir.exists(test_temp_dir))
+test_temp_dir <- sc_test_dir("sc_aggregations")
 
 ## testing parameters ----------------------------------------------------------
 
@@ -23,70 +19,24 @@ no_pcs <- 10L
 
 ## synthetic test data ---------------------------------------------------------
 
-single_cell_test_data <- generate_single_cell_test_data()
-
-genes_pass <- which(
-  Matrix::colSums(single_cell_test_data$counts != 0) >= min_cells_exp
-)
-
-cells_pass <- which(
-  (Matrix::rowSums(single_cell_test_data$counts[, genes_pass]) >=
-    min_lib_size) &
-    (Matrix::rowSums(single_cell_test_data$counts[, genes_pass] != 0) >=
-      min_genes_exp)
-)
-
-expect_true(
-  current = length(genes_pass) > 80 & length(genes_pass) != 100,
-  info = "sc processing - sensible amount of genes pass"
-)
-
-expect_true(
-  current = length(cells_pass) > 800 & length(cells_pass) != 1000,
-  info = "sc processing - sensible amount of cells pass"
-)
-
-sc_qc_param <- params_sc_min_quality(
-  min_unique_genes = min_genes_exp,
+single_cell_test_data <- sc_test_fixture(
   min_lib_size = min_lib_size,
-  min_cells = min_cells_exp,
-  target_size = 1000
+  min_genes_exp = min_genes_exp,
+  min_cells_exp = min_cells_exp,
+  hvg_to_keep = hvg_to_keep,
+  no_pcs = no_pcs
 )
+
+genes_pass <- single_cell_test_data$genes_pass
+cells_pass <- single_cell_test_data$cells_pass
+
+sc_qc_param <- sc_test_qc_params(single_cell_test_data, target_size = 1000)
 
 ## underlying class ------------------------------------------------------------
 
-sc_object <- SingleCells(dir_data = test_temp_dir)
-
-sc_object <- load_r_data(
-  object = sc_object,
-  counts = single_cell_test_data$counts,
-  obs = single_cell_test_data$obs,
-  var = single_cell_test_data$var,
-  sc_qc_param = params_sc_min_quality(
-    min_unique_genes = min_genes_exp,
-    min_lib_size = min_lib_size,
-    min_cells = min_cells_exp
-  ),
-  streaming = 0L,
-  .verbose = FALSE
-)
-
-sc_object <- find_hvg_sc(
-  object = sc_object,
-  hvg_no = hvg_to_keep,
-  .verbose = FALSE
-)
-
-sc_object <- calculate_pca_sc(
-  object = sc_object,
-  no_pcs = no_pcs,
-  .verbose = FALSE
-)
-
-sc_object <- find_neighbours_sc(
-  sc_object,
-  neighbours_params = params_sc_neighbours(knn = list(k = 15L)),
-  .verbose = FALSE
+sc_object <- sc_test_prepped(
+  sc_test_object(test_temp_dir, single_cell_test_data),
+  single_cell_test_data
 )
 
 ## pseudo bulking --------------------------------------------------------------
@@ -521,23 +471,16 @@ expect_true(
 # unfiltered and narrowed afterwards via set_cells_to_keep, so cells_to_keep is
 # deliberately non-contiguous and the two spaces genuinely differ.
 
-gap_temp_dir <- file.path(tempdir(), "sc_aggregations_gaps")
-dir.create(gap_temp_dir, recursive = TRUE, showWarnings = FALSE)
+gap_temp_dir <- sc_test_dir("sc_aggregations_gaps")
 
-gap_object <- SingleCells(dir_data = gap_temp_dir)
-
-gap_object <- load_r_data(
-  object = gap_object,
-  counts = single_cell_test_data$counts,
-  obs = single_cell_test_data$obs,
-  var = single_cell_test_data$var,
+gap_object <- sc_test_object(
+  gap_temp_dir,
+  single_cell_test_data,
   sc_qc_param = params_sc_min_quality(
     min_unique_genes = 1L,
     min_lib_size = 1L,
     min_cells = 1L
-  ),
-  streaming = 0L,
-  .verbose = FALSE
+  )
 )
 
 gap_all_ids <- get_sc_obs(gap_object)$cell_id
@@ -871,5 +814,4 @@ expect_equal(
 
 # clean up ---------------------------------------------------------------------
 
-on.exit(unlink(test_temp_dir, recursive = TRUE, force = TRUE), add = TRUE)
-on.exit(unlink(gap_temp_dir, recursive = TRUE, force = TRUE), add = TRUE)
+sc_test_cleanup(test_temp_dir, gap_temp_dir)

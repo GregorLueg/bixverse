@@ -1,10 +1,10 @@
 # sc multi-modal (adt) ----------------------------------------------------------
 
+source("helper_sc.R", local = TRUE)
+
 set.seed(123L)
 
-test_temp_dir_mm <- file.path(tempdir(), "processing_mm")
-dir.create(test_temp_dir_mm, recursive = TRUE, showWarnings = FALSE)
-stopifnot("Test directory does not exist" = dir.exists(test_temp_dir_mm))
+test_temp_dir_mm <- sc_test_dir("processing_mm")
 
 ## testing parameters ----------------------------------------------------------
 
@@ -17,7 +17,13 @@ no_pcs_adt <- 10L
 
 ## synthetic test data ---------------------------------------------------------
 
-rna <- generate_single_cell_test_data()
+rna <- sc_test_fixture(
+  min_lib_size = min_lib_size,
+  min_genes_exp = min_genes_exp,
+  min_cells_exp = min_cells_exp,
+  hvg_to_keep = hvg_to_keep,
+  no_pcs = no_pcs
+)
 adt <- generate_single_cell_test_data_adt()
 
 # the two modalities must describe the same barcodes for multi-modal to align
@@ -35,11 +41,7 @@ sc_mm <- load_r_data(
   counts = rna$counts,
   obs = rna$obs,
   var = rna$var,
-  sc_qc_param = params_sc_min_quality(
-    min_unique_genes = min_genes_exp,
-    min_lib_size = min_lib_size,
-    min_cells = min_cells_exp
-  ),
+  sc_qc_param = sc_test_qc_params(rna),
   streaming = 0L,
   .verbose = FALSE
 )
@@ -260,4 +262,4 @@ expect_true(
 
 # clean up ---------------------------------------------------------------------
 
-on.exit(unlink(test_temp_dir_mm, recursive = TRUE, force = TRUE), add = TRUE)
+sc_test_cleanup(test_temp_dir_mm)

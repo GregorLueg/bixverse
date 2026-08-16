@@ -1,14 +1,10 @@
 # sc batch correction ----------------------------------------------------------
 
+source("helper_sc.R", local = TRUE)
+
 library(magrittr)
 
-test_temp_dir <- file.path(
-  tempdir(),
-  "sc_batch_corr"
-)
-
-dir.create(test_temp_dir, recursive = TRUE, showWarnings = FALSE)
-stopifnot("Test directory does not exist" = dir.exists(test_temp_dir))
+test_temp_dir <- sc_test_dir("sc_batch_corr")
 
 ## testing parameters ----------------------------------------------------------
 
@@ -21,52 +17,26 @@ hvg_to_keep <- 30L
 # pca
 no_pcs <- 15L
 
-# slighty more complex data
-cell_markers <- list(
-  cell_type_1 = list(marker_genes = 0:8L),
-  cell_type_2 = list(marker_genes = 9:19L),
-  cell_type_3 = list(marker_genes = 20:29L),
-  cell_type_4 = list(marker_genes = 30:44L)
-)
-
 ## synthetic test data ---------------------------------------------------------
 
-# weak batch effect in the data
-single_cell_test_data.weak_batch_effect <- generate_single_cell_test_data(
-  syn_data_params = params_sc_synthetic_data(
-    n_cells = 900L,
-    marker_genes = cell_markers,
-    n_batches = 3L,
-    batch_effect_strength = "weak"
+# four cell types over three batches, at each batch effect strength
+batch_fixture <- function(strength) {
+  sc_batch_fixture(
+    batch_effect_strength = strength,
+    min_lib_size = min_lib_size,
+    min_genes_exp = min_genes_exp,
+    min_cells_exp = min_cells_exp,
+    hvg_to_keep = hvg_to_keep,
+    no_pcs = no_pcs
   )
-)
+}
 
-# medium batch effect in the data
-single_cell_test_data.medium_batch_effect <- generate_single_cell_test_data(
-  syn_data_params = params_sc_synthetic_data(
-    n_cells = 900L,
-    marker_genes = cell_markers,
-    n_batches = 3L,
-    batch_effect_strength = "medium"
-  )
-)
-
-# strong batch effect in the data
-single_cell_test_data.strong_batch_effect <- generate_single_cell_test_data(
-  syn_data_params = params_sc_synthetic_data(
-    n_cells = 900L,
-    marker_genes = cell_markers,
-    n_batches = 3L,
-    batch_effect_strength = "strong"
-  )
-)
+single_cell_test_data.weak_batch_effect <- batch_fixture("weak")
+single_cell_test_data.medium_batch_effect <- batch_fixture("medium")
+single_cell_test_data.strong_batch_effect <- batch_fixture("strong")
 
 # generate QC parameters
-sc_qc_param <- params_sc_min_quality(
-  min_unique_genes = min_genes_exp,
-  min_lib_size = min_lib_size,
-  min_cells = min_cells_exp
-)
+sc_qc_param <- sc_test_qc_params(single_cell_test_data.weak_batch_effect)
 
 # tests ------------------------------------------------------------------------
 
@@ -74,123 +44,31 @@ sc_qc_param <- params_sc_min_quality(
 
 dir_data <- list("weak" = NULL, "medium" = NULL, "strong" = NULL)
 dir_data <- purrr::imap(dir_data, \(elem, name) {
-  final_path <- file.path(test_temp_dir, name)
-  dir.create(final_path, showWarnings = FALSE)
-  final_path
+  sc_test_dir(name, test_temp_dir)
 })
 
 ### weak batch effect ----------------------------------------------------------
 
-sc_object.weak_batch_effect <- SingleCells(
-  dir_data = dir_data$weak
-)
-
-sc_object.weak_batch_effect <- load_r_data(
-  object = sc_object.weak_batch_effect,
-  counts = single_cell_test_data.weak_batch_effect$counts,
-  obs = single_cell_test_data.weak_batch_effect$obs,
-  var = single_cell_test_data.weak_batch_effect$var,
-  sc_qc_param = params_sc_min_quality(
-    min_unique_genes = min_genes_exp,
-    min_lib_size = min_lib_size,
-    min_cells = min_cells_exp
-  ),
-  streaming = 0L,
-  .verbose = FALSE
-)
-
-sc_object.weak_batch_effect <- find_hvg_sc(
-  object = sc_object.weak_batch_effect,
-  hvg_no = hvg_to_keep,
-  .verbose = FALSE
-)
-
-sc_object.weak_batch_effect <- calculate_pca_sc(
-  object = sc_object.weak_batch_effect,
-  no_pcs = no_pcs,
-  .verbose = FALSE
-)
-
-sc_object.weak_batch_effect <- find_neighbours_sc(
-  sc_object.weak_batch_effect,
-  neighbours_params = params_sc_neighbours(knn = list(k = 10L)),
-  .verbose = FALSE
+sc_object.weak_batch_effect <- sc_test_prepped(
+  sc_test_object(dir_data$weak, single_cell_test_data.weak_batch_effect),
+  single_cell_test_data.weak_batch_effect,
+  k = 10L
 )
 
 ### medium batch effect --------------------------------------------------------
 
-sc_object.medium_batch_effect <- SingleCells(
-  dir_data = dir_data$medium
-)
-
-sc_object.medium_batch_effect <- load_r_data(
-  object = sc_object.medium_batch_effect,
-  counts = single_cell_test_data.medium_batch_effect$counts,
-  obs = single_cell_test_data.medium_batch_effect$obs,
-  var = single_cell_test_data.medium_batch_effect$var,
-  sc_qc_param = params_sc_min_quality(
-    min_unique_genes = min_genes_exp,
-    min_lib_size = min_lib_size,
-    min_cells = min_cells_exp
-  ),
-  streaming = 0L,
-  .verbose = FALSE
-)
-
-sc_object.medium_batch_effect <- find_hvg_sc(
-  object = sc_object.medium_batch_effect,
-  hvg_no = hvg_to_keep,
-  .verbose = FALSE
-)
-
-sc_object.medium_batch_effect <- calculate_pca_sc(
-  object = sc_object.medium_batch_effect,
-  no_pcs = no_pcs,
-  .verbose = FALSE
-)
-
-sc_object.medium_batch_effect <- find_neighbours_sc(
-  sc_object.medium_batch_effect,
-  neighbours_params = params_sc_neighbours(knn = list(k = 10L)),
-  .verbose = FALSE
+sc_object.medium_batch_effect <- sc_test_prepped(
+  sc_test_object(dir_data$medium, single_cell_test_data.medium_batch_effect),
+  single_cell_test_data.medium_batch_effect,
+  k = 10L
 )
 
 ### strong batch effect --------------------------------------------------------
 
-sc_object.strong_batch_effect <- SingleCells(
-  dir_data = dir_data$strong
-)
-
-sc_object.strong_batch_effect <- load_r_data(
-  object = sc_object.strong_batch_effect,
-  counts = single_cell_test_data.strong_batch_effect$counts,
-  obs = single_cell_test_data.strong_batch_effect$obs,
-  var = single_cell_test_data.strong_batch_effect$var,
-  sc_qc_param = params_sc_min_quality(
-    min_unique_genes = min_genes_exp,
-    min_lib_size = min_lib_size,
-    min_cells = min_cells_exp
-  ),
-  streaming = 0L,
-  .verbose = FALSE
-)
-
-sc_object.strong_batch_effect <- find_hvg_sc(
-  object = sc_object.strong_batch_effect,
-  hvg_no = hvg_to_keep,
-  .verbose = FALSE
-)
-
-sc_object.strong_batch_effect <- calculate_pca_sc(
-  object = sc_object.strong_batch_effect,
-  no_pcs = no_pcs,
-  .verbose = FALSE
-)
-
-sc_object.strong_batch_effect <- find_neighbours_sc(
-  sc_object.strong_batch_effect,
-  neighbours_params = params_sc_neighbours(knn = list(k = 10L)),
-  .verbose = FALSE
+sc_object.strong_batch_effect <- sc_test_prepped(
+  sc_test_object(dir_data$strong, single_cell_test_data.strong_batch_effect),
+  single_cell_test_data.strong_batch_effect,
+  k = 10L
 )
 
 # tests ------------------------------------------------------------------------
@@ -1593,4 +1471,4 @@ expect_error(
 
 # clean up ---------------------------------------------------------------------
 
-on.exit(unlink(test_temp_dir, recursive = TRUE, force = TRUE), add = TRUE)
+sc_test_cleanup(test_temp_dir)
