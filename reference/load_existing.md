@@ -6,7 +6,7 @@ stored data into the class.
 ## Usage
 
 ``` r
-load_existing(object)
+load_existing(object, .verbose = TRUE)
 ```
 
 ## Arguments
@@ -14,6 +14,10 @@ load_existing(object)
 - object:
 
   `SingleCells`, `MetaCells` or `SingleCellsMultiModal` class.
+
+- .verbose:
+
+  Boolean. Controls verbosity of the function.
 
 ## Value
 

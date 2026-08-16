@@ -83,7 +83,7 @@ sc_object <- load_h5ad(
 #>  Using light streaming for the CSR to CSC conversion.
 #> Loading observations data from h5ad into the DuckDB.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpI9Savd/duckdb
+#> ℹ /tmp/RtmpFehaH6/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -93,7 +93,7 @@ sc_object <- load_h5ad(
 #> Loading variables data from h5ad into the DuckDB.
 #> 
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpI9Savd/duckdb
+#> ℹ /tmp/RtmpFehaH6/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -101,7 +101,7 @@ sc_object <- load_h5ad(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpI9Savd/duckdb
+#> ℹ /tmp/RtmpFehaH6/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -109,7 +109,7 @@ sc_object <- load_h5ad(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpI9Savd/duckdb
+#> ℹ /tmp/RtmpFehaH6/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -117,7 +117,7 @@ sc_object <- load_h5ad(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpI9Savd/duckdb
+#> ℹ /tmp/RtmpFehaH6/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -125,7 +125,7 @@ sc_object <- load_h5ad(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpI9Savd/duckdb
+#> ℹ /tmp/RtmpFehaH6/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -133,7 +133,7 @@ sc_object <- load_h5ad(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpI9Savd/duckdb
+#> ℹ /tmp/RtmpFehaH6/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -141,7 +141,7 @@ sc_object <- load_h5ad(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpI9Savd/duckdb
+#> ℹ /tmp/RtmpFehaH6/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -149,7 +149,7 @@ sc_object <- load_h5ad(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpI9Savd/duckdb
+#> ℹ /tmp/RtmpFehaH6/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -157,7 +157,7 @@ sc_object <- load_h5ad(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpI9Savd/duckdb
+#> ℹ /tmp/RtmpFehaH6/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -165,7 +165,7 @@ sc_object <- load_h5ad(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpI9Savd/duckdb
+#> ℹ /tmp/RtmpFehaH6/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -173,7 +173,7 @@ sc_object <- load_h5ad(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpI9Savd/duckdb
+#> ℹ /tmp/RtmpFehaH6/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -181,7 +181,7 @@ sc_object <- load_h5ad(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpI9Savd/duckdb
+#> ℹ /tmp/RtmpFehaH6/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -189,7 +189,7 @@ sc_object <- load_h5ad(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpI9Savd/duckdb
+#> ℹ /tmp/RtmpFehaH6/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -197,7 +197,7 @@ sc_object <- load_h5ad(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpI9Savd/duckdb
+#> ℹ /tmp/RtmpFehaH6/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -205,7 +205,7 @@ sc_object <- load_h5ad(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpI9Savd/duckdb
+#> ℹ /tmp/RtmpFehaH6/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -256,7 +256,7 @@ sc_object <- find_hvg_sc(
   hvg_no = 1500L
 )
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpI9Savd/duckdb
+#> ℹ /tmp/RtmpFehaH6/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -264,7 +264,7 @@ sc_object <- find_hvg_sc(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpI9Savd/duckdb
+#> ℹ /tmp/RtmpFehaH6/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -272,7 +272,7 @@ sc_object <- find_hvg_sc(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpI9Savd/duckdb
+#> ℹ /tmp/RtmpFehaH6/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -280,7 +280,7 @@ sc_object <- find_hvg_sc(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpI9Savd/duckdb
+#> ℹ /tmp/RtmpFehaH6/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -311,7 +311,7 @@ sc_object <- find_clusters_sc(
   name = "leiden_clusters"
 )
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpI9Savd/duckdb
+#> ℹ /tmp/RtmpFehaH6/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -319,7 +319,7 @@ sc_object <- find_clusters_sc(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpI9Savd/duckdb
+#> ℹ /tmp/RtmpFehaH6/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -343,7 +343,7 @@ embedding_plot_sc(
   discrete = TRUE
 )
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpI9Savd/duckdb
+#> ℹ /tmp/RtmpFehaH6/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -351,7 +351,7 @@ embedding_plot_sc(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpI9Savd/duckdb
+#> ℹ /tmp/RtmpFehaH6/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -441,18 +441,18 @@ when the graph under it moves.
 get_sc_cache_status(sc_object)
 #>    modality  artefact   name stamped  stale reason               id
 #>      <char>    <char> <char>  <lgcl> <lgcl> <char>           <char>
-#> 1:      rna       pca   <NA>    TRUE  FALSE   <NA> df6366443ab95a87
-#> 2:      rna embedding   umap    TRUE  FALSE   <NA> 448f8f6d7c37f457
-#> 3:      rna       knn   <NA>    TRUE  FALSE   <NA> 2f78e709353821f1
-#> 4:      rna       snn   <NA>    TRUE  FALSE   <NA> 85ad2bce11ee1e19
-#> 5:      rna     magic   <NA>    TRUE  FALSE   <NA> f92b88267fb2e061
+#> 1:      rna       pca   <NA>    TRUE  FALSE   <NA> ede43321748d4f96
+#> 2:      rna embedding   umap    TRUE  FALSE   <NA> 7d11870b2a3cd325
+#> 3:      rna       knn   <NA>    TRUE  FALSE   <NA> 1b5361285c9cf1e7
+#> 4:      rna       snn   <NA>    TRUE  FALSE   <NA> 9cbd3cf7d410b544
+#> 5:      rna     magic   <NA>    TRUE  FALSE   <NA> bda2face1c51fd3e
 #>                                 from
 #>                               <list>
 #> 1:                                  
-#> 2: df6366443ab95a87,2f78e709353821f1
-#> 3:                  df6366443ab95a87
-#> 4:                  2f78e709353821f1
-#> 5:                  2f78e709353821f1
+#> 2: ede43321748d4f96,1b5361285c9cf1e7
+#> 3:                  ede43321748d4f96
+#> 4:                  1b5361285c9cf1e7
+#> 5:                  1b5361285c9cf1e7
 ```
 
 ## PAGA
@@ -468,7 +468,7 @@ paga_res <- run_paga_sc(
   cluster_col = "leiden_clusters"
 )
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpI9Savd/duckdb
+#> ℹ /tmp/RtmpFehaH6/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -476,7 +476,7 @@ paga_res <- run_paga_sc(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpI9Savd/duckdb
+#> ℹ /tmp/RtmpFehaH6/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -526,7 +526,7 @@ the UMAP by eye.
 
 paga_plot_sc(sc_object, paga_res, embedding = "umap")
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpI9Savd/duckdb
+#> ℹ /tmp/RtmpFehaH6/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -534,7 +534,7 @@ paga_plot_sc(sc_object, paga_res, embedding = "umap")
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpI9Savd/duckdb
+#> ℹ /tmp/RtmpFehaH6/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -554,7 +554,7 @@ readable one on anything above a handful of clusters.
 
 paga_plot_sc(sc_object, paga_res, embedding = "umap", tree_only = TRUE)
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpI9Savd/duckdb
+#> ℹ /tmp/RtmpFehaH6/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -562,7 +562,7 @@ paga_plot_sc(sc_object, paga_res, embedding = "umap", tree_only = TRUE)
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpI9Savd/duckdb
+#> ℹ /tmp/RtmpFehaH6/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -658,7 +658,7 @@ idx <- match(obs_cells, palantir_res$pseudotime$cell_id)
 
 sc_object[["palantir_pseudotime"]] <- palantir_res$pseudotime$pseudotime[idx]
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpI9Savd/duckdb
+#> ℹ /tmp/RtmpFehaH6/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -666,7 +666,7 @@ sc_object[["palantir_pseudotime"]] <- palantir_res$pseudotime$pseudotime[idx]
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpI9Savd/duckdb
+#> ℹ /tmp/RtmpFehaH6/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -675,7 +675,7 @@ sc_object[["palantir_pseudotime"]] <- palantir_res$pseudotime$pseudotime[idx]
 #> ℹ See ?duckdb_storage for details and alternatives.
 sc_object[["palantir_entropy"]] <- palantir_res$pseudotime$entropy[idx]
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpI9Savd/duckdb
+#> ℹ /tmp/RtmpFehaH6/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -683,7 +683,7 @@ sc_object[["palantir_entropy"]] <- palantir_res$pseudotime$entropy[idx]
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpI9Savd/duckdb
+#> ℹ /tmp/RtmpFehaH6/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -704,7 +704,7 @@ for (lineage in colnames(fate_probs)) {
   sc_object[[paste0("fate_", lineage)]] <- fate_probs[, lineage]
 }
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpI9Savd/duckdb
+#> ℹ /tmp/RtmpFehaH6/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -712,7 +712,7 @@ for (lineage in colnames(fate_probs)) {
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpI9Savd/duckdb
+#> ℹ /tmp/RtmpFehaH6/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -720,7 +720,7 @@ for (lineage in colnames(fate_probs)) {
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpI9Savd/duckdb
+#> ℹ /tmp/RtmpFehaH6/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -728,7 +728,7 @@ for (lineage in colnames(fate_probs)) {
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpI9Savd/duckdb
+#> ℹ /tmp/RtmpFehaH6/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -736,7 +736,7 @@ for (lineage in colnames(fate_probs)) {
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpI9Savd/duckdb
+#> ℹ /tmp/RtmpFehaH6/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -744,7 +744,7 @@ for (lineage in colnames(fate_probs)) {
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpI9Savd/duckdb
+#> ℹ /tmp/RtmpFehaH6/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -756,7 +756,7 @@ sc_object[["palantir_branch"]] <- colnames(fate_probs)[
   max.col(fate_probs, ties.method = "first")
 ]
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpI9Savd/duckdb
+#> ℹ /tmp/RtmpFehaH6/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -764,7 +764,7 @@ sc_object[["palantir_branch"]] <- colnames(fate_probs)[
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpI9Savd/duckdb
+#> ℹ /tmp/RtmpFehaH6/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -799,7 +799,7 @@ embedding_plot_sc(
   discrete = FALSE
 )
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpI9Savd/duckdb
+#> ℹ /tmp/RtmpFehaH6/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -807,7 +807,7 @@ embedding_plot_sc(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpI9Savd/duckdb
+#> ℹ /tmp/RtmpFehaH6/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -834,7 +834,7 @@ paga_plot_sc(
   tree_only = TRUE
 )
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpI9Savd/duckdb
+#> ℹ /tmp/RtmpFehaH6/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -842,7 +842,7 @@ paga_plot_sc(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpI9Savd/duckdb
+#> ℹ /tmp/RtmpFehaH6/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -867,7 +867,7 @@ embedding_plot_sc(
   discrete = FALSE
 )
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpI9Savd/duckdb
+#> ℹ /tmp/RtmpFehaH6/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -875,7 +875,7 @@ embedding_plot_sc(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpI9Savd/duckdb
+#> ℹ /tmp/RtmpFehaH6/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -899,7 +899,7 @@ fate_plots <- lapply(colnames(fate_probs), \(lineage) {
     labs(title = lineage)
 })
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpI9Savd/duckdb
+#> ℹ /tmp/RtmpFehaH6/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -907,7 +907,7 @@ fate_plots <- lapply(colnames(fate_probs), \(lineage) {
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpI9Savd/duckdb
+#> ℹ /tmp/RtmpFehaH6/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -915,7 +915,7 @@ fate_plots <- lapply(colnames(fate_probs), \(lineage) {
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpI9Savd/duckdb
+#> ℹ /tmp/RtmpFehaH6/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -923,7 +923,7 @@ fate_plots <- lapply(colnames(fate_probs), \(lineage) {
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpI9Savd/duckdb
+#> ℹ /tmp/RtmpFehaH6/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -931,7 +931,7 @@ fate_plots <- lapply(colnames(fate_probs), \(lineage) {
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpI9Savd/duckdb
+#> ℹ /tmp/RtmpFehaH6/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -939,7 +939,7 @@ fate_plots <- lapply(colnames(fate_probs), \(lineage) {
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpI9Savd/duckdb
+#> ℹ /tmp/RtmpFehaH6/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -962,7 +962,7 @@ embedding_plot_sc(
   discrete = TRUE
 )
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpI9Savd/duckdb
+#> ℹ /tmp/RtmpFehaH6/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -970,7 +970,7 @@ embedding_plot_sc(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpI9Savd/duckdb
+#> ℹ /tmp/RtmpFehaH6/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -1024,7 +1024,7 @@ data.table(
   )
 )
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpI9Savd/duckdb
+#> ℹ /tmp/RtmpFehaH6/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -1032,7 +1032,7 @@ data.table(
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpI9Savd/duckdb
+#> ℹ /tmp/RtmpFehaH6/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -1116,7 +1116,7 @@ entropy column watches commitment happen along the trajectory.
 
 obs_dt <- get_sc_obs(sc_object, filtered = TRUE)
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpI9Savd/duckdb
+#> ℹ /tmp/RtmpFehaH6/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -1124,7 +1124,7 @@ obs_dt <- get_sc_obs(sc_object, filtered = TRUE)
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpI9Savd/duckdb
+#> ℹ /tmp/RtmpFehaH6/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.

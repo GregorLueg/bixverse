@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.8</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.9</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -86,6 +86,19 @@
     </div>
 
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.4.9" id="bixverse-049">bixverse 0.4.9<a class="anchor" aria-label="anchor" href="#bixverse-049"></a></h2>
+<div class="section level3">
+<h3 id="chores-0-4-9">Chores<a class="anchor" aria-label="anchor" href="#chores-0-4-9"></a></h3>
+<ul><li>Update to the test suite to have less redundancies, be cleaner.</li>
+<li>Version bumps on the Rust side.</li>
+<li>Simplified testing suite with less redundancies.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="fixes-0-4-9">Fixes<a class="anchor" aria-label="anchor" href="#fixes-0-4-9"></a></h3>
+<ul><li>Added <code>@importFrom Matrix sparseMatrix</code> to the package import to avoid issues with meta cells and the conversions of the sparse matrices to lists for Rust.</li>
+</ul></div>
+</div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.4.8" id="bixverse-048">bixverse 0.4.8<a class="anchor" aria-label="anchor" href="#bixverse-048"></a></h2>
 <div class="section level3">
 <h3 id="features-0-4-8">Features<a class="anchor" aria-label="anchor" href="#features-0-4-8"></a></h3>
@@ -100,11 +113,11 @@
 <li>AUCell now defaults to <code>"recovery"</code> a more top heavy score. If you want the old behaviour, please use <code>"wilcox"</code>.</li>
 <li>One-vs-many comparisons to identify cell type markers.</li>
 </ul></div>
-<div class="section level4">
-<h4 id="bug-fixes-0-4-8">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-4-8"></a></h4>
+</div>
+<div class="section level3">
+<h3 id="fixes-0-4-8">Fixes<a class="anchor" aria-label="anchor" href="#fixes-0-4-8"></a></h3>
 <ul><li>Various edge cases bug fixes in <code>bixverse-rs</code> that propagate into here.</li>
-</ul></div>
-<div class="section level4">
+</ul><div class="section level4">
 <h4 id="improved-dev-experience-0-4-8">Improved dev experience<a class="anchor" aria-label="anchor" href="#improved-dev-experience-0-4-8"></a></h4>
 <p>If you want to develop on the package, set:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
