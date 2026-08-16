@@ -502,7 +502,8 @@ if (requireNamespace("fgsea", quietly = TRUE)) {
   fgsea_scores <- fgsea::fgseaSimple(
     pathways = pathway_list,
     stats = stats,
-    nperm = 100
+    nperm = 100,
+    BPPARAM = BiocParallel::SerialParam()
   ) %>%
     data.table::setorder(pathway)
 
@@ -550,7 +551,8 @@ if (requireNamespace("fgsea", quietly = TRUE)) {
 if (requireNamespace("fgsea", quietly = TRUE)) {
   fgsea_scores_ml <- fgsea::fgsea(
     pathways = pathway_list,
-    stats = stats
+    stats = stats,
+    BPPARAM = BiocParallel::SerialParam()
   ) %>%
     data.table::setorder(pathway)
 

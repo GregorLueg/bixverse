@@ -53,7 +53,7 @@ rm(sc_object)
 
 sc_object <- SingleCells(dir_data = test_temp_dir)
 
-sc_object <- suppressMessages(load_existing(sc_object))
+sc_object <- load_existing(sc_object, .verbose = FALSE)
 
 ## getter checks ---------------------------------------------------------------
 
@@ -160,7 +160,7 @@ sc_object <- SingleCells(dir_data = test_temp_dir)
 
 expect_message(current = load_existing(sc_object), info = "message working")
 
-sc_object <- suppressMessages(load_existing(sc_object))
+sc_object <- load_existing(sc_object, .verbose = FALSE)
 
 expect_equal(
   current = get_pca_factors(sc_object),
@@ -183,7 +183,7 @@ sc_object <- SingleCells(dir_data = test_temp_dir)
 # will force the function to load from rds
 removed <- file.remove(file.path(test_temp_dir, "memory.qs2"))
 
-sc_object <- suppressMessages(load_existing(sc_object))
+sc_object <- load_existing(sc_object, .verbose = FALSE)
 
 expect_equal(
   current = get_pca_factors(sc_object),

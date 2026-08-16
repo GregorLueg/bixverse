@@ -189,9 +189,12 @@ synthetic_bulk_cor_matrix <- function(
 
   module_factors <- res$module_factors
   if (nrow(module_factors) > 0) {
-    rownames(module_factors) <- sprintf("module_%i", seq_len(nrow(
-      module_factors
-    )))
+    rownames(module_factors) <- sprintf(
+      "module_%i",
+      seq_len(nrow(
+        module_factors
+      ))
+    )
   }
   colnames(module_factors) <- colnames(counts)
 

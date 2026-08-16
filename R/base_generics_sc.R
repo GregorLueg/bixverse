@@ -1239,6 +1239,7 @@ save_sc_exp_to_disk <- S7::new_generic(
 #' data into the class.
 #'
 #' @param object `SingleCells`, `MetaCells` or `SingleCellsMultiModal` class.
+#' @param .verbose Boolean. Controls verbosity of the function.
 #'
 #' @returns The object with added information on the data on disk.
 #'
@@ -1247,7 +1248,8 @@ load_existing <- S7::new_generic(
   name = "load_existing",
   dispatch_args = "object",
   fun = function(
-    object
+    object,
+    .verbose = TRUE
   ) {
     S7::S7_dispatch()
   }

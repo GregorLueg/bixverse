@@ -1,14 +1,5 @@
 # shared single cell test fixtures ---------------------------------------------
 
-# Sourced from the top of the single cell test files with
-# `source("helper_sc.R", local = TRUE)`. tinytest has no helper convention, but
-# it `setwd()`s to the test directory and evaluates every top level expression
-# of a file in one environment, so this resolves under `run_test_file()` and
-# `test_package()` alike.
-#
-# No `expect_*` calls in here: tinytest only registers expectations returned at
-# the top level of a test file.
-
 ## directories -----------------------------------------------------------------
 
 #' Create a temporary directory for an on-disk single cell object

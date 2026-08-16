@@ -188,7 +188,7 @@ p_hvg_pca <- sc_pipeline() %>>%
   step_pca_sc(no_pcs = no_pcs, .verbose = FALSE)
 
 reload <- SingleCells(dir_data = test_temp_dir)
-reload <- load_existing(reload)
+reload <- load_existing(reload, .verbose = FALSE)
 
 sc_object_2 <- apply_pipeline(p_hvg_pca, reload)
 

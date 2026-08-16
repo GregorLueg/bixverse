@@ -1639,9 +1639,10 @@ S7::method(save_sc_exp_to_disk, SingleCells) <- function(
 #'
 #' @importFrom zeallot %<-%
 #' @importFrom magrittr %>%
-S7::method(load_existing, SingleCells) <- function(object) {
+S7::method(load_existing, SingleCells) <- function(object, .verbose = TRUE) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  checkmate::qassert(.verbose, "B1")
 
   dir_data <- S7::prop(object, "dir_data")
 
@@ -1656,10 +1657,12 @@ S7::method(load_existing, SingleCells) <- function(object) {
   duckdb_con <- get_sc_duckdb(object)
 
   if (any(c("memory.qs2", "memory.rds") %in% list.files(dir_data))) {
-    message(paste(
-      "Found stored data from save_sc_exp_to_disk().",
-      "Loading that one into the object."
-    ))
+    if (.verbose) {
+      message(paste(
+        "Found stored data from save_sc_exp_to_disk().",
+        "Loading that one into the object."
+      ))
+    }
 
     # preferentially load qs2
     saved_data <- if ("memory.qs2" %in% list.files(dir_data)) {
@@ -1766,9 +1769,13 @@ S7::method(save_sc_exp_to_disk, SingleCellsMultiModal) <- function(
 #'
 #' @importFrom zeallot %<-%
 #' @importFrom magrittr %>%
-S7::method(load_existing, SingleCellsMultiModal) <- function(object) {
+S7::method(load_existing, SingleCellsMultiModal) <- function(
+  object,
+  .verbose = TRUE
+) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCellsMultiModal))
+  checkmate::qassert(.verbose, "B1")
 
   dir_data <- S7::prop(object, "dir_data")
 
@@ -1783,10 +1790,12 @@ S7::method(load_existing, SingleCellsMultiModal) <- function(object) {
   duckdb_con <- get_sc_duckdb(object)
 
   if (any(c("memory.qs2", "memory.rds") %in% list.files(dir_data))) {
-    message(paste(
-      "Found stored data from save_sc_exp_to_disk().",
-      "Loading that one into the object."
-    ))
+    if (.verbose) {
+      message(paste(
+        "Found stored data from save_sc_exp_to_disk().",
+        "Loading that one into the object."
+      ))
+    }
 
     saved_data <- if ("memory.qs2" %in% list.files(dir_data)) {
       if (!requireNamespace("qs2", quietly = TRUE)) {
