@@ -710,6 +710,7 @@ reference:
       - calculate_sparsity_stats
       - find_threshold_otsu
       - get_seurat_counts_to_list
+      - install_agent_skill
       - knn_graph_label_propagation
       - params_label_propagation
       - upper_triangle_to_sparse
