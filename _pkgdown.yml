@@ -229,6 +229,8 @@ reference:
       - ica_stabilised_results
       - nmf_bulk
       - stabilised_nmf_bulk
+      - consensus_nmf_bulk
+      - nmf_k_sweep_bulk
       - params_cor_graph
       - params_coremo
       - params_dgrdl
@@ -547,9 +549,13 @@ reference:
       - build_regulons
       - nmf_sc
       - stabilised_nmf_sc
+      - consensus_nmf_sc
+      - nmf_k_sweep_sc
       - get_best_run
+      - get_stability
       - get_w
       - get_h
+      - plot.NmfKSweepResult
       - params_sc_aucell
       - params_sc_hotspot
       - params_sc_miloR
@@ -564,6 +570,7 @@ reference:
       - params_sc_branch_selection
       - params_sc_gene_trends
       - params_nmf_hals
+      - params_nmf_consensus
   # Single cell analysis
   - title: Single cell multi-modal analysis methods
     desc: 
@@ -774,8 +781,6 @@ reference:
       - rs_mc_scenic
       - rs_mitch_calc
       - rs_mutual_info
-      - rs_nmf_multi_mc
-      - rs_nmf_single_mc
       - rs_onto_semantic_sim
       - rs_onto_semantic_sim_mat
       - rs_onto_sim_wang

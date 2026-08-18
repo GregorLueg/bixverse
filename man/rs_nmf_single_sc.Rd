@@ -44,8 +44,8 @@ detailed verbosity.}
 \value{
 A list with the following items
 \itemize{
-\item w - The left factor matrix (n_features x k)
-\item h - The right factor matrix (k x n_samples)
+\item w - The left factor matrix (n_cells x k)
+\item h - The right factor matrix (k x n_genes)
 \item final_loss - Loss at the final iteration
 \item n_iter - Number of iterations the algorithm run for
 \item converged - Did the NMF algorithm converge

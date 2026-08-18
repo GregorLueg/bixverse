@@ -4,6 +4,7 @@
 \alias{get_w}
 \alias{get_w.NmfResult}
 \alias{get_w.StabilisedNmfResult}
+\alias{get_w.ConsensusNmfResult}
 \title{Get the W (gene loadings) matrix}
 \usage{
 get_w(x)
@@ -11,6 +12,8 @@ get_w(x)
 \method{get_w}{NmfResult}(x)
 
 \method{get_w}{StabilisedNmfResult}(x)
+
+\method{get_w}{ConsensusNmfResult}(x)
 }
 \arguments{
 \item{x}{An object holding NMF results.}

@@ -2051,6 +2051,94 @@ rs_nmf_single_bulk <- function(x, k, preprocessing, nmf_hals_params, seed, verbo
 #' @keywords internal
 rs_nmf_multi_bulk <- function(x, k, preprocessing, nmf_hals_params, n_runs, seed, verbose) .Call(wrap__rs_nmf_multi_bulk, x, k, preprocessing, nmf_hals_params, n_runs, seed, verbose)
 
+#' Run consensus NMF on a bulk expression matrix
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Runs `n_runs` HALS-NMF restarts, pools their components, drops unstable
+#' ones by local density, k-means clusters the survivors and refits the
+#' partner factor against the per-cluster median. Expects samples x features.
+#'
+#' @param x Numerical matrix. Rows = samples, columns = features.
+#' @param k Integer. Number of latent factors. Must be at least 2.
+#' @param preprocessing String. One of `c("none", "sd", "sqrt_sd")`.
+#' @param nmf_hals_params Named list. See [bixverse::params_nmf_hals()]. The
+#' `nmf_init` field is ignored, restarts always use random initialisation.
+#' @param nmf_consensus_params Named list. See
+#' [bixverse::params_nmf_consensus()].
+#' @param n_runs Integer. Number of restarts. Must be at least 2.
+#' @param seed Integer. Base random seed. Restart `i` uses `seed + i`.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @returns A list with the following items
+#' \itemize{
+#'   \item w - The `W` matrix of shape `n_samples x k`.
+#'   \item h - The `H` matrix of shape `k x n_features`.
+#'   \item rel_error - Reconstruction error relative to the squared Frobenius
+#'   norm of the input. Not comparable with the absolute `final_loss` the
+#'   single-run version returns.
+#'   \item rel_run_errors - The same, per restart.
+#'   \item labels - Integer vector of length `k * n_runs`. Cluster each pooled
+#'   component landed in, `NA` if it was dropped.
+#'   \item local_density - Mean cosine distance to the nearest neighbours per
+#'   pooled component. Plot this to pick a `density_threshold`.
+#'   \item kept - 1-indexed positions of the surviving pooled components.
+#'   \item silhouette - Silhouette per survivor, aligned with `kept`.
+#'   \item stability - Mean silhouette over the survivors.
+#'   \item cluster_sizes - Number of survivors per cluster.
+#'   \item n_dropped - Number of pooled components removed.
+#'   \item n_empty_clusters - Number of clusters left with no members.
+#' }
+#'
+#' @references Kotliar et al., eLife, 2019
+#'
+#' @export
+#'
+#' @keywords internal
+rs_nmf_consensus_bulk <- function(x, k, preprocessing, nmf_hals_params, nmf_consensus_params, n_runs, seed, verbose) .Call(wrap__rs_nmf_consensus_bulk, x, k, preprocessing, nmf_hals_params, nmf_consensus_params, n_runs, seed, verbose)
+
+#' Sweep k and report consensus stability against reconstruction error (bulk)
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Returns diagnostics only, no factors, so a wide `k_range` stays cheap.
+#' Pick the k where stability is high and the error curve has not yet
+#' flattened, then call [rs_nmf_consensus_bulk()] there.
+#'
+#' @param x Numerical matrix. Rows = samples, columns = features.
+#' @param k_range Integer vector. Ranks to evaluate, every entry at least 2.
+#' @param preprocessing String. One of `c("none", "sd", "sqrt_sd")`.
+#' @param nmf_hals_params Named list. See [bixverse::params_nmf_hals()].
+#' @param nmf_consensus_params Named list. See
+#' [bixverse::params_nmf_consensus()].
+#' @param n_runs Integer. Number of restarts per k. Must be at least 2.
+#' @param seed Integer. Base random seed.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @returns A list of equal-length vectors, one element per swept k
+#' \itemize{
+#'   \item k - The rank.
+#'   \item stability - Mean silhouette of the consensus clusters. `NaN` where
+#'   the consensus step failed.
+#'   \item best_error - Lowest restart error, relative to the squared
+#'   Frobenius norm of the input.
+#'   \item median_error - Median restart error, same scale.
+#'   \item consensus_failed - Did the density filter leave fewer than `k`
+#'   components.
+#'   \item n_dropped - Number of pooled components removed.
+#'   \item n_empty_clusters - Number of clusters left with no members.
+#'   \item n_converged - Restarts that met the HALS tolerance.
+#' }
+#'
+#' @references Kotliar et al., eLife, 2019
+#'
+#' @export
+#'
+#' @keywords internal
+rs_nmf_k_sweep_bulk <- function(x, k_range, preprocessing, nmf_hals_params, nmf_consensus_params, n_runs, seed, verbose) .Call(wrap__rs_nmf_k_sweep_bulk, x, k_range, preprocessing, nmf_hals_params, nmf_consensus_params, n_runs, seed, verbose)
+
 #' Generate reciprocal best hits based on set similarities
 #'
 #' @description
@@ -3975,8 +4063,8 @@ rs_importance_threshold <- function(matrix, n_sd, min_value) .Call(wrap__rs_impo
 #'
 #' @returns A list with the following items
 #' \itemize{
-#'   \item w - The left factor matrix (n_features x k)
-#'   \item h - The right factor matrix (k x n_samples)
+#'   \item w - The left factor matrix (n_cells x k)
+#'   \item h - The right factor matrix (k x n_genes)
 #'   \item final_loss - Loss at the final iteration
 #'   \item n_iter - Number of iterations the algorithm run for
 #'   \item converged - Did the NMF algorithm converge
@@ -4013,9 +4101,9 @@ rs_nmf_single_sc <- function(f_path_gene, gene_indices, cell_indices, k, preproc
 #' @returns A list with the following items
 #' \itemize{
 #'   \item w_all - Column-bound W matrices across all runs,
-#'   shape `n_features x (k * n_runs)`. Columns `i*k+1..(i+1)*k` are run `i`'s
+#'   shape `n_cells x (k * n_runs)`. Columns `i*k+1..(i+1)*k` are run `i`'s
 #'   components (1-indexed).
-#'   \item h_per_run - List of H matrices, each `k x n_cells`.
+#'   \item h_per_run - List of H matrices, each `k x n_genes`.
 #'   \item losses - Numeric vector. Final reconstruction loss per run.
 #'   \item converged - Logical vector. Convergence flag per run.
 #'   \item best_idx - Integer. 1-indexed position of the run with the lowest
@@ -4026,6 +4114,107 @@ rs_nmf_single_sc <- function(f_path_gene, gene_indices, cell_indices, k, preproc
 #'
 #' @keywords internal
 rs_nmf_multi_sc <- function(f_path_gene, gene_indices, cell_indices, k, preprocessing, use_second_layer, nmf_hals_params, n_runs, seed, verbose) .Call(wrap__rs_nmf_multi_sc, f_path_gene, gene_indices, cell_indices, k, preprocessing, use_second_layer, nmf_hals_params, n_runs, seed, verbose)
+
+#' Run consensus NMF over a set of single cells and genes
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Runs `n_runs` HALS NMF restarts, pools their components, drops unstable
+#' ones by local density, k-means clusters the survivors and refits the
+#' partner factor against the per-cluster median. The counts are streamed from
+#' the binary file, but the restart factors are dense and all held at once, so
+#' `n_runs` times `k` times the cell count is the memory you should budget for.
+#'
+#' @param f_path_gene Path to the `counts_genes.bin` file.
+#' @param gene_indices Integer vector. 0-indexed(!) positions of the genes
+#' to include.
+#' @param cell_indices Integer vector. 0-indexed(!) positions of cells to
+#' include in the analysis.
+#' @param k Integer. Number of latent factors. Must be at least 2.
+#' @param preprocessing String. One of `c("none", "sd", "sqrt_sd")`.
+#' @param use_second_layer Boolean. If `TRUE`, runs NMF on the normalised
+#' counts; if `FALSE`, on the raw counts.
+#' @param nmf_hals_params Named list. Contains the NMF parameters. The
+#' `nmf_init` field is ignored, restarts always use random initialisation.
+#' @param nmf_consensus_params Named list. Contains the consensus parameters.
+#' @param n_runs Integer. Number of restarts. Must be at least 2.
+#' @param seed Integer. Base random seed. Restart `i` uses `seed + i`.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @returns A list with the following items
+#' \itemize{
+#'   \item w - The left factor matrix (n_cells x k)
+#'   \item h - The right factor matrix (k x n_genes)
+#'   \item rel_error - Reconstruction error relative to the squared Frobenius
+#'   norm of the input. Not comparable with the absolute `final_loss` the
+#'   single-run version returns.
+#'   \item rel_run_errors - The same, per restart.
+#'   \item labels - Integer vector of length `k * n_runs`. Cluster each pooled
+#'   component landed in, `NA` if it was dropped.
+#'   \item local_density - Mean cosine distance to the nearest neighbours per
+#'   pooled component.
+#'   \item kept - 1-indexed positions of the surviving pooled components.
+#'   \item silhouette - Silhouette per survivor, aligned with `kept`.
+#'   \item stability - Mean silhouette over the survivors.
+#'   \item cluster_sizes - Number of survivors per cluster.
+#'   \item n_dropped - Number of pooled components removed.
+#'   \item n_empty_clusters - Number of clusters left with no members.
+#' }
+#'
+#' @references Kotliar et al., eLife, 2019
+#'
+#' @export
+#'
+#' @keywords internal
+rs_nmf_consensus_sc <- function(f_path_gene, gene_indices, cell_indices, k, preprocessing, use_second_layer, nmf_hals_params, nmf_consensus_params, n_runs, seed, verbose) .Call(wrap__rs_nmf_consensus_sc, f_path_gene, gene_indices, cell_indices, k, preprocessing, use_second_layer, nmf_hals_params, nmf_consensus_params, n_runs, seed, verbose)
+
+#' Sweep k and report consensus stability against reconstruction error
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Returns diagnostics only, no factors, so a wide `k_range` stays cheap in
+#' memory. The counts are loaded once and reused across every k. Pick the k
+#' where stability is high and the error curve has not yet flattened, then call
+#' [rs_nmf_consensus_sc()] there.
+#'
+#' @param f_path_gene Path to the `counts_genes.bin` file.
+#' @param gene_indices Integer vector. 0-indexed(!) positions of the genes
+#' to include.
+#' @param cell_indices Integer vector. 0-indexed(!) positions of cells to
+#' include in the analysis.
+#' @param k_range Integer vector. Ranks to evaluate, every entry at least 2.
+#' @param preprocessing String. One of `c("none", "sd", "sqrt_sd")`.
+#' @param use_second_layer Boolean. If `TRUE`, runs NMF on the normalised
+#' counts; if `FALSE`, on the raw counts.
+#' @param nmf_hals_params Named list. Contains the NMF parameters.
+#' @param nmf_consensus_params Named list. Contains the consensus parameters.
+#' @param n_runs Integer. Number of restarts per k. Must be at least 2.
+#' @param seed Integer. Base random seed.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @returns A list of equal-length vectors, one element per swept k
+#' \itemize{
+#'   \item k - The rank.
+#'   \item stability - Mean silhouette of the consensus clusters. `NaN` where
+#'   the consensus step failed.
+#'   \item best_error - Lowest restart error, relative to the squared
+#'   Frobenius norm of the input.
+#'   \item median_error - Median restart error, same scale.
+#'   \item consensus_failed - Did the density filter leave fewer than `k`
+#'   components.
+#'   \item n_dropped - Number of pooled components removed.
+#'   \item n_empty_clusters - Number of clusters left with no members.
+#'   \item n_converged - Restarts that met the HALS tolerance.
+#' }
+#'
+#' @references Kotliar et al., eLife, 2019
+#'
+#' @export
+#'
+#' @keywords internal
+rs_nmf_k_sweep_sc <- function(f_path_gene, gene_indices, cell_indices, k_range, preprocessing, use_second_layer, nmf_hals_params, nmf_consensus_params, n_runs, seed, verbose) .Call(wrap__rs_nmf_k_sweep_sc, f_path_gene, gene_indices, cell_indices, k_range, preprocessing, use_second_layer, nmf_hals_params, nmf_consensus_params, n_runs, seed, verbose)
 
 #' Generate the ligand to target influence matrices
 #'
@@ -4822,6 +5011,8 @@ rs_mc_hotspot_gene_cor <- function(sparse_data, embd, knn_data, hotspot_params, 
 #' @returns A list with `w`, `h`, `final_loss`, `n_iter`, `converged`.
 #'
 #' @export
+#'
+#' @keywords internal
 rs_nmf_single_mc <- function(sparse_data, k, preprocessing, use_second_layer, nmf_hals_params, seed, verbose) .Call(wrap__rs_nmf_single_mc, sparse_data, k, preprocessing, use_second_layer, nmf_hals_params, seed, verbose)
 
 #' Run multiple NMF (HALS) restarts on MetaCells
@@ -4846,7 +5037,103 @@ rs_nmf_single_mc <- function(sparse_data, k, preprocessing, use_second_layer, nm
 #' `best_idx` (1-indexed).
 #'
 #' @export
+#'
+#' @keywords internal
 rs_nmf_multi_mc <- function(sparse_data, k, preprocessing, use_second_layer, nmf_hals_params, n_runs, seed, verbose) .Call(wrap__rs_nmf_multi_mc, sparse_data, k, preprocessing, use_second_layer, nmf_hals_params, n_runs, seed, verbose)
+
+#' Run consensus NMF on MetaCells
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Runs `n_runs` HALS NMF restarts, pools their components, drops unstable
+#' ones by local density, k-means clusters the survivors and refits the
+#' partner factor against the per-cluster median. Assumes that the sparse data
+#' is pre-filtered for the cells/genes you wish to include. Indices in the
+#' sparse data need to be 0-indexed.
+#'
+#' @param sparse_data A named list with `data`, `indptr`, `indices`, `nrow`,
+#' `ncol` and `format`.
+#' @param k Integer. Number of latent factors. Must be at least 2.
+#' @param preprocessing String. One of `c("none", "sd", "sqrt_sd")`.
+#' @param use_second_layer Boolean. If `TRUE`, runs NMF on normalised counts.
+#' @param nmf_hals_params Named list. Contains the NMF parameters. The
+#' `nmf_init` field is ignored, restarts always use random initialisation.
+#' @param nmf_consensus_params Named list. Contains the consensus parameters.
+#' @param n_runs Integer. Number of restarts. Must be at least 2.
+#' @param seed Integer. Base random seed. Restart `i` uses `seed + i`.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @returns A list with the following items
+#' \itemize{
+#'   \item w - The left factor matrix (n_meta_cells x k)
+#'   \item h - The right factor matrix (k x n_genes)
+#'   \item rel_error - Reconstruction error relative to the squared Frobenius
+#'   norm of the input. Not comparable with the absolute `final_loss` the
+#'   single-run version returns.
+#'   \item rel_run_errors - The same, per restart.
+#'   \item labels - Integer vector of length `k * n_runs`. Cluster each pooled
+#'   component landed in, `NA` if it was dropped.
+#'   \item local_density - Mean cosine distance to the nearest neighbours per
+#'   pooled component.
+#'   \item kept - 1-indexed positions of the surviving pooled components.
+#'   \item silhouette - Silhouette per survivor, aligned with `kept`.
+#'   \item stability - Mean silhouette over the survivors.
+#'   \item cluster_sizes - Number of survivors per cluster.
+#'   \item n_dropped - Number of pooled components removed.
+#'   \item n_empty_clusters - Number of clusters left with no members.
+#' }
+#'
+#' @references Kotliar et al., eLife, 2019
+#'
+#' @export
+#'
+#' @keywords internal
+rs_nmf_consensus_mc <- function(sparse_data, k, preprocessing, use_second_layer, nmf_hals_params, nmf_consensus_params, n_runs, seed, verbose) .Call(wrap__rs_nmf_consensus_mc, sparse_data, k, preprocessing, use_second_layer, nmf_hals_params, nmf_consensus_params, n_runs, seed, verbose)
+
+#' Sweep k and report consensus stability against reconstruction error
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Returns diagnostics only, no factors, so a wide `k_range` stays cheap in
+#' memory. Pick the k where stability is high and the error curve has not yet
+#' flattened, then call [rs_nmf_consensus_mc()] there. Assumes that the sparse
+#' data is pre-filtered for the cells/genes you wish to include. Indices in the
+#' sparse data need to be 0-indexed.
+#'
+#' @param sparse_data A named list with `data`, `indptr`, `indices`, `nrow`,
+#' `ncol` and `format`.
+#' @param k_range Integer vector. Ranks to evaluate, every entry at least 2.
+#' @param preprocessing String. One of `c("none", "sd", "sqrt_sd")`.
+#' @param use_second_layer Boolean. If `TRUE`, runs NMF on normalised counts.
+#' @param nmf_hals_params Named list. Contains the NMF parameters.
+#' @param nmf_consensus_params Named list. Contains the consensus parameters.
+#' @param n_runs Integer. Number of restarts per k. Must be at least 2.
+#' @param seed Integer. Base random seed.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @returns A list of equal-length vectors, one element per swept k
+#' \itemize{
+#'   \item k - The rank.
+#'   \item stability - Mean silhouette of the consensus clusters. `NaN` where
+#'   the consensus step failed.
+#'   \item best_error - Lowest restart error, relative to the squared
+#'   Frobenius norm of the input.
+#'   \item median_error - Median restart error, same scale.
+#'   \item consensus_failed - Did the density filter leave fewer than `k`
+#'   components.
+#'   \item n_dropped - Number of pooled components removed.
+#'   \item n_empty_clusters - Number of clusters left with no members.
+#'   \item n_converged - Restarts that met the HALS tolerance.
+#' }
+#'
+#' @references Kotliar et al., eLife, 2019
+#'
+#' @export
+#'
+#' @keywords internal
+rs_nmf_k_sweep_mc <- function(sparse_data, k_range, preprocessing, use_second_layer, nmf_hals_params, nmf_consensus_params, n_runs, seed, verbose) .Call(wrap__rs_nmf_k_sweep_mc, sparse_data, k_range, preprocessing, use_second_layer, nmf_hals_params, nmf_consensus_params, n_runs, seed, verbose)
 
 #' Loads in a modality from a 10x h5 file
 #'

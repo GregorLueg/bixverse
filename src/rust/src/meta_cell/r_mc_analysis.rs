@@ -1,6 +1,7 @@
 //! Analysis methods for meta cells specifically. At the moment, it supports
 //! mostly SCENIC.
 
+use bixverse_rs::methods::nmf_hals::consensus::ConsensusParams;
 use bixverse_rs::methods::nmf_hals::HalsOpts;
 use bixverse_rs::prelude::*;
 use bixverse_rs::single_cell::mc_analysis::aucell::calculate_aucell_metacells;
@@ -14,6 +15,7 @@ use extendr_api::*;
 use faer::{Mat, MatRef};
 
 use crate::meta_cell::utils::*;
+use crate::methods::nmf_utils::{consensus_res_to_r_list, k_sweep_to_r_list};
 use crate::single_cell::utils::knn_data_to_rust;
 
 /////////////
@@ -32,6 +34,8 @@ extendr_module! {
     // nmf
     fn rs_nmf_single_mc;
     fn rs_nmf_multi_mc;
+    fn rs_nmf_consensus_mc;
+    fn rs_nmf_k_sweep_mc;
 }
 
 /////////////
@@ -447,6 +451,8 @@ fn rs_mc_hotspot_gene_cor(
 /// @returns A list with `w`, `h`, `final_loss`, `n_iter`, `converged`.
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 #[allow(clippy::too_many_arguments)]
 fn rs_nmf_single_mc(
@@ -502,6 +508,8 @@ fn rs_nmf_single_mc(
 /// `best_idx` (1-indexed).
 ///
 /// @export
+///
+/// @keywords internal
 #[extendr]
 #[allow(clippy::too_many_arguments)]
 fn rs_nmf_multi_mc(
@@ -542,4 +550,163 @@ fn rs_nmf_multi_mc(
         converged = nmf_res.converged,
         best_idx = (nmf_res.best_idx + 1) as i32
     ))
+}
+
+/// Run consensus NMF on MetaCells
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Runs `n_runs` HALS NMF restarts, pools their components, drops unstable
+/// ones by local density, k-means clusters the survivors and refits the
+/// partner factor against the per-cluster median. Assumes that the sparse data
+/// is pre-filtered for the cells/genes you wish to include. Indices in the
+/// sparse data need to be 0-indexed.
+///
+/// @param sparse_data A named list with `data`, `indptr`, `indices`, `nrow`,
+/// `ncol` and `format`.
+/// @param k Integer. Number of latent factors. Must be at least 2.
+/// @param preprocessing String. One of `c("none", "sd", "sqrt_sd")`.
+/// @param use_second_layer Boolean. If `TRUE`, runs NMF on normalised counts.
+/// @param nmf_hals_params Named list. Contains the NMF parameters. The
+/// `nmf_init` field is ignored, restarts always use random initialisation.
+/// @param nmf_consensus_params Named list. Contains the consensus parameters.
+/// @param n_runs Integer. Number of restarts. Must be at least 2.
+/// @param seed Integer. Base random seed. Restart `i` uses `seed + i`.
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
+///
+/// @returns A list with the following items
+/// \itemize{
+///   \item w - The left factor matrix (n_meta_cells x k)
+///   \item h - The right factor matrix (k x n_genes)
+///   \item rel_error - Reconstruction error relative to the squared Frobenius
+///   norm of the input. Not comparable with the absolute `final_loss` the
+///   single-run version returns.
+///   \item rel_run_errors - The same, per restart.
+///   \item labels - Integer vector of length `k * n_runs`. Cluster each pooled
+///   component landed in, `NA` if it was dropped.
+///   \item local_density - Mean cosine distance to the nearest neighbours per
+///   pooled component.
+///   \item kept - 1-indexed positions of the surviving pooled components.
+///   \item silhouette - Silhouette per survivor, aligned with `kept`.
+///   \item stability - Mean silhouette over the survivors.
+///   \item cluster_sizes - Number of survivors per cluster.
+///   \item n_dropped - Number of pooled components removed.
+///   \item n_empty_clusters - Number of clusters left with no members.
+/// }
+///
+/// @references Kotliar et al., eLife, 2019
+///
+/// @export
+///
+/// @keywords internal
+#[extendr]
+#[allow(clippy::too_many_arguments)]
+fn rs_nmf_consensus_mc(
+    sparse_data: List,
+    k: usize,
+    preprocessing: &str,
+    use_second_layer: bool,
+    nmf_hals_params: List,
+    nmf_consensus_params: List,
+    n_runs: usize,
+    seed: usize,
+    verbose: usize,
+) -> Result<List> {
+    let sparse: CompressedSparseData2<f64, f64> =
+        list_to_sparse_matrix(sparse_data, true).to_extendr()?;
+    let sparse = cast_compressed_sparse_data_f32(sparse);
+    let nmf_hals_opt: HalsOpts<f32> = HalsOpts::from_r_list(nmf_hals_params, seed).to_extendr()?;
+    let consensus_opt: ConsensusParams<f32> = ConsensusParams::from_r_list(nmf_consensus_params)?;
+    let nmf_res = nmf_consensus_run_mc(
+        sparse,
+        k,
+        preprocessing,
+        use_second_layer,
+        Some(nmf_hals_opt),
+        Some(consensus_opt),
+        n_runs,
+        seed,
+        verbose,
+    )
+    .to_extendr()?;
+
+    Ok(consensus_res_to_r_list(&nmf_res))
+}
+
+/// Sweep k and report consensus stability against reconstruction error
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Returns diagnostics only, no factors, so a wide `k_range` stays cheap in
+/// memory. Pick the k where stability is high and the error curve has not yet
+/// flattened, then call [rs_nmf_consensus_mc()] there. Assumes that the sparse
+/// data is pre-filtered for the cells/genes you wish to include. Indices in the
+/// sparse data need to be 0-indexed.
+///
+/// @param sparse_data A named list with `data`, `indptr`, `indices`, `nrow`,
+/// `ncol` and `format`.
+/// @param k_range Integer vector. Ranks to evaluate, every entry at least 2.
+/// @param preprocessing String. One of `c("none", "sd", "sqrt_sd")`.
+/// @param use_second_layer Boolean. If `TRUE`, runs NMF on normalised counts.
+/// @param nmf_hals_params Named list. Contains the NMF parameters.
+/// @param nmf_consensus_params Named list. Contains the consensus parameters.
+/// @param n_runs Integer. Number of restarts per k. Must be at least 2.
+/// @param seed Integer. Base random seed.
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
+///
+/// @returns A list of equal-length vectors, one element per swept k
+/// \itemize{
+///   \item k - The rank.
+///   \item stability - Mean silhouette of the consensus clusters. `NaN` where
+///   the consensus step failed.
+///   \item best_error - Lowest restart error, relative to the squared
+///   Frobenius norm of the input.
+///   \item median_error - Median restart error, same scale.
+///   \item consensus_failed - Did the density filter leave fewer than `k`
+///   components.
+///   \item n_dropped - Number of pooled components removed.
+///   \item n_empty_clusters - Number of clusters left with no members.
+///   \item n_converged - Restarts that met the HALS tolerance.
+/// }
+///
+/// @references Kotliar et al., eLife, 2019
+///
+/// @export
+///
+/// @keywords internal
+#[extendr]
+#[allow(clippy::too_many_arguments)]
+fn rs_nmf_k_sweep_mc(
+    sparse_data: List,
+    k_range: &[i32],
+    preprocessing: &str,
+    use_second_layer: bool,
+    nmf_hals_params: List,
+    nmf_consensus_params: List,
+    n_runs: usize,
+    seed: usize,
+    verbose: usize,
+) -> Result<List> {
+    let sparse: CompressedSparseData2<f64, f64> =
+        list_to_sparse_matrix(sparse_data, true).to_extendr()?;
+    let sparse = cast_compressed_sparse_data_f32(sparse);
+    let k_range = k_range.r_int_convert();
+    let nmf_hals_opt: HalsOpts<f32> = HalsOpts::from_r_list(nmf_hals_params, seed).to_extendr()?;
+    let consensus_opt: ConsensusParams<f32> = ConsensusParams::from_r_list(nmf_consensus_params)?;
+    let sweep_res = nmf_k_sweep_run_mc(
+        sparse,
+        &k_range,
+        preprocessing,
+        use_second_layer,
+        Some(nmf_hals_opt),
+        Some(consensus_opt),
+        n_runs,
+        seed,
+        verbose,
+    )
+    .to_extendr()?;
+
+    Ok(k_sweep_to_r_list(&sweep_res))
 }

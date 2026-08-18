@@ -858,6 +858,72 @@ checkNmfHals <- function(x) {
 #' @keywords internal
 assertNmfHals <- checkmate::makeAssertionFunction(checkNmfHals)
 
+### nmf (consensus) ------------------------------------------------------------
+
+#' Check consensus NMF parameters
+#'
+#' @description Checkmate extension for checking the consensus NMF parameters.
+#'
+#' @param x The list to check/assert
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
+checkNmfConsensus <- function(x) {
+  res <- check_list_shape(
+    x,
+    c(
+      "consensus_target",
+      "n_neighbours",
+      "density_threshold",
+      "kmeans_iters",
+      "kmeans_n_init"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- apply_qtest_rules(
+    x,
+    list(
+      n_neighbours = "I1[0,)",
+      density_threshold = "N1[0,2]",
+      kmeans_iters = "I1[1,)",
+      kmeans_n_init = "I1[1,)"
+    ),
+    label = "NMF consensus params",
+    hint = paste(
+      "n_neighbours must be a non-negative integer (0 = auto);",
+      "density_threshold must be a numeric in [0, 2] (>= 2 disables the",
+      "filter); kmeans_iters and kmeans_n_init must be positive integers."
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  apply_choice_rules(
+    x,
+    list(consensus_target = c("h", "w")),
+    label = "NMF consensus params"
+  )
+}
+
+#' Assert consensus NMF parameters
+#'
+#' @description Checkmate extension for asserting the consensus NMF parameters.
+#'
+#' @inheritParams checkNmfConsensus
+#'
+#' @param .var.name Name of the checked object to print in assertions.
+#' @param add Collection to store assertion messages.
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
+assertNmfConsensus <- checkmate::makeAssertionFunction(checkNmfConsensus)
+
 ### snf ------------------------------------------------------------------------
 
 #' Check SNF parameters

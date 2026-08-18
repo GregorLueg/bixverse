@@ -1083,3 +1083,145 @@ S7::method(stabilised_nmf_sc, SingleCells) <- function(
     params = params
   )
 }
+
+#' @method consensus_nmf_sc SingleCells
+#'
+#' @export
+S7::method(consensus_nmf_sc, SingleCells) <- function(
+  object,
+  k,
+  cell_ids = NULL,
+  gene_ids = NULL,
+  preprocessing = "none",
+  use_second_layer = TRUE,
+  nmf_hals_params = params_nmf_hals(),
+  nmf_consensus_params = params_nmf_consensus(),
+  n_runs = 30L,
+  seed = 42L,
+  .verbose = TRUE
+) {
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  checkmate::qassert(k, "I1[2,)")
+  checkmate::qassert(cell_ids, c("0", "S+"))
+  checkmate::qassert(gene_ids, c("0", "S+"))
+  checkmate::assertChoice(preprocessing, c("none", "sd", "sqrt_sd"))
+  checkmate::qassert(use_second_layer, "B1")
+  assertNmfHals(nmf_hals_params)
+  assertNmfConsensus(nmf_consensus_params)
+  checkmate::qassert(n_runs, "I1[2,)")
+  checkmate::qassert(seed, "I1")
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
+
+  sel <- .resolve_sc_nmf_selection(object, cell_ids, gene_ids)
+
+  .warn_consensus_target_w(
+    nmf_consensus_params,
+    n_samples = length(sel$cell_indices),
+    k = k,
+    n_runs = n_runs
+  )
+
+  nmf_res <- .run_consensus_nmf(
+    .rs_call = rs_nmf_consensus_sc,
+    nmf_consensus_params = nmf_consensus_params,
+    seed = seed,
+    f_path_gene = get_rust_count_gene_f_path(object),
+    gene_indices = sel$gene_indices,
+    cell_indices = sel$cell_indices,
+    k = k,
+    preprocessing = preprocessing,
+    use_second_layer = use_second_layer,
+    nmf_hals_params = nmf_hals_params,
+    n_runs = n_runs,
+    verbose = parse_verbosity(.verbose)
+  )
+
+  params <- c(
+    nmf_hals_params,
+    list(
+      k = k,
+      preprocessing = preprocessing,
+      use_second_layer = use_second_layer,
+      nmf_consensus_params = nmf_consensus_params,
+      n_runs = n_runs,
+      seed = seed
+    )
+  )
+
+  new_consensus_nmf_result(
+    nmf_res = nmf_res,
+    gene_ids = sel$gene_ids,
+    cell_ids = sel$cell_ids,
+    cell_indices = sel$cell_indices,
+    source_class = "SingleCells",
+    params = params
+  )
+}
+
+#' @method nmf_k_sweep_sc SingleCells
+#'
+#' @export
+S7::method(nmf_k_sweep_sc, SingleCells) <- function(
+  object,
+  k_range,
+  cell_ids = NULL,
+  gene_ids = NULL,
+  preprocessing = "none",
+  use_second_layer = TRUE,
+  nmf_hals_params = params_nmf_hals(),
+  nmf_consensus_params = params_nmf_consensus(),
+  n_runs = 30L,
+  seed = 42L,
+  .verbose = TRUE
+) {
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  k_range <- .assert_nmf_k_range(k_range)
+  checkmate::qassert(cell_ids, c("0", "S+"))
+  checkmate::qassert(gene_ids, c("0", "S+"))
+  checkmate::assertChoice(preprocessing, c("none", "sd", "sqrt_sd"))
+  checkmate::qassert(use_second_layer, "B1")
+  assertNmfHals(nmf_hals_params)
+  assertNmfConsensus(nmf_consensus_params)
+  checkmate::qassert(n_runs, "I1[2,)")
+  checkmate::qassert(seed, "I1")
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
+
+  sel <- .resolve_sc_nmf_selection(object, cell_ids, gene_ids)
+
+  .warn_consensus_target_w(
+    nmf_consensus_params,
+    n_samples = length(sel$cell_indices),
+    k = max(k_range),
+    n_runs = n_runs
+  )
+
+  sweep_res <- rs_nmf_k_sweep_sc(
+    f_path_gene = get_rust_count_gene_f_path(object),
+    gene_indices = sel$gene_indices,
+    cell_indices = sel$cell_indices,
+    k_range = k_range,
+    preprocessing = preprocessing,
+    use_second_layer = use_second_layer,
+    nmf_hals_params = nmf_hals_params,
+    nmf_consensus_params = .inject_consensus_seed(nmf_consensus_params, seed),
+    n_runs = n_runs,
+    seed = seed,
+    verbose = parse_verbosity(.verbose)
+  )
+
+  new_nmf_k_sweep_result(
+    sweep_res = sweep_res,
+    source_class = "SingleCells",
+    params = c(
+      nmf_hals_params,
+      list(
+        k_range = k_range,
+        preprocessing = preprocessing,
+        use_second_layer = use_second_layer,
+        nmf_consensus_params = nmf_consensus_params,
+        n_runs = n_runs,
+        seed = seed
+      )
+    )
+  )
+}

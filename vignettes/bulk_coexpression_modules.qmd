@@ -34,7 +34,9 @@ together across samples. `bixverse` ships five approaches for this on a shared
   regularised by feature- and sample-side Laplacians.
 - **NMF (HALS)** — non-negative matrix factorisation with hierarchical
   alternating least squares. Non-negative loadings give a natural
-  "parts-based" module interpretation and per-sample module activity.
+  "parts-based" module interpretation and per-sample module activity. Comes in
+  three flavours: one run, best-of-many restarts, or consensus across restarts
+  (cNMF), which also hands you a way to choose `k`.
 
 One structural difference matters throughout. CoReMo and Leiden partition genes:
 one gene, one module. The three factorisation methods do not, and should not. A
@@ -492,6 +494,91 @@ stab <- get_nmf_stability(coexp_nmf_stab)
 stab
 ```
 
+### Consensus NMF
+
+`stabilised_nmf_bulk()` picks the restart with the lowest loss, which tells you
+nothing about whether that restart is reproducible. Consensus NMF asks the
+better question: pool the components of every restart, throw away the ones that
+sit on their own, cluster what is left into `k` groups, and take the median of
+each group as the answer. What survives is the structure the restarts agree on.
+That agreement gets a number, the mean silhouette of those clusters, and it is
+the honest way to judge whether `k` is right.
+
+Which brings us to picking `k`. `nmf_k_sweep_bulk()` runs the whole thing across
+a range and reports stability against reconstruction error, no factors kept, so
+it stays cheap.
+
+```{r}
+#| label: nmf-k-sweep
+k_sweep <- nmf_k_sweep_bulk(
+  coexp_nmf,
+  k_range = 2:8,
+  n_runs = 10L,
+  preprocessing = "none",
+  nmf_hals_params = params_nmf_hals(max_iter = 200L, tol = 1e-3),
+  nmf_consensus_params = params_nmf_consensus(density_threshold = 2),
+  seed = 42L,
+  .verbose = FALSE
+)
+
+k_sweep
+```
+
+```{r}
+#| label: nmf-k-sweep-plot
+#| fig-cap: "Consensus NMF k sweep: stability against reconstruction error."
+plot(k_sweep)
+```
+
+Error falls monotonically with `k`, so on its own it would push you to the
+largest `k` you can afford. Stability is the counterweight. You want the last
+`k` before it drops off, where the error curve is still coming down.
+
+::: {.callout-note}
+`density_threshold = 2` switches the outlier filter off, because cosine distance
+cannot exceed 2. With the filter live, components whose neighbours sit far away
+get dropped, and if that leaves fewer than `k` of them the fit errors rather
+than handing back something degenerate. That is the right behaviour on real
+data, but with only 10 restarts on a small synthetic matrix it fires more often
+than it should. Plot `local_density` from `get_nmf_stability()` to pick a real
+threshold for your data.
+:::
+
+Now fit at the chosen `k`:
+
+```{r}
+#| label: nmf-consensus
+coexp_nmf_consensus <- consensus_nmf_bulk(
+  coexp_nmf,
+  k = 4L,
+  n_runs = 10L,
+  preprocessing = "none",
+  nmf_hals_params = params_nmf_hals(max_iter = 300L, tol = 1e-4),
+  nmf_consensus_params = params_nmf_consensus(density_threshold = 2),
+  seed = 42L,
+  .verbose = FALSE
+)
+
+consensus_stab <- get_nmf_stability(coexp_nmf_consensus)
+consensus_stab$stability
+consensus_stab$cluster_sizes
+```
+
+The per-component table shows where every restart's components ended up.
+`component_id` uses the same `run_XX.comp_YY` naming as the `w_all` columns of
+a stabilised fit, so at matching `k` and `n_runs` the two line up directly.
+
+```{r}
+#| label: nmf-consensus-clusters
+head(consensus_stab$clusters)
+```
+
+```{r}
+#| label: nmf-consensus-modules
+nmf_consensus_modules <- get_nmf_modules(coexp_nmf_consensus)
+nmf_consensus_modules[, .N, by = module_id]
+```
+
 ## Recovery of planted modules
 
 With ground truth in hand we can quantify how well each method recovered the
@@ -516,7 +603,7 @@ best_jaccard_vs <- function(assignments, truth_dt) {
 }
 
 recovery <- data.table(
-  method = c("CoReMo", "Leiden", "ICA", "DGRDL", "NMF"),
+  method = c("CoReMo", "Leiden", "ICA", "DGRDL", "NMF", "Consensus NMF"),
   score = c(
     mean(best_jaccard_vs(
       coremo_modules[, .(gene, module_id = cluster_id)],
@@ -525,7 +612,8 @@ recovery <- data.table(
     mean(best_jaccard_vs(leiden_modules, truth)),
     mean(best_jaccard_vs(ica_modules, truth)),
     mean(best_jaccard_vs(dgrdl_modules, truth)),
-    mean(best_jaccard_vs(nmf_modules, truth))
+    mean(best_jaccard_vs(nmf_modules, truth)),
+    mean(best_jaccard_vs(nmf_consensus_modules, truth))
   )
 )
 
@@ -544,6 +632,17 @@ ggplot(recovery, aes(x = reorder(method, score), y = score)) +
   xlab("") +
   ylab("Mean best Jaccard vs. planted modules")
 ```
+
+Worth being blunt about one result there: consensus NMF scores *below* plain
+NMF. That is not a bug, and it is not an argument against consensus NMF. Two
+things are going on. This data was generated with `hub_modular`, a Normal
+latent factor, so there is no non-negative ground truth for NMF to reach in the
+first place, and both NMF variants are fighting the data. On top of that,
+consensus optimises for reproducibility, not recall: the median across restarts
+is deliberately conservative, and the components it keeps are the ones every
+restart found rather than the ones that happen to match a planted module best
+on one lucky seed. A recall number on simulated data rewards the lucky seed.
+Real data does not.
 
 ## Scoring against the latent factors
 

@@ -4,6 +4,7 @@
 \alias{get_h}
 \alias{get_h.NmfResult}
 \alias{get_h.StabilisedNmfResult}
+\alias{get_h.ConsensusNmfResult}
 \title{Get the H (cell activations) matrix}
 \usage{
 get_h(x)
@@ -11,6 +12,8 @@ get_h(x)
 \method{get_h}{NmfResult}(x)
 
 \method{get_h}{StabilisedNmfResult}(x)
+
+\method{get_h}{ConsensusNmfResult}(x)
 }
 \arguments{
 \item{x}{An object holding NMF results.}

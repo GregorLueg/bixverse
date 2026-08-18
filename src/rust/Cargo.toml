@@ -1,5 +1,5 @@
 [package]
-version = '0.4.9'
+version = '0.4.10'
 name = 'bixverse'
 publish = false
 edition = '2021'
@@ -26,7 +26,7 @@ codegen-units = 4
 strip = true
 
 [dependencies]
-bixverse-rs = { version = "0.4.4", features = [ "single-cell", "multi-modal", ] }
+bixverse-rs = { version = "0.4.5", features = [ "single-cell", "multi-modal", ] }
 extendr-api = "0.9.0"
 either = "1.15.0"
 faer = { version = '0.23.2' }
@@ -40,3 +40,9 @@ thousands = "*"
 [[bin]]
 name = "document"
 path = "document.rs"
+
+# TEMPORARY: bixverse-rs 0.4.5 is not on crates.io yet. Strip this block and
+# `cargo update -p bixverse-rs` once the crate is published, otherwise CI cannot
+# resolve the dependency.
+[patch.crates-io]
+bixverse-rs = { path = "../../../../../../bixverse-rs" }
