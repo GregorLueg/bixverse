@@ -2,31 +2,18 @@
 
 ## Features
 
-### Consensus NMF
-
-Consensus NMF (cNMF, Kotliar et al., eLife, 2019) is now wired up for bulk,
-single cells and meta cells. Rather than picking the restart with the lowest
-loss, it pools the components of every restart, drops the unstable ones by
-local density, clusters the survivors and takes the per-cluster median. What
-comes out is the structure the restarts agree on, and how strongly they agreed
-is reported as the mean silhouette of those clusters.
-
-* `consensus_nmf_bulk()` on `BulkCoExp` and `consensus_nmf_sc()` on
-  `SingleCells` and `MetaCells`.
-* `nmf_k_sweep_bulk()` and `nmf_k_sweep_sc()` sweep a range of `k` and report
-  stability against reconstruction error, so choosing `k` stops being a guess.
-  Both return an `NmfKSweepResult` with a `plot()` method.
-* `params_nmf_consensus()` plus the matching checkmate assertions.
-* New `ConsensusNmfResult` class with `get_w()`, `get_h()`, `get_data()` and a
-  new `get_stability()` generic for the clustering diagnostics.
-* `get_nmf_stability()` on `BulkCoExp` now covers consensus fits as well as
-  stabilised ones.
-
-## Fixes
-
-* The `rs_nmf_single_sc()` and `rs_nmf_multi_sc()` documentation had the factor
-  shapes the wrong way round. On the single cell path `W` is cells x k and `H`
-  is k x genes, not the other way about.
+* Consensus NMF implemented:
+  - `consensus_nmf_bulk()` on `BulkCoExp` and `consensus_nmf_sc()` on
+    `SingleCells` and `MetaCells`.
+  - `nmf_k_sweep_bulk()` and `nmf_k_sweep_sc()` sweep a range of `k` and report
+    stability against reconstruction error, so choosing `k` stops being a guess.
+    Both return an `NmfKSweepResult` with a `plot()` method.
+  - `params_nmf_consensus()` plus the matching checkmate assertions.
+  - New `ConsensusNmfResult` class with `get_w()`, `get_h()`, `get_data()` and a
+    new `get_stability()` generic for the clustering diagnostics.
+  - `get_nmf_stability()` on `BulkCoExp` now covers consensus fits as well as
+    stabilised ones.
+* Agent skills implemented: `install_agent_skill()` installs an agent skill.
 
 # bixverse 0.4.9
 

@@ -45,4 +45,4 @@ path = "document.rs"
 # `cargo update -p bixverse-rs` once the crate is published, otherwise CI cannot
 # resolve the dependency.
 [patch.crates-io]
-bixverse-rs = { path = "../../../../../../bixverse-rs" }
+bixverse-rs = { path = "/Users/gregorlueg/repos/shared/bixverse-rs" }

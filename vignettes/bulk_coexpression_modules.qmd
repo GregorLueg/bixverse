@@ -518,7 +518,7 @@ k_sweep <- nmf_k_sweep_bulk(
   nmf_hals_params = params_nmf_hals(max_iter = 200L, tol = 1e-3),
   nmf_consensus_params = params_nmf_consensus(density_threshold = 2),
   seed = 42L,
-  .verbose = FALSE
+  .verbose = TRUE
 )
 
 k_sweep
