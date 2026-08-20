@@ -779,6 +779,8 @@ reference:
       - rs_mc_hvg
       - rs_mc_pca
       - rs_mc_scenic
+      - rs_mc_vision
+      - rs_mc_vision_with_autocorrelation
       - rs_mitch_calc
       - rs_mutual_info
       - rs_onto_semantic_sim

@@ -39,6 +39,144 @@ S7::method(aucell_sc, MetaCells) <- function(
   return(auc_res)
 }
 
+## vision ----------------------------------------------------------------------
+
+### calculate the scores -------------------------------------------------------
+
+# generics found in base_generics_sc.R
+
+#' @method vision_sc MetaCells
+#'
+#' @export
+S7::method(vision_sc, MetaCells) <- function(
+  object,
+  gs_list,
+  streaming = NULL,
+  .verbose = TRUE
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(object, MetaCells))
+  checkmate::assertList(gs_list, types = "list", names = "named")
+  checkmate::qassert(streaming, c("B1", "0"))
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
+
+  vision_gs_clean <- purrr::map(gs_list, \(ls) {
+    lapply(ls, FUN = get_gene_indices, x = object, rust_index = TRUE)
+  })
+
+  # VISION scores the normalised counts; `"raw"` here would score the raw ones
+  # without complaining
+  vision_res <- rs_mc_vision(
+    sparse_data = mc_counts_to_list(object, assay = "norm"),
+    gs_list = vision_gs_clean,
+    verbose = parse_verbosity(.verbose)
+  )
+
+  colnames(vision_res) <- names(gs_list)
+  rownames(vision_res) <- S7::prop(object, "obs_table")$meta_cell_id
+
+  return(vision_res)
+}
+
+### vision with auto-correlation -----------------------------------------------
+
+# generics found in base_generics_sc.R
+
+#' @method vision_w_autocor_sc MetaCells
+#'
+#' @export
+S7::method(vision_w_autocor_sc, MetaCells) <- function(
+  object,
+  gs_list,
+  embd_to_use,
+  no_embd_to_use = NULL,
+  use_knn = TRUE,
+  vision_params = params_sc_vision(),
+  streaming = NULL,
+  random_seed = 42L,
+  .verbose = TRUE
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(object, MetaCells))
+  checkmate::assertList(gs_list, types = "list", names = "named")
+  checkmate::qassert(embd_to_use, "S1")
+  checkmate::qassert(no_embd_to_use, c("I1", "0"))
+  checkmate::qassert(use_knn, "B1")
+  assertScVision(vision_params)
+  checkmate::qassert(streaming, c("B1", "0"))
+  checkmate::qassert(random_seed, "I1")
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
+
+  # scores cover every meta cell and every gene, so only the embedding and the
+  # kNN are taken off the prep
+  prepped <- .prep_mc_embd_knn(
+    object = object,
+    embd_to_use = embd_to_use,
+    use_knn = use_knn,
+    no_embd_to_use = no_embd_to_use,
+    cells_to_take = NULL,
+    genes_to_take = NULL
+  )
+
+  vision_gs_clean <- purrr::map(gs_list, \(ls) {
+    lapply(ls, FUN = get_gene_indices, x = object, rust_index = TRUE)
+  })
+
+  if (.verbose) {
+    message(sprintf(
+      "Generating %i random gene set clusters with a total of %s permutations.",
+      vision_params$n_cluster,
+      vision_params$n_perm
+    ))
+  }
+
+  c(random_gs, cluster_membership) %<-%
+    with(
+      vision_params,
+      .generate_null_perm_gs(
+        gs_list = gs_list,
+        expr_genes = S7::prop(object, "var_table")$gene_id,
+        n_perm = n_perm,
+        n_comp = n_cluster,
+        random_seed = random_seed
+      )
+    )
+
+  random_gs_clean <- purrr::map(random_gs, \(rs) {
+    lapply(
+      rs,
+      FUN = function(ls) {
+        lapply(ls, FUN = get_gene_indices, x = object, rust_index = TRUE)
+      }
+    )
+  })
+
+  vision_res <- rs_mc_vision_with_autocorrelation(
+    sparse_data = mc_counts_to_list(object, assay = "norm"),
+    embd = prepped$embd,
+    knn_data = prepped$knn_data,
+    gs_list = vision_gs_clean,
+    random_gs_list = random_gs_clean,
+    vision_params = vision_params,
+    cluster_membership = as.integer(cluster_membership),
+    verbose = parse_verbosity(.verbose),
+    seed = random_seed
+  )
+
+  auto_cor_dt <- data.table::as.data.table(vision_res$autocor_res)[,
+    gene_set_name := names(vision_gs_clean)
+  ][, c("gene_set_name", "auto_cor", "p_val", "fdr"), with = FALSE]
+
+  vision_matrix <- vision_res$vision_mat
+
+  colnames(vision_matrix) <- names(gs_list)
+  rownames(vision_matrix) <- S7::prop(object, "obs_table")$meta_cell_id
+
+  result <- list(vision_matrix = vision_matrix, auto_cor_dt = auto_cor_dt)
+
+  return(result)
+}
+
 ## hotspot ---------------------------------------------------------------------
 
 ### auto-correlation -----------------------------------------------------------
@@ -73,7 +211,7 @@ S7::method(hotspot_autocor_sc, MetaCells) <- function(
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   c(embd, cells_to_take, genes_to_take, knn_data) %<-%
-    .prep_mc_hotspot(
+    .prep_mc_embd_knn(
       object = object,
       embd_to_use = embd_to_use,
       use_knn = use_knn,
@@ -143,7 +281,7 @@ S7::method(hotspot_gene_cor_sc, MetaCells) <- function(
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   c(embd, cells_to_take, genes_to_take, knn_data) %<-%
-    .prep_mc_hotspot(
+    .prep_mc_embd_knn(
       object = object,
       embd_to_use = embd_to_use,
       use_knn = use_knn,

@@ -187,7 +187,8 @@ The important structural difference: unlike `SingleCells`, a `MetaCells` object
 **holds its counts in memory**, with plain data.tables for obs and var and no
 DuckDB. It shares `ScCache` and dispatches through the `ScOrMc` S7 union, so the
 familiar generics work on it directly: `find_hvg_sc()`, `calculate_pca_sc()`,
-`find_neighbours_sc()`, `find_clusters_sc()`, `umap_sc()`, `aucell_sc()`.
+`find_neighbours_sc()`, `find_clusters_sc()`, `umap_sc()`, `aucell_sc()`,
+`vision_sc()`, `vision_w_autocor_sc()`.
 `find_hvg_sc()` ignores `streaming` there and `calculate_pca_sc()` ignores
 `sparse_svd`, since neither applies to an in-memory object.
 

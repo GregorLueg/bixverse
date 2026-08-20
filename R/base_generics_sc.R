@@ -1598,3 +1598,110 @@ hotspot_gene_cor_sc <- S7::new_generic(
     S7::S7_dispatch()
   }
 )
+
+#### vision -------------------------------------------------------------------
+
+#' Calculate VISION scores
+#'
+#' @description
+#' Calculates an VISION-type scores for pathways based on DeTomaso, et al.
+#' Compared to other score types, you can also calculate delta-type scores
+#' between positive and negative gene indices, think epithelial vs mesenchymal
+#' gene signature, etc.
+#'
+#' @param object `SingleCells`, `MetaCells` (or potentially other) class.
+#' @param gs_list Named nested list. The elements have the gene identifiers of
+#' the respective gene sets and have the option to have a `"pos"` and `"neg"`
+#' gene sets. The names need to be part of the variables of the object.
+#' @param streaming Optional Boolean. Shall the data be streamed in. Useful for
+#' larger data sets where you wish to avoid loading in the whole data. If
+#' `NULL`, will automatically detect. Ignored when applied to `MetaCells`.
+#' @param .verbose Boolean or integer. Controls verbosity and returns run times.
+#' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
+#' verbosity.
+#'
+#' @returns The VISION scores in form of a matrix that is cells x gene sets
+#' or as `ScMatrixRes` pending the input.
+#'
+#' @references DeTomaso, et al., Nat. Commun., 2019
+#'
+#' @export
+vision_sc <- S7::new_generic(
+  name = "vision_sc",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    gs_list,
+    streaming = NULL,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' Calculate VISION scores (with auto-correlation scores)
+#'
+#' @description
+#' Calculates VISION-type scores for pathways based on DeTomaso, et al.
+#' Compared to other score types, you can also calculate delta-type scores
+#' between positive and negative gene indices, think epithelial vs mesenchymal
+#' gene signature, etc. Additionally, this function also calculates the auto-
+#' correlation values, answering the question if a given signature shows non-
+#' random enrichment on the kNN graph. The kNN graph (and distance measures)
+#' will be generated on-the-fly based on the embedding you wish to use.
+#'
+#' @param object `SingleCells`, `MetaCells` (or potentially other) class.
+#' @param gs_list Named nested list. The elements have the gene identifiers of
+#' the respective gene sets and have the option to have a `"pos"` and `"neg"`
+#' gene sets. The names need to be part of the variables of the object.
+#' @param vision_params List with vision parameters, see
+#' [bixverse::params_sc_vision()] with the following elements:
+#' \itemize{
+#'   \item n_perm - Integer. Number of random permutations
+#'   \item n_cluster - Integer. Number of random clusters to generate to
+#'   associate each set with.
+#'   \item knn - List of kNN parameters. See [bixverse::params_knn_defaults()]
+#'   for available parameters and their defaults.
+#' }
+#' @param embd_to_use String. The embedding to use. Whichever you chose, it
+#' needs to be part of the object.
+#' @param no_embd_to_use Optional integer. Number of embedding dimensions to
+#' use. If `NULL` all will be used.
+#' @param use_knn Boolean. Shall the internal kNN be used. If set to yes, you
+#' need to ensure consistency.
+#' @param random_seed Integer. The random seed.
+#' @param streaming Optional Boolean. Shall the data be streamed in. Useful for
+#' larger data sets where you wish to avoid loading in the whole data. If
+#' `NULL`, will automatically detect. Ignored when applied to `MetaCells`.
+#' @param .verbose Boolean or integer. Controls verbosity and returns run times.
+#' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
+#' verbosity.
+#'
+#' @return A list with the following elements:
+#' \itemize{
+#'   \item vision_matrix - Matrix of cells x signatures with the VISION
+#'   pathway scores as values.
+#'   \item auto_cor_dt - data.table with the auto-correlation results per
+#'   gene set, i.e., `auto_cor` (1 - Gaery's C), `p_val` and `fdr`.
+#' }
+#'
+#' @references DeTomaso, et al., Nat. Commun., 2019
+#'
+#' @export
+vision_w_autocor_sc <- S7::new_generic(
+  name = "vision_w_autocor_sc",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    gs_list,
+    embd_to_use,
+    no_embd_to_use = NULL,
+    use_knn = TRUE,
+    vision_params = params_sc_vision(),
+    streaming = NULL,
+    random_seed = 42L,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)

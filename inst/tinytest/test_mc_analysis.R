@@ -443,6 +443,163 @@ expect_true(
   info = "mc aucell standardise - the gene set columns are z-scored"
 )
 
+## vision ----------------------------------------------------------------------
+
+set.seed(42L)
+
+mc_genes <- S7::prop(mc_object, "var_table")$gene_id
+
+vision_gs <- list(
+  gs_1 = list(
+    pos = sprintf("gene_%03d", 1:10),
+    neg = sprintf("gene_%03d", 11:30)
+  ),
+  gs_2 = list(
+    pos = sprintf("gene_%03d", 11:20),
+    neg = sprintf("gene_%03d", c(1:10, 21:40))
+  ),
+  gs_3 = list(
+    pos = sprintf("gene_%03d", 21:30)
+  ),
+  gs_4 = list(
+    pos = sample(mc_genes[30:80], 11),
+    neg = sample(mc_genes[30:80], 9)
+  ),
+  gs_5 = list(
+    pos = sample(mc_genes[30:80], 6),
+    neg = sample(mc_genes[30:80], 14)
+  ),
+  gs_6 = list(
+    pos = sample(mc_genes[30:80], 2),
+    neg = sample(mc_genes[30:80], 8)
+  )
+)
+
+vision_gs <- lapply(vision_gs, function(gs) {
+  lapply(gs, intersect, mc_genes)
+})
+
+expect_error(
+  current = suppressWarnings(vision_sc(
+    object = mc_object,
+    gs_list = list(markers = list(pos = sample(letters, 10))),
+    .verbose = FALSE
+  )),
+  info = "mc vision - error when no gene set entries match"
+)
+
+expect_error(
+  current = vision_sc(
+    object = mc_object,
+    gs_list = list(markers = sprintf("gene_%03d", 1:10)),
+    .verbose = FALSE
+  ),
+  info = "mc vision - error when the gene sets are not nested lists"
+)
+
+vision_res <- vision_sc(
+  object = mc_object,
+  gs_list = vision_gs,
+  .verbose = FALSE
+)
+
+expect_true(
+  current = checkmate::testMatrix(
+    vision_res,
+    mode = "numeric",
+    nrows = target_n_metacells,
+    ncols = length(vision_gs),
+    row.names = "named",
+    col.names = "named"
+  ),
+  info = "mc vision - correct matrix shape and naming"
+)
+
+expect_true(
+  current = sign(mean(vision_res[, "gs_1"])) == -1,
+  info = "mc vision - delta gene set v1 has negative avg scores"
+)
+
+expect_true(
+  current = sign(mean(vision_res[, "gs_2"])) == -1,
+  info = "mc vision - delta gene set v2 has negative avg scores"
+)
+
+expect_true(
+  current = sign(mean(vision_res[, "gs_3"])) == 1,
+  info = "mc vision - gene set without delta has positive signs"
+)
+
+# gs_3 is the cell type 3 marker set without a negative side
+mc_in <- mc_ids[mc_dominant_type == "cell_type_3"]
+mc_out <- mc_ids[mc_dominant_type != "cell_type_3"]
+
+expect_true(
+  current = mean(vision_res[mc_in, "gs_3"]) > mean(vision_res[mc_out, "gs_3"]),
+  info = "mc vision - cell type 3 markers higher in matching meta cells"
+)
+
+### vision with auto-correlation -----------------------------------------------
+
+vision_res_auto <- vision_w_autocor_sc(
+  object = mc_object,
+  gs_list = vision_gs,
+  embd_to_use = "pca",
+  vision_params = params_sc_vision(n_perm = 100L),
+  .verbose = FALSE
+)
+
+expect_equivalent(
+  current = vision_res_auto$vision_matrix,
+  target = vision_res,
+  info = "mc vision w autocor - matrix matches the standalone call"
+)
+
+expect_true(
+  current = checkmate::testDataTable(
+    vision_res_auto$auto_cor_dt,
+    nrows = length(vision_gs)
+  ),
+  info = "mc vision w autocor - autocor data.table is correct"
+)
+
+# meta cells are aggregates of neighbouring cells, so everything looks smoother
+# on their kNN graph than on the single cell one and the permutation null sits
+# far higher. The ordering survives that, the p-value cut-off of the single cell
+# test does not
+expect_true(
+  current = max(vision_res_auto$auto_cor_dt$auto_cor[1:3]) >
+    max(vision_res_auto$auto_cor_dt$auto_cor[4:6]),
+  info = "mc vision w autocor - structured sets outscore the random ones"
+)
+
+expect_true(
+  current = vision_res_auto$auto_cor_dt$p_val[1] < 0.05,
+  info = "mc vision w autocor - the delta marker set is significant"
+)
+
+vision_res_auto_v2 <- vision_w_autocor_sc(
+  object = mc_object,
+  gs_list = vision_gs[1:4],
+  embd_to_use = "pca",
+  no_embd_to_use = 5L,
+  use_knn = FALSE,
+  vision_params = params_sc_vision(n_perm = 100L),
+  .verbose = FALSE
+)
+
+expect_true(
+  current = checkmate::testMatrix(
+    vision_res_auto_v2$vision_matrix,
+    mode = "numeric",
+    nrows = target_n_metacells,
+    ncols = 4, # reduced
+    row.names = "named",
+    col.names = "named"
+  ),
+  info = "mc vision w autocor - 4 gene sets and a rebuilt kNN still work"
+)
+
 ## scenic ----------------------------------------------------------------------
 
 tfs <- sprintf("gene_%03i", c(1, 2, 11, 12, 21, 22, 50, 60, 70, 80, 90, 100))

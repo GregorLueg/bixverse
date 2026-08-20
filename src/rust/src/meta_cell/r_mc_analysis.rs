@@ -1,6 +1,7 @@
-//! Analysis methods for meta cells specifically. At the moment, it supports
-//! mostly SCENIC.
+//! Analysis methods for meta cells specifically: SCENIC, AUCell, HotSpot,
+//! VISION and NMF.
 
+use bixverse_rs::core::math::stats::calc_fdr;
 use bixverse_rs::methods::nmf_hals::consensus::ConsensusParams;
 use bixverse_rs::methods::nmf_hals::HalsOpts;
 use bixverse_rs::prelude::*;
@@ -8,9 +9,13 @@ use bixverse_rs::single_cell::mc_analysis::aucell::calculate_aucell_metacells;
 use bixverse_rs::single_cell::mc_analysis::hotspot_mc::*;
 use bixverse_rs::single_cell::mc_analysis::nmf_mc::*;
 use bixverse_rs::single_cell::mc_analysis::scenic_metacells::run_scenic_grn_in_memory;
+use bixverse_rs::single_cell::mc_analysis::vision_mc::calculate_vision_metacells;
 use bixverse_rs::single_cell::sc_analysis::dge_pathway_scores::AucellParams;
 use bixverse_rs::single_cell::sc_analysis::hotspot::{HotSpotGeneRes, HotSpotPairRes, HotSpotParams};
 use bixverse_rs::single_cell::sc_analysis::scenic::ScenicParams;
+use bixverse_rs::single_cell::sc_analysis::vision::{
+    calc_autocorr_with_clusters, r_list_to_sig_genes,
+};
 use extendr_api::*;
 use faer::{Mat, MatRef};
 
@@ -31,6 +36,9 @@ extendr_module! {
     // hotspot
     fn rs_mc_hotspot_autocor;
     fn rs_mc_hotspot_gene_cor;
+    // vision
+    fn rs_mc_vision;
+    fn rs_mc_vision_with_autocorrelation;
     // nmf
     fn rs_nmf_single_mc;
     fn rs_nmf_multi_mc;
@@ -111,6 +119,28 @@ fn resolve_knn_graph(
             distances_are_squared(&knn_params.ann_dist),
         ))
     }
+}
+
+/// Read the meta cell counts VISION scores over.
+///
+/// VISION reads the second layer, and `list_to_sparse_matrix` fills it with a
+/// copy of the first, so whatever R hands over here is what gets scored. The
+/// cast keeps both layers in `f32`: `cast_compressed_sparse_data_u32` would
+/// truncate the normalised counts VISION expects.
+///
+/// ### Params
+///
+/// * `sparse_data` - The named list from R, shape (metacells, genes), holding
+///   the normalised counts.
+///
+/// ### Returns
+///
+/// The same matrix as `CompressedSparseData2<f32, f32>`.
+fn mc_vision_sparse(sparse_data: List) -> extendr_api::Result<CompressedSparseData2<f32, f32>> {
+    let sparse: CompressedSparseData2<f64, f64> =
+        list_to_sparse_matrix(sparse_data, true).to_extendr()?;
+
+    Ok(cast_compressed_sparse_data_f32(sparse))
 }
 
 /////////////////////
@@ -213,6 +243,180 @@ fn rs_mc_aucell(
 
     let auc_mat = Mat::from_fn(res[0].len(), res.len(), |i, j| res[j][i] as f64);
     Ok(faer_to_r_matrix(auc_mat.as_ref()))
+}
+
+/////////////////////
+// Metacell VISION //
+/////////////////////
+
+/// Calculate VISION pathway scores in Rust (for meta cells)
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// The function will take in a list of gene sets that contains lists of `"pos"`
+/// and `"neg"` gene indices (0-indexed). You don't have to provide the `"neg"`,
+/// but it can be useful to classify the delta of two stats (EMT, Th1; Th2) etc.
+/// This version works on MetaCell counts which are stored in memory directly.
+///
+/// @param sparse_data A named list that needs to have `data`, `indptr`,
+/// `indices`, `nrow`, `ncol` and `cs_type`. Shape is (metacells, genes) and the
+/// data need to be the **normalised** counts.
+/// @param gs_list Nested list. Each sublist contains the (0-indexed!) positive
+/// and negative gene indices of that specific gene set.
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
+///
+/// @return A matrix of meta cells x vision scores per gene set.
+///
+/// @export
+///
+/// @references DeTomaso, et al., Nat. Commun., 2019
+///
+/// @keywords internal
+#[extendr]
+fn rs_mc_vision(sparse_data: List, gs_list: List, verbose: usize) -> Result<RArray<f64, 2>> {
+    let gene_signatures = r_list_to_sig_genes(gs_list)?;
+
+    let sparse = mc_vision_sparse(sparse_data)?;
+
+    let res = calculate_vision_metacells(&sparse, &gene_signatures, verbose).to_extendr()?;
+
+    let vision_mat = Mat::from_fn(res.len(), res[0].len(), |i, j| res[i][j] as f64);
+
+    Ok(faer_to_r_matrix(vision_mat.as_ref()))
+}
+
+/// Calculate VISION pathway scores in Rust with auto-correlation (for meta cells)
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// The function will take in a list of gene sets that contains lists of `"pos"`
+/// and `"neg"` gene indices (0-indexed). You don't have to provide the `"neg"`,
+/// but it can be useful to classify the delta of two stats (EMT, Th1; Th2) etc.
+/// Additionally, it will take a random gene list and calculate an
+/// auto-correlation score based on Gaery's C to identify pathways that show
+/// significant patterns on the kNN graph generated on the provided embedding.
+/// This version works on MetaCell counts which are stored in memory directly.
+///
+/// @param sparse_data A named list that needs to have `data`, `indptr`,
+/// `indices`, `nrow`, `ncol` and `cs_type`. Shape is (metacells, genes) and the
+/// data need to be the **normalised** counts.
+/// @param embd Numerical matrix. The embedding matrix to use to generate the
+/// kNN graph. Needs to be of the same order/length as the meta cells in
+/// `sparse_data`.
+/// @param knn_data Optional list. This contains pre-computed kNN data
+/// (including distances) and the `dist_metric` it was built with. The user has
+/// to ensure consistency! If provided, this will be used and whether the
+/// distances are treated as squared is derived from `dist_metric` rather than
+/// from the parameter list.
+/// @param gs_list Nested list. Each sublist contains the (0-indexed!) positive
+/// and negative gene indices of that specific gene set.
+/// @param random_gs_list Double-nested list. The outer list represents the
+/// clusters of clusters and the inner list represents the permutations within
+/// that cluster.
+/// @param vision_params List. Contains various parameters to use in terms
+/// of the kNN generation.
+/// @param cluster_membership Integer. Vector that indicates to which of the
+/// permuted gene set clusters the given gene set belongs.
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
+/// @param seed Integer. Random seed for reproducibility.
+///
+/// @return A list with the following items:
+/// \itemize{
+///   \item autocor_res - Auto-correlation results, i.e., 1 - C, p-value and
+///   FDR.
+///   \item vision_mat - A matrix of meta cells x vision scores per gene set.
+/// }
+///
+/// @export
+///
+/// @references DeTomaso, et al., Nat. Commun., 2019
+///
+/// @keywords internal
+#[extendr]
+#[allow(clippy::too_many_arguments)]
+fn rs_mc_vision_with_autocorrelation(
+    sparse_data: List,
+    embd: RMatrix<f64>,
+    knn_data: Nullable<List>,
+    gs_list: List,
+    random_gs_list: List,
+    vision_params: List,
+    cluster_membership: Vec<i32>,
+    verbose: usize,
+    seed: usize,
+) -> extendr_api::Result<List> {
+    let verbosity = parse_verbosity_level(verbose);
+
+    let sparse = mc_vision_sparse(sparse_data)?;
+
+    assert!(
+        embd.nrows() == sparse.shape.0,
+        "The embedding matrix need to have the same nrow as the meta cells to use."
+    );
+
+    if verbosity.normal_verbosity() {
+        println!("Calculating the VISION scores of the actual gene sets.")
+    }
+
+    let gene_signatures = r_list_to_sig_genes(gs_list)?;
+    let res = calculate_vision_metacells(&sparse, &gene_signatures, verbose).to_extendr()?;
+
+    if verbosity.normal_verbosity() {
+        println!("Calculating the VISION scores of the permuted gene sets.")
+    }
+
+    let mut random_scores_by_cluster: Vec<Vec<Vec<f32>>> = Vec::with_capacity(random_gs_list.len());
+
+    for cluster_idx in 0..random_gs_list.len() {
+        let cluster_sigs = random_gs_list
+            .elt(cluster_idx)?
+            .as_list()
+            .ok_or("Cluster element not a list")?;
+
+        let cluster_signatures = r_list_to_sig_genes(cluster_sigs)?;
+
+        let cluster_random_scores =
+            calculate_vision_metacells(&sparse, &cluster_signatures, verbose).to_extendr()?;
+
+        random_scores_by_cluster.push(cluster_random_scores);
+
+        if verbosity.normal_verbosity() {
+            println!(
+                "Completed random signatures for cluster {} / {}",
+                cluster_idx + 1,
+                random_gs_list.len()
+            );
+        }
+    }
+
+    let embd = r_matrix_to_faer_fp32(&embd);
+    let knn_params = KnnParams::from_r_list(vision_params)?;
+
+    let (knn_indices, knn_dist, squared_distances) =
+        resolve_knn_graph(knn_data, embd.as_ref(), &knn_params, seed, verbosity)?;
+
+    let cluster_membership = cluster_membership.r_int_convert_shift();
+
+    let (gaery_c, p_val) = calc_autocorr_with_clusters(
+        &res,
+        &random_scores_by_cluster,
+        &cluster_membership,
+        knn_indices,
+        knn_dist,
+        squared_distances,
+        verbose,
+    );
+
+    let fdr = calc_fdr(&p_val);
+
+    let vision_mat = Mat::from_fn(res.len(), res[0].len(), |i, j| res[i][j] as f64);
+
+    Ok(list!(
+        autocor_res = list!(auto_cor = gaery_c, p_val = p_val, fdr = fdr),
+        vision_mat = faer_to_r_matrix(vision_mat.as_ref())
+    ))
 }
 
 //////////////////////
