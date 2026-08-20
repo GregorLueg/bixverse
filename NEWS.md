@@ -14,6 +14,7 @@
   - `get_nmf_stability()` on `BulkCoExp` now covers consensus fits as well as
     stabilised ones.
 * Agent skills implemented: `install_agent_skill()` installs an agent skill.
+* VISION scores enabled also for the `MetaCells` class.
 
 # bixverse 0.4.9
 
