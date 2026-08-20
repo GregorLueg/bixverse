@@ -133,7 +133,7 @@ S7::method(nmf_bulk, BulkCoExp) <- function(
   colnames(sample_activity) <- colnames(gene_loadings) <-
     sprintf("comp_%02i", seq_len(k))
 
-  modules <- .nmf_modules_from_w(gene_loadings, membership_params)
+  modules <- modules_from_loadings(gene_loadings, membership_params)
 
   fit_params <- c(
     nmf_hals_params,
@@ -291,7 +291,7 @@ S7::method(stabilised_nmf_bulk, BulkCoExp) <- function(
   colnames(best_sample_activity) <- colnames(best_gene_loadings) <-
     sprintf("comp_%02i", seq_len(k))
 
-  modules <- .nmf_modules_from_w(best_gene_loadings, membership_params)
+  modules <- modules_from_loadings(best_gene_loadings, membership_params)
 
   fit_params <- c(
     nmf_hals_params,
@@ -469,7 +469,7 @@ S7::method(consensus_nmf_bulk, BulkCoExp) <- function(
   colnames(sample_activity) <- colnames(gene_loadings) <-
     sprintf("comp_%02i", seq_len(k))
 
-  modules <- .nmf_modules_from_w(gene_loadings, membership_params)
+  modules <- modules_from_loadings(gene_loadings, membership_params)
 
   fit_params <- c(
     nmf_hals_params,
@@ -760,27 +760,6 @@ S7::method(nmf_k_sweep_bulk, BulkCoExp) <- function(
       ))
     }
   )
-}
-
-#' Derive gene-to-module assignments from an NMF loadings matrix
-#'
-#' @description
-#' Each gene is assigned to the component whose absolute loading is highest.
-#' Thin wrapper over [bixverse::.modules_from_loadings()]. NMF loadings are
-#' non-negative, so the `"auto"` tail setting resolves to an upper-tail test.
-#'
-#' @param w Numeric matrix. Gene loadings (features x k).
-#' @param membership_params List. See
-#' [bixverse::params_module_membership()].
-#'
-#' @returns A data.table with one row per surviving (gene, component) pair.
-#'
-#' @keywords internal
-.nmf_modules_from_w <- function(
-  w,
-  membership_params = params_module_membership()
-) {
-  .modules_from_loadings(w, membership_params)
 }
 
 ## getters ---------------------------------------------------------------------

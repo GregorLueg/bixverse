@@ -697,10 +697,10 @@ params_label_propagation <- function(
 #' to nothing, which is the background category an argmax assignment cannot give
 #' you.
 #'
-#' @param method String. `"zscore"` standardises each component robustly (median
-#' and MAD) and keeps `abs(z) > cutoff`. `"fdr"` converts to two-sided p-values
-#' against a Normal null fitted the same way, Benjamini-Hochberg adjusts, and
-#' keeps `padj < fdr`. Defaults to `"zscore"`.
+#' @param method String. `"zscore"` standardises each component and keeps
+#' `abs(z) > cutoff`. `"fdr"` converts to two-sided p-values against a Normal
+#' null fitted the same way, Benjamini-Hochberg adjusts, and keeps
+#' `padj < fdr`. Defaults to `"zscore"`.
 #' @param cutoff Float. Absolute z threshold for `method = "zscore"`. Defaults
 #' to `3.0`.
 #' @param fdr Float. Adjusted p-value threshold for `method = "fdr"`. Defaults
@@ -708,6 +708,10 @@ params_label_propagation <- function(
 #' @param tails String. `"auto"` uses an upper-tail-only test when every loading
 #' is non-negative (the NMF case) and a two-sided one otherwise. `"upper"` and
 #' `"both"` force the choice. Defaults to `"auto"`.
+#' @param scaling String. `"robust"` centres and scales each component by its
+#' median and MAD. `"standard"` uses the mean and standard deviation instead,
+#' which is stricter and less forgiving of skewed loadings (e.g. NMF).
+#' Defaults to `"robust"`.
 #'
 #' @returns A list with the parameters for usage in subsequent functions.
 #'
@@ -718,14 +722,17 @@ params_module_membership <- function(
   method = c("zscore", "fdr"),
   cutoff = 3.0,
   fdr = 0.05,
-  tails = c("auto", "upper", "both")
+  tails = c("auto", "upper", "both"),
+  scaling = c("robust", "standard")
 ) {
   # Standard choices
   method <- match.arg(method)
   tails <- match.arg(tails)
+  scaling <- match.arg(scaling)
   # Checks
   checkmate::assertChoice(method, c("zscore", "fdr"))
   checkmate::assertChoice(tails, c("auto", "upper", "both"))
+  checkmate::assertChoice(scaling, c("robust", "standard"))
   checkmate::qassert(cutoff, "N1(0,)")
   checkmate::qassert(fdr, "N1(0,1]")
   # Return
@@ -734,7 +741,8 @@ params_module_membership <- function(
       method = method,
       cutoff = cutoff,
       fdr = fdr,
-      tails = tails
+      tails = tails,
+      scaling = scaling
     )
   )
 }

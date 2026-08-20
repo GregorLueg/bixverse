@@ -1145,7 +1145,7 @@ assertLabelPropParams <- checkmate::makeAssertionFunction(checkLabelPropParams)
 #'
 #' @keywords internal
 checkModuleMembershipParams <- function(x) {
-  res <- check_list_shape(x, c("method", "cutoff", "fdr", "tails"))
+  res <- check_list_shape(x, c("method", "cutoff", "fdr", "tails", "scaling"))
   if (!isTRUE(res)) {
     return(res)
   }
@@ -1164,7 +1164,8 @@ checkModuleMembershipParams <- function(x) {
     x,
     list(
       method = c("zscore", "fdr"),
-      tails = c("auto", "upper", "both")
+      tails = c("auto", "upper", "both"),
+      scaling = c("robust", "standard")
     ),
     label = "module membership params"
   )

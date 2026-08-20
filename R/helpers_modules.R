@@ -91,13 +91,16 @@
 #'
 #' Two thresholding rules, selected via `membership_params`:
 #' \itemize{
-#'  \item `"zscore"` - robust standardisation per component, centred on the
-#'  median and scaled by the MAD, keeping `abs(z) > cutoff`. No distributional
-#'  assumption beyond rough symmetry.
+#'  \item `"zscore"` - standardisation per component, keeping `abs(z) >
+#'  cutoff`. No distributional assumption beyond rough symmetry.
 #'  \item `"fdr"` - two-sided p-values against a Normal null fitted per
-#'  component by median and MAD, Benjamini-Hochberg adjusted, keeping
-#'  `padj < fdr`.
+#'  component, Benjamini-Hochberg adjusted, keeping `padj < fdr`.
 #' }
+#'
+#' The standardisation itself is controlled by `membership_params$scaling`:
+#' `"robust"` centres and scales by the median and MAD, `"standard"` by the
+#' mean and standard deviation. The latter is stricter and keeps fewer genes
+#' on skewed loadings, which is common for NMF.
 #'
 #' @param loadings Numeric matrix. `gene x k`, with row and column names.
 #' @param membership_params List. See
@@ -108,8 +111,8 @@
 #' surviving (gene, component) pair, ordered by component then by descending
 #' absolute loading.
 #'
-#' @keywords internal
-.modules_from_loadings <- function(
+#' @export
+modules_from_loadings <- function(
   loadings,
   membership_params = params_module_membership()
 ) {
@@ -129,8 +132,13 @@
 
   per_component <- purrr::map(seq_len(ncol(loadings)), \(j) {
     vals <- loadings[, j]
-    centre <- stats::median(vals)
-    scale_val <- stats::mad(vals)
+    if (membership_params$scaling == "robust") {
+      centre <- stats::median(vals)
+      scale_val <- stats::mad(vals)
+    } else {
+      centre <- mean(vals)
+      scale_val <- stats::sd(vals)
+    }
 
     # A degenerate component (all loadings identical) has no tail to speak of.
     if (!is.finite(scale_val) || scale_val <= 0) {

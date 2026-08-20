@@ -715,7 +715,7 @@ S7::method(ica_stabilised_results, BulkCoExp) <- function(
   # keep the tails per component. A gene may load on several components, so it
   # may appear in several modules.
   gene_loadings <- t(S)
-  modules_dt <- .modules_from_loadings(gene_loadings, membership_params)
+  modules_dt <- modules_from_loadings(gene_loadings, membership_params)
 
   S7::prop(object, "final_results") <- new_bulk_module_result(
     modules = modules_dt,
