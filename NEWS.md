@@ -1,3 +1,21 @@
+# bixverse 0.4.10
+
+## Features
+
+* Consensus NMF implemented:
+  - `consensus_nmf_bulk()` on `BulkCoExp` and `consensus_nmf_sc()` on
+    `SingleCells` and `MetaCells`.
+  - `nmf_k_sweep_bulk()` and `nmf_k_sweep_sc()` sweep a range of `k` and report
+    stability against reconstruction error, so choosing `k` stops being a guess.
+    Both return an `NmfKSweepResult` with a `plot()` method.
+  - `params_nmf_consensus()` plus the matching checkmate assertions.
+  - New `ConsensusNmfResult` class with `get_w()`, `get_h()`, `get_data()` and a
+    new `get_stability()` generic for the clustering diagnostics.
+  - `get_nmf_stability()` on `BulkCoExp` now covers consensus fits as well as
+    stabilised ones.
+* Agent skills implemented: `install_agent_skill()` installs an agent skill.
+* VISION scores enabled also for the `MetaCells` class.
+
 # bixverse 0.4.9
 
 ## Chores

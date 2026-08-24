@@ -1332,6 +1332,246 @@ expect_true(
   info = "nmf_sc subset: at least one component aligns with cell_type_1 genes"
 )
 
+### consensus_nmf_sc on SingleCells -------------------------------------------
+
+# Density filter off. resolve_n_neighbours is ceiling(0.3 * n_runs), so at a
+# small n_runs a live filter drops components unpredictably on a 30-gene
+# fixture, which errors out and makes the test flaky. The filter gets its own
+# test below.
+consensus_params <- params_nmf_consensus(density_threshold = 2)
+
+consensus_res <- consensus_nmf_sc(
+  object = sc_object,
+  k = nmf_k,
+  preprocessing = "none",
+  use_second_layer = TRUE,
+  nmf_consensus_params = consensus_params,
+  n_runs = n_runs,
+  .verbose = FALSE
+)
+
+expect_true(
+  current = checkmate::testClass(consensus_res, "ConsensusNmfResult"),
+  info = "consensus_nmf_sc: ConsensusNmfResult class returned"
+)
+
+expect_equal(
+  current = dim(get_w(consensus_res)),
+  target = c(hvg_n, nmf_k),
+  info = "consensus_nmf_sc: W has shape (n_hvg, k)"
+)
+
+expect_equal(
+  current = dim(get_h(consensus_res)),
+  target = c(nmf_k, n_cells_kept),
+  info = "consensus_nmf_sc: H has shape (k, n_cells_kept)"
+)
+
+expect_true(
+  current = all(get_w(consensus_res) >= 0) && all(get_h(consensus_res) >= 0),
+  info = "consensus_nmf_sc: both factors are non-negative"
+)
+
+expect_true(
+  current = !is.null(rownames(get_w(consensus_res))) &&
+    !is.null(colnames(get_h(consensus_res))),
+  info = "consensus_nmf_sc: factors carry gene and cell names"
+)
+
+consensus_stability <- get_stability(consensus_res)
+
+expect_true(
+  current = consensus_stability$stability >= -1 &&
+    consensus_stability$stability <= 1,
+  info = "consensus_nmf_sc: stability is a silhouette in [-1, 1]"
+)
+
+expect_equal(
+  current = nrow(consensus_stability$clusters),
+  target = nmf_k * n_runs,
+  info = "consensus_nmf_sc: one cluster row per pooled component"
+)
+
+expect_equal(
+  current = length(consensus_stability$rel_run_errors),
+  target = n_runs,
+  info = "consensus_nmf_sc: one relative error per restart"
+)
+
+# Rust pools component j of restart r at k * r + j, which is the order the
+# stabilised result names its w_all columns in. If that ever drifts, the
+# diagnostics stop joining onto the restart factors.
+expect_equal(
+  current = consensus_stability$clusters$component_id,
+  target = colnames(get_w(stab_res)),
+  info = "consensus_nmf_sc: component ids line up with the stabilised w_all"
+)
+
+expect_equal(
+  current = sum(consensus_stability$cluster_sizes$n),
+  target = sum(consensus_stability$clusters$kept),
+  info = "consensus_nmf_sc: cluster sizes account for every survivor"
+)
+
+expect_equal(
+  current = sum(!is.na(consensus_stability$clusters$cluster)),
+  target = sum(consensus_stability$clusters$kept),
+  info = "consensus_nmf_sc: dropped components carry an NA cluster"
+)
+
+# the components should still recover the planted structure
+consensus_celltypes <- .nmf_component_to_celltype(
+  get_h(consensus_res),
+  nmf_obs$cell_grp
+)
+
+expect_equal(
+  current = length(unique(consensus_celltypes)),
+  target = nmf_k,
+  info = "consensus_nmf_sc: components map bijectively onto the cell types"
+)
+
+consensus_blocks <- .nmf_component_to_gene_block(get_w(consensus_res))
+
+expect_equal(
+  current = length(unique(consensus_blocks)),
+  target = nmf_k,
+  info = "consensus_nmf_sc: components map bijectively onto the gene blocks"
+)
+
+expect_true(
+  current = all(consensus_celltypes == consensus_blocks),
+  info = "consensus_nmf_sc: cell type and gene block assignments agree"
+)
+
+# obs round trip
+consensus_obs <- get_data(consensus_res)
+
+expect_true(
+  current = data.table::is.data.table(consensus_obs) &&
+    isTRUE(attr(consensus_obs, "is_obs")),
+  info = "consensus_nmf_sc: get_data returns a flagged obs data.table"
+)
+
+expect_true(
+  current = all(
+    c(sprintf("comp_%02d", seq_len(nmf_k)), "cell_idx") %in%
+      names(consensus_obs)
+  ),
+  info = "consensus_nmf_sc: obs table carries one column per component"
+)
+
+# same seed, same answer
+consensus_repeat <- consensus_nmf_sc(
+  object = sc_object,
+  k = nmf_k,
+  preprocessing = "none",
+  use_second_layer = TRUE,
+  nmf_consensus_params = consensus_params,
+  n_runs = n_runs,
+  .verbose = FALSE
+)
+
+expect_equal(
+  current = get_w(consensus_repeat),
+  target = get_w(consensus_res),
+  info = "consensus_nmf_sc: the same seed reproduces the same W"
+)
+
+#### parameter validation -----------------------------------------------------
+
+expect_error(
+  current = consensus_nmf_sc(
+    object = sc_object,
+    k = 1L,
+    n_runs = n_runs,
+    .verbose = FALSE
+  ),
+  info = "consensus_nmf_sc: k below 2 is refused"
+)
+
+expect_error(
+  current = consensus_nmf_sc(
+    object = sc_object,
+    k = nmf_k,
+    n_runs = 1L,
+    .verbose = FALSE
+  ),
+  info = "consensus_nmf_sc: fewer than 2 restarts is refused"
+)
+
+expect_error(
+  current = consensus_nmf_sc(
+    object = sc_object,
+    k = nmf_k,
+    n_runs = n_runs,
+    preprocessing = "garbage",
+    .verbose = FALSE
+  ),
+  info = "consensus_nmf_sc: invalid preprocessing string errors"
+)
+
+expect_error(
+  current = consensus_nmf_sc(
+    object = sc_object,
+    k = nmf_k,
+    n_runs = n_runs,
+    nmf_consensus_params = params_nmf_consensus(density_threshold = 1e-9),
+    .verbose = FALSE
+  ),
+  pattern = "density",
+  info = "consensus_nmf_sc: too tight a density filter errors informatively"
+)
+
+### nmf_k_sweep_sc on SingleCells ----------------------------------------------
+
+k_sweep <- nmf_k_sweep_sc(
+  object = sc_object,
+  k_range = 2:4,
+  preprocessing = "none",
+  use_second_layer = TRUE,
+  nmf_consensus_params = consensus_params,
+  n_runs = n_runs,
+  .verbose = FALSE
+)
+
+expect_true(
+  current = checkmate::testClass(k_sweep, "NmfKSweepResult") &&
+    data.table::is.data.table(k_sweep),
+  info = "nmf_k_sweep_sc: data.table-backed NmfKSweepResult returned"
+)
+
+expect_equal(
+  current = k_sweep$k,
+  target = 2:4,
+  info = "nmf_k_sweep_sc: one row per k, in the order requested"
+)
+
+expect_true(
+  current = all(k_sweep$best_error <= k_sweep$median_error),
+  info = "nmf_k_sweep_sc: the best restart is never worse than the median"
+)
+
+expect_true(
+  current = all(k_sweep$n_converged <= n_runs),
+  info = "nmf_k_sweep_sc: converged counts cannot exceed the restart count"
+)
+
+expect_true(
+  current = inherits(plot(k_sweep), "ggplot"),
+  info = "nmf_k_sweep_sc: plot() gives a ggplot"
+)
+
+expect_error(
+  current = nmf_k_sweep_sc(
+    object = sc_object,
+    k_range = 1:3,
+    n_runs = n_runs,
+    .verbose = FALSE
+  ),
+  info = "nmf_k_sweep_sc: a k range reaching below 2 is refused"
+)
+
 # clean up ---------------------------------------------------------------------
 
 sc_test_cleanup(test_temp_dir)

@@ -470,6 +470,58 @@ params_nmf_hals <- function(
   )
 }
 
+## NMF (consensus) -------------------------------------------------------------
+
+#' Wrapper function for consensus NMF parameters
+#'
+#' @description
+#' Controls the clustering step of consensus NMF: the components of every
+#' restart are pooled, outliers are dropped by local density, and the survivors
+#' are k-means clustered into `k` groups whose median becomes the consensus
+#' factor.
+#'
+#' @param consensus_target String. One of `c("h", "w")`. `"h"` clusters the
+#' gene programmes (the spectra), which is what cNMF does and what you almost
+#' always want. `"w"` clusters in sample space instead, which on single cell
+#' data means cell space: it pools a dense `(k * n_runs) x n_cells` matrix and
+#' runs an exhaustive cosine search over it, so it gets expensive fast.
+#' @param n_neighbours Integer. Neighbours used for the local density estimate.
+#' `0L` picks `ceiling(0.3 * n_runs)` for you.
+#' @param density_threshold Numeric. Components whose mean cosine distance to
+#' their neighbours exceeds this are dropped as unstable. Cosine distance
+#' cannot exceed 2, so any value `>= 2` disables the filter entirely.
+#' @param kmeans_iters Integer. Maximum k-means iterations.
+#' @param kmeans_n_init Integer. Number of k-means restarts.
+#'
+#' @returns A list with the consensus NMF parameters.
+#'
+#' @references Kotliar et al., eLife, 2019
+#'
+#' @export
+params_nmf_consensus <- function(
+  consensus_target = c("h", "w"),
+  n_neighbours = 0L,
+  density_threshold = 0.5,
+  kmeans_iters = 100L,
+  kmeans_n_init = 3L
+) {
+  consensus_target <- match.arg(consensus_target)
+
+  checkmate::assertChoice(consensus_target, c("h", "w"))
+  checkmate::qassert(n_neighbours, "I1[0,)")
+  checkmate::qassert(density_threshold, "N1[0,2]")
+  checkmate::qassert(kmeans_iters, "I1[1,)")
+  checkmate::qassert(kmeans_n_init, "I1[1,)")
+
+  list(
+    consensus_target = consensus_target,
+    n_neighbours = n_neighbours,
+    density_threshold = density_threshold,
+    kmeans_iters = kmeans_iters,
+    kmeans_n_init = kmeans_n_init
+  )
+}
+
 ## SNF -------------------------------------------------------------------------
 
 #' Wrapper function to generate SNF parameters
@@ -645,10 +697,10 @@ params_label_propagation <- function(
 #' to nothing, which is the background category an argmax assignment cannot give
 #' you.
 #'
-#' @param method String. `"zscore"` standardises each component robustly (median
-#' and MAD) and keeps `abs(z) > cutoff`. `"fdr"` converts to two-sided p-values
-#' against a Normal null fitted the same way, Benjamini-Hochberg adjusts, and
-#' keeps `padj < fdr`. Defaults to `"zscore"`.
+#' @param method String. `"zscore"` standardises each component and keeps
+#' `abs(z) > cutoff`. `"fdr"` converts to two-sided p-values against a Normal
+#' null fitted the same way, Benjamini-Hochberg adjusts, and keeps
+#' `padj < fdr`. Defaults to `"zscore"`.
 #' @param cutoff Float. Absolute z threshold for `method = "zscore"`. Defaults
 #' to `3.0`.
 #' @param fdr Float. Adjusted p-value threshold for `method = "fdr"`. Defaults
@@ -656,6 +708,10 @@ params_label_propagation <- function(
 #' @param tails String. `"auto"` uses an upper-tail-only test when every loading
 #' is non-negative (the NMF case) and a two-sided one otherwise. `"upper"` and
 #' `"both"` force the choice. Defaults to `"auto"`.
+#' @param scaling String. `"robust"` centres and scales each component by its
+#' median and MAD. `"standard"` uses the mean and standard deviation instead,
+#' which is stricter and less forgiving of skewed loadings (e.g. NMF).
+#' Defaults to `"robust"`.
 #'
 #' @returns A list with the parameters for usage in subsequent functions.
 #'
@@ -666,14 +722,17 @@ params_module_membership <- function(
   method = c("zscore", "fdr"),
   cutoff = 3.0,
   fdr = 0.05,
-  tails = c("auto", "upper", "both")
+  tails = c("auto", "upper", "both"),
+  scaling = c("robust", "standard")
 ) {
   # Standard choices
   method <- match.arg(method)
   tails <- match.arg(tails)
+  scaling <- match.arg(scaling)
   # Checks
   checkmate::assertChoice(method, c("zscore", "fdr"))
   checkmate::assertChoice(tails, c("auto", "upper", "both"))
+  checkmate::assertChoice(scaling, c("robust", "standard"))
   checkmate::qassert(cutoff, "N1(0,)")
   checkmate::qassert(fdr, "N1(0,1]")
   # Return
@@ -682,7 +741,8 @@ params_module_membership <- function(
       method = method,
       cutoff = cutoff,
       fdr = fdr,
-      tails = tails
+      tails = tails,
+      scaling = scaling
     )
   )
 }

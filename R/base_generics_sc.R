@@ -1204,6 +1204,120 @@ stabilised_nmf_sc <- S7::new_generic(
   }
 )
 
+#' Run consensus NMF on single cell or meta cell data
+#'
+#' @description
+#' Runs `n_runs` HALS NMF restarts, pools their components, drops unstable ones
+#' by local density, k-means clusters the survivors into `k` groups and refits
+#' the partner factor against the per-cluster median. This is cNMF: the answer
+#' is the structure the restarts agree on, and the mean silhouette of those
+#' clusters (`stability`) says how much they agreed.
+#'
+#' Prefer this over [stabilised_nmf_sc()], which picks the lowest-loss restart
+#' and tells you nothing about whether that restart is reproducible.
+#'
+#' @details
+#' Use [nmf_k_sweep_sc()] first if you do not already know `k`.
+#'
+#' Memory is the thing to watch. The restarts are dense and all live at once:
+#' roughly `n_cells * k * n_runs` plus `n_runs * k * n_genes` floats on top of
+#' the counts. At 200k cells, `k = 20` and `n_runs = 50` that is a few hundred
+#' megabytes before anything else, which is exactly the regime where running on
+#' `MetaCells` instead is the honest answer.
+#'
+#' The density filter is the part that bites. If it leaves fewer than `k`
+#' components the fit errors rather than returning something degenerate. With
+#' few restarts the filter is jumpy, so either raise `n_runs` or set
+#' `density_threshold = 2` in [params_nmf_consensus()] to switch it off.
+#'
+#' @param object `SingleCells` or `MetaCells` class.
+#' @param k Integer. Number of latent factors. Must be at least 2.
+#' @param cell_ids Optional character. Cell ids (or meta cell ids) to restrict
+#' the NMF to. If `NULL`, uses [get_cells_to_keep()] for `SingleCells` and all
+#' meta cells for `MetaCells`.
+#' @param gene_ids Optional character. Gene ids to restrict the NMF to. If
+#' `NULL`, uses [get_hvg()] on the object.
+#' @param preprocessing String. One of `c("none", "sd", "sqrt_sd")`.
+#' @param use_second_layer Boolean. If `TRUE`, runs NMF on the normalised
+#' counts (recommended); if `FALSE`, on the raw counts.
+#' @param nmf_hals_params List, see [params_nmf_hals()]. The `nmf_init` field is
+#' ignored, restarts always use random initialisation.
+#' @param nmf_consensus_params List, see [params_nmf_consensus()].
+#' @param n_runs Integer. Number of random restarts. Must be at least 2.
+#' @param seed Integer. Base random seed. Restart `i` uses `seed + i`, and the
+#' k-means step is seeded from it too.
+#' @param .verbose Boolean or integer. Verbosity.
+#'
+#' @returns A `ConsensusNmfResult` object.
+#'
+#' @references Kotliar et al., eLife, 2019
+#'
+#' @export
+consensus_nmf_sc <- S7::new_generic(
+  name = "consensus_nmf_sc",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    k,
+    cell_ids = NULL,
+    gene_ids = NULL,
+    preprocessing = "none",
+    use_second_layer = TRUE,
+    nmf_hals_params = params_nmf_hals(),
+    nmf_consensus_params = params_nmf_consensus(),
+    n_runs = 30L,
+    seed = 42L,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' Sweep k for consensus NMF on single cell or meta cell data
+#'
+#' @description
+#' Runs the consensus clustering step across a range of `k` and reports
+#' stability against reconstruction error, without keeping any factors. Pick
+#' the `k` where stability is still high and the error curve has not yet
+#' flattened out, then run [consensus_nmf_sc()] there.
+#'
+#' @details
+#' This is a diagnostic, so it leaves the object alone and hands the result back
+#' directly. `plot()` on it gives you the two curves.
+#'
+#' Cost is `length(k_range) * n_runs` full NMF fits. On the `SingleCells` path
+#' the counts are read from disk once and reused across every `k`, but the fits
+#' themselves are not free, so keep both modest on a first pass.
+#'
+#' @inheritParams consensus_nmf_sc
+#' @param k_range Integer vector. The ranks to evaluate. Every entry must be at
+#' least 2.
+#'
+#' @returns An `NmfKSweepResult`, which is a data.table with one row per `k`.
+#'
+#' @references Kotliar et al., eLife, 2019
+#'
+#' @export
+nmf_k_sweep_sc <- S7::new_generic(
+  name = "nmf_k_sweep_sc",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    k_range,
+    cell_ids = NULL,
+    gene_ids = NULL,
+    preprocessing = "none",
+    use_second_layer = TRUE,
+    nmf_hals_params = params_nmf_hals(),
+    nmf_consensus_params = params_nmf_consensus(),
+    n_runs = 30L,
+    seed = 42L,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
 #### i/o -----------------------------------------------------------------------
 
 #' Save memory-bound data to disk
@@ -1478,6 +1592,113 @@ hotspot_gene_cor_sc <- S7::new_generic(
     genes_to_take = NULL,
     streaming = NULL,
     working_mem_gb = 4,
+    random_seed = 42L,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#### vision -------------------------------------------------------------------
+
+#' Calculate VISION scores
+#'
+#' @description
+#' Calculates an VISION-type scores for pathways based on DeTomaso, et al.
+#' Compared to other score types, you can also calculate delta-type scores
+#' between positive and negative gene indices, think epithelial vs mesenchymal
+#' gene signature, etc.
+#'
+#' @param object `SingleCells`, `MetaCells` (or potentially other) class.
+#' @param gs_list Named nested list. The elements have the gene identifiers of
+#' the respective gene sets and have the option to have a `"pos"` and `"neg"`
+#' gene sets. The names need to be part of the variables of the object.
+#' @param streaming Optional Boolean. Shall the data be streamed in. Useful for
+#' larger data sets where you wish to avoid loading in the whole data. If
+#' `NULL`, will automatically detect. Ignored when applied to `MetaCells`.
+#' @param .verbose Boolean or integer. Controls verbosity and returns run times.
+#' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
+#' verbosity.
+#'
+#' @returns The VISION scores in form of a matrix that is cells x gene sets
+#' or as `ScMatrixRes` pending the input.
+#'
+#' @references DeTomaso, et al., Nat. Commun., 2019
+#'
+#' @export
+vision_sc <- S7::new_generic(
+  name = "vision_sc",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    gs_list,
+    streaming = NULL,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' Calculate VISION scores (with auto-correlation scores)
+#'
+#' @description
+#' Calculates VISION-type scores for pathways based on DeTomaso, et al.
+#' Compared to other score types, you can also calculate delta-type scores
+#' between positive and negative gene indices, think epithelial vs mesenchymal
+#' gene signature, etc. Additionally, this function also calculates the auto-
+#' correlation values, answering the question if a given signature shows non-
+#' random enrichment on the kNN graph. The kNN graph (and distance measures)
+#' will be generated on-the-fly based on the embedding you wish to use.
+#'
+#' @param object `SingleCells`, `MetaCells` (or potentially other) class.
+#' @param gs_list Named nested list. The elements have the gene identifiers of
+#' the respective gene sets and have the option to have a `"pos"` and `"neg"`
+#' gene sets. The names need to be part of the variables of the object.
+#' @param vision_params List with vision parameters, see
+#' [bixverse::params_sc_vision()] with the following elements:
+#' \itemize{
+#'   \item n_perm - Integer. Number of random permutations
+#'   \item n_cluster - Integer. Number of random clusters to generate to
+#'   associate each set with.
+#'   \item knn - List of kNN parameters. See [bixverse::params_knn_defaults()]
+#'   for available parameters and their defaults.
+#' }
+#' @param embd_to_use String. The embedding to use. Whichever you chose, it
+#' needs to be part of the object.
+#' @param no_embd_to_use Optional integer. Number of embedding dimensions to
+#' use. If `NULL` all will be used.
+#' @param use_knn Boolean. Shall the internal kNN be used. If set to yes, you
+#' need to ensure consistency.
+#' @param random_seed Integer. The random seed.
+#' @param streaming Optional Boolean. Shall the data be streamed in. Useful for
+#' larger data sets where you wish to avoid loading in the whole data. If
+#' `NULL`, will automatically detect. Ignored when applied to `MetaCells`.
+#' @param .verbose Boolean or integer. Controls verbosity and returns run times.
+#' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
+#' verbosity.
+#'
+#' @return A list with the following elements:
+#' \itemize{
+#'   \item vision_matrix - Matrix of cells x signatures with the VISION
+#'   pathway scores as values.
+#'   \item auto_cor_dt - data.table with the auto-correlation results per
+#'   gene set, i.e., `auto_cor` (1 - Gaery's C), `p_val` and `fdr`.
+#' }
+#'
+#' @references DeTomaso, et al., Nat. Commun., 2019
+#'
+#' @export
+vision_w_autocor_sc <- S7::new_generic(
+  name = "vision_w_autocor_sc",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    gs_list,
+    embd_to_use,
+    no_embd_to_use = NULL,
+    use_knn = TRUE,
+    vision_params = params_sc_vision(),
+    streaming = NULL,
     random_seed = 42L,
     .verbose = TRUE
   ) {

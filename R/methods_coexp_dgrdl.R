@@ -253,7 +253,7 @@ S7::method(dgrdl_result, BulkCoExp) <- function(
   # gene x dict_size and keep the tails per atom. A gene may be active in
   # several atoms, so it may appear in several modules.
   gene_loadings <- t(loadings)
-  modules_dt <- .modules_from_loadings(gene_loadings, membership_params)
+  modules_dt <- modules_from_loadings(gene_loadings, membership_params)
 
   S7::prop(object, "final_results") <- new_bulk_module_result(
     modules = modules_dt,

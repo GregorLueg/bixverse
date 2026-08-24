@@ -700,6 +700,8 @@ Exported but absent from `_pkgdown.yml`. Mostly internal constructors and `rs_*`
 - `rs_synthetic_sc_data_with_cell_types`: Generates synthetic data for single cell
 - `rs_top_k_targets`: SCENIC: Select the Top TF <> Gene pairs
 - `rs_transfer_labels_symphony`: Transfer labels from a Symphony reference to a query via kNN vote
+- `rs_mc_vision`: Calculate VISION pathway scores in Rust (for meta cells)
+- `rs_mc_vision_with_autocorrelation`: Calculate VISION pathway scores in Rust with auto-correlation (for meta cells)
 - `rs_vision`: Calculate VISION pathway scores in Rust
 - `rs_vision_with_autocorrelation`: Calculate VISION pathway scores in Rust with auto-correlation
 - `set_cell_mapping`: Set cell mapping

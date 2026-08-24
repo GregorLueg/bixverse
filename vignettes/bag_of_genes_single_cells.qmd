@@ -276,7 +276,7 @@ it differently:
   gene set prevalence, so don't compare raw values across sets of different
   size unless you switch `standardise` on.
 
-We stick with the default here.
+We use the `"wilcox"` here.
 
 ```{r}
 #| label: aucell
@@ -286,7 +286,7 @@ We stick with the default here.
 auc_scores <- aucell_sc(
   object = sc_object,
   gs_list = lineage_sets,
-  aucell_params = params_sc_aucell(),
+  aucell_params = params_sc_aucell(auc_type = "wilcox"),
   .verbose = FALSE
 )
 
@@ -687,14 +687,15 @@ Alternating Least Squares) in Rust, which converges fast and scales nicely.
 A few practical notes before diving in:
 
 - NMF is non-convex: different random initialisations land in different local
-  optima. The package therefore provides `nmf_sc()` for a single run and
-  `stabilised_nmf_sc()` for multiple restarts. The latter is the right default
-  for any serious analysis as well as down stream meta analyses such as 
-  finding consensus programmes.
+  optima. The package therefore provides `nmf_sc()` for a single run,
+  `stabilised_nmf_sc()` for multiple restarts, and `consensus_nmf_sc()` which
+  takes those restarts and returns the programmes they agree on. The last one
+  is the right default for any serious analysis.
 - Picking `k` is the eternal question. Too small and programmes get smushed
-  together; too large and they fragment into redundant copies. There is no
-  free lunch here. Usually you run with several values and inspect. If in doubt,
-  lick your finger and see from where the wind comes... (Joke)
+  together; too large and they fragment into redundant copies. `nmf_k_sweep_sc()`
+  turns that into something you can actually look at: stability against
+  reconstruction error across a range of `k`. It is not a free lunch, but it
+  beats licking your finger and seeing from where the wind comes... (Joke)
 - NMF on a heterogeneous dataset often just rediscovers the obvious cell-type
   axis. The interesting use case is running it *within* a cell type to find
   finer-grained programmes (activation, exhaustion, cycling, etc.). We will
@@ -816,6 +817,102 @@ point for a single-run analysis. `get_best_run()` returns it as an
 best_run <- get_best_run(t_cell_nmf_results_stabilised)
 ```
 
+### Consensus NMF
+
+Picking the lowest-loss restart is a reasonable default, but it dodges the
+question you actually care about: did the restarts agree? Consensus NMF
+(cNMF, [Kotliar, et al.](https://elifesciences.org/articles/43803)) answers it
+directly. Pool the components of every restart, drop the ones sitting on their
+own in the pool, k-means the survivors into `k` groups, and take the median of
+each group. What comes out is the programme structure the restarts agree on,
+and the mean silhouette of those clusters says how strongly they agreed.
+
+Before fitting, though, you need a `k`. `nmf_k_sweep_sc()` runs the consensus
+step across a range of ranks and reports stability against reconstruction
+error, keeping no factors, so a wide sweep stays affordable.
+
+```{r}
+#| label: nmf k sweep
+t_cell_k_sweep <- nmf_k_sweep_sc(
+  object = sc_object,
+  k_range = 2:12,
+  cell_ids = t_cell_ids,
+  gene_ids = t_cell_hvg,
+  n_runs = 10L,
+  nmf_consensus_params = params_nmf_consensus(density_threshold = 2)
+)
+
+t_cell_k_sweep
+```
+
+```{r}
+#| label: nmf k sweep plot
+#| fig-cap: "Consensus NMF k sweep on the T cells."
+plot(t_cell_k_sweep)
+```
+
+Error falls monotonically with `k`, so it would happily push you to the largest
+rank you can afford. Stability is the counterweight: take the last `k` before it
+falls away, while the error curve is still coming down. Here that is `5L`, not 
+the 10 we picked by eye for the runs above. Worth knowing before writing up ten
+programmes when the data supports seven. (Identifying two components is always
+trivial and unlikely to be the true signal.)
+
+::: {.callout-note}
+`density_threshold = 2` turns the outlier filter off, since cosine distance
+cannot exceed 2. Left on, components whose neighbours sit too far away get
+dropped, and if fewer than `k` survive the fit errors instead of returning
+something degenerate. Sensible on real data with enough restarts; with 8 it
+fires more often than it should. `get_stability()` gives you the
+`local_density` values to pick a real threshold from.
+:::
+
+```{r}
+#| label: run consensus nmf
+t_cell_nmf_consensus <- consensus_nmf_sc(
+  object = sc_object,
+  k = 5L,
+  cell_ids = t_cell_ids,
+  gene_ids = t_cell_hvg,
+  n_runs = 10L,
+  nmf_consensus_params = params_nmf_consensus(density_threshold = 2)
+)
+
+t_cell_nmf_consensus
+```
+
+`W` and `H` come back in exactly the shape `nmf_sc()` gives you, so everything
+downstream is unchanged. What is new is `get_stability()`.
+
+```{r}
+#| label: consensus stability
+consensus_diag <- get_stability(t_cell_nmf_consensus)
+consensus_diag$stability
+consensus_diag$cluster_sizes
+```
+
+The per-component table records where each restart's components landed.
+`component_id` uses the same `run_XX.comp_YY` naming as the `w_all` columns of
+a stabilised fit, so at matching `k` and `n_runs` the two line up directly and
+you can go back to the raw restarts behind any cluster.
+
+```{r}
+#| label: consensus clusters
+head(consensus_diag$clusters)
+```
+
+With 10 restarts, a cluster holding 10 components is a programme every run
+found. A thin one is a programme only some initialisations saw, and that is
+worth knowing before you write it up.
+
+::: {.callout-note}
+Memory, not runtime, is what bites here. The restarts are dense and all live at
+once, so budget roughly `n_cells * k * n_runs` floats on top of the counts. At a
+few hundred thousand cells with `n_runs = 50` that adds up fast, and the honest
+answer is to run consensus NMF on `MetaCells` instead. See the meta cell
+vignette.
+:::
+
 ### Downstream analysis
 
 What you do next depends entirely on what you are after. Some natural
@@ -828,13 +925,10 @@ directions:
 - **Score cells**: `H` gives you per-cell activations for each programme.
   Project them onto your UMAP, correlate against existing annotations, or
   use them as features for downstream clustering.
-- **Add activations to the obs table**: `get_data()` on an `NmfResult`
-  returns a data.table of cell activations that slots into the SingleCells
-  obs table via `add_sc_new_obs()`, the same way module scores did earlier.
-- **Consensus across runs**: with `stabilised_nmf_sc()` you have `k * n_runs`
-  W columns to play with. The classical move is to cluster these to identify
-  components that recur across initialisations (the stable programmes) and
-  components that appear only once (likely overfit to a particular seed).
+- **Add activations to the obs table**: `get_data()` on an `NmfResult` or a
+  `ConsensusNmfResult` returns a data.table of cell activations that slots into
+  the SingleCells obs table via `add_sc_new_obs()`, the same way module scores
+  did earlier.
 
 We leave the choice of analysis here to you - the right downstream depends on
 the biology and your questions to the data, not the API.

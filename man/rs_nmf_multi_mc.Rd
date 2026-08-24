@@ -43,3 +43,4 @@ A list with \code{w_all}, \code{h_per_run}, \code{losses}, \code{converged},
 Assumes that the sparse data is pre-filtered for the cells/genes you wish
 to include. Indices in the sparse data need to be 0-indexed.
 }
+\keyword{internal}

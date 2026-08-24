@@ -17,6 +17,8 @@
     "ADTCounts",
     "NmfResult",
     "StabilisedNmfResult",
+    "ConsensusNmfResult",
+    "NmfKSweepResult",
     "LigandTargetInfluence",
     "ScTypeResults",
     "ScTypeCellResults",

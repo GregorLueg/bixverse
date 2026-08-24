@@ -269,43 +269,7 @@ S7::method(aucell_sc, SingleCells) <- function(
 
 ### calculate the scores -------------------------------------------------------
 
-#' Calculate VISION scores
-#'
-#' @description
-#' Calculates an VISION-type scores for pathways based on DeTomaso, et al.
-#' Compared to other score types, you can also calculate delta-type scores
-#' between positive and negative gene indices, think epithelial vs mesenchymal
-#' gene signature, etc.
-#'
-#' @param object `SingleCells` class.
-#' @param gs_list Named nested list. The elements have the gene identifiers of
-#' the respective gene sets and have the option to have a `"pos"` and `"neg"`
-#' gene sets. The names need to be part of the variables of the
-#' `SingleCells` class.
-#' @param streaming Optional Boolean. Shall the data be streamed in. Useful for
-#' larger data sets where you wish to avoid loading in the whole data. If
-#' `NULL`, will automatically detect.
-#' @param .verbose Boolean or integer. Controls verbosity and returns run times.
-#' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
-#' verbosity.
-#'
-#' @returns Returns a `ScMatrixRes` with the VISION scores.
-#'
-#' @references DeTomaso, et al., Nat. Commun., 2019
-#'
-#' @export
-vision_sc <- S7::new_generic(
-  name = "vision_sc",
-  dispatch_args = "object",
-  fun = function(
-    object,
-    gs_list,
-    streaming = NULL,
-    .verbose = TRUE
-  ) {
-    S7::S7_dispatch()
-  }
-)
+# generics found in base_generics_sc.R
 
 #' @method vision_sc SingleCells
 #'
@@ -354,68 +318,7 @@ S7::method(vision_sc, SingleCells) <- function(
 
 ### vision with auto-correlation -----------------------------------------------
 
-#' Calculate VISION scores (with auto-correlation scores)
-#'
-#' @description
-#' Calculates VISION-type scores for pathways based on DeTomaso, et al.
-#' Compared to other score types, you can also calculate delta-type scores
-#' between positive and negative gene indices, think epithelial vs mesenchymal
-#' gene signature, etc. Additionally, this function also calculates the auto-
-#' correlation values, answering the question if a given signature shows non-
-#' random enrichment on the kNN graph. The kNN graph (and distance measures)
-#' will be generated on-the-fly based on the embedding you wish to use.
-#'
-#' @param object `SingleCells` class.
-#' @param gs_list Named nested list. The elements have the gene identifiers of
-#' the respective gene sets and have the option to have a `"pos"` and `"neg"`
-#' gene sets. The names need to be part of the variables of the
-#' `SingleCells` class.
-#' @param vision_params List with vision parameters, see
-#' [bixverse::params_sc_vision()] with the following elements:
-#' \itemize{
-#'   \item n_perm - Integer. Number of random permutations
-#'   \item n_cluster - Integer. Number of random clusters to generate to
-#'   associate each set with.
-#'   \item knn - List of kNN parameters. See [bixverse::params_knn_defaults()]
-#'   for available parameters and their defaults.
-#' }
-#' @param embd_to_use String. The embedding to use. Whichever you chose, it
-#' needs to be part of the object.
-#' @param no_embd_to_use Optional integer. Number of embedding dimensions to
-#' use. If `NULL` all will be used.
-#' @param use_knn Boolean. Shall the internal kNN be used. If set to yes, you
-#' need to ensure consistency.
-#' @param random_seed Integer. The random seed.
-#' @param streaming Optional Boolean. Shall the data be streamed in. Useful for
-#' larger data sets where you wish to avoid loading in the whole data. If
-#' `NULL`, will automatically detect.
-#' @param .verbose Boolean or integer. Controls verbosity and returns run times.
-#' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
-#' verbosity.
-#'
-#' @return Matrix of cells x signatures with the VISION pathway scores as
-#' values.
-#'
-#' @references DeTomaso, et al., Nat. Commun., 2019
-#'
-#' @export
-vision_w_autocor_sc <- S7::new_generic(
-  name = "vision_w_autocor_sc",
-  dispatch_args = "object",
-  fun = function(
-    object,
-    gs_list,
-    embd_to_use,
-    no_embd_to_use = NULL,
-    use_knn = TRUE,
-    vision_params = params_sc_vision(),
-    streaming = NULL,
-    random_seed = 42L,
-    .verbose = TRUE
-  ) {
-    S7::S7_dispatch()
-  }
-)
+# generics found in base_generics_sc.R
 
 #' @method vision_w_autocor_sc SingleCells
 #'
@@ -435,8 +338,10 @@ S7::method(vision_w_autocor_sc, SingleCells) <- function(
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::qassert(embd_to_use, "S1")
   checkmate::qassert(no_embd_to_use, c("I1", "0"))
+  checkmate::qassert(use_knn, "B1")
   assertScVision(vision_params)
   checkmate::qassert(streaming, c("B1", "0"))
+  checkmate::qassert(random_seed, "I1")
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   streaming <- auto_streaming(
@@ -1081,5 +986,147 @@ S7::method(stabilised_nmf_sc, SingleCells) <- function(
     cell_indices = sel$cell_indices,
     source_class = "SingleCells",
     params = params
+  )
+}
+
+#' @method consensus_nmf_sc SingleCells
+#'
+#' @export
+S7::method(consensus_nmf_sc, SingleCells) <- function(
+  object,
+  k,
+  cell_ids = NULL,
+  gene_ids = NULL,
+  preprocessing = "none",
+  use_second_layer = TRUE,
+  nmf_hals_params = params_nmf_hals(),
+  nmf_consensus_params = params_nmf_consensus(),
+  n_runs = 30L,
+  seed = 42L,
+  .verbose = TRUE
+) {
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  checkmate::qassert(k, "I1[2,)")
+  checkmate::qassert(cell_ids, c("0", "S+"))
+  checkmate::qassert(gene_ids, c("0", "S+"))
+  checkmate::assertChoice(preprocessing, c("none", "sd", "sqrt_sd"))
+  checkmate::qassert(use_second_layer, "B1")
+  assertNmfHals(nmf_hals_params)
+  assertNmfConsensus(nmf_consensus_params)
+  checkmate::qassert(n_runs, "I1[2,)")
+  checkmate::qassert(seed, "I1")
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
+
+  sel <- .resolve_sc_nmf_selection(object, cell_ids, gene_ids)
+
+  .warn_consensus_target_w(
+    nmf_consensus_params,
+    n_samples = length(sel$cell_indices),
+    k = k,
+    n_runs = n_runs
+  )
+
+  nmf_res <- .run_consensus_nmf(
+    .rs_call = rs_nmf_consensus_sc,
+    nmf_consensus_params = nmf_consensus_params,
+    seed = seed,
+    f_path_gene = get_rust_count_gene_f_path(object),
+    gene_indices = sel$gene_indices,
+    cell_indices = sel$cell_indices,
+    k = k,
+    preprocessing = preprocessing,
+    use_second_layer = use_second_layer,
+    nmf_hals_params = nmf_hals_params,
+    n_runs = n_runs,
+    verbose = parse_verbosity(.verbose)
+  )
+
+  params <- c(
+    nmf_hals_params,
+    list(
+      k = k,
+      preprocessing = preprocessing,
+      use_second_layer = use_second_layer,
+      nmf_consensus_params = nmf_consensus_params,
+      n_runs = n_runs,
+      seed = seed
+    )
+  )
+
+  new_consensus_nmf_result(
+    nmf_res = nmf_res,
+    gene_ids = sel$gene_ids,
+    cell_ids = sel$cell_ids,
+    cell_indices = sel$cell_indices,
+    source_class = "SingleCells",
+    params = params
+  )
+}
+
+#' @method nmf_k_sweep_sc SingleCells
+#'
+#' @export
+S7::method(nmf_k_sweep_sc, SingleCells) <- function(
+  object,
+  k_range,
+  cell_ids = NULL,
+  gene_ids = NULL,
+  preprocessing = "none",
+  use_second_layer = TRUE,
+  nmf_hals_params = params_nmf_hals(),
+  nmf_consensus_params = params_nmf_consensus(),
+  n_runs = 30L,
+  seed = 42L,
+  .verbose = TRUE
+) {
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  k_range <- .assert_nmf_k_range(k_range)
+  checkmate::qassert(cell_ids, c("0", "S+"))
+  checkmate::qassert(gene_ids, c("0", "S+"))
+  checkmate::assertChoice(preprocessing, c("none", "sd", "sqrt_sd"))
+  checkmate::qassert(use_second_layer, "B1")
+  assertNmfHals(nmf_hals_params)
+  assertNmfConsensus(nmf_consensus_params)
+  checkmate::qassert(n_runs, "I1[2,)")
+  checkmate::qassert(seed, "I1")
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
+
+  sel <- .resolve_sc_nmf_selection(object, cell_ids, gene_ids)
+
+  .warn_consensus_target_w(
+    nmf_consensus_params,
+    n_samples = length(sel$cell_indices),
+    k = max(k_range),
+    n_runs = n_runs
+  )
+
+  sweep_res <- rs_nmf_k_sweep_sc(
+    f_path_gene = get_rust_count_gene_f_path(object),
+    gene_indices = sel$gene_indices,
+    cell_indices = sel$cell_indices,
+    k_range = k_range,
+    preprocessing = preprocessing,
+    use_second_layer = use_second_layer,
+    nmf_hals_params = nmf_hals_params,
+    nmf_consensus_params = .inject_consensus_seed(nmf_consensus_params, seed),
+    n_runs = n_runs,
+    seed = seed,
+    verbose = parse_verbosity(.verbose)
+  )
+
+  new_nmf_k_sweep_result(
+    sweep_res = sweep_res,
+    source_class = "SingleCells",
+    params = c(
+      nmf_hals_params,
+      list(
+        k_range = k_range,
+        preprocessing = preprocessing,
+        use_second_layer = use_second_layer,
+        nmf_consensus_params = nmf_consensus_params,
+        n_runs = n_runs,
+        seed = seed
+      )
+    )
   )
 }

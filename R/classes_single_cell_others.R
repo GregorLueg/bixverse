@@ -3299,6 +3299,459 @@ get_params.StabilisedNmfResult <- function(
   to_ret
 }
 
+### ConsensusNmfResult ---------------------------------------------------------
+
+#' Assemble the per-component consensus diagnostics
+#'
+#' @description
+#' Turns the flat vectors the Rust side returns into one row per pooled
+#' component. Rust pools component `j` of restart `r` at position `k * r + j`,
+#' which is the order [bixverse::new_stabilised_nmf_result()] builds its
+#' `w_all` column names in, so `component_id` joins straight onto the columns
+#' of `get_w()` on a stabilised fit.
+#'
+#' @param nmf_res Named list. Raw consensus output, needs `labels`,
+#' `local_density`, `kept` and `silhouette`.
+#' @param k Integer. Components per restart.
+#' @param n_runs Integer. Number of restarts.
+#'
+#' @returns A data.table with one row per pooled component and the columns
+#' `component_id`, `run`, `component`, `pooled_idx`, `cluster`,
+#' `local_density`, `silhouette` and `kept`. Dropped components carry `NA` in
+#' `cluster` and `silhouette`.
+#'
+#' @keywords internal
+.nmf_cluster_dt <- function(nmf_res, k, n_runs) {
+  checkmate::assertList(nmf_res)
+  checkmate::assertNames(
+    names(nmf_res),
+    must.include = c("labels", "local_density", "kept", "silhouette")
+  )
+  checkmate::qassert(k, "I1[1,)")
+  checkmate::qassert(n_runs, "I1[1,)")
+
+  n_pooled <- k * n_runs
+  run <- rep(seq_len(n_runs), each = k)
+  component <- rep(seq_len(k), times = n_runs)
+
+  # `silhouette` is only as long as `kept`, so widen it back out rather than
+  # handing the user two vectors of different lengths to line up themselves.
+  silhouette <- rep(NA_real_, n_pooled)
+  silhouette[nmf_res$kept] <- nmf_res$silhouette
+
+  data.table::data.table(
+    component_id = sprintf("run_%02d.comp_%02d", run, component),
+    run = run,
+    component = component,
+    pooled_idx = seq_len(n_pooled),
+    cluster = as.integer(nmf_res$labels),
+    local_density = nmf_res$local_density,
+    silhouette = silhouette,
+    kept = seq_len(n_pooled) %in% nmf_res$kept
+  )
+}
+
+#' Constructor for consensus NMF results
+#'
+#' @description
+#' Stores the consensus W (genes x components) and H (components x cells)
+#' matrices, the relative reconstruction errors and the clustering diagnostics
+#' that produced them.
+#'
+#' @param nmf_res Named list. Output of [rs_nmf_consensus_sc()] or
+#' [rs_nmf_consensus_mc()]. Must contain `w`, `h`, `rel_error`,
+#' `rel_run_errors`, `labels`, `local_density`, `kept`, `silhouette`,
+#' `stability`, `cluster_sizes`, `n_dropped`, `n_empty_clusters`.
+#' @param gene_ids Character vector. Gene identifiers for the rows of W.
+#' @param cell_ids Character vector. Cell (or meta cell) identifiers for the
+#' columns of H.
+#' @param cell_indices Integer vector. 0-indexed cell positions used in the
+#' run (Rust-side indices, kept for re-running / cross-referencing).
+#' @param source_class String. One of `c("SingleCells", "MetaCells")`.
+#' @param params List. The full set of parameters used for the run.
+#'
+#' @returns An object of class `ConsensusNmfResult`.
+#'
+#' @references Kotliar et al., eLife, 2019
+#'
+#' @export
+#'
+#' @keywords internal
+new_consensus_nmf_result <- function(
+  nmf_res,
+  gene_ids,
+  cell_ids,
+  cell_indices,
+  source_class,
+  params
+) {
+  checkmate::assertList(nmf_res)
+  checkmate::assertNames(
+    names(nmf_res),
+    must.include = c(
+      "w",
+      "h",
+      "rel_error",
+      "rel_run_errors",
+      "labels",
+      "local_density",
+      "kept",
+      "silhouette",
+      "stability",
+      "cluster_sizes",
+      "n_dropped",
+      "n_empty_clusters"
+    )
+  )
+  checkmate::qassert(gene_ids, "S+")
+  checkmate::qassert(cell_ids, "S+")
+  checkmate::qassert(cell_indices, "I+")
+  checkmate::assertChoice(source_class, c("SingleCells", "MetaCells"))
+  checkmate::assertList(params)
+
+  # Rust factorises cells x genes, so its `w` is cells x k and its `h` is
+  # k x genes. Flip both, same as new_nmf_result().
+  w <- t(nmf_res$h)
+  h <- t(nmf_res$w)
+
+  k <- ncol(w)
+  n_runs <- length(nmf_res$rel_run_errors)
+  comp_names <- sprintf("comp_%02d", seq_len(k))
+
+  rownames(w) <- gene_ids
+  colnames(w) <- comp_names
+  rownames(h) <- comp_names
+  colnames(h) <- cell_ids
+
+  res <- list(
+    w = w,
+    h = h,
+    gene_ids = gene_ids,
+    cell_ids = cell_ids,
+    cell_indices = cell_indices,
+    stability = nmf_res$stability,
+    rel_error = nmf_res$rel_error,
+    rel_run_errors = nmf_res$rel_run_errors,
+    clusters = .nmf_cluster_dt(nmf_res, k = k, n_runs = n_runs),
+    cluster_sizes = data.table::data.table(
+      cluster = seq_len(k),
+      n = as.integer(nmf_res$cluster_sizes)
+    ),
+    n_dropped = nmf_res$n_dropped,
+    n_empty_clusters = nmf_res$n_empty_clusters,
+    source_class = source_class,
+    params = params
+  )
+
+  class(res) <- "ConsensusNmfResult"
+  res
+}
+
+#### primitives ----------------------------------------------------------------
+
+#' @export
+#'
+#' @keywords internal
+print.ConsensusNmfResult <- function(x, ...) {
+  cat("ConsensusNmfResult (consensus HALS NMF)\n")
+  cat(sprintf("  Source class:     %s\n", x$source_class))
+  cat(sprintf("  No genes:         %d\n", nrow(x$w)))
+  cat(sprintf("  No cells:         %d\n", ncol(x$h)))
+  cat(sprintf("  No components:    %d\n", ncol(x$w)))
+  cat(sprintf("  No runs:          %d\n", length(x$rel_run_errors)))
+  cat(sprintf("  Stability:        %.4g\n", x$stability))
+  cat(sprintf("  Relative error:   %.4g\n", x$rel_error))
+  cat(sprintf(
+    "  Dropped:          %d / %d components\n",
+    x$n_dropped,
+    nrow(x$clusters)
+  ))
+  cat(sprintf("  Preprocessing:    %s\n", x$params$preprocessing))
+  invisible(x)
+}
+
+#' @export
+#'
+#' @keywords internal
+dim.ConsensusNmfResult <- function(x) {
+  c(nrow(x$w), ncol(x$h), ncol(x$w))
+}
+
+#### transforms ----------------------------------------------------------------
+
+#' @export
+as.matrix.ConsensusNmfResult <- function(x, which = c("w", "h"), ...) {
+  which <- match.arg(which)
+  x[[which]]
+}
+
+#### getters -------------------------------------------------------------------
+
+#' @rdname get_w
+#'
+#' @export
+get_w.ConsensusNmfResult <- function(x) {
+  checkmate::assertClass(x, "ConsensusNmfResult")
+  x$w
+}
+
+#' @rdname get_h
+#'
+#' @export
+get_h.ConsensusNmfResult <- function(x) {
+  checkmate::assertClass(x, "ConsensusNmfResult")
+  x$h
+}
+
+#' Get the consensus NMF stability diagnostics
+#'
+#' @description
+#' Returns the mean silhouette of the consensus clusters, the relative
+#' reconstruction errors and the per-component clustering table. A stability
+#' near 1 means every restart found the same programmes; a low one means the
+#' factorisation is not reproducible at this `k`.
+#'
+#' @param x An object holding consensus NMF results.
+#'
+#' @returns A list with `stability`, `rel_error`, `rel_run_errors`, `clusters`,
+#' `cluster_sizes`, `n_dropped` and `n_empty_clusters`.
+#'
+#' @export
+get_stability <- function(x) {
+  UseMethod("get_stability")
+}
+
+#' @rdname get_stability
+#'
+#' @export
+get_stability.ConsensusNmfResult <- function(x) {
+  checkmate::assertClass(x, "ConsensusNmfResult")
+  list(
+    stability = x$stability,
+    rel_error = x$rel_error,
+    rel_run_errors = x$rel_run_errors,
+    clusters = x$clusters,
+    cluster_sizes = x$cluster_sizes,
+    n_dropped = x$n_dropped,
+    n_empty_clusters = x$n_empty_clusters
+  )
+}
+
+#' @method get_params ConsensusNmfResult
+#'
+#' @export
+S7::method(get_params, S7::new_S3_class("ConsensusNmfResult")) <-
+  function(object, to_json = FALSE, pretty_json = FALSE) {
+    get_params.ConsensusNmfResult(
+      object = object,
+      to_json = to_json,
+      pretty_json = pretty_json
+    )
+  }
+
+#' @rdname get_params
+#'
+#' @export
+get_params.ConsensusNmfResult <- function(
+  object,
+  to_json = FALSE,
+  pretty_json = FALSE
+) {
+  checkmate::assertClass(object, "ConsensusNmfResult")
+  checkmate::qassert(to_json, "B1")
+  checkmate::qassert(pretty_json, "B1")
+
+  to_ret <- object[["params"]]
+  if (to_json) {
+    to_ret <- jsonlite::toJSON(to_ret)
+  }
+  if (to_json && pretty_json) {
+    to_ret <- jsonlite::prettify(to_ret)
+  }
+  to_ret
+}
+
+#' @rdname get_data
+#'
+#' @export
+get_data.ConsensusNmfResult <- function(x, ...) {
+  checkmate::assertClass(x, "ConsensusNmfResult")
+
+  obs_dt <- data.table::as.data.table(t(x$h))
+  obs_dt[, cell_idx := (x$cell_indices + 1L)]
+
+  obs_dt <- .add_is_obs_attr(obs_dt)
+  obs_dt
+}
+
+### NmfKSweepResult ------------------------------------------------------------
+
+#' Constructor for NMF k sweep results
+#'
+#' @description
+#' Wraps the diagnostics of a consensus NMF sweep over several `k` in a
+#' data.table, one row per `k`. Subclassing the data.table rather than boxing
+#' it means `[`, `order()` and friends keep working.
+#'
+#' @param sweep_res Named list. Output of [rs_nmf_k_sweep_bulk()],
+#' [rs_nmf_k_sweep_sc()] or [rs_nmf_k_sweep_mc()]. Must contain `k`,
+#' `stability`, `best_error`, `median_error`, `consensus_failed`, `n_dropped`,
+#' `n_empty_clusters` and `n_converged`.
+#' @param source_class String. One of
+#' `c("BulkCoExp", "SingleCells", "MetaCells")`.
+#' @param params List. The full set of parameters used for the sweep.
+#'
+#' @returns An object of class `NmfKSweepResult`, which is also a data.table.
+#' `stability` is `NA` for any `k` where the consensus step failed.
+#'
+#' @references Kotliar et al., eLife, 2019
+#'
+#' @export
+#'
+#' @keywords internal
+new_nmf_k_sweep_result <- function(sweep_res, source_class, params) {
+  checkmate::assertList(sweep_res)
+  checkmate::assertNames(
+    names(sweep_res),
+    must.include = c(
+      "k",
+      "stability",
+      "best_error",
+      "median_error",
+      "consensus_failed",
+      "n_dropped",
+      "n_empty_clusters",
+      "n_converged"
+    )
+  )
+  checkmate::assertChoice(
+    source_class,
+    c("BulkCoExp", "SingleCells", "MetaCells")
+  )
+  checkmate::assertList(params)
+
+  dt <- data.table::as.data.table(sweep_res)
+
+  # Rust hands back NaN for a failed consensus step. Make that an honest NA
+  # rather than something that plots as a gap nobody noticed.
+  data.table::set(
+    dt,
+    i = which(dt$consensus_failed),
+    j = "stability",
+    value = NA_real_
+  )
+
+  n_failed <- sum(dt$consensus_failed)
+  if (n_failed > 0L) {
+    warning(sprintf(
+      paste(
+        "The consensus step failed for %d of %d values of k (too few",
+        "components survived the density filter). Their stability is NA.",
+        "Raise `density_threshold` in params_nmf_consensus() or add restarts."
+      ),
+      n_failed,
+      nrow(dt)
+    ))
+  }
+
+  n_empty <- sum(dt$n_empty_clusters > 0L)
+  if (n_empty > 0L) {
+    warning(sprintf(
+      paste(
+        "%d of %d values of k left at least one cluster empty. Stability is",
+        "reported as 0 when fewer than two clusters are populated, so treat",
+        "those rows as uninformative rather than as genuinely unstable."
+      ),
+      n_empty,
+      nrow(dt)
+    ))
+  }
+
+  data.table::setattr(dt, "source_class", source_class)
+  data.table::setattr(dt, "params", params)
+  data.table::setattr(
+    dt,
+    "class",
+    c("NmfKSweepResult", "data.table", "data.frame")
+  )
+  dt
+}
+
+#### primitives ----------------------------------------------------------------
+
+#' @export
+#'
+#' @keywords internal
+print.NmfKSweepResult <- function(x, ...) {
+  usable <- x[which(!is.na(x$stability)), ]
+  cat("NmfKSweepResult (consensus NMF k sweep)\n")
+  cat(sprintf("  Source class:     %s\n", attr(x, "source_class")))
+  cat(sprintf("  k range:          %d to %d\n", min(x$k), max(x$k)))
+  cat(sprintf("  No runs per k:    %d\n", attr(x, "params")$n_runs))
+  if (nrow(usable) > 0L) {
+    cat(sprintf(
+      "  Most stable k:    %d (stability = %.4g)\n",
+      usable$k[which.max(usable$stability)],
+      max(usable$stability)
+    ))
+  } else {
+    cat("  Most stable k:    none, every k failed the consensus step\n")
+  }
+  cat("\n")
+  NextMethod()
+  invisible(x)
+}
+
+#' Plot a consensus NMF k sweep
+#'
+#' @description
+#' Stability and relative reconstruction error against `k`, the standard cNMF
+#' diagnostic. Pick the `k` where stability is still high and the error curve
+#' has not yet flattened out. Values of `k` whose consensus step failed have no
+#' stability point.
+#'
+#' @param x `NmfKSweepResult` object.
+#' @param ... Additional params. Currently unused.
+#'
+#' @returns A `ggplot2` object with the two curves side by side.
+#'
+#' @references Kotliar et al., eLife, 2019
+#'
+#' @export
+plot.NmfKSweepResult <- function(x, ...) {
+  checkmate::assertClass(x, "NmfKSweepResult")
+
+  plot_dt <- data.table::rbindlist(list(
+    data.table::data.table(
+      k = x$k,
+      value = x$stability,
+      metric = "Stability (mean silhouette)"
+    ),
+    data.table::data.table(
+      k = x$k,
+      value = x$median_error,
+      metric = "Relative reconstruction error"
+    )
+  ))
+  plot_dt <- plot_dt[which(!is.na(plot_dt$value)), ]
+
+  ggplot2::ggplot(
+    data = plot_dt,
+    mapping = ggplot2::aes(x = k, y = value)
+  ) +
+    ggplot2::geom_line(colour = "grey40") +
+    ggplot2::geom_point(size = 2) +
+    ggplot2::facet_wrap(~metric, scales = "free_y") +
+    ggplot2::scale_x_continuous(breaks = unique(plot_dt$k)) +
+    ggplot2::labs(
+      title = "Consensus NMF k sweep",
+      subtitle = "High stability with error still falling is the sweet spot",
+      x = "Number of components (k)",
+      y = NULL
+    ) +
+    ggplot2::theme_minimal()
+}
+
 ## trajectory results ----------------------------------------------------------
 
 ### palantir -------------------------------------------------------------------

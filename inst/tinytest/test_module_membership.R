@@ -11,7 +11,13 @@ gene <- module_id <- N <- NULL
 
 expect_equal(
   current = params_module_membership(),
-  target = list(method = "zscore", cutoff = 3.0, fdr = 0.05, tails = "auto"),
+  target = list(
+    method = "zscore",
+    cutoff = 3.0,
+    fdr = 0.05,
+    tails = "auto",
+    scaling = "robust"
+  ),
   info = "module membership params - defaults"
 )
 
@@ -55,7 +61,7 @@ loadings[1:20, 1] <- 5
 loadings[15:34, 2] <- 5
 loadings[40:59, 3] <- -5
 
-mods <- bixverse:::.modules_from_loadings(loadings)
+mods <- bixverse::modules_from_loadings(loadings)
 
 expect_true(
   current = data.table::is.data.table(mods),
@@ -110,11 +116,11 @@ expect_true(
 
 ## cutoff behaviour ------------------------------------------------------------
 
-strict <- bixverse:::.modules_from_loadings(
+strict <- bixverse::modules_from_loadings(
   loadings,
   params_module_membership(cutoff = 10)
 )
-loose <- bixverse:::.modules_from_loadings(
+loose <- bixverse::modules_from_loadings(
   loadings,
   params_module_membership(cutoff = 1)
 )
@@ -126,7 +132,7 @@ expect_true(
 
 ## fdr method ------------------------------------------------------------------
 
-mods_fdr <- bixverse:::.modules_from_loadings(
+mods_fdr <- bixverse::modules_from_loadings(
   loadings,
   params_module_membership(method = "fdr")
 )
@@ -156,17 +162,17 @@ non_negative <- abs(loadings)
 
 expect_true(
   current = all(
-    bixverse:::.modules_from_loadings(non_negative)$sign == "pos"
+    bixverse::modules_from_loadings(non_negative)$sign == "pos"
   ),
   info = "membership - auto tails goes one-sided on non-negative loadings"
 )
 
 expect_true(
-  current = nrow(bixverse:::.modules_from_loadings(
+  current = nrow(bixverse::modules_from_loadings(
     loadings,
     params_module_membership(tails = "upper")
   )) <
-    nrow(bixverse:::.modules_from_loadings(
+    nrow(bixverse::modules_from_loadings(
       loadings,
       params_module_membership(tails = "both")
     )),
@@ -183,17 +189,17 @@ flat <- matrix(
 )
 
 expect_warning(
-  current = bixverse:::.modules_from_loadings(flat),
+  current = bixverse::modules_from_loadings(flat),
   info = "membership - a component with no spread warns rather than erroring"
 )
 
 expect_equal(
-  current = nrow(suppressWarnings(bixverse:::.modules_from_loadings(flat))),
+  current = nrow(suppressWarnings(bixverse::modules_from_loadings(flat))),
   target = 0L,
   info = "membership - a degenerate matrix yields no modules"
 )
 
 expect_error(
-  current = bixverse:::.modules_from_loadings(unname(loadings)),
+  current = bixverse::modules_from_loadings(unname(loadings)),
   info = "membership - a loading matrix without rownames is rejected"
 )
