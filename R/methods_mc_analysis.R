@@ -856,3 +856,79 @@ S7::method(nmf_k_sweep_sc, MetaCells) <- function(
     )
   )
 }
+
+## dialogue --------------------------------------------------------------------
+
+# generic found in base_generics_sc.R
+
+#' @method dialogue_sc MetaCells
+#'
+#' @export
+S7::method(dialogue_sc, MetaCells) <- function(
+  object,
+  cell_type_col,
+  sample_col,
+  features,
+  quality_col = NULL,
+  gene_ids = NULL,
+  pmd_params = params_dialogue_pmd(),
+  hlm_params = params_dialogue_hlm(),
+  refine_params = params_dialogue_refine(),
+  .verbose = TRUE
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(object, MetaCells))
+  checkmate::qassert(cell_type_col, "S1")
+  checkmate::qassert(sample_col, "S1")
+  checkmate::assertList(features, names = "named")
+  checkmate::qassert(quality_col, c("S1", "0"))
+  checkmate::qassert(gene_ids, c("S+", "0"))
+  assertDialoguePmd(pmd_params)
+  assertDialogueHlm(hlm_params)
+  assertDialogueRefine(refine_params)
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
+
+  obs <- S7::prop(object, "obs_table")
+
+  prepped <- .prep_dialogue_inputs(
+    object = object,
+    obs = obs,
+    cell_type_col = cell_type_col,
+    sample_col = sample_col,
+    features = features,
+    quality_col = quality_col,
+    cell_id_col = "meta_cell_id",
+    # meta cells carry no `lib_size`, but the raw counts are in memory
+    default_quality = as.numeric(Matrix::rowSums(
+      S7::prop(object, "data")[["raw"]]
+    ))
+  )
+
+  # DIALOGUE reads the normalised layer only; `"raw"` here would hand it the
+  # raw counts without complaining
+  dialogue_res <- rs_mc_dialogue(
+    sparse_data = mc_counts_to_list(object, assay = "norm"),
+    cell_type_indices = prepped$cell_type_indices,
+    features = prepped$features,
+    sample_ids = prepped$sample_ids,
+    cell_quality = prepped$cell_quality,
+    gene_indices = .resolve_dialogue_genes(object, gene_ids),
+    dialogue_params = c(pmd_params, hlm_params, refine_params),
+    verbose = parse_verbosity(.verbose)
+  )
+
+  new_dialogue_result(
+    dialogue_res = dialogue_res,
+    prepped = prepped,
+    gene_names = S7::prop(object, "var_table")$gene_id,
+    source_class = "MetaCells",
+    params = list(
+      cell_type_col = cell_type_col,
+      sample_col = sample_col,
+      quality_col = quality_col,
+      pmd_params = pmd_params,
+      hlm_params = hlm_params,
+      refine_params = refine_params
+    )
+  )
+}

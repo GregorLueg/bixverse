@@ -118,6 +118,147 @@ generate_single_cell_test_data <- function(
   )
 }
 
+### dialogue -------------------------------------------------------------------
+
+#' Single cell test data with a planted multicellular programme
+#'
+#' @description
+#' Generates synthetic data DIALOGUE should be able to solve. Every cell type
+#' gets its own noise and its own sample-level nuisance factors; only the first
+#' feature column and the planted genes carry a shared per-sample latent, so
+#' anything found beyond that is spurious.
+#'
+#' @details
+#' Same generator the Rust integration tests use, so the planted structure
+#' cannot drift between the two suites. What differs is the scale: R takes the
+#' raw count layer and lets the normal ingestion path log-normalise it, where
+#' the Rust tests feed the planted layer straight in.
+#'
+#' Cells are laid out contiguously by cell type and, within a cell type, by
+#' sample, so every cell type sees every sample. That is the easy case for the
+#' method and is what a fixture should be.
+#'
+#' @param syn_data_params List. Contains the parameters for the generation of
+#' the synthetic data, see: [bixverse::params_sc_synthetic_dialogue()].
+#' @param seed Integer. The seed for the generation of the synthetic data.
+#'
+#' @returns List with the following items
+#' \itemize{
+#'   \item counts - dgRMatrix with cells x genes of raw counts.
+#'   \item obs - data.table with `cell_id`, `cell_grp`, `sample_id` and
+#'   `cell_quality`. The last is pure noise, independent of the planted
+#'   programme: hand it to `dialogue_sc(quality_col = "cell_quality")` so the
+#'   covariate does not carry the signal you are trying to find.
+#'   \item var - data.table with the gene information.
+#'   \item features - Named list of numeric matrices, one per cell type, with
+#'   the cell identifiers as row names. Hand this straight to
+#'   [bixverse::dialogue_sc()].
+#'   \item latent - Numeric vector. The per-sample latent the planted
+#'   programme follows, named by sample.
+#'   \item planted - Named list of character vectors. The planted gene
+#'   identifiers per cell type.
+#' }
+#'
+#' @references Jerby-Arnon & Regev, Nature Biotechnology, 2022
+#'
+#' @export
+#'
+#' @keywords internal
+generate_dialogue_test_data <- function(
+  syn_data_params = params_sc_synthetic_dialogue(),
+  seed = 42L
+) {
+  # checks
+  assertScSyntheticDialogue(syn_data_params)
+  checkmate::qassert(seed, "I1")
+
+  if (!requireNamespace("Matrix", quietly = TRUE)) {
+    stop(
+      "Package 'Matrix' needed for this function to work. Please install it.",
+      call. = FALSE
+    )
+  }
+
+  data <- with(
+    syn_data_params,
+    rs_synthetic_sc_dialogue_data(
+      n_samples = n_samples,
+      cells_per_sample = cells_per_sample,
+      n_cell_types = n_cell_types,
+      n_features = n_features,
+      n_sample_features = n_sample_features,
+      n_genes = n_genes,
+      n_planted = n_planted,
+      seed = seed
+    )
+  )
+
+  n_cells <- data$nrow
+  n_genes <- data$ncol
+
+  cell_ids <- sprintf(
+    sprintf("cell_%%0%dd", nchar(as.character(n_cells))),
+    seq_len(n_cells)
+  )
+  gene_ids <- sprintf(
+    sprintf("gene_%%0%dd", nchar(as.character(n_genes))),
+    seq_len(n_genes)
+  )
+  cell_types <- sprintf("cell_type_%i", seq_along(data$cell_type_indices))
+  sample_ids <- sprintf("sample_%02d", data$sample_ids + 1L)
+
+  counts <- new(
+    "dgRMatrix",
+    p = as.integer(data$indptr),
+    x = as.numeric(data$data),
+    j = as.integer(data$indices),
+    Dim = as.integer(c(n_cells, n_genes)),
+    Dimnames = list(cell_ids, gene_ids)
+  )
+
+  cell_grp <- character(n_cells)
+  for (i in seq_along(data$cell_type_indices)) {
+    cell_grp[data$cell_type_indices[[i]] + 1L] <- cell_types[i]
+  }
+
+  obs <- data.table::data.table(
+    cell_id = cell_ids,
+    cell_grp = cell_grp,
+    sample_id = sample_ids,
+    cell_quality = data$quality
+  )
+
+  var <- data.table::data.table(
+    gene_id = gene_ids,
+    ensembl_id = sprintf(
+      sprintf("ens_%%0%dd", nchar(as.character(n_genes))),
+      seq_len(n_genes)
+    )
+  )
+
+  features <- purrr::imap(data$features, \(mat, i) {
+    rownames(mat) <- cell_ids[data$cell_type_indices[[i]] + 1L]
+    colnames(mat) <- sprintf("feature_%02d", seq_len(ncol(mat)))
+    mat
+  })
+  names(features) <- cell_types
+
+  planted <- purrr::map(data$planted, \(idx) gene_ids[idx + 1L])
+  names(planted) <- cell_types
+
+  latent <- data$latent
+  names(latent) <- sprintf("sample_%02d", seq_along(latent))
+
+  list(
+    counts = counts,
+    obs = obs,
+    var = var,
+    features = features,
+    latent = latent,
+    planted = planted
+  )
+}
+
 ### adt ------------------------------------------------------------------------
 
 #' Single cell test data (ADT)

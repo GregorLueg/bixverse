@@ -551,6 +551,7 @@ reference:
       - stabilised_nmf_sc
       - consensus_nmf_sc
       - nmf_k_sweep_sc
+      - dialogue_sc
       - get_best_run
       - get_stability
       - get_w
@@ -571,6 +572,9 @@ reference:
       - params_sc_gene_trends
       - params_nmf_hals
       - params_nmf_consensus
+      - params_dialogue_pmd
+      - params_dialogue_hlm
+      - params_dialogue_refine
   # Single cell analysis
   - title: Single cell multi-modal analysis methods
     desc: 
@@ -697,11 +701,13 @@ reference:
       - calculate_sparsity_stats
       - generate_gene_module_data
       - generate_single_cell_test_data
+      - generate_dialogue_test_data
       - cell_cycle_genes
       - write_cellranger_output
       - write_h5ad_sc
       - write_h5ad_sc_dense
       - params_sc_synthetic_data
+      - params_sc_synthetic_dialogue
       - params_synthetic_bulk_rnaseq
       - params_bulk_sparsity
       - synthetic_signal_matrix
@@ -774,6 +780,7 @@ reference:
       - rs_ligand_activity_scores
       - rs_mad_outlier
       - rs_mc_aucell
+      - rs_mc_dialogue
       - rs_mc_hotspot_autocor
       - rs_mc_hotspot_gene_cor
       - rs_mc_hvg

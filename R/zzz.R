@@ -19,6 +19,7 @@
     "StabilisedNmfResult",
     "ConsensusNmfResult",
     "NmfKSweepResult",
+    "DialogueResult",
     "LigandTargetInfluence",
     "ScTypeResults",
     "ScTypeCellResults",

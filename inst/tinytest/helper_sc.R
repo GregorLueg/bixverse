@@ -241,3 +241,96 @@ sc_test_prepped <- function(object, fixture, k = 15L) {
     .verbose = FALSE
   )
 }
+
+## dialogue --------------------------------------------------------------------
+
+#' Synthetic fixture with a planted multicellular programme
+#'
+#' @description
+#' Wraps [generate_dialogue_test_data()] with QC thresholds loose enough that
+#' every cell survives, so the planted design is not perturbed before DIALOGUE
+#' sees it.
+#'
+#' @param syn_data_params List. See [params_sc_synthetic_dialogue()].
+#' @param seed Integer. Seed handed to the generator.
+#'
+#' @returns The generator output plus the QC thresholds.
+#'
+#' @keywords internal
+dialogue_test_fixture <- function(
+  syn_data_params = params_sc_synthetic_dialogue(),
+  seed = 11L
+) {
+  checkmate::assertList(syn_data_params, names = "named")
+  checkmate::qassert(seed, "I1")
+
+  data <- generate_dialogue_test_data(
+    syn_data_params = syn_data_params,
+    seed = seed
+  )
+
+  c(
+    data,
+    list(
+      min_lib_size = 50L,
+      min_genes_exp = 10L,
+      min_cells_exp = 10L
+    )
+  )
+}
+
+#' Build a `SingleCells` object off a DIALOGUE fixture
+#'
+#' @param dir String. Directory for the object, see [sc_test_dir()].
+#' @param fixture List. Output of [dialogue_test_fixture()].
+#' @param obs data.table. Observation table, defaults to the fixture's.
+#'
+#' @returns The loaded `SingleCells` object.
+#'
+#' @keywords internal
+dialogue_test_object <- function(dir, fixture, obs = fixture$obs) {
+  checkmate::assertDirectoryExists(dir)
+  checkmate::assertList(fixture, names = "named")
+  checkmate::assertDataFrame(obs)
+
+  load_r_data(
+    object = SingleCells(dir_data = dir),
+    counts = fixture$counts,
+    obs = obs,
+    var = fixture$var,
+    sc_qc_param = params_sc_min_quality(
+      min_unique_genes = fixture$min_genes_exp,
+      min_lib_size = fixture$min_lib_size,
+      min_cells = fixture$min_cells_exp
+    ),
+    streaming = 0L,
+    .verbose = FALSE
+  )
+}
+
+#' Sample-averaged programme scores against the planted latent
+#'
+#' @description
+#' The property the whole method rests on: for the programme that recovered the
+#' latent, every cell type's sample-averaged score should track it.
+#'
+#' @param scores Named list of score matrices, one per cell type.
+#' @param obs data.table. Obs table holding `cell_id` and `sample_id`.
+#' @param latent Numeric. The planted per-sample latent, named by sample.
+#' @param programme Integer. Which programme to look at.
+#'
+#' @returns Numeric vector of absolute correlations, one per cell type.
+#'
+#' @keywords internal
+dialogue_latent_agreement <- function(scores, obs, latent, programme) {
+  checkmate::assertList(scores, names = "named")
+  checkmate::assertDataFrame(obs)
+  checkmate::qassert(latent, "N+")
+  checkmate::qassert(programme, "X1[1,)")
+
+  purrr::map_dbl(scores, \(m) {
+    samples <- obs$sample_id[match(rownames(m), obs$cell_id)]
+    means <- tapply(m[, programme], samples, mean)
+    abs(stats::cor(means[names(latent)], latent))
+  })
+}

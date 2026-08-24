@@ -19,6 +19,39 @@ kNN graph, which tells you whether a score is structured or noise.
 Scores land as a data.table; push them onto the object with
 `add_sc_new_obs(obj, obs_data = ...)`.
 
+## DIALOGUE
+
+`dialogue_sc()` looks for multicellular programmes: cell-type-specific genes
+whose activity covaries across the samples several cell types share. Where
+co-expression modules ask what varies together *within* a cell type, this asks
+what varies together *between* them, sample by sample. Runs on `SingleCells`,
+`SingleCellsSubset` and `MetaCells`.
+
+Three parameter blocks, one per stage: `params_dialogue_pmd()` (sparse
+multi-CCA and the provisional signatures), `params_dialogue_hlm()` (the mixed
+models) and `params_dialogue_refine()` (meta-analysis plus the non-negative
+refit).
+
+`features` is mandatory, a named list of matrices, one per cell type, row names
+matching cells. DIALOGUE does not compute it and the method is only as good as
+that choice. Do **not** pass a slice of a global PCA: those components carry
+between-cell-type identity, which is near-constant inside one cell type and
+gets dropped by the ANOVA filter. Run a PCA per cell type instead
+(`SingleCellsSubset()` then `calculate_pca_sc()`).
+
+The design constraints are hard errors, not bad answers: at least two cell
+types, at least five samples present in *every* cell type, and enough cells per
+sample per cell type to clear `abn_c`. On `MetaCells` the meta cells have to be
+built **within** samples, otherwise the random intercept has no well-defined
+level.
+
+Returns a `DialogueResult` with `programmes` (empirical p and canonical
+correlation per programme and cell type pair), per-cell-type `scores`,
+`verdicts` and the permissive/strict `signatures`.
+
+`generate_dialogue_test_data()` builds synthetic data with a planted programme,
+the same generator the Rust integration tests use.
+
 ## Hotspot
 
 Gene autocorrelation over the graph, then gene-gene local correlations, then
@@ -188,7 +221,7 @@ The important structural difference: unlike `SingleCells`, a `MetaCells` object
 DuckDB. It shares `ScCache` and dispatches through the `ScOrMc` S7 union, so the
 familiar generics work on it directly: `find_hvg_sc()`, `calculate_pca_sc()`,
 `find_neighbours_sc()`, `find_clusters_sc()`, `umap_sc()`, `aucell_sc()`,
-`vision_sc()`, `vision_w_autocor_sc()`.
+`vision_sc()`, `vision_w_autocor_sc()`, `dialogue_sc()`.
 `find_hvg_sc()` ignores `streaming` there and `calculate_pca_sc()` ignores
 `sparse_svd`, since neither applies to an in-memory object.
 

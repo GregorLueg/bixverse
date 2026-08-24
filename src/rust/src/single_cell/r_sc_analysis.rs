@@ -5,6 +5,7 @@ use bixverse_rs::prelude::*;
 use bixverse_rs::single_cell::sc_analysis::nichenet::prioritisation::ClusterExpressionStats;
 use bixverse_rs::single_cell::sc_analysis::{
     dge_pathway_scores::*,
+    dialogue::{dialogue_run, DialogueParams},
     hotspot::*,
     meld::*,
     milo_r::*,
@@ -12,21 +13,22 @@ use bixverse_rs::single_cell::sc_analysis::{
     nichenet::activity_scoring::*,
     nichenet::ligand_regulatory_potential::*,
     nichenet::prioritisation::compute_cluster_expression_stats,
-    nmf_sc::{
-        nmf_consensus_run_sc, nmf_k_sweep_run_sc, nmf_multiple_run_sc, nmf_single_run_sc,
-    },
-    regulon_binarise::{BinariseParams, derive_regulon_thresholds},
+    nmf_sc::{nmf_consensus_run_sc, nmf_k_sweep_run_sc, nmf_multiple_run_sc, nmf_single_run_sc},
+    regulon_binarise::{derive_regulon_thresholds, BinariseParams},
     scenic::*,
     vision::*,
 };
 use extendr_api::*;
-use faer::Mat;
+use faer::{Mat, MatRef};
 use rand::prelude::*;
 use rayon::prelude::*;
 use std::cmp::Ordering;
 
 use crate::methods::nmf_utils::{consensus_res_to_r_list, k_sweep_to_r_list};
-use crate::single_cell::utils::{knn_data_to_rust, panel_size_from_mem, prep_nichenet_network};
+use crate::single_cell::utils::{
+    dialogue_inputs_to_rust, dialogue_res_to_r_list, knn_data_to_rust, panel_size_from_mem,
+    prep_nichenet_network,
+};
 
 ////////////////////
 // extendr Module //
@@ -64,6 +66,8 @@ extendr_module! {
     fn rs_nmf_multi_sc;
     fn rs_nmf_consensus_sc;
     fn rs_nmf_k_sweep_sc;
+    // dialogue
+    fn rs_dialogue_sc;
     // nichenet
     fn rs_generate_ligand_target_influence;
     fn rs_ligand_activity_scores;
@@ -489,10 +493,7 @@ fn rs_regulon_thresholds(auc_matrix: RMatrix<f64>, binarise_params: List) -> Res
 
     let res = derive_regulon_thresholds(&rows, Some(params)).to_extendr()?;
 
-    Ok(list!(
-        thresholds = res.thresholds,
-        bimodal = res.bimodal
-    ))
+    Ok(list!(thresholds = res.thresholds, bimodal = res.bimodal))
 }
 
 /// Calculate VISION pathway scores in Rust
@@ -2126,4 +2127,117 @@ fn rs_compute_cluster_expr_stats(
         mean = faer_to_r_matrix(cluster_res.mean.as_ref()),
         frac = faer_to_r_matrix(cluster_res.frac.as_ref())
     ))
+}
+
+//////////////
+// DIALOGUE //
+//////////////
+
+/// Run DIALOGUE over a set of single cells
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Finds multicellular programmes: genes that are cell-type-specific but whose
+/// activity covaries across the samples the cell types share. Three stages.
+/// First, each cell type's features are collapsed to one row per sample and put
+/// through a sparse multi-CCA, giving every programme a weight vector per cell
+/// type plus a provisional gene signature. Second, for every ordered pair of
+/// cell types and every candidate gene, a mixed model asks whether a cell's own
+/// programme score tracks the partner cell type's expression of that gene in
+/// the same sample. Third, the partners are meta-analysed and the scores refit
+/// onto the surviving genes by non-negative least squares.
+///
+/// The counts are streamed off the gene-major file and only the normalised
+/// layer is read. DIALOGUE does not compute the features: whatever the caller
+/// trusts as a low-dimensional description of each cell type goes in as
+/// `features`.
+///
+/// @param f_path_gene Path to the `counts_genes.bin` file.
+/// @param cell_type_indices List of integer vectors. 0-indexed(!) positions of
+/// the cells belonging to each cell type. At least two cell types are needed.
+/// @param features List of numeric matrices, one per cell type, shaped
+/// `n_cells_in_type x k_i` with rows aligned to `cell_type_indices`. Needs at
+/// least two columns per cell type.
+/// @param sample_ids Integer vector. 0-indexed(!) sample code per cell, over
+/// the *whole* store rather than per cell type. Must be long enough to cover
+/// the largest index in `cell_type_indices`.
+/// @param cell_quality Numeric vector. Quality covariate per cell, indexed the
+/// same way as `sample_ids`. Upstream's `cellQ`, typically the z-scored log of
+/// the library size.
+/// @param gene_indices Integer vector. 0-indexed(!) positions of the genes to
+/// consider when building signatures.
+/// @param dialogue_params Named list. Contains the DIALOGUE parameters across
+/// all three stages, see [params_dialogue_pmd()], [params_dialogue_hlm()] and
+/// [params_dialogue_refine()]. The three blocks share one flat list.
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
+///
+/// @returns A list with the following items
+/// \itemize{
+///   \item shared_samples - Integer vector. 0-indexed(!) sample codes present
+///   in every cell type.
+///   \item kept_features - List of integer vectors. 0-indexed(!) feature
+///   columns surviving the ANOVA filter, per cell type.
+///   \item mcp_cell_types - List of integer vectors. 0-indexed(!) cell types
+///   each programme spans.
+///   \item ws - List of matrices. Sparse canonical weights per cell type,
+///   `kept_features x k`.
+///   \item scores - List of matrices. Final programme scores per cell type,
+///   `n_cells_in_type x k`, residualised on the quality covariate.
+///   \item cca_scores - List of matrices. Stage one's canonical scores, kept
+///   for comparison against the refit.
+///   \item emp_p - Matrix. Empirical p per programme and cell type pair,
+///   `k x n_pairs`, the columns in `combn(n_cell_types, 2)` order.
+///   \item pair_cor - Matrix. Canonical correlation on the real fit, same
+///   shape.
+///   \item refit_fidelity - Matrix. Correlation between the canonical score
+///   and the refit, `n_cell_types x k`. A low value means the gene-level refit
+///   drifted away from the programme the decomposition found.
+///   \item verdicts - List of equal-length vectors with the meta-analysis
+///   verdict per gene: `cell_type`, `programme`, `gene` (all 0-indexed),
+///   `up`, `n_supporting`, `support_fraction`, `p_up`, `p_down` and
+///   `coefficient`.
+///   \item permissive - Nested list `[cell_type][programme]` of `up` / `down`
+///   gene positions (0-indexed).
+///   \item strict - The same, for the stricter gene list.
+/// }
+///
+/// @references Jerby-Arnon & Regev, Nature Biotechnology, 2022
+///
+/// @export
+///
+/// @keywords internal
+#[extendr]
+#[allow(clippy::too_many_arguments)]
+fn rs_dialogue_sc(
+    f_path_gene: &str,
+    cell_type_indices: List,
+    features: List,
+    sample_ids: &[i32],
+    cell_quality: &[f64],
+    gene_indices: &[i32],
+    dialogue_params: List,
+    verbose: usize,
+) -> Result<List> {
+    let (cells, feature_mats) = dialogue_inputs_to_rust(cell_type_indices, features)?;
+    let feature_refs: Vec<MatRef<f64>> = feature_mats.iter().map(r_matrix_to_faer).collect();
+    let sample_ids: Vec<usize> = sample_ids.r_int_convert();
+    let genes: Vec<usize> = gene_indices.r_int_convert();
+    let params = DialogueParams::from_r_list(dialogue_params)?;
+
+    let reader = ParallelSparseReader::new(f_path_gene).to_extendr()?;
+
+    let res = dialogue_run(
+        &reader,
+        &cells,
+        &feature_refs,
+        &sample_ids,
+        cell_quality,
+        &genes,
+        &params,
+        verbose,
+    )
+    .to_extendr()?;
+
+    Ok(dialogue_res_to_r_list(&res))
 }

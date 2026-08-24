@@ -880,6 +880,219 @@ params_sc_hotspot <- function(
   )
 }
 
+## dialogue --------------------------------------------------------------------
+
+#' Wrapper function for the DIALOGUE decomposition parameters
+#'
+#' @description
+#' Stage one of DIALOGUE: the penalised matrix decomposition that turns the
+#' per-cell-type features into multicellular programmes, and the provisional
+#' gene signatures that come off it.
+#'
+#' @details
+#' The defaults follow upstream's `DLG.get.param`. Two knobs are worth thinking
+#' about before anything else. `k` is how many programmes you are asking for,
+#' and there is no sweep to help you pick it. `n_permutations` sets the
+#' resolution of the empirical p-value: with the default of `100` the smallest
+#' p you can observe is `0.01`, so lower it for a quick look and leave it alone
+#' for anything you intend to believe.
+#'
+#' `averaging` is exposed and honoured here. Upstream takes the same argument
+#' and then ignores it, hard-coding column medians, so `"median"` is what every
+#' published DIALOGUE run actually used.
+#'
+#' @param k Integer. Number of multicellular programmes to extract. Must be at
+#' least 1.
+#' @param n_permutations Integer. Permutations backing the empirical p-value
+#' per programme. Must be at least 2.
+#' @param extra_sparse Boolean. Tune the L1 bound by permutation instead of
+#' fixing it at `sqrt(p_1) / 2`. Costs ten more fits per permutation.
+#' @param abn_c Integer. Minimum cells a sample must contribute, within a cell
+#' type, before it counts towards the feature-level ANOVA.
+#' @param p_anova Numeric. BH-adjusted ANOVA cutoff for keeping a feature. Must
+#' be in `(0, 1]`.
+#' @param centre Boolean. Centre and scale the sample-level feature matrix,
+#' then winsorise it.
+#' @param cap Numeric. Winsorising tail fraction applied to each column. Must
+#' be in `[0, 0.5)`.
+#' @param spatial Boolean. Spatial data: skip the ANOVA feature filter
+#' entirely. Niches are small, so a feature need not vary across them to be
+#' real.
+#' @param n_genes Integer. Genes taken per programme per direction when
+#' building a signature.
+#' @param min_ci Numeric. Minimum absolute correlation for a gene to enter a
+#' signature. Must be in `[0, 1]`.
+#' @param averaging String. One of `c("median", "mean")`. How cell-level
+#' features are collapsed per sample.
+#' @param mcp_assignment_p Numeric. Empirical p below which a cell type pair
+#' counts as connected when deciding which cell types a programme spans. Must
+#' be in `(0, 1]`.
+#' @param seed Integer. Seed for the permutation null.
+#'
+#' @returns A list with the stage one DIALOGUE parameters.
+#'
+#' @references Jerby-Arnon & Regev, Nature Biotechnology, 2022
+#'
+#' @export
+params_dialogue_pmd <- function(
+  k = 2L,
+  n_permutations = 100L,
+  extra_sparse = FALSE,
+  abn_c = 15L,
+  p_anova = 0.05,
+  centre = TRUE,
+  cap = 0.01,
+  spatial = FALSE,
+  n_genes = 200L,
+  min_ci = 0.05,
+  averaging = c("median", "mean"),
+  mcp_assignment_p = 0.1,
+  seed = 1234L
+) {
+  averaging <- match.arg(averaging)
+
+  # checks
+  checkmate::qassert(k, "I1[1,)")
+  checkmate::qassert(n_permutations, "I1[2,)")
+  checkmate::qassert(extra_sparse, "B1")
+  checkmate::qassert(abn_c, "I1[0,)")
+  checkmate::qassert(p_anova, "N1(0,1]")
+  checkmate::qassert(centre, "B1")
+  checkmate::qassert(cap, "N1[0,0.5)")
+  checkmate::qassert(spatial, "B1")
+  checkmate::qassert(n_genes, "I1[1,)")
+  checkmate::qassert(min_ci, "N1[0,1]")
+  checkmate::assertChoice(averaging, c("median", "mean"))
+  checkmate::qassert(mcp_assignment_p, "N1(0,1]")
+  checkmate::qassert(seed, "I1")
+
+  list(
+    k = k,
+    n_permutations = n_permutations,
+    extra_sparse = extra_sparse,
+    abn_c = abn_c,
+    p_anova = p_anova,
+    centre = centre,
+    cap = cap,
+    spatial = spatial,
+    n_genes = n_genes,
+    min_ci = min_ci,
+    averaging = averaging,
+    mcp_assignment_p = mcp_assignment_p,
+    seed = seed
+  )
+}
+
+#' Wrapper function for the DIALOGUE mixed model parameters
+#'
+#' @description
+#' Stage two of DIALOGUE: for every ordered pair of cell types and every
+#' candidate gene, a random-intercept mixed model over samples asking whether a
+#' cell's own programme score tracks the partner cell type's expression of that
+#' gene in the same sample.
+#'
+#' @details
+#' This stage dominates the runtime, and `satterthwaite` is the knob that
+#' decides how badly. Turning it off falls back to the residual count for the
+#' denominator degrees of freedom, which is far cheaper and barely differs once
+#' a cell type has thousands of cells.
+#'
+#' `use_cell_quality` conditions on the cell's own quality covariate, which
+#' stage one has already regressed out of the scores by ordinary least squares.
+#' The default conditions on it twice, because upstream does.
+#'
+#' @param min_cells_per_sample Integer. Minimum cells a sample must contribute,
+#' in *both* cell types of a pair, before it takes part in that pair's models.
+#' @param use_tme_qc Boolean. Include the partner cell type's mean quality in
+#' that sample as a fixed effect. Upstream's `tme.qc`.
+#' @param use_cell_quality Boolean. Include the responding cell's own quality
+#' as a fixed effect. Upstream's `cellQ`.
+#' @param satterthwaite Boolean. Compute Satterthwaite denominator degrees of
+#' freedom, as `lmerTest` does.
+#'
+#' @returns A list with the stage two DIALOGUE parameters.
+#'
+#' @references Jerby-Arnon & Regev, Nature Biotechnology, 2022
+#'
+#' @export
+params_dialogue_hlm <- function(
+  min_cells_per_sample = 2L,
+  use_tme_qc = TRUE,
+  use_cell_quality = TRUE,
+  satterthwaite = TRUE
+) {
+  # checks
+  checkmate::qassert(min_cells_per_sample, "I1[0,)")
+  checkmate::qassert(use_tme_qc, "B1")
+  checkmate::qassert(use_cell_quality, "B1")
+  checkmate::qassert(satterthwaite, "B1")
+
+  list(
+    min_cells_per_sample = min_cells_per_sample,
+    use_tme_qc = use_tme_qc,
+    use_cell_quality = use_cell_quality,
+    satterthwaite = satterthwaite
+  )
+}
+
+#' Wrapper function for the DIALOGUE refinement parameters
+#'
+#' @description
+#' Stage three of DIALOGUE: the cross-partner meta-analysis that decides which
+#' genes survive, and the non-negative refit of the programme scores onto them.
+#'
+#' @details
+#' Two gene lists come out. The permissive one asks only for a Fisher-combined
+#' p below `permissive_p`; the strict one is looser on the p-value but also
+#' demands that *every* partner supports the gene. They are not nested by
+#' threshold, they are nested by evidence, and the strict list is the one to
+#' quote.
+#'
+#' @param support_p Numeric. Adjusted p below which one partner counts as
+#' supporting a gene. Must be in `(0, 1]`.
+#' @param min_support_fraction Numeric. Minimum supporting fraction for a
+#' stratum to enter the staged fit. Must be in `[0, 1]`.
+#' @param min_stratum Integer. Minimum genes in a stratum before it is worth
+#' fitting.
+#' @param early_stop_cor Numeric. Correlation between the original score and
+#' the running fit at which the staged fit stops early. Must be in `(0, 1]`.
+#' @param permissive_p Numeric. Fisher-combined p for the permissive gene list,
+#' where a gene is carried by partner support rather than by a positive
+#' coefficient. Must be in `(0, 1]`.
+#' @param strict_p Numeric. Fisher-combined p for the strict gene list, which
+#' also demands that every partner supports the gene. Must be in `(0, 1]`.
+#'
+#' @returns A list with the stage three DIALOGUE parameters.
+#'
+#' @references Jerby-Arnon & Regev, Nature Biotechnology, 2022
+#'
+#' @export
+params_dialogue_refine <- function(
+  support_p = 0.1,
+  min_support_fraction = 1 / 3,
+  min_stratum = 5L,
+  early_stop_cor = 0.95,
+  permissive_p = 1e-3,
+  strict_p = 0.05
+) {
+  # checks
+  checkmate::qassert(support_p, "N1(0,1]")
+  checkmate::qassert(min_support_fraction, "N1[0,1]")
+  checkmate::qassert(min_stratum, "I1[0,)")
+  checkmate::qassert(early_stop_cor, "N1(0,1]")
+  checkmate::qassert(permissive_p, "N1(0,1]")
+  checkmate::qassert(strict_p, "N1(0,1]")
+
+  list(
+    support_p = support_p,
+    min_support_fraction = min_support_fraction,
+    min_stratum = min_stratum,
+    early_stop_cor = early_stop_cor,
+    permissive_p = permissive_p,
+    strict_p = strict_p
+  )
+}
+
 ## miloR -----------------------------------------------------------------------
 
 #' Wrapper function for parameters for MiloR
