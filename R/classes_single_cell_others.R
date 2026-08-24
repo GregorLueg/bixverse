@@ -4393,3 +4393,286 @@ print.ScSpecificMarkers <- function(x, ...) {
 
   invisible(x)
 }
+
+## dialogue results ------------------------------------------------------------
+
+### DialogueResult -------------------------------------------------------------
+
+#' Flatten the DIALOGUE signature lists into a table
+#'
+#' @param signatures Nested list `[cell_type][programme]` of `up` / `down`
+#' 0-indexed gene positions, as Rust returns them.
+#' @param cell_types Character. Cell type names, in index order.
+#' @param gene_names Character. All gene identifiers, in index order.
+#' @param list_name String. Which list this is, `"permissive"` or `"strict"`.
+#'
+#' @returns A data.table with `cell_type`, `programme`, `gene_id`, `direction`
+#' and `list`.
+#'
+#' @keywords internal
+.dialogue_signature_dt <- function(
+  signatures,
+  cell_types,
+  gene_names,
+  list_name
+) {
+  checkmate::assertList(signatures)
+  checkmate::qassert(cell_types, "S+")
+  checkmate::qassert(gene_names, "S+")
+  checkmate::qassert(list_name, "S1")
+
+  rows <- purrr::imap(signatures, \(per_type, type_idx) {
+    purrr::imap(per_type, \(sig, prog_idx) {
+      data.table::data.table(
+        cell_type = cell_types[type_idx],
+        programme = as.integer(prog_idx),
+        gene_id = gene_names[c(sig$up, sig$down) + 1L],
+        direction = rep(
+          c("up", "down"),
+          times = c(length(sig$up), length(sig$down))
+        ),
+        list = list_name
+      )
+    })
+  })
+
+  data.table::rbindlist(purrr::list_flatten(rows))
+}
+
+#' Name the feature columns a cell type kept
+#'
+#' @param feature Numeric matrix. That cell type's features.
+#' @param kept Integer. 0-indexed columns that survived the ANOVA filter.
+#'
+#' @returns Character vector of column names.
+#'
+#' @keywords internal
+.dialogue_feature_names <- function(feature, kept) {
+  labels <- colnames(feature)
+  if (is.null(labels)) {
+    labels <- sprintf("feature_%i", seq_len(ncol(feature)))
+  }
+  labels[kept + 1L]
+}
+
+#' Constructor for the DialogueResult class
+#'
+#' @description
+#' Wraps what [rs_dialogue_sc()] and [rs_mc_dialogue()] return, mapping every
+#' index back into cell, gene, cell type and sample names.
+#'
+#' @param dialogue_res List. The raw Rust output.
+#' @param prepped List. Output of [.prep_dialogue_inputs()].
+#' @param gene_names Character. All gene identifiers, in index order.
+#' @param source_class String. Class the result came off.
+#' @param params List. Parameters the run used.
+#'
+#' @returns A `DialogueResult` object, a list with the following items
+#' \itemize{
+#'   \item programmes - data.table. One row per programme and cell type pair,
+#'   with the empirical p-value and the canonical correlation.
+#'   \item mcp_cell_types - List per programme of the cell types it spans.
+#'   \item scores - Named list per cell type. Final programme scores, cells x
+#'   programmes.
+#'   \item cca_scores - The same for stage one's canonical scores.
+#'   \item refit_fidelity - Matrix, cell types x programmes. Correlation
+#'   between the two. A low value means the gene-level refit drifted away from
+#'   the programme the decomposition found.
+#'   \item ws - Named list per cell type of the sparse canonical weights.
+#'   \item kept_features - Named list per cell type of the feature columns that
+#'   survived the ANOVA filter.
+#'   \item verdicts - data.table. What the meta-analysis concluded per gene.
+#'   \item signatures - data.table. The permissive and strict gene lists.
+#'   \item shared_samples - Character. Samples present in every cell type.
+#'   \item cell_types - Character. The analysed cell types, in order.
+#'   \item source_class - String.
+#'   \item params - List.
+#' }
+#'
+#' @keywords internal
+#'
+#' @export
+new_dialogue_result <- function(
+  dialogue_res,
+  prepped,
+  gene_names,
+  source_class,
+  params
+) {
+  # checks
+  checkmate::assertList(dialogue_res)
+  checkmate::assertNames(
+    names(dialogue_res),
+    must.include = c(
+      "shared_samples",
+      "kept_features",
+      "mcp_cell_types",
+      "ws",
+      "scores",
+      "cca_scores",
+      "emp_p",
+      "pair_cor",
+      "refit_fidelity",
+      "verdicts",
+      "permissive",
+      "strict"
+    )
+  )
+  checkmate::assertList(prepped, names = "named")
+  checkmate::qassert(gene_names, "S+")
+  checkmate::qassert(source_class, "S1")
+  checkmate::assertList(params)
+
+  cell_types <- prepped$cell_types
+  k <- nrow(dialogue_res$emp_p)
+  mcp_names <- sprintf("mcp_%02d", seq_len(k))
+
+  # the Rust side orders the pair columns as `combn(.., 2)` does, so this
+  # reproduces them rather than guessing
+  pairs <- utils::combn(cell_types, 2L)
+
+  programmes <- data.table::data.table(
+    programme = rep(seq_len(k), times = ncol(pairs)),
+    cell_type_a = rep(pairs[1L, ], each = k),
+    cell_type_b = rep(pairs[2L, ], each = k),
+    emp_p = as.numeric(dialogue_res$emp_p),
+    pair_cor = as.numeric(dialogue_res$pair_cor)
+  )
+
+  name_scores <- function(mats) {
+    out <- purrr::imap(mats, \(m, i) {
+      rownames(m) <- prepped$cell_ids[[i]]
+      colnames(m) <- mcp_names
+      m
+    })
+    names(out) <- cell_types
+    out
+  }
+
+  kept_features <- purrr::imap(dialogue_res$kept_features, \(kept, i) {
+    .dialogue_feature_names(prepped$features[[i]], kept)
+  })
+  names(kept_features) <- cell_types
+
+  ws <- purrr::imap(dialogue_res$ws, \(m, i) {
+    rownames(m) <- kept_features[[i]]
+    colnames(m) <- mcp_names
+    m
+  })
+  names(ws) <- cell_types
+
+  refit_fidelity <- dialogue_res$refit_fidelity
+  rownames(refit_fidelity) <- cell_types
+  colnames(refit_fidelity) <- mcp_names
+
+  verdicts <- data.table::data.table(
+    cell_type = cell_types[dialogue_res$verdicts$cell_type + 1L],
+    programme = dialogue_res$verdicts$programme + 1L,
+    gene_id = gene_names[dialogue_res$verdicts$gene + 1L],
+    up = dialogue_res$verdicts$up,
+    n_supporting = dialogue_res$verdicts$n_supporting,
+    support_fraction = dialogue_res$verdicts$support_fraction,
+    p_up = dialogue_res$verdicts$p_up,
+    p_down = dialogue_res$verdicts$p_down,
+    coefficient = dialogue_res$verdicts$coefficient
+  )
+
+  signatures <- data.table::rbindlist(list(
+    .dialogue_signature_dt(
+      dialogue_res$permissive,
+      cell_types,
+      gene_names,
+      "permissive"
+    ),
+    .dialogue_signature_dt(
+      dialogue_res$strict,
+      cell_types,
+      gene_names,
+      "strict"
+    )
+  ))
+
+  res <- list(
+    programmes = programmes,
+    mcp_cell_types = purrr::map(
+      dialogue_res$mcp_cell_types,
+      \(idx) cell_types[idx + 1L]
+    ),
+    scores = name_scores(dialogue_res$scores),
+    cca_scores = name_scores(dialogue_res$cca_scores),
+    refit_fidelity = refit_fidelity,
+    ws = ws,
+    kept_features = kept_features,
+    verdicts = verdicts,
+    signatures = signatures,
+    shared_samples = prepped$sample_levels[dialogue_res$shared_samples + 1L],
+    cell_types = cell_types,
+    source_class = source_class,
+    params = params
+  )
+
+  class(res) <- "DialogueResult"
+  res
+}
+
+#### getters -------------------------------------------------------------------
+
+#' @rdname get_params
+#'
+#' @export
+get_params.DialogueResult <- function(object, ...) {
+  checkmate::assertClass(object, "DialogueResult")
+
+  object$params
+}
+
+#' @rdname get_results
+#'
+#' @export
+get_results.DialogueResult <- function(object, ...) {
+  checkmate::assertClass(object, "DialogueResult")
+
+  object$programmes
+}
+
+#### primitives ----------------------------------------------------------------
+
+#' @export
+#'
+#' @keywords internal
+print.DialogueResult <- function(x, ...) {
+  k <- ncol(x$refit_fidelity)
+  # the least significant pair is the one that decides whether a programme is
+  # really multicellular, so report the max rather than the min
+  worst <- vapply(
+    seq_len(k),
+    \(i) max(x$programmes$emp_p[x$programmes$programme == i]),
+    numeric(1)
+  )
+
+  cat("DialogueResult (multicellular programmes)\n")
+  cat(sprintf("  Source class:     %s\n", x$source_class))
+  cat(sprintf(
+    "  Cell types:       %i (%s)\n",
+    length(x$cell_types),
+    paste(x$cell_types, collapse = ", ")
+  ))
+  cat(sprintf("  Shared samples:   %i\n", length(x$shared_samples)))
+  cat(sprintf("  Programmes:       %i\n", k))
+  for (i in seq_len(k)) {
+    cat(sprintf(
+      "    mcp_%02d - worst pair p: %.4g | spans %i cell type(s)\n",
+      i,
+      worst[i],
+      length(x$mcp_cell_types[[i]])
+    ))
+  }
+  cat(sprintf("  Genes with a verdict: %i\n", nrow(x$verdicts)))
+  cat(sprintf(
+    "  Signature genes:  %i permissive | %i strict\n",
+    sum(x$signatures$list == "permissive"),
+    sum(x$signatures$list == "strict")
+  ))
+
+  invisible(x)
+}

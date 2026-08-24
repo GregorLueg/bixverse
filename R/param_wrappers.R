@@ -1085,6 +1085,74 @@ params_sc_synthetic_data_adt <- function(
   )
 }
 
+##### dialogue -----------------------------------------------------------------
+
+#' Default parameters for generation of synthetic DIALOGUE data
+#'
+#' @description
+#' Shapes the fixture with a planted multicellular programme that
+#' [bixverse::generate_dialogue_test_data()] builds. The defaults give 14
+#' samples x 25 cells x 3 cell types = 1050 cells over 400 genes.
+#'
+#' @details
+#' `n_genes` defaults higher here than on the Rust side, which plants the same
+#' structure into 90. R runs the counts through the normal ingestion path, and
+#' on a small panel the planted genes are a large enough share of the library
+#' that log-normalisation divides the signal back out: at 90 genes the library
+#' size tracks the programme at an r of 0.75 and background genes pick up a
+#' spurious correlation of their own. At 400 the planted block is a few percent
+#' of the library and the contrast survives. The Rust tests feed the planted
+#' layer straight in, so they never meet this.
+#'
+#' @param n_samples Integer. Samples the experiment spans. DIALOGUE needs at
+#' least 5.
+#' @param cells_per_sample Integer. Cells per sample per cell type.
+#' @param n_cell_types Integer. Number of cell types. Must be at least 2.
+#' @param n_features Integer. Feature columns per cell type. Must be at least 2.
+#' @param n_sample_features Integer. Feature columns carrying a per-sample
+#' component. The first of those is the shared programme, the rest are
+#' cell-type-specific nuisance; anything past this count is pure noise and
+#' exists so the ANOVA filter has something to reject.
+#' @param n_genes Integer. Number of genes.
+#' @param n_planted Integer. Planted genes per cell type. The blocks are
+#' contiguous, so `n_planted * n_cell_types` has to fit into `n_genes`.
+#'
+#' @return A list with the parameters.
+#'
+#' @references Jerby-Arnon & Regev, Nature Biotechnology, 2022
+#'
+#' @export
+params_sc_synthetic_dialogue <- function(
+  n_samples = 14L,
+  cells_per_sample = 25L,
+  n_cell_types = 3L,
+  n_features = 8L,
+  n_sample_features = 5L,
+  n_genes = 400L,
+  n_planted = 8L
+) {
+  # checks
+  checkmate::qassert(n_samples, "I1[1,)")
+  checkmate::qassert(cells_per_sample, "I1[1,)")
+  checkmate::qassert(n_cell_types, "I1[2,)")
+  checkmate::qassert(n_features, "I1[2,)")
+  checkmate::qassert(n_sample_features, "I1[1,)")
+  checkmate::qassert(n_genes, "I1[1,)")
+  checkmate::qassert(n_planted, "I1[0,)")
+  checkmate::assertTRUE(n_sample_features <= n_features)
+  checkmate::assertTRUE(n_planted * n_cell_types <= n_genes)
+
+  list(
+    n_samples = n_samples,
+    cells_per_sample = cells_per_sample,
+    n_cell_types = n_cell_types,
+    n_features = n_features,
+    n_sample_features = n_sample_features,
+    n_genes = n_genes,
+    n_planted = n_planted
+  )
+}
+
 #### io ------------------------------------------------------------------------
 
 #' Wrapper function to provide data for mtx-based loading

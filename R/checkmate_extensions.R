@@ -1618,6 +1618,85 @@ checkScSyntheticData <- function(x) {
 #' @keywords internal
 assertScSyntheticData <- checkmate::makeAssertionFunction(checkScSyntheticData)
 
+##### dialogue -----------------------------------------------------------------
+
+#' Check synthetic DIALOGUE data parameters
+#'
+#' @description Checkmate extension for checking the parameters for the
+#' generation of synthetic DIALOGUE data.
+#'
+#' @param x The list to check/assert
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
+checkScSyntheticDialogue <- function(x) {
+  res <- check_list_shape(
+    x,
+    c(
+      "n_samples",
+      "cells_per_sample",
+      "n_cell_types",
+      "n_features",
+      "n_sample_features",
+      "n_genes",
+      "n_planted"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- apply_qtest_rules(
+    x,
+    list(
+      n_samples = "I1[1,)",
+      cells_per_sample = "I1[1,)",
+      n_cell_types = "I1[2,)",
+      n_features = "I1[2,)",
+      n_sample_features = "I1[1,)",
+      n_genes = "I1[1,)",
+      n_planted = "I1[0,)"
+    ),
+    label = "synthetic DIALOGUE params",
+    hint = paste(
+      "n_cell_types and n_features must be at least 2, the remaining counts",
+      "positive integers."
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  if (x$n_sample_features > x$n_features) {
+    return("n_sample_features cannot exceed n_features.")
+  }
+  if (x$n_planted * x$n_cell_types > x$n_genes) {
+    return("The planted gene blocks do not fit into n_genes.")
+  }
+
+  return(TRUE)
+}
+
+#' Assert synthetic DIALOGUE data parameters
+#'
+#' @description Checkmate extension for asserting the parameters for the
+#' generation of synthetic DIALOGUE data.
+#'
+#' @inheritParams checkScSyntheticDialogue
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
+assertScSyntheticDialogue <- checkmate::makeAssertionFunction(
+  checkScSyntheticDialogue
+)
+
 ##### adt ----------------------------------------------------------------------
 
 #' Check synthetic ADT data parameters
@@ -2972,6 +3051,209 @@ checkScSeuratRpca <- function(x) {
 #'
 #' @keywords internal
 assertScSeuratRpca <- checkmate::makeAssertionFunction(checkScSeuratRpca)
+
+#### DIALOGUE ------------------------------------------------------------------
+
+#' Check DIALOGUE decomposition parameters
+#'
+#' @description Checkmate extension for checking the stage one DIALOGUE
+#' parameters, see [bixverse::params_dialogue_pmd()].
+#'
+#' @param x The list to check/assert
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
+checkDialoguePmd <- function(x) {
+  res <- check_list_shape(
+    x,
+    c(
+      "k",
+      "n_permutations",
+      "extra_sparse",
+      "abn_c",
+      "p_anova",
+      "centre",
+      "cap",
+      "spatial",
+      "n_genes",
+      "min_ci",
+      "averaging",
+      "mcp_assignment_p",
+      "seed"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- apply_qtest_rules(
+    x,
+    list(
+      k = "I1[1,)",
+      n_permutations = "I1[2,)",
+      extra_sparse = "B1",
+      abn_c = "I1[0,)",
+      p_anova = "N1(0,1]",
+      centre = "B1",
+      cap = "N1[0,0.5)",
+      spatial = "B1",
+      n_genes = "I1[1,)",
+      min_ci = "N1[0,1]",
+      mcp_assignment_p = "N1(0,1]",
+      seed = "I1"
+    ),
+    label = "DIALOGUE decomposition params",
+    hint = paste(
+      "k >= 1, n_permutations >= 2, cap in [0, 0.5), the p-value cutoffs in",
+      "(0, 1] and min_ci in [0, 1]."
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  apply_choice_rules(
+    x,
+    list(averaging = c("median", "mean")),
+    label = "DIALOGUE decomposition params"
+  )
+}
+
+#' Assert DIALOGUE decomposition parameters
+#'
+#' @description Checkmate extension for asserting the stage one DIALOGUE
+#' parameters.
+#'
+#' @inheritParams checkDialoguePmd
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
+assertDialoguePmd <- checkmate::makeAssertionFunction(checkDialoguePmd)
+
+#' Check DIALOGUE mixed model parameters
+#'
+#' @description Checkmate extension for checking the stage two DIALOGUE
+#' parameters, see [bixverse::params_dialogue_hlm()].
+#'
+#' @param x The list to check/assert
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
+checkDialogueHlm <- function(x) {
+  res <- check_list_shape(
+    x,
+    c(
+      "min_cells_per_sample",
+      "use_tme_qc",
+      "use_cell_quality",
+      "satterthwaite"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  apply_qtest_rules(
+    x,
+    list(
+      min_cells_per_sample = "I1[0,)",
+      use_tme_qc = "B1",
+      use_cell_quality = "B1",
+      satterthwaite = "B1"
+    ),
+    label = "DIALOGUE mixed model params",
+    hint = paste(
+      "min_cells_per_sample must be a non-negative integer, the rest are",
+      "booleans."
+    )
+  )
+}
+
+#' Assert DIALOGUE mixed model parameters
+#'
+#' @description Checkmate extension for asserting the stage two DIALOGUE
+#' parameters.
+#'
+#' @inheritParams checkDialogueHlm
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
+assertDialogueHlm <- checkmate::makeAssertionFunction(checkDialogueHlm)
+
+#' Check DIALOGUE refinement parameters
+#'
+#' @description Checkmate extension for checking the stage three DIALOGUE
+#' parameters, see [bixverse::params_dialogue_refine()].
+#'
+#' @param x The list to check/assert
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
+checkDialogueRefine <- function(x) {
+  res <- check_list_shape(
+    x,
+    c(
+      "support_p",
+      "min_support_fraction",
+      "min_stratum",
+      "early_stop_cor",
+      "permissive_p",
+      "strict_p"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  apply_qtest_rules(
+    x,
+    list(
+      support_p = "N1(0,1]",
+      min_support_fraction = "N1[0,1]",
+      min_stratum = "I1[0,)",
+      early_stop_cor = "N1(0,1]",
+      permissive_p = "N1(0,1]",
+      strict_p = "N1(0,1]"
+    ),
+    label = "DIALOGUE refinement params",
+    hint = paste(
+      "the p-value cutoffs and early_stop_cor must be in (0, 1],",
+      "min_support_fraction in [0, 1] and min_stratum a non-negative integer."
+    )
+  )
+}
+
+#' Assert DIALOGUE refinement parameters
+#'
+#' @description Checkmate extension for asserting the stage three DIALOGUE
+#' parameters.
+#'
+#' @inheritParams checkDialogueRefine
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
+assertDialogueRefine <- checkmate::makeAssertionFunction(checkDialogueRefine)
 
 #### VISION --------------------------------------------------------------------
 

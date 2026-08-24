@@ -395,6 +395,7 @@ A large number of different methods to extract insights from your single cell ex
 - `test_nhoods`: Test neighbourhoods for differential abundance
 - `vision_sc`: Calculate VISION scores
 - `vision_w_autocor_sc`: Calculate VISION scores (with auto-correlation scores)
+- `dialogue_sc`: Find multicellular programmes with DIALOGUE
 - `identify_tf_to_genes`: Identify the TF to gene regulation
 - `scenic_gene_filter_sc`: Filter genes for SCENIC GRN inference
 - `scenic_grn_sc`: Run SCENIC GRN inference

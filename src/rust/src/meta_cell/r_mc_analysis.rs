@@ -1,17 +1,21 @@
 //! Analysis methods for meta cells specifically: SCENIC, AUCell, HotSpot,
-//! VISION and NMF.
+//! VISION, NMF and DIALOGUE.
 
 use bixverse_rs::core::math::stats::calc_fdr;
 use bixverse_rs::methods::nmf_hals::consensus::ConsensusParams;
 use bixverse_rs::methods::nmf_hals::HalsOpts;
 use bixverse_rs::prelude::*;
 use bixverse_rs::single_cell::mc_analysis::aucell::calculate_aucell_metacells;
+use bixverse_rs::single_cell::mc_analysis::dialogue_mc::dialogue_metacells;
 use bixverse_rs::single_cell::mc_analysis::hotspot_mc::*;
 use bixverse_rs::single_cell::mc_analysis::nmf_mc::*;
 use bixverse_rs::single_cell::mc_analysis::scenic_metacells::run_scenic_grn_in_memory;
 use bixverse_rs::single_cell::mc_analysis::vision_mc::calculate_vision_metacells;
 use bixverse_rs::single_cell::sc_analysis::dge_pathway_scores::AucellParams;
-use bixverse_rs::single_cell::sc_analysis::hotspot::{HotSpotGeneRes, HotSpotPairRes, HotSpotParams};
+use bixverse_rs::single_cell::sc_analysis::dialogue::DialogueParams;
+use bixverse_rs::single_cell::sc_analysis::hotspot::{
+    HotSpotGeneRes, HotSpotPairRes, HotSpotParams,
+};
 use bixverse_rs::single_cell::sc_analysis::scenic::ScenicParams;
 use bixverse_rs::single_cell::sc_analysis::vision::{
     calc_autocorr_with_clusters, r_list_to_sig_genes,
@@ -21,7 +25,9 @@ use faer::{Mat, MatRef};
 
 use crate::meta_cell::utils::*;
 use crate::methods::nmf_utils::{consensus_res_to_r_list, k_sweep_to_r_list};
-use crate::single_cell::utils::knn_data_to_rust;
+use crate::single_cell::utils::{
+    dialogue_inputs_to_rust, dialogue_res_to_r_list, knn_data_to_rust,
+};
 
 /////////////
 // extendR //
@@ -39,6 +45,8 @@ extendr_module! {
     // vision
     fn rs_mc_vision;
     fn rs_mc_vision_with_autocorrelation;
+    // dialogue
+    fn rs_mc_dialogue;
     // nmf
     fn rs_nmf_single_mc;
     fn rs_nmf_multi_mc;
@@ -913,4 +921,91 @@ fn rs_nmf_k_sweep_mc(
     .to_extendr()?;
 
     Ok(k_sweep_to_r_list(&sweep_res))
+}
+
+//////////////
+// DIALOGUE //
+//////////////
+
+/// Run DIALOGUE over meta cells
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// The meta cell entry point into DIALOGUE, see [rs_dialogue_sc()] for what the
+/// method does. This is a shim rather than a second implementation: everything
+/// DIALOGUE asks of the expression matrix is per-gene, so the in-memory matrix
+/// is wrapped as a gene-major reader and the same core runs.
+///
+/// Only the normalised layer is ever read, so `sparse_data` has to carry the
+/// normalised counts. The `data` layer is cast to integers on the way in and
+/// then goes unused.
+///
+/// Meta cells are already aggregates, so the sample a meta cell belongs to has
+/// to be unambiguous: build them within samples, not across them. The random
+/// intercept in stage two is over samples, and a meta cell straddling two of
+/// them has no well-defined level.
+///
+/// @param sparse_data A named list that needs to have `data`, `indptr`,
+/// `indices`, `cs_type`, `nrow` and `ncol`, holding the *normalised* meta cell
+/// counts with shape (metacells, genes).
+/// @param cell_type_indices List of integer vectors. 0-indexed(!) positions of
+/// the meta cells belonging to each cell type. At least two cell types are
+/// needed.
+/// @param features List of numeric matrices, one per cell type, shaped
+/// `n_metacells_in_type x k_i` with rows aligned to `cell_type_indices`. Needs
+/// at least two columns per cell type.
+/// @param sample_ids Integer vector. 0-indexed(!) sample code per meta cell,
+/// over all meta cells rather than per cell type.
+/// @param cell_quality Numeric vector. Quality covariate per meta cell, indexed
+/// the same way as `sample_ids`.
+/// @param gene_indices Integer vector. 0-indexed(!) positions of the genes to
+/// consider when building signatures.
+/// @param dialogue_params Named list. Contains the DIALOGUE parameters across
+/// all three stages, see [params_dialogue_pmd()], [params_dialogue_hlm()] and
+/// [params_dialogue_refine()]. The three blocks share one flat list.
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
+///
+/// @returns A list, identical in shape to [rs_dialogue_sc()].
+///
+/// @references Jerby-Arnon & Regev, Nature Biotechnology, 2022
+///
+/// @export
+///
+/// @keywords internal
+#[extendr]
+#[allow(clippy::too_many_arguments)]
+fn rs_mc_dialogue(
+    sparse_data: List,
+    cell_type_indices: List,
+    features: List,
+    sample_ids: &[i32],
+    cell_quality: &[f64],
+    gene_indices: &[i32],
+    dialogue_params: List,
+    verbose: usize,
+) -> Result<List> {
+    let (cells, feature_mats) = dialogue_inputs_to_rust(cell_type_indices, features)?;
+    let feature_refs: Vec<MatRef<f64>> = feature_mats.iter().map(r_matrix_to_faer).collect();
+    let sample_ids: Vec<usize> = sample_ids.r_int_convert();
+    let genes: Vec<usize> = gene_indices.r_int_convert();
+    let params = DialogueParams::from_r_list(dialogue_params)?;
+
+    let sparse: CompressedSparseData2<f64, f64> =
+        list_to_sparse_matrix(sparse_data, true).to_extendr()?;
+    let sparse = cast_compressed_sparse_data_u32(sparse);
+
+    let res = dialogue_metacells(
+        &sparse,
+        &cells,
+        &feature_refs,
+        &sample_ids,
+        cell_quality,
+        &genes,
+        &params,
+        verbose,
+    )
+    .to_extendr()?;
+
+    Ok(dialogue_res_to_r_list(&res))
 }

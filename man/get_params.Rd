@@ -8,6 +8,7 @@
 \alias{get_params.NmfResult}
 \alias{get_params.StabilisedNmfResult}
 \alias{get_params.ConsensusNmfResult}
+\alias{get_params.DialogueResult}
 \title{Get the parameters that were used.}
 \usage{
 get_params(object, to_json = FALSE, pretty_json = FALSE)
@@ -23,6 +24,8 @@ get_params.NmfResult(object, to_json = FALSE, pretty_json = FALSE)
 get_params.StabilisedNmfResult(object, to_json = FALSE, pretty_json = FALSE)
 
 get_params.ConsensusNmfResult(object, to_json = FALSE, pretty_json = FALSE)
+
+get_params.DialogueResult(object, ...)
 }
 \arguments{
 \item{object}{A class within bixverse that inherits from

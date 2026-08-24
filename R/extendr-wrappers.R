@@ -851,6 +851,61 @@ rs_sample_ids_for_cell_types <- function(cell_type_indices, n_samples, sample_bi
 #' @keywords internal
 rs_synthetic_sc_adt_with_cell_types <- function(n_cells, n_proteins, n_batches, isotype_controls, cell_configs, batch_effect_strength, seed) .Call(wrap__rs_synthetic_sc_adt_with_cell_types, n_cells, n_proteins, n_batches, isotype_controls, cell_configs, batch_effect_strength, seed)
 
+#' Generates synthetic data with a planted multicellular programme
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Builds the fixture DIALOGUE is tested against. Every cell type gets its own
+#' noise and its own sample-level nuisance factors; only the first feature
+#' column and the planted genes carry the shared per-sample latent, so anything
+#' found beyond that is spurious. Cells are laid out contiguously by cell type
+#' and, within a cell type, by sample.
+#'
+#' The counts are a scaled copy of the normalised layer rather than a draw from
+#' a count model. That keeps the planted signal clean, which is the point of a
+#' fixture.
+#'
+#' @param n_samples Integer. Samples the experiment spans. DIALOGUE needs at
+#' least 5.
+#' @param cells_per_sample Integer. Cells per sample per cell type.
+#' @param n_cell_types Integer. Number of cell types. Must be at least 2.
+#' @param n_features Integer. Feature columns per cell type. Must be at least
+#' 2.
+#' @param n_sample_features Integer. Feature columns carrying a per-sample
+#' component. The first of those is the shared programme, the rest are
+#' cell-type-specific nuisance; anything past this count is pure noise.
+#' @param n_genes Integer. Number of genes.
+#' @param n_planted Integer. Planted genes per cell type. Cell type `t` owns
+#' genes `t * n_planted` to `(t + 1) * n_planted - 1` (0-indexed), so the
+#' blocks have to fit into `n_genes`.
+#' @param seed Integer. Random seed for reproducibility.
+#'
+#' @return A list with the following items.
+#' \itemize{
+#'   \item data - The synthetic raw counts, CSR over cells.
+#'   \item indptr - The index pointers of the cells.
+#'   \item indices - The gene indices for the given cells.
+#'   \item nrow - Number of cells.
+#'   \item ncol - Number of genes.
+#'   \item cell_type_indices - List of integer vectors. 0-indexed(!) global
+#'   cell positions per cell type.
+#'   \item features - List of numeric matrices, one per cell type, rows
+#'   aligned to `cell_type_indices`.
+#'   \item sample_ids - Integer vector. 0-indexed(!) sample code per cell.
+#'   \item quality - Numeric vector. Quality covariate per cell. Pure noise.
+#'   \item latent - Numeric vector. The per-sample latent the planted
+#'   programme follows.
+#'   \item planted - List of integer vectors. 0-indexed(!) planted gene
+#'   positions per cell type.
+#' }
+#'
+#' @references Jerby-Arnon & Regev, Nature Biotechnology, 2022
+#'
+#' @export
+#'
+#' @keywords internal
+rs_synthetic_sc_dialogue_data <- function(n_samples, cells_per_sample, n_cell_types, n_features, n_sample_features, n_genes, n_planted, seed) .Call(wrap__rs_synthetic_sc_dialogue_data, n_samples, cells_per_sample, n_cell_types, n_features, n_sample_features, n_genes, n_planted, seed)
+
 #' Load in h5ad data via Rust
 #'
 #' @description
@@ -4216,6 +4271,82 @@ rs_nmf_consensus_sc <- function(f_path_gene, gene_indices, cell_indices, k, prep
 #' @keywords internal
 rs_nmf_k_sweep_sc <- function(f_path_gene, gene_indices, cell_indices, k_range, preprocessing, use_second_layer, nmf_hals_params, nmf_consensus_params, n_runs, seed, verbose) .Call(wrap__rs_nmf_k_sweep_sc, f_path_gene, gene_indices, cell_indices, k_range, preprocessing, use_second_layer, nmf_hals_params, nmf_consensus_params, n_runs, seed, verbose)
 
+#' Run DIALOGUE over a set of single cells
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Finds multicellular programmes: genes that are cell-type-specific but whose
+#' activity covaries across the samples the cell types share. Three stages.
+#' First, each cell type's features are collapsed to one row per sample and put
+#' through a sparse multi-CCA, giving every programme a weight vector per cell
+#' type plus a provisional gene signature. Second, for every ordered pair of
+#' cell types and every candidate gene, a mixed model asks whether a cell's own
+#' programme score tracks the partner cell type's expression of that gene in
+#' the same sample. Third, the partners are meta-analysed and the scores refit
+#' onto the surviving genes by non-negative least squares.
+#'
+#' The counts are streamed off the gene-major file and only the normalised
+#' layer is read. DIALOGUE does not compute the features: whatever the caller
+#' trusts as a low-dimensional description of each cell type goes in as
+#' `features`.
+#'
+#' @param f_path_gene Path to the `counts_genes.bin` file.
+#' @param cell_type_indices List of integer vectors. 0-indexed(!) positions of
+#' the cells belonging to each cell type. At least two cell types are needed.
+#' @param features List of numeric matrices, one per cell type, shaped
+#' `n_cells_in_type x k_i` with rows aligned to `cell_type_indices`. Needs at
+#' least two columns per cell type.
+#' @param sample_ids Integer vector. 0-indexed(!) sample code per cell, over
+#' the *whole* store rather than per cell type. Must be long enough to cover
+#' the largest index in `cell_type_indices`.
+#' @param cell_quality Numeric vector. Quality covariate per cell, indexed the
+#' same way as `sample_ids`. Upstream's `cellQ`, typically the z-scored log of
+#' the library size.
+#' @param gene_indices Integer vector. 0-indexed(!) positions of the genes to
+#' consider when building signatures.
+#' @param dialogue_params Named list. Contains the DIALOGUE parameters across
+#' all three stages, see [params_dialogue_pmd()], [params_dialogue_hlm()] and
+#' [params_dialogue_refine()]. The three blocks share one flat list.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @returns A list with the following items
+#' \itemize{
+#'   \item shared_samples - Integer vector. 0-indexed(!) sample codes present
+#'   in every cell type.
+#'   \item kept_features - List of integer vectors. 0-indexed(!) feature
+#'   columns surviving the ANOVA filter, per cell type.
+#'   \item mcp_cell_types - List of integer vectors. 0-indexed(!) cell types
+#'   each programme spans.
+#'   \item ws - List of matrices. Sparse canonical weights per cell type,
+#'   `kept_features x k`.
+#'   \item scores - List of matrices. Final programme scores per cell type,
+#'   `n_cells_in_type x k`, residualised on the quality covariate.
+#'   \item cca_scores - List of matrices. Stage one's canonical scores, kept
+#'   for comparison against the refit.
+#'   \item emp_p - Matrix. Empirical p per programme and cell type pair,
+#'   `k x n_pairs`, the columns in `combn(n_cell_types, 2)` order.
+#'   \item pair_cor - Matrix. Canonical correlation on the real fit, same
+#'   shape.
+#'   \item refit_fidelity - Matrix. Correlation between the canonical score
+#'   and the refit, `n_cell_types x k`. A low value means the gene-level refit
+#'   drifted away from the programme the decomposition found.
+#'   \item verdicts - List of equal-length vectors with the meta-analysis
+#'   verdict per gene: `cell_type`, `programme`, `gene` (all 0-indexed),
+#'   `up`, `n_supporting`, `support_fraction`, `p_up`, `p_down` and
+#'   `coefficient`.
+#'   \item permissive - Nested list `[cell_type][programme]` of `up` / `down`
+#'   gene positions (0-indexed).
+#'   \item strict - The same, for the stricter gene list.
+#' }
+#'
+#' @references Jerby-Arnon & Regev, Nature Biotechnology, 2022
+#'
+#' @export
+#'
+#' @keywords internal
+rs_dialogue_sc <- function(f_path_gene, cell_type_indices, features, sample_ids, cell_quality, gene_indices, dialogue_params, verbose) .Call(wrap__rs_dialogue_sc, f_path_gene, cell_type_indices, features, sample_ids, cell_quality, gene_indices, dialogue_params, verbose)
+
 #' Generate the ligand to target influence matrices
 #'
 #' @description
@@ -5066,6 +5197,54 @@ rs_mc_vision <- function(sparse_data, gs_list, verbose) .Call(wrap__rs_mc_vision
 #'
 #' @keywords internal
 rs_mc_vision_with_autocorrelation <- function(sparse_data, embd, knn_data, gs_list, random_gs_list, vision_params, cluster_membership, verbose, seed) .Call(wrap__rs_mc_vision_with_autocorrelation, sparse_data, embd, knn_data, gs_list, random_gs_list, vision_params, cluster_membership, verbose, seed)
+
+#' Run DIALOGUE over meta cells
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' The meta cell entry point into DIALOGUE, see [rs_dialogue_sc()] for what the
+#' method does. This is a shim rather than a second implementation: everything
+#' DIALOGUE asks of the expression matrix is per-gene, so the in-memory matrix
+#' is wrapped as a gene-major reader and the same core runs.
+#'
+#' Only the normalised layer is ever read, so `sparse_data` has to carry the
+#' normalised counts. The `data` layer is cast to integers on the way in and
+#' then goes unused.
+#'
+#' Meta cells are already aggregates, so the sample a meta cell belongs to has
+#' to be unambiguous: build them within samples, not across them. The random
+#' intercept in stage two is over samples, and a meta cell straddling two of
+#' them has no well-defined level.
+#'
+#' @param sparse_data A named list that needs to have `data`, `indptr`,
+#' `indices`, `cs_type`, `nrow` and `ncol`, holding the *normalised* meta cell
+#' counts with shape (metacells, genes).
+#' @param cell_type_indices List of integer vectors. 0-indexed(!) positions of
+#' the meta cells belonging to each cell type. At least two cell types are
+#' needed.
+#' @param features List of numeric matrices, one per cell type, shaped
+#' `n_metacells_in_type x k_i` with rows aligned to `cell_type_indices`. Needs
+#' at least two columns per cell type.
+#' @param sample_ids Integer vector. 0-indexed(!) sample code per meta cell,
+#' over all meta cells rather than per cell type.
+#' @param cell_quality Numeric vector. Quality covariate per meta cell, indexed
+#' the same way as `sample_ids`.
+#' @param gene_indices Integer vector. 0-indexed(!) positions of the genes to
+#' consider when building signatures.
+#' @param dialogue_params Named list. Contains the DIALOGUE parameters across
+#' all three stages, see [params_dialogue_pmd()], [params_dialogue_hlm()] and
+#' [params_dialogue_refine()]. The three blocks share one flat list.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @returns A list, identical in shape to [rs_dialogue_sc()].
+#'
+#' @references Jerby-Arnon & Regev, Nature Biotechnology, 2022
+#'
+#' @export
+#'
+#' @keywords internal
+rs_mc_dialogue <- function(sparse_data, cell_type_indices, features, sample_ids, cell_quality, gene_indices, dialogue_params, verbose) .Call(wrap__rs_mc_dialogue, sparse_data, cell_type_indices, features, sample_ids, cell_quality, gene_indices, dialogue_params, verbose)
 
 #' Run NMF (HALS) on MetaCells
 #'

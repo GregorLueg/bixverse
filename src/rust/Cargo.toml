@@ -45,5 +45,10 @@ path = "document.rs"
 # `cargo update -p bixverse-rs` once the crate is published, otherwise CI cannot
 # resolve the dependency. New commits on the branch need an explicit
 # `cargo update -p bixverse-rs`, the lock file pins a SHA.
+#
+# DIALOGUE is in flight: the `feat-dialogue` commits are local only, so this
+# points at the sibling checkout. Swap it back to the git form below once the
+# branch is pushed, then `cargo update -p bixverse-rs`.
 [patch.crates-io]
-bixverse-rs = { git = "https://github.com/GregorLueg/bixverse-rs", branch = "feat-vision-metacells" }
+bixverse-rs = { path = "/Users/gregorlueg/repos/shared/bixverse-rs" }
+# bixverse-rs = { git = "https://github.com/GregorLueg/bixverse-rs", branch = "feat-dialogue" }
