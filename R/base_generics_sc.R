@@ -972,16 +972,15 @@ find_clusters_sc <- S7::new_generic(
 #' @description
 #' Calculates an AUC-type score akin to AUCell across the gene sets, see Aibar
 #' et al. Three statistics are on offer, all consuming the same within-cell
-#' ranking but weighting it differently. `"wilcox"` (the default) is the AUC
-#' derived from the Mann-Whitney U statistic over the full ranking; its null
-#' sits at 0.5 for any gene set size, which makes it a good fit for pathway
-#' activity. `"recovery"` is the recovery-curve AUC under a rank cutoff, i.e.
-#' the actual AUCell statistic of Aibar, et al., and is top-heavy: only genes
-#' inside the top `max_rank` of the cell contribute. `"ap"` is average
-#' precision, the most top-heavy of the three, but its null tracks the gene set
-#' prevalence, so raw values are not comparable across gene sets of different
-#' size unless `standardise` is on. Data can be streamed in chunks of 50k cells
-#' per or loaded in in one go.
+#' ranking but weighting it differently. `"recovery"` (default) is the
+#' recovery-curve AUC under a rank cutoff, i.e. the AUCell statistic of Aibar,
+#' et al., and is top-heavy: only genes inside the top `max_rank` of the cell
+#' contribute. `"wilcox"` is the AUC derived from the Mann-Whitney U statistic
+#' over the full ranking; its null sits at 0.5 for any gene set size, which
+#' makes it a good fit for pathway activity.  `"ap"` is average precision, the
+#' most top-heavy of the three, but its null tracks the gene set prevalence, so
+#' raw values are not comparable across gene sets of different size unless
+#' `standardise` is on.
 #'
 #' @param object `SingleCells`, `MetaCells` (or potentially other) class.
 #' @param gs_list Named list. The elements have the gene identifiers of the
@@ -1213,9 +1212,6 @@ stabilised_nmf_sc <- S7::new_generic(
 #' is the structure the restarts agree on, and the mean silhouette of those
 #' clusters (`stability`) says how much they agreed.
 #'
-#' Prefer this over [stabilised_nmf_sc()], which picks the lowest-loss restart
-#' and tells you nothing about whether that restart is reproducible.
-#'
 #' @details
 #' Use [nmf_k_sweep_sc()] first if you do not already know `k`.
 #'
@@ -1290,6 +1286,7 @@ consensus_nmf_sc <- S7::new_generic(
 #' themselves are not free, so keep both modest on a first pass.
 #'
 #' @inheritParams consensus_nmf_sc
+#'
 #' @param k_range Integer vector. The ranks to evaluate. Every entry must be at
 #' least 2.
 #'
@@ -1717,13 +1714,14 @@ vision_w_autocor_sc <- S7::new_generic(
 #' asks what varies together *between* them, sample by sample.
 #'
 #' @details
-#' Three stages. Each cell type's features are collapsed to one row per sample
-#' and put through a sparse multi-CCA, giving every programme a weight vector
-#' per cell type plus a provisional gene signature. Then, for every ordered pair
-#' of cell types and every candidate gene, a mixed model asks whether a cell's
-#' own programme score tracks the partner's expression of that gene in the same
-#' sample. Finally the partners are meta-analysed and the scores refit onto the
-#' surviving genes by non-negative least squares.
+#' The algorithm works in three stages. Each cell type's features are  collapsed
+#' to one row per sample and put through a sparse multi-CCA, giving  every
+#' programme a weight vector per cell type plus a provisional gene signature.
+#' Then, for every ordered pair of cell types and every candidate gene, a mixed
+#' model asks whether a cell's own programme score tracks the partner's
+#' expression of that gene in the same sample. Finally the partners are
+#' meta-analysed and the scores refit onto the surviving genes by non-negative
+#' least squares.
 #'
 #' `features` is mandatory and there is no default. DIALOGUE does not compute
 #' it: it is whatever low-dimensional description of each cell type you trust,
