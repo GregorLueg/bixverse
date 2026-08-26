@@ -4716,3 +4716,86 @@ checkLigandTarget <- function(x) {
 #'
 #' @keywords internal
 assertLigandTarget <- checkmate::makeAssertionFunction(checkLigandTarget)
+
+#### LDA -----------------------------------------------------------------------
+
+#' Check LDA parameters
+#'
+#' @description Checkmate extension for checking the LDA solver parameters,
+#' see [bixverse::params_lda()].
+#'
+#' @param x The list to check/assert
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
+checkLdaParams <- function(x) {
+  res <- check_list_shape(
+    x,
+    c(
+      "alpha",
+      "alpha_by_topic",
+      "eta",
+      "eta_by_topic",
+      "max_iter",
+      "tol",
+      "inner_max_iter",
+      "inner_tol",
+      "check_every",
+      "learning",
+      "batch_size",
+      "n_epochs"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- apply_qtest_rules(
+    x,
+    list(
+      alpha = "N1(0,)",
+      alpha_by_topic = "B1",
+      eta = "N1(0,)",
+      eta_by_topic = "B1",
+      max_iter = "I1[1,)",
+      tol = "N1(0,)",
+      inner_max_iter = "I1[1,)",
+      inner_tol = "N1(0,)",
+      check_every = "I1[1,)",
+      batch_size = "I1[1,)",
+      n_epochs = "I1[1,)"
+    ),
+    label = "LDA params",
+    hint = paste(
+      "alpha, eta, tol and inner_tol must be positive numerics;",
+      "max_iter, inner_max_iter, check_every, batch_size and n_epochs must be",
+      "positive integers; alpha_by_topic and eta_by_topic must be booleans."
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  apply_choice_rules(
+    x,
+    list(learning = c("batch", "online")),
+    label = "LDA params"
+  )
+}
+
+#' Assert LDA parameters
+#'
+#' @description Checkmate extension for asserting the LDA solver parameters,
+#' see [bixverse::params_lda()].
+#'
+#' @inheritParams checkLdaParams
+#'
+#' @param .var.name Name of the checked object to print in assertions.
+#' @param add Collection to store assertion messages.
+#'
+#' @return Invisibly returns the checked object if the assertion is
+#' successful.
+#'
+#' @keywords internal
+assertLdaParams <- checkmate::makeAssertionFunction(checkLdaParams)

@@ -26,23 +26,27 @@ are all assumed to be done already. If you have not read the
 and the [introductory vignette](https://gregorlueg.github.io/bixverse/articles/thinking_single_cell.html),
 please do so first.
 
-The methods fall into two broad categories:
+The methods fall into four broad categories:
 
-- The first, module scores, AUCell, and VISION, takes *pre-defined* gene sets 
-  and scores them per cell. 
+- The first, module scores, AUCell, and VISION, takes *pre-defined* gene sets
+  and scores them per cell.
 - The second, Hotspot and SCENIC, *discovers* gene programmes and regulatory
   relationships from the data itself.
 - The third, NMF, also *discovers* gene programmes and regulatory relationships
   via matrix factorisation which is different from SCENIC and Hotspot.
+- The fourth, LDA, is a topic model over a binary matrix. It picks up where
+  SCENIC leaves off: binarise the regulon activity, then sort the TFs into
+  topics.
 
-We use the PBMC3k dataset throughout. At 2,700 cells this is likely too small 
+We use the PBMC3k dataset throughout. At 2,700 cells this is likely too small
 for the GRN methods to produce biologically meaningful results, but it is large
 enough to show the API and the workflow end to end. On real datasets with tens
-of thousands of cells the same code applies unchanged. Also, as the 
+of thousands of cells the same code applies unchanged. Also, as the
 
 ```{r}
 #| label: setup
 library(bixverse)
+library(bixverse.plots)
 library(ggplot2)
 library(data.table)
 library(magrittr)
@@ -637,28 +641,53 @@ CisTarget is not a pass/fail filter on the module. Per enriched motif it builds
 a recovery curve, compares it against the mean + 2 SD curve across every motif
 in the database, and keeps only the genes above the point of maximum
 separation. So expect the regulons coming out of `build_regulons()` to be a
-good deal smaller than the modules going in. This is how you would run the
-regulon binarisation.
+good deal smaller than the modules going in.
+
+`build_regulons()` applies that filter, adds the TF back to its own set and
+drops anything too small. Since we skipped the CisTarget download above, we
+pass `use_leading_edge = FALSE` and it warns and carries on without the motif
+filter. The regulons that come out are a lot bigger and noisier than a proper
+SCENIC run would give you, so read the biology below with that in mind. The
+API is identical either way.
 
 ```{r}
 #| label: scenic-regulon
-#| eval: false
+regulons <- build_regulons(scenic_res, use_leading_edge = FALSE)
 
-# build_regulons() applies that filter, adds the TF back to its own set and
-# drops anything too small. This is what you hand to aucell_sc()
-regulons <- build_regulons(scenic_res)
+length(regulons)
+summary(lengths(regulons))
+```
 
+That is what you hand to `aucell_sc()`, which scores every regulon in every
+cell.
+
+```{r}
+#| label: scenic-aucell
 auc_regulons <- aucell_sc(
   object = sc_object,
   gs_list = regulons,
   aucell_params = params_sc_aucell()
 )
+```
 
+The AUC scores are continuous, and for most downstream purposes you want an
+on/off call instead. `binarise_regulon_activity()` fits a two-component
+Gaussian mixture per regulon, compares it against a single Gaussian by BIC,
+and puts the threshold at the trough between the two component means. Regulons
+that are not bimodal fall back to `mean + 2 * sd`.
+
+```{r}
+#| label: scenic-binarise
 binarised_regulons <- binarise_regulon_activity(auc_regulons)
 
 binary_matrix <- binarised_regulons$binary
 colnames(binary_matrix) <- ensembl_to_symbol[colnames(binary_matrix)]
 
+head(binarised_regulons$thresholds[order(-n_cells_on)])
+```
+
+```{r}
+#| label: scenic-plot-stat1
 sc_object[["STAT1_active"]] <- binary_matrix[, "STAT1"]
 
 embedding_plot_sc(
@@ -670,6 +699,116 @@ embedding_plot_sc(
 
 This is how you work with all types of `"bag of genes"` analyses for single
 cell in `bixverse`.
+
+## Topic models with LDA
+
+Binarising the regulons gives us a cells x regulons matrix of ones and zeros,
+which is exactly the shape a topic model wants: cells are documents, regulons
+are terms. This is the trick behind
+[cisTopic](https://doi.org/10.1038/s41592-019-0367-1), which runs latent
+Dirichlet allocation over binarised scATAC to get a cell-topic distribution for
+clustering and a topic-region distribution for region set discovery. Nothing
+about it is ATAC-specific, so swapping regions for regulons gives you TF
+activity sorted into topics.
+
+Why binarise at all? Because LDA on raw single cell counts is dominated by
+library size. Every cell's "document length" is its total count, deep cells
+dominate the corpus, and the topics you get back are largely a rediscovery of
+sequencing depth. Thresholding to on/off throws that away and leaves the model
+looking at co-occurrence, which is the thing you actually care about.
+
+`bixverse` implements variational Bayes LDA in Rust, following
+[Hoffman, et al.](https://papers.nips.cc/paper/2010/hash/71f6278d140af599e06ad9bf1ba03cb0-Abstract.html),
+with the same knobs and defaults pycisTopic exposes.
+
+### Picking the number of topics
+
+Same eternal question as with NMF, and `lda_k_sweep()` gives you three
+different answers to argue with. Arun 2010 compares the singular values of the
+topic-term matrix against the document length distribution; Cao Juan 2009 is
+the mean pairwise cosine similarity between topics, which climbs once `k` gets
+large enough that topics start duplicating each other; Mimno 2011 is UMass
+coherence. `combined_score` rescales all three onto `[0, 1]` and adds them up.
+
+```{r}
+#| label: lda-sweep
+sweep_res <- lda_k_sweep(binary_matrix, k_range = 5:12)
+
+sweep_res
+```
+
+```{r}
+#| label: lda-sweep-plot
+#| fig-cap: "The three selection metrics and the combined score against k."
+plot(sweep_res)
+```
+
+One caveat that will bite you if you do not know about it. Any `k` below five
+is struck out of the selection entirely, because coherence saturates on small
+topic counts and would otherwise always win. That is inherited from pycisTopic,
+so `best_k` can never come back below five however good the raw metrics of a
+smaller `k` look. Sweep below the floor and you get a warning plus `NA` in
+`combined_score` for those rows; the metrics themselves are still reported, so
+read them off the table and pass the `k` you want to `get_best_model()`.
+
+### Reading the topics
+
+`get_best_model()` pulls the winning fit straight out of the sweep, no
+refitting.
+
+```{r}
+#| label: lda-best
+lda_res <- get_best_model(sweep_res)
+
+lda_res
+```
+
+`get_top_terms()` is where the interpretation happens: per topic, the regulons
+carrying the most probability mass.
+
+```{r}
+#| label: lda-top-terms
+top_tfs <- get_top_terms(lda_res, n = 8L)
+
+top_tfs[, .(tfs = paste(term, collapse = ", ")), by = topic]
+```
+
+On PBMC3k the myeloid topic is usually unmistakable: `SPI1`, `CEBPD`, `KLF4`
+and friends land together, because those regulons switch on in the same cells.
+The T cell topics split along the naive/cytotoxic axis, with `TCF7` and `LEF1`
+on one side and `STAT4`, `RUNX3`, `ETS1` on the other. Which topic index gets
+which programme is arbitrary and changes with the seed, so always read the
+loadings rather than trusting the numbering.
+
+The other half of the model is the cell-topic matrix, which is a soft
+assignment: every cell gets a distribution over topics summing to one. Drop a
+column into the object and it plots like any other cell-level covariate.
+
+```{r}
+#| label: lda-umap
+#| fig-height: 7
+#| fig-cap: "Topic proportions per cell on the UMAP."
+doc_topic <- as.matrix(lda_res, "doc_topic")
+
+for (topic in colnames(doc_topic)) {
+  sc_object[[topic]] <- doc_topic[, topic]
+}
+
+topic_plots <- purrr::map(colnames(doc_topic)[1:4], \(topic) {
+  embedding_plot_sc(
+    object = sc_object,
+    embedding = "umap",
+    colour_by = topic
+  ) +
+    ggplot2::ggtitle(topic)
+})
+
+patchwork::wrap_plots(topic_plots, ncol = 2)
+```
+
+Because the assignment is soft, a cell sitting between two programmes shows up
+as genuinely intermediate rather than being forced into one cluster. That is
+the main thing a topic model buys you over hard clustering on the same matrix.
 
 ## NMF on single cells
 

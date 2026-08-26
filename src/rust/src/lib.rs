@@ -45,6 +45,7 @@ pub use methods::r_coremo;
 pub use methods::r_dgrdl;
 pub use methods::r_diffcor;
 pub use methods::r_ica;
+pub use methods::r_lda;
 pub use methods::r_nmf_bulk;
 pub use methods::r_rbh;
 
@@ -105,6 +106,7 @@ extendr_module! {
     use r_dgrdl;
     use r_diffcor;
     use r_ica;
+    use r_lda;
     use r_nmf_bulk;
     use r_rbh;
     use r_cistarget;

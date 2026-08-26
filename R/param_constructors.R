@@ -2382,3 +2382,91 @@ params_sc_gene_trends <- function(
     chunk_size = chunk_size
   )
 }
+
+## lda -------------------------------------------------------------------------
+
+#' Wrapper function for the LDA parameters
+#'
+#' @description
+#' Solver options for the variational Bayes latent Dirichlet allocation, see
+#' [bixverse::run_lda()].
+#'
+#' @details
+#' The defaults follow pycisTopic, so the knobs mean the same thing on both
+#' sides. `alpha_by_topic = TRUE` turns `alpha` into the Griffiths and
+#' Steyvers `50 / k` heuristic that cisTopic defaults to; set it to `FALSE` if
+#' you want `alpha` taken literally.
+#'
+#' `learning = "batch"` sweeps every document once per iteration and is
+#' monotone in the bound. `"online"` takes decaying steps from shuffled
+#' mini-batches, which reaches a usable fit in far fewer passes on a large
+#' corpus at the cost of that guarantee. `batch_size` and `n_epochs` are only
+#' read by the online variant.
+#'
+#' @param alpha Float. Dirichlet prior on the document-topic distributions.
+#' @param alpha_by_topic Boolean. Shall `alpha` be divided by the topic count.
+#' @param eta Float. Dirichlet prior on the topic-term distributions.
+#' @param eta_by_topic Boolean. Shall `eta` be divided by the topic count.
+#' @param max_iter Integer. Maximum outer iterations. Ignored by the online
+#' variant, which counts epochs instead.
+#' @param tol Float. Relative change in the bound below which the solver stops.
+#' @param inner_max_iter Integer. Maximum fixed-point iterations of the
+#' per-document E-step.
+#' @param inner_tol Float. Relative L1 change in the variational parameters
+#' below which the per-document E-step stops.
+#' @param check_every Integer. Iterations between bound evaluations.
+#' @param learning String. One of `c("batch", "online")`.
+#' @param batch_size Integer. Documents per mini-batch. Online only.
+#' @param n_epochs Integer. Passes over the corpus. Online only.
+#'
+#' @returns A list with the LDA parameters.
+#'
+#' @references Hoffman, Blei and Bach, NIPS, 2010; Bravo Gonzalez-Blas, et al.,
+#' Nat Methods, 2019
+#'
+#' @export
+params_lda <- function(
+  alpha = 50.0,
+  alpha_by_topic = TRUE,
+  eta = 0.1,
+  eta_by_topic = FALSE,
+  max_iter = 150L,
+  tol = 1e-3,
+  inner_max_iter = 100L,
+  inner_tol = 1e-3,
+  check_every = 10L,
+  learning = c("batch", "online"),
+  batch_size = 1024L,
+  n_epochs = 10L
+) {
+  learning <- match.arg(learning)
+
+  # checks
+  checkmate::qassert(alpha, "N1(0,)")
+  checkmate::qassert(alpha_by_topic, "B1")
+  checkmate::qassert(eta, "N1(0,)")
+  checkmate::qassert(eta_by_topic, "B1")
+  checkmate::qassert(max_iter, "I1[1,)")
+  checkmate::qassert(tol, "N1(0,)")
+  checkmate::qassert(inner_max_iter, "I1[1,)")
+  checkmate::qassert(inner_tol, "N1(0,)")
+  checkmate::qassert(check_every, "I1[1,)")
+  checkmate::assertChoice(learning, c("batch", "online"))
+  checkmate::qassert(batch_size, "I1[1,)")
+  checkmate::qassert(n_epochs, "I1[1,)")
+
+  list(
+    alpha = alpha,
+    alpha_by_topic = alpha_by_topic,
+    eta = eta,
+    eta_by_topic = eta_by_topic,
+    max_iter = max_iter,
+    tol = tol,
+    inner_max_iter = inner_max_iter,
+    inner_tol = inner_tol,
+    check_every = check_every,
+    learning = learning,
+    batch_size = batch_size,
+    n_epochs = n_epochs
+  )
+}

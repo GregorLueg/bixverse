@@ -554,12 +554,17 @@ reference:
       - stabilised_nmf_sc
       - consensus_nmf_sc
       - nmf_k_sweep_sc
+      - run_lda
+      - lda_k_sweep
       - dialogue_sc
       - get_best_run
+      - get_best_model
       - get_stability
+      - get_top_terms
       - get_w
       - get_h
       - plot.NmfKSweepResult
+      - plot.LdaKSweepResult
       - params_sc_aucell
       - params_sc_hotspot
       - params_sc_miloR
@@ -575,6 +580,7 @@ reference:
       - params_sc_gene_trends
       - params_nmf_hals
       - params_nmf_consensus
+      - params_lda
       - params_dialogue_pmd
       - params_dialogue_hlm
       - params_dialogue_refine
