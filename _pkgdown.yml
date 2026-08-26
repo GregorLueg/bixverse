@@ -234,6 +234,7 @@ reference:
       - stabilised_nmf_bulk
       - consensus_nmf_bulk
       - nmf_k_sweep_bulk
+      - modules_from_loadings
       - params_cor_graph
       - params_coremo
       - params_dgrdl
