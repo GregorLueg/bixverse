@@ -12,6 +12,9 @@ get_h(x)
 
 # S3 method for class 'StabilisedNmfResult'
 get_h(x)
+
+# S3 method for class 'ConsensusNmfResult'
+get_h(x)
 ```
 
 ## Arguments

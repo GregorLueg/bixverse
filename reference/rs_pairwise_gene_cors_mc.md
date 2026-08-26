@@ -5,7 +5,13 @@
 ## Usage
 
 ``` r
-rs_pairwise_gene_cors_mc(sparse_data, gene_indices_1, gene_indices_2, spearman)
+rs_pairwise_gene_cors_mc(
+  sparse_data,
+  gene_indices_1,
+  gene_indices_2,
+  spearman,
+  verbose
+)
 ```
 
 ## Arguments
@@ -28,6 +34,11 @@ rs_pairwise_gene_cors_mc(sparse_data, gene_indices_1, gene_indices_2, spearman)
 - spearman:
 
   Boolean. Shall the spearman correlation be calculated.
+
+- verbose:
+
+  Integer. `0L` - quiet; `1L` - normal verbosity; `2L` - detailed
+  verbosity.
 
 ## Value
 

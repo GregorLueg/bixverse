@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.9</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.10</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -56,6 +56,7 @@
     <li><a class="dropdown-item" href="../articles/bag_of_genes_single_cells.html">'Bag of genes' methods for single cell in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/nichenet.html">Ligand receptor analysis</a></li>
     <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/dialogue.html">Multicellular programmes with DIALOGUE</a></li>
     <li><a class="dropdown-item" href="../articles/trajectory_inference.html">Trajectory inference with Palantir and PAGA</a></li>
     <li><a class="dropdown-item" href="../articles/symphony.html">Reference mapping via Symphony</a></li>
     <li><a class="dropdown-item" href="../articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
@@ -103,14 +104,14 @@
 
         <dt>
 
-          <code><a href="get_params.html">get_params()</a></code> <code><a href="get_params.html">get_params.Hotspot()</a></code> <code><a href="get_params.html">get_params.miloR()</a></code> <code><a href="get_params.html">get_params.ScenicGrn()</a></code> <code><a href="get_params.html">get_params.NmfResult()</a></code> <code><a href="get_params.html">get_params.StabilisedNmfResult()</a></code>
+          <code><a href="get_params.html">get_params()</a></code> <code><a href="get_params.html">get_params.LdaResult()</a></code> <code><a href="get_params.html">get_params.LdaKSweepResult()</a></code> <code><a href="get_params.html">get_params.Hotspot()</a></code> <code><a href="get_params.html">get_params.miloR()</a></code> <code><a href="get_params.html">get_params.ScenicGrn()</a></code> <code><a href="get_params.html">get_params.NmfResult()</a></code> <code><a href="get_params.html">get_params.StabilisedNmfResult()</a></code> <code><a href="get_params.html">get_params.ConsensusNmfResult()</a></code> <code><a href="get_params.html">get_params.DialogueResult()</a></code>
 
         </dt>
         <dd>Get the parameters that were used.</dd>
 
         <dt>
 
-          <code><a href="get_results.html">get_results()</a></code>
+          <code><a href="get_results.html">get_results()</a></code> <code><a href="get_results.html">get_results.DialogueResult()</a></code>
 
         </dt>
         <dd>Get the final results from the class</dd>
@@ -401,7 +402,7 @@
           <code><a href="get_nmf_stability.html">get_nmf_stability()</a></code>
 
         </dt>
-        <dd>Get the stabilised NMF diagnostics</dd>
+        <dd>Get the multi-run NMF diagnostics</dd>
 
         <dt>
 
@@ -619,6 +620,27 @@
 
         </dt>
         <dd>Run stabilised (multi-restart) NMF on a BulkCoExp</dd>
+
+        <dt>
+
+          <code><a href="consensus_nmf_bulk.html">consensus_nmf_bulk()</a></code>
+
+        </dt>
+        <dd>Run consensus NMF on a BulkCoExp</dd>
+
+        <dt>
+
+          <code><a href="nmf_k_sweep_bulk.html">nmf_k_sweep_bulk()</a></code>
+
+        </dt>
+        <dd>Sweep k for consensus NMF on a BulkCoExp</dd>
+
+        <dt>
+
+          <code><a href="modules_from_loadings.html">modules_from_loadings()</a></code>
+
+        </dt>
+        <dd>Derive sparse module membership from a loading matrix</dd>
 
         <dt>
 
@@ -2492,10 +2514,66 @@
 
         <dt>
 
+          <code><a href="consensus_nmf_sc.html">consensus_nmf_sc()</a></code>
+
+        </dt>
+        <dd>Run consensus NMF on single cell or meta cell data</dd>
+
+        <dt>
+
+          <code><a href="nmf_k_sweep_sc.html">nmf_k_sweep_sc()</a></code>
+
+        </dt>
+        <dd>Sweep k for consensus NMF on single cell or meta cell data</dd>
+
+        <dt>
+
+          <code><a href="run_lda.html">run_lda()</a></code>
+
+        </dt>
+        <dd>Fit a latent Dirichlet allocation model</dd>
+
+        <dt>
+
+          <code><a href="lda_k_sweep.html">lda_k_sweep()</a></code>
+
+        </dt>
+        <dd>Sweep the topic count for LDA</dd>
+
+        <dt>
+
+          <code><a href="dialogue_sc.html">dialogue_sc()</a></code>
+
+        </dt>
+        <dd>Find multicellular programmes with DIALOGUE</dd>
+
+        <dt>
+
           <code><a href="get_best_run.html">get_best_run()</a></code>
 
         </dt>
         <dd>Get the best run from a stabilised NMF result</dd>
+
+        <dt>
+
+          <code><a href="get_best_model.html">get_best_model()</a></code>
+
+        </dt>
+        <dd>Get the selected model from an LDA topic count sweep</dd>
+
+        <dt>
+
+          <code><a href="get_stability.html">get_stability()</a></code>
+
+        </dt>
+        <dd>Get the consensus NMF stability diagnostics</dd>
+
+        <dt>
+
+          <code><a href="get_top_terms.html">get_top_terms()</a></code>
+
+        </dt>
+        <dd>Get the highest-probability terms per topic</dd>
 
         <dt>
 
@@ -2510,6 +2588,20 @@
 
         </dt>
         <dd>Get the H (cell activations) matrix</dd>
+
+        <dt>
+
+          <code><a href="plot.NmfKSweepResult.html">plot(<i>&lt;NmfKSweepResult&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Plot a consensus NMF k sweep</dd>
+
+        <dt>
+
+          <code><a href="plot.LdaKSweepResult.html">plot(<i>&lt;LdaKSweepResult&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Plot the LDA topic count sweep</dd>
 
         <dt>
 
@@ -2608,6 +2700,41 @@
 
         </dt>
         <dd>Wrapper function for NMF (HALS) parameters</dd>
+
+        <dt>
+
+          <code><a href="params_nmf_consensus.html">params_nmf_consensus()</a></code>
+
+        </dt>
+        <dd>Wrapper function for consensus NMF parameters</dd>
+
+        <dt>
+
+          <code><a href="params_lda.html">params_lda()</a></code>
+
+        </dt>
+        <dd>Wrapper function for the LDA parameters</dd>
+
+        <dt>
+
+          <code><a href="params_dialogue_pmd.html">params_dialogue_pmd()</a></code>
+
+        </dt>
+        <dd>Wrapper function for the DIALOGUE decomposition parameters</dd>
+
+        <dt>
+
+          <code><a href="params_dialogue_hlm.html">params_dialogue_hlm()</a></code>
+
+        </dt>
+        <dd>Wrapper function for the DIALOGUE mixed model parameters</dd>
+
+        <dt>
+
+          <code><a href="params_dialogue_refine.html">params_dialogue_refine()</a></code>
+
+        </dt>
+        <dd>Wrapper function for the DIALOGUE refinement parameters</dd>
       </dl></div><div class="section level2">
       <h2 id="single-cell-multi-modal-analysis-methods">Single cell multi-modal analysis methods<a class="anchor" aria-label="anchor" href="#single-cell-multi-modal-analysis-methods"></a></h2>
 
@@ -3159,6 +3286,13 @@
 
         <dt>
 
+          <code><a href="download_dialogue_uc.html">download_dialogue_uc()</a></code>
+
+        </dt>
+        <dd>Download the ulcerative colitis example data for DIALOGUE</dd>
+
+        <dt>
+
           <code><a href="download_marrow_cd34.html">download_marrow_cd34()</a></code>
 
         </dt>
@@ -3222,6 +3356,13 @@
 
         <dt>
 
+          <code><a href="generate_dialogue_test_data.html">generate_dialogue_test_data()</a></code>
+
+        </dt>
+        <dd>Single cell test data with a planted multicellular programme</dd>
+
+        <dt>
+
           <code><a href="cell_cycle_genes.html">cell_cycle_genes</a></code>
 
         </dt>
@@ -3254,6 +3395,13 @@
 
         </dt>
         <dd>Default parameters for generation of synthetic single cell data (RNA)</dd>
+
+        <dt>
+
+          <code><a href="params_sc_synthetic_dialogue.html">params_sc_synthetic_dialogue()</a></code>
+
+        </dt>
+        <dd>Default parameters for generation of synthetic DIALOGUE data</dd>
 
         <dt>
 
@@ -3333,6 +3481,13 @@
 
         </dt>
         <dd>Transform Seurat raw counts into a List</dd>
+
+        <dt>
+
+          <code><a href="install_agent_skill.html">install_agent_skill()</a></code>
+
+        </dt>
+        <dd>Install the bixverse agent skill</dd>
 
         <dt>
 
@@ -3688,6 +3843,13 @@
 
         <dt>
 
+          <code><a href="rs_mc_dialogue.html">rs_mc_dialogue()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Run DIALOGUE over meta cells</dd>
+
+        <dt>
+
           <code><a href="rs_mc_hotspot_autocor.html">rs_mc_hotspot_autocor()</a></code>
           <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
@@ -3723,6 +3885,20 @@
 
         <dt>
 
+          <code><a href="rs_mc_vision.html">rs_mc_vision()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Calculate VISION pathway scores in Rust (for meta cells)</dd>
+
+        <dt>
+
+          <code><a href="rs_mc_vision_with_autocorrelation.html">rs_mc_vision_with_autocorrelation()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Calculate VISION pathway scores in Rust with auto-correlation (for meta cells)</dd>
+
+        <dt>
+
           <code><a href="rs_mitch_calc.html">rs_mitch_calc()</a></code>
 
         </dt>
@@ -3734,20 +3910,6 @@
           <span class="badge lifecycle lifecycle-experimental">experimental</span>
         </dt>
         <dd>Calculates the mutual information matrix</dd>
-
-        <dt>
-
-          <code><a href="rs_nmf_multi_mc.html">rs_nmf_multi_mc()</a></code>
-          <span class="badge lifecycle lifecycle-experimental">experimental</span>
-        </dt>
-        <dd>Run multiple NMF (HALS) restarts on MetaCells</dd>
-
-        <dt>
-
-          <code><a href="rs_nmf_single_mc.html">rs_nmf_single_mc()</a></code>
-          <span class="badge lifecycle lifecycle-experimental">experimental</span>
-        </dt>
-        <dd>Run NMF (HALS) on MetaCells</dd>
 
         <dt>
 

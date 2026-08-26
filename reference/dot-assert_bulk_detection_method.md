@@ -6,12 +6,6 @@ method on success, `NULL` on mismatch (with a warning). If
 `allow_unset = TRUE`, a `NULL` `detection_method` is treated as a first
 invocation and returns `NA_character_` silently.
 
-Caller pattern:
-
-
-    detection_method <- .assert_bulk_detection_method(object, "correlation-based", "correlation")
-    if (is.null(detection_method)) return(object)
-
 ## Usage
 
 ``` r

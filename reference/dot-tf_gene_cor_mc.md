@@ -5,7 +5,7 @@ Get TF gene correlations for MetaCells
 ## Usage
 
 ``` r
-.tf_gene_cor_mc(tf_to_gene, object, spearman)
+.tf_gene_cor_mc(tf_to_gene, object, spearman, .verbose = TRUE)
 ```
 
 ## Arguments
@@ -21,6 +21,10 @@ Get TF gene correlations for MetaCells
 - spearman:
 
   Boolean. Shall the Spearman correlation be used.
+
+- .verbose:
+
+  Boolean or integer. Verbosity.
 
 ## Value
 

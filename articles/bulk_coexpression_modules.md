@@ -25,6 +25,8 @@ on a shared `BulkCoExp` class:
 - **NMF (HALS)** — non-negative matrix factorisation with hierarchical
   alternating least squares. Non-negative loadings give a natural
   “parts-based” module interpretation and per-sample module activity.
+  Comes in three flavours: one run, best-of-many restarts, or consensus
+  across restarts (cNMF), which also hands you a way to choose `k`.
 
 One structural difference matters throughout. CoReMo and Leiden
 partition genes: one gene, one module. The three factorisation methods
@@ -634,13 +636,160 @@ coexp_nmf_stab <- stabilised_nmf_bulk(
 stab <- get_nmf_stability(coexp_nmf_stab)
 stab
 #> $losses
-#> [1] 6901265232 6885273328 6903864151 6878840103 6887485138
+#> [1] 6901265227 6885273325 6903864064 6878840099 6887485166
 #> 
 #> $converged
 #> [1] TRUE TRUE TRUE TRUE TRUE
 #> 
 #> $best_idx
 #> [1] 4
+```
+
+### Consensus NMF
+
+[`stabilised_nmf_bulk()`](https://gregorlueg.github.io/bixverse/reference/stabilised_nmf_bulk.md)
+picks the restart with the lowest loss, which tells you nothing about
+whether that restart is reproducible. Consensus NMF asks the better
+question: pool the components of every restart, throw away the ones that
+sit on their own, cluster what is left into `k` groups, and take the
+median of each group as the answer. What survives is the structure the
+restarts agree on. That agreement gets a number, the mean silhouette of
+those clusters, and it is the honest way to judge whether `k` is right.
+
+Which brings us to picking `k`.
+[`nmf_k_sweep_bulk()`](https://gregorlueg.github.io/bixverse/reference/nmf_k_sweep_bulk.md)
+runs the whole thing across a range and reports stability against
+reconstruction error, no factors kept, so it stays cheap.
+
+``` r
+
+k_sweep <- nmf_k_sweep_bulk(
+  coexp_nmf,
+  k_range = 2:8,
+  n_runs = 10L,
+  preprocessing = "none",
+  nmf_hals_params = params_nmf_hals(max_iter = 200L, tol = 1e-3),
+  nmf_consensus_params = params_nmf_consensus(density_threshold = 2),
+  seed = 42L,
+  .verbose = TRUE
+)
+
+k_sweep
+#> NmfKSweepResult (consensus NMF k sweep)
+#>   Source class:     BulkCoExp
+#>   k range:          2 to 8
+#>   No runs per k:    10
+#>   Most stable k:    4 (stability = 0.9752)
+#> 
+#>        k stability best_error median_error consensus_failed n_dropped
+#>    <int>     <num>      <num>        <num>           <lgcl>     <int>
+#> 1:     2 0.7546717 0.13438072   0.13449627            FALSE         0
+#> 2:     3 0.7082610 0.09671029   0.09806779            FALSE         0
+#> 3:     4 0.9751884 0.06291160   0.06299967            FALSE         0
+#> 4:     5 0.8993866 0.05916342   0.06091455            FALSE         0
+#> 5:     6 0.7649854 0.05695935   0.05906541            FALSE         0
+#> 6:     7 0.7087603 0.05512724   0.05638576            FALSE         0
+#> 7:     8 0.6015527 0.05385696   0.05448819            FALSE         0
+#>    n_empty_clusters n_converged
+#>               <int>       <int>
+#> 1:                0          10
+#> 2:                0          10
+#> 3:                0          10
+#> 4:                0          10
+#> 5:                0          10
+#> 6:                0          10
+#> 7:                0          10
+```
+
+``` r
+
+plot(k_sweep)
+```
+
+![](bulk_coexpression_modules_files/figure-html/nmf-k-sweep-plot-1.png)
+
+Consensus NMF k sweep: stability against reconstruction error.
+
+Error falls monotonically with `k`, so on its own it would push you to
+the largest `k` you can afford. Stability is the counterweight. You want
+the last `k` before it drops off, where the error curve is still coming
+down.
+
+> **Note**
+>
+> `density_threshold = 2` switches the outlier filter off, because
+> cosine distance cannot exceed 2. With the filter live, components
+> whose neighbours sit far away get dropped, and if that leaves fewer
+> than `k` of them the fit errors rather than handing back something
+> degenerate. That is the right behaviour on real data, but with only 10
+> restarts on a small synthetic matrix it fires more often than it
+> should. Plot `local_density` from
+> [`get_nmf_stability()`](https://gregorlueg.github.io/bixverse/reference/get_nmf_stability.md)
+> to pick a real threshold for your data.
+
+Now fit at the chosen `k`:
+
+``` r
+
+coexp_nmf_consensus <- consensus_nmf_bulk(
+  coexp_nmf,
+  k = 4L,
+  n_runs = 10L,
+  preprocessing = "none",
+  nmf_hals_params = params_nmf_hals(max_iter = 300L, tol = 1e-4),
+  nmf_consensus_params = params_nmf_consensus(density_threshold = 2),
+  seed = 42L,
+  .verbose = FALSE
+)
+
+consensus_stab <- get_nmf_stability(coexp_nmf_consensus)
+consensus_stab$stability
+#> [1] 0.988677
+consensus_stab$cluster_sizes
+#>    cluster     n
+#>      <int> <int>
+#> 1:       1    10
+#> 2:       2    10
+#> 3:       3    10
+#> 4:       4    10
+```
+
+The per-component table shows where every restart’s components ended up.
+`component_id` uses the same `run_XX.comp_YY` naming as the `w_all`
+columns of a stabilised fit, so at matching `k` and `n_runs` the two
+line up directly.
+
+``` r
+
+head(consensus_stab$clusters)
+#>      component_id   run component pooled_idx cluster local_density silhouette
+#>            <char> <int>     <int>      <int>   <int>         <num>      <num>
+#> 1: run_01.comp_01     1         1          1       3  5.220121e-06  0.9999714
+#> 2: run_01.comp_02     1         2          2       4  9.438180e-03  0.9763555
+#> 3: run_01.comp_03     1         3          3       1  7.572240e-03  0.9526643
+#> 4: run_01.comp_04     1         4          4       2  1.848404e-04  0.9952859
+#> 5: run_02.comp_01     2         1          5       2  5.203961e-05  0.9968476
+#> 6: run_02.comp_02     2         2          6       3  6.306890e-07  0.9999903
+#>      kept
+#>    <lgcl>
+#> 1:   TRUE
+#> 2:   TRUE
+#> 3:   TRUE
+#> 4:   TRUE
+#> 5:   TRUE
+#> 6:   TRUE
+```
+
+``` r
+
+nmf_consensus_modules <- get_nmf_modules(coexp_nmf_consensus)
+nmf_consensus_modules[, .N, by = module_id]
+#>    module_id     N
+#>       <char> <int>
+#> 1:   comp_01    57
+#> 2:   comp_02    66
+#> 3:   comp_03     3
+#> 4:   comp_04    54
 ```
 
 ## Recovery of planted modules
@@ -667,7 +816,7 @@ best_jaccard_vs <- function(assignments, truth_dt) {
 }
 
 recovery <- data.table(
-  method = c("CoReMo", "Leiden", "ICA", "DGRDL", "NMF"),
+  method = c("CoReMo", "Leiden", "ICA", "DGRDL", "NMF", "Consensus NMF"),
   score = c(
     mean(best_jaccard_vs(
       coremo_modules[, .(gene, module_id = cluster_id)],
@@ -676,19 +825,21 @@ recovery <- data.table(
     mean(best_jaccard_vs(leiden_modules, truth)),
     mean(best_jaccard_vs(ica_modules, truth)),
     mean(best_jaccard_vs(dgrdl_modules, truth)),
-    mean(best_jaccard_vs(nmf_modules, truth))
+    mean(best_jaccard_vs(nmf_modules, truth)),
+    mean(best_jaccard_vs(nmf_consensus_modules, truth))
   )
 )
 
 setorder(recovery, -score)
 recovery
-#>    method     score
-#>    <char>     <num>
-#> 1: Leiden 0.8366667
-#> 2:    ICA 0.7573697
-#> 3: CoReMo 0.7500000
-#> 4:    NMF 0.6811551
-#> 5:  DGRDL 0.1505952
+#>           method     score
+#>           <char>     <num>
+#> 1:        Leiden 0.8366667
+#> 2:           ICA 0.7573697
+#> 3:        CoReMo 0.7500000
+#> 4:           NMF 0.6811551
+#> 5: Consensus NMF 0.5900000
+#> 6:         DGRDL 0.1505952
 ```
 
 ``` r
@@ -705,6 +856,18 @@ ggplot(recovery, aes(x = reorder(method, score), y = score)) +
 ![](bulk_coexpression_modules_files/figure-html/recovery-plot-1.png)
 
 Mean best-Jaccard across the three planted modules.
+
+Worth being blunt about one result there: consensus NMF scores *below*
+plain NMF. That is not a bug, and it is not an argument against
+consensus NMF. Two things are going on. This data was generated with
+`hub_modular`, a Normal latent factor, so there is no non-negative
+ground truth for NMF to reach in the first place, and both NMF variants
+are fighting the data. On top of that, consensus optimises for
+reproducibility, not recall: the median across restarts is deliberately
+conservative, and the components it keeps are the ones every restart
+found rather than the ones that happen to match a planted module best on
+one lucky seed. A recall number on simulated data rewards the lucky
+seed. Real data does not.
 
 ## Scoring against the latent factors
 

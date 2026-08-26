@@ -10,7 +10,8 @@ rs_pairwise_gene_cors(
   gene_indices_1,
   gene_indices_2,
   cells_to_keep,
-  spearman
+  spearman,
+  verbose
 )
 ```
 
@@ -38,6 +39,11 @@ rs_pairwise_gene_cors(
 - spearman:
 
   Boolean. Shall spearman correlation be used.
+
+- verbose:
+
+  Integer. `0L` - quiet; `1L` - normal verbosity; `2L` - detailed
+  verbosity.
 
 ## Value
 

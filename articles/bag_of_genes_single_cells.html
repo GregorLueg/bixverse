@@ -23,7 +23,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.9</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.10</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -78,6 +78,7 @@
     <li><a class="dropdown-item" href="../articles/bag_of_genes_single_cells.html">'Bag of genes' methods for single cell in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/nichenet.html">Ligand receptor analysis</a></li>
     <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/dialogue.html">Multicellular programmes with DIALOGUE</a></li>
     <li><a class="dropdown-item" href="../articles/trajectory_inference.html">Trajectory inference with Palantir and PAGA</a></li>
     <li><a class="dropdown-item" href="../articles/symphony.html">Reference mapping via Symphony</a></li>
     <li><a class="dropdown-item" href="../articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
@@ -113,7 +114,7 @@
       <h1>Gene set analysis and GRN inference on PBMCs</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-08-16</p>
+      <p class="date">2026-08-26</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -127,16 +128,18 @@
     <section class="level2"><h2 id="intro">Intro<a class="anchor" aria-label="anchor" href="#intro"></a>
 </h2>
 <p>This vignette demonstrates the gene set scoring, spatial autocorrelation, and gene regulatory network (GRN) inference methods available in <code>bixverse</code>. It picks up where the <a href="https://gregorlueg.github.io/bixverse/articles/single_cell_pbmc.html">PBMC vignette</a> left off: QC, normalisation, PCA, nearest neighbours, clustering and UMAP are all assumed to be done already. If you have not read the <a href="https://gregorlueg.github.io/bixverse/articles/design_single_cell.html">design choices</a> and the <a href="https://gregorlueg.github.io/bixverse/articles/thinking_single_cell.html">introductory vignette</a>, please do so first.</p>
-<p>The methods fall into two broad categories:</p>
+<p>The methods fall into four broad categories:</p>
 <ul>
 <li>The first, module scores, AUCell, and VISION, takes <em>pre-defined</em> gene sets and scores them per cell.</li>
 <li>The second, Hotspot and SCENIC, <em>discovers</em> gene programmes and regulatory relationships from the data itself.</li>
 <li>The third, NMF, also <em>discovers</em> gene programmes and regulatory relationships via matrix factorisation which is different from SCENIC and Hotspot.</li>
+<li>The fourth, LDA, is a topic model over a binary matrix. It picks up where SCENIC leaves off: binarise the regulon activity, then sort the TFs into topics.</li>
 </ul>
 <p>We use the PBMC3k dataset throughout. At 2,700 cells this is likely too small for the GRN methods to produce biologically meaningful results, but it is large enough to show the API and the workflow end to end. On real datasets with tens of thousands of cells the same code applies unchanged. Also, as the</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://gregorlueg.github.io/bixverse">bixverse</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://gregorlueg.github.io/bixverse.plots/">bixverse.plots</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-datatable.com" class="external-link">data.table</a></span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -169,170 +172,10 @@
 <span>  mtx_streaming <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  .verbose <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpCS7SaE/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpCS7SaE/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpCS7SaE/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpCS7SaE/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpCS7SaE/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpCS7SaE/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpCS7SaE/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpCS7SaE/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpCS7SaE/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpCS7SaE/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpCS7SaE/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpCS7SaE/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpCS7SaE/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpCS7SaE/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpCS7SaE/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpCS7SaE/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
 <span></span>
 <span><span class="fu"><a href="../reference/setnames_sc.html">setnames_sc</a></span><span class="op">(</span><span class="va">sc_object</span>, table <span class="op">=</span> <span class="st">"var"</span>, old <span class="op">=</span> <span class="st">"column1"</span>, new <span class="op">=</span> <span class="st">"gene_symbol"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpCS7SaE/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpCS7SaE/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
 <span></span>
 <span><span class="va">var</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_sc_var.html">get_sc_var</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpCS7SaE/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpCS7SaE/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
 <span><span class="va">ensembl_to_symbol</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/setNames.html" class="external-link">setNames</a></span><span class="op">(</span><span class="va">var</span><span class="op">$</span><span class="va">gene_symbol</span>, <span class="va">var</span><span class="op">$</span><span class="va">gene_id</span><span class="op">)</span></span>
 <span><span class="va">symbol_to_ensembl</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/setNames.html" class="external-link">setNames</a></span><span class="op">(</span><span class="va">var</span><span class="op">$</span><span class="va">gene_id</span>, <span class="va">var</span><span class="op">$</span><span class="va">gene_symbol</span><span class="op">)</span></span>
 <span></span>
@@ -347,41 +190,9 @@
 <span>  streaming <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  .verbose <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpCS7SaE/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpCS7SaE/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
 <span></span>
 <span><span class="co"># MAD QC</span></span>
 <span><span class="va">qc_df</span> <span class="op">&lt;-</span> <span class="va">sc_object</span><span class="op">[[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"cell_id"</span>, <span class="st">"lib_size"</span>, <span class="st">"nnz"</span>, <span class="st">"MT"</span><span class="op">)</span><span class="op">]</span><span class="op">]</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpCS7SaE/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpCS7SaE/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
 <span><span class="va">metrics</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  log10_lib_size <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log10</a></span><span class="op">(</span><span class="va">qc_df</span><span class="op">$</span><span class="va">lib_size</span><span class="op">)</span>,</span>
 <span>  log10_nnz <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log10</a></span><span class="op">(</span><span class="va">qc_df</span><span class="op">$</span><span class="va">nnz</span><span class="op">)</span>,</span>
@@ -399,75 +210,11 @@
 <span>  threshold <span class="op">=</span> <span class="fl">3</span></span>
 <span><span class="op">)</span></span>
 <span><span class="va">sc_object</span><span class="op">[[</span><span class="st">"outlier"</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">qc</span><span class="op">$</span><span class="va">combined</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpCS7SaE/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpCS7SaE/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
 <span><span class="va">cells_to_keep</span> <span class="op">&lt;-</span> <span class="va">qc_df</span><span class="op">[</span><span class="op">!</span><span class="va">qc</span><span class="op">$</span><span class="va">combined</span>, <span class="va">cell_id</span><span class="op">]</span></span>
 <span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/set_cells_to_keep.html">set_cells_to_keep</a></span><span class="op">(</span><span class="va">sc_object</span>, <span class="va">cells_to_keep</span><span class="op">)</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpCS7SaE/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpCS7SaE/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
 <span></span>
 <span><span class="co"># HVG, PCA, neighbours, clustering, UMAP</span></span>
 <span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/find_hvg_sc.html">find_hvg_sc</a></span><span class="op">(</span><span class="va">sc_object</span>, hvg_no <span class="op">=</span> <span class="fl">2000L</span>, .verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpCS7SaE/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpCS7SaE/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpCS7SaE/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpCS7SaE/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
 <span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calculate_pca_sc.html">calculate_pca_sc</a></span><span class="op">(</span><span class="va">sc_object</span>, no_pcs <span class="op">=</span> <span class="fl">30L</span>, sparse_svd <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Using sparse SVD solving on scaled data on 2000 HVG.</span></span>
 <span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/find_neighbours_sc.html">find_neighbours_sc</a></span><span class="op">(</span></span>
@@ -480,22 +227,6 @@
 <span><span class="co">#&gt; Generating sNN graph (full: TRUE).</span></span>
 <span><span class="co">#&gt; Transforming sNN data to igraph.</span></span>
 <span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/find_clusters_sc.html">find_clusters_sc</a></span><span class="op">(</span><span class="va">sc_object</span>, res <span class="op">=</span> <span class="fl">1.5</span>, name <span class="op">=</span> <span class="st">"leiden_clusters"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpCS7SaE/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpCS7SaE/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
 <span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/umap_sc.html">umap_sc</a></span><span class="op">(</span><span class="va">sc_object</span>, knn_method <span class="op">=</span> <span class="st">"annoy"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Running UMAP.</span></span>
 <span><span class="co">#&gt; Using n_epochs = 500 (dataset &lt;10k samples or adam_parallel optimiser)</span></span>
@@ -616,40 +347,8 @@
 <span>  object <span class="op">=</span> <span class="va">sc_object</span>,</span>
 <span>  obs_data <span class="op">=</span> <span class="fu"><a href="../reference/get_data.html">get_data</a></span><span class="op">(</span><span class="va">module_scores</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpCS7SaE/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpCS7SaE/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpCS7SaE/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpCS7SaE/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
 <span><span class="co">#&gt;    cell_idx          cell_id   nnz lib_size to_keep          MT      Ribo</span></span>
 <span><span class="co">#&gt;       &lt;num&gt;           &lt;char&gt; &lt;num&gt;    &lt;num&gt;  &lt;lgcl&gt;       &lt;num&gt;     &lt;num&gt;</span></span>
 <span><span class="co">#&gt; 1:        1 AAACATACAACCAC-1   778     2418    TRUE 0.030190241 0.4371381</span></span>
@@ -679,13 +378,13 @@
 <li>
 <code>"ap"</code> is average precision. Most top-heavy of the three, but its null tracks gene set prevalence, so don’t compare raw values across sets of different size unless you switch <code>standardise</code> on.</li>
 </ul>
-<p>We stick with the default here.</p>
+<p>We use the <code>"wilcox"</code> here.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">auc_scores</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/aucell_sc.html">aucell_sc</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">sc_object</span>,</span>
 <span>  gs_list <span class="op">=</span> <span class="va">lineage_sets</span>,</span>
-<span>  aucell_params <span class="op">=</span> <span class="fu"><a href="../reference/params_sc_aucell.html">params_sc_aucell</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  aucell_params <span class="op">=</span> <span class="fu"><a href="../reference/params_sc_aucell.html">params_sc_aucell</a></span><span class="op">(</span>auc_type <span class="op">=</span> <span class="st">"wilcox"</span><span class="op">)</span>,</span>
 <span>  .verbose <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
@@ -733,9 +432,9 @@
 <span><span class="co">#&gt;    gene_set_name  auto_cor       p_val         fdr</span></span>
 <span><span class="co">#&gt;           &lt;char&gt;     &lt;num&gt;       &lt;num&gt;       &lt;num&gt;</span></span>
 <span><span class="co">#&gt; 1:        T cell 0.7612149 0.001996008 0.003992016</span></span>
-<span><span class="co">#&gt; 2:  Cytotoxic NK 0.4620488 0.009980040 0.009980040</span></span>
-<span><span class="co">#&gt; 3:        B cell 0.5621615 0.009980040 0.009980040</span></span>
-<span><span class="co">#&gt; 4:      Monocyte 0.5473183 0.001996008 0.003992016</span></span></code></pre></div>
+<span><span class="co">#&gt; 2:  Cytotoxic NK 0.4620422 0.009980040 0.009980040</span></span>
+<span><span class="co">#&gt; 3:        B cell 0.5621629 0.009980040 0.009980040</span></span>
+<span><span class="co">#&gt; 4:      Monocyte 0.5473186 0.001996008 0.003992016</span></span></code></pre></div>
 </div>
 <p>Unsurprisingly, all of these gene sets show highly significant spatial correlation.</p>
 </section></section><section class="level2"><h2 id="hotspot">Hotspot<a class="anchor" aria-label="anchor" href="#hotspot"></a>
@@ -800,7 +499,7 @@
 <span></span>
 <span><span class="va">hotspot_cor</span></span>
 <span><span class="co">#&gt; Hotspot gene-gene local correlation results</span></span>
-<span><span class="co">#&gt;   Genes: 2320</span></span>
+<span><span class="co">#&gt;   Genes: 2581</span></span>
 <span><span class="co">#&gt;   Cells: 2163</span></span>
 <span><span class="co">#&gt;   Modules: not yet computed (see generate_hotspot_membership)</span></span></code></pre></div>
 </div>
@@ -830,26 +529,26 @@
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">membership</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="va">cluster_member</span><span class="op">)</span><span class="op">]</span>, <span class="fl">20L</span><span class="op">)</span></span>
 <span><span class="co">#&gt;             gene_id cluster_member gene_symbol</span></span>
 <span><span class="co">#&gt;              &lt;char&gt;          &lt;num&gt;      &lt;char&gt;</span></span>
-<span><span class="co">#&gt;  1: ENSG00000137959            477      IFI44L</span></span>
-<span><span class="co">#&gt;  2: ENSG00000134321            477       RSAD2</span></span>
-<span><span class="co">#&gt;  3: ENSG00000115415            477       STAT1</span></span>
-<span><span class="co">#&gt;  4: ENSG00000196141            477     SPATS2L</span></span>
-<span><span class="co">#&gt;  5: ENSG00000136514            477        RTP4</span></span>
-<span><span class="co">#&gt;  6: ENSG00000138642            477       HERC6</span></span>
-<span><span class="co">#&gt;  7: ENSG00000138646            477       HERC5</span></span>
-<span><span class="co">#&gt;  8: ENSG00000003147            477        ICA1</span></span>
-<span><span class="co">#&gt;  9: ENSG00000119917            477       IFIT3</span></span>
-<span><span class="co">#&gt; 10: ENSG00000185745            477       IFIT1</span></span>
-<span><span class="co">#&gt; 11: ENSG00000173456            477       RNF26</span></span>
-<span><span class="co">#&gt; 12: ENSG00000135114            477        OASL</span></span>
-<span><span class="co">#&gt; 13: ENSG00000140511            477      HAPLN3</span></span>
-<span><span class="co">#&gt; 14: ENSG00000157601            477         MX1</span></span>
-<span><span class="co">#&gt; 15: ENSG00000181817            515       LSM10</span></span>
-<span><span class="co">#&gt; 16: ENSG00000173193            515      PARP14</span></span>
-<span><span class="co">#&gt; 17: ENSG00000113719            515      ERGIC1</span></span>
-<span><span class="co">#&gt; 18: ENSG00000213722            515       DDAH2</span></span>
-<span><span class="co">#&gt; 19: ENSG00000146192            515        FGD2</span></span>
-<span><span class="co">#&gt; 20: ENSG00000112335            515        SNX3</span></span>
+<span><span class="co">#&gt;  1: ENSG00000188822              0        CNR2</span></span>
+<span><span class="co">#&gt;  2: ENSG00000169504              0       CLIC4</span></span>
+<span><span class="co">#&gt;  3: ENSG00000169442              0        CD52</span></span>
+<span><span class="co">#&gt;  4: ENSG00000162511              0      LAPTM5</span></span>
+<span><span class="co">#&gt;  5: ENSG00000162373              0       BEND5</span></span>
+<span><span class="co">#&gt;  6: ENSG00000132704              0       FCRL2</span></span>
+<span><span class="co">#&gt;  7: ENSG00000163534              0       FCRL1</span></span>
+<span><span class="co">#&gt;  8: ENSG00000158481              0        CD1C</span></span>
+<span><span class="co">#&gt;  9: ENSG00000072694              0      FCGR2B</span></span>
+<span><span class="co">#&gt; 10: ENSG00000132185              0       FCRLA</span></span>
+<span><span class="co">#&gt; 11: ENSG00000116191              0     RALGPS2</span></span>
+<span><span class="co">#&gt; 12: ENSG00000197520              0     FAM177B</span></span>
+<span><span class="co">#&gt; 13: ENSG00000054277              0        OPN3</span></span>
+<span><span class="co">#&gt; 14: ENSG00000152689              0     RASGRP3</span></span>
+<span><span class="co">#&gt; 15: ENSG00000119866              0      BCL11A</span></span>
+<span><span class="co">#&gt; 16: ENSG00000162924              0         REL</span></span>
+<span><span class="co">#&gt; 17: ENSG00000144218              0        AFF3</span></span>
+<span><span class="co">#&gt; 18: ENSG00000136717              0        BIN1</span></span>
+<span><span class="co">#&gt; 19: ENSG00000169994              0       MYO7B</span></span>
+<span><span class="co">#&gt; 20: ENSG00000121966              0       CXCR4</span></span>
 <span><span class="co">#&gt;             gene_id cluster_member gene_symbol</span></span>
 <span><span class="co">#&gt;              &lt;char&gt;          &lt;num&gt;      &lt;char&gt;</span></span></code></pre></div>
 </div>
@@ -1002,11 +701,11 @@
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">tf_gene_dt</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="op">-</span><span class="va">importance</span><span class="op">)</span><span class="op">]</span>, <span class="fl">5L</span><span class="op">)</span></span>
 <span><span class="co">#&gt;                 tf            gene importance pairwise_cor cor_sign tf_symbol</span></span>
 <span><span class="co">#&gt;             &lt;char&gt;          &lt;char&gt;      &lt;num&gt;        &lt;num&gt;    &lt;int&gt;    &lt;char&gt;</span></span>
-<span><span class="co">#&gt; 1: ENSG00000171223 ENSG00000120129  0.2948482    0.3103157        1      JUNB</span></span>
-<span><span class="co">#&gt; 2: ENSG00000066336 ENSG00000107341  0.2746513    0.1931868        1      SPI1</span></span>
+<span><span class="co">#&gt; 1: ENSG00000171223 ENSG00000120129  0.2948482    0.3103159        1      JUNB</span></span>
+<span><span class="co">#&gt; 2: ENSG00000066336 ENSG00000107341  0.2746513    0.1931844        1      SPI1</span></span>
 <span><span class="co">#&gt; 3: ENSG00000170345 ENSG00000120129  0.2573821    0.3420300        1       FOS</span></span>
-<span><span class="co">#&gt; 4: ENSG00000066336 ENSG00000165025  0.2460342    0.2060715        1      SPI1</span></span>
-<span><span class="co">#&gt; 5: ENSG00000139187 ENSG00000153563  0.2453607    0.2005602        1     KLRG1</span></span>
+<span><span class="co">#&gt; 4: ENSG00000066336 ENSG00000165025  0.2460342    0.2060750        1      SPI1</span></span>
+<span><span class="co">#&gt; 5: ENSG00000139187 ENSG00000153563  0.2453607    0.2005614        1     KLRG1</span></span>
 <span><span class="co">#&gt;    gene_symbol</span></span>
 <span><span class="co">#&gt;         &lt;char&gt;</span></span>
 <span><span class="co">#&gt; 1:       DUSP1</span></span>
@@ -1049,40 +748,181 @@
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">tf_gene_final</span><span class="op">[</span><span class="op">(</span><span class="va">in_leading_edge</span><span class="op">)</span><span class="op">]</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="op">-</span><span class="va">importance</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
 </div>
-<p>CisTarget is not a pass/fail filter on the module. Per enriched motif it builds a recovery curve, compares it against the mean + 2 SD curve across every motif in the database, and keeps only the genes above the point of maximum separation. So expect the regulons coming out of <code><a href="../reference/build_regulons.html">build_regulons()</a></code> to be a good deal smaller than the modules going in. This is how you would run the regulon binarisation.</p>
+<p>CisTarget is not a pass/fail filter on the module. Per enriched motif it builds a recovery curve, compares it against the mean + 2 SD curve across every motif in the database, and keeps only the genes above the point of maximum separation. So expect the regulons coming out of <code><a href="../reference/build_regulons.html">build_regulons()</a></code> to be a good deal smaller than the modules going in.</p>
+<p><code><a href="../reference/build_regulons.html">build_regulons()</a></code> applies that filter, adds the TF back to its own set and drops anything too small. Since we skipped the CisTarget download above, we pass <code>use_leading_edge = FALSE</code> and it warns and carries on without the motif filter. The regulons that come out are a lot bigger and noisier than a proper SCENIC run would give you, so read the biology below with that in mind. The API is identical either way.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb17"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># build_regulons() applies that filter, adds the TF back to its own set and</span></span>
-<span><span class="co"># drops anything too small. This is what you hand to aucell_sc()</span></span>
-<span><span class="va">regulons</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/build_regulons.html">build_regulons</a></span><span class="op">(</span><span class="va">scenic_res</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">regulons</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/build_regulons.html">build_regulons</a></span><span class="op">(</span><span class="va">scenic_res</span>, use_leading_edge <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Built 227 regulons (154 dropped below 10 genes). Median size: 21</span></span>
 <span></span>
-<span><span class="va">auc_regulons</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/aucell_sc.html">aucell_sc</a></span><span class="op">(</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">regulons</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] 227</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/lengths.html" class="external-link">lengths</a></span><span class="op">(</span><span class="va">regulons</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt;    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. </span></span>
+<span><span class="co">#&gt;    10.0    14.0    21.0   139.8   104.0  1583.0</span></span></code></pre></div>
+</div>
+<p>That is what you hand to <code><a href="../reference/aucell_sc.html">aucell_sc()</a></code>, which scores every regulon in every cell.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb18"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">auc_regulons</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/aucell_sc.html">aucell_sc</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">sc_object</span>,</span>
 <span>  gs_list <span class="op">=</span> <span class="va">regulons</span>,</span>
 <span>  aucell_params <span class="op">=</span> <span class="fu"><a href="../reference/params_sc_aucell.html">params_sc_aucell</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">binarised_regulons</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/binarise_regulon_activity.html">binarise_regulon_activity</a></span><span class="op">(</span><span class="va">auc_regulons</span><span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+</div>
+<p>The AUC scores are continuous, and for most downstream purposes you want an on/off call instead. <code><a href="../reference/binarise_regulon_activity.html">binarise_regulon_activity()</a></code> fits a two-component Gaussian mixture per regulon, compares it against a single Gaussian by BIC, and puts the threshold at the trough between the two component means. Regulons that are not bimodal fall back to <code>mean + 2 * sd</code>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb19"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">binarised_regulons</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/binarise_regulon_activity.html">binarise_regulon_activity</a></span><span class="op">(</span><span class="va">auc_regulons</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Binarised 227 regulons, 72 of which were bimodal.</span></span>
 <span></span>
 <span><span class="va">binary_matrix</span> <span class="op">&lt;-</span> <span class="va">binarised_regulons</span><span class="op">$</span><span class="va">binary</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">binary_matrix</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="va">ensembl_to_symbol</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">binary_matrix</span><span class="op">)</span><span class="op">]</span></span>
 <span></span>
-<span><span class="va">sc_object</span><span class="op">[[</span><span class="st">"STAT1_active"</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">binary_matrix</span><span class="op">[</span>, <span class="st">"STAT1"</span><span class="op">]</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">binarised_regulons</span><span class="op">$</span><span class="va">thresholds</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="op">-</span><span class="va">n_cells_on</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span>
+<span><span class="co">#&gt;            regulon   threshold bimodal n_cells_on</span></span>
+<span><span class="co">#&gt;             &lt;char&gt;       &lt;num&gt;  &lt;lgcl&gt;      &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1: ENSG00000177606 0.028034928    TRUE       1629</span></span>
+<span><span class="co">#&gt; 2: ENSG00000198034 0.099866757    TRUE       1539</span></span>
+<span><span class="co">#&gt; 3: ENSG00000124614 0.097379875    TRUE       1535</span></span>
+<span><span class="co">#&gt; 4: ENSG00000171223 0.069938338    TRUE       1500</span></span>
+<span><span class="co">#&gt; 5: ENSG00000136942 0.129315786    TRUE       1498</span></span>
+<span><span class="co">#&gt; 6: ENSG00000100823 0.009789546    TRUE       1458</span></span></code></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb20"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">sc_object</span><span class="op">[[</span><span class="st">"STAT1_active"</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">binary_matrix</span><span class="op">[</span>, <span class="st">"STAT1"</span><span class="op">]</span></span>
 <span></span>
-<span><span class="fu">embedding_plot_sc</span><span class="op">(</span></span>
+<span><span class="fu"><a href="https://gregorlueg.github.io/bixverse.plots/reference/embedding_plot_sc.html">embedding_plot_sc</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">sc_object</span>,</span>
 <span>  embedding <span class="op">=</span> <span class="st">"umap"</span>,</span>
 <span>  colour_by <span class="op">=</span> <span class="st">"STAT1_active"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
+<div class="cell-output-display">
+<div>
+<figure><p><img src="bag_of_genes_single_cells_files/figure-html/scenic-plot-stat1-1.png" width="672"></p>
+</figure>
+</div>
+</div>
 </div>
 <p>This is how you work with all types of <code>"bag of genes"</code> analyses for single cell in <code>bixverse</code>.</p>
+</section></section><section class="level2"><h2 id="topic-models-with-lda">Topic models with LDA<a class="anchor" aria-label="anchor" href="#topic-models-with-lda"></a>
+</h2>
+<p>Binarising the regulons gives us a cells x regulons matrix of ones and zeros, which is exactly the shape a topic model wants: cells are documents, regulons are terms. This is the trick behind <a href="https://doi.org/10.1038/s41592-019-0367-1" class="external-link">cisTopic</a>, which runs latent Dirichlet allocation over binarised scATAC to get a cell-topic distribution for clustering and a topic-region distribution for region set discovery. Nothing about it is ATAC-specific, so swapping regions for regulons gives you TF activity sorted into topics.</p>
+<p>Why binarise at all? Because LDA on raw single cell counts is dominated by library size. Every cell’s “document length” is its total count, deep cells dominate the corpus, and the topics you get back are largely a rediscovery of sequencing depth. Thresholding to on/off throws that away and leaves the model looking at co-occurrence, which is the thing you actually care about.</p>
+<p><code>bixverse</code> implements variational Bayes LDA in Rust, following <a href="https://papers.nips.cc/paper/2010/hash/71f6278d140af599e06ad9bf1ba03cb0-Abstract.html" class="external-link">Hoffman, et al.</a>, with the same knobs and defaults pycisTopic exposes.</p>
+<section class="level3"><h3 id="picking-the-number-of-topics">Picking the number of topics<a class="anchor" aria-label="anchor" href="#picking-the-number-of-topics"></a>
+</h3>
+<p>Same eternal question as with NMF, and <code><a href="../reference/lda_k_sweep.html">lda_k_sweep()</a></code> gives you three different answers to argue with. Arun 2010 compares the singular values of the topic-term matrix against the document length distribution; Cao Juan 2009 is the mean pairwise cosine similarity between topics, which climbs once <code>k</code> gets large enough that topics start duplicating each other; Mimno 2011 is UMass coherence. <code>combined_score</code> rescales all three onto <code>[0, 1]</code> and adds them up.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb21"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">sweep_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/lda_k_sweep.html">lda_k_sweep</a></span><span class="op">(</span><span class="va">binary_matrix</span>, k_range <span class="op">=</span> <span class="fl">5</span><span class="op">:</span><span class="fl">12</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">sweep_res</span></span>
+<span><span class="co">#&gt; LdaKSweepResult (LDA topic count sweep)</span></span>
+<span><span class="co">#&gt;   k range:          5 to 12</span></span>
+<span><span class="co">#&gt;   Best k:           7</span></span>
+<span><span class="co">#&gt;   Metrics:          arun_2010 and cao_juan_2009 lower is better, mimno_2011 higher</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;        k  arun_2010 cao_juan_2009 mimno_2011     bound perplexity</span></span>
+<span><span class="co">#&gt;    &lt;int&gt;      &lt;num&gt;         &lt;num&gt;      &lt;num&gt;     &lt;num&gt;      &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1:     5 0.16981332     0.3002322 -0.8547891 -339021.7   134.5479</span></span>
+<span><span class="co">#&gt; 2:     6 0.15225958     0.2160656 -0.8800924 -338921.9   134.3539</span></span>
+<span><span class="co">#&gt; 3:     7 0.13542282     0.1724176 -1.0198741 -338820.0   134.1560</span></span>
+<span><span class="co">#&gt; 4:     8 0.11508164     0.1654747 -1.1853645 -339039.1   134.5817</span></span>
+<span><span class="co">#&gt; 5:     9 0.10976724     0.1641425 -1.2842002 -339296.9   135.0844</span></span>
+<span><span class="co">#&gt; 6:    10 0.12072008     0.1731616 -1.3134488 -339586.9   135.6520</span></span>
+<span><span class="co">#&gt; 7:    11 0.12276630     0.1669807 -1.3461572 -339823.9   136.1175</span></span>
+<span><span class="co">#&gt; 8:    12 0.09433794     0.1303569 -1.3338648 -339872.5   136.2134</span></span>
+<span><span class="co">#&gt;    combined_score converged</span></span>
+<span><span class="co">#&gt;             &lt;num&gt;    &lt;lgcl&gt;</span></span>
+<span><span class="co">#&gt; 1:       1.808360      TRUE</span></span>
+<span><span class="co">#&gt; 2:       2.579716      TRUE</span></span>
+<span><span class="co">#&gt; 3:       2.872085      TRUE</span></span>
+<span><span class="co">#&gt; 4:       2.637487      TRUE</span></span>
+<span><span class="co">#&gt; 5:       2.269648      TRUE</span></span>
+<span><span class="co">#&gt; 6:       1.736410      TRUE</span></span>
+<span><span class="co">#&gt; 7:       1.453985      TRUE</span></span>
+<span><span class="co">#&gt; 8:       2.025017      TRUE</span></span></code></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb22"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">sweep_res</span><span class="op">)</span></span></code></pre></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure><p><img src="bag_of_genes_single_cells_files/figure-html/lda-sweep-plot-1.png" width="672"></p>
+<figcaption>The three selection metrics and the combined score against k.</figcaption></figure>
+</div>
+</div>
+</div>
+<p>One caveat that will bite you if you do not know about it. Any <code>k</code> below five is struck out of the selection entirely, because coherence saturates on small topic counts and would otherwise always win. That is inherited from pycisTopic, so <code>best_k</code> can never come back below five however good the raw metrics of a smaller <code>k</code> look. Sweep below the floor and you get a warning plus <code>NA</code> in <code>combined_score</code> for those rows; the metrics themselves are still reported, so read them off the table and pass the <code>k</code> you want to <code><a href="../reference/get_best_model.html">get_best_model()</a></code>.</p>
+</section><section class="level3"><h3 id="reading-the-topics">Reading the topics<a class="anchor" aria-label="anchor" href="#reading-the-topics"></a>
+</h3>
+<p><code><a href="../reference/get_best_model.html">get_best_model()</a></code> pulls the winning fit straight out of the sweep, no refitting.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb23"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">lda_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_best_model.html">get_best_model</a></span><span class="op">(</span><span class="va">sweep_res</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">lda_res</span></span>
+<span><span class="co">#&gt; LdaResult (latent Dirichlet allocation)</span></span>
+<span><span class="co">#&gt;   Documents:        2163</span></span>
+<span><span class="co">#&gt;   Terms:            227</span></span>
+<span><span class="co">#&gt;   Topics:           7</span></span>
+<span><span class="co">#&gt;   Bound (ELBO):     -338820</span></span>
+<span><span class="co">#&gt;   Perplexity:       134.156</span></span>
+<span><span class="co">#&gt;   Iterations:       90</span></span></code></pre></div>
+</div>
+<p><code><a href="../reference/get_top_terms.html">get_top_terms()</a></code> is where the interpretation happens: per topic, the regulons carrying the most probability mass.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb24"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">top_tfs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_top_terms.html">get_top_terms</a></span><span class="op">(</span><span class="va">lda_res</span>, n <span class="op">=</span> <span class="fl">8L</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">top_tfs</span><span class="op">[</span>, <span class="fu">.</span><span class="op">(</span>tfs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="va">term</span>, collapse <span class="op">=</span> <span class="st">", "</span><span class="op">)</span><span class="op">)</span>, by <span class="op">=</span> <span class="va">topic</span><span class="op">]</span></span>
+<span><span class="co">#&gt;       topic                                                       tfs</span></span>
+<span><span class="co">#&gt;      &lt;char&gt;                                                    &lt;char&gt;</span></span>
+<span><span class="co">#&gt; 1: topic_01        RPS4X, RPS10, JUNB, RPL35, TCF7, JUN, LEF1, ANXA11</span></span>
+<span><span class="co">#&gt; 2: topic_02       PARP1, MAZ, BCLAF1, RAB2A, HSF1, DNMT1, APEX1, ATF4</span></span>
+<span><span class="co">#&gt; 3: topic_03     NUCB1, ELF1, ZMAT2, ILF2, UGP2, STUB1, SCAND1, SUCLG1</span></span>
+<span><span class="co">#&gt; 4: topic_04 CBFB, DUSP22, RNASEH2C, CXXC5, KLF12, RELA, SSRP1, ZNF581</span></span>
+<span><span class="co">#&gt; 5: topic_05         NR4A1, LYL1, RXRA, CEBPD, SPI1, KLF4, CEBPB, MAFB</span></span>
+<span><span class="co">#&gt; 6: topic_06    STAT4, TSC22D4, SF3B1, ETS1, MAGOH, RUNX3, KLRG1, XBP1</span></span>
+<span><span class="co">#&gt; 7: topic_07 HTATIP2, HNRNPH3, NFATC3, KIF22, UGP2, APEX1, ANXA11, BBX</span></span></code></pre></div>
+</div>
+<p>On PBMC3k the myeloid topic is usually unmistakable: <code>SPI1</code>, <code>CEBPD</code>, <code>KLF4</code> and friends land together, because those regulons switch on in the same cells. The T cell topics split along the naive/cytotoxic axis, with <code>TCF7</code> and <code>LEF1</code> on one side and <code>STAT4</code>, <code>RUNX3</code>, <code>ETS1</code> on the other. Which topic index gets which programme is arbitrary and changes with the seed, so always read the loadings rather than trusting the numbering.</p>
+<p>The other half of the model is the cell-topic matrix, which is a soft assignment: every cell gets a distribution over topics summing to one. Drop a column into the object and it plots like any other cell-level covariate.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb25"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">doc_topic</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">lda_res</span>, <span class="st">"doc_topic"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="kw">for</span> <span class="op">(</span><span class="va">topic</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">doc_topic</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">sc_object</span><span class="op">[[</span><span class="va">topic</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">doc_topic</span><span class="op">[</span>, <span class="va">topic</span><span class="op">]</span></span>
+<span><span class="op">}</span></span>
+<span></span>
+<span><span class="va">topic_plots</span> <span class="op">&lt;-</span> <span class="fu">purrr</span><span class="fu">::</span><span class="fu"><a href="https://purrr.tidyverse.org/reference/map.html" class="external-link">map</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">doc_topic</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span><span class="op">]</span>, \<span class="op">(</span><span class="va">topic</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="fu"><a href="https://gregorlueg.github.io/bixverse.plots/reference/embedding_plot_sc.html">embedding_plot_sc</a></span><span class="op">(</span></span>
+<span>    object <span class="op">=</span> <span class="va">sc_object</span>,</span>
+<span>    embedding <span class="op">=</span> <span class="st">"umap"</span>,</span>
+<span>    colour_by <span class="op">=</span> <span class="va">topic</span></span>
+<span>  <span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ggtitle</a></span><span class="op">(</span><span class="va">topic</span><span class="op">)</span></span>
+<span><span class="op">}</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">patchwork</span><span class="fu">::</span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/wrap_plots.html" class="external-link">wrap_plots</a></span><span class="op">(</span><span class="va">topic_plots</span>, ncol <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span></code></pre></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure><p><img src="bag_of_genes_single_cells_files/figure-html/lda-umap-1.png" width="672"></p>
+<figcaption>Topic proportions per cell on the UMAP.</figcaption></figure>
+</div>
+</div>
+</div>
+<p>Because the assignment is soft, a cell sitting between two programmes shows up as genuinely intermediate rather than being forced into one cluster. That is the main thing a topic model buys you over hard clustering on the same matrix.</p>
 </section></section><section class="level2"><h2 id="nmf-on-single-cells">NMF on single cells<a class="anchor" aria-label="anchor" href="#nmf-on-single-cells"></a>
 </h2>
 <p>The methods so far have all started from either a pre-defined gene set, a graph-based notion of locality, or a TF-centric regression framework. NMF (non-negative matrix factorisation) takes yet another angle: it factorises the expression matrix <code>V ≈ W H</code> into a small number of latent factors, where <code>W</code> carries non-negative gene loadings and <code>H</code> carries non-negative cell activations. The non-negativity constraint tends to push the factors into something interpretable as additive gene programmes rather than abstract directions of variance like PCA. <code>bixverse</code> implements <a href="https://proceedings.mlr.press/v39/kimura14.pdf" class="external-link">HALS</a> (Hierarchical Alternating Least Squares) in Rust, which converges fast and scales nicely.</p>
 <p>A few practical notes before diving in:</p>
 <ul>
-<li>NMF is non-convex: different random initialisations land in different local optima. The package therefore provides <code><a href="../reference/nmf_sc.html">nmf_sc()</a></code> for a single run and <code><a href="../reference/stabilised_nmf_sc.html">stabilised_nmf_sc()</a></code> for multiple restarts. The latter is the right default for any serious analysis as well as down stream meta analyses such as finding consensus programmes.</li>
-<li>Picking <code>k</code> is the eternal question. Too small and programmes get smushed together; too large and they fragment into redundant copies. There is no free lunch here. Usually you run with several values and inspect. If in doubt, lick your finger and see from where the wind comes… (Joke)</li>
+<li>NMF is non-convex: different random initialisations land in different local optima. The package therefore provides <code><a href="../reference/nmf_sc.html">nmf_sc()</a></code> for a single run, <code><a href="../reference/stabilised_nmf_sc.html">stabilised_nmf_sc()</a></code> for multiple restarts, and <code><a href="../reference/consensus_nmf_sc.html">consensus_nmf_sc()</a></code> which takes those restarts and returns the programmes they agree on. The last one is the right default for any serious analysis.</li>
+<li>Picking <code>k</code> is the eternal question. Too small and programmes get smushed together; too large and they fragment into redundant copies. <code><a href="../reference/nmf_k_sweep_sc.html">nmf_k_sweep_sc()</a></code> turns that into something you can actually look at: stability against reconstruction error across a range of <code>k</code>. It is not a free lunch, but it beats licking your finger and seeing from where the wind comes… (Joke)</li>
 <li>NMF on a heterogeneous dataset often just rediscovers the obvious cell-type axis. The interesting use case is running it <em>within</em> a cell type to find finer-grained programmes (activation, exhaustion, cycling, etc.). We will do exactly that here.</li>
 </ul>
 <p>We will focus on the T cells as an example. Think of your own use cases in your data set and analyses.</p>
@@ -1090,7 +930,7 @@
 </h3>
 <p>We will use the AUC scores from earlier to pull out the T cell population. <a href="https://en.wikipedia.org/wiki/Otsu%27s_method" class="external-link">Otsu’s method</a> gives us a data-driven threshold for the bimodal AUC distribution.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">otsu_t_cell</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/find_threshold_otsu.html">find_threshold_otsu</a></span><span class="op">(</span><span class="va">auc_dt</span><span class="op">$</span><span class="va">`T cell`</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">auc_dt</span>, mapping <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">`T cell`</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
@@ -1108,26 +948,10 @@
 <p>With the threshold in hand we grab the T cell IDs and recompute HVGs <em>within</em> this subset. This matters: HVGs computed across all PBMCs are dominated by inter-cell-type variation (T vs B vs monocyte). HVGs within T cells expose the genes that actually vary across T cell states, which is what we want NMF to factorise.</p>
 <p><code><a href="../reference/get_hvg_data_sc.html">get_hvg_data_sc()</a></code> is a non-mutating variant of <code><a href="../reference/find_hvg_sc.html">find_hvg_sc()</a></code>: it returns a data.table with the HVG metrics and an <code>is_hvg</code> flag, without overwriting the HVGs stored on the object. Convenient when you want HVGs for a specific downstream analysis without disturbing the global state.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb19"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb27"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">t_cell_ids</span> <span class="op">&lt;-</span> <span class="va">auc_dt</span><span class="op">[</span><span class="va">`T cell`</span> <span class="op">&gt;=</span> <span class="va">otsu_t_cell</span>, <span class="va">cell_id</span><span class="op">]</span></span>
 <span></span>
 <span><span class="va">hvg_t_cell_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_hvg_data_sc.html">get_hvg_data_sc</a></span><span class="op">(</span>object <span class="op">=</span> <span class="va">sc_object</span>, cell_ids <span class="op">=</span> <span class="va">t_cell_ids</span><span class="op">)</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpCS7SaE/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpCS7SaE/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
 <span></span>
 <span><span class="va">t_cell_hvg</span> <span class="op">&lt;-</span> <span class="va">hvg_t_cell_data</span><span class="op">[</span><span class="op">(</span><span class="va">is_hvg</span><span class="op">)</span>, <span class="va">gene_id</span><span class="op">]</span></span></code></pre></div>
 </div>
@@ -1135,7 +959,7 @@
 </h3>
 <p><code><a href="../reference/nmf_sc.html">nmf_sc()</a></code> runs one NMF on the chosen cells and genes. The default initialisation is NNDSVD, which is deterministic and usually gives a sensible starting point.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb20"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb28"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">t_cell_nmf_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/nmf_sc.html">nmf_sc</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">sc_object</span>,</span>
 <span>  k <span class="op">=</span> <span class="fl">10L</span>,</span>
@@ -1145,36 +969,42 @@
 </div>
 <p>The result is an <code>NmfResult</code> carrying the <code>W</code> gene-loading matrix (genes x components) and the <code>H</code> cell-activation matrix (components x cells), plus the parameters and convergence info.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb21"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb29"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/get_w.html">get_w</a></span><span class="op">(</span><span class="va">t_cell_nmf_results</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span></span>
-<span><span class="co">#&gt;                      comp_01      comp_02   comp_03      comp_04      comp_05</span></span>
-<span><span class="co">#&gt; ENSG00000188976 2.558843e+00 9.992267e-11 0.3763380 2.132400e-01 9.993509e-11</span></span>
-<span><span class="co">#&gt; ENSG00000187608 9.983787e-11 9.992267e-11 0.5599045 9.981262e-11 9.993509e-11</span></span>
-<span><span class="co">#&gt; ENSG00000186827 9.983787e-11 9.992267e-11 7.3252878 9.981262e-11 9.993509e-11</span></span>
-<span><span class="co">#&gt; ENSG00000176022 1.122509e-01 2.855008e-02 0.1625732 9.981262e-11 9.993509e-11</span></span>
-<span><span class="co">#&gt; ENSG00000242485 2.209524e+00 2.744842e+00 4.3223567 6.435678e-01 1.557151e+00</span></span></code></pre></div>
+<span><span class="co">#&gt;                      comp_01      comp_02      comp_03      comp_04</span></span>
+<span><span class="co">#&gt; ENSG00000188976 2.756063e+00 1.516444e-01 9.978818e-11 3.985443e-01</span></span>
+<span><span class="co">#&gt; ENSG00000188290 9.983770e-11 1.001252e-10 9.978818e-11 7.743338e-02</span></span>
+<span><span class="co">#&gt; ENSG00000187608 9.983770e-11 2.746899e+00 1.624547e-01 9.984959e-11</span></span>
+<span><span class="co">#&gt; ENSG00000186827 9.983770e-11 1.001252e-10 7.541640e+00 9.984959e-11</span></span>
+<span><span class="co">#&gt; ENSG00000176022 9.073032e-01 7.619265e-03 1.844488e-01 9.984959e-11</span></span>
+<span><span class="co">#&gt;                      comp_05</span></span>
+<span><span class="co">#&gt; ENSG00000188976 3.031700e-01</span></span>
+<span><span class="co">#&gt; ENSG00000188290 1.000227e-10</span></span>
+<span><span class="co">#&gt; ENSG00000187608 1.000227e-10</span></span>
+<span><span class="co">#&gt; ENSG00000186827 1.000227e-10</span></span>
+<span><span class="co">#&gt; ENSG00000176022 1.000227e-10</span></span></code></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb22"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb30"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/get_h.html">get_h</a></span><span class="op">(</span><span class="va">t_cell_nmf_results</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span></span>
-<span><span class="co">#&gt;         AAACATACAACCAC-1 AAACATTGATCAGC-1 AAACGCTGGTTCTT-1 AAACTTGATCCAGA-1</span></span>
-<span><span class="co">#&gt; comp_01       0.03039108      0.028655788     2.779504e-02     0.0335300341</span></span>
-<span><span class="co">#&gt; comp_02       0.04223846      0.009922862     6.078151e-02     0.0007059687</span></span>
-<span><span class="co">#&gt; comp_03       0.01914044      0.041368406     1.002924e-10     0.0018196171</span></span>
-<span><span class="co">#&gt; comp_04       0.04766104      0.033128884     3.672349e-02     0.0398822948</span></span>
-<span><span class="co">#&gt; comp_05       0.03773499      0.001358267     4.147765e-02     0.0049292077</span></span>
-<span><span class="co">#&gt;         AAAGCCTGTATGCG-1</span></span>
-<span><span class="co">#&gt; comp_01       0.03014318</span></span>
-<span><span class="co">#&gt; comp_02       0.02215907</span></span>
-<span><span class="co">#&gt; comp_03       0.04835882</span></span>
-<span><span class="co">#&gt; comp_04       0.02421124</span></span>
-<span><span class="co">#&gt; comp_05       0.04118023</span></span></code></pre></div>
+<span><span class="co">#&gt;         AAACATACAACCAC-1 AAACATTGATCAGC-1 AAACGCACTGGTAC-1 AAACGCTGGTTCTT-1</span></span>
+<span><span class="co">#&gt; comp_01      0.029081384      0.028246988     2.750892e-02     2.642106e-02</span></span>
+<span><span class="co">#&gt; comp_02      0.032824770      0.004165698     5.788827e-03     4.682986e-02</span></span>
+<span><span class="co">#&gt; comp_03      0.009732882      0.053273071     5.238257e-02     1.002123e-10</span></span>
+<span><span class="co">#&gt; comp_04      0.064907432      0.017416965     1.001506e-10     3.876413e-02</span></span>
+<span><span class="co">#&gt; comp_05      0.004365134      0.047877852     9.997733e-11     1.034977e-02</span></span>
+<span><span class="co">#&gt;         AAACTTGATCCAGA-1</span></span>
+<span><span class="co">#&gt; comp_01      0.032608423</span></span>
+<span><span class="co">#&gt; comp_02      0.002322522</span></span>
+<span><span class="co">#&gt; comp_03      0.007309146</span></span>
+<span><span class="co">#&gt; comp_04      0.018659594</span></span>
+<span><span class="co">#&gt; comp_05      0.049327504</span></span></code></pre></div>
 </div>
 </section><section class="level3"><h3 id="running-multiple-nmf-runs">Running multiple NMF runs<a class="anchor" aria-label="anchor" href="#running-multiple-nmf-runs"></a>
 </h3>
 <p>For anything beyond exploratory work you want multiple restarts. <code><a href="../reference/stabilised_nmf_sc.html">stabilised_nmf_sc()</a></code> runs <code>n_runs</code> HALS NMFs with random initialisations (seeded by <code>seed + i</code>) and column-binds the resulting <code>W</code> matrices. Looking at this stabilised data allows you to identify components that constantly show up between random initialisations.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb23"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb31"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">t_cell_nmf_results_stabilised</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/stabilised_nmf_sc.html">stabilised_nmf_sc</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">sc_object</span>,</span>
 <span>  k <span class="op">=</span> <span class="fl">10L</span>,</span>
@@ -1185,71 +1015,203 @@
 </div>
 <p>The W matrix here is wide: <code>n_genes x (k * n_runs)</code>. Each block of <code>k</code> columns corresponds to one run. You can then use it for downstream consensus analyses.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb24"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb32"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/get_w.html">get_w</a></span><span class="op">(</span><span class="va">t_cell_nmf_results_stabilised</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span></span>
 <span><span class="co">#&gt;                 run_01.comp_01 run_01.comp_02 run_01.comp_03 run_01.comp_04</span></span>
-<span><span class="co">#&gt; ENSG00000188976   8.834997e-01   1.168006e+00   4.921125e-01   9.998284e-11</span></span>
-<span><span class="co">#&gt; ENSG00000187608   9.988405e-11   1.000315e-10   4.467033e-02   9.998284e-11</span></span>
-<span><span class="co">#&gt; ENSG00000186827   9.988405e-11   1.000315e-10   9.998983e-11   9.998284e-11</span></span>
-<span><span class="co">#&gt; ENSG00000176022   4.819395e-01   1.243956e-01   9.209826e-02   9.998284e-11</span></span>
-<span><span class="co">#&gt; ENSG00000242485   7.240750e-01   1.973956e+00   1.215576e+00   6.745355e-01</span></span>
+<span><span class="co">#&gt; ENSG00000188976   2.047948e+00   6.749125e-01     0.42683131   1.000597e-10</span></span>
+<span><span class="co">#&gt; ENSG00000188290   2.615961e-02   1.000214e-10     0.13890615   1.000597e-10</span></span>
+<span><span class="co">#&gt; ENSG00000187608   9.990404e-11   1.000214e-10    29.44829559   1.000597e-10</span></span>
+<span><span class="co">#&gt; ENSG00000186827   9.990404e-11   1.000214e-10     2.02266049   7.260294e+00</span></span>
+<span><span class="co">#&gt; ENSG00000176022   6.144505e-01   3.268677e-01     0.03150798   1.429209e-02</span></span>
 <span><span class="co">#&gt;                 run_01.comp_05</span></span>
-<span><span class="co">#&gt; ENSG00000188976   9.488367e-01</span></span>
-<span><span class="co">#&gt; ENSG00000187608   1.238252e+00</span></span>
-<span><span class="co">#&gt; ENSG00000186827   1.001258e-10</span></span>
-<span><span class="co">#&gt; ENSG00000176022   1.001258e-10</span></span>
-<span><span class="co">#&gt; ENSG00000242485   1.621210e+00</span></span></code></pre></div>
+<span><span class="co">#&gt; ENSG00000188976   9.101315e-01</span></span>
+<span><span class="co">#&gt; ENSG00000188290   1.698188e-01</span></span>
+<span><span class="co">#&gt; ENSG00000187608   3.292343e+00</span></span>
+<span><span class="co">#&gt; ENSG00000186827   1.002548e-10</span></span>
+<span><span class="co">#&gt; ENSG00000176022   1.002548e-10</span></span></code></pre></div>
 </div>
 <p>The H matrices are kept per-run, since each random initialisation gives a different cell-activation pattern (components are not aligned across runs without further work).</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb25"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb33"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="fu"><a href="../reference/get_h.html">get_h</a></span><span class="op">(</span><span class="va">t_cell_nmf_results_stabilised</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; List of 10</span></span>
-<span><span class="co">#&gt;  $ run_01: num [1:10, 1:1034] 0.03552 0.00777 0.01237 0.03586 0.03921 ...</span></span>
+<span><span class="co">#&gt;  $ run_01: num [1:10, 1:1150] 4.46e-02 1.84e-03 1.00e-10 2.27e-02 1.68e-02 ...</span></span>
 <span><span class="co">#&gt;   ..- attr(*, "dimnames")=List of 2</span></span>
 <span><span class="co">#&gt;   .. ..$ : chr [1:10] "comp_01" "comp_02" "comp_03" "comp_04" ...</span></span>
-<span><span class="co">#&gt;   .. ..$ : chr [1:1034] "AAACATACAACCAC-1" "AAACATTGATCAGC-1" "AAACGCTGGTTCTT-1" "AAACTTGATCCAGA-1" ...</span></span>
-<span><span class="co">#&gt;  $ run_02: num [1:10, 1:1034] 4.08e-02 4.75e-03 3.12e-02 4.11e-03 1.00e-10 ...</span></span>
+<span><span class="co">#&gt;   .. ..$ : chr [1:1150] "AAACATACAACCAC-1" "AAACATTGATCAGC-1" "AAACGCACTGGTAC-1" "AAACGCTGGTTCTT-1" ...</span></span>
+<span><span class="co">#&gt;  $ run_02: num [1:10, 1:1150] 3.71e-02 1.00e-10 4.35e-02 1.23e-02 2.78e-02 ...</span></span>
 <span><span class="co">#&gt;   ..- attr(*, "dimnames")=List of 2</span></span>
 <span><span class="co">#&gt;   .. ..$ : chr [1:10] "comp_01" "comp_02" "comp_03" "comp_04" ...</span></span>
-<span><span class="co">#&gt;   .. ..$ : chr [1:1034] "AAACATACAACCAC-1" "AAACATTGATCAGC-1" "AAACGCTGGTTCTT-1" "AAACTTGATCCAGA-1" ...</span></span>
-<span><span class="co">#&gt;  $ run_03: num [1:10, 1:1034] 4.34e-02 2.35e-03 1.00e-10 4.04e-02 1.00e-10 ...</span></span>
+<span><span class="co">#&gt;   .. ..$ : chr [1:1150] "AAACATACAACCAC-1" "AAACATTGATCAGC-1" "AAACGCACTGGTAC-1" "AAACGCTGGTTCTT-1" ...</span></span>
+<span><span class="co">#&gt;  $ run_03: num [1:10, 1:1150] 0.0218 0.031 0.016 0.0335 0.0346 ...</span></span>
 <span><span class="co">#&gt;   ..- attr(*, "dimnames")=List of 2</span></span>
 <span><span class="co">#&gt;   .. ..$ : chr [1:10] "comp_01" "comp_02" "comp_03" "comp_04" ...</span></span>
-<span><span class="co">#&gt;   .. ..$ : chr [1:1034] "AAACATACAACCAC-1" "AAACATTGATCAGC-1" "AAACGCTGGTTCTT-1" "AAACTTGATCCAGA-1" ...</span></span>
-<span><span class="co">#&gt;  $ run_04: num [1:10, 1:1034] 3.93e-02 1.00e-10 5.72e-02 1.35e-02 1.00e-10 ...</span></span>
+<span><span class="co">#&gt;   .. ..$ : chr [1:1150] "AAACATACAACCAC-1" "AAACATTGATCAGC-1" "AAACGCACTGGTAC-1" "AAACGCTGGTTCTT-1" ...</span></span>
+<span><span class="co">#&gt;  $ run_04: num [1:10, 1:1150] 1.83e-02 3.01e-02 3.60e-02 2.95e-02 1.00e-10 ...</span></span>
 <span><span class="co">#&gt;   ..- attr(*, "dimnames")=List of 2</span></span>
 <span><span class="co">#&gt;   .. ..$ : chr [1:10] "comp_01" "comp_02" "comp_03" "comp_04" ...</span></span>
-<span><span class="co">#&gt;   .. ..$ : chr [1:1034] "AAACATACAACCAC-1" "AAACATTGATCAGC-1" "AAACGCTGGTTCTT-1" "AAACTTGATCCAGA-1" ...</span></span>
-<span><span class="co">#&gt;  $ run_05: num [1:10, 1:1034] 4.20e-02 9.28e-04 1.00e-10 9.99e-11 2.34e-02 ...</span></span>
+<span><span class="co">#&gt;   .. ..$ : chr [1:1150] "AAACATACAACCAC-1" "AAACATTGATCAGC-1" "AAACGCACTGGTAC-1" "AAACGCTGGTTCTT-1" ...</span></span>
+<span><span class="co">#&gt;  $ run_05: num [1:10, 1:1150] 3.05e-02 3.28e-02 9.99e-11 1.00e-10 2.73e-02 ...</span></span>
 <span><span class="co">#&gt;   ..- attr(*, "dimnames")=List of 2</span></span>
 <span><span class="co">#&gt;   .. ..$ : chr [1:10] "comp_01" "comp_02" "comp_03" "comp_04" ...</span></span>
-<span><span class="co">#&gt;   .. ..$ : chr [1:1034] "AAACATACAACCAC-1" "AAACATTGATCAGC-1" "AAACGCTGGTTCTT-1" "AAACTTGATCCAGA-1" ...</span></span>
-<span><span class="co">#&gt;  $ run_06: num [1:10, 1:1034] 4.65e-02 1.00e-10 1.00e-10 4.25e-02 1.00e-10 ...</span></span>
+<span><span class="co">#&gt;   .. ..$ : chr [1:1150] "AAACATACAACCAC-1" "AAACATTGATCAGC-1" "AAACGCACTGGTAC-1" "AAACGCTGGTTCTT-1" ...</span></span>
+<span><span class="co">#&gt;  $ run_06: num [1:10, 1:1150] 0.03488 0.01592 0.00726 0.02895 0.03118 ...</span></span>
 <span><span class="co">#&gt;   ..- attr(*, "dimnames")=List of 2</span></span>
 <span><span class="co">#&gt;   .. ..$ : chr [1:10] "comp_01" "comp_02" "comp_03" "comp_04" ...</span></span>
-<span><span class="co">#&gt;   .. ..$ : chr [1:1034] "AAACATACAACCAC-1" "AAACATTGATCAGC-1" "AAACGCTGGTTCTT-1" "AAACTTGATCCAGA-1" ...</span></span>
-<span><span class="co">#&gt;  $ run_07: num [1:10, 1:1034] 4.60e-02 1.00e-10 1.00e-10 7.62e-02 4.03e-04 ...</span></span>
+<span><span class="co">#&gt;   .. ..$ : chr [1:1150] "AAACATACAACCAC-1" "AAACATTGATCAGC-1" "AAACGCACTGGTAC-1" "AAACGCTGGTTCTT-1" ...</span></span>
+<span><span class="co">#&gt;  $ run_07: num [1:10, 1:1150] 1.94e-02 4.54e-02 1.00e-10 1.19e-02 1.05e-02 ...</span></span>
 <span><span class="co">#&gt;   ..- attr(*, "dimnames")=List of 2</span></span>
 <span><span class="co">#&gt;   .. ..$ : chr [1:10] "comp_01" "comp_02" "comp_03" "comp_04" ...</span></span>
-<span><span class="co">#&gt;   .. ..$ : chr [1:1034] "AAACATACAACCAC-1" "AAACATTGATCAGC-1" "AAACGCTGGTTCTT-1" "AAACTTGATCCAGA-1" ...</span></span>
-<span><span class="co">#&gt;  $ run_08: num [1:10, 1:1034] 4.49e-02 2.58e-03 9.99e-11 3.42e-02 1.52e-02 ...</span></span>
+<span><span class="co">#&gt;   .. ..$ : chr [1:1150] "AAACATACAACCAC-1" "AAACATTGATCAGC-1" "AAACGCACTGGTAC-1" "AAACGCTGGTTCTT-1" ...</span></span>
+<span><span class="co">#&gt;  $ run_08: num [1:10, 1:1150] 3.70e-02 1.00e-10 3.69e-02 4.94e-02 3.10e-02 ...</span></span>
 <span><span class="co">#&gt;   ..- attr(*, "dimnames")=List of 2</span></span>
 <span><span class="co">#&gt;   .. ..$ : chr [1:10] "comp_01" "comp_02" "comp_03" "comp_04" ...</span></span>
-<span><span class="co">#&gt;   .. ..$ : chr [1:1034] "AAACATACAACCAC-1" "AAACATTGATCAGC-1" "AAACGCTGGTTCTT-1" "AAACTTGATCCAGA-1" ...</span></span>
-<span><span class="co">#&gt;  $ run_09: num [1:10, 1:1034] 2.87e-02 2.09e-02 3.28e-02 2.82e-02 1.00e-10 ...</span></span>
+<span><span class="co">#&gt;   .. ..$ : chr [1:1150] "AAACATACAACCAC-1" "AAACATTGATCAGC-1" "AAACGCACTGGTAC-1" "AAACGCTGGTTCTT-1" ...</span></span>
+<span><span class="co">#&gt;  $ run_09: num [1:10, 1:1150] 3.77e-02 1.00e-10 3.61e-02 1.22e-02 2.73e-02 ...</span></span>
 <span><span class="co">#&gt;   ..- attr(*, "dimnames")=List of 2</span></span>
 <span><span class="co">#&gt;   .. ..$ : chr [1:10] "comp_01" "comp_02" "comp_03" "comp_04" ...</span></span>
-<span><span class="co">#&gt;   .. ..$ : chr [1:1034] "AAACATACAACCAC-1" "AAACATTGATCAGC-1" "AAACGCTGGTTCTT-1" "AAACTTGATCCAGA-1" ...</span></span>
-<span><span class="co">#&gt;  $ run_10: num [1:10, 1:1034] 0.0102 0.0463 0.0281 0.0379 0.0254 ...</span></span>
+<span><span class="co">#&gt;   .. ..$ : chr [1:1150] "AAACATACAACCAC-1" "AAACATTGATCAGC-1" "AAACGCACTGGTAC-1" "AAACGCTGGTTCTT-1" ...</span></span>
+<span><span class="co">#&gt;  $ run_10: num [1:10, 1:1150] 4.28e-02 1.00e-10 1.72e-02 2.96e-02 5.73e-02 ...</span></span>
 <span><span class="co">#&gt;   ..- attr(*, "dimnames")=List of 2</span></span>
 <span><span class="co">#&gt;   .. ..$ : chr [1:10] "comp_01" "comp_02" "comp_03" "comp_04" ...</span></span>
-<span><span class="co">#&gt;   .. ..$ : chr [1:1034] "AAACATACAACCAC-1" "AAACATTGATCAGC-1" "AAACGCTGGTTCTT-1" "AAACTTGATCCAGA-1" ...</span></span></code></pre></div>
+<span><span class="co">#&gt;   .. ..$ : chr [1:1150] "AAACATACAACCAC-1" "AAACATTGATCAGC-1" "AAACGCACTGGTAC-1" "AAACGCTGGTTCTT-1" ...</span></span></code></pre></div>
 </div>
 <p>The run with the lowest final reconstruction loss is the most natural starting point for a single-run analysis. <code><a href="../reference/get_best_run.html">get_best_run()</a></code> returns it as an <code>NmfResult</code>, identical in shape to the output of <code><a href="../reference/nmf_sc.html">nmf_sc()</a></code>.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb26"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb34"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">best_run</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_best_run.html">get_best_run</a></span><span class="op">(</span><span class="va">t_cell_nmf_results_stabilised</span><span class="op">)</span></span></code></pre></div>
+</div>
+</section><section class="level3"><h3 id="consensus-nmf">Consensus NMF<a class="anchor" aria-label="anchor" href="#consensus-nmf"></a>
+</h3>
+<p>Picking the lowest-loss restart is a reasonable default, but it dodges the question you actually care about: did the restarts agree? Consensus NMF (cNMF, <a href="https://elifesciences.org/articles/43803" class="external-link">Kotliar, et al.</a>) answers it directly. Pool the components of every restart, drop the ones sitting on their own in the pool, k-means the survivors into <code>k</code> groups, and take the median of each group. What comes out is the programme structure the restarts agree on, and the mean silhouette of those clusters says how strongly they agreed.</p>
+<p>Before fitting, though, you need a <code>k</code>. <code><a href="../reference/nmf_k_sweep_sc.html">nmf_k_sweep_sc()</a></code> runs the consensus step across a range of ranks and reports stability against reconstruction error, keeping no factors, so a wide sweep stays affordable.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb35"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">t_cell_k_sweep</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/nmf_k_sweep_sc.html">nmf_k_sweep_sc</a></span><span class="op">(</span></span>
+<span>  object <span class="op">=</span> <span class="va">sc_object</span>,</span>
+<span>  k_range <span class="op">=</span> <span class="fl">2</span><span class="op">:</span><span class="fl">12</span>,</span>
+<span>  cell_ids <span class="op">=</span> <span class="va">t_cell_ids</span>,</span>
+<span>  gene_ids <span class="op">=</span> <span class="va">t_cell_hvg</span>,</span>
+<span>  n_runs <span class="op">=</span> <span class="fl">10L</span>,</span>
+<span>  nmf_consensus_params <span class="op">=</span> <span class="fu"><a href="../reference/params_nmf_consensus.html">params_nmf_consensus</a></span><span class="op">(</span>density_threshold <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">t_cell_k_sweep</span></span>
+<span><span class="co">#&gt; NmfKSweepResult (consensus NMF k sweep)</span></span>
+<span><span class="co">#&gt;   Source class:     SingleCells</span></span>
+<span><span class="co">#&gt;   k range:          2 to 12</span></span>
+<span><span class="co">#&gt;   No runs per k:    10</span></span>
+<span><span class="co">#&gt;   Most stable k:    2 (stability = 0.9987)</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;         k stability best_error median_error consensus_failed n_dropped</span></span>
+<span><span class="co">#&gt;     &lt;int&gt;     &lt;num&gt;      &lt;num&gt;        &lt;num&gt;           &lt;lgcl&gt;     &lt;int&gt;</span></span>
+<span><span class="co">#&gt;  1:     2 0.9987255  0.3494214    0.3494324            FALSE         0</span></span>
+<span><span class="co">#&gt;  2:     3 0.7904969  0.3454919    0.3455086            FALSE         0</span></span>
+<span><span class="co">#&gt;  3:     4 0.7136912  0.3430810    0.3431764            FALSE         0</span></span>
+<span><span class="co">#&gt;  4:     5 0.7964178  0.3409729    0.3410496            FALSE         0</span></span>
+<span><span class="co">#&gt;  5:     6 0.6604626  0.3390599    0.3391575            FALSE         0</span></span>
+<span><span class="co">#&gt;  6:     7 0.7007527  0.3374616    0.3375218            FALSE         0</span></span>
+<span><span class="co">#&gt;  7:     8 0.6017957  0.3359818    0.3362038            FALSE         0</span></span>
+<span><span class="co">#&gt;  8:     9 0.6791331  0.3347037    0.3348030            FALSE         0</span></span>
+<span><span class="co">#&gt;  9:    10 0.6019418  0.3331404    0.3334405            FALSE         0</span></span>
+<span><span class="co">#&gt; 10:    11 0.5787128  0.3321190    0.3322654            FALSE         0</span></span>
+<span><span class="co">#&gt; 11:    12 0.5389146  0.3308056    0.3309833            FALSE         0</span></span>
+<span><span class="co">#&gt;     n_empty_clusters n_converged</span></span>
+<span><span class="co">#&gt;                &lt;int&gt;       &lt;int&gt;</span></span>
+<span><span class="co">#&gt;  1:                0          10</span></span>
+<span><span class="co">#&gt;  2:                0          10</span></span>
+<span><span class="co">#&gt;  3:                0          10</span></span>
+<span><span class="co">#&gt;  4:                0          10</span></span>
+<span><span class="co">#&gt;  5:                0          10</span></span>
+<span><span class="co">#&gt;  6:                0          10</span></span>
+<span><span class="co">#&gt;  7:                0          10</span></span>
+<span><span class="co">#&gt;  8:                0          10</span></span>
+<span><span class="co">#&gt;  9:                0          10</span></span>
+<span><span class="co">#&gt; 10:                0          10</span></span>
+<span><span class="co">#&gt; 11:                0          10</span></span></code></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb36"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">t_cell_k_sweep</span><span class="op">)</span></span></code></pre></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure><p><img src="bag_of_genes_single_cells_files/figure-html/nmf%20k%20sweep%20plot-1.png" width="672"></p>
+<figcaption>Consensus NMF k sweep on the T cells.</figcaption></figure>
+</div>
+</div>
+</div>
+<p>Error falls monotonically with <code>k</code>, so it would happily push you to the largest rank you can afford. Stability is the counterweight: take the last <code>k</code> before it falls away, while the error curve is still coming down. Here that is <code>5L</code>, not the 10 we picked by eye for the runs above. Worth knowing before writing up ten programmes when the data supports seven. (Identifying two components is always trivial and unlikely to be the true signal.)</p>
+<div>
+<blockquote>
+<p><strong>Note</strong></p>
+<p><code>density_threshold = 2</code> turns the outlier filter off, since cosine distance cannot exceed 2. Left on, components whose neighbours sit too far away get dropped, and if fewer than <code>k</code> survive the fit errors instead of returning something degenerate. Sensible on real data with enough restarts; with 8 it fires more often than it should. <code><a href="../reference/get_stability.html">get_stability()</a></code> gives you the <code>local_density</code> values to pick a real threshold from.</p>
+</blockquote>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb37"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">t_cell_nmf_consensus</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/consensus_nmf_sc.html">consensus_nmf_sc</a></span><span class="op">(</span></span>
+<span>  object <span class="op">=</span> <span class="va">sc_object</span>,</span>
+<span>  k <span class="op">=</span> <span class="fl">5L</span>,</span>
+<span>  cell_ids <span class="op">=</span> <span class="va">t_cell_ids</span>,</span>
+<span>  gene_ids <span class="op">=</span> <span class="va">t_cell_hvg</span>,</span>
+<span>  n_runs <span class="op">=</span> <span class="fl">10L</span>,</span>
+<span>  nmf_consensus_params <span class="op">=</span> <span class="fu"><a href="../reference/params_nmf_consensus.html">params_nmf_consensus</a></span><span class="op">(</span>density_threshold <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">t_cell_nmf_consensus</span></span>
+<span><span class="co">#&gt; ConsensusNmfResult (consensus HALS NMF)</span></span>
+<span><span class="co">#&gt;   Source class:     SingleCells</span></span>
+<span><span class="co">#&gt;   No genes:         3000</span></span>
+<span><span class="co">#&gt;   No cells:         1150</span></span>
+<span><span class="co">#&gt;   No components:    5</span></span>
+<span><span class="co">#&gt;   No runs:          10</span></span>
+<span><span class="co">#&gt;   Stability:        0.7876</span></span>
+<span><span class="co">#&gt;   Relative error:   0.3414</span></span>
+<span><span class="co">#&gt;   Dropped:          0 / 50 components</span></span>
+<span><span class="co">#&gt;   Preprocessing:    none</span></span></code></pre></div>
+</div>
+<p><code>W</code> and <code>H</code> come back in exactly the shape <code><a href="../reference/nmf_sc.html">nmf_sc()</a></code> gives you, so everything downstream is unchanged. What is new is <code><a href="../reference/get_stability.html">get_stability()</a></code>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb38"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">consensus_diag</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_stability.html">get_stability</a></span><span class="op">(</span><span class="va">t_cell_nmf_consensus</span><span class="op">)</span></span>
+<span><span class="va">consensus_diag</span><span class="op">$</span><span class="va">stability</span></span>
+<span><span class="co">#&gt; [1] 0.7876265</span></span>
+<span><span class="va">consensus_diag</span><span class="op">$</span><span class="va">cluster_sizes</span></span>
+<span><span class="co">#&gt;    cluster     n</span></span>
+<span><span class="co">#&gt;      &lt;int&gt; &lt;int&gt;</span></span>
+<span><span class="co">#&gt; 1:       1    10</span></span>
+<span><span class="co">#&gt; 2:       2     7</span></span>
+<span><span class="co">#&gt; 3:       3     9</span></span>
+<span><span class="co">#&gt; 4:       4     6</span></span>
+<span><span class="co">#&gt; 5:       5    18</span></span></code></pre></div>
+</div>
+<p>The per-component table records where each restart’s components landed. <code>component_id</code> uses the same <code>run_XX.comp_YY</code> naming as the <code>w_all</code> columns of a stabilised fit, so at matching <code>k</code> and <code>n_runs</code> the two line up directly and you can go back to the raw restarts behind any cluster.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb39"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">consensus_diag</span><span class="op">$</span><span class="va">clusters</span><span class="op">)</span></span>
+<span><span class="co">#&gt;      component_id   run component pooled_idx cluster local_density silhouette</span></span>
+<span><span class="co">#&gt;            &lt;char&gt; &lt;int&gt;     &lt;int&gt;      &lt;int&gt;   &lt;int&gt;         &lt;num&gt;      &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1: run_01.comp_01     1         1          1       5   0.013249059  0.7841961</span></span>
+<span><span class="co">#&gt; 2: run_01.comp_02     1         2          2       5   0.012458582  0.8275782</span></span>
+<span><span class="co">#&gt; 3: run_01.comp_03     1         3          3       1   0.004470150  0.9566821</span></span>
+<span><span class="co">#&gt; 4: run_01.comp_04     1         4          4       3   0.017578840  0.8770334</span></span>
+<span><span class="co">#&gt; 5: run_01.comp_05     1         5          5       4   0.017095327  0.6891547</span></span>
+<span><span class="co">#&gt; 6: run_02.comp_01     2         1          6       5   0.008731465  0.8714657</span></span>
+<span><span class="co">#&gt;      kept</span></span>
+<span><span class="co">#&gt;    &lt;lgcl&gt;</span></span>
+<span><span class="co">#&gt; 1:   TRUE</span></span>
+<span><span class="co">#&gt; 2:   TRUE</span></span>
+<span><span class="co">#&gt; 3:   TRUE</span></span>
+<span><span class="co">#&gt; 4:   TRUE</span></span>
+<span><span class="co">#&gt; 5:   TRUE</span></span>
+<span><span class="co">#&gt; 6:   TRUE</span></span></code></pre></div>
+</div>
+<p>With 10 restarts, a cluster holding 10 components is a programme every run found. A thin one is a programme only some initialisations saw, and that is worth knowing before you write it up.</p>
+<div>
+<blockquote>
+<p><strong>Note</strong></p>
+<p>Memory, not runtime, is what bites here. The restarts are dense and all live at once, so budget roughly <code>n_cells * k * n_runs</code> floats on top of the counts. At a few hundred thousand cells with <code>n_runs = 50</code> that adds up fast, and the honest answer is to run consensus NMF on <code>MetaCells</code> instead. See the meta cell vignette.</p>
+</blockquote>
 </div>
 </section><section class="level3"><h3 id="downstream-analysis">Downstream analysis<a class="anchor" aria-label="anchor" href="#downstream-analysis"></a>
 </h3>
@@ -1260,15 +1222,13 @@
 <li>
 <strong>Score cells</strong>: <code>H</code> gives you per-cell activations for each programme. Project them onto your UMAP, correlate against existing annotations, or use them as features for downstream clustering.</li>
 <li>
-<strong>Add activations to the obs table</strong>: <code><a href="../reference/get_data.html">get_data()</a></code> on an <code>NmfResult</code> returns a data.table of cell activations that slots into the SingleCells obs table via <code><a href="../reference/add_sc_new_obs.html">add_sc_new_obs()</a></code>, the same way module scores did earlier.</li>
-<li>
-<strong>Consensus across runs</strong>: with <code><a href="../reference/stabilised_nmf_sc.html">stabilised_nmf_sc()</a></code> you have <code>k * n_runs</code> W columns to play with. The classical move is to cluster these to identify components that recur across initialisations (the stable programmes) and components that appear only once (likely overfit to a particular seed).</li>
+<strong>Add activations to the obs table</strong>: <code><a href="../reference/get_data.html">get_data()</a></code> on an <code>NmfResult</code> or a <code>ConsensusNmfResult</code> returns a data.table of cell activations that slots into the SingleCells obs table via <code><a href="../reference/add_sc_new_obs.html">add_sc_new_obs()</a></code>, the same way module scores did earlier.</li>
 </ul>
 <p>We leave the choice of analysis here to you - the right downstream depends on the biology and your questions to the data, not the API.</p>
 </section></section><section class="level2"><h2 id="clean-up">Clean up<a class="anchor" aria-label="anchor" href="#clean-up"></a>
 </h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb27"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb40"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">tempdir_pbmc</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span>, force <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 </div>
 </section><script id="quarto-html-after-body" type="application/javascript">

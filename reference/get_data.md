@@ -32,6 +32,9 @@ get_data(x, ...)
 
 # S3 method for class 'NmfResult'
 get_data(x, ...)
+
+# S3 method for class 'ConsensusNmfResult'
+get_data(x, ...)
 ```
 
 ## Arguments

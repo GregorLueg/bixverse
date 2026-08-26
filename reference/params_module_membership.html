@@ -17,7 +17,7 @@ you."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.9</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.10</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -66,6 +66,7 @@ you."></head><body>
     <li><a class="dropdown-item" href="../articles/bag_of_genes_single_cells.html">'Bag of genes' methods for single cell in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/nichenet.html">Ligand receptor analysis</a></li>
     <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/dialogue.html">Multicellular programmes with DIALOGUE</a></li>
     <li><a class="dropdown-item" href="../articles/trajectory_inference.html">Trajectory inference with Palantir and PAGA</a></li>
     <li><a class="dropdown-item" href="../articles/symphony.html">Reference mapping via Symphony</a></li>
     <li><a class="dropdown-item" href="../articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
@@ -111,7 +112,8 @@ you.</p>
 <span>  method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"zscore"</span>, <span class="st">"fdr"</span><span class="op">)</span>,</span>
 <span>  cutoff <span class="op">=</span> <span class="fl">3</span>,</span>
 <span>  fdr <span class="op">=</span> <span class="fl">0.05</span>,</span>
-<span>  tails <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"auto"</span>, <span class="st">"upper"</span>, <span class="st">"both"</span><span class="op">)</span></span>
+<span>  tails <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"auto"</span>, <span class="st">"upper"</span>, <span class="st">"both"</span><span class="op">)</span>,</span>
+<span>  scaling <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"robust"</span>, <span class="st">"standard"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -120,10 +122,10 @@ you.</p>
 
 
 <dl><dt id="arg-method">method<a class="anchor" aria-label="anchor" href="#arg-method"></a></dt>
-<dd><p>String. <code>"zscore"</code> standardises each component robustly (median
-and MAD) and keeps <code>abs(z) &gt; cutoff</code>. <code>"fdr"</code> converts to two-sided p-values
-against a Normal null fitted the same way, Benjamini-Hochberg adjusts, and
-keeps <code>padj &lt; fdr</code>. Defaults to <code>"zscore"</code>.</p></dd>
+<dd><p>String. <code>"zscore"</code> standardises each component and keeps
+<code>abs(z) &gt; cutoff</code>. <code>"fdr"</code> converts to two-sided p-values against a Normal
+null fitted the same way, Benjamini-Hochberg adjusts, and keeps
+<code>padj &lt; fdr</code>. Defaults to <code>"zscore"</code>.</p></dd>
 
 
 <dt id="arg-cutoff">cutoff<a class="anchor" aria-label="anchor" href="#arg-cutoff"></a></dt>
@@ -140,6 +142,13 @@ to <code>0.05</code>.</p></dd>
 <dd><p>String. <code>"auto"</code> uses an upper-tail-only test when every loading
 is non-negative (the NMF case) and a two-sided one otherwise. <code>"upper"</code> and
 <code>"both"</code> force the choice. Defaults to <code>"auto"</code>.</p></dd>
+
+
+<dt id="arg-scaling">scaling<a class="anchor" aria-label="anchor" href="#arg-scaling"></a></dt>
+<dd><p>String. <code>"robust"</code> centres and scales each component by its
+median and MAD. <code>"standard"</code> uses the mean and standard deviation instead,
+which is stricter and less forgiving of skewed loadings (e.g. NMF).
+Defaults to <code>"robust"</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

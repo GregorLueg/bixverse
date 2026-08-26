@@ -8,13 +8,18 @@ co-expression module detection, graph-based clustering, etc.
 - [`get_metadata()`](https://gregorlueg.github.io/bixverse/reference/get_metadata.md)
   : Return the metadata
 - [`get_params()`](https://gregorlueg.github.io/bixverse/reference/get_params.md)
+  [`get_params.LdaResult()`](https://gregorlueg.github.io/bixverse/reference/get_params.md)
+  [`get_params.LdaKSweepResult()`](https://gregorlueg.github.io/bixverse/reference/get_params.md)
   [`get_params.Hotspot()`](https://gregorlueg.github.io/bixverse/reference/get_params.md)
   [`get_params.miloR()`](https://gregorlueg.github.io/bixverse/reference/get_params.md)
   [`get_params.ScenicGrn()`](https://gregorlueg.github.io/bixverse/reference/get_params.md)
   [`get_params.NmfResult()`](https://gregorlueg.github.io/bixverse/reference/get_params.md)
   [`get_params.StabilisedNmfResult()`](https://gregorlueg.github.io/bixverse/reference/get_params.md)
+  [`get_params.ConsensusNmfResult()`](https://gregorlueg.github.io/bixverse/reference/get_params.md)
+  [`get_params.DialogueResult()`](https://gregorlueg.github.io/bixverse/reference/get_params.md)
   : Get the parameters that were used.
 - [`get_results()`](https://gregorlueg.github.io/bixverse/reference/get_results.md)
+  [`get_results.DialogueResult()`](https://gregorlueg.github.io/bixverse/reference/get_results.md)
   : Get the final results from the class
 
 ## Gene set enrichment helpers
@@ -111,7 +116,7 @@ factorisations.
 - [`get_nmf_sample_activity()`](https://gregorlueg.github.io/bixverse/reference/get_nmf_sample_activity.md)
   : Get the NMF sample activity
 - [`get_nmf_stability()`](https://gregorlueg.github.io/bixverse/reference/get_nmf_stability.md)
-  : Get the stabilised NMF diagnostics
+  : Get the multi-run NMF diagnostics
 - [`get_c_pca_factors()`](https://gregorlueg.github.io/bixverse/reference/get_c_pca_factors.md)
   : Get the contrastive PCA factors
 - [`get_c_pca_loadings()`](https://gregorlueg.github.io/bixverse/reference/get_c_pca_loadings.md)
@@ -175,6 +180,12 @@ factorisations.
   : Run non-negative matrix factorisation on a BulkCoExp
 - [`stabilised_nmf_bulk()`](https://gregorlueg.github.io/bixverse/reference/stabilised_nmf_bulk.md)
   : Run stabilised (multi-restart) NMF on a BulkCoExp
+- [`consensus_nmf_bulk()`](https://gregorlueg.github.io/bixverse/reference/consensus_nmf_bulk.md)
+  : Run consensus NMF on a BulkCoExp
+- [`nmf_k_sweep_bulk()`](https://gregorlueg.github.io/bixverse/reference/nmf_k_sweep_bulk.md)
+  : Sweep k for consensus NMF on a BulkCoExp
+- [`modules_from_loadings()`](https://gregorlueg.github.io/bixverse/reference/modules_from_loadings.md)
+  : Derive sparse module membership from a loading matrix
 - [`params_cor_graph()`](https://gregorlueg.github.io/bixverse/reference/params_cor_graph.md)
   : Wrapper function for graph generation
 - [`params_coremo()`](https://gregorlueg.github.io/bixverse/reference/params_coremo.md)
@@ -884,14 +895,44 @@ count extraction, miloR, Hotspot, VISION and SCENIC.
 - [`stabilised_nmf_sc()`](https://gregorlueg.github.io/bixverse/reference/stabilised_nmf_sc.md)
   : Run stabilised (multi-run) NMF on single cell or meta cell data
 
+- [`consensus_nmf_sc()`](https://gregorlueg.github.io/bixverse/reference/consensus_nmf_sc.md)
+  : Run consensus NMF on single cell or meta cell data
+
+- [`nmf_k_sweep_sc()`](https://gregorlueg.github.io/bixverse/reference/nmf_k_sweep_sc.md)
+  : Sweep k for consensus NMF on single cell or meta cell data
+
+- [`run_lda()`](https://gregorlueg.github.io/bixverse/reference/run_lda.md)
+  : Fit a latent Dirichlet allocation model
+
+- [`lda_k_sweep()`](https://gregorlueg.github.io/bixverse/reference/lda_k_sweep.md)
+  : Sweep the topic count for LDA
+
+- [`dialogue_sc()`](https://gregorlueg.github.io/bixverse/reference/dialogue_sc.md)
+  : Find multicellular programmes with DIALOGUE
+
 - [`get_best_run()`](https://gregorlueg.github.io/bixverse/reference/get_best_run.md)
   : Get the best run from a stabilised NMF result
+
+- [`get_best_model()`](https://gregorlueg.github.io/bixverse/reference/get_best_model.md)
+  : Get the selected model from an LDA topic count sweep
+
+- [`get_stability()`](https://gregorlueg.github.io/bixverse/reference/get_stability.md)
+  : Get the consensus NMF stability diagnostics
+
+- [`get_top_terms()`](https://gregorlueg.github.io/bixverse/reference/get_top_terms.md)
+  : Get the highest-probability terms per topic
 
 - [`get_w()`](https://gregorlueg.github.io/bixverse/reference/get_w.md)
   : Get the W (gene loadings) matrix
 
 - [`get_h()`](https://gregorlueg.github.io/bixverse/reference/get_h.md)
   : Get the H (cell activations) matrix
+
+- [`plot(`*`<NmfKSweepResult>`*`)`](https://gregorlueg.github.io/bixverse/reference/plot.NmfKSweepResult.md)
+  : Plot a consensus NMF k sweep
+
+- [`plot(`*`<LdaKSweepResult>`*`)`](https://gregorlueg.github.io/bixverse/reference/plot.LdaKSweepResult.md)
+  : Plot the LDA topic count sweep
 
 - [`params_sc_aucell()`](https://gregorlueg.github.io/bixverse/reference/params_sc_aucell.md)
   : Wrapper function for parameters for AUCell
@@ -935,6 +976,21 @@ count extraction, miloR, Hotspot, VISION and SCENIC.
 
 - [`params_nmf_hals()`](https://gregorlueg.github.io/bixverse/reference/params_nmf_hals.md)
   : Wrapper function for NMF (HALS) parameters
+
+- [`params_nmf_consensus()`](https://gregorlueg.github.io/bixverse/reference/params_nmf_consensus.md)
+  : Wrapper function for consensus NMF parameters
+
+- [`params_lda()`](https://gregorlueg.github.io/bixverse/reference/params_lda.md)
+  : Wrapper function for the LDA parameters
+
+- [`params_dialogue_pmd()`](https://gregorlueg.github.io/bixverse/reference/params_dialogue_pmd.md)
+  : Wrapper function for the DIALOGUE decomposition parameters
+
+- [`params_dialogue_hlm()`](https://gregorlueg.github.io/bixverse/reference/params_dialogue_hlm.md)
+  : Wrapper function for the DIALOGUE mixed model parameters
+
+- [`params_dialogue_refine()`](https://gregorlueg.github.io/bixverse/reference/params_dialogue_refine.md)
+  : Wrapper function for the DIALOGUE refinement parameters
 
 ## Single cell multi-modal analysis methods
 
@@ -1118,6 +1174,8 @@ Functions and helpers to download or generate synthetic data.
 
 - [`download_cd34_data()`](https://gregorlueg.github.io/bixverse/reference/download_cd34_data.md)
   : Download the CD34 example data from SEACells
+- [`download_dialogue_uc()`](https://gregorlueg.github.io/bixverse/reference/download_dialogue_uc.md)
+  : Download the ulcerative colitis example data for DIALOGUE
 - [`download_marrow_cd34()`](https://gregorlueg.github.io/bixverse/reference/download_marrow_cd34.md)
   : Download the marrow CD34 example data from Palantir
 - [`download_pbmc3k()`](https://gregorlueg.github.io/bixverse/reference/download_pbmc3k.md)
@@ -1136,6 +1194,8 @@ Functions and helpers to download or generate synthetic data.
   : Generates synthetic gene module data.
 - [`generate_single_cell_test_data()`](https://gregorlueg.github.io/bixverse/reference/generate_single_cell_test_data.md)
   : Single cell test data
+- [`generate_dialogue_test_data()`](https://gregorlueg.github.io/bixverse/reference/generate_dialogue_test_data.md)
+  : Single cell test data with a planted multicellular programme
 - [`cell_cycle_genes`](https://gregorlueg.github.io/bixverse/reference/cell_cycle_genes.md)
   : Cell cycle genes
 - [`write_cellranger_output()`](https://gregorlueg.github.io/bixverse/reference/write_cellranger_output.md)
@@ -1147,6 +1207,8 @@ Functions and helpers to download or generate synthetic data.
 - [`params_sc_synthetic_data()`](https://gregorlueg.github.io/bixverse/reference/params_sc_synthetic_data.md)
   : Default parameters for generation of synthetic single cell data
   (RNA)
+- [`params_sc_synthetic_dialogue()`](https://gregorlueg.github.io/bixverse/reference/params_sc_synthetic_dialogue.md)
+  : Default parameters for generation of synthetic DIALOGUE data
 - [`params_synthetic_bulk_rnaseq()`](https://gregorlueg.github.io/bixverse/reference/params_synthetic_bulk_rnaseq.md)
   : Wrapper function to generate synthetic bulk RNAseq parameters
 - [`params_bulk_sparsity()`](https://gregorlueg.github.io/bixverse/reference/params_bulk_sparsity.md)
@@ -1172,6 +1234,8 @@ All types of other random helpers without a clear pattern
   : Find a threshold via the Otsu method
 - [`get_seurat_counts_to_list()`](https://gregorlueg.github.io/bixverse/reference/get_seurat_counts_to_list.md)
   : Transform Seurat raw counts into a List
+- [`install_agent_skill()`](https://gregorlueg.github.io/bixverse/reference/install_agent_skill.md)
+  : Install the bixverse agent skill
 - [`knn_graph_label_propagation()`](https://gregorlueg.github.io/bixverse/reference/knn_graph_label_propagation.md)
   : kNN-based graph label propagation
 - [`params_label_propagation()`](https://gregorlueg.github.io/bixverse/reference/params_label_propagation.md)
@@ -1295,6 +1359,8 @@ There is a lot more under the hood…
   **\[experimental\]** : Calculate MAD outlier detection in Rust.
 - [`rs_mc_aucell()`](https://gregorlueg.github.io/bixverse/reference/rs_mc_aucell.md)
   **\[experimental\]** : Calculate AUCell in Rust (for meta cells)
+- [`rs_mc_dialogue()`](https://gregorlueg.github.io/bixverse/reference/rs_mc_dialogue.md)
+  **\[experimental\]** : Run DIALOGUE over meta cells
 - [`rs_mc_hotspot_autocor()`](https://gregorlueg.github.io/bixverse/reference/rs_mc_hotspot_autocor.md)
   **\[experimental\]** : Calculate gene spatial auto-correlations (for
   meta cells)
@@ -1307,14 +1373,16 @@ There is a lot more under the hood…
   **\[experimental\]** : PCA on MetaCells (sparse data)
 - [`rs_mc_scenic()`](https://gregorlueg.github.io/bixverse/reference/rs_mc_scenic.md)
   **\[experimental\]** : SCENIC on MetaCells
+- [`rs_mc_vision()`](https://gregorlueg.github.io/bixverse/reference/rs_mc_vision.md)
+  **\[experimental\]** : Calculate VISION pathway scores in Rust (for
+  meta cells)
+- [`rs_mc_vision_with_autocorrelation()`](https://gregorlueg.github.io/bixverse/reference/rs_mc_vision_with_autocorrelation.md)
+  **\[experimental\]** : Calculate VISION pathway scores in Rust with
+  auto-correlation (for meta cells)
 - [`rs_mitch_calc()`](https://gregorlueg.github.io/bixverse/reference/rs_mitch_calc.md)
   : Calculate mitch enrichment leveraging Rust under the hood
 - [`rs_mutual_info()`](https://gregorlueg.github.io/bixverse/reference/rs_mutual_info.md)
   **\[experimental\]** : Calculates the mutual information matrix
-- [`rs_nmf_multi_mc()`](https://gregorlueg.github.io/bixverse/reference/rs_nmf_multi_mc.md)
-  **\[experimental\]** : Run multiple NMF (HALS) restarts on MetaCells
-- [`rs_nmf_single_mc()`](https://gregorlueg.github.io/bixverse/reference/rs_nmf_single_mc.md)
-  **\[experimental\]** : Run NMF (HALS) on MetaCells
 - [`rs_onto_semantic_sim()`](https://gregorlueg.github.io/bixverse/reference/rs_onto_semantic_sim.md)
   **\[experimental\]** : Calculate the semantic similarity in an
   ontology

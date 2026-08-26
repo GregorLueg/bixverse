@@ -66,9 +66,9 @@ rs_nmf_single_sc(
 
 A list with the following items
 
-- w - The left factor matrix (n_features x k)
+- w - The left factor matrix (n_cells x k)
 
-- h - The right factor matrix (k x n_samples)
+- h - The right factor matrix (k x n_genes)
 
 - final_loss - Loss at the final iteration
 

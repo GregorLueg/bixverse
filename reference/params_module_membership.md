@@ -14,7 +14,8 @@ params_module_membership(
   method = c("zscore", "fdr"),
   cutoff = 3,
   fdr = 0.05,
-  tails = c("auto", "upper", "both")
+  tails = c("auto", "upper", "both"),
+  scaling = c("robust", "standard")
 )
 ```
 
@@ -22,10 +23,10 @@ params_module_membership(
 
 - method:
 
-  String. `"zscore"` standardises each component robustly (median and
-  MAD) and keeps `abs(z) > cutoff`. `"fdr"` converts to two-sided
-  p-values against a Normal null fitted the same way, Benjamini-Hochberg
-  adjusts, and keeps `padj < fdr`. Defaults to `"zscore"`.
+  String. `"zscore"` standardises each component and keeps
+  `abs(z) > cutoff`. `"fdr"` converts to two-sided p-values against a
+  Normal null fitted the same way, Benjamini-Hochberg adjusts, and keeps
+  `padj < fdr`. Defaults to `"zscore"`.
 
 - cutoff:
 
@@ -42,6 +43,13 @@ params_module_membership(
   String. `"auto"` uses an upper-tail-only test when every loading is
   non-negative (the NMF case) and a two-sided one otherwise. `"upper"`
   and `"both"` force the choice. Defaults to `"auto"`.
+
+- scaling:
+
+  String. `"robust"` centres and scales each component by its median and
+  MAD. `"standard"` uses the mean and standard deviation instead, which
+  is stricter and less forgiving of skewed loadings (e.g. NMF). Defaults
+  to `"robust"`.
 
 ## Value
 

@@ -72,10 +72,10 @@ rs_nmf_multi_sc(
 A list with the following items
 
 - w_all - Column-bound W matrices across all runs, shape
-  `n_features x (k * n_runs)`. Columns `i*k+1..(i+1)*k` are run `i`'s
+  `n_cells x (k * n_runs)`. Columns `i*k+1..(i+1)*k` are run `i`'s
   components (1-indexed).
 
-- h_per_run - List of H matrices, each `k x n_cells`.
+- h_per_run - List of H matrices, each `k x n_genes`.
 
 - losses - Numeric vector. Final reconstruction loss per run.
 

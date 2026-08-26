@@ -23,7 +23,7 @@
 
     <a class="navbar-brand me-2" href="index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.9</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.10</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -78,6 +78,7 @@
     <li><a class="dropdown-item" href="articles/bag_of_genes_single_cells.html">'Bag of genes' methods for single cell in bixverse</a></li>
     <li><a class="dropdown-item" href="articles/nichenet.html">Ligand receptor analysis</a></li>
     <li><a class="dropdown-item" href="articles/meta_cells.html">Meta cells - generation and analysis</a></li>
+    <li><a class="dropdown-item" href="articles/dialogue.html">Multicellular programmes with DIALOGUE</a></li>
     <li><a class="dropdown-item" href="articles/trajectory_inference.html">Trajectory inference with Palantir and PAGA</a></li>
     <li><a class="dropdown-item" href="articles/symphony.html">Reference mapping via Symphony</a></li>
     <li><a class="dropdown-item" href="articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
@@ -111,63 +112,157 @@
   <main id="main" class="col-md-9"><div class="section level1">
 <div class="page-header"><h1 id="bixverse-package">bixverse package<a class="anchor" aria-label="anchor" href="#bixverse-package"></a>
 </h1></div>
-<p><img src="https://img.shields.io/badge/R_package-0.4.9-orange" alt="r_package"><a href="https://github.com/GregorLueg/bixverse/actions/workflows/R-cmd-check.yml" class="external-link"><img src="https://github.com/GregorLueg/bixverse/actions/workflows/R-cmd-check.yml/badge.svg" alt="CI"></a> <a href="https://opensource.org/licenses/MIT" class="external-link"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a> <a href="https://gregorlueg.github.io/bixverse/"><img src="https://img.shields.io/badge/pkgdown-website-1b5e9f?logo=github" alt="pkgdown"></a> <a href="https://extendr.github.io/extendr/extendr_api/" class="external-link"><img src="https://img.shields.io/badge/extendr-%5E0.9.0-276DC2" alt="extendr"></a></p>
+<p><a href="https://github.com/GregorLueg/bixverse/blob/main/DESCRIPTION" class="external-link"><img src="https://img.shields.io/github/r-package/v/GregorLueg/bixverse?label=R_package&amp;color=orange" alt="r_package"></a> <a href="https://github.com/GregorLueg/bixverse/actions/workflows/R-cmd-check.yml" class="external-link"><img src="https://github.com/GregorLueg/bixverse/actions/workflows/R-cmd-check.yml/badge.svg" alt="CI"></a> <a href="https://opensource.org/licenses/MIT" class="external-link"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a> <a href="https://gregorlueg.github.io/bixverse/"><img src="https://img.shields.io/badge/pkgdown-website-1b5e9f?logo=github" alt="pkgdown"></a> <a href="https://extendr.github.io/extendr/extendr_api/" class="external-link"><img src="https://img.shields.io/badge/extendr-%5E0.9.0-276DC2" alt="extendr"></a></p>
 <p></p>
 <p><img src="reference/figures/bixverse_logo.png" width="128" height="128" alt="bixverse logo"></p>
 <p></p>
 <div class="section level2">
-<h2 id="intro">Intro<a class="anchor" aria-label="anchor" href="#intro"></a>
+<h2 id="what-this-is">What this is<a class="anchor" aria-label="anchor" href="#what-this-is"></a>
 </h2>
-<div class="section level3">
-<h3 id="description">Description<a class="anchor" aria-label="anchor" href="#description"></a>
-</h3>
-<p>This is an <em>opionated</em> package taking various bioinformatics and computational biology workflows from R and Python, making them substantially faster via low-level implementations in Rust and exposing them via thin R wrappers. Result? Blazingly fast performance with low memory usage, making large-scale analysis feasable without any cloud compute. Over time more and more methods will be added.</p>
-<p>Two sister packages are also in the process of being built and maintained:</p>
-<ul>
-<li>
-<a href="https://github.com/GregorLueg/bixverse.plots" class="external-link">bixverse.plots</a> package for - you guessed it - plotting. Contains especially a large number of plotting helpers for single cell now.</li>
-<li>
-<a href="https://github.com/GregorLueg/bixverse.gpu" class="external-link">bixverse.gpu</a> package for - you guessed it again - GPU-accelerated methods. In this case, it leverages <a href="https://github.com/tracel-ai/cubecl" class="external-link">cubecl</a>/<a href="https://burn.dev" class="external-link">Burn</a> under the hood with wgpu backends which means it will work on (theoretically) any GPU. If you do single cell stuff, have a look… Some of the implementations in there make everything substantially faster.</li>
-</ul>
-<p>Additional packages that might be of interest interest to you:</p>
-<ul>
-<li>
-<a href="https://github.com/GregorLueg/manifoldsR" class="external-link">manifoldsR</a>. This package specialises on methods for manifold learning for visualisations, think UMAP, tSNE, diffusion maps, etc. Additionally, it is home to a cool clustering method called <a href="https://github.com/TutteInstitute/evoc" class="external-link">EVoC</a> leveraging Rust under the hood. This package is used for all of the 2D visualisations for the single cell suite.</li>
-<li>
-<a href="https://github.com/GregorLueg/genewalkR" class="external-link">genewalkR</a>. This one is a bit more graph-heavy but has some cool methods in there… Also, it provides a data base with different gene &lt;&gt; gene interaction and regulatory networks. For sure useful for different computational biology workflows.</li>
-</ul>
-</div>
-<div class="section level3">
-<h3 id="release-notes">Release notes<a class="anchor" aria-label="anchor" href="#release-notes"></a>
-</h3>
-<p><img src="reference/figures/bixverse_single_cell.png" width="500" height="500" alt="atlas scale on small compute"></p>
-<p>Major release with <code>"0.4.0+"</code>. The single cell suite has been further improved. The key changes are:</p>
-<ul>
-<li>Performance improvements across several axes. A lot of the underlying Rust code was made even faster and more performant. The goal of analysing a 1m single cell data set on a MacBook Air with 24 GB memory has been achieved.</li>
-<li>Multi-modal support. There is now a <code>SingleCellsMultiModal</code> class that allows you to (for now only) also add ADT counts. Some readers have been added to load in the data. This also includes support for new methods in this space:
-<ul>
-<li>
-<a href="https://www.nature.com/articles/s41467-022-29356-8" class="external-link">DSB normalisation</a> for ADT counts</li>
-<li>
-<a href="https://www.cell.com/cell/fulltext/S0092-8674(21)00583-3" class="external-link">WNN generation</a> for generation of multi-modal graphs.</li>
-<li>Large number of methods and updates to support multi-model analysis</li>
-</ul>
-</li>
-<li>Massive improvements on the two sister packages (<a href="https://github.com/GregorLueg/bixverse.plots" class="external-link">bixverse.plots</a> and <a href="https://github.com/GregorLueg/bixverse.gpu" class="external-link">bixverse.gpu</a>): enabling GPU-accelerated methods (Harmony, PCA, kNN searches) and a large number of plotting helpers.</li>
-<li>Updates to various vignettes to reflect the changes with this release.</li>
-<li>More methods added… Symphony, NicheNet, sparse NMF for single cells!</li>
-</ul>
-<p><a href="https://gregorlueg.github.io/bixverse/">Please checkout out the website of the package for details</a> -&gt; particularly the sections around single cell (design choices and vignettes.)</p>
-</div>
+<p>This is an <em>opinionated</em> package taking bioinformatics and computational biology workflows from R and Python, reimplementing them in Rust and exposing them through thin R wrappers. Gene set enrichment, co-expression modules, biomedical ontologies, graph and diffusion methods, differential expression, and a full single cell suite that goes from raw h5 to annotated clusters, plus a huge number of analysis methods for single cell. Result? Blazingly fast performance with low memory usage, making large-scale analysis feasible without any cloud compute.</p>
+<p>Every exported function validates its inputs on the R side. The heavy numerics live in the standalone <a href="https://crates.io/crates/bixverse-rs" class="external-link">bixverse-rs</a> crate, so the R layer stays a wrapper and nothing more.</p>
 </div>
 <div class="section level2">
-<h2 id="usage">Usage<a class="anchor" aria-label="anchor" href="#usage"></a>
+<h2 id="atlas-scale-on-a-laptop">Atlas scale on a laptop<a class="anchor" aria-label="anchor" href="#atlas-scale-on-a-laptop"></a>
 </h2>
-<div class="section level3">
-<h3 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
-</h3>
-<p>You will need Rust on your system to have the package working. An installation guide is provided <a href="https://www.rust-lang.org/tools/install" class="external-link">here</a>. There is a bunch of further help written <a href="https://extendr.github.io/rextendr/index.html" class="external-link">here</a> by the rextendr guys in terms of Rust set up. (bixverse uses rextendr to interface with Rust.)</p>
-<p>Steps for installation:</p>
+<p><img src="reference/figures/bixverse_single_cell.png" width="400" height="400" alt="atlas scale on small compute"></p>
+<p>The 1 million cell PBMC data set from Parse Biosciences, end to end, on a MacBook Air M3 with 24 GB. Parse’s own guide for that same data set recommends you move to the cloud and pick an instance with at least 8 threads and 160 GB of RAM.</p>
+<table class="table">
+<thead><tr>
+<th>Step</th>
+<th>CPU</th>
+<th>GPU</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>Stream and process to desk the 24 samples</td>
+<td>~3.5 min</td>
+<td></td>
+</tr>
+<tr>
+<td>HVG selection (2k genes)</td>
+<td>~10 s</td>
+<td></td>
+</tr>
+<tr>
+<td>PCA (32 components)</td>
+<td>~25 s</td>
+<td>15 s</td>
+</tr>
+<tr>
+<td>kNN graph</td>
+<td>~90 s (NNDescent)</td>
+<td>&lt;30 s (CAGRA)</td>
+</tr>
+</tbody>
+</table>
+<p>Nothing here loads the full matrix into memory at any point. Counts sit on disk in a Rust binary format, metadata sits in DuckDB, and the analysis streams data in small chunks to not blow up your memory. You can even write pipelines like this here:</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">pipeline</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/sc_pipeline.html">sc_pipeline</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="reference/grapes-greater-than-greater-than-grapes.html">%&gt;&gt;%</a></span></span>
+<span>  <span class="fu"><a href="reference/step_hvg_sc.html">step_hvg_sc</a></span><span class="op">(</span>hvg_no <span class="op">=</span> <span class="fl">2000L</span><span class="op">)</span> <span class="op"><a href="reference/grapes-greater-than-greater-than-grapes.html">%&gt;&gt;%</a></span></span>
+<span>  <span class="fu"><a href="reference/step_pca_sc.html">step_pca_sc</a></span><span class="op">(</span>no_pcs <span class="op">=</span> <span class="fl">20L</span><span class="op">)</span> <span class="op"><a href="reference/grapes-greater-than-greater-than-grapes.html">%&gt;&gt;%</a></span></span>
+<span>  <span class="fu"><a href="reference/step_harmony_sc.html">step_harmony_sc</a></span><span class="op">(</span>batch_column <span class="op">=</span> <span class="st">"plate"</span><span class="op">)</span> <span class="op"><a href="reference/grapes-greater-than-greater-than-grapes.html">%&gt;&gt;%</a></span></span>
+<span>  <span class="fu"><a href="reference/step_neighbours_sc.html">step_neighbours_sc</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="reference/grapes-greater-than-greater-than-grapes.html">%&gt;&gt;%</a></span></span>
+<span>  <span class="fu"><a href="reference/step_clusters_sc.html">step_clusters_sc</a></span><span class="op">(</span>res <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/apply_pipeline.html">apply_pipeline</a></span><span class="op">(</span><span class="va">pipeline</span>, <span class="va">sc_object</span><span class="op">)</span></span></code></pre></div>
+<p>Pipelines are inert. Nothing runs until you apply one, and the same chain works on a <code>SingleCells</code>, on a <code>SingleCellsSubset</code>, or once per group via <code><a href="reference/apply_pipeline_per_group.html">apply_pipeline_per_group()</a></code> (useful for sub cell type analysis).</p>
+<p>Full walk-through: <a href="https://gregorlueg.github.io/bixverse/articles/single_cell_big_data.html">scaling to millions of cells</a>. What changed in each release: <a href="https://gregorlueg.github.io/bixverse/news/index.html">the changelog</a>.</p>
+</div>
+<div class="section level2">
+<h2 id="whats-in-it">What’s in it<a class="anchor" aria-label="anchor" href="#whats-in-it"></a>
+</h2>
+<table class="table">
+<colgroup>
+<col width="33%">
+<col width="33%">
+<col width="33%">
+</colgroup>
+<thead><tr>
+<th>Domain</th>
+<th>What’s in there</th>
+<th>Read more</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>Gene set enrichment</td>
+<td>Hypergeometric tests, fgsea, GSVA, ssGSEA, singscore, mitch, plus GO-aware elim methods</td>
+<td>
+<a href="https://gregorlueg.github.io/bixverse/articles/gse_methods.html">GSE methods</a>, <a href="https://gregorlueg.github.io/bixverse/articles/pathway_activity.html">pathway activity</a>
+</td>
+</tr>
+<tr>
+<td>(Single cell) Regulons</td>
+<td>SCENIC, CisTarget motif enrichment, regulon binarisation</td>
+<td><a href="https://gregorlueg.github.io/bixverse/articles/bag_of_genes_single_cells.html">bag of genes</a></td>
+</tr>
+<tr>
+<td>Bulk co-expression</td>
+<td>CoReMo, stabilised ICA, contrastive PCA, NMF and consensus NMF, DGRDL</td>
+<td>
+<a href="https://gregorlueg.github.io/bixverse/articles/bulk_coexpression_modules.html">co-expression modules</a>, <a href="https://gregorlueg.github.io/bixverse/articles/cpca.html">contrastive PCA</a>
+</td>
+</tr>
+<tr>
+<td>Bulk DGE</td>
+<td>limma-voom, Hedges’ g effect sizes, batch correction, TPM and RPKM, structured handling of many contrasts</td>
+<td><a href="https://gregorlueg.github.io/bixverse/reference/index.html">reference</a></td>
+</tr>
+<tr>
+<td>Ontologies</td>
+<td>Resnik, Lin and Wang semantic similarities over disease, phenotype and gene ontologies</td>
+<td><a href="https://gregorlueg.github.io/bixverse/articles/ontologies.html">semantic similarities</a></td>
+</tr>
+<tr>
+<td>Graphs</td>
+<td>Network diffusion, constrained page rank, reciprocal best hit graphs, similarity network fusion, community detection</td>
+<td><a href="https://gregorlueg.github.io/bixverse/articles/genetic_diffusions.html">diffusions and communities</a></td>
+</tr>
+<tr>
+<td>Single cell</td>
+<td>Streaming i/o, QC, doublet detection, HVG, PCA, Harmony, fastMNN, BBKNN, kNN and clustering, markers, pseudobulk DGE, AUCell, hotspot, VISION, NMF, LDA</td>
+<td>
+<a href="https://gregorlueg.github.io/bixverse/articles/thinking_single_cell.html">start here</a>, then the Single Cells menu</td>
+</tr>
+<tr>
+<td>Single cell, advanced</td>
+<td>Symphony reference mapping, NicheNet ligand receptor, DIALOGUE multicellular programmes, Palantir and PAGA trajectories</td>
+<td>
+<a href="https://gregorlueg.github.io/bixverse/articles/symphony.html">Symphony</a>, <a href="https://gregorlueg.github.io/bixverse/articles/nichenet.html">NicheNet</a>, <a href="https://gregorlueg.github.io/bixverse/articles/dialogue.html">DIALOGUE</a>, <a href="https://gregorlueg.github.io/bixverse/articles/trajectory_inference.html">trajectories</a>
+</td>
+</tr>
+<tr>
+<td>Meta cells</td>
+<td>Generation, purity and entropy diagnostics, the full downstream analysis surface</td>
+<td><a href="https://gregorlueg.github.io/bixverse/articles/meta_cells.html">meta cells</a></td>
+</tr>
+<tr>
+<td>Multi-modal</td>
+<td>ADT counts, DSB normalisation, WNN graphs</td>
+<td><a href="https://gregorlueg.github.io/bixverse/articles/multi_modal_single_cells.html">multi-modal analysis</a></td>
+</tr>
+</tbody>
+</table>
+<p>Bulk DGE is the one row pointing at the reference index rather than a vignette. It works, it just doesn’t have a written walk-through yet. On the roadmap.</p>
+</div>
+<div class="section level2">
+<h2 id="the-bixverse-ecosystem">The “bixverse ecosystem”<a class="anchor" aria-label="anchor" href="#the-bixverse-ecosystem"></a>
+</h2>
+<ul>
+<li>
+<a href="https://github.com/GregorLueg/bixverse.plots" class="external-link">bixverse.plots</a> for, you guessed it, plotting. Especially a large number of plotting helpers for single cell.</li>
+<li>
+<a href="https://github.com/GregorLueg/bixverse.gpu" class="external-link">bixverse.gpu</a> for GPU-accelerated methods, built on <a href="https://github.com/tracel-ai/cubecl" class="external-link">cubecl</a>/<a href="https://burn.dev" class="external-link">Burn</a> with wgpu backends, so it works on (theoretically) any GPU. If you do single cell stuff, have a look. Some of the implementations in there make everything substantially faster.</li>
+<li>
+<a href="https://github.com/GregorLueg/manifoldsR" class="external-link">manifoldsR</a> for manifold learning: UMAP, tSNE, diffusion maps, and a cool clustering method called <a href="https://github.com/TutteInstitute/evoc" class="external-link">EVoC</a>. Every 2D visualisation in the single cell suite goes through it.</li>
+<li>
+<a href="https://github.com/GregorLueg/genewalkR" class="external-link">genewalkR</a> is the graph-heavy one. Ships a database of gene to gene interaction and regulatory networks. Useful across a lot of computational biology workflows.</li>
+</ul>
+</div>
+<div class="section level2">
+<h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
+</h2>
+<p>You need Rust on your system. Install guide <a href="https://www.rust-lang.org/tools/install" class="external-link">here</a>, and the rextendr guys have written a lot of further help on the Rust set up <a href="https://extendr.github.io/rextendr/index.html" class="external-link">here</a>. (bixverse uses rextendr to interface with Rust.)</p>
 <ol style="list-style-type: decimal">
 <li>In the terminal, install <a href="https://www.rust-lang.org/tools/install" class="external-link">Rust</a>
 </li>
@@ -181,58 +276,49 @@
 <li>Finally install bixverse:</li>
 </ol>
 <pre><code><span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"https://github.com/GregorLueg/bixverse"</span><span class="op">)</span></span></code></pre>
-</div>
 <div class="section level3">
-<h3 id="windows-support">Windows support<a class="anchor" aria-label="anchor" href="#windows-support"></a>
+<h3 id="windows">Windows<a class="anchor" aria-label="anchor" href="#windows"></a>
 </h3>
 <p>If you are using Windows, I am sorry, the tool chain is just very, very painful… I really tried to make this work and maybe there are some hacks in terms of compiling everything to install the package, but it has proven… challenging in the CI/CD. Hence, no official Windows support for now. It is specifically the incorporation of h5 which proves non-trivial with cross-compiling that with Rust within the R umbrella.</p>
 </div>
-<div class="section level3">
-<h3 id="how-to-use-the-package">How to use the package.<a class="anchor" aria-label="anchor" href="#how-to-use-the-package"></a>
-</h3>
-<p>The package website can be found <a href="https://gregorlueg.github.io/bixverse/">here</a>. A good primer for <a href="https://gregorlueg.github.io/bixverse/articles/rust_functions.html">why Rust is here</a> - a show case of how much faster Rust can make a lot of basic functions much faster. If you wish to integrate this into your package, please feel free. If you wish to use the single cell part, it is really worth reading this <a href="https://gregorlueg.github.io/bixverse/articles/design_single_cell.html">here</a> first… It will give you a good explainer on the design decisions, the choices and trade-offs. The various vignettes will show you how to analyse data.</p>
 </div>
+<div class="section level2">
+<h2 id="where-to-start">Where to start<a class="anchor" aria-label="anchor" href="#where-to-start"></a>
+</h2>
+<p>The <a href="https://gregorlueg.github.io/bixverse/">package website</a> is the main entry point. Three routes depending on what you’re after:</p>
+<ul>
+<li>
+<a href="https://gregorlueg.github.io/bixverse/articles/rust_functions.html">Why Rust is here</a>. A show case of how much faster Rust makes a lot of basic functions. If you want to integrate any of this into your own package, please feel free. MIT licence for the win.</li>
+<li>
+<a href="https://gregorlueg.github.io/bixverse/articles/design_single_cell.html">Design choices for single cell</a>. Read this before touching the single cell suite. It explains the on-disk layout, the trade-offs and why things are the way they are.</li>
+<li>
+<a href="https://gregorlueg.github.io/bixverse/articles/pbmc_single_cell.html">The PBMC3k walkthrough</a> for a first end-to-end run on a small data set.</li>
+</ul>
+<p>Working with an LLM coding agent? <code><a href="reference/install_agent_skill.html">install_agent_skill()</a></code> drops a bixverse skill into your agent set up so it stops guessing at the API.</p>
 </div>
 <div class="section level2">
 <h2 id="roadmap">Roadmap<a class="anchor" aria-label="anchor" href="#roadmap"></a>
 </h2>
 <div class="section level3">
-<h3 id="single-and-spatial-transcriptomics">Single and spatial transcriptomics:<a class="anchor" aria-label="anchor" href="#single-and-spatial-transcriptomics"></a>
+<h3 id="single-and-spatial-transcriptomics">Single and spatial transcriptomics<a class="anchor" aria-label="anchor" href="#single-and-spatial-transcriptomics"></a>
 </h3>
-<div class="section level4">
-<h4 id="general">General<a class="anchor" aria-label="anchor" href="#general"></a>
-</h4>
 <ul class="task-list">
-<li><label><input type="checkbox" checked>Multi h5 (10x output) i/o</label></li>
-<li><label><input type="checkbox" checked><del>Splitting a SingleCells into several sub directories for easier management.</del> Subset class enabled with views. The direct splitting is maybe not needed … ?</label></li>
-<li><label><input type="checkbox" checked>Port over <a href="https://www.nature.com/articles/s41592-019-0667-5" class="external-link">NicheNet</a>.</label></li>
-<li><label><input type="checkbox">Implementation of <a href="https://www.nature.com/articles/s41587-019-0068-4" class="external-link">Palantir</a> and <a href="https://pubmed.ncbi.nlm.nih.gov/29914354/" class="external-link">Slingshot</a> for trajectory analysis.</label></li>
+<li><label><input type="checkbox"><a href="https://pubmed.ncbi.nlm.nih.gov/29914354/" class="external-link">Slingshot</a> for trajectory analysis, to sit alongside the Palantir and PAGA implementations that already ship.</label></li>
 <li><label><input type="checkbox">Save data to h5ad for easier interoperability with Python.</label></li>
 <li><label><input type="checkbox">Easy interoperability that chunks of data can be read in for neural network training in the corresponding deep learning frameworks.</label></li>
-</ul>
-</div>
-<div class="section level4">
-<h4 id="spatial">Spatial<a class="anchor" aria-label="anchor" href="#spatial"></a>
-</h4>
-<p>Full support of spatial transcriptomics via a dedicated <code>SpatialSpots</code> class leveraging the current Rust-based infrastructure for large scale analysis on local compute.</p>
-</div>
-</div>
-<div class="section level3">
-<h3 id="general-methods">General methods<a class="anchor" aria-label="anchor" href="#general-methods"></a>
-</h3>
-<ul class="task-list">
-<li><label><input type="checkbox" checked>Addition of an NMF method for dense and sparse matrices. After some research likely a combination HALS + NNDSVD initialisation. Partially done, the single cell part is ready.</label></li>
+<li><label><input type="checkbox">Full support of spatial transcriptomics via a dedicated <code>SpatialSpots</code> class, using the current Rust-based infrastructure for large scale analysis on local compute.</label></li>
+<li><label><input type="checkbox">Wire up <a href="https://github.com/GregorLueg/edge-rs" class="external-link">edge-rs</a> to have <a href="https://www.nature.com/articles/s42003-021-02146-6" class="external-link">NEBULA</a> directly integrated into the single cell framework.</label></li>
 </ul>
 </div>
 <div class="section level3">
-<h3 id="further-cross-integration-with-other-packages">Further cross integration with other packages<a class="anchor" aria-label="anchor" href="#further-cross-integration-with-other-packages"></a>
+<h3 id="cross-integration">Cross integration<a class="anchor" aria-label="anchor" href="#cross-integration"></a>
 </h3>
-<p>Two sister packages are in active development: <a href="https://github.com/GregorLueg/bixverse.gpu" class="external-link">GPU-accelerated methods</a> and a dedicated <a href="https://github.com/GregorLueg/bixverse.plots" class="external-link">plotting package</a>. Further improved cross-integration is on the to-do list.</p>
+<p>Tighter integration with <a href="https://github.com/GregorLueg/bixverse.gpu" class="external-link">bixverse.gpu</a> and <a href="https://github.com/GregorLueg/bixverse.plots" class="external-link">bixverse.plots</a>, both in active development.</p>
 </div>
 <div class="section level3">
 <h3 id="documentation">Documentation<a class="anchor" aria-label="anchor" href="#documentation"></a>
 </h3>
-<p>While there are already quite a few vignettes, the amount of code in the package is… quite substantial and there are methods hidden here and there that lack any vignettes for now. On the roadmap to provide examples here, too.</p>
+<p>There are already quite a few vignettes, but the amount of code in the package is… quite substantial and there are methods hidden here and there that lack any vignettes for now. Bulk DGE is the most obvious gap.</p>
 </div>
 </div>
 <div class="section level2">

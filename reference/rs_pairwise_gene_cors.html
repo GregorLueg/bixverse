@@ -9,7 +9,7 @@ Calculates the correlations between sets of genes."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.9</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.10</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -58,6 +58,7 @@ Calculates the correlations between sets of genes."></head><body>
     <li><a class="dropdown-item" href="../articles/bag_of_genes_single_cells.html">'Bag of genes' methods for single cell in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/nichenet.html">Ligand receptor analysis</a></li>
     <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/dialogue.html">Multicellular programmes with DIALOGUE</a></li>
     <li><a class="dropdown-item" href="../articles/trajectory_inference.html">Trajectory inference with Palantir and PAGA</a></li>
     <li><a class="dropdown-item" href="../articles/symphony.html">Reference mapping via Symphony</a></li>
     <li><a class="dropdown-item" href="../articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
@@ -100,7 +101,8 @@ Calculates the correlations between sets of genes.</p>
 <span>  <span class="va">gene_indices_1</span>,</span>
 <span>  <span class="va">gene_indices_2</span>,</span>
 <span>  <span class="va">cells_to_keep</span>,</span>
-<span>  <span class="va">spearman</span></span>
+<span>  <span class="va">spearman</span>,</span>
+<span>  <span class="va">verbose</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -129,6 +131,11 @@ analysis. (0-indexed!)</p></dd>
 
 <dt id="arg-spearman">spearman<a class="anchor" aria-label="anchor" href="#arg-spearman"></a></dt>
 <dd><p>Boolean. Shall spearman correlation be used.</p></dd>
+
+
+<dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
+<dd><p>Integer. <code>0L</code> - quiet; <code>1L</code> - normal verbosity; <code>2L</code> -
+detailed verbosity.</p></dd>
 
 </dl></div>
     <div class="section level2">

@@ -6,6 +6,8 @@ Get the final results from `BixverseBaseClass` class (or child classes).
 
 ``` r
 get_results(object)
+
+get_results.DialogueResult(object, ...)
 ```
 
 ## Arguments

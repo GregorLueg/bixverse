@@ -78,6 +78,7 @@ construct a named list, which is the expected input format throughout
 ``` r
 
 h_gene_sets <- msigdbr::msigdbr(species = "human", collection = "H")
+#> Downloading gene sets (first use only, may take a few minutes)...
 
 h_gene_sets_ls <- split(h_gene_sets$ensembl_gene, h_gene_sets$gs_name)
 
@@ -213,7 +214,7 @@ rs_results_example <- gse_hypergeometric_list(
   gene_set_list = gene_sets
 )
 tictoc::toc()
-#> 1.666 sec elapsed
+#> 1.664 sec elapsed
 ```
 
 ## Gene Ontology-aware enrichment: the elimination method
@@ -342,7 +343,7 @@ rs_results_example <- gse_go_elim_method_list(
   target_gene_list = go_target_gene_sets
 )
 tictoc::toc()
-#> 1.794 sec elapsed
+#> 1.751 sec elapsed
 ```
 
 ## Alternative: post-hoc simplification of GO results
@@ -562,8 +563,8 @@ microbenchmark::microbenchmark(
 )
 #> Unit: seconds
 #>   expr      min       lq     mean   median       uq      max neval
-#>  fgsea 2.907732 3.018951 3.249784 3.251019 3.306899 3.764318     5
-#>   rust 2.129355 2.143854 2.145953 2.144023 2.145655 2.166878     5
+#>  fgsea 2.913937 3.009982 3.253336 3.255200 3.335463 3.752100     5
+#>   rust 2.119787 2.147242 2.151555 2.156137 2.157713 2.176898     5
 ```
 
 ## GO-aware GSEA: the elimination method

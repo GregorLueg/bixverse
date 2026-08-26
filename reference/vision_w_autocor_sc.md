@@ -29,14 +29,13 @@ vision_w_autocor_sc(
 
 - object:
 
-  `SingleCells` class.
+  `SingleCells`, `MetaCells` (or potentially other) class.
 
 - gs_list:
 
   Named nested list. The elements have the gene identifiers of the
   respective gene sets and have the option to have a `"pos"` and `"neg"`
-  gene sets. The names need to be part of the variables of the
-  `SingleCells` class.
+  gene sets. The names need to be part of the variables of the object.
 
 - embd_to_use:
 
@@ -72,7 +71,8 @@ vision_w_autocor_sc(
 
   Optional Boolean. Shall the data be streamed in. Useful for larger
   data sets where you wish to avoid loading in the whole data. If
-  `NULL`, will automatically detect.
+  `NULL`, will automatically detect. Ignored when applied to
+  `MetaCells`.
 
 - random_seed:
 
@@ -86,7 +86,13 @@ vision_w_autocor_sc(
 
 ## Value
 
-Matrix of cells x signatures with the VISION pathway scores as values.
+A list with the following elements:
+
+- vision_matrix - Matrix of cells x signatures with the VISION pathway
+  scores as values.
+
+- auto_cor_dt - data.table with the auto-correlation results per gene
+  set, i.e., `auto_cor` (1 - Gaery's C), `p_val` and `fdr`.
 
 ## References
 

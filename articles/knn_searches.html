@@ -23,7 +23,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.9</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.10</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -78,6 +78,7 @@
     <li><a class="dropdown-item" href="../articles/bag_of_genes_single_cells.html">'Bag of genes' methods for single cell in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/nichenet.html">Ligand receptor analysis</a></li>
     <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/dialogue.html">Multicellular programmes with DIALOGUE</a></li>
     <li><a class="dropdown-item" href="../articles/trajectory_inference.html">Trajectory inference with Palantir and PAGA</a></li>
     <li><a class="dropdown-item" href="../articles/symphony.html">Reference mapping via Symphony</a></li>
     <li><a class="dropdown-item" href="../articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
@@ -113,7 +114,7 @@
       <h1>KNN searches for single cell</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-08-16</p>
+      <p class="date">2026-08-26</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -160,136 +161,7 @@
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt;  Loading data directly into memory for CSR to CSC conversion.</span></span>
 <span><span class="co">#&gt; Loading observations data from flat file into the DuckDB.</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpZih8UK/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
 <span><span class="co">#&gt; Loading variable data from flat file into the DuckDB.</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpZih8UK/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpZih8UK/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpZih8UK/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpZih8UK/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpZih8UK/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpZih8UK/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpZih8UK/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpZih8UK/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpZih8UK/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpZih8UK/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpZih8UK/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpZih8UK/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpZih8UK/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpZih8UK/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpZih8UK/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
 <span></span>
 <span><span class="co"># ensembl to gene symbols</span></span>
 <span><span class="fu"><a href="../reference/setnames_sc.html">setnames_sc</a></span><span class="op">(</span></span>
@@ -298,40 +170,8 @@
 <span>  old <span class="op">=</span> <span class="st">"column1"</span>,</span>
 <span>  new <span class="op">=</span> <span class="st">"gene_symbol"</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpZih8UK/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpZih8UK/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
 <span></span>
 <span><span class="va">var</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_sc_var.html">get_sc_var</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpZih8UK/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpZih8UK/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
 <span></span>
 <span><span class="va">ensembl_to_symbol</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/setNames.html" class="external-link">setNames</a></span><span class="op">(</span><span class="va">var</span><span class="op">$</span><span class="va">gene_symbol</span>, <span class="va">var</span><span class="op">$</span><span class="va">gene_id</span><span class="op">)</span></span>
 <span><span class="va">symbol_to_ensembl</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/setNames.html" class="external-link">setNames</a></span><span class="op">(</span><span class="va">var</span><span class="op">$</span><span class="va">gene_id</span>, <span class="va">var</span><span class="op">$</span><span class="va">gene_symbol</span><span class="op">)</span></span>
@@ -347,40 +187,8 @@
 <span>  <span class="va">gs_of_interest</span>,</span>
 <span>  .verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpZih8UK/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpZih8UK/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
 <span></span>
 <span><span class="va">qc_df</span> <span class="op">&lt;-</span> <span class="va">sc_object</span><span class="op">[[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"cell_id"</span>, <span class="st">"lib_size"</span>, <span class="st">"nnz"</span>, <span class="st">"MT"</span><span class="op">)</span><span class="op">]</span><span class="op">]</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpZih8UK/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpZih8UK/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
 <span></span>
 <span><span class="va">metrics</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  log10_lib_size <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log10</a></span><span class="op">(</span><span class="va">qc_df</span><span class="op">$</span><span class="va">lib_size</span><span class="op">)</span>,</span>
@@ -402,42 +210,10 @@
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">sc_object</span><span class="op">[[</span><span class="st">"outlier"</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">qc</span><span class="op">$</span><span class="va">combined</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpZih8UK/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpZih8UK/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
 <span></span>
 <span><span class="va">cells_to_keep</span> <span class="op">&lt;-</span> <span class="va">qc_df</span><span class="op">[</span><span class="op">!</span><span class="va">qc</span><span class="op">$</span><span class="va">combined</span>, <span class="va">cell_id</span><span class="op">]</span></span>
 <span></span>
 <span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/set_cells_to_keep.html">set_cells_to_keep</a></span><span class="op">(</span><span class="va">sc_object</span>, <span class="va">cells_to_keep</span><span class="op">)</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpZih8UK/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpZih8UK/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
 <span></span>
 <span><span class="co"># HVG</span></span>
 <span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/find_hvg_sc.html">find_hvg_sc</a></span><span class="op">(</span></span>
@@ -445,38 +221,6 @@
 <span>  hvg_no <span class="op">=</span> <span class="fl">2000L</span>,</span>
 <span>  .verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpZih8UK/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpZih8UK/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpZih8UK/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
-<span><span class="co">#&gt; duckdb keeps downloaded extensions and secrets in a temporary directory:</span></span>
-<span><span class="co">#&gt; ℹ /tmp/RtmpZih8UK/duckdb</span></span>
-<span><span class="co">#&gt; This is removed when the R session ends.</span></span>
-<span><span class="co">#&gt; • Extensions are re-downloaded each session.</span></span>
-<span><span class="co">#&gt; • Secrets are lost.</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).</span></span>
-<span><span class="co">#&gt; ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).</span></span>
-<span><span class="co">#&gt; ℹ See ?duckdb_storage for details and alternatives.</span></span>
 <span></span>
 <span><span class="co"># PCA</span></span>
 <span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calculate_pca_sc.html">calculate_pca_sc</a></span><span class="op">(</span></span>

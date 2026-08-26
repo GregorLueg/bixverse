@@ -10,6 +10,10 @@ Also, can dispatch to specific methods for certain S3 classes.
 ``` r
 get_params(object, to_json = FALSE, pretty_json = FALSE)
 
+get_params.LdaResult(object, ...)
+
+get_params.LdaKSweepResult(object, ...)
+
 get_params.Hotspot(object, to_json = FALSE, pretty_json = FALSE)
 
 get_params.miloR(object, to_json = FALSE, pretty_json = FALSE)
@@ -19,6 +23,10 @@ get_params.ScenicGrn(object, to_json = FALSE, pretty_json = FALSE)
 get_params.NmfResult(object, to_json = FALSE, pretty_json = FALSE)
 
 get_params.StabilisedNmfResult(object, to_json = FALSE, pretty_json = FALSE)
+
+get_params.ConsensusNmfResult(object, to_json = FALSE, pretty_json = FALSE)
+
+get_params.DialogueResult(object, ...)
 ```
 
 ## Arguments

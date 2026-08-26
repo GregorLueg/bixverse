@@ -14,7 +14,7 @@ and the [introductory
 vignette](https://gregorlueg.github.io/bixverse/articles/thinking_single_cell.html),
 please do so first.
 
-The methods fall into two broad categories:
+The methods fall into four broad categories:
 
 - The first, module scores, AUCell, and VISION, takes *pre-defined* gene
   sets and scores them per cell.
@@ -23,6 +23,9 @@ The methods fall into two broad categories:
 - The third, NMF, also *discovers* gene programmes and regulatory
   relationships via matrix factorisation which is different from SCENIC
   and Hotspot.
+- The fourth, LDA, is a topic model over a binary matrix. It picks up
+  where SCENIC leaves off: binarise the regulon activity, then sort the
+  TFs into topics.
 
 We use the PBMC3k dataset throughout. At 2,700 cells this is likely too
 small for the GRN methods to produce biologically meaningful results,
@@ -33,6 +36,7 @@ unchanged. Also, as the
 ``` r
 
 library(bixverse)
+library(bixverse.plots)
 library(ggplot2)
 library(data.table)
 #> 
@@ -72,170 +76,10 @@ sc_object <- load_mtx(
   mtx_streaming = FALSE,
   .verbose = FALSE
 )
-#> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpCS7SaE/duckdb
-#> This is removed when the R session ends.
-#> • Extensions are re-downloaded each session.
-#> • Secrets are lost.
-#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
-#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
-#> ℹ See ?duckdb_storage for details and alternatives.
-#> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpCS7SaE/duckdb
-#> This is removed when the R session ends.
-#> • Extensions are re-downloaded each session.
-#> • Secrets are lost.
-#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
-#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
-#> ℹ See ?duckdb_storage for details and alternatives.
-#> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpCS7SaE/duckdb
-#> This is removed when the R session ends.
-#> • Extensions are re-downloaded each session.
-#> • Secrets are lost.
-#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
-#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
-#> ℹ See ?duckdb_storage for details and alternatives.
-#> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpCS7SaE/duckdb
-#> This is removed when the R session ends.
-#> • Extensions are re-downloaded each session.
-#> • Secrets are lost.
-#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
-#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
-#> ℹ See ?duckdb_storage for details and alternatives.
-#> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpCS7SaE/duckdb
-#> This is removed when the R session ends.
-#> • Extensions are re-downloaded each session.
-#> • Secrets are lost.
-#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
-#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
-#> ℹ See ?duckdb_storage for details and alternatives.
-#> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpCS7SaE/duckdb
-#> This is removed when the R session ends.
-#> • Extensions are re-downloaded each session.
-#> • Secrets are lost.
-#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
-#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
-#> ℹ See ?duckdb_storage for details and alternatives.
-#> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpCS7SaE/duckdb
-#> This is removed when the R session ends.
-#> • Extensions are re-downloaded each session.
-#> • Secrets are lost.
-#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
-#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
-#> ℹ See ?duckdb_storage for details and alternatives.
-#> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpCS7SaE/duckdb
-#> This is removed when the R session ends.
-#> • Extensions are re-downloaded each session.
-#> • Secrets are lost.
-#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
-#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
-#> ℹ See ?duckdb_storage for details and alternatives.
-#> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpCS7SaE/duckdb
-#> This is removed when the R session ends.
-#> • Extensions are re-downloaded each session.
-#> • Secrets are lost.
-#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
-#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
-#> ℹ See ?duckdb_storage for details and alternatives.
-#> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpCS7SaE/duckdb
-#> This is removed when the R session ends.
-#> • Extensions are re-downloaded each session.
-#> • Secrets are lost.
-#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
-#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
-#> ℹ See ?duckdb_storage for details and alternatives.
-#> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpCS7SaE/duckdb
-#> This is removed when the R session ends.
-#> • Extensions are re-downloaded each session.
-#> • Secrets are lost.
-#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
-#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
-#> ℹ See ?duckdb_storage for details and alternatives.
-#> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpCS7SaE/duckdb
-#> This is removed when the R session ends.
-#> • Extensions are re-downloaded each session.
-#> • Secrets are lost.
-#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
-#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
-#> ℹ See ?duckdb_storage for details and alternatives.
-#> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpCS7SaE/duckdb
-#> This is removed when the R session ends.
-#> • Extensions are re-downloaded each session.
-#> • Secrets are lost.
-#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
-#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
-#> ℹ See ?duckdb_storage for details and alternatives.
-#> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpCS7SaE/duckdb
-#> This is removed when the R session ends.
-#> • Extensions are re-downloaded each session.
-#> • Secrets are lost.
-#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
-#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
-#> ℹ See ?duckdb_storage for details and alternatives.
-#> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpCS7SaE/duckdb
-#> This is removed when the R session ends.
-#> • Extensions are re-downloaded each session.
-#> • Secrets are lost.
-#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
-#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
-#> ℹ See ?duckdb_storage for details and alternatives.
-#> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpCS7SaE/duckdb
-#> This is removed when the R session ends.
-#> • Extensions are re-downloaded each session.
-#> • Secrets are lost.
-#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
-#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
-#> ℹ See ?duckdb_storage for details and alternatives.
 
 setnames_sc(sc_object, table = "var", old = "column1", new = "gene_symbol")
-#> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpCS7SaE/duckdb
-#> This is removed when the R session ends.
-#> • Extensions are re-downloaded each session.
-#> • Secrets are lost.
-#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
-#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
-#> ℹ See ?duckdb_storage for details and alternatives.
-#> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpCS7SaE/duckdb
-#> This is removed when the R session ends.
-#> • Extensions are re-downloaded each session.
-#> • Secrets are lost.
-#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
-#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
-#> ℹ See ?duckdb_storage for details and alternatives.
 
 var <- get_sc_var(sc_object)
-#> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpCS7SaE/duckdb
-#> This is removed when the R session ends.
-#> • Extensions are re-downloaded each session.
-#> • Secrets are lost.
-#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
-#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
-#> ℹ See ?duckdb_storage for details and alternatives.
-#> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpCS7SaE/duckdb
-#> This is removed when the R session ends.
-#> • Extensions are re-downloaded each session.
-#> • Secrets are lost.
-#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
-#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
-#> ℹ See ?duckdb_storage for details and alternatives.
 ensembl_to_symbol <- setNames(var$gene_symbol, var$gene_id)
 symbol_to_ensembl <- setNames(var$gene_id, var$gene_symbol)
 
@@ -250,41 +94,9 @@ sc_object <- gene_set_proportions_sc(
   streaming = FALSE,
   .verbose = FALSE
 )
-#> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpCS7SaE/duckdb
-#> This is removed when the R session ends.
-#> • Extensions are re-downloaded each session.
-#> • Secrets are lost.
-#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
-#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
-#> ℹ See ?duckdb_storage for details and alternatives.
-#> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpCS7SaE/duckdb
-#> This is removed when the R session ends.
-#> • Extensions are re-downloaded each session.
-#> • Secrets are lost.
-#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
-#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
-#> ℹ See ?duckdb_storage for details and alternatives.
 
 # MAD QC
 qc_df <- sc_object[[c("cell_id", "lib_size", "nnz", "MT")]]
-#> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpCS7SaE/duckdb
-#> This is removed when the R session ends.
-#> • Extensions are re-downloaded each session.
-#> • Secrets are lost.
-#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
-#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
-#> ℹ See ?duckdb_storage for details and alternatives.
-#> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpCS7SaE/duckdb
-#> This is removed when the R session ends.
-#> • Extensions are re-downloaded each session.
-#> • Secrets are lost.
-#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
-#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
-#> ℹ See ?duckdb_storage for details and alternatives.
 metrics <- list(
   log10_lib_size = log10(qc_df$lib_size),
   log10_nnz = log10(qc_df$nnz),
@@ -302,75 +114,11 @@ qc <- run_cell_qc(
   threshold = 3
 )
 sc_object[["outlier"]] <- qc$combined
-#> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpCS7SaE/duckdb
-#> This is removed when the R session ends.
-#> • Extensions are re-downloaded each session.
-#> • Secrets are lost.
-#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
-#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
-#> ℹ See ?duckdb_storage for details and alternatives.
-#> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpCS7SaE/duckdb
-#> This is removed when the R session ends.
-#> • Extensions are re-downloaded each session.
-#> • Secrets are lost.
-#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
-#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
-#> ℹ See ?duckdb_storage for details and alternatives.
 cells_to_keep <- qc_df[!qc$combined, cell_id]
 sc_object <- set_cells_to_keep(sc_object, cells_to_keep)
-#> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpCS7SaE/duckdb
-#> This is removed when the R session ends.
-#> • Extensions are re-downloaded each session.
-#> • Secrets are lost.
-#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
-#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
-#> ℹ See ?duckdb_storage for details and alternatives.
-#> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpCS7SaE/duckdb
-#> This is removed when the R session ends.
-#> • Extensions are re-downloaded each session.
-#> • Secrets are lost.
-#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
-#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
-#> ℹ See ?duckdb_storage for details and alternatives.
 
 # HVG, PCA, neighbours, clustering, UMAP
 sc_object <- find_hvg_sc(sc_object, hvg_no = 2000L, .verbose = FALSE)
-#> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpCS7SaE/duckdb
-#> This is removed when the R session ends.
-#> • Extensions are re-downloaded each session.
-#> • Secrets are lost.
-#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
-#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
-#> ℹ See ?duckdb_storage for details and alternatives.
-#> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpCS7SaE/duckdb
-#> This is removed when the R session ends.
-#> • Extensions are re-downloaded each session.
-#> • Secrets are lost.
-#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
-#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
-#> ℹ See ?duckdb_storage for details and alternatives.
-#> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpCS7SaE/duckdb
-#> This is removed when the R session ends.
-#> • Extensions are re-downloaded each session.
-#> • Secrets are lost.
-#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
-#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
-#> ℹ See ?duckdb_storage for details and alternatives.
-#> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpCS7SaE/duckdb
-#> This is removed when the R session ends.
-#> • Extensions are re-downloaded each session.
-#> • Secrets are lost.
-#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
-#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
-#> ℹ See ?duckdb_storage for details and alternatives.
 sc_object <- calculate_pca_sc(sc_object, no_pcs = 30L, sparse_svd = TRUE)
 #> Using sparse SVD solving on scaled data on 2000 HVG.
 sc_object <- find_neighbours_sc(
@@ -383,22 +131,6 @@ sc_object <- find_neighbours_sc(
 #> Generating sNN graph (full: TRUE).
 #> Transforming sNN data to igraph.
 sc_object <- find_clusters_sc(sc_object, res = 1.5, name = "leiden_clusters")
-#> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpCS7SaE/duckdb
-#> This is removed when the R session ends.
-#> • Extensions are re-downloaded each session.
-#> • Secrets are lost.
-#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
-#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
-#> ℹ See ?duckdb_storage for details and alternatives.
-#> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpCS7SaE/duckdb
-#> This is removed when the R session ends.
-#> • Extensions are re-downloaded each session.
-#> • Secrets are lost.
-#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
-#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
-#> ℹ See ?duckdb_storage for details and alternatives.
 sc_object <- umap_sc(sc_object, knn_method = "annoy")
 #> Running UMAP.
 #> Using n_epochs = 500 (dataset <10k samples or adam_parallel optimiser)
@@ -529,40 +261,8 @@ sc_object <- add_sc_new_obs(
   object = sc_object,
   obs_data = get_data(module_scores)
 )
-#> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpCS7SaE/duckdb
-#> This is removed when the R session ends.
-#> • Extensions are re-downloaded each session.
-#> • Secrets are lost.
-#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
-#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
-#> ℹ See ?duckdb_storage for details and alternatives.
-#> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpCS7SaE/duckdb
-#> This is removed when the R session ends.
-#> • Extensions are re-downloaded each session.
-#> • Secrets are lost.
-#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
-#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
-#> ℹ See ?duckdb_storage for details and alternatives.
 
 head(sc_object)
-#> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpCS7SaE/duckdb
-#> This is removed when the R session ends.
-#> • Extensions are re-downloaded each session.
-#> • Secrets are lost.
-#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
-#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
-#> ℹ See ?duckdb_storage for details and alternatives.
-#> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpCS7SaE/duckdb
-#> This is removed when the R session ends.
-#> • Extensions are re-downloaded each session.
-#> • Secrets are lost.
-#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
-#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
-#> ℹ See ?duckdb_storage for details and alternatives.
 #>    cell_idx          cell_id   nnz lib_size to_keep          MT      Ribo
 #>       <num>           <char> <num>    <num>  <lgcl>       <num>     <num>
 #> 1:        1 AAACATACAACCAC-1   778     2418    TRUE 0.030190241 0.4371381
@@ -604,14 +304,14 @@ all reading the same ranking but weighting it differently:
   tracks gene set prevalence, so don’t compare raw values across sets of
   different size unless you switch `standardise` on.
 
-We stick with the default here.
+We use the `"wilcox"` here.
 
 ``` r
 
 auc_scores <- aucell_sc(
   object = sc_object,
   gs_list = lineage_sets,
-  aucell_params = params_sc_aucell(),
+  aucell_params = params_sc_aucell(auc_type = "wilcox"),
   .verbose = FALSE
 )
 
@@ -671,9 +371,9 @@ head(vision_res$auto_cor_dt)
 #>    gene_set_name  auto_cor       p_val         fdr
 #>           <char>     <num>       <num>       <num>
 #> 1:        T cell 0.7612149 0.001996008 0.003992016
-#> 2:  Cytotoxic NK 0.4620488 0.009980040 0.009980040
-#> 3:        B cell 0.5621615 0.009980040 0.009980040
-#> 4:      Monocyte 0.5473183 0.001996008 0.003992016
+#> 2:  Cytotoxic NK 0.4620422 0.009980040 0.009980040
+#> 3:        B cell 0.5621629 0.009980040 0.009980040
+#> 4:      Monocyte 0.5473186 0.001996008 0.003992016
 ```
 
 Unsurprisingly, all of these gene sets show highly significant spatial
@@ -757,7 +457,7 @@ hotspot_cor <- hotspot_gene_cor_sc(
 
 hotspot_cor
 #> Hotspot gene-gene local correlation results
-#>   Genes: 2320
+#>   Genes: 2581
 #>   Cells: 2163
 #>   Modules: not yet computed (see generate_hotspot_membership)
 ```
@@ -787,26 +487,26 @@ membership <- membership[!is.na(cluster_member)]
 head(membership[order(cluster_member)], 20L)
 #>             gene_id cluster_member gene_symbol
 #>              <char>          <num>      <char>
-#>  1: ENSG00000137959            477      IFI44L
-#>  2: ENSG00000134321            477       RSAD2
-#>  3: ENSG00000115415            477       STAT1
-#>  4: ENSG00000196141            477     SPATS2L
-#>  5: ENSG00000136514            477        RTP4
-#>  6: ENSG00000138642            477       HERC6
-#>  7: ENSG00000138646            477       HERC5
-#>  8: ENSG00000003147            477        ICA1
-#>  9: ENSG00000119917            477       IFIT3
-#> 10: ENSG00000185745            477       IFIT1
-#> 11: ENSG00000173456            477       RNF26
-#> 12: ENSG00000135114            477        OASL
-#> 13: ENSG00000140511            477      HAPLN3
-#> 14: ENSG00000157601            477         MX1
-#> 15: ENSG00000181817            515       LSM10
-#> 16: ENSG00000173193            515      PARP14
-#> 17: ENSG00000113719            515      ERGIC1
-#> 18: ENSG00000213722            515       DDAH2
-#> 19: ENSG00000146192            515        FGD2
-#> 20: ENSG00000112335            515        SNX3
+#>  1: ENSG00000188822              0        CNR2
+#>  2: ENSG00000169504              0       CLIC4
+#>  3: ENSG00000169442              0        CD52
+#>  4: ENSG00000162511              0      LAPTM5
+#>  5: ENSG00000162373              0       BEND5
+#>  6: ENSG00000132704              0       FCRL2
+#>  7: ENSG00000163534              0       FCRL1
+#>  8: ENSG00000158481              0        CD1C
+#>  9: ENSG00000072694              0      FCGR2B
+#> 10: ENSG00000132185              0       FCRLA
+#> 11: ENSG00000116191              0     RALGPS2
+#> 12: ENSG00000197520              0     FAM177B
+#> 13: ENSG00000054277              0        OPN3
+#> 14: ENSG00000152689              0     RASGRP3
+#> 15: ENSG00000119866              0      BCL11A
+#> 16: ENSG00000162924              0         REL
+#> 17: ENSG00000144218              0        AFF3
+#> 18: ENSG00000136717              0        BIN1
+#> 19: ENSG00000169994              0       MYO7B
+#> 20: ENSG00000121966              0       CXCR4
 #>             gene_id cluster_member gene_symbol
 #>              <char>          <num>      <char>
 ```
@@ -1009,11 +709,11 @@ tf_gene_dt[, gene_symbol := ensembl_to_symbol[gene]]
 head(tf_gene_dt[order(-importance)], 5L)
 #>                 tf            gene importance pairwise_cor cor_sign tf_symbol
 #>             <char>          <char>      <num>        <num>    <int>    <char>
-#> 1: ENSG00000171223 ENSG00000120129  0.2948482    0.3103157        1      JUNB
-#> 2: ENSG00000066336 ENSG00000107341  0.2746513    0.1931868        1      SPI1
+#> 1: ENSG00000171223 ENSG00000120129  0.2948482    0.3103159        1      JUNB
+#> 2: ENSG00000066336 ENSG00000107341  0.2746513    0.1931844        1      SPI1
 #> 3: ENSG00000170345 ENSG00000120129  0.2573821    0.3420300        1       FOS
-#> 4: ENSG00000066336 ENSG00000165025  0.2460342    0.2060715        1      SPI1
-#> 5: ENSG00000139187 ENSG00000153563  0.2453607    0.2005602        1     KLRG1
+#> 4: ENSG00000066336 ENSG00000165025  0.2460342    0.2060750        1      SPI1
+#> 5: ENSG00000139187 ENSG00000153563  0.2453607    0.2005614        1     KLRG1
 #>    gene_symbol
 #>         <char>
 #> 1:       DUSP1
@@ -1070,25 +770,69 @@ builds a recovery curve, compares it against the mean + 2 SD curve
 across every motif in the database, and keeps only the genes above the
 point of maximum separation. So expect the regulons coming out of
 [`build_regulons()`](https://gregorlueg.github.io/bixverse/reference/build_regulons.md)
-to be a good deal smaller than the modules going in. This is how you
-would run the regulon binarisation.
+to be a good deal smaller than the modules going in.
+
+[`build_regulons()`](https://gregorlueg.github.io/bixverse/reference/build_regulons.md)
+applies that filter, adds the TF back to its own set and drops anything
+too small. Since we skipped the CisTarget download above, we pass
+`use_leading_edge = FALSE` and it warns and carries on without the motif
+filter. The regulons that come out are a lot bigger and noisier than a
+proper SCENIC run would give you, so read the biology below with that in
+mind. The API is identical either way.
 
 ``` r
 
-# build_regulons() applies that filter, adds the TF back to its own set and
-# drops anything too small. This is what you hand to aucell_sc()
-regulons <- build_regulons(scenic_res)
+regulons <- build_regulons(scenic_res, use_leading_edge = FALSE)
+#> Built 227 regulons (154 dropped below 10 genes). Median size: 21
+
+length(regulons)
+#> [1] 227
+summary(lengths(regulons))
+#>    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+#>    10.0    14.0    21.0   139.8   104.0  1583.0
+```
+
+That is what you hand to
+[`aucell_sc()`](https://gregorlueg.github.io/bixverse/reference/aucell_sc.md),
+which scores every regulon in every cell.
+
+``` r
 
 auc_regulons <- aucell_sc(
   object = sc_object,
   gs_list = regulons,
   aucell_params = params_sc_aucell()
 )
+```
+
+The AUC scores are continuous, and for most downstream purposes you want
+an on/off call instead.
+[`binarise_regulon_activity()`](https://gregorlueg.github.io/bixverse/reference/binarise_regulon_activity.md)
+fits a two-component Gaussian mixture per regulon, compares it against a
+single Gaussian by BIC, and puts the threshold at the trough between the
+two component means. Regulons that are not bimodal fall back to
+`mean + 2 * sd`.
+
+``` r
 
 binarised_regulons <- binarise_regulon_activity(auc_regulons)
+#> Binarised 227 regulons, 72 of which were bimodal.
 
 binary_matrix <- binarised_regulons$binary
 colnames(binary_matrix) <- ensembl_to_symbol[colnames(binary_matrix)]
+
+head(binarised_regulons$thresholds[order(-n_cells_on)])
+#>            regulon   threshold bimodal n_cells_on
+#>             <char>       <num>  <lgcl>      <num>
+#> 1: ENSG00000177606 0.028034928    TRUE       1629
+#> 2: ENSG00000198034 0.099866757    TRUE       1539
+#> 3: ENSG00000124614 0.097379875    TRUE       1535
+#> 4: ENSG00000171223 0.069938338    TRUE       1500
+#> 5: ENSG00000136942 0.129315786    TRUE       1498
+#> 6: ENSG00000100823 0.009789546    TRUE       1458
+```
+
+``` r
 
 sc_object[["STAT1_active"]] <- binary_matrix[, "STAT1"]
 
@@ -1099,8 +843,176 @@ embedding_plot_sc(
 )
 ```
 
+![](bag_of_genes_single_cells_files/figure-html/scenic-plot-stat1-1.png)
+
 This is how you work with all types of `"bag of genes"` analyses for
 single cell in `bixverse`.
+
+## Topic models with LDA
+
+Binarising the regulons gives us a cells x regulons matrix of ones and
+zeros, which is exactly the shape a topic model wants: cells are
+documents, regulons are terms. This is the trick behind
+[cisTopic](https://doi.org/10.1038/s41592-019-0367-1), which runs latent
+Dirichlet allocation over binarised scATAC to get a cell-topic
+distribution for clustering and a topic-region distribution for region
+set discovery. Nothing about it is ATAC-specific, so swapping regions
+for regulons gives you TF activity sorted into topics.
+
+Why binarise at all? Because LDA on raw single cell counts is dominated
+by library size. Every cell’s “document length” is its total count, deep
+cells dominate the corpus, and the topics you get back are largely a
+rediscovery of sequencing depth. Thresholding to on/off throws that away
+and leaves the model looking at co-occurrence, which is the thing you
+actually care about.
+
+`bixverse` implements variational Bayes LDA in Rust, following [Hoffman,
+et
+al.](https://papers.nips.cc/paper/2010/hash/71f6278d140af599e06ad9bf1ba03cb0-Abstract.html),
+with the same knobs and defaults pycisTopic exposes.
+
+### Picking the number of topics
+
+Same eternal question as with NMF, and
+[`lda_k_sweep()`](https://gregorlueg.github.io/bixverse/reference/lda_k_sweep.md)
+gives you three different answers to argue with. Arun 2010 compares the
+singular values of the topic-term matrix against the document length
+distribution; Cao Juan 2009 is the mean pairwise cosine similarity
+between topics, which climbs once `k` gets large enough that topics
+start duplicating each other; Mimno 2011 is UMass coherence.
+`combined_score` rescales all three onto `[0, 1]` and adds them up.
+
+``` r
+
+sweep_res <- lda_k_sweep(binary_matrix, k_range = 5:12)
+
+sweep_res
+#> LdaKSweepResult (LDA topic count sweep)
+#>   k range:          5 to 12
+#>   Best k:           7
+#>   Metrics:          arun_2010 and cao_juan_2009 lower is better, mimno_2011 higher
+#> 
+#>        k  arun_2010 cao_juan_2009 mimno_2011     bound perplexity
+#>    <int>      <num>         <num>      <num>     <num>      <num>
+#> 1:     5 0.16981332     0.3002322 -0.8547891 -339021.7   134.5479
+#> 2:     6 0.15225958     0.2160656 -0.8800924 -338921.9   134.3539
+#> 3:     7 0.13542282     0.1724176 -1.0198741 -338820.0   134.1560
+#> 4:     8 0.11508164     0.1654747 -1.1853645 -339039.1   134.5817
+#> 5:     9 0.10976724     0.1641425 -1.2842002 -339296.9   135.0844
+#> 6:    10 0.12072008     0.1731616 -1.3134488 -339586.9   135.6520
+#> 7:    11 0.12276630     0.1669807 -1.3461572 -339823.9   136.1175
+#> 8:    12 0.09433794     0.1303569 -1.3338648 -339872.5   136.2134
+#>    combined_score converged
+#>             <num>    <lgcl>
+#> 1:       1.808360      TRUE
+#> 2:       2.579716      TRUE
+#> 3:       2.872085      TRUE
+#> 4:       2.637487      TRUE
+#> 5:       2.269648      TRUE
+#> 6:       1.736410      TRUE
+#> 7:       1.453985      TRUE
+#> 8:       2.025017      TRUE
+```
+
+``` r
+
+plot(sweep_res)
+```
+
+![](bag_of_genes_single_cells_files/figure-html/lda-sweep-plot-1.png)
+
+The three selection metrics and the combined score against k.
+
+One caveat that will bite you if you do not know about it. Any `k` below
+five is struck out of the selection entirely, because coherence
+saturates on small topic counts and would otherwise always win. That is
+inherited from pycisTopic, so `best_k` can never come back below five
+however good the raw metrics of a smaller `k` look. Sweep below the
+floor and you get a warning plus `NA` in `combined_score` for those
+rows; the metrics themselves are still reported, so read them off the
+table and pass the `k` you want to
+[`get_best_model()`](https://gregorlueg.github.io/bixverse/reference/get_best_model.md).
+
+### Reading the topics
+
+[`get_best_model()`](https://gregorlueg.github.io/bixverse/reference/get_best_model.md)
+pulls the winning fit straight out of the sweep, no refitting.
+
+``` r
+
+lda_res <- get_best_model(sweep_res)
+
+lda_res
+#> LdaResult (latent Dirichlet allocation)
+#>   Documents:        2163
+#>   Terms:            227
+#>   Topics:           7
+#>   Bound (ELBO):     -338820
+#>   Perplexity:       134.156
+#>   Iterations:       90
+```
+
+[`get_top_terms()`](https://gregorlueg.github.io/bixverse/reference/get_top_terms.md)
+is where the interpretation happens: per topic, the regulons carrying
+the most probability mass.
+
+``` r
+
+top_tfs <- get_top_terms(lda_res, n = 8L)
+
+top_tfs[, .(tfs = paste(term, collapse = ", ")), by = topic]
+#>       topic                                                       tfs
+#>      <char>                                                    <char>
+#> 1: topic_01        RPS4X, RPS10, JUNB, RPL35, TCF7, JUN, LEF1, ANXA11
+#> 2: topic_02       PARP1, MAZ, BCLAF1, RAB2A, HSF1, DNMT1, APEX1, ATF4
+#> 3: topic_03     NUCB1, ELF1, ZMAT2, ILF2, UGP2, STUB1, SCAND1, SUCLG1
+#> 4: topic_04 CBFB, DUSP22, RNASEH2C, CXXC5, KLF12, RELA, SSRP1, ZNF581
+#> 5: topic_05         NR4A1, LYL1, RXRA, CEBPD, SPI1, KLF4, CEBPB, MAFB
+#> 6: topic_06    STAT4, TSC22D4, SF3B1, ETS1, MAGOH, RUNX3, KLRG1, XBP1
+#> 7: topic_07 HTATIP2, HNRNPH3, NFATC3, KIF22, UGP2, APEX1, ANXA11, BBX
+```
+
+On PBMC3k the myeloid topic is usually unmistakable: `SPI1`, `CEBPD`,
+`KLF4` and friends land together, because those regulons switch on in
+the same cells. The T cell topics split along the naive/cytotoxic axis,
+with `TCF7` and `LEF1` on one side and `STAT4`, `RUNX3`, `ETS1` on the
+other. Which topic index gets which programme is arbitrary and changes
+with the seed, so always read the loadings rather than trusting the
+numbering.
+
+The other half of the model is the cell-topic matrix, which is a soft
+assignment: every cell gets a distribution over topics summing to one.
+Drop a column into the object and it plots like any other cell-level
+covariate.
+
+``` r
+
+doc_topic <- as.matrix(lda_res, "doc_topic")
+
+for (topic in colnames(doc_topic)) {
+  sc_object[[topic]] <- doc_topic[, topic]
+}
+
+topic_plots <- purrr::map(colnames(doc_topic)[1:4], \(topic) {
+  embedding_plot_sc(
+    object = sc_object,
+    embedding = "umap",
+    colour_by = topic
+  ) +
+    ggplot2::ggtitle(topic)
+})
+
+patchwork::wrap_plots(topic_plots, ncol = 2)
+```
+
+![](bag_of_genes_single_cells_files/figure-html/lda-umap-1.png)
+
+Topic proportions per cell on the UMAP.
+
+Because the assignment is soft, a cell sitting between two programmes
+shows up as genuinely intermediate rather than being forced into one
+cluster. That is the main thing a topic model buys you over hard
+clustering on the same matrix.
 
 ## NMF on single cells
 
@@ -1122,16 +1034,19 @@ A few practical notes before diving in:
 - NMF is non-convex: different random initialisations land in different
   local optima. The package therefore provides
   [`nmf_sc()`](https://gregorlueg.github.io/bixverse/reference/nmf_sc.md)
-  for a single run and
+  for a single run,
   [`stabilised_nmf_sc()`](https://gregorlueg.github.io/bixverse/reference/stabilised_nmf_sc.md)
-  for multiple restarts. The latter is the right default for any serious
-  analysis as well as down stream meta analyses such as finding
-  consensus programmes.
+  for multiple restarts, and
+  [`consensus_nmf_sc()`](https://gregorlueg.github.io/bixverse/reference/consensus_nmf_sc.md)
+  which takes those restarts and returns the programmes they agree on.
+  The last one is the right default for any serious analysis.
 - Picking `k` is the eternal question. Too small and programmes get
   smushed together; too large and they fragment into redundant copies.
-  There is no free lunch here. Usually you run with several values and
-  inspect. If in doubt, lick your finger and see from where the wind
-  comes… (Joke)
+  [`nmf_k_sweep_sc()`](https://gregorlueg.github.io/bixverse/reference/nmf_k_sweep_sc.md)
+  turns that into something you can actually look at: stability against
+  reconstruction error across a range of `k`. It is not a free lunch,
+  but it beats licking your finger and seeing from where the wind comes…
+  (Joke)
 - NMF on a heterogeneous dataset often just rediscovers the obvious
   cell-type axis. The interesting use case is running it *within* a cell
   type to find finer-grained programmes (activation, exhaustion,
@@ -1179,22 +1094,6 @@ global state.
 t_cell_ids <- auc_dt[`T cell` >= otsu_t_cell, cell_id]
 
 hvg_t_cell_data <- get_hvg_data_sc(object = sc_object, cell_ids = t_cell_ids)
-#> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpCS7SaE/duckdb
-#> This is removed when the R session ends.
-#> • Extensions are re-downloaded each session.
-#> • Secrets are lost.
-#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
-#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
-#> ℹ See ?duckdb_storage for details and alternatives.
-#> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpCS7SaE/duckdb
-#> This is removed when the R session ends.
-#> • Extensions are re-downloaded each session.
-#> • Secrets are lost.
-#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
-#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
-#> ℹ See ?duckdb_storage for details and alternatives.
 
 t_cell_hvg <- hvg_t_cell_data[(is_hvg), gene_id]
 ```
@@ -1223,29 +1122,35 @@ plus the parameters and convergence info.
 ``` r
 
 get_w(t_cell_nmf_results)[1:5, 1:5]
-#>                      comp_01      comp_02   comp_03      comp_04      comp_05
-#> ENSG00000188976 2.558843e+00 9.992267e-11 0.3763380 2.132400e-01 9.993509e-11
-#> ENSG00000187608 9.983787e-11 9.992267e-11 0.5599045 9.981262e-11 9.993509e-11
-#> ENSG00000186827 9.983787e-11 9.992267e-11 7.3252878 9.981262e-11 9.993509e-11
-#> ENSG00000176022 1.122509e-01 2.855008e-02 0.1625732 9.981262e-11 9.993509e-11
-#> ENSG00000242485 2.209524e+00 2.744842e+00 4.3223567 6.435678e-01 1.557151e+00
+#>                      comp_01      comp_02      comp_03      comp_04
+#> ENSG00000188976 2.756063e+00 1.516444e-01 9.978818e-11 3.985443e-01
+#> ENSG00000188290 9.983770e-11 1.001252e-10 9.978818e-11 7.743338e-02
+#> ENSG00000187608 9.983770e-11 2.746899e+00 1.624547e-01 9.984959e-11
+#> ENSG00000186827 9.983770e-11 1.001252e-10 7.541640e+00 9.984959e-11
+#> ENSG00000176022 9.073032e-01 7.619265e-03 1.844488e-01 9.984959e-11
+#>                      comp_05
+#> ENSG00000188976 3.031700e-01
+#> ENSG00000188290 1.000227e-10
+#> ENSG00000187608 1.000227e-10
+#> ENSG00000186827 1.000227e-10
+#> ENSG00000176022 1.000227e-10
 ```
 
 ``` r
 
 get_h(t_cell_nmf_results)[1:5, 1:5]
-#>         AAACATACAACCAC-1 AAACATTGATCAGC-1 AAACGCTGGTTCTT-1 AAACTTGATCCAGA-1
-#> comp_01       0.03039108      0.028655788     2.779504e-02     0.0335300341
-#> comp_02       0.04223846      0.009922862     6.078151e-02     0.0007059687
-#> comp_03       0.01914044      0.041368406     1.002924e-10     0.0018196171
-#> comp_04       0.04766104      0.033128884     3.672349e-02     0.0398822948
-#> comp_05       0.03773499      0.001358267     4.147765e-02     0.0049292077
-#>         AAAGCCTGTATGCG-1
-#> comp_01       0.03014318
-#> comp_02       0.02215907
-#> comp_03       0.04835882
-#> comp_04       0.02421124
-#> comp_05       0.04118023
+#>         AAACATACAACCAC-1 AAACATTGATCAGC-1 AAACGCACTGGTAC-1 AAACGCTGGTTCTT-1
+#> comp_01      0.029081384      0.028246988     2.750892e-02     2.642106e-02
+#> comp_02      0.032824770      0.004165698     5.788827e-03     4.682986e-02
+#> comp_03      0.009732882      0.053273071     5.238257e-02     1.002123e-10
+#> comp_04      0.064907432      0.017416965     1.001506e-10     3.876413e-02
+#> comp_05      0.004365134      0.047877852     9.997733e-11     1.034977e-02
+#>         AAACTTGATCCAGA-1
+#> comp_01      0.032608423
+#> comp_02      0.002322522
+#> comp_03      0.007309146
+#> comp_04      0.018659594
+#> comp_05      0.049327504
 ```
 
 ### Running multiple NMF runs
@@ -1276,17 +1181,17 @@ consensus analyses.
 
 get_w(t_cell_nmf_results_stabilised)[1:5, 1:5]
 #>                 run_01.comp_01 run_01.comp_02 run_01.comp_03 run_01.comp_04
-#> ENSG00000188976   8.834997e-01   1.168006e+00   4.921125e-01   9.998284e-11
-#> ENSG00000187608   9.988405e-11   1.000315e-10   4.467033e-02   9.998284e-11
-#> ENSG00000186827   9.988405e-11   1.000315e-10   9.998983e-11   9.998284e-11
-#> ENSG00000176022   4.819395e-01   1.243956e-01   9.209826e-02   9.998284e-11
-#> ENSG00000242485   7.240750e-01   1.973956e+00   1.215576e+00   6.745355e-01
+#> ENSG00000188976   2.047948e+00   6.749125e-01     0.42683131   1.000597e-10
+#> ENSG00000188290   2.615961e-02   1.000214e-10     0.13890615   1.000597e-10
+#> ENSG00000187608   9.990404e-11   1.000214e-10    29.44829559   1.000597e-10
+#> ENSG00000186827   9.990404e-11   1.000214e-10     2.02266049   7.260294e+00
+#> ENSG00000176022   6.144505e-01   3.268677e-01     0.03150798   1.429209e-02
 #>                 run_01.comp_05
-#> ENSG00000188976   9.488367e-01
-#> ENSG00000187608   1.238252e+00
-#> ENSG00000186827   1.001258e-10
-#> ENSG00000176022   1.001258e-10
-#> ENSG00000242485   1.621210e+00
+#> ENSG00000188976   9.101315e-01
+#> ENSG00000188290   1.698188e-01
+#> ENSG00000187608   3.292343e+00
+#> ENSG00000186827   1.002548e-10
+#> ENSG00000176022   1.002548e-10
 ```
 
 The H matrices are kept per-run, since each random initialisation gives
@@ -1297,46 +1202,46 @@ runs without further work).
 
 str(get_h(t_cell_nmf_results_stabilised))
 #> List of 10
-#>  $ run_01: num [1:10, 1:1034] 0.03552 0.00777 0.01237 0.03586 0.03921 ...
+#>  $ run_01: num [1:10, 1:1150] 4.46e-02 1.84e-03 1.00e-10 2.27e-02 1.68e-02 ...
 #>   ..- attr(*, "dimnames")=List of 2
 #>   .. ..$ : chr [1:10] "comp_01" "comp_02" "comp_03" "comp_04" ...
-#>   .. ..$ : chr [1:1034] "AAACATACAACCAC-1" "AAACATTGATCAGC-1" "AAACGCTGGTTCTT-1" "AAACTTGATCCAGA-1" ...
-#>  $ run_02: num [1:10, 1:1034] 4.08e-02 4.75e-03 3.12e-02 4.11e-03 1.00e-10 ...
+#>   .. ..$ : chr [1:1150] "AAACATACAACCAC-1" "AAACATTGATCAGC-1" "AAACGCACTGGTAC-1" "AAACGCTGGTTCTT-1" ...
+#>  $ run_02: num [1:10, 1:1150] 3.71e-02 1.00e-10 4.35e-02 1.23e-02 2.78e-02 ...
 #>   ..- attr(*, "dimnames")=List of 2
 #>   .. ..$ : chr [1:10] "comp_01" "comp_02" "comp_03" "comp_04" ...
-#>   .. ..$ : chr [1:1034] "AAACATACAACCAC-1" "AAACATTGATCAGC-1" "AAACGCTGGTTCTT-1" "AAACTTGATCCAGA-1" ...
-#>  $ run_03: num [1:10, 1:1034] 4.34e-02 2.35e-03 1.00e-10 4.04e-02 1.00e-10 ...
+#>   .. ..$ : chr [1:1150] "AAACATACAACCAC-1" "AAACATTGATCAGC-1" "AAACGCACTGGTAC-1" "AAACGCTGGTTCTT-1" ...
+#>  $ run_03: num [1:10, 1:1150] 0.0218 0.031 0.016 0.0335 0.0346 ...
 #>   ..- attr(*, "dimnames")=List of 2
 #>   .. ..$ : chr [1:10] "comp_01" "comp_02" "comp_03" "comp_04" ...
-#>   .. ..$ : chr [1:1034] "AAACATACAACCAC-1" "AAACATTGATCAGC-1" "AAACGCTGGTTCTT-1" "AAACTTGATCCAGA-1" ...
-#>  $ run_04: num [1:10, 1:1034] 3.93e-02 1.00e-10 5.72e-02 1.35e-02 1.00e-10 ...
+#>   .. ..$ : chr [1:1150] "AAACATACAACCAC-1" "AAACATTGATCAGC-1" "AAACGCACTGGTAC-1" "AAACGCTGGTTCTT-1" ...
+#>  $ run_04: num [1:10, 1:1150] 1.83e-02 3.01e-02 3.60e-02 2.95e-02 1.00e-10 ...
 #>   ..- attr(*, "dimnames")=List of 2
 #>   .. ..$ : chr [1:10] "comp_01" "comp_02" "comp_03" "comp_04" ...
-#>   .. ..$ : chr [1:1034] "AAACATACAACCAC-1" "AAACATTGATCAGC-1" "AAACGCTGGTTCTT-1" "AAACTTGATCCAGA-1" ...
-#>  $ run_05: num [1:10, 1:1034] 4.20e-02 9.28e-04 1.00e-10 9.99e-11 2.34e-02 ...
+#>   .. ..$ : chr [1:1150] "AAACATACAACCAC-1" "AAACATTGATCAGC-1" "AAACGCACTGGTAC-1" "AAACGCTGGTTCTT-1" ...
+#>  $ run_05: num [1:10, 1:1150] 3.05e-02 3.28e-02 9.99e-11 1.00e-10 2.73e-02 ...
 #>   ..- attr(*, "dimnames")=List of 2
 #>   .. ..$ : chr [1:10] "comp_01" "comp_02" "comp_03" "comp_04" ...
-#>   .. ..$ : chr [1:1034] "AAACATACAACCAC-1" "AAACATTGATCAGC-1" "AAACGCTGGTTCTT-1" "AAACTTGATCCAGA-1" ...
-#>  $ run_06: num [1:10, 1:1034] 4.65e-02 1.00e-10 1.00e-10 4.25e-02 1.00e-10 ...
+#>   .. ..$ : chr [1:1150] "AAACATACAACCAC-1" "AAACATTGATCAGC-1" "AAACGCACTGGTAC-1" "AAACGCTGGTTCTT-1" ...
+#>  $ run_06: num [1:10, 1:1150] 0.03488 0.01592 0.00726 0.02895 0.03118 ...
 #>   ..- attr(*, "dimnames")=List of 2
 #>   .. ..$ : chr [1:10] "comp_01" "comp_02" "comp_03" "comp_04" ...
-#>   .. ..$ : chr [1:1034] "AAACATACAACCAC-1" "AAACATTGATCAGC-1" "AAACGCTGGTTCTT-1" "AAACTTGATCCAGA-1" ...
-#>  $ run_07: num [1:10, 1:1034] 4.60e-02 1.00e-10 1.00e-10 7.62e-02 4.03e-04 ...
+#>   .. ..$ : chr [1:1150] "AAACATACAACCAC-1" "AAACATTGATCAGC-1" "AAACGCACTGGTAC-1" "AAACGCTGGTTCTT-1" ...
+#>  $ run_07: num [1:10, 1:1150] 1.94e-02 4.54e-02 1.00e-10 1.19e-02 1.05e-02 ...
 #>   ..- attr(*, "dimnames")=List of 2
 #>   .. ..$ : chr [1:10] "comp_01" "comp_02" "comp_03" "comp_04" ...
-#>   .. ..$ : chr [1:1034] "AAACATACAACCAC-1" "AAACATTGATCAGC-1" "AAACGCTGGTTCTT-1" "AAACTTGATCCAGA-1" ...
-#>  $ run_08: num [1:10, 1:1034] 4.49e-02 2.58e-03 9.99e-11 3.42e-02 1.52e-02 ...
+#>   .. ..$ : chr [1:1150] "AAACATACAACCAC-1" "AAACATTGATCAGC-1" "AAACGCACTGGTAC-1" "AAACGCTGGTTCTT-1" ...
+#>  $ run_08: num [1:10, 1:1150] 3.70e-02 1.00e-10 3.69e-02 4.94e-02 3.10e-02 ...
 #>   ..- attr(*, "dimnames")=List of 2
 #>   .. ..$ : chr [1:10] "comp_01" "comp_02" "comp_03" "comp_04" ...
-#>   .. ..$ : chr [1:1034] "AAACATACAACCAC-1" "AAACATTGATCAGC-1" "AAACGCTGGTTCTT-1" "AAACTTGATCCAGA-1" ...
-#>  $ run_09: num [1:10, 1:1034] 2.87e-02 2.09e-02 3.28e-02 2.82e-02 1.00e-10 ...
+#>   .. ..$ : chr [1:1150] "AAACATACAACCAC-1" "AAACATTGATCAGC-1" "AAACGCACTGGTAC-1" "AAACGCTGGTTCTT-1" ...
+#>  $ run_09: num [1:10, 1:1150] 3.77e-02 1.00e-10 3.61e-02 1.22e-02 2.73e-02 ...
 #>   ..- attr(*, "dimnames")=List of 2
 #>   .. ..$ : chr [1:10] "comp_01" "comp_02" "comp_03" "comp_04" ...
-#>   .. ..$ : chr [1:1034] "AAACATACAACCAC-1" "AAACATTGATCAGC-1" "AAACGCTGGTTCTT-1" "AAACTTGATCCAGA-1" ...
-#>  $ run_10: num [1:10, 1:1034] 0.0102 0.0463 0.0281 0.0379 0.0254 ...
+#>   .. ..$ : chr [1:1150] "AAACATACAACCAC-1" "AAACATTGATCAGC-1" "AAACGCACTGGTAC-1" "AAACGCTGGTTCTT-1" ...
+#>  $ run_10: num [1:10, 1:1150] 4.28e-02 1.00e-10 1.72e-02 2.96e-02 5.73e-02 ...
 #>   ..- attr(*, "dimnames")=List of 2
 #>   .. ..$ : chr [1:10] "comp_01" "comp_02" "comp_03" "comp_04" ...
-#>   .. ..$ : chr [1:1034] "AAACATACAACCAC-1" "AAACATTGATCAGC-1" "AAACGCTGGTTCTT-1" "AAACTTGATCCAGA-1" ...
+#>   .. ..$ : chr [1:1150] "AAACATACAACCAC-1" "AAACATTGATCAGC-1" "AAACGCACTGGTAC-1" "AAACGCTGGTTCTT-1" ...
 ```
 
 The run with the lowest final reconstruction loss is the most natural
@@ -1349,6 +1254,179 @@ returns it as an `NmfResult`, identical in shape to the output of
 
 best_run <- get_best_run(t_cell_nmf_results_stabilised)
 ```
+
+### Consensus NMF
+
+Picking the lowest-loss restart is a reasonable default, but it dodges
+the question you actually care about: did the restarts agree? Consensus
+NMF (cNMF, [Kotliar, et al.](https://elifesciences.org/articles/43803))
+answers it directly. Pool the components of every restart, drop the ones
+sitting on their own in the pool, k-means the survivors into `k` groups,
+and take the median of each group. What comes out is the programme
+structure the restarts agree on, and the mean silhouette of those
+clusters says how strongly they agreed.
+
+Before fitting, though, you need a `k`.
+[`nmf_k_sweep_sc()`](https://gregorlueg.github.io/bixverse/reference/nmf_k_sweep_sc.md)
+runs the consensus step across a range of ranks and reports stability
+against reconstruction error, keeping no factors, so a wide sweep stays
+affordable.
+
+``` r
+
+t_cell_k_sweep <- nmf_k_sweep_sc(
+  object = sc_object,
+  k_range = 2:12,
+  cell_ids = t_cell_ids,
+  gene_ids = t_cell_hvg,
+  n_runs = 10L,
+  nmf_consensus_params = params_nmf_consensus(density_threshold = 2)
+)
+
+t_cell_k_sweep
+#> NmfKSweepResult (consensus NMF k sweep)
+#>   Source class:     SingleCells
+#>   k range:          2 to 12
+#>   No runs per k:    10
+#>   Most stable k:    2 (stability = 0.9987)
+#> 
+#>         k stability best_error median_error consensus_failed n_dropped
+#>     <int>     <num>      <num>        <num>           <lgcl>     <int>
+#>  1:     2 0.9987255  0.3494214    0.3494324            FALSE         0
+#>  2:     3 0.7904969  0.3454919    0.3455086            FALSE         0
+#>  3:     4 0.7136912  0.3430810    0.3431764            FALSE         0
+#>  4:     5 0.7964178  0.3409729    0.3410496            FALSE         0
+#>  5:     6 0.6604626  0.3390599    0.3391575            FALSE         0
+#>  6:     7 0.7007527  0.3374616    0.3375218            FALSE         0
+#>  7:     8 0.6017957  0.3359818    0.3362038            FALSE         0
+#>  8:     9 0.6791331  0.3347037    0.3348030            FALSE         0
+#>  9:    10 0.6019418  0.3331404    0.3334405            FALSE         0
+#> 10:    11 0.5787128  0.3321190    0.3322654            FALSE         0
+#> 11:    12 0.5389146  0.3308056    0.3309833            FALSE         0
+#>     n_empty_clusters n_converged
+#>                <int>       <int>
+#>  1:                0          10
+#>  2:                0          10
+#>  3:                0          10
+#>  4:                0          10
+#>  5:                0          10
+#>  6:                0          10
+#>  7:                0          10
+#>  8:                0          10
+#>  9:                0          10
+#> 10:                0          10
+#> 11:                0          10
+```
+
+``` r
+
+plot(t_cell_k_sweep)
+```
+
+![](bag_of_genes_single_cells_files/figure-html/nmf%20k%20sweep%20plot-1.png)
+
+Consensus NMF k sweep on the T cells.
+
+Error falls monotonically with `k`, so it would happily push you to the
+largest rank you can afford. Stability is the counterweight: take the
+last `k` before it falls away, while the error curve is still coming
+down. Here that is `5L`, not the 10 we picked by eye for the runs above.
+Worth knowing before writing up ten programmes when the data supports
+seven. (Identifying two components is always trivial and unlikely to be
+the true signal.)
+
+> **Note**
+>
+> `density_threshold = 2` turns the outlier filter off, since cosine
+> distance cannot exceed 2. Left on, components whose neighbours sit too
+> far away get dropped, and if fewer than `k` survive the fit errors
+> instead of returning something degenerate. Sensible on real data with
+> enough restarts; with 8 it fires more often than it should.
+> [`get_stability()`](https://gregorlueg.github.io/bixverse/reference/get_stability.md)
+> gives you the `local_density` values to pick a real threshold from.
+
+``` r
+
+t_cell_nmf_consensus <- consensus_nmf_sc(
+  object = sc_object,
+  k = 5L,
+  cell_ids = t_cell_ids,
+  gene_ids = t_cell_hvg,
+  n_runs = 10L,
+  nmf_consensus_params = params_nmf_consensus(density_threshold = 2)
+)
+
+t_cell_nmf_consensus
+#> ConsensusNmfResult (consensus HALS NMF)
+#>   Source class:     SingleCells
+#>   No genes:         3000
+#>   No cells:         1150
+#>   No components:    5
+#>   No runs:          10
+#>   Stability:        0.7876
+#>   Relative error:   0.3414
+#>   Dropped:          0 / 50 components
+#>   Preprocessing:    none
+```
+
+`W` and `H` come back in exactly the shape
+[`nmf_sc()`](https://gregorlueg.github.io/bixverse/reference/nmf_sc.md)
+gives you, so everything downstream is unchanged. What is new is
+[`get_stability()`](https://gregorlueg.github.io/bixverse/reference/get_stability.md).
+
+``` r
+
+consensus_diag <- get_stability(t_cell_nmf_consensus)
+consensus_diag$stability
+#> [1] 0.7876265
+consensus_diag$cluster_sizes
+#>    cluster     n
+#>      <int> <int>
+#> 1:       1    10
+#> 2:       2     7
+#> 3:       3     9
+#> 4:       4     6
+#> 5:       5    18
+```
+
+The per-component table records where each restart’s components landed.
+`component_id` uses the same `run_XX.comp_YY` naming as the `w_all`
+columns of a stabilised fit, so at matching `k` and `n_runs` the two
+line up directly and you can go back to the raw restarts behind any
+cluster.
+
+``` r
+
+head(consensus_diag$clusters)
+#>      component_id   run component pooled_idx cluster local_density silhouette
+#>            <char> <int>     <int>      <int>   <int>         <num>      <num>
+#> 1: run_01.comp_01     1         1          1       5   0.013249059  0.7841961
+#> 2: run_01.comp_02     1         2          2       5   0.012458582  0.8275782
+#> 3: run_01.comp_03     1         3          3       1   0.004470150  0.9566821
+#> 4: run_01.comp_04     1         4          4       3   0.017578840  0.8770334
+#> 5: run_01.comp_05     1         5          5       4   0.017095327  0.6891547
+#> 6: run_02.comp_01     2         1          6       5   0.008731465  0.8714657
+#>      kept
+#>    <lgcl>
+#> 1:   TRUE
+#> 2:   TRUE
+#> 3:   TRUE
+#> 4:   TRUE
+#> 5:   TRUE
+#> 6:   TRUE
+```
+
+With 10 restarts, a cluster holding 10 components is a programme every
+run found. A thin one is a programme only some initialisations saw, and
+that is worth knowing before you write it up.
+
+> **Note**
+>
+> Memory, not runtime, is what bites here. The restarts are dense and
+> all live at once, so budget roughly `n_cells * k * n_runs` floats on
+> top of the counts. At a few hundred thousand cells with `n_runs = 50`
+> that adds up fast, and the honest answer is to run consensus NMF on
+> `MetaCells` instead. See the meta cell vignette.
 
 ### Downstream analysis
 
@@ -1365,16 +1443,10 @@ directions:
   annotations, or use them as features for downstream clustering.
 - **Add activations to the obs table**:
   [`get_data()`](https://gregorlueg.github.io/bixverse/reference/get_data.md)
-  on an `NmfResult` returns a data.table of cell activations that slots
-  into the SingleCells obs table via
+  on an `NmfResult` or a `ConsensusNmfResult` returns a data.table of
+  cell activations that slots into the SingleCells obs table via
   [`add_sc_new_obs()`](https://gregorlueg.github.io/bixverse/reference/add_sc_new_obs.md),
   the same way module scores did earlier.
-- **Consensus across runs**: with
-  [`stabilised_nmf_sc()`](https://gregorlueg.github.io/bixverse/reference/stabilised_nmf_sc.md)
-  you have `k * n_runs` W columns to play with. The classical move is to
-  cluster these to identify components that recur across initialisations
-  (the stable programmes) and components that appear only once (likely
-  overfit to a particular seed).
 
 We leave the choice of analysis here to you - the right downstream
 depends on the biology and your questions to the data, not the API.

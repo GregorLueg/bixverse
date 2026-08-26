@@ -23,7 +23,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.9</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.10</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -78,6 +78,7 @@
     <li><a class="dropdown-item" href="../articles/bag_of_genes_single_cells.html">'Bag of genes' methods for single cell in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/nichenet.html">Ligand receptor analysis</a></li>
     <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/dialogue.html">Multicellular programmes with DIALOGUE</a></li>
     <li><a class="dropdown-item" href="../articles/trajectory_inference.html">Trajectory inference with Palantir and PAGA</a></li>
     <li><a class="dropdown-item" href="../articles/symphony.html">Reference mapping via Symphony</a></li>
     <li><a class="dropdown-item" href="../articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
@@ -113,7 +114,7 @@
       <h1>Bulk co-expression modules</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-08-16</p>
+      <p class="date">2026-08-26</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -137,7 +138,7 @@
 <li>
 <strong>DGRDL</strong> (<a href="https://doi.org/10.1016/j.cels.2022.09.005" class="external-link">Pan, et al.</a>) — dual graph-regularised dictionary learning. Sparse decomposition regularised by feature- and sample-side Laplacians.</li>
 <li>
-<strong>NMF (HALS)</strong> — non-negative matrix factorisation with hierarchical alternating least squares. Non-negative loadings give a natural “parts-based” module interpretation and per-sample module activity.</li>
+<strong>NMF (HALS)</strong> — non-negative matrix factorisation with hierarchical alternating least squares. Non-negative loadings give a natural “parts-based” module interpretation and per-sample module activity. Comes in three flavours: one run, best-of-many restarts, or consensus across restarts (cNMF), which also hands you a way to choose <code>k</code>.</li>
 </ul>
 <p>One structural difference matters throughout. CoReMo and Leiden partition genes: one gene, one module. The three factorisation methods do not, and should not. A gene can load on several components, so <code><a href="../reference/get_modules.html">get_modules()</a></code> returns one row per (gene, component) pair for ICA, NMF and DGRDL, and genes in no component’s tail appear nowhere. <code><a href="../reference/params_module_membership.html">params_module_membership()</a></code> controls that thresholding. Do not assume <code>gene</code> is a unique key.</p>
 <p>None of these is uniformly best. This vignette walks through all five on the same synthetic dataset with planted ground-truth modules, so you can see the inputs, the outputs, and how well each recovers the true structure.</p>
@@ -633,7 +634,7 @@
 <span><span class="va">stab</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_nmf_stability.html">get_nmf_stability</a></span><span class="op">(</span><span class="va">coexp_nmf_stab</span><span class="op">)</span></span>
 <span><span class="va">stab</span></span>
 <span><span class="co">#&gt; $losses</span></span>
-<span><span class="co">#&gt; [1] 6901265232 6885273328 6903864151 6878840103 6887485138</span></span>
+<span><span class="co">#&gt; [1] 6901265227 6885273325 6903864064 6878840099 6887485166</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $converged</span></span>
 <span><span class="co">#&gt; [1] TRUE TRUE TRUE TRUE TRUE</span></span>
@@ -641,11 +642,128 @@
 <span><span class="co">#&gt; $best_idx</span></span>
 <span><span class="co">#&gt; [1] 4</span></span></code></pre></div>
 </div>
-</section><section class="level2"><h2 id="recovery-of-planted-modules">Recovery of planted modules<a class="anchor" aria-label="anchor" href="#recovery-of-planted-modules"></a>
+<section class="level3"><h3 id="consensus-nmf">Consensus NMF<a class="anchor" aria-label="anchor" href="#consensus-nmf"></a>
+</h3>
+<p><code><a href="../reference/stabilised_nmf_bulk.html">stabilised_nmf_bulk()</a></code> picks the restart with the lowest loss, which tells you nothing about whether that restart is reproducible. Consensus NMF asks the better question: pool the components of every restart, throw away the ones that sit on their own, cluster what is left into <code>k</code> groups, and take the median of each group as the answer. What survives is the structure the restarts agree on. That agreement gets a number, the mean silhouette of those clusters, and it is the honest way to judge whether <code>k</code> is right.</p>
+<p>Which brings us to picking <code>k</code>. <code><a href="../reference/nmf_k_sweep_bulk.html">nmf_k_sweep_bulk()</a></code> runs the whole thing across a range and reports stability against reconstruction error, no factors kept, so it stays cheap.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb22"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">k_sweep</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/nmf_k_sweep_bulk.html">nmf_k_sweep_bulk</a></span><span class="op">(</span></span>
+<span>  <span class="va">coexp_nmf</span>,</span>
+<span>  k_range <span class="op">=</span> <span class="fl">2</span><span class="op">:</span><span class="fl">8</span>,</span>
+<span>  n_runs <span class="op">=</span> <span class="fl">10L</span>,</span>
+<span>  preprocessing <span class="op">=</span> <span class="st">"none"</span>,</span>
+<span>  nmf_hals_params <span class="op">=</span> <span class="fu"><a href="../reference/params_nmf_hals.html">params_nmf_hals</a></span><span class="op">(</span>max_iter <span class="op">=</span> <span class="fl">200L</span>, tol <span class="op">=</span> <span class="fl">1e-3</span><span class="op">)</span>,</span>
+<span>  nmf_consensus_params <span class="op">=</span> <span class="fu"><a href="../reference/params_nmf_consensus.html">params_nmf_consensus</a></span><span class="op">(</span>density_threshold <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>,</span>
+<span>  seed <span class="op">=</span> <span class="fl">42L</span>,</span>
+<span>  .verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">k_sweep</span></span>
+<span><span class="co">#&gt; NmfKSweepResult (consensus NMF k sweep)</span></span>
+<span><span class="co">#&gt;   Source class:     BulkCoExp</span></span>
+<span><span class="co">#&gt;   k range:          2 to 8</span></span>
+<span><span class="co">#&gt;   No runs per k:    10</span></span>
+<span><span class="co">#&gt;   Most stable k:    4 (stability = 0.9752)</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;        k stability best_error median_error consensus_failed n_dropped</span></span>
+<span><span class="co">#&gt;    &lt;int&gt;     &lt;num&gt;      &lt;num&gt;        &lt;num&gt;           &lt;lgcl&gt;     &lt;int&gt;</span></span>
+<span><span class="co">#&gt; 1:     2 0.7546717 0.13438072   0.13449627            FALSE         0</span></span>
+<span><span class="co">#&gt; 2:     3 0.7082610 0.09671029   0.09806779            FALSE         0</span></span>
+<span><span class="co">#&gt; 3:     4 0.9751884 0.06291160   0.06299967            FALSE         0</span></span>
+<span><span class="co">#&gt; 4:     5 0.8993866 0.05916342   0.06091455            FALSE         0</span></span>
+<span><span class="co">#&gt; 5:     6 0.7649854 0.05695935   0.05906541            FALSE         0</span></span>
+<span><span class="co">#&gt; 6:     7 0.7087603 0.05512724   0.05638576            FALSE         0</span></span>
+<span><span class="co">#&gt; 7:     8 0.6015527 0.05385696   0.05448819            FALSE         0</span></span>
+<span><span class="co">#&gt;    n_empty_clusters n_converged</span></span>
+<span><span class="co">#&gt;               &lt;int&gt;       &lt;int&gt;</span></span>
+<span><span class="co">#&gt; 1:                0          10</span></span>
+<span><span class="co">#&gt; 2:                0          10</span></span>
+<span><span class="co">#&gt; 3:                0          10</span></span>
+<span><span class="co">#&gt; 4:                0          10</span></span>
+<span><span class="co">#&gt; 5:                0          10</span></span>
+<span><span class="co">#&gt; 6:                0          10</span></span>
+<span><span class="co">#&gt; 7:                0          10</span></span></code></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb23"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">k_sweep</span><span class="op">)</span></span></code></pre></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure><p><img src="bulk_coexpression_modules_files/figure-html/nmf-k-sweep-plot-1.png" width="672"></p>
+<figcaption>Consensus NMF k sweep: stability against reconstruction error.</figcaption></figure>
+</div>
+</div>
+</div>
+<p>Error falls monotonically with <code>k</code>, so on its own it would push you to the largest <code>k</code> you can afford. Stability is the counterweight. You want the last <code>k</code> before it drops off, where the error curve is still coming down.</p>
+<div>
+<blockquote>
+<p><strong>Note</strong></p>
+<p><code>density_threshold = 2</code> switches the outlier filter off, because cosine distance cannot exceed 2. With the filter live, components whose neighbours sit far away get dropped, and if that leaves fewer than <code>k</code> of them the fit errors rather than handing back something degenerate. That is the right behaviour on real data, but with only 10 restarts on a small synthetic matrix it fires more often than it should. Plot <code>local_density</code> from <code><a href="../reference/get_nmf_stability.html">get_nmf_stability()</a></code> to pick a real threshold for your data.</p>
+</blockquote>
+</div>
+<p>Now fit at the chosen <code>k</code>:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb24"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">coexp_nmf_consensus</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/consensus_nmf_bulk.html">consensus_nmf_bulk</a></span><span class="op">(</span></span>
+<span>  <span class="va">coexp_nmf</span>,</span>
+<span>  k <span class="op">=</span> <span class="fl">4L</span>,</span>
+<span>  n_runs <span class="op">=</span> <span class="fl">10L</span>,</span>
+<span>  preprocessing <span class="op">=</span> <span class="st">"none"</span>,</span>
+<span>  nmf_hals_params <span class="op">=</span> <span class="fu"><a href="../reference/params_nmf_hals.html">params_nmf_hals</a></span><span class="op">(</span>max_iter <span class="op">=</span> <span class="fl">300L</span>, tol <span class="op">=</span> <span class="fl">1e-4</span><span class="op">)</span>,</span>
+<span>  nmf_consensus_params <span class="op">=</span> <span class="fu"><a href="../reference/params_nmf_consensus.html">params_nmf_consensus</a></span><span class="op">(</span>density_threshold <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>,</span>
+<span>  seed <span class="op">=</span> <span class="fl">42L</span>,</span>
+<span>  .verbose <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">consensus_stab</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_nmf_stability.html">get_nmf_stability</a></span><span class="op">(</span><span class="va">coexp_nmf_consensus</span><span class="op">)</span></span>
+<span><span class="va">consensus_stab</span><span class="op">$</span><span class="va">stability</span></span>
+<span><span class="co">#&gt; [1] 0.988677</span></span>
+<span><span class="va">consensus_stab</span><span class="op">$</span><span class="va">cluster_sizes</span></span>
+<span><span class="co">#&gt;    cluster     n</span></span>
+<span><span class="co">#&gt;      &lt;int&gt; &lt;int&gt;</span></span>
+<span><span class="co">#&gt; 1:       1    10</span></span>
+<span><span class="co">#&gt; 2:       2    10</span></span>
+<span><span class="co">#&gt; 3:       3    10</span></span>
+<span><span class="co">#&gt; 4:       4    10</span></span></code></pre></div>
+</div>
+<p>The per-component table shows where every restart’s components ended up. <code>component_id</code> uses the same <code>run_XX.comp_YY</code> naming as the <code>w_all</code> columns of a stabilised fit, so at matching <code>k</code> and <code>n_runs</code> the two line up directly.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb25"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">consensus_stab</span><span class="op">$</span><span class="va">clusters</span><span class="op">)</span></span>
+<span><span class="co">#&gt;      component_id   run component pooled_idx cluster local_density silhouette</span></span>
+<span><span class="co">#&gt;            &lt;char&gt; &lt;int&gt;     &lt;int&gt;      &lt;int&gt;   &lt;int&gt;         &lt;num&gt;      &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1: run_01.comp_01     1         1          1       3  5.220121e-06  0.9999714</span></span>
+<span><span class="co">#&gt; 2: run_01.comp_02     1         2          2       4  9.438180e-03  0.9763555</span></span>
+<span><span class="co">#&gt; 3: run_01.comp_03     1         3          3       1  7.572240e-03  0.9526643</span></span>
+<span><span class="co">#&gt; 4: run_01.comp_04     1         4          4       2  1.848404e-04  0.9952859</span></span>
+<span><span class="co">#&gt; 5: run_02.comp_01     2         1          5       2  5.203961e-05  0.9968476</span></span>
+<span><span class="co">#&gt; 6: run_02.comp_02     2         2          6       3  6.306890e-07  0.9999903</span></span>
+<span><span class="co">#&gt;      kept</span></span>
+<span><span class="co">#&gt;    &lt;lgcl&gt;</span></span>
+<span><span class="co">#&gt; 1:   TRUE</span></span>
+<span><span class="co">#&gt; 2:   TRUE</span></span>
+<span><span class="co">#&gt; 3:   TRUE</span></span>
+<span><span class="co">#&gt; 4:   TRUE</span></span>
+<span><span class="co">#&gt; 5:   TRUE</span></span>
+<span><span class="co">#&gt; 6:   TRUE</span></span></code></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb26"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">nmf_consensus_modules</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_nmf_modules.html">get_nmf_modules</a></span><span class="op">(</span><span class="va">coexp_nmf_consensus</span><span class="op">)</span></span>
+<span><span class="va">nmf_consensus_modules</span><span class="op">[</span>, <span class="va">.N</span>, by <span class="op">=</span> <span class="va">module_id</span><span class="op">]</span></span>
+<span><span class="co">#&gt;    module_id     N</span></span>
+<span><span class="co">#&gt;       &lt;char&gt; &lt;int&gt;</span></span>
+<span><span class="co">#&gt; 1:   comp_01    57</span></span>
+<span><span class="co">#&gt; 2:   comp_02    66</span></span>
+<span><span class="co">#&gt; 3:   comp_03     3</span></span>
+<span><span class="co">#&gt; 4:   comp_04    54</span></span></code></pre></div>
+</div>
+</section></section><section class="level2"><h2 id="recovery-of-planted-modules">Recovery of planted modules<a class="anchor" aria-label="anchor" href="#recovery-of-planted-modules"></a>
 </h2>
 <p>With ground truth in hand we can quantify how well each method recovered the three planted modules. For each method we compute the best-matching planted module per detected cluster (max Jaccard), then take the mean Jaccard across the three planted modules…. A simple “recall” score.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb22"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb27"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># assignments: data.table with columns `gene` and `module_id`.</span></span>
 <span><span class="co"># Returns one score per planted module: the best Jaccard any detected cluster</span></span>
 <span><span class="co"># manages against it.</span></span>
@@ -661,7 +779,7 @@
 <span><span class="op">}</span></span>
 <span></span>
 <span><span class="va">recovery</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/data.table/man/data.table.html" class="external-link">data.table</a></span><span class="op">(</span></span>
-<span>  method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"CoReMo"</span>, <span class="st">"Leiden"</span>, <span class="st">"ICA"</span>, <span class="st">"DGRDL"</span>, <span class="st">"NMF"</span><span class="op">)</span>,</span>
+<span>  method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"CoReMo"</span>, <span class="st">"Leiden"</span>, <span class="st">"ICA"</span>, <span class="st">"DGRDL"</span>, <span class="st">"NMF"</span>, <span class="st">"Consensus NMF"</span><span class="op">)</span>,</span>
 <span>  score <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
 <span>    <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="fu">best_jaccard_vs</span><span class="op">(</span></span>
 <span>      <span class="va">coremo_modules</span><span class="op">[</span>, <span class="fu">.</span><span class="op">(</span><span class="va">gene</span>, module_id <span class="op">=</span> <span class="va">cluster_id</span><span class="op">)</span><span class="op">]</span>,</span>
@@ -670,22 +788,24 @@
 <span>    <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="fu">best_jaccard_vs</span><span class="op">(</span><span class="va">leiden_modules</span>, <span class="va">truth</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>    <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="fu">best_jaccard_vs</span><span class="op">(</span><span class="va">ica_modules</span>, <span class="va">truth</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>    <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="fu">best_jaccard_vs</span><span class="op">(</span><span class="va">dgrdl_modules</span>, <span class="va">truth</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>    <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="fu">best_jaccard_vs</span><span class="op">(</span><span class="va">nmf_modules</span>, <span class="va">truth</span><span class="op">)</span><span class="op">)</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="fu">best_jaccard_vs</span><span class="op">(</span><span class="va">nmf_modules</span>, <span class="va">truth</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="fu">best_jaccard_vs</span><span class="op">(</span><span class="va">nmf_consensus_modules</span>, <span class="va">truth</span><span class="op">)</span><span class="op">)</span></span>
 <span>  <span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/pkg/data.table/man/setorder.html" class="external-link">setorder</a></span><span class="op">(</span><span class="va">recovery</span>, <span class="op">-</span><span class="va">score</span><span class="op">)</span></span>
 <span><span class="va">recovery</span></span>
-<span><span class="co">#&gt;    method     score</span></span>
-<span><span class="co">#&gt;    &lt;char&gt;     &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1: Leiden 0.8366667</span></span>
-<span><span class="co">#&gt; 2:    ICA 0.7573697</span></span>
-<span><span class="co">#&gt; 3: CoReMo 0.7500000</span></span>
-<span><span class="co">#&gt; 4:    NMF 0.6811551</span></span>
-<span><span class="co">#&gt; 5:  DGRDL 0.1505952</span></span></code></pre></div>
+<span><span class="co">#&gt;           method     score</span></span>
+<span><span class="co">#&gt;           &lt;char&gt;     &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1:        Leiden 0.8366667</span></span>
+<span><span class="co">#&gt; 2:           ICA 0.7573697</span></span>
+<span><span class="co">#&gt; 3:        CoReMo 0.7500000</span></span>
+<span><span class="co">#&gt; 4:           NMF 0.6811551</span></span>
+<span><span class="co">#&gt; 5: Consensus NMF 0.5900000</span></span>
+<span><span class="co">#&gt; 6:         DGRDL 0.1505952</span></span></code></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb23"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb28"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">recovery</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/reorder.factor.html" class="external-link">reorder</a></span><span class="op">(</span><span class="va">method</span>, <span class="va">score</span><span class="op">)</span>, y <span class="op">=</span> <span class="va">score</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_bar.html" class="external-link">geom_col</a></span><span class="op">(</span>fill <span class="op">=</span> <span class="st">"steelblue"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/coord_flip.html" class="external-link">coord_flip</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
@@ -700,11 +820,12 @@
 </div>
 </div>
 </div>
+<p>Worth being blunt about one result there: consensus NMF scores <em>below</em> plain NMF. That is not a bug, and it is not an argument against consensus NMF. Two things are going on. This data was generated with <code>hub_modular</code>, a Normal latent factor, so there is no non-negative ground truth for NMF to reach in the first place, and both NMF variants are fighting the data. On top of that, consensus optimises for reproducibility, not recall: the median across restarts is deliberately conservative, and the components it keeps are the ones every restart found rather than the ones that happen to match a planted module best on one lucky seed. A recall number on simulated data rewards the lucky seed. Real data does not.</p>
 </section><section class="level2"><h2 id="scoring-against-the-latent-factors">Scoring against the latent factors<a class="anchor" aria-label="anchor" href="#scoring-against-the-latent-factors"></a>
 </h2>
 <p>Jaccard on gene sets only asks whether a method found the right genes. The latent factors let us ask a sharper question: did it recover the right <em>signal</em>? For CoReMo we can correlate each per-sample eigengene against the factor the module was actually built on.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb24"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb29"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># activity: samples x k matrix of per-sample scores (eigengenes, ICA sample</span></span>
 <span><span class="co"># activity, NMF sample activity). Returns one score per true factor: the best</span></span>
 <span><span class="co"># absolute correlation any recovered column manages against it.</span></span>
@@ -746,7 +867,7 @@
 </ul>
 <p>The distinction matters because “ICA-friendly” is a claim about <em>identifiability of the factorisation</em>, that is, recovering the sources up to permutation and scaling. It says nothing about whether assigning each gene to its strongest-loading component reproduces a planted block. Three methods rather than five here, to keep the render time honest: Leiden and DGRDL both carry a parameter search on top.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb25"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb30"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">run_methods</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">generator</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">params</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/params_synthetic_bulk_rnaseq.html">params_synthetic_bulk_rnaseq</a></span><span class="op">(</span></span>
 <span>    num_samples <span class="op">=</span> <span class="fl">100L</span>,</span>
@@ -843,7 +964,7 @@
 <span><span class="co">#&gt; 8: non_gaussian_factor factor_cor  0.978 0.466 0.979</span></span></code></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb26"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb31"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">grid_long</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/data.table/man/melt.data.table.html" class="external-link">melt</a></span><span class="op">(</span></span>
 <span>  <span class="va">grid_res</span>,</span>
 <span>  id.vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"generator"</span>, <span class="st">"metric"</span><span class="op">)</span>,</span>
@@ -871,7 +992,7 @@
 <p><strong>ICA’s factor recovery is best on <code>non_gaussian_factor</code>, exactly as advertised.</strong> The Laplace-factor generator is the one built for ICA and it wins on the metric identifiability is actually about. NMF’s factor recovery sits above 0.96 on all four, so that metric does not discriminate for NMF at all: it recovers per-sample activity almost perfectly regardless.</p>
 <p><strong>ICA’s Jaccard on <code>modular</code> collapses, and the reason is instructive.</strong> Membership for the factorisation methods comes from keeping the tails of each component’s loading distribution, which quietly assumes there <em>is</em> a tail. That assumption depends entirely on how the loadings were drawn:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb27"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb32"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">excess_kurtosis</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">centred</span> <span class="op">&lt;-</span> <span class="va">x</span> <span class="op">-</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">centred</span><span class="op">^</span><span class="fl">4</span><span class="op">)</span> <span class="op">/</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">centred</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span> <span class="op">-</span> <span class="fl">3</span></span>

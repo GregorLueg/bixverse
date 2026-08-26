@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.9</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.10</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -56,6 +56,7 @@
     <li><a class="dropdown-item" href="../articles/bag_of_genes_single_cells.html">'Bag of genes' methods for single cell in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/nichenet.html">Ligand receptor analysis</a></li>
     <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/dialogue.html">Multicellular programmes with DIALOGUE</a></li>
     <li><a class="dropdown-item" href="../articles/trajectory_inference.html">Trajectory inference with Palantir and PAGA</a></li>
     <li><a class="dropdown-item" href="../articles/symphony.html">Reference mapping via Symphony</a></li>
     <li><a class="dropdown-item" href="../articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
@@ -85,6 +86,28 @@
 
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.4.10" id="bixverse-0410">bixverse 0.4.10<a class="anchor" aria-label="anchor" href="#bixverse-0410"></a></h2>
+<div class="section level3">
+<h3 id="features-0-4-10">Features<a class="anchor" aria-label="anchor" href="#features-0-4-10"></a></h3>
+<ul><li>Consensus NMF implemented:
+<ul><li>
+<code><a href="../reference/consensus_nmf_bulk.html">consensus_nmf_bulk()</a></code> on <code>BulkCoExp</code> and <code><a href="../reference/consensus_nmf_sc.html">consensus_nmf_sc()</a></code> on <code>SingleCells</code> and <code>MetaCells</code>.</li>
+<li>
+<code><a href="../reference/nmf_k_sweep_bulk.html">nmf_k_sweep_bulk()</a></code> and <code><a href="../reference/nmf_k_sweep_sc.html">nmf_k_sweep_sc()</a></code> sweep a range of <code>k</code> and report stability against reconstruction error, so choosing <code>k</code> stops being a guess. Both return an <code>NmfKSweepResult</code> with a <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> method.</li>
+<li>
+<code><a href="../reference/params_nmf_consensus.html">params_nmf_consensus()</a></code> plus the matching checkmate assertions.</li>
+<li>New <code>ConsensusNmfResult</code> class with <code><a href="../reference/get_w.html">get_w()</a></code>, <code><a href="../reference/get_h.html">get_h()</a></code>, <code><a href="../reference/get_data.html">get_data()</a></code> and a new <code><a href="../reference/get_stability.html">get_stability()</a></code> generic for the clustering diagnostics.</li>
+<li>
+<code><a href="../reference/get_nmf_stability.html">get_nmf_stability()</a></code> on <code>BulkCoExp</code> now covers consensus fits as well as stabilised ones.</li>
+</ul></li>
+<li>Agent skills implemented: <code><a href="../reference/install_agent_skill.html">install_agent_skill()</a></code> installs an agent skill.</li>
+<li>VISION scores enabled also for the <code>MetaCells</code> class.</li>
+<li>Latent dirichlet allocation (LDA) implemented for decomposing binary data (think cell x TF active binary matrices).</li>
+<li>
+<a href="https://www.nature.com/articles/s41587-022-01288-0" class="external-link">DIALOGUE</a> also available now.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.4.9" id="bixverse-049">bixverse 0.4.9<a class="anchor" aria-label="anchor" href="#bixverse-049"></a></h2>
 <div class="section level3">

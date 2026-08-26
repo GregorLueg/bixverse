@@ -13,7 +13,7 @@ gene signature, etc."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.9</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.10</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -62,6 +62,7 @@ gene signature, etc."></head><body>
     <li><a class="dropdown-item" href="../articles/bag_of_genes_single_cells.html">'Bag of genes' methods for single cell in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/nichenet.html">Ligand receptor analysis</a></li>
     <li><a class="dropdown-item" href="../articles/meta_cells.html">Meta cells - generation and analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/dialogue.html">Multicellular programmes with DIALOGUE</a></li>
     <li><a class="dropdown-item" href="../articles/trajectory_inference.html">Trajectory inference with Palantir and PAGA</a></li>
     <li><a class="dropdown-item" href="../articles/symphony.html">Reference mapping via Symphony</a></li>
     <li><a class="dropdown-item" href="../articles/multi_modal_single_cells.html">Multi-modal analysis</a></li>
@@ -109,20 +110,19 @@ gene signature, etc.</p>
 
 
 <dl><dt id="arg-object">object<a class="anchor" aria-label="anchor" href="#arg-object"></a></dt>
-<dd><p><code>SingleCells</code> class.</p></dd>
+<dd><p><code>SingleCells</code>, <code>MetaCells</code> (or potentially other) class.</p></dd>
 
 
 <dt id="arg-gs-list">gs_list<a class="anchor" aria-label="anchor" href="#arg-gs-list"></a></dt>
 <dd><p>Named nested list. The elements have the gene identifiers of
 the respective gene sets and have the option to have a <code>"pos"</code> and <code>"neg"</code>
-gene sets. The names need to be part of the variables of the
-<code>SingleCells</code> class.</p></dd>
+gene sets. The names need to be part of the variables of the object.</p></dd>
 
 
 <dt id="arg-streaming">streaming<a class="anchor" aria-label="anchor" href="#arg-streaming"></a></dt>
 <dd><p>Optional Boolean. Shall the data be streamed in. Useful for
 larger data sets where you wish to avoid loading in the whole data. If
-<code>NULL</code>, will automatically detect.</p></dd>
+<code>NULL</code>, will automatically detect. Ignored when applied to <code>MetaCells</code>.</p></dd>
 
 
 <dt id="arg--verbose">.verbose<a class="anchor" aria-label="anchor" href="#arg--verbose"></a></dt>
@@ -133,7 +133,8 @@ verbosity.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>Returns a <code>ScMatrixRes</code> with the VISION scores.</p>
+    <p>The VISION scores in form of a matrix that is cells x gene sets
+or as <code>ScMatrixRes</code> pending the input.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>

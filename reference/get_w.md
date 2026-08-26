@@ -12,6 +12,9 @@ get_w(x)
 
 # S3 method for class 'StabilisedNmfResult'
 get_w(x)
+
+# S3 method for class 'ConsensusNmfResult'
+get_w(x)
 ```
 
 ## Arguments

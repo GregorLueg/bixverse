@@ -5,7 +5,7 @@ Get TF gene correlations for SingleCells
 ## Usage
 
 ``` r
-.tf_gene_cor_sc(tf_to_gene, object, spearman)
+.tf_gene_cor_sc(tf_to_gene, object, spearman, .verbose = TRUE)
 ```
 
 ## Arguments
@@ -21,6 +21,10 @@ Get TF gene correlations for SingleCells
 - spearman:
 
   Boolean. Shall the Spearman correlation be used.
+
+- .verbose:
+
+  Boolean or integer. Verbosity.
 
 ## Value
 

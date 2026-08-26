@@ -2,17 +2,15 @@
 
 Calculates an AUC-type score akin to AUCell across the gene sets, see
 Aibar et al. Three statistics are on offer, all consuming the same
-within-cell ranking but weighting it differently. `"wilcox"` (the
-default) is the AUC derived from the Mann-Whitney U statistic over the
-full ranking; its null sits at 0.5 for any gene set size, which makes it
-a good fit for pathway activity. `"recovery"` is the recovery-curve AUC
-under a rank cutoff, i.e. the actual AUCell statistic of Aibar, et al.,
-and is top-heavy: only genes inside the top `max_rank` of the cell
-contribute. `"ap"` is average precision, the most top-heavy of the
-three, but its null tracks the gene set prevalence, so raw values are
-not comparable across gene sets of different size unless `standardise`
-is on. Data can be streamed in chunks of 50k cells per or loaded in in
-one go.
+within-cell ranking but weighting it differently. `"recovery"` (default)
+is the recovery-curve AUC under a rank cutoff, i.e. the AUCell statistic
+of Aibar, et al., and is top-heavy: only genes inside the top `max_rank`
+of the cell contribute. `"wilcox"` is the AUC derived from the
+Mann-Whitney U statistic over the full ranking; its null sits at 0.5 for
+any gene set size, which makes it a good fit for pathway activity.
+`"ap"` is average precision, the most top-heavy of the three, but its
+null tracks the gene set prevalence, so raw values are not comparable
+across gene sets of different size unless `standardise` is on.
 
 ## Usage
 

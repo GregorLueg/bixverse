@@ -15,20 +15,20 @@ vision_sc(object, gs_list, streaming = NULL, .verbose = TRUE)
 
 - object:
 
-  `SingleCells` class.
+  `SingleCells`, `MetaCells` (or potentially other) class.
 
 - gs_list:
 
   Named nested list. The elements have the gene identifiers of the
   respective gene sets and have the option to have a `"pos"` and `"neg"`
-  gene sets. The names need to be part of the variables of the
-  `SingleCells` class.
+  gene sets. The names need to be part of the variables of the object.
 
 - streaming:
 
   Optional Boolean. Shall the data be streamed in. Useful for larger
   data sets where you wish to avoid loading in the whole data. If
-  `NULL`, will automatically detect.
+  `NULL`, will automatically detect. Ignored when applied to
+  `MetaCells`.
 
 - .verbose:
 
@@ -38,7 +38,8 @@ vision_sc(object, gs_list, streaming = NULL, .verbose = TRUE)
 
 ## Value
 
-Returns a `ScMatrixRes` with the VISION scores.
+The VISION scores in form of a matrix that is cells x gene sets or as
+`ScMatrixRes` pending the input.
 
 ## References
 

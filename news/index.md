@@ -1,5 +1,41 @@
 # Changelog
 
+## bixverse 0.4.10
+
+### Features
+
+- Consensus NMF implemented:
+  - [`consensus_nmf_bulk()`](https://gregorlueg.github.io/bixverse/reference/consensus_nmf_bulk.md)
+    on `BulkCoExp` and
+    [`consensus_nmf_sc()`](https://gregorlueg.github.io/bixverse/reference/consensus_nmf_sc.md)
+    on `SingleCells` and `MetaCells`.
+  - [`nmf_k_sweep_bulk()`](https://gregorlueg.github.io/bixverse/reference/nmf_k_sweep_bulk.md)
+    and
+    [`nmf_k_sweep_sc()`](https://gregorlueg.github.io/bixverse/reference/nmf_k_sweep_sc.md)
+    sweep a range of `k` and report stability against reconstruction
+    error, so choosing `k` stops being a guess. Both return an
+    `NmfKSweepResult` with a
+    [`plot()`](https://rdrr.io/r/graphics/plot.default.html) method.
+  - [`params_nmf_consensus()`](https://gregorlueg.github.io/bixverse/reference/params_nmf_consensus.md)
+    plus the matching checkmate assertions.
+  - New `ConsensusNmfResult` class with
+    [`get_w()`](https://gregorlueg.github.io/bixverse/reference/get_w.md),
+    [`get_h()`](https://gregorlueg.github.io/bixverse/reference/get_h.md),
+    [`get_data()`](https://gregorlueg.github.io/bixverse/reference/get_data.md)
+    and a new
+    [`get_stability()`](https://gregorlueg.github.io/bixverse/reference/get_stability.md)
+    generic for the clustering diagnostics.
+  - [`get_nmf_stability()`](https://gregorlueg.github.io/bixverse/reference/get_nmf_stability.md)
+    on `BulkCoExp` now covers consensus fits as well as stabilised ones.
+- Agent skills implemented:
+  [`install_agent_skill()`](https://gregorlueg.github.io/bixverse/reference/install_agent_skill.md)
+  installs an agent skill.
+- VISION scores enabled also for the `MetaCells` class.
+- Latent dirichlet allocation (LDA) implemented for decomposing binary
+  data (think cell x TF active binary matrices).
+- [DIALOGUE](https://www.nature.com/articles/s41587-022-01288-0) also
+  available now.
+
 ## bixverse 0.4.9
 
 ### Chores
