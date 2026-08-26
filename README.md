@@ -38,14 +38,15 @@ of RAM.
 
 | Step | CPU | GPU |
 |---|---|---|
-| Stream in 24 samples | ~3.5 min | |
+| Stream and process to desk the 24 samples | ~3.5 min | |
 | HVG selection (2k genes) | ~10 s | |
 | PCA (32 components) | ~25 s | 15 s |
 | kNN graph | ~90 s (NNDescent) | <30 s (CAGRA) |
 
-Nothing here loads the full matrix into memory. Counts sit on disk in a Rust
-binary format, metadata sits in DuckDB, and the analysis streams. You can even
-write pipelines like this here:
+Nothing here loads the full matrix into memory at any point. Counts sit on disk 
+in a Rust binary format, metadata sits in DuckDB, and the analysis streams data
+in small chunks to not blow up your memory. You can even write pipelines like 
+this here:
 
 ```r
 pipeline <- sc_pipeline() %>>%
@@ -60,7 +61,7 @@ sc_object <- apply_pipeline(pipeline, sc_object)
 
 Pipelines are inert. Nothing runs until you apply one, and the same chain works
 on a `SingleCells`, on a `SingleCellsSubset`, or once per group via
-`apply_pipeline_per_group()`.
+`apply_pipeline_per_group()` (useful for sub cell type analysis).
 
 Full walk-through: [scaling to millions of cells](https://gregorlueg.github.io/bixverse/articles/single_cell_big_data.html).
 What changed in each release: [the changelog](https://gregorlueg.github.io/bixverse/news/index.html).
@@ -70,7 +71,7 @@ What changed in each release: [the changelog](https://gregorlueg.github.io/bixve
 | Domain | What's in there | Read more |
 |---|---|---|
 | Gene set enrichment | Hypergeometric tests, fgsea, GSVA, ssGSEA, singscore, mitch, plus GO-aware elim methods | [GSE methods](https://gregorlueg.github.io/bixverse/articles/gse_methods.html), [pathway activity](https://gregorlueg.github.io/bixverse/articles/pathway_activity.html) |
-| Regulons | SCENIC, CisTarget motif enrichment, regulon binarisation | [bag of genes](https://gregorlueg.github.io/bixverse/articles/bag_of_genes_single_cells.html) |
+| (Single cell) Regulons | SCENIC, CisTarget motif enrichment, regulon binarisation | [bag of genes](https://gregorlueg.github.io/bixverse/articles/bag_of_genes_single_cells.html) |
 | Bulk co-expression | CoReMo, stabilised ICA, contrastive PCA, NMF and consensus NMF, DGRDL | [co-expression modules](https://gregorlueg.github.io/bixverse/articles/bulk_coexpression_modules.html), [contrastive PCA](https://gregorlueg.github.io/bixverse/articles/cpca.html) |
 | Bulk DGE | limma-voom, Hedges' g effect sizes, batch correction, TPM and RPKM, structured handling of many contrasts | [reference](https://gregorlueg.github.io/bixverse/reference/index.html) |
 | Ontologies | Resnik, Lin and Wang semantic similarities over disease, phenotype and gene ontologies | [semantic similarities](https://gregorlueg.github.io/bixverse/articles/ontologies.html) |
@@ -144,7 +145,8 @@ entry point. Three routes depending on what you're after:
 
 - [Why Rust is here](https://gregorlueg.github.io/bixverse/articles/rust_functions.html).
   A show case of how much faster Rust makes a lot of basic functions. If you
-  want to integrate any of this into your own package, please feel free.
+  want to integrate any of this into your own package, please feel free. MIT
+  licence for the win.
 - [Design choices for single cell](https://gregorlueg.github.io/bixverse/articles/design_single_cell.html).
   Read this before touching the single cell suite. It explains the on-disk
   layout, the trade-offs and why things are the way they are.
