@@ -4632,6 +4632,14 @@ get_params.DialogueResult <- function(object, ...) {
   object$params
 }
 
+#' @method get_params DialogueResult
+#'
+#' @export
+S7::method(get_params, S7::new_S3_class("DialogueResult")) <-
+  function(object, to_json = FALSE, pretty_json = FALSE) {
+    get_params.DialogueResult(object = object)
+  }
+
 #' @rdname get_results
 #'
 #' @export
@@ -4640,6 +4648,14 @@ get_results.DialogueResult <- function(object, ...) {
 
   object$programmes
 }
+
+#' @method get_results DialogueResult
+#'
+#' @export
+S7::method(get_results, S7::new_S3_class("DialogueResult")) <-
+  function(object) {
+    get_results.DialogueResult(object = object)
+  }
 
 #### primitives ----------------------------------------------------------------
 
