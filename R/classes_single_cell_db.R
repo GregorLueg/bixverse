@@ -751,7 +751,15 @@ SingleCellDuckDBBase <- R6::R6Class(
     db_path = NULL,
     # Helper to connect to the DB
     connect_db = function() {
-      con <- DBI::dbConnect(duckdb::duckdb(), dbdir = private$db_path)
+      # `shared_home` is not about the database file, it is where duckdb keeps
+      # downloaded extensions and secrets. We use neither, so there is nothing
+      # to gain from writing into the user's ~/.duckdb. Passing it either way
+      # also marks the choice as made, which is what stops duckdb announcing
+      # its storage location on every single connection.
+      con <- DBI::dbConnect(
+        duckdb::duckdb(shared_home = FALSE),
+        dbdir = private$db_path
+      )
       return(con)
     },
     # Helper to check that obs table exists
@@ -1856,7 +1864,7 @@ SingleCellDuckDB <- R6::R6Class(
         checkmate::qassert(fi$exp_id, "S1")
 
         src_con <- DBI::dbConnect(
-          duckdb::duckdb(),
+          duckdb::duckdb(shared_home = FALSE),
           dbdir = fi$db_path,
           read_only = TRUE
         )
@@ -1940,7 +1948,7 @@ SingleCellDuckDB <- R6::R6Class(
       checkmate::assertCharacter(final_gene_names, min.len = 1L)
 
       src_con <- DBI::dbConnect(
-        duckdb::duckdb(),
+        duckdb::duckdb(shared_home = FALSE),
         dbdir = source_db_path,
         read_only = TRUE
       )

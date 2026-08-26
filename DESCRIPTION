@@ -47,7 +47,7 @@ Imports:
     data.table,
     DBI,
     dplyr,
-    duckdb,
+    duckdb (>= 1.5.5),
     edgeR,
     fastcluster,
     ggplot2,
