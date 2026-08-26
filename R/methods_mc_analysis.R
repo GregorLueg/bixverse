@@ -39,6 +39,144 @@ S7::method(aucell_sc, MetaCells) <- function(
   return(auc_res)
 }
 
+## vision ----------------------------------------------------------------------
+
+### calculate the scores -------------------------------------------------------
+
+# generics found in base_generics_sc.R
+
+#' @method vision_sc MetaCells
+#'
+#' @export
+S7::method(vision_sc, MetaCells) <- function(
+  object,
+  gs_list,
+  streaming = NULL,
+  .verbose = TRUE
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(object, MetaCells))
+  checkmate::assertList(gs_list, types = "list", names = "named")
+  checkmate::qassert(streaming, c("B1", "0"))
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
+
+  vision_gs_clean <- purrr::map(gs_list, \(ls) {
+    lapply(ls, FUN = get_gene_indices, x = object, rust_index = TRUE)
+  })
+
+  # VISION scores the normalised counts; `"raw"` here would score the raw ones
+  # without complaining
+  vision_res <- rs_mc_vision(
+    sparse_data = mc_counts_to_list(object, assay = "norm"),
+    gs_list = vision_gs_clean,
+    verbose = parse_verbosity(.verbose)
+  )
+
+  colnames(vision_res) <- names(gs_list)
+  rownames(vision_res) <- S7::prop(object, "obs_table")$meta_cell_id
+
+  return(vision_res)
+}
+
+### vision with auto-correlation -----------------------------------------------
+
+# generics found in base_generics_sc.R
+
+#' @method vision_w_autocor_sc MetaCells
+#'
+#' @export
+S7::method(vision_w_autocor_sc, MetaCells) <- function(
+  object,
+  gs_list,
+  embd_to_use,
+  no_embd_to_use = NULL,
+  use_knn = TRUE,
+  vision_params = params_sc_vision(),
+  streaming = NULL,
+  random_seed = 42L,
+  .verbose = TRUE
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(object, MetaCells))
+  checkmate::assertList(gs_list, types = "list", names = "named")
+  checkmate::qassert(embd_to_use, "S1")
+  checkmate::qassert(no_embd_to_use, c("I1", "0"))
+  checkmate::qassert(use_knn, "B1")
+  assertScVision(vision_params)
+  checkmate::qassert(streaming, c("B1", "0"))
+  checkmate::qassert(random_seed, "I1")
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
+
+  # scores cover every meta cell and every gene, so only the embedding and the
+  # kNN are taken off the prep
+  prepped <- .prep_mc_embd_knn(
+    object = object,
+    embd_to_use = embd_to_use,
+    use_knn = use_knn,
+    no_embd_to_use = no_embd_to_use,
+    cells_to_take = NULL,
+    genes_to_take = NULL
+  )
+
+  vision_gs_clean <- purrr::map(gs_list, \(ls) {
+    lapply(ls, FUN = get_gene_indices, x = object, rust_index = TRUE)
+  })
+
+  if (.verbose) {
+    message(sprintf(
+      "Generating %i random gene set clusters with a total of %s permutations.",
+      vision_params$n_cluster,
+      vision_params$n_perm
+    ))
+  }
+
+  c(random_gs, cluster_membership) %<-%
+    with(
+      vision_params,
+      .generate_null_perm_gs(
+        gs_list = gs_list,
+        expr_genes = S7::prop(object, "var_table")$gene_id,
+        n_perm = n_perm,
+        n_comp = n_cluster,
+        random_seed = random_seed
+      )
+    )
+
+  random_gs_clean <- purrr::map(random_gs, \(rs) {
+    lapply(
+      rs,
+      FUN = function(ls) {
+        lapply(ls, FUN = get_gene_indices, x = object, rust_index = TRUE)
+      }
+    )
+  })
+
+  vision_res <- rs_mc_vision_with_autocorrelation(
+    sparse_data = mc_counts_to_list(object, assay = "norm"),
+    embd = prepped$embd,
+    knn_data = prepped$knn_data,
+    gs_list = vision_gs_clean,
+    random_gs_list = random_gs_clean,
+    vision_params = vision_params,
+    cluster_membership = as.integer(cluster_membership),
+    verbose = parse_verbosity(.verbose),
+    seed = random_seed
+  )
+
+  auto_cor_dt <- data.table::as.data.table(vision_res$autocor_res)[,
+    gene_set_name := names(vision_gs_clean)
+  ][, c("gene_set_name", "auto_cor", "p_val", "fdr"), with = FALSE]
+
+  vision_matrix <- vision_res$vision_mat
+
+  colnames(vision_matrix) <- names(gs_list)
+  rownames(vision_matrix) <- S7::prop(object, "obs_table")$meta_cell_id
+
+  result <- list(vision_matrix = vision_matrix, auto_cor_dt = auto_cor_dt)
+
+  return(result)
+}
+
 ## hotspot ---------------------------------------------------------------------
 
 ### auto-correlation -----------------------------------------------------------
@@ -73,7 +211,7 @@ S7::method(hotspot_autocor_sc, MetaCells) <- function(
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   c(embd, cells_to_take, genes_to_take, knn_data) %<-%
-    .prep_mc_hotspot(
+    .prep_mc_embd_knn(
       object = object,
       embd_to_use = embd_to_use,
       use_knn = use_knn,
@@ -143,7 +281,7 @@ S7::method(hotspot_gene_cor_sc, MetaCells) <- function(
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   c(embd, cells_to_take, genes_to_take, knn_data) %<-%
-    .prep_mc_hotspot(
+    .prep_mc_embd_knn(
       object = object,
       embd_to_use = embd_to_use,
       use_knn = use_knn,
@@ -560,5 +698,237 @@ S7::method(stabilised_nmf_sc, MetaCells) <- function(
     cell_indices = sel$cell_indices_rust,
     source_class = "MetaCells",
     params = params
+  )
+}
+
+#' @method consensus_nmf_sc MetaCells
+#'
+#' @export
+S7::method(consensus_nmf_sc, MetaCells) <- function(
+  object,
+  k,
+  cell_ids = NULL,
+  gene_ids = NULL,
+  preprocessing = "none",
+  use_second_layer = TRUE,
+  nmf_hals_params = params_nmf_hals(),
+  nmf_consensus_params = params_nmf_consensus(),
+  n_runs = 30L,
+  seed = 42L,
+  .verbose = TRUE
+) {
+  checkmate::assertTRUE(S7::S7_inherits(object, MetaCells))
+  checkmate::qassert(k, "I1[2,)")
+  checkmate::qassert(cell_ids, c("0", "S+"))
+  checkmate::qassert(gene_ids, c("0", "S+"))
+  checkmate::assertChoice(preprocessing, c("none", "sd", "sqrt_sd"))
+  checkmate::qassert(use_second_layer, "B1")
+  assertNmfHals(nmf_hals_params)
+  assertNmfConsensus(nmf_consensus_params)
+  checkmate::qassert(n_runs, "I1[2,)")
+  checkmate::qassert(seed, "I1")
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
+
+  sel <- .resolve_mc_nmf_selection(object, cell_ids, gene_ids)
+
+  .warn_consensus_target_w(
+    nmf_consensus_params,
+    n_samples = length(sel$cell_indices_1b),
+    k = k,
+    n_runs = n_runs
+  )
+
+  assay <- if (use_second_layer) "norm" else "raw"
+
+  count_list <- mc_counts_to_list(
+    object = object,
+    cell_indices = sel$cell_indices_1b,
+    gene_indices = sel$gene_indices_1b,
+    assay = assay
+  )
+
+  nmf_res <- .run_consensus_nmf(
+    .rs_call = rs_nmf_consensus_mc,
+    nmf_consensus_params = nmf_consensus_params,
+    seed = seed,
+    sparse_data = count_list,
+    k = k,
+    preprocessing = preprocessing,
+    use_second_layer = use_second_layer,
+    nmf_hals_params = nmf_hals_params,
+    n_runs = n_runs,
+    verbose = parse_verbosity(.verbose)
+  )
+
+  params <- c(
+    nmf_hals_params,
+    list(
+      k = k,
+      preprocessing = preprocessing,
+      use_second_layer = use_second_layer,
+      nmf_consensus_params = nmf_consensus_params,
+      n_runs = n_runs,
+      seed = seed
+    )
+  )
+
+  new_consensus_nmf_result(
+    nmf_res = nmf_res,
+    gene_ids = sel$gene_ids,
+    cell_ids = sel$cell_ids,
+    cell_indices = sel$cell_indices_rust,
+    source_class = "MetaCells",
+    params = params
+  )
+}
+
+#' @method nmf_k_sweep_sc MetaCells
+#'
+#' @export
+S7::method(nmf_k_sweep_sc, MetaCells) <- function(
+  object,
+  k_range,
+  cell_ids = NULL,
+  gene_ids = NULL,
+  preprocessing = "none",
+  use_second_layer = TRUE,
+  nmf_hals_params = params_nmf_hals(),
+  nmf_consensus_params = params_nmf_consensus(),
+  n_runs = 30L,
+  seed = 42L,
+  .verbose = TRUE
+) {
+  checkmate::assertTRUE(S7::S7_inherits(object, MetaCells))
+  k_range <- .assert_nmf_k_range(k_range)
+  checkmate::qassert(cell_ids, c("0", "S+"))
+  checkmate::qassert(gene_ids, c("0", "S+"))
+  checkmate::assertChoice(preprocessing, c("none", "sd", "sqrt_sd"))
+  checkmate::qassert(use_second_layer, "B1")
+  assertNmfHals(nmf_hals_params)
+  assertNmfConsensus(nmf_consensus_params)
+  checkmate::qassert(n_runs, "I1[2,)")
+  checkmate::qassert(seed, "I1")
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
+
+  sel <- .resolve_mc_nmf_selection(object, cell_ids, gene_ids)
+
+  .warn_consensus_target_w(
+    nmf_consensus_params,
+    n_samples = length(sel$cell_indices_1b),
+    k = max(k_range),
+    n_runs = n_runs
+  )
+
+  assay <- if (use_second_layer) "norm" else "raw"
+
+  count_list <- mc_counts_to_list(
+    object = object,
+    cell_indices = sel$cell_indices_1b,
+    gene_indices = sel$gene_indices_1b,
+    assay = assay
+  )
+
+  sweep_res <- rs_nmf_k_sweep_mc(
+    sparse_data = count_list,
+    k_range = k_range,
+    preprocessing = preprocessing,
+    use_second_layer = use_second_layer,
+    nmf_hals_params = nmf_hals_params,
+    nmf_consensus_params = .inject_consensus_seed(nmf_consensus_params, seed),
+    n_runs = n_runs,
+    seed = seed,
+    verbose = parse_verbosity(.verbose)
+  )
+
+  new_nmf_k_sweep_result(
+    sweep_res = sweep_res,
+    source_class = "MetaCells",
+    params = c(
+      nmf_hals_params,
+      list(
+        k_range = k_range,
+        preprocessing = preprocessing,
+        use_second_layer = use_second_layer,
+        nmf_consensus_params = nmf_consensus_params,
+        n_runs = n_runs,
+        seed = seed
+      )
+    )
+  )
+}
+
+## dialogue --------------------------------------------------------------------
+
+# generic found in base_generics_sc.R
+
+#' @method dialogue_sc MetaCells
+#'
+#' @export
+S7::method(dialogue_sc, MetaCells) <- function(
+  object,
+  cell_type_col,
+  sample_col,
+  features,
+  quality_col = NULL,
+  gene_ids = NULL,
+  pmd_params = params_dialogue_pmd(),
+  hlm_params = params_dialogue_hlm(),
+  refine_params = params_dialogue_refine(),
+  .verbose = TRUE
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(object, MetaCells))
+  checkmate::qassert(cell_type_col, "S1")
+  checkmate::qassert(sample_col, "S1")
+  checkmate::assertList(features, names = "named")
+  checkmate::qassert(quality_col, c("S1", "0"))
+  checkmate::qassert(gene_ids, c("S+", "0"))
+  assertDialoguePmd(pmd_params)
+  assertDialogueHlm(hlm_params)
+  assertDialogueRefine(refine_params)
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
+
+  obs <- S7::prop(object, "obs_table")
+
+  prepped <- .prep_dialogue_inputs(
+    object = object,
+    obs = obs,
+    cell_type_col = cell_type_col,
+    sample_col = sample_col,
+    features = features,
+    quality_col = quality_col,
+    cell_id_col = "meta_cell_id",
+    # meta cells carry no `lib_size`, but the raw counts are in memory
+    default_quality = as.numeric(Matrix::rowSums(
+      S7::prop(object, "data")[["raw"]]
+    ))
+  )
+
+  # DIALOGUE reads the normalised layer only; `"raw"` here would hand it the
+  # raw counts without complaining
+  dialogue_res <- rs_mc_dialogue(
+    sparse_data = mc_counts_to_list(object, assay = "norm"),
+    cell_type_indices = prepped$cell_type_indices,
+    features = prepped$features,
+    sample_ids = prepped$sample_ids,
+    cell_quality = prepped$cell_quality,
+    gene_indices = .resolve_dialogue_genes(object, gene_ids),
+    dialogue_params = c(pmd_params, hlm_params, refine_params),
+    verbose = parse_verbosity(.verbose)
+  )
+
+  new_dialogue_result(
+    dialogue_res = dialogue_res,
+    prepped = prepped,
+    gene_names = S7::prop(object, "var_table")$gene_id,
+    source_class = "MetaCells",
+    params = list(
+      cell_type_col = cell_type_col,
+      sample_col = sample_col,
+      quality_col = quality_col,
+      pmd_params = pmd_params,
+      hlm_params = hlm_params,
+      refine_params = refine_params
+    )
   )
 }

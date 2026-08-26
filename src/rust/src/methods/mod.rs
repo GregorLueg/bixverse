@@ -1,7 +1,9 @@
+pub mod nmf_utils;
 pub mod r_cistarget;
 pub mod r_coremo;
 pub mod r_dgrdl;
 pub mod r_diffcor;
 pub mod r_ica;
+pub mod r_lda;
 pub mod r_nmf_bulk;
 pub mod r_rbh;

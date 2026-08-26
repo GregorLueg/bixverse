@@ -858,6 +858,72 @@ checkNmfHals <- function(x) {
 #' @keywords internal
 assertNmfHals <- checkmate::makeAssertionFunction(checkNmfHals)
 
+### nmf (consensus) ------------------------------------------------------------
+
+#' Check consensus NMF parameters
+#'
+#' @description Checkmate extension for checking the consensus NMF parameters.
+#'
+#' @param x The list to check/assert
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
+checkNmfConsensus <- function(x) {
+  res <- check_list_shape(
+    x,
+    c(
+      "consensus_target",
+      "n_neighbours",
+      "density_threshold",
+      "kmeans_iters",
+      "kmeans_n_init"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- apply_qtest_rules(
+    x,
+    list(
+      n_neighbours = "I1[0,)",
+      density_threshold = "N1[0,2]",
+      kmeans_iters = "I1[1,)",
+      kmeans_n_init = "I1[1,)"
+    ),
+    label = "NMF consensus params",
+    hint = paste(
+      "n_neighbours must be a non-negative integer (0 = auto);",
+      "density_threshold must be a numeric in [0, 2] (>= 2 disables the",
+      "filter); kmeans_iters and kmeans_n_init must be positive integers."
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  apply_choice_rules(
+    x,
+    list(consensus_target = c("h", "w")),
+    label = "NMF consensus params"
+  )
+}
+
+#' Assert consensus NMF parameters
+#'
+#' @description Checkmate extension for asserting the consensus NMF parameters.
+#'
+#' @inheritParams checkNmfConsensus
+#'
+#' @param .var.name Name of the checked object to print in assertions.
+#' @param add Collection to store assertion messages.
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
+assertNmfConsensus <- checkmate::makeAssertionFunction(checkNmfConsensus)
+
 ### snf ------------------------------------------------------------------------
 
 #' Check SNF parameters
@@ -1079,7 +1145,7 @@ assertLabelPropParams <- checkmate::makeAssertionFunction(checkLabelPropParams)
 #'
 #' @keywords internal
 checkModuleMembershipParams <- function(x) {
-  res <- check_list_shape(x, c("method", "cutoff", "fdr", "tails"))
+  res <- check_list_shape(x, c("method", "cutoff", "fdr", "tails", "scaling"))
   if (!isTRUE(res)) {
     return(res)
   }
@@ -1098,7 +1164,8 @@ checkModuleMembershipParams <- function(x) {
     x,
     list(
       method = c("zscore", "fdr"),
-      tails = c("auto", "upper", "both")
+      tails = c("auto", "upper", "both"),
+      scaling = c("robust", "standard")
     ),
     label = "module membership params"
   )
@@ -1550,6 +1617,85 @@ checkScSyntheticData <- function(x) {
 #'
 #' @keywords internal
 assertScSyntheticData <- checkmate::makeAssertionFunction(checkScSyntheticData)
+
+##### dialogue -----------------------------------------------------------------
+
+#' Check synthetic DIALOGUE data parameters
+#'
+#' @description Checkmate extension for checking the parameters for the
+#' generation of synthetic DIALOGUE data.
+#'
+#' @param x The list to check/assert
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
+checkScSyntheticDialogue <- function(x) {
+  res <- check_list_shape(
+    x,
+    c(
+      "n_samples",
+      "cells_per_sample",
+      "n_cell_types",
+      "n_features",
+      "n_sample_features",
+      "n_genes",
+      "n_planted"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- apply_qtest_rules(
+    x,
+    list(
+      n_samples = "I1[1,)",
+      cells_per_sample = "I1[1,)",
+      n_cell_types = "I1[2,)",
+      n_features = "I1[2,)",
+      n_sample_features = "I1[1,)",
+      n_genes = "I1[1,)",
+      n_planted = "I1[0,)"
+    ),
+    label = "synthetic DIALOGUE params",
+    hint = paste(
+      "n_cell_types and n_features must be at least 2, the remaining counts",
+      "positive integers."
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  if (x$n_sample_features > x$n_features) {
+    return("n_sample_features cannot exceed n_features.")
+  }
+  if (x$n_planted * x$n_cell_types > x$n_genes) {
+    return("The planted gene blocks do not fit into n_genes.")
+  }
+
+  return(TRUE)
+}
+
+#' Assert synthetic DIALOGUE data parameters
+#'
+#' @description Checkmate extension for asserting the parameters for the
+#' generation of synthetic DIALOGUE data.
+#'
+#' @inheritParams checkScSyntheticDialogue
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
+assertScSyntheticDialogue <- checkmate::makeAssertionFunction(
+  checkScSyntheticDialogue
+)
 
 ##### adt ----------------------------------------------------------------------
 
@@ -2905,6 +3051,209 @@ checkScSeuratRpca <- function(x) {
 #'
 #' @keywords internal
 assertScSeuratRpca <- checkmate::makeAssertionFunction(checkScSeuratRpca)
+
+#### DIALOGUE ------------------------------------------------------------------
+
+#' Check DIALOGUE decomposition parameters
+#'
+#' @description Checkmate extension for checking the stage one DIALOGUE
+#' parameters, see [bixverse::params_dialogue_pmd()].
+#'
+#' @param x The list to check/assert
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
+checkDialoguePmd <- function(x) {
+  res <- check_list_shape(
+    x,
+    c(
+      "k",
+      "n_permutations",
+      "extra_sparse",
+      "abn_c",
+      "p_anova",
+      "centre",
+      "cap",
+      "spatial",
+      "n_genes",
+      "min_ci",
+      "averaging",
+      "mcp_assignment_p",
+      "seed"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- apply_qtest_rules(
+    x,
+    list(
+      k = "I1[1,)",
+      n_permutations = "I1[2,)",
+      extra_sparse = "B1",
+      abn_c = "I1[0,)",
+      p_anova = "N1(0,1]",
+      centre = "B1",
+      cap = "N1[0,0.5)",
+      spatial = "B1",
+      n_genes = "I1[1,)",
+      min_ci = "N1[0,1]",
+      mcp_assignment_p = "N1(0,1]",
+      seed = "I1"
+    ),
+    label = "DIALOGUE decomposition params",
+    hint = paste(
+      "k >= 1, n_permutations >= 2, cap in [0, 0.5), the p-value cutoffs in",
+      "(0, 1] and min_ci in [0, 1]."
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  apply_choice_rules(
+    x,
+    list(averaging = c("median", "mean")),
+    label = "DIALOGUE decomposition params"
+  )
+}
+
+#' Assert DIALOGUE decomposition parameters
+#'
+#' @description Checkmate extension for asserting the stage one DIALOGUE
+#' parameters.
+#'
+#' @inheritParams checkDialoguePmd
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
+assertDialoguePmd <- checkmate::makeAssertionFunction(checkDialoguePmd)
+
+#' Check DIALOGUE mixed model parameters
+#'
+#' @description Checkmate extension for checking the stage two DIALOGUE
+#' parameters, see [bixverse::params_dialogue_hlm()].
+#'
+#' @param x The list to check/assert
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
+checkDialogueHlm <- function(x) {
+  res <- check_list_shape(
+    x,
+    c(
+      "min_cells_per_sample",
+      "use_tme_qc",
+      "use_cell_quality",
+      "satterthwaite"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  apply_qtest_rules(
+    x,
+    list(
+      min_cells_per_sample = "I1[0,)",
+      use_tme_qc = "B1",
+      use_cell_quality = "B1",
+      satterthwaite = "B1"
+    ),
+    label = "DIALOGUE mixed model params",
+    hint = paste(
+      "min_cells_per_sample must be a non-negative integer, the rest are",
+      "booleans."
+    )
+  )
+}
+
+#' Assert DIALOGUE mixed model parameters
+#'
+#' @description Checkmate extension for asserting the stage two DIALOGUE
+#' parameters.
+#'
+#' @inheritParams checkDialogueHlm
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
+assertDialogueHlm <- checkmate::makeAssertionFunction(checkDialogueHlm)
+
+#' Check DIALOGUE refinement parameters
+#'
+#' @description Checkmate extension for checking the stage three DIALOGUE
+#' parameters, see [bixverse::params_dialogue_refine()].
+#'
+#' @param x The list to check/assert
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
+checkDialogueRefine <- function(x) {
+  res <- check_list_shape(
+    x,
+    c(
+      "support_p",
+      "min_support_fraction",
+      "min_stratum",
+      "early_stop_cor",
+      "permissive_p",
+      "strict_p"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  apply_qtest_rules(
+    x,
+    list(
+      support_p = "N1(0,1]",
+      min_support_fraction = "N1[0,1]",
+      min_stratum = "I1[0,)",
+      early_stop_cor = "N1(0,1]",
+      permissive_p = "N1(0,1]",
+      strict_p = "N1(0,1]"
+    ),
+    label = "DIALOGUE refinement params",
+    hint = paste(
+      "the p-value cutoffs and early_stop_cor must be in (0, 1],",
+      "min_support_fraction in [0, 1] and min_stratum a non-negative integer."
+    )
+  )
+}
+
+#' Assert DIALOGUE refinement parameters
+#'
+#' @description Checkmate extension for asserting the stage three DIALOGUE
+#' parameters.
+#'
+#' @inheritParams checkDialogueRefine
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
+assertDialogueRefine <- checkmate::makeAssertionFunction(checkDialogueRefine)
 
 #### VISION --------------------------------------------------------------------
 
@@ -4367,3 +4716,86 @@ checkLigandTarget <- function(x) {
 #'
 #' @keywords internal
 assertLigandTarget <- checkmate::makeAssertionFunction(checkLigandTarget)
+
+#### LDA -----------------------------------------------------------------------
+
+#' Check LDA parameters
+#'
+#' @description Checkmate extension for checking the LDA solver parameters,
+#' see [bixverse::params_lda()].
+#'
+#' @param x The list to check/assert
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
+checkLdaParams <- function(x) {
+  res <- check_list_shape(
+    x,
+    c(
+      "alpha",
+      "alpha_by_topic",
+      "eta",
+      "eta_by_topic",
+      "max_iter",
+      "tol",
+      "inner_max_iter",
+      "inner_tol",
+      "check_every",
+      "learning",
+      "batch_size",
+      "n_epochs"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- apply_qtest_rules(
+    x,
+    list(
+      alpha = "N1(0,)",
+      alpha_by_topic = "B1",
+      eta = "N1(0,)",
+      eta_by_topic = "B1",
+      max_iter = "I1[1,)",
+      tol = "N1(0,)",
+      inner_max_iter = "I1[1,)",
+      inner_tol = "N1(0,)",
+      check_every = "I1[1,)",
+      batch_size = "I1[1,)",
+      n_epochs = "I1[1,)"
+    ),
+    label = "LDA params",
+    hint = paste(
+      "alpha, eta, tol and inner_tol must be positive numerics;",
+      "max_iter, inner_max_iter, check_every, batch_size and n_epochs must be",
+      "positive integers; alpha_by_topic and eta_by_topic must be booleans."
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  apply_choice_rules(
+    x,
+    list(learning = c("batch", "online")),
+    label = "LDA params"
+  )
+}
+
+#' Assert LDA parameters
+#'
+#' @description Checkmate extension for asserting the LDA solver parameters,
+#' see [bixverse::params_lda()].
+#'
+#' @inheritParams checkLdaParams
+#'
+#' @param .var.name Name of the checked object to print in assertions.
+#' @param add Collection to store assertion messages.
+#'
+#' @return Invisibly returns the checked object if the assertion is
+#' successful.
+#'
+#' @keywords internal
+assertLdaParams <- checkmate::makeAssertionFunction(checkLdaParams)

@@ -758,6 +758,117 @@ p2 <- ggplot(umap_dt, aes(x = umap_1, y = umap_2)) +
 p1 + p2
 ```
 
+### Consensus NMF on meta cells
+
+The same argument applies to matrix factorisation, and here compression buys
+you something concrete. Consensus NMF
+([Kotliar, et al.](https://elifesciences.org/articles/43803)) fits `n_runs`
+NMFs, pools their components, drops the ones sitting on their own, clusters the
+survivors and takes the median of each cluster. What survives is the programme
+structure the restarts agree on. The catch on raw single cells is memory: every
+restart is dense, and they all live at once. On a few thousand meta cells rather
+than a few hundred thousand cells, `n_runs = 50` is unremarkable. This is the
+path where consensus NMF is genuinely affordable.
+
+Start by picking `k`. `nmf_k_sweep_sc()` runs the consensus step across a range
+of ranks and reports stability against reconstruction error, keeping no factors.
+
+```{r}
+#| label: nmf k sweep on meta cells
+mc_k_sweep <- nmf_k_sweep_sc(
+  object = seacells,
+  k_range = 2:12,
+  n_runs = 10L,
+  nmf_consensus_params = params_nmf_consensus(density_threshold = 2)
+)
+
+mc_k_sweep
+```
+
+```{r}
+#| label: nmf k sweep plot on meta cells
+#| fig-cap: "Consensus NMF k sweep on the meta cells."
+plot(mc_k_sweep)
+```
+
+The usual rule is to take the last `k` before stability falls away, while the
+error curve is still coming down. Here it does not fall away so much as bounce:
+stability stays high across the whole range and dips and recovers, which says
+the meta cells support several plausible ranks rather than one obvious answer.
+It peaks at 6 and the error is still coming down there, so that is where we
+fit.
+
+```{r}
+#| label: consensus nmf on meta cells
+mc_nmf <- consensus_nmf_sc(
+  object = seacells,
+  k = 6L,
+  n_runs = 10L,
+  nmf_consensus_params = params_nmf_consensus(density_threshold = 2)
+)
+
+mc_nmf
+```
+
+`get_stability()` gives you the diagnostics: the mean silhouette of the
+clusters, the relative reconstruction errors, and a row per pooled component
+recording where it landed.
+
+```{r}
+#| label: consensus nmf diagnostics
+mc_nmf_diag <- get_stability(mc_nmf)
+mc_nmf_diag$stability
+mc_nmf_diag$cluster_sizes
+```
+
+With 20 restarts, a cluster of 20 is a programme every run found. A thin one is
+a programme only some initialisations saw.
+
+`W` (genes x k) and `H` (k x meta cells) come back in the same shape the
+single-run `nmf_sc()` gives you, so the activations drop straight onto the UMAP:
+
+```{r}
+#| label: consensus nmf on the umap
+#| fig-cap: "Two consensus programmes projected onto the meta cell UMAP."
+mc_h <- get_h(mc_nmf)
+
+umap_nmf_dt <- as.data.table(
+  get_embedding(seacells, "umap"),
+  keep.rownames = "meta_cell_id"
+)
+umap_nmf_dt[, `:=`(
+  comp_01 = mc_h["comp_01", meta_cell_id],
+  comp_02 = mc_h["comp_02", meta_cell_id]
+)]
+
+p3 <- ggplot(umap_nmf_dt, aes(x = umap_1, y = umap_2)) +
+  geom_point(aes(fill = comp_01), size = 2.5, shape = 21) +
+  theme_bw() +
+  labs(fill = "comp_01") +
+  scale_fill_viridis_c()
+
+p4 <- ggplot(umap_nmf_dt, aes(x = umap_1, y = umap_2)) +
+  geom_point(aes(fill = comp_02), size = 2.5, shape = 21) +
+  theme_bw() +
+  labs(fill = "comp_02") +
+  scale_fill_viridis_c()
+
+p3 + p4
+```
+
+To read off what a programme is, rank the genes by their loading in `W`:
+
+```{r}
+#| label: consensus nmf top genes
+mc_w <- get_w(mc_nmf)
+
+top_genes <- lapply(colnames(mc_w), \(comp) {
+  names(sort(mc_w[, comp], decreasing = TRUE))[1:10]
+})
+names(top_genes) <- colnames(mc_w)
+top_genes[1:3]
+```
+
 ## Pseudo-bulking
 
 Pseudo-bulks are conceptually adjacent but solve a different problem. Where

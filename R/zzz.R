@@ -17,6 +17,11 @@
     "ADTCounts",
     "NmfResult",
     "StabilisedNmfResult",
+    "ConsensusNmfResult",
+    "NmfKSweepResult",
+    "LdaResult",
+    "LdaKSweepResult",
+    "DialogueResult",
     "LigandTargetInfluence",
     "ScTypeResults",
     "ScTypeCellResults",
@@ -35,4 +40,5 @@
 
   registerS3method("format", "BulkModuleResult", format.BulkModuleResult)
   registerS3method("dim", "BulkModuleResult", dim.BulkModuleResult)
+  registerS3method("dim", "LdaResult", dim.LdaResult)
 }

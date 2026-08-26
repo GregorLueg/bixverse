@@ -2,6 +2,7 @@
 //! into R lists.
 
 use bixverse_rs::prelude::*;
+use bixverse_rs::single_cell::sc_analysis::dialogue::{DialogueResult, ProgrammeSignature};
 use bixverse_rs::single_cell::sc_analysis::fast_clusters::{
     FastLouvainGridResult, FastLouvainResults,
 };
@@ -399,4 +400,150 @@ pub fn prep_nichenet_network(network_data: List) -> NicheNetNetwork {
         .ok_or_else(|| Error::Other("'weight' is not a real vector".into()))?;
 
     Ok((from, to, weight))
+}
+
+//////////////
+// DIALOGUE //
+//////////////
+
+/// The per-cell-type inputs DIALOGUE needs, owned so the borrows stay alive.
+///
+/// ### Fields
+///
+/// * `0` - Global cell indices per cell type
+/// * `1` - Feature matrices per cell type, still in R's column-major storage
+pub type DialogueInputs = Result<(Vec<Vec<usize>>, Vec<RMatrix<f64>>)>;
+
+/// Pulls the per-cell-type cell indices and feature matrices off two R lists.
+///
+/// The matrices are returned owned rather than as `MatRef`, because
+/// `r_matrix_to_faer` borrows and the caller has to keep the storage alive for
+/// the length of the run.
+///
+/// ### Params
+///
+/// * `cell_type_indices` - List of integer vectors, 0-indexed global cell
+///   positions per cell type
+/// * `features` - List of numeric matrices, one per cell type
+///
+/// ### Returns
+///
+/// The [DialogueInputs], or an error naming the offending element. Whether the
+/// two line up in length and shape is left to `dialogue_run`, which checks it
+/// anyway and reports it in the same terms for every caller.
+pub fn dialogue_inputs_to_rust(cell_type_indices: List, features: List) -> DialogueInputs {
+    let mut cells: Vec<Vec<usize>> = Vec::with_capacity(cell_type_indices.len());
+    for i in 0..cell_type_indices.len() {
+        let elem = cell_type_indices.elt(i)?;
+        let idx = elem.as_integer_vector().ok_or_else(|| {
+            Error::Other(format!("cell type {} indices are not an integer vector", i))
+        })?;
+        if let Some(bad) = idx.iter().find(|&&v| v < 0) {
+            return Err(Error::Other(format!(
+                "cell type {i} holds a negative cell index ({bad}); these are 0-indexed"
+            )));
+        }
+        cells.push(idx.iter().map(|&v| v as usize).collect());
+    }
+
+    let mut mats: Vec<RMatrix<f64>> = Vec::with_capacity(features.len());
+    for i in 0..features.len() {
+        let elem = features.elt(i)?;
+        let mat: RMatrix<f64> = elem
+            .as_matrix()
+            .ok_or_else(|| Error::Other(format!("features {} is not a numeric matrix", i)))?;
+        mats.push(mat);
+    }
+
+    Ok((cells, mats))
+}
+
+/// Flattens a nested `[cell_type][programme]` signature list into an R list.
+///
+/// ### Params
+///
+/// * `signatures` - The per-cell-type, per-programme gene lists
+///
+/// ### Returns
+///
+/// A list of lists, innermost holding `up` and `down` as 0-indexed gene
+/// positions.
+fn signatures_to_r_list(signatures: &[Vec<ProgrammeSignature>]) -> List {
+    List::from_values(signatures.iter().map(|per_type| {
+        List::from_values(per_type.iter().map(|sig| {
+            list!(
+                up = sig.up.clone().r_int_convert(),
+                down = sig.down.clone().r_int_convert()
+            )
+        }))
+    }))
+}
+
+/// Flattens the DIALOGUE result into an R list.
+///
+/// Everything index-like stays 0-indexed and the R wrappers add the one, the
+/// same as every other single cell binding. Shapes: `emp_p` and `pair_cor` are
+/// `k x n_pairs` with the columns in `combn(n_cell_types, 2)` order,
+/// `refit_fidelity` is `n_cell_types x k`.
+///
+/// ### Params
+///
+/// * `res` - The finished [DialogueResult]
+///
+/// ### Returns
+///
+/// The results list.
+pub fn dialogue_res_to_r_list(res: &DialogueResult) -> List {
+    let verdicts = list!(
+        cell_type = res
+            .verdicts
+            .iter()
+            .map(|v| v.cell_type as i32)
+            .collect::<Vec<i32>>(),
+        programme = res
+            .verdicts
+            .iter()
+            .map(|v| v.programme as i32)
+            .collect::<Vec<i32>>(),
+        gene = res
+            .verdicts
+            .iter()
+            .map(|v| v.gene as i32)
+            .collect::<Vec<i32>>(),
+        up = res.verdicts.iter().map(|v| v.up).collect::<Vec<bool>>(),
+        n_supporting = res
+            .verdicts
+            .iter()
+            .map(|v| v.n_supporting as i32)
+            .collect::<Vec<i32>>(),
+        support_fraction = res
+            .verdicts
+            .iter()
+            .map(|v| v.support_fraction)
+            .collect::<Vec<f64>>(),
+        p_up = res.verdicts.iter().map(|v| v.p_up).collect::<Vec<f64>>(),
+        p_down = res.verdicts.iter().map(|v| v.p_down).collect::<Vec<f64>>(),
+        coefficient = res
+            .verdicts
+            .iter()
+            .map(|v| v.coefficient)
+            .collect::<Vec<f64>>()
+    );
+
+    list!(
+        shared_samples = res.shared_samples.clone().r_int_convert(),
+        kept_features =
+            List::from_values(res.kept_features.iter().map(|f| f.clone().r_int_convert())),
+        mcp_cell_types =
+            List::from_values(res.mcp_cell_types.iter().map(|t| t.clone().r_int_convert())),
+        ws = List::from_values(res.ws.iter().map(|m| faer_to_r_matrix(m.as_ref()))),
+        scores = List::from_values(res.scores.iter().map(|m| faer_to_r_matrix(m.as_ref()))),
+        cca_scores = List::from_values(res.cca_scores.iter().map(|m| faer_to_r_matrix(m.as_ref()))),
+        emp_p = faer_to_r_matrix(res.emp_p.as_ref()),
+        pair_cor = faer_to_r_matrix(res.pair_cor.as_ref()),
+        refit_fidelity = faer_to_r_matrix(res.refit_fidelity.as_ref()),
+        verdicts = verdicts,
+        permissive = signatures_to_r_list(&res.permissive),
+        strict = signatures_to_r_list(&res.strict)
+    )
 }

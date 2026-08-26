@@ -46,9 +46,9 @@ detailed verbosity.}
 A list with the following items
 \itemize{
 \item w_all - Column-bound W matrices across all runs,
-shape \verb{n_features x (k * n_runs)}. Columns \verb{i*k+1..(i+1)*k} are run \code{i}'s
+shape \verb{n_cells x (k * n_runs)}. Columns \verb{i*k+1..(i+1)*k} are run \code{i}'s
 components (1-indexed).
-\item h_per_run - List of H matrices, each \verb{k x n_cells}.
+\item h_per_run - List of H matrices, each \verb{k x n_genes}.
 \item losses - Numeric vector. Final reconstruction loss per run.
 \item converged - Logical vector. Convergence flag per run.
 \item best_idx - Integer. 1-indexed position of the run with the lowest

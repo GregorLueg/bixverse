@@ -2,7 +2,7 @@
 % Please edit documentation in R/methods_coexp_nmf.R
 \name{get_nmf_stability}
 \alias{get_nmf_stability}
-\title{Get the stabilised NMF diagnostics}
+\title{Get the multi-run NMF diagnostics}
 \usage{
 get_nmf_stability(object)
 }
@@ -10,10 +10,16 @@ get_nmf_stability(object)
 \item{object}{The class, see \code{\link[=BulkCoExp]{BulkCoExp()}}.}
 }
 \value{
-A list with \code{losses}, \code{converged}, \code{best_idx} (if found) or \code{NULL}.
+For a stabilised fit, a list with \code{losses}, \code{converged} and
+\code{best_idx}. For a consensus fit, a list with \code{stability}, \code{rel_error},
+\code{rel_run_errors}, \code{clusters}, \code{cluster_sizes}, \code{n_dropped} and
+\code{n_empty_clusters}. \code{NULL} if neither was run.
 }
 \description{
-Getter function to extract per-run losses, convergence flags, and the
-best-run index from a \code{stabilised_nmf_bulk()} fit. Returns \code{NULL} for a
+Getter function for the diagnostics of a multi-run NMF fit. For a
+\code{\link[=stabilised_nmf_bulk]{stabilised_nmf_bulk()}} fit that is the per-run losses,
+convergence flags and the best-run index. For a
+\code{\link[=consensus_nmf_bulk]{consensus_nmf_bulk()}} fit it is the cluster stability, the
+relative errors and the per-component clustering table. Returns \code{NULL} for a
 single-run fit.
 }

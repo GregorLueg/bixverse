@@ -851,6 +851,61 @@ rs_sample_ids_for_cell_types <- function(cell_type_indices, n_samples, sample_bi
 #' @keywords internal
 rs_synthetic_sc_adt_with_cell_types <- function(n_cells, n_proteins, n_batches, isotype_controls, cell_configs, batch_effect_strength, seed) .Call(wrap__rs_synthetic_sc_adt_with_cell_types, n_cells, n_proteins, n_batches, isotype_controls, cell_configs, batch_effect_strength, seed)
 
+#' Generates synthetic data with a planted multicellular programme
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Builds the fixture DIALOGUE is tested against. Every cell type gets its own
+#' noise and its own sample-level nuisance factors; only the first feature
+#' column and the planted genes carry the shared per-sample latent, so anything
+#' found beyond that is spurious. Cells are laid out contiguously by cell type
+#' and, within a cell type, by sample.
+#'
+#' The counts are a scaled copy of the normalised layer rather than a draw from
+#' a count model. That keeps the planted signal clean, which is the point of a
+#' fixture.
+#'
+#' @param n_samples Integer. Samples the experiment spans. DIALOGUE needs at
+#' least 5.
+#' @param cells_per_sample Integer. Cells per sample per cell type.
+#' @param n_cell_types Integer. Number of cell types. Must be at least 2.
+#' @param n_features Integer. Feature columns per cell type. Must be at least
+#' 2.
+#' @param n_sample_features Integer. Feature columns carrying a per-sample
+#' component. The first of those is the shared programme, the rest are
+#' cell-type-specific nuisance; anything past this count is pure noise.
+#' @param n_genes Integer. Number of genes.
+#' @param n_planted Integer. Planted genes per cell type. Cell type `t` owns
+#' genes `t * n_planted` to `(t + 1) * n_planted - 1` (0-indexed), so the
+#' blocks have to fit into `n_genes`.
+#' @param seed Integer. Random seed for reproducibility.
+#'
+#' @return A list with the following items.
+#' \itemize{
+#'   \item data - The synthetic raw counts, CSR over cells.
+#'   \item indptr - The index pointers of the cells.
+#'   \item indices - The gene indices for the given cells.
+#'   \item nrow - Number of cells.
+#'   \item ncol - Number of genes.
+#'   \item cell_type_indices - List of integer vectors. 0-indexed(!) global
+#'   cell positions per cell type.
+#'   \item features - List of numeric matrices, one per cell type, rows
+#'   aligned to `cell_type_indices`.
+#'   \item sample_ids - Integer vector. 0-indexed(!) sample code per cell.
+#'   \item quality - Numeric vector. Quality covariate per cell. Pure noise.
+#'   \item latent - Numeric vector. The per-sample latent the planted
+#'   programme follows.
+#'   \item planted - List of integer vectors. 0-indexed(!) planted gene
+#'   positions per cell type.
+#' }
+#'
+#' @references Jerby-Arnon & Regev, Nature Biotechnology, 2022
+#'
+#' @export
+#'
+#' @keywords internal
+rs_synthetic_sc_dialogue_data <- function(n_samples, cells_per_sample, n_cell_types, n_features, n_sample_features, n_genes, n_planted, seed) .Call(wrap__rs_synthetic_sc_dialogue_data, n_samples, cells_per_sample, n_cell_types, n_features, n_sample_features, n_genes, n_planted, seed)
+
 #' Load in h5ad data via Rust
 #'
 #' @description
@@ -1989,6 +2044,78 @@ rs_ica_iters <- function(x1, k, no_comp, no_random_init, ica_type, random_seed, 
 #' @export
 rs_ica_iters_cv <- function(x, no_comp, no_folds, no_random_init, ica_type, random_seed, ica_params) .Call(wrap__rs_ica_iters_cv, x, no_comp, no_folds, no_random_init, ica_type, random_seed, ica_params)
 
+#' Fit a latent Dirichlet allocation model to a document-term matrix
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Variational Bayes, following Hoffman, et al. The matrix is documents x
+#' terms; for a cisTopic-style run that is a binarised cells x regions (or
+#' cells x regulons) matrix, but any count matrix works.
+#'
+#' @param sparse_data A named list that needs to have `data`, `indptr`,
+#' `indices`, `nrow`, `ncol` and `cs_type`. Documents x terms.
+#' @param k Integer. Number of topics.
+#' @param lda_params List. The LDA parameters, see [bixverse::params_lda()].
+#' @param seed Integer. Seed for the variational initialisation.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @returns A list with the following items
+#' \itemize{
+#'   \item cell_topic - Topic proportions per document, `k x n_documents`.
+#'   \item topic_region - Term probabilities per topic, `n_terms x k`.
+#'   \item bound - Final variational bound (ELBO). Higher is better.
+#'   \item perplexity - Per-token perplexity. Lower is better.
+#'   \item n_iter - Outer iterations run.
+#'   \item converged - Whether the relative bound change fell below `tol`.
+#' }
+#'
+#' @references Hoffman, Blei and Bach, NIPS, 2010
+#'
+#' @export
+#'
+#' @keywords internal
+rs_lda <- function(sparse_data, k, lda_params, seed, verbose) .Call(wrap__rs_lda, sparse_data, k, lda_params, seed, verbose)
+
+#' Fit LDA across a range of topic counts and score each fit
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Fits one model per requested topic count and evaluates each with the Arun,
+#' Cao Juan and Mimno metrics. The corpus is built once and shared, and each
+#' fit is already parallel over documents, so the topic counts run
+#' sequentially rather than nesting Rayon pools.
+#'
+#' @param sparse_data A named list that needs to have `data`, `indptr`,
+#' `indices`, `nrow`, `ncol` and `cs_type`. Documents x terms.
+#' @param k_range Integer vector. Topic counts to evaluate.
+#' @param lda_params List. The LDA parameters, see [bixverse::params_lda()].
+#' @param top_topics_coh Optional integer. Number of top-scoring topics
+#' averaged into the reported coherence. If `NULL`, defaults to `5L`.
+#' @param seed Integer. Seed for the variational initialisation.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @returns A list with the following items
+#' \itemize{
+#'   \item k - The topic counts that were tried.
+#'   \item models - One fitted model per topic count, see [rs_lda()].
+#'   \item metrics - One metric list per topic count, with `arun_2010`,
+#'   `cao_juan_2009`, `mimno_2011`, `coherence_per_topic`, `bound` and
+#'   `perplexity`.
+#'   \item combined_score - Rescaled combined score per entry. `NaN` where the
+#'   entry was excluded from selection by the coherence topic-count floor.
+#'   \item best_k - Topic count with the highest combined score.
+#' }
+#'
+#' @references Arun, et al., PAKDD, 2010; Cao, et al., Neurocomputing, 2009;
+#' Mimno, et al., EMNLP, 2011
+#'
+#' @export
+#'
+#' @keywords internal
+rs_lda_k_sweep <- function(sparse_data, k_range, lda_params, top_topics_coh, seed, verbose) .Call(wrap__rs_lda_k_sweep, sparse_data, k_range, lda_params, top_topics_coh, seed, verbose)
+
 #' Run NMF (HALS) on a bulk expression matrix (single run)
 #'
 #' @description
@@ -2050,6 +2177,94 @@ rs_nmf_single_bulk <- function(x, k, preprocessing, nmf_hals_params, seed, verbo
 #'
 #' @keywords internal
 rs_nmf_multi_bulk <- function(x, k, preprocessing, nmf_hals_params, n_runs, seed, verbose) .Call(wrap__rs_nmf_multi_bulk, x, k, preprocessing, nmf_hals_params, n_runs, seed, verbose)
+
+#' Run consensus NMF on a bulk expression matrix
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Runs `n_runs` HALS-NMF restarts, pools their components, drops unstable
+#' ones by local density, k-means clusters the survivors and refits the
+#' partner factor against the per-cluster median. Expects samples x features.
+#'
+#' @param x Numerical matrix. Rows = samples, columns = features.
+#' @param k Integer. Number of latent factors. Must be at least 2.
+#' @param preprocessing String. One of `c("none", "sd", "sqrt_sd")`.
+#' @param nmf_hals_params Named list. See [bixverse::params_nmf_hals()]. The
+#' `nmf_init` field is ignored, restarts always use random initialisation.
+#' @param nmf_consensus_params Named list. See
+#' [bixverse::params_nmf_consensus()].
+#' @param n_runs Integer. Number of restarts. Must be at least 2.
+#' @param seed Integer. Base random seed. Restart `i` uses `seed + i`.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @returns A list with the following items
+#' \itemize{
+#'   \item w - The `W` matrix of shape `n_samples x k`.
+#'   \item h - The `H` matrix of shape `k x n_features`.
+#'   \item rel_error - Reconstruction error relative to the squared Frobenius
+#'   norm of the input. Not comparable with the absolute `final_loss` the
+#'   single-run version returns.
+#'   \item rel_run_errors - The same, per restart.
+#'   \item labels - Integer vector of length `k * n_runs`. Cluster each pooled
+#'   component landed in, `NA` if it was dropped.
+#'   \item local_density - Mean cosine distance to the nearest neighbours per
+#'   pooled component. Plot this to pick a `density_threshold`.
+#'   \item kept - 1-indexed positions of the surviving pooled components.
+#'   \item silhouette - Silhouette per survivor, aligned with `kept`.
+#'   \item stability - Mean silhouette over the survivors.
+#'   \item cluster_sizes - Number of survivors per cluster.
+#'   \item n_dropped - Number of pooled components removed.
+#'   \item n_empty_clusters - Number of clusters left with no members.
+#' }
+#'
+#' @references Kotliar et al., eLife, 2019
+#'
+#' @export
+#'
+#' @keywords internal
+rs_nmf_consensus_bulk <- function(x, k, preprocessing, nmf_hals_params, nmf_consensus_params, n_runs, seed, verbose) .Call(wrap__rs_nmf_consensus_bulk, x, k, preprocessing, nmf_hals_params, nmf_consensus_params, n_runs, seed, verbose)
+
+#' Sweep k and report consensus stability against reconstruction error (bulk)
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Returns diagnostics only, no factors, so a wide `k_range` stays cheap.
+#' Pick the k where stability is high and the error curve has not yet
+#' flattened, then call [rs_nmf_consensus_bulk()] there.
+#'
+#' @param x Numerical matrix. Rows = samples, columns = features.
+#' @param k_range Integer vector. Ranks to evaluate, every entry at least 2.
+#' @param preprocessing String. One of `c("none", "sd", "sqrt_sd")`.
+#' @param nmf_hals_params Named list. See [bixverse::params_nmf_hals()].
+#' @param nmf_consensus_params Named list. See
+#' [bixverse::params_nmf_consensus()].
+#' @param n_runs Integer. Number of restarts per k. Must be at least 2.
+#' @param seed Integer. Base random seed.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @returns A list of equal-length vectors, one element per swept k
+#' \itemize{
+#'   \item k - The rank.
+#'   \item stability - Mean silhouette of the consensus clusters. `NaN` where
+#'   the consensus step failed.
+#'   \item best_error - Lowest restart error, relative to the squared
+#'   Frobenius norm of the input.
+#'   \item median_error - Median restart error, same scale.
+#'   \item consensus_failed - Did the density filter leave fewer than `k`
+#'   components.
+#'   \item n_dropped - Number of pooled components removed.
+#'   \item n_empty_clusters - Number of clusters left with no members.
+#'   \item n_converged - Restarts that met the HALS tolerance.
+#' }
+#'
+#' @references Kotliar et al., eLife, 2019
+#'
+#' @export
+#'
+#' @keywords internal
+rs_nmf_k_sweep_bulk <- function(x, k_range, preprocessing, nmf_hals_params, nmf_consensus_params, n_runs, seed, verbose) .Call(wrap__rs_nmf_k_sweep_bulk, x, k_range, preprocessing, nmf_hals_params, nmf_consensus_params, n_runs, seed, verbose)
 
 #' Generate reciprocal best hits based on set similarities
 #'
@@ -3019,6 +3234,8 @@ rs_sc_get_gene_set_perc <- function(f_path_cell, gene_set_idx, cell_indices, str
 #' @param cells_to_keep Integer. The indices of the cells to include in this
 #' analysis. (0-indexed!)
 #' @param spearman Boolean. Shall spearman correlation be used.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
 #'
 #' @returns The vector of correlations between the pairs of gene_indices_1
 #' and gene_indices_2
@@ -3026,7 +3243,7 @@ rs_sc_get_gene_set_perc <- function(f_path_cell, gene_set_idx, cell_indices, str
 #' @export
 #'
 #' @keywords internal
-rs_pairwise_gene_cors <- function(f_path, gene_indices_1, gene_indices_2, cells_to_keep, spearman) .Call(wrap__rs_pairwise_gene_cors, f_path, gene_indices_1, gene_indices_2, cells_to_keep, spearman)
+rs_pairwise_gene_cors <- function(f_path, gene_indices_1, gene_indices_2, cells_to_keep, spearman, verbose) .Call(wrap__rs_pairwise_gene_cors, f_path, gene_indices_1, gene_indices_2, cells_to_keep, spearman, verbose)
 
 #' Calculate the percentage of gene sets in the cells
 #'
@@ -3975,8 +4192,8 @@ rs_importance_threshold <- function(matrix, n_sd, min_value) .Call(wrap__rs_impo
 #'
 #' @returns A list with the following items
 #' \itemize{
-#'   \item w - The left factor matrix (n_features x k)
-#'   \item h - The right factor matrix (k x n_samples)
+#'   \item w - The left factor matrix (n_cells x k)
+#'   \item h - The right factor matrix (k x n_genes)
 #'   \item final_loss - Loss at the final iteration
 #'   \item n_iter - Number of iterations the algorithm run for
 #'   \item converged - Did the NMF algorithm converge
@@ -4013,9 +4230,9 @@ rs_nmf_single_sc <- function(f_path_gene, gene_indices, cell_indices, k, preproc
 #' @returns A list with the following items
 #' \itemize{
 #'   \item w_all - Column-bound W matrices across all runs,
-#'   shape `n_features x (k * n_runs)`. Columns `i*k+1..(i+1)*k` are run `i`'s
+#'   shape `n_cells x (k * n_runs)`. Columns `i*k+1..(i+1)*k` are run `i`'s
 #'   components (1-indexed).
-#'   \item h_per_run - List of H matrices, each `k x n_cells`.
+#'   \item h_per_run - List of H matrices, each `k x n_genes`.
 #'   \item losses - Numeric vector. Final reconstruction loss per run.
 #'   \item converged - Logical vector. Convergence flag per run.
 #'   \item best_idx - Integer. 1-indexed position of the run with the lowest
@@ -4026,6 +4243,183 @@ rs_nmf_single_sc <- function(f_path_gene, gene_indices, cell_indices, k, preproc
 #'
 #' @keywords internal
 rs_nmf_multi_sc <- function(f_path_gene, gene_indices, cell_indices, k, preprocessing, use_second_layer, nmf_hals_params, n_runs, seed, verbose) .Call(wrap__rs_nmf_multi_sc, f_path_gene, gene_indices, cell_indices, k, preprocessing, use_second_layer, nmf_hals_params, n_runs, seed, verbose)
+
+#' Run consensus NMF over a set of single cells and genes
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Runs `n_runs` HALS NMF restarts, pools their components, drops unstable
+#' ones by local density, k-means clusters the survivors and refits the
+#' partner factor against the per-cluster median. The counts are streamed from
+#' the binary file, but the restart factors are dense and all held at once, so
+#' `n_runs` times `k` times the cell count is the memory you should budget for.
+#'
+#' @param f_path_gene Path to the `counts_genes.bin` file.
+#' @param gene_indices Integer vector. 0-indexed(!) positions of the genes
+#' to include.
+#' @param cell_indices Integer vector. 0-indexed(!) positions of cells to
+#' include in the analysis.
+#' @param k Integer. Number of latent factors. Must be at least 2.
+#' @param preprocessing String. One of `c("none", "sd", "sqrt_sd")`.
+#' @param use_second_layer Boolean. If `TRUE`, runs NMF on the normalised
+#' counts; if `FALSE`, on the raw counts.
+#' @param nmf_hals_params Named list. Contains the NMF parameters. The
+#' `nmf_init` field is ignored, restarts always use random initialisation.
+#' @param nmf_consensus_params Named list. Contains the consensus parameters.
+#' @param n_runs Integer. Number of restarts. Must be at least 2.
+#' @param seed Integer. Base random seed. Restart `i` uses `seed + i`.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @returns A list with the following items
+#' \itemize{
+#'   \item w - The left factor matrix (n_cells x k)
+#'   \item h - The right factor matrix (k x n_genes)
+#'   \item rel_error - Reconstruction error relative to the squared Frobenius
+#'   norm of the input. Not comparable with the absolute `final_loss` the
+#'   single-run version returns.
+#'   \item rel_run_errors - The same, per restart.
+#'   \item labels - Integer vector of length `k * n_runs`. Cluster each pooled
+#'   component landed in, `NA` if it was dropped.
+#'   \item local_density - Mean cosine distance to the nearest neighbours per
+#'   pooled component.
+#'   \item kept - 1-indexed positions of the surviving pooled components.
+#'   \item silhouette - Silhouette per survivor, aligned with `kept`.
+#'   \item stability - Mean silhouette over the survivors.
+#'   \item cluster_sizes - Number of survivors per cluster.
+#'   \item n_dropped - Number of pooled components removed.
+#'   \item n_empty_clusters - Number of clusters left with no members.
+#' }
+#'
+#' @references Kotliar et al., eLife, 2019
+#'
+#' @export
+#'
+#' @keywords internal
+rs_nmf_consensus_sc <- function(f_path_gene, gene_indices, cell_indices, k, preprocessing, use_second_layer, nmf_hals_params, nmf_consensus_params, n_runs, seed, verbose) .Call(wrap__rs_nmf_consensus_sc, f_path_gene, gene_indices, cell_indices, k, preprocessing, use_second_layer, nmf_hals_params, nmf_consensus_params, n_runs, seed, verbose)
+
+#' Sweep k and report consensus stability against reconstruction error
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Returns diagnostics only, no factors, so a wide `k_range` stays cheap in
+#' memory. The counts are loaded once and reused across every k. Pick the k
+#' where stability is high and the error curve has not yet flattened, then call
+#' [rs_nmf_consensus_sc()] there.
+#'
+#' @param f_path_gene Path to the `counts_genes.bin` file.
+#' @param gene_indices Integer vector. 0-indexed(!) positions of the genes
+#' to include.
+#' @param cell_indices Integer vector. 0-indexed(!) positions of cells to
+#' include in the analysis.
+#' @param k_range Integer vector. Ranks to evaluate, every entry at least 2.
+#' @param preprocessing String. One of `c("none", "sd", "sqrt_sd")`.
+#' @param use_second_layer Boolean. If `TRUE`, runs NMF on the normalised
+#' counts; if `FALSE`, on the raw counts.
+#' @param nmf_hals_params Named list. Contains the NMF parameters.
+#' @param nmf_consensus_params Named list. Contains the consensus parameters.
+#' @param n_runs Integer. Number of restarts per k. Must be at least 2.
+#' @param seed Integer. Base random seed.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @returns A list of equal-length vectors, one element per swept k
+#' \itemize{
+#'   \item k - The rank.
+#'   \item stability - Mean silhouette of the consensus clusters. `NaN` where
+#'   the consensus step failed.
+#'   \item best_error - Lowest restart error, relative to the squared
+#'   Frobenius norm of the input.
+#'   \item median_error - Median restart error, same scale.
+#'   \item consensus_failed - Did the density filter leave fewer than `k`
+#'   components.
+#'   \item n_dropped - Number of pooled components removed.
+#'   \item n_empty_clusters - Number of clusters left with no members.
+#'   \item n_converged - Restarts that met the HALS tolerance.
+#' }
+#'
+#' @references Kotliar et al., eLife, 2019
+#'
+#' @export
+#'
+#' @keywords internal
+rs_nmf_k_sweep_sc <- function(f_path_gene, gene_indices, cell_indices, k_range, preprocessing, use_second_layer, nmf_hals_params, nmf_consensus_params, n_runs, seed, verbose) .Call(wrap__rs_nmf_k_sweep_sc, f_path_gene, gene_indices, cell_indices, k_range, preprocessing, use_second_layer, nmf_hals_params, nmf_consensus_params, n_runs, seed, verbose)
+
+#' Run DIALOGUE over a set of single cells
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Finds multicellular programmes: genes that are cell-type-specific but whose
+#' activity covaries across the samples the cell types share. Three stages.
+#' First, each cell type's features are collapsed to one row per sample and put
+#' through a sparse multi-CCA, giving every programme a weight vector per cell
+#' type plus a provisional gene signature. Second, for every ordered pair of
+#' cell types and every candidate gene, a mixed model asks whether a cell's own
+#' programme score tracks the partner cell type's expression of that gene in
+#' the same sample. Third, the partners are meta-analysed and the scores refit
+#' onto the surviving genes by non-negative least squares.
+#'
+#' The counts are streamed off the gene-major file and only the normalised
+#' layer is read. DIALOGUE does not compute the features: whatever the caller
+#' trusts as a low-dimensional description of each cell type goes in as
+#' `features`.
+#'
+#' @param f_path_gene Path to the `counts_genes.bin` file.
+#' @param cell_type_indices List of integer vectors. 0-indexed(!) positions of
+#' the cells belonging to each cell type. At least two cell types are needed.
+#' @param features List of numeric matrices, one per cell type, shaped
+#' `n_cells_in_type x k_i` with rows aligned to `cell_type_indices`. Needs at
+#' least two columns per cell type.
+#' @param sample_ids Integer vector. 0-indexed(!) sample code per cell, over
+#' the *whole* store rather than per cell type. Must be long enough to cover
+#' the largest index in `cell_type_indices`.
+#' @param cell_quality Numeric vector. Quality covariate per cell, indexed the
+#' same way as `sample_ids`. Upstream's `cellQ`, typically the z-scored log of
+#' the library size.
+#' @param gene_indices Integer vector. 0-indexed(!) positions of the genes to
+#' consider when building signatures.
+#' @param dialogue_params Named list. Contains the DIALOGUE parameters across
+#' all three stages, see [params_dialogue_pmd()], [params_dialogue_hlm()] and
+#' [params_dialogue_refine()]. The three blocks share one flat list.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @returns A list with the following items
+#' \itemize{
+#'   \item shared_samples - Integer vector. 0-indexed(!) sample codes present
+#'   in every cell type.
+#'   \item kept_features - List of integer vectors. 0-indexed(!) feature
+#'   columns surviving the ANOVA filter, per cell type.
+#'   \item mcp_cell_types - List of integer vectors. 0-indexed(!) cell types
+#'   each programme spans.
+#'   \item ws - List of matrices. Sparse canonical weights per cell type,
+#'   `kept_features x k`.
+#'   \item scores - List of matrices. Final programme scores per cell type,
+#'   `n_cells_in_type x k`, residualised on the quality covariate.
+#'   \item cca_scores - List of matrices. Stage one's canonical scores, kept
+#'   for comparison against the refit.
+#'   \item emp_p - Matrix. Empirical p per programme and cell type pair,
+#'   `k x n_pairs`, the columns in `combn(n_cell_types, 2)` order.
+#'   \item pair_cor - Matrix. Canonical correlation on the real fit, same
+#'   shape.
+#'   \item refit_fidelity - Matrix. Correlation between the canonical score
+#'   and the refit, `n_cell_types x k`. A low value means the gene-level refit
+#'   drifted away from the programme the decomposition found.
+#'   \item verdicts - List of equal-length vectors with the meta-analysis
+#'   verdict per gene: `cell_type`, `programme`, `gene` (all 0-indexed),
+#'   `up`, `n_supporting`, `support_fraction`, `p_up`, `p_down` and
+#'   `coefficient`.
+#'   \item permissive - Nested list `[cell_type][programme]` of `up` / `down`
+#'   gene positions (0-indexed).
+#'   \item strict - The same, for the stricter gene list.
+#' }
+#'
+#' @references Jerby-Arnon & Regev, Nature Biotechnology, 2022
+#'
+#' @export
+#'
+#' @keywords internal
+rs_dialogue_sc <- function(f_path_gene, cell_type_indices, features, sample_ids, cell_quality, gene_indices, dialogue_params, verbose) .Call(wrap__rs_dialogue_sc, f_path_gene, cell_type_indices, features, sample_ids, cell_quality, gene_indices, dialogue_params, verbose)
 
 #' Generate the ligand to target influence matrices
 #'
@@ -4651,6 +5045,8 @@ rs_mc_pca <- function(sparse_data, no_pcs, pca_params, clr_offsets, seed, verbos
 #' @param gene_indices_2 Integer. The gene indices for the first set of genes.
 #' Must be 0-indexed!
 #' @param spearman Boolean. Shall the spearman correlation be calculated.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
 #'
 #' @returns The vector of correlations between the pairs of gene_indices_1
 #' and gene_indices_2
@@ -4658,7 +5054,7 @@ rs_mc_pca <- function(sparse_data, no_pcs, pca_params, clr_offsets, seed, verbos
 #' @export
 #'
 #' @keywords internal
-rs_pairwise_gene_cors_mc <- function(sparse_data, gene_indices_1, gene_indices_2, spearman) .Call(wrap__rs_pairwise_gene_cors_mc, sparse_data, gene_indices_1, gene_indices_2, spearman)
+rs_pairwise_gene_cors_mc <- function(sparse_data, gene_indices_1, gene_indices_2, spearman, verbose) .Call(wrap__rs_pairwise_gene_cors_mc, sparse_data, gene_indices_1, gene_indices_2, spearman, verbose)
 
 #' SCENIC on MetaCells
 #'
@@ -4802,6 +5198,130 @@ rs_mc_hotspot_autocor <- function(sparse_data, embd, knn_data, hotspot_params, c
 #' @keywords internal
 rs_mc_hotspot_gene_cor <- function(sparse_data, embd, knn_data, hotspot_params, cells_to_keep, genes_to_use, verbose, seed) .Call(wrap__rs_mc_hotspot_gene_cor, sparse_data, embd, knn_data, hotspot_params, cells_to_keep, genes_to_use, verbose, seed)
 
+#' Calculate VISION pathway scores in Rust (for meta cells)
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' The function will take in a list of gene sets that contains lists of `"pos"`
+#' and `"neg"` gene indices (0-indexed). You don't have to provide the `"neg"`,
+#' but it can be useful to classify the delta of two stats (EMT, Th1; Th2) etc.
+#' This version works on MetaCell counts which are stored in memory directly.
+#'
+#' @param sparse_data A named list that needs to have `data`, `indptr`,
+#' `indices`, `nrow`, `ncol` and `cs_type`. Shape is (metacells, genes) and the
+#' data need to be the **normalised** counts.
+#' @param gs_list Nested list. Each sublist contains the (0-indexed!) positive
+#' and negative gene indices of that specific gene set.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @return A matrix of meta cells x vision scores per gene set.
+#'
+#' @export
+#'
+#' @references DeTomaso, et al., Nat. Commun., 2019
+#'
+#' @keywords internal
+rs_mc_vision <- function(sparse_data, gs_list, verbose) .Call(wrap__rs_mc_vision, sparse_data, gs_list, verbose)
+
+#' Calculate VISION pathway scores in Rust with auto-correlation (for meta cells)
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' The function will take in a list of gene sets that contains lists of `"pos"`
+#' and `"neg"` gene indices (0-indexed). You don't have to provide the `"neg"`,
+#' but it can be useful to classify the delta of two stats (EMT, Th1; Th2) etc.
+#' Additionally, it will take a random gene list and calculate an
+#' auto-correlation score based on Gaery's C to identify pathways that show
+#' significant patterns on the kNN graph generated on the provided embedding.
+#' This version works on MetaCell counts which are stored in memory directly.
+#'
+#' @param sparse_data A named list that needs to have `data`, `indptr`,
+#' `indices`, `nrow`, `ncol` and `cs_type`. Shape is (metacells, genes) and the
+#' data need to be the **normalised** counts.
+#' @param embd Numerical matrix. The embedding matrix to use to generate the
+#' kNN graph. Needs to be of the same order/length as the meta cells in
+#' `sparse_data`.
+#' @param knn_data Optional list. This contains pre-computed kNN data
+#' (including distances) and the `dist_metric` it was built with. The user has
+#' to ensure consistency! If provided, this will be used and whether the
+#' distances are treated as squared is derived from `dist_metric` rather than
+#' from the parameter list.
+#' @param gs_list Nested list. Each sublist contains the (0-indexed!) positive
+#' and negative gene indices of that specific gene set.
+#' @param random_gs_list Double-nested list. The outer list represents the
+#' clusters of clusters and the inner list represents the permutations within
+#' that cluster.
+#' @param vision_params List. Contains various parameters to use in terms
+#' of the kNN generation.
+#' @param cluster_membership Integer. Vector that indicates to which of the
+#' permuted gene set clusters the given gene set belongs.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#' @param seed Integer. Random seed for reproducibility.
+#'
+#' @return A list with the following items:
+#' \itemize{
+#'   \item autocor_res - Auto-correlation results, i.e., 1 - C, p-value and
+#'   FDR.
+#'   \item vision_mat - A matrix of meta cells x vision scores per gene set.
+#' }
+#'
+#' @export
+#'
+#' @references DeTomaso, et al., Nat. Commun., 2019
+#'
+#' @keywords internal
+rs_mc_vision_with_autocorrelation <- function(sparse_data, embd, knn_data, gs_list, random_gs_list, vision_params, cluster_membership, verbose, seed) .Call(wrap__rs_mc_vision_with_autocorrelation, sparse_data, embd, knn_data, gs_list, random_gs_list, vision_params, cluster_membership, verbose, seed)
+
+#' Run DIALOGUE over meta cells
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' The meta cell entry point into DIALOGUE, see [rs_dialogue_sc()] for what the
+#' method does. This is a shim rather than a second implementation: everything
+#' DIALOGUE asks of the expression matrix is per-gene, so the in-memory matrix
+#' is wrapped as a gene-major reader and the same core runs.
+#'
+#' Only the normalised layer is ever read, so `sparse_data` has to carry the
+#' normalised counts. The `data` layer is cast to integers on the way in and
+#' then goes unused.
+#'
+#' Meta cells are already aggregates, so the sample a meta cell belongs to has
+#' to be unambiguous: build them within samples, not across them. The random
+#' intercept in stage two is over samples, and a meta cell straddling two of
+#' them has no well-defined level.
+#'
+#' @param sparse_data A named list that needs to have `data`, `indptr`,
+#' `indices`, `cs_type`, `nrow` and `ncol`, holding the *normalised* meta cell
+#' counts with shape (metacells, genes).
+#' @param cell_type_indices List of integer vectors. 0-indexed(!) positions of
+#' the meta cells belonging to each cell type. At least two cell types are
+#' needed.
+#' @param features List of numeric matrices, one per cell type, shaped
+#' `n_metacells_in_type x k_i` with rows aligned to `cell_type_indices`. Needs
+#' at least two columns per cell type.
+#' @param sample_ids Integer vector. 0-indexed(!) sample code per meta cell,
+#' over all meta cells rather than per cell type.
+#' @param cell_quality Numeric vector. Quality covariate per meta cell, indexed
+#' the same way as `sample_ids`.
+#' @param gene_indices Integer vector. 0-indexed(!) positions of the genes to
+#' consider when building signatures.
+#' @param dialogue_params Named list. Contains the DIALOGUE parameters across
+#' all three stages, see [params_dialogue_pmd()], [params_dialogue_hlm()] and
+#' [params_dialogue_refine()]. The three blocks share one flat list.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @returns A list, identical in shape to [rs_dialogue_sc()].
+#'
+#' @references Jerby-Arnon & Regev, Nature Biotechnology, 2022
+#'
+#' @export
+#'
+#' @keywords internal
+rs_mc_dialogue <- function(sparse_data, cell_type_indices, features, sample_ids, cell_quality, gene_indices, dialogue_params, verbose) .Call(wrap__rs_mc_dialogue, sparse_data, cell_type_indices, features, sample_ids, cell_quality, gene_indices, dialogue_params, verbose)
+
 #' Run NMF (HALS) on MetaCells
 #'
 #' @description
@@ -4822,6 +5342,8 @@ rs_mc_hotspot_gene_cor <- function(sparse_data, embd, knn_data, hotspot_params, 
 #' @returns A list with `w`, `h`, `final_loss`, `n_iter`, `converged`.
 #'
 #' @export
+#'
+#' @keywords internal
 rs_nmf_single_mc <- function(sparse_data, k, preprocessing, use_second_layer, nmf_hals_params, seed, verbose) .Call(wrap__rs_nmf_single_mc, sparse_data, k, preprocessing, use_second_layer, nmf_hals_params, seed, verbose)
 
 #' Run multiple NMF (HALS) restarts on MetaCells
@@ -4846,7 +5368,103 @@ rs_nmf_single_mc <- function(sparse_data, k, preprocessing, use_second_layer, nm
 #' `best_idx` (1-indexed).
 #'
 #' @export
+#'
+#' @keywords internal
 rs_nmf_multi_mc <- function(sparse_data, k, preprocessing, use_second_layer, nmf_hals_params, n_runs, seed, verbose) .Call(wrap__rs_nmf_multi_mc, sparse_data, k, preprocessing, use_second_layer, nmf_hals_params, n_runs, seed, verbose)
+
+#' Run consensus NMF on MetaCells
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Runs `n_runs` HALS NMF restarts, pools their components, drops unstable
+#' ones by local density, k-means clusters the survivors and refits the
+#' partner factor against the per-cluster median. Assumes that the sparse data
+#' is pre-filtered for the cells/genes you wish to include. Indices in the
+#' sparse data need to be 0-indexed.
+#'
+#' @param sparse_data A named list with `data`, `indptr`, `indices`, `nrow`,
+#' `ncol` and `format`.
+#' @param k Integer. Number of latent factors. Must be at least 2.
+#' @param preprocessing String. One of `c("none", "sd", "sqrt_sd")`.
+#' @param use_second_layer Boolean. If `TRUE`, runs NMF on normalised counts.
+#' @param nmf_hals_params Named list. Contains the NMF parameters. The
+#' `nmf_init` field is ignored, restarts always use random initialisation.
+#' @param nmf_consensus_params Named list. Contains the consensus parameters.
+#' @param n_runs Integer. Number of restarts. Must be at least 2.
+#' @param seed Integer. Base random seed. Restart `i` uses `seed + i`.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @returns A list with the following items
+#' \itemize{
+#'   \item w - The left factor matrix (n_meta_cells x k)
+#'   \item h - The right factor matrix (k x n_genes)
+#'   \item rel_error - Reconstruction error relative to the squared Frobenius
+#'   norm of the input. Not comparable with the absolute `final_loss` the
+#'   single-run version returns.
+#'   \item rel_run_errors - The same, per restart.
+#'   \item labels - Integer vector of length `k * n_runs`. Cluster each pooled
+#'   component landed in, `NA` if it was dropped.
+#'   \item local_density - Mean cosine distance to the nearest neighbours per
+#'   pooled component.
+#'   \item kept - 1-indexed positions of the surviving pooled components.
+#'   \item silhouette - Silhouette per survivor, aligned with `kept`.
+#'   \item stability - Mean silhouette over the survivors.
+#'   \item cluster_sizes - Number of survivors per cluster.
+#'   \item n_dropped - Number of pooled components removed.
+#'   \item n_empty_clusters - Number of clusters left with no members.
+#' }
+#'
+#' @references Kotliar et al., eLife, 2019
+#'
+#' @export
+#'
+#' @keywords internal
+rs_nmf_consensus_mc <- function(sparse_data, k, preprocessing, use_second_layer, nmf_hals_params, nmf_consensus_params, n_runs, seed, verbose) .Call(wrap__rs_nmf_consensus_mc, sparse_data, k, preprocessing, use_second_layer, nmf_hals_params, nmf_consensus_params, n_runs, seed, verbose)
+
+#' Sweep k and report consensus stability against reconstruction error
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Returns diagnostics only, no factors, so a wide `k_range` stays cheap in
+#' memory. Pick the k where stability is high and the error curve has not yet
+#' flattened, then call [rs_nmf_consensus_mc()] there. Assumes that the sparse
+#' data is pre-filtered for the cells/genes you wish to include. Indices in the
+#' sparse data need to be 0-indexed.
+#'
+#' @param sparse_data A named list with `data`, `indptr`, `indices`, `nrow`,
+#' `ncol` and `format`.
+#' @param k_range Integer vector. Ranks to evaluate, every entry at least 2.
+#' @param preprocessing String. One of `c("none", "sd", "sqrt_sd")`.
+#' @param use_second_layer Boolean. If `TRUE`, runs NMF on normalised counts.
+#' @param nmf_hals_params Named list. Contains the NMF parameters.
+#' @param nmf_consensus_params Named list. Contains the consensus parameters.
+#' @param n_runs Integer. Number of restarts per k. Must be at least 2.
+#' @param seed Integer. Base random seed.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @returns A list of equal-length vectors, one element per swept k
+#' \itemize{
+#'   \item k - The rank.
+#'   \item stability - Mean silhouette of the consensus clusters. `NaN` where
+#'   the consensus step failed.
+#'   \item best_error - Lowest restart error, relative to the squared
+#'   Frobenius norm of the input.
+#'   \item median_error - Median restart error, same scale.
+#'   \item consensus_failed - Did the density filter leave fewer than `k`
+#'   components.
+#'   \item n_dropped - Number of pooled components removed.
+#'   \item n_empty_clusters - Number of clusters left with no members.
+#'   \item n_converged - Restarts that met the HALS tolerance.
+#' }
+#'
+#' @references Kotliar et al., eLife, 2019
+#'
+#' @export
+#'
+#' @keywords internal
+rs_nmf_k_sweep_mc <- function(sparse_data, k_range, preprocessing, use_second_layer, nmf_hals_params, nmf_consensus_params, n_runs, seed, verbose) .Call(wrap__rs_nmf_k_sweep_mc, sparse_data, k_range, preprocessing, use_second_layer, nmf_hals_params, nmf_consensus_params, n_runs, seed, verbose)
 
 #' Loads in a modality from a 10x h5 file
 #'

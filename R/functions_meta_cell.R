@@ -611,14 +611,15 @@ merge_meta_cells <- function(
   )
 }
 
-## hotspot ---------------------------------------------------------------------
+## embedding and kNN ------------------------------------------------------------
 
-#' Resolve the shared inputs of the meta cell HotSpot methods
+#' Resolve the shared inputs of the meta cell graph-based methods
 #'
 #' @description
-#' Both HotSpot entry points need the same four things resolved off the object
-#' before anything can go to Rust. Kept in one place so the two methods cannot
-#' drift apart.
+#' HotSpot and VISION all need the same things resolved off the object before
+#' anything can go to Rust. Kept in one place so the methods cannot drift
+#' apart. VISION scores every meta cell over every gene, so it ignores the
+#' `cells_to_take` / `genes_to_take` slots of the return.
 #'
 #' @param object `MetaCells` class.
 #' @param embd_to_use String. The embedding to use.
@@ -640,7 +641,7 @@ merge_meta_cells <- function(
 #' }
 #'
 #' @keywords internal
-.prep_mc_hotspot <- function(
+.prep_mc_embd_knn <- function(
   object,
   embd_to_use,
   use_knn,

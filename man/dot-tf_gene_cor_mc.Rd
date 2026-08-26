@@ -4,7 +4,7 @@
 \alias{.tf_gene_cor_mc}
 \title{Get TF gene correlations for MetaCells}
 \usage{
-.tf_gene_cor_mc(tf_to_gene, object, spearman)
+.tf_gene_cor_mc(tf_to_gene, object, spearman, .verbose = TRUE)
 }
 \arguments{
 \item{tf_to_gene}{data.table. The TF to gene data.table}
@@ -12,6 +12,8 @@
 \item{object}{\code{MetaCells} class.}
 
 \item{spearman}{Boolean. Shall the Spearman correlation be used.}
+
+\item{.verbose}{Boolean or integer. Verbosity.}
 }
 \value{
 Adds a \code{pairwise_cor} column to the tf_to_gene data.table

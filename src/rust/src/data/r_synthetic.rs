@@ -19,6 +19,8 @@ extendr_module! {
     fn rs_sample_ids_for_cell_types;
     // -- adt --
     fn rs_synthetic_sc_adt_with_cell_types;
+    // -- dialogue --
+    fn rs_synthetic_sc_dialogue_data;
 }
 
 //////////
@@ -331,4 +333,123 @@ fn rs_sample_ids_for_cell_types(
     let sample_labels = generate_sample_labels(&cell_type_indices, n_samples, &bias, seed);
 
     Ok(sample_labels.r_int_convert())
+}
+
+//////////////
+// DIALOGUE //
+//////////////
+
+/// Generates synthetic data with a planted multicellular programme
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Builds the fixture DIALOGUE is tested against. Every cell type gets its own
+/// noise and its own sample-level nuisance factors; only the first feature
+/// column and the planted genes carry the shared per-sample latent, so anything
+/// found beyond that is spurious. Cells are laid out contiguously by cell type
+/// and, within a cell type, by sample.
+///
+/// The counts are a scaled copy of the normalised layer rather than a draw from
+/// a count model. That keeps the planted signal clean, which is the point of a
+/// fixture.
+///
+/// @param n_samples Integer. Samples the experiment spans. DIALOGUE needs at
+/// least 5.
+/// @param cells_per_sample Integer. Cells per sample per cell type.
+/// @param n_cell_types Integer. Number of cell types. Must be at least 2.
+/// @param n_features Integer. Feature columns per cell type. Must be at least
+/// 2.
+/// @param n_sample_features Integer. Feature columns carrying a per-sample
+/// component. The first of those is the shared programme, the rest are
+/// cell-type-specific nuisance; anything past this count is pure noise.
+/// @param n_genes Integer. Number of genes.
+/// @param n_planted Integer. Planted genes per cell type. Cell type `t` owns
+/// genes `t * n_planted` to `(t + 1) * n_planted - 1` (0-indexed), so the
+/// blocks have to fit into `n_genes`.
+/// @param seed Integer. Random seed for reproducibility.
+///
+/// @return A list with the following items.
+/// \itemize{
+///   \item data - The synthetic raw counts, CSR over cells.
+///   \item indptr - The index pointers of the cells.
+///   \item indices - The gene indices for the given cells.
+///   \item nrow - Number of cells.
+///   \item ncol - Number of genes.
+///   \item cell_type_indices - List of integer vectors. 0-indexed(!) global
+///   cell positions per cell type.
+///   \item features - List of numeric matrices, one per cell type, rows
+///   aligned to `cell_type_indices`.
+///   \item sample_ids - Integer vector. 0-indexed(!) sample code per cell.
+///   \item quality - Numeric vector. Quality covariate per cell. Pure noise.
+///   \item latent - Numeric vector. The per-sample latent the planted
+///   programme follows.
+///   \item planted - List of integer vectors. 0-indexed(!) planted gene
+///   positions per cell type.
+/// }
+///
+/// @references Jerby-Arnon & Regev, Nature Biotechnology, 2022
+///
+/// @export
+///
+/// @keywords internal
+#[allow(clippy::too_many_arguments)]
+#[extendr]
+fn rs_synthetic_sc_dialogue_data(
+    n_samples: usize,
+    cells_per_sample: usize,
+    n_cell_types: usize,
+    n_features: usize,
+    n_sample_features: usize,
+    n_genes: usize,
+    n_planted: usize,
+    seed: usize,
+) -> extendr_api::Result<List> {
+    let params = DialogueSyntheticParams::new(
+        n_samples,
+        cells_per_sample,
+        n_cell_types,
+        n_features,
+        n_sample_features,
+        n_genes,
+        n_planted,
+    );
+
+    let synthetic = create_dialogue_synthetic_data(&params, seed as u64).to_extendr()?;
+
+    // The generator works gene-major; R wants a `dgRMatrix`, so hand back the
+    // cell-major view of the same matrix.
+    let csr = synthetic.matrix.transform();
+
+    let features = List::from_values(
+        synthetic
+            .features
+            .iter()
+            .map(|mat| faer_to_r_matrix(mat.as_ref())),
+    );
+    let cell_type_indices = List::from_values(
+        synthetic
+            .cell_type_indices
+            .into_iter()
+            .map(|cells| cells.r_int_convert()),
+    );
+    let planted = List::from_values(
+        synthetic
+            .planted
+            .into_iter()
+            .map(|genes| genes.r_int_convert()),
+    );
+
+    Ok(list!(
+        data = csr.data,
+        indptr = csr.indptr,
+        indices = csr.indices,
+        nrow = csr.shape.0,
+        ncol = csr.shape.1,
+        cell_type_indices = cell_type_indices,
+        features = features,
+        sample_ids = synthetic.sample_ids.r_int_convert(),
+        quality = synthetic.quality,
+        latent = synthetic.latent,
+        planted = planted
+    ))
 }

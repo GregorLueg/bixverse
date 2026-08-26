@@ -8,14 +8,15 @@ params_module_membership(
   method = c("zscore", "fdr"),
   cutoff = 3,
   fdr = 0.05,
-  tails = c("auto", "upper", "both")
+  tails = c("auto", "upper", "both"),
+  scaling = c("robust", "standard")
 )
 }
 \arguments{
-\item{method}{String. \code{"zscore"} standardises each component robustly (median
-and MAD) and keeps \code{abs(z) > cutoff}. \code{"fdr"} converts to two-sided p-values
-against a Normal null fitted the same way, Benjamini-Hochberg adjusts, and
-keeps \code{padj < fdr}. Defaults to \code{"zscore"}.}
+\item{method}{String. \code{"zscore"} standardises each component and keeps
+\code{abs(z) > cutoff}. \code{"fdr"} converts to two-sided p-values against a Normal
+null fitted the same way, Benjamini-Hochberg adjusts, and keeps
+\code{padj < fdr}. Defaults to \code{"zscore"}.}
 
 \item{cutoff}{Float. Absolute z threshold for \code{method = "zscore"}. Defaults
 to \code{3.0}.}
@@ -26,6 +27,11 @@ to \code{0.05}.}
 \item{tails}{String. \code{"auto"} uses an upper-tail-only test when every loading
 is non-negative (the NMF case) and a two-sided one otherwise. \code{"upper"} and
 \code{"both"} force the choice. Defaults to \code{"auto"}.}
+
+\item{scaling}{String. \code{"robust"} centres and scales each component by its
+median and MAD. \code{"standard"} uses the mean and standard deviation instead,
+which is stricter and less forgiving of skewed loadings (e.g. NMF).
+Defaults to \code{"robust"}.}
 }
 \value{
 A list with the parameters for usage in subsequent functions.

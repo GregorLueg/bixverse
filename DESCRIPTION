@@ -1,6 +1,6 @@
 Package: bixverse
 Title: Rust-accelerated standard bioinformatics, computational biology workflows
-Version: 0.4.9
+Version: 0.4.10
 Authors@R: 
     c(
       person(
@@ -47,7 +47,7 @@ Imports:
     data.table,
     DBI,
     dplyr,
-    duckdb,
+    duckdb (>= 1.5.5),
     edgeR,
     fastcluster,
     ggplot2,
@@ -103,6 +103,6 @@ Depends:
     R (>= 4.2)
 LazyData: true
 Remotes:
-    GregorLueg/manifoldsR@v0.2.9,
-    GregorLueg/bixverse.plots@v0.2.3
+    GregorLueg/manifoldsR,
+    GregorLueg/bixverse.plots
 Config/roxygen2/version: 8.1.0

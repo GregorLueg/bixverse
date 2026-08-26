@@ -1,6 +1,6 @@
 # bixverse package
 
-![r_package](https://img.shields.io/badge/R_package-0.4.9-orange) 
+[![r_package](https://img.shields.io/github/r-package/v/GregorLueg/bixverse?label=R_package&color=orange)](https://github.com/GregorLueg/bixverse/blob/main/DESCRIPTION)
 [![CI](https://github.com/GregorLueg/bixverse/actions/workflows/R-cmd-check.yml/badge.svg)](https://github.com/GregorLueg/bixverse/actions/workflows/R-cmd-check.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![pkgdown](https://img.shields.io/badge/pkgdown-website-1b5e9f?logo=github)](https://gregorlueg.github.io/bixverse/)
@@ -12,81 +12,104 @@
 
 </br>
 
-## Intro
+## What this is
 
-### Description
+This is an *opinionated* package taking bioinformatics and computational
+biology workflows from R and Python, reimplementing them in Rust and exposing
+them through thin R wrappers. Gene set enrichment, co-expression modules,
+biomedical ontologies, graph and diffusion methods, differential expression,
+and a full single cell suite that goes from raw h5 to annotated clusters, plus
+a huge number of analysis methods for single cell. Result? Blazingly fast 
+performance with low memory usage, making large-scale analysis feasible without 
+any cloud compute.
 
-This is an *opionated* package taking various bioinformatics and computational
-biology workflows from R and Python, making them substantially faster via 
-low-level implementations in Rust and exposing them via thin R wrappers. 
-Result? Blazingly fast performance with low memory usage, making large-scale
-analysis feasable without any cloud compute. Over time more and more methods
-will be added.  
+Every exported function validates its inputs on the R side. The heavy numerics
+live in the standalone [bixverse-rs](https://crates.io/crates/bixverse-rs)
+crate, so the R layer stays a wrapper and nothing more.
 
-Two sister packages are also in the process of being built and maintained:
+## Atlas scale on a laptop
 
-- [bixverse.plots](https://github.com/GregorLueg/bixverse.plots) package for - 
-  you guessed it - plotting. Contains especially a large number of plotting
-  helpers for single cell now.
-- [bixverse.gpu](https://github.com/GregorLueg/bixverse.gpu) package for -
-  you guessed it again - GPU-accelerated methods. In this case, it leverages
-  [cubecl](https://github.com/tracel-ai/cubecl)/[Burn](https://burn.dev) under 
-  the hood with wgpu backends which means it will work on (theoretically) any
-  GPU. If you do single cell stuff, have a look... Some of the implementations
-  in there make everything substantially faster.
+<img src="man/figures/bixverse_single_cell.png" width="400" height="400" alt="atlas scale on small compute">
 
-Additional packages that might be of interest interest to you:
+The 1 million cell PBMC data set from Parse Biosciences, end to end, on a
+MacBook Air M3 with 24 GB. Parse's own guide for that same data set recommends
+you move to the cloud and pick an instance with at least 8 threads and 160 GB
+of RAM.
 
-- [manifoldsR](https://github.com/GregorLueg/manifoldsR). This package 
-  specialises on methods for manifold learning for visualisations, think UMAP,
-  tSNE, diffusion maps, etc. Additionally, it is home to a cool clustering 
-  method called [EVoC](https://github.com/TutteInstitute/evoc) leveraging
-  Rust under the hood. This package is used for all of the 2D visualisations
-  for the single cell suite.
-- [genewalkR](https://github.com/GregorLueg/genewalkR). This one is a bit more
-  graph-heavy but has some cool methods in there... Also, it provides a data
-  base with different gene <> gene interaction and regulatory networks. For
-  sure useful for different computational biology workflows.
+| Step | CPU | GPU |
+|---|---|---|
+| Stream and process to desk the 24 samples | ~3.5 min | |
+| HVG selection (2k genes) | ~10 s | |
+| PCA (32 components) | ~25 s | 15 s |
+| kNN graph | ~90 s (NNDescent) | <30 s (CAGRA) |
 
-### Release notes
+Nothing here loads the full matrix into memory at any point. Counts sit on disk 
+in a Rust binary format, metadata sits in DuckDB, and the analysis streams data
+in small chunks to not blow up your memory. You can even write pipelines like 
+this here:
 
-<img src="man/figures/bixverse_single_cell.png" width="500" height="500" alt="atlas scale on small compute">
+```r
+pipeline <- sc_pipeline() %>>%
+  step_hvg_sc(hvg_no = 2000L) %>>%
+  step_pca_sc(no_pcs = 20L) %>>%
+  step_harmony_sc(batch_column = "plate") %>>%
+  step_neighbours_sc() %>>%
+  step_clusters_sc(res = 0.5)
 
-Major release with `"0.4.0+"`. The single cell suite has been further improved. 
-The key changes are:
+sc_object <- apply_pipeline(pipeline, sc_object)
+```
 
-- Performance improvements across several axes. A lot of the underlying Rust
-  code was made even faster and more performant. The goal of analysing a 1m
-  single cell data set on a MacBook Air with 24 GB memory has been achieved.
-- Multi-modal support. There is now a `SingleCellsMultiModal` class that allows
-  you to (for now only) also add ADT counts. Some readers have been added to
-  load in the data. This also includes support for new methods in this space:
-  * [DSB normalisation](https://www.nature.com/articles/s41467-022-29356-8) for
-    ADT counts
-  * [WNN generation](https://www.cell.com/cell/fulltext/S0092-8674(21)00583-3) 
-    for generation of multi-modal graphs.
-  * Large number of methods and updates to support multi-model analysis
-- Massive improvements on the two sister packages ([bixverse.plots](https://github.com/GregorLueg/bixverse.plots) and 
-  [bixverse.gpu](https://github.com/GregorLueg/bixverse.gpu)): enabling 
-  GPU-accelerated methods (Harmony, PCA, kNN searches) and a large number of 
-  plotting helpers.
-- Updates to various vignettes to reflect the changes with this release.
-- More methods added... Symphony, NicheNet, sparse NMF for single cells!
+Pipelines are inert. Nothing runs until you apply one, and the same chain works
+on a `SingleCells`, on a `SingleCellsSubset`, or once per group via
+`apply_pipeline_per_group()` (useful for sub cell type analysis).
 
-[Please checkout out the website of the package for details](https://gregorlueg.github.io/bixverse/) -> 
-particularly the sections around single cell (design choices and vignettes.)
+Full walk-through: [scaling to millions of cells](https://gregorlueg.github.io/bixverse/articles/single_cell_big_data.html).
+What changed in each release: [the changelog](https://gregorlueg.github.io/bixverse/news/index.html).
 
-## Usage
+## What's in it
 
-### Installation
+| Domain | What's in there | Read more |
+|---|---|---|
+| Gene set enrichment | Hypergeometric tests, fgsea, GSVA, ssGSEA, singscore, mitch, plus GO-aware elim methods | [GSE methods](https://gregorlueg.github.io/bixverse/articles/gse_methods.html), [pathway activity](https://gregorlueg.github.io/bixverse/articles/pathway_activity.html) |
+| (Single cell) Regulons | SCENIC, CisTarget motif enrichment, regulon binarisation | [bag of genes](https://gregorlueg.github.io/bixverse/articles/bag_of_genes_single_cells.html) |
+| Bulk co-expression | CoReMo, stabilised ICA, contrastive PCA, NMF and consensus NMF, DGRDL | [co-expression modules](https://gregorlueg.github.io/bixverse/articles/bulk_coexpression_modules.html), [contrastive PCA](https://gregorlueg.github.io/bixverse/articles/cpca.html) |
+| Bulk DGE | limma-voom, Hedges' g effect sizes, batch correction, TPM and RPKM, structured handling of many contrasts | [reference](https://gregorlueg.github.io/bixverse/reference/index.html) |
+| Ontologies | Resnik, Lin and Wang semantic similarities over disease, phenotype and gene ontologies | [semantic similarities](https://gregorlueg.github.io/bixverse/articles/ontologies.html) |
+| Graphs | Network diffusion, constrained page rank, reciprocal best hit graphs, similarity network fusion, community detection | [diffusions and communities](https://gregorlueg.github.io/bixverse/articles/genetic_diffusions.html) |
+| Single cell | Streaming i/o, QC, doublet detection, HVG, PCA, Harmony, fastMNN, BBKNN, kNN and clustering, markers, pseudobulk DGE, AUCell, hotspot, VISION, NMF, LDA | [start here](https://gregorlueg.github.io/bixverse/articles/thinking_single_cell.html), then the Single Cells menu |
+| Single cell, advanced | Symphony reference mapping, NicheNet ligand receptor, DIALOGUE multicellular programmes, Palantir and PAGA trajectories | [Symphony](https://gregorlueg.github.io/bixverse/articles/symphony.html), [NicheNet](https://gregorlueg.github.io/bixverse/articles/nichenet.html), [DIALOGUE](https://gregorlueg.github.io/bixverse/articles/dialogue.html), [trajectories](https://gregorlueg.github.io/bixverse/articles/trajectory_inference.html) |
+| Meta cells | Generation, purity and entropy diagnostics, the full downstream analysis surface | [meta cells](https://gregorlueg.github.io/bixverse/articles/meta_cells.html) |
+| Multi-modal | ADT counts, DSB normalisation, WNN graphs | [multi-modal analysis](https://gregorlueg.github.io/bixverse/articles/multi_modal_single_cells.html) |
 
-You will need Rust on your system to have the package working. An installation
-guide is provided [here](https://www.rust-lang.org/tools/install). There is a
-bunch of further help written [here](https://extendr.github.io/rextendr/index.html)
-by the rextendr guys in terms of Rust set up. (bixverse uses rextendr to interface
-with Rust.)
+Bulk DGE is the one row pointing at the reference index rather than a vignette.
+It works, it just doesn't have a written walk-through yet. On the roadmap.
 
-Steps for installation:
+## The "bixverse ecosystem"
+
+- [bixverse.plots](https://github.com/GregorLueg/bixverse.plots) for, you
+  guessed it, plotting. Especially a large number of plotting helpers for
+  single cell.
+- [bixverse.gpu](https://github.com/GregorLueg/bixverse.gpu) for
+  GPU-accelerated methods, built on
+  [cubecl](https://github.com/tracel-ai/cubecl)/[Burn](https://burn.dev) with
+  wgpu backends, so it works on (theoretically) any GPU. If you do single cell
+  stuff, have a look. Some of the implementations in there make everything
+  substantially faster.
+- [manifoldsR](https://github.com/GregorLueg/manifoldsR) for manifold learning:
+  UMAP, tSNE, diffusion maps, and a cool clustering method called
+  [EVoC](https://github.com/TutteInstitute/evoc). Every 2D visualisation in the
+  single cell suite goes through it.
+- [genewalkR](https://github.com/GregorLueg/genewalkR) is the graph-heavy one.
+  Ships a database of gene to gene interaction and regulatory networks. Useful
+  across a lot of computational biology workflows.
+
+## Installation
+
+You need Rust on your system. Install guide
+[here](https://www.rust-lang.org/tools/install), and the rextendr guys have
+written a lot of further help on the Rust set up
+[here](https://extendr.github.io/rextendr/index.html). (bixverse uses rextendr
+to interface with Rust.)
 
 1. In the terminal, install [Rust](https://www.rust-lang.org/tools/install)
 
@@ -106,66 +129,61 @@ install.packages("rextendr")
 devtools::install_github("https://github.com/GregorLueg/bixverse")
 ```
 
-### Windows support
+### Windows
 
-If you are using Windows, I am sorry, the tool chain is just very, very 
-painful... I really tried to make this work and maybe there are some hacks in 
+If you are using Windows, I am sorry, the tool chain is just very, very
+painful... I really tried to make this work and maybe there are some hacks in
 terms of compiling everything to install the package, but it has proven...
 challenging in the CI/CD. Hence, no official Windows support for now. It is
-specifically the incorporation of h5 which proves non-trivial with 
+specifically the incorporation of h5 which proves non-trivial with
 cross-compiling that with Rust within the R umbrella.
 
-### How to use the package.
+## Where to start
 
-The package website can be found [here](https://gregorlueg.github.io/bixverse/).
-A good primer for [why Rust is here](https://gregorlueg.github.io/bixverse/articles/rust_functions.html) - a show case of how much faster Rust can make a lot of basic functions much faster. 
-If you wish to integrate this into your package, please feel free. If
-you wish to use the single cell part, it is really worth reading this 
-[here](https://gregorlueg.github.io/bixverse/articles/design_single_cell.html) 
-first... It will give you a good explainer on the design decisions, the choices
-and trade-offs. The various vignettes will show you how to analyse data.
+The [package website](https://gregorlueg.github.io/bixverse/) is the main
+entry point. Three routes depending on what you're after:
+
+- [Why Rust is here](https://gregorlueg.github.io/bixverse/articles/rust_functions.html).
+  A show case of how much faster Rust makes a lot of basic functions. If you
+  want to integrate any of this into your own package, please feel free. MIT
+  licence for the win.
+- [Design choices for single cell](https://gregorlueg.github.io/bixverse/articles/design_single_cell.html).
+  Read this before touching the single cell suite. It explains the on-disk
+  layout, the trade-offs and why things are the way they are.
+- [The PBMC3k walkthrough](https://gregorlueg.github.io/bixverse/articles/pbmc_single_cell.html)
+  for a first end-to-end run on a small data set.
+
+Working with an LLM coding agent? `install_agent_skill()` drops a bixverse
+skill into your agent set up so it stops guessing at the API.
 
 ## Roadmap
 
-### Single and spatial transcriptomics:
+### Single and spatial transcriptomics
 
-#### General
-
-- [x] Multi h5 (10x output) i/o
-- [x] ~~Splitting a SingleCells into several sub directories for easier management.~~
-  Subset class enabled with views. The direct splitting is maybe not needed ... ?
-- [x] Port over [NicheNet](https://www.nature.com/articles/s41592-019-0667-5).
-- [ ] Implementation of [Palantir](https://www.nature.com/articles/s41587-019-0068-4) and
-  [Slingshot](https://pubmed.ncbi.nlm.nih.gov/29914354/) for trajectory
-  analysis.
+- [ ] [Slingshot](https://pubmed.ncbi.nlm.nih.gov/29914354/) for trajectory
+  analysis, to sit alongside the Palantir and PAGA implementations that already
+  ship.
 - [ ] Save data to h5ad for easier interoperability with Python.
-- [ ] Easy interoperability that chunks of data can be read in for neural 
+- [ ] Easy interoperability that chunks of data can be read in for neural
   network training in the corresponding deep learning frameworks.
+- [ ] Full support of spatial transcriptomics via a dedicated `SpatialSpots`
+  class, using the current Rust-based infrastructure for large scale analysis
+  on local compute.
+- [ ] Wire up [edge-rs](https://github.com/GregorLueg/edge-rs) to have 
+  [NEBULA](https://www.nature.com/articles/s42003-021-02146-6) directly 
+  integrated into the single cell framework.
 
-#### Spatial 
+### Cross integration
 
-Full support of spatial transcriptomics via a dedicated `SpatialSpots` class
-leveraging the current Rust-based infrastructure for large scale analysis on
-local compute.
-
-### General methods
-
-- [x] Addition of an NMF method for dense and sparse matrices. After some 
-  research likely a combination HALS + NNDSVD initialisation. Partially done,
-  the single cell part is ready.
-
-### Further cross integration with other packages
-
-Two sister packages are in active development: 
-[GPU-accelerated methods](https://github.com/GregorLueg/bixverse.gpu) and a
-dedicated [plotting package](https://github.com/GregorLueg/bixverse.plots). 
-Further improved cross-integration is on the to-do list.
+Tighter integration with [bixverse.gpu](https://github.com/GregorLueg/bixverse.gpu)
+and [bixverse.plots](https://github.com/GregorLueg/bixverse.plots), both in
+active development.
 
 ### Documentation
 
-While there are already quite a few vignettes, the amount of code in the package
+There are already quite a few vignettes, but the amount of code in the package
 is... quite substantial and there are methods hidden here and there that lack
-any vignettes for now. On the roadmap to provide examples here, too.
+any vignettes for now. Bulk DGE is the most obvious gap.
 
 ## For developers
 

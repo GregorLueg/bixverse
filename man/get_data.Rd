@@ -11,6 +11,7 @@
 \alias{get_data.ScDblFinderRes}
 \alias{get_data.SingleCellFastClusters}
 \alias{get_data.NmfResult}
+\alias{get_data.ConsensusNmfResult}
 \title{Get the ready obs data from various sub method}
 \usage{
 get_data(x, columns = NULL, ...)
@@ -30,6 +31,8 @@ get_data(x, columns = NULL, ...)
 \method{get_data}{SingleCellFastClusters}(x, ...)
 
 \method{get_data}{NmfResult}(x, ...)
+
+\method{get_data}{ConsensusNmfResult}(x, ...)
 }
 \arguments{
 \item{x}{An object to get the data from.}

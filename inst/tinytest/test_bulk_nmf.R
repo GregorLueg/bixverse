@@ -198,3 +198,260 @@ expect_true(
   current = nrow(get_modules(get_results(nmf_strict))) < nrow(nmf_modules_dt),
   info = "nmf_bulk - a stricter membership cutoff keeps fewer genes"
 )
+
+## consensus nmf ---------------------------------------------------------------
+
+# The density filter is off for the tests. resolve_n_neighbours is
+# ceiling(0.3 * n_runs), so at a small n_runs a live filter is jumpy enough on
+# a noisy fixture to drop below k survivors, which is a hard error and a flaky
+# test. The filter itself gets its own deliberate test below.
+consensus_params <- params_nmf_consensus(density_threshold = 2)
+
+nmf_consensus_obj <- BulkCoExp(
+  raw_data = t(counts),
+  meta_data = meta_data
+) %>%
+  preprocess_bulk_coexp(scaling = FALSE, hvg = NULL, .verbose = FALSE) %>%
+  consensus_nmf_bulk(
+    k = 5L,
+    n_runs = 6L,
+    nmf_consensus_params = consensus_params,
+    seed = 42L,
+    .verbose = FALSE
+  )
+
+nmf_consensus_result <- get_results(nmf_consensus_obj)
+
+expect_true(
+  current = inherits(nmf_consensus_result, "BulkModuleResult"),
+  info = "consensus_nmf_bulk - final_results is a BulkModuleResult"
+)
+
+consensus_gene_loadings <- get_factors(
+  nmf_consensus_result,
+  which = "gene_loadings"
+)
+consensus_sample_activity <- get_factors(
+  nmf_consensus_result,
+  which = "sample_activity"
+)
+
+expect_equal(
+  current = dim(consensus_gene_loadings),
+  target = c(nrow(counts), 5L),
+  info = "consensus_nmf_bulk - gene_loadings has (n_genes, k) shape"
+)
+
+expect_equal(
+  current = dim(consensus_sample_activity),
+  target = c(ncol(counts), 5L),
+  info = "consensus_nmf_bulk - sample_activity has (n_samples, k) shape"
+)
+
+expect_true(
+  current = all(consensus_gene_loadings >= 0) &&
+    all(consensus_sample_activity >= 0),
+  info = "consensus_nmf_bulk - both factors are non-negative"
+)
+
+consensus_stability <- get_nmf_stability(nmf_consensus_obj)
+
+expect_true(
+  current = all(
+    c(
+      "stability",
+      "rel_error",
+      "rel_run_errors",
+      "clusters",
+      "cluster_sizes",
+      "n_dropped",
+      "n_empty_clusters"
+    ) %in%
+      names(consensus_stability)
+  ),
+  info = "consensus_nmf_bulk - get_nmf_stability returns consensus diagnostics"
+)
+
+expect_true(
+  current = consensus_stability$stability >= -1 &&
+    consensus_stability$stability <= 1,
+  info = "consensus_nmf_bulk - stability is a silhouette in [-1, 1]"
+)
+
+expect_equal(
+  current = length(consensus_stability$rel_run_errors),
+  target = 6L,
+  info = "consensus_nmf_bulk - one relative error per restart"
+)
+
+expect_equal(
+  current = nrow(consensus_stability$clusters),
+  target = 5L * 6L,
+  info = "consensus_nmf_bulk - one cluster row per pooled component"
+)
+
+expect_true(
+  current = all(
+    c(
+      "component_id",
+      "run",
+      "component",
+      "pooled_idx",
+      "cluster",
+      "local_density",
+      "silhouette",
+      "kept"
+    ) %in%
+      names(consensus_stability$clusters)
+  ),
+  info = "consensus_nmf_bulk - cluster table carries the per-component fields"
+)
+
+expect_equal(
+  current = sum(consensus_stability$cluster_sizes$n),
+  target = sum(consensus_stability$clusters$kept),
+  info = "consensus_nmf_bulk - cluster sizes account for every survivor"
+)
+
+# The stabilised getter must keep working on a stabilised fit, i.e. the
+# consensus branch has not swallowed it.
+expect_equal(
+  current = names(get_nmf_stability(nmf_stab_test)),
+  target = c("losses", "converged", "best_idx"),
+  info = "get_nmf_stability - stabilised fits still return the old fields"
+)
+
+# Same seed, same answer.
+nmf_consensus_repeat <- BulkCoExp(
+  raw_data = t(counts),
+  meta_data = meta_data
+) %>%
+  preprocess_bulk_coexp(scaling = FALSE, hvg = NULL, .verbose = FALSE) %>%
+  consensus_nmf_bulk(
+    k = 5L,
+    n_runs = 6L,
+    nmf_consensus_params = consensus_params,
+    seed = 42L,
+    .verbose = FALSE
+  )
+
+expect_equal(
+  current = get_factors(get_results(nmf_consensus_repeat), "gene_loadings"),
+  target = consensus_gene_loadings,
+  info = "consensus_nmf_bulk - the same seed reproduces the same loadings"
+)
+
+consensus_recall <- mean(best_jaccard(get_modules(nmf_consensus_result)))
+
+expect_true(
+  current = consensus_recall >= 0.6,
+  info = sprintf(
+    "consensus_nmf_bulk - recall vs planted modules >= 0.6 (got %.3f)",
+    consensus_recall
+  )
+)
+
+## consensus nmf validation ----------------------------------------------------
+
+expect_error(
+  current = consensus_nmf_bulk(nmf_test, k = 1L, n_runs = 4L, .verbose = FALSE),
+  info = "consensus_nmf_bulk - k below 2 is refused"
+)
+
+expect_error(
+  current = consensus_nmf_bulk(nmf_test, k = 3L, n_runs = 1L, .verbose = FALSE),
+  info = "consensus_nmf_bulk - fewer than 2 restarts is refused"
+)
+
+expect_error(
+  current = params_nmf_consensus(density_threshold = 3),
+  info = "params_nmf_consensus - a density threshold above 2 is refused"
+)
+
+expect_error(
+  current = params_nmf_consensus(consensus_target = "garbage"),
+  info = "params_nmf_consensus - an unknown consensus target is refused"
+)
+
+expect_error(
+  current = assertNmfConsensus(list(consensus_target = "h")),
+  info = "assertNmfConsensus - an incomplete parameter list is refused"
+)
+
+# A filter this tight cannot leave k components standing, and that has to be a
+# hard error rather than a quietly degenerate fit.
+expect_error(
+  current = consensus_nmf_bulk(
+    nmf_test,
+    k = 5L,
+    n_runs = 4L,
+    nmf_consensus_params = params_nmf_consensus(density_threshold = 1e-9),
+    .verbose = FALSE
+  ),
+  pattern = "density",
+  info = "consensus_nmf_bulk - too tight a density filter errors informatively"
+)
+
+## k sweep ---------------------------------------------------------------------
+
+k_sweep <- nmf_k_sweep_bulk(
+  nmf_test,
+  k_range = 2:5,
+  n_runs = 4L,
+  nmf_consensus_params = consensus_params,
+  seed = 42L,
+  .verbose = FALSE
+)
+
+expect_true(
+  current = inherits(k_sweep, "NmfKSweepResult") &&
+    data.table::is.data.table(k_sweep),
+  info = "nmf_k_sweep_bulk - returns a data.table-backed NmfKSweepResult"
+)
+
+expect_equal(
+  current = k_sweep$k,
+  target = 2:5,
+  info = "nmf_k_sweep_bulk - one row per k, in the order requested"
+)
+
+expect_true(
+  current = all(
+    c(
+      "stability",
+      "best_error",
+      "median_error",
+      "consensus_failed",
+      "n_dropped",
+      "n_empty_clusters",
+      "n_converged"
+    ) %in%
+      names(k_sweep)
+  ),
+  info = "nmf_k_sweep_bulk - the diagnostic columns are all present"
+)
+
+expect_true(
+  current = all(k_sweep$best_error <= k_sweep$median_error),
+  info = "nmf_k_sweep_bulk - the best restart is never worse than the median"
+)
+
+expect_true(
+  current = all(diff(k_sweep$best_error) <= 0),
+  info = "nmf_k_sweep_bulk - reconstruction error falls as k grows"
+)
+
+expect_true(
+  current = inherits(plot(k_sweep), "ggplot"),
+  info = "nmf_k_sweep_bulk - plot() gives a ggplot"
+)
+
+expect_error(
+  current = nmf_k_sweep_bulk(nmf_test, k_range = 1:3, .verbose = FALSE),
+  info = "nmf_k_sweep_bulk - a k range reaching below 2 is refused"
+)
+
+expect_error(
+  current = nmf_k_sweep_bulk(nmf_test, k_range = integer(), .verbose = FALSE),
+  info = "nmf_k_sweep_bulk - an empty k range is refused"
+)

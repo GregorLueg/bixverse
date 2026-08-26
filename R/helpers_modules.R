@@ -1,4 +1,6 @@
-# internal helpers for bulk co-expression methods ------------------------------
+# helpers related to co-expression module detections ---------------------------
+
+## internal helpers for bulk co-expression methods -----------------------------
 
 #' Resolve the target matrix for a BulkCoExp method
 #'
@@ -31,12 +33,6 @@
 #' method on success, `NULL` on mismatch (with a warning). If
 #' `allow_unset = TRUE`, a `NULL` `detection_method` is treated as a first
 #' invocation and returns `NA_character_` silently.
-#'
-#' Caller pattern:
-#' \preformatted{
-#' detection_method <- .assert_bulk_detection_method(object, "correlation-based", "correlation")
-#' if (is.null(detection_method)) return(object)
-#' }
 #'
 #' @param object The class, see [bixverse::BulkCoExp()].
 #' @param allowed Character vector. Detection-method strings the caller accepts.
@@ -93,22 +89,18 @@
 #' DGRDL) into a membership table by keeping the tails of each component's
 #' loading distribution.
 #'
-#' The important property is that membership is **not** exclusive: a gene that
-#' loads strongly on three components appears three times. That is the whole
-#' point of a factorisation, and it is why an argmax assignment is the wrong
-#' tool. Genes that fail the threshold on every component appear not at all,
-#' giving a real background category rather than forcing every feature into
-#' some module.
-#'
 #' Two thresholding rules, selected via `membership_params`:
 #' \itemize{
-#'  \item `"zscore"` - robust standardisation per component, centred on the
-#'  median and scaled by the MAD, keeping `abs(z) > cutoff`. No distributional
-#'  assumption beyond rough symmetry.
+#'  \item `"zscore"` - standardisation per component, keeping `abs(z) >
+#'  cutoff`. No distributional assumption beyond rough symmetry.
 #'  \item `"fdr"` - two-sided p-values against a Normal null fitted per
-#'  component by median and MAD, Benjamini-Hochberg adjusted, keeping
-#'  `padj < fdr`.
+#'  component, Benjamini-Hochberg adjusted, keeping `padj < fdr`.
 #' }
+#'
+#' The standardisation itself is controlled by `membership_params$scaling`:
+#' `"robust"` centres and scales by the median and MAD, `"standard"` by the
+#' mean and standard deviation. The latter is stricter and keeps fewer genes
+#' on skewed loadings, which is common for NMF.
 #'
 #' @param loadings Numeric matrix. `gene x k`, with row and column names.
 #' @param membership_params List. See
@@ -119,8 +111,8 @@
 #' surviving (gene, component) pair, ordered by component then by descending
 #' absolute loading.
 #'
-#' @keywords internal
-.modules_from_loadings <- function(
+#' @export
+modules_from_loadings <- function(
   loadings,
   membership_params = params_module_membership()
 ) {
@@ -140,8 +132,13 @@
 
   per_component <- purrr::map(seq_len(ncol(loadings)), \(j) {
     vals <- loadings[, j]
-    centre <- stats::median(vals)
-    scale_val <- stats::mad(vals)
+    if (membership_params$scaling == "robust") {
+      centre <- stats::median(vals)
+      scale_val <- stats::mad(vals)
+    } else {
+      centre <- mean(vals)
+      scale_val <- stats::sd(vals)
+    }
 
     # A degenerate component (all loadings identical) has no tail to speak of.
     if (!is.finite(scale_val) || scale_val <= 0) {

@@ -39,3 +39,4 @@ A list with \code{w}, \code{h}, \code{final_loss}, \code{n_iter}, \code{converge
 Assumes that the sparse data is pre-filtered for the cells/genes you wish
 to include. Indices in the sparse data need to be 0-indexed.
 }
+\keyword{internal}

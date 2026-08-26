@@ -4,7 +4,13 @@
 \alias{rs_pairwise_gene_cors_mc}
 \title{Calculate the pairwise gene-correlation for meta cells}
 \usage{
-rs_pairwise_gene_cors_mc(sparse_data, gene_indices_1, gene_indices_2, spearman)
+rs_pairwise_gene_cors_mc(
+  sparse_data,
+  gene_indices_1,
+  gene_indices_2,
+  spearman,
+  verbose
+)
 }
 \arguments{
 \item{sparse_data}{A named list that needs to have \code{data}, \code{indptr},
@@ -17,6 +23,9 @@ Must be 0-indexed!}
 Must be 0-indexed!}
 
 \item{spearman}{Boolean. Shall the spearman correlation be calculated.}
+
+\item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
+detailed verbosity.}
 }
 \value{
 The vector of correlations between the pairs of gene_indices_1

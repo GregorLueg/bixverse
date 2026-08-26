@@ -9,7 +9,8 @@ rs_pairwise_gene_cors(
   gene_indices_1,
   gene_indices_2,
   cells_to_keep,
-  spearman
+  spearman,
+  verbose
 )
 }
 \arguments{
@@ -25,6 +26,9 @@ to be of same length as \code{gene_indices_1}. (0-indexed!)}
 analysis. (0-indexed!)}
 
 \item{spearman}{Boolean. Shall spearman correlation be used.}
+
+\item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
+detailed verbosity.}
 }
 \value{
 The vector of correlations between the pairs of gene_indices_1

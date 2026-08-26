@@ -67,6 +67,8 @@ navbar:
           href: articles/nichenet.html
         - text: "Meta cells - generation and analysis"
           href: articles/meta_cells.html
+        - text: "Multicellular programmes with DIALOGUE"
+          href: articles/dialogue.html
         - text: "Trajectory inference with Palantir and PAGA"
           href: articles/trajectory_inference.html
         - text: "Reference mapping via Symphony"
@@ -121,6 +123,7 @@ articles:
       - knn_searches
       - single_cell_subsets
       - meta_cells
+      - dialogue
       - trajectory_inference
       - single_cell_big_data
       - multi_modal_single_cells
@@ -229,6 +232,9 @@ reference:
       - ica_stabilised_results
       - nmf_bulk
       - stabilised_nmf_bulk
+      - consensus_nmf_bulk
+      - nmf_k_sweep_bulk
+      - modules_from_loadings
       - params_cor_graph
       - params_coremo
       - params_dgrdl
@@ -547,9 +553,19 @@ reference:
       - build_regulons
       - nmf_sc
       - stabilised_nmf_sc
+      - consensus_nmf_sc
+      - nmf_k_sweep_sc
+      - run_lda
+      - lda_k_sweep
+      - dialogue_sc
       - get_best_run
+      - get_best_model
+      - get_stability
+      - get_top_terms
       - get_w
       - get_h
+      - plot.NmfKSweepResult
+      - plot.LdaKSweepResult
       - params_sc_aucell
       - params_sc_hotspot
       - params_sc_miloR
@@ -564,6 +580,11 @@ reference:
       - params_sc_branch_selection
       - params_sc_gene_trends
       - params_nmf_hals
+      - params_nmf_consensus
+      - params_lda
+      - params_dialogue_pmd
+      - params_dialogue_hlm
+      - params_dialogue_refine
   # Single cell analysis
   - title: Single cell multi-modal analysis methods
     desc: 
@@ -681,6 +702,7 @@ reference:
       Functions and helpers to download or generate synthetic data.
     contents:
       - download_cd34_data
+      - download_dialogue_uc
       - download_marrow_cd34
       - download_pbmc3k
       - download_demuxlet_pbmc
@@ -690,11 +712,13 @@ reference:
       - calculate_sparsity_stats
       - generate_gene_module_data
       - generate_single_cell_test_data
+      - generate_dialogue_test_data
       - cell_cycle_genes
       - write_cellranger_output
       - write_h5ad_sc
       - write_h5ad_sc_dense
       - params_sc_synthetic_data
+      - params_sc_synthetic_dialogue
       - params_synthetic_bulk_rnaseq
       - params_bulk_sparsity
       - synthetic_signal_matrix
@@ -710,6 +734,7 @@ reference:
       - calculate_sparsity_stats
       - find_threshold_otsu
       - get_seurat_counts_to_list
+      - install_agent_skill
       - knn_graph_label_propagation
       - params_label_propagation
       - upper_triangle_to_sparse
@@ -766,15 +791,16 @@ reference:
       - rs_ligand_activity_scores
       - rs_mad_outlier
       - rs_mc_aucell
+      - rs_mc_dialogue
       - rs_mc_hotspot_autocor
       - rs_mc_hotspot_gene_cor
       - rs_mc_hvg
       - rs_mc_pca
       - rs_mc_scenic
+      - rs_mc_vision
+      - rs_mc_vision_with_autocorrelation
       - rs_mitch_calc
       - rs_mutual_info
-      - rs_nmf_multi_mc
-      - rs_nmf_single_mc
       - rs_onto_semantic_sim
       - rs_onto_semantic_sim_mat
       - rs_onto_sim_wang
