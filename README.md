@@ -18,9 +18,10 @@ This is an *opinionated* package taking bioinformatics and computational
 biology workflows from R and Python, reimplementing them in Rust and exposing
 them through thin R wrappers. Gene set enrichment, co-expression modules,
 biomedical ontologies, graph and diffusion methods, differential expression,
-and a full single cell suite that goes from raw h5 to annotated clusters.
-Result? Blazingly fast performance with low memory usage, making large-scale
-analysis feasible without any cloud compute.
+and a full single cell suite that goes from raw h5 to annotated clusters, plus
+a huge number of analysis methods for single cell. Result? Blazingly fast 
+performance with low memory usage, making large-scale analysis feasible without 
+any cloud compute.
 
 Every exported function validates its inputs on the R side. The heavy numerics
 live in the standalone [bixverse-rs](https://crates.io/crates/bixverse-rs)
@@ -81,7 +82,7 @@ What changed in each release: [the changelog](https://gregorlueg.github.io/bixve
 Bulk DGE is the one row pointing at the reference index rather than a vignette.
 It works, it just doesn't have a written walk-through yet. On the roadmap.
 
-## The bixverse ecosystem
+## The "bixverse ecosystem"
 
 - [bixverse.plots](https://github.com/GregorLueg/bixverse.plots) for, you
   guessed it, plotting. Especially a large number of plotting helpers for
