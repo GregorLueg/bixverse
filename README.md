@@ -44,7 +44,8 @@ of RAM.
 | kNN graph | ~90 s (NNDescent) | <30 s (CAGRA) |
 
 Nothing here loads the full matrix into memory. Counts sit on disk in a Rust
-binary format, metadata sits in DuckDB, and the analysis streams.
+binary format, metadata sits in DuckDB, and the analysis streams. You can even
+write pipelines like this here:
 
 ```r
 pipeline <- sc_pipeline() %>>%
@@ -166,6 +167,9 @@ skill into your agent set up so it stops guessing at the API.
 - [ ] Full support of spatial transcriptomics via a dedicated `SpatialSpots`
   class, using the current Rust-based infrastructure for large scale analysis
   on local compute.
+- [ ] Wire up [edge-rs](https://github.com/GregorLueg/edge-rs) to have 
+  [NEBULA](https://www.nature.com/articles/s42003-021-02146-6) directly 
+  integrated into the single cell framework.
 
 ### Cross integration
 

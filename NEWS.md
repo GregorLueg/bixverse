@@ -15,6 +15,10 @@
     stabilised ones.
 * Agent skills implemented: `install_agent_skill()` installs an agent skill.
 * VISION scores enabled also for the `MetaCells` class.
+* Latent dirichlet allocation (LDA) implemented for decomposing binary data
+  (think cell x TF active binary matrices).
+* [DIALOGUE](https://www.nature.com/articles/s41587-022-01288-0) also available
+  now.
 
 # bixverse 0.4.9
 
