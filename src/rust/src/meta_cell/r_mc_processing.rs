@@ -247,6 +247,8 @@ fn rs_mc_pca(
 /// @param gene_indices_2 Integer. The gene indices for the first set of genes.
 /// Must be 0-indexed!
 /// @param spearman Boolean. Shall the spearman correlation be calculated.
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
 ///
 /// @returns The vector of correlations between the pairs of gene_indices_1
 /// and gene_indices_2
@@ -260,6 +262,7 @@ fn rs_pairwise_gene_cors_mc(
     gene_indices_1: &[i32],
     gene_indices_2: &[i32],
     spearman: bool,
+    verbose: usize,
 ) -> Result<Vec<f64>> {
     let gene_indices_1 = gene_indices_1.r_int_convert();
     let gene_indices_2 = gene_indices_2.r_int_convert();
@@ -275,9 +278,14 @@ fn rs_pairwise_gene_cors_mc(
         sparse
     };
 
-    let pairwise_cors =
-        pairwise_gene_correlations_in_memory(&sparse, &gene_indices_1, &gene_indices_2, spearman)
-            .to_extendr()?;
+    let pairwise_cors = pairwise_gene_correlations_in_memory(
+        &sparse,
+        &gene_indices_1,
+        &gene_indices_2,
+        spearman,
+        verbose,
+    )
+    .to_extendr()?;
 
     Ok(pairwise_cors.r_float_convert())
 }

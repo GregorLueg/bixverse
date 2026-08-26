@@ -26,7 +26,7 @@ codegen-units = 4
 strip = true
 
 [dependencies]
-bixverse-rs = { version = "0.4.6", features = [ "single-cell", "multi-modal", ] }
+bixverse-rs = { version = "0.4.7", features = [ "single-cell", "multi-modal", ] }
 extendr-api = "0.9.0"
 either = "1.15.0"
 faer = { version = '0.23.2' }
@@ -40,6 +40,3 @@ thousands = "*"
 [[bin]]
 name = "document"
 path = "document.rs"
-
-[patch.crates-io]
-bixverse-rs = { git = "https://github.com/GregorLueg/bixverse-rs", branch = "feat-dialogue" }

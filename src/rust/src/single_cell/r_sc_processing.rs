@@ -464,6 +464,8 @@ fn rs_sc_get_gene_set_perc(
 /// @param cells_to_keep Integer. The indices of the cells to include in this
 /// analysis. (0-indexed!)
 /// @param spearman Boolean. Shall spearman correlation be used.
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
 ///
 /// @returns The vector of correlations between the pairs of gene_indices_1
 /// and gene_indices_2
@@ -478,6 +480,7 @@ fn rs_pairwise_gene_cors(
     gene_indices_2: &[i32],
     cells_to_keep: &[i32],
     spearman: bool,
+    verbose: usize,
 ) -> Result<Vec<f64>, extendr_api::Error> {
     let reader = ParallelSparseReader::new(f_path).to_extendr()?;
 
@@ -491,6 +494,7 @@ fn rs_pairwise_gene_cors(
         &gene_indices_2,
         &cells_to_keep,
         spearman,
+        verbose,
     )
     .to_extendr()?;
 

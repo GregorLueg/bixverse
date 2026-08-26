@@ -2086,11 +2086,12 @@ identify_tf_to_genes.ScenicGrn <- function(
 #' @param tf_to_gene data.table. The TF to gene data.table
 #' @param object `SingleCells` class.
 #' @param spearman Boolean. Shall the Spearman correlation be used.
+#' @param .verbose Boolean or integer. Verbosity.
 #'
 #' @returns Adds a `pairwise_cor` column to the tf_to_gene data.table
 #'
 #' @keywords internal
-.tf_gene_cor_sc <- function(tf_to_gene, object, spearman) {
+.tf_gene_cor_sc <- function(tf_to_gene, object, spearman, .verbose = TRUE) {
   # checks
   checkmate::assertDataTable(tf_to_gene)
   checkmate::assertNames(
@@ -2099,6 +2100,7 @@ identify_tf_to_genes.ScenicGrn <- function(
   )
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::qassert(spearman, "B1")
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   indices_1 <- get_sc_map(object)$gene_mapping[tf_to_gene$tf] - 1L
   indices_2 <- get_sc_map(object)$gene_mapping[tf_to_gene$gene] - 1L
@@ -2108,7 +2110,8 @@ identify_tf_to_genes.ScenicGrn <- function(
     gene_indices_1 = as.integer(indices_1),
     gene_indices_2 = as.integer(indices_2),
     cells_to_keep = as.integer(get_cells_to_keep(object)),
-    spearman = spearman
+    spearman = spearman,
+    verbose = parse_verbosity(.verbose)
   )
 
   tf_to_gene[, pairwise_cor := pairwise_cors]
@@ -2121,11 +2124,12 @@ identify_tf_to_genes.ScenicGrn <- function(
 #' @param tf_to_gene data.table. The TF to gene data.table
 #' @param object `MetaCells` class.
 #' @param spearman Boolean. Shall the Spearman correlation be used.
+#' @param .verbose Boolean or integer. Verbosity.
 #'
 #' @returns Adds a `pairwise_cor` column to the tf_to_gene data.table
 #'
 #' @keywords internal
-.tf_gene_cor_mc <- function(tf_to_gene, object, spearman) {
+.tf_gene_cor_mc <- function(tf_to_gene, object, spearman, .verbose = TRUE) {
   # checks
   checkmate::assertDataTable(tf_to_gene)
   checkmate::assertNames(
@@ -2134,6 +2138,7 @@ identify_tf_to_genes.ScenicGrn <- function(
   )
   checkmate::assertTRUE(S7::S7_inherits(object, MetaCells))
   checkmate::qassert(spearman, "B1")
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   indices_1 <- get_gene_indices(
     x = object,
@@ -2155,7 +2160,8 @@ identify_tf_to_genes.ScenicGrn <- function(
     sparse_data = count_list,
     gene_indices_1 = indices_1,
     gene_indices_2 = indices_2,
-    spearman = spearman
+    spearman = spearman,
+    verbose = parse_verbosity(.verbose)
   )
 
   tf_to_gene[, pairwise_cor := pairwise_cors]
@@ -2258,9 +2264,9 @@ tf_to_genes_correlations.ScenicGrn <- function(
   }
 
   tf_to_gene <- if (S7::S7_inherits(object, SingleCells)) {
-    .tf_gene_cor_sc(tf_to_gene, object, spearman)
+    .tf_gene_cor_sc(tf_to_gene, object, spearman, .verbose)
   } else {
-    .tf_gene_cor_mc(tf_to_gene, object, spearman)
+    .tf_gene_cor_mc(tf_to_gene, object, spearman, .verbose)
   }
 
   tf_to_gene[,

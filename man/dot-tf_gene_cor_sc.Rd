@@ -4,7 +4,7 @@
 \alias{.tf_gene_cor_sc}
 \title{Get TF gene correlations for SingleCells}
 \usage{
-.tf_gene_cor_sc(tf_to_gene, object, spearman)
+.tf_gene_cor_sc(tf_to_gene, object, spearman, .verbose = TRUE)
 }
 \arguments{
 \item{tf_to_gene}{data.table. The TF to gene data.table}
@@ -12,6 +12,8 @@
 \item{object}{\code{SingleCells} class.}
 
 \item{spearman}{Boolean. Shall the Spearman correlation be used.}
+
+\item{.verbose}{Boolean or integer. Verbosity.}
 }
 \value{
 Adds a \code{pairwise_cor} column to the tf_to_gene data.table

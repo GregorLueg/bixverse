@@ -3169,7 +3169,7 @@ rs_sc_get_gene_set_perc <- function(f_path_cell, gene_set_idx, cell_indices, str
 #' @export
 #'
 #' @keywords internal
-rs_pairwise_gene_cors <- function(f_path, gene_indices_1, gene_indices_2, cells_to_keep, spearman) .Call(wrap__rs_pairwise_gene_cors, f_path, gene_indices_1, gene_indices_2, cells_to_keep, spearman)
+rs_pairwise_gene_cors <- function(f_path, gene_indices_1, gene_indices_2, cells_to_keep, spearman, verbose) .Call(wrap__rs_pairwise_gene_cors, f_path, gene_indices_1, gene_indices_2, cells_to_keep, spearman, verbose)
 
 #' Calculate the percentage of gene sets in the cells
 #'
@@ -4978,7 +4978,7 @@ rs_mc_pca <- function(sparse_data, no_pcs, pca_params, clr_offsets, seed, verbos
 #' @export
 #'
 #' @keywords internal
-rs_pairwise_gene_cors_mc <- function(sparse_data, gene_indices_1, gene_indices_2, spearman) .Call(wrap__rs_pairwise_gene_cors_mc, sparse_data, gene_indices_1, gene_indices_2, spearman)
+rs_pairwise_gene_cors_mc <- function(sparse_data, gene_indices_1, gene_indices_2, spearman, verbose) .Call(wrap__rs_pairwise_gene_cors_mc, sparse_data, gene_indices_1, gene_indices_2, spearman, verbose)
 
 #' SCENIC on MetaCells
 #'
