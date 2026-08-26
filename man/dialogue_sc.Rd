@@ -57,13 +57,14 @@ co-expression modules ask what varies together \emph{within} a cell type, this
 asks what varies together \emph{between} them, sample by sample.
 }
 \details{
-Three stages. Each cell type's features are collapsed to one row per sample
-and put through a sparse multi-CCA, giving every programme a weight vector
-per cell type plus a provisional gene signature. Then, for every ordered pair
-of cell types and every candidate gene, a mixed model asks whether a cell's
-own programme score tracks the partner's expression of that gene in the same
-sample. Finally the partners are meta-analysed and the scores refit onto the
-surviving genes by non-negative least squares.
+The algorithm works in three stages. Each cell type's features are  collapsed
+to one row per sample and put through a sparse multi-CCA, giving  every
+programme a weight vector per cell type plus a provisional gene signature.
+Then, for every ordered pair of cell types and every candidate gene, a mixed
+model asks whether a cell's own programme score tracks the partner's
+expression of that gene in the same sample. Finally the partners are
+meta-analysed and the scores refit onto the surviving genes by non-negative
+least squares.
 
 \code{features} is mandatory and there is no default. DIALOGUE does not compute
 it: it is whatever low-dimensional description of each cell type you trust,

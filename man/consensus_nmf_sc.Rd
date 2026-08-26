@@ -56,9 +56,6 @@ by local density, k-means clusters the survivors into \code{k} groups and refits
 the partner factor against the per-cluster median. This is cNMF: the answer
 is the structure the restarts agree on, and the mean silhouette of those
 clusters (\code{stability}) says how much they agreed.
-
-Prefer this over \code{\link[=stabilised_nmf_sc]{stabilised_nmf_sc()}}, which picks the lowest-loss restart
-and tells you nothing about whether that restart is reproducible.
 }
 \details{
 Use \code{\link[=nmf_k_sweep_sc]{nmf_k_sweep_sc()}} first if you do not already know \code{k}.

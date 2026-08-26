@@ -44,16 +44,15 @@ AUCell results in form of a matrix that is cells x gene sets or as
 \description{
 Calculates an AUC-type score akin to AUCell across the gene sets, see Aibar
 et al. Three statistics are on offer, all consuming the same within-cell
-ranking but weighting it differently. \code{"wilcox"} (the default) is the AUC
-derived from the Mann-Whitney U statistic over the full ranking; its null
-sits at 0.5 for any gene set size, which makes it a good fit for pathway
-activity. \code{"recovery"} is the recovery-curve AUC under a rank cutoff, i.e.
-the actual AUCell statistic of Aibar, et al., and is top-heavy: only genes
-inside the top \code{max_rank} of the cell contribute. \code{"ap"} is average
-precision, the most top-heavy of the three, but its null tracks the gene set
-prevalence, so raw values are not comparable across gene sets of different
-size unless \code{standardise} is on. Data can be streamed in chunks of 50k cells
-per or loaded in in one go.
+ranking but weighting it differently. \code{"recovery"} (default) is the
+recovery-curve AUC under a rank cutoff, i.e. the AUCell statistic of Aibar,
+et al., and is top-heavy: only genes inside the top \code{max_rank} of the cell
+contribute. \code{"wilcox"} is the AUC derived from the Mann-Whitney U statistic
+over the full ranking; its null sits at 0.5 for any gene set size, which
+makes it a good fit for pathway activity.  \code{"ap"} is average precision, the
+most top-heavy of the three, but its null tracks the gene set prevalence, so
+raw values are not comparable across gene sets of different size unless
+\code{standardise} is on.
 }
 \references{
 Aibar, et al., Nat Methods, 2017
