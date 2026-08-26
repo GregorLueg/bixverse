@@ -916,6 +916,47 @@ download_cd34_data <- function(quiet = FALSE) {
   file.path(temp_dir, "cd34_multiome_rna.h5ad")
 }
 
+### dialogue ulcerative colitis ------------------------------------------------
+
+#' Download the ulcerative colitis example data for DIALOGUE
+#'
+#' @description
+#' This function downloads the ulcerative colitis subset used by the DIALOGUE
+#' paper into the temporary directory. 5,374 cells across five cell subtypes
+#' and 30 donors, with the inflammation status per biopsy. Enough samples per
+#' cell type for [bixverse::dialogue_sc()], which most single sample example
+#' data sets are not.
+#'
+#' @details
+#' The published matrix holds `log2(TPM / 10 + 1)`, which is what Smillie, et
+#' al. released; the raw counts were never published. The file served here has
+#' been linearised back to the TPM/10 scale and rounded, so it loads through
+#' [bixverse::load_h5ad()] like any count matrix and gets bixverse's own log
+#' CPM on the way in. See `data-raw/dialogue_uc.R` for the preparation.
+#'
+#' @param quiet Boolean. If the download shall be quiet.
+#'
+#' @returns String. The path to the ulcerative colitis h5ad file.
+#'
+#' @export
+#'
+#' @references Smillie, et al., Cell, 2019; Jerby-Arnon and Regev, Nat.
+#' Biotechnol., 2022
+download_dialogue_uc <- function(quiet = FALSE) {
+  old_timeout <- getOption("timeout")
+  options(timeout = max(300, old_timeout))
+  on.exit(options(timeout = old_timeout))
+
+  temp_dir <- tempdir()
+  dest_file <- file.path(temp_dir, "dialogue_uc.h5ad.gz")
+  url <- "https://zenodo.org/records/22105703/files/dialogue_uc.h5ad.gz?download=1"
+
+  download.file(url, dest_file, mode = "wb", quiet = quiet)
+  R.utils::gunzip(dest_file, remove = TRUE)
+
+  file.path(temp_dir, "dialogue_uc.h5ad")
+}
+
 ### marrow cd34 example data set -----------------------------------------------
 
 #' Download the marrow CD34 example data from Palantir
