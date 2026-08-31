@@ -4799,3 +4799,65 @@ checkLdaParams <- function(x) {
 #'
 #' @keywords internal
 assertLdaParams <- checkmate::makeAssertionFunction(checkLdaParams)
+
+#### edgeR quasi-likelihood ----------------------------------------------------
+
+#' Check edgeR quasi-likelihood parameters
+#'
+#' @description Checkmate extension for checking the edgeR quasi-likelihood
+#' parameters, see [bixverse::params_edger_ql()].
+#'
+#' @param x The list to check/assert
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
+checkEdgeRQlParams <- function(x) {
+  res <- check_list_shape(
+    x,
+    c("norm_method", "filter", "min_mean", "robust", "legacy")
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- apply_qtest_rules(
+    x,
+    list(
+      filter = "B1",
+      min_mean = "N1[0,)",
+      robust = "B1",
+      legacy = "B1"
+    ),
+    label = "edgeR QL params",
+    hint = "min_mean must be a non-negative number; the rest are booleans."
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  apply_choice_rules(
+    x,
+    list(
+      norm_method = c("TMM", "TMMwsp", "RLE", "upperquartile", "none")
+    ),
+    label = "edgeR QL params"
+  )
+}
+
+#' Assert edgeR quasi-likelihood parameters
+#'
+#' @description Checkmate extension for asserting the edgeR quasi-likelihood
+#' parameters.
+#'
+#' @inheritParams checkEdgeRQlParams
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
+assertEdgeRQlParams <- checkmate::makeAssertionFunction(checkEdgeRQlParams)

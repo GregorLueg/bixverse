@@ -268,6 +268,9 @@ reference:
       - calculate_rpkm
       - calculate_tpm
       - run_limma_voom
+      - run_edger_ql
+      - pseudobulk_dge_sc
+      - params_edger_ql
       - hedges_g_dge
       - get_dge_effect_sizes
       - get_dge_limma_voom
@@ -790,6 +793,7 @@ reference:
       - rs_generate_ligand_target_influence
       - rs_ligand_activity_scores
       - rs_mad_outlier
+      - rs_edger_ql
       - rs_mc_aucell
       - rs_mc_dialogue
       - rs_mc_hotspot_autocor

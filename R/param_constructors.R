@@ -2470,3 +2470,67 @@ params_lda <- function(
     n_epochs = n_epochs
   )
 }
+
+## differential expression -----------------------------------------------------
+
+### edgeR quasi-likelihood -----------------------------------------------------
+
+#' Wrapper function for parameters for the edgeR quasi-likelihood workflow
+#'
+#' @description
+#' Parameters for the edgeR quasi-likelihood chain, implemented in Rust via the
+#' `edge-rs` crate and gated against edgeR 4.8.2. Defaults are edgeR's own.
+#'
+#' The `legacy` switch picks between two genuinely different pipelines. The
+#' current route estimates its own dispersion from the most abundant genes and
+#' skips `estimateDisp()`, which is where most of the runtime went and is
+#' edgeR 4's own recommendation. The legacy route shrinks the raw residual
+#' deviance, needs a dispersion handed to it, and is the only one where the
+#' Poisson bound bites.
+#'
+#' @param norm_method String. Library size normalisation. One of
+#' `c("TMM", "TMMwsp", "RLE", "upperquartile", "none")`. Defaults to `"TMM"`.
+#' `"none"` leaves every factor at one, which is what Milo's `logMS` amounts
+#' to.
+#' @param filter Boolean. Run `filterByExpr()` before fitting. Defaults to
+#' `TRUE`. Turn this off for anything that is not gene expression, e.g. Milo
+#' neighbourhood counts, where the heuristic means nothing.
+#' @param min_mean Numeric. Drop features whose mean count across samples is
+#' below this. Applied on top of `filter`. Defaults to `0` (off).
+#' @param robust Boolean. Robust empirical Bayes squeezing, giving outlier
+#' features their own smaller prior degrees of freedom. Defaults to `FALSE`.
+#' @param legacy Boolean. Take edgeR's pre-4.0 quasi-likelihood pipeline.
+#' Defaults to `FALSE`.
+#'
+#' @returns A list with the edgeR quasi-likelihood parameters.
+#'
+#' @references Chen, Lun and Smyth, F1000Research, 2016
+#'
+#' @export
+params_edger_ql <- function(
+  norm_method = c("TMM", "TMMwsp", "RLE", "upperquartile", "none"),
+  filter = TRUE,
+  min_mean = 0,
+  robust = FALSE,
+  legacy = FALSE
+) {
+  norm_method <- match.arg(norm_method)
+
+  # checks
+  checkmate::assertChoice(
+    norm_method,
+    c("TMM", "TMMwsp", "RLE", "upperquartile", "none")
+  )
+  checkmate::qassert(filter, "B1")
+  checkmate::qassert(min_mean, "N1[0,)")
+  checkmate::qassert(robust, "B1")
+  checkmate::qassert(legacy, "B1")
+
+  list(
+    norm_method = norm_method,
+    filter = filter,
+    min_mean = min_mean,
+    robust = robust,
+    legacy = legacy
+  )
+}

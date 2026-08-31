@@ -1785,6 +1785,43 @@ rs_cluster_stability <- function(data) .Call(wrap__rs_cluster_stability, data)
 #' @keywords internal
 rs_split_cor_signs <- function(data) .Call(wrap__rs_split_cor_signs, data)
 
+#' Run the edgeR quasi-likelihood chain on a count matrix
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Runs `filterByExpr` -> `calcNormFactors` -> `glmQLFit` -> `glmQLFTest`,
+#' implemented in Rust via the `edge-rs` crate and gated against edgeR 4.8.2.
+#' The tested axis does not have to be genes: Milo's neighbourhood counts are
+#' tested with the same call, with `filter = FALSE`.
+#'
+#' @param counts Numeric matrix. Raw counts of features x samples. Must not
+#' be normalised or log-transformed.
+#' @param design Numeric matrix. The design matrix of samples x coefficients,
+#' including the intercept. Needs at least two columns, since the null model
+#' has to retain one.
+#' @param edger_params Named list. The edgeR parameters, see
+#' [bixverse::params_edger_ql()], plus either `coef` (0-indexed(!) design
+#' columns to drop from the null model) or `contrast` (column-major weights
+#' with `n_contrasts` columns).
+#'
+#' @return A list with the following elements
+#' \itemize{
+#'   \item features_to_keep - Boolean. Which features survived the filters.
+#'   Spans the full feature axis of `counts`.
+#'   \item log_fc - Log2 fold changes of the tested coefficient or contrast.
+#'   \item log_cpm - Average log2 counts per million.
+#'   \item f_stat - The quasi-likelihood F statistic.
+#'   \item p_values - Raw p-values.
+#'   \item fdr - Benjamini-Hochberg adjusted p-values.
+#' }
+#'
+#' @references Chen, Lun and Smyth, F1000Research, 2016
+#'
+#' @export
+#'
+#' @keywords internal
+rs_edger_ql <- function(counts, design, edger_params) .Call(wrap__rs_edger_ql, counts, design, edger_params)
+
 #' Generate a sparse dictionary with DGRDL
 #'
 #' @description
