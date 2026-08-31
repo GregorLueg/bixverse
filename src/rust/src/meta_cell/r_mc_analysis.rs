@@ -129,28 +129,6 @@ fn resolve_knn_graph(
     }
 }
 
-/// Read the meta cell counts VISION scores over.
-///
-/// VISION reads the second layer, and `list_to_sparse_matrix` fills it with a
-/// copy of the first, so whatever R hands over here is what gets scored. The
-/// cast keeps both layers in `f32`: `cast_compressed_sparse_data_u32` would
-/// truncate the normalised counts VISION expects.
-///
-/// ### Params
-///
-/// * `sparse_data` - The named list from R, shape (metacells, genes), holding
-///   the normalised counts.
-///
-/// ### Returns
-///
-/// The same matrix as `CompressedSparseData2<f32, f32>`.
-fn mc_vision_sparse(sparse_data: List) -> extendr_api::Result<CompressedSparseData2<f32, f32>> {
-    let sparse: CompressedSparseData2<f64, f64> =
-        list_to_sparse_matrix(sparse_data, true).to_extendr()?;
-
-    Ok(cast_compressed_sparse_data_f32(sparse))
-}
-
 /////////////////////
 // Metacell SCENIC //
 /////////////////////
@@ -183,9 +161,7 @@ fn rs_mc_scenic(
     verbose: usize,
 ) -> Result<RArray<f64, 2>> {
     let tf_indices = tf_indices.r_int_convert();
-    let sparse: CompressedSparseData2<f64, f64> =
-        list_to_sparse_matrix(sparse_data, true).to_extendr()?;
-    let sparse = cast_compressed_sparse_data_u32(sparse);
+    let sparse = mc_list_to_sparse_u32(sparse_data)?;
     let scenic_params = ScenicParams::from_r_list(scenic_params)?;
 
     let grn_matrix = run_scenic_grn_in_memory(&sparse, &tf_indices, &scenic_params, seed, verbose)
@@ -242,9 +218,7 @@ fn rs_mc_aucell(
         gs_indices.push(int);
     }
 
-    let sparse: CompressedSparseData2<f64, f64> =
-        list_to_sparse_matrix(sparse_data, true).to_extendr()?;
-    let sparse = cast_compressed_sparse_data_u32(sparse);
+    let sparse = mc_list_to_sparse_u32(sparse_data)?;
 
     let res = calculate_aucell_metacells(&sparse, &gs_indices, Some(aucell_params), verbose)
         .to_extendr()?;
@@ -285,7 +259,7 @@ fn rs_mc_aucell(
 fn rs_mc_vision(sparse_data: List, gs_list: List, verbose: usize) -> Result<RArray<f64, 2>> {
     let gene_signatures = r_list_to_sig_genes(gs_list)?;
 
-    let sparse = mc_vision_sparse(sparse_data)?;
+    let sparse = mc_list_to_sparse_f32(sparse_data)?;
 
     let res = calculate_vision_metacells(&sparse, &gene_signatures, verbose).to_extendr()?;
 
@@ -357,7 +331,7 @@ fn rs_mc_vision_with_autocorrelation(
 ) -> extendr_api::Result<List> {
     let verbosity = parse_verbosity_level(verbose);
 
-    let sparse = mc_vision_sparse(sparse_data)?;
+    let sparse = mc_list_to_sparse_f32(sparse_data)?;
 
     assert!(
         embd.nrows() == sparse.shape.0,
@@ -512,12 +486,9 @@ fn rs_mc_hotspot_autocor(
 
     hotspot_params.graph_params.squared_distances = squared_distances;
 
-    // HotSpot only ever reads the raw counts and the per-cell library sizes, so
-    // the second layer the reader insists on can stay the copy of the raw one
-    // `list_to_sparse_matrix` puts there
-    let sparse: CompressedSparseData2<f64, f64> =
-        list_to_sparse_matrix(sparse_data, true).to_extendr()?;
-    let sparse = cast_compressed_sparse_data_u32(sparse);
+    // HotSpot only ever reads the raw counts and the per-cell library sizes,
+    // so the derived second layer goes unread here
+    let sparse = mc_list_to_sparse_u32(sparse_data)?;
 
     let res: HotSpotGeneRes = hotspot_autocor_metacells(
         &sparse,
@@ -618,9 +589,7 @@ fn rs_mc_hotspot_gene_cor(
 
     hotspot_params.graph_params.squared_distances = squared_distances;
 
-    let sparse: CompressedSparseData2<f64, f64> =
-        list_to_sparse_matrix(sparse_data, true).to_extendr()?;
-    let sparse = cast_compressed_sparse_data_u32(sparse);
+    let sparse = mc_list_to_sparse_u32(sparse_data)?;
 
     let res: HotSpotPairRes = hotspot_gene_cor_metacells(
         &sparse,
@@ -676,9 +645,7 @@ fn rs_nmf_single_mc(
     seed: usize,
     verbose: usize,
 ) -> Result<List> {
-    let sparse: CompressedSparseData2<f64, f64> =
-        list_to_sparse_matrix(sparse_data, true).to_extendr()?;
-    let sparse = cast_compressed_sparse_data_f32(sparse);
+    let sparse = mc_list_to_sparse_f32(sparse_data)?;
     let nmf_hals_opt: HalsOpts<f32> = HalsOpts::from_r_list(nmf_hals_params, seed).to_extendr()?;
     let nmf_res = nmf_single_run_mc(
         sparse,
@@ -735,9 +702,7 @@ fn rs_nmf_multi_mc(
     verbose: usize,
 ) -> Result<List> {
     // CHECK: same caveat as rs_nmf_single_mc on the f32 conversion.
-    let sparse: CompressedSparseData2<f64, f64> =
-        list_to_sparse_matrix(sparse_data, true).to_extendr()?;
-    let sparse = cast_compressed_sparse_data_f32(sparse);
+    let sparse = mc_list_to_sparse_f32(sparse_data)?;
     let nmf_hals_opt: HalsOpts<f32> = HalsOpts::from_r_list(nmf_hals_params, seed).to_extendr()?;
     let nmf_res = nmf_multiple_run_mc(
         sparse,
@@ -825,9 +790,7 @@ fn rs_nmf_consensus_mc(
     seed: usize,
     verbose: usize,
 ) -> Result<List> {
-    let sparse: CompressedSparseData2<f64, f64> =
-        list_to_sparse_matrix(sparse_data, true).to_extendr()?;
-    let sparse = cast_compressed_sparse_data_f32(sparse);
+    let sparse = mc_list_to_sparse_f32(sparse_data)?;
     let nmf_hals_opt: HalsOpts<f32> = HalsOpts::from_r_list(nmf_hals_params, seed).to_extendr()?;
     let consensus_opt: ConsensusParams<f32> = ConsensusParams::from_r_list(nmf_consensus_params)?;
     let nmf_res = nmf_consensus_run_mc(
@@ -901,9 +864,7 @@ fn rs_nmf_k_sweep_mc(
     seed: usize,
     verbose: usize,
 ) -> Result<List> {
-    let sparse: CompressedSparseData2<f64, f64> =
-        list_to_sparse_matrix(sparse_data, true).to_extendr()?;
-    let sparse = cast_compressed_sparse_data_f32(sparse);
+    let sparse = mc_list_to_sparse_f32(sparse_data)?;
     let k_range = k_range.r_int_convert();
     let nmf_hals_opt: HalsOpts<f32> = HalsOpts::from_r_list(nmf_hals_params, seed).to_extendr()?;
     let consensus_opt: ConsensusParams<f32> = ConsensusParams::from_r_list(nmf_consensus_params)?;
@@ -991,9 +952,7 @@ fn rs_mc_dialogue(
     let genes: Vec<usize> = gene_indices.r_int_convert();
     let params = DialogueParams::from_r_list(dialogue_params)?;
 
-    let sparse: CompressedSparseData2<f64, f64> =
-        list_to_sparse_matrix(sparse_data, true).to_extendr()?;
-    let sparse = cast_compressed_sparse_data_u32(sparse);
+    let sparse = mc_list_to_sparse_u32(sparse_data)?;
 
     let res = dialogue_metacells(
         &sparse,
