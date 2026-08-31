@@ -1,0 +1,23 @@
+name: Linux binaries
+
+# Chains off the release that r-auto-tag.yml cuts on a DESCRIPTION version
+# bump, which is itself gated on a green R-CMD-check. So a binary can only ever
+# exist for a version that passed CI.
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  binaries:
+    uses: GregorLueg/personal-actions/.github/workflows/r-linux-binaries.yml@v1
+    with:
+      rust: true
+      r-versions: '4.5 4.6'
+      arches: 'x86_64 aarch64'
+      glibc-runner: ubuntu-22.04
+      target-repo: GregorLueg/bixverse-binaries
+    secrets: inherit
