@@ -1286,10 +1286,13 @@ generate_hotspot_membership.Hotspot <- function(
 #' please refer to Dann, et al.
 #'
 #' @param nhoods Sparse dgCMatrix with cells x neighbourhoods.
-#' @param sample_counts Integer matrix. Represents neighbourhoods x cells from
-#' sample of interest.
-#' @param spatial_dist Numeric. The spatial distance between the neighbourhoods
-#' to calculate the spatial FDR.
+#' @param sample_counts Numeric matrix. Represents neighbourhoods x samples,
+#' i.e. the cells of each sample found in each neighbourhood.
+#' @param spatial_dist Numeric. The distance to the k-th nearest neighbour per
+#' neighbourhood, the `"k-distance"` weighting for the spatial FDR.
+#' @param nhood_overlap Numeric. The cells each neighbourhood shares with all
+#' the others, the `"graph-overlap"` weighting for the spatial FDR. Taken at
+#' construction because it is a function of the neighbourhood matrix alone.
 #' @param params Named list. The parameters that were used to generate these
 #' results.
 #'
@@ -1299,16 +1302,22 @@ generate_hotspot_membership.Hotspot <- function(
 #' @references Dann, et al., Nat Biotechnol, 2022
 #'
 #' @keywords internal
-new_sc_miloR_res <- function(nhoods, sample_counts, spatial_dist, params) {
+new_sc_miloR_res <- function(
+  nhoods,
+  sample_counts,
+  spatial_dist,
+  nhood_overlap,
+  params
+) {
   # checks
-  checkmate::checkClass(nhoods, "dgCMatrix")
-  checkmate::checkMatrix(
+  checkmate::assertClass(nhoods, "dgCMatrix")
+  checkmate::assertMatrix(
     sample_counts,
-    row.names = "named",
-    col.names = "named",
-    mode = "integer"
+    mode = "numeric",
+    col.names = "named"
   )
   checkmate::qassert(spatial_dist, "N+")
+  checkmate::qassert(nhood_overlap, "N+")
   checkmate::assertList(params, names = "named")
 
   # function body
@@ -1316,8 +1325,8 @@ new_sc_miloR_res <- function(nhoods, sample_counts, spatial_dist, params) {
     nhoods = nhoods,
     sample_counts = sample_counts,
     spatial_dist = spatial_dist,
+    nhood_overlap = nhood_overlap,
     nhoods_info = NULL,
-    model = NULL,
     params = params
   )
 
@@ -1403,10 +1412,15 @@ get_differential_abundance_res.miloR <- function(
 
 #' Get the fitted model
 #'
-#' @param x An object from which to get the differential abundance results
-#' from.
+#' @description
+#' `r lifecycle::badge("deprecated")`
+#' The neighbourhood test moved into Rust, so there is no `DGEGLM` to hand
+#' back any more. Everything the fit was consulted for now sits in the results
+#' table, see [bixverse::get_differential_abundance_res()].
 #'
-#' @returns The model object, please refer to [edgeR::glmQLFTest()].
+#' @param x An object from which to get the fitted model from.
+#'
+#' @returns `NULL`, with a deprecation warning.
 #'
 #' @export
 get_model_fit <- function(x) {
@@ -1422,17 +1436,16 @@ get_model_fit.miloR <- function(
   # checks
   checkmate::assertClass(x, "miloR")
 
-  res <- x[["model"]]
+  lifecycle::deprecate_warn(
+    when = "0.4.11",
+    what = "get_model_fit()",
+    details = paste(
+      "test_nhoods() now runs the edgeR quasi-likelihood chain in Rust and",
+      "keeps no DGEGLM. Use get_differential_abundance_res() instead."
+    )
+  )
 
-  if (is.null(res)) {
-    warning(paste(
-      "No DGEGLM results found in x.",
-      "Did you run test_nhoods()?",
-      "Returning NULL."
-    ))
-  }
-
-  res
+  invisible(NULL)
 }
 
 #' Get the index cells
@@ -1458,110 +1471,51 @@ get_index_cells.miloR <- function(x) {
 
 ### methods --------------------------------------------------------------------
 
-#### helpers -------------------------------------------------------------------
-
-#' Spatial FDR correction for neighbourhoods
-#'
-#' @param nhoods Sparse matrix of cells x neighbourhoods
-#' @param pvalues Numeric vector. The p-values.
-#' @param weighting String. Weighting scheme, one of
-#' `c("k-distance", "graph-overlap")`
-#' @param kth_distances Numeric vector. The k-th nearest neighbour distances.
-#' Must be supplied if `weighting == "k-distance"`.
-#'
-#' @return Vector of spatially-corrected FDR values
-#'
-#' @noRd
-spatial_fdr_correction <- function(
-  nhoods,
-  pvalues,
-  weighting = c("k-distance", "graph-overlap"),
-  kth_distances = NULL
-) {
-  weighting <- match.arg(weighting)
-
-  # checks
-  checkmate::checkClass(nhoods, "dgCMatrix")
-  checkmate::qassert(pvalues, "n+")
-  checkmate::assertChoice(weighting, c("k-distance", "graph-overlap"))
-  checkmate::qassert(kth_distances, c("0", "N+"))
-
-  # handle NAs
-  haspval <- !is.na(pvalues)
-  if (!all(haspval)) {
-    pvalues <- pvalues[haspval]
-  }
-
-  # weights
-  if (weighting == "k-distance") {
-    if (is.null(kth_distances)) {
-      stop("k-distance weighting requires kth.distances")
-    }
-    t.connect <- kth_distances[haspval]
-  } else if (weighting == "graph-overlap") {
-    intersect_mat <- Matrix::crossprod(nhoods)
-    diag(intersect_mat) <- 0
-    t.connect <- Matrix::rowSums(intersect_mat)
-  }
-
-  w <- 1 / t.connect
-  w[is.infinite(w)] <- 1
-
-  o <- order(pvalues)
-  pvalues <- pvalues[o]
-  w <- w[o]
-
-  adjp <- numeric(length(o))
-  adjp[o] <- rev(cummin(rev(sum(w) * pvalues / cumsum(w))))
-  adjp <- pmin(adjp, 1)
-
-  # put NA's back
-  if (!all(haspval)) {
-    refp <- rep(NA_real_, length(haspval))
-    refp[haspval] <- adjp
-    adjp <- refp
-  }
-
-  adjp
-}
-
 #### neighbourhood testing -----------------------------------------------------
 
 #' Test neighbourhoods for differential abundance
 #'
 #' @description
-#' Performs differential abundance testing on single-cell neighbourhoods using
-#' edgeR's quasi-likelihood negative binomial framework. The function fits a
-#' generalised linear model to neighbourhood cell counts, tests for differential
-#' abundance between conditions, and applies spatial FDR correction to account
-#' for overlapping neighbourhoods. This implementation follows the approach
-#' described in Dann et al., using graph-based neighbourhoods to identify
-#' regions of significant compositional changes in single-cell data.
+#' Performs differential abundance testing on single-cell neighbourhoods with
+#' edgeR's quasi-likelihood negative binomial framework, implemented in Rust
+#' via the `edge-rs` crate. A generalised linear model is fitted to the
+#' neighbourhood counts, one coefficient or contrast is tested, and the spatial
+#' FDR correction accounts for the fact that neighbourhoods overlap and their
+#' tests are therefore not independent.
+#'
+#' `filterByExpr()` is off here and cannot be turned on. It is a gene
+#' expression heuristic and means nothing for a neighbourhood. Use `min_mean`
+#' if you want to drop sparsely populated neighbourhoods.
 #'
 #' @param x `miloR` object for which to run the differential abundance
 #' analysis.
-#' @param design Formula for the experimental design
-#' @param design_df data.frame. Contains the metadata to be used for the
-#' generation of the model matrix.
-#' @param coef Optional string/integer. For more complex experimental designs,
-#' you can specify which coefficient to test. If NULL, tests the last
-#' coefficient in the design matrix (typically the main effect of interest).
-#' @param norm_method String. Normalisation method to use. One of
-#' `c("TMM", "RLE", "logMS")`. Defaults to TMM (trimmed mean of M-values).
-#' @param min_mean Numeric. Minimum mean count threshold for filtering
-#' neighbourhoods. Neighbourhoods with mean counts below this value are excluded.
-#' Defaults to 0 (no filtering).
-#' @param robust Logical. If TRUE, uses robust estimation of the quasi-likelihood
-#' dispersion. Recommended for datasets with potential outliers. Defaults to TRUE.
+#' @param design Formula for the experimental design, e.g. `~ grps`.
+#' @param design_df data.frame. The metadata used to build the model matrix.
+#' Its rownames need to cover the sample names of the neighbourhood counts.
+#' @param coef Optional integer or character. Which coefficient(s) of the
+#' design to drop from the null model, given as 1-based column positions or
+#' column names. Defaults to the last column, as edgeR does.
+#' @param contrast Optional numeric vector or matrix. Weights over the design
+#' columns. Mutually exclusive with `coef`.
+#' @param norm_method String. Library size normalisation. One of
+#' `c("TMM", "TMMwsp", "RLE", "upperquartile", "logMS")`. Defaults to `"TMM"`.
+#' `"logMS"` is Milo's own name for leaving every factor at one.
+#' @param min_mean Numeric. Minimum mean count across samples. Neighbourhoods
+#' below it are dropped. Defaults to `0` (no filtering).
+#' @param robust Logical. Robust estimation of the quasi-likelihood dispersion.
+#' Defaults to `TRUE`.
+#' @param legacy Logical. Take edgeR's pre-4.0 quasi-likelihood pipeline, which
+#' runs `estimateDisp()` and applies the Poisson bound. Defaults to `TRUE`, so
+#' this keeps matching what Milo itself does.
 #' @param fdr_weighting String. Spatial FDR weighting scheme. One of
-#' `c("k-distance", "graph-overlap", "none")`. k-distance uses the distance to
-#' the k-th nearest neighbour, graph-overlap uses neighbourhood overlap counts.
-#' Defaults to k-distance.
+#' `c("k-distance", "graph-overlap", "none")`. `"k-distance"` weights by the
+#' distance to the k-th nearest neighbour, `"graph-overlap"` by the number of
+#' cells shared with other neighbourhoods. Defaults to `"k-distance"`.
 #'
-#' @return The `miloR` object with added model and results from the
-#' differential abundance analysis.
+#' @return The `miloR` object with the differential abundance results added.
 #'
-#' @references Dann et al., 2022, Nat Biotechnol
+#' @references Dann, et al., Nat Biotechnol, 2022; Chen, Lun and Smyth,
+#' F1000Research, 2016
 #'
 #' @export
 test_nhoods <- function(
@@ -1569,9 +1523,11 @@ test_nhoods <- function(
   design,
   design_df,
   coef = NULL,
-  norm_method = c("TMM", "RLE", "logMS"),
+  contrast = NULL,
+  norm_method = c("TMM", "TMMwsp", "RLE", "upperquartile", "logMS"),
   min_mean = 0,
   robust = TRUE,
+  legacy = TRUE,
   fdr_weighting = c("k-distance", "graph-overlap", "none")
 ) {
   UseMethod("test_nhoods")
@@ -1585,11 +1541,15 @@ test_nhoods.miloR <- function(
   design,
   design_df,
   coef = NULL,
-  norm_method = c("TMM", "RLE", "logMS"),
+  contrast = NULL,
+  norm_method = c("TMM", "TMMwsp", "RLE", "upperquartile", "logMS"),
   min_mean = 0,
   robust = TRUE,
+  legacy = TRUE,
   fdr_weighting = c("k-distance", "graph-overlap", "none")
 ) {
+  Nhood <- PValue <- SpatialFDR <- NULL
+
   norm_method <- match.arg(norm_method)
   fdr_weighting <- match.arg(fdr_weighting)
 
@@ -1597,10 +1557,13 @@ test_nhoods.miloR <- function(
   checkmate::assertClass(x, "miloR")
   checkmate::assertFormula(design)
   checkmate::assertDataFrame(design_df, row.names = "named")
-  checkmate::qassert(coef, c("0", "S1", "X1"))
-  checkmate::qassert(min_mean, "N1")
+  checkmate::qassert(min_mean, "N1[0,)")
   checkmate::qassert(robust, "B1")
-  checkmate::assertChoice(norm_method, c("TMM", "RLE", "logMS"))
+  checkmate::qassert(legacy, "B1")
+  checkmate::assertChoice(
+    norm_method,
+    c("TMM", "TMMwsp", "RLE", "upperquartile", "logMS")
+  )
   checkmate::assertChoice(
     fdr_weighting,
     c("k-distance", "graph-overlap", "none")
@@ -1609,74 +1572,77 @@ test_nhoods.miloR <- function(
   mm <- stats::model.matrix(design, data = design_df)
 
   if (ncol(x$sample_counts) != nrow(mm)) {
-    stop(
-      "Design matrix (",
+    stop(sprintf(
+      "Design matrix (%i) and sample counts (%i) dimensions don't match.",
       nrow(mm),
-      ") and sample counts (",
-      ncol(x$sample_counts),
-      ") dimensions don't match"
-    )
+      ncol(x$sample_counts)
+    ))
   }
 
   if (any(colnames(x$sample_counts) != rownames(mm))) {
     if (!all(colnames(x$sample_counts) %in% rownames(mm))) {
-      stop("Sample names in counts and design matrix don't match")
+      stop("Sample names in counts and design matrix don't match.")
     }
-    warning("Reordering design matrix to match sample counts")
-    mm <- mm[colnames(x$sample_counts), ]
+    warning("Reordering design matrix to match sample counts.")
+    mm <- mm[colnames(x$sample_counts), , drop = FALSE]
   }
 
-  keep_nh <- if (min_mean > 0) {
-    rowMeans(x$sample_counts) >= min_mean
-  } else {
-    rep(TRUE, nrow(x$sample_counts))
-  }
-
-  dge <- edgeR::DGEList(
-    counts = x$sample_counts[keep_nh, , drop = FALSE],
-    lib.size = colSums(x$sample_counts)
+  # `filterByExpr` is a gene expression heuristic and means nothing for a
+  # neighbourhood, so the filtering is left to `min_mean`. Milo's `logMS` is
+  # edgeR's "none": leave every normalisation factor at one.
+  edger_params <- params_edger_ql(
+    norm_method = if (norm_method == "logMS") "none" else norm_method,
+    filter = FALSE,
+    min_mean = min_mean,
+    robust = robust,
+    legacy = legacy
   )
 
-  if (norm_method %in% c("TMM", "RLE")) {
-    dge <- edgeR::calcNormFactors(dge, method = norm_method)
-  }
+  # already neighbourhoods x samples, which is the orientation edgeR takes.
+  # The rownames carry the neighbourhood index through the filter, so `Nhood`
+  # lines up with the object without tracking the mask separately
+  counts <- x$sample_counts
+  rownames(counts) <- as.character(seq_len(nrow(counts)))
 
-  dge <- edgeR::estimateDisp(dge, mm)
-  fit <- edgeR::glmQLFit(dge, mm, robust = robust, legacy = TRUE)
+  res <- run_edger_ql(
+    counts = counts,
+    design = mm,
+    coef = coef,
+    contrast = contrast,
+    edger_params = edger_params
+  )
 
-  if (is.null(coef)) {
-    coef <- ncol(mm)
-  }
+  data.table::setnames(
+    res,
+    old = c("feature_id", "log_fc", "log_cpm", "f_stat", "p_value"),
+    new = c("Nhood", "logFC", "logCPM", "F", "PValue")
+  )
+  data.table::setnames(res, old = "fdr", new = "FDR")
+  res[, Nhood := as.integer(Nhood)]
 
-  res <- edgeR::topTags(
-    edgeR::glmQLFTest(fit, coef = coef),
-    sort.by = "none",
-    n = Inf
-  ) %>%
-    as.data.frame()
+  # the two weightings are both functions of the neighbourhood matrix alone and
+  # were taken when the object was built, so they only need subsetting here
+  connectivity <- switch(
+    fdr_weighting,
+    "k-distance" = x$spatial_dist[res$Nhood],
+    "graph-overlap" = x$nhood_overlap[res$Nhood],
+    "none" = NULL
+  )
 
-  res$Nhood <- which(keep_nh)
+  res[,
+    SpatialFDR := if (is.null(connectivity)) {
+      NA_real_
+    } else {
+      rs_spatial_fdr(p_values = PValue, connectivity = connectivity)
+    }
+  ]
 
-  if (fdr_weighting != "none") {
-    spatial_fdr <- spatial_fdr_correction(
-      nhoods = x$nhoods[, keep_nh, drop = FALSE],
-      pvalues = res$PValue,
-      weighting = fdr_weighting,
-      kth_distances = x$spatial_dist[keep_nh]
-    )
-    res$SpatialFDR <- spatial_fdr
-  } else {
-    res$SpatialFDR <- NA_real_
-  }
-
-  res <- data.table::setDT(res)
   data.table::setcolorder(
     res,
     c("Nhood", "logFC", "logCPM", "F", "PValue", "FDR", "SpatialFDR")
   )
 
   x[["nhoods_info"]] <- res
-  x[["model"]] <- fit
 
   return(x)
 }

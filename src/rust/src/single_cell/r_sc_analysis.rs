@@ -50,6 +50,7 @@ extendr_module! {
     fn rs_module_scoring;
     // miloR
     fn rs_make_milor_nhoods;
+    fn rs_spatial_fdr;
     // MELD
     fn rs_meld_sc;
     // vision
@@ -1055,6 +1056,9 @@ fn rs_hotspot_cluster_genes(
 /// graph and will be used to refine the neighbourhoods.
 /// @param knn_indices Integer matrix. Each row represents a given cell and
 /// the columns the neighbours. (0-indexed!)
+/// @param sample_ids Integer vector. 0-indexed(!) sample label per cell, in
+/// `0..n_samples`. One entry per row of `embd`.
+/// @param n_samples Integer. Number of distinct samples.
 /// @param milor_params Named list. Contains the parameters for running the
 /// miloR approach.
 /// @param seed Integer. Seed for reproducibility.
@@ -1073,15 +1077,22 @@ fn rs_hotspot_cluster_genes(
 ///  \item nrows - Integer. Number of cells in the matrix
 ///  \item ncols - Integer. Number of refined neighbourhoods.
 ///  \item kth_distances - The k-th distances for spatial FDR calculations.
+///  \item sample_counts - Numeric matrix of neighbourhoods x samples. The
+///  cells of each sample found in each neighbourhood.
+///  \item nhood_overlap - Numeric. Cells each neighbourhood shares with all
+///  the others, the `"graph-overlap"` weighting for the spatial FDR.
 /// }
 ///
 /// @export
 ///
 /// @keywords internal
 #[extendr]
+#[allow(clippy::too_many_arguments)]
 fn rs_make_milor_nhoods(
     embd: RMatrix<f64>,
     knn_indices: RMatrix<i32>,
+    sample_ids: Vec<i32>,
+    n_samples: usize,
     milor_params: List,
     seed: usize,
     verbose: usize,
@@ -1174,6 +1185,30 @@ fn rs_make_milor_nhoods(
         knn_indices[0].len() - 1,
     );
 
+    // Both weightings for the spatial FDR are functions of the COO alone, and
+    // both are two passes over the non-zeros, so they are cheaper to take here
+    // than to hand the COO back to R and rebuild it at test time.
+    let sample_ids: Vec<usize> = sample_ids.r_int_convert();
+    let counts = count_nhood_cells(
+        &nhoods_triplets.0,
+        &nhoods_triplets.1,
+        &sample_ids,
+        len_unique_indices,
+        n_samples,
+    )
+    .to_extendr()?;
+    let overlap = nhood_overlap(
+        &nhoods_triplets.0,
+        &nhoods_triplets.1,
+        len_unique_indices,
+        n_cells,
+    )
+    .to_extendr()?;
+
+    let sample_counts = RMatrix::new_matrix(len_unique_indices, n_samples, |r, c| {
+        counts[r * n_samples + c]
+    });
+
     Ok(list!(
         index_cell = unique_indices.r_int_convert(),
         nhoods_i = nhoods_triplets.0,
@@ -1181,8 +1216,37 @@ fn rs_make_milor_nhoods(
         nhoods_x = nhoods_triplets.2,
         nrows = n_cells as i32,
         ncols = len_unique_indices,
-        kth_distances = kth_distances
+        kth_distances = kth_distances,
+        sample_counts = sample_counts,
+        nhood_overlap = overlap
     ))
+}
+
+/// Weighted Benjamini-Hochberg over overlapping neighbourhoods
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Milo's spatial FDR. Neighbourhoods overlap, so the tests are not
+/// independent and a plain BH is anti-conservative. Each p-value is weighted
+/// by the reciprocal of its connectivity and the step-up runs on those
+/// weights. Non-finite p-values are carried through untouched and take no part
+/// in the adjustment.
+///
+/// @param p_values Numeric vector. One raw p-value per tested neighbourhood.
+/// @param connectivity Numeric vector. The matching connectivity per
+/// neighbourhood, either the k-th neighbour distances or the neighbourhood
+/// overlaps. A zero connectivity gets a weight of one, as in the upstream.
+///
+/// @returns The adjusted p-values, in the input order.
+///
+/// @references Dann, et al., Nat Biotechnol, 2022
+///
+/// @export
+///
+/// @keywords internal
+#[extendr]
+fn rs_spatial_fdr(p_values: &[f64], connectivity: &[f64]) -> Result<Vec<f64>> {
+    spatial_fdr(p_values, connectivity).to_extendr()
 }
 
 //////////

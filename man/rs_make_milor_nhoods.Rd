@@ -4,7 +4,15 @@
 \alias{rs_make_milor_nhoods}
 \title{Generate the neighbourhoods akin to the miloR approach}
 \usage{
-rs_make_milor_nhoods(embd, knn_indices, milor_params, seed, verbose)
+rs_make_milor_nhoods(
+  embd,
+  knn_indices,
+  sample_ids,
+  n_samples,
+  milor_params,
+  seed,
+  verbose
+)
 }
 \arguments{
 \item{embd}{Numeric matrix. Represents the matrix used to generate the kNN
@@ -12,6 +20,11 @@ graph and will be used to refine the neighbourhoods.}
 
 \item{knn_indices}{Integer matrix. Each row represents a given cell and
 the columns the neighbours. (0-indexed!)}
+
+\item{sample_ids}{Integer vector. 0-indexed(!) sample label per cell, in
+\verb{0..n_samples}. One entry per row of \code{embd}.}
+
+\item{n_samples}{Integer. Number of distinct samples.}
 
 \item{milor_params}{Named list. Contains the parameters for running the
 miloR approach.}
@@ -34,6 +47,10 @@ defaults to \code{1.0}.
 \item nrows - Integer. Number of cells in the matrix
 \item ncols - Integer. Number of refined neighbourhoods.
 \item kth_distances - The k-th distances for spatial FDR calculations.
+\item sample_counts - Numeric matrix of neighbourhoods x samples. The
+cells of each sample found in each neighbourhood.
+\item nhood_overlap - Numeric. Cells each neighbourhood shares with all
+the others, the \code{"graph-overlap"} weighting for the spatial FDR.
 }
 }
 \description{

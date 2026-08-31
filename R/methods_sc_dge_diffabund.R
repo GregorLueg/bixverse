@@ -579,10 +579,9 @@ S7::method(find_specific_markers_sc, ScOrScSubset) <- function(
 #'   \item refinement_strategy - String. Strategy for refining sampled indices.
 #'   One of `c("approximate", "bruteforce", "index")`.
 #'   \item index_type - String. Type of kNN index to use. One of
-#'   `c("annoy", "hnsw")`.
+#'   `c("nndescent", "ivf", "hnsw", "annoy", "exhaustive")`.
 #'   \item knn - List of kNN parameters. See [bixverse::params_knn_defaults()]
-#'   for available parameters and their defaults. Note: `knn_method` cannot be
-#'   `"exhaustive"` for MiloR as it basically boils down to `"bruteforce"`.
+#'   for available parameters and their defaults.
 #' }
 #' @param seed Integer. Seed for reproducibility
 #' @param .verbose Boolean or integer. Controls verbosity and returns run times.
@@ -611,9 +610,6 @@ get_miloR_abundances_sc <- S7::new_generic(
 #' @method get_miloR_abundances_sc SingleCells
 #'
 #' @export
-#'
-#' @importFrom zeallot %<-%
-#' @importFrom magrittr %>%
 S7::method(get_miloR_abundances_sc, SingleCells) <- function(
   object,
   sample_id_col,
@@ -634,6 +630,18 @@ S7::method(get_miloR_abundances_sc, SingleCells) <- function(
   assert_sc_state(object, artefacts = c(embd_to_use, "knn"))
 
   samples <- unlist(object[[sample_id_col]], use.names = FALSE)
+
+  # a cell with no sample label cannot be counted into any sample, and dropping
+  # it silently would deflate the neighbourhood counts unevenly
+  if (anyNA(samples)) {
+    stop(sprintf(
+      "Column '%s' holds %i missing value(s). Every cell needs a sample.",
+      sample_id_col,
+      sum(is.na(samples))
+    ))
+  }
+
+  samples <- factor(samples)
 
   embd <- get_embedding(x = object, embd_name = embd_to_use)
 
@@ -669,6 +677,8 @@ S7::method(get_miloR_abundances_sc, SingleCells) <- function(
   milor_res <- rs_make_milor_nhoods(
     embd = embd,
     knn_indices = knn_data,
+    sample_ids = as.integer(samples) - 1L,
+    n_samples = nlevels(samples),
     milor_params = miloR_params,
     seed = seed,
     verbose = parse_verbosity(.verbose)
@@ -681,13 +691,13 @@ S7::method(get_miloR_abundances_sc, SingleCells) <- function(
     dims = c(milor_res$nrows, milor_res$ncols)
   )
 
-  sample_counts <- table(
-    sample = samples[milor_res$nhoods_i + 1],
-    nhood = milor_res$nhoods_j
-  ) %>%
-    t() %>%
-    unclass() %>%
-    as.matrix()
+  # Rust returns the full neighbourhoods x samples grid with explicit zeros,
+  # so unlike the old table() this cannot come back ragged
+  sample_counts <- milor_res$sample_counts
+  dimnames(sample_counts) <- list(
+    seq_len(nrow(sample_counts)),
+    levels(samples)
+  )
 
   params <- miloR_params
   params[["used_emb"]] <- embd_to_use
@@ -698,6 +708,7 @@ S7::method(get_miloR_abundances_sc, SingleCells) <- function(
     nhoods = nhoods,
     sample_counts = sample_counts,
     spatial_dist = milor_res$kth_distances,
+    nhood_overlap = milor_res$nhood_overlap,
     params = params
   )
 

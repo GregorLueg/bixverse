@@ -3517,7 +3517,7 @@ checkScMiloR <- function(x) {
     x,
     list(
       refinement_strategy = c("approximate", "bruteforce", "index"),
-      index_type = c("nndescent", "ivf", "hnsw", "annoy")
+      index_type = c("nndescent", "ivf", "hnsw", "annoy", "exhaustive")
     ),
     label = "MiloR params"
   )

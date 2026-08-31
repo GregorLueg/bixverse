@@ -3969,6 +3969,9 @@ rs_module_scoring <- function(f_path_cells, f_path_genes, gs_list, cells_to_keep
 #' graph and will be used to refine the neighbourhoods.
 #' @param knn_indices Integer matrix. Each row represents a given cell and
 #' the columns the neighbours. (0-indexed!)
+#' @param sample_ids Integer vector. 0-indexed(!) sample label per cell, in
+#' `0..n_samples`. One entry per row of `embd`.
+#' @param n_samples Integer. Number of distinct samples.
 #' @param milor_params Named list. Contains the parameters for running the
 #' miloR approach.
 #' @param seed Integer. Seed for reproducibility.
@@ -3987,12 +3990,40 @@ rs_module_scoring <- function(f_path_cells, f_path_genes, gs_list, cells_to_keep
 #'  \item nrows - Integer. Number of cells in the matrix
 #'  \item ncols - Integer. Number of refined neighbourhoods.
 #'  \item kth_distances - The k-th distances for spatial FDR calculations.
+#'  \item sample_counts - Numeric matrix of neighbourhoods x samples. The
+#'  cells of each sample found in each neighbourhood.
+#'  \item nhood_overlap - Numeric. Cells each neighbourhood shares with all
+#'  the others, the `"graph-overlap"` weighting for the spatial FDR.
 #' }
 #'
 #' @export
 #'
 #' @keywords internal
-rs_make_milor_nhoods <- function(embd, knn_indices, milor_params, seed, verbose) .Call(wrap__rs_make_milor_nhoods, embd, knn_indices, milor_params, seed, verbose)
+rs_make_milor_nhoods <- function(embd, knn_indices, sample_ids, n_samples, milor_params, seed, verbose) .Call(wrap__rs_make_milor_nhoods, embd, knn_indices, sample_ids, n_samples, milor_params, seed, verbose)
+
+#' Weighted Benjamini-Hochberg over overlapping neighbourhoods
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Milo's spatial FDR. Neighbourhoods overlap, so the tests are not
+#' independent and a plain BH is anti-conservative. Each p-value is weighted
+#' by the reciprocal of its connectivity and the step-up runs on those
+#' weights. Non-finite p-values are carried through untouched and take no part
+#' in the adjustment.
+#'
+#' @param p_values Numeric vector. One raw p-value per tested neighbourhood.
+#' @param connectivity Numeric vector. The matching connectivity per
+#' neighbourhood, either the k-th neighbour distances or the neighbourhood
+#' overlaps. A zero connectivity gets a weight of one, as in the upstream.
+#'
+#' @returns The adjusted p-values, in the input order.
+#'
+#' @references Dann, et al., Nat Biotechnol, 2022
+#'
+#' @export
+#'
+#' @keywords internal
+rs_spatial_fdr <- function(p_values, connectivity) .Call(wrap__rs_spatial_fdr, p_values, connectivity)
 
 #' Run MELD
 #'

@@ -1105,13 +1105,15 @@ params_dialogue_refine <- function(
 #' One of `c("approximate", "bruteforce", "index")`. Defaults to
 #' `"index"`.
 #' @param index_type String. Type of kNN index to use. One of
-#' `c("hnsw", "annoy", "nndescent", "ivf")`. Defaults to `"nndescent"`.
+#' `c("nndescent", "ivf", "hnsw", "annoy", "exhaustive")`. Defaults to
+#' `"nndescent"`. `"exhaustive"` scans every cell, so it returns the true
+#' nearest neighbour rather than an approximation, at a cost that grows with
+#' the number of cells.
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
 #' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
-#' and `n_probe`. Note: `knn_method` cannot be `"exhaustive"` for MiloR as it
-#' doesn't generate an index!
+#' and `n_probe`.
 #'
 #' @returns A list with the MiloR parameters.
 #'
@@ -1120,7 +1122,7 @@ params_sc_miloR <- function(
   prop = 0.2,
   k_refine = 20L,
   refinement_strategy = c("index", "approximate", "bruteforce"),
-  index_type = c("nndescent", "ivf", "hnsw", "annoy"),
+  index_type = c("nndescent", "ivf", "hnsw", "annoy", "exhaustive"),
   knn = list()
 ) {
   refinement_strategy <- match.arg(refinement_strategy)

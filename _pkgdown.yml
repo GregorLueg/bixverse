@@ -834,6 +834,7 @@ reference:
       - rs_singscore_permutation_test
       - rs_singscore_single
       - rs_snf
+      - rs_spatial_fdr
       - rs_sparse_dict_dgrdl
       - rs_sparse_dict_dgrdl_grid_search
       - rs_spectral_clustering
