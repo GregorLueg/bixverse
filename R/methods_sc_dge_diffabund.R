@@ -853,3 +853,189 @@ S7::method(meld_sc, SingleCells) <- function(
 
   meld_res
 }
+
+### NEBULA ---------------------------------------------------------------------
+
+#' Run NEBULA on single cells
+#'
+#' @description
+#' Fits NEBULA's negative binomial gamma mixed model, which is the test to
+#' reach for when the cells are not independent because they came from a
+#' handful of donors. The variance is split into a subject-level random effect
+#' and a cell-level overdispersion, so the donor structure is modelled rather
+#' than ignored, and the nominal false discovery rate holds.
+#'
+#' The design is a formula evaluated against the obs table, so anything in
+#' there can go into the model. Cells with a missing design or subject value
+#' are dropped with a warning.
+#'
+#' Genes are streamed and fitted in batches, which is exact: NEBULA is
+#' gene-independent. A fit is milliseconds to seconds per gene though, so
+#' running it over the full gene axis is rarely what you want. Restrict
+#' `genes_to_use` to the highly variable genes or a candidate set.
+#'
+#' @param object `SingleCells` or `SingleCellsSubset` class.
+#' @param subject_col String. The column in the obs table holding the subject
+#' (donor) identifier. This is what the random effect is over. Not the same
+#' thing as a sample or a batch, unless they happen to coincide.
+#' @param design Formula. The experimental design, evaluated against the obs
+#' table, e.g. `~ condition` or `~ condition + age`. Include the intercept.
+#' @param coef Optional integer or character. Which coefficient of the design
+#' the Wald test reports, as a 1-based column position or a column name.
+#' Defaults to the last column.
+#' @param contrast Optional numeric vector. One weight per design column.
+#' Mutually exclusive with `coef`.
+#' @param genes_to_use Optional character vector. The genes to fit. Defaults to
+#' every gene in the object, which is usually too many.
+#' @param offset Optional numeric vector. Strictly positive scaling factor per
+#' cell, aligned to the cells that survive the design. Defaults to `NULL`,
+#' which uses the library sizes.
+#' @param nebula_params A list, see [bixverse::params_nebula()]. The list has
+#' the following parameters:
+#' \itemize{
+#'   \item nebula_method - String. One of `c("ln", "hl")`.
+#'   \item min_sigma, max_sigma - Numeric. Bounds on the subject-level
+#'   overdispersion.
+#'   \item min_phi, max_phi - Numeric. Bounds on the cell-level overdispersion.
+#'   \item cutoff_cell - Numeric. When to refit both overdispersions.
+#'   \item kappa - Numeric. When to trust the stage-one subject overdispersion.
+#'   \item cpc - Numeric. Minimum mean count per cell for a gene to be tested.
+#'   \item mincp - Integer. Minimum number of cells expressing a gene.
+#'   \item reml - Boolean. Restricted maximum likelihood.
+#'   \item eps - Numeric. Optimiser stopping tolerance.
+#'   \item gene_batch_size - Integer. Genes read and fitted per batch.
+#'   \item shrink_dispersion - Boolean. Empirical Bayes shrinkage of the
+#'   cell-level overdispersions.
+#' }
+#' @param .verbose Boolean or integer. Controls verbosity and returns run
+#' times. `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` ->
+#' detailed verbosity.
+#'
+#' @returns A `ScNebula` class, see [bixverse::new_sc_nebula_res()], with
+#' \itemize{
+#'   \item results - data.table. One row per gene that survived NEBULA's
+#'   expression filter, with the Wald test and both overdispersions.
+#'   \item coefficients - Numeric matrix of genes x coefficients.
+#'   \item se - Numeric matrix of genes x coefficients.
+#'   \item params - List. The parameters the run used.
+#' }
+#'
+#' @references He, et al., Commun Biol, 2021
+#'
+#' @export
+nebula_sc <- S7::new_generic(
+  name = "nebula_sc",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    subject_col,
+    design,
+    coef = NULL,
+    contrast = NULL,
+    genes_to_use = NULL,
+    offset = NULL,
+    nebula_params = params_nebula(),
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method nebula_sc ScOrScSubset
+S7::method(nebula_sc, ScOrScSubset) <- function(
+  object,
+  subject_col,
+  design,
+  coef = NULL,
+  contrast = NULL,
+  genes_to_use = NULL,
+  offset = NULL,
+  nebula_params = params_nebula(),
+  .verbose = TRUE
+) {
+  # checks
+  checkmate::assertTRUE(
+    S7::S7_inherits(object, SingleCells) ||
+      S7::S7_inherits(object, SingleCellsSubset)
+  )
+  checkmate::qassert(subject_col, "S1")
+  checkmate::assertFormula(design)
+  checkmate::qassert(genes_to_use, c("0", "S+"))
+  checkmate::qassert(offset, c("0", "N+"))
+  assertNebulaParams(nebula_params)
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
+
+  obs <- get_sc_obs(
+    object,
+    cols = unique(c("cell_idx", subject_col, all.vars(design))),
+    filtered = TRUE
+  )
+
+  inputs <- .nebula_design(
+    obs = obs,
+    design = design,
+    subject_col = subject_col
+  )
+  tested <- .resolve_tested_sc(
+    design = inputs$design_mat,
+    coef = coef,
+    contrast = contrast
+  )
+
+  # obs cell_idx is 1-based, Rust wants 0-based global positions
+  cells_to_keep <- as.integer(inputs$obs$cell_idx - 1L)
+
+  if (!is.null(offset)) {
+    checkmate::assertNumeric(
+      offset,
+      len = length(cells_to_keep),
+      lower = .Machine$double.eps,
+      any.missing = FALSE
+    )
+  }
+
+  # Rust wants one subject label per cell in the store, not per selected cell.
+  # Unselected positions are never read, so they can stay at zero.
+  n_cells_total <- nrow(get_sc_obs(object, cols = "cell_idx", filtered = FALSE))
+  subject_ids <- integer(n_cells_total)
+  subject_ids[inputs$obs$cell_idx] <- as.integer(inputs$subject_fct) - 1L
+
+  gene_indices <- if (is.null(genes_to_use)) {
+    seq_along(get_gene_names(object)) - 1L
+  } else {
+    get_gene_indices(x = object, gene_ids = genes_to_use, rust_index = TRUE)
+  }
+
+  res <- rs_nebula_sc(
+    f_path_genes = get_rust_count_gene_f_path(object),
+    f_path_cells = get_rust_count_cell_f_path(object),
+    cells_to_keep = cells_to_keep,
+    gene_indices = as.integer(gene_indices),
+    subject_ids = subject_ids,
+    design = inputs$design_mat,
+    offset = offset,
+    nebula_params = c(nebula_params, tested),
+    verbose = parse_verbosity(.verbose)
+  )
+
+  params <- list(
+    subject_col = subject_col,
+    design = deparse1(design),
+    tested = if (is.null(tested$coef)) {
+      "contrast"
+    } else {
+      colnames(inputs$design_mat)[tested$coef + 1L]
+    },
+    n_cells = length(cells_to_keep),
+    n_subjects = nlevels(inputs$subject_fct),
+    n_genes_requested = length(gene_indices),
+    nebula_params = nebula_params
+  )
+
+  .nebula_res_to_class(
+    res = res,
+    gene_names = get_gene_names(object),
+    design_mat = inputs$design_mat,
+    params = params
+  )
+}

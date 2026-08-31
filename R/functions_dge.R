@@ -261,3 +261,179 @@ pseudobulk_dge_sc <- function(
     edger_params = edger_params
   )
 }
+
+## NEBULA ----------------------------------------------------------------------
+
+#' Resolve what a NEBULA Wald test is testing
+#'
+#' @description
+#' The single cell counterpart of [.resolve_tested()]. NEBULA tests one
+#' coefficient or one contrast, not a set of them, so this returns a scalar
+#' `coef` or a single weight vector rather than edgeR's `n_contrasts` form.
+#'
+#' @param design Numeric matrix. The design matrix of cells x coefficients.
+#' @param coef Optional integer or character. The coefficient to report, as a
+#' 1-based column position or a column name.
+#' @param contrast Optional numeric vector. One weight per column of `design`.
+#'
+#' @returns A named list holding either `coef` (0-based) or `contrast`.
+#'
+#' @keywords internal
+.resolve_tested_sc <- function(design, coef = NULL, contrast = NULL) {
+  # checks
+  checkmate::assertMatrix(design, mode = "numeric")
+
+  if (!is.null(coef) && !is.null(contrast)) {
+    stop("Supply either `coef` or `contrast`, not both.")
+  }
+
+  if (!is.null(contrast)) {
+    checkmate::assertNumeric(
+      contrast,
+      len = ncol(design),
+      any.missing = FALSE
+    )
+    return(list(contrast = as.numeric(contrast)))
+  }
+
+  if (is.null(coef)) {
+    coef <- ncol(design)
+  }
+
+  if (is.character(coef)) {
+    checkmate::assertChoice(coef, colnames(design))
+    coef <- match(coef, colnames(design))
+  }
+
+  checkmate::assertInt(coef, lower = 1L, upper = ncol(design))
+
+  # Rust reads this 0-indexed
+  list(coef = as.integer(coef) - 1L)
+}
+
+#' Build the NEBULA design from an obs table
+#'
+#' @description
+#' Evaluates the design formula against the obs table of the selected cells (or
+#' meta cells) and drops anything with a missing design or subject value. The
+#' subject labels come back as a factor so the caller can map them onto the
+#' full store.
+#'
+#' @param obs data.table. The obs table of the selected cells, holding at least
+#' the subject column and every variable in `design`.
+#' @param design Formula. The experimental design, evaluated against `obs`.
+#' @param subject_col String. The column of `obs` holding the subject
+#' identifier, i.e. what the random effect is over.
+#'
+#' @returns A list with `obs` (rows actually used), `design_mat` and
+#' `subject_fct`.
+#'
+#' @keywords internal
+.nebula_design <- function(obs, design, subject_col) {
+  # checks
+  checkmate::assertDataTable(obs)
+  checkmate::assertFormula(design)
+  checkmate::qassert(subject_col, "S1")
+
+  design_vars <- all.vars(design)
+  needed <- unique(c(design_vars, subject_col))
+  missing_cols <- setdiff(needed, names(obs))
+  if (length(missing_cols) > 0L) {
+    stop(sprintf(
+      "Not found in the obs table: %s.",
+      paste(missing_cols, collapse = ", ")
+    ))
+  }
+
+  complete <- stats::complete.cases(obs[, needed, with = FALSE])
+  if (!all(complete)) {
+    warning(sprintf(
+      "Dropping %i cell(s) with a missing design or subject value.",
+      sum(!complete)
+    ))
+    obs <- obs[complete]
+  }
+
+  if (nrow(obs) == 0L) {
+    stop("No cells left after dropping missing design or subject values.")
+  }
+
+  design_mat <- stats::model.matrix(design, data = obs)
+
+  # complete.cases already removed everything model.matrix would drop, so a
+  # mismatch here means the formula did something this cannot align
+  if (nrow(design_mat) != nrow(obs)) {
+    stop(
+      paste(
+        "The design matrix does not line up with the obs table.",
+        "Check the formula for terms that drop rows."
+      )
+    )
+  }
+
+  subject_fct <- factor(obs[[subject_col]])
+
+  if (nlevels(subject_fct) < 2L) {
+    warning(
+      paste(
+        "Only one subject found. The subject-level variance has nothing to",
+        "estimate from and NEBULA collapses to a plain negative binomial."
+      )
+    )
+  }
+
+  list(obs = obs, design_mat = design_mat, subject_fct = subject_fct)
+}
+
+#' Wrap the NEBULA fits into a result class
+#'
+#' @description
+#' Names the coefficient matrices, joins the per-gene test onto the gene
+#' identifiers and hands back a [new_sc_nebula_res()].
+#'
+#' @param res List. The raw return of `rs_nebula_sc()` / `rs_nebula_mc()`.
+#' @param gene_names Character vector. All gene identifiers of the object, in
+#' store order, so `res$gene_idx` indexes into it.
+#' @param design_mat Numeric matrix. The design that was fitted, for its column
+#' names.
+#' @param params Named list. The parameters of the run.
+#'
+#' @returns A `ScNebula` class.
+#'
+#' @keywords internal
+.nebula_res_to_class <- function(res, gene_names, design_mat, params) {
+  cell_overdispersion_shrunk <- NULL
+
+  # Rust hands back 0-based gene indices into the full gene axis
+  gene_ids <- gene_names[res$gene_idx + 1L]
+
+  coefficients <- res$coefficients
+  se <- res$se
+  dimnames(coefficients) <- list(gene_ids, colnames(design_mat))
+  dimnames(se) <- list(gene_ids, colnames(design_mat))
+
+  results <- data.table::data.table(
+    gene_id = gene_ids,
+    log_fc = res$log_fc,
+    effect_se = res$effect_se,
+    z = res$z,
+    p_value = res$p_values,
+    fdr = res$fdr,
+    subject_overdispersion = res$subject_overdispersion,
+    cell_overdispersion = res$cell_overdispersion,
+    convergence = res$convergence,
+    sigma_at_bound = res$sigma_at_bound
+  )
+
+  # only present when the shrinkage was requested
+  if (!is.null(res$cell_overdispersion_shrunk)) {
+    results[, cell_overdispersion_shrunk := res$cell_overdispersion_shrunk]
+  }
+
+  new_sc_nebula_res(
+    results = results,
+    coefficients = coefficients,
+    se = se,
+    params = params
+  )
+}

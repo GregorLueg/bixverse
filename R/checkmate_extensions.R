@@ -4861,3 +4861,101 @@ checkEdgeRQlParams <- function(x) {
 #'
 #' @keywords internal
 assertEdgeRQlParams <- checkmate::makeAssertionFunction(checkEdgeRQlParams)
+
+#### NEBULA --------------------------------------------------------------------
+
+#' Check NEBULA parameters
+#'
+#' @description Checkmate extension for checking the NEBULA parameters, see
+#' [bixverse::params_nebula()].
+#'
+#' @param x The list to check/assert
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
+checkNebulaParams <- function(x) {
+  res <- check_list_shape(
+    x,
+    c(
+      "nebula_method",
+      "min_sigma",
+      "min_phi",
+      "max_sigma",
+      "max_phi",
+      "cutoff_cell",
+      "kappa",
+      "cpc",
+      "mincp",
+      "reml",
+      "eps",
+      "gene_batch_size",
+      "shrink_dispersion"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- apply_qtest_rules(
+    x,
+    list(
+      min_sigma = "N1(0,)",
+      min_phi = "N1(0,)",
+      max_sigma = "N1(0,)",
+      max_phi = "N1(0,)",
+      cutoff_cell = "N1[0,)",
+      kappa = "N1[0,)",
+      cpc = "N1[0,)",
+      mincp = "I1[0,)",
+      reml = "B1",
+      eps = "N1(0,)",
+      gene_batch_size = "I1[1,)",
+      shrink_dispersion = "B1"
+    ),
+    label = "NEBULA params",
+    hint = paste(
+      "The overdispersion bounds and `eps` must be strictly positive;",
+      "`gene_batch_size` must be at least 1."
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- apply_choice_rules(
+    x,
+    list(nebula_method = c("ln", "hl")),
+    label = "NEBULA params"
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  # the bounds are checked pairwise rather than by qtest, which cannot see two
+  # elements at once
+  if (x[["min_sigma"]] >= x[["max_sigma"]]) {
+    return("`min_sigma` in NEBULA params is not below `max_sigma`.")
+  }
+  if (x[["min_phi"]] >= x[["max_phi"]]) {
+    return("`min_phi` in NEBULA params is not below `max_phi`.")
+  }
+
+  return(TRUE)
+}
+
+#' Assert NEBULA parameters
+#'
+#' @description Checkmate extension for asserting the NEBULA parameters.
+#'
+#' @inheritParams checkNebulaParams
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
+assertNebulaParams <- checkmate::makeAssertionFunction(checkNebulaParams)

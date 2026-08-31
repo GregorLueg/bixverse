@@ -2536,3 +2536,113 @@ params_edger_ql <- function(
     legacy = legacy
   )
 }
+
+### NEBULA ---------------------------------------------------------------------
+
+#' Wrapper function for parameters for NEBULA
+#'
+#' @description
+#' Parameters for the NEBULA negative binomial gamma mixed model, implemented
+#' in Rust via the `edge-rs` crate and ported from the `nebula` package's own
+#' C++. Defaults are the R package's own.
+#'
+#' NEBULA splits the variance into a subject-level random effect and a
+#' cell-level overdispersion. Run it on meta cells and the cell-level term
+#' becomes the spread between aggregates within a subject rather than between
+#' cells, so it is smaller and absorbs whatever the aggregation smoothed away.
+#' The subject-level term keeps its meaning either way.
+#'
+#' @param nebula_method String. Which variant to run. One of `c("ln", "hl")`.
+#' Defaults to `"ln"`. NEBULA downgrades `"ln"` to `"hl"` below 30 cells per
+#' subject, as the R package does.
+#' @param min_sigma Numeric. Lower bound on the subject-level overdispersion.
+#' Defaults to `1e-4`.
+#' @param min_phi Numeric. Lower bound on the cell-level overdispersion.
+#' Defaults to `1e-4`.
+#' @param max_sigma Numeric. Upper bound on the subject-level overdispersion.
+#' Defaults to `10`.
+#' @param max_phi Numeric. Upper bound on the cell-level overdispersion.
+#' Defaults to `1000`.
+#' @param cutoff_cell Numeric. Refit both overdispersions when the product of
+#' the cells per subject and the estimated `phi` falls below this. Defaults to
+#' `20`.
+#' @param kappa Numeric. Threshold on NEBULA's `kappa_obs` above which the
+#' subject-level overdispersion from stage one is trusted as is. Defaults to
+#' `800`.
+#' @param cpc Numeric. Drop a gene whose mean count per cell is at most this.
+#' Defaults to `0.005`.
+#' @param mincp Integer. Drop a gene expressed in fewer than this many cells.
+#' Defaults to `5L`.
+#' @param reml Boolean. Estimate the overdispersions by restricted maximum
+#' likelihood. Defaults to `FALSE`. The R package only honours this for
+#' `NBLMM`, which the Rust port does not implement, so this arm has not been
+#' validated against an R reference. Leave it off unless you know why you want
+#' it.
+#' @param eps Numeric. Absolute stopping tolerance for the optimiser. Defaults
+#' to `1e-6`.
+#' @param gene_batch_size Integer. Genes read and fitted per batch. Bounds how
+#' much of the store is resident at once and changes nothing about the answer,
+#' since NEBULA is gene-independent. Defaults to `1000L`.
+#' @param shrink_dispersion Boolean. Shrink the cell-level overdispersions
+#' towards an empirical Bayes prior once the sweep is done. Defaults to `TRUE`.
+#'
+#' @returns A list with the NEBULA parameters.
+#'
+#' @references He, et al., Commun Biol, 2021
+#'
+#' @export
+params_nebula <- function(
+  nebula_method = c("ln", "hl"),
+  min_sigma = 1e-4,
+  min_phi = 1e-4,
+  max_sigma = 10,
+  max_phi = 1000,
+  cutoff_cell = 20,
+  kappa = 800,
+  cpc = 0.005,
+  mincp = 5L,
+  reml = FALSE,
+  eps = 1e-6,
+  gene_batch_size = 1000L,
+  shrink_dispersion = TRUE
+) {
+  nebula_method <- match.arg(nebula_method)
+
+  # checks
+  checkmate::assertChoice(nebula_method, c("ln", "hl"))
+  checkmate::qassert(min_sigma, "N1(0,)")
+  checkmate::qassert(min_phi, "N1(0,)")
+  checkmate::qassert(max_sigma, "N1(0,)")
+  checkmate::qassert(max_phi, "N1(0,)")
+  checkmate::qassert(cutoff_cell, "N1[0,)")
+  checkmate::qassert(kappa, "N1[0,)")
+  checkmate::qassert(cpc, "N1[0,)")
+  checkmate::qassert(mincp, "I1[0,)")
+  checkmate::qassert(reml, "B1")
+  checkmate::qassert(eps, "N1(0,)")
+  checkmate::qassert(gene_batch_size, "I1[1,)")
+  checkmate::qassert(shrink_dispersion, "B1")
+
+  if (min_sigma >= max_sigma) {
+    stop("`min_sigma` needs to be below `max_sigma`.")
+  }
+  if (min_phi >= max_phi) {
+    stop("`min_phi` needs to be below `max_phi`.")
+  }
+
+  list(
+    nebula_method = nebula_method,
+    min_sigma = min_sigma,
+    min_phi = min_phi,
+    max_sigma = max_sigma,
+    max_phi = max_phi,
+    cutoff_cell = cutoff_cell,
+    kappa = kappa,
+    cpc = cpc,
+    mincp = mincp,
+    reml = reml,
+    eps = eps,
+    gene_batch_size = gene_batch_size,
+    shrink_dispersion = shrink_dispersion
+  )
+}

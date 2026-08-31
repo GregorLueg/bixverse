@@ -424,6 +424,7 @@ reference:
       - generate_bt_meta_cells_sc
       - generate_seacells_sc
       - merge_meta_cells
+      - nebula_mc
       - params_sc_supercell
       - params_sc_bt_metacells
       - params_sc_seacells
@@ -537,6 +538,7 @@ reference:
       - get_hotspot_membership
       - get_miloR_abundances_sc
       - meld_sc
+      - nebula_sc
       - run_palantir_sc
       - run_paga_sc
       - run_gene_trends_sc
@@ -572,6 +574,7 @@ reference:
       - params_sc_aucell
       - params_sc_hotspot
       - params_sc_miloR
+      - params_nebula
       - params_sc_vision
       - params_scenic
       - params_scenic_extra_trees_defaults
@@ -804,6 +807,7 @@ reference:
       - rs_mc_vision
       - rs_mc_vision_with_autocorrelation
       - rs_mitch_calc
+      - rs_nebula_mc
       - rs_mutual_info
       - rs_onto_semantic_sim
       - rs_onto_semantic_sim_mat

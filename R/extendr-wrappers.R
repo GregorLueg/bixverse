@@ -4025,6 +4025,66 @@ rs_make_milor_nhoods <- function(embd, knn_indices, sample_ids, n_samples, milor
 #' @keywords internal
 rs_spatial_fdr <- function(p_values, connectivity) .Call(wrap__rs_spatial_fdr, p_values, connectivity)
 
+#' Fit the NEBULA negative binomial gamma mixed model over single cells
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Fits NEBULA to every requested gene, streaming the counts out of the
+#' gene-major store in batches. NEBULA is gene-independent, so the batching
+#' changes nothing about the answer. Cells do not have to arrive grouped by
+#' subject: the Rust side sorts them and permutes the design and offsets to
+#' match.
+#'
+#' @param f_path_genes String. Path to the `counts_genes.bin` file.
+#' @param f_path_cells String. Path to the `counts_cells.bin` file. Only read
+#' when `offset` is `NULL`, to take the library sizes.
+#' @param cells_to_keep Integer vector. 0-indexed(!) global positions of the
+#' cells to analyse, in any order. Must not hold duplicates.
+#' @param gene_indices Integer vector. 0-indexed(!) positions of the genes to
+#' fit.
+#' @param subject_ids Integer vector. 0-indexed(!) subject label per global
+#' cell. One entry per cell in the store, not per cell in `cells_to_keep`.
+#' @param design Numeric matrix. Predictors of cells x coefficients, rows
+#' aligned to `cells_to_keep` and including an intercept.
+#' @param offset Optional numeric vector. Strictly positive scaling factor per
+#' selected cell, aligned to `cells_to_keep`. `NULL` uses the library sizes.
+#' @param nebula_params Named list. The NEBULA parameters, see
+#' [bixverse::params_nebula()], plus either `coef` (a 0-indexed(!) coefficient)
+#' or `contrast` (one weight per coefficient).
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @return A list with the following elements
+#' \itemize{
+#'   \item gene_idx - Integer. 0-indexed positions of the genes that survived
+#'   NEBULA's own expression filter.
+#'   \item coefficients - Numeric matrix of genes x coefficients. The fixed
+#'   effects on the design scale.
+#'   \item se - Numeric matrix of genes x coefficients. The standard errors.
+#'   \item subject_overdispersion - Numeric. NEBULA's `sigma^2`.
+#'   \item cell_overdispersion - Numeric. NEBULA's `phi^-1`.
+#'   \item cell_overdispersion_shrunk - Numeric or `NULL`. The cell-level
+#'   overdispersion after empirical Bayes shrinkage, when it was requested.
+#'   \item convergence - Integer. NEBULA's convergence code. At or below `-20`
+#'   is a likely failure.
+#'   \item sigma_at_bound - Boolean. Whether the subject-level variance
+#'   finished pinned on its lower bound, i.e. the mixed model collapsed to a
+#'   plain negative binomial.
+#'   \item log_fc - Numeric. Effect of the tested coefficient or contrast, on
+#'   the natural log scale.
+#'   \item effect_se - Numeric. Standard error of that effect.
+#'   \item z - Numeric. The Wald statistic.
+#'   \item p_values - Numeric. Two-sided p-values.
+#'   \item fdr - Numeric. Benjamini-Hochberg adjusted p-values.
+#' }
+#'
+#' @references He, et al., Commun Biol, 2021
+#'
+#' @export
+#'
+#' @keywords internal
+rs_nebula_sc <- function(f_path_genes, f_path_cells, cells_to_keep, gene_indices, subject_ids, design, offset, nebula_params, verbose) .Call(wrap__rs_nebula_sc, f_path_genes, f_path_cells, cells_to_keep, gene_indices, subject_ids, design, offset, nebula_params, verbose)
+
 #' Run MELD
 #'
 #' @description
@@ -5389,6 +5449,46 @@ rs_mc_vision_with_autocorrelation <- function(sparse_data, embd, knn_data, gs_li
 #'
 #' @keywords internal
 rs_mc_dialogue <- function(sparse_data, cell_type_indices, features, sample_ids, cell_quality, gene_indices, dialogue_params, verbose) .Call(wrap__rs_mc_dialogue, sparse_data, cell_type_indices, features, sample_ids, cell_quality, gene_indices, dialogue_params, verbose)
+
+#' Fit the NEBULA negative binomial gamma mixed model over meta cells
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' The arithmetic is the single cell one verbatim, only the counts come from
+#' memory rather than the streamed store. What changes is the interpretation:
+#' the cell-level overdispersion becomes the spread between aggregates within
+#' a subject, not between cells, so it is smaller and absorbs whatever the
+#' aggregation smoothed away. The subject-level term keeps its meaning. Do not
+#' compare the two against a single cell run.
+#'
+#' @param sparse_data A named list that needs to have `data`, `indptr`,
+#' `indices`, `nrow`, `ncol` and `cs_type`. Shape (metacells, genes), holding
+#' the raw counts.
+#' @param metacells_to_keep Integer vector. 0-indexed(!) positions of the
+#' meta cells to analyse, in any order. Must not hold duplicates.
+#' @param gene_indices Integer vector. 0-indexed(!) positions of the genes to
+#' fit.
+#' @param subject_ids Integer vector. 0-indexed(!) subject label per meta
+#' cell. One entry per row of `sparse_data`, not per element of
+#' `metacells_to_keep`.
+#' @param design Numeric matrix. Predictors of meta cells x coefficients, rows
+#' aligned to `metacells_to_keep` and including an intercept.
+#' @param offset Optional numeric vector. Strictly positive scaling factor per
+#' selected meta cell. `NULL` uses the aggregated library sizes.
+#' @param nebula_params Named list. The NEBULA parameters, see
+#' [bixverse::params_nebula()], plus either `coef` (a 0-indexed(!) coefficient)
+#' or `contrast` (one weight per coefficient).
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @return A list with the same elements [bixverse::rs_nebula_sc()] returns.
+#'
+#' @references He, et al., Commun Biol, 2021
+#'
+#' @export
+#'
+#' @keywords internal
+rs_nebula_mc <- function(sparse_data, metacells_to_keep, gene_indices, subject_ids, design, offset, nebula_params, verbose) .Call(wrap__rs_nebula_mc, sparse_data, metacells_to_keep, gene_indices, subject_ids, design, offset, nebula_params, verbose)
 
 #' Run NMF (HALS) on MetaCells
 #'

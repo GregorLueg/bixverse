@@ -4664,3 +4664,123 @@ print.DialogueResult <- function(x, ...) {
 
   invisible(x)
 }
+
+## NEBULA ----------------------------------------------------------------------
+
+#' Generate a new NEBULA result
+#'
+#' @description
+#' Wraps the NEBULA fits together. The per-gene test sits in `results`, the
+#' full fixed-effect table in `coefficients` and `se`, so the variance
+#' decomposition is available without re-running anything.
+#'
+#' @param results data.table. One row per gene that survived NEBULA's own
+#' expression filter.
+#' @param coefficients Numeric matrix of genes x coefficients. The fixed
+#' effects on the design scale.
+#' @param se Numeric matrix of genes x coefficients. The matching standard
+#' errors.
+#' @param params Named list. The parameters that were used to generate these
+#' results.
+#'
+#' @returns A `ScNebula` class holding the provided data.
+#'
+#' @references He, et al., Commun Biol, 2021
+#'
+#' @keywords internal
+new_sc_nebula_res <- function(results, coefficients, se, params) {
+  # checks
+  checkmate::assertDataTable(results)
+  checkmate::assertNames(
+    names(results),
+    must.include = c("gene_id", "log_fc", "z", "p_value", "fdr")
+  )
+  checkmate::assertMatrix(coefficients, mode = "numeric")
+  checkmate::assertMatrix(se, mode = "numeric")
+  checkmate::assertList(params, names = "named")
+
+  sc_nebula <- list(
+    results = results,
+    coefficients = coefficients,
+    se = se,
+    params = params
+  )
+
+  class(sc_nebula) <- "ScNebula"
+
+  return(sc_nebula)
+}
+
+### print ----------------------------------------------------------------------
+
+#' @export
+print.ScNebula <- function(x, ...) {
+  # convergence at or below -20 is nebula's own "this likely failed" marker
+  failed <- sum(x$results$convergence <= -20L)
+  collapsed <- sum(x$results$sigma_at_bound)
+
+  cat(
+    sprintf(
+      "ScNebula: %i genes fitted, %i coefficients\n",
+      nrow(x$results),
+      ncol(x$coefficients)
+    ),
+    sprintf(
+      "  Method:   %s | subject column: %s\n",
+      x$params$nebula_params$nebula_method,
+      x$params$subject_col
+    ),
+    sprintf("  Tested:   %s\n", x$params$tested),
+    sprintf(
+      "  Subjects: %i | cells: %i\n",
+      x$params$n_subjects,
+      x$params$n_cells
+    ),
+    sprintf(
+      "  Warnings: %i did not converge, %i collapsed to a plain NB\n",
+      failed,
+      collapsed
+    ),
+    sep = ""
+  )
+
+  invisible(x)
+}
+
+### getters --------------------------------------------------------------------
+
+#' @method get_params ScNebula
+#'
+#' @export
+S7::method(get_params, S7::new_S3_class("ScNebula")) <-
+  function(object, to_json = FALSE, pretty_json = FALSE) {
+    get_params.ScNebula(
+      object = object,
+      to_json = to_json,
+      pretty_json = pretty_json
+    )
+  }
+
+#' @rdname get_params
+#'
+#' @export
+get_params.ScNebula <- function(
+  object,
+  to_json = FALSE,
+  pretty_json = FALSE
+) {
+  # checks
+  checkmate::assertClass(object, "ScNebula")
+  checkmate::qassert(to_json, "B1")
+  checkmate::qassert(pretty_json, "B1")
+
+  to_ret <- object[["params"]]
+  if (to_json) {
+    to_ret <- jsonlite::toJSON(to_ret)
+  }
+  if (to_json && pretty_json) {
+    to_ret <- jsonlite::prettify(to_ret)
+  }
+
+  return(to_ret)
+}

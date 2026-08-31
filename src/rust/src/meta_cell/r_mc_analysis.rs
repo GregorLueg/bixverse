@@ -8,6 +8,7 @@ use bixverse_rs::prelude::*;
 use bixverse_rs::single_cell::mc_analysis::aucell::calculate_aucell_metacells;
 use bixverse_rs::single_cell::mc_analysis::dialogue_mc::dialogue_metacells;
 use bixverse_rs::single_cell::mc_analysis::hotspot_mc::*;
+use bixverse_rs::single_cell::mc_analysis::nebula_mc::nebula_metacells;
 use bixverse_rs::single_cell::mc_analysis::nmf_mc::*;
 use bixverse_rs::single_cell::mc_analysis::scenic_metacells::run_scenic_grn_in_memory;
 use bixverse_rs::single_cell::mc_analysis::vision_mc::calculate_vision_metacells;
@@ -16,6 +17,7 @@ use bixverse_rs::single_cell::sc_analysis::dialogue::DialogueParams;
 use bixverse_rs::single_cell::sc_analysis::hotspot::{
     HotSpotGeneRes, HotSpotPairRes, HotSpotParams,
 };
+use bixverse_rs::single_cell::sc_analysis::nebula::NebulaScParams;
 use bixverse_rs::single_cell::sc_analysis::scenic::ScenicParams;
 use bixverse_rs::single_cell::sc_analysis::vision::{
     calc_autocorr_with_clusters, r_list_to_sig_genes,
@@ -26,7 +28,7 @@ use faer::{Mat, MatRef};
 use crate::meta_cell::utils::*;
 use crate::methods::nmf_utils::{consensus_res_to_r_list, k_sweep_to_r_list};
 use crate::single_cell::utils::{
-    dialogue_inputs_to_rust, dialogue_res_to_r_list, knn_data_to_rust,
+    dialogue_inputs_to_rust, dialogue_res_to_r_list, knn_data_to_rust, nebula_res_to_r_list,
 };
 
 /////////////
@@ -47,6 +49,8 @@ extendr_module! {
     fn rs_mc_vision_with_autocorrelation;
     // dialogue
     fn rs_mc_dialogue;
+    // nebula
+    fn rs_nebula_mc;
     // nmf
     fn rs_nmf_single_mc;
     fn rs_nmf_multi_mc;
@@ -967,4 +971,90 @@ fn rs_mc_dialogue(
     .to_extendr()?;
 
     Ok(dialogue_res_to_r_list(&res))
+}
+
+///////////////////////
+// Metacell NEBULA   //
+///////////////////////
+
+/// Fit the NEBULA negative binomial gamma mixed model over meta cells
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// The arithmetic is the single cell one verbatim, only the counts come from
+/// memory rather than the streamed store. What changes is the interpretation:
+/// the cell-level overdispersion becomes the spread between aggregates within
+/// a subject, not between cells, so it is smaller and absorbs whatever the
+/// aggregation smoothed away. The subject-level term keeps its meaning. Do not
+/// compare the two against a single cell run.
+///
+/// @param sparse_data A named list that needs to have `data`, `indptr`,
+/// `indices`, `nrow`, `ncol` and `cs_type`. Shape (metacells, genes), holding
+/// the raw counts.
+/// @param metacells_to_keep Integer vector. 0-indexed(!) positions of the
+/// meta cells to analyse, in any order. Must not hold duplicates.
+/// @param gene_indices Integer vector. 0-indexed(!) positions of the genes to
+/// fit.
+/// @param subject_ids Integer vector. 0-indexed(!) subject label per meta
+/// cell. One entry per row of `sparse_data`, not per element of
+/// `metacells_to_keep`.
+/// @param design Numeric matrix. Predictors of meta cells x coefficients, rows
+/// aligned to `metacells_to_keep` and including an intercept.
+/// @param offset Optional numeric vector. Strictly positive scaling factor per
+/// selected meta cell. `NULL` uses the aggregated library sizes.
+/// @param nebula_params Named list. The NEBULA parameters, see
+/// [bixverse::params_nebula()], plus either `coef` (a 0-indexed(!) coefficient)
+/// or `contrast` (one weight per coefficient).
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
+///
+/// @return A list with the same elements [bixverse::rs_nebula_sc()] returns.
+///
+/// @references He, et al., Commun Biol, 2021
+///
+/// @export
+///
+/// @keywords internal
+#[extendr]
+#[allow(clippy::too_many_arguments)]
+fn rs_nebula_mc(
+    sparse_data: List,
+    metacells_to_keep: Vec<i32>,
+    gene_indices: Vec<i32>,
+    subject_ids: Vec<i32>,
+    design: RMatrix<f64>,
+    offset: Nullable<Vec<f64>>,
+    nebula_params: List,
+    verbose: usize,
+) -> Result<List> {
+    let metacells_to_keep: Vec<usize> = metacells_to_keep.r_int_convert();
+    let gene_indices: Vec<usize> = gene_indices.r_int_convert();
+    let subject_ids: Vec<usize> = subject_ids.r_int_convert();
+
+    let n_coef = design.ncols();
+    // Column-major out of R, row-major into `nebula_metacells`.
+    let design = mat_to_flat_row_major(r_matrix_to_faer(&design));
+
+    let params = NebulaScParams::from_r_list(nebula_params)?;
+    let sparse = mc_list_to_sparse_u32(sparse_data)?;
+
+    let offset = match offset {
+        Nullable::NotNull(o) => Some(o),
+        Nullable::Null => None,
+    };
+
+    let res = nebula_metacells(
+        &sparse,
+        &metacells_to_keep,
+        &gene_indices,
+        &subject_ids,
+        &design,
+        n_coef,
+        offset.as_deref(),
+        &params,
+        verbose,
+    )
+    .to_extendr()?;
+
+    Ok(nebula_res_to_r_list(res))
 }
