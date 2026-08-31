@@ -1,4 +1,4 @@
-use bixverse_rs::core::math::stats::calc_fdr;
+use bixverse_rs::core::math::stats::p_adjust_fdr;
 use bixverse_rs::methods::nmf_hals::consensus::ConsensusParams;
 use bixverse_rs::methods::nmf_hals::HalsOpts;
 use bixverse_rs::prelude::*;
@@ -707,7 +707,7 @@ fn rs_vision_with_autocorrelation(
 
     let gaery_c = auto_cor_res.0;
     let p_val = auto_cor_res.1;
-    let fdr = calc_fdr(&p_val);
+    let fdr = p_adjust_fdr(&p_val);
 
     let vision_mat = Mat::from_fn(res.len(), res[0].len(), |i, j| res[i][j] as f64);
 
