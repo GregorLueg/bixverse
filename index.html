@@ -23,7 +23,7 @@
 
     <a class="navbar-brand me-2" href="index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.10</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.11</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -262,7 +262,16 @@
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
-<p>You need Rust on your system. Install guide <a href="https://www.rust-lang.org/tools/install" class="external-link">here</a>, and the rextendr guys have written a lot of further help on the Rust set up <a href="https://extendr.github.io/rextendr/index.html" class="external-link">here</a>. (bixverse uses rextendr to interface with Rust.)</p>
+<p>The easy route is r-universe. You get a pre-built binary, so no Rust toolchain and no compile:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span></span>
+<span>  <span class="st">"bixverse"</span>,</span>
+<span>  repos <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"https://gregorlueg.r-universe.dev"</span>, <span class="st">"https://cloud.r-project.org"</span><span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<div class="section level3">
+<h3 id="from-source">From source<a class="anchor" aria-label="anchor" href="#from-source"></a>
+</h3>
+<p>Building from source needs Rust on your system. Install guide <a href="https://www.rust-lang.org/tools/install" class="external-link">here</a>, and the rextendr guys have written a lot of further help on the Rust set up <a href="https://extendr.github.io/rextendr/index.html" class="external-link">here</a>. (bixverse uses rextendr to interface with Rust.)</p>
 <ol style="list-style-type: decimal">
 <li>In the terminal, install <a href="https://www.rust-lang.org/tools/install" class="external-link">Rust</a>
 </li>
@@ -273,13 +282,16 @@
 </ol>
 <pre><code><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"rextendr"</span><span class="op">)</span></span></code></pre>
 <ol start="3" style="list-style-type: decimal">
-<li>Finally install bixverse:</li>
+<li>Install bixverse. Keep the r-universe repo in the list: <code>manifoldsR</code> and <code>bixverse.plots</code> live there, not on CRAN.</li>
 </ol>
-<pre><code><span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"https://github.com/GregorLueg/bixverse"</span><span class="op">)</span></span></code></pre>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>repos <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"https://gregorlueg.r-universe.dev"</span>, <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"repos"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"https://github.com/GregorLueg/bixverse"</span><span class="op">)</span></span></code></pre></div>
+</div>
 <div class="section level3">
 <h3 id="windows">Windows<a class="anchor" aria-label="anchor" href="#windows"></a>
 </h3>
-<p>If you are using Windows, I am sorry, the tool chain is just very, very painful… I really tried to make this work and maybe there are some hacks in terms of compiling everything to install the package, but it has proven… challenging in the CI/CD. Hence, no official Windows support for now. It is specifically the incorporation of h5 which proves non-trivial with cross-compiling that with Rust within the R umbrella.</p>
+<p>Windows works. It used to not, and the reason turned out to be dull: nothing to do with the Rust toolchain or the h5 cross-compile I blamed for a long time. <code>R CMD INSTALL</code> builds in a deep temp directory, and the HDF5 C library that gets compiled for h5ad support pushed the CMake object paths to 265 characters against a 260 character <code>MAX_PATH</code>. The object file silently never lands, and CMake then reports gcc as “not able to compile a simple test program”. The build now puts the cargo target directory in <code>~/.bixverse-cargo</code>, which is short enough to stay clear of it.</p>
 </div>
 </div>
 <div class="section level2">

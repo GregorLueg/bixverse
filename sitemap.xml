@@ -285,6 +285,7 @@
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dialogue_sc.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/diffcor_module_processing.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/diffuse_seed_nodes.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/dot-BIXVERSE_DATA_TAG.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-add_is_obs_attr.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-adt_feature_names.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-assert_bulk_detection_method.html</loc></url>
@@ -302,10 +303,12 @@
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-concat_scdblfinder.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-concat_scrublet.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-confirm_sc_reset.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/dot-data_urls.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-demote_verbosity.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-dialogue_feature_names.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-dialogue_signature_dt.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-dispatch_gene_based_data.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/dot-download_with_retry.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-drop_stamp.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-extract_expr_in_memory.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/dot-finalise_dot_plot_dt.html</loc></url>
