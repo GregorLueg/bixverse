@@ -830,8 +830,6 @@ write_tenx_h5_sc <- function(
 
   for (i in seq_len(tries)) {
     for (url in urls) {
-      # download.file() warns rather than errors on some failure paths, so both
-      # have to be caught. A truncated transfer leaves a zero byte file behind.
       ok <- tryCatch(
         {
           download.file(url, dest_file, mode = "wb", quiet = quiet)
