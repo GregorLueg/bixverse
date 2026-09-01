@@ -1012,3 +1012,138 @@ download_pbmc_totalseq_data <- function(quiet = FALSE) {
 
   file.path(temp_dir, "10k_Human_PBMC_TotalSeqB.h5")
 }
+
+### example data staging -------------------------------------------------------
+
+#' Fetch an example dataset, from Zenodo or a local staging directory
+#'
+#' @description
+#' Serves the example datasets. Set
+#' `options(bixverse.example_data_dir = "/some/path")` to take them from a local
+#' directory instead of downloading, which is what you want while a dataset is
+#' staged but not yet uploaded, or to avoid re-downloading on every knit.
+#'
+#' @param file_name String. The file to fetch.
+#' @param url String or `NA`. Where to download it from. `NA` means the dataset
+#' is not published yet and can only be served locally.
+#' @param quiet Boolean. If the download shall be quiet.
+#'
+#' @returns String. Path to the file in the temporary directory.
+#'
+#' @keywords internal
+.fetch_example_data <- function(file_name, url, quiet = FALSE) {
+  checkmate::qassert(file_name, "S1")
+  checkmate::qassert(quiet, "B1")
+
+  local_dir <- getOption("bixverse.example_data_dir", default = NULL)
+
+  if (!is.null(local_dir)) {
+    local_path <- file.path(path.expand(local_dir), file_name)
+    if (file.exists(local_path)) {
+      dest_file <- file.path(tempdir(), file_name)
+      # copied rather than used in place so the caller cannot write over the
+      # staged original
+      file.copy(local_path, dest_file, overwrite = TRUE)
+      return(dest_file)
+    }
+    warning(sprintf(
+      "'%s' not found in the local staging directory '%s'.",
+      file_name,
+      local_dir
+    ))
+  }
+
+  if (is.na(url)) {
+    stop(sprintf(
+      paste(
+        "'%s' is not published yet. Point at a local copy with",
+        "options(bixverse.example_data_dir = '/path/to/directory')."
+      ),
+      file_name
+    ))
+  }
+
+  old_timeout <- getOption("timeout")
+  options(timeout = max(300, old_timeout))
+  on.exit(options(timeout = old_timeout))
+
+  dest_file <- file.path(tempdir(), file_name)
+  download.file(url, dest_file, mode = "wb", quiet = quiet)
+
+  dest_file
+}
+
+### kang pbmc ------------------------------------------------------------------
+
+#' Download the Kang, et al. IFN-beta stimulated PBMC data
+#'
+#' @description
+#' Downloads the Kang, et al. demultiplexed PBMC experiment as a
+#' `SingleCellExperiment`. 8 lupus donors, PBMCs, control against IFN-beta
+#' stimulated in vitro, roughly 29k cells before quality control.
+#'
+#' The design is paired within donor, which is what makes it the example for
+#' [bixverse::nebula_sc()]: the donor is a genuine random effect and every donor
+#' contributes to both arms. Load it with [bixverse::load_sce()].
+#'
+#' @details
+#' Sourced from the `muscData` Bioconductor package, itself from GEO accession
+#' `GSE96583`. See `data-raw/zenodo_sce_datasets.R` for the preparation. The
+#' `multiplets` column marks doublets and ambiguous droplets, which are worth
+#' dropping before any modelling.
+#'
+#' @param quiet Boolean. If the download shall be quiet.
+#'
+#' @returns String. The path to the qs2 file holding the
+#' `SingleCellExperiment`.
+#'
+#' @export
+#'
+#' @references Kang, et al., Nat. Biotechnol., 2018
+download_kang_pbmc <- function(quiet = FALSE) {
+  .fetch_example_data(
+    file_name = "kang18_8vs8.qs2",
+    # TODO: fill in once the Zenodo record is up
+    url = NA_character_,
+    quiet = quiet
+  )
+}
+
+### ageing thymus --------------------------------------------------------------
+
+#' Download the Baran-Gale, et al. ageing thymus data
+#'
+#' @description
+#' Downloads the mouse ageing thymus droplet experiment as a
+#' `SingleCellExperiment`. Roughly 69k thymic epithelial cells across three
+#' ages, with real change in cell type proportions between them.
+#'
+#' That compositional change is what makes it the example for
+#' [bixverse::get_miloR_abundances_sc()] and [bixverse::meld_sc()]. A
+#' stimulation experiment moves cells in embedding space without moving the
+#' proportions, so almost every neighbourhood comes out significant and the
+#' result says nothing. Load it with [bixverse::load_sce()].
+#'
+#' @details
+#' Sourced from the `MouseThymusAgeing` Bioconductor package. See
+#' `data-raw/zenodo_sce_datasets.R` for the preparation. The object carries no
+#' gene names, so [bixverse::load_sce()] falls back to the Ensembl identifiers
+#' in the `rowData`, and 336 genes with no annotation at all get a generated
+#' identifier.
+#'
+#' @param quiet Boolean. If the download shall be quiet.
+#'
+#' @returns String. The path to the qs2 file holding the
+#' `SingleCellExperiment`.
+#'
+#' @export
+#'
+#' @references Baran-Gale, et al., Development, 2020
+download_thymus_ageing <- function(quiet = FALSE) {
+  .fetch_example_data(
+    file_name = "thymus_ageing_droplet.qs2",
+    # TODO: fill in once the Zenodo record is up
+    url = NA_character_,
+    quiet = quiet
+  )
+}

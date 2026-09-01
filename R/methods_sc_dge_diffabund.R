@@ -996,7 +996,11 @@ S7::method(nebula_sc, ScOrScSubset) <- function(
 
   # Rust wants one subject label per cell in the store, not per selected cell.
   # Unselected positions are never read, so they can stay at zero.
-  n_cells_total <- nrow(get_sc_obs(object, cols = "cell_idx", filtered = FALSE))
+  #
+  # The count has to come off the store rather than the obs table: a subset
+  # shares its parent's counts file and carries only its own rows, with
+  # `cell_idx` still in the parent's index space.
+  n_cells_total <- get_sc_rust_ptr(object)$get_shape()[1]
   subject_ids <- integer(n_cells_total)
   subject_ids[inputs$obs$cell_idx] <- as.integer(inputs$subject_fct) - 1L
 

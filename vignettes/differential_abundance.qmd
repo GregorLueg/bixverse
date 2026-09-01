@@ -1,0 +1,374 @@
+---
+title: "Differential abundance with Milo and MELD"
+date: last-modified
+date-format: YYYY-MM-DD
+vignette: >
+  %\VignetteIndexEntry{Differential abundance with Milo and MELD}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+knitr:
+  opts_chunk:
+    collapse: true
+    comment: '#>'
+author:
+  - name: "Gregor Lueg"
+---
+
+## Intro
+
+Differential expression asks whether cells changed what they express.
+Differential abundance asks whether the cells that are there changed at all.
+Both matter, and the second is the one people usually answer badly.
+
+The obvious approach is to cluster, count cells per cluster per sample, and
+test the proportions. It works, and it inherits every problem the clustering
+had. If a condition shifts a subpopulation that your resolution parameter
+merged into a bigger cluster, you see nothing. If it shifts half a cluster, the
+proportion barely moves. The answer depends on a choice you made before you
+asked the question.
+
+Two methods here avoid that, in different ways.
+
+[Milo](https://doi.org/10.1038/s41587-021-01033-z) tests overlapping
+neighbourhoods of the kNN graph instead of clusters. Each neighbourhood is a
+cell and its neighbours, so the resolution is the graph's rather than the
+clustering's, and a shift that spans part of a cluster shows up. Counts per
+neighbourhood per sample go through the same negative binomial machinery bulk
+RNA-seq uses.
+
+[MELD](https://doi.org/10.1038/s41587-020-00803-5) does not test anything. It
+smooths the condition labels over the graph and returns, per cell, how likely
+that cell is under each condition. It is a continuous score rather than a set
+of calls, which suits a graded response better than a discrete one.
+
+They answer the same question and they should agree. At the end of this
+vignette they do, which is a better check on both than either provides alone.
+
+```{r}
+#| label: setup
+#| message: false
+#| warning: false
+library(bixverse)
+library(data.table)
+library(SingleCellExperiment)
+```
+
+## The data
+
+[Baran-Gale, et al.](https://doi.org/10.1242/dev.183996) profiled mouse thymic
+epithelial cells at one, four and sixteen weeks. The thymus involutes with age,
+so the cell type proportions genuinely move, which is what makes this a
+sensible differential abundance example.
+
+::: {.callout-important}
+## A stimulation experiment is a bad Milo example
+
+It is tempting to reuse a treatment dataset here. Do not. In vitro stimulation
+moves cells a long way in embedding space without moving the cell type
+proportions much, so stimulated and control cells separate into different
+neighbourhoods and almost every neighbourhood comes out significant. The result
+looks spectacular and says nothing beyond "the treatment did something", which
+you knew.
+
+Differential abundance needs a design where the *composition* plausibly
+changed.
+:::
+
+::: {.callout-note}
+## Staging note
+
+The example data is not on Zenodo yet, so point `bixverse` at a local copy.
+Once the record is up, `download_thymus_ageing()` works without the option.
+
+```r
+options(bixverse.example_data_dir = "~/Desktop/zenodo_data")
+```
+:::
+
+```{r}
+#| label: fetch
+#| include: false
+options(bixverse.example_data_dir = "~/Desktop/zenodo_data")
+```
+
+The object carries no gene names at all, with the identifiers sitting in the
+`rowData` instead.
+[`load_sce()`](https://gregorlueg.github.io/bixverse/reference/load_sce.html)
+falls back to the first metadata column and tells you it did. 336 genes have no
+annotation whatsoever and get a generated identifier, which it also tells you.
+Both warnings are expected here.
+
+```{r}
+#| label: load-data
+sce <- qs2::qs_read(download_thymus_ageing())
+
+dir_thymus <- file.path(tempdir(), "thymus")
+dir.create(dir_thymus, showWarnings = FALSE, recursive = TRUE)
+
+sc_object <- SingleCells(dir_data = dir_thymus)
+sc_object <- load_sce(
+  object = sc_object,
+  sce = sce,
+  sc_qc_param = params_sc_min_quality(
+    min_unique_genes = 200L,
+    min_lib_size = 500L,
+    min_cells = 20L,
+    target_size = 1e4
+  ),
+  .verbose = FALSE
+)
+
+sc_object
+```
+
+Now the design, and there is a trap in it. `samp_id` looks like the sample. It
+is not: it is the sequencing run, and every run carries all three ages, because
+the ages were hashed together and demultiplexed.
+
+```{r}
+#| label: design-trap
+obs <- sc_object[[]]
+
+table(obs$samp_id, obs$age)
+```
+
+The sample is the run and the age together, which gives eighteen. Using
+`samp_id` as the sample would ask Milo whether abundance differs between
+sequencing runs, and every run contains every age, so the answer would be a
+flat no.
+
+```{r}
+#| label: design
+sc_object[["sample"]] <- paste(obs$samp_id, obs$age, sep = "_")
+obs <- sc_object[[]]
+
+table(obs$sample, obs$age)[1:6, ]
+```
+
+## The embedding
+
+Milo and MELD both run on the kNN graph, so the usual pipeline comes first.
+
+```{r}
+#| label: embedding
+sc_object <- find_hvg_sc(sc_object, hvg_no = 2000L, .verbose = FALSE)
+sc_object <- calculate_pca_sc(sc_object, no_pcs = 30L, .verbose = FALSE)
+```
+
+The default `k` of 15 is fine for clustering and too small for Milo. A
+neighbourhood holds `k + 1` cells, and those get spread over the samples. With
+eighteen samples and `k = 15` that is under one cell per sample per
+neighbourhood, and a negative binomial fitted to counts that are mostly zero or
+one has very little to work with.
+
+Rough rule: pick `k` so the average neighbourhood holds at least a few cells
+per sample. Eighteen samples and `k = 60` gives around three, which is enough
+here.
+
+```{r}
+#| label: knn
+sc_object <- find_neighbours_sc(
+  sc_object,
+  neighbours_params = params_sc_neighbours(knn = list(k = 60L)),
+  .verbose = FALSE
+)
+```
+
+## Milo
+
+Sampling the neighbourhoods and counting the cells per sample is one call. The
+counts come back as neighbourhoods by samples, with the graph-overlap weighting
+and the k-th neighbour distances taken at the same time, since all three are
+functions of the neighbourhood matrix alone.
+
+```{r}
+#| label: milo-nhoods
+milo_obj <- get_miloR_abundances_sc(
+  object = sc_object,
+  sample_id_col = "sample",
+  miloR_params = params_sc_miloR(prop = 0.1),
+  .verbose = FALSE
+)
+
+dim(milo_obj$sample_counts)
+mean(rowSums(milo_obj$sample_counts))
+```
+
+The test needs a design table with one row per sample, and its rownames have to
+cover the sample names on the counts. Blocking on the run is worth it: every
+run contributes all three ages, so run-to-run variation is a nuisance term the
+model can remove.
+
+```{r}
+#| label: milo-design
+samp_design <- unique(obs[, .(sample, samp_id, age)])
+
+design_df <- data.frame(
+  age = samp_design$age,
+  run = samp_design$samp_id,
+  row.names = samp_design$sample
+)
+design_df <- design_df[colnames(milo_obj$sample_counts), , drop = FALSE]
+
+table(design_df$age, design_df$run)
+```
+
+::: {.callout-warning}
+## Check which coefficient you are testing
+
+`test_nhoods()` defaults to the last column of the design, the way edgeR and
+limma do. With `age` as a factor, R orders the levels alphabetically:
+`Wk1`, `Wk16`, `Wk4`. The last coefficient is therefore **Wk4 against Wk1**,
+not the sixteen week contrast you probably wanted.
+
+Name the coefficient rather than trusting the default.
+:::
+
+```{r}
+#| label: milo-test
+milo_obj <- test_nhoods(
+  milo_obj,
+  design = ~ run + age,
+  design_df = design_df,
+  coef = "ageWk16"
+)
+
+da_res <- get_differential_abundance_res(milo_obj)
+
+da_res[SpatialFDR <= 0.1, .N]
+```
+
+```{r}
+#| label: milo-top
+head(da_res[order(PValue), .(Nhood, logFC, F, PValue, FDR, SpatialFDR)], 6)
+```
+
+A neighbourhood is not a cell type, so on its own a list of neighbourhood
+indices is not much use. `add_nhoods_info()` tags each with the cell type its
+cells mostly belong to.
+
+```{r}
+#| label: milo-annotate
+milo_obj <- add_nhoods_info(milo_obj, cell_info = obs$cluster_annot)
+da_res <- get_differential_abundance_res(milo_obj)
+
+sig <- da_res[SpatialFDR <= 0.1]
+sig[, direction := ifelse(logFC > 0, "up at Wk16", "down at Wk16")]
+
+dcast(
+  sig[, .N, by = .(majority_celltype, direction)],
+  majority_celltype ~ direction,
+  value.var = "N",
+  fill = 0
+)[order(-`up at Wk16`)]
+```
+
+The proliferating TEC populations go down with age and the mature medullary
+ones go up. That is thymic involution, and it is the expected direction.
+
+### On the spatial FDR
+
+Neighbourhoods overlap, so their tests are not independent and a plain
+Benjamini-Hochberg adjustment is anti-conservative. Milo's spatial FDR weights
+each p-value by the reciprocal of its connectivity and runs the step-up on
+those weights.
+
+```{r}
+#| label: spatial-fdr
+data.table(
+  plain_fdr = da_res[FDR <= 0.1, .N],
+  spatial_fdr = da_res[SpatialFDR <= 0.1, .N]
+)
+```
+
+On this data the two barely differ. That is worth knowing rather than
+disappointing: the correction bites when neighbourhoods overlap heavily and the
+connectivity varies a lot between them, and here it does not. Do not assume it
+is always doing work.
+
+The weighting scheme is a choice. `"k-distance"` weights by the distance to the
+k-th neighbour, `"graph-overlap"` by how many cells a neighbourhood shares with
+the others. Both are precomputed, so switching is cheap.
+
+## MELD
+
+MELD needs no design and no neighbourhood sampling. Hand it the condition
+column and it smooths the indicator over the graph.
+
+```{r}
+#| label: meld
+meld_res <- meld_sc(
+  object = sc_object,
+  sample_id_col = "age",
+  .verbose = FALSE
+)
+
+dim(meld_res$norm_scores)
+head(round(meld_res$norm_scores, 3), 4)
+```
+
+The normalised scores are clamped at zero and L1 normalised per cell, so each
+row is a likelihood over the three ages. A cell sitting at 0.6 for Wk16 lives
+in a part of the manifold that is enriched for sixteen week old thymus.
+
+Averaging per cell type turns that into something readable.
+
+```{r}
+#| label: meld-per-celltype
+meld_dt <- data.table(
+  cluster = obs$cluster_annot,
+  as.data.table(meld_res$norm_scores)
+)
+
+per_celltype <- meld_dt[, lapply(.SD, mean), by = cluster]
+
+head(per_celltype[order(-Wk16)], 8)
+```
+
+## Do they agree
+
+They are different methods on the same graph, so this is a real check rather
+than a formality. Milo's mean log fold change per cell type against MELD's mean
+Wk16 likelihood per cell type.
+
+```{r}
+#| label: agreement
+milo_per_ct <- sig[, .(milo_logfc = mean(logFC)), by = .(cluster = majority_celltype)]
+comparison <- merge(per_celltype, milo_per_ct, by = "cluster")
+
+comparison[order(-milo_logfc), .(cluster, Wk1, Wk16, milo_logfc)]
+```
+
+```{r}
+#| label: correlation
+cor(comparison$Wk16, comparison$milo_logfc, method = "spearman")
+```
+
+Strong agreement, and the disagreements are informative rather than
+embarrassing. Milo tests neighbourhoods and reports only the ones that clear a
+threshold, so a cell type that shifted a little everywhere can score low on the
+Milo axis while MELD still registers the shift. The two are measuring related
+but not identical things.
+
+## Which one to reach for
+
+Milo when you want calls with error control: a list of regions that changed,
+with p-values you can defend and a multiple testing correction that accounts
+for the overlap. It needs a real design, enough samples to fit a negative
+binomial, and a `k` large enough that the counts are not mostly zero.
+
+MELD when the response is graded, when you want a per-cell score to carry into
+downstream analysis, or when the design is too thin for a test. It gives you no
+p-values, which is a feature when you have four samples and would only have
+been fooling yourself.
+
+Running both costs almost nothing once the graph is built, and their agreement
+is the most useful diagnostic either one has.
+
+## Where next
+
+The other half of this is differential *expression* with the same donor
+structure, which has its own
+[vignette](https://gregorlueg.github.io/bixverse/articles/differential_expression.html).
+Neighbourhood level expression testing, rather than abundance, is not wired up
+yet.

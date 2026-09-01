@@ -505,6 +505,53 @@ expect_error(
   info = "nebula_mc rejects a subject column that is not in the obs table"
 )
 
+
+## subsets ---------------------------------------------------------------------
+
+# Running NEBULA within a cell type is the normal usage, so the subset path
+# matters. A subset shares its parent's counts file and carries only its own
+# obs rows, with cell_idx still in the parent's index space, so the subject
+# vector has to be sized off the store rather than off the obs table.
+sc_object[["cell_grp_chr"]] <- as.character(sc_object[[]]$cell_grp)
+first_grp <- sort(unique(sc_object[[]]$cell_grp_chr))[1]
+
+sc_subset <- SingleCellsSubset(
+  sc_object,
+  grouping_column = "cell_grp_chr",
+  group = first_grp
+)
+
+expect_true(
+  current = S7::prop(sc_subset, "dims")[1] < S7::prop(sc_object, "dims")[1],
+  info = "the subset holds fewer cells than the parent"
+)
+
+nebula_subset <- nebula_sc(
+  object = sc_subset,
+  subject_col = "sample_id",
+  design = ~condition,
+  genes_to_use = genes_to_test,
+  .verbose = FALSE
+)
+
+expect_inherits(
+  current = nebula_subset,
+  class = "ScNebula",
+  info = "nebula_sc runs on a SingleCellsSubset"
+)
+
+expect_equal(
+  current = get_params(nebula_subset)$n_cells,
+  target = S7::prop(sc_subset, "dims")[1],
+  info = "the subset run sees exactly the subset's cells"
+)
+
+expect_true(
+  current = all(
+    nebula_subset$results$p_value >= 0 & nebula_subset$results$p_value <= 1
+  ),
+  info = "the subset run produces usable p-values"
+)
 # clean up ---------------------------------------------------------------------
 
 sc_test_cleanup(test_temp_dir)
