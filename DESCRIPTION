@@ -90,6 +90,8 @@ Suggests:
     qs2,
     quarto,
     singscore,
+    SingleCellExperiment,
+    SummarizedExperiment,
     StatMatch,
     Seurat,
     tictoc,

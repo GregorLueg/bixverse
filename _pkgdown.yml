@@ -449,6 +449,7 @@ reference:
       - stream_h5ad
       - load_r_data
       - load_seurat
+      - load_sce
       - load_tenx_h5
       - load_multi_tenx_h5
       - read_h5ad_metadata
