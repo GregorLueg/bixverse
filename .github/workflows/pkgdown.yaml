@@ -18,4 +18,5 @@ jobs:
     with:
       rust: true
       gpu: false
+      extra-repositories: 'https://gregorlueg.r-universe.dev'
     secrets: inherit
