@@ -98,11 +98,7 @@ Suggests:
     future
 SystemRequirements: 
     Cargo (Rust's package manager), rustc
-VignetteBuilder: quarto
 Depends: 
     R (>= 4.2)
 LazyData: true
-Remotes:
-    GregorLueg/manifoldsR,
-    GregorLueg/bixverse.plots
 Config/roxygen2/version: 8.1.0

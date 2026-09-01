@@ -12,11 +12,12 @@ concurrency:
 
 jobs:
   R-CMD-check:
-    uses: GregorLueg/personal-actions/.github/workflows/r-cmd-check.yml@v1
+    uses: GregorLueg/personal-actions/.github/workflows/r-cmd-check.yml@feat-add-repos
     with:
       rust: true
       gpu: false
-      windows: false
+      windows: true
       linux-runner: ubuntu-22.04
+      extra-repositories: 'https://gregorlueg.r-universe.dev'
       rebuild-from-source: 'stringfish qs2'
     secrets: inherit

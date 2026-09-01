@@ -22,7 +22,6 @@
 ^src/rust/target$
 ^src/rust/vendor$
 ^target$
-^vignettes/*_files$
-^vignettes/\.quarto$
+^vignettes$
 ^[.]?air[.]toml$
 ^\.vscode$
