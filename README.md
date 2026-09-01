@@ -105,7 +105,19 @@ It works, it just doesn't have a written walk-through yet. On the roadmap.
 
 ## Installation
 
-You need Rust on your system. Install guide
+The easy route is r-universe. You get a pre-built binary, so no Rust toolchain
+and no compile:
+
+```r
+install.packages(
+  "bixverse",
+  repos = c("https://gregorlueg.r-universe.dev", "https://cloud.r-project.org")
+)
+```
+
+### From source
+
+Building from source needs Rust on your system. Install guide
 [here](https://www.rust-lang.org/tools/install), and the rextendr guys have
 written a lot of further help on the Rust set up
 [here](https://extendr.github.io/rextendr/index.html). (bixverse uses rextendr
@@ -123,20 +135,24 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 install.packages("rextendr")
 ```
 
-3. Finally install bixverse:
+3. Install bixverse. Keep the r-universe repo in the list: `manifoldsR` and
+`bixverse.plots` live there, not on CRAN.
 
-```
+```r
+options(repos = c("https://gregorlueg.r-universe.dev", getOption("repos")))
 devtools::install_github("https://github.com/GregorLueg/bixverse")
 ```
 
 ### Windows
 
-If you are using Windows, I am sorry, the tool chain is just very, very
-painful... I really tried to make this work and maybe there are some hacks in
-terms of compiling everything to install the package, but it has proven...
-challenging in the CI/CD. Hence, no official Windows support for now. It is
-specifically the incorporation of h5 which proves non-trivial with
-cross-compiling that with Rust within the R umbrella.
+Windows works. It used to not, and the reason turned out to be dull: nothing to
+do with the Rust toolchain or the h5 cross-compile I blamed for a long time.
+`R CMD INSTALL` builds in a deep temp directory, and the HDF5 C library that
+gets compiled for h5ad support pushed the CMake object paths to 265 characters
+against a 260 character `MAX_PATH`. The object file silently never lands, and
+CMake then reports gcc as "not able to compile a simple test program". The build
+now puts the cargo target directory in `~/.bixverse-cargo`, which is short
+enough to stay clear of it.
 
 ## Where to start
 
