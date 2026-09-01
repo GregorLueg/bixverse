@@ -12,7 +12,7 @@ concurrency:
 
 jobs:
   R-CMD-check:
-    uses: GregorLueg/personal-actions/.github/workflows/r-cmd-check.yml@feat-add-repos
+    uses: GregorLueg/personal-actions/.github/workflows/r-cmd-check.yml@v1
     with:
       rust: true
       gpu: false

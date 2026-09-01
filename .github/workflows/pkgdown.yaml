@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   pkgdown:
-    uses: GregorLueg/personal-actions/.github/workflows/r-pkgdown.yml@feat-add-repos
+    uses: GregorLueg/personal-actions/.github/workflows/r-pkgdown.yml@v1
     with:
       rust: true
       gpu: false
