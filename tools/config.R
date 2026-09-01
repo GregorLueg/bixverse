@@ -54,7 +54,7 @@ if (!is_not_cran) {
 
 # when DEBUG env var is present we use `--debug` build
 .profile <- ifelse(is_debug, "", "--release")
-.clean_targets <- ifelse(is_debug || is_dev, "", "$(TARGET_DIR)")
+.clean_targets <- ifelse(is_debug || is_dev, "", "\"$(TARGET_DIR)\"")
 
 # used to replace @CARGO_HOME@. A CRAN build must not write outside the package,
 # so cargo home points at a throwaway `src/.cargo`, which means a cold registry
@@ -117,6 +117,26 @@ cfg <- if (is_debug) "debug" else "release"
 # read in the Makevars.in file checking
 is_windows <- .Platform[["OS.type"]] == "windows"
 
+# used to replace @TARGET_DIR@. Windows only, and it is about MAX_PATH rather
+# than taste. R CMD INSTALL builds under
+# `AppData/Local/Temp/RtmpXXXXXX/R.INSTALLXXXXXXXXXX/bixverse/src/`, 84
+# characters before the target dir starts. `hdf5-metno-src` is the one
+# dependency that shells out to CMake, and CMake's TryCompile scratch adds a
+# further 139, which puts the object path at 265 against a 260 limit. The
+# symptom is not a path error, it is `gcc.exe` being declared "not able to
+# compile a simple test program", because the .obj silently never lands.
+#
+# Building outside the package tree is what keeps it short. Kept out of
+# `Makevars.in`: no unix path is anywhere near the limit.
+.target_dir <- if (is_windows) {
+  home <- Sys.getenv("USERPROFILE", unset = Sys.getenv("HOME"))
+  d <- file.path(home, ".bixverse-cargo")
+  dir.create(d, showWarnings = FALSE, recursive = TRUE)
+  normalizePath(d, winslash = "/", mustWork = TRUE)
+} else {
+  "./rust/target"
+}
+
 # if windows we replace in the Makevars.win.in
 mv_fp <- ifelse(
   is_windows,
@@ -148,7 +168,8 @@ new_txt <- gsub("@CRAN_FLAGS@", .cran_flags, mv_txt) |>
   gsub("@TARGET@", .target, x = _) |>
   gsub("@PANIC_EXPORTS@", .panic_exports, x = _) |>
   gsub("@CARGO_HOME@", .cargo_home, x = _) |>
-  gsub("@DEV_EXPORTS@", .dev_exports, x = _)
+  gsub("@DEV_EXPORTS@", .dev_exports, x = _) |>
+  gsub("@TARGET_DIR@", .target_dir, x = _)
 
 message("Writing `", mv_ofp, "`.")
 con <- file(mv_ofp, open = "wb")

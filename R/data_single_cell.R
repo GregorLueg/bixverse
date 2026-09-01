@@ -763,6 +763,99 @@ write_tenx_h5_sc <- function(
 
 ## example data sets -----------------------------------------------------------
 
+#' Resolve the download URLs for an example data file
+#'
+#' @description
+#' GitHub releases first, Zenodo second. Zenodo holds the archival copy with
+#' the DOI, but it is slow and drops connections often enough to fail a
+#' vignette build outright.
+#'
+#' @param file String. File name, identical in both locations.
+#' @param zenodo_record String. Zenodo record holding the fallback copy.
+#'
+#' @returns Character vector of URLs, in the order they should be tried.
+#'
+#' @keywords internal
+.data_urls <- function(file, zenodo_record) {
+  checkmate::assertString(file)
+  checkmate::assertString(zenodo_record)
+
+  c(
+    sprintf(
+      "https://github.com/GregorLueg/bixverse-data/releases/download/%s/%s",
+      .BIXVERSE_DATA_TAG,
+      file
+    ),
+    sprintf(
+      "https://zenodo.org/records/%s/files/%s?download=1",
+      zenodo_record,
+      file
+    )
+  )
+}
+
+#' Release tag of the bixverse-data repository
+#'
+#' @description
+#' Pinned rather than moving, so a given bixverse version always resolves the
+#' same data.
+#'
+#' @keywords internal
+.BIXVERSE_DATA_TAG <- "v1.0.0"
+
+#' Download a file, retrying on failure
+#'
+#' @description
+#' Zenodo drops connections often enough that a single `download.file()` call
+#' is not reliable, which shows up as `cannot open URL` mid-vignette. Retries
+#' with a linear backoff.
+#'
+#' @param url String. The URL to fetch.
+#' @param dest_file String. Path to write the file to.
+#' @param quiet Boolean. If the download shall be quiet.
+#' @param tries Integer. Attempts before giving up.
+#'
+#' @returns Invisibly, `dest_file`.
+#'
+#' @keywords internal
+.download_with_retry <- function(urls, dest_file, quiet = FALSE, tries = 4L) {
+  checkmate::assertCharacter(urls, min.len = 1, any.missing = FALSE)
+  checkmate::assertString(dest_file)
+  checkmate::assertFlag(quiet)
+  checkmate::assertCount(tries, positive = TRUE)
+
+  old_timeout <- getOption("timeout")
+  options(timeout = max(300, old_timeout))
+  on.exit(options(timeout = old_timeout))
+
+  for (i in seq_len(tries)) {
+    for (url in urls) {
+      ok <- tryCatch(
+        {
+          download.file(url, dest_file, mode = "wb", quiet = quiet)
+          TRUE
+        },
+        error = function(e) FALSE,
+        warning = function(w) FALSE
+      )
+
+      if (ok && file.exists(dest_file) && file.size(dest_file) > 0) {
+        return(invisible(dest_file))
+      }
+
+      unlink(dest_file)
+    }
+
+    if (i < tries) {
+      cli::cli_alert_warning("Download failed ({i}/{tries}), retrying.")
+      Sys.sleep(5 * i)
+    }
+  }
+
+  cli::cli_abort("Download failed after {tries} attempts: {.url {urls[[1]]}}")
+}
+
+
 ### pbmc3k ---------------------------------------------------------------------
 
 #' Download PBMC3K data from Zenodo
@@ -777,15 +870,11 @@ write_tenx_h5_sc <- function(
 #'
 #' @export
 download_pbmc3k <- function(quiet = FALSE) {
-  old_timeout <- getOption("timeout")
-  options(timeout = max(300, old_timeout))
-  on.exit(options(timeout = old_timeout))
-
   temp_dir <- tempdir()
   dest_file <- file.path(temp_dir, "pbmc3k.tar.gz")
-  url <- "https://zenodo.org/records/20977604/files/pbmc3k_filtered_gene_bc_matrices.tar.gz?download=1"
+  urls <- .data_urls("pbmc3k_filtered_gene_bc_matrices.tar.gz", "20977604")
 
-  download.file(url, dest_file, mode = "wb", quiet = quiet)
+  .download_with_retry(urls, dest_file, quiet = quiet)
   untar(dest_file, exdir = temp_dir)
 
   # add headers to genes.tsv
@@ -808,15 +897,11 @@ download_pbmc3k <- function(quiet = FALSE) {
 #'
 #' @export
 download_pbmc8k <- function(quiet = FALSE) {
-  old_timeout <- getOption("timeout")
-  options(timeout = max(300, old_timeout))
-  on.exit(options(timeout = old_timeout))
-
   temp_dir <- tempdir()
   dest_file <- file.path(temp_dir, "pmbc-8k.tar.gz")
-  url <- "https://zenodo.org/records/20977604/files/pmbc-8k.tar.gz?download=1"
+  urls <- .data_urls("pmbc-8k.tar.gz", "20977604")
 
-  download.file(url, dest_file, mode = "wb", quiet = quiet)
+  .download_with_retry(urls, dest_file, quiet = quiet)
   untar(dest_file, exdir = temp_dir)
 
   # add headers to genes.tsv
@@ -839,15 +924,11 @@ download_pbmc8k <- function(quiet = FALSE) {
 #'
 #' @export
 download_demuxlet_pbmc <- function(quiet = FALSE) {
-  old_timeout <- getOption("timeout")
-  options(timeout = max(300, old_timeout))
-  on.exit(options(timeout = old_timeout))
-
   temp_dir <- tempdir()
   dest_file <- file.path(temp_dir, "demuxlet_PBMCs.tar.gz")
-  url <- "https://zenodo.org/records/20977604/files/demuxlet_PBMCs.tar.gz?download=1"
+  urls <- .data_urls("demuxlet_PBMCs.tar.gz", "20977604")
 
-  download.file(url, dest_file, mode = "wb", quiet = quiet)
+  .download_with_retry(urls, dest_file, quiet = quiet)
   untar(dest_file, exdir = temp_dir)
 
   data_path <- file.path(temp_dir, "demuxlet_PBMCs")
@@ -869,15 +950,11 @@ download_demuxlet_pbmc <- function(quiet = FALSE) {
 #'
 #' @export
 download_pbmc_batches <- function(quiet = FALSE) {
-  old_timeout <- getOption("timeout")
-  options(timeout = max(300, old_timeout))
-  on.exit(options(timeout = old_timeout))
-
   temp_dir <- tempdir()
   dest_file <- file.path(temp_dir, "pbmc_batches.tar.gz")
-  url <- "https://zenodo.org/records/20977604/files/pbmc_batches.tar.gz?download=1"
+  urls <- .data_urls("pbmc_batches.tar.gz", "20977604")
 
-  download.file(url, dest_file, mode = "wb", quiet = quiet)
+  .download_with_retry(urls, dest_file, quiet = quiet)
   untar(dest_file, exdir = temp_dir)
 
   # add headers to genes.tsv
@@ -902,15 +979,11 @@ download_pbmc_batches <- function(quiet = FALSE) {
 #'
 #' @references Persad, et al., Nat. Biotechnol., 2023
 download_cd34_data <- function(quiet = FALSE) {
-  old_timeout <- getOption("timeout")
-  options(timeout = max(300, old_timeout))
-  on.exit(options(timeout = old_timeout))
-
   temp_dir <- tempdir()
   dest_file <- file.path(temp_dir, "cd34_multiome_rna.h5ad.gz")
-  url <- "https://zenodo.org/records/20977604/files/cd34_multiome_rna.h5ad.gz?download=1"
+  urls <- .data_urls("cd34_multiome_rna.h5ad.gz", "20977604")
 
-  download.file(url, dest_file, mode = "wb", quiet = quiet)
+  .download_with_retry(urls, dest_file, quiet = quiet)
   R.utils::gunzip(dest_file, remove = TRUE)
 
   file.path(temp_dir, "cd34_multiome_rna.h5ad")
@@ -943,15 +1016,11 @@ download_cd34_data <- function(quiet = FALSE) {
 #' @references Smillie, et al., Cell, 2019; Jerby-Arnon and Regev, Nat.
 #' Biotechnol., 2022
 download_dialogue_uc <- function(quiet = FALSE) {
-  old_timeout <- getOption("timeout")
-  options(timeout = max(300, old_timeout))
-  on.exit(options(timeout = old_timeout))
-
   temp_dir <- tempdir()
   dest_file <- file.path(temp_dir, "dialogue_uc.h5ad.gz")
-  url <- "https://zenodo.org/records/22105703/files/dialogue_uc.h5ad.gz?download=1"
+  urls <- .data_urls("dialogue_uc.h5ad.gz", "22105703")
 
-  download.file(url, dest_file, mode = "wb", quiet = quiet)
+  .download_with_retry(urls, dest_file, quiet = quiet)
   R.utils::gunzip(dest_file, remove = TRUE)
 
   file.path(temp_dir, "dialogue_uc.h5ad")
@@ -973,15 +1042,11 @@ download_dialogue_uc <- function(quiet = FALSE) {
 #'
 #' @references Setty, et al., Nat. Biotechnol., 2019
 download_marrow_cd34 <- function(quiet = FALSE) {
-  old_timeout <- getOption("timeout")
-  options(timeout = max(300, old_timeout))
-  on.exit(options(timeout = old_timeout))
-
   temp_dir <- tempdir()
   dest_file <- file.path(temp_dir, "marrow_sample_scseq_counts.h5ad.gz")
-  url <- "https://zenodo.org/records/21892320/files/marrow_sample_scseq_counts.h5ad.gz?download=1"
+  urls <- .data_urls("marrow_sample_scseq_counts.h5ad.gz", "21892320")
 
-  download.file(url, dest_file, mode = "wb", quiet = quiet)
+  .download_with_retry(urls, dest_file, quiet = quiet)
   R.utils::gunzip(dest_file, remove = TRUE)
 
   file.path(temp_dir, "marrow_sample_scseq_counts.h5ad")
@@ -1000,15 +1065,11 @@ download_marrow_cd34 <- function(quiet = FALSE) {
 #'
 #' @export
 download_pbmc_totalseq_data <- function(quiet = FALSE) {
-  old_timeout <- getOption("timeout")
-  options(timeout = max(300, old_timeout))
-  on.exit(options(timeout = old_timeout))
-
   temp_dir <- tempdir()
   dest_file <- file.path(temp_dir, "10k_Human_PBMC_TotalSeqB.h5")
-  url <- "https://zenodo.org/records/20977604/files/10k_Human_PBMC_TotalSeqB.h5?download=1"
+  urls <- .data_urls("10k_Human_PBMC_TotalSeqB.h5", "20977604")
 
-  download.file(url, dest_file, mode = "wb", quiet = quiet)
+  .download_with_retry(urls, dest_file, quiet = quiet)
 
   file.path(temp_dir, "10k_Human_PBMC_TotalSeqB.h5")
 }
