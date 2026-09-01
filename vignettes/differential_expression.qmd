@@ -61,23 +61,6 @@ donors, split each sample in two, and stimulated one half with IFN-β. Every
 donor contributes to both arms, so the design is paired and the donor is a
 genuine random effect. Roughly 29k cells before quality control.
 
-::: {.callout-note}
-## Staging note
-
-The example data is not on Zenodo yet, so point `bixverse` at a local copy.
-Once the record is up, `download_kang_pbmc()` works without the option.
-
-```r
-options(bixverse.example_data_dir = "~/Desktop/zenodo_data")
-```
-:::
-
-```{r}
-#| label: fetch
-#| include: false
-options(bixverse.example_data_dir = "~/Desktop/zenodo_data")
-```
-
 The object is a Bioconductor `SingleCellExperiment`, which
 [`load_sce()`](https://gregorlueg.github.io/bixverse/reference/load_sce.html)
 takes directly: `colData` becomes obs, `rowData` becomes var, and the counts go

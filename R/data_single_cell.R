@@ -771,21 +771,31 @@ write_tenx_h5_sc <- function(
 #' vignette build outright.
 #'
 #' @param file String. File name, identical in both locations.
-#' @param zenodo_record String. Zenodo record holding the fallback copy.
+#' @param zenodo_record Optional string. Zenodo record holding the fallback
+#' copy. `NULL` for datasets that only live in the GitHub release, which is the
+#' case until they are archived.
 #'
 #' @returns Character vector of URLs, in the order they should be tried.
 #'
 #' @keywords internal
-.data_urls <- function(file, zenodo_record) {
+.data_urls <- function(file, zenodo_record = NULL) {
   checkmate::assertString(file)
-  checkmate::assertString(zenodo_record)
+  checkmate::assertString(zenodo_record, null.ok = TRUE)
+
+  gh <- sprintf(
+    "https://github.com/GregorLueg/bixverse-data/releases/download/%s/%s",
+    .BIXVERSE_DATA_TAG,
+    file
+  )
+
+  # not everything has an archival copy yet, and a dataset that only lives in
+  # the release is still perfectly downloadable
+  if (is.null(zenodo_record)) {
+    return(gh)
+  }
 
   c(
-    sprintf(
-      "https://github.com/GregorLueg/bixverse-data/releases/download/%s/%s",
-      .BIXVERSE_DATA_TAG,
-      file
-    ),
+    gh,
     sprintf(
       "https://zenodo.org/records/%s/files/%s?download=1",
       zenodo_record,
@@ -1074,66 +1084,6 @@ download_pbmc_totalseq_data <- function(quiet = FALSE) {
   file.path(temp_dir, "10k_Human_PBMC_TotalSeqB.h5")
 }
 
-### example data staging -------------------------------------------------------
-
-#' Fetch an example dataset, from Zenodo or a local staging directory
-#'
-#' @description
-#' Serves the example datasets. Set
-#' `options(bixverse.example_data_dir = "/some/path")` to take them from a local
-#' directory instead of downloading, which is what you want while a dataset is
-#' staged but not yet uploaded, or to avoid re-downloading on every knit.
-#'
-#' @param file_name String. The file to fetch.
-#' @param url String or `NA`. Where to download it from. `NA` means the dataset
-#' is not published yet and can only be served locally.
-#' @param quiet Boolean. If the download shall be quiet.
-#'
-#' @returns String. Path to the file in the temporary directory.
-#'
-#' @keywords internal
-.fetch_example_data <- function(file_name, url, quiet = FALSE) {
-  checkmate::qassert(file_name, "S1")
-  checkmate::qassert(quiet, "B1")
-
-  local_dir <- getOption("bixverse.example_data_dir", default = NULL)
-
-  if (!is.null(local_dir)) {
-    local_path <- file.path(path.expand(local_dir), file_name)
-    if (file.exists(local_path)) {
-      dest_file <- file.path(tempdir(), file_name)
-      # copied rather than used in place so the caller cannot write over the
-      # staged original
-      file.copy(local_path, dest_file, overwrite = TRUE)
-      return(dest_file)
-    }
-    warning(sprintf(
-      "'%s' not found in the local staging directory '%s'.",
-      file_name,
-      local_dir
-    ))
-  }
-
-  if (is.na(url)) {
-    stop(sprintf(
-      paste(
-        "'%s' is not published yet. Point at a local copy with",
-        "options(bixverse.example_data_dir = '/path/to/directory')."
-      ),
-      file_name
-    ))
-  }
-
-  old_timeout <- getOption("timeout")
-  options(timeout = max(300, old_timeout))
-  on.exit(options(timeout = old_timeout))
-
-  dest_file <- file.path(tempdir(), file_name)
-  download.file(url, dest_file, mode = "wb", quiet = quiet)
-
-  dest_file
-}
-
 ### kang pbmc ------------------------------------------------------------------
 
 #' Download the Kang, et al. IFN-beta stimulated PBMC data
@@ -1153,6 +1103,9 @@ download_pbmc_totalseq_data <- function(quiet = FALSE) {
 #' `multiplets` column marks doublets and ambiguous droplets, which are worth
 #' dropping before any modelling.
 #'
+#' Served from the `bixverse-data` GitHub release. There is no Zenodo fallback
+#' for this one yet.
+#'
 #' @param quiet Boolean. If the download shall be quiet.
 #'
 #' @returns String. The path to the qs2 file holding the
@@ -1162,12 +1115,13 @@ download_pbmc_totalseq_data <- function(quiet = FALSE) {
 #'
 #' @references Kang, et al., Nat. Biotechnol., 2018
 download_kang_pbmc <- function(quiet = FALSE) {
-  .fetch_example_data(
-    file_name = "kang18_8vs8.qs2",
-    # TODO: fill in once the Zenodo record is up
-    url = NA_character_,
-    quiet = quiet
-  )
+  temp_dir <- tempdir()
+  dest_file <- file.path(temp_dir, "kang18_8vs8.qs2")
+  urls <- .data_urls("kang18_8vs8.qs2")
+
+  .download_with_retry(urls, dest_file, quiet = quiet)
+
+  dest_file
 }
 
 ### ageing thymus --------------------------------------------------------------
@@ -1192,6 +1146,10 @@ download_kang_pbmc <- function(quiet = FALSE) {
 #' in the `rowData`, and 336 genes with no annotation at all get a generated
 #' identifier.
 #'
+#' Served from the `bixverse-data` GitHub release. There is no Zenodo fallback
+#' for this one yet. At 430 MB it is the largest of the example datasets, so
+#' expect the first call to take a while.
+#'
 #' @param quiet Boolean. If the download shall be quiet.
 #'
 #' @returns String. The path to the qs2 file holding the
@@ -1201,10 +1159,11 @@ download_kang_pbmc <- function(quiet = FALSE) {
 #'
 #' @references Baran-Gale, et al., Development, 2020
 download_thymus_ageing <- function(quiet = FALSE) {
-  .fetch_example_data(
-    file_name = "thymus_ageing_droplet.qs2",
-    # TODO: fill in once the Zenodo record is up
-    url = NA_character_,
-    quiet = quiet
-  )
+  temp_dir <- tempdir()
+  dest_file <- file.path(temp_dir, "thymus_ageing_droplet.qs2")
+  urls <- .data_urls("thymus_ageing_droplet.qs2")
+
+  .download_with_retry(urls, dest_file, quiet = quiet)
+
+  dest_file
 }

@@ -74,23 +74,6 @@ Differential abundance needs a design where the *composition* plausibly
 changed.
 :::
 
-::: {.callout-note}
-## Staging note
-
-The example data is not on Zenodo yet, so point `bixverse` at a local copy.
-Once the record is up, `download_thymus_ageing()` works without the option.
-
-```r
-options(bixverse.example_data_dir = "~/Desktop/zenodo_data")
-```
-:::
-
-```{r}
-#| label: fetch
-#| include: false
-options(bixverse.example_data_dir = "~/Desktop/zenodo_data")
-```
-
 The object carries no gene names at all, with the identifiers sitting in the
 `rowData` instead.
 [`load_sce()`](https://gregorlueg.github.io/bixverse/reference/load_sce.html)

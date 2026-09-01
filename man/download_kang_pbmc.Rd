@@ -27,6 +27,9 @@ Sourced from the \code{muscData} Bioconductor package, itself from GEO accession
 \code{GSE96583}. See \code{data-raw/zenodo_sce_datasets.R} for the preparation. The
 \code{multiplets} column marks doublets and ambiguous droplets, which are worth
 dropping before any modelling.
+
+Served from the \code{bixverse-data} GitHub release. There is no Zenodo fallback
+for this one yet.
 }
 \references{
 Kang, et al., Nat. Biotechnol., 2018

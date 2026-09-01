@@ -30,6 +30,10 @@ Sourced from the \code{MouseThymusAgeing} Bioconductor package. See
 gene names, so \code{\link[=load_sce]{load_sce()}} falls back to the Ensembl identifiers
 in the \code{rowData}, and 336 genes with no annotation at all get a generated
 identifier.
+
+Served from the \code{bixverse-data} GitHub release. There is no Zenodo fallback
+for this one yet. At 430 MB it is the largest of the example datasets, so
+expect the first call to take a while.
 }
 \references{
 Baran-Gale, et al., Development, 2020
