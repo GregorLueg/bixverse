@@ -12,11 +12,7 @@ concurrency:
 
 jobs:
   R-CMD-check:
-    # On the branch rather than @v1 while the matrix is being tried out: the
-    # macos-x86 input only exists on feat/os-matrix, and a reusable workflow
-    # hard-errors on an input it does not declare. Back to @v1 once that tag
-    # moves.
-    uses: GregorLueg/personal-actions/.github/workflows/r-cmd-check.yml@feat/os-matrix
+    uses: GregorLueg/personal-actions/.github/workflows/r-cmd-check.yml@v1
     with:
       rust: true
       gpu: false
