@@ -28,8 +28,8 @@ neighbour distances. Defaults to \code{FALSE}.}
 \item{knn}{List. Optional overrides for kNN parameters. See
 \code{\link[=params_knn_defaults]{params_knn_defaults()}} for available parameters: \code{k},
 \code{knn_method}, \code{ann_dist}, \code{search_budget}, \code{n_trees}, \code{delta},
-\code{diversify_prob}, \code{ef_budget}, \code{m}, \code{ef_construction}, \code{ef_search}, \code{n_list}
-and \code{n_probe}.}
+\code{diversify_prob}, \code{ef_budget}, \code{extract_knn}, \code{m}, \code{ef_construction},
+\code{ef_search}, \code{n_list} and \code{n_probe}.}
 }
 \value{
 A list with the HotSpot parameters.
@@ -40,10 +40,6 @@ default of \code{FALSE} follows the reference implementation: the distances only
 decide who is a neighbour and every retained edge weighs one. Set it to
 \code{TRUE} for the Gaussian kernel, whose width is the
 \code{ceil(k / neighborhood_factor)}-th neighbour distance.
-
-Whether the distances need squaring is derived from the metric, so it is not
-a parameter here. When a pre-computed kNN graph is handed to the method, the
-metric stored on that graph wins over \code{ann_dist}.
 }
 \references{
 DeTomaso and Yosef, Cell Systems, 2021

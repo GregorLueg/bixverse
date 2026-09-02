@@ -137,6 +137,103 @@ is_windows <- .Platform[["OS.type"]] == "windows"
   "./rust/target"
 }
 
+# HDF5 provider. `bixverse-rs` 0.5.0 made the from-source HDF5 build opt-in
+# (`hdf5-static`, which this package turns on by default). Building it is the
+# only option that needs no system library, but it breaks on a cross-host
+# Windows build: cargo running from an msvc host against a `-pc-windows-gnu`
+# target makes `hdf5-metno-src` name its output the msvc way, and the link then
+# fails looking for `libhdf5`. That is exactly what the r-universe Windows jobs
+# hit.
+#
+# So on Windows we look for an external libhdf5 through pkg-config first.
+# `hdf5-metno-sys` skips its runtime version check precisely when pkg-config
+# wins on Windows, which is what makes a static-only Rtools HDF5 usable, and
+# pkg-config also hands back the transitive link flags so nothing has to be
+# guessed. No hit means the source build, i.e. today's behaviour.
+.cargo_features <- ""
+.hdf5_exports <- ""
+.hdf5_libs <- ""
+
+if (is_windows) {
+  pkg_config <- Sys.which("pkg-config")
+
+  candidates <- character(0)
+  if (nzchar(pkg_config)) {
+    rtools_homes <- Sys.getenv(c(
+      "RTOOLS45_AARCH64_HOME",
+      "RTOOLS45_HOME",
+      "RTOOLS44_HOME",
+      "RTOOLS43_HOME",
+      "RTOOLS42_HOME"
+    ))
+    rtools_homes <- unique(rtools_homes[nzchar(rtools_homes)])
+    prefixes <- c(
+      "x86_64-w64-mingw32.static.posix",
+      "aarch64-w64-mingw32.static.posix",
+      "clang-aarch64",
+      "ucrt64",
+      "mingw64"
+    )
+    candidates <- file.path(
+      rep(rtools_homes, each = length(prefixes)),
+      prefixes,
+      "lib",
+      "pkgconfig"
+    )
+    candidates <- candidates[dir.exists(candidates)]
+    # whatever the caller already set stays first in line
+    candidates <- c(Sys.getenv("PKG_CONFIG_PATH"), candidates)
+    candidates <- unique(candidates[nzchar(candidates)])
+  }
+
+  # `system2(env = )` is documented as unsupported on Windows, which is the
+  # only platform this branch runs on, so the variable is set and restored
+  # around the probe instead.
+  old_pkg_config_path <- Sys.getenv("PKG_CONFIG_PATH", unset = NA)
+  on.exit(
+    if (is.na(old_pkg_config_path)) {
+      Sys.unsetenv("PKG_CONFIG_PATH")
+    } else {
+      Sys.setenv(PKG_CONFIG_PATH = old_pkg_config_path)
+    },
+    add = TRUE
+  )
+
+  for (path in candidates) {
+    # forward slashes, or the Makevars recipe and pkg-config disagree about
+    # what a backslash means
+    path <- normalizePath(path, winslash = "/", mustWork = FALSE)
+    Sys.setenv(PKG_CONFIG_PATH = path)
+    libs <- suppressWarnings(system2(
+      pkg_config,
+      c("--libs", "--static", "hdf5"),
+      stdout = TRUE,
+      stderr = FALSE
+    ))
+    if (!is.null(attr(libs, "status")) || !length(libs)) {
+      next
+    }
+    .cargo_features <- "--no-default-features"
+    # the recipe runs under sh, not cmd, whatever the host is
+    .hdf5_exports <- paste0(
+      "PKG_CONFIG_PATH=",
+      shQuote(path, type = "sh"),
+      " "
+    )
+    .hdf5_libs <- paste0(trimws(paste(libs, collapse = " ")), " ")
+    message(
+      "Found an external HDF5 via `",
+      path,
+      "`. Skipping the source build."
+    )
+    break
+  }
+
+  if (!nzchar(.cargo_features)) {
+    message("No external HDF5 found. Building it from source.")
+  }
+}
+
 # if windows we replace in the Makevars.win.in
 mv_fp <- ifelse(
   is_windows,
@@ -169,7 +266,12 @@ new_txt <- gsub("@CRAN_FLAGS@", .cran_flags, mv_txt) |>
   gsub("@PANIC_EXPORTS@", .panic_exports, x = _) |>
   gsub("@CARGO_HOME@", .cargo_home, x = _) |>
   gsub("@DEV_EXPORTS@", .dev_exports, x = _) |>
-  gsub("@TARGET_DIR@", .target_dir, x = _)
+  gsub("@TARGET_DIR@", .target_dir, x = _) |>
+  # fixed = TRUE: these carry Windows paths, and a backslash in a gsub
+  # replacement is an escape rather than a literal.
+  gsub("@CARGO_FEATURES@", .cargo_features, x = _, fixed = TRUE) |>
+  gsub("@HDF5_EXPORTS@", .hdf5_exports, x = _, fixed = TRUE) |>
+  gsub("@HDF5_LIBS@", .hdf5_libs, x = _, fixed = TRUE)
 
 message("Writing `", mv_ofp, "`.")
 con <- file(mv_ofp, open = "wb")

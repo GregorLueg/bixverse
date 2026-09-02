@@ -1025,7 +1025,7 @@ fn rs_sc_knn(
 
     let knn_method = parse_knn_method(&knn_params.knn_method).unwrap_or_default();
 
-    let knn = match knn_method {
+    let mut knn = match knn_method {
         KnnSearch::Hnsw => generate_knn_hnsw(
             embd.as_ref(),
             &knn_params.ann_dist,
@@ -1054,6 +1054,7 @@ fn rs_sc_knn(
             knn_params.diversify_prob,
             knn_params.ef_budget,
             knn_params.delta,
+            knn_params.extract_knn,
             seed,
             validate_index,
             verbosity.normal_verbosity(),
@@ -1090,6 +1091,8 @@ fn rs_sc_knn(
     if verbosity.normal_verbosity() {
         println!("KNN generation done : {:.2?}", end_knn);
     }
+
+    pad_knn_rows(&mut knn, None, knn_params.k);
 
     let index_mat = Mat::from_fn(embd.nrows(), knn_params.k, |i, j| knn[i][j] as i32);
 
@@ -1137,7 +1140,7 @@ fn rs_sc_knn_w_dist(
 
     let verbosity = parse_verbosity_level(verbose);
 
-    let (knn_indices, knn_dist) = generate_knn_with_dist(
+    let (mut knn_indices, knn_dist) = generate_knn_with_dist(
         embd.as_ref(),
         &knn_params,
         true,
@@ -1147,7 +1150,8 @@ fn rs_sc_knn_w_dist(
     )
     .to_extendr()?;
 
-    let knn_dist = knn_dist.unwrap();
+    let mut knn_dist = knn_dist.unwrap();
+    pad_knn_rows(&mut knn_indices, Some(&mut knn_dist), knn_params.k);
 
     let index_mat = Mat::from_fn(embd.nrows(), knn_params.k, |i, j| knn_indices[i][j] as i32);
     let dist_mat = Mat::from_fn(embd.nrows(), knn_params.k, |i, j| knn_dist[i][j] as f64);
@@ -1497,8 +1501,7 @@ fn rs_fast_cluster_sc_grid(
 /// @param f_path String. Path to the `counts_genes.bin` file.
 /// @param knn_data List. The `SingleCellNearestNeighbour` data with `indices`
 /// (0-indexed!), `dist`, `k` and `dist_metric`. The indices are positions
-/// within `cell_indices`, not global cell ids. Whether the distances are
-/// treated as squared is derived from `dist_metric`.
+/// within `cell_indices`, not global cell ids.
 /// @param cell_indices Integer vector. The global cell indices (0-indexed!)
 /// the kNN graph was built over, in kNN row order.
 /// @param total_cells Integer. The cell count of the binary store, not of the
@@ -1527,21 +1530,15 @@ fn rs_magic_impute(
     magic_params: List,
     verbose: usize,
 ) -> Result<RMatrix<f64>, extendr_api::Error> {
-    let (knn_indices, knn_distances, _, distance) = knn_data_to_rust(knn_data)?;
+    let (knn_indices, knn_distances, _, _) = knn_data_to_rust(knn_data)?;
     let params = MagicParams::from_r_list(magic_params)?;
-    let squared_dist = distance == "euclidean";
 
     let cell_indices: Vec<usize> = cell_indices.r_int_convert();
     let gene_indices: Vec<usize> = gene_indices.r_int_convert();
 
-    let operator = MagicOperator::from_knn(
-        &knn_indices,
-        &knn_distances,
-        squared_dist,
-        &cell_indices,
-        total_cells,
-    )
-    .to_extendr()?;
+    let operator =
+        MagicOperator::from_knn(&knn_indices, &knn_distances, &cell_indices, total_cells)
+            .to_extendr()?;
 
     let reader = ParallelSparseReader::new(f_path).to_extendr()?;
 

@@ -71,10 +71,9 @@
 #' those probabilities. For details, please refer to Setty, et al.
 #'
 #' The kNN graph stored on the object feeds the diffusion kernel, so run
-#' [bixverse::find_neighbours_sc()] first. Whether the stored distances are
-#' treated as squared is derived from the distance metric of that graph. The
-#' geodesics themselves are measured over a second kNN graph that Palantir
-#' builds internally on the multiscale space, controlled by the `knn` element of
+#' [bixverse::find_neighbours_sc()] first. The geodesics themselves are measured
+#' over a second kNN graph that Palantir builds internally on the multiscale
+#' space, controlled by the `knn` element of
 #' [bixverse::params_sc_palantir()].
 #'
 #' For `SingleCellsMultiModal` the `"wnn"` graph works, but its distances are

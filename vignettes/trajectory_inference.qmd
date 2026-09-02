@@ -96,8 +96,8 @@ would run `run_cell_qc()` and `set_cells_to_keep()` first, as in the
 Standard pipeline. The one choice worth spelling out is `k = 30` on the kNN
 graph: Palantir builds its diffusion kernel from whatever graph is stored on the
 object, and 30 neighbours is what the reference uses. The distance metric has to
-be euclidean, since that is how `bixverse` decides whether the stored distances
-are squared.
+be euclidean, since the diffusion kernel is a Gaussian over a metric distance
+and cosine is not one.
 
 `pruning` has to move with `k`. The default of `1/12` is set for the default
 `k = 15`, and since the threshold is a share of the neighbourhood, leaving it

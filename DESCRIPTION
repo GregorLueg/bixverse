@@ -1,6 +1,6 @@
 Package: bixverse
 Title: Rust-accelerated standard bioinformatics, computational biology workflows
-Version: 0.4.11
+Version: 0.5.0
 Authors@R: 
     c(
       person(
@@ -97,7 +97,7 @@ Suggests:
     furrr,
     future
 SystemRequirements: 
-    Cargo (Rust's package manager), rustc
+    Cargo (Rust's package manager), rustc >= 1.90, xz
 Depends: 
     R (>= 4.2)
 LazyData: true

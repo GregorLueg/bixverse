@@ -4,6 +4,8 @@ use bixverse_rs::single_cell::sc_batch_correction::batch_utils::cosine_normalise
 use extendr_api::*;
 use faer::Mat;
 
+use crate::single_cell::utils::pad_knn_rows;
+
 ////////////////////
 // extendr Module //
 ////////////////////
@@ -63,16 +65,6 @@ fn rs_wnn(
 
     wnn_params.knn_params.k = k_min;
 
-    let is_squared_dist = wnn_params.knn_params.ann_dist == "euclidean";
-
-    let sqrt_distances = |x: &mut [Vec<f32>]| {
-        for row in x.iter_mut() {
-            for d in row.iter_mut() {
-                *d = d.sqrt();
-            }
-        }
-    };
-
     let modality_emb_one = r_matrix_to_faer_fp32(&modality_emb_one);
     let modality_emb_two = r_matrix_to_faer_fp32(&modality_emb_two);
 
@@ -89,7 +81,7 @@ fn rs_wnn(
         )
     }
 
-    let (indices_1, dist_1) = generate_knn_with_dist(
+    let (mut indices_1, dist_1) = generate_knn_with_dist(
         modality_emb_one.as_ref(),
         &wnn_params.knn_params,
         true,
@@ -100,10 +92,7 @@ fn rs_wnn(
     .to_extendr()?;
 
     let mut dist_1 = dist_1.unwrap();
-
-    if is_squared_dist {
-        sqrt_distances(&mut dist_1);
-    }
+    pad_knn_rows(&mut indices_1, Some(&mut dist_1), k_min);
 
     // second modality
     if verbosity.normal_verbosity() {
@@ -113,7 +102,7 @@ fn rs_wnn(
         )
     }
 
-    let (indices_2, dist_2) = generate_knn_with_dist(
+    let (mut indices_2, dist_2) = generate_knn_with_dist(
         modality_emb_two.as_ref(),
         &wnn_params.knn_params,
         true,
@@ -124,10 +113,7 @@ fn rs_wnn(
     .to_extendr()?;
 
     let mut dist_2 = dist_2.unwrap();
-
-    if is_squared_dist {
-        sqrt_distances(&mut dist_2);
-    }
+    pad_knn_rows(&mut indices_2, Some(&mut dist_2), k_min);
 
     let wnn_modality_1 = ModalityInput::new(modality_emb_one.as_ref(), &indices_1, &dist_1);
     let wnn_modality_2 = ModalityInput::new(modality_emb_two.as_ref(), &indices_2, &dist_2);

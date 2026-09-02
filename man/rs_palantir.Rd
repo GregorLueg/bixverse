@@ -15,8 +15,7 @@ rs_palantir(
 }
 \arguments{
 \item{knn_data}{List. The \code{SingleCellNearestNeighbour} data with \code{indices}
-(0-indexed!), \code{dist}, \code{k} and \code{dist_metric}. Whether the distances are
-treated as squared is derived from \code{dist_metric}.}
+(0-indexed!), \code{dist}, \code{k} and \code{dist_metric}.}
 
 \item{palantir_params}{List. Parameter list, see
 \code{\link[=params_sc_palantir]{params_sc_palantir()}}.}

@@ -1317,6 +1317,11 @@ params_sc_pca <- function(
 #' applied at the end of index construction. Defaults to `0.0`.
 #' @param ef_budget Integer or `NULL`. NNDescent param: optional query budget.
 #' Higher values improve recall at the cost of speed.
+#' @param extract_knn Boolean. NNDescent param: hand back the graph the descent
+#' already built instead of beam searching it. Skips the query pass entirely,
+#' so it is much faster, at the cost of some recall. Rows the descent never
+#' filled come back padded with duplicate edges. Ignored by every other method.
+#' Defaults to `FALSE`.
 #' @param m Integer. HNSW param: number of connections between layers.
 #' Defaults to `16L`.
 #' @param ef_construction Integer. HNSW param: size of the dynamic candidate
@@ -1340,6 +1345,7 @@ params_sc_knn <- function(
   delta = 0.001,
   diversify_prob = 0.0,
   ef_budget = NULL,
+  extract_knn = FALSE,
   m = 16L,
   ef_construction = 200L,
   ef_search = 100L,
@@ -1363,6 +1369,7 @@ params_sc_knn <- function(
     checkmate::checkNull(ef_budget),
     checkmate::checkInt(ef_budget, lower = 1L)
   )
+  checkmate::qassert(extract_knn, "B1")
   checkmate::qassert(m, "I1[1,)")
   checkmate::qassert(ef_construction, "I1[1,)")
   checkmate::qassert(ef_search, "I1[1,)")
@@ -1384,6 +1391,7 @@ params_sc_knn <- function(
     delta = delta,
     diversify_prob = diversify_prob,
     ef_budget = ef_budget,
+    extract_knn = extract_knn,
     m = m,
     ef_construction = ef_construction,
     ef_search = ef_search,

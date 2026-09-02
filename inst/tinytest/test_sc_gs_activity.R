@@ -468,6 +468,30 @@ expect_true(
   info = "hotspot - average Gaery's C higher in expected genes - normal"
 )
 
+#### weighted graph ------------------------------------------------------------
+
+# The Gaussian kernel is the one hotspot path that reads the raw distance
+# magnitudes, so it is the one that moved when the kNN graph stopped handing
+# back squared Euclidean distances.
+hotspot_autocor_weighted_res <- hotspot_autocor_sc(
+  object = sc_object,
+  hotspot_params = params_sc_hotspot(weighted_graph = TRUE),
+  .verbose = FALSE
+)
+
+expect_true(
+  current = all(hotspot_autocor_weighted_res$fdr[1:30] <= 0.05),
+  info = "hotspot - local correlations significant were expected - weighted"
+)
+
+expect_true(
+  current = mean(hotspot_autocor_weighted_res$gaerys_c[1:30]) >=
+    mean(hotspot_autocor_weighted_res$gaerys_c[
+      31:nrow(hotspot_autocor_weighted_res)
+    ]),
+  info = "hotspot - average Gaery's C higher in expected genes - weighted"
+)
+
 #### streaming -----------------------------------------------------------------
 
 hotspot_autocor_danb_res_streaming <- hotspot_autocor_sc(

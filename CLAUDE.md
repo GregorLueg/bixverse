@@ -7,8 +7,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 `bixverse` is an R package that wraps bioinformatics and computational biology
 methods (gene set enrichment, graphs, co-expression modules, ontologies, and a
 full single cell suite) around a Rust core exposed via
-[rextendr](https://github.com/extendr/rextendr)/extendr. No official Windows
-support (the h5 toolchain cross-compilation is the blocker).
+[rextendr](https://github.com/extendr/rextendr)/extendr. Windows is supported;
+the blocker used to be MAX_PATH during the HDF5 CMake build, see
+`tools/config.R`.
 
 ## Commands
 

@@ -38,9 +38,9 @@ anchor weights. Defaults to \code{1.0}.}
 \item{knn}{List. Optional overrides for kNN parameters. See
 \code{\link[=params_knn_defaults]{params_knn_defaults()}} for available parameters: \code{k},
 \code{knn_method}, \code{ann_dist}, \code{search_budget}, \code{n_trees}, \code{delta},
-\code{diversify_prob}, \code{ef_budget}, \code{m}, \code{ef_construction}, \code{ef_search}, \code{n_list}
-and \code{n_probe}. Note that \code{k} is unused here, the neighbourhood sizes come
-from \code{k_anchor}, \code{k_score} and \code{k_weight}.}
+\code{diversify_prob}, \code{ef_budget}, \code{extract_knn}, \code{m}, \code{ef_construction},
+\code{ef_search}, \code{n_list} and \code{n_probe}. Note that \code{k} is unused here, the
+neighbourhood sizes come from \code{k_anchor}, \code{k_score} and \code{k_weight}.}
 
 \item{pca}{Named list. Parameters to feed through to the optional
 recalculation of the PCA, see \code{\link[=params_sc_pca]{params_sc_pca()}}.}

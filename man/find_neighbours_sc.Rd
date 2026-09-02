@@ -64,6 +64,9 @@ sets. A benign race condition is leveraged during index build, making the
 build non-deterministic. Bigger impact on smaller data sets.
 \item \code{nndescent} - Nearest neighbour descent. Leverages concepts from
 \code{PyNNDescent} and works well on very large data sets similar to \code{hnsw}.
+Set \code{extract_knn = TRUE} in the kNN parameters to hand back the descent
+graph directly instead of beam searching it. That drops the query pass
+altogether, so it is much faster, but recall goes down a little.
 \item \code{ivf} - Inverted file index. Uses first k-means clustering to
 identify Voronoi cells and leverages these during querying. Works well
 on large data sets with high dimensionality and when you need to return

@@ -1,9 +1,12 @@
-TARGET = $(subst 64,x86_64,$(subst 32,i686,$(WIN)))-pc-windows-gnu
+# The runner wins when it names a target. r-universe sets CARGO_BUILD_TARGET to
+# `aarch64-pc-windows-gnullvm` for the arm64 job, where $(WIN) is empty and the
+# derivation below would produce a bare `-pc-windows-gnu`.
+TARGET = $(if $(CARGO_BUILD_TARGET),$(CARGO_BUILD_TARGET),$(subst 64,x86_64,$(subst 32,i686,$(WIN)))-pc-windows-gnu)
 
 TARGET_DIR = @TARGET_DIR@
 LIBDIR = $(TARGET_DIR)/$(TARGET)/@LIBDIR@
 STATLIB = $(LIBDIR)/libbixverse.a
-PKG_LIBS = -L"$(LIBDIR)" -lbixverse -lws2_32 -ladvapi32 -luserenv -lbcrypt -lntdll
+PKG_LIBS = -L"$(LIBDIR)" -lbixverse @HDF5_LIBS@-lws2_32 -ladvapi32 -luserenv -lbcrypt -lntdll
 
 all: $(SHLIB) rust_clean
 
@@ -34,13 +37,13 @@ $(STATLIB):
 	# Build the project using Cargo with additional flags
 	export CARGO_HOME=@CARGO_HOME@ && \
 	export LIBRARY_PATH="$(LIBRARY_PATH);$(TARGET_DIR)/libgcc_mock" && \
-	@DEV_EXPORTS@RUSTFLAGS="$(RUSTFLAGS) --print=native-static-libs" cargo build @CRAN_FLAGS@ --target=$(TARGET) --lib @PROFILE@ --manifest-path=rust/Cargo.toml --target-dir="$(TARGET_DIR)"
+	@HDF5_EXPORTS@@DEV_EXPORTS@RUSTFLAGS="$(RUSTFLAGS) --print=native-static-libs" cargo build @CRAN_FLAGS@ @CARGO_FEATURES@ --target=$(TARGET) --lib @PROFILE@ --manifest-path=rust/Cargo.toml --target-dir="$(TARGET_DIR)"
 
 	# Generate wrappers. The profile and the dev overrides both have to match the
 	# build above, see Makevars.in.
 	export CARGO_HOME=@CARGO_HOME@ && \
 	export PATH="$(PATH):$(HOME)/.cargo/bin" && \
-	@DEV_EXPORTS@cargo run @CRAN_FLAGS@ @PROFILE@ --bin document --target $(TARGET) --manifest-path=./rust/Cargo.toml --target-dir "$(TARGET_DIR)"
+	@HDF5_EXPORTS@@DEV_EXPORTS@cargo run @CRAN_FLAGS@ @CARGO_FEATURES@ @PROFILE@ --bin document --target $(TARGET) --manifest-path=./rust/Cargo.toml --target-dir "$(TARGET_DIR)"
 
 	# Always clean up CARGOTMP
 	rm -Rf $(CARGOTMP);

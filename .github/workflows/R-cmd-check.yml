@@ -12,11 +12,18 @@ concurrency:
 
 jobs:
   R-CMD-check:
-    uses: GregorLueg/personal-actions/.github/workflows/r-cmd-check.yml@v1
+    # On the branch rather than @v1 while the matrix is being tried out: the
+    # macos-x86 input only exists on feat/os-matrix, and a reusable workflow
+    # hard-errors on an input it does not declare. Back to @v1 once that tag
+    # moves.
+    uses: GregorLueg/personal-actions/.github/workflows/r-cmd-check.yml@feat/os-matrix
     with:
       rust: true
       gpu: false
       windows: true
+      # macOS-latest is arm64. The x86 lane is here because r-universe's
+      # macos-x86_64 job trips test_ica.R and nothing of ours reproduces it.
+      macos-x86: true
       extra-repositories: 'https://gregorlueg.r-universe.dev'
       rebuild-from-source: 'stringfish qs2'
     secrets: inherit

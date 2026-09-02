@@ -19,8 +19,7 @@ rs_magic_impute(
 
 \item{knn_data}{List. The \code{SingleCellNearestNeighbour} data with \code{indices}
 (0-indexed!), \code{dist}, \code{k} and \code{dist_metric}. The indices are positions
-within \code{cell_indices}, not global cell ids. Whether the distances are
-treated as squared is derived from \code{dist_metric}.}
+within \code{cell_indices}, not global cell ids.}
 
 \item{cell_indices}{Integer vector. The global cell indices (0-indexed!)
 the kNN graph was built over, in kNN row order.}

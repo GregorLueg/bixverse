@@ -17,7 +17,7 @@
 #'  neighbour search. Defaults to `"kmknn"`. The implementations are:
 #'  `c("kmknn", "hnsw", "annoy", "nndescent", "ivf", "exhaustive")`.
 #'  \item ann_dist - Which distance metric to use for the approximate nearest
-#'  neighbour search. Defaults to `"cosine"`. The implementations are
+#'  neighbour search. Defaults to `"euclidean"`. The implementations are
 #'  `c("cosine", "euclidean")`.
 #'  \item n_trees - Annoy param: number of trees to generate for Annoy. Defaults
 #'  to `50L`.
@@ -30,6 +30,11 @@
 #'  Defaults to `0.001`.
 #'  \item ef_budget - NNDescent param: optional query budget parameter. Can
 #'  accelerate querying, but at the cost of Recall.
+#'  \item extract_knn - NNDescent param: hand back the graph the descent
+#'  already built instead of beam searching it. Skips the query pass entirely,
+#'  so it is much faster, at the cost of some recall. Rows the descent never
+#'  filled come back padded with duplicate edges. Ignored by every other
+#'  method. Defaults to `FALSE`.
 #'  \item m - HNSW param: number of connections between layers for HNSW.
 #'  Defaults to `16L`.
 #'  \item ef_construction - HNSW param: size of dynamic candidate list during
@@ -56,6 +61,7 @@ params_knn_defaults <- function() {
     delta = 0.001,
     diversify_prob = 0.0,
     ef_budget = NULL,
+    extract_knn = FALSE,
     # HNSW
     m = 16L,
     ef_construction = 200L,
@@ -226,8 +232,8 @@ params_kmeans_defaults <- function() {
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
-#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
-#' and `n_probe`.
+#' `diversify_prob`, `ef_budget`, `extract_knn`, `m`, `ef_construction`,
+#' `ef_search`, `n_list` and `n_probe`.
 #' Note: this function defaults to `k = 0L` (automatic neighbour detection).
 #'
 #' @returns A named list with all Scrublet parameters, combining defaults with
@@ -311,9 +317,9 @@ params_scrublet <- function(
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
-#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
-#' and `n_probe`. Note: this function defaults to `k = 0L` (automatic neighbour
-#' detection).
+#' `diversify_prob`, `ef_budget`, `extract_knn`, `m`, `ef_construction`,
+#' `ef_search`, `n_list` and `n_probe`. Note: this function defaults to
+#' `k = 0L` (automatic neighbour detection).
 #' @param fast_cluster_params List. Optional overrides for the fast clustering
 #' parameters. Only relevant if `fast_cluster = TRUE`. See
 #' [params_fast_cluster_default()] for available parameters: `km_type`,
@@ -553,8 +559,8 @@ params_scdblfinder <- function(
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
-#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
-#' and `n_probe`.
+#' `diversify_prob`, `ef_budget`, `extract_knn`, `m`, `ef_construction`,
+#' `ef_search`, `n_list` and `n_probe`.
 #'
 #' @returns A list with the neighbour parameters.
 #'
@@ -615,8 +621,8 @@ params_sc_neighbours <- function(
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
-#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
-#' and `n_probe`. Sets the default `k = 5L`.
+#' `diversify_prob`, `ef_budget`, `extract_knn`, `m`, `ef_construction`,
+#' `ef_search`, `n_list` and `n_probe`. Sets the default `k = 5L`.
 #'
 #' @returns A named list with the single cell fast clustering parameters.
 #'
@@ -679,8 +685,8 @@ params_sc_fast_cluster <- function(
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
-#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
-#' and `n_probe`.
+#' `diversify_prob`, `ef_budget`, `extract_knn`, `m`, `ef_construction`,
+#' `ef_search`, `n_list` and `n_probe`.
 #'
 #' @returns A list with the VISION parameters when you wish to use the
 #' auto-correlation version.
@@ -827,10 +833,6 @@ params_scenic_binarise <- function(
 #' `TRUE` for the Gaussian kernel, whose width is the
 #' `ceil(k / neighborhood_factor)`-th neighbour distance.
 #'
-#' Whether the distances need squaring is derived from the metric, so it is not
-#' a parameter here. When a pre-computed kNN graph is handed to the method, the
-#' metric stored on that graph wins over `ann_dist`.
-#'
 #' @param model String. Model to use for modelling the GEX. One of
 #' `c("danb", "bernoulli", "normal")`. Defaults to `"danb"`.
 #' @param normalise Boolean. Shall the data be normalised. Defaults to `TRUE`.
@@ -842,8 +844,8 @@ params_scenic_binarise <- function(
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
-#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
-#' and `n_probe`.
+#' `diversify_prob`, `ef_budget`, `extract_knn`, `m`, `ef_construction`,
+#' `ef_search`, `n_list` and `n_probe`.
 #'
 #' @returns A list with the HotSpot parameters.
 #'
@@ -1112,8 +1114,8 @@ params_dialogue_refine <- function(
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
-#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
-#' and `n_probe`.
+#' `diversify_prob`, `ef_budget`, `extract_knn`, `m`, `ef_construction`,
+#' `ef_search`, `n_list` and `n_probe`.
 #'
 #' @returns A list with the MiloR parameters.
 #'
@@ -1171,8 +1173,8 @@ params_sc_miloR <- function(
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
-#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
-#' and `n_probe`.
+#' `diversify_prob`, `ef_budget`, `extract_knn`, `m`, `ef_construction`,
+#' `ef_search`, `n_list` and `n_probe`.
 #'
 #' @returns A list with the metacell parameters.
 #'
@@ -1228,8 +1230,8 @@ params_sc_bt_metacells <- function(
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
-#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
-#' and `n_probe`.
+#' `diversify_prob`, `ef_budget`, `extract_knn`, `m`, `ef_construction`,
+#' `ef_search`, `n_list` and `n_probe`.
 #'
 #' @returns A list with the SEACells parameters.
 #'
@@ -1302,8 +1304,8 @@ params_sc_seacells <- function(
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
-#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
-#' and `n_probe`.
+#' `diversify_prob`, `ef_budget`, `extract_knn`, `m`, `ef_construction`,
+#' `ef_search`, `n_list` and `n_probe`.
 #'
 #' @returns A list with the SuperCell parameters.
 #'
@@ -1359,8 +1361,8 @@ params_sc_supercell <- function(
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
-#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
-#' and `n_probe`.
+#' `diversify_prob`, `ef_budget`, `extract_knn`, `m`, `ef_construction`,
+#' `ef_search`, `n_list` and `n_probe`.
 #'
 #' @returns A list with the BBKNN parameters.
 #'
@@ -1408,8 +1410,8 @@ params_sc_bbknn <- function(
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
-#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
-#' and `n_probe`.
+#' `diversify_prob`, `ef_budget`, `extract_knn`, `m`, `ef_construction`,
+#' `ef_search`, `n_list` and `n_probe`.
 #' @param pca Named list. Parameters to feed through to the optional
 #' recalculation of the PCA, see [params_sc_pca()].
 #'
@@ -1664,9 +1666,10 @@ params_sc_harmony_v2 <- function(
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
-#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
-#' and `n_probe`. Note that `k` is unused here, the neighbourhood sizes come
-#' from `k_anchor`, `k_filter`, `k_score` and `k_weight`.
+#' `diversify_prob`, `ef_budget`, `extract_knn`, `m`, `ef_construction`,
+#' `ef_search`, `n_list` and `n_probe`. Note that `k` is unused here, the
+#' neighbourhood sizes come from `k_anchor`, `k_filter`, `k_score` and
+#' `k_weight`.
 #' @param pca Named list. Parameters to feed through to the optional
 #' recalculation of the PCA, see [params_sc_pca()].
 #'
@@ -1741,9 +1744,9 @@ params_sc_seurat_cca <- function(
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
-#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
-#' and `n_probe`. Note that `k` is unused here, the neighbourhood sizes come
-#' from `k_anchor`, `k_score` and `k_weight`.
+#' `diversify_prob`, `ef_budget`, `extract_knn`, `m`, `ef_construction`,
+#' `ef_search`, `n_list` and `n_probe`. Note that `k` is unused here, the
+#' neighbourhood sizes come from `k_anchor`, `k_score` and `k_weight`.
 #' @param pca Named list. Parameters to feed through to the optional
 #' recalculation of the PCA, see [params_sc_pca()].
 #'
@@ -2060,8 +2063,8 @@ params_meld <- function(
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
-#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
-#' and `n_probe`.
+#' `diversify_prob`, `ef_budget`, `extract_knn`, `m`, `ef_construction`,
+#' `ef_search`, `n_list` and `n_probe`.
 #'
 #' @returns A list with the WNN parameters.
 #'
