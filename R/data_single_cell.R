@@ -820,7 +820,7 @@ write_tenx_h5_sc <- function(
 #' is not reliable, which shows up as `cannot open URL` mid-vignette. Retries
 #' with a linear backoff.
 #'
-#' @param url String. The URL to fetch.
+#' @param urls Character vector. Mirrors to try, in order.
 #' @param dest_file String. Path to write the file to.
 #' @param quiet Boolean. If the download shall be quiet.
 #' @param tries Integer. Attempts before giving up.

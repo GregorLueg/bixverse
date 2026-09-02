@@ -90,6 +90,30 @@ Regressor choice lives in `params_scenic()`, with
 
 Motif rankings are a large download. `download_cistarget_hg38()` fetches them.
 
+## Topic models (LDA)
+
+The model behind cisTopic. Fits a documents x terms count matrix by variational
+Bayes and gives you back cells x topics for clustering and topics x terms for
+set discovery.
+
+```r
+res <- run_lda(x, k = 20L, lda_params = params_lda(), seed = 42L)
+
+res$doc_topic      # cells x topics
+res$term_topic     # terms x topics
+get_top_terms(res, n = 20L)
+```
+
+**Binarise first.** LDA on raw single cell counts is dominated by library size,
+which is the whole thing cisTopic sidesteps. Binarised cells x regions scATAC is
+the intended input, and the binarised regulon activity out of
+`binarise_regulon_activity()` works the same way.
+
+Don't know `k`? `lda_k_sweep(x, k_range = 5:30)` returns a data.table with one
+row per `k` scored on Arun, Cao-Juan and Mimno coherence. `plot()` it, then
+`get_best_model(sweep)` for the fit at the selected `k`, or pass your own `k` if
+you disagree with the pick. Cost is one full fit per `k`.
+
 ## Differential abundance (miloR)
 
 ```r
@@ -119,6 +143,65 @@ the grouping yourself. `assay = "raw"` sums counts, `assay = "norm"` means the
 normalised values. Returns aggregated cells x genes, ready for the bulk workflow
 in `bulk.md`. This is the bridge between the two halves of the package.
 
+## Differential expression
+
+Two options, and the choice is about how you want to handle the fact that cells
+within a donor are not independent. A Wilcoxon over cells is not one of them.
+
+**Pseudobulk, then edgeR.** Sum the raw counts per sample and treat the result
+as a bulk experiment. Boring, and it holds its nominal FDR.
+
+```r
+groups <- split(obs$cell_id, obs$sample_id)
+design <- model.matrix(~ condition, data = sample_meta)   # rows follow groups
+
+res <- pseudobulk_dge_sc(
+  obj,
+  cell_list = groups,
+  design = design,
+  coef = "conditiontreated",
+  edger_params = params_edger_ql()
+)
+```
+
+That is a wrapper over `get_pseudobulked_sc()` plus `run_edger_ql()`, see
+`bulk.md`. Call the two separately if you want the aggregate matrix back.
+Raw counts only: a negative binomial cannot model the mean of normalised counts
+over a group.
+
+**NEBULA.** Keeps the cells and models the donor structure directly, splitting
+the variance into a subject-level random effect and cell-level overdispersion.
+Use it when the within-donor variation is the thing you care about, or when
+pseudobulking throws away too many samples.
+
+```r
+res <- nebula_sc(
+  obj,
+  subject_col = "donor_id",           # the random effect, NOT sample or batch
+  design = ~ condition + age,         # formula against the obs table
+  coef = "conditiontreated",          # or `contrast`, not both
+  genes_to_use = hvg_names,           # restrict this, see below
+  nebula_params = params_nebula(nebula_method = "ln")
+)
+
+res                                   # print it, see the convergence warnings
+res$results                           # data.table, one row per fitted gene
+res$coefficients; res$se              # genes x coefficients
+get_params(res)
+```
+
+A fit is milliseconds to seconds per gene, so running the full gene axis is
+rarely what you want. Restrict `genes_to_use` to the HVGs or a candidate set.
+`get_hvg()` hands back 0-based indices, so the names come from
+`get_gene_names_from_idx(obj, get_hvg(obj), rust_based = TRUE)`.
+Genes are streamed and fitted in batches, which is exact, NEBULA is
+gene-independent.
+
+Cells with a missing design or subject value are dropped with a warning. The
+`ScNebula` print method reports how many genes failed to converge and how many
+collapsed to a plain negative binomial, which is worth reading before you
+believe the FDR column. `nebula_mc()` is the same method on `MetaCells`.
+
 ## Trajectory inference
 
 Order is fixed and each step asserts on the previous one:
@@ -143,6 +226,23 @@ res <- nmf_sc(obj, nmf_params = params_nmf_hals())
 res <- stabilised_nmf_sc(obj, ...)     # multi-run, picks a stable solution
 get_w(res); get_h(res); get_best_run(res)
 ```
+
+`consensus_nmf_sc()` is the cNMF route: it clusters the factors across `n_runs`
+and keeps the consensus rather than picking a winner, which is what you want
+when the programmes matter more than the reconstruction error.
+
+```r
+res   <- consensus_nmf_sc(obj, k = 15L, n_runs = 30L,
+                          cell_ids = NULL, gene_ids = NULL,
+                          nmf_consensus_params = params_nmf_consensus())
+sweep <- nmf_k_sweep_sc(obj, k_range = 5:25)   # diagnostic, leaves obj alone
+plot(sweep)
+```
+
+The sweep reports consensus stability against reconstruction error and hands the
+result back directly rather than storing it on the object. Both take
+`cell_ids` / `gene_ids` to restrict the factorisation, and both work on
+`MetaCells` too.
 
 `get_hvg_data_sc()` gives you the HVG-restricted matrix if you want to factorise
 that instead of the full thing.
@@ -234,7 +334,12 @@ get_meta_cell_purity(mc)
 calc_manifold_metrics(mc)                   # compactness, separation
 merged <- merge_meta_cells(list(mc1, mc2))
 mc_counts_to_list(mc); mc_get_clr_offsets(mc)
+
+res <- nebula_mc(mc, subject_col = "donor_id", design = ~ condition)
 ```
+
+`nebula_mc()` is `nebula_sc()` over the aggregated counts, same arguments, same
+`ScNebula` result. The offset defaults to the aggregated library sizes.
 
 Merged objects set `is_merged = TRUE`, after which anything resolving back to
 source cell indices bails out early. Pick which metacell method to use by

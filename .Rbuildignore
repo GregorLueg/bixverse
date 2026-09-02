@@ -25,3 +25,5 @@
 ^vignettes$
 ^[.]?air[.]toml$
 ^\.vscode$
+^\.claude$
+^renovate\.json$

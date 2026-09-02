@@ -952,6 +952,11 @@ check_sc_state <- function(x, artefacts, modality = "rna") {
 #'
 #' @inheritParams check_sc_state
 #'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
 #' @returns Invisibly `x` when the assertion holds, otherwise an error.
 #'
 #' @export

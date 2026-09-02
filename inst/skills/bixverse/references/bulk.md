@@ -32,6 +32,35 @@ obj <- calculate_all_dges(obj, ...)    # everything across all contrasts
 `run_limma_voom()` is the standalone voom path and is what
 `calculate_dge_limma()` calls internally for count data.
 
+### edgeR quasi-likelihood
+
+The other standalone path, and the one to reach for on raw counts. It runs
+`filterByExpr()` -> `calcNormFactors()` -> `glmQLFit()` -> `glmQLFTest()` in
+Rust, gated against edgeR 4.8.2. No `edgeR` install needed.
+
+```r
+design <- model.matrix(~ condition, data = meta)
+
+res <- run_edger_ql(
+  counts = counts,                      # features x samples, RAW
+  design = design,
+  coef = "conditiontreated",            # or a `contrast` vector, not both
+  edger_params = params_edger_ql(norm_method = "TMM")
+)
+```
+
+Returns a data.table of `feature_id`, `log_fc`, `log_cpm`, `f_stat`, `p_value`,
+`fdr`, one row per feature surviving the filter. `design` needs at least two
+columns, the null model has to keep one.
+
+By default it skips `estimateDisp()` and lets the fit find its own dispersion,
+which is edgeR 4's own recommendation and where the runtime went. Set
+`legacy = TRUE` in the bundle for the pre-4.0 pipeline.
+
+The tested axis does not have to be genes. Anything shaped features x samples
+goes through it, which is why the Milo neighbourhood test calls the same
+function with `filter = FALSE`.
+
 Getters: `get_dge_list()`, `get_dge_limma_voom()`, `get_dge_effect_sizes()`,
 `get_model_fit()`, `get_tpm_counts()`, `get_fpkm_counts()`,
 `get_dge_qc_plot()`.
@@ -151,6 +180,39 @@ get_nmf_sample_activity(coexp)  # samples x k
 `stabilised_nmf_bulk()` runs multiple random restarts and returns the one with
 the lowest reconstruction loss. `get_nmf_stability()` reports the spread. Single
 run with NNDSVD init is deterministic.
+
+### NMF (consensus)
+
+Different question to `stabilised_nmf_bulk()`. Rather than picking the best of
+`n_runs`, it clusters the factors across all of them and keeps the consensus,
+which is the cNMF approach and what you want when the modules matter more than
+the reconstruction error.
+
+```r
+coexp <- consensus_nmf_bulk(
+  coexp,
+  k = 4L,
+  n_runs = 30L,
+  preprocessing = "none",
+  nmf_hals_params = params_nmf_hals(),
+  nmf_consensus_params = params_nmf_consensus(
+    consensus_target = "h",             # cluster over H, or "w"
+    density_threshold = 0.5             # drop outlier factors first
+  ),
+  membership_params = params_module_membership()
+)
+```
+
+Don't know `k`? `nmf_k_sweep_bulk(coexp, k_range = 2:10, ...)` runs the same
+thing per `k` and reports consensus stability against reconstruction error. The
+elbow between the two is the answer.
+
+`modules_from_loadings()` turns any non-negative loading matrix into a sparse
+membership data.table with `params_module_membership()`, so you can go from a
+factorisation you ran elsewhere straight to modules.
+
+The single cell siblings are `consensus_nmf_sc()` and `nmf_k_sweep_sc()`, see
+`single-cell-analysis.md`.
 
 ### DGRDL
 

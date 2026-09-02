@@ -1,16 +1,10 @@
-# bixverse package
+# bixverse package <img src="man/figures/logo.png" align="right" height="138" alt="bixverse logo" />
 
 [![r_package](https://img.shields.io/github/r-package/v/GregorLueg/bixverse?label=R_package&color=orange)](https://github.com/GregorLueg/bixverse/blob/main/DESCRIPTION)
 [![CI](https://github.com/GregorLueg/bixverse/actions/workflows/R-cmd-check.yml/badge.svg)](https://github.com/GregorLueg/bixverse/actions/workflows/R-cmd-check.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![pkgdown](https://img.shields.io/badge/pkgdown-website-1b5e9f?logo=github)](https://gregorlueg.github.io/bixverse/)
 [![extendr](https://img.shields.io/badge/extendr-^0.9.0-276DC2)](https://extendr.github.io/extendr/extendr_api/)
-
-</br>
-
-<img src="man/figures/bixverse_logo.png" width="128" height="128" alt="bixverse logo">
-
-</br>
 
 ## What this is
 

@@ -137,6 +137,8 @@ params_norm_doublets_defaults <- function() {
 #'  much smaller dense matrix that does not increase the memory pressure
 #'  massively.
 #' }
+#'
+#' @export
 params_pca_defaults <- function() {
   list(
     no_pcs = 30L,
@@ -158,6 +160,8 @@ params_pca_defaults <- function() {
 #'  \item batch_size - Max batch size will be set to `4098L`, but pending data
 #'  set set to `N_cells / 2`.
 #' }
+#'
+#' @export
 params_fast_cluster_default <- function() {
   list(
     km_type = "minibatch",
@@ -185,6 +189,8 @@ params_fast_cluster_default <- function() {
 #'  leveraging the triangle inequality. Faster on large data sets with large
 #'  numbers of centroids.
 #' }
+#'
+#' @export
 params_kmeans_defaults <- function() {
   list(
     k_means_iter = 30L,

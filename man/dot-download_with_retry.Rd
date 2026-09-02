@@ -7,13 +7,13 @@
 .download_with_retry(urls, dest_file, quiet = FALSE, tries = 4L)
 }
 \arguments{
+\item{urls}{Character vector. Mirrors to try, in order.}
+
 \item{dest_file}{String. Path to write the file to.}
 
 \item{quiet}{Boolean. If the download shall be quiet.}
 
 \item{tries}{Integer. Attempts before giving up.}
-
-\item{url}{String. The URL to fetch.}
 }
 \value{
 Invisibly, \code{dest_file}.

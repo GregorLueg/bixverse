@@ -10,7 +10,7 @@ R package, but the heavy numerics happen in Rust, so it handles data sizes that
 would kill a normal R session. A million cells on a laptop is the design target,
 not a stretch goal.
 
-The API is large: roughly 475 user-facing functions across single cell, gene set
+The API is large: roughly 515 user-facing functions across single cell, gene set
 enrichment, bulk RNAseq, graphs and ontologies. Do not guess at signatures.
 Check `references/api-index.md` for whether something exists, then `?fn` for how
 to call it.
@@ -27,7 +27,7 @@ find_neighbours_sc(obj, neighbours_params = params_sc_neighbours(
 ```
 
 Each bundle has a matching checkmate assertion, so a malformed one fails at the
-call site with a readable message. There are 61 of them and they're all in the
+call site with a readable message. There are 69 of them and they're all in the
 API index.
 
 **2. Analysis objects are S7 and the chain returns the object.** The shape is
@@ -46,7 +46,7 @@ than guessing, and much cheaper than recomputing a PCA you didn't need to.
 | Installing, Rust toolchain, missing dependencies, sister packages | `references/install.md` |
 | `params_*()`, S7 chains, naming, getters, what mutates what | `references/conventions.md` |
 | Single cell: load, QC, doublets, HVG, PCA, batch correction, clustering, embeddings, markers | `references/single-cell.md` |
-| Single cell downstream: gene set scoring, SCENIC, Hotspot, trajectory, miloR, metacells, CITE-seq, reference mapping | `references/single-cell-analysis.md` |
+| Single cell downstream: gene set scoring, SCENIC, topic models, differential expression, Hotspot, trajectory, miloR, metacells, CITE-seq, reference mapping | `references/single-cell-analysis.md` |
 | Hypergeometric tests, GO elimination, GSEA, GSVA, ssGSEA, singscore | `references/enrichment.md` |
 | Bulk RNAseq: differential expression, co-expression modules, ICA, NMF, contrastive PCA | `references/bulk.md` |
 | Network diffusion, RBH graphs, similarity network fusion, ontology semantic similarity | `references/graphs-ontology.md` |
@@ -114,5 +114,6 @@ unlink(dir_sc, recursive = TRUE, force = TRUE)
 - **Plotting mostly lives in `bixverse.plots`**, a separate package. bixverse
   itself gives you `extract_*_data()` functions that return the plot-ready
   data.table. If a plotting function isn't found, that's the missing dependency.
-- **Windows is not supported.** Don't attempt workarounds, the h5 toolchain
-  cross-compilation is the blocker and it has already been tried.
+- **Windows is supported**, and is in CI. The MAX_PATH and cross-ABI handling
+  for the HDF5 build lives in `tools/config.R`. Older answers saying otherwise
+  predate that work.

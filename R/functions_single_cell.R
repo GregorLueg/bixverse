@@ -318,6 +318,8 @@ get_meta_cell_matrices <- function(meta_cell_data, dimnames = NULL) {
 #'  \item outlier - Boolean vector indicating which cell is an outlier
 #'  \item metrics - The applied thresholds.
 #' }
+#'
+#' @export
 per_cell_qc_outlier <- function(
   metric,
   threshold = 3,

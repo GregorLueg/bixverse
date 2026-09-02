@@ -22,6 +22,12 @@ kind (\code{"pca"}, \code{"knn"}, \code{"snn"}, \code{"magic"}) or an embedding 
 
 \item{modality}{String. Modality to resolve unqualified names against. One
 of \code{c("rna", "adt", "atac", "wnn")}.}
+
+\item{.var.name}{Name of the checked object to print in assertions. Defaults
+to the heuristic implemented in checkmate.}
+
+\item{add}{Collection to store assertion messages. See
+\code{\link[checkmate:makeAssertCollection]{checkmate::makeAssertCollection()}}.}
 }
 \value{
 Invisibly \code{x} when the assertion holds, otherwise an error.

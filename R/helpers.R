@@ -307,6 +307,8 @@ sparse_list_to_mat <- function(ls) {
 #'   \item inflection_idx - Index of the inflection point
 #'   \item gradient_change - Absolute change in the first derivative
 #' }
+#'
+#' @export
 get_inflection_point <- function(x, y, span = 0.5) {
   # Checks
   checkmate::assertNumeric(x, len = length(y))

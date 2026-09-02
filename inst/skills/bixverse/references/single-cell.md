@@ -71,6 +71,7 @@ save_sc_exp_to_disk(obj, type = "qs2")
 | h5ad | `load_h5ad()`, or `load_h5ad_norm()` for pre-normalised, or `stream_h5ad()` for big files |
 | 10x HDF5 | `load_tenx_h5()` |
 | Seurat object | `load_seurat()` |
+| `SingleCellExperiment` | `load_sce()`, with `assay_name` naming the raw counts |
 | in-memory sparse matrix + obs + var | `load_r_data()` |
 | a directory written earlier | `load_existing()` |
 
@@ -91,6 +92,11 @@ params_sc_min_quality(
 
 **Normalisation happens here.** Log-CPM to `target_size` runs inside Rust during
 the load. There is no `normalise_sc()` and you should not write one.
+
+`load_sce()` takes `colData` as obs and `rowData` as var. It does not carry
+`reducedDims` or `altExps` over, and the assay you point it at has to be raw
+counts. A lot of objects in the wild only ship `logcounts`, so name the assay
+rather than trusting the default.
 
 **The load-time cutoffs are irreversible.** Cells and genes failing
 `min_unique_genes` / `min_lib_size` / `min_cells` are never written to the

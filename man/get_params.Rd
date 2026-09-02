@@ -44,6 +44,9 @@ get_params.ScNebula(object, to_json = FALSE, pretty_json = FALSE)
 \item{to_json}{Shall the params be returned as a JSON string.}
 
 \item{pretty_json}{Shall the params be returned as a pretty JSON string.}
+
+\item{...}{Unused, present so the S3 methods sharing this page match the
+generic.}
 }
 \value{
 Depending on parameters either the R list or a (pretty) JSON string.

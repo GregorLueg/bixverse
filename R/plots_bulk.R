@@ -11,6 +11,8 @@
 #' @param group_col String specifying the column with cohort information
 #'
 #' @return ggplot object, i.e. boxplot with number of genes by cohort
+#'
+#' @export
 plot_preprocessing_genes <- function(samples, group_col) {
   # checks
   checkmate::assertDataFrame(samples)
@@ -55,6 +57,8 @@ plot_preprocessing_genes <- function(samples, group_col) {
 #' @param max_perc Numeric. Upper cutoff to identify outliers
 #'
 #' @return ggplot object, i.e., beeswarm plot with outlier indication
+#'
+#' @export
 plot_preprocessing_outliers <- function(
   samples,
   group_col,
@@ -116,6 +120,8 @@ plot_preprocessing_outliers <- function(
 #' @param voom_object `EList`. Voom object with normalised counts.
 #'
 #' @return ggplot object, i.e., voom normalisation plot.
+#'
+#' @export
 plot_voom_normalization <- function(voom_object) {
   # checks
   checkmate::assertClass(voom_object, "EList")
@@ -153,6 +159,8 @@ plot_voom_normalization <- function(voom_object) {
 #' @param group_col String. The grouping column.
 #'
 #' @return ggplot object, i.e., box plot with expression per sample.
+#'
+#' @export
 plot_boxplot_normalization <- function(samples, voom_object, group_col) {
   # checks
   checkmate::assertClass(voom_object, "EList")
@@ -192,6 +200,8 @@ plot_boxplot_normalization <- function(samples, voom_object, group_col) {
 #' @param grps Factor or character vector. The group vector.
 #'
 #' @return ggplot object for the pca
+#'
+#' @export
 plot_pca <- function(pca_dt, grps) {
   # checks
   checkmate::assertDataTable(pca_dt)

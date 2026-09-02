@@ -51,6 +51,8 @@ BixverseBaseClass <- S7::new_class(
 #' [bixverse::BixverseBaseClass()] or defined S3 classes.
 #' @param to_json Shall the params be returned as a JSON string.
 #' @param pretty_json Shall the params be returned as a pretty JSON string.
+#' @param ... Unused, present so the S3 methods sharing this page match the
+#' generic.
 #'
 #' @return Depending on parameters either the R list or a (pretty) JSON string.
 #'
@@ -97,6 +99,8 @@ S7::method(get_params, BixverseBaseClass) <-
 #' @param object The underlying [bixverse::BixverseBaseClass()]
 #' class. The class functionality is usually inherited by other S7 classes in
 #' `bixverse`.
+#' @param ... Unused, present so the S3 methods sharing this page match the
+#' generic.
 #'
 #' @return Returns the final results if any have been stored in the class.
 #'
