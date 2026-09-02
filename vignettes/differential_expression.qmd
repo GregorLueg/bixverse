@@ -88,7 +88,7 @@ sc_object <- load_sce(
     min_cells = 20L,
     target_size = 1e4
   ),
-  .verbose = FALSE
+  .verbose = TRUE
 )
 
 sc_object
@@ -156,7 +156,10 @@ design blocks on the donor, which is what makes it a paired test.
 
 ```{r}
 #| label: real-pseudobulk
-cell_list <- split(mono_obs$cell_id, paste(mono_obs$ind, mono_obs$stim, sep = "_"))
+cell_list <- split(
+  mono_obs$cell_id,
+  paste(mono_obs$ind, mono_obs$stim, sep = "_")
+)
 
 samples <- data.table(sample = names(cell_list))
 samples[, c("ind", "stim") := tstrsplit(sample, "_", fixed = TRUE)]
@@ -184,7 +187,7 @@ nebula_res <- nebula_sc(
   subject_col = "ind",
   design = ~stim,
   genes_to_use = hvgs,
-  .verbose = FALSE
+  .verbose = TRUE
 )
 
 nebula_res
@@ -276,7 +279,7 @@ nebula_null <- nebula_sc(
   subject_col = "ind",
   design = ~fake,
   genes_to_use = hvgs,
-  .verbose = FALSE
+  .verbose = TRUE
 )
 
 nebula_null$results[fdr <= 0.05, .N]
@@ -302,13 +305,16 @@ that motivated the model.
 ```{r}
 #| label: overdispersions
 head(
-  nebula_res$results[order(-subject_overdispersion), .(
-    gene_id,
-    subject_overdispersion,
-    cell_overdispersion,
-    sigma_at_bound,
-    convergence
-  )],
+  nebula_res$results[
+    order(-subject_overdispersion),
+    .(
+      gene_id,
+      subject_overdispersion,
+      cell_overdispersion,
+      sigma_at_bound,
+      convergence
+    )
+  ],
   6
 )
 ```

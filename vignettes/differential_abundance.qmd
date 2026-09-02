@@ -98,7 +98,7 @@ sc_object <- load_sce(
     min_cells = 20L,
     target_size = 1e4
   ),
-  .verbose = FALSE
+  .verbose = TRUE
 )
 
 sc_object
@@ -152,8 +152,10 @@ here.
 #| label: knn
 sc_object <- find_neighbours_sc(
   sc_object,
-  neighbours_params = params_sc_neighbours(knn = list(k = 60L)),
-  .verbose = FALSE
+  neighbours_params = params_sc_neighbours(
+    knn = list(k = 60L)
+  ),
+  .verbose = TRUE
 )
 ```
 
@@ -322,7 +324,10 @@ Wk16 likelihood per cell type.
 
 ```{r}
 #| label: agreement
-milo_per_ct <- sig[, .(milo_logfc = mean(logFC)), by = .(cluster = majority_celltype)]
+milo_per_ct <- sig[,
+  .(milo_logfc = mean(logFC)),
+  by = .(cluster = majority_celltype)
+]
 comparison <- merge(per_celltype, milo_per_ct, by = "cluster")
 
 comparison[order(-milo_logfc), .(cluster, Wk1, Wk16, milo_logfc)]
