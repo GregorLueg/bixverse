@@ -180,7 +180,6 @@ expect_true(
 ### expected data --------------------------------------------------------------
 
 expected_ica_x1_mat <- qs2::qs_read("./test_data/ica_class_x1.qs")
-expected_ica_k_mat <- qs2::qs_read("./test_data/ica_class_k_mat.qs")
 expected_ica_stability_res <- qs2::qs_read(
   "./test_data/ica_class_stability_res.qs"
 )
@@ -232,13 +231,32 @@ expect_warning(
 ica_test <- preprocess_bulk_coexp(ica_test, hvg = 0.5, .verbose = FALSE)
 ica_test <- ica_processing(ica_test, .verbose = FALSE)
 
-# numerical stability of the randomised SVD starts being bad
-# at very high ICs (as expected)
-# reducing this to the first 75 rows
+# K is built from the singular vectors of the covariance, and singular vectors
+# belonging to near-degenerate values are only defined up to a rotation of
+# their subspace. Adjacent singular values here come within 0.04% of each
+# other, so an entrywise comparison pins down an arbitrary choice of basis and
+# disagrees between BLAS implementations. Assert what K is for instead: it
+# whitens, K V K' = I, which no rotation or sign flip can break.
+k_mat <- ica_test@processed_data$K
+x1_mat <- ica_test@processed_data$X1
+cov_mat <- (x1_mat %*% t(x1_mat)) / ncol(x1_mat)
+
 expect_equal(
-  current = ica_test@processed_data$K[1:75, ],
-  target = expected_ica_k_mat[1:75, ],
-  info = "ica bulk coexp - k matrix"
+  current = nrow(k_mat),
+  target = nrow(data) - 1L,
+  info = "ica bulk coexp - k matrix capped at the achievable rank"
+)
+
+expect_true(
+  current = max(abs(k_mat %*% cov_mat %*% t(k_mat) - diag(nrow(k_mat)))) < 1e-8,
+  info = "ica bulk coexp - k matrix whitens the covariance"
+)
+
+# the whitening scale is 1/sqrt(sigma) over descending sigma, so the row norms
+# only ever grow. A null-space row would spike instead.
+expect_false(
+  current = is.unsorted(sqrt(rowSums(k_mat^2))),
+  info = "ica bulk coexp - k matrix row norms grow with the component index"
 )
 
 expect_equal(
@@ -248,7 +266,6 @@ expect_equal(
 )
 
 if (identical(Sys.getenv("REGEN"), "1")) {
-  qs2::qs_save(ica_test@processed_data$K, "./test_data/ica_class_k_mat.qs")
   qs2::qs_save(ica_test@processed_data$X1, "./test_data/ica_class_x1.qs")
 }
 
