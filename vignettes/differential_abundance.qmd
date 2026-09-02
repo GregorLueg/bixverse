@@ -246,8 +246,14 @@ dcast(
 )[order(-`up at Wk16`)]
 ```
 
-The proliferating TEC populations go down with age and the mature medullary
-ones go up. That is thymic involution, and it is the expected direction.
+The two proliferating populations are the most strongly depleted of anything
+here, which is the clearest ageing signal the tissue has: an involuting thymus
+stops making new cells. The intertypical TECs dominate the enriched side.
+
+The medullary subsets split both ways, so "mTECs go up" would be the wrong
+summary to take away. That is the point of testing neighbourhoods rather than
+clusters: a cluster level test would have averaged those subsets into one
+number and reported whichever direction happened to win.
 
 ### On the spatial FDR
 
