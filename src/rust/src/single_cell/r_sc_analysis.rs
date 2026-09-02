@@ -1,4 +1,4 @@
-use bixverse_rs::core::math::stats::calc_fdr;
+use bixverse_rs::core::math::stats::p_adjust_fdr;
 use bixverse_rs::methods::nmf_hals::consensus::ConsensusParams;
 use bixverse_rs::methods::nmf_hals::HalsOpts;
 use bixverse_rs::prelude::*;
@@ -10,6 +10,7 @@ use bixverse_rs::single_cell::sc_analysis::{
     meld::*,
     milo_r::*,
     module_scoring::*,
+    nebula::{run_nebula, NebulaScParams},
     nichenet::activity_scoring::*,
     nichenet::ligand_regulatory_potential::*,
     nichenet::prioritisation::compute_cluster_expression_stats,
@@ -26,8 +27,8 @@ use std::cmp::Ordering;
 
 use crate::methods::nmf_utils::{consensus_res_to_r_list, k_sweep_to_r_list};
 use crate::single_cell::utils::{
-    dialogue_inputs_to_rust, dialogue_res_to_r_list, knn_data_to_rust, panel_size_from_mem,
-    prep_nichenet_network,
+    dialogue_inputs_to_rust, dialogue_res_to_r_list, knn_data_to_rust, nebula_res_to_r_list,
+    panel_size_from_mem, prep_nichenet_network,
 };
 
 ////////////////////
@@ -50,6 +51,9 @@ extendr_module! {
     fn rs_module_scoring;
     // miloR
     fn rs_make_milor_nhoods;
+    fn rs_spatial_fdr;
+    // nebula
+    fn rs_nebula_sc;
     // MELD
     fn rs_meld_sc;
     // vision
@@ -707,7 +711,7 @@ fn rs_vision_with_autocorrelation(
 
     let gaery_c = auto_cor_res.0;
     let p_val = auto_cor_res.1;
-    let fdr = calc_fdr(&p_val);
+    let fdr = p_adjust_fdr(&p_val);
 
     let vision_mat = Mat::from_fn(res.len(), res[0].len(), |i, j| res[i][j] as f64);
 
@@ -1055,6 +1059,9 @@ fn rs_hotspot_cluster_genes(
 /// graph and will be used to refine the neighbourhoods.
 /// @param knn_indices Integer matrix. Each row represents a given cell and
 /// the columns the neighbours. (0-indexed!)
+/// @param sample_ids Integer vector. 0-indexed(!) sample label per cell, in
+/// `0..n_samples`. One entry per row of `embd`.
+/// @param n_samples Integer. Number of distinct samples.
 /// @param milor_params Named list. Contains the parameters for running the
 /// miloR approach.
 /// @param seed Integer. Seed for reproducibility.
@@ -1073,15 +1080,22 @@ fn rs_hotspot_cluster_genes(
 ///  \item nrows - Integer. Number of cells in the matrix
 ///  \item ncols - Integer. Number of refined neighbourhoods.
 ///  \item kth_distances - The k-th distances for spatial FDR calculations.
+///  \item sample_counts - Numeric matrix of neighbourhoods x samples. The
+///  cells of each sample found in each neighbourhood.
+///  \item nhood_overlap - Numeric. Cells each neighbourhood shares with all
+///  the others, the `"graph-overlap"` weighting for the spatial FDR.
 /// }
 ///
 /// @export
 ///
 /// @keywords internal
 #[extendr]
+#[allow(clippy::too_many_arguments)]
 fn rs_make_milor_nhoods(
     embd: RMatrix<f64>,
     knn_indices: RMatrix<i32>,
+    sample_ids: Vec<i32>,
+    n_samples: usize,
     milor_params: List,
     seed: usize,
     verbose: usize,
@@ -1174,6 +1188,30 @@ fn rs_make_milor_nhoods(
         knn_indices[0].len() - 1,
     );
 
+    // Both weightings for the spatial FDR are functions of the COO alone, and
+    // both are two passes over the non-zeros, so they are cheaper to take here
+    // than to hand the COO back to R and rebuild it at test time.
+    let sample_ids: Vec<usize> = sample_ids.r_int_convert();
+    let counts = count_nhood_cells(
+        &nhoods_triplets.0,
+        &nhoods_triplets.1,
+        &sample_ids,
+        len_unique_indices,
+        n_samples,
+    )
+    .to_extendr()?;
+    let overlap = nhood_overlap(
+        &nhoods_triplets.0,
+        &nhoods_triplets.1,
+        len_unique_indices,
+        n_cells,
+    )
+    .to_extendr()?;
+
+    let sample_counts = RMatrix::new_matrix(len_unique_indices, n_samples, |r, c| {
+        counts[r * n_samples + c]
+    });
+
     Ok(list!(
         index_cell = unique_indices.r_int_convert(),
         nhoods_i = nhoods_triplets.0,
@@ -1181,8 +1219,147 @@ fn rs_make_milor_nhoods(
         nhoods_x = nhoods_triplets.2,
         nrows = n_cells as i32,
         ncols = len_unique_indices,
-        kth_distances = kth_distances
+        kth_distances = kth_distances,
+        sample_counts = sample_counts,
+        nhood_overlap = overlap
     ))
+}
+
+/// Weighted Benjamini-Hochberg over overlapping neighbourhoods
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Milo's spatial FDR. Neighbourhoods overlap, so the tests are not
+/// independent and a plain BH is anti-conservative. Each p-value is weighted
+/// by the reciprocal of its connectivity and the step-up runs on those
+/// weights. Non-finite p-values are carried through untouched and take no part
+/// in the adjustment.
+///
+/// @param p_values Numeric vector. One raw p-value per tested neighbourhood.
+/// @param connectivity Numeric vector. The matching connectivity per
+/// neighbourhood, either the k-th neighbour distances or the neighbourhood
+/// overlaps. A zero connectivity gets a weight of one, as in the upstream.
+///
+/// @returns The adjusted p-values, in the input order.
+///
+/// @references Dann, et al., Nat Biotechnol, 2022
+///
+/// @export
+///
+/// @keywords internal
+#[extendr]
+fn rs_spatial_fdr(p_values: &[f64], connectivity: &[f64]) -> Result<Vec<f64>> {
+    spatial_fdr(p_values, connectivity).to_extendr()
+}
+
+////////////
+// NEBULA //
+////////////
+
+/// Fit the NEBULA negative binomial gamma mixed model over single cells
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Fits NEBULA to every requested gene, streaming the counts out of the
+/// gene-major store in batches. NEBULA is gene-independent, so the batching
+/// changes nothing about the answer. Cells do not have to arrive grouped by
+/// subject: the Rust side sorts them and permutes the design and offsets to
+/// match.
+///
+/// @param f_path_genes String. Path to the `counts_genes.bin` file.
+/// @param f_path_cells String. Path to the `counts_cells.bin` file. Only read
+/// when `offset` is `NULL`, to take the library sizes.
+/// @param cells_to_keep Integer vector. 0-indexed(!) global positions of the
+/// cells to analyse, in any order. Must not hold duplicates.
+/// @param gene_indices Integer vector. 0-indexed(!) positions of the genes to
+/// fit.
+/// @param subject_ids Integer vector. 0-indexed(!) subject label per global
+/// cell. One entry per cell in the store, not per cell in `cells_to_keep`.
+/// @param design Numeric matrix. Predictors of cells x coefficients, rows
+/// aligned to `cells_to_keep` and including an intercept.
+/// @param offset Optional numeric vector. Strictly positive scaling factor per
+/// selected cell, aligned to `cells_to_keep`. `NULL` uses the library sizes.
+/// @param nebula_params Named list. The NEBULA parameters, see
+/// [bixverse::params_nebula()], plus either `coef` (a 0-indexed(!) coefficient)
+/// or `contrast` (one weight per coefficient).
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
+///
+/// @return A list with the following elements
+/// \itemize{
+///   \item gene_idx - Integer. 0-indexed positions of the genes that survived
+///   NEBULA's own expression filter.
+///   \item coefficients - Numeric matrix of genes x coefficients. The fixed
+///   effects on the design scale.
+///   \item se - Numeric matrix of genes x coefficients. The standard errors.
+///   \item subject_overdispersion - Numeric. NEBULA's `sigma^2`.
+///   \item cell_overdispersion - Numeric. NEBULA's `phi^-1`.
+///   \item cell_overdispersion_shrunk - Numeric or `NULL`. The cell-level
+///   overdispersion after empirical Bayes shrinkage, when it was requested.
+///   \item convergence - Integer. NEBULA's convergence code. At or below `-20`
+///   is a likely failure.
+///   \item sigma_at_bound - Boolean. Whether the subject-level variance
+///   finished pinned on its lower bound, i.e. the mixed model collapsed to a
+///   plain negative binomial.
+///   \item log_fc - Numeric. Effect of the tested coefficient or contrast, on
+///   the natural log scale.
+///   \item effect_se - Numeric. Standard error of that effect.
+///   \item z - Numeric. The Wald statistic.
+///   \item p_values - Numeric. Two-sided p-values.
+///   \item fdr - Numeric. Benjamini-Hochberg adjusted p-values.
+/// }
+///
+/// @references He, et al., Commun Biol, 2021
+///
+/// @export
+///
+/// @keywords internal
+#[extendr]
+#[allow(clippy::too_many_arguments)]
+fn rs_nebula_sc(
+    f_path_genes: String,
+    f_path_cells: String,
+    cells_to_keep: Vec<i32>,
+    gene_indices: Vec<i32>,
+    subject_ids: Vec<i32>,
+    design: RMatrix<f64>,
+    offset: Nullable<Vec<f64>>,
+    nebula_params: List,
+    verbose: usize,
+) -> Result<List> {
+    let cells_to_keep: Vec<usize> = cells_to_keep.r_int_convert();
+    let gene_indices: Vec<usize> = gene_indices.r_int_convert();
+    let subject_ids: Vec<usize> = subject_ids.r_int_convert();
+
+    let n_coef = design.ncols();
+    // Column-major out of R, row-major into `run_nebula`.
+    let design = mat_to_flat_row_major(r_matrix_to_faer(&design));
+
+    let params = NebulaScParams::from_r_list(nebula_params)?;
+
+    let gene_reader = ParallelSparseReader::new(&f_path_genes).to_extendr()?;
+    let cell_reader = ParallelSparseReader::new(&f_path_cells).to_extendr()?;
+
+    let offset = match offset {
+        Nullable::NotNull(o) => Some(o),
+        Nullable::Null => None,
+    };
+
+    let res = run_nebula(
+        &gene_reader,
+        &cell_reader,
+        &cells_to_keep,
+        &gene_indices,
+        &subject_ids,
+        &design,
+        n_coef,
+        offset.as_deref(),
+        &params,
+        verbose,
+    )
+    .to_extendr()?;
+
+    Ok(nebula_res_to_r_list(res))
 }
 
 //////////

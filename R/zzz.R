@@ -32,7 +32,8 @@
     "PagaRes",
     "ScMagic",
     "GeneTrendsRes",
-    "ScSpecificMarkers"
+    "ScSpecificMarkers",
+    "ScNebula"
   )
   for (cls in classes) {
     registerS3method("print", cls, get(paste0("print.", cls)))

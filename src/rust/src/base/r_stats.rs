@@ -155,7 +155,7 @@ fn rs_hedges_g(mat_a: RMatrix<f64>, mat_b: RMatrix<f64>, small_sample_correction
 /// @export
 #[extendr]
 fn rs_fdr_adjustment(pvals: &[f64]) -> Vec<f64> {
-    calc_fdr(pvals)
+    p_adjust_fdr(pvals)
 }
 
 /// Calculate the hypergeometric test in Rust

@@ -1785,6 +1785,43 @@ rs_cluster_stability <- function(data) .Call(wrap__rs_cluster_stability, data)
 #' @keywords internal
 rs_split_cor_signs <- function(data) .Call(wrap__rs_split_cor_signs, data)
 
+#' Run the edgeR quasi-likelihood chain on a count matrix
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Runs `filterByExpr` -> `calcNormFactors` -> `glmQLFit` -> `glmQLFTest`,
+#' implemented in Rust via the `edge-rs` crate and gated against edgeR 4.8.2.
+#' The tested axis does not have to be genes: Milo's neighbourhood counts are
+#' tested with the same call, with `filter = FALSE`.
+#'
+#' @param counts Numeric matrix. Raw counts of features x samples. Must not
+#' be normalised or log-transformed.
+#' @param design Numeric matrix. The design matrix of samples x coefficients,
+#' including the intercept. Needs at least two columns, since the null model
+#' has to retain one.
+#' @param edger_params Named list. The edgeR parameters, see
+#' [bixverse::params_edger_ql()], plus either `coef` (0-indexed(!) design
+#' columns to drop from the null model) or `contrast` (column-major weights
+#' with `n_contrasts` columns).
+#'
+#' @return A list with the following elements
+#' \itemize{
+#'   \item features_to_keep - Boolean. Which features survived the filters.
+#'   Spans the full feature axis of `counts`.
+#'   \item log_fc - Log2 fold changes of the tested coefficient or contrast.
+#'   \item log_cpm - Average log2 counts per million.
+#'   \item f_stat - The quasi-likelihood F statistic.
+#'   \item p_values - Raw p-values.
+#'   \item fdr - Benjamini-Hochberg adjusted p-values.
+#' }
+#'
+#' @references Chen, Lun and Smyth, F1000Research, 2016
+#'
+#' @export
+#'
+#' @keywords internal
+rs_edger_ql <- function(counts, design, edger_params) .Call(wrap__rs_edger_ql, counts, design, edger_params)
+
 #' Generate a sparse dictionary with DGRDL
 #'
 #' @description
@@ -3932,6 +3969,9 @@ rs_module_scoring <- function(f_path_cells, f_path_genes, gs_list, cells_to_keep
 #' graph and will be used to refine the neighbourhoods.
 #' @param knn_indices Integer matrix. Each row represents a given cell and
 #' the columns the neighbours. (0-indexed!)
+#' @param sample_ids Integer vector. 0-indexed(!) sample label per cell, in
+#' `0..n_samples`. One entry per row of `embd`.
+#' @param n_samples Integer. Number of distinct samples.
 #' @param milor_params Named list. Contains the parameters for running the
 #' miloR approach.
 #' @param seed Integer. Seed for reproducibility.
@@ -3950,12 +3990,100 @@ rs_module_scoring <- function(f_path_cells, f_path_genes, gs_list, cells_to_keep
 #'  \item nrows - Integer. Number of cells in the matrix
 #'  \item ncols - Integer. Number of refined neighbourhoods.
 #'  \item kth_distances - The k-th distances for spatial FDR calculations.
+#'  \item sample_counts - Numeric matrix of neighbourhoods x samples. The
+#'  cells of each sample found in each neighbourhood.
+#'  \item nhood_overlap - Numeric. Cells each neighbourhood shares with all
+#'  the others, the `"graph-overlap"` weighting for the spatial FDR.
 #' }
 #'
 #' @export
 #'
 #' @keywords internal
-rs_make_milor_nhoods <- function(embd, knn_indices, milor_params, seed, verbose) .Call(wrap__rs_make_milor_nhoods, embd, knn_indices, milor_params, seed, verbose)
+rs_make_milor_nhoods <- function(embd, knn_indices, sample_ids, n_samples, milor_params, seed, verbose) .Call(wrap__rs_make_milor_nhoods, embd, knn_indices, sample_ids, n_samples, milor_params, seed, verbose)
+
+#' Weighted Benjamini-Hochberg over overlapping neighbourhoods
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Milo's spatial FDR. Neighbourhoods overlap, so the tests are not
+#' independent and a plain BH is anti-conservative. Each p-value is weighted
+#' by the reciprocal of its connectivity and the step-up runs on those
+#' weights. Non-finite p-values are carried through untouched and take no part
+#' in the adjustment.
+#'
+#' @param p_values Numeric vector. One raw p-value per tested neighbourhood.
+#' @param connectivity Numeric vector. The matching connectivity per
+#' neighbourhood, either the k-th neighbour distances or the neighbourhood
+#' overlaps. A zero connectivity gets a weight of one, as in the upstream.
+#'
+#' @returns The adjusted p-values, in the input order.
+#'
+#' @references Dann, et al., Nat Biotechnol, 2022
+#'
+#' @export
+#'
+#' @keywords internal
+rs_spatial_fdr <- function(p_values, connectivity) .Call(wrap__rs_spatial_fdr, p_values, connectivity)
+
+#' Fit the NEBULA negative binomial gamma mixed model over single cells
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Fits NEBULA to every requested gene, streaming the counts out of the
+#' gene-major store in batches. NEBULA is gene-independent, so the batching
+#' changes nothing about the answer. Cells do not have to arrive grouped by
+#' subject: the Rust side sorts them and permutes the design and offsets to
+#' match.
+#'
+#' @param f_path_genes String. Path to the `counts_genes.bin` file.
+#' @param f_path_cells String. Path to the `counts_cells.bin` file. Only read
+#' when `offset` is `NULL`, to take the library sizes.
+#' @param cells_to_keep Integer vector. 0-indexed(!) global positions of the
+#' cells to analyse, in any order. Must not hold duplicates.
+#' @param gene_indices Integer vector. 0-indexed(!) positions of the genes to
+#' fit.
+#' @param subject_ids Integer vector. 0-indexed(!) subject label per global
+#' cell. One entry per cell in the store, not per cell in `cells_to_keep`.
+#' @param design Numeric matrix. Predictors of cells x coefficients, rows
+#' aligned to `cells_to_keep` and including an intercept.
+#' @param offset Optional numeric vector. Strictly positive scaling factor per
+#' selected cell, aligned to `cells_to_keep`. `NULL` uses the library sizes.
+#' @param nebula_params Named list. The NEBULA parameters, see
+#' [bixverse::params_nebula()], plus either `coef` (a 0-indexed(!) coefficient)
+#' or `contrast` (one weight per coefficient).
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @return A list with the following elements
+#' \itemize{
+#'   \item gene_idx - Integer. 0-indexed positions of the genes that survived
+#'   NEBULA's own expression filter.
+#'   \item coefficients - Numeric matrix of genes x coefficients. The fixed
+#'   effects on the design scale.
+#'   \item se - Numeric matrix of genes x coefficients. The standard errors.
+#'   \item subject_overdispersion - Numeric. NEBULA's `sigma^2`.
+#'   \item cell_overdispersion - Numeric. NEBULA's `phi^-1`.
+#'   \item cell_overdispersion_shrunk - Numeric or `NULL`. The cell-level
+#'   overdispersion after empirical Bayes shrinkage, when it was requested.
+#'   \item convergence - Integer. NEBULA's convergence code. At or below `-20`
+#'   is a likely failure.
+#'   \item sigma_at_bound - Boolean. Whether the subject-level variance
+#'   finished pinned on its lower bound, i.e. the mixed model collapsed to a
+#'   plain negative binomial.
+#'   \item log_fc - Numeric. Effect of the tested coefficient or contrast, on
+#'   the natural log scale.
+#'   \item effect_se - Numeric. Standard error of that effect.
+#'   \item z - Numeric. The Wald statistic.
+#'   \item p_values - Numeric. Two-sided p-values.
+#'   \item fdr - Numeric. Benjamini-Hochberg adjusted p-values.
+#' }
+#'
+#' @references He, et al., Commun Biol, 2021
+#'
+#' @export
+#'
+#' @keywords internal
+rs_nebula_sc <- function(f_path_genes, f_path_cells, cells_to_keep, gene_indices, subject_ids, design, offset, nebula_params, verbose) .Call(wrap__rs_nebula_sc, f_path_genes, f_path_cells, cells_to_keep, gene_indices, subject_ids, design, offset, nebula_params, verbose)
 
 #' Run MELD
 #'
@@ -5321,6 +5449,46 @@ rs_mc_vision_with_autocorrelation <- function(sparse_data, embd, knn_data, gs_li
 #'
 #' @keywords internal
 rs_mc_dialogue <- function(sparse_data, cell_type_indices, features, sample_ids, cell_quality, gene_indices, dialogue_params, verbose) .Call(wrap__rs_mc_dialogue, sparse_data, cell_type_indices, features, sample_ids, cell_quality, gene_indices, dialogue_params, verbose)
+
+#' Fit the NEBULA negative binomial gamma mixed model over meta cells
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' The arithmetic is the single cell one verbatim, only the counts come from
+#' memory rather than the streamed store. What changes is the interpretation:
+#' the cell-level overdispersion becomes the spread between aggregates within
+#' a subject, not between cells, so it is smaller and absorbs whatever the
+#' aggregation smoothed away. The subject-level term keeps its meaning. Do not
+#' compare the two against a single cell run.
+#'
+#' @param sparse_data A named list that needs to have `data`, `indptr`,
+#' `indices`, `nrow`, `ncol` and `cs_type`. Shape (metacells, genes), holding
+#' the raw counts.
+#' @param metacells_to_keep Integer vector. 0-indexed(!) positions of the
+#' meta cells to analyse, in any order. Must not hold duplicates.
+#' @param gene_indices Integer vector. 0-indexed(!) positions of the genes to
+#' fit.
+#' @param subject_ids Integer vector. 0-indexed(!) subject label per meta
+#' cell. One entry per row of `sparse_data`, not per element of
+#' `metacells_to_keep`.
+#' @param design Numeric matrix. Predictors of meta cells x coefficients, rows
+#' aligned to `metacells_to_keep` and including an intercept.
+#' @param offset Optional numeric vector. Strictly positive scaling factor per
+#' selected meta cell. `NULL` uses the aggregated library sizes.
+#' @param nebula_params Named list. The NEBULA parameters, see
+#' [bixverse::params_nebula()], plus either `coef` (a 0-indexed(!) coefficient)
+#' or `contrast` (one weight per coefficient).
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @return A list with the same elements [bixverse::rs_nebula_sc()] returns.
+#'
+#' @references He, et al., Commun Biol, 2021
+#'
+#' @export
+#'
+#' @keywords internal
+rs_nebula_mc <- function(sparse_data, metacells_to_keep, gene_indices, subject_ids, design, offset, nebula_params, verbose) .Call(wrap__rs_nebula_mc, sparse_data, metacells_to_keep, gene_indices, subject_ids, design, offset, nebula_params, verbose)
 
 #' Run NMF (HALS) on MetaCells
 #'

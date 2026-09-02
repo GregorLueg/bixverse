@@ -1,4 +1,4 @@
-use bixverse_rs::core::math::stats::calc_fdr;
+use bixverse_rs::core::math::stats::p_adjust_fdr;
 use bixverse_rs::enrichment::enrichment_r_wrapper::prepare_mitch_pathways;
 use bixverse_rs::enrichment::mitch::*;
 use bixverse_rs::prelude::*;
@@ -85,7 +85,7 @@ fn rs_mitch_calc(
         pathway_names = pathway_names,
         pathway_sizes = pathway_sizes,
         manova_pval = manova_pvals.clone(),
-        manova_fdr = calc_fdr(&manova_pvals),
+        manova_fdr = p_adjust_fdr(&manova_pvals),
         anova_pvals = anova_pvals,
         scores = scores,
         s_dist = s_dist,

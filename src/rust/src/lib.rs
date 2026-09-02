@@ -42,6 +42,7 @@ pub use graph::r_snf;
 // methods
 pub use methods::r_cistarget;
 pub use methods::r_coremo;
+pub use methods::r_dge_bulk;
 pub use methods::r_dgrdl;
 pub use methods::r_diffcor;
 pub use methods::r_ica;
@@ -103,6 +104,7 @@ extendr_module! {
 
     // methods
     use r_coremo;
+    use r_dge_bulk;
     use r_dgrdl;
     use r_diffcor;
     use r_ica;

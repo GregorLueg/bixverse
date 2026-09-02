@@ -4,16 +4,20 @@
 \alias{new_sc_miloR_res}
 \title{Generate a new miloR result}
 \usage{
-new_sc_miloR_res(nhoods, sample_counts, spatial_dist, params)
+new_sc_miloR_res(nhoods, sample_counts, spatial_dist, nhood_overlap, params)
 }
 \arguments{
 \item{nhoods}{Sparse dgCMatrix with cells x neighbourhoods.}
 
-\item{sample_counts}{Integer matrix. Represents neighbourhoods x cells from
-sample of interest.}
+\item{sample_counts}{Numeric matrix. Represents neighbourhoods x samples,
+i.e. the cells of each sample found in each neighbourhood.}
 
-\item{spatial_dist}{Numeric. The spatial distance between the neighbourhoods
-to calculate the spatial FDR.}
+\item{spatial_dist}{Numeric. The distance to the k-th nearest neighbour per
+neighbourhood, the \code{"k-distance"} weighting for the spatial FDR.}
+
+\item{nhood_overlap}{Numeric. The cells each neighbourhood shares with all
+the others, the \code{"graph-overlap"} weighting for the spatial FDR. Taken at
+construction because it is a function of the neighbourhood matrix alone.}
 
 \item{params}{Named list. The parameters that were used to generate these
 results.}

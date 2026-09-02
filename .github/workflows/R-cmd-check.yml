@@ -16,7 +16,7 @@ jobs:
     with:
       rust: true
       gpu: false
-      windows: false
-      linux-runner: ubuntu-22.04
+      windows: true
+      extra-repositories: 'https://gregorlueg.r-universe.dev'
       rebuild-from-source: 'stringfish qs2'
     secrets: inherit

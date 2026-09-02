@@ -268,6 +268,9 @@ reference:
       - calculate_rpkm
       - calculate_tpm
       - run_limma_voom
+      - run_edger_ql
+      - pseudobulk_dge_sc
+      - params_edger_ql
       - hedges_g_dge
       - get_dge_effect_sizes
       - get_dge_limma_voom
@@ -421,6 +424,7 @@ reference:
       - generate_bt_meta_cells_sc
       - generate_seacells_sc
       - merge_meta_cells
+      - nebula_mc
       - params_sc_supercell
       - params_sc_bt_metacells
       - params_sc_seacells
@@ -534,6 +538,7 @@ reference:
       - get_hotspot_membership
       - get_miloR_abundances_sc
       - meld_sc
+      - nebula_sc
       - run_palantir_sc
       - run_paga_sc
       - run_gene_trends_sc
@@ -569,6 +574,7 @@ reference:
       - params_sc_aucell
       - params_sc_hotspot
       - params_sc_miloR
+      - params_nebula
       - params_sc_vision
       - params_scenic
       - params_scenic_extra_trees_defaults
@@ -790,6 +796,7 @@ reference:
       - rs_generate_ligand_target_influence
       - rs_ligand_activity_scores
       - rs_mad_outlier
+      - rs_edger_ql
       - rs_mc_aucell
       - rs_mc_dialogue
       - rs_mc_hotspot_autocor
@@ -800,6 +807,7 @@ reference:
       - rs_mc_vision
       - rs_mc_vision_with_autocorrelation
       - rs_mitch_calc
+      - rs_nebula_mc
       - rs_mutual_info
       - rs_onto_semantic_sim
       - rs_onto_semantic_sim_mat
@@ -830,6 +838,7 @@ reference:
       - rs_singscore_permutation_test
       - rs_singscore_single
       - rs_snf
+      - rs_spatial_fdr
       - rs_sparse_dict_dgrdl
       - rs_sparse_dict_dgrdl_grid_search
       - rs_spectral_clustering

@@ -10,9 +10,11 @@ test_nhoods(
   design,
   design_df,
   coef = NULL,
-  norm_method = c("TMM", "RLE", "logMS"),
+  contrast = NULL,
+  norm_method = c("TMM", "TMMwsp", "RLE", "upperquartile", "logMS"),
   min_mean = 0,
   robust = TRUE,
+  legacy = TRUE,
   fdr_weighting = c("k-distance", "graph-overlap", "none")
 )
 
@@ -21,9 +23,11 @@ test_nhoods(
   design,
   design_df,
   coef = NULL,
-  norm_method = c("TMM", "RLE", "logMS"),
+  contrast = NULL,
+  norm_method = c("TMM", "TMMwsp", "RLE", "upperquartile", "logMS"),
   min_mean = 0,
   robust = TRUE,
+  legacy = TRUE,
   fdr_weighting = c("k-distance", "graph-overlap", "none")
 )
 }
@@ -31,43 +35,53 @@ test_nhoods(
 \item{x}{\code{miloR} object for which to run the differential abundance
 analysis.}
 
-\item{design}{Formula for the experimental design}
+\item{design}{Formula for the experimental design, e.g. \code{~ grps}.}
 
-\item{design_df}{data.frame. Contains the metadata to be used for the
-generation of the model matrix.}
+\item{design_df}{data.frame. The metadata used to build the model matrix.
+Its rownames need to cover the sample names of the neighbourhood counts.}
 
-\item{coef}{Optional string/integer. For more complex experimental designs,
-you can specify which coefficient to test. If NULL, tests the last
-coefficient in the design matrix (typically the main effect of interest).}
+\item{coef}{Optional integer or character. Which coefficient(s) of the
+design to drop from the null model, given as 1-based column positions or
+column names. Defaults to the last column, as edgeR does.}
 
-\item{norm_method}{String. Normalisation method to use. One of
-\code{c("TMM", "RLE", "logMS")}. Defaults to TMM (trimmed mean of M-values).}
+\item{contrast}{Optional numeric vector or matrix. Weights over the design
+columns. Mutually exclusive with \code{coef}.}
 
-\item{min_mean}{Numeric. Minimum mean count threshold for filtering
-neighbourhoods. Neighbourhoods with mean counts below this value are excluded.
-Defaults to 0 (no filtering).}
+\item{norm_method}{String. Library size normalisation. One of
+\code{c("TMM", "TMMwsp", "RLE", "upperquartile", "logMS")}. Defaults to \code{"TMM"}.
+\code{"logMS"} is Milo's own name for leaving every factor at one.}
 
-\item{robust}{Logical. If TRUE, uses robust estimation of the quasi-likelihood
-dispersion. Recommended for datasets with potential outliers. Defaults to TRUE.}
+\item{min_mean}{Numeric. Minimum mean count across samples. Neighbourhoods
+below it are dropped. Defaults to \code{0} (no filtering).}
+
+\item{robust}{Logical. Robust estimation of the quasi-likelihood dispersion.
+Defaults to \code{TRUE}.}
+
+\item{legacy}{Logical. Take edgeR's pre-4.0 quasi-likelihood pipeline, which
+runs \code{estimateDisp()} and applies the Poisson bound. Defaults to \code{TRUE}, so
+this keeps matching what Milo itself does.}
 
 \item{fdr_weighting}{String. Spatial FDR weighting scheme. One of
-\code{c("k-distance", "graph-overlap", "none")}. k-distance uses the distance to
-the k-th nearest neighbour, graph-overlap uses neighbourhood overlap counts.
-Defaults to k-distance.}
+\code{c("k-distance", "graph-overlap", "none")}. \code{"k-distance"} weights by the
+distance to the k-th nearest neighbour, \code{"graph-overlap"} by the number of
+cells shared with other neighbourhoods. Defaults to \code{"k-distance"}.}
 }
 \value{
-The \code{miloR} object with added model and results from the
-differential abundance analysis.
+The \code{miloR} object with the differential abundance results added.
 }
 \description{
-Performs differential abundance testing on single-cell neighbourhoods using
-edgeR's quasi-likelihood negative binomial framework. The function fits a
-generalised linear model to neighbourhood cell counts, tests for differential
-abundance between conditions, and applies spatial FDR correction to account
-for overlapping neighbourhoods. This implementation follows the approach
-described in Dann et al., using graph-based neighbourhoods to identify
-regions of significant compositional changes in single-cell data.
+Performs differential abundance testing on single-cell neighbourhoods with
+edgeR's quasi-likelihood negative binomial framework, implemented in Rust
+via the \code{edge-rs} crate. A generalised linear model is fitted to the
+neighbourhood counts, one coefficient or contrast is tested, and the spatial
+FDR correction accounts for the fact that neighbourhoods overlap and their
+tests are therefore not independent.
+
+\code{filterByExpr()} is off here and cannot be turned on. It is a gene
+expression heuristic and means nothing for a neighbourhood. Use \code{min_mean}
+if you want to drop sparsely populated neighbourhoods.
 }
 \references{
-Dann et al., 2022, Nat Biotechnol
+Dann, et al., Nat Biotechnol, 2022; Chen, Lun and Smyth,
+F1000Research, 2016
 }

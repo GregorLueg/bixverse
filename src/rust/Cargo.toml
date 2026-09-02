@@ -26,7 +26,11 @@ codegen-units = 4
 strip = true
 
 [dependencies]
-bixverse-rs = { version = "0.4.7", features = [ "single-cell", "multi-modal", ] }
+bixverse-rs = { version = "0.4.8", features = [ "single-cell", "multi-modal", ] }
+# The `Tested` / `ScTested` / `NebulaParams` types cross the binding boundary,
+# so the edgeR and NEBULA wrappers need them by name. Kept in step with the
+# version `bixverse-rs` pulls in.
+edge-rs = "0.0.2"
 extendr-api = "0.9.0"
 either = "1.15.0"
 faer = { version = '0.23.2' }
@@ -40,3 +44,12 @@ thousands = "*"
 [[bin]]
 name = "document"
 path = "document.rs"
+
+#########
+# Patch #
+#########
+
+# `bixverse-rs` 0.4.8 is unreleased. Point this back at the crates.io version
+# once it is cut through CI/CD, and bump the `[dependencies]` entry with it.
+[patch.crates-io]
+bixverse-rs = { git = "https://github.com/GregorLueg/bixverse-rs", branch = "release-0.4.8" }

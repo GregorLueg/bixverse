@@ -1,13 +1,14 @@
 //! Analysis methods for meta cells specifically: SCENIC, AUCell, HotSpot,
 //! VISION, NMF and DIALOGUE.
 
-use bixverse_rs::core::math::stats::calc_fdr;
+use bixverse_rs::core::math::stats::p_adjust_fdr;
 use bixverse_rs::methods::nmf_hals::consensus::ConsensusParams;
 use bixverse_rs::methods::nmf_hals::HalsOpts;
 use bixverse_rs::prelude::*;
 use bixverse_rs::single_cell::mc_analysis::aucell::calculate_aucell_metacells;
 use bixverse_rs::single_cell::mc_analysis::dialogue_mc::dialogue_metacells;
 use bixverse_rs::single_cell::mc_analysis::hotspot_mc::*;
+use bixverse_rs::single_cell::mc_analysis::nebula_mc::nebula_metacells;
 use bixverse_rs::single_cell::mc_analysis::nmf_mc::*;
 use bixverse_rs::single_cell::mc_analysis::scenic_metacells::run_scenic_grn_in_memory;
 use bixverse_rs::single_cell::mc_analysis::vision_mc::calculate_vision_metacells;
@@ -16,6 +17,7 @@ use bixverse_rs::single_cell::sc_analysis::dialogue::DialogueParams;
 use bixverse_rs::single_cell::sc_analysis::hotspot::{
     HotSpotGeneRes, HotSpotPairRes, HotSpotParams,
 };
+use bixverse_rs::single_cell::sc_analysis::nebula::NebulaScParams;
 use bixverse_rs::single_cell::sc_analysis::scenic::ScenicParams;
 use bixverse_rs::single_cell::sc_analysis::vision::{
     calc_autocorr_with_clusters, r_list_to_sig_genes,
@@ -26,7 +28,7 @@ use faer::{Mat, MatRef};
 use crate::meta_cell::utils::*;
 use crate::methods::nmf_utils::{consensus_res_to_r_list, k_sweep_to_r_list};
 use crate::single_cell::utils::{
-    dialogue_inputs_to_rust, dialogue_res_to_r_list, knn_data_to_rust,
+    dialogue_inputs_to_rust, dialogue_res_to_r_list, knn_data_to_rust, nebula_res_to_r_list,
 };
 
 /////////////
@@ -47,6 +49,8 @@ extendr_module! {
     fn rs_mc_vision_with_autocorrelation;
     // dialogue
     fn rs_mc_dialogue;
+    // nebula
+    fn rs_nebula_mc;
     // nmf
     fn rs_nmf_single_mc;
     fn rs_nmf_multi_mc;
@@ -129,28 +133,6 @@ fn resolve_knn_graph(
     }
 }
 
-/// Read the meta cell counts VISION scores over.
-///
-/// VISION reads the second layer, and `list_to_sparse_matrix` fills it with a
-/// copy of the first, so whatever R hands over here is what gets scored. The
-/// cast keeps both layers in `f32`: `cast_compressed_sparse_data_u32` would
-/// truncate the normalised counts VISION expects.
-///
-/// ### Params
-///
-/// * `sparse_data` - The named list from R, shape (metacells, genes), holding
-///   the normalised counts.
-///
-/// ### Returns
-///
-/// The same matrix as `CompressedSparseData2<f32, f32>`.
-fn mc_vision_sparse(sparse_data: List) -> extendr_api::Result<CompressedSparseData2<f32, f32>> {
-    let sparse: CompressedSparseData2<f64, f64> =
-        list_to_sparse_matrix(sparse_data, true).to_extendr()?;
-
-    Ok(cast_compressed_sparse_data_f32(sparse))
-}
-
 /////////////////////
 // Metacell SCENIC //
 /////////////////////
@@ -183,9 +165,7 @@ fn rs_mc_scenic(
     verbose: usize,
 ) -> Result<RArray<f64, 2>> {
     let tf_indices = tf_indices.r_int_convert();
-    let sparse: CompressedSparseData2<f64, f64> =
-        list_to_sparse_matrix(sparse_data, true).to_extendr()?;
-    let sparse = cast_compressed_sparse_data_u32(sparse);
+    let sparse = mc_list_to_sparse_u32(sparse_data)?;
     let scenic_params = ScenicParams::from_r_list(scenic_params)?;
 
     let grn_matrix = run_scenic_grn_in_memory(&sparse, &tf_indices, &scenic_params, seed, verbose)
@@ -242,9 +222,7 @@ fn rs_mc_aucell(
         gs_indices.push(int);
     }
 
-    let sparse: CompressedSparseData2<f64, f64> =
-        list_to_sparse_matrix(sparse_data, true).to_extendr()?;
-    let sparse = cast_compressed_sparse_data_u32(sparse);
+    let sparse = mc_list_to_sparse_u32(sparse_data)?;
 
     let res = calculate_aucell_metacells(&sparse, &gs_indices, Some(aucell_params), verbose)
         .to_extendr()?;
@@ -285,7 +263,7 @@ fn rs_mc_aucell(
 fn rs_mc_vision(sparse_data: List, gs_list: List, verbose: usize) -> Result<RArray<f64, 2>> {
     let gene_signatures = r_list_to_sig_genes(gs_list)?;
 
-    let sparse = mc_vision_sparse(sparse_data)?;
+    let sparse = mc_list_to_sparse_f32(sparse_data)?;
 
     let res = calculate_vision_metacells(&sparse, &gene_signatures, verbose).to_extendr()?;
 
@@ -357,7 +335,7 @@ fn rs_mc_vision_with_autocorrelation(
 ) -> extendr_api::Result<List> {
     let verbosity = parse_verbosity_level(verbose);
 
-    let sparse = mc_vision_sparse(sparse_data)?;
+    let sparse = mc_list_to_sparse_f32(sparse_data)?;
 
     assert!(
         embd.nrows() == sparse.shape.0,
@@ -417,7 +395,7 @@ fn rs_mc_vision_with_autocorrelation(
         verbose,
     );
 
-    let fdr = calc_fdr(&p_val);
+    let fdr = p_adjust_fdr(&p_val);
 
     let vision_mat = Mat::from_fn(res.len(), res[0].len(), |i, j| res[i][j] as f64);
 
@@ -512,12 +490,9 @@ fn rs_mc_hotspot_autocor(
 
     hotspot_params.graph_params.squared_distances = squared_distances;
 
-    // HotSpot only ever reads the raw counts and the per-cell library sizes, so
-    // the second layer the reader insists on can stay the copy of the raw one
-    // `list_to_sparse_matrix` puts there
-    let sparse: CompressedSparseData2<f64, f64> =
-        list_to_sparse_matrix(sparse_data, true).to_extendr()?;
-    let sparse = cast_compressed_sparse_data_u32(sparse);
+    // HotSpot only ever reads the raw counts and the per-cell library sizes,
+    // so the derived second layer goes unread here
+    let sparse = mc_list_to_sparse_u32(sparse_data)?;
 
     let res: HotSpotGeneRes = hotspot_autocor_metacells(
         &sparse,
@@ -618,9 +593,7 @@ fn rs_mc_hotspot_gene_cor(
 
     hotspot_params.graph_params.squared_distances = squared_distances;
 
-    let sparse: CompressedSparseData2<f64, f64> =
-        list_to_sparse_matrix(sparse_data, true).to_extendr()?;
-    let sparse = cast_compressed_sparse_data_u32(sparse);
+    let sparse = mc_list_to_sparse_u32(sparse_data)?;
 
     let res: HotSpotPairRes = hotspot_gene_cor_metacells(
         &sparse,
@@ -676,9 +649,7 @@ fn rs_nmf_single_mc(
     seed: usize,
     verbose: usize,
 ) -> Result<List> {
-    let sparse: CompressedSparseData2<f64, f64> =
-        list_to_sparse_matrix(sparse_data, true).to_extendr()?;
-    let sparse = cast_compressed_sparse_data_f32(sparse);
+    let sparse = mc_list_to_sparse_f32(sparse_data)?;
     let nmf_hals_opt: HalsOpts<f32> = HalsOpts::from_r_list(nmf_hals_params, seed).to_extendr()?;
     let nmf_res = nmf_single_run_mc(
         sparse,
@@ -735,9 +706,7 @@ fn rs_nmf_multi_mc(
     verbose: usize,
 ) -> Result<List> {
     // CHECK: same caveat as rs_nmf_single_mc on the f32 conversion.
-    let sparse: CompressedSparseData2<f64, f64> =
-        list_to_sparse_matrix(sparse_data, true).to_extendr()?;
-    let sparse = cast_compressed_sparse_data_f32(sparse);
+    let sparse = mc_list_to_sparse_f32(sparse_data)?;
     let nmf_hals_opt: HalsOpts<f32> = HalsOpts::from_r_list(nmf_hals_params, seed).to_extendr()?;
     let nmf_res = nmf_multiple_run_mc(
         sparse,
@@ -825,9 +794,7 @@ fn rs_nmf_consensus_mc(
     seed: usize,
     verbose: usize,
 ) -> Result<List> {
-    let sparse: CompressedSparseData2<f64, f64> =
-        list_to_sparse_matrix(sparse_data, true).to_extendr()?;
-    let sparse = cast_compressed_sparse_data_f32(sparse);
+    let sparse = mc_list_to_sparse_f32(sparse_data)?;
     let nmf_hals_opt: HalsOpts<f32> = HalsOpts::from_r_list(nmf_hals_params, seed).to_extendr()?;
     let consensus_opt: ConsensusParams<f32> = ConsensusParams::from_r_list(nmf_consensus_params)?;
     let nmf_res = nmf_consensus_run_mc(
@@ -901,9 +868,7 @@ fn rs_nmf_k_sweep_mc(
     seed: usize,
     verbose: usize,
 ) -> Result<List> {
-    let sparse: CompressedSparseData2<f64, f64> =
-        list_to_sparse_matrix(sparse_data, true).to_extendr()?;
-    let sparse = cast_compressed_sparse_data_f32(sparse);
+    let sparse = mc_list_to_sparse_f32(sparse_data)?;
     let k_range = k_range.r_int_convert();
     let nmf_hals_opt: HalsOpts<f32> = HalsOpts::from_r_list(nmf_hals_params, seed).to_extendr()?;
     let consensus_opt: ConsensusParams<f32> = ConsensusParams::from_r_list(nmf_consensus_params)?;
@@ -991,9 +956,7 @@ fn rs_mc_dialogue(
     let genes: Vec<usize> = gene_indices.r_int_convert();
     let params = DialogueParams::from_r_list(dialogue_params)?;
 
-    let sparse: CompressedSparseData2<f64, f64> =
-        list_to_sparse_matrix(sparse_data, true).to_extendr()?;
-    let sparse = cast_compressed_sparse_data_u32(sparse);
+    let sparse = mc_list_to_sparse_u32(sparse_data)?;
 
     let res = dialogue_metacells(
         &sparse,
@@ -1008,4 +971,90 @@ fn rs_mc_dialogue(
     .to_extendr()?;
 
     Ok(dialogue_res_to_r_list(&res))
+}
+
+///////////////////////
+// Metacell NEBULA   //
+///////////////////////
+
+/// Fit the NEBULA negative binomial gamma mixed model over meta cells
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// The arithmetic is the single cell one verbatim, only the counts come from
+/// memory rather than the streamed store. What changes is the interpretation:
+/// the cell-level overdispersion becomes the spread between aggregates within
+/// a subject, not between cells, so it is smaller and absorbs whatever the
+/// aggregation smoothed away. The subject-level term keeps its meaning. Do not
+/// compare the two against a single cell run.
+///
+/// @param sparse_data A named list that needs to have `data`, `indptr`,
+/// `indices`, `nrow`, `ncol` and `cs_type`. Shape (metacells, genes), holding
+/// the raw counts.
+/// @param metacells_to_keep Integer vector. 0-indexed(!) positions of the
+/// meta cells to analyse, in any order. Must not hold duplicates.
+/// @param gene_indices Integer vector. 0-indexed(!) positions of the genes to
+/// fit.
+/// @param subject_ids Integer vector. 0-indexed(!) subject label per meta
+/// cell. One entry per row of `sparse_data`, not per element of
+/// `metacells_to_keep`.
+/// @param design Numeric matrix. Predictors of meta cells x coefficients, rows
+/// aligned to `metacells_to_keep` and including an intercept.
+/// @param offset Optional numeric vector. Strictly positive scaling factor per
+/// selected meta cell. `NULL` uses the aggregated library sizes.
+/// @param nebula_params Named list. The NEBULA parameters, see
+/// [bixverse::params_nebula()], plus either `coef` (a 0-indexed(!) coefficient)
+/// or `contrast` (one weight per coefficient).
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
+///
+/// @return A list with the same elements [bixverse::rs_nebula_sc()] returns.
+///
+/// @references He, et al., Commun Biol, 2021
+///
+/// @export
+///
+/// @keywords internal
+#[extendr]
+#[allow(clippy::too_many_arguments)]
+fn rs_nebula_mc(
+    sparse_data: List,
+    metacells_to_keep: Vec<i32>,
+    gene_indices: Vec<i32>,
+    subject_ids: Vec<i32>,
+    design: RMatrix<f64>,
+    offset: Nullable<Vec<f64>>,
+    nebula_params: List,
+    verbose: usize,
+) -> Result<List> {
+    let metacells_to_keep: Vec<usize> = metacells_to_keep.r_int_convert();
+    let gene_indices: Vec<usize> = gene_indices.r_int_convert();
+    let subject_ids: Vec<usize> = subject_ids.r_int_convert();
+
+    let n_coef = design.ncols();
+    // Column-major out of R, row-major into `nebula_metacells`.
+    let design = mat_to_flat_row_major(r_matrix_to_faer(&design));
+
+    let params = NebulaScParams::from_r_list(nebula_params)?;
+    let sparse = mc_list_to_sparse_u32(sparse_data)?;
+
+    let offset = match offset {
+        Nullable::NotNull(o) => Some(o),
+        Nullable::Null => None,
+    };
+
+    let res = nebula_metacells(
+        &sparse,
+        &metacells_to_keep,
+        &gene_indices,
+        &subject_ids,
+        &design,
+        n_coef,
+        offset.as_deref(),
+        &params,
+        verbose,
+    )
+    .to_extendr()?;
+
+    Ok(nebula_res_to_r_list(res))
 }

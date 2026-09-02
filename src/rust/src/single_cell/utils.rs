@@ -6,6 +6,7 @@ use bixverse_rs::single_cell::sc_analysis::dialogue::{DialogueResult, ProgrammeS
 use bixverse_rs::single_cell::sc_analysis::fast_clusters::{
     FastLouvainGridResult, FastLouvainResults,
 };
+use bixverse_rs::single_cell::sc_analysis::nebula::NebulaScRes;
 use bixverse_rs::single_cell::sc_annotation::sc_type::CellTypeMarkers;
 use bixverse_rs::single_cell::sc_processing::hvg::HvgDispersionRes;
 use either::Either;
@@ -545,5 +546,56 @@ pub fn dialogue_res_to_r_list(res: &DialogueResult) -> List {
         verdicts = verdicts,
         permissive = signatures_to_r_list(&res.permissive),
         strict = signatures_to_r_list(&res.strict)
+    )
+}
+
+////////////
+// NEBULA //
+////////////
+
+/// Flatten the NEBULA fits into an R list
+///
+/// Shared by the single cell and meta cell entry points, which run the same
+/// kernel and only differ in where the counts come from.
+///
+/// `coefficients` and `se` arrive row-major over `n_kept * n_coef` and go back
+/// as matrices of genes x coefficients, so R never has to know the stride.
+///
+/// ### Params
+///
+/// * `res` - The `NebulaScRes` from the fit.
+///
+/// ### Returns
+///
+/// The results as an R list.
+pub fn nebula_res_to_r_list(res: NebulaScRes) -> List {
+    let n_kept = res.gene_idx.len();
+    let n_coef = res.n_coef;
+
+    let coefficients = RMatrix::new_matrix(n_kept, n_coef, |r, c| res.coefficients[r * n_coef + c]);
+    let se = RMatrix::new_matrix(n_kept, n_coef, |r, c| res.se[r * n_coef + c]);
+
+    // `cell_overdispersion_shrunk` is absent when the shrinkage was turned off.
+    // `Nullable` keeps that an R `NULL` rather than a zero-length vector, which
+    // would be indistinguishable from "every gene shrank to nothing".
+    let shrunk = match res.cell_overdispersion_shrunk {
+        Some(v) => Nullable::NotNull(v),
+        None => Nullable::Null,
+    };
+
+    list!(
+        gene_idx = res.gene_idx.r_int_convert(),
+        coefficients = coefficients,
+        se = se,
+        subject_overdispersion = res.subject_overdispersion,
+        cell_overdispersion = res.cell_overdispersion,
+        cell_overdispersion_shrunk = shrunk,
+        convergence = res.convergence,
+        sigma_at_bound = res.sigma_at_bound,
+        log_fc = res.log_fc,
+        effect_se = res.effect_se,
+        z = res.z,
+        p_values = res.p_val,
+        fdr = res.fdr
     )
 }
