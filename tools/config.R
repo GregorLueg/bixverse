@@ -139,22 +139,54 @@ is_windows <- .Platform[["OS.type"]] == "windows"
 
 # HDF5 provider. `bixverse-rs` 0.5.0 made the from-source HDF5 build opt-in
 # (`hdf5-static`, which this package turns on by default). Building it is the
-# only option that needs no system library, but it breaks on a cross-host
-# Windows build: cargo running from an msvc host against a `-pc-windows-gnu`
-# target makes `hdf5-metno-src` name its output the msvc way, and the link then
-# fails looking for `libhdf5`. That is exactly what the r-universe Windows jobs
-# hit.
+# only option that needs no system library, and it is the right one everywhere
+# except a cross-ABI Windows build: cargo running from an msvc host against a
+# `-pc-windows-gnu` target makes `hdf5-metno-src` name its output the msvc way,
+# and the link then fails looking for `libhdf5`. That is what the r-universe
+# Windows jobs hit, and only them.
 #
-# So on Windows we look for an external libhdf5 through pkg-config first.
+# There we look for an external libhdf5 through pkg-config instead.
 # `hdf5-metno-sys` skips its runtime version check precisely when pkg-config
 # wins on Windows, which is what makes a static-only Rtools HDF5 usable, and
 # pkg-config also hands back the transitive link flags so nothing has to be
-# guessed. No hit means the source build, i.e. today's behaviour.
+# guessed.
+#
+# The gate matters. A gnu host, which is what our own CI installs, builds HDF5
+# from source correctly, and putting Rtools' lib dir on the link line there
+# instead drags a second mingw runtime into it: the runner carries its own
+# mingw, whose `crt2.o` then resolves `libmsvcrt.a` out of Rtools and loses
+# `__p___initenv`.
 .cargo_features <- ""
 .hdf5_exports <- ""
 .hdf5_libs <- ""
+.hdf5_rustflags <- ""
 
-if (is_windows) {
+# `rustc -vV` reports the toolchain's own triple. The target is always a
+# `-pc-windows-gnu*` one here, since extendr links against the gnu ABI, so an
+# msvc host is exactly the cross-ABI case.
+rustc_host <- if (is_windows) {
+  out <- tryCatch(
+    system2("rustc", "-vV", stdout = TRUE, stderr = FALSE),
+    error = function(e) character(0),
+    warning = function(w) character(0)
+  )
+  host <- grep("^host: ", out, value = TRUE)
+  if (length(host)) sub("^host: ", "", host[1]) else ""
+} else {
+  ""
+}
+
+is_cross_abi <- grepl("windows-msvc", rustc_host, fixed = TRUE)
+
+if (is_windows && !is_cross_abi) {
+  message(
+    "Rust host `",
+    rustc_host,
+    "` matches the target ABI. Building HDF5 from source."
+  )
+}
+
+if (is_windows && is_cross_abi) {
   pkg_config <- Sys.which("pkg-config")
 
   candidates <- character(0)
@@ -220,7 +252,14 @@ if (is_windows) {
       shQuote(path, type = "sh"),
       " "
     )
-    .hdf5_libs <- paste0(trimws(paste(libs, collapse = " ")), " ")
+    flags <- trimws(paste(libs, collapse = " "))
+    # R links the final DLL with PKG_LIBS, but cargo links the `document`
+    # binary itself, so the same flags have to go both ways. `hdf5-metno-sys`
+    # emits a bare `-lhdf5` and drops pkg-config's Libs.private, which is why
+    # zlib and szip have to be handed over explicitly. rustc takes `-L`/`-l` in
+    # the attached form pkg-config already prints.
+    .hdf5_libs <- paste0(flags, " ")
+    .hdf5_rustflags <- paste0(" ", flags)
     message(
       "Found an external HDF5 via `",
       path,
@@ -271,7 +310,8 @@ new_txt <- gsub("@CRAN_FLAGS@", .cran_flags, mv_txt) |>
   # replacement is an escape rather than a literal.
   gsub("@CARGO_FEATURES@", .cargo_features, x = _, fixed = TRUE) |>
   gsub("@HDF5_EXPORTS@", .hdf5_exports, x = _, fixed = TRUE) |>
-  gsub("@HDF5_LIBS@", .hdf5_libs, x = _, fixed = TRUE)
+  gsub("@HDF5_LIBS@", .hdf5_libs, x = _, fixed = TRUE) |>
+  gsub("@HDF5_RUSTFLAGS@", .hdf5_rustflags, x = _, fixed = TRUE)
 
 message("Writing `", mv_ofp, "`.")
 con <- file(mv_ofp, open = "wb")

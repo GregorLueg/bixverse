@@ -36,7 +36,7 @@ $(STATLIB):
 
 	export CARGO_HOME=@CARGO_HOME@ && \
 	export PATH="$(PATH):$(HOME)/.cargo/bin" && \
-	@HDF5_EXPORTS@@PANIC_EXPORTS@@DEV_EXPORTS@RUSTFLAGS="$(RUSTFLAGS) --print=native-static-libs" cargo build @CRAN_FLAGS@ @CARGO_FEATURES@ --lib @PROFILE@ --manifest-path=./rust/Cargo.toml --target-dir $(TARGET_DIR) @TARGET@
+	@HDF5_EXPORTS@@PANIC_EXPORTS@@DEV_EXPORTS@RUSTFLAGS="$(RUSTFLAGS) --print=native-static-libs@HDF5_RUSTFLAGS@" cargo build @CRAN_FLAGS@ @CARGO_FEATURES@ --lib @PROFILE@ --manifest-path=./rust/Cargo.toml --target-dir $(TARGET_DIR) @TARGET@
 
 	# @PROFILE@ matters here. config.R pins it to --release, and without it
 	# cargo builds the document bin into target/debug, recompiling the lib and
@@ -47,7 +47,7 @@ $(STATLIB):
 	# second full compile.
 	export CARGO_HOME=@CARGO_HOME@ && \
 	export PATH="$(PATH):$(HOME)/.cargo/bin" && \
-	@HDF5_EXPORTS@@DEV_EXPORTS@cargo run @CRAN_FLAGS@ @CARGO_FEATURES@ @PROFILE@ --bin document --manifest-path=./rust/Cargo.toml --target-dir $(TARGET_DIR) @TARGET@
+	@HDF5_EXPORTS@@DEV_EXPORTS@RUSTFLAGS="$(RUSTFLAGS)@HDF5_RUSTFLAGS@" cargo run @CRAN_FLAGS@ @CARGO_FEATURES@ @PROFILE@ --bin document --manifest-path=./rust/Cargo.toml --target-dir $(TARGET_DIR) @TARGET@
 
 	# Always clean up CARGOTMP
 	rm -Rf $(CARGOTMP);
