@@ -74,6 +74,63 @@ pub fn flatten_dispersion_batches(results: Vec<HvgDispersionRes>) -> List {
 // kNN //
 /////////
 
+/// Pad a possibly ragged kNN graph out to a rectangular `k` columns.
+///
+/// The NN-Descent `extract_knn` path hands back the graph the descent built
+/// rather than beam searching it, and rows can come back shorter than `k`
+/// where the descent never filled them. Everything that crosses into R as a
+/// matrix needs a rectangle, so short rows are padded by repeating their last
+/// neighbour, and an empty row falls back to the node itself at distance zero.
+///
+/// The padding is a duplicate edge, not a new one, so anything downstream that
+/// deduplicates neighbours sees the true, shorter neighbourhood.
+///
+/// ### Params
+///
+/// * `indices` - Neighbour indices per node, mutated in place
+/// * `distances` - The matching distances, mutated in place when present
+/// * `k` - Target row length
+///
+/// ### Returns
+///
+/// The number of rows that needed padding.
+pub fn pad_knn_rows(
+    indices: &mut [Vec<usize>],
+    mut distances: Option<&mut [Vec<f32>]>,
+    k: usize,
+) -> usize {
+    let mut padded = 0;
+
+    for (i, idx_row) in indices.iter_mut().enumerate() {
+        if idx_row.len() >= k {
+            continue;
+        }
+        padded += 1;
+
+        let (fill_idx, fill_dist) = match (idx_row.last(), distances.as_ref()) {
+            (Some(&last), Some(dists)) => (last, dists[i].last().copied().unwrap_or(0.0)),
+            (Some(&last), None) => (last, 0.0),
+            (None, _) => (i, 0.0),
+        };
+
+        idx_row.resize(k, fill_idx);
+        if let Some(dists) = distances.as_mut() {
+            dists[i].resize(k, fill_dist);
+        }
+    }
+
+    if padded > 0 {
+        println!(
+            "[WARNING!] {} of {} rows came back with fewer than {} neighbours and were padded with duplicate edges. This is expected with 'extract_knn'; lower 'k' or turn it off to avoid it.",
+            padded,
+            indices.len(),
+            k
+        );
+    }
+
+    padded
+}
+
 /// Process R KNN indices to the Rust variant
 ///
 /// ### Params

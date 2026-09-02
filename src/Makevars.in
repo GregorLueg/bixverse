@@ -1,7 +1,7 @@
 TARGET_DIR = ./rust/target
 LIBDIR = $(TARGET_DIR)/@LIBDIR@
 STATLIB = $(LIBDIR)/libbixverse.a
-PKG_LIBS = -L$(LIBDIR) -lbixverse
+PKG_LIBS = -L$(LIBDIR) -lbixverse @HDF5_LIBS@
 
 all: $(SHLIB) rust_clean
 
@@ -36,18 +36,19 @@ $(STATLIB):
 
 	export CARGO_HOME=@CARGO_HOME@ && \
 	export PATH="$(PATH):$(HOME)/.cargo/bin" && \
-	@PANIC_EXPORTS@@DEV_EXPORTS@RUSTFLAGS="$(RUSTFLAGS) --print=native-static-libs" cargo build @CRAN_FLAGS@ --lib @PROFILE@ --manifest-path=./rust/Cargo.toml --target-dir $(TARGET_DIR) @TARGET@
+	@HDF5_EXPORTS@@PANIC_EXPORTS@@DEV_EXPORTS@RUSTFLAGS="$(RUSTFLAGS) --print=native-static-libs@HDF5_RUSTFLAGS@" cargo build @CRAN_FLAGS@ @CARGO_FEATURES@ --lib @PROFILE@ --manifest-path=./rust/Cargo.toml --target-dir $(TARGET_DIR) @TARGET@
 
 	# @PROFILE@ matters here. config.R pins it to --release, and without it
 	# cargo builds the document bin into target/debug, recompiling the lib and
 	# every transitive dependency a second time just to emit the wrappers.
 	#
-	# The dev profile overrides have to match the build above for the same
-	# reason: both invocations share one profile, so differing overrides mean a
-	# second full compile.
+	# RUSTFLAGS and the dev profile overrides have to match the build above for
+	# the same reason. Both invocations share one target dir, and cargo keys its
+	# fingerprint on RUSTFLAGS, so a flag set on one and not the other rebuilds
+	# the whole dependency tree just to emit the wrappers.
 	export CARGO_HOME=@CARGO_HOME@ && \
 	export PATH="$(PATH):$(HOME)/.cargo/bin" && \
-	@DEV_EXPORTS@cargo run @CRAN_FLAGS@ @PROFILE@ --bin document --manifest-path=./rust/Cargo.toml --target-dir $(TARGET_DIR) @TARGET@
+	@HDF5_EXPORTS@@DEV_EXPORTS@RUSTFLAGS="$(RUSTFLAGS) --print=native-static-libs@HDF5_RUSTFLAGS@" cargo run @CRAN_FLAGS@ @CARGO_FEATURES@ @PROFILE@ --bin document --manifest-path=./rust/Cargo.toml --target-dir $(TARGET_DIR) @TARGET@
 
 	# Always clean up CARGOTMP
 	rm -Rf $(CARGOTMP);

@@ -1711,6 +1711,9 @@ S7::method(fast_cluster_sc, SingleCells) <- function(
 #'   build non-deterministic. Bigger impact on smaller data sets.
 #'   \item `nndescent` - Nearest neighbour descent. Leverages concepts from
 #'   `PyNNDescent` and works well on very large data sets similar to `hnsw`.
+#'   Set `extract_knn = TRUE` in the kNN parameters to hand back the descent
+#'   graph directly instead of beam searching it. That drops the query pass
+#'   altogether, so it is much faster, but recall goes down a little.
 #'   \item `ivf` - Inverted file index. Uses first k-means clustering to
 #'   identify Voronoi cells and leverages these during querying. Works well
 #'   on large data sets with high dimensionality and when you need to return

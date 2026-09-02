@@ -68,16 +68,12 @@ extendr_module! {
 ///
 /// * `0` - Neighbour indices per meta cell, self excluded
 /// * `1` - The matching neighbour distances, ascending
-/// * `2` - Whether those distances hold `d^2`
-type ResolvedKnn = extendr_api::Result<(Vec<Vec<usize>>, Vec<Vec<f32>>, bool)>;
+type ResolvedKnn = extendr_api::Result<(Vec<Vec<usize>>, Vec<Vec<f32>>)>;
 
 /// Resolve the kNN graph the HotSpot kernel runs over.
 ///
 /// Either the pre-computed graph handed over from R, or one built from the
-/// embedding. Whether the distances are pre-squared follows from the metric,
-/// which is read off the supplied graph rather than the parameter list: a
-/// cached graph may well have been built with a different metric than
-/// `ann_dist` says.
+/// embedding.
 ///
 /// ### Params
 ///
@@ -91,8 +87,7 @@ type ResolvedKnn = extendr_api::Result<(Vec<Vec<usize>>, Vec<Vec<f32>>, bool)>;
 ///
 /// ### Returns
 ///
-/// The neighbour indices, their distances, and whether those distances hold
-/// `d^2`.
+/// The neighbour indices and their distances.
 fn resolve_knn_graph(
     knn_data: Nullable<List>,
     embd: MatRef<f32>,
@@ -108,9 +103,9 @@ fn resolve_knn_graph(
             .into_robj()
             .as_list()
             .ok_or_else(|| Error::Other("'knn_data' is not a list".into()))?;
-        let (knn_indices, knn_dist, _, dist_metric) = knn_data_to_rust(knn_data)?;
+        let (knn_indices, knn_dist, _, _) = knn_data_to_rust(knn_data)?;
 
-        Ok((knn_indices, knn_dist, distances_are_squared(&dist_metric)))
+        Ok((knn_indices, knn_dist))
     } else {
         if verbosity.normal_verbosity() {
             println!("Generating a kNN graph from scratch")
@@ -125,11 +120,7 @@ fn resolve_knn_graph(
         )
         .to_extendr()?;
 
-        Ok((
-            knn_indices,
-            knn_dist.unwrap(),
-            distances_are_squared(&knn_params.ann_dist),
-        ))
+        Ok((knn_indices, knn_dist.unwrap()))
     }
 }
 
@@ -292,9 +283,8 @@ fn rs_mc_vision(sparse_data: List, gs_list: List, verbose: usize) -> Result<RArr
 /// `sparse_data`.
 /// @param knn_data Optional list. This contains pre-computed kNN data
 /// (including distances) and the `dist_metric` it was built with. The user has
-/// to ensure consistency! If provided, this will be used and whether the
-/// distances are treated as squared is derived from `dist_metric` rather than
-/// from the parameter list.
+/// to ensure consistency! If provided, this will be used rather than a graph
+/// built from the parameter list.
 /// @param gs_list Nested list. Each sublist contains the (0-indexed!) positive
 /// and negative gene indices of that specific gene set.
 /// @param random_gs_list Double-nested list. The outer list represents the
@@ -380,7 +370,7 @@ fn rs_mc_vision_with_autocorrelation(
     let embd = r_matrix_to_faer_fp32(&embd);
     let knn_params = KnnParams::from_r_list(vision_params)?;
 
-    let (knn_indices, knn_dist, squared_distances) =
+    let (knn_indices, knn_dist) =
         resolve_knn_graph(knn_data, embd.as_ref(), &knn_params, seed, verbosity)?;
 
     let cluster_membership = cluster_membership.r_int_convert_shift();
@@ -391,7 +381,6 @@ fn rs_mc_vision_with_autocorrelation(
         &cluster_membership,
         knn_indices,
         knn_dist,
-        squared_distances,
         verbose,
     );
 
@@ -427,9 +416,8 @@ fn rs_mc_vision_with_autocorrelation(
 /// the kNN graph.
 /// @param knn_data Optional list. This contains pre-computed kNN data
 /// (including distances) and the `dist_metric` it was built with. The user has
-/// to ensure consistency! If provided, this will be used and whether the
-/// distances are treated as squared is derived from `dist_metric` rather than
-/// from the parameter list.
+/// to ensure consistency! If provided, this will be used rather than a graph
+/// built from the parameter list.
 /// @param hotspot_params List. The HotSpot parameter list. The kNN parameters
 /// are only read when no `knn_data` is provided.
 /// @param cells_to_keep Integer vector. 0-index vector indicating which meta
@@ -474,21 +462,19 @@ fn rs_mc_hotspot_autocor(
     );
 
     let verbosity = parse_verbosity_level(verbose);
-    let mut hotspot_params = HotSpotParams::from_r_list(hotspot_params)?;
+    let hotspot_params = HotSpotParams::from_r_list(hotspot_params)?;
 
     let embd = r_matrix_to_faer_fp32(&embd);
     let cells_to_keep = cells_to_keep.r_int_convert();
     let genes_to_use = genes_to_use.r_int_convert();
 
-    let (knn_indices, knn_dist, squared_distances) = resolve_knn_graph(
+    let (knn_indices, knn_dist) = resolve_knn_graph(
         knn_data,
         embd.as_ref(),
         &hotspot_params.knn_params,
         seed,
         verbosity,
     )?;
-
-    hotspot_params.graph_params.squared_distances = squared_distances;
 
     // HotSpot only ever reads the raw counts and the per-cell library sizes,
     // so the derived second layer goes unread here
@@ -533,9 +519,8 @@ fn rs_mc_hotspot_autocor(
 /// the kNN graph.
 /// @param knn_data Optional list. This contains pre-computed kNN data
 /// (including distances) and the `dist_metric` it was built with. The user has
-/// to ensure consistency! If provided, this will be used and whether the
-/// distances are treated as squared is derived from `dist_metric` rather than
-/// from the parameter list.
+/// to ensure consistency! If provided, this will be used rather than a graph
+/// built from the parameter list.
 /// @param hotspot_params List. The HotSpot parameter list. The kNN parameters
 /// are only read when no `knn_data` is provided; `normalise` is unused on this
 /// path.
@@ -577,21 +562,19 @@ fn rs_mc_hotspot_gene_cor(
     );
 
     let verbosity = parse_verbosity_level(verbose);
-    let mut hotspot_params = HotSpotParams::from_r_list(hotspot_params)?;
+    let hotspot_params = HotSpotParams::from_r_list(hotspot_params)?;
 
     let embd = r_matrix_to_faer_fp32(&embd);
     let cells_to_keep = cells_to_keep.r_int_convert();
     let genes_to_use = genes_to_use.r_int_convert();
 
-    let (knn_indices, knn_dist, squared_distances) = resolve_knn_graph(
+    let (knn_indices, knn_dist) = resolve_knn_graph(
         knn_data,
         embd.as_ref(),
         &hotspot_params.knn_params,
         seed,
         verbosity,
     )?;
-
-    hotspot_params.graph_params.squared_distances = squared_distances;
 
     let sparse = mc_list_to_sparse_u32(sparse_data)?;
 

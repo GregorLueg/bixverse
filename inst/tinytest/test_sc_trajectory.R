@@ -70,7 +70,7 @@ linear_knn <- knn_of(linear_data)
 expect_equal(
   current = linear_knn$dist_metric,
   target = "euclidean",
-  info = "sc trajectory - the kNN graph carries squared euclidean distances"
+  info = "sc trajectory - the kNN graph carries euclidean distances"
 )
 
 linear_res <- rs_palantir(

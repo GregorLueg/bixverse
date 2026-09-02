@@ -137,6 +137,142 @@ is_windows <- .Platform[["OS.type"]] == "windows"
   "./rust/target"
 }
 
+# HDF5 provider. `bixverse-rs` 0.5.0 made the from-source HDF5 build opt-in
+# (`hdf5-static`, which this package turns on by default). Building it is the
+# only option that needs no system library, and it is the right one everywhere
+# except a cross-ABI Windows build: cargo running from an msvc host against a
+# `-pc-windows-gnu` target makes `hdf5-metno-src` name its output the msvc way,
+# and the link then fails looking for `libhdf5`. That is what the r-universe
+# Windows jobs hit, and only them.
+#
+# There we look for an external libhdf5 through pkg-config instead.
+# `hdf5-metno-sys` skips its runtime version check precisely when pkg-config
+# wins on Windows, which is what makes a static-only Rtools HDF5 usable, and
+# pkg-config also hands back the transitive link flags so nothing has to be
+# guessed.
+#
+# The gate matters. A gnu host, which is what our own CI installs, builds HDF5
+# from source correctly, and putting Rtools' lib dir on the link line there
+# instead drags a second mingw runtime into it: the runner carries its own
+# mingw, whose `crt2.o` then resolves `libmsvcrt.a` out of Rtools and loses
+# `__p___initenv`.
+.cargo_features <- ""
+.hdf5_exports <- ""
+.hdf5_libs <- ""
+.hdf5_rustflags <- ""
+
+# `rustc -vV` reports the toolchain's own triple. The target is always a
+# `-pc-windows-gnu*` one here, since extendr links against the gnu ABI, so an
+# msvc host is exactly the cross-ABI case.
+rustc_host <- if (is_windows) {
+  out <- tryCatch(
+    system2("rustc", "-vV", stdout = TRUE, stderr = FALSE),
+    error = function(e) character(0),
+    warning = function(w) character(0)
+  )
+  host <- grep("^host: ", out, value = TRUE)
+  if (length(host)) sub("^host: ", "", host[1]) else ""
+} else {
+  ""
+}
+
+is_cross_abi <- grepl("windows-msvc", rustc_host, fixed = TRUE)
+
+if (is_windows && !is_cross_abi) {
+  message(
+    "Rust host `",
+    rustc_host,
+    "` matches the target ABI. Building HDF5 from source."
+  )
+}
+
+if (is_windows && is_cross_abi) {
+  pkg_config <- Sys.which("pkg-config")
+
+  candidates <- character(0)
+  if (nzchar(pkg_config)) {
+    rtools_homes <- Sys.getenv(c(
+      "RTOOLS45_AARCH64_HOME",
+      "RTOOLS45_HOME",
+      "RTOOLS44_HOME",
+      "RTOOLS43_HOME",
+      "RTOOLS42_HOME"
+    ))
+    rtools_homes <- unique(rtools_homes[nzchar(rtools_homes)])
+    prefixes <- c(
+      "x86_64-w64-mingw32.static.posix",
+      "aarch64-w64-mingw32.static.posix",
+      "clang-aarch64",
+      "ucrt64",
+      "mingw64"
+    )
+    candidates <- file.path(
+      rep(rtools_homes, each = length(prefixes)),
+      prefixes,
+      "lib",
+      "pkgconfig"
+    )
+    candidates <- candidates[dir.exists(candidates)]
+    # whatever the caller already set stays first in line
+    candidates <- c(Sys.getenv("PKG_CONFIG_PATH"), candidates)
+    candidates <- unique(candidates[nzchar(candidates)])
+  }
+
+  # `system2(env = )` is documented as unsupported on Windows, which is the
+  # only platform this branch runs on, so the variable is set and restored
+  # around the probe instead.
+  old_pkg_config_path <- Sys.getenv("PKG_CONFIG_PATH", unset = NA)
+  on.exit(
+    if (is.na(old_pkg_config_path)) {
+      Sys.unsetenv("PKG_CONFIG_PATH")
+    } else {
+      Sys.setenv(PKG_CONFIG_PATH = old_pkg_config_path)
+    },
+    add = TRUE
+  )
+
+  for (path in candidates) {
+    # forward slashes, or the Makevars recipe and pkg-config disagree about
+    # what a backslash means
+    path <- normalizePath(path, winslash = "/", mustWork = FALSE)
+    Sys.setenv(PKG_CONFIG_PATH = path)
+    libs <- suppressWarnings(system2(
+      pkg_config,
+      c("--libs", "--static", "hdf5"),
+      stdout = TRUE,
+      stderr = FALSE
+    ))
+    if (!is.null(attr(libs, "status")) || !length(libs)) {
+      next
+    }
+    .cargo_features <- "--no-default-features"
+    # the recipe runs under sh, not cmd, whatever the host is
+    .hdf5_exports <- paste0(
+      "PKG_CONFIG_PATH=",
+      shQuote(path, type = "sh"),
+      " "
+    )
+    flags <- trimws(paste(libs, collapse = " "))
+    # R links the final DLL with PKG_LIBS, but cargo links the `document`
+    # binary itself, so the same flags have to go both ways. `hdf5-metno-sys`
+    # emits a bare `-lhdf5` and drops pkg-config's Libs.private, which is why
+    # zlib and szip have to be handed over explicitly. rustc takes `-L`/`-l` in
+    # the attached form pkg-config already prints.
+    .hdf5_libs <- paste0(flags, " ")
+    .hdf5_rustflags <- paste0(" ", flags)
+    message(
+      "Found an external HDF5 via `",
+      path,
+      "`. Skipping the source build."
+    )
+    break
+  }
+
+  if (!nzchar(.cargo_features)) {
+    message("No external HDF5 found. Building it from source.")
+  }
+}
+
 # if windows we replace in the Makevars.win.in
 mv_fp <- ifelse(
   is_windows,
@@ -169,7 +305,13 @@ new_txt <- gsub("@CRAN_FLAGS@", .cran_flags, mv_txt) |>
   gsub("@PANIC_EXPORTS@", .panic_exports, x = _) |>
   gsub("@CARGO_HOME@", .cargo_home, x = _) |>
   gsub("@DEV_EXPORTS@", .dev_exports, x = _) |>
-  gsub("@TARGET_DIR@", .target_dir, x = _)
+  gsub("@TARGET_DIR@", .target_dir, x = _) |>
+  # fixed = TRUE: these carry Windows paths, and a backslash in a gsub
+  # replacement is an escape rather than a literal.
+  gsub("@CARGO_FEATURES@", .cargo_features, x = _, fixed = TRUE) |>
+  gsub("@HDF5_EXPORTS@", .hdf5_exports, x = _, fixed = TRUE) |>
+  gsub("@HDF5_LIBS@", .hdf5_libs, x = _, fixed = TRUE) |>
+  gsub("@HDF5_RUSTFLAGS@", .hdf5_rustflags, x = _, fixed = TRUE)
 
 message("Writing `", mv_ofp, "`.")
 con <- file(mv_ofp, open = "wb")

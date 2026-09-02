@@ -13,6 +13,7 @@ KNN_PARAM_NAMES <- c(
   "delta",
   "diversify_prob",
   "ef_budget",
+  "extract_knn",
   "m",
   "ef_construction",
   "ef_search",
@@ -1422,6 +1423,16 @@ checkKnnParams <- function(x, required_params = NULL) {
     return(res)
   }
 
+  res <- apply_qtest_rules(
+    x,
+    list(extract_knn = "B1"),
+    label = "kNN params",
+    hint = "extract_knn must be a single boolean."
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
   apply_choice_rules(
     x,
     list(
@@ -2336,6 +2347,7 @@ checkScKnn <- function(x) {
       "delta",
       "diversify_prob",
       "ef_budget",
+      "extract_knn",
       "m",
       "ef_construction",
       "ef_search",
@@ -2354,6 +2366,7 @@ checkScKnn <- function(x) {
       n_trees = "I1[1,)",
       delta = "N1(0,)",
       diversify_prob = "N1[0,1]",
+      extract_knn = "B1",
       m = "I1[1,)",
       ef_construction = "I1[1,)",
       ef_search = "I1[1,)",
@@ -2367,6 +2380,7 @@ checkScKnn <- function(x) {
       "k, n_trees, m, ef_construction and ef_search must be positive integers;",
       "delta must be a positive numeric;",
       "diversify_prob must be a numeric in [0, 1];",
+      "extract_knn must be a single boolean;",
       "search_budget, ef_budget, n_list and n_probe must be NULL or positive integers."
     )
   )

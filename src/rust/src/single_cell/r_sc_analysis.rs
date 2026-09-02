@@ -562,9 +562,8 @@ fn rs_vision(
 /// kNN graph.
 /// @param knn_data Optional list. This contains pre-computed kNN data
 /// (including distances) and the `dist_metric` it was built with. The user has
-/// to ensure consistency! If provided, this will be used and whether the
-/// distances are treated as squared is derived from `dist_metric` rather than
-/// from the parameter list.
+/// to ensure consistency! If provided, this will be used rather than a graph
+/// built from the parameter list.
 /// @param gs_list Nested list. Each sublist contains the (0-indexed!) positive
 /// and negative gene indices of that specific gene set.
 /// @param random_gs_list Double-nested list. The outer list represents the
@@ -663,7 +662,7 @@ fn rs_vision_with_autocorrelation(
     let embd = r_matrix_to_faer_fp32(&embd);
     let knn_params = KnnParams::from_r_list(vision_params)?;
 
-    let (knn_indices, knn_dist, squared_distances) = if knn_provided {
+    let (knn_indices, knn_dist) = if knn_provided {
         if verbosity.normal_verbosity() {
             println!("Using provided kNN graph.")
         }
@@ -672,9 +671,9 @@ fn rs_vision_with_autocorrelation(
             .into_robj()
             .as_list()
             .ok_or_else(|| Error::Other("'knn_data' is not a list".into()))?;
-        let (knn_indices, knn_dist, _, dist_metric) = knn_data_to_rust(knn_data)?;
+        let (knn_indices, knn_dist, _, _) = knn_data_to_rust(knn_data)?;
 
-        (knn_indices, knn_dist, distances_are_squared(&dist_metric))
+        (knn_indices, knn_dist)
     } else {
         if verbosity.normal_verbosity() {
             println!("Generating a kNN graph from scratch.")
@@ -690,11 +689,7 @@ fn rs_vision_with_autocorrelation(
         )
         .to_extendr()?;
 
-        (
-            knn_indices,
-            knn_dist.unwrap(),
-            distances_are_squared(&knn_params.ann_dist),
-        )
+        (knn_indices, knn_dist.unwrap())
     };
 
     let cluster_membership = cluster_membership.r_int_convert_shift();
@@ -705,7 +700,6 @@ fn rs_vision_with_autocorrelation(
         &cluster_membership,
         knn_indices,
         knn_dist,
-        squared_distances,
         verbose,
     );
 
@@ -743,9 +737,8 @@ fn rs_vision_with_autocorrelation(
 /// as the embedding matrix.
 /// @param knn_data Optional list. This contains pre-computed kNN data
 /// (including distances) and the `dist_metric` it was built with. The user has
-/// to ensure consistency! If provided, this will be used and whether the
-/// distances are treated as squared is derived from `dist_metric` rather than
-/// from the parameter list.
+/// to ensure consistency! If provided, this will be used rather than a graph
+/// built from the parameter list.
 /// @param genes_to_use Integer vector. 0-index vector indicating which genes
 /// to include.
 /// @param streaming Boolean. Shall the data be streamed in chunks. Useful
@@ -791,13 +784,13 @@ fn rs_hotspot_autocor(
     let verbosity = parse_verbosity_level(verbose);
     let knn_provided = knn_data != extendr_api::Nullable::Null;
 
-    let mut hotspot_params = HotSpotParams::from_r_list(hotspot_params)?;
+    let hotspot_params = HotSpotParams::from_r_list(hotspot_params)?;
 
     let embd = r_matrix_to_faer_fp32(&embd);
     let cells_to_keep = cells_to_keep.r_int_convert();
     let genes_to_use = genes_to_use.r_int_convert();
 
-    let (knn_indices, knn_dist, squared_distances) = if knn_provided {
+    let (knn_indices, knn_dist) = if knn_provided {
         if verbosity.normal_verbosity() {
             println!("Using provided kNN graph...")
         }
@@ -805,9 +798,9 @@ fn rs_hotspot_autocor(
             .into_robj()
             .as_list()
             .ok_or_else(|| Error::Other("'knn_data' is not a list".into()))?;
-        let (knn_indices, knn_dist, _, dist_metric) = knn_data_to_rust(knn_data)?;
+        let (knn_indices, knn_dist, _, _) = knn_data_to_rust(knn_data)?;
 
-        (knn_indices, knn_dist, distances_are_squared(&dist_metric))
+        (knn_indices, knn_dist)
     } else {
         if verbosity.normal_verbosity() {
             println!("Generating a kNN graph from scratch")
@@ -823,16 +816,8 @@ fn rs_hotspot_autocor(
         )
         .to_extendr()?;
 
-        (
-            knn_indices,
-            knn_dist.unwrap(),
-            distances_are_squared(&hotspot_params.knn_params.ann_dist),
-        )
+        (knn_indices, knn_dist.unwrap())
     };
-
-    // the parsed params derive this from `ann_dist`, which is the wrong source
-    // when the graph came in pre-computed under a different metric
-    hotspot_params.graph_params.squared_distances = squared_distances;
 
     let gene_reader = ParallelSparseReader::new(&f_path_genes).to_extendr()?;
     let cell_reader = ParallelSparseReader::new(&f_path_cells).to_extendr()?;
@@ -889,9 +874,8 @@ fn rs_hotspot_autocor(
 /// the kNN graph.
 /// @param knn_data Optional list. This contains pre-computed kNN data
 /// (including distances) and the `dist_metric` it was built with. The user has
-/// to ensure consistency! If provided, this will be used and whether the
-/// distances are treated as squared is derived from `dist_metric` rather than
-/// from the parameter list.
+/// to ensure consistency! If provided, this will be used rather than a graph
+/// built from the parameter list.
 /// @param hotspot_params List. The HotSpot parameter list.
 /// @param cells_to_keep Integer vector. 0-index vector indicating which cells
 /// to include in the analysis. Ensure that this is of same order/length
@@ -940,12 +924,12 @@ fn rs_hotspot_gene_cor(
     let cells_to_keep = cells_to_keep.r_int_convert();
     let genes_to_use = genes_to_use.r_int_convert();
 
-    let mut hotspot_params = HotSpotParams::from_r_list(hotspot_params)?;
+    let hotspot_params = HotSpotParams::from_r_list(hotspot_params)?;
 
     let verbosity = parse_verbosity_level(verbose);
     let knn_provided = knn_data != extendr_api::Nullable::Null;
 
-    let (knn_indices, knn_dist, squared_distances) = if knn_provided {
+    let (knn_indices, knn_dist) = if knn_provided {
         if verbosity.normal_verbosity() {
             println!("Using provided kNN graph...")
         }
@@ -953,9 +937,9 @@ fn rs_hotspot_gene_cor(
             .into_robj()
             .as_list()
             .ok_or_else(|| Error::Other("'knn_data' is not a list".into()))?;
-        let (knn_indices, knn_dist, _, dist_metric) = knn_data_to_rust(knn_data)?;
+        let (knn_indices, knn_dist, _, _) = knn_data_to_rust(knn_data)?;
 
-        (knn_indices, knn_dist, distances_are_squared(&dist_metric))
+        (knn_indices, knn_dist)
     } else {
         if verbosity.normal_verbosity() {
             println!("Generating a kNN graph from scratch")
@@ -971,16 +955,8 @@ fn rs_hotspot_gene_cor(
         )
         .to_extendr()?;
 
-        (
-            knn_indices,
-            knn_dist.unwrap(),
-            distances_are_squared(&hotspot_params.knn_params.ann_dist),
-        )
+        (knn_indices, knn_dist.unwrap())
     };
-
-    // the parsed params derive this from `ann_dist`, which is the wrong source
-    // when the graph came in pre-computed under a different metric
-    hotspot_params.graph_params.squared_distances = squared_distances;
 
     let gene_reader = ParallelSparseReader::new(&f_path_genes).to_extendr()?;
     let cell_reader = ParallelSparseReader::new(&f_path_cells).to_extendr()?;
@@ -1715,7 +1691,7 @@ fn rs_meld_sc(
     // deal with kNN
     let knn_provided = knn_data != extendr_api::Nullable::Null;
 
-    let (knn_indices, knn_dist, dist) = if knn_provided {
+    let (knn_indices, knn_dist) = if knn_provided {
         if verbosity.normal_verbosity() {
             println!("Using provided kNN graph...")
         }
@@ -1723,9 +1699,9 @@ fn rs_meld_sc(
             .into_robj()
             .as_list()
             .ok_or_else(|| Error::Other("'knn_data' is not a list".into()))?;
-        let (knn_indices, knn_dist, _, dist) = knn_data_to_rust(knn_data)?;
+        let (knn_indices, knn_dist, _, _) = knn_data_to_rust(knn_data)?;
 
-        (knn_indices, knn_dist, dist)
+        (knn_indices, knn_dist)
     } else {
         if verbosity.normal_verbosity() {
             println!("Generating a kNN graph from scratch")
@@ -1741,21 +1717,14 @@ fn rs_meld_sc(
         )
         .to_extendr()?;
 
-        (
-            knn_indices,
-            knn_dist.unwrap(),
-            meld_params.knn_params.ann_dist.clone(),
-        )
+        (knn_indices, knn_dist.unwrap())
     };
-
-    let is_squared_distance = dist == "euclidean";
 
     let (meld_raw, meld_norm) = meld(
         &knn_indices,
         &knn_dist,
         &labels,
         n_labels,
-        is_squared_distance,
         &meld_params,
         seed as u64,
         verbose,

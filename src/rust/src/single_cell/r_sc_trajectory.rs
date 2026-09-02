@@ -40,8 +40,7 @@ extendr_module! {
 /// reference measures them.
 ///
 /// @param knn_data List. The `SingleCellNearestNeighbour` data with `indices`
-/// (0-indexed!), `dist`, `k` and `dist_metric`. Whether the distances are
-/// treated as squared is derived from `dist_metric`.
+/// (0-indexed!), `dist`, `k` and `dist_metric`.
 /// @param palantir_params List. Parameter list, see
 /// [bixverse::params_sc_palantir()].
 /// @param early_cell Integer. Index (0-indexed!) of the early cell within the
@@ -99,9 +98,8 @@ fn rs_palantir(
     seed: usize,
     verbose: usize,
 ) -> Result<List> {
-    let (knn_indices, knn_distances, _, distance) = knn_data_to_rust(knn_data)?;
+    let (knn_indices, knn_distances, _, _) = knn_data_to_rust(knn_data)?;
     let params = PalantirParams::from_r_list(palantir_params)?;
-    let squared_dist = distance == "euclidean";
 
     let terminal_states: Option<Vec<usize>> = match terminal_states {
         Nullable::Null => None,
@@ -111,7 +109,6 @@ fn rs_palantir(
     let res = run_palantir(
         &knn_indices,
         &knn_distances,
-        squared_dist,
         early_cell,
         terminal_states.as_deref(),
         params,

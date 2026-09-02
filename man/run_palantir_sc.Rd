@@ -68,10 +68,9 @@ reaching each terminal state, and the differentiation entropy derived from
 those probabilities. For details, please refer to Setty, et al.
 
 The kNN graph stored on the object feeds the diffusion kernel, so run
-\code{\link[=find_neighbours_sc]{find_neighbours_sc()}} first. Whether the stored distances are
-treated as squared is derived from the distance metric of that graph. The
-geodesics themselves are measured over a second kNN graph that Palantir
-builds internally on the multiscale space, controlled by the \code{knn} element of
+\code{\link[=find_neighbours_sc]{find_neighbours_sc()}} first. The geodesics themselves are measured
+over a second kNN graph that Palantir builds internally on the multiscale
+space, controlled by the \code{knn} element of
 \code{\link[=params_sc_palantir]{params_sc_palantir()}}.
 
 For \code{SingleCellsMultiModal} the \code{"wnn"} graph works, but its distances are

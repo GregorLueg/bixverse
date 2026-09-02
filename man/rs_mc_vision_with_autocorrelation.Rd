@@ -27,9 +27,8 @@ kNN graph. Needs to be of the same order/length as the meta cells in
 
 \item{knn_data}{Optional list. This contains pre-computed kNN data
 (including distances) and the \code{dist_metric} it was built with. The user has
-to ensure consistency! If provided, this will be used and whether the
-distances are treated as squared is derived from \code{dist_metric} rather than
-from the parameter list.}
+to ensure consistency! If provided, this will be used rather than a graph
+built from the parameter list.}
 
 \item{gs_list}{Nested list. Each sublist contains the (0-indexed!) positive
 and negative gene indices of that specific gene set.}

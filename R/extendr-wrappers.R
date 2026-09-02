@@ -3649,8 +3649,7 @@ rs_fast_cluster_sc_grid <- function(embd, km_type, resolutions, n_centroids, fc_
 #' @param f_path String. Path to the `counts_genes.bin` file.
 #' @param knn_data List. The `SingleCellNearestNeighbour` data with `indices`
 #' (0-indexed!), `dist`, `k` and `dist_metric`. The indices are positions
-#' within `cell_indices`, not global cell ids. Whether the distances are
-#' treated as squared is derived from `dist_metric`.
+#' within `cell_indices`, not global cell ids.
 #' @param cell_indices Integer vector. The global cell indices (0-indexed!)
 #' the kNN graph was built over, in kNN row order.
 #' @param total_cells Integer. The cell count of the binary store, not of the
@@ -3833,9 +3832,8 @@ rs_regulon_thresholds <- function(auc_matrix, binarise_params) .Call(wrap__rs_re
 #' as the embedding matrix.
 #' @param knn_data Optional list. This contains pre-computed kNN data
 #' (including distances) and the `dist_metric` it was built with. The user has
-#' to ensure consistency! If provided, this will be used and whether the
-#' distances are treated as squared is derived from `dist_metric` rather than
-#' from the parameter list.
+#' to ensure consistency! If provided, this will be used rather than a graph
+#' built from the parameter list.
 #' @param genes_to_use Integer vector. 0-index vector indicating which genes
 #' to include.
 #' @param streaming Boolean. Shall the data be streamed in chunks. Useful
@@ -3891,9 +3889,8 @@ rs_hotspot_cluster_genes <- function(z_matrix, fdr_threshold, min_size) .Call(wr
 #' the kNN graph.
 #' @param knn_data Optional list. This contains pre-computed kNN data
 #' (including distances) and the `dist_metric` it was built with. The user has
-#' to ensure consistency! If provided, this will be used and whether the
-#' distances are treated as squared is derived from `dist_metric` rather than
-#' from the parameter list.
+#' to ensure consistency! If provided, this will be used rather than a graph
+#' built from the parameter list.
 #' @param hotspot_params List. The HotSpot parameter list.
 #' @param cells_to_keep Integer vector. 0-index vector indicating which cells
 #' to include in the analysis. Ensure that this is of same order/length
@@ -4155,9 +4152,8 @@ rs_vision <- function(f_path, gs_list, cells_to_keep, streaming, verbose) .Call(
 #' kNN graph.
 #' @param knn_data Optional list. This contains pre-computed kNN data
 #' (including distances) and the `dist_metric` it was built with. The user has
-#' to ensure consistency! If provided, this will be used and whether the
-#' distances are treated as squared is derived from `dist_metric` rather than
-#' from the parameter list.
+#' to ensure consistency! If provided, this will be used rather than a graph
+#' built from the parameter list.
 #' @param gs_list Nested list. Each sublist contains the (0-indexed!) positive
 #' and negative gene indices of that specific gene set.
 #' @param random_gs_list Double-nested list. The outer list represents the
@@ -4954,8 +4950,7 @@ rs_extract_grouped_gene_stats <- function(f_path, cell_indices, gene_indices, gr
 #' reference measures them.
 #'
 #' @param knn_data List. The `SingleCellNearestNeighbour` data with `indices`
-#' (0-indexed!), `dist`, `k` and `dist_metric`. Whether the distances are
-#' treated as squared is derived from `dist_metric`.
+#' (0-indexed!), `dist`, `k` and `dist_metric`.
 #' @param palantir_params List. Parameter list, see
 #' [bixverse::params_sc_palantir()].
 #' @param early_cell Integer. Index (0-indexed!) of the early cell within the
@@ -5248,9 +5243,8 @@ rs_mc_aucell <- function(sparse_data, gs_list, aucell_params, verbose) .Call(wra
 #' the kNN graph.
 #' @param knn_data Optional list. This contains pre-computed kNN data
 #' (including distances) and the `dist_metric` it was built with. The user has
-#' to ensure consistency! If provided, this will be used and whether the
-#' distances are treated as squared is derived from `dist_metric` rather than
-#' from the parameter list.
+#' to ensure consistency! If provided, this will be used rather than a graph
+#' built from the parameter list.
 #' @param hotspot_params List. The HotSpot parameter list. The kNN parameters
 #' are only read when no `knn_data` is provided.
 #' @param cells_to_keep Integer vector. 0-index vector indicating which meta
@@ -5298,9 +5292,8 @@ rs_mc_hotspot_autocor <- function(sparse_data, embd, knn_data, hotspot_params, c
 #' the kNN graph.
 #' @param knn_data Optional list. This contains pre-computed kNN data
 #' (including distances) and the `dist_metric` it was built with. The user has
-#' to ensure consistency! If provided, this will be used and whether the
-#' distances are treated as squared is derived from `dist_metric` rather than
-#' from the parameter list.
+#' to ensure consistency! If provided, this will be used rather than a graph
+#' built from the parameter list.
 #' @param hotspot_params List. The HotSpot parameter list. The kNN parameters
 #' are only read when no `knn_data` is provided; `normalise` is unused on this
 #' path.
@@ -5372,9 +5365,8 @@ rs_mc_vision <- function(sparse_data, gs_list, verbose) .Call(wrap__rs_mc_vision
 #' `sparse_data`.
 #' @param knn_data Optional list. This contains pre-computed kNN data
 #' (including distances) and the `dist_metric` it was built with. The user has
-#' to ensure consistency! If provided, this will be used and whether the
-#' distances are treated as squared is derived from `dist_metric` rather than
-#' from the parameter list.
+#' to ensure consistency! If provided, this will be used rather than a graph
+#' built from the parameter list.
 #' @param gs_list Nested list. Each sublist contains the (0-indexed!) positive
 #' and negative gene indices of that specific gene set.
 #' @param random_gs_list Double-nested list. The outer list represents the
