@@ -186,19 +186,24 @@ if (is_windows && !is_cross_abi) {
   )
 }
 
+rtools_homes <- if (is_windows) {
+  homes <- Sys.getenv(c(
+    "RTOOLS45_AARCH64_HOME",
+    "RTOOLS45_HOME",
+    "RTOOLS44_HOME",
+    "RTOOLS43_HOME",
+    "RTOOLS42_HOME"
+  ))
+  unique(homes[nzchar(homes)])
+} else {
+  character(0)
+}
+
 if (is_windows && is_cross_abi) {
   pkg_config <- Sys.which("pkg-config")
 
   candidates <- character(0)
   if (nzchar(pkg_config)) {
-    rtools_homes <- Sys.getenv(c(
-      "RTOOLS45_AARCH64_HOME",
-      "RTOOLS45_HOME",
-      "RTOOLS44_HOME",
-      "RTOOLS43_HOME",
-      "RTOOLS42_HOME"
-    ))
-    rtools_homes <- unique(rtools_homes[nzchar(rtools_homes)])
     prefixes <- c(
       "x86_64-w64-mingw32.static.posix",
       "aarch64-w64-mingw32.static.posix",
@@ -273,6 +278,56 @@ if (is_windows && is_cross_abi) {
   }
 }
 
+# used to replace @LINKER_RUSTFLAGS@. Cross-ABI again, and only for the
+# `-pc-windows-gnu` targets: there rustc drives the link through
+# `<triple>-gcc`, a name Rtools does not ship, so it resolves to whatever
+# mingw the image happens to carry (`C:/mingw64` on the r-universe x86_64
+# runners, GCC 15). That gcc contributes its own `crt2.o`, which then resolves
+# `libmsvcrt.a` out of the HDF5 `-L` above and comes up short on
+# `__p___initenv`. Two mingw runtimes in one link.
+#
+# Pinning the linker to the gcc R itself uses puts the CRT and the HDF5
+# library back in the same toolchain, and matches what a gnu-host build gets
+# by default. The `gnullvm` targets (the Windows arm64 jobs) link through
+# rust-lld with no external gcc, so they are left alone.
+.linker_rustflags <- ""
+
+if (
+  is_windows &&
+    is_cross_abi &&
+    !grepl("gnullvm", Sys.getenv("CARGO_BUILD_TARGET"), fixed = TRUE)
+) {
+  gcc <- Sys.which("gcc")
+  if (!nzchar(gcc)) {
+    fallback <- file.path(
+      rtools_homes,
+      paste0(R.version$arch, "-w64-mingw32.static.posix"),
+      "bin",
+      "gcc.exe"
+    )
+    fallback <- fallback[file.exists(fallback)]
+    if (length(fallback)) {
+      gcc <- fallback[1]
+    }
+  }
+  if (nzchar(gcc)) {
+    gcc <- normalizePath(gcc, winslash = "/", mustWork = FALSE)
+    # RUSTFLAGS is split on whitespace, so a path with a space in it has to go
+    # in as the 8.3 short name.
+    if (grepl(" ", gcc, fixed = TRUE)) {
+      gcc <- normalizePath(
+        utils::shortPathName(gcc),
+        winslash = "/",
+        mustWork = FALSE
+      )
+    }
+    .linker_rustflags <- paste0(" -Clinker=", gcc)
+    message("Pinning the Rust linker to `", gcc, "`.")
+  } else {
+    message("No Rtools `gcc` found. Leaving the Rust linker to rustc.")
+  }
+}
+
 # if windows we replace in the Makevars.win.in
 mv_fp <- ifelse(
   is_windows,
@@ -311,7 +366,8 @@ new_txt <- gsub("@CRAN_FLAGS@", .cran_flags, mv_txt) |>
   gsub("@CARGO_FEATURES@", .cargo_features, x = _, fixed = TRUE) |>
   gsub("@HDF5_EXPORTS@", .hdf5_exports, x = _, fixed = TRUE) |>
   gsub("@HDF5_LIBS@", .hdf5_libs, x = _, fixed = TRUE) |>
-  gsub("@HDF5_RUSTFLAGS@", .hdf5_rustflags, x = _, fixed = TRUE)
+  gsub("@HDF5_RUSTFLAGS@", .hdf5_rustflags, x = _, fixed = TRUE) |>
+  gsub("@LINKER_RUSTFLAGS@", .linker_rustflags, x = _, fixed = TRUE)
 
 message("Writing `", mv_ofp, "`.")
 con <- file(mv_ofp, open = "wb")
