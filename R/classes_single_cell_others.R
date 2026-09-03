@@ -1079,15 +1079,19 @@ print.Hotspot <- function(x, ...) {
 #' Plot the Hotspot Z-score matrix
 #'
 #' @description
-#' Produces a heatmap of the pairwise gene-gene Z-score matrix. If module
-#' membership has been computed via [generate_hotspot_membership()], genes
-#' are ordered by module and unassigned genes are excluded. If no membership
-#' is available, all genes are shown.
+#' Heatmap of the pairwise gene-gene Z-scores. With module membership from
+#' [generate_hotspot_membership()] the plot keeps the `top_k` largest modules,
+#' orders genes within each module by hierarchical clustering and separates and
+#' labels the module blocks, so the block structure is actually readable.
+#' Without membership every gene is shown in the order it comes in.
 #'
 #' @param x A `Hotspot` object.
-#' @param max_genes Integer. Maximum number of genes to plot. If the number
-#' of genes exceeds this, a random subsample is drawn (stratified by module
-#' if membership is available). Set to `NULL` to disable. Default 500.
+#' @param top_k Integer. Number of modules to keep, ranked by gene count. Set to
+#' `NULL` to keep all of them. Ignored when no membership has been computed.
+#' Defaults to `5L`.
+#' @param max_genes Integer. Maximum number of genes to plot. Above this a
+#' subsample is drawn, allocated across the kept modules in proportion to their
+#' size. Set to `NULL` to disable. Defaults to `500L`.
 #' @param seed Integer. Seed for reproducible subsampling.
 #' @param ... Further arguments (currently unused).
 #'
@@ -1098,38 +1102,85 @@ print.Hotspot <- function(x, ...) {
 #' @export
 #'
 #' @keywords internal
-plot.Hotspot <- function(x, max_genes = 500L, seed = 42L, ...) {
+plot.Hotspot <- function(x, top_k = 5L, max_genes = 500L, seed = 42L, ...) {
   if (!requireNamespace("ggplot2", quietly = TRUE)) {
     stop("ggplot2 is required for plotting.")
   }
+
+  # Globals scope check
+  . <- `:=` <- cluster_member <- gene_id <- NULL
+  gene_1 <- gene_2 <- z_score <- z_capped <- N <- NULL
+
+  # Checks
   checkmate::assertClass(x, "Hotspot")
-  checkmate::qassert(max_genes, "I1")
+  checkmate::qassert(top_k, c("I1[1,)", "0"))
+  checkmate::qassert(max_genes, c("I1[2,)", "0"))
   checkmate::qassert(seed, "I1")
 
   z_mat <- x$z
 
-  if (!is.null(x$module_memership)) {
-    membership <- data.table::copy(x$module_memership)
-    membership <- membership[!is.na(cluster_member)]
-    data.table::setorder(membership, cluster_member)
+  membership <- x[["module_memership"]]
+  if (!is.null(membership)) {
+    membership <- data.table::copy(membership)[!is.na(cluster_member)]
+  }
 
-    if (!is.null(max_genes) && nrow(membership) > max_genes) {
-      set.seed(seed)
-      membership <- membership[,
-        .SD[sample(.N, min(.N, ceiling(max_genes * .N / nrow(membership))))],
-        by = cluster_member
-      ]
-      data.table::setorder(membership, cluster_member)
+  if (is.null(membership) || nrow(membership) == 0L) {
+    if (!is.null(x[["module_memership"]])) {
+      warning("No gene was assigned to a module. Plotting all genes.")
     }
 
-    gene_order <- membership$gene_id
-  } else {
     gene_order <- rownames(z_mat)
-
     if (!is.null(max_genes) && length(gene_order) > max_genes) {
       set.seed(seed)
       gene_order <- sample(gene_order, max_genes)
     }
+    blocks <- NULL
+  } else {
+    if (!is.null(top_k)) {
+      sizes <- membership[, .N, by = cluster_member]
+      data.table::setorder(sizes, -N, cluster_member)
+      membership <- membership[
+        cluster_member %in% utils::head(sizes$cluster_member, top_k)
+      ]
+    }
+
+    if (!is.null(max_genes) && nrow(membership) > max_genes) {
+      # Proportional allocation, but never below two genes: a module reduced to
+      # a single tile is worse than not showing it at all.
+      n_total <- nrow(membership)
+      set.seed(seed)
+      membership <- membership[,
+        .SD[sample(.N, min(.N, max(2L, round(max_genes * .N / n_total))))],
+        by = cluster_member
+      ]
+    }
+
+    sizes <- membership[, .N, by = cluster_member]
+    data.table::setorder(sizes, cluster_member)
+
+    # Ordering within a module is what turns the block into something with
+    # structure rather than a uniform square.
+    gene_order <- unlist(
+      purrr::map(sizes$cluster_member, \(module) {
+        genes <- membership[cluster_member == module, gene_id]
+        if (length(genes) < 3L) {
+          return(genes)
+        }
+        sub_mat <- z_mat[genes, genes]
+        genes[fastcluster::hclust(dist(sub_mat), method = "ward.D2")$order]
+      }),
+      use.names = FALSE
+    )
+
+    blocks <- data.table::data.table(
+      module = sizes$cluster_member,
+      n = sizes$N,
+      end = cumsum(sizes$N)
+    )
+    blocks[, `:=`(
+      mid_gene = gene_order[floor(end - n / 2) + 1L],
+      label = sprintf("M%d (%d)", as.integer(module), n)
+    )]
   }
 
   z_mat <- z_mat[gene_order, gene_order]
@@ -1146,7 +1197,7 @@ plot.Hotspot <- function(x, max_genes = 500L, seed = 42L, ...) {
   cap <- quantile(abs(plot_dt$z_score), 0.99, na.rm = TRUE)
   plot_dt[, z_capped := pmax(pmin(z_score, cap), -cap)]
 
-  ggplot2::ggplot(plot_dt, ggplot2::aes(x = gene_1, y = gene_2)) +
+  p <- ggplot2::ggplot(plot_dt, ggplot2::aes(x = gene_1, y = gene_2)) +
     ggplot2::geom_tile(ggplot2::aes(fill = z_capped)) +
     ggplot2::scale_fill_gradient2(
       low = "#2166AC",
@@ -1155,14 +1206,52 @@ plot.Hotspot <- function(x, max_genes = 500L, seed = 42L, ...) {
       midpoint = 0,
       name = "Z-score"
     ) +
+    ggplot2::coord_fixed() +
     ggplot2::theme_minimal() +
     ggplot2::theme(
-      axis.text.x = ggplot2::element_blank(),
-      axis.text.y = ggplot2::element_blank(),
       axis.ticks = ggplot2::element_blank(),
       panel.grid = ggplot2::element_blank()
     ) +
     ggplot2::labs(x = NULL, y = NULL)
+
+  if (is.null(blocks)) {
+    return(p + ggplot2::theme(axis.text = ggplot2::element_blank()))
+  }
+
+  # Discrete positions run 1..n, so a boundary after the block ending at `end`
+  # sits at `end + 0.5`. The y levels are reversed, hence the mirror.
+  n_plot <- length(gene_order)
+  cuts <- utils::head(blocks$end, -1L)
+
+  p +
+    ggplot2::geom_vline(
+      xintercept = cuts + 0.5,
+      colour = "grey25",
+      linewidth = 0.3
+    ) +
+    ggplot2::geom_hline(
+      yintercept = n_plot - cuts + 0.5,
+      colour = "grey25",
+      linewidth = 0.3
+    ) +
+    ggplot2::scale_x_discrete(
+      breaks = blocks$mid_gene,
+      labels = blocks$label
+    ) +
+    ggplot2::scale_y_discrete(
+      breaks = blocks$mid_gene,
+      labels = blocks$label
+    ) +
+    ggplot2::theme(
+      axis.text.x = ggplot2::element_text(angle = 45, hjust = 1)
+    ) +
+    ggplot2::labs(
+      subtitle = sprintf(
+        "%d modules, %d genes shown",
+        nrow(blocks),
+        n_plot
+      )
+    )
 }
 
 #### getters -------------------------------------------------------------------
