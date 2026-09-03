@@ -1042,10 +1042,6 @@ blitzgsea_calibrate <- function(stats, blitz_params = params_blitzgsea()) {
     blitz_params = blitz_params
   )
 
-  # The null is only good for the signature it was drawn from: the anchor grid
-  # comes from its length and the gammas from its values. Carried along so
-  # calc_blitzgsea() can refuse a mismatched pairing instead of returning
-  # plausible-looking rubbish.
   null_model$n_genes <- length(stats)
 
   worst_ks <- min(null_model$ks_pos, null_model$ks_neg)
@@ -1073,6 +1069,8 @@ blitzgsea_calibrate <- function(stats, blitz_params = params_blitzgsea()) {
 #' @returns Invisibly returns `x`.
 #'
 #' @export
+#'
+#' @keywords internal
 print.BlitzGseaNull <- function(x, ...) {
   checkmate::assertClass(x, "BlitzGseaNull")
 

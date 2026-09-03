@@ -17,3 +17,4 @@ Invisibly returns \code{x}.
 \description{
 Print a blitzGSEA null model
 }
+\keyword{internal}
