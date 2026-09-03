@@ -43,6 +43,10 @@
   bixverse](https://gregorlueg.github.io/bixverse/articles/meta_cells.md):
 - [Multicellular programmes with
   DIALOGUE](https://gregorlueg.github.io/bixverse/articles/dialogue.md):
+- [Differential expression with donor
+  structure](https://gregorlueg.github.io/bixverse/articles/differential_expression.md):
+- [Differential abundance with Milo and
+  MELD](https://gregorlueg.github.io/bixverse/articles/differential_abundance.md):
 - [Trajectory inference with Palantir and
   PAGA](https://gregorlueg.github.io/bixverse/articles/trajectory_inference.md):
 - [Scaling to millions of cells with

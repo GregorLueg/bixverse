@@ -14,6 +14,7 @@ params_sc_knn(
   delta = 0.001,
   diversify_prob = 0,
   ef_budget = NULL,
+  extract_knn = FALSE,
   m = 16L,
   ef_construction = 200L,
   ef_search = 100L,
@@ -62,6 +63,14 @@ params_sc_knn(
 
   Integer or `NULL`. NNDescent param: optional query budget. Higher
   values improve recall at the cost of speed.
+
+- extract_knn:
+
+  Boolean. NNDescent param: hand back the graph the descent already
+  built instead of beam searching it. Skips the query pass entirely, so
+  it is much faster, at the cost of some recall. Rows the descent never
+  filled come back padded with duplicate edges. Ignored by every other
+  method. Defaults to `FALSE`.
 
 - m:
 

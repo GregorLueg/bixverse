@@ -111,8 +111,8 @@ vignette](https://gregorlueg.github.io/bixverse/articles/pbmc_single_cell.html).
 Standard pipeline. The one choice worth spelling out is `k = 30` on the
 kNN graph: Palantir builds its diffusion kernel from whatever graph is
 stored on the object, and 30 neighbours is what the reference uses. The
-distance metric has to be euclidean, since that is how `bixverse`
-decides whether the stored distances are squared.
+distance metric has to be euclidean, since the diffusion kernel is a
+Gaussian over a metric distance and cosine is not one.
 
 `pruning` has to move with `k`. The default of `1/12` is set for the
 default `k = 15`, and since the threshold is a share of the
@@ -248,18 +248,18 @@ when the graph under it moves.
 get_sc_cache_status(sc_object)
 #>    modality  artefact   name stamped  stale reason               id
 #>      <char>    <char> <char>  <lgcl> <lgcl> <char>           <char>
-#> 1:      rna       pca   <NA>    TRUE  FALSE   <NA> 854b8827a8b89db0
-#> 2:      rna embedding   umap    TRUE  FALSE   <NA> 48fbc01feecfbed3
-#> 3:      rna       knn   <NA>    TRUE  FALSE   <NA> cd4263d075c5f19f
-#> 4:      rna       snn   <NA>    TRUE  FALSE   <NA> 33d6151e484aaa8d
-#> 5:      rna     magic   <NA>    TRUE  FALSE   <NA> f40090c867ca786e
+#> 1:      rna       pca   <NA>    TRUE  FALSE   <NA> 62bd0547d9af95a0
+#> 2:      rna embedding   umap    TRUE  FALSE   <NA> 9ab45c6c6db332a7
+#> 3:      rna       knn   <NA>    TRUE  FALSE   <NA> 87be80f49033bde4
+#> 4:      rna       snn   <NA>    TRUE  FALSE   <NA> 4774ba5b35ee9d5b
+#> 5:      rna     magic   <NA>    TRUE  FALSE   <NA> 52ac018c91d3e152
 #>                                 from
 #>                               <list>
 #> 1:                                  
-#> 2: 854b8827a8b89db0,cd4263d075c5f19f
-#> 3:                  854b8827a8b89db0
-#> 4:                  cd4263d075c5f19f
-#> 5:                  cd4263d075c5f19f
+#> 2: 62bd0547d9af95a0,87be80f49033bde4
+#> 3:                  62bd0547d9af95a0
+#> 4:                  87be80f49033bde4
+#> 5:                  87be80f49033bde4
 ```
 
 ## PAGA
@@ -392,7 +392,7 @@ palantir_res <- run_palantir_sc(
 
 palantir_res
 #> PalantirRes: 4142 cells, 3 terminal states (rna modality)
-#>   Start cell: Run5_164698952452459 | waypoints: 993
+#>   Start cell: Run5_164698952452459 | waypoints: 991
 #>   Converged: TRUE (2 iterations)
 #>   Repair edges: 0, stranded waypoints: 0
 ```
@@ -437,12 +437,12 @@ sc_object[["palantir_branch"]] <- colnames(fate_probs)[
 
 head(round(fate_probs, 3))
 #>                        Ery    DC  Mono
-#> Run4_120703408880541 0.621 0.052 0.327
-#> Run4_120703409056541 0.281 0.100 0.620
-#> Run4_120703409580963 0.064 0.092 0.844
-#> Run4_120703423990708 0.035 0.045 0.919
-#> Run4_120703436876077 0.268 0.101 0.630
-#> Run4_120726912355038 0.130 0.100 0.771
+#> Run4_120703408880541 0.634 0.067 0.299
+#> Run4_120703409056541 0.284 0.132 0.585
+#> Run4_120703409580963 0.075 0.129 0.797
+#> Run4_120703423990708 0.012 0.019 0.969
+#> Run4_120703436876077 0.269 0.134 0.597
+#> Run4_120726912355038 0.153 0.136 0.711
 ```
 
 Rows do not necessarily sum to one. Fate probabilities below
@@ -555,7 +555,7 @@ palantir_auto <- run_palantir_sc(
 #> Running Palantir over the rna kNN graph (4142 cells).
 
 palantir_auto$terminal_states
-#> [1] "Run5_134377557125406" "Run5_235070783670620"
+#> [1] "Run5_134377557125406"
 ```
 
 Where did they land relative to the supplied ones?
@@ -576,8 +576,7 @@ data.table(
 )
 #>                 cell_id branch pseudotime
 #>                  <char> <char>      <num>
-#> 1: Run5_134377557125406   Mono      0.326
-#> 2: Run5_235070783670620   Mono      0.542
+#> 1: Run5_134377557125406   Mono      0.324
 ```
 
 ## Gene trends
@@ -601,7 +600,7 @@ trends <- run_gene_trends_sc(
 
 trends
 #> GeneTrendsRes: 3 branches, 4 genes, 500 grid points
-#>   Cells per branch: Ery (1458), DC (1609), Mono (1897)
+#>   Cells per branch: Ery (1425), DC (1532), Mono (1981)
 #>   Source: normalised counts
 #>   Length scale: 1 | sigma: 1
 ```
@@ -641,7 +640,7 @@ set the reference notebook plots.
 
 purrr::map_int(trends$branch_cells, length)
 #>  Ery   DC Mono 
-#> 1458 1609 1897
+#> 1425 1532 1981
 ```
 
 The same trick works with any per-cell quantity. A loess through the

@@ -39,9 +39,8 @@ rs_mc_hotspot_autocor(
 
   Optional list. This contains pre-computed kNN data (including
   distances) and the `dist_metric` it was built with. The user has to
-  ensure consistency! If provided, this will be used and whether the
-  distances are treated as squared is derived from `dist_metric` rather
-  than from the parameter list.
+  ensure consistency! If provided, this will be used rather than a graph
+  built from the parameter list.
 
 - hotspot_params:
 

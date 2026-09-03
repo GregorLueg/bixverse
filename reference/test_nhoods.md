@@ -1,13 +1,15 @@
 # Test neighbourhoods for differential abundance
 
 Performs differential abundance testing on single-cell neighbourhoods
-using edgeR's quasi-likelihood negative binomial framework. The function
-fits a generalised linear model to neighbourhood cell counts, tests for
-differential abundance between conditions, and applies spatial FDR
-correction to account for overlapping neighbourhoods. This
-implementation follows the approach described in Dann et al., using
-graph-based neighbourhoods to identify regions of significant
-compositional changes in single-cell data.
+with edgeR's quasi-likelihood negative binomial framework, implemented
+in Rust via the `edge-rs` crate. A generalised linear model is fitted to
+the neighbourhood counts, one coefficient or contrast is tested, and the
+spatial FDR correction accounts for the fact that neighbourhoods overlap
+and their tests are therefore not independent.
+
+`filterByExpr()` is off here and cannot be turned on. It is a gene
+expression heuristic and means nothing for a neighbourhood. Use
+`min_mean` if you want to drop sparsely populated neighbourhoods.
 
 ## Usage
 
@@ -17,9 +19,11 @@ test_nhoods(
   design,
   design_df,
   coef = NULL,
-  norm_method = c("TMM", "RLE", "logMS"),
+  contrast = NULL,
+  norm_method = c("TMM", "TMMwsp", "RLE", "upperquartile", "logMS"),
   min_mean = 0,
   robust = TRUE,
+  legacy = TRUE,
   fdr_weighting = c("k-distance", "graph-overlap", "none")
 )
 
@@ -29,9 +33,11 @@ test_nhoods(
   design,
   design_df,
   coef = NULL,
-  norm_method = c("TMM", "RLE", "logMS"),
+  contrast = NULL,
+  norm_method = c("TMM", "TMMwsp", "RLE", "upperquartile", "logMS"),
   min_mean = 0,
   robust = TRUE,
+  legacy = TRUE,
   fdr_weighting = c("k-distance", "graph-overlap", "none")
 )
 ```
@@ -44,50 +50,59 @@ test_nhoods(
 
 - design:
 
-  Formula for the experimental design
+  Formula for the experimental design, e.g. `~ grps`.
 
 - design_df:
 
-  data.frame. Contains the metadata to be used for the generation of the
-  model matrix.
+  data.frame. The metadata used to build the model matrix. Its rownames
+  need to cover the sample names of the neighbourhood counts.
 
 - coef:
 
-  Optional string/integer. For more complex experimental designs, you
-  can specify which coefficient to test. If NULL, tests the last
-  coefficient in the design matrix (typically the main effect of
-  interest).
+  Optional integer or character. Which coefficient(s) of the design to
+  drop from the null model, given as 1-based column positions or column
+  names. Defaults to the last column, as edgeR does.
+
+- contrast:
+
+  Optional numeric vector or matrix. Weights over the design columns.
+  Mutually exclusive with `coef`.
 
 - norm_method:
 
-  String. Normalisation method to use. One of
-  `c("TMM", "RLE", "logMS")`. Defaults to TMM (trimmed mean of
-  M-values).
+  String. Library size normalisation. One of
+  `c("TMM", "TMMwsp", "RLE", "upperquartile", "logMS")`. Defaults to
+  `"TMM"`. `"logMS"` is Milo's own name for leaving every factor at one.
 
 - min_mean:
 
-  Numeric. Minimum mean count threshold for filtering neighbourhoods.
-  Neighbourhoods with mean counts below this value are excluded.
-  Defaults to 0 (no filtering).
+  Numeric. Minimum mean count across samples. Neighbourhoods below it
+  are dropped. Defaults to `0` (no filtering).
 
 - robust:
 
-  Logical. If TRUE, uses robust estimation of the quasi-likelihood
-  dispersion. Recommended for datasets with potential outliers. Defaults
-  to TRUE.
+  Logical. Robust estimation of the quasi-likelihood dispersion.
+  Defaults to `TRUE`.
+
+- legacy:
+
+  Logical. Take edgeR's pre-4.0 quasi-likelihood pipeline, which runs
+  `estimateDisp()` and applies the Poisson bound. Defaults to `TRUE`, so
+  this keeps matching what Milo itself does.
 
 - fdr_weighting:
 
   String. Spatial FDR weighting scheme. One of
-  `c("k-distance", "graph-overlap", "none")`. k-distance uses the
-  distance to the k-th nearest neighbour, graph-overlap uses
-  neighbourhood overlap counts. Defaults to k-distance.
+  `c("k-distance", "graph-overlap", "none")`. `"k-distance"` weights by
+  the distance to the k-th nearest neighbour, `"graph-overlap"` by the
+  number of cells shared with other neighbourhoods. Defaults to
+  `"k-distance"`.
 
 ## Value
 
-The `miloR` object with added model and results from the differential
-abundance analysis.
+The `miloR` object with the differential abundance results added.
 
 ## References
 
-Dann et al., 2022, Nat Biotechnol
+Dann, et al., Nat Biotechnol, 2022; Chen, Lun and Smyth, F1000Research,
+2016

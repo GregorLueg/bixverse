@@ -6,6 +6,11 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>Gene set analysis and GRN inference on PBMCs • bixverse</title>
+<!-- favicons --><link rel="icon" type="image/png" sizes="96x96" href="../favicon-96x96.png">
+<link rel="icon" type="”image/svg+xml”" href="../favicon.svg">
+<link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
+<link rel="icon" sizes="any" href="../favicon.ico">
+<link rel="manifest" href="../site.webmanifest">
 <script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
@@ -14,6 +19,7 @@
 <link href="bag_of_genes_single_cells_files/libs/quarto-html/light-border.css" rel="stylesheet">
 <!-- pkgdown --><script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet">
 <meta property="og:title" content="Gene set analysis and GRN inference on PBMCs">
+<meta property="og:image" content="https://gregorlueg.github.io/bixverse/logo.png">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -23,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.11</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -110,11 +116,10 @@
 </nav><div class="container template-quarto">
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
-
-      <h1>Gene set analysis and GRN inference on PBMCs</h1>
+      <img src="../logo.png" class="logo" alt=""><h1>Gene set analysis and GRN inference on PBMCs</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-09-01</p>
+      <p class="date">2026-09-03</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -457,17 +462,17 @@
 <span><span class="co">#&gt;              &lt;char&gt;     &lt;num&gt;     &lt;num&gt; &lt;num&gt; &lt;num&gt;      &lt;char&gt;</span></span>
 <span><span class="co">#&gt;  1: ENSG00000188290 0.3242266  39.66046     0     0        HES4</span></span>
 <span><span class="co">#&gt;  2: ENSG00000119535 0.3022016  49.27494     0     0       CSF3R</span></span>
-<span><span class="co">#&gt;  3: ENSG00000163131 0.5119517  63.60383     0     0        CTSS</span></span>
+<span><span class="co">#&gt;  3: ENSG00000163131 0.5119518  63.60383     0     0        CTSS</span></span>
 <span><span class="co">#&gt;  4: ENSG00000163191 0.4122631  58.87283     0     0     S100A11</span></span>
 <span><span class="co">#&gt;  5: ENSG00000163220 0.6936087 109.61599     0     0      S100A9</span></span>
 <span><span class="co">#&gt;  6: ENSG00000143546 0.6563530 114.56873     0     0      S100A8</span></span>
-<span><span class="co">#&gt;  7: ENSG00000197956 0.6433797  98.70326     0     0      S100A6</span></span>
+<span><span class="co">#&gt;  7: ENSG00000197956 0.6433796  98.70326     0     0      S100A6</span></span>
 <span><span class="co">#&gt;  8: ENSG00000196154 0.6429363  92.52890     0     0      S100A4</span></span>
-<span><span class="co">#&gt;  9: ENSG00000177954 0.6083654  94.29710     0     0       RPS27</span></span>
+<span><span class="co">#&gt;  9: ENSG00000177954 0.6083655  94.29710     0     0       RPS27</span></span>
 <span><span class="co">#&gt; 10: ENSG00000158869 0.6997935  81.83833     0     0      FCER1G</span></span>
 <span><span class="co">#&gt; 11: ENSG00000203747 0.6159353  71.61398     0     0      FCGR3A</span></span>
 <span><span class="co">#&gt; 12: ENSG00000198821 0.2228819  59.91400     0     0       CD247</span></span>
-<span><span class="co">#&gt; 13: ENSG00000143185 0.3826069  53.56304     0     0        XCL2</span></span>
+<span><span class="co">#&gt; 13: ENSG00000143185 0.3826068  53.56304     0     0        XCL2</span></span>
 <span><span class="co">#&gt; 14: ENSG00000143184 0.3719576  57.30895     0     0        XCL1</span></span>
 <span><span class="co">#&gt; 15: ENSG00000116667 0.2143988  43.89426     0     0     C1orf21</span></span>
 <span><span class="co">#&gt; 16: ENSG00000143947 0.3742483  57.71536     0     0      RPS27A</span></span>
@@ -508,9 +513,11 @@
 <div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">hotspot_cor</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/generate_hotspot_membership.html">generate_hotspot_membership</a></span><span class="op">(</span><span class="va">hotspot_cor</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># this will only plot a subsample of 500 genes for speed (stratified by</span></span>
-<span><span class="co"># module). You can control this via a parameter in the plotting function</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">hotspot_cor</span><span class="op">)</span></span></code></pre></div>
+<span><span class="co"># the largest modules, at most 500 genes, subsampled in proportion to module</span></span>
+<span><span class="co"># size. top_k = NULL gives you every module</span></span>
+<span><span class="va">hotspot_top_k</span> <span class="op">&lt;-</span> <span class="fl">5L</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">hotspot_cor</span>, top_k <span class="op">=</span> <span class="va">hotspot_top_k</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
 <figure><p><img src="bag_of_genes_single_cells_files/figure-html/hotspot%20-%20plot%20modules-1.png" width="672"></p>
@@ -518,6 +525,7 @@
 </div>
 </div>
 </div>
+<p>Genes are ordered within each module by hierarchical clustering, so the blocks on the diagonal show whatever substructure is there rather than a flat square.</p>
 <p>Let’s pull out the genes:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb10"><pre class="downlit sourceCode r">
@@ -552,10 +560,15 @@
 <span><span class="co">#&gt;             gene_id cluster_member gene_symbol</span></span>
 <span><span class="co">#&gt;              &lt;char&gt;          &lt;num&gt;      &lt;char&gt;</span></span></code></pre></div>
 </div>
-<p>The resulting modules should roughly correspond to the major cell-type programmes in PBMCs (T cell, monocyte, B cell, NK cell signatures, etc.). Let’s visualise this with AUCell check it out.</p>
+<p>The resulting modules should roughly correspond to the major cell-type programmes in PBMCs (T cell, monocyte, B cell, NK cell signatures, etc.). Let’s score the same modules the heatmap showed with VISION and put them on the UMAP.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">hotspot_gene_sets</span> <span class="op">&lt;-</span> <span class="va">membership</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/exposition.html" class="external-link">%$%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/split.html" class="external-link">split</a></span><span class="op">(</span><span class="va">gene_id</span>, <span class="va">cluster_member</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="co"># same ranking plot.Hotspot() uses: largest by gene count, ties broken by id</span></span>
+<span><span class="va">module_sizes</span> <span class="op">&lt;-</span> <span class="va">membership</span><span class="op">[</span>, <span class="va">.N</span>, by <span class="op">=</span> <span class="va">cluster_member</span><span class="op">]</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="op">-</span><span class="va">N</span>, <span class="va">cluster_member</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="va">top_modules</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">module_sizes</span><span class="op">$</span><span class="va">cluster_member</span>, <span class="va">hotspot_top_k</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">hotspot_gene_sets</span> <span class="op">&lt;-</span> <span class="va">membership</span><span class="op">[</span><span class="va">cluster_member</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="va">top_modules</span><span class="op">]</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/exposition.html" class="external-link">%$%</a></span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/split.html" class="external-link">split</a></span><span class="op">(</span><span class="va">gene_id</span>, <span class="va">cluster_member</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">hotspot_gene_sets</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">hotspot_gene_sets</span>, <span class="kw">function</span><span class="op">(</span><span class="va">genes</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>pos <span class="op">=</span> <span class="va">genes</span><span class="op">)</span></span>
@@ -972,13 +985,13 @@
 <div class="sourceCode cell-code" id="cb29"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/get_w.html">get_w</a></span><span class="op">(</span><span class="va">t_cell_nmf_results</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span></span>
 <span><span class="co">#&gt;                      comp_01      comp_02      comp_03      comp_04</span></span>
-<span><span class="co">#&gt; ENSG00000188976 2.756063e+00 1.516444e-01 9.978818e-11 3.985443e-01</span></span>
-<span><span class="co">#&gt; ENSG00000188290 9.983770e-11 1.001252e-10 9.978818e-11 7.743338e-02</span></span>
-<span><span class="co">#&gt; ENSG00000187608 9.983770e-11 2.746899e+00 1.624547e-01 9.984959e-11</span></span>
-<span><span class="co">#&gt; ENSG00000186827 9.983770e-11 1.001252e-10 7.541640e+00 9.984959e-11</span></span>
-<span><span class="co">#&gt; ENSG00000176022 9.073032e-01 7.619265e-03 1.844488e-01 9.984959e-11</span></span>
+<span><span class="co">#&gt; ENSG00000188976 2.756057e+00 1.516397e-01 9.978818e-11 3.985491e-01</span></span>
+<span><span class="co">#&gt; ENSG00000188290 9.983771e-11 1.001252e-10 9.978818e-11 7.743262e-02</span></span>
+<span><span class="co">#&gt; ENSG00000187608 9.983771e-11 2.746886e+00 1.624592e-01 9.984961e-11</span></span>
+<span><span class="co">#&gt; ENSG00000186827 9.983771e-11 1.001252e-10 7.541643e+00 9.984961e-11</span></span>
+<span><span class="co">#&gt; ENSG00000176022 9.073032e-01 7.618927e-03 1.844488e-01 9.984961e-11</span></span>
 <span><span class="co">#&gt;                      comp_05</span></span>
-<span><span class="co">#&gt; ENSG00000188976 3.031700e-01</span></span>
+<span><span class="co">#&gt; ENSG00000188976 3.031699e-01</span></span>
 <span><span class="co">#&gt; ENSG00000188290 1.000227e-10</span></span>
 <span><span class="co">#&gt; ENSG00000187608 1.000227e-10</span></span>
 <span><span class="co">#&gt; ENSG00000186827 1.000227e-10</span></span>
@@ -988,17 +1001,17 @@
 <div class="sourceCode cell-code" id="cb30"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/get_h.html">get_h</a></span><span class="op">(</span><span class="va">t_cell_nmf_results</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span></span>
 <span><span class="co">#&gt;         AAACATACAACCAC-1 AAACATTGATCAGC-1 AAACGCACTGGTAC-1 AAACGCTGGTTCTT-1</span></span>
-<span><span class="co">#&gt; comp_01      0.029081384      0.028246988     2.750892e-02     2.642106e-02</span></span>
-<span><span class="co">#&gt; comp_02      0.032824770      0.004165698     5.788827e-03     4.682986e-02</span></span>
-<span><span class="co">#&gt; comp_03      0.009732882      0.053273071     5.238257e-02     1.002123e-10</span></span>
-<span><span class="co">#&gt; comp_04      0.064907432      0.017416965     1.001506e-10     3.876413e-02</span></span>
-<span><span class="co">#&gt; comp_05      0.004365134      0.047877852     9.997733e-11     1.034977e-02</span></span>
+<span><span class="co">#&gt; comp_01      0.029081339      0.028247045     2.750897e-02     2.642105e-02</span></span>
+<span><span class="co">#&gt; comp_02      0.032824829      0.004165604     5.788922e-03     4.683001e-02</span></span>
+<span><span class="co">#&gt; comp_03      0.009732792      0.053272992     5.238255e-02     1.002123e-10</span></span>
+<span><span class="co">#&gt; comp_04      0.064907387      0.017417077     1.001506e-10     3.876416e-02</span></span>
+<span><span class="co">#&gt; comp_05      0.004365175      0.047877818     9.997733e-11     1.034977e-02</span></span>
 <span><span class="co">#&gt;         AAACTTGATCCAGA-1</span></span>
-<span><span class="co">#&gt; comp_01      0.032608423</span></span>
-<span><span class="co">#&gt; comp_02      0.002322522</span></span>
-<span><span class="co">#&gt; comp_03      0.007309146</span></span>
-<span><span class="co">#&gt; comp_04      0.018659594</span></span>
-<span><span class="co">#&gt; comp_05      0.049327504</span></span></code></pre></div>
+<span><span class="co">#&gt; comp_01      0.032608394</span></span>
+<span><span class="co">#&gt; comp_02      0.002322546</span></span>
+<span><span class="co">#&gt; comp_03      0.007309148</span></span>
+<span><span class="co">#&gt; comp_04      0.018659715</span></span>
+<span><span class="co">#&gt; comp_05      0.049327463</span></span></code></pre></div>
 </div>
 </section><section class="level3"><h3 id="running-multiple-nmf-runs">Running multiple NMF runs<a class="anchor" aria-label="anchor" href="#running-multiple-nmf-runs"></a>
 </h3>
@@ -1191,12 +1204,12 @@
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">consensus_diag</span><span class="op">$</span><span class="va">clusters</span><span class="op">)</span></span>
 <span><span class="co">#&gt;      component_id   run component pooled_idx cluster local_density silhouette</span></span>
 <span><span class="co">#&gt;            &lt;char&gt; &lt;int&gt;     &lt;int&gt;      &lt;int&gt;   &lt;int&gt;         &lt;num&gt;      &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1: run_01.comp_01     1         1          1       5   0.013249059  0.7841961</span></span>
-<span><span class="co">#&gt; 2: run_01.comp_02     1         2          2       5   0.012458582  0.8275782</span></span>
-<span><span class="co">#&gt; 3: run_01.comp_03     1         3          3       1   0.004470150  0.9566821</span></span>
-<span><span class="co">#&gt; 4: run_01.comp_04     1         4          4       3   0.017578840  0.8770334</span></span>
-<span><span class="co">#&gt; 5: run_01.comp_05     1         5          5       4   0.017095327  0.6891547</span></span>
-<span><span class="co">#&gt; 6: run_02.comp_01     2         1          6       5   0.008731465  0.8714657</span></span>
+<span><span class="co">#&gt; 1: run_01.comp_01     1         1          1       5   0.013249557  0.7841961</span></span>
+<span><span class="co">#&gt; 2: run_01.comp_02     1         2          2       5   0.012458901  0.8275782</span></span>
+<span><span class="co">#&gt; 3: run_01.comp_03     1         3          3       1   0.004470170  0.9566821</span></span>
+<span><span class="co">#&gt; 4: run_01.comp_04     1         4          4       3   0.017579237  0.8770334</span></span>
+<span><span class="co">#&gt; 5: run_01.comp_05     1         5          5       4   0.017095923  0.6891547</span></span>
+<span><span class="co">#&gt; 6: run_02.comp_01     2         1          6       5   0.008731644  0.8714657</span></span>
 <span><span class="co">#&gt;      kept</span></span>
 <span><span class="co">#&gt;    &lt;lgcl&gt;</span></span>
 <span><span class="co">#&gt; 1:   TRUE</span></span>

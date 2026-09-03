@@ -128,7 +128,7 @@ what we have there…
 ``` r
 
 str(params_knn_defaults())
-#> List of 13
+#> List of 14
 #>  $ k              : int 15
 #>  $ knn_method     : chr "kmknn"
 #>  $ ann_dist       : chr "euclidean"
@@ -137,6 +137,7 @@ str(params_knn_defaults())
 #>  $ delta          : num 0.001
 #>  $ diversify_prob : num 0
 #>  $ ef_budget      : NULL
+#>  $ extract_knn    : logi FALSE
 #>  $ m              : int 16
 #>  $ ef_construction: int 200
 #>  $ ef_search      : int 100
@@ -158,7 +159,7 @@ in this package (all happens via
 | KmKnn | An exact method that takes a shortcut via k-means cluster | (Fast) exact | On well structured (low dimensional) data, it gives you an exact kNN search that is substantially faster than Exhaustive on large data sets | Does not matter |
 | Annoy | The classic approximate nearest neighbour search you know from Seurat | Tree-based | A memory-based version of Annoy that avoids the round trip to the disk-based index of the original. Good default for data sets with up to half a million cells with fast index building (but slower querying) | Ideally ≤ 100 as otherwise the query phase can become quite long… |
 | HNSW | A powerful graph-based index for large data sets and vector search index powering a large number of data bases. | Graph-based | Need to tackle large data sets … ? HNSW does that for you. An important note is that due to the benign race condition during graph construction this index is not deterministic. On large data sets this makes basically no difference, but something to keep in mind for smaller ones! | ≤50 or you need to bump the `ef_search` substantially |
-| NNDescent | Another graph-based index that is ideal for tackling large data sets | Graph-based | Another graph-based index that is very good at dealing with large data sets. Uses tricks from PyNNDescent and is designed to be very memory-efficient | ≤30. The initial kNN is designed with a node degree of 30, so you might see degradation in the performance when you ask for higher k. If you try this, set `ef_budget` high! |
+| NNDescent | Another graph-based index that is ideal for tackling large data sets | Graph-based | Another graph-based index that is very good at dealing with large data sets. Uses tricks from PyNNDescent and is designed to be very memory-efficient. `extract_knn = TRUE` skips the query phase entirely and hands you the descent graph | ≤30. The initial kNN is designed with a node degree of 30, so you might see degradation in the performance when you ask for higher k. If you try this, set `ef_budget` high! |
 | IVF | A cluster-based index that partitions the data via k-means into Voronoi cells | Cluster-based | If you read a bit about vector searches, this is a very common algorithm which works well with quantisations in particular (and GPU-acceleration…). For the usual ephemeral kNN graph generation in single cell maybe not the right call, but if you need A LOT of neighbours on large data sets, this is a very good choice! | Does not matter (outside of absurd high numbers) |
 
 There are additional GPU-accelerated kNN searches in the sister package,
@@ -173,12 +174,13 @@ Now let’s see which parameter belongs to which method and does what.
 |----|----|----|
 | k | `15L` | Kinda obvious… Number of neighbours |
 | knn_method | `"kmknn"` | The approximate nearest neighbour method. One of `c("kmknn", "exhaustive", "annoy", "ivf", "hnsw", "nndescent")` |
-| ann_dist | `"euclidean"` | The distance metric to use. Two options are available… Euclidean distance or Cosine distance. Very important, the underlying library returns the **SQUARED** Euclidean distance for speed purposes. If you use the Euclidean distance for something, keep this in mind! |
+| ann_dist | `"euclidean"` | The distance metric to use. Two options are available… Euclidean distance or Cosine distance. As of `0.5.0` these are true distances: the underlying library works in squared Euclidean space for speed, but the square root is taken at the boundary, so what you get back is the Euclidean distance. |
 | n_trees | `50L` | **Annoy:** The number of trees to use for Annoy. Generally speaking the generation is very fast in terms of indexing and in different (emperical) experiments after 50 trees one gets diminishing returns |
 | search_budget | `NULL` | **Annoy:** The search budget during querying. If `NULL` defaults to `k * n_trees * 20`. Higher values allow for better Recall. |
 | delta | `0.001` | **NNDescent:** The termination criterium for the NNDescent iterations. When less than 0.001 (0.1%) of the edges are updated, the iterations stop and the algorithm is considered converged. |
 | diversify_prob | `0.0` | **NNDescent:** If you want to do additional diversification after the NNDescent algorithm converged. This is based on the original paper, but in reality usually degrades graph quality while not providing too many benefits. |
 | ef_budget | `NULL` | **NNDescent:** The beam width for the query phase for NNDescent. If `NULL`, it will use the library default, i.e., `(k * 2).clamp(50, 200)).max(k)`. Generally not really needed to touch, but limits the number of k neighbours you can confidently return. |
+| extract_knn | `FALSE` | **NNDescent:** Hand back the graph the descent already built instead of beam searching it. There is no query phase at all, so it is much faster, and `ef_budget` stops mattering. You pay for it in recall. Rows the descent never filled come back padded with duplicate edges and you get a warning saying how many. |
 | m | `16L` | **HNSW:** The node degree during the index creation. Creates 16 edges per given node in the graph-based index. |
 | ef_construction | `200L` | **HNSW:** The budget to generate good connections during construction of the index. Higher values yields a better initial graph-index. |
 | ef_search | `100L` | **HNSW:** The beam width during querying of the index. If a high quality graph was generated, usually does not need to be too high. If you set `k` high, you should adopt this parameter. |
@@ -218,7 +220,7 @@ exhaustive_knn
 #> SingleCellNearestNeighbour: 2163 cells, k = 15
 #>   Distance metric: euclidean
 #>   Index range: [0, 2162]
-#>   Distance range: [14.5910, 24042.3926]
+#>   Distance range: [3.8198, 155.0561]
 ```
 
 This is the class that is actually sored in the object after running
@@ -255,7 +257,7 @@ annoy_knn
 #> SingleCellNearestNeighbour: 2163 cells, k = 15
 #>   Distance metric: euclidean
 #>   Index range: [0, 2162]
-#>   Distance range: [14.5910, 24042.3926]
+#>   Distance range: [3.8198, 155.0561]
 ```
 
 The print message showed this line here:
@@ -301,7 +303,7 @@ annoy_knn_less_trees
 #> SingleCellNearestNeighbour: 2163 cells, k = 15
 #>   Distance metric: euclidean
 #>   Index range: [0, 2162]
-#>   Distance range: [14.5910, 24569.1406]
+#>   Distance range: [3.8198, 156.7455]
 ```
 
 With one tree, we can appreciate that the Recall is dropping:
@@ -327,11 +329,11 @@ cat(
 )
 #> Annoy vs exhaustive.
 #>   Recall@15: 0.665.
-#>   Distance ratio: 1.055.
+#>   Distance ratio: 1.026.
 ```
 
 We can appreciate that with one tree we do not get a Recall of 1 and the
-distance ratio is 4.2% worse than the exhaustive one. Let’s test another
+distance ratio is worse than the exhaustive one. Let’s test another
 index
 
 ``` r
@@ -347,7 +349,7 @@ nndescent_knn
 #> SingleCellNearestNeighbour: 2163 cells, k = 15
 #>   Distance metric: euclidean
 #>   Index range: [0, 2162]
-#>   Distance range: [14.5910, 24048.2656]
+#>   Distance range: [3.8198, 155.0750]
 ```
 
 And benchmark it:
@@ -357,7 +359,7 @@ And benchmark it:
 nndescent_vs_exhaustive <- calc_knn_metrics(exhaustive_knn, nndescent_knn)
 
 cat(
-  "Annoy vs exhaustive.\n",
+  "NNDescent vs exhaustive.\n",
   sprintf(
     " Recall@15: %.3f.\n",
     nndescent_vs_exhaustive$final_recall
@@ -367,13 +369,47 @@ cat(
     nndescent_vs_exhaustive$final_ratio
   )
 )
-#> Annoy vs exhaustive.
+#> NNDescent vs exhaustive.
 #>   Recall@15: 1.000.
 #>   Distance ratio: 1.000.
 ```
 
 As we can see, this approximate index also reaches perfect recall and
 distance ratio.
+
+NNDescent has a second gear. The descent already builds a kNN graph on
+its way to convergence, and `extract_knn = TRUE` hands you that graph
+instead of running a beam search over the index. No query phase at all.
+
+``` r
+
+nndescent_extracted <- generate_knn_sc(
+  object = sc_object,
+  neighbours_params = params_sc_neighbours(
+    knn = list(knn_method = "nndescent", extract_knn = TRUE)
+  )
+)
+
+extracted_vs_exhaustive <- calc_knn_metrics(exhaustive_knn, nndescent_extracted)
+
+cat(
+  "NNDescent (graph extraction) vs exhaustive.\n",
+  sprintf(
+    " Recall@15: %.3f.\n",
+    extracted_vs_exhaustive$final_recall
+  ),
+  sprintf(
+    " Distance ratio: %.3f.\n",
+    extracted_vs_exhaustive$final_ratio
+  )
+)
+#> NNDescent (graph extraction) vs exhaustive.
+#>   Recall@15: 1.000.
+#>   Distance ratio: 1.000.
+```
+
+That is the trade: you give up a bit of recall and get the query phase
+for free. On million-cell data that is the difference worth having.
 
 ## Conclusions
 

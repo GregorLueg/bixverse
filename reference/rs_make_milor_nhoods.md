@@ -5,7 +5,15 @@
 ## Usage
 
 ``` r
-rs_make_milor_nhoods(embd, knn_indices, milor_params, seed, verbose)
+rs_make_milor_nhoods(
+  embd,
+  knn_indices,
+  sample_ids,
+  n_samples,
+  milor_params,
+  seed,
+  verbose
+)
 ```
 
 ## Arguments
@@ -19,6 +27,15 @@ rs_make_milor_nhoods(embd, knn_indices, milor_params, seed, verbose)
 
   Integer matrix. Each row represents a given cell and the columns the
   neighbours. (0-indexed!)
+
+- sample_ids:
+
+  Integer vector. 0-indexed(!) sample label per cell, in `0..n_samples`.
+  One entry per row of `embd`.
+
+- n_samples:
+
+  Integer. Number of distinct samples.
 
 - milor_params:
 
@@ -53,3 +70,9 @@ A list with the following elements:
 - ncols - Integer. Number of refined neighbourhoods.
 
 - kth_distances - The k-th distances for spatial FDR calculations.
+
+- sample_counts - Numeric matrix of neighbourhoods x samples. The cells
+  of each sample found in each neighbourhood.
+
+- nhood_overlap - Numeric. Cells each neighbourhood shares with all the
+  others, the `"graph-overlap"` weighting for the spatial FDR.

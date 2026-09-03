@@ -1,6 +1,9 @@
 # Get the fitted model
 
-Get the fitted model
+**\[deprecated\]** The neighbourhood test moved into Rust, so there is
+no `DGEGLM` to hand back any more. Everything the fit was consulted for
+now sits in the results table, see
+[`get_differential_abundance_res()`](https://gregorlueg.github.io/bixverse/reference/get_differential_abundance_res.md).
 
 ## Usage
 
@@ -15,9 +18,8 @@ get_model_fit(x)
 
 - x:
 
-  An object from which to get the differential abundance results from.
+  An object from which to get the fitted model from.
 
 ## Value
 
-The model object, please refer to
-[`edgeR::glmQLFTest()`](https://rdrr.io/pkg/edgeR/man/glmQLFTest.html).
+`NULL`, with a deprecation warning.

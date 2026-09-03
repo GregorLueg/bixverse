@@ -6,6 +6,11 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>KNN searches for single cell • bixverse</title>
+<!-- favicons --><link rel="icon" type="image/png" sizes="96x96" href="../favicon-96x96.png">
+<link rel="icon" type="”image/svg+xml”" href="../favicon.svg">
+<link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
+<link rel="icon" sizes="any" href="../favicon.ico">
+<link rel="manifest" href="../site.webmanifest">
 <script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
@@ -14,6 +19,7 @@
 <link href="knn_searches_files/libs/quarto-html/light-border.css" rel="stylesheet">
 <!-- pkgdown --><script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet">
 <meta property="og:title" content="KNN searches for single cell">
+<meta property="og:image" content="https://gregorlueg.github.io/bixverse/logo.png">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -23,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.11</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -110,11 +116,10 @@
 </nav><div class="container template-quarto">
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
-
-      <h1>KNN searches for single cell</h1>
+      <img src="../logo.png" class="logo" alt=""><h1>KNN searches for single cell</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-09-01</p>
+      <p class="date">2026-09-03</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -236,7 +241,7 @@
 <div class="cell">
 <div class="sourceCode cell-code" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="fu"><a href="../reference/params_knn_defaults.html">params_knn_defaults</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; List of 13</span></span>
+<span><span class="co">#&gt; List of 14</span></span>
 <span><span class="co">#&gt;  $ k              : int 15</span></span>
 <span><span class="co">#&gt;  $ knn_method     : chr "kmknn"</span></span>
 <span><span class="co">#&gt;  $ ann_dist       : chr "euclidean"</span></span>
@@ -245,6 +250,7 @@
 <span><span class="co">#&gt;  $ delta          : num 0.001</span></span>
 <span><span class="co">#&gt;  $ diversify_prob : num 0</span></span>
 <span><span class="co">#&gt;  $ ef_budget      : NULL</span></span>
+<span><span class="co">#&gt;  $ extract_knn    : logi FALSE</span></span>
 <span><span class="co">#&gt;  $ m              : int 16</span></span>
 <span><span class="co">#&gt;  $ ef_construction: int 200</span></span>
 <span><span class="co">#&gt;  $ ef_search      : int 100</span></span>
@@ -302,7 +308,7 @@
 <td>NNDescent</td>
 <td>Another graph-based index that is ideal for tackling large data sets</td>
 <td>Graph-based</td>
-<td>Another graph-based index that is very good at dealing with large data sets. Uses tricks from PyNNDescent and is designed to be very memory-efficient</td>
+<td>Another graph-based index that is very good at dealing with large data sets. Uses tricks from PyNNDescent and is designed to be very memory-efficient. <code>extract_knn = TRUE</code> skips the query phase entirely and hands you the descent graph</td>
 <td>≤30. The initial kNN is designed with a node degree of 30, so you might see degradation in the performance when you ask for higher k. If you try this, set <code>ef_budget</code> high!</td>
 </tr>
 <tr class="even">
@@ -344,7 +350,7 @@
 <tr class="odd">
 <td>ann_dist</td>
 <td><code>"euclidean"</code></td>
-<td>The distance metric to use. Two options are available… Euclidean distance or Cosine distance. Very important, the underlying library returns the <strong>SQUARED</strong> Euclidean distance for speed purposes. If you use the Euclidean distance for something, keep this in mind!</td>
+<td>The distance metric to use. Two options are available… Euclidean distance or Cosine distance. As of <code>0.5.0</code> these are true distances: the underlying library works in squared Euclidean space for speed, but the square root is taken at the boundary, so what you get back is the Euclidean distance.</td>
 </tr>
 <tr class="even">
 <td>n_trees</td>
@@ -377,30 +383,36 @@
 <strong>NNDescent:</strong> The beam width for the query phase for NNDescent. If <code>NULL</code>, it will use the library default, i.e., <code>(k * 2).clamp(50, 200)).max(k)</code>. Generally not really needed to touch, but limits the number of k neighbours you can confidently return.</td>
 </tr>
 <tr class="odd">
+<td>extract_knn</td>
+<td><code>FALSE</code></td>
+<td>
+<strong>NNDescent:</strong> Hand back the graph the descent already built instead of beam searching it. There is no query phase at all, so it is much faster, and <code>ef_budget</code> stops mattering. You pay for it in recall. Rows the descent never filled come back padded with duplicate edges and you get a warning saying how many.</td>
+</tr>
+<tr class="even">
 <td>m</td>
 <td><code>16L</code></td>
 <td>
 <strong>HNSW:</strong> The node degree during the index creation. Creates 16 edges per given node in the graph-based index.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>ef_construction</td>
 <td><code>200L</code></td>
 <td>
 <strong>HNSW:</strong> The budget to generate good connections during construction of the index. Higher values yields a better initial graph-index.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>ef_search</td>
 <td><code>100L</code></td>
 <td>
 <strong>HNSW:</strong> The beam width during querying of the index. If a high quality graph was generated, usually does not need to be too high. If you set <code>k</code> high, you should adopt this parameter.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>n_list</td>
 <td><code>NULL</code></td>
 <td>
 <strong>IVF and KmKnn:</strong> This parameter is shared between the IVF and KmKnn index. Defines the number of Voronoi cells/clusters to generate. If not provided defaults to <code>sqrt(N)</code>. Be careful on smaller data sets and possible set it to more clusters here.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>n_probe</td>
 <td><code>NULL</code></td>
 <td>
@@ -436,7 +448,7 @@
 <span><span class="co">#&gt; SingleCellNearestNeighbour: 2163 cells, k = 15</span></span>
 <span><span class="co">#&gt;   Distance metric: euclidean</span></span>
 <span><span class="co">#&gt;   Index range: [0, 2162]</span></span>
-<span><span class="co">#&gt;   Distance range: [14.5910, 24042.3926]</span></span></code></pre></div>
+<span><span class="co">#&gt;   Distance range: [3.8198, 155.0561]</span></span></code></pre></div>
 </div>
 <p>This is the class that is actually sored in the object after running <code><a href="../reference/find_neighbours_sc.html">find_neighbours_sc()</a></code>.</p>
 <div class="cell">
@@ -467,7 +479,7 @@
 <span><span class="co">#&gt; SingleCellNearestNeighbour: 2163 cells, k = 15</span></span>
 <span><span class="co">#&gt;   Distance metric: euclidean</span></span>
 <span><span class="co">#&gt;   Index range: [0, 2162]</span></span>
-<span><span class="co">#&gt;   Distance range: [14.5910, 24042.3926]</span></span></code></pre></div>
+<span><span class="co">#&gt;   Distance range: [3.8198, 155.0561]</span></span></code></pre></div>
 </div>
 <p>The print message showed this line here:</p>
 <pre><code>Recall of approximate nearest neighbours search in random subset: 1.00</code></pre>
@@ -505,7 +517,7 @@
 <span><span class="co">#&gt; SingleCellNearestNeighbour: 2163 cells, k = 15</span></span>
 <span><span class="co">#&gt;   Distance metric: euclidean</span></span>
 <span><span class="co">#&gt;   Index range: [0, 2162]</span></span>
-<span><span class="co">#&gt;   Distance range: [14.5910, 24569.1406]</span></span></code></pre></div>
+<span><span class="co">#&gt;   Distance range: [3.8198, 156.7455]</span></span></code></pre></div>
 </div>
 <p>With one tree, we can appreciate that the Recall is dropping:</p>
 <pre><code>Recall of approximate nearest neighbours search in random subset: 0.75</code></pre>
@@ -527,9 +539,9 @@
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Annoy vs exhaustive.</span></span>
 <span><span class="co">#&gt;   Recall@15: 0.665.</span></span>
-<span><span class="co">#&gt;   Distance ratio: 1.055.</span></span></code></pre></div>
+<span><span class="co">#&gt;   Distance ratio: 1.026.</span></span></code></pre></div>
 </div>
-<p>We can appreciate that with one tree we do not get a Recall of 1 and the distance ratio is 4.2% worse than the exhaustive one. Let’s test another index</p>
+<p>We can appreciate that with one tree we do not get a Recall of 1 and the distance ratio is worse than the exhaustive one. Let’s test another index</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">nndescent_knn</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/generate_knn_sc.html">generate_knn_sc</a></span><span class="op">(</span></span>
@@ -543,7 +555,7 @@
 <span><span class="co">#&gt; SingleCellNearestNeighbour: 2163 cells, k = 15</span></span>
 <span><span class="co">#&gt;   Distance metric: euclidean</span></span>
 <span><span class="co">#&gt;   Index range: [0, 2162]</span></span>
-<span><span class="co">#&gt;   Distance range: [14.5910, 24048.2656]</span></span></code></pre></div>
+<span><span class="co">#&gt;   Distance range: [3.8198, 155.0750]</span></span></code></pre></div>
 </div>
 <p>And benchmark it:</p>
 <div class="cell">
@@ -551,7 +563,7 @@
 <code class="sourceCode R"><span><span class="va">nndescent_vs_exhaustive</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calc_knn_metrics.html">calc_knn_metrics</a></span><span class="op">(</span><span class="va">exhaustive_knn</span>, <span class="va">nndescent_knn</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span></span>
-<span>  <span class="st">"Annoy vs exhaustive.\n"</span>,</span>
+<span>  <span class="st">"NNDescent vs exhaustive.\n"</span>,</span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span></span>
 <span>    <span class="st">" Recall@15: %.3f.\n"</span>,</span>
 <span>    <span class="va">nndescent_vs_exhaustive</span><span class="op">$</span><span class="va">final_recall</span></span>
@@ -561,18 +573,46 @@
 <span>    <span class="va">nndescent_vs_exhaustive</span><span class="op">$</span><span class="va">final_ratio</span></span>
 <span>  <span class="op">)</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Annoy vs exhaustive.</span></span>
+<span><span class="co">#&gt; NNDescent vs exhaustive.</span></span>
 <span><span class="co">#&gt;   Recall@15: 1.000.</span></span>
 <span><span class="co">#&gt;   Distance ratio: 1.000.</span></span></code></pre></div>
 </div>
 <p>As we can see, this approximate index also reaches perfect recall and distance ratio.</p>
+<p>NNDescent has a second gear. The descent already builds a kNN graph on its way to convergence, and <code>extract_knn = TRUE</code> hands you that graph instead of running a beam search over the index. No query phase at all.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb15"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">nndescent_extracted</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/generate_knn_sc.html">generate_knn_sc</a></span><span class="op">(</span></span>
+<span>  object <span class="op">=</span> <span class="va">sc_object</span>,</span>
+<span>  neighbours_params <span class="op">=</span> <span class="fu"><a href="../reference/params_sc_neighbours.html">params_sc_neighbours</a></span><span class="op">(</span></span>
+<span>    knn <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>knn_method <span class="op">=</span> <span class="st">"nndescent"</span>, extract_knn <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span>  <span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">extracted_vs_exhaustive</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calc_knn_metrics.html">calc_knn_metrics</a></span><span class="op">(</span><span class="va">exhaustive_knn</span>, <span class="va">nndescent_extracted</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span></span>
+<span>  <span class="st">"NNDescent (graph extraction) vs exhaustive.\n"</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span></span>
+<span>    <span class="st">" Recall@15: %.3f.\n"</span>,</span>
+<span>    <span class="va">extracted_vs_exhaustive</span><span class="op">$</span><span class="va">final_recall</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span></span>
+<span>    <span class="st">" Distance ratio: %.3f.\n"</span>,</span>
+<span>    <span class="va">extracted_vs_exhaustive</span><span class="op">$</span><span class="va">final_ratio</span></span>
+<span>  <span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span><span class="co">#&gt; NNDescent (graph extraction) vs exhaustive.</span></span>
+<span><span class="co">#&gt;   Recall@15: 1.000.</span></span>
+<span><span class="co">#&gt;   Distance ratio: 1.000.</span></span></code></pre></div>
+</div>
+<p>That is the trade: you give up a bit of recall and get the query phase for free. On million-cell data that is the difference worth having.</p>
 </section></section><section class="level2"><h2 id="conclusions">Conclusions<a class="anchor" aria-label="anchor" href="#conclusions"></a>
 </h2>
 <p>We could iterate through the others, but it does not have much of a point. The goal of this vignette was to check the type of hyperparameters and type of indices provided and give an idea when to use which and how to work with them and validate parameters if neededed.</p>
 </section><section class="level2"><h2 id="clean-up">Clean up<a class="anchor" aria-label="anchor" href="#clean-up"></a>
 </h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">tempdir_pbmc</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span>, force <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 </div>
 </section><script id="quarto-html-after-body" type="application/javascript">

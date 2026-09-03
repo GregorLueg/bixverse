@@ -6,10 +6,6 @@ only decide who is a neighbour and every retained edge weighs one. Set
 it to `TRUE` for the Gaussian kernel, whose width is the
 `ceil(k / neighborhood_factor)`-th neighbour distance.
 
-Whether the distances need squaring is derived from the metric, so it is
-not a parameter here. When a pre-computed kNN graph is handed to the
-method, the metric stored on that graph wins over `ann_dist`.
-
 ## Usage
 
 ``` r
@@ -50,7 +46,8 @@ params_sc_hotspot(
   [`params_knn_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_knn_defaults.md)
   for available parameters: `k`, `knn_method`, `ann_dist`,
   `search_budget`, `n_trees`, `delta`, `diversify_prob`, `ef_budget`,
-  `m`, `ef_construction`, `ef_search`, `n_list` and `n_probe`.
+  `extract_knn`, `m`, `ef_construction`, `ef_search`, `n_list` and
+  `n_probe`.
 
 ## Value
 

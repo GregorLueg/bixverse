@@ -13,6 +13,10 @@ with a linear backoff.
 
 ## Arguments
 
+- urls:
+
+  Character vector. Mirrors to try, in order.
+
 - dest_file:
 
   String. Path to write the file to.
@@ -24,10 +28,6 @@ with a linear backoff.
 - tries:
 
   Integer. Attempts before giving up.
-
-- url:
-
-  String. The URL to fetch.
 
 ## Value
 

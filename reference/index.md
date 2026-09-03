@@ -17,6 +17,7 @@ co-expression module detection, graph-based clustering, etc.
   [`get_params.StabilisedNmfResult()`](https://gregorlueg.github.io/bixverse/reference/get_params.md)
   [`get_params.ConsensusNmfResult()`](https://gregorlueg.github.io/bixverse/reference/get_params.md)
   [`get_params.DialogueResult()`](https://gregorlueg.github.io/bixverse/reference/get_params.md)
+  [`get_params.ScNebula()`](https://gregorlueg.github.io/bixverse/reference/get_params.md)
   : Get the parameters that were used.
 - [`get_results()`](https://gregorlueg.github.io/bixverse/reference/get_results.md)
   [`get_results.DialogueResult()`](https://gregorlueg.github.io/bixverse/reference/get_results.md)
@@ -25,7 +26,7 @@ co-expression module detection, graph-based clustering, etc.
 ## Gene set enrichment helpers
 
 Everything and anything you need to do various types of gene set
-enrichments; hypergeometric tests, GSVA, (ss)GSEA.
+enrichments; hypergeometric tests, GSVA, (ss)GSEA, blitzGSEA.
 
 - [`gse_hypergeometric()`](https://gregorlueg.github.io/bixverse/reference/gse_hypergeometric.md)
   : Gene set enrichment (GSE) based on a hypergeometric test.
@@ -36,6 +37,10 @@ enrichments; hypergeometric tests, GSVA, (ss)GSEA.
   : Bixverse implementation of the fgsea algorithm
 - [`calc_fgsea_simple()`](https://gregorlueg.github.io/bixverse/reference/calc_fgsea_simple.md)
   : Bixverse implementation of the simple fgsea algorithm
+- [`calc_blitzgsea()`](https://gregorlueg.github.io/bixverse/reference/calc_blitzgsea.md)
+  : Bixverse implementation of the blitzGSEA algorithm
+- [`blitzgsea_calibrate()`](https://gregorlueg.github.io/bixverse/reference/blitzgsea_calibrate.md)
+  : Calibrate the blitzGSEA null model for a signature
 - [`calc_gsea_traditional()`](https://gregorlueg.github.io/bixverse/reference/calc_gsea_traditional.md)
   : Bixverse implementation of the traditional GSEA algorithm
 - [`calc_mitch()`](https://gregorlueg.github.io/bixverse/reference/calc_mitch.md)
@@ -50,6 +55,8 @@ enrichments; hypergeometric tests, GSVA, (ss)GSEA.
   : Bixverse implementation of singscore (multiple gene sets)
 - [`calc_singscore_rank()`](https://gregorlueg.github.io/bixverse/reference/calc_singscore_rank.md)
   : Rank an expression matrix for singscore
+- [`params_blitzgsea()`](https://gregorlueg.github.io/bixverse/reference/params_blitzgsea.md)
+  : Wrapper function to generate blitzGSEA parameters
 - [`params_gsea()`](https://gregorlueg.github.io/bixverse/reference/params_gsea.md)
   : Wrapper function to generate GSEA parameters
 - [`params_gsva()`](https://gregorlueg.github.io/bixverse/reference/params_gsva.md)
@@ -243,6 +250,14 @@ differential gene expression results.
   : TPM calculation
 - [`run_limma_voom()`](https://gregorlueg.github.io/bixverse/reference/run_limma_voom.md)
   : Wrapper for a Limma Voom analysis
+- [`run_edger_ql()`](https://gregorlueg.github.io/bixverse/reference/run_edger_ql.md)
+  : Run the edgeR quasi-likelihood workflow
+- [`pseudobulk_dge_sc()`](https://gregorlueg.github.io/bixverse/reference/pseudobulk_dge_sc.md)
+  : Run the edgeR quasi-likelihood workflow on pseudo-bulked single
+  cells
+- [`params_edger_ql()`](https://gregorlueg.github.io/bixverse/reference/params_edger_ql.md)
+  : Wrapper function for parameters for the edgeR quasi-likelihood
+  workflow
 - [`hedges_g_dge()`](https://gregorlueg.github.io/bixverse/reference/hedges_g_dge.md)
   : Calculate the effect size
 - [`get_dge_effect_sizes()`](https://gregorlueg.github.io/bixverse/reference/get_dge_effect_sizes.md)
@@ -258,7 +273,7 @@ differential gene expression results.
 - [`get_gene_lengths()`](https://gregorlueg.github.io/bixverse/reference/get_gene_lengths.md)
   : Get the gene lengths
 - [`get_model_fit()`](https://gregorlueg.github.io/bixverse/reference/get_model_fit.md)
-  : Get the fitted model
+  **\[deprecated\]** : Get the fitted model
 - [`get_tpm_counts()`](https://gregorlueg.github.io/bixverse/reference/get_tpm_counts.md)
   : Return the TPM-normalised counts
 
@@ -567,6 +582,9 @@ Generating meta cells.
 - [`merge_meta_cells()`](https://gregorlueg.github.io/bixverse/reference/merge_meta_cells.md)
   : Merge meta cell objects into one
 
+- [`nebula_mc()`](https://gregorlueg.github.io/bixverse/reference/nebula_mc.md)
+  : Run NEBULA on meta cells
+
 - [`params_sc_supercell()`](https://gregorlueg.github.io/bixverse/reference/params_sc_supercell.md)
   : Wrapper function for parameters for SuperCell generation
 
@@ -640,6 +658,11 @@ Rust and the DuckDB supporting the metadata.
   :
 
   Load in Seurat to `SingleCells`
+
+- [`load_sce()`](https://gregorlueg.github.io/bixverse/reference/load_sce.md)
+  :
+
+  Load in data from a `SingleCellExperiment`
 
 - [`load_tenx_h5()`](https://gregorlueg.github.io/bixverse/reference/load_tenx_h5.md)
   :
@@ -838,6 +861,9 @@ count extraction, miloR, Hotspot, VISION and SCENIC.
 - [`meld_sc()`](https://gregorlueg.github.io/bixverse/reference/meld_sc.md)
   : Run MELD signal smoothing for differential abundance estimation
 
+- [`nebula_sc()`](https://gregorlueg.github.io/bixverse/reference/nebula_sc.md)
+  : Run NEBULA on single cells
+
 - [`run_palantir_sc()`](https://gregorlueg.github.io/bixverse/reference/run_palantir_sc.md)
   : Run Palantir trajectory inference
 
@@ -942,6 +968,9 @@ count extraction, miloR, Hotspot, VISION and SCENIC.
 
 - [`params_sc_miloR()`](https://gregorlueg.github.io/bixverse/reference/params_sc_miloR.md)
   : Wrapper function for parameters for MiloR
+
+- [`params_nebula()`](https://gregorlueg.github.io/bixverse/reference/params_nebula.md)
+  : Wrapper function for parameters for NEBULA
 
 - [`params_sc_vision()`](https://gregorlueg.github.io/bixverse/reference/params_sc_vision.md)
   : Wrapper function for parameters for VISION with auto-correlation
@@ -1176,6 +1205,10 @@ Functions and helpers to download or generate synthetic data.
   : Download the CD34 example data from SEACells
 - [`download_dialogue_uc()`](https://gregorlueg.github.io/bixverse/reference/download_dialogue_uc.md)
   : Download the ulcerative colitis example data for DIALOGUE
+- [`download_kang_pbmc()`](https://gregorlueg.github.io/bixverse/reference/download_kang_pbmc.md)
+  : Download the Kang, et al. IFN-beta stimulated PBMC data
+- [`download_thymus_ageing()`](https://gregorlueg.github.io/bixverse/reference/download_thymus_ageing.md)
+  : Download the Baran-Gale, et al. ageing thymus data
 - [`download_marrow_cd34()`](https://gregorlueg.github.io/bixverse/reference/download_marrow_cd34.md)
   : Download the marrow CD34 example data from Palantir
 - [`download_pbmc3k()`](https://gregorlueg.github.io/bixverse/reference/download_pbmc3k.md)
@@ -1232,8 +1265,6 @@ All types of other random helpers without a clear pattern
   : Helper function to calculate the induced sparsity
 - [`find_threshold_otsu()`](https://gregorlueg.github.io/bixverse/reference/find_threshold_otsu.md)
   : Find a threshold via the Otsu method
-- [`get_seurat_counts_to_list()`](https://gregorlueg.github.io/bixverse/reference/get_seurat_counts_to_list.md)
-  : Transform Seurat raw counts into a List
 - [`install_agent_skill()`](https://gregorlueg.github.io/bixverse/reference/install_agent_skill.md)
   : Install the bixverse agent skill
 - [`knn_graph_label_propagation()`](https://gregorlueg.github.io/bixverse/reference/knn_graph_label_propagation.md)
@@ -1261,6 +1292,12 @@ There is a lot more under the hood…
 - [`rs_batch_silhouette_width()`](https://gregorlueg.github.io/bixverse/reference/rs_batch_silhouette_width.md)
   **\[experimental\]** : Calculate batch silhouette width from an
   embedding
+- [`rs_blitzgsea_calibrate()`](https://gregorlueg.github.io/bixverse/reference/rs_blitzgsea_calibrate.md)
+  **\[experimental\]** : Calibrate the blitzGSEA gamma null for a
+  signature
+- [`rs_blitzgsea_score()`](https://gregorlueg.github.io/bixverse/reference/rs_blitzgsea_score.md)
+  **\[experimental\]** : Score gene sets against a calibrated blitzGSEA
+  null
 - [`rs_cistarget()`](https://gregorlueg.github.io/bixverse/reference/rs_cistarget.md)
   **\[experimental\]** : Run CisTarget motif enrichment analysis
 - [`rs_compare_knn()`](https://gregorlueg.github.io/bixverse/reference/rs_compare_knn.md)
@@ -1357,6 +1394,9 @@ There is a lot more under the hood…
   **\[experimental\]** : Calculate the NicheNet ligand activity scores
 - [`rs_mad_outlier()`](https://gregorlueg.github.io/bixverse/reference/rs_mad_outlier.md)
   **\[experimental\]** : Calculate MAD outlier detection in Rust.
+- [`rs_edger_ql()`](https://gregorlueg.github.io/bixverse/reference/rs_edger_ql.md)
+  **\[experimental\]** : Run the edgeR quasi-likelihood chain on a count
+  matrix
 - [`rs_mc_aucell()`](https://gregorlueg.github.io/bixverse/reference/rs_mc_aucell.md)
   **\[experimental\]** : Calculate AUCell in Rust (for meta cells)
 - [`rs_mc_dialogue()`](https://gregorlueg.github.io/bixverse/reference/rs_mc_dialogue.md)
@@ -1381,6 +1421,9 @@ There is a lot more under the hood…
   auto-correlation (for meta cells)
 - [`rs_mitch_calc()`](https://gregorlueg.github.io/bixverse/reference/rs_mitch_calc.md)
   : Calculate mitch enrichment leveraging Rust under the hood
+- [`rs_nebula_mc()`](https://gregorlueg.github.io/bixverse/reference/rs_nebula_mc.md)
+  **\[experimental\]** : Fit the NEBULA negative binomial gamma mixed
+  model over meta cells
 - [`rs_mutual_info()`](https://gregorlueg.github.io/bixverse/reference/rs_mutual_info.md)
   **\[experimental\]** : Calculates the mutual information matrix
 - [`rs_onto_semantic_sim()`](https://gregorlueg.github.io/bixverse/reference/rs_onto_semantic_sim.md)
@@ -1450,6 +1493,9 @@ There is a lot more under the hood…
   **\[experimental\]** : Rust version of singscore for a single gene set
 - [`rs_snf()`](https://gregorlueg.github.io/bixverse/reference/rs_snf.md)
   **\[experimental\]** : Similarity network fusion
+- [`rs_spatial_fdr()`](https://gregorlueg.github.io/bixverse/reference/rs_spatial_fdr.md)
+  **\[experimental\]** : Weighted Benjamini-Hochberg over overlapping
+  neighbourhoods
 - [`rs_sparse_dict_dgrdl()`](https://gregorlueg.github.io/bixverse/reference/rs_sparse_dict_dgrdl.md)
   **\[experimental\]** : Generate a sparse dictionary with DGRDL
 - [`rs_sparse_dict_dgrdl_grid_search()`](https://gregorlueg.github.io/bixverse/reference/rs_sparse_dict_dgrdl_grid_search.md)

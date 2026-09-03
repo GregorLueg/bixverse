@@ -7,7 +7,7 @@ a vignette build outright.
 ## Usage
 
 ``` r
-.data_urls(file, zenodo_record)
+.data_urls(file, zenodo_record = NULL)
 ```
 
 ## Arguments
@@ -18,7 +18,9 @@ a vignette build outright.
 
 - zenodo_record:
 
-  String. Zenodo record holding the fallback copy.
+  Optional string. Zenodo record holding the fallback copy. `NULL` for
+  datasets that only live in the GitHub release, which is the case until
+  they are archived.
 
 ## Value
 

@@ -60,13 +60,11 @@ get_miloR_abundances_sc(
     One of `c("approximate", "bruteforce", "index")`.
 
   - index_type - String. Type of kNN index to use. One of
-    `c("annoy", "hnsw")`.
+    `c("nndescent", "ivf", "hnsw", "annoy", "exhaustive")`.
 
   - knn - List of kNN parameters. See
     [`params_knn_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_knn_defaults.md)
-    for available parameters and their defaults. Note: `knn_method`
-    cannot be `"exhaustive"` for MiloR as it basically boils down to
-    `"bruteforce"`.
+    for available parameters and their defaults.
 
 - seed:
 

@@ -438,11 +438,11 @@ ica_modules <- get_modules(ica_res)
 ica_modules[, .N, by = module_id][order(-N)]
 #>    module_id     N
 #>       <char> <int>
-#> 1:      IC_1    88
-#> 2:      IC_5    85
-#> 3:      IC_4    70
-#> 4:      IC_3    65
-#> 5:      IC_2    57
+#> 1:      IC_2    77
+#> 2:      IC_3    68
+#> 3:      IC_5    67
+#> 4:      IC_1    65
+#> 5:      IC_4    28
 
 # Sparse and overlapping, which is the whole point of a factorisation.
 data.table(
@@ -452,7 +452,7 @@ data.table(
 )
 #>     rows unique_genes in_multiple_modules
 #>    <int>        <int>               <int>
-#> 1:   365          234                 116
+#> 1:   305          169                  77
 ```
 
 ## Method 4: DGRDL
@@ -835,10 +835,10 @@ recovery
 #>           method     score
 #>           <char>     <num>
 #> 1:        Leiden 0.8366667
-#> 2:           ICA 0.7573697
-#> 3:        CoReMo 0.7500000
-#> 4:           NMF 0.6811551
-#> 5: Consensus NMF 0.5900000
+#> 2:        CoReMo 0.7500000
+#> 3:           NMF 0.6811551
+#> 4: Consensus NMF 0.5900000
+#> 5:           ICA 0.4974674
 #> 6:         DGRDL 0.1505952
 ```
 
@@ -1022,14 +1022,14 @@ grid_res <- rbindlist(lapply(
 grid_res
 #>              generator     metric CoReMo   ICA   NMF
 #>                 <char>     <char>  <num> <num> <num>
-#> 1:         hub_modular    jaccard  0.750 0.757 0.681
-#> 2:         hub_modular factor_cor  0.985 0.776 0.988
-#> 3:             modular    jaccard  0.790 0.166 0.690
-#> 4:             modular factor_cor  0.983 0.691 0.986
-#> 5: non_negative_factor    jaccard  0.560 0.504 0.486
-#> 6: non_negative_factor factor_cor  0.959 0.420 0.966
-#> 7: non_gaussian_factor    jaccard  0.617 0.502 0.596
-#> 8: non_gaussian_factor factor_cor  0.978 0.466 0.979
+#> 1:         hub_modular    jaccard  0.750 0.497 0.681
+#> 2:         hub_modular factor_cor  0.985 0.520 0.988
+#> 3:             modular    jaccard  0.790 0.211 0.690
+#> 4:             modular factor_cor  0.983 0.599 0.986
+#> 5: non_negative_factor    jaccard  0.560 0.511 0.486
+#> 6: non_negative_factor factor_cor  0.959 0.401 0.966
+#> 7: non_gaussian_factor    jaccard  0.617 0.507 0.596
+#> 8: non_gaussian_factor factor_cor  0.978 0.516 0.979
 ```
 
 ``` r

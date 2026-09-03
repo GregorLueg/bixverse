@@ -8,10 +8,9 @@ al.
 
 The kNN graph stored on the object feeds the diffusion kernel, so run
 [`find_neighbours_sc()`](https://gregorlueg.github.io/bixverse/reference/find_neighbours_sc.md)
-first. Whether the stored distances are treated as squared is derived
-from the distance metric of that graph. The geodesics themselves are
-measured over a second kNN graph that Palantir builds internally on the
-multiscale space, controlled by the `knn` element of
+first. The geodesics themselves are measured over a second kNN graph
+that Palantir builds internally on the multiscale space, controlled by
+the `knn` element of
 [`params_sc_palantir()`](https://gregorlueg.github.io/bixverse/reference/params_sc_palantir.md).
 
 For `SingleCellsMultiModal` the `"wnn"` graph works, but its distances

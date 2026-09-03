@@ -27,6 +27,8 @@ get_params.StabilisedNmfResult(object, to_json = FALSE, pretty_json = FALSE)
 get_params.ConsensusNmfResult(object, to_json = FALSE, pretty_json = FALSE)
 
 get_params.DialogueResult(object, ...)
+
+get_params.ScNebula(object, to_json = FALSE, pretty_json = FALSE)
 ```
 
 ## Arguments
@@ -44,6 +46,10 @@ get_params.DialogueResult(object, ...)
 - pretty_json:
 
   Shall the params be returned as a pretty JSON string.
+
+- ...:
+
+  Unused, present so the S3 methods sharing this page match the generic.
 
 ## Value
 

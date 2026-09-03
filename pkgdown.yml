@@ -7,6 +7,8 @@ articles:
   cpca: cpca.html
   design_single_cell: design_single_cell.html
   dialogue: dialogue.html
+  differential_abundance: differential_abundance.html
+  differential_expression: differential_expression.html
   doublet_detection: doublet_detection.html
   genetic_diffusions: genetic_diffusions.html
   gse_methods: gse_methods.html
@@ -26,7 +28,7 @@ articles:
   symphony: symphony.html
   thinking_single_cell: thinking_single_cell.html
   trajectory_inference: trajectory_inference.html
-last_built: 2026-09-01T13:13Z
+last_built: 2026-09-03T17:49Z
 urls:
   reference: https://gregorlueg.github.io/bixverse/reference
   article: https://gregorlueg.github.io/bixverse/articles

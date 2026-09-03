@@ -214,7 +214,7 @@ rs_results_example <- gse_hypergeometric_list(
   gene_set_list = gene_sets
 )
 tictoc::toc()
-#> 1.653 sec elapsed
+#> 1.844 sec elapsed
 ```
 
 ## Gene Ontology-aware enrichment: the elimination method
@@ -343,7 +343,7 @@ rs_results_example <- gse_go_elim_method_list(
   target_gene_list = go_target_gene_sets
 )
 tictoc::toc()
-#> 1.78 sec elapsed
+#> 1.966 sec elapsed
 ```
 
 ## Alternative: post-hoc simplification of GO results
@@ -516,12 +516,12 @@ head(bixverse_fgsea)
 #> 6:  0.3607407  1.0328122 0.4202128 0.6202637
 #>                                    leading_edge n_more_extreme    log2err
 #>                                          <list>          <num>      <num>
-#> 1:                      15270,12189,71846,19357            338 0.06378454
-#> 2:  17918,19341,20336,22628,22627,20619,...[15]            454 0.04999139
+#> 1:                            15270,12189,71846            338 0.06378454
+#> 2:  17918,19341,20336,22628,22627,20619,...[10]            454 0.04999139
 #> 3: 76199,19014,26896,229003,17977,17978,...[12]             50 0.19782202
-#> 4:                            20893,59027,19883            456 0.04979032
-#> 5:  60406,19361,15270,20893,12189,68240,...[13]            262 0.07647671
-#> 6:                     60406,20018,245688,20017            236 0.08197788
+#> 4:                                  20893,59027            456 0.04979032
+#> 5:  60406,19361,15270,20893,12189,68240,...[12]            262 0.07647671
+#> 6:                                  60406,20018            236 0.08197788
 ```
 
 The p-values from both implementations are in close agreement, as
@@ -563,9 +563,154 @@ microbenchmark::microbenchmark(
 )
 #> Unit: seconds
 #>   expr      min       lq     mean   median       uq      max neval
-#>  fgsea 2.793930 3.081702 3.224985 3.310682 3.339463 3.599149     5
-#>   rust 2.156319 2.156515 2.158710 2.157585 2.161408 2.161726     5
+#>  fgsea 2.838884 2.945555 3.166647 3.178852 3.276348 3.593595     5
+#>   rust 2.268717 2.285337 2.286291 2.287432 2.289646 2.300320     5
 ```
+
+## blitzGSEA
+
+Permutation-based GSEA pays per pathway. blitzGSEA does not. It draws
+random gene sets once across a log-spaced grid of set sizes, fits gamma
+tails to the resulting null enrichment scores, and then reads every
+pathway’s p-value straight off the fitted tail, see [Lachmann et
+al.](https://doi.org/10.1093/bioinformatics/btac076). One gamma
+evaluation per pathway, no matter how big the library.
+
+``` r
+
+blitz_params <- params_blitzgsea(min_size = 15L)
+
+bixverse_blitz <- calc_blitzgsea(
+  stats = exampleRanks,
+  pathways = examplePathways,
+  blitz_params = blitz_params
+)
+
+head(bixverse_blitz)
+#>                                       pathway_name        es      nes
+#>                                             <char>     <num>    <num>
+#> 1:                              5990980_Cell_Cycle 0.5373426 7.977693
+#> 2:                     5990979_Cell_Cycle,_Mitotic 0.5579853 7.860540
+#> 3:                                 5991454_M_Phase 0.5558732 5.985000
+#> 4:                    5991851_Mitotic_Prometaphase 0.7243143 5.964933
+#> 5: 5992217_Resolution_of_Sister_Chromatid_Cohesion 0.7337666 5.803762
+#> 6:          5991502_Mitotic_Metaphase_and_Anaphase 0.6038215 5.697086
+#>           pvals          fdr        sidak  size
+#>           <num>        <num>        <num> <num>
+#> 1: 1.490940e-15 8.736906e-13 8.736906e-13   369
+#> 2: 3.824815e-15 1.120671e-12 2.241341e-12   317
+#> 3: 2.163902e-09 3.585367e-07 1.268046e-06   173
+#> 4: 2.447350e-09 3.585367e-07 1.434146e-06    82
+#> 5: 6.484348e-09 7.599656e-07 3.799821e-06    74
+#> 6: 1.218724e-08 1.033659e-06 7.141697e-06   123
+#>                                     leading_edge
+#>                                           <list>
+#> 1: 66336,66977,12442,107995,66442,19361,...[155]
+#> 2: 66336,66977,12442,107995,66442,12571,...[141]
+#> 3:  66336,66977,12442,107995,66442,52276,...[67]
+#> 4:  66336,66977,12442,107995,66442,52276,...[44]
+#> 5:  66336,66977,12442,107995,66442,52276,...[40]
+#> 6:  66336,66977,107995,66442,52276,67629,...[51]
+```
+
+Does the approximation hold up against the permutations?
+
+``` r
+
+blitz_vs_fgsea <- merge(
+  bixverse_blitz[, .(pathway_name, pvals_blitz = pvals)],
+  bixverse_fgsea[, .(pathway_name, pvals_fgsea = pvals)],
+  by = "pathway_name"
+)
+
+plot(
+  x = -log10(blitz_vs_fgsea$pvals_fgsea),
+  y = -log10(blitz_vs_fgsea$pvals_blitz),
+  xlab = "-log10(pval) bixverse fgsea",
+  ylab = "-log10(pval) bixverse blitzGSEA",
+  main = "fgsea and blitzGSEA"
+)
+```
+
+![](gse_methods_files/figure-html/blitzgsea%20vs%20fgsea%20p-value%20comparison-1.png)
+
+Close enough to rank the same things at the top, with the gamma tail
+reaching further into the small p-values than 1000 permutations can.
+
+### Reusing the null model
+
+Nothing about a gene set library enters the calibration. It depends only
+on the signature, so one calibration serves every library you score
+against that ranking.
+[`blitzgsea_calibrate()`](https://gregorlueg.github.io/bixverse/reference/blitzgsea_calibrate.md)
+hands it back as a plain list you can hold onto or
+[`saveRDS()`](https://rdrr.io/r/base/readRDS.html):
+
+``` r
+
+null_model <- blitzgsea_calibrate(
+  stats = exampleRanks,
+  blitz_params = blitz_params
+)
+
+null_model
+#> BlitzGseaNull (calibrated blitzGSEA null model)
+#>   Signature:        12000 genes
+#>   Anchors:          37 (sizes 1 to 6000)
+#>   Centred:          TRUE
+#>   KS p-value:       0.42 positive tail, 0.491 negative tail
+```
+
+The KS p-values are a goodness-of-fit diagnostic on the gamma tails. Low
+values mean the fit is poor and the p-values are optimistic;
+[`calc_blitzgsea()`](https://gregorlueg.github.io/bixverse/reference/calc_blitzgsea.md)
+warns when that happens. More permutations is the usual fix.
+
+Hand the null back and the scoring is all that is left:
+
+``` r
+
+microbenchmark::microbenchmark(
+  fgsea = calc_fgsea(
+    stats = exampleRanks,
+    pathways = examplePathways,
+    gsea_params = params_gsea(min_size = 15L)
+  ),
+  blitz_cold = calc_blitzgsea(
+    stats = exampleRanks,
+    pathways = examplePathways,
+    blitz_params = blitz_params
+  ),
+  blitz_warm = calc_blitzgsea(
+    stats = exampleRanks,
+    pathways = examplePathways,
+    blitz_params = blitz_params,
+    null_model = null_model
+  ),
+  times = 5L
+)
+#> Unit: milliseconds
+#>        expr       min         lq       mean     median         uq        max
+#>       fgsea 2258.6763 2276.08025 2277.42033 2280.55564 2285.06587 2286.72358
+#>  blitz_cold  975.4092  983.48074  986.39046  983.82479  991.79640  997.44120
+#>  blitz_warm   14.3427   15.05996   15.04192   15.11114   15.25463   15.44115
+#>  neval
+#>      5
+#>      5
+#>      5
+```
+
+On this data (586 pathways, ~12k genes) the cold run lands around 3x
+faster than the fgsea multilevel method and the warm one around 90x.
+Score five libraries against one ranking and you pay the calibration
+once.
+
+The catch: the null is specific to the signature it was drawn from, both
+its length and its values.
+[`calc_blitzgsea()`](https://gregorlueg.github.io/bixverse/reference/calc_blitzgsea.md)
+refuses a null whose gene count does not match rather than returning
+plausible-looking rubbish, but it cannot catch two different signatures
+of the same length. Recalibrate when the ranking changes.
 
 ## GO-aware GSEA: the elimination method
 

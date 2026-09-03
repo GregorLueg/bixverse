@@ -18,8 +18,8 @@ now GPU-accelerated
 leveraging CUDA and Nvidia GPUs. In Rust, we have
 [SingleRust](https://singlerust.com) which is porting ScanPy over… What
 the hell is the point, you might ask? Well, the design philosophy in
-this package is quite different from all of the above — whether better
-or worse you shall discover, but it *is* different. Let’s start with the
+this package is quite different from all of the above. Whether better or
+worse you shall discover, but it *is* different. Let’s start with the
 problem though…
 
 ### Chapter 1: Single cell is just not (very) performant (on CPU)…
@@ -33,7 +33,7 @@ Some quotes from recent papers:
 > clustering (Methods). **On a 32-core workstation, the pipeline took
 > over 52 minutes (Methods)** \[…\]
 >
-> — [Dicks, et al., arXiv, 2026](https://arxiv.org/abs/2603.02402)
+> - [Dicks, et al., arXiv, 2026](https://arxiv.org/abs/2603.02402)
 
 > For instance, a typical single-cell data analysis pipeline —
 > encompassing data integration, clustering, visualisation, and
@@ -42,8 +42,8 @@ Some quotes from recent papers:
 > increases to 600,000, **the above pipeline can crash due to memory
 > exceeding, even on a professional computing platform with 512 GB RAM**
 >
-> — [Li, et al., Nat Comm,
-> 2025](https://www.nature.com/articles/s41467-025-56424-6)
+> - [Li, et al., Nat Comm,
+>   2025](https://www.nature.com/articles/s41467-025-56424-6)
 
 > *Recommendations for executing the Scanpy analysis*
 >
@@ -115,7 +115,7 @@ direction here, but can we do even better?
 ![](../reference/figures/python_r_slow.png)
 
 There. It has been said. They are slow and let us stop pretending
-otherwise. Yes, you can drop into NumPy or Rcpp for the heavy lifting —
+otherwise. Yes, you can drop into NumPy or Rcpp for the heavy lifting,
 but that argument rather proves the point! The real problem is not any
 single kernel; it is what happens between them.
 
@@ -124,9 +124,9 @@ A lot of algorithms in practice end up looking like this:
     R/Python → low-level kernel → R/Python → low-level kernel → R/Python → ...
 
 Each arrow is a context switch. Data gets passed across a language
-boundary, some “simple” bookkeeping happens in the interpreter — a
-filter here, a reshape there, maybe a quick normalisation — and then you
-hand it back down again. None of those individual steps looks expensive.
+boundary, some “simple” bookkeeping happens in the interpreter (a filter
+here, a reshape there, maybe a quick normalisation) and then you hand it
+back down again. None of those individual steps looks expensive.
 Collectively, they are death by a thousand cuts: repeated allocations,
 data copies you did not ask for, and the interpreter’s garbage collector
 doing God knows what in between. You also lose any hope of the compiler
@@ -160,7 +160,7 @@ much easier. From there we can make some design decisions.
     leveraging counts only need subsets of cells and genes. We can also
     avoid holding metadata in memory via DuckDB. Data will be streamed
     from disk when needed and Rust’s compiler will free memory once it
-    is no longer needed — sometimes enforced explicitly with
+    is no longer needed, sometimes enforced explicitly with
     [`drop()`](https://rdrr.io/r/base/drop.html). Raw counts? Nope.
     Normalised counts? Nope. Scaled counts? Nope. We just removed 40 GB
     of unnecessary stuff from memory (in our 1M cell example). Data can
@@ -173,18 +173,20 @@ much easier. From there we can make some design decisions.
     transformation. (Anyone who has tried fancy Pearson residual
     modelling on large data sets knows what I am talking about.) That
     means when reading h5ad or mtx files, we can pre-scan them, take
-    only what we want, and normalise in a single pass — avoiding the
+    only what we want, and normalise in a single pass, avoiding the
     load-everything, then-filter, then-normalise pattern.
 
 3.  ***We accept that single cell is noisy*** and do not bother with
     `f32` or even `f64` precision for storage. For raw counts, `u16` is
-    sufficient most of the time. The ML field has shown that you can get
-    away with `f16`, which reduces memory pressure and I/O substantially
-    — and they are pushing quantisation even further than that. We will
-    accept the precision loss when upcasting to `f64` to avoid
-    catastrophic cancellation issues at large N.
+    sufficient most of the time, and the storage enum falls back to
+    `u32` per chunk for the rare gene that busts it, so nothing gets
+    clipped. The ML field has shown that you can get away with `f16`,
+    which reduces memory pressure and I/O substantially, and they are
+    pushing quantisation even further than that. We will accept the
+    precision loss when upcasting to `f64` to avoid catastrophic
+    cancellation issues at large N.
 
-4.  ***We are not doing any heavy calculations in R (or Python — future
+4.  ***We are not doing any heavy calculations in R (or Python, future
     roadmap).*** Rust is superior for speed and optimisation: aggressive
     multi-threading, no copy-on-modify semantics, tight memory control,
     and SIMD acceleration for specific bottlenecks (distance
@@ -255,12 +257,11 @@ decent SSD speeds, but most modern hardware has that covered.
 
 Continuing from step 4, we avoid round trips to R entirely. This
 sidesteps R quirks like copy-on-modify. The typical approximate nearest
-neighbour library used in R (Annoy) actually writes the index to disk —
-which was Spotify’s original design and made total sense for their use
-case — but why are we doing this in R? No idea. The core philosophy is
-to take a hard look at the algorithms and methods used and, where
-needed, implement a highly specialised version for single cell. Some
-examples:
+neighbour library used in R (Annoy) actually writes the index to disk.
+That was Spotify’s original design and made total sense for their use
+case, but why are we doing this in R? No idea. The core philosophy is to
+take a hard look at the algorithms and methods used and, where needed,
+implement a highly specialised version for single cell. Some examples:
 
 - Custom implementation of various kNN searches, all running in Rust:
   [ann-search-rs](https://crates.io/crates/ann-search-rs). No on-disk
@@ -270,7 +271,7 @@ examples:
   up has a wide impact.
 
 - PCA underlies a lot of algorithms, is a key dimensionality reduction
-  step, and — perhaps embarrassingly — [still beats fancy foundation
+  step, and, perhaps embarrassingly, [still beats fancy foundation
   models](https://arxiv.org/abs/2410.13956). A few tricks make it fast:
 
   - [Randomised SVD](https://arxiv.org/abs/0909.4061) to approximate PCA
@@ -278,7 +279,7 @@ examples:
     HVGs, we reduce the problem to a few hundred cells × HVGs.
   - Smart scaling without ever densifying the matrix. As shown in the
     numbers above, densifying with 2k HVGs means holding a 16 GB matrix
-    in memory for a million cells — 80 GB for five million. With smart
+    in memory for a million cells, 80 GB for five million. With smart
     matrix algebra, you never have to densify at all. An 80 GB problem
     becomes something closer to 10 GB.
 
@@ -296,9 +297,9 @@ examples:
   transcription factors best predict its expression? It does this by
   training a tree ensemble per gene, using the importance scores from
   those trees as a proxy for regulatory influence. The trees themselves
-  are then thrown away — only the importance scores matter. That means
-  we can optimise purely for speed, without caring about prediction
-  quality at all. A few tricks compound here:
+  are then thrown away. Only the importance scores matter. That means we
+  can optimise purely for speed, without caring about prediction quality
+  at all. A few tricks compound here:
 
   - Rather than training one ensemble per gene independently, we share
     the same tree structure across a batch of genes simultaneously: the
@@ -308,7 +309,7 @@ examples:
   - Transcription factor expression data is quantised down to 256 bins
     (one byte per cell), which makes histogram construction and split
     evaluation very fast and cache-friendly.
-  - Single cell data is sparse — most genes are zero in most cells — so
+  - Single cell data is sparse, most genes are zero in most cells, so
     rather than densifying the target matrix (which would be enormous),
     we exploit that sparsity directly during tree building.
 
@@ -318,7 +319,7 @@ examples:
 These are just some examples where purpose-built code can deliver
 massive gains in both memory usage and speed. This allows the package to
 run multi-million cell analyses (the GRNs will still be slow and take
-hours despite my best efforts — sorry) on a decent local laptop. I have
+hours despite my best efforts, sorry) on a decent local laptop. I have
 churned through 3 million cell data sets on my loyal M1 Max MacBook Pro
 with 64 GB with doing reading from h5ad, mt percentage detection, some
 cell filtering, HVG detection, PCA, kNN/sNN graph generation +
@@ -343,16 +344,47 @@ NOT in memory, we need to carefully synchronise state between:
       number of features.
   2.  Run doublet detection to remove doublets.
   3.  Recheck library sizes, feature counts, transcriptional complexity,
-      mitochondrial counts, and only then finalise your cell selection —
+      mitochondrial counts, and only then finalise your cell selection,
       flagged as `cells_to_keep` in the object.
 
-  Any subsequent analysis — HVG detection, PCA, kNN construction, etc. —
-  will operate on whatever is set here. If you want to change this, you
-  need to think carefully about the state of what is on disk. That is a
-  real disadvantage and can be a NASTY footgun. Especially for methods
-  that will do something like “read in embedding AND kNN graph” — if the
-  state was not synchronised here, it will blow up and you will see red
-  unhappy Rust messages in your console.
+  Any subsequent analysis (HVG detection, PCA, kNN construction, etc.)
+  will operate on whatever is set here. This used to be THE footgun of
+  the package. Move the cell set, forget to re-run the kNN, and you had
+  a PCA over one set of cells sitting next to a kNN over another.
+  Nothing complained. It either crashed deep in Rust or, much worse,
+  quietly handed you mis-aligned biology.
+
+  So now it complains. Every artefact that lands in the cache, the PCA,
+  the embeddings, the kNN, the sNN graph, the MAGIC layer, carries a
+  provenance stamp: a hash of the cell set it was computed on, plus the
+  ids of whatever it was derived from. The kNN records the PCA it was
+  built on and the sNN records the kNN, which is the bit that matters.
+  Re-run the PCA on the **same** cells with fewer components and the kNN
+  hanging off it is now stale, even though its own cell count never
+  moved. A row-count check waves that straight through.
+
+  Two things worth saying about how it is built. The stamp rides on the
+  payload as an attribute rather than in a registry off to the side, so
+  deleting a payload deletes its stamp and the two cannot drift apart.
+  And it tracks provenance, not parameters: a kNN over the first 5 PCs
+  and one over all 15 of the same PCA look identical to it. Neither of
+  those can produce an index mismatch, which is the only thing this is
+  here to stop.
+
+  The response is graded rather than one blanket error. Reading a stale
+  artefact warns, because plenty of call sites use the getters as
+  presence probes on something they are about to overwrite anyway.
+  Anything that hands cached indices to Rust or writes a derived result
+  back errors outright. `options(bixverse.cache_check = "error")`
+  promotes the warnings if you want no mercy, `"none"` turns the lot off
+  at your own risk. Nothing is ever silently recomputed or binned: a
+  forty minute Harmony run is not the package’s to throw away.
+
+  None of which means you get to stop thinking about on-disk state. It
+  only means you find out before the biology is wrong rather than after.
+  The worked example lives in the [thinking about single
+  cells](https://gregorlueg.github.io/bixverse/articles/thinking_single_cell.html)
+  vignette.
 
 - The “ecosystem” (quotation marks because at the moment it is just this
   R package and several Rust crates) is in its infancy. Stuff will
@@ -366,16 +398,29 @@ people find it useful and at least rethink some of their assumptions.
 
 ## Future directions
 
-The future is bright. The longer-term roadmap is to implement more
-methods, mature the system, build out the plotting helpers, and then
-tackle other projects:
+A fair amount of the original roadmap has landed since this was first
+written. Trajectory inference is in
+([Palantir](https://github.com/dpeerlab/Palantir) from [Setty, et
+al.](https://www.nature.com/articles/s41587-019-0068-4), PAGA and gene
+trends along pseudotime), so is a decent spread of batch correction
+(Harmony, Harmony v2, fastMNN, BBKNN, Seurat CCA and rPCA, with kBET,
+ASW and LISI to score whether any of it worked), differential expression
+and abundance (Wilcoxon markers, pseudobulk into limma-voom and edgeR
+quasi-likelihood, NEBULA, Milo, MELD), the full SCENIC stack with
+cisTarget, meta cells via SEACells and SuperCell, DIALOGUE, Hotspot,
+VISION, NMF, multi-modal CITE-seq with WNN graphs, and Symphony
+reference mapping. The plotting helpers moved out into
+[bixverse.plots](https://github.com/GregorLueg/bixverse.plots) rather
+than bloating the parent package further. The [reference
+index](https://gregorlueg.github.io/bixverse/reference/index.html) is
+the honest list.
 
-- **More methods:** More methods will be implemented over time. So far,
-  the approach was that I implemented what was needed or I considered
-  interesting. I have my eyes on some trajectory methods, such as
-  [Palantir](https://github.com/dpeerlab/Palantir) from [Setty, et
-  al.](https://www.nature.com/articles/s41587-019-0068-4) and
-  [Slingshot](https://pubmed.ncbi.nlm.nih.gov/29914354/).
+What is still ahead:
+
+- **More methods:** the approach has always been to implement what I
+  needed or found interesting, and that will not change.
+  [Slingshot](https://pubmed.ncbi.nlm.nih.gov/29914354/) never got done
+  and is still on the list.
 
 - **Spatial transcriptomics:** Spatial data does not (yet) reach the
   scale of the largest single cell data sets most of the time. However,
@@ -383,18 +428,44 @@ tackle other projects:
   quite heavy, and a lot of current frameworks are built on top of
   single cell ones anyway. There are also some interesting methods that
   leverage the spatial grid information directly, which I find genuinely
-  exciting.
+  exciting. None of it exists yet though, and to be clear about what
+  does: the graph autocorrelation in VISION and Hotspot runs over the
+  kNN graph, not over tissue coordinates.
 
 - **GPU acceleration:** GPUs are becoming increasingly accessible, and
-  if you have the budget for data-centre-scale GPUs, please do use them
-  — Nvidia knows what they are doing and cuBLAS is insanely fast, in
-  ways that simply cannot be matched on CPUs. However, most people do
-  not have several B200s lying around at home, so the aim is to make
-  better use of the powerful GPUs in Apple Silicon, for example. I have
-  had some first attempts writing GPU kernels via
-  [cubecl](https://github.com/tracel-ai/cubecl) for nearest neighbour
-  searches, which makes exhaustive searches brutally fast. First
-  tentative attempts to leverage GPU-acceleration can be found in the
-  [sister package](https://github.com/GregorLueg/bixverse.gpu)… We have
-  GPU-accelerated kNN searches; randomised sparse SVD (with the GEMM
-  being executed on the GPU) and a GPU-accelerated Harmony.
+  if you have the budget for data-centre-scale GPUs, please do use them.
+  Nvidia knows what they are doing and cuBLAS is insanely fast, in ways
+  that simply cannot be matched on CPUs. However, most people do not
+  have several B200s lying around at home. So the GPU work goes through
+  [cubecl](https://github.com/tracel-ai/cubecl) on the wgpu backend,
+  which means Metal on macOS, Vulkan on Linux and DX12 on Windows off
+  one set of kernels rather than a CUDA-only path. (A native CUDA
+  backend is aspirational. I do not own an Nvidia GPU to test it on.) It
+  all lives in the [sister
+  package](https://github.com/GregorLueg/bixverse.gpu), and there is a
+  fair amount of it now: sparse randomised SVD for the PCA, Harmony v2
+  with the arrowhead inversion, kNN across exhaustive, IVF and
+  NNDescent-into-CAGRA, k-means coarsened fast clustering, the UMAP Adam
+  optimiser, SEACells (both Frank-Wolfe solves), Scrublet, the NMF HALS
+  family, SCENIC’s ExtraTrees and RandomForest learners, and
+  Pearson/Spearman correlation.
+
+  On measured numbers, all on an M1 Max: SCENIC end to end is 2.0x for
+  ExtraTrees and 1.8x for RandomForest, consensus NMF 3.3x, Scrublet
+  2.4x, correlation 1.5x against faer on CPU and 132x against base R’s
+  [`cor()`](https://rdrr.io/r/stats/cor.html). Look at a single SCENIC
+  batch against one CPU core and the GPU side is over 20x. The
+  end-to-end figure is lower because the CPU version already uses every
+  core you have, so you are really comparing 32 GPU cores against 10 CPU
+  ones.
+
+  The honest half: on Apple Silicon the GPU rarely blows the CPU out of
+  the water, because wgpu gets you no tensor cores. Small data loses
+  outright. SEACells measures 0.95x on a small fit and only pays off at
+  scale, roughly 2.6x at 50k cells and 666 archetypes. UMAP needs
+  something like 10k points before the GPU is ahead at all. The t-SNE
+  optimiser is still CPU, GRNBoost2 stays on CPU on purpose (the
+  tree-based learners are where the GPU helps), GPU NMF caps the rank at
+  128, and GPU Harmony takes a single batch covariate. BBKNN is the one
+  thing left unticked on that package’s own roadmap, so for now that one
+  stays on CPU.

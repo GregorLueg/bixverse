@@ -23,8 +23,7 @@ rs_palantir(
 - knn_data:
 
   List. The `SingleCellNearestNeighbour` data with `indices`
-  (0-indexed!), `dist`, `k` and `dist_metric`. Whether the distances are
-  treated as squared is derived from `dist_metric`.
+  (0-indexed!), `dist`, `k` and `dist_metric`.
 
 - palantir_params:
 

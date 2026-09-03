@@ -35,6 +35,16 @@ assert_sc_state(
   String. Modality to resolve unqualified names against. One of
   `c("rna", "adt", "atac", "wnn")`.
 
+- .var.name:
+
+  Name of the checked object to print in assertions. Defaults to the
+  heuristic implemented in checkmate.
+
+- add:
+
+  Collection to store assertion messages. See
+  [`checkmate::makeAssertCollection()`](https://mllg.github.io/checkmate/reference/AssertCollection.html).
+
 ## Value
 
 Invisibly `x` when the assertion holds, otherwise an error.

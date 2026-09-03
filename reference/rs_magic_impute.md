@@ -36,8 +36,7 @@ rs_magic_impute(
 
   List. The `SingleCellNearestNeighbour` data with `indices`
   (0-indexed!), `dist`, `k` and `dist_metric`. The indices are positions
-  within `cell_indices`, not global cell ids. Whether the distances are
-  treated as squared is derived from `dist_metric`.
+  within `cell_indices`, not global cell ids.
 
 - cell_indices:
 

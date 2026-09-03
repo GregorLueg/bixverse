@@ -6,6 +6,11 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>Gene Set Enrichment Methods • bixverse</title>
+<!-- favicons --><link rel="icon" type="image/png" sizes="96x96" href="../favicon-96x96.png">
+<link rel="icon" type="”image/svg+xml”" href="../favicon.svg">
+<link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
+<link rel="icon" sizes="any" href="../favicon.ico">
+<link rel="manifest" href="../site.webmanifest">
 <script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
@@ -14,6 +19,7 @@
 <link href="gse_methods_files/libs/quarto-html/light-border.css" rel="stylesheet">
 <!-- pkgdown --><script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet">
 <meta property="og:title" content="Gene Set Enrichment Methods">
+<meta property="og:image" content="https://gregorlueg.github.io/bixverse/logo.png">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -23,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.11</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -110,11 +116,10 @@
 </nav><div class="container template-quarto">
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
-
-      <h1>Gene Set Enrichment Methods</h1>
+      <img src="../logo.png" class="logo" alt=""><h1>Gene Set Enrichment Methods</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-09-01</p>
+      <p class="date">2026-09-03</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -277,7 +282,7 @@
 <span>  gene_set_list <span class="op">=</span> <span class="va">gene_sets</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu">tictoc</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tictoc/man/tic.html" class="external-link">toc</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 1.653 sec elapsed</span></span></code></pre></div>
+<span><span class="co">#&gt; 1.844 sec elapsed</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="gene-ontology-aware-enrichment-the-elimination-method">Gene Ontology-aware enrichment: the elimination method<a class="anchor" aria-label="anchor" href="#gene-ontology-aware-enrichment-the-elimination-method"></a>
 </h2>
@@ -378,7 +383,7 @@
 <span>  target_gene_list <span class="op">=</span> <span class="va">go_target_gene_sets</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu">tictoc</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tictoc/man/tic.html" class="external-link">toc</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 1.78 sec elapsed</span></span></code></pre></div>
+<span><span class="co">#&gt; 1.966 sec elapsed</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="alternative-post-hoc-simplification-of-go-results">Alternative: post-hoc simplification of GO results<a class="anchor" aria-label="anchor" href="#alternative-post-hoc-simplification-of-go-results"></a>
 </h2>
@@ -526,12 +531,12 @@
 <span><span class="co">#&gt; 6:  0.3607407  1.0328122 0.4202128 0.6202637</span></span>
 <span><span class="co">#&gt;                                    leading_edge n_more_extreme    log2err</span></span>
 <span><span class="co">#&gt;                                          &lt;list&gt;          &lt;num&gt;      &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1:                      15270,12189,71846,19357            338 0.06378454</span></span>
-<span><span class="co">#&gt; 2:  17918,19341,20336,22628,22627,20619,...[15]            454 0.04999139</span></span>
+<span><span class="co">#&gt; 1:                            15270,12189,71846            338 0.06378454</span></span>
+<span><span class="co">#&gt; 2:  17918,19341,20336,22628,22627,20619,...[10]            454 0.04999139</span></span>
 <span><span class="co">#&gt; 3: 76199,19014,26896,229003,17977,17978,...[12]             50 0.19782202</span></span>
-<span><span class="co">#&gt; 4:                            20893,59027,19883            456 0.04979032</span></span>
-<span><span class="co">#&gt; 5:  60406,19361,15270,20893,12189,68240,...[13]            262 0.07647671</span></span>
-<span><span class="co">#&gt; 6:                     60406,20018,245688,20017            236 0.08197788</span></span></code></pre></div>
+<span><span class="co">#&gt; 4:                                  20893,59027            456 0.04979032</span></span>
+<span><span class="co">#&gt; 5:  60406,19361,15270,20893,12189,68240,...[12]            262 0.07647671</span></span>
+<span><span class="co">#&gt; 6:                                  60406,20018            236 0.08197788</span></span></code></pre></div>
 </div>
 <p>The p-values from both implementations are in close agreement, as expected:</p>
 <div class="cell">
@@ -569,14 +574,129 @@
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: seconds</span></span>
 <span><span class="co">#&gt;   expr      min       lq     mean   median       uq      max neval</span></span>
-<span><span class="co">#&gt;  fgsea 2.793930 3.081702 3.224985 3.310682 3.339463 3.599149     5</span></span>
-<span><span class="co">#&gt;   rust 2.156319 2.156515 2.158710 2.157585 2.161408 2.161726     5</span></span></code></pre></div>
+<span><span class="co">#&gt;  fgsea 2.838884 2.945555 3.166647 3.178852 3.276348 3.593595     5</span></span>
+<span><span class="co">#&gt;   rust 2.268717 2.285337 2.286291 2.287432 2.289646 2.300320     5</span></span></code></pre></div>
 </div>
-</section><section class="level2"><h2 id="go-aware-gsea-the-elimination-method">GO-aware GSEA: the elimination method<a class="anchor" aria-label="anchor" href="#go-aware-gsea-the-elimination-method"></a>
+</section><section class="level2"><h2 id="blitzgsea">blitzGSEA<a class="anchor" aria-label="anchor" href="#blitzgsea"></a>
+</h2>
+<p>Permutation-based GSEA pays per pathway. blitzGSEA does not. It draws random gene sets once across a log-spaced grid of set sizes, fits gamma tails to the resulting null enrichment scores, and then reads every pathway’s p-value straight off the fitted tail, see <a href="https://doi.org/10.1093/bioinformatics/btac076" class="external-link">Lachmann et al.</a>. One gamma evaluation per pathway, no matter how big the library.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb16"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">blitz_params</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/params_blitzgsea.html">params_blitzgsea</a></span><span class="op">(</span>min_size <span class="op">=</span> <span class="fl">15L</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">bixverse_blitz</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calc_blitzgsea.html">calc_blitzgsea</a></span><span class="op">(</span></span>
+<span>  stats <span class="op">=</span> <span class="va">exampleRanks</span>,</span>
+<span>  pathways <span class="op">=</span> <span class="va">examplePathways</span>,</span>
+<span>  blitz_params <span class="op">=</span> <span class="va">blitz_params</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">bixverse_blitz</span><span class="op">)</span></span>
+<span><span class="co">#&gt;                                       pathway_name        es      nes</span></span>
+<span><span class="co">#&gt;                                             &lt;char&gt;     &lt;num&gt;    &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1:                              5990980_Cell_Cycle 0.5373426 7.977693</span></span>
+<span><span class="co">#&gt; 2:                     5990979_Cell_Cycle,_Mitotic 0.5579853 7.860540</span></span>
+<span><span class="co">#&gt; 3:                                 5991454_M_Phase 0.5558732 5.985000</span></span>
+<span><span class="co">#&gt; 4:                    5991851_Mitotic_Prometaphase 0.7243143 5.964933</span></span>
+<span><span class="co">#&gt; 5: 5992217_Resolution_of_Sister_Chromatid_Cohesion 0.7337666 5.803762</span></span>
+<span><span class="co">#&gt; 6:          5991502_Mitotic_Metaphase_and_Anaphase 0.6038215 5.697086</span></span>
+<span><span class="co">#&gt;           pvals          fdr        sidak  size</span></span>
+<span><span class="co">#&gt;           &lt;num&gt;        &lt;num&gt;        &lt;num&gt; &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1: 1.490940e-15 8.736906e-13 8.736906e-13   369</span></span>
+<span><span class="co">#&gt; 2: 3.824815e-15 1.120671e-12 2.241341e-12   317</span></span>
+<span><span class="co">#&gt; 3: 2.163902e-09 3.585367e-07 1.268046e-06   173</span></span>
+<span><span class="co">#&gt; 4: 2.447350e-09 3.585367e-07 1.434146e-06    82</span></span>
+<span><span class="co">#&gt; 5: 6.484348e-09 7.599656e-07 3.799821e-06    74</span></span>
+<span><span class="co">#&gt; 6: 1.218724e-08 1.033659e-06 7.141697e-06   123</span></span>
+<span><span class="co">#&gt;                                     leading_edge</span></span>
+<span><span class="co">#&gt;                                           &lt;list&gt;</span></span>
+<span><span class="co">#&gt; 1: 66336,66977,12442,107995,66442,19361,...[155]</span></span>
+<span><span class="co">#&gt; 2: 66336,66977,12442,107995,66442,12571,...[141]</span></span>
+<span><span class="co">#&gt; 3:  66336,66977,12442,107995,66442,52276,...[67]</span></span>
+<span><span class="co">#&gt; 4:  66336,66977,12442,107995,66442,52276,...[44]</span></span>
+<span><span class="co">#&gt; 5:  66336,66977,12442,107995,66442,52276,...[40]</span></span>
+<span><span class="co">#&gt; 6:  66336,66977,107995,66442,52276,67629,...[51]</span></span></code></pre></div>
+</div>
+<p>Does the approximation hold up against the permutations?</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb17"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">blitz_vs_fgsea</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/merge.html" class="external-link">merge</a></span><span class="op">(</span></span>
+<span>  <span class="va">bixverse_blitz</span><span class="op">[</span>, <span class="fu">.</span><span class="op">(</span><span class="va">pathway_name</span>, pvals_blitz <span class="op">=</span> <span class="va">pvals</span><span class="op">)</span><span class="op">]</span>,</span>
+<span>  <span class="va">bixverse_fgsea</span><span class="op">[</span>, <span class="fu">.</span><span class="op">(</span><span class="va">pathway_name</span>, pvals_fgsea <span class="op">=</span> <span class="va">pvals</span><span class="op">)</span><span class="op">]</span>,</span>
+<span>  by <span class="op">=</span> <span class="st">"pathway_name"</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span></span>
+<span>  x <span class="op">=</span> <span class="op">-</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log10</a></span><span class="op">(</span><span class="va">blitz_vs_fgsea</span><span class="op">$</span><span class="va">pvals_fgsea</span><span class="op">)</span>,</span>
+<span>  y <span class="op">=</span> <span class="op">-</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log10</a></span><span class="op">(</span><span class="va">blitz_vs_fgsea</span><span class="op">$</span><span class="va">pvals_blitz</span><span class="op">)</span>,</span>
+<span>  xlab <span class="op">=</span> <span class="st">"-log10(pval) bixverse fgsea"</span>,</span>
+<span>  ylab <span class="op">=</span> <span class="st">"-log10(pval) bixverse blitzGSEA"</span>,</span>
+<span>  main <span class="op">=</span> <span class="st">"fgsea and blitzGSEA"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<div class="cell-output-display">
+<div>
+<figure><p><img src="gse_methods_files/figure-html/blitzgsea%20vs%20fgsea%20p-value%20comparison-1.png" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Close enough to rank the same things at the top, with the gamma tail reaching further into the small p-values than 1000 permutations can.</p>
+<section class="level3"><h3 id="reusing-the-null-model">Reusing the null model<a class="anchor" aria-label="anchor" href="#reusing-the-null-model"></a>
+</h3>
+<p>Nothing about a gene set library enters the calibration. It depends only on the signature, so one calibration serves every library you score against that ranking. <code><a href="../reference/blitzgsea_calibrate.html">blitzgsea_calibrate()</a></code> hands it back as a plain list you can hold onto or <code><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">saveRDS()</a></code>:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb18"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">null_model</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/blitzgsea_calibrate.html">blitzgsea_calibrate</a></span><span class="op">(</span></span>
+<span>  stats <span class="op">=</span> <span class="va">exampleRanks</span>,</span>
+<span>  blitz_params <span class="op">=</span> <span class="va">blitz_params</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">null_model</span></span>
+<span><span class="co">#&gt; BlitzGseaNull (calibrated blitzGSEA null model)</span></span>
+<span><span class="co">#&gt;   Signature:        12000 genes</span></span>
+<span><span class="co">#&gt;   Anchors:          37 (sizes 1 to 6000)</span></span>
+<span><span class="co">#&gt;   Centred:          TRUE</span></span>
+<span><span class="co">#&gt;   KS p-value:       0.42 positive tail, 0.491 negative tail</span></span></code></pre></div>
+</div>
+<p>The KS p-values are a goodness-of-fit diagnostic on the gamma tails. Low values mean the fit is poor and the p-values are optimistic; <code><a href="../reference/calc_blitzgsea.html">calc_blitzgsea()</a></code> warns when that happens. More permutations is the usual fix.</p>
+<p>Hand the null back and the scoring is all that is left:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb19"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">microbenchmark</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/microbenchmark/man/microbenchmark.html" class="external-link">microbenchmark</a></span><span class="op">(</span></span>
+<span>  fgsea <span class="op">=</span> <span class="fu"><a href="../reference/calc_fgsea.html">calc_fgsea</a></span><span class="op">(</span></span>
+<span>    stats <span class="op">=</span> <span class="va">exampleRanks</span>,</span>
+<span>    pathways <span class="op">=</span> <span class="va">examplePathways</span>,</span>
+<span>    gsea_params <span class="op">=</span> <span class="fu"><a href="../reference/params_gsea.html">params_gsea</a></span><span class="op">(</span>min_size <span class="op">=</span> <span class="fl">15L</span><span class="op">)</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  blitz_cold <span class="op">=</span> <span class="fu"><a href="../reference/calc_blitzgsea.html">calc_blitzgsea</a></span><span class="op">(</span></span>
+<span>    stats <span class="op">=</span> <span class="va">exampleRanks</span>,</span>
+<span>    pathways <span class="op">=</span> <span class="va">examplePathways</span>,</span>
+<span>    blitz_params <span class="op">=</span> <span class="va">blitz_params</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  blitz_warm <span class="op">=</span> <span class="fu"><a href="../reference/calc_blitzgsea.html">calc_blitzgsea</a></span><span class="op">(</span></span>
+<span>    stats <span class="op">=</span> <span class="va">exampleRanks</span>,</span>
+<span>    pathways <span class="op">=</span> <span class="va">examplePathways</span>,</span>
+<span>    blitz_params <span class="op">=</span> <span class="va">blitz_params</span>,</span>
+<span>    null_model <span class="op">=</span> <span class="va">null_model</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  times <span class="op">=</span> <span class="fl">5L</span></span>
+<span><span class="op">)</span></span>
+<span><span class="co">#&gt; Unit: milliseconds</span></span>
+<span><span class="co">#&gt;        expr       min         lq       mean     median         uq        max</span></span>
+<span><span class="co">#&gt;       fgsea 2258.6763 2276.08025 2277.42033 2280.55564 2285.06587 2286.72358</span></span>
+<span><span class="co">#&gt;  blitz_cold  975.4092  983.48074  986.39046  983.82479  991.79640  997.44120</span></span>
+<span><span class="co">#&gt;  blitz_warm   14.3427   15.05996   15.04192   15.11114   15.25463   15.44115</span></span>
+<span><span class="co">#&gt;  neval</span></span>
+<span><span class="co">#&gt;      5</span></span>
+<span><span class="co">#&gt;      5</span></span>
+<span><span class="co">#&gt;      5</span></span></code></pre></div>
+</div>
+<p>On this data (586 pathways, ~12k genes) the cold run lands around 3x faster than the fgsea multilevel method and the warm one around 90x. Score five libraries against one ranking and you pay the calibration once.</p>
+<p>The catch: the null is specific to the signature it was drawn from, both its length and its values. <code><a href="../reference/calc_blitzgsea.html">calc_blitzgsea()</a></code> refuses a null whose gene count does not match rather than returning plausible-looking rubbish, but it cannot catch two different signatures of the same length. Recalibrate when the ranking changes.</p>
+</section></section><section class="level2"><h2 id="go-aware-gsea-the-elimination-method">GO-aware GSEA: the elimination method<a class="anchor" aria-label="anchor" href="#go-aware-gsea-the-elimination-method"></a>
 </h2>
 <p><code>bixverse</code> combines the elimination method with GSEA, using the same <code>GeneOntologyElim</code> object as the hypergeometric variant. The ontology is traversed leaf-first; for each term a permutation-based p-value is computed and if it falls below the elimination threshold, genes from that term are removed from all ancestors before they are tested. Once the full traversal is complete, the fgsea multilevel method is applied to terms that reached nominal significance to obtain more precise p-values than pure permutation alone can provide.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">gene_universe_go</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/unlist.html" class="external-link">unlist</a></span><span class="op">(</span><span class="va">go_data_dt</span><span class="op">[</span>, <span class="st">"ensembl_id"</span><span class="op">]</span>, use.names <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>

@@ -21,7 +21,7 @@ A list with default parameters for kNN searches. Following parameters:
   `c("kmknn", "hnsw", "annoy", "nndescent", "ivf", "exhaustive")`.
 
 - ann_dist - Which distance metric to use for the approximate nearest
-  neighbour search. Defaults to `"cosine"`. The implementations are
+  neighbour search. Defaults to `"euclidean"`. The implementations are
   `c("cosine", "euclidean")`.
 
 - n_trees - Annoy param: number of trees to generate for Annoy. Defaults
@@ -39,6 +39,12 @@ A list with default parameters for kNN searches. Following parameters:
 
 - ef_budget - NNDescent param: optional query budget parameter. Can
   accelerate querying, but at the cost of Recall.
+
+- extract_knn - NNDescent param: hand back the graph the descent already
+  built instead of beam searching it. Skips the query pass entirely, so
+  it is much faster, at the cost of some recall. Rows the descent never
+  filled come back padded with duplicate edges. Ignored by every other
+  method. Defaults to `FALSE`.
 
 - m - HNSW param: number of connections between layers for HNSW.
   Defaults to `16L`.

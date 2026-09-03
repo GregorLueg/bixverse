@@ -9,7 +9,7 @@ on the method, please refer to Dann, et al.
 ## Usage
 
 ``` r
-new_sc_miloR_res(nhoods, sample_counts, spatial_dist, params)
+new_sc_miloR_res(nhoods, sample_counts, spatial_dist, nhood_overlap, params)
 ```
 
 ## Arguments
@@ -20,13 +20,19 @@ new_sc_miloR_res(nhoods, sample_counts, spatial_dist, params)
 
 - sample_counts:
 
-  Integer matrix. Represents neighbourhoods x cells from sample of
-  interest.
+  Numeric matrix. Represents neighbourhoods x samples, i.e. the cells of
+  each sample found in each neighbourhood.
 
 - spatial_dist:
 
-  Numeric. The spatial distance between the neighbourhoods to calculate
-  the spatial FDR.
+  Numeric. The distance to the k-th nearest neighbour per neighbourhood,
+  the `"k-distance"` weighting for the spatial FDR.
+
+- nhood_overlap:
+
+  Numeric. The cells each neighbourhood shares with all the others, the
+  `"graph-overlap"` weighting for the spatial FDR. Taken at construction
+  because it is a function of the neighbourhood matrix alone.
 
 - params:
 

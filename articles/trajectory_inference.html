@@ -6,6 +6,11 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>Trajectory inference with Palantir and PAGA • bixverse</title>
+<!-- favicons --><link rel="icon" type="image/png" sizes="96x96" href="../favicon-96x96.png">
+<link rel="icon" type="”image/svg+xml”" href="../favicon.svg">
+<link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
+<link rel="icon" sizes="any" href="../favicon.ico">
+<link rel="manifest" href="../site.webmanifest">
 <script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
@@ -14,6 +19,7 @@
 <link href="trajectory_inference_files/libs/quarto-html/light-border.css" rel="stylesheet">
 <!-- pkgdown --><script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet">
 <meta property="og:title" content="Trajectory inference with Palantir and PAGA">
+<meta property="og:image" content="https://gregorlueg.github.io/bixverse/logo.png">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -23,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.11</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -110,11 +116,10 @@
 </nav><div class="container template-quarto">
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
-
-      <h1>Trajectory inference with Palantir and PAGA</h1>
+      <img src="../logo.png" class="logo" alt=""><h1>Trajectory inference with Palantir and PAGA</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-09-01</p>
+      <p class="date">2026-09-03</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -191,7 +196,7 @@
 <p>The data ships pre-filtered, so there is no QC step here. On your own data you would run <code><a href="../reference/run_cell_qc.html">run_cell_qc()</a></code> and <code><a href="../reference/set_cells_to_keep.html">set_cells_to_keep()</a></code> first, as in the <a href="https://gregorlueg.github.io/bixverse/articles/pbmc_single_cell.html">PBMC vignette</a>.</p>
 </section><section class="level2"><h2 id="feature-selection-pca-and-neighbours">Feature selection, PCA and neighbours<a class="anchor" aria-label="anchor" href="#feature-selection-pca-and-neighbours"></a>
 </h2>
-<p>Standard pipeline. The one choice worth spelling out is <code>k = 30</code> on the kNN graph: Palantir builds its diffusion kernel from whatever graph is stored on the object, and 30 neighbours is what the reference uses. The distance metric has to be euclidean, since that is how <code>bixverse</code> decides whether the stored distances are squared.</p>
+<p>Standard pipeline. The one choice worth spelling out is <code>k = 30</code> on the kNN graph: Palantir builds its diffusion kernel from whatever graph is stored on the object, and 30 neighbours is what the reference uses. The distance metric has to be euclidean, since the diffusion kernel is a Gaussian over a metric distance and cosine is not one.</p>
 <p><code>pruning</code> has to move with <code>k</code>. The default of <code>1/12</code> is set for the default <code>k = 15</code>, and since the threshold is a share of the neighbourhood, leaving it alone at <code>k = 30</code> prunes twice as hard. Nothing errors, you just get cells with too few shared neighbours dropping out as one-cell clusters.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb4"><pre class="downlit sourceCode r">
@@ -300,18 +305,18 @@
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/get_sc_cache_status.html">get_sc_cache_status</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span></span>
 <span><span class="co">#&gt;    modality  artefact   name stamped  stale reason               id</span></span>
 <span><span class="co">#&gt;      &lt;char&gt;    &lt;char&gt; &lt;char&gt;  &lt;lgcl&gt; &lt;lgcl&gt; &lt;char&gt;           &lt;char&gt;</span></span>
-<span><span class="co">#&gt; 1:      rna       pca   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 854b8827a8b89db0</span></span>
-<span><span class="co">#&gt; 2:      rna embedding   umap    TRUE  FALSE   &lt;NA&gt; 48fbc01feecfbed3</span></span>
-<span><span class="co">#&gt; 3:      rna       knn   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; cd4263d075c5f19f</span></span>
-<span><span class="co">#&gt; 4:      rna       snn   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 33d6151e484aaa8d</span></span>
-<span><span class="co">#&gt; 5:      rna     magic   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; f40090c867ca786e</span></span>
+<span><span class="co">#&gt; 1:      rna       pca   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 62bd0547d9af95a0</span></span>
+<span><span class="co">#&gt; 2:      rna embedding   umap    TRUE  FALSE   &lt;NA&gt; 9ab45c6c6db332a7</span></span>
+<span><span class="co">#&gt; 3:      rna       knn   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 87be80f49033bde4</span></span>
+<span><span class="co">#&gt; 4:      rna       snn   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 4774ba5b35ee9d5b</span></span>
+<span><span class="co">#&gt; 5:      rna     magic   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 52ac018c91d3e152</span></span>
 <span><span class="co">#&gt;                                 from</span></span>
 <span><span class="co">#&gt;                               &lt;list&gt;</span></span>
 <span><span class="co">#&gt; 1:                                  </span></span>
-<span><span class="co">#&gt; 2: 854b8827a8b89db0,cd4263d075c5f19f</span></span>
-<span><span class="co">#&gt; 3:                  854b8827a8b89db0</span></span>
-<span><span class="co">#&gt; 4:                  cd4263d075c5f19f</span></span>
-<span><span class="co">#&gt; 5:                  cd4263d075c5f19f</span></span></code></pre></div>
+<span><span class="co">#&gt; 2: 62bd0547d9af95a0,87be80f49033bde4</span></span>
+<span><span class="co">#&gt; 3:                  62bd0547d9af95a0</span></span>
+<span><span class="co">#&gt; 4:                  87be80f49033bde4</span></span>
+<span><span class="co">#&gt; 5:                  87be80f49033bde4</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="paga">PAGA<a class="anchor" aria-label="anchor" href="#paga"></a>
 </h2>
@@ -406,7 +411,7 @@
 <span></span>
 <span><span class="va">palantir_res</span></span>
 <span><span class="co">#&gt; PalantirRes: 4142 cells, 3 terminal states (rna modality)</span></span>
-<span><span class="co">#&gt;   Start cell: Run5_164698952452459 | waypoints: 993</span></span>
+<span><span class="co">#&gt;   Start cell: Run5_164698952452459 | waypoints: 991</span></span>
 <span><span class="co">#&gt;   Converged: TRUE (2 iterations)</span></span>
 <span><span class="co">#&gt;   Repair edges: 0, stranded waypoints: 0</span></span></code></pre></div>
 </div>
@@ -437,12 +442,12 @@
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">fate_probs</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt;                        Ery    DC  Mono</span></span>
-<span><span class="co">#&gt; Run4_120703408880541 0.621 0.052 0.327</span></span>
-<span><span class="co">#&gt; Run4_120703409056541 0.281 0.100 0.620</span></span>
-<span><span class="co">#&gt; Run4_120703409580963 0.064 0.092 0.844</span></span>
-<span><span class="co">#&gt; Run4_120703423990708 0.035 0.045 0.919</span></span>
-<span><span class="co">#&gt; Run4_120703436876077 0.268 0.101 0.630</span></span>
-<span><span class="co">#&gt; Run4_120726912355038 0.130 0.100 0.771</span></span></code></pre></div>
+<span><span class="co">#&gt; Run4_120703408880541 0.634 0.067 0.299</span></span>
+<span><span class="co">#&gt; Run4_120703409056541 0.284 0.132 0.585</span></span>
+<span><span class="co">#&gt; Run4_120703409580963 0.075 0.129 0.797</span></span>
+<span><span class="co">#&gt; Run4_120703423990708 0.012 0.019 0.969</span></span>
+<span><span class="co">#&gt; Run4_120703436876077 0.269 0.134 0.597</span></span>
+<span><span class="co">#&gt; Run4_120726912355038 0.153 0.136 0.711</span></span></code></pre></div>
 </div>
 <p>Rows do not necessarily sum to one. Fate probabilities below <code>branch_prob_threshold</code> (0.01 by default) are zeroed without renormalisation, and cells whose waypoint weight sits on a stranded waypoint lose that mass entirely.</p>
 </section><section class="level3"><h3 id="pseudotime-and-entropy">Pseudotime and entropy<a class="anchor" aria-label="anchor" href="#pseudotime-and-entropy"></a>
@@ -553,7 +558,7 @@
 <span><span class="co">#&gt; Running Palantir over the rna kNN graph (4142 cells).</span></span>
 <span></span>
 <span><span class="va">palantir_auto</span><span class="op">$</span><span class="va">terminal_states</span></span>
-<span><span class="co">#&gt; [1] "Run5_134377557125406" "Run5_235070783670620"</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] "Run5_134377557125406"</span></span></code></pre></div>
 </div>
 <p>Where did they land relative to the supplied ones?</p>
 <div class="cell">
@@ -572,8 +577,7 @@
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt;                 cell_id branch pseudotime</span></span>
 <span><span class="co">#&gt;                  &lt;char&gt; &lt;char&gt;      &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1: Run5_134377557125406   Mono      0.326</span></span>
-<span><span class="co">#&gt; 2: Run5_235070783670620   Mono      0.542</span></span></code></pre></div>
+<span><span class="co">#&gt; 1: Run5_134377557125406   Mono      0.324</span></span></code></pre></div>
 </div>
 </section></section><section class="level2"><h2 id="gene-trends">Gene trends<a class="anchor" aria-label="anchor" href="#gene-trends"></a>
 </h2>
@@ -589,7 +593,7 @@
 <span></span>
 <span><span class="va">trends</span></span>
 <span><span class="co">#&gt; GeneTrendsRes: 3 branches, 4 genes, 500 grid points</span></span>
-<span><span class="co">#&gt;   Cells per branch: Ery (1458), DC (1609), Mono (1897)</span></span>
+<span><span class="co">#&gt;   Cells per branch: Ery (1425), DC (1532), Mono (1981)</span></span>
 <span><span class="co">#&gt;   Source: normalised counts</span></span>
 <span><span class="co">#&gt;   Length scale: 1 | sigma: 1</span></span></code></pre></div>
 </div>
@@ -622,7 +626,7 @@
 <div class="sourceCode cell-code" id="cb27"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">purrr</span><span class="fu">::</span><span class="fu"><a href="https://purrr.tidyverse.org/reference/map.html" class="external-link">map_int</a></span><span class="op">(</span><span class="va">trends</span><span class="op">$</span><span class="va">branch_cells</span>, <span class="va">length</span><span class="op">)</span></span>
 <span><span class="co">#&gt;  Ery   DC Mono </span></span>
-<span><span class="co">#&gt; 1458 1609 1897</span></span></code></pre></div>
+<span><span class="co">#&gt; 1425 1532 1981</span></span></code></pre></div>
 </div>
 <p>The same trick works with any per-cell quantity. A loess through the entropy column watches commitment happen along the trajectory.</p>
 <div class="cell">

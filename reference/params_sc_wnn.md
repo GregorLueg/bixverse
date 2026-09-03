@@ -76,7 +76,8 @@ params_sc_wnn(
   [`params_knn_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_knn_defaults.md)
   for available parameters: `k`, `knn_method`, `ann_dist`,
   `search_budget`, `n_trees`, `delta`, `diversify_prob`, `ef_budget`,
-  `m`, `ef_construction`, `ef_search`, `n_list` and `n_probe`.
+  `extract_knn`, `m`, `ef_construction`, `ef_search`, `n_list` and
+  `n_probe`.
 
 ## Value
 
