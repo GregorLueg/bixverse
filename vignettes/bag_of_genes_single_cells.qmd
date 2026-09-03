@@ -401,10 +401,13 @@ This returns a HotSpot result. Let's add the membership and plot it.
 #| label: hotspot - plot modules
 hotspot_cor <- generate_hotspot_membership(hotspot_cor)
 
-# this will only plot a subsample of 500 genes for speed (stratified by
-# module). You can control this via a parameter in the plotting function
-plot(hotspot_cor)
+# the five largest modules, at most 500 genes, subsampled in proportion to
+# module size. top_k = NULL gives you every module
+plot(hotspot_cor, top_k = 5L)
 ```
+
+Genes are ordered within each module by hierarchical clustering, so the blocks
+on the diagonal show whatever substructure is there rather than a flat square.
 
 Let's pull out the genes:
 
@@ -458,7 +461,7 @@ vision_scores_long[,
   by = gene_set
 ]
 
-ggplot(vision_scores_long, aes(x = umap_1, y = umap_2)) +
+ggplot(vision_scores_long[gene_set %in% c(0:5)], aes(x = umap_1, y = umap_2)) +
   geom_point(aes(colour = vision_score_scaled), size = 0.3) +
   scale_colour_viridis_c() +
   facet_wrap(~gene_set) +
