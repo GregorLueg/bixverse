@@ -403,7 +403,7 @@ hotspot_cor <- generate_hotspot_membership(hotspot_cor)
 
 # the largest modules, at most 500 genes, subsampled in proportion to module
 # size. top_k = NULL gives you every module
-hotspot_top_k <- 5L
+hotspot_top_k <- 6L
 
 plot(hotspot_cor, top_k = hotspot_top_k)
 ```
@@ -698,13 +698,14 @@ head(binarised_regulons$thresholds[order(-n_cells_on)])
 ```
 
 ```{r}
-#| label: scenic-plot-stat1
-sc_object[["STAT1_active"]] <- binary_matrix[, "STAT1"]
+#| label: scenic-plot-spi1
+sc_object[["SPI1_active"]] <- binary_matrix[, "SPI1"]
 
 embedding_plot_sc(
   object = sc_object,
   embedding = "umap",
-  colour_by = "STAT1_active"
+  colour_by = "SPI1_active",
+  palette = "viridis"
 )
 ```
 
