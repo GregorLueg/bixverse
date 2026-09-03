@@ -976,6 +976,254 @@ multilevel_error <- function(pval, sample_size) {
   return(res)
 }
 
+## blitzgsea ------------------------------------------------------------------
+
+### constants -----------------------------------------------------------------
+
+# Mirrors BLITZ_MIN_PERMUTATIONS_SPLIT on the Rust side. Below this the split
+# tails cannot be fitted stably and both are pooled into one gamma. Kept here
+# only so the warning can name the number.
+BLITZ_MIN_PERMUTATIONS_SPLIT <- 1000L
+
+# Mean Kolmogorov-Smirnov p-value across anchors below which the gamma fit is
+# poor enough to be worth flagging. Not a hard error: a badly fitting tail still
+# ranks pathways sensibly, it just makes the p-values optimistic.
+BLITZ_KS_WARN_THRESHOLD <- 0.05
+
+### calibration ---------------------------------------------------------------
+
+#' Calibrate the blitzGSEA null model for a signature
+#'
+#' @description
+#' Draws random gene sets across a log-spaced grid of set sizes, fits gamma
+#' tails to the resulting enrichment scores and smooths the fitted parameters
+#' across sizes, see Lachmann, et al. No gene set library enters here, so one
+#' calibration serves every library you score against that signature. This is
+#' where nearly all of the runtime sits; scoring afterwards costs one gamma tail
+#' evaluation per pathway.
+#'
+#' The returned null is a plain list, so it survives `saveRDS()` and can be
+#' cached against a signature.
+#'
+#' @param stats Named numeric vector. The gene level statistic. Sorted
+#' internally, so the order you hand it in does not matter.
+#' @param blitz_params List. The blitzGSEA parameters, see
+#' [bixverse::params_blitzgsea()] wrapper function.
+#'
+#' @returns An object of class `BlitzGseaNull`, a list with the following
+#' elements:
+#' \itemize{
+#'  \item anchor_sizes - Numeric vector. The anchor set sizes, ascending.
+#'  \item shape_pos - Numeric vector. Smoothed positive-tail gamma shape.
+#'  \item scale_pos - Numeric vector. Smoothed positive-tail gamma scale.
+#'  \item shape_neg - Numeric vector. Smoothed negative-tail gamma shape.
+#'  \item scale_neg - Numeric vector. Smoothed negative-tail gamma scale.
+#'  \item pos_ratio - Numeric vector. Smoothed fraction of positive null scores
+#'  at each anchor.
+#'  \item ks_pos - Float. Mean goodness-of-fit p-value for the positive tail.
+#'  \item ks_neg - Float. Mean goodness-of-fit p-value for the negative tail.
+#'  \item centred - Boolean. Whether the signature was centred.
+#'  \item n_genes - Integer. Size of the signature it was calibrated on.
+#' }
+#'
+#' @export
+#'
+#' @references Lachmann, et al., Bioinformatics, 2022
+blitzgsea_calibrate <- function(stats, blitz_params = params_blitzgsea()) {
+  # Checks
+  checkmate::assertNumeric(stats, min.len = 3L, finite = TRUE)
+  checkmate::assertNames(names(stats))
+  assertBlitzGseaParams(blitz_params)
+
+  stats <- sort(stats, decreasing = TRUE)
+
+  null_model <- rs_blitzgsea_calibrate(
+    stats = stats,
+    blitz_params = blitz_params
+  )
+
+  # The null is only good for the signature it was drawn from: the anchor grid
+  # comes from its length and the gammas from its values. Carried along so
+  # calc_blitzgsea() can refuse a mismatched pairing instead of returning
+  # plausible-looking rubbish.
+  null_model$n_genes <- length(stats)
+
+  worst_ks <- min(null_model$ks_pos, null_model$ks_neg)
+  if (blitz_params$ks_test && worst_ks < BLITZ_KS_WARN_THRESHOLD) {
+    warning(sprintf(
+      paste(
+        "The gamma fit is poor (mean KS p-value %.3g across anchors).",
+        "Rankings will still be sensible, but treat the p-values as",
+        "optimistic. More permutations usually helps."
+      ),
+      worst_ks
+    ))
+  }
+
+  class(null_model) <- "BlitzGseaNull"
+
+  return(null_model)
+}
+
+#' Print a blitzGSEA null model
+#'
+#' @param x `BlitzGseaNull` object.
+#' @param ... Ignored.
+#'
+#' @returns Invisibly returns `x`.
+#'
+#' @export
+print.BlitzGseaNull <- function(x, ...) {
+  checkmate::assertClass(x, "BlitzGseaNull")
+
+  cat("BlitzGseaNull (calibrated blitzGSEA null model)\n")
+  cat(sprintf("  Signature:        %i genes\n", x$n_genes))
+  cat(sprintf(
+    "  Anchors:          %i (sizes %i to %i)\n",
+    length(x$anchor_sizes),
+    as.integer(min(x$anchor_sizes)),
+    as.integer(max(x$anchor_sizes))
+  ))
+  cat(sprintf("  Centred:          %s\n", x$centred))
+  cat(sprintf(
+    "  KS p-value:       %.3g positive tail, %.3g negative tail\n",
+    x$ks_pos,
+    x$ks_neg
+  ))
+
+  invisible(x)
+}
+
+### scoring -------------------------------------------------------------------
+
+#' Bixverse implementation of the blitzGSEA algorithm
+#'
+#' @description
+#' Rust-based version of blitzGSEA, see Lachmann, et al. Instead of permuting
+#' per pathway, it calibrates a gamma null once for the signature and then reads
+#' each pathway's p-value straight off the fitted tail. That makes the cost
+#' independent of how many pathways you throw at it, which is where it pulls
+#' away from permutation methods on large libraries.
+#'
+#' Hand back a `null_model` from [bixverse::blitzgsea_calibrate()] to reuse a
+#' calibration across libraries. Left as `NULL`, one is calibrated on the fly.
+#'
+#' @param stats Named numeric vector. The gene level statistic.
+#' @param pathways List. A named list with each element containing the genes for
+#' this pathway.
+#' @param blitz_params List. The blitzGSEA parameters, see
+#' [bixverse::params_blitzgsea()] wrapper function. This function generates a
+#' list containing:
+#' \itemize{
+#'  \item min_size - Integer. Minimum size for the gene sets.
+#'  \item max_size - Integer. Maximum size for the gene sets.
+#'  \item permutations - Integer. Random gene sets per anchor size.
+#'  \item anchors - Integer. Number of log-spaced anchor sizes.
+#'  \item symmetric - Boolean. Pool both tails into a single gamma.
+#'  \item centre - Boolean. Centre the signature before scoring.
+#'  \item ks_test - Boolean. Run the goodness-of-fit diagnostic.
+#'  \item seed - Float. Random seed.
+#' }
+#' @param null_model Optional `BlitzGseaNull` object from
+#' [bixverse::blitzgsea_calibrate()]. Has to have been calibrated on the same
+#' signature and with the same `centre` setting. Defaults to `NULL`, in which
+#' case it is calibrated here.
+#'
+#' @returns A data.table with the results from the blitzGSEA with the following
+#' columns:
+#' \itemize{
+#'  \item pathway_name - Character. The name of the pathway.
+#'  \item es - Float. The enrichment score for this pathway.
+#'  \item nes - Float. The normalised enrichment score, the signed normal
+#'  quantile of the one-sided tail probability.
+#'  \item pvals - Float. The two-sided p-value from the gamma approximation.
+#'  \item fdr - Float. The Benjamini-Hochberg adjusted p-value.
+#'  \item sidak - Float. The Sidak adjusted p-value.
+#'  \item size - Integer. The size of the pathway after intersection.
+#'  \item leading_edge - List of character vectors with the leading edge genes.
+#' }
+#'
+#' @export
+#'
+#' @references Lachmann, et al., Bioinformatics, 2022
+calc_blitzgsea <- function(
+  stats,
+  pathways,
+  blitz_params = params_blitzgsea(),
+  null_model = NULL
+) {
+  # Globals scope check
+  . <- `:=` <- pathways_clean <- pathway_sizes <- pvals <- NULL
+
+  # Checks
+  checkmate::assertNumeric(stats, min.len = 3L, finite = TRUE)
+  checkmate::assertNames(names(stats))
+  checkmate::assertList(pathways, types = "character")
+  checkmate::assertNames(names(pathways))
+  assertBlitzGseaParams(blitz_params)
+  checkmate::assertClass(null_model, "BlitzGseaNull", null.ok = TRUE)
+
+  c(stats, pathways_clean, pathway_sizes) %<-%
+    with(
+      blitz_params,
+      prep_stats_pathways(
+        stats = stats,
+        pathways = pathways,
+        min_size = min_size,
+        max_size = max_size
+      )
+    )
+
+  if (length(pathways_clean) == 0L) {
+    warning("No gene set survived the size filters. Returning NULL.")
+    return(NULL)
+  }
+
+  if (is.null(null_model)) {
+    null_model <- blitzgsea_calibrate(
+      stats = stats,
+      blitz_params = blitz_params
+    )
+  } else if (!identical(null_model$n_genes, length(stats))) {
+    stop(sprintf(
+      paste(
+        "The null model was calibrated on %i genes but the signature has %i.",
+        "The anchor grid and the gamma fits are specific to the signature they",
+        "were drawn from."
+      ),
+      null_model$n_genes,
+      length(stats)
+    ))
+  }
+
+  res <- rs_blitzgsea_score(
+    stats = stats,
+    pathways = pathways_clean,
+    null_model = unclass(null_model),
+    blitz_params = blitz_params
+  )
+
+  leading_edges <- mapply(
+    "[",
+    list(names(stats)),
+    res$leading_edge,
+    SIMPLIFY = FALSE
+  )
+  res$leading_edge <- NULL
+
+  results <- data.table::setDT(res) %>%
+    .[, `:=`(
+      pathway_name = names(pathways_clean),
+      leading_edge = leading_edges
+    )] %>%
+    data.table::setcolorder(
+      c("pathway_name", "es", "nes", "pvals", "fdr", "sidak", "size")
+    ) %>%
+    data.table::setorder(pvals)
+
+  return(results)
+}
+
 ## mitch -----------------------------------------------------------------------
 
 #' Calculate a mitch gene set enrichments on contrast

@@ -3,6 +3,7 @@
 
   # S3 <> S7 weirdness: manual registration of print methods
   classes <- c(
+    "BlitzGseaNull",
     "ScenicGrn",
     "CellQc",
     "ScrubletRes",

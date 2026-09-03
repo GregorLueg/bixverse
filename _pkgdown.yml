@@ -149,12 +149,14 @@ reference:
   - title: Gene set enrichment helpers
     desc: 
       Everything and anything you need to do various types of gene set 
-      enrichments; hypergeometric tests, GSVA, (ss)GSEA.
+      enrichments; hypergeometric tests, GSVA, (ss)GSEA, blitzGSEA.
     contents:
       - gse_hypergeometric
       - gse_hypergeometric_list
       - calc_fgsea
       - calc_fgsea_simple
+      - calc_blitzgsea
+      - blitzgsea_calibrate
       - calc_gsea_traditional
       - calc_mitch
       - calc_gsva
@@ -162,6 +164,7 @@ reference:
       - calc_singscore
       - calc_singscore_multi
       - calc_singscore_rank
+      - params_blitzgsea
       - params_gsea
       - params_gsva
       - params_ssgsea
@@ -762,6 +765,8 @@ reference:
       - rs_2d_loess
       - rs_batch_lisi
       - rs_batch_silhouette_width
+      - rs_blitzgsea_calibrate
+      - rs_blitzgsea_score
       - rs_cistarget
       - rs_compare_knn
       - rs_constrained_page_rank

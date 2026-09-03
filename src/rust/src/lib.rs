@@ -27,6 +27,7 @@ pub use data::r_sparse;
 pub use data::r_synthetic;
 
 // enrichments
+pub use enrichment::r_blitzgsea;
 pub use enrichment::r_gsea;
 pub use enrichment::r_gsva;
 pub use enrichment::r_mitch;
@@ -90,6 +91,7 @@ extendr_module! {
     use r_h5;
 
     // enrichment
+    use r_blitzgsea;
     use r_gsea;
     use r_gsva;
     use r_mitch;

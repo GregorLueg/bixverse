@@ -545,6 +545,73 @@ checkGSEAParams <- function(x) {
 #' @keywords internal
 assertGSEAParams <- checkmate::makeAssertionFunction(checkGSEAParams)
 
+### blitzgsea ------------------------------------------------------------------
+
+#' Check blitzGSEA parameters
+#'
+#' @description Checkmate extension for checking the blitzGSEA parameters.
+#'
+#' @param x The list to check/assert
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
+checkBlitzGseaParams <- function(x) {
+  res <- check_list_shape(
+    x,
+    c(
+      "min_size",
+      "max_size",
+      "permutations",
+      "anchors",
+      "symmetric",
+      "centre",
+      "ks_test",
+      "seed"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  apply_qtest_rules(
+    x,
+    list(
+      min_size = "I1[3,)",
+      max_size = "I1[4,)",
+      permutations = "I1[2,)",
+      anchors = "I1[2,)",
+      symmetric = "B1",
+      centre = "B1",
+      ks_test = "B1",
+      seed = "N1[0,)"
+    ),
+    label = "blitzGSEA params",
+    hint = paste(
+      "min_size and max_size must be integers (with max_size > min_size",
+      "and min_size >= 3); permutations and anchors must be integers >= 2;",
+      "symmetric, centre and ks_test must be booleans;",
+      "seed must be a non-negative double."
+    )
+  )
+}
+
+#' Assert blitzGSEA parameter
+#'
+#' @description Checkmate extension for asserting the blitzGSEA parameters.
+#'
+#' @inheritParams checkBlitzGseaParams
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
+assertBlitzGseaParams <- checkmate::makeAssertionFunction(checkBlitzGseaParams)
+
 ### gsva -----------------------------------------------------------------------
 
 #' Check GSVA parameters
