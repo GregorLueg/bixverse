@@ -2,11 +2,13 @@ url: https://gregorlueg.github.io/bixverse/
 
 template:
   bootstrap: 5
-  bootswatch: lux
   light-switch: true
+  theme: atom-one-light
+  theme-dark: atom-one-dark
   bslib:
-    # lux uses navbar-padding-y: 1.5rem, so pkgdown's 56px default is too small
-    pkgdown-nav-height: 104px
+    primary: "#3C4B6D"
+    border-radius: 0.5rem
+    btn-border-radius: 0.25rem
 
 home:
   title: bixverse
