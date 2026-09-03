@@ -7,6 +7,8 @@
 #' matrix (think correlation matrix, distance matrix, etc.) in an
 #' memory-efficient form and return a data.table or dense (or sparse) R matrix
 #' if need be.
+#'
+#' @export
 upper_triangular_sym_mat <- R6::R6Class(
   # Class name
   classname = "upper_triangular_sym_mat",

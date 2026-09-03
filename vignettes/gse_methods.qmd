@@ -413,6 +413,110 @@ microbenchmark::microbenchmark(
 )
 ```
 
+## blitzGSEA
+
+Permutation-based GSEA pays per pathway. blitzGSEA does not. It draws random
+gene sets once across a log-spaced grid of set sizes, fits gamma tails to the
+resulting null enrichment scores, and then reads every pathway's p-value
+straight off the fitted tail, see
+[Lachmann et al.](https://doi.org/10.1093/bioinformatics/btac076). One gamma
+evaluation per pathway, no matter how big the library.
+
+```{r}
+#| label: blitzgsea run
+#| eval: !expr requireNamespace("fgsea", quietly = TRUE)
+blitz_params <- params_blitzgsea(min_size = 15L)
+
+bixverse_blitz <- calc_blitzgsea(
+  stats = exampleRanks,
+  pathways = examplePathways,
+  blitz_params = blitz_params
+)
+
+head(bixverse_blitz)
+```
+
+Does the approximation hold up against the permutations?
+
+```{r}
+#| label: blitzgsea vs fgsea p-value comparison
+#| eval: !expr requireNamespace("fgsea", quietly = TRUE)
+blitz_vs_fgsea <- merge(
+  bixverse_blitz[, .(pathway_name, pvals_blitz = pvals)],
+  bixverse_fgsea[, .(pathway_name, pvals_fgsea = pvals)],
+  by = "pathway_name"
+)
+
+plot(
+  x = -log10(blitz_vs_fgsea$pvals_fgsea),
+  y = -log10(blitz_vs_fgsea$pvals_blitz),
+  xlab = "-log10(pval) bixverse fgsea",
+  ylab = "-log10(pval) bixverse blitzGSEA",
+  main = "fgsea and blitzGSEA"
+)
+```
+
+Close enough to rank the same things at the top, with the gamma tail reaching
+further into the small p-values than 1000 permutations can.
+
+### Reusing the null model
+
+Nothing about a gene set library enters the calibration. It depends only on the
+signature, so one calibration serves every library you score against that
+ranking. `blitzgsea_calibrate()` hands it back as a plain list you can hold onto
+or `saveRDS()`:
+
+```{r}
+#| label: blitzgsea calibrate
+#| eval: !expr requireNamespace("fgsea", quietly = TRUE)
+null_model <- blitzgsea_calibrate(
+  stats = exampleRanks,
+  blitz_params = blitz_params
+)
+
+null_model
+```
+
+The KS p-values are a goodness-of-fit diagnostic on the gamma tails. Low values
+mean the fit is poor and the p-values are optimistic; `calc_blitzgsea()` warns
+when that happens. More permutations is the usual fix.
+
+Hand the null back and the scoring is all that is left:
+
+```{r}
+#| label: blitzgsea speed
+#| eval: !expr requireNamespace("microbenchmark", quietly = TRUE)
+microbenchmark::microbenchmark(
+  fgsea = calc_fgsea(
+    stats = exampleRanks,
+    pathways = examplePathways,
+    gsea_params = params_gsea(min_size = 15L)
+  ),
+  blitz_cold = calc_blitzgsea(
+    stats = exampleRanks,
+    pathways = examplePathways,
+    blitz_params = blitz_params
+  ),
+  blitz_warm = calc_blitzgsea(
+    stats = exampleRanks,
+    pathways = examplePathways,
+    blitz_params = blitz_params,
+    null_model = null_model
+  ),
+  times = 5L
+)
+```
+
+On this data (586 pathways, ~12k genes) the cold run lands around 3x faster than
+the fgsea multilevel method and the warm one around 90x. Score five libraries
+against one ranking and you pay the calibration once.
+
+The catch: the null is specific to the signature it was drawn from, both its
+length and its values. `calc_blitzgsea()` refuses a null whose gene count does
+not match rather than returning plausible-looking rubbish, but it cannot catch
+two different signatures of the same length. Recalibrate when the ranking
+changes.
+
 ## GO-aware GSEA: the elimination method
 
 `bixverse` combines the elimination method with GSEA, using the same

@@ -27,6 +27,7 @@ pub use data::r_sparse;
 pub use data::r_synthetic;
 
 // enrichments
+pub use enrichment::r_blitzgsea;
 pub use enrichment::r_gsea;
 pub use enrichment::r_gsva;
 pub use enrichment::r_mitch;
@@ -42,6 +43,7 @@ pub use graph::r_snf;
 // methods
 pub use methods::r_cistarget;
 pub use methods::r_coremo;
+pub use methods::r_dge_bulk;
 pub use methods::r_dgrdl;
 pub use methods::r_diffcor;
 pub use methods::r_ica;
@@ -89,6 +91,7 @@ extendr_module! {
     use r_h5;
 
     // enrichment
+    use r_blitzgsea;
     use r_gsea;
     use r_gsva;
     use r_mitch;
@@ -103,6 +106,7 @@ extendr_module! {
 
     // methods
     use r_coremo;
+    use r_dge_bulk;
     use r_dgrdl;
     use r_diffcor;
     use r_ica;

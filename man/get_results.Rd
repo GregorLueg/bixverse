@@ -13,6 +13,9 @@ get_results.DialogueResult(object, ...)
 \item{object}{The underlying \code{\link[=BixverseBaseClass]{BixverseBaseClass()}}
 class. The class functionality is usually inherited by other S7 classes in
 \code{bixverse}.}
+
+\item{...}{Unused, present so the S3 methods sharing this page match the
+generic.}
 }
 \value{
 Returns the final results if any have been stored in the class.

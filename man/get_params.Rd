@@ -12,6 +12,7 @@
 \alias{get_params.StabilisedNmfResult}
 \alias{get_params.ConsensusNmfResult}
 \alias{get_params.DialogueResult}
+\alias{get_params.ScNebula}
 \title{Get the parameters that were used.}
 \usage{
 get_params(object, to_json = FALSE, pretty_json = FALSE)
@@ -33,6 +34,8 @@ get_params.StabilisedNmfResult(object, to_json = FALSE, pretty_json = FALSE)
 get_params.ConsensusNmfResult(object, to_json = FALSE, pretty_json = FALSE)
 
 get_params.DialogueResult(object, ...)
+
+get_params.ScNebula(object, to_json = FALSE, pretty_json = FALSE)
 }
 \arguments{
 \item{object}{A class within bixverse that inherits from
@@ -41,6 +44,9 @@ get_params.DialogueResult(object, ...)
 \item{to_json}{Shall the params be returned as a JSON string.}
 
 \item{pretty_json}{Shall the params be returned as a pretty JSON string.}
+
+\item{...}{Unused, present so the S3 methods sharing this page match the
+generic.}
 }
 \value{
 Depending on parameters either the R list or a (pretty) JSON string.

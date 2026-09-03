@@ -1,5 +1,5 @@
 [package]
-version = '0.4.11'
+version = '0.5.0'
 name = 'bixverse'
 publish = false
 edition = '2021'
@@ -10,7 +10,12 @@ crate-type = ['staticlib', 'rlib']
 name = 'bixverse'
 
 [features]
-default = []
+## Compile HDF5 from source through `hdf5-metno-src`. On by default, since
+## that is the only thing that needs no system library. `tools/config.R`
+## switches it off with `--no-default-features` when it finds an external
+## libhdf5, which is what makes the Windows cross-host builds link.
+default = ["hdf5-static"]
+hdf5-static = ["bixverse-rs/hdf5-static"]
 
 [profile.dev.package.faer]
 opt-level = 3
@@ -26,7 +31,14 @@ codegen-units = 4
 strip = true
 
 [dependencies]
-bixverse-rs = { version = "0.4.7", features = [ "single-cell", "multi-modal", ] }
+bixverse-rs = { version = "0.5.0", default-features = false, features = [
+    "single-cell",
+    "multi-modal",
+] }
+# The `Tested` / `ScTested` / `NebulaParams` types cross the binding boundary,
+# so the edgeR and NEBULA wrappers need them by name. Kept in step with the
+# version `bixverse-rs` pulls in.
+edge-rs = "0.0.2"
 extendr-api = "0.9.0"
 either = "1.15.0"
 faer = { version = '0.23.2' }
@@ -40,3 +52,12 @@ thousands = "*"
 [[bin]]
 name = "document"
 path = "document.rs"
+
+#########
+# Patch #
+#########
+
+# `bixverse-rs` 0.5.0 is unreleased. Point this back at the crates.io version
+# once it is cut through CI/CD, and bump the `[dependencies]` entry with it.
+# [patch.crates-io]
+# bixverse-rs = { git = "https://github.com/GregorLueg/bixverse-rs", branch = "release-0.5.0" }

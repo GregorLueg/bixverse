@@ -128,23 +128,45 @@ get_cell_ranger_params <- function(dir_data) {
   return(res)
 }
 
-## seurat assay to list --------------------------------------------------------
+## gene-major counts to cell-major ---------------------------------------------
 
-#' Transform Seurat raw counts into a List
+#' Reinterpret a gene-major count matrix as a cell-major one
 #'
-#' @param seurat_obj `Seurat` class. The class from which to extract the counts
-#' from and transform to a list.
+#' @description
+#' Seurat and `SingleCellExperiment` both store counts as a `dgCMatrix` of
+#' genes x cells. Everything on this side wants cells x genes. Those two are
+#' the same bytes: a CSC matrix over genes x cells holds one pointer per cell
+#' and gene indices, and so does a CSR matrix over cells x genes. So this
+#' relabels the slots rather than transposing, and costs nothing regardless of
+#' how many non-zeros there are.
 #'
-#' @return A list with the following elements
-#' \itemize{
-#'   \item indptr - Index pointers of the sparse data.
-#'   \item indices - Indices of the data.
-#'   \item data - The underlying data.
-#'   \item format - String that defines if the data is CSR or CSC.
-#'   \item nrow - The number of rows.
-#'   \item ncol - The number of columns.
-#' }
-get_seurat_counts_to_list <- function(seurat_obj) {
+#' @param counts `dgCMatrix`. Counts of genes x cells.
+#'
+#' @return The same data as a `dgRMatrix` of cells x genes.
+#'
+#' @keywords internal
+.counts_to_cell_major <- function(counts) {
+  checkmate::assertClass(counts, "dgCMatrix")
+
+  new(
+    "dgRMatrix",
+    p = counts@p,
+    j = counts@i,
+    x = counts@x,
+    Dim = rev(counts@Dim)
+  )
+}
+
+## seurat counts ---------------------------------------------------------------
+
+#' Pull the raw counts out of a Seurat object
+#'
+#' @param seurat_obj `Seurat` class. The class to extract the counts from.
+#'
+#' @return The raw counts as a `dgRMatrix` of cells x genes.
+#'
+#' @keywords internal
+get_seurat_counts <- function(seurat_obj) {
   # checks
   if (!requireNamespace("Seurat", quietly = TRUE)) {
     stop(
@@ -155,22 +177,13 @@ get_seurat_counts_to_list <- function(seurat_obj) {
   checkmate::assertClass(seurat_obj, "Seurat")
 
   assay <- seurat_obj@assays$RNA
-  if (.hasSlot(assay, "layers")) {
-    raw_counts <- assay@layers$counts
+  raw_counts <- if (.hasSlot(assay, "layers")) {
+    assay@layers$counts
   } else {
-    raw_counts <- assay@counts
+    assay@counts
   }
 
-  res <- list(
-    indptr = raw_counts@p,
-    indices = raw_counts@i,
-    data = raw_counts@x,
-    cs_type = "csr",
-    nrow = raw_counts@Dim[2],
-    ncol = raw_counts@Dim[1]
-  )
-
-  return(res)
+  .counts_to_cell_major(raw_counts)
 }
 
 ## meta cell matrices ----------------------------------------------------------
@@ -305,6 +318,8 @@ get_meta_cell_matrices <- function(meta_cell_data, dimnames = NULL) {
 #'  \item outlier - Boolean vector indicating which cell is an outlier
 #'  \item metrics - The applied thresholds.
 #' }
+#'
+#' @export
 per_cell_qc_outlier <- function(
   metric,
   threshold = 3,

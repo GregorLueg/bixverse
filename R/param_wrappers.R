@@ -248,6 +248,81 @@ params_gsea <- function(
   )
 }
 
+## blitzgsea ------------------------------------------------------------------
+
+#' Wrapper function to generate blitzGSEA parameters
+#'
+#' @param min_size Integer. Minimum number of genes per gene set.
+#' @param max_size Integer. Maximum number of genes per gene set.
+#' @param permutations Integer. Random gene sets drawn per anchor size during
+#' calibration. Defaults to `2000L`. Below `1000L` the two tails are pooled
+#' into a single gamma regardless of `symmetric`.
+#' @param anchors Integer. Number of log-spaced anchor sizes requested. Sizes
+#' that collide after rounding are collapsed, so the realised grid is usually a
+#' little smaller. Defaults to `40L`.
+#' @param symmetric Boolean. Pool both tails into one gamma instead of fitting
+#' them separately. Defaults to `FALSE`.
+#' @param centre Boolean. Centre the signature on its mean before scoring. The
+#' enrichment score is not invariant to an offset, so the calibration and the
+#' scoring have to agree on this. Defaults to `TRUE`.
+#' @param ks_test Boolean. Run the Kolmogorov-Smirnov goodness-of-fit
+#' diagnostic at every anchor. Costs a sort per anchor. Defaults to `TRUE`.
+#' @param seed Float. Random seed for the calibration. Defaults to `42`.
+#'
+#' @returns List with parameters for usage in subsequent function.
+#'
+#' @export
+#'
+#' @references Lachmann, et al., Bioinformatics, 2022
+params_blitzgsea <- function(
+  min_size = 5L,
+  max_size = 500L,
+  permutations = 2000L,
+  anchors = 40L,
+  symmetric = FALSE,
+  centre = TRUE,
+  ks_test = TRUE,
+  seed = 42
+) {
+  # Checks
+  checkmate::qassert(min_size, "I1[3,)")
+  checkmate::qassert(max_size, "I1[4,)")
+  checkmate::qassert(permutations, "I1[2,)")
+  checkmate::qassert(anchors, "I1[2,)")
+  checkmate::qassert(symmetric, "B1")
+  checkmate::qassert(centre, "B1")
+  checkmate::qassert(ks_test, "B1")
+  checkmate::qassert(seed, "N1[0,)")
+
+  if (permutations < BLITZ_MIN_PERMUTATIONS_SPLIT) {
+    warning(sprintf(
+      paste(
+        "%i permutations is below %i, so the positive and negative tails will",
+        "be pooled into a single gamma regardless of `symmetric`."
+      ),
+      permutations,
+      BLITZ_MIN_PERMUTATIONS_SPLIT
+    ))
+  }
+
+  # Returns
+  return(
+    list(
+      min_size = min_size,
+      max_size = max_size,
+      permutations = permutations,
+      anchors = anchors,
+      symmetric = symmetric,
+      centre = centre,
+      ks_test = ks_test,
+      # The Rust side takes a 64 bit seed and reads it as a double, since R has
+      # no integer type wide enough. An integer here would be dropped and the
+      # default would run instead.
+      seed = as.double(seed)
+    )
+  )
+}
+
 ## gsva ------------------------------------------------------------------------
 
 #' Wrapper function to generate GSVA parameters
@@ -1317,6 +1392,11 @@ params_sc_pca <- function(
 #' applied at the end of index construction. Defaults to `0.0`.
 #' @param ef_budget Integer or `NULL`. NNDescent param: optional query budget.
 #' Higher values improve recall at the cost of speed.
+#' @param extract_knn Boolean. NNDescent param: hand back the graph the descent
+#' already built instead of beam searching it. Skips the query pass entirely,
+#' so it is much faster, at the cost of some recall. Rows the descent never
+#' filled come back padded with duplicate edges. Ignored by every other method.
+#' Defaults to `FALSE`.
 #' @param m Integer. HNSW param: number of connections between layers.
 #' Defaults to `16L`.
 #' @param ef_construction Integer. HNSW param: size of the dynamic candidate
@@ -1340,6 +1420,7 @@ params_sc_knn <- function(
   delta = 0.001,
   diversify_prob = 0.0,
   ef_budget = NULL,
+  extract_knn = FALSE,
   m = 16L,
   ef_construction = 200L,
   ef_search = 100L,
@@ -1363,6 +1444,7 @@ params_sc_knn <- function(
     checkmate::checkNull(ef_budget),
     checkmate::checkInt(ef_budget, lower = 1L)
   )
+  checkmate::qassert(extract_knn, "B1")
   checkmate::qassert(m, "I1[1,)")
   checkmate::qassert(ef_construction, "I1[1,)")
   checkmate::qassert(ef_search, "I1[1,)")
@@ -1384,6 +1466,7 @@ params_sc_knn <- function(
     delta = delta,
     diversify_prob = diversify_prob,
     ef_budget = ef_budget,
+    extract_knn = extract_knn,
     m = m,
     ef_construction = ef_construction,
     ef_search = ef_search,

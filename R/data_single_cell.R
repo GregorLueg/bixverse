@@ -771,21 +771,31 @@ write_tenx_h5_sc <- function(
 #' vignette build outright.
 #'
 #' @param file String. File name, identical in both locations.
-#' @param zenodo_record String. Zenodo record holding the fallback copy.
+#' @param zenodo_record Optional string. Zenodo record holding the fallback
+#' copy. `NULL` for datasets that only live in the GitHub release, which is the
+#' case until they are archived.
 #'
 #' @returns Character vector of URLs, in the order they should be tried.
 #'
 #' @keywords internal
-.data_urls <- function(file, zenodo_record) {
+.data_urls <- function(file, zenodo_record = NULL) {
   checkmate::assertString(file)
-  checkmate::assertString(zenodo_record)
+  checkmate::assertString(zenodo_record, null.ok = TRUE)
+
+  gh <- sprintf(
+    "https://github.com/GregorLueg/bixverse-data/releases/download/%s/%s",
+    .BIXVERSE_DATA_TAG,
+    file
+  )
+
+  # not everything has an archival copy yet, and a dataset that only lives in
+  # the release is still perfectly downloadable
+  if (is.null(zenodo_record)) {
+    return(gh)
+  }
 
   c(
-    sprintf(
-      "https://github.com/GregorLueg/bixverse-data/releases/download/%s/%s",
-      .BIXVERSE_DATA_TAG,
-      file
-    ),
+    gh,
     sprintf(
       "https://zenodo.org/records/%s/files/%s?download=1",
       zenodo_record,
@@ -810,7 +820,7 @@ write_tenx_h5_sc <- function(
 #' is not reliable, which shows up as `cannot open URL` mid-vignette. Retries
 #' with a linear backoff.
 #'
-#' @param url String. The URL to fetch.
+#' @param urls Character vector. Mirrors to try, in order.
 #' @param dest_file String. Path to write the file to.
 #' @param quiet Boolean. If the download shall be quiet.
 #' @param tries Integer. Attempts before giving up.
@@ -1072,4 +1082,88 @@ download_pbmc_totalseq_data <- function(quiet = FALSE) {
   .download_with_retry(urls, dest_file, quiet = quiet)
 
   file.path(temp_dir, "10k_Human_PBMC_TotalSeqB.h5")
+}
+
+### kang pbmc ------------------------------------------------------------------
+
+#' Download the Kang, et al. IFN-beta stimulated PBMC data
+#'
+#' @description
+#' Downloads the Kang, et al. demultiplexed PBMC experiment as a
+#' `SingleCellExperiment`. 8 lupus donors, PBMCs, control against IFN-beta
+#' stimulated in vitro, roughly 29k cells before quality control.
+#'
+#' The design is paired within donor, which is what makes it the example for
+#' [bixverse::nebula_sc()]: the donor is a genuine random effect and every donor
+#' contributes to both arms. Load it with [bixverse::load_sce()].
+#'
+#' @details
+#' Sourced from the `muscData` Bioconductor package, itself from GEO accession
+#' `GSE96583`. See `data-raw/zenodo_sce_datasets.R` for the preparation. The
+#' `multiplets` column marks doublets and ambiguous droplets, which are worth
+#' dropping before any modelling.
+#'
+#' Served from the `bixverse-data` GitHub release. There is no Zenodo fallback
+#' for this one yet.
+#'
+#' @param quiet Boolean. If the download shall be quiet.
+#'
+#' @returns String. The path to the qs2 file holding the
+#' `SingleCellExperiment`.
+#'
+#' @export
+#'
+#' @references Kang, et al., Nat. Biotechnol., 2018
+download_kang_pbmc <- function(quiet = FALSE) {
+  temp_dir <- tempdir()
+  dest_file <- file.path(temp_dir, "kang18_8vs8.qs2")
+  urls <- .data_urls("kang18_8vs8.qs2")
+
+  .download_with_retry(urls, dest_file, quiet = quiet)
+
+  dest_file
+}
+
+### ageing thymus --------------------------------------------------------------
+
+#' Download the Baran-Gale, et al. ageing thymus data
+#'
+#' @description
+#' Downloads the mouse ageing thymus droplet experiment as a
+#' `SingleCellExperiment`. Roughly 69k thymic epithelial cells across three
+#' ages, with real change in cell type proportions between them.
+#'
+#' That compositional change is what makes it the example for
+#' [bixverse::get_miloR_abundances_sc()] and [bixverse::meld_sc()]. A
+#' stimulation experiment moves cells in embedding space without moving the
+#' proportions, so almost every neighbourhood comes out significant and the
+#' result says nothing. Load it with [bixverse::load_sce()].
+#'
+#' @details
+#' Sourced from the `MouseThymusAgeing` Bioconductor package. See
+#' `data-raw/zenodo_sce_datasets.R` for the preparation. The object carries no
+#' gene names, so [bixverse::load_sce()] falls back to the Ensembl identifiers
+#' in the `rowData`, and 336 genes with no annotation at all get a generated
+#' identifier.
+#'
+#' Served from the `bixverse-data` GitHub release. There is no Zenodo fallback
+#' for this one yet. At 430 MB it is the largest of the example datasets, so
+#' expect the first call to take a while.
+#'
+#' @param quiet Boolean. If the download shall be quiet.
+#'
+#' @returns String. The path to the qs2 file holding the
+#' `SingleCellExperiment`.
+#'
+#' @export
+#'
+#' @references Baran-Gale, et al., Development, 2020
+download_thymus_ageing <- function(quiet = FALSE) {
+  temp_dir <- tempdir()
+  dest_file <- file.path(temp_dir, "thymus_ageing_droplet.qs2")
+  urls <- .data_urls("thymus_ageing_droplet.qs2")
+
+  .download_with_retry(urls, dest_file, quiet = quiet)
+
+  dest_file
 }

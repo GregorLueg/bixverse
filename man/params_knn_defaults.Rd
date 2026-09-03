@@ -15,7 +15,7 @@ parameters:
 neighbour search. Defaults to \code{"kmknn"}. The implementations are:
 \code{c("kmknn", "hnsw", "annoy", "nndescent", "ivf", "exhaustive")}.
 \item ann_dist - Which distance metric to use for the approximate nearest
-neighbour search. Defaults to \code{"cosine"}. The implementations are
+neighbour search. Defaults to \code{"euclidean"}. The implementations are
 \code{c("cosine", "euclidean")}.
 \item n_trees - Annoy param: number of trees to generate for Annoy. Defaults
 to \code{50L}.
@@ -28,6 +28,11 @@ potentiall better edges. Defaults to \code{0.0}.
 Defaults to \code{0.001}.
 \item ef_budget - NNDescent param: optional query budget parameter. Can
 accelerate querying, but at the cost of Recall.
+\item extract_knn - NNDescent param: hand back the graph the descent
+already built instead of beam searching it. Skips the query pass entirely,
+so it is much faster, at the cost of some recall. Rows the descent never
+filled come back padded with duplicate edges. Ignored by every other
+method. Defaults to \code{FALSE}.
 \item m - HNSW param: number of connections between layers for HNSW.
 Defaults to \code{16L}.
 \item ef_construction - HNSW param: size of dynamic candidate list during

@@ -17,6 +17,9 @@ jobs:
       rust: true
       gpu: false
       windows: true
+      # macOS-latest is arm64. The x86 lane is here because r-universe's
+      # macos-x86_64 job trips test_ica.R and nothing of ours reproduces it.
+      macos-x86: true
       extra-repositories: 'https://gregorlueg.r-universe.dev'
       rebuild-from-source: 'stringfish qs2'
     secrets: inherit

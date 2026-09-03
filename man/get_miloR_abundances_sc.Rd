@@ -36,10 +36,9 @@ indices. Must be in (0,1).
 \item refinement_strategy - String. Strategy for refining sampled indices.
 One of \code{c("approximate", "bruteforce", "index")}.
 \item index_type - String. Type of kNN index to use. One of
-\code{c("annoy", "hnsw")}.
+\code{c("nndescent", "ivf", "hnsw", "annoy", "exhaustive")}.
 \item knn - List of kNN parameters. See \code{\link[=params_knn_defaults]{params_knn_defaults()}}
-for available parameters and their defaults. Note: \code{knn_method} cannot be
-\code{"exhaustive"} for MiloR as it basically boils down to \code{"bruteforce"}.
+for available parameters and their defaults.
 }}
 
 \item{seed}{Integer. Seed for reproducibility}

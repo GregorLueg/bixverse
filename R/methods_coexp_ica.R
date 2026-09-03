@@ -62,15 +62,25 @@ S7::method(ica_processing, BulkCoExp) <- function(
   if (!fast_svd && .verbose) {
     message("Using full SVD for whitening (slower, but more precise).")
   }
+  # The covariance the SVD runs over is built from column-centred data, so it
+  # carries at most `nrow - 1` real components. Anything past that sits in the
+  # null space, where the whitening scale is 1/sqrt(~0) and the row norms blow
+  # up to 1e7. `rs_prepare_whitening()` also hands back `rank + oversampling`
+  # rows rather than `rank`, so the surplus is cut here rather than left for
+  # the caller to trip over.
+  max_rank <- min(nrow(target_mat) - 1L, ncol(target_mat))
+
   c(X1, K) %<-%
     rs_prepare_whitening(
       x = target_mat,
       fast_svd = fast_svd,
       seed = random_seed,
-      rank = nrow(target_mat),
+      rank = max_rank,
       oversampling = NULL,
       n_power_iter = NULL
     )
+
+  K <- K[seq_len(max_rank), , drop = FALSE]
 
   S7::prop(object, "processed_data")[["X1"]] <- X1
   S7::prop(object, "processed_data")[["K"]] <- K

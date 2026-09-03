@@ -1079,15 +1079,19 @@ print.Hotspot <- function(x, ...) {
 #' Plot the Hotspot Z-score matrix
 #'
 #' @description
-#' Produces a heatmap of the pairwise gene-gene Z-score matrix. If module
-#' membership has been computed via [generate_hotspot_membership()], genes
-#' are ordered by module and unassigned genes are excluded. If no membership
-#' is available, all genes are shown.
+#' Heatmap of the pairwise gene-gene Z-scores. With module membership from
+#' [generate_hotspot_membership()] the plot keeps the `top_k` largest modules,
+#' orders genes within each module by hierarchical clustering and separates and
+#' labels the module blocks, so the block structure is actually readable.
+#' Without membership every gene is shown in the order it comes in.
 #'
 #' @param x A `Hotspot` object.
-#' @param max_genes Integer. Maximum number of genes to plot. If the number
-#' of genes exceeds this, a random subsample is drawn (stratified by module
-#' if membership is available). Set to `NULL` to disable. Default 500.
+#' @param top_k Integer. Number of modules to keep, ranked by gene count. Set to
+#' `NULL` to keep all of them. Ignored when no membership has been computed.
+#' Defaults to `5L`.
+#' @param max_genes Integer. Maximum number of genes to plot. Above this a
+#' subsample is drawn, allocated across the kept modules in proportion to their
+#' size. Set to `NULL` to disable. Defaults to `500L`.
 #' @param seed Integer. Seed for reproducible subsampling.
 #' @param ... Further arguments (currently unused).
 #'
@@ -1098,38 +1102,85 @@ print.Hotspot <- function(x, ...) {
 #' @export
 #'
 #' @keywords internal
-plot.Hotspot <- function(x, max_genes = 500L, seed = 42L, ...) {
+plot.Hotspot <- function(x, top_k = 5L, max_genes = 500L, seed = 42L, ...) {
   if (!requireNamespace("ggplot2", quietly = TRUE)) {
     stop("ggplot2 is required for plotting.")
   }
+
+  # Globals scope check
+  . <- `:=` <- cluster_member <- gene_id <- NULL
+  gene_1 <- gene_2 <- z_score <- z_capped <- N <- NULL
+
+  # Checks
   checkmate::assertClass(x, "Hotspot")
-  checkmate::qassert(max_genes, "I1")
+  checkmate::qassert(top_k, c("I1[1,)", "0"))
+  checkmate::qassert(max_genes, c("I1[2,)", "0"))
   checkmate::qassert(seed, "I1")
 
   z_mat <- x$z
 
-  if (!is.null(x$module_memership)) {
-    membership <- data.table::copy(x$module_memership)
-    membership <- membership[!is.na(cluster_member)]
-    data.table::setorder(membership, cluster_member)
+  membership <- x[["module_memership"]]
+  if (!is.null(membership)) {
+    membership <- data.table::copy(membership)[!is.na(cluster_member)]
+  }
 
-    if (!is.null(max_genes) && nrow(membership) > max_genes) {
-      set.seed(seed)
-      membership <- membership[,
-        .SD[sample(.N, min(.N, ceiling(max_genes * .N / nrow(membership))))],
-        by = cluster_member
-      ]
-      data.table::setorder(membership, cluster_member)
+  if (is.null(membership) || nrow(membership) == 0L) {
+    if (!is.null(x[["module_memership"]])) {
+      warning("No gene was assigned to a module. Plotting all genes.")
     }
 
-    gene_order <- membership$gene_id
-  } else {
     gene_order <- rownames(z_mat)
-
     if (!is.null(max_genes) && length(gene_order) > max_genes) {
       set.seed(seed)
       gene_order <- sample(gene_order, max_genes)
     }
+    blocks <- NULL
+  } else {
+    if (!is.null(top_k)) {
+      sizes <- membership[, .N, by = cluster_member]
+      data.table::setorder(sizes, -N, cluster_member)
+      membership <- membership[
+        cluster_member %in% utils::head(sizes$cluster_member, top_k)
+      ]
+    }
+
+    if (!is.null(max_genes) && nrow(membership) > max_genes) {
+      # Proportional allocation, but never below two genes: a module reduced to
+      # a single tile is worse than not showing it at all.
+      n_total <- nrow(membership)
+      set.seed(seed)
+      membership <- membership[,
+        .SD[sample(.N, min(.N, max(2L, round(max_genes * .N / n_total))))],
+        by = cluster_member
+      ]
+    }
+
+    sizes <- membership[, .N, by = cluster_member]
+    data.table::setorder(sizes, cluster_member)
+
+    # Ordering within a module is what turns the block into something with
+    # structure rather than a uniform square.
+    gene_order <- unlist(
+      purrr::map(sizes$cluster_member, \(module) {
+        genes <- membership[cluster_member == module, gene_id]
+        if (length(genes) < 3L) {
+          return(genes)
+        }
+        sub_mat <- z_mat[genes, genes]
+        genes[fastcluster::hclust(dist(sub_mat), method = "ward.D2")$order]
+      }),
+      use.names = FALSE
+    )
+
+    blocks <- data.table::data.table(
+      module = sizes$cluster_member,
+      n = sizes$N,
+      end = cumsum(sizes$N)
+    )
+    blocks[, `:=`(
+      mid_gene = gene_order[floor(end - n / 2) + 1L],
+      label = sprintf("M%d (%d)", as.integer(module), n)
+    )]
   }
 
   z_mat <- z_mat[gene_order, gene_order]
@@ -1146,7 +1197,7 @@ plot.Hotspot <- function(x, max_genes = 500L, seed = 42L, ...) {
   cap <- quantile(abs(plot_dt$z_score), 0.99, na.rm = TRUE)
   plot_dt[, z_capped := pmax(pmin(z_score, cap), -cap)]
 
-  ggplot2::ggplot(plot_dt, ggplot2::aes(x = gene_1, y = gene_2)) +
+  p <- ggplot2::ggplot(plot_dt, ggplot2::aes(x = gene_1, y = gene_2)) +
     ggplot2::geom_tile(ggplot2::aes(fill = z_capped)) +
     ggplot2::scale_fill_gradient2(
       low = "#2166AC",
@@ -1155,14 +1206,52 @@ plot.Hotspot <- function(x, max_genes = 500L, seed = 42L, ...) {
       midpoint = 0,
       name = "Z-score"
     ) +
+    ggplot2::coord_fixed() +
     ggplot2::theme_minimal() +
     ggplot2::theme(
-      axis.text.x = ggplot2::element_blank(),
-      axis.text.y = ggplot2::element_blank(),
       axis.ticks = ggplot2::element_blank(),
       panel.grid = ggplot2::element_blank()
     ) +
     ggplot2::labs(x = NULL, y = NULL)
+
+  if (is.null(blocks)) {
+    return(p + ggplot2::theme(axis.text = ggplot2::element_blank()))
+  }
+
+  # Discrete positions run 1..n, so a boundary after the block ending at `end`
+  # sits at `end + 0.5`. The y levels are reversed, hence the mirror.
+  n_plot <- length(gene_order)
+  cuts <- utils::head(blocks$end, -1L)
+
+  p +
+    ggplot2::geom_vline(
+      xintercept = cuts + 0.5,
+      colour = "grey25",
+      linewidth = 0.3
+    ) +
+    ggplot2::geom_hline(
+      yintercept = n_plot - cuts + 0.5,
+      colour = "grey25",
+      linewidth = 0.3
+    ) +
+    ggplot2::scale_x_discrete(
+      breaks = blocks$mid_gene,
+      labels = blocks$label
+    ) +
+    ggplot2::scale_y_discrete(
+      breaks = blocks$mid_gene,
+      labels = blocks$label
+    ) +
+    ggplot2::theme(
+      axis.text.x = ggplot2::element_text(angle = 45, hjust = 1)
+    ) +
+    ggplot2::labs(
+      subtitle = sprintf(
+        "%d modules, %d genes shown",
+        nrow(blocks),
+        n_plot
+      )
+    )
 }
 
 #### getters -------------------------------------------------------------------
@@ -1286,10 +1375,13 @@ generate_hotspot_membership.Hotspot <- function(
 #' please refer to Dann, et al.
 #'
 #' @param nhoods Sparse dgCMatrix with cells x neighbourhoods.
-#' @param sample_counts Integer matrix. Represents neighbourhoods x cells from
-#' sample of interest.
-#' @param spatial_dist Numeric. The spatial distance between the neighbourhoods
-#' to calculate the spatial FDR.
+#' @param sample_counts Numeric matrix. Represents neighbourhoods x samples,
+#' i.e. the cells of each sample found in each neighbourhood.
+#' @param spatial_dist Numeric. The distance to the k-th nearest neighbour per
+#' neighbourhood, the `"k-distance"` weighting for the spatial FDR.
+#' @param nhood_overlap Numeric. The cells each neighbourhood shares with all
+#' the others, the `"graph-overlap"` weighting for the spatial FDR. Taken at
+#' construction because it is a function of the neighbourhood matrix alone.
 #' @param params Named list. The parameters that were used to generate these
 #' results.
 #'
@@ -1299,16 +1391,22 @@ generate_hotspot_membership.Hotspot <- function(
 #' @references Dann, et al., Nat Biotechnol, 2022
 #'
 #' @keywords internal
-new_sc_miloR_res <- function(nhoods, sample_counts, spatial_dist, params) {
+new_sc_miloR_res <- function(
+  nhoods,
+  sample_counts,
+  spatial_dist,
+  nhood_overlap,
+  params
+) {
   # checks
-  checkmate::checkClass(nhoods, "dgCMatrix")
-  checkmate::checkMatrix(
+  checkmate::assertClass(nhoods, "dgCMatrix")
+  checkmate::assertMatrix(
     sample_counts,
-    row.names = "named",
-    col.names = "named",
-    mode = "integer"
+    mode = "numeric",
+    col.names = "named"
   )
   checkmate::qassert(spatial_dist, "N+")
+  checkmate::qassert(nhood_overlap, "N+")
   checkmate::assertList(params, names = "named")
 
   # function body
@@ -1316,8 +1414,8 @@ new_sc_miloR_res <- function(nhoods, sample_counts, spatial_dist, params) {
     nhoods = nhoods,
     sample_counts = sample_counts,
     spatial_dist = spatial_dist,
+    nhood_overlap = nhood_overlap,
     nhoods_info = NULL,
-    model = NULL,
     params = params
   )
 
@@ -1403,10 +1501,15 @@ get_differential_abundance_res.miloR <- function(
 
 #' Get the fitted model
 #'
-#' @param x An object from which to get the differential abundance results
-#' from.
+#' @description
+#' `r lifecycle::badge("deprecated")`
+#' The neighbourhood test moved into Rust, so there is no `DGEGLM` to hand
+#' back any more. Everything the fit was consulted for now sits in the results
+#' table, see [bixverse::get_differential_abundance_res()].
 #'
-#' @returns The model object, please refer to [edgeR::glmQLFTest()].
+#' @param x An object from which to get the fitted model from.
+#'
+#' @returns `NULL`, with a deprecation warning.
 #'
 #' @export
 get_model_fit <- function(x) {
@@ -1422,17 +1525,16 @@ get_model_fit.miloR <- function(
   # checks
   checkmate::assertClass(x, "miloR")
 
-  res <- x[["model"]]
+  lifecycle::deprecate_warn(
+    when = "0.4.11",
+    what = "get_model_fit()",
+    details = paste(
+      "test_nhoods() now runs the edgeR quasi-likelihood chain in Rust and",
+      "keeps no DGEGLM. Use get_differential_abundance_res() instead."
+    )
+  )
 
-  if (is.null(res)) {
-    warning(paste(
-      "No DGEGLM results found in x.",
-      "Did you run test_nhoods()?",
-      "Returning NULL."
-    ))
-  }
-
-  res
+  invisible(NULL)
 }
 
 #' Get the index cells
@@ -1458,110 +1560,51 @@ get_index_cells.miloR <- function(x) {
 
 ### methods --------------------------------------------------------------------
 
-#### helpers -------------------------------------------------------------------
-
-#' Spatial FDR correction for neighbourhoods
-#'
-#' @param nhoods Sparse matrix of cells x neighbourhoods
-#' @param pvalues Numeric vector. The p-values.
-#' @param weighting String. Weighting scheme, one of
-#' `c("k-distance", "graph-overlap")`
-#' @param kth_distances Numeric vector. The k-th nearest neighbour distances.
-#' Must be supplied if `weighting == "k-distance"`.
-#'
-#' @return Vector of spatially-corrected FDR values
-#'
-#' @noRd
-spatial_fdr_correction <- function(
-  nhoods,
-  pvalues,
-  weighting = c("k-distance", "graph-overlap"),
-  kth_distances = NULL
-) {
-  weighting <- match.arg(weighting)
-
-  # checks
-  checkmate::checkClass(nhoods, "dgCMatrix")
-  checkmate::qassert(pvalues, "n+")
-  checkmate::assertChoice(weighting, c("k-distance", "graph-overlap"))
-  checkmate::qassert(kth_distances, c("0", "N+"))
-
-  # handle NAs
-  haspval <- !is.na(pvalues)
-  if (!all(haspval)) {
-    pvalues <- pvalues[haspval]
-  }
-
-  # weights
-  if (weighting == "k-distance") {
-    if (is.null(kth_distances)) {
-      stop("k-distance weighting requires kth.distances")
-    }
-    t.connect <- kth_distances[haspval]
-  } else if (weighting == "graph-overlap") {
-    intersect_mat <- Matrix::crossprod(nhoods)
-    diag(intersect_mat) <- 0
-    t.connect <- Matrix::rowSums(intersect_mat)
-  }
-
-  w <- 1 / t.connect
-  w[is.infinite(w)] <- 1
-
-  o <- order(pvalues)
-  pvalues <- pvalues[o]
-  w <- w[o]
-
-  adjp <- numeric(length(o))
-  adjp[o] <- rev(cummin(rev(sum(w) * pvalues / cumsum(w))))
-  adjp <- pmin(adjp, 1)
-
-  # put NA's back
-  if (!all(haspval)) {
-    refp <- rep(NA_real_, length(haspval))
-    refp[haspval] <- adjp
-    adjp <- refp
-  }
-
-  adjp
-}
-
 #### neighbourhood testing -----------------------------------------------------
 
 #' Test neighbourhoods for differential abundance
 #'
 #' @description
-#' Performs differential abundance testing on single-cell neighbourhoods using
-#' edgeR's quasi-likelihood negative binomial framework. The function fits a
-#' generalised linear model to neighbourhood cell counts, tests for differential
-#' abundance between conditions, and applies spatial FDR correction to account
-#' for overlapping neighbourhoods. This implementation follows the approach
-#' described in Dann et al., using graph-based neighbourhoods to identify
-#' regions of significant compositional changes in single-cell data.
+#' Performs differential abundance testing on single-cell neighbourhoods with
+#' edgeR's quasi-likelihood negative binomial framework, implemented in Rust
+#' via the `edge-rs` crate. A generalised linear model is fitted to the
+#' neighbourhood counts, one coefficient or contrast is tested, and the spatial
+#' FDR correction accounts for the fact that neighbourhoods overlap and their
+#' tests are therefore not independent.
+#'
+#' `filterByExpr()` is off here and cannot be turned on. It is a gene
+#' expression heuristic and means nothing for a neighbourhood. Use `min_mean`
+#' if you want to drop sparsely populated neighbourhoods.
 #'
 #' @param x `miloR` object for which to run the differential abundance
 #' analysis.
-#' @param design Formula for the experimental design
-#' @param design_df data.frame. Contains the metadata to be used for the
-#' generation of the model matrix.
-#' @param coef Optional string/integer. For more complex experimental designs,
-#' you can specify which coefficient to test. If NULL, tests the last
-#' coefficient in the design matrix (typically the main effect of interest).
-#' @param norm_method String. Normalisation method to use. One of
-#' `c("TMM", "RLE", "logMS")`. Defaults to TMM (trimmed mean of M-values).
-#' @param min_mean Numeric. Minimum mean count threshold for filtering
-#' neighbourhoods. Neighbourhoods with mean counts below this value are excluded.
-#' Defaults to 0 (no filtering).
-#' @param robust Logical. If TRUE, uses robust estimation of the quasi-likelihood
-#' dispersion. Recommended for datasets with potential outliers. Defaults to TRUE.
+#' @param design Formula for the experimental design, e.g. `~ grps`.
+#' @param design_df data.frame. The metadata used to build the model matrix.
+#' Its rownames need to cover the sample names of the neighbourhood counts.
+#' @param coef Optional integer or character. Which coefficient(s) of the
+#' design to drop from the null model, given as 1-based column positions or
+#' column names. Defaults to the last column, as edgeR does.
+#' @param contrast Optional numeric vector or matrix. Weights over the design
+#' columns. Mutually exclusive with `coef`.
+#' @param norm_method String. Library size normalisation. One of
+#' `c("TMM", "TMMwsp", "RLE", "upperquartile", "logMS")`. Defaults to `"TMM"`.
+#' `"logMS"` is Milo's own name for leaving every factor at one.
+#' @param min_mean Numeric. Minimum mean count across samples. Neighbourhoods
+#' below it are dropped. Defaults to `0` (no filtering).
+#' @param robust Logical. Robust estimation of the quasi-likelihood dispersion.
+#' Defaults to `TRUE`.
+#' @param legacy Logical. Take edgeR's pre-4.0 quasi-likelihood pipeline, which
+#' runs `estimateDisp()` and applies the Poisson bound. Defaults to `TRUE`, so
+#' this keeps matching what Milo itself does.
 #' @param fdr_weighting String. Spatial FDR weighting scheme. One of
-#' `c("k-distance", "graph-overlap", "none")`. k-distance uses the distance to
-#' the k-th nearest neighbour, graph-overlap uses neighbourhood overlap counts.
-#' Defaults to k-distance.
+#' `c("k-distance", "graph-overlap", "none")`. `"k-distance"` weights by the
+#' distance to the k-th nearest neighbour, `"graph-overlap"` by the number of
+#' cells shared with other neighbourhoods. Defaults to `"k-distance"`.
 #'
-#' @return The `miloR` object with added model and results from the
-#' differential abundance analysis.
+#' @return The `miloR` object with the differential abundance results added.
 #'
-#' @references Dann et al., 2022, Nat Biotechnol
+#' @references Dann, et al., Nat Biotechnol, 2022; Chen, Lun and Smyth,
+#' F1000Research, 2016
 #'
 #' @export
 test_nhoods <- function(
@@ -1569,9 +1612,11 @@ test_nhoods <- function(
   design,
   design_df,
   coef = NULL,
-  norm_method = c("TMM", "RLE", "logMS"),
+  contrast = NULL,
+  norm_method = c("TMM", "TMMwsp", "RLE", "upperquartile", "logMS"),
   min_mean = 0,
   robust = TRUE,
+  legacy = TRUE,
   fdr_weighting = c("k-distance", "graph-overlap", "none")
 ) {
   UseMethod("test_nhoods")
@@ -1585,11 +1630,15 @@ test_nhoods.miloR <- function(
   design,
   design_df,
   coef = NULL,
-  norm_method = c("TMM", "RLE", "logMS"),
+  contrast = NULL,
+  norm_method = c("TMM", "TMMwsp", "RLE", "upperquartile", "logMS"),
   min_mean = 0,
   robust = TRUE,
+  legacy = TRUE,
   fdr_weighting = c("k-distance", "graph-overlap", "none")
 ) {
+  Nhood <- PValue <- SpatialFDR <- NULL
+
   norm_method <- match.arg(norm_method)
   fdr_weighting <- match.arg(fdr_weighting)
 
@@ -1597,10 +1646,13 @@ test_nhoods.miloR <- function(
   checkmate::assertClass(x, "miloR")
   checkmate::assertFormula(design)
   checkmate::assertDataFrame(design_df, row.names = "named")
-  checkmate::qassert(coef, c("0", "S1", "X1"))
-  checkmate::qassert(min_mean, "N1")
+  checkmate::qassert(min_mean, "N1[0,)")
   checkmate::qassert(robust, "B1")
-  checkmate::assertChoice(norm_method, c("TMM", "RLE", "logMS"))
+  checkmate::qassert(legacy, "B1")
+  checkmate::assertChoice(
+    norm_method,
+    c("TMM", "TMMwsp", "RLE", "upperquartile", "logMS")
+  )
   checkmate::assertChoice(
     fdr_weighting,
     c("k-distance", "graph-overlap", "none")
@@ -1609,74 +1661,77 @@ test_nhoods.miloR <- function(
   mm <- stats::model.matrix(design, data = design_df)
 
   if (ncol(x$sample_counts) != nrow(mm)) {
-    stop(
-      "Design matrix (",
+    stop(sprintf(
+      "Design matrix (%i) and sample counts (%i) dimensions don't match.",
       nrow(mm),
-      ") and sample counts (",
-      ncol(x$sample_counts),
-      ") dimensions don't match"
-    )
+      ncol(x$sample_counts)
+    ))
   }
 
   if (any(colnames(x$sample_counts) != rownames(mm))) {
     if (!all(colnames(x$sample_counts) %in% rownames(mm))) {
-      stop("Sample names in counts and design matrix don't match")
+      stop("Sample names in counts and design matrix don't match.")
     }
-    warning("Reordering design matrix to match sample counts")
-    mm <- mm[colnames(x$sample_counts), ]
+    warning("Reordering design matrix to match sample counts.")
+    mm <- mm[colnames(x$sample_counts), , drop = FALSE]
   }
 
-  keep_nh <- if (min_mean > 0) {
-    rowMeans(x$sample_counts) >= min_mean
-  } else {
-    rep(TRUE, nrow(x$sample_counts))
-  }
-
-  dge <- edgeR::DGEList(
-    counts = x$sample_counts[keep_nh, , drop = FALSE],
-    lib.size = colSums(x$sample_counts)
+  # `filterByExpr` is a gene expression heuristic and means nothing for a
+  # neighbourhood, so the filtering is left to `min_mean`. Milo's `logMS` is
+  # edgeR's "none": leave every normalisation factor at one.
+  edger_params <- params_edger_ql(
+    norm_method = if (norm_method == "logMS") "none" else norm_method,
+    filter = FALSE,
+    min_mean = min_mean,
+    robust = robust,
+    legacy = legacy
   )
 
-  if (norm_method %in% c("TMM", "RLE")) {
-    dge <- edgeR::calcNormFactors(dge, method = norm_method)
-  }
+  # already neighbourhoods x samples, which is the orientation edgeR takes.
+  # The rownames carry the neighbourhood index through the filter, so `Nhood`
+  # lines up with the object without tracking the mask separately
+  counts <- x$sample_counts
+  rownames(counts) <- as.character(seq_len(nrow(counts)))
 
-  dge <- edgeR::estimateDisp(dge, mm)
-  fit <- edgeR::glmQLFit(dge, mm, robust = robust, legacy = TRUE)
+  res <- run_edger_ql(
+    counts = counts,
+    design = mm,
+    coef = coef,
+    contrast = contrast,
+    edger_params = edger_params
+  )
 
-  if (is.null(coef)) {
-    coef <- ncol(mm)
-  }
+  data.table::setnames(
+    res,
+    old = c("feature_id", "log_fc", "log_cpm", "f_stat", "p_value"),
+    new = c("Nhood", "logFC", "logCPM", "F", "PValue")
+  )
+  data.table::setnames(res, old = "fdr", new = "FDR")
+  res[, Nhood := as.integer(Nhood)]
 
-  res <- edgeR::topTags(
-    edgeR::glmQLFTest(fit, coef = coef),
-    sort.by = "none",
-    n = Inf
-  ) %>%
-    as.data.frame()
+  # the two weightings are both functions of the neighbourhood matrix alone and
+  # were taken when the object was built, so they only need subsetting here
+  connectivity <- switch(
+    fdr_weighting,
+    "k-distance" = x$spatial_dist[res$Nhood],
+    "graph-overlap" = x$nhood_overlap[res$Nhood],
+    "none" = NULL
+  )
 
-  res$Nhood <- which(keep_nh)
+  res[,
+    SpatialFDR := if (is.null(connectivity)) {
+      NA_real_
+    } else {
+      rs_spatial_fdr(p_values = PValue, connectivity = connectivity)
+    }
+  ]
 
-  if (fdr_weighting != "none") {
-    spatial_fdr <- spatial_fdr_correction(
-      nhoods = x$nhoods[, keep_nh, drop = FALSE],
-      pvalues = res$PValue,
-      weighting = fdr_weighting,
-      kth_distances = x$spatial_dist[keep_nh]
-    )
-    res$SpatialFDR <- spatial_fdr
-  } else {
-    res$SpatialFDR <- NA_real_
-  }
-
-  res <- data.table::setDT(res)
   data.table::setcolorder(
     res,
     c("Nhood", "logFC", "logCPM", "F", "PValue", "FDR", "SpatialFDR")
   )
 
   x[["nhoods_info"]] <- res
-  x[["model"]] <- fit
 
   return(x)
 }
@@ -4697,4 +4752,124 @@ print.DialogueResult <- function(x, ...) {
   ))
 
   invisible(x)
+}
+
+## NEBULA ----------------------------------------------------------------------
+
+#' Generate a new NEBULA result
+#'
+#' @description
+#' Wraps the NEBULA fits together. The per-gene test sits in `results`, the
+#' full fixed-effect table in `coefficients` and `se`, so the variance
+#' decomposition is available without re-running anything.
+#'
+#' @param results data.table. One row per gene that survived NEBULA's own
+#' expression filter.
+#' @param coefficients Numeric matrix of genes x coefficients. The fixed
+#' effects on the design scale.
+#' @param se Numeric matrix of genes x coefficients. The matching standard
+#' errors.
+#' @param params Named list. The parameters that were used to generate these
+#' results.
+#'
+#' @returns A `ScNebula` class holding the provided data.
+#'
+#' @references He, et al., Commun Biol, 2021
+#'
+#' @keywords internal
+new_sc_nebula_res <- function(results, coefficients, se, params) {
+  # checks
+  checkmate::assertDataTable(results)
+  checkmate::assertNames(
+    names(results),
+    must.include = c("gene_id", "log_fc", "z", "p_value", "fdr")
+  )
+  checkmate::assertMatrix(coefficients, mode = "numeric")
+  checkmate::assertMatrix(se, mode = "numeric")
+  checkmate::assertList(params, names = "named")
+
+  sc_nebula <- list(
+    results = results,
+    coefficients = coefficients,
+    se = se,
+    params = params
+  )
+
+  class(sc_nebula) <- "ScNebula"
+
+  return(sc_nebula)
+}
+
+### print ----------------------------------------------------------------------
+
+#' @export
+print.ScNebula <- function(x, ...) {
+  # convergence at or below -20 is nebula's own "this likely failed" marker
+  failed <- sum(x$results$convergence <= -20L)
+  collapsed <- sum(x$results$sigma_at_bound)
+
+  cat(
+    sprintf(
+      "ScNebula: %i genes fitted, %i coefficients\n",
+      nrow(x$results),
+      ncol(x$coefficients)
+    ),
+    sprintf(
+      "  Method:   %s | subject column: %s\n",
+      x$params$nebula_params$nebula_method,
+      x$params$subject_col
+    ),
+    sprintf("  Tested:   %s\n", x$params$tested),
+    sprintf(
+      "  Subjects: %i | cells: %i\n",
+      x$params$n_subjects,
+      x$params$n_cells
+    ),
+    sprintf(
+      "  Warnings: %i did not converge, %i collapsed to a plain NB\n",
+      failed,
+      collapsed
+    ),
+    sep = ""
+  )
+
+  invisible(x)
+}
+
+### getters --------------------------------------------------------------------
+
+#' @method get_params ScNebula
+#'
+#' @export
+S7::method(get_params, S7::new_S3_class("ScNebula")) <-
+  function(object, to_json = FALSE, pretty_json = FALSE) {
+    get_params.ScNebula(
+      object = object,
+      to_json = to_json,
+      pretty_json = pretty_json
+    )
+  }
+
+#' @rdname get_params
+#'
+#' @export
+get_params.ScNebula <- function(
+  object,
+  to_json = FALSE,
+  pretty_json = FALSE
+) {
+  # checks
+  checkmate::assertClass(object, "ScNebula")
+  checkmate::qassert(to_json, "B1")
+  checkmate::qassert(pretty_json, "B1")
+
+  to_ret <- object[["params"]]
+  if (to_json) {
+    to_ret <- jsonlite::toJSON(to_ret)
+  }
+  if (to_json && pretty_json) {
+    to_ret <- jsonlite::prettify(to_ret)
+  }
+
+  return(to_ret)
 }

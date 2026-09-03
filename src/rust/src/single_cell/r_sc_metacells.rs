@@ -479,7 +479,7 @@ fn rs_get_seacells(
     let subset_to_orig = mapping.subset_to_orig;
     let n_total_cells = mapping.n_total;
 
-    let (knn_indices, knn_dist, dist_squared) = if knn_provided && !is_subset {
+    let (knn_indices, knn_dist) = if knn_provided && !is_subset {
         if verbosity.normal_verbosity() {
             println!("Using provided kNN graph.")
         }
@@ -488,7 +488,7 @@ fn rs_get_seacells(
             .into_robj()
             .as_list()
             .ok_or_else(|| Error::Other("'knn_data' is not a list".into()))?;
-        let (knn_indices, knn_dist, _, distance) = knn_data_to_rust(knn_data)?;
+        let (knn_indices, knn_dist, _, _) = knn_data_to_rust(knn_data)?;
 
         if knn_indices.len() != embd_mat.nrows() {
             return Err(format!(
@@ -499,8 +499,7 @@ fn rs_get_seacells(
             .into());
         }
 
-        let dist_squared = distance == "euclidean";
-        (knn_indices, knn_dist, dist_squared)
+        (knn_indices, knn_dist)
     } else {
         let start_knn = Instant::now();
 
@@ -518,7 +517,6 @@ fn rs_get_seacells(
         )
         .to_extendr()?;
         let knn_dist = knn_dist.unwrap();
-        let dist_squared = seacells_params.knn_params.ann_dist == "euclidean";
 
         if verbosity.normal_verbosity() {
             println!(
@@ -528,7 +526,7 @@ fn rs_get_seacells(
             );
         }
 
-        (knn_indices, knn_dist, dist_squared)
+        (knn_indices, knn_dist)
     };
 
     let mut seacell = SEACells::new(embd_mat.nrows(), &seacells_params);
@@ -541,7 +539,6 @@ fn rs_get_seacells(
                 embd_mat.as_ref(),
                 &knn_indices,
                 &knn_dist,
-                dist_squared,
                 n_landmarks,
                 verbose,
                 seed as u64,
@@ -549,7 +546,7 @@ fn rs_get_seacells(
             .to_extendr()?;
     } else {
         seacell
-            .initialise_archetypes(&knn_indices, &knn_dist, verbose, dist_squared, seed as u64)
+            .initialise_archetypes(&knn_indices, &knn_dist, verbose, seed as u64)
             .to_extendr()?;
     }
 
@@ -739,7 +736,7 @@ fn rs_supercell(
         reader.get_header().total_cells,
     )?;
 
-    let (knn_indices, knn_dist, dist_squared) = match &mapping.rows_to_use {
+    let (knn_indices, knn_dist) = match &mapping.rows_to_use {
         Some(rows_to_use) => {
             let embd = embd.as_ref().ok_or_else(|| {
                 Error::Other("When using 'cells_to_use', 'embd' must be provided".into())
@@ -765,7 +762,6 @@ fn rs_supercell(
             )
             .to_extendr()?;
             let knn_d = knn_d.unwrap();
-            let dist_sq = supercell_params.knn_params.ann_dist == "euclidean";
 
             if verbosity.normal_verbosity() {
                 println!(
@@ -775,7 +771,7 @@ fn rs_supercell(
                 );
             }
 
-            (knn_idx, knn_d, dist_sq)
+            (knn_idx, knn_d)
         }
         None => {
             if knn_provided {
@@ -783,7 +779,7 @@ fn rs_supercell(
                     .into_robj()
                     .as_list()
                     .ok_or_else(|| Error::Other("'knn_data' is not a list".into()))?;
-                let (knn_idx, knn_d, _, distance) = knn_data_to_rust(knn_list)?;
+                let (knn_idx, knn_d, _, _) = knn_data_to_rust(knn_list)?;
 
                 if let Some(ref em) = embd {
                     if knn_idx.len() != em.nrows() {
@@ -796,7 +792,7 @@ fn rs_supercell(
                     }
                 }
 
-                (knn_idx, knn_d, distance == "euclidean")
+                (knn_idx, knn_d)
             } else {
                 let embd = embd.unwrap();
                 let embd_mat = r_matrix_to_faer_fp32(&embd);
@@ -816,7 +812,6 @@ fn rs_supercell(
                 )
                 .to_extendr()?;
                 let knn_d = knn_d.unwrap();
-                let dist_sq = supercell_params.knn_params.ann_dist == "euclidean";
 
                 if verbosity.normal_verbosity() {
                     println!(
@@ -826,7 +821,7 @@ fn rs_supercell(
                     );
                 }
 
-                (knn_idx, knn_d, dist_sq)
+                (knn_idx, knn_d)
             }
         }
     };
@@ -845,7 +840,6 @@ fn rs_supercell(
         &knn_indices,
         &knn_dist,
         &supercell_params,
-        dist_squared,
         n_meta_cells,
         verbose,
     );
@@ -941,14 +935,12 @@ fn rs_metacell_density(
     verbose: usize,
     seed: usize,
 ) -> Result<List> {
-    let (knn_indices, knn_distances, _, distance) = knn_data_to_rust(knn_data)?;
+    let (knn_indices, knn_distances, _, _) = knn_data_to_rust(knn_data)?;
     let knn_params = KnnParams::from_r_list(knn_params)?;
-    let squared_dist = distance == "euclidean";
 
     let density_res: DiffusionDensity = compute_diffusion_density(
         &knn_indices,
         &knn_distances,
-        squared_dist,
         n_dcs,
         k_density,
         &knn_params,

@@ -17,7 +17,7 @@
 #'  neighbour search. Defaults to `"kmknn"`. The implementations are:
 #'  `c("kmknn", "hnsw", "annoy", "nndescent", "ivf", "exhaustive")`.
 #'  \item ann_dist - Which distance metric to use for the approximate nearest
-#'  neighbour search. Defaults to `"cosine"`. The implementations are
+#'  neighbour search. Defaults to `"euclidean"`. The implementations are
 #'  `c("cosine", "euclidean")`.
 #'  \item n_trees - Annoy param: number of trees to generate for Annoy. Defaults
 #'  to `50L`.
@@ -30,6 +30,11 @@
 #'  Defaults to `0.001`.
 #'  \item ef_budget - NNDescent param: optional query budget parameter. Can
 #'  accelerate querying, but at the cost of Recall.
+#'  \item extract_knn - NNDescent param: hand back the graph the descent
+#'  already built instead of beam searching it. Skips the query pass entirely,
+#'  so it is much faster, at the cost of some recall. Rows the descent never
+#'  filled come back padded with duplicate edges. Ignored by every other
+#'  method. Defaults to `FALSE`.
 #'  \item m - HNSW param: number of connections between layers for HNSW.
 #'  Defaults to `16L`.
 #'  \item ef_construction - HNSW param: size of dynamic candidate list during
@@ -56,6 +61,7 @@ params_knn_defaults <- function() {
     delta = 0.001,
     diversify_prob = 0.0,
     ef_budget = NULL,
+    extract_knn = FALSE,
     # HNSW
     m = 16L,
     ef_construction = 200L,
@@ -131,6 +137,8 @@ params_norm_doublets_defaults <- function() {
 #'  much smaller dense matrix that does not increase the memory pressure
 #'  massively.
 #' }
+#'
+#' @export
 params_pca_defaults <- function() {
   list(
     no_pcs = 30L,
@@ -152,6 +160,8 @@ params_pca_defaults <- function() {
 #'  \item batch_size - Max batch size will be set to `4098L`, but pending data
 #'  set set to `N_cells / 2`.
 #' }
+#'
+#' @export
 params_fast_cluster_default <- function() {
   list(
     km_type = "minibatch",
@@ -179,6 +189,8 @@ params_fast_cluster_default <- function() {
 #'  leveraging the triangle inequality. Faster on large data sets with large
 #'  numbers of centroids.
 #' }
+#'
+#' @export
 params_kmeans_defaults <- function() {
   list(
     k_means_iter = 30L,
@@ -226,8 +238,8 @@ params_kmeans_defaults <- function() {
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
-#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
-#' and `n_probe`.
+#' `diversify_prob`, `ef_budget`, `extract_knn`, `m`, `ef_construction`,
+#' `ef_search`, `n_list` and `n_probe`.
 #' Note: this function defaults to `k = 0L` (automatic neighbour detection).
 #'
 #' @returns A named list with all Scrublet parameters, combining defaults with
@@ -311,9 +323,9 @@ params_scrublet <- function(
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
-#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
-#' and `n_probe`. Note: this function defaults to `k = 0L` (automatic neighbour
-#' detection).
+#' `diversify_prob`, `ef_budget`, `extract_knn`, `m`, `ef_construction`,
+#' `ef_search`, `n_list` and `n_probe`. Note: this function defaults to
+#' `k = 0L` (automatic neighbour detection).
 #' @param fast_cluster_params List. Optional overrides for the fast clustering
 #' parameters. Only relevant if `fast_cluster = TRUE`. See
 #' [params_fast_cluster_default()] for available parameters: `km_type`,
@@ -553,8 +565,8 @@ params_scdblfinder <- function(
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
-#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
-#' and `n_probe`.
+#' `diversify_prob`, `ef_budget`, `extract_knn`, `m`, `ef_construction`,
+#' `ef_search`, `n_list` and `n_probe`.
 #'
 #' @returns A list with the neighbour parameters.
 #'
@@ -615,8 +627,8 @@ params_sc_neighbours <- function(
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
-#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
-#' and `n_probe`. Sets the default `k = 5L`.
+#' `diversify_prob`, `ef_budget`, `extract_knn`, `m`, `ef_construction`,
+#' `ef_search`, `n_list` and `n_probe`. Sets the default `k = 5L`.
 #'
 #' @returns A named list with the single cell fast clustering parameters.
 #'
@@ -679,8 +691,8 @@ params_sc_fast_cluster <- function(
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
-#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
-#' and `n_probe`.
+#' `diversify_prob`, `ef_budget`, `extract_knn`, `m`, `ef_construction`,
+#' `ef_search`, `n_list` and `n_probe`.
 #'
 #' @returns A list with the VISION parameters when you wish to use the
 #' auto-correlation version.
@@ -827,10 +839,6 @@ params_scenic_binarise <- function(
 #' `TRUE` for the Gaussian kernel, whose width is the
 #' `ceil(k / neighborhood_factor)`-th neighbour distance.
 #'
-#' Whether the distances need squaring is derived from the metric, so it is not
-#' a parameter here. When a pre-computed kNN graph is handed to the method, the
-#' metric stored on that graph wins over `ann_dist`.
-#'
 #' @param model String. Model to use for modelling the GEX. One of
 #' `c("danb", "bernoulli", "normal")`. Defaults to `"danb"`.
 #' @param normalise Boolean. Shall the data be normalised. Defaults to `TRUE`.
@@ -842,8 +850,8 @@ params_scenic_binarise <- function(
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
-#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
-#' and `n_probe`.
+#' `diversify_prob`, `ef_budget`, `extract_knn`, `m`, `ef_construction`,
+#' `ef_search`, `n_list` and `n_probe`.
 #'
 #' @returns A list with the HotSpot parameters.
 #'
@@ -1105,13 +1113,15 @@ params_dialogue_refine <- function(
 #' One of `c("approximate", "bruteforce", "index")`. Defaults to
 #' `"index"`.
 #' @param index_type String. Type of kNN index to use. One of
-#' `c("hnsw", "annoy", "nndescent", "ivf")`. Defaults to `"nndescent"`.
+#' `c("nndescent", "ivf", "hnsw", "annoy", "exhaustive")`. Defaults to
+#' `"nndescent"`. `"exhaustive"` scans every cell, so it returns the true
+#' nearest neighbour rather than an approximation, at a cost that grows with
+#' the number of cells.
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
-#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
-#' and `n_probe`. Note: `knn_method` cannot be `"exhaustive"` for MiloR as it
-#' doesn't generate an index!
+#' `diversify_prob`, `ef_budget`, `extract_knn`, `m`, `ef_construction`,
+#' `ef_search`, `n_list` and `n_probe`.
 #'
 #' @returns A list with the MiloR parameters.
 #'
@@ -1120,7 +1130,7 @@ params_sc_miloR <- function(
   prop = 0.2,
   k_refine = 20L,
   refinement_strategy = c("index", "approximate", "bruteforce"),
-  index_type = c("nndescent", "ivf", "hnsw", "annoy"),
+  index_type = c("nndescent", "ivf", "hnsw", "annoy", "exhaustive"),
   knn = list()
 ) {
   refinement_strategy <- match.arg(refinement_strategy)
@@ -1169,8 +1179,8 @@ params_sc_miloR <- function(
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
-#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
-#' and `n_probe`.
+#' `diversify_prob`, `ef_budget`, `extract_knn`, `m`, `ef_construction`,
+#' `ef_search`, `n_list` and `n_probe`.
 #'
 #' @returns A list with the metacell parameters.
 #'
@@ -1226,8 +1236,8 @@ params_sc_bt_metacells <- function(
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
-#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
-#' and `n_probe`.
+#' `diversify_prob`, `ef_budget`, `extract_knn`, `m`, `ef_construction`,
+#' `ef_search`, `n_list` and `n_probe`.
 #'
 #' @returns A list with the SEACells parameters.
 #'
@@ -1300,8 +1310,8 @@ params_sc_seacells <- function(
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
-#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
-#' and `n_probe`.
+#' `diversify_prob`, `ef_budget`, `extract_knn`, `m`, `ef_construction`,
+#' `ef_search`, `n_list` and `n_probe`.
 #'
 #' @returns A list with the SuperCell parameters.
 #'
@@ -1357,8 +1367,8 @@ params_sc_supercell <- function(
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
-#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
-#' and `n_probe`.
+#' `diversify_prob`, `ef_budget`, `extract_knn`, `m`, `ef_construction`,
+#' `ef_search`, `n_list` and `n_probe`.
 #'
 #' @returns A list with the BBKNN parameters.
 #'
@@ -1406,8 +1416,8 @@ params_sc_bbknn <- function(
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
-#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
-#' and `n_probe`.
+#' `diversify_prob`, `ef_budget`, `extract_knn`, `m`, `ef_construction`,
+#' `ef_search`, `n_list` and `n_probe`.
 #' @param pca Named list. Parameters to feed through to the optional
 #' recalculation of the PCA, see [params_sc_pca()].
 #'
@@ -1662,9 +1672,10 @@ params_sc_harmony_v2 <- function(
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
-#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
-#' and `n_probe`. Note that `k` is unused here, the neighbourhood sizes come
-#' from `k_anchor`, `k_filter`, `k_score` and `k_weight`.
+#' `diversify_prob`, `ef_budget`, `extract_knn`, `m`, `ef_construction`,
+#' `ef_search`, `n_list` and `n_probe`. Note that `k` is unused here, the
+#' neighbourhood sizes come from `k_anchor`, `k_filter`, `k_score` and
+#' `k_weight`.
 #' @param pca Named list. Parameters to feed through to the optional
 #' recalculation of the PCA, see [params_sc_pca()].
 #'
@@ -1739,9 +1750,9 @@ params_sc_seurat_cca <- function(
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
-#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
-#' and `n_probe`. Note that `k` is unused here, the neighbourhood sizes come
-#' from `k_anchor`, `k_score` and `k_weight`.
+#' `diversify_prob`, `ef_budget`, `extract_knn`, `m`, `ef_construction`,
+#' `ef_search`, `n_list` and `n_probe`. Note that `k` is unused here, the
+#' neighbourhood sizes come from `k_anchor`, `k_score` and `k_weight`.
 #' @param pca Named list. Parameters to feed through to the optional
 #' recalculation of the PCA, see [params_sc_pca()].
 #'
@@ -2058,8 +2069,8 @@ params_meld <- function(
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
-#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
-#' and `n_probe`.
+#' `diversify_prob`, `ef_budget`, `extract_knn`, `m`, `ef_construction`,
+#' `ef_search`, `n_list` and `n_probe`.
 #'
 #' @returns A list with the WNN parameters.
 #'
@@ -2468,5 +2479,179 @@ params_lda <- function(
     learning = learning,
     batch_size = batch_size,
     n_epochs = n_epochs
+  )
+}
+
+## differential expression -----------------------------------------------------
+
+### edgeR quasi-likelihood -----------------------------------------------------
+
+#' Wrapper function for parameters for the edgeR quasi-likelihood workflow
+#'
+#' @description
+#' Parameters for the edgeR quasi-likelihood chain, implemented in Rust via the
+#' `edge-rs` crate and gated against edgeR 4.8.2. Defaults are edgeR's own.
+#'
+#' The `legacy` switch picks between two genuinely different pipelines. The
+#' current route estimates its own dispersion from the most abundant genes and
+#' skips `estimateDisp()`, which is where most of the runtime went and is
+#' edgeR 4's own recommendation. The legacy route shrinks the raw residual
+#' deviance, needs a dispersion handed to it, and is the only one where the
+#' Poisson bound bites.
+#'
+#' @param norm_method String. Library size normalisation. One of
+#' `c("TMM", "TMMwsp", "RLE", "upperquartile", "none")`. Defaults to `"TMM"`.
+#' `"none"` leaves every factor at one, which is what Milo's `logMS` amounts
+#' to.
+#' @param filter Boolean. Run `filterByExpr()` before fitting. Defaults to
+#' `TRUE`. Turn this off for anything that is not gene expression, e.g. Milo
+#' neighbourhood counts, where the heuristic means nothing.
+#' @param min_mean Numeric. Drop features whose mean count across samples is
+#' below this. Applied on top of `filter`. Defaults to `0` (off).
+#' @param robust Boolean. Robust empirical Bayes squeezing, giving outlier
+#' features their own smaller prior degrees of freedom. Defaults to `FALSE`.
+#' @param legacy Boolean. Take edgeR's pre-4.0 quasi-likelihood pipeline.
+#' Defaults to `FALSE`.
+#'
+#' @returns A list with the edgeR quasi-likelihood parameters.
+#'
+#' @references Chen, Lun and Smyth, F1000Research, 2016
+#'
+#' @export
+params_edger_ql <- function(
+  norm_method = c("TMM", "TMMwsp", "RLE", "upperquartile", "none"),
+  filter = TRUE,
+  min_mean = 0,
+  robust = FALSE,
+  legacy = FALSE
+) {
+  norm_method <- match.arg(norm_method)
+
+  # checks
+  checkmate::assertChoice(
+    norm_method,
+    c("TMM", "TMMwsp", "RLE", "upperquartile", "none")
+  )
+  checkmate::qassert(filter, "B1")
+  checkmate::qassert(min_mean, "N1[0,)")
+  checkmate::qassert(robust, "B1")
+  checkmate::qassert(legacy, "B1")
+
+  list(
+    norm_method = norm_method,
+    filter = filter,
+    min_mean = min_mean,
+    robust = robust,
+    legacy = legacy
+  )
+}
+
+### NEBULA ---------------------------------------------------------------------
+
+#' Wrapper function for parameters for NEBULA
+#'
+#' @description
+#' Parameters for the NEBULA negative binomial gamma mixed model, implemented
+#' in Rust via the `edge-rs` crate and ported from the `nebula` package's own
+#' C++. Defaults are the R package's own.
+#'
+#' NEBULA splits the variance into a subject-level random effect and a
+#' cell-level overdispersion. Run it on meta cells and the cell-level term
+#' becomes the spread between aggregates within a subject rather than between
+#' cells, so it is smaller and absorbs whatever the aggregation smoothed away.
+#' The subject-level term keeps its meaning either way.
+#'
+#' @param nebula_method String. Which variant to run. One of `c("ln", "hl")`.
+#' Defaults to `"ln"`. NEBULA downgrades `"ln"` to `"hl"` below 30 cells per
+#' subject, as the R package does.
+#' @param min_sigma Numeric. Lower bound on the subject-level overdispersion.
+#' Defaults to `1e-4`.
+#' @param min_phi Numeric. Lower bound on the cell-level overdispersion.
+#' Defaults to `1e-4`.
+#' @param max_sigma Numeric. Upper bound on the subject-level overdispersion.
+#' Defaults to `10`.
+#' @param max_phi Numeric. Upper bound on the cell-level overdispersion.
+#' Defaults to `1000`.
+#' @param cutoff_cell Numeric. Refit both overdispersions when the product of
+#' the cells per subject and the estimated `phi` falls below this. Defaults to
+#' `20`.
+#' @param kappa Numeric. Threshold on NEBULA's `kappa_obs` above which the
+#' subject-level overdispersion from stage one is trusted as is. Defaults to
+#' `800`.
+#' @param cpc Numeric. Drop a gene whose mean count per cell is at most this.
+#' Defaults to `0.005`.
+#' @param mincp Integer. Drop a gene expressed in fewer than this many cells.
+#' Defaults to `5L`.
+#' @param reml Boolean. Estimate the overdispersions by restricted maximum
+#' likelihood. Defaults to `FALSE`. The R package only honours this for
+#' `NBLMM`, which the Rust port does not implement, so this arm has not been
+#' validated against an R reference. Leave it off unless you know why you want
+#' it.
+#' @param eps Numeric. Absolute stopping tolerance for the optimiser. Defaults
+#' to `1e-6`.
+#' @param gene_batch_size Integer. Genes read and fitted per batch. Bounds how
+#' much of the store is resident at once and changes nothing about the answer,
+#' since NEBULA is gene-independent. Defaults to `1000L`.
+#' @param shrink_dispersion Boolean. Shrink the cell-level overdispersions
+#' towards an empirical Bayes prior once the sweep is done. Defaults to `TRUE`.
+#'
+#' @returns A list with the NEBULA parameters.
+#'
+#' @references He, et al., Commun Biol, 2021
+#'
+#' @export
+params_nebula <- function(
+  nebula_method = c("ln", "hl"),
+  min_sigma = 1e-4,
+  min_phi = 1e-4,
+  max_sigma = 10,
+  max_phi = 1000,
+  cutoff_cell = 20,
+  kappa = 800,
+  cpc = 0.005,
+  mincp = 5L,
+  reml = FALSE,
+  eps = 1e-6,
+  gene_batch_size = 1000L,
+  shrink_dispersion = TRUE
+) {
+  nebula_method <- match.arg(nebula_method)
+
+  # checks
+  checkmate::assertChoice(nebula_method, c("ln", "hl"))
+  checkmate::qassert(min_sigma, "N1(0,)")
+  checkmate::qassert(min_phi, "N1(0,)")
+  checkmate::qassert(max_sigma, "N1(0,)")
+  checkmate::qassert(max_phi, "N1(0,)")
+  checkmate::qassert(cutoff_cell, "N1[0,)")
+  checkmate::qassert(kappa, "N1[0,)")
+  checkmate::qassert(cpc, "N1[0,)")
+  checkmate::qassert(mincp, "I1[0,)")
+  checkmate::qassert(reml, "B1")
+  checkmate::qassert(eps, "N1(0,)")
+  checkmate::qassert(gene_batch_size, "I1[1,)")
+  checkmate::qassert(shrink_dispersion, "B1")
+
+  if (min_sigma >= max_sigma) {
+    stop("`min_sigma` needs to be below `max_sigma`.")
+  }
+  if (min_phi >= max_phi) {
+    stop("`min_phi` needs to be below `max_phi`.")
+  }
+
+  list(
+    nebula_method = nebula_method,
+    min_sigma = min_sigma,
+    min_phi = min_phi,
+    max_sigma = max_sigma,
+    max_phi = max_phi,
+    cutoff_cell = cutoff_cell,
+    kappa = kappa,
+    cpc = cpc,
+    mincp = mincp,
+    reml = reml,
+    eps = eps,
+    gene_batch_size = gene_batch_size,
+    shrink_dispersion = shrink_dispersion
   )
 }

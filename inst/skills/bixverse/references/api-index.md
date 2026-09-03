@@ -66,7 +66,7 @@ Methods to identify co-expression modules via correlations or matrix factorisati
 - `get_nmf_gene_loadings`: Get the NMF gene loadings
 - `get_nmf_modules`: Get the NMF module membership data.table
 - `get_nmf_sample_activity`: Get the NMF sample activity
-- `get_nmf_stability`: Get the stabilised NMF diagnostics
+- `get_nmf_stability`: Get the multi-run NMF diagnostics
 - `get_c_pca_factors`: Get the contrastive PCA factors
 - `get_c_pca_loadings`: Get the contrastive PCA loadings
 - `get_ica_stability_res`: Get the ICA component data (stability, convergence, nMI)
@@ -98,6 +98,9 @@ Methods to identify co-expression modules via correlations or matrix factorisati
 - `ica_stabilised_results`: Run stabilised ICA with a given number of components
 - `nmf_bulk`: Run non-negative matrix factorisation on a BulkCoExp
 - `stabilised_nmf_bulk`: Run stabilised (multi-restart) NMF on a BulkCoExp
+- `consensus_nmf_bulk`: Run consensus NMF on a BulkCoExp
+- `nmf_k_sweep_bulk`: Sweep k for consensus NMF on a BulkCoExp
+- `modules_from_loadings`: Derive sparse module membership from a loading matrix
 - `params_cor_graph`: Wrapper function for graph generation
 - `params_coremo`: Wrapper function to generate CoReMo parameters
 - `params_dgrdl`: Wrapper function to generate DGRDL parameters
@@ -128,6 +131,9 @@ Methods to help out with differential gene expression analyses in a structured w
 - `calculate_rpkm`: RPKM calculation
 - `calculate_tpm`: TPM calculation
 - `run_limma_voom`: Wrapper for a Limma Voom analysis
+- `run_edger_ql`: Run the edgeR quasi-likelihood workflow
+- `pseudobulk_dge_sc`: Run the edgeR quasi-likelihood workflow on pseudo-bulked single cells
+- `params_edger_ql`: Wrapper function for parameters for the edgeR quasi-likelihood workflow
 - `hedges_g_dge`: Calculate the effect size
 - `get_dge_effect_sizes`: Return the effect size results
 - `get_dge_limma_voom`: Return the Limma Voom results
@@ -277,6 +283,7 @@ Generating meta cells.
 - `generate_bt_meta_cells_sc`: Generate meta cells based on hdWGCNA and return a MetaCells object
 - `generate_seacells_sc`: Generate meta cells based on SEACells and return a MetaCells object
 - `merge_meta_cells`: Merge meta cell objects into one
+- `nebula_mc`: Run NEBULA on meta cells
 - `params_sc_supercell`: Wrapper function for parameters for SuperCell generation
 - `params_sc_bt_metacells`: Wrapper function for parameters for bootstrapped meta cell generation
 - `params_sc_seacells`: Wrapper function for the SEACells parameters
@@ -300,6 +307,7 @@ I/O functions for single cell. Load in h5ad, mtx, Seurat or R data into Rust and
 - `stream_h5ad`: Stream in h5ad to SingleCells (alias)
 - `load_r_data`: Load in data directly from R objects.
 - `load_seurat`: Load in Seurat to SingleCells
+- `load_sce`: Load in data from a SingleCellExperiment
 - `load_tenx_h5`: Load in a 10x CellRanger h5 file to SingleCells
 - `load_multi_tenx_h5`: Load multiple 10x CellRanger h5 files into a single SingleCells
 - `read_h5ad_metadata`: Read obs and var tables and metadata from an h5ad file
@@ -387,6 +395,7 @@ A large number of different methods to extract insights from your single cell ex
 - `get_hotspot_membership`: Get the hotspot gene membership table
 - `get_miloR_abundances_sc`: Generate an miloR abundance object for differential abundance testing
 - `meld_sc`: Run MELD signal smoothing for differential abundance estimation
+- `nebula_sc`: Run NEBULA on single cells
 - `run_palantir_sc`: Run Palantir trajectory inference
 - `run_paga_sc`: Run PAGA graph abstraction
 - `run_gene_trends_sc`: Fit gene trends over Palantir pseudotime
@@ -395,7 +404,6 @@ A large number of different methods to extract insights from your single cell ex
 - `test_nhoods`: Test neighbourhoods for differential abundance
 - `vision_sc`: Calculate VISION scores
 - `vision_w_autocor_sc`: Calculate VISION scores (with auto-correlation scores)
-- `dialogue_sc`: Find multicellular programmes with DIALOGUE
 - `identify_tf_to_genes`: Identify the TF to gene regulation
 - `scenic_gene_filter_sc`: Filter genes for SCENIC GRN inference
 - `scenic_grn_sc`: Run SCENIC GRN inference
@@ -407,12 +415,23 @@ A large number of different methods to extract insights from your single cell ex
 - `build_regulons`: Build the final regulons
 - `nmf_sc`: Run single-run NMF on single cell or meta cell data
 - `stabilised_nmf_sc`: Run stabilised (multi-run) NMF on single cell or meta cell data
+- `consensus_nmf_sc`: Run consensus NMF on single cell or meta cell data
+- `nmf_k_sweep_sc`: Sweep k for consensus NMF on single cell or meta cell data
+- `run_lda`: Fit a latent Dirichlet allocation model
+- `lda_k_sweep`: Sweep the topic count for LDA
+- `dialogue_sc`: Find multicellular programmes with DIALOGUE
 - `get_best_run`: Get the best run from a stabilised NMF result
+- `get_best_model`: Get the selected model from an LDA topic count sweep
+- `get_stability`: Get the consensus NMF stability diagnostics
+- `get_top_terms`: Get the highest-probability terms per topic
 - `get_w`: Get the W (gene loadings) matrix
 - `get_h`: Get the H (cell activations) matrix
+- `plot.NmfKSweepResult`: Plot a consensus NMF k sweep
+- `plot.LdaKSweepResult`: Plot the LDA topic count sweep
 - `params_sc_aucell`: Wrapper function for parameters for AUCell
 - `params_sc_hotspot`: Wrapper function for parameters for HotSpot
 - `params_sc_miloR`: Wrapper function for parameters for MiloR
+- `params_nebula`: Wrapper function for parameters for NEBULA
 - `params_sc_vision`: Wrapper function for parameters for VISION with auto-correlation
 - `params_scenic`: Constructor for SCENIC parameters
 - `params_scenic_extra_trees_defaults`: Default parameters for the SCENIC ExtraTrees regression learner
@@ -424,6 +443,11 @@ A large number of different methods to extract insights from your single cell ex
 - `params_sc_branch_selection`: Wrapper function for the branch cell selection parameters
 - `params_sc_gene_trends`: Wrapper function for gene trend parameters
 - `params_nmf_hals`: Wrapper function for NMF (HALS) parameters
+- `params_nmf_consensus`: Wrapper function for consensus NMF parameters
+- `params_lda`: Wrapper function for the LDA parameters
+- `params_dialogue_pmd`: Wrapper function for the DIALOGUE decomposition parameters
+- `params_dialogue_hlm`: Wrapper function for the DIALOGUE mixed model parameters
+- `params_dialogue_refine`: Wrapper function for the DIALOGUE refinement parameters
 
 ## Single cell multi-modal analysis methods
 
@@ -532,6 +556,9 @@ Some core plotting helpers in the package (usually for QC). The ones to plot dow
 Functions and helpers to download or generate synthetic data.
 
 - `download_cd34_data`: Download the CD34 example data from SEACells
+- `download_dialogue_uc`: Download the ulcerative colitis example data for DIALOGUE
+- `download_kang_pbmc`: Download the Kang, et al. IFN-beta stimulated PBMC data
+- `download_thymus_ageing`: Download the Baran-Gale, et al. ageing thymus data
 - `download_marrow_cd34`: Download the marrow CD34 example data from Palantir
 - `download_pbmc3k`: Download PBMC3K data from Zenodo
 - `download_demuxlet_pbmc`: Download PBMCs with demuxlet doublet information
@@ -541,11 +568,13 @@ Functions and helpers to download or generate synthetic data.
 - `calculate_sparsity_stats`: Helper function to calculate the induced sparsity
 - `generate_gene_module_data`: Generates synthetic gene module data.
 - `generate_single_cell_test_data`: Single cell test data
+- `generate_dialogue_test_data`: Single cell test data with a planted multicellular programme
 - `cell_cycle_genes`: Cell cycle genes
 - `write_cellranger_output`: Helper function to write data to a cell ranger like output
 - `write_h5ad_sc`: Helper function to write data to h5ad format
 - `write_h5ad_sc_dense`: Helper function to write data to a dense h5ad file
 - `params_sc_synthetic_data`: Default parameters for generation of synthetic single cell data (RNA)
+- `params_sc_synthetic_dialogue`: Default parameters for generation of synthetic DIALOGUE data
 - `params_synthetic_bulk_rnaseq`: Wrapper function to generate synthetic bulk RNAseq parameters
 - `params_bulk_sparsity`: Wrapper function to generate bulk sparsification parameters
 - `synthetic_signal_matrix`: Generates a simple synthetic, pseudo gene expression matrix
@@ -560,7 +589,6 @@ All types of other random helpers without a clear pattern
 - `AnnDataParser`: Class for Anndata
 - `calculate_sparsity_stats`: Helper function to calculate the induced sparsity
 - `find_threshold_otsu`: Find a threshold via the Otsu method
-- `get_seurat_counts_to_list`: Transform Seurat raw counts into a List
 - `install_agent_skill`: Install the bixverse agent skill
 - `knn_graph_label_propagation`: kNN-based graph label propagation
 - `params_label_propagation`: Wrapper function to generate label propagation parameters
@@ -572,7 +600,7 @@ All types of other random helpers without a clear pattern
 
 Everything Rusty - only use this if you know what you are doing... Maybe useful for your own package? Use with care and read the documentation! The ones exposed here are general enough to be useful in other packages. There is a lot more under the hood...
 
-92 `rs_*` functions are exposed here. They are the raw extendr bindings with no input validation. Use the R wrapper instead; only reach for these if you are building on top of bixverse and know exactly what you are doing.
+96 `rs_*` functions are exposed here. They are the raw extendr bindings with no input validation. Use the R wrapper instead; only reach for these if you are building on top of bixverse and know exactly what you are doing.
 
 ## Not on the package website
 
@@ -584,11 +612,17 @@ Exported but absent from `_pkgdown.yml`. Mostly internal constructors and `rs_*`
 - `detect_raw_count_slot`: Detect which slot holds raw integer counts in an h5ad file
 - `gene_ontology_data`: Gene Ontology data (deprecated)
 - `generate_single_cell_test_data_adt`: Single cell test data (ADT)
+- `get_params.ConsensusNmfResult`: Get the parameters that were used.
+- `get_params.DialogueResult`: Get the parameters that were used.
 - `get_params.Hotspot`: Get the parameters that were used.
+- `get_params.LdaKSweepResult`: Get the parameters that were used.
+- `get_params.LdaResult`: Get the parameters that were used.
 - `get_params.miloR`: Get the parameters that were used.
 - `get_params.NmfResult`: Get the parameters that were used.
 - `get_params.ScenicGrn`: Get the parameters that were used.
+- `get_params.ScNebula`: Get the parameters that were used.
 - `get_params.StabilisedNmfResult`: Get the parameters that were used.
+- `get_results.DialogueResult`: Get the final results from the class
 - `get_sc_cache`: Getter the memory-stored data from the class
 - `get_sc_duckdb`: Getter for the single cell DuckDB connection
 - `get_sc_map`: Getter for the different maps in the object
@@ -597,7 +631,12 @@ Exported but absent from `_pkgdown.yml`. Mostly internal constructors and `rs_*`
 - `mc_get_clr_offsets`: Get the offsets for the CLR/PFlogPF transformation prior PCA
 - `meta_cells`: bixverse meta cell class (deprecated)
 - `network_diffusions`: Network diffusion class (deprecated)
+- `new_consensus_nmf_result`: Constructor for consensus NMF results
+- `new_dialogue_result`: Constructor for the DialogueResult class
 - `new_gene_trends_res`: Helper function to generate the gene trend results
+- `new_lda_k_sweep_result`: Generate an LdaKSweepResult instance
+- `new_lda_result`: Generate an LdaResult instance
+- `new_nmf_k_sweep_result`: Constructor for NMF k sweep results
 - `new_nmf_result`: Constructor for single-run NMF results
 - `new_paga_res`: Helper function to generate the PAGA results
 - `new_palantir_res`: Helper function to generate the Palantir results
@@ -632,6 +671,7 @@ Exported but absent from `_pkgdown.yml`. Mostly internal constructors and `rs_*`
 - `rs_create_random_aucs`: Create random AUCs
 - `rs_critval`: Calculate the critical value
 - `rs_critval_mat`: Calculate the critical value
+- `rs_dialogue_sc`: Run DIALOGUE over a set of single cells
 - `rs_dsb`: Run DSB normalisation on raw ADT counts
 - `rs_extract_counts_plots`: Helper to extract single cell counts as a dense vector for plotting
 - `rs_extract_grouped_gene_stats`: Calculates the gene statistics for a set of cell groups and genes
@@ -648,6 +688,8 @@ Exported but absent from `_pkgdown.yml`. Mostly internal constructors and `rs_*`
 - `rs_hotspot_gene_cor`: Calculate gene to gene spatial correlations
 - `rs_importance_threshold`: SCENIC: Select TF-gene pairs by per-gene importance threshold
 - `rs_knn_mat_to_edge_pairs`: Flatten kNN matrix to edge list
+- `rs_lda`: Fit a latent Dirichlet allocation model to a document-term matrix
+- `rs_lda_k_sweep`: Fit LDA across a range of topic counts and score each fit
 - `rs_magic_impute`: Impute a subset of genes with MAGIC
 - `rs_make_milor_nhoods`: Generate the neighbourhoods akin to the miloR approach
 - `rs_meld_sc`: Run MELD
@@ -656,9 +698,18 @@ Exported but absent from `_pkgdown.yml`. Mostly internal constructors and `rs_*`
 - `rs_metacell_separation`: Calculates the separation of the centroids of the MetaCells based on diffusion map coordinates.
 - `rs_mnn`: FastMNN batch correction in Rust
 - `rs_module_scoring`: Calculate module activity scores in Rust
+- `rs_nebula_sc`: Fit the NEBULA negative binomial gamma mixed model over single cells
+- `rs_nmf_consensus_bulk`: Run consensus NMF on a bulk expression matrix
+- `rs_nmf_consensus_mc`: Run consensus NMF on MetaCells
+- `rs_nmf_consensus_sc`: Run consensus NMF over a set of single cells and genes
+- `rs_nmf_k_sweep_bulk`: Sweep k and report consensus stability against reconstruction error (bulk)
+- `rs_nmf_k_sweep_mc`: Sweep k and report consensus stability against reconstruction error
+- `rs_nmf_k_sweep_sc`: Sweep k and report consensus stability against reconstruction error
 - `rs_nmf_multi_bulk`: Run multiple NMF (HALS) restarts on a bulk expression matrix
+- `rs_nmf_multi_mc`: Run multiple NMF (HALS) restarts on MetaCells
 - `rs_nmf_multi_sc`: Run multiple NMF (HALS) restarts over a set of single cells and genes
 - `rs_nmf_single_bulk`: Run NMF (HALS) on a bulk expression matrix (single run)
+- `rs_nmf_single_mc`: Run NMF (HALS) on MetaCells
 - `rs_nmf_single_sc`: Run NMF (HALS) over a set of single cells and genes
 - `rs_paga`: Run PAGA over a kNN graph and a clustering
 - `rs_pairwise_gene_cors`: Calculates pairwise gene correlations in single cell
@@ -699,10 +750,9 @@ Exported but absent from `_pkgdown.yml`. Mostly internal constructors and `rs_*`
 - `rs_symphony_map_query`: Map a query onto a Symphony reference (Rust)
 - `rs_synthetic_sc_adt_with_cell_types`: Generates synthetic ADT counts with defined cell types
 - `rs_synthetic_sc_data_with_cell_types`: Generates synthetic data for single cell
+- `rs_synthetic_sc_dialogue_data`: Generates synthetic data with a planted multicellular programme
 - `rs_top_k_targets`: SCENIC: Select the Top TF <> Gene pairs
 - `rs_transfer_labels_symphony`: Transfer labels from a Symphony reference to a query via kNN vote
-- `rs_mc_vision`: Calculate VISION pathway scores in Rust (for meta cells)
-- `rs_mc_vision_with_autocorrelation`: Calculate VISION pathway scores in Rust with auto-correlation (for meta cells)
 - `rs_vision`: Calculate VISION pathway scores in Rust
 - `rs_vision_with_autocorrelation`: Calculate VISION pathway scores in Rust with auto-correlation
 - `set_cell_mapping`: Set cell mapping

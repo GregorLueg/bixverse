@@ -932,3 +932,157 @@ S7::method(dialogue_sc, MetaCells) <- function(
     )
   )
 }
+
+## nebula ----------------------------------------------------------------------
+
+#' Run NEBULA on meta cells
+#'
+#' @description
+#' Fits NEBULA's negative binomial gamma mixed model over aggregated counts.
+#' The arithmetic is [bixverse::nebula_sc()] verbatim, only the counts come out
+#' of memory rather than the streamed store, and the fit is much cheaper
+#' because there are far fewer rows.
+#'
+#' What changes is the interpretation, not the numerics. The cell-level
+#' overdispersion becomes the spread between aggregates within a subject rather
+#' than between cells, so it is smaller and it absorbs whatever the aggregation
+#' smoothed away. The subject-level term keeps its meaning. Read the two as a
+#' variance decomposition over meta cells and do not compare them against a
+#' single cell run.
+#'
+#' @param object `MetaCells` class.
+#' @param subject_col String. The column in the obs table holding the subject
+#' (donor) identifier. This is what the random effect is over.
+#' @param design Formula. The experimental design, evaluated against the obs
+#' table, e.g. `~ condition` or `~ condition + age`. Include the intercept.
+#' @param coef Optional integer or character. Which coefficient of the design
+#' the Wald test reports, as a 1-based column position or a column name.
+#' Defaults to the last column.
+#' @param contrast Optional numeric vector. One weight per design column.
+#' Mutually exclusive with `coef`.
+#' @param genes_to_use Optional character vector. The genes to fit. Defaults to
+#' every gene in the object.
+#' @param offset Optional numeric vector. Strictly positive scaling factor per
+#' meta cell, aligned to the meta cells that survive the design. Defaults to
+#' `NULL`, which uses the aggregated library sizes.
+#' @param nebula_params A list, see [bixverse::params_nebula()]. See
+#' [bixverse::nebula_sc()] for the individual elements.
+#' @param .verbose Boolean or integer. Controls verbosity and returns run
+#' times. `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` ->
+#' detailed verbosity.
+#'
+#' @returns A `ScNebula` class, see [bixverse::new_sc_nebula_res()].
+#'
+#' @references He, et al., Commun Biol, 2021
+#'
+#' @export
+nebula_mc <- S7::new_generic(
+  name = "nebula_mc",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    subject_col,
+    design,
+    coef = NULL,
+    contrast = NULL,
+    genes_to_use = NULL,
+    offset = NULL,
+    nebula_params = params_nebula(),
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method nebula_mc MetaCells
+#'
+#' @export
+S7::method(nebula_mc, MetaCells) <- function(
+  object,
+  subject_col,
+  design,
+  coef = NULL,
+  contrast = NULL,
+  genes_to_use = NULL,
+  offset = NULL,
+  nebula_params = params_nebula(),
+  .verbose = TRUE
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(object, MetaCells))
+  checkmate::qassert(subject_col, "S1")
+  checkmate::assertFormula(design)
+  checkmate::qassert(genes_to_use, c("0", "S+"))
+  checkmate::qassert(offset, c("0", "N+"))
+  assertNebulaParams(nebula_params)
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
+
+  obs <- get_sc_obs(object)
+
+  inputs <- .nebula_design(
+    obs = obs,
+    design = design,
+    subject_col = subject_col
+  )
+  tested <- .resolve_tested_sc(
+    design = inputs$design_mat,
+    coef = coef,
+    contrast = contrast
+  )
+
+  # meta_cell_idx is 1-based and matches the row order of the count matrix
+  metacells_to_keep <- as.integer(inputs$obs$meta_cell_idx - 1L)
+
+  if (!is.null(offset)) {
+    checkmate::assertNumeric(
+      offset,
+      len = length(metacells_to_keep),
+      lower = .Machine$double.eps,
+      any.missing = FALSE
+    )
+  }
+
+  # one subject label per row of the matrix, not per selected meta cell
+  subject_ids <- integer(nrow(obs))
+  subject_ids[inputs$obs$meta_cell_idx] <- as.integer(inputs$subject_fct) - 1L
+
+  gene_names <- S7::prop(object, "var_table")$gene_id
+
+  gene_indices <- if (is.null(genes_to_use)) {
+    seq_along(gene_names) - 1L
+  } else {
+    get_gene_indices(x = object, gene_ids = genes_to_use, rust_index = TRUE)
+  }
+
+  res <- rs_nebula_mc(
+    sparse_data = mc_counts_to_list(object, assay = "raw"),
+    metacells_to_keep = metacells_to_keep,
+    gene_indices = as.integer(gene_indices),
+    subject_ids = subject_ids,
+    design = inputs$design_mat,
+    offset = offset,
+    nebula_params = c(nebula_params, tested),
+    verbose = parse_verbosity(.verbose)
+  )
+
+  params <- list(
+    subject_col = subject_col,
+    design = deparse1(design),
+    tested = if (is.null(tested$coef)) {
+      "contrast"
+    } else {
+      colnames(inputs$design_mat)[tested$coef + 1L]
+    },
+    n_cells = length(metacells_to_keep),
+    n_subjects = nlevels(inputs$subject_fct),
+    n_genes_requested = length(gene_indices),
+    nebula_params = nebula_params
+  )
+
+  .nebula_res_to_class(
+    res = res,
+    gene_names = gene_names,
+    design_mat = inputs$design_mat,
+    params = params
+  )
+}

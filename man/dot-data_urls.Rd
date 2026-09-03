@@ -4,12 +4,14 @@
 \alias{.data_urls}
 \title{Resolve the download URLs for an example data file}
 \usage{
-.data_urls(file, zenodo_record)
+.data_urls(file, zenodo_record = NULL)
 }
 \arguments{
 \item{file}{String. File name, identical in both locations.}
 
-\item{zenodo_record}{String. Zenodo record holding the fallback copy.}
+\item{zenodo_record}{Optional string. Zenodo record holding the fallback
+copy. \code{NULL} for datasets that only live in the GitHub release, which is the
+case until they are archived.}
 }
 \value{
 Character vector of URLs, in the order they should be tried.

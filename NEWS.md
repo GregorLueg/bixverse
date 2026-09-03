@@ -1,3 +1,54 @@
+# bixverse 0.5.0
+
+## Features
+
+* [blitzGSEA](https://doi.org/10.1093/bioinformatics/btac076) wired into the R
+  layer via `calc_blitzgsea()`. Permutation GSEA pays per pathway, this does
+  not: random gene sets are drawn once across a log-spaced grid of set sizes,
+  gamma tails are fitted to the null enrichment scores, and every pathway's
+  p-value is read straight off the fitted tail. One gamma evaluation per
+  pathway, no matter how big the library. No gene set library enters the
+  calibration, so `blitzgsea_calibrate()` gives you a `BlitzGseaNull` that
+  serves every library scored against that signature and survives `saveRDS()`.
+  `params_blitzgsea()` and a `print()` method come with it.
+* `bixverse-rs` 0.5.0 under the hood. kNN graphs now return true Euclidean
+  distances, so the `is_squared` plumbing is gone from the binding layer.
+* NNDescent gained `extract_knn`: hand back the graph the descent already built
+  instead of running a separate search over the index.
+* `load_sce()` reads `SingleCellExperiment` objects. The Seurat loader was
+  deduplicated against it.
+* Windows builds work on the r-universe runners.
+
+## Fixes
+
+* `plot.Hotspot()` draws readable module blocks, and the scored modules are the
+  ones the heatmap actually shows.
+* ICA whitening rank is capped rather than left to blow up on rank-deficient
+  input.
+* The external HDF5 is gated on a cross-ABI host.
+
+# bixverse 0.4.11
+
+## Features
+
+### Single cells
+
+* NEBULA for mixed model differential expression, see He, et al., Commun Biol,
+  2021: `nebula_sc()` on `SingleCells` and `nebula_mc()` on `MetaCells`, for
+  when you have repeated measures per subject and pseudobulk throws away too
+  much.
+* The miloR neighbourhood test runs in Rust now via `rs_make_milor_nhoods()`,
+  behind `get_miloR_abundances_sc()` and `test_nhoods()`.
+* edgeR quasi-likelihood workflow via the `edge-rs` crate: `run_edger_ql()`
+  does the fit in Rust rather than round tripping through the R package.
+* Fewer redundant copies in the meta cell sparse handoff.
+
+## Chores
+
+* Linux binary builds, and vignettes are kept out of the build tarball.
+* Windows builds happen outside the package directory to dodge MAX_PATH.
+* r-universe is now the easy install route.
+
 # bixverse 0.4.10
 
 ## Features

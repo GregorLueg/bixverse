@@ -286,6 +286,8 @@ prescan_h5ad_files <- function(
 #'
 #' @return A list with `dims` (named integer `c(obs, var)`) and `type` (one of
 #'   `"CSR"`, `"CSC"`, `"DENSE_ROW"`, `"DENSE_COL"`).
+#'
+#' @export
 get_h5ad_dimensions <- function(f_path) {
   checkmate::assertFileExists(f_path)
 

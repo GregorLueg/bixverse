@@ -23,3 +23,5 @@ scratch_*.R
 
 # Claude
 .claude/worktrees/*
+
+pkgdown/favicon/*

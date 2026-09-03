@@ -312,7 +312,7 @@ S7::method(load_seurat, SingleCells) <- function(
     message("Pulling the raw counts out of the Seurat object.")
   }
 
-  counts <- get_seurat_counts_to_list(seurat)
+  counts <- get_seurat_counts(seurat)
 
   if (.verbose) {
     message("Pulling the obs and var data out of the object")
@@ -323,57 +323,302 @@ S7::method(load_seurat, SingleCells) <- function(
     keep.rownames = "barcode"
   )
 
+  # the first obs column becomes cell_id downstream, so an existing one would
+  # collide and get a suffix from make.unique()
   if ("cell_id" %in% names(obs_dt)) {
     obs_dt[, cell_id := NULL]
   }
 
   var_dt <- data.table::data.table(gene_id = rownames(seurat))
 
-  rust_con <- get_sc_rust_ptr(object)
-
-  file_res <- rust_con$r_data_to_file(
-    r_data = counts,
-    qc_params = sc_qc_param,
-    verbose = .verbose
-  )
-
-  .dispatch_gene_based_data(
-    rust_con = rust_con,
+  load_r_data(
+    object = object,
+    counts = counts,
+    obs = obs_dt,
+    var = var_dt,
+    sc_qc_param = sc_qc_param,
     streaming = streaming,
     batch_size = batch_size,
     max_genes_in_memory = max_genes_in_memory,
     cell_batch_size = cell_batch_size,
     .verbose = .verbose
   )
+}
 
-  gene_nnz <- rust_con$get_nnz_genes(gene_indices = NULL)
-  gene_nnz_dt <- data.table::data.table(no_cells_exp = gene_nnz)
+## single cell experiment ------------------------------------------------------
 
-  duckdb_con <- get_sc_duckdb(object)
+#' Extract the obs and var tables from a SingleCellExperiment
+#'
+#' @description
+#' `colData` becomes obs and `rowData` becomes var, with the identifiers put
+#' first because the first column of each is what becomes `cell_id` and
+#' `gene_id` downstream.
+#'
+#' Non-atomic columns are dropped. `colData` is a `DataFrame` and can carry
+#' nested `DataFrame` or list columns, which have nowhere to go in the DuckDB.
+#'
+#' @param sce `SingleCellExperiment` class.
+#'
+#' @return A list with `obs` and `var` as data.tables.
+#'
+#' @keywords internal
+.sce_obs_var <- function(sce) {
+  flatten <- function(df, ids, id_label, reserved, axis, n) {
+    atomic <- vapply(
+      seq_len(ncol(df)),
+      \(i) is.atomic(df[[i]]) || is.factor(df[[i]]),
+      logical(1)
+    )
+    if (any(!atomic)) {
+      warning(sprintf(
+        "Dropping %i non-atomic %s column(s): %s.",
+        sum(!atomic),
+        axis,
+        paste(colnames(df)[!atomic], collapse = ", ")
+      ))
+    }
 
-  duckdb_con$populate_obs_from_data.table(
-    obs_dt = obs_dt,
-    filter = as.integer(file_res$cell_indices + 1)
+    kept <- if (any(atomic)) {
+      data.table::as.data.table(as.list(df[, atomic, drop = FALSE]))
+    } else {
+      data.table::data.table()
+    }
+
+    # Bioconductor objects quite happily carry the identifiers in the metadata
+    # and leave the dimnames empty, so fall back to the first column rather
+    # than handing back a synthetic index nobody can join on
+    if (is.null(ids)) {
+      if (ncol(kept) > 0L) {
+        ids <- as.character(kept[[1L]])
+        warning(sprintf(
+          "No %s names on the object. Using '%s' from the metadata instead.",
+          axis,
+          names(kept)[1L]
+        ))
+      } else {
+        ids <- sprintf("%s_%i", axis, seq_len(n))
+        warning(sprintf(
+          "No %s names and no metadata to fall back on. Generating them.",
+          axis
+        ))
+      }
+    }
+
+    # Identifiers have to be present and unique: they are the join key for
+    # every lookup on this side. Published objects routinely fail both, e.g.
+    # the ageing thymus data carries 336 genes with no annotation at all, so
+    # repair rather than refuse, and say exactly what was repaired.
+    ids <- as.character(ids)
+    missing_ids <- is.na(ids) | !nzchar(ids)
+    if (any(missing_ids)) {
+      warning(sprintf(
+        "%i %s(s) have no identifier. Generating one for each.",
+        sum(missing_ids),
+        axis
+      ))
+      ids[missing_ids] <- sprintf("%s_%i", axis, which(missing_ids))
+    }
+    if (anyDuplicated(ids)) {
+      warning(sprintf(
+        "%i %s identifier(s) are duplicated. Making them unique.",
+        sum(duplicated(ids)),
+        axis
+      ))
+      ids <- make.unique(ids)
+    }
+
+    # the leading column becomes `reserved` downstream, so anything that snake
+    # cases to the same name collides and picks up a make.unique() suffix
+    if (ncol(kept) > 0L) {
+      clash <- to_snake_case(names(kept)) == reserved
+      if (any(clash)) {
+        kept[, (names(kept)[clash]) := NULL]
+      }
+    }
+
+    out <- data.table::data.table(id = ids)
+    data.table::setnames(out, "id", id_label)
+
+    if (ncol(kept) > 0L) {
+      out <- cbind(out, kept)
+    }
+
+    out
+  }
+
+  list(
+    obs = flatten(
+      SummarizedExperiment::colData(sce),
+      colnames(sce),
+      id_label = "barcode",
+      reserved = "cell_id",
+      axis = "cell",
+      n = ncol(sce)
+    ),
+    var = flatten(
+      SummarizedExperiment::rowData(sce),
+      rownames(sce),
+      id_label = "gene_id",
+      reserved = "gene_id",
+      axis = "gene",
+      n = nrow(sce)
+    )
   )
+}
 
-  duckdb_con$populate_var_from_data.table(
-    var_dt = var_dt,
-    filter = as.integer(file_res$gene_indices + 1)
+#' Load in data from a `SingleCellExperiment`
+#'
+#' @description
+#' Brings a Bioconductor `SingleCellExperiment` into a `SingleCells` object.
+#' `colData` becomes the obs table, `rowData` becomes the var table, and the
+#' chosen assay goes through the same Rust quality control and normalisation
+#' every other loader uses.
+#'
+#' The assay has to hold raw counts. Plenty of objects in the wild ship only
+#' `logcounts`, and a negative binomial cannot model those, so pick the right
+#' one rather than letting the default find whatever is there.
+#'
+#' `reducedDims` and `altExps` are not carried over. Run the embedding on this
+#' side, and use [bixverse::SingleCellsMultiModal()] for ADT.
+#'
+#' @param object `SingleCells` class.
+#' @param sce `SingleCellExperiment` class you want to transform.
+#' @param assay_name String. Which assay holds the raw counts. Defaults to
+#' `"counts"`.
+#' @param sc_qc_param List. Output of [bixverse::params_sc_min_quality()]. A
+#' list with the following elements:
+#' \itemize{
+#'   \item min_unique_genes - Integer. Minimum number of genes to be detected
+#'   in the cell to be included.
+#'   \item min_lib_size - Integer. Minimum library size in the cell to be
+#'   included.
+#'   \item min_cells - Integer. Minimum number of cells a gene needs to be
+#'   detected to be included.
+#'   \item target_size - Float. Target size to normalise to. Defaults to `1e5`.
+#' }
+#' @param streaming Integer. CSR-to-CSC conversion mode. `0L` -> in-memory
+#' (fastest, highest memory), `1L` -> light streaming with cell batching,
+#' `2L` -> heavy streaming with memory upper boundaries. Defaults to `1L`.
+#' @param batch_size Integer. Cell batch size when `streaming = 1L`. Defaults
+#' to `1000L`.
+#' @param max_genes_in_memory Integer. Maximum genes held in memory at once
+#' when `streaming = 2L`. Defaults to `2000L`.
+#' @param cell_batch_size Integer. Cell batch size when `streaming = 2L`.
+#' Defaults to `100000L`.
+#' @param .verbose Boolean. Controls the verbosity of the function.
+#'
+#' @return It will populate the files on disk and return the class with updated
+#' shape information.
+#'
+#' @export
+load_sce <- S7::new_generic(
+  name = "load_sce",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    sce,
+    assay_name = "counts",
+    sc_qc_param = params_sc_min_quality(),
+    streaming = 1L,
+    batch_size = 1000L,
+    max_genes_in_memory = 2000L,
+    cell_batch_size = 100000L,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method load_sce SingleCells
+S7::method(load_sce, SingleCells) <- function(
+  object,
+  sce,
+  assay_name = "counts",
+  sc_qc_param = params_sc_min_quality(),
+  streaming = 1L,
+  batch_size = 1000L,
+  max_genes_in_memory = 2000L,
+  cell_batch_size = 100000L,
+  .verbose = TRUE
+) {
+  # checks
+  if (!requireNamespace("SingleCellExperiment", quietly = TRUE)) {
+    stop(
+      paste(
+        "Package 'SingleCellExperiment' required.",
+        "Install with: BiocManager::install('SingleCellExperiment')"
+      )
+    )
+  }
+
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  checkmate::assertClass(sce, "SingleCellExperiment")
+  checkmate::qassert(assay_name, "S1")
+  assertScMinQC(sc_qc_param)
+  checkmate::qassert(streaming, "I1")
+  checkmate::assertTRUE(streaming %in% c(0L, 1L, 2L))
+  checkmate::qassert(.verbose, "B1")
+
+  available <- SummarizedExperiment::assayNames(sce)
+  if (!assay_name %in% available) {
+    stop(sprintf(
+      "Assay '%s' not found. The object has: %s.",
+      assay_name,
+      paste(available, collapse = ", ")
+    ))
+  }
+
+  if (.verbose) {
+    message("Pulling the raw counts out of the SingleCellExperiment.")
+  }
+
+  counts <- SummarizedExperiment::assay(sce, assay_name)
+
+  # a DelayedArray or HDF5Matrix has no slots to reinterpret, and realising it
+  # silently would pull the whole thing into memory behind the user's back
+  if (!inherits(counts, "dgCMatrix")) {
+    stop(sprintf(
+      paste(
+        "Assay '%s' is a %s, not a dgCMatrix.",
+        "Coerce it first, e.g. as(assay(sce, '%s'), 'CsparseMatrix'),",
+        "and be aware that realising a DelayedArray loads it into memory."
+      ),
+      assay_name,
+      class(counts)[1],
+      assay_name
+    ))
+  }
+
+  if (length(counts@x) > 0 && min(counts@x) < 0) {
+    stop(sprintf(
+      paste(
+        "Assay '%s' holds negative values, so it is not raw counts.",
+        "Pass the assay holding the counts via `assay_name`."
+      ),
+      assay_name
+    ))
+  }
+
+  counts <- .counts_to_cell_major(counts)
+
+  if (.verbose) {
+    message("Pulling the obs and var data out of the object")
+  }
+
+  tables <- .sce_obs_var(sce)
+
+  load_r_data(
+    object = object,
+    counts = counts,
+    obs = tables$obs,
+    var = tables$var,
+    sc_qc_param = sc_qc_param,
+    streaming = streaming,
+    batch_size = batch_size,
+    max_genes_in_memory = max_genes_in_memory,
+    cell_batch_size = cell_batch_size,
+    .verbose = .verbose
   )
-
-  cell_res_dt <- data.table::setDT(file_res[c("nnz", "lib_size")])
-
-  duckdb_con$add_data_obs(new_data = cell_res_dt)
-  duckdb_con$add_data_var(new_data = gene_nnz_dt)
-  duckdb_con$set_to_keep_column()
-  cell_map <- duckdb_con$get_obs_index_map()
-  gene_map <- duckdb_con$get_var_index_map()
-
-  S7::prop(object, "dims") <- as.integer(rust_con$get_shape())
-  object <- set_cell_mapping(x = object, cell_map = cell_map)
-  object <- set_gene_mapping(x = object, gene_map = gene_map)
-
-  return(object)
 }
 
 ## direct r --------------------------------------------------------------------

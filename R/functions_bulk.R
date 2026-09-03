@@ -8,6 +8,8 @@
 #' @param gene_lengths Named vector. Named vector with gene lengths.
 #'
 #' @returns TPM-normalised matrix.
+#'
+#' @export
 calculate_tpm <- function(counts, gene_lengths) {
   # checks
   checkmate::assertMatrix(
@@ -33,6 +35,8 @@ calculate_tpm <- function(counts, gene_lengths) {
 #' @param gene_lengths Named vector. Named vector with gene lengths.
 #'
 #' @returns RPKM-normalised matrix.
+#'
+#' @export
 calculate_rpkm <- function(counts, gene_lengths) {
   # checks
   checkmate::assertMatrix(

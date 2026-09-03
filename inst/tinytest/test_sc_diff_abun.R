@@ -291,6 +291,216 @@ expect_true(
   info = "spatial FDR NOT calculated"
 )
 
+## exhaustive index ------------------------------------------------------------
+
+# the exhaustive index scans every cell, so it returns the true nearest
+# neighbour rather than an approximation
+miloR_obj_exhaustive <- get_miloR_abundances_sc(
+  object = sc_object,
+  sample_id_col = "sample_id",
+  miloR_params = params_sc_miloR(
+    refinement_strategy = "index",
+    index_type = "exhaustive"
+  ),
+  .verbose = FALSE
+)
+
+expect_inherits(
+  current = miloR_obj_exhaustive,
+  class = "miloR",
+  info = "correct class returned for the exhaustive index"
+)
+
+expect_true(
+  current = rs_set_similarity(
+    as.character(get_index_cells(miloR_obj_exhaustive)),
+    as.character(get_index_cells(miloR_obj_bruteforce)),
+    TRUE
+  ) >
+    0.95,
+  info = "the exhaustive index and brute force agree almost perfectly"
+)
+
+expect_error(
+  current = params_sc_miloR(index_type = "nonsense"),
+  info = "params_sc_miloR rejects an unknown index type"
+)
+
+## neighbourhood counting ------------------------------------------------------
+
+# Rust returns the full grid, so unlike the old table() this cannot come back
+# ragged
+expect_equal(
+  current = dim(miloR_obj_index$sample_counts),
+  target = c(
+    length(get_index_cells(miloR_obj_index)),
+    nrow(unique(sc_object[["sample_id"]]))
+  ),
+  info = "the sample counts span every neighbourhood and every sample"
+)
+
+expect_true(
+  current = all(miloR_obj_index$sample_counts >= 0),
+  info = "the neighbourhood counts are non-negative"
+)
+
+# every neighbourhood holds its index cell plus its k neighbours, deduplicated,
+# so its total across samples cannot exceed k + 1
+expect_true(
+  current = all(
+    rowSums(miloR_obj_index$sample_counts) <= ncol(get_knn_mat(sc_object)) + 1
+  ),
+  info = "no cell is counted twice within a neighbourhood"
+)
+
+expect_equal(
+  current = sum(miloR_obj_index$sample_counts),
+  target = sum(miloR_obj_index$nhoods),
+  info = "the counts total the non-zeros of the neighbourhood matrix"
+)
+
+## graph overlap ---------------------------------------------------------------
+
+expect_equal(
+  current = length(miloR_obj_index$nhood_overlap),
+  target = length(get_index_cells(miloR_obj_index)),
+  info = "one overlap value per neighbourhood"
+)
+
+expect_true(
+  current = all(miloR_obj_index$nhood_overlap >= 0),
+  info = "the overlaps are non-negative"
+)
+
+# the overlap is the row sums of t(nhoods) %*% nhoods with the diagonal zeroed,
+# which the Rust never actually forms
+intersect_mat <- Matrix::crossprod(miloR_obj_index$nhoods)
+diag(intersect_mat) <- 0
+
+expect_equal(
+  current = miloR_obj_index$nhood_overlap,
+  target = as.numeric(Matrix::rowSums(intersect_mat)),
+  info = "the overlap matches the explicit crossproduct"
+)
+
+miloR_obj_overlap <- test_nhoods(
+  x = miloR_obj_index_v2,
+  design = ~grps,
+  design_df = design_df,
+  fdr_weighting = "graph-overlap"
+)
+
+expect_true(
+  current = all(
+    !is.na(get_differential_abundance_res(miloR_obj_overlap)$SpatialFDR)
+  ),
+  info = "graph-overlap weighting produces a spatial FDR"
+)
+
+expect_true(
+  current = all(
+    get_differential_abundance_res(miloR_obj_overlap)$SpatialFDR >= 0 &
+      get_differential_abundance_res(miloR_obj_overlap)$SpatialFDR <= 1
+  ),
+  info = "the spatial FDR is a probability"
+)
+
+## spatial FDR -----------------------------------------------------------------
+
+# a flat connectivity reduces the weighted step-up to plain Benjamini-Hochberg
+set.seed(123L)
+flat_p <- runif(200)
+
+expect_equal(
+  current = rs_spatial_fdr(
+    p_values = flat_p,
+    connectivity = rep(1, length(flat_p))
+  ),
+  target = stats::p.adjust(flat_p, method = "BH"),
+  tolerance = 1e-12,
+  info = "flat weights reduce the spatial FDR to Benjamini-Hochberg"
+)
+
+expect_true(
+  current = all(is.na(rs_spatial_fdr(
+    p_values = rep(NA_real_, 5),
+    connectivity = rep(1, 5)
+  ))),
+  info = "non-finite p-values are carried through untouched"
+)
+
+expect_error(
+  current = rs_spatial_fdr(p_values = flat_p, connectivity = c(1, 2)),
+  info = "rs_spatial_fdr rejects mismatched lengths"
+)
+
+## coefficient selection -------------------------------------------------------
+
+milo_by_name <- test_nhoods(
+  x = miloR_obj_index_v2,
+  design = ~grps,
+  design_df = design_df,
+  coef = "grpstrt"
+)
+
+expect_equal(
+  current = get_differential_abundance_res(milo_by_name)$logFC,
+  target = get_differential_abundance_res(miloR_obj_index_v2)$logFC,
+  info = "naming the coefficient matches the default last-column choice"
+)
+
+milo_contrast <- test_nhoods(
+  x = miloR_obj_index_v2,
+  design = ~grps,
+  design_df = design_df,
+  contrast = c(0, 1)
+)
+
+expect_equal(
+  current = get_differential_abundance_res(milo_contrast)$logFC,
+  target = get_differential_abundance_res(miloR_obj_index_v2)$logFC,
+  tolerance = 1e-8,
+  info = "a unit contrast reproduces testing that coefficient directly"
+)
+
+## normalisation ---------------------------------------------------------------
+
+milo_logms <- test_nhoods(
+  x = miloR_obj_index_v2,
+  design = ~grps,
+  design_df = design_df,
+  norm_method = "logMS"
+)
+
+expect_true(
+  current = checkmate::testDataTable(
+    get_differential_abundance_res(milo_logms)
+  ),
+  info = "logMS normalisation runs"
+)
+
+expect_error(
+  current = test_nhoods(
+    x = miloR_obj_index_v2,
+    design = ~grps,
+    design_df = design_df,
+    norm_method = "nonsense"
+  ),
+  info = "test_nhoods rejects an unknown normalisation method"
+)
+
+## deprecated model getter -----------------------------------------------------
+
+expect_warning(
+  current = get_model_fit(miloR_obj_index),
+  info = "get_model_fit is deprecated now that the fit lives in Rust"
+)
+
+expect_null(
+  current = suppressWarnings(get_model_fit(miloR_obj_index)),
+  info = "get_model_fit returns NULL"
+)
+
 ## neighbour information -------------------------------------------------------
 
 # this one does not have the neighbourhood data, so should warn

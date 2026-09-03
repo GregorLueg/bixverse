@@ -6,10 +6,10 @@ ci_rust: true
 extra_sysdeps: ''
 has_gpu: false
 has_rust: true
-linux_runner: ubuntu-22.04
+linux_runner: ubuntu-latest
 pkg_name: bixverse
 quarto: true
 rebuild_from_source: stringfish qs2
 rust_toolchain: stable
-windows: false
+windows: true
 

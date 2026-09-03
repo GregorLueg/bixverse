@@ -4,14 +4,18 @@
 \alias{plot.Hotspot}
 \title{Plot the Hotspot Z-score matrix}
 \usage{
-\method{plot}{Hotspot}(x, max_genes = 500L, seed = 42L, ...)
+\method{plot}{Hotspot}(x, top_k = 5L, max_genes = 500L, seed = 42L, ...)
 }
 \arguments{
 \item{x}{A \code{Hotspot} object.}
 
-\item{max_genes}{Integer. Maximum number of genes to plot. If the number
-of genes exceeds this, a random subsample is drawn (stratified by module
-if membership is available). Set to \code{NULL} to disable. Default 500.}
+\item{top_k}{Integer. Number of modules to keep, ranked by gene count. Set to
+\code{NULL} to keep all of them. Ignored when no membership has been computed.
+Defaults to \code{5L}.}
+
+\item{max_genes}{Integer. Maximum number of genes to plot. Above this a
+subsample is drawn, allocated across the kept modules in proportion to their
+size. Set to \code{NULL} to disable. Defaults to \code{500L}.}
 
 \item{seed}{Integer. Seed for reproducible subsampling.}
 
@@ -21,9 +25,10 @@ if membership is available). Set to \code{NULL} to disable. Default 500.}
 A \link[ggplot2:ggplot]{ggplot2::ggplot} object.
 }
 \description{
-Produces a heatmap of the pairwise gene-gene Z-score matrix. If module
-membership has been computed via \code{\link[=generate_hotspot_membership]{generate_hotspot_membership()}}, genes
-are ordered by module and unassigned genes are excluded. If no membership
-is available, all genes are shown.
+Heatmap of the pairwise gene-gene Z-scores. With module membership from
+\code{\link[=generate_hotspot_membership]{generate_hotspot_membership()}} the plot keeps the \code{top_k} largest modules,
+orders genes within each module by hierarchical clustering and separates and
+labels the module blocks, so the block structure is actually readable.
+Without membership every gene is shown in the order it comes in.
 }
 \keyword{internal}

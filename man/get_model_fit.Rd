@@ -10,12 +10,14 @@ get_model_fit(x)
 \method{get_model_fit}{miloR}(x)
 }
 \arguments{
-\item{x}{An object from which to get the differential abundance results
-from.}
+\item{x}{An object from which to get the fitted model from.}
 }
 \value{
-The model object, please refer to \code{\link[edgeR:glmQLFTest]{edgeR::glmQLFTest()}}.
+\code{NULL}, with a deprecation warning.
 }
 \description{
-Get the fitted model
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+The neighbourhood test moved into Rust, so there is no \code{DGEGLM} to hand
+back any more. Everything the fit was consulted for now sits in the results
+table, see \code{\link[=get_differential_abundance_res]{get_differential_abundance_res()}}.
 }

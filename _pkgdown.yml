@@ -2,11 +2,13 @@ url: https://gregorlueg.github.io/bixverse/
 
 template:
   bootstrap: 5
-  bootswatch: lux
   light-switch: true
+  theme: atom-one-light
+  theme-dark: atom-one-dark
   bslib:
-    # lux uses navbar-padding-y: 1.5rem, so pkgdown's 56px default is too small
-    pkgdown-nav-height: 104px
+    primary: "#3C4B6D"
+    border-radius: 0.5rem
+    btn-border-radius: 0.25rem
 
 home:
   title: bixverse
@@ -124,6 +126,8 @@ articles:
       - single_cell_subsets
       - meta_cells
       - dialogue
+      - differential_expression
+      - differential_abundance
       - trajectory_inference
       - single_cell_big_data
       - multi_modal_single_cells
@@ -145,12 +149,14 @@ reference:
   - title: Gene set enrichment helpers
     desc: 
       Everything and anything you need to do various types of gene set 
-      enrichments; hypergeometric tests, GSVA, (ss)GSEA.
+      enrichments; hypergeometric tests, GSVA, (ss)GSEA, blitzGSEA.
     contents:
       - gse_hypergeometric
       - gse_hypergeometric_list
       - calc_fgsea
       - calc_fgsea_simple
+      - calc_blitzgsea
+      - blitzgsea_calibrate
       - calc_gsea_traditional
       - calc_mitch
       - calc_gsva
@@ -158,6 +164,7 @@ reference:
       - calc_singscore
       - calc_singscore_multi
       - calc_singscore_rank
+      - params_blitzgsea
       - params_gsea
       - params_gsva
       - params_ssgsea
@@ -268,6 +275,9 @@ reference:
       - calculate_rpkm
       - calculate_tpm
       - run_limma_voom
+      - run_edger_ql
+      - pseudobulk_dge_sc
+      - params_edger_ql
       - hedges_g_dge
       - get_dge_effect_sizes
       - get_dge_limma_voom
@@ -421,6 +431,7 @@ reference:
       - generate_bt_meta_cells_sc
       - generate_seacells_sc
       - merge_meta_cells
+      - nebula_mc
       - params_sc_supercell
       - params_sc_bt_metacells
       - params_sc_seacells
@@ -445,6 +456,7 @@ reference:
       - stream_h5ad
       - load_r_data
       - load_seurat
+      - load_sce
       - load_tenx_h5
       - load_multi_tenx_h5
       - read_h5ad_metadata
@@ -534,6 +546,7 @@ reference:
       - get_hotspot_membership
       - get_miloR_abundances_sc
       - meld_sc
+      - nebula_sc
       - run_palantir_sc
       - run_paga_sc
       - run_gene_trends_sc
@@ -569,6 +582,7 @@ reference:
       - params_sc_aucell
       - params_sc_hotspot
       - params_sc_miloR
+      - params_nebula
       - params_sc_vision
       - params_scenic
       - params_scenic_extra_trees_defaults
@@ -703,6 +717,8 @@ reference:
     contents:
       - download_cd34_data
       - download_dialogue_uc
+      - download_kang_pbmc
+      - download_thymus_ageing
       - download_marrow_cd34
       - download_pbmc3k
       - download_demuxlet_pbmc
@@ -733,7 +749,6 @@ reference:
       - AnnDataParser
       - calculate_sparsity_stats
       - find_threshold_otsu
-      - get_seurat_counts_to_list
       - install_agent_skill
       - knn_graph_label_propagation
       - params_label_propagation
@@ -750,6 +765,8 @@ reference:
       - rs_2d_loess
       - rs_batch_lisi
       - rs_batch_silhouette_width
+      - rs_blitzgsea_calibrate
+      - rs_blitzgsea_score
       - rs_cistarget
       - rs_compare_knn
       - rs_constrained_page_rank
@@ -790,6 +807,7 @@ reference:
       - rs_generate_ligand_target_influence
       - rs_ligand_activity_scores
       - rs_mad_outlier
+      - rs_edger_ql
       - rs_mc_aucell
       - rs_mc_dialogue
       - rs_mc_hotspot_autocor
@@ -800,6 +818,7 @@ reference:
       - rs_mc_vision
       - rs_mc_vision_with_autocorrelation
       - rs_mitch_calc
+      - rs_nebula_mc
       - rs_mutual_info
       - rs_onto_semantic_sim
       - rs_onto_semantic_sim_mat
@@ -830,6 +849,7 @@ reference:
       - rs_singscore_permutation_test
       - rs_singscore_single
       - rs_snf
+      - rs_spatial_fdr
       - rs_sparse_dict_dgrdl
       - rs_sparse_dict_dgrdl_grid_search
       - rs_spectral_clustering

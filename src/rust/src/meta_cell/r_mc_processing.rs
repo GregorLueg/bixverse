@@ -7,11 +7,10 @@ use bixverse_rs::single_cell::mc_analysis::metrics::pairwise_gene_correlations_i
 use bixverse_rs::single_cell::mc_processing::hvg_pca::*;
 use bixverse_rs::single_cell::sc_processing::hvg::*;
 use bixverse_rs::single_cell::sc_processing::pca::SingleCellPcaParams;
-use bixverse_rs::utils::r_rust_interface::list_to_sparse_matrix;
 use extendr_api::*;
 use std::time::Instant;
 
-use crate::meta_cell::utils::cast_compressed_sparse_data_f32;
+use crate::meta_cell::utils::mc_list_to_sparse_f32;
 
 /////////////
 // extendR //
@@ -86,10 +85,7 @@ fn rs_mc_hvg(
         println!("Running HVG detection on meta cells.")
     }
 
-    let sparse: CompressedSparseData2<f64, f64> =
-        list_to_sparse_matrix(sparse_data, true).to_extendr()?;
-
-    let sparse = cast_compressed_sparse_data_f32(sparse);
+    let sparse = mc_list_to_sparse_f32(sparse_data)?;
 
     if verbosity.detailed_verbosity() {
         println!(
@@ -194,9 +190,7 @@ fn rs_mc_pca(
         println!("Running PCA calculation on meta cells.")
     }
 
-    let sparse: CompressedSparseData2<f64, f64> =
-        list_to_sparse_matrix(sparse_data, true).to_extendr()?;
-    let sparse = cast_compressed_sparse_data_f32(sparse);
+    let sparse = mc_list_to_sparse_f32(sparse_data)?;
 
     if verbosity.detailed_verbosity() {
         println!(
@@ -267,9 +261,7 @@ fn rs_pairwise_gene_cors_mc(
     let gene_indices_1 = gene_indices_1.r_int_convert();
     let gene_indices_2 = gene_indices_2.r_int_convert();
 
-    let sparse: CompressedSparseData2<f64, f64> =
-        list_to_sparse_matrix(sparse_data, true).to_extendr()?;
-    let sparse = cast_compressed_sparse_data_f32(sparse);
+    let sparse = mc_list_to_sparse_f32(sparse_data)?;
 
     // transpose
     let sparse = if sparse.cs_type.is_csr() {

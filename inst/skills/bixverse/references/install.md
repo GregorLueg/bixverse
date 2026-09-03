@@ -26,13 +26,23 @@ devtools::install_github("https://github.com/GregorLueg/bixverse")
 The first install compiles the whole Rust dependency tree and takes a while.
 That's normal, not a hang.
 
-`SystemRequirements` is `Cargo` and `rustc`. R 4.2 or newer.
+`SystemRequirements` is `Cargo`, `rustc >= 1.90` and `xz`. R 4.2 or newer.
 
 ## Windows
 
-Not supported. The blocker is incorporating h5 when cross-compiling Rust under
-the R umbrella, and it does not work in CI. Hacks may exist but nothing is
-supported, so don't burn time inventing one. Use WSL, macOS or Linux.
+Supported, and covered by CI. It used to not be, so older answers and issue
+threads will tell you to use WSL. Ignore them.
+
+The two things that had to be solved both live in `tools/config.R`, which
+templates `src/Makevars.win` from `src/Makevars.win.in` at configure time:
+
+- MAX_PATH during the HDF5 CMake build, worked around by shortening the cargo
+  target directory
+- the cross-ABI case, where cargo runs from an msvc host against a
+  `-pc-windows-gnu` target and `hdf5-metno-src` names its output the msvc way
+
+You need Rtools with a working toolchain and a Rust install whose host triple
+matches. Nothing else is special.
 
 ## Optional dependencies
 
@@ -50,6 +60,7 @@ specific methods, and a missing one gives an error naming the package:
 | `biomaRt` | gene identifier conversion |
 | `ontologyIndex`, `ontologySimilarity` | ontology cross-checks |
 | `qs2` | `save_sc_exp_to_disk(type = "qs2")`, the faster serialisation path |
+| `SingleCellExperiment`, `SummarizedExperiment` | `load_sce()` |
 | `quarto` | building vignettes |
 
 Note that Scrublet and scDblFinder are **reimplemented in Rust** inside
