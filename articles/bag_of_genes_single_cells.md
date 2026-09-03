@@ -409,17 +409,17 @@ head(hotspot_autocor[order(fdr)], 25L)
 #>              <char>     <num>     <num> <num> <num>      <char>
 #>  1: ENSG00000188290 0.3242266  39.66046     0     0        HES4
 #>  2: ENSG00000119535 0.3022016  49.27494     0     0       CSF3R
-#>  3: ENSG00000163131 0.5119518  63.60383     0     0        CTSS
+#>  3: ENSG00000163131 0.5119517  63.60383     0     0        CTSS
 #>  4: ENSG00000163191 0.4122631  58.87283     0     0     S100A11
 #>  5: ENSG00000163220 0.6936087 109.61599     0     0      S100A9
 #>  6: ENSG00000143546 0.6563530 114.56873     0     0      S100A8
-#>  7: ENSG00000197956 0.6433796  98.70326     0     0      S100A6
+#>  7: ENSG00000197956 0.6433797  98.70326     0     0      S100A6
 #>  8: ENSG00000196154 0.6429363  92.52890     0     0      S100A4
-#>  9: ENSG00000177954 0.6083655  94.29710     0     0       RPS27
+#>  9: ENSG00000177954 0.6083654  94.29710     0     0       RPS27
 #> 10: ENSG00000158869 0.6997935  81.83833     0     0      FCER1G
 #> 11: ENSG00000203747 0.6159353  71.61398     0     0      FCGR3A
 #> 12: ENSG00000198821 0.2228819  59.91400     0     0       CD247
-#> 13: ENSG00000143185 0.3826068  53.56304     0     0        XCL2
+#> 13: ENSG00000143185 0.3826069  53.56304     0     0        XCL2
 #> 14: ENSG00000143184 0.3719576  57.30895     0     0        XCL1
 #> 15: ENSG00000116667 0.2143988  43.89426     0     0     C1orf21
 #> 16: ENSG00000143947 0.3742483  57.71536     0     0      RPS27A
@@ -470,7 +470,7 @@ hotspot_cor <- generate_hotspot_membership(hotspot_cor)
 
 # the largest modules, at most 500 genes, subsampled in proportion to module
 # size. top_k = NULL gives you every module
-hotspot_top_k <- 5L
+hotspot_top_k <- 6L
 
 plot(hotspot_cor, top_k = hotspot_top_k)
 ```
@@ -846,16 +846,17 @@ head(binarised_regulons$thresholds[order(-n_cells_on)])
 
 ``` r
 
-sc_object[["STAT1_active"]] <- binary_matrix[, "STAT1"]
+sc_object[["SPI1_active"]] <- binary_matrix[, "SPI1"]
 
 embedding_plot_sc(
   object = sc_object,
   embedding = "umap",
-  colour_by = "STAT1_active"
+  colour_by = "SPI1_active",
+  palette = "viridis"
 )
 ```
 
-![](bag_of_genes_single_cells_files/figure-html/scenic-plot-stat1-1.png)
+![](bag_of_genes_single_cells_files/figure-html/scenic-plot-spi1-1.png)
 
 This is how you work with all types of `"bag of genes"` analyses for
 single cell in `bixverse`.
@@ -1135,13 +1136,13 @@ plus the parameters and convergence info.
 
 get_w(t_cell_nmf_results)[1:5, 1:5]
 #>                      comp_01      comp_02      comp_03      comp_04
-#> ENSG00000188976 2.756057e+00 1.516397e-01 9.978818e-11 3.985491e-01
-#> ENSG00000188290 9.983771e-11 1.001252e-10 9.978818e-11 7.743262e-02
-#> ENSG00000187608 9.983771e-11 2.746886e+00 1.624592e-01 9.984961e-11
-#> ENSG00000186827 9.983771e-11 1.001252e-10 7.541643e+00 9.984961e-11
-#> ENSG00000176022 9.073032e-01 7.618927e-03 1.844488e-01 9.984961e-11
+#> ENSG00000188976 2.756063e+00 1.516444e-01 9.978818e-11 3.985443e-01
+#> ENSG00000188290 9.983770e-11 1.001252e-10 9.978818e-11 7.743338e-02
+#> ENSG00000187608 9.983770e-11 2.746899e+00 1.624547e-01 9.984959e-11
+#> ENSG00000186827 9.983770e-11 1.001252e-10 7.541640e+00 9.984959e-11
+#> ENSG00000176022 9.073032e-01 7.619265e-03 1.844488e-01 9.984959e-11
 #>                      comp_05
-#> ENSG00000188976 3.031699e-01
+#> ENSG00000188976 3.031700e-01
 #> ENSG00000188290 1.000227e-10
 #> ENSG00000187608 1.000227e-10
 #> ENSG00000186827 1.000227e-10
@@ -1152,17 +1153,17 @@ get_w(t_cell_nmf_results)[1:5, 1:5]
 
 get_h(t_cell_nmf_results)[1:5, 1:5]
 #>         AAACATACAACCAC-1 AAACATTGATCAGC-1 AAACGCACTGGTAC-1 AAACGCTGGTTCTT-1
-#> comp_01      0.029081339      0.028247045     2.750897e-02     2.642105e-02
-#> comp_02      0.032824829      0.004165604     5.788922e-03     4.683001e-02
-#> comp_03      0.009732792      0.053272992     5.238255e-02     1.002123e-10
-#> comp_04      0.064907387      0.017417077     1.001506e-10     3.876416e-02
-#> comp_05      0.004365175      0.047877818     9.997733e-11     1.034977e-02
+#> comp_01      0.029081384      0.028246988     2.750892e-02     2.642106e-02
+#> comp_02      0.032824770      0.004165698     5.788827e-03     4.682986e-02
+#> comp_03      0.009732882      0.053273071     5.238257e-02     1.002123e-10
+#> comp_04      0.064907432      0.017416965     1.001506e-10     3.876413e-02
+#> comp_05      0.004365134      0.047877852     9.997733e-11     1.034977e-02
 #>         AAACTTGATCCAGA-1
-#> comp_01      0.032608394
-#> comp_02      0.002322546
-#> comp_03      0.007309148
-#> comp_04      0.018659715
-#> comp_05      0.049327463
+#> comp_01      0.032608423
+#> comp_02      0.002322522
+#> comp_03      0.007309146
+#> comp_04      0.018659594
+#> comp_05      0.049327504
 ```
 
 ### Running multiple NMF runs

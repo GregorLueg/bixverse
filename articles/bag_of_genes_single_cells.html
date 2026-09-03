@@ -462,17 +462,17 @@
 <span><span class="co">#&gt;              &lt;char&gt;     &lt;num&gt;     &lt;num&gt; &lt;num&gt; &lt;num&gt;      &lt;char&gt;</span></span>
 <span><span class="co">#&gt;  1: ENSG00000188290 0.3242266  39.66046     0     0        HES4</span></span>
 <span><span class="co">#&gt;  2: ENSG00000119535 0.3022016  49.27494     0     0       CSF3R</span></span>
-<span><span class="co">#&gt;  3: ENSG00000163131 0.5119518  63.60383     0     0        CTSS</span></span>
+<span><span class="co">#&gt;  3: ENSG00000163131 0.5119517  63.60383     0     0        CTSS</span></span>
 <span><span class="co">#&gt;  4: ENSG00000163191 0.4122631  58.87283     0     0     S100A11</span></span>
 <span><span class="co">#&gt;  5: ENSG00000163220 0.6936087 109.61599     0     0      S100A9</span></span>
 <span><span class="co">#&gt;  6: ENSG00000143546 0.6563530 114.56873     0     0      S100A8</span></span>
-<span><span class="co">#&gt;  7: ENSG00000197956 0.6433796  98.70326     0     0      S100A6</span></span>
+<span><span class="co">#&gt;  7: ENSG00000197956 0.6433797  98.70326     0     0      S100A6</span></span>
 <span><span class="co">#&gt;  8: ENSG00000196154 0.6429363  92.52890     0     0      S100A4</span></span>
-<span><span class="co">#&gt;  9: ENSG00000177954 0.6083655  94.29710     0     0       RPS27</span></span>
+<span><span class="co">#&gt;  9: ENSG00000177954 0.6083654  94.29710     0     0       RPS27</span></span>
 <span><span class="co">#&gt; 10: ENSG00000158869 0.6997935  81.83833     0     0      FCER1G</span></span>
 <span><span class="co">#&gt; 11: ENSG00000203747 0.6159353  71.61398     0     0      FCGR3A</span></span>
 <span><span class="co">#&gt; 12: ENSG00000198821 0.2228819  59.91400     0     0       CD247</span></span>
-<span><span class="co">#&gt; 13: ENSG00000143185 0.3826068  53.56304     0     0        XCL2</span></span>
+<span><span class="co">#&gt; 13: ENSG00000143185 0.3826069  53.56304     0     0        XCL2</span></span>
 <span><span class="co">#&gt; 14: ENSG00000143184 0.3719576  57.30895     0     0        XCL1</span></span>
 <span><span class="co">#&gt; 15: ENSG00000116667 0.2143988  43.89426     0     0     C1orf21</span></span>
 <span><span class="co">#&gt; 16: ENSG00000143947 0.3742483  57.71536     0     0      RPS27A</span></span>
@@ -515,7 +515,7 @@
 <span></span>
 <span><span class="co"># the largest modules, at most 500 genes, subsampled in proportion to module</span></span>
 <span><span class="co"># size. top_k = NULL gives you every module</span></span>
-<span><span class="va">hotspot_top_k</span> <span class="op">&lt;-</span> <span class="fl">5L</span></span>
+<span><span class="va">hotspot_top_k</span> <span class="op">&lt;-</span> <span class="fl">6L</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">hotspot_cor</span>, top_k <span class="op">=</span> <span class="va">hotspot_top_k</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
@@ -804,16 +804,17 @@
 </div>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb20"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">sc_object</span><span class="op">[[</span><span class="st">"STAT1_active"</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">binary_matrix</span><span class="op">[</span>, <span class="st">"STAT1"</span><span class="op">]</span></span>
+<code class="sourceCode R"><span><span class="va">sc_object</span><span class="op">[[</span><span class="st">"SPI1_active"</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">binary_matrix</span><span class="op">[</span>, <span class="st">"SPI1"</span><span class="op">]</span></span>
 <span></span>
 <span><span class="fu"><a href="https://gregorlueg.github.io/bixverse.plots/reference/embedding_plot_sc.html">embedding_plot_sc</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">sc_object</span>,</span>
 <span>  embedding <span class="op">=</span> <span class="st">"umap"</span>,</span>
-<span>  colour_by <span class="op">=</span> <span class="st">"STAT1_active"</span></span>
+<span>  colour_by <span class="op">=</span> <span class="st">"SPI1_active"</span>,</span>
+<span>  palette <span class="op">=</span> <span class="st">"viridis"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="bag_of_genes_single_cells_files/figure-html/scenic-plot-stat1-1.png" width="672"></p>
+<figure><p><img src="bag_of_genes_single_cells_files/figure-html/scenic-plot-spi1-1.png" width="672"></p>
 </figure>
 </div>
 </div>
@@ -985,13 +986,13 @@
 <div class="sourceCode cell-code" id="cb29"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/get_w.html">get_w</a></span><span class="op">(</span><span class="va">t_cell_nmf_results</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span></span>
 <span><span class="co">#&gt;                      comp_01      comp_02      comp_03      comp_04</span></span>
-<span><span class="co">#&gt; ENSG00000188976 2.756057e+00 1.516397e-01 9.978818e-11 3.985491e-01</span></span>
-<span><span class="co">#&gt; ENSG00000188290 9.983771e-11 1.001252e-10 9.978818e-11 7.743262e-02</span></span>
-<span><span class="co">#&gt; ENSG00000187608 9.983771e-11 2.746886e+00 1.624592e-01 9.984961e-11</span></span>
-<span><span class="co">#&gt; ENSG00000186827 9.983771e-11 1.001252e-10 7.541643e+00 9.984961e-11</span></span>
-<span><span class="co">#&gt; ENSG00000176022 9.073032e-01 7.618927e-03 1.844488e-01 9.984961e-11</span></span>
+<span><span class="co">#&gt; ENSG00000188976 2.756063e+00 1.516444e-01 9.978818e-11 3.985443e-01</span></span>
+<span><span class="co">#&gt; ENSG00000188290 9.983770e-11 1.001252e-10 9.978818e-11 7.743338e-02</span></span>
+<span><span class="co">#&gt; ENSG00000187608 9.983770e-11 2.746899e+00 1.624547e-01 9.984959e-11</span></span>
+<span><span class="co">#&gt; ENSG00000186827 9.983770e-11 1.001252e-10 7.541640e+00 9.984959e-11</span></span>
+<span><span class="co">#&gt; ENSG00000176022 9.073032e-01 7.619265e-03 1.844488e-01 9.984959e-11</span></span>
 <span><span class="co">#&gt;                      comp_05</span></span>
-<span><span class="co">#&gt; ENSG00000188976 3.031699e-01</span></span>
+<span><span class="co">#&gt; ENSG00000188976 3.031700e-01</span></span>
 <span><span class="co">#&gt; ENSG00000188290 1.000227e-10</span></span>
 <span><span class="co">#&gt; ENSG00000187608 1.000227e-10</span></span>
 <span><span class="co">#&gt; ENSG00000186827 1.000227e-10</span></span>
@@ -1001,17 +1002,17 @@
 <div class="sourceCode cell-code" id="cb30"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/get_h.html">get_h</a></span><span class="op">(</span><span class="va">t_cell_nmf_results</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span></span>
 <span><span class="co">#&gt;         AAACATACAACCAC-1 AAACATTGATCAGC-1 AAACGCACTGGTAC-1 AAACGCTGGTTCTT-1</span></span>
-<span><span class="co">#&gt; comp_01      0.029081339      0.028247045     2.750897e-02     2.642105e-02</span></span>
-<span><span class="co">#&gt; comp_02      0.032824829      0.004165604     5.788922e-03     4.683001e-02</span></span>
-<span><span class="co">#&gt; comp_03      0.009732792      0.053272992     5.238255e-02     1.002123e-10</span></span>
-<span><span class="co">#&gt; comp_04      0.064907387      0.017417077     1.001506e-10     3.876416e-02</span></span>
-<span><span class="co">#&gt; comp_05      0.004365175      0.047877818     9.997733e-11     1.034977e-02</span></span>
+<span><span class="co">#&gt; comp_01      0.029081384      0.028246988     2.750892e-02     2.642106e-02</span></span>
+<span><span class="co">#&gt; comp_02      0.032824770      0.004165698     5.788827e-03     4.682986e-02</span></span>
+<span><span class="co">#&gt; comp_03      0.009732882      0.053273071     5.238257e-02     1.002123e-10</span></span>
+<span><span class="co">#&gt; comp_04      0.064907432      0.017416965     1.001506e-10     3.876413e-02</span></span>
+<span><span class="co">#&gt; comp_05      0.004365134      0.047877852     9.997733e-11     1.034977e-02</span></span>
 <span><span class="co">#&gt;         AAACTTGATCCAGA-1</span></span>
-<span><span class="co">#&gt; comp_01      0.032608394</span></span>
-<span><span class="co">#&gt; comp_02      0.002322546</span></span>
-<span><span class="co">#&gt; comp_03      0.007309148</span></span>
-<span><span class="co">#&gt; comp_04      0.018659715</span></span>
-<span><span class="co">#&gt; comp_05      0.049327463</span></span></code></pre></div>
+<span><span class="co">#&gt; comp_01      0.032608423</span></span>
+<span><span class="co">#&gt; comp_02      0.002322522</span></span>
+<span><span class="co">#&gt; comp_03      0.007309146</span></span>
+<span><span class="co">#&gt; comp_04      0.018659594</span></span>
+<span><span class="co">#&gt; comp_05      0.049327504</span></span></code></pre></div>
 </div>
 </section><section class="level3"><h3 id="running-multiple-nmf-runs">Running multiple NMF runs<a class="anchor" aria-label="anchor" href="#running-multiple-nmf-runs"></a>
 </h3>
