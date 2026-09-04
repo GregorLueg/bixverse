@@ -57,8 +57,10 @@ navbar:
           href: articles/doublet_detection.html
         - text: "Batch corrections"
           href: articles/single_cell_batch_corrections.html
-        - text: "kNN searches for single cells in bixverse"
-          href: articles/knn_searches.html
+        - text: "Differential expression in single cell"
+          href: articles/differential_expression.html
+        - text: "Differential abundance in single cell"
+          href: articles/differential_abundance.html
         - text: "Sub-clustering and per-group pipelines"
           href: articles/single_cell_subsets.html
         - text: -------
@@ -81,6 +83,8 @@ navbar:
         - text: "Others"
         - text: Analysing 1 million cells on a laptop
           href: articles/single_cell_big_data.html
+        - text: "kNN searches for single cells in bixverse"
+          href: articles/knn_searches.html
         - text: Plotting helpers
           href: articles/single_cell_visualisation.html
     articles:

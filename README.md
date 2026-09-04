@@ -171,6 +171,8 @@ skill into your agent set up so it stops guessing at the API.
 
 ### Single and spatial transcriptomics
 
+**To-do's:**
+
 - [ ] [Slingshot](https://pubmed.ncbi.nlm.nih.gov/29914354/) for trajectory
   analysis, to sit alongside the Palantir and PAGA implementations that already
   ship.
@@ -180,9 +182,12 @@ skill into your agent set up so it stops guessing at the API.
 - [ ] Full support of spatial transcriptomics via a dedicated `SpatialSpots`
   class, using the current Rust-based infrastructure for large scale analysis
   on local compute.
-- [ ] Wire up [edge-rs](https://github.com/GregorLueg/edge-rs) to have 
+
+**Implemented**
+
+- [x] Wire up [edge-rs](https://github.com/GregorLueg/edge-rs) to have 
   [NEBULA](https://www.nature.com/articles/s42003-021-02146-6) directly 
-  integrated into the single cell framework.
+  integrated into the single cell framework. (Done in `"0.4.11"`).
 
 ### Cross integration
 
