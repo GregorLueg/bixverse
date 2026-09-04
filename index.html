@@ -77,7 +77,8 @@
     <li><a class="dropdown-item" href="articles/single_cell_io.html">Reading data in (single-cell I/O)</a></li>
     <li><a class="dropdown-item" href="articles/doublet_detection.html">Doublet detection in bixverse</a></li>
     <li><a class="dropdown-item" href="articles/single_cell_batch_corrections.html">Batch corrections</a></li>
-    <li><a class="dropdown-item" href="articles/knn_searches.html">kNN searches for single cells in bixverse</a></li>
+    <li><a class="dropdown-item" href="articles/differential_expression.html">Differential expression in single cell</a></li>
+    <li><a class="dropdown-item" href="articles/differential_abundance.html">Differential abundance in single cell</a></li>
     <li><a class="dropdown-item" href="articles/single_cell_subsets.html">Sub-clustering and per-group pipelines</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>More advanced analysis methods</h6></li>
@@ -91,6 +92,7 @@
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Others</h6></li>
     <li><a class="dropdown-item" href="articles/single_cell_big_data.html">Analysing 1 million cells on a laptop</a></li>
+    <li><a class="dropdown-item" href="articles/knn_searches.html">kNN searches for single cells in bixverse</a></li>
     <li><a class="dropdown-item" href="articles/single_cell_visualisation.html">Plotting helpers</a></li>
   </ul>
 </li>
@@ -319,12 +321,16 @@
 <div class="section level3">
 <h3 id="single-and-spatial-transcriptomics">Single and spatial transcriptomics<a class="anchor" aria-label="anchor" href="#single-and-spatial-transcriptomics"></a>
 </h3>
+<p><strong>To-do’s:</strong></p>
 <ul class="task-list">
 <li><label><input type="checkbox"><a href="https://pubmed.ncbi.nlm.nih.gov/29914354/" class="external-link">Slingshot</a> for trajectory analysis, to sit alongside the Palantir and PAGA implementations that already ship.</label></li>
 <li><label><input type="checkbox">Save data to h5ad for easier interoperability with Python.</label></li>
 <li><label><input type="checkbox">Easy interoperability that chunks of data can be read in for neural network training in the corresponding deep learning frameworks.</label></li>
 <li><label><input type="checkbox">Full support of spatial transcriptomics via a dedicated <code>SpatialSpots</code> class, using the current Rust-based infrastructure for large scale analysis on local compute.</label></li>
-<li><label><input type="checkbox">Wire up <a href="https://github.com/GregorLueg/edge-rs" class="external-link">edge-rs</a> to have <a href="https://www.nature.com/articles/s42003-021-02146-6" class="external-link">NEBULA</a> directly integrated into the single cell framework.</label></li>
+</ul>
+<p><strong>Implemented</strong></p>
+<ul class="task-list">
+<li><label><input type="checkbox" checked>Wire up <a href="https://github.com/GregorLueg/edge-rs" class="external-link">edge-rs</a> to have <a href="https://www.nature.com/articles/s42003-021-02146-6" class="external-link">NEBULA</a> directly integrated into the single cell framework. (Done in <code>"0.4.11"</code>).</label></li>
 </ul>
 </div>
 <div class="section level3">

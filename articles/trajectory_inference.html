@@ -77,7 +77,8 @@
     <li><a class="dropdown-item" href="../articles/single_cell_io.html">Reading data in (single-cell I/O)</a></li>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
-    <li><a class="dropdown-item" href="../articles/knn_searches.html">kNN searches for single cells in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/differential_expression.html">Differential expression in single cell</a></li>
+    <li><a class="dropdown-item" href="../articles/differential_abundance.html">Differential abundance in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_subsets.html">Sub-clustering and per-group pipelines</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>More advanced analysis methods</h6></li>
@@ -91,6 +92,7 @@
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Others</h6></li>
     <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing 1 million cells on a laptop</a></li>
+    <li><a class="dropdown-item" href="../articles/knn_searches.html">kNN searches for single cells in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_visualisation.html">Plotting helpers</a></li>
   </ul>
 </li>
@@ -119,7 +121,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Trajectory inference with Palantir and PAGA</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-09-03</p>
+      <p class="date">2026-09-04</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -305,18 +307,18 @@
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/get_sc_cache_status.html">get_sc_cache_status</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span></span>
 <span><span class="co">#&gt;    modality  artefact   name stamped  stale reason               id</span></span>
 <span><span class="co">#&gt;      &lt;char&gt;    &lt;char&gt; &lt;char&gt;  &lt;lgcl&gt; &lt;lgcl&gt; &lt;char&gt;           &lt;char&gt;</span></span>
-<span><span class="co">#&gt; 1:      rna       pca   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 4d38cf3443992a0d</span></span>
-<span><span class="co">#&gt; 2:      rna embedding   umap    TRUE  FALSE   &lt;NA&gt; 99f1def5bcbc4025</span></span>
-<span><span class="co">#&gt; 3:      rna       knn   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; cce7187717152ebe</span></span>
-<span><span class="co">#&gt; 4:      rna       snn   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; f1c5c5fb02e13c40</span></span>
-<span><span class="co">#&gt; 5:      rna     magic   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 8f6c2af636ae86d8</span></span>
+<span><span class="co">#&gt; 1:      rna       pca   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; e2a7f2203d15a9f1</span></span>
+<span><span class="co">#&gt; 2:      rna embedding   umap    TRUE  FALSE   &lt;NA&gt; 1b2dc1237301682b</span></span>
+<span><span class="co">#&gt; 3:      rna       knn   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 6c5ac2746947b4d5</span></span>
+<span><span class="co">#&gt; 4:      rna       snn   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 82ba494677106535</span></span>
+<span><span class="co">#&gt; 5:      rna     magic   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 6c8feb52f8a8b3ef</span></span>
 <span><span class="co">#&gt;                                 from</span></span>
 <span><span class="co">#&gt;                               &lt;list&gt;</span></span>
 <span><span class="co">#&gt; 1:                                  </span></span>
-<span><span class="co">#&gt; 2: 4d38cf3443992a0d,cce7187717152ebe</span></span>
-<span><span class="co">#&gt; 3:                  4d38cf3443992a0d</span></span>
-<span><span class="co">#&gt; 4:                  cce7187717152ebe</span></span>
-<span><span class="co">#&gt; 5:                  cce7187717152ebe</span></span></code></pre></div>
+<span><span class="co">#&gt; 2: e2a7f2203d15a9f1,6c5ac2746947b4d5</span></span>
+<span><span class="co">#&gt; 3:                  e2a7f2203d15a9f1</span></span>
+<span><span class="co">#&gt; 4:                  6c5ac2746947b4d5</span></span>
+<span><span class="co">#&gt; 5:                  6c5ac2746947b4d5</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="paga">PAGA<a class="anchor" aria-label="anchor" href="#paga"></a>
 </h2>

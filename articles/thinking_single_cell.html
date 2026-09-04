@@ -77,7 +77,8 @@
     <li><a class="dropdown-item" href="../articles/single_cell_io.html">Reading data in (single-cell I/O)</a></li>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
-    <li><a class="dropdown-item" href="../articles/knn_searches.html">kNN searches for single cells in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/differential_expression.html">Differential expression in single cell</a></li>
+    <li><a class="dropdown-item" href="../articles/differential_abundance.html">Differential abundance in single cell</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_subsets.html">Sub-clustering and per-group pipelines</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>More advanced analysis methods</h6></li>
@@ -91,6 +92,7 @@
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Others</h6></li>
     <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing 1 million cells on a laptop</a></li>
+    <li><a class="dropdown-item" href="../articles/knn_searches.html">kNN searches for single cells in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_visualisation.html">Plotting helpers</a></li>
   </ul>
 </li>
@@ -119,7 +121,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Thinking about single cells the bixverse way</h1>
 
       <p class="author">Gregor Lueg and Grant Neilson</p>
-      <p class="date">2026-09-03</p>
+      <p class="date">2026-09-04</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -159,11 +161,11 @@
 <span><span class="co">#&gt;   ..$ cell_id    : chr [1:1000] "cell_0001" "cell_0002" "cell_0003" "cell_0004" ...</span></span>
 <span><span class="co">#&gt;   ..$ cell_grp   : chr [1:1000] "cell_type_1" "cell_type_2" "cell_type_3" "cell_type_1" ...</span></span>
 <span><span class="co">#&gt;   ..$ batch_index: num [1:1000] 1 1 1 1 1 1 1 1 1 1 ...</span></span>
-<span><span class="co">#&gt;   ..- attr(*, ".internal.selfref")=&lt;pointer: 0x555a79748b80&gt; </span></span>
+<span><span class="co">#&gt;   ..- attr(*, ".internal.selfref")=&lt;pointer: 0x56331126eb80&gt; </span></span>
 <span><span class="co">#&gt;  $ var   :Classes 'data.table' and 'data.frame': 100 obs. of  2 variables:</span></span>
 <span><span class="co">#&gt;   ..$ gene_id   : chr [1:100] "gene_001" "gene_002" "gene_003" "gene_004" ...</span></span>
 <span><span class="co">#&gt;   ..$ ensembl_id: chr [1:100] "ens_001" "ens_002" "ens_003" "ens_004" ...</span></span>
-<span><span class="co">#&gt;   ..- attr(*, ".internal.selfref")=&lt;pointer: 0x555a79748b80&gt;</span></span></code></pre></div>
+<span><span class="co">#&gt;   ..- attr(*, ".internal.selfref")=&lt;pointer: 0x56331126eb80&gt;</span></span></code></pre></div>
 </div>
 <p>We have a count matrix with pseudo raw counts, an obs table and a var table. Let us load this into a <code>bixverse</code> SingleCell class and explore what’s actually happening.</p>
 </section><section class="level3"><h3 id="loading-in-data">Loading in data<a class="anchor" aria-label="anchor" href="#loading-in-data"></a>
@@ -473,14 +475,14 @@
 <span><span class="fu"><a href="../reference/get_sc_cache_status.html">get_sc_cache_status</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span></span>
 <span><span class="co">#&gt;    modality artefact   name stamped  stale reason               id</span></span>
 <span><span class="co">#&gt;      &lt;char&gt;   &lt;char&gt; &lt;char&gt;  &lt;lgcl&gt; &lt;lgcl&gt; &lt;char&gt;           &lt;char&gt;</span></span>
-<span><span class="co">#&gt; 1:      rna      pca   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 68050e2aacae02f3</span></span>
-<span><span class="co">#&gt; 2:      rna      knn   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 18491e942054cfb7</span></span>
-<span><span class="co">#&gt; 3:      rna      snn   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; f4712895c323d011</span></span>
+<span><span class="co">#&gt; 1:      rna      pca   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 02e6837654c0e8bc</span></span>
+<span><span class="co">#&gt; 2:      rna      knn   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 58a103aeb846f081</span></span>
+<span><span class="co">#&gt; 3:      rna      snn   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 09ca4c596239c35a</span></span>
 <span><span class="co">#&gt;                from</span></span>
 <span><span class="co">#&gt;              &lt;list&gt;</span></span>
 <span><span class="co">#&gt; 1:                 </span></span>
-<span><span class="co">#&gt; 2: 68050e2aacae02f3</span></span>
-<span><span class="co">#&gt; 3: 18491e942054cfb7</span></span></code></pre></div>
+<span><span class="co">#&gt; 2: 02e6837654c0e8bc</span></span>
+<span><span class="co">#&gt; 3: 58a103aeb846f081</span></span></code></pre></div>
 </div>
 <p>The <code>from</code> column is what makes this more than a cell counter. The kNN records the id of the PCA it was built on, and the sNN records the kNN. So watch what happens if we re-run the PCA on the <strong>same</strong> cells, just with fewer components, and don’t touch the neighbours:</p>
 <div class="cell">
@@ -495,14 +497,14 @@
 <span><span class="co">#&gt; 3:      rna      snn   &lt;NA&gt;    TRUE   TRUE</span></span>
 <span><span class="co">#&gt;                                                         reason               id</span></span>
 <span><span class="co">#&gt;                                                         &lt;char&gt;           &lt;char&gt;</span></span>
-<span><span class="co">#&gt; 1:                                                        &lt;NA&gt; 35c39e6276db6764</span></span>
-<span><span class="co">#&gt; 2: the artefact it was derived from was re-computed or removed 18491e942054cfb7</span></span>
-<span><span class="co">#&gt; 3:                             its upstream `rna:knn` is stale f4712895c323d011</span></span>
+<span><span class="co">#&gt; 1:                                                        &lt;NA&gt; e73ac9e27f414caa</span></span>
+<span><span class="co">#&gt; 2: the artefact it was derived from was re-computed or removed 58a103aeb846f081</span></span>
+<span><span class="co">#&gt; 3:                             its upstream `rna:knn` is stale 09ca4c596239c35a</span></span>
 <span><span class="co">#&gt;                from</span></span>
 <span><span class="co">#&gt;              &lt;list&gt;</span></span>
 <span><span class="co">#&gt; 1:                 </span></span>
-<span><span class="co">#&gt; 2: 68050e2aacae02f3</span></span>
-<span><span class="co">#&gt; 3: 18491e942054cfb7</span></span></code></pre></div>
+<span><span class="co">#&gt; 2: 02e6837654c0e8bc</span></span>
+<span><span class="co">#&gt; 3: 58a103aeb846f081</span></span></code></pre></div>
 </div>
 <p>The PCA is fine. The kNN is stale because the PCA it points at no longer exists, and the sNN is stale through the kNN, even though its own cell set never moved. A row-count check would have waved both of those through. The print says so too:</p>
 <div class="cell">
@@ -535,14 +537,14 @@
 <span><span class="fu"><a href="../reference/get_sc_cache_status.html">get_sc_cache_status</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span></span>
 <span><span class="co">#&gt;    modality artefact   name stamped  stale reason               id</span></span>
 <span><span class="co">#&gt;      &lt;char&gt;   &lt;char&gt; &lt;char&gt;  &lt;lgcl&gt; &lt;lgcl&gt; &lt;char&gt;           &lt;char&gt;</span></span>
-<span><span class="co">#&gt; 1:      rna      pca   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 35c39e6276db6764</span></span>
-<span><span class="co">#&gt; 2:      rna      knn   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 225b6e7360e76649</span></span>
-<span><span class="co">#&gt; 3:      rna      snn   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; 8dc45fc28274e7d2</span></span>
+<span><span class="co">#&gt; 1:      rna      pca   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; e73ac9e27f414caa</span></span>
+<span><span class="co">#&gt; 2:      rna      knn   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; f522f5387677a560</span></span>
+<span><span class="co">#&gt; 3:      rna      snn   &lt;NA&gt;    TRUE  FALSE   &lt;NA&gt; cc11eef66849536f</span></span>
 <span><span class="co">#&gt;                from</span></span>
 <span><span class="co">#&gt;              &lt;list&gt;</span></span>
 <span><span class="co">#&gt; 1:                 </span></span>
-<span><span class="co">#&gt; 2: 35c39e6276db6764</span></span>
-<span><span class="co">#&gt; 3: 225b6e7360e76649</span></span></code></pre></div>
+<span><span class="co">#&gt; 2: e73ac9e27f414caa</span></span>
+<span><span class="co">#&gt; 3: f522f5387677a560</span></span></code></pre></div>
 </div>
 <p><code><a href="../reference/set_cells_to_keep.html">set_cells_to_keep()</a></code> warns about exactly the same thing, listing what it just invalidated. If you want everything to be an error, set <code>options(bixverse.cache_check = "error")</code>; <code>"none"</code> turns the lot off, at your own risk.</p>
 <p>Two things it deliberately does not do. Artefacts computed before this existed carry no stamp, so they report as <code>unknown</code> and pass, because nothing is known about them either way. And the stamp tracks provenance, not parameters: a kNN built on the first 5 PCs and one built on all 15 of the same PCA look identical to it. Neither of those can produce an index mismatch, which is what this is here to stop.</p>
@@ -606,8 +608,8 @@
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: milliseconds</span></span>
 <span><span class="co">#&gt;               expr      min       lq     mean   median       uq      max neval</span></span>
-<span><span class="co">#&gt;    the_correct_way 1.425903 1.440190 1.596184 1.447353 1.537962 2.684573    10</span></span>
-<span><span class="co">#&gt;  the_incorrect_way 2.274758 2.369565 2.467735 2.500800 2.539972 2.597701    10</span></span></code></pre></div>
+<span><span class="co">#&gt;    the_correct_way 1.335084 1.387181 1.518118 1.426425 1.478082 2.433176    10</span></span>
+<span><span class="co">#&gt;  the_incorrect_way 2.242299 2.408529 2.448478 2.467710 2.501303 2.593224    10</span></span></code></pre></div>
 </div>
 <p>The difference seems marginal here, but it WILL bite you if you do this on large data sets. Also, the memory advantages this approach gives you usually will disappear if you force the wrong format. Also, another thing to REALLY consider… The indices you supply in R should match what the Rust files have and again you need to THINK about the cells to keep. A nasty example here:</p>
 <div class="cell">
