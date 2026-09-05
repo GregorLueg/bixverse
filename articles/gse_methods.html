@@ -121,7 +121,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Gene Set Enrichment Methods</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-09-04</p>
+      <p class="date">2026-09-05</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -236,7 +236,7 @@
 <p>To give a sense of the scale this handles comfortably, the following runs 250 target gene sets against 5,000 gene sets drawn from a universe of 20,000 genes — 1.25 million hypergeometric tests in total. On most systems this completes in a few seconds.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">seed</span> <span class="op">=</span> <span class="fl">10101L</span></span>
+<code class="sourceCode R"><span><span class="va">seed</span> <span class="op">&lt;-</span> <span class="fl">10101L</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="va">seed</span><span class="op">)</span></span>
 <span></span>
@@ -284,7 +284,7 @@
 <span>  gene_set_list <span class="op">=</span> <span class="va">gene_sets</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu">tictoc</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tictoc/man/tic.html" class="external-link">toc</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 1.696 sec elapsed</span></span></code></pre></div>
+<span><span class="co">#&gt; 1.8 sec elapsed</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="gene-ontology-aware-enrichment-the-elimination-method">Gene Ontology-aware enrichment: the elimination method<a class="anchor" aria-label="anchor" href="#gene-ontology-aware-enrichment-the-elimination-method"></a>
 </h2>
@@ -385,7 +385,7 @@
 <span>  target_gene_list <span class="op">=</span> <span class="va">go_target_gene_sets</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu">tictoc</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tictoc/man/tic.html" class="external-link">toc</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 1.741 sec elapsed</span></span></code></pre></div>
+<span><span class="co">#&gt; 1.932 sec elapsed</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="alternative-post-hoc-simplification-of-go-results">Alternative: post-hoc simplification of GO results<a class="anchor" aria-label="anchor" href="#alternative-post-hoc-simplification-of-go-results"></a>
 </h2>
@@ -576,8 +576,8 @@
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: seconds</span></span>
 <span><span class="co">#&gt;   expr      min       lq     mean   median       uq      max neval</span></span>
-<span><span class="co">#&gt;  fgsea 2.893813 2.994677 3.226675 3.241880 3.327158 3.675848     5</span></span>
-<span><span class="co">#&gt;   rust 2.141132 2.164267 2.164847 2.165388 2.171697 2.181752     5</span></span></code></pre></div>
+<span><span class="co">#&gt;  fgsea 3.111818 3.276709 3.512882 3.566832 3.647523 3.961526     5</span></span>
+<span><span class="co">#&gt;   rust 2.281162 2.311332 2.305926 2.311897 2.311937 2.313301     5</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="blitzgsea">blitzGSEA<a class="anchor" aria-label="anchor" href="#blitzgsea"></a>
 </h2>
@@ -641,7 +641,7 @@
 </div>
 </div>
 </div>
-<p>Close enough to rank the same things at the top, with the gamma tail reaching further into the small p-values than 1000 permutations can.</p>
+<p>Overall good correlation between the two.</p>
 <section class="level3"><h3 id="reusing-the-null-model">Reusing the null model<a class="anchor" aria-label="anchor" href="#reusing-the-null-model"></a>
 </h3>
 <p>Nothing about a gene set library enters the calibration. It depends only on the signature, so one calibration serves every library you score against that ranking. <code><a href="../reference/blitzgsea_calibrate.html">blitzgsea_calibrate()</a></code> hands it back as a plain list you can hold onto or <code><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">saveRDS()</a></code>:</p>
@@ -683,10 +683,10 @@
 <span>  times <span class="op">=</span> <span class="fl">5L</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: milliseconds</span></span>
-<span><span class="co">#&gt;        expr        min         lq       mean     median         uq        max</span></span>
-<span><span class="co">#&gt;       fgsea 2129.50189 2154.65358 2155.96121 2157.82457 2161.49261 2176.33340</span></span>
-<span><span class="co">#&gt;  blitz_cold  892.37805  906.40702  906.84411  910.00843  910.77573  914.65130</span></span>
-<span><span class="co">#&gt;  blitz_warm   12.25435   12.94036   13.10043   12.97796   13.60812   13.72135</span></span>
+<span><span class="co">#&gt;        expr        min         lq       mean     median         uq       max</span></span>
+<span><span class="co">#&gt;       fgsea 2293.99362 2297.49294 2298.88581 2300.01519 2301.35131 2301.5760</span></span>
+<span><span class="co">#&gt;  blitz_cold  937.54700  939.56483  944.47562  941.89034  946.21931  957.1566</span></span>
+<span><span class="co">#&gt;  blitz_warm   13.37099   14.21344   14.80025   14.68046   15.27607   16.4603</span></span>
 <span><span class="co">#&gt;  neval</span></span>
 <span><span class="co">#&gt;      5</span></span>
 <span><span class="co">#&gt;      5</span></span>

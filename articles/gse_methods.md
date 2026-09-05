@@ -166,7 +166,7 @@ systems this completes in a few seconds.
 
 ``` r
 
-seed = 10101L
+seed <- 10101L
 
 set.seed(seed)
 
@@ -214,7 +214,7 @@ rs_results_example <- gse_hypergeometric_list(
   gene_set_list = gene_sets
 )
 tictoc::toc()
-#> 1.696 sec elapsed
+#> 1.8 sec elapsed
 ```
 
 ## Gene Ontology-aware enrichment: the elimination method
@@ -343,7 +343,7 @@ rs_results_example <- gse_go_elim_method_list(
   target_gene_list = go_target_gene_sets
 )
 tictoc::toc()
-#> 1.741 sec elapsed
+#> 1.932 sec elapsed
 ```
 
 ## Alternative: post-hoc simplification of GO results
@@ -563,8 +563,8 @@ microbenchmark::microbenchmark(
 )
 #> Unit: seconds
 #>   expr      min       lq     mean   median       uq      max neval
-#>  fgsea 2.893813 2.994677 3.226675 3.241880 3.327158 3.675848     5
-#>   rust 2.141132 2.164267 2.164847 2.165388 2.171697 2.181752     5
+#>  fgsea 3.111818 3.276709 3.512882 3.566832 3.647523 3.961526     5
+#>   rust 2.281162 2.311332 2.305926 2.311897 2.311937 2.313301     5
 ```
 
 ## blitzGSEA
@@ -634,8 +634,7 @@ plot(
 
 ![](gse_methods_files/figure-html/blitzgsea%20vs%20fgsea%20p-value%20comparison-1.png)
 
-Close enough to rank the same things at the top, with the gamma tail
-reaching further into the small p-values than 1000 permutations can.
+Overall good correlation between the two.
 
 ### Reusing the null model
 
@@ -690,10 +689,10 @@ microbenchmark::microbenchmark(
   times = 5L
 )
 #> Unit: milliseconds
-#>        expr        min         lq       mean     median         uq        max
-#>       fgsea 2129.50189 2154.65358 2155.96121 2157.82457 2161.49261 2176.33340
-#>  blitz_cold  892.37805  906.40702  906.84411  910.00843  910.77573  914.65130
-#>  blitz_warm   12.25435   12.94036   13.10043   12.97796   13.60812   13.72135
+#>        expr        min         lq       mean     median         uq       max
+#>       fgsea 2293.99362 2297.49294 2298.88581 2300.01519 2301.35131 2301.5760
+#>  blitz_cold  937.54700  939.56483  944.47562  941.89034  946.21931  957.1566
+#>  blitz_warm   13.37099   14.21344   14.80025   14.68046   15.27607   16.4603
 #>  neval
 #>      5
 #>      5
