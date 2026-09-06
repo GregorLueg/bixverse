@@ -45,3 +45,17 @@ This function can be used to calculate differentially expressed genes
 between two groups in the single cell data. At the moment, it has only
 an implementation for the Wilcox-based rank statistic.
 }
+\examples{
+# Wilcoxon test between two of the planted cell types
+sc <- demo_single_cells()
+obs <- get_sc_obs(sc)
+res <- find_markers_sc(
+  sc,
+  cells_1 = obs$cell_id[obs$cell_grp == "cell_type_1"],
+  cells_2 = obs$cell_id[obs$cell_grp == "cell_type_2"],
+  .verbose = FALSE
+)
+head(res)
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

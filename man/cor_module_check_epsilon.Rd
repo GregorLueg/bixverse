@@ -31,3 +31,14 @@ This functions iterates through a set of provided epsilons and checks for
 each one to what extend the underlying affinity matrix will follow a power
 law distribution.
 }
+\examples{
+# scan epsilons of a Gaussian RBF for scale-free topology
+mat <- t(synthetic_signal_matrix()$mat)
+obj <- BulkCoExp(mat, data.table::data.table(sample_id = rownames(mat)))
+obj <- preprocess_bulk_coexp(obj, hvg = 0.3, .verbose = FALSE)
+obj <- cor_module_processing(obj, cor_method = "spearman", .verbose = FALSE)
+obj <- cor_module_check_epsilon(
+  obj, rbf_func = "gaussian", .verbose = FALSE
+)
+head(get_epsilon_res(obj))
+}

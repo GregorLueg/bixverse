@@ -50,3 +50,12 @@ This function will run PCA on the detected highly variable genes. You can
 use randomised SVD for speed and there is an option for sparse SVD for very
 large data sets to avoid memory pressure.
 }
+\examples{
+# PCA on the highly variable genes
+sc <- demo_single_cells(prepped = FALSE)
+sc <- find_hvg_sc(sc, hvg_no = 30L, .verbose = FALSE)
+sc <- calculate_pca_sc(sc, no_pcs = 10L, .verbose = FALSE)
+dim(get_pca_factors(sc))
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

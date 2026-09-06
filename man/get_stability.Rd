@@ -22,3 +22,17 @@ reconstruction errors and the per-component clustering table. A stability
 near 1 means every restart found the same programmes; a low one means the
 factorisation is not reproducible at this \code{k}.
 }
+\examples{
+# how much the restarts agreed on the consensus factors
+sc <- demo_single_cells()
+res <- consensus_nmf_sc(
+  sc,
+  k = 5L,
+  n_runs = 5L,
+  nmf_consensus_params = params_nmf_consensus(density_threshold = 2),
+  .verbose = FALSE
+)
+get_stability(res)$stability
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

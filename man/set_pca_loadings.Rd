@@ -32,4 +32,12 @@ set_pca_loadings(x, pca_loading, ...)
 \description{
 Set/add PCA loadings
 }
+\examples{
+# only the first two loading vectors kept
+sc <- demo_single_cells()
+sc <- set_pca_loadings(sc, get_pca_loadings(sc)[, 1:2])
+dim(get_pca_loadings(sc))
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}
 \keyword{internal}

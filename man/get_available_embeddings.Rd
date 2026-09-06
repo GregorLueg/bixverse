@@ -34,3 +34,10 @@ Get the names of the available embeddings.
 Returns the available embedding as names from the class. This function is
 used for the single cell-related classes and methods.
 }
+\examples{
+# what is in the cache to plot against
+sc <- demo_single_cells()
+get_available_embeddings(sc)
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

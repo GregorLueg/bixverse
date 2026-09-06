@@ -37,3 +37,11 @@ List with the following items
 This function generates synthetic data for single cell test purposes. These
 data can be used for testing functionality of various single cell functions.
 }
+\examples{
+# a small synthetic experiment with three planted cell types
+data <- generate_single_cell_test_data(
+  syn_data_params = params_sc_synthetic_data(n_cells = 200L, n_genes = 40L)
+)
+dim(data$counts)
+head(data$obs, 3)
+}

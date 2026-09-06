@@ -29,3 +29,22 @@ to keep are known. The method subsets the ADT counts to the kept cells,
 applies the requested normalisation (CLR or DSB), populates the \code{"var_adt"}
 table in the DuckDB, and attaches an \code{ADTCounts} to the class.
 }
+\examples{
+# a CLR-normalised ADT layer on top of an ingested RNA modality
+rna <- generate_single_cell_test_data()
+adt <- generate_single_cell_test_data_adt()
+dir <- tempfile("bixverse_mm")
+dir.create(dir)
+object <- load_r_data(
+  SingleCellsMultiModal(dir_data = dir),
+  counts = rna$counts,
+  obs = rna$obs,
+  var = rna$var,
+  sc_qc_param = params_sc_min_quality(min_unique_genes = 5L),
+  .verbose = FALSE
+)
+object <- add_adt_counts_sc(object, adt_counts = adt$counts, method = "clr")
+get_adt_names(object)
+
+unlink(dir, recursive = TRUE, force = TRUE)
+}

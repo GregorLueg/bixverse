@@ -15,3 +15,10 @@ String. The path to the TotalSeq data.
 \description{
 This function downloads the PBMC TotalSeq data set.
 }
+\examples{
+\dontrun{
+# pulls the archive into the session tempdir()
+path <- download_pbmc_totalseq_data()
+read_tenx_h5_metadata(path)$feature_types
+}
+}

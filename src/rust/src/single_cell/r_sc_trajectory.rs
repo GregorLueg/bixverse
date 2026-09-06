@@ -234,8 +234,6 @@ fn rs_paga(knn_mat: RMatrix<i32>, partitions: Vec<i32>, n_partitions: usize) -> 
 /// @references Setty, et al., Nat. Biotechnol., 2019.
 ///
 /// @export
-///
-/// @keywords internal
 #[extendr]
 fn rs_gene_trends(
     expression: RMatrix<f64>,

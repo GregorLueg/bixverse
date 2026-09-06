@@ -72,6 +72,32 @@ almost any gene into a smooth monotone or single-peaked curve. Shorten
 bump.
 }
 
+\examples{
+# GP trends for five genes along the Palantir branches
+sc <- demo_single_cells()
+palantir <- run_palantir_sc(
+  sc,
+  early_cell = get_knn_obj(sc)$used_cells[1],
+  palantir_params = params_sc_palantir(
+    knn = 15L,
+    num_waypoints = 100L,
+    n_eigs = 3L,
+    use_early_cell_as_start = TRUE,
+    knn_params = list(knn_method = "exhaustive")
+  ),
+  .verbose = FALSE
+)
+res <- run_gene_trends_sc(
+  sc,
+  palantir_res = palantir,
+  features = get_gene_names(sc)[1:5],
+  gene_trend_params = params_sc_gene_trends(resolution = 50L),
+  .verbose = FALSE
+)
+head(res$trends)
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}
 \references{
 Setty, et al., Nat. Biotechnol., 2019.
 }

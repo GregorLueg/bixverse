@@ -36,3 +36,11 @@ The object with added clustering in the obs table.
 This function will apply Leiden clustering on the sNN graph with the
 given resolution and add a column to the obs table.
 }
+\examples{
+# Leiden on the cached sNN graph
+sc <- demo_single_cells()
+sc <- find_clusters_sc(sc, res = 1.0, name = "clusters")
+table(get_sc_obs(sc)$clusters)
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

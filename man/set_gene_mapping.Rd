@@ -22,4 +22,13 @@ set_gene_mapping(x, gene_map)
 Set a gene mapping for a given object. This is used for the
 single cell-related classes with streaming from disk.
 }
+\examples{
+# the mapping is normally written during ingestion
+sc <- demo_single_cells(prepped = FALSE)
+genes <- get_gene_names(sc)
+sc <- set_gene_mapping(sc, stats::setNames(seq_along(genes), genes))
+head(get_gene_names(sc), 3)
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}
 \keyword{internal}

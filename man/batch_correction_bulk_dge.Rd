@@ -36,3 +36,27 @@ and adding \code{normalised_counts_corrected} to the object. Should these counts
 be found by \code{\link[=calculate_dge_hedges]{calculate_dge_hedges()}}, they will be used for
 calculations of effect sizes based on Hedge's G.
 }
+\examples{
+# regress out a batch column and keep the corrected counts
+syn <- synthetic_bulk_cor_matrix()
+meta <- data.table::data.table(
+  sample_id = colnames(syn$counts),
+  case_control = rep(c("case", "control"), each = 50),
+  batch = rep(c("b1", "b2"), times = 50)
+)
+object <- BulkDge(raw_counts = syn$counts, meta_data = meta)
+object <- qc_bulk_dge(object, group_col = "case_control", .verbose = FALSE)
+object <- normalise_bulk_dge(
+  object,
+  group_col = "case_control",
+  .verbose = FALSE
+)
+object <- calculate_pca_bulk_dge(object, no_hvg_genes = 500L)
+object <- batch_correction_bulk_dge(
+  object,
+  contrast_column = "case_control",
+  batch_col = "batch",
+  no_hvg_genes = 500L
+)
+get_outputs(object)$normalised_counts_corrected[1:3, 1:3]
+}

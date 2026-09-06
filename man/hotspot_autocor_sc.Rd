@@ -82,3 +82,11 @@ follows from the metric. With \code{use_knn = TRUE} it is taken from the metric
 stored on the cached kNN graph, otherwise from \code{ann_dist} in
 \code{hotspot_params}.
 }
+\examples{
+# local auto-correlation of every gene on the cached kNN graph
+sc <- demo_single_cells()
+res <- hotspot_autocor_sc(sc, .verbose = FALSE)
+head(res, 3)
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

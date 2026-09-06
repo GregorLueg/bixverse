@@ -41,3 +41,16 @@ Takes a set of list of target genes, a list of gene sets and calculates a
 p-value (hypergeometric test) and odds ratio (OR) against all the gene sets.
 Also applies a multiple hypothesis correction (BH) to the p-values.
 }
+\examples{
+# two target sets tested against the same gene sets in one call
+gene_universe <- sprintf("gene_\%03i", 1:200)
+gene_sets <- list(
+  set_a = gene_universe[1:20],
+  set_b = gene_universe[100:130]
+)
+targets <- list(
+  hit_a = gene_universe[c(1:12, 150:158)],
+  hit_b = gene_universe[c(100:112, 5:8)]
+)
+gse_hypergeometric_list(targets, gene_sets, gene_universe, threshold = 1)
+}

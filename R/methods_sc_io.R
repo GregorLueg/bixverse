@@ -27,7 +27,7 @@
 #' header row. Applied uniformly. Defaults to `FALSE` (10x convention).
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
-#' @return A list with:
+#' @returns A list with:
 #' \itemize{
 #'   \item universe - Character vector of gene IDs in the intersection, in the
 #'   order they will appear in the final var table.
@@ -38,6 +38,30 @@
 #' }
 #'
 #' @export
+#'
+#' @examples
+#' # two CellRanger style directories reduced to their shared gene universe
+#' data <- generate_single_cell_test_data(
+#'   syn_data_params = params_sc_synthetic_data(n_cells = 200L, n_genes = 40L)
+#' )
+#' dirs <- c(tempfile("cr_a"), tempfile("cr_b"))
+#' for (d in dirs) {
+#'   dir.create(d, recursive = TRUE)
+#'   write_cellranger_output(
+#'     d, data$counts, data$obs, data$var,
+#'     rows = "cells", format_type = "csv", .verbose = FALSE
+#'   )
+#' }
+#' scan_res <- prescan_mtx_dirs(
+#'   dirs = dirs,
+#'   exp_ids = c("a", "b"),
+#'   cells_as_rows = TRUE,
+#'   has_hdr = TRUE,
+#'   .verbose = FALSE
+#' )
+#' scan_res$universe_size
+#'
+#' unlink(c(dirs, scan_res$temp_files), recursive = TRUE, force = TRUE)
 prescan_mtx_dirs <- function(
   dirs,
   exp_ids,
@@ -187,7 +211,7 @@ prescan_mtx_dirs <- function(
 #' @param cell_batch_size Integer. Cell batch size for heavy streaming.
 #' @param .verbose Boolean.
 #'
-#' @return Invisible NULL. Side effect is the gene-based binary file.
+#' @returns Invisible NULL. Side effect is the gene-based binary file.
 #'
 #' @keywords internal
 .dispatch_gene_based_data <- function(
@@ -268,10 +292,38 @@ prescan_mtx_dirs <- function(
 #' Defaults to `100000L`.
 #' @param .verbose Boolean. Controls the verbosity of the function.
 #'
-#' @return It will populate the files on disk and return the class with updated
+#' @returns It will populate the files on disk and return the class with updated
 #' shape information.
 #'
 #' @export
+#'
+#' @examplesIf requireNamespace("Seurat", quietly = TRUE)
+#' \donttest{
+#' # a Seurat object holds genes x cells, the loader transposes it
+#' data <- generate_single_cell_test_data(
+#'   syn_data_params = params_sc_synthetic_data(n_cells = 200L, n_genes = 40L)
+#' )
+#' seurat_obj <- Seurat::CreateSeuratObject(
+#'   counts = Matrix::t(data$counts),
+#'   meta.data = data.frame(data$obs, row.names = data$obs$cell_id)
+#' )
+#' dir_data <- tempfile("sc_seurat")
+#' dir.create(dir_data, recursive = TRUE)
+#' sc <- load_seurat(
+#'   object = SingleCells(dir_data = dir_data),
+#'   seurat = seurat_obj,
+#'   sc_qc_param = params_sc_min_quality(
+#'     min_unique_genes = 5L,
+#'     min_lib_size = 25L,
+#'     min_cells = 5L
+#'   ),
+#'   streaming = 0L,
+#'   .verbose = FALSE
+#' )
+#' dim(sc)
+#'
+#' unlink(dir_data, recursive = TRUE, force = TRUE)
+#' }
 load_seurat <- S7::new_generic(
   name = "load_seurat",
   dispatch_args = "object",
@@ -359,7 +411,7 @@ S7::method(load_seurat, SingleCells) <- function(
 #'
 #' @param sce `SingleCellExperiment` class.
 #'
-#' @return A list with `obs` and `var` as data.tables.
+#' @returns A list with `obs` and `var` as data.tables.
 #'
 #' @keywords internal
 .sce_obs_var <- function(sce) {
@@ -507,10 +559,39 @@ S7::method(load_seurat, SingleCells) <- function(
 #' Defaults to `100000L`.
 #' @param .verbose Boolean. Controls the verbosity of the function.
 #'
-#' @return It will populate the files on disk and return the class with updated
+#' @returns It will populate the files on disk and return the class with updated
 #' shape information.
 #'
 #' @export
+#'
+#' @examplesIf requireNamespace("SingleCellExperiment", quietly = TRUE)
+#' \donttest{
+#' # colData becomes obs, rowData becomes var, the counts assay gets normalised
+#' data <- generate_single_cell_test_data(
+#'   syn_data_params = params_sc_synthetic_data(n_cells = 200L, n_genes = 40L)
+#' )
+#' sce <- SingleCellExperiment::SingleCellExperiment(
+#'   assays = list(counts = as(Matrix::t(data$counts), "CsparseMatrix")),
+#'   colData = data.frame(data$obs, row.names = data$obs$cell_id),
+#'   rowData = data.frame(data$var, row.names = data$var$gene_id)
+#' )
+#' dir_data <- tempfile("sc_sce")
+#' dir.create(dir_data, recursive = TRUE)
+#' sc <- load_sce(
+#'   object = SingleCells(dir_data = dir_data),
+#'   sce = sce,
+#'   sc_qc_param = params_sc_min_quality(
+#'     min_unique_genes = 5L,
+#'     min_lib_size = 25L,
+#'     min_cells = 5L
+#'   ),
+#'   streaming = 0L,
+#'   .verbose = FALSE
+#' )
+#' dim(sc)
+#'
+#' unlink(dir_data, recursive = TRUE, force = TRUE)
+#' }
 load_sce <- S7::new_generic(
   name = "load_sce",
   dispatch_args = "object",
@@ -658,10 +739,34 @@ S7::method(load_sce, SingleCells) <- function(
 #' Defaults to `100000L`.
 #' @param .verbose Boolean. Controls the verbosity of the function.
 #'
-#' @return It will populate the files on disk and return the class with updated
+#' @returns It will populate the files on disk and return the class with updated
 #' shape information.
 #'
 #' @export
+#'
+#' @examples
+#' # straight from a dgRMatrix in memory onto disk
+#' data <- generate_single_cell_test_data(
+#'   syn_data_params = params_sc_synthetic_data(n_cells = 200L, n_genes = 40L)
+#' )
+#' dir_data <- tempfile("sc_r_data")
+#' dir.create(dir_data, recursive = TRUE)
+#' sc <- load_r_data(
+#'   object = SingleCells(dir_data = dir_data),
+#'   counts = data$counts,
+#'   obs = data$obs,
+#'   var = data$var,
+#'   sc_qc_param = params_sc_min_quality(
+#'     min_unique_genes = 5L,
+#'     min_lib_size = 25L,
+#'     min_cells = 5L
+#'   ),
+#'   streaming = 0L,
+#'   .verbose = FALSE
+#' )
+#' dim(sc)
+#'
+#' unlink(dir_data, recursive = TRUE, force = TRUE)
 load_r_data <- S7::new_generic(
   name = "load_r_data",
   dispatch_args = "object",
@@ -810,10 +915,34 @@ S7::method(load_r_data, SingleCells) <- function(
 #' Defaults to `100000L`.
 #' @param .verbose Boolean. Controls the verbosity of the function.
 #'
-#' @return It will populate the files on disk and return the class with updated
+#' @returns It will populate the files on disk and return the class with updated
 #' shape information.
 #'
 #' @export
+#'
+#' @examples
+#' # round trip through a sparse h5ad file
+#' data <- generate_single_cell_test_data(
+#'   syn_data_params = params_sc_synthetic_data(n_cells = 200L, n_genes = 40L)
+#' )
+#' f_path <- tempfile(fileext = ".h5ad")
+#' write_h5ad_sc(f_path, data$counts, data$obs, data$var, .verbose = FALSE)
+#' dir_data <- tempfile("sc_h5ad")
+#' dir.create(dir_data, recursive = TRUE)
+#' sc <- load_h5ad(
+#'   object = SingleCells(dir_data = dir_data),
+#'   h5_path = f_path,
+#'   sc_qc_param = params_sc_min_quality(
+#'     min_unique_genes = 5L,
+#'     min_lib_size = 25L,
+#'     min_cells = 5L
+#'   ),
+#'   streaming = 0L,
+#'   .verbose = FALSE
+#' )
+#' dim(sc)
+#'
+#' unlink(c(f_path, dir_data), recursive = TRUE, force = TRUE)
 load_h5ad <- S7::new_generic(
   name = "load_h5ad",
   dispatch_args = "object",
@@ -974,10 +1103,43 @@ S7::method(load_h5ad, SingleCells) <- function(
 #' Defaults to `100000L`.
 #' @param .verbose Boolean.
 #'
-#' @return It will populate the files on disk and return the class with updated
+#' @returns It will populate the files on disk and return the class with updated
 #' shape information.
 #'
 #' @export
+#'
+#' @examples
+#' # an h5ad holding log1p(x / lib_size * 1e4), raw counts reconstructed on read
+#' data <- generate_single_cell_test_data(
+#'   syn_data_params = params_sc_synthetic_data(n_cells = 200L, n_genes = 40L)
+#' )
+#' lib_size <- Matrix::rowSums(data$counts)
+#' norm_counts <- data$counts
+#' norm_counts@x <- log1p(
+#'   norm_counts@x / rep(lib_size, diff(norm_counts@p)) * 1e4
+#' )
+#' obs <- data.table::copy(data$obs)[, total_counts := lib_size]
+#'
+#' f_path <- tempfile(fileext = ".h5ad")
+#' write_h5ad_sc(f_path, norm_counts, obs, data$var, .verbose = FALSE)
+#' dir_data <- tempfile("sc_h5ad_norm")
+#' dir.create(dir_data, recursive = TRUE)
+#' sc <- load_h5ad_norm(
+#'   object = SingleCells(dir_data = dir_data),
+#'   h5_path = f_path,
+#'   obs_lib_size_col = "total_counts",
+#'   target_size = 1e4,
+#'   sc_qc_param = params_sc_min_quality(
+#'     min_unique_genes = 5L,
+#'     min_lib_size = 25L,
+#'     min_cells = 5L
+#'   ),
+#'   streaming = 0L,
+#'   .verbose = FALSE
+#' )
+#' dim(sc)
+#'
+#' unlink(c(f_path, dir_data), recursive = TRUE, force = TRUE)
 load_h5ad_norm <- S7::new_generic(
   name = "load_h5ad_norm",
   dispatch_args = "object",
@@ -1107,9 +1269,32 @@ S7::method(load_h5ad_norm, SingleCells) <- function(
 #' @param cell_batch_size Integer. Cell batch size. Defaults to `100000L`.
 #' @param .verbose Boolean.
 #'
-#' @return The class with updated shape information.
+#' @returns The class with updated shape information.
 #'
 #' @export
+#'
+#' @examples
+#' # same as load_h5ad(streaming = 2L)
+#' data <- generate_single_cell_test_data(
+#'   syn_data_params = params_sc_synthetic_data(n_cells = 200L, n_genes = 40L)
+#' )
+#' f_path <- tempfile(fileext = ".h5ad")
+#' write_h5ad_sc(f_path, data$counts, data$obs, data$var, .verbose = FALSE)
+#' dir_data <- tempfile("sc_stream")
+#' dir.create(dir_data, recursive = TRUE)
+#' sc <- stream_h5ad(
+#'   object = SingleCells(dir_data = dir_data),
+#'   h5_path = f_path,
+#'   sc_qc_param = params_sc_min_quality(
+#'     min_unique_genes = 5L,
+#'     min_lib_size = 25L,
+#'     min_cells = 5L
+#'   ),
+#'   .verbose = FALSE
+#' )
+#' dim(sc)
+#'
+#' unlink(c(f_path, dir_data), recursive = TRUE, force = TRUE)
 stream_h5ad <- S7::new_generic(
   name = "stream_h5ad",
   dispatch_args = "object",
@@ -1173,9 +1358,40 @@ S7::method(stream_h5ad, SingleCells) <- function(
 #' Defaults to `100000L`.
 #' @param .verbose Boolean.
 #'
-#' @return The class with updated shape and populated DuckDB.
+#' @returns The class with updated shape and populated DuckDB.
 #'
 #' @export
+#'
+#' @examples
+#' # two files into one experiment, cells tagged by exp_id
+#' files <- c(a = tempfile(fileext = ".h5ad"), b = tempfile(fileext = ".h5ad"))
+#' for (i in seq_along(files)) {
+#'   data <- generate_single_cell_test_data(
+#'     syn_data_params = params_sc_synthetic_data(
+#'       n_cells = 200L,
+#'       n_genes = 40L
+#'     ),
+#'     seed = i
+#'   )
+#'   write_h5ad_sc(files[i], data$counts, data$obs, data$var, .verbose = FALSE)
+#' }
+#' tasks <- prescan_h5ad_files(h5_paths = files, .verbose = FALSE)
+#' dir_data <- tempfile("sc_multi_h5ad")
+#' dir.create(dir_data, recursive = TRUE)
+#' sc <- load_multi_h5ad(
+#'   object = SingleCells(dir_data = dir_data),
+#'   prescan_result = tasks,
+#'   sc_qc_param = params_sc_min_quality(
+#'     min_unique_genes = 5L,
+#'     min_lib_size = 25L,
+#'     min_cells = 5L
+#'   ),
+#'   streaming = 0L,
+#'   .verbose = FALSE
+#' )
+#' table(sc[["exp_id"]])
+#'
+#' unlink(c(files, dir_data), recursive = TRUE, force = TRUE)
 load_multi_h5ad <- S7::new_generic(
   name = "load_multi_h5ad",
   dispatch_args = "object",
@@ -1313,9 +1529,44 @@ S7::method(load_multi_h5ad, SingleCells) <- function(
 #' Defaults to `100000L`.
 #' @param .verbose Boolean.
 #'
-#' @return The class with updated shape information.
+#' @returns The class with updated shape information.
 #'
 #' @export
+#'
+#' @examples
+#' # read back a CellRanger style .mtx trio
+#' data <- generate_single_cell_test_data(
+#'   syn_data_params = params_sc_synthetic_data(n_cells = 200L, n_genes = 40L)
+#' )
+#' dir_src <- tempfile("cellranger")
+#' dir.create(dir_src, recursive = TRUE)
+#' write_cellranger_output(
+#'   dir_src, data$counts, data$obs, data$var,
+#'   rows = "cells", format_type = "csv", .verbose = FALSE
+#' )
+#'
+#' dir_data <- tempfile("sc_mtx")
+#' dir.create(dir_data, recursive = TRUE)
+#' sc <- load_mtx(
+#'   object = SingleCells(dir_data = dir_data),
+#'   sc_mtx_io_param = params_sc_mtx_io(
+#'     path_mtx = file.path(dir_src, "matrix.mtx"),
+#'     path_obs = file.path(dir_src, "barcodes.csv"),
+#'     path_var = file.path(dir_src, "features.csv"),
+#'     cells_as_rows = TRUE,
+#'     has_hdr = TRUE
+#'   ),
+#'   sc_qc_param = params_sc_min_quality(
+#'     min_unique_genes = 5L,
+#'     min_lib_size = 25L,
+#'     min_cells = 5L
+#'   ),
+#'   streaming = 0L,
+#'   .verbose = FALSE
+#' )
+#' dim(sc)
+#'
+#' unlink(c(dir_src, dir_data), recursive = TRUE, force = TRUE)
 load_mtx <- S7::new_generic(
   name = "load_mtx",
   dispatch_args = "object",
@@ -1457,9 +1708,55 @@ S7::method(load_mtx, SingleCells) <- function(
 #' Defaults to `100000L`.
 #' @param .verbose Boolean.
 #'
-#' @return The class with updated shape and populated DuckDB.
+#' @returns The class with updated shape and populated DuckDB.
 #'
 #' @export
+#'
+#' @examples
+#' # two CellRanger directories into one experiment
+#' dirs <- c(tempfile("cr_a"), tempfile("cr_b"))
+#' for (i in seq_along(dirs)) {
+#'   dir.create(dirs[i], recursive = TRUE)
+#'   data <- generate_single_cell_test_data(
+#'     syn_data_params = params_sc_synthetic_data(
+#'       n_cells = 200L,
+#'       n_genes = 40L
+#'     ),
+#'     seed = i
+#'   )
+#'   write_cellranger_output(
+#'     dirs[i], data$counts, data$obs, data$var,
+#'     rows = "cells", format_type = "csv", .verbose = FALSE
+#'   )
+#' }
+#' scan_res <- prescan_mtx_dirs(
+#'   dirs = dirs,
+#'   exp_ids = c("a", "b"),
+#'   cells_as_rows = TRUE,
+#'   has_hdr = TRUE,
+#'   .verbose = FALSE
+#' )
+#'
+#' dir_data <- tempfile("sc_multi_mtx")
+#' dir.create(dir_data, recursive = TRUE)
+#' sc <- load_multi_mtx(
+#'   object = SingleCells(dir_data = dir_data),
+#'   prescan_result = scan_res,
+#'   sc_qc_param = params_sc_min_quality(
+#'     min_unique_genes = 5L,
+#'     min_lib_size = 25L,
+#'     min_cells = 5L
+#'   ),
+#'   streaming = 0L,
+#'   .verbose = FALSE
+#' )
+#' dim(sc)
+#'
+#' unlink(
+#'   c(dirs, dir_data, scan_res$temp_files),
+#'   recursive = TRUE,
+#'   force = TRUE
+#' )
 load_multi_mtx <- S7::new_generic(
   name = "load_multi_mtx",
   dispatch_args = "object",
@@ -1605,9 +1902,43 @@ S7::method(load_multi_mtx, SingleCells) <- function(
 #' Defaults to `100000L`.
 #' @param .verbose Boolean.
 #'
-#' @return The class with updated shape information.
+#' @returns The class with updated shape information.
 #'
 #' @export
+#'
+#' @examples
+#' # read back a CellRanger v3 h5, gene expression only
+#' data <- generate_single_cell_test_data(
+#'   syn_data_params = params_sc_synthetic_data(n_cells = 200L, n_genes = 40L)
+#' )
+#' f_path <- tempfile(fileext = ".h5")
+#' write_tenx_h5_sc(
+#'   f_path = f_path,
+#'   counts = data$counts,
+#'   barcodes = data$obs$cell_id,
+#'   features = data.table::data.table(
+#'     id = data$var$gene_id,
+#'     name = data$var$ensembl_id,
+#'     feature_type = "Gene Expression"
+#'   )
+#' )
+#'
+#' dir_data <- tempfile("sc_tenx")
+#' dir.create(dir_data, recursive = TRUE)
+#' sc <- load_tenx_h5(
+#'   object = SingleCells(dir_data = dir_data),
+#'   h5_path = f_path,
+#'   sc_qc_param = params_sc_min_quality(
+#'     min_unique_genes = 5L,
+#'     min_lib_size = 25L,
+#'     min_cells = 5L
+#'   ),
+#'   streaming = 0L,
+#'   .verbose = FALSE
+#' )
+#' dim(sc)
+#'
+#' unlink(c(f_path, dir_data), recursive = TRUE, force = TRUE)
 load_tenx_h5 <- S7::new_generic(
   name = "load_tenx_h5",
   dispatch_args = "object",
@@ -1733,9 +2064,50 @@ S7::method(load_tenx_h5, SingleCells) <- function(
 #' Defaults to `100000L`.
 #' @param .verbose Boolean.
 #'
-#' @return The class with updated shape and populated DuckDB.
+#' @returns The class with updated shape and populated DuckDB.
 #'
 #' @export
+#'
+#' @examples
+#' # two 10x h5 files into one experiment
+#' files <- c(a = tempfile(fileext = ".h5"), b = tempfile(fileext = ".h5"))
+#' for (i in seq_along(files)) {
+#'   data <- generate_single_cell_test_data(
+#'     syn_data_params = params_sc_synthetic_data(
+#'       n_cells = 200L,
+#'       n_genes = 40L
+#'     ),
+#'     seed = i
+#'   )
+#'   write_tenx_h5_sc(
+#'     f_path = files[i],
+#'     counts = data$counts,
+#'     barcodes = data$obs$cell_id,
+#'     features = data.table::data.table(
+#'       id = data$var$gene_id,
+#'       name = data$var$ensembl_id,
+#'       feature_type = "Gene Expression"
+#'     )
+#'   )
+#' }
+#' scan_res <- prescan_tenx_h5_files(h5_paths = files, .verbose = FALSE)
+#'
+#' dir_data <- tempfile("sc_multi_tenx")
+#' dir.create(dir_data, recursive = TRUE)
+#' sc <- load_multi_tenx_h5(
+#'   object = SingleCells(dir_data = dir_data),
+#'   prescan_result = scan_res,
+#'   sc_qc_param = params_sc_min_quality(
+#'     min_unique_genes = 5L,
+#'     min_lib_size = 25L,
+#'     min_cells = 5L
+#'   ),
+#'   streaming = 0L,
+#'   .verbose = FALSE
+#' )
+#' dim(sc)
+#'
+#' unlink(c(files, dir_data), recursive = TRUE, force = TRUE)
 load_multi_tenx_h5 <- S7::new_generic(
   name = "load_multi_tenx_h5",
   dispatch_args = "object",

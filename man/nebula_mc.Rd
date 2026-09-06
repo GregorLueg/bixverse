@@ -47,7 +47,7 @@ times. \code{FALSE} -> quiet, \code{TRUE} or \code{1L} -> normal verbosity, \cod
 detailed verbosity.}
 }
 \value{
-A \code{ScNebula} class, see \code{\link[=new_sc_nebula_res]{new_sc_nebula_res()}}.
+A \code{ScNebula} class, see \code{new_sc_nebula_res()}.
 }
 \description{
 Fits NEBULA's negative binomial gamma mixed model over aggregated counts.
@@ -61,6 +61,43 @@ than between cells, so it is smaller and it absorbs whatever the aggregation
 smoothed away. The subject-level term keeps its meaning. Read the two as a
 variance decomposition over meta cells and do not compare them against a
 single cell run.
+}
+\examples{
+# differential expression over meta cells with a donor random effect
+sc <- demo_single_cells(
+  syn_data_params = params_sc_synthetic_data(
+    n_cells = 2000L,
+    n_genes = 50L,
+    n_samples = 6L,
+    sample_bias = "even"
+  )
+)
+mc <- generate_bt_meta_cells_sc(
+  sc,
+  sc_meta_cell_params = params_sc_bt_metacells(target_no_metacells = 100L),
+  .verbose = FALSE
+)
+# the meta cell obs carries no donor labels, so vote them over
+sample_id <- sc[["sample_id"]]$sample_id
+mc[["sample_id"]] <- vapply(
+  mc[[]]$original_cell_idx,
+  function(idx) names(which.max(table(sample_id[idx]))),
+  character(1)
+)
+mc[["condition"]] <- ifelse(
+  mc[["sample_id"]]$sample_id \%in\% c("sample_1", "sample_2", "sample_3"),
+  "ctr",
+  "trt"
+)
+res <- nebula_mc(
+  mc,
+  subject_col = "sample_id",
+  design = ~condition,
+  .verbose = FALSE
+)
+head(res$results)
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 }
 \references{
 He, et al., Commun Biol, 2021

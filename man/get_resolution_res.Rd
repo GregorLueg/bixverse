@@ -16,3 +16,22 @@ throws a warning and returns NULL.
 \description{
 Getter function to get the resolution results (if available).
 }
+\examples{
+# cluster counts and modularity across the Leiden resolution sweep
+syn <- synthetic_bulk_cor_matrix()
+mat <- log1p(t(syn$counts))
+meta <- data.table::data.table(sample_id = rownames(mat))
+object <- BulkCoExp(raw_data = mat, meta_data = meta)
+object <- preprocess_bulk_coexp(object, hvg = 200L, .verbose = FALSE)
+object <- cor_module_processing(
+  object,
+  cor_method = "pearson",
+  .verbose = FALSE
+)
+object <- cor_module_graph_check_res(
+  object,
+  parallel = FALSE,
+  .verbose = FALSE
+)
+head(get_resolution_res(object))
+}

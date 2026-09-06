@@ -69,6 +69,18 @@ that leaves fewer than \code{k} survivors the fit errors rather than returning
 something degenerate. With few restarts the filter is jumpy, so either raise
 \code{n_runs} or set \code{density_threshold = 2} to switch it off.
 }
+\examples{
+# consensus over ten restarts
+syn <- generate_gene_module_data(n_samples = 24L, n_genes = 60L)
+# NMF needs a non-negative matrix
+mat <- syn$data - min(syn$data)
+obj <- BulkCoExp(mat, syn$meta_data)
+obj <- preprocess_bulk_coexp(
+  obj, hvg = NULL, scaling = FALSE, .verbose = FALSE
+)
+obj <- consensus_nmf_bulk(obj, k = 4L, n_runs = 10L, .verbose = FALSE)
+get_nmf_stability(obj)$stability
+}
 \references{
 Kotliar et al., eLife, 2019
 }

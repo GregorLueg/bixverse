@@ -34,3 +34,10 @@ The PCA factors from the object (if found).
 Returns the PCA factors (sample-based scores). This function is used for the
 single cell-related classes and methods.
 }
+\examples{
+# cells x PCs
+sc <- demo_single_cells()
+dim(get_pca_factors(sc))
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

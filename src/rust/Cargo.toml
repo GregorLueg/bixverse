@@ -1,5 +1,5 @@
 [package]
-version = '0.5.0'
+version = '0.5.1'
 name = 'bixverse'
 publish = false
 edition = '2021'
@@ -57,7 +57,3 @@ path = "document.rs"
 # Patch #
 #########
 
-# `bixverse-rs` 0.5.0 is unreleased. Point this back at the crates.io version
-# once it is cut through CI/CD, and bump the `[dependencies]` entry with it.
-# [patch.crates-io]
-# bixverse-rs = { git = "https://github.com/GregorLueg/bixverse-rs", branch = "release-0.5.0" }

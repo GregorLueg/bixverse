@@ -88,7 +88,7 @@ rs_cov2cor <- function(x) .Call(wrap__rs_cov2cor, x)
 #' @param distance_type String. One of
 #' `c("euclidean", "manhattan", "canberra", "cosine")`.
 #'
-#' @return The calculated distance matrix
+#' @returns The calculated distance matrix
 #'
 #' @export
 rs_dist <- function(x, distance_type) .Call(wrap__rs_dist, x, distance_type)
@@ -179,7 +179,7 @@ rs_set_similarity <- function(s_1, s_2, overlap_coefficient) .Call(wrap__rs_set_
 #' @param overlap_coefficient Boolean. Use the overlap coefficient instead of
 #' the Jaccard similarity be calculated.
 #'
-#' @return A list with the following items:
+#' @returns A list with the following items:
 #' \itemize{
 #'     \item from - Name of element i
 #'     \item to - Name of element j
@@ -202,7 +202,7 @@ rs_set_similarity_list <- function(list, overlap_coefficient) .Call(wrap__rs_set
 #' @param overlap_coefficient Boolean. Use the overlap coefficient instead of
 #' the Jaccard similarity be calculated.
 #'
-#' @return A matrix of the Jaccard similarities between the elements. The rows
+#' @returns A matrix of the Jaccard similarities between the elements. The rows
 #' represent `s_1_list` and the column `s_2_list`.
 #'
 #' @export
@@ -230,7 +230,7 @@ rs_jaccard_row_integers <- function(data_1, data_2) .Call(wrap__rs_jaccard_row_i
 #'
 #' @param x Integer matrix. The integers represent the factor data.
 #'
-#' @return The Hamming distance matrix
+#' @returns The Hamming distance matrix
 #'
 #' @export
 rs_hamming_dist <- function(x) .Call(wrap__rs_hamming_dist, x)
@@ -244,7 +244,7 @@ rs_hamming_dist <- function(x) .Call(wrap__rs_hamming_dist, x)
 #' variables as numerical values.
 #' @param is_cat Boolean. Which of the columns represent categorical values.
 #'
-#' @return The Gower distance matrix between the rows
+#' @returns The Gower distance matrix between the rows
 #'
 #' @export
 rs_gower_dist <- function(x, is_cat) .Call(wrap__rs_gower_dist, x, is_cat)
@@ -265,7 +265,7 @@ rs_gower_dist <- function(x, is_cat) .Call(wrap__rs_gower_dist, x, is_cat)
 #' @param n Integer. Original dimension (i.e., ncol/nrow) of the matrix to be
 #' reconstructed.
 #'
-#' @return The dense R matrix.
+#' @returns The dense R matrix.
 #'
 #' @export
 rs_upper_triangle_to_dense <- function(data, shift, n) .Call(wrap__rs_upper_triangle_to_dense, data, shift, n)
@@ -284,7 +284,7 @@ rs_upper_triangle_to_dense <- function(data, shift, n) .Call(wrap__rs_upper_tria
 #' values. If `true`, assumes the diagonal values are `1`, otherwise derives
 #' them from the data.
 #'
-#' @return The dense R matrix.
+#' @returns The dense R matrix.
 #'
 #' @export
 rs_dense_to_upper_triangle <- function(x, shift) .Call(wrap__rs_dense_to_upper_triangle, x, shift)
@@ -297,7 +297,7 @@ rs_dense_to_upper_triangle <- function(x, shift) .Call(wrap__rs_dense_to_upper_t
 #' @param x The numeric vector (should be between 0 and 1) for which to
 #' calculate the harmonic sum
 #'
-#' @return Returns the harmonic sum according to the OT calculation.
+#' @returns Returns the harmonic sum according to the OT calculation.
 #'
 #' @export
 rs_ot_harmonic_sum <- function(x) .Call(wrap__rs_ot_harmonic_sum, x)
@@ -314,7 +314,7 @@ rs_ot_harmonic_sum <- function(x) .Call(wrap__rs_ot_harmonic_sum, x)
 #' @param min_val Numeric. The lower bound value to normalise into. If set to 0,
 #' the function will equal a min-max normalisation.
 #'
-#' @return Normalised values
+#' @returns Normalised values
 #'
 #' @export
 rs_range_norm <- function(x, max_val, min_val) .Call(wrap__rs_range_norm, x, max_val, min_val)
@@ -333,7 +333,7 @@ rs_range_norm <- function(x, max_val, min_val) .Call(wrap__rs_range_norm, x, max
 #' critical value is smaller than 0.1 percentile of the random permutations.
 #' @param seed Integer. For reproducibility purposes
 #'
-#' @return The critical value for the given parameters.
+#' @returns The critical value for the given parameters.
 #'
 #' @export
 #'
@@ -353,7 +353,7 @@ rs_critval <- function(values, iters, alpha, seed) .Call(wrap__rs_critval, value
 #' critical value is smaller than 0.1 percentile of the random permutations.
 #' @param seed Integer. For reproducibility purposes
 #'
-#' @return The critical value for the given parameters.
+#' @returns The critical value for the given parameters.
 #'
 #' @export
 #'
@@ -372,7 +372,7 @@ rs_critval_mat <- function(mat, iters, alpha, seed) .Call(wrap__rs_critval_mat, 
 #' @param epsilon Float. Epsilon parameter for the RBF.
 #' @param rbf_type String. Needs to be from `c("gaussian", "bump", "inverse_quadratic")`.
 #'
-#' @return The affinities after the Kernel was applied.
+#' @returns The affinities after the Kernel was applied.
 #'
 #' @export
 rs_rbf_function <- function(x, epsilon, rbf_type) .Call(wrap__rs_rbf_function, x, epsilon, rbf_type)
@@ -390,7 +390,7 @@ rs_rbf_function <- function(x, epsilon, rbf_type) .Call(wrap__rs_rbf_function, x
 #' @param rbf_type String. Needs to be from
 #' `c("gaussian", "bump", "inverse_quadratic")`.
 #'
-#' @return The affinities after the Kernel was applied.
+#' @returns The affinities after the Kernel was applied.
 #'
 #' @export
 rs_rbf_function_mat <- function(x, epsilon, rbf_type) .Call(wrap__rs_rbf_function_mat, x, epsilon, rbf_type)
@@ -417,7 +417,7 @@ rs_rbf_function_mat <- function(x, epsilon, rbf_type) .Call(wrap__rs_rbf_functio
 #' for the currently implemented RBF function. Weird strings will default
 #' to Gaussian.
 #'
-#' @return A matrix with rows being the epsilons tested, and columns
+#' @returns A matrix with rows being the epsilons tested, and columns
 #' representing the summed affinity to other features.
 #'
 #' @export
@@ -437,7 +437,7 @@ rs_rbf_iterate_epsilons <- function(dist, epsilon_vec, original_dim, shift, rbf_
 #' Recommended size: 10000L.
 #' @param seed Seed.
 #'
-#' @return The AUC.
+#' @returns The AUC.
 #'
 #' @export
 rs_fast_auc <- function(pos_scores, neg_scores, iters, seed) .Call(wrap__rs_fast_auc, pos_scores, neg_scores, iters, seed)
@@ -457,7 +457,7 @@ rs_fast_auc <- function(pos_scores, neg_scores, iters, seed) .Call(wrap__rs_fast
 #' Recommended size: 10000L.
 #' @param seed Seed.
 #'
-#' @return A vector of random AUCs based the score vector and size of the
+#' @returns A vector of random AUCs based the score vector and size of the
 #' positive set.
 #'
 #' @export
@@ -478,7 +478,7 @@ rs_create_random_aucs <- function(score_vec, size_pos, random_iters, auc_iters, 
 #' calculate the Hedge's G effect.
 #' @param small_sample_correction Shall the small sample correction be applied.
 #'
-#' @return Returns the harmonic sum according to the OT calculation.
+#' @returns Returns the harmonic sum according to the OT calculation.
 #'
 #' @export
 rs_hedges_g <- function(mat_a, mat_b, small_sample_correction) .Call(wrap__rs_hedges_g, mat_a, mat_b, small_sample_correction)
@@ -492,7 +492,7 @@ rs_hedges_g <- function(mat_a, mat_b, small_sample_correction) .Call(wrap__rs_he
 #'
 #' @param pvals Numeric vector. The p-values you wish to adjust.
 #'
-#' @return The Benjamini-Hochberg adjusted p-values.
+#' @returns The Benjamini-Hochberg adjusted p-values.
 #'
 #' @export
 rs_fdr_adjustment <- function(pvals) .Call(wrap__rs_fdr_adjustment, pvals)
@@ -507,7 +507,7 @@ rs_fdr_adjustment <- function(pvals) .Call(wrap__rs_fdr_adjustment, pvals)
 #' @param n Number of black balls in the urn.
 #' @param k The number of balls drawn out of the urn.
 #'
-#' @return P-value (with lower.tail set to False)
+#' @returns P-value (with lower.tail set to False)
 #'
 #' @export
 rs_phyper <- function(q, m, n, k) .Call(wrap__rs_phyper, q, m, n, k)
@@ -524,7 +524,7 @@ rs_phyper <- function(q, m, n, k) .Call(wrap__rs_phyper, q, m, n, k)
 #' the outlier direction be done for values below the threshold, above the
 #' threshold or in both directions. Weird strings default to twosided tests.
 #'
-#' @return A list with the following items:
+#' @returns A list with the following items:
 #' \itemize{
 #'  \item outlier - Boolean vector if element is an outlier
 #'  \item threshold - Applied final threshold
@@ -546,11 +546,11 @@ rs_mad_outlier <- function(x, threshold, direction) .Call(wrap__rs_mad_outlier, 
 #'
 #' @param x Numeric matrix. Rows = samples, columns = features.
 #' @param scale Boolean. Shall the columns be variance normalised. (Mean
-#' centering will automatically occur.)
+#' centring will automatically occur.)
 #' @param top_pcs Optional integer. Only return the top PCs (under the hood
 #' all of them will be calculated).
 #'
-#' @return A list with:
+#' @returns A list with:
 #' \itemize{
 #'   \item scores - The product of x (centred and potentially scaled) with v.
 #'   \item v - v matrix of the SVD.
@@ -572,13 +572,13 @@ rs_prcomp <- function(x, scale, top_pcs) .Call(wrap__rs_prcomp, x, scale, top_pc
 #' @param x Numeric matrix. Rows = samples, columns = features.
 #' @param rank Integer. The rank to use.
 #' @param scale Boolean. Shall the columns be variance normalised. (Mean
-#' centering will automatically occur.)
+#' centring will automatically occur.)
 #' @param seed Integer. Random seed for reproducibility.
 #' @param oversampling Integer. Defaults to `10L` if nothing is provided.
 #' @param n_power_iter Integer. How often shall the QR decomposition be
 #' applied. Defaults to `2L` if nothing is provided.
 #'
-#' @return A list with:
+#' @returns A list with:
 #' \itemize{
 #'   \item u - u matrix of the SVD.
 #'   \item v - v matrix of the SVD.
@@ -606,7 +606,7 @@ rs_random_svd <- function(x, scale, rank, seed, oversampling, n_power_iter) .Cal
 #' @param return_loadings Shall the loadings be returned from the contrastive
 #' PCA
 #'
-#' @return A list containing:
+#' @returns A list containing:
 #'  \itemize{
 #'   \item factors - The factors of the contrastive PCA.
 #'   \item loadings - The loadings of the contrastive PCA. Will be NULL if
@@ -627,7 +627,7 @@ rs_contrastive_pca <- function(target_covar, background_covar, target_mat, alpha
 #' @param degree Integer. Either 1 (linear) or 2 (quadratic). Other values
 #' will cause an error.
 #'
-#' @return A list with the following items
+#' @returns A list with the following items
 #' \itemize{
 #'   \item predicted - The predicted values.
 #'   \item residuals - The residuals for every data point.
@@ -651,7 +651,7 @@ rs_2d_loess <- function(x, y, span, degree) .Call(wrap__rs_2d_loess, x, y, span,
 #' @param cs_type String. One of `c("csr", "csc")`. Which type of list to
 #' return.
 #'
-#' @return A list containing:
+#' @returns A list containing:
 #'  \itemize{
 #'   \item data - A vector of lists with the elements. (Related to the way
 #'   Robj are stored in Rust.)
@@ -701,7 +701,7 @@ rs_count_zeroes <- function(x) .Call(wrap__rs_count_zeroes, x)
 #' `disp_slope`, `noise_std`, `factor_std`, `factor_shape`, `factor_scale`,
 #' `loading_mu`, `loading_sigma` and `hub_percentile`.
 #'
-#' @return List with the following elements
+#' @returns List with the following elements
 #' \itemize{
 #'     \item counts The matrix of simulated counts. Rows are genes, columns
 #'     are samples.
@@ -738,7 +738,7 @@ rs_generate_bulk_rnaseq <- function(synthetic_params) .Call(wrap__rs_generate_bu
 #' [bixverse::params_bulk_sparsity()]. Expected elements are `strategy`,
 #' `target_library_size`, `capture_efficiency_sigma` and `seed`.
 #'
-#' @return The sparsified matrix based on the provided parameters.
+#' @returns The sparsified matrix based on the provided parameters.
 #'
 #' @export
 #'
@@ -767,7 +767,7 @@ rs_simulate_dropouts <- function(count_mat, sparsity_params) .Call(wrap__rs_simu
 #' `c("even", "slightly_uneven", "very_uneven")`
 #' @param seed Integer. Random seed for reproducibility.
 #'
-#' @return A list with the following items.
+#' @returns A list with the following items.
 #' \itemize{
 #'   \item data - The synthetic raw counts.
 #'   \item indptr - The index pointers of the cells.
@@ -836,7 +836,7 @@ rs_sample_ids_for_cell_types <- function(cell_type_indices, n_samples, sample_bi
 #' values fall back to `"strong"`.
 #' @param seed Integer. For reproducibility.
 #'
-#' @return A list with the following items.
+#' @returns A list with the following items.
 #' \itemize{
 #'   \item data - Integer vector. The counts in row-major order, length
 #'   `n_cells * n_proteins` (cell-major: all proteins of cell 0, then cell 1).
@@ -880,7 +880,7 @@ rs_synthetic_sc_adt_with_cell_types <- function(n_cells, n_proteins, n_batches, 
 #' blocks have to fit into `n_genes`.
 #' @param seed Integer. Random seed for reproducibility.
 #'
-#' @return A list with the following items.
+#' @returns A list with the following items.
 #' \itemize{
 #'   \item data - The synthetic raw counts, CSR over cells.
 #'   \item indptr - The index pointers of the cells.
@@ -951,7 +951,7 @@ rs_h5ad_data <- function(f_path, cs_type, nrows, ncols, cell_quality, slot, verb
 #' `anchors`, `symmetric`, `centre`, `ks_test` and `seed`; anything else is
 #' ignored and any missing element takes its default.
 #'
-#' @return List with the following elements
+#' @returns List with the following elements
 #' \itemize{
 #'     \item anchor_sizes Numeric vector. The anchor set sizes, ascending.
 #'     \item shape_pos Numeric vector. Smoothed positive-tail gamma shape.
@@ -966,8 +966,6 @@ rs_h5ad_data <- function(f_path, cs_type, nrows, ncols, cell_quality, slot, verb
 #' }
 #'
 #' @export
-#'
-#' @keywords internal
 rs_blitzgsea_calibrate <- function(stats, blitz_params) .Call(wrap__rs_blitzgsea_calibrate, stats, blitz_params)
 
 #' Score gene sets against a calibrated blitzGSEA null
@@ -989,7 +987,7 @@ rs_blitzgsea_calibrate <- function(stats, blitz_params) .Call(wrap__rs_blitzgsea
 #' [bixverse::params_blitzgsea()]. Only `centre` is read here and it has to
 #' match what the calibration used.
 #'
-#' @return List with the following elements
+#' @returns List with the following elements
 #' \itemize{
 #'     \item es Numeric vector. Enrichment scores for the gene sets.
 #'     \item nes Numeric vector. Normalised enrichment scores.
@@ -1003,8 +1001,6 @@ rs_blitzgsea_calibrate <- function(stats, blitz_params) .Call(wrap__rs_blitzgsea
 #' }
 #'
 #' @export
-#'
-#' @keywords internal
 rs_blitzgsea_score <- function(stats, pathways, null_model, blitz_params) .Call(wrap__rs_blitzgsea_score, stats, pathways, null_model, blitz_params)
 
 #' Calculates the traditional GSEA enrichment score
@@ -1015,7 +1011,7 @@ rs_blitzgsea_score <- function(stats, pathways, null_model, blitz_params) .Call(
 #' @param stats Named numerical vector. Needs to be sorted. The gene level statistics.
 #' @param pathway_r String vector. The genes in the pathway.
 #'
-#' @return The enrichment score
+#' @returns The enrichment score
 #'
 #' @export
 #'
@@ -1031,7 +1027,7 @@ rs_calc_es <- function(stats, pathway_r) .Call(wrap__rs_calc_es, stats, pathway_
 #' @param pathway_list List. A named list with each element containing the genes for this
 #' pathway.
 #'
-#' @return Returns a list with the index positions of the gene set genes in the gene universe.
+#' @returns Returns a list with the index positions of the gene set genes in the gene universe.
 #' Importantly, these are indexed to R's 1-indexing!
 #'
 #' @export
@@ -1052,7 +1048,7 @@ rs_get_gs_indices <- function(gene_universe, pathway_list) .Call(wrap__rs_get_gs
 #' @param return_all_extremes Boolean. Shall the extreme values be returned
 #' for plotting.
 #'
-#' @return List with the following elements
+#' @returns List with the following elements
 #' \itemize{
 #'     \item gene_stat Enrichment score for that gene set
 #'     \item leading_edge Indicies of the leading edge genes.
@@ -1081,7 +1077,7 @@ rs_calc_gsea_stats <- function(stats, gs_idx, gsea_param, return_leading_edge, r
 #' necessary for the multi-level calculations.
 #' @param seed Integer. For reproducibility purposes
 #'
-#' @return List with the following elements
+#' @returns List with the following elements
 #' \itemize{
 #'     \item es Enrichment scores for the gene sets
 #'     \item nes Normalised enrichment scores for the gene sets
@@ -1116,7 +1112,7 @@ rs_calc_gsea_stat_cumulative_batch <- function(stats, pathway_scores, pathway_si
 #' @param iters Integer. Number of permutations.
 #' @param seed Integer For reproducibility purposes
 #'
-#' @return List with the following elements
+#' @returns List with the following elements
 #' \itemize{
 #'     \item es Enrichment scores for the gene sets
 #'     \item nes Normalised enrichment scores for the gene sets
@@ -1144,7 +1140,7 @@ rs_calc_gsea_stat_traditional_batch <- function(stats, pathway_scores, pathway_s
 #' @param eps Float. Boundary for calculating the p-value.
 #' @param sign Boolean. Used for the only positive or only negative score version.
 #'
-#' @return List with the following elements:
+#' @returns List with the following elements:
 #' \itemize{
 #'     \item pvals The pvalues.
 #'     \item is_cp_ge_half Flag indicating if conditional probability is ≥ 0.5. Indicates
@@ -1166,7 +1162,7 @@ rs_calc_multi_level <- function(stats, es, pathway_size, sample_size, seed, eps,
 #' @param nperm Integer. Number of permutations.
 #' @param sample_size Integer. Number of samples.
 #'
-#' @return List with the following elements:
+#' @returns List with the following elements:
 #' \itemize{
 #'     \item simple_err Vector of simple errors.
 #'     \item multi_err Vector of multi errors.
@@ -1188,7 +1184,7 @@ rs_simple_and_multi_err <- function(n_more_extreme, nperm, sample_size) .Call(wr
 #' genes
 #' @param min_size,max_size Integer. The minimum and maximum size respectively.
 #'
-#' @return Returns a list with (zero-indexed) indices.
+#' @returns Returns a list with (zero-indexed) indices.
 #'
 #' @export
 #'
@@ -1215,7 +1211,7 @@ rs_prepare_gsva_gs <- function(feature_names, pathway_list, min_size, max_size) 
 #' @param abs_rank Booelan. If `TRUE` = pos-neg, `FALSE` = pos+neg
 #' @param timings Boolean. Prints timings from the algorithm.
 #'
-#' @return Returns a matrix of gene set ES scores x samples.
+#' @returns Returns a matrix of gene set ES scores x samples.
 #'
 #' @export
 rs_gsva <- function(exp, gs_list, tau, kernel, max_diff, abs_rank, timings) .Call(wrap__rs_gsva, exp, gs_list, tau, kernel, max_diff, abs_rank, timings)
@@ -1235,7 +1231,7 @@ rs_gsva <- function(exp, gs_list, tau, kernel, max_diff, abs_rank, timings) .Cal
 #' @param normalise Boolean. Shall the scores be normalised.
 #' @param timings Boolean. Prints timings from the algorithm.
 #'
-#' @return Returns a matrix of gene set ES scores x samples.
+#' @returns Returns a matrix of gene set ES scores x samples.
 #'
 #' @export
 rs_ssgsea <- function(exp, gs_list, alpha, normalise, timings) .Call(wrap__rs_ssgsea, exp, gs_list, alpha, normalise, timings)
@@ -1248,7 +1244,7 @@ rs_ssgsea <- function(exp, gs_list, alpha, normalise, timings) .Call(wrap__rs_ss
 #' to test for.
 #' @param min_size Integer. Minimum size of gene the gene set to be tested for.
 #'
-#' @return A list with the following elements:
+#' @returns A list with the following elements:
 #'  \itemize{
 #'     \item pathway_names - The name of the pathway.
 #'     \item pathway_sizes The size of the pathway.
@@ -1282,7 +1278,7 @@ rs_mitch_calc <- function(x, pathway_list, min_size) .Call(wrap__rs_mitch_calc, 
 #' @param fdr_threshold Optional float. Shall a filter be applied for the maximum
 #' tolerated FDR.
 #'
-#' @return A list containing:
+#' @returns A list containing:
 #'  \itemize{
 #'   \item pvals - The p-values from the hypergeometric test
 #'   \item odds_ratios - The calculated odds ratios
@@ -1313,7 +1309,7 @@ rs_hypergeom_test <- function(target_genes, gene_sets, gene_universe, min_overla
 #' @param fdr_threshold Optional float. Shall a filter be applied for the maximum
 #' tolerated FDR.
 #'
-#' @return A list containing:
+#' @returns A list containing:
 #'  \itemize{
 #'   \item pvals - The p-values from the hypergeometric test.
 #'   \item fdr - The FDRs for each target gene calculated across all gene sets.
@@ -1338,7 +1334,7 @@ rs_hypergeom_test_list <- function(target_genes_list, gene_sets, gene_universe, 
 #' @param exp Numerical matrix. The expression matrix (rows = genes, columns =
 #' samples).
 #'
-#' @return Returns a matrix of ranks with the same shape as `exp`.
+#' @returns Returns a matrix of ranks with the same shape as `exp`.
 #'
 #' @export
 rs_rank_matrix_col <- function(exp) .Call(wrap__rs_rank_matrix_col, exp)
@@ -1354,7 +1350,7 @@ rs_rank_matrix_col <- function(exp) .Call(wrap__rs_rank_matrix_col, exp)
 #' samples).
 #' @param stable_gene_indices Integer vector of stable genes. One-indexed.
 #'
-#' @return Returns a matrix of normalised ranks with the same shape as `exp`.
+#' @returns Returns a matrix of normalised ranks with the same shape as `exp`.
 #'
 #' @export
 rs_rank_matrix_col_stable <- function(exp, stable_gene_indices) .Call(wrap__rs_rank_matrix_col_stable, exp, stable_gene_indices)
@@ -1378,7 +1374,7 @@ rs_rank_matrix_col_stable <- function(exp, stable_gene_indices) .Call(wrap__rs_r
 #' Becomes irrelevant when `down_set` is also provided.
 #' @param stable Boolean. If `TRUE`, use stable-gene score bounds.
 #'
-#' @return A named list with `TotalScore`, `TotalDispersion`, and (when
+#' @returns A named list with `TotalScore`, `TotalDispersion`, and (when
 #' `down_set` is provided) `UpScore`, `UpDispersion`, `DownScore`,
 #' `DownDispersion`.
 #'
@@ -1401,7 +1397,7 @@ rs_singscore_single <- function(ranks, up_set, down_set, center_score, known_dir
 #' @param known_direction Boolean.
 #' @param stable Boolean.
 #'
-#' @return A named list with
+#' @returns A named list with
 #' \itemize{
 #'   \item `scores` - Numerical matrix with the scores
 #'   \item `dispersion` - Numerical matrix with the dispersions
@@ -1428,7 +1424,7 @@ rs_singscore_multi <- function(ranks, up_list, down_list, center_score, known_di
 #' @param n_permutations Integer. Number of random draws (B).
 #' @param seed Integer. RNG seed.
 #'
-#' @return A named list with `observed_scores` (length n_samples),
+#' @returns A named list with `observed_scores` (length n_samples),
 #' `null_distribution` (B × n_samples matrix), and `p_values`
 #' (length n_samples).
 #'
@@ -1449,7 +1445,7 @@ rs_singscore_permutation_test <- function(ranks, up_set, down_set, center_score,
 #' and be of same length of `node_names`!
 #' @param undirected Boolean. Is this an undirected graph.
 #'
-#' @return The personalised page rank values.
+#' @returns The personalised page rank values.
 #'
 #' @export
 rs_page_rank <- function(node_names, from, to, weights, personalised, undirected) .Call(wrap__rs_page_rank, node_names, from, to, weights, personalised, undirected)
@@ -1471,7 +1467,7 @@ rs_page_rank <- function(node_names, from, to, weights, personalised, undirected
 #' values. Each element must sum to 1 and be of same length of `node_names`!
 #' @param undirected Boolean. Is this an undirected graph.
 #'
-#' @return A matrix of the scores with each row representing an element in the
+#' @returns A matrix of the scores with each row representing an element in the
 #' `diffusion_scores` list (in order), and each column representing the value
 #' of the personalised page rank diffusion for this node.
 #'
@@ -1500,7 +1496,7 @@ rs_page_rank_parallel <- function(node_names, from, to, weights, diffusion_score
 #' of summarisation function to use to calculate the tied diffusion.
 #' @param undirected Boolean. Is this an undirected graph.
 #'
-#' @return A matrix of the scores with each row representing a tied diffusion of
+#' @returns A matrix of the scores with each row representing a tied diffusion of
 #' of `diffusion_scores_1` and  `diffusion_scores_2` lists (in order), and each
 #' column representing the value of the tied diffusion for this node.
 #'
@@ -1529,7 +1525,7 @@ rs_tied_diffusion_parallel <- function(node_names, from, to, weights, diffusion_
 #' @param sink_edges Optional string vector. Shall an automatic reset occur
 #' when this edge type is traversed.
 #'
-#' @return The personalised constrained page rank values.
+#' @returns The personalised constrained page rank values.
 #'
 #' @export
 #'
@@ -1559,7 +1555,7 @@ rs_constrained_page_rank <- function(node_names, node_types, from, to, weights, 
 #' @param sink_edges Optional string vector. Shall an automatic reset occur
 #' when this edge type is traversed.
 #'
-#' @return A list of the personalised (constrained) page rank values.
+#' @returns A list of the personalised (constrained) page rank values.
 #'
 #' @export
 #'
@@ -1579,7 +1575,7 @@ rs_constrained_page_rank_list <- function(personalisation_list, node_names, node
 #' @param mu Float. Normalisation factor for the Gaussian kernel width.
 #' @param normalise Boolean. Shall continuous values be Z-scored.
 #'
-#' @return The affinity matrix based on continuous values.
+#' @returns The affinity matrix based on continuous values.
 #'
 #' @export
 #'
@@ -1596,7 +1592,7 @@ rs_snf_affinity_continuous <- function(data, distance_type, k, mu, normalise) .C
 #' @param k Integer. Number of neighbours to consider.
 #' @param mu Float. Normalisation factor for the Gaussian kernel width.
 #'
-#' @return The affinity matrix based on categorical values.
+#' @returns The affinity matrix based on categorical values.
 #'
 #' @export
 #'
@@ -1616,7 +1612,7 @@ rs_snf_affinity_cat <- function(data, k, mu) .Call(wrap__rs_snf_affinity_cat, da
 #' @param k Integer. Number of neighbours to consider.
 #' @param mu Float. Normalisation factor for the Gaussian kernel width.
 #'
-#' @return The affinity matrix based on mixed values.
+#' @returns The affinity matrix based on mixed values.
 #'
 #' @export
 #'
@@ -1635,7 +1631,7 @@ rs_snf_affinity_mixed <- function(data, is_cat, k, mu) .Call(wrap__rs_snf_affini
 #' @param t Integer. Number of iterations for the algorithm.
 #' @param alpha Float. Normalisation parameter controlling the fusion strength.
 #'
-#' @return The final affinity matrix after the fusion.
+#' @returns The final affinity matrix after the fusion.
 #'
 #' @export
 rs_snf <- function(aff_mat_list, k, t, alpha) .Call(wrap__rs_snf, aff_mat_list, k, t, alpha)
@@ -1654,7 +1650,7 @@ rs_snf <- function(aff_mat_list, k, t, alpha) .Call(wrap__rs_snf, aff_mat_list, 
 #' @param max_iters Integer. Number of iterations for k-means clustering
 #' @param seed Integer. Seed for reproducibility
 #'
-#' @return A vector with the membership of the samples
+#' @returns A vector with the membership of the samples
 #'
 #' @export
 rs_spectral_clustering_sim <- function(similarities, k_neighbours, n_clusters, max_iters, seed) .Call(wrap__rs_spectral_clustering_sim, similarities, k_neighbours, n_clusters, max_iters, seed)
@@ -1678,7 +1674,7 @@ rs_spectral_clustering_sim <- function(similarities, k_neighbours, n_clusters, m
 #' @param max_iters Integer. Number of iterations for k-means clustering
 #' @param seed Integer. Seed for reproducibility
 #'
-#' @return A vector with the membership of the samples
+#' @returns A vector with the membership of the samples
 #'
 #' @export
 rs_spectral_clustering <- function(data, distance_type, epsilon, k_neighbours, n_clusters, max_iters, seed) .Call(wrap__rs_spectral_clustering, data, distance_type, epsilon, k_neighbours, n_clusters, max_iters, seed)
@@ -1704,15 +1700,15 @@ rs_spectral_clustering <- function(data, distance_type, epsilon, k_neighbours, n
 #' @param label_prop_params List. Named list of parameters with the following
 #' optional fields (defaults in parentheses):
 #' \itemize{
-#'   \item \code{alpha} numeric, spreading strength (0.9)
-#'   \item \code{iter} integer, max iterations (100)
-#'   \item \code{tolerance} numeric, convergence threshold (1e-6)
-#'   \item \code{symmetrise} logical, symmetrise the graph (FALSE)
-#'   \item \code{symmetry_strategy} character, one of "average", "min", "max" ("average")
-#'   \item \code{max_hops} integer, restrict spreading radius (unrestricted)
+#'   \item `alpha` numeric, spreading strength (0.9)
+#'   \item `iter` integer, max iterations (100)
+#'   \item `tolerance` numeric, convergence threshold (1e-6)
+#'   \item `symmetrise` logical, symmetrise the graph (FALSE)
+#'   \item `symmetry_strategy` character, one of "average", "min", "max" ("average")
+#'   \item `max_hops` integer, restrict spreading radius (unrestricted)
 #' }
 #'
-#' @return The matrix with the probabilities of being of a certain class.
+#' @returns The matrix with the probabilities of being of a certain class.
 #'
 #' @export
 rs_knn_label_propagation <- function(from, to, one_hot_encoding, label_mask, weights, label_prop_params) .Call(wrap__rs_knn_label_propagation, from, to, one_hot_encoding, label_mask, weights, label_prop_params)
@@ -1729,7 +1725,7 @@ rs_knn_label_propagation <- function(from, to, one_hot_encoding, label_mask, wei
 #' @param one_index Boolean. If the original data is 0-index, shall 1-indexed
 #' data be returned.
 #'
-#' @return A flat vector representing the edge list.
+#' @returns A flat vector representing the edge list.
 #'
 #' @export
 rs_knn_mat_to_edge_list <- function(knn_mat, one_index) .Call(wrap__rs_knn_mat_to_edge_list, knn_mat, one_index)
@@ -1746,7 +1742,7 @@ rs_knn_mat_to_edge_list <- function(knn_mat, one_index) .Call(wrap__rs_knn_mat_t
 #' @param one_index Boolean. If the original data is 0-index, shall 1-indexed
 #' data be returned.
 #'
-#' @return A list with the following elements
+#' @returns A list with the following elements
 #' \itemize{
 #'   \item from - the from indices
 #'   \item to - the to indices
@@ -1770,7 +1766,7 @@ rs_knn_mat_to_edge_pairs <- function(knn_mat, one_index) .Call(wrap__rs_knn_mat_
 #' @param signed Boolean. Shall the signed TOM be calculated. If set to
 #' `FALSE`, values should be ≥ 0.
 #'
-#' @return Returns the TOM matrix.
+#' @returns Returns the TOM matrix.
 #'
 #' @export
 rs_tom <- function(x, tom_type, signed) .Call(wrap__rs_tom, x, tom_type, signed)
@@ -1791,7 +1787,7 @@ rs_tom <- function(x, tom_type, signed) .Call(wrap__rs_tom, x, tom_type, signed)
 #' correlation matrix.
 #' @param seed Integer. Random seed for the sub sampling of genes.
 #'
-#' @return A list containing:
+#' @returns A list containing:
 #'  \itemize{
 #'   \item r2med - median R2 of the cluster.
 #'   \item r2mad - median absolute deviation of the R2 in the cluster.
@@ -1817,7 +1813,7 @@ rs_coremo_quality <- function(cluster_genes, cor_mat, row_names, seed) .Call(wra
 #' `c("gaussian", "bump", "inverse_quadratic")`.
 #' @param spearman Boolean. Shall Spearman correlation be used.
 #'
-#' @return A list with `length(indices)` elements, each containing the distance
+#' @returns A list with `length(indices)` elements, each containing the distance
 #' minus the given sample.
 #'
 #' @keywords internal
@@ -1832,7 +1828,7 @@ rs_coremo_stability <- function(data, indices, epsilon, rbf_type, spearman) .Cal
 #' resampling/bootstrap and the rows represent the features, while each integer
 #' indicates cluster membership.
 #'
-#' @return A list containing:
+#' @returns A list containing:
 #'  \itemize{
 #'   \item mean_jaccard - mean Jaccard similarities for this feature across all
 #'   the bootstraps, resamplings.
@@ -1850,7 +1846,7 @@ rs_cluster_stability <- function(data) .Call(wrap__rs_cluster_stability, data)
 #'
 #' @param data The correlation matrix to split by sign.
 #'
-#' @return A vector of 1 and -1 indicating the respective sign of the
+#' @returns A vector of 1 and -1 indicating the respective sign of the
 #' correlation matrix.
 #'
 #' @export
@@ -1877,7 +1873,7 @@ rs_split_cor_signs <- function(data) .Call(wrap__rs_split_cor_signs, data)
 #' columns to drop from the null model) or `contrast` (column-major weights
 #' with `n_contrasts` columns).
 #'
-#' @return A list with the following elements
+#' @returns A list with the following elements
 #' \itemize{
 #'   \item features_to_keep - Boolean. Which features survived the filters.
 #'   Spans the full feature axis of `counts`.
@@ -1891,8 +1887,6 @@ rs_split_cor_signs <- function(data) .Call(wrap__rs_split_cor_signs, data)
 #' @references Chen, Lun and Smyth, F1000Research, 2016
 #'
 #' @export
-#'
-#' @keywords internal
 rs_edger_ql <- function(counts, design, edger_params) .Call(wrap__rs_edger_ql, counts, design, edger_params)
 
 #' Generate a sparse dictionary with DGRDL
@@ -1999,7 +1993,7 @@ rs_sparse_dict_dgrdl_grid_search <- function(x, dgrdl_params, seeds, dict_sizes,
 #' @param spearman Shall the Spearman correlation be calculated instead of
 #' Pearson.
 #'
-#' @return A list containing:
+#' @returns A list containing:
 #'  \itemize{
 #'   \item r_a - The correlation coefficients in the upper triangle of
 #'   matrix a.
@@ -2035,7 +2029,7 @@ rs_differential_cor <- function(x_a, x_b, spearman) .Call(wrap__rs_differential_
 #' powered. If you supply `NULL`, it will default to `2L`.
 #'
 #'
-#' @return A list containing:
+#' @returns A list containing:
 #'  \itemize{
 #'   \item x - The preprocessed matrix.
 #'   \item k - The pre-whitening matrix k.
@@ -2068,7 +2062,7 @@ rs_prepare_whitening <- function(x, fast_svd, seed, rank, oversampling, n_power_
 #' If the list is empty or the expected elements are not found, default values
 #' are used.
 #'
-#' @return A list with the following items:
+#' @returns A list with the following items:
 #'  \itemize{
 #'   \item mixing - The mixing matrix for subsequent usage.
 #'   \item converged - Boolean if the algorithm converged.
@@ -2106,7 +2100,7 @@ rs_fast_ica <- function(whiten, w_init, ica_type, ica_params) .Call(wrap__rs_fas
 #' If the list is empty or the expected elements are not found, default values
 #' are used.
 #'
-#' @return A list containing:
+#' @returns A list containing:
 #' \itemize{
 #'   \item s_combined - The combined matrices for S. Dimensions are nrows =
 #'   features; and ncols = ncomp * no_random_init.
@@ -2143,7 +2137,7 @@ rs_ica_iters <- function(x1, k, no_comp, no_random_init, ica_type, random_seed, 
 #' If the list is empty or the expected elements are not found, default values
 #' are used.
 #'
-#' @return A list containing:
+#' @returns A list containing:
 #' \itemize{
 #'   \item s_combined - The combined matrices for S. Dimensions are nrows =
 #'   features; and ncols = ncomp * no_random_init.
@@ -2396,7 +2390,7 @@ rs_nmf_k_sweep_bulk <- function(x, k_range, preprocessing, nmf_hals_params, nmf_
 #' @param min_similarity Minimum similarity that should exist between any two
 #' given gene modules to actually calculate RBH pairs.
 #'
-#' @return A list containing:
+#' @returns A list containing:
 #'  \itemize{
 #'   \item origin - The name of the origin of the gene modules.
 #'   \item target - The name of the target of the gene modules.
@@ -2430,7 +2424,7 @@ rs_rbh_sets <- function(module_list, k_best, overlap_coefficient, min_similarity
 #' @param min_similarity Minimum (absolute) correlations that needs to exist
 #' between two terms.
 #'
-#' @return A list containing:
+#' @returns A list containing:
 #'  \itemize{
 #'   \item origin - The name of the origin of the gene modules.
 #'   \item target - The name of the target of the gene modules.
@@ -2464,7 +2458,7 @@ rs_rbh_cor <- function(module_matrices, k_best, spearman, min_similarity) .Call(
 #' @param n_mean Number of points for averaging in approximate method.
 #' @param verbose Controls verbosity of the function.
 #'
-#' @return List of lists, one per gene set, each containing motif_idx, nes, auc,
+#' @returns List of lists, one per gene set, each containing motif_idx, nes, auc,
 #' rank_at_max, n_enriched, and leading_edge.
 #'
 #' @export
@@ -2493,7 +2487,7 @@ rs_cistarget <- function(rankings, gs_list, auc_threshold, nes_threshold, max_ra
 #' @param min_overlap Optional minimum overlap threshold.
 #' @param fdr_threshold Optional fdr threshold.
 #'
-#' @return A list containing:
+#' @returns A list containing:
 #'  \itemize{
 #'   \item go_ids - The gene ontology identifier.
 #'   \item pvals - The calculated odds ratios.
@@ -2531,7 +2525,7 @@ rs_gse_geom_elim <- function(target_genes, levels, go_obj, gene_universe_length,
 #' @param min_overlap Optional minimum overlap threshold.
 #' @param fdr_threshold Optional fdr threshold.
 #'
-#' @return A list containing:
+#' @returns A list containing:
 #'  \itemize{
 #'   \item go_ids - The gene ontology identifier.
 #'   \item pvals - The calculated odds ratios.
@@ -2554,7 +2548,8 @@ rs_gse_geom_elim_list <- function(target_genes_list, levels, go_obj, gene_univer
 #' @param stats Named numerical vector. Needs to be sorted. The gene level statistics.
 #' @param levels A character vector representing the levels to iterate through.
 #' The order will be the one the iterations are happening in.
-#' @param go_obj The gene_ontology_data S7 class. See [bixverse::gene_ontology_data()].
+#' @param go_obj The `GeneOntologyElim` S7 class. See
+#' [bixverse::GeneOntologyElim()].
 #' @param gsea_params List. The GSEA parameters, see [bixverse::params_gsea()]
 #' wrapper function. This function generates a list containing:
 #' \itemize{
@@ -2572,7 +2567,7 @@ rs_gse_geom_elim_list <- function(target_genes_list, levels, go_obj, gene_univer
 #' to use
 #' @param seed Integer. For reproducibility purposes.
 #'
-#' @return List with the following elements
+#' @returns List with the following elements
 #' \itemize{
 #'     \item go_ids The name of the tested gene ontology identifer.
 #'     \item es The enrichment scores for the pathway
@@ -2605,7 +2600,7 @@ rs_geom_elim_fgsea_simple <- function(stats, levels, go_obj, gsea_params, elim_t
 #' @param ic_list R list with the names being the term and the elements the
 #' information content of this given term. Needs to be a single float!
 #'
-#' @return A list with:
+#' @returns A list with:
 #' \itemize{
 #'   \item term1 - name of the first term.
 #'   \item term2 - name of the second term.
@@ -2629,7 +2624,7 @@ rs_onto_semantic_sim <- function(terms, sim_type, ancestor_list, ic_list) .Call(
 #' information content of this given term. Needs to be a single float!
 #' @param flat_matrix Boolean. Shall only the upper triangle be returned.
 #'
-#' @return A list with:
+#' @returns A list with:
 #' \itemize{
 #'   \item sim_mat - the semantic similarity matrix (flat or as matrix.)
 #'   \item names - the row and column names for the calculated matrix.
@@ -2653,7 +2648,7 @@ rs_onto_semantic_sim_mat <- function(sim_type, ancestor_list, ic_list, flat_matr
 #' @param w Numerics. The weights between the parents and children. Need
 #' to be values between 0 and 1.
 #'
-#' @return A list with:
+#' @returns A list with:
 #' \itemize{
 #'   \item term1 - name of the first term.
 #'   \item term2 - name of the second term.
@@ -2676,7 +2671,7 @@ rs_onto_sim_wang <- function(terms, parents, children, w) .Call(wrap__rs_onto_si
 #' to be values between 0 and 1.
 #' @param flat_matrix Boolean. Shall only the upper triangle be returned.
 #'
-#' @return A list with:
+#' @returns A list with:
 #' \itemize{
 #'   \item sim_mat - the Wang similarity matrix (flat or as matrix.)
 #'   \item names - the row and column names for the calculated matrix.
@@ -2697,7 +2692,7 @@ rs_onto_sim_wang_mat <- function(parents, children, w, flat_matrix) .Call(wrap__
 #' @param names String vector. The row/col names of the similarity matrix.
 #' @param threshold Float. The filtering threshold.
 #'
-#' @return A list with:
+#' @returns A list with:
 #' \itemize{
 #'   \item t1 - name of term 1.
 #'   \item t2 - name of term 2.
@@ -2826,7 +2821,7 @@ rs_sc_type_assign_cells <- function(sc_type_res, from, to, weights, cluster_labe
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
 #'
-#' @return A list with gene_means, gene_sds, loadings, z_orig, z_corr, r,
+#' @returns A list with gene_means, gene_sds, loadings, z_orig, z_corr, r,
 #' centroids, nr, c.
 #'
 #' @references
@@ -2860,7 +2855,7 @@ rs_build_symphony_ref <- function(f_path_gene, f_path_cell, cell_indices, hvg_in
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
 #'
-#' @return A list with z_pca, z_corr, r.
+#' @returns A list with z_pca, z_corr, r.
 #'
 #' @references
 #' Kang et al., Nat Comm, 2021.
@@ -2883,7 +2878,7 @@ rs_symphony_map_query <- function(f_path_query, cell_indices_query, gene_means, 
 #' @param seed Integer.
 #' @param verbose Integer. 0/1/2.
 #'
-#' @return A list with `predicted` (0-based integer per query cell) and
+#' @returns A list with `predicted` (0-based integer per query cell) and
 #' `confidence` (vote share of the winning label).
 #'
 #' @export
@@ -2908,7 +2903,7 @@ rs_transfer_labels_symphony <- function(reference_z_corr, query_z_corr, referenc
 #' batch a given cell belongs.
 #' @param verbose Boolean. Controls verbosity of the function.
 #'
-#' @return A list with the following items
+#' @returns A list with the following items
 #' \itemize{
 #'   \item pval - The p-values from the ChiSquare test
 #'   \item chi_square_stats - ChiSquare statistics
@@ -2936,7 +2931,7 @@ rs_kbet <- function(knn_mat, batch_vector, verbose) .Call(wrap__rs_kbet, knn_mat
 #' @param verbose Boolean. Controls verbosity of the function.
 #' @param seed Integer. Seed for subsampling reproducibility.
 #'
-#' @return A list with the following items
+#' @returns A list with the following items
 #' \itemize{
 #'   \item per_cell - Per-cell silhouette scores
 #'   \item mean_asw - Mean silhouette width
@@ -2961,7 +2956,7 @@ rs_batch_silhouette_width <- function(embedding, batch_vector, max_cells, verbos
 #' batch a given cell belongs.
 #' @param verbose Boolean. Controls verbosity of the function.
 #'
-#' @return A list with the following items
+#' @returns A list with the following items
 #' \itemize{
 #'   \item per_cell - Per-cell LISI scores
 #'   \item mean_lisi - Mean LISI
@@ -2986,7 +2981,7 @@ rs_batch_lisi <- function(knn_mat, batch_vector, verbose) .Call(wrap__rs_batch_l
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
 #'
-#' @return A list of two lists representing the sparse matrix representation
+#' @returns A list of two lists representing the sparse matrix representation
 #' of the distances and the connectivities.
 #'
 #' @export
@@ -3006,7 +3001,7 @@ rs_bbknn <- function(embd, batch_labels, bbknn_params, seed, verbose) .Call(wrap
 #' @param data Numeric vector. The distances to the nearest neighbours.
 #' @param no_neighbours_to_keep Integer. Number of nearest neighbours to keep.
 #'
-#' @return A list with `indices` (integer matrix) and `dist` (numeric matrix),
+#' @returns A list with `indices` (integer matrix) and `dist` (numeric matrix),
 #' each with shape (n_cells, no_neighbours_to_keep). Positions without
 #' neighbours are filled with -1 (indices) or NaN (distances).
 #'
@@ -3038,7 +3033,7 @@ rs_bbknn_filtering <- function(indptr, indices, data, no_neighbours_to_keep) .Ca
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
 #'
-#' @return The batch-corrected embedding space.
+#' @returns The batch-corrected embedding space.
 #'
 #' @export
 #'
@@ -3059,7 +3054,7 @@ rs_mnn <- function(f_path_gene, f_path_cell, cell_indices, gene_indices, batch_i
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
 #'
-#' @return The batch-corrected Harmony embedding space.
+#' @returns The batch-corrected Harmony embedding space.
 #'
 #' @export
 rs_harmony <- function(pca, harmony_params, batch_labels, seed, verbose) .Call(wrap__rs_harmony, pca, harmony_params, batch_labels, seed, verbose)
@@ -3079,7 +3074,7 @@ rs_harmony <- function(pca, harmony_params, batch_labels, seed, verbose) .Call(w
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
 #'
-#' @return The batch-corrected Harmony (v2) embedding space.
+#' @returns The batch-corrected Harmony (v2) embedding space.
 #'
 #' @export
 rs_harmony_v2 <- function(pca, harmony_params, batch_labels, seed, verbose) .Call(wrap__rs_harmony_v2, pca, harmony_params, batch_labels, seed, verbose)
@@ -3109,7 +3104,7 @@ rs_harmony_v2 <- function(pca, harmony_params, batch_labels, seed, verbose) .Cal
 #' detailed verbosity.
 #' @param seed Integer. Seed for reproducibility purposes.
 #'
-#' @return The batch-corrected embedding space.
+#' @returns The batch-corrected embedding space.
 #'
 #' @export
 #'
@@ -3143,7 +3138,7 @@ rs_seurat_cca <- function(f_path_gene, f_path_cell, cell_indices, gene_indices, 
 #' detailed verbosity.
 #' @param seed Integer. Seed for reproducibility purposes.
 #'
-#' @return The batch-corrected embedding space.
+#' @returns The batch-corrected embedding space.
 #'
 #' @export
 #'
@@ -3298,7 +3293,7 @@ rs_sc_otsu_method <- function(scores, bins) .Call(wrap__rs_sc_otsu_method, score
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
 #'
-#' @return A list with the cumulative percentages of the Top X genes defined
+#' @returns A list with the cumulative percentages of the Top X genes defined
 #' as in `top_n_vals`.
 #'
 #' @export
@@ -3322,7 +3317,7 @@ rs_sc_get_top_genes_perc <- function(f_path_cell, top_n_vals, cell_indices, stre
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
 #'
-#' @return A list with the percentages of counts per gene set group detected
+#' @returns A list with the percentages of counts per gene set group detected
 #' in the cells.
 #'
 #' @export
@@ -3380,7 +3375,7 @@ rs_pairwise_gene_cors <- function(f_path, gene_indices_1, gene_indices_2, cells_
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
 #'
-#' @return A list with the highly variable genes. If `hvg_method == "vst"`, the
+#' @returns A list with the highly variable genes. If `hvg_method == "vst"`, the
 #' following elements can be found:
 #' \itemize{
 #'   \item mean - The average expression of the gene.
@@ -3431,7 +3426,7 @@ rs_sc_hvg <- function(f_path_gene, hvg_method, cell_indices, loess_span, binning
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
 #'
-#' @return A list with HVG statistics concatenated across all batches. For
+#' @returns A list with HVG statistics concatenated across all batches. For
 #' `hvg_method == 'vst'`, the following elements can be found:
 #' \itemize{
 #'   \item mean - The average expression of each gene in each batch.
@@ -3464,7 +3459,7 @@ rs_sc_hvg_batch_aware <- function(f_path_gene, hvg_method, cell_indices, batch_l
 #' @description
 #' `r lifecycle::badge("experimental")`
 #' Helper function that will calculate the PCA for the specified highly
-#' variable genes. You have the option to do mean centering, variance
+#' variable genes. You have the option to do mean centring, variance
 #' normalisation and/or apply the new proposed transformation `PFlogPF` from
 #' Booeshaghi, et al.
 #'
@@ -3501,7 +3496,7 @@ rs_sc_pca <- function(f_path_gene, f_path_cell, no_pcs, pca_params, cell_indices
 #' @description
 #' `r lifecycle::badge("experimental")`
 #' Helper function that will calculate sparse PCA without scaling the data.
-#' You have the option to do mean centering, variance normalisation and/or
+#' You have the option to do mean centring, variance normalisation and/or
 #' apply the new proposed transformation `PFlogPF` from Booeshaghi, et al.
 #' None of these will densify the matrix.
 #'
@@ -3551,7 +3546,7 @@ rs_sc_pca_sparse <- function(f_path_gene, f_path_cell, no_pcs, pca_params, cell_
 #' detailed verbosity.
 #' @param seed Integer. Seed for reproducibility purposes.
 #'
-#' @return A integer matrix of N x k with N being the number of cells and k the
+#' @returns A integer matrix of N x k with N being the number of cells and k the
 #' number of neighbours.
 #'
 #' @export
@@ -3574,7 +3569,7 @@ rs_sc_knn <- function(embd, knn_params, validate_index, verbose, seed) .Call(wra
 #' detailed verbosity.
 #' @param seed Integer. Seed for reproducibility purposes.
 #'
-#' @return A list with:
+#' @returns A list with:
 #' \itemize{
 #'  \item indices - An integer matrix representing the indices of the
 #'  approximate nearest neighbours.
@@ -3604,7 +3599,7 @@ rs_sc_knn_w_dist <- function(embd, knn_params, validate_index, verbose, seed) .C
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
 #'
-#' @return A list with the following items:
+#' @returns A list with the following items:
 #' \itemize{
 #'  \item edges - sNN edges as edge pairs.
 #'  \item weights - sNN weights of the pairs above.
@@ -3656,6 +3651,8 @@ rs_compare_knn <- function(knn_data_a, knn_data_b) .Call(wrap__rs_compare_knn, k
 #' @param fc_params Named list. The fast clustering parameters.
 #' @param snn Boolean. Shall the kNN graph be additionally transformed into
 #' an sNN graph.
+#' @param return_kmeans Boolean. Shall the k-means centroid assignments be
+#' returned alongside the memberships.
 #' @param seed Integer. For reproducibility.
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
@@ -3688,6 +3685,8 @@ rs_fast_cluster_sc <- function(embd, km_type, resolutions, n_centroids, fc_param
 #' @param snn Boolean. Shall the kNN graph be additionally transformed into
 #' an sNN graph.
 #' @param no_seeds Integer. Number of additional seeds to use. Should be >=2.
+#' @param return_kmeans Boolean. Shall the k-means centroid assignments be
+#' returned alongside the memberships.
 #' @param seed Integer. For reproducibility.
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
@@ -3763,7 +3762,7 @@ rs_magic_impute <- function(f_path, knn_data, cell_indices, total_cells, gene_in
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
 #'
-#' @return A list with the following elements
+#' @returns A list with the following elements
 #' \itemize{
 #'   \item lfc - Log fold changes between the two groups.
 #'   \item prop1 - Proportion of cells expressing the gene in group 1.
@@ -3803,7 +3802,7 @@ rs_calculate_dge_mann_whitney <- function(f_path, cell_indices_1, cell_indices_2
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
 #'
-#' @return A list with the elements below. The per-comparison elements are
+#' @returns A list with the elements below. The per-comparison elements are
 #' flattened comparison-major, i.e., all genes of the first comparison, then
 #' all genes of the second, and so on.
 #' \itemize{
@@ -3857,7 +3856,7 @@ rs_calculate_dge_one_vs_many <- function(f_path, cell_indices_ref, cell_indices_
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
 #'
-#' @return A matrix of cells x gene sets with the values representing the
+#' @returns A matrix of cells x gene sets with the values representing the
 #' AUC.
 #'
 #' @export
@@ -3879,7 +3878,7 @@ rs_aucell <- function(f_path, gs_list, cells_to_keep, aucell_params, streaming, 
 #' @param binarise_params List. The binarisation parameters, see
 #' [bixverse::params_scenic_binarise()].
 #'
-#' @return A list with `thresholds` (one per regulon) and `bimodal` (whether
+#' @returns A list with `thresholds` (one per regulon) and `bimodal` (whether
 #' the mixture won the BIC comparison).
 #'
 #' @export
@@ -4019,7 +4018,7 @@ rs_hotspot_gene_cor <- function(f_path_genes, f_path_cells, embd, knn_data, hots
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
 #'
-#' @return Matrix of module scores (modules x cells). Each row corresponds to a
+#' @returns Matrix of module scores (modules x cells). Each row corresponds to a
 #' module from gs_list, each column to a cell from cells_to_keep.
 #'
 #' @references
@@ -4091,8 +4090,6 @@ rs_make_milor_nhoods <- function(embd, knn_indices, sample_ids, n_samples, milor
 #' @references Dann, et al., Nat Biotechnol, 2022
 #'
 #' @export
-#'
-#' @keywords internal
 rs_spatial_fdr <- function(p_values, connectivity) .Call(wrap__rs_spatial_fdr, p_values, connectivity)
 
 #' Fit the NEBULA negative binomial gamma mixed model over single cells
@@ -4124,7 +4121,7 @@ rs_spatial_fdr <- function(p_values, connectivity) .Call(wrap__rs_spatial_fdr, p
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
 #'
-#' @return A list with the following elements
+#' @returns A list with the following elements
 #' \itemize{
 #'   \item gene_idx - Integer. 0-indexed positions of the genes that survived
 #'   NEBULA's own expression filter.
@@ -4202,7 +4199,7 @@ rs_meld_sc <- function(embd, knn_data, meld_params, labels, n_labels, seed, verb
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
 #'
-#' @return A matrix of cells x vision scores per gene set.
+#' @returns A matrix of cells x vision scores per gene set.
 #'
 #' @export
 #'
@@ -4242,7 +4239,7 @@ rs_vision <- function(f_path, gs_list, cells_to_keep, streaming, verbose) .Call(
 #' detailed verbosity.
 #' @param seed Integer. Random seed for reproducibility.
 #'
-#' @return A list with the following items:
+#' @returns A list with the following items:
 #' \itemize{
 #'   \item autocor_res - Auto-correlation results, i.e., 1 - C, p-value and
 #'   FDR.
@@ -4712,9 +4709,9 @@ rs_compute_cluster_expr_stats <- function(f_path_gene, gene_indices, clusters) .
 #' @param meta_cell_params A list containing the meta cell parameters.
 #' @param target_size Numeric. Target library size for re-normalisation of
 #' the meta cells. Typically `1e4`.
+#' @param seed Integer. For reproducibility.
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
-#' @param verbose Boolean. Controls verbosity of the function.
 #'
 #' @returns A list with the following elements:
 #' \itemize{
@@ -4841,7 +4838,7 @@ rs_supercell <- function(f_path, embd, cells_to_keep, cells_to_use, knn_data, su
 #' detailed verbosity.
 #' @param seed Integer. For reproducibility.
 #'
-#' @return A list with the following items
+#' @returns A list with the following items
 #' \itemize{
 #'   \item dcs - Density coordinates
 #'   \item density_distances - Density distances at `k_density` neighbours.
@@ -5150,8 +5147,6 @@ rs_paga <- function(knn_mat, partitions, n_partitions) .Call(wrap__rs_paga, knn_
 #' @references Setty, et al., Nat. Biotechnol., 2019.
 #'
 #' @export
-#'
-#' @keywords internal
 rs_gene_trends <- function(expression, pseudotime, branch_probs, branch_params, gene_trend_params) .Call(wrap__rs_gene_trends, expression, pseudotime, branch_probs, branch_params, gene_trend_params)
 
 #' Meta cells highly variable genes
@@ -5177,7 +5172,7 @@ rs_gene_trends <- function(expression, pseudotime, branch_probs, branch_params, 
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
 #'
-#' @return A list with the HVG statistics. If `hvg_method == "vst"`:
+#' @returns A list with the HVG statistics. If `hvg_method == "vst"`:
 #' \itemize{
 #'   \item mean - The average expression of the gene.
 #'   \item var - The variance of the gene.
@@ -5292,7 +5287,7 @@ rs_mc_scenic <- function(sparse_data, tf_indices, scenic_params, seed, verbose) 
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
 #'
-#' @return A matrix of cells x gene sets with the values representing the
+#' @returns A matrix of cells x gene sets with the values representing the
 #' AUC.
 #'
 #' @export
@@ -5342,8 +5337,6 @@ rs_mc_aucell <- function(sparse_data, gs_list, aucell_params, verbose) .Call(wra
 #' @export
 #'
 #' @references DeTomaso, et al., Cell Systems, 2021
-#'
-#' @keywords internal
 rs_mc_hotspot_autocor <- function(sparse_data, embd, knn_data, hotspot_params, cells_to_keep, genes_to_use, verbose, seed) .Call(wrap__rs_mc_hotspot_autocor, sparse_data, embd, knn_data, hotspot_params, cells_to_keep, genes_to_use, verbose, seed)
 
 #' Calculate gene to gene spatial correlations (for meta cells)
@@ -5388,8 +5381,6 @@ rs_mc_hotspot_autocor <- function(sparse_data, embd, knn_data, hotspot_params, c
 #' @export
 #'
 #' @references DeTomaso, et al., Cell Systems, 2021
-#'
-#' @keywords internal
 rs_mc_hotspot_gene_cor <- function(sparse_data, embd, knn_data, hotspot_params, cells_to_keep, genes_to_use, verbose, seed) .Call(wrap__rs_mc_hotspot_gene_cor, sparse_data, embd, knn_data, hotspot_params, cells_to_keep, genes_to_use, verbose, seed)
 
 #' Calculate VISION pathway scores in Rust (for meta cells)
@@ -5409,13 +5400,11 @@ rs_mc_hotspot_gene_cor <- function(sparse_data, embd, knn_data, hotspot_params, 
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
 #'
-#' @return A matrix of meta cells x vision scores per gene set.
+#' @returns A matrix of meta cells x vision scores per gene set.
 #'
 #' @export
 #'
 #' @references DeTomaso, et al., Nat. Commun., 2019
-#'
-#' @keywords internal
 rs_mc_vision <- function(sparse_data, gs_list, verbose) .Call(wrap__rs_mc_vision, sparse_data, gs_list, verbose)
 
 #' Calculate VISION pathway scores in Rust with auto-correlation (for meta cells)
@@ -5453,7 +5442,7 @@ rs_mc_vision <- function(sparse_data, gs_list, verbose) .Call(wrap__rs_mc_vision
 #' detailed verbosity.
 #' @param seed Integer. Random seed for reproducibility.
 #'
-#' @return A list with the following items:
+#' @returns A list with the following items:
 #' \itemize{
 #'   \item autocor_res - Auto-correlation results, i.e., 1 - C, p-value and
 #'   FDR.
@@ -5463,8 +5452,6 @@ rs_mc_vision <- function(sparse_data, gs_list, verbose) .Call(wrap__rs_mc_vision
 #' @export
 #'
 #' @references DeTomaso, et al., Nat. Commun., 2019
-#'
-#' @keywords internal
 rs_mc_vision_with_autocorrelation <- function(sparse_data, embd, knn_data, gs_list, random_gs_list, vision_params, cluster_membership, verbose, seed) .Call(wrap__rs_mc_vision_with_autocorrelation, sparse_data, embd, knn_data, gs_list, random_gs_list, vision_params, cluster_membership, verbose, seed)
 
 #' Run DIALOGUE over meta cells
@@ -5511,8 +5498,6 @@ rs_mc_vision_with_autocorrelation <- function(sparse_data, embd, knn_data, gs_li
 #' @references Jerby-Arnon & Regev, Nature Biotechnology, 2022
 #'
 #' @export
-#'
-#' @keywords internal
 rs_mc_dialogue <- function(sparse_data, cell_type_indices, features, sample_ids, cell_quality, gene_indices, dialogue_params, verbose) .Call(wrap__rs_mc_dialogue, sparse_data, cell_type_indices, features, sample_ids, cell_quality, gene_indices, dialogue_params, verbose)
 
 #' Fit the NEBULA negative binomial gamma mixed model over meta cells
@@ -5546,13 +5531,11 @@ rs_mc_dialogue <- function(sparse_data, cell_type_indices, features, sample_ids,
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
 #'
-#' @return A list with the same elements [bixverse::rs_nebula_sc()] returns.
+#' @returns A list with the same elements [bixverse::rs_nebula_sc()] returns.
 #'
 #' @references He, et al., Commun Biol, 2021
 #'
 #' @export
-#'
-#' @keywords internal
 rs_nebula_mc <- function(sparse_data, metacells_to_keep, gene_indices, subject_ids, design, offset, nebula_params, verbose) .Call(wrap__rs_nebula_mc, sparse_data, metacells_to_keep, gene_indices, subject_ids, design, offset, nebula_params, verbose)
 
 #' Run NMF (HALS) on MetaCells
@@ -5848,7 +5831,7 @@ rs_wnn <- function(modality_emb_one, modality_emb_two, wnn_params, seed, verbose
 #' @param n_genes (`integer`)\cr
 #' Number of genes represented in the data.
 #'
-#' @return A new instance of the `SingleCellCountData` class.
+#' @returns A new instance of the `SingleCellCountData` class.
 #'
 #' @export
 #'
@@ -5861,7 +5844,7 @@ rs_wnn <- function(modality_emb_one, modality_emb_two, wnn_params, seed, verbose
 #'\item{`f_path_cells`}{(`character`)\cr Path to the `.bin` file for the cell-based representation.}
 #'\item{`f_path_genes`}{(`character`)\cr Path to the `.bin` file for the gene-based representation. }
 #'}}
-#' \subsection{return}{
+#' \subsection{returns}{
 #'A new `SingleCellCountData` instance with `n_cells` and
 #'`n_genes` initialised to zero.
 #'}
@@ -5870,7 +5853,7 @@ rs_wnn <- function(modality_emb_one, modality_emb_two, wnn_params, seed, verbose
 #'\subsection{Method `get_shape`}{
 #'Get the shape of the matrix
 #'
-#' \subsection{return}{
+#' \subsection{returns}{
 #'An integer vector `c(n_cells, n_genes)`.
 #'}
 #'}
@@ -5884,7 +5867,7 @@ rs_wnn <- function(modality_emb_one, modality_emb_two, wnn_params, seed, verbose
 #'to an existing object on disk.
 #'
 #'}
-#' \subsection{return}{
+#' \subsection{returns}{
 #'Invisible `NULL`.
 #'}
 #'}
@@ -5903,7 +5886,7 @@ rs_wnn <- function(modality_emb_one, modality_emb_two, wnn_params, seed, verbose
 #'the result to `f_path_cells`.
 #'
 #'}
-#' \subsection{return}{
+#' \subsection{returns}{
 #'A list with `cell_indices`, `gene_indices`, `lib_size` and
 #'`nnz`.
 #'}
@@ -5922,7 +5905,7 @@ rs_wnn <- function(modality_emb_one, modality_emb_two, wnn_params, seed, verbose
 #'\item{`slot`}{(`character`)\cr Where to find the raw counts. One of `"X"` or `"raw.X"` (for CellXGene data).}
 #'\item{`verbose`}{(`logical`)\cr Controls verbosity of the function. }
 #'}}
-#' \subsection{return}{
+#' \subsection{returns}{
 #'A list with `cell_indices`, `gene_indices`, `lib_size` and
 #'`nnz`.
 #'}
@@ -5948,7 +5931,7 @@ rs_wnn <- function(modality_emb_one, modality_emb_two, wnn_params, seed, verbose
 #'counts before writing.
 #'
 #'}
-#' \subsection{return}{
+#' \subsection{returns}{
 #'A list with `cell_indices`, `gene_indices`, `lib_size` and
 #'`nnz`.
 #'}
@@ -5972,7 +5955,7 @@ rs_wnn <- function(modality_emb_one, modality_emb_two, wnn_params, seed, verbose
 #'where possible.
 #'
 #'}
-#' \subsection{return}{
+#' \subsection{returns}{
 #'A list with `cell_indices`, `gene_indices`, `lib_size` and
 #'`nnz`.
 #'}
@@ -5988,7 +5971,7 @@ rs_wnn <- function(modality_emb_one, modality_emb_two, wnn_params, seed, verbose
 #'\item{`qc_params`}{(`list`)\cr Quality control parameters (`min_unique_genes`, `min_lib_size`, `min_cells`, `target_size`).}
 #'\item{`verbose`}{(`logical`)\cr Controls verbosity. }
 #'}}
-#' \subsection{return}{
+#' \subsection{returns}{
 #'A list with `global_gene_indices`, `total_cells`,
 #'`total_genes` and `per_file` (a list of lists with `exp_id`,
 #'`cell_indices`, `lib_size`, `nnz`).
@@ -6005,7 +5988,7 @@ rs_wnn <- function(modality_emb_one, modality_emb_two, wnn_params, seed, verbose
 #'\item{`cells_as_rows`}{(`logical`)\cr `TRUE` if cells are rows in the mtx file, `FALSE` if cells are columns.}
 #'\item{`verbose`}{(`logical`)\cr Controls verbosity of the function. }
 #'}}
-#' \subsection{return}{
+#' \subsection{returns}{
 #'A list with `cell_indices`, `gene_indices`, `lib_size` and
 #'`nnz`.
 #'}
@@ -6021,7 +6004,7 @@ rs_wnn <- function(modality_emb_one, modality_emb_two, wnn_params, seed, verbose
 #'\item{`cells_as_rows`}{(`logical`)\cr `TRUE` if cells are rows in the mtx file, `FALSE` if cells are columns.}
 #'\item{`verbose`}{(`logical`)\cr Controls verbosity of the function. }
 #'}}
-#' \subsection{return}{
+#' \subsection{returns}{
 #'A list with `cell_indices`, `gene_indices`, `lib_size` and
 #'`nnz`.
 #'}
@@ -6037,7 +6020,7 @@ rs_wnn <- function(modality_emb_one, modality_emb_two, wnn_params, seed, verbose
 #'\item{`qc_params`}{(`list`)\cr Quality control parameters parseable into `MinCellQuality`.}
 #'\item{`verbose`}{(`logical`)\cr Controls verbosity. }
 #'}}
-#' \subsection{return}{
+#' \subsection{returns}{
 #'A list with `global_gene_indices`, `total_cells`,
 #'`total_genes` and `per_file` (a list of lists with `exp_id`,
 #'`cell_indices`, `lib_size`, `nnz`).
@@ -6063,7 +6046,7 @@ rs_wnn <- function(modality_emb_one, modality_emb_two, wnn_params, seed, verbose
 #'`feature_type`.
 #'
 #'}
-#' \subsection{return}{
+#' \subsection{returns}{
 #'A list with `cell_indices`, `gene_indices`, `lib_size` and
 #'`nnz`.
 #'}
@@ -6079,7 +6062,7 @@ rs_wnn <- function(modality_emb_one, modality_emb_two, wnn_params, seed, verbose
 #'\item{`qc_params`}{(`list`)\cr Quality control parameters (`min_unique_genes`, `min_lib_size`, `min_cells`, `target_size`).}
 #'\item{`verbose`}{(`logical`)\cr Controls verbosity. }
 #'}}
-#' \subsection{return}{
+#' \subsection{returns}{
 #'A list with `global_gene_indices`, `total_cells`, `total_genes`
 #'and `per_file` (a list of lists with `exp_id`, `cell_indices`,
 #'`lib_size`, `nnz`).
@@ -6095,7 +6078,7 @@ rs_wnn <- function(modality_emb_one, modality_emb_two, wnn_params, seed, verbose
 #'\item{`cell_based`}{(`logical`)\cr If `TRUE`, the data is returned in CSR layout (cells as rows). If `FALSE`, the data is returned in CSC layout (genes as columns).}
 #'\item{`verbose`}{(`logical`)\cr Controls verbosity of the function. }
 #'}}
-#' \subsection{return}{
+#' \subsection{returns}{
 #'A list with `indptr`, `indices`, `data`, `no_cells` and
 #'`no_genes`, parseable into a sparse matrix in R.
 #'}
@@ -6113,7 +6096,7 @@ rs_wnn <- function(modality_emb_one, modality_emb_two, wnn_params, seed, verbose
 #'Leverages the CSR-stored data for fast cell retrieval.
 #'
 #'}
-#' \subsection{return}{
+#' \subsection{returns}{
 #'A list with `indptr`, `indices`, `data`, `no_cells` and
 #'`no_genes`, parseable into a CSR matrix in R.
 #'}
@@ -6134,7 +6117,7 @@ rs_wnn <- function(modality_emb_one, modality_emb_two, wnn_params, seed, verbose
 #'`generate_gene_based_data_memory_bounded` for lighter alternatives.
 #'
 #'}
-#' \subsection{return}{
+#' \subsection{returns}{
 #'Invisible `NULL`.
 #'}
 #'}
@@ -6153,7 +6136,7 @@ rs_wnn <- function(modality_emb_one, modality_emb_two, wnn_params, seed, verbose
 #'memory path is too costly.
 #'
 #'}
-#' \subsection{return}{
+#' \subsection{returns}{
 #'Invisible `NULL`.
 #'}
 #'}
@@ -6177,7 +6160,7 @@ rs_wnn <- function(modality_emb_one, modality_emb_two, wnn_params, seed, verbose
 #'}
 #'
 #'}
-#' \subsection{return}{
+#' \subsection{returns}{
 #'Invisible `NULL`.
 #'}
 #'}
@@ -6194,7 +6177,7 @@ rs_wnn <- function(modality_emb_one, modality_emb_two, wnn_params, seed, verbose
 #'Leverages the CSC-stored data for fast gene retrieval.
 #'
 #'}
-#' \subsection{return}{
+#' \subsection{returns}{
 #'A list with `indptr`, `indices`, `data`, `no_cells` and
 #'`no_genes`, parseable into a CSC matrix in R.
 #'}
@@ -6207,7 +6190,7 @@ rs_wnn <- function(modality_emb_one, modality_emb_two, wnn_params, seed, verbose
 #'\describe{
 #'\item{`gene_indices`}{(`integer` or `NULL`)\cr Optional 1-indexed gene indices. If `NULL`, results are returned for all genes. }
 #'}}
-#' \subsection{return}{
+#' \subsection{returns}{
 #'An integer vector of NNZ counts for the requested genes.
 #'}
 #'}
@@ -6223,7 +6206,7 @@ rs_wnn <- function(modality_emb_one, modality_emb_two, wnn_params, seed, verbose
 #'\item{`target_size`}{(`numeric`)\cr Target library size for renormalisation. Ignored when `renormalise = FALSE`.}
 #'\item{`verbose`}{(`logical`)\cr Controls verbosity. }
 #'}}
-#' \subsection{return}{
+#' \subsection{returns}{
 #'A list with `total_cells`, `total_genes` and `per_file` (a
 #'list of lists with `exp_id`, `lib_size`, `nnz`).
 #'}

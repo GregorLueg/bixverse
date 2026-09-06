@@ -18,3 +18,19 @@ bulk_dge_from_h5ad(h5_path, .verbose = TRUE)
 This is a helper function that can be used to create a \code{BulkDge} object
 (see \code{\link[=BulkDge]{BulkDge()}}) directly from h5ad objects.
 }
+\examples{
+# round trip a synthetic count matrix through a temporary h5ad
+syn <- synthetic_bulk_cor_matrix()
+h5_path <- tempfile(fileext = ".h5ad")
+write_h5ad_sc_dense(
+  f_path = h5_path,
+  counts = t(syn$counts),
+  obs = data.table::data.table(sample_id = colnames(syn$counts)),
+  var = data.table::data.table(var_id = rownames(syn$counts)),
+  .verbose = FALSE
+)
+object <- bulk_dge_from_h5ad(h5_path, .verbose = FALSE)
+object
+
+unlink(h5_path)
+}

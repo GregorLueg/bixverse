@@ -25,3 +25,15 @@ to either provide a \code{variable_info} data.table with the alternative gene
 identifier you wish to use or it exists already in the object itself. If it
 exists in the object, that variable_info will be used.
 }
+\examples{
+# swap the row names over to a symbol column of the variable info
+syn <- synthetic_bulk_cor_matrix()
+meta <- data.table::data.table(sample_id = colnames(syn$counts))
+var_info <- data.table::data.table(
+  var_id = rownames(syn$counts),
+  symbol = sprintf("SYM\%i", seq_len(nrow(syn$counts)))
+)
+object <- BulkDge(raw_counts = syn$counts, meta_data = meta)
+object <- change_gene_identifier(object, "symbol", var_info)
+head(rownames(S7::prop(object, "raw_counts")))
+}

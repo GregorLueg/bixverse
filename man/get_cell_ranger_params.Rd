@@ -4,14 +4,46 @@
 \alias{get_cell_ranger_params}
 \title{Helper to generate cell ranger input parameters}
 \usage{
-get_cell_ranger_params(dir_data)
+get_cell_ranger_params(dir_data, cells_as_rows = FALSE, has_hdr = FALSE)
 }
 \arguments{
 \item{dir_data}{String. The directory with the Cell Ranger outputs}
+
+\item{cells_as_rows}{Boolean. Are the cells the rows of the matrix? Cell
+Ranger writes genes x cells, so this defaults to \code{FALSE}. Set to \code{TRUE} for
+output of \code{\link[=write_cellranger_output]{write_cellranger_output()}} written with
+\code{rows = "cells"}.}
+
+\item{has_hdr}{Boolean. Do the barcode and feature files carry a header row?
+Cell Ranger writes none, so this defaults to \code{FALSE}.
+\code{\link[=write_cellranger_output]{write_cellranger_output()}} does write one.}
 }
 \value{
 A list based on \code{\link[=params_sc_mtx_io]{params_sc_mtx_io()}}.
 }
 \description{
-Helper to generate cell ranger input parameters
+Resolves the three files a Cell Ranger MTX directory holds and wraps them
+into the parameter list \code{\link[=load_mtx]{load_mtx()}} wants. Handles the v2 naming
+(\code{genes.tsv}) and the v3 one (\code{features.tsv}), and the \code{.csv} variant that
+\code{\link[=write_cellranger_output]{write_cellranger_output()}} can emit.
+}
+\examples{
+# round trip through the package's own writer
+dir <- tempfile("cellranger")
+dir.create(dir)
+data <- generate_single_cell_test_data(
+  syn_data_params = params_sc_synthetic_data(n_cells = 50L, n_genes = 40L)
+)
+write_cellranger_output(
+  f_path = dir,
+  counts = data$counts,
+  obs = data$obs,
+  var = data$var,
+  rows = "genes",
+  format_type = "tsv",
+  .verbose = FALSE
+)
+str(get_cell_ranger_params(dir, has_hdr = TRUE))
+
+unlink(dir, recursive = TRUE, force = TRUE)
 }

@@ -15,3 +15,14 @@ Returns the DGEList stored in the class.
 \description{
 Getter function to extract the DGEList from the \code{\link[=BulkDge]{BulkDge()}} class.
 }
+\examples{
+# the edgeR DGEList built during QC
+syn <- synthetic_bulk_cor_matrix()
+meta <- data.table::data.table(
+  sample_id = colnames(syn$counts),
+  case_control = rep(c("case", "control"), each = 50)
+)
+object <- BulkDge(raw_counts = syn$counts, meta_data = meta)
+object <- qc_bulk_dge(object, group_col = "case_control", .verbose = FALSE)
+dim(get_dge_list(object))
+}

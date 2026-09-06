@@ -50,3 +50,7 @@ An \code{ScStep}.
 \description{
 Wraps \code{\link[=find_neighbours_sc]{find_neighbours_sc()}} as an \code{ScStep}.
 }
+\examples{
+# neighbours on the PCA embedding
+step_pca_sc(no_pcs = 10L) \%>>\% step_neighbours_sc()
+}

@@ -58,6 +58,34 @@ below \code{min_genes} are dropped. Note the CisTarget leading edge usually cuts
 hard: a module of a few hundred candidate targets typically ends up as a
 regulon of a few dozen.
 }
+\examples{
+# turn the signed TF to gene table into regulon gene sets
+sc <- demo_single_cells()
+grn <- scenic_grn_sc(
+  sc,
+  tf_ids = sprintf("gene_\%02d", 1:5),
+  scenic_params = params_scenic(
+    min_counts = 1L,
+    learner_params = list(n_trees = 20L)
+  ),
+  .verbose = FALSE
+)
+grn <- identify_tf_to_genes(
+  grn,
+  method = "top_k",
+  k_tfs = 3L,
+  .verbose = FALSE
+)
+grn <- tf_to_genes_correlations(grn, object = sc, .verbose = FALSE)
+lengths(build_regulons(
+  grn,
+  use_leading_edge = FALSE,
+  min_genes = 3L,
+  .verbose = FALSE
+))
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}
 \references{
 Aibar, et al., Nat Methods, 2017
 }

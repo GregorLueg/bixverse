@@ -54,6 +54,18 @@ most top-heavy of the three, but its null tracks the gene set prevalence, so
 raw values are not comparable across gene sets of different size unless
 \code{standardise} is on.
 }
+\examples{
+# recovery curve AUC for two marker programmes
+sc <- demo_single_cells()
+gs_list <- list(
+  type_1 = get_gene_names(sc)[1:10],
+  type_2 = get_gene_names(sc)[11:20]
+)
+res <- aucell_sc(sc, gs_list = gs_list, .verbose = FALSE)
+dim(res)
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}
 \references{
 Aibar, et al., Nat Methods, 2017
 }

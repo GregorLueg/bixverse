@@ -40,3 +40,15 @@ This functions can take a given \code{NetworkDiffusions} object and calculates a
 AUC and generates a Z-score based on random permutation of \code{random_aucs} for
 test for statistical significance if desired.
 }
+\examples{
+# AUROC of the diffusion score against two known hit nodes
+set.seed(42)
+g <- igraph::sample_pa(15, directed = FALSE)
+edges <- data.table::setDT(igraph::as_data_frame(g))[, `:=`(
+  from = sprintf("node_\%i", from),
+  to = sprintf("node_\%i", to)
+)]
+object <- NetworkDiffusions(edges, weighted = FALSE, directed = FALSE)
+object <- diffuse_seed_nodes(object, c(node_1 = 1, node_3 = 1), "max")
+calculate_diffusion_auc(object, hit_nodes = c("node_2", "node_4"))
+}

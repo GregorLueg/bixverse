@@ -71,6 +71,20 @@ components the fit errors rather than returning something degenerate. With
 few restarts the filter is jumpy, so either raise \code{n_runs} or set
 \code{density_threshold = 2} in \code{\link[=params_nmf_consensus]{params_nmf_consensus()}} to switch it off.
 }
+\examples{
+# ten restarts pooled, density filter off on data this small
+sc <- demo_single_cells()
+res <- consensus_nmf_sc(
+  sc,
+  k = 3L,
+  n_runs = 10L,
+  nmf_consensus_params = params_nmf_consensus(density_threshold = 2),
+  .verbose = FALSE
+)
+res
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}
 \references{
 Kotliar et al., eLife, 2019
 }

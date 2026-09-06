@@ -4,15 +4,29 @@
 
 ### helpers --------------------------------------------------------------------
 
-#' @title Helper plot function of distribution of genes by samples
+#' Helper plot function of distribution of genes by samples
+#'
+#' @description
+#' Boxplot of the number of detected genes per sample, split by cohort. Used in
+#' the bulk DGE pre-processing report to spot samples with poor library
+#' complexity.
 #'
 #' @param samples data.table with sample information with nb_detected_genes and
 #' a column specifying the cohort.
 #' @param group_col String specifying the column with cohort information
 #'
-#' @return ggplot object, i.e. boxplot with number of genes by cohort
+#' @returns ggplot object, i.e. boxplot with number of genes by cohort
 #'
 #' @export
+#'
+#' @examples
+#' # detected genes per sample, split by cohort
+#' syn <- synthetic_bulk_cor_matrix()
+#' samples <- data.table::data.table(
+#'   cohort = rep(c("case", "control"), each = 50),
+#'   nb_detected_genes = colSums(syn$counts > 0)
+#' )
+#' plot_preprocessing_genes(samples, group_col = "cohort")
 plot_preprocessing_genes <- function(samples, group_col) {
   # checks
   checkmate::assertDataFrame(samples)
@@ -48,7 +62,11 @@ plot_preprocessing_genes <- function(samples, group_col) {
   return(p)
 }
 
-#' @title Helper plot function for identification of outliers
+#' Helper plot function for identification of outliers
+#'
+#' @description
+#' Beeswarm plot of the percentage of detected genes per sample, with the
+#' outlier cutoffs drawn in. Used in the bulk DGE pre-processing report.
 #'
 #' @param samples data.table with sample information with perc_detected_genes
 #' and a column specifying the cohort.
@@ -56,9 +74,23 @@ plot_preprocessing_genes <- function(samples, group_col) {
 #' @param min_perc Numeric. Lower cutoff to identify outliers.
 #' @param max_perc Numeric. Upper cutoff to identify outliers
 #'
-#' @return ggplot object, i.e., beeswarm plot with outlier indication
+#' @returns ggplot object, i.e., beeswarm plot with outlier indication
 #'
 #' @export
+#'
+#' @examples
+#' # percentage of detected genes with the outlier cutoffs drawn in
+#' syn <- synthetic_bulk_cor_matrix()
+#' samples <- data.table::data.table(
+#'   cohort = rep(c("case", "control"), each = 50),
+#'   perc_detected_genes = colMeans(syn$counts > 0) * 100
+#' )
+#' plot_preprocessing_outliers(
+#'   samples,
+#'   group_col = "cohort",
+#'   min_perc = 60,
+#'   max_perc = 95
+#' )
 plot_preprocessing_outliers <- function(
   samples,
   group_col,
@@ -119,9 +151,17 @@ plot_preprocessing_outliers <- function(
 #'
 #' @param voom_object `EList`. Voom object with normalised counts.
 #'
-#' @return ggplot object, i.e., voom normalisation plot.
+#' @returns ggplot object, i.e., voom normalisation plot.
 #'
 #' @export
+#'
+#' @examples
+#' # mean variance trend after voom
+#' syn <- synthetic_bulk_cor_matrix()
+#' grp <- rep(c("case", "control"), each = 50)
+#' dge_list <- edgeR::normLibSizes(edgeR::DGEList(counts = syn$counts))
+#' voom_obj <- limma::voom(dge_list, stats::model.matrix(~grp))
+#' plot_voom_normalization(voom_obj)
 plot_voom_normalization <- function(voom_object) {
   # checks
   checkmate::assertClass(voom_object, "EList")
@@ -151,16 +191,30 @@ plot_voom_normalization <- function(voom_object) {
     ggplot2::theme_classic()
 }
 
-#' Helper plot function for boxplot of normalized data
+#' Helper plot function for boxplot of normalised data
 #'
 #' @param samples data.table with sample information with perc_detected_genes
 #' and a column specifying the cohort.
 #' @param voom_object `EList`. Voom object with normalised counts.
 #' @param group_col String. The grouping column.
 #'
-#' @return ggplot object, i.e., box plot with expression per sample.
+#' @returns ggplot object, i.e., box plot with expression per sample.
 #'
 #' @export
+#'
+#' @examples
+#' # normalised expression per sample, coloured by cohort
+#' syn <- synthetic_bulk_cor_matrix()
+#' samples <- data.table::data.table(
+#'   sample_id = colnames(syn$counts),
+#'   cohort = rep(c("case", "control"), each = 50)
+#' )
+#' dge_list <- edgeR::normLibSizes(edgeR::DGEList(counts = syn$counts))
+#' voom_obj <- limma::voom(
+#'   dge_list,
+#'   stats::model.matrix(~ samples$cohort)
+#' )
+#' plot_boxplot_normalization(samples, voom_obj, group_col = "cohort")
 plot_boxplot_normalization <- function(samples, voom_object, group_col) {
   # checks
   checkmate::assertClass(voom_object, "EList")
@@ -197,11 +251,22 @@ plot_boxplot_normalization <- function(samples, voom_object, group_col) {
 #' Helper plot function for pca with contrasts
 #'
 #' @param pca_dt data.table. data.table with PCA and contrast information.
-#' @param grps Factor or character vector. The group vector.
+#' @param grps String. Name of the column in `pca_dt` holding the groups.
 #'
-#' @return ggplot object for the pca
+#' @returns ggplot object for the pca
 #'
 #' @export
+#'
+#' @examples
+#' # PC1 against PC2, coloured by the named grouping column
+#' syn <- synthetic_bulk_cor_matrix()
+#' pcs <- stats::prcomp(t(log1p(syn$counts)))$x[, 1:2]
+#' pca_dt <- data.table::data.table(
+#'   PC_1 = pcs[, 1],
+#'   PC_2 = pcs[, 2],
+#'   cohort = rep(c("case", "control"), each = 50)
+#' )
+#' plot_pca(pca_dt, grps = "cohort")
 plot_pca <- function(pca_dt, grps) {
   # checks
   checkmate::assertDataTable(pca_dt)
@@ -255,9 +320,20 @@ plot_pca <- function(pca_dt, grps) {
 #' @param object `BulkDge` class.
 #' @param plot_choice Optional string or integer. Index or name of the plate.
 #'
-#' @return Returns the DGEList stored in the class.
+#' @returns Returns the DGEList stored in the class.
 #'
 #' @export
+#'
+#' @examples
+#' # pull a named QC plot back off the object
+#' syn <- synthetic_bulk_cor_matrix()
+#' meta <- data.table::data.table(
+#'   sample_id = colnames(syn$counts),
+#'   case_control = rep(c("case", "control"), each = 50)
+#' )
+#' object <- BulkDge(raw_counts = syn$counts, meta_data = meta)
+#' object <- qc_bulk_dge(object, group_col = "case_control", .verbose = FALSE)
+#' get_dge_qc_plot(object, plot_choice = "p1_nb_genes_cohort")
 get_dge_qc_plot <- S7::new_generic(
   name = "get_dge_qc_plot",
   dispatch_args = "object",
@@ -314,9 +390,26 @@ S7::method(get_dge_qc_plot, BulkDge) <-
 #' Defaults to `c('contrast_info', 'sample_source')`
 #' @param ... additional parameters
 #'
-#' @return A plot if the PCA information was found. `NULL` if no PCA was found.
+#' @returns A plot if the PCA information was found. `NULL` if no PCA was found.
 #'
 #' @export
+#'
+#' @examples
+#' # PCA faceted over the metadata columns you care about
+#' syn <- synthetic_bulk_cor_matrix()
+#' meta <- data.table::data.table(
+#'   sample_id = colnames(syn$counts),
+#'   case_control = rep(c("case", "control"), each = 50)
+#' )
+#' object <- BulkDge(raw_counts = syn$counts, meta_data = meta)
+#' object <- qc_bulk_dge(object, group_col = "case_control", .verbose = FALSE)
+#' object <- normalise_bulk_dge(
+#'   object,
+#'   group_col = "case_control",
+#'   .verbose = FALSE
+#' )
+#' object <- calculate_pca_bulk_dge(object, no_hvg_genes = 500L)
+#' plot_pca_res(object, cols_to_plot = "case_control")
 plot_pca_res <- S7::new_generic(
   "plot_pca_res",
   "object",
@@ -397,7 +490,7 @@ S7::method(plot_pca_res, BulkDge) <- function(
 
 ### generics / methods ---------------------------------------------------------
 
-#' @title Plot the highly variable genes
+#' Plot the highly variable genes
 #'
 #' @description
 #' Plots the median-absolute deviation of the genes and applied thresholds.
@@ -408,6 +501,15 @@ S7::method(plot_pca_res, BulkDge) <- function(
 #' @param bins Integer. Number of bins to plot.
 #'
 #' @export
+#'
+#' @examples
+#' # MAD distribution with the selected genes highlighted
+#' syn <- synthetic_bulk_cor_matrix()
+#' mat <- log1p(t(syn$counts))
+#' meta <- data.table::data.table(sample_id = rownames(mat))
+#' object <- BulkCoExp(raw_data = mat, meta_data = meta)
+#' object <- preprocess_bulk_coexp(object, hvg = 200L, .verbose = FALSE)
+#' plot_hvgs(object)
 plot_hvgs <- S7::new_generic(
   "plot_hvgs",
   "object",

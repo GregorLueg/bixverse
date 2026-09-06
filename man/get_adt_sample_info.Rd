@@ -18,3 +18,13 @@ A data.table with the ADT sample information
 \description{
 Returns sample information in terms of ADT capture, number of features, etc.
 }
+\examples{
+# per-cell ADT capture: non-zero proteins and library size
+adt <- generate_single_cell_test_data_adt()
+cell_info <- stats::setNames(
+  seq_len(nrow(adt$counts)),
+  rownames(adt$counts)
+)
+adt_clr <- new_adt_counts_clr(adt$counts, cell_info = cell_info)
+head(get_adt_sample_info(adt_clr))
+}

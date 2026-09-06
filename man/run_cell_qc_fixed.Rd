@@ -18,3 +18,13 @@ run_cell_qc_fixed(metrics, cells_to_keep, hard_thresholds, groups = NULL)
 \description{
 Thin wrapper around \code{run_cell_qc} with MAD disabled.
 }
+\examples{
+# a hard upper bound, no MAD anywhere
+set.seed(42L)
+qc <- run_cell_qc_fixed(
+  metrics = list(pct_mt = runif(100, 0, 30)),
+  cells_to_keep = 0:99,
+  hard_thresholds = list(pct_mt = c(upper = 15))
+)
+sum(qc$combined)
+}

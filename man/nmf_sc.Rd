@@ -47,3 +47,11 @@ Runs a single HALS NMF on a chosen subset of cells and genes. For
 \code{SingleCells}, the counts are streamed from disk via the Rust binary
 files; for \code{MetaCells}, the in-memory sparse counts are used.
 }
+\examples{
+# three factors on the highly variable genes
+sc <- demo_single_cells()
+res <- nmf_sc(sc, k = 3L, .verbose = FALSE)
+res
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

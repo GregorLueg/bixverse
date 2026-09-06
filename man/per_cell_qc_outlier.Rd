@@ -29,3 +29,11 @@ A list with:
 \description{
 Use MAD outlier detection on per-cell QC metrics
 }
+\examples{
+# one badly undersequenced cell, flagged on the lower tail only
+set.seed(42L)
+lib_size <- c(rnorm(99, 1000, 100), 50)
+res <- per_cell_qc_outlier(lib_size, direction = "below")
+sum(res$outlier)
+res$metrics
+}

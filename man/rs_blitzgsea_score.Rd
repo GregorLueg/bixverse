@@ -41,4 +41,3 @@ Each gene set costs one enrichment score plus one gamma tail evaluation.
 The gene sets are expected to have been filtered to the desired size bounds
 and intersected with the signature already.
 }
-\keyword{internal}

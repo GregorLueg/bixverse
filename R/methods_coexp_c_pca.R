@@ -12,12 +12,23 @@
 #' @param scale Boolean. Shall the data be scaled. Defaults to FALSE.
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
-#' @return `BulkCoExp` with the needed data for contrastive PCA in the
+#' @returns `BulkCoExp` with the needed data for contrastive PCA in the
 #' properties of the class.
 #'
 #' @references Abid, et al., Nature Communications, 2018
 #'
 #' @export
+#'
+#' @examples
+#' # covariance matrices of the target and the background
+#' cpca_data <- synthetic_c_pca_data()
+#' target <- t(cpca_data$target)
+#' background <- t(cpca_data$background)
+#' meta <- data.table::data.table(sample_id = rownames(target))
+#' obj <- BulkCoExp(target, meta)
+#' obj <- preprocess_bulk_coexp(obj, .verbose = FALSE)
+#' obj <- contrastive_pca_processing(obj, background, .verbose = FALSE)
+#' dim(obj@processed_data$target_covar)
 contrastive_pca_processing <- S7::new_generic(
   name = "contrastive_pca_processing",
   dispatch_args = "object",
@@ -51,7 +62,7 @@ S7::method(contrastive_pca_processing, BulkCoExp) <-
       target_mat <- S7::prop(object, "processed_data")[["processed_data"]]
     }
 
-    background_mat <- background_mat
+    background_mat <- background_matrix
 
     intersecting_features <- intersect(
       colnames(target_mat),
@@ -119,11 +130,23 @@ S7::method(contrastive_pca_processing, BulkCoExp) <-
 #' @param alpha Alpha parameter to use.
 #' @param no_pcs Number of contrastive PCs to generate.
 #'
-#' @return `BulkCoExp` with additional data in the slots
+#' @returns `BulkCoExp` with additional data in the slots
 #'
 #' @references Abid, et al., Nature Communications, 2018
 #'
 #' @export
+#'
+#' @examples
+#' # five contrastive PCs at alpha 2.5
+#' cpca_data <- synthetic_c_pca_data()
+#' target <- t(cpca_data$target)
+#' background <- t(cpca_data$background)
+#' meta <- data.table::data.table(sample_id = rownames(target))
+#' obj <- BulkCoExp(target, meta)
+#' obj <- preprocess_bulk_coexp(obj, .verbose = FALSE)
+#' obj <- contrastive_pca_processing(obj, background, .verbose = FALSE)
+#' obj <- contrastive_pca(obj, alpha = 2.5, no_pcs = 5L)
+#' dim(get_c_pca_factors(obj))
 contrastive_pca <- S7::new_generic(
   name = "contrastive_pca",
   dispatch_args = "object",
@@ -166,7 +189,10 @@ S7::method(contrastive_pca, BulkCoExp) <-
         return_loadings = TRUE
       )
 
-    colnames(factors) <- colnames(loadings) <- sprintf("cPC_%i", seq(1:10))
+    colnames(factors) <- colnames(loadings) <- sprintf(
+      "cPC_%i",
+      seq_len(no_pcs)
+    )
     rownames(factors) <- rownames(target_mat)
     rownames(loadings) <- S7::prop(object, "params")[["c_pca_params"]][[
       "intersecting_features"
@@ -196,6 +222,18 @@ S7::method(contrastive_pca, BulkCoExp) <-
 #' returns a warning and NULL.
 #'
 #' @export
+#'
+#' @examples
+#' # feature loadings of the contrastive components
+#' cpca_data <- synthetic_c_pca_data()
+#' target <- t(cpca_data$target)
+#' background <- t(cpca_data$background)
+#' meta <- data.table::data.table(sample_id = rownames(target))
+#' obj <- BulkCoExp(target, meta)
+#' obj <- preprocess_bulk_coexp(obj, .verbose = FALSE)
+#' obj <- contrastive_pca_processing(obj, background, .verbose = FALSE)
+#' obj <- contrastive_pca(obj, alpha = 2.5, no_pcs = 5L)
+#' head(get_c_pca_loadings(obj)[, 1:3])
 get_c_pca_loadings <- S7::new_generic(
   name = "get_c_pca_loadings",
   dispatch_args = "object",
@@ -232,6 +270,18 @@ S7::method(get_c_pca_loadings, BulkCoExp) <- function(object) {
 #' returns a warning and NULL.
 #'
 #' @export
+#'
+#' @examples
+#' # sample scores of the contrastive components
+#' cpca_data <- synthetic_c_pca_data()
+#' target <- t(cpca_data$target)
+#' background <- t(cpca_data$background)
+#' meta <- data.table::data.table(sample_id = rownames(target))
+#' obj <- BulkCoExp(target, meta)
+#' obj <- preprocess_bulk_coexp(obj, .verbose = FALSE)
+#' obj <- contrastive_pca_processing(obj, background, .verbose = FALSE)
+#' obj <- contrastive_pca(obj, alpha = 2.5, no_pcs = 5L)
+#' head(get_c_pca_factors(obj)[, 1:3])
 get_c_pca_factors <- S7::new_generic(
   name = "get_c_pca_factors",
   dispatch_args = "object",
@@ -275,12 +325,26 @@ S7::method(get_c_pca_factors, BulkCoExp) <- function(object) {
 #' of alphas from log(min_alpha) to log(max_alpha) to test out.
 #' @param .verbose Controls verbosity of function.
 #'
-#' @return A ggplot showing the impact of various alpha parameters on the
+#' @returns A ggplot showing the impact of various alpha parameters on the
 #' samples in form of 2D plots.
 #'
 #' @references Abid, et al., Nature Communications, 2018
 #'
 #' @export
+#'
+#' @examples
+#' # how the group separation responds to alpha
+#' cpca_data <- synthetic_c_pca_data()
+#' target <- t(cpca_data$target)
+#' background <- t(cpca_data$background)
+#' meta <- data.table::data.table(
+#'   sample_id = rownames(target),
+#'   grp = cpca_data$target_labels
+#' )
+#' obj <- BulkCoExp(target, meta)
+#' obj <- preprocess_bulk_coexp(obj, .verbose = FALSE)
+#' obj <- contrastive_pca_processing(obj, background, .verbose = FALSE)
+#' c_pca_plot_alphas(obj, label_column = "grp", n_alphas = 6L, .verbose = FALSE)
 c_pca_plot_alphas <- S7::new_generic(
   name = "c_pca_plot_alphas",
   dispatch_args = "object",

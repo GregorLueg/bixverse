@@ -32,4 +32,12 @@ set_pca_factors(x, pca_factor, ...)
 \description{
 Set/add PCA factors
 }
+\examples{
+# an externally computed embedding pushed into the cache
+sc <- demo_single_cells(prepped = FALSE)
+sc <- set_pca_factors(sc, matrix(stats::rnorm(dim(sc)[1] * 2), ncol = 2))
+dim(get_pca_factors(sc))
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}
 \keyword{internal}

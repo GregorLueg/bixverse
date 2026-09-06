@@ -30,4 +30,12 @@ remove_snn_graph(x, ...)
 \description{
 Remove the sNN graph
 }
+\examples{
+# drop the cached sNN graph
+sc <- demo_single_cells()
+sc <- remove_snn_graph(sc)
+is.null(get_snn_graph(sc))
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}
 \keyword{internal}

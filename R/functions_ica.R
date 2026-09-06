@@ -36,6 +36,13 @@
 #' @export
 #'
 #' @importFrom zeallot %<-%
+#'
+#' @examples
+#' # recover two mixed sources
+#' sources <- cbind(sin((1:1000) / 20), rep(((1:200) - 100) / 100, 5))
+#' mixed <- sources %*% matrix(c(0.291, 0.6557, -0.5439, 0.5572), 2, 2)
+#' ica_res <- fast_ica_rust(mixed, n_icas = 2L, ica_fun = "logcosh", seed = 42L)
+#' max(abs(cor(sources[, 1], t(ica_res$S))))
 fast_ica_rust <- function(
   X,
   n_icas,
@@ -44,6 +51,8 @@ fast_ica_rust <- function(
   fast_svd = TRUE,
   seed = NULL
 ) {
+  ica_fun <- match.arg(ica_fun)
+
   # scope
   X1 <- K <- NULL
 
@@ -113,6 +122,27 @@ fast_ica_rust <- function(
 #' @export
 #'
 #' @importFrom zeallot %<-%
+#'
+#' @examples
+#' # same run, but with the whitening done up front
+#' sources <- cbind(sin((1:1000) / 20), rep(((1:200) - 100) / 100, 5))
+#' mixed <- sources %*% matrix(c(0.291, 0.6557, -0.5439, 0.5572), 2, 2)
+#' whitened <- rs_prepare_whitening(
+#'   x = mixed,
+#'   fast_svd = TRUE,
+#'   seed = 42L,
+#'   rank = NULL,
+#'   oversampling = NULL,
+#'   n_power_iter = NULL
+#' )
+#' ica_res <- fast_ica_rust_helper(
+#'   X = whitened$x,
+#'   K = whitened$k,
+#'   n_icas = 2L,
+#'   ica_fun = "logcosh",
+#'   seed = 42L
+#' )
+#' dim(ica_res$S)
 fast_ica_rust_helper <- function(
   X,
   K,
@@ -121,6 +151,8 @@ fast_ica_rust_helper <- function(
   seed = NULL,
   ica_params = params_ica_general()
 ) {
+  ica_fun <- match.arg(ica_fun)
+
   # Scope check
   a <- NULL
   # Checks

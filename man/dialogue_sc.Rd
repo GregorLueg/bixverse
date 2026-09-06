@@ -82,6 +82,36 @@ cell type to clear \code{abn_c} in \code{\link[=params_dialogue_pmd]{params_dial
 with thousands of cells each is the regime it was built for; many samples
 with a dozen cells each is not.
 }
+\examples{
+# a planted multicellular programme recovered across three cell types
+data <- generate_dialogue_test_data()
+dir <- tempfile("bixverse_dlg")
+dir.create(dir)
+object <- load_r_data(
+  SingleCells(dir_data = dir),
+  counts = data$counts,
+  obs = data$obs,
+  var = data$var,
+  sc_qc_param = params_sc_min_quality(
+    min_unique_genes = 10L,
+    min_lib_size = 50L,
+    min_cells = 10L
+  ),
+  .verbose = FALSE
+)
+res <- dialogue_sc(
+  object,
+  cell_type_col = "cell_grp",
+  sample_col = "sample_id",
+  features = data$features,
+  gene_ids = data$var$gene_id,
+  pmd_params = params_dialogue_pmd(k = 2L, n_permutations = 20L),
+  .verbose = FALSE
+)
+res
+
+unlink(dir, recursive = TRUE, force = TRUE)
+}
 \references{
 Jerby-Arnon & Regev, Nature Biotechnology, 2022
 }

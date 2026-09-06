@@ -35,3 +35,18 @@ This function calculates the semantic similarities based on
 Resnik or Lin similarity for a given ontology. Has also the option to
 calculate a combined version of the two.
 }
+\examples{
+# Lin similarity for a subset of terms only
+onto <- data.table::data.table(
+  parent = c("a", "b", "b", "b", "c"),
+  child = c("b", "c", "d", "e", "f")
+)
+ancestry <- get_ontology_ancestry(onto)
+ic <- calculate_information_content(ancestry$descendants)
+calculate_semantic_sim(
+  terms = c("c", "d", "f"),
+  similarity_type = "lin",
+  ancestor_list = ancestry$ancestors,
+  ic_list = ic
+)
+}

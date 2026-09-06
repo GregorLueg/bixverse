@@ -16,3 +16,25 @@ Returns the TPM-normalised counts. (If found.)
 Getter function to extract the TPM-normalised counts from the
 \code{\link[=BulkDge]{BulkDge()}} class.
 }
+\examples{
+# TPM counts, which normalise_bulk_dge() only computes on request
+syn <- synthetic_bulk_cor_matrix()
+meta <- data.table::data.table(
+  sample_id = colnames(syn$counts),
+  case_control = rep(c("case", "control"), each = 50)
+)
+gene_lengths <- stats::setNames(
+  rep(2000, nrow(syn$counts)),
+  rownames(syn$counts)
+)
+object <- BulkDge(raw_counts = syn$counts, meta_data = meta)
+object <- qc_bulk_dge(object, group_col = "case_control", .verbose = FALSE)
+object <- normalise_bulk_dge(
+  object,
+  group_col = "case_control",
+  calc_tpm = TRUE,
+  gene_lengths = gene_lengths,
+  .verbose = FALSE
+)
+get_tpm_counts(object)[1:3, 1:3]
+}

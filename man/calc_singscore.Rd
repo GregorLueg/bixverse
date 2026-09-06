@@ -44,6 +44,17 @@ Scores all samples against one up-regulated gene set with an optional
 paired down-regulated set. When \code{n_permutations > 0}, additionally runs a
 permutation test and includes empirical p-values.
 }
+\examples{
+# score every sample against one up-regulated gene set
+set.seed(123L)
+exp_mat <- matrix(
+  rnorm(200 * 10),
+  nrow = 200,
+  dimnames = list(sprintf("gene_\%03i", 1:200), sprintf("sample_\%i", 1:10))
+)
+ranks <- calc_singscore_rank(exp_mat)
+head(calc_singscore(ranks, up_set = sprintf("gene_\%03i", 1:20)))
+}
 \references{
 Foroutan et al., BMC Bioinformatics, 2018.
 }

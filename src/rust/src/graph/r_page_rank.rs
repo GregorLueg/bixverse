@@ -42,7 +42,7 @@ extendr_module! {
 /// and be of same length of `node_names`!
 /// @param undirected Boolean. Is this an undirected graph.
 ///
-/// @return The personalised page rank values.
+/// @returns The personalised page rank values.
 ///
 /// @export
 #[extendr]
@@ -77,7 +77,7 @@ fn rs_page_rank(
 /// values. Each element must sum to 1 and be of same length of `node_names`!
 /// @param undirected Boolean. Is this an undirected graph.
 ///
-/// @return A matrix of the scores with each row representing an element in the
+/// @returns A matrix of the scores with each row representing an element in the
 /// `diffusion_scores` list (in order), and each column representing the value
 /// of the personalised page rank diffusion for this node.
 ///
@@ -145,7 +145,7 @@ fn rs_page_rank_parallel(
 /// of summarisation function to use to calculate the tied diffusion.
 /// @param undirected Boolean. Is this an undirected graph.
 ///
-/// @return A matrix of the scores with each row representing a tied diffusion of
+/// @returns A matrix of the scores with each row representing a tied diffusion of
 /// of `diffusion_scores_1` and  `diffusion_scores_2` lists (in order), and each
 /// column representing the value of the tied diffusion for this node.
 ///
@@ -212,7 +212,7 @@ fn rs_tied_diffusion_parallel(
 /// @param sink_edges Optional string vector. Shall an automatic reset occur
 /// when this edge type is traversed.
 ///
-/// @return The personalised constrained page rank values.
+/// @returns The personalised constrained page rank values.
 ///
 /// @export
 ///
@@ -281,7 +281,7 @@ fn rs_constrained_page_rank(
 /// @param sink_edges Optional string vector. Shall an automatic reset occur
 /// when this edge type is traversed.
 ///
-/// @return A list of the personalised (constrained) page rank values.
+/// @returns A list of the personalised (constrained) page rank values.
 ///
 /// @export
 ///

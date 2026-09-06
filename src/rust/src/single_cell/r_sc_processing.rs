@@ -339,7 +339,7 @@ fn rs_sc_otsu_method(scores: &[f64], bins: usize) -> f64 {
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
 ///
-/// @return A list with the cumulative percentages of the Top X genes defined
+/// @returns A list with the cumulative percentages of the Top X genes defined
 /// as in `top_n_vals`.
 ///
 /// @export
@@ -395,7 +395,7 @@ fn rs_sc_get_top_genes_perc(
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
 ///
-/// @return A list with the percentages of counts per gene set group detected
+/// @returns A list with the percentages of counts per gene set group detected
 /// in the cells.
 ///
 /// @export
@@ -530,7 +530,7 @@ fn rs_pairwise_gene_cors(
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
 ///
-/// @return A list with the highly variable genes. If `hvg_method == "vst"`, the
+/// @returns A list with the highly variable genes. If `hvg_method == "vst"`, the
 /// following elements can be found:
 /// \itemize{
 ///   \item mean - The average expression of the gene.
@@ -646,7 +646,7 @@ fn rs_sc_hvg(
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
 ///
-/// @return A list with HVG statistics concatenated across all batches. For
+/// @returns A list with HVG statistics concatenated across all batches. For
 /// `hvg_method == 'vst'`, the following elements can be found:
 /// \itemize{
 ///   \item mean - The average expression of each gene in each batch.
@@ -803,7 +803,7 @@ fn rs_sc_hvg_batch_aware(
 /// @description
 /// `r lifecycle::badge("experimental")`
 /// Helper function that will calculate the PCA for the specified highly
-/// variable genes. You have the option to do mean centering, variance
+/// variable genes. You have the option to do mean centring, variance
 /// normalisation and/or apply the new proposed transformation `PFlogPF` from
 /// Booeshaghi, et al.
 ///
@@ -898,7 +898,7 @@ fn rs_sc_pca(
 /// @description
 /// `r lifecycle::badge("experimental")`
 /// Helper function that will calculate sparse PCA without scaling the data.
-/// You have the option to do mean centering, variance normalisation and/or
+/// You have the option to do mean centring, variance normalisation and/or
 /// apply the new proposed transformation `PFlogPF` from Booeshaghi, et al.
 /// None of these will densify the matrix.
 ///
@@ -1003,7 +1003,7 @@ fn rs_sc_pca_sparse(
 /// detailed verbosity.
 /// @param seed Integer. Seed for reproducibility purposes.
 ///
-/// @return A integer matrix of N x k with N being the number of cells and k the
+/// @returns A integer matrix of N x k with N being the number of cells and k the
 /// number of neighbours.
 ///
 /// @export
@@ -1116,7 +1116,7 @@ fn rs_sc_knn(
 /// detailed verbosity.
 /// @param seed Integer. Seed for reproducibility purposes.
 ///
-/// @return A list with:
+/// @returns A list with:
 /// \itemize{
 ///  \item indices - An integer matrix representing the indices of the
 ///  approximate nearest neighbours.
@@ -1181,7 +1181,7 @@ fn rs_sc_knn_w_dist(
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
 ///
-/// @return A list with the following items:
+/// @returns A list with the following items:
 /// \itemize{
 ///  \item edges - sNN edges as edge pairs.
 ///  \item weights - sNN weights of the pairs above.
@@ -1332,6 +1332,8 @@ fn rs_compare_knn(knn_data_a: List, knn_data_b: List) -> Result<List, extendr_ap
 /// @param fc_params Named list. The fast clustering parameters.
 /// @param snn Boolean. Shall the kNN graph be additionally transformed into
 /// an sNN graph.
+/// @param return_kmeans Boolean. Shall the k-means centroid assignments be
+/// returned alongside the memberships.
 /// @param seed Integer. For reproducibility.
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
@@ -1415,6 +1417,8 @@ fn rs_fast_cluster_sc(
 /// @param snn Boolean. Shall the kNN graph be additionally transformed into
 /// an sNN graph.
 /// @param no_seeds Integer. Number of additional seeds to use. Should be >=2.
+/// @param return_kmeans Boolean. Shall the k-means centroid assignments be
+/// returned alongside the memberships.
 /// @param seed Integer. For reproducibility.
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.

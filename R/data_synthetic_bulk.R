@@ -25,7 +25,7 @@
 #' @param seed Integer. Initial random seed for generation of the synthetic
 #' data. Default: 10101L.
 #'
-#' @return A `synthetic_matrix_simple` class containing:
+#' @returns A `synthetic_matrix_simple` class containing:
 #' \itemize{
 #'  \item mat - The random matrix
 #'  \item diff - List of differentially expressed genes per group
@@ -35,10 +35,11 @@
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' synthetic_GEX <- create_synthetic_signal_matrix()
-#' synthetic_signal_mat <- synthetic_GEX$mat
-#' }
+#' # default 1000 x 90 matrix with three groups and a small fourth one
+#' synthetic_gex <- synthetic_signal_matrix()
+#' dim(synthetic_gex$mat)
+#' table(synthetic_gex$group)
+#' lengths(synthetic_gex$diff)
 synthetic_signal_matrix <- function(
   no_grps = 3,
   per_group = 30,
@@ -55,8 +56,9 @@ synthetic_signal_matrix <- function(
   variance_up <- 5
 
   # checks
-  checkmate::qassert(no_grps, "R1(0,)")
-  checkmate::qassert(per_group, "R1(0,)")
+  # "N" not "R": these are counts, so 3L and 3 must both be accepted
+  checkmate::qassert(no_grps, "N1(0,)")
+  checkmate::qassert(per_group, "N1(0,)")
   checkmate::qassert(total_genes, "I1(0,)")
   checkmate::qassert(no_genes_up, "I1(0,)")
   checkmate::qassert(add_small_group, "B1")
@@ -148,7 +150,7 @@ synthetic_signal_matrix <- function(
 #' @param synthetic_params List. The synthetic data parameters, see
 #' [bixverse::params_synthetic_bulk_rnaseq()].
 #'
-#' @return A `synthetic_bulk_data` class containing:
+#' @returns A `synthetic_bulk_data` class containing:
 #' \itemize{
 #'  \item counts - The count matrix. Rows are genes, columns are samples.
 #'  \item sparse_counts - A slot for sparse counts that can be added later, see
@@ -163,6 +165,13 @@ synthetic_signal_matrix <- function(
 #' The parameters used are stored on the `synthetic_params` attribute.
 #'
 #' @export
+#'
+#' @examples
+#' # three co-expression modules on a 1000 x 100 count matrix
+#' syn <- synthetic_bulk_cor_matrix(params_synthetic_bulk_rnaseq())
+#' dim(syn$counts)
+#' head(syn$module_data)
+#' dim(syn$module_factors)
 synthetic_bulk_cor_matrix <- function(
   synthetic_params = params_synthetic_bulk_rnaseq()
 ) {
@@ -227,11 +236,18 @@ synthetic_bulk_cor_matrix <- function(
 #' @param sparsity_params List. The sparsification parameters, see
 #' [bixverse::params_bulk_sparsity()].
 #'
-#' @return `synthetic_bulk_data` with added sparse data.
+#' @returns `synthetic_bulk_data` with added sparse data.
 #'
 #' @export
 #'
 #' @references Zappia, et al., Genome Biol, 2017
+#'
+#' @examples
+#' # thin the counts down to a shallower library size
+#' syn <- synthetic_bulk_cor_matrix()
+#' syn <- simulate_dropouts(syn, params_bulk_sparsity())
+#' mean(syn$counts == 0)
+#' mean(syn$sparse_counts == 0)
 simulate_dropouts <- function(
   object,
   sparsity_params = params_bulk_sparsity()
@@ -276,6 +292,14 @@ simulate_dropouts <- function(
 #' }
 #'
 #' @export
+#'
+#' @examples
+#' # how much sparsity the dropout simulation actually added
+#' syn <- synthetic_bulk_cor_matrix()
+#' syn <- simulate_dropouts(syn, params_bulk_sparsity())
+#' stats <- calculate_sparsity_stats(syn)
+#' stats$added_sparsity
+#' stats$dropout_by_expression
 calculate_sparsity_stats <- function(object, no_exp_bins = 10L) {
   original_zero <- sparse_zero <- NULL
 
@@ -332,7 +356,6 @@ calculate_sparsity_stats <- function(object, no_exp_bins = 10L) {
 
 ## contrastive pca synthetic data ----------------------------------------------
 
-#' @title
 #' Generates synthetic data for contrastive PCA exploration.
 #'
 #' @description
@@ -342,7 +365,7 @@ calculate_sparsity_stats <- function(object, no_exp_bins = 10L) {
 #' @param seed Integer. Initial random seed for generation of the synthetic
 #' data. Default: 10101L.
 #'
-#' @return A `cpca_synthetic_data` class with the following elements:
+#' @returns A `cpca_synthetic_data` class with the following elements:
 #' \itemize{
 #'  \item target - The target matrix.
 #'  \item background - The background matrix.
@@ -352,6 +375,13 @@ calculate_sparsity_stats <- function(object, no_exp_bins = 10L) {
 #' @importFrom magrittr %>%
 #'
 #' @export
+#'
+#' @examples
+#' # target and background matrices for a contrastive PCA run
+#' cpca_data <- synthetic_c_pca_data()
+#' dim(cpca_data$target)
+#' dim(cpca_data$background)
+#' table(cpca_data$target_labels)
 synthetic_c_pca_data <- function(seed = 10101L) {
   # Checks
   checkmate::qassert(seed, "I1")
@@ -403,7 +433,6 @@ synthetic_c_pca_data <- function(seed = 10101L) {
 
 ## gene module data ------------------------------------------------------------
 
-#' @title
 #' Generates synthetic gene module data.
 #'
 #' @description
@@ -419,15 +448,25 @@ synthetic_c_pca_data <- function(seed = 10101L) {
 #' @param seed Integer. Initial random seed for generation of the synthetic
 #' data. Default: 10101L.
 #'
-#' @return A `synthetic_matrix_modules` class with the following items:
+#' @returns A `synthetic_matrix_modules` class with the following items:
 #' \itemize{
 #'  \item data - The data matrix.
-#'  \item metadata - The sample metadata.
+#'  \item meta_data - The sample metadata.
 #' }
 #'
 #' @importFrom magrittr %>%
 #'
 #' @export
+#'
+#' @examples
+#' # four partially overlapping modules over 24 samples
+#' mods <- generate_gene_module_data(
+#'   n_samples = 24L,
+#'   n_genes = 60L,
+#'   n_modules = 4L
+#' )
+#' dim(mods$data)
+#' head(mods$meta_data)
 generate_gene_module_data <- function(
   n_samples = 24L,
   n_genes = 60L,
@@ -528,17 +567,14 @@ generate_gene_module_data <- function(
 #' [bixverse::synthetic_signal_matrix()].
 #' @param ... Additional params
 #'
-#' @return A plotted heatmap showing the DEG.
+#' @returns A plotted heatmap showing the DEG.
 #'
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#'
+#' # heatmap of the simulated differential expression
 #' synthetic_gex <- synthetic_signal_matrix()
-#'
 #' plot(synthetic_gex)
-#' }
 #'
 #' @keywords internal
 plot.synthetic_matrix_simple <- function(x, ...) {
@@ -567,14 +603,17 @@ plot.synthetic_matrix_simple <- function(x, ...) {
 
 ## contrastive pca -------------------------------------------------------------
 
-#' @title
 #' Plot the contrastive PCA example data
+#'
+#' @description
+#' Two heatmaps side by side, the target and the background matrix, so you can
+#' see the structure contrastive PCA is meant to pull apart.
 #'
 #' @param x `cpca_synthetic_data` class. Output from
 #' [bixverse::synthetic_c_pca_data()].
 #' @param ... Additional params
 #'
-#' @return A ggplot showing the two heatmaps from the target and background
+#' @returns A ggplot showing the two heatmaps from the target and background
 #' matrix.
 #'
 #' @export
@@ -582,6 +621,11 @@ plot.synthetic_matrix_simple <- function(x, ...) {
 #' @import patchwork
 #' @import ggplot2
 #' @importFrom magrittr %>%
+#'
+#' @examples
+#' # target next to background, the structure cPCA pulls apart
+#' cpca_data <- synthetic_c_pca_data()
+#' plot(cpca_data)
 #'
 #' @keywords internal
 plot.cpca_synthetic_data <- function(x, ...) {

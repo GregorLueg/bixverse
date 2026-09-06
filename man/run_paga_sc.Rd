@@ -47,6 +47,15 @@ Only the kNN indices are used, no distances and no expression data, so the
 method is safe on any of the available graphs, including the WNN one. Run
 \code{\link[=find_neighbours_sc]{find_neighbours_sc()}} and a clustering first.
 }
+\examples{
+# cluster level graph abstraction of the Leiden clusters
+sc <- demo_single_cells()
+sc <- find_clusters_sc(sc, res = 1.0)
+res <- run_paga_sc(sc, cluster_col = "leiden_clustering", .verbose = FALSE)
+res$sizes
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}
 \references{
 Wolf, et al., Genome Biol., 2019.
 }

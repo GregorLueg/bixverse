@@ -15,10 +15,27 @@ process_go_data(go_info, go_genes, go_relationships)
 \code{relationship}}
 }
 \value{
-data.table ready for usage in \code{\link[=gene_ontology_data]{gene_ontology_data()}}.
+data.table ready for usage in \code{\link[=GeneOntologyElim]{GeneOntologyElim()}}.
 }
 \description{
 Helper function that takes in different files containing gene
 ontology data and puts them together for various gene set enrichment methods
 using the ontological information
+}
+\examples{
+\donttest{
+# assemble the packaged human GO data by hand
+go_data <- load_go_human_data()
+relationships <- data.table::setnames(
+  data.table::copy(go_data$gene_ontology),
+  old = c("from", "to"),
+  new = c("parent", "child")
+)
+go_dt <- process_go_data(
+  go_info = go_data$go_info,
+  go_genes = go_data$go_to_genes,
+  go_relationships = relationships[relationship \%in\% c("is_a", "part_of")]
+)
+dim(go_dt)
+}
 }

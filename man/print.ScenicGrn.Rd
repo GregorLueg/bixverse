@@ -17,4 +17,20 @@ Invisibly returns \code{x}.
 \description{
 Print a ScenicGrn object
 }
+\examples{
+# what the GRN inference produced and which steps have run
+sc <- demo_single_cells()
+grn <- scenic_grn_sc(
+  sc,
+  tf_ids = sprintf("gene_\%02d", 1:5),
+  scenic_params = params_scenic(
+    min_counts = 1L,
+    learner_params = list(n_trees = 20L)
+  ),
+  .verbose = FALSE
+)
+print(grn)
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}
 \keyword{internal}

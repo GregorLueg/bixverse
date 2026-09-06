@@ -21,3 +21,9 @@ relationships.
 This function loads in gene ontology data stored in the package. This is
 for humans only.
 }
+\examples{
+# the human gene ontology tables shipped with the package
+go_data <- load_go_human_data()
+names(go_data)
+head(go_data$go_info)
+}

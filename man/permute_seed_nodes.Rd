@@ -32,3 +32,16 @@ score and adds Z-scores to the object. The function will automatically
 determine if the original diffusion was a single or tied diffusion and
 construct permutations accordingly.
 }
+\examples{
+# 100 node-degree adjusted permutations of a single diffusion
+set.seed(42)
+g <- igraph::sample_pa(15, directed = FALSE)
+edges <- data.table::setDT(igraph::as_data_frame(g))[, `:=`(
+  from = sprintf("node_\%i", from),
+  to = sprintf("node_\%i", to)
+)]
+object <- NetworkDiffusions(edges, weighted = FALSE, directed = FALSE)
+object <- diffuse_seed_nodes(object, c(node_1 = 1, node_3 = 1), "max")
+object <- permute_seed_nodes(object, perm_iters = 100L, .verbose = FALSE)
+head(get_diffusion_perms(object))
+}

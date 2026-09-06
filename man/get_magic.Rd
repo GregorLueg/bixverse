@@ -30,3 +30,11 @@ The \code{ScMagic} object, or \code{NULL} when nothing was imputed.
 Returns the \code{ScMagic} layer written by \code{\link[=run_magic_sc]{run_magic_sc()}}. This
 function is used for the single cell-related classes and methods.
 }
+\examples{
+# the imputed layer, only the genes MAGIC was asked for
+sc <- demo_single_cells()
+sc <- run_magic_sc(sc, features = get_gene_names(sc)[1:5], .verbose = FALSE)
+dim(get_magic(sc)$data)
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

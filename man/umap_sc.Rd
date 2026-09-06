@@ -87,3 +87,11 @@ and \code{spread} together control how tightly points are packed in the
 embedding. For \code{MetaCells}, smaller \code{k} values are often appropriate given
 the reduced number of points.
 }
+\examples{
+# UMAP off the cached kNN graph
+sc <- demo_single_cells()
+sc <- umap_sc(sc, .verbose = FALSE)
+dim(get_embedding(sc, "umap"))
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

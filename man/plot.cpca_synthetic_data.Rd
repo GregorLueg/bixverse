@@ -17,6 +17,13 @@ A ggplot showing the two heatmaps from the target and background
 matrix.
 }
 \description{
-Plot the contrastive PCA example data
+Two heatmaps side by side, the target and the background matrix, so you can
+see the structure contrastive PCA is meant to pull apart.
+}
+\examples{
+# target next to background, the structure cPCA pulls apart
+cpca_data <- synthetic_c_pca_data()
+plot(cpca_data)
+
 }
 \keyword{internal}

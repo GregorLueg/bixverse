@@ -24,3 +24,16 @@ The class with added semantic similarities to the properties.
 This function calculates the specified semantic similarities for
 the whole ontology and adds it to the class.
 }
+\examples{
+# Resnik similarities for the whole ontology stored in the class
+onto <- data.table::data.table(
+  parent = c("a", "b", "b", "b", "c"),
+  child = c("b", "c", "d", "e", "f"),
+  type = c("part_of", "part_of", "part_of", "is_a", "is_a")
+)
+onto_obj <- pre_process_sim_onto(
+  OntologySim(onto, .verbose = FALSE),
+  .verbose = FALSE
+)
+calculate_semantic_sim_onto(onto_obj, sim_type = "resnik", .verbose = FALSE)
+}

@@ -19,3 +19,14 @@ Returns the outputs stored in the class.
 Getter function to extract the outputs from the \code{\link[=BulkCoExp]{BulkCoExp()}} or
 \code{\link[=BulkDge]{BulkDge()}}.
 }
+\examples{
+# everything the QC and normalisation steps stashed on the object
+syn <- synthetic_bulk_cor_matrix()
+meta <- data.table::data.table(
+  sample_id = colnames(syn$counts),
+  case_control = rep(c("case", "control"), each = 50)
+)
+object <- BulkDge(raw_counts = syn$counts, meta_data = meta)
+object <- qc_bulk_dge(object, group_col = "case_control", .verbose = FALSE)
+names(get_outputs(object))
+}

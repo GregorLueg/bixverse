@@ -17,12 +17,22 @@
 #' information content of this given term. Needs to be a single float! See
 #' [bixverse::calculate_information_content()].
 #'
-#' @return The symmetric similarity matrix for the specified data from the
+#' @returns The symmetric similarity matrix for the specified data from the
 #' ontology.
 #'
 #' @export
 #'
 #' @import data.table
+#'
+#' @examples
+#' # Resnik similarity matrix over a toy ontology
+#' onto <- data.table::data.table(
+#'   parent = c("a", "b", "b", "b", "c"),
+#'   child = c("b", "c", "d", "e", "f")
+#' )
+#' ancestry <- get_ontology_ancestry(onto)
+#' ic <- calculate_information_content(ancestry$descendants)
+#' round(calculate_semantic_sim_mat("resnik", ancestry$ancestors, ic), 3)
 calculate_semantic_sim_mat <- function(
   similarity_type,
   ancestor_list,
@@ -67,11 +77,26 @@ calculate_semantic_sim_mat <- function(
 #' @param add_self Boolean. Shall self-similarities be added. Defaults to
 #' `FALSE`.
 #'
-#' @return A data.table with the calculated similarities.
+#' @returns A data.table with the calculated similarities.
 #'
 #' @export
 #'
 #' @import data.table
+#'
+#' @examples
+#' # Lin similarity for a subset of terms only
+#' onto <- data.table::data.table(
+#'   parent = c("a", "b", "b", "b", "c"),
+#'   child = c("b", "c", "d", "e", "f")
+#' )
+#' ancestry <- get_ontology_ancestry(onto)
+#' ic <- calculate_information_content(ancestry$descendants)
+#' calculate_semantic_sim(
+#'   terms = c("c", "d", "f"),
+#'   similarity_type = "lin",
+#'   ancestor_list = ancestry$ancestors,
+#'   ic_list = ic
+#' )
 calculate_semantic_sim <- function(
   terms,
   similarity_type,
@@ -123,11 +148,21 @@ calculate_semantic_sim <- function(
 #' @param weights Named numeric. The relationship of type to weight for this
 #' specific edge. For example `c("part_of" = 0.8, "is_a" = 0.6)`.
 #'
-#' @return The symmetric Wang similarity matrix.
+#' @returns The symmetric Wang similarity matrix.
 #'
 #' @export
 #'
 #' @import data.table
+#'
+#' @examples
+#' # Wang similarity matrix with relationship-specific weights
+#' onto <- data.table::data.table(
+#'   parent = c("a", "b", "b", "b", "c"),
+#'   child = c("b", "c", "d", "e", "f"),
+#'   type = c("part_of", "part_of", "part_of", "is_a", "is_a")
+#' )
+#' weights <- c("part_of" = 0.8, "is_a" = 0.6)
+#' round(calculate_wang_sim_mat(onto, weights = weights), 3)
 calculate_wang_sim_mat <- function(parent_child_dt, weights) {
   # Scope
   weight <- type <- NULL
@@ -174,11 +209,21 @@ calculate_wang_sim_mat <- function(parent_child_dt, weights) {
 #' @param add_self Boolean. Shall self-similarities be added. Defaults to
 #' `FALSE`.
 #'
-#' @return A data.table with the calculated similarities.
+#' @returns A data.table with the calculated similarities.
 #'
 #' @export
 #'
 #' @import data.table
+#'
+#' @examples
+#' # Wang similarity for a subset of terms only
+#' onto <- data.table::data.table(
+#'   parent = c("a", "b", "b", "b", "c"),
+#'   child = c("b", "c", "d", "e", "f"),
+#'   type = c("part_of", "part_of", "part_of", "is_a", "is_a")
+#' )
+#' weights <- c("part_of" = 0.8, "is_a" = 0.6)
+#' calculate_wang_sim(c("c", "d", "f"), onto, weights = weights)
 calculate_wang_sim <- function(
   terms,
   parent_child_dt,
@@ -237,13 +282,22 @@ calculate_wang_sim <- function(
 #' @param parent_child_dt data.table. The data.table with column parent and
 #' child.
 #'
-#' @return A list with
+#' @returns A list with
 #' \itemize{
 #'  \item ancestors A list with all ancestor terms.
 #'  \item descendants A list with all descendant terms.
 #' }
 #'
 #' @export
+#'
+#' @examples
+#' # ancestors and descendants of every term in a toy ontology
+#' onto <- data.table::data.table(
+#'   parent = c("a", "b", "b", "b", "c"),
+#'   child = c("b", "c", "d", "e", "f")
+#' )
+#' ancestry <- get_ontology_ancestry(onto)
+#' ancestry$ancestors[["f"]]
 get_ontology_ancestry <- function(parent_child_dt) {
   . <- NULL
 
@@ -284,12 +338,21 @@ get_ontology_ancestry <- function(parent_child_dt) {
 #' @param ancestor_list List. Named list of terms with ancestor identifiers as
 #' their values
 #'
-#' @return A named list of each term and their information content as values.
+#' @returns A named list of each term and their information content as values.
 #'
 #' @export
 #'
 #' @import data.table
 #' @importFrom magrittr %>%
+#'
+#' @examples
+#' # information content from the descendant counts of a toy ontology
+#' onto <- data.table::data.table(
+#'   parent = c("a", "b", "b", "b", "c"),
+#'   child = c("b", "c", "d", "e", "f")
+#' )
+#' ancestry <- get_ontology_ancestry(onto)
+#' unlist(calculate_information_content(ancestry$descendants))
 calculate_information_content <- function(ancestor_list) {
   checkmate::assertList(ancestor_list)
   checkmate::assertNamed(ancestor_list)
@@ -310,16 +373,28 @@ calculate_information_content <- function(ancestor_list) {
 #' @description This function calculates the critical value for a given ontology
 #' similarity matrix.
 #'
-#' @param x Numerical matrix or `ontology class`, see [bixverse::ontology()].
-#' This function tends to be slower on matrices compared to `ontology class`.
+#' @param x Numerical matrix or `OntologySim` class, see
+#' [bixverse::OntologySim()]. This function tends to be slower on matrices
+#' compared to the `OntologySim` class.
 #' @param alpha Float. The alpha value. For example, 0.001 would mean that the
 #' critical value is smaller than 0.1 percentile of the random permutations.
 #' @param permutations Number of random permutations.
 #' @param seed Integer. For reproducibility purposes
 #'
-#' @return The critical value.
+#' @returns The critical value.
 #'
 #' @export
+#'
+#' @examples
+#' # critical value of a Wang similarity matrix at alpha 0.1
+#' onto <- data.table::data.table(
+#'   parent = c("a", "b", "b", "b", "c"),
+#'   child = c("b", "c", "d", "e", "f"),
+#'   type = c("part_of", "part_of", "part_of", "is_a", "is_a")
+#' )
+#' weights <- c(part_of = 0.8, is_a = 0.6)
+#' sim_mat <- calculate_wang_sim_mat(onto, weights = weights)
+#' calculate_critical_value(sim_mat, alpha = 0.1)
 calculate_critical_value <- function(
   x,
   alpha,

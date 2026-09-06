@@ -23,3 +23,22 @@ Plots the resolution results (if they can be found in the class). The x-axis
 reflects the different resolutions and the y axis the modularity observed
 with that resolution.
 }
+\examples{
+# modularity across the resolutions tested on an RBH graph
+set.seed(123)
+modules <- data.table::data.table(
+  origin = rep(c("set_a", "set_b"), each = 20),
+  module = rep(c("m1", "m2", "m3", "m4"), each = 10),
+  gene = unlist(replicate(4, sample(letters, 10), simplify = FALSE))
+)
+object <- RbhGraph(
+  modules,
+  rbh_type = "set",
+  dataset_col = "origin",
+  module_col = "module",
+  value_col = "gene"
+)
+object <- generate_rbh_graph(object, minimum_similarity = 0)
+object <- find_rbh_communities(object, parallel = FALSE, .verbose = FALSE)
+plot_resolution_res(object)
+}

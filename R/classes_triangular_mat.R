@@ -1,6 +1,6 @@
 # class - symmetric cor matrix -------------------------------------------------
 
-#' @title Class for symmetric correlation matrices
+#' Class for symmetric correlation matrices
 #'
 #' @description
 #' The class allows to store the upper triangular matrix of a symmetric
@@ -9,6 +9,18 @@
 #' if need be.
 #'
 #' @export
+#'
+#' @examples
+#' # store the off-diagonal of a correlation matrix and get it back
+#' set.seed(42)
+#' cor_mat <- cor(matrix(rnorm(80), nrow = 20, ncol = 4))
+#' object <- upper_triangular_sym_mat$new(
+#'   values = cor_mat[lower.tri(cor_mat)],
+#'   features = sprintf("gene_%i", 1:4),
+#'   shift = TRUE
+#' )
+#' object$get_data_table(.verbose = FALSE)
+#' dim(object$get_sym_matrix(.verbose = FALSE))
 upper_triangular_sym_mat <- R6::R6Class(
   # Class name
   classname = "upper_triangular_sym_mat",
@@ -24,7 +36,7 @@ upper_triangular_sym_mat <- R6::R6Class(
     #' upper triangular matrix. If `FALSE`, the diagonal was included, if
     #' `TRUE`, the diagonal was removed.
     #'
-    #' @return Returns the initialised class.
+    #' @returns Returns the initialised class.
     initialize = function(values, features, shift) {
       # Checks
       checkmate::qassert(values, "N+")
@@ -46,7 +58,7 @@ upper_triangular_sym_mat <- R6::R6Class(
 
     #' @description Print the class
     #'
-    #' @return Returns the initialised class
+    #' @returns Returns the initialised class
     print = function() {
       cat(
         "R6-based class for storing upper triangular, symmetric matrices",
@@ -67,7 +79,7 @@ upper_triangular_sym_mat <- R6::R6Class(
     #' factors. Reduces size of the object; however, takes longer to generate.
     #' @param .verbose Boolean. Controls verbosity.
     #'
-    #' @return A data.table with three columns:
+    #' @returns A data.table with three columns:
     #' \itemize{
     #' \item feature_a: The name of the first feature in the correlation matrix.
     #' \item feature_b: The name of the second feature in the correlation
@@ -97,7 +109,7 @@ upper_triangular_sym_mat <- R6::R6Class(
     #'
     #' @param .verbose Boolean. Controls verbosity.
     #'
-    #' @return Returns the correlation matrix as a dense R matrix.
+    #' @returns Returns the correlation matrix as a dense R matrix.
     get_sym_matrix = function(.verbose = TRUE) {
       checkmate::qassert(.verbose, "B1")
 
@@ -123,7 +135,7 @@ upper_triangular_sym_mat <- R6::R6Class(
     #'
     #' @param .verbose Boolean. Controls verbosity
     #'
-    #' @return The sparse matrix.
+    #' @returns The sparse matrix.
     get_sparse_matrix = function(.verbose = TRUE) {
       checkmate::qassert(.verbose, "B1")
 
@@ -144,7 +156,7 @@ upper_triangular_sym_mat <- R6::R6Class(
 
     #' @description Return the correlation data and shift
     #'
-    #' @return A list with
+    #' @returns A list with
     #' \itemize{
     #'  \item cor_data - Numeric vector. The values.
     #'  \item features - String. The feature names.
@@ -215,7 +227,7 @@ upper_triangular_sym_mat <- R6::R6Class(
 
 # class - symmetric differential cor matrix ------------------------------------
 
-#' @title Class for symmetric differential correlation matrices
+#' Class for symmetric differential correlation matrices
 #'
 #' @description
 #' The class allows to store the upper triangular matrices of of differential
@@ -233,7 +245,7 @@ UpperTriangleDiffcorMat <- R6::R6Class(
     #' @param diff_cor_res A list of differential correlation results.
     #' @param features String vector. The features of the correlation matrices.
     #'
-    #' @return Returns the initialised class.
+    #' @returns Returns the initialised class.
     initialize = function(diff_cor_res, features) {
       # Checks
       checkmate::assertList(diff_cor_res, types = "double")
@@ -264,7 +276,7 @@ UpperTriangleDiffcorMat <- R6::R6Class(
     #' factors. Reduces size of the object; however, takes longer to generate.
     #' @param .verbose Boolean. Controls verbosity.
     #'
-    #' @return A data.table with three columns:
+    #' @returns A data.table with three columns:
     #' \itemize{
     #'   \item feature_a: The name of the first feature in the correlation matrix.
     #'   \item feature_b: The name of the second feature in the correlation
@@ -310,7 +322,7 @@ UpperTriangleDiffcorMat <- R6::R6Class(
     #' correlation matrix you want to retrieve.
     #' @param .verbose Boolean. Controls verbosity.
     #'
-    #' @return Returns the specified correlation matrix as a dense R matrix.
+    #' @returns Returns the specified correlation matrix as a dense R matrix.
     get_cor_matrix = function(to_ret = c("cor_a", "cor_b"), .verbose = TRUE) {
       checkmate::assertChoice(to_ret, choices = c("cor_a", "cor_b"))
       checkmate::qassert(.verbose, "B1")

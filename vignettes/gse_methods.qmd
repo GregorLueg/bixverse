@@ -21,12 +21,6 @@ in `bixverse`.
 
 ```{r}
 #| label: setup
-if (!requireNamespace("fgsea", quietly = TRUE)) {
-  BiocManager::install("fgsea")
-}
-if (!requireNamespace("msigdbr", quietly = TRUE)) {
-  install.packages("msigdbr")
-}
 library(bixverse)
 library(data.table)
 library(magrittr)
@@ -436,7 +430,8 @@ bixverse_blitz <- calc_blitzgsea(
 head(bixverse_blitz)
 ```
 
-Does the approximation hold up against the permutations?
+Does the approximation hold up against the permutations + multi-level approach
+from fgsea?
 
 ```{r}
 #| label: blitzgsea vs fgsea p-value comparison
@@ -456,7 +451,8 @@ plot(
 )
 ```
 
-Overall good correlation between the two.
+Overall good correlation between the two. Pathways called significant in one are
+likely to be called significant in the other.
 
 ### Reusing the null model
 

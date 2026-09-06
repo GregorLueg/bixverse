@@ -78,6 +78,26 @@ dim.LigandTargetInfluence <- function(x) {
 #' @param x An object holding ligand-target influence results.
 #'
 #' @export
+#'
+#' @examples
+#' # the ligands x genes regulatory potential matrix
+#' ppi <- data.table::data.table(
+#'   from = c("L1", "SIG1", "L2", "SIG2"),
+#'   to = c("SIG1", "TF1", "SIG2", "TF2"),
+#'   weight = 1.0
+#' )
+#' grn <- data.table::data.table(
+#'   from = rep(c("TF1", "TF2"), each = 3),
+#'   to = c("G1", "G2", "G3", "G4", "G5", "G6"),
+#'   weight = 1.0
+#' )
+#' inf <- generate_ligand_target_influence(
+#'   ligand_seeds = list(L1 = "L1", L2 = "L2"),
+#'   ppi_network = ppi,
+#'   grn_network = grn,
+#'   params = params_ligand_target(ltf_cutoff = 0)
+#' )
+#' dim(get_influence(inf))
 get_influence <- function(x) {
   UseMethod("get_influence")
 }
@@ -113,6 +133,26 @@ get_influence.LigandTargetInfluence <- function(x) {
 #' @returns A `LigandTargetInfluence` object.
 #'
 #' @export
+#'
+#' @examples
+#' # two disjoint signalling components over a toy network
+#' ppi <- data.table::data.table(
+#'   from = c("L1", "SIG1", "L2", "SIG2"),
+#'   to = c("SIG1", "TF1", "SIG2", "TF2"),
+#'   weight = 1.0
+#' )
+#' grn <- data.table::data.table(
+#'   from = rep(c("TF1", "TF2"), each = 3),
+#'   to = c("G1", "G2", "G3", "G4", "G5", "G6"),
+#'   weight = 1.0
+#' )
+#' inf <- generate_ligand_target_influence(
+#'   ligand_seeds = list(L1 = "L1", L2 = "L2"),
+#'   ppi_network = ppi,
+#'   grn_network = grn,
+#'   params = params_ligand_target(ltf_cutoff = 0)
+#' )
+#' inf
 generate_ligand_target_influence <- function(
   ligand_seeds,
   ppi_network,
@@ -220,6 +260,29 @@ generate_ligand_target_influence <- function(
 #' `pearson`, `spearman`.
 #'
 #' @export
+#'
+#' @examples
+#' # rank the ligands against the TF1 target set
+#' ppi <- data.table::data.table(
+#'   from = c("L1", "SIG1", "L2", "SIG2"),
+#'   to = c("SIG1", "TF1", "SIG2", "TF2"),
+#'   weight = 1.0
+#' )
+#' grn <- data.table::data.table(
+#'   from = rep(c("TF1", "TF2"), each = 3),
+#'   to = c("G1", "G2", "G3", "G4", "G5", "G6"),
+#'   weight = 1.0
+#' )
+#' inf <- generate_ligand_target_influence(
+#'   ligand_seeds = list(L1 = "L1", L2 = "L2"),
+#'   ppi_network = ppi,
+#'   grn_network = grn,
+#'   params = params_ligand_target(ltf_cutoff = 0)
+#' )
+#' ligand_activity_scores(
+#'   ligand_influence = inf,
+#'   gene_sets = list(set_A = c("G1", "G2", "G3"))
+#' )
 ligand_activity_scores <- function(
   ligand_influence,
   gene_sets,
@@ -485,6 +548,18 @@ resolve_weights <- function(weights = NULL, scenario, has_condition_de) {
 #' `avg_expr`, `frac_expr`.
 #'
 #' @export
+#'
+#' @examples
+#' # mean expression and expressing fraction per planted cell type
+#' sc <- demo_single_cells()
+#' res <- compute_expression_info_sc(
+#'   sc,
+#'   celltype_colname = "cell_grp",
+#'   genes = get_gene_names(sc)[1:5]
+#' )
+#' head(res)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 compute_expression_info_sc <- function(
   object,
   celltype_colname,
@@ -605,6 +680,35 @@ compute_expression_info_sc <- function(
 #' `prioritisation_score`, with a `prioritisation_rank` column.
 #'
 #' @export
+#'
+#' @examples
+#' # one sender, one receiver, with the signal planted on L1 -> R1
+#' lr_network <- data.table::data.table(
+#'   ligand = c("L1", "L2"),
+#'   receptor = c("R1", "R2")
+#' )
+#' celltype_de <- data.table::CJ(
+#'   cluster_id = c("sender", "receiver"),
+#'   gene = c("L1", "L2", "R1", "R2")
+#' )
+#' celltype_de[, lfc := c(3, 0.1, 0.1, 0.1, 0.1, 0.1, 2.5, 0.1)]
+#' celltype_de[, pval := c(1e-10, 0.5, 0.5, 0.5, 0.5, 0.5, 1e-9, 0.5)]
+#' expression_info <- celltype_de[, .(cluster_id, gene, avg_expr = 0.05)]
+#' expression_info[cluster_id == "sender" & gene == "L1", avg_expr := 5]
+#' expression_info[cluster_id == "receiver" & gene == "R1", avg_expr := 5]
+#' res <- prioritise_interactions(
+#'   celltype_de = celltype_de,
+#'   expression_info = expression_info,
+#'   ligand_activities = data.table::data.table(
+#'     ligand = c("L1", "L2"),
+#'     aupr_corrected = c(0.75, -0.125)
+#'   ),
+#'   lr_network = lr_network,
+#'   senders_oi = "sender",
+#'   receivers_oi = "receiver",
+#'   scenario = "one_condition"
+#' )
+#' head(res[, .(sender, ligand, receiver, receptor, prioritisation_score)])
 prioritise_interactions <- function(
   celltype_de,
   expression_info,

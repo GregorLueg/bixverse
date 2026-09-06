@@ -1,6 +1,6 @@
 # preprocessing ----------------------------------------------------------------
 
-#' @title Prepare class for ICA
+#' Prepare class for ICA
 #'
 #' @description
 #' This is the generic function for doing the necessary preprocessing for
@@ -14,10 +14,18 @@
 #' fast_svd = `TRUE`.
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
-#' @return `BulkCoExp` with the needed data for ICA in the
+#' @returns `BulkCoExp` with the needed data for ICA in the
 #' properties of the class.
 #'
 #' @export
+#'
+#' @examples
+#' # whitening ahead of the ICA runs
+#' mat <- t(synthetic_signal_matrix()$mat)
+#' obj <- BulkCoExp(mat, data.table::data.table(sample_id = rownames(mat)))
+#' obj <- preprocess_bulk_coexp(obj, hvg = 0.3, .verbose = FALSE)
+#' obj <- ica_processing(obj, .verbose = FALSE)
+#' dim(obj@processed_data$K)
 ica_processing <- S7::new_generic(
   name = "ica_processing",
   dispatch_args = "object",
@@ -91,7 +99,7 @@ S7::method(ica_processing, BulkCoExp) <- function(
 
 # component identification -----------------------------------------------------
 
-#' @title Iterate over different ncomp parameters for ICA
+#' Iterate over different ncomp parameters for ICA
 #'
 #' @description
 #' This function allows to iterate over a vector of ncomp to identify which
@@ -138,10 +146,24 @@ S7::method(ica_processing, BulkCoExp) <- function(
 #' @param random_seed Integer. For reproducibility.
 #' @param .verbose Boolean. Controls verbosity.
 #'
-#' @return `BulkCoExp` with the added information of stability of the components
+#' @returns `BulkCoExp` with the added information of stability of the components
 #' and other data to plot to choose the right `ncomp`.
 #'
 #' @export
+#'
+#' @examples
+#' # stability across a small grid of component counts
+#' mat <- t(synthetic_signal_matrix()$mat)
+#' obj <- BulkCoExp(mat, data.table::data.table(sample_id = rownames(mat)))
+#' obj <- preprocess_bulk_coexp(obj, hvg = 0.3, .verbose = FALSE)
+#' obj <- ica_processing(obj, .verbose = FALSE)
+#' obj <- ica_evaluate_comp(
+#'   obj,
+#'   ica_type = "logcosh",
+#'   ncomp_params = params_ica_ncomp(custom_seq = seq(2L, 20L, by = 2L)),
+#'   .verbose = FALSE
+#' )
+#' head(get_ica_stability_res(obj))
 ica_evaluate_comp <- S7::new_generic(
   name = "ica_evaluate_comp",
   dispatch_args = "object",
@@ -174,6 +196,8 @@ S7::method(ica_evaluate_comp, BulkCoExp) <- function(
   random_seed = 42L,
   .verbose = TRUE
 ) {
+  ica_type <- match.arg(ica_type)
+
   # Scope checks
   . <- NULL
 
@@ -383,7 +407,7 @@ S7::method(ica_evaluate_comp, BulkCoExp) <- function(
   return(object)
 }
 
-#' @title Identify stability inflection point
+#' Identify stability inflection point
 #'
 #' @description
 #' This function can be used after having run [bixverse::ica_evaluate_comp()].
@@ -404,9 +428,26 @@ S7::method(ica_evaluate_comp, BulkCoExp) <- function(
 #' Defaults to `TRUE`.
 #' @param .verbose Boolean. Controls the verbosity of the function.
 #'
-#' @return `BulkCoExp` with optimal ncomp based on the inflection point method.
+#' @returns `BulkCoExp` with optimal ncomp based on the inflection point method.
 #'
 #' @export
+#'
+#' @examples
+#' # inflection point of the combined score
+#' mat <- t(synthetic_signal_matrix()$mat)
+#' obj <- BulkCoExp(mat, data.table::data.table(sample_id = rownames(mat)))
+#' obj <- preprocess_bulk_coexp(obj, hvg = 0.3, .verbose = FALSE)
+#' obj <- ica_processing(obj, .verbose = FALSE)
+#' obj <- ica_evaluate_comp(
+#'   obj,
+#'   ica_type = "logcosh",
+#'   ncomp_params = params_ica_ncomp(custom_seq = seq(2L, 20L, by = 2L)),
+#'   .verbose = FALSE
+#' )
+#' obj <- ica_optimal_ncomp(
+#'   obj, span = 0.4, show_plot = FALSE, .verbose = FALSE
+#' )
+#' obj@params$ica_stability_assessment$optimal_ncomp
 ica_optimal_ncomp <- S7::new_generic(
   name = "ica_optimal_ncomp",
   dispatch_args = "object",
@@ -523,7 +564,7 @@ S7::method(ica_optimal_ncomp, BulkCoExp) <- function(
 }
 
 
-#' @title Run stabilised ICA with a given number of components
+#' Run stabilised ICA with a given number of components
 #'
 #' @description
 #' This function runs stabilised ICA with the defined number of components.
@@ -567,10 +608,21 @@ S7::method(ica_optimal_ncomp, BulkCoExp) <- function(
 #' absolute bigger tail is set to positive floats.
 #' @param .verbose Boolean. Controls verbosity.
 #'
-#' @return `BulkCoExp` with the the source matrix S, mixing matrix A and other
+#' @returns `BulkCoExp` with the the source matrix S, mixing matrix A and other
 #' parameters added to the slots.
 #'
 #' @export
+#'
+#' @examples
+#' # stabilised five-component ICA and the resulting modules
+#' mat <- t(synthetic_signal_matrix()$mat)
+#' obj <- BulkCoExp(mat, data.table::data.table(sample_id = rownames(mat)))
+#' obj <- preprocess_bulk_coexp(obj, hvg = 0.3, .verbose = FALSE)
+#' obj <- ica_processing(obj, .verbose = FALSE)
+#' obj <- ica_stabilised_results(
+#'   obj, no_comp = 5L, ica_type = "logcosh", .verbose = FALSE
+#' )
+#' head(get_modules(get_results(obj)))
 ica_stabilised_results <- S7::new_generic(
   name = "ica_stabilised_results",
   dispatch_args = "object",
@@ -750,7 +802,7 @@ S7::method(ica_stabilised_results, BulkCoExp) <- function(
 
 ## plotting --------------------------------------------------------------------
 
-#' @title Plot various parameters with no comp
+#' Plot various parameters with no comp
 #'
 #' @description
 #' Helper function to plot various parameters with the no of components. You
@@ -770,9 +822,23 @@ S7::method(ica_stabilised_results, BulkCoExp) <- function(
 #' @param object The class, see [bixverse::BulkCoExp()]. You need to apply
 #' [bixverse::ica_evaluate_comp()] before running this function.
 #'
-#' @return The plot with no comp ~ vs. various parameters.
+#' @returns The plot with no comp ~ vs. various parameters.
 #'
 #' @export
+#'
+#' @examples
+#' # stability, convergence and orthogonality against ncomp
+#' mat <- t(synthetic_signal_matrix()$mat)
+#' obj <- BulkCoExp(mat, data.table::data.table(sample_id = rownames(mat)))
+#' obj <- preprocess_bulk_coexp(obj, hvg = 0.3, .verbose = FALSE)
+#' obj <- ica_processing(obj, .verbose = FALSE)
+#' obj <- ica_evaluate_comp(
+#'   obj,
+#'   ica_type = "logcosh",
+#'   ncomp_params = params_ica_ncomp(custom_seq = seq(2L, 20L, by = 2L)),
+#'   .verbose = FALSE
+#' )
+#' plot_ica_ncomp_params(obj)
 plot_ica_ncomp_params <- S7::new_generic(
   name = "plot_ica_ncomp_params",
   dispatch_args = "object",
@@ -853,7 +919,7 @@ S7::method(plot_ica_ncomp_params, BulkCoExp) <- function(object) {
   p
 }
 
-#' @title Plot the stability of the ICA components
+#' Plot the stability of the ICA components
 #'
 #' @description
 #' Helper function to plot the individual stability profiles over the tested
@@ -862,7 +928,24 @@ S7::method(plot_ica_ncomp_params, BulkCoExp) <- function(object) {
 #' @param object The class, see [bixverse::BulkCoExp()]. You need to apply
 #' [bixverse::ica_evaluate_comp()] before running this function.
 #'
+#' @returns A ggplot with the per-component stability profiles over the tested
+#' number of components.
+#'
 #' @export
+#'
+#' @examples
+#' # per-component stability profiles across the tested ncomps
+#' mat <- t(synthetic_signal_matrix()$mat)
+#' obj <- BulkCoExp(mat, data.table::data.table(sample_id = rownames(mat)))
+#' obj <- preprocess_bulk_coexp(obj, hvg = 0.3, .verbose = FALSE)
+#' obj <- ica_processing(obj, .verbose = FALSE)
+#' obj <- ica_evaluate_comp(
+#'   obj,
+#'   ica_type = "logcosh",
+#'   ncomp_params = params_ica_ncomp(custom_seq = seq(2L, 20L, by = 2L)),
+#'   .verbose = FALSE
+#' )
+#' plot_ica_stability_individual(obj)
 plot_ica_stability_individual <- S7::new_generic(
   name = "plot_ica_stability_individual",
   dispatch_args = "object",
@@ -1059,7 +1142,7 @@ flip_ica_loading_signs <- function(x) {
 
 ## getters ---------------------------------------------------------------------
 
-#' @title Get the ICA component data (stability, convergence, nMI)
+#' Get the ICA component data (stability, convergence, nMI)
 #'
 #' @description
 #' Getter function to extract the ICA component data in terms of stability,
@@ -1068,9 +1151,23 @@ flip_ica_loading_signs <- function(x) {
 #'
 #' @param object The class, see [bixverse::BulkCoExp()].
 #'
-#' @return data.table with the ICA parameter data (if found. Otherwise `NULL`.)
+#' @returns data.table with the ICA parameter data (if found. Otherwise `NULL`.)
 #'
 #' @export
+#'
+#' @examples
+#' # the stability table behind the ncomp choice
+#' mat <- t(synthetic_signal_matrix()$mat)
+#' obj <- BulkCoExp(mat, data.table::data.table(sample_id = rownames(mat)))
+#' obj <- preprocess_bulk_coexp(obj, hvg = 0.3, .verbose = FALSE)
+#' obj <- ica_processing(obj, .verbose = FALSE)
+#' obj <- ica_evaluate_comp(
+#'   obj,
+#'   ica_type = "logcosh",
+#'   ncomp_params = params_ica_ncomp(custom_seq = seq(2L, 20L, by = 2L)),
+#'   .verbose = FALSE
+#' )
+#' head(get_ica_stability_res(obj))
 get_ica_stability_res <- S7::new_generic(
   name = "get_ica_stability_res",
   dispatch_args = "object",

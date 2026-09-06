@@ -32,3 +32,10 @@ Indices of the stored HVG genes.
 Returns the HVG indices. Pending class type this are 1-based (for R) or
 0-based for Rust.
 }
+\examples{
+# stored 0-based, so map them back through the gene names
+sc <- demo_single_cells()
+get_gene_names_from_idx(sc, head(get_hvg(sc), 3))
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

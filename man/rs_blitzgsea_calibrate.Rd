@@ -38,4 +38,3 @@ tails to the resulting enrichment scores and smooths the fitted parameters
 across sizes. Nothing about any gene set library enters here, so one
 calibration serves every library scored against that signature.
 }
-\keyword{internal}

@@ -32,3 +32,30 @@ used by \code{\link[=load_multi_tenx_h5]{load_multi_tenx_h5()}}. The feature spa
 the intersection or union of features across inputs; missing features
 in the union case are filled with zero.
 }
+\examples{
+# stack the ADT layer of two files, barcodes prefixed by exp_id
+data <- generate_single_cell_test_data(
+  syn_data_params = params_sc_synthetic_data(n_cells = 200L, n_genes = 40L)
+)
+adt <- generate_single_cell_test_data_adt(
+  params_sc_synthetic_data_adt(n_cells = 200L)
+)
+features <- data.table::data.table(
+  id = c(data$var$gene_id, colnames(adt$counts)),
+  name = c(data$var$ensembl_id, colnames(adt$counts)),
+  feature_type = rep(
+    c("Gene Expression", "Antibody Capture"),
+    c(ncol(data$counts), ncol(adt$counts))
+  )
+)
+counts <- cbind(data$counts, as(adt$counts, "RsparseMatrix"))
+files <- c(a = tempfile(fileext = ".h5"), b = tempfile(fileext = ".h5"))
+for (f in files) {
+  write_tenx_h5_sc(f, counts, data$obs$cell_id, features)
+}
+adt_counts <- read_multi_tenx_h5_adt(files)
+dim(adt_counts)
+head(rownames(adt_counts), 2)
+
+unlink(files)
+}

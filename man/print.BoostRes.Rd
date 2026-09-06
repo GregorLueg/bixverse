@@ -17,4 +17,20 @@ Invisible \code{x}.
 \description{
 Print a BoostRes object
 }
+\examples{
+# doublet calls from the boosted classifier
+sc <- demo_single_cells(prepped = FALSE)
+res <- doublet_detection_boost_sc(
+  sc,
+  boost_params = params_boost(
+    hvg = list(min_gene_var_pctl = 0.0),
+    pca = list(no_pcs = 10L),
+    n_iters = 5L
+  ),
+  .verbose = FALSE
+)
+print(res)
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}
 \keyword{internal}

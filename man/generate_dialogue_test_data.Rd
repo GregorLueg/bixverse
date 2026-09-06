@@ -49,7 +49,12 @@ Cells are laid out contiguously by cell type and, within a cell type, by
 sample, so every cell type sees every sample. That is the easy case for the
 method and is what a fixture should be.
 }
+\examples{
+# synthetic data with a multicellular programme planted across samples
+data <- generate_dialogue_test_data()
+names(data$features)
+head(data$planted[[1]])
+}
 \references{
 Jerby-Arnon & Regev, Nature Biotechnology, 2022
 }
-\keyword{internal}

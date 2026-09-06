@@ -71,3 +71,14 @@ parameters added to the slots.
 \description{
 This function runs stabilised ICA with the defined number of components.
 }
+\examples{
+# stabilised five-component ICA and the resulting modules
+mat <- t(synthetic_signal_matrix()$mat)
+obj <- BulkCoExp(mat, data.table::data.table(sample_id = rownames(mat)))
+obj <- preprocess_bulk_coexp(obj, hvg = 0.3, .verbose = FALSE)
+obj <- ica_processing(obj, .verbose = FALSE)
+obj <- ica_stabilised_results(
+  obj, no_comp = 5L, ica_type = "logcosh", .verbose = FALSE
+)
+head(get_modules(get_results(obj)))
+}

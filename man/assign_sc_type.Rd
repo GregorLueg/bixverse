@@ -41,6 +41,24 @@ runner-up cell type) and the hybrid assignment, where clusters at or above
 \code{purity_threshold} keep the blanket cluster-level call and mixed clusters fall
 back to the per-cell calls.
 }
+\examples{
+# per cell calls from the ScType scores
+sc <- demo_single_cells()
+markers <- data.table::data.table(
+  cell_type = rep(sprintf("cell_type_\%i", 1:3), each = 10),
+  gene_id = sprintf("gene_\%02d", 1:30)
+)
+cell_markers <- prepare_cell_markers(obj = sc, marker_df = markers)
+scores <- calc_sc_type_scores(
+  sc,
+  cell_marker_list = cell_markers,
+  .verbose = FALSE
+)
+res <- assign_sc_type(sc, sc_type_res = scores, .verbose = FALSE)
+table(res$assignments)
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}
 \references{
 Ianevski et al., Nat Comm, 2022. Zhou et al., NIPS, 2004.
 }

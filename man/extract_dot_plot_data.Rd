@@ -25,9 +25,22 @@ extract_dot_plot_data(
 \code{SingleCellsMultiModal}.}
 }
 \value{
-A data.table with columns: gene, group, mean_exp, scaled_exp, pct_exp.
+A data.table with columns: gene, group, mean_exp, scaled_exp and
+pct_exp.
 }
 \description{
 Extracts per-group mean expression and percentage of expressing cells for a
 set of genes. Returns a long-format data.table suitable for dot plots.
+}
+\examples{
+# mean expression and expressing fraction per cell group
+sc <- demo_single_cells()
+dt <- extract_dot_plot_data(
+  sc,
+  features = get_gene_names(sc)[1:5],
+  grouping_variable = "cell_grp"
+)
+head(dt, 3)
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 }

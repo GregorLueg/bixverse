@@ -676,7 +676,7 @@ params_snf <- function(
 #' @param low_conf_cats Character vector. Annotation categories considered
 #' lower confidence. Default includes motif similarity-based inferences.
 #'
-#' @return A validated list of RcisTarget parameters.
+#' @returns A validated list of RcisTarget parameters.
 #'
 #' @export
 params_cistarget <- function(
@@ -1045,7 +1045,7 @@ params_bulk_sparsity <- function(
 #' @param sample_bias Optional string. One of
 #' `c("even", "slightly_uneven", "very_uneven")`
 #'
-#' @return A list with the parameters.
+#' @returns A list with the parameters.
 #'
 #' @export
 params_sc_synthetic_data <- function(
@@ -1083,6 +1083,14 @@ params_sc_synthetic_data <- function(
       c("even", "slightly_uneven", "very_uneven")
     )
   )
+  # both or neither: one alone silently yields no sample_id column, which only
+  # surfaces later as a DuckDB binder error
+  if (is.null(n_samples) != is.null(sample_bias)) {
+    stop(paste(
+      "`n_samples` and `sample_bias` must be provided together.",
+      "Supply both to add sample membership, or neither to omit it."
+    ))
+  }
 
   list(
     n_cells = n_cells,
@@ -1117,7 +1125,7 @@ params_sc_synthetic_data <- function(
 #' @param batch_effect_strength String. One of
 #' `c("strong", "medium", "weak")`. The strength of the batch effect to add.
 #'
-#' @return A list with the parameters.
+#' @returns A list with the parameters.
 #'
 #' @export
 #'
@@ -1192,7 +1200,7 @@ params_sc_synthetic_data_adt <- function(
 #' @param n_planted Integer. Planted genes per cell type. The blocks are
 #' contiguous, so `n_planted * n_cell_types` has to fit into `n_genes`.
 #'
-#' @return A list with the parameters.
+#' @returns A list with the parameters.
 #'
 #' @references Jerby-Arnon & Regev, Nature Biotechnology, 2022
 #'
@@ -1338,7 +1346,7 @@ params_sc_hvg <- function(
 
 #' Wrapper for PCA specifically designed for single cells
 #'
-#' @param mean_center Boolean. Shall the data be mean centered
+#' @param mean_center Boolean. Shall the data be mean centred
 #' @param normalise_variance Boolean. Shall the data have normalised variance
 #' @param randomised Boolean. Shall fast, approximate randomised SVD be used.
 #' @param clr Boolean. Shall the CLR-type `PFlogPF` be applied, see Booeshaghi,
@@ -1408,7 +1416,7 @@ params_sc_pca <- function(
 #' @param n_probe Integer or `NULL`. IVF param: number of clusters to query.
 #' If `NULL`, defaults to `sqrt(n_list)` internally.
 #'
-#' @return A list with the kNN parameters.
+#' @returns A list with the kNN parameters.
 #'
 #' @export
 params_sc_knn <- function(
@@ -1496,7 +1504,7 @@ params_sc_knn <- function(
 #' per-protein output clipping. If `NULL` (and `quantile_low` is also `NULL`),
 #' no clipping is applied.
 #'
-#' @return A list with the parameters.
+#' @returns A list with the parameters.
 #'
 #' @export
 params_sc_dsb <- function(
@@ -1599,7 +1607,7 @@ params_sctype_cells <- function(
 #' @param lambda Numeric. Ridge penalty on batch coefficients. Symphony R
 #' hardcodes 1.0.
 #'
-#' @return A list with the parameters.
+#' @returns A list with the parameters.
 #'
 #' @export
 params_symphony_map <- function(sigma = 0.1, lambda = 1.0) {

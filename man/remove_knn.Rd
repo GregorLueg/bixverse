@@ -30,4 +30,12 @@ remove_knn(x, ...)
 \description{
 Remove the KNN data
 }
+\examples{
+# drop the cached kNN, for example before rebuilding it
+sc <- demo_single_cells()
+sc <- remove_knn(sc)
+is.null(get_knn_obj(sc))
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}
 \keyword{internal}

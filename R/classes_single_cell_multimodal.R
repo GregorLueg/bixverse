@@ -21,6 +21,15 @@
 #' @returns `ADTCounts` that contains the raw and normalised ADT counts.
 #'
 #' @export
+#'
+#' @examples
+#' # CLR normalisation of synthetic ADT counts
+#' adt <- generate_single_cell_test_data_adt()
+#' cell_info <- stats::setNames(
+#'   seq_len(nrow(adt$counts)),
+#'   rownames(adt$counts)
+#' )
+#' new_adt_counts_clr(adt$counts, cell_info = cell_info)
 new_adt_counts_clr <- function(
   raw_counts,
   cell_info,
@@ -96,6 +105,20 @@ new_adt_counts_clr <- function(
 #' @export
 #'
 #' @references Mulè et al., Nat Commun, 2022
+#'
+#' @examples
+#' # DSB without empty droplets, i.e. the k-means fallback, using the isotypes
+#' adt <- generate_single_cell_test_data_adt()
+#' cell_info <- stats::setNames(
+#'   seq_len(nrow(adt$counts)),
+#'   rownames(adt$counts)
+#' )
+#' new_adt_counts_dsb(
+#'   adt$counts,
+#'   cell_info = cell_info,
+#'   isotype_names = adt$var$protein_id[adt$var$is_isotype],
+#'   .verbose = FALSE
+#' )
 new_adt_counts_dsb <- function(
   raw_counts,
   cell_info,
@@ -210,6 +233,16 @@ print.ADTCounts <- function(x, ...) {
 #' @returns A data.table with the ADT feature information
 #'
 #' @export
+#'
+#' @examples
+#' # number of cells expressing each protein
+#' adt <- generate_single_cell_test_data_adt()
+#' cell_info <- stats::setNames(
+#'   seq_len(nrow(adt$counts)),
+#'   rownames(adt$counts)
+#' )
+#' adt_clr <- new_adt_counts_clr(adt$counts, cell_info = cell_info)
+#' head(get_adt_feature_info(adt_clr))
 get_adt_feature_info <- function(x) {
   UseMethod("get_adt_feature_info")
 }
@@ -243,6 +276,16 @@ get_adt_feature_info.ADTCounts <- function(x) {
 #' @returns A data.table with the ADT sample information
 #'
 #' @export
+#'
+#' @examples
+#' # per-cell ADT capture: non-zero proteins and library size
+#' adt <- generate_single_cell_test_data_adt()
+#' cell_info <- stats::setNames(
+#'   seq_len(nrow(adt$counts)),
+#'   rownames(adt$counts)
+#' )
+#' adt_clr <- new_adt_counts_clr(adt$counts, cell_info = cell_info)
+#' head(get_adt_sample_info(adt_clr))
 get_adt_sample_info <- function(x) {
   UseMethod("get_adt_sample_info")
 }
@@ -266,16 +309,26 @@ get_adt_sample_info.ADTCounts <- function(x) {
   return(res)
 }
 
-#' @title Get the ADT feature names
+#' Get the ADT feature names
 #'
 #' @description
 #' Get the main ADT feature names
 #'
 #' @param x An object to get the gene names from.
 #'
-#' @return The primary ADT feature identifiers stored in the class.
+#' @returns The primary ADT feature identifiers stored in the class.
 #'
 #' @export
+#'
+#' @examples
+#' # protein identifiers held by an `ADTCounts`
+#' adt <- generate_single_cell_test_data_adt()
+#' cell_info <- stats::setNames(
+#'   seq_len(nrow(adt$counts)),
+#'   rownames(adt$counts)
+#' )
+#' adt_clr <- new_adt_counts_clr(adt$counts, cell_info = cell_info)
+#' head(get_adt_names(adt_clr))
 get_adt_names <- function(x) {
   UseMethod("get_adt_names")
 }
@@ -372,7 +425,7 @@ get_adt_names.ADTCounts <- function(x) {
 
 ## single cell class (multi modal) ---------------------------------------------
 
-#' @title bixverse SingleCells (multi modal) class
+#' bixverse SingleCells (multi modal) class
 #'
 #' @description
 #' This is the `bixverse`-based SingleCells class for multiple modalities. Under
@@ -412,9 +465,26 @@ get_adt_names.ADTCounts <- function(x) {
 #'   \item{dims}{Dimensions of the original data.}
 #' }
 #'
-#' @return Returns the `SingleCellsMultiModal` class for further operations.
+#' @returns Returns the `SingleCellsMultiModal` class for further operations.
 #'
 #' @export
+#'
+#' @examples
+#' # an empty multi-modal handle with the RNA modality ingested into it
+#' rna <- generate_single_cell_test_data()
+#' dir <- tempfile("bixverse_mm")
+#' dir.create(dir)
+#' object <- load_r_data(
+#'   SingleCellsMultiModal(dir_data = dir),
+#'   counts = rna$counts,
+#'   obs = rna$obs,
+#'   var = rna$var,
+#'   sc_qc_param = params_sc_min_quality(min_unique_genes = 5L),
+#'   .verbose = FALSE
+#' )
+#' object
+#'
+#' unlink(dir, recursive = TRUE, force = TRUE)
 SingleCellsMultiModal <- S7::new_class(
   name = "SingleCellsMultiModal",
   parent = SingleCells,
@@ -585,6 +655,25 @@ S7::method(get_sc_var, SingleCellsMultiModal) <- function(
 #' @returns Returns a `SingleCellsMultiModal` with the ADT data added.
 #'
 #' @export
+#'
+#' @examples
+#' # a CLR-normalised ADT layer on top of an ingested RNA modality
+#' rna <- generate_single_cell_test_data()
+#' adt <- generate_single_cell_test_data_adt()
+#' dir <- tempfile("bixverse_mm")
+#' dir.create(dir)
+#' object <- load_r_data(
+#'   SingleCellsMultiModal(dir_data = dir),
+#'   counts = rna$counts,
+#'   obs = rna$obs,
+#'   var = rna$var,
+#'   sc_qc_param = params_sc_min_quality(min_unique_genes = 5L),
+#'   .verbose = FALSE
+#' )
+#' object <- add_adt_counts_sc(object, adt_counts = adt$counts, method = "clr")
+#' get_adt_names(object)
+#'
+#' unlink(dir, recursive = TRUE, force = TRUE)
 add_adt_counts_sc <- S7::new_generic(
   name = "add_adt_counts_sc",
   dispatch_args = "object",

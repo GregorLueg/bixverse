@@ -18,11 +18,16 @@
 #'   \item{final_results}{A data.table that will contain the final results.}
 #' }
 #'
-#' @return Returns the S7 object for further operations.
+#' @returns Returns the S7 object for further operations.
 #'
 #' @export
 #'
 #' @keywords internal
+#'
+#' @examples
+#' # every analysis class inherits the base class getters
+#' object <- SimilarityNetworkFusion(snf_params = params_snf(k = 3L))
+#' inherits(object, "bixverse::BixverseBaseClass")
 BixverseBaseClass <- S7::new_class(
   # Name
   name = "BixverseBaseClass",
@@ -54,9 +59,15 @@ BixverseBaseClass <- S7::new_class(
 #' @param ... Unused, present so the S3 methods sharing this page match the
 #' generic.
 #'
-#' @return Depending on parameters either the R list or a (pretty) JSON string.
+#' @returns Depending on parameters either the R list or a (pretty) JSON string.
 #'
 #' @export
+#'
+#' @examples
+#' # parameters stored in a freshly created class
+#' object <- SimilarityNetworkFusion(snf_params = params_snf(k = 3L))
+#' names(get_params(object))
+#' get_params(object, to_json = TRUE, pretty_json = TRUE)
 get_params <- S7::new_generic(
   name = "get_params",
   dispatch_args = "object",
@@ -102,9 +113,29 @@ S7::method(get_params, BixverseBaseClass) <-
 #' @param ... Unused, present so the S3 methods sharing this page match the
 #' generic.
 #'
-#' @return Returns the final results if any have been stored in the class.
+#' @returns Returns the final results if any have been stored in the class.
 #'
 #' @export
+#'
+#' @examples
+#' # communities found after a network diffusion
+#' set.seed(42)
+#' g <- igraph::sample_pa(15, directed = FALSE)
+#' edges <- data.table::setDT(igraph::as_data_frame(g))[, `:=`(
+#'   from = sprintf("node_%i", from),
+#'   to = sprintf("node_%i", to)
+#' )]
+#' object <- NetworkDiffusions(edges, weighted = FALSE, directed = FALSE)
+#' object <- diffuse_seed_nodes(object, c(node_1 = 1, node_3 = 1), "max")
+#' object <- permute_seed_nodes(object, perm_iters = 100L, .verbose = FALSE)
+#' object <- community_detection(
+#'   object,
+#'   community_params = params_community_detection(
+#'     min_seed_nodes = 0L,
+#'     min_nodes = 2L
+#'   )
+#' )
+#' head(get_results(object))
 get_results <- S7::new_generic(
   name = "get_results",
   dispatch_args = "object",

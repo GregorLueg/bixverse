@@ -54,3 +54,18 @@ generates through several iterations simulated doublets, generate kNN graphs,
 runs Louvain clustering and assesses how often an observed cells clsuters
 together with the simulated doublets.
 }
+\examples{
+# boosted doublet detection over five iterations
+sc <- demo_single_cells(prepped = FALSE)
+doublet_detection_boost_sc(
+  sc,
+  boost_params = params_boost(
+    hvg = list(min_gene_var_pctl = 0.0),
+    pca = list(no_pcs = 10L),
+    n_iters = 5L
+  ),
+  .verbose = FALSE
+)
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

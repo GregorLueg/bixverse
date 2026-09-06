@@ -37,3 +37,8 @@ An \code{ScStep}.
 \description{
 Wraps \code{\link[=harmony_sc]{harmony_sc()}} as an \code{ScStep}.
 }
+\examples{
+# correct the PCA, then build the graph on the corrected embedding
+step_harmony_sc(batch_column = "batch_index") \%>>\%
+  step_neighbours_sc(embd_to_use = "harmony")
+}

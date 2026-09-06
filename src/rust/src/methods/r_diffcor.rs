@@ -30,7 +30,7 @@ extendr_module! {
 /// @param spearman Shall the Spearman correlation be calculated instead of
 /// Pearson.
 ///
-/// @return A list containing:
+/// @returns A list containing:
 ///  \itemize{
 ///   \item r_a - The correlation coefficients in the upper triangle of
 ///   matrix a.

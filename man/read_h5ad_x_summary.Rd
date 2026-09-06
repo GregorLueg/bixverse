@@ -27,3 +27,16 @@ are whole numbers
 \description{
 Read summary statistics from the X slot of an h5ad file
 }
+\examples{
+# check whether /X holds raw counts before loading it
+data <- generate_single_cell_test_data(
+  syn_data_params = params_sc_synthetic_data(n_cells = 200L, n_genes = 40L)
+)
+f_path <- tempfile(fileext = ".h5ad")
+write_h5ad_sc(f_path, data$counts, data$obs, data$var, .verbose = FALSE)
+summary_x <- read_h5ad_x_summary(f_path)
+summary_x$stats
+summary_x$is_integer_valued
+
+unlink(f_path)
+}

@@ -34,3 +34,15 @@ Filters genes by minimum total counts and minimum expressed-cell fraction
 using the SCENIC inclusion criteria. Returns a character vector of gene
 identifiers passing both filters.
 }
+\examples{
+# genes clearing the SCENIC count and prevalence thresholds
+sc <- demo_single_cells()
+genes <- scenic_gene_filter_sc(
+  sc,
+  scenic_params = params_scenic(min_counts = 100L, min_cells = 0.05),
+  .verbose = FALSE
+)
+length(genes)
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

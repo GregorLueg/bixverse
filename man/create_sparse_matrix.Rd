@@ -7,7 +7,7 @@
 create_sparse_matrix(count_data, return_format)
 }
 \arguments{
-\item{count_data}{A list. Output of \code{\link[=get_counts_from_rust]{get_counts_from_rust()}}.}
+\item{count_data}{A list. Output of \code{get_counts_from_rust()}.}
 
 \item{return_format}{String. One of \code{c("cell", "gene")}.}
 }

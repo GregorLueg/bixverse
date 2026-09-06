@@ -26,6 +26,13 @@ been linearised back to the TPM/10 scale and rounded, so it loads through
 \code{\link[=load_h5ad]{load_h5ad()}} like any count matrix and gets bixverse's own log
 CPM on the way in. See \code{data-raw/dialogue_uc.R} for the preparation.
 }
+\examples{
+\dontrun{
+# pulls the archive into the session tempdir()
+path <- download_dialogue_uc()
+get_h5ad_dimensions(path)$dims
+}
+}
 \references{
 Smillie, et al., Cell, 2019; Jerby-Arnon and Regev, Nat.
 Biotechnol., 2022

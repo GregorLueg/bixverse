@@ -188,7 +188,7 @@ fn rs_mc_scenic(
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
 ///
-/// @return A matrix of cells x gene sets with the values representing the
+/// @returns A matrix of cells x gene sets with the values representing the
 /// AUC.
 ///
 /// @export
@@ -243,13 +243,11 @@ fn rs_mc_aucell(
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
 ///
-/// @return A matrix of meta cells x vision scores per gene set.
+/// @returns A matrix of meta cells x vision scores per gene set.
 ///
 /// @export
 ///
 /// @references DeTomaso, et al., Nat. Commun., 2019
-///
-/// @keywords internal
 #[extendr]
 fn rs_mc_vision(sparse_data: List, gs_list: List, verbose: usize) -> Result<RArray<f64, 2>> {
     let gene_signatures = r_list_to_sig_genes(gs_list)?;
@@ -298,7 +296,7 @@ fn rs_mc_vision(sparse_data: List, gs_list: List, verbose: usize) -> Result<RArr
 /// detailed verbosity.
 /// @param seed Integer. Random seed for reproducibility.
 ///
-/// @return A list with the following items:
+/// @returns A list with the following items:
 /// \itemize{
 ///   \item autocor_res - Auto-correlation results, i.e., 1 - C, p-value and
 ///   FDR.
@@ -308,8 +306,6 @@ fn rs_mc_vision(sparse_data: List, gs_list: List, verbose: usize) -> Result<RArr
 /// @export
 ///
 /// @references DeTomaso, et al., Nat. Commun., 2019
-///
-/// @keywords internal
 #[extendr]
 #[allow(clippy::too_many_arguments)]
 fn rs_mc_vision_with_autocorrelation(
@@ -442,8 +438,6 @@ fn rs_mc_vision_with_autocorrelation(
 /// @export
 ///
 /// @references DeTomaso, et al., Cell Systems, 2021
-///
-/// @keywords internal
 #[extendr]
 #[allow(clippy::too_many_arguments)]
 fn rs_mc_hotspot_autocor(
@@ -542,8 +536,6 @@ fn rs_mc_hotspot_autocor(
 /// @export
 ///
 /// @references DeTomaso, et al., Cell Systems, 2021
-///
-/// @keywords internal
 #[extendr]
 #[allow(clippy::too_many_arguments)]
 fn rs_mc_hotspot_gene_cor(
@@ -919,8 +911,6 @@ fn rs_nmf_k_sweep_mc(
 /// @references Jerby-Arnon & Regev, Nature Biotechnology, 2022
 ///
 /// @export
-///
-/// @keywords internal
 #[extendr]
 #[allow(clippy::too_many_arguments)]
 fn rs_mc_dialogue(
@@ -991,13 +981,11 @@ fn rs_mc_dialogue(
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
 ///
-/// @return A list with the same elements [bixverse::rs_nebula_sc()] returns.
+/// @returns A list with the same elements [bixverse::rs_nebula_sc()] returns.
 ///
 /// @references He, et al., Commun Biol, 2021
 ///
 /// @export
-///
-/// @keywords internal
 #[extendr]
 #[allow(clippy::too_many_arguments)]
 fn rs_nebula_mc(

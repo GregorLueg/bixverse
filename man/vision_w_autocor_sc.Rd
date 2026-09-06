@@ -19,9 +19,10 @@ vision_w_autocor_sc(
 \arguments{
 \item{object}{\code{SingleCells}, \code{MetaCells} (or potentially other) class.}
 
-\item{gs_list}{Named nested list. The elements have the gene identifiers of
-the respective gene sets and have the option to have a \code{"pos"} and \code{"neg"}
-gene sets. The names need to be part of the variables of the object.}
+\item{gs_list}{Named nested list. Every element must itself be a list with
+at least a \code{"pos"} element holding the gene identifiers, and optionally a
+\code{"neg"} one. A bare character vector is not accepted. The gene identifiers
+need to be part of the variables of the object.}
 
 \item{embd_to_use}{String. The embedding to use. Whichever you chose, it
 needs to be part of the object.}
@@ -69,6 +70,24 @@ gene signature, etc. Additionally, this function also calculates the auto-
 correlation values, answering the question if a given signature shows non-
 random enrichment on the kNN graph. The kNN graph (and distance measures)
 will be generated on-the-fly based on the embedding you wish to use.
+}
+\examples{
+# scores plus whether they sit non-randomly on the kNN graph
+sc <- demo_single_cells()
+gs_list <- list(
+  programme_a = list(pos = get_gene_names(sc)[1:10]),
+  programme_b = list(pos = get_gene_names(sc)[21:30])
+)
+res <- vision_w_autocor_sc(
+  sc,
+  gs_list = gs_list,
+  embd_to_use = "pca",
+  vision_params = params_sc_vision(n_perm = 50L, n_cluster = 3L),
+  .verbose = FALSE
+)
+res$auto_cor_dt
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 }
 \references{
 DeTomaso, et al., Nat. Commun., 2019

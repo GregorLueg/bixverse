@@ -69,4 +69,3 @@ This version works on MetaCell counts which are stored in memory directly.
 \references{
 DeTomaso, et al., Nat. Commun., 2019
 }
-\keyword{internal}

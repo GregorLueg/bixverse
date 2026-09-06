@@ -32,4 +32,13 @@ set_snn_graph(x, snn_graph, ...)
 \description{
 Set/add KNN
 }
+\examples{
+# the sNN graph taken out and put back
+sc <- demo_single_cells()
+snn <- get_snn_graph(sc)
+sc <- set_snn_graph(remove_snn_graph(sc), snn)
+igraph::vcount(get_snn_graph(sc))
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}
 \keyword{internal}

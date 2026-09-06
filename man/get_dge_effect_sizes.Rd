@@ -16,3 +16,24 @@ Returns the effect size results. (If found.)
 Getter function to extract the Effect size results from the
 \code{\link[=BulkDge]{BulkDge()}} class.
 }
+\examples{
+# Hedge's G effect sizes per contrast
+syn <- synthetic_bulk_cor_matrix()
+meta <- data.table::data.table(
+  sample_id = colnames(syn$counts),
+  case_control = rep(c("case", "control"), each = 50)
+)
+object <- BulkDge(raw_counts = syn$counts, meta_data = meta)
+object <- qc_bulk_dge(object, group_col = "case_control", .verbose = FALSE)
+object <- normalise_bulk_dge(
+  object,
+  group_col = "case_control",
+  .verbose = FALSE
+)
+object <- calculate_dge_hedges(
+  object,
+  contrast_column = "case_control",
+  .verbose = FALSE
+)
+head(get_dge_effect_sizes(object))
+}

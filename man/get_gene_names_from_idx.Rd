@@ -30,3 +30,10 @@ the gene names.}
 \description{
 Get the gene names based on the gene idx
 }
+\examples{
+# Rust indices translated back into gene identifiers
+sc <- demo_single_cells(prepped = FALSE)
+get_gene_names_from_idx(sc, gene_idx = 0:2, rust_based = TRUE)
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

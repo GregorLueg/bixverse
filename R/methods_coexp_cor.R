@@ -1,6 +1,6 @@
 # methods - simple correlations ------------------------------------------------
 
-#' @title Prepare correlation-based module detection
+#' Prepare correlation-based module detection
 #'
 #' @description
 #' This function will calculate the correlation coefficients between the genes,
@@ -13,9 +13,19 @@
 #' @param cor_method String. Option of `c("pearson", "spearman")`.
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
-#' @return The class with added data to the properties for subsequent usage.
+#' @returns The class with added data to the properties for subsequent usage.
 #'
 #' @export
+#'
+#' @examples
+#' # spearman correlations over the 300 most variable genes
+#' mat <- t(synthetic_signal_matrix()$mat)
+#' obj <- BulkCoExp(mat, data.table::data.table(sample_id = rownames(mat)))
+#' obj <- preprocess_bulk_coexp(obj, hvg = 0.3, .verbose = FALSE)
+#' obj <- cor_module_processing(obj, cor_method = "spearman", .verbose = FALSE)
+#' dim(obj@processed_data$correlation_res$get_sym_matrix(
+#'   .verbose = FALSE
+#' ))
 cor_module_processing <- S7::new_generic(
   name = "cor_module_processing",
   dispatch_args = "object",
@@ -37,6 +47,8 @@ S7::method(cor_module_processing, BulkCoExp) <- function(
   cor_method = c("pearson", "spearman"),
   .verbose = TRUE
 ) {
+  cor_method <- match.arg(cor_method)
+
   # Checks
   checkmate::assertClass(object, "bixverse::BulkCoExp")
   checkmate::assertChoice(cor_method, c("pearson", "spearman"))
@@ -82,7 +94,7 @@ S7::method(cor_module_processing, BulkCoExp) <- function(
 
 # methods - TOM ----------------------------------------------------------------
 
-#' @title Update the correlation matrix to a TOM
+#' Update the correlation matrix to a TOM
 #'
 #' @description
 #' This function will update the correlation matrix to a topological overlap
@@ -96,9 +108,18 @@ S7::method(cor_module_processing, BulkCoExp) <- function(
 #' @param version String. One of `c("v2", "v1")`. Defaults to `"v2"`.
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
-#' @return The class with added data to the properties for subsequent usage.
+#' @returns The class with added data to the properties for subsequent usage.
 #'
 #' @export
+#'
+#' @examples
+#' # replace the stored correlations with a signed topological overlap
+#' mat <- t(synthetic_signal_matrix()$mat)
+#' obj <- BulkCoExp(mat, data.table::data.table(sample_id = rownames(mat)))
+#' obj <- preprocess_bulk_coexp(obj, hvg = 0.3, .verbose = FALSE)
+#' obj <- cor_module_processing(obj, cor_method = "spearman", .verbose = FALSE)
+#' obj <- cor_module_tom(obj, signed = TRUE, version = "v2", .verbose = FALSE)
+#' obj@params$correlation_params$TOM
 cor_module_tom <- S7::new_generic(
   name = "cor_module_tom",
   dispatch_args = "object",
@@ -154,7 +175,7 @@ S7::method(cor_module_tom, BulkCoExp) <- function(
   tom_res <- upper_triangular_sym_mat$new(
     values = tom_vec,
     features = features,
-    shift = 1L
+    shift = TRUE
   )
 
   S7::prop(object, "processed_data")[["correlation_res"]] <- tom_res
@@ -165,7 +186,7 @@ S7::method(cor_module_tom, BulkCoExp) <- function(
 
 # methods - differential correlations ------------------------------------------
 
-#' @title Prepare differential correlation-based module detection
+#' Prepare differential correlation-based module detection
 #'
 #' @description
 #' This function will calculate the differential correlation between the stored
@@ -180,9 +201,23 @@ S7::method(cor_module_tom, BulkCoExp) <- function(
 #' @param cor_method String. Option of `c("pearson", "spearman")`.
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
-#' @return The class with added data to the properties for subsequent usage.
+#' @returns The class with added data to the properties for subsequent usage.
 #'
 #' @export
+#'
+#' @examples
+#' # differential correlation of two sample groups of the same matrix
+#' sig <- synthetic_signal_matrix()
+#' mat <- t(sig$mat)
+#' target <- mat[sig$group %in% c("group1", "group2"), ]
+#' background <- mat[sig$group == "group3", ]
+#' meta <- data.table::data.table(sample_id = rownames(target))
+#' obj <- BulkCoExp(target, meta)
+#' obj <- preprocess_bulk_coexp(obj, hvg = 0.3, .verbose = FALSE)
+#' obj <- diffcor_module_processing(
+#'   obj, background, cor_method = "pearson", .verbose = FALSE
+#' )
+#' obj@params$correlation_params$no_intersecting_features
 diffcor_module_processing <- S7::new_generic(
   name = "diffcor_module_processing",
   dispatch_args = "object",
@@ -205,6 +240,8 @@ S7::method(diffcor_module_processing, BulkCoExp) <- function(
   cor_method = c("pearson", "spearman"),
   .verbose = TRUE
 ) {
+  cor_method <- match.arg(cor_method)
+
   # Checks
   checkmate::assertClass(object, "bixverse::BulkCoExp")
   checkmate::assertMatrix(background_mat, mode = "numeric")
@@ -288,7 +325,7 @@ S7::method(diffcor_module_processing, BulkCoExp) <- function(
 
 # methods - graph-based gene module detection ----------------------------------
 
-#' @title Iterate through different epsilon parameters
+#' Iterate through different epsilon parameters
 #'
 #' @description
 #' This functions iterates through a set of provided epsilons and checks for
@@ -303,9 +340,20 @@ S7::method(diffcor_module_processing, BulkCoExp) <- function(
 #' would like to run.
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
-#' @return The class with added data to the properties for subsequent usage.
+#' @returns The class with added data to the properties for subsequent usage.
 #'
 #' @export
+#'
+#' @examples
+#' # scan epsilons of a Gaussian RBF for scale-free topology
+#' mat <- t(synthetic_signal_matrix()$mat)
+#' obj <- BulkCoExp(mat, data.table::data.table(sample_id = rownames(mat)))
+#' obj <- preprocess_bulk_coexp(obj, hvg = 0.3, .verbose = FALSE)
+#' obj <- cor_module_processing(obj, cor_method = "spearman", .verbose = FALSE)
+#' obj <- cor_module_check_epsilon(
+#'   obj, rbf_func = "gaussian", .verbose = FALSE
+#' )
+#' head(get_epsilon_res(obj))
 cor_module_check_epsilon <- S7::new_generic(
   name = "cor_module_check_epsilon",
   dispatch_args = "object",
@@ -332,6 +380,8 @@ S7::method(cor_module_check_epsilon, BulkCoExp) <- function(
   epsilons = c(0.25, seq(from = 0.5, to = 10, by = 0.5)),
   .verbose = TRUE
 ) {
+  rbf_func <- match.arg(rbf_func)
+
   # Checks
   checkmate::assertClass(object, "bixverse::BulkCoExp")
   checkmate::qassert(epsilons, "R+")
@@ -380,7 +430,6 @@ S7::method(cor_module_check_epsilon, BulkCoExp) <- function(
 }
 
 
-#' @title
 #' Iterate through Leiden resolutions for graph-based community detection.
 #'
 #' @description
@@ -428,9 +477,23 @@ S7::method(cor_module_check_epsilon, BulkCoExp) <- function(
 #' of cores.
 #' @param .verbose Controls the verbosity of the function.
 #'
-#' @return The class with added data to the properties.
+#' @returns The class with added data to the properties.
 #'
 #' @export
+#'
+#' @examples
+#' # scan Leiden resolutions on the correlation graph
+#' mat <- t(synthetic_signal_matrix()$mat)
+#' obj <- BulkCoExp(mat, data.table::data.table(sample_id = rownames(mat)))
+#' obj <- preprocess_bulk_coexp(obj, hvg = 0.3, .verbose = FALSE)
+#' obj <- cor_module_processing(obj, cor_method = "spearman", .verbose = FALSE)
+#' obj <- cor_module_graph_check_res(
+#'   obj,
+#'   resolution_params = params_graph_resolution(number_res = 5L),
+#'   parallel = FALSE,
+#'   .verbose = FALSE
+#' )
+#' head(get_resolution_res(obj))
 cor_module_graph_check_res <- S7::new_generic(
   name = "cor_module_graph_check_res",
   dispatch_args = "object",
@@ -628,7 +691,7 @@ S7::method(cor_module_graph_check_res, BulkCoExp) <- function(
   return(object)
 }
 
-#' @title Identify correlation-based gene modules via graphs
+#' Identify correlation-based gene modules via graphs
 #'
 #' @description
 #' This function leverages graph-based clustering to identify gene co-expression
@@ -665,11 +728,26 @@ S7::method(cor_module_graph_check_res, BulkCoExp) <- function(
 #' the maximum number of iterations. Defaults to 100L.
 #' @param .verbose Boolean. Controls the verbosity of the function.
 #'
-#' @return The class with added data to the properties.
+#' @returns The class with added data to the properties.
 #'
 #' @references Barrio-Hernandez, et al., Nat Genet, 2023.
 #'
 #' @export
+#'
+#' @examples
+#' # finalise the communities at the resolution picked by the scan
+#' mat <- t(synthetic_signal_matrix()$mat)
+#' obj <- BulkCoExp(mat, data.table::data.table(sample_id = rownames(mat)))
+#' obj <- preprocess_bulk_coexp(obj, hvg = 0.3, .verbose = FALSE)
+#' obj <- cor_module_processing(obj, cor_method = "spearman", .verbose = FALSE)
+#' obj <- cor_module_graph_check_res(
+#'   obj,
+#'   resolution_params = params_graph_resolution(number_res = 5L),
+#'   parallel = FALSE,
+#'   .verbose = FALSE
+#' )
+#' obj <- cor_module_graph_final_modules(obj, .verbose = FALSE)
+#' head(get_modules(get_results(obj)))
 cor_module_graph_final_modules <- S7::new_generic(
   name = "cor_module_graph_final_modules",
   dispatch_args = "object",
@@ -945,7 +1023,7 @@ S7::method(cor_module_graph_final_modules, BulkCoExp) <- function(
 
 ## clustering ------------------------------------------------------------------
 
-#' @title Generates CoReMo-based gene modules
+#' Generates CoReMo-based gene modules
 #'
 #' @description
 #' This function creates gene modules, based on the framework from Srivastava
@@ -977,11 +1055,20 @@ S7::method(cor_module_graph_final_modules, BulkCoExp) <- function(
 #' @param seed Integer. Random seed for reproducibility purposes.
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
-#' @return The class with added data to the properties for subsequent usage.
+#' @returns The class with added data to the properties for subsequent usage.
 #'
 #' @references Srivastava, et al., Nat. Commun., 2018
 #'
 #' @export
+#'
+#' @examples
+#' # CoReMo clustering with the default RBF and cut range
+#' mat <- t(synthetic_signal_matrix()$mat)
+#' obj <- BulkCoExp(mat, data.table::data.table(sample_id = rownames(mat)))
+#' obj <- preprocess_bulk_coexp(obj, hvg = 0.3, .verbose = FALSE)
+#' obj <- cor_module_processing(obj, cor_method = "spearman", .verbose = FALSE)
+#' obj <- cor_module_coremo_clustering(obj, .verbose = FALSE)
+#' head(obj@outputs$final_modules)
 cor_module_coremo_clustering <- S7::new_generic(
   name = "cor_module_coremo_clustering",
   dispatch_args = "object",
@@ -1141,7 +1228,7 @@ S7::method(cor_module_coremo_clustering, BulkCoExp) <- function(
 
 ## stability -------------------------------------------------------------------
 
-#' @title Assesses CoReMo-based gene module stability
+#' Assesses CoReMo-based gene module stability
 #'
 #' @description
 #' The function assesses the stability of the CoReMo modules, leveraging a
@@ -1156,12 +1243,22 @@ S7::method(cor_module_coremo_clustering, BulkCoExp) <- function(
 #' values here, but be aware of memory pressure.
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
-#' @return The class with added data to the properties for subsequent usage.
+#' @returns The class with added data to the properties for subsequent usage.
 #'
 #' @references Srivastava, et al., Nat. Commun., 2018; Francois, Romagnolo,
 #' et al., Nat. Commun., 2024.
 #'
 #' @export
+#'
+#' @examples
+#' # leave-one-out stability of the CoReMo modules
+#' mat <- t(synthetic_signal_matrix()$mat)
+#' obj <- BulkCoExp(mat, data.table::data.table(sample_id = rownames(mat)))
+#' obj <- preprocess_bulk_coexp(obj, hvg = 0.3, .verbose = FALSE)
+#' obj <- cor_module_processing(obj, cor_method = "spearman", .verbose = FALSE)
+#' obj <- cor_module_coremo_clustering(obj, .verbose = FALSE)
+#' obj <- cor_module_coremo_stability(obj, .verbose = FALSE)
+#' summary(obj@outputs$final_modules$stability)
 cor_module_coremo_stability <- S7::new_generic(
   name = "cor_module_coremo_stability",
   dispatch_args = "object",
@@ -1276,7 +1373,7 @@ S7::method(cor_module_coremo_stability, BulkCoExp) <- function(
 
 ## module splitting ------------------------------------------------------------
 
-#' @title Split CoReMo modules by correlation sign
+#' Split CoReMo modules by correlation sign
 #'
 #' @description
 #' This function will split the identified modules by their correlation sign.
@@ -1290,12 +1387,22 @@ S7::method(cor_module_coremo_stability, BulkCoExp) <- function(
 #' no filtering will be applied.
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
-#' @return The class with updated correlation module names.
+#' @returns The class with updated correlation module names.
 #'
 #' @references Srivastava, et al., Nat. Commun., 2018; Francois, Romagnolo,
 #' et al., Nat. Commun., 2024.
 #'
 #' @export
+#'
+#' @examples
+#' # split the modules into positively and negatively correlated genes
+#' mat <- t(synthetic_signal_matrix()$mat)
+#' obj <- BulkCoExp(mat, data.table::data.table(sample_id = rownames(mat)))
+#' obj <- preprocess_bulk_coexp(obj, hvg = 0.3, .verbose = FALSE)
+#' obj <- cor_module_processing(obj, cor_method = "spearman", .verbose = FALSE)
+#' obj <- cor_module_coremo_clustering(obj, .verbose = FALSE)
+#' obj <- cor_module_coremo_cor_sign(obj, .verbose = FALSE)
+#' table(obj@outputs$final_modules$sign)
 cor_module_coremo_cor_sign <- S7::new_generic(
   name = "cor_module_coremo_cor_sign",
   dispatch_args = "object",
@@ -1384,7 +1491,7 @@ S7::method(cor_module_coremo_cor_sign, BulkCoExp) <- function(
 
 ## eigengenes ------------------------------------------------------------------
 
-#' @title Calculate Eigengenes for CoReMo modules
+#' Calculate Eigengenes for CoReMo modules
 #'
 #' @description
 #' This function will calculate the eigengene values for the modules on a per
@@ -1397,13 +1504,23 @@ S7::method(cor_module_coremo_cor_sign, BulkCoExp) <- function(
 #' no filtering will be applied.
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
-#' @return The class with added correlations to the modules and the values for
+#' @returns The class with added correlations to the modules and the values for
 #' a given eigengene per sample as a data.table.
 #'
 #' @references Srivastava, et al., Nat. Commun., 2018; Francois, Romagnolo,
 #' et al., Nat. Commun., 2024.
 #'
 #' @export
+#'
+#' @examples
+#' # eigengenes per module and the gene to eigengene correlations
+#' mat <- t(synthetic_signal_matrix()$mat)
+#' obj <- BulkCoExp(mat, data.table::data.table(sample_id = rownames(mat)))
+#' obj <- preprocess_bulk_coexp(obj, hvg = 0.3, .verbose = FALSE)
+#' obj <- cor_module_processing(obj, cor_method = "spearman", .verbose = FALSE)
+#' obj <- cor_module_coremo_clustering(obj, .verbose = FALSE)
+#' obj <- cor_module_coremo_eigengene(obj, .verbose = FALSE)
+#' head(get_modules(get_results(obj)))
 cor_module_coremo_eigengene <- S7::new_generic(
   name = "cor_module_coremo_eigengene",
   dispatch_args = "object",
@@ -1578,7 +1695,7 @@ scale_free_fit <- function(k, breaks = 50L, plot = FALSE) {
 
 ## graph generation ------------------------------------------------------------
 
-#' @title Get correlation-based graph
+#' Get correlation-based graph
 #'
 #' @description
 #' Helper function to get a correlation-based igraph from the class
@@ -1588,7 +1705,7 @@ scale_free_fit <- function(k, breaks = 50L, plot = FALSE) {
 #' case the bump function.
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
-#' @return A list with the following elements:
+#' @returns A list with the following elements:
 #' \itemize{
 #'  \item graph - The igraph
 #'  \item params - A list that contains the parameters of the graph generation
@@ -1596,6 +1713,15 @@ scale_free_fit <- function(k, breaks = 50L, plot = FALSE) {
 #' }
 #'
 #' @export
+#'
+#' @examples
+#' # igraph from the stored correlations at a fixed epsilon
+#' mat <- t(synthetic_signal_matrix()$mat)
+#' obj <- BulkCoExp(mat, data.table::data.table(sample_id = rownames(mat)))
+#' obj <- preprocess_bulk_coexp(obj, hvg = 0.3, .verbose = FALSE)
+#' obj <- cor_module_processing(obj, cor_method = "spearman", .verbose = FALSE)
+#' graph_res <- get_cor_graph(obj, epsilon = 2, .verbose = FALSE)
+#' graph_res$params
 get_cor_graph <- S7::new_generic(
   name = "get_cor_graph",
   dispatch_args = "object",
@@ -1654,7 +1780,7 @@ S7::method(get_cor_graph, BulkCoExp) <- function(object, epsilon, .verbose) {
   list(graph = graph, params = graph_params)
 }
 
-#' @title Get differential correlation-based graph
+#' Get differential correlation-based graph
 #'
 #' @description
 #' Helper function to get a differential correlation-based igraph from the class
@@ -1666,7 +1792,7 @@ S7::method(get_cor_graph, BulkCoExp) <- function(object, epsilon, .verbose) {
 #' generation of the graph.
 #' @param .verbose Boolean. Controls the verbosity of the function.
 #'
-#' @return A list with the following elements:
+#' @returns A list with the following elements:
 #' \itemize{
 #'  \item graph - The igraph
 #'  \item params - A list that contains the parameters of the graph generation
@@ -1674,6 +1800,21 @@ S7::method(get_cor_graph, BulkCoExp) <- function(object, epsilon, .verbose) {
 #' }
 #'
 #' @export
+#'
+#' @examples
+#' # igraph from the differential correlations
+#' sig <- synthetic_signal_matrix()
+#' mat <- t(sig$mat)
+#' target <- mat[sig$group %in% c("group1", "group2"), ]
+#' background <- mat[sig$group == "group3", ]
+#' meta <- data.table::data.table(sample_id = rownames(target))
+#' obj <- BulkCoExp(target, meta)
+#' obj <- preprocess_bulk_coexp(obj, hvg = 0.3, .verbose = FALSE)
+#' obj <- diffcor_module_processing(
+#'   obj, background, cor_method = "pearson", .verbose = FALSE
+#' )
+#' graph_res <- get_diffcor_graph(obj, .verbose = FALSE)
+#' graph_res$params
 get_diffcor_graph <- S7::new_generic(
   name = "get_diffcor_graph",
   dispatch_args = "object",
@@ -1755,7 +1896,7 @@ S7::method(get_diffcor_graph, BulkCoExp) <- function(
 #' @param random_seed Integer. Random seed to ensure consistency if sampling is
 #' used.
 #'
-#' @return A data.table with the quality measures of the cluster.
+#' @returns A data.table with the quality measures of the cluster.
 #'
 #' @keywords internal
 coremo_cluster_quality <- function(modules, cor_mat, random_seed = 10101L) {
@@ -1796,7 +1937,7 @@ coremo_cluster_quality <- function(modules, cor_mat, random_seed = 10101L) {
 #' @param cor_method String. Which correlation method to use for
 #' optionally combining the small clusters. One of `c("pearson", "spearman")`.
 #'
-#' @return A vector with module membership.
+#' @returns A vector with module membership.
 #'
 #' @importFrom magrittr %>%
 #'
@@ -1874,7 +2015,7 @@ coremo_tree_cut <- function(
 #' `c("pearson", "spearman")`.
 #' @param seed Integer. For reproducibility purposes.
 #'
-#' @return a data.table with stats (median size of the clusters, median weighted
+#' @returns a data.table with stats (median size of the clusters, median weighted
 #' R^2, and median R^2) on the varying levels of k.
 #'
 #' @importFrom magrittr %>%
@@ -1943,7 +2084,7 @@ tree_cut_iter <- function(
 #' the `dist` object.
 #' @param size Integer. Nrow (or ncol) of the symmetric matrix.
 #'
-#' @return Returns the distance object
+#' @returns Returns the distance object
 #'
 #' @keywords internal
 create_dist_obj <- function(x, size) {
@@ -2021,7 +2162,7 @@ S7::method(plot_resolution_res, BulkCoExp) <- function(
 }
 
 
-#' @title Plot the epsilon vs. power law goodness of fit result
+#' Plot the epsilon vs. power law goodness of fit result
 #'
 #' @description
 #' Plots the epsilon results (if they can be found in the class). The x-axis
@@ -2031,10 +2172,21 @@ S7::method(plot_resolution_res, BulkCoExp) <- function(
 #'
 #' @param object The class, see [bixverse::BulkCoExp()].
 #'
-#' @return If epsilon results were found, returns the ggplot. Otherwise, throws
+#' @returns If epsilon results were found, returns the ggplot. Otherwise, throws
 #' a warning and returns NULL.
 #'
 #' @export
+#'
+#' @examples
+#' # epsilon versus scale-free fit
+#' mat <- t(synthetic_signal_matrix()$mat)
+#' obj <- BulkCoExp(mat, data.table::data.table(sample_id = rownames(mat)))
+#' obj <- preprocess_bulk_coexp(obj, hvg = 0.3, .verbose = FALSE)
+#' obj <- cor_module_processing(obj, cor_method = "spearman", .verbose = FALSE)
+#' obj <- cor_module_check_epsilon(
+#'   obj, rbf_func = "gaussian", .verbose = FALSE
+#' )
+#' plot_epsilon_res(obj)
 plot_epsilon_res <- S7::new_generic(
   name = "plot_epsilon_res",
   dispatch_args = "object",
@@ -2079,7 +2231,7 @@ S7::method(plot_epsilon_res, BulkCoExp) <- function(object) {
 }
 
 
-#' @title Plot the k cuts vs median R2
+#' Plot the k cuts vs median R2
 #'
 #' @description
 #' Plots the optimal k vs. median of median R2 graph to identify the optimal
@@ -2087,10 +2239,19 @@ S7::method(plot_epsilon_res, BulkCoExp) <- function(object) {
 #'
 #' @param object The class, see [bixverse::BulkCoExp()].
 #'
-#' @return If optimal cuts results were found, returns the ggplot. Otherwise,
+#' @returns If optimal cuts results were found, returns the ggplot. Otherwise,
 #' throws a warning and returns NULL.
 #'
 #' @export
+#'
+#' @examples
+#' # k cuts versus median R2, with the chosen cut marked
+#' mat <- t(synthetic_signal_matrix()$mat)
+#' obj <- BulkCoExp(mat, data.table::data.table(sample_id = rownames(mat)))
+#' obj <- preprocess_bulk_coexp(obj, hvg = 0.3, .verbose = FALSE)
+#' obj <- cor_module_processing(obj, cor_method = "spearman", .verbose = FALSE)
+#' obj <- cor_module_coremo_clustering(obj, .verbose = FALSE)
+#' plot_optimal_cuts(obj)
 plot_optimal_cuts <- S7::new_generic(
   name = "plot_optimal_cuts",
   dispatch_args = "object",
@@ -2154,7 +2315,7 @@ S7::method(plot_optimal_cuts, BulkCoExp) <- function(object) {
 
 ### other plotting functions ---------------------------------------------------
 
-#' @title Helper function to plot distance to affinity relationship
+#' Helper function to plot distance to affinity relationship
 #'
 #' @description
 #' This function plots the distance to affinity relationship after applying
@@ -2164,10 +2325,14 @@ S7::method(plot_optimal_cuts, BulkCoExp) <- function(object) {
 #' `c("gaussian", "bump", "inverse_quadratic")`
 #' @param epsilon Numerical. The epsilon parameter.
 #'
-#' @return A plot depicting the distance to affinity relationship after
+#' @returns A plot depicting the distance to affinity relationship after
 #' applying the RBF function.
 #'
 #' @export
+#'
+#' @examples
+#' # distance to affinity under a Gaussian RBF with epsilon 2
+#' plot_rbf_impact(rbf_type = "gaussian", epsilon = 2)
 plot_rbf_impact <- function(rbf_type, epsilon) {
   # checks
   checkmate::assertChoice(rbf_type, c("gaussian", "bump", "inverse_quadratic"))

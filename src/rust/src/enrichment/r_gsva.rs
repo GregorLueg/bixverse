@@ -30,7 +30,7 @@ extendr_module! {
 /// genes
 /// @param min_size,max_size Integer. The minimum and maximum size respectively.
 ///
-/// @return Returns a list with (zero-indexed) indices.
+/// @returns Returns a list with (zero-indexed) indices.
 ///
 /// @export
 ///
@@ -108,7 +108,7 @@ fn rs_prepare_gsva_gs(
 /// @param abs_rank Booelan. If `TRUE` = pos-neg, `FALSE` = pos+neg
 /// @param timings Boolean. Prints timings from the algorithm.
 ///
-/// @return Returns a matrix of gene set ES scores x samples.
+/// @returns Returns a matrix of gene set ES scores x samples.
 ///
 /// @export
 #[extendr]
@@ -153,7 +153,7 @@ fn rs_gsva(
 /// @param normalise Boolean. Shall the scores be normalised.
 /// @param timings Boolean. Prints timings from the algorithm.
 ///
-/// @return Returns a matrix of gene set ES scores x samples.
+/// @returns Returns a matrix of gene set ES scores x samples.
 ///
 /// @export
 #[extendr]

@@ -46,3 +46,44 @@ inputs into a single experiment with global gene QC and sequential cell
 indexing. The feature space is determined by the prescan
 (intersection or union of gene ids).
 }
+\examples{
+# two 10x h5 files into one experiment
+files <- c(a = tempfile(fileext = ".h5"), b = tempfile(fileext = ".h5"))
+for (i in seq_along(files)) {
+  data <- generate_single_cell_test_data(
+    syn_data_params = params_sc_synthetic_data(
+      n_cells = 200L,
+      n_genes = 40L
+    ),
+    seed = i
+  )
+  write_tenx_h5_sc(
+    f_path = files[i],
+    counts = data$counts,
+    barcodes = data$obs$cell_id,
+    features = data.table::data.table(
+      id = data$var$gene_id,
+      name = data$var$ensembl_id,
+      feature_type = "Gene Expression"
+    )
+  )
+}
+scan_res <- prescan_tenx_h5_files(h5_paths = files, .verbose = FALSE)
+
+dir_data <- tempfile("sc_multi_tenx")
+dir.create(dir_data, recursive = TRUE)
+sc <- load_multi_tenx_h5(
+  object = SingleCells(dir_data = dir_data),
+  prescan_result = scan_res,
+  sc_qc_param = params_sc_min_quality(
+    min_unique_genes = 5L,
+    min_lib_size = 25L,
+    min_cells = 5L
+  ),
+  streaming = 0L,
+  .verbose = FALSE
+)
+dim(sc)
+
+unlink(c(files, dir_data), recursive = TRUE, force = TRUE)
+}

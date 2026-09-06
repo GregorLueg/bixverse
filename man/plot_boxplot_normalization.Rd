@@ -2,7 +2,7 @@
 % Please edit documentation in R/plots_bulk.R
 \name{plot_boxplot_normalization}
 \alias{plot_boxplot_normalization}
-\title{Helper plot function for boxplot of normalized data}
+\title{Helper plot function for boxplot of normalised data}
 \usage{
 plot_boxplot_normalization(samples, voom_object, group_col)
 }
@@ -18,5 +18,19 @@ and a column specifying the cohort.}
 ggplot object, i.e., box plot with expression per sample.
 }
 \description{
-Helper plot function for boxplot of normalized data
+Helper plot function for boxplot of normalised data
+}
+\examples{
+# normalised expression per sample, coloured by cohort
+syn <- synthetic_bulk_cor_matrix()
+samples <- data.table::data.table(
+  sample_id = colnames(syn$counts),
+  cohort = rep(c("case", "control"), each = 50)
+)
+dge_list <- edgeR::normLibSizes(edgeR::DGEList(counts = syn$counts))
+voom_obj <- limma::voom(
+  dge_list,
+  stats::model.matrix(~ samples$cohort)
+)
+plot_boxplot_normalization(samples, voom_obj, group_col = "cohort")
 }

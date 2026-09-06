@@ -51,6 +51,20 @@
 #' }
 #'
 #' @export
+#'
+#' @examples
+#' # purity of the meta cells against the cell types they were built from
+#' sc <- demo_single_cells()
+#' mc <- generate_bt_meta_cells_sc(
+#'   sc,
+#'   sc_meta_cell_params = params_sc_bt_metacells(target_no_metacells = 50L),
+#'   .verbose = FALSE
+#' )
+#' cell_types <- sc[["cell_grp"]]$cell_grp
+#' mc <- calc_meta_cell_purity(mc, original_cell_type = cell_types)
+#' head(mc[[c("meta_cell_id", "mc_purity")]])
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 calc_meta_cell_purity <- S7::new_generic(
   name = "calc_meta_cell_purity",
   dispatch_args = "object",
@@ -139,6 +153,23 @@ S7::method(calc_meta_cell_purity, MetaCells) <- function(
 #' }
 #'
 #' @export
+#'
+#' @examples
+#' # the same numbers as a table, leaving the object untouched
+#' sc <- demo_single_cells()
+#' mc <- generate_bt_meta_cells_sc(
+#'   sc,
+#'   sc_meta_cell_params = params_sc_bt_metacells(target_no_metacells = 50L),
+#'   .verbose = FALSE
+#' )
+#' purity <- get_meta_cell_purity(
+#'   mc,
+#'   original_cell_type = sc[["cell_grp"]]$cell_grp,
+#'   add_additional_info = "top_label"
+#' )
+#' head(purity)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 get_meta_cell_purity <- S7::new_generic(
   name = "get_meta_cell_purity",
   dispatch_args = "object",
@@ -205,6 +236,23 @@ S7::method(get_meta_cell_purity, MetaCells) <- function(
 #'
 #' @references
 #' Persad, et al. Nat Biotechnol, 2023
+#'
+#' @examples
+#' # diffusion map off the source kNN graph, giving each meta cell a region
+#' sc <- demo_single_cells()
+#' mc <- generate_bt_meta_cells_sc(
+#'   sc,
+#'   sc_meta_cell_params = params_sc_bt_metacells(target_no_metacells = 50L),
+#'   .verbose = FALSE
+#' )
+#' mc <- calc_diffusion_coordinates(
+#'   mc,
+#'   knn_data = get_knn_obj(sc),
+#'   .verbose = FALSE
+#' )
+#' table(mc[["density_region"]]$density_region)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 calc_diffusion_coordinates <- S7::new_generic(
   name = "calc_diffusion_coordinates",
   dispatch_args = "object",
@@ -307,6 +355,24 @@ S7::method(calc_diffusion_coordinates, MetaCells) <- function(
 #'
 #' @references
 #' Persad, et al. Nat Biotechnol, 2023
+#'
+#' @examples
+#' # compactness and separation on top of the diffusion coordinates
+#' sc <- demo_single_cells()
+#' mc <- generate_bt_meta_cells_sc(
+#'   sc,
+#'   sc_meta_cell_params = params_sc_bt_metacells(target_no_metacells = 50L),
+#'   .verbose = FALSE
+#' )
+#' mc <- calc_diffusion_coordinates(
+#'   mc,
+#'   knn_data = get_knn_obj(sc),
+#'   .verbose = FALSE
+#' )
+#' mc <- calc_manifold_metrics(mc)
+#' head(mc[[c("compactness", "separation")]])
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 calc_manifold_metrics <- S7::new_generic(
   name = "calc_manifold_metrics",
   dispatch_args = "object",

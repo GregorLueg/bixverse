@@ -15,3 +15,12 @@ get_hotspot_membership(x)
 \description{
 Get the hotspot gene membership table
 }
+\examples{
+# the gene to module table hotspot clustered out
+sc <- demo_single_cells()
+hs <- hotspot_gene_cor_sc(sc, .verbose = FALSE)
+hs <- generate_hotspot_membership(hs)
+head(get_hotspot_membership(hs))
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

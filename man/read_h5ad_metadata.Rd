@@ -21,3 +21,15 @@ A list with:
 \description{
 Useful for exploring the data stored in an h5ad file.
 }
+\examples{
+# obs and var tables straight out of the file
+data <- generate_single_cell_test_data(
+  syn_data_params = params_sc_synthetic_data(n_cells = 200L, n_genes = 40L)
+)
+f_path <- tempfile(fileext = ".h5ad")
+write_h5ad_sc(f_path, data$counts, data$obs, data$var, .verbose = FALSE)
+meta <- read_h5ad_metadata(f_path)
+head(meta$var, 3)
+
+unlink(f_path)
+}

@@ -87,3 +87,11 @@ close to the kNN size will produce poor results. With tSNE in particular the
 rule of thumb is to set k to \code{3 * perplexity}. When `k ≤ perplexity`` the
 algorithm does not behave properly anymore, thus, will throw an error.
 }
+\examples{
+# Barnes-Hut t-SNE on the PCA factors
+sc <- demo_single_cells()
+sc <- tsne_sc(sc, .verbose = FALSE)
+dim(get_embedding(sc, "tsne"))
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

@@ -19,3 +19,14 @@ orientation is inferred by comparing the matrix dims against the obs and
 var lengths (\code{DENSE_ROW} = cells x genes, \code{DENSE_COL} = genes x cells).
 Ties (\code{no_obs == no_var}) fall back to the AnnData convention (\code{DENSE_ROW}).
 }
+\examples{
+# dimensions and storage layout without reading the counts
+data <- generate_single_cell_test_data(
+  syn_data_params = params_sc_synthetic_data(n_cells = 200L, n_genes = 40L)
+)
+f_path <- tempfile(fileext = ".h5ad")
+write_h5ad_sc(f_path, data$counts, data$obs, data$var, .verbose = FALSE)
+get_h5ad_dimensions(f_path)
+
+unlink(f_path)
+}

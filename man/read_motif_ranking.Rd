@@ -16,5 +16,13 @@ underlying Rust code.
 \description{
 This function loads in the .feather files with the motif to target gene
 rankings. These can be found here:
-\code{https://resources.aertslab.org/cistarget/databases/}
+\verb{https://resources.aertslab.org/cistarget/databases/}
+}
+\examples{
+\dontrun{
+# transposed motif rankings from the downloaded feather file
+paths <- download_cistarget_hg38()
+rankings <- read_motif_ranking(paths$rankings)
+dim(rankings)
+}
 }

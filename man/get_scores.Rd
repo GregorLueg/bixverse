@@ -24,10 +24,28 @@ get_scores(x, ...)
 \item{score_type}{Either \code{"weighted"} or \code{"cxds_scores"}.}
 }
 \value{
+The score matrix or data.table held by the object, depending on the
+class. Methods exist for \code{ScTypeResults}, \code{ScTypeCellResults} and
+\code{ScDblFinderRes}.
+
 A numeric matrix of cells x cell types.
 
 A numeric vector with the winning score per cell.
 }
 \description{
 Get scores
+}
+\examples{
+# the ScType score matrix of cell types by cluster
+sc <- demo_single_cells()
+markers <- data.table::data.table(
+  cell_type = rep(sprintf("cell_type_\%i", 1:3), each = 10),
+  gene_id = sprintf("gene_\%02d", 1:30)
+)
+cell_markers <- prepare_cell_markers(obj = sc, marker_df = markers)
+res <- calc_sc_type_scores(sc, cell_marker_list = cell_markers,
+                           .verbose = FALSE)
+dim(get_scores(res))
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 }

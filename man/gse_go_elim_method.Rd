@@ -43,3 +43,14 @@ then proceeds to the next level of the ontology and repeats the process. The
 gene universe will be automatically set to every gene represented in the
 ontology.
 }
+\examples{
+\donttest{
+# human GO terms with at least 25 genes
+go_obj <- GeneOntologyElim(
+  get_go_data_human(.verbose = FALSE),
+  min_genes = 25L
+)
+target_genes <- unique(unlist(S7::prop(go_obj, "go_to_genes")[1:5]))
+head(gse_go_elim_method(go_obj, target_genes = target_genes), 3)
+}
+}

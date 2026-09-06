@@ -21,3 +21,10 @@ Named list with paths: \code{rankings} and \code{motif_annotations}.
 \description{
 Download CisTarget reference files for human (hg38)
 }
+\examples{
+\dontrun{
+# fetch the hg38 rankings and motif annotations (large, network)
+paths <- download_cistarget_hg38()
+paths$rankings
+}
+}

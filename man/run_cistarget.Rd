@@ -50,6 +50,37 @@ algorithms used in SCENIC, see Aibar, et al. You will need motif to target
 gene rankings, see \code{\link[=read_motif_ranking]{read_motif_ranking()}} and the motif to TF
 annotations, see \code{\link[=read_motif_annotation_file]{read_motif_annotation_file()}}.
 }
+\examples{
+# motif enrichment against a tiny synthetic ranking database
+rankings <- matrix(
+  c(1L, 5L, 4L, 2L, 2L, 2L, 1L, 5L, 4L, 3L, 2L, 1L, 3L, 1L, 5L, 4L,
+    5L, 4L, 3L, 3L),
+  nrow = 5,
+  byrow = TRUE,
+  dimnames = list(sprintf("gene_\%i", 1:5), sprintf("motif_\%i", 1:4))
+)
+annot <- data.table::data.table(
+  motif = sprintf("motif_\%i", 1:4),
+  TF = sprintf("TF\%i", 1:4),
+  annotationSource = factor(c(
+    "directAnnotation",
+    "inferredBy_Orthology",
+    "inferredBy_MotifSimilarity",
+    "inferredBy_MotifSimilarity_n_Orthology"
+  ))
+)
+res <- run_cistarget(
+  gs_list = list(set_a = c("gene_1", "gene_2", "gene_3")),
+  rankings = rankings,
+  annot_data = annot,
+  cis_target_params = params_cistarget(
+    auc_threshold = 1,
+    nes_threshold = 0.2
+  ),
+  .verbose = FALSE
+)
+res[, c("gs_name", "motif", "nes")]
+}
 \references{
 Aibar, et al., Nat Methods, 2017
 }

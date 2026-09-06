@@ -80,3 +80,11 @@ used across different R single cell packages (Seurat, SCE). This version
 is purely memory-based.
 }
 }
+\examples{
+# a standalone kNN object off the PCA embedding
+sc <- demo_single_cells()
+knn <- generate_knn_sc(sc, .validate_index = FALSE, .verbose = FALSE)
+dim(get_knn_mat(knn))
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

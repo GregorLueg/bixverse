@@ -971,11 +971,48 @@ S7::method(dialogue_sc, MetaCells) <- function(
 #' times. `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` ->
 #' detailed verbosity.
 #'
-#' @returns A `ScNebula` class, see [bixverse::new_sc_nebula_res()].
+#' @returns A `ScNebula` class, see `new_sc_nebula_res()`.
 #'
 #' @references He, et al., Commun Biol, 2021
 #'
 #' @export
+#'
+#' @examples
+#' # differential expression over meta cells with a donor random effect
+#' sc <- demo_single_cells(
+#'   syn_data_params = params_sc_synthetic_data(
+#'     n_cells = 2000L,
+#'     n_genes = 50L,
+#'     n_samples = 6L,
+#'     sample_bias = "even"
+#'   )
+#' )
+#' mc <- generate_bt_meta_cells_sc(
+#'   sc,
+#'   sc_meta_cell_params = params_sc_bt_metacells(target_no_metacells = 100L),
+#'   .verbose = FALSE
+#' )
+#' # the meta cell obs carries no donor labels, so vote them over
+#' sample_id <- sc[["sample_id"]]$sample_id
+#' mc[["sample_id"]] <- vapply(
+#'   mc[[]]$original_cell_idx,
+#'   function(idx) names(which.max(table(sample_id[idx]))),
+#'   character(1)
+#' )
+#' mc[["condition"]] <- ifelse(
+#'   mc[["sample_id"]]$sample_id %in% c("sample_1", "sample_2", "sample_3"),
+#'   "ctr",
+#'   "trt"
+#' )
+#' res <- nebula_mc(
+#'   mc,
+#'   subject_col = "sample_id",
+#'   design = ~condition,
+#'   .verbose = FALSE
+#' )
+#' head(res$results)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 nebula_mc <- S7::new_generic(
   name = "nebula_mc",
   dispatch_args = "object",

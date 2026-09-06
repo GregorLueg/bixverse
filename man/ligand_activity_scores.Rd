@@ -32,3 +32,26 @@ scoring, so AUROC / AUPR reflect ranking within the background (typical
 NicheNet practice: background = genes expressed in the receiver cells,
 gene set = the DEGs).
 }
+\examples{
+# rank the ligands against the TF1 target set
+ppi <- data.table::data.table(
+  from = c("L1", "SIG1", "L2", "SIG2"),
+  to = c("SIG1", "TF1", "SIG2", "TF2"),
+  weight = 1.0
+)
+grn <- data.table::data.table(
+  from = rep(c("TF1", "TF2"), each = 3),
+  to = c("G1", "G2", "G3", "G4", "G5", "G6"),
+  weight = 1.0
+)
+inf <- generate_ligand_target_influence(
+  ligand_seeds = list(L1 = "L1", L2 = "L2"),
+  ppi_network = ppi,
+  grn_network = grn,
+  params = params_ligand_target(ltf_cutoff = 0)
+)
+ligand_activity_scores(
+  ligand_influence = inf,
+  gene_sets = list(set_A = c("G1", "G2", "G3"))
+)
+}

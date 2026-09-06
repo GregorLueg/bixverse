@@ -27,3 +27,10 @@ The primary gene identifiers stored in the class.
 \description{
 Get the main gene names (for example symbols or Ensembl identifiers).
 }
+\examples{
+# the primary gene identifiers held by the object
+sc <- demo_single_cells(prepped = FALSE)
+head(get_gene_names(sc), 3)
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

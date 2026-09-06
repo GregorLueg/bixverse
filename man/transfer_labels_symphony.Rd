@@ -42,3 +42,33 @@ what gets queried. Reference labels come from the reference's stored
 Distances on \code{z_corr} are typically Euclidean — set \code{knn_params$ann_dist}
 to \code{"euclidean"} unless you have a reason to use cosine.
 }
+\examples{
+# kNN label transfer from the reference onto a mapped query
+ref <- demo_single_cells(
+  syn_data_params = params_sc_synthetic_data(
+    n_cells = 500L,
+    n_genes = 50L,
+    n_batches = 2L
+  )
+)
+symphony_ref <- build_symphony_ref(
+  ref,
+  batch_column = "batch_index",
+  hvg = get_hvg(ref) + 1L,
+  harmony_params = params_sc_harmony(k = 10L),
+  no_pcs = 10L,
+  label_columns = "cell_grp",
+  .verbose = FALSE
+)
+query <- demo_single_cells(prepped = FALSE, seed = 7L)
+query <- map_symphony_query(symphony_ref, query = query, .verbose = FALSE)
+labels <- transfer_labels_symphony(
+  symphony_ref,
+  query = query,
+  label_column = "cell_grp",
+  .verbose = FALSE
+)
+head(labels)
+
+unlink(c(ref@dir_data, query@dir_data), recursive = TRUE, force = TRUE)
+}

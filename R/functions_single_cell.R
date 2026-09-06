@@ -75,7 +75,7 @@ auto_streaming <- function(n_cells, streaming = NULL, .verbose = TRUE) {
 #' @param hvg_method String. One of `c("vst", "dispersion", "meanvarbin")`.
 #' Selects which column in `res` is used to rank genes.
 #'
-#' @return A data.table with the original `var_table` columns, all columns
+#' @returns A data.table with the original `var_table` columns, all columns
 #' from `res`, plus:
 #' \itemize{
 #'   \item `is_hvg` - Boolean. `TRUE` for the top `hvg_no` genes.
@@ -107,25 +107,83 @@ build_hvg_table <- function(var_table, res, hvg_no, hvg_method) {
 
 #' Helper to generate cell ranger input parameters
 #'
-#' @param dir_data String. The directory with the Cell Ranger outputs
+#' @description
+#' Resolves the three files a Cell Ranger MTX directory holds and wraps them
+#' into the parameter list [bixverse::load_mtx()] wants. Handles the v2 naming
+#' (`genes.tsv`) and the v3 one (`features.tsv`), and the `.csv` variant that
+#' [bixverse::write_cellranger_output()] can emit.
 #'
-#' @return A list based on [bixverse::params_sc_mtx_io()].
+#' @param dir_data String. The directory with the Cell Ranger outputs
+#' @param cells_as_rows Boolean. Are the cells the rows of the matrix? Cell
+#' Ranger writes genes x cells, so this defaults to `FALSE`. Set to `TRUE` for
+#' output of [bixverse::write_cellranger_output()] written with
+#' `rows = "cells"`.
+#' @param has_hdr Boolean. Do the barcode and feature files carry a header row?
+#' Cell Ranger writes none, so this defaults to `FALSE`.
+#' [bixverse::write_cellranger_output()] does write one.
+#'
+#' @returns A list based on [bixverse::params_sc_mtx_io()].
 #'
 #' @export
-get_cell_ranger_params <- function(dir_data) {
+#'
+#' @examples
+#' # round trip through the package's own writer
+#' dir <- tempfile("cellranger")
+#' dir.create(dir)
+#' data <- generate_single_cell_test_data(
+#'   syn_data_params = params_sc_synthetic_data(n_cells = 50L, n_genes = 40L)
+#' )
+#' write_cellranger_output(
+#'   f_path = dir,
+#'   counts = data$counts,
+#'   obs = data$obs,
+#'   var = data$var,
+#'   rows = "genes",
+#'   format_type = "tsv",
+#'   .verbose = FALSE
+#' )
+#' str(get_cell_ranger_params(dir, has_hdr = TRUE))
+#'
+#' unlink(dir, recursive = TRUE, force = TRUE)
+get_cell_ranger_params <- function(
+  dir_data,
+  cells_as_rows = FALSE,
+  has_hdr = FALSE
+) {
   # checks
   checkmate::assertDirectory(dir_data)
-  assertFileExists(dir_data, c("barcodes.tsv", "genes.tsv", "matrix.mtx"))
+  checkmate::qassert(cells_as_rows, "B1")
+  checkmate::qassert(has_hdr, "B1")
 
-  res <- params_sc_mtx_io(
-    path_mtx = path.expand(file.path(dir_data, "matrix.mtx")),
-    path_obs = path.expand(file.path(dir_data, "barcodes.tsv")),
-    path_var = path.expand(file.path(dir_data, "genes.tsv")),
-    cells_as_rows = FALSE,
-    has_hdr = FALSE
+  # v2 calls the feature file genes.*, v3 calls it features.*; our own writer
+  # emits either extension
+  pick <- function(candidates, label) {
+    hits <- candidates[file.exists(file.path(dir_data, candidates))]
+    if (length(hits) == 0) {
+      stop(sprintf(
+        "No %s file found in '%s'. Looked for: %s.",
+        label,
+        dir_data,
+        paste(candidates, collapse = ", ")
+      ))
+    }
+    file.path(dir_data, hits[1])
+  }
+
+  path_mtx <- pick(c("matrix.mtx", "mat.mtx"), "matrix")
+  path_obs <- pick(c("barcodes.tsv", "barcodes.csv"), "barcode")
+  path_var <- pick(
+    c("features.tsv", "features.csv", "genes.tsv", "genes.csv"),
+    "feature"
   )
 
-  return(res)
+  params_sc_mtx_io(
+    path_mtx = path.expand(path_mtx),
+    path_obs = path.expand(path_obs),
+    path_var = path.expand(path_var),
+    cells_as_rows = cells_as_rows,
+    has_hdr = has_hdr
+  )
 }
 
 ## gene-major counts to cell-major ---------------------------------------------
@@ -142,7 +200,7 @@ get_cell_ranger_params <- function(dir_data) {
 #'
 #' @param counts `dgCMatrix`. Counts of genes x cells.
 #'
-#' @return The same data as a `dgRMatrix` of cells x genes.
+#' @returns The same data as a `dgRMatrix` of cells x genes.
 #'
 #' @keywords internal
 .counts_to_cell_major <- function(counts) {
@@ -163,7 +221,7 @@ get_cell_ranger_params <- function(dir_data) {
 #'
 #' @param seurat_obj `Seurat` class. The class to extract the counts from.
 #'
-#' @return The raw counts as a `dgRMatrix` of cells x genes.
+#' @returns The raw counts as a `dgRMatrix` of cells x genes.
 #'
 #' @keywords internal
 get_seurat_counts <- function(seurat_obj) {
@@ -259,7 +317,7 @@ get_meta_cell_matrices <- function(meta_cell_data, dimnames = NULL) {
 #' @param bounds Named numeric vector with `lower` and/or `upper`. At least one
 #' must be present.
 #'
-#' @return Logical vector of length `length(x)`. `TRUE` where the value is
+#' @returns Logical vector of length `length(x)`. `TRUE` where the value is
 #' within the supplied bounds (inclusive on both ends).
 #'
 #' @keywords internal
@@ -285,7 +343,7 @@ get_meta_cell_matrices <- function(meta_cell_data, dimnames = NULL) {
 #' @param direction String. One of `"twosided"`, `"below"`, `"above"`.
 #' @param metric_name String. Used in the error message.
 #'
-#' @return Invisible `NULL`. Called for its side effect.
+#' @returns Invisible `NULL`. Called for its side effect.
 #'
 #' @keywords internal
 .check_bounds_direction <- function(bounds, direction, metric_name) {
@@ -320,6 +378,14 @@ get_meta_cell_matrices <- function(meta_cell_data, dimnames = NULL) {
 #' }
 #'
 #' @export
+#'
+#' @examples
+#' # one badly undersequenced cell, flagged on the lower tail only
+#' set.seed(42L)
+#' lib_size <- c(rnorm(99, 1000, 100), 50)
+#' res <- per_cell_qc_outlier(lib_size, direction = "below")
+#' sum(res$outlier)
+#' res$metrics
 per_cell_qc_outlier <- function(
   metric,
   threshold = 3,
@@ -363,7 +429,7 @@ per_cell_qc_outlier <- function(
 #' One of `"twosided"`, `"below"`, `"above"`.
 #' @param threshold Numeric. Number of MADs to use for outlier detection.
 #'
-#' @return A `data.table` with one row per metric/group and columns `metric`,
+#' @returns A `data.table` with one row per metric/group and columns `metric`,
 #' `group`, `group_median`, `lower_threshold`, `upper_threshold`, `is_outlier`.
 #'
 #' @keywords internal
@@ -412,9 +478,22 @@ per_group_qc_outlier <- function(metrics, groups, directions, threshold = 3) {
 #' @param mad Logical. If `FALSE`, skip MAD entirely; `hard_thresholds` must
 #' then be supplied.
 #'
-#' @return A `CellQc` object.
+#' @returns A `CellQc` object.
 #'
 #' @export
+#'
+#' @examples
+#' # MAD outlier detection over two metrics at once
+#' set.seed(42L)
+#' metrics <- list(
+#'   lib_size = c(rnorm(99, 1000, 100), 50),
+#'   pct_mt = runif(100, 0, 20)
+#' )
+#' run_cell_qc(
+#'   metrics,
+#'   cells_to_keep = 0:99,
+#'   directions = c(lib_size = "below", pct_mt = "above")
+#' )
 run_cell_qc <- function(
   metrics,
   cells_to_keep,
@@ -544,6 +623,16 @@ run_cell_qc <- function(
 #' @param hard_thresholds Required. See `run_cell_qc`.
 #'
 #' @export
+#'
+#' @examples
+#' # a hard upper bound, no MAD anywhere
+#' set.seed(42L)
+#' qc <- run_cell_qc_fixed(
+#'   metrics = list(pct_mt = runif(100, 0, 30)),
+#'   cells_to_keep = 0:99,
+#'   hard_thresholds = list(pct_mt = c(upper = 15))
+#' )
+#' sum(qc$combined)
 run_cell_qc_fixed <- function(
   metrics,
   cells_to_keep,
@@ -591,6 +680,14 @@ run_cell_qc_fixed <- function(
 #' @returns The `SingleCellNearestNeighbour` for downstream usage.
 #'
 #' @export
+#'
+#' @examples
+#' # kNN over a random embedding; the rows have to carry cell names
+#' set.seed(42L)
+#' embd <- matrix(rnorm(500 * 10), nrow = 500)
+#' rownames(embd) <- sprintf("cell_%03d", 1:500)
+#' knn <- generate_sc_knn(embd, .verbose = FALSE)
+#' dim(get_knn_mat(knn))
 generate_sc_knn <- function(
   data,
   neighbours_params = params_sc_neighbours(),
@@ -641,6 +738,21 @@ generate_sc_knn <- function(
 #' }
 #'
 #' @export
+#'
+#' @examples
+#' # recall of an annoy index against the default one
+#' set.seed(42L)
+#' embd <- matrix(rnorm(500 * 10), nrow = 500)
+#' rownames(embd) <- sprintf("cell_%03d", 1:500)
+#' ref <- generate_sc_knn(embd, .verbose = FALSE)
+#' query <- generate_sc_knn(
+#'   embd,
+#'   neighbours_params = params_sc_neighbours(
+#'     knn = list(knn_method = "annoy")
+#'   ),
+#'   .verbose = FALSE
+#' )
+#' calc_knn_metrics(ref, query)$final_recall
 calc_knn_metrics <- function(ref_knn, query_knn) {
   # checks
   checkmate::assertClass(ref_knn, "SingleCellNearestNeighbour")
@@ -668,6 +780,17 @@ calc_knn_metrics <- function(ref_knn, query_knn) {
 #' usage. Genes not found in the object will be automatically removed.
 #'
 #' @export
+#'
+#' @examples
+#' # a marker table turned into the indexed list the scorers want
+#' sc <- demo_single_cells(prepped = FALSE)
+#' markers <- data.table::data.table(
+#'   cell_type = c("type_a", "type_a", "type_b"),
+#'   gene_id = get_gene_names(sc)[1:3]
+#' )
+#' names(prepare_cell_markers(sc, markers))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 prepare_cell_markers <- function(obj, marker_df) {
   # checks
   checkmate::assertTRUE(
@@ -710,7 +833,7 @@ prepare_cell_markers <- function(obj, marker_df) {
 #' `_adt`.
 #' @param default_modality String. Modality used when no suffix is present.
 #'
-#' @return A list with `id` and `modality`.
+#' @returns A list with `id` and `modality`.
 #'
 #' @keywords internal
 .parse_feature_modality <- function(feature, default_modality) {
@@ -738,10 +861,18 @@ prepare_cell_markers <- function(obj, marker_df) {
 #' @param ... Additional arguments forwarded to [get_embedding()] (e.g.
 #' `modality`).
 #'
-#' @return A data.table with `cell_id`, `dim_*` columns and any requested obs
+#' @returns A data.table with `cell_id`, `dim_*` columns and any requested obs
 #' columns.
 #'
 #' @export
+#'
+#' @examples
+#' # PCA coordinates with a cell annotation riding along
+#' sc <- demo_single_cells()
+#' dt <- extract_embedding_data(sc, "pca", obs_cols = "cell_grp")
+#' head(dt[, c("cell_id", "dim_1", "dim_2", "cell_grp")])
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 extract_embedding_data <- function(object, embedding, obs_cols = NULL, ...) {
   checkmate::qassert(embedding, "S1")
   checkmate::qassert(obs_cols, c("0", "S+"))
@@ -799,7 +930,7 @@ extract_embedding_data <- function(object, embedding, obs_cols = NULL, ...) {
 #' @param ... Additional arguments forwarded to [extract_embedding_data()] and
 #' onward to [get_embedding()] (e.g. `modality`).
 #'
-#' @return A list with the embedding stored as an `embedding` attribute and
+#' @returns A list with the embedding stored as an `embedding` attribute and
 #' \itemize{
 #'   \item nodes - data.table with `cluster` (a factor in graph order),
 #'   `dim_1`, `dim_2`, `n_cells` and, when `node_stat_col` is given, `stat`.
@@ -812,6 +943,15 @@ extract_embedding_data <- function(object, embedding, obs_cols = NULL, ...) {
 #' @references Wolf, et al., Genome Biol., 2019.
 #'
 #' @export
+#'
+#' @examples
+#' # the abstracted graph placed on the PCA coordinates
+#' sc <- demo_single_cells()
+#' sc <- find_clusters_sc(sc, res = 1.0)
+#' paga <- run_paga_sc(sc, cluster_col = "leiden_clustering", .verbose = FALSE)
+#' extract_paga_plot_data(sc, paga, embedding = "pca")$nodes
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 extract_paga_plot_data <- function(
   object,
   paga_res,
@@ -986,9 +1126,21 @@ extract_paga_plot_data <- function(
 #' onward to [get_embedding()]. Do not pass `modality` here; the embedding
 #' modality is set via `embd_modality` and passing it again will error.
 #'
-#' @return A long data.table with `cell_id`, `dim_*`, `gene` and `expression`.
+#' @returns A long data.table with `cell_id`, `dim_*`, `gene` and `expression`.
 #'
 #' @export
+#'
+#' @examples
+#' # two genes melted onto the PCA coordinates
+#' sc <- demo_single_cells()
+#' dt <- extract_feature_plot_data(
+#'   sc,
+#'   features = get_gene_names(sc)[1:2],
+#'   embedding = "pca"
+#' )
+#' head(dt[, c("cell_id", "dim_1", "dim_2", "gene", "expression")])
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 extract_feature_plot_data <- function(
   object,
   features,
@@ -1053,10 +1205,21 @@ extract_feature_plot_data <- function(
 #' @param layer String. One of `c("norm", "magic")`, forwarded to
 #' [extract_gene_expression()].
 #'
-#' @return A long data.table with `cell_id`, `group`, `gene` and `expression`.
+#' @returns A long data.table with `cell_id`, `group`, `gene` and `expression`.
 #' `gene` is an ordered factor following `features`.
 #'
 #' @export
+#'
+#' @examples
+#' # long format expression grouped by cell type
+#' sc <- demo_single_cells(prepped = FALSE)
+#' head(extract_gene_violin_data(
+#'   sc,
+#'   features = get_gene_names(sc)[1:2],
+#'   grouping_variable = "cell_grp"
+#' ))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 extract_gene_violin_data <- function(
   object,
   features,
@@ -1120,11 +1283,19 @@ extract_gene_violin_data <- function(
 #' [extract_gene_expression()]. Applies to both features, and an `_adt`
 #' suffixed one will error under `"magic"`.
 #'
-#' @return A data.table with `cell_id`, `feature_1`, `feature_2` and any
+#' @returns A data.table with `cell_id`, `feature_1`, `feature_2` and any
 #' requested obs columns. The original feature labels are stored in a
 #' `features` attribute as `c(feature_1, feature_2)`.
 #'
 #' @export
+#'
+#' @examples
+#' # two genes side by side, ready for a scatter
+#' sc <- demo_single_cells(prepped = FALSE)
+#' genes <- get_gene_names(sc)[1:2]
+#' head(extract_feature_pair(sc, genes[1], genes[2], obs_cols = "cell_grp"))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 extract_feature_pair <- function(
   object,
   feature_1,

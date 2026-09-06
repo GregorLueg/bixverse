@@ -45,3 +45,15 @@ any requested obs columns.
 Extracts dense normalised (log1p) expression values for a set of genes,
 optionally with additional observation metadata columns.
 }
+\examples{
+# normalised expression of three genes with a cell annotation
+sc <- demo_single_cells()
+dt <- extract_gene_expression(
+  sc,
+  features = get_gene_names(sc)[1:3],
+  obs_cols = "cell_grp"
+)
+head(dt, 3)
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

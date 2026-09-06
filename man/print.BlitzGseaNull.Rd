@@ -17,4 +17,13 @@ Invisibly returns \code{x}.
 \description{
 Print a blitzGSEA null model
 }
+\examples{
+# the calibration summary of a blitzGSEA null
+set.seed(42L)
+stats <- stats::setNames(rnorm(500), sprintf("gene_\%03i", 1:500))
+print(blitzgsea_calibrate(
+  stats,
+  blitz_params = params_blitzgsea(permutations = 1000L, anchors = 10L)
+))
+}
 \keyword{internal}

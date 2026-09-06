@@ -52,6 +52,20 @@ This function allows you to quickly iterate over different initial seeds,
 number of neighbours for the KNN graph and dictionary sizes to identify
 optimal hyperparameters for your DGRDL run.
 }
+\examples{
+# small grid over neighbours and dictionary sizes
+syn <- generate_gene_module_data(n_samples = 24L, n_genes = 60L)
+obj <- BulkCoExp(syn$data, syn$meta_data)
+obj <- preprocess_bulk_coexp(obj, hvg = NULL, .verbose = FALSE)
+obj <- dgrdl_grid_search(
+  obj,
+  neighbours_vec = c(3L, 5L),
+  dict_size_vec = c(4L, 6L),
+  seed_vec = 123L,
+  .verbose = FALSE
+)
+get_grid_search_res(obj)
+}
 \references{
 Pan et al., Cell Syst, 2022
 }

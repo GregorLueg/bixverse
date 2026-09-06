@@ -6,6 +6,18 @@
 \usage{
 .read_slot_value_sample(f_path, slot_path, h5_content, n_sample = 10000L)
 }
+\arguments{
+\item{f_path}{String. Path to the h5ad file.}
+
+\item{slot_path}{String. Full path of the slot inside the file.}
+
+\item{h5_content}{data.table. Output of \code{\link[rhdf5:h5ls]{rhdf5::h5ls()}} on \code{f_path}.}
+
+\item{n_sample}{Integer. Maximum number of values to read.}
+}
+\value{
+Numeric vector of sampled values, or \code{NULL} if the slot is absent.
+}
 \description{
 Handles both sparse (group with a \code{data} dataset) and dense (direct dataset)
 storage. Returns NULL if the slot does not exist.

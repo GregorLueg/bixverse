@@ -18,3 +18,8 @@ to \code{\link[=add_adt_counts_sc]{add_adt_counts_sc()}} as \code{isotype_names}
 \description{
 Detect likely isotype-control features by name pattern
 }
+\examples{
+# find the isotype controls among the ADT features
+features <- c("CD3", "CD19", "IgG1_isotype", "IgG2a_isotype")
+detect_adt_isotypes(features)
+}

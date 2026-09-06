@@ -12,7 +12,7 @@
 #' Helper class that contains various mappings and makes it easier to use
 #' getters/setters with
 #'
-#' @return Generates an empty version of the `ScMap` class.
+#' @returns Generates an empty version of the `ScMap` class.
 #'
 #' @export
 #'
@@ -38,7 +38,7 @@ new_sc_mapper <- function() {
 #' Helper class that contains various data that is held in memory and not on
 #' disk.
 #'
-#' @return Generates an empty version of the `ScCache` class.
+#' @returns Generates an empty version of the `ScCache` class.
 #'
 #' @export
 #'
@@ -583,7 +583,7 @@ get_magic.ScCache <- function(x, ...) {
 
 ## single cell class -----------------------------------------------------------
 
-#' @title bixverse SingleCells class
+#' bixverse SingleCells class
 #'
 #' @description
 #' This is the `bixverse`-based SingleCells class. Under the hood it uses a
@@ -613,9 +613,16 @@ get_magic.ScCache <- function(x, ...) {
 #'   \item{dims}{Dimensions of the original data.}
 #' }
 #'
-#' @return Returns the `SingleCells` class for further operations.
+#' @returns Returns the `SingleCells` class for further operations.
 #'
 #' @export
+#'
+#' @examples
+#' # demo_single_cells() wraps the construction and the ingestion
+#' sc <- demo_single_cells(prepped = FALSE)
+#' sc
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 SingleCells <- S7::new_class(
   name = "SingleCells",
   properties = list(
@@ -663,7 +670,7 @@ SingleCells <- S7::new_class(
 #'
 #' @param object `SingleCells` class.
 #'
-#' @return The DuckDB connector
+#' @returns The DuckDB connector
 #'
 #' @export
 #'
@@ -692,7 +699,7 @@ S7::method(get_sc_duckdb, SingleCells) <- function(object) {
 #'
 #' @param object `SingleCells` class.
 #'
-#' @return The Rust structure
+#' @returns The Rust structure
 #'
 #' @export
 #'
@@ -721,7 +728,7 @@ S7::method(get_sc_rust_ptr, SingleCells) <- function(object) {
 #'
 #' @param object `SingleCells` class.
 #'
-#' @return The path to the `counts_genes.bin`
+#' @returns The path to the `counts_genes.bin`
 #'
 #' @keywords internal
 get_rust_count_gene_f_path <- S7::new_generic(
@@ -750,7 +757,7 @@ S7::method(get_rust_count_gene_f_path, SingleCells) <- function(object) {
 #'
 #' @param object `SingleCells` class.
 #'
-#' @return The path to the `counts_cells.bin`
+#' @returns The path to the `counts_cells.bin`
 #'
 #' @keywords internal
 get_rust_count_cell_f_path <- S7::new_generic(
@@ -1064,7 +1071,7 @@ S7::method(`[`, SingleCells) <- function(
 #' return.
 #' @param .verbose Boolean. Controls verbosity
 #'
-#' @return Returns a list with:
+#' @returns Returns a list with:
 #' \itemize{
 #'  \item indptr - The index pointers of the compressed sparse format.
 #'  \item indices - The indices of the data.
@@ -1118,10 +1125,10 @@ get_counts_from_rust <- function(
 
 #' Helper function transform Rust counts into sparse matrices
 #'
-#' @param count_data A list. Output of [bixverse::get_counts_from_rust()].
+#' @param count_data A list. Output of `get_counts_from_rust()`.
 #' @param return_format String. One of `c("cell", "gene")`.
 #'
-#' @return The sparse matrix in CSR or CSC format, pending the choice in
+#' @returns The sparse matrix in CSR or CSC format, pending the choice in
 #' `return_format`
 #'
 #' @keywords internal
@@ -1159,7 +1166,7 @@ create_sparse_matrix <- function(count_data, return_format) {
 #' @param gene_indices Optional integer. The gene indices to return.
 #' @param sc_map A `ScMap` class. Contains various mapping information.
 #'
-#' @return The finalised matrix.
+#' @returns The finalised matrix.
 #'
 #' @keywords internal
 finalise_matrix <- function(
@@ -1722,9 +1729,21 @@ S7::method(drop_cols_sc, SingleCells) <- function(
 #' @param new_data Atomic vector. The data to add to the column. Needs to be
 #' of same length as [bixverse::get_cells_to_keep()] and have the same order!
 #'
-#' @return The class with updated obs table in the DuckDB
+#' @returns The class with updated obs table in the DuckDB
 #'
 #' @export
+#'
+#' @examples
+#' # one new column, in the order of the cells that passed quality control
+#' sc <- demo_single_cells(prepped = FALSE)
+#' sc <- set_sc_new_obs_col(
+#'   sc,
+#'   col_name = "arm",
+#'   new_data = rep(c("ctrl", "treated"), length.out = dim(sc)[1])
+#' )
+#' table(get_sc_obs(sc)$arm)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 set_sc_new_obs_col <- S7::new_generic(
   name = "set_sc_new_obs_col",
   dispatch_args = "object",
@@ -1769,9 +1788,24 @@ S7::method(set_sc_new_obs_col, SingleCells) <- function(
 #' elements will be added to the obs table. Needs to be of same length as
 #' [bixverse::get_cells_to_keep()] and have the same order!
 #'
-#' @return The class with updated obs table in the DuckDB
+#' @returns The class with updated obs table in the DuckDB
 #'
 #' @export
+#'
+#' @examples
+#' # several columns in one go
+#' sc <- demo_single_cells(prepped = FALSE)
+#' n_cells <- dim(sc)[1]
+#' sc <- set_sc_new_obs_col_multiple(
+#'   sc,
+#'   new_data = list(
+#'     arm = rep(c("ctrl", "treated"), length.out = n_cells),
+#'     donor = rep(sprintf("donor_%i", 1:4), length.out = n_cells)
+#'   )
+#' )
+#' head(get_sc_obs(sc)[, c("arm", "donor")], 3)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 set_sc_new_obs_col_multiple <- S7::new_generic(
   name = "set_sc_new_obs_col_multiple",
   dispatch_args = "object",
@@ -1814,9 +1848,18 @@ S7::method(set_sc_new_obs_col_multiple, SingleCells) <- function(
 #' @param obs_data data.table. A data.table you generated with [get_data()]
 #' on some sub class.
 #'
-#' @return The class with updated obs table in the DuckDB
+#' @returns The class with updated obs table in the DuckDB
 #'
 #' @export
+#'
+#' @examples
+#' # cluster memberships carry their own cell_idx, so they join straight on
+#' sc <- demo_single_cells()
+#' clusters <- fast_cluster_sc(sc, resolutions = 1.0, .verbose = FALSE)
+#' sc <- add_sc_new_obs(sc, get_data(clusters))
+#' head(get_sc_obs(sc), 3)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 add_sc_new_obs <- S7::new_generic(
   name = "add_sc_new_obs",
   dispatch_args = "object",
@@ -1881,9 +1924,22 @@ S7::method(add_sc_new_obs, SingleCells) <- function(
 #' @param object `SingleCells` class.
 #' @param data_list Named list with the data to add.
 #'
-#' @return The class with updated var table in the DuckDB
+#' @returns The class with updated var table in the DuckDB
 #'
 #' @export
+#'
+#' @examples
+#' # flag a couple of genes in the var table
+#' sc <- demo_single_cells(prepped = FALSE)
+#' sc <- set_sc_new_var_cols(
+#'   sc,
+#'   data_list = list(
+#'     is_marker = get_gene_names(sc) %in% c("gene_01", "gene_02")
+#'   )
+#' )
+#' head(get_sc_var(sc), 3)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 set_sc_new_var_cols <- S7::new_generic(
   name = "set_sc_new_var_cols",
   dispatch_args = "object",

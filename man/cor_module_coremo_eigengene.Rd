@@ -24,6 +24,16 @@ This function will calculate the eigengene values for the modules on a per
 sample basis and add correlations of the gene expression of a given gene
 within the module to its eigengene.
 }
+\examples{
+# eigengenes per module and the gene to eigengene correlations
+mat <- t(synthetic_signal_matrix()$mat)
+obj <- BulkCoExp(mat, data.table::data.table(sample_id = rownames(mat)))
+obj <- preprocess_bulk_coexp(obj, hvg = 0.3, .verbose = FALSE)
+obj <- cor_module_processing(obj, cor_method = "spearman", .verbose = FALSE)
+obj <- cor_module_coremo_clustering(obj, .verbose = FALSE)
+obj <- cor_module_coremo_eigengene(obj, .verbose = FALSE)
+head(get_modules(get_results(obj)))
+}
 \references{
 Srivastava, et al., Nat. Commun., 2018; Francois, Romagnolo,
 et al., Nat. Commun., 2024.

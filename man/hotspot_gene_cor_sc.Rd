@@ -85,3 +85,15 @@ follows from the metric. With \code{use_knn = TRUE} it is taken from the metric
 stored on the cached kNN graph, otherwise from \code{ann_dist} in
 \code{hotspot_params}.
 }
+\examples{
+# local gene-gene correlations over a subset of the genes
+sc <- demo_single_cells()
+res <- hotspot_gene_cor_sc(
+  sc,
+  genes_to_take = get_gene_names(sc)[1:20],
+  .verbose = FALSE
+)
+res
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

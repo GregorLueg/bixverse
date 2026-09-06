@@ -25,3 +25,10 @@ A named vector with elements -> cell_idx, names -> cell_names.
 Returns the cell indices (R-based) and the cell names (usually barcodes)
 from the object for further downstream usage.
 }
+\examples{
+# cell indices carrying the barcodes as names
+sc <- demo_single_cells(prepped = FALSE)
+head(get_cell_info(sc), 3)
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

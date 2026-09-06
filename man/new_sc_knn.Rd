@@ -26,3 +26,18 @@ Generates the \code{SingleCellNearestNeighbour} class.
 Wrapper class that stores kNN data for subsequent usage in various other
 functions, methods and helpers.
 }
+\examples{
+# rebuild the kNN wrapper from an existing graph
+sc <- demo_single_cells()
+knn <- generate_knn_sc(sc, .validate_index = FALSE, .verbose = FALSE)
+new_sc_knn(
+  knn_data = list(
+    indices = get_knn_mat(knn),
+    dist = get_knn_dist(knn),
+    dist_metric = "euclidean"
+  ),
+  used_cells = get_cell_names(sc)
+)
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

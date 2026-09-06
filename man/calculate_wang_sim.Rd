@@ -27,3 +27,13 @@ A data.table with the calculated similarities.
 This function calculates the Wang similarity for a set of temrs,
 based on the DAG for a given ontology.
 }
+\examples{
+# Wang similarity for a subset of terms only
+onto <- data.table::data.table(
+  parent = c("a", "b", "b", "b", "c"),
+  child = c("b", "c", "d", "e", "f"),
+  type = c("part_of", "part_of", "part_of", "is_a", "is_a")
+)
+weights <- c("part_of" = 0.8, "is_a" = 0.6)
+calculate_wang_sim(c("c", "d", "f"), onto, weights = weights)
+}

@@ -20,7 +20,7 @@ which the contrast info can be found.}
 to calculate the Hedge's G effect for. Every permutation of the groups
 will be tested if \code{contrast_list} is \code{NULL}.}
 
-\item{normalised_counts}{Numeric Matrix. The normalized count matrix.}
+\item{normalised_counts}{Numeric Matrix. The normalised count matrix.}
 
 \item{contrast_list}{String vector or NULL. Optional string vector of
 contrast formatted as \code{"contrast1-contrast2"}. Default NULL will create all
@@ -34,4 +34,20 @@ Hedge's G effect size for the groups.
 }
 \description{
 Calculate the effect size
+}
+\examples{
+# Hedge's G on log CPM counts for the case vs control contrast
+syn <- synthetic_bulk_cor_matrix()
+meta <- data.table::data.table(
+  sample_id = colnames(syn$counts),
+  case_control = rep(c("case", "control"), each = 50)
+)
+norm_counts <- edgeR::cpm(syn$counts, log = TRUE)
+res <- hedges_g_dge(
+  meta_data = meta,
+  main_contrast = "case_control",
+  normalised_counts = norm_counts,
+  .verbose = FALSE
+)
+head(res)
 }

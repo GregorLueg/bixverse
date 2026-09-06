@@ -33,3 +33,19 @@ Updates doublet calls and associated summary statistics in a \code{ScrubletRes}
 object using a user-supplied threshold. Intended for use after visual
 inspection of the score histograms via \code{\link[=plot.ScrubletRes]{plot.ScrubletRes()}}.
 }
+\examples{
+# move the automatic threshold after eyeballing the histograms
+sc <- demo_single_cells(prepped = FALSE)
+res <- scrublet_sc(
+  sc,
+  scrublet_params = params_scrublet(
+    pca = list(no_pcs = 10L),
+    hvg = list(min_gene_var_pctl = 0.0),
+    n_bins = 20L
+  ),
+  .verbose = FALSE
+)
+call_doublets_manual(res, threshold = 0.3, .verbose = FALSE)
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

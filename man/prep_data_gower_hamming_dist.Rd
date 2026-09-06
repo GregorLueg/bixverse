@@ -27,4 +27,10 @@ and will transform them into matrices for subsequent distance calculations
 based on Hamming distance (everything categorical) or for Gower distance
 (mixed types).
 }
+\examples{
+# mixed categorical and continuous features ready for Gower distances
+dt <- data.table::data.table(age = c(45, 62, 33), sex = c("f", "m", "f"))
+prepped <- prep_data_gower_hamming_dist(dt, sprintf("s\%i", 1:3))
+prepped$is_cat
+}
 \keyword{internal}

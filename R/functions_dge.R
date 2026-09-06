@@ -125,6 +125,14 @@
 #' @references Chen, Lun and Smyth, F1000Research, 2016
 #'
 #' @export
+#'
+#' @examples
+#' # quasi-likelihood F test on the second design column
+#' syn <- synthetic_bulk_cor_matrix()
+#' grp <- factor(rep(c("ctrl", "case"), each = 50), levels = c("ctrl", "case"))
+#' design <- stats::model.matrix(~grp)
+#' res <- run_edger_ql(counts = syn$counts, design = design)
+#' head(res)
 run_edger_ql <- function(
   counts,
   design,
@@ -217,6 +225,20 @@ run_edger_ql <- function(
 #' F1000Research, 2016
 #'
 #' @export
+#'
+#' @examples
+#' # six pseudo-bulk samples out of a demo single cell object
+#' sc <- demo_single_cells(prepped = FALSE)
+#' cells <- get_sc_obs(sc)$cell_id
+#' cell_list <- split(
+#'   cells,
+#'   rep(sprintf("sample_%i", 1:6), length.out = length(cells))
+#' )
+#' design <- stats::model.matrix(~ rep(c("ctrl", "case"), each = 3))
+#' res <- pseudobulk_dge_sc(sc, cell_list, design, .verbose = FALSE)
+#' head(res)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 pseudobulk_dge_sc <- function(
   object,
   cell_list,

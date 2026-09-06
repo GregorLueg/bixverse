@@ -218,7 +218,7 @@ fn parse_count_type(s: &str) -> Option<AssayType> {
 /// @param n_genes (`integer`)\cr
 /// Number of genes represented in the data.
 ///
-/// @return A new instance of the `SingleCellCountData` class.
+/// @returns A new instance of the `SingleCellCountData` class.
 ///
 /// @export
 #[extendr]
@@ -238,7 +238,7 @@ impl SingleCellCountData {
     /// @param f_path_genes (`character`)\cr
     /// Path to the `.bin` file for the gene-based representation.
     ///
-    /// @return A new `SingleCellCountData` instance with `n_cells` and
+    /// @returns A new `SingleCellCountData` instance with `n_cells` and
     /// `n_genes` initialised to zero.
     pub fn new(f_path_cells: String, f_path_genes: String) -> Self {
         Self {
@@ -255,7 +255,7 @@ impl SingleCellCountData {
 
     /// Get the shape of the matrix
     ///
-    /// @return An integer vector `c(n_cells, n_genes)`.
+    /// @returns An integer vector `c(n_cells, n_genes)`.
     pub fn get_shape(&mut self) -> Vec<usize> {
         vec![self.n_cells, self.n_genes]
     }
@@ -267,7 +267,7 @@ impl SingleCellCountData {
     /// `n_cells` and `n_genes` fields accordingly. Useful when reconnecting
     /// to an existing object on disk.
     ///
-    /// @return Invisible `NULL`.
+    /// @returns Invisible `NULL`.
     pub fn set_from_file(&mut self) -> Result<(), extendr_api::Error> {
         let reader = ParallelSparseReader::new(&self.f_path_cells).to_extendr()?;
         let header = reader.get_header();
@@ -300,7 +300,7 @@ impl SingleCellCountData {
     /// @param verbose (`logical`)\cr
     /// Controls verbosity of the function.
     ///
-    /// @return A list with `cell_indices`, `gene_indices`, `lib_size` and
+    /// @returns A list with `cell_indices`, `gene_indices`, `lib_size` and
     /// `nnz`.
     pub fn r_data_to_file(
         &mut self,
@@ -367,7 +367,7 @@ impl SingleCellCountData {
     /// @param verbose (`logical`)\cr
     /// Controls verbosity of the function.
     ///
-    /// @return A list with `cell_indices`, `gene_indices`, `lib_size` and
+    /// @returns A list with `cell_indices`, `gene_indices`, `lib_size` and
     /// `nnz`.
     #[allow(clippy::too_many_arguments)]
     pub fn h5ad_to_file(
@@ -438,7 +438,7 @@ impl SingleCellCountData {
     /// @param verbose (`logical`)\cr
     /// Controls verbosity of the function.
     ///
-    /// @return A list with `cell_indices`, `gene_indices`, `lib_size` and
+    /// @returns A list with `cell_indices`, `gene_indices`, `lib_size` and
     /// `nnz`.
     #[allow(clippy::too_many_arguments)]
     pub fn norm_h5ad_to_file(
@@ -500,7 +500,7 @@ impl SingleCellCountData {
     /// @param verbose (`logical`)\cr
     /// Controls verbosity of the function.
     ///
-    /// @return A list with `cell_indices`, `gene_indices`, `lib_size` and
+    /// @returns A list with `cell_indices`, `gene_indices`, `lib_size` and
     /// `nnz`.
     #[allow(clippy::too_many_arguments)]
     pub fn h5ad_to_file_streaming(
@@ -560,7 +560,7 @@ impl SingleCellCountData {
     /// @param verbose (`logical`)\cr
     /// Controls verbosity.
     ///
-    /// @return A list with `global_gene_indices`, `total_cells`,
+    /// @returns A list with `global_gene_indices`, `total_cells`,
     /// `total_genes` and `per_file` (a list of lists with `exp_id`,
     /// `cell_indices`, `lib_size`, `nnz`).
     pub fn multi_h5ad_to_file(
@@ -629,7 +629,7 @@ impl SingleCellCountData {
     /// @param verbose (`logical`)\cr
     /// Controls verbosity of the function.
     ///
-    /// @return A list with `cell_indices`, `gene_indices`, `lib_size` and
+    /// @returns A list with `cell_indices`, `gene_indices`, `lib_size` and
     /// `nnz`.
     pub fn mtx_to_file(
         &mut self,
@@ -671,7 +671,7 @@ impl SingleCellCountData {
     /// @param verbose (`logical`)\cr
     /// Controls verbosity of the function.
     ///
-    /// @return A list with `cell_indices`, `gene_indices`, `lib_size` and
+    /// @returns A list with `cell_indices`, `gene_indices`, `lib_size` and
     /// `nnz`.
     pub fn mtx_to_file_streaming(
         &mut self,
@@ -714,7 +714,7 @@ impl SingleCellCountData {
     /// @param verbose (`logical`)\cr
     /// Controls verbosity.
     ///
-    /// @return A list with `global_gene_indices`, `total_cells`,
+    /// @returns A list with `global_gene_indices`, `total_cells`,
     /// `total_genes` and `per_file` (a list of lists with `exp_id`,
     /// `cell_indices`, `lib_size`, `nnz`).
     pub fn multi_mtx_to_file(
@@ -794,7 +794,7 @@ impl SingleCellCountData {
     /// @param verbose (`logical`)\cr
     /// Controls verbosity of the function.
     ///
-    /// @return A list with `cell_indices`, `gene_indices`, `lib_size` and
+    /// @returns A list with `cell_indices`, `gene_indices`, `lib_size` and
     /// `nnz`.
     #[allow(clippy::too_many_arguments)]
     pub fn tenx_h5_to_file_streaming(
@@ -863,7 +863,7 @@ impl SingleCellCountData {
     /// @param verbose (`logical`)\cr
     /// Controls verbosity.
     ///
-    /// @return A list with `global_gene_indices`, `total_cells`, `total_genes`
+    /// @returns A list with `global_gene_indices`, `total_cells`, `total_genes`
     /// and `per_file` (a list of lists with `exp_id`, `cell_indices`,
     /// `lib_size`, `nnz`).
     pub fn multi_tenx_h5_to_file(
@@ -931,7 +931,7 @@ impl SingleCellCountData {
     /// @param verbose (`logical`)\cr
     /// Controls verbosity of the function.
     ///
-    /// @return A list with `indptr`, `indices`, `data`, `no_cells` and
+    /// @returns A list with `indptr`, `indices`, `data`, `no_cells` and
     /// `no_genes`, parseable into a sparse matrix in R.
     pub fn return_full_mat(
         &self,
@@ -1011,7 +1011,7 @@ impl SingleCellCountData {
     /// @param assay (`character`)\cr
     /// One of `"raw"` or `"norm"`.
     ///
-    /// @return A list with `indptr`, `indices`, `data`, `no_cells` and
+    /// @returns A list with `indptr`, `indices`, `data`, `no_cells` and
     /// `no_genes`, parseable into a CSR matrix in R.
     pub fn get_cells_by_indices(
         &self,
@@ -1075,7 +1075,7 @@ impl SingleCellCountData {
     /// @param verbose (`logical`)\cr
     /// Controls verbosity of the function.
     ///
-    /// @return Invisible `NULL`.
+    /// @returns Invisible `NULL`.
     pub fn generate_gene_based_data(&mut self, verbose: bool) -> Result<(), extendr_api::Error> {
         let reader = ParallelSparseReader::new(&self.f_path_cells).to_extendr()?;
 
@@ -1179,7 +1179,7 @@ impl SingleCellCountData {
     /// @param verbose (`logical`)\cr
     /// Controls verbosity of the function.
     ///
-    /// @return Invisible `NULL`.
+    /// @returns Invisible `NULL`.
     pub fn generate_gene_based_data_streaming(
         &mut self,
         batch_size: usize,
@@ -1315,7 +1315,7 @@ impl SingleCellCountData {
     /// @param verbose (`logical`)\cr
     /// Controls verbosity.
     ///
-    /// @return Invisible `NULL`.
+    /// @returns Invisible `NULL`.
     pub fn generate_gene_based_data_memory_bounded(
         &mut self,
         max_genes_in_memory: usize,
@@ -1484,7 +1484,7 @@ impl SingleCellCountData {
     /// @param assay (`character`)\cr
     /// One of `"raw"` or `"norm"`.
     ///
-    /// @return A list with `indptr`, `indices`, `data`, `no_cells` and
+    /// @returns A list with `indptr`, `indices`, `data`, `no_cells` and
     /// `no_genes`, parseable into a CSC matrix in R.
     pub fn get_genes_by_indices(
         &self,
@@ -1541,7 +1541,7 @@ impl SingleCellCountData {
     /// Optional 1-indexed gene indices. If `NULL`, results are returned for
     /// all genes.
     ///
-    /// @return An integer vector of NNZ counts for the requested genes.
+    /// @returns An integer vector of NNZ counts for the requested genes.
     pub fn get_nnz_genes(
         &mut self,
         gene_indices: Option<&[i32]>,
@@ -1586,7 +1586,7 @@ impl SingleCellCountData {
     /// @param verbose (`logical`)\cr
     /// Controls verbosity.
     ///
-    /// @return A list with `total_cells`, `total_genes` and `per_file` (a
+    /// @returns A list with `total_cells`, `total_genes` and `per_file` (a
     /// list of lists with `exp_id`, `lib_size`, `nnz`).
     pub fn merge_sc_files(
         &mut self,

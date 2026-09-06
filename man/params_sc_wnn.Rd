@@ -23,7 +23,7 @@ params_sc_wnn(
 to \code{20L}.}
 
 \item{knn_range}{Integer. Candidate pool size per modality. Each cell's kNN
-input must contain at least this many neighbours. Defaults to \code{100L}.}
+input must contain at least this many neighbours. Defaults to \code{200L}.}
 
 \item{sigma_method}{String. Bandwidth method. One of
 \code{c("snn_farthest", "sigma_idx")}. Defaults to \code{"snn_farthest"}.}

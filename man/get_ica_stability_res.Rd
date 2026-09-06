@@ -17,3 +17,17 @@ Getter function to extract the ICA component data in terms of stability,
 convergence and normalised mutual information between the components. If not
 found will return \code{NULL}.
 }
+\examples{
+# the stability table behind the ncomp choice
+mat <- t(synthetic_signal_matrix()$mat)
+obj <- BulkCoExp(mat, data.table::data.table(sample_id = rownames(mat)))
+obj <- preprocess_bulk_coexp(obj, hvg = 0.3, .verbose = FALSE)
+obj <- ica_processing(obj, .verbose = FALSE)
+obj <- ica_evaluate_comp(
+  obj,
+  ica_type = "logcosh",
+  ncomp_params = params_ica_ncomp(custom_seq = seq(2L, 20L, by = 2L)),
+  .verbose = FALSE
+)
+head(get_ica_stability_res(obj))
+}

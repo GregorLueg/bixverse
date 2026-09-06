@@ -36,3 +36,15 @@ given gene sets. This can be used for example for the calculation of
 percentage mitochondrial reads per cell. These will be automatically added
 to the obs table
 }
+\examples{
+# read proportion of a gene set, the mitochondrial percentage pattern
+sc <- demo_single_cells(prepped = FALSE)
+sc <- gene_set_proportions_sc(
+  sc,
+  gene_set_list = list(set_a = c("gene_01", "gene_02", "gene_03")),
+  .verbose = FALSE
+)
+head(unlist(sc[["set_a"]]))
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

@@ -122,6 +122,25 @@
 #' @references Setty, et al., Nat. Biotechnol., 2019.
 #'
 #' @export
+#'
+#' @examples
+#' # pseudotime from an arbitrary start cell on the demo kNN graph
+#' sc <- demo_single_cells()
+#' res <- run_palantir_sc(
+#'   sc,
+#'   early_cell = get_knn_obj(sc)$used_cells[1],
+#'   palantir_params = params_sc_palantir(
+#'     knn = 15L,
+#'     num_waypoints = 100L,
+#'     n_eigs = 3L,
+#'     use_early_cell_as_start = TRUE,
+#'     knn_params = list(knn_method = "exhaustive")
+#'   ),
+#'   .verbose = FALSE
+#' )
+#' head(res$pseudotime)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 run_palantir_sc <- S7::new_generic(
   name = "run_palantir_sc",
   dispatch_args = "object",
@@ -266,6 +285,15 @@ S7::method(run_palantir_sc, ScOrMc) <- function(
 #' @references Wolf, et al., Genome Biol., 2019.
 #'
 #' @export
+#'
+#' @examples
+#' # cluster level graph abstraction of the Leiden clusters
+#' sc <- demo_single_cells()
+#' sc <- find_clusters_sc(sc, res = 1.0)
+#' res <- run_paga_sc(sc, cluster_col = "leiden_clustering", .verbose = FALSE)
+#' res$sizes
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 run_paga_sc <- S7::new_generic(
   name = "run_paga_sc",
   dispatch_args = "object",
@@ -409,6 +437,32 @@ S7::method(run_paga_sc, ScOrMc) <- function(
 #' @references Setty, et al., Nat. Biotechnol., 2019.
 #'
 #' @export
+#'
+#' @examples
+#' # GP trends for five genes along the Palantir branches
+#' sc <- demo_single_cells()
+#' palantir <- run_palantir_sc(
+#'   sc,
+#'   early_cell = get_knn_obj(sc)$used_cells[1],
+#'   palantir_params = params_sc_palantir(
+#'     knn = 15L,
+#'     num_waypoints = 100L,
+#'     n_eigs = 3L,
+#'     use_early_cell_as_start = TRUE,
+#'     knn_params = list(knn_method = "exhaustive")
+#'   ),
+#'   .verbose = FALSE
+#' )
+#' res <- run_gene_trends_sc(
+#'   sc,
+#'   palantir_res = palantir,
+#'   features = get_gene_names(sc)[1:5],
+#'   gene_trend_params = params_sc_gene_trends(resolution = 50L),
+#'   .verbose = FALSE
+#' )
+#' head(res$trends)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 run_gene_trends_sc <- S7::new_generic(
   name = "run_gene_trends_sc",
   dispatch_args = "object",

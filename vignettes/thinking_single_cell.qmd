@@ -178,7 +178,7 @@ print(get_gene_names(sc_object)[1:10])
 ```
 
 Let's quickly check out how you access the obs table and then let's exemplify
-THE footgun of the paper:
+some quirks with data being held on disk.
 
 ```{r}
 #| label: accessing the obs - via `[[]]`
@@ -253,9 +253,9 @@ sc_object
 ```
 
 The print changed now! We have now told the class that only a subset of 682
-cells shall be used in any downstream analyses. This is very important! Most
-functions will only return and work on the filtered cells, and you have to 
-carefully think and remember what you did when. Also:
+cells shall be used in any downstream analyses. Understanding this is 
+**very important**. Most functions will only return and work on the filtered 
+cells, and you have to  carefully think and remember what you did when. Also:
 
 ```{r}
 #| label: differences in obs row numbers

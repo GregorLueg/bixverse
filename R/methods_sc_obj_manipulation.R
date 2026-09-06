@@ -45,9 +45,32 @@
 #' `100000L`. Only relevant if streaming is set to `2`.
 #' @param .verbose Boolean.
 #'
-#' @return The populated target `SingleCells`.
+#' @returns The populated target `SingleCells`.
 #'
 #' @export
+#'
+#' @examples
+#' \donttest{
+#' # two synthetic experiments merged over their shared gene space
+#' sc_a <- demo_single_cells(prepped = FALSE, seed = 1L)
+#' sc_b <- demo_single_cells(prepped = FALSE, seed = 2L)
+#' merged_dir <- tempfile("bixverse_merged")
+#' dir.create(merged_dir)
+#'
+#' merged <- merge_sc_experiments(
+#'   target = SingleCells(dir_data = merged_dir),
+#'   inputs = list(sc_a, sc_b),
+#'   exp_ids = c("exp_a", "exp_b"),
+#'   .verbose = FALSE
+#' )
+#' table(unlist(merged[["exp_id"]]))
+#'
+#' unlink(
+#'   c(sc_a@dir_data, sc_b@dir_data, merged_dir),
+#'   recursive = TRUE,
+#'   force = TRUE
+#' )
+#' }
 merge_sc_experiments <- S7::new_generic(
   name = "merge_sc_experiments",
   dispatch_args = "target",

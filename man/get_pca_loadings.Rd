@@ -34,3 +34,10 @@ The PCA feature loadings from the object (if found).
 Returns the PCA loadings (feature-based scores). This function is used for
 the single cell-related classes and methods.
 }
+\examples{
+# HVGs x PCs
+sc <- demo_single_cells()
+dim(get_pca_loadings(sc))
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

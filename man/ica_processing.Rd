@@ -26,3 +26,11 @@ properties of the class.
 This is the generic function for doing the necessary preprocessing for
 running independent component analysis.
 }
+\examples{
+# whitening ahead of the ICA runs
+mat <- t(synthetic_signal_matrix()$mat)
+obj <- BulkCoExp(mat, data.table::data.table(sample_id = rownames(mat)))
+obj <- preprocess_bulk_coexp(obj, hvg = 0.3, .verbose = FALSE)
+obj <- ica_processing(obj, .verbose = FALSE)
+dim(obj@processed_data$K)
+}

@@ -18,3 +18,20 @@ the values of the observed cells.}
 \description{
 Get the feature matrix used for the classifier
 }
+\examples{
+# the features the scDblFinder classifier was trained on
+sc <- demo_single_cells(prepped = FALSE)
+res <- scdblfinder_sc(
+  sc,
+  scdblfinder_params = params_scdblfinder(
+    pca = list(no_pcs = 10L),
+    n_genes = 25L,
+    cxds_genes = 25L
+  ),
+  return_features = TRUE,
+  .verbose = FALSE
+)
+dim(get_feature_mat(res))
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

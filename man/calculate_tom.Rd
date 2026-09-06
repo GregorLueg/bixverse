@@ -45,7 +45,14 @@ where \eqn{a_{ij}} is the affinity between nodes \eqn{i} and \eqn{j},
 and \eqn{k_i = \sum_j a_{ij}} is the connectivity of node \eqn{i}.
 For signed networks, connectivity is calculated as \eqn{k_i = \sum_j \left|a_{ij}\right|}.
 
-Version 2 uses a different normalization approach that scales the shared
-neighbor contribution separately before combining it with the direct
+Version 2 uses a different normalisation approach that scales the shared
+neighbour contribution separately before combining it with the direct
 connection strength.
+}
+\examples{
+# unsigned TOM from a small correlation matrix
+set.seed(42)
+cor_mat <- cor(matrix(rnorm(200), nrow = 20, ncol = 10))
+tom <- calculate_tom(cor_mat, signed = FALSE)
+dim(tom)
 }

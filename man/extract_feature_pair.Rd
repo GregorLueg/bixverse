@@ -49,3 +49,11 @@ carry a \verb{_rna} or \verb{_adt} suffix to choose its modality independently (
 back to \code{modality}. For \code{SingleCells} / \code{MetaCells} only RNA exists, so an
 \verb{_adt} feature there errors via \code{\link[=extract_gene_expression]{extract_gene_expression()}}.
 }
+\examples{
+# two genes side by side, ready for a scatter
+sc <- demo_single_cells(prepped = FALSE)
+genes <- get_gene_names(sc)[1:2]
+head(extract_feature_pair(sc, genes[1], genes[2], obs_cols = "cell_grp"))
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

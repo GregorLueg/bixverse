@@ -38,3 +38,12 @@ per-sample / per-cell-type re-analysis where the same chain (HVG, PCA,
 neighbours, clusters, ...) is run on each group, e.g. sample-pure metacell
 generation followed by an external merge.
 }
+\examples{
+# the same chain re-run inside each cell type
+sc <- demo_single_cells(prepped = FALSE)
+p <- sc_pipeline() \%>>\% step_hvg_sc(hvg_no = 20L, .verbose = FALSE)
+res <- apply_pipeline_per_group(p, sc, group_col = "cell_grp")
+names(res)
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

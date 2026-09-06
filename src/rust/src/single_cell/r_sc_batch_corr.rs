@@ -52,7 +52,7 @@ extendr_module! {
 /// batch a given cell belongs.
 /// @param verbose Boolean. Controls verbosity of the function.
 ///
-/// @return A list with the following items
+/// @returns A list with the following items
 /// \itemize{
 ///   \item pval - The p-values from the ChiSquare test
 ///   \item chi_square_stats - ChiSquare statistics
@@ -106,7 +106,7 @@ fn rs_kbet(knn_mat: RMatrix<i32>, batch_vector: Vec<i32>, verbose: bool) -> Resu
 /// @param verbose Boolean. Controls verbosity of the function.
 /// @param seed Integer. Seed for subsampling reproducibility.
 ///
-/// @return A list with the following items
+/// @returns A list with the following items
 /// \itemize{
 ///   \item per_cell - Per-cell silhouette scores
 ///   \item mean_asw - Mean silhouette width
@@ -154,7 +154,7 @@ fn rs_batch_silhouette_width(
 /// batch a given cell belongs.
 /// @param verbose Boolean. Controls verbosity of the function.
 ///
-/// @return A list with the following items
+/// @returns A list with the following items
 /// \itemize{
 ///   \item per_cell - Per-cell LISI scores
 ///   \item mean_lisi - Mean LISI
@@ -200,7 +200,7 @@ fn rs_batch_lisi(knn_mat: RMatrix<i32>, batch_vector: Vec<i32>, verbose: bool) -
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
 ///
-/// @return A list of two lists representing the sparse matrix representation
+/// @returns A list of two lists representing the sparse matrix representation
 /// of the distances and the connectivities.
 ///
 /// @export
@@ -242,7 +242,7 @@ fn rs_bbknn(
 /// @param data Numeric vector. The distances to the nearest neighbours.
 /// @param no_neighbours_to_keep Integer. Number of nearest neighbours to keep.
 ///
-/// @return A list with `indices` (integer matrix) and `dist` (numeric matrix),
+/// @returns A list with `indices` (integer matrix) and `dist` (numeric matrix),
 /// each with shape (n_cells, no_neighbours_to_keep). Positions without
 /// neighbours are filled with -1 (indices) or NaN (distances).
 ///
@@ -306,7 +306,7 @@ fn rs_bbknn_filtering(
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
 ///
-/// @return The batch-corrected embedding space.
+/// @returns The batch-corrected embedding space.
 ///
 /// @export
 ///
@@ -382,7 +382,7 @@ fn rs_mnn(
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
 ///
-/// @return The batch-corrected Harmony embedding space.
+/// @returns The batch-corrected Harmony embedding space.
 ///
 /// @export
 #[extendr]
@@ -432,7 +432,7 @@ fn rs_harmony(
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
 ///
-/// @return The batch-corrected Harmony (v2) embedding space.
+/// @returns The batch-corrected Harmony (v2) embedding space.
 ///
 /// @export
 #[extendr]
@@ -496,7 +496,7 @@ fn rs_harmony_v2(
 /// detailed verbosity.
 /// @param seed Integer. Seed for reproducibility purposes.
 ///
-/// @return The batch-corrected embedding space.
+/// @returns The batch-corrected embedding space.
 ///
 /// @export
 ///
@@ -585,7 +585,7 @@ fn rs_seurat_cca(
 /// detailed verbosity.
 /// @param seed Integer. Seed for reproducibility purposes.
 ///
-/// @return The batch-corrected embedding space.
+/// @returns The batch-corrected embedding space.
 ///
 /// @export
 ///

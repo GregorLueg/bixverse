@@ -16,3 +16,15 @@ returns a warning and NULL.
 \description{
 Getter function for the feature factors of the contrastive PCA
 }
+\examples{
+# sample scores of the contrastive components
+cpca_data <- synthetic_c_pca_data()
+target <- t(cpca_data$target)
+background <- t(cpca_data$background)
+meta <- data.table::data.table(sample_id = rownames(target))
+obj <- BulkCoExp(target, meta)
+obj <- preprocess_bulk_coexp(obj, .verbose = FALSE)
+obj <- contrastive_pca_processing(obj, background, .verbose = FALSE)
+obj <- contrastive_pca(obj, alpha = 2.5, no_pcs = 5L)
+head(get_c_pca_factors(obj)[, 1:3])
+}

@@ -70,3 +70,16 @@ Runs k-means on the chosen embedding, builds a kNN graph on the centroids,
 applies Louvain clustering and propagates memberships back to the cells.
 Optionally runs a grid over multiple seeds and returns stability statistics.
 }
+\examples{
+# k-means centroids, Louvain on top, memberships back to the cells
+sc <- demo_single_cells()
+res <- fast_cluster_sc(
+  sc,
+  resolutions = c(1.0, 0.5),
+  n_centroids = 30L,
+  .verbose = FALSE
+)
+head(get_data(res))
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

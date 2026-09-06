@@ -19,3 +19,30 @@ A dense matrix of cells x features
 Helper function to load in ADT counts from h5. Leverages Rust under the
 hood for faster filtering and reading.
 }
+\examples{
+# pull the antibody capture layer out of a multi-modal 10x file
+data <- generate_single_cell_test_data(
+  syn_data_params = params_sc_synthetic_data(n_cells = 200L, n_genes = 40L)
+)
+adt <- generate_single_cell_test_data_adt(
+  params_sc_synthetic_data_adt(n_cells = 200L)
+)
+f_path <- tempfile(fileext = ".h5")
+write_tenx_h5_sc(
+  f_path = f_path,
+  counts = cbind(data$counts, as(adt$counts, "RsparseMatrix")),
+  barcodes = data$obs$cell_id,
+  features = data.table::data.table(
+    id = c(data$var$gene_id, colnames(adt$counts)),
+    name = c(data$var$ensembl_id, colnames(adt$counts)),
+    feature_type = rep(
+      c("Gene Expression", "Antibody Capture"),
+      c(ncol(data$counts), ncol(adt$counts))
+    )
+  )
+)
+adt_counts <- read_tenx_h5_adt(f_path)
+dim(adt_counts)
+
+unlink(f_path)
+}

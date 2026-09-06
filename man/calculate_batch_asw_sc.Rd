@@ -53,3 +53,18 @@ best suited for embedding-based correction methods (e.g. Harmony, fastMNN).
 For graph-based methods like BBKNN, consider using
 \code{\link[=calculate_batch_lisi_sc]{calculate_batch_lisi_sc()}} instead.
 }
+\examples{
+# batch silhouette width on the PCA embedding
+sc <- demo_single_cells(
+  syn_data_params = params_sc_synthetic_data(
+    n_cells = 600L, n_genes = 50L, n_batches = 3L
+  )
+)
+calculate_batch_asw_sc(
+  sc,
+  batch_column = "batch_index",
+  .verbose = FALSE
+)
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

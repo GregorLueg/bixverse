@@ -50,6 +50,20 @@ back directly. \code{plot()} on the returned object gives you the two curves.
 Cost is \code{length(k_range) * n_runs} full NMF fits, so keep both modest on a
 first pass.
 }
+\examples{
+# small sweep, keep both the grid and the restarts modest
+syn <- generate_gene_module_data(n_samples = 24L, n_genes = 60L)
+# NMF needs a non-negative matrix
+mat <- syn$data - min(syn$data)
+obj <- BulkCoExp(mat, syn$meta_data)
+obj <- preprocess_bulk_coexp(
+  obj, hvg = NULL, scaling = FALSE, .verbose = FALSE
+)
+sweep_res <- nmf_k_sweep_bulk(
+  obj, k_range = 3:5, n_runs = 5L, .verbose = FALSE
+)
+sweep_res
+}
 \references{
 Kotliar et al., eLife, 2019
 }

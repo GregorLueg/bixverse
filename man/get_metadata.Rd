@@ -19,3 +19,13 @@ Returns the metadata stored in the class.
 Getter function to extract the metadata from the \code{\link[=BulkCoExp]{BulkCoExp()}} or
 \code{\link[=BulkDge]{BulkDge()}}.
 }
+\examples{
+# sample metadata back out of a BulkDge
+syn <- synthetic_bulk_cor_matrix()
+meta <- data.table::data.table(
+  sample_id = colnames(syn$counts),
+  case_control = rep(c("case", "control"), each = 50)
+)
+object <- BulkDge(raw_counts = syn$counts, meta_data = meta)
+head(get_metadata(object))
+}

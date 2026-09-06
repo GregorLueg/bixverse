@@ -43,3 +43,22 @@ graph. It will iterate through resolutions and add the results to the
 class. Additionally, a column will be added that signifies the resolution
 with the best modularity.
 }
+\examples{
+# Leiden communities across a resolution sweep of the RBH graph
+set.seed(123)
+modules <- data.table::data.table(
+  origin = rep(c("set_a", "set_b"), each = 20),
+  module = rep(c("m1", "m2", "m3", "m4"), each = 10),
+  gene = unlist(replicate(4, sample(letters, 10), simplify = FALSE))
+)
+object <- RbhGraph(
+  modules,
+  rbh_type = "set",
+  dataset_col = "origin",
+  module_col = "module",
+  value_col = "gene"
+)
+object <- generate_rbh_graph(object, minimum_similarity = 0)
+object <- find_rbh_communities(object, parallel = FALSE, .verbose = FALSE)
+head(get_results(object))
+}

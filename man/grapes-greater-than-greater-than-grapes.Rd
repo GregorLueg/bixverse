@@ -18,3 +18,7 @@ A \code{ScPipeline}.
 \verb{\%>>\%} chains pipeline steps. Either side can be a \code{ScStep} or a
 \code{ScPipeline}; the result is always a \code{ScPipeline}.
 }
+\examples{
+# either side may be a step, the result is always a pipeline
+step_hvg_sc(hvg_no = 30L) \%>>\% step_pca_sc(no_pcs = 10L)
+}

@@ -86,7 +86,7 @@ fn optional_vec_to_robj(v: Option<Vec<f64>>) -> Robj {
 /// @param exp Numerical matrix. The expression matrix (rows = genes, columns =
 /// samples).
 ///
-/// @return Returns a matrix of ranks with the same shape as `exp`.
+/// @returns Returns a matrix of ranks with the same shape as `exp`.
 ///
 /// @export
 #[extendr]
@@ -108,7 +108,7 @@ fn rs_rank_matrix_col(exp: RMatrix<f64>) -> RArray<f64, 2> {
 /// samples).
 /// @param stable_gene_indices Integer vector of stable genes. One-indexed.
 ///
-/// @return Returns a matrix of normalised ranks with the same shape as `exp`.
+/// @returns Returns a matrix of normalised ranks with the same shape as `exp`.
 ///
 /// @export
 #[extendr]
@@ -141,7 +141,7 @@ fn rs_rank_matrix_col_stable(
 /// Becomes irrelevant when `down_set` is also provided.
 /// @param stable Boolean. If `TRUE`, use stable-gene score bounds.
 ///
-/// @return A named list with `TotalScore`, `TotalDispersion`, and (when
+/// @returns A named list with `TotalScore`, `TotalDispersion`, and (when
 /// `down_set` is provided) `UpScore`, `UpDispersion`, `DownScore`,
 /// `DownDispersion`.
 ///
@@ -203,7 +203,7 @@ fn rs_singscore_single(
 /// @param known_direction Boolean.
 /// @param stable Boolean.
 ///
-/// @return A named list with
+/// @returns A named list with
 /// \itemize{
 ///   \item `scores` - Numerical matrix with the scores
 ///   \item `dispersion` - Numerical matrix with the dispersions
@@ -264,7 +264,7 @@ fn rs_singscore_multi(
 /// @param n_permutations Integer. Number of random draws (B).
 /// @param seed Integer. RNG seed.
 ///
-/// @return A named list with `observed_scores` (length n_samples),
+/// @returns A named list with `observed_scores` (length n_samples),
 /// `null_distribution` (B × n_samples matrix), and `p_values`
 /// (length n_samples).
 ///

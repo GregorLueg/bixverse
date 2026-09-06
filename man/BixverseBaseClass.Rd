@@ -22,4 +22,9 @@ applied function.}
 }
 }
 
+\examples{
+# every analysis class inherits the base class getters
+object <- SimilarityNetworkFusion(snf_params = params_snf(k = 3L))
+inherits(object, "bixverse::BixverseBaseClass")
+}
 \keyword{internal}

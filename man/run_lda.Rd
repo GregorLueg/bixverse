@@ -38,6 +38,16 @@ effect cisTopic sidesteps.
 
 Use \code{\link[=lda_k_sweep]{lda_k_sweep()}} if you do not already know \code{k}.
 }
+\examples{
+# two planted term blocks recovered as two topics
+set.seed(42L)
+corpus <- matrix(rbinom(200L * 40L, 1L, 0.05), nrow = 200L, ncol = 40L)
+corpus[1:100, 1:10] <- rbinom(1000L, 1L, 0.6)
+corpus[101:200, 11:20] <- rbinom(1000L, 1L, 0.6)
+colnames(corpus) <- sprintf("term_\%02d", 1:40)
+lda_res <- run_lda(corpus > 0, k = 2L, .verbose = FALSE)
+lda_res
+}
 \references{
 Hoffman, Blei and Bach, NIPS, 2010; Bravo Gonzalez-Blas, et al.,
 Nat Methods, 2019

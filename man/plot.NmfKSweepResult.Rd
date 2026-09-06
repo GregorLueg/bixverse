@@ -20,6 +20,20 @@ diagnostic. Pick the \code{k} where stability is still high and the error curve
 has not yet flattened out. Values of \code{k} whose consensus step failed have no
 stability point.
 }
+\examples{
+# stability against reconstruction error across k
+sc <- demo_single_cells()
+res <- nmf_k_sweep_sc(
+  sc,
+  k_range = 2:4,
+  n_runs = 3L,
+  nmf_consensus_params = params_nmf_consensus(density_threshold = 2),
+  .verbose = FALSE
+)
+plot(res)
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}
 \references{
 Kotliar et al., eLife, 2019
 }

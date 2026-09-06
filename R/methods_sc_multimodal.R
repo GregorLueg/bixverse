@@ -23,6 +23,26 @@
 #' for the ADT data to the object.
 #'
 #' @export
+#'
+#' @examples
+#' # PCA over the CLR-normalised protein counts
+#' rna <- generate_single_cell_test_data()
+#' adt <- generate_single_cell_test_data_adt()
+#' dir <- tempfile("bixverse_mm")
+#' dir.create(dir)
+#' object <- load_r_data(
+#'   SingleCellsMultiModal(dir_data = dir),
+#'   counts = rna$counts,
+#'   obs = rna$obs,
+#'   var = rna$var,
+#'   sc_qc_param = params_sc_min_quality(min_unique_genes = 5L),
+#'   .verbose = FALSE
+#' )
+#' object <- add_adt_counts_sc(object, adt_counts = adt$counts, method = "clr")
+#' object <- calculate_pca_adt_sc(object, no_pcs = 10L)
+#' dim(get_pca_factors(object, modality = "adt"))
+#'
+#' unlink(dir, recursive = TRUE, force = TRUE)
 calculate_pca_adt_sc <- S7::new_generic(
   name = "calculate_pca_adt_sc",
   dispatch_args = "object",
@@ -155,6 +175,29 @@ S7::method(calculate_pca_adt_sc, SingleCellsMultiModal) <- function(
 #' @export
 #'
 #' @references Hao et al., Cell, 2021
+#'
+#' @examples
+#' # a fused RNA + ADT graph, both modalities reduced with PCA first
+#' rna <- generate_single_cell_test_data()
+#' adt <- generate_single_cell_test_data_adt()
+#' dir <- tempfile("bixverse_mm")
+#' dir.create(dir)
+#' object <- load_r_data(
+#'   SingleCellsMultiModal(dir_data = dir),
+#'   counts = rna$counts,
+#'   obs = rna$obs,
+#'   var = rna$var,
+#'   sc_qc_param = params_sc_min_quality(min_unique_genes = 5L),
+#'   .verbose = FALSE
+#' )
+#' object <- add_adt_counts_sc(object, adt_counts = adt$counts, method = "clr")
+#' object <- find_hvg_sc(object, hvg_no = 30L, .verbose = FALSE)
+#' object <- calculate_pca_sc(object, no_pcs = 15L, .verbose = FALSE)
+#' object <- calculate_pca_adt_sc(object, no_pcs = 10L)
+#' object <- generate_wnn_graph_sc(object, .verbose = FALSE)
+#' get_snn_graph(object, modality = "wnn")
+#'
+#' unlink(dir, recursive = TRUE, force = TRUE)
 generate_wnn_graph_sc <- S7::new_generic(
   name = "generate_wnn_graph_sc",
   dispatch_args = "object",

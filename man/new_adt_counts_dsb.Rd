@@ -52,6 +52,20 @@ background is estimated from empty droplets. Without \code{empty_drops}, the
 function falls back to a 2-component k-means on the log-transformed cell
 counts ("ModelNegativeADTnorm").
 }
+\examples{
+# DSB without empty droplets, i.e. the k-means fallback, using the isotypes
+adt <- generate_single_cell_test_data_adt()
+cell_info <- stats::setNames(
+  seq_len(nrow(adt$counts)),
+  rownames(adt$counts)
+)
+new_adt_counts_dsb(
+  adt$counts,
+  cell_info = cell_info,
+  isotype_names = adt$var$protein_id[adt$var$is_isotype],
+  .verbose = FALSE
+)
+}
 \references{
 Mulè et al., Nat Commun, 2022
 }

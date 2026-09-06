@@ -2,7 +2,7 @@
 
 ## bulk coexp ------------------------------------------------------------------
 
-#' @title Bulk RNAseq co-expression modules (deprecated)
+#' Bulk RNAseq co-expression modules (deprecated)
 #'
 #' @description
 #' `r lifecycle::badge("deprecated")`
@@ -15,7 +15,7 @@
 #' @param variable_info data.table. Metadata information on the features. This
 #' is an optional table.
 #'
-#' @return Returns a [bixverse::BulkCoExp()] object.
+#' @returns Returns a [bixverse::BulkCoExp()] object.
 #'
 #' @keywords internal
 #' @importFrom lifecycle deprecate_warn
@@ -35,7 +35,7 @@ bulk_coexp <- function(raw_data, meta_data, variable_info = NULL) {
 
 ## bulk dge --------------------------------------------------------------------
 
-#' @title Bulk RNAseq differential gene expression class (deprecated)
+#' Bulk RNAseq differential gene expression class (deprecated)
 #'
 #' @description
 #' `r lifecycle::badge("deprecated")`
@@ -51,7 +51,7 @@ bulk_coexp <- function(raw_data, meta_data, variable_info = NULL) {
 #' @param alternative_gene_id String. Optional alternative gene identifier to
 #' be used. Must be a column of `variable_info`.
 #'
-#' @return Returns a [bixverse::BulkDge()] object.
+#' @returns Returns a [bixverse::BulkDge()] object.
 #'
 #' @keywords internal
 #' @importFrom lifecycle deprecate_warn
@@ -77,7 +77,7 @@ bulk_dge <- function(
 
 ## network diffusion -----------------------------------------------------------
 
-#' @title Network diffusion class (deprecated)
+#' Network diffusion class (deprecated)
 #'
 #' @description
 #' `r lifecycle::badge("deprecated")`
@@ -90,7 +90,7 @@ bulk_dge <- function(
 #' `edge_data_frame` needs to have a weight column.
 #' @param directed Boolean. Shall the graph be stored as directed.
 #'
-#' @return Returns a [bixverse::NetworkDiffusions()] object.
+#' @returns Returns a [bixverse::NetworkDiffusions()] object.
 #'
 #' @keywords internal
 #' @importFrom lifecycle deprecate_warn
@@ -110,7 +110,7 @@ network_diffusions <- function(edge_data_frame, weighted, directed) {
 
 ## rbh graph -------------------------------------------------------------------
 
-#' @title Reciprocal best hit graph (deprecated)
+#' Reciprocal best hit graph (deprecated)
 #'
 #' @description
 #' `r lifecycle::badge("deprecated")`
@@ -123,7 +123,7 @@ network_diffusions <- function(edge_data_frame, weighted, directed) {
 #' @param module_col The column storing the module names.
 #' @param value_col The column storing the genes within each module.
 #'
-#' @return Returns a [bixverse::RbhGraph()] object.
+#' @returns Returns a [bixverse::RbhGraph()] object.
 #'
 #' @keywords internal
 #' @importFrom lifecycle deprecate_warn
@@ -151,7 +151,7 @@ rbh_graph <- function(
 
 ## snf -------------------------------------------------------------------------
 
-#' @title Similarity network fusion (deprecated)
+#' Similarity network fusion (deprecated)
 #'
 #' @description
 #' `r lifecycle::badge("deprecated")`
@@ -163,7 +163,7 @@ rbh_graph <- function(
 #' @param data_name Optional string. Name of the data modality.
 #' @param snf_params List. The SNF parameters, see [bixverse::params_snf()].
 #'
-#' @return Returns a [bixverse::SimilarityNetworkFusion()] object.
+#' @returns Returns a [bixverse::SimilarityNetworkFusion()] object.
 #'
 #' @keywords internal
 #' @importFrom lifecycle deprecate_warn
@@ -174,12 +174,16 @@ snf <- function(data = NULL, data_name = NULL, snf_params = params_snf()) {
     what = "snf()",
     with = "SimilarityNetworkFusion()"
   )
-  Snf(data = data, data_name = data_name, snf_params = snf_params)
+  SimilarityNetworkFusion(
+    data = data,
+    data_name = data_name,
+    snf_params = snf_params
+  )
 }
 
 ## gene ontology elim ----------------------------------------------------------
 
-#' @title Gene Ontology data (deprecated)
+#' Gene Ontology data (deprecated)
 #'
 #' @description
 #' `r lifecycle::badge("deprecated")`
@@ -191,7 +195,7 @@ snf <- function(data = NULL, data_name = NULL, snf_params = params_snf()) {
 #' @param min_genes Integer. The minimum number of genes in a gene ontology
 #' term to conduct the test.
 #'
-#' @return Returns a [bixverse::GeneOntologyElim()] object.
+#' @returns Returns a [bixverse::GeneOntologyElim()] object.
 #'
 #' @keywords internal
 #' @importFrom lifecycle deprecate_warn
@@ -207,7 +211,7 @@ gene_ontology_data <- function(go_data_dt, min_genes) {
 
 ## general ontology ------------------------------------------------------------
 
-#' @title Ontology class (deprecated)
+#' Ontology class (deprecated)
 #'
 #' @description
 #' `r lifecycle::badge("deprecated")`
@@ -219,7 +223,7 @@ gene_ontology_data <- function(go_data_dt, min_genes) {
 #' columns.
 #' @param .verbose Boolean. Controls the verbosity of the class.
 #'
-#' @return Returns a [bixverse::OntologySim()] object.
+#' @returns Returns a [bixverse::OntologySim()] object.
 #'
 #' @keywords internal
 #' @importFrom lifecycle deprecate_warn
@@ -235,7 +239,7 @@ ontology <- function(parent_child_dt, .verbose = TRUE) {
 
 ## single cell -----------------------------------------------------------------
 
-#' @title bixverse single cell class (deprecated)
+#' bixverse single cell class (deprecated)
 #'
 #' @description
 #' `r lifecycle::badge("deprecated")`
@@ -245,7 +249,7 @@ ontology <- function(parent_child_dt, .verbose = TRUE) {
 #' @param dir_data String. The directory in which the experimental files will
 #' be stored.
 #'
-#' @return Returns a [bixverse::SingleCells()] object.
+#' @returns Returns a [bixverse::SingleCells()] object.
 #'
 #' @keywords internal
 #' @importFrom lifecycle deprecate_warn
@@ -261,7 +265,7 @@ single_cell_exp <- function(dir_data) {
 
 ## metacells -------------------------------------------------------------------
 
-#' @title bixverse meta cell class (deprecated)
+#' bixverse meta cell class (deprecated)
 #'
 #' @description
 #' `r lifecycle::badge("deprecated")`
@@ -274,7 +278,7 @@ single_cell_exp <- function(dir_data) {
 #' @param var_data data.table with the variable/feature informations.
 #' @param meta_cell_method String describing the origin of the metacell.
 #'
-#' @return Returns a [bixverse::MetaCells()] object.
+#' @returns Returns a [bixverse::MetaCells()] object.
 #'
 #' @keywords internal
 #' @importFrom lifecycle deprecate_warn

@@ -70,3 +70,17 @@ profiles over the different ncomps and identify a 'sweet spot' of good
 stability, low mutual information and good convergence of the identified
 independent components
 }
+\examples{
+# stability across a small grid of component counts
+mat <- t(synthetic_signal_matrix()$mat)
+obj <- BulkCoExp(mat, data.table::data.table(sample_id = rownames(mat)))
+obj <- preprocess_bulk_coexp(obj, hvg = 0.3, .verbose = FALSE)
+obj <- ica_processing(obj, .verbose = FALSE)
+obj <- ica_evaluate_comp(
+  obj,
+  ica_type = "logcosh",
+  ncomp_params = params_ica_ncomp(custom_seq = seq(2L, 20L, by = 2L)),
+  .verbose = FALSE
+)
+head(get_ica_stability_res(obj))
+}

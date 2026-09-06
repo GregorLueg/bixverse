@@ -33,3 +33,10 @@ counts, so a recovered module or eigengene can be scored against what was
 actually simulated. Which generator to pick and what each parameter does is
 documented in \code{\link[=params_synthetic_bulk_rnaseq]{params_synthetic_bulk_rnaseq()}}.
 }
+\examples{
+# three co-expression modules on a 1000 x 100 count matrix
+syn <- synthetic_bulk_cor_matrix(params_synthetic_bulk_rnaseq())
+dim(syn$counts)
+head(syn$module_data)
+dim(syn$module_factors)
+}

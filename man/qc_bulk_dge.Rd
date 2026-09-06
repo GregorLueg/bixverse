@@ -39,3 +39,14 @@ This function will do QC on the bulk data and remove outlier samples that
 show substantially lower expression of genes compared to the rest of the
 data and remove lowly expressed genes.
 }
+\examples{
+# drop outlier samples and lowly expressed genes
+syn <- synthetic_bulk_cor_matrix()
+meta <- data.table::data.table(
+  sample_id = colnames(syn$counts),
+  case_control = rep(c("case", "control"), each = 50)
+)
+object <- BulkDge(raw_counts = syn$counts, meta_data = meta)
+object <- qc_bulk_dge(object, group_col = "case_control", .verbose = FALSE)
+dim(get_outputs(object)$raw_counts_filtered)
+}

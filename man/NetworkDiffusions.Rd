@@ -37,3 +37,14 @@ applied function.}
 }
 }
 
+\examples{
+# unweighted, undirected diffusion class from an edge table
+set.seed(42)
+g <- igraph::sample_pa(15, directed = FALSE)
+edges <- data.table::setDT(igraph::as_data_frame(g))[, `:=`(
+  from = sprintf("node_\%i", from),
+  to = sprintf("node_\%i", to)
+)]
+object <- NetworkDiffusions(edges, weighted = FALSE, directed = FALSE)
+class(object)[1]
+}

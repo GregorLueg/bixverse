@@ -59,4 +59,3 @@ Shorten \code{length_scale} before believing a bump.
 \references{
 Setty, et al., Nat. Biotechnol., 2019.
 }
-\keyword{internal}

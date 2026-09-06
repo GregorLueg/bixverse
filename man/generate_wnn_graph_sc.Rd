@@ -86,6 +86,29 @@ pseudo-distance metric), the sNN graph as an igraph and a table of per-cell
 modality weights. This graph can subsequently be used for clustering and 2D
 embedding via the \code{"wnn"} modality.
 }
+\examples{
+# a fused RNA + ADT graph, both modalities reduced with PCA first
+rna <- generate_single_cell_test_data()
+adt <- generate_single_cell_test_data_adt()
+dir <- tempfile("bixverse_mm")
+dir.create(dir)
+object <- load_r_data(
+  SingleCellsMultiModal(dir_data = dir),
+  counts = rna$counts,
+  obs = rna$obs,
+  var = rna$var,
+  sc_qc_param = params_sc_min_quality(min_unique_genes = 5L),
+  .verbose = FALSE
+)
+object <- add_adt_counts_sc(object, adt_counts = adt$counts, method = "clr")
+object <- find_hvg_sc(object, hvg_no = 30L, .verbose = FALSE)
+object <- calculate_pca_sc(object, no_pcs = 15L, .verbose = FALSE)
+object <- calculate_pca_adt_sc(object, no_pcs = 10L)
+object <- generate_wnn_graph_sc(object, .verbose = FALSE)
+get_snn_graph(object, modality = "wnn")
+
+unlink(dir, recursive = TRUE, force = TRUE)
+}
 \references{
 Hao et al., Cell, 2021
 }

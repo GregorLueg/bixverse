@@ -27,3 +27,13 @@ using the highly variable genes (if available, otherwise the function will
 use the raw data). The data will be stored in a memory-efficient format
 in the properties of the class.
 }
+\examples{
+# spearman correlations over the 300 most variable genes
+mat <- t(synthetic_signal_matrix()$mat)
+obj <- BulkCoExp(mat, data.table::data.table(sample_id = rownames(mat)))
+obj <- preprocess_bulk_coexp(obj, hvg = 0.3, .verbose = FALSE)
+obj <- cor_module_processing(obj, cor_method = "spearman", .verbose = FALSE)
+dim(obj@processed_data$correlation_res$get_sym_matrix(
+  .verbose = FALSE
+))
+}

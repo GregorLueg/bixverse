@@ -52,3 +52,15 @@ enrichment scores than the actual.
 \description{
 Rust-based version of the traditional permutation-based GSEA algorithm.
 }
+\examples{
+# permutation GSEA against a signature with one enriched set
+set.seed(42L)
+stats <- stats::setNames(rnorm(500), sprintf("gene_\%03i", 1:500))
+stats[1:20] <- stats[1:20] + 2
+pathways <- list(
+  up_set = sprintf("gene_\%03i", 1:20),
+  random_set = sprintf("gene_\%03i", 200:240)
+)
+res <- calc_gsea_traditional(stats, pathways, nperm = 1000L)
+res[, c("pathway_name", "es", "pvals")]
+}

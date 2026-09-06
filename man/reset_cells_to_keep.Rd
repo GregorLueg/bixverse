@@ -46,3 +46,12 @@ subset does not describe the full cell set, and keeping it would recreate
 exactly the mismatch this guards against. With \code{force = FALSE} you are asked
 to confirm before that happens.
 }
+\examples{
+# a filter taken back off, cache wiped with it
+sc <- demo_single_cells(prepped = FALSE)
+sc <- set_cells_to_keep(sc, get_cell_names(sc)[1:100])
+sc <- reset_cells_to_keep(sc, force = TRUE)
+length(get_cells_to_keep(sc))
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

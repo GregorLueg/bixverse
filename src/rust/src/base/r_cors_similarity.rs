@@ -210,7 +210,7 @@ fn rs_pointwise_mutual_info(x: RMatrix<Rbool>, normalise: bool) -> RArray<f64, 2
 /// @param distance_type String. One of
 /// `c("euclidean", "manhattan", "canberra", "cosine")`.
 ///
-/// @return The calculated distance matrix
+/// @returns The calculated distance matrix
 ///
 /// @export
 #[extendr]
@@ -310,7 +310,7 @@ fn rs_set_similarity(s_1: Vec<String>, s_2: Vec<String>, overlap_coefficient: bo
 /// @param overlap_coefficient Boolean. Use the overlap coefficient instead of
 /// the Jaccard similarity be calculated.
 ///
-/// @return A matrix of the Jaccard similarities between the elements. The rows
+/// @returns A matrix of the Jaccard similarities between the elements. The rows
 /// represent `s_1_list` and the column `s_2_list`.
 ///
 /// @export
@@ -354,7 +354,7 @@ fn rs_set_similarity_list2(
 /// @param overlap_coefficient Boolean. Use the overlap coefficient instead of
 /// the Jaccard similarity be calculated.
 ///
-/// @return A list with the following items:
+/// @returns A list with the following items:
 /// \itemize{
 ///     \item from - Name of element i
 ///     \item to - Name of element j
@@ -429,7 +429,7 @@ fn rs_jaccard_row_integers(data_1: RMatrix<i32>, data_2: RMatrix<i32>) -> f64 {
 ///
 /// @param x Integer matrix. The integers represent the factor data.
 ///
-/// @return The Hamming distance matrix
+/// @returns The Hamming distance matrix
 ///
 /// @export
 #[extendr]
@@ -450,7 +450,7 @@ fn rs_hamming_dist(x: RMatrix<i32>) -> RArray<f64, 2> {
 /// variables as numerical values.
 /// @param is_cat Boolean. Which of the columns represent categorical values.
 ///
-/// @return The Gower distance matrix between the rows
+/// @returns The Gower distance matrix between the rows
 ///
 /// @export
 #[extendr]

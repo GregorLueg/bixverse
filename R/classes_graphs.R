@@ -27,9 +27,20 @@
 #' `edge_data_frame` needs to have a weight column.
 #' @param directed Boolean. Shall the graph be stored as directed.
 #'
-#' @return Returns the `NetworkDiffusions` class for further operations.
+#' @returns Returns the `NetworkDiffusions` class for further operations.
 #'
 #' @export
+#'
+#' @examples
+#' # unweighted, undirected diffusion class from an edge table
+#' set.seed(42)
+#' g <- igraph::sample_pa(15, directed = FALSE)
+#' edges <- data.table::setDT(igraph::as_data_frame(g))[, `:=`(
+#'   from = sprintf("node_%i", from),
+#'   to = sprintf("node_%i", to)
+#' )]
+#' object <- NetworkDiffusions(edges, weighted = FALSE, directed = FALSE)
+#' class(object)[1]
 NetworkDiffusions <- S7::new_class(
   # Names, parents
   name = "NetworkDiffusions",
@@ -94,10 +105,22 @@ NetworkDiffusions <- S7::new_class(
 #'
 #' @param object The underlying class [bixverse::NetworkDiffusions()].
 #'
-#' @return The diffusion vector if found. If you did not run either diffusion
+#' @returns The diffusion vector if found. If you did not run either diffusion
 #' functions, it will return `NULL` and a warning.
 #'
 #' @export
+#'
+#' @examples
+#' # diffusion scores after a single seed node diffusion
+#' set.seed(42)
+#' g <- igraph::sample_pa(15, directed = FALSE)
+#' edges <- data.table::setDT(igraph::as_data_frame(g))[, `:=`(
+#'   from = sprintf("node_%i", from),
+#'   to = sprintf("node_%i", to)
+#' )]
+#' object <- NetworkDiffusions(edges, weighted = FALSE, directed = FALSE)
+#' object <- diffuse_seed_nodes(object, c(node_1 = 1, node_3 = 1), "max")
+#' head(get_diffusion_vector(object))
 get_diffusion_vector <- S7::new_generic(
   name = "get_diffusion_vector",
   dispatch_args = "object",
@@ -129,9 +152,22 @@ S7::method(get_diffusion_vector, NetworkDiffusions) <- function(object) {
 #'
 #' @param object The underlying class [bixverse::NetworkDiffusions()].
 #'
-#' @return The diffusion Z scores if found. Otherwise `NULL`.
+#' @returns The diffusion Z scores if found. Otherwise `NULL`.
 #'
 #' @export
+#'
+#' @examples
+#' # Z-scores from node-degree adjusted permutations
+#' set.seed(42)
+#' g <- igraph::sample_pa(15, directed = FALSE)
+#' edges <- data.table::setDT(igraph::as_data_frame(g))[, `:=`(
+#'   from = sprintf("node_%i", from),
+#'   to = sprintf("node_%i", to)
+#' )]
+#' object <- NetworkDiffusions(edges, weighted = FALSE, directed = FALSE)
+#' object <- diffuse_seed_nodes(object, c(node_1 = 1, node_3 = 1), "max")
+#' object <- permute_seed_nodes(object, perm_iters = 100L, .verbose = FALSE)
+#' head(get_diffusion_perms(object))
 get_diffusion_perms <- S7::new_generic(
   name = "get_diffusion_perms",
   dispatch_args = "object",
@@ -192,9 +228,26 @@ S7::method(get_diffusion_perms, NetworkDiffusions) <- function(object) {
 #' @param value_col The column (name) which stores the genes that are part of
 #' the modules. Only needed if you want to use set similarities.
 #'
-#' @return Returns the `RbhGraph` class for further operations.
+#' @returns Returns the `RbhGraph` class for further operations.
 #'
 #' @export
+#'
+#' @examples
+#' # set similarity based RBH class over four gene modules
+#' set.seed(123)
+#' modules <- data.table::data.table(
+#'   origin = rep(c("set_a", "set_b"), each = 20),
+#'   module = rep(c("m1", "m2", "m3", "m4"), each = 10),
+#'   gene = unlist(replicate(4, sample(letters, 10), simplify = FALSE))
+#' )
+#' object <- RbhGraph(
+#'   modules,
+#'   rbh_type = "set",
+#'   dataset_col = "origin",
+#'   module_col = "module",
+#'   value_col = "gene"
+#' )
+#' class(object)[1]
 RbhGraph <- S7::new_class(
   # Names, parents
   name = "RbhGraph",
@@ -281,9 +334,27 @@ RbhGraph <- S7::new_class(
 #'
 #' @param object The underlying class [bixverse::RbhGraph()].
 #'
-#' @return The data.table with the RBH result if found, otherwise NULL.
+#' @returns The data.table with the RBH result if found, otherwise NULL.
 #'
 #' @export
+#'
+#' @examples
+#' # reciprocal best hits between modules of two data sets
+#' set.seed(123)
+#' modules <- data.table::data.table(
+#'   origin = rep(c("set_a", "set_b"), each = 20),
+#'   module = rep(c("m1", "m2", "m3", "m4"), each = 10),
+#'   gene = unlist(replicate(4, sample(letters, 10), simplify = FALSE))
+#' )
+#' object <- RbhGraph(
+#'   modules,
+#'   rbh_type = "set",
+#'   dataset_col = "origin",
+#'   module_col = "module",
+#'   value_col = "gene"
+#' )
+#' object <- generate_rbh_graph(object, minimum_similarity = 0)
+#' head(get_rbh_res(object))
 get_rbh_res <- S7::new_generic(
   name = "get_rbh_res",
   dispatch_args = "object",
@@ -355,9 +426,23 @@ S7::method(get_rbh_res, RbhGraph) <- function(object) {
 #' The parameters will be internally stored for subsequent usage in other
 #' functions.
 #'
-#' @return Returns the `Snf` class for further operations.
+#' @returns Returns the `SimilarityNetworkFusion` class for further
+#' operations.
 #'
 #' @export
+#'
+#' @examples
+#' # continuous modality turned into an affinity matrix
+#' set.seed(42)
+#' continuous <- matrix(rnorm(120), nrow = 12, ncol = 10)
+#' rownames(continuous) <- sprintf("sample_%02i", 1:12)
+#' colnames(continuous) <- sprintf("feature_%i", 1:10)
+#' object <- SimilarityNetworkFusion(
+#'   data = continuous,
+#'   data_name = "continuous",
+#'   snf_params = params_snf(k = 3L)
+#' )
+#' dim(get_snf_adjcacency_mat(object, "continuous"))
 SimilarityNetworkFusion <- S7::new_class(
   # Names, parents
   name = "SimilarityNetworkFusion",
@@ -439,9 +524,14 @@ SimilarityNetworkFusion <- S7::new_class(
 #'
 #' @param object The underlying class [bixverse::SimilarityNetworkFusion()].
 #'
-#' @return Returns the stored SNF params
+#' @returns Returns the stored SNF params
 #'
 #' @export
+#'
+#' @examples
+#' # the SNF parameters stored in an empty class
+#' object <- SimilarityNetworkFusion(snf_params = params_snf(k = 3L))
+#' get_snf_params(object)$k
 get_snf_params <- S7::new_generic(
   name = "get_snf_params",
   dispatch_args = "object",
@@ -471,9 +561,22 @@ S7::method(get_snf_params, SimilarityNetworkFusion) <- function(object) {
 #' @param name String. The name of the individual data modality affinity
 #' matrix to return.
 #'
-#' @return Returns adjcacency matrix if found.
+#' @returns Returns adjcacency matrix if found.
 #'
 #' @export
+#'
+#' @examples
+#' # affinity matrix of a single modality
+#' set.seed(42)
+#' continuous <- matrix(rnorm(120), nrow = 12, ncol = 10)
+#' rownames(continuous) <- sprintf("sample_%02i", 1:12)
+#' colnames(continuous) <- sprintf("feature_%i", 1:10)
+#' object <- SimilarityNetworkFusion(
+#'   data = continuous,
+#'   data_name = "continuous",
+#'   snf_params = params_snf(k = 3L)
+#' )
+#' dim(get_snf_adjcacency_mat(object, name = "continuous"))
 get_snf_adjcacency_mat <- S7::new_generic(
   name = "get_snf_adjcacency_mat",
   dispatch_args = "object",
@@ -509,9 +612,29 @@ S7::method(get_snf_adjcacency_mat, SimilarityNetworkFusion) <- function(
 #'
 #' @param object The underlying class [bixverse::SimilarityNetworkFusion()].
 #'
-#' @return Returns the SNF adjacency/similarity matrix.
+#' @returns Returns the SNF adjacency/similarity matrix.
 #'
 #' @export
+#'
+#' @examples
+#' # fused similarity matrix across two modalities
+#' set.seed(42)
+#' continuous <- matrix(rnorm(120), nrow = 12, ncol = 10)
+#' rownames(continuous) <- sprintf("sample_%02i", 1:12)
+#' colnames(continuous) <- sprintf("feature_%i", 1:10)
+#' clinical <- data.table::data.table(
+#'   sample_id = rownames(continuous),
+#'   sex = factor(sample(c("M", "F"), 12, replace = TRUE)),
+#'   stage = factor(sample(c("I", "II", "III"), 12, replace = TRUE))
+#' )
+#' object <- SimilarityNetworkFusion(
+#'   data = continuous,
+#'   data_name = "continuous",
+#'   snf_params = params_snf(k = 3L)
+#' )
+#' object <- add_snf_data_modality(object, clinical, data_name = "clinical")
+#' object <- run_snf(object)
+#' dim(get_snf_final_mat(object))
 get_snf_final_mat <- S7::new_generic(
   name = "get_snf_final_mat",
   dispatch_args = "object",

@@ -24,4 +24,12 @@ Set the cells to keep. This is used for the single cell-related
 classes with streaming from disk and tells subsequent (Rust) methods which
 cells to include.
 }
+\examples{
+# restrict everything downstream to the first 100 cells
+sc <- demo_single_cells(prepped = FALSE)
+sc <- set_cells_to_keep(sc, get_cell_names(sc)[1:100])
+length(get_cells_to_keep(sc))
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}
 \keyword{internal}

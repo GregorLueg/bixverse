@@ -19,3 +19,28 @@ The differential abundance results stored in the object if found.
 \description{
 Get the differential abundance results
 }
+\examples{
+# neighbourhood level differential abundance table
+sc <- demo_single_cells(
+  syn_data_params = params_sc_synthetic_data(
+    n_cells = 500L,
+    n_genes = 50L,
+    n_samples = 6L,
+    sample_bias = "even"
+  )
+)
+milo <- get_miloR_abundances_sc(
+  sc,
+  sample_id_col = "sample_id",
+  miloR_params = params_sc_miloR(k_refine = 10L),
+  .verbose = FALSE
+)
+design_df <- data.frame(
+  grp = rep(c("a", "b"), each = 3),
+  row.names = sprintf("sample_\%i", 1:6)
+)
+milo <- test_nhoods(milo, design = ~grp, design_df = design_df)
+head(get_differential_abundance_res(milo))
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

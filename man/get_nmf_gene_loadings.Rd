@@ -17,3 +17,15 @@ Getter function to extract the gene loadings matrix (features x k) from a
 bulk NMF fit stored in \code{\link[=BulkCoExp]{BulkCoExp()}}. If no NMF fit is present,
 returns \code{NULL} with a warning.
 }
+\examples{
+# gene loadings of a four-factor fit
+syn <- generate_gene_module_data(n_samples = 24L, n_genes = 60L)
+# NMF needs a non-negative matrix
+mat <- syn$data - min(syn$data)
+obj <- BulkCoExp(mat, syn$meta_data)
+obj <- preprocess_bulk_coexp(
+  obj, hvg = NULL, scaling = FALSE, .verbose = FALSE
+)
+obj <- nmf_bulk(obj, k = 4L, .verbose = FALSE)
+dim(get_nmf_gene_loadings(obj))
+}

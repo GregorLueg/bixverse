@@ -17,3 +17,16 @@ The class with updated var table in the DuckDB
 \description{
 Add a new column to the var table
 }
+\examples{
+# flag a couple of genes in the var table
+sc <- demo_single_cells(prepped = FALSE)
+sc <- set_sc_new_var_cols(
+  sc,
+  data_list = list(
+    is_marker = get_gene_names(sc) \%in\% c("gene_01", "gene_02")
+  )
+)
+head(get_sc_var(sc), 3)
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

@@ -61,6 +61,30 @@ an embedding only and not a fully corrected count matrix. The function will
 iterate through the batches, identify the MNN and generate correction vectors
 and generate a corrected embedding which is added to the function.
 }
+\examples{
+# fastMNN over batch aware highly variable genes
+sc <- demo_single_cells(
+  syn_data_params = params_sc_synthetic_data(
+    n_cells = 600L, n_genes = 50L, n_batches = 3L
+  )
+)
+hvg <- find_hvg_batch_aware_sc(
+  sc, hvg_no = 20L, batch_column = "batch_index", .verbose = FALSE
+)
+sc <- fast_mnn_sc(
+  sc,
+  batch_column = "batch_index",
+  batch_hvg_genes = hvg$hvg_gene_idx,
+  fastmnn_params = params_sc_fastmnn(
+    no_pcs = 10L,
+    knn = list(k = 5L)
+  ),
+  .verbose = FALSE
+)
+dim(get_embedding(sc, "mnn"))
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}
 \references{
 Haghverdi, et al., Nat Biotechnol, 2018
 }

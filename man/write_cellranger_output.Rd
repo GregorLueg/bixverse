@@ -45,3 +45,23 @@ This is a helper to write synthetic data to cell ranger like
 output, i.e., an .mtx file, an barcodes.csv (or .tsv) and a features.csv (or
 .tsv).
 }
+\examples{
+# the 10x trio: an .mtx plus barcode and feature tables
+data <- generate_single_cell_test_data(
+  syn_data_params = params_sc_synthetic_data(n_cells = 200L, n_genes = 40L)
+)
+dir_out <- tempfile("cellranger")
+dir.create(dir_out, recursive = TRUE)
+write_cellranger_output(
+  f_path = dir_out,
+  counts = data$counts,
+  obs = data$obs,
+  var = data$var,
+  rows = "cells",
+  format_type = "csv",
+  .verbose = FALSE
+)
+list.files(dir_out)
+
+unlink(dir_out, recursive = TRUE, force = TRUE)
+}

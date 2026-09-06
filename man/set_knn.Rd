@@ -32,4 +32,13 @@ set_knn(x, knn, ...)
 \description{
 Set/add KNN
 }
+\examples{
+# a kNN built outside the object put into the cache
+sc <- demo_single_cells()
+knn <- generate_knn_sc(sc, .validate_index = FALSE, .verbose = FALSE)
+sc <- set_knn(sc, knn)
+dim(get_knn_mat(sc))
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}
 \keyword{internal}

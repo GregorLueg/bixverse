@@ -29,3 +29,20 @@ Returns the class with additional data added to the outputs.
 Calculates the principal component on top of the filtered count matrix and
 adds the information of the first 10 principal components to the outputs.
 }
+\examples{
+# PCA over the most variable genes of the normalised counts
+syn <- synthetic_bulk_cor_matrix()
+meta <- data.table::data.table(
+  sample_id = colnames(syn$counts),
+  case_control = rep(c("case", "control"), each = 50)
+)
+object <- BulkDge(raw_counts = syn$counts, meta_data = meta)
+object <- qc_bulk_dge(object, group_col = "case_control", .verbose = FALSE)
+object <- normalise_bulk_dge(
+  object,
+  group_col = "case_control",
+  .verbose = FALSE
+)
+object <- calculate_pca_bulk_dge(object, no_hvg_genes = 500L)
+head(get_outputs(object)$pca)
+}

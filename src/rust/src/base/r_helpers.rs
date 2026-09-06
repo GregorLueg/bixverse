@@ -31,7 +31,7 @@ extendr_module! {
 /// @param x The numeric vector (should be between 0 and 1) for which to
 /// calculate the harmonic sum
 ///
-/// @return Returns the harmonic sum according to the OT calculation.
+/// @returns Returns the harmonic sum according to the OT calculation.
 ///
 /// @export
 #[extendr]
@@ -69,7 +69,7 @@ fn rs_ot_harmonic_sum(mut x: Vec<f64>) -> f64 {
 /// @param n Integer. Original dimension (i.e., ncol/nrow) of the matrix to be
 /// reconstructed.
 ///
-/// @return The dense R matrix.
+/// @returns The dense R matrix.
 ///
 /// @export
 #[extendr]
@@ -107,7 +107,7 @@ fn rs_upper_triangle_to_dense(data: &[f64], shift: bool, n: usize) -> RArray<f64
 /// values. If `true`, assumes the diagonal values are `1`, otherwise derives
 /// them from the data.
 ///
-/// @return The dense R matrix.
+/// @returns The dense R matrix.
 ///
 /// @export
 #[extendr]
@@ -145,13 +145,21 @@ fn rs_dense_to_upper_triangle(x: RMatrix<f64>, shift: bool) -> Vec<f64> {
 /// @param min_val Numeric. The lower bound value to normalise into. If set to 0,
 /// the function will equal a min-max normalisation.
 ///
-/// @return Normalised values
+/// @returns Normalised values
 ///
 /// @export
 #[extendr]
 fn rs_range_norm(x: &[f64], max_val: f64, min_val: f64) -> Vec<f64> {
-    let (x_min, x_max) = array_max_min(x);
+    if x.is_empty() {
+        return Vec::new();
+    }
+    // array_max_min returns (max, min), in that order
+    let (x_max, x_min) = array_max_min(x);
     let denom = x_max - x_min;
+    // a constant vector has no range to normalise into; pin it to the top
+    if denom == 0.0 {
+        return vec![max_val; x.len()];
+    }
     let scale = (max_val - min_val) / denom;
     x.par_iter()
         .map(|x| (x - x_min) * scale + min_val)
@@ -172,7 +180,7 @@ fn rs_range_norm(x: &[f64], max_val: f64, min_val: f64) -> Vec<f64> {
 /// critical value is smaller than 0.1 percentile of the random permutations.
 /// @param seed Integer. For reproducibility purposes
 ///
-/// @return The critical value for the given parameters.
+/// @returns The critical value for the given parameters.
 ///
 /// @export
 ///
@@ -195,7 +203,7 @@ fn rs_critval(values: &[f64], iters: usize, alpha: f64, seed: usize) -> f64 {
 /// critical value is smaller than 0.1 percentile of the random permutations.
 /// @param seed Integer. For reproducibility purposes
 ///
-/// @return The critical value for the given parameters.
+/// @returns The critical value for the given parameters.
 ///
 /// @export
 ///

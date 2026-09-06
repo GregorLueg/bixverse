@@ -32,6 +32,19 @@
 #' Tirosh et al, Science (2016)
 #'
 #' @export
+#'
+#' @examples
+#' # score the three planted marker programmes per cell
+#' sc <- demo_single_cells()
+#' gs_list <- list(
+#'   type_1 = sprintf("gene_%02d", 1:10),
+#'   type_2 = sprintf("gene_%02d", 11:20),
+#'   type_3 = sprintf("gene_%02d", 21:30)
+#' )
+#' res <- module_scores_sc(sc, gs_list = gs_list, n_ctrl = 5L, .verbose = FALSE)
+#' dim(res)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 module_scores_sc <- S7::new_generic(
   name = "module_scores_sc",
   dispatch_args = "object",

@@ -41,7 +41,7 @@ extendr_module! {
 /// @param min_similarity Minimum similarity that should exist between any two
 /// given gene modules to actually calculate RBH pairs.
 ///
-/// @return A list containing:
+/// @returns A list containing:
 ///  \itemize{
 ///   \item origin - The name of the origin of the gene modules.
 ///   \item target - The name of the target of the gene modules.
@@ -170,7 +170,7 @@ fn rs_rbh_sets(
 /// @param min_similarity Minimum (absolute) correlations that needs to exist
 /// between two terms.
 ///
-/// @return A list containing:
+/// @returns A list containing:
 ///  \itemize{
 ///   \item origin - The name of the origin of the gene modules.
 ///   \item target - The name of the target of the gene modules.

@@ -25,3 +25,11 @@ Pulls an embedding into a long data.table with standardised coordinate
 columns (\code{dim_1}, \code{dim_2}, ...) and, optionally, observation metadata. The
 embedding name is stored as an \code{embedding} attribute for axis labelling.
 }
+\examples{
+# PCA coordinates with a cell annotation riding along
+sc <- demo_single_cells()
+dt <- extract_embedding_data(sc, "pca", obs_cols = "cell_grp")
+head(dt[, c("cell_id", "dim_1", "dim_2", "cell_grp")])
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

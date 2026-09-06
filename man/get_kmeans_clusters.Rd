@@ -15,3 +15,17 @@ get_kmeans_clusters(x)
 \description{
 Get k-means cluster assignments from a fast cluster result
 }
+\examples{
+# the centroid each cell was assigned to
+sc <- demo_single_cells()
+res <- fast_cluster_sc(
+  sc,
+  resolutions = 1.0,
+  n_centroids = 30L,
+  return_kmeans = TRUE,
+  .verbose = FALSE
+)
+head(get_kmeans_clusters(res))
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

@@ -17,3 +17,13 @@ RPKM-normalised matrix.
 \description{
 RPKM calculation
 }
+\examples{
+# RPKM over synthetic counts with flat 2kb gene lengths
+syn <- synthetic_bulk_cor_matrix()
+gene_lengths <- stats::setNames(
+  rep(2000, nrow(syn$counts)),
+  rownames(syn$counts)
+)
+rpkm <- calculate_rpkm(syn$counts, gene_lengths)
+rpkm[1:3, 1:3]
+}

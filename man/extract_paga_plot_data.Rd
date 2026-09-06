@@ -67,6 +67,15 @@ The abstracted graph is close to complete on real data, so \code{threshold} is
 doing real work. Drop it to zero and you get a hairball. \code{tree_only} is the
 shortcut to the backbone.
 }
+\examples{
+# the abstracted graph placed on the PCA coordinates
+sc <- demo_single_cells()
+sc <- find_clusters_sc(sc, res = 1.0)
+paga <- run_paga_sc(sc, cluster_col = "leiden_clustering", .verbose = FALSE)
+extract_paga_plot_data(sc, paga, embedding = "pca")$nodes
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}
 \references{
 Wolf, et al., Genome Biol., 2019.
 }

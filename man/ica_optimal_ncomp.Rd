@@ -32,3 +32,20 @@ determination of optimal ncomp is warranted. Additionally, you have the
 option to plot the loess function for additional control over the span
 parameter (defaults to \code{TRUE}).
 }
+\examples{
+# inflection point of the combined score
+mat <- t(synthetic_signal_matrix()$mat)
+obj <- BulkCoExp(mat, data.table::data.table(sample_id = rownames(mat)))
+obj <- preprocess_bulk_coexp(obj, hvg = 0.3, .verbose = FALSE)
+obj <- ica_processing(obj, .verbose = FALSE)
+obj <- ica_evaluate_comp(
+  obj,
+  ica_type = "logcosh",
+  ncomp_params = params_ica_ncomp(custom_seq = seq(2L, 20L, by = 2L)),
+  .verbose = FALSE
+)
+obj <- ica_optimal_ncomp(
+  obj, span = 0.4, show_plot = FALSE, .verbose = FALSE
+)
+obj@params$ica_stability_assessment$optimal_ncomp
+}

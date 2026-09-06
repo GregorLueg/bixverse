@@ -23,6 +23,22 @@ Rust-based version of the mitch multi-contrast enrichment, see Kaspi and
 Ziemann. Takes in a matrix representing the contrasts you wish to test
 against.
 }
+\examples{
+# multi-contrast enrichment over two contrasts
+set.seed(10L)
+contrast_mat <- matrix(
+  rnorm(300 * 2),
+  ncol = 2,
+  dimnames = list(sprintf("gene_\%03i", 1:300), c("contrast_a", "contrast_b"))
+)
+contrast_mat[1:30, ] <- contrast_mat[1:30, ] + 1.5
+gene_sets <- list(
+  hit_set = sprintf("gene_\%03i", 1:30),
+  bg_set = sprintf("gene_\%03i", 100:150)
+)
+res <- calc_mitch(contrast_mat, gene_sets)
+res[, c("pathway_names", "manova_pval", "s_dist")]
+}
 \references{
 Kaspi and Ziemann, Bmc Genomics, 2020
 }

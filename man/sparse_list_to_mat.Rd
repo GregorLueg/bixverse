@@ -15,4 +15,16 @@ The sparseMatrix from the data.
 \description{
 Helper function to transform the Rust-exported sparse matrices into R ones
 }
+\examples{
+# 3 x 3 identity in the Rust-side CSC representation
+csc <- list(
+  data = c(1, 1, 1),
+  indices = c(0L, 1L, 2L),
+  indptr = c(0L, 1L, 2L, 3L),
+  nrow = 3L,
+  ncol = 3L,
+  cs_type = "csc"
+)
+sparse_list_to_mat(csc)
+}
 \keyword{internal}

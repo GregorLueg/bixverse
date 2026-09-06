@@ -50,6 +50,20 @@ This is a convenience wrapper: it pseudo-bulks with
 \code{\link[=run_edger_ql]{run_edger_ql()}}. Reach for the two separately if you want to
 inspect or reuse the aggregated matrix.
 }
+\examples{
+# six pseudo-bulk samples out of a demo single cell object
+sc <- demo_single_cells(prepped = FALSE)
+cells <- get_sc_obs(sc)$cell_id
+cell_list <- split(
+  cells,
+  rep(sprintf("sample_\%i", 1:6), length.out = length(cells))
+)
+design <- stats::model.matrix(~ rep(c("ctrl", "case"), each = 3))
+res <- pseudobulk_dge_sc(sc, cell_list, design, .verbose = FALSE)
+head(res)
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}
 \references{
 Squair, et al., Nat Commun, 2021; Chen, Lun and Smyth,
 F1000Research, 2016

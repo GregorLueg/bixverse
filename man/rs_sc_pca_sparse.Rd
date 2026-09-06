@@ -49,7 +49,7 @@ SVD).
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 Helper function that will calculate sparse PCA without scaling the data.
-You have the option to do mean centering, variance normalisation and/or
+You have the option to do mean centring, variance normalisation and/or
 apply the new proposed transformation \code{PFlogPF} from Booeshaghi, et al.
 None of these will densify the matrix.
 }

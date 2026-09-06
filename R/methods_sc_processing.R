@@ -26,7 +26,7 @@
 #'
 #' @param .verbose `TRUE`, `FALSE`, or an integer.
 #'
-#' @return Integer verbosity level.
+#' @returns Integer verbosity level.
 #'
 #' @keywords internal
 .verbose_level <- function(.verbose) {
@@ -43,7 +43,7 @@
 #'
 #' @param .verbose `TRUE`, `FALSE`, or an integer.
 #'
-#' @return Integer verbosity level, floored at 0.
+#' @returns Integer verbosity level, floored at 0.
 #'
 #' @keywords internal
 .demote_verbosity <- function(.verbose) {
@@ -55,7 +55,7 @@
 #' @param object A `SingleCells` object.
 #' @param group_by Character. Column name to validate.
 #'
-#' @return Invisibly `NULL`. Stops with an informative message if the column
+#' @returns Invisibly `NULL`. Stops with an informative message if the column
 #' is absent.
 #'
 #' @keywords internal
@@ -80,7 +80,7 @@
 #' @param group_by Character. Column name to group by.
 #' @param cells_to_use Integer vector of 0-indexed cell indices.
 #'
-#' @return Named list of 0-indexed integer vectors, one element per group.
+#' @returns Named list of 0-indexed integer vectors, one element per group.
 #'
 #' @keywords internal
 .split_cells_by_group <- function(object, group_by, cells_to_use) {
@@ -113,7 +113,7 @@
 #' @param groups Named list of cell index vectors as returned by
 #' [.split_cells_by_group()].
 #'
-#' @return Invisibly `NULL`.
+#' @returns Invisibly `NULL`.
 #'
 #' @keywords internal
 .validate_group_sizes <- function(groups) {
@@ -149,7 +149,7 @@
 #' One level is demoted before being forwarded to `per_group_fn`.
 #' @param label Character. Label shown on the progress bar.
 #'
-#' @return Named list of results, one element per group.
+#' @returns Named list of results, one element per group.
 #'
 #' @keywords internal
 .run_per_group <- function(groups, per_group_fn, .verbose, label) {
@@ -185,7 +185,7 @@
 #' @param group_results Named list of per-group result objects.
 #' @param field Character. Name of the field to extract from each element.
 #'
-#' @return Unnamed vector of concatenated values.
+#' @returns Unnamed vector of concatenated values.
 #'
 #' @keywords internal
 .concat_per_cell <- function(group_results, field) {
@@ -205,7 +205,7 @@
 #' @param return_pairs Logical. If `TRUE`, simulated doublet pair indices are
 #' included per group.
 #'
-#' @return A `ScrubletRes` object with attributes `cell_indices`, `grouped`,
+#' @returns A `ScrubletRes` object with attributes `cell_indices`, `grouped`,
 #' and `group_by_col`.
 #'
 #' @keywords internal
@@ -287,7 +287,7 @@
 #' @param group_by Character. Name of the grouping column; stored as an
 #' attribute on the returned object.
 #'
-#' @return A `BoostRes` object with attributes `cell_indices`, `grouped`,
+#' @returns A `BoostRes` object with attributes `cell_indices`, `grouped`,
 #' and `group_by_col`.
 #'
 #' @keywords internal
@@ -333,7 +333,7 @@
 #' @param group_by Character. Name of the grouping column; stored as an
 #' attribute on the returned object.
 #'
-#' @return A `ScDblFinderRes` object with attributes `cell_indices`, `grouped`,
+#' @returns A `ScDblFinderRes` object with attributes `cell_indices`, `grouped`,
 #' and `group_by_col`.
 #'
 #' @keywords internal
@@ -413,7 +413,7 @@
 #' doublets are included in the result.
 #' @param .verbose Logical or integer. Verbosity level.
 #'
-#' @return A `ScrubletRes` object with `cell_indices` set as an attribute.
+#' @returns A `ScrubletRes` object with `cell_indices` set as an attribute.
 #'
 #' @keywords internal
 .scrublet_run <- function(
@@ -459,7 +459,7 @@
 #' `NULL`, resolved automatically via [auto_streaming()].
 #' @param .verbose Logical or integer. Verbosity level.
 #'
-#' @return A `BoostRes` object with `cell_indices` set as an attribute.
+#' @returns A `BoostRes` object with `cell_indices` set as an attribute.
 #'
 #' @keywords internal
 .boost_run <- function(
@@ -512,7 +512,7 @@
 #' @param seed Integer. Random seed.
 #' @param .verbose Logical or integer. Verbosity level.
 #'
-#' @return A `ScDblFinderRes` object with `cell_indices` set as an attribute.
+#' @returns A `ScDblFinderRes` object with `cell_indices` set as an attribute.
 #'
 #' @keywords internal
 .scdblfinder_run <- function(
@@ -613,7 +613,7 @@
 #' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
 #' verbosity.
 #'
-#' @return A `scrublet_res` class that has with the following items:
+#' @returns A `scrublet_res` class that has with the following items:
 #' \itemize{
 #'   \item predicted_doublets - Boolean vector indicating which observed cells
 #'   predicted as doublets (TRUE = doublet, FALSE = singlet).
@@ -643,6 +643,21 @@
 #' @export
 #'
 #' @references Wollock, et al., Cell Syst, 2020
+#'
+#' @examples
+#' # simulated doublet scoring on 500 synthetic cells
+#' sc <- demo_single_cells(prepped = FALSE)
+#' scrublet_sc(
+#'   sc,
+#'   scrublet_params = params_scrublet(
+#'     pca = list(no_pcs = 10L),
+#'     hvg = list(min_gene_var_pctl = 0.0),
+#'     n_bins = 20L
+#'   ),
+#'   .verbose = FALSE
+#' )
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 scrublet_sc <- S7::new_generic(
   name = "scrublet_sc",
   dispatch_args = "object",
@@ -752,7 +767,7 @@ S7::method(scrublet_sc, SingleCells) <- function(
 #' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
 #' verbosity.
 #'
-#' @return A `boost_res` class that has with the following items:
+#' @returns A `boost_res` class that has with the following items:
 #' \itemize{
 #'   \item predicted_doublets - Boolean vector indicating which observed cells
 #'   predicted as doublets (TRUE = doublet, FALSE = singlet).
@@ -762,6 +777,21 @@ S7::method(scrublet_sc, SingleCells) <- function(
 #' }
 #'
 #' @export
+#'
+#' @examples
+#' # boosted doublet detection over five iterations
+#' sc <- demo_single_cells(prepped = FALSE)
+#' doublet_detection_boost_sc(
+#'   sc,
+#'   boost_params = params_boost(
+#'     hvg = list(min_gene_var_pctl = 0.0),
+#'     pca = list(no_pcs = 10L),
+#'     n_iters = 5L
+#'   ),
+#'   .verbose = FALSE
+#' )
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 doublet_detection_boost_sc <- S7::new_generic(
   name = "doublet_detection_boost_sc",
   dispatch_args = "object",
@@ -862,7 +892,7 @@ S7::method(doublet_detection_boost_sc, SingleCells) <- function(
 #' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
 #' verbosity.
 #'
-#' @return An S3 object of class `ScDblFinderRes` containing:
+#' @returns An S3 object of class `ScDblFinderRes` containing:
 #' \describe{
 #'   \item{predicted_doublets}{Logical vector of doublet calls.}
 #'   \item{doublet_score}{Numeric vector of classifier probabilities.}
@@ -875,6 +905,21 @@ S7::method(doublet_detection_boost_sc, SingleCells) <- function(
 #' with `cell_indices` stored as an attribute.
 #'
 #' @export
+#'
+#' @examples
+#' # cluster aware doublet calls from the gradient boosted classifier
+#' sc <- demo_single_cells(prepped = FALSE)
+#' scdblfinder_sc(
+#'   sc,
+#'   scdblfinder_params = params_scdblfinder(
+#'     pca = list(no_pcs = 10L),
+#'     n_genes = 25L,
+#'     cxds_genes = 25L
+#'   ),
+#'   .verbose = FALSE
+#' )
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 scdblfinder_sc <- S7::new_generic(
   name = "scdblfinder_sc",
   dispatch_args = "object",
@@ -976,10 +1021,18 @@ S7::method(scdblfinder_sc, SingleCells) <- function(
 #' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
 #' verbosity.
 #'
-#' @return It will add the columns based on the names in the `gene_set_list` to
+#' @returns It will add the columns based on the names in the `gene_set_list` to
 #' the obs table.
 #'
 #' @export
+#'
+#' @examples
+#' # share of a cell's reads taken by its top 5 and top 10 genes
+#' sc <- demo_single_cells(prepped = FALSE)
+#' sc <- top_genes_perc_sc(sc, top_n_vals = c(5L, 10L), .verbose = FALSE)
+#' head(unlist(sc[["top_5_genes_percentage"]]))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 top_genes_perc_sc <- S7::new_generic(
   name = "top_genes_perc_sc",
   dispatch_args = "object",
@@ -1058,10 +1111,22 @@ S7::method(top_genes_perc_sc, SingleCells) <- function(
 #' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
 #' verbosity.
 #'
-#' @return It will add the columns based on the names in the `gene_set_list` to
+#' @returns It will add the columns based on the names in the `gene_set_list` to
 #' the obs table.
 #'
 #' @export
+#'
+#' @examples
+#' # read proportion of a gene set, the mitochondrial percentage pattern
+#' sc <- demo_single_cells(prepped = FALSE)
+#' sc <- gene_set_proportions_sc(
+#'   sc,
+#'   gene_set_list = list(set_a = c("gene_01", "gene_02", "gene_03")),
+#'   .verbose = FALSE
+#' )
+#' head(unlist(sc[["set_a"]]))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 gene_set_proportions_sc <- S7::new_generic(
   name = "gene_set_proportions_sc",
   dispatch_args = "object",
@@ -1579,6 +1644,19 @@ S7::method(find_clusters_sc, ScOrMc) <- function(
 #' with `cell_indices` stored as an attribute (0-indexed).
 #'
 #' @export
+#'
+#' @examples
+#' # k-means centroids, Louvain on top, memberships back to the cells
+#' sc <- demo_single_cells()
+#' res <- fast_cluster_sc(
+#'   sc,
+#'   resolutions = c(1.0, 0.5),
+#'   n_centroids = 30L,
+#'   .verbose = FALSE
+#' )
+#' head(get_data(res))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 fast_cluster_sc <- S7::new_generic(
   name = "fast_cluster_sc",
   dispatch_args = "object",
@@ -1751,9 +1829,17 @@ S7::method(fast_cluster_sc, SingleCells) <- function(
 #' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
 #' verbosity.
 #'
-#' @return Initialised `sc_knn` with the kNN data.
+#' @returns Initialised `sc_knn` with the kNN data.
 #'
 #' @export
+#'
+#' @examples
+#' # a standalone kNN object off the PCA embedding
+#' sc <- demo_single_cells()
+#' knn <- generate_knn_sc(sc, .validate_index = FALSE, .verbose = FALSE)
+#' dim(get_knn_mat(knn))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 generate_knn_sc <- S7::new_generic(
   name = "generate_knn_sc",
   dispatch_args = "object",
@@ -1882,6 +1968,18 @@ S7::method(generate_knn_sc, SingleCells) <- function(
 #' @references van Dijk, et al., Cell, 2018.
 #'
 #' @export
+#'
+#' @examples
+#' # diffusion imputation of five genes for plotting
+#' sc <- demo_single_cells()
+#' sc <- run_magic_sc(
+#'   sc,
+#'   features = get_gene_names(sc)[1:5],
+#'   .verbose = FALSE
+#' )
+#' dim(get_magic(sc)$data)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 run_magic_sc <- S7::new_generic(
   name = "run_magic_sc",
   dispatch_args = "object",

@@ -77,6 +77,18 @@ The summaries rank on AUROC rather than the p-value on purpose. Group sizes
 vary a lot in practice and p-values scale with the group sizes, so a large
 rival would otherwise crowd out a small one regardless of effect size.
 }
+\examples{
+# markers that hold up against every rival cell type
+sc <- demo_single_cells()
+res <- find_specific_markers_sc(
+  sc,
+  column_of_interest = "cell_grp",
+  .verbose = FALSE
+)
+head(res$summary)
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}
 \references{
 Soneson and Robinson, Nat Methods, 2018; Lun, et al.,
 F1000Research, 2016

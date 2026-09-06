@@ -37,3 +37,8 @@ An \code{ScStep}.
 \description{
 Wraps \code{\link[=harmony_v2_sc]{harmony_v2_sc()}} as an \code{ScStep}.
 }
+\examples{
+# the v2 implementation writes its own embedding name
+step_harmony_v2_sc(batch_column = "batch_index") \%>>\%
+  step_neighbours_sc(embd_to_use = "harmony_v2")
+}

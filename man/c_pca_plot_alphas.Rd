@@ -38,6 +38,20 @@ samples in form of 2D plots.
 This function will plot various alphas to highlight the most interesting
 alpha parameters akin to the implementation of contrastive PCA in Python.
 }
+\examples{
+# how the group separation responds to alpha
+cpca_data <- synthetic_c_pca_data()
+target <- t(cpca_data$target)
+background <- t(cpca_data$background)
+meta <- data.table::data.table(
+  sample_id = rownames(target),
+  grp = cpca_data$target_labels
+)
+obj <- BulkCoExp(target, meta)
+obj <- preprocess_bulk_coexp(obj, .verbose = FALSE)
+obj <- contrastive_pca_processing(obj, background, .verbose = FALSE)
+c_pca_plot_alphas(obj, label_column = "grp", n_alphas = 6L, .verbose = FALSE)
+}
 \references{
 Abid, et al., Nature Communications, 2018
 }

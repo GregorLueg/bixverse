@@ -32,6 +32,14 @@
 #' }
 #'
 #' @export
+#'
+#' @examples
+#' # a small synthetic experiment with three planted cell types
+#' data <- generate_single_cell_test_data(
+#'   syn_data_params = params_sc_synthetic_data(n_cells = 200L, n_genes = 40L)
+#' )
+#' dim(data$counts)
+#' head(data$obs, 3)
 generate_single_cell_test_data <- function(
   syn_data_params = params_sc_synthetic_data(),
   seed = 42L
@@ -116,6 +124,8 @@ generate_single_cell_test_data <- function(
     obs = obs,
     var = var
   )
+
+  res
 }
 
 ### dialogue -------------------------------------------------------------------
@@ -163,7 +173,11 @@ generate_single_cell_test_data <- function(
 #'
 #' @export
 #'
-#' @keywords internal
+#' @examples
+#' # synthetic data with a multicellular programme planted across samples
+#' data <- generate_dialogue_test_data()
+#' names(data$features)
+#' head(data$planted[[1]])
 generate_dialogue_test_data <- function(
   syn_data_params = params_sc_synthetic_dialogue(),
   seed = 42L
@@ -296,6 +310,12 @@ generate_dialogue_test_data <- function(
 #' @export
 #'
 #' @keywords internal
+#'
+#' @examples
+#' # synthetic ADT counts, cell-for-cell with the RNA generator
+#' adt <- generate_single_cell_test_data_adt()
+#' dim(adt$counts)
+#' head(adt$var, 3)
 generate_single_cell_test_data_adt <- function(
   syn_data_params = params_sc_synthetic_data_adt(),
   seed = 42L
@@ -356,6 +376,100 @@ generate_single_cell_test_data_adt <- function(
   res
 }
 
+## demo objects ----------------------------------------------------------------
+
+#' Ready-made `SingleCells` object for examples and tests
+#'
+#' @description
+#' Wires [bixverse::generate_single_cell_test_data()] into a `SingleCells`
+#' object on disk in one call, so examples do not have to repeat the whole
+#' ingestion dance. The default is deliberately tiny (500 cells x 50 genes) and
+#' the quality thresholds are loose enough that every cell survives. This is
+#' synthetic data for demonstration and testing, not something to analyse.
+#'
+#' @param dir String. Directory to hold the object. Created if it does not
+#' exist. Defaults to a fresh path under the session `tempdir()`. Remove it
+#' with `unlink(dir, recursive = TRUE)` when you are done.
+#' @param prepped Boolean. Run the standard HVG -> PCA -> kNN chain before
+#' returning? Defaults to `TRUE`.
+#' @param syn_data_params List. Parameters for the synthetic data, see
+#' [bixverse::params_sc_synthetic_data()].
+#' @param hvg_no Integer. Number of highly variable genes, `prepped` only.
+#' @param no_pcs Integer. Number of principal components, `prepped` only.
+#' @param k Integer. Number of nearest neighbours, `prepped` only.
+#' @param seed Integer. Seed for the data generation.
+#' @param .verbose Boolean. Controls verbosity of the function.
+#'
+#' @returns A `SingleCells` object backed by `dir`.
+#'
+#' @export
+#'
+#' @examples
+#' # a prepped object, ready for clustering
+#' sc <- demo_single_cells()
+#' sc <- find_clusters_sc(sc, res = 1.0)
+#' sc
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+demo_single_cells <- function(
+  dir = tempfile("bixverse_demo"),
+  prepped = TRUE,
+  syn_data_params = params_sc_synthetic_data(
+    n_cells = 500L,
+    n_genes = 50L
+  ),
+  hvg_no = 30L,
+  no_pcs = 10L,
+  k = 15L,
+  seed = 42L,
+  .verbose = FALSE
+) {
+  # checks
+  checkmate::qassert(dir, "S1")
+  checkmate::qassert(prepped, "B1")
+  assertScSyntheticData(syn_data_params)
+  checkmate::qassert(hvg_no, "I1")
+  checkmate::qassert(no_pcs, "I1")
+  checkmate::qassert(k, "I1")
+  checkmate::qassert(seed, "I1")
+  checkmate::qassert(.verbose, "B1")
+
+  dir.create(dir, recursive = TRUE, showWarnings = FALSE)
+  checkmate::assertDirectoryExists(dir)
+
+  data <- generate_single_cell_test_data(
+    syn_data_params = syn_data_params,
+    seed = seed
+  )
+
+  object <- load_r_data(
+    object = SingleCells(dir_data = dir),
+    counts = data$counts,
+    obs = data$obs,
+    var = data$var,
+    sc_qc_param = params_sc_min_quality(
+      min_unique_genes = 5L,
+      min_lib_size = 25L,
+      min_cells = 5L
+    ),
+    streaming = 0L,
+    .verbose = .verbose
+  )
+
+  if (!prepped) {
+    return(object)
+  }
+
+  object <- find_hvg_sc(object, hvg_no = hvg_no, .verbose = .verbose)
+  object <- calculate_pca_sc(object, no_pcs = no_pcs, .verbose = .verbose)
+
+  find_neighbours_sc(
+    object,
+    neighbours_params = params_sc_neighbours(knn = list(k = k)),
+    .verbose = .verbose
+  )
+}
+
 ## data saving -----------------------------------------------------------------
 
 ### write h5ad type formats ----------------------------------------------------
@@ -377,9 +491,20 @@ generate_single_cell_test_data_adt <- function(
 #' @param overwrite Boolean. Shall any found h5ad file be overwritten.
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
-#' @return Returns invisible
+#' @returns Returns invisible
 #'
 #' @export
+#'
+#' @examples
+#' # round trip synthetic counts through a sparse h5ad
+#' data <- generate_single_cell_test_data(
+#'   syn_data_params = params_sc_synthetic_data(n_cells = 200L, n_genes = 40L)
+#' )
+#' f_path <- tempfile(fileext = ".h5ad")
+#' write_h5ad_sc(f_path, data$counts, data$obs, data$var, .verbose = FALSE)
+#' get_h5ad_dimensions(f_path)$dims
+#'
+#' unlink(f_path)
 write_h5ad_sc <- function(
   f_path,
   counts,
@@ -473,9 +598,22 @@ write_h5ad_sc <- function(
 #' @param overwrite Boolean. Shall any found h5ad file be overwritten.
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
-#' @return Returns invisible
+#' @returns Returns invisible
 #'
 #' @export
+#'
+#' @examples
+#' # the same data with a dense /X, which reads back as DENSE_ROW
+#' data <- generate_single_cell_test_data(
+#'   syn_data_params = params_sc_synthetic_data(n_cells = 200L, n_genes = 40L)
+#' )
+#' f_path <- tempfile(fileext = ".h5ad")
+#' write_h5ad_sc_dense(
+#'   f_path, data$counts, data$obs, data$var, .verbose = FALSE
+#' )
+#' get_h5ad_dimensions(f_path)$type
+#'
+#' unlink(f_path)
 write_h5ad_sc_dense <- function(
   f_path,
   counts,
@@ -559,9 +697,29 @@ write_h5ad_sc_dense <- function(
 #' @param overwrite Boolean. Shall any found h5ad file be overwritten.
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
-#' @return Returns invisible
+#' @returns Returns invisible
 #'
 #' @export
+#'
+#' @examples
+#' # the 10x trio: an .mtx plus barcode and feature tables
+#' data <- generate_single_cell_test_data(
+#'   syn_data_params = params_sc_synthetic_data(n_cells = 200L, n_genes = 40L)
+#' )
+#' dir_out <- tempfile("cellranger")
+#' dir.create(dir_out, recursive = TRUE)
+#' write_cellranger_output(
+#'   f_path = dir_out,
+#'   counts = data$counts,
+#'   obs = data$obs,
+#'   var = data$var,
+#'   rows = "cells",
+#'   format_type = "csv",
+#'   .verbose = FALSE
+#' )
+#' list.files(dir_out)
+#'
+#' unlink(dir_out, recursive = TRUE, force = TRUE)
 write_cellranger_output <- function(
   f_path,
   counts,
@@ -594,7 +752,9 @@ write_cellranger_output <- function(
   checkmate::assertChoice(format_type, c("csv", "tsv"))
   checkmate::assertChoice(rows, c("cells", "genes"))
 
-  f_path_mtx <- file.path(f_path, "mat.mtx")
+  # "matrix.mtx" is what Cell Ranger writes and what
+  # get_cell_ranger_params() looks for
+  f_path_mtx <- file.path(f_path, "matrix.mtx")
   f_path_obs <- file.path(f_path, sprintf("barcodes.%s", format_type))
   f_path_var <- file.path(f_path, sprintf("features.%s", format_type))
 
@@ -679,11 +839,30 @@ write_cellranger_output <- function(
 #' @param version One of `"v3"` or `"v2"`.
 #' @param overwrite Boolean.
 #'
-#' @return Invisible.
+#' @returns Invisible.
 #'
 #' @export
 #'
 #' @keywords internal
+#'
+#' @examples
+#' # a CellRanger v3 style h5, ready for load_tenx_h5()
+#' data <- generate_single_cell_test_data(
+#'   syn_data_params = params_sc_synthetic_data(n_cells = 200L, n_genes = 40L)
+#' )
+#' f_path <- tempfile(fileext = ".h5")
+#' write_tenx_h5_sc(
+#'   f_path = f_path,
+#'   counts = data$counts,
+#'   barcodes = data$obs$cell_id,
+#'   features = data.table::data.table(
+#'     id = data$var$gene_id,
+#'     name = data$var$ensembl_id
+#'   )
+#' )
+#' read_tenx_h5_metadata(f_path)$dims
+#'
+#' unlink(f_path)
 write_tenx_h5_sc <- function(
   f_path,
   counts,
@@ -879,6 +1058,13 @@ write_tenx_h5_sc <- function(
 #' @returns String. The path to the extracted PBMC3K data.
 #'
 #' @export
+#'
+#' @examples
+#' \dontrun{
+#' # pulls the archive into the session tempdir()
+#' path <- download_pbmc3k()
+#' list.files(path)
+#' }
 download_pbmc3k <- function(quiet = FALSE) {
   temp_dir <- tempdir()
   dest_file <- file.path(temp_dir, "pbmc3k.tar.gz")
@@ -906,6 +1092,13 @@ download_pbmc3k <- function(quiet = FALSE) {
 #' @returns String. The path to the extracted PBMC8K data.
 #'
 #' @export
+#'
+#' @examples
+#' \dontrun{
+#' # pulls the archive into the session tempdir()
+#' path <- download_pbmc8k()
+#' list.files(path)
+#' }
 download_pbmc8k <- function(quiet = FALSE) {
   temp_dir <- tempdir()
   dest_file <- file.path(temp_dir, "pmbc-8k.tar.gz")
@@ -933,6 +1126,13 @@ download_pbmc8k <- function(quiet = FALSE) {
 #' @returns String. The path to the extracted doublet detection data.
 #'
 #' @export
+#'
+#' @examples
+#' \dontrun{
+#' # pulls the archive into the session tempdir()
+#' path <- download_demuxlet_pbmc()
+#' list.files(path)
+#' }
 download_demuxlet_pbmc <- function(quiet = FALSE) {
   temp_dir <- tempdir()
   dest_file <- file.path(temp_dir, "demuxlet_PBMCs.tar.gz")
@@ -959,6 +1159,13 @@ download_demuxlet_pbmc <- function(quiet = FALSE) {
 #' @returns String. The path to the directory with the PBMC h5ad files.
 #'
 #' @export
+#'
+#' @examples
+#' \dontrun{
+#' # pulls the archive into the session tempdir()
+#' path <- download_pbmc_batches()
+#' list.files(path)
+#' }
 download_pbmc_batches <- function(quiet = FALSE) {
   temp_dir <- tempdir()
   dest_file <- file.path(temp_dir, "pbmc_batches.tar.gz")
@@ -988,6 +1195,13 @@ download_pbmc_batches <- function(quiet = FALSE) {
 #' @export
 #'
 #' @references Persad, et al., Nat. Biotechnol., 2023
+#'
+#' @examples
+#' \dontrun{
+#' # pulls the archive into the session tempdir()
+#' path <- download_cd34_data()
+#' get_h5ad_dimensions(path)$dims
+#' }
 download_cd34_data <- function(quiet = FALSE) {
   temp_dir <- tempdir()
   dest_file <- file.path(temp_dir, "cd34_multiome_rna.h5ad.gz")
@@ -1025,6 +1239,13 @@ download_cd34_data <- function(quiet = FALSE) {
 #'
 #' @references Smillie, et al., Cell, 2019; Jerby-Arnon and Regev, Nat.
 #' Biotechnol., 2022
+#'
+#' @examples
+#' \dontrun{
+#' # pulls the archive into the session tempdir()
+#' path <- download_dialogue_uc()
+#' get_h5ad_dimensions(path)$dims
+#' }
 download_dialogue_uc <- function(quiet = FALSE) {
   temp_dir <- tempdir()
   dest_file <- file.path(temp_dir, "dialogue_uc.h5ad.gz")
@@ -1051,6 +1272,13 @@ download_dialogue_uc <- function(quiet = FALSE) {
 #' @export
 #'
 #' @references Setty, et al., Nat. Biotechnol., 2019
+#'
+#' @examples
+#' \dontrun{
+#' # pulls the archive into the session tempdir()
+#' path <- download_marrow_cd34()
+#' get_h5ad_dimensions(path)$dims
+#' }
 download_marrow_cd34 <- function(quiet = FALSE) {
   temp_dir <- tempdir()
   dest_file <- file.path(temp_dir, "marrow_sample_scseq_counts.h5ad.gz")
@@ -1074,6 +1302,13 @@ download_marrow_cd34 <- function(quiet = FALSE) {
 #' @returns String. The path to the TotalSeq data.
 #'
 #' @export
+#'
+#' @examples
+#' \dontrun{
+#' # pulls the archive into the session tempdir()
+#' path <- download_pbmc_totalseq_data()
+#' read_tenx_h5_metadata(path)$feature_types
+#' }
 download_pbmc_totalseq_data <- function(quiet = FALSE) {
   temp_dir <- tempdir()
   dest_file <- file.path(temp_dir, "10k_Human_PBMC_TotalSeqB.h5")
@@ -1114,6 +1349,13 @@ download_pbmc_totalseq_data <- function(quiet = FALSE) {
 #' @export
 #'
 #' @references Kang, et al., Nat. Biotechnol., 2018
+#'
+#' @examples
+#' \dontrun{
+#' # pulls the archive into the session tempdir()
+#' path <- download_kang_pbmc()
+#' sce <- qs2::qs_read(path)
+#' }
 download_kang_pbmc <- function(quiet = FALSE) {
   temp_dir <- tempdir()
   dest_file <- file.path(temp_dir, "kang18_8vs8.qs2")
@@ -1158,6 +1400,13 @@ download_kang_pbmc <- function(quiet = FALSE) {
 #' @export
 #'
 #' @references Baran-Gale, et al., Development, 2020
+#'
+#' @examples
+#' \dontrun{
+#' # pulls the archive into the session tempdir()
+#' path <- download_thymus_ageing()
+#' sce <- qs2::qs_read(path)
+#' }
 download_thymus_ageing <- function(quiet = FALSE) {
   temp_dir <- tempdir()
   dest_file <- file.path(temp_dir, "thymus_ageing_droplet.qs2")

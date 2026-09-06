@@ -32,14 +32,21 @@
 #' and \eqn{k_i = \sum_j a_{ij}} is the connectivity of node \eqn{i}.
 #' For signed networks, connectivity is calculated as \eqn{k_i = \sum_j \left|a_{ij}\right|}.
 #'
-#' Version 2 uses a different normalization approach that scales the shared
-#' neighbor contribution separately before combining it with the direct
+#' Version 2 uses a different normalisation approach that scales the shared
+#' neighbour contribution separately before combining it with the direct
 #' connection strength.
 #'
 #' @returns A symmetric matrix of the same dimensions as `cor_mat` containing
 #' the topological overlap measures.
 #'
 #' @export
+#'
+#' @examples
+#' # unsigned TOM from a small correlation matrix
+#' set.seed(42)
+#' cor_mat <- cor(matrix(rnorm(200), nrow = 20, ncol = 10))
+#' tom <- calculate_tom(cor_mat, signed = FALSE)
+#' dim(tom)
 calculate_tom <- function(cor_mat, signed, version = c("v1", "v2")) {
   version <- match.arg(version)
 
@@ -93,13 +100,25 @@ calculate_tom <- function(cor_mat, signed, version = c("v1", "v2")) {
 #' and \eqn{k_i = \sum_j a_{ij}} is the connectivity of node \eqn{i}.
 #' For signed networks, connectivity is calculated as \eqn{k_i = \sum_j \left|a_{ij}\right|}.
 #'
-#' Version 2 uses a different normalization approach that scales the shared
-#' neighbor contribution separately before combining it with the direct
+#' Version 2 uses a different normalisation approach that scales the shared
+#' neighbour contribution separately before combining it with the direct
 #' connection strength.
 #'
 #' @returns The topological overlap matrix.
 #'
 #' @export
+#'
+#' @examples
+#' # TOM straight from a samples x genes expression matrix
+#' set.seed(42)
+#' x <- matrix(rnorm(200), nrow = 20, ncol = 10)
+#' tom <- calculate_tom_from_exp(
+#'   x,
+#'   signed = FALSE,
+#'   version = "v1",
+#'   cor_method = "pearson"
+#' )
+#' dim(tom)
 calculate_tom_from_exp <- function(x, signed, version, cor_method) {
   # checks
   checkmate::assertMatrix(x)
@@ -120,124 +139,6 @@ calculate_tom_from_exp <- function(x, signed, version, cor_method) {
   return(tom_mat)
 }
 
-## scaling ---------------------------------------------------------------------
-
-#' Calculates a harmonic sum normalised between 0 to 1.
-#'
-#' @description
-#' The function takes in a vector of scores between 0 and 1 and calculates a
-#' harmonic sum, based on the approach OpenTargets takes to do their gene -
-#' disease evidence scores, see:
-#' https://platform-docs.opentargets.org/associations.
-#'
-#' @param x Numeric vector. Needs to be between 0 and 1.
-#'
-#' @return Harmonic, normalised sum of the provided scores.
-#'
-#' @export
-ot_harmonic_score <- function(x) {
-  # Checks
-  checkmate::qassert(x, "R+[0,1]")
-  # Function body - using Rust here
-  rs_ot_harmonic_sum(x)
-}
-
-
-#' Robust scaler.
-#'
-#' @description
-#' Robust scaling, i.e., removes the median and scales data based on the
-#' interquartile range (IQR). Useful if outliers are expected. NAs will be
-#' ignored.
-#'
-#' @param x Numeric vector.
-#'
-#' @return x, robustly scaled.
-#'
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#'
-#' set.seed(123)
-#' x <- rnorm(10)
-#'
-#' x.scaled <- robust_scaling(x)
-#' }
-robust_scale <- function(x) {
-  # Checks
-  checkmate::qassert(x, "r+")
-  (x - median(x, na.rm = T)) / IQR(x, na.rm = T)
-}
-
-## effect sizes ----------------------------------------------------------------
-
-#' Calculate the Hedge G effect between two matrices
-#'
-#' @description
-#' This function takes two matrices in and calculate on a per column basis the
-#' Hedge's G effect size and the standard error. These results can be
-#' subsequently used for meta-analyses or other approaches.
-#'
-#' @param mat_a Numerical matrix. Contains the values for group a. Assumes that
-#' rows = samples, and columns = features.
-#' @param mat_b Numerical matrix. Contains the values for group b.
-#' @param small_sample_correction Can be NULL (automatic determination if a
-#' small sample size correction should be applied) or Boolean.
-#' @param .verbose Boolean that controls verbosity of the function.
-#'
-#' @return x, robustly scaled.
-#'
-#' @export
-calculate_effect_size <- function(
-  mat_a,
-  mat_b,
-  small_sample_correction = NULL,
-  .verbose = TRUE
-) {
-  # Checks
-  checkmate::assertMatrix(mat_a, mode = "numeric", min.rows = 3L, min.cols = 1L)
-  checkmate::assertMatrix(mat_b, mode = "numeric", min.rows = 3L, min.cols = 1L)
-  checkmate::qassert(small_sample_correction, c("B1", "0"))
-  # Function
-  intersecting_features <- intersect(colnames(mat_a), colnames(mat_b))
-  mat_a <- mat_a[, intersecting_features]
-  mat_b <- mat_b[, intersecting_features]
-
-  message_text <- if (!is.null(small_sample_correction)) {
-    sprintf(
-      "Using user-specified choice for small sample correction. Correction is set to %b",
-      small_sample_correction
-    )
-  } else {
-    total_n <- nrow(mat_a) + nrow(mat_b)
-    ifelse(
-      total_n <= 50,
-      "Less than 50 samples identified. Applying small sample correction.",
-      "More than 50 samples identified. No small sample correction applied."
-    )
-  }
-
-  if (.verbose) {
-    message(message_text)
-  }
-  small_sample_correction <- if (is.null(small_sample_correction)) {
-    total_n <= 50
-  } else {
-    small_sample_correction
-  }
-
-  # TO DO: implement Glass effect size estimation
-
-  results <- rs_hedges_g(
-    mat_a = mat_a,
-    mat_b = mat_b,
-    small_sample_correction = small_sample_correction
-  )
-
-  results
-}
-
 ## F1 scores on confusion matrix -----------------------------------------------
 
 #' F1 scores on top of a confusion matrix
@@ -248,10 +149,16 @@ calculate_effect_size <- function(
 #' @param clusters_a String or factor. The clustering of algorithm 1.
 #' @param clusters_b String or factor. The clustering of algorithm 2.
 #'
-#' @return Named vector with the F1 scores between the two clustering
+#' @returns Named vector with the F1 scores between the two clustering
 #' algorithms.
 #'
 #' @export
+#'
+#' @examples
+#' # agreement between two clusterings of the same six samples
+#' clusters_a <- c("c1", "c1", "c2", "c2", "c3", "c3")
+#' clusters_b <- c("x", "x", "y", "y", "z", "x")
+#' f1_score_confusion_mat(clusters_a, clusters_b)
 f1_score_confusion_mat <- function(clusters_a, clusters_b) {
   # checks
   len_a <- length(clusters_a)

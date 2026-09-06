@@ -80,3 +80,58 @@ with this TF (or not). You have the option to limit this to only the
 the high confidence TFs (default), or also include the low confidence TFs
 (i.e., links from TF to motif that are less certain).
 }
+\examples{
+# CisTarget against a synthetic ranking database
+sc <- demo_single_cells()
+tfs <- sprintf("gene_\%02d", 1:5)
+grn <- scenic_grn_sc(
+  sc,
+  tf_ids = tfs,
+  scenic_params = params_scenic(
+    min_counts = 1L,
+    learner_params = list(n_trees = 20L)
+  ),
+  .verbose = FALSE
+)
+grn <- identify_tf_to_genes(
+  grn,
+  method = "top_k",
+  k_tfs = 3L,
+  .verbose = FALSE
+)
+genes <- get_gene_names(sc)
+targets <- split(get_tf_to_gene(grn)$gene, get_tf_to_gene(grn)$tf)
+rankings <- matrix(
+  vapply(
+    tfs,
+    function(tf) {
+      as.integer(rank(!(genes \%in\% targets[[tf]]), ties.method = "first"))
+    },
+    integer(length(genes))
+  ),
+  nrow = length(genes),
+  dimnames = list(genes, sprintf("motif_\%s", tfs))
+)
+annot <- data.table::data.table(
+  motif = sprintf("motif_\%s", tfs),
+  TF = tfs,
+  annotationSource = factor(
+    c(rep("directAnnotation", 4), "inferredBy_MotifSimilarity")
+  )
+)
+grn <- tf_to_genes_motif_enrichment(
+  grn,
+  motif_rankings = rankings,
+  annot_data = annot,
+  cis_target_params = params_cistarget(
+    auc_threshold = 1,
+    nes_threshold = 1,
+    high_conf_cats = "directAnnotation",
+    low_conf_cats = "inferredBy_MotifSimilarity"
+  ),
+  .verbose = FALSE
+)
+head(get_tf_to_gene(grn))
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

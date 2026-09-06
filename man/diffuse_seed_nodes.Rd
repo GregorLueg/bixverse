@@ -30,3 +30,19 @@ This function takes a diffusion vector and leverages personalised page-rank
 diffusion to identify influential nodes. These can be used subsequently for
 community detection or check AUROC values given a set of genes.
 }
+\examples{
+# personalised page-rank diffusion from three seed nodes
+set.seed(42)
+g <- igraph::sample_pa(15, directed = FALSE)
+edges <- data.table::setDT(igraph::as_data_frame(g))[, `:=`(
+  from = sprintf("node_\%i", from),
+  to = sprintf("node_\%i", to)
+)]
+object <- NetworkDiffusions(edges, weighted = FALSE, directed = FALSE)
+object <- diffuse_seed_nodes(
+  object,
+  c(node_1 = 1, node_3 = 1, node_10 = 1),
+  summarisation = "max"
+)
+head(get_diffusion_vector(object))
+}

@@ -16,3 +16,15 @@ A samples x k numeric matrix (if found) or \code{NULL}.
 Getter function to extract the sample activity matrix (samples x k) from a
 bulk NMF fit. If no NMF fit is present, returns \code{NULL} with a warning.
 }
+\examples{
+# sample activity of a four-factor fit
+syn <- generate_gene_module_data(n_samples = 24L, n_genes = 60L)
+# NMF needs a non-negative matrix
+mat <- syn$data - min(syn$data)
+obj <- BulkCoExp(mat, syn$meta_data)
+obj <- preprocess_bulk_coexp(
+  obj, hvg = NULL, scaling = FALSE, .verbose = FALSE
+)
+obj <- nmf_bulk(obj, k = 4L, .verbose = FALSE)
+dim(get_nmf_sample_activity(obj))
+}

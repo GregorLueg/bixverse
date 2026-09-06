@@ -24,7 +24,7 @@ SC_STEP_CLASSES <- c("SingleCells", "SingleCellsSubset", "MetaCells")
 #' @param returns String. Class name the step returns, or `"input"` if it hands
 #' back whatever it was given.
 #'
-#' @return An `ScStep` object.
+#' @returns An `ScStep` object.
 #'
 #' @keywords internal
 new_sc_step <- function(
@@ -61,9 +61,15 @@ new_sc_step <- function(
 #' [apply_pipeline()]. Pipelines are inert until applied; steps can be
 #' inspected via `pipeline$steps`.
 #'
-#' @return An empty `ScPipeline` object.
+#' @returns An empty `ScPipeline` object.
 #'
 #' @export
+#'
+#' @examples
+#' # an empty container, filled with `%>>%`
+#' sc_pipeline() %>>%
+#'   step_hvg_sc(hvg_no = 30L) %>>%
+#'   step_pca_sc(no_pcs = 10L)
 sc_pipeline <- function() {
   structure(list(steps = list()), class = "ScPipeline")
 }
@@ -79,9 +85,13 @@ sc_pipeline <- function() {
 #' @param lhs `ScPipeline` or `ScStep`.
 #' @param rhs `ScStep`.
 #'
-#' @return A `ScPipeline`.
+#' @returns A `ScPipeline`.
 #'
 #' @export
+#'
+#' @examples
+#' # either side may be a step, the result is always a pipeline
+#' step_hvg_sc(hvg_no = 30L) %>>% step_pca_sc(no_pcs = 10L)
 `%>>%` <- function(lhs, rhs) UseMethod("%>>%")
 
 #' @export
@@ -186,9 +196,14 @@ format_step_args <- function(args) {
 #' @param class String. Class of the object the pipeline would start on. One of
 #' `c("SingleCells", "SingleCellsSubset", "MetaCells")`.
 #'
-#' @return Invisibly, the class the pipeline would return.
+#' @returns Invisibly, the class the pipeline would return.
 #'
 #' @export
+#'
+#' @examples
+#' # the meta cell step changes what the next step would receive
+#' p <- step_hvg_sc() %>>% step_metacells_sc("bootstrapped")
+#' print(validate_pipeline(p, "SingleCells"))
 validate_pipeline <- function(pipeline, class) {
   checkmate::assertClass(pipeline, "ScPipeline")
   checkmate::assertChoice(class, SC_STEP_CLASSES)
@@ -230,9 +245,19 @@ validate_pipeline <- function(pipeline, class) {
 #' happens inside each step's underlying generic, so the same pipeline works on
 #' any class its steps have methods for.
 #'
-#' @return The object after all steps have run.
+#' @returns The object after all steps have run.
 #'
 #' @export
+#'
+#' @examples
+#' # HVG then PCA, run in order on a freshly loaded object
+#' sc <- demo_single_cells(prepped = FALSE)
+#' p <- step_hvg_sc(hvg_no = 30L, .verbose = FALSE) %>>%
+#'   step_pca_sc(no_pcs = 10L, .verbose = FALSE)
+#' sc <- apply_pipeline(p, sc)
+#' dim(get_pca_factors(sc))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 apply_pipeline <- function(pipeline, object) {
   checkmate::assertClass(pipeline, "ScPipeline")
   if (length(pipeline$steps) == 0L) {
@@ -263,12 +288,21 @@ apply_pipeline <- function(pipeline, object) {
 #' @param progress Boolean. Shall big progress messages be printed to the
 #' console. Defaults to `FALSE`.
 #'
-#' @return Named list of processed objects, names being the group values.
+#' @returns Named list of processed objects, names being the group values.
 #' Usually `SingleCellsSubset`, or `MetaCells` if the pipeline ends on
 #' [step_metacells_sc()], in which case [merge_meta_cells()] puts them back
 #' together.
 #'
 #' @export
+#'
+#' @examples
+#' # the same chain re-run inside each cell type
+#' sc <- demo_single_cells(prepped = FALSE)
+#' p <- sc_pipeline() %>>% step_hvg_sc(hvg_no = 20L, .verbose = FALSE)
+#' res <- apply_pipeline_per_group(p, sc, group_col = "cell_grp")
+#' names(res)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 apply_pipeline_per_group <- function(
   pipeline,
   object,
@@ -352,15 +386,24 @@ apply_pipeline_per_group <- function(
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' prep <- step_hvg_sc() %>>% step_pca_sc(no_pcs = 20L) %>>% step_neighbours_sc()
-#' mc <- meta_cells_per_group(
-#'   object = sc_obj,
-#'   group_col = "patient_id",
+#' # meta cells that never mix two cell groups
+#' sc <- demo_single_cells(prepped = FALSE)
+#' prep <- step_hvg_sc(hvg_no = 30L, .verbose = FALSE) %>>%
+#'   step_pca_sc(no_pcs = 10L, .verbose = FALSE) %>>%
+#'   step_neighbours_sc(.verbose = FALSE)
+#' meta_cells_per_group(
+#'   object = sc,
+#'   group_col = "cell_grp",
 #'   method = "bootstrapped",
-#'   pipeline = prep
+#'   mc_params = list(
+#'     sc_meta_cell_params = params_sc_bt_metacells(target_no_metacells = 10L),
+#'     .verbose = FALSE
+#'   ),
+#'   pipeline = prep,
+#'   .verbose = FALSE
 #' )
-#' }
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 meta_cells_per_group <- function(
   object,
   group_col,
@@ -428,9 +471,13 @@ meta_cells_per_group <- function(
 #'
 #' @inheritParams find_hvg_sc
 #'
-#' @return An `ScStep`.
+#' @returns An `ScStep`.
 #'
 #' @export
+#'
+#' @examples
+#' # a step is inert until the pipeline is applied
+#' step_hvg_sc(hvg_no = 30L)
 step_hvg_sc <- function(
   hvg_no = 2000L,
   hvg_params = params_sc_hvg(),
@@ -459,9 +506,13 @@ step_hvg_sc <- function(
 #'
 #' @inheritParams calculate_pca_sc
 #'
-#' @return An `ScStep`.
+#' @returns An `ScStep`.
 #'
 #' @export
+#'
+#' @examples
+#' # PCA restricted to whatever the HVG step selected
+#' step_hvg_sc(hvg_no = 30L) %>>% step_pca_sc(no_pcs = 10L)
 step_pca_sc <- function(
   no_pcs = 30L,
   pca_params = params_sc_pca(),
@@ -494,9 +545,13 @@ step_pca_sc <- function(
 #'
 #' @inheritParams find_neighbours_sc
 #'
-#' @return An `ScStep`.
+#' @returns An `ScStep`.
 #'
 #' @export
+#'
+#' @examples
+#' # neighbours on the PCA embedding
+#' step_pca_sc(no_pcs = 10L) %>>% step_neighbours_sc()
 step_neighbours_sc <- function(
   embd_to_use = "pca",
   no_embd_to_use = NULL,
@@ -529,9 +584,13 @@ step_neighbours_sc <- function(
 #'
 #' @inheritParams find_clusters_sc
 #'
-#' @return An `ScStep`.
+#' @returns An `ScStep`.
 #'
 #' @export
+#'
+#' @examples
+#' # Leiden over the graph the neighbours step wrote
+#' step_neighbours_sc() %>>% step_clusters_sc(res = 0.5)
 step_clusters_sc <- function(
   cluster_algorithm = c("leiden", "louvain"),
   res = 1.0,
@@ -562,9 +621,14 @@ step_clusters_sc <- function(
 #'
 #' @inheritParams harmony_sc
 #'
-#' @return An `ScStep`.
+#' @returns An `ScStep`.
 #'
 #' @export
+#'
+#' @examples
+#' # correct the PCA, then build the graph on the corrected embedding
+#' step_harmony_sc(batch_column = "batch_index") %>>%
+#'   step_neighbours_sc(embd_to_use = "harmony")
 step_harmony_sc <- function(
   batch_column,
   additional_batch_columns = NULL,
@@ -594,9 +658,14 @@ step_harmony_sc <- function(
 #'
 #' @inheritParams harmony_v2_sc
 #'
-#' @return An `ScStep`.
+#' @returns An `ScStep`.
 #'
 #' @export
+#'
+#' @examples
+#' # the v2 implementation writes its own embedding name
+#' step_harmony_v2_sc(batch_column = "batch_index") %>>%
+#'   step_neighbours_sc(embd_to_use = "harmony_v2")
 step_harmony_v2_sc <- function(
   batch_column,
   additional_batch_columns = NULL,
@@ -626,9 +695,14 @@ step_harmony_v2_sc <- function(
 #'
 #' @inheritParams bbknn_sc
 #'
-#' @return An `ScStep`.
+#' @returns An `ScStep`.
 #'
 #' @export
+#'
+#' @examples
+#' # BBKNN replaces the graph outright, so nothing follows it
+#' step_pca_sc(no_pcs = 10L) %>>%
+#'   step_bbknn_sc(batch_column = "batch_index")
 step_bbknn_sc <- function(
   batch_column,
   no_neighbours_to_keep = 5L,
@@ -660,9 +734,17 @@ step_bbknn_sc <- function(
 #'
 #' @inheritParams fast_mnn_sc
 #'
-#' @return An `ScStep`.
+#' @returns An `ScStep`.
 #'
 #' @export
+#'
+#' @examples
+#' # fastMNN wants the batch aware genes handed to it up front
+#' step_fast_mnn_sc(
+#'   batch_column = "batch_index",
+#'   batch_hvg_genes = 0:29L
+#' ) %>>%
+#'   step_neighbours_sc(embd_to_use = "mnn")
 step_fast_mnn_sc <- function(
   batch_column,
   batch_hvg_genes,
@@ -719,21 +801,26 @@ step_fast_mnn_sc <- function(
 #' @param ... Arguments passed on to the generator, e.g.
 #' `sc_meta_cell_params`, `target_size` or `.verbose`.
 #'
-#' @return An `ScStep`.
+#' @returns An `ScStep`.
 #'
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' pipeline <- step_hvg_sc() %>>%
-#'   step_pca_sc(no_pcs = 20L) %>>%
-#'   step_harmony_sc(batch_column = "plate") %>>%
-#'   step_neighbours_sc(embd_to_use = "harmony") %>>%
-#'   step_metacells_sc("bootstrapped")
+#' # per group pre-processing that ends on source-pure meta cells
+#' sc <- demo_single_cells(prepped = FALSE)
+#' pipeline <- step_hvg_sc(hvg_no = 30L, .verbose = FALSE) %>>%
+#'   step_pca_sc(no_pcs = 10L, .verbose = FALSE) %>>%
+#'   step_neighbours_sc(.verbose = FALSE) %>>%
+#'   step_metacells_sc(
+#'     "bootstrapped",
+#'     sc_meta_cell_params = params_sc_bt_metacells(target_no_metacells = 10L),
+#'     .verbose = FALSE
+#'   )
 #'
-#' per_patient <- apply_pipeline_per_group(pipeline, sc_obj, "patient_id")
-#' mc <- merge_meta_cells(per_patient)
-#' }
+#' per_group <- apply_pipeline_per_group(pipeline, sc, group_col = "cell_grp")
+#' merge_meta_cells(per_group, .verbose = FALSE)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 step_metacells_sc <- function(
   method = c("bootstrapped", "seacells", "supercells"),
   ...

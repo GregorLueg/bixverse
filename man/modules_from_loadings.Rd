@@ -35,3 +35,15 @@ The standardisation itself is controlled by \code{membership_params$scaling}:
 mean and standard deviation. The latter is stricter and keeps fewer genes
 on skewed loadings, which is common for NMF.
 }
+\examples{
+# turn NMF gene loadings into module membership
+syn <- generate_gene_module_data(n_samples = 24L, n_genes = 60L)
+# NMF needs a non-negative matrix
+mat <- syn$data - min(syn$data)
+obj <- BulkCoExp(mat, syn$meta_data)
+obj <- preprocess_bulk_coexp(
+  obj, hvg = NULL, scaling = FALSE, .verbose = FALSE
+)
+obj <- nmf_bulk(obj, k = 4L, .verbose = FALSE)
+head(modules_from_loadings(get_nmf_gene_loadings(obj)))
+}

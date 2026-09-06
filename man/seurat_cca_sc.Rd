@@ -76,6 +76,27 @@ correction runs on the embedding, not on full log-expression. In practice
 the anchor structure comes out close to identical at a fraction of the
 memory.
 }
+\examples{
+# CCA anchor integration over batch aware highly variable genes
+sc <- demo_single_cells(
+  syn_data_params = params_sc_synthetic_data(
+    n_cells = 600L, n_genes = 50L, n_batches = 3L
+  )
+)
+hvg <- find_hvg_batch_aware_sc(
+  sc, hvg_no = 20L, batch_column = "batch_index", .verbose = FALSE
+)
+sc <- seurat_cca_sc(
+  sc,
+  batch_column = "batch_index",
+  batch_hvg_genes = hvg$hvg_gene_idx,
+  cca_params = params_sc_seurat_cca(num_cc = 10L, dims = 10L),
+  .verbose = FALSE
+)
+dim(get_embedding(sc, "cca"))
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}
 \references{
 Stuart, et al., Cell, 2019
 }

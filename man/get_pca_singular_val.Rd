@@ -35,3 +35,10 @@ Returns the PCA singular values (can be useful to assess cumulative variance
 explained). This function is used for the single cell-related classes and
 methods.
 }
+\examples{
+# singular values, largest first
+sc <- demo_single_cells()
+head(get_pca_singular_val(sc), 3)
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

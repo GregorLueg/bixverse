@@ -34,3 +34,23 @@ for the ADT data to the object.
 This function will run PCA - via (randomised) SVD - on the normalised counts
 and add the PCA results to the ScCache for the ADT counts.
 }
+\examples{
+# PCA over the CLR-normalised protein counts
+rna <- generate_single_cell_test_data()
+adt <- generate_single_cell_test_data_adt()
+dir <- tempfile("bixverse_mm")
+dir.create(dir)
+object <- load_r_data(
+  SingleCellsMultiModal(dir_data = dir),
+  counts = rna$counts,
+  obs = rna$obs,
+  var = rna$var,
+  sc_qc_param = params_sc_min_quality(min_unique_genes = 5L),
+  .verbose = FALSE
+)
+object <- add_adt_counts_sc(object, adt_counts = adt$counts, method = "clr")
+object <- calculate_pca_adt_sc(object, no_pcs = 10L)
+dim(get_pca_factors(object, modality = "adt"))
+
+unlink(dir, recursive = TRUE, force = TRUE)
+}

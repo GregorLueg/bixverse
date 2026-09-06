@@ -20,7 +20,8 @@ rs_geom_elim_fgsea_simple(
 \item{levels}{A character vector representing the levels to iterate through.
 The order will be the one the iterations are happening in.}
 
-\item{go_obj}{The gene_ontology_data S7 class. See \code{\link[=gene_ontology_data]{gene_ontology_data()}}.}
+\item{go_obj}{The \code{GeneOntologyElim} S7 class. See
+\code{\link[=GeneOntologyElim]{GeneOntologyElim()}}.}
 
 \item{gsea_params}{List. The GSEA parameters, see \code{\link[=params_gsea]{params_gsea()}}
 wrapper function. This function generates a list containing:
