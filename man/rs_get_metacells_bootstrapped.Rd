@@ -38,7 +38,10 @@ types. If this is provided, the kNN graph will be regenerated.}
 \item{target_size}{Numeric. Target library size for re-normalisation of
 the meta cells. Typically \code{1e4}.}
 
-\item{verbose}{Boolean. Controls verbosity of the function.}
+\item{seed}{Integer. For reproducibility.}
+
+\item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
+detailed verbosity.}
 }
 \value{
 A list with the following elements:

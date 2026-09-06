@@ -38,7 +38,7 @@ extendr_module! {
 /// @param fdr_threshold Optional float. Shall a filter be applied for the maximum
 /// tolerated FDR.
 ///
-/// @return A list containing:
+/// @returns A list containing:
 ///  \itemize{
 ///   \item pvals - The p-values from the hypergeometric test
 ///   \item odds_ratios - The calculated odds ratios
@@ -96,7 +96,7 @@ fn rs_hypergeom_test(
 /// @param fdr_threshold Optional float. Shall a filter be applied for the maximum
 /// tolerated FDR.
 ///
-/// @return A list containing:
+/// @returns A list containing:
 ///  \itemize{
 ///   \item pvals - The p-values from the hypergeometric test.
 ///   \item fdr - The FDRs for each target gene calculated across all gene sets.

@@ -64,4 +64,3 @@ transcriptome.
 \references{
 DeTomaso, et al., Cell Systems, 2021
 }
-\keyword{internal}

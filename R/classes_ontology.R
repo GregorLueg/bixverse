@@ -22,7 +22,7 @@
 #'   conduct the test.}
 #' }
 #'
-#' @return Returns the class for subsequent usage.
+#' @returns Returns the class for subsequent usage.
 #'
 #' @export
 GeneOntologyElim <- S7::new_class(
@@ -122,7 +122,7 @@ S7::method(print, GeneOntologyElim) <- function(x, ...) {
 #'   \item{final_results}{Final results stored in the class.}
 #' }
 #'
-#' @return Returns the class for subsequent usage.
+#' @returns Returns the class for subsequent usage.
 #'
 #' @export
 OntologySim <- S7::new_class(
@@ -193,7 +193,7 @@ S7::method(print, OntologySim) <- function(x, ...) {
 #' data.table.
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
-#' @return Returns the semantic similarity data.table from the class
+#' @returns Returns the semantic similarity data.table from the class
 #'
 #' @export
 get_sim_matrix <- S7::new_generic(

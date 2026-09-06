@@ -10,7 +10,7 @@
 #' @param object `OntologySim class`. See [bixverse::OntologySim()].
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
-#' @return The class with added pre-processed data for semantic similarities to
+#' @returns The class with added pre-processed data for semantic similarities to
 #' the properties.
 #'
 #' @export
@@ -70,7 +70,7 @@ S7::method(pre_process_sim_onto, OntologySim) <- function(
 #' @param sim_type String. One of `c("resnik", "lin", "combined")`.
 #' @param .verbose Boolean. Controls the verbosity of the function.
 #'
-#' @return The class with added semantic similarities to the properties.
+#' @returns The class with added semantic similarities to the properties.
 #'
 #' @export
 calculate_semantic_sim_onto <- S7::new_generic(
@@ -163,7 +163,7 @@ S7::method(calculate_semantic_sim_onto, OntologySim) <-
 #' specific edge. For example `c("part_of" = 0.8, "is_a" = 0.6)`.
 #' @param .verbose Boolean. Controls the verbosity of the function.
 #'
-#' @return The class with added semantic similarities to the properties.
+#' @returns The class with added semantic similarities to the properties.
 #'
 #' @export
 calculate_wang_sim_onto <- S7::new_generic(
@@ -264,7 +264,7 @@ S7::method(calculate_wang_sim_onto, OntologySim) <- function(
 #' @param seed Integer. For reproducibility purposes.
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
-#' @return The class with filtered results added to the respective slot.
+#' @returns The class with filtered results added to the respective slot.
 #'
 #' @export
 filter_similarities <- S7::new_generic(

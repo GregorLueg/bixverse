@@ -8,7 +8,7 @@
 #' package-specific user cache directory.
 #' @param overwrite Logical. Re-download even if files already exist.
 #'
-#' @return Named list with paths: `rankings` and `motif_annotations`.
+#' @returns Named list with paths: `rankings` and `motif_annotations`.
 #'
 #' @export
 download_cistarget_hg38 <- function(
@@ -59,7 +59,7 @@ download_cistarget_hg38 <- function(
 #' @param represented_genes Character vector. The represented genes in the
 #' rankings.
 #'
-#' @return A data.table with the results if there were any significant motifs.
+#' @returns A data.table with the results if there were any significant motifs.
 #'
 #' @keywords internal
 process_cistarget_res <- function(
@@ -115,7 +115,7 @@ process_cistarget_res <- function(
 #'
 #' @description
 #' This function loads in the motif2tf information that you can get from
-#' \code{https://resources.aertslab.org/cistarget/motif2tf/}.
+#' `https://resources.aertslab.org/cistarget/motif2tf/`.
 #' The function will generate a data.table that can be subsequently used.
 #'
 #' @param annot_file String. Path to the motif2tf file that you downloaded.
@@ -185,7 +185,7 @@ read_motif_annotation_file <- function(annot_file) {
 #' @description
 #' This function loads in the .feather files with the motif to target gene
 #' rankings. These can be found here:
-#' \code{https://resources.aertslab.org/cistarget/databases/}
+#' `https://resources.aertslab.org/cistarget/databases/`
 #'
 #' @param ranking_file String. The file path to the .feather file
 #'
@@ -249,7 +249,7 @@ read_motif_ranking <- function(ranking_file) {
 #' }
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
-#' @return data.table with enriched motifs and corresponding statistics and
+#' @returns data.table with enriched motifs and corresponding statistics and
 #' high & low confidence TFs for each gene set.
 #'
 #' @references Aibar, et al., Nat Methods, 2017

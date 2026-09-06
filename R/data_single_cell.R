@@ -162,8 +162,6 @@ generate_single_cell_test_data <- function(
 #' @references Jerby-Arnon & Regev, Nature Biotechnology, 2022
 #'
 #' @export
-#'
-#' @keywords internal
 generate_dialogue_test_data <- function(
   syn_data_params = params_sc_synthetic_dialogue(),
   seed = 42L
@@ -356,6 +354,100 @@ generate_single_cell_test_data_adt <- function(
   res
 }
 
+## demo objects ----------------------------------------------------------------
+
+#' Ready-made `SingleCells` object for examples and tests
+#'
+#' @description
+#' Wires [bixverse::generate_single_cell_test_data()] into a `SingleCells`
+#' object on disk in one call, so examples do not have to repeat the whole
+#' ingestion dance. The default is deliberately tiny (500 cells x 50 genes) and
+#' the quality thresholds are loose enough that every cell survives. This is
+#' synthetic data for demonstration and testing, not something to analyse.
+#'
+#' @param dir String. Directory to hold the object. Created if it does not
+#' exist. Defaults to a fresh path under the session `tempdir()`. Remove it
+#' with `unlink(dir, recursive = TRUE)` when you are done.
+#' @param prepped Boolean. Run the standard HVG -> PCA -> kNN chain before
+#' returning? Defaults to `TRUE`.
+#' @param syn_data_params List. Parameters for the synthetic data, see
+#' [bixverse::params_sc_synthetic_data()].
+#' @param hvg_no Integer. Number of highly variable genes, `prepped` only.
+#' @param no_pcs Integer. Number of principal components, `prepped` only.
+#' @param k Integer. Number of nearest neighbours, `prepped` only.
+#' @param seed Integer. Seed for the data generation.
+#' @param .verbose Boolean. Controls verbosity of the function.
+#'
+#' @returns A `SingleCells` object backed by `dir`.
+#'
+#' @export
+#'
+#' @examples
+#' # a prepped object, ready for clustering
+#' sc <- demo_single_cells()
+#' sc <- find_clusters_sc(sc, res = 1.0)
+#' sc
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+demo_single_cells <- function(
+  dir = tempfile("bixverse_demo"),
+  prepped = TRUE,
+  syn_data_params = params_sc_synthetic_data(
+    n_cells = 500L,
+    n_genes = 50L
+  ),
+  hvg_no = 30L,
+  no_pcs = 10L,
+  k = 15L,
+  seed = 42L,
+  .verbose = FALSE
+) {
+  # checks
+  checkmate::qassert(dir, "S1")
+  checkmate::qassert(prepped, "B1")
+  assertScSyntheticData(syn_data_params)
+  checkmate::qassert(hvg_no, "I1")
+  checkmate::qassert(no_pcs, "I1")
+  checkmate::qassert(k, "I1")
+  checkmate::qassert(seed, "I1")
+  checkmate::qassert(.verbose, "B1")
+
+  dir.create(dir, recursive = TRUE, showWarnings = FALSE)
+  checkmate::assertDirectoryExists(dir)
+
+  data <- generate_single_cell_test_data(
+    syn_data_params = syn_data_params,
+    seed = seed
+  )
+
+  object <- load_r_data(
+    object = SingleCells(dir_data = dir),
+    counts = data$counts,
+    obs = data$obs,
+    var = data$var,
+    sc_qc_param = params_sc_min_quality(
+      min_unique_genes = 5L,
+      min_lib_size = 25L,
+      min_cells = 5L
+    ),
+    streaming = 0L,
+    .verbose = .verbose
+  )
+
+  if (!prepped) {
+    return(object)
+  }
+
+  object <- find_hvg_sc(object, hvg_no = hvg_no, .verbose = .verbose)
+  object <- calculate_pca_sc(object, no_pcs = no_pcs, .verbose = .verbose)
+
+  find_neighbours_sc(
+    object,
+    neighbours_params = params_sc_neighbours(knn = list(k = k)),
+    .verbose = .verbose
+  )
+}
+
 ## data saving -----------------------------------------------------------------
 
 ### write h5ad type formats ----------------------------------------------------
@@ -377,7 +469,7 @@ generate_single_cell_test_data_adt <- function(
 #' @param overwrite Boolean. Shall any found h5ad file be overwritten.
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
-#' @return Returns invisible
+#' @returns Returns invisible
 #'
 #' @export
 write_h5ad_sc <- function(
@@ -473,7 +565,7 @@ write_h5ad_sc <- function(
 #' @param overwrite Boolean. Shall any found h5ad file be overwritten.
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
-#' @return Returns invisible
+#' @returns Returns invisible
 #'
 #' @export
 write_h5ad_sc_dense <- function(
@@ -559,7 +651,7 @@ write_h5ad_sc_dense <- function(
 #' @param overwrite Boolean. Shall any found h5ad file be overwritten.
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
-#' @return Returns invisible
+#' @returns Returns invisible
 #'
 #' @export
 write_cellranger_output <- function(
@@ -679,7 +771,7 @@ write_cellranger_output <- function(
 #' @param version One of `"v3"` or `"v2"`.
 #' @param overwrite Boolean.
 #'
-#' @return Invisible.
+#' @returns Invisible.
 #'
 #' @export
 #'

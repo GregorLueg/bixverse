@@ -52,7 +52,7 @@ extendr_module! {
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
 ///
-/// @return A list with the HVG statistics. If `hvg_method == "vst"`:
+/// @returns A list with the HVG statistics. If `hvg_method == "vst"`:
 /// \itemize{
 ///   \item mean - The average expression of the gene.
 ///   \item var - The variance of the gene.

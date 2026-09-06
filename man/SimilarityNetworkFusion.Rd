@@ -37,7 +37,8 @@ The parameters will be internally stored for subsequent usage in other
 functions.}
 }
 \value{
-Returns the \code{Snf} class for further operations.
+Returns the \code{SimilarityNetworkFusion} class for further
+operations.
 }
 \description{
 This class is designed to generate and store the adjacency matrices for

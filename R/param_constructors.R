@@ -101,7 +101,7 @@ params_hvg_defaults <- function() {
 
 #' Helper function to generate normalisation defaults for doublet detection.
 #'
-#' @return A list with the following parameters for normalisation specifically
+#' @returns A list with the following parameters for normalisation specifically
 #' designed for doublet detection methods:
 #' \itemize{
 #'  \item log_transform - Boolean. Shall the counts be log-normalised.
@@ -125,7 +125,7 @@ params_norm_doublets_defaults <- function() {
 
 #' Helper function to generate default parameters for PCA
 #'
-#' @return A list with the following parameters for PCA.
+#' @returns A list with the following parameters for PCA.
 #' \itemize{
 #'  \item no_pcs - Integer. Number of PCs to consider. Defaults to `30L`.
 #'  \item random_svd - Boolean. Shall randomised SVD be used. Defaults to
@@ -1485,7 +1485,7 @@ params_sc_fastmnn <- function(
 #' Possible parameters are `"k_means_iter"`, `"k_means_init"`, `"gemm"` and
 #' `"hamerly"`, see [params_kmeans_defaults()].
 #'
-#' @return A list with the parameters.
+#' @returns A list with the parameters.
 #'
 #' @export
 params_sc_harmony <- function(
@@ -1578,7 +1578,7 @@ params_sc_harmony <- function(
 #' Possible parameters are `"k_means_iter"`, `"k_means_init"`, `"gemm"` and
 #' `"hamerly"`, see [params_kmeans_defaults()].
 #'
-#' @return A list with the parameters.
+#' @returns A list with the parameters.
 #'
 #' @export
 params_sc_harmony_v2 <- function(
@@ -1806,7 +1806,7 @@ params_sc_seurat_rpca <- function(
 
 #' Default parameters for the SCENIC RandomForest regression learner
 #'
-#' @return A list with the following parameters:
+#' @returns A list with the following parameters:
 #' \itemize{
 #'  \item n_trees - Integer. Number of trees to build. Defaults to `250L`.
 #'  \item min_samples_leaf - Integer. Minimum number of samples required at a
@@ -1837,7 +1837,7 @@ params_scenic_random_forest_defaults <- function() {
 
 #' Default parameters for the SCENIC ExtraTrees regression learner
 #'
-#' @return A list with the following parameters:
+#' @returns A list with the following parameters:
 #' \itemize{
 #'  \item n_trees - Integer. Number of trees to build. Defaults to `500L`.
 #'  \item min_samples_leaf - Integer. Minimum number of samples required at a
@@ -1866,7 +1866,7 @@ params_scenic_extra_trees_defaults <- function() {
 #' Default parameters for the SCENIC GradientBoosting (GRNBoost2) regression
 #' learner
 #'
-#' @return A list with the following parameters:
+#' @returns A list with the following parameters:
 #' \itemize{
 #'  \item n_trees_max - Integer. Maximum number of boosting rounds. Early
 #'  stopping usually triggers well before this limit. Defaults to `1000L`.
@@ -2050,7 +2050,7 @@ params_meld <- function(
 #' @param k_nn Integer. Final number of multimodal neighbours per cell. Defaults
 #' to `20L`.
 #' @param knn_range Integer. Candidate pool size per modality. Each cell's kNN
-#' input must contain at least this many neighbours. Defaults to `100L`.
+#' input must contain at least this many neighbours. Defaults to `200L`.
 #' @param sigma_method String. Bandwidth method. One of
 #' `c("snn_farthest", "sigma_idx")`. Defaults to `"snn_farthest"`.
 #' @param sigma_idx Integer. `"sigma_idx"` only: 0-based kNN index for

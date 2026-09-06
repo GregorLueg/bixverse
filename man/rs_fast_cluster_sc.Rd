@@ -33,6 +33,9 @@ not provided, defaults to \code{sqrt(nrow(embd))}.}
 \item{snn}{Boolean. Shall the kNN graph be additionally transformed into
 an sNN graph.}
 
+\item{return_kmeans}{Boolean. Shall the k-means centroid assignments be
+returned alongside the memberships.}
+
 \item{seed}{Integer. For reproducibility.}
 
 \item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -

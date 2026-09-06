@@ -36,7 +36,7 @@ extendr_module! {
 /// Recommended size: 10000L.
 /// @param seed Seed.
 ///
-/// @return The AUC.
+/// @returns The AUC.
 ///
 /// @export
 #[extendr]
@@ -70,7 +70,7 @@ fn rs_fast_auc(pos_scores: &[f64], neg_scores: &[f64], iters: usize, seed: u64) 
 /// Recommended size: 10000L.
 /// @param seed Seed.
 ///
-/// @return A vector of random AUCs based the score vector and size of the
+/// @returns A vector of random AUCs based the score vector and size of the
 /// positive set.
 ///
 /// @export
@@ -111,7 +111,7 @@ fn rs_create_random_aucs(
 /// calculate the Hedge's G effect.
 /// @param small_sample_correction Shall the small sample correction be applied.
 ///
-/// @return Returns the harmonic sum according to the OT calculation.
+/// @returns Returns the harmonic sum according to the OT calculation.
 ///
 /// @export
 #[extendr]
@@ -150,7 +150,7 @@ fn rs_hedges_g(mat_a: RMatrix<f64>, mat_b: RMatrix<f64>, small_sample_correction
 ///
 /// @param pvals Numeric vector. The p-values you wish to adjust.
 ///
-/// @return The Benjamini-Hochberg adjusted p-values.
+/// @returns The Benjamini-Hochberg adjusted p-values.
 ///
 /// @export
 #[extendr]
@@ -168,7 +168,7 @@ fn rs_fdr_adjustment(pvals: &[f64]) -> Vec<f64> {
 /// @param n Number of black balls in the urn.
 /// @param k The number of balls drawn out of the urn.
 ///
-/// @return P-value (with lower.tail set to False)
+/// @returns P-value (with lower.tail set to False)
 ///
 /// @export
 #[extendr]
@@ -188,7 +188,7 @@ fn rs_phyper(q: usize, m: usize, n: usize, k: usize) -> f64 {
 /// the outlier direction be done for values below the threshold, above the
 /// threshold or in both directions. Weird strings default to twosided tests.
 ///
-/// @return A list with the following items:
+/// @returns A list with the following items:
 /// \itemize{
 ///  \item outlier - Boolean vector if element is an outlier
 ///  \item threshold - Applied final threshold

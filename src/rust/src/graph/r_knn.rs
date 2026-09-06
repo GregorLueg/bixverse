@@ -108,15 +108,15 @@ impl LabelPropParams {
 /// @param label_prop_params List. Named list of parameters with the following
 /// optional fields (defaults in parentheses):
 /// \itemize{
-///   \item \code{alpha} numeric, spreading strength (0.9)
-///   \item \code{iter} integer, max iterations (100)
-///   \item \code{tolerance} numeric, convergence threshold (1e-6)
-///   \item \code{symmetrise} logical, symmetrise the graph (FALSE)
-///   \item \code{symmetry_strategy} character, one of "average", "min", "max" ("average")
-///   \item \code{max_hops} integer, restrict spreading radius (unrestricted)
+///   \item `alpha` numeric, spreading strength (0.9)
+///   \item `iter` integer, max iterations (100)
+///   \item `tolerance` numeric, convergence threshold (1e-6)
+///   \item `symmetrise` logical, symmetrise the graph (FALSE)
+///   \item `symmetry_strategy` character, one of "average", "min", "max" ("average")
+///   \item `max_hops` integer, restrict spreading radius (unrestricted)
 /// }
 ///
-/// @return The matrix with the probabilities of being of a certain class.
+/// @returns The matrix with the probabilities of being of a certain class.
 ///
 /// @export
 #[extendr]
@@ -183,7 +183,7 @@ fn rs_knn_label_propagation(
 /// @param one_index Boolean. If the original data is 0-index, shall 1-indexed
 /// data be returned.
 ///
-/// @return A flat vector representing the edge list.
+/// @returns A flat vector representing the edge list.
 ///
 /// @export
 #[extendr]
@@ -226,7 +226,7 @@ fn rs_knn_mat_to_edge_list(knn_mat: RMatrix<i32>, one_index: bool) -> Vec<i32> {
 /// @param one_index Boolean. If the original data is 0-index, shall 1-indexed
 /// data be returned.
 ///
-/// @return A list with the following elements
+/// @returns A list with the following elements
 /// \itemize{
 ///   \item from - the from indices
 ///   \item to - the to indices

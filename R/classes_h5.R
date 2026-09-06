@@ -3,7 +3,7 @@
 # TODO Add option to extract the var table (if exists) and interact with other
 # data. Future problem.
 
-#' @title Class for Anndata
+#' Class for Anndata
 #'
 #' @description
 #' This class helps dealing with h5ad objects from Python AnnData. You have
@@ -20,7 +20,7 @@ AnnDataParser <- R6::R6Class(
     #'
     #' @param h5_path String. Path to the h5 file.
     #'
-    #' @return Returns the initialised class.
+    #' @returns Returns the initialised class.
     initialize = function(h5_path) {
       # Checks
       checkmate::qassert(h5_path, "S1")
@@ -37,7 +37,7 @@ AnnDataParser <- R6::R6Class(
     #' @description Returns the observation table with all the data from the
     #' h5ad file.
     #'
-    #' @return data.table. The found observations are returned. The pandas index
+    #' @returns data.table. The found observations are returned. The pandas index
     #' will be named `sample_id`. Remaining columns (if found) will be returned
     #' as factors due to the way the data is stored in h5.
     get_obs_table = function() {
@@ -86,7 +86,7 @@ AnnDataParser <- R6::R6Class(
     #' @description Returns the variable table with all the data from the
     #' h5ad file.
     #'
-    #' @return data.table. The found observations are returned. The pandas index
+    #' @returns data.table. The found observations are returned. The pandas index
     #' will be named `var_id`. Remaining columns (if found) will be returned as
     #' factors due to the way the data is stored in h5.
     get_var_info = function() {
@@ -128,7 +128,7 @@ AnnDataParser <- R6::R6Class(
     #' @description Returns the counts that are stored in `X` slot of the
     #' anndata object.
     #'
-    #' @return Returns the count matrix with samples = columns and rows =
+    #' @returns Returns the count matrix with samples = columns and rows =
     #' features.
     get_raw_counts = function() {
       # TODO Needs a conditional to also deal with the sparse versions that
@@ -149,7 +149,7 @@ AnnDataParser <- R6::R6Class(
     #' @description Wrapper function that returns a list of the stored count
     #' data and the metadata found in the h5ad file.
     #'
-    #' @return List with following elements:
+    #' @returns List with following elements:
     #' \itemize{
     #'  \item metadata - metadata from the respective h5ad file
     #'  \item var_info - metadata on the variables from the respective h5ad

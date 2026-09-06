@@ -63,7 +63,7 @@ fn r_list_to_index_vec(pathways: List) -> extendr_api::Result<Vec<Vec<i32>>> {
 /// `anchors`, `symmetric`, `centre`, `ks_test` and `seed`; anything else is
 /// ignored and any missing element takes its default.
 ///
-/// @return List with the following elements
+/// @returns List with the following elements
 /// \itemize{
 ///     \item anchor_sizes Numeric vector. The anchor set sizes, ascending.
 ///     \item shape_pos Numeric vector. Smoothed positive-tail gamma shape.
@@ -78,8 +78,6 @@ fn r_list_to_index_vec(pathways: List) -> extendr_api::Result<Vec<Vec<i32>>> {
 /// }
 ///
 /// @export
-///
-/// @keywords internal
 #[extendr]
 fn rs_blitzgsea_calibrate(stats: &[f64], blitz_params: List) -> extendr_api::Result<List> {
     let params = BlitzGseaParams::from_r_list(blitz_params)?;
@@ -108,7 +106,7 @@ fn rs_blitzgsea_calibrate(stats: &[f64], blitz_params: List) -> extendr_api::Res
 /// [bixverse::params_blitzgsea()]. Only `centre` is read here and it has to
 /// match what the calibration used.
 ///
-/// @return List with the following elements
+/// @returns List with the following elements
 /// \itemize{
 ///     \item es Numeric vector. Enrichment scores for the gene sets.
 ///     \item nes Numeric vector. Normalised enrichment scores.
@@ -122,8 +120,6 @@ fn rs_blitzgsea_calibrate(stats: &[f64], blitz_params: List) -> extendr_api::Res
 /// }
 ///
 /// @export
-///
-/// @keywords internal
 #[extendr]
 fn rs_blitzgsea_score(
     stats: &[f64],

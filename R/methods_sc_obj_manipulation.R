@@ -45,7 +45,7 @@
 #' `100000L`. Only relevant if streaming is set to `2`.
 #' @param .verbose Boolean.
 #'
-#' @return The populated target `SingleCells`.
+#' @returns The populated target `SingleCells`.
 #'
 #' @export
 merge_sc_experiments <- S7::new_generic(

@@ -52,4 +52,3 @@ method and is what a fixture should be.
 \references{
 Jerby-Arnon & Regev, Nature Biotechnology, 2022
 }
-\keyword{internal}

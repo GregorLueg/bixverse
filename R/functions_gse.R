@@ -22,7 +22,7 @@
 #' and the respective gene set.
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
-#' @return data.table with enrichment results.
+#' @returns data.table with enrichment results.
 #'
 #' @export
 #'
@@ -124,7 +124,7 @@ gse_hypergeometric <- function(
 #' the respective gene set.
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
-#' @return data.table with enrichment results.
+#' @returns data.table with enrichment results.
 #'
 #' @export
 #'
@@ -233,7 +233,7 @@ gse_hypergeometric_list <- function(
 #' @param min_sim Float between 0 and 1. The minimum similarity that the terms
 #' need to have.
 #'
-#' @return data.table with enrichment results.
+#' @returns data.table with enrichment results.
 #'
 #' @export
 #'
@@ -338,7 +338,7 @@ simplify_hypergeom_res <- function(
 #' }
 #' @param .verbose Boolean. Controls verbosity.
 #'
-#' @return A matrix of shape pathways (that passed the thresholds) x samples.
+#' @returns A matrix of shape pathways (that passed the thresholds) x samples.
 #'
 #' @export
 #'
@@ -432,7 +432,7 @@ calc_gsva <- function(
 #' }
 #' @param .verbose Boolean. Controls verbosity.
 #'
-#' @return A matrix of shape pathways (that passed the thresholds) x samples.
+#' @returns A matrix of shape pathways (that passed the thresholds) x samples.
 #'
 #' @export
 #'
@@ -958,7 +958,7 @@ prep_stats_pathways <- function(
 #' @param pval Numerical vector. The p-values.
 #' @param sample_size Integer. The sample size.
 #'
-#' @return Returns the log2error
+#' @returns Returns the log2error
 #'
 #' @keywords internal
 multilevel_error <- function(pval, sample_size) {
@@ -1237,7 +1237,7 @@ calc_blitzgsea <- function(
 #' against.
 #' @param min_size Integer. Minimum size of the gene set to be included.
 #'
-#' @return A data.table with the Mitch enrichment results.
+#' @returns A data.table with the Mitch enrichment results.
 #'
 #' @export
 #'
@@ -1306,7 +1306,7 @@ calc_mitch <- function(contrast_mat, gene_set_list, min_size = 5L) {
 #' @param stable_genes Character vector or NULL. Gene names of stable genes.
 #' Defaults to `NULL` (standard ranking).
 #'
-#' @return A rank matrix with the same shape as `exp` and `attr(., "stable")`
+#' @returns A rank matrix with the same shape as `exp` and `attr(., "stable")`
 #' set to `TRUE` or `FALSE`.
 #'
 #' @export
@@ -1363,7 +1363,7 @@ calc_singscore_rank <- function(exp, stable_genes = NULL) {
 #' permutation test.
 #' @param seed Integer. RNG seed for the permutation test.
 #'
-#' @return A data.table with one row per sample. Columns: `total_score`,
+#' @returns A data.table with one row per sample. Columns: `total_score`,
 #' `total_dispersion`, optionally `up_score`, `up_dispersion`, `down_score`,
 #' `down_dispersion`, and (when permutations are run) `pval`. With
 #' permutations, the null distribution is attached as
@@ -1461,7 +1461,7 @@ calc_singscore <- function(
 #' @param min_size Integer. Minimum gene-set size after dropping missing genes.
 #' @param max_size Integer. Maximum gene-set size.
 #'
-#' @return A named list with two matrices, `scores` and `dispersions`, each of
+#' @returns A named list with two matrices, `scores` and `dispersions`, each of
 #' shape gene_sets × samples.
 #'
 #' @export

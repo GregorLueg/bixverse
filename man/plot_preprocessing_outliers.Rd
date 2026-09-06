@@ -20,5 +20,6 @@ and a column specifying the cohort.}
 ggplot object, i.e., beeswarm plot with outlier indication
 }
 \description{
-Helper plot function for identification of outliers
+Beeswarm plot of the percentage of detected genes per sample, with the
+outlier cutoffs drawn in. Used in the bulk DGE pre-processing report.
 }

@@ -47,7 +47,7 @@ times. \code{FALSE} -> quiet, \code{TRUE} or \code{1L} -> normal verbosity, \cod
 detailed verbosity.}
 }
 \value{
-A \code{ScNebula} class, see \code{\link[=new_sc_nebula_res]{new_sc_nebula_res()}}.
+A \code{ScNebula} class, see \code{new_sc_nebula_res()}.
 }
 \description{
 Fits NEBULA's negative binomial gamma mixed model over aggregated counts.

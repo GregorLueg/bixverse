@@ -40,7 +40,7 @@ extendr_module! {
 /// @param signed Boolean. Shall the signed TOM be calculated. If set to
 /// `FALSE`, values should be ≥ 0.
 ///
-/// @return Returns the TOM matrix.
+/// @returns Returns the TOM matrix.
 ///
 /// @export
 #[extendr]
@@ -74,7 +74,7 @@ fn rs_tom(x: RMatrix<f64>, tom_type: &str, signed: bool) -> extendr_api::Result<
 /// correlation matrix.
 /// @param seed Integer. Random seed for the sub sampling of genes.
 ///
-/// @return A list containing:
+/// @returns A list containing:
 ///  \itemize{
 ///   \item r2med - median R2 of the cluster.
 ///   \item r2mad - median absolute deviation of the R2 in the cluster.
@@ -184,7 +184,7 @@ fn rs_coremo_quality(
 /// `c("gaussian", "bump", "inverse_quadratic")`.
 /// @param spearman Boolean. Shall Spearman correlation be used.
 ///
-/// @return A list with `length(indices)` elements, each containing the distance
+/// @returns A list with `length(indices)` elements, each containing the distance
 /// minus the given sample.
 ///
 /// @keywords internal
@@ -243,7 +243,7 @@ fn rs_coremo_stability(
 /// resampling/bootstrap and the rows represent the features, while each integer
 /// indicates cluster membership.
 ///
-/// @return A list containing:
+/// @returns A list containing:
 ///  \itemize{
 ///   \item mean_jaccard - mean Jaccard similarities for this feature across all
 ///   the bootstraps, resamplings.
@@ -278,7 +278,7 @@ fn rs_cluster_stability(data: RMatrix<i32>) -> List {
 ///
 /// @param data The correlation matrix to split by sign.
 ///
-/// @return A vector of 1 and -1 indicating the respective sign of the
+/// @returns A vector of 1 and -1 indicating the respective sign of the
 /// correlation matrix.
 ///
 /// @export

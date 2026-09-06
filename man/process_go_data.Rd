@@ -15,7 +15,7 @@ process_go_data(go_info, go_genes, go_relationships)
 \code{relationship}}
 }
 \value{
-data.table ready for usage in \code{\link[=gene_ontology_data]{gene_ontology_data()}}.
+data.table ready for usage in \code{\link[=GeneOntologyElim]{GeneOntologyElim()}}.
 }
 \description{
 Helper function that takes in different files containing gene

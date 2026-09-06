@@ -27,7 +27,7 @@
 #' `edge_data_frame` needs to have a weight column.
 #' @param directed Boolean. Shall the graph be stored as directed.
 #'
-#' @return Returns the `NetworkDiffusions` class for further operations.
+#' @returns Returns the `NetworkDiffusions` class for further operations.
 #'
 #' @export
 NetworkDiffusions <- S7::new_class(
@@ -94,7 +94,7 @@ NetworkDiffusions <- S7::new_class(
 #'
 #' @param object The underlying class [bixverse::NetworkDiffusions()].
 #'
-#' @return The diffusion vector if found. If you did not run either diffusion
+#' @returns The diffusion vector if found. If you did not run either diffusion
 #' functions, it will return `NULL` and a warning.
 #'
 #' @export
@@ -129,7 +129,7 @@ S7::method(get_diffusion_vector, NetworkDiffusions) <- function(object) {
 #'
 #' @param object The underlying class [bixverse::NetworkDiffusions()].
 #'
-#' @return The diffusion Z scores if found. Otherwise `NULL`.
+#' @returns The diffusion Z scores if found. Otherwise `NULL`.
 #'
 #' @export
 get_diffusion_perms <- S7::new_generic(
@@ -192,7 +192,7 @@ S7::method(get_diffusion_perms, NetworkDiffusions) <- function(object) {
 #' @param value_col The column (name) which stores the genes that are part of
 #' the modules. Only needed if you want to use set similarities.
 #'
-#' @return Returns the `RbhGraph` class for further operations.
+#' @returns Returns the `RbhGraph` class for further operations.
 #'
 #' @export
 RbhGraph <- S7::new_class(
@@ -281,7 +281,7 @@ RbhGraph <- S7::new_class(
 #'
 #' @param object The underlying class [bixverse::RbhGraph()].
 #'
-#' @return The data.table with the RBH result if found, otherwise NULL.
+#' @returns The data.table with the RBH result if found, otherwise NULL.
 #'
 #' @export
 get_rbh_res <- S7::new_generic(
@@ -355,7 +355,8 @@ S7::method(get_rbh_res, RbhGraph) <- function(object) {
 #' The parameters will be internally stored for subsequent usage in other
 #' functions.
 #'
-#' @return Returns the `Snf` class for further operations.
+#' @returns Returns the `SimilarityNetworkFusion` class for further
+#' operations.
 #'
 #' @export
 SimilarityNetworkFusion <- S7::new_class(
@@ -439,7 +440,7 @@ SimilarityNetworkFusion <- S7::new_class(
 #'
 #' @param object The underlying class [bixverse::SimilarityNetworkFusion()].
 #'
-#' @return Returns the stored SNF params
+#' @returns Returns the stored SNF params
 #'
 #' @export
 get_snf_params <- S7::new_generic(
@@ -471,7 +472,7 @@ S7::method(get_snf_params, SimilarityNetworkFusion) <- function(object) {
 #' @param name String. The name of the individual data modality affinity
 #' matrix to return.
 #'
-#' @return Returns adjcacency matrix if found.
+#' @returns Returns adjcacency matrix if found.
 #'
 #' @export
 get_snf_adjcacency_mat <- S7::new_generic(
@@ -509,7 +510,7 @@ S7::method(get_snf_adjcacency_mat, SimilarityNetworkFusion) <- function(
 #'
 #' @param object The underlying class [bixverse::SimilarityNetworkFusion()].
 #'
-#' @return Returns the SNF adjacency/similarity matrix.
+#' @returns Returns the SNF adjacency/similarity matrix.
 #'
 #' @export
 get_snf_final_mat <- S7::new_generic(

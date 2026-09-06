@@ -2,7 +2,7 @@
 % Please edit documentation in R/plots_bulk.R
 \name{plot_boxplot_normalization}
 \alias{plot_boxplot_normalization}
-\title{Helper plot function for boxplot of normalized data}
+\title{Helper plot function for boxplot of normalised data}
 \usage{
 plot_boxplot_normalization(samples, voom_object, group_col)
 }
@@ -18,5 +18,5 @@ and a column specifying the cohort.}
 ggplot object, i.e., box plot with expression per sample.
 }
 \description{
-Helper plot function for boxplot of normalized data
+Helper plot function for boxplot of normalised data
 }

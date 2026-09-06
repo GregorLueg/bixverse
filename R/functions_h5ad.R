@@ -11,7 +11,7 @@
 #' @param group_path The HDF5 group (e.g. "/obs", "/var").
 #' @param h5_content data.table from rhdf5::h5ls().
 #'
-#' @return A list with `idx` (character vector or NULL) and `idx_col` (the
+#' @returns A list with `idx` (character vector or NULL) and `idx_col` (the
 #'   dataset name used, or NULL).
 #'
 #' @keywords internal
@@ -45,6 +45,13 @@
 #'
 #' Handles both sparse (group with a `data` dataset) and dense (direct dataset)
 #' storage. Returns NULL if the slot does not exist.
+#'
+#' @param f_path String. Path to the h5ad file.
+#' @param slot_path String. Full path of the slot inside the file.
+#' @param h5_content data.table. Output of [rhdf5::h5ls()] on `f_path`.
+#' @param n_sample Integer. Maximum number of values to read.
+#'
+#' @returns Numeric vector of sampled values, or `NULL` if the slot is absent.
 #'
 #' @keywords internal
 .read_slot_value_sample <- function(
@@ -101,7 +108,7 @@
 #' @param threshold Minimum fraction of non-zero values that must be whole
 #' numbers for a slot to count as raw.
 #'
-#' @return The detected slot name, or NULL if none qualifies.
+#' @returns The detected slot name, or NULL if none qualifies.
 #'
 #' @export
 #'
@@ -154,7 +161,7 @@ detect_raw_count_slot <- function(
 #' `"layers.counts"`.
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
-#' @return A list with:
+#' @returns A list with:
 #' \itemize{
 #'  \item universe - Character vector of gene names in the universe
 #'  \item file_tasks - List of per-file task structures, each containing:
@@ -284,7 +291,7 @@ prescan_h5ad_files <- function(
 #'
 #' @param f_path File path to the `.h5ad` file.
 #'
-#' @return A list with `dims` (named integer `c(obs, var)`) and `type` (one of
+#' @returns A list with `dims` (named integer `c(obs, var)`) and `type` (one of
 #'   `"CSR"`, `"CSC"`, `"DENSE_ROW"`, `"DENSE_COL"`).
 #'
 #' @export
@@ -364,7 +371,7 @@ get_h5ad_dimensions <- function(f_path) {
 #'
 #' @param f_path File path to the `.h5ad` file.
 #'
-#' @return A list with:
+#' @returns A list with:
 #' \itemize{
 #'   \item obs - data.table of cell-level metadata
 #'   \item var - data.table of gene-level metadata
@@ -461,7 +468,7 @@ read_h5ad_metadata <- function(f_path) {
 #' @param n_sample Number of non-zero values to sample for the preview. NULL
 #' reads all.
 #'
-#' @return A list with:
+#' @returns A list with:
 #' \itemize{
 #'   \item stats - named vector: min, max, mean, median, and fraction of values
 #'   that are whole numbers
@@ -512,7 +519,7 @@ read_h5ad_x_summary <- function(f_path, n_sample = 10000L) {
 #'
 #' @param f_path Path to the 10x CellRanger h5 file.
 #'
-#' @return A list with `version` (`"v2"`/`"v3"`), `n_cells` and `n_genes`.
+#' @returns A list with `version` (`"v2"`/`"v3"`), `n_cells` and `n_genes`.
 #'
 #' @keywords internal
 get_tenx_h5_metadata <- function(f_path) {
@@ -550,7 +557,7 @@ get_tenx_h5_metadata <- function(f_path) {
 #' @param feature_names Character. ADT feature names (matrix colnames).
 #' @param pattern String. Case-insensitive regex. Defaults to `"isotype"`.
 #'
-#' @return Character vector of matching names, for inspection before passing
+#' @returns Character vector of matching names, for inspection before passing
 #' to [add_adt_counts_sc()] as `isotype_names`.
 #'
 #' @export
@@ -567,7 +574,7 @@ detect_adt_isotypes <- function(feature_names, pattern = "isotype") {
 #' from [get_adt_names()]).
 #' @param pattern String. Case-insensitive regex. Defaults to `"isotype"`.
 #'
-#' @return Character vector of ADT features, but anything with `"isotype"`.
+#' @returns Character vector of ADT features, but anything with `"isotype"`.
 #'
 #' @export
 remove_adt_isotypes <- function(feature_names, pattern = "isotype") {
@@ -597,7 +604,7 @@ remove_adt_isotypes <- function(feature_names, pattern = "isotype") {
 #' @param gene_universe One of `"intersection"` or `"union"`.
 #' @param .verbose Boolean. Controls verbosity.
 #'
-#' @return A list with:
+#' @returns A list with:
 #' \itemize{
 #'   \item universe - Character vector of gene ids in the universe.
 #'   \item universe_size - Length of the universe.
@@ -735,7 +742,7 @@ prescan_tenx_h5_files <- function(
 #'
 #' @param f_path File path to the 10x `.h5` file.
 #'
-#' @return A list with:
+#' @returns A list with:
 #' \itemize{
 #'   \item obs - data.table of barcodes
 #'   \item var - data.table of features (id, name, and feature_type for v3)

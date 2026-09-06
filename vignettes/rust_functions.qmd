@@ -416,7 +416,7 @@ all.equal(rust_res_mi, infotheo_res_mi)
 
 ```{r}
 #| label: speed differences bixverse vs. infotheo (equal width)
-#| eval: !expr requireNamespace(c("infotheo", "microbenchmark"), quietly = TRUE)
+#| eval: !expr all(vapply(c("infotheo", "microbenchmark"), requireNamespace, logical(1), quietly = TRUE))
 microbenchmark::microbenchmark(
   infotheo = infotheo::mutinformation(infotheo::discretize(
     mat,
@@ -457,7 +457,7 @@ all.equal(rust_res_mi, infotheo_res_mi)
 
 ```{r}
 #| label: speed differences bixverse vs. infotheo (equal frequency)
-#| eval: !expr requireNamespace(c("infotheo", "microbenchmark"), quietly = TRUE)
+#| eval: !expr all(vapply(c("infotheo", "microbenchmark"), requireNamespace, logical(1), quietly = TRUE))
 microbenchmark::microbenchmark(
   infotheo = infotheo::mutinformation(infotheo::discretize(
     mat,
@@ -503,7 +503,7 @@ Starting with a sequential [purrr](https://purrr.tidyverse.org) approach as
 the baseline:
 ```{r}
 #| label: set similarity in R (purrr)
-#| eval: !expr requireNamespace(c("tictoc"), quietly = TRUE)
+#| eval: !expr requireNamespace("tictoc", quietly = TRUE)
 tictoc::tic()
 
 r_results <- purrr::map(
@@ -529,7 +529,7 @@ speedup:
 
 ```{r}
 #| label: set similarity in R (furrr)
-#| eval: !expr requireNamespace(c("future", "tictoc", "furrr"), quietly = TRUE)
+#| eval: !expr all(vapply(c("future", "tictoc", "furrr"), requireNamespace, logical(1), quietly = TRUE))
 future::plan(strategy = future::multisession(workers = parallel::detectCores()))
 
 tictoc::tic()
@@ -559,7 +559,7 @@ scheduling overhead (somtimes) compared to `future` and does a bit better:
 
 ```{r}
 #| label: set similarity in R (mirai)
-#| eval: !expr requireNamespace(c("tictoc", "mirai"), quietly = TRUE)
+#| eval: !expr all(vapply(c("tictoc", "mirai"), requireNamespace, logical(1), quietly = TRUE))
 mirai::daemons(parallel::detectCores())
 
 tictoc::tic()

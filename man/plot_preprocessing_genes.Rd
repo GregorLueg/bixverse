@@ -16,5 +16,7 @@ a column specifying the cohort.}
 ggplot object, i.e. boxplot with number of genes by cohort
 }
 \description{
-Helper plot function of distribution of genes by samples
+Boxplot of the number of detected genes per sample, split by cohort. Used in
+the bulk DGE pre-processing report to spot samples with poor library
+complexity.
 }

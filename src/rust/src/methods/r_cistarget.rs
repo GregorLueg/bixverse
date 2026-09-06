@@ -38,7 +38,7 @@ extendr_module! {
 /// @param n_mean Number of points for averaging in approximate method.
 /// @param verbose Controls verbosity of the function.
 ///
-/// @return List of lists, one per gene set, each containing motif_idx, nes, auc,
+/// @returns List of lists, one per gene set, each containing motif_idx, nes, auc,
 /// rank_at_max, n_enriched, and leading_edge.
 ///
 /// @export

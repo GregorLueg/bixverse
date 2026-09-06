@@ -29,11 +29,11 @@ extendr_module! {
 ///
 /// @param x Numeric matrix. Rows = samples, columns = features.
 /// @param scale Boolean. Shall the columns be variance normalised. (Mean
-/// centering will automatically occur.)
+/// centring will automatically occur.)
 /// @param top_pcs Optional integer. Only return the top PCs (under the hood
 /// all of them will be calculated).
 ///
-/// @return A list with:
+/// @returns A list with:
 /// \itemize{
 ///   \item scores - The product of x (centred and potentially scaled) with v.
 ///   \item v - v matrix of the SVD.
@@ -84,13 +84,13 @@ fn rs_prcomp(
 /// @param x Numeric matrix. Rows = samples, columns = features.
 /// @param rank Integer. The rank to use.
 /// @param scale Boolean. Shall the columns be variance normalised. (Mean
-/// centering will automatically occur.)
+/// centring will automatically occur.)
 /// @param seed Integer. Random seed for reproducibility.
 /// @param oversampling Integer. Defaults to `10L` if nothing is provided.
 /// @param n_power_iter Integer. How often shall the QR decomposition be
 /// applied. Defaults to `2L` if nothing is provided.
 ///
-/// @return A list with:
+/// @returns A list with:
 /// \itemize{
 ///   \item u - u matrix of the SVD.
 ///   \item v - v matrix of the SVD.
@@ -143,7 +143,7 @@ fn rs_random_svd(
 /// @param return_loadings Shall the loadings be returned from the contrastive
 /// PCA
 ///
-/// @return A list containing:
+/// @returns A list containing:
 ///  \itemize{
 ///   \item factors - The factors of the contrastive PCA.
 ///   \item loadings - The loadings of the contrastive PCA. Will be NULL if

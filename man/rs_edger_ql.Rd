@@ -41,4 +41,3 @@ tested with the same call, with \code{filter = FALSE}.
 \references{
 Chen, Lun and Smyth, F1000Research, 2016
 }
-\keyword{internal}

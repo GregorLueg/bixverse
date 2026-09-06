@@ -45,7 +45,7 @@ extendr_module! {
 /// @param min_overlap Optional minimum overlap threshold.
 /// @param fdr_threshold Optional fdr threshold.
 ///
-/// @return A list containing:
+/// @returns A list containing:
 ///  \itemize{
 ///   \item go_ids - The gene ontology identifier.
 ///   \item pvals - The calculated odds ratios.
@@ -126,7 +126,7 @@ fn rs_gse_geom_elim(
 /// @param min_overlap Optional minimum overlap threshold.
 /// @param fdr_threshold Optional fdr threshold.
 ///
-/// @return A list containing:
+/// @returns A list containing:
 ///  \itemize{
 ///   \item go_ids - The gene ontology identifier.
 ///   \item pvals - The calculated odds ratios.
@@ -233,7 +233,8 @@ fn rs_gse_geom_elim_list(
 /// @param stats Named numerical vector. Needs to be sorted. The gene level statistics.
 /// @param levels A character vector representing the levels to iterate through.
 /// The order will be the one the iterations are happening in.
-/// @param go_obj The gene_ontology_data S7 class. See [bixverse::gene_ontology_data()].
+/// @param go_obj The `GeneOntologyElim` S7 class. See
+/// [bixverse::GeneOntologyElim()].
 /// @param gsea_params List. The GSEA parameters, see [bixverse::params_gsea()]
 /// wrapper function. This function generates a list containing:
 /// \itemize{
@@ -251,7 +252,7 @@ fn rs_gse_geom_elim_list(
 /// to use
 /// @param seed Integer. For reproducibility purposes.
 ///
-/// @return List with the following elements
+/// @returns List with the following elements
 /// \itemize{
 ///     \item go_ids The name of the tested gene ontology identifer.
 ///     \item es The enrichment scores for the pathway

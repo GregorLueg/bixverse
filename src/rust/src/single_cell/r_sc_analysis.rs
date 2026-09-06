@@ -102,7 +102,7 @@ extendr_module! {
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
 ///
-/// @return A list with the following elements
+/// @returns A list with the following elements
 /// \itemize{
 ///   \item lfc - Log fold changes between the two groups.
 ///   \item prop1 - Proportion of cells expressing the gene in group 1.
@@ -193,7 +193,7 @@ fn rs_calculate_dge_mann_whitney(
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
 ///
-/// @return A list with the elements below. The per-comparison elements are
+/// @returns A list with the elements below. The per-comparison elements are
 /// flattened comparison-major, i.e., all genes of the first comparison, then
 /// all genes of the second, and so on.
 /// \itemize{
@@ -320,7 +320,7 @@ fn rs_calculate_dge_one_vs_many(
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
 ///
-/// @return Matrix of module scores (modules x cells). Each row corresponds to a
+/// @returns Matrix of module scores (modules x cells). Each row corresponds to a
 /// module from gs_list, each column to a cell from cells_to_keep.
 ///
 /// @references
@@ -400,7 +400,7 @@ fn rs_module_scoring(
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
 ///
-/// @return A matrix of cells x gene sets with the values representing the
+/// @returns A matrix of cells x gene sets with the values representing the
 /// AUC.
 ///
 /// @export
@@ -470,7 +470,7 @@ fn rs_aucell(
 /// @param binarise_params List. The binarisation parameters, see
 /// [bixverse::params_scenic_binarise()].
 ///
-/// @return A list with `thresholds` (one per regulon) and `bimodal` (whether
+/// @returns A list with `thresholds` (one per regulon) and `bimodal` (whether
 /// the mixture won the BIC comparison).
 ///
 /// @export
@@ -516,7 +516,7 @@ fn rs_regulon_thresholds(auc_matrix: RMatrix<f64>, binarise_params: List) -> Res
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
 ///
-/// @return A matrix of cells x vision scores per gene set.
+/// @returns A matrix of cells x vision scores per gene set.
 ///
 /// @export
 ///
@@ -579,7 +579,7 @@ fn rs_vision(
 /// detailed verbosity.
 /// @param seed Integer. Random seed for reproducibility.
 ///
-/// @return A list with the following items:
+/// @returns A list with the following items:
 /// \itemize{
 ///   \item autocor_res - Auto-correlation results, i.e., 1 - C, p-value and
 ///   FDR.
@@ -1221,8 +1221,6 @@ fn rs_make_milor_nhoods(
 /// @references Dann, et al., Nat Biotechnol, 2022
 ///
 /// @export
-///
-/// @keywords internal
 #[extendr]
 fn rs_spatial_fdr(p_values: &[f64], connectivity: &[f64]) -> Result<Vec<f64>> {
     spatial_fdr(p_values, connectivity).to_extendr()
@@ -1261,7 +1259,7 @@ fn rs_spatial_fdr(p_values: &[f64], connectivity: &[f64]) -> Result<Vec<f64>> {
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
 ///
-/// @return A list with the following elements
+/// @returns A list with the following elements
 /// \itemize{
 ///   \item gene_idx - Integer. 0-indexed positions of the genes that survived
 ///   NEBULA's own expression filter.

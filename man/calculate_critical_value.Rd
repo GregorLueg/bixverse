@@ -7,8 +7,9 @@
 calculate_critical_value(x, alpha, permutations = 100000L, seed = 10101L)
 }
 \arguments{
-\item{x}{Numerical matrix or \verb{ontology class}, see \code{\link[=ontology]{ontology()}}.
-This function tends to be slower on matrices compared to \verb{ontology class}.}
+\item{x}{Numerical matrix or \code{OntologySim} class, see
+\code{\link[=OntologySim]{OntologySim()}}. This function tends to be slower on matrices
+compared to the \code{OntologySim} class.}
 
 \item{alpha}{Float. The alpha value. For example, 0.001 would mean that the
 critical value is smaller than 0.1 percentile of the random permutations.}

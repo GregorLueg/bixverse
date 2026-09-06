@@ -40,7 +40,7 @@
 #' @param used_cells Character vector. The cells used to generate the kNN graph
 #' with the distances.
 #'
-#' @return Generates the `SingleCellNearestNeighbour` class.
+#' @returns Generates the `SingleCellNearestNeighbour` class.
 #'
 #' @export
 new_sc_knn <- function(knn_data, used_cells) {
@@ -127,7 +127,7 @@ get_knn_dist.SingleCellNearestNeighbour <- function(x, ...) {
 #'
 #' @param x `SingleCellNearestNeighbour` class.
 #'
-#' @return A `NearestNeighbours` class compatible with manifoldsR.
+#' @returns A `NearestNeighbours` class compatible with manifoldsR.
 #'
 #' @export
 sc_knn_to_nearest_neighbours <- function(x) {
@@ -156,7 +156,7 @@ sc_knn_to_nearest_neighbours <- function(x) {
 #' @param rescue_thresholds Named list of numeric vectors with `lower`
 #' and/or `upper`.
 #'
-#' @return Updated `CellQc`.
+#' @returns Updated `CellQc`.
 #'
 #' @export
 rescue_cells <- function(x, rescue_thresholds) {
@@ -196,7 +196,7 @@ rescue_cells <- function(x, rescue_thresholds) {
 #' @param hard_thresholds Named list. See `run_cell_qc`.
 #' @param reset Logical. Clear existing hard flags before applying.
 #'
-#' @return Updated `CellQc`.
+#' @returns Updated `CellQc`.
 #'
 #' @export
 flag_cells <- function(x, hard_thresholds, reset = FALSE) {
@@ -454,7 +454,7 @@ get_data.ScMatrixRes <- function(x, columns = NULL, ...) {
 #' @param .verbose Logical. If `TRUE`, prints updated rate summaries to the
 #' console.
 #'
-#' @return The `ScrubletRes` object with updated doublet calls and summary
+#' @returns The `ScrubletRes` object with updated doublet calls and summary
 #' statistics.
 #'
 #' @keywords internal
@@ -535,7 +535,7 @@ get_data.ScMatrixRes <- function(x, columns = NULL, ...) {
 #' group to plot. Defaults to the first group if `NULL`.
 #' @param ... Additional arguments (unused; required by the S3 generic).
 #'
-#' @return A `patchwork` object with two `ggplot2` histograms.
+#' @returns A `patchwork` object with two `ggplot2` histograms.
 #'
 #' @export
 #'
@@ -636,7 +636,7 @@ plot.ScrubletRes <- function(x, break_number = 31L, for_sample = NULL, ...) {
 #' @param .verbose Logical. If `TRUE`, prints updated rate summaries to the
 #' console.
 #'
-#' @return The `ScrubletRes` object with updated `predicted_doublets`,
+#' @returns The `ScrubletRes` object with updated `predicted_doublets`,
 #' `z_scores`, `threshold`, `detected_doublet_rate`,
 #' `detectable_doublet_fraction`, and `overall_doublet_rate`.
 #'
@@ -700,7 +700,7 @@ get_data.ScrubletRes <- function(x, ...) {
 #' @param x A `ScrubletRes` object.
 #' @param ... Ignored.
 #'
-#' @return Invisible `x`.
+#' @returns Invisible `x`.
 #'
 #' @export
 #'
@@ -810,7 +810,7 @@ get_data.BoostRes <- function(x, ...) {
 #' @param x A `BoostRes` object.
 #' @param ... Ignored.
 #'
-#' @return Invisible `x`.
+#' @returns Invisible `x`.
 #'
 #' @export
 #'
@@ -936,7 +936,7 @@ get_scores.ScDblFinderRes <- function(
 #' @param x A `ScDblFinderRes` object.
 #' @param ... Ignored.
 #'
-#' @return Invisible `x`.
+#' @returns Invisible `x`.
 #'
 #' @export
 #'
@@ -1009,7 +1009,7 @@ print.ScDblFinderRes <- function(x, ...) {
 #' @param used_genes Character vector. The used genes to generate the matrices.
 #' @param used_cells Character vector. The used cells to generate the matrices.
 #'
-#' @return Generates the `sc_hotspot` class.
+#' @returns Generates the `sc_hotspot` class.
 #'
 #' @export
 #'
@@ -1095,7 +1095,7 @@ print.Hotspot <- function(x, ...) {
 #' @param seed Integer. Seed for reproducible subsampling.
 #' @param ... Further arguments (currently unused).
 #'
-#' @return A [ggplot2::ggplot] object.
+#' @returns A [ggplot2::ggplot] object.
 #'
 #' @method plot Hotspot
 #'
@@ -1601,7 +1601,7 @@ get_index_cells.miloR <- function(x) {
 #' distance to the k-th nearest neighbour, `"graph-overlap"` by the number of
 #' cells shared with other neighbourhoods. Defaults to `"k-distance"`.
 #'
-#' @return The `miloR` object with the differential abundance results added.
+#' @returns The `miloR` object with the differential abundance results added.
 #'
 #' @references Dann, et al., Nat Biotechnol, 2022; Chen, Lun and Smyth,
 #' F1000Research, 2016
@@ -1753,7 +1753,7 @@ test_nhoods.miloR <- function(
 #' you wish to add to the different neighbourhoods. Must be the same length
 #' as the number of cells (rows) in the nhoods matrix.
 #'
-#' @return Modified `miloR` object with updated `nhoods_info` containing
+#' @returns Modified `miloR` object with updated `nhoods_info` containing
 #' `majority_celltype` and `majority_prop` columns.
 #'
 #' @export
@@ -1845,7 +1845,7 @@ add_nhoods_info.miloR <- function(x, cell_info) {
 #' @param tf_ids Character vector. TF identifiers corresponding to columns.
 #' @param params List. The full SCENIC parameters used for the run.
 #'
-#' @return An object of class `ScenicGrn`.
+#' @returns An object of class `ScenicGrn`.
 #'
 #' @export
 #'
@@ -3833,7 +3833,7 @@ plot.NmfKSweepResult <- function(x, ...) {
 #' `terminal_states`. Detected terminal states have no labels to carry, so this
 #' is `NULL` for those runs.
 #'
-#' @return Generates the `PalantirRes` class.
+#' @returns Generates the `PalantirRes` class.
 #'
 #' @export
 #'
@@ -3982,7 +3982,7 @@ print.PalantirRes <- function(x, ...) {
 #' @param cluster_col String. The obs column the clustering came from.
 #' @param modality String. The modality the kNN graph came from.
 #'
-#' @return Generates the `PagaRes` class.
+#' @returns Generates the `PagaRes` class.
 #'
 #' @export
 #'
@@ -4063,7 +4063,7 @@ print.PagaRes <- function(x, ...) {
 #' @param modality String. The modality of the kNN graph that did the
 #' smoothing. The values themselves are always RNA.
 #'
-#' @return Generates the `ScMagic` class.
+#' @returns Generates the `ScMagic` class.
 #'
 #' @export
 #'
@@ -4144,7 +4144,7 @@ print.ScMagic <- function(x, ...) {
 #' probability matrix.
 #' @param params List. The parameters the run used.
 #'
-#' @return Generates the `GeneTrendsRes` class.
+#' @returns Generates the `GeneTrendsRes` class.
 #'
 #' @export
 #'

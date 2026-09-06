@@ -971,7 +971,7 @@ S7::method(dialogue_sc, MetaCells) <- function(
 #' times. `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` ->
 #' detailed verbosity.
 #'
-#' @returns A `ScNebula` class, see [bixverse::new_sc_nebula_res()].
+#' @returns A `ScNebula` class, see `new_sc_nebula_res()`.
 #'
 #' @references He, et al., Commun Biol, 2021
 #'

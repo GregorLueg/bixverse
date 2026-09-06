@@ -31,7 +31,7 @@ extendr_module! {
 /// @param stats Named numerical vector. Needs to be sorted. The gene level statistics.
 /// @param pathway_r String vector. The genes in the pathway.
 ///
-/// @return The enrichment score
+/// @returns The enrichment score
 ///
 /// @export
 ///
@@ -59,7 +59,7 @@ fn rs_calc_es(stats: Robj, pathway_r: Vec<String>) -> extendr_api::Result<f64> {
 /// @param pathway_list List. A named list with each element containing the genes for this
 /// pathway.
 ///
-/// @return Returns a list with the index positions of the gene set genes in the gene universe.
+/// @returns Returns a list with the index positions of the gene set genes in the gene universe.
 /// Importantly, these are indexed to R's 1-indexing!
 ///
 /// @export
@@ -117,7 +117,7 @@ fn rs_get_gs_indices(gene_universe: Vec<String>, pathway_list: List) -> extendr_
 /// @param return_all_extremes Boolean. Shall the extreme values be returned
 /// for plotting.
 ///
-/// @return List with the following elements
+/// @returns List with the following elements
 /// \itemize{
 ///     \item gene_stat Enrichment score for that gene set
 ///     \item leading_edge Indicies of the leading edge genes.
@@ -166,7 +166,7 @@ fn rs_calc_gsea_stats(
 /// @param iters Integer. Number of permutations.
 /// @param seed Integer For reproducibility purposes
 ///
-/// @return List with the following elements
+/// @returns List with the following elements
 /// \itemize{
 ///     \item es Enrichment scores for the gene sets
 ///     \item nes Normalised enrichment scores for the gene sets
@@ -220,7 +220,7 @@ fn rs_calc_gsea_stat_traditional_batch(
 /// necessary for the multi-level calculations.
 /// @param seed Integer. For reproducibility purposes
 ///
-/// @return List with the following elements
+/// @returns List with the following elements
 /// \itemize{
 ///     \item es Enrichment scores for the gene sets
 ///     \item nes Normalised enrichment scores for the gene sets
@@ -301,7 +301,7 @@ fn rs_calc_gsea_stat_cumulative_batch(
 /// @param eps Float. Boundary for calculating the p-value.
 /// @param sign Boolean. Used for the only positive or only negative score version.
 ///
-/// @return List with the following elements:
+/// @returns List with the following elements:
 /// \itemize{
 ///     \item pvals The pvalues.
 ///     \item is_cp_ge_half Flag indicating if conditional probability is ≥ 0.5. Indicates
@@ -368,7 +368,7 @@ fn rs_calc_multi_level(
 /// @param nperm Integer. Number of permutations.
 /// @param sample_size Integer. Number of samples.
 ///
-/// @return List with the following elements:
+/// @returns List with the following elements:
 /// \itemize{
 ///     \item simple_err Vector of simple errors.
 ///     \item multi_err Vector of multi errors.

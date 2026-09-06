@@ -10,7 +10,7 @@
 #'
 #' @param x Numeric vector. Needs to be between 0 and 1.
 #'
-#' @return Harmonic, normalised sum of the provided scores.
+#' @returns Harmonic, normalised sum of the provided scores.
 #'
 #' @export
 ot_harmonic_score <- function(x) {
@@ -30,7 +30,7 @@ ot_harmonic_score <- function(x) {
 #'
 #' @param x Numeric vector.
 #'
-#' @return x, robustly scaled.
+#' @returns x, robustly scaled.
 #'
 #' @export
 #'
@@ -63,7 +63,7 @@ robust_scale <- function(x) {
 #' small sample size correction should be applied) or Boolean.
 #' @param .verbose Boolean that controls verbosity of the function.
 #'
-#' @return x, robustly scaled.
+#' @returns x, robustly scaled.
 #'
 #' @export
 calculate_effect_size <- function(

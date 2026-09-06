@@ -36,6 +36,10 @@
 
 #' Placeholder: manifoldsR nearest neighbours from a WNN graph
 #'
+#' @param x `SingleCellsMultiModal` object holding a WNN graph.
+#'
+#' @returns A `manifoldsR` nearest neighbours object.
+#'
 #' @keywords internal
 .get_manifoldsr_knn_from_wnn <- function(x) {
   checkmate::assertTRUE(
@@ -104,7 +108,7 @@
 #' @param seed Integer. For reproducibility.
 #' @param .verbose Boolean. Controls verbosity.
 #'
-#' @return The object with a `"umap"` embedding added.
+#' @returns The object with a `"umap"` embedding added.
 #'
 #' @export
 umap_sc <- S7::new_generic(
@@ -312,7 +316,7 @@ S7::method(umap_sc, ScOrMc) <- function(
 #' @param seed Integer. For reproducibility.
 #' @param .verbose Boolean. Controls verbosity.
 #'
-#' @return The object with a `"tsne"` embedding added.
+#' @returns The object with a `"tsne"` embedding added.
 #'
 #' @export
 tsne_sc <- S7::new_generic(
@@ -508,7 +512,7 @@ S7::method(tsne_sc, ScOrMc) <- function(
 #' @param seed Integer. For reproducibility.
 #' @param .verbose Boolean. Controls verbosity.
 #'
-#' @return The object with a `"phate"` embedding added.
+#' @returns The object with a `"phate"` embedding added.
 #'
 #' @export
 phate_sc <- S7::new_generic(
@@ -662,7 +666,7 @@ S7::method(phate_sc, ScOrMc) <- function(
 #' @param features Character vector. Requested feature ids.
 #' @param available Character vector. Feature names present in the data.
 #'
-#' @return The subset of `features` that was matched, in input order.
+#' @returns The subset of `features` that was matched, in input order.
 #'
 #' @keywords internal
 .match_features <- function(features, available) {
@@ -717,7 +721,7 @@ S7::method(phate_sc, ScOrMc) <- function(
 #' @param x Numeric vector.
 #' @param clip Optional numeric. Clip the z-scores to `[-clip, clip]`.
 #'
-#' @return The scaled (and optionally clipped) vector.
+#' @returns The scaled (and optionally clipped) vector.
 #'
 #' @keywords internal
 .scale_and_clip_expr <- function(x, clip = NULL) {
@@ -739,7 +743,7 @@ S7::method(phate_sc, ScOrMc) <- function(
 #' @param scale Boolean. Whether to z-score each feature across cells.
 #' @param clip Optional numeric. Clip the z-scores if `scale = TRUE`.
 #'
-#' @return A data.table with a `cell_id` column and one column per feature.
+#' @returns A data.table with a `cell_id` column and one column per feature.
 #'
 #' @keywords internal
 .extract_expr_in_memory <- function(mat, features, scale = FALSE, clip = NULL) {
@@ -761,7 +765,7 @@ S7::method(phate_sc, ScOrMc) <- function(
 #' @param features Character vector. Feature ids to extract (pre-matched).
 #' @param grouping Factor. Group assignment per cell.
 #'
-#' @return A long data.table with columns `gene`, `group`, `mean_exp`,
+#' @returns A long data.table with columns `gene`, `group`, `mean_exp`,
 #' `pct_exp`.
 #'
 #' @keywords internal
@@ -790,7 +794,7 @@ S7::method(phate_sc, ScOrMc) <- function(
 #' @param group_levels Character vector. Group levels, in display order.
 #' @param scale_exp Boolean. Whether to min-max scale mean expression per gene.
 #'
-#' @return The data.table with an added `scaled_exp` column and ordered
+#' @returns The data.table with an added `scaled_exp` column and ordered
 #' `gene`/`group` factors.
 #'
 #' @keywords internal

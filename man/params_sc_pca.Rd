@@ -13,7 +13,7 @@ params_sc_pca(
 )
 }
 \arguments{
-\item{mean_center}{Boolean. Shall the data be mean centered}
+\item{mean_center}{Boolean. Shall the data be mean centred}
 
 \item{normalise_variance}{Boolean. Shall the data have normalised variance}
 

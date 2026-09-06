@@ -25,7 +25,9 @@ set_magic(x, magic, ...)
 
 \item{...}{Other parameters.}
 }
+\value{
+The object with the imputed layer attached.
+}
 \description{
 Set/add the MAGIC imputed layer
 }
-\keyword{internal}

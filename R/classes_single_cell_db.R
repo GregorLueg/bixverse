@@ -4,7 +4,7 @@
 
 ### base class -----------------------------------------------------------------
 
-#' @title Base class for the single cell DuckDB connection
+#' Base class for the single cell DuckDB connection
 #'
 #' @description
 #' This is the base class for the single cell experiment DuckDB connection,
@@ -27,7 +27,7 @@ SingleCellDuckDBBase <- R6::R6Class(
     #' @param db_dir String. Path to where to store the db.
     #' @param db_name String. The name of the DB. Defaults to `"sc_duckdb.db"`.
     #'
-    #' @return Returns the initialised class
+    #' @returns Returns the initialised class
     initialize = function(db_dir, db_name = "sc_duckdb.db") {
       # checks
       checkmate::assertDirectoryExists(db_dir)
@@ -48,7 +48,7 @@ SingleCellDuckDBBase <- R6::R6Class(
     #' @param cols Optional column names to return.
     #' @param filtered Boolean. Whether to return all cells or filtered to to_keep cells.
     #'
-    #' @return The observation table (if found) as a data.table with optionally
+    #' @returns The observation table (if found) as a data.table with optionally
     #' selected indices and/or columns.
     get_obs_table = function(indices = NULL, cols = NULL, filtered = FALSE) {
       # checks
@@ -111,7 +111,7 @@ SingleCellDuckDBBase <- R6::R6Class(
     #' @param indices Optional gene/var indices.
     #' @param cols Optional column names to return.
     #'
-    #' @return The var table (if found) as a data.table with optionally
+    #' @returns The var table (if found) as a data.table with optionally
     #' selected indices and/or columns.
     get_vars_table = function(indices = NULL, cols = NULL) {
       # checks
@@ -160,7 +160,7 @@ SingleCellDuckDBBase <- R6::R6Class(
     #' @param indices Optional ADT/var indices.
     #' @param cols Optional column names to return.
     #'
-    #' @return The var adt table (if found) as a data.table with optionally
+    #' @returns The var adt table (if found) as a data.table with optionally
     #' selected indices and/or columns.
     get_vars_adt_table = function(indices = NULL, cols = NULL) {
       # checks
@@ -206,7 +206,7 @@ SingleCellDuckDBBase <- R6::R6Class(
     #' @description
     #' Returns a mapping between cell index and cell names/barcodes.
     #'
-    #' @return A named numeric containing the cell index mapping.
+    #' @returns A named numeric containing the cell index mapping.
     get_obs_index_map = function() {
       # checks
       private$check_obs_exists()
@@ -232,7 +232,7 @@ SingleCellDuckDBBase <- R6::R6Class(
     #' @description
     #' Returns a mapping between variable index and variable names.
     #'
-    #' @return A named numeric containing the gene index mapping.
+    #' @returns A named numeric containing the gene index mapping.
     get_var_index_map = function() {
       # checks
       private$check_var_exists()
@@ -258,7 +258,7 @@ SingleCellDuckDBBase <- R6::R6Class(
     #' @description
     #' Returns the indices of the cells that have to_keep = TRUE in the DB.
     #'
-    #' @return The index positions (1-index) of the cells to keep.
+    #' @returns The index positions (1-index) of the cells to keep.
     get_cells_to_keep = function() {
       # checks
       private$check_obs_exists()
@@ -283,7 +283,7 @@ SingleCellDuckDBBase <- R6::R6Class(
     #' @description
     #' Returns the available column names in the obs table.
     #'
-    #' @return A character vector of column names.
+    #' @returns A character vector of column names.
     get_obs_cols = function() {
       private$check_obs_exists()
 
@@ -309,7 +309,7 @@ SingleCellDuckDBBase <- R6::R6Class(
     #' @param cell_idx_to_keep Integer vector with the cell indices to keep.
     #' Needs to be 1-indexed!
     #'
-    #' @return Invisible self after updating the to_keep column in the DuckDB.
+    #' @returns Invisible self after updating the to_keep column in the DuckDB.
     set_cells_to_keep = function(cell_idx_to_keep) {
       # checks
       checkmate::qassert(cell_idx_to_keep, "I+")
@@ -350,7 +350,7 @@ SingleCellDuckDBBase <- R6::R6Class(
     #' `set_cells_to_keep()`, which would write a temp table the size of the
     #' whole obs table just to switch every flag back on.
     #'
-    #' @return Invisible self after resetting the to_keep column.
+    #' @returns Invisible self after resetting the to_keep column.
     reset_cells_to_keep = function() {
       # checks
       private$check_obs_exists()
@@ -420,7 +420,7 @@ SingleCellDuckDBBase <- R6::R6Class(
     #' @param new_data A data.table with additional new columns. The order needs
     #' to be the same as the original in the obs table.
     #'
-    #' @return Invisible self while adding the new columns to the obs table
+    #' @returns Invisible self while adding the new columns to the obs table
     #' in the DuckDB.
     add_data_obs = function(new_data) {
       checkmate::assertDataTable(new_data)
@@ -479,7 +479,7 @@ SingleCellDuckDBBase <- R6::R6Class(
     #'
     #' @param new_data A data.table with a cell_idx column to join on.
     #'
-    #' @return Invisible self while left joining the new data to the obs table
+    #' @returns Invisible self while left joining the new data to the obs table
     #' in the DuckDB.
     join_data_obs = function(new_data) {
       checkmate::assertDataTable(new_data)
@@ -561,7 +561,7 @@ SingleCellDuckDBBase <- R6::R6Class(
     #' @param new_data A data.table with additional new columns. The order needs
     #' to be the same as the original in the var table.
     #'
-    #' @return Invisible self while adding the new columns to the var table
+    #' @returns Invisible self while adding the new columns to the var table
     #' in the DuckDB.
     add_data_var = function(new_data) {
       # checks
@@ -627,7 +627,7 @@ SingleCellDuckDBBase <- R6::R6Class(
     #' @param old String. The current column name.
     #' @param new String. The desired new column name.
     #'
-    #' @return Invisible self.
+    #' @returns Invisible self.
     rename_column = function(table = c("obs", "var"), old, new) {
       table <- match.arg(table)
       checkmate::qassert(old, "S1")
@@ -685,7 +685,7 @@ SingleCellDuckDBBase <- R6::R6Class(
     #' @param table String. Either "obs" or "var".
     #' @param cols Character vector. The column names to drop.
     #'
-    #' @return Invisible self.
+    #' @returns Invisible self.
     drop_columns = function(table = c("obs", "var"), cols) {
       table <- match.arg(table)
       checkmate::qassert(cols, "S+")
@@ -845,7 +845,7 @@ SingleCellDuckDBBase <- R6::R6Class(
 
 ### reader helper --------------------------------------------------------------
 
-#' @title Class for storing single cell experimental data in DuckDB (nightly!)
+#' Class for storing single cell experimental data in DuckDB (nightly!)
 #'
 #' @description
 #' This class wraps up the DB connection and methods to interact with the
@@ -876,7 +876,7 @@ SingleCellDuckDB <- R6::R6Class(
     #' in the h5ad obs table is NOT the cell identifier, you can provide
     #' here the correct column name to use as cell_name.
     #'
-    #' @return Returns invisible self. As a side effect, it will load in the
+    #' @returns Returns invisible self. As a side effect, it will load in the
     #' obs data from the h5ad file into the DuckDB.
     populate_obs_from_h5ad = function(
       h5_path,
@@ -1006,7 +1006,7 @@ SingleCellDuckDB <- R6::R6Class(
     #' observation table.
     #' @param filter Optional integer. Positions of obs to read in from file.
     #'
-    #' @return Returns invisible self. As a side effect, it will load in the
+    #' @returns Returns invisible self. As a side effect, it will load in the
     #' obs data from the h5ad file into the DuckDB.
     populate_vars_from_h5ad = function(h5_path, filter = NULL) {
       checkmate::assertFileExists(h5_path)
@@ -1129,7 +1129,7 @@ SingleCellDuckDB <- R6::R6Class(
     #'   cell_filter (1-indexed integer vector of cells to keep).
     #' @param cell_id_col Optional string. Column name for cell identifiers.
     #'
-    #' @return Invisible self. Populates the obs table in DuckDB.
+    #' @returns Invisible self. Populates the obs table in DuckDB.
     populate_obs_from_multi_h5ad = function(per_file_info, cell_id_col = NULL) {
       checkmate::assertList(per_file_info, min.len = 2L)
       checkmate::qassert(cell_id_col, c("S1", "0"))
@@ -1268,7 +1268,7 @@ SingleCellDuckDB <- R6::R6Class(
     #' @param final_gene_names Character vector. Gene ids in the final order
     #' (matches the Rust binary gene axis).
     #'
-    #' @return Invisible self.
+    #' @returns Invisible self.
     populate_var_minimal = function(final_gene_names) {
       checkmate::assertCharacter(final_gene_names, min.len = 1L)
 
@@ -1668,7 +1668,7 @@ SingleCellDuckDB <- R6::R6Class(
     #' @param version String. One of `"v2"` or `"v3"`.
     #' @param filter Optional integer. 1-indexed positions of cells to keep.
     #'
-    #' @return Invisible self. Populates the obs table in DuckDB.
+    #' @returns Invisible self. Populates the obs table in DuckDB.
     populate_obs_from_tenx_h5 = function(h5_path, version, filter = NULL) {
       checkmate::assertFileExists(h5_path)
       checkmate::assertChoice(version, c("v2", "v3"))
@@ -1715,7 +1715,7 @@ SingleCellDuckDB <- R6::R6Class(
     #' @param version String. One of `"v2"` or `"v3"`.
     #' @param filter Optional integer. 1-indexed positions of features to keep.
     #'
-    #' @return Invisible self. Populates the var table in DuckDB.
+    #' @returns Invisible self. Populates the var table in DuckDB.
     populate_vars_from_tenx_h5 = function(h5_path, version, filter = NULL) {
       checkmate::assertFileExists(h5_path)
       checkmate::assertChoice(version, c("v2", "v3"))
@@ -1782,7 +1782,7 @@ SingleCellDuckDB <- R6::R6Class(
     #' (string), `version` (`"v2"` or `"v3"`), `exp_id` (string) and
     #' `cell_filter` (1-indexed integer vector).
     #'
-    #' @return Invisible self.
+    #' @returns Invisible self.
     populate_obs_from_multi_tenx_h5 = function(per_file_info) {
       checkmate::assertList(per_file_info, min.len = 2L)
 
@@ -1852,7 +1852,7 @@ SingleCellDuckDB <- R6::R6Class(
     #' @param per_file_info List of lists; each must contain `db_path`
     #'   (string) and `exp_id` (string).
     #'
-    #' @return Invisible self.
+    #' @returns Invisible self.
     populate_obs_from_multi_duckdb = function(per_file_info) {
       checkmate::assertList(per_file_info, min.len = 2L)
 
@@ -1939,7 +1939,7 @@ SingleCellDuckDB <- R6::R6Class(
     #' @param final_gene_names Character vector. Gene names in the desired
     #'   final order.
     #'
-    #' @return Invisible self.
+    #' @returns Invisible self.
     populate_vars_from_duckdb_reordered = function(
       source_db_path,
       final_gene_names
@@ -2017,7 +2017,7 @@ SingleCellDuckDB <- R6::R6Class(
     #' `exp_id` (string), `has_hdr` (boolean), `cell_filter` (1-indexed integer
     #' vector).
     #'
-    #' @return Invisible self.
+    #' @returns Invisible self.
     populate_obs_from_multi_plain_text = function(per_file_info) {
       checkmate::assertList(per_file_info, min.len = 2L)
 

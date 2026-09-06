@@ -2,7 +2,7 @@
 % Please edit documentation in R/checkmate_extensions.R
 \name{assertCellsExist}
 \alias{assertCellsExist}
-\title{Assert neighbour generation parameters}
+\title{Assert that the cell names exist in the object}
 \usage{
 assertCellsExist(x, cell_names, .var.name = checkmate::vname(x), add = NULL)
 }
@@ -21,6 +21,7 @@ to the heuristic implemented in checkmate.}
 Invisibly returns the checked object if the assertion is successful.
 }
 \description{
-Checkmate extension for asserting if the prodivided cell names
+Checkmate extension for asserting if the provided cell names
+exist in the object.
 }
 \keyword{internal}

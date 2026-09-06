@@ -26,7 +26,7 @@
 #'
 #' @param .verbose `TRUE`, `FALSE`, or an integer.
 #'
-#' @return Integer verbosity level.
+#' @returns Integer verbosity level.
 #'
 #' @keywords internal
 .verbose_level <- function(.verbose) {
@@ -43,7 +43,7 @@
 #'
 #' @param .verbose `TRUE`, `FALSE`, or an integer.
 #'
-#' @return Integer verbosity level, floored at 0.
+#' @returns Integer verbosity level, floored at 0.
 #'
 #' @keywords internal
 .demote_verbosity <- function(.verbose) {
@@ -55,7 +55,7 @@
 #' @param object A `SingleCells` object.
 #' @param group_by Character. Column name to validate.
 #'
-#' @return Invisibly `NULL`. Stops with an informative message if the column
+#' @returns Invisibly `NULL`. Stops with an informative message if the column
 #' is absent.
 #'
 #' @keywords internal
@@ -80,7 +80,7 @@
 #' @param group_by Character. Column name to group by.
 #' @param cells_to_use Integer vector of 0-indexed cell indices.
 #'
-#' @return Named list of 0-indexed integer vectors, one element per group.
+#' @returns Named list of 0-indexed integer vectors, one element per group.
 #'
 #' @keywords internal
 .split_cells_by_group <- function(object, group_by, cells_to_use) {
@@ -113,7 +113,7 @@
 #' @param groups Named list of cell index vectors as returned by
 #' [.split_cells_by_group()].
 #'
-#' @return Invisibly `NULL`.
+#' @returns Invisibly `NULL`.
 #'
 #' @keywords internal
 .validate_group_sizes <- function(groups) {
@@ -149,7 +149,7 @@
 #' One level is demoted before being forwarded to `per_group_fn`.
 #' @param label Character. Label shown on the progress bar.
 #'
-#' @return Named list of results, one element per group.
+#' @returns Named list of results, one element per group.
 #'
 #' @keywords internal
 .run_per_group <- function(groups, per_group_fn, .verbose, label) {
@@ -185,7 +185,7 @@
 #' @param group_results Named list of per-group result objects.
 #' @param field Character. Name of the field to extract from each element.
 #'
-#' @return Unnamed vector of concatenated values.
+#' @returns Unnamed vector of concatenated values.
 #'
 #' @keywords internal
 .concat_per_cell <- function(group_results, field) {
@@ -205,7 +205,7 @@
 #' @param return_pairs Logical. If `TRUE`, simulated doublet pair indices are
 #' included per group.
 #'
-#' @return A `ScrubletRes` object with attributes `cell_indices`, `grouped`,
+#' @returns A `ScrubletRes` object with attributes `cell_indices`, `grouped`,
 #' and `group_by_col`.
 #'
 #' @keywords internal
@@ -287,7 +287,7 @@
 #' @param group_by Character. Name of the grouping column; stored as an
 #' attribute on the returned object.
 #'
-#' @return A `BoostRes` object with attributes `cell_indices`, `grouped`,
+#' @returns A `BoostRes` object with attributes `cell_indices`, `grouped`,
 #' and `group_by_col`.
 #'
 #' @keywords internal
@@ -333,7 +333,7 @@
 #' @param group_by Character. Name of the grouping column; stored as an
 #' attribute on the returned object.
 #'
-#' @return A `ScDblFinderRes` object with attributes `cell_indices`, `grouped`,
+#' @returns A `ScDblFinderRes` object with attributes `cell_indices`, `grouped`,
 #' and `group_by_col`.
 #'
 #' @keywords internal
@@ -413,7 +413,7 @@
 #' doublets are included in the result.
 #' @param .verbose Logical or integer. Verbosity level.
 #'
-#' @return A `ScrubletRes` object with `cell_indices` set as an attribute.
+#' @returns A `ScrubletRes` object with `cell_indices` set as an attribute.
 #'
 #' @keywords internal
 .scrublet_run <- function(
@@ -459,7 +459,7 @@
 #' `NULL`, resolved automatically via [auto_streaming()].
 #' @param .verbose Logical or integer. Verbosity level.
 #'
-#' @return A `BoostRes` object with `cell_indices` set as an attribute.
+#' @returns A `BoostRes` object with `cell_indices` set as an attribute.
 #'
 #' @keywords internal
 .boost_run <- function(
@@ -512,7 +512,7 @@
 #' @param seed Integer. Random seed.
 #' @param .verbose Logical or integer. Verbosity level.
 #'
-#' @return A `ScDblFinderRes` object with `cell_indices` set as an attribute.
+#' @returns A `ScDblFinderRes` object with `cell_indices` set as an attribute.
 #'
 #' @keywords internal
 .scdblfinder_run <- function(
@@ -613,7 +613,7 @@
 #' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
 #' verbosity.
 #'
-#' @return A `scrublet_res` class that has with the following items:
+#' @returns A `scrublet_res` class that has with the following items:
 #' \itemize{
 #'   \item predicted_doublets - Boolean vector indicating which observed cells
 #'   predicted as doublets (TRUE = doublet, FALSE = singlet).
@@ -752,7 +752,7 @@ S7::method(scrublet_sc, SingleCells) <- function(
 #' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
 #' verbosity.
 #'
-#' @return A `boost_res` class that has with the following items:
+#' @returns A `boost_res` class that has with the following items:
 #' \itemize{
 #'   \item predicted_doublets - Boolean vector indicating which observed cells
 #'   predicted as doublets (TRUE = doublet, FALSE = singlet).
@@ -862,7 +862,7 @@ S7::method(doublet_detection_boost_sc, SingleCells) <- function(
 #' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
 #' verbosity.
 #'
-#' @return An S3 object of class `ScDblFinderRes` containing:
+#' @returns An S3 object of class `ScDblFinderRes` containing:
 #' \describe{
 #'   \item{predicted_doublets}{Logical vector of doublet calls.}
 #'   \item{doublet_score}{Numeric vector of classifier probabilities.}
@@ -976,7 +976,7 @@ S7::method(scdblfinder_sc, SingleCells) <- function(
 #' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
 #' verbosity.
 #'
-#' @return It will add the columns based on the names in the `gene_set_list` to
+#' @returns It will add the columns based on the names in the `gene_set_list` to
 #' the obs table.
 #'
 #' @export
@@ -1058,7 +1058,7 @@ S7::method(top_genes_perc_sc, SingleCells) <- function(
 #' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
 #' verbosity.
 #'
-#' @return It will add the columns based on the names in the `gene_set_list` to
+#' @returns It will add the columns based on the names in the `gene_set_list` to
 #' the obs table.
 #'
 #' @export
@@ -1751,7 +1751,7 @@ S7::method(fast_cluster_sc, SingleCells) <- function(
 #' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
 #' verbosity.
 #'
-#' @return Initialised `sc_knn` with the kNN data.
+#' @returns Initialised `sc_knn` with the kNN data.
 #'
 #' @export
 generate_knn_sc <- S7::new_generic(

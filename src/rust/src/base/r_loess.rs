@@ -26,7 +26,7 @@ extendr_module! {
 /// @param degree Integer. Either 1 (linear) or 2 (quadratic). Other values
 /// will cause an error.
 ///
-/// @return A list with the following items
+/// @returns A list with the following items
 /// \itemize{
 ///   \item predicted - The predicted values.
 ///   \item residuals - The residuals for every data point.

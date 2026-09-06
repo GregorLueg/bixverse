@@ -2,7 +2,7 @@
 
 ## single run ------------------------------------------------------------------
 
-#' @title Run non-negative matrix factorisation on a BulkCoExp
+#' Run non-negative matrix factorisation on a BulkCoExp
 #'
 #' @description
 #' Fits a single HALS-NMF `V ~ W H` to the bulk expression matrix with a fixed
@@ -40,7 +40,7 @@
 #' `42L`.
 #' @param .verbose Boolean or integer `0L`/`1L`/`2L`. Controls verbosity.
 #'
-#' @return The class with `final_results` populated (see description) and the
+#' @returns The class with `final_results` populated (see description) and the
 #' fit parameters stored under `params$nmf_fit`, plus
 #' `params$detection_method = "nmf-based"`.
 #'
@@ -172,7 +172,7 @@ S7::method(nmf_bulk, BulkCoExp) <- function(
 
 ## stabilised ------------------------------------------------------------------
 
-#' @title Run stabilised (multi-restart) NMF on a BulkCoExp
+#' Run stabilised (multi-restart) NMF on a BulkCoExp
 #'
 #' @description
 #' Runs `n_runs` HALS-NMF fits with random initialisations and returns the run
@@ -192,7 +192,7 @@ S7::method(nmf_bulk, BulkCoExp) <- function(
 #' @param seed Integer. Base random seed.
 #' @param .verbose Boolean or integer `0L`/`1L`/`2L`. Controls verbosity.
 #'
-#' @return The class with `final_results` populated from the best run (lowest
+#' @returns The class with `final_results` populated from the best run (lowest
 #' final loss) plus stability diagnostics (`losses`, `converged`, `best_idx`,
 #' `w_all_runs`, `h_per_run`).
 #'
@@ -332,7 +332,7 @@ S7::method(stabilised_nmf_bulk, BulkCoExp) <- function(
 
 ## consensus -------------------------------------------------------------------
 
-#' @title Run consensus NMF on a BulkCoExp
+#' Run consensus NMF on a BulkCoExp
 #'
 #' @description
 #' Runs `n_runs` HALS-NMF restarts, pools their components, drops unstable ones
@@ -373,7 +373,7 @@ S7::method(stabilised_nmf_bulk, BulkCoExp) <- function(
 #' k-means step is seeded from it too.
 #' @param .verbose Boolean or integer `0L`/`1L`/`2L`. Controls verbosity.
 #'
-#' @return The class with `final_results` populated from the consensus fit,
+#' @returns The class with `final_results` populated from the consensus fit,
 #' with the clustering diagnostics under `diagnostics` and the fit parameters
 #' under `params$nmf_fit`.
 #'
@@ -514,7 +514,7 @@ S7::method(consensus_nmf_bulk, BulkCoExp) <- function(
 
 ## k sweep ---------------------------------------------------------------------
 
-#' @title Sweep k for consensus NMF on a BulkCoExp
+#' Sweep k for consensus NMF on a BulkCoExp
 #'
 #' @description
 #' Runs the consensus clustering step across a range of `k` and reports
@@ -540,7 +540,7 @@ S7::method(consensus_nmf_bulk, BulkCoExp) <- function(
 #' @param seed Integer. Base random seed.
 #' @param .verbose Boolean or integer `0L`/`1L`/`2L`. Controls verbosity.
 #'
-#' @return An `NmfKSweepResult`, which is a data.table with one row per `k`.
+#' @returns An `NmfKSweepResult`, which is a data.table with one row per `k`.
 #'
 #' @references Kotliar et al., eLife, 2019
 #'
@@ -764,7 +764,7 @@ S7::method(nmf_k_sweep_bulk, BulkCoExp) <- function(
 
 ## getters ---------------------------------------------------------------------
 
-#' @title Get the NMF gene loadings
+#' Get the NMF gene loadings
 #'
 #' @description
 #' Getter function to extract the gene loadings matrix (features x k) from a
@@ -773,7 +773,7 @@ S7::method(nmf_k_sweep_bulk, BulkCoExp) <- function(
 #'
 #' @param object The class, see [bixverse::BulkCoExp()].
 #'
-#' @return A features x k numeric matrix (if found) or `NULL`.
+#' @returns A features x k numeric matrix (if found) or `NULL`.
 #'
 #' @export
 get_nmf_gene_loadings <- S7::new_generic(
@@ -799,7 +799,7 @@ S7::method(get_nmf_gene_loadings, BulkCoExp) <- function(object) {
   get_factors(final_results, which = "gene_loadings")
 }
 
-#' @title Get the NMF sample activity
+#' Get the NMF sample activity
 #'
 #' @description
 #' Getter function to extract the sample activity matrix (samples x k) from a
@@ -807,7 +807,7 @@ S7::method(get_nmf_gene_loadings, BulkCoExp) <- function(object) {
 #'
 #' @param object The class, see [bixverse::BulkCoExp()].
 #'
-#' @return A samples x k numeric matrix (if found) or `NULL`.
+#' @returns A samples x k numeric matrix (if found) or `NULL`.
 #'
 #' @export
 get_nmf_sample_activity <- S7::new_generic(
@@ -833,7 +833,7 @@ S7::method(get_nmf_sample_activity, BulkCoExp) <- function(object) {
   get_factors(final_results, which = "sample_activity")
 }
 
-#' @title Get the NMF module membership data.table
+#' Get the NMF module membership data.table
 #'
 #' @description
 #' Getter function to extract the gene-to-module data.table from a bulk NMF
@@ -841,7 +841,7 @@ S7::method(get_nmf_sample_activity, BulkCoExp) <- function(object) {
 #'
 #' @param object The class, see [bixverse::BulkCoExp()].
 #'
-#' @return A data.table with `gene`, `module_id`, `loading`, `sign` columns
+#' @returns A data.table with `gene`, `module_id`, `loading`, `sign` columns
 #' (if found) or `NULL`.
 #'
 #' @export
@@ -868,7 +868,7 @@ S7::method(get_nmf_modules, BulkCoExp) <- function(object) {
   get_modules(final_results)
 }
 
-#' @title Get the multi-run NMF diagnostics
+#' Get the multi-run NMF diagnostics
 #'
 #' @description
 #' Getter function for the diagnostics of a multi-run NMF fit. For a
@@ -880,7 +880,7 @@ S7::method(get_nmf_modules, BulkCoExp) <- function(object) {
 #'
 #' @param object The class, see [bixverse::BulkCoExp()].
 #'
-#' @return For a stabilised fit, a list with `losses`, `converged` and
+#' @returns For a stabilised fit, a list with `losses`, `converged` and
 #' `best_idx`. For a consensus fit, a list with `stability`, `rel_error`,
 #' `rel_run_errors`, `clusters`, `cluster_sizes`, `n_dropped` and
 #' `n_empty_clusters`. `NULL` if neither was run.

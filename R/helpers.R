@@ -59,7 +59,7 @@ load_go_human_data <- function() {
 #' @param go_relationships data.table. Contains `parent`, `child` and
 #' `relationship`
 #'
-#' @returns data.table ready for usage in [bixverse::gene_ontology_data()].
+#' @returns data.table ready for usage in [bixverse::GeneOntologyElim()].
 #'
 #' @export
 #' @import data.table
@@ -116,7 +116,7 @@ process_go_data <- function(go_info, go_genes, go_relationships) {
 #'
 #' @description
 #' This function loads in gene ontology data stored in the package and processes
-#' it into the format for [bixverse::gene_ontology_data()]. Wraps
+#' it into the format for [bixverse::GeneOntologyElim()]. Wraps
 #' [bixverse::load_go_human_data()] and [bixverse::process_go_data()] into one.
 #'
 #' @param filter_relationships Boolean. Shall the ontology be filtered to
@@ -171,7 +171,7 @@ get_go_data_human <- function(filter_relationships = TRUE, .verbose = TRUE) {
 #' @param edge_dt data.table. The gene ontology edge data (i.e., term
 #' connections between the different terms)
 #'
-#' @return A data.table with the identifier and depth.
+#' @returns A data.table with the identifier and depth.
 #'
 #' @keywords internal
 get_go_levels <- function(edge_dt) {
@@ -302,7 +302,7 @@ sparse_list_to_mat <- function(ls) {
 #' @param x,y The x and y values.
 #' @param span The span parameter for the loess function.
 #'
-#' @return A list containing:
+#' @returns A list containing:
 #' \itemize{
 #'   \item inflection_idx - Index of the inflection point
 #'   \item gradient_change - Absolute change in the first derivative
@@ -393,7 +393,7 @@ get_cores <- function(abs_max_workers = 8L) {
 #' @param ignore_na Boolean. Shall the function just ignore `NA` values and
 #' return `NA` at this position. Defaults to `FALSE`.
 #'
-#' @return Returns the string in snake_case format.
+#' @returns Returns the string in snake_case format.
 #'
 #' @export
 to_snake_case <- function(x, ignore_na = FALSE) {
@@ -470,7 +470,7 @@ select_user_option <- function(options) {
 #' @param sample_names String. The sample names. Needs to be same length as
 #' `nrow(dt)`.
 #'
-#' @return List with the following items:
+#' @returns List with the following items:
 #' \itemize{
 #'   \item dat - A numerical matrix ready for Gower distance calculations
 #'   across samples based on mixed features.
@@ -523,7 +523,7 @@ prep_data_gower_hamming_dist <- function(dt, sample_names) {
 #'
 #' @param labels String vector. `NA`s signify unlabelled data.
 #'
-#' @return One-hot encoded matrix.
+#' @returns One-hot encoded matrix.
 #'
 #' @keywords internal
 one_hot_encode <- function(labels) {
@@ -550,7 +550,7 @@ one_hot_encode <- function(labels) {
 #'
 #' @param sparse_mat Sparse matrix. The matrix to transform into a list.
 #'
-#' @return A list with the following elements
+#' @returns A list with the following elements
 #' \itemize{
 #'   \item indptr - Index pointers of the sparse data.
 #'   \item indices - Indices of the data.

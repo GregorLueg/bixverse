@@ -116,7 +116,7 @@ computational fire power your system has.)
 
 ```{r}
 #| label: gsva-gaussian-speed
-#| eval: !expr requireNamespace(c("GSVA", "microbenchmark"), quietly = TRUE)
+#| eval: !expr all(vapply(c("GSVA", "microbenchmark"), requireNamespace, logical(1), quietly = TRUE))
 microbenchmark::microbenchmark(
   gsva = {
     gsvaPar <- gsvaParam(X, gs)
@@ -166,7 +166,7 @@ And speed:
 
 ```{r}
 #| label: gsva-poisson-speed
-#| eval: !expr requireNamespace(c("GSVA", "microbenchmark"), quietly = TRUE)
+#| eval: !expr all(vapply(c("GSVA", "microbenchmark"), requireNamespace, logical(1), quietly = TRUE))
 microbenchmark::microbenchmark(
   gsva = {
     gsvaPar <- gsvaParam(X_counts, gs, kcdf = "Poisson")
@@ -214,7 +214,7 @@ print(sprintf(
 And check the underlying speed differences:
 ```{r}
 #| label: ssgsea-speed
-#| eval: !expr requireNamespace(c("GSVA", "microbenchmark"), quietly = TRUE)
+#| eval: !expr all(vapply(c("GSVA", "microbenchmark"), requireNamespace, logical(1), quietly = TRUE))
 microbenchmark::microbenchmark(
   gsva = {
     ssgseaPar <- ssgseaParam(X, gs)
@@ -362,7 +362,7 @@ And the speed difference:
 
 ```{r}
 #| label: singscore-speed
-#| eval: !expr requireNamespace(c("singscore", "microbenchmark"), quietly = TRUE)
+#| eval: !expr all(vapply(c("singscore", "microbenchmark"), requireNamespace, logical(1), quietly = TRUE))
 microbenchmark::microbenchmark(
   singscore = {
     sing_ranks <- rankGenes(X)
@@ -455,7 +455,7 @@ And let's check the speed differences:
 
 ```{r}
 #| label: mitch-speed
-#| eval: !expr requireNamespace(c("mitch", "microbenchmark"), quietly = TRUE)
+#| eval: !expr all(vapply(c("mitch", "microbenchmark"), requireNamespace, logical(1), quietly = TRUE))
 microbenchmark::microbenchmark(
   mitch = suppressMessages(mitch::mitch_calc(
     myImportedData,

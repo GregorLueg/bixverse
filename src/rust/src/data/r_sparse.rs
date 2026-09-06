@@ -30,7 +30,7 @@ extendr_module! {
 /// @param cs_type String. One of `c("csr", "csc")`. Which type of list to
 /// return.
 ///
-/// @return A list containing:
+/// @returns A list containing:
 ///  \itemize{
 ///   \item data - A vector of lists with the elements. (Related to the way
 ///   Robj are stored in Rust.)

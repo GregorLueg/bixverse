@@ -2,7 +2,7 @@
 
 ## s7 object -------------------------------------------------------------------
 
-#' @title bixverse single cell subset class
+#' bixverse single cell subset class
 #'
 #' @description
 #' Subset view onto a [bixverse::SingleCells()] object, restricted to cells
@@ -37,7 +37,7 @@
 #' grouping.
 #' @param group String. Level of `grouping_column` to retain.
 #'
-#' @return A `SingleCellsSubset` object.
+#' @returns A `SingleCellsSubset` object.
 #'
 #' @export
 SingleCellsSubset <- S7::new_class(

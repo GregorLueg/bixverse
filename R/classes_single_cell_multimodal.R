@@ -266,14 +266,14 @@ get_adt_sample_info.ADTCounts <- function(x) {
   return(res)
 }
 
-#' @title Get the ADT feature names
+#' Get the ADT feature names
 #'
 #' @description
 #' Get the main ADT feature names
 #'
 #' @param x An object to get the gene names from.
 #'
-#' @return The primary ADT feature identifiers stored in the class.
+#' @returns The primary ADT feature identifiers stored in the class.
 #'
 #' @export
 get_adt_names <- function(x) {
@@ -372,7 +372,7 @@ get_adt_names.ADTCounts <- function(x) {
 
 ## single cell class (multi modal) ---------------------------------------------
 
-#' @title bixverse SingleCells (multi modal) class
+#' bixverse SingleCells (multi modal) class
 #'
 #' @description
 #' This is the `bixverse`-based SingleCells class for multiple modalities. Under
@@ -412,7 +412,7 @@ get_adt_names.ADTCounts <- function(x) {
 #'   \item{dims}{Dimensions of the original data.}
 #' }
 #'
-#' @return Returns the `SingleCellsMultiModal` class for further operations.
+#' @returns Returns the `SingleCellsMultiModal` class for further operations.
 #'
 #' @export
 SingleCellsMultiModal <- S7::new_class(

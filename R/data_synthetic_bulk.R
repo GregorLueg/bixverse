@@ -25,7 +25,7 @@
 #' @param seed Integer. Initial random seed for generation of the synthetic
 #' data. Default: 10101L.
 #'
-#' @return A `synthetic_matrix_simple` class containing:
+#' @returns A `synthetic_matrix_simple` class containing:
 #' \itemize{
 #'  \item mat - The random matrix
 #'  \item diff - List of differentially expressed genes per group
@@ -148,7 +148,7 @@ synthetic_signal_matrix <- function(
 #' @param synthetic_params List. The synthetic data parameters, see
 #' [bixverse::params_synthetic_bulk_rnaseq()].
 #'
-#' @return A `synthetic_bulk_data` class containing:
+#' @returns A `synthetic_bulk_data` class containing:
 #' \itemize{
 #'  \item counts - The count matrix. Rows are genes, columns are samples.
 #'  \item sparse_counts - A slot for sparse counts that can be added later, see
@@ -227,7 +227,7 @@ synthetic_bulk_cor_matrix <- function(
 #' @param sparsity_params List. The sparsification parameters, see
 #' [bixverse::params_bulk_sparsity()].
 #'
-#' @return `synthetic_bulk_data` with added sparse data.
+#' @returns `synthetic_bulk_data` with added sparse data.
 #'
 #' @export
 #'
@@ -332,7 +332,6 @@ calculate_sparsity_stats <- function(object, no_exp_bins = 10L) {
 
 ## contrastive pca synthetic data ----------------------------------------------
 
-#' @title
 #' Generates synthetic data for contrastive PCA exploration.
 #'
 #' @description
@@ -342,7 +341,7 @@ calculate_sparsity_stats <- function(object, no_exp_bins = 10L) {
 #' @param seed Integer. Initial random seed for generation of the synthetic
 #' data. Default: 10101L.
 #'
-#' @return A `cpca_synthetic_data` class with the following elements:
+#' @returns A `cpca_synthetic_data` class with the following elements:
 #' \itemize{
 #'  \item target - The target matrix.
 #'  \item background - The background matrix.
@@ -403,7 +402,6 @@ synthetic_c_pca_data <- function(seed = 10101L) {
 
 ## gene module data ------------------------------------------------------------
 
-#' @title
 #' Generates synthetic gene module data.
 #'
 #' @description
@@ -419,7 +417,7 @@ synthetic_c_pca_data <- function(seed = 10101L) {
 #' @param seed Integer. Initial random seed for generation of the synthetic
 #' data. Default: 10101L.
 #'
-#' @return A `synthetic_matrix_modules` class with the following items:
+#' @returns A `synthetic_matrix_modules` class with the following items:
 #' \itemize{
 #'  \item data - The data matrix.
 #'  \item metadata - The sample metadata.
@@ -528,7 +526,7 @@ generate_gene_module_data <- function(
 #' [bixverse::synthetic_signal_matrix()].
 #' @param ... Additional params
 #'
-#' @return A plotted heatmap showing the DEG.
+#' @returns A plotted heatmap showing the DEG.
 #'
 #' @export
 #'
@@ -567,14 +565,17 @@ plot.synthetic_matrix_simple <- function(x, ...) {
 
 ## contrastive pca -------------------------------------------------------------
 
-#' @title
 #' Plot the contrastive PCA example data
+#'
+#' @description
+#' Two heatmaps side by side, the target and the background matrix, so you can
+#' see the structure contrastive PCA is meant to pull apart.
 #'
 #' @param x `cpca_synthetic_data` class. Output from
 #' [bixverse::synthetic_c_pca_data()].
 #' @param ... Additional params
 #'
-#' @return A ggplot showing the two heatmaps from the target and background
+#' @returns A ggplot showing the two heatmaps from the target and background
 #' matrix.
 #'
 #' @export

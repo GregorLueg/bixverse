@@ -730,6 +730,7 @@ reference:
       - download_pbmc_totalseq_data
       - download_pbmc8k
       - calculate_sparsity_stats
+      - demo_single_cells
       - generate_gene_module_data
       - generate_single_cell_test_data
       - generate_dialogue_test_data
@@ -751,7 +752,6 @@ reference:
       All types of other random helpers without a clear pattern
     contents:
       - AnnDataParser
-      - calculate_sparsity_stats
       - find_threshold_otsu
       - install_agent_skill
       - knn_graph_label_propagation

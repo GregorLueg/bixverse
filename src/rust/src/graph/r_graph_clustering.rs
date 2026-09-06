@@ -33,7 +33,7 @@ extendr_module! {
 /// @param max_iters Integer. Number of iterations for k-means clustering
 /// @param seed Integer. Seed for reproducibility
 ///
-/// @return A vector with the membership of the samples
+/// @returns A vector with the membership of the samples
 ///
 /// @export
 #[extendr]
@@ -78,7 +78,7 @@ fn rs_spectral_clustering_sim(
 /// @param max_iters Integer. Number of iterations for k-means clustering
 /// @param seed Integer. Seed for reproducibility
 ///
-/// @return A vector with the membership of the samples
+/// @returns A vector with the membership of the samples
 ///
 /// @export
 #[extendr]

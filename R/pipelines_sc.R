@@ -24,7 +24,7 @@ SC_STEP_CLASSES <- c("SingleCells", "SingleCellsSubset", "MetaCells")
 #' @param returns String. Class name the step returns, or `"input"` if it hands
 #' back whatever it was given.
 #'
-#' @return An `ScStep` object.
+#' @returns An `ScStep` object.
 #'
 #' @keywords internal
 new_sc_step <- function(
@@ -61,7 +61,7 @@ new_sc_step <- function(
 #' [apply_pipeline()]. Pipelines are inert until applied; steps can be
 #' inspected via `pipeline$steps`.
 #'
-#' @return An empty `ScPipeline` object.
+#' @returns An empty `ScPipeline` object.
 #'
 #' @export
 sc_pipeline <- function() {
@@ -79,7 +79,7 @@ sc_pipeline <- function() {
 #' @param lhs `ScPipeline` or `ScStep`.
 #' @param rhs `ScStep`.
 #'
-#' @return A `ScPipeline`.
+#' @returns A `ScPipeline`.
 #'
 #' @export
 `%>>%` <- function(lhs, rhs) UseMethod("%>>%")
@@ -186,7 +186,7 @@ format_step_args <- function(args) {
 #' @param class String. Class of the object the pipeline would start on. One of
 #' `c("SingleCells", "SingleCellsSubset", "MetaCells")`.
 #'
-#' @return Invisibly, the class the pipeline would return.
+#' @returns Invisibly, the class the pipeline would return.
 #'
 #' @export
 validate_pipeline <- function(pipeline, class) {
@@ -230,7 +230,7 @@ validate_pipeline <- function(pipeline, class) {
 #' happens inside each step's underlying generic, so the same pipeline works on
 #' any class its steps have methods for.
 #'
-#' @return The object after all steps have run.
+#' @returns The object after all steps have run.
 #'
 #' @export
 apply_pipeline <- function(pipeline, object) {
@@ -263,7 +263,7 @@ apply_pipeline <- function(pipeline, object) {
 #' @param progress Boolean. Shall big progress messages be printed to the
 #' console. Defaults to `FALSE`.
 #'
-#' @return Named list of processed objects, names being the group values.
+#' @returns Named list of processed objects, names being the group values.
 #' Usually `SingleCellsSubset`, or `MetaCells` if the pipeline ends on
 #' [step_metacells_sc()], in which case [merge_meta_cells()] puts them back
 #' together.
@@ -428,7 +428,7 @@ meta_cells_per_group <- function(
 #'
 #' @inheritParams find_hvg_sc
 #'
-#' @return An `ScStep`.
+#' @returns An `ScStep`.
 #'
 #' @export
 step_hvg_sc <- function(
@@ -459,7 +459,7 @@ step_hvg_sc <- function(
 #'
 #' @inheritParams calculate_pca_sc
 #'
-#' @return An `ScStep`.
+#' @returns An `ScStep`.
 #'
 #' @export
 step_pca_sc <- function(
@@ -494,7 +494,7 @@ step_pca_sc <- function(
 #'
 #' @inheritParams find_neighbours_sc
 #'
-#' @return An `ScStep`.
+#' @returns An `ScStep`.
 #'
 #' @export
 step_neighbours_sc <- function(
@@ -529,7 +529,7 @@ step_neighbours_sc <- function(
 #'
 #' @inheritParams find_clusters_sc
 #'
-#' @return An `ScStep`.
+#' @returns An `ScStep`.
 #'
 #' @export
 step_clusters_sc <- function(
@@ -562,7 +562,7 @@ step_clusters_sc <- function(
 #'
 #' @inheritParams harmony_sc
 #'
-#' @return An `ScStep`.
+#' @returns An `ScStep`.
 #'
 #' @export
 step_harmony_sc <- function(
@@ -594,7 +594,7 @@ step_harmony_sc <- function(
 #'
 #' @inheritParams harmony_v2_sc
 #'
-#' @return An `ScStep`.
+#' @returns An `ScStep`.
 #'
 #' @export
 step_harmony_v2_sc <- function(
@@ -626,7 +626,7 @@ step_harmony_v2_sc <- function(
 #'
 #' @inheritParams bbknn_sc
 #'
-#' @return An `ScStep`.
+#' @returns An `ScStep`.
 #'
 #' @export
 step_bbknn_sc <- function(
@@ -660,7 +660,7 @@ step_bbknn_sc <- function(
 #'
 #' @inheritParams fast_mnn_sc
 #'
-#' @return An `ScStep`.
+#' @returns An `ScStep`.
 #'
 #' @export
 step_fast_mnn_sc <- function(
@@ -719,7 +719,7 @@ step_fast_mnn_sc <- function(
 #' @param ... Arguments passed on to the generator, e.g.
 #' `sc_meta_cell_params`, `target_size` or `.verbose`.
 #'
-#' @return An `ScStep`.
+#' @returns An `ScStep`.
 #'
 #' @export
 #'

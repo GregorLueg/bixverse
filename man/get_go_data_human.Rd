@@ -17,6 +17,6 @@ A data.table
 }
 \description{
 This function loads in gene ontology data stored in the package and processes
-it into the format for \code{\link[=gene_ontology_data]{gene_ontology_data()}}. Wraps
+it into the format for \code{\link[=GeneOntologyElim]{GeneOntologyElim()}}. Wraps
 \code{\link[=load_go_human_data]{load_go_human_data()}} and \code{\link[=process_go_data]{process_go_data()}} into one.
 }

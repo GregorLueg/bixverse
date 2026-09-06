@@ -75,7 +75,7 @@ auto_streaming <- function(n_cells, streaming = NULL, .verbose = TRUE) {
 #' @param hvg_method String. One of `c("vst", "dispersion", "meanvarbin")`.
 #' Selects which column in `res` is used to rank genes.
 #'
-#' @return A data.table with the original `var_table` columns, all columns
+#' @returns A data.table with the original `var_table` columns, all columns
 #' from `res`, plus:
 #' \itemize{
 #'   \item `is_hvg` - Boolean. `TRUE` for the top `hvg_no` genes.
@@ -109,7 +109,7 @@ build_hvg_table <- function(var_table, res, hvg_no, hvg_method) {
 #'
 #' @param dir_data String. The directory with the Cell Ranger outputs
 #'
-#' @return A list based on [bixverse::params_sc_mtx_io()].
+#' @returns A list based on [bixverse::params_sc_mtx_io()].
 #'
 #' @export
 get_cell_ranger_params <- function(dir_data) {
@@ -142,7 +142,7 @@ get_cell_ranger_params <- function(dir_data) {
 #'
 #' @param counts `dgCMatrix`. Counts of genes x cells.
 #'
-#' @return The same data as a `dgRMatrix` of cells x genes.
+#' @returns The same data as a `dgRMatrix` of cells x genes.
 #'
 #' @keywords internal
 .counts_to_cell_major <- function(counts) {
@@ -163,7 +163,7 @@ get_cell_ranger_params <- function(dir_data) {
 #'
 #' @param seurat_obj `Seurat` class. The class to extract the counts from.
 #'
-#' @return The raw counts as a `dgRMatrix` of cells x genes.
+#' @returns The raw counts as a `dgRMatrix` of cells x genes.
 #'
 #' @keywords internal
 get_seurat_counts <- function(seurat_obj) {
@@ -259,7 +259,7 @@ get_meta_cell_matrices <- function(meta_cell_data, dimnames = NULL) {
 #' @param bounds Named numeric vector with `lower` and/or `upper`. At least one
 #' must be present.
 #'
-#' @return Logical vector of length `length(x)`. `TRUE` where the value is
+#' @returns Logical vector of length `length(x)`. `TRUE` where the value is
 #' within the supplied bounds (inclusive on both ends).
 #'
 #' @keywords internal
@@ -285,7 +285,7 @@ get_meta_cell_matrices <- function(meta_cell_data, dimnames = NULL) {
 #' @param direction String. One of `"twosided"`, `"below"`, `"above"`.
 #' @param metric_name String. Used in the error message.
 #'
-#' @return Invisible `NULL`. Called for its side effect.
+#' @returns Invisible `NULL`. Called for its side effect.
 #'
 #' @keywords internal
 .check_bounds_direction <- function(bounds, direction, metric_name) {
@@ -363,7 +363,7 @@ per_cell_qc_outlier <- function(
 #' One of `"twosided"`, `"below"`, `"above"`.
 #' @param threshold Numeric. Number of MADs to use for outlier detection.
 #'
-#' @return A `data.table` with one row per metric/group and columns `metric`,
+#' @returns A `data.table` with one row per metric/group and columns `metric`,
 #' `group`, `group_median`, `lower_threshold`, `upper_threshold`, `is_outlier`.
 #'
 #' @keywords internal
@@ -412,7 +412,7 @@ per_group_qc_outlier <- function(metrics, groups, directions, threshold = 3) {
 #' @param mad Logical. If `FALSE`, skip MAD entirely; `hard_thresholds` must
 #' then be supplied.
 #'
-#' @return A `CellQc` object.
+#' @returns A `CellQc` object.
 #'
 #' @export
 run_cell_qc <- function(
@@ -710,7 +710,7 @@ prepare_cell_markers <- function(obj, marker_df) {
 #' `_adt`.
 #' @param default_modality String. Modality used when no suffix is present.
 #'
-#' @return A list with `id` and `modality`.
+#' @returns A list with `id` and `modality`.
 #'
 #' @keywords internal
 .parse_feature_modality <- function(feature, default_modality) {
@@ -738,7 +738,7 @@ prepare_cell_markers <- function(obj, marker_df) {
 #' @param ... Additional arguments forwarded to [get_embedding()] (e.g.
 #' `modality`).
 #'
-#' @return A data.table with `cell_id`, `dim_*` columns and any requested obs
+#' @returns A data.table with `cell_id`, `dim_*` columns and any requested obs
 #' columns.
 #'
 #' @export
@@ -799,7 +799,7 @@ extract_embedding_data <- function(object, embedding, obs_cols = NULL, ...) {
 #' @param ... Additional arguments forwarded to [extract_embedding_data()] and
 #' onward to [get_embedding()] (e.g. `modality`).
 #'
-#' @return A list with the embedding stored as an `embedding` attribute and
+#' @returns A list with the embedding stored as an `embedding` attribute and
 #' \itemize{
 #'   \item nodes - data.table with `cluster` (a factor in graph order),
 #'   `dim_1`, `dim_2`, `n_cells` and, when `node_stat_col` is given, `stat`.
@@ -986,7 +986,7 @@ extract_paga_plot_data <- function(
 #' onward to [get_embedding()]. Do not pass `modality` here; the embedding
 #' modality is set via `embd_modality` and passing it again will error.
 #'
-#' @return A long data.table with `cell_id`, `dim_*`, `gene` and `expression`.
+#' @returns A long data.table with `cell_id`, `dim_*`, `gene` and `expression`.
 #'
 #' @export
 extract_feature_plot_data <- function(
@@ -1053,7 +1053,7 @@ extract_feature_plot_data <- function(
 #' @param layer String. One of `c("norm", "magic")`, forwarded to
 #' [extract_gene_expression()].
 #'
-#' @return A long data.table with `cell_id`, `group`, `gene` and `expression`.
+#' @returns A long data.table with `cell_id`, `group`, `gene` and `expression`.
 #' `gene` is an ordered factor following `features`.
 #'
 #' @export
@@ -1120,7 +1120,7 @@ extract_gene_violin_data <- function(
 #' [extract_gene_expression()]. Applies to both features, and an `_adt`
 #' suffixed one will error under `"magic"`.
 #'
-#' @return A data.table with `cell_id`, `feature_1`, `feature_2` and any
+#' @returns A data.table with `cell_id`, `feature_1`, `feature_2` and any
 #' requested obs columns. The original feature labels are stored in a
 #' `features` attribute as `c(feature_1, feature_2)`.
 #'

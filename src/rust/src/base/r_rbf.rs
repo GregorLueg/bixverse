@@ -31,7 +31,7 @@ extendr_module! {
 /// @param epsilon Float. Epsilon parameter for the RBF.
 /// @param rbf_type String. Needs to be from `c("gaussian", "bump", "inverse_quadratic")`.
 ///
-/// @return The affinities after the Kernel was applied.
+/// @returns The affinities after the Kernel was applied.
 ///
 /// @export
 #[extendr]
@@ -61,7 +61,7 @@ fn rs_rbf_function(x: &[f64], epsilon: f64, rbf_type: &str) -> extendr_api::Resu
 /// @param rbf_type String. Needs to be from
 /// `c("gaussian", "bump", "inverse_quadratic")`.
 ///
-/// @return The affinities after the Kernel was applied.
+/// @returns The affinities after the Kernel was applied.
 ///
 /// @export
 #[extendr]
@@ -108,7 +108,7 @@ fn rs_rbf_function_mat(
 /// for the currently implemented RBF function. Weird strings will default
 /// to Gaussian.
 ///
-/// @return A matrix with rows being the epsilons tested, and columns
+/// @returns A matrix with rows being the epsilons tested, and columns
 /// representing the summed affinity to other features.
 ///
 /// @export

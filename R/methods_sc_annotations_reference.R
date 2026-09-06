@@ -217,7 +217,7 @@ S7::method(assign_sc_type, SingleCells) <- function(
 #' @param seed Integer.
 #' @param .verbose Boolean or integer.
 #'
-#' @return A [SymphonyReference] object.
+#' @returns A [SymphonyReference] object.
 #'
 #' @export
 build_symphony_ref <- S7::new_generic(
@@ -377,7 +377,7 @@ S7::method(build_symphony_ref, SingleCells) <- function(
 #' @param overwrite Boolean. If `TRUE`, existing label columns of the same
 #' name are replaced; otherwise an error is raised on collision.
 #'
-#' @return The `reference` with updated `labels`.
+#' @returns The `reference` with updated `labels`.
 #'
 #' @export
 add_symphony_labels <- S7::new_generic(
@@ -461,7 +461,7 @@ S7::method(add_symphony_labels, SymphonyReference) <- function(
 #' @param params List. Output of [bixverse::params_symphony_map()].
 #' @param .verbose Boolean or integer.
 #'
-#' @return The `query` object with embeddings `"symphony"` (z_corr),
+#' @returns The `query` object with embeddings `"symphony"` (z_corr),
 #' `"symphony_pca"` (z_pca) and `"symphony_r"` (soft cluster assignments,
 #' transposed to N_q x K).
 #'
@@ -584,7 +584,7 @@ S7::method(map_symphony_query, SymphonyReference) <- function(
 #' @param seed Integer.
 #' @param .verbose Boolean or integer.
 #'
-#' @return A data.table with columns `predicted_<label_column>` and
+#' @returns A data.table with columns `predicted_<label_column>` and
 #' `confidence_<label_column>`, in `get_cells_to_keep(query)` order.
 #'
 #' @export

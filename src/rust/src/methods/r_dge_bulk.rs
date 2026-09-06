@@ -45,7 +45,7 @@ extendr_module! {
 /// columns to drop from the null model) or `contrast` (column-major weights
 /// with `n_contrasts` columns).
 ///
-/// @return A list with the following elements
+/// @returns A list with the following elements
 /// \itemize{
 ///   \item features_to_keep - Boolean. Which features survived the filters.
 ///   Spans the full feature axis of `counts`.
@@ -59,8 +59,6 @@ extendr_module! {
 /// @references Chen, Lun and Smyth, F1000Research, 2016
 ///
 /// @export
-///
-/// @keywords internal
 #[extendr]
 fn rs_edger_ql(counts: RMatrix<f64>, design: RMatrix<f64>, edger_params: List) -> Result<List> {
     let n_features = counts.nrows();

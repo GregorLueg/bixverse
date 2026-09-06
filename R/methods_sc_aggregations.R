@@ -539,7 +539,7 @@ S7::method(generate_supercells_sc, ScOrScSubset) <- function(
 #' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
 #' verbosity.
 #'
-#' @return Pending on your setting in return_format a dense matrix or sparse
+#' @returns Pending on your setting in return_format a dense matrix or sparse
 #' CSR matrix with aggregated cells x genes.
 #'
 #' @importFrom magrittr %$%

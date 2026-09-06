@@ -17,7 +17,7 @@
 #' information content of this given term. Needs to be a single float! See
 #' [bixverse::calculate_information_content()].
 #'
-#' @return The symmetric similarity matrix for the specified data from the
+#' @returns The symmetric similarity matrix for the specified data from the
 #' ontology.
 #'
 #' @export
@@ -67,7 +67,7 @@ calculate_semantic_sim_mat <- function(
 #' @param add_self Boolean. Shall self-similarities be added. Defaults to
 #' `FALSE`.
 #'
-#' @return A data.table with the calculated similarities.
+#' @returns A data.table with the calculated similarities.
 #'
 #' @export
 #'
@@ -123,7 +123,7 @@ calculate_semantic_sim <- function(
 #' @param weights Named numeric. The relationship of type to weight for this
 #' specific edge. For example `c("part_of" = 0.8, "is_a" = 0.6)`.
 #'
-#' @return The symmetric Wang similarity matrix.
+#' @returns The symmetric Wang similarity matrix.
 #'
 #' @export
 #'
@@ -174,7 +174,7 @@ calculate_wang_sim_mat <- function(parent_child_dt, weights) {
 #' @param add_self Boolean. Shall self-similarities be added. Defaults to
 #' `FALSE`.
 #'
-#' @return A data.table with the calculated similarities.
+#' @returns A data.table with the calculated similarities.
 #'
 #' @export
 #'
@@ -237,7 +237,7 @@ calculate_wang_sim <- function(
 #' @param parent_child_dt data.table. The data.table with column parent and
 #' child.
 #'
-#' @return A list with
+#' @returns A list with
 #' \itemize{
 #'  \item ancestors A list with all ancestor terms.
 #'  \item descendants A list with all descendant terms.
@@ -284,7 +284,7 @@ get_ontology_ancestry <- function(parent_child_dt) {
 #' @param ancestor_list List. Named list of terms with ancestor identifiers as
 #' their values
 #'
-#' @return A named list of each term and their information content as values.
+#' @returns A named list of each term and their information content as values.
 #'
 #' @export
 #'
@@ -310,14 +310,15 @@ calculate_information_content <- function(ancestor_list) {
 #' @description This function calculates the critical value for a given ontology
 #' similarity matrix.
 #'
-#' @param x Numerical matrix or `ontology class`, see [bixverse::ontology()].
-#' This function tends to be slower on matrices compared to `ontology class`.
+#' @param x Numerical matrix or `OntologySim` class, see
+#' [bixverse::OntologySim()]. This function tends to be slower on matrices
+#' compared to the `OntologySim` class.
 #' @param alpha Float. The alpha value. For example, 0.001 would mean that the
 #' critical value is smaller than 0.1 percentile of the random permutations.
 #' @param permutations Number of random permutations.
 #' @param seed Integer. For reproducibility purposes
 #'
-#' @return The critical value.
+#' @returns The critical value.
 #'
 #' @export
 calculate_critical_value <- function(

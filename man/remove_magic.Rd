@@ -23,7 +23,9 @@ remove_magic(x, ...)
 
 \item{...}{Other parameters.}
 }
+\value{
+The object with the imputed layer dropped.
+}
 \description{
 Remove the MAGIC imputed layer
 }
-\keyword{internal}

@@ -4,7 +4,7 @@
 
 ## class -----------------------------------------------------------------------
 
-#' @title bixverse SymphonyReference class
+#' bixverse SymphonyReference class
 #'
 #' @description
 #' Holds a Symphony reference: PCA loadings, per-HVG scaling stats, soft
@@ -35,7 +35,7 @@
 #' @param labels Optional `data.table` of reference cell labels with
 #' `nrow(z_corr)` rows, one column per label. `NULL` if no labels stored.
 #'
-#' @return Returns the `SymphonyReference` class for further operations.
+#' @returns Returns the `SymphonyReference` class for further operations.
 #'
 #' @references Kang et al., Nat. Commun., 2021
 #'
@@ -105,7 +105,7 @@ SymphonyReference <- S7::new_class(
 #'
 #' @param object `SymphonyReference` class.
 #'
-#' @return The PCA gene loadings matrix (n_hvgs x d).
+#' @returns The PCA gene loadings matrix (n_hvgs x d).
 #'
 #' @export
 get_symphony_loadings <- S7::new_generic(
@@ -124,7 +124,7 @@ S7::method(get_symphony_loadings, SymphonyReference) <- function(object) {
 #'
 #' @param object `SymphonyReference` class.
 #'
-#' @return The post-Harmony corrected embedding (N x d).
+#' @returns The post-Harmony corrected embedding (N x d).
 #'
 #' @export
 get_symphony_z_corr <- S7::new_generic(
@@ -143,7 +143,7 @@ S7::method(get_symphony_z_corr, SymphonyReference) <- function(object) {
 #'
 #' @param object `SymphonyReference` class.
 #'
-#' @return Character vector of HVG gene names in reference loading order.
+#' @returns Character vector of HVG gene names in reference loading order.
 #'
 #' @export
 get_symphony_hvg_names <- S7::new_generic(
@@ -162,7 +162,7 @@ S7::method(get_symphony_hvg_names, SymphonyReference) <- function(object) {
 #'
 #' @param object `SymphonyReference` class.
 #'
-#' @return A `data.table` of reference cell labels in `z_corr` row order, or
+#' @returns A `data.table` of reference cell labels in `z_corr` row order, or
 #' `NULL` if no labels are stored.
 #'
 #' @export

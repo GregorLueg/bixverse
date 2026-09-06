@@ -10,7 +10,7 @@ rs_random_svd(x, scale, rank, seed, oversampling, n_power_iter)
 \item{x}{Numeric matrix. Rows = samples, columns = features.}
 
 \item{scale}{Boolean. Shall the columns be variance normalised. (Mean
-centering will automatically occur.)}
+centring will automatically occur.)}
 
 \item{rank}{Integer. The rank to use.}
 

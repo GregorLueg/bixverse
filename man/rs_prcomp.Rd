@@ -10,7 +10,7 @@ rs_prcomp(x, scale, top_pcs)
 \item{x}{Numeric matrix. Rows = samples, columns = features.}
 
 \item{scale}{Boolean. Shall the columns be variance normalised. (Mean
-centering will automatically occur.)}
+centring will automatically occur.)}
 
 \item{top_pcs}{Optional integer. Only return the top PCs (under the hood
 all of them will be calculated).}

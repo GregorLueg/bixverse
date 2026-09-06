@@ -16,5 +16,5 @@ underlying Rust code.
 \description{
 This function loads in the .feather files with the motif to target gene
 rankings. These can be found here:
-\code{https://resources.aertslab.org/cistarget/databases/}
+\verb{https://resources.aertslab.org/cistarget/databases/}
 }

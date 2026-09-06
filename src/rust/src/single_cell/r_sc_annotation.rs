@@ -373,7 +373,7 @@ fn composition_to_r(hybrid: &ScTypeHybridRes, n_ct: usize) -> List {
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
 ///
-/// @return A list with gene_means, gene_sds, loadings, z_orig, z_corr, r,
+/// @returns A list with gene_means, gene_sds, loadings, z_orig, z_corr, r,
 /// centroids, nr, c.
 ///
 /// @references
@@ -489,7 +489,7 @@ fn rs_build_symphony_ref(
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
 ///
-/// @return A list with z_pca, z_corr, r.
+/// @returns A list with z_pca, z_corr, r.
 ///
 /// @references
 /// Kang et al., Nat Comm, 2021.
@@ -580,7 +580,7 @@ fn rs_symphony_map_query(
 /// @param seed Integer.
 /// @param verbose Integer. 0/1/2.
 ///
-/// @return A list with `predicted` (0-based integer per query cell) and
+/// @returns A list with `predicted` (0-based integer per query cell) and
 /// `confidence` (vote share of the winning label).
 ///
 /// @export

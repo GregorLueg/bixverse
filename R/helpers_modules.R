@@ -106,7 +106,7 @@
 #' @param membership_params List. See
 #' [bixverse::params_module_membership()].
 #'
-#' @return A data.table with columns `gene`, `module_id`, `loading`, `sign` and
+#' @returns A data.table with columns `gene`, `module_id`, `loading`, `sign` and
 #' the per-component score (`z` or `padj` depending on the method). One row per
 #' surviving (gene, component) pair, ordered by component then by descending
 #' absolute loading.

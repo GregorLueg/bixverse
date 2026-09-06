@@ -27,7 +27,7 @@
 #' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
 #' verbosity.
 #'
-#' @return data.table with the DGE results from the test.
+#' @returns data.table with the DGE results from the test.
 #'
 #' @export
 find_markers_sc <- S7::new_generic(
@@ -151,7 +151,7 @@ S7::method(find_markers_sc, ScOrScSubset) <- function(
 #' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
 #' verbosity.
 #'
-#' @return data.table with the DGE results from the test.
+#' @returns data.table with the DGE results from the test.
 #'
 #' @export
 find_all_markers_sc <- S7::new_generic(
@@ -334,7 +334,7 @@ S7::method(find_all_markers_sc, ScOrScSubset) <- function(
 #' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
 #' verbosity.
 #'
-#' @return A `ScSpecificMarkers` class with the following elements
+#' @returns A `ScSpecificMarkers` class with the following elements
 #' \itemize{
 #'   \item summary - data.table. Per gene and reference group, the summaries
 #'   across all rivals: `prop_ref`, `median_auroc`, `min_auroc`, `mean_auroc`,
@@ -762,7 +762,7 @@ S7::method(get_miloR_abundances_sc, SingleCells) <- function(
 #' times. `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` ->
 #' detailed verbosity.
 #'
-#' @return A list with:
+#' @returns A list with:
 #' \itemize{
 #'  \item raw_scores - The raw MELD scores
 #'  \item norm_scores - Negative values were clamped to 0 and the rows L1
@@ -911,7 +911,7 @@ S7::method(meld_sc, SingleCells) <- function(
 #' times. `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` ->
 #' detailed verbosity.
 #'
-#' @returns A `ScNebula` class, see [bixverse::new_sc_nebula_res()], with
+#' @returns A `ScNebula` class, see `new_sc_nebula_res()`, with
 #' \itemize{
 #'   \item results - data.table. One row per gene that survived NEBULA's
 #'   expression filter, with the Wald test and both overdispersions.

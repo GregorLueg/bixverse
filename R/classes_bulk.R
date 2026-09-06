@@ -4,7 +4,7 @@
 
 ### BulkCoExp ------------------------------------------------------------------
 
-#' @title Bulk RNAseq co-expression modules
+#' Bulk RNAseq co-expression modules
 #'
 #' @description
 #' Class for applying various co-expression module detection methods on top of
@@ -29,7 +29,7 @@
 #'   \item{final_results}{A data.table that will contain the final results.}
 #' }
 #'
-#' @return Returns the `BulkCoExp` class for further operations.
+#' @returns Returns the `BulkCoExp` class for further operations.
 #'
 #' @export
 BulkCoExp <- S7::new_class(
@@ -83,7 +83,7 @@ BulkCoExp <- S7::new_class(
   }
 )
 
-#' @title Bulk RNAseq differential gene expression class
+#' Bulk RNAseq differential gene expression class
 #'
 #' @description
 #' Class for coordinating differential gene expression analyses with subsequent
@@ -112,7 +112,7 @@ BulkCoExp <- S7::new_class(
 #'   \item{final_results}{A list in which final results will be stored.}
 #' }
 #'
-#' @return Returns the `BulkDge` class for further operations.
+#' @returns Returns the `BulkDge` class for further operations.
 #'
 #' @export
 BulkDge <- S7::new_class(
@@ -236,7 +236,7 @@ bulk_dge_from_h5ad <- function(
 #' @param samples_to_remove Character vector. The sample identifiers to remove.
 #' @param ... Additional arguments to parse to the functions.
 #'
-#' @return Returns the object with the samples removed. This will regenerated
+#' @returns Returns the object with the samples removed. This will regenerated
 #' the object from the start and remove any data in it.
 #'
 #' @export
@@ -291,7 +291,7 @@ S7::method(remove_samples, BulkDge) <-
 #' @param col_names Character vector. The columns to fix.
 #' @param ... Additional arguments to parse to the functions.
 #'
-#' @return Returns the object with the respective metadata columns updated.
+#' @returns Returns the object with the respective metadata columns updated.
 #'
 #' @export
 fix_meta_data_column <- S7::new_generic(
@@ -335,7 +335,7 @@ S7::method(fix_meta_data_column, BulkDge) <- function(object, col_names) {
 #' the data.
 #' @param ... Additional arguments to parse to the functions.
 #'
-#' @return Returns the object with the respective metadata updated.
+#' @returns Returns the object with the respective metadata updated.
 #'
 #' @export
 update_metadata_values <- S7::new_generic(
@@ -384,7 +384,7 @@ S7::method(update_metadata_values, BulkDge) <- function(
 #' [bixverse::BulkDge()].
 #' @param ... Additional arguments to parse to the functions.
 #'
-#' @return Returns the metadata stored in the class.
+#' @returns Returns the metadata stored in the class.
 #'
 #' @export
 get_metadata <- S7::new_generic(
@@ -433,7 +433,7 @@ S7::method(get_metadata, BulkDge) <- function(object) {
 #' [bixverse::BulkDge()].
 #' @param ... Additional arguments to parse to the functions.
 #'
-#' @return Returns the outputs stored in the class.
+#' @returns Returns the outputs stored in the class.
 #'
 #' @export
 get_outputs <- S7::new_generic(
@@ -483,7 +483,7 @@ S7::method(get_outputs, BulkDge) <- function(object, ...) {
 #'
 #' @param object `BulkDge` class.
 #'
-#' @return Returns the DGEList stored in the class.
+#' @returns Returns the DGEList stored in the class.
 #'
 #' @export
 get_dge_list <- S7::new_generic(
@@ -517,7 +517,7 @@ S7::method(get_dge_list, BulkDge) <- function(object) {
 #'
 #' @param object `BulkDge` class.
 #'
-#' @return Returns the Limma Voom results. (If found.)
+#' @returns Returns the Limma Voom results. (If found.)
 #'
 #' @export
 get_dge_limma_voom <- S7::new_generic(
@@ -558,7 +558,7 @@ S7::method(get_dge_limma_voom, BulkDge) <- function(object) {
 #'
 #' @param object `BulkDge` class.
 #'
-#' @return Returns the effect size results. (If found.)
+#' @returns Returns the effect size results. (If found.)
 #'
 #' @export
 get_dge_effect_sizes <- S7::new_generic(
@@ -599,7 +599,7 @@ S7::method(get_dge_effect_sizes, BulkDge) <- function(object) {
 #'
 #' @param object `BulkDge` class.
 #'
-#' @return Returns the TPM-normalised counts. (If found.)
+#' @returns Returns the TPM-normalised counts. (If found.)
 #'
 #' @export
 get_tpm_counts <- S7::new_generic(
@@ -640,7 +640,7 @@ S7::method(get_tpm_counts, BulkDge) <- function(object) {
 #'
 #' @param object `BulkDge` class.
 #'
-#' @return Returns the FPKM-normalised counts. (If found.)
+#' @returns Returns the FPKM-normalised counts. (If found.)
 #'
 #' @export
 get_fpkm_counts <- S7::new_generic(
@@ -683,7 +683,7 @@ S7::method(get_fpkm_counts, BulkDge) <- function(object) {
 #'
 #' @param object `BulkCoExp` class.
 #'
-#' @return Returns the epsilon data. (If found. Otherwise `NULL`).
+#' @returns Returns the epsilon data. (If found. Otherwise `NULL`).
 #'
 #' @export
 get_epsilon_res <- S7::new_generic(
@@ -718,14 +718,14 @@ S7::method(get_epsilon_res, BulkCoExp) <- function(object) {
   return(epsilon_results)
 }
 
-#' @title Return the resolution results
+#' Return the resolution results
 #'
 #' @description
 #' Getter function to get the resolution results (if available).
 #'
 #' @param object The class, see [bixverse::BulkCoExp()].
 #'
-#' @return If resolution results were found, returns the data.table. Otherwise,
+#' @returns If resolution results were found, returns the data.table. Otherwise,
 #' throws a warning and returns NULL.
 #'
 #' @export
@@ -775,7 +775,7 @@ S7::method(get_resolution_res, BulkCoExp) <- function(object) {
 #' @param variable_info Optional data.table with variable information. If
 #' `variable_info` is in an attribute of the class, that one will be used.
 #'
-#' @return The class with modified primary gene identifier.
+#' @returns The class with modified primary gene identifier.
 #'
 #' @export
 change_gene_identifier <- S7::new_generic(

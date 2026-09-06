@@ -63,7 +63,7 @@ times. \code{FALSE} -> quiet, \code{TRUE} or \code{1L} -> normal verbosity, \cod
 detailed verbosity.}
 }
 \value{
-A \code{ScNebula} class, see \code{\link[=new_sc_nebula_res]{new_sc_nebula_res()}}, with
+A \code{ScNebula} class, see \code{new_sc_nebula_res()}, with
 \itemize{
 \item results - data.table. One row per gene that survived NEBULA's
 expression filter, with the Wald test and both overdispersions.

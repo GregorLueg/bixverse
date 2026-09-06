@@ -34,7 +34,7 @@ extendr_module! {
 /// @param ic_list R list with the names being the term and the elements the
 /// information content of this given term. Needs to be a single float!
 ///
-/// @return A list with:
+/// @returns A list with:
 /// \itemize{
 ///   \item term1 - name of the first term.
 ///   \item term2 - name of the second term.
@@ -92,7 +92,7 @@ fn rs_onto_semantic_sim(
 /// information content of this given term. Needs to be a single float!
 /// @param flat_matrix Boolean. Shall only the upper triangle be returned.
 ///
-/// @return A list with:
+/// @returns A list with:
 /// \itemize{
 ///   \item sim_mat - the semantic similarity matrix (flat or as matrix.)
 ///   \item names - the row and column names for the calculated matrix.
@@ -150,7 +150,7 @@ fn rs_onto_semantic_sim_mat(
 /// to be values between 0 and 1.
 /// @param flat_matrix Boolean. Shall only the upper triangle be returned.
 ///
-/// @return A list with:
+/// @returns A list with:
 /// \itemize{
 ///   \item sim_mat - the Wang similarity matrix (flat or as matrix.)
 ///   \item names - the row and column names for the calculated matrix.
@@ -199,7 +199,7 @@ fn rs_onto_sim_wang_mat(
 /// @param w Numerics. The weights between the parents and children. Need
 /// to be values between 0 and 1.
 ///
-/// @return A list with:
+/// @returns A list with:
 /// \itemize{
 ///   \item term1 - name of the first term.
 ///   \item term2 - name of the second term.
@@ -270,7 +270,7 @@ fn rs_onto_sim_wang(
 /// @param names String vector. The row/col names of the similarity matrix.
 /// @param threshold Float. The filtering threshold.
 ///
-/// @return A list with:
+/// @returns A list with:
 /// \itemize{
 ///   \item t1 - name of term 1.
 ///   \item t2 - name of term 2.

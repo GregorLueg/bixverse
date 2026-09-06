@@ -5,7 +5,7 @@
 
 ## plotting --------------------------------------------------------------------
 
-#' @title Plot the resolution results.
+#' Plot the resolution results.
 #'
 #' @description
 #' Plots the resolution results (if they can be found in the class). The x-axis
@@ -17,7 +17,7 @@
 #' meta data. Only applicable for `BulkCoExp` objects.
 #' @param ... Additional arguments to parse to the functions.
 #'
-#' @return Plots the result, if the results were found in the class. Otherwise,
+#' @returns Plots the result, if the results were found in the class. Otherwise,
 #' throws a warning and returns NULL.
 #'
 #' @export
@@ -31,7 +31,7 @@ plot_resolution_res <- S7::new_generic(
 
 ## meta data -------------------------------------------------------------------
 
-#' @title Replace the meta data
+#' Replace the meta data
 #'
 #' @description
 #' This function will replace the meta data within the given object
@@ -40,7 +40,7 @@ plot_resolution_res <- S7::new_generic(
 #' @param new_metadata data.table. The new meta data you wish to add.
 #' @param ... Additional arguments to parse to the functions.
 #'
-#' @return The object with updated metadata.
+#' @returns The object with updated metadata.
 #'
 #' @export
 add_new_metadata <- S7::new_generic(

@@ -30,7 +30,7 @@ extendr_module! {
 /// @param mu Float. Normalisation factor for the Gaussian kernel width.
 /// @param normalise Boolean. Shall continuous values be Z-scored.
 ///
-/// @return The affinity matrix based on continuous values.
+/// @returns The affinity matrix based on continuous values.
 ///
 /// @export
 ///
@@ -60,7 +60,7 @@ fn rs_snf_affinity_continuous(
 /// @param k Integer. Number of neighbours to consider.
 /// @param mu Float. Normalisation factor for the Gaussian kernel width.
 ///
-/// @return The affinity matrix based on categorical values.
+/// @returns The affinity matrix based on categorical values.
 ///
 /// @export
 ///
@@ -87,7 +87,7 @@ fn rs_snf_affinity_cat(data: RMatrix<i32>, k: usize, mu: f64) -> RArray<f64, 2> 
 /// @param k Integer. Number of neighbours to consider.
 /// @param mu Float. Normalisation factor for the Gaussian kernel width.
 ///
-/// @return The affinity matrix based on mixed values.
+/// @returns The affinity matrix based on mixed values.
 ///
 /// @export
 ///
@@ -123,7 +123,7 @@ fn rs_snf_affinity_mixed(
 /// @param t Integer. Number of iterations for the algorithm.
 /// @param alpha Float. Normalisation parameter controlling the fusion strength.
 ///
-/// @return The final affinity matrix after the fusion.
+/// @returns The final affinity matrix after the fusion.
 ///
 /// @export
 #[extendr]

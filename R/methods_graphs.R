@@ -17,7 +17,7 @@
 #' @param summarisation String. If there are duplicated names in the
 #' `diffusion_vector` how to summarise the scores.
 #'
-#' @return The class with added diffusion score based on a single set of seed
+#' @returns The class with added diffusion score based on a single set of seed
 #' genes. Additionally, the seed genes are stored in the class.
 #'
 #' @export
@@ -113,7 +113,7 @@ S7::method(diffuse_seed_nodes, NetworkDiffusions) <-
 #' @param score_aggregation String. How to summarise the tied scores.
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
-#' @return The class with added diffusion score based on a two sets of seed
+#' @returns The class with added diffusion score based on a two sets of seed
 #' genes. Additionally, the seed genes are stored in the class.
 #'
 #' @export
@@ -264,7 +264,7 @@ S7::method(tied_diffusion, NetworkDiffusions) <-
 #' @param random_seed Integer. Random seed for determinism.
 #' @param .verbose Boolean. Controls verbosity.
 #'
-#' @return The class with added diffusion score based on a single set of seed
+#' @returns The class with added diffusion score based on a single set of seed
 #' genes. Additionally, the seed genes are stored in the class.
 #'
 #' @export
@@ -430,7 +430,7 @@ S7::method(permute_seed_nodes, NetworkDiffusions) <- function(
 #' resolution parameter is increased by 0.05, to identify more granular
 #' communities within the sub communities.
 #'
-#' @return The class with added diffusion community detection results (if any
+#' @returns The class with added diffusion community detection results (if any
 #' could be identified with the provided parameters).
 #'
 #' @export
@@ -747,7 +747,7 @@ S7::method(community_detection, NetworkDiffusions) <- function(
 #' calculated.
 #' @param seed Integer. Random seed.
 #'
-#' @return List with AUC and Z-score as the two named elements if permutations
+#' @returns List with AUC and Z-score as the two named elements if permutations
 #' test set to TRUE; otherwise just the AUC.
 #'
 #' @export
@@ -841,7 +841,7 @@ S7::method(calculate_diffusion_auc, NetworkDiffusions) <-
 #' @param iters Integer. Number of random permutations to generate.
 #' @param random_seed Integer. Random seed.
 #'
-#' @return List with the permutations.
+#' @returns List with the permutations.
 #'
 #' @importFrom magrittr %$%
 #'
@@ -896,7 +896,7 @@ generate_perm_diffusion_vecs <- function(
 #' @param x Named numeric.
 #' @param summarisation String. Which summary function to use.
 #'
-#' @return Named numeric.
+#' @returns Named numeric.
 #'
 #' @importFrom magrittr %$%
 #'
@@ -951,7 +951,7 @@ summarise_scores <- function(
 #' @param spearman Boolean. Shall Spearman correlation be used. Only relevant
 #' if the underlying class is set to correlation-based similarity.
 #'
-#' @return The class with added properties.
+#' @returns The class with added properties.
 #'
 #' @export
 generate_rbh_graph <- S7::new_generic(
@@ -1097,7 +1097,7 @@ S7::method(generate_rbh_graph, RbhGraph) <- function(
 #' @param random_seed Integer. Random seed for reproducibility.
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
-#' @return The class with added community detection results.
+#' @returns The class with added community detection results.
 #'
 #' @export
 find_rbh_communities <- S7::new_generic(
@@ -1280,7 +1280,7 @@ S7::method(find_rbh_communities, RbhGraph) <- function(
 #' from within the object will be used. If not NULL, the new parameters will
 #' be used for this modality specifically and only for this modality!
 #'
-#' @return The class with added adjacency matrix for this data.
+#' @returns The class with added adjacency matrix for this data.
 #'
 #' @export
 add_snf_data_modality <- S7::new_generic(
@@ -1377,7 +1377,7 @@ S7::method(add_snf_data_modality, SimilarityNetworkFusion) <- function(
 #' from within the object will be used. If not NULL, the new parameters will
 #' be used for this modality specifically and only for this modality!
 #'
-#' @return The class with added adjacency matrix based on the SNF algorithm.
+#' @returns The class with added adjacency matrix based on the SNF algorithm.
 #'
 #' @export
 run_snf <- S7::new_generic(

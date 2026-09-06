@@ -14,6 +14,6 @@ data.table with the motif to transcription factor information.
 }
 \description{
 This function loads in the motif2tf information that you can get from
-\code{https://resources.aertslab.org/cistarget/motif2tf/}.
+\verb{https://resources.aertslab.org/cistarget/motif2tf/}.
 The function will generate a data.table that can be subsequently used.
 }

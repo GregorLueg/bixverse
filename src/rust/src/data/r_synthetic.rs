@@ -46,7 +46,7 @@ extendr_module! {
 /// `disp_slope`, `noise_std`, `factor_std`, `factor_shape`, `factor_scale`,
 /// `loading_mu`, `loading_sigma` and `hub_percentile`.
 ///
-/// @return List with the following elements
+/// @returns List with the following elements
 /// \itemize{
 ///     \item counts The matrix of simulated counts. Rows are genes, columns
 ///     are samples.
@@ -97,7 +97,7 @@ fn rs_generate_bulk_rnaseq(synthetic_params: List) -> extendr_api::Result<List> 
 /// [bixverse::params_bulk_sparsity()]. Expected elements are `strategy`,
 /// `target_library_size`, `capture_efficiency_sigma` and `seed`.
 ///
-/// @return The sparsified matrix based on the provided parameters.
+/// @returns The sparsified matrix based on the provided parameters.
 ///
 /// @export
 ///
@@ -142,7 +142,7 @@ fn rs_simulate_dropouts(
 /// `c("even", "slightly_uneven", "very_uneven")`
 /// @param seed Integer. Random seed for reproducibility.
 ///
-/// @return A list with the following items.
+/// @returns A list with the following items.
 /// \itemize{
 ///   \item data - The synthetic raw counts.
 ///   \item indptr - The index pointers of the cells.
@@ -248,7 +248,7 @@ fn rs_synthetic_sc_data_with_cell_types(
 /// values fall back to `"strong"`.
 /// @param seed Integer. For reproducibility.
 ///
-/// @return A list with the following items.
+/// @returns A list with the following items.
 /// \itemize{
 ///   \item data - Integer vector. The counts in row-major order, length
 ///   `n_cells * n_proteins` (cell-major: all proteins of cell 0, then cell 1).
@@ -368,7 +368,7 @@ fn rs_sample_ids_for_cell_types(
 /// blocks have to fit into `n_genes`.
 /// @param seed Integer. Random seed for reproducibility.
 ///
-/// @return A list with the following items.
+/// @returns A list with the following items.
 /// \itemize{
 ///   \item data - The synthetic raw counts, CSR over cells.
 ///   \item indptr - The index pointers of the cells.

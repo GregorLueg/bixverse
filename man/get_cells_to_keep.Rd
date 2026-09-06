@@ -26,5 +26,6 @@ get_cells_to_keep(x)
 Integer vector with 0-indices of the cells to keep.
 }
 \description{
-Get the cells to keep
+Returns the indices of the cells that survived quality control. These are
+stored 0-indexed for Rust, so add one before using them in R.
 }

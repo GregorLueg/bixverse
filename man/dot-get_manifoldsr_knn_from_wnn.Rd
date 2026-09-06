@@ -6,6 +6,12 @@
 \usage{
 .get_manifoldsr_knn_from_wnn(x)
 }
+\arguments{
+\item{x}{\code{SingleCellsMultiModal} object holding a WNN graph.}
+}
+\value{
+A \code{manifoldsR} nearest neighbours object.
+}
 \description{
 Placeholder: manifoldsR nearest neighbours from a WNN graph
 }

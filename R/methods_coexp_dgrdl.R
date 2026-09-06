@@ -1,6 +1,6 @@
 # grid search ------------------------------------------------------------------
 
-#' @title Grid search over DGRDL parameters
+#' Grid search over DGRDL parameters
 #'
 #' @description
 #' This function allows you to quickly iterate over different initial seeds,
@@ -32,7 +32,7 @@
 #' }
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
-#' @return `BulkCoExp` with the grid search results added to the class.
+#' @returns `BulkCoExp` with the grid search results added to the class.
 #'
 #' @export
 #'
@@ -277,7 +277,7 @@ S7::method(dgrdl_result, BulkCoExp) <- function(
 
 ## specific getters ------------------------------------------------------------
 
-#' @title Get the grid search results
+#' Get the grid search results
 #'
 #' @description
 #' Getter function to extract the grid search results. If not found will return
@@ -285,7 +285,7 @@ S7::method(dgrdl_result, BulkCoExp) <- function(
 #'
 #' @param object The class, see [bixverse::BulkCoExp()].
 #'
-#' @return data.table with the grid search results (if found. Otherwise `NULL`.)
+#' @returns data.table with the grid search results (if found. Otherwise `NULL`.)
 #'
 #' @export
 get_grid_search_res <- S7::new_generic(

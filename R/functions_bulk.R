@@ -392,7 +392,7 @@ run_limma_voom <- function(
 #' @param main_contrast String. Which column contains the main groups you want
 #' to calculate the Hedge's G effect for. Every permutation of the groups
 #' will be tested if `contrast_list` is `NULL`.
-#' @param normalised_counts Numeric Matrix. The normalized count matrix.
+#' @param normalised_counts Numeric Matrix. The normalised count matrix.
 #' @param contrast_list String vector or NULL. Optional string vector of
 #' contrast formatted as `"contrast1-contrast2"`. Default NULL will create all
 #' contrasts automatically.

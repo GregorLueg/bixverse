@@ -18,7 +18,7 @@
 #'   \item{final_results}{A data.table that will contain the final results.}
 #' }
 #'
-#' @return Returns the S7 object for further operations.
+#' @returns Returns the S7 object for further operations.
 #'
 #' @export
 #'
@@ -54,7 +54,7 @@ BixverseBaseClass <- S7::new_class(
 #' @param ... Unused, present so the S3 methods sharing this page match the
 #' generic.
 #'
-#' @return Depending on parameters either the R list or a (pretty) JSON string.
+#' @returns Depending on parameters either the R list or a (pretty) JSON string.
 #'
 #' @export
 get_params <- S7::new_generic(
@@ -102,7 +102,7 @@ S7::method(get_params, BixverseBaseClass) <-
 #' @param ... Unused, present so the S3 methods sharing this page match the
 #' generic.
 #'
-#' @return Returns the final results if any have been stored in the class.
+#' @returns Returns the final results if any have been stored in the class.
 #'
 #' @export
 get_results <- S7::new_generic(

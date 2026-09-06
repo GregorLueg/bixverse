@@ -210,9 +210,9 @@ extendr_module! {
 /// @param meta_cell_params A list containing the meta cell parameters.
 /// @param target_size Numeric. Target library size for re-normalisation of
 /// the meta cells. Typically `1e4`.
+/// @param seed Integer. For reproducibility.
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
-/// @param verbose Boolean. Controls verbosity of the function.
 ///
 /// @returns A list with the following elements:
 /// \itemize{
@@ -914,7 +914,7 @@ fn rs_supercell(
 /// detailed verbosity.
 /// @param seed Integer. For reproducibility.
 ///
-/// @return A list with the following items
+/// @returns A list with the following items
 /// \itemize{
 ///   \item dcs - Density coordinates
 ///   \item density_distances - Density distances at `k_density` neighbours.

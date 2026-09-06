@@ -40,7 +40,7 @@ extendr_module! {
 /// powered. If you supply `NULL`, it will default to `2L`.
 ///
 ///
-/// @return A list containing:
+/// @returns A list containing:
 ///  \itemize{
 ///   \item x - The preprocessed matrix.
 ///   \item k - The pre-whitening matrix k.
@@ -92,7 +92,7 @@ fn rs_prepare_whitening(
 /// If the list is empty or the expected elements are not found, default values
 /// are used.
 ///
-/// @return A list with the following items:
+/// @returns A list with the following items:
 ///  \itemize{
 ///   \item mixing - The mixing matrix for subsequent usage.
 ///   \item converged - Boolean if the algorithm converged.
@@ -168,7 +168,7 @@ fn rs_fast_ica(
 /// If the list is empty or the expected elements are not found, default values
 /// are used.
 ///
-/// @return A list containing:
+/// @returns A list containing:
 /// \itemize{
 ///   \item s_combined - The combined matrices for S. Dimensions are nrows =
 ///   features; and ncols = ncomp * no_random_init.
@@ -242,7 +242,7 @@ fn rs_ica_iters(
 /// If the list is empty or the expected elements are not found, default values
 /// are used.
 ///
-/// @return A list containing:
+/// @returns A list containing:
 /// \itemize{
 ///   \item s_combined - The combined matrices for S. Dimensions are nrows =
 ///   features; and ncols = ncomp * no_random_init.

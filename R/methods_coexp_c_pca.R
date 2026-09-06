@@ -12,7 +12,7 @@
 #' @param scale Boolean. Shall the data be scaled. Defaults to FALSE.
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
-#' @return `BulkCoExp` with the needed data for contrastive PCA in the
+#' @returns `BulkCoExp` with the needed data for contrastive PCA in the
 #' properties of the class.
 #'
 #' @references Abid, et al., Nature Communications, 2018
@@ -119,7 +119,7 @@ S7::method(contrastive_pca_processing, BulkCoExp) <-
 #' @param alpha Alpha parameter to use.
 #' @param no_pcs Number of contrastive PCs to generate.
 #'
-#' @return `BulkCoExp` with additional data in the slots
+#' @returns `BulkCoExp` with additional data in the slots
 #'
 #' @references Abid, et al., Nature Communications, 2018
 #'
@@ -275,7 +275,7 @@ S7::method(get_c_pca_factors, BulkCoExp) <- function(object) {
 #' of alphas from log(min_alpha) to log(max_alpha) to test out.
 #' @param .verbose Controls verbosity of function.
 #'
-#' @return A ggplot showing the impact of various alpha parameters on the
+#' @returns A ggplot showing the impact of various alpha parameters on the
 #' samples in form of 2D plots.
 #'
 #' @references Abid, et al., Nature Communications, 2018

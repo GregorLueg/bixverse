@@ -409,7 +409,7 @@ print.BatchLisiScores <- function(x, ...) {
 #' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
 #' verbosity.
 #'
-#' @return This function will return a list with:
+#' @returns This function will return a list with:
 #' \itemize{
 #'   \item hvg_genes - The gene names of the HVGs.
 #'   \item hvg_gene_idx - The (0-index) gene features.
@@ -865,7 +865,7 @@ S7::method(fast_mnn_sc, ScOrScSubset) <- function(
 #' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
 #' verbosity.
 #'
-#' @return The object with a `"harmony"` embedding added. If no PCA embeddings
+#' @returns The object with a `"harmony"` embedding added. If no PCA embeddings
 #' are found, returns the object unchanged with a warning.
 #'
 #' @export
@@ -992,7 +992,7 @@ S7::method(harmony_sc, ScOrScSubset) <- function(
 #' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
 #' verbosity.
 #'
-#' @return The object with a `"harmony_v2"` embedding added. If no PCA
+#' @returns The object with a `"harmony_v2"` embedding added. If no PCA
 #' embeddings are found, returns the object unchanged with a warning.
 #'
 #' @export

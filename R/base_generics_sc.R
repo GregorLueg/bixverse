@@ -16,7 +16,7 @@
 #' @param filtered Boolean. Whether to return all cells or filtered to `to_keep`
 #' cells. Not relevant for `MetaCells`.
 #'
-#' @return The obs table
+#' @returns The obs table
 #'
 #' @export
 get_sc_obs <- S7::new_generic(
@@ -42,7 +42,7 @@ get_sc_obs <- S7::new_generic(
 #' @param cols Optional string vector. The columns from the var table to return.
 #' @param modality String. The modality to return. One of `c("rna", "adt")`.
 #'
-#' @return The vars table
+#' @returns The vars table
 #'
 #' @export
 get_sc_var <- S7::new_generic(
@@ -75,7 +75,7 @@ get_sc_var <- S7::new_generic(
 #' shall the counts be reduced to these. Not relevant for `MetaCells`.
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
-#' @return The counts table
+#' @returns The counts table
 #'
 #' @export
 get_sc_counts <- S7::new_generic(
@@ -105,7 +105,7 @@ get_sc_counts <- S7::new_generic(
 #'
 #' @param object `SingleCells`, `MetaCells` (or potentially other) class.
 #'
-#' @return A data.table with available features.
+#' @returns A data.table with available features.
 #'
 #' @export
 get_sc_available_features <- S7::new_generic(
@@ -131,7 +131,7 @@ get_sc_available_features <- S7::new_generic(
 #' @param old Character vector. The old column names.
 #' @param new Character vector. The new column names.
 #'
-#' @return Invisible self
+#' @returns Invisible self
 #'
 #' @export
 setnames_sc <- S7::new_generic(
@@ -162,7 +162,7 @@ setnames_sc <- S7::new_generic(
 #' @param table String. One of `c("obs", "var")`.
 #' @param cols Character vector. Column names to drop.
 #'
-#' @return Invisible self.
+#' @returns Invisible self.
 #'
 #' @export
 drop_cols_sc <- S7::new_generic(
@@ -181,7 +181,7 @@ drop_cols_sc <- S7::new_generic(
 
 #### setters -------------------------------------------------------------------
 
-#' @title Set gene mapping
+#' Set gene mapping
 #'
 #' @description Set a gene mapping for a given object. This is used for the
 #' single cell-related classes with streaming from disk.
@@ -196,7 +196,7 @@ set_gene_mapping <- function(x, gene_map) {
   UseMethod("set_gene_mapping")
 }
 
-#' @title Set cell mapping
+#' Set cell mapping
 #'
 #' @description Set a cell mapping for a given object. This is used for the
 #' single cell-related classes with streaming from disk.
@@ -211,7 +211,7 @@ set_cell_mapping <- function(x, cell_map) {
   UseMethod("set_cell_mapping")
 }
 
-#' @title Set cells to keep
+#' Set cells to keep
 #'
 #' @description Set the cells to keep. This is used for the single cell-related
 #' classes with streaming from disk and tells subsequent (Rust) methods which
@@ -228,7 +228,7 @@ set_cells_to_keep <- function(x, cells_to_keep) {
   UseMethod("set_cells_to_keep")
 }
 
-#' @title Reset the cells to keep
+#' Reset the cells to keep
 #'
 #' @description
 #' Restores every cell found in the binary count file and wipes the cache,
@@ -261,7 +261,7 @@ reset_cells_to_keep <- S7::new_generic(
   }
 )
 
-#' @title Set the HVG genes
+#' Set the HVG genes
 #'
 #' @description
 #' Stores within the class the index positions of the HVG. This is used for
@@ -280,7 +280,7 @@ set_hvg <- function(x, hvg) {
 
 #### getters -------------------------------------------------------------------
 
-#' @title Get the HVG
+#' Get the HVG
 #'
 #' @description
 #' Returns the HVG indices. Pending class type this are 1-based (for R) or
@@ -295,21 +295,21 @@ get_hvg <- function(x) {
   UseMethod("get_hvg")
 }
 
-#' @title Get the gene names
+#' Get the gene names
 #'
 #' @description
 #' Get the main gene names (for example symbols or Ensembl identifiers).
 #'
 #' @param x An object to get the gene names from.
 #'
-#' @return The primary gene identifiers stored in the class.
+#' @returns The primary gene identifiers stored in the class.
 #'
 #' @export
 get_gene_names <- function(x) {
   UseMethod("get_gene_names")
 }
 
-#' @title Get the cell names
+#' Get the cell names
 #'
 #' @description
 #' Returns the cell names (usually barcodes).
@@ -319,14 +319,14 @@ get_gene_names <- function(x) {
 #' `cells_to_keep` be returned (see [bixverse::set_cells_to_keep()]. Defaults
 #' to `FALSE`
 #'
-#' @return The cell names (barcodes)
+#' @returns The cell names (barcodes)
 #'
 #' @export
 get_cell_names <- function(x, filtered = FALSE) {
   UseMethod("get_cell_names")
 }
 
-#' @title Get the index position for a gene
+#' Get the index position for a gene
 #'
 #' @description
 #' Returns the index for a given gene based on the internal gene mapping. This
@@ -343,7 +343,7 @@ get_gene_indices <- function(x, gene_ids, rust_index) {
   UseMethod("get_gene_indices")
 }
 
-#' @title Get the index position for a gene
+#' Get the index position for a gene
 #'
 #' @description
 #' Returns the index for a given gene based on the internal gene mapping. This
@@ -360,7 +360,7 @@ get_cell_indices <- function(x, cell_ids, rust_index) {
   UseMethod("get_cell_indices")
 }
 
-#' @title Get the cell idx (R-based) and cell names
+#' Get the cell idx (R-based) and cell names
 #'
 #' @description
 #' Returns the cell indices (R-based) and the cell names (usually barcodes)
@@ -376,7 +376,11 @@ get_cell_info <- function(x, filtered = TRUE) {
   UseMethod("get_cell_info")
 }
 
-#' @title Get the cells to keep
+#' Get the cells to keep
+#'
+#' @description
+#' Returns the indices of the cells that survived quality control. These are
+#' stored 0-indexed for Rust, so add one before using them in R.
 #'
 #' @param x An object from which to get the cells to keep from. These are
 #' 0-indexed.
@@ -514,9 +518,9 @@ remove_snn_graph <- function(x, ...) {
 #' @param magic `ScMagic` class with the imputed counts.
 #' @param ... Other parameters.
 #'
-#' @export
+#' @returns The object with the imputed layer attached.
 #'
-#' @keywords internal
+#' @export
 set_magic <- function(x, magic, ...) {
   UseMethod("set_magic")
 }
@@ -526,16 +530,16 @@ set_magic <- function(x, magic, ...) {
 #' @param x An object from which to remove the imputed layer.
 #' @param ... Other parameters.
 #'
-#' @export
+#' @returns The object with the imputed layer dropped.
 #'
-#' @keywords internal
+#' @export
 remove_magic <- function(x, ...) {
   UseMethod("remove_magic")
 }
 
 #### getters -------------------------------------------------------------------
 
-#' @title Get the PCA factors
+#' Get the PCA factors
 #'
 #' @description
 #' Returns the PCA factors (sample-based scores). This function is used for the
@@ -551,7 +555,7 @@ get_pca_factors <- function(x, ...) {
   UseMethod("get_pca_factors")
 }
 
-#' @title Get the PCA loadings
+#' Get the PCA loadings
 #'
 #' @description
 #' Returns the PCA loadings (feature-based scores). This function is used for
@@ -567,7 +571,7 @@ get_pca_loadings <- function(x, ...) {
   UseMethod("get_pca_loadings")
 }
 
-#' @title Get the PCA singular values
+#' Get the PCA singular values
 #'
 #' @description
 #' Returns the PCA singular values (can be useful to assess cumulative variance
@@ -584,7 +588,7 @@ get_pca_singular_val <- function(x, ...) {
   UseMethod("get_pca_singular_val")
 }
 
-#' @title Get the embedding
+#' Get the embedding
 #'
 #' @description
 #' General wrapper function that can be used to pull out any embedding stored
@@ -612,7 +616,7 @@ get_embedding <- function(x, embd_name, ...) {
 #' @param x An object to get embedding from
 #' @param ... Other parameters.
 #'
-#' @return Get the names of the available embeddings.
+#' @returns Get the names of the available embeddings.
 #'
 #' @export
 get_available_embeddings <- function(x, ...) {
@@ -750,7 +754,7 @@ get_knn_dist <- function(x, ...) {
 #' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
 #' verbosity.
 #'
-#' @return It will add the mean, var, var_exp, var_std of each gene to the
+#' @returns It will add the mean, var, var_exp, var_std of each gene to the
 #' the var table.
 #'
 #' @export
@@ -786,7 +790,7 @@ find_hvg_sc <- S7::new_generic(
 #' @param streaming Optional Boolean. Stream the data. Ignored for `MetaCells`.
 #' @param .verbose Boolean or integer. Verbosity.
 #'
-#' @return data.table with `gene_idx`, `gene_id`, the HVG statistics returned
+#' @returns data.table with `gene_idx`, `gene_id`, the HVG statistics returned
 #' by the Rust HVG function, an `is_hvg` boolean and an `hvg_rank` integer
 #' (`NA` for non-HVGs).
 #'
@@ -835,7 +839,7 @@ get_hvg_data_sc <- S7::new_generic(
 #' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
 #' verbosity.
 #'
-#' @return The function will add the PCA factors, loadings and singular values
+#' @returns The function will add the PCA factors, loadings and singular values
 #' to the object cache in memory.
 #'
 #' @export
@@ -913,7 +917,7 @@ calculate_pca_sc <- S7::new_generic(
 #' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
 #' verbosity.
 #'
-#' @return The object with added KNN matrix.
+#' @returns The object with added KNN matrix.
 #'
 #' @export
 find_neighbours_sc <- S7::new_generic(
@@ -950,7 +954,7 @@ find_neighbours_sc <- S7::new_generic(
 #' multi-modal versions with the added data.
 #' @param seed Integer. For reproducibility.
 #'
-#' @return The object with added clustering in the obs table.
+#' @returns The object with added clustering in the obs table.
 #'
 #' @export
 find_clusters_sc <- S7::new_generic(
@@ -1005,7 +1009,7 @@ find_clusters_sc <- S7::new_generic(
 #' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
 #' verbosity.
 #'
-#' @return AUCell results in form of a matrix that is cells x gene sets or as
+#' @returns AUCell results in form of a matrix that is cells x gene sets or as
 #' `ScMatrixRes` pending the input.
 #'
 #' @export
@@ -1384,7 +1388,7 @@ load_existing <- S7::new_generic(
 #' @param modality String. One of `c("rna", "adt")`. ADT is only available for
 #' `SingleCellsMultiModal`.
 #'
-#' @return A data.table with columns: gene, group, mean_exp, scaled_exp, pct_exp.
+#' @returns A data.table with columns: gene, group, mean_exp, scaled_exp, pct_exp.
 #'
 #' @export
 extract_dot_plot_data <- S7::new_generic(
@@ -1423,7 +1427,7 @@ extract_dot_plot_data <- S7::new_generic(
 #' [bixverse::extract_dot_plot_data()] deliberately has no such argument:
 #' group means of imputed values are exactly the quantity MAGIC manufactures.
 #'
-#' @return A data.table with a `cell_id` column, one column per gene, and
+#' @returns A data.table with a `cell_id` column, one column per gene, and
 #' any requested obs columns.
 #'
 #' @export
@@ -1677,7 +1681,7 @@ vision_sc <- S7::new_generic(
 #' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
 #' verbosity.
 #'
-#' @return A list with the following elements:
+#' @returns A list with the following elements:
 #' \itemize{
 #'   \item vision_matrix - Matrix of cells x signatures with the VISION
 #'   pathway scores as values.

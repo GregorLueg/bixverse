@@ -27,7 +27,7 @@
 #' header row. Applied uniformly. Defaults to `FALSE` (10x convention).
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
-#' @return A list with:
+#' @returns A list with:
 #' \itemize{
 #'   \item universe - Character vector of gene IDs in the intersection, in the
 #'   order they will appear in the final var table.
@@ -187,7 +187,7 @@ prescan_mtx_dirs <- function(
 #' @param cell_batch_size Integer. Cell batch size for heavy streaming.
 #' @param .verbose Boolean.
 #'
-#' @return Invisible NULL. Side effect is the gene-based binary file.
+#' @returns Invisible NULL. Side effect is the gene-based binary file.
 #'
 #' @keywords internal
 .dispatch_gene_based_data <- function(
@@ -268,7 +268,7 @@ prescan_mtx_dirs <- function(
 #' Defaults to `100000L`.
 #' @param .verbose Boolean. Controls the verbosity of the function.
 #'
-#' @return It will populate the files on disk and return the class with updated
+#' @returns It will populate the files on disk and return the class with updated
 #' shape information.
 #'
 #' @export
@@ -359,7 +359,7 @@ S7::method(load_seurat, SingleCells) <- function(
 #'
 #' @param sce `SingleCellExperiment` class.
 #'
-#' @return A list with `obs` and `var` as data.tables.
+#' @returns A list with `obs` and `var` as data.tables.
 #'
 #' @keywords internal
 .sce_obs_var <- function(sce) {
@@ -507,7 +507,7 @@ S7::method(load_seurat, SingleCells) <- function(
 #' Defaults to `100000L`.
 #' @param .verbose Boolean. Controls the verbosity of the function.
 #'
-#' @return It will populate the files on disk and return the class with updated
+#' @returns It will populate the files on disk and return the class with updated
 #' shape information.
 #'
 #' @export
@@ -658,7 +658,7 @@ S7::method(load_sce, SingleCells) <- function(
 #' Defaults to `100000L`.
 #' @param .verbose Boolean. Controls the verbosity of the function.
 #'
-#' @return It will populate the files on disk and return the class with updated
+#' @returns It will populate the files on disk and return the class with updated
 #' shape information.
 #'
 #' @export
@@ -810,7 +810,7 @@ S7::method(load_r_data, SingleCells) <- function(
 #' Defaults to `100000L`.
 #' @param .verbose Boolean. Controls the verbosity of the function.
 #'
-#' @return It will populate the files on disk and return the class with updated
+#' @returns It will populate the files on disk and return the class with updated
 #' shape information.
 #'
 #' @export
@@ -974,7 +974,7 @@ S7::method(load_h5ad, SingleCells) <- function(
 #' Defaults to `100000L`.
 #' @param .verbose Boolean.
 #'
-#' @return It will populate the files on disk and return the class with updated
+#' @returns It will populate the files on disk and return the class with updated
 #' shape information.
 #'
 #' @export
@@ -1107,7 +1107,7 @@ S7::method(load_h5ad_norm, SingleCells) <- function(
 #' @param cell_batch_size Integer. Cell batch size. Defaults to `100000L`.
 #' @param .verbose Boolean.
 #'
-#' @return The class with updated shape information.
+#' @returns The class with updated shape information.
 #'
 #' @export
 stream_h5ad <- S7::new_generic(
@@ -1173,7 +1173,7 @@ S7::method(stream_h5ad, SingleCells) <- function(
 #' Defaults to `100000L`.
 #' @param .verbose Boolean.
 #'
-#' @return The class with updated shape and populated DuckDB.
+#' @returns The class with updated shape and populated DuckDB.
 #'
 #' @export
 load_multi_h5ad <- S7::new_generic(
@@ -1313,7 +1313,7 @@ S7::method(load_multi_h5ad, SingleCells) <- function(
 #' Defaults to `100000L`.
 #' @param .verbose Boolean.
 #'
-#' @return The class with updated shape information.
+#' @returns The class with updated shape information.
 #'
 #' @export
 load_mtx <- S7::new_generic(
@@ -1457,7 +1457,7 @@ S7::method(load_mtx, SingleCells) <- function(
 #' Defaults to `100000L`.
 #' @param .verbose Boolean.
 #'
-#' @return The class with updated shape and populated DuckDB.
+#' @returns The class with updated shape and populated DuckDB.
 #'
 #' @export
 load_multi_mtx <- S7::new_generic(
@@ -1605,7 +1605,7 @@ S7::method(load_multi_mtx, SingleCells) <- function(
 #' Defaults to `100000L`.
 #' @param .verbose Boolean.
 #'
-#' @return The class with updated shape information.
+#' @returns The class with updated shape information.
 #'
 #' @export
 load_tenx_h5 <- S7::new_generic(
@@ -1733,7 +1733,7 @@ S7::method(load_tenx_h5, SingleCells) <- function(
 #' Defaults to `100000L`.
 #' @param .verbose Boolean.
 #'
-#' @return The class with updated shape and populated DuckDB.
+#' @returns The class with updated shape and populated DuckDB.
 #'
 #' @export
 load_multi_tenx_h5 <- S7::new_generic(

@@ -20,7 +20,7 @@ which the contrast info can be found.}
 to calculate the Hedge's G effect for. Every permutation of the groups
 will be tested if \code{contrast_list} is \code{NULL}.}
 
-\item{normalised_counts}{Numeric Matrix. The normalized count matrix.}
+\item{normalised_counts}{Numeric Matrix. The normalised count matrix.}
 
 \item{contrast_list}{String vector or NULL. Optional string vector of
 contrast formatted as \code{"contrast1-contrast2"}. Default NULL will create all

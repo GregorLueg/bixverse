@@ -22,7 +22,7 @@
 #' min_prop of the samples (in cohorts defined by groups_coll)
 #' @param .verbose Boolean. Controls the verbosity of the function.
 #'
-#' @return Returns the class with the `processed_data` data slot populated and
+#' @returns Returns the class with the `processed_data` data slot populated and
 #' applied parameters added to the `params` slot.
 #'
 #' @export
@@ -175,7 +175,7 @@ S7::method(qc_bulk_dge, BulkDge) <- function(
 #' identifier as used in the counts.
 #' @param .verbose Boolean. Controls the verbosity of the function.
 #'
-#' @return Returns the class with the `processed_data` data slot populated and
+#' @returns Returns the class with the `processed_data` data slot populated and
 #' applied parameters added to the `params` slot.
 #'
 #' @export
@@ -327,7 +327,7 @@ S7::method(normalise_bulk_dge, BulkDge) <- function(
 #' robust scaling.
 #' @param .verbose Boolean. Controls the verbosity of the function.
 #'
-#' @return Returns the class with the `processed_data` data slot populated and
+#' @returns Returns the class with the `processed_data` data slot populated and
 #' applied parameters added to the `params` slot.
 #'
 #' @export
@@ -473,7 +473,7 @@ S7::method(preprocess_bulk_coexp, BulkCoExp) <- function(
 #' @param no_hvg_genes Integer. Number of highly variable genes to include.
 #' Defaults to 2500.
 #'
-#' @return Returns the class with additional data added to the outputs.
+#' @returns Returns the class with additional data added to the outputs.
 #'
 #' @export
 calculate_pca_bulk_dge <- S7::new_generic(
@@ -652,7 +652,7 @@ check_pca_grp_differences <- function(pc1, pc2, grps) {
 #' @param no_hvg_genes Integer. Number of highly variable genes to include.
 #' Defaults to 2500.
 #'
-#' @return Returns the class with additional data added to the outputs.
+#' @returns Returns the class with additional data added to the outputs.
 #'
 #' @export
 batch_correction_bulk_dge <- S7::new_generic(
@@ -830,7 +830,7 @@ S7::method(batch_correction_bulk_dge, BulkDge) <- function(
 #' [limma::voom()].
 #' @param .verbose Controls verbosity of the function.
 #'
-#' @return Returns the class with additional data added to the outputs.
+#' @returns Returns the class with additional data added to the outputs.
 #'
 #' @export
 calculate_dge_limma <- S7::new_generic(
@@ -989,7 +989,7 @@ S7::method(calculate_dge_limma, BulkDge) <- function(
 #' separately in the data.
 #' @param .verbose Controls verbosity of the function.
 #'
-#' @return Returns the class with additional data added to the outputs.
+#' @returns Returns the class with additional data added to the outputs.
 #'
 #' @export
 calculate_dge_hedges <- S7::new_generic(
@@ -1146,7 +1146,7 @@ S7::method(calculate_dge_hedges, BulkDge) <- function(
 #' to be identified in.
 #' @param .verbose Boolean. Controls the verbosity of the function.
 #'
-#' @return Throws an error, as it is deprecated.
+#' @returns Throws an error, as it is deprecated.
 #'
 #' @export
 #'
@@ -1213,7 +1213,7 @@ S7::method(preprocess_bulk_dge, BulkDge) <- function(
 #' small sample size correction should be applied) or a Boolean.
 #' @param .verbose Controls verbosity of the function.
 #'
-#' @return Throws an error, as it is deprecated.
+#' @returns Throws an error, as it is deprecated.
 #'
 #' @export
 calculate_all_dges <- S7::new_generic(

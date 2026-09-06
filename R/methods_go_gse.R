@@ -23,7 +23,7 @@
 #' the gene ontology term. If NULL, it will default to the number of minimum
 #' genes stored in `GeneOntologyElim`.
 #'
-#' @return data.table with enrichment results.
+#' @returns data.table with enrichment results.
 #'
 #' @export
 gse_go_elim_method <- S7::new_generic(
@@ -135,7 +135,7 @@ S7::method(gse_go_elim_method, GeneOntologyElim) <-
 #' the gene ontology term. If NULL, it will default to the number of minimum
 #' genes stored in `GeneOntologyElim`.
 #'
-#' @return data.table with enrichment results.
+#' @returns data.table with enrichment results.
 #'
 #' @export
 gse_go_elim_method_list <- S7::new_generic(
@@ -273,7 +273,7 @@ S7::method(gse_go_elim_method_list, GeneOntologyElim) <-
 #' }
 #' @param seed Random seed for reproducibility.
 #'
-#' @return data.table with enrichment results.
+#' @returns data.table with enrichment results.
 #'
 #' @export
 fgsea_simple_go_elim <- S7::new_generic(
@@ -386,7 +386,7 @@ S7::method(fgsea_simple_go_elim, GeneOntologyElim) <-
 #' }
 #' @param seed Random seed for reproducibility.
 #'
-#' @return data.table with enrichment results.
+#' @returns data.table with enrichment results.
 #'
 #' @references Korotkevich, et al., bioRxiv
 #'

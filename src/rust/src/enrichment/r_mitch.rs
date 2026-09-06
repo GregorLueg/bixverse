@@ -23,7 +23,7 @@ extendr_module! {
 /// to test for.
 /// @param min_size Integer. Minimum size of gene the gene set to be tested for.
 ///
-/// @return A list with the following elements:
+/// @returns A list with the following elements:
 ///  \itemize{
 ///     \item pathway_names - The name of the pathway.
 ///     \item pathway_sizes The size of the pathway.

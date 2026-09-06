@@ -15,7 +15,7 @@ checkCellsExist(x, cell_names)
 \code{TRUE} if the check was successful, otherwise an error message.
 }
 \description{
-Checkmate extension for checking if the prodivided cell names
+Checkmate extension for checking if the provided cell names
 exist in the object.
 }
 \keyword{internal}
