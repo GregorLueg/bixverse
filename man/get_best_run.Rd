@@ -19,3 +19,11 @@ An \code{NmfResult} containing the W/H of the best run.
 Extracts the run with the lowest reconstruction loss and returns it as a
 single-run \code{NmfResult} for downstream methods.
 }
+\examples{
+# the restart with the lowest reconstruction loss
+sc <- demo_single_cells()
+res <- stabilised_nmf_sc(sc, k = 5L, n_runs = 5L, .verbose = FALSE)
+get_best_run(res)
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

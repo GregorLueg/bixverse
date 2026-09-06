@@ -34,3 +34,10 @@ The \code{SingleCellNearestNeighbour} object.
 Returns the \code{SingleCellNearestNeighbour} from the object. This function is
 used for the single cell-related classes and methods.
 }
+\examples{
+# the cached kNN, cells x neighbours
+sc <- demo_single_cells()
+dim(get_knn_mat(get_knn_obj(sc)))
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

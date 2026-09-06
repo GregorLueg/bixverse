@@ -9,9 +9,10 @@ vision_sc(object, gs_list, streaming = NULL, .verbose = TRUE)
 \arguments{
 \item{object}{\code{SingleCells}, \code{MetaCells} (or potentially other) class.}
 
-\item{gs_list}{Named nested list. The elements have the gene identifiers of
-the respective gene sets and have the option to have a \code{"pos"} and \code{"neg"}
-gene sets. The names need to be part of the variables of the object.}
+\item{gs_list}{Named nested list. Every element must itself be a list with
+at least a \code{"pos"} element holding the gene identifiers, and optionally a
+\code{"neg"} one. A bare character vector is not accepted. The gene identifiers
+need to be part of the variables of the object.}
 
 \item{streaming}{Optional Boolean. Shall the data be streamed in. Useful for
 larger data sets where you wish to avoid loading in the whole data. If
@@ -30,6 +31,21 @@ Calculates an VISION-type scores for pathways based on DeTomaso, et al.
 Compared to other score types, you can also calculate delta-type scores
 between positive and negative gene indices, think epithelial vs mesenchymal
 gene signature, etc.
+}
+\examples{
+# a signed signature alongside a plain one
+sc <- demo_single_cells()
+gs_list <- list(
+  programme_a = list(
+    pos = get_gene_names(sc)[1:10],
+    neg = get_gene_names(sc)[11:20]
+  ),
+  programme_b = list(pos = get_gene_names(sc)[21:30])
+)
+res <- vision_sc(sc, gs_list = gs_list, .verbose = FALSE)
+dim(res)
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 }
 \references{
 DeTomaso, et al., Nat. Commun., 2019

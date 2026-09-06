@@ -14,12 +14,14 @@ All types of general getters that work across various classes related to co-expr
 
 ## Gene set enrichment helpers
 
-Everything and anything you need to do various types of gene set enrichments; hypergeometric tests, GSVA, (ss)GSEA.
+Everything and anything you need to do various types of gene set enrichments; hypergeometric tests, GSVA, (ss)GSEA, blitzGSEA.
 
 - `gse_hypergeometric`: Gene set enrichment (GSE) based on a hypergeometric test.
 - `gse_hypergeometric_list`: Gene set enrichment (GSE) based on a hypergeometric test over a list.
 - `calc_fgsea`: Bixverse implementation of the fgsea algorithm
 - `calc_fgsea_simple`: Bixverse implementation of the simple fgsea algorithm
+- `calc_blitzgsea`: Bixverse implementation of the blitzGSEA algorithm
+- `blitzgsea_calibrate`: Calibrate the blitzGSEA null model for a signature
 - `calc_gsea_traditional`: Bixverse implementation of the traditional GSEA algorithm
 - `calc_mitch`: Calculate a mitch gene set enrichments on contrast
 - `calc_gsva`: Bixverse implementation of GSVA
@@ -27,6 +29,7 @@ Everything and anything you need to do various types of gene set enrichments; hy
 - `calc_singscore`: Bixverse implementation of singscore (single gene set)
 - `calc_singscore_multi`: Bixverse implementation of singscore (multiple gene sets)
 - `calc_singscore_rank`: Rank an expression matrix for singscore
+- `params_blitzgsea`: Wrapper function to generate blitzGSEA parameters
 - `params_gsea`: Wrapper function to generate GSEA parameters
 - `params_gsva`: Wrapper function to generate GSVA parameters
 - `params_ssgsea`: Wrapper function to generate ssGSEA parameters
@@ -523,7 +526,7 @@ Various helpers that generate data for plotting single cell, such as 2D embeddin
 
 Any types of functions that help with statistics
 
-- `calculate_effect_size`: Calculate the Hedge G effect between two matrices
+- `calculate_effect_size`: Calculate the Hedge's G effect between two matrices
 - `calculate_tom`: Calculate the TOM from a correlation matrix
 - `calculate_tom_from_exp`: Calculate the TOM from an expression matrix
 - `f1_score_confusion_mat`: F1 scores on top of a confusion matrix
@@ -537,7 +540,7 @@ Any types of functions that help with statistics
 
 Some core plotting helpers in the package (usually for QC). The ones to plot downstream results can be found in bixverse.plots.
 
-- `plot_boxplot_normalization`: Helper plot function for boxplot of normalized data
+- `plot_boxplot_normalization`: Helper plot function for boxplot of normalised data
 - `plot_epsilon_res`: Plot the epsilon vs. power law goodness of fit result
 - `plot_hvgs`: Plot the highly variable genes
 - `plot_ica_ncomp_params`: Plot various parameters with no comp
@@ -566,6 +569,7 @@ Functions and helpers to download or generate synthetic data.
 - `download_pbmc_totalseq_data`: Download the PBMC TotalSeq data with ADT counts
 - `download_pbmc8k`: Download PBMC8K data from Zenodo
 - `calculate_sparsity_stats`: Helper function to calculate the induced sparsity
+- `demo_single_cells`: Ready-made SingleCells object for examples and tests
 - `generate_gene_module_data`: Generates synthetic gene module data.
 - `generate_single_cell_test_data`: Single cell test data
 - `generate_dialogue_test_data`: Single cell test data with a planted multicellular programme
@@ -587,7 +591,6 @@ Functions and helpers to download or generate synthetic data.
 All types of other random helpers without a clear pattern
 
 - `AnnDataParser`: Class for Anndata
-- `calculate_sparsity_stats`: Helper function to calculate the induced sparsity
 - `find_threshold_otsu`: Find a threshold via the Otsu method
 - `install_agent_skill`: Install the bixverse agent skill
 - `knn_graph_label_propagation`: kNN-based graph label propagation
@@ -600,7 +603,7 @@ All types of other random helpers without a clear pattern
 
 Everything Rusty - only use this if you know what you are doing... Maybe useful for your own package? Use with care and read the documentation! The ones exposed here are general enough to be useful in other packages. There is a lot more under the hood...
 
-96 `rs_*` functions are exposed here. They are the raw extendr bindings with no input validation. Use the R wrapper instead; only reach for these if you are building on top of bixverse and know exactly what you are doing.
+98 `rs_*` functions are exposed here. They are the raw extendr bindings with no input validation. Use the R wrapper instead; only reach for these if you are building on top of bixverse and know exactly what you are doing.
 
 ## Not on the package website
 

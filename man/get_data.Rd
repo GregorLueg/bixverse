@@ -51,3 +51,11 @@ Helper method that creates data.tables with cell indices which were used
 in the given analysis + the values that are to be added to the obs table
 in the DuckDB.
 }
+\examples{
+# the cell indices and cluster memberships a run produced
+sc <- demo_single_cells()
+res <- fast_cluster_sc(sc, resolutions = 1.0, .verbose = FALSE)
+head(get_data(res), 3)
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

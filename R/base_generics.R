@@ -92,7 +92,25 @@ add_new_metadata <- S7::new_generic(
 #' @param x An object to get scores from.
 #' @param ... Additional arguments passed to methods.
 #'
+#' @returns The score matrix or data.table held by the object, depending on the
+#' class. Methods exist for `ScTypeResults`, `ScTypeCellResults` and
+#' `ScDblFinderRes`.
+#'
 #' @export
+#'
+#' @examples
+#' # the ScType score matrix of cell types by cluster
+#' sc <- demo_single_cells()
+#' markers <- data.table::data.table(
+#'   cell_type = rep(sprintf("cell_type_%i", 1:3), each = 10),
+#'   gene_id = sprintf("gene_%02d", 1:30)
+#' )
+#' cell_markers <- prepare_cell_markers(obj = sc, marker_df = markers)
+#' res <- calc_sc_type_scores(sc, cell_marker_list = cell_markers,
+#'                            .verbose = FALSE)
+#' dim(get_scores(res))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 get_scores <- function(x, ...) {
   UseMethod("get_scores")
 }

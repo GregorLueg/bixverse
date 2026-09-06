@@ -21,3 +21,11 @@ get_w(x)
 \description{
 Get the W (gene loadings) matrix
 }
+\examples{
+# gene loadings of a five factor NMF
+sc <- demo_single_cells()
+res <- nmf_sc(sc, k = 5L, .verbose = FALSE)
+dim(get_w(res))
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

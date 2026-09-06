@@ -19,6 +19,13 @@
 #' @returns The obs table
 #'
 #' @export
+#'
+#' @examples
+#' # the obs table, restricted to a few columns
+#' sc <- demo_single_cells(prepped = FALSE)
+#' head(get_sc_obs(sc, cols = c("cell_id", "cell_grp", "lib_size")), 3)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 get_sc_obs <- S7::new_generic(
   name = "get_sc_obs",
   dispatch_args = "object",
@@ -45,6 +52,13 @@ get_sc_obs <- S7::new_generic(
 #' @returns The vars table
 #'
 #' @export
+#'
+#' @examples
+#' # the per gene statistics the HVG step wrote
+#' sc <- demo_single_cells()
+#' head(get_sc_var(sc, cols = c("gene_id", "mean", "var_std")), 3)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 get_sc_var <- S7::new_generic(
   name = "get_sc_var",
   dispatch_args = "object",
@@ -78,6 +92,14 @@ get_sc_var <- S7::new_generic(
 #' @returns The counts table
 #'
 #' @export
+#'
+#' @examples
+#' # raw counts for the first ten genes, cell-centric (CSR)
+#' sc <- demo_single_cells(prepped = FALSE)
+#' counts <- get_sc_counts(sc, gene_indices = 1:10, .verbose = FALSE)
+#' dim(counts)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 get_sc_counts <- S7::new_generic(
   name = "get_sc_counts",
   dispatch_args = "object",
@@ -108,6 +130,13 @@ get_sc_counts <- S7::new_generic(
 #' @returns A data.table with available features.
 #'
 #' @export
+#'
+#' @examples
+#' # what can be queried from the obs table and the counts
+#' sc <- demo_single_cells(prepped = FALSE)
+#' head(get_sc_available_features(sc), 3)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 get_sc_available_features <- S7::new_generic(
   name = "get_sc_available_features",
   dispatch_args = "object",
@@ -134,6 +163,14 @@ get_sc_available_features <- S7::new_generic(
 #' @returns Invisible self
 #'
 #' @export
+#'
+#' @examples
+#' # rename a column in the obs table
+#' sc <- demo_single_cells(prepped = FALSE)
+#' sc <- setnames_sc(sc, table = "obs", old = "cell_grp", new = "cell_type")
+#' head(get_sc_obs(sc)$cell_type, 3)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 setnames_sc <- S7::new_generic(
   name = "setnames_sc",
   dispatch_args = "object",
@@ -165,6 +202,14 @@ setnames_sc <- S7::new_generic(
 #' @returns Invisible self.
 #'
 #' @export
+#'
+#' @examples
+#' # drop a column that is no longer needed
+#' sc <- demo_single_cells(prepped = FALSE)
+#' sc <- drop_cols_sc(sc, table = "obs", cols = "batch_index")
+#' names(get_sc_obs(sc))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 drop_cols_sc <- S7::new_generic(
   name = "drop_cols_sc",
   dispatch_args = "object",
@@ -192,6 +237,15 @@ drop_cols_sc <- S7::new_generic(
 #' @export
 #'
 #' @keywords internal
+#'
+#' @examples
+#' # the mapping is normally written during ingestion
+#' sc <- demo_single_cells(prepped = FALSE)
+#' genes <- get_gene_names(sc)
+#' sc <- set_gene_mapping(sc, stats::setNames(seq_along(genes), genes))
+#' head(get_gene_names(sc), 3)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 set_gene_mapping <- function(x, gene_map) {
   UseMethod("set_gene_mapping")
 }
@@ -207,6 +261,15 @@ set_gene_mapping <- function(x, gene_map) {
 #' @export
 #'
 #' @keywords internal
+#'
+#' @examples
+#' # the mapping is normally written during ingestion
+#' sc <- demo_single_cells(prepped = FALSE)
+#' cells <- get_cell_names(sc)
+#' sc <- set_cell_mapping(sc, stats::setNames(seq_along(cells), cells))
+#' head(get_cell_names(sc), 3)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 set_cell_mapping <- function(x, cell_map) {
   UseMethod("set_cell_mapping")
 }
@@ -224,6 +287,14 @@ set_cell_mapping <- function(x, cell_map) {
 #' @export
 #'
 #' @keywords internal
+#'
+#' @examples
+#' # restrict everything downstream to the first 100 cells
+#' sc <- demo_single_cells(prepped = FALSE)
+#' sc <- set_cells_to_keep(sc, get_cell_names(sc)[1:100])
+#' length(get_cells_to_keep(sc))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 set_cells_to_keep <- function(x, cells_to_keep) {
   UseMethod("set_cells_to_keep")
 }
@@ -250,6 +321,15 @@ set_cells_to_keep <- function(x, cells_to_keep) {
 #' if the confirmation was declined.
 #'
 #' @export
+#'
+#' @examples
+#' # a filter taken back off, cache wiped with it
+#' sc <- demo_single_cells(prepped = FALSE)
+#' sc <- set_cells_to_keep(sc, get_cell_names(sc)[1:100])
+#' sc <- reset_cells_to_keep(sc, force = TRUE)
+#' length(get_cells_to_keep(sc))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 reset_cells_to_keep <- S7::new_generic(
   name = "reset_cells_to_keep",
   dispatch_args = "object",
@@ -274,6 +354,14 @@ reset_cells_to_keep <- S7::new_generic(
 #' @export
 #'
 #' @keywords internal
+#'
+#' @examples
+#' # HVGs picked by hand instead of by find_hvg_sc()
+#' sc <- demo_single_cells(prepped = FALSE)
+#' sc <- set_hvg(sc, get_gene_names(sc)[1:20])
+#' head(get_hvg(sc))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 set_hvg <- function(x, hvg) {
   UseMethod("set_hvg")
 }
@@ -291,6 +379,13 @@ set_hvg <- function(x, hvg) {
 #' @returns Indices of the stored HVG genes.
 #'
 #' @export
+#'
+#' @examples
+#' # stored 0-based, so map them back through the gene names
+#' sc <- demo_single_cells()
+#' get_gene_names_from_idx(sc, head(get_hvg(sc), 3))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 get_hvg <- function(x) {
   UseMethod("get_hvg")
 }
@@ -305,6 +400,13 @@ get_hvg <- function(x) {
 #' @returns The primary gene identifiers stored in the class.
 #'
 #' @export
+#'
+#' @examples
+#' # the primary gene identifiers held by the object
+#' sc <- demo_single_cells(prepped = FALSE)
+#' head(get_gene_names(sc), 3)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 get_gene_names <- function(x) {
   UseMethod("get_gene_names")
 }
@@ -322,6 +424,13 @@ get_gene_names <- function(x) {
 #' @returns The cell names (barcodes)
 #'
 #' @export
+#'
+#' @examples
+#' # barcodes of the cells that passed quality control
+#' sc <- demo_single_cells(prepped = FALSE)
+#' head(get_cell_names(sc, filtered = TRUE), 3)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 get_cell_names <- function(x, filtered = FALSE) {
   UseMethod("get_cell_names")
 }
@@ -339,6 +448,13 @@ get_cell_names <- function(x, filtered = FALSE) {
 #' @returns The indices of the genes
 #'
 #' @export
+#'
+#' @examples
+#' # R-based positions of two genes
+#' sc <- demo_single_cells(prepped = FALSE)
+#' get_gene_indices(sc, c("gene_01", "gene_02"), rust_index = FALSE)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 get_gene_indices <- function(x, gene_ids, rust_index) {
   UseMethod("get_gene_indices")
 }
@@ -356,6 +472,13 @@ get_gene_indices <- function(x, gene_ids, rust_index) {
 #' @returns The indices of the cells
 #'
 #' @export
+#'
+#' @examples
+#' # R-based positions of two cells
+#' sc <- demo_single_cells(prepped = FALSE)
+#' get_cell_indices(sc, c("cell_001", "cell_002"), rust_index = FALSE)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 get_cell_indices <- function(x, cell_ids, rust_index) {
   UseMethod("get_cell_indices")
 }
@@ -372,6 +495,13 @@ get_cell_indices <- function(x, cell_ids, rust_index) {
 #' @returns A named vector with elements -> cell_idx, names -> cell_names.
 #'
 #' @export
+#'
+#' @examples
+#' # cell indices carrying the barcodes as names
+#' sc <- demo_single_cells(prepped = FALSE)
+#' head(get_cell_info(sc), 3)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 get_cell_info <- function(x, filtered = TRUE) {
   UseMethod("get_cell_info")
 }
@@ -388,6 +518,13 @@ get_cell_info <- function(x, filtered = TRUE) {
 #' @returns Integer vector with 0-indices of the cells to keep.
 #'
 #' @export
+#'
+#' @examples
+#' # 0-based for Rust, so add one before indexing in R
+#' sc <- demo_single_cells(prepped = FALSE)
+#' head(get_cells_to_keep(sc) + 1, 3)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 get_cells_to_keep <- function(x) {
   UseMethod("get_cells_to_keep")
 }
@@ -401,6 +538,13 @@ get_cells_to_keep <- function(x) {
 #' 1-indexed.
 #'
 #' @export
+#'
+#' @examples
+#' # Rust indices translated back into gene identifiers
+#' sc <- demo_single_cells(prepped = FALSE)
+#' get_gene_names_from_idx(sc, gene_idx = 0:2, rust_based = TRUE)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 get_gene_names_from_idx <- function(x, gene_idx, rust_based = TRUE) {
   UseMethod("get_gene_names_from_idx")
 }
@@ -418,6 +562,14 @@ get_gene_names_from_idx <- function(x, gene_idx, rust_based = TRUE) {
 #' @export
 #'
 #' @keywords internal
+#'
+#' @examples
+#' # an externally computed embedding pushed into the cache
+#' sc <- demo_single_cells(prepped = FALSE)
+#' sc <- set_pca_factors(sc, matrix(stats::rnorm(dim(sc)[1] * 2), ncol = 2))
+#' dim(get_pca_factors(sc))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 set_pca_factors <- function(x, pca_factor, ...) {
   UseMethod("set_pca_factors")
 }
@@ -431,6 +583,14 @@ set_pca_factors <- function(x, pca_factor, ...) {
 #' @export
 #'
 #' @keywords internal
+#'
+#' @examples
+#' # only the first two loading vectors kept
+#' sc <- demo_single_cells()
+#' sc <- set_pca_loadings(sc, get_pca_loadings(sc)[, 1:2])
+#' dim(get_pca_loadings(sc))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 set_pca_loadings <- function(x, pca_loading, ...) {
   UseMethod("set_pca_loadings")
 }
@@ -444,6 +604,14 @@ set_pca_loadings <- function(x, pca_loading, ...) {
 #' @export
 #'
 #' @keywords internal
+#'
+#' @examples
+#' # singular values from a decomposition done elsewhere
+#' sc <- demo_single_cells(prepped = FALSE)
+#' sc <- set_pca_singular_vals(sc, c(4.1, 2.3))
+#' get_pca_singular_val(sc)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 set_pca_singular_vals <- function(x, singular_vals, ...) {
   UseMethod("set_pca_singular_vals")
 }
@@ -458,6 +626,14 @@ set_pca_singular_vals <- function(x, singular_vals, ...) {
 #' @export
 #'
 #' @keywords internal
+#'
+#' @examples
+#' # the first two PCs stored as an embedding in their own right
+#' sc <- demo_single_cells()
+#' sc <- set_embedding(sc, get_pca_factors(sc)[, 1:2], name = "pca_2d")
+#' get_available_embeddings(sc)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 set_embedding <- function(x, embd, name, ...) {
   UseMethod("set_embedding")
 }
@@ -471,6 +647,15 @@ set_embedding <- function(x, embd, name, ...) {
 #' @export
 #'
 #' @keywords internal
+#'
+#' @examples
+#' # a kNN built outside the object put into the cache
+#' sc <- demo_single_cells()
+#' knn <- generate_knn_sc(sc, .validate_index = FALSE, .verbose = FALSE)
+#' sc <- set_knn(sc, knn)
+#' dim(get_knn_mat(sc))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 set_knn <- function(x, knn, ...) {
   UseMethod("set_knn")
 }
@@ -484,6 +669,15 @@ set_knn <- function(x, knn, ...) {
 #' @export
 #'
 #' @keywords internal
+#'
+#' @examples
+#' # the sNN graph taken out and put back
+#' sc <- demo_single_cells()
+#' snn <- get_snn_graph(sc)
+#' sc <- set_snn_graph(remove_snn_graph(sc), snn)
+#' igraph::vcount(get_snn_graph(sc))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 set_snn_graph <- function(x, snn_graph, ...) {
   UseMethod("set_snn_graph")
 }
@@ -496,6 +690,14 @@ set_snn_graph <- function(x, snn_graph, ...) {
 #' @export
 #'
 #' @keywords internal
+#'
+#' @examples
+#' # drop the cached kNN, for example before rebuilding it
+#' sc <- demo_single_cells()
+#' sc <- remove_knn(sc)
+#' is.null(get_knn_obj(sc))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 remove_knn <- function(x, ...) {
   UseMethod("remove_knn")
 }
@@ -508,6 +710,14 @@ remove_knn <- function(x, ...) {
 #' @export
 #'
 #' @keywords internal
+#'
+#' @examples
+#' # drop the cached sNN graph
+#' sc <- demo_single_cells()
+#' sc <- remove_snn_graph(sc)
+#' is.null(get_snn_graph(sc))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 remove_snn_graph <- function(x, ...) {
   UseMethod("remove_snn_graph")
 }
@@ -521,6 +731,16 @@ remove_snn_graph <- function(x, ...) {
 #' @returns The object with the imputed layer attached.
 #'
 #' @export
+#'
+#' @examples
+#' # the imputed layer taken out and put back
+#' sc <- demo_single_cells()
+#' sc <- run_magic_sc(sc, features = get_gene_names(sc)[1:5], .verbose = FALSE)
+#' magic <- get_magic(sc)
+#' sc <- set_magic(remove_magic(sc), magic)
+#' dim(get_magic(sc)$data)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 set_magic <- function(x, magic, ...) {
   UseMethod("set_magic")
 }
@@ -533,6 +753,15 @@ set_magic <- function(x, magic, ...) {
 #' @returns The object with the imputed layer dropped.
 #'
 #' @export
+#'
+#' @examples
+#' # drop the imputed layer again
+#' sc <- demo_single_cells()
+#' sc <- run_magic_sc(sc, features = get_gene_names(sc)[1:5], .verbose = FALSE)
+#' sc <- remove_magic(sc)
+#' is.null(get_magic(sc))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 remove_magic <- function(x, ...) {
   UseMethod("remove_magic")
 }
@@ -551,6 +780,13 @@ remove_magic <- function(x, ...) {
 #' @returns The PCA factors from the object (if found).
 #'
 #' @export
+#'
+#' @examples
+#' # cells x PCs
+#' sc <- demo_single_cells()
+#' dim(get_pca_factors(sc))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 get_pca_factors <- function(x, ...) {
   UseMethod("get_pca_factors")
 }
@@ -567,6 +803,13 @@ get_pca_factors <- function(x, ...) {
 #' @returns The PCA feature loadings from the object (if found).
 #'
 #' @export
+#'
+#' @examples
+#' # HVGs x PCs
+#' sc <- demo_single_cells()
+#' dim(get_pca_loadings(sc))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 get_pca_loadings <- function(x, ...) {
   UseMethod("get_pca_loadings")
 }
@@ -584,6 +827,13 @@ get_pca_loadings <- function(x, ...) {
 #' @returns The PCA singular values from the object (if found).
 #'
 #' @export
+#'
+#' @examples
+#' # singular values, largest first
+#' sc <- demo_single_cells()
+#' head(get_pca_singular_val(sc), 3)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 get_pca_singular_val <- function(x, ...) {
   UseMethod("get_pca_singular_val")
 }
@@ -603,6 +853,13 @@ get_pca_singular_val <- function(x, ...) {
 #' @returns Get the specified embeddings from the object (if found).
 #'
 #' @export
+#'
+#' @examples
+#' # any stored embedding, by name
+#' sc <- demo_single_cells()
+#' dim(get_embedding(sc, "pca"))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 get_embedding <- function(x, embd_name, ...) {
   UseMethod("get_embedding")
 }
@@ -619,6 +876,13 @@ get_embedding <- function(x, embd_name, ...) {
 #' @returns Get the names of the available embeddings.
 #'
 #' @export
+#'
+#' @examples
+#' # what is in the cache to plot against
+#' sc <- demo_single_cells()
+#' get_available_embeddings(sc)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 get_available_embeddings <- function(x, ...) {
   UseMethod("get_available_embeddings")
 }
@@ -635,6 +899,13 @@ get_available_embeddings <- function(x, ...) {
 #' @returns The igraph that has the shared nearest neighbours.
 #'
 #' @export
+#'
+#' @examples
+#' # the sNN graph the clustering methods run on
+#' sc <- demo_single_cells()
+#' igraph::vcount(get_snn_graph(sc))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 get_snn_graph <- function(x, ...) {
   UseMethod("get_snn_graph")
 }
@@ -651,6 +922,13 @@ get_snn_graph <- function(x, ...) {
 #' @returns The `SingleCellNearestNeighbour` object.
 #'
 #' @export
+#'
+#' @examples
+#' # the cached kNN, cells x neighbours
+#' sc <- demo_single_cells()
+#' dim(get_knn_mat(get_knn_obj(sc)))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 get_knn_obj <- function(x, ...) {
   UseMethod("get_knn_obj")
 }
@@ -667,6 +945,14 @@ get_knn_obj <- function(x, ...) {
 #' @returns The `ScMagic` object, or `NULL` when nothing was imputed.
 #'
 #' @export
+#'
+#' @examples
+#' # the imputed layer, only the genes MAGIC was asked for
+#' sc <- demo_single_cells()
+#' sc <- run_magic_sc(sc, features = get_gene_names(sc)[1:5], .verbose = FALSE)
+#' dim(get_magic(sc)$data)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 get_magic <- function(x, ...) {
   UseMethod("get_magic")
 }
@@ -691,6 +977,14 @@ get_magic <- function(x, ...) {
 #' in the analysis and additional columns to be added to the obs table.
 #'
 #' @export
+#'
+#' @examples
+#' # the cell indices and cluster memberships a run produced
+#' sc <- demo_single_cells()
+#' res <- fast_cluster_sc(sc, resolutions = 1.0, .verbose = FALSE)
+#' head(get_data(res), 3)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 get_data <- function(x, columns = NULL, ...) {
   UseMethod("get_data")
 }
@@ -706,6 +1000,13 @@ get_data <- function(x, columns = NULL, ...) {
 #' @param ... Other parameters.
 #'
 #' @export
+#'
+#' @examples
+#' # cells x neighbours
+#' sc <- demo_single_cells()
+#' dim(get_knn_mat(sc))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 get_knn_mat <- function(x, ...) {
   UseMethod("get_knn_mat")
 }
@@ -720,6 +1021,13 @@ get_knn_mat <- function(x, ...) {
 #' @param ... Other parameters.
 #'
 #' @export
+#'
+#' @examples
+#' # cells x neighbour distances
+#' sc <- demo_single_cells()
+#' dim(get_knn_dist(sc))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 get_knn_dist <- function(x, ...) {
   UseMethod("get_knn_dist")
 }
@@ -758,6 +1066,14 @@ get_knn_dist <- function(x, ...) {
 #' the var table.
 #'
 #' @export
+#'
+#' @examples
+#' # the twenty most variable genes by the vst method
+#' sc <- demo_single_cells(prepped = FALSE)
+#' sc <- find_hvg_sc(sc, hvg_no = 20L, .verbose = FALSE)
+#' length(get_hvg(sc))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 find_hvg_sc <- S7::new_generic(
   name = "find_hvg_sc",
   dispatch_args = "object",
@@ -795,6 +1111,14 @@ find_hvg_sc <- S7::new_generic(
 #' (`NA` for non-HVGs).
 #'
 #' @export
+#'
+#' @examples
+#' # HVG statistics without touching the object
+#' sc <- demo_single_cells(prepped = FALSE)
+#' dt <- get_hvg_data_sc(sc, hvg_no = 20L, .verbose = FALSE)
+#' head(dt[(is_hvg), c("gene_id", "hvg_rank")], 3)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 get_hvg_data_sc <- S7::new_generic(
   name = "get_hvg_data_sc",
   dispatch_args = "object",
@@ -843,6 +1167,15 @@ get_hvg_data_sc <- S7::new_generic(
 #' to the object cache in memory.
 #'
 #' @export
+#'
+#' @examples
+#' # PCA on the highly variable genes
+#' sc <- demo_single_cells(prepped = FALSE)
+#' sc <- find_hvg_sc(sc, hvg_no = 30L, .verbose = FALSE)
+#' sc <- calculate_pca_sc(sc, no_pcs = 10L, .verbose = FALSE)
+#' dim(get_pca_factors(sc))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 calculate_pca_sc <- S7::new_generic(
   name = "calculate_pca_sc",
   dispatch_args = "object",
@@ -920,6 +1253,20 @@ calculate_pca_sc <- S7::new_generic(
 #' @returns The object with added KNN matrix.
 #'
 #' @export
+#'
+#' @examples
+#' # kNN and the sNN graph on top of the PCA
+#' sc <- demo_single_cells(prepped = FALSE)
+#' sc <- find_hvg_sc(sc, hvg_no = 30L, .verbose = FALSE)
+#' sc <- calculate_pca_sc(sc, no_pcs = 10L, .verbose = FALSE)
+#' sc <- find_neighbours_sc(
+#'   sc,
+#'   neighbours_params = params_sc_neighbours(knn = list(k = 15L)),
+#'   .verbose = FALSE
+#' )
+#' dim(get_knn_mat(sc))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 find_neighbours_sc <- S7::new_generic(
   name = "find_neighbours_sc",
   dispatch_args = "object",
@@ -957,6 +1304,14 @@ find_neighbours_sc <- S7::new_generic(
 #' @returns The object with added clustering in the obs table.
 #'
 #' @export
+#'
+#' @examples
+#' # Leiden on the cached sNN graph
+#' sc <- demo_single_cells()
+#' sc <- find_clusters_sc(sc, res = 1.0, name = "clusters")
+#' table(get_sc_obs(sc)$clusters)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 find_clusters_sc <- S7::new_generic(
   name = "find_clusters_sc",
   dispatch_args = "object",
@@ -1015,6 +1370,18 @@ find_clusters_sc <- S7::new_generic(
 #' @export
 #'
 #' @references Aibar, et al., Nat Methods, 2017
+#'
+#' @examples
+#' # recovery curve AUC for two marker programmes
+#' sc <- demo_single_cells()
+#' gs_list <- list(
+#'   type_1 = get_gene_names(sc)[1:10],
+#'   type_2 = get_gene_names(sc)[11:20]
+#' )
+#' res <- aucell_sc(sc, gs_list = gs_list, .verbose = FALSE)
+#' dim(res)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 aucell_sc <- S7::new_generic(
   name = "aucell_sc",
   dispatch_args = "object",
@@ -1054,6 +1421,18 @@ aucell_sc <- S7::new_generic(
 #' inclusion criteria.
 #'
 #' @export
+#'
+#' @examples
+#' # genes clearing the SCENIC count and prevalence thresholds
+#' sc <- demo_single_cells()
+#' genes <- scenic_gene_filter_sc(
+#'   sc,
+#'   scenic_params = params_scenic(min_counts = 100L, min_cells = 0.05),
+#'   .verbose = FALSE
+#' )
+#' length(genes)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 scenic_gene_filter_sc <- S7::new_generic(
   name = "scenic_gene_filter_sc",
   dispatch_args = "object",
@@ -1117,6 +1496,22 @@ scenic_gene_filter_sc <- S7::new_generic(
 #' `grnboost2` learner that can only fit one gene at a given time.
 #'
 #' @export
+#'
+#' @examples
+#' # TF to gene importances from a small random forest
+#' sc <- demo_single_cells()
+#' res <- scenic_grn_sc(
+#'   sc,
+#'   tf_ids = get_gene_names(sc)[1:5],
+#'   scenic_params = params_scenic(
+#'     min_counts = 100L,
+#'     learner_params = list(n_trees = 20L)
+#'   ),
+#'   .verbose = FALSE
+#' )
+#' res
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 scenic_grn_sc <- S7::new_generic(
   name = "scenic_grn_sc",
   dispatch_args = "object",
@@ -1160,6 +1555,14 @@ scenic_grn_sc <- S7::new_generic(
 #' @returns An `NmfResult` object.
 #'
 #' @export
+#'
+#' @examples
+#' # three factors on the highly variable genes
+#' sc <- demo_single_cells()
+#' res <- nmf_sc(sc, k = 3L, .verbose = FALSE)
+#' res
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 nmf_sc <- S7::new_generic(
   name = "nmf_sc",
   dispatch_args = "object",
@@ -1191,6 +1594,14 @@ nmf_sc <- S7::new_generic(
 #' @returns A `StabilisedNmfResult` object.
 #'
 #' @export
+#'
+#' @examples
+#' # five random restarts, the best one reported
+#' sc <- demo_single_cells()
+#' res <- stabilised_nmf_sc(sc, k = 3L, n_runs = 5L, .verbose = FALSE)
+#' res
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 stabilised_nmf_sc <- S7::new_generic(
   name = "stabilised_nmf_sc",
   dispatch_args = "object",
@@ -1256,6 +1667,20 @@ stabilised_nmf_sc <- S7::new_generic(
 #' @references Kotliar et al., eLife, 2019
 #'
 #' @export
+#'
+#' @examples
+#' # ten restarts pooled, density filter off on data this small
+#' sc <- demo_single_cells()
+#' res <- consensus_nmf_sc(
+#'   sc,
+#'   k = 3L,
+#'   n_runs = 10L,
+#'   nmf_consensus_params = params_nmf_consensus(density_threshold = 2),
+#'   .verbose = FALSE
+#' )
+#' res
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 consensus_nmf_sc <- S7::new_generic(
   name = "consensus_nmf_sc",
   dispatch_args = "object",
@@ -1302,6 +1727,20 @@ consensus_nmf_sc <- S7::new_generic(
 #' @references Kotliar et al., eLife, 2019
 #'
 #' @export
+#'
+#' @examples
+#' # stability against reconstruction error across three ranks
+#' sc <- demo_single_cells()
+#' res <- nmf_k_sweep_sc(
+#'   sc,
+#'   k_range = 2:4,
+#'   n_runs = 5L,
+#'   nmf_consensus_params = params_nmf_consensus(density_threshold = 2),
+#'   .verbose = FALSE
+#' )
+#' res
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 nmf_k_sweep_sc <- S7::new_generic(
   name = "nmf_k_sweep_sc",
   dispatch_args = "object",
@@ -1336,9 +1775,19 @@ nmf_k_sweep_sc <- S7::new_generic(
 #' @param type String. One of `c("qs2", "rds")`. Defines which binary format to
 #' use. Will default to `"qs2"` for speed.
 #'
-#' @returns The object with added information on the data on disk.
+#' @returns `NULL`, invisibly. Called for the side effect of writing the
+#' in-memory maps and caches next to the counts. It does not return the
+#' object, so do not assign the result.
 #'
 #' @export
+#'
+#' @examples
+#' # checkpoint the in-memory map and cache next to the counts
+#' sc <- demo_single_cells()
+#' save_sc_exp_to_disk(sc, type = "rds")
+#' list.files(sc@dir_data)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 save_sc_exp_to_disk <- S7::new_generic(
   name = "save_sc_exp_to_disk",
   dispatch_args = "object",
@@ -1362,6 +1811,15 @@ save_sc_exp_to_disk <- S7::new_generic(
 #' @returns The object with added information on the data on disk.
 #'
 #' @export
+#'
+#' @examples
+#' # a fresh handle over a directory written earlier
+#' sc <- demo_single_cells(prepped = FALSE)
+#' dir <- sc@dir_data
+#' sc <- load_existing(SingleCells(dir_data = dir), .verbose = FALSE)
+#' dim(sc)
+#'
+#' unlink(dir, recursive = TRUE, force = TRUE)
 load_existing <- S7::new_generic(
   name = "load_existing",
   dispatch_args = "object",
@@ -1388,9 +1846,22 @@ load_existing <- S7::new_generic(
 #' @param modality String. One of `c("rna", "adt")`. ADT is only available for
 #' `SingleCellsMultiModal`.
 #'
-#' @returns A data.table with columns: gene, group, mean_exp, scaled_exp, pct_exp.
+#' @returns A data.table with columns: gene, group, mean_exp, scaled_exp and
+#' pct_exp.
 #'
 #' @export
+#'
+#' @examples
+#' # mean expression and expressing fraction per cell group
+#' sc <- demo_single_cells()
+#' dt <- extract_dot_plot_data(
+#'   sc,
+#'   features = get_gene_names(sc)[1:5],
+#'   grouping_variable = "cell_grp"
+#' )
+#' head(dt, 3)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 extract_dot_plot_data <- S7::new_generic(
   name = "extract_dot_plot_data",
   dispatch_args = "object",
@@ -1431,6 +1902,18 @@ extract_dot_plot_data <- S7::new_generic(
 #' any requested obs columns.
 #'
 #' @export
+#'
+#' @examples
+#' # normalised expression of three genes with a cell annotation
+#' sc <- demo_single_cells()
+#' dt <- extract_gene_expression(
+#'   sc,
+#'   features = get_gene_names(sc)[1:3],
+#'   obs_cols = "cell_grp"
+#' )
+#' head(dt, 3)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 extract_gene_expression <- S7::new_generic(
   name = "extract_gene_expression",
   dispatch_args = "object",
@@ -1506,6 +1989,14 @@ extract_gene_expression <- S7::new_generic(
 #' `hotspot_params`.
 #'
 #' @export
+#'
+#' @examples
+#' # local auto-correlation of every gene on the cached kNN graph
+#' sc <- demo_single_cells()
+#' res <- hotspot_autocor_sc(sc, .verbose = FALSE)
+#' head(res, 3)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 hotspot_autocor_sc <- S7::new_generic(
   name = "hotspot_autocor_sc",
   dispatch_args = "object",
@@ -1583,6 +2074,18 @@ hotspot_autocor_sc <- S7::new_generic(
 #' `hotspot_params`.
 #'
 #' @export
+#'
+#' @examples
+#' # local gene-gene correlations over a subset of the genes
+#' sc <- demo_single_cells()
+#' res <- hotspot_gene_cor_sc(
+#'   sc,
+#'   genes_to_take = get_gene_names(sc)[1:20],
+#'   .verbose = FALSE
+#' )
+#' res
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 hotspot_gene_cor_sc <- S7::new_generic(
   name = "hotspot_gene_cor_sc",
   dispatch_args = "object",
@@ -1614,9 +2117,10 @@ hotspot_gene_cor_sc <- S7::new_generic(
 #' gene signature, etc.
 #'
 #' @param object `SingleCells`, `MetaCells` (or potentially other) class.
-#' @param gs_list Named nested list. The elements have the gene identifiers of
-#' the respective gene sets and have the option to have a `"pos"` and `"neg"`
-#' gene sets. The names need to be part of the variables of the object.
+#' @param gs_list Named nested list. Every element must itself be a list with
+#' at least a `"pos"` element holding the gene identifiers, and optionally a
+#' `"neg"` one. A bare character vector is not accepted. The gene identifiers
+#' need to be part of the variables of the object.
 #' @param streaming Optional Boolean. Shall the data be streamed in. Useful for
 #' larger data sets where you wish to avoid loading in the whole data. If
 #' `NULL`, will automatically detect. Ignored when applied to `MetaCells`.
@@ -1630,6 +2134,21 @@ hotspot_gene_cor_sc <- S7::new_generic(
 #' @references DeTomaso, et al., Nat. Commun., 2019
 #'
 #' @export
+#'
+#' @examples
+#' # a signed signature alongside a plain one
+#' sc <- demo_single_cells()
+#' gs_list <- list(
+#'   programme_a = list(
+#'     pos = get_gene_names(sc)[1:10],
+#'     neg = get_gene_names(sc)[11:20]
+#'   ),
+#'   programme_b = list(pos = get_gene_names(sc)[21:30])
+#' )
+#' res <- vision_sc(sc, gs_list = gs_list, .verbose = FALSE)
+#' dim(res)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 vision_sc <- S7::new_generic(
   name = "vision_sc",
   dispatch_args = "object",
@@ -1655,9 +2174,10 @@ vision_sc <- S7::new_generic(
 #' will be generated on-the-fly based on the embedding you wish to use.
 #'
 #' @param object `SingleCells`, `MetaCells` (or potentially other) class.
-#' @param gs_list Named nested list. The elements have the gene identifiers of
-#' the respective gene sets and have the option to have a `"pos"` and `"neg"`
-#' gene sets. The names need to be part of the variables of the object.
+#' @param gs_list Named nested list. Every element must itself be a list with
+#' at least a `"pos"` element holding the gene identifiers, and optionally a
+#' `"neg"` one. A bare character vector is not accepted. The gene identifiers
+#' need to be part of the variables of the object.
 #' @param vision_params List with vision parameters, see
 #' [bixverse::params_sc_vision()] with the following elements:
 #' \itemize{
@@ -1692,6 +2212,24 @@ vision_sc <- S7::new_generic(
 #' @references DeTomaso, et al., Nat. Commun., 2019
 #'
 #' @export
+#'
+#' @examples
+#' # scores plus whether they sit non-randomly on the kNN graph
+#' sc <- demo_single_cells()
+#' gs_list <- list(
+#'   programme_a = list(pos = get_gene_names(sc)[1:10]),
+#'   programme_b = list(pos = get_gene_names(sc)[21:30])
+#' )
+#' res <- vision_w_autocor_sc(
+#'   sc,
+#'   gs_list = gs_list,
+#'   embd_to_use = "pca",
+#'   vision_params = params_sc_vision(n_perm = 50L, n_cluster = 3L),
+#'   .verbose = FALSE
+#' )
+#' res$auto_cor_dt
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 vision_w_autocor_sc <- S7::new_generic(
   name = "vision_w_autocor_sc",
   dispatch_args = "object",
@@ -1771,6 +2309,36 @@ vision_w_autocor_sc <- S7::new_generic(
 #' @references Jerby-Arnon & Regev, Nature Biotechnology, 2022
 #'
 #' @export
+#'
+#' @examples
+#' # a planted multicellular programme recovered across three cell types
+#' data <- generate_dialogue_test_data()
+#' dir <- tempfile("bixverse_dlg")
+#' dir.create(dir)
+#' object <- load_r_data(
+#'   SingleCells(dir_data = dir),
+#'   counts = data$counts,
+#'   obs = data$obs,
+#'   var = data$var,
+#'   sc_qc_param = params_sc_min_quality(
+#'     min_unique_genes = 10L,
+#'     min_lib_size = 50L,
+#'     min_cells = 10L
+#'   ),
+#'   .verbose = FALSE
+#' )
+#' res <- dialogue_sc(
+#'   object,
+#'   cell_type_col = "cell_grp",
+#'   sample_col = "sample_id",
+#'   features = data$features,
+#'   gene_ids = data$var$gene_id,
+#'   pmd_params = params_dialogue_pmd(k = 2L, n_permutations = 20L),
+#'   .verbose = FALSE
+#' )
+#' res
+#'
+#' unlink(dir, recursive = TRUE, force = TRUE)
 dialogue_sc <- S7::new_generic(
   name = "dialogue_sc",
   dispatch_args = "object",

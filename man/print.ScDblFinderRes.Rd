@@ -17,4 +17,20 @@ Invisible \code{x}.
 \description{
 Print a ScDblFinderRes object
 }
+\examples{
+# threshold, score range and the cluster count behind the calls
+sc <- demo_single_cells(prepped = FALSE)
+res <- scdblfinder_sc(
+  sc,
+  scdblfinder_params = params_scdblfinder(
+    pca = list(no_pcs = 10L),
+    n_genes = 25L,
+    cxds_genes = 25L
+  ),
+  .verbose = FALSE
+)
+print(res)
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}
 \keyword{internal}

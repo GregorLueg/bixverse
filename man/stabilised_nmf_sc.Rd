@@ -50,3 +50,11 @@ Runs \code{n_runs} HALS NMF with random initialisations seeded by \code{seed + i
 The \code{nmf_init} field in \code{nmf_hals_params} is ignored; random init is
 always used.
 }
+\examples{
+# five random restarts, the best one reported
+sc <- demo_single_cells()
+res <- stabilised_nmf_sc(sc, k = 3L, n_runs = 5L, .verbose = FALSE)
+res
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

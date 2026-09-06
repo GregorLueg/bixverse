@@ -21,3 +21,15 @@ Returns the statistics that the summaries of
 reference group and rival. Useful to find out which rival a gene fails
 against.
 }
+\examples{
+# the per rival statistics the summaries are built from
+sc <- demo_single_cells()
+res <- find_specific_markers_sc(
+  sc,
+  column_of_interest = "cell_grp",
+  .verbose = FALSE
+)
+head(get_marker_comparisons(res))
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

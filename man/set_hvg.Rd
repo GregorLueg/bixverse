@@ -32,4 +32,12 @@ genes.}
 Stores within the class the index positions of the HVG. This is used for
 the single cell-related classes and methods.
 }
+\examples{
+# HVGs picked by hand instead of by find_hvg_sc()
+sc <- demo_single_cells(prepped = FALSE)
+sc <- set_hvg(sc, get_gene_names(sc)[1:20])
+head(get_hvg(sc))
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}
 \keyword{internal}

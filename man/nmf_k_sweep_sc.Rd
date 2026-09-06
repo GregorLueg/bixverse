@@ -65,6 +65,20 @@ Cost is \code{length(k_range) * n_runs} full NMF fits. On the \code{SingleCells}
 the counts are read from disk once and reused across every \code{k}, but the fits
 themselves are not free, so keep both modest on a first pass.
 }
+\examples{
+# stability against reconstruction error across three ranks
+sc <- demo_single_cells()
+res <- nmf_k_sweep_sc(
+  sc,
+  k_range = 2:4,
+  n_runs = 5L,
+  nmf_consensus_params = params_nmf_consensus(density_threshold = 2),
+  .verbose = FALSE
+)
+res
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}
 \references{
 Kotliar et al., eLife, 2019
 }

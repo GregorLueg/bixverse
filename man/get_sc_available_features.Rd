@@ -16,3 +16,10 @@ A data.table with available features.
 Returns a data.table with available features in the obs table and in the
 count matrices.
 }
+\examples{
+# what can be queried from the obs table and the counts
+sc <- demo_single_cells(prepped = FALSE)
+head(get_sc_available_features(sc), 3)
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

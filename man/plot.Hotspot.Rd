@@ -31,4 +31,13 @@ orders genes within each module by hierarchical clustering and separates and
 labels the module blocks, so the block structure is actually readable.
 Without membership every gene is shown in the order it comes in.
 }
+\examples{
+# gene-gene Z-scores ordered by module membership
+sc <- demo_single_cells()
+hs <- hotspot_gene_cor_sc(sc, .verbose = FALSE)
+hs <- generate_hotspot_membership(hs)
+plot(hs)
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}
 \keyword{internal}

@@ -40,3 +40,11 @@ genes. Useful for computing HVGs on a subset of cells (e.g. a specific
 cell type) for downstream methods like NMF, without overwriting the HVGs
 stored on the object.
 }
+\examples{
+# HVG statistics without touching the object
+sc <- demo_single_cells(prepped = FALSE)
+dt <- get_hvg_data_sc(sc, hvg_no = 20L, .verbose = FALSE)
+head(dt[(is_hvg), c("gene_id", "hvg_rank")], 3)
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

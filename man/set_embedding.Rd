@@ -34,4 +34,12 @@ set_embedding(x, embd, name, ...)
 \description{
 Add additional embeddings to the class
 }
+\examples{
+# the first two PCs stored as an embedding in their own right
+sc <- demo_single_cells()
+sc <- set_embedding(sc, get_pca_factors(sc)[, 1:2], name = "pca_2d")
+get_available_embeddings(sc)
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}
 \keyword{internal}

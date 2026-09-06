@@ -18,3 +18,23 @@ The indices of the cells in the neighbourhood.
 \description{
 Get the index cells
 }
+\examples{
+# the cells the neighbourhoods were centred on
+sc <- demo_single_cells(
+  syn_data_params = params_sc_synthetic_data(
+    n_cells = 500L,
+    n_genes = 50L,
+    n_samples = 6L,
+    sample_bias = "even"
+  )
+)
+milo <- get_miloR_abundances_sc(
+  sc,
+  sample_id_col = "sample_id",
+  miloR_params = params_sc_miloR(k_refine = 10L),
+  .verbose = FALSE
+)
+head(get_index_cells(milo))
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

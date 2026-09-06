@@ -81,6 +81,31 @@ tests are therefore not independent.
 expression heuristic and means nothing for a neighbourhood. Use \code{min_mean}
 if you want to drop sparsely populated neighbourhoods.
 }
+\examples{
+# differential abundance of neighbourhoods across two sample groups
+sc <- demo_single_cells(
+  syn_data_params = params_sc_synthetic_data(
+    n_cells = 500L,
+    n_genes = 50L,
+    n_samples = 6L,
+    sample_bias = "even"
+  )
+)
+milo <- get_miloR_abundances_sc(
+  sc,
+  sample_id_col = "sample_id",
+  miloR_params = params_sc_miloR(k_refine = 10L),
+  .verbose = FALSE
+)
+design_df <- data.frame(
+  grp = rep(c("a", "b"), each = 3),
+  row.names = sprintf("sample_\%i", 1:6)
+)
+milo <- test_nhoods(milo, design = ~grp, design_df = design_df)
+head(get_differential_abundance_res(milo))
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}
 \references{
 Dann, et al., Nat Biotechnol, 2022; Chen, Lun and Smyth,
 F1000Research, 2016

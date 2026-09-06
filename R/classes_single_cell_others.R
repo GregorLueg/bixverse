@@ -43,6 +43,21 @@
 #' @returns Generates the `SingleCellNearestNeighbour` class.
 #'
 #' @export
+#'
+#' @examples
+#' # rebuild the kNN wrapper from an existing graph
+#' sc <- demo_single_cells()
+#' knn <- generate_knn_sc(sc, .validate_index = FALSE, .verbose = FALSE)
+#' new_sc_knn(
+#'   knn_data = list(
+#'     indices = get_knn_mat(knn),
+#'     dist = get_knn_dist(knn),
+#'     dist_metric = "euclidean"
+#'   ),
+#'   used_cells = get_cell_names(sc)
+#' )
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 new_sc_knn <- function(knn_data, used_cells) {
   # checks
   checkmate::assertList(knn_data)
@@ -130,6 +145,14 @@ get_knn_dist.SingleCellNearestNeighbour <- function(x, ...) {
 #' @returns A `NearestNeighbours` class compatible with manifoldsR.
 #'
 #' @export
+#'
+#' @examples
+#' # hand the single cell kNN graph over to manifoldsR
+#' sc <- demo_single_cells()
+#' knn <- generate_knn_sc(sc, .validate_index = FALSE, .verbose = FALSE)
+#' sc_knn_to_nearest_neighbours(knn)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 sc_knn_to_nearest_neighbours <- function(x) {
   checkmate::assertClass(x, "SingleCellNearestNeighbour")
 
@@ -159,6 +182,20 @@ sc_knn_to_nearest_neighbours <- function(x) {
 #' @returns Updated `CellQc`.
 #'
 #' @export
+#'
+#' @examples
+#' # un-flag MAD outliers that still sit above a sane library size
+#' set.seed(42L)
+#' metrics <- list(
+#'   lib_size = c(rnorm(99, 1000, 100), 50),
+#'   pct_mt = runif(100, 0, 20)
+#' )
+#' qc <- run_cell_qc(
+#'   metrics,
+#'   cells_to_keep = 0:99,
+#'   directions = c(lib_size = "below", pct_mt = "above")
+#' )
+#' rescue_cells(qc, list(lib_size = c(lower = 500)))
 rescue_cells <- function(x, rescue_thresholds) {
   checkmate::assertClass(x, "CellQc")
   checkmate::assertList(rescue_thresholds, types = "numeric", names = "unique")
@@ -199,6 +236,20 @@ rescue_cells <- function(x, rescue_thresholds) {
 #' @returns Updated `CellQc`.
 #'
 #' @export
+#'
+#' @examples
+#' # add a hard mitochondrial cut on top of the MAD flags
+#' set.seed(42L)
+#' metrics <- list(
+#'   lib_size = c(rnorm(99, 1000, 100), 50),
+#'   pct_mt = runif(100, 0, 20)
+#' )
+#' qc <- run_cell_qc(
+#'   metrics,
+#'   cells_to_keep = 0:99,
+#'   directions = c(lib_size = "below", pct_mt = "above")
+#' )
+#' flag_cells(qc, list(pct_mt = c(upper = 15)))
 flag_cells <- function(x, hard_thresholds, reset = FALSE) {
   checkmate::assertClass(x, "CellQc")
   checkmate::assertList(hard_thresholds, types = "numeric", names = "unique")
@@ -540,6 +591,22 @@ get_data.ScMatrixRes <- function(x, columns = NULL, ...) {
 #' @export
 #'
 #' @keywords internal
+#'
+#' @examples
+#' # observed against simulated doublet scores
+#' sc <- demo_single_cells(prepped = FALSE)
+#' res <- scrublet_sc(
+#'   sc,
+#'   scrublet_params = params_scrublet(
+#'     pca = list(no_pcs = 10L),
+#'     hvg = list(min_gene_var_pctl = 0.0),
+#'     n_bins = 20L
+#'   ),
+#'   .verbose = FALSE
+#' )
+#' plot(res)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 plot.ScrubletRes <- function(x, break_number = 31L, for_sample = NULL, ...) {
   checkmate::assertClass(x, "ScrubletRes")
   checkmate::qassert(break_number, "I1")
@@ -641,6 +708,22 @@ plot.ScrubletRes <- function(x, break_number = 31L, for_sample = NULL, ...) {
 #' `detectable_doublet_fraction`, and `overall_doublet_rate`.
 #'
 #' @export
+#'
+#' @examples
+#' # move the automatic threshold after eyeballing the histograms
+#' sc <- demo_single_cells(prepped = FALSE)
+#' res <- scrublet_sc(
+#'   sc,
+#'   scrublet_params = params_scrublet(
+#'     pca = list(no_pcs = 10L),
+#'     hvg = list(min_gene_var_pctl = 0.0),
+#'     n_bins = 20L
+#'   ),
+#'   .verbose = FALSE
+#' )
+#' call_doublets_manual(res, threshold = 0.3, .verbose = FALSE)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 call_doublets_manual <- function(
   scrublet_res,
   threshold,
@@ -705,6 +788,22 @@ get_data.ScrubletRes <- function(x, ...) {
 #' @export
 #'
 #' @keywords internal
+#'
+#' @examples
+#' # the doublet rates and the threshold that produced them
+#' sc <- demo_single_cells(prepped = FALSE)
+#' res <- scrublet_sc(
+#'   sc,
+#'   scrublet_params = params_scrublet(
+#'     pca = list(no_pcs = 10L),
+#'     hvg = list(min_gene_var_pctl = 0.0),
+#'     n_bins = 20L
+#'   ),
+#'   .verbose = FALSE
+#' )
+#' print(res)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 print.ScrubletRes <- function(x, ...) {
   n_cells <- length(x$predicted_doublets)
   n_doublets <- sum(x$predicted_doublets)
@@ -815,6 +914,22 @@ get_data.BoostRes <- function(x, ...) {
 #' @export
 #'
 #' @keywords internal
+#'
+#' @examples
+#' # doublet calls from the boosted classifier
+#' sc <- demo_single_cells(prepped = FALSE)
+#' res <- doublet_detection_boost_sc(
+#'   sc,
+#'   boost_params = params_boost(
+#'     hvg = list(min_gene_var_pctl = 0.0),
+#'     pca = list(no_pcs = 10L),
+#'     n_iters = 5L
+#'   ),
+#'   .verbose = FALSE
+#' )
+#' print(res)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 print.BoostRes <- function(x, ...) {
   n_cells <- length(x$doublet)
   n_doublets <- sum(x$doublet)
@@ -894,6 +1009,23 @@ get_data.ScDblFinderRes <- function(x, ...) {
 #' @param ... Additional parameters to forward to the method.
 #'
 #' @export
+#'
+#' @examples
+#' # the features the scDblFinder classifier was trained on
+#' sc <- demo_single_cells(prepped = FALSE)
+#' res <- scdblfinder_sc(
+#'   sc,
+#'   scdblfinder_params = params_scdblfinder(
+#'     pca = list(no_pcs = 10L),
+#'     n_genes = 25L,
+#'     cxds_genes = 25L
+#'   ),
+#'   return_features = TRUE,
+#'   .verbose = FALSE
+#' )
+#' dim(get_feature_mat(res))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 get_feature_mat <- function(x, ...) {
   UseMethod("get_feature_mat")
 }
@@ -941,6 +1073,22 @@ get_scores.ScDblFinderRes <- function(
 #' @export
 #'
 #' @keywords internal
+#'
+#' @examples
+#' # threshold, score range and the cluster count behind the calls
+#' sc <- demo_single_cells(prepped = FALSE)
+#' res <- scdblfinder_sc(
+#'   sc,
+#'   scdblfinder_params = params_scdblfinder(
+#'     pca = list(no_pcs = 10L),
+#'     n_genes = 25L,
+#'     cxds_genes = 25L
+#'   ),
+#'   .verbose = FALSE
+#' )
+#' print(res)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 print.ScDblFinderRes <- function(x, ...) {
   n_cells <- length(x$predicted_doublets)
   n_doublets <- sum(x$predicted_doublets)
@@ -1102,6 +1250,15 @@ print.Hotspot <- function(x, ...) {
 #' @export
 #'
 #' @keywords internal
+#'
+#' @examples
+#' # gene-gene Z-scores ordered by module membership
+#' sc <- demo_single_cells()
+#' hs <- hotspot_gene_cor_sc(sc, .verbose = FALSE)
+#' hs <- generate_hotspot_membership(hs)
+#' plot(hs)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 plot.Hotspot <- function(x, top_k = 5L, max_genes = 500L, seed = 42L, ...) {
   if (!requireNamespace("ggplot2", quietly = TRUE)) {
     stop("ggplot2 is required for plotting.")
@@ -1301,6 +1458,15 @@ get_params.Hotspot <- function(
 #' @param x The object from which to retrieve the hotspot gene membership
 #'
 #' @export
+#'
+#' @examples
+#' # the gene to module table hotspot clustered out
+#' sc <- demo_single_cells()
+#' hs <- hotspot_gene_cor_sc(sc, .verbose = FALSE)
+#' hs <- generate_hotspot_membership(hs)
+#' head(get_hotspot_membership(hs))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 get_hotspot_membership <- function(x) {
   UseMethod("get_hotspot_membership")
 }
@@ -1328,6 +1494,14 @@ get_hotspot_membership.Hotspot <- function(
 #' @param min_size Integer. Minimum cluster size.
 #'
 #' @export
+#'
+#' @examples
+#' # cluster the local gene-gene correlations into modules
+#' sc <- demo_single_cells()
+#' hs <- hotspot_gene_cor_sc(sc, .verbose = FALSE)
+#' generate_hotspot_membership(hs)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 generate_hotspot_membership <- function(
   x,
   fdr_threshold = 0.05,
@@ -1473,6 +1647,31 @@ get_params.miloR <- function(
 #' @returns The differential abundance results stored in the object if found.
 #'
 #' @export
+#'
+#' @examples
+#' # neighbourhood level differential abundance table
+#' sc <- demo_single_cells(
+#'   syn_data_params = params_sc_synthetic_data(
+#'     n_cells = 500L,
+#'     n_genes = 50L,
+#'     n_samples = 6L,
+#'     sample_bias = "even"
+#'   )
+#' )
+#' milo <- get_miloR_abundances_sc(
+#'   sc,
+#'   sample_id_col = "sample_id",
+#'   miloR_params = params_sc_miloR(k_refine = 10L),
+#'   .verbose = FALSE
+#' )
+#' design_df <- data.frame(
+#'   grp = rep(c("a", "b"), each = 3),
+#'   row.names = sprintf("sample_%i", 1:6)
+#' )
+#' milo <- test_nhoods(milo, design = ~grp, design_df = design_df)
+#' head(get_differential_abundance_res(milo))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 get_differential_abundance_res <- function(x) {
   UseMethod("get_differential_abundance_res")
 }
@@ -1544,6 +1743,26 @@ get_model_fit.miloR <- function(
 #' @returns The indices of the cells in the neighbourhood.
 #'
 #' @export
+#'
+#' @examples
+#' # the cells the neighbourhoods were centred on
+#' sc <- demo_single_cells(
+#'   syn_data_params = params_sc_synthetic_data(
+#'     n_cells = 500L,
+#'     n_genes = 50L,
+#'     n_samples = 6L,
+#'     sample_bias = "even"
+#'   )
+#' )
+#' milo <- get_miloR_abundances_sc(
+#'   sc,
+#'   sample_id_col = "sample_id",
+#'   miloR_params = params_sc_miloR(k_refine = 10L),
+#'   .verbose = FALSE
+#' )
+#' head(get_index_cells(milo))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 get_index_cells <- function(x) {
   UseMethod("get_index_cells")
 }
@@ -1607,6 +1826,31 @@ get_index_cells.miloR <- function(x) {
 #' F1000Research, 2016
 #'
 #' @export
+#'
+#' @examples
+#' # differential abundance of neighbourhoods across two sample groups
+#' sc <- demo_single_cells(
+#'   syn_data_params = params_sc_synthetic_data(
+#'     n_cells = 500L,
+#'     n_genes = 50L,
+#'     n_samples = 6L,
+#'     sample_bias = "even"
+#'   )
+#' )
+#' milo <- get_miloR_abundances_sc(
+#'   sc,
+#'   sample_id_col = "sample_id",
+#'   miloR_params = params_sc_miloR(k_refine = 10L),
+#'   .verbose = FALSE
+#' )
+#' design_df <- data.frame(
+#'   grp = rep(c("a", "b"), each = 3),
+#'   row.names = sprintf("sample_%i", 1:6)
+#' )
+#' milo <- test_nhoods(milo, design = ~grp, design_df = design_df)
+#' head(get_differential_abundance_res(milo))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 test_nhoods <- function(
   x,
   design,
@@ -1757,6 +2001,32 @@ test_nhoods.miloR <- function(
 #' `majority_celltype` and `majority_prop` columns.
 #'
 #' @export
+#'
+#' @examples
+#' # tag each neighbourhood with its majority cell type
+#' sc <- demo_single_cells(
+#'   syn_data_params = params_sc_synthetic_data(
+#'     n_cells = 500L,
+#'     n_genes = 50L,
+#'     n_samples = 6L,
+#'     sample_bias = "even"
+#'   )
+#' )
+#' milo <- get_miloR_abundances_sc(
+#'   sc,
+#'   sample_id_col = "sample_id",
+#'   miloR_params = params_sc_miloR(k_refine = 10L),
+#'   .verbose = FALSE
+#' )
+#' design_df <- data.frame(
+#'   grp = rep(c("a", "b"), each = 3),
+#'   row.names = sprintf("sample_%i", 1:6)
+#' )
+#' milo <- test_nhoods(milo, design = ~grp, design_df = design_df)
+#' milo <- add_nhoods_info(milo, cell_info = get_sc_obs(sc)$cell_grp)
+#' head(get_differential_abundance_res(milo))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 add_nhoods_info <- function(
   x,
   cell_info
@@ -1897,6 +2167,22 @@ as.matrix.ScenicGrn <- function(x, ...) {
 #' @export
 #'
 #' @keywords internal
+#'
+#' @examples
+#' # what the GRN inference produced and which steps have run
+#' sc <- demo_single_cells()
+#' grn <- scenic_grn_sc(
+#'   sc,
+#'   tf_ids = sprintf("gene_%02d", 1:5),
+#'   scenic_params = params_scenic(
+#'     min_counts = 1L,
+#'     learner_params = list(n_trees = 20L)
+#'   ),
+#'   .verbose = FALSE
+#' )
+#' print(grn)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 print.ScenicGrn <- function(x, ...) {
   tf_to_gene_generated <- nrow(x$tf_to_gene_results) > 0
   cis_targets_results_generated <- nrow(x$cis_targets_results) > 0
@@ -1959,6 +2245,28 @@ get_params.ScenicGrn <- function(
 #' @returns data.table with TF to gene information
 #'
 #' @export
+#'
+#' @examples
+#' # the TF to gene links that survived the importance filter
+#' sc <- demo_single_cells()
+#' grn <- scenic_grn_sc(
+#'   sc,
+#'   tf_ids = sprintf("gene_%02d", 1:5),
+#'   scenic_params = params_scenic(
+#'     min_counts = 1L,
+#'     learner_params = list(n_trees = 20L)
+#'   ),
+#'   .verbose = FALSE
+#' )
+#' grn <- identify_tf_to_genes(
+#'   grn,
+#'   method = "top_k",
+#'   k_tfs = 3L,
+#'   .verbose = FALSE
+#' )
+#' head(get_tf_to_gene(grn))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 get_tf_to_gene <- function(x) {
   UseMethod("get_tf_to_gene")
 }
@@ -1990,6 +2298,61 @@ get_tf_to_gene.ScenicGrn <- function(x) {
 #' @returns data.table with TF to gene information
 #'
 #' @export
+#'
+#' @examples
+#' # CisTarget against a synthetic ranking database
+#' sc <- demo_single_cells()
+#' tfs <- sprintf("gene_%02d", 1:5)
+#' grn <- scenic_grn_sc(
+#'   sc,
+#'   tf_ids = tfs,
+#'   scenic_params = params_scenic(
+#'     min_counts = 1L,
+#'     learner_params = list(n_trees = 20L)
+#'   ),
+#'   .verbose = FALSE
+#' )
+#' grn <- identify_tf_to_genes(
+#'   grn,
+#'   method = "top_k",
+#'   k_tfs = 3L,
+#'   .verbose = FALSE
+#' )
+#' genes <- get_gene_names(sc)
+#' targets <- split(get_tf_to_gene(grn)$gene, get_tf_to_gene(grn)$tf)
+#' rankings <- matrix(
+#'   vapply(
+#'     tfs,
+#'     function(tf) {
+#'       as.integer(rank(!(genes %in% targets[[tf]]), ties.method = "first"))
+#'     },
+#'     integer(length(genes))
+#'   ),
+#'   nrow = length(genes),
+#'   dimnames = list(genes, sprintf("motif_%s", tfs))
+#' )
+#' annot <- data.table::data.table(
+#'   motif = sprintf("motif_%s", tfs),
+#'   TF = tfs,
+#'   annotationSource = factor(
+#'     c(rep("directAnnotation", 4), "inferredBy_MotifSimilarity")
+#'   )
+#' )
+#' grn <- tf_to_genes_motif_enrichment(
+#'   grn,
+#'   motif_rankings = rankings,
+#'   annot_data = annot,
+#'   cis_target_params = params_cistarget(
+#'     auc_threshold = 1,
+#'     nes_threshold = 1,
+#'     high_conf_cats = "directAnnotation",
+#'     low_conf_cats = "inferredBy_MotifSimilarity"
+#'   ),
+#'   .verbose = FALSE
+#' )
+#' get_cistarget_res(grn)[, c("gs_name", "motif", "nes")]
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 get_cistarget_res <- function(x) {
   UseMethod("get_cistarget_res")
 }
@@ -2052,6 +2415,28 @@ get_cistarget_res.ScenicGrn <- function(x) {
 #'   added.
 #'
 #' @export
+#'
+#' @examples
+#' # keep the three strongest TFs per gene
+#' sc <- demo_single_cells()
+#' grn <- scenic_grn_sc(
+#'   sc,
+#'   tf_ids = sprintf("gene_%02d", 1:5),
+#'   scenic_params = params_scenic(
+#'     min_counts = 1L,
+#'     learner_params = list(n_trees = 20L)
+#'   ),
+#'   .verbose = FALSE
+#' )
+#' grn <- identify_tf_to_genes(
+#'   grn,
+#'   method = "top_k",
+#'   k_tfs = 3L,
+#'   .verbose = FALSE
+#' )
+#' head(get_tf_to_gene(grn))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 identify_tf_to_genes <- function(
   x,
   method = c("threshold", "top_k"),
@@ -2263,6 +2648,29 @@ identify_tf_to_genes.ScenicGrn <- function(
 #' @references Aibar, et al., Nat Methods, 2017
 #'
 #' @export
+#'
+#' @examples
+#' # sign the TF to gene links and keep the activating ones
+#' sc <- demo_single_cells()
+#' grn <- scenic_grn_sc(
+#'   sc,
+#'   tf_ids = sprintf("gene_%02d", 1:5),
+#'   scenic_params = params_scenic(
+#'     min_counts = 1L,
+#'     learner_params = list(n_trees = 20L)
+#'   ),
+#'   .verbose = FALSE
+#' )
+#' grn <- identify_tf_to_genes(
+#'   grn,
+#'   method = "top_k",
+#'   k_tfs = 3L,
+#'   .verbose = FALSE
+#' )
+#' grn <- tf_to_genes_correlations(grn, object = sc, .verbose = FALSE)
+#' head(get_tf_to_gene(grn))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 tf_to_genes_correlations <- function(
   x,
   object,
@@ -2411,6 +2819,61 @@ tf_to_genes_correlations.ScenicGrn <- function(
 #' @returns Adds a data.table with the first tf to gene results to the class.
 #'
 #' @export
+#'
+#' @examples
+#' # CisTarget against a synthetic ranking database
+#' sc <- demo_single_cells()
+#' tfs <- sprintf("gene_%02d", 1:5)
+#' grn <- scenic_grn_sc(
+#'   sc,
+#'   tf_ids = tfs,
+#'   scenic_params = params_scenic(
+#'     min_counts = 1L,
+#'     learner_params = list(n_trees = 20L)
+#'   ),
+#'   .verbose = FALSE
+#' )
+#' grn <- identify_tf_to_genes(
+#'   grn,
+#'   method = "top_k",
+#'   k_tfs = 3L,
+#'   .verbose = FALSE
+#' )
+#' genes <- get_gene_names(sc)
+#' targets <- split(get_tf_to_gene(grn)$gene, get_tf_to_gene(grn)$tf)
+#' rankings <- matrix(
+#'   vapply(
+#'     tfs,
+#'     function(tf) {
+#'       as.integer(rank(!(genes %in% targets[[tf]]), ties.method = "first"))
+#'     },
+#'     integer(length(genes))
+#'   ),
+#'   nrow = length(genes),
+#'   dimnames = list(genes, sprintf("motif_%s", tfs))
+#' )
+#' annot <- data.table::data.table(
+#'   motif = sprintf("motif_%s", tfs),
+#'   TF = tfs,
+#'   annotationSource = factor(
+#'     c(rep("directAnnotation", 4), "inferredBy_MotifSimilarity")
+#'   )
+#' )
+#' grn <- tf_to_genes_motif_enrichment(
+#'   grn,
+#'   motif_rankings = rankings,
+#'   annot_data = annot,
+#'   cis_target_params = params_cistarget(
+#'     auc_threshold = 1,
+#'     nes_threshold = 1,
+#'     high_conf_cats = "directAnnotation",
+#'     low_conf_cats = "inferredBy_MotifSimilarity"
+#'   ),
+#'   .verbose = FALSE
+#' )
+#' head(get_tf_to_gene(grn))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 tf_to_genes_motif_enrichment <- function(
   x,
   motif_rankings,
@@ -2510,11 +2973,17 @@ tf_to_genes_motif_enrichment.ScenicGrn <- function(
     if (nrow(dt) == 0L) {
       return(data.table::data.table(tf = character(), le_gene = character()))
     }
-    le <- dt[,
+    exploded <- dt[,
       .(single_tf = unlist(strsplit(get(tf_col), ";"))),
       by = .(gs_name, leading_edge_genes)
-    ][
-      single_tf == gs_name,
+    ][single_tf == gs_name]
+
+    # no motif was annotated back to its own gene set's TF
+    if (nrow(exploded) == 0L) {
+      return(data.table::data.table(tf = character(), le_gene = character()))
+    }
+
+    le <- exploded[,
       .(le_gene = unlist(strsplit(leading_edge_genes, ";"))),
       by = .(tf = gs_name)
     ]
@@ -2583,6 +3052,34 @@ tf_to_genes_motif_enrichment.ScenicGrn <- function(
 #' @references Aibar, et al., Nat Methods, 2017
 #'
 #' @export
+#'
+#' @examples
+#' # turn the signed TF to gene table into regulon gene sets
+#' sc <- demo_single_cells()
+#' grn <- scenic_grn_sc(
+#'   sc,
+#'   tf_ids = sprintf("gene_%02d", 1:5),
+#'   scenic_params = params_scenic(
+#'     min_counts = 1L,
+#'     learner_params = list(n_trees = 20L)
+#'   ),
+#'   .verbose = FALSE
+#' )
+#' grn <- identify_tf_to_genes(
+#'   grn,
+#'   method = "top_k",
+#'   k_tfs = 3L,
+#'   .verbose = FALSE
+#' )
+#' grn <- tf_to_genes_correlations(grn, object = sc, .verbose = FALSE)
+#' lengths(build_regulons(
+#'   grn,
+#'   use_leading_edge = FALSE,
+#'   min_genes = 3L,
+#'   .verbose = FALSE
+#' ))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 build_regulons <- function(
   x,
   use_leading_edge = TRUE,
@@ -2719,6 +3216,20 @@ get_data.SingleCellFastClusters <- function(x, ...) {
 #' @param x `SingleCellFastClusters` object.
 #'
 #' @export
+#'
+#' @examples
+#' # the k-means centroids the graph clustering was built on
+#' sc <- demo_single_cells()
+#' res <- fast_cluster_sc(
+#'   sc,
+#'   resolutions = 1.0,
+#'   n_centroids = 30L,
+#'   return_kmeans = TRUE,
+#'   .verbose = FALSE
+#' )
+#' dim(get_centroids_sc(res))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 get_centroids_sc <- function(x) {
   UseMethod("get_centroids_sc")
 }
@@ -2742,6 +3253,20 @@ get_centroids_sc.SingleCellFastClusters <- function(x) {
 #' @param x `SingleCellFastClusters` object.
 #'
 #' @export
+#'
+#' @examples
+#' # the centroid each cell was assigned to
+#' sc <- demo_single_cells()
+#' res <- fast_cluster_sc(
+#'   sc,
+#'   resolutions = 1.0,
+#'   n_centroids = 30L,
+#'   return_kmeans = TRUE,
+#'   .verbose = FALSE
+#' )
+#' head(get_kmeans_clusters(res))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 get_kmeans_clusters <- function(x) {
   UseMethod("get_kmeans_clusters")
 }
@@ -2805,6 +3330,29 @@ get_scores.ScTypeResults <- function(x, ...) {
 #' @returns A `data.table` with cluster_id, cell_type, scores and n_cells.
 #'
 #' @export
+#'
+#' @examples
+#' # aggregate the per cell ScType scores onto a clustering
+#' sc <- demo_single_cells()
+#' markers <- data.table::data.table(
+#'   cell_type = rep(sprintf("cell_type_%i", 1:3), each = 10),
+#'   gene_id = sprintf("gene_%02d", 1:30)
+#' )
+#' cell_markers <- prepare_cell_markers(obj = sc, marker_df = markers)
+#' scores <- calc_sc_type_scores(
+#'   sc,
+#'   cell_marker_list = cell_markers,
+#'   .verbose = FALSE
+#' )
+#' clusters <- fast_cluster_sc(
+#'   sc,
+#'   resolutions = 1.0,
+#'   n_centroids = 30L,
+#'   .verbose = FALSE
+#' )
+#' head(score_clusters(scores, cluster_labels = get_data(clusters)$res_1))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 score_clusters <- function(x, cluster_labels) {
   UseMethod("score_clusters")
 }
@@ -3065,6 +3613,14 @@ as.matrix.NmfResult <- function(x, which = c("w", "h"), ...) {
 #' @param x An object holding NMF results.
 #'
 #' @export
+#'
+#' @examples
+#' # gene loadings of a five factor NMF
+#' sc <- demo_single_cells()
+#' res <- nmf_sc(sc, k = 5L, .verbose = FALSE)
+#' dim(get_w(res))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 get_w <- function(x) {
   UseMethod("get_w")
 }
@@ -3082,6 +3638,14 @@ get_w.NmfResult <- function(x) {
 #' @param x An object holding NMF results.
 #'
 #' @export
+#'
+#' @examples
+#' # per cell activations of a five factor NMF
+#' sc <- demo_single_cells()
+#' res <- nmf_sc(sc, k = 5L, .verbose = FALSE)
+#' dim(get_h(res))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 get_h <- function(x) {
   UseMethod("get_h")
 }
@@ -3287,6 +3851,14 @@ get_h.StabilisedNmfResult <- function(x) {
 #' @returns An `NmfResult` containing the W/H of the best run.
 #'
 #' @export
+#'
+#' @examples
+#' # the restart with the lowest reconstruction loss
+#' sc <- demo_single_cells()
+#' res <- stabilised_nmf_sc(sc, k = 5L, n_runs = 5L, .verbose = FALSE)
+#' get_best_run(res)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 get_best_run <- function(x) {
   UseMethod("get_best_run")
 }
@@ -3578,6 +4150,20 @@ get_h.ConsensusNmfResult <- function(x) {
 #' `cluster_sizes`, `n_dropped` and `n_empty_clusters`.
 #'
 #' @export
+#'
+#' @examples
+#' # how much the restarts agreed on the consensus factors
+#' sc <- demo_single_cells()
+#' res <- consensus_nmf_sc(
+#'   sc,
+#'   k = 5L,
+#'   n_runs = 5L,
+#'   nmf_consensus_params = params_nmf_consensus(density_threshold = 2),
+#'   .verbose = FALSE
+#' )
+#' get_stability(res)$stability
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 get_stability <- function(x) {
   UseMethod("get_stability")
 }
@@ -3779,6 +4365,20 @@ print.NmfKSweepResult <- function(x, ...) {
 #' @references Kotliar et al., eLife, 2019
 #'
 #' @export
+#'
+#' @examples
+#' # stability against reconstruction error across k
+#' sc <- demo_single_cells()
+#' res <- nmf_k_sweep_sc(
+#'   sc,
+#'   k_range = 2:4,
+#'   n_runs = 3L,
+#'   nmf_consensus_params = params_nmf_consensus(density_threshold = 2),
+#'   .verbose = FALSE
+#' )
+#' plot(res)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 plot.NmfKSweepResult <- function(x, ...) {
   checkmate::assertClass(x, "NmfKSweepResult")
 
@@ -4390,6 +4990,18 @@ new_sc_specific_markers <- function(summary, per_comparison, params) {
 #' @returns A copy of the summary data.table.
 #'
 #' @export
+#'
+#' @examples
+#' # per gene summaries across every rival group
+#' sc <- demo_single_cells()
+#' res <- find_specific_markers_sc(
+#'   sc,
+#'   column_of_interest = "cell_grp",
+#'   .verbose = FALSE
+#' )
+#' head(get_marker_summary(res))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 get_marker_summary <- function(x) {
   UseMethod("get_marker_summary")
 }
@@ -4416,6 +5028,18 @@ get_marker_summary.ScSpecificMarkers <- function(x) {
 #' @returns A copy of the per comparison data.table.
 #'
 #' @export
+#'
+#' @examples
+#' # the per rival statistics the summaries are built from
+#' sc <- demo_single_cells()
+#' res <- find_specific_markers_sc(
+#'   sc,
+#'   column_of_interest = "cell_grp",
+#'   .verbose = FALSE
+#' )
+#' head(get_marker_comparisons(res))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 get_marker_comparisons <- function(x) {
   UseMethod("get_marker_comparisons")
 }

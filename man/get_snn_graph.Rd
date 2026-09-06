@@ -34,3 +34,10 @@ The igraph that has the shared nearest neighbours.
 Returns the shared nearest neighbour graph from the object. This function is
 used for the single cell-related classes and methods.
 }
+\examples{
+# the sNN graph the clustering methods run on
+sc <- demo_single_cells()
+igraph::vcount(get_snn_graph(sc))
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

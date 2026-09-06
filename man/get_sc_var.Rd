@@ -22,3 +22,10 @@ The vars table
 \description{
 Getter the var table
 }
+\examples{
+# the per gene statistics the HVG step wrote
+sc <- demo_single_cells()
+head(get_sc_var(sc, cols = c("gene_id", "mean", "var_std")), 3)
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

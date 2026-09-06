@@ -29,3 +29,12 @@ The object with the imputed layer dropped.
 \description{
 Remove the MAGIC imputed layer
 }
+\examples{
+# drop the imputed layer again
+sc <- demo_single_cells()
+sc <- run_magic_sc(sc, features = get_gene_names(sc)[1:5], .verbose = FALSE)
+sc <- remove_magic(sc)
+is.null(get_magic(sc))
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

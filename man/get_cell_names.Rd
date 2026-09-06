@@ -31,3 +31,10 @@ The cell names (barcodes)
 \description{
 Returns the cell names (usually barcodes).
 }
+\examples{
+# barcodes of the cells that passed quality control
+sc <- demo_single_cells(prepped = FALSE)
+head(get_cell_names(sc, filtered = TRUE), 3)
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

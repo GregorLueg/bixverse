@@ -20,3 +20,17 @@ Updated \code{CellQc}.
 Unions new hard flags with existing ones per metric. Set \code{reset = TRUE}
 to clear existing hard flags first.
 }
+\examples{
+# add a hard mitochondrial cut on top of the MAD flags
+set.seed(42L)
+metrics <- list(
+  lib_size = c(rnorm(99, 1000, 100), 50),
+  pct_mt = runif(100, 0, 20)
+)
+qc <- run_cell_qc(
+  metrics,
+  cells_to_keep = 0:99,
+  directions = c(lib_size = "below", pct_mt = "above")
+)
+flag_cells(qc, list(pct_mt = c(upper = 15)))
+}

@@ -34,3 +34,10 @@ get_knn_mat(x, ...)
 \description{
 Getter for an integer matrix of samples x neighbours.
 }
+\examples{
+# cells x neighbours
+sc <- demo_single_cells()
+dim(get_knn_mat(sc))
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

@@ -23,3 +23,11 @@ classes. Protected identifier and bookkeeping columns (\code{cell_idx},
 with a warning. Columns that do not exist trigger a warning and are
 skipped.
 }
+\examples{
+# drop a column that is no longer needed
+sc <- demo_single_cells(prepped = FALSE)
+sc <- drop_cols_sc(sc, table = "obs", cols = "batch_index")
+names(get_sc_obs(sc))
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

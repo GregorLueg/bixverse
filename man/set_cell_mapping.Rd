@@ -22,4 +22,13 @@ set_cell_mapping(x, cell_map)
 Set a cell mapping for a given object. This is used for the
 single cell-related classes with streaming from disk.
 }
+\examples{
+# the mapping is normally written during ingestion
+sc <- demo_single_cells(prepped = FALSE)
+cells <- get_cell_names(sc)
+sc <- set_cell_mapping(sc, stats::setNames(seq_along(cells), cells))
+head(get_cell_names(sc), 3)
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}
 \keyword{internal}

@@ -21,3 +21,15 @@ against its rivals reduced to one row per gene and reference group. Rank on
 \code{median_auroc} for a marker that survives a single closely related rival, or
 on \code{min_auroc} when it has to beat every rival unambiguously.
 }
+\examples{
+# per gene summaries across every rival group
+sc <- demo_single_cells()
+res <- find_specific_markers_sc(
+  sc,
+  column_of_interest = "cell_grp",
+  .verbose = FALSE
+)
+head(get_marker_summary(res))
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

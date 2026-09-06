@@ -35,3 +35,10 @@ get_knn_dist(x, ...)
 Getter for an integer matrix of samples x distances. Useful in combination
 with \code{\link[=get_knn_mat]{get_knn_mat()}}.
 }
+\examples{
+# cells x neighbour distances
+sc <- demo_single_cells()
+dim(get_knn_dist(sc))
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

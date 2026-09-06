@@ -45,3 +45,11 @@ the var table.
 This is a helper function to identify highly variable genes for \code{SingleCells}
 (using the Rust-based streaming of data) or \code{MetaCells}.
 }
+\examples{
+# the twenty most variable genes by the vst method
+sc <- demo_single_cells(prepped = FALSE)
+sc <- find_hvg_sc(sc, hvg_no = 20L, .verbose = FALSE)
+length(get_hvg(sc))
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

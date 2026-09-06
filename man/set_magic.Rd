@@ -31,3 +31,13 @@ The object with the imputed layer attached.
 \description{
 Set/add the MAGIC imputed layer
 }
+\examples{
+# the imputed layer taken out and put back
+sc <- demo_single_cells()
+sc <- run_magic_sc(sc, features = get_gene_names(sc)[1:5], .verbose = FALSE)
+magic <- get_magic(sc)
+sc <- set_magic(remove_magic(sc), magic)
+dim(get_magic(sc)$data)
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

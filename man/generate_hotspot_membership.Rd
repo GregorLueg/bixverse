@@ -20,3 +20,11 @@ correlation to be included.}
 \description{
 Identify hotspot gene clusters
 }
+\examples{
+# cluster the local gene-gene correlations into modules
+sc <- demo_single_cells()
+hs <- hotspot_gene_cor_sc(sc, .verbose = FALSE)
+generate_hotspot_membership(hs)
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

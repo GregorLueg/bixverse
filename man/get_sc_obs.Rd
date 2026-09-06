@@ -23,3 +23,10 @@ The obs table
 \description{
 Getter the obs table
 }
+\examples{
+# the obs table, restricted to a few columns
+sc <- demo_single_cells(prepped = FALSE)
+head(get_sc_obs(sc, cols = c("cell_id", "cell_grp", "lib_size")), 3)
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

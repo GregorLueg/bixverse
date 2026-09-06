@@ -36,3 +36,10 @@ The indices of the cells
 Returns the index for a given gene based on the internal gene mapping. This
 is used for the single cell-related classes and methods.
 }
+\examples{
+# R-based positions of two cells
+sc <- demo_single_cells(prepped = FALSE)
+get_cell_indices(sc, c("cell_001", "cell_002"), rust_index = FALSE)
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}
