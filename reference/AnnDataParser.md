@@ -121,3 +121,28 @@ The objects of this class are cloneable with this method.
 - `deep`:
 
   Whether to make a deep clone.
+
+## Examples
+
+``` r
+# parse counts and obs back out of a small h5ad file
+set.seed(42)
+counts <- matrix(rpois(50, 5), nrow = 10, ncol = 5)
+obs <- data.table::data.table(sample_id = sprintf("cell_%i", 1:10))
+var <- data.table::data.table(var_id = sprintf("gene_%i", 1:5))
+h5_path <- tempfile(fileext = ".h5ad")
+write_h5ad_sc_dense(h5_path, counts, obs, var, .verbose = FALSE)
+parser <- AnnDataParser$new(h5_path)
+dim(parser$get_raw_counts())
+#> [1]  5 10
+head(parser$get_obs_table())
+#>    sample_id
+#>       <char>
+#> 1:    cell_1
+#> 2:    cell_2
+#> 3:    cell_3
+#> 4:    cell_4
+#> 5:    cell_5
+#> 6:    cell_6
+unlink(h5_path)
+```

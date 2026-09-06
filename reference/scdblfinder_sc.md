@@ -94,3 +94,26 @@ An S3 object of class `ScDblFinderRes` containing:
   Fraction of cells called as doublets.
 
 with `cell_indices` stored as an attribute.
+
+## Examples
+
+``` r
+# cluster aware doublet calls from the gradient boosted classifier
+sc <- demo_single_cells(prepped = FALSE)
+scdblfinder_sc(
+  sc,
+  scdblfinder_params = params_scdblfinder(
+    pca = list(no_pcs = 10L),
+    n_genes = 25L,
+    cxds_genes = 25L
+  ),
+  .verbose = FALSE
+)
+#> ScDblFinderRes: 500 cells, 14 doublets (2.8%)
+#>   Threshold:        0.4883
+#>   Score range:      [0.0361, 0.9485]
+#>   Final clusters:   3
+#>   Features available: FALSE
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

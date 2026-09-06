@@ -68,3 +68,23 @@ nmf_sc(
 ## Value
 
 An `NmfResult` object.
+
+## Examples
+
+``` r
+# three factors on the highly variable genes
+sc <- demo_single_cells()
+res <- nmf_sc(sc, k = 3L, .verbose = FALSE)
+res
+#> NmfResult (single-run HALS NMF)
+#>   Source class:     SingleCells
+#>   No genes:         30
+#>   No cells:         500
+#>   No components:    3
+#>   Final loss:       5.941e+04
+#>   Iterations:       40
+#>   Converged:        TRUE
+#>   Preprocessing:    none
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

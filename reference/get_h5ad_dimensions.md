@@ -22,3 +22,24 @@ get_h5ad_dimensions(f_path)
 
 A list with `dims` (named integer `c(obs, var)`) and `type` (one of
 `"CSR"`, `"CSC"`, `"DENSE_ROW"`, `"DENSE_COL"`).
+
+## Examples
+
+``` r
+# dimensions and storage layout without reading the counts
+data <- generate_single_cell_test_data(
+  syn_data_params = params_sc_synthetic_data(n_cells = 200L, n_genes = 40L)
+)
+f_path <- tempfile(fileext = ".h5ad")
+write_h5ad_sc(f_path, data$counts, data$obs, data$var, .verbose = FALSE)
+get_h5ad_dimensions(f_path)
+#> $dims
+#> obs var 
+#> 200  40 
+#> 
+#> $type
+#> [1] "CSR"
+#> 
+
+unlink(f_path)
+```

@@ -78,3 +78,23 @@ table in the DuckDB.
 for the equivalent on result objects that carry their own `cell_idx`,
 such as
 [`fast_cluster_sc()`](https://gregorlueg.github.io/bixverse/reference/fast_cluster_sc.md).
+
+## Examples
+
+``` r
+# write a column computed on the subset back onto the parent
+sc <- demo_single_cells(prepped = FALSE)
+subset_obj <- SingleCellsSubset(
+  sc_object = sc,
+  grouping_column = "cell_grp",
+  group = "cell_type_1"
+)
+subset_obj[["sub_label"]] <- rep("a", dim(subset_obj)[1])
+sc <- merge_subset_obs(sc, subset_obj, cols = "sub_label", .verbose = FALSE)
+table(get_sc_obs(sc)$sub_label, useNA = "ifany")
+#> 
+#>    a <NA> 
+#>  167  333 
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

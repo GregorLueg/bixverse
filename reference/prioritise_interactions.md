@@ -93,3 +93,83 @@ prioritise_interactions(
 A `data.table` with one row per surviving (sender, ligand, receiver,
 receptor) tuple, sorted by descending `prioritisation_score`, with a
 `prioritisation_rank` column.
+
+## Examples
+
+``` r
+# one sender, one receiver, with the signal planted on L1 -> R1
+lr_network <- data.table::data.table(
+  ligand = c("L1", "L2"),
+  receptor = c("R1", "R2")
+)
+celltype_de <- data.table::CJ(
+  cluster_id = c("sender", "receiver"),
+  gene = c("L1", "L2", "R1", "R2")
+)
+celltype_de[, lfc := c(3, 0.1, 0.1, 0.1, 0.1, 0.1, 2.5, 0.1)]
+#> Key: <cluster_id, gene>
+#>    cluster_id   gene   lfc
+#>        <char> <char> <num>
+#> 1:   receiver     L1   3.0
+#> 2:   receiver     L2   0.1
+#> 3:   receiver     R1   0.1
+#> 4:   receiver     R2   0.1
+#> 5:     sender     L1   0.1
+#> 6:     sender     L2   0.1
+#> 7:     sender     R1   2.5
+#> 8:     sender     R2   0.1
+celltype_de[, pval := c(1e-10, 0.5, 0.5, 0.5, 0.5, 0.5, 1e-9, 0.5)]
+#> Key: <cluster_id, gene>
+#>    cluster_id   gene   lfc  pval
+#>        <char> <char> <num> <num>
+#> 1:   receiver     L1   3.0 1e-10
+#> 2:   receiver     L2   0.1 5e-01
+#> 3:   receiver     R1   0.1 5e-01
+#> 4:   receiver     R2   0.1 5e-01
+#> 5:     sender     L1   0.1 5e-01
+#> 6:     sender     L2   0.1 5e-01
+#> 7:     sender     R1   2.5 1e-09
+#> 8:     sender     R2   0.1 5e-01
+expression_info <- celltype_de[, .(cluster_id, gene, avg_expr = 0.05)]
+expression_info[cluster_id == "sender" & gene == "L1", avg_expr := 5]
+#> Key: <cluster_id, gene>
+#>    cluster_id   gene avg_expr
+#>        <char> <char>    <num>
+#> 1:   receiver     L1     0.05
+#> 2:   receiver     L2     0.05
+#> 3:   receiver     R1     0.05
+#> 4:   receiver     R2     0.05
+#> 5:     sender     L1     5.00
+#> 6:     sender     L2     0.05
+#> 7:     sender     R1     0.05
+#> 8:     sender     R2     0.05
+expression_info[cluster_id == "receiver" & gene == "R1", avg_expr := 5]
+#> Key: <cluster_id, gene>
+#>    cluster_id   gene avg_expr
+#>        <char> <char>    <num>
+#> 1:   receiver     L1     0.05
+#> 2:   receiver     L2     0.05
+#> 3:   receiver     R1     5.00
+#> 4:   receiver     R2     0.05
+#> 5:     sender     L1     5.00
+#> 6:     sender     L2     0.05
+#> 7:     sender     R1     0.05
+#> 8:     sender     R2     0.05
+res <- prioritise_interactions(
+  celltype_de = celltype_de,
+  expression_info = expression_info,
+  ligand_activities = data.table::data.table(
+    ligand = c("L1", "L2"),
+    aupr_corrected = c(0.75, -0.125)
+  ),
+  lr_network = lr_network,
+  senders_oi = "sender",
+  receivers_oi = "receiver",
+  scenario = "one_condition"
+)
+head(res[, .(sender, ligand, receiver, receptor, prioritisation_score)])
+#>    sender ligand receiver receptor prioritisation_score
+#>    <char> <char>   <char>   <char>                <num>
+#> 1: sender     L1 receiver       R1            0.8333333
+#> 2: sender     L2 receiver       R2            0.5000000
+```

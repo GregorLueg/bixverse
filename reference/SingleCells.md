@@ -56,3 +56,24 @@ Returns the `SingleCells` class for further operations.
 - dims:
 
   Dimensions of the original data.
+
+## Examples
+
+``` r
+# demo_single_cells() wraps the construction and the ingestion
+sc <- demo_single_cells(prepped = FALSE)
+sc
+#> Single cell experiment (Single Cells).
+#>   No cells (original): 500
+#>    To keep n: 500
+#>   No genes: 50
+#>   HVG calculated: FALSE
+#>   PCA calculated: FALSE
+#>   Other embeddings: none
+#>   KNN generated: FALSE
+#>   SNN generated: FALSE
+#>   MAGIC imputed: none
+#>   Stale artefacts: none
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

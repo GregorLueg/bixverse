@@ -67,3 +67,14 @@ A list containing:
 - S ICA results matrix S.
 
 - converged Boolean indicating if algorithm converged.
+
+## Examples
+
+``` r
+# recover two mixed sources
+sources <- cbind(sin((1:1000) / 20), rep(((1:200) - 100) / 100, 5))
+mixed <- sources %*% matrix(c(0.291, 0.6557, -0.5439, 0.5572), 2, 2)
+ica_res <- fast_ica_rust(mixed, n_icas = 2L, ica_fun = "logcosh", seed = 42L)
+max(abs(cor(sources[, 1], t(ica_res$S))))
+#> [1] 0.9999303
+```

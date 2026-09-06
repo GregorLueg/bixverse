@@ -22,3 +22,13 @@ String. The path to CD34 SEACells data set.
 ## References
 
 Persad, et al., Nat. Biotechnol., 2023
+
+## Examples
+
+``` r
+if (FALSE) { # \dontrun{
+# pulls the archive into the session tempdir()
+path <- download_cd34_data()
+get_h5ad_dimensions(path)$dims
+} # }
+```

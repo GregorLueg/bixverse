@@ -46,3 +46,13 @@ step_clusters_sc(
 ## Value
 
 An `ScStep`.
+
+## Examples
+
+``` r
+# Leiden over the graph the neighbours step wrote
+step_neighbours_sc() %>>% step_clusters_sc(res = 0.5)
+#> <ScPipeline> 2 steps
+#>   1. neighbours  embd_to_use = "pca", no_embd_to_use = NULL, modality = c("rna", "adt"), neighbours_params = <list>, seed = 42L, .verbose = TRUE
+#>   2. clusters    cluster_algorithm = c("leiden", "louvain"), res = 0.5, name = "leiden_clustering", modality = c("rna", "adt", "wnn"), seed = 42L
+```

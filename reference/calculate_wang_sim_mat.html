@@ -9,7 +9,7 @@ for a given ontology. This function will return the full similarity matrix."><me
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -120,6 +120,25 @@ specific edge. For example <code>c("part_of" = 0.8, "is_a" = 0.6)</code>.</p></d
     <p>The symmetric Wang similarity matrix.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Wang similarity matrix with relationship-specific weights</span></span></span>
+<span class="r-in"><span><span class="va">onto</span> <span class="op">&lt;-</span> <span class="fu">data.table</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/data.table/man/data.table.html" class="external-link">data.table</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  parent <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>, <span class="st">"b"</span>, <span class="st">"b"</span>, <span class="st">"b"</span>, <span class="st">"c"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  child <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"b"</span>, <span class="st">"c"</span>, <span class="st">"d"</span>, <span class="st">"e"</span>, <span class="st">"f"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"part_of"</span>, <span class="st">"part_of"</span>, <span class="st">"part_of"</span>, <span class="st">"is_a"</span>, <span class="st">"is_a"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">weights</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"part_of"</span> <span class="op">=</span> <span class="fl">0.8</span>, <span class="st">"is_a"</span> <span class="op">=</span> <span class="fl">0.6</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu">calculate_wang_sim_mat</span><span class="op">(</span><span class="va">onto</span>, weights <span class="op">=</span> <span class="va">weights</span><span class="op">)</span>, <span class="fl">3</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       f     d     b     a     c     e</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> f 1.000 0.470 0.625 0.400 0.796 0.428</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> d 0.470 1.000 0.764 0.477 0.590 0.558</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> b 0.625 0.764 1.000 0.643 0.764 0.742</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> a 0.400 0.477 0.643 1.000 0.477 0.481</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> c 0.796 0.590 0.764 0.477 1.000 0.558</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> e 0.428 0.558 0.742 0.481 0.558 1.000</span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

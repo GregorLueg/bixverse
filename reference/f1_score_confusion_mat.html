@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -115,6 +115,16 @@
 algorithms.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># agreement between two clusterings of the same six samples</span></span></span>
+<span class="r-in"><span><span class="va">clusters_a</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"c1"</span>, <span class="st">"c1"</span>, <span class="st">"c2"</span>, <span class="st">"c2"</span>, <span class="st">"c3"</span>, <span class="st">"c3"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">clusters_b</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"x"</span>, <span class="st">"x"</span>, <span class="st">"y"</span>, <span class="st">"y"</span>, <span class="st">"z"</span>, <span class="st">"x"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">f1_score_confusion_mat</span><span class="op">(</span><span class="va">clusters_a</span>, <span class="va">clusters_b</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  c1  c2  c3 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 0.8 1.0 0.4 </span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

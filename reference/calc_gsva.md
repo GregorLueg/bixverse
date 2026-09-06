@@ -67,3 +67,21 @@ A matrix of shape pathways (that passed the thresholds) x samples.
 ## References
 
 see Hänzelmann, et al. Bmc Bioinformatics, 2013
+
+## Examples
+
+``` r
+# per-sample GSVA scores for two gene sets
+set.seed(123L)
+exp_mat <- matrix(
+  rnorm(200 * 10),
+  nrow = 200,
+  dimnames = list(sprintf("gene_%03i", 1:200), sprintf("sample_%i", 1:10))
+)
+pathways <- list(
+  set_a = sprintf("gene_%03i", 1:20),
+  set_b = sprintf("gene_%03i", 50:80)
+)
+dim(calc_gsva(exp_mat, pathways))
+#> [1]  2 10
+```

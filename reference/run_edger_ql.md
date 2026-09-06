@@ -88,3 +88,22 @@ A data.table with one row per feature that survived the filters:
 ## References
 
 Chen, Lun and Smyth, F1000Research, 2016
+
+## Examples
+
+``` r
+# quasi-likelihood F test on the second design column
+syn <- synthetic_bulk_cor_matrix()
+grp <- factor(rep(c("ctrl", "case"), each = 50), levels = c("ctrl", "case"))
+design <- stats::model.matrix(~grp)
+res <- run_edger_ql(counts = syn$counts, design = design)
+head(res)
+#>    feature_id    log_fc   log_cpm   f_stat    p_value       fdr
+#>        <char>     <num>     <num>    <num>      <num>     <num>
+#> 1:     gene_1 0.2745955  9.688226 4.631884 0.03370368 0.7699028
+#> 2:     gene_3 0.4784174 10.150204 2.066838 0.15354297 0.8615887
+#> 3:     gene_4 0.2722054  9.406887 2.944643 0.08915174 0.8439886
+#> 4:     gene_5 0.2362892 10.096156 1.602479 0.20838779 0.8615887
+#> 5:     gene_6 0.2210409  9.558067 3.543764 0.06257428 0.7699028
+#> 6:     gene_7 0.1231826 10.042099 1.460349 0.22962213 0.8615887
+```

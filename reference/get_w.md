@@ -22,3 +22,15 @@ get_w(x)
 - x:
 
   An object holding NMF results.
+
+## Examples
+
+``` r
+# gene loadings of a five factor NMF
+sc <- demo_single_cells()
+res <- nmf_sc(sc, k = 5L, .verbose = FALSE)
+dim(get_w(res))
+#> [1] 30  5
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

@@ -44,3 +44,16 @@ plot(x, top_k = 5L, max_genes = 500L, seed = 42L, ...)
 
 A [ggplot2::ggplot](https://ggplot2.tidyverse.org/reference/ggplot.html)
 object.
+
+## Examples
+
+``` r
+# gene-gene Z-scores ordered by module membership
+sc <- demo_single_cells()
+hs <- hotspot_gene_cor_sc(sc, .verbose = FALSE)
+hs <- generate_hotspot_membership(hs)
+plot(hs)
+
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

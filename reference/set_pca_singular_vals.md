@@ -33,3 +33,15 @@ set_pca_singular_vals(x, singular_vals, ...)
 - ...:
 
   Other parameters.
+
+## Examples
+
+``` r
+# singular values from a decomposition done elsewhere
+sc <- demo_single_cells(prepped = FALSE)
+sc <- set_pca_singular_vals(sc, c(4.1, 2.3))
+get_pca_singular_val(sc)
+#> [1] 4.1 2.3
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

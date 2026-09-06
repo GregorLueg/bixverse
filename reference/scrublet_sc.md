@@ -116,3 +116,27 @@ A `scrublet_res` class that has with the following items:
 ## References
 
 Wollock, et al., Cell Syst, 2020
+
+## Examples
+
+``` r
+# simulated doublet scoring on 500 synthetic cells
+sc <- demo_single_cells(prepped = FALSE)
+scrublet_sc(
+  sc,
+  scrublet_params = params_scrublet(
+    pca = list(no_pcs = 10L),
+    hvg = list(min_gene_var_pctl = 0.0),
+    n_bins = 20L
+  ),
+  .verbose = FALSE
+)
+#> ScrubletRes: 500 cells, 36 doublets (7.2%)
+#>   Threshold:              0.1215
+#>   Detected doublet rate:  7.2%
+#>   Detectable fraction:    97.7%
+#>   Overall doublet rate:   7.4%
+#>   Simulated doublets:     750
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

@@ -52,3 +52,23 @@ gse_hypergeometric(
 ## Value
 
 data.table with enrichment results.
+
+## Examples
+
+``` r
+# hypergeometric test of a target set against a small universe
+gene_universe <- sprintf("gene_%03i", 1:200)
+gene_sets <- list(
+  set_a = gene_universe[1:20],
+  set_b = gene_universe[15:40],
+  set_c = gene_universe[100:130]
+)
+target <- gene_universe[c(1:12, 150:158)]
+gse_hypergeometric(target, gene_sets, gene_universe, threshold = 1)
+#>    gene_set_name odds_ratios       pvals          fdr  hits gene_set_lengths
+#>           <char>       <num>       <num>        <num> <num>            <num>
+#> 1:         set_a        28.5 4.19695e-09 1.259085e-08    12               20
+#>    target_set_lengths
+#>                 <int>
+#> 1:                 21
+```

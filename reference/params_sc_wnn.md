@@ -30,7 +30,7 @@ params_sc_wnn(
 - knn_range:
 
   Integer. Candidate pool size per modality. Each cell's kNN input must
-  contain at least this many neighbours. Defaults to `100L`.
+  contain at least this many neighbours. Defaults to `200L`.
 
 - sigma_method:
 

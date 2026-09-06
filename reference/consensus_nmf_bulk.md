@@ -103,3 +103,19 @@ off.
 ## References
 
 Kotliar et al., eLife, 2019
+
+## Examples
+
+``` r
+# consensus over ten restarts
+syn <- generate_gene_module_data(n_samples = 24L, n_genes = 60L)
+# NMF needs a non-negative matrix
+mat <- syn$data - min(syn$data)
+obj <- BulkCoExp(mat, syn$meta_data)
+obj <- preprocess_bulk_coexp(
+  obj, hvg = NULL, scaling = FALSE, .verbose = FALSE
+)
+obj <- consensus_nmf_bulk(obj, k = 4L, n_runs = 10L, .verbose = FALSE)
+get_nmf_stability(obj)$stability
+#> [1] 0.9998821
+```

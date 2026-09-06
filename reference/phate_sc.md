@@ -110,3 +110,15 @@ phate_sc(
 ## Value
 
 The object with a `"phate"` embedding added.
+
+## Examples
+
+``` r
+# PHATE embedding off the cached kNN graph
+sc <- demo_single_cells()
+sc <- phate_sc(sc, .verbose = FALSE)
+dim(get_embedding(sc, "phate"))
+#> [1] 500   2
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

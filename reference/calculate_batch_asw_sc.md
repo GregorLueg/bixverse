@@ -69,3 +69,25 @@ A `BatchSilhouetteScores` object with the following elements
 - n_batches - Number of batches in the data.
 
 - embedding_used - Which embedding the ASW was computed on.
+
+## Examples
+
+``` r
+# batch silhouette width on the PCA embedding
+sc <- demo_single_cells(
+  syn_data_params = params_sc_synthetic_data(
+    n_cells = 600L, n_genes = 50L, n_batches = 3L
+  )
+)
+calculate_batch_asw_sc(
+  sc,
+  batch_column = "batch_index",
+  .verbose = FALSE
+)
+#> Batch Silhouette Width
+#>   Cells: 600 | Batches: 3
+#>   Mean ASW:    0.0281 (-1 = strong intermixing, 0 = mixed, 1 = separated)
+#>   Median ASW:  0.0361
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

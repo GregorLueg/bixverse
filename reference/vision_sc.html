@@ -13,7 +13,7 @@ gene signature, etc."><meta property="og:image" content="https://gregorlueg.gith
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -115,9 +115,10 @@ gene signature, etc.</p>
 
 
 <dt id="arg-gs-list">gs_list<a class="anchor" aria-label="anchor" href="#arg-gs-list"></a></dt>
-<dd><p>Named nested list. The elements have the gene identifiers of
-the respective gene sets and have the option to have a <code>"pos"</code> and <code>"neg"</code>
-gene sets. The names need to be part of the variables of the object.</p></dd>
+<dd><p>Named nested list. Every element must itself be a list with
+at least a <code>"pos"</code> element holding the gene identifiers, and optionally a
+<code>"neg"</code> one. A bare character vector is not accepted. The gene identifiers
+need to be part of the variables of the object.</p></dd>
 
 
 <dt id="arg-streaming">streaming<a class="anchor" aria-label="anchor" href="#arg-streaming"></a></dt>
@@ -142,6 +143,24 @@ or as <code>ScMatrixRes</code> pending the input.</p>
     <p>DeTomaso, et al., Nat. Commun., 2019</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># a signed signature alongside a plain one</span></span></span>
+<span class="r-in"><span><span class="va">sc</span> <span class="op">&lt;-</span> <span class="fu"><a href="demo_single_cells.html">demo_single_cells</a></span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">gs_list</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  programme_a <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    pos <span class="op">=</span> <span class="fu"><a href="get_gene_names.html">get_gene_names</a></span><span class="op">(</span><span class="va">sc</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">10</span><span class="op">]</span>,</span></span>
+<span class="r-in"><span>    neg <span class="op">=</span> <span class="fu"><a href="get_gene_names.html">get_gene_names</a></span><span class="op">(</span><span class="va">sc</span><span class="op">)</span><span class="op">[</span><span class="fl">11</span><span class="op">:</span><span class="fl">20</span><span class="op">]</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span>,</span></span>
+<span class="r-in"><span>  programme_b <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>pos <span class="op">=</span> <span class="fu"><a href="get_gene_names.html">get_gene_names</a></span><span class="op">(</span><span class="va">sc</span><span class="op">)</span><span class="op">[</span><span class="fl">21</span><span class="op">:</span><span class="fl">30</span><span class="op">]</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu">vision_sc</span><span class="op">(</span><span class="va">sc</span>, gs_list <span class="op">=</span> <span class="va">gs_list</span>, .verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 500   2</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">sc</span><span class="op">@</span><span class="va">dir_data</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span>, force <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

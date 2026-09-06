@@ -37,3 +37,16 @@ cor_module_tom(object, signed = TRUE, version = c("v2", "v1"), .verbose = TRUE)
 ## Value
 
 The class with added data to the properties for subsequent usage.
+
+## Examples
+
+``` r
+# replace the stored correlations with a signed topological overlap
+mat <- t(synthetic_signal_matrix()$mat)
+obj <- BulkCoExp(mat, data.table::data.table(sample_id = rownames(mat)))
+obj <- preprocess_bulk_coexp(obj, hvg = 0.3, .verbose = FALSE)
+obj <- cor_module_processing(obj, cor_method = "spearman", .verbose = FALSE)
+obj <- cor_module_tom(obj, signed = TRUE, version = "v2", .verbose = FALSE)
+obj@params$correlation_params$TOM
+#> [1] TRUE
+```

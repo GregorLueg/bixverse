@@ -15,7 +15,7 @@ features between the two data sets."><meta property="og:image" content="https://
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -140,6 +140,23 @@ should run <code><a href="preprocess_bulk_coexp.html">preprocess_bulk_coexp()</a
     <p>The class with added data to the properties for subsequent usage.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># differential correlation of two sample groups of the same matrix</span></span></span>
+<span class="r-in"><span><span class="va">sig</span> <span class="op">&lt;-</span> <span class="fu"><a href="synthetic_signal_matrix.html">synthetic_signal_matrix</a></span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">mat</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="va">sig</span><span class="op">$</span><span class="va">mat</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">target</span> <span class="op">&lt;-</span> <span class="va">mat</span><span class="op">[</span><span class="va">sig</span><span class="op">$</span><span class="va">group</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"group1"</span>, <span class="st">"group2"</span><span class="op">)</span>, <span class="op">]</span></span></span>
+<span class="r-in"><span><span class="va">background</span> <span class="op">&lt;-</span> <span class="va">mat</span><span class="op">[</span><span class="va">sig</span><span class="op">$</span><span class="va">group</span> <span class="op">==</span> <span class="st">"group3"</span>, <span class="op">]</span></span></span>
+<span class="r-in"><span><span class="va">meta</span> <span class="op">&lt;-</span> <span class="fu">data.table</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/data.table/man/data.table.html" class="external-link">data.table</a></span><span class="op">(</span>sample_id <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">target</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">obj</span> <span class="op">&lt;-</span> <span class="fu"><a href="BulkCoExp.html">BulkCoExp</a></span><span class="op">(</span><span class="va">target</span>, <span class="va">meta</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">obj</span> <span class="op">&lt;-</span> <span class="fu"><a href="preprocess_bulk_coexp.html">preprocess_bulk_coexp</a></span><span class="op">(</span><span class="va">obj</span>, hvg <span class="op">=</span> <span class="fl">0.3</span>, .verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">obj</span> <span class="op">&lt;-</span> <span class="fu">diffcor_module_processing</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">obj</span>, <span class="va">background</span>, cor_method <span class="op">=</span> <span class="st">"pearson"</span>, .verbose <span class="op">=</span> <span class="cn">FALSE</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">obj</span><span class="op">@</span><span class="va">params</span><span class="op">$</span><span class="va">correlation_params</span><span class="op">$</span><span class="va">no_intersecting_features</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 300</span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

@@ -19,7 +19,7 @@ please see Büttner et al."><meta property="og:image" content="https://gregorlue
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -155,6 +155,24 @@ test was below the threshold.</p></li>
     <p>Büttner, et al., Nat. Methods, 2019</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># kBET rejection rate over three batches</span></span></span>
+<span class="r-in"><span><span class="va">sc</span> <span class="op">&lt;-</span> <span class="fu"><a href="demo_single_cells.html">demo_single_cells</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  syn_data_params <span class="op">=</span> <span class="fu"><a href="params_sc_synthetic_data.html">params_sc_synthetic_data</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    n_cells <span class="op">=</span> <span class="fl">600L</span>, n_genes <span class="op">=</span> <span class="fl">50L</span>, n_batches <span class="op">=</span> <span class="fl">3L</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">calculate_kbet_sc</span><span class="op">(</span><span class="va">sc</span>, batch_column <span class="op">=</span> <span class="st">"batch_index"</span>, .verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> kBET Scores</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Cells: 600 | Batches: 3 | Threshold: 0.050</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Rejection rate:      0.7533 (452 / 600)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Mean Chi-Square:     11.6940 (expected under H0: 2)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Median Chi-Square:   10.0000</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">sc</span><span class="op">@</span><span class="va">dir_data</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span>, force <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

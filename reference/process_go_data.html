@@ -11,7 +11,7 @@ using the ontological information"><meta property="og:image" content="https://gr
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -122,9 +122,29 @@ using the ontological information</p>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>data.table ready for usage in <code><a href="gene_ontology_data.html">gene_ontology_data()</a></code>.</p>
+    <p>data.table ready for usage in <code><a href="GeneOntologyElim.html">GeneOntologyElim()</a></code>.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \donttest{</span></span></span>
+<span class="r-in"><span><span class="co"># assemble the packaged human GO data by hand</span></span></span>
+<span class="r-in"><span><span class="va">go_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="load_go_human_data.html">load_go_human_data</a></span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">relationships</span> <span class="op">&lt;-</span> <span class="fu">data.table</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/data.table/man/setattr.html" class="external-link">setnames</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="fu">data.table</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/data.table/man/copy.html" class="external-link">copy</a></span><span class="op">(</span><span class="va">go_data</span><span class="op">$</span><span class="va">gene_ontology</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  old <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"from"</span>, <span class="st">"to"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  new <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"parent"</span>, <span class="st">"child"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">go_dt</span> <span class="op">&lt;-</span> <span class="fu">process_go_data</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  go_info <span class="op">=</span> <span class="va">go_data</span><span class="op">$</span><span class="va">go_info</span>,</span></span>
+<span class="r-in"><span>  go_genes <span class="op">=</span> <span class="va">go_data</span><span class="op">$</span><span class="va">go_to_genes</span>,</span></span>
+<span class="r-in"><span>  go_relationships <span class="op">=</span> <span class="va">relationships</span><span class="op">[</span><span class="va">relationship</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"is_a"</span>, <span class="st">"part_of"</span><span class="op">)</span><span class="op">]</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">go_dt</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 18841     6</span>
+<span class="r-in"><span><span class="co"># }</span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

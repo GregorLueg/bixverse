@@ -99,3 +99,36 @@ the fits themselves are not free, so keep both modest on a first pass.
 ## References
 
 Kotliar et al., eLife, 2019
+
+## Examples
+
+``` r
+# stability against reconstruction error across three ranks
+sc <- demo_single_cells()
+res <- nmf_k_sweep_sc(
+  sc,
+  k_range = 2:4,
+  n_runs = 5L,
+  nmf_consensus_params = params_nmf_consensus(density_threshold = 2),
+  .verbose = FALSE
+)
+res
+#> NmfKSweepResult (consensus NMF k sweep)
+#>   Source class:     SingleCells
+#>   k range:          2 to 4
+#>   No runs per k:    5
+#>   Most stable k:    3 (stability = 0.9944)
+#> 
+#>        k stability best_error median_error consensus_failed n_dropped
+#>    <int>     <num>      <num>        <num>           <lgcl>     <int>
+#> 1:     2 0.9943518  0.2972628    0.2973181            FALSE         0
+#> 2:     3 0.9944324  0.2518355    0.2518508            FALSE         0
+#> 3:     4 0.9003837  0.2320080    0.2320648            FALSE         0
+#>    n_empty_clusters n_converged
+#>               <int>       <int>
+#> 1:                0           5
+#> 2:                0           5
+#> 3:                0           5
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

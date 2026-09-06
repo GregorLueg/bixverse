@@ -72,3 +72,36 @@ data.table with enrichment results.
 ## References
 
 Korotkevich, et al., bioRxiv
+
+## Examples
+
+``` r
+# \donttest{
+# human GO terms with at least 25 genes
+go_obj <- GeneOntologyElim(
+  get_go_data_human(.verbose = FALSE),
+  min_genes = 25L
+)
+genes <- unique(unlist(S7::prop(go_obj, "go_to_genes")))
+set.seed(1L)
+stats <- stats::setNames(rnorm(length(genes)), genes)
+stats[1:200] <- stats[1:200] + 2
+res <- fgsea_go_elim(go_obj, stats = stats, nperm = 1000L)
+head(res, 3)
+#>         go_id        es      nes  size        pvals n_more_extreme
+#>        <char>     <num>    <num> <num>        <num>          <num>
+#> 1: GO:0000244 0.8595015 3.597023    76 6.153695e-26              0
+#> 2: GO:0046540 0.7694975 3.312726    94 6.220826e-26              0
+#> 3: GO:0000353 0.8578760 3.360251    57 6.254944e-26              0
+#>                                                                                               leading_edge
+#>                                                                                                     <list>
+#> 1: ENSG00000196189,ENSG00000119335,ENSG00000164040,ENSG00000085552,ENSG00000169306,ENSG00000288093,...[67]
+#> 2: ENSG00000196189,ENSG00000119335,ENSG00000164040,ENSG00000085552,ENSG00000169306,ENSG00000288093,...[62]
+#> 3: ENSG00000196189,ENSG00000119335,ENSG00000164040,ENSG00000085552,ENSG00000169306,ENSG00000162542,...[50]
+#>    log2err          fdr                                  go_name
+#>      <num>        <num>                                   <char>
+#> 1:      NA 3.080252e-23  spliceosomal tri-snRNP complex assembly
+#> 2:      NA 3.080252e-23             U4/U6 x U5 tri-snRNP complex
+#> 3:      NA 3.080252e-23 formation of quadruple SL/U4/U5/U6 snRNP
+# }
+```

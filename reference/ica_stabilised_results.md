@@ -100,3 +100,25 @@ ica_stabilised_results(
 
 `BulkCoExp` with the the source matrix S, mixing matrix A and other
 parameters added to the slots.
+
+## Examples
+
+``` r
+# stabilised five-component ICA and the resulting modules
+mat <- t(synthetic_signal_matrix()$mat)
+obj <- BulkCoExp(mat, data.table::data.table(sample_id = rownames(mat)))
+obj <- preprocess_bulk_coexp(obj, hvg = 0.3, .verbose = FALSE)
+obj <- ica_processing(obj, .verbose = FALSE)
+obj <- ica_stabilised_results(
+  obj, no_comp = 5L, ica_type = "logcosh", .verbose = FALSE
+)
+head(get_modules(get_results(obj)))
+#>       gene module_id   loading   sign        z
+#>     <char>    <char>     <num> <char>    <num>
+#> 1:  gene17      IC_1  4.098349    pos 3.031712
+#> 2:  gene47      IC_2  2.325615    pos 3.193498
+#> 3: gene184      IC_3 10.133645    pos 4.554106
+#> 4: gene138      IC_3  9.554019    pos 4.311909
+#> 5: gene176      IC_3  9.062064    pos 4.106346
+#> 6: gene116      IC_3  7.938691    pos 3.636945
+```

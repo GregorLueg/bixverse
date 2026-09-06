@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -113,6 +113,38 @@
     <p>data.table with TF to gene information</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># the TF to gene links that survived the importance filter</span></span></span>
+<span class="r-in"><span><span class="va">sc</span> <span class="op">&lt;-</span> <span class="fu"><a href="demo_single_cells.html">demo_single_cells</a></span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">grn</span> <span class="op">&lt;-</span> <span class="fu"><a href="scenic_grn_sc.html">scenic_grn_sc</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">sc</span>,</span></span>
+<span class="r-in"><span>  tf_ids <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"gene_%02d"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  scenic_params <span class="op">=</span> <span class="fu"><a href="params_scenic.html">params_scenic</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    min_counts <span class="op">=</span> <span class="fl">1L</span>,</span></span>
+<span class="r-in"><span>    learner_params <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>n_trees <span class="op">=</span> <span class="fl">20L</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span>,</span></span>
+<span class="r-in"><span>  .verbose <span class="op">=</span> <span class="cn">FALSE</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">grn</span> <span class="op">&lt;-</span> <span class="fu"><a href="identify_tf_to_genes.html">identify_tf_to_genes</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">grn</span>,</span></span>
+<span class="r-in"><span>  method <span class="op">=</span> <span class="st">"top_k"</span>,</span></span>
+<span class="r-in"><span>  k_tfs <span class="op">=</span> <span class="fl">3L</span>,</span></span>
+<span class="r-in"><span>  .verbose <span class="op">=</span> <span class="cn">FALSE</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">get_tf_to_gene</span><span class="op">(</span><span class="va">grn</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         tf    gene importance</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     &lt;char&gt;  &lt;char&gt;      &lt;num&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1: gene_01 gene_01  0.4643152</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2: gene_03 gene_01  0.3568220</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3: gene_04 gene_01  0.1553617</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4: gene_02 gene_02  0.4926334</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5: gene_03 gene_02  0.2651168</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6: gene_04 gene_02  0.1317756</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">sc</span><span class="op">@</span><span class="va">dir_data</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span>, force <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

@@ -1,6 +1,7 @@
-# Assert neighbour generation parameters
+# Assert that the cell names exist in the object
 
-Checkmate extension for asserting if the prodivided cell names
+Checkmate extension for asserting if the provided cell names exist in
+the object.
 
 ## Usage
 

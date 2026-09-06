@@ -47,3 +47,20 @@ Returns the class for subsequent usage.
 
   Integer, the minimum genes in the gene ontology term to conduct the
   test.
+
+## Examples
+
+``` r
+# \donttest{
+# human GO restricted to terms with at least 25 genes
+go_obj <- GeneOntologyElim(
+  get_go_data_human(.verbose = FALSE),
+  min_genes = 25L
+)
+go_obj
+#> Gene ontology enrichment class:
+#>  Contains 1974 gene ontology terms.
+#>  Total of 14 levels represented in the ontology.
+#>  Minimum genes per term set to 25.
+# }
+```

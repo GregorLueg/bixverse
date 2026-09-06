@@ -22,3 +22,16 @@ generate_personalisation_vec(graph, node_weights)
 ## Value
 
 The personalisation vector for subsequent usage in page-rank
+
+## Examples
+
+``` r
+# reset weight split across two seed nodes, normalised to sum to one
+g <- igraph::graph_from_data_frame(
+  data.frame(from = c("a", "b", "c"), to = c("b", "c", "d")),
+  directed = TRUE
+)
+generate_personalisation_vec(g, node_weights = c(a = 3, c = 1))
+#>    a    b    c    d 
+#> 0.75 0.00 0.25 0.00 
+```

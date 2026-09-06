@@ -45,4 +45,26 @@ A `synthetic_matrix_modules` class with the following items:
 
 - data - The data matrix.
 
-- metadata - The sample metadata.
+- meta_data - The sample metadata.
+
+## Examples
+
+``` r
+# four partially overlapping modules over 24 samples
+mods <- generate_gene_module_data(
+  n_samples = 24L,
+  n_genes = 60L,
+  n_modules = 4L
+)
+dim(mods$data)
+#> [1] 24 60
+head(mods$meta_data)
+#>    sample_id module_1_active module_2_active module_3_active module_4_active
+#>       <char>          <lgcl>          <lgcl>          <lgcl>          <lgcl>
+#> 1:  sample_1            TRUE           FALSE           FALSE           FALSE
+#> 2:  sample_2            TRUE           FALSE           FALSE           FALSE
+#> 3:  sample_3            TRUE           FALSE           FALSE           FALSE
+#> 4:  sample_4            TRUE           FALSE           FALSE           FALSE
+#> 5:  sample_5            TRUE            TRUE           FALSE           FALSE
+#> 6:  sample_6            TRUE            TRUE           FALSE           FALSE
+```

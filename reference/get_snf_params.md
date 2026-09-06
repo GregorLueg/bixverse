@@ -18,3 +18,12 @@ get_snf_params(object)
 ## Value
 
 Returns the stored SNF params
+
+## Examples
+
+``` r
+# the SNF parameters stored in an empty class
+object <- SimilarityNetworkFusion(snf_params = params_snf(k = 3L))
+get_snf_params(object)$k
+#> [1] 3
+```

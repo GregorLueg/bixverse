@@ -26,3 +26,14 @@ get_gene_names(x)
 ## Value
 
 The primary gene identifiers stored in the class.
+
+## Examples
+
+``` r
+# the primary gene identifiers held by the object
+sc <- demo_single_cells(prepped = FALSE)
+head(get_gene_names(sc), 3)
+#> [1] "gene_01" "gene_02" "gene_03"
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

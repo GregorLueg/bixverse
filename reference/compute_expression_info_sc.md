@@ -46,3 +46,26 @@ compute_expression_info_sc(
 
 A long `data.table` with columns `cluster_id`, `gene`, `avg_expr`,
 `frac_expr`.
+
+## Examples
+
+``` r
+# mean expression and expressing fraction per planted cell type
+sc <- demo_single_cells()
+res <- compute_expression_info_sc(
+  sc,
+  celltype_colname = "cell_grp",
+  genes = get_gene_names(sc)[1:5]
+)
+head(res)
+#>     cluster_id    gene avg_expr frac_expr
+#>         <char>  <char>    <num>     <num>
+#> 1: cell_type_1 gene_01 6.241650 0.9880240
+#> 2: cell_type_1 gene_02 6.115141 0.9880240
+#> 3: cell_type_1 gene_03 6.385783 1.0000000
+#> 4: cell_type_1 gene_04 5.770888 0.9580838
+#> 5: cell_type_1 gene_05 4.425770 0.8383234
+#> 6: cell_type_2 gene_01 2.902391 0.6946108
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

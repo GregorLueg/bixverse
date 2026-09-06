@@ -33,9 +33,10 @@ vision_w_autocor_sc(
 
 - gs_list:
 
-  Named nested list. The elements have the gene identifiers of the
-  respective gene sets and have the option to have a `"pos"` and `"neg"`
-  gene sets. The names need to be part of the variables of the object.
+  Named nested list. Every element must itself be a list with at least a
+  `"pos"` element holding the gene identifiers, and optionally a `"neg"`
+  one. A bare character vector is not accepted. The gene identifiers
+  need to be part of the variables of the object.
 
 - embd_to_use:
 
@@ -97,3 +98,28 @@ A list with the following elements:
 ## References
 
 DeTomaso, et al., Nat. Commun., 2019
+
+## Examples
+
+``` r
+# scores plus whether they sit non-randomly on the kNN graph
+sc <- demo_single_cells()
+gs_list <- list(
+  programme_a = list(pos = get_gene_names(sc)[1:10]),
+  programme_b = list(pos = get_gene_names(sc)[21:30])
+)
+res <- vision_w_autocor_sc(
+  sc,
+  gs_list = gs_list,
+  embd_to_use = "pca",
+  vision_params = params_sc_vision(n_perm = 50L, n_cluster = 3L),
+  .verbose = FALSE
+)
+res$auto_cor_dt
+#>    gene_set_name  auto_cor      p_val        fdr
+#>           <char>     <num>      <num>      <num>
+#> 1:   programme_a 0.7248461 0.01960784 0.01960784
+#> 2:   programme_b 0.7437420 0.01960784 0.01960784
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

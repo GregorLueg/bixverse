@@ -27,3 +27,19 @@ get_outputs(object, ...)
 ## Value
 
 Returns the outputs stored in the class.
+
+## Examples
+
+``` r
+# everything the QC and normalisation steps stashed on the object
+syn <- synthetic_bulk_cor_matrix()
+meta <- data.table::data.table(
+  sample_id = colnames(syn$counts),
+  case_control = rep(c("case", "control"), each = 50)
+)
+object <- BulkDge(raw_counts = syn$counts, meta_data = meta)
+object <- qc_bulk_dge(object, group_col = "case_control", .verbose = FALSE)
+names(get_outputs(object))
+#> [1] "dge_list"            "sample_info"         "group_col"          
+#> [4] "raw_counts_filtered"
+```

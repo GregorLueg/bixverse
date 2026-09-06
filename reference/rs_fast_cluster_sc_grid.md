@@ -52,6 +52,11 @@ rs_fast_cluster_sc_grid(
   Boolean. Shall the kNN graph be additionally transformed into an sNN
   graph.
 
+- return_kmeans:
+
+  Boolean. Shall the k-means centroid assignments be returned alongside
+  the memberships.
+
 - no_seeds:
 
   Integer. Number of additional seeds to use. Should be \>=2.

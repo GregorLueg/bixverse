@@ -53,3 +53,29 @@ gse_hypergeometric_list(
 ## Value
 
 data.table with enrichment results.
+
+## Examples
+
+``` r
+# two target sets tested against the same gene sets in one call
+gene_universe <- sprintf("gene_%03i", 1:200)
+gene_sets <- list(
+  set_a = gene_universe[1:20],
+  set_b = gene_universe[100:130]
+)
+targets <- list(
+  hit_a = gene_universe[c(1:12, 150:158)],
+  hit_b = gene_universe[c(100:112, 5:8)]
+)
+gse_hypergeometric_list(targets, gene_sets, gene_universe, threshold = 1)
+#>    target_set_name odds_ratios        pvals          fdr  hits gene_set_lengths
+#>             <char>       <num>        <num>        <num> <num>            <num>
+#> 1:           hit_b   29.791667 3.811374e-09 7.622748e-09    13               31
+#> 2:           hit_a   28.500000 4.196950e-09 8.393901e-09    12               20
+#> 3:           hit_b    3.211538 7.369238e-02 7.369238e-02     4               20
+#>    gene_set_name target_set_lengths
+#>           <char>              <int>
+#> 1:         set_b                 17
+#> 2:         set_a                 21
+#> 3:         set_a                 17
+```

@@ -87,3 +87,37 @@ build_symphony_ref(
 A
 [SymphonyReference](https://gregorlueg.github.io/bixverse/reference/SymphonyReference.md)
 object.
+
+## Examples
+
+``` r
+# two batch reference, cell type labels snapshotted along the way
+ref <- demo_single_cells(
+  syn_data_params = params_sc_synthetic_data(
+    n_cells = 500L,
+    n_genes = 50L,
+    n_batches = 2L,
+    batch_effect_strength = "medium"
+  )
+)
+symphony_ref <- build_symphony_ref(
+  ref,
+  batch_column = "batch_index",
+  hvg = get_hvg(ref) + 1L,
+  harmony_params = params_sc_harmony(k = 10L),
+  no_pcs = 10L,
+  label_columns = "cell_grp",
+  .verbose = FALSE
+)
+symphony_ref
+#> Symphony reference
+#>   Harmony backend: v1
+#>   No HVGs: 30
+#>   No PCs: 10
+#>   No clusters: 10
+#>   Batch variables: batch_index
+#>   Slim: FALSE
+#>   Labels: cell_grp
+
+unlink(ref@dir_data, recursive = TRUE, force = TRUE)
+```

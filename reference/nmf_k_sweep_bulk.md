@@ -76,3 +76,36 @@ a first pass.
 ## References
 
 Kotliar et al., eLife, 2019
+
+## Examples
+
+``` r
+# small sweep, keep both the grid and the restarts modest
+syn <- generate_gene_module_data(n_samples = 24L, n_genes = 60L)
+# NMF needs a non-negative matrix
+mat <- syn$data - min(syn$data)
+obj <- BulkCoExp(mat, syn$meta_data)
+obj <- preprocess_bulk_coexp(
+  obj, hvg = NULL, scaling = FALSE, .verbose = FALSE
+)
+sweep_res <- nmf_k_sweep_bulk(
+  obj, k_range = 3:5, n_runs = 5L, .verbose = FALSE
+)
+sweep_res
+#> NmfKSweepResult (consensus NMF k sweep)
+#>   Source class:     BulkCoExp
+#>   k range:          3 to 5
+#>   No runs per k:    5
+#>   Most stable k:    3 (stability = 1)
+#> 
+#>        k stability  best_error median_error consensus_failed n_dropped
+#>    <int>     <num>       <num>        <num>           <lgcl>     <int>
+#> 1:     3 0.9999921 0.110235887  0.110236112            FALSE         0
+#> 2:     4 0.9998356 0.003672419  0.003675283            FALSE         0
+#> 3:     5 0.9234360 0.003480078  0.003504362            FALSE         0
+#>    n_empty_clusters n_converged
+#>               <int>       <int>
+#> 1:                0           5
+#> 2:                0           5
+#> 3:                0           5
+```

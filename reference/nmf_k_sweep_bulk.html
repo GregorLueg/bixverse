@@ -13,7 +13,7 @@ flattened out, then run consensus_nmf_bulk() there."><meta property="og:image" c
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -169,6 +169,38 @@ first pass.</p>
     <p>Kotliar et al., eLife, 2019</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># small sweep, keep both the grid and the restarts modest</span></span></span>
+<span class="r-in"><span><span class="va">syn</span> <span class="op">&lt;-</span> <span class="fu"><a href="generate_gene_module_data.html">generate_gene_module_data</a></span><span class="op">(</span>n_samples <span class="op">=</span> <span class="fl">24L</span>, n_genes <span class="op">=</span> <span class="fl">60L</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># NMF needs a non-negative matrix</span></span></span>
+<span class="r-in"><span><span class="va">mat</span> <span class="op">&lt;-</span> <span class="va">syn</span><span class="op">$</span><span class="va">data</span> <span class="op">-</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">syn</span><span class="op">$</span><span class="va">data</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">obj</span> <span class="op">&lt;-</span> <span class="fu"><a href="BulkCoExp.html">BulkCoExp</a></span><span class="op">(</span><span class="va">mat</span>, <span class="va">syn</span><span class="op">$</span><span class="va">meta_data</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">obj</span> <span class="op">&lt;-</span> <span class="fu"><a href="preprocess_bulk_coexp.html">preprocess_bulk_coexp</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">obj</span>, hvg <span class="op">=</span> <span class="cn">NULL</span>, scaling <span class="op">=</span> <span class="cn">FALSE</span>, .verbose <span class="op">=</span> <span class="cn">FALSE</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">sweep_res</span> <span class="op">&lt;-</span> <span class="fu">nmf_k_sweep_bulk</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">obj</span>, k_range <span class="op">=</span> <span class="fl">3</span><span class="op">:</span><span class="fl">5</span>, n_runs <span class="op">=</span> <span class="fl">5L</span>, .verbose <span class="op">=</span> <span class="cn">FALSE</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">sweep_res</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> NmfKSweepResult (consensus NMF k sweep)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Source class:     BulkCoExp</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   k range:          3 to 5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   No runs per k:    5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Most stable k:    3 (stability = 1)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>        k stability  best_error median_error consensus_failed n_dropped</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    &lt;int&gt;     &lt;num&gt;       &lt;num&gt;        &lt;num&gt;           &lt;lgcl&gt;     &lt;int&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1:     3 0.9999921 0.110235887  0.110236112            FALSE         0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2:     4 0.9998356 0.003672419  0.003675283            FALSE         0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3:     5 0.9234360 0.003480078  0.003504362            FALSE         0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    n_empty_clusters n_converged</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>               &lt;int&gt;       &lt;int&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1:                0           5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2:                0           5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3:                0           5</span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

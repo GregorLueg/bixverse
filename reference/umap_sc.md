@@ -121,3 +121,15 @@ umap_sc(
 ## Value
 
 The object with a `"umap"` embedding added.
+
+## Examples
+
+``` r
+# UMAP off the cached kNN graph
+sc <- demo_single_cells()
+sc <- umap_sc(sc, .verbose = FALSE)
+dim(get_embedding(sc, "umap"))
+#> [1] 500   2
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

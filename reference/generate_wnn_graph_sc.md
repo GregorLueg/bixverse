@@ -119,3 +119,41 @@ modality weights added to `other_data[["wnn"]]`.
 ## References
 
 Hao et al., Cell, 2021
+
+## Examples
+
+``` r
+# a fused RNA + ADT graph, both modalities reduced with PCA first
+rna <- generate_single_cell_test_data()
+adt <- generate_single_cell_test_data_adt()
+dir <- tempfile("bixverse_mm")
+dir.create(dir)
+object <- load_r_data(
+  SingleCellsMultiModal(dir_data = dir),
+  counts = rna$counts,
+  obs = rna$obs,
+  var = rna$var,
+  sc_qc_param = params_sc_min_quality(min_unique_genes = 5L),
+  .verbose = FALSE
+)
+object <- add_adt_counts_sc(object, adt_counts = adt$counts, method = "clr")
+object <- find_hvg_sc(object, hvg_no = 30L, .verbose = FALSE)
+object <- calculate_pca_sc(object, no_pcs = 15L, .verbose = FALSE)
+object <- calculate_pca_adt_sc(object, no_pcs = 10L)
+object <- generate_wnn_graph_sc(object, .verbose = FALSE)
+get_snn_graph(object, modality = "wnn")
+#> IGRAPH a01ce5a U-W- 1000 35379 -- 
+#> + attr: weight (e/n)
+#> + edges from a01ce5a:
+#>  [1]  1-- 4  5-- 8  3-- 9  1--13  4--13 13--16  1--16 14--17  3--18 10--19
+#> [11] 14--20 17--20  5--20 12--21  1--22 16--22  5--23 20--23  8--23 15--24
+#> [21] 12--24  9--24 21--24  4--25  5--26 20--26 23--26 17--26 12--27 21--27
+#> [31] 24--27  6--27 25--28  2--29 12--30 15--30 24--30 28--31 17--32  9--33
+#> [41] 15--33 31--34  4--34 32--35 11--35 15--36 27--36 30--36 24--36  1--37
+#> [51] 13--37 16--37 22--37 28--37 14--38 17--38 20--38 27--39 33--39  9--39
+#> [61] 24--39 12--39 36--39 15--39 28--40 31--40  2--41 29--41 11--41 35--41
+#> [71] 18--42  3--42  9--42 22--43 10--43  1--43 19--43 32--44 35--44 17--44
+#> + ... omitted several edges
+
+unlink(dir, recursive = TRUE, force = TRUE)
+```

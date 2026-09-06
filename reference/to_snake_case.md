@@ -22,3 +22,11 @@ to_snake_case(x, ignore_na = FALSE)
 ## Value
 
 Returns the string in snake_case format.
+
+## Examples
+
+``` r
+# normalise mixed naming conventions
+to_snake_case(c("Gene Name", "someRNAValue", "Foo-Bar"))
+#> [1] "gene_name"     "some_rnavalue" "foo_bar"      
+```

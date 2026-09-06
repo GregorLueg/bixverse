@@ -21,3 +21,19 @@ get_nmf_gene_loadings(object)
 ## Value
 
 A features x k numeric matrix (if found) or `NULL`.
+
+## Examples
+
+``` r
+# gene loadings of a four-factor fit
+syn <- generate_gene_module_data(n_samples = 24L, n_genes = 60L)
+# NMF needs a non-negative matrix
+mat <- syn$data - min(syn$data)
+obj <- BulkCoExp(mat, syn$meta_data)
+obj <- preprocess_bulk_coexp(
+  obj, hvg = NULL, scaling = FALSE, .verbose = FALSE
+)
+obj <- nmf_bulk(obj, k = 4L, .verbose = FALSE)
+dim(get_nmf_gene_loadings(obj))
+#> [1] 60  4
+```

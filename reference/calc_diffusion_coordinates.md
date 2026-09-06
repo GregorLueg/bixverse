@@ -58,3 +58,26 @@ region attached.
 ## References
 
 Persad, et al. Nat Biotechnol, 2023
+
+## Examples
+
+``` r
+# diffusion map off the source kNN graph, giving each meta cell a region
+sc <- demo_single_cells()
+mc <- generate_bt_meta_cells_sc(
+  sc,
+  sc_meta_cell_params = params_sc_bt_metacells(target_no_metacells = 50L),
+  .verbose = FALSE
+)
+mc <- calc_diffusion_coordinates(
+  mc,
+  knn_data = get_knn_obj(sc),
+  .verbose = FALSE
+)
+table(mc[["density_region"]]$density_region)
+#> 
+#> high  low  mid 
+#>   12   11   27 
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

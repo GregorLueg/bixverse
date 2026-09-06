@@ -33,3 +33,15 @@ simulate_dropouts(object, sparsity_params = params_bulk_sparsity())
 ## References
 
 Zappia, et al., Genome Biol, 2017
+
+## Examples
+
+``` r
+# thin the counts down to a shallower library size
+syn <- synthetic_bulk_cor_matrix()
+syn <- simulate_dropouts(syn, params_bulk_sparsity())
+mean(syn$counts == 0)
+#> [1] 0.00433
+mean(syn$sparse_counts == 0)
+#> [1] 0.01176
+```

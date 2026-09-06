@@ -61,3 +61,15 @@ generate_sc_knn(
 ## Value
 
 The `SingleCellNearestNeighbour` for downstream usage.
+
+## Examples
+
+``` r
+# kNN over a random embedding; the rows have to carry cell names
+set.seed(42L)
+embd <- matrix(rnorm(500 * 10), nrow = 500)
+rownames(embd) <- sprintf("cell_%03d", 1:500)
+knn <- generate_sc_knn(embd, .verbose = FALSE)
+dim(get_knn_mat(knn))
+#> [1] 500  15
+```

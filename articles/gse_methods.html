@@ -29,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -121,7 +121,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Gene Set Enrichment Methods</h1>
 
       <p class="author">Gregor Lueg</p>
-      <p class="date">2026-09-05</p>
+      <p class="date">2026-09-06</p>
 
 
       <div class="d-none name"><code></code></div>
@@ -137,13 +137,7 @@
 <p>This vignette shows you how to use the gene set enrichment methods implemented in <code>bixverse</code>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"fgsea"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="fu">BiocManager</span><span class="fu">::</span><span class="fu">install</span><span class="op">(</span><span class="st">"fgsea"</span><span class="op">)</span></span>
-<span><span class="op">}</span></span>
-<span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"msigdbr"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"msigdbr"</span><span class="op">)</span></span>
-<span><span class="op">}</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://gregorlueg.github.io/bixverse">bixverse</a></span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://gregorlueg.github.io/bixverse">bixverse</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-datatable.com" class="external-link">data.table</a></span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Attaching package: 'data.table'</span></span>
@@ -284,7 +278,7 @@
 <span>  gene_set_list <span class="op">=</span> <span class="va">gene_sets</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu">tictoc</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tictoc/man/tic.html" class="external-link">toc</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 1.8 sec elapsed</span></span></code></pre></div>
+<span><span class="co">#&gt; 1.168 sec elapsed</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="gene-ontology-aware-enrichment-the-elimination-method">Gene Ontology-aware enrichment: the elimination method<a class="anchor" aria-label="anchor" href="#gene-ontology-aware-enrichment-the-elimination-method"></a>
 </h2>
@@ -295,10 +289,6 @@
 <code class="sourceCode R"><span><span class="va">go_data_dt</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_go_data_human.html">get_go_data_human</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Loading the data from the package.</span></span>
 <span><span class="co">#&gt; Processing data for the gene_ontology class.</span></span>
-<span><span class="co">#&gt; Warning: The `father` argument of `dfs()` is deprecated as of igraph 2.2.0.</span></span>
-<span><span class="co">#&gt; ℹ Please use the `parent` argument instead.</span></span>
-<span><span class="co">#&gt; ℹ The deprecated feature was likely used in the bixverse package.</span></span>
-<span><span class="co">#&gt;   Please report the issue to the authors.</span></span>
 <span></span>
 <span><span class="va">go_data_s7</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/GeneOntologyElim.html">GeneOntologyElim</a></span><span class="op">(</span><span class="va">go_data_dt</span>, min_genes <span class="op">=</span> <span class="fl">3L</span><span class="op">)</span></span></code></pre></div>
 </div>
@@ -385,7 +375,7 @@
 <span>  target_gene_list <span class="op">=</span> <span class="va">go_target_gene_sets</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu">tictoc</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tictoc/man/tic.html" class="external-link">toc</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 1.932 sec elapsed</span></span></code></pre></div>
+<span><span class="co">#&gt; 1.271 sec elapsed</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="alternative-post-hoc-simplification-of-go-results">Alternative: post-hoc simplification of GO results<a class="anchor" aria-label="anchor" href="#alternative-post-hoc-simplification-of-go-results"></a>
 </h2>
@@ -576,8 +566,8 @@
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: seconds</span></span>
 <span><span class="co">#&gt;   expr      min       lq     mean   median       uq      max neval</span></span>
-<span><span class="co">#&gt;  fgsea 3.111818 3.276709 3.512882 3.566832 3.647523 3.961526     5</span></span>
-<span><span class="co">#&gt;   rust 2.281162 2.311332 2.305926 2.311897 2.311937 2.313301     5</span></span></code></pre></div>
+<span><span class="co">#&gt;  fgsea 2.209884 2.339467 2.495893 2.518937 2.536158 2.875021     5</span></span>
+<span><span class="co">#&gt;   rust 1.462361 1.467389 1.474873 1.472826 1.475919 1.495869     5</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="blitzgsea">blitzGSEA<a class="anchor" aria-label="anchor" href="#blitzgsea"></a>
 </h2>
@@ -618,7 +608,7 @@
 <span><span class="co">#&gt; 5:  66336,66977,12442,107995,66442,52276,...[40]</span></span>
 <span><span class="co">#&gt; 6:  66336,66977,107995,66442,52276,67629,...[51]</span></span></code></pre></div>
 </div>
-<p>Does the approximation hold up against the permutations?</p>
+<p>Does the approximation hold up against the permutations + multi-level approach from fgsea?</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">blitz_vs_fgsea</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/merge.html" class="external-link">merge</a></span><span class="op">(</span></span>
@@ -641,7 +631,7 @@
 </div>
 </div>
 </div>
-<p>Overall good correlation between the two.</p>
+<p>Overall good correlation between the two. Pathways called significant in one are likely to be called significant in the other.</p>
 <section class="level3"><h3 id="reusing-the-null-model">Reusing the null model<a class="anchor" aria-label="anchor" href="#reusing-the-null-model"></a>
 </h3>
 <p>Nothing about a gene set library enters the calibration. It depends only on the signature, so one calibration serves every library you score against that ranking. <code><a href="../reference/blitzgsea_calibrate.html">blitzgsea_calibrate()</a></code> hands it back as a plain list you can hold onto or <code><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">saveRDS()</a></code>:</p>
@@ -683,10 +673,10 @@
 <span>  times <span class="op">=</span> <span class="fl">5L</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: milliseconds</span></span>
-<span><span class="co">#&gt;        expr        min         lq       mean     median         uq       max</span></span>
-<span><span class="co">#&gt;       fgsea 2293.99362 2297.49294 2298.88581 2300.01519 2301.35131 2301.5760</span></span>
-<span><span class="co">#&gt;  blitz_cold  937.54700  939.56483  944.47562  941.89034  946.21931  957.1566</span></span>
-<span><span class="co">#&gt;  blitz_warm   13.37099   14.21344   14.80025   14.68046   15.27607   16.4603</span></span>
+<span><span class="co">#&gt;        expr        min         lq      mean     median         uq       max</span></span>
+<span><span class="co">#&gt;       fgsea 1439.09966 1465.74932 1492.9116 1469.84666 1536.48756 1553.3750</span></span>
+<span><span class="co">#&gt;  blitz_cold  642.36221  644.98215  647.1558  645.63802  649.71179  653.0848</span></span>
+<span><span class="co">#&gt;  blitz_warm   10.95529   12.67466   12.5824   12.73331   12.86415   13.6846</span></span>
 <span><span class="co">#&gt;  neval</span></span>
 <span><span class="co">#&gt;      5</span></span>
 <span><span class="co">#&gt;      5</span></span>

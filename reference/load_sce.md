@@ -88,3 +88,36 @@ load_sce(
 
 It will populate the files on disk and return the class with updated
 shape information.
+
+## Examples
+
+``` r
+# \donttest{
+# colData becomes obs, rowData becomes var, the counts assay gets normalised
+data <- generate_single_cell_test_data(
+  syn_data_params = params_sc_synthetic_data(n_cells = 200L, n_genes = 40L)
+)
+sce <- SingleCellExperiment::SingleCellExperiment(
+  assays = list(counts = as(Matrix::t(data$counts), "CsparseMatrix")),
+  colData = data.frame(data$obs, row.names = data$obs$cell_id),
+  rowData = data.frame(data$var, row.names = data$var$gene_id)
+)
+dir_data <- tempfile("sc_sce")
+dir.create(dir_data, recursive = TRUE)
+sc <- load_sce(
+  object = SingleCells(dir_data = dir_data),
+  sce = sce,
+  sc_qc_param = params_sc_min_quality(
+    min_unique_genes = 5L,
+    min_lib_size = 25L,
+    min_cells = 5L
+  ),
+  streaming = 0L,
+  .verbose = FALSE
+)
+dim(sc)
+#> [1] 200  40
+
+unlink(dir_data, recursive = TRUE, force = TRUE)
+# }
+```

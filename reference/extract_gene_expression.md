@@ -60,3 +60,23 @@ extract_gene_expression(
 
 A data.table with a `cell_id` column, one column per gene, and any
 requested obs columns.
+
+## Examples
+
+``` r
+# normalised expression of three genes with a cell annotation
+sc <- demo_single_cells()
+dt <- extract_gene_expression(
+  sc,
+  features = get_gene_names(sc)[1:3],
+  obs_cols = "cell_grp"
+)
+head(dt, 3)
+#>     cell_id  gene_01  gene_02  gene_03    cell_grp
+#>      <char>    <num>    <num>    <num>      <char>
+#> 1: cell_001 6.222656 6.761719 5.531250 cell_type_1
+#> 2: cell_002 4.113281 4.511719 4.113281 cell_type_2
+#> 3: cell_003 4.300781 4.300781 3.226562 cell_type_3
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

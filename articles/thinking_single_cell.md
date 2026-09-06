@@ -42,11 +42,11 @@ str(single_cell_test_data)
 #>   ..$ cell_id    : chr [1:1000] "cell_0001" "cell_0002" "cell_0003" "cell_0004" ...
 #>   ..$ cell_grp   : chr [1:1000] "cell_type_1" "cell_type_2" "cell_type_3" "cell_type_1" ...
 #>   ..$ batch_index: num [1:1000] 1 1 1 1 1 1 1 1 1 1 ...
-#>   ..- attr(*, ".internal.selfref")=<pointer: 0x55de3811db80> 
+#>   ..- attr(*, ".internal.selfref")=<pointer: 0x556023a6eb80> 
 #>  $ var   :Classes 'data.table' and 'data.frame': 100 obs. of  2 variables:
 #>   ..$ gene_id   : chr [1:100] "gene_001" "gene_002" "gene_003" "gene_004" ...
 #>   ..$ ensembl_id: chr [1:100] "ens_001" "ens_002" "ens_003" "ens_004" ...
-#>   ..- attr(*, ".internal.selfref")=<pointer: 0x55de3811db80>
+#>   ..- attr(*, ".internal.selfref")=<pointer: 0x556023a6eb80>
 ```
 
 We have a count matrix with pseudo raw counts, an obs table and a var
@@ -240,7 +240,7 @@ print(get_gene_names(sc_object)[1:10])
 ```
 
 Let’s quickly check out how you access the obs table and then let’s
-exemplify THE footgun of the paper:
+exemplify some quirks with data being held on disk.
 
 ``` r
 
@@ -395,10 +395,10 @@ sc_object
 ```
 
 The print changed now! We have now told the class that only a subset of
-682 cells shall be used in any downstream analyses. This is very
-important! Most functions will only return and work on the filtered
-cells, and you have to carefully think and remember what you did when.
-Also:
+682 cells shall be used in any downstream analyses. Understanding this
+is **very important**. Most functions will only return and work on the
+filtered cells, and you have to carefully think and remember what you
+did when. Also:
 
 ``` r
 
@@ -439,14 +439,14 @@ sc_object <- find_neighbours_sc(sc_object, .verbose = FALSE)
 get_sc_cache_status(sc_object)
 #>    modality artefact   name stamped  stale reason               id
 #>      <char>   <char> <char>  <lgcl> <lgcl> <char>           <char>
-#> 1:      rna      pca   <NA>    TRUE  FALSE   <NA> bcd974b90f1390e5
-#> 2:      rna      knn   <NA>    TRUE  FALSE   <NA> e2fe3a350c5b7302
-#> 3:      rna      snn   <NA>    TRUE  FALSE   <NA> a30a5ea6b6ea9767
+#> 1:      rna      pca   <NA>    TRUE  FALSE   <NA> 71068790f2f285d0
+#> 2:      rna      knn   <NA>    TRUE  FALSE   <NA> b6e2304729787411
+#> 3:      rna      snn   <NA>    TRUE  FALSE   <NA> d6b2c5f52f7ff91e
 #>                from
 #>              <list>
 #> 1:                 
-#> 2: bcd974b90f1390e5
-#> 3: e2fe3a350c5b7302
+#> 2: 71068790f2f285d0
+#> 3: b6e2304729787411
 ```
 
 The `from` column is what makes this more than a cell counter. The kNN
@@ -466,14 +466,14 @@ get_sc_cache_status(sc_object)
 #> 3:      rna      snn   <NA>    TRUE   TRUE
 #>                                                         reason               id
 #>                                                         <char>           <char>
-#> 1:                                                        <NA> 4c25a37a8a892ead
-#> 2: the artefact it was derived from was re-computed or removed e2fe3a350c5b7302
-#> 3:                             its upstream `rna:knn` is stale a30a5ea6b6ea9767
+#> 1:                                                        <NA> 2750a7b6692c4c59
+#> 2: the artefact it was derived from was re-computed or removed b6e2304729787411
+#> 3:                             its upstream `rna:knn` is stale d6b2c5f52f7ff91e
 #>                from
 #>              <list>
 #> 1:                 
-#> 2: bcd974b90f1390e5
-#> 3: e2fe3a350c5b7302
+#> 2: 71068790f2f285d0
+#> 3: b6e2304729787411
 ```
 
 The PCA is fine. The kNN is stale because the PCA it points at no longer
@@ -520,14 +520,14 @@ sc_object <- find_neighbours_sc(sc_object, .verbose = FALSE)
 get_sc_cache_status(sc_object)
 #>    modality artefact   name stamped  stale reason               id
 #>      <char>   <char> <char>  <lgcl> <lgcl> <char>           <char>
-#> 1:      rna      pca   <NA>    TRUE  FALSE   <NA> 4c25a37a8a892ead
-#> 2:      rna      knn   <NA>    TRUE  FALSE   <NA> 22ea6adab3e27f63
-#> 3:      rna      snn   <NA>    TRUE  FALSE   <NA> f273e7011233c053
+#> 1:      rna      pca   <NA>    TRUE  FALSE   <NA> 2750a7b6692c4c59
+#> 2:      rna      knn   <NA>    TRUE  FALSE   <NA> f7a414c6058d4e71
+#> 3:      rna      snn   <NA>    TRUE  FALSE   <NA> 48d0d2e2236b7a5f
 #>                from
 #>              <list>
 #> 1:                 
-#> 2: 4c25a37a8a892ead
-#> 3: 22ea6adab3e27f63
+#> 2: 2750a7b6692c4c59
+#> 3: f7a414c6058d4e71
 ```
 
 [`set_cells_to_keep()`](https://gregorlueg.github.io/bixverse/reference/set_cells_to_keep.md)
@@ -627,8 +627,8 @@ microbenchmark::microbenchmark(
 )
 #> Unit: milliseconds
 #>               expr      min       lq     mean   median       uq      max neval
-#>    the_correct_way 1.317680 1.335947 1.527815 1.376318 1.405390 2.868957    10
-#>  the_incorrect_way 2.140879 2.417779 2.407708 2.444073 2.490506 2.553821    10
+#>    the_correct_way 1.108278 1.135997 1.166313 1.163091 1.197212 1.248913    10
+#>  the_incorrect_way 1.877284 1.999032 2.087810 2.032888 2.079597 2.798758    10
 ```
 
 The difference seems marginal here, but it WILL bite you if you do this

@@ -88,3 +88,26 @@ columns:
 ## References
 
 Lachmann, et al., Bioinformatics, 2022
+
+## Examples
+
+``` r
+# blitzGSEA reading p-values off a fitted gamma null
+set.seed(42L)
+stats <- stats::setNames(rnorm(500), sprintf("gene_%03i", 1:500))
+stats[1:20] <- stats[1:20] + 2
+pathways <- list(
+  up_set = sprintf("gene_%03i", 1:20),
+  random_set = sprintf("gene_%03i", 200:240)
+)
+res <- calc_blitzgsea(
+  stats,
+  pathways,
+  blitz_params = params_blitzgsea(permutations = 1000L, anchors = 10L)
+)
+res[, c("pathway_name", "es", "nes", "pvals")]
+#>    pathway_name         es        nes        pvals
+#>          <char>      <num>      <num>        <num>
+#> 1:       up_set  0.9028009  4.5694226 4.890698e-06
+#> 2:   random_set -0.2225088 -0.4301274 6.671029e-01
+```

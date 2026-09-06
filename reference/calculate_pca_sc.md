@@ -66,3 +66,16 @@ calculate_pca_sc(
 
 The function will add the PCA factors, loadings and singular values to
 the object cache in memory.
+
+## Examples
+
+``` r
+# PCA on the highly variable genes
+sc <- demo_single_cells(prepped = FALSE)
+sc <- find_hvg_sc(sc, hvg_no = 30L, .verbose = FALSE)
+sc <- calculate_pca_sc(sc, no_pcs = 10L, .verbose = FALSE)
+dim(get_pca_factors(sc))
+#> [1] 500  10
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

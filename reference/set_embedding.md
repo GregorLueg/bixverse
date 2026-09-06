@@ -37,3 +37,15 @@ set_embedding(x, embd, name, ...)
 - ...:
 
   Other parameters.
+
+## Examples
+
+``` r
+# the first two PCs stored as an embedding in their own right
+sc <- demo_single_cells()
+sc <- set_embedding(sc, get_pca_factors(sc)[, 1:2], name = "pca_2d")
+get_available_embeddings(sc)
+#> [1] "pca"    "pca_2d"
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

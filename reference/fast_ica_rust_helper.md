@@ -68,3 +68,28 @@ A list containing:
 - S ICA results matrix S.
 
 - converged Boolean indicating if algorithm converged.
+
+## Examples
+
+``` r
+# same run, but with the whitening done up front
+sources <- cbind(sin((1:1000) / 20), rep(((1:200) - 100) / 100, 5))
+mixed <- sources %*% matrix(c(0.291, 0.6557, -0.5439, 0.5572), 2, 2)
+whitened <- rs_prepare_whitening(
+  x = mixed,
+  fast_svd = TRUE,
+  seed = 42L,
+  rank = NULL,
+  oversampling = NULL,
+  n_power_iter = NULL
+)
+ica_res <- fast_ica_rust_helper(
+  X = whitened$x,
+  K = whitened$k,
+  n_icas = 2L,
+  ica_fun = "logcosh",
+  seed = 42L
+)
+dim(ica_res$S)
+#> [1]    2 1000
+```

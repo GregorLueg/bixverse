@@ -31,7 +31,7 @@ modules."><meta property="og:image" content="https://gregorlueg.github.io/bixver
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -200,6 +200,30 @@ of cores.</p></dd>
     <p>The class with added data to the properties.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># scan Leiden resolutions on the correlation graph</span></span></span>
+<span class="r-in"><span><span class="va">mat</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="fu"><a href="synthetic_signal_matrix.html">synthetic_signal_matrix</a></span><span class="op">(</span><span class="op">)</span><span class="op">$</span><span class="va">mat</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">obj</span> <span class="op">&lt;-</span> <span class="fu"><a href="BulkCoExp.html">BulkCoExp</a></span><span class="op">(</span><span class="va">mat</span>, <span class="fu">data.table</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/data.table/man/data.table.html" class="external-link">data.table</a></span><span class="op">(</span>sample_id <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">mat</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">obj</span> <span class="op">&lt;-</span> <span class="fu"><a href="preprocess_bulk_coexp.html">preprocess_bulk_coexp</a></span><span class="op">(</span><span class="va">obj</span>, hvg <span class="op">=</span> <span class="fl">0.3</span>, .verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">obj</span> <span class="op">&lt;-</span> <span class="fu"><a href="cor_module_processing.html">cor_module_processing</a></span><span class="op">(</span><span class="va">obj</span>, cor_method <span class="op">=</span> <span class="st">"spearman"</span>, .verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">obj</span> <span class="op">&lt;-</span> <span class="fu">cor_module_graph_check_res</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">obj</span>,</span></span>
+<span class="r-in"><span>  resolution_params <span class="op">=</span> <span class="fu"><a href="params_graph_resolution.html">params_graph_resolution</a></span><span class="op">(</span>number_res <span class="op">=</span> <span class="fl">5L</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  parallel <span class="op">=</span> <span class="cn">FALSE</span>,</span></span>
+<span class="r-in"><span>  .verbose <span class="op">=</span> <span class="cn">FALSE</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="get_resolution_res.html">get_resolution_res</a></span><span class="op">(</span><span class="va">obj</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Key: &lt;resolution&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    resolution no_clusters modularity good_clusters  avg_size max_size</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         &lt;num&gt;       &lt;int&gt;      &lt;num&gt;         &lt;int&gt;     &lt;num&gt;    &lt;int&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1:  0.1000000           3 0.66589290             3 72.333333       74</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2:  0.3162278           3 0.66589290             3 72.333333       74</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3:  1.0000000           3 0.66589290             3 72.333333       74</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4:  3.1622777          16 0.24320781            14 13.562500       24</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5: 10.0000000         119 0.02575417             0  1.823529        8</span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

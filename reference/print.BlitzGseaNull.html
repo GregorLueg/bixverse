@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -115,6 +115,22 @@
     <p>Invisibly returns <code>x</code>.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># the calibration summary of a blitzGSEA null</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42L</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">stats</span> <span class="op">&lt;-</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/setNames.html" class="external-link">setNames</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">500</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"gene_%03i"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">500</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="blitzgsea_calibrate.html">blitzgsea_calibrate</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">stats</span>,</span></span>
+<span class="r-in"><span>  blitz_params <span class="op">=</span> <span class="fu"><a href="params_blitzgsea.html">params_blitzgsea</a></span><span class="op">(</span>permutations <span class="op">=</span> <span class="fl">1000L</span>, anchors <span class="op">=</span> <span class="fl">10L</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> BlitzGseaNull (calibrated blitzGSEA null model)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Signature:        500 genes</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Anchors:          10 (sizes 1 to 250)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Centred:          TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   KS p-value:       0.404 positive tail, 0.297 negative tail</span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

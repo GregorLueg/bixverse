@@ -28,3 +28,15 @@ get_cell_info(x, filtered = TRUE)
 ## Value
 
 A named vector with elements -\> cell_idx, names -\> cell_names.
+
+## Examples
+
+``` r
+# cell indices carrying the barcodes as names
+sc <- demo_single_cells(prepped = FALSE)
+head(get_cell_info(sc), 3)
+#> cell_001 cell_002 cell_003 
+#>        1        2        3 
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

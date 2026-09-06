@@ -65,3 +65,20 @@ stabilised_nmf_bulk(
 The class with `final_results` populated from the best run (lowest final
 loss) plus stability diagnostics (`losses`, `converged`, `best_idx`,
 `w_all_runs`, `h_per_run`).
+
+## Examples
+
+``` r
+# ten random restarts, best run kept
+syn <- generate_gene_module_data(n_samples = 24L, n_genes = 60L)
+# NMF needs a non-negative matrix
+mat <- syn$data - min(syn$data)
+obj <- BulkCoExp(mat, syn$meta_data)
+obj <- preprocess_bulk_coexp(
+  obj, hvg = NULL, scaling = FALSE, .verbose = FALSE
+)
+obj <- stabilised_nmf_bulk(obj, k = 4L, n_runs = 10L, .verbose = FALSE)
+get_nmf_stability(obj)$losses
+#>  [1] 2.259699 2.258609 2.259214 2.258859 2.258488 2.259210 2.260035 2.261240
+#>  [9] 2.260705 2.258274
+```

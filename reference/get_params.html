@@ -13,7 +13,7 @@ Also, can dispatch to specific methods for certain S3 classes."><meta property="
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -153,6 +153,41 @@ generic.</p></dd>
     <p>Depending on parameters either the R list or a (pretty) JSON string.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># parameters stored in a freshly created class</span></span></span>
+<span class="r-in"><span><span class="va">object</span> <span class="op">&lt;-</span> <span class="fu"><a href="SimilarityNetworkFusion.html">SimilarityNetworkFusion</a></span><span class="op">(</span>snf_params <span class="op">=</span> <span class="fu"><a href="params_snf.html">params_snf</a></span><span class="op">(</span>k <span class="op">=</span> <span class="fl">3L</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="fu">get_params</span><span class="op">(</span><span class="va">object</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "snf"        "no_samples"</span>
+<span class="r-in"><span><span class="fu">get_params</span><span class="op">(</span><span class="va">object</span>, to_json <span class="op">=</span> <span class="cn">TRUE</span>, pretty_json <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     "snf": {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         "k": [</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>             3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         ],</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         "t": [</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>             20</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         ],</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         "mu": [</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>             0.5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         ],</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         "alpha": [</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>             1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         ],</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         "distance_metric": [</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>             "euclidean"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         ],</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         "normalise": [</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>             true</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         ]</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     },</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     "no_samples": {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     }</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  </span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

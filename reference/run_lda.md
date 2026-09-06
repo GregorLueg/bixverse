@@ -57,3 +57,24 @@ if you do not already know `k`.
 
 Hoffman, Blei and Bach, NIPS, 2010; Bravo Gonzalez-Blas, et al., Nat
 Methods, 2019
+
+## Examples
+
+``` r
+# two planted term blocks recovered as two topics
+set.seed(42L)
+corpus <- matrix(rbinom(200L * 40L, 1L, 0.05), nrow = 200L, ncol = 40L)
+corpus[1:100, 1:10] <- rbinom(1000L, 1L, 0.6)
+corpus[101:200, 11:20] <- rbinom(1000L, 1L, 0.6)
+colnames(corpus) <- sprintf("term_%02d", 1:40)
+lda_res <- run_lda(corpus > 0, k = 2L, .verbose = FALSE)
+lda_res
+#> LdaResult (latent Dirichlet allocation)
+#>   Documents:        200
+#>   Terms:            40
+#>   Topics:           2
+#>   Bound (ELBO):     -5137.97
+#>   Perplexity:       31.6666
+#>   Iterations:       60
+#> 
+```

@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -178,6 +178,27 @@ absolute bigger tail is set to positive floats.</p></dd>
 parameters added to the slots.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># stabilised five-component ICA and the resulting modules</span></span></span>
+<span class="r-in"><span><span class="va">mat</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="fu"><a href="synthetic_signal_matrix.html">synthetic_signal_matrix</a></span><span class="op">(</span><span class="op">)</span><span class="op">$</span><span class="va">mat</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">obj</span> <span class="op">&lt;-</span> <span class="fu"><a href="BulkCoExp.html">BulkCoExp</a></span><span class="op">(</span><span class="va">mat</span>, <span class="fu">data.table</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/data.table/man/data.table.html" class="external-link">data.table</a></span><span class="op">(</span>sample_id <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">mat</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">obj</span> <span class="op">&lt;-</span> <span class="fu"><a href="preprocess_bulk_coexp.html">preprocess_bulk_coexp</a></span><span class="op">(</span><span class="va">obj</span>, hvg <span class="op">=</span> <span class="fl">0.3</span>, .verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">obj</span> <span class="op">&lt;-</span> <span class="fu"><a href="ica_processing.html">ica_processing</a></span><span class="op">(</span><span class="va">obj</span>, .verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">obj</span> <span class="op">&lt;-</span> <span class="fu">ica_stabilised_results</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">obj</span>, no_comp <span class="op">=</span> <span class="fl">5L</span>, ica_type <span class="op">=</span> <span class="st">"logcosh"</span>, .verbose <span class="op">=</span> <span class="cn">FALSE</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="get_modules.html">get_modules</a></span><span class="op">(</span><span class="fu"><a href="get_results.html">get_results</a></span><span class="op">(</span><span class="va">obj</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       gene module_id   loading   sign        z</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     &lt;char&gt;    &lt;char&gt;     &lt;num&gt; &lt;char&gt;    &lt;num&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1:  gene17      IC_1  4.098349    pos 3.031712</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2:  gene47      IC_2  2.325615    pos 3.193498</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3: gene184      IC_3 10.133645    pos 4.554106</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4: gene138      IC_3  9.554019    pos 4.311909</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5: gene176      IC_3  9.062064    pos 4.106346</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6: gene116      IC_3  7.938691    pos 3.636945</span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

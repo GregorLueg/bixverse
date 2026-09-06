@@ -9,7 +9,7 @@ storage. Returns NULL if the slot does not exist."><meta property="og:image" con
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -100,8 +100,33 @@ storage. Returns NULL if the slot does not exist.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">.read_slot_value_sample</span><span class="op">(</span><span class="va">f_path</span>, <span class="va">slot_path</span>, <span class="va">h5_content</span>, n_sample <span class="op">=</span> <span class="fl">10000L</span><span class="op">)</span></span></code></pre></div>
     </div>
 
+    <div class="section level2">
+    <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
 
-  </main></div>
+
+<dl><dt id="arg-f-path">f_path<a class="anchor" aria-label="anchor" href="#arg-f-path"></a></dt>
+<dd><p>String. Path to the h5ad file.</p></dd>
+
+
+<dt id="arg-slot-path">slot_path<a class="anchor" aria-label="anchor" href="#arg-slot-path"></a></dt>
+<dd><p>String. Full path of the slot inside the file.</p></dd>
+
+
+<dt id="arg-h-content">h5_content<a class="anchor" aria-label="anchor" href="#arg-h-content"></a></dt>
+<dd><p>data.table. Output of <code><a href="https://huber-group-embl.github.io/rhdf5/reference/h5ls.html" class="external-link">rhdf5::h5ls()</a></code> on <code>f_path</code>.</p></dd>
+
+
+<dt id="arg-n-sample">n_sample<a class="anchor" aria-label="anchor" href="#arg-n-sample"></a></dt>
+<dd><p>Integer. Maximum number of values to read.</p></dd>
+
+</dl></div>
+    <div class="section level2">
+    <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
+    <p>Numeric vector of sampled values, or <code>NULL</code> if the slot is absent.</p>
+    </div>
+
+  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
+    </nav></aside></div>
 
 
     <footer><div class="pkgdown-footer-left">

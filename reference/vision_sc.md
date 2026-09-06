@@ -19,9 +19,10 @@ vision_sc(object, gs_list, streaming = NULL, .verbose = TRUE)
 
 - gs_list:
 
-  Named nested list. The elements have the gene identifiers of the
-  respective gene sets and have the option to have a `"pos"` and `"neg"`
-  gene sets. The names need to be part of the variables of the object.
+  Named nested list. Every element must itself be a list with at least a
+  `"pos"` element holding the gene identifiers, and optionally a `"neg"`
+  one. A bare character vector is not accepted. The gene identifiers
+  need to be part of the variables of the object.
 
 - streaming:
 
@@ -44,3 +45,22 @@ The VISION scores in form of a matrix that is cells x gene sets or as
 ## References
 
 DeTomaso, et al., Nat. Commun., 2019
+
+## Examples
+
+``` r
+# a signed signature alongside a plain one
+sc <- demo_single_cells()
+gs_list <- list(
+  programme_a = list(
+    pos = get_gene_names(sc)[1:10],
+    neg = get_gene_names(sc)[11:20]
+  ),
+  programme_b = list(pos = get_gene_names(sc)[21:30])
+)
+res <- vision_sc(sc, gs_list = gs_list, .verbose = FALSE)
+dim(res)
+#> [1] 500   2
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

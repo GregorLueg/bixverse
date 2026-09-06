@@ -11,7 +11,7 @@ applies a multiple hypothesis correction (BH) to the p-values."><meta property="
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -149,6 +149,25 @@ and the respective gene set.</p></dd>
     <p>data.table with enrichment results.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># hypergeometric test of a target set against a small universe</span></span></span>
+<span class="r-in"><span><span class="va">gene_universe</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"gene_%03i"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">200</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">gene_sets</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  set_a <span class="op">=</span> <span class="va">gene_universe</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">20</span><span class="op">]</span>,</span></span>
+<span class="r-in"><span>  set_b <span class="op">=</span> <span class="va">gene_universe</span><span class="op">[</span><span class="fl">15</span><span class="op">:</span><span class="fl">40</span><span class="op">]</span>,</span></span>
+<span class="r-in"><span>  set_c <span class="op">=</span> <span class="va">gene_universe</span><span class="op">[</span><span class="fl">100</span><span class="op">:</span><span class="fl">130</span><span class="op">]</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">target</span> <span class="op">&lt;-</span> <span class="va">gene_universe</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">12</span>, <span class="fl">150</span><span class="op">:</span><span class="fl">158</span><span class="op">)</span><span class="op">]</span></span></span>
+<span class="r-in"><span><span class="fu">gse_hypergeometric</span><span class="op">(</span><span class="va">target</span>, <span class="va">gene_sets</span>, <span class="va">gene_universe</span>, threshold <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    gene_set_name odds_ratios       pvals          fdr  hits gene_set_lengths</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>           &lt;char&gt;       &lt;num&gt;       &lt;num&gt;        &lt;num&gt; &lt;num&gt;            &lt;num&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1:         set_a        28.5 4.19695e-09 1.259085e-08    12               20</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    target_set_lengths</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                 &lt;int&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1:                 21</span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

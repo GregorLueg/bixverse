@@ -34,3 +34,14 @@ get_pca_factors(x, ...)
 ## Value
 
 The PCA factors from the object (if found).
+
+## Examples
+
+``` r
+# cells x PCs
+sc <- demo_single_cells()
+dim(get_pca_factors(sc))
+#> [1] 500  10
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

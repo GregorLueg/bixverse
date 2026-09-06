@@ -35,7 +35,7 @@ embedding via the &quot;wnn&quot; modality."><meta property="og:image" content="
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -235,6 +235,43 @@ modality weights added to <code>other_data[["wnn"]]</code>.</p>
     <p>Hao et al., Cell, 2021</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># a fused RNA + ADT graph, both modalities reduced with PCA first</span></span></span>
+<span class="r-in"><span><span class="va">rna</span> <span class="op">&lt;-</span> <span class="fu"><a href="generate_single_cell_test_data.html">generate_single_cell_test_data</a></span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">adt</span> <span class="op">&lt;-</span> <span class="fu"><a href="generate_single_cell_test_data_adt.html">generate_single_cell_test_data_adt</a></span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">dir</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="st">"bixverse_mm"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span><span class="va">dir</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">object</span> <span class="op">&lt;-</span> <span class="fu"><a href="load_r_data.html">load_r_data</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="SingleCellsMultiModal.html">SingleCellsMultiModal</a></span><span class="op">(</span>dir_data <span class="op">=</span> <span class="va">dir</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  counts <span class="op">=</span> <span class="va">rna</span><span class="op">$</span><span class="va">counts</span>,</span></span>
+<span class="r-in"><span>  obs <span class="op">=</span> <span class="va">rna</span><span class="op">$</span><span class="va">obs</span>,</span></span>
+<span class="r-in"><span>  var <span class="op">=</span> <span class="va">rna</span><span class="op">$</span><span class="va">var</span>,</span></span>
+<span class="r-in"><span>  sc_qc_param <span class="op">=</span> <span class="fu"><a href="params_sc_min_quality.html">params_sc_min_quality</a></span><span class="op">(</span>min_unique_genes <span class="op">=</span> <span class="fl">5L</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  .verbose <span class="op">=</span> <span class="cn">FALSE</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">object</span> <span class="op">&lt;-</span> <span class="fu"><a href="add_adt_counts_sc.html">add_adt_counts_sc</a></span><span class="op">(</span><span class="va">object</span>, adt_counts <span class="op">=</span> <span class="va">adt</span><span class="op">$</span><span class="va">counts</span>, method <span class="op">=</span> <span class="st">"clr"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">object</span> <span class="op">&lt;-</span> <span class="fu"><a href="find_hvg_sc.html">find_hvg_sc</a></span><span class="op">(</span><span class="va">object</span>, hvg_no <span class="op">=</span> <span class="fl">30L</span>, .verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">object</span> <span class="op">&lt;-</span> <span class="fu"><a href="calculate_pca_sc.html">calculate_pca_sc</a></span><span class="op">(</span><span class="va">object</span>, no_pcs <span class="op">=</span> <span class="fl">15L</span>, .verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">object</span> <span class="op">&lt;-</span> <span class="fu"><a href="calculate_pca_adt_sc.html">calculate_pca_adt_sc</a></span><span class="op">(</span><span class="va">object</span>, no_pcs <span class="op">=</span> <span class="fl">10L</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">object</span> <span class="op">&lt;-</span> <span class="fu">generate_wnn_graph_sc</span><span class="op">(</span><span class="va">object</span>, .verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="get_snn_graph.html">get_snn_graph</a></span><span class="op">(</span><span class="va">object</span>, modality <span class="op">=</span> <span class="st">"wnn"</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> IGRAPH a01ce5a U-W- 1000 35379 -- </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> + attr: weight (e/n)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> + edges from a01ce5a:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [1]  1-- 4  5-- 8  3-- 9  1--13  4--13 13--16  1--16 14--17  3--18 10--19</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [11] 14--20 17--20  5--20 12--21  1--22 16--22  5--23 20--23  8--23 15--24</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [21] 12--24  9--24 21--24  4--25  5--26 20--26 23--26 17--26 12--27 21--27</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [31] 24--27  6--27 25--28  2--29 12--30 15--30 24--30 28--31 17--32  9--33</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [41] 15--33 31--34  4--34 32--35 11--35 15--36 27--36 30--36 24--36  1--37</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [51] 13--37 16--37 22--37 28--37 14--38 17--38 20--38 27--39 33--39  9--39</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [61] 24--39 12--39 36--39 15--39 28--40 31--40  2--41 29--41 11--41 35--41</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [71] 18--42  3--42  9--42 22--43 10--43  1--43 19--43 32--44 35--44 17--44</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> + ... omitted several edges</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">dir</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span>, force <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

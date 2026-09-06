@@ -42,3 +42,18 @@ of the class.
 ## References
 
 Abid, et al., Nature Communications, 2018
+
+## Examples
+
+``` r
+# covariance matrices of the target and the background
+cpca_data <- synthetic_c_pca_data()
+target <- t(cpca_data$target)
+background <- t(cpca_data$background)
+meta <- data.table::data.table(sample_id = rownames(target))
+obj <- BulkCoExp(target, meta)
+obj <- preprocess_bulk_coexp(obj, .verbose = FALSE)
+obj <- contrastive_pca_processing(obj, background, .verbose = FALSE)
+dim(obj@processed_data$target_covar)
+#> [1] 30 30
+```

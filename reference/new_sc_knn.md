@@ -31,3 +31,25 @@ new_sc_knn(knn_data, used_cells)
 ## Value
 
 Generates the `SingleCellNearestNeighbour` class.
+
+## Examples
+
+``` r
+# rebuild the kNN wrapper from an existing graph
+sc <- demo_single_cells()
+knn <- generate_knn_sc(sc, .validate_index = FALSE, .verbose = FALSE)
+new_sc_knn(
+  knn_data = list(
+    indices = get_knn_mat(knn),
+    dist = get_knn_dist(knn),
+    dist_metric = "euclidean"
+  ),
+  used_cells = get_cell_names(sc)
+)
+#> SingleCellNearestNeighbour: 500 cells, k = 15
+#>   Distance metric: euclidean
+#>   Index range: [0, 499]
+#>   Distance range: [1.1849, 4.2876]
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

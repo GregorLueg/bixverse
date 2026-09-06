@@ -72,3 +72,19 @@ AUCell results in form of a matrix that is cells x gene sets or as
 ## References
 
 Aibar, et al., Nat Methods, 2017
+
+## Examples
+
+``` r
+# recovery curve AUC for two marker programmes
+sc <- demo_single_cells()
+gs_list <- list(
+  type_1 = get_gene_names(sc)[1:10],
+  type_2 = get_gene_names(sc)[11:20]
+)
+res <- aucell_sc(sc, gs_list = gs_list, .verbose = FALSE)
+dim(res)
+#> [1] 500   2
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

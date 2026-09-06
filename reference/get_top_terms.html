@@ -13,7 +13,7 @@ different breadth."><meta property="og:image" content="https://gregorlueg.github
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -127,6 +127,30 @@ different breadth.</p>
 by topic and then rank.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># the five highest probability terms of each topic</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42L</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">corpus</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Binomial.html" class="external-link">rbinom</a></span><span class="op">(</span><span class="fl">200L</span> <span class="op">*</span> <span class="fl">40L</span>, <span class="fl">1L</span>, <span class="fl">0.05</span><span class="op">)</span>, nrow <span class="op">=</span> <span class="fl">200L</span>, ncol <span class="op">=</span> <span class="fl">40L</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">corpus</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">100</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">10</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Binomial.html" class="external-link">rbinom</a></span><span class="op">(</span><span class="fl">1000L</span>, <span class="fl">1L</span>, <span class="fl">0.6</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">corpus</span><span class="op">[</span><span class="fl">101</span><span class="op">:</span><span class="fl">200</span>, <span class="fl">11</span><span class="op">:</span><span class="fl">20</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Binomial.html" class="external-link">rbinom</a></span><span class="op">(</span><span class="fl">1000L</span>, <span class="fl">1L</span>, <span class="fl">0.6</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">corpus</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"term_%02d"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">40</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">lda_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="run_lda.html">run_lda</a></span><span class="op">(</span><span class="va">corpus</span> <span class="op">&gt;</span> <span class="fl">0</span>, k <span class="op">=</span> <span class="fl">2L</span>, .verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">get_top_terms</span><span class="op">(</span><span class="va">lda_res</span>, n <span class="op">=</span> <span class="fl">5L</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>        topic  rank    term probability</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       &lt;char&gt; &lt;int&gt;  &lt;char&gt;       &lt;num&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  1: topic_01     1 term_07  0.09487961</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  2: topic_01     2 term_09  0.09487961</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  3: topic_01     3 term_03  0.09221070</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  4: topic_01     4 term_02  0.09087624</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  5: topic_01     5 term_10  0.08687288</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  6: topic_02     1 term_18  0.10072022</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  7: topic_02     2 term_14  0.09937908</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  8: topic_02     3 term_12  0.09267333</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  9: topic_02     4 term_19  0.08864989</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 10: topic_02     5 term_17  0.08730874</span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

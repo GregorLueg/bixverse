@@ -42,3 +42,19 @@ scenic_gene_filter_sc(
 
 A character vector of gene identifiers passing the SCENIC inclusion
 criteria.
+
+## Examples
+
+``` r
+# genes clearing the SCENIC count and prevalence thresholds
+sc <- demo_single_cells()
+genes <- scenic_gene_filter_sc(
+  sc,
+  scenic_params = params_scenic(min_counts = 100L, min_cells = 0.05),
+  .verbose = FALSE
+)
+length(genes)
+#> [1] 50
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

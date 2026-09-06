@@ -75,3 +75,17 @@ step_fast_mnn_sc(
 ## Value
 
 An `ScStep`.
+
+## Examples
+
+``` r
+# fastMNN wants the batch aware genes handed to it up front
+step_fast_mnn_sc(
+  batch_column = "batch_index",
+  batch_hvg_genes = 0:29L
+) %>>%
+  step_neighbours_sc(embd_to_use = "mnn")
+#> <ScPipeline> 2 steps
+#>   1. fast_mnn    batch_column = "batch_index", batch_hvg_genes = <integer>, fastmnn_params = <list>, use_precomputed_pca = FALSE, seed = 42L, .verbose = TRUE
+#>   2. neighbours  embd_to_use = "mnn", no_embd_to_use = NULL, modality = c("rna", "adt"), neighbours_params = <list>, seed = 42L, .verbose = TRUE
+```

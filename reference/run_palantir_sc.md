@@ -103,3 +103,33 @@ A `PalantirRes` S3 object with:
 ## References
 
 Setty, et al., Nat. Biotechnol., 2019.
+
+## Examples
+
+``` r
+# pseudotime from an arbitrary start cell on the demo kNN graph
+sc <- demo_single_cells()
+res <- run_palantir_sc(
+  sc,
+  early_cell = get_knn_obj(sc)$used_cells[1],
+  palantir_params = params_sc_palantir(
+    knn = 15L,
+    num_waypoints = 100L,
+    n_eigs = 3L,
+    use_early_cell_as_start = TRUE,
+    knn_params = list(knn_method = "exhaustive")
+  ),
+  .verbose = FALSE
+)
+head(res$pseudotime)
+#>     cell_id  pseudotime      entropy
+#>      <char>       <num>        <num>
+#> 1: cell_001 0.003929901 6.039814e-01
+#> 2: cell_002 0.943664432 2.954056e-09
+#> 3: cell_003 0.935922384 1.399716e-02
+#> 4: cell_004 0.057008278 6.029099e-01
+#> 5: cell_005 0.764215529 1.669870e-03
+#> 6: cell_006 0.965360820 7.510468e-03
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

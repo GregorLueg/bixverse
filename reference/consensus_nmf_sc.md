@@ -107,3 +107,30 @@ to switch it off.
 ## References
 
 Kotliar et al., eLife, 2019
+
+## Examples
+
+``` r
+# ten restarts pooled, density filter off on data this small
+sc <- demo_single_cells()
+res <- consensus_nmf_sc(
+  sc,
+  k = 3L,
+  n_runs = 10L,
+  nmf_consensus_params = params_nmf_consensus(density_threshold = 2),
+  .verbose = FALSE
+)
+res
+#> ConsensusNmfResult (consensus HALS NMF)
+#>   Source class:     SingleCells
+#>   No genes:         30
+#>   No cells:         500
+#>   No components:    3
+#>   No runs:          10
+#>   Stability:        0.9944
+#>   Relative error:   0.2518
+#>   Dropped:          0 / 30 components
+#>   Preprocessing:    none
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

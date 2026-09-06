@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -138,6 +138,29 @@ v3 may include <code>feature_type</code>; defaults to <code>"Gene Expression"</c
     <p>Invisible.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># a CellRanger v3 style h5, ready for load_tenx_h5()</span></span></span>
+<span class="r-in"><span><span class="va">data</span> <span class="op">&lt;-</span> <span class="fu"><a href="generate_single_cell_test_data.html">generate_single_cell_test_data</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  syn_data_params <span class="op">=</span> <span class="fu"><a href="params_sc_synthetic_data.html">params_sc_synthetic_data</a></span><span class="op">(</span>n_cells <span class="op">=</span> <span class="fl">200L</span>, n_genes <span class="op">=</span> <span class="fl">40L</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">f_path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".h5"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">write_tenx_h5_sc</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  f_path <span class="op">=</span> <span class="va">f_path</span>,</span></span>
+<span class="r-in"><span>  counts <span class="op">=</span> <span class="va">data</span><span class="op">$</span><span class="va">counts</span>,</span></span>
+<span class="r-in"><span>  barcodes <span class="op">=</span> <span class="va">data</span><span class="op">$</span><span class="va">obs</span><span class="op">$</span><span class="va">cell_id</span>,</span></span>
+<span class="r-in"><span>  features <span class="op">=</span> <span class="fu">data.table</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/data.table/man/data.table.html" class="external-link">data.table</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    id <span class="op">=</span> <span class="va">data</span><span class="op">$</span><span class="va">var</span><span class="op">$</span><span class="va">gene_id</span>,</span></span>
+<span class="r-in"><span>    name <span class="op">=</span> <span class="va">data</span><span class="op">$</span><span class="va">var</span><span class="op">$</span><span class="va">ensembl_id</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="read_tenx_h5_metadata.html">read_tenx_h5_metadata</a></span><span class="op">(</span><span class="va">f_path</span><span class="op">)</span><span class="op">$</span><span class="va">dims</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> obs var </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 200  40 </span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">f_path</span><span class="op">)</span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

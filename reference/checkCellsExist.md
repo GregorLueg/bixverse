@@ -1,7 +1,7 @@
 # Check that the cell name exists in the object
 
-Checkmate extension for checking if the prodivided cell names exist in
-the object.
+Checkmate extension for checking if the provided cell names exist in the
+object.
 
 ## Usage
 

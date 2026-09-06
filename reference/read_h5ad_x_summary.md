@@ -33,3 +33,24 @@ A list with:
 - dims - named integer vector c(obs, var)
 
 - sample - numeric vector of sampled non-zero values
+
+## Examples
+
+``` r
+# check whether /X holds raw counts before loading it
+data <- generate_single_cell_test_data(
+  syn_data_params = params_sc_synthetic_data(n_cells = 200L, n_genes = 40L)
+)
+f_path <- tempfile(fileext = ".h5ad")
+write_h5ad_sc(f_path, data$counts, data$obs, data$var, .verbose = FALSE)
+summary_x <- read_h5ad_x_summary(f_path)
+summary_x$stats
+#>               min               max              mean            median 
+#>            1.0000          254.0000           12.1641            4.0000 
+#> whole_number_frac 
+#>            1.0000 
+summary_x$is_integer_valued
+#> [1] TRUE
+
+unlink(f_path)
+```

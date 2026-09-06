@@ -112,3 +112,22 @@ Whether the neighbour distances need squaring before the kernel sees
 them follows from the metric. With `use_knn = TRUE` it is taken from the
 metric stored on the cached kNN graph, otherwise from `ann_dist` in
 `hotspot_params`.
+
+## Examples
+
+``` r
+# local gene-gene correlations over a subset of the genes
+sc <- demo_single_cells()
+res <- hotspot_gene_cor_sc(
+  sc,
+  genes_to_take = get_gene_names(sc)[1:20],
+  .verbose = FALSE
+)
+res
+#> Hotspot gene-gene local correlation results
+#>   Genes: 20
+#>   Cells: 500
+#>   Modules: not yet computed (see generate_hotspot_membership)
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

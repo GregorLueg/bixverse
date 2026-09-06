@@ -27,10 +27,8 @@ A plotted heatmap showing the DEG.
 ## Examples
 
 ``` r
-if (FALSE) { # \dontrun{
-
+# heatmap of the simulated differential expression
 synthetic_gex <- synthetic_signal_matrix()
-
 plot(synthetic_gex)
-} # }
+
 ```

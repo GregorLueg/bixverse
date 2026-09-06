@@ -17,8 +17,8 @@ rs_prcomp(x, scale, top_pcs)
 
 - scale:
 
-  Boolean. Shall the columns be variance normalised. (Mean centering
-  will automatically occur.)
+  Boolean. Shall the columns be variance normalised. (Mean centring will
+  automatically occur.)
 
 - top_pcs:
 

@@ -30,3 +30,14 @@ List with the following items:
   samples based on mixed features.
 
 - is_cat - Boolean vector, indicating which columns are categorical.
+
+## Examples
+
+``` r
+# mixed categorical and continuous features ready for Gower distances
+dt <- data.table::data.table(age = c(45, 62, 33), sex = c("f", "m", "f"))
+prepped <- prep_data_gower_hamming_dist(dt, sprintf("s%i", 1:3))
+prepped$is_cat
+#>   age   sex 
+#> FALSE  TRUE 
+```

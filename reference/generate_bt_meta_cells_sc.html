@@ -11,7 +11,7 @@ of for example correlation-based methods to identify co-regulated genes."><meta 
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -180,6 +180,36 @@ aggregation method.</p>
     <p>Morabito, et al. Cell Rep Methods, 2023</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># 50 meta cells off the demo object</span></span></span>
+<span class="r-in"><span><span class="va">sc</span> <span class="op">&lt;-</span> <span class="fu"><a href="demo_single_cells.html">demo_single_cells</a></span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">mc</span> <span class="op">&lt;-</span> <span class="fu">generate_bt_meta_cells_sc</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">sc</span>,</span></span>
+<span class="r-in"><span>  sc_meta_cell_params <span class="op">=</span> <span class="fu"><a href="params_sc_bt_metacells.html">params_sc_bt_metacells</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    target_no_metacells <span class="op">=</span> <span class="fl">50L</span>,</span></span>
+<span class="r-in"><span>    knn <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>k <span class="op">=</span> <span class="fl">10L</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span>,</span></span>
+<span class="r-in"><span>  .verbose <span class="op">=</span> <span class="cn">FALSE</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">mc</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Single cell experiment (Meta Cells).</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Meta cell method: meta_cells_hdwgcna</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Merged: FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   No meta cells: 50</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   No genes: 50</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   No cells aggregated: 366</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   No obs rows in source: 500</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   HVG calculated: FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   PCA calculated: FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Other embeddings: none</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   KNN generated: FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   SNN generated: FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Stale artefacts: none</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">sc</span><span class="op">@</span><span class="va">dir_data</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span>, force <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

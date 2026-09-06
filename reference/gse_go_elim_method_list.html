@@ -23,7 +23,7 @@ represented in the ontology."><meta property="og:image" content="https://gregorl
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -166,6 +166,36 @@ genes stored in <code>GeneOntologyElim</code>.</p></dd>
     <p>data.table with enrichment results.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \donttest{</span></span></span>
+<span class="r-in"><span><span class="co"># human GO terms with at least 25 genes</span></span></span>
+<span class="r-in"><span><span class="va">go_obj</span> <span class="op">&lt;-</span> <span class="fu"><a href="GeneOntologyElim.html">GeneOntologyElim</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="get_go_data_human.html">get_go_data_human</a></span><span class="op">(</span>.verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  min_genes <span class="op">=</span> <span class="fl">25L</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">target_genes</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/unlist.html" class="external-link">unlist</a></span><span class="op">(</span><span class="fu">S7</span><span class="fu">::</span><span class="fu"><a href="https://rconsortium.github.io/S7/reference/prop.html" class="external-link">prop</a></span><span class="op">(</span><span class="va">go_obj</span>, <span class="st">"go_to_genes"</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu">gse_go_elim_method_list</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">go_obj</span>,</span></span>
+<span class="r-in"><span>  target_gene_list <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    set_a <span class="op">=</span> <span class="va">target_genes</span>,</span></span>
+<span class="r-in"><span>    set_b <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rev.html" class="external-link">rev</a></span><span class="op">(</span><span class="va">target_genes</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">50</span><span class="op">]</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">res</span>, <span class="fl">3</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    target_set_name                                 go_name      go_id</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>             &lt;char&gt;                                  &lt;char&gt;     &lt;char&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1:           set_a                           axon guidance GO:0007411</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2:           set_a spliceosomal tri-snRNP complex assembly GO:0000244</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3:           set_b                           axon guidance GO:0007411</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    odds_ratios         pvals           fdr  hits gene_set_lengths</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>          &lt;num&gt;         &lt;num&gt;         &lt;num&gt; &lt;num&gt;            &lt;num&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1:         Inf  0.000000e+00  0.000000e+00   192              192</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2:         Inf 2.939673e-140 2.850013e-137    76               76</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3:         Inf 1.104880e-105 2.155621e-102    50              192</span>
+<span class="r-in"><span><span class="co"># }</span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

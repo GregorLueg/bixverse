@@ -11,7 +11,7 @@ an implementation for the Wilcox-based rank statistic."><meta property="og:image
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -156,6 +156,30 @@ verbosity.</p></dd>
     <p>data.table with the DGE results from the test.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Wilcoxon test between two of the planted cell types</span></span></span>
+<span class="r-in"><span><span class="va">sc</span> <span class="op">&lt;-</span> <span class="fu"><a href="demo_single_cells.html">demo_single_cells</a></span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">obs</span> <span class="op">&lt;-</span> <span class="fu"><a href="get_sc_obs.html">get_sc_obs</a></span><span class="op">(</span><span class="va">sc</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu">find_markers_sc</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">sc</span>,</span></span>
+<span class="r-in"><span>  cells_1 <span class="op">=</span> <span class="va">obs</span><span class="op">$</span><span class="va">cell_id</span><span class="op">[</span><span class="va">obs</span><span class="op">$</span><span class="va">cell_grp</span> <span class="op">==</span> <span class="st">"cell_type_1"</span><span class="op">]</span>,</span></span>
+<span class="r-in"><span>  cells_2 <span class="op">=</span> <span class="va">obs</span><span class="op">$</span><span class="va">cell_id</span><span class="op">[</span><span class="va">obs</span><span class="op">$</span><span class="va">cell_grp</span> <span class="op">==</span> <span class="st">"cell_type_2"</span><span class="op">]</span>,</span></span>
+<span class="r-in"><span>  .verbose <span class="op">=</span> <span class="cn">FALSE</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    gene_id      lfc     prop1     prop2 z_scores     p_values          fdr</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     &lt;char&gt;    &lt;num&gt;     &lt;num&gt;     &lt;num&gt;    &lt;num&gt;        &lt;num&gt;        &lt;num&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1: gene_01 3.339259 0.9880239 0.6946108 14.38283 6.632426e-47 7.043991e-46</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2: gene_02 3.292560 0.9880239 0.6886228 14.16134 1.589201e-45 9.932503e-45</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3: gene_03 3.461920 1.0000000 0.6946108 14.95929 1.354582e-50 3.386456e-49</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4: gene_04 2.915536 0.9580838 0.6886228 12.95389 2.233137e-38 8.588988e-38</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5: gene_05 2.709311 0.8383234 0.4431138 10.68923 1.142846e-26 3.361312e-26</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6: gene_06 3.113609 0.9760479 0.7005988 14.03355 9.715047e-45 5.397248e-44</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">sc</span><span class="op">@</span><span class="va">dir_data</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span>, force <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

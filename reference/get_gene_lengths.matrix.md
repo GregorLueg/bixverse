@@ -27,3 +27,17 @@ get_gene_lengths(x, species = c("human", "mouse", "rat"), ...)
 ## Value
 
 Named numeric representing the gene lengths.
+
+## Examples
+
+``` r
+if (FALSE) { # \dontrun{
+# the matrix method, dispatched on Ensembl rownames
+counts <- matrix(
+  1:4,
+  nrow = 2,
+  dimnames = list(c("ENSG00000141510", "ENSG00000012048"), c("s1", "s2"))
+)
+get_gene_lengths.matrix(counts, species = "human")
+} # }
+```

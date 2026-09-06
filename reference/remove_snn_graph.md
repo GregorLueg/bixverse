@@ -29,3 +29,15 @@ remove_snn_graph(x, ...)
 - ...:
 
   Other parameters.
+
+## Examples
+
+``` r
+# drop the cached sNN graph
+sc <- demo_single_cells()
+sc <- remove_snn_graph(sc)
+is.null(get_snn_graph(sc))
+#> [1] TRUE
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

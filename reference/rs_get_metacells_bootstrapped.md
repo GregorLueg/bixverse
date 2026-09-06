@@ -60,9 +60,14 @@ rs_get_metacells_bootstrapped(
   Numeric. Target library size for re-normalisation of the meta cells.
   Typically `1e4`.
 
+- seed:
+
+  Integer. For reproducibility.
+
 - verbose:
 
-  Boolean. Controls verbosity of the function.
+  Integer. `0L` - quiet; `1L` - normal verbosity; `2L` - detailed
+  verbosity.
 
 ## Value
 

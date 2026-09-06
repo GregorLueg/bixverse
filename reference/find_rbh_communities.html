@@ -13,7 +13,7 @@ with the best modularity."><meta property="og:image" content="https://gregorlueg
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -152,6 +152,43 @@ of the identified cores (to a maximum of 8).</p></dd>
     <p>The class with added community detection results.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Leiden communities across a resolution sweep of the RBH graph</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">123</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">modules</span> <span class="op">&lt;-</span> <span class="fu">data.table</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/data.table/man/data.table.html" class="external-link">data.table</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  origin <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"set_a"</span>, <span class="st">"set_b"</span><span class="op">)</span>, each <span class="op">=</span> <span class="fl">20</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  module <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"m1"</span>, <span class="st">"m2"</span>, <span class="st">"m3"</span>, <span class="st">"m4"</span><span class="op">)</span>, each <span class="op">=</span> <span class="fl">10</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  gene <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/unlist.html" class="external-link">unlist</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">replicate</a></span><span class="op">(</span><span class="fl">4</span>, <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="va">letters</span>, <span class="fl">10</span><span class="op">)</span>, simplify <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">object</span> <span class="op">&lt;-</span> <span class="fu"><a href="RbhGraph.html">RbhGraph</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">modules</span>,</span></span>
+<span class="r-in"><span>  rbh_type <span class="op">=</span> <span class="st">"set"</span>,</span></span>
+<span class="r-in"><span>  dataset_col <span class="op">=</span> <span class="st">"origin"</span>,</span></span>
+<span class="r-in"><span>  module_col <span class="op">=</span> <span class="st">"module"</span>,</span></span>
+<span class="r-in"><span>  value_col <span class="op">=</span> <span class="st">"gene"</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">object</span> <span class="op">&lt;-</span> <span class="fu"><a href="generate_rbh_graph.html">generate_rbh_graph</a></span><span class="op">(</span><span class="va">object</span>, minimum_similarity <span class="op">=</span> <span class="fl">0</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">object</span> <span class="op">&lt;-</span> <span class="fu">find_rbh_communities</span><span class="op">(</span><span class="va">object</span>, parallel <span class="op">=</span> <span class="cn">FALSE</span>, .verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="get_results.html">get_results</a></span><span class="op">(</span><span class="va">object</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    node_name origin_id module_id membership resolution modularity</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       &lt;char&gt;    &lt;char&gt;    &lt;char&gt;      &lt;num&gt;      &lt;num&gt;      &lt;num&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1:  set_a_m1     set_a        m1          1  0.1000000  0.4897959</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2:  set_a_m2     set_a        m2          2  0.1000000  0.4897959</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3:  set_b_m3     set_b        m3          1  0.1000000  0.4897959</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4:  set_b_m4     set_b        m4          2  0.1000000  0.4897959</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5:  set_a_m1     set_a        m1          1  0.1389495  0.4897959</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6:  set_a_m2     set_a        m2          2  0.1389495  0.4897959</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    best_modularity</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>             &lt;lgcl&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1:            TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2:            TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3:            TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4:            TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5:            TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6:            TRUE</span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

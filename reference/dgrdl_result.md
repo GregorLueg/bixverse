@@ -69,3 +69,26 @@ dgrdl_result(
 ## References
 
 Pan et al., Cell Syst, 2022
+
+## Examples
+
+``` r
+# fit DGRDL with a six-atom dictionary
+syn <- generate_gene_module_data(n_samples = 24L, n_genes = 60L)
+obj <- BulkCoExp(syn$data, syn$meta_data)
+obj <- preprocess_bulk_coexp(obj, hvg = NULL, .verbose = FALSE)
+obj <- dgrdl_result(
+  obj,
+  dgrdl_params = params_dgrdl(dict_size = 6L, k_neighbours = 3L),
+  .verbose = FALSE
+)
+head(get_modules(get_results(obj)))
+#>          gene module_id  loading   sign        z
+#>        <char>    <char>    <num> <char>    <num>
+#> 1: feature_27    dict_2 1.889059    pos 3.077097
+#> 2: feature_24    dict_2 1.885384    pos 3.070073
+#> 3: feature_22    dict_2 1.882083    pos 3.063763
+#> 4: feature_28    dict_2 1.881407    pos 3.062472
+#> 5: feature_25    dict_2 1.878301    pos 3.056535
+#> 6: feature_23    dict_2 1.877537    pos 3.055074
+```

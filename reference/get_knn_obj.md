@@ -34,3 +34,14 @@ get_knn_obj(x, ...)
 ## Value
 
 The `SingleCellNearestNeighbour` object.
+
+## Examples
+
+``` r
+# the cached kNN, cells x neighbours
+sc <- demo_single_cells()
+dim(get_knn_mat(get_knn_obj(sc)))
+#> [1] 500  15
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

@@ -62,3 +62,31 @@ A list with:
 - temp_files - Character vector of temp files created during
   decompression; the caller should
   [`unlink()`](https://rdrr.io/r/base/unlink.html) these after use.
+
+## Examples
+
+``` r
+# two CellRanger style directories reduced to their shared gene universe
+data <- generate_single_cell_test_data(
+  syn_data_params = params_sc_synthetic_data(n_cells = 200L, n_genes = 40L)
+)
+dirs <- c(tempfile("cr_a"), tempfile("cr_b"))
+for (d in dirs) {
+  dir.create(d, recursive = TRUE)
+  write_cellranger_output(
+    d, data$counts, data$obs, data$var,
+    rows = "cells", format_type = "csv", .verbose = FALSE
+  )
+}
+scan_res <- prescan_mtx_dirs(
+  dirs = dirs,
+  exp_ids = c("a", "b"),
+  cells_as_rows = TRUE,
+  has_hdr = TRUE,
+  .verbose = FALSE
+)
+scan_res$universe_size
+#> [1] 40
+
+unlink(c(dirs, scan_res$temp_files), recursive = TRUE, force = TRUE)
+```

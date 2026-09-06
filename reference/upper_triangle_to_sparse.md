@@ -31,3 +31,12 @@ upper_triangle_to_sparse(upper_triangle_vals, shift, n, type = c("csc", "csr"))
 ## Value
 
 The sparse matrix.
+
+## Examples
+
+``` r
+# 3 x 3 symmetric matrix from its off-diagonal upper triangle
+mat <- upper_triangle_to_sparse(c(0.5, 0.2, 0.8), shift = TRUE, n = 3L)
+dim(mat)
+#> [1] 3 3
+```

@@ -66,8 +66,15 @@ A `synthetic_matrix_simple` class containing:
 ## Examples
 
 ``` r
-if (FALSE) { # \dontrun{
-synthetic_GEX <- create_synthetic_signal_matrix()
-synthetic_signal_mat <- synthetic_GEX$mat
-} # }
+# default 1000 x 90 matrix with three groups and a small fourth one
+synthetic_gex <- synthetic_signal_matrix()
+dim(synthetic_gex$mat)
+#> [1] 1000   90
+table(synthetic_gex$group)
+#> 
+#>      group1      group2      group3 small_group 
+#>          25          30          30           5 
+lengths(synthetic_gex$diff)
+#>      group1      group2      group3 small_group 
+#>         100         100         100         101 
 ```

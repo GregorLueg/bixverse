@@ -82,3 +82,26 @@ This function will return a list with:
 
 - batch_hvg_data - data.table with the detailed information of the
   variance per batch.
+
+## Examples
+
+``` r
+# highly variable genes taken as the union over the batches
+sc <- demo_single_cells(
+  syn_data_params = params_sc_synthetic_data(
+    n_cells = 600L, n_genes = 50L, n_batches = 3L
+  )
+)
+hvg <- find_hvg_batch_aware_sc(
+  sc,
+  hvg_no = 20L,
+  batch_column = "batch_index",
+  gene_comb_method = "union",
+  .verbose = FALSE
+)
+head(hvg$hvg_genes)
+#>        38        37        43        20        36        35 
+#> "gene_39" "gene_38" "gene_44" "gene_21" "gene_37" "gene_36" 
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

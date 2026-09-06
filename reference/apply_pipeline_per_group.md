@@ -50,3 +50,16 @@ Named list of processed objects, names being the group values. Usually
 in which case
 [`merge_meta_cells()`](https://gregorlueg.github.io/bixverse/reference/merge_meta_cells.md)
 puts them back together.
+
+## Examples
+
+``` r
+# the same chain re-run inside each cell type
+sc <- demo_single_cells(prepped = FALSE)
+p <- sc_pipeline() %>>% step_hvg_sc(hvg_no = 20L, .verbose = FALSE)
+res <- apply_pipeline_per_group(p, sc, group_col = "cell_grp")
+names(res)
+#> [1] "cell_type_1" "cell_type_2" "cell_type_3"
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

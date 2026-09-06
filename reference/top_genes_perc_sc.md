@@ -42,3 +42,18 @@ top_genes_perc_sc(
 
 It will add the columns based on the names in the `gene_set_list` to the
 obs table.
+
+## Examples
+
+``` r
+# share of a cell's reads taken by its top 5 and top 10 genes
+sc <- demo_single_cells(prepped = FALSE)
+sc <- top_genes_perc_sc(sc, top_n_vals = c(5L, 10L), .verbose = FALSE)
+head(unlist(sc[["top_5_genes_percentage"]]))
+#> top_5_genes_percentage1 top_5_genes_percentage2 top_5_genes_percentage3 
+#>               0.5863310               0.6096096               0.6924940 
+#> top_5_genes_percentage4 top_5_genes_percentage5 top_5_genes_percentage6 
+#>               0.7106017               0.6787879               0.7664399 
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

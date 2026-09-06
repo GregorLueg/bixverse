@@ -107,3 +107,19 @@ Whether the neighbour distances need squaring before the kernel sees
 them follows from the metric. With `use_knn = TRUE` it is taken from the
 metric stored on the cached kNN graph, otherwise from `ann_dist` in
 `hotspot_params`.
+
+## Examples
+
+``` r
+# local auto-correlation of every gene on the cached kNN graph
+sc <- demo_single_cells()
+res <- hotspot_autocor_sc(sc, .verbose = FALSE)
+head(res, 3)
+#>    gene_id  gaerys_c  z_score          pval           fdr
+#>     <char>     <num>    <num>         <num>         <num>
+#> 1: gene_01 0.4152188 29.01265 2.278132e-185 8.136184e-185
+#> 2: gene_02 0.4358798 31.03719 8.494589e-212 5.309118e-211
+#> 3: gene_03 0.4703848 32.60140 1.959130e-233 1.632609e-232
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

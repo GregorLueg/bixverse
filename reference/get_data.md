@@ -56,3 +56,19 @@ get_data(x, ...)
 
 Returns a data.table with a cell_idx column for the cells included in
 the analysis and additional columns to be added to the obs table.
+
+## Examples
+
+``` r
+# the cell indices and cluster memberships a run produced
+sc <- demo_single_cells()
+res <- fast_cluster_sc(sc, resolutions = 1.0, .verbose = FALSE)
+head(get_data(res), 3)
+#>    cell_idx res_1
+#>       <int> <int>
+#> 1:        1     2
+#> 2:        2     0
+#> 3:        3     1
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

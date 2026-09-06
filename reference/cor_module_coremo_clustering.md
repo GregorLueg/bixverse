@@ -73,3 +73,24 @@ The class with added data to the properties for subsequent usage.
 ## References
 
 Srivastava, et al., Nat. Commun., 2018
+
+## Examples
+
+``` r
+# CoReMo clustering with the default RBF and cut range
+mat <- t(synthetic_signal_matrix()$mat)
+obj <- BulkCoExp(mat, data.table::data.table(sample_id = rownames(mat)))
+obj <- preprocess_bulk_coexp(obj, hvg = 0.3, .verbose = FALSE)
+obj <- cor_module_processing(obj, cor_method = "spearman", .verbose = FALSE)
+obj <- cor_module_coremo_clustering(obj, .verbose = FALSE)
+head(obj@outputs$final_modules)
+#> Key: <cluster_id>
+#>    cluster_id   gene     r2med     r2mad  size
+#>        <char> <char>     <num>     <num> <num>
+#> 1:          1 gene60 0.2863814 0.1181169    74
+#> 2:          1 gene56 0.2863814 0.1181169    74
+#> 3:          1 gene97 0.2863814 0.1181169    74
+#> 4:          1 gene14 0.2863814 0.1181169    74
+#> 5:          1 gene45 0.2863814 0.1181169    74
+#> 6:          1 gene17 0.2863814 0.1181169    74
+```

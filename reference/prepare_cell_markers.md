@@ -25,3 +25,18 @@ prepare_cell_markers(obj, marker_df)
 
 A list of cell type to marker associations ready for subsequent usage.
 Genes not found in the object will be automatically removed.
+
+## Examples
+
+``` r
+# a marker table turned into the indexed list the scorers want
+sc <- demo_single_cells(prepped = FALSE)
+markers <- data.table::data.table(
+  cell_type = c("type_a", "type_a", "type_b"),
+  gene_id = get_gene_names(sc)[1:3]
+)
+names(prepare_cell_markers(sc, markers))
+#> [1] "type_a" "type_b"
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

@@ -116,3 +116,45 @@ built for; many samples with a dozen cells each is not.
 ## References
 
 Jerby-Arnon & Regev, Nature Biotechnology, 2022
+
+## Examples
+
+``` r
+# a planted multicellular programme recovered across three cell types
+data <- generate_dialogue_test_data()
+dir <- tempfile("bixverse_dlg")
+dir.create(dir)
+object <- load_r_data(
+  SingleCells(dir_data = dir),
+  counts = data$counts,
+  obs = data$obs,
+  var = data$var,
+  sc_qc_param = params_sc_min_quality(
+    min_unique_genes = 10L,
+    min_lib_size = 50L,
+    min_cells = 10L
+  ),
+  .verbose = FALSE
+)
+res <- dialogue_sc(
+  object,
+  cell_type_col = "cell_grp",
+  sample_col = "sample_id",
+  features = data$features,
+  gene_ids = data$var$gene_id,
+  pmd_params = params_dialogue_pmd(k = 2L, n_permutations = 20L),
+  .verbose = FALSE
+)
+res
+#> DialogueResult (multicellular programmes)
+#>   Source class:     SingleCells
+#>   Cell types:       3 (cell_type_1, cell_type_2, cell_type_3)
+#>   Shared samples:   14
+#>   Programmes:       2
+#>     mcp_01 - worst pair p: 0.9586 | spans 2 cell type(s)
+#>     mcp_02 - worst pair p: 0.05929 | spans 3 cell type(s)
+#>   Genes with a verdict: 17
+#>   Signature genes:  6 permissive | 9 strict
+
+unlink(dir, recursive = TRUE, force = TRUE)
+```

@@ -38,3 +38,14 @@ get_cell_indices(x, cell_ids, rust_index)
 ## Value
 
 The indices of the cells
+
+## Examples
+
+``` r
+# R-based positions of two cells
+sc <- demo_single_cells(prepped = FALSE)
+get_cell_indices(sc, c("cell_001", "cell_002"), rust_index = FALSE)
+#> [1] 1 2
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

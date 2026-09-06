@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -111,6 +111,36 @@
 throws a warning and returns NULL.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># cluster counts and modularity across the Leiden resolution sweep</span></span></span>
+<span class="r-in"><span><span class="va">syn</span> <span class="op">&lt;-</span> <span class="fu"><a href="synthetic_bulk_cor_matrix.html">synthetic_bulk_cor_matrix</a></span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">mat</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log1p</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="va">syn</span><span class="op">$</span><span class="va">counts</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">meta</span> <span class="op">&lt;-</span> <span class="fu">data.table</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/data.table/man/data.table.html" class="external-link">data.table</a></span><span class="op">(</span>sample_id <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">mat</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">object</span> <span class="op">&lt;-</span> <span class="fu"><a href="BulkCoExp.html">BulkCoExp</a></span><span class="op">(</span>raw_data <span class="op">=</span> <span class="va">mat</span>, meta_data <span class="op">=</span> <span class="va">meta</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">object</span> <span class="op">&lt;-</span> <span class="fu"><a href="preprocess_bulk_coexp.html">preprocess_bulk_coexp</a></span><span class="op">(</span><span class="va">object</span>, hvg <span class="op">=</span> <span class="fl">200L</span>, .verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">object</span> <span class="op">&lt;-</span> <span class="fu"><a href="cor_module_processing.html">cor_module_processing</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">object</span>,</span></span>
+<span class="r-in"><span>  cor_method <span class="op">=</span> <span class="st">"pearson"</span>,</span></span>
+<span class="r-in"><span>  .verbose <span class="op">=</span> <span class="cn">FALSE</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">object</span> <span class="op">&lt;-</span> <span class="fu"><a href="cor_module_graph_check_res.html">cor_module_graph_check_res</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">object</span>,</span></span>
+<span class="r-in"><span>  parallel <span class="op">=</span> <span class="cn">FALSE</span>,</span></span>
+<span class="r-in"><span>  .verbose <span class="op">=</span> <span class="cn">FALSE</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">get_resolution_res</span><span class="op">(</span><span class="va">object</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Key: &lt;resolution&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    resolution no_clusters modularity good_clusters avg_size max_size</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         &lt;num&gt;       &lt;int&gt;      &lt;num&gt;         &lt;int&gt;    &lt;num&gt;    &lt;int&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1:  0.1000000           3  0.6603861             3 61.33333       65</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2:  0.1389495           3  0.6603861             3 61.33333       65</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3:  0.1930698           3  0.6603861             3 61.33333       65</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4:  0.2682696           3  0.6603861             3 61.33333       65</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5:  0.3727594           3  0.6603861             3 61.33333       65</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6:  0.5179475           3  0.6603861             3 61.33333       65</span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

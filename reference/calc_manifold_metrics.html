@@ -15,7 +15,7 @@ separation indicates how well the different metacells span the manifold."><meta 
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -126,6 +126,34 @@ separation indicates how well the different metacells span the manifold.</p>
     <p>Persad, et al. Nat Biotechnol, 2023</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># compactness and separation on top of the diffusion coordinates</span></span></span>
+<span class="r-in"><span><span class="va">sc</span> <span class="op">&lt;-</span> <span class="fu"><a href="demo_single_cells.html">demo_single_cells</a></span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">mc</span> <span class="op">&lt;-</span> <span class="fu"><a href="generate_bt_meta_cells_sc.html">generate_bt_meta_cells_sc</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">sc</span>,</span></span>
+<span class="r-in"><span>  sc_meta_cell_params <span class="op">=</span> <span class="fu"><a href="params_sc_bt_metacells.html">params_sc_bt_metacells</a></span><span class="op">(</span>target_no_metacells <span class="op">=</span> <span class="fl">50L</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  .verbose <span class="op">=</span> <span class="cn">FALSE</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">mc</span> <span class="op">&lt;-</span> <span class="fu"><a href="calc_diffusion_coordinates.html">calc_diffusion_coordinates</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">mc</span>,</span></span>
+<span class="r-in"><span>  knn_data <span class="op">=</span> <span class="fu"><a href="get_knn_obj.html">get_knn_obj</a></span><span class="op">(</span><span class="va">sc</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  .verbose <span class="op">=</span> <span class="cn">FALSE</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">mc</span> <span class="op">&lt;-</span> <span class="fu">calc_manifold_metrics</span><span class="op">(</span><span class="va">mc</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">mc</span><span class="op">[[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"compactness"</span>, <span class="st">"separation"</span><span class="op">)</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    compactness separation</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>          &lt;num&gt;      &lt;num&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1:  0.02674035 0.17462617</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2:  0.03287052 0.15380448</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3:  0.01897743 0.22679596</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4:  0.04910118 0.27503037</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5:  0.03481250 0.04071459</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6:  0.01309141 0.17024054</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">sc</span><span class="op">@</span><span class="va">dir_data</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span>, force <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

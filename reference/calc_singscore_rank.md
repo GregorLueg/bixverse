@@ -32,3 +32,18 @@ to `TRUE` or `FALSE`.
 
 1.) Foroutan et al., BMC Bioinformatics, 2018.; 2.) Bhuva, et al.,
 Nucleic Acids Res., 2020
+
+## Examples
+
+``` r
+# column ranks of an expression matrix, ready for singscore
+set.seed(123L)
+exp_mat <- matrix(
+  rnorm(200 * 10),
+  nrow = 200,
+  dimnames = list(sprintf("gene_%03i", 1:200), sprintf("sample_%i", 1:10))
+)
+ranks <- calc_singscore_rank(exp_mat)
+dim(ranks)
+#> [1] 200  10
+```

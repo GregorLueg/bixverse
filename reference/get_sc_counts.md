@@ -58,3 +58,15 @@ get_sc_counts(
 ## Value
 
 The counts table
+
+## Examples
+
+``` r
+# raw counts for the first ten genes, cell-centric (CSR)
+sc <- demo_single_cells(prepped = FALSE)
+counts <- get_sc_counts(sc, gene_indices = 1:10, .verbose = FALSE)
+dim(counts)
+#> [1] 500  10
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

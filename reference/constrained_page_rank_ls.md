@@ -48,3 +48,27 @@ A list with the constrained personalised page rank values.
 ## References
 
 Ruiz, et al., Nat Commun, 2021
+
+## Examples
+
+``` r
+# two personalisation vectors over the same signalling graph
+nodes <- data.frame(
+  name = c("rec_a", "kin_b", "tf_c", "gene_d"),
+  type = c("receptor", "kinase", "tf", "target_gene")
+)
+edges <- data.frame(
+  from = c("rec_a", "kin_b", "tf_c"),
+  to = c("kin_b", "tf_c", "gene_d"),
+  weight = rep(1, 3),
+  type = c("activation", "phosphorylation", "tf_activation")
+)
+g <- igraph::graph_from_data_frame(edges, vertices = nodes, directed = TRUE)
+res <- constrained_page_rank_ls(
+  g,
+  personalisation_list = list(a = c(1, 0, 0, 0), b = c(0, 1, 0, 0))
+)
+res$a
+#>     rec_a     kin_b      tf_c    gene_d 
+#> 0.3138116 0.2667399 0.2267289 0.1927196 
+```

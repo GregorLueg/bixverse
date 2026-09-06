@@ -11,7 +11,7 @@ Optionally runs a grid over multiple seeds and returns stability statistics."><m
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -201,6 +201,29 @@ resolution (<code>res_&lt;value&gt;</code>).</p></dd>
 </dl><p>with <code>cell_indices</code> stored as an attribute (0-indexed).</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># k-means centroids, Louvain on top, memberships back to the cells</span></span></span>
+<span class="r-in"><span><span class="va">sc</span> <span class="op">&lt;-</span> <span class="fu"><a href="demo_single_cells.html">demo_single_cells</a></span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu">fast_cluster_sc</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">sc</span>,</span></span>
+<span class="r-in"><span>  resolutions <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1.0</span>, <span class="fl">0.5</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  n_centroids <span class="op">=</span> <span class="fl">30L</span>,</span></span>
+<span class="r-in"><span>  .verbose <span class="op">=</span> <span class="cn">FALSE</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="get_data.html">get_data</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    cell_idx res_1 res_0.5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       &lt;int&gt; &lt;int&gt;   &lt;int&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1:        1     2       2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2:        2     0       0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3:        3     1       1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4:        4     2       2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5:        5     0       0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6:        6     1       1</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">sc</span><span class="op">@</span><span class="va">dir_data</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span>, force <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

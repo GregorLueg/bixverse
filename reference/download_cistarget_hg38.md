@@ -25,3 +25,13 @@ download_cistarget_hg38(
 ## Value
 
 Named list with paths: `rankings` and `motif_annotations`.
+
+## Examples
+
+``` r
+if (FALSE) { # \dontrun{
+# fetch the hg38 rankings and motif annotations (large, network)
+paths <- download_cistarget_hg38()
+paths$rankings
+} # }
+```

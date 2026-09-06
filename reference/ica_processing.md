@@ -36,3 +36,15 @@ ica_processing(object, fast_svd = TRUE, random_seed = 123L, .verbose = TRUE)
 ## Value
 
 `BulkCoExp` with the needed data for ICA in the properties of the class.
+
+## Examples
+
+``` r
+# whitening ahead of the ICA runs
+mat <- t(synthetic_signal_matrix()$mat)
+obj <- BulkCoExp(mat, data.table::data.table(sample_id = rownames(mat)))
+obj <- preprocess_bulk_coexp(obj, hvg = 0.3, .verbose = FALSE)
+obj <- ica_processing(obj, .verbose = FALSE)
+dim(obj@processed_data$K)
+#> [1]  89 300
+```

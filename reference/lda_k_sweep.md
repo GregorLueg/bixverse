@@ -84,3 +84,31 @@ sequentially rather than nesting thread pools.
 
 Arun, et al., PAKDD, 2010; Cao, et al., Neurocomputing, 2009; Mimno, et
 al., EMNLP, 2011
+
+## Examples
+
+``` r
+# small sweep above the coherence topic count floor
+set.seed(42L)
+corpus <- matrix(rbinom(200L * 40L, 1L, 0.05), nrow = 200L, ncol = 40L)
+corpus[1:100, 1:10] <- rbinom(1000L, 1L, 0.6)
+corpus[101:200, 11:20] <- rbinom(1000L, 1L, 0.6)
+colnames(corpus) <- sprintf("term_%02d", 1:40)
+sweep_res <- lda_k_sweep(corpus > 0, k_range = 5:7, .verbose = FALSE)
+sweep_res
+#> LdaKSweepResult (LDA topic count sweep)
+#>   k range:          5 to 7
+#>   Best k:           6
+#>   Metrics:          arun_2010 and cao_juan_2009 lower is better, mimno_2011 higher
+#> 
+#>        k   arun_2010 cao_juan_2009 mimno_2011     bound perplexity
+#>    <int>       <num>         <num>      <num>     <num>      <num>
+#> 1:     5 0.028294826    0.08618927  -6.024552 -5251.392   34.17638
+#> 2:     6 0.006299162    0.01887827  -6.862262 -5234.695   33.79478
+#> 3:     7 0.011683037    0.03999421  -5.601452 -5273.724   34.69351
+#>    combined_score converged
+#>             <num>    <lgcl>
+#> 1:       1.236614      TRUE
+#> 2:       3.000000      TRUE
+#> 3:       2.441523      TRUE
+```

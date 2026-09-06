@@ -13,7 +13,7 @@ asks what varies together between them, sample by sample."><meta property="og:im
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -204,6 +204,47 @@ with a dozen cells each is not.</p>
     <p>Jerby-Arnon &amp; Regev, Nature Biotechnology, 2022</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># a planted multicellular programme recovered across three cell types</span></span></span>
+<span class="r-in"><span><span class="va">data</span> <span class="op">&lt;-</span> <span class="fu"><a href="generate_dialogue_test_data.html">generate_dialogue_test_data</a></span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">dir</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="st">"bixverse_dlg"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span><span class="va">dir</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">object</span> <span class="op">&lt;-</span> <span class="fu"><a href="load_r_data.html">load_r_data</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="SingleCells.html">SingleCells</a></span><span class="op">(</span>dir_data <span class="op">=</span> <span class="va">dir</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  counts <span class="op">=</span> <span class="va">data</span><span class="op">$</span><span class="va">counts</span>,</span></span>
+<span class="r-in"><span>  obs <span class="op">=</span> <span class="va">data</span><span class="op">$</span><span class="va">obs</span>,</span></span>
+<span class="r-in"><span>  var <span class="op">=</span> <span class="va">data</span><span class="op">$</span><span class="va">var</span>,</span></span>
+<span class="r-in"><span>  sc_qc_param <span class="op">=</span> <span class="fu"><a href="params_sc_min_quality.html">params_sc_min_quality</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    min_unique_genes <span class="op">=</span> <span class="fl">10L</span>,</span></span>
+<span class="r-in"><span>    min_lib_size <span class="op">=</span> <span class="fl">50L</span>,</span></span>
+<span class="r-in"><span>    min_cells <span class="op">=</span> <span class="fl">10L</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span>,</span></span>
+<span class="r-in"><span>  .verbose <span class="op">=</span> <span class="cn">FALSE</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu">dialogue_sc</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">object</span>,</span></span>
+<span class="r-in"><span>  cell_type_col <span class="op">=</span> <span class="st">"cell_grp"</span>,</span></span>
+<span class="r-in"><span>  sample_col <span class="op">=</span> <span class="st">"sample_id"</span>,</span></span>
+<span class="r-in"><span>  features <span class="op">=</span> <span class="va">data</span><span class="op">$</span><span class="va">features</span>,</span></span>
+<span class="r-in"><span>  gene_ids <span class="op">=</span> <span class="va">data</span><span class="op">$</span><span class="va">var</span><span class="op">$</span><span class="va">gene_id</span>,</span></span>
+<span class="r-in"><span>  pmd_params <span class="op">=</span> <span class="fu"><a href="params_dialogue_pmd.html">params_dialogue_pmd</a></span><span class="op">(</span>k <span class="op">=</span> <span class="fl">2L</span>, n_permutations <span class="op">=</span> <span class="fl">20L</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  .verbose <span class="op">=</span> <span class="cn">FALSE</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">res</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> DialogueResult (multicellular programmes)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Source class:     SingleCells</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Cell types:       3 (cell_type_1, cell_type_2, cell_type_3)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Shared samples:   14</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Programmes:       2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     mcp_01 - worst pair p: 0.9586 | spans 2 cell type(s)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     mcp_02 - worst pair p: 0.05929 | spans 3 cell type(s)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Genes with a verdict: 17</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Signature genes:  6 permissive | 9 strict</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">dir</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span>, force <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

@@ -49,3 +49,19 @@ calculate_diffusion_auc(
 
 List with AUC and Z-score as the two named elements if permutations test
 set to TRUE; otherwise just the AUC.
+
+## Examples
+
+``` r
+# AUROC of the diffusion score against two known hit nodes
+set.seed(42)
+g <- igraph::sample_pa(15, directed = FALSE)
+edges <- data.table::setDT(igraph::as_data_frame(g))[, `:=`(
+  from = sprintf("node_%i", from),
+  to = sprintf("node_%i", to)
+)]
+object <- NetworkDiffusions(edges, weighted = FALSE, directed = FALSE)
+object <- diffuse_seed_nodes(object, c(node_1 = 1, node_3 = 1), "max")
+calculate_diffusion_auc(object, hit_nodes = c("node_2", "node_4"))
+#> [1] 0.9239
+```

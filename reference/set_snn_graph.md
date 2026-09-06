@@ -33,3 +33,16 @@ set_snn_graph(x, snn_graph, ...)
 - ...:
 
   Other parameters.
+
+## Examples
+
+``` r
+# the sNN graph taken out and put back
+sc <- demo_single_cells()
+snn <- get_snn_graph(sc)
+sc <- set_snn_graph(remove_snn_graph(sc), snn)
+igraph::vcount(get_snn_graph(sc))
+#> [1] 500
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

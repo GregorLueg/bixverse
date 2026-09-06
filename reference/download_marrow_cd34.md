@@ -22,3 +22,13 @@ String. The path to the marrow CD34 data set.
 ## References
 
 Setty, et al., Nat. Biotechnol., 2019
+
+## Examples
+
+``` r
+if (FALSE) { # \dontrun{
+# pulls the archive into the session tempdir()
+path <- download_marrow_cd34()
+get_h5ad_dimensions(path)$dims
+} # }
+```

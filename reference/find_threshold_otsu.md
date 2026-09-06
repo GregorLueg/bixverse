@@ -22,3 +22,12 @@ find_threshold_otsu(x, bins = 100L)
 ## Value
 
 The threshold.
+
+## Examples
+
+``` r
+# threshold separating two Gaussian modes
+set.seed(42)
+find_threshold_otsu(c(rnorm(100), rnorm(100, mean = 5)))
+#> [1] 2.300925
+```

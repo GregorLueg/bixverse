@@ -120,3 +120,15 @@ tsne_sc(
 ## Value
 
 The object with a `"tsne"` embedding added.
+
+## Examples
+
+``` r
+# Barnes-Hut t-SNE on the PCA factors
+sc <- demo_single_cells()
+sc <- tsne_sc(sc, .verbose = FALSE)
+dim(get_embedding(sc, "tsne"))
+#> [1] 500   2
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

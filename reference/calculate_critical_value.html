@@ -9,7 +9,7 @@ similarity matrix."><meta property="og:image" content="https://gregorlueg.github
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -105,8 +105,9 @@ similarity matrix.</p>
 
 
 <dl><dt id="arg-x">x<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
-<dd><p>Numerical matrix or <code>ontology class</code>, see <code><a href="ontology.html">ontology()</a></code>.
-This function tends to be slower on matrices compared to <code>ontology class</code>.</p></dd>
+<dd><p>Numerical matrix or <code>OntologySim</code> class, see
+<code><a href="OntologySim.html">OntologySim()</a></code>. This function tends to be slower on matrices
+compared to the <code>OntologySim</code> class.</p></dd>
 
 
 <dt id="arg-alpha">alpha<a class="anchor" aria-label="anchor" href="#arg-alpha"></a></dt>
@@ -127,6 +128,20 @@ critical value is smaller than 0.1 percentile of the random permutations.</p></d
     <p>The critical value.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># critical value of a Wang similarity matrix at alpha 0.1</span></span></span>
+<span class="r-in"><span><span class="va">onto</span> <span class="op">&lt;-</span> <span class="fu">data.table</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/data.table/man/data.table.html" class="external-link">data.table</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  parent <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>, <span class="st">"b"</span>, <span class="st">"b"</span>, <span class="st">"b"</span>, <span class="st">"c"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  child <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"b"</span>, <span class="st">"c"</span>, <span class="st">"d"</span>, <span class="st">"e"</span>, <span class="st">"f"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"part_of"</span>, <span class="st">"part_of"</span>, <span class="st">"part_of"</span>, <span class="st">"is_a"</span>, <span class="st">"is_a"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">weights</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>part_of <span class="op">=</span> <span class="fl">0.8</span>, is_a <span class="op">=</span> <span class="fl">0.6</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">sim_mat</span> <span class="op">&lt;-</span> <span class="fu"><a href="calculate_wang_sim_mat.html">calculate_wang_sim_mat</a></span><span class="op">(</span><span class="va">onto</span>, weights <span class="op">=</span> <span class="va">weights</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">calculate_critical_value</span><span class="op">(</span><span class="va">sim_mat</span>, alpha <span class="op">=</span> <span class="fl">0.1</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.7641509</span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

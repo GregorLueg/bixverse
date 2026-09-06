@@ -66,3 +66,41 @@ load_tenx_h5(
 ## Value
 
 The class with updated shape information.
+
+## Examples
+
+``` r
+# read back a CellRanger v3 h5, gene expression only
+data <- generate_single_cell_test_data(
+  syn_data_params = params_sc_synthetic_data(n_cells = 200L, n_genes = 40L)
+)
+f_path <- tempfile(fileext = ".h5")
+write_tenx_h5_sc(
+  f_path = f_path,
+  counts = data$counts,
+  barcodes = data$obs$cell_id,
+  features = data.table::data.table(
+    id = data$var$gene_id,
+    name = data$var$ensembl_id,
+    feature_type = "Gene Expression"
+  )
+)
+
+dir_data <- tempfile("sc_tenx")
+dir.create(dir_data, recursive = TRUE)
+sc <- load_tenx_h5(
+  object = SingleCells(dir_data = dir_data),
+  h5_path = f_path,
+  sc_qc_param = params_sc_min_quality(
+    min_unique_genes = 5L,
+    min_lib_size = 25L,
+    min_cells = 5L
+  ),
+  streaming = 0L,
+  .verbose = FALSE
+)
+dim(sc)
+#> [1] 200  40
+
+unlink(c(f_path, dir_data), recursive = TRUE, force = TRUE)
+```

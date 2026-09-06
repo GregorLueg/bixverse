@@ -38,3 +38,18 @@ detect_raw_count_slot(
 ## Value
 
 The detected slot name, or NULL if none qualifies.
+
+## Examples
+
+``` r
+# the synthetic writer only fills /X, and it holds raw counts
+data <- generate_single_cell_test_data(
+  syn_data_params = params_sc_synthetic_data(n_cells = 200L, n_genes = 40L)
+)
+f_path <- tempfile(fileext = ".h5ad")
+write_h5ad_sc(f_path, data$counts, data$obs, data$var, .verbose = FALSE)
+detect_raw_count_slot(f_path)
+#> [1] "X"
+
+unlink(f_path)
+```

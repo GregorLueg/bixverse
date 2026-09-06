@@ -26,3 +26,15 @@ set_cells_to_keep(x, cells_to_keep)
 
   String or integer. The names or indices of the cells to keep in
   downstream analysis.
+
+## Examples
+
+``` r
+# restrict everything downstream to the first 100 cells
+sc <- demo_single_cells(prepped = FALSE)
+sc <- set_cells_to_keep(sc, get_cell_names(sc)[1:100])
+length(get_cells_to_keep(sc))
+#> [1] 100
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

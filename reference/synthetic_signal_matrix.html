@@ -15,7 +15,7 @@ the mixture that is slightly more difficult to detect"><meta property="og:image"
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -162,10 +162,17 @@ data. Default: 10101L.</p></dd>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span><span class="va">synthetic_GEX</span> <span class="op">&lt;-</span> <span class="fu">create_synthetic_signal_matrix</span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">synthetic_signal_mat</span> <span class="op">&lt;-</span> <span class="va">synthetic_GEX</span><span class="op">$</span><span class="va">mat</span></span></span>
-<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># default 1000 x 90 matrix with three groups and a small fourth one</span></span></span>
+<span class="r-in"><span><span class="va">synthetic_gex</span> <span class="op">&lt;-</span> <span class="fu">synthetic_signal_matrix</span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">synthetic_gex</span><span class="op">$</span><span class="va">mat</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1000   90</span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">synthetic_gex</span><span class="op">$</span><span class="va">group</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      group1      group2      group3 small_group </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>          25          30          30           5 </span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/lengths.html" class="external-link">lengths</a></span><span class="op">(</span><span class="va">synthetic_gex</span><span class="op">$</span><span class="va">diff</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      group1      group2      group3 small_group </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         100         100         100         101 </span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

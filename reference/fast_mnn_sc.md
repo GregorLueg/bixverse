@@ -87,3 +87,31 @@ The object with the added fastMNN embeddings to the object.
 ## References
 
 Haghverdi, et al., Nat Biotechnol, 2018
+
+## Examples
+
+``` r
+# fastMNN over batch aware highly variable genes
+sc <- demo_single_cells(
+  syn_data_params = params_sc_synthetic_data(
+    n_cells = 600L, n_genes = 50L, n_batches = 3L
+  )
+)
+hvg <- find_hvg_batch_aware_sc(
+  sc, hvg_no = 20L, batch_column = "batch_index", .verbose = FALSE
+)
+sc <- fast_mnn_sc(
+  sc,
+  batch_column = "batch_index",
+  batch_hvg_genes = hvg$hvg_gene_idx,
+  fastmnn_params = params_sc_fastmnn(
+    no_pcs = 10L,
+    knn = list(k = 5L)
+  ),
+  .verbose = FALSE
+)
+dim(get_embedding(sc, "mnn"))
+#> [1] 600  10
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

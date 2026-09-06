@@ -23,7 +23,7 @@ al."><meta property="og:image" content="https://gregorlueg.github.io/bixverse/lo
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -174,6 +174,38 @@ level implementation of fgsea.</p></li>
     <p>Korotkevich, et al., bioRxiv</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \donttest{</span></span></span>
+<span class="r-in"><span><span class="co"># human GO terms with at least 25 genes</span></span></span>
+<span class="r-in"><span><span class="va">go_obj</span> <span class="op">&lt;-</span> <span class="fu"><a href="GeneOntologyElim.html">GeneOntologyElim</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="get_go_data_human.html">get_go_data_human</a></span><span class="op">(</span>.verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  min_genes <span class="op">=</span> <span class="fl">25L</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">genes</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/unlist.html" class="external-link">unlist</a></span><span class="op">(</span><span class="fu">S7</span><span class="fu">::</span><span class="fu"><a href="https://rconsortium.github.io/S7/reference/prop.html" class="external-link">prop</a></span><span class="op">(</span><span class="va">go_obj</span>, <span class="st">"go_to_genes"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1L</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">stats</span> <span class="op">&lt;-</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/setNames.html" class="external-link">setNames</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">genes</span><span class="op">)</span><span class="op">)</span>, <span class="va">genes</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">stats</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">200</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">stats</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">200</span><span class="op">]</span> <span class="op">+</span> <span class="fl">2</span></span></span>
+<span class="r-in"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu">fgsea_go_elim</span><span class="op">(</span><span class="va">go_obj</span>, stats <span class="op">=</span> <span class="va">stats</span>, nperm <span class="op">=</span> <span class="fl">1000L</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">res</span>, <span class="fl">3</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         go_id        es      nes  size        pvals n_more_extreme</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>        &lt;char&gt;     &lt;num&gt;    &lt;num&gt; &lt;num&gt;        &lt;num&gt;          &lt;num&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1: GO:0000244 0.8595015 3.597023    76 6.153695e-26              0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2: GO:0046540 0.7694975 3.312726    94 6.220826e-26              0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3: GO:0000353 0.8578760 3.360251    57 6.254944e-26              0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                                                                               leading_edge</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                                                                                     &lt;list&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1: ENSG00000196189,ENSG00000119335,ENSG00000164040,ENSG00000085552,ENSG00000169306,ENSG00000288093,...[67]</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2: ENSG00000196189,ENSG00000119335,ENSG00000164040,ENSG00000085552,ENSG00000169306,ENSG00000288093,...[62]</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3: ENSG00000196189,ENSG00000119335,ENSG00000164040,ENSG00000085552,ENSG00000169306,ENSG00000162542,...[50]</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    log2err          fdr                                  go_name</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      &lt;num&gt;        &lt;num&gt;                                   &lt;char&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1:      NA 3.080252e-23  spliceosomal tri-snRNP complex assembly</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2:      NA 3.080252e-23             U4/U6 x U5 tri-snRNP complex</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3:      NA 3.080252e-23 formation of quadruple SL/U4/U5/U6 snRNP</span>
+<span class="r-in"><span><span class="co"># }</span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

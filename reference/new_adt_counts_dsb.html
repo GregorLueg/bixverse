@@ -15,7 +15,7 @@ counts ("ModelNegativeADTnorm").'><meta property="og:image" content="https://gre
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -173,6 +173,26 @@ counts.</p>
     <p>Mulè et al., Nat Commun, 2022</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># DSB without empty droplets, i.e. the k-means fallback, using the isotypes</span></span></span>
+<span class="r-in"><span><span class="va">adt</span> <span class="op">&lt;-</span> <span class="fu"><a href="generate_single_cell_test_data_adt.html">generate_single_cell_test_data_adt</a></span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">cell_info</span> <span class="op">&lt;-</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/setNames.html" class="external-link">setNames</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">adt</span><span class="op">$</span><span class="va">counts</span><span class="op">)</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">adt</span><span class="op">$</span><span class="va">counts</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">new_adt_counts_dsb</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">adt</span><span class="op">$</span><span class="va">counts</span>,</span></span>
+<span class="r-in"><span>  cell_info <span class="op">=</span> <span class="va">cell_info</span>,</span></span>
+<span class="r-in"><span>  isotype_names <span class="op">=</span> <span class="va">adt</span><span class="op">$</span><span class="va">var</span><span class="op">$</span><span class="va">protein_id</span><span class="op">[</span><span class="va">adt</span><span class="op">$</span><span class="va">var</span><span class="op">$</span><span class="va">is_isotype</span><span class="op">]</span>,</span></span>
+<span class="r-in"><span>  .verbose <span class="op">=</span> <span class="cn">FALSE</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ADTCounts</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Cells:     1000 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Proteins:  15 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Type:      DSB </span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

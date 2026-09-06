@@ -18,7 +18,7 @@ params_sc_pca(
 
 - mean_center:
 
-  Boolean. Shall the data be mean centered
+  Boolean. Shall the data be mean centred
 
 - normalise_variance:
 

@@ -27,3 +27,17 @@ apply_pipeline(pipeline, object)
 ## Value
 
 The object after all steps have run.
+
+## Examples
+
+``` r
+# HVG then PCA, run in order on a freshly loaded object
+sc <- demo_single_cells(prepped = FALSE)
+p <- step_hvg_sc(hvg_no = 30L, .verbose = FALSE) %>>%
+  step_pca_sc(no_pcs = 10L, .verbose = FALSE)
+sc <- apply_pipeline(p, sc)
+dim(get_pca_factors(sc))
+#> [1] 500  10
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

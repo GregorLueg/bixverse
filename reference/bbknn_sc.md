@@ -92,3 +92,24 @@ the returned connectivities of the algorithm.
 ## References
 
 Polański, et al., Bioinformatics, 2020
+
+## Examples
+
+``` r
+# batch balanced kNN, replacing the graph the demo object carries
+sc <- demo_single_cells(
+  syn_data_params = params_sc_synthetic_data(
+    n_cells = 600L, n_genes = 50L, n_batches = 3L
+  )
+)
+sc <- bbknn_sc(
+  remove_knn(sc),
+  batch_column = "batch_index",
+  no_neighbours_to_keep = 5L,
+  .verbose = FALSE
+)
+dim(get_knn_mat(sc))
+#> [1] 600   5
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

@@ -55,3 +55,26 @@ tied_diffusion(
 
 The class with added diffusion score based on a two sets of seed genes.
 Additionally, the seed genes are stored in the class.
+
+## Examples
+
+``` r
+# tied diffusion between two sets of seed nodes
+set.seed(42)
+g <- igraph::sample_pa(15, directed = FALSE)
+edges <- data.table::setDT(igraph::as_data_frame(g))[, `:=`(
+  from = sprintf("node_%i", from),
+  to = sprintf("node_%i", to)
+)]
+object <- NetworkDiffusions(edges, weighted = FALSE, directed = FALSE)
+object <- tied_diffusion(
+  object,
+  diffusion_vector_1 = c(node_1 = 1, node_3 = 1),
+  diffusion_vector_2 = c(node_2 = 1, node_6 = 1),
+  summarisation = "max",
+  score_aggregation = "min"
+)
+head(get_diffusion_vector(object))
+#>     node_1     node_2     node_3     node_4     node_6     node_7 
+#> 0.04299109 0.20231102 0.06764978 0.10645037 0.04364123 0.03541402 
+```

@@ -11,7 +11,7 @@ calculate a combined version of the two. Returns the full matrix of the data."><
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -130,6 +130,25 @@ information content of this given term. Needs to be a single float! See
 ontology.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Resnik similarity matrix over a toy ontology</span></span></span>
+<span class="r-in"><span><span class="va">onto</span> <span class="op">&lt;-</span> <span class="fu">data.table</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/data.table/man/data.table.html" class="external-link">data.table</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  parent <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>, <span class="st">"b"</span>, <span class="st">"b"</span>, <span class="st">"b"</span>, <span class="st">"c"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  child <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"b"</span>, <span class="st">"c"</span>, <span class="st">"d"</span>, <span class="st">"e"</span>, <span class="st">"f"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">ancestry</span> <span class="op">&lt;-</span> <span class="fu"><a href="get_ontology_ancestry.html">get_ontology_ancestry</a></span><span class="op">(</span><span class="va">onto</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">ic</span> <span class="op">&lt;-</span> <span class="fu"><a href="calculate_information_content.html">calculate_information_content</a></span><span class="op">(</span><span class="va">ancestry</span><span class="op">$</span><span class="va">descendants</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu">calculate_semantic_sim_mat</span><span class="op">(</span><span class="st">"resnik"</span>, <span class="va">ancestry</span><span class="op">$</span><span class="va">ancestors</span>, <span class="va">ic</span><span class="op">)</span>, <span class="fl">3</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   a     b     c     d     e     f</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> a 1 0.000 0.000 0.000 0.000 0.000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> b 0 1.000 0.102 0.102 0.102 0.102</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> c 0 0.102 1.000 0.102 0.102 0.613</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> d 0 0.102 0.102 1.000 0.102 0.102</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> e 0 0.102 0.102 0.102 1.000 0.102</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> f 0 0.102 0.613 0.102 0.102 1.000</span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

@@ -18,3 +18,13 @@ download_pbmc8k(quiet = FALSE)
 ## Value
 
 String. The path to the extracted PBMC8K data.
+
+## Examples
+
+``` r
+if (FALSE) { # \dontrun{
+# pulls the archive into the session tempdir()
+path <- download_pbmc8k()
+list.files(path)
+} # }
+```

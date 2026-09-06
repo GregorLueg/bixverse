@@ -62,3 +62,25 @@ With permutations, the null distribution is attached as
 ## References
 
 Foroutan et al., BMC Bioinformatics, 2018.
+
+## Examples
+
+``` r
+# score every sample against one up-regulated gene set
+set.seed(123L)
+exp_mat <- matrix(
+  rnorm(200 * 10),
+  nrow = 200,
+  dimnames = list(sprintf("gene_%03i", 1:200), sprintf("sample_%i", 1:10))
+)
+ranks <- calc_singscore_rank(exp_mat)
+head(calc_singscore(ranks, up_set = sprintf("gene_%03i", 1:20)))
+#>    total_score total_dispersion sample_id
+#>          <num>            <num>    <char>
+#> 1:  0.05611111         78.57792  sample_1
+#> 2: -0.01944444         61.52799  sample_2
+#> 3: -0.07138889         57.08019  sample_3
+#> 4: -0.08083333         49.66717  sample_4
+#> 5:  0.01888889         57.82149  sample_5
+#> 6:  0.03388889         74.87141  sample_6
+```

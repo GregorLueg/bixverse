@@ -30,3 +30,18 @@ get_sc_obs(object, indices = NULL, cols = NULL, filtered = FALSE)
 ## Value
 
 The obs table
+
+## Examples
+
+``` r
+# the obs table, restricted to a few columns
+sc <- demo_single_cells(prepped = FALSE)
+head(get_sc_obs(sc, cols = c("cell_id", "cell_grp", "lib_size")), 3)
+#>     cell_id    cell_grp lib_size
+#>      <char>      <char>    <num>
+#> 1: cell_001 cell_type_1      278
+#> 2: cell_002 cell_type_2      333
+#> 3: cell_003 cell_type_3      413
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

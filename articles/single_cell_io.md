@@ -159,7 +159,7 @@ write_cellranger_output(
 )
 
 mtx_params <- params_sc_mtx_io(
-  path_mtx = file.path(dir_a, "mat.mtx"),
+  path_mtx = file.path(dir_a, "matrix.mtx"),
   path_obs = file.path(dir_a, "barcodes.csv"),
   path_var = file.path(dir_a, "features.csv"),
   cells_as_rows = FALSE,
@@ -263,7 +263,7 @@ write_cellranger_output(
 )
 
 mtx_params_swapped <- params_sc_mtx_io(
-  path_mtx = file.path(dir_swapped, "mat.mtx"),
+  path_mtx = file.path(dir_swapped, "matrix.mtx"),
   path_obs = file.path(dir_swapped, "barcodes.csv"),
   path_var = file.path(dir_swapped, "features.csv"),
   cells_as_rows = TRUE,

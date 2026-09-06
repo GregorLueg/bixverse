@@ -71,3 +71,24 @@ Returns the `RbhGraph` class for further operations.
 - final_results:
 
   data.table. Contains final results.
+
+## Examples
+
+``` r
+# set similarity based RBH class over four gene modules
+set.seed(123)
+modules <- data.table::data.table(
+  origin = rep(c("set_a", "set_b"), each = 20),
+  module = rep(c("m1", "m2", "m3", "m4"), each = 10),
+  gene = unlist(replicate(4, sample(letters, 10), simplify = FALSE))
+)
+object <- RbhGraph(
+  modules,
+  rbh_type = "set",
+  dataset_col = "origin",
+  module_col = "module",
+  value_col = "gene"
+)
+class(object)[1]
+#> [1] "bixverse::RbhGraph"
+```

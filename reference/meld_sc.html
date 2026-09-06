@@ -17,7 +17,7 @@ class and return the smoothed density estimates per cell and condition."><meta p
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -188,6 +188,30 @@ normalised. This yields probability-like values.</p></li>
     <p>Burkhardt, et al. Nat. Biotechnol., 2021.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># per cell sample likelihoods over the kNN graph</span></span></span>
+<span class="r-in"><span><span class="va">sc</span> <span class="op">&lt;-</span> <span class="fu"><a href="demo_single_cells.html">demo_single_cells</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  syn_data_params <span class="op">=</span> <span class="fu"><a href="params_sc_synthetic_data.html">params_sc_synthetic_data</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    n_cells <span class="op">=</span> <span class="fl">500L</span>,</span></span>
+<span class="r-in"><span>    n_genes <span class="op">=</span> <span class="fl">50L</span>,</span></span>
+<span class="r-in"><span>    n_samples <span class="op">=</span> <span class="fl">6L</span>,</span></span>
+<span class="r-in"><span>    sample_bias <span class="op">=</span> <span class="st">"even"</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu">meld_sc</span><span class="op">(</span><span class="va">sc</span>, sample_id_col <span class="op">=</span> <span class="st">"sample_id"</span>, .verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">res</span><span class="op">$</span><span class="va">norm_scores</span><span class="op">[</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">]</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>           sample_1  sample_2  sample_3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> cell_001 0.1588948 0.1845288 0.1803174</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> cell_002 0.1761598 0.1402652 0.1614138</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> cell_003 0.1657891 0.1734398 0.1571076</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> cell_004 0.1586567 0.1845500 0.1815831</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> cell_005 0.1730026 0.1480341 0.1651779</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> cell_006 0.1658959 0.1731794 0.1563808</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">sc</span><span class="op">@</span><span class="va">dir_data</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span>, force <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

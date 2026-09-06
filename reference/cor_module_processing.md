@@ -36,3 +36,17 @@ cor_module_processing(
 ## Value
 
 The class with added data to the properties for subsequent usage.
+
+## Examples
+
+``` r
+# spearman correlations over the 300 most variable genes
+mat <- t(synthetic_signal_matrix()$mat)
+obj <- BulkCoExp(mat, data.table::data.table(sample_id = rownames(mat)))
+obj <- preprocess_bulk_coexp(obj, hvg = 0.3, .verbose = FALSE)
+obj <- cor_module_processing(obj, cor_method = "spearman", .verbose = FALSE)
+dim(obj@processed_data$correlation_res$get_sym_matrix(
+  .verbose = FALSE
+))
+#> [1] 300 300
+```

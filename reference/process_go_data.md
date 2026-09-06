@@ -27,4 +27,25 @@ process_go_data(go_info, go_genes, go_relationships)
 ## Value
 
 data.table ready for usage in
-[`gene_ontology_data()`](https://gregorlueg.github.io/bixverse/reference/gene_ontology_data.md).
+[`GeneOntologyElim()`](https://gregorlueg.github.io/bixverse/reference/GeneOntologyElim.md).
+
+## Examples
+
+``` r
+# \donttest{
+# assemble the packaged human GO data by hand
+go_data <- load_go_human_data()
+relationships <- data.table::setnames(
+  data.table::copy(go_data$gene_ontology),
+  old = c("from", "to"),
+  new = c("parent", "child")
+)
+go_dt <- process_go_data(
+  go_info = go_data$go_info,
+  go_genes = go_data$go_to_genes,
+  go_relationships = relationships[relationship %in% c("is_a", "part_of")]
+)
+dim(go_dt)
+#> [1] 18841     6
+# }
+```

@@ -33,3 +33,17 @@ An `LdaResult`.
 [`lda_k_sweep()`](https://gregorlueg.github.io/bixverse/reference/lda_k_sweep.md).
 Pass `k` explicitly if the raw metrics point somewhere the selection
 could not go.
+
+## Examples
+
+``` r
+# pull the selected fit out of a sweep without refitting
+set.seed(42L)
+corpus <- matrix(rbinom(200L * 40L, 1L, 0.05), nrow = 200L, ncol = 40L)
+corpus[1:100, 1:10] <- rbinom(1000L, 1L, 0.6)
+corpus[101:200, 11:20] <- rbinom(1000L, 1L, 0.6)
+colnames(corpus) <- sprintf("term_%02d", 1:40)
+sweep_res <- lda_k_sweep(corpus > 0, k_range = 5:7, .verbose = FALSE)
+dim(get_best_model(sweep_res))
+#> [1] 200  40   6
+```

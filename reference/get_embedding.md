@@ -40,3 +40,14 @@ get_embedding(x, embd_name, ...)
 ## Value
 
 Get the specified embeddings from the object (if found).
+
+## Examples
+
+``` r
+# any stored embedding, by name
+sc <- demo_single_cells()
+dim(get_embedding(sc, "pca"))
+#> [1] 500  10
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

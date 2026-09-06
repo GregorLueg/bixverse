@@ -56,3 +56,44 @@ transfer_labels_symphony(
 
 A data.table with columns `predicted_<label_column>` and
 `confidence_<label_column>`, in `get_cells_to_keep(query)` order.
+
+## Examples
+
+``` r
+# kNN label transfer from the reference onto a mapped query
+ref <- demo_single_cells(
+  syn_data_params = params_sc_synthetic_data(
+    n_cells = 500L,
+    n_genes = 50L,
+    n_batches = 2L
+  )
+)
+symphony_ref <- build_symphony_ref(
+  ref,
+  batch_column = "batch_index",
+  hvg = get_hvg(ref) + 1L,
+  harmony_params = params_sc_harmony(k = 10L),
+  no_pcs = 10L,
+  label_columns = "cell_grp",
+  .verbose = FALSE
+)
+query <- demo_single_cells(prepped = FALSE, seed = 7L)
+query <- map_symphony_query(symphony_ref, query = query, .verbose = FALSE)
+labels <- transfer_labels_symphony(
+  symphony_ref,
+  query = query,
+  label_column = "cell_grp",
+  .verbose = FALSE
+)
+head(labels)
+#>    predicted_cell_grp confidence_cell_grp
+#>                <char>               <num>
+#> 1:        cell_type_1           0.8666667
+#> 2:        cell_type_2           0.9333333
+#> 3:        cell_type_3           0.8000000
+#> 4:        cell_type_1           0.8000000
+#> 5:        cell_type_2           0.8666667
+#> 6:        cell_type_3           0.8666667
+
+unlink(c(ref@dir_data, query@dir_data), recursive = TRUE, force = TRUE)
+```

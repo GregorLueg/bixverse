@@ -57,3 +57,23 @@ harmony_v2_sc(
 
 The object with a `"harmony_v2"` embedding added. If no PCA embeddings
 are found, returns the object unchanged with a warning.
+
+## Examples
+
+``` r
+# the reimplemented Harmony, writing its own embedding
+sc <- demo_single_cells(
+  syn_data_params = params_sc_synthetic_data(
+    n_cells = 600L, n_genes = 50L, n_batches = 3L
+  )
+)
+sc <- harmony_v2_sc(
+  sc,
+  batch_column = "batch_index",
+  .verbose = FALSE
+)
+dim(get_embedding(sc, "harmony_v2"))
+#> [1] 600  10
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

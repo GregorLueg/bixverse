@@ -53,3 +53,25 @@ run_cell_qc(
 ## Value
 
 A `CellQc` object.
+
+## Examples
+
+``` r
+# MAD outlier detection over two metrics at once
+set.seed(42L)
+metrics <- list(
+  lib_size = c(rnorm(99, 1000, 100), 50),
+  pct_mt = runif(100, 0, 20)
+)
+run_cell_qc(
+  metrics,
+  cells_to_keep = 0:99,
+  directions = c(lib_size = "below", pct_mt = "above")
+)
+#> CellQc: 100 cells, 5 outliers (5.0%)
+#> Metrics:
+#>   - lib_size: 5 outliers (mad = 5)
+#>     MAD lower = 816.05
+#>   - pct_mt: 0 outliers (mad = 0)
+#>     MAD upper = 23.60
+```

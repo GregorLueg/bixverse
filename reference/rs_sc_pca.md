@@ -2,7 +2,7 @@
 
 **\[experimental\]** Helper function that will calculate the PCA for the
 specified highly variable genes. You have the option to do mean
-centering, variance normalisation and/or apply the new proposed
+centring, variance normalisation and/or apply the new proposed
 transformation `PFlogPF` from Booeshaghi, et al.
 
 ## Usage

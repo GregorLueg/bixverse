@@ -18,3 +18,13 @@ download_pbmc_batches(quiet = FALSE)
 ## Value
 
 String. The path to the directory with the PBMC h5ad files.
+
+## Examples
+
+``` r
+if (FALSE) { # \dontrun{
+# pulls the archive into the session tempdir()
+path <- download_pbmc_batches()
+list.files(path)
+} # }
+```

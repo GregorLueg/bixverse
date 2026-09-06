@@ -39,14 +39,32 @@ An `ScStep`.
 ## Examples
 
 ``` r
-if (FALSE) { # \dontrun{
-pipeline <- step_hvg_sc() %>>%
-  step_pca_sc(no_pcs = 20L) %>>%
-  step_harmony_sc(batch_column = "plate") %>>%
-  step_neighbours_sc(embd_to_use = "harmony") %>>%
-  step_metacells_sc("bootstrapped")
+# per group pre-processing that ends on source-pure meta cells
+sc <- demo_single_cells(prepped = FALSE)
+pipeline <- step_hvg_sc(hvg_no = 30L, .verbose = FALSE) %>>%
+  step_pca_sc(no_pcs = 10L, .verbose = FALSE) %>>%
+  step_neighbours_sc(.verbose = FALSE) %>>%
+  step_metacells_sc(
+    "bootstrapped",
+    sc_meta_cell_params = params_sc_bt_metacells(target_no_metacells = 10L),
+    .verbose = FALSE
+  )
 
-per_patient <- apply_pipeline_per_group(pipeline, sc_obj, "patient_id")
-mc <- merge_meta_cells(per_patient)
-} # }
+per_group <- apply_pipeline_per_group(pipeline, sc, group_col = "cell_grp")
+merge_meta_cells(per_group, .verbose = FALSE)
+#> Single cell experiment (Meta Cells).
+#>   Meta cell method: meta_cells_hdwgcna
+#>   Merged: TRUE
+#>   No meta cells: 30
+#>   No genes: 50
+#>   No cells aggregated: 297
+#>   No obs rows in source: 500
+#>   HVG calculated: FALSE
+#>   PCA calculated: FALSE
+#>   Other embeddings: none
+#>   KNN generated: FALSE
+#>   SNN generated: FALSE
+#>   Stale artefacts: none
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 ```

@@ -34,3 +34,14 @@ get_pca_loadings(x, ...)
 ## Value
 
 The PCA feature loadings from the object (if found).
+
+## Examples
+
+``` r
+# HVGs x PCs
+sc <- demo_single_cells()
+dim(get_pca_loadings(sc))
+#> [1] 30 10
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

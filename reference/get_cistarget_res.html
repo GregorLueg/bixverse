@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -113,6 +113,71 @@
     <p>data.table with TF to gene information</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># CisTarget against a synthetic ranking database</span></span></span>
+<span class="r-in"><span><span class="va">sc</span> <span class="op">&lt;-</span> <span class="fu"><a href="demo_single_cells.html">demo_single_cells</a></span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">tfs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"gene_%02d"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">grn</span> <span class="op">&lt;-</span> <span class="fu"><a href="scenic_grn_sc.html">scenic_grn_sc</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">sc</span>,</span></span>
+<span class="r-in"><span>  tf_ids <span class="op">=</span> <span class="va">tfs</span>,</span></span>
+<span class="r-in"><span>  scenic_params <span class="op">=</span> <span class="fu"><a href="params_scenic.html">params_scenic</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    min_counts <span class="op">=</span> <span class="fl">1L</span>,</span></span>
+<span class="r-in"><span>    learner_params <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>n_trees <span class="op">=</span> <span class="fl">20L</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span>,</span></span>
+<span class="r-in"><span>  .verbose <span class="op">=</span> <span class="cn">FALSE</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">grn</span> <span class="op">&lt;-</span> <span class="fu"><a href="identify_tf_to_genes.html">identify_tf_to_genes</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">grn</span>,</span></span>
+<span class="r-in"><span>  method <span class="op">=</span> <span class="st">"top_k"</span>,</span></span>
+<span class="r-in"><span>  k_tfs <span class="op">=</span> <span class="fl">3L</span>,</span></span>
+<span class="r-in"><span>  .verbose <span class="op">=</span> <span class="cn">FALSE</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">genes</span> <span class="op">&lt;-</span> <span class="fu"><a href="get_gene_names.html">get_gene_names</a></span><span class="op">(</span><span class="va">sc</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">targets</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/split.html" class="external-link">split</a></span><span class="op">(</span><span class="fu"><a href="get_tf_to_gene.html">get_tf_to_gene</a></span><span class="op">(</span><span class="va">grn</span><span class="op">)</span><span class="op">$</span><span class="va">gene</span>, <span class="fu"><a href="get_tf_to_gene.html">get_tf_to_gene</a></span><span class="op">(</span><span class="va">grn</span><span class="op">)</span><span class="op">$</span><span class="va">tf</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">rankings</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">vapply</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    <span class="va">tfs</span>,</span></span>
+<span class="r-in"><span>    <span class="kw">function</span><span class="op">(</span><span class="va">tf</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span>      <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">as.integer</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rank.html" class="external-link">rank</a></span><span class="op">(</span><span class="op">!</span><span class="op">(</span><span class="va">genes</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="va">targets</span><span class="op">[[</span><span class="va">tf</span><span class="op">]</span><span class="op">]</span><span class="op">)</span>, ties.method <span class="op">=</span> <span class="st">"first"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span>    <span class="op">}</span>,</span></span>
+<span class="r-in"><span>    <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">integer</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">genes</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span>,</span></span>
+<span class="r-in"><span>  nrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">genes</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  dimnames <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">genes</span>, <span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"motif_%s"</span>, <span class="va">tfs</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">annot</span> <span class="op">&lt;-</span> <span class="fu">data.table</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/data.table/man/data.table.html" class="external-link">data.table</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  motif <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"motif_%s"</span>, <span class="va">tfs</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  TF <span class="op">=</span> <span class="va">tfs</span>,</span></span>
+<span class="r-in"><span>  annotationSource <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"directAnnotation"</span>, <span class="fl">4</span><span class="op">)</span>, <span class="st">"inferredBy_MotifSimilarity"</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">grn</span> <span class="op">&lt;-</span> <span class="fu"><a href="tf_to_genes_motif_enrichment.html">tf_to_genes_motif_enrichment</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">grn</span>,</span></span>
+<span class="r-in"><span>  motif_rankings <span class="op">=</span> <span class="va">rankings</span>,</span></span>
+<span class="r-in"><span>  annot_data <span class="op">=</span> <span class="va">annot</span>,</span></span>
+<span class="r-in"><span>  cis_target_params <span class="op">=</span> <span class="fu"><a href="params_cistarget.html">params_cistarget</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    auc_threshold <span class="op">=</span> <span class="fl">1</span>,</span></span>
+<span class="r-in"><span>    nes_threshold <span class="op">=</span> <span class="fl">1</span>,</span></span>
+<span class="r-in"><span>    high_conf_cats <span class="op">=</span> <span class="st">"directAnnotation"</span>,</span></span>
+<span class="r-in"><span>    low_conf_cats <span class="op">=</span> <span class="st">"inferredBy_MotifSimilarity"</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span>,</span></span>
+<span class="r-in"><span>  .verbose <span class="op">=</span> <span class="cn">FALSE</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">get_cistarget_res</span><span class="op">(</span><span class="va">grn</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"gs_name"</span>, <span class="st">"motif"</span>, <span class="st">"nes"</span><span class="op">)</span><span class="op">]</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Key: &lt;motif&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    gs_name         motif      nes</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     &lt;char&gt;        &lt;char&gt;    &lt;num&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1: gene_01 motif_gene_01 1.243565</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2: gene_02 motif_gene_02 1.666598</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3: gene_03 motif_gene_03 1.038259</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4: gene_04 motif_gene_04 1.063332</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5: gene_05 motif_gene_05 1.608758</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">sc</span><span class="op">@</span><span class="va">dir_data</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span>, force <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

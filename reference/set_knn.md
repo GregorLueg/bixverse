@@ -33,3 +33,16 @@ set_knn(x, knn, ...)
 - ...:
 
   Other parameters.
+
+## Examples
+
+``` r
+# a kNN built outside the object put into the cache
+sc <- demo_single_cells()
+knn <- generate_knn_sc(sc, .validate_index = FALSE, .verbose = FALSE)
+sc <- set_knn(sc, knn)
+dim(get_knn_mat(sc))
+#> [1] 500  15
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

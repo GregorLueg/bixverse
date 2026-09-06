@@ -20,3 +20,17 @@ sc_knn_to_nearest_neighbours(x)
 ## Value
 
 A `NearestNeighbours` class compatible with manifoldsR.
+
+## Examples
+
+``` r
+# hand the single cell kNN graph over to manifoldsR
+sc <- demo_single_cells()
+knn <- generate_knn_sc(sc, .validate_index = FALSE, .verbose = FALSE)
+sc_knn_to_nearest_neighbours(knn)
+#> NearestNeighbours
+#>   n_samples:    500 
+#>   k_neighbours: 15 
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

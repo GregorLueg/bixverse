@@ -90,3 +90,29 @@ The class with added data to the properties.
 ## References
 
 Barrio-Hernandez, et al., Nat Genet, 2023.
+
+## Examples
+
+``` r
+# finalise the communities at the resolution picked by the scan
+mat <- t(synthetic_signal_matrix()$mat)
+obj <- BulkCoExp(mat, data.table::data.table(sample_id = rownames(mat)))
+obj <- preprocess_bulk_coexp(obj, hvg = 0.3, .verbose = FALSE)
+obj <- cor_module_processing(obj, cor_method = "spearman", .verbose = FALSE)
+obj <- cor_module_graph_check_res(
+  obj,
+  resolution_params = params_graph_resolution(number_res = 5L),
+  parallel = FALSE,
+  .verbose = FALSE
+)
+obj <- cor_module_graph_final_modules(obj, .verbose = FALSE)
+head(get_modules(get_results(obj)))
+#>       gene module_id
+#>     <char>    <char>
+#> 1:  gene60 cluster_1
+#> 2: gene139 cluster_2
+#> 3: gene196 cluster_2
+#> 4: gene176 cluster_2
+#> 5: gene203 cluster_3
+#> 6:  gene56 cluster_1
+```

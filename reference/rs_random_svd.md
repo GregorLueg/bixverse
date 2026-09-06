@@ -18,8 +18,8 @@ rs_random_svd(x, scale, rank, seed, oversampling, n_power_iter)
 
 - scale:
 
-  Boolean. Shall the columns be variance normalised. (Mean centering
-  will automatically occur.)
+  Boolean. Shall the columns be variance normalised. (Mean centring will
+  automatically occur.)
 
 - rank:
 

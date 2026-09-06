@@ -30,3 +30,15 @@ get_gene_names_from_idx(x, gene_idx, rust_based = TRUE)
 - rust_based:
 
   Boolean. Is it Rust-based, i.e., 0-index or R-based, i.e., 1-indexed.
+
+## Examples
+
+``` r
+# Rust indices translated back into gene identifiers
+sc <- demo_single_cells(prepped = FALSE)
+get_gene_names_from_idx(sc, gene_idx = 0:2, rust_based = TRUE)
+#>         0         1         2 
+#> "gene_01" "gene_02" "gene_03" 
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

@@ -53,7 +53,7 @@ Create a new instance of the class
   (`character`)  
   Path to the `.bin` file for the gene-based representation.
 
-#### return
+#### returns
 
 A new `SingleCellCountData` instance with `n_cells` and `n_genes`
 initialised to zero.
@@ -62,7 +62,7 @@ initialised to zero.
 
 Get the shape of the matrix
 
-#### return
+#### returns
 
 An integer vector `c(n_cells, n_genes)`.
 
@@ -76,7 +76,7 @@ Reads the header of the file at `f_path_cells` and updates the `n_cells`
 and `n_genes` fields accordingly. Useful when reconnecting to an
 existing object on disk.
 
-#### return
+#### returns
 
 Invisible `NULL`.
 
@@ -108,7 +108,7 @@ Write a CSR matrix from R to the cells binary file
 Ingest a sparse matrix passed in from R, apply per-cell QC, and write
 the result to `f_path_cells`.
 
-#### return
+#### returns
 
 A list with `cell_indices`, `gene_indices`, `lib_size` and `nnz`.
 
@@ -154,7 +154,7 @@ Write an h5ad file to the cells binary file
   (`logical`)  
   Controls verbosity of the function.
 
-#### return
+#### returns
 
 A list with `cell_indices`, `gene_indices`, `lib_size` and `nnz`.
 
@@ -211,7 +211,7 @@ For data sets where only normalised counts are available in `X`. Reads
 library sizes from a specified `obs` column to reconstruct raw counts
 before writing.
 
-#### return
+#### returns
 
 A list with `cell_indices`, `gene_indices`, `lib_size` and `nnz`.
 
@@ -262,7 +262,7 @@ Write an h5ad file to disk using streaming
 Slower but lighter on memory than `h5ad_to_file`; streams the input
 where possible.
 
-#### return
+#### returns
 
 A list with `cell_indices`, `gene_indices`, `lib_size` and `nnz`.
 
@@ -295,7 +295,7 @@ Load multiple h5ad files into a single binary
   (`logical`)  
   Controls verbosity.
 
-#### return
+#### returns
 
 A list with `global_gene_indices`, `total_cells`, `total_genes` and
 `per_file` (a list of lists with `exp_id`, `cell_indices`, `lib_size`,
@@ -328,7 +328,7 @@ Write an mtx file to the cells binary file
   (`logical`)  
   Controls verbosity of the function.
 
-#### return
+#### returns
 
 A list with `cell_indices`, `gene_indices`, `lib_size` and `nnz`.
 
@@ -359,7 +359,7 @@ Write an mtx file to the cells binary file using streaming
   (`logical`)  
   Controls verbosity of the function.
 
-#### return
+#### returns
 
 A list with `cell_indices`, `gene_indices`, `lib_size` and `nnz`.
 
@@ -391,7 +391,7 @@ Load multiple mtx files into a single binary
   (`logical`)  
   Controls verbosity.
 
-#### return
+#### returns
 
 A list with `global_gene_indices`, `total_cells`, `total_genes` and
 `per_file` (a list of lists with `exp_id`, `cell_indices`, `lib_size`,
@@ -445,7 +445,7 @@ Ingests the gene-expression modality from a CellRanger v2/v3 h5 file.
 Other modalities (e.g. Antibody Capture) are filtered out via
 `feature_type`.
 
-#### return
+#### returns
 
 A list with `cell_indices`, `gene_indices`, `lib_size` and `nnz`.
 
@@ -480,7 +480,7 @@ Load multiple 10x CellRanger h5 files into a single binary
   (`logical`)  
   Controls verbosity.
 
-#### return
+#### returns
 
 A list with `global_gene_indices`, `total_cells`, `total_genes` and
 `per_file` (a list of lists with `exp_id`, `cell_indices`, `lib_size`,
@@ -509,7 +509,7 @@ Return the full count matrix
   (`logical`)  
   Controls verbosity of the function.
 
-#### return
+#### returns
 
 A list with `indptr`, `indices`, `data`, `no_cells` and `no_genes`,
 parseable into a sparse matrix in R.
@@ -534,7 +534,7 @@ Return cells by index positions
 
 Leverages the CSR-stored data for fast cell retrieval.
 
-#### return
+#### returns
 
 A list with `indptr`, `indices`, `data`, `no_cells` and `no_genes`,
 parseable into a CSR matrix in R.
@@ -558,7 +558,7 @@ and may cause memory pressure on large data sets; see
 `generate_gene_based_data_streaming` or
 `generate_gene_based_data_memory_bounded` for lighter alternatives.
 
-#### return
+#### returns
 
 Invisible `NULL`.
 
@@ -585,7 +585,7 @@ Builds the CSC representation directly without creating intermediate CSR
 structures. Suitable for very large data sets where the all-in- memory
 path is too costly.
 
-#### return
+#### returns
 
 Invisible `NULL`.
 
@@ -622,7 +622,7 @@ Processes genes in phases to cap memory usage. Each phase:
 
 4.  clears memory and moves to the next phase.
 
-#### return
+#### returns
 
 Invisible `NULL`.
 
@@ -646,7 +646,7 @@ Return genes by index positions
 
 Leverages the CSC-stored data for fast gene retrieval.
 
-#### return
+#### returns
 
 A list with `indptr`, `indices`, `data`, `no_cells` and `no_genes`,
 parseable into a CSC matrix in R.
@@ -663,7 +663,7 @@ Get the number of cells expressing each gene
   Optional 1-indexed gene indices. If `NULL`, results are returned for
   all genes.
 
-#### return
+#### returns
 
 An integer vector of NNZ counts for the requested genes.
 
@@ -705,7 +705,7 @@ Merge multiple existing bin files into the cells binary file
   (`logical`)  
   Controls verbosity.
 
-#### return
+#### returns
 
 A list with `total_cells`, `total_genes` and `per_file` (a list of lists
 with `exp_id`, `lib_size`, `nnz`).

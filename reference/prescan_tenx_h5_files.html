@@ -17,7 +17,7 @@ the feature id (ensembl-style) since gene symbols collide."><meta property="og:i
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -149,6 +149,28 @@ containing <code>exp_id</code>, <code>h5_path</code>, <code>version</code>, <cod
 for features outside the universe / non-target modality, 0-indexed).</p></li>
 </ul></div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># gene universe across two 10x h5 files</span></span></span>
+<span class="r-in"><span><span class="va">data</span> <span class="op">&lt;-</span> <span class="fu"><a href="generate_single_cell_test_data.html">generate_single_cell_test_data</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  syn_data_params <span class="op">=</span> <span class="fu"><a href="params_sc_synthetic_data.html">params_sc_synthetic_data</a></span><span class="op">(</span>n_cells <span class="op">=</span> <span class="fl">200L</span>, n_genes <span class="op">=</span> <span class="fl">40L</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">features</span> <span class="op">&lt;-</span> <span class="fu">data.table</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/data.table/man/data.table.html" class="external-link">data.table</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  id <span class="op">=</span> <span class="va">data</span><span class="op">$</span><span class="va">var</span><span class="op">$</span><span class="va">gene_id</span>,</span></span>
+<span class="r-in"><span>  name <span class="op">=</span> <span class="va">data</span><span class="op">$</span><span class="va">var</span><span class="op">$</span><span class="va">ensembl_id</span>,</span></span>
+<span class="r-in"><span>  feature_type <span class="op">=</span> <span class="st">"Gene Expression"</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">files</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>a <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".h5"</span><span class="op">)</span>, b <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".h5"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="kw">for</span> <span class="op">(</span><span class="va">f</span> <span class="kw">in</span> <span class="va">files</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="write_tenx_h5_sc.html">write_tenx_h5_sc</a></span><span class="op">(</span><span class="va">f</span>, <span class="va">data</span><span class="op">$</span><span class="va">counts</span>, <span class="va">data</span><span class="op">$</span><span class="va">obs</span><span class="op">$</span><span class="va">cell_id</span>, <span class="va">features</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">}</span></span></span>
+<span class="r-in"><span><span class="va">scan_res</span> <span class="op">&lt;-</span> <span class="fu">prescan_tenx_h5_files</span><span class="op">(</span>h5_paths <span class="op">=</span> <span class="va">files</span>, .verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">scan_res</span><span class="op">$</span><span class="va">universe_size</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 40</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">files</span><span class="op">)</span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

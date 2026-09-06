@@ -29,3 +29,15 @@ drop_cols_sc(object, table = c("obs", "var"), cols)
 ## Value
 
 Invisible self.
+
+## Examples
+
+``` r
+# drop a column that is no longer needed
+sc <- demo_single_cells(prepped = FALSE)
+sc <- drop_cols_sc(sc, table = "obs", cols = "batch_index")
+names(get_sc_obs(sc))
+#> [1] "cell_idx" "cell_id"  "cell_grp" "nnz"      "lib_size" "to_keep" 
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

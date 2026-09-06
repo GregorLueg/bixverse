@@ -23,7 +23,7 @@ one."><meta property="og:image" content="https://gregorlueg.github.io/bixverse/l
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -196,6 +196,42 @@ bump.</p>
     <p>Setty, et al., Nat. Biotechnol., 2019.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># GP trends for five genes along the Palantir branches</span></span></span>
+<span class="r-in"><span><span class="va">sc</span> <span class="op">&lt;-</span> <span class="fu"><a href="demo_single_cells.html">demo_single_cells</a></span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">palantir</span> <span class="op">&lt;-</span> <span class="fu"><a href="run_palantir_sc.html">run_palantir_sc</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">sc</span>,</span></span>
+<span class="r-in"><span>  early_cell <span class="op">=</span> <span class="fu"><a href="get_knn_obj.html">get_knn_obj</a></span><span class="op">(</span><span class="va">sc</span><span class="op">)</span><span class="op">$</span><span class="va">used_cells</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>,</span></span>
+<span class="r-in"><span>  palantir_params <span class="op">=</span> <span class="fu"><a href="params_sc_palantir.html">params_sc_palantir</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    knn <span class="op">=</span> <span class="fl">15L</span>,</span></span>
+<span class="r-in"><span>    num_waypoints <span class="op">=</span> <span class="fl">100L</span>,</span></span>
+<span class="r-in"><span>    n_eigs <span class="op">=</span> <span class="fl">3L</span>,</span></span>
+<span class="r-in"><span>    use_early_cell_as_start <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
+<span class="r-in"><span>    knn_params <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>knn_method <span class="op">=</span> <span class="st">"exhaustive"</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span>,</span></span>
+<span class="r-in"><span>  .verbose <span class="op">=</span> <span class="cn">FALSE</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu">run_gene_trends_sc</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">sc</span>,</span></span>
+<span class="r-in"><span>  palantir_res <span class="op">=</span> <span class="va">palantir</span>,</span></span>
+<span class="r-in"><span>  features <span class="op">=</span> <span class="fu"><a href="get_gene_names.html">get_gene_names</a></span><span class="op">(</span><span class="va">sc</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span>,</span></span>
+<span class="r-in"><span>  gene_trend_params <span class="op">=</span> <span class="fu"><a href="params_sc_gene_trends.html">params_sc_gene_trends</a></span><span class="op">(</span>resolution <span class="op">=</span> <span class="fl">50L</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  .verbose <span class="op">=</span> <span class="cn">FALSE</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">res</span><span class="op">$</span><span class="va">trends</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      branch pseudotime    gene expression</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      &lt;fctr&gt;      &lt;num&gt;  &lt;fctr&gt;      &lt;num&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1: cell_099 0.00000000 gene_01   6.259300</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2: cell_099 0.02040816 gene_01   6.247292</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3: cell_099 0.04081633 gene_01   6.229469</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4: cell_099 0.06122449 gene_01   6.205736</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5: cell_099 0.08163265 gene_01   6.176020</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6: cell_099 0.10204082 gene_01   6.140287</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">sc</span><span class="op">@</span><span class="va">dir_data</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span>, force <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

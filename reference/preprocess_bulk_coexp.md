@@ -51,3 +51,18 @@ preprocess_bulk_coexp(
 
 Returns the class with the `processed_data` data slot populated and
 applied parameters added to the `params` slot.
+
+## Examples
+
+``` r
+# keep the 200 most variable genes for module detection
+syn <- synthetic_bulk_cor_matrix()
+mat <- log1p(t(syn$counts))
+meta <- data.table::data.table(sample_id = rownames(mat))
+object <- BulkCoExp(raw_data = mat, meta_data = meta)
+object <- preprocess_bulk_coexp(object, hvg = 200L, .verbose = FALSE)
+object
+#> Bulk co-expression module class (BulkCoExp).
+#>  Pre-processing done: TRUE.
+#>   Number of HVG: 200.
+```

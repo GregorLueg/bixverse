@@ -1381,7 +1381,7 @@ their summaries) from the binary storage files.
 Any types of functions that help with statistics
 
 - [`calculate_effect_size()`](https://gregorlueg.github.io/bixverse/reference/calculate_effect_size.md)
-  : Calculate the Hedge G effect between two matrices
+  : Calculate the Hedge's G effect between two matrices
 - [`calculate_tom()`](https://gregorlueg.github.io/bixverse/reference/calculate_tom.md)
   : Calculate the TOM from a correlation matrix
 - [`calculate_tom_from_exp()`](https://gregorlueg.github.io/bixverse/reference/calculate_tom_from_exp.md)
@@ -1405,7 +1405,7 @@ Some core plotting helpers in the package (usually for QC). The ones to
 plot downstream results can be found in bixverse.plots.
 
 - [`plot_boxplot_normalization()`](https://gregorlueg.github.io/bixverse/reference/plot_boxplot_normalization.md)
-  : Helper plot function for boxplot of normalized data
+  : Helper plot function for boxplot of normalised data
 - [`plot_epsilon_res()`](https://gregorlueg.github.io/bixverse/reference/plot_epsilon_res.md)
   : Plot the epsilon vs. power law goodness of fit result
 - [`plot_hvgs()`](https://gregorlueg.github.io/bixverse/reference/plot_hvgs.md)
@@ -1437,55 +1437,85 @@ Functions and helpers to download or generate synthetic data.
 
 - [`download_cd34_data()`](https://gregorlueg.github.io/bixverse/reference/download_cd34_data.md)
   : Download the CD34 example data from SEACells
+
 - [`download_dialogue_uc()`](https://gregorlueg.github.io/bixverse/reference/download_dialogue_uc.md)
   : Download the ulcerative colitis example data for DIALOGUE
+
 - [`download_kang_pbmc()`](https://gregorlueg.github.io/bixverse/reference/download_kang_pbmc.md)
   : Download the Kang, et al. IFN-beta stimulated PBMC data
+
 - [`download_thymus_ageing()`](https://gregorlueg.github.io/bixverse/reference/download_thymus_ageing.md)
   : Download the Baran-Gale, et al. ageing thymus data
+
 - [`download_marrow_cd34()`](https://gregorlueg.github.io/bixverse/reference/download_marrow_cd34.md)
   : Download the marrow CD34 example data from Palantir
+
 - [`download_pbmc3k()`](https://gregorlueg.github.io/bixverse/reference/download_pbmc3k.md)
   : Download PBMC3K data from Zenodo
+
 - [`download_demuxlet_pbmc()`](https://gregorlueg.github.io/bixverse/reference/download_demuxlet_pbmc.md)
   : Download PBMCs with demuxlet doublet information
+
 - [`download_pbmc_batches()`](https://gregorlueg.github.io/bixverse/reference/download_pbmc_batches.md)
   : Download two different PBMC data sets for batch correction testing
+
 - [`download_pbmc_totalseq_data()`](https://gregorlueg.github.io/bixverse/reference/download_pbmc_totalseq_data.md)
   : Download the PBMC TotalSeq data with ADT counts
+
 - [`download_pbmc8k()`](https://gregorlueg.github.io/bixverse/reference/download_pbmc8k.md)
   : Download PBMC8K data from Zenodo
+
 - [`calculate_sparsity_stats()`](https://gregorlueg.github.io/bixverse/reference/calculate_sparsity_stats.md)
   : Helper function to calculate the induced sparsity
+
+- [`demo_single_cells()`](https://gregorlueg.github.io/bixverse/reference/demo_single_cells.md)
+  :
+
+  Ready-made `SingleCells` object for examples and tests
+
 - [`generate_gene_module_data()`](https://gregorlueg.github.io/bixverse/reference/generate_gene_module_data.md)
   : Generates synthetic gene module data.
+
 - [`generate_single_cell_test_data()`](https://gregorlueg.github.io/bixverse/reference/generate_single_cell_test_data.md)
   : Single cell test data
+
 - [`generate_dialogue_test_data()`](https://gregorlueg.github.io/bixverse/reference/generate_dialogue_test_data.md)
   : Single cell test data with a planted multicellular programme
+
 - [`cell_cycle_genes`](https://gregorlueg.github.io/bixverse/reference/cell_cycle_genes.md)
   : Cell cycle genes
+
 - [`write_cellranger_output()`](https://gregorlueg.github.io/bixverse/reference/write_cellranger_output.md)
   : Helper function to write data to a cell ranger like output
+
 - [`write_h5ad_sc()`](https://gregorlueg.github.io/bixverse/reference/write_h5ad_sc.md)
   : Helper function to write data to h5ad format
+
 - [`write_h5ad_sc_dense()`](https://gregorlueg.github.io/bixverse/reference/write_h5ad_sc_dense.md)
   : Helper function to write data to a dense h5ad file
+
 - [`params_sc_synthetic_data()`](https://gregorlueg.github.io/bixverse/reference/params_sc_synthetic_data.md)
   : Default parameters for generation of synthetic single cell data
   (RNA)
+
 - [`params_sc_synthetic_dialogue()`](https://gregorlueg.github.io/bixverse/reference/params_sc_synthetic_dialogue.md)
   : Default parameters for generation of synthetic DIALOGUE data
+
 - [`params_synthetic_bulk_rnaseq()`](https://gregorlueg.github.io/bixverse/reference/params_synthetic_bulk_rnaseq.md)
   : Wrapper function to generate synthetic bulk RNAseq parameters
+
 - [`params_bulk_sparsity()`](https://gregorlueg.github.io/bixverse/reference/params_bulk_sparsity.md)
   : Wrapper function to generate bulk sparsification parameters
+
 - [`synthetic_signal_matrix()`](https://gregorlueg.github.io/bixverse/reference/synthetic_signal_matrix.md)
   : Generates a simple synthetic, pseudo gene expression matrix
+
 - [`simulate_dropouts()`](https://gregorlueg.github.io/bixverse/reference/simulate_dropouts.md)
   : Simulate sequencing-depth dropouts on synthetic bulk data
+
 - [`synthetic_bulk_cor_matrix()`](https://gregorlueg.github.io/bixverse/reference/synthetic_bulk_cor_matrix.md)
   : Generates synthetic bulk RNAseq data
+
 - [`synthetic_c_pca_data()`](https://gregorlueg.github.io/bixverse/reference/synthetic_c_pca_data.md)
   : Generates synthetic data for contrastive PCA exploration.
 
@@ -1495,8 +1525,6 @@ All types of other random helpers without a clear pattern
 
 - [`AnnDataParser`](https://gregorlueg.github.io/bixverse/reference/AnnDataParser.md)
   : Class for Anndata
-- [`calculate_sparsity_stats()`](https://gregorlueg.github.io/bixverse/reference/calculate_sparsity_stats.md)
-  : Helper function to calculate the induced sparsity
 - [`find_threshold_otsu()`](https://gregorlueg.github.io/bixverse/reference/find_threshold_otsu.md)
   : Find a threshold via the Otsu method
 - [`install_agent_skill()`](https://gregorlueg.github.io/bixverse/reference/install_agent_skill.md)

@@ -17,3 +17,13 @@ download_pbmc_totalseq_data(quiet = FALSE)
 ## Value
 
 String. The path to the TotalSeq data.
+
+## Examples
+
+``` r
+if (FALSE) { # \dontrun{
+# pulls the archive into the session tempdir()
+path <- download_pbmc_totalseq_data()
+read_tenx_h5_metadata(path)$feature_types
+} # }
+```

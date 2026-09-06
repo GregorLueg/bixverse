@@ -77,3 +77,22 @@ A data.table with the results from the GSEA with the following columns:
 ## References
 
 Korotkevich, et al., bioRxiv
+
+## Examples
+
+``` r
+# fgsea simple against a signature with one enriched set
+set.seed(42L)
+stats <- stats::setNames(rnorm(500), sprintf("gene_%03i", 1:500))
+stats[1:20] <- stats[1:20] + 2
+pathways <- list(
+  up_set = sprintf("gene_%03i", 1:20),
+  random_set = sprintf("gene_%03i", 200:240)
+)
+res <- calc_fgsea_simple(stats, pathways, nperm = 1000L)
+res[, c("pathway_name", "es", "pvals")]
+#>    pathway_name         es       pvals
+#>          <char>      <num>       <num>
+#> 1:       up_set  0.9045609 0.001709402
+#> 2:   random_set -0.2135723 0.842666667
+```

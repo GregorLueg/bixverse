@@ -37,3 +37,13 @@ like any count matrix and gets bixverse's own log CPM on the way in. See
 
 Smillie, et al., Cell, 2019; Jerby-Arnon and Regev, Nat. Biotechnol.,
 2022
+
+## Examples
+
+``` r
+if (FALSE) { # \dontrun{
+# pulls the archive into the session tempdir()
+path <- download_dialogue_uc()
+get_h5ad_dimensions(path)$dims
+} # }
+```

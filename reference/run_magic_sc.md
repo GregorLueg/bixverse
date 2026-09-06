@@ -80,3 +80,19 @@ the `layer` element of
 ## References
 
 van Dijk, et al., Cell, 2018.
+
+## Examples
+
+``` r
+# diffusion imputation of five genes for plotting
+sc <- demo_single_cells()
+sc <- run_magic_sc(
+  sc,
+  features = get_gene_names(sc)[1:5],
+  .verbose = FALSE
+)
+dim(get_magic(sc)$data)
+#> [1] 500   5
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

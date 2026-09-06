@@ -45,3 +45,20 @@ get_pseudobulked_sc(
 
 Pending on your setting in return_format a dense matrix or sparse CSR
 matrix with aggregated cells x genes.
+
+## Examples
+
+``` r
+# sum raw counts per planted cell type
+sc <- demo_single_cells()
+obs <- get_sc_obs(sc)
+res <- get_pseudobulked_sc(
+  sc,
+  cell_list = split(obs$cell_id, obs$cell_grp),
+  .verbose = FALSE
+)
+dim(res)
+#> [1]  3 50
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

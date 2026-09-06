@@ -80,3 +80,19 @@ A `SingleCellsSubset` object.
 - dims:
 
   `c(n_cells_subset, n_genes)`.
+
+## Examples
+
+``` r
+# a view onto one cell type, sharing the parent's counts on disk
+sc <- demo_single_cells(prepped = FALSE)
+subset_obj <- SingleCellsSubset(
+  sc_object = sc,
+  grouping_column = "cell_grp",
+  group = "cell_type_1"
+)
+dim(subset_obj)
+#> [1] 167  50
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

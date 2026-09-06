@@ -33,3 +33,22 @@ update_metadata_values(object, column, replacement, ...)
 ## Value
 
 Returns the object with the respective metadata updated.
+
+## Examples
+
+``` r
+# relabel the levels of a metadata column
+syn <- synthetic_bulk_cor_matrix()
+meta <- data.table::data.table(
+  sample_id = colnames(syn$counts),
+  case_control = rep(c("case", "control"), each = 50)
+)
+object <- BulkDge(raw_counts = syn$counts, meta_data = meta)
+object <- update_metadata_values(
+  object,
+  column = "case_control",
+  replacement = c(case = "disease", control = "healthy")
+)
+unique(get_metadata(object)$case_control)
+#> [1] "disease" "healthy"
+```

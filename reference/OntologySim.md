@@ -50,3 +50,18 @@ Returns the class for subsequent usage.
 - final_results:
 
   Final results stored in the class.
+
+## Examples
+
+``` r
+# wrap a toy parent-child ontology into the class
+onto <- data.table::data.table(
+  parent = c("a", "b", "b", "b", "c"),
+  child = c("b", "c", "d", "e", "f"),
+  type = c("part_of", "part_of", "part_of", "is_a", "is_a")
+)
+OntologySim(onto, .verbose = FALSE)
+#> OntologySim class:
+#>  Size of the ontology: 5.
+#>  Semantic similarities calculated: No.
+```

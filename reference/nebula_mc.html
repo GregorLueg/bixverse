@@ -25,7 +25,7 @@ single cell run."><meta property="og:image" content="https://gregorlueg.github.i
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -194,6 +194,69 @@ detailed verbosity.</p></dd>
     <p>He, et al., Commun Biol, 2021</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># differential expression over meta cells with a donor random effect</span></span></span>
+<span class="r-in"><span><span class="va">sc</span> <span class="op">&lt;-</span> <span class="fu"><a href="demo_single_cells.html">demo_single_cells</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  syn_data_params <span class="op">=</span> <span class="fu"><a href="params_sc_synthetic_data.html">params_sc_synthetic_data</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    n_cells <span class="op">=</span> <span class="fl">2000L</span>,</span></span>
+<span class="r-in"><span>    n_genes <span class="op">=</span> <span class="fl">50L</span>,</span></span>
+<span class="r-in"><span>    n_samples <span class="op">=</span> <span class="fl">6L</span>,</span></span>
+<span class="r-in"><span>    sample_bias <span class="op">=</span> <span class="st">"even"</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">mc</span> <span class="op">&lt;-</span> <span class="fu"><a href="generate_bt_meta_cells_sc.html">generate_bt_meta_cells_sc</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">sc</span>,</span></span>
+<span class="r-in"><span>  sc_meta_cell_params <span class="op">=</span> <span class="fu"><a href="params_sc_bt_metacells.html">params_sc_bt_metacells</a></span><span class="op">(</span>target_no_metacells <span class="op">=</span> <span class="fl">100L</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  .verbose <span class="op">=</span> <span class="cn">FALSE</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># the meta cell obs carries no donor labels, so vote them over</span></span></span>
+<span class="r-in"><span><span class="va">sample_id</span> <span class="op">&lt;-</span> <span class="va">sc</span><span class="op">[[</span><span class="st">"sample_id"</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">sample_id</span></span></span>
+<span class="r-in"><span><span class="va">mc</span><span class="op">[[</span><span class="st">"sample_id"</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">vapply</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">mc</span><span class="op">[[</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">original_cell_idx</span>,</span></span>
+<span class="r-in"><span>  <span class="kw">function</span><span class="op">(</span><span class="va">idx</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/which.min.html" class="external-link">which.max</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">sample_id</span><span class="op">[</span><span class="va">idx</span><span class="op">]</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">character</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">mc</span><span class="op">[[</span><span class="st">"condition"</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">mc</span><span class="op">[[</span><span class="st">"sample_id"</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">sample_id</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"sample_1"</span>, <span class="st">"sample_2"</span>, <span class="st">"sample_3"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  <span class="st">"ctr"</span>,</span></span>
+<span class="r-in"><span>  <span class="st">"trt"</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu">nebula_mc</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">mc</span>,</span></span>
+<span class="r-in"><span>  subject_col <span class="op">=</span> <span class="st">"sample_id"</span>,</span></span>
+<span class="r-in"><span>  design <span class="op">=</span> <span class="op">~</span><span class="va">condition</span>,</span></span>
+<span class="r-in"><span>  .verbose <span class="op">=</span> <span class="cn">FALSE</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">res</span><span class="op">$</span><span class="va">results</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    gene_id     log_fc effect_se          z   p_value       fdr</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     &lt;char&gt;      &lt;num&gt;     &lt;num&gt;      &lt;num&gt;     &lt;num&gt;     &lt;num&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1: gene_01 -0.4345582 0.2976426 -1.4599999 0.1442901 0.9274431</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2: gene_02 -0.1984760 0.2907377 -0.6826634 0.4948196 0.9274431</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3: gene_03 -0.1901702 0.2949573 -0.6447379 0.5190970 0.9274431</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4: gene_04 -0.2830729 0.3538626 -0.7999514 0.4237390 0.9274431</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5: gene_05 -0.3958592 0.4129879 -0.9585249 0.3377981 0.9274431</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6: gene_06 -0.2923441 0.2664164 -1.0973202 0.2725015 0.9274431</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    subject_overdispersion cell_overdispersion convergence sigma_at_bound</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                     &lt;num&gt;               &lt;num&gt;       &lt;int&gt;         &lt;lgcl&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1:             0.05448843            1.150486           1          FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2:             0.05224946            1.077529           1          FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3:             0.05974837            1.021993         -10          FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4:             0.10133330            1.170186           1          FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5:             0.14619244            1.391691           1          FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6:             0.03321586            1.091282           1          FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    cell_overdispersion_shrunk</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                         &lt;num&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1:                   1.119392</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2:                   1.063358</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3:                   1.001475</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4:                   1.108070</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5:                   1.310626</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6:                   1.066635</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">sc</span><span class="op">@</span><span class="va">dir_data</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span>, force <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

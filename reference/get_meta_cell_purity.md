@@ -76,3 +76,31 @@ Shannon entropy of the label distribution within a meta cell, divided by
 `log(<number of distinct labels in original_cell_type>)`, so it sits in
 `[0, 1]` and stays comparable between meta cells. It is `0` if there is
 only a single label in the data.
+
+## Examples
+
+``` r
+# the same numbers as a table, leaving the object untouched
+sc <- demo_single_cells()
+mc <- generate_bt_meta_cells_sc(
+  sc,
+  sc_meta_cell_params = params_sc_bt_metacells(target_no_metacells = 50L),
+  .verbose = FALSE
+)
+purity <- get_meta_cell_purity(
+  mc,
+  original_cell_type = sc[["cell_grp"]]$cell_grp,
+  add_additional_info = "top_label"
+)
+head(purity)
+#>    meta_cell_idx meta_cell_id mc_purity mc_top_label
+#>            <int>       <char>     <num>       <char>
+#> 1:             1 meta_cell_01         1  cell_type_1
+#> 2:             2 meta_cell_02         1  cell_type_3
+#> 3:             3 meta_cell_03         1  cell_type_2
+#> 4:             4 meta_cell_04         1  cell_type_1
+#> 5:             5 meta_cell_05         1  cell_type_3
+#> 6:             6 meta_cell_06         1  cell_type_2
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

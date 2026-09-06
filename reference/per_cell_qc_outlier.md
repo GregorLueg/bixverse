@@ -35,3 +35,17 @@ A list with:
 - outlier - Boolean vector indicating which cell is an outlier
 
 - metrics - The applied thresholds.
+
+## Examples
+
+``` r
+# one badly undersequenced cell, flagged on the lower tail only
+set.seed(42L)
+lib_size <- c(rnorm(99, 1000, 100), 50)
+res <- per_cell_qc_outlier(lib_size, direction = "below")
+sum(res$outlier)
+#> [1] 5
+res$metrics
+#>          median upper_threshold lower_threshold 
+#>       1008.9100              NA        816.0509 
+```

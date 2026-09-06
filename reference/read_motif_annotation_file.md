@@ -19,3 +19,14 @@ read_motif_annotation_file(annot_file)
 ## Value
 
 data.table with the motif to transcription factor information.
+
+## Examples
+
+``` r
+if (FALSE) { # \dontrun{
+# motif to transcription factor table from the downloaded reference
+paths <- download_cistarget_hg38()
+annot <- read_motif_annotation_file(paths$motif_annotations)
+head(annot)
+} # }
+```

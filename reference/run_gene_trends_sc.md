@@ -99,3 +99,40 @@ before believing a bump.
 ## References
 
 Setty, et al., Nat. Biotechnol., 2019.
+
+## Examples
+
+``` r
+# GP trends for five genes along the Palantir branches
+sc <- demo_single_cells()
+palantir <- run_palantir_sc(
+  sc,
+  early_cell = get_knn_obj(sc)$used_cells[1],
+  palantir_params = params_sc_palantir(
+    knn = 15L,
+    num_waypoints = 100L,
+    n_eigs = 3L,
+    use_early_cell_as_start = TRUE,
+    knn_params = list(knn_method = "exhaustive")
+  ),
+  .verbose = FALSE
+)
+res <- run_gene_trends_sc(
+  sc,
+  palantir_res = palantir,
+  features = get_gene_names(sc)[1:5],
+  gene_trend_params = params_sc_gene_trends(resolution = 50L),
+  .verbose = FALSE
+)
+head(res$trends)
+#>      branch pseudotime    gene expression
+#>      <fctr>      <num>  <fctr>      <num>
+#> 1: cell_099 0.00000000 gene_01   6.259300
+#> 2: cell_099 0.02040816 gene_01   6.247292
+#> 3: cell_099 0.04081633 gene_01   6.229469
+#> 4: cell_099 0.06122449 gene_01   6.205736
+#> 5: cell_099 0.08163265 gene_01   6.176020
+#> 6: cell_099 0.10204082 gene_01   6.140287
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

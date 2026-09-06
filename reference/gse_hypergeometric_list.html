@@ -11,7 +11,7 @@ Also applies a multiple hypothesis correction (BH) to the p-values."><meta prope
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -150,6 +150,31 @@ the respective gene set.</p></dd>
     <p>data.table with enrichment results.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># two target sets tested against the same gene sets in one call</span></span></span>
+<span class="r-in"><span><span class="va">gene_universe</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"gene_%03i"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">200</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">gene_sets</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  set_a <span class="op">=</span> <span class="va">gene_universe</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">20</span><span class="op">]</span>,</span></span>
+<span class="r-in"><span>  set_b <span class="op">=</span> <span class="va">gene_universe</span><span class="op">[</span><span class="fl">100</span><span class="op">:</span><span class="fl">130</span><span class="op">]</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">targets</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  hit_a <span class="op">=</span> <span class="va">gene_universe</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">12</span>, <span class="fl">150</span><span class="op">:</span><span class="fl">158</span><span class="op">)</span><span class="op">]</span>,</span></span>
+<span class="r-in"><span>  hit_b <span class="op">=</span> <span class="va">gene_universe</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">100</span><span class="op">:</span><span class="fl">112</span>, <span class="fl">5</span><span class="op">:</span><span class="fl">8</span><span class="op">)</span><span class="op">]</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">gse_hypergeometric_list</span><span class="op">(</span><span class="va">targets</span>, <span class="va">gene_sets</span>, <span class="va">gene_universe</span>, threshold <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    target_set_name odds_ratios        pvals          fdr  hits gene_set_lengths</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>             &lt;char&gt;       &lt;num&gt;        &lt;num&gt;        &lt;num&gt; &lt;num&gt;            &lt;num&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1:           hit_b   29.791667 3.811374e-09 7.622748e-09    13               31</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2:           hit_a   28.500000 4.196950e-09 8.393901e-09    12               20</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3:           hit_b    3.211538 7.369238e-02 7.369238e-02     4               20</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    gene_set_name target_set_lengths</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>           &lt;char&gt;              &lt;int&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1:         set_b                 17</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2:         set_a                 21</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3:         set_a                 17</span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

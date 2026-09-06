@@ -43,3 +43,25 @@ A `BatchLisiScores` object with the following elements
 ## References
 
 Korsunsky, et al., Nat. Methods, 2019
+
+## Examples
+
+``` r
+# batch LISI over the kNN graph
+sc <- demo_single_cells(
+  syn_data_params = params_sc_synthetic_data(
+    n_cells = 600L, n_genes = 50L, n_batches = 3L
+  )
+)
+calculate_batch_lisi_sc(
+  sc,
+  batch_column = "batch_index",
+  .verbose = FALSE
+)
+#> Batch LISI Scores
+#>   Cells: 600 | Batches: 3
+#>   Mean LISI:    1.8192 (1 = no mixing, 3 = perfect mixing)
+#>   Median LISI:  1.8000
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

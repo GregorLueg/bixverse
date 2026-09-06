@@ -88,3 +88,28 @@ individually. Due to the batching by similar gene, the signal dilution
 is limited. If you wish to run the traditional approach, you can set
 gene_batch_size to `1L` or use the `grnboost2` learner that can only fit
 one gene at a given time.
+
+## Examples
+
+``` r
+# TF to gene importances from a small random forest
+sc <- demo_single_cells()
+res <- scenic_grn_sc(
+  sc,
+  tf_ids = get_gene_names(sc)[1:5],
+  scenic_params = params_scenic(
+    min_counts = 100L,
+    learner_params = list(n_trees = 20L)
+  ),
+  .verbose = FALSE
+)
+res
+#> ScenicGrn (GRN results)
+#>   No genes:                 50 
+#>   No TFs:                   5 
+#>   Applied learner:          randomforest 
+#>   TF to gene generated:     FALSE 
+#>   CisTarget res generated:  FALSE 
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

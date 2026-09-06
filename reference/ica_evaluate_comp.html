@@ -15,7 +15,7 @@ independent components"><meta property="og:image" content="https://gregorlueg.gi
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -179,6 +179,39 @@ Should be between 1 to 2.</p></li>
 and other data to plot to choose the right <code>ncomp</code>.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># stability across a small grid of component counts</span></span></span>
+<span class="r-in"><span><span class="va">mat</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="fu"><a href="synthetic_signal_matrix.html">synthetic_signal_matrix</a></span><span class="op">(</span><span class="op">)</span><span class="op">$</span><span class="va">mat</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">obj</span> <span class="op">&lt;-</span> <span class="fu"><a href="BulkCoExp.html">BulkCoExp</a></span><span class="op">(</span><span class="va">mat</span>, <span class="fu">data.table</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/data.table/man/data.table.html" class="external-link">data.table</a></span><span class="op">(</span>sample_id <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">mat</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">obj</span> <span class="op">&lt;-</span> <span class="fu"><a href="preprocess_bulk_coexp.html">preprocess_bulk_coexp</a></span><span class="op">(</span><span class="va">obj</span>, hvg <span class="op">=</span> <span class="fl">0.3</span>, .verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">obj</span> <span class="op">&lt;-</span> <span class="fu"><a href="ica_processing.html">ica_processing</a></span><span class="op">(</span><span class="va">obj</span>, .verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">obj</span> <span class="op">&lt;-</span> <span class="fu">ica_evaluate_comp</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">obj</span>,</span></span>
+<span class="r-in"><span>  ica_type <span class="op">=</span> <span class="st">"logcosh"</span>,</span></span>
+<span class="r-in"><span>  ncomp_params <span class="op">=</span> <span class="fu"><a href="params_ica_ncomp.html">params_ica_ncomp</a></span><span class="op">(</span>custom_seq <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">2L</span>, <span class="fl">20L</span>, by <span class="op">=</span> <span class="fl">2L</span><span class="op">)</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  .verbose <span class="op">=</span> <span class="cn">FALSE</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="get_ica_stability_res.html">get_ica_stability_res</a></span><span class="op">(</span><span class="va">obj</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Key: &lt;no_components&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    no_components median_stability UQ_stability LQ_stability converged</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>            &lt;int&gt;            &lt;num&gt;        &lt;num&gt;        &lt;num&gt;     &lt;num&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1:             2        0.3341118    0.3371207    0.3311030      1.00</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2:             4        0.5896017    0.6422570    0.5311256      1.00</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3:             6        0.6287036    0.6477328    0.5436103      0.34</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4:             8        0.4903164    0.5704741    0.4185860      0.00</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5:            10        0.6038098    0.7605020    0.4277218      0.58</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6:            12        0.4654485    0.5977709    0.3903346      0.30</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    norm_mutual_information combined_score</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                      &lt;num&gt;          &lt;num&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1:              0.28908019      0.2375267</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2:              0.15172833      0.5001424</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3:              0.10588218      0.1911259</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4:              0.09540071      0.0000000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5:              0.09111733      0.3182995</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6:              0.09419421      0.1264818</span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

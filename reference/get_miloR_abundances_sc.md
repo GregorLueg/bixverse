@@ -76,6 +76,47 @@ get_miloR_abundances_sc(
   -\> quiet, `TRUE` or `1L` -\> normal verbosity, `2L` -\> detailed
   verbosity.
 
+## Value
+
+A `miloR` class with the following elements:
+
+- nhoods - Sparse matrix of cells x neighbourhoods.
+
+- sample_counts - Matrix of neighbourhoods x samples with the cell
+  counts per neighbourhood and sample.
+
+- spatial_dist - Numeric. The kth nearest neighbour distance per
+  neighbourhood index cell.
+
+- nhood_overlap - The overlap between the neighbourhoods.
+
+- params - List. The parameters used, plus the embedding and the index
+  cells.
+
 ## References
 
 Dann, et al., Nat Biotechnol, 2022
+
+## Examples
+
+``` r
+# neighbourhood counts across six synthetic samples
+sc <- demo_single_cells(
+  syn_data_params = params_sc_synthetic_data(
+    n_cells = 500L,
+    n_genes = 50L,
+    n_samples = 6L,
+    sample_bias = "even"
+  )
+)
+milo <- get_miloR_abundances_sc(
+  sc,
+  sample_id_col = "sample_id",
+  miloR_params = params_sc_miloR(k_refine = 10L),
+  .verbose = FALSE
+)
+dim(milo$sample_counts)
+#> [1] 84  6
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

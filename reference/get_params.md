@@ -54,3 +54,39 @@ get_params.ScNebula(object, to_json = FALSE, pretty_json = FALSE)
 ## Value
 
 Depending on parameters either the R list or a (pretty) JSON string.
+
+## Examples
+
+``` r
+# parameters stored in a freshly created class
+object <- SimilarityNetworkFusion(snf_params = params_snf(k = 3L))
+names(get_params(object))
+#> [1] "snf"        "no_samples"
+get_params(object, to_json = TRUE, pretty_json = TRUE)
+#> {
+#>     "snf": {
+#>         "k": [
+#>             3
+#>         ],
+#>         "t": [
+#>             20
+#>         ],
+#>         "mu": [
+#>             0.5
+#>         ],
+#>         "alpha": [
+#>             1
+#>         ],
+#>         "distance_metric": [
+#>             "euclidean"
+#>         ],
+#>         "normalise": [
+#>             true
+#>         ]
+#>     },
+#>     "no_samples": {
+#> 
+#>     }
+#> }
+#>  
+```

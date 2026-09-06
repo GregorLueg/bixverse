@@ -24,3 +24,21 @@ get_stability(x)
 
 A list with `stability`, `rel_error`, `rel_run_errors`, `clusters`,
 `cluster_sizes`, `n_dropped` and `n_empty_clusters`.
+
+## Examples
+
+``` r
+# how much the restarts agreed on the consensus factors
+sc <- demo_single_cells()
+res <- consensus_nmf_sc(
+  sc,
+  k = 5L,
+  n_runs = 5L,
+  nmf_consensus_params = params_nmf_consensus(density_threshold = 2),
+  .verbose = FALSE
+)
+get_stability(res)$stability
+#> [1] 0.9446008
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

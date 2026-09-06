@@ -24,3 +24,16 @@ set_gene_mapping(x, gene_map)
 - gene_map:
 
   Named integer indicating indices and names of the genes
+
+## Examples
+
+``` r
+# the mapping is normally written during ingestion
+sc <- demo_single_cells(prepped = FALSE)
+genes <- get_gene_names(sc)
+sc <- set_gene_mapping(sc, stats::setNames(seq_along(genes), genes))
+head(get_gene_names(sc), 3)
+#> [1] "gene_01" "gene_02" "gene_03"
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

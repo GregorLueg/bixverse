@@ -11,7 +11,7 @@ calculate a combined version of the two."><meta property="og:image" content="htt
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -142,6 +142,28 @@ information content of this given term. Needs to be a single float! See
     <p>A data.table with the calculated similarities.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Lin similarity for a subset of terms only</span></span></span>
+<span class="r-in"><span><span class="va">onto</span> <span class="op">&lt;-</span> <span class="fu">data.table</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/data.table/man/data.table.html" class="external-link">data.table</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  parent <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>, <span class="st">"b"</span>, <span class="st">"b"</span>, <span class="st">"b"</span>, <span class="st">"c"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  child <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"b"</span>, <span class="st">"c"</span>, <span class="st">"d"</span>, <span class="st">"e"</span>, <span class="st">"f"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">ancestry</span> <span class="op">&lt;-</span> <span class="fu"><a href="get_ontology_ancestry.html">get_ontology_ancestry</a></span><span class="op">(</span><span class="va">onto</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">ic</span> <span class="op">&lt;-</span> <span class="fu"><a href="calculate_information_content.html">calculate_information_content</a></span><span class="op">(</span><span class="va">ancestry</span><span class="op">$</span><span class="va">descendants</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">calculate_semantic_sim</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  terms <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"c"</span>, <span class="st">"d"</span>, <span class="st">"f"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  similarity_type <span class="op">=</span> <span class="st">"lin"</span>,</span></span>
+<span class="r-in"><span>  ancestor_list <span class="op">=</span> <span class="va">ancestry</span><span class="op">$</span><span class="va">ancestors</span>,</span></span>
+<span class="r-in"><span>  ic_list <span class="op">=</span> <span class="va">ic</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     term1  term2      sims</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    &lt;char&gt; &lt;char&gt;     &lt;num&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1:      c      d 0.1261579</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2:      c      f 0.7601875</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3:      d      f 0.1017556</span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

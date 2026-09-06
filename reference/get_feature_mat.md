@@ -21,3 +21,24 @@ get_feature_mat(x, ...)
 - ...:
 
   Additional parameters to forward to the method.
+
+## Examples
+
+``` r
+# the features the scDblFinder classifier was trained on
+sc <- demo_single_cells(prepped = FALSE)
+res <- scdblfinder_sc(
+  sc,
+  scdblfinder_params = params_scdblfinder(
+    pca = list(no_pcs = 10L),
+    n_genes = 25L,
+    cxds_genes = 25L
+  ),
+  return_features = TRUE,
+  .verbose = FALSE
+)
+dim(get_feature_mat(res))
+#> [1] 500  22
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

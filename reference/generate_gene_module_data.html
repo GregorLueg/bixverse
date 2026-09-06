@@ -11,7 +11,7 @@ to test some of the algorithms."><meta property="og:image" content="https://greg
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -138,9 +138,30 @@ data. Default: 10101L.</p></dd>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A <code>synthetic_matrix_modules</code> class with the following items:</p><ul><li><p>data - The data matrix.</p></li>
-<li><p>metadata - The sample metadata.</p></li>
+<li><p>meta_data - The sample metadata.</p></li>
 </ul></div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># four partially overlapping modules over 24 samples</span></span></span>
+<span class="r-in"><span><span class="va">mods</span> <span class="op">&lt;-</span> <span class="fu">generate_gene_module_data</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  n_samples <span class="op">=</span> <span class="fl">24L</span>,</span></span>
+<span class="r-in"><span>  n_genes <span class="op">=</span> <span class="fl">60L</span>,</span></span>
+<span class="r-in"><span>  n_modules <span class="op">=</span> <span class="fl">4L</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">mods</span><span class="op">$</span><span class="va">data</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 24 60</span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">mods</span><span class="op">$</span><span class="va">meta_data</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    sample_id module_1_active module_2_active module_3_active module_4_active</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       &lt;char&gt;          &lt;lgcl&gt;          &lt;lgcl&gt;          &lt;lgcl&gt;          &lt;lgcl&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1:  sample_1            TRUE           FALSE           FALSE           FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2:  sample_2            TRUE           FALSE           FALSE           FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3:  sample_3            TRUE           FALSE           FALSE           FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4:  sample_4            TRUE           FALSE           FALSE           FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5:  sample_5            TRUE            TRUE           FALSE           FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6:  sample_6            TRUE            TRUE           FALSE           FALSE</span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

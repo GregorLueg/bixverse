@@ -63,6 +63,22 @@ where \\a\_{ij}\\ is the affinity between nodes \\i\\ and \\j\\, and
 networks, connectivity is calculated as \\k_i = \sum_j
 \left\|a\_{ij}\right\|\\.
 
-Version 2 uses a different normalization approach that scales the shared
-neighbor contribution separately before combining it with the direct
+Version 2 uses a different normalisation approach that scales the shared
+neighbour contribution separately before combining it with the direct
 connection strength.
+
+## Examples
+
+``` r
+# TOM straight from a samples x genes expression matrix
+set.seed(42)
+x <- matrix(rnorm(200), nrow = 20, ncol = 10)
+tom <- calculate_tom_from_exp(
+  x,
+  signed = FALSE,
+  version = "v1",
+  cor_method = "pearson"
+)
+dim(tom)
+#> [1] 10 10
+```

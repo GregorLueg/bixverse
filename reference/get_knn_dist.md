@@ -34,3 +34,14 @@ get_knn_dist(x, ...)
 - ...:
 
   Other parameters.
+
+## Examples
+
+``` r
+# cells x neighbour distances
+sc <- demo_single_cells()
+dim(get_knn_dist(sc))
+#> [1] 500  15
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

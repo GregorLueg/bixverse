@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -115,6 +115,22 @@ on some sub class.</p></dd>
     <p>The class with updated obs table in the DuckDB</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># cluster memberships carry their own cell_idx, so they join straight on</span></span></span>
+<span class="r-in"><span><span class="va">sc</span> <span class="op">&lt;-</span> <span class="fu"><a href="demo_single_cells.html">demo_single_cells</a></span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">clusters</span> <span class="op">&lt;-</span> <span class="fu"><a href="fast_cluster_sc.html">fast_cluster_sc</a></span><span class="op">(</span><span class="va">sc</span>, resolutions <span class="op">=</span> <span class="fl">1.0</span>, .verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">sc</span> <span class="op">&lt;-</span> <span class="fu">add_sc_new_obs</span><span class="op">(</span><span class="va">sc</span>, <span class="fu"><a href="get_data.html">get_data</a></span><span class="op">(</span><span class="va">clusters</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="get_sc_obs.html">get_sc_obs</a></span><span class="op">(</span><span class="va">sc</span><span class="op">)</span>, <span class="fl">3</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    cell_idx  cell_id    cell_grp batch_index   nnz lib_size to_keep res_1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       &lt;int&gt;   &lt;char&gt;      &lt;char&gt;       &lt;num&gt; &lt;num&gt;    &lt;num&gt;  &lt;lgcl&gt; &lt;int&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1:        1 cell_001 cell_type_1           1    34      278    TRUE     2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2:        2 cell_002 cell_type_2           1    31      333    TRUE     0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3:        3 cell_003 cell_type_3           1    32      413    TRUE     1</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">sc</span><span class="op">@</span><span class="va">dir_data</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span>, force <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

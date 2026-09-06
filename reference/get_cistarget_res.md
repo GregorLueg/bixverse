@@ -20,3 +20,69 @@ get_cistarget_res(x)
 ## Value
 
 data.table with TF to gene information
+
+## Examples
+
+``` r
+# CisTarget against a synthetic ranking database
+sc <- demo_single_cells()
+tfs <- sprintf("gene_%02d", 1:5)
+grn <- scenic_grn_sc(
+  sc,
+  tf_ids = tfs,
+  scenic_params = params_scenic(
+    min_counts = 1L,
+    learner_params = list(n_trees = 20L)
+  ),
+  .verbose = FALSE
+)
+grn <- identify_tf_to_genes(
+  grn,
+  method = "top_k",
+  k_tfs = 3L,
+  .verbose = FALSE
+)
+genes <- get_gene_names(sc)
+targets <- split(get_tf_to_gene(grn)$gene, get_tf_to_gene(grn)$tf)
+rankings <- matrix(
+  vapply(
+    tfs,
+    function(tf) {
+      as.integer(rank(!(genes %in% targets[[tf]]), ties.method = "first"))
+    },
+    integer(length(genes))
+  ),
+  nrow = length(genes),
+  dimnames = list(genes, sprintf("motif_%s", tfs))
+)
+annot <- data.table::data.table(
+  motif = sprintf("motif_%s", tfs),
+  TF = tfs,
+  annotationSource = factor(
+    c(rep("directAnnotation", 4), "inferredBy_MotifSimilarity")
+  )
+)
+grn <- tf_to_genes_motif_enrichment(
+  grn,
+  motif_rankings = rankings,
+  annot_data = annot,
+  cis_target_params = params_cistarget(
+    auc_threshold = 1,
+    nes_threshold = 1,
+    high_conf_cats = "directAnnotation",
+    low_conf_cats = "inferredBy_MotifSimilarity"
+  ),
+  .verbose = FALSE
+)
+get_cistarget_res(grn)[, c("gs_name", "motif", "nes")]
+#> Key: <motif>
+#>    gs_name         motif      nes
+#>     <char>        <char>    <num>
+#> 1: gene_01 motif_gene_01 1.243565
+#> 2: gene_02 motif_gene_02 1.666598
+#> 3: gene_03 motif_gene_03 1.038259
+#> 4: gene_04 motif_gene_04 1.063332
+#> 5: gene_05 motif_gene_05 1.608758
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

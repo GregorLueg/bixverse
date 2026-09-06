@@ -125,3 +125,54 @@ with
 ## References
 
 He, et al., Commun Biol, 2021
+
+## Examples
+
+``` r
+# mixed model DGE with the sample as the random effect
+sc <- demo_single_cells(
+  syn_data_params = params_sc_synthetic_data(
+    n_cells = 500L,
+    n_genes = 50L,
+    n_samples = 6L,
+    sample_bias = "even"
+  )
+)
+obs <- get_sc_obs(sc)
+ctr <- sprintf("sample_%i", 1:3)
+condition <- ifelse(obs$sample_id %in% ctr, "ctr", "trt")
+sc <- set_sc_new_obs_col(sc, col_name = "condition", new_data = condition)
+res <- nebula_sc(
+  sc,
+  subject_col = "sample_id",
+  design = ~condition,
+  .verbose = FALSE
+)
+head(res$results)
+#>    gene_id      log_fc effect_se           z    p_value       fdr
+#>     <char>       <num>     <num>       <num>      <num>     <num>
+#> 1: gene_01  0.01337655 0.1414657  0.09455685 0.92466683 0.9845895
+#> 2: gene_02 -0.02825830 0.1381089 -0.20460888 0.83787772 0.9841999
+#> 3: gene_03 -0.24943883 0.1385520 -1.80032709 0.07180901 0.5317242
+#> 4: gene_04 -0.15638762 0.1463091 -1.06888499 0.28512150 0.8929664
+#> 5: gene_05  0.14882188 0.1750502  0.85016706 0.39523221 0.8929664
+#> 6: gene_06 -0.29350995 0.1405359 -2.08850540 0.03675227 0.5317242
+#>    subject_overdispersion cell_overdispersion convergence sigma_at_bound
+#>                     <num>               <num>       <int>         <lgcl>
+#> 1:                  1e-04            2.398553           1           TRUE
+#> 2:                  1e-04            2.268379           1           TRUE
+#> 3:                  1e-04            2.295687           1           TRUE
+#> 4:                  1e-04            2.542552           1           TRUE
+#> 5:                  1e-04            3.570782           1           TRUE
+#> 6:                  1e-04            2.344475           1           TRUE
+#>    cell_overdispersion_shrunk
+#>                         <num>
+#> 1:                   2.403075
+#> 2:                   2.297054
+#> 3:                   2.310078
+#> 4:                   2.570034
+#> 5:                   3.549097
+#> 6:                   2.369482
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

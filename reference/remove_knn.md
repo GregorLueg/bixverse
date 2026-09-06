@@ -29,3 +29,15 @@ remove_knn(x, ...)
 - ...:
 
   Other parameters.
+
+## Examples
+
+``` r
+# drop the cached kNN, for example before rebuilding it
+sc <- demo_single_cells()
+sc <- remove_knn(sc)
+is.null(get_knn_obj(sc))
+#> [1] TRUE
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

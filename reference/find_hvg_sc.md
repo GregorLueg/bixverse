@@ -59,3 +59,15 @@ find_hvg_sc(
 
 It will add the mean, var, var_exp, var_std of each gene to the the var
 table.
+
+## Examples
+
+``` r
+# the twenty most variable genes by the vst method
+sc <- demo_single_cells(prepped = FALSE)
+sc <- find_hvg_sc(sc, hvg_no = 20L, .verbose = FALSE)
+length(get_hvg(sc))
+#> [1] 20
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

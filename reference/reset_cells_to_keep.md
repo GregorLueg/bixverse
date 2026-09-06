@@ -44,3 +44,16 @@ reset_cells_to_keep(object, force = FALSE)
 
 The object with every cell restored and an empty cache. Unchanged if the
 confirmation was declined.
+
+## Examples
+
+``` r
+# a filter taken back off, cache wiped with it
+sc <- demo_single_cells(prepped = FALSE)
+sc <- set_cells_to_keep(sc, get_cell_names(sc)[1:100])
+sc <- reset_cells_to_keep(sc, force = TRUE)
+length(get_cells_to_keep(sc))
+#> [1] 500
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

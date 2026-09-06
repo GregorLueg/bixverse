@@ -56,3 +56,19 @@ get_hvg_data_sc(
 data.table with `gene_idx`, `gene_id`, the HVG statistics returned by
 the Rust HVG function, an `is_hvg` boolean and an `hvg_rank` integer
 (`NA` for non-HVGs).
+
+## Examples
+
+``` r
+# HVG statistics without touching the object
+sc <- demo_single_cells(prepped = FALSE)
+dt <- get_hvg_data_sc(sc, hvg_no = 20L, .verbose = FALSE)
+head(dt[(is_hvg), c("gene_id", "hvg_rank")], 3)
+#>    gene_id hvg_rank
+#>     <char>    <int>
+#> 1: gene_04       20
+#> 2: gene_05        3
+#> 3: gene_07       19
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

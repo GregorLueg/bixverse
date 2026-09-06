@@ -95,3 +95,31 @@ Returns the `MetaCells` class for further operations.
   [`merge_meta_cells()`](https://gregorlueg.github.io/bixverse/reference/merge_meta_cells.md).
   Methods that need to resolve `original_cell_idx` against the source
   single cell data use this to bail out early.
+
+## Examples
+
+``` r
+# the class is produced by the aggregation functions, not built by hand
+sc <- demo_single_cells()
+mc <- generate_bt_meta_cells_sc(
+  sc,
+  sc_meta_cell_params = params_sc_bt_metacells(target_no_metacells = 50L),
+  .verbose = FALSE
+)
+mc
+#> Single cell experiment (Meta Cells).
+#>   Meta cell method: meta_cells_hdwgcna
+#>   Merged: FALSE
+#>   No meta cells: 50
+#>   No genes: 50
+#>   No cells aggregated: 366
+#>   No obs rows in source: 500
+#>   HVG calculated: FALSE
+#>   PCA calculated: FALSE
+#>   Other embeddings: none
+#>   KNN generated: FALSE
+#>   SNN generated: FALSE
+#>   Stale artefacts: none
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

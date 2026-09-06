@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -146,6 +146,27 @@ then be supplied.</p></dd>
     <p>A <code>CellQc</code> object.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># MAD outlier detection over two metrics at once</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42L</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">metrics</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  lib_size <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">99</span>, <span class="fl">1000</span>, <span class="fl">100</span><span class="op">)</span>, <span class="fl">50</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  pct_mt <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">0</span>, <span class="fl">20</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">run_cell_qc</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">metrics</span>,</span></span>
+<span class="r-in"><span>  cells_to_keep <span class="op">=</span> <span class="fl">0</span><span class="op">:</span><span class="fl">99</span>,</span></span>
+<span class="r-in"><span>  directions <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>lib_size <span class="op">=</span> <span class="st">"below"</span>, pct_mt <span class="op">=</span> <span class="st">"above"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> CellQc: 100 cells, 5 outliers (5.0%)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Metrics:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   - lib_size: 5 outliers (mad = 5)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     MAD lower = 816.05</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   - pct_mt: 0 outliers (mad = 0)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     MAD upper = 23.60</span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

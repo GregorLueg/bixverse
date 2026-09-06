@@ -54,3 +54,11 @@ step_hvg_sc(
 ## Value
 
 An `ScStep`.
+
+## Examples
+
+``` r
+# a step is inert until the pipeline is applied
+step_hvg_sc(hvg_no = 30L)
+#> <ScStep> hvg(hvg_no = 30L, hvg_params = <list>, streaming = NULL, .verbose = TRUE)
+```

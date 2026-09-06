@@ -58,6 +58,17 @@ where \\a\_{ij}\\ is the affinity between nodes \\i\\ and \\j\\, and
 networks, connectivity is calculated as \\k_i = \sum_j
 \left\|a\_{ij}\right\|\\.
 
-Version 2 uses a different normalization approach that scales the shared
-neighbor contribution separately before combining it with the direct
+Version 2 uses a different normalisation approach that scales the shared
+neighbour contribution separately before combining it with the direct
 connection strength.
+
+## Examples
+
+``` r
+# unsigned TOM from a small correlation matrix
+set.seed(42)
+cor_mat <- cor(matrix(rnorm(200), nrow = 20, ncol = 10))
+tom <- calculate_tom(cor_mat, signed = FALSE)
+dim(tom)
+#> [1] 10 10
+```

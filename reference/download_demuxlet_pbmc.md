@@ -18,3 +18,13 @@ download_demuxlet_pbmc(quiet = FALSE)
 ## Value
 
 String. The path to the extracted doublet detection data.
+
+## Examples
+
+``` r
+if (FALSE) { # \dontrun{
+# pulls the archive into the session tempdir()
+path <- download_demuxlet_pbmc()
+list.files(path)
+} # }
+```

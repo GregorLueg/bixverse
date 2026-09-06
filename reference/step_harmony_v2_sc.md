@@ -51,3 +51,14 @@ step_harmony_v2_sc(
 ## Value
 
 An `ScStep`.
+
+## Examples
+
+``` r
+# the v2 implementation writes its own embedding name
+step_harmony_v2_sc(batch_column = "batch_index") %>>%
+  step_neighbours_sc(embd_to_use = "harmony_v2")
+#> <ScPipeline> 2 steps
+#>   1. harmony_v2  batch_column = "batch_index", additional_batch_columns = NULL, modality = c("rna", "adt"), harmony_params = <params_sc_harmony_v2>, seed = 42L, .verbose = TRUE
+#>   2. neighbours  embd_to_use = "harmony_v2", no_embd_to_use = NULL, modality = c("rna", "adt"), neighbours_params = <list>, seed = 42L, .verbose = TRUE
+```

@@ -38,3 +38,33 @@ ligand_activity_scores(ligand_influence, gene_sets, background = NULL)
 A `data.table` with one row per (gene set, ligand) pair and columns
 `gene_set`, `ligand`, `auroc`, `aupr`, `aupr_corrected`, `pearson`,
 `spearman`.
+
+## Examples
+
+``` r
+# rank the ligands against the TF1 target set
+ppi <- data.table::data.table(
+  from = c("L1", "SIG1", "L2", "SIG2"),
+  to = c("SIG1", "TF1", "SIG2", "TF2"),
+  weight = 1.0
+)
+grn <- data.table::data.table(
+  from = rep(c("TF1", "TF2"), each = 3),
+  to = c("G1", "G2", "G3", "G4", "G5", "G6"),
+  weight = 1.0
+)
+inf <- generate_ligand_target_influence(
+  ligand_seeds = list(L1 = "L1", L2 = "L2"),
+  ppi_network = ppi,
+  grn_network = grn,
+  params = params_ligand_target(ltf_cutoff = 0)
+)
+ligand_activity_scores(
+  ligand_influence = inf,
+  gene_sets = list(set_A = c("G1", "G2", "G3"))
+)
+#>    gene_set ligand     auroc  aupr aupr_corrected    pearson   spearman
+#>      <char> <char>     <num> <num>          <num>      <num>      <num>
+#> 1:    set_A     L1 1.0000000 1.000          0.750  1.0000000  1.0000000
+#> 2:    set_A     L2 0.3333333 0.125         -0.125 -0.3333333 -0.3333333
+```

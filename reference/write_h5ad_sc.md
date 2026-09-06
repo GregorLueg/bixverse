@@ -40,3 +40,19 @@ write_h5ad_sc(f_path, counts, obs, var, overwrite = TRUE, .verbose = TRUE)
 ## Value
 
 Returns invisible
+
+## Examples
+
+``` r
+# round trip synthetic counts through a sparse h5ad
+data <- generate_single_cell_test_data(
+  syn_data_params = params_sc_synthetic_data(n_cells = 200L, n_genes = 40L)
+)
+f_path <- tempfile(fileext = ".h5ad")
+write_h5ad_sc(f_path, data$counts, data$obs, data$var, .verbose = FALSE)
+get_h5ad_dimensions(f_path)$dims
+#> obs var 
+#> 200  40 
+
+unlink(f_path)
+```

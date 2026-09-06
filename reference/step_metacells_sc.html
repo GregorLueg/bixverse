@@ -19,7 +19,7 @@ source-pure meta cells, which you then hand to merge_meta_cells()."><meta proper
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -135,16 +135,34 @@ source-pure meta cells, which you then hand to <code><a href="merge_meta_cells.h
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span><span class="va">pipeline</span> <span class="op">&lt;-</span> <span class="fu"><a href="step_hvg_sc.html">step_hvg_sc</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="grapes-greater-than-greater-than-grapes.html">%&gt;&gt;%</a></span></span></span>
-<span class="r-in"><span>  <span class="fu"><a href="step_pca_sc.html">step_pca_sc</a></span><span class="op">(</span>no_pcs <span class="op">=</span> <span class="fl">20L</span><span class="op">)</span> <span class="op"><a href="grapes-greater-than-greater-than-grapes.html">%&gt;&gt;%</a></span></span></span>
-<span class="r-in"><span>  <span class="fu"><a href="step_harmony_sc.html">step_harmony_sc</a></span><span class="op">(</span>batch_column <span class="op">=</span> <span class="st">"plate"</span><span class="op">)</span> <span class="op"><a href="grapes-greater-than-greater-than-grapes.html">%&gt;&gt;%</a></span></span></span>
-<span class="r-in"><span>  <span class="fu"><a href="step_neighbours_sc.html">step_neighbours_sc</a></span><span class="op">(</span>embd_to_use <span class="op">=</span> <span class="st">"harmony"</span><span class="op">)</span> <span class="op"><a href="grapes-greater-than-greater-than-grapes.html">%&gt;&gt;%</a></span></span></span>
-<span class="r-in"><span>  <span class="fu">step_metacells_sc</span><span class="op">(</span><span class="st">"bootstrapped"</span><span class="op">)</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># per group pre-processing that ends on source-pure meta cells</span></span></span>
+<span class="r-in"><span><span class="va">sc</span> <span class="op">&lt;-</span> <span class="fu"><a href="demo_single_cells.html">demo_single_cells</a></span><span class="op">(</span>prepped <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">pipeline</span> <span class="op">&lt;-</span> <span class="fu"><a href="step_hvg_sc.html">step_hvg_sc</a></span><span class="op">(</span>hvg_no <span class="op">=</span> <span class="fl">30L</span>, .verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op"><a href="grapes-greater-than-greater-than-grapes.html">%&gt;&gt;%</a></span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="step_pca_sc.html">step_pca_sc</a></span><span class="op">(</span>no_pcs <span class="op">=</span> <span class="fl">10L</span>, .verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op"><a href="grapes-greater-than-greater-than-grapes.html">%&gt;&gt;%</a></span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="step_neighbours_sc.html">step_neighbours_sc</a></span><span class="op">(</span>.verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op"><a href="grapes-greater-than-greater-than-grapes.html">%&gt;&gt;%</a></span></span></span>
+<span class="r-in"><span>  <span class="fu">step_metacells_sc</span><span class="op">(</span></span></span>
+<span class="r-in"><span>    <span class="st">"bootstrapped"</span>,</span></span>
+<span class="r-in"><span>    sc_meta_cell_params <span class="op">=</span> <span class="fu"><a href="params_sc_bt_metacells.html">params_sc_bt_metacells</a></span><span class="op">(</span>target_no_metacells <span class="op">=</span> <span class="fl">10L</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>    .verbose <span class="op">=</span> <span class="cn">FALSE</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="va">per_patient</span> <span class="op">&lt;-</span> <span class="fu"><a href="apply_pipeline_per_group.html">apply_pipeline_per_group</a></span><span class="op">(</span><span class="va">pipeline</span>, <span class="va">sc_obj</span>, <span class="st">"patient_id"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">mc</span> <span class="op">&lt;-</span> <span class="fu"><a href="merge_meta_cells.html">merge_meta_cells</a></span><span class="op">(</span><span class="va">per_patient</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
+<span class="r-in"><span><span class="va">per_group</span> <span class="op">&lt;-</span> <span class="fu"><a href="apply_pipeline_per_group.html">apply_pipeline_per_group</a></span><span class="op">(</span><span class="va">pipeline</span>, <span class="va">sc</span>, group_col <span class="op">=</span> <span class="st">"cell_grp"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="merge_meta_cells.html">merge_meta_cells</a></span><span class="op">(</span><span class="va">per_group</span>, .verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Single cell experiment (Meta Cells).</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Meta cell method: meta_cells_hdwgcna</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Merged: TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   No meta cells: 30</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   No genes: 50</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   No cells aggregated: 297</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   No obs rows in source: 500</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   HVG calculated: FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   PCA calculated: FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Other embeddings: none</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   KNN generated: FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   SNN generated: FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Stale artefacts: none</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">sc</span><span class="op">@</span><span class="va">dir_data</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span>, force <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

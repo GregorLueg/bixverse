@@ -107,3 +107,28 @@ The object with the added `"cca"` embedding.
 ## References
 
 Stuart, et al., Cell, 2019
+
+## Examples
+
+``` r
+# CCA anchor integration over batch aware highly variable genes
+sc <- demo_single_cells(
+  syn_data_params = params_sc_synthetic_data(
+    n_cells = 600L, n_genes = 50L, n_batches = 3L
+  )
+)
+hvg <- find_hvg_batch_aware_sc(
+  sc, hvg_no = 20L, batch_column = "batch_index", .verbose = FALSE
+)
+sc <- seurat_cca_sc(
+  sc,
+  batch_column = "batch_index",
+  batch_hvg_genes = hvg$hvg_gene_idx,
+  cca_params = params_sc_seurat_cca(num_cc = 10L, dims = 10L),
+  .verbose = FALSE
+)
+dim(get_embedding(sc, "cca"))
+#> [1] 600  10
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

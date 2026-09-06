@@ -45,3 +45,13 @@ datasets, so expect the first call to take a while.
 ## References
 
 Baran-Gale, et al., Development, 2020
+
+## Examples
+
+``` r
+if (FALSE) { # \dontrun{
+# pulls the archive into the session tempdir()
+path <- download_thymus_ageing()
+sce <- qs2::qs_read(path)
+} # }
+```

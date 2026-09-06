@@ -23,3 +23,12 @@ Returns the S7 object for further operations.
 - final_results:
 
   A data.table that will contain the final results.
+
+## Examples
+
+``` r
+# every analysis class inherits the base class getters
+object <- SimilarityNetworkFusion(snf_params = params_snf(k = 3L))
+inherits(object, "bixverse::BixverseBaseClass")
+#> [1] TRUE
+```

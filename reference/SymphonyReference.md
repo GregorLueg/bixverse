@@ -103,3 +103,36 @@ Returns the `SymphonyReference` class for further operations.
 ## References
 
 Kang et al., Nat. Commun., 2021
+
+## Examples
+
+``` r
+# a reference built off a two batch synthetic data set
+ref <- demo_single_cells(
+  syn_data_params = params_sc_synthetic_data(
+    n_cells = 500L,
+    n_genes = 50L,
+    n_batches = 2L
+  )
+)
+symphony_ref <- build_symphony_ref(
+  ref,
+  batch_column = "batch_index",
+  hvg = get_hvg(ref) + 1L,
+  harmony_params = params_sc_harmony(k = 10L),
+  no_pcs = 10L,
+  label_columns = "cell_grp",
+  .verbose = FALSE
+)
+symphony_ref
+#> Symphony reference
+#>   Harmony backend: v1
+#>   No HVGs: 30
+#>   No PCs: 10
+#>   No clusters: 10
+#>   Batch variables: batch_index
+#>   Slim: FALSE
+#>   Labels: cell_grp
+
+unlink(ref@dir_data, recursive = TRUE, force = TRUE)
+```

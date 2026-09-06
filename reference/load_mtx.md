@@ -69,3 +69,42 @@ load_mtx(
 ## Value
 
 The class with updated shape information.
+
+## Examples
+
+``` r
+# read back a CellRanger style .mtx trio
+data <- generate_single_cell_test_data(
+  syn_data_params = params_sc_synthetic_data(n_cells = 200L, n_genes = 40L)
+)
+dir_src <- tempfile("cellranger")
+dir.create(dir_src, recursive = TRUE)
+write_cellranger_output(
+  dir_src, data$counts, data$obs, data$var,
+  rows = "cells", format_type = "csv", .verbose = FALSE
+)
+
+dir_data <- tempfile("sc_mtx")
+dir.create(dir_data, recursive = TRUE)
+sc <- load_mtx(
+  object = SingleCells(dir_data = dir_data),
+  sc_mtx_io_param = params_sc_mtx_io(
+    path_mtx = file.path(dir_src, "matrix.mtx"),
+    path_obs = file.path(dir_src, "barcodes.csv"),
+    path_var = file.path(dir_src, "features.csv"),
+    cells_as_rows = TRUE,
+    has_hdr = TRUE
+  ),
+  sc_qc_param = params_sc_min_quality(
+    min_unique_genes = 5L,
+    min_lib_size = 25L,
+    min_cells = 5L
+  ),
+  streaming = 0L,
+  .verbose = FALSE
+)
+dim(sc)
+#> [1] 200  40
+
+unlink(c(dir_src, dir_data), recursive = TRUE, force = TRUE)
+```

@@ -9,7 +9,7 @@ hood for faster filtering and reading."><meta property="og:image" content="https
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -118,6 +118,36 @@ hood for faster filtering and reading.</p>
     <p>A dense matrix of cells x features</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># pull the antibody capture layer out of a multi-modal 10x file</span></span></span>
+<span class="r-in"><span><span class="va">data</span> <span class="op">&lt;-</span> <span class="fu"><a href="generate_single_cell_test_data.html">generate_single_cell_test_data</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  syn_data_params <span class="op">=</span> <span class="fu"><a href="params_sc_synthetic_data.html">params_sc_synthetic_data</a></span><span class="op">(</span>n_cells <span class="op">=</span> <span class="fl">200L</span>, n_genes <span class="op">=</span> <span class="fl">40L</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">adt</span> <span class="op">&lt;-</span> <span class="fu"><a href="generate_single_cell_test_data_adt.html">generate_single_cell_test_data_adt</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="params_sc_synthetic_data_adt.html">params_sc_synthetic_data_adt</a></span><span class="op">(</span>n_cells <span class="op">=</span> <span class="fl">200L</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">f_path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".h5"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="write_tenx_h5_sc.html">write_tenx_h5_sc</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  f_path <span class="op">=</span> <span class="va">f_path</span>,</span></span>
+<span class="r-in"><span>  counts <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">data</span><span class="op">$</span><span class="va">counts</span>, <span class="fu">as</span><span class="op">(</span><span class="va">adt</span><span class="op">$</span><span class="va">counts</span>, <span class="st">"RsparseMatrix"</span><span class="op">)</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  barcodes <span class="op">=</span> <span class="va">data</span><span class="op">$</span><span class="va">obs</span><span class="op">$</span><span class="va">cell_id</span>,</span></span>
+<span class="r-in"><span>  features <span class="op">=</span> <span class="fu">data.table</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/data.table/man/data.table.html" class="external-link">data.table</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    id <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">data</span><span class="op">$</span><span class="va">var</span><span class="op">$</span><span class="va">gene_id</span>, <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">adt</span><span class="op">$</span><span class="va">counts</span><span class="op">)</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>    name <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">data</span><span class="op">$</span><span class="va">var</span><span class="op">$</span><span class="va">ensembl_id</span>, <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">adt</span><span class="op">$</span><span class="va">counts</span><span class="op">)</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>    feature_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>      <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Gene Expression"</span>, <span class="st">"Antibody Capture"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>      <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">data</span><span class="op">$</span><span class="va">counts</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">adt</span><span class="op">$</span><span class="va">counts</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span>    <span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">adt_counts</span> <span class="op">&lt;-</span> <span class="fu">read_tenx_h5_adt</span><span class="op">(</span><span class="va">f_path</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">adt_counts</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 200  15</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">f_path</span><span class="op">)</span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

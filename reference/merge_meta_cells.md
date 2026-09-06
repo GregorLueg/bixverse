@@ -63,3 +63,37 @@ which is why methods that resolve it against the source single cell data
 [`calc_manifold_metrics()`](https://gregorlueg.github.io/bixverse/reference/calc_manifold_metrics.md))
 refuse to run on the result. `other_data` holds the source identifiers
 under `sources`.
+
+## Examples
+
+``` r
+# \donttest{
+# meta cells generated per source, then pooled for downstream methods
+sc_1 <- demo_single_cells(seed = 1L)
+sc_2 <- demo_single_cells(seed = 2L)
+params <- params_sc_bt_metacells(target_no_metacells = 25L)
+merged <- merge_meta_cells(
+  list(
+    donor_1 = generate_bt_meta_cells_sc(sc_1, params, .verbose = FALSE),
+    donor_2 = generate_bt_meta_cells_sc(sc_2, params, .verbose = FALSE)
+  ),
+  .verbose = FALSE
+)
+merged
+#> Single cell experiment (Meta Cells).
+#>   Meta cell method: meta_cells_hdwgcna
+#>   Merged: TRUE
+#>   No meta cells: 50
+#>   No genes: 50
+#>   No cells aggregated: 379
+#>   No obs rows in source: 500
+#>   HVG calculated: FALSE
+#>   PCA calculated: FALSE
+#>   Other embeddings: none
+#>   KNN generated: FALSE
+#>   SNN generated: FALSE
+#>   Stale artefacts: none
+
+unlink(c(sc_1@dir_data, sc_2@dir_data), recursive = TRUE, force = TRUE)
+# }
+```

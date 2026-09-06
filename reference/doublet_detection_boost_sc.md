@@ -70,3 +70,23 @@ A `boost_res` class that has with the following items:
   doublet for the observed cells.
 
 - voting_avg - Numerical vector with the average voting score.
+
+## Examples
+
+``` r
+# boosted doublet detection over five iterations
+sc <- demo_single_cells(prepped = FALSE)
+doublet_detection_boost_sc(
+  sc,
+  boost_params = params_boost(
+    hvg = list(min_gene_var_pctl = 0.0),
+    pca = list(no_pcs = 10L),
+    n_iters = 5L
+  ),
+  .verbose = FALSE
+)
+#> BoostRes: 500 cells, 1 doublets (0.2%)
+#>   Score range: [0.0125, 0.8289]
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

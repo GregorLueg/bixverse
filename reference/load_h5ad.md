@@ -89,3 +89,31 @@ load_h5ad(
 
 It will populate the files on disk and return the class with updated
 shape information.
+
+## Examples
+
+``` r
+# round trip through a sparse h5ad file
+data <- generate_single_cell_test_data(
+  syn_data_params = params_sc_synthetic_data(n_cells = 200L, n_genes = 40L)
+)
+f_path <- tempfile(fileext = ".h5ad")
+write_h5ad_sc(f_path, data$counts, data$obs, data$var, .verbose = FALSE)
+dir_data <- tempfile("sc_h5ad")
+dir.create(dir_data, recursive = TRUE)
+sc <- load_h5ad(
+  object = SingleCells(dir_data = dir_data),
+  h5_path = f_path,
+  sc_qc_param = params_sc_min_quality(
+    min_unique_genes = 5L,
+    min_lib_size = 25L,
+    min_cells = 5L
+  ),
+  streaming = 0L,
+  .verbose = FALSE
+)
+dim(sc)
+#> [1] 200  40
+
+unlink(c(f_path, dir_data), recursive = TRUE, force = TRUE)
+```

@@ -63,3 +63,20 @@ A `PagaRes` S3 object with:
 ## References
 
 Wolf, et al., Genome Biol., 2019.
+
+## Examples
+
+``` r
+# cluster level graph abstraction of the Leiden clusters
+sc <- demo_single_cells()
+sc <- find_clusters_sc(sc, res = 1.0)
+res <- run_paga_sc(sc, cluster_col = "leiden_clustering", .verbose = FALSE)
+res$sizes
+#>    cluster n_cells
+#>     <char>   <int>
+#> 1:       0     169
+#> 2:       1     166
+#> 3:       2     165
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

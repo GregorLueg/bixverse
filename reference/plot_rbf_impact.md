@@ -24,3 +24,10 @@ plot_rbf_impact(rbf_type, epsilon)
 
 A plot depicting the distance to affinity relationship after applying
 the RBF function.
+
+## Examples
+
+``` r
+# distance to affinity under a Gaussian RBF with epsilon 2
+plot_rbf_impact(rbf_type = "gaussian", epsilon = 2)
+```

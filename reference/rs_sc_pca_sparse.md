@@ -1,7 +1,7 @@
 # Calculates sparse PCA for single cell
 
 **\[experimental\]** Helper function that will calculate sparse PCA
-without scaling the data. You have the option to do mean centering,
+without scaling the data. You have the option to do mean centring,
 variance normalisation and/or apply the new proposed transformation
 `PFlogPF` from Booeshaghi, et al. None of these will densify the matrix.
 

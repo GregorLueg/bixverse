@@ -11,7 +11,7 @@ For details, please refer to the paper."><meta property="og:image" content="http
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -181,6 +181,37 @@ aggregation method.</p>
     <p>Bilous, et al. BMC Bioinform., 2022</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># walktrap based super cells at a graining factor of 10</span></span></span>
+<span class="r-in"><span><span class="va">sc</span> <span class="op">&lt;-</span> <span class="fu"><a href="demo_single_cells.html">demo_single_cells</a></span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">mc</span> <span class="op">&lt;-</span> <span class="fu">generate_supercells_sc</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">sc</span>,</span></span>
+<span class="r-in"><span>  sc_supercell_params <span class="op">=</span> <span class="fu"><a href="params_sc_supercell.html">params_sc_supercell</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    graining_factor <span class="op">=</span> <span class="fl">10</span>,</span></span>
+<span class="r-in"><span>    knn <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>k <span class="op">=</span> <span class="fl">10L</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span>,</span></span>
+<span class="r-in"><span>  regenerate_knn <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
+<span class="r-in"><span>  .verbose <span class="op">=</span> <span class="cn">FALSE</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">mc</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Single cell experiment (Meta Cells).</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Meta cell method: supercells</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Merged: FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   No meta cells: 50</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   No genes: 50</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   No cells aggregated: 500</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   No obs rows in source: 500</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   HVG calculated: FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   PCA calculated: FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Other embeddings: none</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   KNN generated: FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   SNN generated: FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Stale artefacts: none</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">sc</span><span class="op">@</span><span class="va">dir_data</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span>, force <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

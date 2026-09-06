@@ -58,3 +58,21 @@ An object of class `BlitzGseaNull`, a list with the following elements:
 ## References
 
 Lachmann, et al., Bioinformatics, 2022
+
+## Examples
+
+``` r
+# calibrate a null once, to be reused across gene set libraries
+set.seed(42L)
+stats <- stats::setNames(rnorm(500), sprintf("gene_%03i", 1:500))
+null_model <- blitzgsea_calibrate(
+  stats,
+  blitz_params = params_blitzgsea(permutations = 1000L, anchors = 10L)
+)
+null_model
+#> BlitzGseaNull (calibrated blitzGSEA null model)
+#>   Signature:        500 genes
+#>   Anchors:          10 (sizes 1 to 250)
+#>   Centred:          TRUE
+#>   KS p-value:       0.404 positive tail, 0.297 negative tail
+```

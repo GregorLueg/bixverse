@@ -24,4 +24,18 @@ save_sc_exp_to_disk(object, type = c("qs2", "rds"))
 
 ## Value
 
-The object with added information on the data on disk.
+`NULL`, invisibly. Called for the side effect of writing the in-memory
+maps and caches next to the counts. It does not return the object, so do
+not assign the result.
+
+## Examples
+
+``` r
+# checkpoint the in-memory map and cache next to the counts
+sc <- demo_single_cells()
+save_sc_exp_to_disk(sc, type = "rds")
+list.files(sc@dir_data)
+#> [1] "counts_cells.bin" "counts_genes.bin" "memory.rds"       "sc_duckdb.db"    
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

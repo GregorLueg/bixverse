@@ -40,3 +40,26 @@ A data.table with columns `gene`, `module_id`, `loading`, `sign` and the
 per-component score (`z` or `padj` depending on the method). One row per
 surviving (gene, component) pair, ordered by component then by
 descending absolute loading.
+
+## Examples
+
+``` r
+# turn NMF gene loadings into module membership
+syn <- generate_gene_module_data(n_samples = 24L, n_genes = 60L)
+# NMF needs a non-negative matrix
+mat <- syn$data - min(syn$data)
+obj <- BulkCoExp(mat, syn$meta_data)
+obj <- preprocess_bulk_coexp(
+  obj, hvg = NULL, scaling = FALSE, .verbose = FALSE
+)
+obj <- nmf_bulk(obj, k = 4L, .verbose = FALSE)
+head(modules_from_loadings(get_nmf_gene_loadings(obj)))
+#>          gene module_id  loading   sign        z
+#>        <char>    <char>    <num> <char>    <num>
+#> 1: feature_44   comp_01 3.675330    pos 38.28581
+#> 2: feature_40   comp_01 3.643421    pos 37.94433
+#> 3: feature_42   comp_01 3.633641    pos 37.83967
+#> 4: feature_31   comp_01 3.630990    pos 37.81130
+#> 5: feature_34   comp_01 3.602253    pos 37.50377
+#> 6: feature_45   comp_01 3.590235    pos 37.37517
+```

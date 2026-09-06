@@ -34,3 +34,23 @@ calculate_semantic_sim_mat(similarity_type, ancestor_list, ic_list)
 
 The symmetric similarity matrix for the specified data from the
 ontology.
+
+## Examples
+
+``` r
+# Resnik similarity matrix over a toy ontology
+onto <- data.table::data.table(
+  parent = c("a", "b", "b", "b", "c"),
+  child = c("b", "c", "d", "e", "f")
+)
+ancestry <- get_ontology_ancestry(onto)
+ic <- calculate_information_content(ancestry$descendants)
+round(calculate_semantic_sim_mat("resnik", ancestry$ancestors, ic), 3)
+#>   a     b     c     d     e     f
+#> a 1 0.000 0.000 0.000 0.000 0.000
+#> b 0 1.000 0.102 0.102 0.102 0.102
+#> c 0 0.102 1.000 0.102 0.102 0.613
+#> d 0 0.102 0.102 1.000 0.102 0.102
+#> e 0 0.102 0.102 0.102 1.000 0.102
+#> f 0 0.102 0.613 0.102 0.102 1.000
+```

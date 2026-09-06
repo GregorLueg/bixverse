@@ -4,15 +4,9 @@ Robust scaling, i.e., removes the median and scales data based on the
 interquartile range (IQR). Useful if outliers are expected. NAs will be
 ignored.
 
-Robust scaling, i.e., removes the median and scales data based on the
-interquartile range (IQR). Useful if outliers are expected. NAs will be
-ignored.
-
 ## Usage
 
 ``` r
-robust_scale(x)
-
 robust_scale(x)
 ```
 
@@ -26,23 +20,11 @@ robust_scale(x)
 
 x, robustly scaled.
 
-x, robustly scaled.
-
 ## Examples
 
 ``` r
-if (FALSE) { # \dontrun{
-
+# median-centred, IQR-scaled vector
 set.seed(123)
-x <- rnorm(10)
-
-x.scaled <- robust_scaling(x)
-} # }
-if (FALSE) { # \dontrun{
-
-set.seed(123)
-x <- rnorm(10)
-
-x.scaled <- robust_scaling(x)
-} # }
+head(robust_scale(rnorm(10)))
+#> [1] -0.5283040 -0.1652517  1.8010294  0.1652517  0.2298599  1.9728912
 ```

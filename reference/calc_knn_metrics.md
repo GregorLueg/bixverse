@@ -35,3 +35,22 @@ A list with:
 - final_recall - The final recall across all samples.
 
 - final_ratio - The final distance ratio across all samples.
+
+## Examples
+
+``` r
+# recall of an annoy index against the default one
+set.seed(42L)
+embd <- matrix(rnorm(500 * 10), nrow = 500)
+rownames(embd) <- sprintf("cell_%03d", 1:500)
+ref <- generate_sc_knn(embd, .verbose = FALSE)
+query <- generate_sc_knn(
+  embd,
+  neighbours_params = params_sc_neighbours(
+    knn = list(knn_method = "annoy")
+  ),
+  .verbose = FALSE
+)
+calc_knn_metrics(ref, query)$final_recall
+#> [1] 1
+```

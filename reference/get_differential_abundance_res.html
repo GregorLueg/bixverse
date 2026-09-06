@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -114,6 +114,41 @@ from.</p></dd>
     <p>The differential abundance results stored in the object if found.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># neighbourhood level differential abundance table</span></span></span>
+<span class="r-in"><span><span class="va">sc</span> <span class="op">&lt;-</span> <span class="fu"><a href="demo_single_cells.html">demo_single_cells</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  syn_data_params <span class="op">=</span> <span class="fu"><a href="params_sc_synthetic_data.html">params_sc_synthetic_data</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    n_cells <span class="op">=</span> <span class="fl">500L</span>,</span></span>
+<span class="r-in"><span>    n_genes <span class="op">=</span> <span class="fl">50L</span>,</span></span>
+<span class="r-in"><span>    n_samples <span class="op">=</span> <span class="fl">6L</span>,</span></span>
+<span class="r-in"><span>    sample_bias <span class="op">=</span> <span class="st">"even"</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">milo</span> <span class="op">&lt;-</span> <span class="fu"><a href="get_miloR_abundances_sc.html">get_miloR_abundances_sc</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">sc</span>,</span></span>
+<span class="r-in"><span>  sample_id_col <span class="op">=</span> <span class="st">"sample_id"</span>,</span></span>
+<span class="r-in"><span>  miloR_params <span class="op">=</span> <span class="fu"><a href="params_sc_miloR.html">params_sc_miloR</a></span><span class="op">(</span>k_refine <span class="op">=</span> <span class="fl">10L</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  .verbose <span class="op">=</span> <span class="cn">FALSE</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">design_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  grp <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>, <span class="st">"b"</span><span class="op">)</span>, each <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  row.names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"sample_%i"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">6</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">milo</span> <span class="op">&lt;-</span> <span class="fu"><a href="test_nhoods.html">test_nhoods</a></span><span class="op">(</span><span class="va">milo</span>, design <span class="op">=</span> <span class="op">~</span><span class="va">grp</span>, design_df <span class="op">=</span> <span class="va">design_df</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">get_differential_abundance_res</span><span class="op">(</span><span class="va">milo</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Nhood        logFC   logCPM            F    PValue       FDR SpatialFDR</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    &lt;int&gt;        &lt;num&gt;    &lt;num&gt;        &lt;num&gt;     &lt;num&gt;     &lt;num&gt;      &lt;num&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1:     1  0.696761445 14.32139 8.523319e-01 0.3565560 0.8319639  0.8269572</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2:     2  0.340283155 14.32108 2.207650e-01 0.6387624 0.8455142  0.8402161</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3:     3 -1.087351007 14.31886 2.594503e+00 0.1267721 0.8163203  0.8108069</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4:     4 -0.005885377 14.31889 8.100235e-05 0.9931983 0.9945522  0.9945522</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5:     5  0.696752491 14.30611 3.770292e-01 0.5396130 0.8455142  0.8402161</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6:     6 -0.351990673 14.32160 2.136750e-01 0.6442013 0.8455142  0.8402161</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">sc</span><span class="op">@</span><span class="va">dir_data</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span>, force <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

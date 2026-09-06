@@ -27,3 +27,13 @@ A list containing:
 - inflection_idx - Index of the inflection point
 
 - gradient_change - Absolute change in the first derivative
+
+## Examples
+
+``` r
+# elbow of a decaying curve that flattens out
+x <- 1:20
+y <- c(exp(-x[1:10] / 2), rep(0.005, 10))
+get_inflection_point(x, y)$inflection_idx
+#> [1] 3
+```

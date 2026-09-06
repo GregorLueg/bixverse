@@ -20,3 +20,14 @@ read_motif_ranking(ranking_file)
 
 An integer matrix that has been transposed for easier use in the
 underlying Rust code.
+
+## Examples
+
+``` r
+if (FALSE) { # \dontrun{
+# transposed motif rankings from the downloaded feather file
+paths <- download_cistarget_hg38()
+rankings <- read_motif_ranking(paths$rankings)
+dim(rankings)
+} # }
+```

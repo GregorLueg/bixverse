@@ -75,3 +75,29 @@ Returns the `BulkDge` class for further operations.
 - final_results:
 
   A list in which final results will be stored.
+
+## Examples
+
+``` r
+# DGE class over synthetic bulk counts (genes x samples)
+syn <- synthetic_bulk_cor_matrix()
+meta <- data.table::data.table(
+  sample_id = colnames(syn$counts),
+  case_control = rep(c("case", "control"), each = 50)
+)
+object <- BulkDge(raw_counts = syn$counts, meta_data = meta)
+object
+#> Bulk differential gene expression class (BulkDge).
+#>  Raw counts: 1000 genes x 100 samples.
+#>  Meta-data rows: 100.
+#>  Variable info provided: FALSE.
+#>  Applied steps:
+#>   qc_bulk_dge(): FALSE.
+#>   normalise_bulk_dge(): FALSE.
+#>   batch_correction_bulk_dge(): FALSE.
+#>   calculate_pca_bulk_dge(): FALSE.
+#>   calculate_dge_limma(): FALSE.
+#>   calculate_dge_hedges(): FALSE.
+#>   TPM normalisation: FALSE.
+#>   FPKM normalisation: FALSE.
+```

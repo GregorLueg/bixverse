@@ -11,7 +11,7 @@ Jaccard similarity and to specify a minimum similarity."><meta property="og:imag
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -144,6 +144,34 @@ if the underlying class is set to correlation-based similarity.</p></dd>
     <p>The class with added properties.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Jaccard-based reciprocal best hits between two module sets</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">123</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">modules</span> <span class="op">&lt;-</span> <span class="fu">data.table</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/data.table/man/data.table.html" class="external-link">data.table</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  origin <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"set_a"</span>, <span class="st">"set_b"</span><span class="op">)</span>, each <span class="op">=</span> <span class="fl">20</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  module <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"m1"</span>, <span class="st">"m2"</span>, <span class="st">"m3"</span>, <span class="st">"m4"</span><span class="op">)</span>, each <span class="op">=</span> <span class="fl">10</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  gene <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/unlist.html" class="external-link">unlist</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">replicate</a></span><span class="op">(</span><span class="fl">4</span>, <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="va">letters</span>, <span class="fl">10</span><span class="op">)</span>, simplify <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">object</span> <span class="op">&lt;-</span> <span class="fu"><a href="RbhGraph.html">RbhGraph</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">modules</span>,</span></span>
+<span class="r-in"><span>  rbh_type <span class="op">=</span> <span class="st">"set"</span>,</span></span>
+<span class="r-in"><span>  dataset_col <span class="op">=</span> <span class="st">"origin"</span>,</span></span>
+<span class="r-in"><span>  module_col <span class="op">=</span> <span class="st">"module"</span>,</span></span>
+<span class="r-in"><span>  value_col <span class="op">=</span> <span class="st">"gene"</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">object</span> <span class="op">&lt;-</span> <span class="fu">generate_rbh_graph</span><span class="op">(</span><span class="va">object</span>, minimum_similarity <span class="op">=</span> <span class="fl">0</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="get_rbh_res.html">get_rbh_res</a></span><span class="op">(</span><span class="va">object</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    origin target origin_modules target_modules similiarity combined_origin</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    &lt;char&gt; &lt;char&gt;         &lt;char&gt;         &lt;char&gt;       &lt;num&gt;          &lt;char&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1:  set_a  set_b             m1             m3   0.2500000        set_a_m1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2:  set_a  set_b             m2             m4   0.3333333        set_a_m2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    combined_target</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>             &lt;char&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1:        set_b_m3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2:        set_b_m4</span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

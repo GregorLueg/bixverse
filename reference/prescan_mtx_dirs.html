@@ -23,7 +23,7 @@ error is raised."><meta property="og:image" content="https://gregorlueg.github.i
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -164,6 +164,33 @@ order they will appear in the final var table.</p></li>
 decompression; the caller should <code><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink()</a></code> these after use.</p></li>
 </ul></div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># two CellRanger style directories reduced to their shared gene universe</span></span></span>
+<span class="r-in"><span><span class="va">data</span> <span class="op">&lt;-</span> <span class="fu"><a href="generate_single_cell_test_data.html">generate_single_cell_test_data</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  syn_data_params <span class="op">=</span> <span class="fu"><a href="params_sc_synthetic_data.html">params_sc_synthetic_data</a></span><span class="op">(</span>n_cells <span class="op">=</span> <span class="fl">200L</span>, n_genes <span class="op">=</span> <span class="fl">40L</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">dirs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="st">"cr_a"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="st">"cr_b"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="kw">for</span> <span class="op">(</span><span class="va">d</span> <span class="kw">in</span> <span class="va">dirs</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span><span class="va">d</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="write_cellranger_output.html">write_cellranger_output</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    <span class="va">d</span>, <span class="va">data</span><span class="op">$</span><span class="va">counts</span>, <span class="va">data</span><span class="op">$</span><span class="va">obs</span>, <span class="va">data</span><span class="op">$</span><span class="va">var</span>,</span></span>
+<span class="r-in"><span>    rows <span class="op">=</span> <span class="st">"cells"</span>, format_type <span class="op">=</span> <span class="st">"csv"</span>, .verbose <span class="op">=</span> <span class="cn">FALSE</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">}</span></span></span>
+<span class="r-in"><span><span class="va">scan_res</span> <span class="op">&lt;-</span> <span class="fu">prescan_mtx_dirs</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  dirs <span class="op">=</span> <span class="va">dirs</span>,</span></span>
+<span class="r-in"><span>  exp_ids <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>, <span class="st">"b"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  cells_as_rows <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
+<span class="r-in"><span>  has_hdr <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
+<span class="r-in"><span>  .verbose <span class="op">=</span> <span class="cn">FALSE</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">scan_res</span><span class="op">$</span><span class="va">universe_size</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 40</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">dirs</span>, <span class="va">scan_res</span><span class="op">$</span><span class="va">temp_files</span><span class="op">)</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span>, force <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

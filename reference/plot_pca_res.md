@@ -36,3 +36,24 @@ plot_pca_res(
 ## Value
 
 A plot if the PCA information was found. `NULL` if no PCA was found.
+
+## Examples
+
+``` r
+# PCA faceted over the metadata columns you care about
+syn <- synthetic_bulk_cor_matrix()
+meta <- data.table::data.table(
+  sample_id = colnames(syn$counts),
+  case_control = rep(c("case", "control"), each = 50)
+)
+object <- BulkDge(raw_counts = syn$counts, meta_data = meta)
+object <- qc_bulk_dge(object, group_col = "case_control", .verbose = FALSE)
+object <- normalise_bulk_dge(
+  object,
+  group_col = "case_control",
+  .verbose = FALSE
+)
+#> calcNormFactors has been renamed to normLibSizes
+object <- calculate_pca_bulk_dge(object, no_hvg_genes = 500L)
+plot_pca_res(object, cols_to_plot = "case_control")
+```

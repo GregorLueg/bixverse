@@ -63,3 +63,14 @@ the method and is what a fixture should be.
 ## References
 
 Jerby-Arnon & Regev, Nature Biotechnology, 2022
+
+## Examples
+
+``` r
+# synthetic data with a multicellular programme planted across samples
+data <- generate_dialogue_test_data()
+names(data$features)
+#> [1] "cell_type_1" "cell_type_2" "cell_type_3"
+head(data$planted[[1]])
+#> [1] "gene_001" "gene_002" "gene_003" "gene_004" "gene_005" "gene_006"
+```

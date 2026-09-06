@@ -9,7 +9,7 @@ optionally with additional observation metadata columns."><meta property="og:ima
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -154,6 +154,25 @@ group means of imputed values are exactly the quantity MAGIC manufactures.</p></
 any requested obs columns.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># normalised expression of three genes with a cell annotation</span></span></span>
+<span class="r-in"><span><span class="va">sc</span> <span class="op">&lt;-</span> <span class="fu"><a href="demo_single_cells.html">demo_single_cells</a></span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">dt</span> <span class="op">&lt;-</span> <span class="fu">extract_gene_expression</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">sc</span>,</span></span>
+<span class="r-in"><span>  features <span class="op">=</span> <span class="fu"><a href="get_gene_names.html">get_gene_names</a></span><span class="op">(</span><span class="va">sc</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">]</span>,</span></span>
+<span class="r-in"><span>  obs_cols <span class="op">=</span> <span class="st">"cell_grp"</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">dt</span>, <span class="fl">3</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     cell_id  gene_01  gene_02  gene_03    cell_grp</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      &lt;char&gt;    &lt;num&gt;    &lt;num&gt;    &lt;num&gt;      &lt;char&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1: cell_001 6.222656 6.761719 5.531250 cell_type_1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2: cell_002 4.113281 4.511719 4.113281 cell_type_2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3: cell_003 4.300781 4.300781 3.226562 cell_type_3</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">sc</span><span class="op">@</span><span class="va">dir_data</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span>, force <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

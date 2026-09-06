@@ -33,3 +33,14 @@ get_cell_names(x, filtered = FALSE)
 ## Value
 
 The cell names (barcodes)
+
+## Examples
+
+``` r
+# barcodes of the cells that passed quality control
+sc <- demo_single_cells(prepped = FALSE)
+head(get_cell_names(sc, filtered = TRUE), 3)
+#> [1] "cell_001" "cell_002" "cell_003"
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

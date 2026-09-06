@@ -9,7 +9,7 @@ fit. Each row is one gene assigned to its top-loading module."><meta property="o
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -114,6 +114,28 @@ fit. Each row is one gene assigned to its top-loading module.</p>
 (if found) or <code>NULL</code>.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># gene to module assignments of a four-factor fit</span></span></span>
+<span class="r-in"><span><span class="va">syn</span> <span class="op">&lt;-</span> <span class="fu"><a href="generate_gene_module_data.html">generate_gene_module_data</a></span><span class="op">(</span>n_samples <span class="op">=</span> <span class="fl">24L</span>, n_genes <span class="op">=</span> <span class="fl">60L</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># NMF needs a non-negative matrix</span></span></span>
+<span class="r-in"><span><span class="va">mat</span> <span class="op">&lt;-</span> <span class="va">syn</span><span class="op">$</span><span class="va">data</span> <span class="op">-</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">syn</span><span class="op">$</span><span class="va">data</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">obj</span> <span class="op">&lt;-</span> <span class="fu"><a href="BulkCoExp.html">BulkCoExp</a></span><span class="op">(</span><span class="va">mat</span>, <span class="va">syn</span><span class="op">$</span><span class="va">meta_data</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">obj</span> <span class="op">&lt;-</span> <span class="fu"><a href="preprocess_bulk_coexp.html">preprocess_bulk_coexp</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">obj</span>, hvg <span class="op">=</span> <span class="cn">NULL</span>, scaling <span class="op">=</span> <span class="cn">FALSE</span>, .verbose <span class="op">=</span> <span class="cn">FALSE</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">obj</span> <span class="op">&lt;-</span> <span class="fu"><a href="nmf_bulk.html">nmf_bulk</a></span><span class="op">(</span><span class="va">obj</span>, k <span class="op">=</span> <span class="fl">4L</span>, .verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">get_nmf_modules</span><span class="op">(</span><span class="va">obj</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>          gene module_id  loading   sign        z</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>        &lt;char&gt;    &lt;char&gt;    &lt;num&gt; &lt;char&gt;    &lt;num&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1: feature_44   comp_01 3.675330    pos 38.28581</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2: feature_40   comp_01 3.643421    pos 37.94433</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3: feature_42   comp_01 3.633641    pos 37.83967</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4: feature_31   comp_01 3.630990    pos 37.81130</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5: feature_34   comp_01 3.602253    pos 37.50377</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6: feature_45   comp_01 3.590235    pos 37.37517</span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

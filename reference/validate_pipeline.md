@@ -28,3 +28,12 @@ validate_pipeline(pipeline, class)
 ## Value
 
 Invisibly, the class the pipeline would return.
+
+## Examples
+
+``` r
+# the meta cell step changes what the next step would receive
+p <- step_hvg_sc() %>>% step_metacells_sc("bootstrapped")
+print(validate_pipeline(p, "SingleCells"))
+#> [1] "MetaCells"
+```

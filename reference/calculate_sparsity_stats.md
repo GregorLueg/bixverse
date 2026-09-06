@@ -40,3 +40,19 @@ A list with various statistics about the sparsity
 - sample_sparsity_sd - SD sparsity for the genes.
 
 - dropout_by_expression - Dropout per expression bin level.
+
+## Examples
+
+``` r
+# how much sparsity the dropout simulation actually added
+syn <- synthetic_bulk_cor_matrix()
+syn <- simulate_dropouts(syn, params_bulk_sparsity())
+stats <- calculate_sparsity_stats(syn)
+stats$added_sparsity
+#> [1] 0.00743
+stats$dropout_by_expression
+#> (0.685,1.51]  (1.51,2.33]  (2.33,3.15]  (3.15,3.97]  (3.97,4.79]  (4.79,5.61] 
+#> 3.678290e-01 8.080464e-02 1.103286e-02 8.630744e-04 2.717613e-05 0.000000e+00 
+#>  (5.61,6.43]  (6.43,7.25]  (7.25,8.08]   (8.08,8.9] 
+#> 0.000000e+00 0.000000e+00 0.000000e+00 0.000000e+00 
+```

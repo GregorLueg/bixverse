@@ -86,3 +86,37 @@ Adds a `pairwise_cor` and a `cor_sign` column to the TF to gene results.
 ## References
 
 Aibar, et al., Nat Methods, 2017
+
+## Examples
+
+``` r
+# sign the TF to gene links and keep the activating ones
+sc <- demo_single_cells()
+grn <- scenic_grn_sc(
+  sc,
+  tf_ids = sprintf("gene_%02d", 1:5),
+  scenic_params = params_scenic(
+    min_counts = 1L,
+    learner_params = list(n_trees = 20L)
+  ),
+  .verbose = FALSE
+)
+grn <- identify_tf_to_genes(
+  grn,
+  method = "top_k",
+  k_tfs = 3L,
+  .verbose = FALSE
+)
+grn <- tf_to_genes_correlations(grn, object = sc, .verbose = FALSE)
+head(get_tf_to_gene(grn))
+#>         tf    gene importance pairwise_cor cor_sign
+#>     <char>  <char>      <num>        <num>    <int>
+#> 1: gene_03 gene_01  0.3568220    0.5735584        1
+#> 2: gene_04 gene_01  0.1553617    0.5115550        1
+#> 3: gene_03 gene_02  0.2651168    0.5171022        1
+#> 4: gene_04 gene_02  0.1317756    0.4859316        1
+#> 5: gene_04 gene_03  0.1788230    0.5314755        1
+#> 6: gene_01 gene_03  0.1435614    0.5735584        1
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

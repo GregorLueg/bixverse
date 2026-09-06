@@ -29,8 +29,8 @@ rs_geom_elim_fgsea_simple(
 
 - go_obj:
 
-  The gene_ontology_data S7 class. See
-  [`gene_ontology_data()`](https://gregorlueg.github.io/bixverse/reference/gene_ontology_data.md).
+  The `GeneOntologyElim` S7 class. See
+  [`GeneOntologyElim()`](https://gregorlueg.github.io/bixverse/reference/GeneOntologyElim.md).
 
 - gsea_params:
 

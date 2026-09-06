@@ -92,3 +92,28 @@ cor_module_graph_check_res(
 ## Value
 
 The class with added data to the properties.
+
+## Examples
+
+``` r
+# scan Leiden resolutions on the correlation graph
+mat <- t(synthetic_signal_matrix()$mat)
+obj <- BulkCoExp(mat, data.table::data.table(sample_id = rownames(mat)))
+obj <- preprocess_bulk_coexp(obj, hvg = 0.3, .verbose = FALSE)
+obj <- cor_module_processing(obj, cor_method = "spearman", .verbose = FALSE)
+obj <- cor_module_graph_check_res(
+  obj,
+  resolution_params = params_graph_resolution(number_res = 5L),
+  parallel = FALSE,
+  .verbose = FALSE
+)
+head(get_resolution_res(obj))
+#> Key: <resolution>
+#>    resolution no_clusters modularity good_clusters  avg_size max_size
+#>         <num>       <int>      <num>         <int>     <num>    <int>
+#> 1:  0.1000000           3 0.66589290             3 72.333333       74
+#> 2:  0.3162278           3 0.66589290             3 72.333333       74
+#> 3:  1.0000000           3 0.66589290             3 72.333333       74
+#> 4:  3.1622777          16 0.24320781            14 13.562500       24
+#> 5: 10.0000000         119 0.02575417             0  1.823529        8
+```

@@ -24,3 +24,17 @@ calculate_information_content(ancestor_list)
 ## Value
 
 A named list of each term and their information content as values.
+
+## Examples
+
+``` r
+# information content from the descendant counts of a toy ontology
+onto <- data.table::data.table(
+  parent = c("a", "b", "b", "b", "c"),
+  child = c("b", "c", "d", "e", "f")
+)
+ancestry <- get_ontology_ancestry(onto)
+unlist(calculate_information_content(ancestry$descendants))
+#>         a         b         c         d         e         f 
+#> 0.0000000 0.1823216 1.0986123 1.7917595 1.7917595 1.7917595 
+```

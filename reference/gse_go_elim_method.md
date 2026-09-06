@@ -55,3 +55,27 @@ gse_go_elim_method(
 ## Value
 
 data.table with enrichment results.
+
+## Examples
+
+``` r
+# \donttest{
+# human GO terms with at least 25 genes
+go_obj <- GeneOntologyElim(
+  get_go_data_human(.verbose = FALSE),
+  min_genes = 25L
+)
+target_genes <- unique(unlist(S7::prop(go_obj, "go_to_genes")[1:5]))
+head(gse_go_elim_method(go_obj, target_genes = target_genes), 3)
+#>         go_id                                  go_name odds_ratios
+#>        <char>                                   <char>       <num>
+#> 1: GO:0007411                            axon guidance         Inf
+#> 2: GO:0000244  spliceosomal tri-snRNP complex assembly         Inf
+#> 3: GO:0000353 formation of quadruple SL/U4/U5/U6 snRNP         Inf
+#>            pvals           fdr  hits gene_set_lengths
+#>            <num>         <num> <num>            <num>
+#> 1:  0.000000e+00  0.000000e+00   192              192
+#> 2: 2.939673e-140 2.850013e-137    76               76
+#> 3: 1.335653e-104 8.632771e-102    57               57
+# }
+```

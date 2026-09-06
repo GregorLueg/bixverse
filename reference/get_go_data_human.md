@@ -2,7 +2,7 @@
 
 This function loads in gene ontology data stored in the package and
 processes it into the format for
-[`gene_ontology_data()`](https://gregorlueg.github.io/bixverse/reference/gene_ontology_data.md).
+[`GeneOntologyElim()`](https://gregorlueg.github.io/bixverse/reference/GeneOntologyElim.md).
 Wraps
 [`load_go_human_data()`](https://gregorlueg.github.io/bixverse/reference/load_go_human_data.md)
 and
@@ -29,3 +29,14 @@ get_go_data_human(filter_relationships = TRUE, .verbose = TRUE)
 ## Value
 
 A data.table
+
+## Examples
+
+``` r
+# \donttest{
+# human GO data ready for GeneOntologyElim()
+go_dt <- get_go_data_human(.verbose = FALSE)
+dim(go_dt)
+#> [1] 18841     6
+# }
+```

@@ -73,3 +73,24 @@ stabilised_nmf_sc(
 ## Value
 
 A `StabilisedNmfResult` object.
+
+## Examples
+
+``` r
+# five random restarts, the best one reported
+sc <- demo_single_cells()
+res <- stabilised_nmf_sc(sc, k = 3L, n_runs = 5L, .verbose = FALSE)
+res
+#> StabilisedNmfResult (multi-run HALS NMF)
+#>   Source class:     SingleCells
+#>   No genes:         30
+#>   No cells:         500
+#>   No components:    3
+#>   No runs:          5
+#>   No converged:     5 / 5
+#>   Loss range:       [5.94e+04, 5.941e+04]
+#>   Best run:         3 (loss = 5.94e+04)
+#>   Preprocessing:    none
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

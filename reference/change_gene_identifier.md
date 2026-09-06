@@ -32,3 +32,19 @@ change_gene_identifier(object, alternative_gene_id, variable_info = NULL)
 ## Value
 
 The class with modified primary gene identifier.
+
+## Examples
+
+``` r
+# swap the row names over to a symbol column of the variable info
+syn <- synthetic_bulk_cor_matrix()
+meta <- data.table::data.table(sample_id = colnames(syn$counts))
+var_info <- data.table::data.table(
+  var_id = rownames(syn$counts),
+  symbol = sprintf("SYM%i", seq_len(nrow(syn$counts)))
+)
+object <- BulkDge(raw_counts = syn$counts, meta_data = meta)
+object <- change_gene_identifier(object, "symbol", var_info)
+head(rownames(S7::prop(object, "raw_counts")))
+#> [1] "SYM1" "SYM2" "SYM3" "SYM4" "SYM5" "SYM6"
+```

@@ -38,3 +38,18 @@ The class with added data to the properties for subsequent usage.
 
 Srivastava, et al., Nat. Commun., 2018; Francois, Romagnolo, et al.,
 Nat. Commun., 2024.
+
+## Examples
+
+``` r
+# leave-one-out stability of the CoReMo modules
+mat <- t(synthetic_signal_matrix()$mat)
+obj <- BulkCoExp(mat, data.table::data.table(sample_id = rownames(mat)))
+obj <- preprocess_bulk_coexp(obj, hvg = 0.3, .verbose = FALSE)
+obj <- cor_module_processing(obj, cor_method = "spearman", .verbose = FALSE)
+obj <- cor_module_coremo_clustering(obj, .verbose = FALSE)
+obj <- cor_module_coremo_stability(obj, .verbose = FALSE)
+summary(obj@outputs$final_modules$stability)
+#>    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+#>  0.3035  0.8156  0.8771  0.8065  0.9041  0.9062 
+```

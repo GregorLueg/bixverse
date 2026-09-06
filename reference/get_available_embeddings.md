@@ -34,3 +34,14 @@ get_available_embeddings(x, ...)
 ## Value
 
 Get the names of the available embeddings.
+
+## Examples
+
+``` r
+# what is in the cache to plot against
+sc <- demo_single_cells()
+get_available_embeddings(sc)
+#> [1] "pca"
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

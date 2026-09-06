@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -111,6 +111,27 @@
 returns a warning and NULL.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># feature loadings of the contrastive components</span></span></span>
+<span class="r-in"><span><span class="va">cpca_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="synthetic_c_pca_data.html">synthetic_c_pca_data</a></span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">target</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="va">cpca_data</span><span class="op">$</span><span class="va">target</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">background</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="va">cpca_data</span><span class="op">$</span><span class="va">background</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">meta</span> <span class="op">&lt;-</span> <span class="fu">data.table</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/data.table/man/data.table.html" class="external-link">data.table</a></span><span class="op">(</span>sample_id <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">target</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">obj</span> <span class="op">&lt;-</span> <span class="fu"><a href="BulkCoExp.html">BulkCoExp</a></span><span class="op">(</span><span class="va">target</span>, <span class="va">meta</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">obj</span> <span class="op">&lt;-</span> <span class="fu"><a href="preprocess_bulk_coexp.html">preprocess_bulk_coexp</a></span><span class="op">(</span><span class="va">obj</span>, .verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">obj</span> <span class="op">&lt;-</span> <span class="fu"><a href="contrastive_pca_processing.html">contrastive_pca_processing</a></span><span class="op">(</span><span class="va">obj</span>, <span class="va">background</span>, .verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">obj</span> <span class="op">&lt;-</span> <span class="fu"><a href="contrastive_pca.html">contrastive_pca</a></span><span class="op">(</span><span class="va">obj</span>, alpha <span class="op">=</span> <span class="fl">2.5</span>, no_pcs <span class="op">=</span> <span class="fl">5L</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">get_c_pca_loadings</span><span class="op">(</span><span class="va">obj</span><span class="op">)</span><span class="op">[</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">]</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                   cPC_1        cPC_2         cPC_3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> feature_1  -0.020646762  0.030973018 -0.0133776245</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> feature_9   0.034373886  0.005184735  0.0070808801</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> feature_10  0.018730361  0.001767020 -0.0008550033</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> feature_5  -0.008601644  0.010760683 -0.0101120801</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> feature_8  -0.001500864  0.009470081 -0.0230014453</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> feature_2   0.003709886 -0.013213907  0.0043487894</span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

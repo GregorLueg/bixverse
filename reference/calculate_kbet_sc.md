@@ -59,3 +59,22 @@ A `KbetScores` object with the following elements
 ## References
 
 Büttner, et al., Nat. Methods, 2019
+
+## Examples
+
+``` r
+# kBET rejection rate over three batches
+sc <- demo_single_cells(
+  syn_data_params = params_sc_synthetic_data(
+    n_cells = 600L, n_genes = 50L, n_batches = 3L
+  )
+)
+calculate_kbet_sc(sc, batch_column = "batch_index", .verbose = FALSE)
+#> kBET Scores
+#>   Cells: 600 | Batches: 3 | Threshold: 0.050
+#>   Rejection rate:      0.7533 (452 / 600)
+#>   Mean Chi-Square:     11.6940 (expected under H0: 2)
+#>   Median Chi-Square:   10.0000
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

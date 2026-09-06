@@ -53,3 +53,18 @@ List with the following items
 - obs - data.table that contains the cell information.
 
 - var - data.table that contains the protein information.
+
+## Examples
+
+``` r
+# synthetic ADT counts, cell-for-cell with the RNA generator
+adt <- generate_single_cell_test_data_adt()
+dim(adt$counts)
+#> [1] 1000   15
+head(adt$var, 3)
+#>    protein_id is_isotype
+#>        <char>     <lgcl>
+#> 1: protein_01      FALSE
+#> 2: protein_02      FALSE
+#> 3: protein_03      FALSE
+```

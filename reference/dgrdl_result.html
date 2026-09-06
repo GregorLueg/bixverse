@@ -11,7 +11,7 @@ dgrdl_grid_search()."><meta property="og:image" content="https://gregorlueg.gith
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -153,6 +153,28 @@ a gene in no tail appears in none.</p></dd>
     <p>Pan et al., Cell Syst, 2022</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># fit DGRDL with a six-atom dictionary</span></span></span>
+<span class="r-in"><span><span class="va">syn</span> <span class="op">&lt;-</span> <span class="fu"><a href="generate_gene_module_data.html">generate_gene_module_data</a></span><span class="op">(</span>n_samples <span class="op">=</span> <span class="fl">24L</span>, n_genes <span class="op">=</span> <span class="fl">60L</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">obj</span> <span class="op">&lt;-</span> <span class="fu"><a href="BulkCoExp.html">BulkCoExp</a></span><span class="op">(</span><span class="va">syn</span><span class="op">$</span><span class="va">data</span>, <span class="va">syn</span><span class="op">$</span><span class="va">meta_data</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">obj</span> <span class="op">&lt;-</span> <span class="fu"><a href="preprocess_bulk_coexp.html">preprocess_bulk_coexp</a></span><span class="op">(</span><span class="va">obj</span>, hvg <span class="op">=</span> <span class="cn">NULL</span>, .verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">obj</span> <span class="op">&lt;-</span> <span class="fu">dgrdl_result</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">obj</span>,</span></span>
+<span class="r-in"><span>  dgrdl_params <span class="op">=</span> <span class="fu"><a href="params_dgrdl.html">params_dgrdl</a></span><span class="op">(</span>dict_size <span class="op">=</span> <span class="fl">6L</span>, k_neighbours <span class="op">=</span> <span class="fl">3L</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  .verbose <span class="op">=</span> <span class="cn">FALSE</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="get_modules.html">get_modules</a></span><span class="op">(</span><span class="fu"><a href="get_results.html">get_results</a></span><span class="op">(</span><span class="va">obj</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>          gene module_id  loading   sign        z</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>        &lt;char&gt;    &lt;char&gt;    &lt;num&gt; &lt;char&gt;    &lt;num&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1: feature_27    dict_2 1.889059    pos 3.077097</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2: feature_24    dict_2 1.885384    pos 3.070073</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3: feature_22    dict_2 1.882083    pos 3.063763</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4: feature_28    dict_2 1.881407    pos 3.062472</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5: feature_25    dict_2 1.878301    pos 3.056535</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6: feature_23    dict_2 1.877537    pos 3.055074</span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

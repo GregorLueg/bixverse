@@ -29,3 +29,21 @@ A `ggplot2` object with the two curves side by side.
 ## References
 
 Kotliar et al., eLife, 2019
+
+## Examples
+
+``` r
+# stability against reconstruction error across k
+sc <- demo_single_cells()
+res <- nmf_k_sweep_sc(
+  sc,
+  k_range = 2:4,
+  n_runs = 3L,
+  nmf_consensus_params = params_nmf_consensus(density_threshold = 2),
+  .verbose = FALSE
+)
+plot(res)
+
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

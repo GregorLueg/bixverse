@@ -176,3 +176,27 @@ The objects of this class are cloneable with this method.
 - `deep`:
 
   Whether to make a deep clone.
+
+## Examples
+
+``` r
+# store the off-diagonal of a correlation matrix and get it back
+set.seed(42)
+cor_mat <- cor(matrix(rnorm(80), nrow = 20, ncol = 4))
+object <- upper_triangular_sym_mat$new(
+  values = cor_mat[lower.tri(cor_mat)],
+  features = sprintf("gene_%i", 1:4),
+  shift = TRUE
+)
+object$get_data_table(.verbose = FALSE)
+#>    feature_a feature_b         sim
+#>       <char>    <char>       <num>
+#> 1:    gene_1    gene_2  0.43694936
+#> 2:    gene_1    gene_3  0.04324370
+#> 3:    gene_1    gene_4 -0.03960938
+#> 4:    gene_2    gene_3  0.03976509
+#> 5:    gene_2    gene_4 -0.06555478
+#> 6:    gene_3    gene_4  0.33289052
+dim(object$get_sym_matrix(.verbose = FALSE))
+#> [1] 4 4
+```

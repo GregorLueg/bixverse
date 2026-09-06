@@ -9,7 +9,7 @@ long format, ready for stacked (one gene per row) violin plots."><meta property=
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -147,6 +147,27 @@ long format, ready for stacked (one gene per row) violin plots.</p>
 <code>gene</code> is an ordered factor following <code>features</code>.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># long format expression grouped by cell type</span></span></span>
+<span class="r-in"><span><span class="va">sc</span> <span class="op">&lt;-</span> <span class="fu"><a href="demo_single_cells.html">demo_single_cells</a></span><span class="op">(</span>prepped <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">extract_gene_violin_data</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">sc</span>,</span></span>
+<span class="r-in"><span>  features <span class="op">=</span> <span class="fu"><a href="get_gene_names.html">get_gene_names</a></span><span class="op">(</span><span class="va">sc</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">2</span><span class="op">]</span>,</span></span>
+<span class="r-in"><span>  grouping_variable <span class="op">=</span> <span class="st">"cell_grp"</span></span></span>
+<span class="r-in"><span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     cell_id       group    gene expression</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      &lt;char&gt;      &lt;fctr&gt;  &lt;fctr&gt;      &lt;num&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1: cell_001 cell_type_1 gene_01   6.222656</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2: cell_002 cell_type_2 gene_01   4.113281</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3: cell_003 cell_type_3 gene_01   4.300781</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4: cell_004 cell_type_1 gene_01   5.757812</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5: cell_005 cell_type_2 gene_01   0.000000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6: cell_006 cell_type_3 gene_01   0.000000</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">sc</span><span class="op">@</span><span class="va">dir_data</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span>, force <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

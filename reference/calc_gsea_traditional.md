@@ -71,3 +71,22 @@ A data.table with the results from the GSEA with the following columns:
 - leading_edge - List of character vectors with the leading edge genes.
 
 - fdr - Float. The adjusted pval.
+
+## Examples
+
+``` r
+# permutation GSEA against a signature with one enriched set
+set.seed(42L)
+stats <- stats::setNames(rnorm(500), sprintf("gene_%03i", 1:500))
+stats[1:20] <- stats[1:20] + 2
+pathways <- list(
+  up_set = sprintf("gene_%03i", 1:20),
+  random_set = sprintf("gene_%03i", 200:240)
+)
+res <- calc_gsea_traditional(stats, pathways, nperm = 1000L)
+res[, c("pathway_name", "es", "pvals")]
+#>    pathway_name         es       pvals
+#>          <char>      <num>       <num>
+#> 1:       up_set  0.9045609 0.001709402
+#> 2:   random_set -0.2135723 0.842666667
+```

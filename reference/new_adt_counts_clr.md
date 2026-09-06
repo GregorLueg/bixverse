@@ -45,3 +45,19 @@ new_adt_counts_clr(
 ## Value
 
 `ADTCounts` that contains the raw and normalised ADT counts.
+
+## Examples
+
+``` r
+# CLR normalisation of synthetic ADT counts
+adt <- generate_single_cell_test_data_adt()
+cell_info <- stats::setNames(
+  seq_len(nrow(adt$counts)),
+  rownames(adt$counts)
+)
+new_adt_counts_clr(adt$counts, cell_info = cell_info)
+#> ADTCounts
+#>   Cells:     1000 
+#>   Proteins:  15 
+#>   Type:      CLR 
+```

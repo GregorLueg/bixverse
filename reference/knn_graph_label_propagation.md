@@ -50,3 +50,15 @@ A list with the following elements:
 - `assignment_probs` - Matrix with the assignment probabilities.
 
 - `final_labels` - Final labels in the graph.
+
+## Examples
+
+``` r
+# spread two labels through a five node kNN graph
+from <- as.integer(c(1, 1, 2, 3, 4))
+to <- as.integer(c(2, 3, 3, 4, 5))
+labels <- c("A", NA, "B", NA, NA)
+res <- knn_graph_label_propagation(from = from, to = to, labels = labels)
+res$final_labels
+#> [1] "A" "B" "B" "B" "B"
+```

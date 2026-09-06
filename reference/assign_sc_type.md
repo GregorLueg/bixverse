@@ -59,3 +59,27 @@ An `ScTypeCellResults` results class.
 ## References
 
 Ianevski et al., Nat Comm, 2022. Zhou et al., NIPS, 2004.
+
+## Examples
+
+``` r
+# per cell calls from the ScType scores
+sc <- demo_single_cells()
+markers <- data.table::data.table(
+  cell_type = rep(sprintf("cell_type_%i", 1:3), each = 10),
+  gene_id = sprintf("gene_%02d", 1:30)
+)
+cell_markers <- prepare_cell_markers(obj = sc, marker_df = markers)
+scores <- calc_sc_type_scores(
+  sc,
+  cell_marker_list = cell_markers,
+  .verbose = FALSE
+)
+res <- assign_sc_type(sc, sc_type_res = scores, .verbose = FALSE)
+table(res$assignments)
+#> 
+#> cell_type_1 cell_type_2 cell_type_3 
+#>         167         166         167 
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

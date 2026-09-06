@@ -101,3 +101,28 @@ A list with:
 ## References
 
 Burkhardt, et al. Nat. Biotechnol., 2021.
+
+## Examples
+
+``` r
+# per cell sample likelihoods over the kNN graph
+sc <- demo_single_cells(
+  syn_data_params = params_sc_synthetic_data(
+    n_cells = 500L,
+    n_genes = 50L,
+    n_samples = 6L,
+    sample_bias = "even"
+  )
+)
+res <- meld_sc(sc, sample_id_col = "sample_id", .verbose = FALSE)
+head(res$norm_scores[, 1:3])
+#>           sample_1  sample_2  sample_3
+#> cell_001 0.1588948 0.1845288 0.1803174
+#> cell_002 0.1761598 0.1402652 0.1614138
+#> cell_003 0.1657891 0.1734398 0.1571076
+#> cell_004 0.1586567 0.1845500 0.1815831
+#> cell_005 0.1730026 0.1480341 0.1651779
+#> cell_006 0.1658959 0.1731794 0.1563808
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

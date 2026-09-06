@@ -59,3 +59,16 @@ Returns the `BulkCoExp` class for further operations.
 - final_results:
 
   A data.table that will contain the final results.
+
+## Examples
+
+``` r
+# co-expression class over synthetic bulk counts (samples x genes)
+syn <- synthetic_bulk_cor_matrix()
+mat <- log1p(t(syn$counts))
+meta <- data.table::data.table(sample_id = rownames(mat))
+object <- BulkCoExp(raw_data = mat, meta_data = meta)
+object
+#> Bulk co-expression module class (BulkCoExp).
+#>  Pre-processing done: FALSE.
+```

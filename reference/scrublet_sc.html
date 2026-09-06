@@ -21,7 +21,7 @@ data is a doublet. For more details, please check the publication."><meta proper
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -209,6 +209,29 @@ doublets.</p></li>
     <p>Wollock, et al., Cell Syst, 2020</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># simulated doublet scoring on 500 synthetic cells</span></span></span>
+<span class="r-in"><span><span class="va">sc</span> <span class="op">&lt;-</span> <span class="fu"><a href="demo_single_cells.html">demo_single_cells</a></span><span class="op">(</span>prepped <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">scrublet_sc</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">sc</span>,</span></span>
+<span class="r-in"><span>  scrublet_params <span class="op">=</span> <span class="fu"><a href="params_scrublet.html">params_scrublet</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    pca <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>no_pcs <span class="op">=</span> <span class="fl">10L</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>    hvg <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>min_gene_var_pctl <span class="op">=</span> <span class="fl">0.0</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>    n_bins <span class="op">=</span> <span class="fl">20L</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span>,</span></span>
+<span class="r-in"><span>  .verbose <span class="op">=</span> <span class="cn">FALSE</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ScrubletRes: 500 cells, 36 doublets (7.2%)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Threshold:              0.1215</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Detected doublet rate:  7.2%</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Detectable fraction:    97.7%</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Overall doublet rate:   7.4%</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Simulated doublets:     750</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">sc</span><span class="op">@</span><span class="va">dir_data</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span>, force <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

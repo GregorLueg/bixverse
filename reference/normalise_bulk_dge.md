@@ -57,3 +57,27 @@ normalise_bulk_dge(
 
 Returns the class with the `processed_data` data slot populated and
 applied parameters added to the `params` slot.
+
+## Examples
+
+``` r
+# TMM library size normalisation followed by voom
+syn <- synthetic_bulk_cor_matrix()
+meta <- data.table::data.table(
+  sample_id = colnames(syn$counts),
+  case_control = rep(c("case", "control"), each = 50)
+)
+object <- BulkDge(raw_counts = syn$counts, meta_data = meta)
+object <- qc_bulk_dge(object, group_col = "case_control", .verbose = FALSE)
+object <- normalise_bulk_dge(
+  object,
+  group_col = "case_control",
+  .verbose = FALSE
+)
+#> calcNormFactors has been renamed to normLibSizes
+get_outputs(object)$normalised_counts[1:3, 1:3]
+#>        sample_1 sample_10 sample_100
+#> gene_1 9.529540  8.997354   8.994702
+#> gene_2 4.848276  4.259485   6.473063
+#> gene_3 6.473063  6.061875   9.555580
+```

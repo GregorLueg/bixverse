@@ -13,7 +13,7 @@ can control the parameters of ICA via ica_params.'><meta property="og:image" con
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -157,6 +157,30 @@ Should be between 1 to 2.</p></li>
 <li><p>converged Boolean indicating if algorithm converged.</p></li>
 </ul></div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># same run, but with the whitening done up front</span></span></span>
+<span class="r-in"><span><span class="va">sources</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Trig.html" class="external-link">sin</a></span><span class="op">(</span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">1000</span><span class="op">)</span> <span class="op">/</span> <span class="fl">20</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="op">(</span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">200</span><span class="op">)</span> <span class="op">-</span> <span class="fl">100</span><span class="op">)</span> <span class="op">/</span> <span class="fl">100</span>, <span class="fl">5</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">mixed</span> <span class="op">&lt;-</span> <span class="va">sources</span> <span class="op"><a href="https://rdrr.io/r/base/matmult.html" class="external-link">%*%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.291</span>, <span class="fl">0.6557</span>, <span class="op">-</span><span class="fl">0.5439</span>, <span class="fl">0.5572</span><span class="op">)</span>, <span class="fl">2</span>, <span class="fl">2</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">whitened</span> <span class="op">&lt;-</span> <span class="fu"><a href="rs_prepare_whitening.html">rs_prepare_whitening</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  x <span class="op">=</span> <span class="va">mixed</span>,</span></span>
+<span class="r-in"><span>  fast_svd <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
+<span class="r-in"><span>  seed <span class="op">=</span> <span class="fl">42L</span>,</span></span>
+<span class="r-in"><span>  rank <span class="op">=</span> <span class="cn">NULL</span>,</span></span>
+<span class="r-in"><span>  oversampling <span class="op">=</span> <span class="cn">NULL</span>,</span></span>
+<span class="r-in"><span>  n_power_iter <span class="op">=</span> <span class="cn">NULL</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">ica_res</span> <span class="op">&lt;-</span> <span class="fu">fast_ica_rust_helper</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  X <span class="op">=</span> <span class="va">whitened</span><span class="op">$</span><span class="va">x</span>,</span></span>
+<span class="r-in"><span>  K <span class="op">=</span> <span class="va">whitened</span><span class="op">$</span><span class="va">k</span>,</span></span>
+<span class="r-in"><span>  n_icas <span class="op">=</span> <span class="fl">2L</span>,</span></span>
+<span class="r-in"><span>  ica_fun <span class="op">=</span> <span class="st">"logcosh"</span>,</span></span>
+<span class="r-in"><span>  seed <span class="op">=</span> <span class="fl">42L</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">ica_res</span><span class="op">$</span><span class="va">S</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1]    2 1000</span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

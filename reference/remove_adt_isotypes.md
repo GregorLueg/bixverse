@@ -22,3 +22,12 @@ remove_adt_isotypes(feature_names, pattern = "isotype")
 ## Value
 
 Character vector of ADT features, but anything with `"isotype"`.
+
+## Examples
+
+``` r
+# the same features with the isotype controls dropped
+features <- c("CD3", "CD19", "IgG1_isotype", "IgG2a_isotype")
+remove_adt_isotypes(features)
+#> [1] "CD3"  "CD19"
+```

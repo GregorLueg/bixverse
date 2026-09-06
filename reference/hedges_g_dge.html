@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -119,7 +119,7 @@ will be tested if <code>contrast_list</code> is <code>NULL</code>.</p></dd>
 
 
 <dt id="arg-normalised-counts">normalised_counts<a class="anchor" aria-label="anchor" href="#arg-normalised-counts"></a></dt>
-<dd><p>Numeric Matrix. The normalized count matrix.</p></dd>
+<dd><p>Numeric Matrix. The normalised count matrix.</p></dd>
 
 
 <dt id="arg-contrast-list">contrast_list<a class="anchor" aria-label="anchor" href="#arg-contrast-list"></a></dt>
@@ -138,6 +138,32 @@ contrasts automatically.</p></dd>
 Hedge's G effect size for the groups.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Hedge's G on log CPM counts for the case vs control contrast</span></span></span>
+<span class="r-in"><span><span class="va">syn</span> <span class="op">&lt;-</span> <span class="fu"><a href="synthetic_bulk_cor_matrix.html">synthetic_bulk_cor_matrix</a></span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">meta</span> <span class="op">&lt;-</span> <span class="fu">data.table</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/data.table/man/data.table.html" class="external-link">data.table</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  sample_id <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">syn</span><span class="op">$</span><span class="va">counts</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  case_control <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"case"</span>, <span class="st">"control"</span><span class="op">)</span>, each <span class="op">=</span> <span class="fl">50</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">norm_counts</span> <span class="op">&lt;-</span> <span class="fu">edgeR</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/edgeR/man/cpm.html" class="external-link">cpm</a></span><span class="op">(</span><span class="va">syn</span><span class="op">$</span><span class="va">counts</span>, log <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu">hedges_g_dge</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  meta_data <span class="op">=</span> <span class="va">meta</span>,</span></span>
+<span class="r-in"><span>  main_contrast <span class="op">=</span> <span class="st">"case_control"</span>,</span></span>
+<span class="r-in"><span>  normalised_counts <span class="op">=</span> <span class="va">norm_counts</span>,</span></span>
+<span class="r-in"><span>  .verbose <span class="op">=</span> <span class="cn">FALSE</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    effect_sizes standard_errors gene_id     combination</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>           &lt;num&gt;           &lt;num&gt;  &lt;char&gt;          &lt;char&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1:   -0.5265904       0.2034367  gene_1 case_vs_control</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2:   -0.2279491       0.2006485  gene_2 case_vs_control</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3:   -0.4553987       0.2025758  gene_3 case_vs_control</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4:   -0.4393655       0.2023986  gene_4 case_vs_control</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5:   -0.3488589       0.2015155  gene_5 case_vs_control</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6:   -0.4848591       0.2029173  gene_6 case_vs_control</span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

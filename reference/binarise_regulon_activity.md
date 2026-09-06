@@ -55,3 +55,20 @@ A list with:
 ## References
 
 Aibar, et al., Nat Methods, 2017
+
+## Examples
+
+``` r
+# on/off calls for a bimodal and a unimodal regulon
+set.seed(7L)
+auc <- cbind(
+  regulon_a = c(rnorm(50, 0.1, 0.02), rnorm(50, 0.4, 0.02)),
+  regulon_b = rnorm(100, 0.2, 0.05)
+)
+rownames(auc) <- sprintf("cell_%i", 1:100)
+binarise_regulon_activity(auc, .verbose = FALSE)$thresholds
+#>      regulon threshold bimodal n_cells_on
+#>       <char>     <num>  <lgcl>      <num>
+#> 1: regulon_a 0.2536428    TRUE         50
+#> 2: regulon_b 0.3014215   FALSE          2
+```

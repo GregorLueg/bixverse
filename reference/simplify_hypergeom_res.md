@@ -39,3 +39,27 @@ simplify_hypergeom_res(res, parent_child_dt, weights, min_sim = 0.7)
 ## Value
 
 data.table with enrichment results.
+
+## Examples
+
+``` r
+# collapse redundant terms of a toy ontology by Wang similarity
+onto <- data.table::data.table(
+  parent = c("a", "b", "b", "c"),
+  child = c("b", "c", "d", "e"),
+  type = c("is_a", "is_a", "part_of", "is_a")
+)
+res <- data.table::data.table(
+  gene_set_name = c("b", "c", "d", "e"),
+  fdr = c(0.001, 0.001, 0.4, 0.02)
+)
+simplify_hypergeom_res(
+  res,
+  onto,
+  weights = c("is_a" = 0.8, "part_of" = 0.6),
+  min_sim = 0.6
+)
+#>    gene_set_name   fdr
+#>           <char> <num>
+#> 1:             e  0.02
+```

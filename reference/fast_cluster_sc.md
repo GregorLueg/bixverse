@@ -112,3 +112,27 @@ fast_cluster_sc(
   Resolutions used.
 
 with `cell_indices` stored as an attribute (0-indexed).
+
+## Examples
+
+``` r
+# k-means centroids, Louvain on top, memberships back to the cells
+sc <- demo_single_cells()
+res <- fast_cluster_sc(
+  sc,
+  resolutions = c(1.0, 0.5),
+  n_centroids = 30L,
+  .verbose = FALSE
+)
+head(get_data(res))
+#>    cell_idx res_1 res_0.5
+#>       <int> <int>   <int>
+#> 1:        1     2       2
+#> 2:        2     0       0
+#> 3:        3     1       1
+#> 4:        4     2       2
+#> 5:        5     0       0
+#> 6:        6     1       1
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

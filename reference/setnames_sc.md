@@ -31,3 +31,15 @@ setnames_sc(object, table = c("obs", "var"), old, new)
 ## Value
 
 Invisible self
+
+## Examples
+
+``` r
+# rename a column in the obs table
+sc <- demo_single_cells(prepped = FALSE)
+sc <- setnames_sc(sc, table = "obs", old = "cell_grp", new = "cell_type")
+head(get_sc_obs(sc)$cell_type, 3)
+#> [1] "cell_type_1" "cell_type_2" "cell_type_3"
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

@@ -7,12 +7,6 @@ implemented in `bixverse`.
 
 ``` r
 
-if (!requireNamespace("fgsea", quietly = TRUE)) {
-  BiocManager::install("fgsea")
-}
-if (!requireNamespace("msigdbr", quietly = TRUE)) {
-  install.packages("msigdbr")
-}
 library(bixverse)
 library(data.table)
 #> 
@@ -214,7 +208,7 @@ rs_results_example <- gse_hypergeometric_list(
   gene_set_list = gene_sets
 )
 tictoc::toc()
-#> 1.8 sec elapsed
+#> 1.168 sec elapsed
 ```
 
 ## Gene Ontology-aware enrichment: the elimination method
@@ -241,10 +235,6 @@ traversal.
 go_data_dt <- get_go_data_human()
 #> Loading the data from the package.
 #> Processing data for the gene_ontology class.
-#> Warning: The `father` argument of `dfs()` is deprecated as of igraph 2.2.0.
-#> ℹ Please use the `parent` argument instead.
-#> ℹ The deprecated feature was likely used in the bixverse package.
-#>   Please report the issue to the authors.
 
 go_data_s7 <- GeneOntologyElim(go_data_dt, min_genes = 3L)
 ```
@@ -343,7 +333,7 @@ rs_results_example <- gse_go_elim_method_list(
   target_gene_list = go_target_gene_sets
 )
 tictoc::toc()
-#> 1.932 sec elapsed
+#> 1.271 sec elapsed
 ```
 
 ## Alternative: post-hoc simplification of GO results
@@ -563,8 +553,8 @@ microbenchmark::microbenchmark(
 )
 #> Unit: seconds
 #>   expr      min       lq     mean   median       uq      max neval
-#>  fgsea 3.111818 3.276709 3.512882 3.566832 3.647523 3.961526     5
-#>   rust 2.281162 2.311332 2.305926 2.311897 2.311937 2.313301     5
+#>  fgsea 2.209884 2.339467 2.495893 2.518937 2.536158 2.875021     5
+#>   rust 1.462361 1.467389 1.474873 1.472826 1.475919 1.495869     5
 ```
 
 ## blitzGSEA
@@ -613,7 +603,8 @@ head(bixverse_blitz)
 #> 6:  66336,66977,107995,66442,52276,67629,...[51]
 ```
 
-Does the approximation hold up against the permutations?
+Does the approximation hold up against the permutations + multi-level
+approach from fgsea?
 
 ``` r
 
@@ -634,7 +625,8 @@ plot(
 
 ![](gse_methods_files/figure-html/blitzgsea%20vs%20fgsea%20p-value%20comparison-1.png)
 
-Overall good correlation between the two.
+Overall good correlation between the two. Pathways called significant in
+one are likely to be called significant in the other.
 
 ### Reusing the null model
 
@@ -689,10 +681,10 @@ microbenchmark::microbenchmark(
   times = 5L
 )
 #> Unit: milliseconds
-#>        expr        min         lq       mean     median         uq       max
-#>       fgsea 2293.99362 2297.49294 2298.88581 2300.01519 2301.35131 2301.5760
-#>  blitz_cold  937.54700  939.56483  944.47562  941.89034  946.21931  957.1566
-#>  blitz_warm   13.37099   14.21344   14.80025   14.68046   15.27607   16.4603
+#>        expr        min         lq      mean     median         uq       max
+#>       fgsea 1439.09966 1465.74932 1492.9116 1469.84666 1536.48756 1553.3750
+#>  blitz_cold  642.36221  644.98215  647.1558  645.63802  649.71179  653.0848
+#>  blitz_warm   10.95529   12.67466   12.5824   12.73331   12.86415   13.6846
 #>  neval
 #>      5
 #>      5

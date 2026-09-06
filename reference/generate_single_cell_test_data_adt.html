@@ -15,7 +15,7 @@ n_cells, number of cell types and n_batches."><meta property="og:image" content=
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -142,6 +142,20 @@ effect to add.</p></li>
 <li><p>var - data.table that contains the protein information.</p></li>
 </ul></div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># synthetic ADT counts, cell-for-cell with the RNA generator</span></span></span>
+<span class="r-in"><span><span class="va">adt</span> <span class="op">&lt;-</span> <span class="fu">generate_single_cell_test_data_adt</span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">adt</span><span class="op">$</span><span class="va">counts</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1000   15</span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">adt</span><span class="op">$</span><span class="va">var</span>, <span class="fl">3</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    protein_id is_isotype</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>        &lt;char&gt;     &lt;lgcl&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1: protein_01      FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2: protein_02      FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3: protein_03      FALSE</span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

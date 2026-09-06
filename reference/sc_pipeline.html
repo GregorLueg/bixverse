@@ -11,7 +11,7 @@ inspected via pipeline$steps."><meta property="og:image" content="https://gregor
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -108,6 +108,17 @@ inspected via <code>pipeline$steps</code>.</p>
     <p>An empty <code>ScPipeline</code> object.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># an empty container, filled with `%&gt;&gt;%`</span></span></span>
+<span class="r-in"><span><span class="fu">sc_pipeline</span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="grapes-greater-than-greater-than-grapes.html">%&gt;&gt;%</a></span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="step_hvg_sc.html">step_hvg_sc</a></span><span class="op">(</span>hvg_no <span class="op">=</span> <span class="fl">30L</span><span class="op">)</span> <span class="op"><a href="grapes-greater-than-greater-than-grapes.html">%&gt;&gt;%</a></span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="step_pca_sc.html">step_pca_sc</a></span><span class="op">(</span>no_pcs <span class="op">=</span> <span class="fl">10L</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;ScPipeline&gt; 2 steps</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   1. hvg  hvg_no = 30L, hvg_params = &lt;list&gt;, streaming = NULL, .verbose = TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   2. pca  no_pcs = 10L, pca_params = &lt;list&gt;, sparse_svd = FALSE, hvg = NULL, seed = 42L, .verbose = TRUE</span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

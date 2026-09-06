@@ -42,3 +42,21 @@ diffcor_module_processing(
 ## Value
 
 The class with added data to the properties for subsequent usage.
+
+## Examples
+
+``` r
+# differential correlation of two sample groups of the same matrix
+sig <- synthetic_signal_matrix()
+mat <- t(sig$mat)
+target <- mat[sig$group %in% c("group1", "group2"), ]
+background <- mat[sig$group == "group3", ]
+meta <- data.table::data.table(sample_id = rownames(target))
+obj <- BulkCoExp(target, meta)
+obj <- preprocess_bulk_coexp(obj, hvg = 0.3, .verbose = FALSE)
+obj <- diffcor_module_processing(
+  obj, background, cor_method = "pearson", .verbose = FALSE
+)
+obj@params$correlation_params$no_intersecting_features
+#> [1] 300
+```

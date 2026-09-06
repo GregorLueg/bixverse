@@ -30,3 +30,15 @@ get_hvg(x)
 ## Value
 
 Indices of the stored HVG genes.
+
+## Examples
+
+``` r
+# stored 0-based, so map them back through the gene names
+sc <- demo_single_cells()
+get_gene_names_from_idx(sc, head(get_hvg(sc), 3))
+#>        43        18         4 
+#> "gene_44" "gene_19" "gene_05" 
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

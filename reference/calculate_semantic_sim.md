@@ -45,3 +45,26 @@ calculate_semantic_sim(
 ## Value
 
 A data.table with the calculated similarities.
+
+## Examples
+
+``` r
+# Lin similarity for a subset of terms only
+onto <- data.table::data.table(
+  parent = c("a", "b", "b", "b", "c"),
+  child = c("b", "c", "d", "e", "f")
+)
+ancestry <- get_ontology_ancestry(onto)
+ic <- calculate_information_content(ancestry$descendants)
+calculate_semantic_sim(
+  terms = c("c", "d", "f"),
+  similarity_type = "lin",
+  ancestor_list = ancestry$ancestors,
+  ic_list = ic
+)
+#>     term1  term2      sims
+#>    <char> <char>     <num>
+#> 1:      c      d 0.1261579
+#> 2:      c      f 0.7601875
+#> 3:      d      f 0.1017556
+```

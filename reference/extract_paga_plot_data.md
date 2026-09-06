@@ -95,3 +95,20 @@ A list with the embedding stored as an `embedding` attribute and
 ## References
 
 Wolf, et al., Genome Biol., 2019.
+
+## Examples
+
+``` r
+# the abstracted graph placed on the PCA coordinates
+sc <- demo_single_cells()
+sc <- find_clusters_sc(sc, res = 1.0)
+paga <- run_paga_sc(sc, cluster_col = "leiden_clustering", .verbose = FALSE)
+extract_paga_plot_data(sc, paga, embedding = "pca")$nodes
+#>    cluster      dim_1      dim_2 n_cells
+#>     <fctr>      <num>      <num>   <int>
+#> 1:       0  0.3627222  2.5498254     169
+#> 2:       1 -2.6148999 -0.9278136     166
+#> 3:       2  2.3032472 -1.4784771     165
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

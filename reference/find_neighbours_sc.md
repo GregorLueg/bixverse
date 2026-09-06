@@ -102,3 +102,21 @@ find_neighbours_sc(
 ## Value
 
 The object with added KNN matrix.
+
+## Examples
+
+``` r
+# kNN and the sNN graph on top of the PCA
+sc <- demo_single_cells(prepped = FALSE)
+sc <- find_hvg_sc(sc, hvg_no = 30L, .verbose = FALSE)
+sc <- calculate_pca_sc(sc, no_pcs = 10L, .verbose = FALSE)
+sc <- find_neighbours_sc(
+  sc,
+  neighbours_params = params_sc_neighbours(knn = list(k = 15L)),
+  .verbose = FALSE
+)
+dim(get_knn_mat(sc))
+#> [1] 500  15
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

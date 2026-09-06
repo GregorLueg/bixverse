@@ -38,3 +38,14 @@ get_gene_indices(x, gene_ids, rust_index)
 ## Value
 
 The indices of the genes
+
+## Examples
+
+``` r
+# R-based positions of two genes
+sc <- demo_single_cells(prepped = FALSE)
+get_gene_indices(sc, c("gene_01", "gene_02"), rust_index = FALSE)
+#> [1] 1 2
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

@@ -15,7 +15,7 @@ clusters (stability) says how much they agreed."><meta property="og:image" conte
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -197,6 +197,32 @@ few restarts the filter is jumpy, so either raise <code>n_runs</code> or set
     <p>Kotliar et al., eLife, 2019</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># ten restarts pooled, density filter off on data this small</span></span></span>
+<span class="r-in"><span><span class="va">sc</span> <span class="op">&lt;-</span> <span class="fu"><a href="demo_single_cells.html">demo_single_cells</a></span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu">consensus_nmf_sc</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">sc</span>,</span></span>
+<span class="r-in"><span>  k <span class="op">=</span> <span class="fl">3L</span>,</span></span>
+<span class="r-in"><span>  n_runs <span class="op">=</span> <span class="fl">10L</span>,</span></span>
+<span class="r-in"><span>  nmf_consensus_params <span class="op">=</span> <span class="fu"><a href="params_nmf_consensus.html">params_nmf_consensus</a></span><span class="op">(</span>density_threshold <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  .verbose <span class="op">=</span> <span class="cn">FALSE</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">res</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ConsensusNmfResult (consensus HALS NMF)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Source class:     SingleCells</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   No genes:         30</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   No cells:         500</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   No components:    3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   No runs:          10</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Stability:        0.9944</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Relative error:   0.2518</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Dropped:          0 / 30 components</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Preprocessing:    none</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">sc</span><span class="op">@</span><span class="va">dir_data</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span>, force <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

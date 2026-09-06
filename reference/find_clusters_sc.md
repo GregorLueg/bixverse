@@ -50,3 +50,17 @@ find_clusters_sc(
 ## Value
 
 The object with added clustering in the obs table.
+
+## Examples
+
+``` r
+# Leiden on the cached sNN graph
+sc <- demo_single_cells()
+sc <- find_clusters_sc(sc, res = 1.0, name = "clusters")
+table(get_sc_obs(sc)$clusters)
+#> 
+#>   0   1   2 
+#> 169 166 165 
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

@@ -47,3 +47,20 @@ List with the following items
 - obs - data.table that contains the cell information.
 
 - var - data.table that contains the var information.
+
+## Examples
+
+``` r
+# a small synthetic experiment with three planted cell types
+data <- generate_single_cell_test_data(
+  syn_data_params = params_sc_synthetic_data(n_cells = 200L, n_genes = 40L)
+)
+dim(data$counts)
+#> [1] 200  40
+head(data$obs, 3)
+#>     cell_id    cell_grp batch_index
+#>      <char>      <char>       <num>
+#> 1: cell_001 cell_type_1           1
+#> 2: cell_002 cell_type_2           1
+#> 3: cell_003 cell_type_3           1
+```

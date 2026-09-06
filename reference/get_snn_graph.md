@@ -34,3 +34,14 @@ get_snn_graph(x, ...)
 ## Value
 
 The igraph that has the shared nearest neighbours.
+
+## Examples
+
+``` r
+# the sNN graph the clustering methods run on
+sc <- demo_single_cells()
+igraph::vcount(get_snn_graph(sc))
+#> [1] 500
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+```

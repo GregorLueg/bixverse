@@ -13,7 +13,7 @@ flattened out, then run consensus_nmf_sc() there."><meta property="og:image" con
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -190,6 +190,38 @@ themselves are not free, so keep both modest on a first pass.</p>
     <p>Kotliar et al., eLife, 2019</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># stability against reconstruction error across three ranks</span></span></span>
+<span class="r-in"><span><span class="va">sc</span> <span class="op">&lt;-</span> <span class="fu"><a href="demo_single_cells.html">demo_single_cells</a></span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu">nmf_k_sweep_sc</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">sc</span>,</span></span>
+<span class="r-in"><span>  k_range <span class="op">=</span> <span class="fl">2</span><span class="op">:</span><span class="fl">4</span>,</span></span>
+<span class="r-in"><span>  n_runs <span class="op">=</span> <span class="fl">5L</span>,</span></span>
+<span class="r-in"><span>  nmf_consensus_params <span class="op">=</span> <span class="fu"><a href="params_nmf_consensus.html">params_nmf_consensus</a></span><span class="op">(</span>density_threshold <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  .verbose <span class="op">=</span> <span class="cn">FALSE</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">res</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> NmfKSweepResult (consensus NMF k sweep)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Source class:     SingleCells</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   k range:          2 to 4</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   No runs per k:    5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Most stable k:    3 (stability = 0.9944)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>        k stability best_error median_error consensus_failed n_dropped</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    &lt;int&gt;     &lt;num&gt;      &lt;num&gt;        &lt;num&gt;           &lt;lgcl&gt;     &lt;int&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1:     2 0.9943518  0.2972628    0.2973181            FALSE         0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2:     3 0.9944324  0.2518355    0.2518508            FALSE         0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3:     4 0.9003837  0.2320080    0.2320648            FALSE         0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    n_empty_clusters n_converged</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>               &lt;int&gt;       &lt;int&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1:                0           5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2:                0           5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3:                0           5</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">sc</span><span class="op">@</span><span class="va">dir_data</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span>, force <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 
