@@ -457,7 +457,8 @@ plot(
 )
 ```
 
-Overall good correlation between the two.
+Overall good correlation between the two. Pathways called significant in one are
+likely to be called significant in the other.
 
 ### Reusing the null model
 
