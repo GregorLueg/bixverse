@@ -25,6 +25,16 @@
 #' @returns Returns the class for subsequent usage.
 #'
 #' @export
+#'
+#' @examples
+#' \donttest{
+#' # human GO restricted to terms with at least 25 genes
+#' go_obj <- GeneOntologyElim(
+#'   get_go_data_human(.verbose = FALSE),
+#'   min_genes = 25L
+#' )
+#' go_obj
+#' }
 GeneOntologyElim <- S7::new_class(
   # Names, parents
   name = "GeneOntologyElim",
@@ -125,6 +135,15 @@ S7::method(print, GeneOntologyElim) <- function(x, ...) {
 #' @returns Returns the class for subsequent usage.
 #'
 #' @export
+#'
+#' @examples
+#' # wrap a toy parent-child ontology into the class
+#' onto <- data.table::data.table(
+#'   parent = c("a", "b", "b", "b", "c"),
+#'   child = c("b", "c", "d", "e", "f"),
+#'   type = c("part_of", "part_of", "part_of", "is_a", "is_a")
+#' )
+#' OntologySim(onto, .verbose = FALSE)
 OntologySim <- S7::new_class(
   # Names, parents
   parent = BixverseBaseClass,
@@ -196,6 +215,21 @@ S7::method(print, OntologySim) <- function(x, ...) {
 #' @returns Returns the semantic similarity data.table from the class
 #'
 #' @export
+#'
+#' @examples
+#' # the Wang similarity matrix back out of the class
+#' onto <- data.table::data.table(
+#'   parent = c("a", "b", "b", "b", "c"),
+#'   child = c("b", "c", "d", "e", "f"),
+#'   type = c("part_of", "part_of", "part_of", "is_a", "is_a")
+#' )
+#' onto_obj <- OntologySim(onto, .verbose = FALSE)
+#' onto_obj <- calculate_wang_sim_onto(
+#'   onto_obj,
+#'   weights = c(part_of = 0.8, is_a = 0.6),
+#'   .verbose = FALSE
+#' )
+#' round(get_sim_matrix(onto_obj, .verbose = FALSE), 3)
 get_sim_matrix <- S7::new_generic(
   name = "get_semantic_similarities",
   dispatch_args = "object",

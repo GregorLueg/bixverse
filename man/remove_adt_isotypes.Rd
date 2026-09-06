@@ -18,3 +18,8 @@ Character vector of ADT features, but anything with \code{"isotype"}.
 \description{
 Return the ADT feature names removing the isotypes
 }
+\examples{
+# the same features with the isotype controls dropped
+features <- c("CD3", "CD19", "IgG1_isotype", "IgG2a_isotype")
+remove_adt_isotypes(features)
+}

@@ -34,3 +34,23 @@ the gene universe as the union of all symbols across both networks, remaps to
 0-indexed integer node IDs for the Rust side, and wraps the resulting matrix
 in a \code{LigandTargetInfluence} object.
 }
+\examples{
+# two disjoint signalling components over a toy network
+ppi <- data.table::data.table(
+  from = c("L1", "SIG1", "L2", "SIG2"),
+  to = c("SIG1", "TF1", "SIG2", "TF2"),
+  weight = 1.0
+)
+grn <- data.table::data.table(
+  from = rep(c("TF1", "TF2"), each = 3),
+  to = c("G1", "G2", "G3", "G4", "G5", "G6"),
+  weight = 1.0
+)
+inf <- generate_ligand_target_influence(
+  ligand_seeds = list(L1 = "L1", L2 = "L2"),
+  ppi_network = ppi,
+  grn_network = grn,
+  params = params_ligand_target(ltf_cutoff = 0)
+)
+inf
+}

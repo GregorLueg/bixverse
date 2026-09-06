@@ -20,3 +20,7 @@ applying the RBF function.
 This function plots the distance to affinity relationship after applying
 a given radial basis function (RBF) with a given epsilon value.
 }
+\examples{
+# distance to affinity under a Gaussian RBF with epsilon 2
+plot_rbf_impact(rbf_type = "gaussian", epsilon = 2)
+}

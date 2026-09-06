@@ -32,6 +32,14 @@
 #' }
 #'
 #' @export
+#'
+#' @examples
+#' # a small synthetic experiment with three planted cell types
+#' data <- generate_single_cell_test_data(
+#'   syn_data_params = params_sc_synthetic_data(n_cells = 200L, n_genes = 40L)
+#' )
+#' dim(data$counts)
+#' head(data$obs, 3)
 generate_single_cell_test_data <- function(
   syn_data_params = params_sc_synthetic_data(),
   seed = 42L
@@ -116,6 +124,8 @@ generate_single_cell_test_data <- function(
     obs = obs,
     var = var
   )
+
+  res
 }
 
 ### dialogue -------------------------------------------------------------------
@@ -162,6 +172,12 @@ generate_single_cell_test_data <- function(
 #' @references Jerby-Arnon & Regev, Nature Biotechnology, 2022
 #'
 #' @export
+#'
+#' @examples
+#' # synthetic data with a multicellular programme planted across samples
+#' data <- generate_dialogue_test_data()
+#' names(data$features)
+#' head(data$planted[[1]])
 generate_dialogue_test_data <- function(
   syn_data_params = params_sc_synthetic_dialogue(),
   seed = 42L
@@ -294,6 +310,12 @@ generate_dialogue_test_data <- function(
 #' @export
 #'
 #' @keywords internal
+#'
+#' @examples
+#' # synthetic ADT counts, cell-for-cell with the RNA generator
+#' adt <- generate_single_cell_test_data_adt()
+#' dim(adt$counts)
+#' head(adt$var, 3)
 generate_single_cell_test_data_adt <- function(
   syn_data_params = params_sc_synthetic_data_adt(),
   seed = 42L
@@ -472,6 +494,17 @@ demo_single_cells <- function(
 #' @returns Returns invisible
 #'
 #' @export
+#'
+#' @examples
+#' # round trip synthetic counts through a sparse h5ad
+#' data <- generate_single_cell_test_data(
+#'   syn_data_params = params_sc_synthetic_data(n_cells = 200L, n_genes = 40L)
+#' )
+#' f_path <- tempfile(fileext = ".h5ad")
+#' write_h5ad_sc(f_path, data$counts, data$obs, data$var, .verbose = FALSE)
+#' get_h5ad_dimensions(f_path)$dims
+#'
+#' unlink(f_path)
 write_h5ad_sc <- function(
   f_path,
   counts,
@@ -568,6 +601,19 @@ write_h5ad_sc <- function(
 #' @returns Returns invisible
 #'
 #' @export
+#'
+#' @examples
+#' # the same data with a dense /X, which reads back as DENSE_ROW
+#' data <- generate_single_cell_test_data(
+#'   syn_data_params = params_sc_synthetic_data(n_cells = 200L, n_genes = 40L)
+#' )
+#' f_path <- tempfile(fileext = ".h5ad")
+#' write_h5ad_sc_dense(
+#'   f_path, data$counts, data$obs, data$var, .verbose = FALSE
+#' )
+#' get_h5ad_dimensions(f_path)$type
+#'
+#' unlink(f_path)
 write_h5ad_sc_dense <- function(
   f_path,
   counts,
@@ -654,6 +700,26 @@ write_h5ad_sc_dense <- function(
 #' @returns Returns invisible
 #'
 #' @export
+#'
+#' @examples
+#' # the 10x trio: an .mtx plus barcode and feature tables
+#' data <- generate_single_cell_test_data(
+#'   syn_data_params = params_sc_synthetic_data(n_cells = 200L, n_genes = 40L)
+#' )
+#' dir_out <- tempfile("cellranger")
+#' dir.create(dir_out, recursive = TRUE)
+#' write_cellranger_output(
+#'   f_path = dir_out,
+#'   counts = data$counts,
+#'   obs = data$obs,
+#'   var = data$var,
+#'   rows = "cells",
+#'   format_type = "csv",
+#'   .verbose = FALSE
+#' )
+#' list.files(dir_out)
+#'
+#' unlink(dir_out, recursive = TRUE, force = TRUE)
 write_cellranger_output <- function(
   f_path,
   counts,
@@ -776,6 +842,25 @@ write_cellranger_output <- function(
 #' @export
 #'
 #' @keywords internal
+#'
+#' @examples
+#' # a CellRanger v3 style h5, ready for load_tenx_h5()
+#' data <- generate_single_cell_test_data(
+#'   syn_data_params = params_sc_synthetic_data(n_cells = 200L, n_genes = 40L)
+#' )
+#' f_path <- tempfile(fileext = ".h5")
+#' write_tenx_h5_sc(
+#'   f_path = f_path,
+#'   counts = data$counts,
+#'   barcodes = data$obs$cell_id,
+#'   features = data.table::data.table(
+#'     id = data$var$gene_id,
+#'     name = data$var$ensembl_id
+#'   )
+#' )
+#' read_tenx_h5_metadata(f_path)$dims
+#'
+#' unlink(f_path)
 write_tenx_h5_sc <- function(
   f_path,
   counts,
@@ -971,6 +1056,13 @@ write_tenx_h5_sc <- function(
 #' @returns String. The path to the extracted PBMC3K data.
 #'
 #' @export
+#'
+#' @examples
+#' \dontrun{
+#' # pulls the archive into the session tempdir()
+#' path <- download_pbmc3k()
+#' list.files(path)
+#' }
 download_pbmc3k <- function(quiet = FALSE) {
   temp_dir <- tempdir()
   dest_file <- file.path(temp_dir, "pbmc3k.tar.gz")
@@ -998,6 +1090,13 @@ download_pbmc3k <- function(quiet = FALSE) {
 #' @returns String. The path to the extracted PBMC8K data.
 #'
 #' @export
+#'
+#' @examples
+#' \dontrun{
+#' # pulls the archive into the session tempdir()
+#' path <- download_pbmc8k()
+#' list.files(path)
+#' }
 download_pbmc8k <- function(quiet = FALSE) {
   temp_dir <- tempdir()
   dest_file <- file.path(temp_dir, "pmbc-8k.tar.gz")
@@ -1025,6 +1124,13 @@ download_pbmc8k <- function(quiet = FALSE) {
 #' @returns String. The path to the extracted doublet detection data.
 #'
 #' @export
+#'
+#' @examples
+#' \dontrun{
+#' # pulls the archive into the session tempdir()
+#' path <- download_demuxlet_pbmc()
+#' list.files(path)
+#' }
 download_demuxlet_pbmc <- function(quiet = FALSE) {
   temp_dir <- tempdir()
   dest_file <- file.path(temp_dir, "demuxlet_PBMCs.tar.gz")
@@ -1051,6 +1157,13 @@ download_demuxlet_pbmc <- function(quiet = FALSE) {
 #' @returns String. The path to the directory with the PBMC h5ad files.
 #'
 #' @export
+#'
+#' @examples
+#' \dontrun{
+#' # pulls the archive into the session tempdir()
+#' path <- download_pbmc_batches()
+#' list.files(path)
+#' }
 download_pbmc_batches <- function(quiet = FALSE) {
   temp_dir <- tempdir()
   dest_file <- file.path(temp_dir, "pbmc_batches.tar.gz")
@@ -1080,6 +1193,13 @@ download_pbmc_batches <- function(quiet = FALSE) {
 #' @export
 #'
 #' @references Persad, et al., Nat. Biotechnol., 2023
+#'
+#' @examples
+#' \dontrun{
+#' # pulls the archive into the session tempdir()
+#' path <- download_cd34_data()
+#' get_h5ad_dimensions(path)$dims
+#' }
 download_cd34_data <- function(quiet = FALSE) {
   temp_dir <- tempdir()
   dest_file <- file.path(temp_dir, "cd34_multiome_rna.h5ad.gz")
@@ -1117,6 +1237,13 @@ download_cd34_data <- function(quiet = FALSE) {
 #'
 #' @references Smillie, et al., Cell, 2019; Jerby-Arnon and Regev, Nat.
 #' Biotechnol., 2022
+#'
+#' @examples
+#' \dontrun{
+#' # pulls the archive into the session tempdir()
+#' path <- download_dialogue_uc()
+#' get_h5ad_dimensions(path)$dims
+#' }
 download_dialogue_uc <- function(quiet = FALSE) {
   temp_dir <- tempdir()
   dest_file <- file.path(temp_dir, "dialogue_uc.h5ad.gz")
@@ -1143,6 +1270,13 @@ download_dialogue_uc <- function(quiet = FALSE) {
 #' @export
 #'
 #' @references Setty, et al., Nat. Biotechnol., 2019
+#'
+#' @examples
+#' \dontrun{
+#' # pulls the archive into the session tempdir()
+#' path <- download_marrow_cd34()
+#' get_h5ad_dimensions(path)$dims
+#' }
 download_marrow_cd34 <- function(quiet = FALSE) {
   temp_dir <- tempdir()
   dest_file <- file.path(temp_dir, "marrow_sample_scseq_counts.h5ad.gz")
@@ -1166,6 +1300,13 @@ download_marrow_cd34 <- function(quiet = FALSE) {
 #' @returns String. The path to the TotalSeq data.
 #'
 #' @export
+#'
+#' @examples
+#' \dontrun{
+#' # pulls the archive into the session tempdir()
+#' path <- download_pbmc_totalseq_data()
+#' read_tenx_h5_metadata(path)$feature_types
+#' }
 download_pbmc_totalseq_data <- function(quiet = FALSE) {
   temp_dir <- tempdir()
   dest_file <- file.path(temp_dir, "10k_Human_PBMC_TotalSeqB.h5")
@@ -1206,6 +1347,13 @@ download_pbmc_totalseq_data <- function(quiet = FALSE) {
 #' @export
 #'
 #' @references Kang, et al., Nat. Biotechnol., 2018
+#'
+#' @examples
+#' \dontrun{
+#' # pulls the archive into the session tempdir()
+#' path <- download_kang_pbmc()
+#' sce <- qs2::qs_read(path)
+#' }
 download_kang_pbmc <- function(quiet = FALSE) {
   temp_dir <- tempdir()
   dest_file <- file.path(temp_dir, "kang18_8vs8.qs2")
@@ -1250,6 +1398,13 @@ download_kang_pbmc <- function(quiet = FALSE) {
 #' @export
 #'
 #' @references Baran-Gale, et al., Development, 2020
+#'
+#' @examples
+#' \dontrun{
+#' # pulls the archive into the session tempdir()
+#' path <- download_thymus_ageing()
+#' sce <- qs2::qs_read(path)
+#' }
 download_thymus_ageing <- function(quiet = FALSE) {
   temp_dir <- tempdir()
   dest_file <- file.path(temp_dir, "thymus_ageing_droplet.qs2")

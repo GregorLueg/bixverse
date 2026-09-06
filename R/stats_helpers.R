@@ -13,6 +13,10 @@
 #' @returns Harmonic, normalised sum of the provided scores.
 #'
 #' @export
+#'
+#' @examples
+#' # harmonic sum over four evidence scores
+#' ot_harmonic_score(c(1, 0.8, 0.5, 0.1))
 ot_harmonic_score <- function(x) {
   # Checks
   checkmate::qassert(x, "R+[0,1]")
@@ -35,13 +39,9 @@ ot_harmonic_score <- function(x) {
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#'
+#' # median-centred, IQR-scaled vector
 #' set.seed(123)
-#' x <- rnorm(10)
-#'
-#' x.scaled <- robust_scaling(x)
-#' }
+#' head(robust_scale(rnorm(10)))
 robust_scale <- function(x) {
   # Checks
   checkmate::qassert(x, "r+")
@@ -66,6 +66,15 @@ robust_scale <- function(x) {
 #' @returns x, robustly scaled.
 #'
 #' @export
+#'
+#' @examples
+#' # Hedge's G between two groups of ten samples
+#' set.seed(42)
+#' mat_a <- matrix(rnorm(100), nrow = 10, ncol = 10)
+#' mat_b <- matrix(rnorm(100, mean = 1), nrow = 10, ncol = 10)
+#' colnames(mat_a) <- colnames(mat_b) <- sprintf("gene_%i", 1:10)
+#' res <- calculate_effect_size(mat_a, mat_b, .verbose = FALSE)
+#' head(res$effect_sizes)
 calculate_effect_size <- function(
   mat_a,
   mat_b,
@@ -125,6 +134,11 @@ calculate_effect_size <- function(
 #' @returns The threshold.
 #'
 #' @export
+#'
+#' @examples
+#' # threshold separating two Gaussian modes
+#' set.seed(42)
+#' find_threshold_otsu(c(rnorm(100), rnorm(100, mean = 5)))
 find_threshold_otsu <- function(x, bins = 100L) {
   checkmate::qassert(x, "N+")
   checkmate::qassert(bins, "I+")

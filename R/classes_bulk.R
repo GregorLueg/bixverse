@@ -32,6 +32,14 @@
 #' @returns Returns the `BulkCoExp` class for further operations.
 #'
 #' @export
+#'
+#' @examples
+#' # co-expression class over synthetic bulk counts (samples x genes)
+#' syn <- synthetic_bulk_cor_matrix()
+#' mat <- log1p(t(syn$counts))
+#' meta <- data.table::data.table(sample_id = rownames(mat))
+#' object <- BulkCoExp(raw_data = mat, meta_data = meta)
+#' object
 BulkCoExp <- S7::new_class(
   # Names, parents
   name = "BulkCoExp",
@@ -115,6 +123,16 @@ BulkCoExp <- S7::new_class(
 #' @returns Returns the `BulkDge` class for further operations.
 #'
 #' @export
+#'
+#' @examples
+#' # DGE class over synthetic bulk counts (genes x samples)
+#' syn <- synthetic_bulk_cor_matrix()
+#' meta <- data.table::data.table(
+#'   sample_id = colnames(syn$counts),
+#'   case_control = rep(c("case", "control"), each = 50)
+#' )
+#' object <- BulkDge(raw_counts = syn$counts, meta_data = meta)
+#' object
 BulkDge <- S7::new_class(
   # Names, parents
   name = "BulkDge",
@@ -198,6 +216,22 @@ BulkDge <- S7::new_class(
 #' @export
 #'
 #' @importFrom zeallot %<-%
+#'
+#' @examples
+#' # round trip a synthetic count matrix through a temporary h5ad
+#' syn <- synthetic_bulk_cor_matrix()
+#' h5_path <- tempfile(fileext = ".h5ad")
+#' write_h5ad_sc_dense(
+#'   f_path = h5_path,
+#'   counts = t(syn$counts),
+#'   obs = data.table::data.table(sample_id = colnames(syn$counts)),
+#'   var = data.table::data.table(var_id = rownames(syn$counts)),
+#'   .verbose = FALSE
+#' )
+#' object <- bulk_dge_from_h5ad(h5_path, .verbose = FALSE)
+#' object
+#'
+#' unlink(h5_path)
 bulk_dge_from_h5ad <- function(
   h5_path,
   .verbose = TRUE
@@ -240,6 +274,14 @@ bulk_dge_from_h5ad <- function(
 #' the object from the start and remove any data in it.
 #'
 #' @export
+#'
+#' @examples
+#' # drop the first two samples and rebuild the object
+#' syn <- synthetic_bulk_cor_matrix()
+#' meta <- data.table::data.table(sample_id = colnames(syn$counts))
+#' object <- BulkDge(raw_counts = syn$counts, meta_data = meta)
+#' object <- remove_samples(object, c("sample_1", "sample_2"))
+#' dim(S7::prop(object, "raw_counts"))
 remove_samples <- S7::new_generic(
   name = "remove_samples",
   dispatch_args = "object",
@@ -294,6 +336,17 @@ S7::method(remove_samples, BulkDge) <-
 #' @returns Returns the object with the respective metadata columns updated.
 #'
 #' @export
+#'
+#' @examples
+#' # make a contrast column safe for model.matrix()
+#' syn <- synthetic_bulk_cor_matrix()
+#' meta <- data.table::data.table(
+#'   sample_id = colnames(syn$counts),
+#'   case_control = rep(c("case 1", "control 1"), each = 50)
+#' )
+#' object <- BulkDge(raw_counts = syn$counts, meta_data = meta)
+#' object <- fix_meta_data_column(object, "case_control")
+#' unique(get_metadata(object)$case_control)
 fix_meta_data_column <- S7::new_generic(
   name = "fix_meta_data_column",
   dispatch_args = "object",
@@ -338,6 +391,21 @@ S7::method(fix_meta_data_column, BulkDge) <- function(object, col_names) {
 #' @returns Returns the object with the respective metadata updated.
 #'
 #' @export
+#'
+#' @examples
+#' # relabel the levels of a metadata column
+#' syn <- synthetic_bulk_cor_matrix()
+#' meta <- data.table::data.table(
+#'   sample_id = colnames(syn$counts),
+#'   case_control = rep(c("case", "control"), each = 50)
+#' )
+#' object <- BulkDge(raw_counts = syn$counts, meta_data = meta)
+#' object <- update_metadata_values(
+#'   object,
+#'   column = "case_control",
+#'   replacement = c(case = "disease", control = "healthy")
+#' )
+#' unique(get_metadata(object)$case_control)
 update_metadata_values <- S7::new_generic(
   name = "update_metadata_values",
   dispatch_args = "object",
@@ -387,6 +455,16 @@ S7::method(update_metadata_values, BulkDge) <- function(
 #' @returns Returns the metadata stored in the class.
 #'
 #' @export
+#'
+#' @examples
+#' # sample metadata back out of a BulkDge
+#' syn <- synthetic_bulk_cor_matrix()
+#' meta <- data.table::data.table(
+#'   sample_id = colnames(syn$counts),
+#'   case_control = rep(c("case", "control"), each = 50)
+#' )
+#' object <- BulkDge(raw_counts = syn$counts, meta_data = meta)
+#' head(get_metadata(object))
 get_metadata <- S7::new_generic(
   name = "get_metadata",
   dispatch_args = "object",
@@ -436,6 +514,17 @@ S7::method(get_metadata, BulkDge) <- function(object) {
 #' @returns Returns the outputs stored in the class.
 #'
 #' @export
+#'
+#' @examples
+#' # everything the QC and normalisation steps stashed on the object
+#' syn <- synthetic_bulk_cor_matrix()
+#' meta <- data.table::data.table(
+#'   sample_id = colnames(syn$counts),
+#'   case_control = rep(c("case", "control"), each = 50)
+#' )
+#' object <- BulkDge(raw_counts = syn$counts, meta_data = meta)
+#' object <- qc_bulk_dge(object, group_col = "case_control", .verbose = FALSE)
+#' names(get_outputs(object))
 get_outputs <- S7::new_generic(
   name = "get_outputs",
   dispatch_args = "object",
@@ -486,6 +575,17 @@ S7::method(get_outputs, BulkDge) <- function(object, ...) {
 #' @returns Returns the DGEList stored in the class.
 #'
 #' @export
+#'
+#' @examples
+#' # the edgeR DGEList built during QC
+#' syn <- synthetic_bulk_cor_matrix()
+#' meta <- data.table::data.table(
+#'   sample_id = colnames(syn$counts),
+#'   case_control = rep(c("case", "control"), each = 50)
+#' )
+#' object <- BulkDge(raw_counts = syn$counts, meta_data = meta)
+#' object <- qc_bulk_dge(object, group_col = "case_control", .verbose = FALSE)
+#' dim(get_dge_list(object))
 get_dge_list <- S7::new_generic(
   name = "get_dge_list",
   dispatch_args = "object",
@@ -520,6 +620,27 @@ S7::method(get_dge_list, BulkDge) <- function(object) {
 #' @returns Returns the Limma Voom results. (If found.)
 #'
 #' @export
+#'
+#' @examples
+#' # topTable results for every contrast that was fitted
+#' syn <- synthetic_bulk_cor_matrix()
+#' meta <- data.table::data.table(
+#'   sample_id = colnames(syn$counts),
+#'   case_control = rep(c("case", "control"), each = 50)
+#' )
+#' object <- BulkDge(raw_counts = syn$counts, meta_data = meta)
+#' object <- qc_bulk_dge(object, group_col = "case_control", .verbose = FALSE)
+#' object <- normalise_bulk_dge(
+#'   object,
+#'   group_col = "case_control",
+#'   .verbose = FALSE
+#' )
+#' object <- calculate_dge_limma(
+#'   object,
+#'   contrast_column = "case_control",
+#'   .verbose = FALSE
+#' )
+#' head(get_dge_limma_voom(object))
 get_dge_limma_voom <- S7::new_generic(
   name = "get_dge_limma_voom",
   dispatch_args = "object",
@@ -561,6 +682,27 @@ S7::method(get_dge_limma_voom, BulkDge) <- function(object) {
 #' @returns Returns the effect size results. (If found.)
 #'
 #' @export
+#'
+#' @examples
+#' # Hedge's G effect sizes per contrast
+#' syn <- synthetic_bulk_cor_matrix()
+#' meta <- data.table::data.table(
+#'   sample_id = colnames(syn$counts),
+#'   case_control = rep(c("case", "control"), each = 50)
+#' )
+#' object <- BulkDge(raw_counts = syn$counts, meta_data = meta)
+#' object <- qc_bulk_dge(object, group_col = "case_control", .verbose = FALSE)
+#' object <- normalise_bulk_dge(
+#'   object,
+#'   group_col = "case_control",
+#'   .verbose = FALSE
+#' )
+#' object <- calculate_dge_hedges(
+#'   object,
+#'   contrast_column = "case_control",
+#'   .verbose = FALSE
+#' )
+#' head(get_dge_effect_sizes(object))
 get_dge_effect_sizes <- S7::new_generic(
   name = "get_dge_effect_sizes",
   dispatch_args = "object",
@@ -602,6 +744,28 @@ S7::method(get_dge_effect_sizes, BulkDge) <- function(object) {
 #' @returns Returns the TPM-normalised counts. (If found.)
 #'
 #' @export
+#'
+#' @examples
+#' # TPM counts, which normalise_bulk_dge() only computes on request
+#' syn <- synthetic_bulk_cor_matrix()
+#' meta <- data.table::data.table(
+#'   sample_id = colnames(syn$counts),
+#'   case_control = rep(c("case", "control"), each = 50)
+#' )
+#' gene_lengths <- stats::setNames(
+#'   rep(2000, nrow(syn$counts)),
+#'   rownames(syn$counts)
+#' )
+#' object <- BulkDge(raw_counts = syn$counts, meta_data = meta)
+#' object <- qc_bulk_dge(object, group_col = "case_control", .verbose = FALSE)
+#' object <- normalise_bulk_dge(
+#'   object,
+#'   group_col = "case_control",
+#'   calc_tpm = TRUE,
+#'   gene_lengths = gene_lengths,
+#'   .verbose = FALSE
+#' )
+#' get_tpm_counts(object)[1:3, 1:3]
 get_tpm_counts <- S7::new_generic(
   name = "get_tpm_counts",
   dispatch_args = "object",
@@ -643,6 +807,28 @@ S7::method(get_tpm_counts, BulkDge) <- function(object) {
 #' @returns Returns the FPKM-normalised counts. (If found.)
 #'
 #' @export
+#'
+#' @examples
+#' # FPKM counts, which normalise_bulk_dge() only computes on request
+#' syn <- synthetic_bulk_cor_matrix()
+#' meta <- data.table::data.table(
+#'   sample_id = colnames(syn$counts),
+#'   case_control = rep(c("case", "control"), each = 50)
+#' )
+#' gene_lengths <- stats::setNames(
+#'   rep(2000, nrow(syn$counts)),
+#'   rownames(syn$counts)
+#' )
+#' object <- BulkDge(raw_counts = syn$counts, meta_data = meta)
+#' object <- qc_bulk_dge(object, group_col = "case_control", .verbose = FALSE)
+#' object <- normalise_bulk_dge(
+#'   object,
+#'   group_col = "case_control",
+#'   calc_fpkm = TRUE,
+#'   gene_lengths = gene_lengths,
+#'   .verbose = FALSE
+#' )
+#' get_fpkm_counts(object)[1:3, 1:3]
 get_fpkm_counts <- S7::new_generic(
   name = "get_fpkm_counts",
   dispatch_args = "object",
@@ -686,6 +872,25 @@ S7::method(get_fpkm_counts, BulkDge) <- function(object) {
 #' @returns Returns the epsilon data. (If found. Otherwise `NULL`).
 #'
 #' @export
+#'
+#' @examples
+#' # scale-free fit of the affinity matrix across epsilons
+#' syn <- synthetic_bulk_cor_matrix()
+#' mat <- log1p(t(syn$counts))
+#' meta <- data.table::data.table(sample_id = rownames(mat))
+#' object <- BulkCoExp(raw_data = mat, meta_data = meta)
+#' object <- preprocess_bulk_coexp(object, hvg = 200L, .verbose = FALSE)
+#' object <- cor_module_processing(
+#'   object,
+#'   cor_method = "pearson",
+#'   .verbose = FALSE
+#' )
+#' object <- cor_module_check_epsilon(
+#'   object,
+#'   rbf_func = "gaussian",
+#'   .verbose = FALSE
+#' )
+#' head(get_epsilon_res(object))
 get_epsilon_res <- S7::new_generic(
   name = "get_epsilon_res",
   dispatch_args = "object",
@@ -729,6 +934,25 @@ S7::method(get_epsilon_res, BulkCoExp) <- function(object) {
 #' throws a warning and returns NULL.
 #'
 #' @export
+#'
+#' @examples
+#' # cluster counts and modularity across the Leiden resolution sweep
+#' syn <- synthetic_bulk_cor_matrix()
+#' mat <- log1p(t(syn$counts))
+#' meta <- data.table::data.table(sample_id = rownames(mat))
+#' object <- BulkCoExp(raw_data = mat, meta_data = meta)
+#' object <- preprocess_bulk_coexp(object, hvg = 200L, .verbose = FALSE)
+#' object <- cor_module_processing(
+#'   object,
+#'   cor_method = "pearson",
+#'   .verbose = FALSE
+#' )
+#' object <- cor_module_graph_check_res(
+#'   object,
+#'   parallel = FALSE,
+#'   .verbose = FALSE
+#' )
+#' head(get_resolution_res(object))
 get_resolution_res <- S7::new_generic(
   name = "get_resolution_res",
   dispatch_args = "object",
@@ -778,6 +1002,18 @@ S7::method(get_resolution_res, BulkCoExp) <- function(object) {
 #' @returns The class with modified primary gene identifier.
 #'
 #' @export
+#'
+#' @examples
+#' # swap the row names over to a symbol column of the variable info
+#' syn <- synthetic_bulk_cor_matrix()
+#' meta <- data.table::data.table(sample_id = colnames(syn$counts))
+#' var_info <- data.table::data.table(
+#'   var_id = rownames(syn$counts),
+#'   symbol = sprintf("SYM%i", seq_len(nrow(syn$counts)))
+#' )
+#' object <- BulkDge(raw_counts = syn$counts, meta_data = meta)
+#' object <- change_gene_identifier(object, "symbol", var_info)
+#' head(rownames(S7::prop(object, "raw_counts")))
 change_gene_identifier <- S7::new_generic(
   name = "change_gene_identifier",
   dispatch_args = "object",
@@ -1257,6 +1493,17 @@ dim.BulkModuleResult <- function(x) {
 #' per (gene, module) pair.
 #'
 #' @export
+#'
+#' @examples
+#' # gene to module assignments from an NMF fit
+#' syn <- synthetic_bulk_cor_matrix()
+#' mat <- log1p(t(syn$counts))
+#' meta <- data.table::data.table(sample_id = rownames(mat))
+#' object <- BulkCoExp(raw_data = mat, meta_data = meta)
+#' object <- preprocess_bulk_coexp(object, hvg = 500L, .verbose = FALSE)
+#' object <- nmf_bulk(object, k = 3L, .verbose = FALSE)
+#' res <- S7::prop(object, "final_results")
+#' head(get_modules(res))
 get_modules <- S7::new_generic(
   name = "get_modules",
   dispatch_args = "object",
@@ -1290,6 +1537,18 @@ S7::method(get_modules, S7::new_S3_class("BulkModuleResult")) <- function(
 #' if `which` is not among the stored factor keys.
 #'
 #' @export
+#'
+#' @examples
+#' # gene loadings and sample activities of an NMF fit
+#' syn <- synthetic_bulk_cor_matrix()
+#' mat <- log1p(t(syn$counts))
+#' meta <- data.table::data.table(sample_id = rownames(mat))
+#' object <- BulkCoExp(raw_data = mat, meta_data = meta)
+#' object <- preprocess_bulk_coexp(object, hvg = 500L, .verbose = FALSE)
+#' object <- nmf_bulk(object, k = 3L, .verbose = FALSE)
+#' res <- S7::prop(object, "final_results")
+#' names(get_factors(res))
+#' dim(get_factors(res, "gene_loadings"))
 get_factors <- S7::new_generic(
   name = "get_factors",
   dispatch_args = "object",
@@ -1345,6 +1604,18 @@ S7::method(get_factors, S7::new_S3_class("BulkModuleResult")) <- function(
 #' warning) if `which` is not among the stored diagnostic keys.
 #'
 #' @export
+#'
+#' @examples
+#' # convergence diagnostics of an NMF fit
+#' syn <- synthetic_bulk_cor_matrix()
+#' mat <- log1p(t(syn$counts))
+#' meta <- data.table::data.table(sample_id = rownames(mat))
+#' object <- BulkCoExp(raw_data = mat, meta_data = meta)
+#' object <- preprocess_bulk_coexp(object, hvg = 500L, .verbose = FALSE)
+#' object <- nmf_bulk(object, k = 3L, .verbose = FALSE)
+#' res <- S7::prop(object, "final_results")
+#' names(get_diagnostics(res))
+#' get_diagnostics(res, "converged")
 get_diagnostics <- S7::new_generic(
   name = "get_diagnostics",
   dispatch_args = "object",

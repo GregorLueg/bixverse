@@ -54,6 +54,18 @@ Rust-based version of the fgsea simple algorithm. This one is permutation-
 based and similar to the traditional implementation, but leverages some
 clear tricks to be way faster, see Korotkevich, et al.
 }
+\examples{
+# fgsea simple against a signature with one enriched set
+set.seed(42L)
+stats <- stats::setNames(rnorm(500), sprintf("gene_\%03i", 1:500))
+stats[1:20] <- stats[1:20] + 2
+pathways <- list(
+  up_set = sprintf("gene_\%03i", 1:20),
+  random_set = sprintf("gene_\%03i", 200:240)
+)
+res <- calc_fgsea_simple(stats, pathways, nperm = 1000L)
+res[, c("pathway_name", "es", "pvals")]
+}
 \references{
 Korotkevich, et al., bioRxiv
 }

@@ -23,6 +23,16 @@
 #' @export
 #'
 #' @import data.table
+#'
+#' @examples
+#' # Resnik similarity matrix over a toy ontology
+#' onto <- data.table::data.table(
+#'   parent = c("a", "b", "b", "b", "c"),
+#'   child = c("b", "c", "d", "e", "f")
+#' )
+#' ancestry <- get_ontology_ancestry(onto)
+#' ic <- calculate_information_content(ancestry$descendants)
+#' round(calculate_semantic_sim_mat("resnik", ancestry$ancestors, ic), 3)
 calculate_semantic_sim_mat <- function(
   similarity_type,
   ancestor_list,
@@ -72,6 +82,21 @@ calculate_semantic_sim_mat <- function(
 #' @export
 #'
 #' @import data.table
+#'
+#' @examples
+#' # Lin similarity for a subset of terms only
+#' onto <- data.table::data.table(
+#'   parent = c("a", "b", "b", "b", "c"),
+#'   child = c("b", "c", "d", "e", "f")
+#' )
+#' ancestry <- get_ontology_ancestry(onto)
+#' ic <- calculate_information_content(ancestry$descendants)
+#' calculate_semantic_sim(
+#'   terms = c("c", "d", "f"),
+#'   similarity_type = "lin",
+#'   ancestor_list = ancestry$ancestors,
+#'   ic_list = ic
+#' )
 calculate_semantic_sim <- function(
   terms,
   similarity_type,
@@ -128,6 +153,16 @@ calculate_semantic_sim <- function(
 #' @export
 #'
 #' @import data.table
+#'
+#' @examples
+#' # Wang similarity matrix with relationship-specific weights
+#' onto <- data.table::data.table(
+#'   parent = c("a", "b", "b", "b", "c"),
+#'   child = c("b", "c", "d", "e", "f"),
+#'   type = c("part_of", "part_of", "part_of", "is_a", "is_a")
+#' )
+#' weights <- c("part_of" = 0.8, "is_a" = 0.6)
+#' round(calculate_wang_sim_mat(onto, weights = weights), 3)
 calculate_wang_sim_mat <- function(parent_child_dt, weights) {
   # Scope
   weight <- type <- NULL
@@ -179,6 +214,16 @@ calculate_wang_sim_mat <- function(parent_child_dt, weights) {
 #' @export
 #'
 #' @import data.table
+#'
+#' @examples
+#' # Wang similarity for a subset of terms only
+#' onto <- data.table::data.table(
+#'   parent = c("a", "b", "b", "b", "c"),
+#'   child = c("b", "c", "d", "e", "f"),
+#'   type = c("part_of", "part_of", "part_of", "is_a", "is_a")
+#' )
+#' weights <- c("part_of" = 0.8, "is_a" = 0.6)
+#' calculate_wang_sim(c("c", "d", "f"), onto, weights = weights)
 calculate_wang_sim <- function(
   terms,
   parent_child_dt,
@@ -244,6 +289,15 @@ calculate_wang_sim <- function(
 #' }
 #'
 #' @export
+#'
+#' @examples
+#' # ancestors and descendants of every term in a toy ontology
+#' onto <- data.table::data.table(
+#'   parent = c("a", "b", "b", "b", "c"),
+#'   child = c("b", "c", "d", "e", "f")
+#' )
+#' ancestry <- get_ontology_ancestry(onto)
+#' ancestry$ancestors[["f"]]
 get_ontology_ancestry <- function(parent_child_dt) {
   . <- NULL
 
@@ -290,6 +344,15 @@ get_ontology_ancestry <- function(parent_child_dt) {
 #'
 #' @import data.table
 #' @importFrom magrittr %>%
+#'
+#' @examples
+#' # information content from the descendant counts of a toy ontology
+#' onto <- data.table::data.table(
+#'   parent = c("a", "b", "b", "b", "c"),
+#'   child = c("b", "c", "d", "e", "f")
+#' )
+#' ancestry <- get_ontology_ancestry(onto)
+#' unlist(calculate_information_content(ancestry$descendants))
 calculate_information_content <- function(ancestor_list) {
   checkmate::assertList(ancestor_list)
   checkmate::assertNamed(ancestor_list)
@@ -321,6 +384,17 @@ calculate_information_content <- function(ancestor_list) {
 #' @returns The critical value.
 #'
 #' @export
+#'
+#' @examples
+#' # critical value of a Wang similarity matrix at alpha 0.1
+#' onto <- data.table::data.table(
+#'   parent = c("a", "b", "b", "b", "c"),
+#'   child = c("b", "c", "d", "e", "f"),
+#'   type = c("part_of", "part_of", "part_of", "is_a", "is_a")
+#' )
+#' weights <- c(part_of = 0.8, is_a = 0.6)
+#' sim_mat <- calculate_wang_sim_mat(onto, weights = weights)
+#' calculate_critical_value(sim_mat, alpha = 0.1)
 calculate_critical_value <- function(
   x,
   alpha,

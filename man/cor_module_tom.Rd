@@ -25,3 +25,12 @@ This function will update the correlation matrix to a topological overlap
 matrix. It defaults to \code{"v2"} and the signed version, please see
 \code{\link[=calculate_tom]{calculate_tom()}} for details.
 }
+\examples{
+# replace the stored correlations with a signed topological overlap
+mat <- t(synthetic_signal_matrix()$mat)
+obj <- BulkCoExp(mat, data.table::data.table(sample_id = rownames(mat)))
+obj <- preprocess_bulk_coexp(obj, hvg = 0.3, .verbose = FALSE)
+obj <- cor_module_processing(obj, cor_method = "spearman", .verbose = FALSE)
+obj <- cor_module_tom(obj, signed = TRUE, version = "v2", .verbose = FALSE)
+obj@params$correlation_params$TOM
+}

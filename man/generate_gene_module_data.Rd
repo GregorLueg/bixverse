@@ -29,11 +29,21 @@ data. Default: 10101L.}
 A \code{synthetic_matrix_modules} class with the following items:
 \itemize{
 \item data - The data matrix.
-\item metadata - The sample metadata.
+\item meta_data - The sample metadata.
 }
 }
 \description{
 Generates an artifical matrix of active modules (for a maximum of 8) in
 samples being active. Also allows for overlap between the modules. Designed
 to test some of the algorithms.
+}
+\examples{
+# four partially overlapping modules over 24 samples
+mods <- generate_gene_module_data(
+  n_samples = 24L,
+  n_genes = 60L,
+  n_modules = 4L
+)
+dim(mods$data)
+head(mods$meta_data)
 }

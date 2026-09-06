@@ -38,6 +38,25 @@ subsequently, the surfer will be reseted. This function can be useful for
 deriving PPR profiles under constraints in heterogenous graphs and has been
 inspired by Ruiz, et al.
 }
+\examples{
+# two personalisation vectors over the same signalling graph
+nodes <- data.frame(
+  name = c("rec_a", "kin_b", "tf_c", "gene_d"),
+  type = c("receptor", "kinase", "tf", "target_gene")
+)
+edges <- data.frame(
+  from = c("rec_a", "kin_b", "tf_c"),
+  to = c("kin_b", "tf_c", "gene_d"),
+  weight = rep(1, 3),
+  type = c("activation", "phosphorylation", "tf_activation")
+)
+g <- igraph::graph_from_data_frame(edges, vertices = nodes, directed = TRUE)
+res <- constrained_page_rank_ls(
+  g,
+  personalisation_list = list(a = c(1, 0, 0, 0), b = c(0, 1, 0, 0))
+)
+res$a
+}
 \references{
 Ruiz, et al., Nat Commun, 2021
 }

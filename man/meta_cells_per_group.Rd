@@ -54,13 +54,22 @@ The meta cell generators need an embedding, so \code{pipeline} will normally be
 subset already carries one.
 }
 \examples{
-\dontrun{
-prep <- step_hvg_sc() \%>>\% step_pca_sc(no_pcs = 20L) \%>>\% step_neighbours_sc()
-mc <- meta_cells_per_group(
-  object = sc_obj,
-  group_col = "patient_id",
+# meta cells that never mix two cell groups
+sc <- demo_single_cells(prepped = FALSE)
+prep <- step_hvg_sc(hvg_no = 30L, .verbose = FALSE) \%>>\%
+  step_pca_sc(no_pcs = 10L, .verbose = FALSE) \%>>\%
+  step_neighbours_sc(.verbose = FALSE)
+meta_cells_per_group(
+  object = sc,
+  group_col = "cell_grp",
   method = "bootstrapped",
-  pipeline = prep
+  mc_params = list(
+    sc_meta_cell_params = params_sc_bt_metacells(target_no_metacells = 10L),
+    .verbose = FALSE
+  ),
+  pipeline = prep,
+  .verbose = FALSE
 )
-}
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 }

@@ -34,3 +34,11 @@ genes by expression in a given cell. High values here can indicate low
 complexity, quality cells. The values will be automatically added to the
 obs table.
 }
+\examples{
+# share of a cell's reads taken by its top 5 and top 10 genes
+sc <- demo_single_cells(prepped = FALSE)
+sc <- top_genes_perc_sc(sc, top_n_vals = c(5L, 10L), .verbose = FALSE)
+head(unlist(sc[["top_5_genes_percentage"]]))
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

@@ -30,3 +30,12 @@ This function takes two matrices in and calculate on a per column basis the
 Hedge's G effect size and the standard error. These results can be
 subsequently used for meta-analyses or other approaches.
 }
+\examples{
+# Hedge's G between two groups of ten samples
+set.seed(42)
+mat_a <- matrix(rnorm(100), nrow = 10, ncol = 10)
+mat_b <- matrix(rnorm(100, mean = 1), nrow = 10, ncol = 10)
+colnames(mat_a) <- colnames(mat_b) <- sprintf("gene_\%i", 1:10)
+res <- calculate_effect_size(mat_a, mat_b, .verbose = FALSE)
+head(res$effect_sizes)
+}

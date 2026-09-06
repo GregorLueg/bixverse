@@ -31,3 +31,21 @@ calculate the Wang similarity and keep within a set of highly similar terms
 the one with the lowest fdr. Should there be terms with the same fdr, the
 function will keep the most specific term within the ontology.
 }
+\examples{
+# collapse redundant terms of a toy ontology by Wang similarity
+onto <- data.table::data.table(
+  parent = c("a", "b", "b", "c"),
+  child = c("b", "c", "d", "e"),
+  type = c("is_a", "is_a", "part_of", "is_a")
+)
+res <- data.table::data.table(
+  gene_set_name = c("b", "c", "d", "e"),
+  fdr = c(0.001, 0.001, 0.4, 0.02)
+)
+simplify_hypergeom_res(
+  res,
+  onto,
+  weights = c("is_a" = 0.8, "part_of" = 0.6),
+  min_sim = 0.6
+)
+}

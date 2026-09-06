@@ -34,3 +34,16 @@ This is a wrapper function to generate pseudo-bulked counts from a list of
 cell identifiers. You have the option to return sparse or dense matrices and
 if you wish to sum raw counts or calculate the mean of the normalised counts.
 }
+\examples{
+# sum raw counts per planted cell type
+sc <- demo_single_cells()
+obs <- get_sc_obs(sc)
+res <- get_pseudobulked_sc(
+  sc,
+  cell_list = split(obs$cell_id, obs$cell_grp),
+  .verbose = FALSE
+)
+dim(res)
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

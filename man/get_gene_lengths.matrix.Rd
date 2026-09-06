@@ -20,4 +20,16 @@ Named numeric representing the gene lengths.
 \description{
 Get gene set lengths for a matrix
 }
+\examples{
+\dontrun{
+# the matrix method, dispatched on Ensembl rownames
+counts <- matrix(
+  1:4,
+  nrow = 2,
+  dimnames = list(c("ENSG00000141510", "ENSG00000012048"), c("s1", "s2"))
+)
+get_gene_lengths.matrix(counts, species = "human")
+}
+
+}
 \keyword{internal}

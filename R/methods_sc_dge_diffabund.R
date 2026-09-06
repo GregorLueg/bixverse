@@ -30,6 +30,20 @@
 #' @returns data.table with the DGE results from the test.
 #'
 #' @export
+#'
+#' @examples
+#' # Wilcoxon test between two of the planted cell types
+#' sc <- demo_single_cells()
+#' obs <- get_sc_obs(sc)
+#' res <- find_markers_sc(
+#'   sc,
+#'   cells_1 = obs$cell_id[obs$cell_grp == "cell_type_1"],
+#'   cells_2 = obs$cell_id[obs$cell_grp == "cell_type_2"],
+#'   .verbose = FALSE
+#' )
+#' head(res)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 find_markers_sc <- S7::new_generic(
   name = "find_markers_sc",
   dispatch_args = "object",
@@ -154,6 +168,19 @@ S7::method(find_markers_sc, ScOrScSubset) <- function(
 #' @returns data.table with the DGE results from the test.
 #'
 #' @export
+#'
+#' @examples
+#' # one versus rest across the Leiden clusters
+#' sc <- demo_single_cells()
+#' sc <- find_clusters_sc(sc, res = 1.0)
+#' res <- find_all_markers_sc(
+#'   sc,
+#'   column_of_interest = "leiden_clustering",
+#'   .verbose = FALSE
+#' )
+#' head(res)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 find_all_markers_sc <- S7::new_generic(
   name = "find_all_markers_sc",
   dispatch_args = "object",
@@ -351,6 +378,18 @@ S7::method(find_all_markers_sc, ScOrScSubset) <- function(
 #' F1000Research, 2016
 #'
 #' @export
+#'
+#' @examples
+#' # markers that hold up against every rival cell type
+#' sc <- demo_single_cells()
+#' res <- find_specific_markers_sc(
+#'   sc,
+#'   column_of_interest = "cell_grp",
+#'   .verbose = FALSE
+#' )
+#' head(res$summary)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 find_specific_markers_sc <- S7::new_generic(
   name = "find_specific_markers_sc",
   dispatch_args = "object",
@@ -588,9 +627,41 @@ S7::method(find_specific_markers_sc, ScOrScSubset) <- function(
 #' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
 #' verbosity.
 #'
+#' @returns A `miloR` class with the following elements:
+#' \itemize{
+#'   \item nhoods - Sparse matrix of cells x neighbourhoods.
+#'   \item sample_counts - Matrix of neighbourhoods x samples with the cell
+#'   counts per neighbourhood and sample.
+#'   \item spatial_dist - Numeric. The kth nearest neighbour distance per
+#'   neighbourhood index cell.
+#'   \item nhood_overlap - The overlap between the neighbourhoods.
+#'   \item params - List. The parameters used, plus the embedding and the
+#'   index cells.
+#' }
+#'
 #' @references Dann, et al., Nat Biotechnol, 2022
 #'
 #' @export
+#'
+#' @examples
+#' # neighbourhood counts across six synthetic samples
+#' sc <- demo_single_cells(
+#'   syn_data_params = params_sc_synthetic_data(
+#'     n_cells = 500L,
+#'     n_genes = 50L,
+#'     n_samples = 6L,
+#'     sample_bias = "even"
+#'   )
+#' )
+#' milo <- get_miloR_abundances_sc(
+#'   sc,
+#'   sample_id_col = "sample_id",
+#'   miloR_params = params_sc_miloR(k_refine = 10L),
+#'   .verbose = FALSE
+#' )
+#' dim(milo$sample_counts)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 get_miloR_abundances_sc <- S7::new_generic(
   name = "get_miloR_abundances_sc",
   dispatch_args = "object",
@@ -772,6 +843,21 @@ S7::method(get_miloR_abundances_sc, SingleCells) <- function(
 #' @references Burkhardt, et al. Nat. Biotechnol., 2021.
 #'
 #' @export
+#'
+#' @examples
+#' # per cell sample likelihoods over the kNN graph
+#' sc <- demo_single_cells(
+#'   syn_data_params = params_sc_synthetic_data(
+#'     n_cells = 500L,
+#'     n_genes = 50L,
+#'     n_samples = 6L,
+#'     sample_bias = "even"
+#'   )
+#' )
+#' res <- meld_sc(sc, sample_id_col = "sample_id", .verbose = FALSE)
+#' head(res$norm_scores[, 1:3])
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 meld_sc <- S7::new_generic(
   name = "meld_sc",
   dispatch_args = "object",
@@ -923,6 +1009,30 @@ S7::method(meld_sc, SingleCells) <- function(
 #' @references He, et al., Commun Biol, 2021
 #'
 #' @export
+#'
+#' @examples
+#' # mixed model DGE with the sample as the random effect
+#' sc <- demo_single_cells(
+#'   syn_data_params = params_sc_synthetic_data(
+#'     n_cells = 500L,
+#'     n_genes = 50L,
+#'     n_samples = 6L,
+#'     sample_bias = "even"
+#'   )
+#' )
+#' obs <- get_sc_obs(sc)
+#' ctr <- sprintf("sample_%i", 1:3)
+#' condition <- ifelse(obs$sample_id %in% ctr, "ctr", "trt")
+#' sc <- set_sc_new_obs_col(sc, col_name = "condition", new_data = condition)
+#' res <- nebula_sc(
+#'   sc,
+#'   subject_col = "sample_id",
+#'   design = ~condition,
+#'   .verbose = FALSE
+#' )
+#' head(res$results)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 nebula_sc <- S7::new_generic(
   name = "nebula_sc",
   dispatch_args = "object",

@@ -40,6 +40,13 @@
 #' the topological overlap measures.
 #'
 #' @export
+#'
+#' @examples
+#' # unsigned TOM from a small correlation matrix
+#' set.seed(42)
+#' cor_mat <- cor(matrix(rnorm(200), nrow = 20, ncol = 10))
+#' tom <- calculate_tom(cor_mat, signed = FALSE)
+#' dim(tom)
 calculate_tom <- function(cor_mat, signed, version = c("v1", "v2")) {
   version <- match.arg(version)
 
@@ -100,6 +107,18 @@ calculate_tom <- function(cor_mat, signed, version = c("v1", "v2")) {
 #' @returns The topological overlap matrix.
 #'
 #' @export
+#'
+#' @examples
+#' # TOM straight from a samples x genes expression matrix
+#' set.seed(42)
+#' x <- matrix(rnorm(200), nrow = 20, ncol = 10)
+#' tom <- calculate_tom_from_exp(
+#'   x,
+#'   signed = FALSE,
+#'   version = "v1",
+#'   cor_method = "pearson"
+#' )
+#' dim(tom)
 calculate_tom_from_exp <- function(x, signed, version, cor_method) {
   # checks
   checkmate::assertMatrix(x)
@@ -134,6 +153,12 @@ calculate_tom_from_exp <- function(x, signed, version, cor_method) {
 #' algorithms.
 #'
 #' @export
+#'
+#' @examples
+#' # agreement between two clusterings of the same six samples
+#' clusters_a <- c("c1", "c1", "c2", "c2", "c3", "c3")
+#' clusters_b <- c("x", "x", "y", "y", "z", "x")
+#' f1_score_confusion_mat(clusters_a, clusters_b)
 f1_score_confusion_mat <- function(clusters_a, clusters_b) {
   # checks
   len_a <- length(clusters_a)

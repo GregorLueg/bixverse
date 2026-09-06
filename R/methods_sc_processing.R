@@ -643,6 +643,21 @@
 #' @export
 #'
 #' @references Wollock, et al., Cell Syst, 2020
+#'
+#' @examples
+#' # simulated doublet scoring on 500 synthetic cells
+#' sc <- demo_single_cells(prepped = FALSE)
+#' scrublet_sc(
+#'   sc,
+#'   scrublet_params = params_scrublet(
+#'     pca = list(no_pcs = 10L),
+#'     hvg = list(min_gene_var_pctl = 0.0),
+#'     n_bins = 20L
+#'   ),
+#'   .verbose = FALSE
+#' )
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 scrublet_sc <- S7::new_generic(
   name = "scrublet_sc",
   dispatch_args = "object",
@@ -762,6 +777,21 @@ S7::method(scrublet_sc, SingleCells) <- function(
 #' }
 #'
 #' @export
+#'
+#' @examples
+#' # boosted doublet detection over five iterations
+#' sc <- demo_single_cells(prepped = FALSE)
+#' doublet_detection_boost_sc(
+#'   sc,
+#'   boost_params = params_boost(
+#'     hvg = list(min_gene_var_pctl = 0.0),
+#'     pca = list(no_pcs = 10L),
+#'     n_iters = 5L
+#'   ),
+#'   .verbose = FALSE
+#' )
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 doublet_detection_boost_sc <- S7::new_generic(
   name = "doublet_detection_boost_sc",
   dispatch_args = "object",
@@ -875,6 +905,21 @@ S7::method(doublet_detection_boost_sc, SingleCells) <- function(
 #' with `cell_indices` stored as an attribute.
 #'
 #' @export
+#'
+#' @examples
+#' # cluster aware doublet calls from the gradient boosted classifier
+#' sc <- demo_single_cells(prepped = FALSE)
+#' scdblfinder_sc(
+#'   sc,
+#'   scdblfinder_params = params_scdblfinder(
+#'     pca = list(no_pcs = 10L),
+#'     n_genes = 25L,
+#'     cxds_genes = 25L
+#'   ),
+#'   .verbose = FALSE
+#' )
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 scdblfinder_sc <- S7::new_generic(
   name = "scdblfinder_sc",
   dispatch_args = "object",
@@ -980,6 +1025,14 @@ S7::method(scdblfinder_sc, SingleCells) <- function(
 #' the obs table.
 #'
 #' @export
+#'
+#' @examples
+#' # share of a cell's reads taken by its top 5 and top 10 genes
+#' sc <- demo_single_cells(prepped = FALSE)
+#' sc <- top_genes_perc_sc(sc, top_n_vals = c(5L, 10L), .verbose = FALSE)
+#' head(unlist(sc[["top_5_genes_percentage"]]))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 top_genes_perc_sc <- S7::new_generic(
   name = "top_genes_perc_sc",
   dispatch_args = "object",
@@ -1062,6 +1115,18 @@ S7::method(top_genes_perc_sc, SingleCells) <- function(
 #' the obs table.
 #'
 #' @export
+#'
+#' @examples
+#' # read proportion of a gene set, the mitochondrial percentage pattern
+#' sc <- demo_single_cells(prepped = FALSE)
+#' sc <- gene_set_proportions_sc(
+#'   sc,
+#'   gene_set_list = list(set_a = c("gene_01", "gene_02", "gene_03")),
+#'   .verbose = FALSE
+#' )
+#' head(unlist(sc[["set_a"]]))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 gene_set_proportions_sc <- S7::new_generic(
   name = "gene_set_proportions_sc",
   dispatch_args = "object",
@@ -1579,6 +1644,19 @@ S7::method(find_clusters_sc, ScOrMc) <- function(
 #' with `cell_indices` stored as an attribute (0-indexed).
 #'
 #' @export
+#'
+#' @examples
+#' # k-means centroids, Louvain on top, memberships back to the cells
+#' sc <- demo_single_cells()
+#' res <- fast_cluster_sc(
+#'   sc,
+#'   resolutions = c(1.0, 0.5),
+#'   n_centroids = 30L,
+#'   .verbose = FALSE
+#' )
+#' head(get_data(res))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 fast_cluster_sc <- S7::new_generic(
   name = "fast_cluster_sc",
   dispatch_args = "object",
@@ -1754,6 +1832,14 @@ S7::method(fast_cluster_sc, SingleCells) <- function(
 #' @returns Initialised `sc_knn` with the kNN data.
 #'
 #' @export
+#'
+#' @examples
+#' # a standalone kNN object off the PCA embedding
+#' sc <- demo_single_cells()
+#' knn <- generate_knn_sc(sc, .validate_index = FALSE, .verbose = FALSE)
+#' dim(get_knn_mat(knn))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 generate_knn_sc <- S7::new_generic(
   name = "generate_knn_sc",
   dispatch_args = "object",
@@ -1882,6 +1968,18 @@ S7::method(generate_knn_sc, SingleCells) <- function(
 #' @references van Dijk, et al., Cell, 2018.
 #'
 #' @export
+#'
+#' @examples
+#' # diffusion imputation of five genes for plotting
+#' sc <- demo_single_cells()
+#' sc <- run_magic_sc(
+#'   sc,
+#'   features = get_gene_names(sc)[1:5],
+#'   .verbose = FALSE
+#' )
+#' dim(get_magic(sc)$data)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 run_magic_sc <- S7::new_generic(
   name = "run_magic_sc",
   dispatch_args = "object",

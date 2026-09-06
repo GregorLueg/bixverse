@@ -46,3 +46,11 @@ The \code{SingleCellNearestNeighbour} for downstream usage.
 \description{
 Generate a new SingleCellNearestNeighbour from data
 }
+\examples{
+# kNN over a random embedding; the rows have to carry cell names
+set.seed(42L)
+embd <- matrix(rnorm(500 * 10), nrow = 500)
+rownames(embd) <- sprintf("cell_\%03d", 1:500)
+knn <- generate_sc_knn(embd, .verbose = FALSE)
+dim(get_knn_mat(knn))
+}

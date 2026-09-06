@@ -19,3 +19,11 @@ The personalisation vector for subsequent usage in page-rank
 \description{
 Helper function to create personalisation vectors
 }
+\examples{
+# reset weight split across two seed nodes, normalised to sum to one
+g <- igraph::graph_from_data_frame(
+  data.frame(from = c("a", "b", "c"), to = c("b", "c", "d")),
+  directed = TRUE
+)
+generate_personalisation_vec(g, node_weights = c(a = 3, c = 1))
+}

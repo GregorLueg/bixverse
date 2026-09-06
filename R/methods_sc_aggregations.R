@@ -47,6 +47,21 @@
 #'
 #' @references
 #' Morabito, et al. Cell Rep Methods, 2023
+#'
+#' @examples
+#' # 50 meta cells off the demo object
+#' sc <- demo_single_cells()
+#' mc <- generate_bt_meta_cells_sc(
+#'   sc,
+#'   sc_meta_cell_params = params_sc_bt_metacells(
+#'     target_no_metacells = 50L,
+#'     knn = list(k = 10L)
+#'   ),
+#'   .verbose = FALSE
+#' )
+#' mc
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 generate_bt_meta_cells_sc <- S7::new_generic(
   name = "generate_bt_meta_cells_sc",
   dispatch_args = "object",
@@ -242,6 +257,22 @@ S7::method(generate_bt_meta_cells_sc, ScOrScSubset) <- function(
 #'
 #' @references
 #' Persad, et al. Nat Biotechnol, 2023
+#'
+#' @examples
+#' # archetypal analysis based meta cells
+#' sc <- demo_single_cells()
+#' mc <- generate_seacells_sc(
+#'   sc,
+#'   seacell_params = params_sc_seacells(
+#'     n_sea_cells = 50L,
+#'     min_iter = 5L,
+#'     knn = list(k = 10L)
+#'   ),
+#'   .verbose = FALSE
+#' )
+#' mc
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 generate_seacells_sc <- S7::new_generic(
   name = "generate_seacells_sc",
   dispatch_args = "object",
@@ -384,6 +415,22 @@ S7::method(generate_seacells_sc, ScOrScSubset) <- function(
 #'
 #' @references
 #' Bilous, et al. BMC Bioinform., 2022
+#'
+#' @examples
+#' # walktrap based super cells at a graining factor of 10
+#' sc <- demo_single_cells()
+#' mc <- generate_supercells_sc(
+#'   sc,
+#'   sc_supercell_params = params_sc_supercell(
+#'     graining_factor = 10,
+#'     knn = list(k = 10L)
+#'   ),
+#'   regenerate_knn = TRUE,
+#'   .verbose = FALSE
+#' )
+#' mc
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 generate_supercells_sc <- S7::new_generic(
   name = "generate_supercells_sc",
   dispatch_args = "object",
@@ -545,6 +592,19 @@ S7::method(generate_supercells_sc, ScOrScSubset) <- function(
 #' @importFrom magrittr %$%
 #'
 #' @export
+#'
+#' @examples
+#' # sum raw counts per planted cell type
+#' sc <- demo_single_cells()
+#' obs <- get_sc_obs(sc)
+#' res <- get_pseudobulked_sc(
+#'   sc,
+#'   cell_list = split(obs$cell_id, obs$cell_grp),
+#'   .verbose = FALSE
+#' )
+#' dim(res)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 get_pseudobulked_sc <- S7::new_generic(
   name = "get_pseudobulked_sc",
   dispatch_args = "object",

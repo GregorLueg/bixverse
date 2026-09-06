@@ -21,3 +21,14 @@ BulkCoExp object.}
 \description{
 Get the gene lengths
 }
+\examples{
+\dontrun{
+# median transcript length per Ensembl gene, queried from Ensembl
+counts <- matrix(
+  1:4,
+  nrow = 2,
+  dimnames = list(c("ENSG00000141510", "ENSG00000012048"), c("s1", "s2"))
+)
+get_gene_lengths(counts, species = "human")
+}
+}

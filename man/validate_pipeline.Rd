@@ -23,3 +23,8 @@ what they were given; \code{\link[=step_metacells_sc]{step_metacells_sc()}} does
 only find out about a mismatch when S7 fails to dispatch, i.e. after the
 expensive steps already ran.
 }
+\examples{
+# the meta cell step changes what the next step would receive
+p <- step_hvg_sc() \%>>\% step_metacells_sc("bootstrapped")
+print(validate_pipeline(p, "SingleCells"))
+}

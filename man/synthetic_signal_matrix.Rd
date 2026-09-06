@@ -49,8 +49,9 @@ standard setting a 1000 x 90 matrix, and add optionally a small group into
 the mixture that is slightly more difficult to detect
 }
 \examples{
-\dontrun{
-synthetic_GEX <- create_synthetic_signal_matrix()
-synthetic_signal_mat <- synthetic_GEX$mat
-}
+# default 1000 x 90 matrix with three groups and a small fourth one
+synthetic_gex <- synthetic_signal_matrix()
+dim(synthetic_gex$mat)
+table(synthetic_gex$group)
+lengths(synthetic_gex$diff)
 }

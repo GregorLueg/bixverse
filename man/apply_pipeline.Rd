@@ -22,3 +22,13 @@ receive the result of the previous step. The chain is validated against the
 class of \code{object} before anything runs, see \code{\link[=validate_pipeline]{validate_pipeline()}}.
 Errors propagate; nothing is caught.
 }
+\examples{
+# HVG then PCA, run in order on a freshly loaded object
+sc <- demo_single_cells(prepped = FALSE)
+p <- step_hvg_sc(hvg_no = 30L, .verbose = FALSE) \%>>\%
+  step_pca_sc(no_pcs = 10L, .verbose = FALSE)
+sc <- apply_pipeline(p, sc)
+dim(get_pca_factors(sc))
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

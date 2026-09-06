@@ -30,3 +30,11 @@ A list with various statistics about the sparsity
 \description{
 Helper function to calculate the induced sparsity
 }
+\examples{
+# how much sparsity the dropout simulation actually added
+syn <- synthetic_bulk_cor_matrix()
+syn <- simulate_dropouts(syn, params_bulk_sparsity())
+stats <- calculate_sparsity_stats(syn)
+stats$added_sparsity
+stats$dropout_by_expression
+}

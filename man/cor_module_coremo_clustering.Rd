@@ -50,6 +50,15 @@ for clustering the genes. It optimises the R2 (cor^2) within the clusters to
 identify the optimal cut. Gene modules with low R2 are being considered as
 the 'junk module'.
 }
+\examples{
+# CoReMo clustering with the default RBF and cut range
+mat <- t(synthetic_signal_matrix()$mat)
+obj <- BulkCoExp(mat, data.table::data.table(sample_id = rownames(mat)))
+obj <- preprocess_bulk_coexp(obj, hvg = 0.3, .verbose = FALSE)
+obj <- cor_module_processing(obj, cor_method = "spearman", .verbose = FALSE)
+obj <- cor_module_coremo_clustering(obj, .verbose = FALSE)
+head(obj@outputs$final_modules)
+}
 \references{
 Srivastava, et al., Nat. Commun., 2018
 }

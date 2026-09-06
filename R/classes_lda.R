@@ -143,6 +143,16 @@ S7::method(get_params, S7::new_S3_class("LdaResult")) <-
 #' by topic and then rank.
 #'
 #' @export
+#'
+#' @examples
+#' # the five highest probability terms of each topic
+#' set.seed(42L)
+#' corpus <- matrix(rbinom(200L * 40L, 1L, 0.05), nrow = 200L, ncol = 40L)
+#' corpus[1:100, 1:10] <- rbinom(1000L, 1L, 0.6)
+#' corpus[101:200, 11:20] <- rbinom(1000L, 1L, 0.6)
+#' colnames(corpus) <- sprintf("term_%02d", 1:40)
+#' lda_res <- run_lda(corpus > 0, k = 2L, .verbose = FALSE)
+#' get_top_terms(lda_res, n = 5L)
 get_top_terms <- function(x, n = 20L) {
   UseMethod("get_top_terms")
 }
@@ -315,6 +325,16 @@ print.LdaKSweepResult <- function(x, ...) {
 #' @returns A `ggplot2` object with one panel per metric.
 #'
 #' @export
+#'
+#' @examples
+#' # the three selection metrics and the combined score against k
+#' set.seed(42L)
+#' corpus <- matrix(rbinom(200L * 40L, 1L, 0.05), nrow = 200L, ncol = 40L)
+#' corpus[1:100, 1:10] <- rbinom(1000L, 1L, 0.6)
+#' corpus[101:200, 11:20] <- rbinom(1000L, 1L, 0.6)
+#' colnames(corpus) <- sprintf("term_%02d", 1:40)
+#' sweep_res <- lda_k_sweep(corpus > 0, k_range = 5:7, .verbose = FALSE)
+#' plot(sweep_res)
 plot.LdaKSweepResult <- function(x, ...) {
   checkmate::assertClass(x, "LdaKSweepResult")
 
@@ -391,6 +411,16 @@ S7::method(get_params, S7::new_S3_class("LdaKSweepResult")) <-
 #' @returns An `LdaResult`.
 #'
 #' @export
+#'
+#' @examples
+#' # pull the selected fit out of a sweep without refitting
+#' set.seed(42L)
+#' corpus <- matrix(rbinom(200L * 40L, 1L, 0.05), nrow = 200L, ncol = 40L)
+#' corpus[1:100, 1:10] <- rbinom(1000L, 1L, 0.6)
+#' corpus[101:200, 11:20] <- rbinom(1000L, 1L, 0.6)
+#' colnames(corpus) <- sprintf("term_%02d", 1:40)
+#' sweep_res <- lda_k_sweep(corpus > 0, k_range = 5:7, .verbose = FALSE)
+#' dim(get_best_model(sweep_res))
 get_best_model <- function(x, k = NULL) {
   UseMethod("get_best_model")
 }

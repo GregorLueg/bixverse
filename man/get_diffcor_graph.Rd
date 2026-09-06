@@ -28,3 +28,18 @@ and general graph information (node, edge numbers).
 \description{
 Helper function to get a differential correlation-based igraph from the class
 }
+\examples{
+# igraph from the differential correlations
+sig <- synthetic_signal_matrix()
+mat <- t(sig$mat)
+target <- mat[sig$group \%in\% c("group1", "group2"), ]
+background <- mat[sig$group == "group3", ]
+meta <- data.table::data.table(sample_id = rownames(target))
+obj <- BulkCoExp(target, meta)
+obj <- preprocess_bulk_coexp(obj, hvg = 0.3, .verbose = FALSE)
+obj <- diffcor_module_processing(
+  obj, background, cor_method = "pearson", .verbose = FALSE
+)
+graph_res <- get_diffcor_graph(obj, .verbose = FALSE)
+graph_res$params
+}

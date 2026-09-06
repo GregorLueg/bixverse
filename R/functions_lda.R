@@ -122,6 +122,16 @@
 #' Nat Methods, 2019
 #'
 #' @export
+#'
+#' @examples
+#' # two planted term blocks recovered as two topics
+#' set.seed(42L)
+#' corpus <- matrix(rbinom(200L * 40L, 1L, 0.05), nrow = 200L, ncol = 40L)
+#' corpus[1:100, 1:10] <- rbinom(1000L, 1L, 0.6)
+#' corpus[101:200, 11:20] <- rbinom(1000L, 1L, 0.6)
+#' colnames(corpus) <- sprintf("term_%02d", 1:40)
+#' lda_res <- run_lda(corpus > 0, k = 2L, .verbose = FALSE)
+#' lda_res
 run_lda <- function(
   x,
   k,
@@ -199,6 +209,16 @@ run_lda <- function(
 #' Mimno, et al., EMNLP, 2011
 #'
 #' @export
+#'
+#' @examples
+#' # small sweep above the coherence topic count floor
+#' set.seed(42L)
+#' corpus <- matrix(rbinom(200L * 40L, 1L, 0.05), nrow = 200L, ncol = 40L)
+#' corpus[1:100, 1:10] <- rbinom(1000L, 1L, 0.6)
+#' corpus[101:200, 11:20] <- rbinom(1000L, 1L, 0.6)
+#' colnames(corpus) <- sprintf("term_%02d", 1:40)
+#' sweep_res <- lda_k_sweep(corpus > 0, k_range = 5:7, .verbose = FALSE)
+#' sweep_res
 lda_k_sweep <- function(
   x,
   k_range,

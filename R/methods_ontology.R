@@ -14,6 +14,17 @@
 #' the properties.
 #'
 #' @export
+#'
+#' @examples
+#' # ancestors, descendants and information content added to the class
+#' onto <- data.table::data.table(
+#'   parent = c("a", "b", "b", "b", "c"),
+#'   child = c("b", "c", "d", "e", "f"),
+#'   type = c("part_of", "part_of", "part_of", "is_a", "is_a")
+#' )
+#' onto_obj <- OntologySim(onto, .verbose = FALSE)
+#' onto_obj <- pre_process_sim_onto(onto_obj, .verbose = FALSE)
+#' names(S7::prop(onto_obj, "outputs"))
 pre_process_sim_onto <- S7::new_generic(
   name = "pre_process_sim_onto",
   dispatch_args = "object",
@@ -73,6 +84,19 @@ S7::method(pre_process_sim_onto, OntologySim) <- function(
 #' @returns The class with added semantic similarities to the properties.
 #'
 #' @export
+#'
+#' @examples
+#' # Resnik similarities for the whole ontology stored in the class
+#' onto <- data.table::data.table(
+#'   parent = c("a", "b", "b", "b", "c"),
+#'   child = c("b", "c", "d", "e", "f"),
+#'   type = c("part_of", "part_of", "part_of", "is_a", "is_a")
+#' )
+#' onto_obj <- pre_process_sim_onto(
+#'   OntologySim(onto, .verbose = FALSE),
+#'   .verbose = FALSE
+#' )
+#' calculate_semantic_sim_onto(onto_obj, sim_type = "resnik", .verbose = FALSE)
 calculate_semantic_sim_onto <- S7::new_generic(
   name = "calculate_semantic_sim_onto",
   dispatch_args = "object",
@@ -166,6 +190,20 @@ S7::method(calculate_semantic_sim_onto, OntologySim) <-
 #' @returns The class with added semantic similarities to the properties.
 #'
 #' @export
+#'
+#' @examples
+#' # Wang similarities for the whole ontology stored in the class
+#' onto <- data.table::data.table(
+#'   parent = c("a", "b", "b", "b", "c"),
+#'   child = c("b", "c", "d", "e", "f"),
+#'   type = c("part_of", "part_of", "part_of", "is_a", "is_a")
+#' )
+#' onto_obj <- OntologySim(onto, .verbose = FALSE)
+#' calculate_wang_sim_onto(
+#'   onto_obj,
+#'   weights = c(part_of = 0.8, is_a = 0.6),
+#'   .verbose = FALSE
+#' )
 calculate_wang_sim_onto <- S7::new_generic(
   name = "calculate_wang_sim_onto",
   dispatch_args = "object",
@@ -208,7 +246,7 @@ S7::method(calculate_wang_sim_onto, OntologySim) <- function(
       must.include = c("parent", "child", "type")
     )
   ) {
-    warnings(paste(
+    warning(paste(
       "No type column found in the column.",
       "Please consider recreating the class with the respective column.",
       "Returning class as is."
@@ -267,6 +305,22 @@ S7::method(calculate_wang_sim_onto, OntologySim) <- function(
 #' @returns The class with filtered results added to the respective slot.
 #'
 #' @export
+#'
+#' @examples
+#' # keep only term pairs above the permutation-derived critical value
+#' onto <- data.table::data.table(
+#'   parent = c("a", "b", "b", "b", "c"),
+#'   child = c("b", "c", "d", "e", "f"),
+#'   type = c("part_of", "part_of", "part_of", "is_a", "is_a")
+#' )
+#' onto_obj <- OntologySim(onto, .verbose = FALSE)
+#' onto_obj <- calculate_wang_sim_onto(
+#'   onto_obj,
+#'   weights = c(part_of = 0.8, is_a = 0.6),
+#'   .verbose = FALSE
+#' )
+#' onto_obj <- filter_similarities(onto_obj, alpha = 0.1, .verbose = FALSE)
+#' head(get_results(onto_obj))
 filter_similarities <- S7::new_generic(
   name = "filter_similarities",
   dispatch_args = "object",

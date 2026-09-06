@@ -51,3 +51,10 @@ generation of the pre-processed data and pre-whitening matrix. It has
 the same two options \code{c("logcosh", "exp")} to run ICA in parallel modus. You
 can control the parameters of ICA via \code{ica_params}.
 }
+\examples{
+# recover two mixed sources
+sources <- cbind(sin((1:1000) / 20), rep(((1:200) - 100) / 100, 5))
+mixed <- sources \%*\% matrix(c(0.291, 0.6557, -0.5439, 0.5572), 2, 2)
+ica_res <- fast_ica_rust(mixed, n_icas = 2L, ica_fun = "logcosh", seed = 42L)
+max(abs(cor(sources[, 1], t(ica_res$S))))
+}

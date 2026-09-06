@@ -26,4 +26,16 @@ extract.}
 Helper function to transform the counts from the \code{MetaCells} into a Rust
 specific list.
 }
+\examples{
+# the CSR representation Rust expects
+sc <- demo_single_cells()
+mc <- generate_bt_meta_cells_sc(
+  sc,
+  sc_meta_cell_params = params_sc_bt_metacells(target_no_metacells = 50L),
+  .verbose = FALSE
+)
+names(mc_counts_to_list(mc, assay = "raw"))
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}
 \keyword{internal}

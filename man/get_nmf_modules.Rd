@@ -17,3 +17,15 @@ A data.table with \code{gene}, \code{module_id}, \code{loading}, \code{sign} col
 Getter function to extract the gene-to-module data.table from a bulk NMF
 fit. Each row is one gene assigned to its top-loading module.
 }
+\examples{
+# gene to module assignments of a four-factor fit
+syn <- generate_gene_module_data(n_samples = 24L, n_genes = 60L)
+# NMF needs a non-negative matrix
+mat <- syn$data - min(syn$data)
+obj <- BulkCoExp(mat, syn$meta_data)
+obj <- preprocess_bulk_coexp(
+  obj, hvg = NULL, scaling = FALSE, .verbose = FALSE
+)
+obj <- nmf_bulk(obj, k = 4L, .verbose = FALSE)
+head(get_nmf_modules(obj))
+}

@@ -72,6 +72,22 @@ returns the resulting SEACells. Compared to other algorithms, a kernel
 archetype analysis is used to identify the metacells. For details, please
 refer to the publication.
 }
+\examples{
+# archetypal analysis based meta cells
+sc <- demo_single_cells()
+mc <- generate_seacells_sc(
+  sc,
+  seacell_params = params_sc_seacells(
+    n_sea_cells = 50L,
+    min_iter = 5L,
+    knn = list(k = 10L)
+  ),
+  .verbose = FALSE
+)
+mc
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}
 \references{
 Persad, et al. Nat Biotechnol, 2023
 }

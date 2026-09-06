@@ -64,3 +64,15 @@ out early.}
 }
 }
 
+\examples{
+# the class is produced by the aggregation functions, not built by hand
+sc <- demo_single_cells()
+mc <- generate_bt_meta_cells_sc(
+  sc,
+  sc_meta_cell_params = params_sc_bt_metacells(target_no_metacells = 50L),
+  .verbose = FALSE
+)
+mc
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

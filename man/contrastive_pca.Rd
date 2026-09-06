@@ -20,6 +20,18 @@ contrastive_pca(object, alpha, no_pcs)
 Applies the contrastive PCA algorithm given a specified alpha and a number of
 contrastive principal components to extract.
 }
+\examples{
+# five contrastive PCs at alpha 2.5
+cpca_data <- synthetic_c_pca_data()
+target <- t(cpca_data$target)
+background <- t(cpca_data$background)
+meta <- data.table::data.table(sample_id = rownames(target))
+obj <- BulkCoExp(target, meta)
+obj <- preprocess_bulk_coexp(obj, .verbose = FALSE)
+obj <- contrastive_pca_processing(obj, background, .verbose = FALSE)
+obj <- contrastive_pca(obj, alpha = 2.5, no_pcs = 5L)
+dim(get_c_pca_factors(obj))
+}
 \references{
 Abid, et al., Nature Communications, 2018
 }

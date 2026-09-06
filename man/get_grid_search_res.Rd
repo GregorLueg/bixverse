@@ -16,3 +16,17 @@ data.table with the grid search results (if found. Otherwise \code{NULL}.)
 Getter function to extract the grid search results. If not found will return
 \code{NULL}.
 }
+\examples{
+# the grid search table
+syn <- generate_gene_module_data(n_samples = 24L, n_genes = 60L)
+obj <- BulkCoExp(syn$data, syn$meta_data)
+obj <- preprocess_bulk_coexp(obj, hvg = NULL, .verbose = FALSE)
+obj <- dgrdl_grid_search(
+  obj,
+  neighbours_vec = c(3L, 5L),
+  dict_size_vec = c(4L, 6L),
+  seed_vec = 123L,
+  .verbose = FALSE
+)
+get_grid_search_res(obj)
+}

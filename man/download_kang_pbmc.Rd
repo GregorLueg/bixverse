@@ -31,6 +31,13 @@ dropping before any modelling.
 Served from the \code{bixverse-data} GitHub release. There is no Zenodo fallback
 for this one yet.
 }
+\examples{
+\dontrun{
+# pulls the archive into the session tempdir()
+path <- download_kang_pbmc()
+sce <- qs2::qs_read(path)
+}
+}
 \references{
 Kang, et al., Nat. Biotechnol., 2018
 }

@@ -54,3 +54,23 @@ could be identified with the provided parameters).
 Detects privileged communities after a diffusion based on seed
 nodes.
 }
+\examples{
+# privileged communities in the heated part of the network
+set.seed(42)
+g <- igraph::sample_pa(15, directed = FALSE)
+edges <- data.table::setDT(igraph::as_data_frame(g))[, `:=`(
+  from = sprintf("node_\%i", from),
+  to = sprintf("node_\%i", to)
+)]
+object <- NetworkDiffusions(edges, weighted = FALSE, directed = FALSE)
+object <- diffuse_seed_nodes(object, c(node_1 = 1, node_3 = 1), "max")
+object <- permute_seed_nodes(object, perm_iters = 100L, .verbose = FALSE)
+object <- community_detection(
+  object,
+  community_params = params_community_detection(
+    min_seed_nodes = 0L,
+    min_nodes = 2L
+  )
+)
+head(get_results(object))
+}

@@ -42,6 +42,23 @@ manifold, its compactness and separation to other meta cells. To do so,
 generate a diffusion map on the original data based on the approach of
 SEACells and add the data to the object, see Persad, et al.
 }
+\examples{
+# diffusion map off the source kNN graph, giving each meta cell a region
+sc <- demo_single_cells()
+mc <- generate_bt_meta_cells_sc(
+  sc,
+  sc_meta_cell_params = params_sc_bt_metacells(target_no_metacells = 50L),
+  .verbose = FALSE
+)
+mc <- calc_diffusion_coordinates(
+  mc,
+  knn_data = get_knn_obj(sc),
+  .verbose = FALSE
+)
+table(mc[["density_region"]]$density_region)
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}
 \references{
 Persad, et al. Nat Biotechnol, 2023
 }

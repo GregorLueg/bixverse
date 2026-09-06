@@ -35,3 +35,15 @@ user-supplied cell clusters. Cells outside any cluster are ignored.
 If \code{condition_colname} and \code{condition_oi} are supplied, only cells from
 that condition contribute to the aggregation.
 }
+\examples{
+# mean expression and expressing fraction per planted cell type
+sc <- demo_single_cells()
+res <- compute_expression_info_sc(
+  sc,
+  celltype_colname = "cell_grp",
+  genes = get_gene_names(sc)[1:5]
+)
+head(res)
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

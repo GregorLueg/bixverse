@@ -64,6 +64,22 @@ This function implements the meta cell aggregation from Bilous, et al.
 The core idea is to use the walktrap community detection on the kNN graph.
 For details, please refer to the paper.
 }
+\examples{
+# walktrap based super cells at a graining factor of 10
+sc <- demo_single_cells()
+mc <- generate_supercells_sc(
+  sc,
+  sc_supercell_params = params_sc_supercell(
+    graining_factor = 10,
+    knn = list(k = 10L)
+  ),
+  regenerate_knn = TRUE,
+  .verbose = FALSE
+)
+mc
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}
 \references{
 Bilous, et al. BMC Bioinform., 2022
 }

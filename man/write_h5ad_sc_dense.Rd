@@ -34,3 +34,16 @@ Helper to write synthetic data to h5ad with \verb{/X} stored as a
 dense 2D dataset (cells x genes). Useful for exercising the dense ingestion
 path.
 }
+\examples{
+# the same data with a dense /X, which reads back as DENSE_ROW
+data <- generate_single_cell_test_data(
+  syn_data_params = params_sc_synthetic_data(n_cells = 200L, n_genes = 40L)
+)
+f_path <- tempfile(fileext = ".h5ad")
+write_h5ad_sc_dense(
+  f_path, data$counts, data$obs, data$var, .verbose = FALSE
+)
+get_h5ad_dimensions(f_path)$type
+
+unlink(f_path)
+}

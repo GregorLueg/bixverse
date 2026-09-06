@@ -57,3 +57,9 @@ child classes) and has options to return (pretty) JSONs. This generic
 also gets inherited by other classes and can be used to extract parameters.
 Also, can dispatch to specific methods for certain S3 classes.
 }
+\examples{
+# parameters stored in a freshly created class
+object <- SimilarityNetworkFusion(snf_params = params_snf(k = 3L))
+names(get_params(object))
+get_params(object, to_json = TRUE, pretty_json = TRUE)
+}

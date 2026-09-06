@@ -24,3 +24,13 @@ carrying the most probability mass. Note that these are probabilities within
 a topic, so they are comparable down a topic but not across topics of
 different breadth.
 }
+\examples{
+# the five highest probability terms of each topic
+set.seed(42L)
+corpus <- matrix(rbinom(200L * 40L, 1L, 0.05), nrow = 200L, ncol = 40L)
+corpus[1:100, 1:10] <- rbinom(1000L, 1L, 0.6)
+corpus[101:200, 11:20] <- rbinom(1000L, 1L, 0.6)
+colnames(corpus) <- sprintf("term_\%02d", 1:40)
+lda_res <- run_lda(corpus > 0, k = 2L, .verbose = FALSE)
+get_top_terms(lda_res, n = 5L)
+}

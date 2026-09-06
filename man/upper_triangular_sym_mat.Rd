@@ -9,6 +9,18 @@ matrix (think correlation matrix, distance matrix, etc.) in an
 memory-efficient form and return a data.table or dense (or sparse) R matrix
 if need be.
 }
+\examples{
+# store the off-diagonal of a correlation matrix and get it back
+set.seed(42)
+cor_mat <- cor(matrix(rnorm(80), nrow = 20, ncol = 4))
+object <- upper_triangular_sym_mat$new(
+  values = cor_mat[lower.tri(cor_mat)],
+  features = sprintf("gene_\%i", 1:4),
+  shift = TRUE
+)
+object$get_data_table(.verbose = FALSE)
+dim(object$get_sym_matrix(.verbose = FALSE))
+}
 \section{Methods}{
 \subsection{Public methods}{
   \itemize{

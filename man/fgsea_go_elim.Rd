@@ -51,6 +51,21 @@ ontology and repeats the process. Subsequently, it leverages the multi-level
 method to estimate lower p-values for significant terms, see Korotkevich, et
 al.
 }
+\examples{
+\donttest{
+# human GO terms with at least 25 genes
+go_obj <- GeneOntologyElim(
+  get_go_data_human(.verbose = FALSE),
+  min_genes = 25L
+)
+genes <- unique(unlist(S7::prop(go_obj, "go_to_genes")))
+set.seed(1L)
+stats <- stats::setNames(rnorm(length(genes)), genes)
+stats[1:200] <- stats[1:200] + 2
+res <- fgsea_go_elim(go_obj, stats = stats, nperm = 1000L)
+head(res, 3)
+}
+}
 \references{
 Korotkevich, et al., bioRxiv
 }

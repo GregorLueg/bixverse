@@ -616,6 +616,13 @@ get_magic.ScCache <- function(x, ...) {
 #' @returns Returns the `SingleCells` class for further operations.
 #'
 #' @export
+#'
+#' @examples
+#' # demo_single_cells() wraps the construction and the ingestion
+#' sc <- demo_single_cells(prepped = FALSE)
+#' sc
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 SingleCells <- S7::new_class(
   name = "SingleCells",
   properties = list(
@@ -1725,6 +1732,18 @@ S7::method(drop_cols_sc, SingleCells) <- function(
 #' @returns The class with updated obs table in the DuckDB
 #'
 #' @export
+#'
+#' @examples
+#' # one new column, in the order of the cells that passed quality control
+#' sc <- demo_single_cells(prepped = FALSE)
+#' sc <- set_sc_new_obs_col(
+#'   sc,
+#'   col_name = "arm",
+#'   new_data = rep(c("ctrl", "treated"), length.out = dim(sc)[1])
+#' )
+#' table(get_sc_obs(sc)$arm)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 set_sc_new_obs_col <- S7::new_generic(
   name = "set_sc_new_obs_col",
   dispatch_args = "object",
@@ -1772,6 +1791,21 @@ S7::method(set_sc_new_obs_col, SingleCells) <- function(
 #' @returns The class with updated obs table in the DuckDB
 #'
 #' @export
+#'
+#' @examples
+#' # several columns in one go
+#' sc <- demo_single_cells(prepped = FALSE)
+#' n_cells <- dim(sc)[1]
+#' sc <- set_sc_new_obs_col_multiple(
+#'   sc,
+#'   new_data = list(
+#'     arm = rep(c("ctrl", "treated"), length.out = n_cells),
+#'     donor = rep(sprintf("donor_%i", 1:4), length.out = n_cells)
+#'   )
+#' )
+#' head(get_sc_obs(sc)[, c("arm", "donor")], 3)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 set_sc_new_obs_col_multiple <- S7::new_generic(
   name = "set_sc_new_obs_col_multiple",
   dispatch_args = "object",
@@ -1817,6 +1851,15 @@ S7::method(set_sc_new_obs_col_multiple, SingleCells) <- function(
 #' @returns The class with updated obs table in the DuckDB
 #'
 #' @export
+#'
+#' @examples
+#' # cluster memberships carry their own cell_idx, so they join straight on
+#' sc <- demo_single_cells()
+#' clusters <- fast_cluster_sc(sc, resolutions = 1.0, .verbose = FALSE)
+#' sc <- add_sc_new_obs(sc, get_data(clusters))
+#' head(get_sc_obs(sc), 3)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 add_sc_new_obs <- S7::new_generic(
   name = "add_sc_new_obs",
   dispatch_args = "object",
@@ -1884,6 +1927,19 @@ S7::method(add_sc_new_obs, SingleCells) <- function(
 #' @returns The class with updated var table in the DuckDB
 #'
 #' @export
+#'
+#' @examples
+#' # flag a couple of genes in the var table
+#' sc <- demo_single_cells(prepped = FALSE)
+#' sc <- set_sc_new_var_cols(
+#'   sc,
+#'   data_list = list(
+#'     is_marker = get_gene_names(sc) %in% c("gene_01", "gene_02")
+#'   )
+#' )
+#' head(get_sc_var(sc), 3)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 set_sc_new_var_cols <- S7::new_generic(
   name = "set_sc_new_var_cols",
   dispatch_args = "object",

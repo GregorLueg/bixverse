@@ -16,3 +16,10 @@ String. The path to the extracted doublet detection data.
 This function downloads a PBMC data set with demuxlet information to test
 doublet detection methods.
 }
+\examples{
+\dontrun{
+# pulls the archive into the session tempdir()
+path <- download_demuxlet_pbmc()
+list.files(path)
+}
+}

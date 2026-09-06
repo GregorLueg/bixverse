@@ -64,6 +64,14 @@ recommendation and where most of the runtime went. Set \code{legacy = TRUE} in
 \code{\link[=params_edger_ql]{params_edger_ql()}} for the pre-4.0 pipeline, which does run
 \code{estimateDisp()}.
 }
+\examples{
+# quasi-likelihood F test on the second design column
+syn <- synthetic_bulk_cor_matrix()
+grp <- factor(rep(c("ctrl", "case"), each = 50), levels = c("ctrl", "case"))
+design <- stats::model.matrix(~grp)
+res <- run_edger_ql(counts = syn$counts, design = design)
+head(res)
+}
 \references{
 Chen, Lun and Smyth, F1000Research, 2016
 }

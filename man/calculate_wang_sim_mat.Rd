@@ -21,3 +21,13 @@ The symmetric Wang similarity matrix.
 This function calculates the Wang similarity, based on the DAG
 for a given ontology. This function will return the full similarity matrix.
 }
+\examples{
+# Wang similarity matrix with relationship-specific weights
+onto <- data.table::data.table(
+  parent = c("a", "b", "b", "b", "c"),
+  child = c("b", "c", "d", "e", "f"),
+  type = c("part_of", "part_of", "part_of", "is_a", "is_a")
+)
+weights <- c("part_of" = 0.8, "is_a" = 0.6)
+round(calculate_wang_sim_mat(onto, weights = weights), 3)
+}

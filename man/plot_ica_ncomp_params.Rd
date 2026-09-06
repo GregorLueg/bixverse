@@ -28,3 +28,17 @@ indicating how orthogonal the signals detected at this level are.
 If found, the function will also add the optimal number of components based
 on \code{\link[=ica_optimal_ncomp]{ica_optimal_ncomp()}} (if a loess function could be fitted).
 }
+\examples{
+# stability, convergence and orthogonality against ncomp
+mat <- t(synthetic_signal_matrix()$mat)
+obj <- BulkCoExp(mat, data.table::data.table(sample_id = rownames(mat)))
+obj <- preprocess_bulk_coexp(obj, hvg = 0.3, .verbose = FALSE)
+obj <- ica_processing(obj, .verbose = FALSE)
+obj <- ica_evaluate_comp(
+  obj,
+  ica_type = "logcosh",
+  ncomp_params = params_ica_ncomp(custom_seq = seq(2L, 20L, by = 2L)),
+  .verbose = FALSE
+)
+plot_ica_ncomp_params(obj)
+}

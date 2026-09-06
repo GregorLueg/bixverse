@@ -19,6 +19,24 @@ on the manifold (defined by the diffusion map). You must have run
 that compactness indicates how tight the metacell spans the manifold, whereas
 separation indicates how well the different metacells span the manifold.
 }
+\examples{
+# compactness and separation on top of the diffusion coordinates
+sc <- demo_single_cells()
+mc <- generate_bt_meta_cells_sc(
+  sc,
+  sc_meta_cell_params = params_sc_bt_metacells(target_no_metacells = 50L),
+  .verbose = FALSE
+)
+mc <- calc_diffusion_coordinates(
+  mc,
+  knn_data = get_knn_obj(sc),
+  .verbose = FALSE
+)
+mc <- calc_manifold_metrics(mc)
+head(mc[[c("compactness", "separation")]])
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}
 \references{
 Persad, et al. Nat Biotechnol, 2023
 }

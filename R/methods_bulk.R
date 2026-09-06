@@ -30,6 +30,17 @@
 #' @import data.table
 #' @importFrom magrittr %>%
 #' @importFrom magrittr %$%
+#'
+#' @examples
+#' # drop outlier samples and lowly expressed genes
+#' syn <- synthetic_bulk_cor_matrix()
+#' meta <- data.table::data.table(
+#'   sample_id = colnames(syn$counts),
+#'   case_control = rep(c("case", "control"), each = 50)
+#' )
+#' object <- BulkDge(raw_counts = syn$counts, meta_data = meta)
+#' object <- qc_bulk_dge(object, group_col = "case_control", .verbose = FALSE)
+#' dim(get_outputs(object)$raw_counts_filtered)
 qc_bulk_dge <- S7::new_generic(
   "qc_bulk_dge",
   "object",
@@ -183,6 +194,22 @@ S7::method(qc_bulk_dge, BulkDge) <- function(
 #' @import data.table
 #' @importFrom magrittr %>%
 #' @importFrom magrittr %$%
+#'
+#' @examples
+#' # TMM library size normalisation followed by voom
+#' syn <- synthetic_bulk_cor_matrix()
+#' meta <- data.table::data.table(
+#'   sample_id = colnames(syn$counts),
+#'   case_control = rep(c("case", "control"), each = 50)
+#' )
+#' object <- BulkDge(raw_counts = syn$counts, meta_data = meta)
+#' object <- qc_bulk_dge(object, group_col = "case_control", .verbose = FALSE)
+#' object <- normalise_bulk_dge(
+#'   object,
+#'   group_col = "case_control",
+#'   .verbose = FALSE
+#' )
+#' get_outputs(object)$normalised_counts[1:3, 1:3]
 normalise_bulk_dge <- S7::new_generic(
   "normalise_bulk_dge",
   "object",
@@ -335,6 +362,15 @@ S7::method(normalise_bulk_dge, BulkDge) <- function(
 #' @import data.table
 #' @importFrom magrittr %>%
 #' @importFrom magrittr %$%
+#'
+#' @examples
+#' # keep the 200 most variable genes for module detection
+#' syn <- synthetic_bulk_cor_matrix()
+#' mat <- log1p(t(syn$counts))
+#' meta <- data.table::data.table(sample_id = rownames(mat))
+#' object <- BulkCoExp(raw_data = mat, meta_data = meta)
+#' object <- preprocess_bulk_coexp(object, hvg = 200L, .verbose = FALSE)
+#' object
 preprocess_bulk_coexp <- S7::new_generic(
   "preprocess_bulk_coexp",
   "object",
@@ -476,6 +512,23 @@ S7::method(preprocess_bulk_coexp, BulkCoExp) <- function(
 #' @returns Returns the class with additional data added to the outputs.
 #'
 #' @export
+#'
+#' @examples
+#' # PCA over the most variable genes of the normalised counts
+#' syn <- synthetic_bulk_cor_matrix()
+#' meta <- data.table::data.table(
+#'   sample_id = colnames(syn$counts),
+#'   case_control = rep(c("case", "control"), each = 50)
+#' )
+#' object <- BulkDge(raw_counts = syn$counts, meta_data = meta)
+#' object <- qc_bulk_dge(object, group_col = "case_control", .verbose = FALSE)
+#' object <- normalise_bulk_dge(
+#'   object,
+#'   group_col = "case_control",
+#'   .verbose = FALSE
+#' )
+#' object <- calculate_pca_bulk_dge(object, no_hvg_genes = 500L)
+#' head(get_outputs(object)$pca)
 calculate_pca_bulk_dge <- S7::new_generic(
   "calculate_pca_bulk_dge",
   "object",
@@ -536,7 +589,7 @@ S7::method(calculate_pca_bulk_dge, BulkDge) <- function(
     data.table::as.data.table() %>%
     data.table::setorder(-mad)
 
-  hvg_genes <- hvg_data[1:no_hvg_genes, gene_id]
+  hvg_genes <- hvg_data[seq_len(min(no_hvg_genes, nrow(hvg_data))), gene_id]
 
   if (!is.null(S7::prop(object, "variable_info"))) {
     # `:=` on the property alone silently no-ops once the data.table's
@@ -655,6 +708,30 @@ check_pca_grp_differences <- function(pc1, pc2, grps) {
 #' @returns Returns the class with additional data added to the outputs.
 #'
 #' @export
+#'
+#' @examples
+#' # regress out a batch column and keep the corrected counts
+#' syn <- synthetic_bulk_cor_matrix()
+#' meta <- data.table::data.table(
+#'   sample_id = colnames(syn$counts),
+#'   case_control = rep(c("case", "control"), each = 50),
+#'   batch = rep(c("b1", "b2"), times = 50)
+#' )
+#' object <- BulkDge(raw_counts = syn$counts, meta_data = meta)
+#' object <- qc_bulk_dge(object, group_col = "case_control", .verbose = FALSE)
+#' object <- normalise_bulk_dge(
+#'   object,
+#'   group_col = "case_control",
+#'   .verbose = FALSE
+#' )
+#' object <- calculate_pca_bulk_dge(object, no_hvg_genes = 500L)
+#' object <- batch_correction_bulk_dge(
+#'   object,
+#'   contrast_column = "case_control",
+#'   batch_col = "batch",
+#'   no_hvg_genes = 500L
+#' )
+#' get_outputs(object)$normalised_counts_corrected[1:3, 1:3]
 batch_correction_bulk_dge <- S7::new_generic(
   "batch_correction_bulk_dge",
   "object",
@@ -712,8 +789,12 @@ S7::method(batch_correction_bulk_dge, BulkDge) <- function(
   pca_present <- !is.null(S7::prop(object, "outputs")[['pca']])
 
   if (!pca_present) {
-    message("No PCA data found. Running PCA with default parameters now.")
-    object <- calculate_pca_bulk_dge(object)
+    message("No PCA data found. Running PCA now.")
+    object <- calculate_pca_bulk_dge(
+      object,
+      scale_genes = scale_genes,
+      no_hvg_genes = no_hvg_genes
+    )
   }
 
   normalised_counts <- S7::prop(object, "outputs")[['normalised_counts']]
@@ -741,7 +822,7 @@ S7::method(batch_correction_bulk_dge, BulkDge) <- function(
     data.table::as.data.table() %>%
     data.table::setorder(-mad)
 
-  hvg_genes <- hvg_data[1:no_hvg_genes, gene_id]
+  hvg_genes <- hvg_data[seq_len(min(no_hvg_genes, nrow(hvg_data))), gene_id]
 
   input_genes <- t(normalised_counts_corrected[hvg_genes, ])
   pca_results <- rs_prcomp(input_genes, scale = scale_genes, top_pcs = NULL)
@@ -833,6 +914,27 @@ S7::method(batch_correction_bulk_dge, BulkDge) <- function(
 #' @returns Returns the class with additional data added to the outputs.
 #'
 #' @export
+#'
+#' @examples
+#' # limma voom over every contrast in the case_control column
+#' syn <- synthetic_bulk_cor_matrix()
+#' meta <- data.table::data.table(
+#'   sample_id = colnames(syn$counts),
+#'   case_control = rep(c("case", "control"), each = 50)
+#' )
+#' object <- BulkDge(raw_counts = syn$counts, meta_data = meta)
+#' object <- qc_bulk_dge(object, group_col = "case_control", .verbose = FALSE)
+#' object <- normalise_bulk_dge(
+#'   object,
+#'   group_col = "case_control",
+#'   .verbose = FALSE
+#' )
+#' object <- calculate_dge_limma(
+#'   object,
+#'   contrast_column = "case_control",
+#'   .verbose = FALSE
+#' )
+#' head(get_dge_limma_voom(object))
 calculate_dge_limma <- S7::new_generic(
   "calculate_dge_limma",
   "object",
@@ -992,6 +1094,27 @@ S7::method(calculate_dge_limma, BulkDge) <- function(
 #' @returns Returns the class with additional data added to the outputs.
 #'
 #' @export
+#'
+#' @examples
+#' # effect sizes over every contrast in the case_control column
+#' syn <- synthetic_bulk_cor_matrix()
+#' meta <- data.table::data.table(
+#'   sample_id = colnames(syn$counts),
+#'   case_control = rep(c("case", "control"), each = 50)
+#' )
+#' object <- BulkDge(raw_counts = syn$counts, meta_data = meta)
+#' object <- qc_bulk_dge(object, group_col = "case_control", .verbose = FALSE)
+#' object <- normalise_bulk_dge(
+#'   object,
+#'   group_col = "case_control",
+#'   .verbose = FALSE
+#' )
+#' object <- calculate_dge_hedges(
+#'   object,
+#'   contrast_column = "case_control",
+#'   .verbose = FALSE
+#' )
+#' head(get_dge_effect_sizes(object))
 calculate_dge_hedges <- S7::new_generic(
   "calculate_dge_hedges",
   "object",

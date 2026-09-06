@@ -58,3 +58,15 @@ ADT-derived UMAP, or either modality on a WNN embedding). All sources key
 on the same kept-cell barcodes, so the merge stays aligned regardless of
 the chosen combination.
 }
+\examples{
+# two genes melted onto the PCA coordinates
+sc <- demo_single_cells()
+dt <- extract_feature_plot_data(
+  sc,
+  features = get_gene_names(sc)[1:2],
+  embedding = "pca"
+)
+head(dt[, c("cell_id", "dim_1", "dim_2", "gene", "expression")])
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

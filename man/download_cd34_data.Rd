@@ -16,6 +16,13 @@ String. The path to CD34 SEACells data set.
 This function downloads the CD34 data set from the SEACells paper into the
 temperorary directory.
 }
+\examples{
+\dontrun{
+# pulls the archive into the session tempdir()
+path <- download_cd34_data()
+get_h5ad_dimensions(path)$dims
+}
+}
 \references{
 Persad, et al., Nat. Biotechnol., 2023
 }

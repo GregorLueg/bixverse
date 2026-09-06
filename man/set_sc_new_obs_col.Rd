@@ -20,3 +20,15 @@ The class with updated obs table in the DuckDB
 \description{
 Add a new column to the obs table
 }
+\examples{
+# one new column, in the order of the cells that passed quality control
+sc <- demo_single_cells(prepped = FALSE)
+sc <- set_sc_new_obs_col(
+  sc,
+  col_name = "arm",
+  new_data = rep(c("ctrl", "treated"), length.out = dim(sc)[1])
+)
+table(get_sc_obs(sc)$arm)
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

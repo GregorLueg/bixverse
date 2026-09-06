@@ -79,3 +79,11 @@ Because PHATE inherently smooths over the kNN graph, it pairs naturally
 with \code{MetaCells}: the combination yields a particularly clean view of
 continuous biological processes on denoised data.
 }
+\examples{
+# PHATE embedding off the cached kNN graph
+sc <- demo_single_cells()
+sc <- phate_sc(sc, .verbose = FALSE)
+dim(get_embedding(sc, "phate"))
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

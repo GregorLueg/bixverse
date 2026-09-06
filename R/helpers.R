@@ -21,6 +21,12 @@
 #' }
 #'
 #' @export
+#'
+#' @examples
+#' # the human gene ontology tables shipped with the package
+#' go_data <- load_go_human_data()
+#' names(go_data)
+#' head(go_data$go_info)
 load_go_human_data <- function() {
   files_to_load <- c(
     "go_info" = "gene_ontology_info.parquet",
@@ -64,6 +70,23 @@ load_go_human_data <- function() {
 #' @export
 #' @import data.table
 #' @importFrom magrittr %>%
+#'
+#' @examples
+#' \donttest{
+#' # assemble the packaged human GO data by hand
+#' go_data <- load_go_human_data()
+#' relationships <- data.table::setnames(
+#'   data.table::copy(go_data$gene_ontology),
+#'   old = c("from", "to"),
+#'   new = c("parent", "child")
+#' )
+#' go_dt <- process_go_data(
+#'   go_info = go_data$go_info,
+#'   go_genes = go_data$go_to_genes,
+#'   go_relationships = relationships[relationship %in% c("is_a", "part_of")]
+#' )
+#' dim(go_dt)
+#' }
 process_go_data <- function(go_info, go_genes, go_relationships) {
   # scope
   . <- ind <- NULL
@@ -126,6 +149,13 @@ process_go_data <- function(go_info, go_genes, go_relationships) {
 #' @returns A data.table
 #'
 #' @export
+#'
+#' @examples
+#' \donttest{
+#' # human GO data ready for GeneOntologyElim()
+#' go_dt <- get_go_data_human(.verbose = FALSE)
+#' dim(go_dt)
+#' }
 get_go_data_human <- function(filter_relationships = TRUE, .verbose = TRUE) {
   # checks
   checkmate::qassert(.verbose, "B1")
@@ -193,10 +223,10 @@ get_go_levels <- function(edge_dt) {
     dfs_search <- igraph::dfs(
       go_hierarchy_graph,
       root = index,
-      order.out = T,
-      father = T,
-      dist = T,
-      unreachable = F,
+      order.out = TRUE,
+      parent = TRUE,
+      dist = TRUE,
+      unreachable = FALSE,
       mode = "out"
     )$dist
 
@@ -231,6 +261,11 @@ get_go_levels <- function(edge_dt) {
 #' @returns The sparse matrix.
 #'
 #' @export
+#'
+#' @examples
+#' # 3 x 3 symmetric matrix from its off-diagonal upper triangle
+#' mat <- upper_triangle_to_sparse(c(0.5, 0.2, 0.8), shift = TRUE, n = 3L)
+#' dim(mat)
 upper_triangle_to_sparse <- function(
   upper_triangle_vals,
   shift,
@@ -267,6 +302,18 @@ upper_triangle_to_sparse <- function(
 #' @export
 #'
 #' @keywords internal
+#'
+#' @examples
+#' # 3 x 3 identity in the Rust-side CSC representation
+#' csc <- list(
+#'   data = c(1, 1, 1),
+#'   indices = c(0L, 1L, 2L),
+#'   indptr = c(0L, 1L, 2L, 3L),
+#'   nrow = 3L,
+#'   ncol = 3L,
+#'   cs_type = "csc"
+#' )
+#' sparse_list_to_mat(csc)
 sparse_list_to_mat <- function(ls) {
   # checks
   checkmate::assertList(ls, names = "named")
@@ -309,6 +356,12 @@ sparse_list_to_mat <- function(ls) {
 #' }
 #'
 #' @export
+#'
+#' @examples
+#' # elbow of a decaying curve that flattens out
+#' x <- 1:20
+#' y <- c(exp(-x[1:10] / 2), rep(0.005, 10))
+#' get_inflection_point(x, y)$inflection_idx
 get_inflection_point <- function(x, y, span = 0.5) {
   # Checks
   checkmate::assertNumeric(x, len = length(y))
@@ -396,6 +449,10 @@ get_cores <- function(abs_max_workers = 8L) {
 #' @returns Returns the string in snake_case format.
 #'
 #' @export
+#'
+#' @examples
+#' # normalise mixed naming conventions
+#' to_snake_case(c("Gene Name", "someRNAValue", "Foo-Bar"))
 to_snake_case <- function(x, ignore_na = FALSE) {
   # checks
   if (ignore_na) {
@@ -480,6 +537,12 @@ select_user_option <- function(options) {
 #' @export
 #'
 #' @keywords internal
+#'
+#' @examples
+#' # mixed categorical and continuous features ready for Gower distances
+#' dt <- data.table::data.table(age = c(45, 62, 33), sex = c("f", "m", "f"))
+#' prepped <- prep_data_gower_hamming_dist(dt, sprintf("s%i", 1:3))
+#' prepped$is_cat
 prep_data_gower_hamming_dist <- function(dt, sample_names) {
   # checks
   checkmate::assertDataTable(dt)

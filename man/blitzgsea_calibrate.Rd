@@ -41,6 +41,16 @@ evaluation per pathway.
 The returned null is a plain list, so it survives \code{saveRDS()} and can be
 cached against a signature.
 }
+\examples{
+# calibrate a null once, to be reused across gene set libraries
+set.seed(42L)
+stats <- stats::setNames(rnorm(500), sprintf("gene_\%03i", 1:500))
+null_model <- blitzgsea_calibrate(
+  stats,
+  blitz_params = params_blitzgsea(permutations = 1000L, anchors = 10L)
+)
+null_model
+}
 \references{
 Lachmann, et al., Bioinformatics, 2022
 }

@@ -35,3 +35,19 @@ Hedge's G effect size for the groups.
 \description{
 Calculate the effect size
 }
+\examples{
+# Hedge's G on log CPM counts for the case vs control contrast
+syn <- synthetic_bulk_cor_matrix()
+meta <- data.table::data.table(
+  sample_id = colnames(syn$counts),
+  case_control = rep(c("case", "control"), each = 50)
+)
+norm_counts <- edgeR::cpm(syn$counts, log = TRUE)
+res <- hedges_g_dge(
+  meta_data = meta,
+  main_contrast = "case_control",
+  normalised_counts = norm_counts,
+  .verbose = FALSE
+)
+head(res)
+}

@@ -112,6 +112,18 @@
 #' absolute loading.
 #'
 #' @export
+#'
+#' @examples
+#' # turn NMF gene loadings into module membership
+#' syn <- generate_gene_module_data(n_samples = 24L, n_genes = 60L)
+#' # NMF needs a non-negative matrix
+#' mat <- syn$data - min(syn$data)
+#' obj <- BulkCoExp(mat, syn$meta_data)
+#' obj <- preprocess_bulk_coexp(
+#'   obj, hvg = NULL, scaling = FALSE, .verbose = FALSE
+#' )
+#' obj <- nmf_bulk(obj, k = 4L, .verbose = FALSE)
+#' head(modules_from_loadings(get_nmf_gene_loadings(obj)))
 modules_from_loadings <- function(
   loadings,
   membership_params = params_module_membership()

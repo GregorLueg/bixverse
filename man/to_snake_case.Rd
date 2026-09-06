@@ -18,3 +18,7 @@ Returns the string in snake_case format.
 \description{
 Helper function to transform strings to snake_case
 }
+\examples{
+# normalise mixed naming conventions
+to_snake_case(c("Gene Name", "someRNAValue", "Foo-Bar"))
+}

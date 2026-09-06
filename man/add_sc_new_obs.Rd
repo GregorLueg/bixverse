@@ -18,3 +18,12 @@ The class with updated obs table in the DuckDB
 \description{
 Add an obs table derived from a method to the SingleCells.
 }
+\examples{
+# cluster memberships carry their own cell_idx, so they join straight on
+sc <- demo_single_cells()
+clusters <- fast_cluster_sc(sc, resolutions = 1.0, .verbose = FALSE)
+sc <- add_sc_new_obs(sc, get_data(clusters))
+head(get_sc_obs(sc), 3)
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

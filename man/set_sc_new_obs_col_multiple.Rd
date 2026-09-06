@@ -19,3 +19,18 @@ The class with updated obs table in the DuckDB
 \description{
 Add multiple new columns to the obs table
 }
+\examples{
+# several columns in one go
+sc <- demo_single_cells(prepped = FALSE)
+n_cells <- dim(sc)[1]
+sc <- set_sc_new_obs_col_multiple(
+  sc,
+  new_data = list(
+    arm = rep(c("ctrl", "treated"), length.out = n_cells),
+    donor = rep(sprintf("donor_\%i", 1:4), length.out = n_cells)
+  )
+)
+head(get_sc_obs(sc)[, c("arm", "donor")], 3)
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

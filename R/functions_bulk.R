@@ -10,6 +10,16 @@
 #' @returns TPM-normalised matrix.
 #'
 #' @export
+#'
+#' @examples
+#' # TPM over synthetic counts with flat 2kb gene lengths
+#' syn <- synthetic_bulk_cor_matrix()
+#' gene_lengths <- stats::setNames(
+#'   rep(2000, nrow(syn$counts)),
+#'   rownames(syn$counts)
+#' )
+#' tpm <- calculate_tpm(syn$counts, gene_lengths)
+#' colSums(tpm)[1:3]
 calculate_tpm <- function(counts, gene_lengths) {
   # checks
   checkmate::assertMatrix(
@@ -37,6 +47,16 @@ calculate_tpm <- function(counts, gene_lengths) {
 #' @returns RPKM-normalised matrix.
 #'
 #' @export
+#'
+#' @examples
+#' # RPKM over synthetic counts with flat 2kb gene lengths
+#' syn <- synthetic_bulk_cor_matrix()
+#' gene_lengths <- stats::setNames(
+#'   rep(2000, nrow(syn$counts)),
+#'   rownames(syn$counts)
+#' )
+#' rpkm <- calculate_rpkm(syn$counts, gene_lengths)
+#' rpkm[1:3, 1:3]
 calculate_rpkm <- function(counts, gene_lengths) {
   # checks
   checkmate::assertMatrix(
@@ -65,6 +85,17 @@ calculate_rpkm <- function(counts, gene_lengths) {
 #' @param ... Additional parameters passed to methods.
 #'
 #' @export
+#'
+#' @examples
+#' \dontrun{
+#' # median transcript length per Ensembl gene, queried from Ensembl
+#' counts <- matrix(
+#'   1:4,
+#'   nrow = 2,
+#'   dimnames = list(c("ENSG00000141510", "ENSG00000012048"), c("s1", "s2"))
+#' )
+#' get_gene_lengths(counts, species = "human")
+#' }
 get_gene_lengths <- function(x, species = c("human", "mouse", "rat"), ...) {
   UseMethod("get_gene_lengths")
 }
@@ -79,6 +110,17 @@ get_gene_lengths <- function(x, species = c("human", "mouse", "rat"), ...) {
 #' @returns Named numeric representing the gene lengths.
 #'
 #' @export
+#'
+#' @examples
+#' \dontrun{
+#' # the matrix method, dispatched on Ensembl rownames
+#' counts <- matrix(
+#'   1:4,
+#'   nrow = 2,
+#'   dimnames = list(c("ENSG00000141510", "ENSG00000012048"), c("s1", "s2"))
+#' )
+#' get_gene_lengths.matrix(counts, species = "human")
+#' }
 #'
 #' @keywords internal
 get_gene_lengths.matrix <- function(
@@ -291,6 +333,22 @@ prep_limma_contrasts <- function(limma_fit, contrast_list) {
 #'
 #' @import data.table
 #' @importFrom magrittr %>%
+#'
+#' @examples
+#' # voom fit and topTable results for the single case vs control contrast
+#' syn <- synthetic_bulk_cor_matrix()
+#' meta <- data.table::data.table(
+#'   sample_id = colnames(syn$counts),
+#'   case_control = rep(c("case", "control"), each = 50)
+#' )
+#' dge_list <- edgeR::normLibSizes(edgeR::DGEList(counts = syn$counts))
+#' res <- run_limma_voom(
+#'   meta_data = meta,
+#'   main_contrast = "case_control",
+#'   dge_list = dge_list,
+#'   .verbose = FALSE
+#' )
+#' head(res)
 run_limma_voom <- function(
   meta_data,
   main_contrast,
@@ -405,6 +463,22 @@ run_limma_voom <- function(
 #'
 #' @import data.table
 #' @importFrom magrittr %>%
+#'
+#' @examples
+#' # Hedge's G on log CPM counts for the case vs control contrast
+#' syn <- synthetic_bulk_cor_matrix()
+#' meta <- data.table::data.table(
+#'   sample_id = colnames(syn$counts),
+#'   case_control = rep(c("case", "control"), each = 50)
+#' )
+#' norm_counts <- edgeR::cpm(syn$counts, log = TRUE)
+#' res <- hedges_g_dge(
+#'   meta_data = meta,
+#'   main_contrast = "case_control",
+#'   normalised_counts = norm_counts,
+#'   .verbose = FALSE
+#' )
+#' head(res)
 hedges_g_dge <- function(
   meta_data,
   main_contrast,

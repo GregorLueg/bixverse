@@ -42,3 +42,19 @@ applied parameters added to the \code{params} slot.
 This function will apply the CPM + Voom normalisation and can additionally
 calculate TPM and FPKM values for plotting purposes.
 }
+\examples{
+# TMM library size normalisation followed by voom
+syn <- synthetic_bulk_cor_matrix()
+meta <- data.table::data.table(
+  sample_id = colnames(syn$counts),
+  case_control = rep(c("case", "control"), each = 50)
+)
+object <- BulkDge(raw_counts = syn$counts, meta_data = meta)
+object <- qc_bulk_dge(object, group_col = "case_control", .verbose = FALSE)
+object <- normalise_bulk_dge(
+  object,
+  group_col = "case_control",
+  .verbose = FALSE
+)
+get_outputs(object)$normalised_counts[1:3, 1:3]
+}

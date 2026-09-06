@@ -23,3 +23,8 @@ The sparse matrix.
 \description{
 Transform an upper triangle-stored matrix to a sparse one
 }
+\examples{
+# 3 x 3 symmetric matrix from its off-diagonal upper triangle
+mat <- upper_triangle_to_sparse(c(0.5, 0.2, 0.8), shift = TRUE, n = 3L)
+dim(mat)
+}

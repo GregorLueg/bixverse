@@ -36,3 +36,14 @@ with the case-control category overlayed. Added if
 \code{\link[=batch_correction_bulk_dge]{batch_correction_bulk_dge()}} is run.
 }
 }
+\examples{
+# pull a named QC plot back off the object
+syn <- synthetic_bulk_cor_matrix()
+meta <- data.table::data.table(
+  sample_id = colnames(syn$counts),
+  case_control = rep(c("case", "control"), each = 50)
+)
+object <- BulkDge(raw_counts = syn$counts, meta_data = meta)
+object <- qc_bulk_dge(object, group_col = "case_control", .verbose = FALSE)
+get_dge_qc_plot(object, plot_choice = "p1_nb_genes_cohort")
+}

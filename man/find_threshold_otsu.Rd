@@ -18,3 +18,8 @@ The threshold.
 \description{
 Find a threshold via the Otsu method
 }
+\examples{
+# threshold separating two Gaussian modes
+set.seed(42)
+find_threshold_otsu(c(rnorm(100), rnorm(100, mean = 5)))
+}

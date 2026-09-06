@@ -72,6 +72,21 @@ estimates for each sample condition. For further details on the method,
 please refer to Burkhardt, et al. This function will take a \code{SingleCells}
 class and return the smoothed density estimates per cell and condition.
 }
+\examples{
+# per cell sample likelihoods over the kNN graph
+sc <- demo_single_cells(
+  syn_data_params = params_sc_synthetic_data(
+    n_cells = 500L,
+    n_genes = 50L,
+    n_samples = 6L,
+    sample_bias = "even"
+  )
+)
+res <- meld_sc(sc, sample_id_col = "sample_id", .verbose = FALSE)
+head(res$norm_scores[, 1:3])
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}
 \references{
 Burkhardt, et al. Nat. Biotechnol., 2021.
 }

@@ -64,6 +64,18 @@ different operations rather than the same one rescaled, see the \code{layer}
 element of \code{\link[=params_sc_magic]{params_sc_magic()}}.
 }
 
+\examples{
+# diffusion imputation of five genes for plotting
+sc <- demo_single_cells()
+sc <- run_magic_sc(
+  sc,
+  features = get_gene_names(sc)[1:5],
+  .verbose = FALSE
+)
+dim(get_magic(sc)$data)
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}
 \references{
 van Dijk, et al., Cell, 2018.
 }

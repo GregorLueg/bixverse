@@ -83,6 +83,21 @@ PCA space given the same HVGs; kNN graphs are being generated and a kNN
 classifier is used to assign a probability that a given cell in the original
 data is a doublet. For more details, please check the publication.
 }
+\examples{
+# simulated doublet scoring on 500 synthetic cells
+sc <- demo_single_cells(prepped = FALSE)
+scrublet_sc(
+  sc,
+  scrublet_params = params_scrublet(
+    pca = list(no_pcs = 10L),
+    hvg = list(min_gene_var_pctl = 0.0),
+    n_bins = 20L
+  ),
+  .verbose = FALSE
+)
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}
 \references{
 Wollock, et al., Cell Syst, 2020
 }

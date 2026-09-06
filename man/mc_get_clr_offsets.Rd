@@ -18,4 +18,16 @@ A vector of length cell_indices which contains the CLR offsets
 \description{
 Helper function to get the offsets for the CLR/PFlogPF transformation.
 }
+\examples{
+# one offset per meta cell
+sc <- demo_single_cells()
+mc <- generate_bt_meta_cells_sc(
+  sc,
+  sc_meta_cell_params = params_sc_bt_metacells(target_no_metacells = 50L),
+  .verbose = FALSE
+)
+head(mc_get_clr_offsets(mc))
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}
 \keyword{internal}

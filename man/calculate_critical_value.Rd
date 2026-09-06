@@ -25,3 +25,14 @@ The critical value.
 This function calculates the critical value for a given ontology
 similarity matrix.
 }
+\examples{
+# critical value of a Wang similarity matrix at alpha 0.1
+onto <- data.table::data.table(
+  parent = c("a", "b", "b", "b", "c"),
+  child = c("b", "c", "d", "e", "f"),
+  type = c("part_of", "part_of", "part_of", "is_a", "is_a")
+)
+weights <- c(part_of = 0.8, is_a = 0.6)
+sim_mat <- calculate_wang_sim_mat(onto, weights = weights)
+calculate_critical_value(sim_mat, alpha = 0.1)
+}

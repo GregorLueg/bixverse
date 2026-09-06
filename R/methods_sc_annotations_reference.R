@@ -21,6 +21,23 @@
 #' @returns An `ScTypeResults` results class
 #'
 #' @export
+#'
+#' @examples
+#' # ScType scores against the planted marker genes
+#' sc <- demo_single_cells()
+#' markers <- data.table::data.table(
+#'   cell_type = rep(sprintf("cell_type_%i", 1:3), each = 10),
+#'   gene_id = sprintf("gene_%02d", 1:30)
+#' )
+#' cell_markers <- prepare_cell_markers(obj = sc, marker_df = markers)
+#' res <- calc_sc_type_scores(
+#'   sc,
+#'   cell_marker_list = cell_markers,
+#'   .verbose = FALSE
+#' )
+#' dim(get_scores(res))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 calc_sc_type_scores <- S7::new_generic(
   name = "calc_sc_type_scores",
   dispatch_args = "object",
@@ -92,6 +109,24 @@ S7::method(calc_sc_type_scores, SingleCells) <- function(
 #' @references Ianevski et al., Nat Comm, 2022. Zhou et al., NIPS, 2004.
 #'
 #' @export
+#'
+#' @examples
+#' # per cell calls from the ScType scores
+#' sc <- demo_single_cells()
+#' markers <- data.table::data.table(
+#'   cell_type = rep(sprintf("cell_type_%i", 1:3), each = 10),
+#'   gene_id = sprintf("gene_%02d", 1:30)
+#' )
+#' cell_markers <- prepare_cell_markers(obj = sc, marker_df = markers)
+#' scores <- calc_sc_type_scores(
+#'   sc,
+#'   cell_marker_list = cell_markers,
+#'   .verbose = FALSE
+#' )
+#' res <- assign_sc_type(sc, sc_type_res = scores, .verbose = FALSE)
+#' table(res$assignments)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 assign_sc_type <- S7::new_generic(
   name = "assign_sc_type",
   dispatch_args = "object",
@@ -220,6 +255,29 @@ S7::method(assign_sc_type, SingleCells) <- function(
 #' @returns A [SymphonyReference] object.
 #'
 #' @export
+#'
+#' @examples
+#' # two batch reference, cell type labels snapshotted along the way
+#' ref <- demo_single_cells(
+#'   syn_data_params = params_sc_synthetic_data(
+#'     n_cells = 500L,
+#'     n_genes = 50L,
+#'     n_batches = 2L,
+#'     batch_effect_strength = "medium"
+#'   )
+#' )
+#' symphony_ref <- build_symphony_ref(
+#'   ref,
+#'   batch_column = "batch_index",
+#'   hvg = get_hvg(ref) + 1L,
+#'   harmony_params = params_sc_harmony(k = 10L),
+#'   no_pcs = 10L,
+#'   label_columns = "cell_grp",
+#'   .verbose = FALSE
+#' )
+#' symphony_ref
+#'
+#' unlink(ref@dir_data, recursive = TRUE, force = TRUE)
 build_symphony_ref <- S7::new_generic(
   name = "build_symphony_ref",
   dispatch_args = "object",
@@ -380,6 +438,32 @@ S7::method(build_symphony_ref, SingleCells) <- function(
 #' @returns The `reference` with updated `labels`.
 #'
 #' @export
+#'
+#' @examples
+#' # attach obs labels to a reference built without them
+#' ref <- demo_single_cells(
+#'   syn_data_params = params_sc_synthetic_data(
+#'     n_cells = 500L,
+#'     n_genes = 50L,
+#'     n_batches = 2L
+#'   )
+#' )
+#' symphony_ref <- build_symphony_ref(
+#'   ref,
+#'   batch_column = "batch_index",
+#'   hvg = get_hvg(ref) + 1L,
+#'   harmony_params = params_sc_harmony(k = 10L),
+#'   no_pcs = 10L,
+#'   .verbose = FALSE
+#' )
+#' symphony_ref <- add_symphony_labels(
+#'   symphony_ref,
+#'   sc_object = ref,
+#'   columns = "cell_grp"
+#' )
+#' head(get_symphony_labels(symphony_ref))
+#'
+#' unlink(ref@dir_data, recursive = TRUE, force = TRUE)
 add_symphony_labels <- S7::new_generic(
   name = "add_symphony_labels",
   dispatch_args = "reference",
@@ -466,6 +550,29 @@ S7::method(add_symphony_labels, SymphonyReference) <- function(
 #' transposed to N_q x K).
 #'
 #' @export
+#'
+#' @examples
+#' # project a second data set into the reference embedding
+#' ref <- demo_single_cells(
+#'   syn_data_params = params_sc_synthetic_data(
+#'     n_cells = 500L,
+#'     n_genes = 50L,
+#'     n_batches = 2L
+#'   )
+#' )
+#' symphony_ref <- build_symphony_ref(
+#'   ref,
+#'   batch_column = "batch_index",
+#'   hvg = get_hvg(ref) + 1L,
+#'   harmony_params = params_sc_harmony(k = 10L),
+#'   no_pcs = 10L,
+#'   .verbose = FALSE
+#' )
+#' query <- demo_single_cells(prepped = FALSE, seed = 7L)
+#' query <- map_symphony_query(symphony_ref, query = query, .verbose = FALSE)
+#' dim(get_embedding(query, "symphony"))
+#'
+#' unlink(c(ref@dir_data, query@dir_data), recursive = TRUE, force = TRUE)
 map_symphony_query <- S7::new_generic(
   name = "map_symphony_query",
   dispatch_args = "reference",
@@ -588,6 +695,36 @@ S7::method(map_symphony_query, SymphonyReference) <- function(
 #' `confidence_<label_column>`, in `get_cells_to_keep(query)` order.
 #'
 #' @export
+#'
+#' @examples
+#' # kNN label transfer from the reference onto a mapped query
+#' ref <- demo_single_cells(
+#'   syn_data_params = params_sc_synthetic_data(
+#'     n_cells = 500L,
+#'     n_genes = 50L,
+#'     n_batches = 2L
+#'   )
+#' )
+#' symphony_ref <- build_symphony_ref(
+#'   ref,
+#'   batch_column = "batch_index",
+#'   hvg = get_hvg(ref) + 1L,
+#'   harmony_params = params_sc_harmony(k = 10L),
+#'   no_pcs = 10L,
+#'   label_columns = "cell_grp",
+#'   .verbose = FALSE
+#' )
+#' query <- demo_single_cells(prepped = FALSE, seed = 7L)
+#' query <- map_symphony_query(symphony_ref, query = query, .verbose = FALSE)
+#' labels <- transfer_labels_symphony(
+#'   symphony_ref,
+#'   query = query,
+#'   label_column = "cell_grp",
+#'   .verbose = FALSE
+#' )
+#' head(labels)
+#'
+#' unlink(c(ref@dir_data, query@dir_data), recursive = TRUE, force = TRUE)
 transfer_labels_symphony <- S7::new_generic(
   name = "transfer_labels_symphony",
   dispatch_args = "reference",

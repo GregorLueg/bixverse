@@ -29,6 +29,17 @@ properties of the class.
 This function will prepare the \code{BulkCoExp} for subsequent usage of the
 contrastive PCA functions. This is based on the work of Abid, et al.
 }
+\examples{
+# covariance matrices of the target and the background
+cpca_data <- synthetic_c_pca_data()
+target <- t(cpca_data$target)
+background <- t(cpca_data$background)
+meta <- data.table::data.table(sample_id = rownames(target))
+obj <- BulkCoExp(target, meta)
+obj <- preprocess_bulk_coexp(obj, .verbose = FALSE)
+obj <- contrastive_pca_processing(obj, background, .verbose = FALSE)
+dim(obj@processed_data$target_covar)
+}
 \references{
 Abid, et al., Nature Communications, 2018
 }

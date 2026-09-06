@@ -20,3 +20,18 @@ Returns the semantic similarity data.table from the class
 \description{
 Get the similarity matrix
 }
+\examples{
+# the Wang similarity matrix back out of the class
+onto <- data.table::data.table(
+  parent = c("a", "b", "b", "b", "c"),
+  child = c("b", "c", "d", "e", "f"),
+  type = c("part_of", "part_of", "part_of", "is_a", "is_a")
+)
+onto_obj <- OntologySim(onto, .verbose = FALSE)
+onto_obj <- calculate_wang_sim_onto(
+  onto_obj,
+  weights = c(part_of = 0.8, is_a = 0.6),
+  .verbose = FALSE
+)
+round(get_sim_matrix(onto_obj, .verbose = FALSE), 3)
+}

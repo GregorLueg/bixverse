@@ -44,3 +44,7 @@ An \code{ScStep}.
 \description{
 Wraps \code{\link[=calculate_pca_sc]{calculate_pca_sc()}} as an \code{ScStep}.
 }
+\examples{
+# PCA restricted to whatever the HVG step selected
+step_hvg_sc(hvg_no = 30L) \%>>\% step_pca_sc(no_pcs = 10L)
+}

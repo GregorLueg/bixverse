@@ -42,4 +42,10 @@ single cell functions. Pairs cell-for-cell with
 \code{\link[=generate_single_cell_test_data]{generate_single_cell_test_data()}} when generated with matching
 \code{n_cells}, number of cell types and \code{n_batches}.
 }
+\examples{
+# synthetic ADT counts, cell-for-cell with the RNA generator
+adt <- generate_single_cell_test_data_adt()
+dim(adt$counts)
+head(adt$var, 3)
+}
 \keyword{internal}

@@ -29,6 +29,17 @@
 #' @importFrom magrittr %>%
 #' @importFrom magrittr %$%
 #' @import data.table
+#'
+#' @examples
+#' # hypergeometric test of a target set against a small universe
+#' gene_universe <- sprintf("gene_%03i", 1:200)
+#' gene_sets <- list(
+#'   set_a = gene_universe[1:20],
+#'   set_b = gene_universe[15:40],
+#'   set_c = gene_universe[100:130]
+#' )
+#' target <- gene_universe[c(1:12, 150:158)]
+#' gse_hypergeometric(target, gene_sets, gene_universe, threshold = 1)
 gse_hypergeometric <- function(
   target_genes,
   gene_set_list,
@@ -131,6 +142,19 @@ gse_hypergeometric <- function(
 #' @importFrom magrittr %>%
 #' @importFrom magrittr %$%
 #' @import data.table
+#'
+#' @examples
+#' # two target sets tested against the same gene sets in one call
+#' gene_universe <- sprintf("gene_%03i", 1:200)
+#' gene_sets <- list(
+#'   set_a = gene_universe[1:20],
+#'   set_b = gene_universe[100:130]
+#' )
+#' targets <- list(
+#'   hit_a = gene_universe[c(1:12, 150:158)],
+#'   hit_b = gene_universe[c(100:112, 5:8)]
+#' )
+#' gse_hypergeometric_list(targets, gene_sets, gene_universe, threshold = 1)
 gse_hypergeometric_list <- function(
   target_genes_list,
   gene_set_list,
@@ -240,6 +264,24 @@ gse_hypergeometric_list <- function(
 #' @importFrom magrittr %>%
 #' @importFrom magrittr %$%
 #' @import data.table
+#'
+#' @examples
+#' # collapse redundant terms of a toy ontology by Wang similarity
+#' onto <- data.table::data.table(
+#'   parent = c("a", "b", "b", "c"),
+#'   child = c("b", "c", "d", "e"),
+#'   type = c("is_a", "is_a", "part_of", "is_a")
+#' )
+#' res <- data.table::data.table(
+#'   gene_set_name = c("b", "c", "d", "e"),
+#'   fdr = c(0.001, 0.001, 0.4, 0.02)
+#' )
+#' simplify_hypergeom_res(
+#'   res,
+#'   onto,
+#'   weights = c("is_a" = 0.8, "part_of" = 0.6),
+#'   min_sim = 0.6
+#' )
 simplify_hypergeom_res <- function(
   res,
   parent_child_dt,
@@ -343,6 +385,20 @@ simplify_hypergeom_res <- function(
 #' @export
 #'
 #' @references see Hänzelmann, et al. Bmc Bioinformatics, 2013
+#'
+#' @examples
+#' # per-sample GSVA scores for two gene sets
+#' set.seed(123L)
+#' exp_mat <- matrix(
+#'   rnorm(200 * 10),
+#'   nrow = 200,
+#'   dimnames = list(sprintf("gene_%03i", 1:200), sprintf("sample_%i", 1:10))
+#' )
+#' pathways <- list(
+#'   set_a = sprintf("gene_%03i", 1:20),
+#'   set_b = sprintf("gene_%03i", 50:80)
+#' )
+#' dim(calc_gsva(exp_mat, pathways))
 calc_gsva <- function(
   exp,
   pathways,
@@ -437,6 +493,20 @@ calc_gsva <- function(
 #' @export
 #'
 #' @references Barbie et al., Nature, 2009
+#'
+#' @examples
+#' # per-sample ssGSEA scores for two gene sets
+#' set.seed(123L)
+#' exp_mat <- matrix(
+#'   rnorm(200 * 10),
+#'   nrow = 200,
+#'   dimnames = list(sprintf("gene_%03i", 1:200), sprintf("sample_%i", 1:10))
+#' )
+#' pathways <- list(
+#'   set_a = sprintf("gene_%03i", 1:20),
+#'   set_b = sprintf("gene_%03i", 50:80)
+#' )
+#' round(calc_ssgsea(exp_mat, pathways)[, 1:3], 3)
 calc_ssgsea <- function(
   exp,
   pathways,
@@ -525,6 +595,18 @@ calc_ssgsea <- function(
 #' }
 #'
 #' @export
+#'
+#' @examples
+#' # permutation GSEA against a signature with one enriched set
+#' set.seed(42L)
+#' stats <- stats::setNames(rnorm(500), sprintf("gene_%03i", 1:500))
+#' stats[1:20] <- stats[1:20] + 2
+#' pathways <- list(
+#'   up_set = sprintf("gene_%03i", 1:20),
+#'   random_set = sprintf("gene_%03i", 200:240)
+#' )
+#' res <- calc_gsea_traditional(stats, pathways, nperm = 1000L)
+#' res[, c("pathway_name", "es", "pvals")]
 calc_gsea_traditional <- function(
   stats,
   pathways,
@@ -637,6 +719,18 @@ calc_gsea_traditional <- function(
 #' @export
 #'
 #' @references Korotkevich, et al., bioRxiv
+#'
+#' @examples
+#' # fgsea simple against a signature with one enriched set
+#' set.seed(42L)
+#' stats <- stats::setNames(rnorm(500), sprintf("gene_%03i", 1:500))
+#' stats[1:20] <- stats[1:20] + 2
+#' pathways <- list(
+#'   up_set = sprintf("gene_%03i", 1:20),
+#'   random_set = sprintf("gene_%03i", 200:240)
+#' )
+#' res <- calc_fgsea_simple(stats, pathways, nperm = 1000L)
+#' res[, c("pathway_name", "es", "pvals")]
 calc_fgsea_simple <- function(
   stats,
   pathways,
@@ -756,6 +850,18 @@ calc_fgsea_simple <- function(
 #' @export
 #'
 #' @references Korotkevich, et al., bioRxiv
+#'
+#' @examples
+#' # fgsea with the multi-level refinement of low p-values
+#' set.seed(42L)
+#' stats <- stats::setNames(rnorm(500), sprintf("gene_%03i", 1:500))
+#' stats[1:20] <- stats[1:20] + 2
+#' pathways <- list(
+#'   up_set = sprintf("gene_%03i", 1:20),
+#'   random_set = sprintf("gene_%03i", 200:240)
+#' )
+#' res <- calc_fgsea(stats, pathways, nperm = 1000L)
+#' res[, c("pathway_name", "es", "pvals")]
 calc_fgsea <- function(
   stats,
   pathways,
@@ -1029,6 +1135,16 @@ BLITZ_KS_WARN_THRESHOLD <- 0.05
 #' @export
 #'
 #' @references Lachmann, et al., Bioinformatics, 2022
+#'
+#' @examples
+#' # calibrate a null once, to be reused across gene set libraries
+#' set.seed(42L)
+#' stats <- stats::setNames(rnorm(500), sprintf("gene_%03i", 1:500))
+#' null_model <- blitzgsea_calibrate(
+#'   stats,
+#'   blitz_params = params_blitzgsea(permutations = 1000L, anchors = 10L)
+#' )
+#' null_model
 blitzgsea_calibrate <- function(stats, blitz_params = params_blitzgsea()) {
   # Checks
   checkmate::assertNumeric(stats, min.len = 3L, finite = TRUE)
@@ -1071,6 +1187,15 @@ blitzgsea_calibrate <- function(stats, blitz_params = params_blitzgsea()) {
 #' @export
 #'
 #' @keywords internal
+#'
+#' @examples
+#' # the calibration summary of a blitzGSEA null
+#' set.seed(42L)
+#' stats <- stats::setNames(rnorm(500), sprintf("gene_%03i", 1:500))
+#' print(blitzgsea_calibrate(
+#'   stats,
+#'   blitz_params = params_blitzgsea(permutations = 1000L, anchors = 10L)
+#' ))
 print.BlitzGseaNull <- function(x, ...) {
   checkmate::assertClass(x, "BlitzGseaNull")
 
@@ -1144,6 +1269,22 @@ print.BlitzGseaNull <- function(x, ...) {
 #' @export
 #'
 #' @references Lachmann, et al., Bioinformatics, 2022
+#'
+#' @examples
+#' # blitzGSEA reading p-values off a fitted gamma null
+#' set.seed(42L)
+#' stats <- stats::setNames(rnorm(500), sprintf("gene_%03i", 1:500))
+#' stats[1:20] <- stats[1:20] + 2
+#' pathways <- list(
+#'   up_set = sprintf("gene_%03i", 1:20),
+#'   random_set = sprintf("gene_%03i", 200:240)
+#' )
+#' res <- calc_blitzgsea(
+#'   stats,
+#'   pathways,
+#'   blitz_params = params_blitzgsea(permutations = 1000L, anchors = 10L)
+#' )
+#' res[, c("pathway_name", "es", "nes", "pvals")]
 calc_blitzgsea <- function(
   stats,
   pathways,
@@ -1242,6 +1383,22 @@ calc_blitzgsea <- function(
 #' @export
 #'
 #' @references Kaspi and Ziemann, Bmc Genomics, 2020
+#'
+#' @examples
+#' # multi-contrast enrichment over two contrasts
+#' set.seed(10L)
+#' contrast_mat <- matrix(
+#'   rnorm(300 * 2),
+#'   ncol = 2,
+#'   dimnames = list(sprintf("gene_%03i", 1:300), c("contrast_a", "contrast_b"))
+#' )
+#' contrast_mat[1:30, ] <- contrast_mat[1:30, ] + 1.5
+#' gene_sets <- list(
+#'   hit_set = sprintf("gene_%03i", 1:30),
+#'   bg_set = sprintf("gene_%03i", 100:150)
+#' )
+#' res <- calc_mitch(contrast_mat, gene_sets)
+#' res[, c("pathway_names", "manova_pval", "s_dist")]
 calc_mitch <- function(contrast_mat, gene_set_list, min_size = 5L) {
   # checks
   checkmate::assertMatrix(
@@ -1313,6 +1470,17 @@ calc_mitch <- function(contrast_mat, gene_set_list, min_size = 5L) {
 #'
 #' @references 1.) Foroutan et al., BMC Bioinformatics, 2018.; 2.) Bhuva,
 #' et al., Nucleic Acids Res., 2020
+#'
+#' @examples
+#' # column ranks of an expression matrix, ready for singscore
+#' set.seed(123L)
+#' exp_mat <- matrix(
+#'   rnorm(200 * 10),
+#'   nrow = 200,
+#'   dimnames = list(sprintf("gene_%03i", 1:200), sprintf("sample_%i", 1:10))
+#' )
+#' ranks <- calc_singscore_rank(exp_mat)
+#' dim(ranks)
 calc_singscore_rank <- function(exp, stable_genes = NULL) {
   checkmate::assertMatrix(
     exp,
@@ -1372,6 +1540,17 @@ calc_singscore_rank <- function(exp, stable_genes = NULL) {
 #' @export
 #'
 #' @references Foroutan et al., BMC Bioinformatics, 2018.
+#'
+#' @examples
+#' # score every sample against one up-regulated gene set
+#' set.seed(123L)
+#' exp_mat <- matrix(
+#'   rnorm(200 * 10),
+#'   nrow = 200,
+#'   dimnames = list(sprintf("gene_%03i", 1:200), sprintf("sample_%i", 1:10))
+#' )
+#' ranks <- calc_singscore_rank(exp_mat)
+#' head(calc_singscore(ranks, up_set = sprintf("gene_%03i", 1:20)))
 calc_singscore <- function(
   ranks,
   up_set,
@@ -1467,6 +1646,22 @@ calc_singscore <- function(
 #' @export
 #'
 #' @references Foroutan et al., BMC Bioinformatics, 2018.
+#'
+#' @examples
+#' # score every sample against several up-regulated gene sets
+#' set.seed(123L)
+#' exp_mat <- matrix(
+#'   rnorm(200 * 10),
+#'   nrow = 200,
+#'   dimnames = list(sprintf("gene_%03i", 1:200), sprintf("sample_%i", 1:10))
+#' )
+#' ranks <- calc_singscore_rank(exp_mat)
+#' pathways <- list(
+#'   set_a = sprintf("gene_%03i", 1:20),
+#'   set_b = sprintf("gene_%03i", 50:80)
+#' )
+#' res <- calc_singscore_multi(ranks, up_pathways = pathways)
+#' dim(res$scores)
 calc_singscore_multi <- function(
   ranks,
   up_pathways,

@@ -986,6 +986,13 @@ assert_sc_state <- checkmate::makeAssertionFunction(check_sc_state)
 #' }
 #'
 #' @export
+#'
+#' @examples
+#' # what the object holds and whether it still agrees with the cells
+#' sc <- demo_single_cells()
+#' get_sc_cache_status(sc)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 get_sc_cache_status <- function(object) {
   # checks
   checkmate::assertTRUE(

@@ -1083,6 +1083,14 @@ params_sc_synthetic_data <- function(
       c("even", "slightly_uneven", "very_uneven")
     )
   )
+  # both or neither: one alone silently yields no sample_id column, which only
+  # surfaces later as a DuckDB binder error
+  if (is.null(n_samples) != is.null(sample_bias)) {
+    stop(paste(
+      "`n_samples` and `sample_bias` must be provided together.",
+      "Supply both to add sample membership, or neither to omit it."
+    ))
+  }
 
   list(
     n_cells = n_cells,

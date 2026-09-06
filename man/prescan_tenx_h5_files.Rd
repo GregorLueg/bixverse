@@ -42,3 +42,22 @@ or union universe of gene ids, and returns the file tasks expected by
 V2 and V3 files can be mixed in a single batch. Gene matching is done on
 the feature \code{id} (ensembl-style) since gene symbols collide.
 }
+\examples{
+# gene universe across two 10x h5 files
+data <- generate_single_cell_test_data(
+  syn_data_params = params_sc_synthetic_data(n_cells = 200L, n_genes = 40L)
+)
+features <- data.table::data.table(
+  id = data$var$gene_id,
+  name = data$var$ensembl_id,
+  feature_type = "Gene Expression"
+)
+files <- c(a = tempfile(fileext = ".h5"), b = tempfile(fileext = ".h5"))
+for (f in files) {
+  write_tenx_h5_sc(f, data$counts, data$obs$cell_id, features)
+}
+scan_res <- prescan_tenx_h5_files(h5_paths = files, .verbose = FALSE)
+scan_res$universe_size
+
+unlink(files)
+}

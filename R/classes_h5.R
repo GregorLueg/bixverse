@@ -12,6 +12,19 @@
 #' @export
 #'
 #' @import data.table
+#'
+#' @examples
+#' # parse counts and obs back out of a small h5ad file
+#' set.seed(42)
+#' counts <- matrix(rpois(50, 5), nrow = 10, ncol = 5)
+#' obs <- data.table::data.table(sample_id = sprintf("cell_%i", 1:10))
+#' var <- data.table::data.table(var_id = sprintf("gene_%i", 1:5))
+#' h5_path <- tempfile(fileext = ".h5ad")
+#' write_h5ad_sc_dense(h5_path, counts, obs, var, .verbose = FALSE)
+#' parser <- AnnDataParser$new(h5_path)
+#' dim(parser$get_raw_counts())
+#' head(parser$get_obs_table())
+#' unlink(h5_path)
 AnnDataParser <- R6::R6Class(
   # Class name
   classname = "AnnDataParser",

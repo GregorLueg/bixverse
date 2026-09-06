@@ -18,3 +18,13 @@ A data.table with the ADT feature information
 \description{
 Returns the number of cells expressing a given ADT
 }
+\examples{
+# number of cells expressing each protein
+adt <- generate_single_cell_test_data_adt()
+cell_info <- stats::setNames(
+  seq_len(nrow(adt$counts)),
+  rownames(adt$counts)
+)
+adt_clr <- new_adt_counts_clr(adt$counts, cell_info = cell_info)
+head(get_adt_feature_info(adt_clr))
+}

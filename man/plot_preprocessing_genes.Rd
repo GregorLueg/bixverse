@@ -20,3 +20,12 @@ Boxplot of the number of detected genes per sample, split by cohort. Used in
 the bulk DGE pre-processing report to spot samples with poor library
 complexity.
 }
+\examples{
+# detected genes per sample, split by cohort
+syn <- synthetic_bulk_cor_matrix()
+samples <- data.table::data.table(
+  cohort = rep(c("case", "control"), each = 50),
+  nb_detected_genes = colSums(syn$counts > 0)
+)
+plot_preprocessing_genes(samples, group_col = "cohort")
+}

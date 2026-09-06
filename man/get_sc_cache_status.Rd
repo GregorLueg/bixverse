@@ -29,3 +29,10 @@ cell set and with the artefacts it was derived from. Artefacts computed
 before provenance stamping existed report \code{stamped = FALSE} and are never
 flagged stale, because nothing is known about them either way.
 }
+\examples{
+# what the object holds and whether it still agrees with the cells
+sc <- demo_single_cells()
+get_sc_cache_status(sc)
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

@@ -34,3 +34,20 @@ An \code{ScTypeResults} results class
 \description{
 Implements the approach from
 }
+\examples{
+# ScType scores against the planted marker genes
+sc <- demo_single_cells()
+markers <- data.table::data.table(
+  cell_type = rep(sprintf("cell_type_\%i", 1:3), each = 10),
+  gene_id = sprintf("gene_\%02d", 1:30)
+)
+cell_markers <- prepare_cell_markers(obj = sc, marker_df = markers)
+res <- calc_sc_type_scores(
+  sc,
+  cell_marker_list = cell_markers,
+  .verbose = FALSE
+)
+dim(get_scores(res))
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

@@ -69,6 +69,28 @@ cell labels (e.g. cell type annotations) can be snapshotted at build time
 via \code{label_columns} in \code{\link[=build_symphony_ref]{build_symphony_ref()}} or attached post-hoc via
 \code{\link[=add_symphony_labels]{add_symphony_labels()}}. For details on the method, refer to Kang et al.
 }
+\examples{
+# a reference built off a two batch synthetic data set
+ref <- demo_single_cells(
+  syn_data_params = params_sc_synthetic_data(
+    n_cells = 500L,
+    n_genes = 50L,
+    n_batches = 2L
+  )
+)
+symphony_ref <- build_symphony_ref(
+  ref,
+  batch_column = "batch_index",
+  hvg = get_hvg(ref) + 1L,
+  harmony_params = params_sc_harmony(k = 10L),
+  no_pcs = 10L,
+  label_columns = "cell_grp",
+  .verbose = FALSE
+)
+symphony_ref
+
+unlink(ref@dir_data, recursive = TRUE, force = TRUE)
+}
 \references{
 Kang et al., Nat. Commun., 2021
 }

@@ -16,3 +16,10 @@ String. The path to the extracted PBMC3K data.
 This function downloads the PBMC3K dataset from 10x Genomics (uploaded on
 Zenodo) and extracts it and returns the (temporary) paths.
 }
+\examples{
+\dontrun{
+# pulls the archive into the session tempdir()
+path <- download_pbmc3k()
+list.files(path)
+}
+}

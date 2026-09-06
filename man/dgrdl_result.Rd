@@ -45,6 +45,18 @@ Runs the DGRDL algorithm from Pan et al., with the specified hyperparamters.
 To determine the hyperparameters, you can use
 \code{\link[=dgrdl_grid_search]{dgrdl_grid_search()}}.
 }
+\examples{
+# fit DGRDL with a six-atom dictionary
+syn <- generate_gene_module_data(n_samples = 24L, n_genes = 60L)
+obj <- BulkCoExp(syn$data, syn$meta_data)
+obj <- preprocess_bulk_coexp(obj, hvg = NULL, .verbose = FALSE)
+obj <- dgrdl_result(
+  obj,
+  dgrdl_params = params_dgrdl(dict_size = 6L, k_neighbours = 3L),
+  .verbose = FALSE
+)
+head(get_modules(get_results(obj)))
+}
 \references{
 Pan et al., Cell Syst, 2022
 }

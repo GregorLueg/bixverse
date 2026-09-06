@@ -21,3 +21,12 @@ with ancestor identifiers as their values. Can be calculated using
 as \verb{-log2(number descendant/total terms in the ontology)}. More information
 can be found \href{https://yulab-smu.top/biomedical-knowledge-mining-book/semantic-similarity-overview.html}{here}.
 }
+\examples{
+# information content from the descendant counts of a toy ontology
+onto <- data.table::data.table(
+  parent = c("a", "b", "b", "b", "c"),
+  child = c("b", "c", "d", "e", "f")
+)
+ancestry <- get_ontology_ancestry(onto)
+unlist(calculate_information_content(ancestry$descendants))
+}

@@ -39,3 +39,17 @@ exp_id, h5_path, cs_type, no_cells, no_genes, gene_local_to_universe
 \description{
 Pre-scan multiple h5ad files for multi-sample loading
 }
+\examples{
+# build the gene universe across two files before a multi-file load
+data <- generate_single_cell_test_data(
+  syn_data_params = params_sc_synthetic_data(n_cells = 200L, n_genes = 40L)
+)
+files <- c(a = tempfile(fileext = ".h5ad"), b = tempfile(fileext = ".h5ad"))
+for (f in files) {
+  write_h5ad_sc(f, data$counts, data$obs, data$var, .verbose = FALSE)
+}
+tasks <- prescan_h5ad_files(h5_paths = files, .verbose = FALSE)
+tasks$universe_size
+
+unlink(files)
+}

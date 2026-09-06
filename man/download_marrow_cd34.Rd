@@ -16,6 +16,13 @@ String. The path to the marrow CD34 data set.
 This function downloads the bone marrow CD34 data set from the Palantir
 paper into the temporary directory.
 }
+\examples{
+\dontrun{
+# pulls the archive into the session tempdir()
+path <- download_marrow_cd34()
+get_h5ad_dimensions(path)$dims
+}
+}
 \references{
 Setty, et al., Nat. Biotechnol., 2019
 }

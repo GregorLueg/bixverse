@@ -46,3 +46,19 @@ the identified contrast pairs.
 \description{
 Wrapper function to run Limma Voom workflows.
 }
+\examples{
+# voom fit and topTable results for the single case vs control contrast
+syn <- synthetic_bulk_cor_matrix()
+meta <- data.table::data.table(
+  sample_id = colnames(syn$counts),
+  case_control = rep(c("case", "control"), each = 50)
+)
+dge_list <- edgeR::normLibSizes(edgeR::DGEList(counts = syn$counts))
+res <- run_limma_voom(
+  meta_data = meta,
+  main_contrast = "case_control",
+  dge_list = dge_list,
+  .verbose = FALSE
+)
+head(res)
+}

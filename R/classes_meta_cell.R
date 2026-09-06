@@ -49,6 +49,18 @@
 #' @returns Returns the `MetaCells` class for further operations.
 #'
 #' @export
+#'
+#' @examples
+#' # the class is produced by the aggregation functions, not built by hand
+#' sc <- demo_single_cells()
+#' mc <- generate_bt_meta_cells_sc(
+#'   sc,
+#'   sc_meta_cell_params = params_sc_bt_metacells(target_no_metacells = 50L),
+#'   .verbose = FALSE
+#' )
+#' mc
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 MetaCells <- S7::new_class(
   name = "MetaCells",
   properties = list(
@@ -390,6 +402,18 @@ S7::method(`[`, MetaCells) <- function(
 #' @keywords internal
 #'
 #' @export
+#'
+#' @examples
+#' # the CSR representation Rust expects
+#' sc <- demo_single_cells()
+#' mc <- generate_bt_meta_cells_sc(
+#'   sc,
+#'   sc_meta_cell_params = params_sc_bt_metacells(target_no_metacells = 50L),
+#'   .verbose = FALSE
+#' )
+#' names(mc_counts_to_list(mc, assay = "raw"))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 mc_counts_to_list <- S7::new_generic(
   name = "mc_counts_to_list",
   dispatch_args = "object",
@@ -446,6 +470,18 @@ S7::method(mc_counts_to_list, MetaCells) <- function(
 #' @keywords internal
 #'
 #' @export
+#'
+#' @examples
+#' # one offset per meta cell
+#' sc <- demo_single_cells()
+#' mc <- generate_bt_meta_cells_sc(
+#'   sc,
+#'   sc_meta_cell_params = params_sc_bt_metacells(target_no_metacells = 50L),
+#'   .verbose = FALSE
+#' )
+#' head(mc_get_clr_offsets(mc))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 mc_get_clr_offsets <- S7::new_generic(
   name = "mc_get_clr_offsets",
   dispatch_args = "object",

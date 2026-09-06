@@ -63,6 +63,21 @@ This function implements the meta cell aggregation from Morabito, et al.
 The generation of metacells is a useful approach for subsequent application
 of for example correlation-based methods to identify co-regulated genes.
 }
+\examples{
+# 50 meta cells off the demo object
+sc <- demo_single_cells()
+mc <- generate_bt_meta_cells_sc(
+  sc,
+  sc_meta_cell_params = params_sc_bt_metacells(
+    target_no_metacells = 50L,
+    knn = list(k = 10L)
+  ),
+  .verbose = FALSE
+)
+mc
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}
 \references{
 Morabito, et al. Cell Rep Methods, 2023
 }

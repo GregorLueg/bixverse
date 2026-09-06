@@ -54,3 +54,11 @@ An \code{ScStep}.
 \description{
 Wraps \code{\link[=fast_mnn_sc]{fast_mnn_sc()}} as an \code{ScStep}.
 }
+\examples{
+# fastMNN wants the batch aware genes handed to it up front
+step_fast_mnn_sc(
+  batch_column = "batch_index",
+  batch_hvg_genes = 0:29L
+) \%>>\%
+  step_neighbours_sc(embd_to_use = "mnn")
+}

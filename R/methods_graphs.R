@@ -21,6 +21,22 @@
 #' genes. Additionally, the seed genes are stored in the class.
 #'
 #' @export
+#'
+#' @examples
+#' # personalised page-rank diffusion from three seed nodes
+#' set.seed(42)
+#' g <- igraph::sample_pa(15, directed = FALSE)
+#' edges <- data.table::setDT(igraph::as_data_frame(g))[, `:=`(
+#'   from = sprintf("node_%i", from),
+#'   to = sprintf("node_%i", to)
+#' )]
+#' object <- NetworkDiffusions(edges, weighted = FALSE, directed = FALSE)
+#' object <- diffuse_seed_nodes(
+#'   object,
+#'   c(node_1 = 1, node_3 = 1, node_10 = 1),
+#'   summarisation = "max"
+#' )
+#' head(get_diffusion_vector(object))
 diffuse_seed_nodes <- S7::new_generic(
   name = "diffuse_seed_nodes",
   dispatch_args = "object",
@@ -117,6 +133,24 @@ S7::method(diffuse_seed_nodes, NetworkDiffusions) <-
 #' genes. Additionally, the seed genes are stored in the class.
 #'
 #' @export
+#'
+#' @examples
+#' # tied diffusion between two sets of seed nodes
+#' set.seed(42)
+#' g <- igraph::sample_pa(15, directed = FALSE)
+#' edges <- data.table::setDT(igraph::as_data_frame(g))[, `:=`(
+#'   from = sprintf("node_%i", from),
+#'   to = sprintf("node_%i", to)
+#' )]
+#' object <- NetworkDiffusions(edges, weighted = FALSE, directed = FALSE)
+#' object <- tied_diffusion(
+#'   object,
+#'   diffusion_vector_1 = c(node_1 = 1, node_3 = 1),
+#'   diffusion_vector_2 = c(node_2 = 1, node_6 = 1),
+#'   summarisation = "max",
+#'   score_aggregation = "min"
+#' )
+#' head(get_diffusion_vector(object))
 tied_diffusion <- S7::new_generic(
   name = "tied_diffusion",
   dispatch_args = "object",
@@ -268,6 +302,19 @@ S7::method(tied_diffusion, NetworkDiffusions) <-
 #' genes. Additionally, the seed genes are stored in the class.
 #'
 #' @export
+#'
+#' @examples
+#' # 100 node-degree adjusted permutations of a single diffusion
+#' set.seed(42)
+#' g <- igraph::sample_pa(15, directed = FALSE)
+#' edges <- data.table::setDT(igraph::as_data_frame(g))[, `:=`(
+#'   from = sprintf("node_%i", from),
+#'   to = sprintf("node_%i", to)
+#' )]
+#' object <- NetworkDiffusions(edges, weighted = FALSE, directed = FALSE)
+#' object <- diffuse_seed_nodes(object, c(node_1 = 1, node_3 = 1), "max")
+#' object <- permute_seed_nodes(object, perm_iters = 100L, .verbose = FALSE)
+#' head(get_diffusion_perms(object))
 permute_seed_nodes <- S7::new_generic(
   name = "permute_seed_nodes",
   dispatch_args = "object",
@@ -434,6 +481,26 @@ S7::method(permute_seed_nodes, NetworkDiffusions) <- function(
 #' could be identified with the provided parameters).
 #'
 #' @export
+#'
+#' @examples
+#' # privileged communities in the heated part of the network
+#' set.seed(42)
+#' g <- igraph::sample_pa(15, directed = FALSE)
+#' edges <- data.table::setDT(igraph::as_data_frame(g))[, `:=`(
+#'   from = sprintf("node_%i", from),
+#'   to = sprintf("node_%i", to)
+#' )]
+#' object <- NetworkDiffusions(edges, weighted = FALSE, directed = FALSE)
+#' object <- diffuse_seed_nodes(object, c(node_1 = 1, node_3 = 1), "max")
+#' object <- permute_seed_nodes(object, perm_iters = 100L, .verbose = FALSE)
+#' object <- community_detection(
+#'   object,
+#'   community_params = params_community_detection(
+#'     min_seed_nodes = 0L,
+#'     min_nodes = 2L
+#'   )
+#' )
+#' head(get_results(object))
 community_detection <- S7::new_generic(
   name = "community_detection",
   dispatch_args = "object",
@@ -751,6 +818,18 @@ S7::method(community_detection, NetworkDiffusions) <- function(
 #' test set to TRUE; otherwise just the AUC.
 #'
 #' @export
+#'
+#' @examples
+#' # AUROC of the diffusion score against two known hit nodes
+#' set.seed(42)
+#' g <- igraph::sample_pa(15, directed = FALSE)
+#' edges <- data.table::setDT(igraph::as_data_frame(g))[, `:=`(
+#'   from = sprintf("node_%i", from),
+#'   to = sprintf("node_%i", to)
+#' )]
+#' object <- NetworkDiffusions(edges, weighted = FALSE, directed = FALSE)
+#' object <- diffuse_seed_nodes(object, c(node_1 = 1, node_3 = 1), "max")
+#' calculate_diffusion_auc(object, hit_nodes = c("node_2", "node_4"))
 calculate_diffusion_auc <- S7::new_generic(
   name = "calculate_diffusion_auc",
   dispatch_args = "object",
@@ -954,6 +1033,24 @@ summarise_scores <- function(
 #' @returns The class with added properties.
 #'
 #' @export
+#'
+#' @examples
+#' # Jaccard-based reciprocal best hits between two module sets
+#' set.seed(123)
+#' modules <- data.table::data.table(
+#'   origin = rep(c("set_a", "set_b"), each = 20),
+#'   module = rep(c("m1", "m2", "m3", "m4"), each = 10),
+#'   gene = unlist(replicate(4, sample(letters, 10), simplify = FALSE))
+#' )
+#' object <- RbhGraph(
+#'   modules,
+#'   rbh_type = "set",
+#'   dataset_col = "origin",
+#'   module_col = "module",
+#'   value_col = "gene"
+#' )
+#' object <- generate_rbh_graph(object, minimum_similarity = 0)
+#' head(get_rbh_res(object))
 generate_rbh_graph <- S7::new_generic(
   name = "generate_rbh_graph",
   dispatch_args = "object",
@@ -1100,6 +1197,25 @@ S7::method(generate_rbh_graph, RbhGraph) <- function(
 #' @returns The class with added community detection results.
 #'
 #' @export
+#'
+#' @examples
+#' # Leiden communities across a resolution sweep of the RBH graph
+#' set.seed(123)
+#' modules <- data.table::data.table(
+#'   origin = rep(c("set_a", "set_b"), each = 20),
+#'   module = rep(c("m1", "m2", "m3", "m4"), each = 10),
+#'   gene = unlist(replicate(4, sample(letters, 10), simplify = FALSE))
+#' )
+#' object <- RbhGraph(
+#'   modules,
+#'   rbh_type = "set",
+#'   dataset_col = "origin",
+#'   module_col = "module",
+#'   value_col = "gene"
+#' )
+#' object <- generate_rbh_graph(object, minimum_similarity = 0)
+#' object <- find_rbh_communities(object, parallel = FALSE, .verbose = FALSE)
+#' head(get_results(object))
 find_rbh_communities <- S7::new_generic(
   name = "find_rbh_communities",
   dispatch_args = "object",
@@ -1139,12 +1255,12 @@ S7::method(find_rbh_communities, RbhGraph) <- function(
   checkmate::qassert(max_workers, c("I1", "0"))
   checkmate::qassert(.verbose, "B1")
 
-  if (is.null(S7::prop(object, "RbhGraph"))) {
+  if (is.null(S7::prop(object, "rbh_graph"))) {
     warning("No RBH graph yet generated. Returning class as is.")
     return(object)
   }
 
-  graph <- S7::prop(object, "RbhGraph")
+  graph <- S7::prop(object, "rbh_graph")
 
   resolutions <- with(
     resolution_params,
@@ -1283,6 +1399,25 @@ S7::method(find_rbh_communities, RbhGraph) <- function(
 #' @returns The class with added adjacency matrix for this data.
 #'
 #' @export
+#'
+#' @examples
+#' # add a categorical clinical modality to a continuous one
+#' set.seed(42)
+#' continuous <- matrix(rnorm(120), nrow = 12, ncol = 10)
+#' rownames(continuous) <- sprintf("sample_%02i", 1:12)
+#' colnames(continuous) <- sprintf("feature_%i", 1:10)
+#' clinical <- data.table::data.table(
+#'   sample_id = rownames(continuous),
+#'   sex = factor(sample(c("M", "F"), 12, replace = TRUE)),
+#'   stage = factor(sample(c("I", "II", "III"), 12, replace = TRUE))
+#' )
+#' object <- SimilarityNetworkFusion(
+#'   data = continuous,
+#'   data_name = "continuous",
+#'   snf_params = params_snf(k = 3L)
+#' )
+#' object <- add_snf_data_modality(object, clinical, data_name = "clinical")
+#' dim(get_snf_adjcacency_mat(object, name = "clinical"))
 add_snf_data_modality <- S7::new_generic(
   name = "add_snf_data_modality",
   dispatch_args = "object",
@@ -1380,6 +1515,26 @@ S7::method(add_snf_data_modality, SimilarityNetworkFusion) <- function(
 #' @returns The class with added adjacency matrix based on the SNF algorithm.
 #'
 #' @export
+#'
+#' @examples
+#' # fuse a continuous and a categorical modality
+#' set.seed(42)
+#' continuous <- matrix(rnorm(120), nrow = 12, ncol = 10)
+#' rownames(continuous) <- sprintf("sample_%02i", 1:12)
+#' colnames(continuous) <- sprintf("feature_%i", 1:10)
+#' clinical <- data.table::data.table(
+#'   sample_id = rownames(continuous),
+#'   sex = factor(sample(c("M", "F"), 12, replace = TRUE)),
+#'   stage = factor(sample(c("I", "II", "III"), 12, replace = TRUE))
+#' )
+#' object <- SimilarityNetworkFusion(
+#'   data = continuous,
+#'   data_name = "continuous",
+#'   snf_params = params_snf(k = 3L)
+#' )
+#' object <- add_snf_data_modality(object, clinical, data_name = "clinical")
+#' object <- run_snf(object)
+#' dim(get_snf_final_mat(object))
 run_snf <- S7::new_generic(
   name = "run_snf",
   dispatch_args = "object",

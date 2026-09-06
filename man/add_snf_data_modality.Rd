@@ -31,3 +31,22 @@ This function will add a modality as an affinity matrix for subsequent fusion
 to the object. To note: all of the modalities need to have the same number
 of rows, i.e., samples!
 }
+\examples{
+# add a categorical clinical modality to a continuous one
+set.seed(42)
+continuous <- matrix(rnorm(120), nrow = 12, ncol = 10)
+rownames(continuous) <- sprintf("sample_\%02i", 1:12)
+colnames(continuous) <- sprintf("feature_\%i", 1:10)
+clinical <- data.table::data.table(
+  sample_id = rownames(continuous),
+  sex = factor(sample(c("M", "F"), 12, replace = TRUE)),
+  stage = factor(sample(c("I", "II", "III"), 12, replace = TRUE))
+)
+object <- SimilarityNetworkFusion(
+  data = continuous,
+  data_name = "continuous",
+  snf_params = params_snf(k = 3L)
+)
+object <- add_snf_data_modality(object, clinical, data_name = "clinical")
+dim(get_snf_adjcacency_mat(object, name = "clinical"))
+}

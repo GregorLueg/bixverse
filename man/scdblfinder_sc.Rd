@@ -59,3 +59,18 @@ with \code{cell_indices} stored as an attribute.
 Cluster-aware doublet detection using engineered features and a
 gradient-boosted classifier. See Germain et al., F1000Research, 2022.
 }
+\examples{
+# cluster aware doublet calls from the gradient boosted classifier
+sc <- demo_single_cells(prepped = FALSE)
+scdblfinder_sc(
+  sc,
+  scdblfinder_params = params_scdblfinder(
+    pca = list(no_pcs = 10L),
+    n_genes = 25L,
+    cxds_genes = 25L
+  ),
+  .verbose = FALSE
+)
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

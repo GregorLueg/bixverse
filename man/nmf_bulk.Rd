@@ -62,6 +62,18 @@ Module membership is derived by keeping the upper tail of each component's
 gene loadings, see \code{\link[=params_module_membership]{params_module_membership()}}. A gene can belong
 to several modules, and a gene in no tail belongs to none.
 }
+\examples{
+# a single four-factor HALS-NMF fit
+syn <- generate_gene_module_data(n_samples = 24L, n_genes = 60L)
+# NMF needs a non-negative matrix
+mat <- syn$data - min(syn$data)
+obj <- BulkCoExp(mat, syn$meta_data)
+obj <- preprocess_bulk_coexp(
+  obj, hvg = NULL, scaling = FALSE, .verbose = FALSE
+)
+obj <- nmf_bulk(obj, k = 4L, .verbose = FALSE)
+head(get_nmf_modules(obj))
+}
 \references{
 Cichocki & Phan, IEICE Trans., 2009.
 }

@@ -21,3 +21,14 @@ usage. Genes not found in the object will be automatically removed.
 This function is a helper to generate a list of cell type to cell marker
 annotations that can be fed into for example \verb{[REF]}.
 }
+\examples{
+# a marker table turned into the indexed list the scorers want
+sc <- demo_single_cells(prepped = FALSE)
+markers <- data.table::data.table(
+  cell_type = c("type_a", "type_a", "type_b"),
+  gene_id = get_gene_names(sc)[1:3]
+)
+names(prepare_cell_markers(sc, markers))
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

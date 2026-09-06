@@ -66,6 +66,27 @@ rPCA is faster than CCA and corrects less aggressively, which makes it the
 safer choice when batches share most of their cell types. As in Seurat, no
 gene-space anchor filter is applied, that step is CCA-only.
 }
+\examples{
+# reciprocal PCA anchor integration, the cheaper sibling of CCA
+sc <- demo_single_cells(
+  syn_data_params = params_sc_synthetic_data(
+    n_cells = 600L, n_genes = 50L, n_batches = 3L
+  )
+)
+hvg <- find_hvg_batch_aware_sc(
+  sc, hvg_no = 20L, batch_column = "batch_index", .verbose = FALSE
+)
+sc <- seurat_rpca_sc(
+  sc,
+  batch_column = "batch_index",
+  batch_hvg_genes = hvg$hvg_gene_idx,
+  rpca_params = params_sc_seurat_rpca(dims = 10L),
+  .verbose = FALSE
+)
+dim(get_embedding(sc, "rpca"))
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}
 \references{
 Stuart, et al., Cell, 2019
 }

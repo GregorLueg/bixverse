@@ -22,3 +22,10 @@ A \code{cpca_synthetic_data} class with the following elements:
 Generates three elements: target matrix, background matrix and labels for the
 target matrix.
 }
+\examples{
+# target and background matrices for a contrastive PCA run
+cpca_data <- synthetic_c_pca_data()
+dim(cpca_data$target)
+dim(cpca_data$background)
+table(cpca_data$target_labels)
+}

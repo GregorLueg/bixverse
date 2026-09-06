@@ -37,6 +37,17 @@
 #' @export
 #'
 #' @references Büttner, et al., Nat. Methods, 2019
+#'
+#' @examples
+#' # kBET rejection rate over three batches
+#' sc <- demo_single_cells(
+#'   syn_data_params = params_sc_synthetic_data(
+#'     n_cells = 600L, n_genes = 50L, n_batches = 3L
+#'   )
+#' )
+#' calculate_kbet_sc(sc, batch_column = "batch_index", .verbose = FALSE)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 calculate_kbet_sc <- S7::new_generic(
   name = "calculate_kbet_sc",
   dispatch_args = "object",
@@ -174,6 +185,21 @@ print.KbetScores <- function(x, ...) {
 #' }
 #'
 #' @export
+#'
+#' @examples
+#' # batch silhouette width on the PCA embedding
+#' sc <- demo_single_cells(
+#'   syn_data_params = params_sc_synthetic_data(
+#'     n_cells = 600L, n_genes = 50L, n_batches = 3L
+#'   )
+#' )
+#' calculate_batch_asw_sc(
+#'   sc,
+#'   batch_column = "batch_index",
+#'   .verbose = FALSE
+#' )
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 calculate_batch_asw_sc <- S7::new_generic(
   name = "calculate_batch_asw_sc",
   dispatch_args = "object",
@@ -291,6 +317,21 @@ print.BatchSilhouetteScores <- function(x, ...) {
 #' @export
 #'
 #' @references Korsunsky, et al., Nat. Methods, 2019
+#'
+#' @examples
+#' # batch LISI over the kNN graph
+#' sc <- demo_single_cells(
+#'   syn_data_params = params_sc_synthetic_data(
+#'     n_cells = 600L, n_genes = 50L, n_batches = 3L
+#'   )
+#' )
+#' calculate_batch_lisi_sc(
+#'   sc,
+#'   batch_column = "batch_index",
+#'   .verbose = FALSE
+#' )
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 calculate_batch_lisi_sc <- S7::new_generic(
   name = "calculate_batch_lisi_sc",
   dispatch_args = "object",
@@ -418,6 +459,24 @@ print.BatchLisiScores <- function(x, ...) {
 #' }
 #'
 #' @export
+#'
+#' @examples
+#' # highly variable genes taken as the union over the batches
+#' sc <- demo_single_cells(
+#'   syn_data_params = params_sc_synthetic_data(
+#'     n_cells = 600L, n_genes = 50L, n_batches = 3L
+#'   )
+#' )
+#' hvg <- find_hvg_batch_aware_sc(
+#'   sc,
+#'   hvg_no = 20L,
+#'   batch_column = "batch_index",
+#'   gene_comb_method = "union",
+#'   .verbose = FALSE
+#' )
+#' head(hvg$hvg_genes)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 find_hvg_batch_aware_sc <- S7::new_generic(
   name = "find_hvg_batch_aware_sc",
   dispatch_args = "object",
@@ -581,6 +640,23 @@ S7::method(find_hvg_batch_aware_sc, ScOrScSubset) <- function(
 #' @export
 #'
 #' @references Polański, et al., Bioinformatics, 2020
+#'
+#' @examples
+#' # batch balanced kNN, replacing the graph the demo object carries
+#' sc <- demo_single_cells(
+#'   syn_data_params = params_sc_synthetic_data(
+#'     n_cells = 600L, n_genes = 50L, n_batches = 3L
+#'   )
+#' )
+#' sc <- bbknn_sc(
+#'   remove_knn(sc),
+#'   batch_column = "batch_index",
+#'   no_neighbours_to_keep = 5L,
+#'   .verbose = FALSE
+#' )
+#' dim(get_knn_mat(sc))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 bbknn_sc <- S7::new_generic(
   name = "bbknn_sc",
   dispatch_args = "object",
@@ -770,6 +846,30 @@ S7::method(bbknn_sc, ScOrScSubset) <- function(
 #' @export
 #'
 #' @references Haghverdi, et al., Nat Biotechnol, 2018
+#'
+#' @examples
+#' # fastMNN over batch aware highly variable genes
+#' sc <- demo_single_cells(
+#'   syn_data_params = params_sc_synthetic_data(
+#'     n_cells = 600L, n_genes = 50L, n_batches = 3L
+#'   )
+#' )
+#' hvg <- find_hvg_batch_aware_sc(
+#'   sc, hvg_no = 20L, batch_column = "batch_index", .verbose = FALSE
+#' )
+#' sc <- fast_mnn_sc(
+#'   sc,
+#'   batch_column = "batch_index",
+#'   batch_hvg_genes = hvg$hvg_gene_idx,
+#'   fastmnn_params = params_sc_fastmnn(
+#'     no_pcs = 10L,
+#'     knn = list(k = 5L)
+#'   ),
+#'   .verbose = FALSE
+#' )
+#' dim(get_embedding(sc, "mnn"))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 fast_mnn_sc <- S7::new_generic(
   name = "fast_mnn_sc",
   dispatch_args = "object",
@@ -869,6 +969,18 @@ S7::method(fast_mnn_sc, ScOrScSubset) <- function(
 #' are found, returns the object unchanged with a warning.
 #'
 #' @export
+#'
+#' @examples
+#' # Harmony correction of the PCA embedding
+#' sc <- demo_single_cells(
+#'   syn_data_params = params_sc_synthetic_data(
+#'     n_cells = 600L, n_genes = 50L, n_batches = 3L
+#'   )
+#' )
+#' sc <- harmony_sc(sc, batch_column = "batch_index", .verbose = FALSE)
+#' dim(get_embedding(sc, "harmony"))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 harmony_sc <- S7::new_generic(
   name = "harmony_sc",
   dispatch_args = "object",
@@ -996,6 +1108,22 @@ S7::method(harmony_sc, ScOrScSubset) <- function(
 #' embeddings are found, returns the object unchanged with a warning.
 #'
 #' @export
+#'
+#' @examples
+#' # the reimplemented Harmony, writing its own embedding
+#' sc <- demo_single_cells(
+#'   syn_data_params = params_sc_synthetic_data(
+#'     n_cells = 600L, n_genes = 50L, n_batches = 3L
+#'   )
+#' )
+#' sc <- harmony_v2_sc(
+#'   sc,
+#'   batch_column = "batch_index",
+#'   .verbose = FALSE
+#' )
+#' dim(get_embedding(sc, "harmony_v2"))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 harmony_v2_sc <- S7::new_generic(
   name = "harmony_v2_sc",
   dispatch_args = "object",
@@ -1158,6 +1286,27 @@ S7::method(harmony_v2_sc, ScOrScSubset) <- function(
 #' @export
 #'
 #' @references Stuart, et al., Cell, 2019
+#'
+#' @examples
+#' # CCA anchor integration over batch aware highly variable genes
+#' sc <- demo_single_cells(
+#'   syn_data_params = params_sc_synthetic_data(
+#'     n_cells = 600L, n_genes = 50L, n_batches = 3L
+#'   )
+#' )
+#' hvg <- find_hvg_batch_aware_sc(
+#'   sc, hvg_no = 20L, batch_column = "batch_index", .verbose = FALSE
+#' )
+#' sc <- seurat_cca_sc(
+#'   sc,
+#'   batch_column = "batch_index",
+#'   batch_hvg_genes = hvg$hvg_gene_idx,
+#'   cca_params = params_sc_seurat_cca(num_cc = 10L, dims = 10L),
+#'   .verbose = FALSE
+#' )
+#' dim(get_embedding(sc, "cca"))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 seurat_cca_sc <- S7::new_generic(
   name = "seurat_cca_sc",
   dispatch_args = "object",
@@ -1294,6 +1443,27 @@ S7::method(seurat_cca_sc, SingleCells) <- function(
 #' @export
 #'
 #' @references Stuart, et al., Cell, 2019
+#'
+#' @examples
+#' # reciprocal PCA anchor integration, the cheaper sibling of CCA
+#' sc <- demo_single_cells(
+#'   syn_data_params = params_sc_synthetic_data(
+#'     n_cells = 600L, n_genes = 50L, n_batches = 3L
+#'   )
+#' )
+#' hvg <- find_hvg_batch_aware_sc(
+#'   sc, hvg_no = 20L, batch_column = "batch_index", .verbose = FALSE
+#' )
+#' sc <- seurat_rpca_sc(
+#'   sc,
+#'   batch_column = "batch_index",
+#'   batch_hvg_genes = hvg$hvg_gene_idx,
+#'   rpca_params = params_sc_seurat_rpca(dims = 10L),
+#'   .verbose = FALSE
+#' )
+#' dim(get_embedding(sc, "rpca"))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 seurat_rpca_sc <- S7::new_generic(
   name = "seurat_rpca_sc",
   dispatch_args = "object",

@@ -40,3 +40,10 @@ indices, cells to keep, etc.}
 }
 }
 
+\examples{
+# demo_single_cells() wraps the construction and the ingestion
+sc <- demo_single_cells(prepped = FALSE)
+sc
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

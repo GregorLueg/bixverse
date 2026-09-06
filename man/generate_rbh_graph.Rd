@@ -37,3 +37,21 @@ This function will generate an RBH graph based on set similarity between
 gene modules. You have the option to use an overlap coefficient instead of
 Jaccard similarity and to specify a minimum similarity.
 }
+\examples{
+# Jaccard-based reciprocal best hits between two module sets
+set.seed(123)
+modules <- data.table::data.table(
+  origin = rep(c("set_a", "set_b"), each = 20),
+  module = rep(c("m1", "m2", "m3", "m4"), each = 10),
+  gene = unlist(replicate(4, sample(letters, 10), simplify = FALSE))
+)
+object <- RbhGraph(
+  modules,
+  rbh_type = "set",
+  dataset_col = "origin",
+  module_col = "module",
+  value_col = "gene"
+)
+object <- generate_rbh_graph(object, minimum_similarity = 0)
+head(get_rbh_res(object))
+}

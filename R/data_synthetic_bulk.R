@@ -35,10 +35,11 @@
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' synthetic_GEX <- create_synthetic_signal_matrix()
-#' synthetic_signal_mat <- synthetic_GEX$mat
-#' }
+#' # default 1000 x 90 matrix with three groups and a small fourth one
+#' synthetic_gex <- synthetic_signal_matrix()
+#' dim(synthetic_gex$mat)
+#' table(synthetic_gex$group)
+#' lengths(synthetic_gex$diff)
 synthetic_signal_matrix <- function(
   no_grps = 3,
   per_group = 30,
@@ -163,6 +164,13 @@ synthetic_signal_matrix <- function(
 #' The parameters used are stored on the `synthetic_params` attribute.
 #'
 #' @export
+#'
+#' @examples
+#' # three co-expression modules on a 1000 x 100 count matrix
+#' syn <- synthetic_bulk_cor_matrix(params_synthetic_bulk_rnaseq())
+#' dim(syn$counts)
+#' head(syn$module_data)
+#' dim(syn$module_factors)
 synthetic_bulk_cor_matrix <- function(
   synthetic_params = params_synthetic_bulk_rnaseq()
 ) {
@@ -232,6 +240,13 @@ synthetic_bulk_cor_matrix <- function(
 #' @export
 #'
 #' @references Zappia, et al., Genome Biol, 2017
+#'
+#' @examples
+#' # thin the counts down to a shallower library size
+#' syn <- synthetic_bulk_cor_matrix()
+#' syn <- simulate_dropouts(syn, params_bulk_sparsity())
+#' mean(syn$counts == 0)
+#' mean(syn$sparse_counts == 0)
 simulate_dropouts <- function(
   object,
   sparsity_params = params_bulk_sparsity()
@@ -276,6 +291,14 @@ simulate_dropouts <- function(
 #' }
 #'
 #' @export
+#'
+#' @examples
+#' # how much sparsity the dropout simulation actually added
+#' syn <- synthetic_bulk_cor_matrix()
+#' syn <- simulate_dropouts(syn, params_bulk_sparsity())
+#' stats <- calculate_sparsity_stats(syn)
+#' stats$added_sparsity
+#' stats$dropout_by_expression
 calculate_sparsity_stats <- function(object, no_exp_bins = 10L) {
   original_zero <- sparse_zero <- NULL
 
@@ -351,6 +374,13 @@ calculate_sparsity_stats <- function(object, no_exp_bins = 10L) {
 #' @importFrom magrittr %>%
 #'
 #' @export
+#'
+#' @examples
+#' # target and background matrices for a contrastive PCA run
+#' cpca_data <- synthetic_c_pca_data()
+#' dim(cpca_data$target)
+#' dim(cpca_data$background)
+#' table(cpca_data$target_labels)
 synthetic_c_pca_data <- function(seed = 10101L) {
   # Checks
   checkmate::qassert(seed, "I1")
@@ -420,12 +450,22 @@ synthetic_c_pca_data <- function(seed = 10101L) {
 #' @returns A `synthetic_matrix_modules` class with the following items:
 #' \itemize{
 #'  \item data - The data matrix.
-#'  \item metadata - The sample metadata.
+#'  \item meta_data - The sample metadata.
 #' }
 #'
 #' @importFrom magrittr %>%
 #'
 #' @export
+#'
+#' @examples
+#' # four partially overlapping modules over 24 samples
+#' mods <- generate_gene_module_data(
+#'   n_samples = 24L,
+#'   n_genes = 60L,
+#'   n_modules = 4L
+#' )
+#' dim(mods$data)
+#' head(mods$meta_data)
 generate_gene_module_data <- function(
   n_samples = 24L,
   n_genes = 60L,
@@ -531,12 +571,9 @@ generate_gene_module_data <- function(
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#'
+#' # heatmap of the simulated differential expression
 #' synthetic_gex <- synthetic_signal_matrix()
-#'
 #' plot(synthetic_gex)
-#' }
 #'
 #' @keywords internal
 plot.synthetic_matrix_simple <- function(x, ...) {
@@ -583,6 +620,11 @@ plot.synthetic_matrix_simple <- function(x, ...) {
 #' @import patchwork
 #' @import ggplot2
 #' @importFrom magrittr %>%
+#'
+#' @examples
+#' # target next to background, the structure cPCA pulls apart
+#' cpca_data <- synthetic_c_pca_data()
+#' plot(cpca_data)
 #'
 #' @keywords internal
 plot.cpca_synthetic_data <- function(x, ...) {

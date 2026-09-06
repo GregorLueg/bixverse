@@ -38,3 +38,12 @@ applied parameters added to the \code{params} slot.
 Function to do general pre-processing on top of the \code{\link[=BulkCoExp]{BulkCoExp()}}.
 Options to do scaling, HVG selection, etc.
 }
+\examples{
+# keep the 200 most variable genes for module detection
+syn <- synthetic_bulk_cor_matrix()
+mat <- log1p(t(syn$counts))
+meta <- data.table::data.table(sample_id = rownames(mat))
+object <- BulkCoExp(raw_data = mat, meta_data = meta)
+object <- preprocess_bulk_coexp(object, hvg = 200L, .verbose = FALSE)
+object
+}

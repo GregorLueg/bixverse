@@ -71,3 +71,17 @@ returns meta information about the resolutions (which can also be plotted) to
 identify the best suitable resolution parameter to identify co-expression
 modules.
 }
+\examples{
+# scan Leiden resolutions on the correlation graph
+mat <- t(synthetic_signal_matrix()$mat)
+obj <- BulkCoExp(mat, data.table::data.table(sample_id = rownames(mat)))
+obj <- preprocess_bulk_coexp(obj, hvg = 0.3, .verbose = FALSE)
+obj <- cor_module_processing(obj, cor_method = "spearman", .verbose = FALSE)
+obj <- cor_module_graph_check_res(
+  obj,
+  resolution_params = params_graph_resolution(number_res = 5L),
+  parallel = FALSE,
+  .verbose = FALSE
+)
+head(get_resolution_res(obj))
+}

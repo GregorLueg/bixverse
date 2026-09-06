@@ -16,3 +16,10 @@ String. The path to the directory with the PBMC h5ad files.
 This function downloads two different h5ad files for testing batch correction
 methods into the temporary directory.
 }
+\examples{
+\dontrun{
+# pulls the archive into the session tempdir()
+path <- download_pbmc_batches()
+list.files(path)
+}
+}

@@ -11,6 +11,13 @@
 #' @returns Named list with paths: `rankings` and `motif_annotations`.
 #'
 #' @export
+#'
+#' @examples
+#' \dontrun{
+#' # fetch the hg38 rankings and motif annotations (large, network)
+#' paths <- download_cistarget_hg38()
+#' paths$rankings
+#' }
 download_cistarget_hg38 <- function(
   cache_dir = tools::R_user_dir("bixverse", which = "cache"),
   overwrite = FALSE
@@ -123,6 +130,14 @@ process_cistarget_res <- function(
 #' @returns data.table with the motif to transcription factor information.
 #'
 #' @export
+#'
+#' @examples
+#' \dontrun{
+#' # motif to transcription factor table from the downloaded reference
+#' paths <- download_cistarget_hg38()
+#' annot <- read_motif_annotation_file(paths$motif_annotations)
+#' head(annot)
+#' }
 read_motif_annotation_file <- function(annot_file) {
   # checks
   checkmate::assertFileExists(annot_file)
@@ -195,6 +210,14 @@ read_motif_annotation_file <- function(annot_file) {
 #' @export
 #'
 #' @importFrom magrittr %>%
+#'
+#' @examples
+#' \dontrun{
+#' # transposed motif rankings from the downloaded feather file
+#' paths <- download_cistarget_hg38()
+#' rankings <- read_motif_ranking(paths$rankings)
+#' dim(rankings)
+#' }
 read_motif_ranking <- function(ranking_file) {
   # checks
   checkmate::assertFileExists(ranking_file)
@@ -255,6 +278,37 @@ read_motif_ranking <- function(ranking_file) {
 #' @references Aibar, et al., Nat Methods, 2017
 #'
 #' @export
+#'
+#' @examples
+#' # motif enrichment against a tiny synthetic ranking database
+#' rankings <- matrix(
+#'   c(1L, 5L, 4L, 2L, 2L, 2L, 1L, 5L, 4L, 3L, 2L, 1L, 3L, 1L, 5L, 4L,
+#'     5L, 4L, 3L, 3L),
+#'   nrow = 5,
+#'   byrow = TRUE,
+#'   dimnames = list(sprintf("gene_%i", 1:5), sprintf("motif_%i", 1:4))
+#' )
+#' annot <- data.table::data.table(
+#'   motif = sprintf("motif_%i", 1:4),
+#'   TF = sprintf("TF%i", 1:4),
+#'   annotationSource = factor(c(
+#'     "directAnnotation",
+#'     "inferredBy_Orthology",
+#'     "inferredBy_MotifSimilarity",
+#'     "inferredBy_MotifSimilarity_n_Orthology"
+#'   ))
+#' )
+#' res <- run_cistarget(
+#'   gs_list = list(set_a = c("gene_1", "gene_2", "gene_3")),
+#'   rankings = rankings,
+#'   annot_data = annot,
+#'   cis_target_params = params_cistarget(
+#'     auc_threshold = 1,
+#'     nes_threshold = 0.2
+#'   ),
+#'   .verbose = FALSE
+#' )
+#' res[, c("gs_name", "motif", "nes")]
 run_cistarget <- function(
   gs_list,
   rankings,
@@ -389,6 +443,16 @@ run_cistarget <- function(
 #' @references Aibar, et al., Nat Methods, 2017
 #'
 #' @export
+#'
+#' @examples
+#' # on/off calls for a bimodal and a unimodal regulon
+#' set.seed(7L)
+#' auc <- cbind(
+#'   regulon_a = c(rnorm(50, 0.1, 0.02), rnorm(50, 0.4, 0.02)),
+#'   regulon_b = rnorm(100, 0.2, 0.05)
+#' )
+#' rownames(auc) <- sprintf("cell_%i", 1:100)
+#' binarise_regulon_activity(auc, .verbose = FALSE)$thresholds
 binarise_regulon_activity <- function(
   auc_matrix,
   binarise_params = params_scenic_binarise(),

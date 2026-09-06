@@ -40,3 +40,7 @@ An \code{ScStep}.
 \description{
 Wraps \code{\link[=find_hvg_sc]{find_hvg_sc()}} as an \code{ScStep}.
 }
+\examples{
+# a step is inert until the pipeline is applied
+step_hvg_sc(hvg_no = 30L)
+}

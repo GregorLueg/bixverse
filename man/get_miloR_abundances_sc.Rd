@@ -47,6 +47,19 @@ for available parameters and their defaults.
 \code{FALSE} -> quiet, \code{TRUE} or \code{1L} -> normal verbosity, \code{2L} -> detailed
 verbosity.}
 }
+\value{
+A \code{miloR} class with the following elements:
+\itemize{
+\item nhoods - Sparse matrix of cells x neighbourhoods.
+\item sample_counts - Matrix of neighbourhoods x samples with the cell
+counts per neighbourhood and sample.
+\item spatial_dist - Numeric. The kth nearest neighbour distance per
+neighbourhood index cell.
+\item nhood_overlap - The overlap between the neighbourhoods.
+\item params - List. The parameters used, plus the embedding and the
+index cells.
+}
+}
 \description{
 This function implements the miloR differential abundance testing on top
 of the kNN graph. The general idea of the approach is to use the kNN graph
@@ -56,6 +69,26 @@ further details on the method, please refer to Dann, et al. This function
 will take a \code{SingleCells} class, run the neighbourhood detection,
 count the occurrences of a sample and return a \code{sc_miloR} class for
 subsequent differential abundance testing and further annotations.
+}
+\examples{
+# neighbourhood counts across six synthetic samples
+sc <- demo_single_cells(
+  syn_data_params = params_sc_synthetic_data(
+    n_cells = 500L,
+    n_genes = 50L,
+    n_samples = 6L,
+    sample_bias = "even"
+  )
+)
+milo <- get_miloR_abundances_sc(
+  sc,
+  sample_id_col = "sample_id",
+  miloR_params = params_sc_miloR(k_refine = 10L),
+  .verbose = FALSE
+)
+dim(milo$sample_counts)
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 }
 \references{
 Dann, et al., Nat Biotechnol, 2022

@@ -24,6 +24,13 @@ the library size rather than an explicit per-gene dropout curve. Retention
 probability is capped at 1, meaning samples already below their target are
 left alone rather than upsampled.
 }
+\examples{
+# thin the counts down to a shallower library size
+syn <- synthetic_bulk_cor_matrix()
+syn <- simulate_dropouts(syn, params_bulk_sparsity())
+mean(syn$counts == 0)
+mean(syn$sparse_counts == 0)
+}
 \references{
 Zappia, et al., Genome Biol, 2017
 }

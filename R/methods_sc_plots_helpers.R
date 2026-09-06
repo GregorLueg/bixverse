@@ -111,6 +111,14 @@
 #' @returns The object with a `"umap"` embedding added.
 #'
 #' @export
+#'
+#' @examples
+#' # UMAP off the cached kNN graph
+#' sc <- demo_single_cells()
+#' sc <- umap_sc(sc, .verbose = FALSE)
+#' dim(get_embedding(sc, "umap"))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 umap_sc <- S7::new_generic(
   name = "umap_sc",
   dispatch_args = "object",
@@ -319,6 +327,14 @@ S7::method(umap_sc, ScOrMc) <- function(
 #' @returns The object with a `"tsne"` embedding added.
 #'
 #' @export
+#'
+#' @examples
+#' # Barnes-Hut t-SNE on the PCA factors
+#' sc <- demo_single_cells()
+#' sc <- tsne_sc(sc, .verbose = FALSE)
+#' dim(get_embedding(sc, "tsne"))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 tsne_sc <- S7::new_generic(
   name = "tsne_sc",
   dispatch_args = "object",
@@ -515,6 +531,14 @@ S7::method(tsne_sc, ScOrMc) <- function(
 #' @returns The object with a `"phate"` embedding added.
 #'
 #' @export
+#'
+#' @examples
+#' # PHATE embedding off the cached kNN graph
+#' sc <- demo_single_cells()
+#' sc <- phate_sc(sc, .verbose = FALSE)
+#' dim(get_embedding(sc, "phate"))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 phate_sc <- S7::new_generic(
   name = "phate_sc",
   dispatch_args = "object",

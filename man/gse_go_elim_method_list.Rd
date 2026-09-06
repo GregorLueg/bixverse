@@ -45,3 +45,21 @@ repeats the process. The class will leverage Rust threading to parallelise
 the process. The gene universe will be automatically set to every gene
 represented in the ontology.
 }
+\examples{
+\donttest{
+# human GO terms with at least 25 genes
+go_obj <- GeneOntologyElim(
+  get_go_data_human(.verbose = FALSE),
+  min_genes = 25L
+)
+target_genes <- unique(unlist(S7::prop(go_obj, "go_to_genes")[1:5]))
+res <- gse_go_elim_method_list(
+  go_obj,
+  target_gene_list = list(
+    set_a = target_genes,
+    set_b = rev(target_genes)[1:50]
+  )
+)
+head(res, 3)
+}
+}

@@ -17,3 +17,15 @@ functions, it will return \code{NULL} and a warning.
 Returns the diffusion vector if you ran \code{\link[=tied_diffusion]{tied_diffusion()}}
 or \code{\link[=diffuse_seed_nodes]{diffuse_seed_nodes()}}.
 }
+\examples{
+# diffusion scores after a single seed node diffusion
+set.seed(42)
+g <- igraph::sample_pa(15, directed = FALSE)
+edges <- data.table::setDT(igraph::as_data_frame(g))[, `:=`(
+  from = sprintf("node_\%i", from),
+  to = sprintf("node_\%i", to)
+)]
+object <- NetworkDiffusions(edges, weighted = FALSE, directed = FALSE)
+object <- diffuse_seed_nodes(object, c(node_1 = 1, node_3 = 1), "max")
+head(get_diffusion_vector(object))
+}

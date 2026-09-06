@@ -18,11 +18,7 @@ interquartile range (IQR). Useful if outliers are expected. NAs will be
 ignored.
 }
 \examples{
-\dontrun{
-
+# median-centred, IQR-scaled vector
 set.seed(123)
-x <- rnorm(10)
-
-x.scaled <- robust_scaling(x)
-}
+head(robust_scale(rnorm(10)))
 }

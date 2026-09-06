@@ -40,6 +40,22 @@ Scores all samples against many up-regulated gene sets with optional paired
 down-regulated sets. Down sets are paired with up sets by name; unmatched
 names are dropped.
 }
+\examples{
+# score every sample against several up-regulated gene sets
+set.seed(123L)
+exp_mat <- matrix(
+  rnorm(200 * 10),
+  nrow = 200,
+  dimnames = list(sprintf("gene_\%03i", 1:200), sprintf("sample_\%i", 1:10))
+)
+ranks <- calc_singscore_rank(exp_mat)
+pathways <- list(
+  set_a = sprintf("gene_\%03i", 1:20),
+  set_b = sprintf("gene_\%03i", 50:80)
+)
+res <- calc_singscore_multi(ranks, up_pathways = pathways)
+dim(res$scores)
+}
 \references{
 Foroutan et al., BMC Bioinformatics, 2018.
 }

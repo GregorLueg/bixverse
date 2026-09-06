@@ -77,6 +77,25 @@ For \code{SingleCellsMultiModal} the \code{"wnn"} graph works, but its distances
 kernel-derived and not a metric, so the diffusion map on top is a heuristic
 on a heuristic. You will get a warning saying as much.
 }
+\examples{
+# pseudotime from an arbitrary start cell on the demo kNN graph
+sc <- demo_single_cells()
+res <- run_palantir_sc(
+  sc,
+  early_cell = get_knn_obj(sc)$used_cells[1],
+  palantir_params = params_sc_palantir(
+    knn = 15L,
+    num_waypoints = 100L,
+    n_eigs = 3L,
+    use_early_cell_as_start = TRUE,
+    knn_params = list(knn_method = "exhaustive")
+  ),
+  .verbose = FALSE
+)
+head(res$pseudotime)
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}
 \references{
 Setty, et al., Nat. Biotechnol., 2019.
 }

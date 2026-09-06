@@ -47,3 +47,13 @@ applied function.}
 }
 }
 
+\examples{
+# DGE class over synthetic bulk counts (genes x samples)
+syn <- synthetic_bulk_cor_matrix()
+meta <- data.table::data.table(
+  sample_id = colnames(syn$counts),
+  case_control = rep(c("case", "control"), each = 50)
+)
+object <- BulkDge(raw_counts = syn$counts, meta_data = meta)
+object
+}

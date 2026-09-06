@@ -65,3 +65,21 @@ batch), based on the average variance per batch or only take genes that are
 amongst the Top X HVG in all batches. Important. The function returns
 0-indices for the genes!
 }
+\examples{
+# highly variable genes taken as the union over the batches
+sc <- demo_single_cells(
+  syn_data_params = params_sc_synthetic_data(
+    n_cells = 600L, n_genes = 50L, n_batches = 3L
+  )
+)
+hvg <- find_hvg_batch_aware_sc(
+  sc,
+  hvg_no = 20L,
+  batch_column = "batch_index",
+  gene_comb_method = "union",
+  .verbose = FALSE
+)
+head(hvg$hvg_genes)
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

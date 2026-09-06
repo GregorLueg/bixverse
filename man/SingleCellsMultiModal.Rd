@@ -50,3 +50,20 @@ as for example the WNN graph.}
 }
 }
 
+\examples{
+# an empty multi-modal handle with the RNA modality ingested into it
+rna <- generate_single_cell_test_data()
+dir <- tempfile("bixverse_mm")
+dir.create(dir)
+object <- load_r_data(
+  SingleCellsMultiModal(dir_data = dir),
+  counts = rna$counts,
+  obs = rna$obs,
+  var = rna$var,
+  sc_qc_param = params_sc_min_quality(min_unique_genes = 5L),
+  .verbose = FALSE
+)
+object
+
+unlink(dir, recursive = TRUE, force = TRUE)
+}

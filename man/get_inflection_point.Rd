@@ -23,3 +23,9 @@ This function will identify the index of the inflection point of an arbitrary
 series \code{x ~ y} via the biggest increase in the first derivative. Useful to
 identify key points in elbow plots.
 }
+\examples{
+# elbow of a decaying curve that flattens out
+x <- 1:20
+y <- c(exp(-x[1:10] / 2), rep(0.005, 10))
+get_inflection_point(x, y)$inflection_idx
+}

@@ -33,3 +33,13 @@ conduct the test.}
 }
 }
 
+\examples{
+\donttest{
+# human GO restricted to terms with at least 25 genes
+go_obj <- GeneOntologyElim(
+  get_go_data_human(.verbose = FALSE),
+  min_genes = 25L
+)
+go_obj
+}
+}

@@ -30,4 +30,15 @@ Samples the non-zero values of each candidate slot and returns the first one
 that is integer-valued. Slots are checked in the given order, so dedicated
 count slots take precedence over \code{X}.
 }
+\examples{
+# the synthetic writer only fills /X, and it holds raw counts
+data <- generate_single_cell_test_data(
+  syn_data_params = params_sc_synthetic_data(n_cells = 200L, n_genes = 40L)
+)
+f_path <- tempfile(fileext = ".h5ad")
+write_h5ad_sc(f_path, data$counts, data$obs, data$var, .verbose = FALSE)
+detect_raw_count_slot(f_path)
+
+unlink(f_path)
+}
 \keyword{internal}

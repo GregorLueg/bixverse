@@ -55,6 +55,18 @@ the simple method is run. For low p-values, the multi-level method is used
 to estimate lower p-values than possible just based on the permutations, see
 Korotkevich, et al.
 }
+\examples{
+# fgsea with the multi-level refinement of low p-values
+set.seed(42L)
+stats <- stats::setNames(rnorm(500), sprintf("gene_\%03i", 1:500))
+stats[1:20] <- stats[1:20] + 2
+pathways <- list(
+  up_set = sprintf("gene_\%03i", 1:20),
+  random_set = sprintf("gene_\%03i", 200:240)
+)
+res <- calc_fgsea(stats, pathways, nperm = 1000L)
+res[, c("pathway_name", "es", "pvals")]
+}
 \references{
 Korotkevich, et al., bioRxiv
 }

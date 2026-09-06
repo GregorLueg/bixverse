@@ -31,6 +31,21 @@ batches. Under no mixing, LISI equals 1. Unlike kBET, LISI does not compare
 against global batch proportions, making it suitable for graph-based
 correction methods like BBKNN.
 }
+\examples{
+# batch LISI over the kNN graph
+sc <- demo_single_cells(
+  syn_data_params = params_sc_synthetic_data(
+    n_cells = 600L, n_genes = 50L, n_batches = 3L
+  )
+)
+calculate_batch_lisi_sc(
+  sc,
+  batch_column = "batch_index",
+  .verbose = FALSE
+)
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}
 \references{
 Korsunsky, et al., Nat. Methods, 2019
 }

@@ -88,6 +88,30 @@ gene-independent. A fit is milliseconds to seconds per gene though, so
 running it over the full gene axis is rarely what you want. Restrict
 \code{genes_to_use} to the highly variable genes or a candidate set.
 }
+\examples{
+# mixed model DGE with the sample as the random effect
+sc <- demo_single_cells(
+  syn_data_params = params_sc_synthetic_data(
+    n_cells = 500L,
+    n_genes = 50L,
+    n_samples = 6L,
+    sample_bias = "even"
+  )
+)
+obs <- get_sc_obs(sc)
+ctr <- sprintf("sample_\%i", 1:3)
+condition <- ifelse(obs$sample_id \%in\% ctr, "ctr", "trt")
+sc <- set_sc_new_obs_col(sc, col_name = "condition", new_data = condition)
+res <- nebula_sc(
+  sc,
+  subject_col = "sample_id",
+  design = ~condition,
+  .verbose = FALSE
+)
+head(res$results)
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}
 \references{
 He, et al., Commun Biol, 2021
 }

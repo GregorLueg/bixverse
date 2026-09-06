@@ -23,3 +23,14 @@ This function will update the specified columns in the metadata of an
 naming conventions. This is useful to do before running DGE methods as they
 expect standardised names.
 }
+\examples{
+# make a contrast column safe for model.matrix()
+syn <- synthetic_bulk_cor_matrix()
+meta <- data.table::data.table(
+  sample_id = colnames(syn$counts),
+  case_control = rep(c("case 1", "control 1"), each = 50)
+)
+object <- BulkDge(raw_counts = syn$counts, meta_data = meta)
+object <- fix_meta_data_column(object, "case_control")
+unique(get_metadata(object)$case_control)
+}

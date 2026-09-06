@@ -51,3 +51,24 @@ do not provide a vector of contrasts that you wish to test for, every
 permutation of groups represented in that column will be tested against each
 other.
 }
+\examples{
+# limma voom over every contrast in the case_control column
+syn <- synthetic_bulk_cor_matrix()
+meta <- data.table::data.table(
+  sample_id = colnames(syn$counts),
+  case_control = rep(c("case", "control"), each = 50)
+)
+object <- BulkDge(raw_counts = syn$counts, meta_data = meta)
+object <- qc_bulk_dge(object, group_col = "case_control", .verbose = FALSE)
+object <- normalise_bulk_dge(
+  object,
+  group_col = "case_control",
+  .verbose = FALSE
+)
+object <- calculate_dge_limma(
+  object,
+  contrast_column = "case_control",
+  .verbose = FALSE
+)
+head(get_dge_limma_voom(object))
+}

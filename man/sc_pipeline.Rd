@@ -14,3 +14,9 @@ Linear container of \code{ScStep}s. Append steps with \code{\link{\%>>\%}} and e
 \code{\link[=apply_pipeline]{apply_pipeline()}}. Pipelines are inert until applied; steps can be
 inspected via \code{pipeline$steps}.
 }
+\examples{
+# an empty container, filled with `\%>>\%`
+sc_pipeline() \%>>\%
+  step_hvg_sc(hvg_no = 30L) \%>>\%
+  step_pca_sc(no_pcs = 10L)
+}

@@ -15,3 +15,8 @@ Returns the stored SNF params
 \description{
 Get the SNF params
 }
+\examples{
+# the SNF parameters stored in an empty class
+object <- SimilarityNetworkFusion(snf_params = params_snf(k = 3L))
+get_snf_params(object)$k
+}

@@ -40,6 +40,28 @@
 #' @references Kang et al., Nat. Commun., 2021
 #'
 #' @export
+#'
+#' @examples
+#' # a reference built off a two batch synthetic data set
+#' ref <- demo_single_cells(
+#'   syn_data_params = params_sc_synthetic_data(
+#'     n_cells = 500L,
+#'     n_genes = 50L,
+#'     n_batches = 2L
+#'   )
+#' )
+#' symphony_ref <- build_symphony_ref(
+#'   ref,
+#'   batch_column = "batch_index",
+#'   hvg = get_hvg(ref) + 1L,
+#'   harmony_params = params_sc_harmony(k = 10L),
+#'   no_pcs = 10L,
+#'   label_columns = "cell_grp",
+#'   .verbose = FALSE
+#' )
+#' symphony_ref
+#'
+#' unlink(ref@dir_data, recursive = TRUE, force = TRUE)
 SymphonyReference <- S7::new_class(
   name = "SymphonyReference",
   properties = list(
@@ -108,6 +130,28 @@ SymphonyReference <- S7::new_class(
 #' @returns The PCA gene loadings matrix (n_hvgs x d).
 #'
 #' @export
+#'
+#' @examples
+#' # the PCA gene loadings the query gets projected through
+#' ref <- demo_single_cells(
+#'   syn_data_params = params_sc_synthetic_data(
+#'     n_cells = 500L,
+#'     n_genes = 50L,
+#'     n_batches = 2L
+#'   )
+#' )
+#' symphony_ref <- build_symphony_ref(
+#'   ref,
+#'   batch_column = "batch_index",
+#'   hvg = get_hvg(ref) + 1L,
+#'   harmony_params = params_sc_harmony(k = 10L),
+#'   no_pcs = 10L,
+#'   label_columns = "cell_grp",
+#'   .verbose = FALSE
+#' )
+#' dim(get_symphony_loadings(symphony_ref))
+#'
+#' unlink(ref@dir_data, recursive = TRUE, force = TRUE)
 get_symphony_loadings <- S7::new_generic(
   name = "get_symphony_loadings",
   dispatch_args = "object",
@@ -127,6 +171,28 @@ S7::method(get_symphony_loadings, SymphonyReference) <- function(object) {
 #' @returns The post-Harmony corrected embedding (N x d).
 #'
 #' @export
+#'
+#' @examples
+#' # the Harmony corrected reference embedding
+#' ref <- demo_single_cells(
+#'   syn_data_params = params_sc_synthetic_data(
+#'     n_cells = 500L,
+#'     n_genes = 50L,
+#'     n_batches = 2L
+#'   )
+#' )
+#' symphony_ref <- build_symphony_ref(
+#'   ref,
+#'   batch_column = "batch_index",
+#'   hvg = get_hvg(ref) + 1L,
+#'   harmony_params = params_sc_harmony(k = 10L),
+#'   no_pcs = 10L,
+#'   label_columns = "cell_grp",
+#'   .verbose = FALSE
+#' )
+#' dim(get_symphony_z_corr(symphony_ref))
+#'
+#' unlink(ref@dir_data, recursive = TRUE, force = TRUE)
 get_symphony_z_corr <- S7::new_generic(
   name = "get_symphony_z_corr",
   dispatch_args = "object",
@@ -146,6 +212,28 @@ S7::method(get_symphony_z_corr, SymphonyReference) <- function(object) {
 #' @returns Character vector of HVG gene names in reference loading order.
 #'
 #' @export
+#'
+#' @examples
+#' # the HVG names in reference loading order
+#' ref <- demo_single_cells(
+#'   syn_data_params = params_sc_synthetic_data(
+#'     n_cells = 500L,
+#'     n_genes = 50L,
+#'     n_batches = 2L
+#'   )
+#' )
+#' symphony_ref <- build_symphony_ref(
+#'   ref,
+#'   batch_column = "batch_index",
+#'   hvg = get_hvg(ref) + 1L,
+#'   harmony_params = params_sc_harmony(k = 10L),
+#'   no_pcs = 10L,
+#'   label_columns = "cell_grp",
+#'   .verbose = FALSE
+#' )
+#' head(get_symphony_hvg_names(symphony_ref))
+#'
+#' unlink(ref@dir_data, recursive = TRUE, force = TRUE)
 get_symphony_hvg_names <- S7::new_generic(
   name = "get_symphony_hvg_names",
   dispatch_args = "object",
@@ -166,6 +254,28 @@ S7::method(get_symphony_hvg_names, SymphonyReference) <- function(object) {
 #' `NULL` if no labels are stored.
 #'
 #' @export
+#'
+#' @examples
+#' # the cell labels snapshotted at build time
+#' ref <- demo_single_cells(
+#'   syn_data_params = params_sc_synthetic_data(
+#'     n_cells = 500L,
+#'     n_genes = 50L,
+#'     n_batches = 2L
+#'   )
+#' )
+#' symphony_ref <- build_symphony_ref(
+#'   ref,
+#'   batch_column = "batch_index",
+#'   hvg = get_hvg(ref) + 1L,
+#'   harmony_params = params_sc_harmony(k = 10L),
+#'   no_pcs = 10L,
+#'   label_columns = "cell_grp",
+#'   .verbose = FALSE
+#' )
+#' head(get_symphony_labels(symphony_ref))
+#'
+#' unlink(ref@dir_data, recursive = TRUE, force = TRUE)
 get_symphony_labels <- S7::new_generic(
   name = "get_symphony_labels",
   dispatch_args = "object",

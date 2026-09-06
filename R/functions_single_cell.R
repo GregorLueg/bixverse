@@ -112,6 +112,17 @@ build_hvg_table <- function(var_table, res, hvg_no, hvg_method) {
 #' @returns A list based on [bixverse::params_sc_mtx_io()].
 #'
 #' @export
+#'
+#' @examples
+#' # the mtx parameter list a Cell Ranger output directory maps onto
+#' dir <- tempfile("cellranger")
+#' dir.create(dir)
+#' invisible(file.create(
+#'   file.path(dir, c("barcodes.tsv", "genes.tsv", "matrix.mtx"))
+#' ))
+#' str(get_cell_ranger_params(dir))
+#'
+#' unlink(dir, recursive = TRUE, force = TRUE)
 get_cell_ranger_params <- function(dir_data) {
   # checks
   checkmate::assertDirectory(dir_data)
@@ -320,6 +331,14 @@ get_meta_cell_matrices <- function(meta_cell_data, dimnames = NULL) {
 #' }
 #'
 #' @export
+#'
+#' @examples
+#' # one badly undersequenced cell, flagged on the lower tail only
+#' set.seed(42L)
+#' lib_size <- c(rnorm(99, 1000, 100), 50)
+#' res <- per_cell_qc_outlier(lib_size, direction = "below")
+#' sum(res$outlier)
+#' res$metrics
 per_cell_qc_outlier <- function(
   metric,
   threshold = 3,
@@ -415,6 +434,19 @@ per_group_qc_outlier <- function(metrics, groups, directions, threshold = 3) {
 #' @returns A `CellQc` object.
 #'
 #' @export
+#'
+#' @examples
+#' # MAD outlier detection over two metrics at once
+#' set.seed(42L)
+#' metrics <- list(
+#'   lib_size = c(rnorm(99, 1000, 100), 50),
+#'   pct_mt = runif(100, 0, 20)
+#' )
+#' run_cell_qc(
+#'   metrics,
+#'   cells_to_keep = 0:99,
+#'   directions = c(lib_size = "below", pct_mt = "above")
+#' )
 run_cell_qc <- function(
   metrics,
   cells_to_keep,
@@ -544,6 +576,16 @@ run_cell_qc <- function(
 #' @param hard_thresholds Required. See `run_cell_qc`.
 #'
 #' @export
+#'
+#' @examples
+#' # a hard upper bound, no MAD anywhere
+#' set.seed(42L)
+#' qc <- run_cell_qc_fixed(
+#'   metrics = list(pct_mt = runif(100, 0, 30)),
+#'   cells_to_keep = 0:99,
+#'   hard_thresholds = list(pct_mt = c(upper = 15))
+#' )
+#' sum(qc$combined)
 run_cell_qc_fixed <- function(
   metrics,
   cells_to_keep,
@@ -591,6 +633,14 @@ run_cell_qc_fixed <- function(
 #' @returns The `SingleCellNearestNeighbour` for downstream usage.
 #'
 #' @export
+#'
+#' @examples
+#' # kNN over a random embedding; the rows have to carry cell names
+#' set.seed(42L)
+#' embd <- matrix(rnorm(500 * 10), nrow = 500)
+#' rownames(embd) <- sprintf("cell_%03d", 1:500)
+#' knn <- generate_sc_knn(embd, .verbose = FALSE)
+#' dim(get_knn_mat(knn))
 generate_sc_knn <- function(
   data,
   neighbours_params = params_sc_neighbours(),
@@ -641,6 +691,21 @@ generate_sc_knn <- function(
 #' }
 #'
 #' @export
+#'
+#' @examples
+#' # recall of an annoy index against the default one
+#' set.seed(42L)
+#' embd <- matrix(rnorm(500 * 10), nrow = 500)
+#' rownames(embd) <- sprintf("cell_%03d", 1:500)
+#' ref <- generate_sc_knn(embd, .verbose = FALSE)
+#' query <- generate_sc_knn(
+#'   embd,
+#'   neighbours_params = params_sc_neighbours(
+#'     knn = list(knn_method = "annoy")
+#'   ),
+#'   .verbose = FALSE
+#' )
+#' calc_knn_metrics(ref, query)$final_recall
 calc_knn_metrics <- function(ref_knn, query_knn) {
   # checks
   checkmate::assertClass(ref_knn, "SingleCellNearestNeighbour")
@@ -668,6 +733,17 @@ calc_knn_metrics <- function(ref_knn, query_knn) {
 #' usage. Genes not found in the object will be automatically removed.
 #'
 #' @export
+#'
+#' @examples
+#' # a marker table turned into the indexed list the scorers want
+#' sc <- demo_single_cells(prepped = FALSE)
+#' markers <- data.table::data.table(
+#'   cell_type = c("type_a", "type_a", "type_b"),
+#'   gene_id = get_gene_names(sc)[1:3]
+#' )
+#' names(prepare_cell_markers(sc, markers))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 prepare_cell_markers <- function(obj, marker_df) {
   # checks
   checkmate::assertTRUE(
@@ -742,6 +818,14 @@ prepare_cell_markers <- function(obj, marker_df) {
 #' columns.
 #'
 #' @export
+#'
+#' @examples
+#' # PCA coordinates with a cell annotation riding along
+#' sc <- demo_single_cells()
+#' dt <- extract_embedding_data(sc, "pca", obs_cols = "cell_grp")
+#' head(dt[, c("cell_id", "dim_1", "dim_2", "cell_grp")])
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 extract_embedding_data <- function(object, embedding, obs_cols = NULL, ...) {
   checkmate::qassert(embedding, "S1")
   checkmate::qassert(obs_cols, c("0", "S+"))
@@ -812,6 +896,15 @@ extract_embedding_data <- function(object, embedding, obs_cols = NULL, ...) {
 #' @references Wolf, et al., Genome Biol., 2019.
 #'
 #' @export
+#'
+#' @examples
+#' # the abstracted graph placed on the PCA coordinates
+#' sc <- demo_single_cells()
+#' sc <- find_clusters_sc(sc, res = 1.0)
+#' paga <- run_paga_sc(sc, cluster_col = "leiden_clustering", .verbose = FALSE)
+#' extract_paga_plot_data(sc, paga, embedding = "pca")$nodes
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 extract_paga_plot_data <- function(
   object,
   paga_res,
@@ -989,6 +1082,18 @@ extract_paga_plot_data <- function(
 #' @returns A long data.table with `cell_id`, `dim_*`, `gene` and `expression`.
 #'
 #' @export
+#'
+#' @examples
+#' # two genes melted onto the PCA coordinates
+#' sc <- demo_single_cells()
+#' dt <- extract_feature_plot_data(
+#'   sc,
+#'   features = get_gene_names(sc)[1:2],
+#'   embedding = "pca"
+#' )
+#' head(dt[, c("cell_id", "dim_1", "dim_2", "gene", "expression")])
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 extract_feature_plot_data <- function(
   object,
   features,
@@ -1057,6 +1162,17 @@ extract_feature_plot_data <- function(
 #' `gene` is an ordered factor following `features`.
 #'
 #' @export
+#'
+#' @examples
+#' # long format expression grouped by cell type
+#' sc <- demo_single_cells(prepped = FALSE)
+#' head(extract_gene_violin_data(
+#'   sc,
+#'   features = get_gene_names(sc)[1:2],
+#'   grouping_variable = "cell_grp"
+#' ))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 extract_gene_violin_data <- function(
   object,
   features,
@@ -1125,6 +1241,14 @@ extract_gene_violin_data <- function(
 #' `features` attribute as `c(feature_1, feature_2)`.
 #'
 #' @export
+#'
+#' @examples
+#' # two genes side by side, ready for a scatter
+#' sc <- demo_single_cells(prepped = FALSE)
+#' genes <- get_gene_names(sc)[1:2]
+#' head(extract_feature_pair(sc, genes[1], genes[2], obs_cols = "cell_grp"))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
 extract_feature_pair <- function(
   object,
   feature_1,

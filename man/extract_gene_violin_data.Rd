@@ -38,3 +38,14 @@ A long data.table with \code{cell_id}, \code{group}, \code{gene} and \code{expre
 Combines \code{\link[=extract_gene_expression]{extract_gene_expression()}} with a grouping obs column and melts to
 long format, ready for stacked (one gene per row) violin plots.
 }
+\examples{
+# long format expression grouped by cell type
+sc <- demo_single_cells(prepped = FALSE)
+head(extract_gene_violin_data(
+  sc,
+  features = get_gene_names(sc)[1:2],
+  grouping_variable = "cell_grp"
+))
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

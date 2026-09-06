@@ -28,3 +28,18 @@ Helper function to compare the results of two \code{SingleCellNearestNeighbour}
 against each other. The first one can serve as a reference (ground truth)
 and you can compare against the second one.
 }
+\examples{
+# recall of an annoy index against the default one
+set.seed(42L)
+embd <- matrix(rnorm(500 * 10), nrow = 500)
+rownames(embd) <- sprintf("cell_\%03d", 1:500)
+ref <- generate_sc_knn(embd, .verbose = FALSE)
+query <- generate_sc_knn(
+  embd,
+  neighbours_params = params_sc_neighbours(
+    knn = list(knn_method = "annoy")
+  ),
+  .verbose = FALSE
+)
+calc_knn_metrics(ref, query)$final_recall
+}

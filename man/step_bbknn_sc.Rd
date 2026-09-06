@@ -59,3 +59,8 @@ An \code{ScStep}.
 \description{
 Wraps \code{\link[=bbknn_sc]{bbknn_sc()}} as an \code{ScStep}.
 }
+\examples{
+# BBKNN replaces the graph outright, so nothing follows it
+step_pca_sc(no_pcs = 10L) \%>>\%
+  step_bbknn_sc(batch_column = "batch_index")
+}

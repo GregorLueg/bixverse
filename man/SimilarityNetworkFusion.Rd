@@ -58,3 +58,16 @@ applied function.}
 }
 }
 
+\examples{
+# continuous modality turned into an affinity matrix
+set.seed(42)
+continuous <- matrix(rnorm(120), nrow = 12, ncol = 10)
+rownames(continuous) <- sprintf("sample_\%02i", 1:12)
+colnames(continuous) <- sprintf("feature_\%i", 1:10)
+object <- SimilarityNetworkFusion(
+  data = continuous,
+  data_name = "continuous",
+  snf_params = params_snf(k = 3L)
+)
+dim(get_snf_adjcacency_mat(object, "continuous"))
+}

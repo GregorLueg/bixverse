@@ -35,6 +35,13 @@ Served from the \code{bixverse-data} GitHub release. There is no Zenodo fallback
 for this one yet. At 430 MB it is the largest of the example datasets, so
 expect the first call to take a while.
 }
+\examples{
+\dontrun{
+# pulls the archive into the session tempdir()
+path <- download_thymus_ageing()
+sce <- qs2::qs_read(path)
+}
+}
 \references{
 Baran-Gale, et al., Development, 2020
 }

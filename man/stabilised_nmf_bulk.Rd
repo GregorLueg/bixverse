@@ -46,3 +46,15 @@ with the lowest final reconstruction loss as the primary result, along with
 the per-run losses and convergence flags. Useful when the objective is
 known to have multiple local minima. Uses \code{f64} precision.
 }
+\examples{
+# ten random restarts, best run kept
+syn <- generate_gene_module_data(n_samples = 24L, n_genes = 60L)
+# NMF needs a non-negative matrix
+mat <- syn$data - min(syn$data)
+obj <- BulkCoExp(mat, syn$meta_data)
+obj <- preprocess_bulk_coexp(
+  obj, hvg = NULL, scaling = FALSE, .verbose = FALSE
+)
+obj <- stabilised_nmf_bulk(obj, k = 4L, n_runs = 10L, .verbose = FALSE)
+get_nmf_stability(obj)$losses
+}

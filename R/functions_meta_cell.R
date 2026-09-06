@@ -35,6 +35,24 @@
 #' the result. `other_data` holds the source identifiers under `sources`.
 #'
 #' @export
+#'
+#' @examples
+#' \donttest{
+#' # meta cells generated per source, then pooled for downstream methods
+#' sc_1 <- demo_single_cells(seed = 1L)
+#' sc_2 <- demo_single_cells(seed = 2L)
+#' params <- params_sc_bt_metacells(target_no_metacells = 25L)
+#' merged <- merge_meta_cells(
+#'   list(
+#'     donor_1 = generate_bt_meta_cells_sc(sc_1, params, .verbose = FALSE),
+#'     donor_2 = generate_bt_meta_cells_sc(sc_2, params, .verbose = FALSE)
+#'   ),
+#'   .verbose = FALSE
+#' )
+#' merged
+#'
+#' unlink(c(sc_1@dir_data, sc_2@dir_data), recursive = TRUE, force = TRUE)
+#' }
 merge_meta_cells <- function(
   inputs,
   source_ids = NULL,

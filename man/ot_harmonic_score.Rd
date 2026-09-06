@@ -18,3 +18,7 @@ harmonic sum, based on the approach OpenTargets takes to do their gene -
 disease evidence scores, see:
 https://platform-docs.opentargets.org/associations.
 }
+\examples{
+# harmonic sum over four evidence scores
+ot_harmonic_score(c(1, 0.8, 0.5, 0.1))
+}

@@ -53,3 +53,16 @@ The function will automatically downsample everything else to a random set
 of 100,000 cells if it should exceed that. This automatic downsampling can
 be turned off however.
 }
+\examples{
+# one versus rest across the Leiden clusters
+sc <- demo_single_cells()
+sc <- find_clusters_sc(sc, res = 1.0)
+res <- find_all_markers_sc(
+  sc,
+  column_of_interest = "leiden_clustering",
+  .verbose = FALSE
+)
+head(res)
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

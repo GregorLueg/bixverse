@@ -37,6 +37,20 @@
 #' @export
 #'
 #' @references Pan et al., Cell Syst, 2022
+#'
+#' @examples
+#' # small grid over neighbours and dictionary sizes
+#' syn <- generate_gene_module_data(n_samples = 24L, n_genes = 60L)
+#' obj <- BulkCoExp(syn$data, syn$meta_data)
+#' obj <- preprocess_bulk_coexp(obj, hvg = NULL, .verbose = FALSE)
+#' obj <- dgrdl_grid_search(
+#'   obj,
+#'   neighbours_vec = c(3L, 5L),
+#'   dict_size_vec = c(4L, 6L),
+#'   seed_vec = 123L,
+#'   .verbose = FALSE
+#' )
+#' get_grid_search_res(obj)
 dgrdl_grid_search <- S7::new_generic(
   name = "dgrdl_grid_search",
   dispatch_args = "object",
@@ -166,6 +180,18 @@ S7::method(dgrdl_grid_search, BulkCoExp) <- function(
 #' @export
 #'
 #' @references Pan et al., Cell Syst, 2022
+#'
+#' @examples
+#' # fit DGRDL with a six-atom dictionary
+#' syn <- generate_gene_module_data(n_samples = 24L, n_genes = 60L)
+#' obj <- BulkCoExp(syn$data, syn$meta_data)
+#' obj <- preprocess_bulk_coexp(obj, hvg = NULL, .verbose = FALSE)
+#' obj <- dgrdl_result(
+#'   obj,
+#'   dgrdl_params = params_dgrdl(dict_size = 6L, k_neighbours = 3L),
+#'   .verbose = FALSE
+#' )
+#' head(get_modules(get_results(obj)))
 dgrdl_result <- S7::new_generic(
   name = "dgrdl_result",
   dispatch_args = "object",
@@ -288,6 +314,20 @@ S7::method(dgrdl_result, BulkCoExp) <- function(
 #' @returns data.table with the grid search results (if found. Otherwise `NULL`.)
 #'
 #' @export
+#'
+#' @examples
+#' # the grid search table
+#' syn <- generate_gene_module_data(n_samples = 24L, n_genes = 60L)
+#' obj <- BulkCoExp(syn$data, syn$meta_data)
+#' obj <- preprocess_bulk_coexp(obj, hvg = NULL, .verbose = FALSE)
+#' obj <- dgrdl_grid_search(
+#'   obj,
+#'   neighbours_vec = c(3L, 5L),
+#'   dict_size_vec = c(4L, 6L),
+#'   seed_vec = 123L,
+#'   .verbose = FALSE
+#' )
+#' get_grid_search_res(obj)
 get_grid_search_res <- S7::new_generic(
   name = "get_grid_search_res",
   dispatch_args = "object",

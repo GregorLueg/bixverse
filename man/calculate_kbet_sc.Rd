@@ -41,6 +41,17 @@ cell it indicates poor mixing for that cell specifically.
 Large number of positive tests indicate bad mixing overall. For more details,
 please see Büttner et al.
 }
+\examples{
+# kBET rejection rate over three batches
+sc <- demo_single_cells(
+  syn_data_params = params_sc_synthetic_data(
+    n_cells = 600L, n_genes = 50L, n_batches = 3L
+  )
+)
+calculate_kbet_sc(sc, batch_column = "batch_index", .verbose = FALSE)
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}
 \references{
 Büttner, et al., Nat. Methods, 2019
 }

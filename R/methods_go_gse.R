@@ -26,6 +26,17 @@
 #' @returns data.table with enrichment results.
 #'
 #' @export
+#'
+#' @examples
+#' \donttest{
+#' # human GO terms with at least 25 genes
+#' go_obj <- GeneOntologyElim(
+#'   get_go_data_human(.verbose = FALSE),
+#'   min_genes = 25L
+#' )
+#' target_genes <- unique(unlist(S7::prop(go_obj, "go_to_genes")[1:5]))
+#' head(gse_go_elim_method(go_obj, target_genes = target_genes), 3)
+#' }
 gse_go_elim_method <- S7::new_generic(
   name = "gse_go_elim_method",
   dispatch_args = "object",
@@ -138,6 +149,24 @@ S7::method(gse_go_elim_method, GeneOntologyElim) <-
 #' @returns data.table with enrichment results.
 #'
 #' @export
+#'
+#' @examples
+#' \donttest{
+#' # human GO terms with at least 25 genes
+#' go_obj <- GeneOntologyElim(
+#'   get_go_data_human(.verbose = FALSE),
+#'   min_genes = 25L
+#' )
+#' target_genes <- unique(unlist(S7::prop(go_obj, "go_to_genes")[1:5]))
+#' res <- gse_go_elim_method_list(
+#'   go_obj,
+#'   target_gene_list = list(
+#'     set_a = target_genes,
+#'     set_b = rev(target_genes)[1:50]
+#'   )
+#' )
+#' head(res, 3)
+#' }
 gse_go_elim_method_list <- S7::new_generic(
   name = "gse_go_elim_method_list",
   dispatch_args = "object",
@@ -276,6 +305,21 @@ S7::method(gse_go_elim_method_list, GeneOntologyElim) <-
 #' @returns data.table with enrichment results.
 #'
 #' @export
+#'
+#' @examples
+#' \donttest{
+#' # human GO terms with at least 25 genes
+#' go_obj <- GeneOntologyElim(
+#'   get_go_data_human(.verbose = FALSE),
+#'   min_genes = 25L
+#' )
+#' genes <- unique(unlist(S7::prop(go_obj, "go_to_genes")))
+#' set.seed(1L)
+#' stats <- stats::setNames(rnorm(length(genes)), genes)
+#' stats[1:200] <- stats[1:200] + 2
+#' res <- fgsea_simple_go_elim(go_obj, stats = stats, nperm = 1000L)
+#' head(data.table::setorder(res, pvals), 3)
+#' }
 fgsea_simple_go_elim <- S7::new_generic(
   name = "fgsea_simple_go_elim",
   dispatch_args = "object",
@@ -391,6 +435,21 @@ S7::method(fgsea_simple_go_elim, GeneOntologyElim) <-
 #' @references Korotkevich, et al., bioRxiv
 #'
 #' @export
+#'
+#' @examples
+#' \donttest{
+#' # human GO terms with at least 25 genes
+#' go_obj <- GeneOntologyElim(
+#'   get_go_data_human(.verbose = FALSE),
+#'   min_genes = 25L
+#' )
+#' genes <- unique(unlist(S7::prop(go_obj, "go_to_genes")))
+#' set.seed(1L)
+#' stats <- stats::setNames(rnorm(length(genes)), genes)
+#' stats[1:200] <- stats[1:200] + 2
+#' res <- fgsea_go_elim(go_obj, stats = stats, nperm = 1000L)
+#' head(res, 3)
+#' }
 fgsea_go_elim <- S7::new_generic(
   name = "fgsea_go_elim",
   dispatch_args = "object",

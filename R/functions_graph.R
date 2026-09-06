@@ -27,6 +27,21 @@
 #' @export
 #'
 #' @references Ruiz, et al., Nat Commun, 2021
+#'
+#' @examples
+#' # personalised page rank from a receptor over a small signalling graph
+#' nodes <- data.frame(
+#'   name = c("rec_a", "kin_b", "tf_c", "gene_d"),
+#'   type = c("receptor", "kinase", "tf", "target_gene")
+#' )
+#' edges <- data.frame(
+#'   from = c("rec_a", "kin_b", "tf_c"),
+#'   to = c("kin_b", "tf_c", "gene_d"),
+#'   weight = rep(1, 3),
+#'   type = c("activation", "phosphorylation", "tf_activation")
+#' )
+#' g <- igraph::graph_from_data_frame(edges, vertices = nodes, directed = TRUE)
+#' constrained_page_rank(g, personalisation_vector = c(1, 0, 0, 0))
 constrained_page_rank <- function(
   graph,
   personalisation_vector,
@@ -93,6 +108,25 @@ constrained_page_rank <- function(
 #' @export
 #'
 #' @references Ruiz, et al., Nat Commun, 2021
+#'
+#' @examples
+#' # two personalisation vectors over the same signalling graph
+#' nodes <- data.frame(
+#'   name = c("rec_a", "kin_b", "tf_c", "gene_d"),
+#'   type = c("receptor", "kinase", "tf", "target_gene")
+#' )
+#' edges <- data.frame(
+#'   from = c("rec_a", "kin_b", "tf_c"),
+#'   to = c("kin_b", "tf_c", "gene_d"),
+#'   weight = rep(1, 3),
+#'   type = c("activation", "phosphorylation", "tf_activation")
+#' )
+#' g <- igraph::graph_from_data_frame(edges, vertices = nodes, directed = TRUE)
+#' res <- constrained_page_rank_ls(
+#'   g,
+#'   personalisation_list = list(a = c(1, 0, 0, 0), b = c(0, 1, 0, 0))
+#' )
+#' res$a
 constrained_page_rank_ls <- function(
   graph,
   personalisation_list,
@@ -156,10 +190,18 @@ constrained_page_rank_ls <- function(
 #' @export
 #'
 #' @importFrom magrittr %>%
+#'
+#' @examples
+#' # reset weight split across two seed nodes, normalised to sum to one
+#' g <- igraph::graph_from_data_frame(
+#'   data.frame(from = c("a", "b", "c"), to = c("b", "c", "d")),
+#'   directed = TRUE
+#' )
+#' generate_personalisation_vec(g, node_weights = c(a = 3, c = 1))
 generate_personalisation_vec <- function(graph, node_weights) {
   # checks
   checkmate::assertClass(graph, "igraph")
-  checkmate::qassert(node_weights, "N1")
+  checkmate::qassert(node_weights, "N+")
   checkmate::assertNamed(node_weights)
 
   # function body
@@ -172,7 +214,7 @@ generate_personalisation_vec <- function(graph, node_weights) {
       "Check the names please."
     ))
   }
-  diffusion_vec < diffusion_vec / sum(diffusion_vec)
+  diffusion_vec <- diffusion_vec / sum(diffusion_vec)
 
   return(diffusion_vec)
 }
@@ -308,6 +350,14 @@ snf_process_aff_cat_mixed <- function(
 #' }
 #'
 #' @export
+#'
+#' @examples
+#' # spread two labels through a five node kNN graph
+#' from <- as.integer(c(1, 1, 2, 3, 4))
+#' to <- as.integer(c(2, 3, 3, 4, 5))
+#' labels <- c("A", NA, "B", NA, NA)
+#' res <- knn_graph_label_propagation(from = from, to = to, labels = labels)
+#' res$final_labels
 knn_graph_label_propagation <- function(
   from,
   to,

@@ -21,6 +21,25 @@
 #' throws a warning and returns NULL.
 #'
 #' @export
+#'
+#' @examples
+#' # modularity across the resolutions tested on an RBH graph
+#' set.seed(123)
+#' modules <- data.table::data.table(
+#'   origin = rep(c("set_a", "set_b"), each = 20),
+#'   module = rep(c("m1", "m2", "m3", "m4"), each = 10),
+#'   gene = unlist(replicate(4, sample(letters, 10), simplify = FALSE))
+#' )
+#' object <- RbhGraph(
+#'   modules,
+#'   rbh_type = "set",
+#'   dataset_col = "origin",
+#'   module_col = "module",
+#'   value_col = "gene"
+#' )
+#' object <- generate_rbh_graph(object, minimum_similarity = 0)
+#' object <- find_rbh_communities(object, parallel = FALSE, .verbose = FALSE)
+#' plot_resolution_res(object)
 plot_resolution_res <- S7::new_generic(
   name = "plot_resolution_res",
   dispatch_args = "object",
@@ -43,6 +62,21 @@ plot_resolution_res <- S7::new_generic(
 #' @returns The object with updated metadata.
 #'
 #' @export
+#'
+#' @examples
+#' # swap in a metadata table that carries an extra batch column
+#' set.seed(42)
+#' counts <- matrix(rpois(60, 20), nrow = 10, ncol = 6)
+#' rownames(counts) <- sprintf("gene_%i", 1:10)
+#' colnames(counts) <- sprintf("sample_%i", 1:6)
+#' meta <- data.table::data.table(
+#'   sample_id = colnames(counts),
+#'   case_control = rep(c("case", "control"), each = 3)
+#' )
+#' object <- BulkDge(raw_counts = counts, meta_data = meta)
+#' new_meta <- data.table::copy(meta)[, batch := rep(c("b1", "b2"), 3)]
+#' object <- add_new_metadata(object, new_metadata = new_meta)
+#' head(S7::prop(object, "meta_data"))
 add_new_metadata <- S7::new_generic(
   name = "add_new_metadata",
   dispatch_args = "object",

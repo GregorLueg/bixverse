@@ -39,3 +39,16 @@ A \code{CellQc} object.
 \description{
 Helper function to run initial quality control on cells.
 }
+\examples{
+# MAD outlier detection over two metrics at once
+set.seed(42L)
+metrics <- list(
+  lib_size = c(rnorm(99, 1000, 100), 50),
+  pct_mt = runif(100, 0, 20)
+)
+run_cell_qc(
+  metrics,
+  cells_to_keep = 0:99,
+  directions = c(lib_size = "below", pct_mt = "above")
+)
+}

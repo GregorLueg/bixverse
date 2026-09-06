@@ -47,6 +47,18 @@
 #' @references Cichocki & Phan, IEICE Trans., 2009.
 #'
 #' @export
+#'
+#' @examples
+#' # a single four-factor HALS-NMF fit
+#' syn <- generate_gene_module_data(n_samples = 24L, n_genes = 60L)
+#' # NMF needs a non-negative matrix
+#' mat <- syn$data - min(syn$data)
+#' obj <- BulkCoExp(mat, syn$meta_data)
+#' obj <- preprocess_bulk_coexp(
+#'   obj, hvg = NULL, scaling = FALSE, .verbose = FALSE
+#' )
+#' obj <- nmf_bulk(obj, k = 4L, .verbose = FALSE)
+#' head(get_nmf_modules(obj))
 nmf_bulk <- S7::new_generic(
   name = "nmf_bulk",
   dispatch_args = "object",
@@ -197,6 +209,18 @@ S7::method(nmf_bulk, BulkCoExp) <- function(
 #' `w_all_runs`, `h_per_run`).
 #'
 #' @export
+#'
+#' @examples
+#' # ten random restarts, best run kept
+#' syn <- generate_gene_module_data(n_samples = 24L, n_genes = 60L)
+#' # NMF needs a non-negative matrix
+#' mat <- syn$data - min(syn$data)
+#' obj <- BulkCoExp(mat, syn$meta_data)
+#' obj <- preprocess_bulk_coexp(
+#'   obj, hvg = NULL, scaling = FALSE, .verbose = FALSE
+#' )
+#' obj <- stabilised_nmf_bulk(obj, k = 4L, n_runs = 10L, .verbose = FALSE)
+#' get_nmf_stability(obj)$losses
 stabilised_nmf_bulk <- S7::new_generic(
   name = "stabilised_nmf_bulk",
   dispatch_args = "object",
@@ -380,6 +404,18 @@ S7::method(stabilised_nmf_bulk, BulkCoExp) <- function(
 #' @references Kotliar et al., eLife, 2019
 #'
 #' @export
+#'
+#' @examples
+#' # consensus over ten restarts
+#' syn <- generate_gene_module_data(n_samples = 24L, n_genes = 60L)
+#' # NMF needs a non-negative matrix
+#' mat <- syn$data - min(syn$data)
+#' obj <- BulkCoExp(mat, syn$meta_data)
+#' obj <- preprocess_bulk_coexp(
+#'   obj, hvg = NULL, scaling = FALSE, .verbose = FALSE
+#' )
+#' obj <- consensus_nmf_bulk(obj, k = 4L, n_runs = 10L, .verbose = FALSE)
+#' get_nmf_stability(obj)$stability
 consensus_nmf_bulk <- S7::new_generic(
   name = "consensus_nmf_bulk",
   dispatch_args = "object",
@@ -545,6 +581,20 @@ S7::method(consensus_nmf_bulk, BulkCoExp) <- function(
 #' @references Kotliar et al., eLife, 2019
 #'
 #' @export
+#'
+#' @examples
+#' # small sweep, keep both the grid and the restarts modest
+#' syn <- generate_gene_module_data(n_samples = 24L, n_genes = 60L)
+#' # NMF needs a non-negative matrix
+#' mat <- syn$data - min(syn$data)
+#' obj <- BulkCoExp(mat, syn$meta_data)
+#' obj <- preprocess_bulk_coexp(
+#'   obj, hvg = NULL, scaling = FALSE, .verbose = FALSE
+#' )
+#' sweep_res <- nmf_k_sweep_bulk(
+#'   obj, k_range = 3:5, n_runs = 5L, .verbose = FALSE
+#' )
+#' sweep_res
 nmf_k_sweep_bulk <- S7::new_generic(
   name = "nmf_k_sweep_bulk",
   dispatch_args = "object",
@@ -776,6 +826,18 @@ S7::method(nmf_k_sweep_bulk, BulkCoExp) <- function(
 #' @returns A features x k numeric matrix (if found) or `NULL`.
 #'
 #' @export
+#'
+#' @examples
+#' # gene loadings of a four-factor fit
+#' syn <- generate_gene_module_data(n_samples = 24L, n_genes = 60L)
+#' # NMF needs a non-negative matrix
+#' mat <- syn$data - min(syn$data)
+#' obj <- BulkCoExp(mat, syn$meta_data)
+#' obj <- preprocess_bulk_coexp(
+#'   obj, hvg = NULL, scaling = FALSE, .verbose = FALSE
+#' )
+#' obj <- nmf_bulk(obj, k = 4L, .verbose = FALSE)
+#' dim(get_nmf_gene_loadings(obj))
 get_nmf_gene_loadings <- S7::new_generic(
   name = "get_nmf_gene_loadings",
   dispatch_args = "object",
@@ -810,6 +872,18 @@ S7::method(get_nmf_gene_loadings, BulkCoExp) <- function(object) {
 #' @returns A samples x k numeric matrix (if found) or `NULL`.
 #'
 #' @export
+#'
+#' @examples
+#' # sample activity of a four-factor fit
+#' syn <- generate_gene_module_data(n_samples = 24L, n_genes = 60L)
+#' # NMF needs a non-negative matrix
+#' mat <- syn$data - min(syn$data)
+#' obj <- BulkCoExp(mat, syn$meta_data)
+#' obj <- preprocess_bulk_coexp(
+#'   obj, hvg = NULL, scaling = FALSE, .verbose = FALSE
+#' )
+#' obj <- nmf_bulk(obj, k = 4L, .verbose = FALSE)
+#' dim(get_nmf_sample_activity(obj))
 get_nmf_sample_activity <- S7::new_generic(
   name = "get_nmf_sample_activity",
   dispatch_args = "object",
@@ -845,6 +919,18 @@ S7::method(get_nmf_sample_activity, BulkCoExp) <- function(object) {
 #' (if found) or `NULL`.
 #'
 #' @export
+#'
+#' @examples
+#' # gene to module assignments of a four-factor fit
+#' syn <- generate_gene_module_data(n_samples = 24L, n_genes = 60L)
+#' # NMF needs a non-negative matrix
+#' mat <- syn$data - min(syn$data)
+#' obj <- BulkCoExp(mat, syn$meta_data)
+#' obj <- preprocess_bulk_coexp(
+#'   obj, hvg = NULL, scaling = FALSE, .verbose = FALSE
+#' )
+#' obj <- nmf_bulk(obj, k = 4L, .verbose = FALSE)
+#' head(get_nmf_modules(obj))
 get_nmf_modules <- S7::new_generic(
   name = "get_nmf_modules",
   dispatch_args = "object",
@@ -886,6 +972,18 @@ S7::method(get_nmf_modules, BulkCoExp) <- function(object) {
 #' `n_empty_clusters`. `NULL` if neither was run.
 #'
 #' @export
+#'
+#' @examples
+#' # clustering diagnostics of a consensus fit
+#' syn <- generate_gene_module_data(n_samples = 24L, n_genes = 60L)
+#' # NMF needs a non-negative matrix
+#' mat <- syn$data - min(syn$data)
+#' obj <- BulkCoExp(mat, syn$meta_data)
+#' obj <- preprocess_bulk_coexp(
+#'   obj, hvg = NULL, scaling = FALSE, .verbose = FALSE
+#' )
+#' obj <- consensus_nmf_bulk(obj, k = 4L, n_runs = 10L, .verbose = FALSE)
+#' get_nmf_stability(obj)$cluster_sizes
 get_nmf_stability <- S7::new_generic(
   name = "get_nmf_stability",
   dispatch_args = "object",

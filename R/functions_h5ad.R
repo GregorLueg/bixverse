@@ -113,6 +113,17 @@
 #' @export
 #'
 #' @keywords internal
+#'
+#' @examples
+#' # the synthetic writer only fills /X, and it holds raw counts
+#' data <- generate_single_cell_test_data(
+#'   syn_data_params = params_sc_synthetic_data(n_cells = 200L, n_genes = 40L)
+#' )
+#' f_path <- tempfile(fileext = ".h5ad")
+#' write_h5ad_sc(f_path, data$counts, data$obs, data$var, .verbose = FALSE)
+#' detect_raw_count_slot(f_path)
+#'
+#' unlink(f_path)
 detect_raw_count_slot <- function(
   f_path,
   candidates = c("layers.counts", "raw.X", "X"),
@@ -170,6 +181,20 @@ detect_raw_count_slot <- function(
 #' }
 #'
 #' @export
+#'
+#' @examples
+#' # build the gene universe across two files before a multi-file load
+#' data <- generate_single_cell_test_data(
+#'   syn_data_params = params_sc_synthetic_data(n_cells = 200L, n_genes = 40L)
+#' )
+#' files <- c(a = tempfile(fileext = ".h5ad"), b = tempfile(fileext = ".h5ad"))
+#' for (f in files) {
+#'   write_h5ad_sc(f, data$counts, data$obs, data$var, .verbose = FALSE)
+#' }
+#' tasks <- prescan_h5ad_files(h5_paths = files, .verbose = FALSE)
+#' tasks$universe_size
+#'
+#' unlink(files)
 prescan_h5ad_files <- function(
   h5_paths,
   gene_universe = c("intersection", "union"),
@@ -295,6 +320,17 @@ prescan_h5ad_files <- function(
 #'   `"CSR"`, `"CSC"`, `"DENSE_ROW"`, `"DENSE_COL"`).
 #'
 #' @export
+#'
+#' @examples
+#' # dimensions and storage layout without reading the counts
+#' data <- generate_single_cell_test_data(
+#'   syn_data_params = params_sc_synthetic_data(n_cells = 200L, n_genes = 40L)
+#' )
+#' f_path <- tempfile(fileext = ".h5ad")
+#' write_h5ad_sc(f_path, data$counts, data$obs, data$var, .verbose = FALSE)
+#' get_h5ad_dimensions(f_path)
+#'
+#' unlink(f_path)
 get_h5ad_dimensions <- function(f_path) {
   checkmate::assertFileExists(f_path)
 
@@ -380,6 +416,18 @@ get_h5ad_dimensions <- function(f_path) {
 #' }
 #'
 #' @export
+#'
+#' @examples
+#' # obs and var tables straight out of the file
+#' data <- generate_single_cell_test_data(
+#'   syn_data_params = params_sc_synthetic_data(n_cells = 200L, n_genes = 40L)
+#' )
+#' f_path <- tempfile(fileext = ".h5ad")
+#' write_h5ad_sc(f_path, data$counts, data$obs, data$var, .verbose = FALSE)
+#' meta <- read_h5ad_metadata(f_path)
+#' head(meta$var, 3)
+#'
+#' unlink(f_path)
 read_h5ad_metadata <- function(f_path) {
   checkmate::assertFileExists(f_path)
   on.exit(tryCatch(rhdf5::h5closeAll(), error = function(e) invisible()))
@@ -480,6 +528,19 @@ read_h5ad_metadata <- function(f_path) {
 #' }
 #'
 #' @export
+#'
+#' @examples
+#' # check whether /X holds raw counts before loading it
+#' data <- generate_single_cell_test_data(
+#'   syn_data_params = params_sc_synthetic_data(n_cells = 200L, n_genes = 40L)
+#' )
+#' f_path <- tempfile(fileext = ".h5ad")
+#' write_h5ad_sc(f_path, data$counts, data$obs, data$var, .verbose = FALSE)
+#' summary_x <- read_h5ad_x_summary(f_path)
+#' summary_x$stats
+#' summary_x$is_integer_valued
+#'
+#' unlink(f_path)
 read_h5ad_x_summary <- function(f_path, n_sample = 10000L) {
   checkmate::assertFileExists(f_path)
   on.exit(tryCatch(rhdf5::h5closeAll(), error = function(e) invisible()))
@@ -561,6 +622,11 @@ get_tenx_h5_metadata <- function(f_path) {
 #' to [add_adt_counts_sc()] as `isotype_names`.
 #'
 #' @export
+#'
+#' @examples
+#' # find the isotype controls among the ADT features
+#' features <- c("CD3", "CD19", "IgG1_isotype", "IgG2a_isotype")
+#' detect_adt_isotypes(features)
 detect_adt_isotypes <- function(feature_names, pattern = "isotype") {
   checkmate::qassert(feature_names, "S+")
   checkmate::qassert(pattern, "S1")
@@ -577,11 +643,16 @@ detect_adt_isotypes <- function(feature_names, pattern = "isotype") {
 #' @returns Character vector of ADT features, but anything with `"isotype"`.
 #'
 #' @export
+#'
+#' @examples
+#' # the same features with the isotype controls dropped
+#' features <- c("CD3", "CD19", "IgG1_isotype", "IgG2a_isotype")
+#' remove_adt_isotypes(features)
 remove_adt_isotypes <- function(feature_names, pattern = "isotype") {
   checkmate::qassert(feature_names, "S+")
   checkmate::qassert(pattern, "S1")
 
-  feature_names[!grepl(pattern, feature_names)]
+  feature_names[!grepl(pattern, feature_names, ignore.case = TRUE)]
 }
 
 ## multi h5 files --------------------------------------------------------------
@@ -615,6 +686,25 @@ remove_adt_isotypes <- function(feature_names, pattern = "isotype") {
 #' }
 #'
 #' @export
+#'
+#' @examples
+#' # gene universe across two 10x h5 files
+#' data <- generate_single_cell_test_data(
+#'   syn_data_params = params_sc_synthetic_data(n_cells = 200L, n_genes = 40L)
+#' )
+#' features <- data.table::data.table(
+#'   id = data$var$gene_id,
+#'   name = data$var$ensembl_id,
+#'   feature_type = "Gene Expression"
+#' )
+#' files <- c(a = tempfile(fileext = ".h5"), b = tempfile(fileext = ".h5"))
+#' for (f in files) {
+#'   write_tenx_h5_sc(f, data$counts, data$obs$cell_id, features)
+#' }
+#' scan_res <- prescan_tenx_h5_files(h5_paths = files, .verbose = FALSE)
+#' scan_res$universe_size
+#'
+#' unlink(files)
 prescan_tenx_h5_files <- function(
   h5_paths,
   feature_type = "Gene Expression",
@@ -753,6 +843,28 @@ prescan_tenx_h5_files <- function(
 #' }
 #'
 #' @export
+#'
+#' @examples
+#' # barcodes, features and the feature type breakdown
+#' data <- generate_single_cell_test_data(
+#'   syn_data_params = params_sc_synthetic_data(n_cells = 200L, n_genes = 40L)
+#' )
+#' f_path <- tempfile(fileext = ".h5")
+#' write_tenx_h5_sc(
+#'   f_path = f_path,
+#'   counts = data$counts,
+#'   barcodes = data$obs$cell_id,
+#'   features = data.table::data.table(
+#'     id = data$var$gene_id,
+#'     name = data$var$ensembl_id,
+#'     feature_type = "Gene Expression"
+#'   )
+#' )
+#' meta <- read_tenx_h5_metadata(f_path)
+#' meta$dims
+#' meta$feature_types
+#'
+#' unlink(f_path)
 read_tenx_h5_metadata <- function(f_path) {
   checkmate::assertFileExists(f_path)
   on.exit(tryCatch(rhdf5::h5closeAll(), error = function(e) invisible()))
@@ -812,6 +924,33 @@ read_tenx_h5_metadata <- function(f_path) {
 #' @returns A dense matrix of cells x features
 #'
 #' @export
+#'
+#' @examples
+#' # pull the antibody capture layer out of a multi-modal 10x file
+#' data <- generate_single_cell_test_data(
+#'   syn_data_params = params_sc_synthetic_data(n_cells = 200L, n_genes = 40L)
+#' )
+#' adt <- generate_single_cell_test_data_adt(
+#'   params_sc_synthetic_data_adt(n_cells = 200L)
+#' )
+#' f_path <- tempfile(fileext = ".h5")
+#' write_tenx_h5_sc(
+#'   f_path = f_path,
+#'   counts = cbind(data$counts, as(adt$counts, "RsparseMatrix")),
+#'   barcodes = data$obs$cell_id,
+#'   features = data.table::data.table(
+#'     id = c(data$var$gene_id, colnames(adt$counts)),
+#'     name = c(data$var$ensembl_id, colnames(adt$counts)),
+#'     feature_type = rep(
+#'       c("Gene Expression", "Antibody Capture"),
+#'       c(ncol(data$counts), ncol(adt$counts))
+#'     )
+#'   )
+#' )
+#' adt_counts <- read_tenx_h5_adt(f_path)
+#' dim(adt_counts)
+#'
+#' unlink(f_path)
 read_tenx_h5_adt <- function(f_path, feature_type = "Antibody Capture") {
   # checks
   checkmate::assertFileExists(f_path)
@@ -854,6 +993,33 @@ read_tenx_h5_adt <- function(f_path, feature_type = "Antibody Capture") {
 #' rownames and feature names as colnames.
 #'
 #' @export
+#'
+#' @examples
+#' # stack the ADT layer of two files, barcodes prefixed by exp_id
+#' data <- generate_single_cell_test_data(
+#'   syn_data_params = params_sc_synthetic_data(n_cells = 200L, n_genes = 40L)
+#' )
+#' adt <- generate_single_cell_test_data_adt(
+#'   params_sc_synthetic_data_adt(n_cells = 200L)
+#' )
+#' features <- data.table::data.table(
+#'   id = c(data$var$gene_id, colnames(adt$counts)),
+#'   name = c(data$var$ensembl_id, colnames(adt$counts)),
+#'   feature_type = rep(
+#'     c("Gene Expression", "Antibody Capture"),
+#'     c(ncol(data$counts), ncol(adt$counts))
+#'   )
+#' )
+#' counts <- cbind(data$counts, as(adt$counts, "RsparseMatrix"))
+#' files <- c(a = tempfile(fileext = ".h5"), b = tempfile(fileext = ".h5"))
+#' for (f in files) {
+#'   write_tenx_h5_sc(f, counts, data$obs$cell_id, features)
+#' }
+#' adt_counts <- read_multi_tenx_h5_adt(files)
+#' dim(adt_counts)
+#' head(rownames(adt_counts), 2)
+#'
+#' unlink(files)
 read_multi_tenx_h5_adt <- function(
   h5_paths,
   feature_type = "Antibody Capture",

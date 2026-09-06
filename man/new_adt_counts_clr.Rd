@@ -34,3 +34,12 @@ This function generates a new \code{ADTCounts} class which uses CLR normalisatio
 under the hood. You have the choice between Seurat-style CLR (no negative
 values) and normal CLR (allows negative values).
 }
+\examples{
+# CLR normalisation of synthetic ADT counts
+adt <- generate_single_cell_test_data_adt()
+cell_info <- stats::setNames(
+  seq_len(nrow(adt$counts)),
+  rownames(adt$counts)
+)
+new_adt_counts_clr(adt$counts, cell_info = cell_info)
+}

@@ -18,3 +18,9 @@ algorithms.
 \description{
 Helper function to check for expected clustering vs actual clustering.
 }
+\examples{
+# agreement between two clusterings of the same six samples
+clusters_a <- c("c1", "c1", "c2", "c2", "c3", "c3")
+clusters_b <- c("x", "x", "y", "y", "z", "x")
+f1_score_confusion_mat(clusters_a, clusters_b)
+}

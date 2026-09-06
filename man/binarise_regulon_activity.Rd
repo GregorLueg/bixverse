@@ -42,6 +42,16 @@ regulons land there, the AUC distributions are too flat to separate, which
 usually points at the scoring statistic rather than the thresholding. Check
 you used \code{auc_type = "recovery"}, see \code{\link[=params_sc_aucell]{params_sc_aucell()}}.
 }
+\examples{
+# on/off calls for a bimodal and a unimodal regulon
+set.seed(7L)
+auc <- cbind(
+  regulon_a = c(rnorm(50, 0.1, 0.02), rnorm(50, 0.4, 0.02)),
+  regulon_b = rnorm(100, 0.2, 0.05)
+)
+rownames(auc) <- sprintf("cell_\%i", 1:100)
+binarise_regulon_activity(auc, .verbose = FALSE)$thresholds
+}
 \references{
 Aibar, et al., Nat Methods, 2017
 }

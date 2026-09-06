@@ -15,3 +15,14 @@ A list based on \code{\link[=params_sc_mtx_io]{params_sc_mtx_io()}}.
 \description{
 Helper to generate cell ranger input parameters
 }
+\examples{
+# the mtx parameter list a Cell Ranger output directory maps onto
+dir <- tempfile("cellranger")
+dir.create(dir)
+invisible(file.create(
+  file.path(dir, c("barcodes.tsv", "genes.tsv", "matrix.mtx"))
+))
+str(get_cell_ranger_params(dir))
+
+unlink(dir, recursive = TRUE, force = TRUE)
+}

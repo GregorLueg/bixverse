@@ -40,3 +40,11 @@ In case of a kNN graph with a subset of nodes having labels, this function
 can be used to propagate the labels through the graph. This function uses
 the label spreading version of the algorithm.
 }
+\examples{
+# spread two labels through a five node kNN graph
+from <- as.integer(c(1, 1, 2, 3, 4))
+to <- as.integer(c(2, 3, 3, 4, 5))
+labels <- c("A", NA, "B", NA, NA)
+res <- knn_graph_label_propagation(from = from, to = to, labels = labels)
+res$final_labels
+}

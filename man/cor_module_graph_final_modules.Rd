@@ -63,6 +63,21 @@ modules. The class has the option to sub-cluster large communities within
 their respective sub graphs, akin to the approach taken by Barrio-Hernandez,
 et al.
 }
+\examples{
+# finalise the communities at the resolution picked by the scan
+mat <- t(synthetic_signal_matrix()$mat)
+obj <- BulkCoExp(mat, data.table::data.table(sample_id = rownames(mat)))
+obj <- preprocess_bulk_coexp(obj, hvg = 0.3, .verbose = FALSE)
+obj <- cor_module_processing(obj, cor_method = "spearman", .verbose = FALSE)
+obj <- cor_module_graph_check_res(
+  obj,
+  resolution_params = params_graph_resolution(number_res = 5L),
+  parallel = FALSE,
+  .verbose = FALSE
+)
+obj <- cor_module_graph_final_modules(obj, .verbose = FALSE)
+head(get_modules(get_results(obj)))
+}
 \references{
 Barrio-Hernandez, et al., Nat Genet, 2023.
 }

@@ -43,3 +43,19 @@ A version of Harmony v2 by Patikas et al., 2026, implemented in Rust.
 Performs batch correction on PCA embeddings and stores the result as a
 \code{"harmony_v2"} embedding in the object.
 }
+\examples{
+# the reimplemented Harmony, writing its own embedding
+sc <- demo_single_cells(
+  syn_data_params = params_sc_synthetic_data(
+    n_cells = 600L, n_genes = 50L, n_batches = 3L
+  )
+)
+sc <- harmony_v2_sc(
+  sc,
+  batch_column = "batch_index",
+  .verbose = FALSE
+)
+dim(get_embedding(sc, "harmony_v2"))
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}

@@ -55,6 +55,20 @@ Pass a single subset or a list of them, e.g. the output of
 \code{\link[=apply_pipeline_per_group]{apply_pipeline_per_group()}}. All subsets are written in a single join, and
 the function refuses to run if two subsets claim the same cell.
 }
+\examples{
+# write a column computed on the subset back onto the parent
+sc <- demo_single_cells(prepped = FALSE)
+subset_obj <- SingleCellsSubset(
+  sc_object = sc,
+  grouping_column = "cell_grp",
+  group = "cell_type_1"
+)
+subset_obj[["sub_label"]] <- rep("a", dim(subset_obj)[1])
+sc <- merge_subset_obs(sc, subset_obj, cols = "sub_label", .verbose = FALSE)
+table(get_sc_obs(sc)$sub_label, useNA = "ifany")
+
+unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+}
 \seealso{
 \code{\link[=add_sc_new_obs]{add_sc_new_obs()}} for the equivalent on result objects that carry
 their own \code{cell_idx}, such as \code{\link[=fast_cluster_sc]{fast_cluster_sc()}}.

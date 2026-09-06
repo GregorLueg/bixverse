@@ -19,12 +19,9 @@ A plotted heatmap showing the DEG.
 Plot the (simple) synthetic gene expression
 }
 \examples{
-\dontrun{
-
+# heatmap of the simulated differential expression
 synthetic_gex <- synthetic_signal_matrix()
-
 plot(synthetic_gex)
-}
 
 }
 \keyword{internal}

@@ -32,3 +32,7 @@ An \code{ScStep}.
 \description{
 Wraps \code{\link[=find_clusters_sc]{find_clusters_sc()}} as an \code{ScStep}.
 }
+\examples{
+# Leiden over the graph the neighbours step wrote
+step_neighbours_sc() \%>>\% step_clusters_sc(res = 0.5)
+}
