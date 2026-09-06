@@ -457,8 +457,7 @@ plot(
 )
 ```
 
-Close enough to rank the same things at the top, with the gamma tail reaching
-further into the small p-values than 1000 permutations can.
+Overall good correlation between the two.
 
 ### Reusing the null model
 
