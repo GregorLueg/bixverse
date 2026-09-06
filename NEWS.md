@@ -1,3 +1,14 @@
+# bixverse 0.5.1
+
+## Documentations
+
+* Large sweep across all documentations to add examples, remove staleness and
+  harmonise spelling.
+
+## Fixes
+
+* Some minor bug fixes that became apparent during the doc sweep.
+
 # bixverse 0.5.0
 
 ## Features
