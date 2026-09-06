@@ -146,7 +146,7 @@ in a few seconds.
 ```{r}
 #| label: rust speed hypergeom multiple
 #| eval: !expr requireNamespace("tictoc", quietly = TRUE)
-seed = 10101L
+seed <- 10101L
 
 set.seed(seed)
 
@@ -436,7 +436,8 @@ bixverse_blitz <- calc_blitzgsea(
 head(bixverse_blitz)
 ```
 
-Does the approximation hold up against the permutations?
+Does the approximation hold up against the permutations + multi-level approach
+from fgsea?
 
 ```{r}
 #| label: blitzgsea vs fgsea p-value comparison
