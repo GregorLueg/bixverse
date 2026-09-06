@@ -56,8 +56,9 @@ synthetic_signal_matrix <- function(
   variance_up <- 5
 
   # checks
-  checkmate::qassert(no_grps, "R1(0,)")
-  checkmate::qassert(per_group, "R1(0,)")
+  # "N" not "R": these are counts, so 3L and 3 must both be accepted
+  checkmate::qassert(no_grps, "N1(0,)")
+  checkmate::qassert(per_group, "N1(0,)")
   checkmate::qassert(total_genes, "I1(0,)")
   checkmate::qassert(no_genes_up, "I1(0,)")
   checkmate::qassert(add_small_group, "B1")

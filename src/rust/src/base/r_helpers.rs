@@ -150,8 +150,16 @@ fn rs_dense_to_upper_triangle(x: RMatrix<f64>, shift: bool) -> Vec<f64> {
 /// @export
 #[extendr]
 fn rs_range_norm(x: &[f64], max_val: f64, min_val: f64) -> Vec<f64> {
-    let (x_min, x_max) = array_max_min(x);
+    if x.is_empty() {
+        return Vec::new();
+    }
+    // array_max_min returns (max, min), in that order
+    let (x_max, x_min) = array_max_min(x);
     let denom = x_max - x_min;
+    // a constant vector has no range to normalise into; pin it to the top
+    if denom == 0.0 {
+        return vec![max_val; x.len()];
+    }
     let scale = (max_val - min_val) / denom;
     x.par_iter()
         .map(|x| (x - x_min) * scale + min_val)

@@ -752,7 +752,9 @@ write_cellranger_output <- function(
   checkmate::assertChoice(format_type, c("csv", "tsv"))
   checkmate::assertChoice(rows, c("cells", "genes"))
 
-  f_path_mtx <- file.path(f_path, "mat.mtx")
+  # "matrix.mtx" is what Cell Ranger writes and what
+  # get_cell_ranger_params() looks for
+  f_path_mtx <- file.path(f_path, "matrix.mtx")
   f_path_obs <- file.path(f_path, sprintf("barcodes.%s", format_type))
   f_path_var <- file.path(f_path, sprintf("features.%s", format_type))
 

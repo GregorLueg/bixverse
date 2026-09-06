@@ -66,7 +66,7 @@ vars_filtered <- single_cell_test_data$var[genes_pass, ]
 sc_qc_param <- sc_test_qc_params(single_cell_test_data)
 
 params_cells_rows_csv <- params_sc_mtx_io(
-  path_mtx = file.path(f_path_v1, "mat.mtx"),
+  path_mtx = file.path(f_path_v1, "matrix.mtx"),
   path_obs = file.path(f_path_v1, "barcodes.csv"),
   path_var = file.path(f_path_v1, "features.csv"),
   cells_as_rows = TRUE,
@@ -74,7 +74,7 @@ params_cells_rows_csv <- params_sc_mtx_io(
 )
 
 params_genes_rows_tsv <- params_sc_mtx_io(
-  path_mtx = file.path(f_path_v2, "mat.mtx"),
+  path_mtx = file.path(f_path_v2, "matrix.mtx"),
   path_obs = file.path(f_path_v2, "barcodes.tsv"),
   path_var = file.path(f_path_v2, "features.tsv"),
   cells_as_rows = FALSE,

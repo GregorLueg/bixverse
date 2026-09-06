@@ -107,36 +107,83 @@ build_hvg_table <- function(var_table, res, hvg_no, hvg_method) {
 
 #' Helper to generate cell ranger input parameters
 #'
+#' @description
+#' Resolves the three files a Cell Ranger MTX directory holds and wraps them
+#' into the parameter list [bixverse::load_mtx()] wants. Handles the v2 naming
+#' (`genes.tsv`) and the v3 one (`features.tsv`), and the `.csv` variant that
+#' [bixverse::write_cellranger_output()] can emit.
+#'
 #' @param dir_data String. The directory with the Cell Ranger outputs
+#' @param cells_as_rows Boolean. Are the cells the rows of the matrix? Cell
+#' Ranger writes genes x cells, so this defaults to `FALSE`. Set to `TRUE` for
+#' output of [bixverse::write_cellranger_output()] written with
+#' `rows = "cells"`.
+#' @param has_hdr Boolean. Do the barcode and feature files carry a header row?
+#' Cell Ranger writes none, so this defaults to `FALSE`.
+#' [bixverse::write_cellranger_output()] does write one.
 #'
 #' @returns A list based on [bixverse::params_sc_mtx_io()].
 #'
 #' @export
 #'
 #' @examples
-#' # the mtx parameter list a Cell Ranger output directory maps onto
+#' # round trip through the package's own writer
 #' dir <- tempfile("cellranger")
 #' dir.create(dir)
-#' invisible(file.create(
-#'   file.path(dir, c("barcodes.tsv", "genes.tsv", "matrix.mtx"))
-#' ))
-#' str(get_cell_ranger_params(dir))
+#' data <- generate_single_cell_test_data(
+#'   syn_data_params = params_sc_synthetic_data(n_cells = 50L, n_genes = 40L)
+#' )
+#' write_cellranger_output(
+#'   f_path = dir,
+#'   counts = data$counts,
+#'   obs = data$obs,
+#'   var = data$var,
+#'   rows = "genes",
+#'   format_type = "tsv",
+#'   .verbose = FALSE
+#' )
+#' str(get_cell_ranger_params(dir, has_hdr = TRUE))
 #'
 #' unlink(dir, recursive = TRUE, force = TRUE)
-get_cell_ranger_params <- function(dir_data) {
+get_cell_ranger_params <- function(
+  dir_data,
+  cells_as_rows = FALSE,
+  has_hdr = FALSE
+) {
   # checks
   checkmate::assertDirectory(dir_data)
-  assertFileExists(dir_data, c("barcodes.tsv", "genes.tsv", "matrix.mtx"))
+  checkmate::qassert(cells_as_rows, "B1")
+  checkmate::qassert(has_hdr, "B1")
 
-  res <- params_sc_mtx_io(
-    path_mtx = path.expand(file.path(dir_data, "matrix.mtx")),
-    path_obs = path.expand(file.path(dir_data, "barcodes.tsv")),
-    path_var = path.expand(file.path(dir_data, "genes.tsv")),
-    cells_as_rows = FALSE,
-    has_hdr = FALSE
+  # v2 calls the feature file genes.*, v3 calls it features.*; our own writer
+  # emits either extension
+  pick <- function(candidates, label) {
+    hits <- candidates[file.exists(file.path(dir_data, candidates))]
+    if (length(hits) == 0) {
+      stop(sprintf(
+        "No %s file found in '%s'. Looked for: %s.",
+        label,
+        dir_data,
+        paste(candidates, collapse = ", ")
+      ))
+    }
+    file.path(dir_data, hits[1])
+  }
+
+  path_mtx <- pick(c("matrix.mtx", "mat.mtx"), "matrix")
+  path_obs <- pick(c("barcodes.tsv", "barcodes.csv"), "barcode")
+  path_var <- pick(
+    c("features.tsv", "features.csv", "genes.tsv", "genes.csv"),
+    "feature"
   )
 
-  return(res)
+  params_sc_mtx_io(
+    path_mtx = path.expand(path_mtx),
+    path_obs = path.expand(path_obs),
+    path_var = path.expand(path_var),
+    cells_as_rows = cells_as_rows,
+    has_hdr = has_hdr
+  )
 }
 
 ## gene-major counts to cell-major ---------------------------------------------

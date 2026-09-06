@@ -69,7 +69,7 @@ dir.create(dir_data, recursive = TRUE)
 sc <- load_mtx(
   object = SingleCells(dir_data = dir_data),
   sc_mtx_io_param = params_sc_mtx_io(
-    path_mtx = file.path(dir_src, "mat.mtx"),
+    path_mtx = file.path(dir_src, "matrix.mtx"),
     path_obs = file.path(dir_src, "barcodes.csv"),
     path_var = file.path(dir_src, "features.csv"),
     cells_as_rows = TRUE,
