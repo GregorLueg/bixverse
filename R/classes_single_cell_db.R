@@ -1932,6 +1932,79 @@ SingleCellDuckDB <- R6::R6Class(
     },
 
     #' @description
+    #' Populate the obs table from a single source DuckDB, restricted to a
+    #' subset of cells and reordered to match.
+    #'
+    #' Needed because [add_data_obs()] requires an obs table to already exist,
+    #' so an object written from scratch out of a subset of a parent (as
+    #' `cellsweep_sc()` does) has nothing to attach columns to.
+    #'
+    #' @param source_db_path String. Path to the source DuckDB.
+    #' @param cell_idx_to_keep Integer vector. **1-based** source `cell_idx`
+    #'   values, in the order the new object stores them.
+    #'
+    #' @returns Invisible self.
+    populate_obs_from_duckdb_subset = function(
+      source_db_path,
+      cell_idx_to_keep
+    ) {
+      checkmate::assertFileExists(source_db_path)
+      checkmate::qassert(cell_idx_to_keep, "I+[1,)")
+
+      src_con <- DBI::dbConnect(
+        duckdb::duckdb(shared_home = FALSE),
+        dbdir = source_db_path,
+        read_only = TRUE
+      )
+      obs_dt <- tryCatch(
+        # ORDER BY, not insertion order. The positional subset below is only
+        # correct if the rows come back in cell_idx order, and DuckDB only
+        # guarantees that while its preserve_insertion_order setting is on.
+        data.table::setDT(DBI::dbGetQuery(
+          src_con,
+          "SELECT * FROM obs ORDER BY cell_idx"
+        )),
+        finally = DBI::dbDisconnect(src_con)
+      )
+
+      if (max(cell_idx_to_keep) > nrow(obs_dt)) {
+        stop(sprintf(
+          "cell_idx_to_keep goes up to %d but the source obs has %d rows.",
+          max(cell_idx_to_keep),
+          nrow(obs_dt)
+        ))
+      }
+
+      # Subset by position rather than by joining on cell_idx: the caller's
+      # order is the order the counts were written in, and a join would resort.
+      obs_subset <- obs_dt[cell_idx_to_keep]
+
+      drop_cols <- intersect(c("cell_idx", "to_keep"), names(obs_subset))
+      if (length(drop_cols) > 0L) {
+        obs_subset[, (drop_cols) := NULL]
+      }
+      obs_subset[, cell_idx := .I]
+      data.table::setcolorder(
+        obs_subset,
+        c("cell_idx", setdiff(names(obs_subset), "cell_idx"))
+      )
+
+      con <- private$connect_db()
+      on.exit(
+        {
+          if (exists("con") && !is.null(con)) {
+            tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
+          }
+        },
+        add = TRUE
+      )
+
+      DBI::dbWriteTable(con, "obs", obs_subset, overwrite = TRUE)
+
+      invisible(self)
+    },
+
+    #' @description
     #' Populate the var table from a source DuckDB, filtered and reordered
     #' to match a target gene set.
     #'

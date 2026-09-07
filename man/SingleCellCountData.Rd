@@ -408,5 +408,33 @@ A list with \code{total_cells}, \code{total_genes} and \code{per_file} (a
 list of lists with \code{exp_id}, \code{lib_size}, \code{nnz}).
 }
 }
+
+\subsection{Method \code{cellsweep}}{
+Run CellSweep and write the denoised barcodes into the cells binary
+
+One independent EM fit per sample, since the ambient profile is a
+property of a single emulsion. Only the real barcodes are written: the
+empty droplets exist to train the ambient profile, and barcodes that
+are neither empty nor annotated are not part of the model.
+
+Writes the cell-based file only; regenerate the gene-based companion
+afterwards, as for a merge.
+
+\subsection{Arguments}{
+\describe{
+\item{\code{f_path_source}}{(\code{character})\cr Path to the raw \code{counts_cells.bin}, which must still contain the empty droplets.}
+\item{\code{samples}}{(\code{list})\cr A list of lists. Each inner list must contain \code{sample_id}, \code{real_cells} and \code{empty_cells} (0-indexed integer vectors of store indices), \code{celltype_idx} (0-indexed integer vector, one entry per \code{real_cells} entry) and \code{n_celltypes}.}
+\item{\code{cellsweep_params}}{(\code{list})\cr The CellSweep model parameters. Missing entries fall back to the reference implementation's defaults.}
+\item{\code{target_size}}{(\code{numeric})\cr Library size the normalised layer is scaled to.}
+\item{\code{verbose}}{(\code{integer})\cr \code{0} silent, \code{1} per-sample progress, \code{2} per-EM-iteration. }
+}}
+\subsection{returns}{
+A list with \code{cell_order} (0-indexed source indices in output
+order), \code{lib_size}, \code{nnz} and \code{fits} (one list per sample with
+\code{sample_id}, \code{alpha}, \code{z_hat}, \code{beta}, \code{ambient},
+\code{celltype_profiles}, \code{n_celltypes}, \code{log_likelihood}, \code{n_iter} and
+\code{converged}).
+}
+}
 }
 

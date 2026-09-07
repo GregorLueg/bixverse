@@ -2655,3 +2655,209 @@ params_nebula <- function(
     shrink_dispersion = shrink_dispersion
   )
 }
+
+### cellsweep ------------------------------------------------------------------
+
+#' Default parameters for CellSweep denoising
+#'
+#' @description
+#' Mirrors the CellSweep reference implementation's defaults. The pseudocounts
+#' (`celltype_lambda`, `ambient_lambda`, `bulk_lambda`) are given on the scale
+#' you see here and divided by the gene count internally.
+#'
+#' Two of these are worth knowing about before you touch anything else.
+#' `freeze_ambient_profile = TRUE` keeps the ambient profile at its
+#' empty-droplet estimate, which is the recommended path and the only one where
+#' `alpha_cap`, the repulsion terms and cell-type reassignment are live. And
+#' `freeze_empties` only accepts `TRUE`: the reference gives empty droplets a
+#' cell-type component they have no label for, which indexes past the end of the
+#' profile matrix and wraps onto the last cell type.
+#'
+#' @param freeze_empties Logical. Keep the contamination fraction of empty
+#' droplets pinned at 1. Only `TRUE` is supported, see the description.
+#' @param freeze_ambient_profile Logical. Keep the ambient profile at its
+#' empty-droplet estimate rather than re-estimating it as a mixture over the
+#' cell-type profiles.
+#' @param init_alpha Numeric. Starting ambient fraction for every real barcode.
+#' With `freeze_ambient_profile = TRUE` the final result barely depends on it,
+#' so it sits at `alpha_cap`.
+#' @param init_beta Numeric. Starting bulk contamination fraction. Set below
+#' `init_alpha` on purpose: bulk and ambient are not fully separable, so this
+#' biases unassignable contamination towards ambient.
+#' @param alpha_cap Numeric. Ceiling on the per-cell ambient fraction before the
+#' log-likelihood converges. Barcodes wanting to exceed it are excluded from the
+#' cell-type profile update and allowed to switch cell type.
+#' @param repulsion_strength Numeric. Strength of the repulsion pushing
+#' cell-type profiles away from the ambient profile. Scales with cluster mass,
+#' so it is inert on small data and only bites at realistic cell counts.
+#' @param max_frac_gene_repulsion Numeric. Ceiling on the fraction of any single
+#' profile entry that repulsion may remove.
+#' @param celltype_lambda Numeric. Pseudocount smoothing the cell-type profile
+#' update. Higher values give smoother profiles.
+#' @param ambient_lambda Numeric. Pseudocount smoothing the ambient profile
+#' estimate.
+#' @param bulk_lambda Numeric. Pseudocount smoothing the bulk profile estimate.
+#' @param eps Numeric. Floor on denominators.
+#' @param log_eps Numeric. Floor on the argument of `log`.
+#' @param max_iter Integer. Hard cap on EM iterations.
+#' @param del0_ll_tol Numeric. Log-likelihood change, as a fraction of the first
+#' EM step's change, below which stage one ends and parameter convergence starts
+#' being checked.
+#' @param min_ll_tol Numeric. Floor on the adaptive tolerance, relative to the
+#' current log-likelihood. Stops `del0_ll_tol` chasing floating point noise.
+#' @param tol_p Numeric. Convergence threshold on the maximum row-wise L1 change
+#' in the cell-type profiles.
+#' @param tol_f Numeric. Convergence threshold on the change in the total
+#' contamination fraction.
+#' @param norm_from_rounded Logical. Derive the normalised layer from the
+#' integerised counts rather than the denoised floats. Consistent across the two
+#' layers at the cost of the sub-integer signal, which is where CellSweep is most
+#' informative.
+#' @param seed Integer. Seed for the stochastic rounding of the denoised counts.
+#'
+#' @returns A list with the parameters.
+#'
+#' @export
+params_sc_cellsweep <- function(
+  freeze_empties = TRUE,
+  freeze_ambient_profile = TRUE,
+  init_alpha = 0.9,
+  init_beta = 0.1,
+  alpha_cap = 0.9,
+  repulsion_strength = 1e-4,
+  max_frac_gene_repulsion = 0.2,
+  celltype_lambda = 50,
+  ambient_lambda = 50,
+  bulk_lambda = 10,
+  eps = 1e-12,
+  log_eps = 1e-300,
+  max_iter = 2000L,
+  del0_ll_tol = 1e-3,
+  min_ll_tol = 1e-6,
+  tol_p = 1e-4,
+  tol_f = 1e-4,
+  norm_from_rounded = FALSE,
+  seed = 42L
+) {
+  # checks
+  checkmate::qassert(freeze_empties, "B1")
+  checkmate::qassert(freeze_ambient_profile, "B1")
+  checkmate::qassert(init_alpha, "N1[0.1,0.9]")
+  checkmate::qassert(init_beta, "N1[0.1,0.9]")
+  checkmate::qassert(alpha_cap, "N1[0,1]")
+  checkmate::qassert(repulsion_strength, "N1[0,1e-3]")
+  checkmate::qassert(max_frac_gene_repulsion, "N1(0,1]")
+  checkmate::qassert(celltype_lambda, "N1[0,)")
+  checkmate::qassert(ambient_lambda, "N1[0,)")
+  checkmate::qassert(bulk_lambda, "N1[0,)")
+  checkmate::qassert(eps, "N1(0,)")
+  checkmate::qassert(log_eps, "N1(0,)")
+  checkmate::qassert(max_iter, "I1[2,)")
+  checkmate::qassert(del0_ll_tol, "N1(0,)")
+  checkmate::qassert(min_ll_tol, "N1(0,)")
+  checkmate::qassert(tol_p, "N1(0,)")
+  checkmate::qassert(tol_f, "N1(0,)")
+  checkmate::qassert(norm_from_rounded, "B1")
+  checkmate::qassert(seed, "I1[0,)")
+
+  if (!isTRUE(freeze_empties)) {
+    stop(paste(
+      "`freeze_empties = FALSE` is not supported. The reference gives empty",
+      "droplets a cell-type component they have no label for, which indexes",
+      "past the end of the profile matrix."
+    ))
+  }
+
+  res <- list(
+    freeze_empties = freeze_empties,
+    freeze_ambient_profile = freeze_ambient_profile,
+    init_alpha = init_alpha,
+    init_beta = init_beta,
+    alpha_cap = alpha_cap,
+    repulsion_strength = repulsion_strength,
+    max_frac_gene_repulsion = max_frac_gene_repulsion,
+    celltype_lambda = celltype_lambda,
+    ambient_lambda = ambient_lambda,
+    bulk_lambda = bulk_lambda,
+    eps = eps,
+    log_eps = log_eps,
+    max_iter = max_iter,
+    del0_ll_tol = del0_ll_tol,
+    min_ll_tol = min_ll_tol,
+    tol_p = tol_p,
+    tol_f = tol_f,
+    norm_from_rounded = norm_from_rounded,
+    seed = seed
+  )
+  # for easier detection down the line
+  class(res) <- c("params_sc_cellsweep", "list")
+  res
+}
+
+### empty droplets -------------------------------------------------------------
+
+#' Parameters for identifying empty droplets
+#'
+#' @description
+#' CellSweep trains its ambient profile on the empty droplets, so it needs them
+#' called before it runs. Four ways to do that, in descending order of how much
+#' you should trust them.
+#'
+#' `"supplied"` takes an existing logical column from the obs table. This is the
+#' common case: if you have CellRanger's filtered barcode list you already know
+#' which barcodes are empty, and nothing here will beat that.
+#'
+#' `"umi_cutoff"` calls everything below an absolute library size empty.
+#' `"expected_cells"` turns a cell count into that cutoff via the sorted library
+#' sizes. `"knee"` finds the cutoff from the curvature of the rank / log-count
+#' curve; it is experimental in the reference too, and smoothing puts the
+#' curvature minimum a few ranks ahead of the actual cliff, so it sweeps up the
+#' real barcodes nearest the transition.
+#'
+#' @param method String. One of `"supplied"`, `"umi_cutoff"`,
+#' `"expected_cells"` or `"knee"`.
+#' @param is_empty_column String. Name of the logical obs column holding the
+#' mask. Required for `method = "supplied"`, ignored otherwise.
+#' @param umi_cutoff Integer. Barcodes with a library size strictly below this
+#' are empty. Required for `method = "umi_cutoff"`, ignored otherwise.
+#' @param expected_cells Integer. Number of real cells expected in the run.
+#' Required for `method = "expected_cells"`, ignored otherwise.
+#'
+#' @returns A list with the parameters.
+#'
+#' @export
+params_sc_empty_droplets <- function(
+  method = c("supplied", "umi_cutoff", "expected_cells", "knee"),
+  is_empty_column = NULL,
+  umi_cutoff = NULL,
+  expected_cells = NULL
+) {
+  # checks
+  method <- match.arg(method)
+  checkmate::qassert(is_empty_column, c("S1", "0"))
+  checkmate::qassert(umi_cutoff, c("I1[1,)", "0"))
+  checkmate::qassert(expected_cells, c("I1[1,)", "0"))
+
+  # Erroring here rather than defaulting: a missing cutoff would silently call
+  # no barcode empty and the model would then fail much further downstream.
+  required <- switch(
+    method,
+    supplied = "is_empty_column",
+    umi_cutoff = "umi_cutoff",
+    expected_cells = "expected_cells",
+    knee = NULL
+  )
+  if (!is.null(required) && is.null(get(required))) {
+    stop(sprintf("`method = '%s'` needs `%s`.", method, required))
+  }
+
+  res <- list(
+    method = method,
+    is_empty_column = is_empty_column,
+    umi_cutoff = umi_cutoff,
+    expected_cells = expected_cells
+  )
+  # for easier detection down the line
+  class(res) <- c("params_sc_empty_droplets", "list")
+  res
+}
