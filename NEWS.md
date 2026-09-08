@@ -1,3 +1,10 @@
+# bixverse 0.5.2
+
+## Features
+
+* Cellsweep implementation from [Caskey et al.](https://www.biorxiv.org/content/10.64898/2026.03.04.709349v1),
+  see [vignette](TO BE ADDED).
+
 # bixverse 0.5.1
 
 ## Documentations

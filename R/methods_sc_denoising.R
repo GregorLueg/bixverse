@@ -1,4 +1,118 @@
-# cellsweep ####
+# cellsweep --------------------------------------------------------------------
+
+## helpers ---------------------------------------------------------------------
+
+#' Largest smallest-library-size that still looks like raw ingest
+#'
+#' @description A raw, unfiltered barcode list always contains near-empty
+#' droplets. If the minimum library size across the whole object is above this,
+#' a QC cutoff was applied at load time and the empty droplets are gone.
+#'
+#' @keywords internal
+CELLSWEEP_MAX_MIN_LIB_SIZE <- 100L
+
+#' Resolve the empty droplet mask
+#'
+#' @description Either reads the mask out of obs or hands the library sizes to
+#' Rust to infer it. Kept separate from [cellsweep_sc()] so the resolution is
+#' testable on an obs table alone.
+#'
+#' @param obs data.table. The unfiltered obs table, with `lib_size`.
+#' @param empty_params List. See [params_sc_empty_droplets()]. Required: there
+#' is no safe default, since the recommended `method = "supplied"` needs the
+#' name of the obs column holding the mask.
+#' @param .verbose Logical. Controls verbosity.
+#'
+#' @returns Logical vector, `TRUE` where the barcode is an empty droplet.
+#'
+#' @keywords internal
+.resolve_empty_droplets <- function(obs, empty_params, .verbose = TRUE) {
+  if (identical(empty_params$method, "supplied")) {
+    col <- empty_params$is_empty_column
+    if (!col %in% names(obs)) {
+      stop(sprintf("'%s' is not a column in the obs table.", col))
+    }
+    is_empty <- obs[[col]]
+    if (!is.logical(is_empty)) {
+      stop(sprintf("'%s' must be a logical column.", col))
+    }
+    if (anyNA(is_empty)) {
+      stop(sprintf("'%s' contains NAs.", col))
+    }
+    return(is_empty)
+  }
+
+  is_empty <- rs_sc_infer_empty_droplets(
+    lib_size = as.integer(obs$lib_size),
+    empty_params = unclass(empty_params)
+  )
+
+  if (.verbose) {
+    message(sprintf(
+      "Empty droplets (method '%s'): %s of %s barcodes called empty.",
+      empty_params$method,
+      format(sum(is_empty), big.mark = ","),
+      format(nrow(obs), big.mark = ",")
+    ))
+  }
+
+  is_empty
+}
+
+#' Assemble the per-barcode CellSweep diagnostics
+#'
+#' @description Stitches the per-sample fits back into one table in output
+#' order. Per-sample scalars are broadcast across that sample's barcodes, which
+#' keeps them queryable in obs without needing a second table.
+#'
+#' @param res List. The Rust return value.
+#' @param samples List. The per-sample task list handed to Rust, in the same
+#' order.
+#' @param celltype_levels Character vector. Factor levels the `z_hat` codes
+#' index into.
+#'
+#' @returns A data.table with one row per written barcode.
+#'
+#' @keywords internal
+.cellsweep_obs_diagnostics <- function(res, samples, celltype_levels) {
+  parts <- lapply(seq_along(res$fits), function(i) {
+    fit <- res$fits[[i]]
+    data.table::data.table(
+      cellsweep_alpha = as.numeric(fit$alpha),
+      cellsweep_z = celltype_levels[as.integer(fit$z_hat)],
+      cellsweep_beta = as.numeric(fit$beta),
+      cellsweep_ll = as.numeric(fit$log_likelihood),
+      cellsweep_converged = as.logical(fit$converged)
+    )
+  })
+
+  out <- data.table::rbindlist(parts)
+  stopifnot(nrow(out) == length(res$cell_order))
+  out
+}
+
+#' Average the per-sample ambient profiles
+#'
+#' @description The ambient profile is per-emulsion, so a single var column can
+#' only carry a summary. The unweighted mean across samples is that summary; the
+#' per-sample profiles are not persisted.
+#'
+#' @param fits List. One entry per sample, each with an `ambient` vector.
+#'
+#' @returns Numeric vector, one entry per gene.
+#'
+#' @keywords internal
+.cellsweep_mean_ambient <- function(fits) {
+  profiles <- vapply(
+    fits,
+    function(fit) as.numeric(fit$ambient),
+    numeric(length(fits[[1L]]$ambient))
+  )
+  if (length(fits) == 1L) {
+    return(as.numeric(profiles))
+  }
+  rowMeans(profiles)
+}
 
 ## generic ---------------------------------------------------------------------
 
@@ -152,7 +266,6 @@ S7::method(cellsweep_sc, SingleCells) <- function(
   data.table::setDT(obs)
   n_barcodes <- nrow(obs)
 
-  # -- guard the ingest --------------------------------------------------------
   # The load-time cutoffs are irreversible, so an object ingested with the
   # default QC has no empty droplets left and the ambient profile would be
   # fitted to noise.
@@ -175,11 +288,8 @@ S7::method(cellsweep_sc, SingleCells) <- function(
     }
   }
 
-  # -- resolve the empty droplet mask -----------------------------------------
   is_empty <- .resolve_empty_droplets(obs, empty_params, .verbose)
 
-  # -- build the per-sample tasks ---------------------------------------------
-  # cells_to_keep is 0-based; obs rows are 1-based.
   keep_mask <- logical(n_barcodes)
   keep_mask[as.integer(get_cells_to_keep(input)) + 1L] <- TRUE
 
@@ -189,6 +299,7 @@ S7::method(cellsweep_sc, SingleCells) <- function(
 
   real_mask <- keep_mask & annotated & !is_empty
   dropped <- sum(!real_mask & !is_empty)
+
   if (.verbose && dropped > 0L) {
     message(sprintf(
       paste(
@@ -218,7 +329,6 @@ S7::method(cellsweep_sc, SingleCells) <- function(
     )
   })
 
-  # -- the fit ----------------------------------------------------------------
   if (.verbose) {
     message(sprintf(
       "Running CellSweep over %d samples, %d barcodes, %d empty droplets.",
@@ -237,10 +347,10 @@ S7::method(cellsweep_sc, SingleCells) <- function(
     verbose = if (.verbose) 1L else 0L
   )
 
-  # -- gene-based regeneration ------------------------------------------------
   if (.verbose) {
     message("Generating gene-based binary.")
   }
+
   if (streaming == 1L) {
     rust_con$generate_gene_based_data_streaming(
       batch_size = batch_size,
@@ -256,10 +366,10 @@ S7::method(cellsweep_sc, SingleCells) <- function(
     rust_con$generate_gene_based_data(verbose = .verbose)
   }
 
-  # -- populate the target DuckDB ---------------------------------------------
   if (.verbose) {
     message("Populating obs and var tables.")
   }
+
   duckdb_out <- get_sc_duckdb(target)
   source_db <- file.path(S7::prop(input, "dir_data"), "sc_duckdb.db")
 
@@ -267,12 +377,12 @@ S7::method(cellsweep_sc, SingleCells) <- function(
     source_db_path = source_db,
     cell_idx_to_keep = as.integer(res$cell_order) + 1L
   )
+
   duckdb_out$populate_vars_from_duckdb_reordered(
     source_db_path = source_db,
     final_gene_names = duckdb_in$get_vars_table()$gene_id
   )
 
-  # -- diagnostics into obs and var -------------------------------------------
   duckdb_out$add_data_obs(
     new_data = .cellsweep_obs_diagnostics(res, samples, celltype_levels)
   )
@@ -295,121 +405,4 @@ S7::method(cellsweep_sc, SingleCells) <- function(
   )
 
   return(target)
-}
-
-## helpers ---------------------------------------------------------------------
-
-#' Largest smallest-library-size that still looks like raw ingest
-#'
-#' @description A raw, unfiltered barcode list always contains near-empty
-#' droplets. If the minimum library size across the whole object is above this,
-#' a QC cutoff was applied at load time and the empty droplets are gone.
-#'
-#' @keywords internal
-CELLSWEEP_MAX_MIN_LIB_SIZE <- 100L
-
-#' Resolve the empty droplet mask
-#'
-#' @description Either reads the mask out of obs or hands the library sizes to
-#' Rust to infer it. Kept separate from [cellsweep_sc()] so the resolution is
-#' testable on an obs table alone.
-#'
-#' @param obs data.table. The unfiltered obs table, with `lib_size`.
-#' @param empty_params List. See [params_sc_empty_droplets()]. Required: there
-#' is no safe default, since the recommended `method = "supplied"` needs the
-#' name of the obs column holding the mask.
-#' @param .verbose Logical. Controls verbosity.
-#'
-#' @returns Logical vector, `TRUE` where the barcode is an empty droplet.
-#'
-#' @keywords internal
-.resolve_empty_droplets <- function(obs, empty_params, .verbose = TRUE) {
-  if (identical(empty_params$method, "supplied")) {
-    col <- empty_params$is_empty_column
-    if (!col %in% names(obs)) {
-      stop(sprintf("'%s' is not a column in the obs table.", col))
-    }
-    is_empty <- obs[[col]]
-    if (!is.logical(is_empty)) {
-      stop(sprintf("'%s' must be a logical column.", col))
-    }
-    if (anyNA(is_empty)) {
-      stop(sprintf("'%s' contains NAs.", col))
-    }
-    return(is_empty)
-  }
-
-  # All of the inference lives in Rust. The knee detector in particular has to
-  # match scipy's Gaussian smoother closely enough to land on the same rank as
-  # the CellSweep reference, so a second copy here would only drift.
-  is_empty <- rs_sc_infer_empty_droplets(
-    lib_size = as.integer(obs$lib_size),
-    empty_params = unclass(empty_params)
-  )
-
-  if (.verbose) {
-    message(sprintf(
-      "Empty droplets (method '%s'): %s of %s barcodes called empty.",
-      empty_params$method,
-      format(sum(is_empty), big.mark = ","),
-      format(nrow(obs), big.mark = ",")
-    ))
-  }
-
-  is_empty
-}
-
-#' Assemble the per-barcode CellSweep diagnostics
-#'
-#' @description Stitches the per-sample fits back into one table in output
-#' order. Per-sample scalars are broadcast across that sample's barcodes, which
-#' keeps them queryable in obs without needing a second table.
-#'
-#' @param res List. The Rust return value.
-#' @param samples List. The per-sample task list handed to Rust, in the same
-#' order.
-#' @param celltype_levels Character vector. Factor levels the `z_hat` codes
-#' index into.
-#'
-#' @returns A data.table with one row per written barcode.
-#'
-#' @keywords internal
-.cellsweep_obs_diagnostics <- function(res, samples, celltype_levels) {
-  parts <- lapply(seq_along(res$fits), function(i) {
-    fit <- res$fits[[i]]
-    data.table::data.table(
-      cellsweep_alpha = as.numeric(fit$alpha),
-      cellsweep_z = celltype_levels[as.integer(fit$z_hat)],
-      cellsweep_beta = as.numeric(fit$beta),
-      cellsweep_ll = as.numeric(fit$log_likelihood),
-      cellsweep_converged = as.logical(fit$converged)
-    )
-  })
-
-  out <- data.table::rbindlist(parts)
-  stopifnot(nrow(out) == length(res$cell_order))
-  out
-}
-
-#' Average the per-sample ambient profiles
-#'
-#' @description The ambient profile is per-emulsion, so a single var column can
-#' only carry a summary. The unweighted mean across samples is that summary; the
-#' per-sample profiles are not persisted.
-#'
-#' @param fits List. One entry per sample, each with an `ambient` vector.
-#'
-#' @returns Numeric vector, one entry per gene.
-#'
-#' @keywords internal
-.cellsweep_mean_ambient <- function(fits) {
-  profiles <- vapply(
-    fits,
-    function(fit) as.numeric(fit$ambient),
-    numeric(length(fits[[1L]]$ambient))
-  )
-  if (length(fits) == 1L) {
-    return(as.numeric(profiles))
-  }
-  rowMeans(profiles)
 }
