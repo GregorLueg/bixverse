@@ -3,7 +3,17 @@
 ## Features
 
 * Cellsweep implementation from [Caskey et al.](https://www.biorxiv.org/content/10.64898/2026.03.04.709349v1),
-  see [vignette](TO BE ADDED).
+  see [vignette](https://gregorlueg.github.io/bixverse/articles/cell_sweep.html).
+  `cellsweep_sc()` fits the multinomial mixture per emulsion and writes the
+  denoised counts into a new `SingleCells`; the per-barcode ambient fraction
+  lands in obs as `cellsweep_alpha` and doubles as a QC metric.
+  `params_sc_empty_droplets()` covers the four ways of calling the empty
+  droplets the ambient profile is trained on.
+* `generate_cellsweep_test_data()` generates synthetic counts with a planted
+  ambient profile, empty droplets and a known per-barcode contamination
+  fraction. `params_sc_synthetic_cellsweep()` shapes it.
+* `download_pbmc_1k_5p()` pulls the unfiltered 10x 5' PBMC 1k matrix, the one
+  the Cellsweep reference notebook uses.
 
 # bixverse 0.5.1
 

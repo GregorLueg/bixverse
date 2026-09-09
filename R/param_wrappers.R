@@ -1236,6 +1236,85 @@ params_sc_synthetic_dialogue <- function(
   )
 }
 
+##### cellsweep ----------------------------------------------------------------
+
+#' Default parameters for generation of synthetic CellSweep data
+#'
+#' @description
+#' Shapes the fixture with a planted ambient profile that
+#' [bixverse::generate_cellsweep_test_data()] builds. The defaults give 600
+#' real barcodes over 3 cell types plus 2000 empty droplets, on 200 genes.
+#'
+#' @details
+#' The soup is the first cell type plus flat background rather than a mixture
+#' of every cell type profile. A soup sitting in the span of the cell type
+#' profiles makes the contamination fraction unidentifiable, and the fixture
+#' would then be testing the repulsion term rather than the model.
+#'
+#' @param n_real Integer. Number of real barcodes. Cell types are assigned
+#' round-robin over them.
+#' @param n_empty Integer. Number of empty droplets. The ambient profile is
+#' estimated off these, so at least 30 and preferably a lot more.
+#' @param n_genes Integer. Number of genes.
+#' @param n_celltypes Integer. Number of cell types.
+#' @param n_markers Integer. Width of each cell type's marker block. The blocks
+#' are contiguous and disjoint, so `n_markers * n_celltypes` has to fit into
+#' `n_genes`.
+#' @param marker_weight Numeric. Enrichment of a marker gene over background in
+#' its own cell type's profile. Must exceed 1.
+#' @param ambient_dominance Numeric. Fraction of the soup coming from the first
+#' cell type. The remainder is flat background.
+#' @param alpha_mean Numeric. Mean planted ambient fraction across real
+#' barcodes.
+#' @param alpha_sd Numeric. Spread of the planted ambient fraction.
+#' @param real_lib_size Integer. Expected library size of a real barcode.
+#' @param empty_lib_size Integer. Expected library size of an empty droplet.
+#'
+#' @returns A list with the parameters.
+#'
+#' @export
+params_sc_synthetic_cellsweep <- function(
+  n_real = 600L,
+  n_empty = 2000L,
+  n_genes = 200L,
+  n_celltypes = 3L,
+  n_markers = 20L,
+  marker_weight = 25.0,
+  ambient_dominance = 0.6,
+  alpha_mean = 0.3,
+  alpha_sd = 0.12,
+  real_lib_size = 3000L,
+  empty_lib_size = 120L
+) {
+  # checks
+  checkmate::qassert(n_real, "I1[1,)")
+  checkmate::qassert(n_empty, "I1[30,)")
+  checkmate::qassert(n_genes, "I1[1,)")
+  checkmate::qassert(n_celltypes, "I1[1,)")
+  checkmate::qassert(n_markers, "I1[1,)")
+  checkmate::qassert(marker_weight, "N1(1,)")
+  checkmate::qassert(ambient_dominance, "N1[0,1]")
+  checkmate::qassert(alpha_mean, "N1[0.02,0.85]")
+  checkmate::qassert(alpha_sd, "N1[0,)")
+  checkmate::qassert(real_lib_size, "I1[1,)")
+  checkmate::qassert(empty_lib_size, "I1[1,)")
+  checkmate::assertTRUE(n_markers * n_celltypes <= n_genes)
+
+  list(
+    n_real = n_real,
+    n_empty = n_empty,
+    n_genes = n_genes,
+    n_celltypes = n_celltypes,
+    n_markers = n_markers,
+    marker_weight = marker_weight,
+    ambient_dominance = ambient_dominance,
+    alpha_mean = alpha_mean,
+    alpha_sd = alpha_sd,
+    real_lib_size = real_lib_size,
+    empty_lib_size = empty_lib_size
+  )
+}
+
 #### io ------------------------------------------------------------------------
 
 #' Wrapper function to provide data for mtx-based loading

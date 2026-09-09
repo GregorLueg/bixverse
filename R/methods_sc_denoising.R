@@ -66,15 +66,13 @@ CELLSWEEP_MAX_MIN_LIB_SIZE <- 100L
 #' keeps them queryable in obs without needing a second table.
 #'
 #' @param res List. The Rust return value.
-#' @param samples List. The per-sample task list handed to Rust, in the same
-#' order.
 #' @param celltype_levels Character vector. Factor levels the `z_hat` codes
 #' index into.
 #'
 #' @returns A data.table with one row per written barcode.
 #'
 #' @keywords internal
-.cellsweep_obs_diagnostics <- function(res, samples, celltype_levels) {
+.cellsweep_obs_diagnostics <- function(res, celltype_levels) {
   parts <- lapply(seq_along(res$fits), function(i) {
     fit <- res$fits[[i]]
     data.table::data.table(
@@ -384,7 +382,7 @@ S7::method(cellsweep_sc, SingleCells) <- function(
   )
 
   duckdb_out$add_data_obs(
-    new_data = .cellsweep_obs_diagnostics(res, samples, celltype_levels)
+    new_data = .cellsweep_obs_diagnostics(res, celltype_levels)
   )
   duckdb_out$add_data_var(
     new_data = data.table::data.table(

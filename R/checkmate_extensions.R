@@ -1775,6 +1775,91 @@ assertScSyntheticDialogue <- checkmate::makeAssertionFunction(
   checkScSyntheticDialogue
 )
 
+##### cellsweep ----------------------------------------------------------------
+
+#' Check synthetic CellSweep data parameters
+#'
+#' @description Checkmate extension for checking the parameters for the
+#' generation of synthetic CellSweep data.
+#'
+#' @param x The list to check/assert
+#'
+#' @returns `TRUE` if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
+checkScSyntheticCellsweep <- function(x) {
+  res <- check_list_shape(
+    x,
+    c(
+      "n_real",
+      "n_empty",
+      "n_genes",
+      "n_celltypes",
+      "n_markers",
+      "marker_weight",
+      "ambient_dominance",
+      "alpha_mean",
+      "alpha_sd",
+      "real_lib_size",
+      "empty_lib_size"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- apply_qtest_rules(
+    x,
+    list(
+      n_real = "I1[1,)",
+      n_empty = "I1[30,)",
+      n_genes = "I1[1,)",
+      n_celltypes = "I1[1,)",
+      n_markers = "I1[1,)",
+      marker_weight = "N1(1,)",
+      ambient_dominance = "N1[0,1]",
+      alpha_mean = "N1[0.02,0.85]",
+      alpha_sd = "N1[0,)",
+      real_lib_size = "I1[1,)",
+      empty_lib_size = "I1[1,)"
+    ),
+    label = "synthetic CellSweep params",
+    hint = paste(
+      "n_empty must be at least 30, marker_weight above 1, and the fractions",
+      "within their respective ranges."
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  if (x$n_markers * x$n_celltypes > x$n_genes) {
+    return("The marker gene blocks do not fit into n_genes.")
+  }
+
+  return(TRUE)
+}
+
+#' Assert synthetic CellSweep data parameters
+#'
+#' @description Checkmate assertion for the parameters for the generation of
+#' synthetic CellSweep data.
+#'
+#' @inheritParams checkScSyntheticCellsweep
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @returns Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
+assertScSyntheticCellsweep <- checkmate::makeAssertionFunction(
+  checkScSyntheticCellsweep
+)
+
+
 ##### adt ----------------------------------------------------------------------
 
 #' Check synthetic ADT data parameters
@@ -5153,7 +5238,9 @@ checkScEmptyDroplets <- function(x) {
   }
 
   valid <- c("supplied", "umi_cutoff", "expected_cells", "knee")
-  if (!(is.character(x$method) && length(x$method) == 1L && x$method %in% valid)) {
+  if (
+    !(is.character(x$method) && length(x$method) == 1L && x$method %in% valid)
+  ) {
     return(sprintf(
       "`method` must be one of %s.",
       paste(sprintf("'%s'", valid), collapse = ", ")

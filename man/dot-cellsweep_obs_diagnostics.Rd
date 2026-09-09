@@ -4,13 +4,10 @@
 \alias{.cellsweep_obs_diagnostics}
 \title{Assemble the per-barcode CellSweep diagnostics}
 \usage{
-.cellsweep_obs_diagnostics(res, samples, celltype_levels)
+.cellsweep_obs_diagnostics(res, celltype_levels)
 }
 \arguments{
 \item{res}{List. The Rust return value.}
-
-\item{samples}{List. The per-sample task list handed to Rust, in the same
-order.}
 
 \item{celltype_levels}{Character vector. Factor levels the \code{z_hat} codes
 index into.}

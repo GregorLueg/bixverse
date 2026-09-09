@@ -31,7 +31,7 @@ codegen-units = 4
 strip = true
 
 [dependencies]
-bixverse-rs = { version = "0.5.0", default-features = false, features = [
+bixverse-rs = { version = "0.5.1", default-features = false, features = [
     "single-cell",
     "multi-modal",
 ] }
@@ -57,3 +57,6 @@ path = "document.rs"
 # Patch #
 #########
 
+
+[patch.crates-io]
+bixverse-rs = { git = "https://github.com/GregorLueg/bixverse-rs", branch = "release-0.5.1" }

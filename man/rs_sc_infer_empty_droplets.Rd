@@ -7,12 +7,10 @@
 rs_sc_infer_empty_droplets(lib_size, empty_params)
 }
 \arguments{
-\item{lib_size}{(\code{integer})\cr
-Library size per barcode, in store order.}
+\item{lib_size}{Integer vector. Library size per barcode, in store order.}
 
-\item{empty_params}{(\code{list})\cr
-A list with \code{method} (one of \code{"umi_cutoff"}, \code{"expected_cells"}, \code{"knee"})
-plus the numeric argument the method needs. \code{"supplied"} is rejected, since
+\item{empty_params}{List. Parameter list, see
+\code{\link[=params_sc_empty_droplets]{params_sc_empty_droplets()}}. \code{"supplied"} is rejected, since
 there is nothing to infer.}
 }
 \value{
@@ -20,8 +18,10 @@ A logical vector that is \code{TRUE} where the barcode is an empty
 droplet.
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 Kept on the Rust side so the knee detector exists once: it has to match
 \code{scipy.ndimage.gaussian_filter1d} and \code{numpy.gradient} closely enough to
 land on the same rank as the CellSweep reference, and a second copy in R
 would drift.
 }
+\keyword{internal}

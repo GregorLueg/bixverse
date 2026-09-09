@@ -1566,20 +1566,24 @@ fn rs_magic_impute(
 
 /// Identify the empty droplets from the per-barcode library sizes
 ///
+/// @description
+/// `r lifecycle::badge("experimental")`
 /// Kept on the Rust side so the knee detector exists once: it has to match
 /// `scipy.ndimage.gaussian_filter1d` and `numpy.gradient` closely enough to
 /// land on the same rank as the CellSweep reference, and a second copy in R
 /// would drift.
 ///
-/// @param lib_size (`integer`)\cr
-/// Library size per barcode, in store order.
-/// @param empty_params (`list`)\cr
-/// A list with `method` (one of `"umi_cutoff"`, `"expected_cells"`, `"knee"`)
-/// plus the numeric argument the method needs. `"supplied"` is rejected, since
+/// @param lib_size Integer vector. Library size per barcode, in store order.
+/// @param empty_params List. Parameter list, see
+/// [bixverse::params_sc_empty_droplets()]. `"supplied"` is rejected, since
 /// there is nothing to infer.
 ///
 /// @returns A logical vector that is `TRUE` where the barcode is an empty
 /// droplet.
+///
+/// @export
+///
+/// @keywords internal
 #[extendr]
 fn rs_sc_infer_empty_droplets(
     lib_size: &[i32],
