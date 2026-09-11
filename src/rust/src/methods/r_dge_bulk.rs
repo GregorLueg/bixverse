@@ -122,10 +122,11 @@ fn counts_to_row_major(counts: &Robj) -> Result<(Vec<f64>, usize, usize)> {
 ///
 /// @description
 /// `r lifecycle::badge("experimental")`
-/// Runs `filterByExpr` -> `calcNormFactors` -> `glmQLFit` -> `glmQLFTest`,
-/// implemented in Rust via the `edge-rs` crate and gated against edgeR 4.8.2.
-/// The tested axis does not have to be genes: Milo's neighbourhood counts are
-/// tested with the same call, with `filter = FALSE`.
+/// Runs optional `filterByExpr` -> `calcNormFactors` -> `glmQLFit` ->
+/// `glmQLFTest`, implemented in Rust via the `edge-rs` crate and gated against
+/// edgeR 4.8.2. `legacy = TRUE` adds `estimateDisp` before the fit. The tested
+/// axis does not have to be genes: Milo's neighbourhood counts are tested with
+/// the same call, with `filter = FALSE`.
 ///
 /// @param counts Numeric matrix. Raw counts of features x samples. Must not
 /// be normalised or log-transformed.
@@ -137,7 +138,8 @@ fn counts_to_row_major(counts: &Robj) -> Result<(Vec<f64>, usize, usize)> {
 /// columns to drop from the null model) or `contrast` (column-major weights
 /// with `n_contrasts` columns).
 ///
-/// @returns A list with the following elements
+/// @returns A list with the following elements, all but `features_to_keep`
+/// with one entry per kept feature
 /// \itemize{
 ///   \item features_to_keep - Boolean. Which features survived the filters.
 ///   Spans the full feature axis of `counts`.
@@ -191,10 +193,10 @@ fn rs_edger_ql(counts: RMatrix<f64>, design: RMatrix<f64>, edger_params: List) -
 /// coefficient or contrast, implemented in Rust via the `edge-rs` crate and
 /// gated against limma 3.66.0.
 ///
-/// @param counts Numeric matrix. Raw counts of genes x samples. Must not be
-/// normalised or log-transformed.
-/// @param design Numeric matrix. The design matrix of samples x coefficients.
-/// Must be full rank.
+/// @param counts Integer or double matrix. Raw counts of genes x samples. Must
+/// not be normalised or log-transformed.
+/// @param design Numeric matrix. The design matrix of samples x coefficients,
+/// including the intercept. Must be full rank.
 /// @param lib_size Numeric vector or NULL. Library size per sample. NULL uses
 /// the column sums of `counts`. Pass the column sums from before gene filtering
 /// to match edgeR, which keeps those on a subset `DGEList`.
@@ -203,7 +205,8 @@ fn rs_edger_ql(counts: RMatrix<f64>, design: RMatrix<f64>, edger_params: List) -
 /// design column) or `contrast` (column-major weights with `n_contrasts`
 /// columns).
 ///
-/// @returns A list with the following elements
+/// @returns A list with the following elements, all but `features_to_keep`
+/// with one entry per kept gene, in input order
 /// \itemize{
 ///   \item features_to_keep - Boolean. Which genes survived the filters. Spans
 ///   the full gene axis of `counts`.
@@ -274,8 +277,9 @@ fn rs_limma_voom(
 /// `lib.size * norm.factors` as `lib_size` to get voom on a normalised
 /// DGEList.
 ///
-/// @param counts Numeric matrix. Raw counts of genes x samples.
+/// @param counts Integer or double matrix. Raw counts of genes x samples.
 /// @param design Numeric matrix. The design matrix of samples x coefficients.
+/// Must be full rank.
 /// @param lib_size Numeric vector. The effective library size per sample.
 /// @param span Numeric. Lowess span, only used if `adaptive_span = FALSE`.
 /// @param adaptive_span Boolean. Derive the span from the number of genes, as
@@ -342,15 +346,15 @@ fn rs_voom_normalise(
 /// `r lifecycle::badge("experimental")`
 /// edgeR's `filterByExpr`, via the `edge-rs` crate.
 ///
-/// @param counts Numeric matrix. Raw counts of genes x samples.
-/// @param group Integer vector or NULL. Group per sample (e.g.
+/// @param counts Integer or double matrix. Raw counts of genes x samples.
+/// @param group Integer vector or NULL. 1-based group code per sample (e.g.
 /// `as.integer(factor(x))`). If NULL, all samples form one group.
 /// @param lib_size Numeric vector or NULL. Library size per sample. NULL uses
 /// the column sums.
 /// @param min_count Numeric. Minimum count in the median-sized library.
 /// @param min_total_count Numeric. Minimum total count across all samples.
-/// @param min_prop Numeric. Proportion of the smallest group beyond `large_n`
-/// that has to express the gene.
+/// @param min_prop Numeric. Fraction of the smallest group size beyond
+/// edgeR's `large.n` that still has to express the gene.
 ///
 /// @returns Boolean vector, one per gene. `TRUE` if the gene is kept.
 ///
@@ -398,12 +402,12 @@ fn rs_filter_by_expr(
 /// `r lifecycle::badge("experimental")`
 /// edgeR's `calcNormFactors`, via the `edge-rs` crate.
 ///
-/// @param counts Numeric matrix. Raw counts of genes x samples.
+/// @param counts Integer or double matrix. Raw counts of genes x samples.
 /// @param lib_size Numeric vector or NULL. Library size per sample. Pass the
 /// pre-filter column sums after filtering genes, as edgeR keeps them. NULL uses
 /// the column sums of `counts`.
 /// @param norm_method String. One of
-/// `c("TMM", "TMMwsp", "RLE", "upperquartile", "none")`.
+/// `c("TMM", "TMMwsp", "RLE", "upperquartile", "none")`, case-insensitive.
 ///
 /// @returns Numeric vector of normalisation factors, one per sample.
 ///
@@ -439,7 +443,7 @@ fn rs_calc_norm_factors(
 /// `r lifecycle::badge("experimental")`
 /// edgeR's `cpm` on a plain count matrix, via the `edge-rs` crate.
 ///
-/// @param counts Numeric matrix. Raw counts of genes x samples.
+/// @param counts Integer or double matrix. Raw counts of genes x samples.
 /// @param lib_size Numeric vector or NULL. Library size per sample, e.g.
 /// `lib.size * norm.factors`. NULL uses the column sums.
 /// @param log Boolean. Return log2-CPM.
@@ -484,7 +488,8 @@ fn rs_cpm(
 /// work; for testing put batch into the design.
 ///
 /// @param x Numeric matrix. Log-expression values of genes x samples.
-/// @param batch Integer vector. Batch per sample.
+/// @param batch Integer vector. Batch label per sample, e.g.
+/// `as.integer(factor(x))`. Needs at least two distinct labels.
 /// @param design Numeric matrix or NULL. The design of interest, samples x
 /// coefficients, whose effects are protected. NULL is an intercept only.
 ///

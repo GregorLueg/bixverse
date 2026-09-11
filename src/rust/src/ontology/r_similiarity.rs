@@ -24,13 +24,15 @@ extendr_module! {
 ///
 /// @description
 /// `r lifecycle::badge("experimental")`
-/// This function calculates the specified semantic similarity and returns the
-/// full vector (only calculating the upper triangle) for the given similarity.
+/// This function calculates the specified semantic similarity between all
+/// unique pairs of `terms` (upper triangle, no diagonal) and returns them in
+/// long format.
 ///
-/// @param terms Vector of strings. The terms in the ontology you wish to screen.
+/// @param terms Vector of strings. The terms in the ontology you wish to
+/// screen.
 /// @param sim_type String. Must be one of `c("resnik", "lin", "combined")`.
-/// @param ancestor_list R list with names being the term and the elements in the
-/// list the names of the ancestors.
+/// @param ancestor_list R list with names being the term and the elements in
+/// the list the names of the ancestors.
 /// @param ic_list R list with the names being the term and the elements the
 /// information content of this given term. Needs to be a single float!
 ///
@@ -82,20 +84,24 @@ fn rs_onto_semantic_sim(
 ///
 /// @description
 /// `r lifecycle::badge("experimental")`
-/// This function calculates the specified semantic similarity and returns the
-/// full vector (only calculating the upper triangle) for the given similarity.
+/// This function calculates the specified semantic similarity between all
+/// terms in `ic_list` (only calculating the upper triangle) and returns it
+/// either as the flat upper triangle or as the full matrix.
 ///
 /// @param sim_type String. Must be one of `c("resnik", "lin", "combined")`.
-/// @param ancestor_list R list with names being the term and the elements in the
-/// list the names of the ancestors.
+/// @param ancestor_list R list with names being the term and the elements in
+/// the list the names of the ancestors.
 /// @param ic_list R list with the names being the term and the elements the
 /// information content of this given term. Needs to be a single float!
-/// @param flat_matrix Boolean. Shall only the upper triangle be returned.
+/// @param flat_matrix Boolean. Shall only the upper triangle (row-wise,
+/// diagonal excluded) be returned.
 ///
 /// @returns A list with:
 /// \itemize{
-///   \item sim_mat - the semantic similarity matrix (flat or as matrix.)
-///   \item names - the row and column names for the calculated matrix.
+///   \item sim_mat - the semantic similarity matrix (flat or as matrix). The
+///   diagonal of the full matrix is `1`.
+///   \item names - the row and column names for the calculated matrix, i.e.
+///   the names of `ic_list` sorted alphabetically.
 /// }
 ///
 /// @export
@@ -144,11 +150,12 @@ fn rs_onto_semantic_sim_mat(
 /// This function calculates the Wang similarity matrix for a given ontology.
 ///
 /// @param parents String vector. The names of the parents.
-/// @param children String vector. The names of the childs. The length of
+/// @param children String vector. The names of the children. The length of
 /// `parents` needs to be equal to `children`.
 /// @param w Numerics. The weights between the parents and children. Need
 /// to be values between 0 and 1.
-/// @param flat_matrix Boolean. Shall only the upper triangle be returned.
+/// @param flat_matrix Boolean. Shall only the upper triangle (row-wise,
+/// diagonal excluded) be returned.
 ///
 /// @returns A list with:
 /// \itemize{
@@ -188,13 +195,13 @@ fn rs_onto_sim_wang_mat(
 ///
 /// @description
 /// `r lifecycle::badge("experimental")`
-/// This function calculates the Wang similarities between all permutations of a
-/// given set of terms.
+/// This function calculates the Wang similarities between all unique pairs of
+/// a given set of terms. Terms not found in the ontology get `NaN`.
 ///
 /// @param terms String vector. The terms you wish to calculate the similarities
 /// for.
 /// @param parents String vector. The names of the parents.
-/// @param children String vector. The names of the childs. The length of
+/// @param children String vector. The names of the children. The length of
 /// `parents` needs to be equal to `children`.
 /// @param w Numerics. The weights between the parents and children. Need
 /// to be values between 0 and 1.
@@ -262,11 +269,11 @@ fn rs_onto_sim_wang(
 ///
 /// @description
 /// `r lifecycle::badge("experimental")`
-/// This function takes the similarity values as the upper triangle, the
-/// row/column names and filtering the values down based on the threshold.
+/// This function takes the similarity values as the upper triangle and the
+/// row/column names and filters the values down to those `>= threshold`.
 ///
-/// @param sim_vals Numerical vector. The upper triangle of the similarity matrix
-/// as a flattened vector.
+/// @param sim_vals Numerical vector. The upper triangle of the similarity
+/// matrix as a flattened vector (row-wise, diagonal excluded).
 /// @param names String vector. The row/col names of the similarity matrix.
 /// @param threshold Float. The filtering threshold.
 ///

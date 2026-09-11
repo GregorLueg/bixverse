@@ -31,13 +31,14 @@ extendr_module! {
 /// @param scale Boolean. Shall the columns be variance normalised. (Mean
 /// centring will automatically occur.)
 /// @param top_pcs Optional integer. Only return the top PCs (under the hood
-/// all of them will be calculated).
+/// all of them will be calculated). `NULL` returns all.
 ///
 /// @returns A list with:
 /// \itemize{
 ///   \item scores - The product of x (centred and potentially scaled) with v.
 ///   \item v - v matrix of the SVD.
-///   \item s - Eigenvalues of the SVD.
+///   \item s - Standard deviations of the PCs, i.e. singular values divided
+///   by `sqrt(nrow(x) - 1)`.
 ///   \item scaled - Boolean. Was the matrix scaled.
 /// }
 ///
@@ -82,19 +83,20 @@ fn rs_prcomp(
 /// loss in precision.
 ///
 /// @param x Numeric matrix. Rows = samples, columns = features.
-/// @param rank Integer. The rank to use.
 /// @param scale Boolean. Shall the columns be variance normalised. (Mean
 /// centring will automatically occur.)
+/// @param rank Integer. The rank to use.
 /// @param seed Integer. Random seed for reproducibility.
-/// @param oversampling Integer. Defaults to `10L` if nothing is provided.
-/// @param n_power_iter Integer. How often shall the QR decomposition be
-/// applied. Defaults to `2L` if nothing is provided.
+/// @param oversampling Optional integer. Defaults to `10L` if `NULL`.
+/// @param n_power_iter Optional integer. Number of power iterations (each with
+/// a QR decomposition). Defaults to `2L` if `NULL`.
 ///
 /// @returns A list with:
 /// \itemize{
-///   \item u - u matrix of the SVD.
+///   \item scores - u matrix of the SVD multiplied by the singular values.
 ///   \item v - v matrix of the SVD.
-///   \item s - Eigenvalues of the SVD.
+///   \item s - Singular values of the SVD.
+///   \item scaled - Boolean. Was the matrix scaled.
 /// }
 ///
 /// @export
@@ -129,15 +131,16 @@ fn rs_random_svd(
 ///
 /// @description
 /// `r lifecycle::badge("experimental")`
-/// This function calculate the contrastive PCA given a target covariance matrix
-/// and the background covariance matrix you wish to subtract. The alpha
+/// This function calculates the contrastive PCA given a target covariance
+/// matrix and the background covariance matrix you wish to subtract. The alpha
 /// parameter controls how much of the background covariance you wish to remove.
-/// You have the options to return the feature loadings and you can specificy
+/// You have the options to return the feature loadings and you can specify
 /// the number of cPCAs to return.
 ///
 /// @param target_covar The co-variance matrix of the target data set.
 /// @param background_covar The co-variance matrix of the background data set.
-/// @param target_mat The original values of the target matrix.
+/// @param target_mat The original values of the target matrix. Rows =
+/// samples, columns = features.
 /// @param alpha How much of the background co-variance should be removed.
 /// @param n_pcs How many contrastive PCs to return
 /// @param return_loadings Shall the loadings be returned from the contrastive
@@ -145,9 +148,10 @@ fn rs_random_svd(
 ///
 /// @returns A list containing:
 ///  \itemize{
-///   \item factors - The factors of the contrastive PCA.
-///   \item loadings - The loadings of the contrastive PCA. Will be NULL if
-///    return_loadings is set to FALSE.
+///   \item factors - The factors of the contrastive PCA, i.e. `target_mat`
+///    multiplied by the loadings. Samples x `n_pcs`.
+///   \item loadings - The loadings (top eigenvectors) of the contrastive PCA.
+///    Features x `n_pcs`. Will be `NULL` if `return_loadings = FALSE`.
 /// }
 ///
 /// @export

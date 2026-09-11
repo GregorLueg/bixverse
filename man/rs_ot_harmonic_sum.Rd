@@ -11,8 +11,10 @@ rs_ot_harmonic_sum(x)
 calculate the harmonic sum}
 }
 \value{
-Returns the harmonic sum according to the OT calculation.
+The normalised harmonic sum according to the OT calculation.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+Sorts \code{x} in decreasing order and sums \code{x[i] / i^2}, normalised by the same
+sum over a vector of ones of equal length.
 }

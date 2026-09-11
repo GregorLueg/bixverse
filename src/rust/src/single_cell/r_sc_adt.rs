@@ -28,17 +28,20 @@ extendr_module! {
 ///
 /// @description
 /// `r lifecycle::badge("experimental")`
+/// Reads one feature type (e.g. `"Antibody Capture"`) from a 10x h5 file as a
+/// dense matrix. Needs a v3 file; v2 files carry no feature types and error.
 ///
-/// @param f_path String. The path to the h5 file
-/// @param version String. The 10x version. If `"auto"` uses the automatic
-/// detection.
-/// @param feature_type String. The feature type to return.
+/// @param f_path String. The path to the h5 file.
+/// @param version String. The 10x version. If `"auto"`, the version is
+/// detected from the file.
+/// @param feature_type String. The feature type to return. Matched against
+/// the whitespace-trimmed feature types of the file.
 ///
 /// @returns A list with:
 /// \itemize{
-///   \item counts - Numerical matrix of cells x features
-///   \item barcodes - The barcodes as a string
-///   \item features - The features as a string
+///   \item counts - Dense numerical matrix of cells x features.
+///   \item barcodes - Character vector of the cell barcodes, in file order.
+///   \item features - Character vector of the feature names.
 /// }
 ///
 /// @export
@@ -73,7 +76,10 @@ fn rs_read_tenx_h5_modality(f_path: String, version: String, feature_type: Strin
 // Helpers //
 /////////////
 
-/// Helper function that does Seurat style CLR
+/// Seurat-style CLR of one row
+///
+/// Computes `log1p(x / g)`, with `g` the exponent of the summed `log1p` over
+/// the positive entries divided by `ncol`.
 ///
 /// ### Params
 ///
@@ -82,7 +88,7 @@ fn rs_read_tenx_h5_modality(f_path: String, version: String, feature_type: Strin
 ///
 /// ### Returns
 ///
-/// Seurat-style CLR-normalised data
+/// Seurat-style CLR-normalised row, non-negative.
 #[inline]
 fn clr_row_seurat(row: &[f64], ncol: usize) -> Vec<f64> {
     let g = ((0..ncol)
@@ -94,7 +100,9 @@ fn clr_row_seurat(row: &[f64], ncol: usize) -> Vec<f64> {
     row.iter().map(|&v| (v / g).ln_1p()).collect()
 }
 
-/// Helper function that does normal CLR
+/// Proper CLR of one row
+///
+/// Computes `log1p(x) - mean(log1p(x))`.
 ///
 /// ### Params
 ///
@@ -103,7 +111,7 @@ fn clr_row_seurat(row: &[f64], ncol: usize) -> Vec<f64> {
 ///
 /// ### Returns
 ///
-/// CLR-normalised data
+/// CLR-normalised row, mean-centred and possibly negative.
 #[inline]
 fn clr_row(row: &[f64], ncol: usize) -> Vec<f64> {
     let log_gm = row.iter().map(|&v| v.ln_1p()).sum::<f64>() / ncol as f64;
@@ -115,11 +123,15 @@ fn clr_row(row: &[f64], ncol: usize) -> Vec<f64> {
 /// @description
 /// `r lifecycle::badge("experimental")`
 ///
-/// @param counts R matrix of shape cells x features.
-/// @param seurat_clr Logical; if TRUE uses the Seurat variant (non-negative),
-/// if FALSE uses proper CLR (mean-centred log, can be negative).
+/// Normalises each cell (row) separately.
 ///
-/// @returns CLR-transformed matrix.
+/// @param counts Numerical matrix of shape cells x features.
+/// @param seurat_clr Boolean. If `TRUE` uses the Seurat variant
+/// `log1p(x / g)` (non-negative); if `FALSE` uses the proper CLR
+/// `log1p(x) - mean(log1p(x))` (mean-centred, can be negative).
+///
+/// @returns Numerical matrix of cells x features with the CLR-transformed
+/// values.
 ///
 /// @export
 ///
@@ -154,10 +166,12 @@ fn rs_adt_clr(counts: RMatrix<f64>, seurat_clr: bool) -> RMatrix<f64> {
 /// `background_counts` is provided, per-protein ambient background is estimated
 /// from empty droplets ("Step I" of the original paper). When
 /// `background_counts` is `NULL`, per-protein background is estimated by a
-/// two-component k-means on the log-transformed cell counts, with the lower
-/// centroid taken as the background level. An optional second step removes
-/// cell-to-cell technical noise by regressing out PC1 of a noise matrix built
-/// from isotype controls (if available) and the per-cell background mean.
+/// two-component k-means on the `log(x + pseudocount)` cell counts, with the
+/// lower centroid taken as the background level. An optional second step
+/// removes cell-to-cell technical noise by regressing out PC1 of a noise
+/// matrix built from isotype controls (if used) and the per-cell background
+/// mean; without isotype controls the per-cell background mean itself is
+/// regressed out. Optional per-protein quantile clipping runs last.
 ///
 /// @param raw_counts Numeric matrix. Cells x proteins matrix of raw ADT
 /// counts.
@@ -173,8 +187,9 @@ fn rs_adt_clr(counts: RMatrix<f64>, seurat_clr: bool) -> RMatrix<f64> {
 /// @param scale_factor String. One of `"standardise"` or `"mean_subtract"`.
 /// Only used when `background_counts` is provided. `"standardise"` subtracts
 /// the per-protein background mean and divides by the per-protein background
-/// SD. `"mean_subtract"` subtracts the mean only.
-/// @param seed Integer. Random seed for k-means initialisation.
+/// SD. `"mean_subtract"` subtracts the mean only. Unrecognised values fall
+/// back to `"standardise"`.
+/// @param seed Integer. Random seed for the k-means initialisations.
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
 ///
@@ -189,10 +204,12 @@ fn rs_adt_clr(counts: RMatrix<f64>, seurat_clr: bool) -> RMatrix<f64> {
 ///   SD used in Step I.
 ///   \item technical_component - Numeric vector of length `n_cells`, or
 ///   empty vector if `dsb_params$denoise_counts = FALSE`. Per-cell
-///   technical component regressed out in Step II.
+///   covariate regressed out in Step II: PC1 of the noise matrix, or the
+///   per-cell background mean if no isotype controls are used.
 ///   \item cellwise_background_mean - Numeric vector of length `n_cells`,
 ///   or empty vector if `dsb_params$denoise_counts = FALSE`. Per-cell
-///   background mean from the 2-component k-means clustering.
+///   background mean from a 2-component k-means on each cell's protein
+///   vector.
 /// }
 ///
 /// @export

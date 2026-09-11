@@ -84,7 +84,7 @@ fn rs_cor(x: RMatrix<f64>, spearman: bool) -> RArray<f64, 2> {
 ///
 /// @param x R matrix with doubles.
 ///
-/// @returns The correlation matrix.
+/// @returns The cosine similarity matrix.
 ///
 /// @export
 #[extendr]
@@ -108,7 +108,7 @@ fn rs_cos(x: RMatrix<f64>) -> RArray<f64, 2> {
 /// @param spearman Shall the Spearman correlation be calculated instead of
 /// Pearson.
 ///
-/// @returns The correlation matrix.
+/// @returns The correlation matrix of dimension `ncol(x)` by `ncol(y)`.
 ///
 /// @export
 #[extendr]
@@ -149,14 +149,15 @@ fn rs_cov2cor(x: RMatrix<f64>) -> RArray<f64, 2> {
 ///
 /// @param x R matrix with doubles for which to calculate the mutual information
 /// @param n_bins Optional integer. Number of bins to use. If `NULL` is provided
-/// the function will default to `sqrt(nrows(x))`.
-/// @param strategy String. Binning strategy One of
-/// `c("equal_width", "equal_freq")`. If weird string is provided, it will
-/// default to `"equal_width"`.
+/// the function will default to `sqrt(nrow(x))`.
+/// @param strategy String. Binning strategy. One of
+/// `c("equal_width", "equal_freq")`. Unknown strings default to
+/// `"equal_width"`.
 /// @param normalise Boolean. Shall the normalised mutual information be
 /// calculated via joint entropy.
 ///
-/// @returns The mutual information matrix.
+/// @returns The symmetric mutual information matrix. The diagonal holds the
+/// column entropies, or `0` if `normalise = TRUE`.
 ///
 /// @export
 #[extendr]
@@ -186,7 +187,8 @@ fn rs_mutual_info(
 /// @param normalise Shall the normalised pointwise mutual information be
 /// returned.
 ///
-/// @returns The (normalised) pointwise mutual information matrix.
+/// @returns The (normalised) pointwise mutual information matrix between the
+/// columns. Pairs without co-occurrence are `-Inf`.
 ///
 /// @export
 #[extendr]
@@ -208,9 +210,10 @@ fn rs_pointwise_mutual_info(x: RMatrix<Rbool>, normalise: bool) -> RArray<f64, 2
 /// @param x Numerical matrix. The matrix for which to calculate the pairwise
 /// column distances.
 /// @param distance_type String. One of
-/// `c("euclidean", "manhattan", "canberra", "cosine")`.
+/// `c("euclidean", "manhattan", "canberra", "cosine", "correlation")`.
+/// `"correlation"` is `1 - Pearson r`. Unknown strings raise an error.
 ///
-/// @returns The calculated distance matrix
+/// @returns The calculated distance matrix.
 ///
 /// @export
 #[extendr]
@@ -244,12 +247,11 @@ fn rs_dist(x: RMatrix<f64>, distance_type: String) -> extendr_api::Result<RArray
 /// @param x R matrix with doubles.
 /// @param spearman Shall the Spearman correlation be calculated instead of
 /// Pearson.
-/// @param shift Boolean. If you applied a shift, i.e. included the diagonal
-/// values. If `true`, assumes the diagonal values are `1`, otherwise derives
-/// them from the data.
+/// @param shift Boolean. If `TRUE`, the diagonal is excluded, otherwise it is
+/// included.
 ///
 /// @returns The upper triangle of the correlation matrix iterating through the
-/// rows, shifted by one (the diagonal will not be returned).
+/// rows, with or without the diagonal depending on `shift`.
 ///
 /// @export
 #[extendr]
@@ -275,15 +277,15 @@ fn rs_cor_upper_triangle(x: RMatrix<f64>, spearman: bool, shift: bool) -> Vec<f6
 ///
 /// @description
 /// `r lifecycle::badge("experimental")`
-/// This function calculates the Jaccard or similarity index between a two given
-/// string vector and a  of other string vectors.
+/// This function calculates the Jaccard similarity or overlap coefficient
+/// between two string vectors.
 ///
-/// @param s_1 The String vector against which to calculate the set
-/// similarities.
-/// @param s_2 The String vector against which to calculate the set
-/// similarities.
+/// @param s_1 Character vector. The first set.
+/// @param s_2 Character vector. The second set.
 /// @param overlap_coefficient Boolean. Use the overlap coefficient instead of
-/// the Jaccard similarity be calculated.
+/// the Jaccard similarity.
+///
+/// @returns The Jaccard similarity or overlap coefficient.
 ///
 /// @export
 #[extendr]
@@ -305,17 +307,18 @@ fn rs_set_similarity(s_1: Vec<String>, s_2: Vec<String>, overlap_coefficient: bo
 ///
 /// @description
 /// `r lifecycle::badge("experimental")`
-/// This function calculates the Jaccard or similarity index between two lists.
+/// This function calculates the Jaccard similarity or overlap coefficient
+/// between all elements of two lists.
 ///
 /// @param s_1_list R list. The first list of string elements you want to
 /// compare against.
 /// @param s_2_list R list. The second list of string elements you want to
 /// compare against.
 /// @param overlap_coefficient Boolean. Use the overlap coefficient instead of
-/// the Jaccard similarity be calculated.
+/// the Jaccard similarity.
 ///
-/// @returns A matrix of the Jaccard similarities between the elements. The rows
-/// represent `s_1_list` and the column `s_2_list`.
+/// @returns A matrix of the similarities between the elements. The rows
+/// represent `s_1_list` and the columns `s_2_list`.
 ///
 /// @export
 #[extendr]
@@ -356,9 +359,9 @@ fn rs_set_similarity_list2(
 ///
 /// @param list A named R list.
 /// @param overlap_coefficient Boolean. Use the overlap coefficient instead of
-/// the Jaccard similarity be calculated.
+/// the Jaccard similarity.
 ///
-/// @returns A list with the following items:
+/// @returns A list with the following items, one entry per unordered pair:
 /// \itemize{
 ///     \item from - Name of element i
 ///     \item to - Name of element j
@@ -390,17 +393,19 @@ fn rs_set_similarity_list(list: List, overlap_coefficient: bool) -> extendr_api:
     Ok(list!(from = name_i, to = name_j, sim = sim))
 }
 
-/// Calculate rapidbly Jaccard similarities between rows
+/// Calculate rapidly Jaccard similarities between rows
 ///
 /// @description
 /// `r lifecycle::badge("experimental")`
-/// Helper function to quickly calculate the Jaccard similarity between the rows
-/// across the two matrices.
+/// Helper function to quickly calculate the Jaccard similarity between
+/// matching rows of the two matrices. Each row is treated as a set of
+/// integers (duplicates removed).
 ///
 /// @param data_1 Integer matrix. The first matrix to compare.
-/// @param data_2 Integer matrix. The second matrix to compare.
+/// @param data_2 Integer matrix. The second matrix to compare. Needs the same
+/// number of rows as `data_1`.
 ///
-/// @returns The average Jaccard similarity.
+/// @returns The Jaccard similarity averaged over the rows.
 ///
 /// @export
 #[extendr]
@@ -430,10 +435,13 @@ fn rs_jaccard_row_integers(data_1: RMatrix<i32>, data_2: RMatrix<i32>) -> f64 {
 ///
 /// @description
 /// `r lifecycle::badge("experimental")`
+/// Calculates the pairwise Hamming distance between the columns, i.e. the
+/// fraction of rows in which two columns differ.
 ///
 /// @param x Integer matrix. The integers represent the factor data.
 ///
-/// @returns The Hamming distance matrix
+/// @returns The Hamming distance matrix between the columns, values in
+/// `[0, 1]`.
 ///
 /// @export
 #[extendr]
@@ -449,12 +457,16 @@ fn rs_hamming_dist(x: RMatrix<i32>) -> RArray<f64, 2> {
 ///
 /// @description
 /// `r lifecycle::badge("experimental")`
+/// Calculates the pairwise Gower distance between the rows. Continuous columns
+/// contribute the range-normalised absolute difference, categorical columns a
+/// simple mismatch.
 ///
 /// @param x Numerical matrix. Converted matrix of continuous and categorical
-/// variables as numerical values.
-/// @param is_cat Boolean. Which of the columns represent categorical values.
+/// variables as numerical values. Rows = samples, columns = features.
+/// @param is_cat Logical vector of length `ncol(x)`. Which of the columns
+/// represent categorical values.
 ///
-/// @returns The Gower distance matrix between the rows
+/// @returns The Gower distance matrix between the rows, values in `[0, 1]`.
 ///
 /// @export
 #[extendr]

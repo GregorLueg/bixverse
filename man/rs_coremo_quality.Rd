@@ -8,7 +8,7 @@ rs_coremo_quality(cluster_genes, cor_mat, row_names, seed)
 }
 \arguments{
 \item{cluster_genes}{A list. Contains the cluster and their respective
-genes.}
+genes as character vectors.}
 
 \item{cor_mat}{Numerical matrix. Contains the correlation coefficients.}
 
@@ -18,18 +18,18 @@ correlation matrix.}
 \item{seed}{Integer. Random seed for the sub sampling of genes.}
 }
 \value{
-A list containing:
+A list containing, one entry per cluster:
 \itemize{
 \item r2med - median R2 of the cluster.
-\item r2mad - median absolute deviation of the R2 in the cluster.
-\item size - size of the cluster.
+\item r2mad - scaled median absolute deviation of the R2 in the cluster.
+\item size - number of cluster genes found in \code{row_names}.
 }
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 This function assesses the quality of the clusters with a given cut \code{k}.
 Returns the median R2 (cor^2) and the median absolute deviation (MAD) of the
-clusters. Large clusters (≥1000) are subsampled to a random set of 1000
-genes.
+clusters. Clusters with more than 1000 genes are subsampled to a random set
+of 1000 genes. Genes not found in \code{row_names} are skipped.
 }
 \keyword{internal}

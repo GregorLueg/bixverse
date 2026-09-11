@@ -65,24 +65,24 @@ fn knn_mat_to_vecs(knn_mat: &RMatrix<i32>) -> Vec<Vec<usize>> {
 /// @description
 /// `r lifecycle::badge("experimental")`
 /// The function takes in a kNN matrix and a batch vector indicating which
-/// cell belongs to which batch. The function will check for the neighbourhood
-/// of each cell if the proportion of represented batches are different from
-/// the overall batch proportions. Good mixing of batches would mean very
-/// cells have significant differences; bad mixing a lot of the batches
-/// have bad mixing.
+/// cell belongs to which batch. For the neighbourhood of each cell, a
+/// chi-square test checks whether the batch proportions differ from the
+/// overall batch proportions (with Yates' correction for two batches). Good
+/// mixing means few cells with significant differences; bad mixing means
+/// many.
 ///
 /// @param knn_mat Integer matrix. The rows represent the cells and the
-/// columns the neighbour indices.
-/// @param batch_vector Integer vector. The integers indicate to which
-/// batch a given cell belongs.
+/// columns the neighbour indices (0-indexed!).
+/// @param batch_vector Integer vector. The batch per cell. The codes need
+/// not be 0-based or contiguous.
 /// @param verbose Boolean. Controls verbosity of the function.
 ///
 /// @returns A list with the following items
 /// \itemize{
-///   \item pval - The p-values from the ChiSquare test
-///   \item chi_square_stats - ChiSquare statistics
-///   \item mean_chi_square - The mean ChiSquare value
-///   \item median_chi_square - The median ChiSquare value
+///   \item pval - Per-cell p-values from the chi-square test.
+///   \item chi_square_stats - Per-cell chi-square statistics.
+///   \item mean_chi_square - The mean chi-square value.
+///   \item median_chi_square - The median chi-square value.
 /// }
 ///
 /// @export
@@ -109,10 +109,10 @@ fn rs_kbet(knn_mat: RMatrix<i32>, batch_vector: Vec<i32>, verbose: bool) -> Resu
 ///
 /// @param embedding Numeric matrix. The embedding to assess (e.g. PCA or
 /// corrected embedding). Rows are cells, columns are dimensions.
-/// @param batch_vector Integer vector. The integers indicate to which
-/// batch a given cell belongs.
+/// @param batch_vector Integer vector. The batch per cell. The codes need
+/// not be 0-based or contiguous.
 /// @param max_cells Integer or NULL. If not NULL, subsample to this many
-/// cells for performance. Defaults to 5000.
+/// cells for performance. If NULL, all cells are used.
 /// @param verbose Boolean. Controls verbosity of the function.
 /// @param seed Integer. Seed for subsampling reproducibility.
 ///
@@ -160,14 +160,16 @@ fn rs_batch_silhouette_width(
 /// scIB.
 ///
 /// @param knn_mat Integer matrix. The rows represent the cells and the
-/// columns the neighbour indices.
+/// columns the neighbour indices (0-indexed!).
 /// @param knn_dist Numeric matrix or NULL. The kNN distances, same shape as
 /// `knn_mat`. If provided, neighbours are weighted with a perplexity-calibrated
 /// Gaussian kernel as in Korsunsky et al.; if NULL, neighbours are weighted
 /// uniformly.
-/// @param labels Integer vector. The label (batch or cell type) per cell.
+/// @param labels Integer vector. The label (batch or cell type) per cell. The
+/// codes need not be 0-based or contiguous.
 /// @param perplexity Numeric or NULL. Perplexity for the weighted version.
-/// NULL defaults to 30. Ignored if `knn_dist` is NULL.
+/// NULL defaults to 30; values above k are clamped to k. Ignored if
+/// `knn_dist` is NULL.
 /// @param verbose Boolean. Controls verbosity of the function.
 ///
 /// @returns A list with the following items
@@ -233,7 +235,8 @@ fn rs_lisi(
 /// embedding, `(pre - post) / pre`, rather than reading it on its own.
 ///
 /// @param embedding Numeric matrix. Cells x dimensions, ideally a PCA.
-/// @param batch_vector Integer vector. The batch per cell.
+/// @param batch_vector Integer vector. The batch per cell. The codes need not
+/// be 0-based or contiguous.
 ///
 /// @returns A list with the following items
 /// \itemize{
@@ -267,9 +270,10 @@ fn rs_pcr(embedding: RMatrix<f64>, batch_vector: Vec<i32>) -> Result<List> {
 /// `(s + 1) / 2`. Higher values mean cell types stay separated.
 ///
 /// @param embedding Numeric matrix. Cells x dimensions.
-/// @param labels Integer vector. The cell type per cell.
+/// @param labels Integer vector. The cell type per cell. The codes need not
+/// be 0-based or contiguous.
 /// @param max_cells Integer or NULL. If not NULL, subsample to this many
-/// cells for performance.
+/// cells for performance. If NULL, all cells are used.
 /// @param verbose Boolean. Controls verbosity of the function.
 /// @param seed Integer. Seed for subsampling reproducibility.
 ///
@@ -314,16 +318,17 @@ fn rs_cell_type_asw(
 /// `r lifecycle::badge("experimental")`
 /// For each cell type, the fraction of its cells in the largest connected
 /// component of the kNN graph restricted to that cell type. 1 means every
-/// cell type forms one connected piece.
+/// cell type forms one connected piece. Edge direction is ignored.
 ///
 /// @param knn_mat Integer matrix. The rows represent the cells and the
-/// columns the neighbour indices.
-/// @param labels Integer vector. The cell type per cell.
+/// columns the neighbour indices (0-indexed!).
+/// @param labels Integer vector. The cell type per cell. The codes need not
+/// be 0-based or contiguous.
 ///
 /// @returns A list with the following items
 /// \itemize{
-///   \item per_label - Connectivity per cell type, in order of the sorted
-///   label codes.
+///   \item per_label - Connectivity per cell type, in order of first
+///   appearance in `labels`.
 ///   \item mean - Mean connectivity.
 ///   \item median - Median connectivity.
 /// }
@@ -357,14 +362,18 @@ fn rs_graph_connectivity(knn_mat: RMatrix<i32>, labels: Vec<i32>) -> Result<List
 /// @param embd Numerical matrix. The embedding matrix to use to generate the
 /// BBKNN parameters. Usually PCA. Rows represent cells.
 /// @param batch_labels Integer vector. These represent to which batch a given
-/// cell belongs.
+/// cell belongs (0-indexed!).
 /// @param bbknn_params List. Contains all of the BBKNN parameters.
 /// @param seed Integer. Seed for reproducibility purposes.
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
 ///
-/// @returns A list of two lists representing the sparse matrix representation
-/// of the distances and the connectivities.
+/// @returns A list with
+/// \itemize{
+///   \item distances - Sparse list representation of the kNN distances.
+///   \item connectivities - Sparse list representation of the
+///   connectivities.
+/// }
 ///
 /// @export
 ///
@@ -399,15 +408,16 @@ fn rs_bbknn(
 ///
 /// @description
 /// `r lifecycle::badge("experimental")`
+/// Keeps the first `no_neighbours_to_keep` stored entries of each CSR row.
 ///
 /// @param indptr Integer vector. The index pointers of the underlying data.
 /// @param indices Integer vector. The indices of the nearest neighbours.
 /// @param data Numeric vector. The distances to the nearest neighbours.
 /// @param no_neighbours_to_keep Integer. Number of nearest neighbours to keep.
 ///
-/// @returns A list with `indices` (integer matrix) and `dist` (numeric matrix),
-/// each with shape (n_cells, no_neighbours_to_keep). Positions without
-/// neighbours are filled with -1 (indices) or NaN (distances).
+/// @returns A list with `indices` and `dist`, both numeric (double) matrices
+/// of shape (n_cells, no_neighbours_to_keep). Positions without neighbours
+/// are `NaN` in both.
 ///
 /// @export
 ///
@@ -461,15 +471,16 @@ fn rs_bbknn_filtering(
 /// @param gene_indices Integer. The gene indices to use. (0-indexed!) Ideally
 /// these are batch-aware highly variable genes.
 /// @param batch_indices Integer vector. These represent to which batch a given
-/// cell belongs.
-/// @param mnn_params List. Contains all of the fastMNN parameters.
+/// cell belongs (0-indexed!).
 /// @param precomputed_pca Optional PCA matrix. If you want to provide a
 /// pre-computed matrix.
-/// @param seed Integer. Seed for reproducibility purposes.
+/// @param mnn_params List. Contains all of the fastMNN parameters.
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
+/// @param seed Integer. Seed for reproducibility purposes.
 ///
-/// @returns The batch-corrected embedding space.
+/// @returns Numerical matrix, cells x dimensions, with the batch-corrected
+/// embedding.
 ///
 /// @export
 ///
@@ -539,13 +550,14 @@ fn rs_mnn(
 ///
 /// @param pca Numerical matrix, i.e., the PCA matrix you want to correct.
 /// @param harmony_params List. The parameters for the Harmony algorithm.
-/// @param batch_labels List. Each element in the list needs to be a 0-indexed
-/// integer that represents the batch effects you wish to regress out.
+/// @param batch_labels List. Each element needs to be a 0-indexed integer
+/// vector, one per batch variable you wish to regress out.
 /// @param seed Integer. Seed for reproducibility purposes.
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
 ///
-/// @returns The batch-corrected Harmony embedding space.
+/// @returns Numerical matrix, cells x dimensions, with the batch-corrected
+/// Harmony embedding.
 ///
 /// @export
 #[extendr]
@@ -589,13 +601,14 @@ fn rs_harmony(
 ///
 /// @param pca Numerical matrix, i.e., the PCA matrix you want to correct.
 /// @param harmony_params List. The parameters for the Harmony (v2) algorithm.
-/// @param batch_labels List. Each element in the list needs to be a 0-indexed
-/// integer that represents the batch effects you wish to regress out.
+/// @param batch_labels List. Each element needs to be a 0-indexed integer
+/// vector, one per batch variable you wish to regress out.
 /// @param seed Integer. Seed for reproducibility purposes.
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
 ///
-/// @returns The batch-corrected Harmony (v2) embedding space.
+/// @returns Numerical matrix, cells x dimensions, with the batch-corrected
+/// Harmony (v2) embedding.
 ///
 /// @export
 #[extendr]
@@ -659,7 +672,8 @@ fn rs_harmony_v2(
 /// detailed verbosity.
 /// @param seed Integer. Seed for reproducibility purposes.
 ///
-/// @returns The batch-corrected embedding space.
+/// @returns Numerical matrix, cells x dimensions, with the batch-corrected
+/// embedding.
 ///
 /// @export
 ///
@@ -748,7 +762,8 @@ fn rs_seurat_cca(
 /// detailed verbosity.
 /// @param seed Integer. Seed for reproducibility purposes.
 ///
-/// @returns The batch-corrected embedding space.
+/// @returns Numerical matrix, cells x dimensions, with the batch-corrected
+/// embedding.
 ///
 /// @export
 ///

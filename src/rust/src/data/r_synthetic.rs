@@ -129,31 +129,33 @@ fn rs_simulate_dropouts(
 /// @description
 /// `r lifecycle::badge("experimental")`
 /// Helper function to generate synthetic single cell data with optional
-/// bathc effects and sample bias.
+/// batch effects and sample bias.
 ///
 /// @param n_cells Integer. Number of cells to generate.
 /// @param n_genes Integer. Number of genes to generate.
-/// @param n_batches Integer. Number of the batches to generated.
+/// @param n_batches Integer. Number of batches to generate.
 /// @param n_samples Optional integer. Shall the cells be distributed over
-/// `n_samples` samples.
-/// @param cell_configs A nested list that indicates which gene indices
-/// are markers for which cell.
-/// @param batch_effect_strength String. One of `c("strong", "medium", "low")`.
-/// Defines the strength of the added batch effect.
+/// `n_samples` samples. Only used together with `sample_bias`.
+/// @param cell_configs List. One element per cell type, each a list with a
+/// `marker_genes` integer vector of 0-based marker gene indices.
+/// @param batch_effect_strength String. One of `c("strong", "medium", "weak")`.
+/// Defines the strength of the added batch effect. Unknown values fall back to
+/// `"strong"`.
 /// @param sample_bias Optional string. One of
-/// `c("even", "slightly_uneven", "very_uneven")`
+/// `c("even", "slightly_uneven", "very_uneven")`. Other values raise an error.
 /// @param seed Integer. Random seed for reproducibility.
 ///
 /// @returns A list with the following items.
 /// \itemize{
-///   \item data - The synthetic raw counts.
+///   \item data - The synthetic raw counts, CSR over cells.
 ///   \item indptr - The index pointers of the cells.
-///   \item indices - The indices of the genes for the given cells.
-///   \item nrow - Number of rows.
-///   \item ncol - Number of columns
-///   \item cell_type_indices - Vector indicating which cell type this is.
-///   \item batch_indices - Vector indicating the batch.
-///   \item sample_indices - Optional sample indices if asked for.
+///   \item indices - The 0-based gene indices for the given cells.
+///   \item nrow - Number of cells.
+///   \item ncol - Number of genes.
+///   \item cell_type_indices - 0-based cell type per cell.
+///   \item batch_indices - 0-based batch per cell.
+///   \item sample_indices - 0-based sample per cell. `NULL` unless both
+///   `n_samples` and `sample_bias` are provided.
 /// }
 ///
 /// @export
@@ -231,7 +233,8 @@ fn rs_synthetic_sc_data_with_cell_types(
 /// generic background-only protein. Counts follow a negative-binomial draw with
 /// an additive background plus per-cell-type signal, a per-cell capture
 /// efficiency factor, and an optional per-batch staining multiplier. Cell type
-/// and batch assignment match `rs_synthetic_sc_with_cell_types()` cell-for-cell
+/// and batch assignment match `rs_synthetic_sc_data_with_cell_types()`
+/// cell-for-cell
 /// for matched inputs, so RNA and ADT can be paired for multi-modal tests.
 ///
 /// @param n_cells Integer. Number of cells (matrix rows).
@@ -310,14 +313,14 @@ fn rs_synthetic_sc_adt_with_cell_types(
 /// over different sample to cell type patterns
 ///
 /// @param cell_type_indices Integer vector. Each integer represents a cell
-/// type.
+/// type (0-based, as returned by `rs_synthetic_sc_data_with_cell_types()`).
 /// @param n_samples Integer. Number of different sample ids to generate.
 /// @param sample_bias String. One of
-/// `c("even", "slightly_uneven", "very_uneven")`. Determins the cell type
-/// to sample id associations.
+/// `c("even", "slightly_uneven", "very_uneven")`. Determines the cell type
+/// to sample id associations. Other values raise an error.
 /// @param seed Integer. Random seed for reproducibility.
 ///
-/// @returns An integer vector representing the samples.
+/// @returns An integer vector with the 0-based sample per cell.
 ///
 /// @export
 ///

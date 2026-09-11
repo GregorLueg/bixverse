@@ -33,9 +33,10 @@ if there are no isotype controls.}
 \item{scale_factor}{String. One of \code{"standardise"} or \code{"mean_subtract"}.
 Only used when \code{background_counts} is provided. \code{"standardise"} subtracts
 the per-protein background mean and divides by the per-protein background
-SD. \code{"mean_subtract"} subtracts the mean only.}
+SD. \code{"mean_subtract"} subtracts the mean only. Unrecognised values fall
+back to \code{"standardise"}.}
 
-\item{seed}{Integer. Random seed for k-means initialisation.}
+\item{seed}{Integer. Random seed for the k-means initialisations.}
 
 \item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
 detailed verbosity.}
@@ -52,10 +53,12 @@ empty vector if \code{background_counts} was \code{NULL}. Per-protein background
 SD used in Step I.
 \item technical_component - Numeric vector of length \code{n_cells}, or
 empty vector if \code{dsb_params$denoise_counts = FALSE}. Per-cell
-technical component regressed out in Step II.
+covariate regressed out in Step II: PC1 of the noise matrix, or the
+per-cell background mean if no isotype controls are used.
 \item cellwise_background_mean - Numeric vector of length \code{n_cells},
 or empty vector if \code{dsb_params$denoise_counts = FALSE}. Per-cell
-background mean from the 2-component k-means clustering.
+background mean from a 2-component k-means on each cell's protein
+vector.
 }
 }
 \description{
@@ -65,9 +68,11 @@ This function applies the DSB algorithm to normalise antibody-derived tag
 \code{background_counts} is provided, per-protein ambient background is estimated
 from empty droplets ("Step I" of the original paper). When
 \code{background_counts} is \code{NULL}, per-protein background is estimated by a
-two-component k-means on the log-transformed cell counts, with the lower
-centroid taken as the background level. An optional second step removes
-cell-to-cell technical noise by regressing out PC1 of a noise matrix built
-from isotype controls (if available) and the per-cell background mean.
+two-component k-means on the \code{log(x + pseudocount)} cell counts, with the
+lower centroid taken as the background level. An optional second step
+removes cell-to-cell technical noise by regressing out PC1 of a noise
+matrix built from isotype controls (if used) and the per-cell background
+mean; without isotype controls the per-cell background mean itself is
+regressed out. Optional per-protein quantile clipping runs last.
 }
 \keyword{internal}

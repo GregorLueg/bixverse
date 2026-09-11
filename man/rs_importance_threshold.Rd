@@ -8,7 +8,7 @@ rs_importance_threshold(matrix, n_sd, min_value)
 }
 \arguments{
 \item{matrix}{Numeric matrix with genes (rows) x TFs (columns) importance
-values.}
+values. Must carry row and column names.}
 
 \item{n_sd}{Float. Number of standard deviations above the mean to use as
 the per-gene threshold.}
@@ -17,11 +17,12 @@ the per-gene threshold.}
 below this are excluded even if they pass the per-gene threshold.}
 }
 \value{
-A list with three vectors: tf, gene, importance
+A list with three vectors: \code{tf}, \code{gene}, \code{importance}.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
-For each gene (row), computes mean + n_sd * SD of the importance scores
-across all TFs and retains only pairs exceeding that threshold.
+For each gene (row), computes \code{mean + n_sd * SD} (population SD) of the
+importance scores across all TFs and retains only pairs at or above that
+threshold.
 }
 \keyword{internal}

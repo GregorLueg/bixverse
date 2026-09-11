@@ -14,6 +14,6 @@ The Benjamini-Hochberg adjusted p-values.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
-Rust implementation that will be faster if you have an terrifying amount of
+Rust implementation that will be faster if you have a terrifying amount of
 p-values to adjust.
 }

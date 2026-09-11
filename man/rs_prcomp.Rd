@@ -13,14 +13,15 @@ rs_prcomp(x, scale, top_pcs)
 centring will automatically occur.)}
 
 \item{top_pcs}{Optional integer. Only return the top PCs (under the hood
-all of them will be calculated).}
+all of them will be calculated). \code{NULL} returns all.}
 }
 \value{
 A list with:
 \itemize{
 \item scores - The product of x (centred and potentially scaled) with v.
 \item v - v matrix of the SVD.
-\item s - Eigenvalues of the SVD.
+\item s - Standard deviations of the PCs, i.e. singular values divided
+by \code{sqrt(nrow(x) - 1)}.
 \item scaled - Boolean. Was the matrix scaled.
 }
 }

@@ -18,9 +18,9 @@ rs_singscore_permutation_test(
 \arguments{
 \item{ranks}{Numerical matrix. The ranked expression matrix.}
 
-\item{up_set}{Integer vector. Zero-indexed.}
+\item{up_set}{Integer vector. One-indexed (shifted internally).}
 
-\item{down_set}{Integer vector or NULL.}
+\item{down_set}{Integer vector or NULL. One-indexed (shifted internally).}
 
 \item{center_score, known_direction, stable}{Booleans. Should match the
 values used for the real \code{\link[=rs_singscore_single]{rs_singscore_single()}} call.}
@@ -31,7 +31,7 @@ values used for the real \code{\link[=rs_singscore_single]{rs_singscore_single()
 }
 \value{
 A named list with \code{observed_scores} (length n_samples),
-\code{null_distribution} (B × n_samples matrix), and \code{p_values}
+\code{null_distribution} (B x n_samples matrix), and \code{p_values}
 (length n_samples).
 }
 \description{

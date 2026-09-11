@@ -28,7 +28,9 @@ extendr_module! {
 ///
 /// @description
 /// `r lifecycle::badge("experimental")`
-/// This function calculates rapidly AUCs based on an approximation.
+/// This function calculates rapidly AUCs based on an approximation: the
+/// fraction of `iters` random (positive, negative) pairs, drawn with
+/// replacement, where the positive score is larger.
 ///
 /// @param pos_scores The scores of your hits.
 /// @param neg_scores The scores of your non-hits.
@@ -36,7 +38,7 @@ extendr_module! {
 /// Recommended size: 10000L.
 /// @param seed Seed.
 ///
-/// @returns The AUC.
+/// @returns The approximate AUC.
 ///
 /// @export
 #[extendr]
@@ -111,7 +113,11 @@ fn rs_create_random_aucs(
 /// calculate the Hedge's G effect.
 /// @param small_sample_correction Shall the small sample correction be applied.
 ///
-/// @returns Returns the harmonic sum according to the OT calculation.
+/// @returns A list with the following items:
+/// \itemize{
+///  \item effect_sizes - Hedge's G effect size per feature.
+///  \item standard_errors - Standard error of the effect size per feature.
+/// }
 ///
 /// @export
 #[extendr]
@@ -145,7 +151,7 @@ fn rs_hedges_g(mat_a: RMatrix<f64>, mat_b: RMatrix<f64>, small_sample_correction
 ///
 /// @description
 /// `r lifecycle::badge("experimental")`
-/// Rust implementation that will be faster if you have an terrifying amount of
+/// Rust implementation that will be faster if you have a terrifying amount of
 /// p-values to adjust.
 ///
 /// @param pvals Numeric vector. The p-values you wish to adjust.
@@ -168,7 +174,7 @@ fn rs_fdr_adjustment(pvals: &[f64]) -> Vec<f64> {
 /// @param n Number of black balls in the urn.
 /// @param k The number of balls drawn out of the urn.
 ///
-/// @returns P-value (with lower.tail set to False)
+/// @returns P-value, i.e. `P(X > q)` (equivalent to `lower.tail = FALSE`).
 ///
 /// @export
 #[extendr]
@@ -182,20 +188,20 @@ fn rs_phyper(q: usize, m: usize, n: usize, k: usize) -> f64 {
 /// `r lifecycle::badge("experimental")`
 ///
 /// @param x Numerical vector to test.
-/// @param threshold Numeric. Number of MADs in either direction that is
-/// acceptable.
+/// @param threshold Numeric. Number of (unscaled) MADs from the median in
+/// either direction that is acceptable.
 /// @param direction String. One of `c("below", "above", "twosided")`. Shall
 /// the outlier direction be done for values below the threshold, above the
-/// threshold or in both directions. Weird strings default to twosided tests.
+/// threshold or in both directions. Unknown strings default to twosided tests.
 ///
 /// @returns A list with the following items:
 /// \itemize{
 ///  \item outlier - Boolean vector if element is an outlier
-///  \item threshold - Applied final threshold
+///  \item threshold - Applied margin, i.e. `threshold * MAD`.
 /// }
 ///
 /// @details
-/// Should you provide too short vectors, the function will return an empty
+/// Should you provide an empty vector, the function will return an empty
 /// boolean and a threshold of 0.
 ///
 /// @export

@@ -9,24 +9,24 @@ rs_mad_outlier(x, threshold, direction)
 \arguments{
 \item{x}{Numerical vector to test.}
 
-\item{threshold}{Numeric. Number of MADs in either direction that is
-acceptable.}
+\item{threshold}{Numeric. Number of (unscaled) MADs from the median in
+either direction that is acceptable.}
 
 \item{direction}{String. One of \code{c("below", "above", "twosided")}. Shall
 the outlier direction be done for values below the threshold, above the
-threshold or in both directions. Weird strings default to twosided tests.}
+threshold or in both directions. Unknown strings default to twosided tests.}
 }
 \value{
 A list with the following items:
 \itemize{
 \item outlier - Boolean vector if element is an outlier
-\item threshold - Applied final threshold
+\item threshold - Applied margin, i.e. \code{threshold * MAD}.
 }
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 }
 \details{
-Should you provide too short vectors, the function will return an empty
+Should you provide an empty vector, the function will return an empty
 boolean and a threshold of 0.
 }

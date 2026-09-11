@@ -11,7 +11,7 @@ rs_2d_loess(x, y, span, degree)
 
 \item{y}{Numeric. The y values to fit.}
 
-\item{span}{Numeric. The span parameter. Needs to be between 0.1 and 1.}
+\item{span}{Numeric. The span parameter. Needs to be in \verb{(0, 1]}.}
 
 \item{degree}{Integer. Either 1 (linear) or 2 (quadratic). Other values
 will cause an error.}
@@ -19,11 +19,14 @@ will cause an error.}
 \value{
 A list with the following items
 \itemize{
-\item predicted - The predicted values.
-\item residuals - The residuals for every data point.
-\item valid_idx - Which data indices were included.
+\item predicted - The predicted values, \code{0} for dropped points.
+\item residuals - The residuals for every data point, \code{0} for dropped
+points.
+\item valid_idx - 1-based indices of the points included in the fit.
 }
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+Fits a Loess regression of \code{y} on \code{x}. Points where either value is
+non-finite are dropped from the fit.
 }

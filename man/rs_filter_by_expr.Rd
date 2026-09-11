@@ -14,9 +14,9 @@ rs_filter_by_expr(
 )
 }
 \arguments{
-\item{counts}{Numeric matrix. Raw counts of genes x samples.}
+\item{counts}{Integer or double matrix. Raw counts of genes x samples.}
 
-\item{group}{Integer vector or NULL. Group per sample (e.g.
+\item{group}{Integer vector or NULL. 1-based group code per sample (e.g.
 \code{as.integer(factor(x))}). If NULL, all samples form one group.}
 
 \item{lib_size}{Numeric vector or NULL. Library size per sample. NULL uses
@@ -26,8 +26,8 @@ the column sums.}
 
 \item{min_total_count}{Numeric. Minimum total count across all samples.}
 
-\item{min_prop}{Numeric. Proportion of the smallest group beyond \code{large_n}
-that has to express the gene.}
+\item{min_prop}{Numeric. Fraction of the smallest group size beyond
+edgeR's \code{large.n} that still has to express the gene.}
 }
 \value{
 Boolean vector, one per gene. \code{TRUE} if the gene is kept.

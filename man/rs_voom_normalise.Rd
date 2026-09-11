@@ -7,9 +7,10 @@
 rs_voom_normalise(counts, design, lib_size, span, adaptive_span)
 }
 \arguments{
-\item{counts}{Numeric matrix. Raw counts of genes x samples.}
+\item{counts}{Integer or double matrix. Raw counts of genes x samples.}
 
-\item{design}{Numeric matrix. The design matrix of samples x coefficients.}
+\item{design}{Numeric matrix. The design matrix of samples x coefficients.
+Must be full rank.}
 
 \item{lib_size}{Numeric vector. The effective library size per sample.}
 

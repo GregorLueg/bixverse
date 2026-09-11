@@ -202,11 +202,13 @@ extendr_module! {
 /// @param embd Optional numerical matrix. The embedding matrix (for example
 /// PCA embedding) you wish to use for the generation of the kNN graph that
 /// is used subsequently for aggregation of the meta cells.
-/// @param cells_to_keep Optional indices of the cells to keep, i.e., the
-/// cells used for the generation of the embedding.
-/// @param cells_to_use Optional indices of cells to use for meta cell
-/// generation. Useful if you wish to generate meta cells in specific cell
-/// types. If this is provided, the kNN graph will be regenerated.
+/// @param cells_to_keep Optional integer vector. Original cell indices
+/// (0-indexed!) of the rows of `knn_mat` / `embd`, in row order. If `NULL`,
+/// the rows are assumed to map one-to-one onto the count file.
+/// @param cells_to_use Optional integer vector. Original cell indices
+/// (0-indexed!) to restrict the meta cell generation to, e.g. specific cell
+/// types. Needs `cells_to_keep` and `embd`; the kNN graph is then regenerated
+/// on the subset. Cells not in `cells_to_keep` are dropped silently.
 /// @param meta_cell_params A list containing the meta cell parameters.
 /// @param target_size Numeric. Target library size for re-normalisation of
 /// the meta cells. Typically `1e4`.
@@ -216,11 +218,13 @@ extendr_module! {
 ///
 /// @returns A list with the following elements:
 /// \itemize{
-///  \item assignments - A list containing assignment information with elements:
-///    assignments (vector), metacells (list), unassigned (vector), n_metacells,
-///    n_cells, n_unassigned
-///  \item aggregated - A list with indptr, indices, raw_counts, norm_counts,
-///    nrow, ncol in sparse format.
+///  \item assignments - A list with `assignments` (list with one integer
+///    vector of 1-indexed meta cell ids per cell, as meta cells can overlap),
+///    `metacells` (list of 1-indexed original cell indices per meta cell),
+///    `unassigned` (1-indexed cells in no meta cell), `n_metacells`,
+///    `n_cells` and `n_unassigned`.
+///  \item aggregated - A CSR list (meta cells x genes) with indptr, indices,
+///    raw_counts, norm_counts, nrow and ncol.
 /// }
 ///
 /// @export
@@ -395,15 +399,18 @@ fn rs_get_metacells_bootstrapped(
 /// during matrix operations which can affect convergence.
 ///
 /// @param f_path String. Path to the `counts_cells.bin` file.
-/// @param embd Numerical matrix. The embedding matrix (for example PCA embedding)
-/// used for the generation of the kNN graph and kernel matrix.
-/// @param cells_to_keep Optional indices of the cells to keep, i.e., the
-/// cells used for the generation of the embedding.
-/// @param cells_to_use Optional indices of cells to use for meta cell
-/// generation. Useful if you wish to generate meta cells in specific cell
-/// types.
+/// @param embd Numerical matrix. The embedding matrix (for example PCA
+/// embedding) used for the generation of the kNN graph and kernel matrix.
+/// @param cells_to_keep Optional integer vector. Original cell indices
+/// (0-indexed!) of the rows of `embd`, in row order. If `NULL`, the rows are
+/// assumed to map one-to-one onto the count file.
+/// @param cells_to_use Optional integer vector. Original cell indices
+/// (0-indexed!) to restrict the meta cell generation to, e.g. specific cell
+/// types. The kNN graph is then regenerated on the subset. Cells not in
+/// `cells_to_keep` are dropped silently.
 /// @param knn_data Optional list. This contains pre-computed kNN data
-/// (including distances). The user has to ensure consistency!
+/// (including distances). The user has to ensure consistency! Ignored when
+/// `cells_to_use` is set.
 /// @param seacells_params A list containing the SEACells parameters.
 /// @param target_size Numeric. Target library size for re-normalisation of
 /// the meta cells. Typically `1e4`.
@@ -413,13 +420,16 @@ fn rs_get_metacells_bootstrapped(
 ///
 /// @returns A list with the following elements:
 /// \itemize{
-///  \item assignments - A list containing assignment information with elements:
-///    assignments (vector), metacells (list), unassigned (vector), n_metacells,
-///    n_cells, n_unassigned
-///  \item aggregated - A list with indptr, indices, raw_counts, norm_counts,
-///    nrow, ncol in sparse format.
-///  \item rss - Vector of RSS values from each iteration.
-///  \item archetypes - Vector of cell indices selected as archetypes.
+///  \item assignments - A list with `assignments` (integer vector with the
+///    1-indexed meta cell id per original cell, `-1` if unassigned),
+///    `metacells` (list of 1-indexed original cell indices per meta cell),
+///    `unassigned` (1-indexed), `n_metacells`, `n_cells` and `n_unassigned`.
+///    Empty archetypes are dropped and the ids renumbered.
+///  \item aggregated - A CSR list (meta cells x genes) with indptr, indices,
+///    raw_counts, norm_counts, nrow and ncol.
+///  \item rss - Numerical vector of RSS values from each iteration.
+///  \item archetypes - Integer vector with the original cell indices
+///    (0-indexed!) of the archetypes of the retained meta cells.
 /// }
 ///
 /// @export
@@ -651,16 +661,19 @@ fn rs_get_seacells(
 /// @param embd Optional numerical matrix. The embedding matrix (for example
 /// PCA embedding) used for the generation of the kNN graph. Required when
 /// `knn_data` is not provided, and required when using `cells_to_use`.
-/// @param cells_to_keep Optional indices of the cells to keep, i.e., the
-/// cells used for the generation of the embedding.
-/// @param cells_to_use Optional indices of cells to use for meta cell
-/// generation. Useful if you wish to generate meta cells in specific cell
+/// @param cells_to_keep Optional integer vector. Original cell indices
+/// (0-indexed!) of the rows of `embd` / the kNN data, in row order. If
+/// `NULL`, the rows are assumed to map one-to-one onto the count file.
+/// @param cells_to_use Optional integer vector. Original cell indices
+/// (0-indexed!) to restrict the meta cell generation to, e.g. specific cell
 /// types. If this is provided, `embd` and `cells_to_keep` are required and
-/// the kNN graph will be regenerated on the subset.
+/// the kNN graph will be regenerated on the subset. Cells not in
+/// `cells_to_keep` are dropped silently.
 /// @param knn_data Optional list. This contains pre-computed kNN data
 /// (including distances). The user has to ensure consistency! Ignored when
 /// `cells_to_use` is set.
-/// @param supercell_params A list containing the SuperCell parameters.
+/// @param supercell_params A list containing the SuperCell parameters. The
+/// number of meta cells is `ceiling(n_cells / graining_factor)`.
 /// @param target_size Numeric. Target library size for re-normalisation of
 /// the meta cells. Typically `1e4`.
 /// @param seed Integer. For reproducibility purposes.
@@ -669,11 +682,12 @@ fn rs_get_seacells(
 ///
 /// @returns A list with the following elements:
 /// \itemize{
-///  \item assignments - A list containing assignment information with elements:
-///    assignments (vector), metacells (list), unassigned (vector), n_metacells,
-///    n_cells, n_unassigned
-///  \item aggregated - A list with indptr, indices, raw_counts, norm_counts,
-///    nrow, ncol in sparse format.
+///  \item assignments - A list with `assignments` (integer vector with the
+///    1-indexed meta cell id per original cell, `-1` if unassigned),
+///    `metacells` (list of 1-indexed original cell indices per meta cell),
+///    `unassigned` (1-indexed), `n_metacells`, `n_cells` and `n_unassigned`.
+///  \item aggregated - A CSR list (meta cells x genes) with indptr, indices,
+///    raw_counts, norm_counts, nrow and ncol.
 /// }
 ///
 /// @export
@@ -899,26 +913,31 @@ fn rs_supercell(
 ///
 /// @description
 /// `r lifecycle::badge("experimental")`
-/// Generates diffusion maps and identifies in which density region a given
-/// cell sits (defined as distance to k-nearest neighbours quite).
+/// Builds multiscale diffusion components from the kNN graph and uses the
+/// distance to the `k_density`-th neighbour in that space as a density proxy.
+/// The lower quartile of these distances is tagged high density, the upper
+/// quartile low density, the rest mid.
 ///
-/// @param knn_data Named list. Needs to have the relevant data from the kNN
-/// graph.
+/// @param knn_data Named list. The kNN data with `indices` (0-indexed!),
+/// `dist`, `k` and `dist_metric`.
 /// @param n_dcs Integer. The number of diffusion coordinates to return.
 /// Typically `10`.
 /// @param k_density Integer. The k-nearest neighbour to use for the density
 /// estimation. Typically `150`.
 /// @param knn_params List. The kNN parameters defined by
-/// [params_sc_neighbours()].
+/// [params_sc_neighbours()], used for the search in diffusion space.
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
 /// @param seed Integer. For reproducibility.
 ///
 /// @returns A list with the following items
 /// \itemize{
-///   \item dcs - Density coordinates
-///   \item density_distances - Density distances at `k_density` neighbours.
-///   \item regions - Region of the manifold where this given cell is.
+///   \item dcs - Numerical matrix of cells x `n_dcs` with the multiscale
+///   diffusion components.
+///   \item density_distances - Numerical vector. Distance to the
+///   `k_density`-th neighbour in diffusion space per cell.
+///   \item regions - Character vector. `"high"`, `"mid"` or `"low"` density
+///   per cell.
 /// }
 ///
 /// @export
@@ -973,12 +992,16 @@ fn rs_metacell_density(
 ///
 /// @description
 /// `r lifecycle::badge("experimental")`
-/// Calculates the meta cell compactness based on the diffusion map coordinates.
+/// Calculates the meta cell compactness, i.e. the average variance across the
+/// diffusion components over the cells of each meta cell. Lower is better.
 ///
-/// @param dc Numerical matrix. The diffusion map coordinates.
-/// @param meta_cells List. The cell indices of the meta cells.
+/// @param dc Numerical matrix. The diffusion map coordinates, cells x
+/// components.
+/// @param meta_cells List. Per meta cell, an integer vector with the row
+/// indices (1-indexed!) into `dc`.
 ///
-/// @returns The compactness results
+/// @returns Numerical vector with one compactness value per meta cell. Empty
+/// meta cells yield `NaN`.
 ///
 /// @export
 ///
@@ -1007,13 +1030,17 @@ fn rs_metacell_compactness(dc: RMatrix<f64>, meta_cells: List) -> Result<Vec<f64
 ///
 /// @description
 /// `r lifecycle::badge("experimental")`
-/// Calculates the separation of the single cells of a given meta cell based on
-/// the diffusion map.
+/// Calculates the separation, i.e. the Euclidean distance from each meta cell
+/// centroid in diffusion space to the nearest other meta cell centroid.
+/// Higher is better.
 ///
-/// @param dc Numerical matrix. The diffusion map coordinates.
-/// @param meta_cells List. The cell indices of the meta cells.
+/// @param dc Numerical matrix. The diffusion map coordinates, cells x
+/// components.
+/// @param meta_cells List. Per meta cell, an integer vector with the row
+/// indices (1-indexed!) into `dc`.
 ///
-/// @returns The separation results
+/// @returns Numerical vector with one separation value per meta cell. Empty
+/// meta cells yield `NaN`; a lone non-empty meta cell yields `Inf`.
 ///
 /// @export
 ///
@@ -1047,17 +1074,19 @@ fn rs_metacell_separation(dc: RMatrix<f64>, meta_cells: List) -> Result<Vec<f64>
 /// `r lifecycle::badge("experimental")`
 /// This function will return a dense matrix of
 /// `length(cell_indices_ls) x number of genes`. The function has the option
-/// to return the sum of the sum of the raw counts or the average of the
-/// normalised counts.
+/// to return the sum of the raw counts or the average of the normalised
+/// counts.
 ///
 /// @param f_path String. Path to the `counts_cells.bin` file.
-/// @param cell_indices_ls List. Must contains 0-indexed positions of the
-/// cells to aggregate per element.
-/// @param assay String. One of `c("raw", "norm")`. Which counts to normalise.
+/// @param cell_indices_ls List. Each element contains the 0-indexed positions
+/// of the cells to aggregate.
+/// @param assay String. One of `c("raw", "norm")`. `"raw"` sums the raw
+/// counts, `"norm"` averages the normalised counts. Unrecognised values fall
+/// back to `"raw"`.
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
 ///
-/// @returns A dense matrix with the pseudo-bulked data.
+/// @returns A dense numerical matrix of pseudo-bulked samples x genes.
 ///
 /// @export
 ///
@@ -1093,19 +1122,21 @@ fn rs_pseudobulk_cells_dense(
 /// `r lifecycle::badge("experimental")`
 /// This function will return a sparse matrix of
 /// `length(cell_indices_ls) x number of genes` (in list form in CSR).
-/// The function has the option to return the sum of the sum of the raw counts
-/// or the average of the normalised counts.
+/// The function has the option to return the sum of the raw counts or the
+/// average of the normalised counts.
 ///
 /// @param f_path String. Path to the `counts_cells.bin` file.
-/// @param cell_indices_ls List. Must contains 0-indexed positions of the
-/// cells to aggregate per element.
-/// @param assay String. One of `c("raw", "norm")`. Which counts to normalise.
+/// @param cell_indices_ls List. Each element contains the 0-indexed positions
+/// of the cells to aggregate.
+/// @param assay String. One of `c("raw", "norm")`. `"raw"` sums the raw
+/// counts, `"norm"` averages the normalised counts. Unrecognised values fall
+/// back to `"raw"`.
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
 ///
 /// @returns A list with the following elements (easy to convert into CSR in R)
 /// \itemize{
-///   \item indptr - The index pointers (representing cells)
+///   \item indptr - The index pointers (representing pseudo-bulked samples)
 ///   \item indices - The indices (representing genes)
 ///   \item data - The pseudo-bulked data
 ///   \item nrow - Number of rows (i.e., pseudo-bulked samples)

@@ -10,8 +10,11 @@ rs_hamming_dist(x)
 \item{x}{Integer matrix. The integers represent the factor data.}
 }
 \value{
-The Hamming distance matrix
+The Hamming distance matrix between the columns, values in
+\verb{[0, 1]}.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+Calculates the pairwise Hamming distance between the columns, i.e. the
+fraction of rows in which two columns differ.
 }

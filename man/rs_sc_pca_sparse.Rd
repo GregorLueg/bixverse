@@ -36,7 +36,7 @@ run.}
 detailed verbosity.}
 }
 \value{
-A list with with the following items
+A list with the following items
 \itemize{
 \item scores - The samples projected on the PCA space (solved via sparse
 SVD).

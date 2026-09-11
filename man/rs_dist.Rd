@@ -11,10 +11,11 @@ rs_dist(x, distance_type)
 column distances.}
 
 \item{distance_type}{String. One of
-\code{c("euclidean", "manhattan", "canberra", "cosine")}.}
+\code{c("euclidean", "manhattan", "canberra", "cosine", "correlation")}.
+\code{"correlation"} is \verb{1 - Pearson r}. Unknown strings raise an error.}
 }
 \value{
-The calculated distance matrix
+The calculated distance matrix.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}

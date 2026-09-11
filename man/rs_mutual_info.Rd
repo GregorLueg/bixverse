@@ -10,17 +10,18 @@ rs_mutual_info(x, n_bins, strategy, normalise)
 \item{x}{R matrix with doubles for which to calculate the mutual information}
 
 \item{n_bins}{Optional integer. Number of bins to use. If \code{NULL} is provided
-the function will default to \code{sqrt(nrows(x))}.}
+the function will default to \code{sqrt(nrow(x))}.}
 
-\item{strategy}{String. Binning strategy One of
-\code{c("equal_width", "equal_freq")}. If weird string is provided, it will
-default to \code{"equal_width"}.}
+\item{strategy}{String. Binning strategy. One of
+\code{c("equal_width", "equal_freq")}. Unknown strings default to
+\code{"equal_width"}.}
 
 \item{normalise}{Boolean. Shall the normalised mutual information be
 calculated via joint entropy.}
 }
 \value{
-The mutual information matrix.
+The symmetric mutual information matrix. The diagonal holds the
+column entropies, or \code{0} if \code{normalise = TRUE}.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}

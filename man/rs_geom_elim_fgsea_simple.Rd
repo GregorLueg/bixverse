@@ -15,7 +15,8 @@ rs_geom_elim_fgsea_simple(
 )
 }
 \arguments{
-\item{stats}{Named numerical vector. Needs to be sorted. The gene level statistics.}
+\item{stats}{Named numerical vector. Needs to be sorted. The gene level
+statistics.}
 
 \item{levels}{A character vector representing the levels to iterate through.
 The order will be the one the iterations are happening in.}
@@ -29,26 +30,27 @@ wrapper function. This function generates a list containing:
 \item min_size - Integer. Minimum size for the gene sets.
 \item max_size - Integer. Maximum size for the gene sets.
 \item gsea_param - Float. The GSEA parameter. Defaults to \code{1.0}.
-\item sample_size - Integer. Number of samples to iterate through for the
+\item sample_size - Integer. Number of samples to iterate through for
+the multi-level implementation of fgsea.
+\item eps - Float. Boundary for calculating the p-value. Used for the
 multi-level implementation of fgsea.
-\item eps - Float. Boundary for calculating the p-value. Used for the multi-
-level implementation of fgsea.
 }}
 
 \item{elim_threshold}{p-value below which the elimination procedure shall be
 applied to the ancestors.}
 
-\item{iters}{Integer. Number of random permutations for the fgsea simple method
-to use}
+\item{iters}{Integer. Number of random permutations for the fgsea simple
+method to use}
 
 \item{seed}{Integer. For reproducibility purposes.}
 }
 \value{
 List with the following elements
 \itemize{
-\item go_ids The name of the tested gene ontology identifer.
+\item go_id The name of the tested gene ontology identifier.
 \item es The enrichment scores for the pathway
-\item nes The normalised enrichment scores for the pathway
+\item nes The normalised enrichment scores for the pathway. Can be
+\code{NA}.
 \item size The pathway sizes (after elimination!).
 \item pvals The p-values for this pathway based on permutation
 testing
@@ -56,8 +58,8 @@ testing
 bigger or smaller than the permutation (pending sign).
 \item le_zero Number of times the permutation was less than zero.
 \item ge_zero Number of times the permutation was greater than zero.
-\item leading_edge A list of the index positions of the leading edge
-genes for this given GO term.
+\item leading_edge A list of the 1-based index positions (in \code{stats})
+of the leading edge genes for this given GO term.
 }
 }
 \description{

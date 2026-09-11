@@ -22,8 +22,8 @@ of group 1.}
 \item{cell_indices_2}{Integer. Index positions (0-indexed) of the cells
 of group 2.}
 
-\item{min_prop}{Minimum proportion of expression in at least one of the
-two groups to be tested.}
+\item{min_prop}{Numeric. Minimum proportion of expression in at least one
+of the two groups to be tested.}
 
 \item{alternative}{String. One of \code{c("twosided", "greater", "less")}. Null
 hypothesis.}

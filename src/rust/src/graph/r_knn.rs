@@ -18,28 +18,37 @@ extendr_module! {
 /////////////
 
 /// Helper for graph label propagation parameters
-///
-/// ### Params
-///
-/// * `alpha` - Parameter that controls the spreading
-/// * `iter` - Number of iterations to run the algorithm for
-/// * `tolerance` - Tolerance for early stopping
-/// * `symmetrise` - Shall the graph be symmetrised
-/// * `symmetry_strategy` - If weighted graph, which symmetrisation strategy
-///   shall be used.
-/// * `max_hops` - Optional usize. If provided, restricts label spreading to
-///   nodes within this many hops of any labelled node. Nodes beyond this limit
-///   are left as all-zeroes. If None, spreading is unrestricted.
 struct LabelPropParams {
+    /// Parameter that controls the spreading
     alpha: f64,
+    /// Maximum number of iterations to run the algorithm for
     iter: usize,
+    /// Tolerance for early stopping
     tolerance: f64,
+    /// Shall the graph be symmetrised
     symmetrise: bool,
+    /// If weighted graph, which symmetrisation strategy shall be used
     symmetry_strategy: String,
+    /// If provided, restricts label spreading to nodes within this many hops
+    /// of any labelled node. Nodes beyond this limit are left as all-zeroes.
+    /// If `None`, spreading is unrestricted.
     max_hops: Option<usize>,
 }
 
 impl LabelPropParams {
+    /// Generate the parameters from an R list
+    ///
+    /// Missing elements fall back to `alpha = 0.9`, `iter = 100`,
+    /// `tolerance = 1e-6`, `symmetrise = false`,
+    /// `symmetry_strategy = "average"` and no `max_hops`.
+    ///
+    /// ### Params
+    ///
+    /// * `r_list` - Named R list with the parameters
+    ///
+    /// ### Returns
+    ///
+    /// The `LabelPropParams`, or an error if the list cannot be parsed.
     fn from_list(r_list: List) -> Result<Self, extendr_api::Error> {
         let map: HashMap<&str, Robj> = r_list.try_into()?;
 
@@ -95,15 +104,15 @@ impl LabelPropParams {
 /// be useful for semi-supervised tasks. It implements the label spreading
 /// method.
 ///
-/// @param from Integer vector. Source node indices for each edge.
-/// @param to Integer vector. Target node indices for each edge. Must be the
-/// same length as `from`.
+/// @param from Integer vector. 1-based source node indices for each edge.
+/// @param to Integer vector. 1-based target node indices for each edge. Must be
+/// the same length as `from`.
 /// @param one_hot_encoding Integer matrix. Each row represents a sample, the
 /// columns the one-hot encodings. Everything 0 denotes the unlabelled data.
 /// @param label_mask Boolean vector. Which of the samples do not have a label.
 /// Needs to be same length as `nrow(one_hot_encoding)`.
 /// @param weights Optional numeric vector. Edge weights for each pair in
-/// `from`/`to`. Must have the same length as `from`. If NULL, all edges are
+/// `from`/`to`. Must have the same length as `from`. If `NULL`, all edges are
 /// treated as unweighted.
 /// @param label_prop_params List. Named list of parameters with the following
 /// optional fields (defaults in parentheses):
@@ -112,11 +121,13 @@ impl LabelPropParams {
 ///   \item `iter` integer, max iterations (100)
 ///   \item `tolerance` numeric, convergence threshold (1e-6)
 ///   \item `symmetrise` logical, symmetrise the graph (FALSE)
-///   \item `symmetry_strategy` character, one of "average", "min", "max" ("average")
+///   \item `symmetry_strategy` character, one of `"average"`, `"min"`,
+///   `"max"` (`"average"`). Only used for weighted graphs.
 ///   \item `max_hops` integer, restrict spreading radius (unrestricted)
 /// }
 ///
 /// @returns The matrix with the probabilities of being of a certain class.
+/// Same shape as `one_hot_encoding`.
 ///
 /// @export
 #[extendr]
@@ -175,15 +186,15 @@ fn rs_knn_label_propagation(
 ///
 /// @description
 /// `r lifecycle::badge("experimental")`
-/// Helper function to leverage Rust to transform a kNN matrix into two vectors
-/// of from, to
+/// Helper function to leverage Rust to transform a kNN matrix into a flat
+/// edge list.
 ///
 /// @param knn_mat Integer matrix. Rows represent the samples and the columns
-/// the indices of the k-nearest neighbours.
-/// @param one_index Boolean. If the original data is 0-index, shall 1-indexed
-/// data be returned.
+/// the 0-based indices of the k-nearest neighbours.
+/// @param one_index Boolean. Shall 1-based indices be returned.
 ///
-/// @returns A flat vector representing the edge list.
+/// @returns A flat vector representing the edge list, alternating from and
+/// to, i.e. `c(from_1, to_1, from_2, to_2, ...)`.
 ///
 /// @export
 #[extendr]
@@ -214,7 +225,7 @@ fn rs_knn_mat_to_edge_list(knn_mat: RMatrix<i32>, one_index: bool) -> Vec<i32> {
     res
 }
 
-/// Flatten kNN matrix to edge list
+/// Flatten kNN matrix to edge pairs
 ///
 /// @description
 /// `r lifecycle::badge("experimental")`
@@ -222,9 +233,8 @@ fn rs_knn_mat_to_edge_list(knn_mat: RMatrix<i32>, one_index: bool) -> Vec<i32> {
 /// list.
 ///
 /// @param knn_mat Integer matrix. Rows represent the samples and the columns
-/// the indices of the k-nearest neighbours.
-/// @param one_index Boolean. If the original data is 0-index, shall 1-indexed
-/// data be returned.
+/// the 0-based indices of the k-nearest neighbours.
+/// @param one_index Boolean. Shall 1-based indices be returned.
 ///
 /// @returns A list with the following elements
 /// \itemize{

@@ -9,23 +9,27 @@ rs_onto_semantic_sim_mat(sim_type, ancestor_list, ic_list, flat_matrix)
 \arguments{
 \item{sim_type}{String. Must be one of \code{c("resnik", "lin", "combined")}.}
 
-\item{ancestor_list}{R list with names being the term and the elements in the
-list the names of the ancestors.}
+\item{ancestor_list}{R list with names being the term and the elements in
+the list the names of the ancestors.}
 
 \item{ic_list}{R list with the names being the term and the elements the
 information content of this given term. Needs to be a single float!}
 
-\item{flat_matrix}{Boolean. Shall only the upper triangle be returned.}
+\item{flat_matrix}{Boolean. Shall only the upper triangle (row-wise,
+diagonal excluded) be returned.}
 }
 \value{
 A list with:
 \itemize{
-\item sim_mat - the semantic similarity matrix (flat or as matrix.)
-\item names - the row and column names for the calculated matrix.
+\item sim_mat - the semantic similarity matrix (flat or as matrix). The
+diagonal of the full matrix is \code{1}.
+\item names - the row and column names for the calculated matrix, i.e.
+the names of \code{ic_list} sorted alphabetically.
 }
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
-This function calculates the specified semantic similarity and returns the
-full vector (only calculating the upper triangle) for the given similarity.
+This function calculates the specified semantic similarity between all
+terms in \code{ic_list} (only calculating the upper triangle) and returns it
+either as the flat upper triangle or as the full matrix.
 }

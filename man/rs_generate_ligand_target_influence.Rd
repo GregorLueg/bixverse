@@ -13,23 +13,24 @@ rs_generate_ligand_target_influence(
 )
 }
 \arguments{
-\item{ligand_seeds}{List. Contains the indices of the seeds, i.e., ligands.}
+\item{ligand_seeds}{List of integer vectors. The 0-indexed seed node(s) per
+ligand or ligand combination.}
 
 \item{ppi_network}{Named list. Contains the PPI network with the ligand
-to receptor to signalling to TFs. Must contain from (indices), to
-(indices), and edge weights.}
+to receptor to signalling to TFs. Must contain \code{from} and \code{to} (0-indexed
+node indices) and \code{weight}.}
 
 \item{grn_network}{Named list. Contains the gene regulatory network with the
-TF to target gene network. Must contain from (indices), to (indices), and
-edge weights.}
+TF to target gene network. Must contain \code{from} and \code{to} (0-indexed node
+indices) and \code{weight}.}
 
 \item{n_nodes}{Integer. Number of total nodes.}
 
-\item{params}{Named list.}
+\item{params}{Named list. The ligand-target diffusion parameters.}
 }
 \value{
-A dense matrix of ligands x genes that contains the influence
-scores of each
+A dense matrix of ligands x \code{n_nodes}, rows in \code{ligand_seeds}
+order, with the ligand to target influence scores.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}

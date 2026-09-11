@@ -7,14 +7,16 @@
 rs_get_gs_indices(gene_universe, pathway_list)
 }
 \arguments{
-\item{gene_universe}{Character Vector. The genes represented in the gene universe.}
+\item{gene_universe}{Character Vector. The genes represented in the gene
+universe.}
 
-\item{pathway_list}{List. A named list with each element containing the genes for this
-pathway.}
+\item{pathway_list}{List. A named list with each element containing the
+genes for this pathway.}
 }
 \value{
-Returns a list with the index positions of the gene set genes in the gene universe.
-Importantly, these are indexed to R's 1-indexing!
+Returns a list with the sorted index positions of the gene set
+genes in the gene universe. Importantly, these are indexed to R's
+1-indexing! Non-character elements are passed through unchanged.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}

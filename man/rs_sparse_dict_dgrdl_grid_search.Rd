@@ -16,42 +16,46 @@ rs_sparse_dict_dgrdl_grid_search(
 \arguments{
 \item{x}{Numerical matrix. Rows = samples, columns = features.}
 
-\item{dgrdl_params}{A list with the parameters for the algorithm. Expects
-the following items.
+\item{dgrdl_params}{A list with the parameters for the algorithm. Missing
+items fall back to defaults. Expects the following items.
 \itemize{
-\item sparsity - Sparsity constraint (max non-zero coefficients per signal).
-\item dict_size - Size of the dictionary. This parameter will be ignored
-for this function and \code{dict_sizes} will be used.
-\item alpha - Float. Sample context regularisation weight. The higher the stronger
-the regularisation.
-\item beta - Float. Feature context regularisation weight. The higher the stronger
-the regularisation.
+\item sparsity - Integer. Sparsity constraint (max non-zero coefficients
+per signal).
+\item dict_size - Integer. Size of the dictionary. Ignored here,
+\code{dict_sizes} is used instead.
+\item alpha - Float. Sample context regularisation weight. The higher
+the stronger the regularisation.
+\item beta - Float. Feature context regularisation weight. The higher
+the stronger the regularisation.
 \item max_iter - Integer. Maximum iteration for the algorithm.
-\item k_neighbours - Integer. Number of k neighbours for the sample and feature
-Laplacian matrix for the regularisation. This parameter will be ignored and
-\code{k_neighbours_vec} will be used.
-\item admm_iter Integer. Number of iterations for using alternating direction
-method of multipliers (ADMM).
-\item rho Float. ADMM step size.
+\item k_neighbours - Integer. Number of k neighbours for the sample and
+feature Laplacian matrix. Ignored here, \code{k_neighbours_vec} is used
+instead.
+\item admm_iter - Integer. Number of iterations for using alternating
+direction method of multipliers (ADMM).
+\item rho - Float. ADMM step size.
 }}
 
-\item{seeds}{Integer vectors. The random seeds to include in the grid search.}
+\item{seeds}{Integer vector. The random seeds to include in the grid
+search.}
 
 \item{dict_sizes}{Integer vector. The dictionary sizes to test in the grid
 search.}
 
-\item{k_neighbours_vec}{Integer vector. The number of neighbours for the KNN
+\item{k_neighbours_vec}{Integer vector. The number of neighbours for the kNN
 graph generation to test in the grid search.}
 
 \item{verbose}{Boolean. Controls verbosity of the function.}
 }
 \value{
-A list with the following elements:
+A list with the following elements, one entry per tested
+combination:
 \itemize{
 \item seed - The tested seeds.
 \item dict_size - The tested dictionary sizes.
-\item reconstruction_errs - The reconstruction errors for these hyper
-parameters.
+\item k_neighbours - The tested numbers of neighbours.
+\item reconstruction_errs - The reconstruction errors (squared Frobenius
+norm) for these hyperparameters.
 \item feature_laplacian_objective - The objective values of the feature
 Laplacian term for these hyperparameters.
 \item sample_laplacian_objective - The objective values of the sample

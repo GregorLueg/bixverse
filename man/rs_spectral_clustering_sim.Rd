@@ -26,7 +26,7 @@ graph generation}
 \item{seed}{Integer. Seed for reproducibility}
 }
 \value{
-A vector with the membership of the samples
+A vector with the 1-based cluster membership of the samples.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}

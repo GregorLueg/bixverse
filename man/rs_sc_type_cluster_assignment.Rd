@@ -7,23 +7,22 @@
 rs_sc_type_cluster_assignment(sc_type_res, cluster_labels)
 }
 \arguments{
-\item{sc_type_res}{List. The ScType results.}
+\item{sc_type_res}{List. The ScType results, see \code{rs_sc_type()}.}
 
-\item{cluster_labels}{Integer. Cluster assignment. Needs to be of length
-of scored cells.}
+\item{cluster_labels}{Integer vector. Cluster assignment per scored cell.}
 }
 \value{
 A list with
 \itemize{
-\item cluster_id - The cluster id/integer
-\item cell_type - String; the predicted cell type
-\item score - The final score for the clsuter.
-\item n_cells - The number of cells in the cluster.
+\item cluster_id - Integer. The cluster id.
+\item cell_type - Character. The predicted cell type.
+\item scores - Numeric. The final score for the cluster.
+\item n_cells - Integer. The number of cells in the cluster.
 }
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
-This Rust function implements the cell type scoring approach from Ianevski
-et al. (2022).
+Aggregates the per-cell ScType scores into one cell type call per cluster,
+see Ianevski et al. (2022).
 }
 \keyword{internal}

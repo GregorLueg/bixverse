@@ -22,27 +22,28 @@ rs_vision_with_autocorrelation(
 \item{f_path}{String. Path to the \code{counts_cells.bin} file.}
 
 \item{embd}{Numerical matrix. The embedding matrix to use to generate the
-kNN graph.}
+kNN graph. Rows must align with \code{cells_to_keep}.}
 
 \item{knn_data}{Optional list. This contains pre-computed kNN data
-(including distances) and the \code{dist_metric} it was built with. The user has
-to ensure consistency! If provided, this will be used rather than a graph
+(\code{indices} (0-indexed), \code{dist}, \code{dist_metric} and \code{k}). The user has to
+ensure consistency! If provided, this will be used rather than a graph
 built from the parameter list.}
 
-\item{gs_list}{Nested list. Each sublist contains the (0-indexed!) positive
-and negative gene indices of that specific gene set.}
+\item{gs_list}{Nested list. Each sublist contains the (0-indexed!) \code{pos}
+and \code{neg} gene indices of that specific gene set.}
 
 \item{random_gs_list}{Double-nested list. The outer list represents the
-clusters of clusters and the inner list represents the permutations within
-that cluster.}
+gene set clusters and the inner list the permuted gene sets (same structure
+as \code{gs_list}) of that cluster.}
 
 \item{vision_params}{List. Contains various parameters to use in terms
 of the kNN generation.}
 
-\item{cells_to_keep}{Integer. Vector of indices of the cells to keep.}
+\item{cells_to_keep}{Integer. Vector of indices (0-indexed) of the cells to
+keep.}
 
 \item{cluster_membership}{Integer. Vector that indicates to which of the
-permuted gene set clusters the given gene set belongs.}
+permuted gene set clusters (1-indexed) the given gene set belongs.}
 
 \item{streaming}{Boolean. Shall the data be streamed.}
 
@@ -54,8 +55,9 @@ detailed verbosity.}
 \value{
 A list with the following items:
 \itemize{
-\item autocor_res - Auto-correlation results, i.e., 1 - C, p-value and
-FDR.
+\item autocor_res - List with \code{auto_cor} (1 - Geary's C), \code{p_val}
+(empirical, against the permuted gene sets of the same cluster) and
+\code{fdr}.
 \item vision_mat - A matrix of cells x vision scores per gene set.
 }
 }
@@ -65,7 +67,7 @@ The function will take in a list of gene sets that contains lists of \code{"pos"
 and \code{"neg"} gene indices (0-indexed). You don't have to provide the \code{"neg"},
 but it can be useful to classify the delta of two stats (EMT, Th1; Th2) etc.
 Additionally, it will take a random gene list and calculate an
-auto-correlation score based on Gaery's C to identify pathways that show
-significant patterns on the kNN graph generate on the provided embedding.
+auto-correlation score based on Geary's C to identify pathways that show
+significant patterns on the kNN graph generated on the provided embedding.
 }
 \keyword{internal}

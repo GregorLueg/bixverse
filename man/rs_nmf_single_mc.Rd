@@ -16,15 +16,16 @@ rs_nmf_single_mc(
 }
 \arguments{
 \item{sparse_data}{A named list with \code{data}, \code{indptr}, \code{indices}, \code{nrow},
-\code{ncol} and \code{format}.}
+\code{ncol} and \code{cs_type}. Shape is (metacells, genes).}
 
 \item{k}{Integer. Number of latent factors to return.}
 
 \item{preprocessing}{String. One of \code{c("none", "sd", "sqrt_sd")}.}
 
-\item{use_second_layer}{Boolean. If \code{TRUE}, runs NMF on normalised counts.}
+\item{use_second_layer}{Boolean. Shall the second data layer be used.}
 
-\item{nmf_hals_params}{Named list. Contains the NMF parameters.}
+\item{nmf_hals_params}{Named list. Contains the NMF parameters, see
+\code{\link[=params_nmf_hals]{params_nmf_hals()}}.}
 
 \item{seed}{Integer. Random seed for initialisation.}
 
@@ -32,11 +33,20 @@ rs_nmf_single_mc(
 detailed verbosity.}
 }
 \value{
-A list with \code{w}, \code{h}, \code{final_loss}, \code{n_iter}, \code{converged}.
+A list with the following items
+\itemize{
+\item w - The \code{W} matrix of shape \verb{n_meta_cells x k}.
+\item h - The \code{H} matrix of shape \verb{k x n_genes}.
+\item final_loss - Final squared Frobenius reconstruction loss.
+\item n_iter - Number of iterations the algorithm ran for.
+\item converged - Did the NMF algorithm converge.
+}
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 Assumes that the sparse data is pre-filtered for the cells/genes you wish
-to include. Indices in the sparse data need to be 0-indexed.
+to include. Indices in the sparse data need to be 0-indexed. Both data
+layers hold the supplied values, so which assay NMF runs on is decided by
+what is passed in, not by \code{use_second_layer}.
 }
 \keyword{internal}

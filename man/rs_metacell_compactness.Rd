@@ -8,15 +8,19 @@ coordinates}
 rs_metacell_compactness(dc, meta_cells)
 }
 \arguments{
-\item{dc}{Numerical matrix. The diffusion map coordinates.}
+\item{dc}{Numerical matrix. The diffusion map coordinates, cells x
+components.}
 
-\item{meta_cells}{List. The cell indices of the meta cells.}
+\item{meta_cells}{List. Per meta cell, an integer vector with the row
+indices (1-indexed!) into \code{dc}.}
 }
 \value{
-The compactness results
+Numerical vector with one compactness value per meta cell. Empty
+meta cells yield \code{NaN}.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
-Calculates the meta cell compactness based on the diffusion map coordinates.
+Calculates the meta cell compactness, i.e. the average variance across the
+diffusion components over the cells of each meta cell. Lower is better.
 }
 \keyword{internal}

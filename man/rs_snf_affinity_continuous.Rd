@@ -10,8 +10,8 @@ rs_snf_affinity_continuous(data, distance_type, k, mu, normalise)
 \item{data}{Numerical matrix. Needs to be oriented features x samples!}
 
 \item{distance_type}{String. One of
-\code{c("euclidean", "manhattan", "canberra", "cosine")}. Which distance metric
-to use here.}
+\code{c("euclidean", "manhattan", "canberra", "cosine", "correlation")}. Which
+distance metric to use here. Unknown strings default to \code{"euclidean"}.}
 
 \item{k}{Integer. Number of neighbours to consider.}
 

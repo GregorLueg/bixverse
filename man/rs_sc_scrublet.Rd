@@ -52,7 +52,7 @@ a doublet for the simulated cells.
 \item doublet_errors_obs - Numerical vector with the standard errors of
 the scores for the observed cells.
 \item z_scores - Z-scores for the observed cells. Represents:
-\code{score - threshold / error}.
+\code{(score - threshold) / error}.
 \item threshold - Used threshold.
 \item detected_doublet_rate - Fraction of cells that are called as
 doublet.

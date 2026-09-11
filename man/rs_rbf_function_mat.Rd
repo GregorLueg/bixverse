@@ -7,19 +7,18 @@
 rs_rbf_function_mat(x, epsilon, rbf_type)
 }
 \arguments{
-\item{x}{Numeric Matrix. The distances you wish to apply the Gaussian kernel
-onto.}
+\item{x}{Numeric Matrix. The distances you wish to apply the RBF onto.}
 
 \item{epsilon}{Float. Epsilon parameter for the RBF.}
 
 \item{rbf_type}{String. Needs to be from
-\code{c("gaussian", "bump", "inverse_quadratic")}.}
+\code{c("gaussian", "bump", "inverse_quadratic")}. Other values raise an error.}
 }
 \value{
 The affinities after the Kernel was applied.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
-Applies a radial basis function (RBF) to a given distance matrix. Has at the
+Applies a radial basis function (RBF) to a given distance matrix. Has the
 option to apply a Gaussian, Bump or Inverse Quadratic RBF.
 }

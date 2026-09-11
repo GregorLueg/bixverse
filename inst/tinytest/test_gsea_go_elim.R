@@ -360,6 +360,38 @@ expect_equal(
   tolerance = 10e-6
 )
 
+### regression: leading edge indexing ------------------------------------------
+
+# the leading edge used to come back 0-based and was read as 1-based in R,
+# shifting every gene by one; without elimination it must match the plain
+# GSEA leading edge on the full gene set
+
+stats_sorted <- sort(stats, decreasing = TRUE)
+
+le_matches <- purrr::map_lgl(seq_len(nrow(r_results)), \(i) {
+  genes <- toy_go_data[go_id == r_results$go_id[i], ensembl_id][[1]]
+  idx <- sort(match(genes, names(stats_sorted)))
+  ref <- rs_calc_gsea_stats(
+    stats = stats_sorted,
+    gs_idx = idx[!is.na(idx)],
+    gsea_param = 1,
+    return_leading_edge = TRUE,
+    return_all_extremes = FALSE
+  )
+  identical(
+    sort(r_results$leading_edge[[i]]),
+    sort(names(stats_sorted)[ref$leading_edge])
+  )
+})
+
+expect_true(
+  current = all(le_matches),
+  info = paste(
+    "fgsea (multi level) with go elim (R function):",
+    "leading edge matches plain GSEA without elimination"
+  )
+)
+
 ### regression: nothing routed to multi-level -----------------------------------
 
 # purely random GO terms, none of these should be significant enough to be

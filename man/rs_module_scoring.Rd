@@ -24,7 +24,8 @@ rs_module_scoring(
 \item{gs_list}{List. List of integer vectors, where each vector contains
 gene indices (0-based) for a module/gene set.}
 
-\item{cells_to_keep}{Integer. Vector of indices of the cells to keep.}
+\item{cells_to_keep}{Integer. Vector of indices (0-indexed) of the cells to
+keep.}
 
 \item{nbin}{Integer. Number of bins for gene stratification.}
 
@@ -33,15 +34,15 @@ module.}
 
 \item{seed}{Integer. Random seed for reproducible control gene sampling.}
 
-\item{streaming}{Logical. If TRUE, processes cells and genes are read in in
-chunks to reduce memory usage.}
+\item{streaming}{Logical. If \code{TRUE}, cells and genes are read in chunks to
+reduce memory usage.}
 
 \item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
 detailed verbosity.}
 }
 \value{
-Matrix of module scores (modules x cells). Each row corresponds to a
-module from gs_list, each column to a cell from cells_to_keep.
+Matrix of module scores (cells x modules). Each row corresponds to
+a cell from \code{cells_to_keep}, each column to a module from \code{gs_list}.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}

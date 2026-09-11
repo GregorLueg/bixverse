@@ -28,7 +28,8 @@ extendr_module! {
 /// @description
 /// `r lifecycle::badge("experimental")`
 ///
-/// @param stats Named numerical vector. Needs to be sorted. The gene level statistics.
+/// @param stats Named numerical vector. Needs to be sorted. The gene level
+/// statistics.
 /// @param pathway_r String vector. The genes in the pathway.
 ///
 /// @returns The enrichment score
@@ -55,12 +56,14 @@ fn rs_calc_es(stats: Robj, pathway_r: Vec<String>) -> extendr_api::Result<f64> {
 /// @description
 /// `r lifecycle::badge("experimental")`
 ///
-/// @param gene_universe Character Vector. The genes represented in the gene universe.
-/// @param pathway_list List. A named list with each element containing the genes for this
-/// pathway.
+/// @param gene_universe Character Vector. The genes represented in the gene
+/// universe.
+/// @param pathway_list List. A named list with each element containing the
+/// genes for this pathway.
 ///
-/// @returns Returns a list with the index positions of the gene set genes in the gene universe.
-/// Importantly, these are indexed to R's 1-indexing!
+/// @returns Returns a list with the sorted index positions of the gene set
+/// genes in the gene universe. Importantly, these are indexed to R's
+/// 1-indexing! Non-character elements are passed through unchanged.
 ///
 /// @export
 ///
@@ -109,9 +112,9 @@ fn rs_get_gs_indices(gene_universe: Vec<String>, pathway_list: List) -> extendr_
 /// @description
 /// `r lifecycle::badge("experimental")`
 ///
-/// @param stats Numeric vector. The gene level statistic. Needs to
+/// @param stats Numeric vector. The gene level statistic. Needs to be
 /// sorted in descending nature.
-/// @param gs_idx Integer vector. The indices of the gene set genes.
+/// @param gs_idx Integer vector. The 1-based indices of the gene set genes.
 /// @param gsea_param Float. The GSEA parameter. Usually defaults to 1.0.
 /// @param return_leading_edge Boolean. Return the leading edge indices.
 /// @param return_all_extremes Boolean. Shall the extreme values be returned
@@ -119,8 +122,8 @@ fn rs_get_gs_indices(gene_universe: Vec<String>, pathway_list: List) -> extendr_
 ///
 /// @returns List with the following elements
 /// \itemize{
-///     \item gene_stat Enrichment score for that gene set
-///     \item leading_edge Indicies of the leading edge genes.
+///     \item es Enrichment score for that gene set
+///     \item leading_edge 1-based indices of the leading edge genes.
 ///     \item top Top values of the curve.
 ///     \item bottom Bottom values of the curve.
 /// }
@@ -158,13 +161,13 @@ fn rs_calc_gsea_stats(
 /// @description
 /// `r lifecycle::badge("experimental")`
 ///
-/// @param stats Numeric vector. The gene level statistic. Needs to
+/// @param stats Numeric vector. The gene level statistic. Needs to be
 /// sorted in descending nature.
 /// @param pathway_scores Numeric vector. The enrichment scores for the
 /// pathways
 /// @param pathway_sizes Integer vector. The sizes of the pathways.
 /// @param iters Integer. Number of permutations.
-/// @param seed Integer For reproducibility purposes
+/// @param seed Integer. For reproducibility purposes
 ///
 /// @returns List with the following elements
 /// \itemize{
@@ -209,7 +212,7 @@ fn rs_calc_gsea_stat_traditional_batch(
 /// @description
 /// `r lifecycle::badge("experimental")`
 ///
-/// @param stats Numeric vector. The gene level statistic. Needs to
+/// @param stats Numeric vector. The gene level statistic. Needs to be
 /// sorted in descending nature.
 /// @param pathway_scores Numeric vector. The enrichment scores for the
 /// pathways
@@ -230,8 +233,8 @@ fn rs_calc_gsea_stat_traditional_batch(
 ///     \item size Pathway size.
 /// }
 ///
-/// If `return_add_stats` is set to true, there is additional elements in the
-/// list:
+/// If `return_add_stats` is set to `TRUE`, there are additional elements in
+/// the list:
 /// \itemize{
 ///     \item le_zero Number of times the permutation was less than zero.
 ///     \item ge_zero Number of times the permutation was greater than zero.
@@ -293,19 +296,23 @@ fn rs_calc_gsea_stat_cumulative_batch(
 /// @description
 /// `r lifecycle::badge("experimental")`
 ///
-/// @param stats Named numerical vector. Needs to be sorted. The gene level statistics.
-/// @param es Numerical vector. The enrichment scores of the pathways of that specific size
-/// @param pathway_size Integer. The size of the pathways to test.
-/// @param sample_size Integer. The size of the random gene sets to test against.
+/// @param stats Named numerical vector. Needs to be sorted. The gene level
+/// statistics.
+/// @param es Numerical vector. The enrichment scores of the pathways.
+/// @param pathway_size Integer vector. The size of each pathway, same length
+/// as `es`.
+/// @param sample_size Integer. The size of the random gene sets to test
+/// against.
 /// @param seed Integer. Random seed.
 /// @param eps Float. Boundary for calculating the p-value.
-/// @param sign Boolean. Used for the only positive or only negative score version.
+/// @param sign Boolean. Used for the only positive or only negative score
+/// version.
 ///
 /// @returns List with the following elements:
 /// \itemize{
-///     \item pvals The pvalues.
-///     \item is_cp_ge_half Flag indicating if conditional probability is ≥ 0.5. Indicates
-///     overesimation of the p-values.
+///     \item pvals The p-values.
+///     \item is_cp_ge_half Flag indicating if conditional probability is
+///     `>= 0.5`. Indicates overestimation of the p-values.
 /// }
 ///
 /// @export
@@ -363,8 +370,8 @@ fn rs_calc_multi_level(
 /// @description
 /// `r lifecycle::badge("experimental")`
 ///
-/// @param n_more_extreme Integer vector. The number of times the ES was larger than the
-/// permutations.
+/// @param n_more_extreme Integer vector. The number of times the ES was larger
+/// than the permutations.
 /// @param nperm Integer. Number of permutations.
 /// @param sample_size Integer. Number of samples.
 ///

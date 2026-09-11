@@ -26,12 +26,14 @@ for the generation of the meta cells. This function expects 0-indices!}
 PCA embedding) you wish to use for the generation of the kNN graph that
 is used subsequently for aggregation of the meta cells.}
 
-\item{cells_to_keep}{Optional indices of the cells to keep, i.e., the
-cells used for the generation of the embedding.}
+\item{cells_to_keep}{Optional integer vector. Original cell indices
+(0-indexed!) of the rows of \code{knn_mat} / \code{embd}, in row order. If \code{NULL},
+the rows are assumed to map one-to-one onto the count file.}
 
-\item{cells_to_use}{Optional indices of cells to use for meta cell
-generation. Useful if you wish to generate meta cells in specific cell
-types. If this is provided, the kNN graph will be regenerated.}
+\item{cells_to_use}{Optional integer vector. Original cell indices
+(0-indexed!) to restrict the meta cell generation to, e.g. specific cell
+types. Needs \code{cells_to_keep} and \code{embd}; the kNN graph is then regenerated
+on the subset. Cells not in \code{cells_to_keep} are dropped silently.}
 
 \item{meta_cell_params}{A list containing the meta cell parameters.}
 
@@ -46,11 +48,13 @@ detailed verbosity.}
 \value{
 A list with the following elements:
 \itemize{
-\item assignments - A list containing assignment information with elements:
-assignments (vector), metacells (list), unassigned (vector), n_metacells,
-n_cells, n_unassigned
-\item aggregated - A list with indptr, indices, raw_counts, norm_counts,
-nrow, ncol in sparse format.
+\item assignments - A list with \code{assignments} (list with one integer
+vector of 1-indexed meta cell ids per cell, as meta cells can overlap),
+\code{metacells} (list of 1-indexed original cell indices per meta cell),
+\code{unassigned} (1-indexed cells in no meta cell), \code{n_metacells},
+\code{n_cells} and \code{n_unassigned}.
+\item aggregated - A CSR list (meta cells x genes) with indptr, indices,
+raw_counts, norm_counts, nrow and ncol.
 }
 }
 \description{

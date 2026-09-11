@@ -26,8 +26,8 @@ extendr_module! {
 /// @description
 /// `r lifecycle::badge("experimental")`
 /// This function takes a nested list that contains gene modules/sets derived
-/// from various methods and generate identifies (k-th) reciprocal best hits
-/// between gene modules/sets across the different origins.
+/// from various methods and identifies (k-th) reciprocal best hits between
+/// gene modules/sets across every pair of origins.
 ///
 /// @param module_list A nested named list. The outer list should contain the
 /// origin of the gene modules, the inner list the names of the gene modules and
@@ -36,10 +36,10 @@ extendr_module! {
 /// `1L`, this behaves as the traditional reciprocal best hit. If you set this
 /// to `3L` you consider edges if the modules is in the top 3 best modules
 /// by similarity for each other.
-/// @param overlap_coefficient Shall the overlap coefficient instead of the
-/// Jaccard similarity be used.
-/// @param min_similarity Minimum similarity that should exist between any two
-/// given gene modules to actually calculate RBH pairs.
+/// @param overlap_coefficient Boolean. Shall the overlap coefficient instead
+/// of the Jaccard similarity be used.
+/// @param min_similarity Numeric. Only hits with a similarity strictly above
+/// this are returned.
 ///
 /// @returns A list containing:
 ///  \itemize{
@@ -160,15 +160,16 @@ fn rs_rbh_sets(
 /// hits (RBH) for. The rows need to represent the features and the columns the
 /// parts you wish to calculate the RBH for.
 ///
-/// @param module_matrices A list of named matrices. Rows represent features
-/// and columns the samples you wish to calculate the correlations for.
+/// @param module_matrices A named list of matrices with row and column names.
+/// Rows represent features and columns the modules you wish to calculate the
+/// correlations for. Only features shared between two matrices are used.
 /// @param k_best Integer. Number of best neighbours to consider. If set to
 /// `1L`, this behaves as the traditional reciprocal best hit. If you set this
 /// to `3L` you consider edges if the modules is in the top 3 best modules
 /// by similarity for each other.
-/// @param spearman Shall Spearman correlation be used.
-/// @param min_similarity Minimum (absolute) correlations that needs to exist
-/// between two terms.
+/// @param spearman Boolean. Shall Spearman correlation be used.
+/// @param min_similarity Numeric. Only hits with an absolute correlation
+/// strictly above this are returned.
 ///
 /// @returns A list containing:
 ///  \itemize{
@@ -178,8 +179,8 @@ fn rs_rbh_sets(
 ///   identified in this comparison
 ///   \item origin_modules - Names of the gene modules from the origin.
 ///   \item target_modules - Names of the gene modules from the target.
-///   \item similarity - The similarities between the two respective gene
-///   modules.
+///   \item similarity - The absolute correlations between the two respective
+///   gene modules.
 /// }
 ///
 /// @export

@@ -37,8 +37,9 @@ extendr_module! {
 /// @param x Numerical matrix. Affinity matrix.
 /// @param tom_type String. One of `c("v1", "v2")` - pending on choice, a
 /// different normalisation method will be used.
-/// @param signed Boolean. Shall the signed TOM be calculated. If set to
-/// `FALSE`, values should be ≥ 0.
+/// @param signed Boolean. Shall the signed TOM be calculated, i.e. the
+/// connectivity be taken over absolute affinities. If set to `FALSE`, values
+/// should be >= 0.
 ///
 /// @returns Returns the TOM matrix.
 ///
@@ -64,21 +65,21 @@ fn rs_tom(x: RMatrix<f64>, tom_type: &str, signed: bool) -> extendr_api::Result<
 /// `r lifecycle::badge("experimental")`
 /// This function assesses the quality of the clusters with a given cut `k`.
 /// Returns the median R2 (cor^2) and the median absolute deviation (MAD) of the
-/// clusters. Large clusters (≥1000) are subsampled to a random set of 1000
-/// genes.
+/// clusters. Clusters with more than 1000 genes are subsampled to a random set
+/// of 1000 genes. Genes not found in `row_names` are skipped.
 ///
 /// @param cluster_genes A list. Contains the cluster and their respective
-/// genes.
+/// genes as character vectors.
 /// @param cor_mat Numerical matrix. Contains the correlation coefficients.
 /// @param row_names String vector. The row names (or column names) of the
 /// correlation matrix.
 /// @param seed Integer. Random seed for the sub sampling of genes.
 ///
-/// @returns A list containing:
+/// @returns A list containing, one entry per cluster:
 ///  \itemize{
 ///   \item r2med - median R2 of the cluster.
-///   \item r2mad - median absolute deviation of the R2 in the cluster.
-///   \item size - size of the cluster.
+///   \item r2mad - scaled median absolute deviation of the R2 in the cluster.
+///   \item size - number of cluster genes found in `row_names`.
 /// }
 ///
 /// @keywords internal
@@ -133,11 +134,12 @@ fn rs_coremo_quality(
             let indices_diagonal: Vec<(usize, &[usize])> = indices
                 .iter()
                 .enumerate()
-                .map(|(i, first)| (*first, &index_vec[i + 1..]))
+                .map(|(i, first)| (*first, &indices[i + 1..]))
                 .take_while(|(_, rest)| !rest.is_empty())
                 .collect();
 
-            let expected_size = index_vec.len() * (index_vec.len() - 1) / 2;
+            let m = indices.len();
+            let expected_size = m * m.saturating_sub(1) / 2;
             let mut vals: Vec<f64> = Vec::with_capacity(expected_size);
 
             for (r_idx, col_idx) in indices_diagonal {
@@ -172,20 +174,22 @@ fn rs_coremo_quality(
 ///
 /// @description
 /// `r lifecycle::badge("experimental")`
-/// This function is a helper for the leave-on-out stability assessment of
+/// This function is a helper for the leave-one-out stability assessment of
 /// CoReMo clusters. The function will generate the distance vectors based on
-/// leaving out the samples defined in indices one by one.
+/// leaving out the samples defined in indices one by one. Distances are
+/// `1 - rbf(1 - |cor|)` over the feature correlations.
 ///
-/// @param data Numeric matrix. The original processed matrix.
-/// @param indices Integer vector. The sample indices to remove to re-calculate
-/// the distances.
+/// @param data Numeric matrix. The original processed matrix, samples x
+/// features.
+/// @param indices Integer vector. The 1-based sample (row) indices to remove,
+/// one at a time, to re-calculate the distances.
 /// @param epsilon Float. Epsilon parameter for the RBF.
 /// @param rbf_type String. Needs to be from
 /// `c("gaussian", "bump", "inverse_quadratic")`.
 /// @param spearman Boolean. Shall Spearman correlation be used.
 ///
-/// @returns A list with `length(indices)` elements, each containing the distance
-/// minus the given sample.
+/// @returns A list with `length(indices)` elements, each containing the
+/// flattened upper-triangle feature distances with that sample removed.
 ///
 /// @keywords internal
 #[extendr]
@@ -243,12 +247,12 @@ fn rs_coremo_stability(
 /// resampling/bootstrap and the rows represent the features, while each integer
 /// indicates cluster membership.
 ///
-/// @returns A list containing:
+/// @returns A list containing, one entry per feature:
 ///  \itemize{
-///   \item mean_jaccard - mean Jaccard similarities for this feature across all
-///   the bootstraps, resamplings.
-///   \item std_jaccard - the standard deviation of the Jaccard similarities for
-///   this feature across all the bootstraps, resamplings.
+///   \item mean_jaccard - mean Jaccard similarity of the feature's cluster
+///   across all pairs of bootstraps/resamplings.
+///   \item std_jaccard - the (population) standard deviation of these Jaccard
+///   similarities.
 /// }
 ///
 /// @keywords internal
@@ -275,11 +279,12 @@ fn rs_cluster_stability(data: RMatrix<i32>) -> List {
 ///
 /// @description
 /// `r lifecycle::badge("experimental")`
+/// All `1` if every off-diagonal correlation is non-negative, all `-1` if
+/// every one is non-positive, otherwise a graph-based split into two groups.
 ///
 /// @param data The correlation matrix to split by sign.
 ///
-/// @returns A vector of 1 and -1 indicating the respective sign of the
-/// correlation matrix.
+/// @returns An integer vector of 1 and -1, one per column of `data`.
 ///
 /// @export
 ///

@@ -8,28 +8,28 @@ rs_kbet(knn_mat, batch_vector, verbose)
 }
 \arguments{
 \item{knn_mat}{Integer matrix. The rows represent the cells and the
-columns the neighbour indices.}
+columns the neighbour indices (0-indexed!).}
 
-\item{batch_vector}{Integer vector. The integers indicate to which
-batch a given cell belongs.}
+\item{batch_vector}{Integer vector. The batch per cell. The codes need
+not be 0-based or contiguous.}
 
 \item{verbose}{Boolean. Controls verbosity of the function.}
 }
 \value{
 A list with the following items
 \itemize{
-\item pval - The p-values from the ChiSquare test
-\item chi_square_stats - ChiSquare statistics
-\item mean_chi_square - The mean ChiSquare value
-\item median_chi_square - The median ChiSquare value
+\item pval - Per-cell p-values from the chi-square test.
+\item chi_square_stats - Per-cell chi-square statistics.
+\item mean_chi_square - The mean chi-square value.
+\item median_chi_square - The median chi-square value.
 }
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 The function takes in a kNN matrix and a batch vector indicating which
-cell belongs to which batch. The function will check for the neighbourhood
-of each cell if the proportion of represented batches are different from
-the overall batch proportions. Good mixing of batches would mean very
-cells have significant differences; bad mixing a lot of the batches
-have bad mixing.
+cell belongs to which batch. For the neighbourhood of each cell, a
+chi-square test checks whether the batch proportions differ from the
+overall batch proportions (with Yates' correction for two batches). Good
+mixing means few cells with significant differences; bad mixing means
+many.
 }

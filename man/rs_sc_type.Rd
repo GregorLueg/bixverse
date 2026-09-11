@@ -17,9 +17,10 @@ rs_sc_type(
 \item{f_path}{String. Path to the \code{counts_genes.bin} file.}
 
 \item{cell_indices}{Integer vector. 0-indexed(!) positions of cells to
-include in the analysis}
+include in the analysis.}
 
-\item{cell_markers}{A list with the cell marker gene indices.}
+\item{cell_markers}{List. One element per cell type, each a list with that
+cell type's marker gene indices.}
 
 \item{sensitivity}{Boolean. Shall a sensitivity correction be applied that
 downweights common cell type markers.}
@@ -33,10 +34,10 @@ detailed verbosity.}
 \value{
 A list with
 \itemize{
-\item cell_types - String vector. The cell types
-\item scores - Row-major scores (cells x cell_types).
-\item n_cells - Number of cells
-\item n_cell_types - Number of cell types
+\item cell_types - Character vector. The cell types.
+\item scores - Numerical vector. Row-major scores (cells x cell_types).
+\item n_cells - Integer. Number of cells.
+\item n_cell_types - Integer. Number of cell types.
 }
 }
 \description{

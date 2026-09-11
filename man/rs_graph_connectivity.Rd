@@ -8,15 +8,16 @@ rs_graph_connectivity(knn_mat, labels)
 }
 \arguments{
 \item{knn_mat}{Integer matrix. The rows represent the cells and the
-columns the neighbour indices.}
+columns the neighbour indices (0-indexed!).}
 
-\item{labels}{Integer vector. The cell type per cell.}
+\item{labels}{Integer vector. The cell type per cell. The codes need not
+be 0-based or contiguous.}
 }
 \value{
 A list with the following items
 \itemize{
-\item per_label - Connectivity per cell type, in order of the sorted
-label codes.
+\item per_label - Connectivity per cell type, in order of first
+appearance in \code{labels}.
 \item mean - Mean connectivity.
 \item median - Median connectivity.
 }
@@ -25,7 +26,7 @@ label codes.
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 For each cell type, the fraction of its cells in the largest connected
 component of the kNN graph restricted to that cell type. 1 means every
-cell type forms one connected piece.
+cell type forms one connected piece. Edge direction is ignored.
 }
 \references{
 Luecken, et al., Nat Methods, 2022

@@ -9,7 +9,8 @@ rs_remove_batch_effect(x, batch, design)
 \arguments{
 \item{x}{Numeric matrix. Log-expression values of genes x samples.}
 
-\item{batch}{Integer vector. Batch per sample.}
+\item{batch}{Integer vector. Batch label per sample, e.g.
+\code{as.integer(factor(x))}. Needs at least two distinct labels.}
 
 \item{design}{Numeric matrix or NULL. The design of interest, samples x
 coefficients, whose effects are protected. NULL is an intercept only.}

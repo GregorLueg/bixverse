@@ -7,8 +7,8 @@
 rs_filter_onto_sim(sim_vals, names, threshold)
 }
 \arguments{
-\item{sim_vals}{Numerical vector. The upper triangle of the similarity matrix
-as a flattened vector.}
+\item{sim_vals}{Numerical vector. The upper triangle of the similarity
+matrix as a flattened vector (row-wise, diagonal excluded).}
 
 \item{names}{String vector. The row/col names of the similarity matrix.}
 
@@ -24,7 +24,7 @@ A list with:
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
-This function takes the similarity values as the upper triangle, the
-row/column names and filtering the values down based on the threshold.
+This function takes the similarity values as the upper triangle and the
+row/column names and filters the values down to those \verb{>= threshold}.
 }
 \keyword{internal}

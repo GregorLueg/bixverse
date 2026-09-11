@@ -22,8 +22,8 @@ of the reference group.}
 \item{cell_indices_other}{List. List of integer vectors, each containing the
 index positions (0-indexed) of the cells of one comparison group.}
 
-\item{min_prop}{Minimum proportion of expression in at least one of the
-groups to be tested.}
+\item{min_prop}{Numeric. Minimum proportion of expression in at least one
+of the groups to be tested.}
 
 \item{alternative}{String. One of \code{c("twosided", "greater", "less")}. Null
 hypothesis.}

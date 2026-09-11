@@ -7,7 +7,8 @@
 rs_prepare_whitening(x, fast_svd, seed, rank, oversampling, n_power_iter)
 }
 \arguments{
-\item{x}{The matrix to whiten. The whitening will happen over the columns.}
+\item{x}{Numeric matrix to whiten. The columns are centred and the
+whitening happens over the columns.}
 
 \item{fast_svd}{Boolean. Shall a randomised SVD be used. This is way faster
 on larger data sets.}
@@ -18,23 +19,25 @@ on larger data sets.}
 If you supply \code{NULL}, it will default to \code{10L}. Only relevant with
 fast_svd is set to \code{TRUE}.}
 
-\item{oversampling}{Integer. Oversampling parameter to make the approximation
-more precise. If you supply \code{NULL}, it will default to \code{10L}. Only relevant
-with fast_svd is set to \code{TRUE}.}
+\item{oversampling}{Integer. Oversampling parameter to make the
+approximation more precise. If you supply \code{NULL}, it will default to \code{10L}.
+Only relevant with fast_svd is set to \code{TRUE}.}
 
-\item{n_power_iter}{Integer. How much shall the QR low rank approximation be
-powered. If you supply \code{NULL}, it will default to \code{2L}.}
+\item{n_power_iter}{Integer. Number of power iterations for the randomised
+SVD. If you supply \code{NULL}, it will default to \code{2L}. Only relevant with
+fast_svd is set to \code{TRUE}.}
 }
 \value{
 A list containing:
 \itemize{
-\item x - The preprocessed matrix.
-\item k - The pre-whitening matrix k.
+\item x - The column-centred input, transposed.
+\item k - The whitening matrix K. With \code{fast_svd = TRUE} it can carry
+more than \code{rank} rows; the caller trims it.
 }
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
-Prepares the data for subsequent usag in ICA. Incorrect use can cause kernel
-crashes. Wrapper around the Rust functions with type checks are provided in
-the package.
+Prepares the data for subsequent usage in ICA. Incorrect use can cause
+kernel crashes. Wrapper around the Rust functions with type checks are
+provided in the package.
 }

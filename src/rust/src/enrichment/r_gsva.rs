@@ -30,7 +30,9 @@ extendr_module! {
 /// genes
 /// @param min_size,max_size Integer. The minimum and maximum size respectively.
 ///
-/// @returns Returns a list with (zero-indexed) indices.
+/// @returns Returns a named list with the sorted, 0-based indices of the
+/// pathways whose size (after matching to `feature_names`) is within
+/// `[min_size, max_size]`.
 ///
 /// @export
 ///
@@ -97,15 +99,15 @@ fn rs_prepare_gsva_gs(
 ///
 /// @param exp Numerical matrix. The expression matrix with rows = genes, and
 /// columns = samples
-/// @param gs_list List. A list containing the indices of the pathway genes
-/// (needs to be null indexed). See [bixverse::rs_prepare_gsva_gs()].
+/// @param gs_list List. A list containing the 0-based indices of the pathway
+/// genes. See [bixverse::rs_prepare_gsva_gs()].
 /// @param tau Float. Tau parameter, usual recommendation is to use `1.0` here.
 /// Larger values emphasise the tails more.
 /// @param kernel String. One of `c("gaussian", "poisson", "none")`. The
-/// kernel function to use.
+/// kernel function to use. Unknown strings default to `"gaussian"`.
 /// @param max_diff Boolean. Scoring mode: `TRUE` = difference, `FALSE` = larger
 /// absolute value
-/// @param abs_rank Booelan. If `TRUE` = pos-neg, `FALSE` = pos+neg
+/// @param abs_rank Boolean. If `TRUE` = pos-neg, `FALSE` = pos+neg
 /// @param timings Boolean. Prints timings from the algorithm.
 ///
 /// @returns Returns a matrix of gene set ES scores x samples.
@@ -147,8 +149,8 @@ fn rs_gsva(
 ///
 /// @param exp Numerical matrix. The expression matrix with rows = genes, and
 /// columns = samples
-/// @param gs_list List. A list containing the indices of the pathway genes
-/// (needs to be null indexed). See [bixverse::rs_prepare_gsva_gs()].
+/// @param gs_list List. A list containing the 0-based indices of the pathway
+/// genes. See [bixverse::rs_prepare_gsva_gs()].
 /// @param alpha Float. The alpha parameter to adjust the weights.
 /// @param normalise Boolean. Shall the scores be normalised.
 /// @param timings Boolean. Prints timings from the algorithm.

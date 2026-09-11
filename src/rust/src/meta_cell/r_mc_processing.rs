@@ -35,20 +35,23 @@ extendr_module! {
 /// `r lifecycle::badge("experimental")`
 /// Calculates highly variable genes for MetaCells or more
 /// generally speaking sparse data. This is happening in-memory compared to the
-/// (usually much) larger single cell data sets.
+/// (usually much) larger single cell data sets. `"meanvarbin"` and
+/// `"dispersion"` compute the same statistics; they differ only in how the R
+/// side selects from them.
 ///
 /// @param sparse_data A named list that needs to have `data`, `indptr`,
-/// `indices`, `nrow`, `ncol` and `format`.
+/// `indices`, `nrow`, `ncol` and `cs_type`. Shape is (metacells, genes). Pass
+/// raw counts for `"vst"` and normalised counts otherwise.
 /// @param hvg_method String. Which HVG detection method to use. Options
 /// are `c("vst", "meanvarbin", "dispersion")`.
 /// @param loess_span Numeric. The span parameter for the loess function
 /// (only used for `"vst"`).
-/// @param clip_max Optional clipping number. Defaults to `sqrt(no_cells)` if
-/// not provided (only used for `"vst"`).
 /// @param binning String. The binning strategy for the `meanvarbin` and
-/// `dispersion` methods. One of `c("equal_width", "equal_frequency")`.
+/// `dispersion` methods. One of `c("equal_width", "equal_freq")`.
 /// @param n_bins Integer. Number of bins for the `meanvarbin` and
 /// `dispersion` methods.
+/// @param clip_max Optional clipping number. Defaults to `sqrt(no_cells)` if
+/// not provided (only used for `"vst"`).
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
 ///
@@ -148,20 +151,23 @@ fn rs_mc_hvg(
 /// `r lifecycle::badge("experimental")`
 /// Calculates PCA for MetaCells or more generally speaking sparse
 /// data. This is happening in-memory compared to the (usually much) larger
-/// single cell data sets.
+/// single cell data sets. The matrix is densified, optionally CLR transformed
+/// and scaled according to `pca_params` before the SVD.
 ///
 /// @param sparse_data A named list that needs to have `data`, `indptr`,
-/// `indices`, `nrow`, `ncol` and `format`.
+/// `indices`, `nrow`, `ncol` and `cs_type`. Shape is (metacells, genes),
+/// holding the normalised counts of the genes to use.
 /// @param no_pcs Integer. Number of PCs to return.
 /// @param pca_params Named list. Contains the parameters to use for this PCA
-/// run.
-/// @param clr_offsets Optional numeric. If you wish to use the `PFlogPF`
-/// normalisation prior to PCA from Booeshaghi, et al.
+/// run, see [bixverse::params_sc_pca()].
+/// @param clr_offsets Optional numeric. One offset per meta cell for the
+/// `PFlogPF` normalisation from Booeshaghi, et al., computed against the full
+/// gene panel. Required if `pca_params$clr` is `TRUE`, ignored otherwise.
 /// @param seed Integer. Random seed for the randomised SVD.
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
 ///
-/// @returns A list with with the following items
+/// @returns A list with the following items
 /// \itemize{
 ///   \item scores - The samples projected on the PCA space (solved via sparse
 ///   SVD).
@@ -233,19 +239,22 @@ fn rs_mc_pca(
 ///
 /// @description
 /// `r lifecycle::badge("experimental")`
+/// Correlates `gene_indices_1[i]` against `gene_indices_2[i]` over the meta
+/// cells, in memory.
 ///
 /// @param sparse_data A named list that needs to have `data`, `indptr`,
-/// `indices`, `nrow`, `ncol` and `format`.
+/// `indices`, `nrow`, `ncol` and `cs_type`. Shape is (metacells, genes),
+/// holding the normalised counts.
 /// @param gene_indices_1 Integer. The gene indices for the first set of genes.
 /// Must be 0-indexed!
-/// @param gene_indices_2 Integer. The gene indices for the first set of genes.
-/// Must be 0-indexed!
-/// @param spearman Boolean. Shall the spearman correlation be calculated.
+/// @param gene_indices_2 Integer. The gene indices for the second set of
+/// genes, same length as `gene_indices_1`. Must be 0-indexed!
+/// @param spearman Boolean. Shall the Spearman correlation be calculated.
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
 ///
-/// @returns The vector of correlations between the pairs of gene_indices_1
-/// and gene_indices_2
+/// @returns Numeric vector with one correlation per pair of `gene_indices_1`
+/// and `gene_indices_2`.
 ///
 /// @export
 ///

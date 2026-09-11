@@ -2,7 +2,7 @@
 % Please edit documentation in R/extendr-wrappers.R
 \name{rs_sc_hvg}
 \alias{rs_sc_hvg}
-\title{Calculate the percentage of gene sets in the cells}
+\title{Calculate the highly variable genes}
 \usage{
 rs_sc_hvg(
   f_path_gene,
@@ -26,16 +26,17 @@ rs_sc_hvg(
 to keep. Must be unique and within the store; duplicates or out-of-range
 positions raise an error.}
 
-\item{loess_span}{Numeric. The span parameter for the loess function. Must
-be within \verb{(0, 1]}.}
+\item{loess_span}{Numeric. The span parameter for the loess function
+(\code{"vst"} only). Must be within \verb{(0, 1]}.}
 
-\item{binning}{String. The binning strategy for the \code{meanvarbin} method. One
-of \code{c("equal_width", "equal_frequency")}.}
+\item{binning}{String. The binning strategy for the \code{meanvarbin} and
+\code{dispersion} methods. One of \code{c("equal_width", "equal_frequency")}.}
 
-\item{n_bins}{Integer. Number of bins for the \code{meanvarbin} method.}
+\item{n_bins}{Integer. Number of bins for the \code{meanvarbin} and
+\code{dispersion} methods.}
 
-\item{clip_max}{Optional clipping number. Defaults to \code{sqrt(no_cells)} if
-not provided.}
+\item{clip_max}{Optional clipping number (\code{"vst"} only). Defaults to
+\code{sqrt(no_cells)} if not provided.}
 
 \item{streaming}{Boolean. Shall the genes be streamed in to reduce memory
 pressure.}

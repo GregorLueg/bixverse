@@ -40,13 +40,14 @@ A list with the following elements:
 \item index_cell - Integer. 0-indexed positions of the cells defining the
 neighbourhood.
 \item nhoods_i - Integer. 0-indexed positions of the cells in the
-neighbourhood.
-\item nhoods_j - Integer. To which neighbourhood the cell belongs.
-\item nhoods_x - Numeric. The x-value of the COO type matrix, i.e.,
-defaults to \code{1.0}.
+neighbourhood, the index cell included.
+\item nhoods_j - Integer. 0-indexed neighbourhood the cell belongs to.
+\item nhoods_x - Numeric. The x-value of the COO type matrix, always
+\code{1.0}.
 \item nrows - Integer. Number of cells in the matrix
 \item ncols - Integer. Number of refined neighbourhoods.
-\item kth_distances - The k-th distances for spatial FDR calculations.
+\item kth_distances - Numeric. Distance of each index cell to its last
+kNN neighbour, for the spatial FDR.
 \item sample_counts - Numeric matrix of neighbourhoods x samples. The
 cells of each sample found in each neighbourhood.
 \item nhood_overlap - Numeric. Cells each neighbourhood shares with all

@@ -7,11 +7,13 @@
 rs_wnn(modality_emb_one, modality_emb_two, wnn_params, seed, verbose)
 }
 \arguments{
-\item{modality_emb_one}{Numerical matrix of the first modality. For example
-the PCA (or other embeddings) from the transcriptomics.}
+\item{modality_emb_one}{Numerical matrix of the first modality, cells x
+dimensions. For example the PCA (or other embeddings) from the
+transcriptomics.}
 
-\item{modality_emb_two}{Numerical matrix of the second modality. For example
-the PCA (or other embeddings) from the ADT counts.}
+\item{modality_emb_two}{Numerical matrix of the second modality, same cells
+in the same row order. For example the PCA (or other embeddings) from the
+ADT counts.}
 
 \item{wnn_params}{Named list. The weighted nearest neighbour parameters.}
 
@@ -23,18 +25,22 @@ detailed verbosity.}
 \value{
 A list with
 \itemize{
-\item indices An integer matrix representing the indices of the
-approximate nearest neighbours.
-\item dist - An numerical matrix representing the distances to the nearest
-neighbours.
-\item modality_one_weights - The weights of the first modality.
-\item modality_two_weights - The weights of the second modality.
+\item indices - Integer matrix of cells x neighbours with the indices
+(0-indexed!) of the weighted nearest neighbours.
+\item dist - Numerical matrix with the distances to these neighbours.
+\item dist_metric - String. Always \code{"kernelised pseudo-distance"}.
+\item modality_one_weights - Numerical vector with the per-cell weights of
+the first modality.
+\item modality_two_weights - Numerical vector with the per-cell weights of
+the second modality.
 }
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 This provides a Rust-based implementation of the WNN algorithm from Hao,
-et al.
+et al. Both embeddings are L2-normalised per cell, a kNN graph with
+\code{knn_range} neighbours is built per modality, and the per-cell modality
+weights are then used to fuse both into one kNN graph.
 }
 \references{
 Hao et al., Cell, 2021

@@ -37,20 +37,21 @@ applied to the ancestors.}
 \item{fdr_threshold}{Optional fdr threshold.}
 }
 \value{
-A list containing:
+A list containing (for the terms passing the thresholds):
 \itemize{
 \item go_ids - The gene ontology identifier.
-\item pvals - The calculated odds ratios.
+\item pvals - The calculated p-values.
+\item fdr - The calculated FDRs.
 \item odds_ratios - The calculated odds ratios.
-\item overlap - The size of the overlap.
+\item hits - The size of the overlap.
 \item gene_set_lengths - The length of the gene sets.
 }
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 This function implements a Rust version of the gene ontology enrichment with
-elimination: the starting point are the leafs of the ontology and
-hypergeometric tests will first conducted there. Should the hypergeometric
-test p-value be below a certain threshold, the genes of that gene ontology
-term will be removed from all ancestors.
+elimination: the starting point are the leaves of the ontology and
+hypergeometric tests will first be conducted there. Should the
+hypergeometric test p-value be below a certain threshold, the genes of that
+gene ontology term will be removed from all ancestors.
 }

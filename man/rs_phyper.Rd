@@ -16,7 +16,7 @@ rs_phyper(q, m, n, k)
 \item{k}{The number of balls drawn out of the urn.}
 }
 \value{
-P-value (with lower.tail set to False)
+P-value, i.e. \code{P(X > q)} (equivalent to \code{lower.tail = FALSE}).
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}

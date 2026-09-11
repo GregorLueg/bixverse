@@ -8,17 +8,19 @@ rs_lisi(knn_mat, knn_dist, labels, perplexity, verbose)
 }
 \arguments{
 \item{knn_mat}{Integer matrix. The rows represent the cells and the
-columns the neighbour indices.}
+columns the neighbour indices (0-indexed!).}
 
 \item{knn_dist}{Numeric matrix or NULL. The kNN distances, same shape as
 \code{knn_mat}. If provided, neighbours are weighted with a perplexity-calibrated
 Gaussian kernel as in Korsunsky et al.; if NULL, neighbours are weighted
 uniformly.}
 
-\item{labels}{Integer vector. The label (batch or cell type) per cell.}
+\item{labels}{Integer vector. The label (batch or cell type) per cell. The
+codes need not be 0-based or contiguous.}
 
 \item{perplexity}{Numeric or NULL. Perplexity for the weighted version.
-NULL defaults to 30. Ignored if \code{knn_dist} is NULL.}
+NULL defaults to 30; values above k are clamped to k. Ignored if
+\code{knn_dist} is NULL.}
 
 \item{verbose}{Boolean. Controls verbosity of the function.}
 }

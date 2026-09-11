@@ -20,7 +20,8 @@ columns to drop from the null model) or \code{contrast} (column-major weights
 with \code{n_contrasts} columns).}
 }
 \value{
-A list with the following elements
+A list with the following elements, all but \code{features_to_keep}
+with one entry per kept feature
 \itemize{
 \item features_to_keep - Boolean. Which features survived the filters.
 Spans the full feature axis of \code{counts}.
@@ -33,10 +34,11 @@ Spans the full feature axis of \code{counts}.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
-Runs \code{filterByExpr} -> \code{calcNormFactors} -> \code{glmQLFit} -> \code{glmQLFTest},
-implemented in Rust via the \code{edge-rs} crate and gated against edgeR 4.8.2.
-The tested axis does not have to be genes: Milo's neighbourhood counts are
-tested with the same call, with \code{filter = FALSE}.
+Runs optional \code{filterByExpr} -> \code{calcNormFactors} -> \code{glmQLFit} ->
+\code{glmQLFTest}, implemented in Rust via the \code{edge-rs} crate and gated against
+edgeR 4.8.2. \code{legacy = TRUE} adds \code{estimateDisp} before the fit. The tested
+axis does not have to be genes: Milo's neighbourhood counts are tested with
+the same call, with \code{filter = FALSE}.
 }
 \references{
 Chen, Lun and Smyth, F1000Research, 2016

@@ -10,19 +10,19 @@ rs_gsva(exp, gs_list, tau, kernel, max_diff, abs_rank, timings)
 \item{exp}{Numerical matrix. The expression matrix with rows = genes, and
 columns = samples}
 
-\item{gs_list}{List. A list containing the indices of the pathway genes
-(needs to be null indexed). See \code{\link[=rs_prepare_gsva_gs]{rs_prepare_gsva_gs()}}.}
+\item{gs_list}{List. A list containing the 0-based indices of the pathway
+genes. See \code{\link[=rs_prepare_gsva_gs]{rs_prepare_gsva_gs()}}.}
 
 \item{tau}{Float. Tau parameter, usual recommendation is to use \code{1.0} here.
 Larger values emphasise the tails more.}
 
 \item{kernel}{String. One of \code{c("gaussian", "poisson", "none")}. The
-kernel function to use.}
+kernel function to use. Unknown strings default to \code{"gaussian"}.}
 
 \item{max_diff}{Boolean. Scoring mode: \code{TRUE} = difference, \code{FALSE} = larger
 absolute value}
 
-\item{abs_rank}{Booelan. If \code{TRUE} = pos-neg, \code{FALSE} = pos+neg}
+\item{abs_rank}{Boolean. If \code{TRUE} = pos-neg, \code{FALSE} = pos+neg}
 
 \item{timings}{Boolean. Prints timings from the algorithm.}
 }

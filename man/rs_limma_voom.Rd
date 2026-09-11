@@ -7,11 +7,11 @@
 rs_limma_voom(counts, design, lib_size, limma_params)
 }
 \arguments{
-\item{counts}{Numeric matrix. Raw counts of genes x samples. Must not be
-normalised or log-transformed.}
+\item{counts}{Integer or double matrix. Raw counts of genes x samples. Must
+not be normalised or log-transformed.}
 
-\item{design}{Numeric matrix. The design matrix of samples x coefficients.
-Must be full rank.}
+\item{design}{Numeric matrix. The design matrix of samples x coefficients,
+including the intercept. Must be full rank.}
 
 \item{lib_size}{Numeric vector or NULL. Library size per sample. NULL uses
 the column sums of \code{counts}. Pass the column sums from before gene filtering
@@ -23,7 +23,8 @@ design column) or \code{contrast} (column-major weights with \code{n_contrasts}
 columns).}
 }
 \value{
-A list with the following elements
+A list with the following elements, all but \code{features_to_keep}
+with one entry per kept gene, in input order
 \itemize{
 \item features_to_keep - Boolean. Which genes survived the filters. Spans
 the full gene axis of \code{counts}.

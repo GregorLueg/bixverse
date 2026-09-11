@@ -16,7 +16,8 @@ rs_mc_hvg(
 }
 \arguments{
 \item{sparse_data}{A named list that needs to have \code{data}, \code{indptr},
-\code{indices}, \code{nrow}, \code{ncol} and \code{format}.}
+\code{indices}, \code{nrow}, \code{ncol} and \code{cs_type}. Shape is (metacells, genes). Pass
+raw counts for \code{"vst"} and normalised counts otherwise.}
 
 \item{hvg_method}{String. Which HVG detection method to use. Options
 are \code{c("vst", "meanvarbin", "dispersion")}.}
@@ -25,7 +26,7 @@ are \code{c("vst", "meanvarbin", "dispersion")}.}
 (only used for \code{"vst"}).}
 
 \item{binning}{String. The binning strategy for the \code{meanvarbin} and
-\code{dispersion} methods. One of \code{c("equal_width", "equal_frequency")}.}
+\code{dispersion} methods. One of \code{c("equal_width", "equal_freq")}.}
 
 \item{n_bins}{Integer. Number of bins for the \code{meanvarbin} and
 \code{dispersion} methods.}
@@ -56,5 +57,7 @@ For \code{"meanvarbin"} and \code{"dispersion"}:
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 Calculates highly variable genes for MetaCells or more
 generally speaking sparse data. This is happening in-memory compared to the
-(usually much) larger single cell data sets.
+(usually much) larger single cell data sets. \code{"meanvarbin"} and
+\code{"dispersion"} compute the same statistics; they differ only in how the R
+side selects from them.
 }

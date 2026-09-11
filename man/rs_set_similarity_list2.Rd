@@ -14,13 +14,14 @@ compare against.}
 compare against.}
 
 \item{overlap_coefficient}{Boolean. Use the overlap coefficient instead of
-the Jaccard similarity be calculated.}
+the Jaccard similarity.}
 }
 \value{
-A matrix of the Jaccard similarities between the elements. The rows
-represent \code{s_1_list} and the column \code{s_2_list}.
+A matrix of the similarities between the elements. The rows
+represent \code{s_1_list} and the columns \code{s_2_list}.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
-This function calculates the Jaccard or similarity index between two lists.
+This function calculates the Jaccard similarity or overlap coefficient
+between all elements of two lists.
 }

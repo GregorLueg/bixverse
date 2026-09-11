@@ -32,16 +32,17 @@ for each cell. Must be the same length as \code{cell_indices} and densely cover
 \code{0:(n_batches - 1)}; a length mismatch or an empty batch raises an error.
 \code{as.integer(factor(x)) - 1L} always satisfies this.}
 
-\item{loess_span}{Numeric. The span parameter for the loess function. Must
-be within \verb{(0, 1]}.}
+\item{loess_span}{Numeric. The span parameter for the loess function
+(\code{"vst"} only). Must be within \verb{(0, 1]}.}
 
-\item{binning}{String. The binning strategy for the \code{meanvarbin} method. One
-of \code{c("equal_width", "equal_frequency")}.}
+\item{binning}{String. The binning strategy for the \code{meanvarbin} and
+\code{dispersion} methods. One of \code{c("equal_width", "equal_frequency")}.}
 
-\item{n_bins}{Integer. Number of bins for the \code{meanvarbin} method.}
+\item{n_bins}{Integer. Number of bins for the \code{meanvarbin} and
+\code{dispersion} methods.}
 
-\item{clip_max}{Optional clipping number. Defaults to \code{sqrt(no_cells)} per
-batch if not provided.}
+\item{clip_max}{Optional clipping number (\code{"vst"} only). Defaults to
+\code{sqrt(no_cells)} per batch if not provided.}
 
 \item{streaming}{Boolean. Shall the genes be streamed in to reduce memory
 pressure.}
@@ -57,7 +58,8 @@ A list with HVG statistics concatenated across all batches. For
 \item var - The variance of each gene in each batch.
 \item var_exp - The expected variance of each gene in each batch.
 \item var_std - The standardised variance of each gene in each batch.
-\item batch - Batch index for each gene (length = n_genes * n_batches).
+\item batch - Batch index for each entry (0-indexed, length = n_genes *
+n_batches).
 \item gene_idx - Gene index for each entry (0-indexed, length = n_genes *
 n_batches).
 }
@@ -68,7 +70,8 @@ For the other methods
 \item dispersion_scaled - The scaled dispersion per bin per gene in each
 batch.
 \item bin - The bin of the gene in each batch.
-\item batch - Batch index for each gene (length = n_genes * n_batches).
+\item batch - Batch index for each entry (0-indexed, length = n_genes *
+n_batches).
 \item gene_idx - Gene index for each entry (0-indexed, length = n_genes *
 n_batches).
 }

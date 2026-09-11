@@ -783,8 +783,11 @@ S7::method(calculate_graph_connectivity_sc, ScOrScSubset) <- function(
 
   structure(
     list(
-      # Rust reports the labels in sorted code order, i.e., factor level order
-      per_cell_type = stats::setNames(rs_res$per_label, levels(labels)),
+      # Rust reports the labels in first-appearance order, not level order
+      per_cell_type = stats::setNames(
+        rs_res$per_label,
+        levels(labels)[unique(as.integer(labels))]
+      ),
       mean_connectivity = rs_res$mean,
       median_connectivity = rs_res$median
     ),
@@ -1493,7 +1496,7 @@ S7::method(fast_mnn_sc, ScOrScSubset) <- function(
   }
 
   mnn_embd <- rs_mnn(
-    f_path = get_rust_count_gene_f_path(object),
+    f_path_gene = get_rust_count_gene_f_path(object),
     f_path_cell = get_rust_count_cell_f_path(object),
     cell_indices = get_cells_to_keep(object),
     gene_indices = as.integer(batch_hvg_genes),

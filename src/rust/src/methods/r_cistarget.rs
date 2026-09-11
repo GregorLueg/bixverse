@@ -24,22 +24,35 @@ extendr_module! {
 /// @description
 /// `r lifecycle::badge("experimental")`
 /// Core Rust function for motif enrichment analysis using recovery curves.
+/// Gene sets are processed in parallel; only motifs with an NES at or above
+/// `nes_threshold` are returned.
 ///
 /// @param rankings Integer matrix with motif rankings for genes (genes in rows,
 /// motifs in columns). Lower ranks indicate higher regulatory potential.
 /// @param gs_list List of integer vectors. Each element contains 1-based
 /// indices of genes in the gene set (matching row indices in rankings).
-/// @param auc_threshold Absolute number of top-ranked genes to use for AUC
-/// calculation (e.g., for 5% of 10000 genes, use 500).
-/// @param nes_threshold Normalised Enrichment Score threshold for filtering
-/// significant motifs
-/// @param max_rank Maximum rank to consider (typically nrow(rankings)).
-/// @param method Recovery curve calculation method: "approx" or "icistarget".
-/// @param n_mean Number of points for averaging in approximate method.
-/// @param verbose Controls verbosity of the function.
+/// @param auc_threshold Integer. Absolute number of top-ranked genes to use
+/// for the AUC calculation (e.g., for 5% of 10000 genes, use 500).
+/// @param nes_threshold Numeric. Normalised Enrichment Score threshold for
+/// filtering significant motifs.
+/// @param max_rank Integer. Maximum rank to consider for the recovery curves
+/// (at most `nrow(rankings)`).
+/// @param method String. Recovery curve calculation method, one of
+/// `c("approx", "icistarget")`. Anything else falls back to `"approx"`.
+/// @param n_mean Integer. Window size for the smoothing in the approximate
+/// method.
+/// @param verbose Boolean. Report progress per decile of gene sets.
 ///
-/// @returns List of lists, one per gene set, each containing motif_idx, nes, auc,
-/// rank_at_max, n_enriched, and leading_edge.
+/// @returns List of lists, one per gene set, each containing
+/// \itemize{
+///   \item motif_idx - 1-based column index of the motif in `rankings`.
+///   \item nes - Normalised enrichment score.
+///   \item auc - Area under the recovery curve.
+///   \item rank_at_max - Rank at which the leading edge is reached.
+///   \item n_enriched - Number of genes in the leading edge.
+///   \item leading_edge - List of 1-based row indices of the leading edge
+///   genes, one element per motif.
+/// }
 ///
 /// @export
 #[extendr]

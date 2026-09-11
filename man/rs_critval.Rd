@@ -10,10 +10,10 @@ rs_critval(values, iters, alpha, seed)
 \item{values}{Numeric vector. The full data set for which to calculate the
 critical value.}
 
-\item{iters}{Integer. Number of random permutations to use.}
+\item{iters}{Integer. Size of the bootstrap sample.}
 
-\item{alpha}{Float. The alpha value. For example, 0.001 would mean that the
-critical value is smaller than 0.1 percentile of the random permutations.}
+\item{alpha}{Float. The alpha value. For example, 0.001 would return the
+value exceeded by roughly 0.1 percent of the bootstrap sample.}
 
 \item{seed}{Integer. For reproducibility purposes}
 }
@@ -22,7 +22,9 @@ The critical value for the given parameters.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
-This function calculates the critical value for a given set based on random
-permutations and a given alpha value.
+This function calculates the critical value for a given set based on a
+bootstrap sample (with replacement) and a given alpha value. The sample is
+sorted in decreasing order and the value at the upper \code{alpha} tail is
+returned.
 }
 \keyword{internal}

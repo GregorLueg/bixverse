@@ -2,7 +2,7 @@
 % Please edit documentation in R/extendr-wrappers.R
 \name{rs_ica_iters_cv}
 \alias{rs_ica_iters_cv}
-\title{Run ICA with cross-validation and random initialsiation}
+\title{Run ICA with cross-validation and random initialisation}
 \usage{
 rs_ica_iters_cv(
   x,
@@ -22,9 +22,9 @@ been applied yet.)}
 
 \item{no_folds}{Integer. Number of folds to use for the cross-validation.}
 
-\item{no_random_init}{Integer. Number of random initialisations.}
+\item{no_random_init}{Integer. Number of random initialisations per fold.}
 
-\item{ica_type}{String. Which type of ICA shall be run.}
+\item{ica_type}{String. One of \code{c("logcosh", "exp")}.}
 
 \item{random_seed}{Integer. For reproducibility.}
 
@@ -44,13 +44,13 @@ are used.}
 A list containing:
 \itemize{
 \item s_combined - The combined matrices for S. Dimensions are nrows =
-features; and ncols = ncomp * no_random_init.
+features; and ncols = no_comp * no_random_init * no_folds.
 \item converged - Boolean vector indicating if the respective run reached
-convergence. Length = no_random_init
+convergence. Length = no_random_init * no_folds
 }
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 This function will split the data into \code{no_folds} and apply ICA with
-\code{no_random_inits} over that fold.
+\code{no_random_init} random initialisations over each fold.
 }

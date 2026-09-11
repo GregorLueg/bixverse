@@ -29,11 +29,13 @@ extendr_module! {
 /// to keep.
 /// @param gene_index Integer. Gene index position to return (0-indexed!).
 /// @param norm Boolean. Shall normalised counts be returned.
-/// @param scale Boolean. Shall the normalised counts be scaled.
-/// @param clip Optional float. Clipping for the Z-scores if scale is set to
-/// `TRUE`
+/// @param scale Boolean. Shall the normalised counts be z-scored across the
+/// selected cells.
+/// @param clip Optional float. Clips the Z-scores to `[-clip, clip]`. Only
+/// used if `scale = TRUE`.
 ///
-/// @returns The dense vector of expression values for this gene.
+/// @returns Numerical vector with one expression value per cell in
+/// `cell_indices`.
 ///
 /// @export
 ///
@@ -51,10 +53,10 @@ fn rs_extract_counts_plots(
     let reader = ParallelSparseReader::new(f_path).to_extendr()?;
 
     let counts = if norm {
+        extract_norm_counts(&reader, &cell_indices, gene_index, scale, clip).to_extendr()?
+    } else {
         let raw_counts = extract_raw_counts(&reader, &cell_indices, gene_index).to_extendr()?;
         raw_counts.iter().map(|x| *x as f32).collect()
-    } else {
-        extract_norm_counts(&reader, &cell_indices, gene_index, scale, clip).to_extendr()?
     };
 
     Ok(counts.r_float_convert())
@@ -64,17 +66,20 @@ fn rs_extract_counts_plots(
 ///
 /// @description
 /// `r lifecycle::badge("experimental")`
-/// Extract the single cell counts of several genes at ones.
+/// Extract the normalised single cell counts of several genes at once.
 ///
 /// @param f_path String. Path to the `counts_genes.bin` file.
 /// @param cell_indices Integer positions (0-indexed!) that defines the cells
 /// to keep.
-/// @param gene_indices Integer. Gene index position to return (0-indexed!).
-/// @param scale Boolean. Shall the normalised counts be scaled.
-/// @param clip Optional float. Clipping for the Z-scores if scale is set to
-/// `TRUE`
+/// @param gene_indices Integer vector. Gene index positions to return
+/// (0-indexed!).
+/// @param scale Boolean. Shall the normalised counts be z-scored per gene
+/// across the selected cells.
+/// @param clip Optional float. Clips the Z-scores to `[-clip, clip]`. Only
+/// used if `scale = TRUE`.
 ///
-/// @returns A list of dense vectors of the normalised counts.
+/// @returns A list of numerical vectors, one per gene in `gene_indices`, each
+/// with one normalised value per cell in `cell_indices`.
 ///
 /// @export
 ///
@@ -113,17 +118,19 @@ fn rs_extract_several_genes_plots(
 /// @param f_path String. Path to the `counts_genes.bin` file.
 /// @param cell_indices Integer positions (0-indexed!) that defines the cells
 /// to keep.
-/// @param gene_indices Integer. Gene index position to return (0-indexed!).
-/// @param group_ids Integer. The levels of the data. (0-indexed!)
-/// @param group_levels String. Name of the factors.
+/// @param gene_indices Integer vector. Gene index positions to return
+/// (0-indexed!).
+/// @param group_ids Integer vector. Group of each cell in `cell_indices`, as
+/// an index into `group_levels` (0-indexed!). Same length as `cell_indices`.
+/// @param group_levels Character vector. The group labels.
 ///
 /// @returns A list with the following elements:
 /// \itemize{
-///   \item grp_label - The label of that group
-///   \item mean_exp - Vector of mean expression values in row major (genes x
-///   n_levels)
-///   \item perc_exp - Vector of proportions of cells with expression in row
-///   major (genes x n_levels)
+///   \item grp_label - The group labels, i.e. `group_levels`.
+///   \item mean_exp - Mean normalised expression per gene and group over all
+///   cells of the group (zeros included), row-major (genes x groups).
+///   \item perc_exp - Fraction (`[0, 1]`) of cells in the group with a
+///   non-zero count, row-major (genes x groups).
 /// }
 ///
 /// @export

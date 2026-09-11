@@ -21,36 +21,49 @@ rs_build_symphony_ref(
 \arguments{
 \item{f_path_gene}{String. Path to the gene-based binary file.}
 
-\item{f_path_cell}{String. Path to the cell-based binary file.}
+\item{f_path_cell}{String. Path to the cell-based binary file. Only read
+for the PFlogPF offsets if \code{pca_params} requests them.}
 
 \item{cell_indices}{Integer vector. 0-based cell indices.}
 
 \item{hvg_indices}{Integer vector. 0-based HVG indices.}
 
 \item{batch_labels}{List of 0-indexed integer vectors (one per batch
-variable).}
+variable), each of length \code{cell_indices}.}
 
 \item{pca_params}{List. Output of \code{params_sc_pca()}.}
 
-\item{no_pcs}{Integer.}
+\item{no_pcs}{Integer. Number of principal components.}
 
 \item{harmony_params}{List. Output of \code{params_sc_harmony()} or
-\code{params_sc_harmony_v2()}.}
+\code{params_sc_harmony_v2()}, matching \code{harmony_version}.}
 
-\item{harmony_version}{String. "v1" or "v2".}
+\item{harmony_version}{String. \code{"v1"} or \code{"v2"}; anything else errors.}
 
-\item{seed}{Integer.}
+\item{seed}{Integer. Seed for reproducibility.}
 
 \item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
 detailed verbosity.}
 }
 \value{
-A list with gene_means, gene_sds, loadings, z_orig, z_corr, r,
-centroids, nr, c.
+A list with
+\itemize{
+\item gene_means - Numerical vector. Per-HVG mean of the normalised data.
+\item gene_sds - Numerical vector. Per-HVG standard deviation.
+\item loadings - Numerical matrix. PCA loadings (n_hvgs x d).
+\item z_orig - Numerical matrix. Pre-Harmony PCA scores (N x d).
+\item z_corr - Numerical matrix. Harmony-corrected embedding (N x d).
+\item r - Numerical matrix. Soft cluster assignments (K x N).
+\item centroids - Numerical matrix. Cosine-normalised centroids (K x d).
+\item nr - Numerical vector. Cluster sizes, the row sums of \code{r}.
+\item c - Numerical matrix. Compression term, \code{r} times \code{z_corr}
+(K x d).
+}
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
-Builds the Symphony reference in Rust, see Kang et al.
+Builds the Symphony reference in Rust, see Kang et al. Runs PCA on the
+HVGs, corrects it with Harmony and stores the terms needed to map queries.
 }
 \references{
 Kang et al., Nat Comm, 2021.

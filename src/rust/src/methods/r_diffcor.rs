@@ -25,12 +25,13 @@ extendr_module! {
 /// differential correlation on the upper triangle of the two correlation
 /// matrices.
 ///
-/// @param x_a R matrix a to be used for the differential correlation analysis.
-/// @param x_b R matrix a to be used for the differential correlation analysis.
-/// @param spearman Shall the Spearman correlation be calculated instead of
-/// Pearson.
+/// @param x_a Numeric matrix a, samples x features.
+/// @param x_b Numeric matrix b, samples x features. Needs the same number of
+/// columns as `x_a`.
+/// @param spearman Boolean. Shall the Spearman correlation be calculated
+/// instead of Pearson.
 ///
-/// @returns A list containing:
+/// @returns A list containing, one entry per upper-triangle feature pair:
 ///  \itemize{
 ///   \item r_a - The correlation coefficients in the upper triangle of
 ///   matrix a.
@@ -38,7 +39,7 @@ extendr_module! {
 ///   matrix b.
 ///   \item z_score - The z-scores of the difference in correlation
 ///   coefficients.
-///   \item p_val - The z-scores transformed to p-values.
+///   \item p_val - The z-scores transformed to two-sided p-values.
 /// }
 ///
 /// @export

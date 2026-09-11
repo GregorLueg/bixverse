@@ -10,9 +10,8 @@ rs_upper_triangle_to_dense(data, shift, n)
 \item{data}{Numeric vector. The vector of for example correlation
 coefficients that you want to use to go back to a dense matrix.}
 
-\item{shift}{Boolean. If you applied a shift, i.e. included the diagonal
-values. If \code{true}, assumes the diagonal values are \code{1}, otherwise derives
-them from the data.}
+\item{shift}{Boolean. If \code{TRUE}, \code{data} excludes the diagonal and the
+diagonal is set to \code{1}. If \code{FALSE}, \code{data} includes the diagonal.}
 
 \item{n}{Integer. Original dimension (i.e., ncol/nrow) of the matrix to be
 reconstructed.}

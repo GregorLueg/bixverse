@@ -19,7 +19,8 @@ rs_spectral_clustering(
 features.}
 
 \item{distance_type}{String. One of
-\code{c("euclidean", "manhattan", "canberra", "cosine")}.}
+\code{c("euclidean", "manhattan", "canberra", "cosine", "correlation")}. Unknown
+strings raise an error.}
 
 \item{epsilon}{Numerical. The epsilon parameter for the Gaussian Radial
 Basis function}
@@ -34,10 +35,10 @@ graph generation}
 \item{seed}{Integer. Seed for reproducibility}
 }
 \value{
-A vector with the membership of the samples
+A vector with the 1-based cluster membership of the samples.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 This version can take in data as is and will calculate the distance matrix
-internally.
+internally and convert it into similarities with a Gaussian RBF.
 }

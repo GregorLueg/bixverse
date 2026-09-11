@@ -7,7 +7,8 @@
 rs_calc_es(stats, pathway_r)
 }
 \arguments{
-\item{stats}{Named numerical vector. Needs to be sorted. The gene level statistics.}
+\item{stats}{Named numerical vector. Needs to be sorted. The gene level
+statistics.}
 
 \item{pathway_r}{String vector. The genes in the pathway.}
 }

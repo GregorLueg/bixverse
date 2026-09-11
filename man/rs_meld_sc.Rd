@@ -11,12 +11,13 @@ rs_meld_sc(embd, knn_data, meld_params, labels, n_labels, seed, verbose)
 the kNN graph.}
 
 \item{knn_data}{Optional named list. This contains pre-computed kNN data
-(including distances). The user has to ensure consistency! If provided, this
-will be used.}
+(\code{indices} (0-indexed), \code{dist}, \code{dist_metric} and \code{k}). The user has to
+ensure consistency! If provided, this will be used.}
 
 \item{meld_params}{Named list. Contains the parameters to use for MELD.}
 
-\item{labels}{Integer. The labels of the different groups. (1-indexed!)}
+\item{labels}{Integer. The group label per cell (1-indexed!), in
+\verb{1..n_labels}.}
 
 \item{n_labels}{Integer. Number of labels represented in the data.}
 
@@ -28,9 +29,9 @@ detailed verbosity.}
 \value{
 A list with the following items
 \itemize{
-\item raw_scores - The raw MELD scores
-\item norm_scores - Negative values were clamped to 0 and the rows L1
-normalised. This yields probability-like values.
+\item raw_scores - Matrix of cells x labels with the raw MELD scores.
+\item norm_scores - Same shape. Negative values were clamped to 0 and the
+rows L1 normalised. This yields probability-like values.
 }
 }
 \description{

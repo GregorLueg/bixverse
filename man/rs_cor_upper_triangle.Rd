@@ -12,13 +12,12 @@ rs_cor_upper_triangle(x, spearman, shift)
 \item{spearman}{Shall the Spearman correlation be calculated instead of
 Pearson.}
 
-\item{shift}{Boolean. If you applied a shift, i.e. included the diagonal
-values. If \code{true}, assumes the diagonal values are \code{1}, otherwise derives
-them from the data.}
+\item{shift}{Boolean. If \code{TRUE}, the diagonal is excluded, otherwise it is
+included.}
 }
 \value{
 The upper triangle of the correlation matrix iterating through the
-rows, shifted by one (the diagonal will not be returned).
+rows, with or without the diagonal depending on \code{shift}.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}

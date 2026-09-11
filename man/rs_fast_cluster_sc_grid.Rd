@@ -26,8 +26,8 @@ k means clustering to run.}
 \item{resolutions}{Numeric vector. The Louvain resolutions to iterate
 through.}
 
-\item{n_centroids}{Optional integer. The number of clusters to find. If
-not provided, defaults to \code{sqrt(nrow(embd))}.}
+\item{n_centroids}{Optional integer. The number of k-means centroids. If
+not provided, defaults to \code{floor(sqrt(nrow(embd)))}.}
 
 \item{fc_params}{Named list. The fast clustering parameters.}
 
@@ -47,9 +47,14 @@ detailed verbosity.}
 \value{
 A list with the following elements:
 \itemize{
-\item memberships - The memberships across the different resolutions. The
-membership from the random seed with the best conductance is returned.
-\item stats - The statistics per given resolution run.
+\item membership - A list with \code{memberships} (one integer vector per
+resolution, from the seed with the best conductance) and \code{stats} (list
+with \code{mean_ari}, \code{median_ari}, \code{mean_conductance}, \code{median_conductance}
+and \code{mean_n_comms}, one value per resolution).
+\item k_means_cluster - Integer vector with the k-means cluster per cell
+if \code{return_kmeans = TRUE}, otherwise \code{NULL}.
+\item centroids - Numerical matrix with the k-means centroids if
+\code{return_kmeans = TRUE}, otherwise \code{NULL}.
 }
 }
 \description{

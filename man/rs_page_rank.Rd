@@ -2,7 +2,7 @@
 % Please edit documentation in R/extendr-wrappers.R
 \name{rs_page_rank}
 \alias{rs_page_rank}
-\title{Rust version of calcaluting the personalised page rank}
+\title{Rust version of calculating the personalised page rank}
 \usage{
 rs_page_rank(node_names, from, to, weights, personalised, undirected)
 }
@@ -26,4 +26,6 @@ The personalised page rank values.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+Personalised page rank with a damping factor of 0.85, at most 1000
+iterations and a tolerance of 1e-7.
 }

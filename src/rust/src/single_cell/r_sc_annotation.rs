@@ -41,8 +41,9 @@ extendr_module! {
 ///
 /// @param f_path String. Path to the `counts_genes.bin` file.
 /// @param cell_indices Integer vector. 0-indexed(!) positions of cells to
-/// include in the analysis
-/// @param cell_markers A list with the cell marker gene indices.
+/// include in the analysis.
+/// @param cell_markers List. One element per cell type, each a list with that
+/// cell type's marker gene indices.
 /// @param sensitivity Boolean. Shall a sensitivity correction be applied that
 /// downweights common cell type markers.
 /// @param weight_floor Optional numeric. If `sensitivity = TRUE`, what is
@@ -52,10 +53,10 @@ extendr_module! {
 ///
 /// @returns A list with
 /// \itemize{
-///   \item cell_types - String vector. The cell types
-///   \item scores - Row-major scores (cells x cell_types).
-///   \item n_cells - Number of cells
-///   \item n_cell_types - Number of cell types
+///   \item cell_types - Character vector. The cell types.
+///   \item scores - Numerical vector. Row-major scores (cells x cell_types).
+///   \item n_cells - Integer. Number of cells.
+///   \item n_cell_types - Integer. Number of cell types.
 /// }
 ///
 /// @export
@@ -97,19 +98,18 @@ fn rs_sc_type(
 ///
 /// @description
 /// `r lifecycle::badge("experimental")`
-/// This Rust function implements the cell type scoring approach from Ianevski
-/// et al. (2022).
+/// Aggregates the per-cell ScType scores into one cell type call per cluster,
+/// see Ianevski et al. (2022).
 ///
-/// @param sc_type_res List. The ScType results.
-/// @param cluster_labels Integer. Cluster assignment. Needs to be of length
-/// of scored cells.
+/// @param sc_type_res List. The ScType results, see `rs_sc_type()`.
+/// @param cluster_labels Integer vector. Cluster assignment per scored cell.
 ///
 /// @returns A list with
 /// \itemize{
-///  \item cluster_id - The cluster id/integer
-///  \item cell_type - String; the predicted cell type
-///  \item score - The final score for the clsuter.
-///  \item n_cells - The number of cells in the cluster.
+///  \item cluster_id - Integer. The cluster id.
+///  \item cell_type - Character. The predicted cell type.
+///  \item scores - Numeric. The final score for the cluster.
+///  \item n_cells - Integer. The number of cells in the cluster.
 /// }
 ///
 /// @export
@@ -156,8 +156,10 @@ fn rs_sc_type_cluster_assignment(sc_type_res: List, cluster_labels: Vec<i32>) ->
 ///
 /// @param sc_type_res List. The ScType results, see `rs_sc_type()`.
 /// @param from,to Optional integer vectors. 1-indexed(!) edges of the sNN
-/// graph. If `NULL`, no smoothing is applied.
+/// graph, each edge listed once; the graph is symmetrised on the way in. If
+/// either is `NULL`, no smoothing is applied.
 /// @param weights Optional numeric vector. Edge weights, same length as `from`.
+/// Reciprocal weights are averaged. If `NULL`, the graph is unweighted.
 /// @param cluster_labels Optional integer vector. 0-indexed(!) cluster
 /// assignment, of length of the scored cells.
 /// @param params List. The output of `params_sctype_cells()`.
@@ -171,10 +173,14 @@ fn rs_sc_type_cluster_assignment(sc_type_res: List, cluster_labels: Vec<i32>) ->
 ///   \item margins - Numeric vector. Best minus second best score per cell.
 ///   \item agreement - Numeric vector. Fraction of graph neighbours sharing the
 ///   call. `NULL` if no graph was provided.
-///   \item hybrid_assignments - Integer vector, as `assignments`. Only present
-///   if `cluster_labels` was provided.
-///   \item composition - List with the per-cluster composition. Only present if
-///   `cluster_labels` was provided.
+///   \item hybrid_assignments - Integer vector, as `assignments`. `NULL` if no
+///   `cluster_labels` were provided.
+///   \item composition - List with the per-cluster composition (`cluster_id`,
+///   `n_cells`, `n_unknown`, `dominant`, `second`, `purity`,
+///   `second_fraction`, `entropy`, `cluster_mixed` and the clusters x cell
+///   types count matrix `counts`). `dominant` and `second` use the same
+///   1-based encoding as `assignments`. `NULL` if no `cluster_labels` were
+///   provided.
 /// }
 ///
 /// @references
@@ -286,6 +292,7 @@ fn opt_index_to_r(idx: Option<usize>) -> i32 {
 /// * `x` - The optional value.
 ///
 /// ### Returns
+///
 /// The Robj, or `NULL`.
 fn opt_to_r<T: Into<Robj>>(x: Option<T>) -> Robj {
     x.map(|v| v.into()).unwrap_or_else(|| r!(NULL))
@@ -356,25 +363,38 @@ fn composition_to_r(hybrid: &ScTypeHybridRes, n_ct: usize) -> List {
 ///
 /// @description
 /// `r lifecycle::badge("experimental")`
-/// Builds the Symphony reference in Rust, see Kang et al.
+/// Builds the Symphony reference in Rust, see Kang et al. Runs PCA on the
+/// HVGs, corrects it with Harmony and stores the terms needed to map queries.
 ///
 /// @param f_path_gene String. Path to the gene-based binary file.
-/// @param f_path_cell String. Path to the cell-based binary file.
+/// @param f_path_cell String. Path to the cell-based binary file. Only read
+/// for the PFlogPF offsets if `pca_params` requests them.
 /// @param cell_indices Integer vector. 0-based cell indices.
 /// @param hvg_indices Integer vector. 0-based HVG indices.
 /// @param batch_labels List of 0-indexed integer vectors (one per batch
-/// variable).
+/// variable), each of length `cell_indices`.
 /// @param pca_params List. Output of `params_sc_pca()`.
-/// @param no_pcs Integer.
+/// @param no_pcs Integer. Number of principal components.
 /// @param harmony_params List. Output of `params_sc_harmony()` or
-/// `params_sc_harmony_v2()`.
-/// @param harmony_version String. "v1" or "v2".
-/// @param seed Integer.
+/// `params_sc_harmony_v2()`, matching `harmony_version`.
+/// @param harmony_version String. `"v1"` or `"v2"`; anything else errors.
+/// @param seed Integer. Seed for reproducibility.
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
 ///
-/// @returns A list with gene_means, gene_sds, loadings, z_orig, z_corr, r,
-/// centroids, nr, c.
+/// @returns A list with
+/// \itemize{
+///   \item gene_means - Numerical vector. Per-HVG mean of the normalised data.
+///   \item gene_sds - Numerical vector. Per-HVG standard deviation.
+///   \item loadings - Numerical matrix. PCA loadings (n_hvgs x d).
+///   \item z_orig - Numerical matrix. Pre-Harmony PCA scores (N x d).
+///   \item z_corr - Numerical matrix. Harmony-corrected embedding (N x d).
+///   \item r - Numerical matrix. Soft cluster assignments (K x N).
+///   \item centroids - Numerical matrix. Cosine-normalised centroids (K x d).
+///   \item nr - Numerical vector. Cluster sizes, the row sums of `r`.
+///   \item c - Numerical matrix. Compression term, `r` times `z_corr`
+///   (K x d).
+/// }
 ///
 /// @references
 /// Kang et al., Nat Comm, 2021.
@@ -481,15 +501,23 @@ fn rs_build_symphony_ref(
 /// @param nr Reference cluster sizes (length K).
 /// @param c_cache Reference compression term R*Z_corr (K x d).
 /// @param ref_to_query_gene_map Integer vector. For each reference HVG slot,
-/// the 0-based query gene index, or `NA_integer_` if absent.
-/// @param batch_labels_query List of 0-indexed integer vectors (empty = no
-/// batch correction).
-/// @param params_symphony Named list. Contains the parameters for the referemce
-/// generation.
+/// the 0-based query gene index, or `NA_integer_` (or any negative value) if
+/// absent. Absent slots are filled with zeros.
+/// @param batch_labels_query List of 0-indexed integer vectors, one per batch
+/// variable. An empty list skips the batch correction (`z_corr = z_pca`).
+/// @param params_symphony Named list. The query mapping parameters.
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
 ///
-/// @returns A list with z_pca, z_corr, r.
+/// @returns A list with
+/// \itemize{
+///   \item z_pca - Numerical matrix. Query projected into the reference PC
+///   space (N_q x d).
+///   \item z_corr - Numerical matrix. Query after the batch correction
+///   (N_q x d).
+///   \item r - Numerical matrix. Query soft assignments onto the reference
+///   centroids (K x N_q).
+/// }
 ///
 /// @references
 /// Kang et al., Nat Comm, 2021.
@@ -571,17 +599,27 @@ fn rs_symphony_map_query(
 ///
 /// @description
 /// `r lifecycle::badge("experimental")`
+/// Finds the reference neighbours of every query cell and assigns the
+/// majority label. Ties go to the lowest label index.
 ///
-/// @param reference_z_corr Reference Harmony-corrected embedding (N_ref x d).
-/// @param query_z_corr Query Symphony-corrected embedding (N_q x d).
-/// @param reference_labels 0-based integer-encoded reference labels.
-/// @param n_labels Number of distinct labels.
+/// @param reference_z_corr Numerical matrix. Reference Harmony-corrected
+/// embedding (N_ref x d).
+/// @param query_z_corr Numerical matrix. Query Symphony-corrected embedding
+/// (N_q x d).
+/// @param reference_labels Integer vector. 0-based integer-encoded reference
+/// labels.
+/// @param n_labels Integer. Number of distinct labels.
 /// @param knn_params List. Output of `params_sc_knn()`.
-/// @param seed Integer.
-/// @param verbose Integer. 0/1/2.
+/// @param seed Integer. Seed for the kNN search.
+/// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+/// detailed verbosity.
 ///
-/// @returns A list with `predicted` (0-based integer per query cell) and
-/// `confidence` (vote share of the winning label).
+/// @returns A list with
+/// \itemize{
+///   \item predicted - Integer vector. Predicted label per query cell
+///   (0-based).
+///   \item confidence - Numerical vector. Vote share of the winning label.
+/// }
 ///
 /// @export
 ///

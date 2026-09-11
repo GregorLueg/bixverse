@@ -36,11 +36,11 @@ calculations.}
 \value{
 A list with
 \itemize{
-\item predicted_doublets - Boolean vector indicating which observed cells
+\item doublet - Boolean vector indicating which observed cells are
 predicted as doublets (TRUE = doublet, FALSE = singlet).
-\item doublet_scores_obs - Numerical vector with the likelihood of being
-a doublet for the observed cells.
-\item voting_avg - Voting average across the different iterations.
+\item doublet_score - Numerical vector with the doublet score per cell,
+averaged across iterations.
+\item voting_avg - Voting average per cell across the iterations.
 }
 }
 \description{

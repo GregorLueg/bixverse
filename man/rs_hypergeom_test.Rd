@@ -18,24 +18,25 @@ rs_hypergeom_test(
 \item{gene_sets}{List. Contains the strings that represent the gene sets to
 test against.}
 
-\item{gene_universe}{String vector. The features representing the gene universe
-from which the target genes and gene sets are sampled from.}
+\item{gene_universe}{String vector. The features representing the gene
+universe from which the target genes and gene sets are sampled from.}
 
-\item{min_overlap}{Optional integer. Shall a filter be applied on the minimum of
-overlappign genes.}
+\item{min_overlap}{Optional integer. Shall a filter be applied on the
+minimum of overlapping genes.}
 
-\item{fdr_threshold}{Optional float. Shall a filter be applied for the maximum
-tolerated FDR.}
+\item{fdr_threshold}{Optional float. Shall a filter be applied for the
+maximum tolerated FDR.}
 }
 \value{
-A list containing:
+A list containing (only for the gene sets passing the filters):
 \itemize{
 \item pvals - The p-values from the hypergeometric test
 \item odds_ratios - The calculated odds ratios
 \item hits - The size of the overlap
 \item gene_set_lengths - The length of the gene sets.
-\item fdr - The FDR calculated across the gene sets.
-\item to_keep - Indices of the gene sets that passed (optional) thresholds.
+\item fdr - The FDR calculated across all gene sets (before filtering).
+\item to_keep - 1-based indices of the gene sets that passed the
+(optional) thresholds.
 }
 }
 \description{

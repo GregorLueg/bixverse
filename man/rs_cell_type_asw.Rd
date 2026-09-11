@@ -9,10 +9,11 @@ rs_cell_type_asw(embedding, labels, max_cells, verbose, seed)
 \arguments{
 \item{embedding}{Numeric matrix. Cells x dimensions.}
 
-\item{labels}{Integer vector. The cell type per cell.}
+\item{labels}{Integer vector. The cell type per cell. The codes need not
+be 0-based or contiguous.}
 
 \item{max_cells}{Integer or NULL. If not NULL, subsample to this many
-cells for performance.}
+cells for performance. If NULL, all cells are used.}
 
 \item{verbose}{Boolean. Controls verbosity of the function.}
 

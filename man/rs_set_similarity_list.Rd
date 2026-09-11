@@ -10,10 +10,10 @@ rs_set_similarity_list(list, overlap_coefficient)
 \item{list}{A named R list.}
 
 \item{overlap_coefficient}{Boolean. Use the overlap coefficient instead of
-the Jaccard similarity be calculated.}
+the Jaccard similarity.}
 }
 \value{
-A list with the following items:
+A list with the following items, one entry per unordered pair:
 \itemize{
 \item from - Name of element i
 \item to - Name of element j

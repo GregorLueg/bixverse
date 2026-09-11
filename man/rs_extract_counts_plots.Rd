@@ -16,13 +16,15 @@ to keep.}
 
 \item{norm}{Boolean. Shall normalised counts be returned.}
 
-\item{scale}{Boolean. Shall the normalised counts be scaled.}
+\item{scale}{Boolean. Shall the normalised counts be z-scored across the
+selected cells.}
 
-\item{clip}{Optional float. Clipping for the Z-scores if scale is set to
-\code{TRUE}}
+\item{clip}{Optional float. Clips the Z-scores to \verb{[-clip, clip]}. Only
+used if \code{scale = TRUE}.}
 }
 \value{
-The dense vector of expression values for this gene.
+Numerical vector with one expression value per cell in
+\code{cell_indices}.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}

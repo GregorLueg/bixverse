@@ -8,13 +8,17 @@ rs_gower_dist(x, is_cat)
 }
 \arguments{
 \item{x}{Numerical matrix. Converted matrix of continuous and categorical
-variables as numerical values.}
+variables as numerical values. Rows = samples, columns = features.}
 
-\item{is_cat}{Boolean. Which of the columns represent categorical values.}
+\item{is_cat}{Logical vector of length \code{ncol(x)}. Which of the columns
+represent categorical values.}
 }
 \value{
-The Gower distance matrix between the rows
+The Gower distance matrix between the rows, values in \verb{[0, 1]}.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+Calculates the pairwise Gower distance between the rows. Continuous columns
+contribute the range-normalised absolute difference, categorical columns a
+simple mismatch.
 }

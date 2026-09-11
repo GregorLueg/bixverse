@@ -24,19 +24,22 @@ extendr_module! {
 /// CSR with cells x genes.
 ///
 /// @param f_path File path. The path to the h5ad file.
-/// @param cs_type String. Is the data stored in CSC or CSR.
+/// @param cs_type String. One of `c("csr", "csc")`. How the data is stored in
+/// the file. Other values raise an error.
 /// @param nrows Integer. Number of rows in the file.
 /// @param ncols Integer. Number of columns in the file.
-/// @param cell_quality List. Specifiying the cell quality. Please refer
+/// @param cell_quality List. Specifying the cell quality. Please refer
 /// to [bixverse::params_sc_min_quality()].
-/// @param slot String. In which slot the raw data can be found.
+/// @param slot String. In which slot the raw data can be found. One of
+/// `c("X", "raw", "layers.counts")`. Unknown strings default to `"X"`.
 /// @param verbose Boolean. Controls verbosity of the function
 ///
-/// @returns A list with:
+/// @returns A list with the CSR data (cells x genes) of the cells and genes
+/// passing `cell_quality`:
 /// \itemize{
-///   \item data - The data of the sparse matrix stored on the h5ad file.
-///   \item indices - The indices of the sparse matrix stored in the h5ad file.
-///   \item indptr - The indptr of the sparse matrix stored in the h5ad file.
+///   \item data - The counts of the sparse matrix.
+///   \item indices - The 0-based gene indices of the sparse matrix.
+///   \item indptr - The index pointers of the sparse matrix.
 ///   \item no_genes - No of genes in the sparse matrix (i.e., ncol).
 ///   \item no_cells - No of cells in the sparse matrix (i.e., nrow).
 /// }

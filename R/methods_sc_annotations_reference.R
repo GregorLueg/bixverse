@@ -373,7 +373,7 @@ S7::method(build_symphony_ref, SingleCells) <- function(
   }
 
   ref_rs <- rs_build_symphony_ref(
-    f_path = get_rust_count_gene_f_path(object),
+    f_path_gene = get_rust_count_gene_f_path(object),
     f_path_cell = get_rust_count_cell_f_path(object),
     cell_indices = cells_to_keep,
     hvg_indices = hvg_rust,

@@ -23,8 +23,9 @@ rs_page_rank_parallel(
 \item{weights}{Optional weight vector. If NULL, defaults to 1.0 as weight
 for all edges.}
 
-\item{diffusion_scores}{List. The personalised vectors for the page rank reset
-values. Each element must sum to 1 and be of same length of \code{node_names}!}
+\item{diffusion_scores}{List. The personalised vectors for the page rank
+reset values. Each element must sum to 1 and be of same length of
+\code{node_names}!}
 
 \item{undirected}{Boolean. Is this an undirected graph.}
 }
@@ -35,7 +36,7 @@ of the personalised page rank diffusion for this node.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
-Helper function to calculate in parallel on the same (unweighted) network
-the personalised page rank as fast as possible. Can be used for permutations
+Helper function to calculate in parallel on the same network the
+personalised page rank as fast as possible. Can be used for permutation
 type approaches.
 }

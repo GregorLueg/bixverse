@@ -13,7 +13,8 @@ rs_nmf_multi_bulk(x, k, preprocessing, nmf_hals_params, n_runs, seed, verbose)
 
 \item{preprocessing}{String. One of \code{c("none", "sd", "sqrt_sd")}.}
 
-\item{nmf_hals_params}{Named list. See \code{\link[=params_nmf_hals]{params_nmf_hals()}}.}
+\item{nmf_hals_params}{Named list. See \code{\link[=params_nmf_hals]{params_nmf_hals()}}. The
+\code{nmf_init} field is ignored, restarts always use random initialisation.}
 
 \item{n_runs}{Integer. Number of random restarts.}
 

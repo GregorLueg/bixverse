@@ -2,7 +2,7 @@
 % Please edit documentation in R/extendr-wrappers.R
 \name{rs_ica_iters}
 \alias{rs_ica_iters}
-\title{Run ICA over a given no_comp with random initilisations of w_init}
+\title{Run ICA over a given no_comp with random initialisations of w_init}
 \usage{
 rs_ica_iters(x1, k, no_comp, no_random_init, ica_type, random_seed, ica_params)
 }
@@ -10,15 +10,17 @@ rs_ica_iters(x1, k, no_comp, no_random_init, ica_type, random_seed, ica_params)
 \item{x1}{Numerical matrix. The processed matrix (but not yet
 whitened!)}
 
-\item{k}{Numerical matrix. The whitening matrix.}
+\item{k}{Numerical matrix. The whitening matrix. Needs at least \code{no_comp}
+rows, only the first \code{no_comp} are used.}
 
 \item{no_comp}{Integer. Number of independent components to return.}
 
 \item{no_random_init}{Integer. Number of random initialisations to test.}
 
-\item{ica_type}{String. One of 'logcosh' or 'exp'.}
+\item{ica_type}{String. One of \code{c("logcosh", "exp")}.}
 
-\item{random_seed}{Integer. Seed for randomisations.}
+\item{random_seed}{Integer. Seed for randomisations. Run \code{i} uses
+\code{random_seed + i}.}
 
 \item{ica_params}{A list containing:
 \itemize{

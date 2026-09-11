@@ -27,8 +27,8 @@ rs_hotspot_gene_cor(
 the kNN graph.}
 
 \item{knn_data}{Optional list. This contains pre-computed kNN data
-(including distances) and the \code{dist_metric} it was built with. The user has
-to ensure consistency! If provided, this will be used rather than a graph
+(\code{indices} (0-indexed), \code{dist}, \code{dist_metric} and \code{k}). The user has to
+ensure consistency! If provided, this will be used rather than a graph
 built from the parameter list.}
 
 \item{hotspot_params}{List. The HotSpot parameter list.}
@@ -56,10 +56,10 @@ detailed verbosity.}
 \value{
 A list with the following elements.
 \itemize{
-\item cor - A matrix of the N x N genes_to_use length with the auto-
+\item cor - Symmetric \verb{genes_to_use x genes_to_use} matrix with the local
 correlation coefficients.
-\item z - A matrix of N x N genes_to_use length with the Z-scores of the
-local correlations between two genes.
+\item z - Symmetric \verb{genes_to_use x genes_to_use} matrix with the Z-scores
+of the local correlations between two genes.
 }
 }
 \description{

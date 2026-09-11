@@ -15,25 +15,35 @@ rs_transfer_labels_symphony(
 )
 }
 \arguments{
-\item{reference_z_corr}{Reference Harmony-corrected embedding (N_ref x d).}
+\item{reference_z_corr}{Numerical matrix. Reference Harmony-corrected
+embedding (N_ref x d).}
 
-\item{query_z_corr}{Query Symphony-corrected embedding (N_q x d).}
+\item{query_z_corr}{Numerical matrix. Query Symphony-corrected embedding
+(N_q x d).}
 
-\item{reference_labels}{0-based integer-encoded reference labels.}
+\item{reference_labels}{Integer vector. 0-based integer-encoded reference
+labels.}
 
-\item{n_labels}{Number of distinct labels.}
+\item{n_labels}{Integer. Number of distinct labels.}
 
 \item{knn_params}{List. Output of \code{params_sc_knn()}.}
 
-\item{seed}{Integer.}
+\item{seed}{Integer. Seed for the kNN search.}
 
-\item{verbose}{Integer. 0/1/2.}
+\item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
+detailed verbosity.}
 }
 \value{
-A list with \code{predicted} (0-based integer per query cell) and
-\code{confidence} (vote share of the winning label).
+A list with
+\itemize{
+\item predicted - Integer vector. Predicted label per query cell
+(0-based).
+\item confidence - Numerical vector. Vote share of the winning label.
+}
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+Finds the reference neighbours of every query cell and assigns the
+majority label. Ties go to the lowest label index.
 }
 \keyword{internal}

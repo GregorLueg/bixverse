@@ -24,8 +24,8 @@ extendr_module! {
 ///
 /// @param data Numerical matrix. Needs to be oriented features x samples!
 /// @param distance_type String. One of
-/// `c("euclidean", "manhattan", "canberra", "cosine")`. Which distance metric
-/// to use here.
+/// `c("euclidean", "manhattan", "canberra", "cosine", "correlation")`. Which
+/// distance metric to use here. Unknown strings default to `"euclidean"`.
 /// @param k Integer. Number of neighbours to consider.
 /// @param mu Float. Normalisation factor for the Gaussian kernel width.
 /// @param normalise Boolean. Shall continuous values be Z-scored.
@@ -56,7 +56,7 @@ fn rs_snf_affinity_continuous(
 /// `r lifecycle::badge("experimental")`
 ///
 /// @param data Integer matrix. Needs to be oriented features x samples! The
-/// integers represent the factor values of the catagories.
+/// integers represent the factor values of the categories.
 /// @param k Integer. Number of neighbours to consider.
 /// @param mu Float. Normalisation factor for the Gaussian kernel width.
 ///

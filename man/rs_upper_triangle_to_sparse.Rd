@@ -9,25 +9,28 @@ rs_upper_triangle_to_sparse(value, shift, n, cs_type)
 \arguments{
 \item{value}{Numeric vector. The upper triangle values.}
 
-\item{shift}{Boolean. Was the matrix shifted up (false = diagonal included;
-true diagonal not incldued).}
+\item{shift}{Boolean. Was the matrix shifted up (\code{FALSE} = diagonal
+included; \code{TRUE} = diagonal not included).}
 
 \item{n}{Integer. The number of columns/rows in the symmetric matrix.}
 
 \item{cs_type}{String. One of \code{c("csr", "csc")}. Which type of list to
-return.}
+return. Other values raise an error.}
 }
 \value{
 A list containing:
 \itemize{
-\item data - A vector of lists with the elements. (Related to the way
-Robj are stored in Rust.)
-\item row_indices - A vector of integers with the row indices.
-\item col_ptr - A vector of integers with the column pointers.
+\item data - Numeric vector with the non-zero values.
+\item indptr - Integer vector with the index pointers.
+\item indices - Integer vector with the 0-based indices.
+\item nrow - Number of rows.
+\item ncol - Number of columns.
+\item cs_type - \code{"csr"} or \code{"csc"}.
 }
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
-This function takes the values from an upper triangle matrix
-the shift and the nrows/ncols and returns a list.
+This function takes the values from an upper triangle matrix, the shift
+and the nrows/ncols and returns the full symmetric matrix as a compressed
+sparse list.
 }

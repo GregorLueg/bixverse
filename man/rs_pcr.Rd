@@ -9,7 +9,8 @@ rs_pcr(embedding, batch_vector)
 \arguments{
 \item{embedding}{Numeric matrix. Cells x dimensions, ideally a PCA.}
 
-\item{batch_vector}{Integer vector. The batch per cell.}
+\item{batch_vector}{Integer vector. The batch per cell. The codes need not
+be 0-based or contiguous.}
 }
 \value{
 A list with the following items

@@ -19,18 +19,21 @@ extendr_module! {
 ///
 /// @description
 /// `r lifecycle::badge("experimental")`
+/// Fits a Loess regression of `y` on `x`. Points where either value is
+/// non-finite are dropped from the fit.
 ///
 /// @param x Numeric. The x values to fit.
 /// @param y Numeric. The y values to fit.
-/// @param span Numeric. The span parameter. Needs to be between 0.1 and 1.
+/// @param span Numeric. The span parameter. Needs to be in `(0, 1]`.
 /// @param degree Integer. Either 1 (linear) or 2 (quadratic). Other values
 /// will cause an error.
 ///
 /// @returns A list with the following items
 /// \itemize{
-///   \item predicted - The predicted values.
-///   \item residuals - The residuals for every data point.
-///   \item valid_idx - Which data indices were included.
+///   \item predicted - The predicted values, `0` for dropped points.
+///   \item residuals - The residuals for every data point, `0` for dropped
+///   points.
+///   \item valid_idx - 1-based indices of the points included in the fit.
 /// }
 ///
 /// @export

@@ -26,8 +26,8 @@ rs_hotspot_autocor(
 the kNN graph.}
 
 \item{knn_data}{Optional list. This contains pre-computed kNN data
-(including distances) and the \code{dist_metric} it was built with. The user has
-to ensure consistency! If provided, this will be used rather than a graph
+(\code{indices} (0-indexed), \code{dist}, \code{dist_metric} and \code{k}). The user has to
+ensure consistency! If provided, this will be used rather than a graph
 built from the parameter list.}
 
 \item{hotspot_params}{List. The HotSpot parameter list.}
@@ -51,8 +51,7 @@ detailed verbosity.}
 A list with the following elements.
 \itemize{
 \item gene_idx - 0-based integer indicating the gene index.
-\item gaerys_c - Gaery's C calculation for the autocorrelation
-coefficient.
+\item gaerys_c - Geary's C statistic of the gene.
 \item z_score - Z-score of the auto-correlation.
 \item pval - P-value derived from the Z-score.
 \item fdr - False discovery rate based on the p-value.

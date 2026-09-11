@@ -24,12 +24,14 @@ detailed verbosity.}
 \value{
 A list with:
 \itemize{
-\item indices - An integer matrix representing the indices of the
-approximate nearest neighbours.
-\item dist - An numerical matrix representing the distances to the nearest
-neighbours.
+\item indices - An integer matrix (cells x k) representing the indices
+(0-indexed!) of the approximate nearest neighbours.
+\item dist - A numerical matrix (cells x k) representing the distances to
+the nearest neighbours.
 \item dist_metric - String representing the used distance metric.
 }
+Rows the search left short are padded by repeating their last neighbour
+and distance.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}

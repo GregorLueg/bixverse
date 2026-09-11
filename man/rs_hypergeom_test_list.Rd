@@ -13,7 +13,8 @@ rs_hypergeom_test_list(
 )
 }
 \arguments{
-\item{target_genes_list}{A character vector representing the target gene set.}
+\item{target_genes_list}{A list of character vectors, each representing a
+target gene set.}
 
 \item{gene_sets}{A list of strings that represent the gene sets to test
 against.}
@@ -21,29 +22,31 @@ against.}
 \item{gene_universe}{A character vector representing the gene universe from
 which the target genes and gene sets are sampled from.}
 
-\item{min_overlap}{Optional integer. Shall a filter be applied on the minimum of
-overlappign genes.}
+\item{min_overlap}{Optional integer. Shall a filter be applied on the
+minimum of overlapping genes.}
 
-\item{fdr_threshold}{Optional float. Shall a filter be applied for the maximum
-tolerated FDR.}
+\item{fdr_threshold}{Optional float. Shall a filter be applied for the
+maximum tolerated FDR.}
 }
 \value{
-A list containing:
+A list containing (results of all target sets concatenated, only
+for the tests passing the filters):
 \itemize{
 \item pvals - The p-values from the hypergeometric test.
-\item fdr - The FDRs for each target gene calculated across all gene sets.
-\item odds ratios - The calculated odds ratios
-\item hits - The size of the overlap between the target gene set and individual
-gene sets.
+\item fdr - The FDRs for each target set calculated across all gene sets.
+\item odds_ratios - The calculated odds ratios
+\item hits - The size of the overlap between the target gene set and
+individual gene sets.
 \item gene_set_lengths - The length of the gene sets.
-\item to_keep - Indices of the tests that passed.
-\item tests_passed - How many tests passed the filter criteria for that target
-set.
+\item to_keep - 1-based indices (into \code{gene_sets}) of the tests that
+passed.
+\item tests_passed - How many tests passed the filter criteria for that
+target set.
 }
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 Given a list of target gene sets, this function will test for each of the
-individual target genes the hypergeoemetric enrichment against the specified
-gene sets.
+individual target gene sets the hypergeometric enrichment against the
+specified gene sets.
 }

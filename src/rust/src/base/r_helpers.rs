@@ -27,11 +27,13 @@ extendr_module! {
 ///
 /// @description
 /// `r lifecycle::badge("experimental")`
+/// Sorts `x` in decreasing order and sums `x[i] / i^2`, normalised by the same
+/// sum over a vector of ones of equal length.
 ///
 /// @param x The numeric vector (should be between 0 and 1) for which to
 /// calculate the harmonic sum
 ///
-/// @returns Returns the harmonic sum according to the OT calculation.
+/// @returns The normalised harmonic sum according to the OT calculation.
 ///
 /// @export
 #[extendr]
@@ -63,9 +65,8 @@ fn rs_ot_harmonic_sum(mut x: Vec<f64>) -> f64 {
 ///
 /// @param data Numeric vector. The vector of for example correlation
 /// coefficients that you want to use to go back to a dense matrix.
-/// @param shift Boolean. If you applied a shift, i.e. included the diagonal
-/// values. If `true`, assumes the diagonal values are `1`, otherwise derives
-/// them from the data.
+/// @param shift Boolean. If `TRUE`, `data` excludes the diagonal and the
+/// diagonal is set to `1`. If `FALSE`, `data` includes the diagonal.
 /// @param n Integer. Original dimension (i.e., ncol/nrow) of the matrix to be
 /// reconstructed.
 ///
@@ -98,16 +99,14 @@ fn rs_upper_triangle_to_dense(data: &[f64], shift: bool, n: usize) -> RArray<f64
 /// @description
 /// `r lifecycle::badge("experimental")`
 /// This function generates a vector from the upper triangle of a given
-/// symmetric matrix. You have the option to remove the diagonal with setting
-/// shift to 1.
+/// symmetric matrix, iterating through the rows. You have the option to
+/// remove the diagonal with setting `shift = TRUE`.
 ///
-/// @param x Numeric vector. The vector of correlation coefficients that you
-/// want to use to go back to a dense matrix.
-/// @param shift Boolean. If you applied a shift, i.e. included the diagonal
-/// values. If `true`, assumes the diagonal values are `1`, otherwise derives
-/// them from the data.
+/// @param x Numeric matrix. The symmetric matrix to flatten.
+/// @param shift Boolean. If `TRUE`, the diagonal is excluded, otherwise it is
+/// included.
 ///
-/// @returns The dense R matrix.
+/// @returns Numeric vector with the upper triangle values.
 ///
 /// @export
 #[extendr]
@@ -140,12 +139,13 @@ fn rs_dense_to_upper_triangle(x: RMatrix<f64>, shift: bool) -> Vec<f64> {
 /// Applies a range normalisation on an R vector.
 ///
 /// @param x Numerical vector. The data to normalise.
-/// @param max_val Numeric. The upper bound value to normalise into. If set to 1,
-/// the function will be equal to a min-max normalisation.
-/// @param min_val Numeric. The lower bound value to normalise into. If set to 0,
-/// the function will equal a min-max normalisation.
+/// @param max_val Numeric. The upper bound value to normalise into. If set to
+/// 1, the function will be equal to a min-max normalisation.
+/// @param min_val Numeric. The lower bound value to normalise into. If set to
+/// 0, the function will equal a min-max normalisation.
 ///
-/// @returns Normalised values
+/// @returns Normalised values. A constant vector returns `max_val` for every
+/// element.
 ///
 /// @export
 #[extendr]
@@ -170,14 +170,16 @@ fn rs_range_norm(x: &[f64], max_val: f64, min_val: f64) -> Vec<f64> {
 ///
 /// @description
 /// `r lifecycle::badge("experimental")`
-/// This function calculates the critical value for a given set based on random
-/// permutations and a given alpha value.
+/// This function calculates the critical value for a given set based on a
+/// bootstrap sample (with replacement) and a given alpha value. The sample is
+/// sorted in decreasing order and the value at the upper `alpha` tail is
+/// returned.
 ///
 /// @param values Numeric vector. The full data set for which to calculate the
 /// critical value.
-/// @param iters Integer. Number of random permutations to use.
-/// @param alpha Float. The alpha value. For example, 0.001 would mean that the
-/// critical value is smaller than 0.1 percentile of the random permutations.
+/// @param iters Integer. Size of the bootstrap sample.
+/// @param alpha Float. The alpha value. For example, 0.001 would return the
+/// value exceeded by roughly 0.1 percent of the bootstrap sample.
 /// @param seed Integer. For reproducibility purposes
 ///
 /// @returns The critical value for the given parameters.
@@ -194,13 +196,13 @@ fn rs_critval(values: &[f64], iters: usize, alpha: f64, seed: usize) -> f64 {
 ///
 /// @description
 /// `r lifecycle::badge("experimental")`
-/// This function calculates the critical value for a given set based on random
-/// permutations and a given alpha value.
+/// Same as [bixverse::rs_critval()], but the values are taken from the upper
+/// triangle (diagonal excluded) of a symmetric matrix.
 ///
-/// @param mat Numeric matrix. The (symmetric matrix with all of the values).
-/// @param iters Integer. Number of random permutations to use.
-/// @param alpha Float. The alpha value. For example, 0.001 would mean that the
-/// critical value is smaller than 0.1 percentile of the random permutations.
+/// @param mat Numeric matrix. The symmetric matrix with all of the values.
+/// @param iters Integer. Size of the bootstrap sample.
+/// @param alpha Float. The alpha value. For example, 0.001 would return the
+/// value exceeded by roughly 0.1 percent of the bootstrap sample.
 /// @param seed Integer. For reproducibility purposes
 ///
 /// @returns The critical value for the given parameters.

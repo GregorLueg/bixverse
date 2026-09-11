@@ -10,8 +10,8 @@ rs_ssgsea(exp, gs_list, alpha, normalise, timings)
 \item{exp}{Numerical matrix. The expression matrix with rows = genes, and
 columns = samples}
 
-\item{gs_list}{List. A list containing the indices of the pathway genes
-(needs to be null indexed). See \code{\link[=rs_prepare_gsva_gs]{rs_prepare_gsva_gs()}}.}
+\item{gs_list}{List. A list containing the 0-based indices of the pathway
+genes. See \code{\link[=rs_prepare_gsva_gs]{rs_prepare_gsva_gs()}}.}
 
 \item{alpha}{Float. The alpha parameter to adjust the weights.}
 

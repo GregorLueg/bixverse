@@ -10,9 +10,11 @@ rs_sc_type_assign_cells(sc_type_res, from, to, weights, cluster_labels, params)
 \item{sc_type_res}{List. The ScType results, see \code{rs_sc_type()}.}
 
 \item{from, to}{Optional integer vectors. 1-indexed(!) edges of the sNN
-graph. If \code{NULL}, no smoothing is applied.}
+graph, each edge listed once; the graph is symmetrised on the way in. If
+either is \code{NULL}, no smoothing is applied.}
 
-\item{weights}{Optional numeric vector. Edge weights, same length as \code{from}.}
+\item{weights}{Optional numeric vector. Edge weights, same length as \code{from}.
+Reciprocal weights are averaged. If \code{NULL}, the graph is unweighted.}
 
 \item{cluster_labels}{Optional integer vector. 0-indexed(!) cluster
 assignment, of length of the scored cells.}
@@ -29,10 +31,14 @@ cell, \code{0L} denoting Unknown.
 \item margins - Numeric vector. Best minus second best score per cell.
 \item agreement - Numeric vector. Fraction of graph neighbours sharing the
 call. \code{NULL} if no graph was provided.
-\item hybrid_assignments - Integer vector, as \code{assignments}. Only present
-if \code{cluster_labels} was provided.
-\item composition - List with the per-cluster composition. Only present if
-\code{cluster_labels} was provided.
+\item hybrid_assignments - Integer vector, as \code{assignments}. \code{NULL} if no
+\code{cluster_labels} were provided.
+\item composition - List with the per-cluster composition (\code{cluster_id},
+\code{n_cells}, \code{n_unknown}, \code{dominant}, \code{second}, \code{purity},
+\code{second_fraction}, \code{entropy}, \code{cluster_mixed} and the clusters x cell
+types count matrix \code{counts}). \code{dominant} and \code{second} use the same
+1-based encoding as \code{assignments}. \code{NULL} if no \code{cluster_labels} were
+provided.
 }
 }
 \description{

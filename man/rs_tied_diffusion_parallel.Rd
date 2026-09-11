@@ -33,18 +33,19 @@ of \code{node_names}!}
 the page rank reset values. Each element must sum to 1 and be of same length
 of \code{node_names}!}
 
-\item{summarisation_fun}{String. One of \code{c("min", "max", "avg")}. Which type
-of summarisation function to use to calculate the tied diffusion.}
+\item{summarisation_fun}{String. One of \code{c("min", "max", "mean")}. Which
+type of summarisation function to use to calculate the tied diffusion.
+Other values cause a panic.}
 
 \item{undirected}{Boolean. Is this an undirected graph.}
 }
 \value{
-A matrix of the scores with each row representing a tied diffusion of
-of \code{diffusion_scores_1} and  \code{diffusion_scores_2} lists (in order), and each
-column representing the value of the tied diffusion for this node.
+A matrix of the scores with each row representing a tied diffusion
+of the \code{diffusion_scores_1} and \code{diffusion_scores_2} lists (in order), and
+each column representing the value of the tied diffusion for this node.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
-Helper function to calculate in parallel on the same (unweighted) network
-the tied diffusions as fast as possible. Can be used for permutation.
+Helper function to calculate in parallel on the same network the tied
+diffusions as fast as possible. Can be used for permutation.
 }

@@ -39,14 +39,14 @@ A list with
 scaled to \verb{[0, 1]}. The start cell is not pinned to 0; a start cell far
 from 0 means the refinement disagreed with the anchor.
 \item entropy - Numerical vector with the differentiation entropy per cell
-(natural log).
+(natural log), computed on the fate probabilities before thresholding.
 \item branch_probs - Numerical matrix of cells x terminal states with the
 fate probabilities. Rows need not sum to one, as sub-threshold values are
 zeroed without renormalisation.
 \item terminal_states - Integer vector with the terminal state cell indices
-(0-indexed!). Sets the column order of \code{branch_probs}.
+(0-indexed!), ascending. Sets the column order of \code{branch_probs}.
 \item waypoints - Integer vector with the waypoint cell indices
-(0-indexed!). The first element is the start cell.
+(0-indexed!). The first element is the start cell, the rest ascending.
 \item start_cell - Integer. The start cell that was actually used
 (0-indexed!).
 \item multiscale - Numerical matrix of cells x components with the

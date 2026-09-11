@@ -31,21 +31,22 @@ extendr_module! {
 /// @param target_genes String vector. Represents the target gene set.
 /// @param gene_sets List. Contains the strings that represent the gene sets to
 /// test against.
-/// @param gene_universe String vector. The features representing the gene universe
-/// from which the target genes and gene sets are sampled from.
-/// @param min_overlap Optional integer. Shall a filter be applied on the minimum of
-/// overlappign genes.
-/// @param fdr_threshold Optional float. Shall a filter be applied for the maximum
-/// tolerated FDR.
+/// @param gene_universe String vector. The features representing the gene
+/// universe from which the target genes and gene sets are sampled from.
+/// @param min_overlap Optional integer. Shall a filter be applied on the
+/// minimum of overlapping genes.
+/// @param fdr_threshold Optional float. Shall a filter be applied for the
+/// maximum tolerated FDR.
 ///
-/// @returns A list containing:
+/// @returns A list containing (only for the gene sets passing the filters):
 ///  \itemize{
 ///   \item pvals - The p-values from the hypergeometric test
 ///   \item odds_ratios - The calculated odds ratios
 ///   \item hits - The size of the overlap
 ///   \item gene_set_lengths - The length of the gene sets.
-///   \item fdr - The FDR calculated across the gene sets.
-///   \item to_keep - Indices of the gene sets that passed (optional) thresholds.
+///   \item fdr - The FDR calculated across all gene sets (before filtering).
+///   \item to_keep - 1-based indices of the gene sets that passed the
+///   (optional) thresholds.
 /// }
 ///
 /// @export
@@ -83,30 +84,33 @@ fn rs_hypergeom_test(
 /// @description
 /// `r lifecycle::badge("experimental")`
 /// Given a list of target gene sets, this function will test for each of the
-/// individual target genes the hypergeoemetric enrichment against the specified
-/// gene sets.
+/// individual target gene sets the hypergeometric enrichment against the
+/// specified gene sets.
 ///
-/// @param target_genes_list A character vector representing the target gene set.
+/// @param target_genes_list A list of character vectors, each representing a
+/// target gene set.
 /// @param gene_sets A list of strings that represent the gene sets to test
 /// against.
 /// @param gene_universe A character vector representing the gene universe from
 /// which the target genes and gene sets are sampled from.
-/// @param min_overlap Optional integer. Shall a filter be applied on the minimum of
-/// overlappign genes.
-/// @param fdr_threshold Optional float. Shall a filter be applied for the maximum
-/// tolerated FDR.
+/// @param min_overlap Optional integer. Shall a filter be applied on the
+/// minimum of overlapping genes.
+/// @param fdr_threshold Optional float. Shall a filter be applied for the
+/// maximum tolerated FDR.
 ///
-/// @returns A list containing:
+/// @returns A list containing (results of all target sets concatenated, only
+/// for the tests passing the filters):
 ///  \itemize{
 ///   \item pvals - The p-values from the hypergeometric test.
-///   \item fdr - The FDRs for each target gene calculated across all gene sets.
-///   \item odds ratios - The calculated odds ratios
-///   \item hits - The size of the overlap between the target gene set and individual
-///   gene sets.
+///   \item fdr - The FDRs for each target set calculated across all gene sets.
+///   \item odds_ratios - The calculated odds ratios
+///   \item hits - The size of the overlap between the target gene set and
+///   individual gene sets.
 ///   \item gene_set_lengths - The length of the gene sets.
-///   \item to_keep - Indices of the tests that passed.
-///   \item tests_passed - How many tests passed the filter criteria for that target
-///   set.
+///   \item to_keep - 1-based indices (into `gene_sets`) of the tests that
+///   passed.
+///   \item tests_passed - How many tests passed the filter criteria for that
+///   target set.
 /// }
 ///
 /// @export

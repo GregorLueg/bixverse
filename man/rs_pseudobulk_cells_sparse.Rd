@@ -9,10 +9,12 @@ rs_pseudobulk_cells_sparse(f_path, cell_indices_ls, assay, verbose)
 \arguments{
 \item{f_path}{String. Path to the \code{counts_cells.bin} file.}
 
-\item{cell_indices_ls}{List. Must contains 0-indexed positions of the
-cells to aggregate per element.}
+\item{cell_indices_ls}{List. Each element contains the 0-indexed positions
+of the cells to aggregate.}
 
-\item{assay}{String. One of \code{c("raw", "norm")}. Which counts to normalise.}
+\item{assay}{String. One of \code{c("raw", "norm")}. \code{"raw"} sums the raw
+counts, \code{"norm"} averages the normalised counts. Unrecognised values fall
+back to \code{"raw"}.}
 
 \item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
 detailed verbosity.}
@@ -20,7 +22,7 @@ detailed verbosity.}
 \value{
 A list with the following elements (easy to convert into CSR in R)
 \itemize{
-\item indptr - The index pointers (representing cells)
+\item indptr - The index pointers (representing pseudo-bulked samples)
 \item indices - The indices (representing genes)
 \item data - The pseudo-bulked data
 \item nrow - Number of rows (i.e., pseudo-bulked samples)
@@ -31,7 +33,7 @@ A list with the following elements (easy to convert into CSR in R)
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 This function will return a sparse matrix of
 \verb{length(cell_indices_ls) x number of genes} (in list form in CSR).
-The function has the option to return the sum of the sum of the raw counts
-or the average of the normalised counts.
+The function has the option to return the sum of the raw counts or the
+average of the normalised counts.
 }
 \keyword{internal}

@@ -26,10 +26,10 @@ A class for handling single cell count data stored on disk in two
 complementary binary representations: a CSR-like layout (\code{f_path_cells})
 for fast cell-wise access and a CSC-like layout (\code{f_path_genes}) for fast
 gene-wise access. Both raw counts and log-normalised counts are stored
-side by side. Provides methods for ingesting data from R, \code{h5ad}, and
-\code{mtx} sources (including multi-file workflows), converting between
-layouts, retrieving slices of the matrix, and merging existing binary
-objects.
+side by side. Provides methods for ingesting data from R, \code{h5ad}, \code{mtx}
+and 10x CellRanger h5 sources (including multi-file workflows),
+converting between layouts, retrieving slices of the matrix, merging
+existing binary objects and writing CellSweep-denoised counts.
 }
 \section{Methods}{
 
@@ -74,7 +74,7 @@ Write a CSR matrix from R to the cells binary file
 
 \subsection{Arguments}{
 \describe{
-\item{\code{r_data}}{(\code{list})\cr A list convertible into \code{CompressedSparseData2}. Must contain the elements \code{"indptr"}, \code{"indices"}, \code{"data"}, \code{"nrow"}, \code{"ncol"} and \code{"cs_type"}.}
+\item{\code{r_data}}{(\code{list})\cr A named list convertible into \code{CompressedSparseData2}. Must contain \code{"indptr"}, \code{"indices"} (0-indexed), \code{"data"}, \code{"nrow"}, \code{"ncol"} and \code{"cs_type"} (\code{"csr"} or \code{"csc"}).}
 \item{\code{qc_params}}{(\code{list})\cr Quality control parameters parseable into \code{MinCellQuality}.}
 \item{\code{verbose}}{(\code{logical})\cr Controls verbosity of the function. }
 }}
@@ -84,8 +84,8 @@ the result to \code{f_path_cells}.
 
 }
 \subsection{returns}{
-A list with \code{cell_indices}, \code{gene_indices}, \code{lib_size} and
-\code{nnz}.
+A list with \code{cell_indices} and \code{gene_indices} (0-indexed,
+surviving QC), \code{lib_size} and \code{nnz}.
 }
 }
 
@@ -99,12 +99,12 @@ Write an h5ad file to the cells binary file
 \item{\code{no_cells}}{(\code{integer})\cr Number of cells in the h5ad file.}
 \item{\code{no_genes}}{(\code{integer})\cr Number of genes in the h5ad file.}
 \item{\code{qc_params}}{(\code{list})\cr Quality control parameters parseable into \code{MinCellQuality}.}
-\item{\code{slot}}{(\code{character})\cr Where to find the raw counts. One of \code{"X"} or \code{"raw.X"} (for CellXGene data).}
+\item{\code{slot}}{(\code{character})\cr Where to find the raw counts. One of \code{"X"}, \code{"raw.X"} (or \code{"raw"}, for CellXGene data) or \code{"layers.counts"}. Unmatched values fall back to \code{"X"}.}
 \item{\code{verbose}}{(\code{logical})\cr Controls verbosity of the function. }
 }}
 \subsection{returns}{
-A list with \code{cell_indices}, \code{gene_indices}, \code{lib_size} and
-\code{nnz}.
+A list with \code{cell_indices} and \code{gene_indices} (0-indexed,
+surviving QC), \code{lib_size} and \code{nnz}.
 }
 }
 
@@ -129,8 +129,8 @@ counts before writing.
 
 }
 \subsection{returns}{
-A list with \code{cell_indices}, \code{gene_indices}, \code{lib_size} and
-\code{nnz}.
+A list with \code{cell_indices} and \code{gene_indices} (0-indexed,
+surviving QC), \code{lib_size} and \code{nnz}.
 }
 }
 
@@ -144,7 +144,7 @@ Write an h5ad file to disk using streaming
 \item{\code{no_cells}}{(\code{integer})\cr Number of cells in the h5 file.}
 \item{\code{no_genes}}{(\code{integer})\cr Number of genes in the h5 file.}
 \item{\code{qc_params}}{(\code{list})\cr Quality control parameters parseable into \code{MinCellQuality}.}
-\item{\code{slot}}{(\code{character})\cr Where to find the raw counts. One of \code{"X"} or \code{"raw.X"} (for CellXGene data).}
+\item{\code{slot}}{(\code{character})\cr Where to find the raw counts. One of \code{"X"}, \code{"raw.X"} (or \code{"raw"}, for CellXGene data) or \code{"layers.counts"}. Unmatched values fall back to \code{"X"}.}
 \item{\code{verbose}}{(\code{logical})\cr Controls verbosity of the function. }
 }}
 \subsection{description}{
@@ -153,8 +153,8 @@ where possible.
 
 }
 \subsection{returns}{
-A list with \code{cell_indices}, \code{gene_indices}, \code{lib_size} and
-\code{nnz}.
+A list with \code{cell_indices} and \code{gene_indices} (0-indexed,
+surviving QC), \code{lib_size} and \code{nnz}.
 }
 }
 
@@ -163,7 +163,7 @@ Load multiple h5ad files into a single binary
 
 \subsection{Arguments}{
 \describe{
-\item{\code{file_tasks}}{(\code{list})\cr A list of lists, each produced by the R prescan function. Each inner list must contain \code{exp_id}, \code{h5_path}, \code{cs_type}, \code{no_cells}, \code{no_genes} and \code{gene_local_to_universe}.}
+\item{\code{file_tasks}}{(\code{list})\cr A list of lists, each produced by the R prescan function. Each inner list must contain \code{exp_id}, \code{h5_path}, \code{cs_type}, \code{no_cells}, \code{no_genes} and \code{gene_local_to_universe} (0-indexed integer vector, \code{NA} for unmapped genes), plus an optional \code{raw_slot}.}
 \item{\code{universe_size}}{(\code{integer})\cr Total number of genes in the universe.}
 \item{\code{qc_params}}{(\code{list})\cr Quality control parameters (\code{min_unique_genes}, \code{min_lib_size}, \code{min_cells}, \code{target_size}).}
 \item{\code{verbose}}{(\code{logical})\cr Controls verbosity. }
@@ -171,7 +171,7 @@ Load multiple h5ad files into a single binary
 \subsection{returns}{
 A list with \code{global_gene_indices}, \code{total_cells},
 \code{total_genes} and \code{per_file} (a list of lists with \code{exp_id},
-\code{cell_indices}, \code{lib_size}, \code{nnz}).
+\code{cell_indices} (file-local, 0-indexed), \code{lib_size}, \code{nnz}).
 }
 }
 
@@ -186,8 +186,8 @@ Write an mtx file to the cells binary file
 \item{\code{verbose}}{(\code{logical})\cr Controls verbosity of the function. }
 }}
 \subsection{returns}{
-A list with \code{cell_indices}, \code{gene_indices}, \code{lib_size} and
-\code{nnz}.
+A list with \code{cell_indices} and \code{gene_indices} (0-indexed,
+surviving QC), \code{lib_size} and \code{nnz}.
 }
 }
 
@@ -202,8 +202,8 @@ Write an mtx file to the cells binary file using streaming
 \item{\code{verbose}}{(\code{logical})\cr Controls verbosity of the function. }
 }}
 \subsection{returns}{
-A list with \code{cell_indices}, \code{gene_indices}, \code{lib_size} and
-\code{nnz}.
+A list with \code{cell_indices} and \code{gene_indices} (0-indexed,
+surviving QC), \code{lib_size} and \code{nnz}.
 }
 }
 
@@ -220,7 +220,7 @@ Load multiple mtx files into a single binary
 \subsection{returns}{
 A list with \code{global_gene_indices}, \code{total_cells},
 \code{total_genes} and \code{per_file} (a list of lists with \code{exp_id},
-\code{cell_indices}, \code{lib_size}, \code{nnz}).
+\code{cell_indices} (file-local, 0-indexed), \code{lib_size}, \code{nnz}).
 }
 }
 
@@ -230,7 +230,7 @@ Write a 10x CellRanger h5 file to the cells binary file using streaming
 \subsection{Arguments}{
 \describe{
 \item{\code{h5_path}}{(\code{character})\cr Path to the 10x h5 file.}
-\item{\code{version}}{(\code{character})\cr One of \code{"auto"}, \code{"v2"} or \code{"v3"}. \code{"auto"} detects the layout from the file.}
+\item{\code{version}}{(\code{character})\cr One of \code{"auto"}, \code{"v2"} or \code{"v3"}. \code{"auto"}, and any unmatched value, detects the layout from the file.}
 \item{\code{no_cells}}{(\code{integer})\cr Number of cells (columns) in the file.}
 \item{\code{no_genes}}{(\code{integer})\cr Number of features (rows), including all modalities.}
 \item{\code{qc_params}}{(\code{list})\cr Quality control parameters parseable into \code{MinCellQuality}.}
@@ -244,8 +244,8 @@ Other modalities (e.g. Antibody Capture) are filtered out via
 
 }
 \subsection{returns}{
-A list with \code{cell_indices}, \code{gene_indices}, \code{lib_size} and
-\code{nnz}.
+A list with \code{cell_indices} and \code{gene_indices} (0-indexed,
+surviving QC), \code{lib_size} and \code{nnz}.
 }
 }
 
@@ -254,15 +254,15 @@ Load multiple 10x CellRanger h5 files into a single binary
 
 \subsection{Arguments}{
 \describe{
-\item{\code{file_tasks}}{(\code{list})\cr A list of lists, each produced by the R prescan function. Each inner list must contain \code{exp_id}, \code{h5_path}, \code{version} (\code{"v2"} or \code{"v3"}), \code{no_cells}, \code{no_genes}, \code{gene_local_to_universe} (integer vector, \code{NA} for unmapped / non-gene features) and \code{feature_type} (optional string, defaults to \code{"Gene Expression"}). }
+\item{\code{file_tasks}}{(\code{list})\cr A list of lists, each produced by the R prescan function. Each inner list must contain \code{exp_id}, \code{h5_path}, \code{version} (\code{"v2"} or \code{"v3"}), \code{no_cells}, \code{no_genes}, \code{gene_local_to_universe} (integer vector, \code{NA} for unmapped / non-gene features) and \code{feature_type} (optional string, defaults to \code{"Gene Expression"}).}
 \item{\code{universe_size}}{(\code{integer})\cr Total number of genes in the universe.}
 \item{\code{qc_params}}{(\code{list})\cr Quality control parameters (\code{min_unique_genes}, \code{min_lib_size}, \code{min_cells}, \code{target_size}).}
 \item{\code{verbose}}{(\code{logical})\cr Controls verbosity. }
 }}
 \subsection{returns}{
 A list with \code{global_gene_indices}, \code{total_cells}, \code{total_genes}
-and \code{per_file} (a list of lists with \code{exp_id}, \code{cell_indices},
-\code{lib_size}, \code{nnz}).
+and \code{per_file} (a list of lists with \code{exp_id}, \code{cell_indices}
+(file-local, 0-indexed), \code{lib_size}, \code{nnz}).
 }
 }
 
@@ -276,8 +276,9 @@ Return the full count matrix
 \item{\code{verbose}}{(\code{logical})\cr Controls verbosity of the function. }
 }}
 \subsection{returns}{
-A list with \code{indptr}, \code{indices}, \code{data}, \code{no_cells} and
-\code{no_genes}, parseable into a sparse matrix in R.
+A list with \code{indptr}, \code{indices} (0-indexed), \code{data},
+\code{no_cells} and \code{no_genes}, parseable into a sparse matrix in R. \code{data}
+is integer for \code{"raw"} and double for \code{"norm"}.
 }
 }
 
@@ -294,8 +295,9 @@ Leverages the CSR-stored data for fast cell retrieval.
 
 }
 \subsection{returns}{
-A list with \code{indptr}, \code{indices}, \code{data}, \code{no_cells} and
-\code{no_genes}, parseable into a CSR matrix in R.
+A list with \code{indptr}, \code{indices} (0-indexed gene positions),
+\code{data}, \code{no_cells} (number of returned cells) and \code{no_genes},
+parseable into a CSR matrix in R.
 }
 }
 
@@ -375,8 +377,9 @@ Leverages the CSC-stored data for fast gene retrieval.
 
 }
 \subsection{returns}{
-A list with \code{indptr}, \code{indices}, \code{data}, \code{no_cells} and
-\code{no_genes}, parseable into a CSC matrix in R.
+A list with \code{indptr}, \code{indices} (0-indexed cell positions),
+\code{data}, \code{no_cells} and \code{no_genes} (number of returned genes),
+parseable into a CSC matrix in R.
 }
 }
 
@@ -397,7 +400,7 @@ Merge multiple existing bin files into the cells binary file
 
 \subsection{Arguments}{
 \describe{
-\item{\code{merge_tasks}}{(\code{list})\cr A list of lists. Each inner list must contain \code{exp_id}, \code{bin_cells_path}, \code{cells_to_keep} (0-indexed integer vector) and \code{gene_local_to_universe} (integer vector, \code{-1} for genes absent from the universe).}
+\item{\code{merge_tasks}}{(\code{list})\cr A list of lists. Each inner list must contain \code{exp_id}, \code{bin_cells_path}, \code{cells_to_keep} (0-indexed integer vector) and \code{gene_local_to_universe} (0-indexed integer vector, \code{NA} for genes absent from the universe).}
 \item{\code{universe_size}}{(\code{integer})\cr Number of genes in the intersection universe.}
 \item{\code{renormalise}}{(\code{logical})\cr If \code{TRUE}, recompute \code{data_norm} against \code{target_size} using each cell's surviving raw counts. If \code{FALSE}, pass \code{data_norm} through untouched; the caller must guarantee all inputs were normalised against the same \code{target_size}.}
 \item{\code{target_size}}{(\code{numeric})\cr Target library size for renormalisation. Ignored when \code{renormalise = FALSE}.}
@@ -431,7 +434,7 @@ afterwards, as for a merge.
 \subsection{returns}{
 A list with \code{cell_order} (0-indexed source indices in output
 order), \code{lib_size}, \code{nnz} and \code{fits} (one list per sample with
-\code{sample_id}, \code{alpha}, \code{z_hat}, \code{beta}, \code{ambient},
+\code{sample_id}, \code{alpha}, \code{z_hat} (1-indexed), \code{beta}, \code{ambient},
 \code{celltype_profiles}, \code{n_celltypes}, \code{log_likelihood}, \code{n_iter} and
 \code{converged}).
 }

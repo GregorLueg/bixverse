@@ -7,7 +7,7 @@
 rs_cpm(counts, lib_size, log, prior_count)
 }
 \arguments{
-\item{counts}{Numeric matrix. Raw counts of genes x samples.}
+\item{counts}{Integer or double matrix. Raw counts of genes x samples.}
 
 \item{lib_size}{Numeric vector or NULL. Library size per sample, e.g.
 \code{lib.size * norm.factors}. NULL uses the column sums.}

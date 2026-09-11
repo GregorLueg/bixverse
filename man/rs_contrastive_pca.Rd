@@ -18,7 +18,8 @@ rs_contrastive_pca(
 
 \item{background_covar}{The co-variance matrix of the background data set.}
 
-\item{target_mat}{The original values of the target matrix.}
+\item{target_mat}{The original values of the target matrix. Rows =
+samples, columns = features.}
 
 \item{alpha}{How much of the background co-variance should be removed.}
 
@@ -30,16 +31,17 @@ PCA}
 \value{
 A list containing:
 \itemize{
-\item factors - The factors of the contrastive PCA.
-\item loadings - The loadings of the contrastive PCA. Will be NULL if
-return_loadings is set to FALSE.
+\item factors - The factors of the contrastive PCA, i.e. \code{target_mat}
+multiplied by the loadings. Samples x \code{n_pcs}.
+\item loadings - The loadings (top eigenvectors) of the contrastive PCA.
+Features x \code{n_pcs}. Will be \code{NULL} if \code{return_loadings = FALSE}.
 }
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
-This function calculate the contrastive PCA given a target covariance matrix
-and the background covariance matrix you wish to subtract. The alpha
+This function calculates the contrastive PCA given a target covariance
+matrix and the background covariance matrix you wish to subtract. The alpha
 parameter controls how much of the background covariance you wish to remove.
-You have the options to return the feature loadings and you can specificy
+You have the options to return the feature loadings and you can specify
 the number of cPCAs to return.
 }

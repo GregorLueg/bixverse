@@ -18,21 +18,23 @@ rs_nmf_k_sweep_mc(
 }
 \arguments{
 \item{sparse_data}{A named list with \code{data}, \code{indptr}, \code{indices}, \code{nrow},
-\code{ncol} and \code{format}.}
+\code{ncol} and \code{cs_type}. Shape is (metacells, genes).}
 
 \item{k_range}{Integer vector. Ranks to evaluate, every entry at least 2.}
 
 \item{preprocessing}{String. One of \code{c("none", "sd", "sqrt_sd")}.}
 
-\item{use_second_layer}{Boolean. If \code{TRUE}, runs NMF on normalised counts.}
+\item{use_second_layer}{Boolean. Shall the second data layer be used.}
 
-\item{nmf_hals_params}{Named list. Contains the NMF parameters.}
+\item{nmf_hals_params}{Named list. Contains the NMF parameters, see
+\code{\link[=params_nmf_hals]{params_nmf_hals()}}.}
 
-\item{nmf_consensus_params}{Named list. Contains the consensus parameters.}
+\item{nmf_consensus_params}{Named list. Contains the consensus parameters,
+see \code{\link[=params_nmf_consensus]{params_nmf_consensus()}}.}
 
 \item{n_runs}{Integer. Number of restarts per k. Must be at least 2.}
 
-\item{seed}{Integer. Base random seed.}
+\item{seed}{Integer. Base random seed. The i-th k uses \code{seed + i * n_runs}.}
 
 \item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
 detailed verbosity.}
@@ -59,7 +61,9 @@ Returns diagnostics only, no factors, so a wide \code{k_range} stays cheap in
 memory. Pick the k where stability is high and the error curve has not yet
 flattened, then call \code{\link[=rs_nmf_consensus_mc]{rs_nmf_consensus_mc()}} there. Assumes that the sparse
 data is pre-filtered for the cells/genes you wish to include. Indices in the
-sparse data need to be 0-indexed.
+sparse data need to be 0-indexed. Both data layers hold the supplied
+values, so which assay NMF runs on is decided by what is passed in, not by
+\code{use_second_layer}.
 }
 \references{
 Kotliar et al., eLife, 2019

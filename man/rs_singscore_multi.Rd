@@ -16,25 +16,26 @@ rs_singscore_multi(
 \arguments{
 \item{ranks}{Numerical matrix. The ranked expression matrix.}
 
-\item{up_list}{List. Up gene sets as zero-indexed indices. See
+\item{up_list}{List. Up gene sets as 0-based indices. See
 \code{\link[=rs_prepare_gsva_gs]{rs_prepare_gsva_gs()}}.}
 
-\item{down_list}{List or NULL. Paired down gene sets, same length and
-ordering as \code{up_list}.}
+\item{down_list}{List or NULL. Paired down gene sets as 0-based indices,
+same length and ordering as \code{up_list}.}
 
-\item{center_score}{Boolean.}
+\item{center_score}{Boolean. Centre scores around 0. Disabled internally
+when \code{known_direction = FALSE}.}
 
-\item{known_direction}{Boolean.}
+\item{known_direction}{Boolean. Whether the up-set direction is known.}
 
-\item{stable}{Boolean.}
+\item{stable}{Boolean. If \code{TRUE}, use stable-gene score bounds.}
 }
 \value{
 A named list with
 \itemize{
 \item \code{scores} - Numerical matrix with the scores
-\item \code{dispersion} - Numerical matrix with the dispersions
+\item \code{dispersions} - Numerical matrix with the dispersions
 }
-Both matrices are of shape gene_sets × samples.
+Both matrices are of shape gene sets x samples.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}

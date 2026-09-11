@@ -9,25 +9,28 @@ rs_h5ad_data(f_path, cs_type, nrows, ncols, cell_quality, slot, verbose)
 \arguments{
 \item{f_path}{File path. The path to the h5ad file.}
 
-\item{cs_type}{String. Is the data stored in CSC or CSR.}
+\item{cs_type}{String. One of \code{c("csr", "csc")}. How the data is stored in
+the file. Other values raise an error.}
 
 \item{nrows}{Integer. Number of rows in the file.}
 
 \item{ncols}{Integer. Number of columns in the file.}
 
-\item{cell_quality}{List. Specifiying the cell quality. Please refer
+\item{cell_quality}{List. Specifying the cell quality. Please refer
 to \code{\link[=params_sc_min_quality]{params_sc_min_quality()}}.}
 
-\item{slot}{String. In which slot the raw data can be found.}
+\item{slot}{String. In which slot the raw data can be found. One of
+\code{c("X", "raw", "layers.counts")}. Unknown strings default to \code{"X"}.}
 
 \item{verbose}{Boolean. Controls verbosity of the function}
 }
 \value{
-A list with:
+A list with the CSR data (cells x genes) of the cells and genes
+passing \code{cell_quality}:
 \itemize{
-\item data - The data of the sparse matrix stored on the h5ad file.
-\item indices - The indices of the sparse matrix stored in the h5ad file.
-\item indptr - The indptr of the sparse matrix stored in the h5ad file.
+\item data - The counts of the sparse matrix.
+\item indices - The 0-based gene indices of the sparse matrix.
+\item indptr - The index pointers of the sparse matrix.
 \item no_genes - No of genes in the sparse matrix (i.e., ncol).
 \item no_cells - No of cells in the sparse matrix (i.e., nrow).
 }

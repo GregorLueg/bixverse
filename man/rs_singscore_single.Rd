@@ -32,9 +32,9 @@ Becomes irrelevant when \code{down_set} is also provided.}
 \item{stable}{Boolean. If \code{TRUE}, use stable-gene score bounds.}
 }
 \value{
-A named list with \code{TotalScore}, \code{TotalDispersion}, and (when
-\code{down_set} is provided) \code{UpScore}, \code{UpDispersion}, \code{DownScore},
-\code{DownDispersion}.
+A named list with \code{total_score}, \code{total_dispersion}, \code{up_score},
+\code{up_dispersion}, \code{down_score} and \code{down_dispersion}. The last four are
+\code{NULL} unless \code{down_set} is provided.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}

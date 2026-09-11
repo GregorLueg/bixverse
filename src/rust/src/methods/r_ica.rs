@@ -22,28 +22,30 @@ extendr_module! {
 ///
 /// @description
 /// `r lifecycle::badge("experimental")`
-/// Prepares the data for subsequent usag in ICA. Incorrect use can cause kernel
-/// crashes. Wrapper around the Rust functions with type checks are provided in
-/// the package.
+/// Prepares the data for subsequent usage in ICA. Incorrect use can cause
+/// kernel crashes. Wrapper around the Rust functions with type checks are
+/// provided in the package.
 ///
-/// @param x The matrix to whiten. The whitening will happen over the columns.
+/// @param x Numeric matrix to whiten. The columns are centred and the
+/// whitening happens over the columns.
 /// @param fast_svd Boolean. Shall a randomised SVD be used. This is way faster
 /// on larger data sets.
 /// @param seed Integer. Only relevant with fast_svd is set to `TRUE`.
 /// @param rank Integer. How many ranks to use for the fast SVD approximation.
 /// If you supply `NULL`, it will default to `10L`. Only relevant with
 /// fast_svd is set to `TRUE`.
-/// @param oversampling Integer. Oversampling parameter to make the approximation
-/// more precise. If you supply `NULL`, it will default to `10L`. Only relevant
-/// with fast_svd is set to `TRUE`.
-/// @param n_power_iter Integer. How much shall the QR low rank approximation be
-/// powered. If you supply `NULL`, it will default to `2L`.
-///
+/// @param oversampling Integer. Oversampling parameter to make the
+/// approximation more precise. If you supply `NULL`, it will default to `10L`.
+/// Only relevant with fast_svd is set to `TRUE`.
+/// @param n_power_iter Integer. Number of power iterations for the randomised
+/// SVD. If you supply `NULL`, it will default to `2L`. Only relevant with
+/// fast_svd is set to `TRUE`.
 ///
 /// @returns A list containing:
 ///  \itemize{
-///   \item x - The preprocessed matrix.
-///   \item k - The pre-whitening matrix k.
+///   \item x - The column-centred input, transposed.
+///   \item k - The whitening matrix K. With `fast_svd = TRUE` it can carry
+///   more than `rank` rows; the caller trims it.
 /// }
 ///
 /// @export
@@ -73,13 +75,13 @@ fn rs_prepare_whitening(
 /// @description
 /// `r lifecycle::badge("experimental")`
 /// This function serves as a wrapper over the fast ICA implementations in Rust.
-/// It assumes a whitened matrix and also an intialised w_init.
+/// It assumes a whitened matrix and also an initialised w_init.
 ///
 /// @param whiten Numerical matrix. The whitened matrix.
 /// @param w_init Numerical matrix. The initial unmixing matrix. ncols need to
 /// be equal to nrows of whiten.
-/// @param ica_type String. One of 'logcosh' or 'exp'. If weird string is
-/// provided, it will default to `"logcosh"`.
+/// @param ica_type String. One of `c("logcosh", "exp")`. Any other string
+/// defaults to `"logcosh"`.
 /// @param ica_params A list containing:
 ///  \itemize{
 ///   \item maxit - Integer. Maximum number of iterations for ICA.
@@ -95,7 +97,8 @@ fn rs_prepare_whitening(
 /// @returns A list with the following items:
 ///  \itemize{
 ///   \item mixing - The mixing matrix for subsequent usage.
-///   \item converged - Boolean if the algorithm converged.
+///   \item converged - Boolean. Did the best tolerance reached fall below
+///   `max_tol`.
 /// }
 ///
 /// @export
@@ -139,7 +142,7 @@ fn rs_fast_ica(
     ))
 }
 
-/// Run ICA over a given no_comp with random initilisations of w_init
+/// Run ICA over a given no_comp with random initialisations of w_init
 ///
 /// @description
 /// `r lifecycle::badge("experimental")`
@@ -151,11 +154,13 @@ fn rs_fast_ica(
 ///
 /// @param x1 Numerical matrix. The processed matrix (but not yet
 /// whitened!)
-/// @param k Numerical matrix. The whitening matrix.
+/// @param k Numerical matrix. The whitening matrix. Needs at least `no_comp`
+/// rows, only the first `no_comp` are used.
 /// @param no_comp Integer. Number of independent components to return.
 /// @param no_random_init Integer. Number of random initialisations to test.
-/// @param ica_type String. One of 'logcosh' or 'exp'.
-/// @param random_seed Integer. Seed for randomisations.
+/// @param ica_type String. One of `c("logcosh", "exp")`.
+/// @param random_seed Integer. Seed for randomisations. Run `i` uses
+/// `random_seed + i`.
 /// @param ica_params A list containing:
 /// \itemize{
 ///   \item maxit - Integer. Maximum number of iterations for ICA.
@@ -216,19 +221,19 @@ fn rs_ica_iters(
     ))
 }
 
-/// Run ICA with cross-validation and random initialsiation
+/// Run ICA with cross-validation and random initialisation
 ///
 /// @description
 /// `r lifecycle::badge("experimental")`
 /// This function will split the data into `no_folds` and apply ICA with
-/// `no_random_inits` over that fold.
+/// `no_random_init` random initialisations over each fold.
 ///
 /// @param x Numeric matrix. The processed data (no whitening function has
 /// been applied yet.)
 /// @param no_comp Integer. Number of components to test for.
-/// @param no_random_init Integer. Number of random initialisations.
 /// @param no_folds Integer. Number of folds to use for the cross-validation.
-/// @param ica_type String. Which type of ICA shall be run.
+/// @param no_random_init Integer. Number of random initialisations per fold.
+/// @param ica_type String. One of `c("logcosh", "exp")`.
 /// @param random_seed Integer. For reproducibility.
 /// @param ica_params A list containing:
 /// \itemize{
@@ -245,9 +250,9 @@ fn rs_ica_iters(
 /// @returns A list containing:
 /// \itemize{
 ///   \item s_combined - The combined matrices for S. Dimensions are nrows =
-///   features; and ncols = ncomp * no_random_init.
+///   features; and ncols = no_comp * no_random_init * no_folds.
 ///   \item converged - Boolean vector indicating if the respective run reached
-///   convergence. Length = no_random_init
+///   convergence. Length = no_random_init * no_folds
 /// }
 ///
 /// @export

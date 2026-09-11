@@ -10,10 +10,11 @@ rs_split_cor_signs(data)
 \item{data}{The correlation matrix to split by sign.}
 }
 \value{
-A vector of 1 and -1 indicating the respective sign of the
-correlation matrix.
+An integer vector of 1 and -1, one per column of \code{data}.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+All \code{1} if every off-diagonal correlation is non-negative, all \code{-1} if
+every one is non-positive, otherwise a graph-based split into two groups.
 }
 \keyword{internal}

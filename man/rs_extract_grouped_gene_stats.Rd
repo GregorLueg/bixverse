@@ -18,20 +18,22 @@ rs_extract_grouped_gene_stats(
 \item{cell_indices}{Integer positions (0-indexed!) that defines the cells
 to keep.}
 
-\item{gene_indices}{Integer. Gene index position to return (0-indexed!).}
+\item{gene_indices}{Integer vector. Gene index positions to return
+(0-indexed!).}
 
-\item{group_ids}{Integer. The levels of the data. (0-indexed!)}
+\item{group_ids}{Integer vector. Group of each cell in \code{cell_indices}, as
+an index into \code{group_levels} (0-indexed!). Same length as \code{cell_indices}.}
 
-\item{group_levels}{String. Name of the factors.}
+\item{group_levels}{Character vector. The group labels.}
 }
 \value{
 A list with the following elements:
 \itemize{
-\item grp_label - The label of that group
-\item mean_exp - Vector of mean expression values in row major (genes x
-n_levels)
-\item perc_exp - Vector of proportions of cells with expression in row
-major (genes x n_levels)
+\item grp_label - The group labels, i.e. \code{group_levels}.
+\item mean_exp - Mean normalised expression per gene and group over all
+cells of the group (zeros included), row-major (genes x groups).
+\item perc_exp - Fraction (\verb{[0, 1]}) of cells in the group with a
+non-zero count, row-major (genes x groups).
 }
 }
 \description{
