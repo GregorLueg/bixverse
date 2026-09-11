@@ -19,9 +19,9 @@ checksum = "4b46cbb362ab8752921c97e041f5e366ee6297bd428a31275b9fcf1e380f7299"
 
 [[package]]
 name = "ann-search-rs"
-version = "0.8.2"
+version = "0.8.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bacd8fae57ca621a5aef6ff4bc7852279c51b658daf73f8098b8b38644659757"
+checksum = "a07cbec2cb92034051d11f04be040e9a82e4d460890ccb1097b45eb4eea2ad18"
 dependencies = [
  "document-features",
  "faer",
@@ -103,9 +103,9 @@ dependencies = [
 
 [[package]]
 name = "bitflags"
-version = "2.13.1"
+version = "2.13.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b588b76d00fde79687d7646a9b5bdf3cc0f655e0bbd080335a95d7e96f3587da"
+checksum = "3ded4057c258ba199e2d26386d3af3780957ecaee6c4ef4041c6b4b8b97c0b06"
 
 [[package]]
 name = "bixverse"
@@ -127,7 +127,7 @@ dependencies = [
 [[package]]
 name = "bixverse-rs"
 version = "0.5.1"
-source = "git+https://github.com/GregorLueg/bixverse-rs?branch=release-0.5.1#32702315fd0e35e685134bc48b943bedcff6ad02"
+source = "git+https://github.com/GregorLueg/bixverse-rs?branch=release-0.5.1#89d20281cf5a029a82d885bfe68c19040d587dfb"
 dependencies = [
  "ann-search-rs",
  "approx",
@@ -431,9 +431,9 @@ checksum = "e1d926b4d407d372f141f93bb444696142c29d32962ccbd3531117cf3aa0bfa9"
 
 [[package]]
 name = "edge-rs"
-version = "0.0.2"
+version = "0.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4319f18ec387a50ce6d00230d4947b61c6f682707e7278dca05119b8dc2eaa85"
+checksum = "16fca3d67d5222e62aad123c7e86dff1c5ffde62b3728baf9d2b0137d80ec712"
 dependencies = [
  "faer",
  "faer-traits",
@@ -1889,9 +1889,9 @@ checksum = "0c790de23124f9ab44544d7ac05d60440adc586479ce501c1d6d7da3cd8c9cf5"
 
 [[package]]
 name = "smallvec"
-version = "1.16.0"
+version = "1.16.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b9be42f50aa861c555654aa3a37f52f4b1074bacf4e48fe0ef7fa584e80f1f0f"
+checksum = "ba467056f1b547ed52077911161fc86985becbc60e8e1857c8a144dab0def891"
 
 [[package]]
 name = "spindle"
@@ -2061,9 +2061,9 @@ dependencies = [
 
 [[package]]
 name = "toml_edit"
-version = "0.25.13+spec-1.1.0"
+version = "0.25.15+spec-1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6975367e4d2ef766d86af01ffad14b622fecc8d4357a998fbc4deb6e9bacaf9b"
+checksum = "1340ea94a5856333492c9064b02c778b191dd2c853778d9609debdcdfea3a614"
 dependencies = [
  "indexmap",
  "toml_datetime",

@@ -59,7 +59,7 @@ sequencer saw is in there.
 
 ```{r}
 #| label: download the raw matrix
-h5_path <- download_pbmc_1k_5p(quiet = TRUE)
+h5_path <- download_pbmc_1k_5p(quiet = FALSE)
 
 meta <- read_tenx_h5_metadata(h5_path)
 meta$dims
@@ -87,7 +87,7 @@ raw_object <- load_tenx_h5(
     min_cells = 0L
   ),
   feature_type = "Gene Expression",
-  .verbose = FALSE
+  .verbose = TRUE
 )
 
 raw_object
@@ -192,6 +192,7 @@ something, and cluster there.
 ```{r}
 #| label: load the cells
 dir_cells <- file.path(tempdir_cellsweep, "cells")
+
 dir.create(dir_cells, showWarnings = FALSE, recursive = TRUE)
 
 cell_object <- load_tenx_h5(
@@ -203,7 +204,7 @@ cell_object <- load_tenx_h5(
     min_cells = 3L
   ),
   feature_type = "Gene Expression",
-  .verbose = FALSE
+  .verbose = TRUE
 )
 
 cell_object
@@ -273,6 +274,7 @@ cell_object <- find_clusters_sc(
 )
 
 obs_cells <- get_sc_obs(cell_object)
+
 table(obs_cells$leiden_clusters)
 ```
 

@@ -1935,7 +1935,7 @@ SingleCellDuckDB <- R6::R6Class(
     #' Populate the obs table from a single source DuckDB, restricted to a
     #' subset of cells and reordered to match.
     #'
-    #' Needed because [add_data_obs()] requires an obs table to already exist,
+    #' Needed because `add_data_obs()` requires an obs table to already exist,
     #' so an object written from scratch out of a subset of a parent (as
     #' `cellsweep_sc()` does) has nothing to attach columns to.
     #'

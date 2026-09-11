@@ -225,6 +225,10 @@ fn rs_dist(x: RMatrix<f64>, distance_type: String) -> extendr_api::Result<RArray
         DistanceType::L1Norm => column_pairwise_l1_norm(data),
         DistanceType::Cosine => column_pairwise_cosine_dist(data),
         DistanceType::Canberra => column_pairwise_canberra_dist(data),
+        DistanceType::Correlation => {
+            let cor = bixverse_rs::core::base::cors_similarity::column_pairwise_cor(data, false);
+            faer::Mat::from_fn(cor.nrows(), cor.ncols(), |i, j| 1.0 - cor[(i, j)])
+        }
     };
 
     Ok(faer_to_r_matrix(res.as_ref()))

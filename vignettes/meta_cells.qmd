@@ -900,8 +900,9 @@ dim(pb_counts)
 ```
 
 The returned matrix has one row per group and one column per gene. From here
-the standard bulk DGE pipeline applies; `bixverse` does not wrap the DGE call
-itself.
+the standard bulk DGE pipeline applies: transpose it and hand it to
+`run_edger_ql()` or `run_limma_voom()`, both in Rust, no edgeR or limma
+needed.
 
 ## Clean up
 

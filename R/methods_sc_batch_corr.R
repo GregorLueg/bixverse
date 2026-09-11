@@ -162,7 +162,7 @@ print.KbetScores <- function(x, ...) {
 #' separation, and negative values suggest overcorrection. This metric is
 #' best suited for embedding-based correction methods (e.g. Harmony, fastMNN).
 #' For graph-based methods like BBKNN, consider using
-#' [bixverse::calculate_batch_lisi_sc()] instead.
+#' [bixverse::calculate_lisi_sc()] instead.
 #'
 #' @param object `SingleCells` or `SingleCellsSubset` class.
 #' @param batch_column String. The column with the batch information in the
@@ -238,8 +238,8 @@ S7::method(calculate_batch_asw_sc, ScOrScSubset) <- function(
   }
 
   if (!embd_to_use %in% get_available_embeddings(object)) {
-    warning("The desired embedding was not found. Returning class as is.")
-    return(object)
+    warning("The desired embedding was not found. Returning NULL")
+    return(NULL)
   }
 
   embd <- get_embedding(x = object, embd_name = embd_to_use)
@@ -289,68 +289,224 @@ print.BatchSilhouetteScores <- function(x, ...) {
   invisible(x)
 }
 
-## batch LISI ------------------------------------------------------------------
+## LISI ------------------------------------------------------------------------
 
-#' Calculate batch LISI scores
+#' Calculate LISI scores (iLISI or cLISI)
 #'
 #' @description
-#' Computes the Local Inverse Simpson's Index (LISI) on batch labels using the
-#' kNN graph. LISI measures the effective number of batches represented in each
-#' cell's neighbourhood. Under perfect mixing, LISI equals the number of
-#' batches. Under no mixing, LISI equals 1. Unlike kBET, LISI does not compare
-#' against global batch proportions, making it suitable for graph-based
-#' correction methods like BBKNN.
+#' Computes the Local Inverse Simpson's Index (LISI) on the kNN graph: the
+#' effective number of labels in each cell's neighbourhood. On batch labels
+#' this is iLISI, where higher means better mixing. On cell type labels it is
+#' cLISI, where lower means cell types stay apart. Unlike kBET, LISI does not
+#' compare against global proportions, so it also works on graph-based
+#' corrections like BBKNN.
+#'
+#' The normalised score follows scIB and lands in `[0, 1]`, higher is better
+#' for both: iLISI as `(median - 1) / (n - 1)`, cLISI as
+#' `(n - median) / (n - 1)`.
 #'
 #' @param object `SingleCells` or `SingleCellsSubset` class.
-#' @param batch_column String. The column with the batch information in the
-#' obs data of the class.
+#' @param label_column String. The column with the batch or cell type labels in
+#' the obs data of the class.
+#' @param type String. One of `c("batch", "cell_type")`. Decides which
+#' normalised score is reported. Defaults to `"batch"`.
+#' @param weighted Boolean. Weight the neighbours with a perplexity-calibrated
+#' Gaussian kernel on the kNN distances, as in Korsunsky et al. If `FALSE`,
+#' all neighbours count equally. Defaults to `FALSE`.
+#' @param perplexity Numeric. Perplexity for the weighted version. Defaults to
+#' `30`.
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
-#' @returns A `BatchLisiScores` object with the following elements
+#' @returns A `LisiScores` object with the following elements
 #' \itemize{
-#'   \item per_cell - Per-cell LISI scores in `[1, n_batches]`.
+#'   \item per_cell - Per-cell LISI scores in `[1, n_labels]`.
 #'   \item mean_lisi - Mean LISI across all cells.
 #'   \item median_lisi - Median LISI across all cells.
-#'   \item n_batches - Number of batches in the data.
+#'   \item lisi_norm - The normalised score in `[0, 1]`, higher is better.
+#'   \item n_labels - Number of distinct labels.
+#'   \item type - `"batch"` (iLISI) or `"cell_type"` (cLISI).
 #' }
 #'
 #' @export
 #'
-#' @references Korsunsky, et al., Nat. Methods, 2019
+#' @references Korsunsky, et al., Nat. Methods, 2019; Luecken, et al., Nat.
+#' Methods, 2022
 #'
 #' @examples
-#' # batch LISI over the kNN graph
+#' # iLISI over the kNN graph
 #' sc <- demo_single_cells(
 #'   syn_data_params = params_sc_synthetic_data(
 #'     n_cells = 600L, n_genes = 50L, n_batches = 3L
 #'   )
 #' )
-#' calculate_batch_lisi_sc(
+#' calculate_lisi_sc(
 #'   sc,
-#'   batch_column = "batch_index",
+#'   label_column = "batch_index",
 #'   .verbose = FALSE
 #' )
 #'
 #' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
-calculate_batch_lisi_sc <- S7::new_generic(
-  name = "calculate_batch_lisi_sc",
+calculate_lisi_sc <- S7::new_generic(
+  name = "calculate_lisi_sc",
   dispatch_args = "object",
   fun = function(
     object,
-    batch_column,
+    label_column,
+    type = c("batch", "cell_type"),
+    weighted = FALSE,
+    perplexity = 30,
     .verbose = TRUE
   ) {
     S7::S7_dispatch()
   }
 )
 
-#' @method calculate_batch_lisi_sc ScOrScSubset
-S7::method(calculate_batch_lisi_sc, ScOrScSubset) <- function(
+#' @method calculate_lisi_sc ScOrScSubset
+S7::method(calculate_lisi_sc, ScOrScSubset) <- function(
+  object,
+  label_column,
+  type = c("batch", "cell_type"),
+  weighted = FALSE,
+  perplexity = 30,
+  .verbose = TRUE
+) {
+  type <- match.arg(type)
+  checkmate::qassert(label_column, "S1")
+  checkmate::assertChoice(type, c("batch", "cell_type"))
+  checkmate::qassert(weighted, "B1")
+  checkmate::qassert(perplexity, "N1(0,)")
+  checkmate::qassert(.verbose, "B1")
+
+  labels <- unlist(object[[label_column]])
+
+  if (!length(levels(factor(labels))) > 1) {
+    warning("The label column only has one label. Returning NULL")
+    return(NULL)
+  }
+
+  knn_mat <- get_knn_mat(object)
+
+  if (is.null(knn_mat)) {
+    warning("No kNN matrix found to calculate LISI. Returning NULL")
+    return(NULL)
+  }
+
+  knn_dist <- if (weighted) get_knn_dist(object) else NULL
+  if (weighted && is.null(knn_dist)) {
+    warning("No kNN distances found for weighted LISI. Returning NULL")
+    return(NULL)
+  }
+
+  rs_res <- rs_lisi(
+    knn_mat = knn_mat,
+    knn_dist = knn_dist,
+    labels = as.integer(factor(labels)),
+    perplexity = perplexity,
+    verbose = .verbose
+  )
+
+  structure(
+    list(
+      per_cell = rs_res$per_cell,
+      mean_lisi = rs_res$mean_lisi,
+      median_lisi = rs_res$median_lisi,
+      lisi_norm = if (type == "batch") {
+        rs_res$ilisi_norm
+      } else {
+        rs_res$clisi_norm
+      },
+      n_labels = rs_res$n_labels,
+      type = type
+    ),
+    class = "LisiScores"
+  )
+}
+
+### lisi print -----------------------------------------------------------------
+
+#' @export
+#'
+#' @keywords internal
+print.LisiScores <- function(x, ...) {
+  n_cells <- length(x$per_cell)
+  label <- if (x$type == "batch") "iLISI (batch)" else "cLISI (cell type)"
+
+  cat(sprintf("%s\n", label))
+  cat(sprintf("  Cells: %d | Labels: %d\n", n_cells, x$n_labels))
+  cat(sprintf("  Mean LISI:    %.4f\n", x$mean_lisi))
+  cat(sprintf("  Median LISI:  %.4f\n", x$median_lisi))
+  cat(sprintf("  Normalised:   %.4f (0 = worst, 1 = best)\n", x$lisi_norm))
+
+  invisible(x)
+}
+
+## PCR -------------------------------------------------------------------------
+
+#' Calculate the principal component regression on batch
+#'
+#' @description
+#' Regresses each embedding dimension on the batch labels and weights the
+#' per-dimension R-squared by the variance of that dimension. On its own the
+#' number says how much of the embedding variance batch explains. For a
+#' corrected embedding, the function also runs it on the uncorrected PCA and
+#' reports the scIB comparison `(pre - post) / pre`: 1 means the batch
+#' variance is gone, 0 means nothing changed, negative means it got worse.
+#'
+#' @param object `SingleCells` or `SingleCellsSubset` class.
+#' @param batch_column String. The column with the batch information in the
+#' obs data of the class.
+#' @param embd_to_use String. Which embedding to compute the PCR on. Defaults
+#' to `"pca"`.
+#' @param .verbose Boolean. Controls verbosity of the function.
+#'
+#' @returns A `PcrScores` object with the following elements
+#' \itemize{
+#'   \item pcr - Variance-weighted R-squared of batch on `embd_to_use`.
+#'   \item pcr_pca - The same on the uncorrected PCA.
+#'   \item pcr_comparison - `(pcr_pca - pcr) / pcr_pca`. `NA` if
+#'   `embd_to_use = "pca"`.
+#'   \item var_explained - Variance per embedding dimension.
+#'   \item r_squared - Batch R-squared per embedding dimension.
+#'   \item embedding_used - Which embedding the PCR was computed on.
+#' }
+#'
+#' @export
+#'
+#' @references Büttner, et al., Nat. Methods, 2019; Luecken, et al., Nat.
+#' Methods, 2022
+#'
+#' @examples
+#' # share of PCA variance explained by batch
+#' sc <- demo_single_cells(
+#'   syn_data_params = params_sc_synthetic_data(
+#'     n_cells = 600L, n_genes = 50L, n_batches = 3L
+#'   )
+#' )
+#' calculate_pcr_sc(sc, batch_column = "batch_index")
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+calculate_pcr_sc <- S7::new_generic(
+  name = "calculate_pcr_sc",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    batch_column,
+    embd_to_use = "pca",
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method calculate_pcr_sc ScOrScSubset
+S7::method(calculate_pcr_sc, ScOrScSubset) <- function(
   object,
   batch_column,
+  embd_to_use = "pca",
   .verbose = TRUE
 ) {
   checkmate::qassert(batch_column, "S1")
+  checkmate::qassert(embd_to_use, "S1")
   checkmate::qassert(.verbose, "B1")
 
   batch_index <- unlist(object[[batch_column]])
@@ -360,55 +516,470 @@ S7::method(calculate_batch_lisi_sc, ScOrScSubset) <- function(
     return(NULL)
   }
 
-  knn_mat <- get_knn_mat(object)
-
-  if (is.null(knn_mat)) {
-    warning("No kNN matrix found to calculate batch LISI. Returning NULL")
+  available <- get_available_embeddings(object)
+  if (!all(c("pca", embd_to_use) %in% available)) {
+    warning("The PCA or the desired embedding was not found. Returning NULL")
     return(NULL)
   }
 
-  n_batches <- length(levels(factor(batch_index)))
+  batch_vector <- as.integer(factor(batch_index))
+  pca_res <- rs_pcr(
+    embedding = get_embedding(x = object, embd_name = "pca"),
+    batch_vector = batch_vector
+  )
+  rs_res <- if (embd_to_use == "pca") {
+    pca_res
+  } else {
+    rs_pcr(
+      embedding = get_embedding(x = object, embd_name = embd_to_use),
+      batch_vector = batch_vector
+    )
+  }
 
-  rs_res <- rs_batch_lisi(
-    knn_mat = knn_mat,
-    batch_vector = as.integer(factor(batch_index)),
-    verbose = .verbose
+  pcr_comparison <- if (embd_to_use == "pca") {
+    NA_real_
+  } else {
+    (pca_res$pcr - rs_res$pcr) / pca_res$pcr
+  }
+
+  structure(
+    list(
+      pcr = rs_res$pcr,
+      pcr_pca = pca_res$pcr,
+      pcr_comparison = pcr_comparison,
+      var_explained = rs_res$var_explained,
+      r_squared = rs_res$r_squared,
+      embedding_used = embd_to_use
+    ),
+    class = "PcrScores"
+  )
+}
+
+### pcr print ------------------------------------------------------------------
+
+#' @export
+#'
+#' @keywords internal
+print.PcrScores <- function(x, ...) {
+  cat("Principal Component Regression (batch)\n")
+  cat(sprintf(
+    "  Embedding: %s | Dimensions: %d\n",
+    x$embedding_used,
+    length(x$r_squared)
+  ))
+  cat(sprintf("  PCR:             %.4f\n", x$pcr))
+  if (!is.na(x$pcr_comparison)) {
+    cat(sprintf("  PCR (PCA):       %.4f\n", x$pcr_pca))
+    cat(sprintf(
+      "  PCR comparison:  %.4f (1 = batch variance removed)\n",
+      x$pcr_comparison
+    ))
+  }
+
+  invisible(x)
+}
+
+## cell type silhouette width --------------------------------------------------
+
+#' Calculate cell type average silhouette width
+#'
+#' @description
+#' Average silhouette width on cell type labels in the embedding, rescaled to
+#' `[0, 1]` via `(s + 1) / 2` as in scIB. Higher values mean cell types stay
+#' separated after correction. Counterpart to
+#' [bixverse::calculate_batch_asw_sc()] on the biology side.
+#'
+#' @param object `SingleCells` or `SingleCellsSubset` class.
+#' @param cell_type_column String. The column with the cell type labels in the
+#' obs data of the class.
+#' @param embd_to_use String. Which embedding to compute the ASW on. Defaults
+#' to `"pca"`.
+#' @param max_cells Integer or `NULL`. If not `NULL`, subsample to this many
+#' cells for performance. Defaults to `5000L`.
+#' @param seed Integer. Seed for subsampling reproducibility.
+#' @param .verbose Boolean. Controls verbosity of the function.
+#'
+#' @returns A `CellTypeAswScores` object with the following elements
+#' \itemize{
+#'   \item per_cell - Per-cell rescaled silhouette scores in `[0, 1]`.
+#'   \item mean_asw - Mean rescaled silhouette width.
+#'   \item median_asw - Median rescaled silhouette width.
+#'   \item n_cell_types - Number of cell types.
+#'   \item embedding_used - Which embedding the ASW was computed on.
+#' }
+#'
+#' @export
+#'
+#' @references Luecken, et al., Nat. Methods, 2022
+#'
+#' @examples
+#' # cell type silhouette width on the PCA embedding
+#' sc <- demo_single_cells(
+#'   syn_data_params = params_sc_synthetic_data(
+#'     n_cells = 600L, n_genes = 50L, n_batches = 3L
+#'   )
+#' )
+#' calculate_cell_type_asw_sc(
+#'   sc,
+#'   cell_type_column = "cell_grp",
+#'   .verbose = FALSE
+#' )
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+calculate_cell_type_asw_sc <- S7::new_generic(
+  name = "calculate_cell_type_asw_sc",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    cell_type_column,
+    embd_to_use = "pca",
+    max_cells = 5000L,
+    seed = 42L,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method calculate_cell_type_asw_sc ScOrScSubset
+S7::method(calculate_cell_type_asw_sc, ScOrScSubset) <- function(
+  object,
+  cell_type_column,
+  embd_to_use = "pca",
+  max_cells = 5000L,
+  seed = 42L,
+  .verbose = TRUE
+) {
+  checkmate::qassert(cell_type_column, "S1")
+  checkmate::qassert(embd_to_use, "S1")
+  checkmate::qassert(max_cells, c("I1", "0"))
+  checkmate::qassert(seed, "I1")
+  checkmate::qassert(.verbose, "B1")
+
+  labels <- unlist(object[[cell_type_column]])
+
+  if (!length(levels(factor(labels))) > 1) {
+    warning("The cell type column only has one cell type. Returning NULL")
+    return(NULL)
+  }
+
+  if (!embd_to_use %in% get_available_embeddings(object)) {
+    warning("The desired embedding was not found. Returning NULL")
+    return(NULL)
+  }
+
+  rs_res <- rs_cell_type_asw(
+    embedding = get_embedding(x = object, embd_name = embd_to_use),
+    labels = as.integer(factor(labels)),
+    max_cells = max_cells,
+    verbose = .verbose,
+    seed = seed
   )
 
   structure(
     list(
       per_cell = rs_res$per_cell,
-      mean_lisi = rs_res$mean_lisi,
-      median_lisi = rs_res$median_lisi,
-      n_batches = n_batches
+      mean_asw = rs_res$mean_asw,
+      median_asw = rs_res$median_asw,
+      n_cell_types = length(levels(factor(labels))),
+      embedding_used = embd_to_use
     ),
-    class = "BatchLisiScores"
+    class = "CellTypeAswScores"
   )
 }
 
-### batch lisi print -----------------------------------------------------------
+### cell type silhouette print -------------------------------------------------
 
-#' Print method for BatchLisiScores
-#'
-#' @param x A `BatchLisiScores` object.
-#' @param ... Additional arguments (ignored).
-#'
 #' @export
 #'
 #' @keywords internal
-print.BatchLisiScores <- function(x, ...) {
-  n_cells <- length(x$per_cell)
-
-  cat("Batch LISI Scores\n")
-  cat(sprintf("  Cells: %d | Batches: %d\n", n_cells, x$n_batches))
+print.CellTypeAswScores <- function(x, ...) {
+  cat("Cell Type Silhouette Width (rescaled)\n")
   cat(sprintf(
-    "  Mean LISI:    %.4f (1 = no mixing, %d = perfect mixing)\n",
-    x$mean_lisi,
-    x$n_batches
+    "  Cells: %d | Cell types: %d | Embedding: %s\n",
+    length(x$per_cell),
+    x$n_cell_types,
+    x$embedding_used
   ))
-  cat(sprintf("  Median LISI:  %.4f\n", x$median_lisi))
+  cat(sprintf(
+    "  Mean ASW:    %.4f (0.5 = no structure, 1 = separated)\n",
+    x$mean_asw
+  ))
+  cat(sprintf("  Median ASW:  %.4f\n", x$median_asw))
 
   invisible(x)
+}
+
+## graph connectivity ----------------------------------------------------------
+
+#' Calculate the graph connectivity per cell type
+#'
+#' @description
+#' For each cell type, restricts the kNN graph to that cell type and takes the
+#' fraction of its cells in the largest connected component. A cell type split
+#' across batches after correction falls apart into several components and
+#' scores low. 1 means every cell type is one connected piece.
+#'
+#' @param object `SingleCells` or `SingleCellsSubset` class.
+#' @param cell_type_column String. The column with the cell type labels in the
+#' obs data of the class.
+#' @param .verbose Boolean. Controls verbosity of the function.
+#'
+#' @returns A `GraphConnectivityScores` object with the following elements
+#' \itemize{
+#'   \item per_cell_type - Named numeric. Connectivity per cell type.
+#'   \item mean_connectivity - Mean connectivity across cell types.
+#'   \item median_connectivity - Median connectivity across cell types.
+#' }
+#'
+#' @export
+#'
+#' @references Luecken, et al., Nat. Methods, 2022
+#'
+#' @examples
+#' # connectivity of each cell type in the kNN graph
+#' sc <- demo_single_cells(
+#'   syn_data_params = params_sc_synthetic_data(
+#'     n_cells = 600L, n_genes = 50L, n_batches = 3L
+#'   )
+#' )
+#' calculate_graph_connectivity_sc(sc, cell_type_column = "cell_grp")
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+calculate_graph_connectivity_sc <- S7::new_generic(
+  name = "calculate_graph_connectivity_sc",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    cell_type_column,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method calculate_graph_connectivity_sc ScOrScSubset
+S7::method(calculate_graph_connectivity_sc, ScOrScSubset) <- function(
+  object,
+  cell_type_column,
+  .verbose = TRUE
+) {
+  checkmate::qassert(cell_type_column, "S1")
+  checkmate::qassert(.verbose, "B1")
+
+  labels <- factor(unlist(object[[cell_type_column]]))
+
+  knn_mat <- get_knn_mat(object)
+
+  if (is.null(knn_mat)) {
+    warning("No kNN matrix found to calculate connectivity. Returning NULL")
+    return(NULL)
+  }
+
+  rs_res <- rs_graph_connectivity(
+    knn_mat = knn_mat,
+    labels = as.integer(labels)
+  )
+
+  structure(
+    list(
+      # Rust reports the labels in sorted code order, i.e., factor level order
+      per_cell_type = stats::setNames(rs_res$per_label, levels(labels)),
+      mean_connectivity = rs_res$mean,
+      median_connectivity = rs_res$median
+    ),
+    class = "GraphConnectivityScores"
+  )
+}
+
+### graph connectivity print ---------------------------------------------------
+
+#' @export
+#'
+#' @keywords internal
+print.GraphConnectivityScores <- function(x, ...) {
+  cat("Graph Connectivity\n")
+  cat(sprintf("  Cell types: %d\n", length(x$per_cell_type)))
+  cat(sprintf(
+    "  Mean:    %.4f (1 = every cell type connected)\n",
+    x$mean_connectivity
+  ))
+  cat(sprintf("  Median:  %.4f\n", x$median_connectivity))
+  worst <- sort(x$per_cell_type)[seq_len(min(3L, length(x$per_cell_type)))]
+  cat(sprintf(
+    "  Lowest:  %s\n",
+    paste(sprintf("%s (%.3f)", names(worst), worst), collapse = ", ")
+  ))
+
+  invisible(x)
+}
+
+## summary ---------------------------------------------------------------------
+
+#' Calculate a summary of integration metrics
+#'
+#' @description
+#' Runs the batch mixing and (if cell type labels are given) the biological
+#' conservation metrics in one go and returns one row per call, so results
+#' across correction methods can be `rbind`-ed into one table. Every column is
+#' on `[0, 1]` (PCR comparison can go negative) and higher is better, the
+#' scIB convention:
+#'
+#' Batch mixing:
+#' \itemize{
+#'   \item kbet_accept - `1 - ` kBET rejection rate.
+#'   \item batch_asw - `mean(1 - |s|)` over the per-cell batch silhouettes.
+#'   \item ilisi - Normalised iLISI.
+#'   \item pcr_comparison - `(pre - post) / pre` of the batch PCR.
+#' }
+#'
+#' Biological conservation:
+#' \itemize{
+#'   \item clisi - Normalised cLISI.
+#'   \item cell_type_asw - Rescaled cell type silhouette width.
+#'   \item graph_connectivity - Mean graph connectivity over cell types.
+#' }
+#'
+#' The kNN metrics read the kNN graph currently stored in the object, so
+#' recompute the neighbours on the corrected embedding first. Embedding metrics
+#' are `NA` if `embd_to_use = NULL` (e.g. BBKNN, which only returns a graph).
+#'
+#' @param object `SingleCells` or `SingleCellsSubset` class.
+#' @param batch_column String. The column with the batch information in the
+#' obs data of the class.
+#' @param cell_type_column Optional string. The column with the cell type
+#' labels. If `NULL`, the conservation metrics are `NA`.
+#' @param embd_to_use Optional string. The embedding for ASW and PCR. Defaults
+#' to `"pca"`.
+#' @param max_cells Integer or `NULL`. Subsampling for the silhouette widths.
+#' Defaults to `5000L`.
+#' @param seed Integer. Seed for subsampling reproducibility.
+#' @param .verbose Boolean. Controls verbosity of the function.
+#'
+#' @returns A one-row data.table with the columns `embedding`, `kbet_accept`,
+#' `batch_asw`, `ilisi`, `pcr_comparison`, `clisi`, `cell_type_asw` and
+#' `graph_connectivity`.
+#'
+#' @export
+#'
+#' @references Luecken, et al., Nat. Methods, 2022
+#'
+#' @examples
+#' # all metrics on the uncorrected PCA
+#' sc <- demo_single_cells(
+#'   syn_data_params = params_sc_synthetic_data(
+#'     n_cells = 600L, n_genes = 50L, n_batches = 3L
+#'   )
+#' )
+#' calculate_integration_metrics_sc(
+#'   sc,
+#'   batch_column = "batch_index",
+#'   cell_type_column = "cell_grp",
+#'   .verbose = FALSE
+#' )
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+calculate_integration_metrics_sc <- S7::new_generic(
+  name = "calculate_integration_metrics_sc",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    batch_column,
+    cell_type_column = NULL,
+    embd_to_use = "pca",
+    max_cells = 5000L,
+    seed = 42L,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method calculate_integration_metrics_sc ScOrScSubset
+S7::method(calculate_integration_metrics_sc, ScOrScSubset) <- function(
+  object,
+  batch_column,
+  cell_type_column = NULL,
+  embd_to_use = "pca",
+  max_cells = 5000L,
+  seed = 42L,
+  .verbose = TRUE
+) {
+  checkmate::qassert(batch_column, "S1")
+  checkmate::qassert(cell_type_column, c("S1", "0"))
+  checkmate::qassert(embd_to_use, c("S1", "0"))
+  checkmate::qassert(max_cells, c("I1", "0"))
+  checkmate::qassert(seed, "I1")
+  checkmate::qassert(.verbose, "B1")
+
+  # NULL results (missing kNN / embedding) become NA
+  or_na <- \(x, expr) if (is.null(x)) NA_real_ else expr(x)
+
+  kbet <- calculate_kbet_sc(
+    object,
+    batch_column = batch_column,
+    .verbose = FALSE
+  )
+  ilisi <- calculate_lisi_sc(
+    object,
+    label_column = batch_column,
+    type = "batch",
+    .verbose = FALSE
+  )
+
+  batch_asw <- pcr <- NULL
+  if (!is.null(embd_to_use)) {
+    batch_asw <- calculate_batch_asw_sc(
+      object,
+      batch_column = batch_column,
+      embd_to_use = embd_to_use,
+      max_cells = max_cells,
+      seed = seed,
+      .verbose = FALSE
+    )
+    pcr <- calculate_pcr_sc(
+      object,
+      batch_column = batch_column,
+      embd_to_use = embd_to_use,
+      .verbose = FALSE
+    )
+  }
+
+  clisi <- ct_asw <- conn <- NULL
+  if (!is.null(cell_type_column)) {
+    clisi <- calculate_lisi_sc(
+      object,
+      label_column = cell_type_column,
+      type = "cell_type",
+      .verbose = FALSE
+    )
+    conn <- calculate_graph_connectivity_sc(
+      object,
+      cell_type_column = cell_type_column,
+      .verbose = FALSE
+    )
+    if (!is.null(embd_to_use)) {
+      ct_asw <- calculate_cell_type_asw_sc(
+        object,
+        cell_type_column = cell_type_column,
+        embd_to_use = embd_to_use,
+        max_cells = max_cells,
+        seed = seed,
+        .verbose = FALSE
+      )
+    }
+  }
+
+  data.table::data.table(
+    embedding = if (is.null(embd_to_use)) NA_character_ else embd_to_use,
+    kbet_accept = or_na(kbet, \(x) 1 - x$kbet_score),
+    batch_asw = or_na(batch_asw, \(x) mean(1 - abs(x$per_cell))),
+    ilisi = or_na(ilisi, \(x) x$lisi_norm),
+    pcr_comparison = or_na(pcr, \(x) x$pcr_comparison),
+    clisi = or_na(clisi, \(x) x$lisi_norm),
+    cell_type_asw = or_na(ct_asw, \(x) x$mean_asw),
+    graph_connectivity = or_na(conn, \(x) x$mean_connectivity)
+  )
 }
 
 ## batch aware hvg -------------------------------------------------------------

@@ -1,0 +1,467 @@
+---
+title: "Bulk differential expression with BulkDge"
+date: last-modified
+date-format: YYYY-MM-DD
+vignette: >
+  %\VignetteIndexEntry{Bulk differential expression with BulkDge}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+knitr:
+  opts_chunk:
+    collapse: true
+    comment: '#>'
+author:
+  - name: "Gregor Lueg"
+---
+
+## Intro
+
+`BulkDge` is the class for bulk RNA-seq differential expression. You hand it a
+count matrix and the sample metadata, and it walks you through the usual
+steps: sample QC, gene filtering, normalisation, a PCA to see what drives the
+data, optional batch correction, and then the actual tests. Every step stores
+its output and its plots on the object, so you can come back to them later.
+
+```
+BulkDge()
+  -> qc_bulk_dge()              # outlier samples, filterByExpr
+  -> normalise_bulk_dge()       # TMM + voom
+  -> calculate_pca_bulk_dge()   # what separates the samples?
+  -> batch_correction_bulk_dge() # optional, removeBatchEffect
+  -> calculate_dge_limma()      # limma-voom
+  -> calculate_dge_hedges()     # effect sizes
+```
+
+None of this needs limma or edgeR. The numerics run in Rust via
+[edge-rs](https://crates.io/crates/edge-rs), a port of the edgeR and limma
+stack that is checked against both. Towards the end we put the two side by
+side, and go through where the results match, where they differ on purpose, and
+what edge-rs does not do (yet).
+
+```{r}
+#| label: setup
+#| message: false
+#| warning: false
+library(bixverse)
+library(data.table)
+library(ggplot2)
+library(magrittr)
+
+# the comparison section at the end needs the reference implementations
+has_reference <- requireNamespace("limma", quietly = TRUE) &&
+  requireNamespace("edgeR", quietly = TRUE)
+```
+
+## The data
+
+The classic: [airway](https://bioconductor.org/packages/airway/) from
+[Himes, et al.](https://doi.org/10.1371/journal.pone.0099625). Four airway
+smooth muscle cell lines, each treated with dexamethasone or left untreated.
+Eight samples, and a paired design: the cell line is a nuisance factor we want
+to account for, the treatment is what we care about.
+
+```{r}
+#| label: load data
+data("airway", package = "airway")
+
+counts <- SummarizedExperiment::assay(airway, "counts")
+
+meta_data <- as.data.table(
+  as.data.frame(SummarizedExperiment::colData(airway)),
+  keep.rownames = "sample_id"
+)[, .(sample_id, cell, dex)]
+
+meta_data
+
+dim(counts)
+```
+
+Setting up the class needs the counts (genes x samples, with names) and a
+data.table with a `sample_id` column matching the column names of the counts.
+
+```{r}
+#| label: class
+dge_obj <- BulkDge(raw_counts = counts, meta_data = meta_data)
+
+dge_obj
+```
+
+## QC
+
+`qc_bulk_dge()` does two things. It flags samples that detect far fewer genes
+than the rest (more than `outlier_threshold` standard deviations below the
+mean) and drops them, and it removes lowly expressed genes with edgeR's
+`filterByExpr()` logic within the groups of `group_col`.
+
+```{r}
+#| label: qc
+dge_obj <- qc_bulk_dge(dge_obj, group_col = "dex")
+```
+
+The QC plots live on the object. Plot 1 shows the number of detected genes per
+sample, plot 2 the outlier thresholds.
+
+```{r}
+#| label: qc plots
+#| fig-width: 7
+#| fig-height: 4
+get_dge_qc_plot(dge_obj, plot_choice = 1L)
+get_dge_qc_plot(dge_obj, plot_choice = 2L)
+```
+
+## Normalisation
+
+`normalise_bulk_dge()` calculates the normalisation factors (TMM by default)
+and applies voom on top, which gives you log2-CPM values to work with for
+PCAs, plotting and effect sizes. The mean-variance trend and the per-sample
+distributions end up as plots 3 and 4.
+
+```{r}
+#| label: normalisation
+#| fig-width: 7
+#| fig-height: 4
+dge_obj <- normalise_bulk_dge(dge_obj, group_col = "dex")
+
+get_dge_qc_plot(dge_obj, plot_choice = 3L)
+get_dge_qc_plot(dge_obj, plot_choice = 4L)
+```
+
+The factors are stored alongside the counts:
+
+```{r}
+#| label: norm factors
+get_outputs(dge_obj)$norm_factors
+```
+
+Want the edgeR `DGEList` anyway, say for a method bixverse does not wrap?
+`get_dge_list()` builds one from the stored counts, library sizes and factors.
+This is the one function in the class that needs edgeR installed.
+
+```{r}
+#| label: dge list
+#| eval: !expr has_reference
+get_dge_list(dge_obj)
+```
+
+## PCA
+
+Before testing anything, check what actually separates the samples.
+
+```{r}
+#| label: pca
+#| fig-width: 8
+#| fig-height: 4
+dge_obj <- calculate_pca_bulk_dge(dge_obj)
+
+plot_pca_res(dge_obj, cols_to_plot = c("dex", "cell"))
+```
+
+The class also runs a quick ANOVA of PC1 and PC2 against the groups:
+
+```{r}
+#| label: pca anova
+get_outputs(dge_obj)$pca_anova
+```
+
+## Batch correction
+
+Cell line is a nuisance factor here. For the linear model we'll put it into the
+design (see below), which is the right way to deal with it when testing. For
+plotting and for effect sizes you want it gone from the expression values
+themselves. `batch_correction_bulk_dge()` does that via limma's
+`removeBatchEffect()` logic, while protecting the contrast of interest.
+
+```{r}
+#| label: batch correction
+#| fig-width: 8
+#| fig-height: 4
+dge_obj <- batch_correction_bulk_dge(
+  dge_obj,
+  contrast_column = "dex",
+  batch_col = "cell"
+)
+
+get_dge_qc_plot(dge_obj, plot_choice = "p6_batch_correction_plot")
+```
+
+## Differential expression
+
+### limma-voom
+
+`calculate_dge_limma()` fits `~ 0 + dex + cell` and tests every pairwise
+contrast between the levels of `contrast_column`. With two levels that is one
+contrast, treated versus untreated. The knobs sit in `params_limma_voom()`: the
+route (`"voom"` or `"trend"`), the normalisation method, robust empirical Bayes
+and friends.
+
+```{r}
+#| label: limma
+dge_obj <- calculate_dge_limma(
+  dge_obj,
+  contrast_column = "dex",
+  co_variates = "cell",
+  limma_params = params_limma_voom(route = "voom", robust = FALSE)
+)
+
+limma_res <- get_dge_limma_voom(dge_obj)
+head(limma_res)
+```
+
+The columns are the ones from limma's `topTable(confint = TRUE)`. Here's the
+volcano:
+
+```{r}
+#| label: volcano
+#| fig-width: 6
+#| fig-height: 5
+ggplot(
+  limma_res,
+  aes(x = logFC, y = -log10(P.Value), colour = adj.P.Val < 0.05)
+) +
+  geom_point(size = 0.5, alpha = 0.5) +
+  scale_colour_manual(values = c("grey70", "#3C4B6D")) +
+  theme_minimal() +
+  labs(
+    title = "Dexamethasone vs untreated",
+    colour = "FDR < 0.05"
+  )
+```
+
+```{r}
+#| label: n significant
+limma_res[, .(
+  up = sum(adj.P.Val < 0.05 & logFC > 0),
+  down = sum(adj.P.Val < 0.05 & logFC < 0)
+)]
+```
+
+### Effect sizes
+
+p-values tell you how sure you are, not how big the change is. Hedges' g gives
+a standardised effect size per gene, and since we ran the batch correction
+above, it is calculated on the corrected values.
+
+```{r}
+#| label: hedges
+dge_obj <- calculate_dge_hedges(dge_obj, contrast_column = "dex")
+
+head(get_dge_effect_sizes(dge_obj))
+```
+
+Watch the direction: the combination here is `untrt_vs_trt`, the opposite way
+round to the limma contrast, so the signs flip.
+
+### Outside the class
+
+Both linear model chains are also available as plain functions on a count
+matrix. `run_limma_voom()` is what `calculate_dge_limma()` calls under the
+hood. `run_edger_ql()` gives you the edgeR quasi-likelihood test instead, which
+is the one to reach for when you have few replicates or very low counts.
+
+```{r}
+#| label: edger ql
+dge_counts <- get_outputs(dge_obj)$dge_counts
+# copy: the data.table on the object would otherwise be modified by reference
+sample_info <- copy(get_outputs(dge_obj)$sample_info)
+sample_info[, dex := factor(dex, levels = c("untrt", "trt"))]
+
+design <- model.matrix(~ cell + dex, data = sample_info)
+
+edger_res <- run_edger_ql(
+  counts = dge_counts[, sample_info$sample_id],
+  design = design,
+  coef = "dextrt",
+  edger_params = params_edger_ql(filter = FALSE)
+)
+
+head(edger_res[order(p_value)])
+```
+
+## edge-rs versus edgeR and limma
+
+Swapping out the R implementations for a Rust port raises the obvious question:
+do you get the same answer? For the parts bixverse uses, yes. The package tests
+check `filterByExpr()`, TMM factors, `cpm()`, voom's log-CPM values and
+weights, the full `voomLmFit()` -> `eBayes()` -> `topTable()` table (log fold
+changes, confidence intervals, moderated t, p-values, B) and
+`removeBatchEffect()` against edgeR 4.8.2 and limma 3.66.0, to 1e-8 or better.
+
+Let's check it on airway. We rebuild exactly what `calculate_dge_limma()` ran,
+on the same filtered counts, with edgeR and limma.
+
+```{r}
+#| label: reference fit
+#| eval: !expr has_reference
+design_ref <- model.matrix(~ 0 + dex + cell, data = sample_info)
+colnames(design_ref) <- gsub("dex", "", colnames(design_ref))
+
+# the class keeps the pre-filter library sizes, as a subset DGEList does
+y <- edgeR::normLibSizes(
+  edgeR::DGEList(
+    dge_counts[, sample_info$sample_id],
+    lib.size = get_outputs(dge_obj)$lib_size[sample_info$sample_id]
+  )
+)
+
+fit <- edgeR::voomLmFit(y, design_ref, sample.weights = FALSE)
+fit <- limma::contrasts.fit(
+  fit,
+  limma::makeContrasts(trt - untrt, levels = design_ref)
+)
+fit <- limma::eBayes(fit)
+
+ref_res <- as.data.table(
+  limma::topTable(fit, number = Inf, sort.by = "none", confint = TRUE),
+  keep.rownames = "gene_id"
+)
+
+comparison <- merge(
+  limma_res[, .(gene_id, logFC, t, P.Value)],
+  ref_res[, .(gene_id, logFC, t, P.Value)],
+  by = "gene_id",
+  suffixes = c("_rs", "_r")
+)
+
+comparison[, .(
+  max_abs_diff_logfc = max(abs(logFC_rs - logFC_r)),
+  max_abs_diff_t = max(abs(t_rs - t_r)),
+  max_abs_diff_log10p = max(abs(log10(P.Value_rs) - log10(P.Value_r)))
+)]
+```
+
+Or as plots:
+
+```{r}
+#| label: reference fit plots
+#| eval: !expr has_reference
+
+p1 <- ggplot(data = comparison, mapping = aes(x = logFC_rs, y = logFC_r)) +
+  geom_point() +
+  xlab("LFC (Rust)") +
+  ylab("LFC (R)") +
+  ggtitle(label = waiver(), subtitle = "LFC comparison") +
+  theme_minimal() +
+  geom_abline(slope = 1, intercept = 0, linesize = 0.25)
+
+p2 <- ggplot(data = comparison, mapping = aes(x = t_rs, y = t_r)) +
+  geom_point() +
+  xlab("t stat (Rust)") +
+  ylab("t stat (R)") +
+  ggtitle(label = waiver(), subtitle = "t stat comparison") +
+  theme_minimal() +
+  geom_abline(slope = 1, intercept = 0, linesize = 0.25)
+
+p1 + p2 + plot_annotation(title = "Rust vs R limma-voom")
+```
+
+And voom's normalised values against the ones `normalise_bulk_dge()` stored:
+
+```{r}
+#| label: reference voom
+#| eval: !expr has_reference
+voom_ref <- limma::voom(
+  y,
+  model.matrix(~ 0 + dex, data = sample_info)
+)
+
+max(abs(get_outputs(dge_obj)$normalised_counts - voom_ref$E))
+```
+
+Same for the batch correction: `removeBatchEffect()` on the stored voom values,
+cell line as batch, treatment protected, against what
+`batch_correction_bulk_dge()` stored. Again, this is for plotting and effect
+sizes. The test itself had the cell line in the design.
+
+```{r}
+#| label: reference batch correction
+#| eval: !expr has_reference
+batch_info <- get_outputs(dge_obj)$sample_info
+
+corrected_ref <- limma::removeBatchEffect(
+  get_outputs(dge_obj)$normalised_counts,
+  batch = batch_info$cell,
+  design = model.matrix(~ 0 + factor(batch_info$dex))
+)
+
+max(abs(get_outputs(dge_obj)$normalised_counts_corrected - corrected_ref))
+```
+
+### Where the results differ on purpose
+
+Numbers matching is only half the story. A few defaults differ from what a
+classic limma script does, and they will move your results a bit:
+
+- **`voomLmFit()`, not `voom()` + `lmFit()`.** The DGE chain follows edgeR's
+  `voomLmFit()`. It masks structural zeros, i.e. genes that are all zero in a
+  group, before fitting the mean-variance trend, and gives those genes their
+  own residual degrees of freedom. On well-filtered data the two agree
+  closely, on sparse data they don't.
+- **No quantile normalisation.** Older versions of bixverse quantile-normalised
+  the voom output in `normalise_bulk_dge()`. Voom on top of TMM is limma's own
+  default, and the one we stick with now.
+- **The empirical Bayes trend follows the route.** voom carries the
+  mean-variance relationship in its weights, so the prior is not trended;
+  limma-trend has nothing else to absorb it, so it is. limma lets you mix and
+  match, bixverse doesn't.
+
+Here's how much the first point matters on airway: the classic `voom()` +
+`lmFit()` script next to what bixverse runs.
+
+```{r}
+#| label: classic limma
+#| eval: !expr has_reference
+v <- limma::voom(y, design_ref)
+fit_classic <- limma::lmFit(v, design_ref)
+fit_classic <- limma::contrasts.fit(
+  fit_classic,
+  limma::makeContrasts(trt - untrt, levels = design_ref)
+)
+fit_classic <- limma::eBayes(fit_classic)
+
+classic_res <- as.data.table(
+  limma::topTable(fit_classic, number = Inf, sort.by = "none"),
+  keep.rownames = "gene_id"
+)
+
+classic <- merge(
+  limma_res[, .(gene_id, logFC, P.Value, adj.P.Val)],
+  classic_res[, .(gene_id, logFC, P.Value, adj.P.Val)],
+  by = "gene_id",
+  suffixes = c("_bixverse", "_classic")
+)
+
+classic[, .(
+  cor_logfc = cor(logFC_bixverse, logFC_classic),
+  cor_log10p = cor(log10(P.Value_bixverse), log10(P.Value_classic)),
+  sig_bixverse = sum(adj.P.Val_bixverse < 0.05),
+  sig_classic = sum(adj.P.Val_classic < 0.05),
+  sig_both = sum(adj.P.Val_bixverse < 0.05 & adj.P.Val_classic < 0.05)
+)]
+```
+
+Fold changes are identical to the last digit and the p-values barely move. The
+classic script calls a few dozen more genes at 5% FDR, and nearly everything
+bixverse calls, it calls too. Different defaults, same biology.
+
+### What edge-rs does not do (yet)
+
+- **Sample or array weights.** No `voomWithQualityWeights()` or
+  `arrayWeights()` in the bixverse chain.
+- **Blocking.** No `duplicateCorrelation()` and no `block` argument. Repeated
+  measures have to go into the design as a fixed effect, as the cell line did
+  above.
+- **The moderated F-test.** One coefficient or contrast at a time. Several at
+  once errors rather than silently testing the first.
+- **Arbitrary contrasts.** `contrast_list` takes `"a-b"` strings only, not the
+  full expression syntax of `makeContrasts()`.
+- **`treat()`** and the other limma extras.
+
+If you need any of those, `get_dge_list()` hands you a `DGEList` and you can
+carry on in limma or edgeR directly.
+
+## Where next
+
+The DGE results feed straight into the gene set enrichment methods, see
+`vignette("gse_methods")`. For co-expression rather than differential
+expression, `vignette("bulk_coexpression_modules")`. For single cell
+pseudobulk, NEBULA and friends, `vignette("differential_expression")`.

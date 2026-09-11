@@ -231,74 +231,61 @@ fix_contrast_names <- function(x) {
   return(res)
 }
 
-#' Create all limma contrasts (based on combination of everything)
+#' Build pairwise limma contrasts
 #'
-#' @param limma_fit The fitted limma model, i.e., output of [limma::lmFit()].
-#' @param contrast_grps String vector. The contrast groups of interest. If NULL
-#' all co-variate comparisons will be returned.
+#' @description
+#' Stands in for `limma::makeContrasts()` for the two cases bixverse needs:
+#' every pairwise difference between the levels of the main contrast, or the
+#' differences given as `"a-b"` strings.
 #'
-#' @returns The Limma contrasts for further usage.
+#' @param coef_names String vector. The column names of the design matrix.
+#' @param contrast_grps String vector. The levels of the main contrast. Only
+#' used if `contrast_list` is `NULL`.
+#' @param contrast_list Optional string vector of the form `"a-b"`. If `NULL`,
+#' all pairwise contrasts between `contrast_grps` are built, in design column
+#' order.
 #'
-#' @keywords internal
-all_limma_contrasts <- function(limma_fit, contrast_grps) {
-  # Globals
-  coef <- combn <- NULL
-
-  # Checks
-  checkmate::assertClass(limma_fit, "MArrayLM")
-  checkmate::qassert(contrast_grps, c("S+", "F+", "0"))
-  coefs_fit <- colnames(coef(limma_fit))
-  if (!is.null(contrast_grps)) {
-    coefs_fit <- coefs_fit[coefs_fit %in% contrast_grps]
-  }
-  contrast_combs <- c(combn(x = coefs_fit, m = 2, FUN = function(x) {
-    paste0(x[[1]], "-", x[[2]])
-  }))
-
-  all_contrasts <- vector(mode = "list", length = length(contrast_combs))
-
-  # makeContrasts is WILD...
-  for (i in seq_along(contrast_combs)) {
-    value <- contrast_combs[[i]]
-    contrast_i <- limma::makeContrasts(
-      contrasts = value,
-      levels = colnames(coef(limma_fit))
-    )
-    all_contrasts[[i]] <- contrast_i
-  }
-
-  return(all_contrasts)
-}
-
-
-#' Create all limma contrasts from a provided string
-#'
-#' @param limma_fit The fitted limma model, i.e., output of [limma::lmFit()].
-#' @param contrast_list String vector. The strings need to have the form of
-#' `"contrast1-contrast2"`.
-#'
-#' @returns The Limma contrasts for further usage.
+#' @returns A named list of numeric contrast vectors, one entry per design
+#' column. Names are the contrasts with `-` replaced by `_vs_`.
 #'
 #' @keywords internal
-prep_limma_contrasts <- function(limma_fit, contrast_list) {
-  # Checks
-  checkmate::assertClass(limma_fit, "MArrayLM")
-  checkmate::qassert(contrast_list, c("S+", "F+", "0"))
+build_limma_contrasts <- function(
+  coef_names,
+  contrast_grps,
+  contrast_list = NULL
+) {
+  # checks
+  checkmate::qassert(coef_names, "S+")
+  checkmate::qassert(contrast_grps, "S+")
+  checkmate::qassert(contrast_list, c("S+", "0"))
 
-  coefs_fit <- colnames(coef(limma_fit))
-  all_contrasts <- vector(mode = "list", length = length(contrast_list))
-
-  # makeContrasts is WILD...
-  for (i in seq_along(contrast_list)) {
-    value <- contrast_list[[i]]
-    contrast_i <- limma::makeContrasts(
-      contrasts = value,
-      levels = colnames(coef(limma_fit))
-    )
-    all_contrasts[[i]] <- contrast_i
+  if (is.null(contrast_list)) {
+    grps <- coef_names[coef_names %in% contrast_grps]
+    contrast_list <- utils::combn(grps, 2, FUN = \(x) {
+      paste0(x[[1]], "-", x[[2]])
+    })
   }
 
-  return(all_contrasts)
+  pairs <- strsplit(contrast_list, "-", fixed = TRUE)
+  valid <- purrr::map_lgl(pairs, \(p) {
+    length(p) == 2L && all(p %in% coef_names)
+  })
+  if (!all(valid)) {
+    stop(sprintf(
+      "Contrasts need the form `a-b` with both levels in the design: %s",
+      paste(contrast_list[!valid], collapse = ", ")
+    ))
+  }
+
+  res <- purrr::map(pairs, \(p) {
+    contrast <- stats::setNames(numeric(length(coef_names)), coef_names)
+    contrast[p[[1]]] <- 1
+    contrast[p[[2]]] <- -1
+    contrast
+  })
+  names(res) <- gsub("-", "_vs_", contrast_list)
+
+  res
 }
 
 # dge functions ----------------------------------------------------------------
@@ -308,31 +295,42 @@ prep_limma_contrasts <- function(limma_fit, contrast_list) {
 #' Wrapper for a Limma Voom analysis
 #'
 #' @description
-#' Wrapper function to run Limma Voom workflows.
+#' Runs the limma-voom workflow (`calcNormFactors()` -> `voomLmFit()` ->
+#' `contrasts.fit()` -> `eBayes()` -> `topTable()`) in Rust via the `edge-rs`
+#' crate, gated against limma `3.66.0`. The design is
+#' `~ 0 + main_contrast + co_variates` and every requested contrast is tested
+#' separately. limma and edgeR are not needed.
 #'
 #' @param meta_data data.table. The meta information about the experiment in
-#' which the contrast info (and potential co-variates) can be found.
+#' which the contrast info (and potential co-variates) can be found. Rows need
+#' to be in the same order as the columns of `counts`.
 #' @param main_contrast String. Which column contains the main groups you want
 #' to test differential gene expression with the Limma-Voom workflow for.
-#' @param dge_list DGEList, see [edgeR::DGEList()].
+#' @param counts Numeric matrix. Raw counts of genes x samples, with gene
+#' identifiers as row names.
 #' @param contrast_list String vector or NULL. Optional string vector of
 #' contrast formatted as `"contrast1-contrast2"`. Default NULL will create all
 #' contrasts automatically.
 #' @param co_variates String or NULL. Optional co-variates you wish to consider
 #' during model fitting.
-#' @param quantile_norm Boolean. Shall the counts be also quantile-normalised.
-#' Defaults to `FALSE`.
-#' @param ... Additional parameters to forward to [limma::eBayes()] or
-#' [limma::voom()].
+#' @param limma_params List. The limma parameters, see
+#' [bixverse::params_limma_voom()].
+#' @param lib_size Optional numeric vector. Library size per sample, in the
+#' column order of `counts`. `NULL` uses the column sums of `counts`. Pass the
+#' column sums from before gene filtering to match edgeR, which keeps those on
+#' a subset `DGEList`.
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
-#' @returns A data.table with all the DGE results from [limma::topTable()] for
-#' the identified contrast pairs.
+#' @returns A data.table with the columns of limma's `topTable(confint = TRUE)`
+#' (`gene_id`, `logFC`, `CI.L`, `CI.R`, `AveExpr`, `t`, `P.Value`,
+#' `adj.P.Val`, `B`) plus `contrast`, sorted by p-value within each contrast.
 #'
 #' @export
 #'
 #' @import data.table
 #' @importFrom magrittr %>%
+#'
+#' @references Law, et al., Genome Biol, 2014
 #'
 #' @examples
 #' # voom fit and topTable results for the single case vs control contrast
@@ -341,39 +339,51 @@ prep_limma_contrasts <- function(limma_fit, contrast_list) {
 #'   sample_id = colnames(syn$counts),
 #'   case_control = rep(c("case", "control"), each = 50)
 #' )
-#' dge_list <- edgeR::normLibSizes(edgeR::DGEList(counts = syn$counts))
 #' res <- run_limma_voom(
 #'   meta_data = meta,
 #'   main_contrast = "case_control",
-#'   dge_list = dge_list,
+#'   counts = syn$counts,
 #'   .verbose = FALSE
 #' )
 #' head(res)
 run_limma_voom <- function(
   meta_data,
   main_contrast,
-  dge_list,
+  counts,
   contrast_list = NULL,
   co_variates = NULL,
-  quantile_norm = FALSE,
-  ...,
+  limma_params = params_limma_voom(),
+  lib_size = NULL,
   .verbose = TRUE
 ) {
   variables <- c(main_contrast, co_variates)
-  # Checks
+  # checks
   checkmate::assertDataFrame(meta_data)
   checkmate::qassert(main_contrast, "S1")
-  checkmate::checkClass(dge_list, "DGEList")
+  checkmate::assertMatrix(
+    counts,
+    mode = "numeric",
+    ncols = nrow(meta_data),
+    row.names = "named"
+  )
   checkmate::qassert(co_variates, c("S+", "0"))
   checkmate::assertNames(
     names(meta_data),
     must.include = variables
   )
-  checkmate::qassert(.verbose, "B1")
   checkmate::qassert(contrast_list, c("S+", "0"))
-  checkmate::assert(all(grepl("-", contrast_list)))
+  assertLimmaVoomParams(limma_params)
+  checkmate::assertNumeric(
+    lib_size,
+    lower = 0,
+    any.missing = FALSE,
+    len = ncol(counts),
+    null.ok = TRUE
+  )
+  checkmate::qassert(.verbose, "B1")
 
-  # deal with metadata columns
+  # copy, so the caller's table is not modified by reference
+  meta_data <- data.table::copy(data.table::as.data.table(meta_data))
   meta_data[,
     (variables) := lapply(.SD, fix_contrast_names),
     .SDcols = variables
@@ -389,54 +399,41 @@ run_limma_voom <- function(
     "~ 0 + %s",
     paste(variables, collapse = " + ")
   )
-
   model_matrix <- model.matrix(as.formula(model_formula), data = meta_data)
   colnames(model_matrix) <- gsub(main_contrast, "", colnames(model_matrix))
 
-  voom_obj <- limma::voom(
-    counts = dge_list,
-    design = model_matrix,
-    normalize.method = ifelse(quantile_norm, "quantile", "none"),
-    plot = FALSE,
-    ...
+  limma_contrasts <- build_limma_contrasts(
+    coef_names = colnames(model_matrix),
+    contrast_grps = as.character(unique(meta_data[[main_contrast]])),
+    contrast_list = contrast_list
   )
-  limma_fit <- limma::lmFit(voom_obj, model_matrix)
 
-  contrast_grps <- unique(meta_data[[main_contrast]])
+  storage.mode(counts) <- "double"
 
-  if (is.null(contrast_list)) {
-    limma_contrasts <- all_limma_contrasts(
-      limma_fit = limma_fit,
-      contrast_grps = contrast_grps
+  all_dge_res <- purrr::imap(limma_contrasts, \(contrast, contrast_name) {
+    tested <- .resolve_tested(design = model_matrix, contrast = contrast)
+    res <- rs_limma_voom(
+      counts = counts,
+      design = model_matrix,
+      lib_size = if (is.null(lib_size)) NULL else unname(as.numeric(lib_size)),
+      limma_params = c(limma_params, tested)
     )
-  } else {
-    limma_contrasts <- prep_limma_contrasts(
-      limma_fit = limma_fit,
-      contrast_list = contrast_list
-    )
-  }
 
-  all_dge_res <- purrr::map(
-    limma_contrasts,
-    \(contrast_obj) {
-      final_fit <- limma::contrasts.fit(limma_fit, contrast_obj)
-      final_fit <- limma::eBayes(final_fit, ...)
-
-      coef_name <- colnames(coef(final_fit))
-
-      top.table <- as.data.table(
-        limma::topTable(
-          fit = final_fit,
-          sort.by = "P",
-          n = Inf,
-          confint = TRUE
-        ),
-        keep.rownames = "gene_id"
-      ) %>%
-        .[, contrast := gsub("-", "_vs_", coef_name)]
-    }
-  ) %>%
-    rbindlist()
+    data.table::data.table(
+      gene_id = rownames(counts)[res$features_to_keep],
+      logFC = res$log_fc,
+      CI.L = res$ci_lower,
+      CI.R = res$ci_upper,
+      AveExpr = res$ave_expr,
+      t = res$t_stat,
+      P.Value = res$p_values,
+      adj.P.Val = res$fdr,
+      B = res$b_stat,
+      contrast = contrast_name
+    ) %>%
+      data.table::setorderv("P.Value")
+  }) %>%
+    data.table::rbindlist()
 
   return(all_dge_res)
 }
@@ -471,7 +468,8 @@ run_limma_voom <- function(
 #'   sample_id = colnames(syn$counts),
 #'   case_control = rep(c("case", "control"), each = 50)
 #' )
-#' norm_counts <- edgeR::cpm(syn$counts, log = TRUE)
+#' norm_counts <- rs_cpm(syn$counts, lib_size = NULL, log = TRUE,
+#'   prior_count = 2)
 #' res <- hedges_g_dge(
 #'   meta_data = meta,
 #'   main_contrast = "case_control",

@@ -210,7 +210,12 @@ test_data <- synthetic_bulk_cor_matrix(
   )
 )
 
-norm_counts <- edgeR::cpm(test_data$counts, log = TRUE)
+norm_counts <- rs_cpm(
+  test_data$counts,
+  lib_size = NULL,
+  log = TRUE,
+  prior_count = 2
+)
 
 data <- t(norm_counts)
 

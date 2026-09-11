@@ -10,10 +10,15 @@ get_dge_list(object)
 \item{object}{\code{BulkDge} class.}
 }
 \value{
-Returns the DGEList stored in the class.
+An edgeR \code{DGEList}, or \code{NULL} with a warning if
+\code{\link[=qc_bulk_dge]{qc_bulk_dge()}} has not been run.
 }
 \description{
-Getter function to extract the DGEList from the \code{\link[=BulkDge]{BulkDge()}} class.
+Builds an edgeR \code{DGEList} from the filtered counts, library sizes and
+normalisation factors stored in the \code{\link[=BulkDge]{BulkDge()}} class. bixverse
+does not need edgeR itself, so this requires edgeR to be installed.
+Normalisation factors are one until \code{\link[=normalise_bulk_dge]{normalise_bulk_dge()}} has
+run.
 }
 \examples{
 # the edgeR DGEList built during QC
@@ -24,5 +29,7 @@ meta <- data.table::data.table(
 )
 object <- BulkDge(raw_counts = syn$counts, meta_data = meta)
 object <- qc_bulk_dge(object, group_col = "case_control", .verbose = FALSE)
-dim(get_dge_list(object))
+if (requireNamespace("edgeR", quietly = TRUE)) {
+  dim(get_dge_list(object))
+}
 }

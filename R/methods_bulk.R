@@ -80,6 +80,7 @@ S7::method(qc_bulk_dge, BulkDge) <- function(
   checkmate::qassert(group_col, "S1")
   checkmate::qassert(outlier_threshold, "N1")
   checkmate::qassert(min_prop, "R1[0,1]")
+  checkmate::qassert(min_count, "N1[0,)")
   checkmate::qassert(.verbose, "B1")
 
   raw_counts <- S7::prop(object, "raw_counts")
@@ -126,22 +127,26 @@ S7::method(qc_bulk_dge, BulkDge) <- function(
 
   samples_red <- samples[!(outliers), ]
   raw_counts <- raw_counts[, unique(samples_red$sample_id)]
+  storage.mode(raw_counts) <- "double"
+  group <- samples_red[[group_col]][
+    match(colnames(raw_counts), samples_red$sample_id)
+  ]
+  # pre-filter library sizes; edgeR carries these through gene subsetting
+  lib_size <- matrixStats::colSums2(raw_counts)
+  names(lib_size) <- colnames(raw_counts)
 
-  ## Voom normalization
+  ## filter lowly expressed genes
   if (.verbose) {
     message("Removing lowly expressed genes.")
   }
-  dge_list <- edgeR::DGEList(raw_counts)
-
-  # Filter lowly expressed genes
-  to_keep <- edgeR::filterByExpr(
-    y = dge_list,
-    min.prop = min_prop,
-    min.count = min_count,
-    group = samples[[group_col]]
+  to_keep <- rs_filter_by_expr(
+    counts = raw_counts,
+    group = as.integer(factor(group)),
+    lib_size = lib_size,
+    min_count = min_count,
+    min_total_count = 15,
+    min_prop = min_prop
   )
-  dge_list <- dge_list[to_keep, ]
-  count_matrix <- dge_list$counts
 
   if (.verbose) {
     message(sprintf("A total of %i genes are kept.", sum(to_keep)))
@@ -153,7 +158,9 @@ S7::method(qc_bulk_dge, BulkDge) <- function(
   )
 
   S7::prop(object, "outputs") <- list(
-    dge_list = dge_list,
+    dge_counts = raw_counts[to_keep, , drop = FALSE],
+    lib_size = lib_size,
+    group = group,
     sample_info = samples_red,
     group_col = group_col,
     raw_counts_filtered = raw_counts
@@ -170,15 +177,16 @@ S7::method(qc_bulk_dge, BulkDge) <- function(
 #' Normalise the count data for DGE.
 #'
 #' @description
-#' This function will apply the CPM + Voom normalisation and can additionally
-#' calculate TPM and FPKM values for plotting purposes.
+#' Calculates the normalisation factors and applies voom on the filtered
+#' counts from [bixverse::qc_bulk_dge()], both in Rust via the `edge-rs`
+#' crate. Can additionally calculate TPM and FPKM values for plotting purposes.
 #'
 #' @param object The underlying class, see [bixverse::BulkDge()].
 #' @param group_col String. The column in the metadata that will contain the
 #' contrast groups. Needs to be part of the metadata stored in the class.
 #' @param norm_method String. One of
 #' `c("TMM", "TMMwsp", "RLE", "upperquartile", "none")`. Please refer to
-#' [edgeR::normLibSizes()].
+#' edgeR's `calcNormFactors()`.
 #' @param calc_tpm Boolean. Output TPM calculation (default = FALSE).
 #' @param calc_fpkm Boolean. Output FPKM calculation (default = FALSE).
 #' @param gene_lengths Optional named numeric. If you want to calculate TPM
@@ -261,15 +269,16 @@ S7::method(normalise_bulk_dge, BulkDge) <- function(
   checkmate::qassert(.verbose, "B1")
 
   # early return
-  if (is.null(S7::prop(object, "outputs")[["dge_list"]])) {
+  if (is.null(S7::prop(object, "outputs")[["dge_counts"]])) {
     warning(paste(
-      "Could not find the DGE list in the object. Did you run qc_bulk_dge()?",
-      "Returning class as is."
+      "Could not find the filtered counts in the object. Did you run",
+      "qc_bulk_dge()? Returning class as is."
     ))
     return(object)
   }
 
-  dge_list <- S7::prop(object, "outputs")[["dge_list"]]
+  dge_counts <- S7::prop(object, "outputs")[["dge_counts"]]
+  lib_size <- S7::prop(object, "outputs")[["lib_size"]]
   raw_counts_filtered <- S7::prop(object, "outputs")[["raw_counts_filtered"]]
   meta_data_filtered <- S7::prop(object, "outputs")[["sample_info"]]
 
@@ -281,27 +290,33 @@ S7::method(normalise_bulk_dge, BulkDge) <- function(
     ))
   }
 
-  ## CPM
-  dge_list <- edgeR::calcNormFactors(
-    dge_list,
-    method = norm_method
+  ## normalisation factors + voom
+  norm_factors <- rs_calc_norm_factors(
+    counts = dge_counts,
+    lib_size = lib_size,
+    norm_method = norm_method
   )
+  names(norm_factors) <- colnames(dge_counts)
   groups <- meta_data_filtered[[group_col]]
   design <- model.matrix(~ 0 + groups)
-  voom_obj <- limma::voom(
-    counts = dge_list,
+  voom_res <- rs_voom_normalise(
+    counts = dge_counts,
     design = design,
-    normalize.method = "quantile",
-    plot = FALSE
+    lib_size = lib_size * norm_factors,
+    span = 0.5,
+    adaptive_span = TRUE
   )
+  normalised_counts <- voom_res$e
 
   # plot 3 - mean variance trend from voom
-  p3_voom_normalization <- plot_voom_normalization(voom_object = voom_obj)
+  p3_voom_normalization <- plot_voom_normalization(
+    norm_counts = normalised_counts
+  )
 
   # plot 4 - boxplots
   p4_boxplot_normalization <- plot_boxplot_normalization(
     samples = meta_data_filtered,
-    voom_object = voom_obj,
+    norm_counts = normalised_counts,
     group_col = group_col
   )
 
@@ -324,7 +339,8 @@ S7::method(normalise_bulk_dge, BulkDge) <- function(
     "p4_boxplot_normalization"
   ]] <- p4_boxplot_normalization
 
-  S7::prop(object, "outputs")[["normalised_counts"]] <- voom_obj$E
+  S7::prop(object, "outputs")[["normalised_counts"]] <- normalised_counts
+  S7::prop(object, "outputs")[["norm_factors"]] <- norm_factors
   S7::prop(object, "outputs")[["tpm_counts"]] <- tpm_counts
   S7::prop(object, "outputs")[["fpkm_counts"]] <- fpkm_counts
 
@@ -629,7 +645,7 @@ S7::method(calculate_pca_bulk_dge, BulkDge) <- function(
   ## params
   pca_params <- list(
     hvg_genes = hvg_genes,
-    scale = scale,
+    scale = scale_genes,
     pcs_taken = pcs_to_take
   )
 
@@ -806,9 +822,9 @@ S7::method(batch_correction_bulk_dge, BulkDge) <- function(
   design <- model.matrix(~ 0 + factor(sample_info[[contrast_column]]))
   colnames(design) <- unique(sample_info[[contrast_column]])
 
-  normalised_counts_corrected <- limma::removeBatchEffect(
+  normalised_counts_corrected <- rs_remove_batch_effect(
     x = normalised_counts,
-    batch = batch_data,
+    batch = as.integer(batch_data),
     design = design
   )
 
@@ -844,9 +860,6 @@ S7::method(batch_correction_bulk_dge, BulkDge) <- function(
       by = 'sample_id'
     )
 
-  # Otherwise it continues bugging...
-  library(patchwork)
-
   plot_uncor <- plot_pca(
     pca_dt = pca_dt_uncor,
     grps = contrast_column
@@ -858,11 +871,10 @@ S7::method(batch_correction_bulk_dge, BulkDge) <- function(
   ) +
     ggplot2::ggtitle("Post batch correction")
 
-  p6_batch_correction_plot <- plot_uncor +
-    plot_cor +
+  p6_batch_correction_plot <- patchwork::wrap_plots(plot_uncor, plot_cor) +
     patchwork::plot_annotation(
       title = 'PCA plots pre and post batch effect correction',
-      subtitle = 'Batch effect correction via limma::removeBatchEffect()'
+      subtitle = 'Batch effect correction via removeBatchEffect()'
     )
 
   ## params
@@ -905,10 +917,8 @@ S7::method(batch_correction_bulk_dge, BulkDge) <- function(
 #' separately in the data.
 #' @param co_variates Optional string vector. Any co-variates you wish to
 #' consider during the Limma Voom modelling.
-#' @param quantile_norm Boolean. Shall the data also be quantile normalised.
-#' Defaults to `FALSE`.
-#' @param ... Additional parameters to forward to [limma::eBayes()] or
-#' [limma::voom()].
+#' @param limma_params List. The limma parameters, see
+#' [bixverse::params_limma_voom()].
 #' @param .verbose Controls verbosity of the function.
 #'
 #' @returns Returns the class with additional data added to the outputs.
@@ -944,8 +954,7 @@ calculate_dge_limma <- S7::new_generic(
     contrast_list = NULL,
     filter_column = NULL,
     co_variates = NULL,
-    quantile_norm = FALSE,
-    ...,
+    limma_params = params_limma_voom(),
     .verbose = TRUE
   ) {
     S7::S7_dispatch()
@@ -965,8 +974,7 @@ S7::method(calculate_dge_limma, BulkDge) <- function(
   contrast_list = NULL,
   filter_column = NULL,
   co_variates = NULL,
-  quantile_norm = FALSE,
-  ...,
+  limma_params = params_limma_voom(),
   .verbose = TRUE
 ) {
   . <- subgroup <- NULL
@@ -976,16 +984,12 @@ S7::method(calculate_dge_limma, BulkDge) <- function(
   checkmate::qassert(contrast_column, "S+")
   checkmate::qassert(co_variates, c("S+", "0"))
   checkmate::qassert(filter_column, c("S+", "0"))
+  assertLimmaVoomParams(limma_params)
 
   # Early return
-  dge_list_present <- checkmate::testNames(
-    names(S7::prop(object, "outputs")),
-    must.include = "dge_list"
-  )
-
-  if (!dge_list_present) {
+  if (is.null(S7::prop(object, "outputs")[["dge_counts"]])) {
     warning(paste(
-      "No dge_list found. Did you run qc_bulk_dge()?",
+      "No filtered counts found. Did you run qc_bulk_dge()?",
       "Returning object as is"
     ))
     return(object)
@@ -997,7 +1001,9 @@ S7::method(calculate_dge_limma, BulkDge) <- function(
     NULL
   )
   sample_info <- S7::prop(object, "outputs")[["sample_info"]]
-  dge_list <- S7::prop(object, "outputs")[["dge_list"]]
+  dge_counts <- S7::prop(object, "outputs")[["dge_counts"]]
+  # pre-filter library sizes from qc_bulk_dge(), as edgeR keeps them
+  lib_size <- S7::prop(object, "outputs")[["lib_size"]]
 
   checkmate::assertTRUE(all(all_specified_columns %in% colnames(sample_info)))
 
@@ -1009,11 +1015,11 @@ S7::method(calculate_dge_limma, BulkDge) <- function(
     limma_results_final <- run_limma_voom(
       meta_data = sample_info,
       main_contrast = contrast_column,
-      dge_list = dge_list,
+      counts = dge_counts[, sample_info$sample_id],
       contrast_list = contrast_list,
       co_variates = co_variates,
-      quantile_norm = quantile_norm,
-      ...,
+      limma_params = limma_params,
+      lib_size = lib_size[sample_info$sample_id],
       .verbose = .verbose
     ) %>%
       .[, subgroup := NA]
@@ -1029,32 +1035,22 @@ S7::method(calculate_dge_limma, BulkDge) <- function(
     groups <- unique(sample_info[[filter_column]])
 
     results <- purrr::map(groups, \(group) {
-      # Filter the meta data and dge list
-      sample_info_red <- sample_info[
-        eval(parse(
-          text = paste0(filter_column, " == '", group, "'")
-        ))
-      ]
-      dge_list_red <- dge_list[, sample_info_red$sample_id]
+      sample_info_red <- sample_info[sample_info[[filter_column]] == group]
 
-      # Limma Voom
-      limma_results <- run_limma_voom(
-        meta_data = data.table::copy(sample_info_red),
+      run_limma_voom(
+        meta_data = sample_info_red,
         main_contrast = contrast_column,
-        dge_list = dge_list_red,
+        counts = dge_counts[, sample_info_red$sample_id],
         contrast_list = contrast_list,
         co_variates = co_variates,
-        quantile_norm = quantile_norm,
-        ...,
+        limma_params = limma_params,
+        lib_size = lib_size[sample_info_red$sample_id],
         .verbose = .verbose
       ) %>%
         .[, subgroup := group]
-
-      return(limma_results)
     })
 
-    # rbind the data
-    limma_results_final <- data.table::rbindlist(limma_results)
+    limma_results_final <- data.table::rbindlist(results)
   }
 
   dge_params <- list(
@@ -1262,7 +1258,7 @@ S7::method(calculate_dge_hedges, BulkDge) <- function(
 #' contrast groups. Needs to be part of the metadata stored in the class.
 #' @param norm_method String. One of
 #' `c("TMM", "TMMwsp", "RLE", "upperquartile", "none")`. Please refer to
-#' [edgeR::normLibSizes()].
+#' edgeR's `calcNormFactors()`.
 #' @param outlier_threshold Float. Number of standard deviations in terms of
 #' percentage genes detected you allow before removing a sample. Defaults to `2`.
 #' @param min_prop Float. Minimum proportion of samples in which the gene has
@@ -1330,8 +1326,8 @@ S7::method(preprocess_bulk_dge, BulkDge) <- function(
 #' @param contrast_list Optional string vector. A vectors that contains the
 #' contrast formatted as `"contrast1-contrast2"`. Default `NULL` will create
 #' all possible contrast automatically.
-#' @param ... Additional parameters to forward to [limma::eBayes()] or
-#' [limma::voom()].
+#' @param ... Additional parameters that used to go to limma's `eBayes()` or
+#' `voom()`.
 #' @param small_sample_correction Can be NULL (automatic determination if a
 #' small sample size correction should be applied) or a Boolean.
 #' @param .verbose Controls verbosity of the function.

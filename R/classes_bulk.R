@@ -95,8 +95,9 @@ BulkCoExp <- S7::new_class(
 #'
 #' @description
 #' Class for coordinating differential gene expression analyses with subsequent
-#' GSE in a structured format. Additionally, the class will store the counts in
-#' [edgeR::DGEList()] for subsequent processing.
+#' GSE in a structured format. The filtered counts, library sizes and
+#' normalisation factors are stored in the class; [bixverse::get_dge_list()]
+#' turns them into an edgeR `DGEList` on demand.
 #'
 #' @param raw_counts matrix. The raw count matrix. Rows = genes, columns =
 #' samples. Note: this is different from the [bixverse::BulkCoExp()] class!
@@ -568,11 +569,16 @@ S7::method(get_outputs, BulkDge) <- function(object, ...) {
 #' Return the DGEList
 #'
 #' @description
-#' Getter function to extract the DGEList from the [bixverse::BulkDge()] class.
+#' Builds an edgeR `DGEList` from the filtered counts, library sizes and
+#' normalisation factors stored in the [bixverse::BulkDge()] class. bixverse
+#' does not need edgeR itself, so this requires edgeR to be installed.
+#' Normalisation factors are one until [bixverse::normalise_bulk_dge()] has
+#' run.
 #'
 #' @param object `BulkDge` class.
 #'
-#' @returns Returns the DGEList stored in the class.
+#' @returns An edgeR `DGEList`, or `NULL` with a warning if
+#' [bixverse::qc_bulk_dge()] has not been run.
 #'
 #' @export
 #'
@@ -585,7 +591,9 @@ S7::method(get_outputs, BulkDge) <- function(object, ...) {
 #' )
 #' object <- BulkDge(raw_counts = syn$counts, meta_data = meta)
 #' object <- qc_bulk_dge(object, group_col = "case_control", .verbose = FALSE)
-#' dim(get_dge_list(object))
+#' if (requireNamespace("edgeR", quietly = TRUE)) {
+#'   dim(get_dge_list(object))
+#' }
 get_dge_list <- S7::new_generic(
   name = "get_dge_list",
   dispatch_args = "object",
@@ -605,8 +613,33 @@ S7::method(get_dge_list, BulkDge) <- function(object) {
     "bixverse::BulkDge"
   )
 
-  # Return
-  return(S7::prop(object, "outputs")[['dge_list']])
+  outputs <- S7::prop(object, "outputs")
+  if (is.null(outputs[["dge_counts"]])) {
+    warning(paste(
+      "No filtered counts found. Did you run qc_bulk_dge()?",
+      "Returning NULL"
+    ))
+    return(NULL)
+  }
+  if (!requireNamespace("edgeR", quietly = TRUE)) {
+    stop(paste(
+      "get_dge_list() builds an edgeR DGEList and needs edgeR.",
+      "Install it with BiocManager::install('edgeR')."
+    ))
+  }
+
+  # factors of one until normalise_bulk_dge() has run, as in DGEList()
+  norm_factors <- outputs[["norm_factors"]]
+  if (is.null(norm_factors)) {
+    norm_factors <- rep(1, ncol(outputs[["dge_counts"]]))
+  }
+
+  edgeR::DGEList(
+    counts = outputs[["dge_counts"]],
+    lib.size = outputs[["lib_size"]],
+    norm.factors = norm_factors,
+    group = outputs[["group"]]
+  )
 }
 
 #' Return the Limma Voom results
@@ -662,7 +695,7 @@ S7::method(get_dge_limma_voom, BulkDge) <- function(object) {
   limma_res <- S7::prop(object, "outputs")[['limma_voom_res']]
   if (is.null(limma_res)) {
     warning(paste(
-      "No results found. Did you run get_dge_limma_voom()?",
+      "No results found. Did you run calculate_dge_limma()?",
       "Returning NULL"
     ))
   }
@@ -1314,7 +1347,7 @@ S7::method(print, BulkDge) <- function(x, ...) {
 
   # Downstream steps and their marker outputs
   step_flags <- list(
-    "qc_bulk_dge()" = !is.null(outputs[["dge_list"]]),
+    "qc_bulk_dge()" = !is.null(outputs[["dge_counts"]]),
     "normalise_bulk_dge()" = !is.null(outputs[["normalised_counts"]]),
     "batch_correction_bulk_dge()" = !is.null(outputs[[
       "normalised_counts_corrected"

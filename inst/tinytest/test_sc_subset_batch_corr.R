@@ -167,21 +167,21 @@ expect_true(
 
 ### lisi scores ----------------------------------------------------------------
 
-lisi.weak <- calculate_batch_lisi_sc(
+lisi.weak <- calculate_lisi_sc(
   object = subset.weak,
-  batch_column = "batch_index",
+  label_column = "batch_index",
   .verbose = FALSE
 )
 
-lisi.medium <- calculate_batch_lisi_sc(
+lisi.medium <- calculate_lisi_sc(
   object = subset.medium,
-  batch_column = "batch_index",
+  label_column = "batch_index",
   .verbose = FALSE
 )
 
-lisi.strong <- calculate_batch_lisi_sc(
+lisi.strong <- calculate_lisi_sc(
   object = subset.strong,
-  batch_column = "batch_index",
+  label_column = "batch_index",
   .verbose = FALSE
 )
 

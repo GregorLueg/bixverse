@@ -286,9 +286,13 @@ Networks come from outside bixverse. `genewalkR` is one source.
 
 ## Batch metrics
 
-`calculate_kbet_sc()`, `calculate_batch_asw_sc()`, `calculate_batch_lisi_sc()`.
-Run them on the uncorrected embedding first so you have a baseline, otherwise
-the numbers mean nothing.
+Batch mixing: `calculate_kbet_sc()`, `calculate_batch_asw_sc()`,
+`calculate_lisi_sc()` (iLISI), `calculate_pcr_sc()`. Bio conservation, with a
+cell type column: `calculate_lisi_sc(type = "cell_type")` (cLISI),
+`calculate_cell_type_asw_sc()`, `calculate_graph_connectivity_sc()`.
+`calculate_integration_metrics_sc()` runs all of them and returns one
+scIB-style row, higher is better throughout. Run them on the uncorrected
+embedding first so you have a baseline, otherwise the numbers mean nothing.
 
 ## Plot data extractors
 
