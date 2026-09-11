@@ -8,6 +8,11 @@
   and ASW).
 * Also wired in from [edge-rs](https://crates.io/crates/edge-rs) the limma-voom 
   workflow. 
+* Sweep over the Rust/rextendr documentation
+
+## Fixes
+
+* Good old 0 to 1-index indexing issues fixed in two functions.
 
 # bixverse 0.5.1
 
