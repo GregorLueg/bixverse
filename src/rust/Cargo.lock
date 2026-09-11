@@ -109,7 +109,7 @@ checksum = "b588b76d00fde79687d7646a9b5bdf3cc0f655e0bbd080335a95d7e96f3587da"
 
 [[package]]
 name = "bixverse"
-version = "0.5.1"
+version = "0.5.2"
 dependencies = [
  "bixverse-rs",
  "edge-rs",
@@ -126,9 +126,8 @@ dependencies = [
 
 [[package]]
 name = "bixverse-rs"
-version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "83a5c2ad235452b8d42ce8c7ba9e985a15caaed67585226854e5246fb6524cd6"
+version = "0.5.1"
+source = "git+https://github.com/GregorLueg/bixverse-rs?branch=release-0.5.1#32702315fd0e35e685134bc48b943bedcff6ad02"
 dependencies = [
  "ann-search-rs",
  "approx",
@@ -2411,18 +2410,18 @@ checksum = "1ebf944e87a7c253233ad6766e082e3cd714b5d03812acc24c318f549614536e"
 
 [[package]]
 name = "zerocopy"
-version = "0.8.56"
+version = "0.8.57"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "556764e583adb45a9f8d413c2a147fa7e8d821e48e12b14fd560b607998b75eb"
+checksum = "d35102a9f36d089ccae9e4c6802bc118be4487b80aaffc0ab4e0cf5ce92d2873"
 dependencies = [
  "zerocopy-derive",
 ]
 
 [[package]]
 name = "zerocopy-derive"
-version = "0.8.56"
+version = "0.8.57"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f2ab42fc20575779bd240faa45f94a74256f755c0fa9e89f0ede20d91d0cdfc1"
+checksum = "146c01f5ab44258da43cf276c74a2763db2ff3969c9c652c3f2de07041d0b2bc"
 dependencies = [
  "proc-macro2",
  "quote",

@@ -1775,6 +1775,91 @@ assertScSyntheticDialogue <- checkmate::makeAssertionFunction(
   checkScSyntheticDialogue
 )
 
+##### cellsweep ----------------------------------------------------------------
+
+#' Check synthetic CellSweep data parameters
+#'
+#' @description Checkmate extension for checking the parameters for the
+#' generation of synthetic CellSweep data.
+#'
+#' @param x The list to check/assert
+#'
+#' @returns `TRUE` if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
+checkScSyntheticCellsweep <- function(x) {
+  res <- check_list_shape(
+    x,
+    c(
+      "n_real",
+      "n_empty",
+      "n_genes",
+      "n_celltypes",
+      "n_markers",
+      "marker_weight",
+      "ambient_dominance",
+      "alpha_mean",
+      "alpha_sd",
+      "real_lib_size",
+      "empty_lib_size"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- apply_qtest_rules(
+    x,
+    list(
+      n_real = "I1[1,)",
+      n_empty = "I1[30,)",
+      n_genes = "I1[1,)",
+      n_celltypes = "I1[1,)",
+      n_markers = "I1[1,)",
+      marker_weight = "N1(1,)",
+      ambient_dominance = "N1[0,1]",
+      alpha_mean = "N1[0.02,0.85]",
+      alpha_sd = "N1[0,)",
+      real_lib_size = "I1[1,)",
+      empty_lib_size = "I1[1,)"
+    ),
+    label = "synthetic CellSweep params",
+    hint = paste(
+      "n_empty must be at least 30, marker_weight above 1, and the fractions",
+      "within their respective ranges."
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  if (x$n_markers * x$n_celltypes > x$n_genes) {
+    return("The marker gene blocks do not fit into n_genes.")
+  }
+
+  return(TRUE)
+}
+
+#' Assert synthetic CellSweep data parameters
+#'
+#' @description Checkmate assertion for the parameters for the generation of
+#' synthetic CellSweep data.
+#'
+#' @inheritParams checkScSyntheticCellsweep
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @returns Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
+assertScSyntheticCellsweep <- checkmate::makeAssertionFunction(
+  checkScSyntheticCellsweep
+)
+
+
 ##### adt ----------------------------------------------------------------------
 
 #' Check synthetic ADT data parameters
@@ -5040,3 +5125,166 @@ checkNebulaParams <- function(x) {
 #'
 #' @keywords internal
 assertNebulaParams <- checkmate::makeAssertionFunction(checkNebulaParams)
+
+#### cellsweep ----------------------------------------------------------------
+
+#' Check CellSweep parameters
+#'
+#' @description Checkmate extension for checking the CellSweep parameters.
+#'
+#' @param x The list to check/assert
+#'
+#' @returns `TRUE` if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
+checkScCellsweep <- function(x) {
+  res <- check_list_shape(
+    x,
+    c(
+      "freeze_empties",
+      "freeze_ambient_profile",
+      "init_alpha",
+      "init_beta",
+      "alpha_cap",
+      "repulsion_strength",
+      "max_frac_gene_repulsion",
+      "celltype_lambda",
+      "ambient_lambda",
+      "bulk_lambda",
+      "eps",
+      "log_eps",
+      "max_iter",
+      "del0_ll_tol",
+      "min_ll_tol",
+      "tol_p",
+      "tol_f",
+      "norm_from_rounded",
+      "seed"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- apply_qtest_rules(
+    x,
+    list(
+      freeze_empties = "B1",
+      freeze_ambient_profile = "B1",
+      init_alpha = "N1[0.1,0.9]",
+      init_beta = "N1[0.1,0.9]",
+      alpha_cap = "N1[0,1]",
+      repulsion_strength = "N1[0,1e-3]",
+      max_frac_gene_repulsion = "N1(0,1]",
+      celltype_lambda = "N1[0,)",
+      ambient_lambda = "N1[0,)",
+      bulk_lambda = "N1[0,)",
+      eps = "N1(0,)",
+      log_eps = "N1(0,)",
+      max_iter = "I1[2,)",
+      del0_ll_tol = "N1(0,)",
+      min_ll_tol = "N1(0,)",
+      tol_p = "N1(0,)",
+      tol_f = "N1(0,)",
+      norm_from_rounded = "B1",
+      seed = "I1[0,)"
+    ),
+    label = "CellSweep params"
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  if (!isTRUE(x$freeze_empties)) {
+    return("`freeze_empties = FALSE` is not supported by CellSweep.")
+  }
+
+  TRUE
+}
+
+#' Assert CellSweep parameters
+#'
+#' @description Checkmate extension for asserting the CellSweep parameters.
+#'
+#' @param x The list to assert.
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @returns Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
+assertScCellsweep <- checkmate::makeAssertionFunction(checkScCellsweep)
+
+#### empty droplets -----------------------------------------------------------
+
+#' Check empty droplet parameters
+#'
+#' @description Checkmate extension for checking the empty droplet parameters.
+#'
+#' @param x The list to check/assert
+#'
+#' @returns `TRUE` if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
+checkScEmptyDroplets <- function(x) {
+  res <- check_list_shape(
+    x,
+    c("method", "is_empty_column", "umi_cutoff", "expected_cells")
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  valid <- c("supplied", "umi_cutoff", "expected_cells", "knee")
+  if (
+    !(is.character(x$method) && length(x$method) == 1L && x$method %in% valid)
+  ) {
+    return(sprintf(
+      "`method` must be one of %s.",
+      paste(sprintf("'%s'", valid), collapse = ", ")
+    ))
+  }
+
+  res <- apply_qtest_rules(
+    x,
+    list(
+      is_empty_column = c("S1", "0"),
+      umi_cutoff = c("I1[1,)", "0"),
+      expected_cells = c("I1[1,)", "0")
+    ),
+    label = "empty droplet params"
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  required <- switch(
+    x$method,
+    supplied = "is_empty_column",
+    umi_cutoff = "umi_cutoff",
+    expected_cells = "expected_cells",
+    knee = NULL
+  )
+  if (!is.null(required) && is.null(x[[required]])) {
+    return(sprintf("`method = '%s'` needs `%s`.", x$method, required))
+  }
+
+  TRUE
+}
+
+#' Assert empty droplet parameters
+#'
+#' @description Checkmate extension for asserting the empty droplet parameters.
+#'
+#' @param x The list to assert.
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @returns Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
+assertScEmptyDroplets <- checkmate::makeAssertionFunction(checkScEmptyDroplets)

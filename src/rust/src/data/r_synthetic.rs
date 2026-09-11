@@ -21,6 +21,8 @@ extendr_module! {
     fn rs_synthetic_sc_adt_with_cell_types;
     // -- dialogue --
     fn rs_synthetic_sc_dialogue_data;
+    // -- cellsweep --
+    fn rs_synthetic_sc_cellsweep_data;
 }
 
 //////////
@@ -451,5 +453,109 @@ fn rs_synthetic_sc_dialogue_data(
         quality = synthetic.quality,
         latent = synthetic.latent,
         planted = planted
+    ))
+}
+
+/////////////////
+// Cell sweep  //
+/////////////////
+
+/// Generates synthetic single cell counts with a planted ambient profile
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Builds the fixture CellSweep is tested against. Every real barcode is a
+/// two-component multinomial: a planted fraction `alpha` of its library comes
+/// from the soup, the rest from its own cell type profile. Empty droplets are
+/// pure soup at a much smaller library size, which is what the ambient profile
+/// is estimated off. Real barcodes come first in the matrix, empty droplets
+/// after, and cell types are assigned round-robin over the real barcodes.
+///
+/// The soup is cell type one plus flat background rather than a mixture of
+/// every profile. A soup sitting in the span of the cell type profiles makes
+/// the contamination fraction unidentifiable.
+///
+/// @param n_real Integer. Number of real barcodes.
+/// @param n_empty Integer. Number of empty droplets. At least 30, and the
+/// ambient profile gets noisy well above that.
+/// @param n_genes Integer. Number of genes.
+/// @param n_celltypes Integer. Number of cell types.
+/// @param n_markers Integer. Width of each cell type's marker block. Blocks
+/// are disjoint and laid out from the first gene.
+/// @param marker_weight Float. Enrichment of a marker gene over background in
+/// its own cell type's profile. Must exceed 1.
+/// @param ambient_dominance Float. Fraction of the soup coming from the first
+/// cell type. The remainder is flat background.
+/// @param alpha_mean Float. Mean planted ambient fraction across real
+/// barcodes.
+/// @param alpha_sd Float. Spread of the planted ambient fraction.
+/// @param real_lib_size Integer. Expected library size of a real barcode.
+/// @param empty_lib_size Integer. Expected library size of an empty droplet.
+/// @param seed Integer. For reproducibility.
+///
+/// @returns A list with the following items.
+/// \itemize{
+///   \item data - Integer vector. Non-zero counts of the CSR matrix.
+///   \item indptr - Integer vector. Row pointers of the CSR matrix.
+///   \item indices - Integer vector. 0-indexed(!) gene positions.
+///   \item nrow - Integer. Number of barcodes, real plus empty.
+///   \item ncol - Integer. Number of genes.
+///   \item cell_type_indices - Integer vector. 0-indexed(!) cell type per real
+///   barcode. Empty droplets have none.
+///   \item is_empty - Logical vector over all barcodes.
+///   \item alpha_true - Numeric vector. Planted ambient fraction per real
+///   barcode.
+///   \item ambient_true - Numeric vector. The soup, summing to one.
+///   \item celltype_profiles_true - Numeric vector. Cell type profiles,
+///   row-major `n_celltypes x n_genes`, each row summing to one.
+/// }
+///
+/// @export
+///
+/// @keywords internal
+#[allow(clippy::too_many_arguments)]
+#[extendr]
+fn rs_synthetic_sc_cellsweep_data(
+    n_real: usize,
+    n_empty: usize,
+    n_genes: usize,
+    n_celltypes: usize,
+    n_markers: usize,
+    marker_weight: f64,
+    ambient_dominance: f64,
+    alpha_mean: f64,
+    alpha_sd: f64,
+    real_lib_size: usize,
+    empty_lib_size: usize,
+    seed: usize,
+) -> extendr_api::Result<List> {
+    let params = CellSweepSyntheticParams {
+        n_real,
+        n_empty,
+        n_genes,
+        n_celltypes,
+        n_markers,
+        marker_weight,
+        ambient_dominance,
+        alpha_mean,
+        alpha_sd,
+        real_lib_size,
+        empty_lib_size,
+    };
+
+    let synthetic = create_cellsweep_synthetic_data(&params, seed as u64).to_extendr()?;
+    let csr = synthetic.matrix;
+
+    Ok(list!(
+        data = csr.data,
+        indptr = csr.indptr,
+        indices = csr.indices,
+        nrow = csr.shape.0,
+        ncol = csr.shape.1,
+        cell_type_indices = synthetic.cell_type_indices.r_int_convert(),
+        is_empty = synthetic.is_empty,
+        alpha_true = synthetic.alpha_true,
+        ambient_true = synthetic.ambient_true,
+        celltype_profiles_true = synthetic.celltype_profiles_true
     ))
 }

@@ -906,6 +906,61 @@ rs_synthetic_sc_adt_with_cell_types <- function(n_cells, n_proteins, n_batches, 
 #' @keywords internal
 rs_synthetic_sc_dialogue_data <- function(n_samples, cells_per_sample, n_cell_types, n_features, n_sample_features, n_genes, n_planted, seed) .Call(wrap__rs_synthetic_sc_dialogue_data, n_samples, cells_per_sample, n_cell_types, n_features, n_sample_features, n_genes, n_planted, seed)
 
+#' Generates synthetic single cell counts with a planted ambient profile
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Builds the fixture CellSweep is tested against. Every real barcode is a
+#' two-component multinomial: a planted fraction `alpha` of its library comes
+#' from the soup, the rest from its own cell type profile. Empty droplets are
+#' pure soup at a much smaller library size, which is what the ambient profile
+#' is estimated off. Real barcodes come first in the matrix, empty droplets
+#' after, and cell types are assigned round-robin over the real barcodes.
+#'
+#' The soup is cell type one plus flat background rather than a mixture of
+#' every profile. A soup sitting in the span of the cell type profiles makes
+#' the contamination fraction unidentifiable.
+#'
+#' @param n_real Integer. Number of real barcodes.
+#' @param n_empty Integer. Number of empty droplets. At least 30, and the
+#' ambient profile gets noisy well above that.
+#' @param n_genes Integer. Number of genes.
+#' @param n_celltypes Integer. Number of cell types.
+#' @param n_markers Integer. Width of each cell type's marker block. Blocks
+#' are disjoint and laid out from the first gene.
+#' @param marker_weight Float. Enrichment of a marker gene over background in
+#' its own cell type's profile. Must exceed 1.
+#' @param ambient_dominance Float. Fraction of the soup coming from the first
+#' cell type. The remainder is flat background.
+#' @param alpha_mean Float. Mean planted ambient fraction across real
+#' barcodes.
+#' @param alpha_sd Float. Spread of the planted ambient fraction.
+#' @param real_lib_size Integer. Expected library size of a real barcode.
+#' @param empty_lib_size Integer. Expected library size of an empty droplet.
+#' @param seed Integer. For reproducibility.
+#'
+#' @returns A list with the following items.
+#' \itemize{
+#'   \item data - Integer vector. Non-zero counts of the CSR matrix.
+#'   \item indptr - Integer vector. Row pointers of the CSR matrix.
+#'   \item indices - Integer vector. 0-indexed(!) gene positions.
+#'   \item nrow - Integer. Number of barcodes, real plus empty.
+#'   \item ncol - Integer. Number of genes.
+#'   \item cell_type_indices - Integer vector. 0-indexed(!) cell type per real
+#'   barcode. Empty droplets have none.
+#'   \item is_empty - Logical vector over all barcodes.
+#'   \item alpha_true - Numeric vector. Planted ambient fraction per real
+#'   barcode.
+#'   \item ambient_true - Numeric vector. The soup, summing to one.
+#'   \item celltype_profiles_true - Numeric vector. Cell type profiles,
+#'   row-major `n_celltypes x n_genes`, each row summing to one.
+#' }
+#'
+#' @export
+#'
+#' @keywords internal
+rs_synthetic_sc_cellsweep_data <- function(n_real, n_empty, n_genes, n_celltypes, n_markers, marker_weight, ambient_dominance, alpha_mean, alpha_sd, real_lib_size, empty_lib_size, seed) .Call(wrap__rs_synthetic_sc_cellsweep_data, n_real, n_empty, n_genes, n_celltypes, n_markers, marker_weight, ambient_dominance, alpha_mean, alpha_sd, real_lib_size, empty_lib_size, seed)
+
 #' Load in h5ad data via Rust
 #'
 #' @description
@@ -3742,6 +3797,28 @@ rs_fast_cluster_sc_grid <- function(embd, km_type, resolutions, n_centroids, fc_
 #' @keywords internal
 rs_magic_impute <- function(f_path, knn_data, cell_indices, total_cells, gene_indices, magic_params, verbose) .Call(wrap__rs_magic_impute, f_path, knn_data, cell_indices, total_cells, gene_indices, magic_params, verbose)
 
+#' Identify the empty droplets from the per-barcode library sizes
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Kept on the Rust side so the knee detector exists once: it has to match
+#' `scipy.ndimage.gaussian_filter1d` and `numpy.gradient` closely enough to
+#' land on the same rank as the CellSweep reference, and a second copy in R
+#' would drift.
+#'
+#' @param lib_size Integer vector. Library size per barcode, in store order.
+#' @param empty_params List. Parameter list, see
+#' [bixverse::params_sc_empty_droplets()]. `"supplied"` is rejected, since
+#' there is nothing to infer.
+#'
+#' @returns A logical vector that is `TRUE` where the barcode is an empty
+#' droplet.
+#'
+#' @export
+#'
+#' @keywords internal
+rs_sc_infer_empty_droplets <- function(lib_size, empty_params) .Call(wrap__rs_sc_infer_empty_droplets, lib_size, empty_params)
+
 #' Calculate DGEs between cells based on Mann Whitney stats
 #'
 #' @description
@@ -6212,6 +6289,34 @@ rs_wnn <- function(modality_emb_one, modality_emb_two, wnn_params, seed, verbose
 #'}
 #'}
 #'
+#'\subsection{Method `cellsweep`}{
+#'Run CellSweep and write the denoised barcodes into the cells binary
+#'
+#'One independent EM fit per sample, since the ambient profile is a
+#'property of a single emulsion. Only the real barcodes are written: the
+#'empty droplets exist to train the ambient profile, and barcodes that
+#'are neither empty nor annotated are not part of the model.
+#'
+#'Writes the cell-based file only; regenerate the gene-based companion
+#'afterwards, as for a merge.
+#'
+#' \subsection{Arguments}{
+#'\describe{
+#'\item{`f_path_source`}{(`character`)\cr Path to the raw `counts_cells.bin`, which must still contain the empty droplets.}
+#'\item{`samples`}{(`list`)\cr A list of lists. Each inner list must contain `sample_id`, `real_cells` and `empty_cells` (0-indexed integer vectors of store indices), `celltype_idx` (0-indexed integer vector, one entry per `real_cells` entry) and `n_celltypes`.}
+#'\item{`cellsweep_params`}{(`list`)\cr The CellSweep model parameters. Missing entries fall back to the reference implementation's defaults.}
+#'\item{`target_size`}{(`numeric`)\cr Library size the normalised layer is scaled to.}
+#'\item{`verbose`}{(`integer`)\cr `0` silent, `1` per-sample progress, `2` per-EM-iteration. }
+#'}}
+#' \subsection{returns}{
+#'A list with `cell_order` (0-indexed source indices in output
+#'order), `lib_size`, `nnz` and `fits` (one list per sample with
+#'`sample_id`, `alpha`, `z_hat`, `beta`, `ambient`,
+#'`celltype_profiles`, `n_celltypes`, `log_likelihood`, `n_iter` and
+#'`converged`).
+#'}
+#'}
+#'
 SingleCellCountData <- new.env(parent = emptyenv())
 
 SingleCellCountData$new <- function(f_path_cells, f_path_genes) .Call(wrap__SingleCellCountData__new, f_path_cells, f_path_genes)
@@ -6255,6 +6360,8 @@ SingleCellCountData$get_genes_by_indices <- function(indices, assay) .Call(wrap_
 SingleCellCountData$get_nnz_genes <- function(gene_indices) .Call(wrap__SingleCellCountData__get_nnz_genes, self, gene_indices)
 
 SingleCellCountData$merge_sc_files <- function(merge_tasks, universe_size, renormalise, target_size, verbose) .Call(wrap__SingleCellCountData__merge_sc_files, self, merge_tasks, universe_size, renormalise, target_size, verbose)
+
+SingleCellCountData$cellsweep <- function(f_path_source, samples, cellsweep_params, target_size, verbose) .Call(wrap__SingleCellCountData__cellsweep, self, f_path_source, samples, cellsweep_params, target_size, verbose)
 
 #' @rdname SingleCellCountData
 #' @usage NULL

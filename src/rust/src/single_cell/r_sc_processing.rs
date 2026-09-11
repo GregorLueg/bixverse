@@ -5,9 +5,10 @@ use bixverse_rs::single_cell::sc_processing::magic::{
 };
 use bixverse_rs::single_cell::sc_processing::metrics::pairwise_gene_correlations;
 use bixverse_rs::single_cell::sc_processing::{
-    doublet_detection::*, hvg::*, pca::*, qc::*, scdblfinder::*, scrublet::*, snn::*,
-    utils_doublets::find_threshold_otsu,
+    cellsweep::infer_empty_droplets, doublet_detection::*, hvg::*, pca::*, qc::*, scdblfinder::*,
+    scrublet::*, snn::*, utils_doublets::find_threshold_otsu,
 };
+use bixverse_rs::single_cell::sc_r_wrappers::empty_droplet_call_from_r_list;
 use extendr_api::prelude::*;
 use faer::Mat;
 use rustc_hash::FxHashSet;
@@ -46,6 +47,8 @@ extendr_module! {
     fn rs_fast_cluster_sc_grid;
     // imputation
     fn rs_magic_impute;
+    // denoising
+    fn rs_sc_infer_empty_droplets;
 }
 
 ///////////////////////
@@ -1555,4 +1558,39 @@ fn rs_magic_impute(
     Ok(RMatrix::new_matrix(res.n_cells, n_genes, |r, c| {
         res.data[r * n_genes + c] as f64
     }))
+}
+
+/////////////////////
+// Empty droplets  //
+/////////////////////
+
+/// Identify the empty droplets from the per-barcode library sizes
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Kept on the Rust side so the knee detector exists once: it has to match
+/// `scipy.ndimage.gaussian_filter1d` and `numpy.gradient` closely enough to
+/// land on the same rank as the CellSweep reference, and a second copy in R
+/// would drift.
+///
+/// @param lib_size Integer vector. Library size per barcode, in store order.
+/// @param empty_params List. Parameter list, see
+/// [bixverse::params_sc_empty_droplets()]. `"supplied"` is rejected, since
+/// there is nothing to infer.
+///
+/// @returns A logical vector that is `TRUE` where the barcode is an empty
+/// droplet.
+///
+/// @export
+///
+/// @keywords internal
+#[extendr]
+fn rs_sc_infer_empty_droplets(
+    lib_size: &[i32],
+    empty_params: List,
+) -> Result<Vec<bool>, extendr_api::Error> {
+    let call = empty_droplet_call_from_r_list(empty_params)?;
+    let sizes: Vec<u32> = lib_size.iter().map(|&x| x.max(0) as u32).collect();
+
+    infer_empty_droplets(&sizes, call).to_extendr()
 }

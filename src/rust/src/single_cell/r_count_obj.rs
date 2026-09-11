@@ -10,6 +10,10 @@ use bixverse_rs::single_cell::sc_data::{
     bin_merge_io::*, data_io::*, h5_10x_io::*, h5_10x_multifile_io::*, h5ad_io::*,
     h5ad_multifile_io::*, mtx_io::*, mtx_multifile_io::*, r_obj_io::*,
 };
+use bixverse_rs::single_cell::sc_processing::cellsweep::{
+    CellSweepParams, CellSweepSample, run_cellsweep,
+};
+use bixverse_rs::single_cell::sc_r_wrappers::cellsweep_sample_from_r_list;
 
 /////////////
 // extendR //
@@ -1627,6 +1631,88 @@ impl SingleCellCountData {
             total_cells = result.total_cells,
             total_genes = result.total_genes,
             per_file = per_file
+        ))
+    }
+
+    ///////////////
+    // CellSweep //
+    ///////////////
+
+    /// Run CellSweep and write the denoised barcodes into the cells binary
+    ///
+    /// One independent EM fit per sample, since the ambient profile is a
+    /// property of a single emulsion. Only the real barcodes are written: the
+    /// empty droplets exist to train the ambient profile, and barcodes that
+    /// are neither empty nor annotated are not part of the model.
+    ///
+    /// Writes the cell-based file only; regenerate the gene-based companion
+    /// afterwards, as for a merge.
+    ///
+    /// @param f_path_source (`character`)\cr
+    /// Path to the raw `counts_cells.bin`, which must still contain the empty
+    /// droplets.
+    /// @param samples (`list`)\cr
+    /// A list of lists. Each inner list must contain `sample_id`,
+    /// `real_cells` and `empty_cells` (0-indexed integer vectors of store
+    /// indices), `celltype_idx` (0-indexed integer vector, one entry per
+    /// `real_cells` entry) and `n_celltypes`.
+    /// @param cellsweep_params (`list`)\cr
+    /// The CellSweep model parameters. Missing entries fall back to the
+    /// reference implementation's defaults.
+    /// @param target_size (`numeric`)\cr
+    /// Library size the normalised layer is scaled to.
+    /// @param verbose (`integer`)\cr
+    /// `0` silent, `1` per-sample progress, `2` per-EM-iteration.
+    ///
+    /// @returns A list with `cell_order` (0-indexed source indices in output
+    /// order), `lib_size`, `nnz` and `fits` (one list per sample with
+    /// `sample_id`, `alpha`, `z_hat`, `beta`, `ambient`,
+    /// `celltype_profiles`, `n_celltypes`, `log_likelihood`, `n_iter` and
+    /// `converged`).
+    pub fn cellsweep(
+        &mut self,
+        f_path_source: String,
+        samples: List,
+        cellsweep_params: List,
+        target_size: f64,
+        verbose: i32,
+    ) -> Result<List, extendr_api::Error> {
+        let sample_specs: Vec<CellSweepSample> = samples
+            .into_iter()
+            .map(|(_, robj)| {
+                let inner = List::try_from(robj).expect("Each sample must be a list");
+                cellsweep_sample_from_r_list(inner)
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+
+        let params = CellSweepParams::from_r_list(cellsweep_params)?;
+
+        let reader = ParallelSparseReader::new(&f_path_source).to_extendr()?;
+        let result = run_cellsweep(
+            &reader,
+            &sample_specs,
+            params,
+            &self.f_path_cells,
+            target_size as f32,
+            verbose.max(0) as usize,
+        )
+        .to_extendr()?;
+
+        self.n_cells = result.cell_order.len();
+        self.n_genes = reader.get_header().total_genes;
+
+        let fits: List = result
+            .fits
+            .iter()
+            .zip(&sample_specs)
+            .map(|(fit, sample)| fit.to_r_list(&sample.sample_id))
+            .collect::<List>();
+
+        Ok(list!(
+            cell_order = result.cell_order.r_int_convert(),
+            lib_size = result.library_size.r_int_convert(),
+            nnz = result.nnz.r_int_convert(),
+            fits = fits
         ))
     }
 }

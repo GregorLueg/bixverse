@@ -334,3 +334,69 @@ dialogue_latent_agreement <- function(scores, obs, latent, programme) {
     abs(stats::cor(means[names(latent)], latent))
   })
 }
+
+## cellsweep -------------------------------------------------------------------
+
+#' Synthetic fixture with a planted ambient profile
+#'
+#' @description
+#' Wraps [generate_cellsweep_test_data()] with the fully permissive QC CellSweep
+#' needs: the load-time cutoffs are irreversible and the defaults would delete
+#' exactly the empty droplets the ambient profile is estimated from.
+#'
+#' @param syn_data_params List. See [params_sc_synthetic_cellsweep()].
+#' @param seed Integer. Seed handed to the generator.
+#'
+#' @returns The generator output plus `n_real` and the QC parameters.
+#'
+#' @keywords internal
+cellsweep_test_fixture <- function(
+  syn_data_params = params_sc_synthetic_cellsweep(),
+  seed = 42L
+) {
+  checkmate::assertList(syn_data_params, names = "named")
+  checkmate::qassert(seed, "I1")
+
+  data <- generate_cellsweep_test_data(
+    syn_data_params = syn_data_params,
+    seed = seed
+  )
+
+  c(
+    data,
+    list(
+      n_real = syn_data_params$n_real,
+      sc_qc_param = params_sc_min_quality(
+        min_unique_genes = 0L,
+        min_lib_size = 0L,
+        min_cells = 0L
+      )
+    )
+  )
+}
+
+#' Build a `SingleCells` object off a CellSweep fixture
+#'
+#' @param dir String. Directory for the object, see [sc_test_dir()].
+#' @param fixture List. Output of [cellsweep_test_fixture()].
+#' @param obs data.table. Observation table, defaults to the fixture's. Pass a
+#' modified one to break a guard on purpose.
+#'
+#' @returns The loaded `SingleCells` object.
+#'
+#' @keywords internal
+cellsweep_test_object <- function(dir, fixture, obs = fixture$obs) {
+  checkmate::assertDirectoryExists(dir)
+  checkmate::assertList(fixture, names = "named")
+  checkmate::assertDataFrame(obs)
+
+  load_r_data(
+    object = SingleCells(dir_data = dir),
+    counts = fixture$counts,
+    obs = obs,
+    var = fixture$var,
+    sc_qc_param = fixture$sc_qc_param,
+    streaming = 0L,
+    .verbose = FALSE
+  )
+}
