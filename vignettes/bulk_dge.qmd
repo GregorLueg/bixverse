@@ -425,7 +425,7 @@ microbenchmark::microbenchmark(
     lib_size = get_outputs(dge_obj)$lib_size[sample_info$sample_id],
     .verbose = FALSE
   ),
-  times = 10L
+  times = 5L
 )
 ```
 
@@ -454,7 +454,8 @@ microbenchmark::microbenchmark(
 ```
 
 Both land a few times faster on the Rust side, on eight samples. Mileage on
-bigger cohorts will vary with your machine.
+bigger cohorts will vary with your machine, but some benchmarks have shown the
+delta tends to increase with Rust getting comparably faster with larger N.
 
 ### Where the results differ on purpose
 
