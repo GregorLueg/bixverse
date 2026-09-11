@@ -1957,6 +1957,9 @@ rs_edger_ql <- function(counts, design, edger_params) .Call(wrap__rs_edger_ql, c
 #' normalised or log-transformed.
 #' @param design Numeric matrix. The design matrix of samples x coefficients.
 #' Must be full rank.
+#' @param lib_size Numeric vector or NULL. Library size per sample. NULL uses
+#' the column sums of `counts`. Pass the column sums from before gene filtering
+#' to match edgeR, which keeps those on a subset `DGEList`.
 #' @param limma_params Named list. The limma parameters, see
 #' [bixverse::params_limma_voom()], plus either `coef` (a single 0-indexed(!)
 #' design column) or `contrast` (column-major weights with `n_contrasts`
@@ -1980,7 +1983,7 @@ rs_edger_ql <- function(counts, design, edger_params) .Call(wrap__rs_edger_ql, c
 #' 2004
 #'
 #' @export
-rs_limma_voom <- function(counts, design, limma_params) .Call(wrap__rs_limma_voom, counts, design, limma_params)
+rs_limma_voom <- function(counts, design, lib_size, limma_params) .Call(wrap__rs_limma_voom, counts, design, lib_size, limma_params)
 
 #' Voom-transform a count matrix
 #'

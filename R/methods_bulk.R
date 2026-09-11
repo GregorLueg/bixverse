@@ -645,7 +645,7 @@ S7::method(calculate_pca_bulk_dge, BulkDge) <- function(
   ## params
   pca_params <- list(
     hvg_genes = hvg_genes,
-    scale = scale,
+    scale = scale_genes,
     pcs_taken = pcs_to_take
   )
 
@@ -860,9 +860,6 @@ S7::method(batch_correction_bulk_dge, BulkDge) <- function(
       by = 'sample_id'
     )
 
-  # Otherwise it continues bugging...
-  library(patchwork)
-
   plot_uncor <- plot_pca(
     pca_dt = pca_dt_uncor,
     grps = contrast_column
@@ -874,8 +871,7 @@ S7::method(batch_correction_bulk_dge, BulkDge) <- function(
   ) +
     ggplot2::ggtitle("Post batch correction")
 
-  p6_batch_correction_plot <- plot_uncor +
-    plot_cor +
+  p6_batch_correction_plot <- patchwork::wrap_plots(plot_uncor, plot_cor) +
     patchwork::plot_annotation(
       title = 'PCA plots pre and post batch effect correction',
       subtitle = 'Batch effect correction via removeBatchEffect()'
@@ -1006,6 +1002,8 @@ S7::method(calculate_dge_limma, BulkDge) <- function(
   )
   sample_info <- S7::prop(object, "outputs")[["sample_info"]]
   dge_counts <- S7::prop(object, "outputs")[["dge_counts"]]
+  # pre-filter library sizes from qc_bulk_dge(), as edgeR keeps them
+  lib_size <- S7::prop(object, "outputs")[["lib_size"]]
 
   checkmate::assertTRUE(all(all_specified_columns %in% colnames(sample_info)))
 
@@ -1021,6 +1019,7 @@ S7::method(calculate_dge_limma, BulkDge) <- function(
       contrast_list = contrast_list,
       co_variates = co_variates,
       limma_params = limma_params,
+      lib_size = lib_size[sample_info$sample_id],
       .verbose = .verbose
     ) %>%
       .[, subgroup := NA]
@@ -1045,6 +1044,7 @@ S7::method(calculate_dge_limma, BulkDge) <- function(
         contrast_list = contrast_list,
         co_variates = co_variates,
         limma_params = limma_params,
+        lib_size = lib_size[sample_info_red$sample_id],
         .verbose = .verbose
       ) %>%
         .[, subgroup := group]

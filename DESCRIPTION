@@ -69,7 +69,8 @@ Imports:
     S7,
     stringr,
     zeallot
-Suggests: 
+Suggests:
+    airway,
     biomaRt,
     BiocParallel,
     bixverse.plots,

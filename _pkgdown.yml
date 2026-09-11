@@ -34,6 +34,10 @@ navbar:
         - text: Genetic diffusion and community detections
           href: articles/genetic_diffusions.html
         - text: -------
+        - text: "Bulk RNA-seq"
+        - text: Bulk differential expression with BulkDge
+          href: articles/bulk_dge.html
+        - text: -------
         - text: "Co-expression module detection methods"
         - text: Contrastive PCA
           href: articles/cpca.html
@@ -117,6 +121,7 @@ articles:
       - pathway_activity
       - genetic_diffusions
       - cpca
+      - bulk_dge
       - bulk_coexpression_modules
       - ontologies
   - title: Single Cells

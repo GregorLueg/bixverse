@@ -11,6 +11,7 @@ run_limma_voom(
   contrast_list = NULL,
   co_variates = NULL,
   limma_params = params_limma_voom(),
+  lib_size = NULL,
   .verbose = TRUE
 )
 }
@@ -34,6 +35,11 @@ during model fitting.}
 
 \item{limma_params}{List. The limma parameters, see
 \code{\link[=params_limma_voom]{params_limma_voom()}}.}
+
+\item{lib_size}{Optional numeric vector. Library size per sample, in the
+column order of \code{counts}. \code{NULL} uses the column sums of \code{counts}. Pass the
+column sums from before gene filtering to match edgeR, which keeps those on
+a subset \code{DGEList}.}
 
 \item{.verbose}{Boolean. Controls verbosity of the function.}
 }

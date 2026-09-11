@@ -315,6 +315,10 @@ build_limma_contrasts <- function(
 #' during model fitting.
 #' @param limma_params List. The limma parameters, see
 #' [bixverse::params_limma_voom()].
+#' @param lib_size Optional numeric vector. Library size per sample, in the
+#' column order of `counts`. `NULL` uses the column sums of `counts`. Pass the
+#' column sums from before gene filtering to match edgeR, which keeps those on
+#' a subset `DGEList`.
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
 #' @returns A data.table with the columns of limma's `topTable(confint = TRUE)`
@@ -349,6 +353,7 @@ run_limma_voom <- function(
   contrast_list = NULL,
   co_variates = NULL,
   limma_params = params_limma_voom(),
+  lib_size = NULL,
   .verbose = TRUE
 ) {
   variables <- c(main_contrast, co_variates)
@@ -368,6 +373,13 @@ run_limma_voom <- function(
   )
   checkmate::qassert(contrast_list, c("S+", "0"))
   assertLimmaVoomParams(limma_params)
+  checkmate::assertNumeric(
+    lib_size,
+    lower = 0,
+    any.missing = FALSE,
+    len = ncol(counts),
+    null.ok = TRUE
+  )
   checkmate::qassert(.verbose, "B1")
 
   # copy, so the caller's table is not modified by reference
@@ -403,6 +415,7 @@ run_limma_voom <- function(
     res <- rs_limma_voom(
       counts = counts,
       design = model_matrix,
+      lib_size = if (is.null(lib_size)) NULL else unname(as.numeric(lib_size)),
       limma_params = c(limma_params, tested)
     )
 

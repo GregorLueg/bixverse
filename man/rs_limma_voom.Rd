@@ -4,7 +4,7 @@
 \alias{rs_limma_voom}
 \title{Run the limma linear model chain on a count matrix}
 \usage{
-rs_limma_voom(counts, design, limma_params)
+rs_limma_voom(counts, design, lib_size, limma_params)
 }
 \arguments{
 \item{counts}{Numeric matrix. Raw counts of genes x samples. Must not be
@@ -12,6 +12,10 @@ normalised or log-transformed.}
 
 \item{design}{Numeric matrix. The design matrix of samples x coefficients.
 Must be full rank.}
+
+\item{lib_size}{Numeric vector or NULL. Library size per sample. NULL uses
+the column sums of \code{counts}. Pass the column sums from before gene filtering
+to match edgeR, which keeps those on a subset \code{DGEList}.}
 
 \item{limma_params}{Named list. The limma parameters, see
 \code{\link[=params_limma_voom]{params_limma_voom()}}, plus either \code{coef} (a single 0-indexed(!)

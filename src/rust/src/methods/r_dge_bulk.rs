@@ -195,6 +195,9 @@ fn rs_edger_ql(counts: RMatrix<f64>, design: RMatrix<f64>, edger_params: List) -
 /// normalised or log-transformed.
 /// @param design Numeric matrix. The design matrix of samples x coefficients.
 /// Must be full rank.
+/// @param lib_size Numeric vector or NULL. Library size per sample. NULL uses
+/// the column sums of `counts`. Pass the column sums from before gene filtering
+/// to match edgeR, which keeps those on a subset `DGEList`.
 /// @param limma_params Named list. The limma parameters, see
 /// [bixverse::params_limma_voom()], plus either `coef` (a single 0-indexed(!)
 /// design column) or `contrast` (column-major weights with `n_contrasts`
@@ -219,8 +222,14 @@ fn rs_edger_ql(counts: RMatrix<f64>, design: RMatrix<f64>, edger_params: List) -
 ///
 /// @export
 #[extendr]
-fn rs_limma_voom(counts: Robj, design: RMatrix<f64>, limma_params: List) -> Result<List> {
+fn rs_limma_voom(
+    counts: Robj,
+    design: RMatrix<f64>,
+    lib_size: Nullable<Vec<f64>>,
+    limma_params: List,
+) -> Result<List> {
     let (counts, n_genes, n_samples) = counts_to_row_major(&counts)?;
+    let lib_size: Option<Vec<f64>> = lib_size.into_option();
     let n_coef = design.ncols();
     check_design_rows(design.nrows(), n_samples)?;
 
@@ -231,7 +240,14 @@ fn rs_limma_voom(counts: Robj, design: RMatrix<f64>, limma_params: List) -> Resu
     let design = mat_to_flat_row_major(r_matrix_to_faer(&design));
 
     let res = run_limma_dge(
-        &counts, n_genes, n_samples, &design, n_coef, &tested, &params,
+        &counts,
+        n_genes,
+        n_samples,
+        lib_size.as_deref(),
+        &design,
+        n_coef,
+        &tested,
+        &params,
     )
     .to_extendr()?;
 
