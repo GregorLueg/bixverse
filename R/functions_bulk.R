@@ -297,9 +297,9 @@ build_limma_contrasts <- function(
 #' @description
 #' Runs the limma-voom workflow (`calcNormFactors()` -> `voomLmFit()` ->
 #' `contrasts.fit()` -> `eBayes()` -> `topTable()`) in Rust via the `edge-rs`
-#' crate, gated against limma 3.66.0. The design is `~ 0 + main_contrast +
-#' co_variates` and every requested contrast is tested separately. limma and
-#' edgeR are not needed.
+#' crate, gated against limma `3.66.0`. The design is
+#' `~ 0 + main_contrast + co_variates` and every requested contrast is tested
+#' separately. limma and edgeR are not needed.
 #'
 #' @param meta_data data.table. The meta information about the experiment in
 #' which the contrast info (and potential co-variates) can be found. Rows need

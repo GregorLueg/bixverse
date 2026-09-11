@@ -394,7 +394,7 @@ inputs, and rbindlists.
   Populate the obs table from a single source DuckDB, restricted to a
 subset of cells and reordered to match.
 
-Needed because \code{\link[=add_data_obs]{add_data_obs()}} requires an obs table to already exist,
+Needed because \code{add_data_obs()} requires an obs table to already exist,
 so an object written from scratch out of a subset of a parent (as
 \code{cellsweep_sc()} does) has nothing to attach columns to.
   \subsection{Usage}{

@@ -82,6 +82,7 @@ data.table with a `sample_id` column matching the column names of the counts.
 ```{r}
 #| label: class
 dge_obj <- BulkDge(raw_counts = counts, meta_data = meta_data)
+
 dge_obj
 ```
 
@@ -326,6 +327,31 @@ comparison[, .(
   max_abs_diff_t = max(abs(t_rs - t_r)),
   max_abs_diff_log10p = max(abs(log10(P.Value_rs) - log10(P.Value_r)))
 )]
+```
+
+Or as plots:
+
+```{r}
+#| label: reference fit plots
+#| eval: !expr has_reference
+
+p1 <- ggplot(data = comparison, mapping = aes(x = logFC_rs, y = logFC_r)) +
+  geom_point() +
+  xlab("LFC (Rust)") +
+  ylab("LFC (R)") +
+  ggtitle(label = waiver(), subtitle = "LFC comparison") +
+  theme_minimal() +
+  geom_abline(slope = 1, intercept = 0, linesize = 0.25)
+
+p2 <- ggplot(data = comparison, mapping = aes(x = t_rs, y = t_r)) +
+  geom_point() +
+  xlab("t stat (Rust)") +
+  ylab("t stat (R)") +
+  ggtitle(label = waiver(), subtitle = "t stat comparison") +
+  theme_minimal() +
+  geom_abline(slope = 1, intercept = 0, linesize = 0.25)
+
+p1 + p2 + plot_annotation(title = "Rust vs R limma-voom")
 ```
 
 And voom's normalised values against the ones `normalise_bulk_dge()` stored:

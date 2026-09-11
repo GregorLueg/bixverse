@@ -49,7 +49,9 @@ used, to scale the new normalised layer.}
 
 \item{cell_batch_size}{Integer. Cells per batch for \code{streaming = 2L}.}
 
-\item{.verbose}{Logical. Controls verbosity.}
+\item{.verbose}{Boolean or integer. Controls verbosity and returns run times.
+\code{FALSE} -> quiet, \code{TRUE} or \code{1L} -> normal verbosity, \code{2L} -> detailed
+verbosity.}
 }
 \value{
 The \code{target} object, populated with the denoised counts. The fit

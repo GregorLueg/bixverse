@@ -51,8 +51,9 @@ A data.table with the columns of limma's \code{topTable(confint = TRUE)}
 \description{
 Runs the limma-voom workflow (\code{calcNormFactors()} -> \code{voomLmFit()} ->
 \code{contrasts.fit()} -> \code{eBayes()} -> \code{topTable()}) in Rust via the \code{edge-rs}
-crate, gated against limma 3.66.0. The design is \code{~ 0 + main_contrast + co_variates} and every requested contrast is tested separately. limma and
-edgeR are not needed.
+crate, gated against limma \verb{3.66.0}. The design is
+\code{~ 0 + main_contrast + co_variates} and every requested contrast is tested
+separately. limma and edgeR are not needed.
 }
 \examples{
 # voom fit and topTable results for the single case vs control contrast

@@ -185,7 +185,9 @@ CELLSWEEP_MAX_MIN_LIB_SIZE <- 100L
 #' @param batch_size Integer. Cells per batch for `streaming = 1L`.
 #' @param max_genes_in_memory Integer. Genes held at once for `streaming = 2L`.
 #' @param cell_batch_size Integer. Cells per batch for `streaming = 2L`.
-#' @param .verbose Logical. Controls verbosity.
+#' @param .verbose Boolean or integer. Controls verbosity and returns run times.
+#' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
+#' verbosity.
 #'
 #' @returns The `target` object, populated with the denoised counts. The fit
 #' lands in obs as `cellsweep_alpha`, `cellsweep_z`, `cellsweep_beta`,
@@ -245,7 +247,7 @@ S7::method(cellsweep_sc, SingleCells) <- function(
   checkmate::qassert(streaming, "I1")
   checkmate::assertTRUE(streaming %in% c(0L, 1L, 2L))
   checkmate::qassert(batch_size, "I1")
-  checkmate::qassert(.verbose, "B1")
+  checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   if (identical(S7::prop(target, "dir_data"), S7::prop(input, "dir_data"))) {
     stop("`target` and `input` must point at different directories.")
@@ -342,7 +344,7 @@ S7::method(cellsweep_sc, SingleCells) <- function(
     samples = samples,
     cellsweep_params = unclass(cellsweep_params),
     target_size = sc_qc_param$target_size,
-    verbose = if (.verbose) 1L else 0L
+    verbose = parse_verbosity(.verbose)
   )
 
   if (.verbose) {
@@ -352,16 +354,16 @@ S7::method(cellsweep_sc, SingleCells) <- function(
   if (streaming == 1L) {
     rust_con$generate_gene_based_data_streaming(
       batch_size = batch_size,
-      verbose = .verbose
+      verbose = as.logical(.verbose)
     )
   } else if (streaming == 2L) {
     rust_con$generate_gene_based_data_memory_bounded(
       max_genes_in_memory = max_genes_in_memory,
       cell_batch_size = cell_batch_size,
-      verbose = .verbose
+      verbose = as.logical(.verbose)
     )
   } else {
-    rust_con$generate_gene_based_data(verbose = .verbose)
+    rust_con$generate_gene_based_data(verbose = as.logical(.verbose))
   }
 
   if (.verbose) {

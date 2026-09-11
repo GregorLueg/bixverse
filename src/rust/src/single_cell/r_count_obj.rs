@@ -11,7 +11,7 @@ use bixverse_rs::single_cell::sc_data::{
     h5ad_multifile_io::*, mtx_io::*, mtx_multifile_io::*, r_obj_io::*,
 };
 use bixverse_rs::single_cell::sc_processing::cellsweep::{
-    CellSweepParams, CellSweepSample, run_cellsweep,
+    run_cellsweep, CellSweepParams, CellSweepSample,
 };
 use bixverse_rs::single_cell::sc_r_wrappers::cellsweep_sample_from_r_list;
 
@@ -1675,7 +1675,7 @@ impl SingleCellCountData {
         samples: List,
         cellsweep_params: List,
         target_size: f64,
-        verbose: i32,
+        verbose: usize,
     ) -> Result<List, extendr_api::Error> {
         let sample_specs: Vec<CellSweepSample> = samples
             .into_iter()
@@ -1694,7 +1694,7 @@ impl SingleCellCountData {
             params,
             &self.f_path_cells,
             target_size as f32,
-            verbose.max(0) as usize,
+            verbose,
         )
         .to_extendr()?;
 
