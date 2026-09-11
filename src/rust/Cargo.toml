@@ -35,9 +35,6 @@ bixverse-rs = { version = "0.5.1", default-features = false, features = [
     "single-cell",
     "multi-modal",
 ] }
-# The `Tested` / `ScTested` / `NebulaParams` types cross the binding boundary,
-# so the edgeR and NEBULA wrappers need them by name. Kept in step with the
-# version `bixverse-rs` pulls in.
 edge-rs = "0.0.2"
 extendr-api = "0.9.0"
 either = "1.15.0"
@@ -56,7 +53,6 @@ path = "document.rs"
 #########
 # Patch #
 #########
-
 
 [patch.crates-io]
 bixverse-rs = { git = "https://github.com/GregorLueg/bixverse-rs", branch = "release-0.5.1" }
