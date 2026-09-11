@@ -35,7 +35,7 @@ bixverse-rs = { version = "0.5.1", default-features = false, features = [
     "single-cell",
     "multi-modal",
 ] }
-edge-rs = "0.0.2"
+edge-rs = "0.0.4"
 extendr-api = "0.9.0"
 either = "1.15.0"
 faer = { version = '0.23.2' }

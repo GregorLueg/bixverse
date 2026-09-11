@@ -12,7 +12,12 @@ membership <- is_hub <- NULL
 # modules. This is the number that decides whether any module detection method
 # has a chance.
 cor_gap <- function(synth) {
-  norm_counts <- edgeR::cpm(synth$counts, log = TRUE)
+  norm_counts <- rs_cpm(
+    synth$counts,
+    lib_size = NULL,
+    log = TRUE,
+    prior_count = 2
+  )
   cor_mat <- stats::cor(t(norm_counts), method = "spearman")
   diag(cor_mat) <- NA
 
@@ -29,7 +34,12 @@ cor_gap <- function(synth) {
 # Absolute correlation of each module's first principal component against the
 # latent factor it was built on.
 factor_recovery <- function(synth) {
-  norm_counts <- edgeR::cpm(synth$counts, log = TRUE)
+  norm_counts <- rs_cpm(
+    synth$counts,
+    lib_size = NULL,
+    log = TRUE,
+    prior_count = 2
+  )
   memb <- synth$module_data$membership
 
   purrr::map_dbl(seq_len(nrow(synth$module_factors)), \(k) {

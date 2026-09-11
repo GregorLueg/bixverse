@@ -56,14 +56,29 @@ batches that don't share their cell types. rPCA projects each batch into the
 other's PCA basis instead: cheaper, gentler, and the better default when the
 batches broadly match. Both need batch-aware HVGs.
 
-`bixverse` also provides three metrics for assessing batch correction quality:
+A correction has two jobs: mix the batches and keep the biology intact. Going
+too hard on the first ruins the second, so `bixverse` scores both, following
+the scIB benchmark ([Luecken, et al., 2022](https://doi.org/10.1038/s41592-021-01336-8)).
 
-- **kBET**: tests whether neighbourhood batch proportions match global
-proportions (best for embedding-based methods).
-- **Batch ASW**: measures batch separation in the embedding space (best for
-embedding-based methods).
-- **LISI**: measures the effective number of batches per neighbourhood (works
-on any kNN graph).
+Batch mixing:
+
+- **kBET**: tests whether neighbourhood batch proportions match the global
+ones.
+- **Batch ASW**: silhouette width on batch labels in the embedding.
+- **iLISI**: effective number of batches per neighbourhood. Works on any kNN
+graph.
+- **PCR**: how much of the embedding variance batch explains, before versus
+after correction.
+
+Bio conservation, which needs cell type labels:
+
+- **cLISI**: effective number of cell types per neighbourhood. You want one.
+- **Cell type ASW**: silhouette width on cell type labels.
+- **Graph connectivity**: whether each cell type stays one connected piece of
+the kNN graph.
+
+`calculate_integration_metrics_sc()` runs the lot and returns one row, every
+column rescaled so that higher is better.
 
 ```{r}
 #| label: setup
@@ -71,6 +86,7 @@ library(bixverse)
 library(bixverse.plots)
 library(data.table)
 library(ggplot2)
+library(magrittr)
 ```
 
 ## Preparing the data
@@ -190,6 +206,73 @@ sc_object <- find_neighbours_sc(
 )
 ```
 
+### Cell type labels
+
+The bio conservation metrics need cell types. We cluster the uncorrected data
+and annotate the clusters with scType
+([Ianevski, et al., 2022](https://doi.org/10.1038/s41467-022-28803-w)) on a
+handful of canonical PBMC markers, same as in the PBMC vignette. The labels are
+deliberately coarse: T cells stay lumped, since splitting CD4 from CD8 on
+uncorrected data is asking for trouble.
+
+One caveat: the labels come from uncorrected data, so they carry whatever
+the batch effect did to the clusters. Good enough to spot a method that
+smears cell types together, not a ground truth.
+
+```{r}
+#| label: cell type labels
+#| code-fold: true
+sc_object <- find_clusters_sc(sc_object, res = 1, name = "leiden_uncorrected")
+
+cell_markers <- c(
+  CD3D = "T cells",
+  CD3E = "T cells",
+  IL7R = "T cells",
+  CD8A = "T cells",
+  MS4A1 = "B cells",
+  CD79A = "B cells",
+  CD14 = "Monocytes",
+  LYZ = "Monocytes",
+  FCGR3A = "Monocytes",
+  GNLY = "NK",
+  NKG7 = "NK",
+  FCER1A = "DC",
+  CD1C = "DC",
+  PPBP = "Platelets"
+)
+
+cell_markers_dt <- data.table(
+  gene_symbol = names(cell_markers),
+  cell_type = unname(cell_markers)
+) %>%
+  .[, gene_id := var$gene_id[match(gene_symbol, var$gene_symbol)]] %>%
+  .[!is.na(gene_id)]
+
+marker_list <- prepare_cell_markers(sc_object, cell_markers_dt)
+sctype_scores <- calc_sc_type_scores(
+  object = sc_object,
+  cell_marker_list = marker_list
+)
+cell_type_anno <- score_clusters(
+  sctype_scores,
+  sc_object[[]][["leiden_uncorrected"]]
+)
+
+obs <- get_sc_obs(sc_object, filtered = TRUE)[, .(
+  cell_idx,
+  leiden_uncorrected
+)] %>%
+  .[,
+    cell_type := cell_type_anno$cell_type[match(
+      leiden_uncorrected,
+      cell_type_anno$cluster_id
+    )]
+  ]
+sc_object[["cell_type"]] <- obs$cell_type
+
+table(obs$cell_type)
+```
+
 ## Comparing the different methods
 
 Let's check out the different methods and how they behave.
@@ -224,21 +307,34 @@ embedding_plot_sc(
   )
 ```
 
-Batch correction stats:
-```{r}
-#| label: uncorrected metrics
-kbet_score_prior <- calculate_kbet_sc(sc_object, batch_column = "exp_id")
-asw_score_prior <- calculate_batch_asw_sc(sc_object, batch_column = "exp_id")
-lisi_score_prior <- calculate_batch_lisi_sc(sc_object, batch_column = "exp_id")
+Each metric has its own function with its own print method. Here's kBET on its
+own:
 
-kbet_score_prior
-asw_score_prior
-lisi_score_prior
+```{r}
+#| label: uncorrected kbet
+calculate_kbet_sc(sc_object, batch_column = "exp_id")
 ```
 
-The high kBET rejection rate and mean chi-square well above the expected value
-of 1 confirm a substantial batch effect. LISI scores also indicate very poor
-batch matching and the tSNE shows clear separation by batch. 
+In practice, you'd want all of them at once. `calculate_integration_metrics_sc()`
+gives one row per call, and we'll stack one row per method into `metrics_dt`:
+
+```{r}
+#| label: uncorrected metrics
+metrics_dt <- calculate_integration_metrics_sc(
+  sc_object,
+  batch_column = "exp_id",
+  cell_type_column = "cell_type",
+  .verbose = FALSE
+) %>%
+  .[, method := "Uncorrected"]
+
+metrics_dt
+```
+
+The high kBET rejection rate (so a low `kbet_accept`) and a low `ilisi` confirm
+a substantial batch effect, and the tSNE shows clear separation by batch.
+`pcr_comparison` is `NA` here: it compares a corrected embedding against this
+PCA, so the PCA has nothing to compare against.
 
 ### fastMNN
 
@@ -270,27 +366,23 @@ sc_object <- find_neighbours_sc(
 
 ```{r}
 #| label: fastmnn metrics
-kbet_score_post_mnn <- calculate_kbet_sc(
-  sc_object,
-  batch_column = "exp_id"
-)
-asw_score_post_mnn <- calculate_batch_asw_sc(
-  sc_object,
-  embd_to_use = "mnn",
-  batch_column = "exp_id"
-)
-lisi_score_post_mnn <- calculate_batch_lisi_sc(
-  sc_object,
-  batch_column = "exp_id"
+metrics_dt <- rbind(
+  metrics_dt,
+  calculate_integration_metrics_sc(
+    sc_object,
+    batch_column = "exp_id",
+    cell_type_column = "cell_type",
+    embd_to_use = "mnn",
+    .verbose = FALSE
+  ) %>%
+    .[, method := "fastMNN"]
 )
 
-kbet_score_post_mnn
-asw_score_post_mnn
-lisi_score_post_mnn
+metrics_dt[method == "fastMNN"]
 ```
 
-We can see clear improvements across all scores. Lower kBET scores, better mean
-AWS scores and LISI scores also closer to 2 (i.e., number of batches).
+We can see clear improvements on the batch side: kBET acceptance, batch ASW and
+iLISI all go up.
 
 ```{r}
 #| label: fastmnn tsne
@@ -344,23 +436,19 @@ Let's calculate the batch correction-related scores
 
 ```{r}
 #| label: harmony metrics
-kbet_score_post_harmony <- calculate_kbet_sc(
-  sc_object,
-  batch_column = "exp_id"
-)
-asw_score_post_harmony <- calculate_batch_asw_sc(
-  sc_object,
-  embd_to_use = "harmony",
-  batch_column = "exp_id"
-)
-lisi_score_post_harmony <- calculate_batch_lisi_sc(
-  sc_object,
-  batch_column = "exp_id"
+metrics_dt <- rbind(
+  metrics_dt,
+  calculate_integration_metrics_sc(
+    sc_object,
+    batch_column = "exp_id",
+    cell_type_column = "cell_type",
+    embd_to_use = "harmony",
+    .verbose = FALSE
+  ) %>%
+    .[, method := "Harmony"]
 )
 
-kbet_score_post_harmony
-asw_score_post_harmony
-lisi_score_post_harmony
+metrics_dt[method == "Harmony"]
 ```
 
 Also here, we observe improvements across the board.
@@ -424,23 +512,19 @@ Let's calculate the batch correction-related scores
 
 ```{r}
 #| label: harmony (v2) metrics
-kbet_score_post_harmony <- calculate_kbet_sc(
-  sc_object,
-  batch_column = "exp_id"
-)
-asw_score_post_harmony <- calculate_batch_asw_sc(
-  sc_object,
-  embd_to_use = "harmony_v2",
-  batch_column = "exp_id"
-)
-lisi_score_post_harmony <- calculate_batch_lisi_sc(
-  sc_object,
-  batch_column = "exp_id"
+metrics_dt <- rbind(
+  metrics_dt,
+  calculate_integration_metrics_sc(
+    sc_object,
+    batch_column = "exp_id",
+    cell_type_column = "cell_type",
+    embd_to_use = "harmony_v2",
+    .verbose = FALSE
+  ) %>%
+    .[, method := "Harmony v2"]
 )
 
-kbet_score_post_harmony
-asw_score_post_harmony
-lisi_score_post_harmony
+metrics_dt[method == "Harmony v2"]
 ```
 
 ```{r}
@@ -513,23 +597,19 @@ sc_object <- find_neighbours_sc(
 
 ```{r}
 #| label: seurat cca metrics
-kbet_score_post_cca <- calculate_kbet_sc(
-  sc_object,
-  batch_column = "exp_id"
-)
-asw_score_post_cca <- calculate_batch_asw_sc(
-  sc_object,
-  embd_to_use = "cca",
-  batch_column = "exp_id"
-)
-lisi_score_post_cca <- calculate_batch_lisi_sc(
-  sc_object,
-  batch_column = "exp_id"
+metrics_dt <- rbind(
+  metrics_dt,
+  calculate_integration_metrics_sc(
+    sc_object,
+    batch_column = "exp_id",
+    cell_type_column = "cell_type",
+    embd_to_use = "cca",
+    .verbose = FALSE
+  ) %>%
+    .[, method := "Seurat CCA"]
 )
 
-kbet_score_post_cca
-asw_score_post_cca
-lisi_score_post_cca
+metrics_dt[method == "Seurat CCA"]
 ```
 
 ```{r}
@@ -583,23 +663,19 @@ sc_object <- find_neighbours_sc(
 
 ```{r}
 #| label: seurat rpca metrics
-kbet_score_post_rpca <- calculate_kbet_sc(
-  sc_object,
-  batch_column = "exp_id"
-)
-asw_score_post_rpca <- calculate_batch_asw_sc(
-  sc_object,
-  embd_to_use = "rpca",
-  batch_column = "exp_id"
-)
-lisi_score_post_rpca <- calculate_batch_lisi_sc(
-  sc_object,
-  batch_column = "exp_id"
+metrics_dt <- rbind(
+  metrics_dt,
+  calculate_integration_metrics_sc(
+    sc_object,
+    batch_column = "exp_id",
+    cell_type_column = "cell_type",
+    embd_to_use = "rpca",
+    .verbose = FALSE
+  ) %>%
+    .[, method := "Seurat rPCA"]
 )
 
-kbet_score_post_rpca
-asw_score_post_rpca
-lisi_score_post_rpca
+metrics_dt[method == "Seurat rPCA"]
 ```
 
 ```{r}
@@ -642,10 +718,12 @@ total generated neighbours (here 10 from 2 batches = 20 total) ensures the
 distance-based filtering introduces genuine variation, making downstream
 metrics informative.
 
-Note that kBET and ASW are not well suited for evaluating BBKNN: kBET compares
-neighbourhood proportions against global proportions, which BBKNN manipulates
-by design, and ASW requires an embedding. LISI on the stored kNN is the most
-appropriate metric here.
+Note that kBET and the embedding metrics are not well suited for evaluating
+BBKNN: kBET compares neighbourhood proportions against global proportions,
+which BBKNN manipulates by design, and ASW and PCR need an embedding. BBKNN only
+hands back a graph, so we pass `embd_to_use = NULL` and those columns come back
+`NA`. iLISI, cLISI and graph connectivity on the stored kNN are the ones to
+read here.
 
 ```{r}
 #| label: bbknn
@@ -659,17 +737,19 @@ sc_object <- bbknn_sc(
 
 ```{r}
 #| label: bbknn metrics
-kbet_score_post_bbknn <- calculate_kbet_sc(
-  sc_object,
-  batch_column = "exp_id"
-)
-lisi_score_post_bbknn <- calculate_batch_lisi_sc(
-  sc_object,
-  batch_column = "exp_id"
+metrics_dt <- rbind(
+  metrics_dt,
+  calculate_integration_metrics_sc(
+    sc_object,
+    batch_column = "exp_id",
+    cell_type_column = "cell_type",
+    embd_to_use = NULL,
+    .verbose = FALSE
+  ) %>%
+    .[, method := "BBKNN"]
 )
 
-kbet_score_post_bbknn
-lisi_score_post_bbknn
+metrics_dt[method == "BBKNN"]
 ```
 
 ```{r}
@@ -695,6 +775,64 @@ embedding_plot_sc(
 ```
 
 ## Choosing a method
+
+Here's everything side by side:
+
+```{r}
+#| label: all metrics
+metrics_dt[, .(
+  method,
+  kbet_accept,
+  batch_asw,
+  ilisi,
+  pcr_comparison,
+  clisi,
+  cell_type_asw,
+  graph_connectivity
+)]
+```
+
+```{r}
+#| label: metrics plot
+#| fig-width: 9
+#| fig-height: 5
+bio_metrics <- c("clisi", "cell_type_asw", "graph_connectivity")
+
+metrics_long <- melt(
+  metrics_dt[, -"embedding"],
+  id.vars = "method",
+  variable.name = "metric",
+  value.name = "score"
+) %>%
+  .[, `:=`(
+    method = factor(method, levels = rev(unique(metrics_dt$method))),
+    type = fifelse(metric %in% bio_metrics, "Bio conservation", "Batch mixing")
+  )]
+
+ggplot(metrics_long, aes(x = metric, y = method, fill = score)) +
+  geom_tile(colour = "white") +
+  geom_text(
+    aes(label = fifelse(is.na(score), "", sprintf("%.2f", score))),
+    size = 3
+  ) +
+  facet_grid(~type, scales = "free_x", space = "free_x") +
+  scale_fill_viridis_c(na.value = "grey90", limits = c(0, 1), oob = scales::squish) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(x = NULL, y = NULL, fill = "Score", title = "Integration metrics")
+```
+
+Read the two panels together. A method that tops batch mixing but drops on
+bio conservation has merged cell types along with the batches, which is worse
+than doing nothing.
+
+Two of these tell you little on this data set. cLISI sits at 1 for every
+method: six coarse, well separated cell types keep their neighbourhoods pure no
+matter what. Batch ASW barely moves either, since two PBMC batches of the same
+tissue never separate much on silhouette to begin with. Both earn their keep on
+finer labels and nastier batch effects. On two PBMC runs, kBET, iLISI and PCR
+do the talking. And BBKNN's perfect kBET is the artefact mentioned above, not a
+win.
 
 There is no universally best batch correction method. Some practical guidance:
 
@@ -722,11 +860,11 @@ The batch-balanced graph can be passed directly to graph-based clustering
 algorithms. It is the lightest-touch approach but provides less control over
 the degree of correction.
 
-In practice, running multiple methods and looking at quantitative metrics is the 
-most reliable approach. No single metric captures everything -- kBET and ASW
-measure different aspects of embedding-based correction, and LISI is most 
-informative for graph-based methods. UMAPs and tSNE assessments should be taken
-with a big pinch of salt, see 
+In practice, running multiple methods and looking at quantitative metrics is the
+most reliable approach. No single metric captures everything: kBET and PCR only
+see batch, cLISI and cell type ASW only see biology, and the ones built on the
+kNN graph are the only fair comparison for graph-based methods like BBKNN. UMAPs
+and tSNE assessments should be taken with a big pinch of salt, see
 [Chari, et al.](https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1011288) 
 Admittedly, they do look pretty however.
 

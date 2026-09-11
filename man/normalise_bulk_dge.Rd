@@ -22,7 +22,7 @@ contrast groups. Needs to be part of the metadata stored in the class.}
 
 \item{norm_method}{String. One of
 \code{c("TMM", "TMMwsp", "RLE", "upperquartile", "none")}. Please refer to
-\code{\link[edgeR:normLibSizes]{edgeR::normLibSizes()}}.}
+edgeR's \code{calcNormFactors()}.}
 
 \item{calc_tpm}{Boolean. Output TPM calculation (default = FALSE).}
 
@@ -39,8 +39,9 @@ Returns the class with the \code{processed_data} data slot populated and
 applied parameters added to the \code{params} slot.
 }
 \description{
-This function will apply the CPM + Voom normalisation and can additionally
-calculate TPM and FPKM values for plotting purposes.
+Calculates the normalisation factors and applies voom on the filtered
+counts from \code{\link[=qc_bulk_dge]{qc_bulk_dge()}}, both in Rust via the \code{edge-rs}
+crate. Can additionally calculate TPM and FPKM values for plotting purposes.
 }
 \examples{
 # TMM library size normalisation followed by voom

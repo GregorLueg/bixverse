@@ -268,8 +268,10 @@ which you then hand to `find_neighbours_sc(embd_to_use = ...)`.
 | `seurat_rpca_sc()` | | `params_sc_seurat_rpca()` |
 | `bbknn_sc()` | modifies the graph directly | `params_sc_bbknn()` |
 
-Quantify the damage before and after with `calculate_kbet_sc()`,
-`calculate_batch_asw_sc()` and `calculate_batch_lisi_sc()`.
+Quantify the damage before and after with
+`calculate_integration_metrics_sc()`, which bundles kBET, batch ASW, iLISI and
+PCR, plus cLISI, cell type ASW and graph connectivity when given a cell type
+column. The individual `calculate_*_sc()` functions are there too.
 
 ## Pipelines
 

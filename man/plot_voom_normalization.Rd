@@ -4,10 +4,11 @@
 \alias{plot_voom_normalization}
 \title{Helper plot function for Voom normalisation}
 \usage{
-plot_voom_normalization(voom_object)
+plot_voom_normalization(norm_counts)
 }
 \arguments{
-\item{voom_object}{\code{EList}. Voom object with normalised counts.}
+\item{norm_counts}{Numeric matrix. The voom log2-CPM values, genes x
+samples.}
 }
 \value{
 ggplot object, i.e., voom normalisation plot.
@@ -19,7 +20,7 @@ Helper plot function for Voom normalisation
 # mean variance trend after voom
 syn <- synthetic_bulk_cor_matrix()
 grp <- rep(c("case", "control"), each = 50)
-dge_list <- edgeR::normLibSizes(edgeR::DGEList(counts = syn$counts))
-voom_obj <- limma::voom(dge_list, stats::model.matrix(~grp))
-plot_voom_normalization(voom_obj)
+norm_counts <- rs_cpm(syn$counts, lib_size = NULL, log = TRUE,
+  prior_count = 0.5)
+plot_voom_normalization(norm_counts)
 }

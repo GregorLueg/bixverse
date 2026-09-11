@@ -30,7 +30,12 @@ obj <- calculate_all_dges(obj, ...)    # everything across all contrasts
 ```
 
 `run_limma_voom()` is the standalone voom path and is what
-`calculate_dge_limma()` calls internally for count data.
+`calculate_dge_limma()` calls internally for count data. It runs
+`calcNormFactors()` -> `voomLmFit()` -> `contrasts.fit()` -> `eBayes()` ->
+`topTable(confint = TRUE)` in Rust, gated against limma 3.66.0, with the knobs
+in `params_limma_voom()`. The whole bulk DGE class runs without limma or edgeR;
+`get_dge_list()` builds an edgeR `DGEList` on demand and is the one place that
+needs edgeR installed.
 
 ### edgeR quasi-likelihood
 

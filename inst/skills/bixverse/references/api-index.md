@@ -137,6 +137,7 @@ Methods to help out with differential gene expression analyses in a structured w
 - `run_edger_ql`: Run the edgeR quasi-likelihood workflow
 - `pseudobulk_dge_sc`: Run the edgeR quasi-likelihood workflow on pseudo-bulked single cells
 - `params_edger_ql`: Wrapper function for parameters for the edgeR quasi-likelihood workflow
+- `params_limma_voom`: Wrapper function for parameters for the limma-voom workflow
 - `hedges_g_dge`: Calculate the effect size
 - `get_dge_effect_sizes`: Return the effect size results
 - `get_dge_limma_voom`: Return the Limma Voom results
@@ -370,7 +371,11 @@ Batch correction methods and metrics for single cell
 - `seurat_rpca_sc`: Run Seurat rPCA integration
 - `calculate_kbet_sc`: Calculate kBET scores
 - `calculate_batch_asw_sc`: Calculate batch average silhouette width
-- `calculate_batch_lisi_sc`: Calculate batch LISI scores
+- `calculate_lisi_sc`: Calculate LISI scores (iLISI or cLISI)
+- `calculate_pcr_sc`: Calculate the principal component regression on batch
+- `calculate_cell_type_asw_sc`: Calculate cell type average silhouette width
+- `calculate_graph_connectivity_sc`: Calculate the graph connectivity per cell type
+- `calculate_integration_metrics_sc`: Calculate a summary of integration metrics
 - `params_sc_fastmnn`: Wrapper function for the fastMNN parameters
 - `params_sc_harmony`: Default parameters for Harmony batch correction
 - `params_sc_harmony_v2`: Default parameters for Harmony v2 batch correction

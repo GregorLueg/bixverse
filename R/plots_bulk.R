@@ -149,7 +149,8 @@ plot_preprocessing_outliers <- function(
 
 #' Helper plot function for Voom normalisation
 #'
-#' @param voom_object `EList`. Voom object with normalised counts.
+#' @param norm_counts Numeric matrix. The voom log2-CPM values, genes x
+#' samples.
 #'
 #' @returns ggplot object, i.e., voom normalisation plot.
 #'
@@ -159,17 +160,17 @@ plot_preprocessing_outliers <- function(
 #' # mean variance trend after voom
 #' syn <- synthetic_bulk_cor_matrix()
 #' grp <- rep(c("case", "control"), each = 50)
-#' dge_list <- edgeR::normLibSizes(edgeR::DGEList(counts = syn$counts))
-#' voom_obj <- limma::voom(dge_list, stats::model.matrix(~grp))
-#' plot_voom_normalization(voom_obj)
-plot_voom_normalization <- function(voom_object) {
+#' norm_counts <- rs_cpm(syn$counts, lib_size = NULL, log = TRUE,
+#'   prior_count = 0.5)
+#' plot_voom_normalization(norm_counts)
+plot_voom_normalization <- function(norm_counts) {
   # checks
-  checkmate::assertClass(voom_object, "EList")
+  checkmate::assertMatrix(norm_counts, mode = "numeric")
 
   # function
   voom_plot_data <- data.table::data.table(
-    avg_exp = rowMeans(voom_object$E),
-    residual_sd = sqrt(matrixStats::rowSds(voom_object$E))
+    avg_exp = rowMeans(norm_counts),
+    residual_sd = sqrt(matrixStats::rowSds(norm_counts))
   )
 
   ggplot2::ggplot(
@@ -195,7 +196,8 @@ plot_voom_normalization <- function(voom_object) {
 #'
 #' @param samples data.table with sample information with perc_detected_genes
 #' and a column specifying the cohort.
-#' @param voom_object `EList`. Voom object with normalised counts.
+#' @param norm_counts Numeric matrix. The normalised log2 expression, genes x
+#' samples, with the samples in the same order as the rows of `samples`.
 #' @param group_col String. The grouping column.
 #'
 #' @returns ggplot object, i.e., box plot with expression per sample.
@@ -209,24 +211,25 @@ plot_voom_normalization <- function(voom_object) {
 #'   sample_id = colnames(syn$counts),
 #'   cohort = rep(c("case", "control"), each = 50)
 #' )
-#' dge_list <- edgeR::normLibSizes(edgeR::DGEList(counts = syn$counts))
-#' voom_obj <- limma::voom(
-#'   dge_list,
-#'   stats::model.matrix(~ samples$cohort)
-#' )
-#' plot_boxplot_normalization(samples, voom_obj, group_col = "cohort")
-plot_boxplot_normalization <- function(samples, voom_object, group_col) {
+#' norm_counts <- rs_cpm(syn$counts, lib_size = NULL, log = TRUE,
+#'   prior_count = 0.5)
+#' plot_boxplot_normalization(samples, norm_counts, group_col = "cohort")
+plot_boxplot_normalization <- function(samples, norm_counts, group_col) {
   # checks
-  checkmate::assertClass(voom_object, "EList")
+  checkmate::assertMatrix(
+    norm_counts,
+    mode = "numeric",
+    ncols = nrow(samples)
+  )
   checkmate::assertDataTable(samples)
   checkmate::qassert(group_col, "S1")
   checkmate::assertTRUE(group_col %in% names(samples))
 
   # function
   boxplot_data <- data.table::data.table(
-    sample = rep(colnames(voom_object$E), each = nrow(voom_object$E)),
-    expression = as.vector(voom_object$E),
-    group = rep(as.factor(samples[[group_col]]), each = nrow(voom_object$E))
+    sample = rep(colnames(norm_counts), each = nrow(norm_counts)),
+    expression = as.vector(norm_counts),
+    group = rep(as.factor(samples[[group_col]]), each = nrow(norm_counts))
   )
 
   p <- ggplot2::ggplot(

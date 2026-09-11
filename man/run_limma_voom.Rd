@@ -7,22 +7,23 @@
 run_limma_voom(
   meta_data,
   main_contrast,
-  dge_list,
+  counts,
   contrast_list = NULL,
   co_variates = NULL,
-  quantile_norm = FALSE,
-  ...,
+  limma_params = params_limma_voom(),
   .verbose = TRUE
 )
 }
 \arguments{
 \item{meta_data}{data.table. The meta information about the experiment in
-which the contrast info (and potential co-variates) can be found.}
+which the contrast info (and potential co-variates) can be found. Rows need
+to be in the same order as the columns of \code{counts}.}
 
 \item{main_contrast}{String. Which column contains the main groups you want
 to test differential gene expression with the Limma-Voom workflow for.}
 
-\item{dge_list}{DGEList, see \code{\link[edgeR:DGEList]{edgeR::DGEList()}}.}
+\item{counts}{Numeric matrix. Raw counts of genes x samples, with gene
+identifiers as row names.}
 
 \item{contrast_list}{String vector or NULL. Optional string vector of
 contrast formatted as \code{"contrast1-contrast2"}. Default NULL will create all
@@ -31,20 +32,21 @@ contrasts automatically.}
 \item{co_variates}{String or NULL. Optional co-variates you wish to consider
 during model fitting.}
 
-\item{quantile_norm}{Boolean. Shall the counts be also quantile-normalised.
-Defaults to \code{FALSE}.}
-
-\item{...}{Additional parameters to forward to \code{\link[limma:eBayes]{limma::eBayes()}} or
-\code{\link[limma:voom]{limma::voom()}}.}
+\item{limma_params}{List. The limma parameters, see
+\code{\link[=params_limma_voom]{params_limma_voom()}}.}
 
 \item{.verbose}{Boolean. Controls verbosity of the function.}
 }
 \value{
-A data.table with all the DGE results from \code{\link[limma:topTable]{limma::topTable()}} for
-the identified contrast pairs.
+A data.table with the columns of limma's \code{topTable(confint = TRUE)}
+(\code{gene_id}, \code{logFC}, \code{CI.L}, \code{CI.R}, \code{AveExpr}, \code{t}, \code{P.Value},
+\code{adj.P.Val}, \code{B}) plus \code{contrast}, sorted by p-value within each contrast.
 }
 \description{
-Wrapper function to run Limma Voom workflows.
+Runs the limma-voom workflow (\code{calcNormFactors()} -> \code{voomLmFit()} ->
+\code{contrasts.fit()} -> \code{eBayes()} -> \code{topTable()}) in Rust via the \code{edge-rs}
+crate, gated against limma 3.66.0. The design is \code{~ 0 + main_contrast + co_variates} and every requested contrast is tested separately. limma and
+edgeR are not needed.
 }
 \examples{
 # voom fit and topTable results for the single case vs control contrast
@@ -53,12 +55,14 @@ meta <- data.table::data.table(
   sample_id = colnames(syn$counts),
   case_control = rep(c("case", "control"), each = 50)
 )
-dge_list <- edgeR::normLibSizes(edgeR::DGEList(counts = syn$counts))
 res <- run_limma_voom(
   meta_data = meta,
   main_contrast = "case_control",
-  dge_list = dge_list,
+  counts = syn$counts,
   .verbose = FALSE
 )
 head(res)
+}
+\references{
+Law, et al., Genome Biol, 2014
 }

@@ -137,8 +137,8 @@ raw counts for it.
 
 ```{r}
 #| label: normalise
-norm_counts <- edgeR::cpm(synth$counts, log = TRUE)
-raw_cpm <- edgeR::cpm(synth$counts, log = FALSE)
+norm_counts <- rs_cpm(synth$counts, lib_size = NULL, log = TRUE, prior_count = 2)
+raw_cpm <- rs_cpm(synth$counts, lib_size = NULL, log = FALSE, prior_count = 2)
 
 data_log <- t(norm_counts)
 data_raw <- t(raw_cpm)
@@ -718,13 +718,23 @@ run_methods <- function(generator) {
   meta_g <- data.table(sample_id = colnames(synth_g$counts))
 
   log_obj <- BulkCoExp(
-    raw_data = t(edgeR::cpm(synth_g$counts, log = TRUE)),
+    raw_data = t(rs_cpm(
+      synth_g$counts,
+      lib_size = NULL,
+      log = TRUE,
+      prior_count = 2
+    )),
     meta_data = meta_g
   ) %>%
     preprocess_bulk_coexp(hvg = 0.5, .verbose = FALSE)
 
   raw_obj <- BulkCoExp(
-    raw_data = t(edgeR::cpm(synth_g$counts, log = FALSE)),
+    raw_data = t(rs_cpm(
+      synth_g$counts,
+      lib_size = NULL,
+      log = FALSE,
+      prior_count = 2
+    )),
     meta_data = meta_g
   ) %>%
     preprocess_bulk_coexp(hvg = 0.5, .verbose = FALSE)

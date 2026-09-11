@@ -1944,6 +1944,159 @@ rs_split_cor_signs <- function(data) .Call(wrap__rs_split_cor_signs, data)
 #' @export
 rs_edger_ql <- function(counts, design, edger_params) .Call(wrap__rs_edger_ql, counts, design, edger_params)
 
+#' Run the limma linear model chain on a count matrix
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Runs optional `filterByExpr` -> `calcNormFactors` -> `voomLmFit` (or
+#' limma-trend) -> `contrasts.fit` -> `eBayes` -> `topTable` for one
+#' coefficient or contrast, implemented in Rust via the `edge-rs` crate and
+#' gated against limma 3.66.0.
+#'
+#' @param counts Numeric matrix. Raw counts of genes x samples. Must not be
+#' normalised or log-transformed.
+#' @param design Numeric matrix. The design matrix of samples x coefficients.
+#' Must be full rank.
+#' @param limma_params Named list. The limma parameters, see
+#' [bixverse::params_limma_voom()], plus either `coef` (a single 0-indexed(!)
+#' design column) or `contrast` (column-major weights with `n_contrasts`
+#' columns).
+#'
+#' @returns A list with the following elements
+#' \itemize{
+#'   \item features_to_keep - Boolean. Which genes survived the filters. Spans
+#'   the full gene axis of `counts`.
+#'   \item log_fc - Log2 fold changes of the tested coefficient or contrast.
+#'   \item ci_lower - Lower end of the 95% confidence interval on `log_fc`.
+#'   \item ci_upper - Upper end of the 95% confidence interval on `log_fc`.
+#'   \item ave_expr - Average log2 counts per million.
+#'   \item t_stat - Moderated t statistic.
+#'   \item p_values - Raw p-values.
+#'   \item fdr - Benjamini-Hochberg adjusted p-values.
+#'   \item b_stat - Log-odds of differential expression.
+#' }
+#'
+#' @references Law, et al., Genome Biol, 2014; Smyth, Stat Appl Genet Mol Biol,
+#' 2004
+#'
+#' @export
+rs_limma_voom <- function(counts, design, limma_params) .Call(wrap__rs_limma_voom, counts, design, limma_params)
+
+#' Voom-transform a count matrix
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' limma's `voom` on counts that are already filtered: log2-CPM against the
+#' supplied (effective) library sizes, the mean-variance trend and the
+#' precision weights. No filtering and no normalisation happen in here; pass
+#' `lib.size * norm.factors` as `lib_size` to get voom on a normalised
+#' DGEList.
+#'
+#' @param counts Numeric matrix. Raw counts of genes x samples.
+#' @param design Numeric matrix. The design matrix of samples x coefficients.
+#' @param lib_size Numeric vector. The effective library size per sample.
+#' @param span Numeric. Lowess span, only used if `adaptive_span = FALSE`.
+#' @param adaptive_span Boolean. Derive the span from the number of genes, as
+#' limma does since 3.56.
+#'
+#' @returns A list with the following elements
+#' \itemize{
+#'   \item e - Numeric matrix. The log2-CPM values, genes x samples. limma's
+#'   `E`.
+#'   \item weights - Numeric matrix. The precision weights, genes x samples.
+#'   \item trend_x - The mean-variance trend abscissae (average log2 count).
+#'   \item trend_y - The mean-variance trend ordinates (sqrt standard
+#'   deviation).
+#'   \item amean - Average log2-CPM per gene.
+#' }
+#'
+#' @references Law, et al., Genome Biol, 2014
+#'
+#' @export
+rs_voom_normalise <- function(counts, design, lib_size, span, adaptive_span) .Call(wrap__rs_voom_normalise, counts, design, lib_size, span, adaptive_span)
+
+#' Filter lowly expressed genes
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' edgeR's `filterByExpr`, via the `edge-rs` crate.
+#'
+#' @param counts Numeric matrix. Raw counts of genes x samples.
+#' @param group Integer vector or NULL. Group per sample (e.g.
+#' `as.integer(factor(x))`). If NULL, all samples form one group.
+#' @param lib_size Numeric vector or NULL. Library size per sample. NULL uses
+#' the column sums.
+#' @param min_count Numeric. Minimum count in the median-sized library.
+#' @param min_total_count Numeric. Minimum total count across all samples.
+#' @param min_prop Numeric. Proportion of the smallest group beyond `large_n`
+#' that has to express the gene.
+#'
+#' @returns Boolean vector, one per gene. `TRUE` if the gene is kept.
+#'
+#' @references Chen, Lun and Smyth, F1000Research, 2016
+#'
+#' @export
+rs_filter_by_expr <- function(counts, group, lib_size, min_count, min_total_count, min_prop) .Call(wrap__rs_filter_by_expr, counts, group, lib_size, min_count, min_total_count, min_prop)
+
+#' Calculate normalisation factors
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' edgeR's `calcNormFactors`, via the `edge-rs` crate.
+#'
+#' @param counts Numeric matrix. Raw counts of genes x samples.
+#' @param lib_size Numeric vector or NULL. Library size per sample. Pass the
+#' pre-filter column sums after filtering genes, as edgeR keeps them. NULL uses
+#' the column sums of `counts`.
+#' @param norm_method String. One of
+#' `c("TMM", "TMMwsp", "RLE", "upperquartile", "none")`.
+#'
+#' @returns Numeric vector of normalisation factors, one per sample.
+#'
+#' @references Robinson and Oshlack, Genome Biol, 2010
+#'
+#' @export
+rs_calc_norm_factors <- function(counts, lib_size, norm_method) .Call(wrap__rs_calc_norm_factors, counts, lib_size, norm_method)
+
+#' Counts per million
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' edgeR's `cpm` on a plain count matrix, via the `edge-rs` crate.
+#'
+#' @param counts Numeric matrix. Raw counts of genes x samples.
+#' @param lib_size Numeric vector or NULL. Library size per sample, e.g.
+#' `lib.size * norm.factors`. NULL uses the column sums.
+#' @param log Boolean. Return log2-CPM.
+#' @param prior_count Numeric. Prior count added before the log. Ignored if
+#' `log = FALSE`.
+#'
+#' @returns Numeric matrix of (log2-)CPM values, genes x samples.
+#'
+#' @export
+rs_cpm <- function(counts, lib_size, log, prior_count) .Call(wrap__rs_cpm, counts, lib_size, log, prior_count)
+
+#' Remove batch effects from a log-expression matrix
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' limma's `removeBatchEffect`, via the `edge-rs` crate. Batch gets
+#' sum-to-zero contrasts, is fitted jointly with the design of interest and
+#' only the batch part is subtracted. Meant for plotting and unsupervised
+#' work; for testing put batch into the design.
+#'
+#' @param x Numeric matrix. Log-expression values of genes x samples.
+#' @param batch Integer vector. Batch per sample.
+#' @param design Numeric matrix or NULL. The design of interest, samples x
+#' coefficients, whose effects are protected. NULL is an intercept only.
+#'
+#' @returns Numeric matrix of corrected values, genes x samples.
+#'
+#' @references Smyth, Stat Appl Genet Mol Biol, 2004
+#'
+#' @export
+rs_remove_batch_effect <- function(x, batch, design) .Call(wrap__rs_remove_batch_effect, x, batch, design)
+
 #' Generate a sparse dictionary with DGRDL
 #'
 #' @description
@@ -2996,19 +3149,25 @@ rs_kbet <- function(knn_mat, batch_vector, verbose) .Call(wrap__rs_kbet, knn_mat
 #' @export
 rs_batch_silhouette_width <- function(embedding, batch_vector, max_cells, verbose, seed) .Call(wrap__rs_batch_silhouette_width, embedding, batch_vector, max_cells, verbose, seed)
 
-#' Calculate batch LISI scores
+#' Calculate LISI scores on any label
 #'
 #' @description
 #' `r lifecycle::badge("experimental")`
-#' Computes the Local Inverse Simpson's Index on batch labels using the
-#' kNN graph. Measures the effective number of batches in each cell's
-#' neighbourhood. Under perfect mixing LISI equals the number of batches,
-#' under no mixing LISI equals 1.
+#' Computes the Local Inverse Simpson's Index on the kNN graph: the effective
+#' number of labels in each cell's neighbourhood. On batch labels this is
+#' iLISI (higher is better mixing), on cell type labels cLISI (lower is better
+#' separation). Both come back rescaled to `[0, 1]`, higher is better, as in
+#' scIB.
 #'
 #' @param knn_mat Integer matrix. The rows represent the cells and the
 #' columns the neighbour indices.
-#' @param batch_vector Integer vector. The integers indicate to which
-#' batch a given cell belongs.
+#' @param knn_dist Numeric matrix or NULL. The kNN distances, same shape as
+#' `knn_mat`. If provided, neighbours are weighted with a perplexity-calibrated
+#' Gaussian kernel as in Korsunsky et al.; if NULL, neighbours are weighted
+#' uniformly.
+#' @param labels Integer vector. The label (batch or cell type) per cell.
+#' @param perplexity Numeric or NULL. Perplexity for the weighted version.
+#' NULL defaults to 30. Ignored if `knn_dist` is NULL.
 #' @param verbose Boolean. Controls verbosity of the function.
 #'
 #' @returns A list with the following items
@@ -3016,10 +3175,92 @@ rs_batch_silhouette_width <- function(embedding, batch_vector, max_cells, verbos
 #'   \item per_cell - Per-cell LISI scores
 #'   \item mean_lisi - Mean LISI
 #'   \item median_lisi - Median LISI
+#'   \item n_labels - Number of distinct labels
+#'   \item ilisi_norm - Median LISI rescaled as iLISI, `(median - 1) / (n - 1)`
+#'   \item clisi_norm - Median LISI rescaled as cLISI, `(n - median) / (n - 1)`
 #' }
 #'
+#' @references Korsunsky, et al., Nat Methods, 2019; Luecken, et al., Nat
+#' Methods, 2022
+#'
 #' @export
-rs_batch_lisi <- function(knn_mat, batch_vector, verbose) .Call(wrap__rs_batch_lisi, knn_mat, batch_vector, verbose)
+rs_lisi <- function(knn_mat, knn_dist, labels, perplexity, verbose) .Call(wrap__rs_lisi, knn_mat, knn_dist, labels, perplexity, verbose)
+
+#' Principal component regression on batch
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Regresses each embedding dimension on the batch labels (one-way ANOVA) and
+#' weights the per-dimension R-squared by the variance each dimension carries.
+#' Compare the value on the uncorrected PCA with the one on the corrected
+#' embedding, `(pre - post) / pre`, rather than reading it on its own.
+#'
+#' @param embedding Numeric matrix. Cells x dimensions, ideally a PCA.
+#' @param batch_vector Integer vector. The batch per cell.
+#'
+#' @returns A list with the following items
+#' \itemize{
+#'   \item var_explained - Variance per embedding dimension.
+#'   \item r_squared - R-squared of batch per embedding dimension.
+#'   \item pcr - Variance-weighted R-squared of batch.
+#' }
+#'
+#' @references Büttner, et al., Nat Methods, 2019; Luecken, et al., Nat
+#' Methods, 2022
+#'
+#' @export
+rs_pcr <- function(embedding, batch_vector) .Call(wrap__rs_pcr, embedding, batch_vector)
+
+#' Calculate cell type silhouette width from an embedding
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Average silhouette width on cell type labels, rescaled to `[0, 1]` via
+#' `(s + 1) / 2`. Higher values mean cell types stay separated.
+#'
+#' @param embedding Numeric matrix. Cells x dimensions.
+#' @param labels Integer vector. The cell type per cell.
+#' @param max_cells Integer or NULL. If not NULL, subsample to this many
+#' cells for performance.
+#' @param verbose Boolean. Controls verbosity of the function.
+#' @param seed Integer. Seed for subsampling reproducibility.
+#'
+#' @returns A list with the following items
+#' \itemize{
+#'   \item per_cell - Per-cell rescaled silhouette scores
+#'   \item mean_asw - Mean rescaled silhouette width
+#'   \item median_asw - Median rescaled silhouette width
+#' }
+#'
+#' @references Luecken, et al., Nat Methods, 2022
+#'
+#' @export
+rs_cell_type_asw <- function(embedding, labels, max_cells, verbose, seed) .Call(wrap__rs_cell_type_asw, embedding, labels, max_cells, verbose, seed)
+
+#' Calculate graph connectivity per cell type
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' For each cell type, the fraction of its cells in the largest connected
+#' component of the kNN graph restricted to that cell type. 1 means every
+#' cell type forms one connected piece.
+#'
+#' @param knn_mat Integer matrix. The rows represent the cells and the
+#' columns the neighbour indices.
+#' @param labels Integer vector. The cell type per cell.
+#'
+#' @returns A list with the following items
+#' \itemize{
+#'   \item per_label - Connectivity per cell type, in order of the sorted
+#'   label codes.
+#'   \item mean - Mean connectivity.
+#'   \item median - Median connectivity.
+#' }
+#'
+#' @references Luecken, et al., Nat Methods, 2022
+#'
+#' @export
+rs_graph_connectivity <- function(knn_mat, labels) .Call(wrap__rs_graph_connectivity, knn_mat, labels)
 
 #' BBKNN implementation in Rust
 #'

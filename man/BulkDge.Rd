@@ -29,8 +29,9 @@ Returns the \code{BulkDge} class for further operations.
 }
 \description{
 Class for coordinating differential gene expression analyses with subsequent
-GSE in a structured format. Additionally, the class will store the counts in
-\code{\link[edgeR:DGEList]{edgeR::DGEList()}} for subsequent processing.
+GSE in a structured format. The filtered counts, library sizes and
+normalisation factors are stored in the class; \code{\link[=get_dge_list]{get_dge_list()}}
+turns them into an edgeR \code{DGEList} on demand.
 }
 \section{Properties}{
 

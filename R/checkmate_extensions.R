@@ -5028,6 +5028,84 @@ checkEdgeRQlParams <- function(x) {
 #' @keywords internal
 assertEdgeRQlParams <- checkmate::makeAssertionFunction(checkEdgeRQlParams)
 
+#### limma-voom ----------------------------------------------------------------
+
+#' Check limma-voom parameters
+#'
+#' @description Checkmate extension for checking the limma-voom parameters,
+#' see [bixverse::params_limma_voom()].
+#'
+#' @param x The list to check/assert
+#'
+#' @returns `TRUE` if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
+checkLimmaVoomParams <- function(x) {
+  res <- check_list_shape(
+    x,
+    c(
+      "route",
+      "norm_method",
+      "filter",
+      "min_mean",
+      "robust",
+      "prior_count",
+      "adaptive_span",
+      "span",
+      "proportion"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- apply_qtest_rules(
+    x,
+    list(
+      filter = "B1",
+      min_mean = "N1[0,)",
+      robust = "B1",
+      prior_count = c("N1(0,)", "0"),
+      adaptive_span = "B1",
+      span = "N1(0,1]",
+      proportion = "N1(0,1)"
+    ),
+    label = "limma-voom params",
+    hint = paste(
+      "min_mean must be non-negative, prior_count positive or NULL, span in",
+      "(0, 1], proportion in (0, 1); the rest are booleans."
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  apply_choice_rules(
+    x,
+    list(
+      route = c("voom", "trend"),
+      norm_method = c("TMM", "TMMwsp", "RLE", "upperquartile", "none")
+    ),
+    label = "limma-voom params"
+  )
+}
+
+#' Assert limma-voom parameters
+#'
+#' @description Checkmate extension for asserting the limma-voom parameters.
+#'
+#' @inheritParams checkLimmaVoomParams
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @returns Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
+assertLimmaVoomParams <- checkmate::makeAssertionFunction(checkLimmaVoomParams)
+
 #### NEBULA --------------------------------------------------------------------
 
 #' Check NEBULA parameters

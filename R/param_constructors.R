@@ -2546,6 +2546,86 @@ params_edger_ql <- function(
   )
 }
 
+### limma-voom -----------------------------------------------------------------
+
+#' Wrapper function for parameters for the limma-voom workflow
+#'
+#' @description
+#' Parameters for the limma linear model chain, implemented in Rust via the
+#' `edge-rs` crate and gated against limma 3.66.0. Defaults are limma's own,
+#' except for `filter`: inside [bixverse::BulkDge()] the genes were already
+#' filtered by [bixverse::qc_bulk_dge()].
+#'
+#' `route = "voom"` is `voomLmFit()`: precision weights from the mean-variance
+#' trend, then weighted least squares. `route = "trend"` is limma-trend:
+#' log-CPM straight into `lmFit()`, with the trend absorbed by
+#' `eBayes(trend = TRUE)`. The empirical Bayes trend follows the route.
+#'
+#' @param route String. One of `c("voom", "trend")`. Defaults to `"voom"`.
+#' @param norm_method String. Library size normalisation. One of
+#' `c("TMM", "TMMwsp", "RLE", "upperquartile", "none")`. Defaults to `"TMM"`.
+#' @param filter Boolean. Run `filterByExpr()` before fitting. Defaults to
+#' `FALSE`.
+#' @param min_mean Numeric. Drop genes whose mean count across samples is below
+#' this. Applied on top of `filter`. Defaults to `0` (off).
+#' @param robust Boolean. Robust empirical Bayes, `eBayes(robust = TRUE)`.
+#' Defaults to `FALSE`.
+#' @param prior_count Optional numeric. Count added before the log. `NULL`
+#' takes the route's own default, `0.5` for voom and `2` for trend.
+#' @param adaptive_span Boolean. Derive the lowess span from the number of
+#' genes, as limma does since 3.56. Only used by voom. Defaults to `TRUE`.
+#' @param span Numeric. Lowess span for the voom trend, only read if
+#' `adaptive_span = FALSE`. Defaults to `0.5`.
+#' @param proportion Numeric. Assumed proportion of differentially expressed
+#' genes, only used for the B-statistic. Defaults to `0.01`.
+#'
+#' @returns A list with the limma-voom parameters.
+#'
+#' @references Law, et al., Genome Biol, 2014; Smyth, Stat Appl Genet Mol Biol,
+#' 2004
+#'
+#' @export
+params_limma_voom <- function(
+  route = c("voom", "trend"),
+  norm_method = c("TMM", "TMMwsp", "RLE", "upperquartile", "none"),
+  filter = FALSE,
+  min_mean = 0,
+  robust = FALSE,
+  prior_count = NULL,
+  adaptive_span = TRUE,
+  span = 0.5,
+  proportion = 0.01
+) {
+  route <- match.arg(route)
+  norm_method <- match.arg(norm_method)
+
+  # checks
+  checkmate::assertChoice(route, c("voom", "trend"))
+  checkmate::assertChoice(
+    norm_method,
+    c("TMM", "TMMwsp", "RLE", "upperquartile", "none")
+  )
+  checkmate::qassert(filter, "B1")
+  checkmate::qassert(min_mean, "N1[0,)")
+  checkmate::qassert(robust, "B1")
+  checkmate::qassert(prior_count, c("N1(0,)", "0"))
+  checkmate::qassert(adaptive_span, "B1")
+  checkmate::qassert(span, "N1(0,1]")
+  checkmate::qassert(proportion, "N1(0,1)")
+
+  list(
+    route = route,
+    norm_method = norm_method,
+    filter = filter,
+    min_mean = min_mean,
+    robust = robust,
+    prior_count = prior_count,
+    adaptive_span = adaptive_span,
+    span = span,
+    proportion = proportion
+  )
+}
+
 ### NEBULA ---------------------------------------------------------------------
 
 #' Wrapper function for parameters for NEBULA

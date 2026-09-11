@@ -14,24 +14,24 @@ test_data <- qs2::qs_read(
 
 expected_pca_pvals <- c(3.494401e-05, 8.877927e-01)
 expected_pc1 <- c(
-  37.19602,
-  -20.14648,
-  22.61833,
-  -37.88058,
-  30.08617,
-  -23.42578,
-  27.39613,
-  -35.84382
+  36.335908610,
+  -20.010584901,
+  21.175662344,
+  -38.669885948,
+  33.913162821,
+  -21.541925708,
+  26.386616859,
+  -37.588954077
 )
 expected_pc2 <- c(
-  -16.95906,
-  -13.90214,
-  -11.77074,
-  -11.08694,
-  40.49074,
-  46.80947,
-  -17.84254,
-  -15.73879
+  -19.087712024,
+  -12.577552537,
+  -13.851156801,
+  -10.031544022,
+  40.942109786,
+  49.484185894,
+  -20.105452488,
+  -14.772877808
 )
 
 expected_limma_res <- data.table::fread("./test_data/dge_limma_res.gz")
@@ -120,13 +120,30 @@ expect_true(
   info = "DGE pre-processing: 4th QC plot"
 )
 expect_true(
-  current = all(dim(get_dge_list(dge_class)) == c(15926, 8)),
+  current = all(dim(dge_class@outputs$dge_counts) == c(15926, 8)),
   info = "DGE pre-processing - filtered lowly expressed genes."
 )
 expect_true(
-  current = class(get_dge_list(dge_class)) == "DGEList",
-  info = "DGE class - get the DGEList object"
+  current = checkmate::qtest(dge_class@outputs$norm_factors, "N8(0,)"),
+  info = "DGE pre-processing - normalisation factors stored"
 )
+
+if (requireNamespace("edgeR", quietly = TRUE)) {
+  dge_list <- get_dge_list(dge_class)
+  expect_true(
+    current = inherits(dge_list, "DGEList"),
+    info = "DGE class - DGEList built on demand"
+  )
+  expect_true(
+    current = all(dim(dge_list) == c(15926, 8)),
+    info = "DGE class - DGEList dimensions"
+  )
+  expect_equal(
+    current = unname(dge_list$samples$norm.factors),
+    target = unname(dge_class@outputs$norm_factors),
+    info = "DGE class - DGEList carries the stored norm factors"
+  )
+}
 
 ### pca ------------------------------------------------------------------------
 
@@ -212,6 +229,12 @@ expect_true(
   ) >=
     0.99,
   info = "DGE class - limma results: t correlation"
+)
+
+expect_true(
+  current = cor(limma_res$CI.L, expected_limma_res$CI.L) >= 0.99 &&
+    cor(limma_res$CI.R, expected_limma_res$CI.R) >= 0.99,
+  info = "DGE class - limma results: confidence interval correlation"
 )
 
 #### hedge's g -----------------------------------------------------------------

@@ -20,7 +20,10 @@ extendr_module! {
     // metrics
     fn rs_kbet;
     fn rs_batch_silhouette_width;
-    fn rs_batch_lisi;
+    fn rs_lisi;
+    fn rs_pcr;
+    fn rs_cell_type_asw;
+    fn rs_graph_connectivity;
     // batch corrections
     fn rs_bbknn;
     fn rs_bbknn_filtering;
@@ -29,6 +32,28 @@ extendr_module! {
     fn rs_harmony_v2;
     fn rs_seurat_cca;
     fn rs_seurat_rpca;
+}
+
+/////////////
+// Helpers //
+/////////////
+
+/// Converts an R kNN index matrix into one neighbour list per cell.
+///
+/// ### Params
+///
+/// * `knn_mat` - Column-major cells x neighbours, 0-indexed
+///
+/// ### Returns
+///
+/// One `Vec<usize>` of neighbour indices per cell.
+fn knn_mat_to_vecs(knn_mat: &RMatrix<i32>) -> Vec<Vec<usize>> {
+    let n_cells = knn_mat.nrows();
+    let k = knn_mat.ncols();
+    let raw: &[i32] = knn_mat.data();
+    (0..n_cells)
+        .map(|i| (0..k).map(|j| raw[j * n_cells + i] as usize).collect())
+        .collect()
 }
 
 ///////////////
@@ -63,22 +88,7 @@ extendr_module! {
 /// @export
 #[extendr]
 fn rs_kbet(knn_mat: RMatrix<i32>, batch_vector: Vec<i32>, verbose: bool) -> Result<List> {
-    let n_cells = knn_mat.nrows();
-    let k_neighbours = knn_mat.ncols();
-
-    let raw: &[i32] = knn_mat.data();
-
-    let mut knn_matrix: Vec<Vec<usize>> = (0..n_cells)
-        .map(|_| Vec::with_capacity(k_neighbours))
-        .collect();
-
-    for j in 0..k_neighbours {
-        let col_offset = j * n_cells;
-        for i in 0..n_cells {
-            knn_matrix[i].push(raw[col_offset + i] as usize);
-        }
-    }
-
+    let knn_matrix = knn_mat_to_vecs(&knn_mat);
     let batches: Vec<usize> = batch_vector.r_int_convert();
     let kbet_res = kbet(&knn_matrix, &batches, verbose).to_extendr()?;
     Ok(list![
@@ -139,19 +149,25 @@ fn rs_batch_silhouette_width(
     ])
 }
 
-/// Calculate batch LISI scores
+/// Calculate LISI scores on any label
 ///
 /// @description
 /// `r lifecycle::badge("experimental")`
-/// Computes the Local Inverse Simpson's Index on batch labels using the
-/// kNN graph. Measures the effective number of batches in each cell's
-/// neighbourhood. Under perfect mixing LISI equals the number of batches,
-/// under no mixing LISI equals 1.
+/// Computes the Local Inverse Simpson's Index on the kNN graph: the effective
+/// number of labels in each cell's neighbourhood. On batch labels this is
+/// iLISI (higher is better mixing), on cell type labels cLISI (lower is better
+/// separation). Both come back rescaled to `[0, 1]`, higher is better, as in
+/// scIB.
 ///
 /// @param knn_mat Integer matrix. The rows represent the cells and the
 /// columns the neighbour indices.
-/// @param batch_vector Integer vector. The integers indicate to which
-/// batch a given cell belongs.
+/// @param knn_dist Numeric matrix or NULL. The kNN distances, same shape as
+/// `knn_mat`. If provided, neighbours are weighted with a perplexity-calibrated
+/// Gaussian kernel as in Korsunsky et al.; if NULL, neighbours are weighted
+/// uniformly.
+/// @param labels Integer vector. The label (batch or cell type) per cell.
+/// @param perplexity Numeric or NULL. Perplexity for the weighted version.
+/// NULL defaults to 30. Ignored if `knn_dist` is NULL.
 /// @param verbose Boolean. Controls verbosity of the function.
 ///
 /// @returns A list with the following items
@@ -159,25 +175,172 @@ fn rs_batch_silhouette_width(
 ///   \item per_cell - Per-cell LISI scores
 ///   \item mean_lisi - Mean LISI
 ///   \item median_lisi - Median LISI
+///   \item n_labels - Number of distinct labels
+///   \item ilisi_norm - Median LISI rescaled as iLISI, `(median - 1) / (n - 1)`
+///   \item clisi_norm - Median LISI rescaled as cLISI, `(n - median) / (n - 1)`
 /// }
+///
+/// @references Korsunsky, et al., Nat Methods, 2019; Luecken, et al., Nat
+/// Methods, 2022
 ///
 /// @export
 #[extendr]
-fn rs_batch_lisi(knn_mat: RMatrix<i32>, batch_vector: Vec<i32>, verbose: bool) -> Result<List> {
-    let n_cells = knn_mat.nrows();
-    let k = knn_mat.ncols();
+fn rs_lisi(
+    knn_mat: RMatrix<i32>,
+    knn_dist: Nullable<RMatrix<f64>>,
+    labels: Vec<i32>,
+    perplexity: Nullable<f64>,
+    verbose: bool,
+) -> Result<List> {
+    let knn_indices = knn_mat_to_vecs(&knn_mat);
+    let labels: Vec<usize> = labels.r_int_convert();
 
-    let knn_indices: Vec<Vec<usize>> = (0..n_cells)
-        .map(|i| (0..k).map(|j| knn_mat[[i, j]] as usize).collect())
-        .collect();
+    let res = match knn_dist {
+        Nullable::NotNull(dist) => {
+            let n_cells = dist.nrows();
+            let k = dist.ncols();
+            let raw: &[f64] = dist.data();
+            let knn_dists: Vec<Vec<f32>> = (0..n_cells)
+                .map(|i| (0..k).map(|j| raw[j * n_cells + i] as f32).collect())
+                .collect();
+            let perplexity = match perplexity {
+                Nullable::NotNull(p) => Some(p),
+                Nullable::Null => None,
+            };
+            lisi_weighted(&knn_indices, &knn_dists, &labels, perplexity, verbose)
+        }
+        Nullable::Null => lisi(&knn_indices, &labels, verbose),
+    }
+    .to_extendr()?;
 
+    Ok(list![
+        ilisi_norm = res.ilisi_norm(),
+        clisi_norm = res.clisi_norm(),
+        per_cell = res.per_cell,
+        mean_lisi = res.mean_lisi,
+        median_lisi = res.median_lisi,
+        n_labels = res.n_labels
+    ])
+}
+
+/// Principal component regression on batch
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Regresses each embedding dimension on the batch labels (one-way ANOVA) and
+/// weights the per-dimension R-squared by the variance each dimension carries.
+/// Compare the value on the uncorrected PCA with the one on the corrected
+/// embedding, `(pre - post) / pre`, rather than reading it on its own.
+///
+/// @param embedding Numeric matrix. Cells x dimensions, ideally a PCA.
+/// @param batch_vector Integer vector. The batch per cell.
+///
+/// @returns A list with the following items
+/// \itemize{
+///   \item var_explained - Variance per embedding dimension.
+///   \item r_squared - R-squared of batch per embedding dimension.
+///   \item pcr - Variance-weighted R-squared of batch.
+/// }
+///
+/// @references Büttner, et al., Nat Methods, 2019; Luecken, et al., Nat
+/// Methods, 2022
+///
+/// @export
+#[extendr]
+fn rs_pcr(embedding: RMatrix<f64>, batch_vector: Vec<i32>) -> Result<List> {
+    let embd = r_matrix_to_faer(&embedding);
     let batches: Vec<usize> = batch_vector.r_int_convert();
-    let res = batch_lisi(&knn_indices, &batches, verbose).to_extendr()?;
+    let res = pcr(embd.as_ref(), &batches).to_extendr()?;
+
+    Ok(list![
+        var_explained = res.var_explained,
+        r_squared = res.r_squared,
+        pcr = res.pcr
+    ])
+}
+
+/// Calculate cell type silhouette width from an embedding
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Average silhouette width on cell type labels, rescaled to `[0, 1]` via
+/// `(s + 1) / 2`. Higher values mean cell types stay separated.
+///
+/// @param embedding Numeric matrix. Cells x dimensions.
+/// @param labels Integer vector. The cell type per cell.
+/// @param max_cells Integer or NULL. If not NULL, subsample to this many
+/// cells for performance.
+/// @param verbose Boolean. Controls verbosity of the function.
+/// @param seed Integer. Seed for subsampling reproducibility.
+///
+/// @returns A list with the following items
+/// \itemize{
+///   \item per_cell - Per-cell rescaled silhouette scores
+///   \item mean_asw - Mean rescaled silhouette width
+///   \item median_asw - Median rescaled silhouette width
+/// }
+///
+/// @references Luecken, et al., Nat Methods, 2022
+///
+/// @export
+#[extendr]
+fn rs_cell_type_asw(
+    embedding: RMatrix<f64>,
+    labels: Vec<i32>,
+    max_cells: Nullable<i32>,
+    verbose: bool,
+    seed: i32,
+) -> Result<List> {
+    let embd = r_matrix_to_faer_fp32(&embedding);
+    let labels: Vec<usize> = labels.r_int_convert();
+    let subsample = match max_cells {
+        Nullable::NotNull(n) => Some(n as usize),
+        Nullable::Null => None,
+    };
+
+    let res =
+        cell_type_asw(embd.as_ref(), &labels, subsample, seed as usize, verbose).to_extendr()?;
 
     Ok(list![
         per_cell = res.per_cell,
-        mean_lisi = res.mean_lisi,
-        median_lisi = res.median_lisi
+        mean_asw = res.mean,
+        median_asw = res.median
+    ])
+}
+
+/// Calculate graph connectivity per cell type
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// For each cell type, the fraction of its cells in the largest connected
+/// component of the kNN graph restricted to that cell type. 1 means every
+/// cell type forms one connected piece.
+///
+/// @param knn_mat Integer matrix. The rows represent the cells and the
+/// columns the neighbour indices.
+/// @param labels Integer vector. The cell type per cell.
+///
+/// @returns A list with the following items
+/// \itemize{
+///   \item per_label - Connectivity per cell type, in order of the sorted
+///   label codes.
+///   \item mean - Mean connectivity.
+///   \item median - Median connectivity.
+/// }
+///
+/// @references Luecken, et al., Nat Methods, 2022
+///
+/// @export
+#[extendr]
+fn rs_graph_connectivity(knn_mat: RMatrix<i32>, labels: Vec<i32>) -> Result<List> {
+    let knn_indices = knn_mat_to_vecs(&knn_mat);
+    let labels: Vec<usize> = labels.r_int_convert();
+    let res = graph_connectivity(&knn_indices, &labels).to_extendr()?;
+
+    Ok(list![
+        per_label = res.per_label,
+        mean = res.mean,
+        median = res.median
     ])
 }
 
