@@ -253,6 +253,7 @@ sctype_scores <- calc_sc_type_scores(
   object = sc_object,
   cell_marker_list = marker_list
 )
+
 cell_type_anno <- score_clusters(
   sctype_scores,
   sc_object[[]][["leiden_uncorrected"]]
@@ -268,6 +269,7 @@ obs <- get_sc_obs(sc_object, filtered = TRUE)[, .(
       cell_type_anno$cluster_id
     )]
   ]
+
 sc_object[["cell_type"]] <- obs$cell_type
 
 table(obs$cell_type)
@@ -328,7 +330,7 @@ metrics_dt <- calculate_integration_metrics_sc(
 ) %>%
   .[, method := "Uncorrected"]
 
-metrics_dt
+metrics_dt[]
 ```
 
 The high kBET rejection rate (so a low `kbet_accept`) and a low `ilisi` confirm
@@ -816,7 +818,13 @@ ggplot(metrics_long, aes(x = metric, y = method, fill = score)) +
     size = 3
   ) +
   facet_grid(~type, scales = "free_x", space = "free_x") +
-  scale_fill_viridis_c(na.value = "grey90", limits = c(0, 1), oob = scales::squish) +
+  scale_fill_distiller(
+    palette = "Blues",
+    direction = 1,
+    na.value = "grey90",
+    limits = c(0, 1),
+    oob = scales::squish
+  ) +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   labs(x = NULL, y = NULL, fill = "Score", title = "Integration metrics")
