@@ -2440,14 +2440,17 @@ S7::method(load_existing, SingleCellsMultiModal) <- function(
       ))
     }
 
-    # sanity check ADT against kept cells
+    # ADT is keyed by barcode and frozen at add time, so it can hold more
+    # cells than survive later QC; only kept cells missing from it matter
     adt <- S7::prop(object, "adt_counts")
     if (!is.null(adt)) {
-      n_kept <- length(get_cells_to_keep(object))
-      if (nrow(adt$raw_counts) != n_kept) {
-        stop(paste(
-          "The number of rows in the stored ADT counts does not match",
-          "the number of cells to keep."
+      n_missing <- sum(
+        !get_cell_names(object, filtered = TRUE) %in% rownames(adt$raw_counts)
+      )
+      if (n_missing > 0L) {
+        warning(sprintf(
+          "%i cells to keep are not present in the stored ADT counts.",
+          n_missing
         ))
       }
     }
