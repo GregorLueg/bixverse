@@ -51,8 +51,8 @@ CELLSWEEP_MAX_MIN_LIB_SIZE <- 100L
     message(sprintf(
       "Empty droplets (method '%s'): %s of %s barcodes called empty.",
       empty_params$method,
-      format(sum(is_empty), big.mark = ","),
-      format(nrow(obs), big.mark = ",")
+      .fmt_n(sum(is_empty)),
+      .fmt_n(nrow(obs))
     ))
   }
 

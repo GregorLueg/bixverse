@@ -59,10 +59,13 @@ print.ScResidualFit <- function(x, ...) {
   cat(sprintf("Fitted residual model: %s\n", method))
   cat(sprintf(
     "  %s over %s cells\n",
-    ngettext(x$n_groups, "1 group", sprintf("%i groups", x$n_groups)),
-    length(x$cell_indices)
+    ngettext(x$n_groups, "1 group", sprintf("%s groups", .fmt_n(x$n_groups))),
+    .fmt_n(length(x$cell_indices))
   ))
-  cat(sprintf("  %s genes modelled in every group\n", length(x$genes)))
+  cat(sprintf(
+    "  %s genes modelled in every group\n",
+    .fmt_n(length(x$genes))
+  ))
 
   if (!is.na(x$group_column)) {
     cat(sprintf("  grouped by: %s\n", x$group_column))
@@ -243,13 +246,13 @@ print.ScResidualFit <- function(x, ...) {
 
   if (.verbose) {
     message(sprintf(
-      "Fitting %s over %i cells%s.",
+      "Fitting %s over %s cells%s.",
       method,
-      length(cell_indices),
+      .fmt_n(length(cell_indices)),
       if (is.null(group_of_cell)) {
         ""
       } else {
-        sprintf(" in %i groups", length(unique(group_of_cell)))
+        sprintf(" in %s groups", .fmt_n(length(unique(group_of_cell))))
       }
     ))
   }

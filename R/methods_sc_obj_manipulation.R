@@ -148,7 +148,7 @@ S7::method(merge_sc_experiments, SingleCells) <- function(
   if (.verbose) {
     message(sprintf(
       "Universe size: %s genes (intersection of %d inputs).",
-      format(length(universe), big.mark = ","),
+      .fmt_n(length(universe)),
       length(inputs)
     ))
   }

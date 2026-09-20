@@ -154,9 +154,9 @@ S7::method(fit_residuals_sc, ScOrScSubset) <- function(
 
   if (.verbose) {
     message(sprintf(
-      "Fitted %i model(s) over %i genes.",
-      fit$n_groups,
-      length(fit$genes)
+      "Fitted %s model(s) over %s genes.",
+      .fmt_n(fit$n_groups),
+      .fmt_n(length(fit$genes))
     ))
   }
 
@@ -239,9 +239,9 @@ S7::method(fit_residuals_sc, MetaCells) <- function(
 
   if (.verbose) {
     message(sprintf(
-      "Fitted %i model(s) over %i genes.",
-      fit$n_groups,
-      length(fit$genes)
+      "Fitted %s model(s) over %s genes.",
+      .fmt_n(fit$n_groups),
+      .fmt_n(length(fit$genes))
     ))
   }
 
