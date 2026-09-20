@@ -1209,6 +1209,17 @@ S7::method(find_hvg_sc, SingleCells) <- function(
   checkmate::qassert(streaming, c("B1", "0"))
   checkmate::qassert(.verbose, c("B1", "I1[0, 2]"))
 
+  # the residual path ranks on a fitted model instead of the stored layer, and
+  # selects in Rust, so it shares none of the machinery below
+  if (hvg_params$method == "residual") {
+    return(.find_hvg_residual(
+      object = object,
+      hvg_no = hvg_no,
+      write_var = TRUE,
+      .verbose = .verbose
+    ))
+  }
+
   streaming <- auto_streaming(
     n_cells = nrow(object),
     streaming = streaming,
@@ -1265,6 +1276,16 @@ S7::method(get_hvg_data_sc, SingleCells) <- function(
   checkmate::qassert(streaming, c("B1", "0"))
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
+  # `cell_ids` may name a different set than the model was fitted on, and
+  # honouring that would mean refitting inside a getter
+  if (hvg_params$method == "residual") {
+    stop(paste(
+      "get_hvg_data_sc() does not support method = 'residual', which needs a",
+      "model fitted on a fixed cell set. Use fit_residuals_sc() followed by",
+      "find_hvg_sc()."
+    ))
+  }
+
   cell_indices <- if (is.null(cell_ids)) {
     get_cells_to_keep(object)
   } else {
@@ -1319,6 +1340,7 @@ S7::method(calculate_pca_sc, SingleCells) <- function(
   sparse_svd = FALSE,
   hvg = NULL,
   seed = 42L,
+  residuals = FALSE,
   .verbose = TRUE
 ) {
   checkmate::assertClass(object, "bixverse::SingleCells")
@@ -1327,6 +1349,7 @@ S7::method(calculate_pca_sc, SingleCells) <- function(
   checkmate::qassert(sparse_svd, "B1")
   checkmate::qassert(hvg, c("I+", "0"))
   checkmate::qassert(seed, "I1")
+  checkmate::qassert(residuals, "B1")
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   # dual warning - not needed
@@ -1352,6 +1375,20 @@ S7::method(calculate_pca_sc, SingleCells) <- function(
     hvg - 1L
   } else {
     get_hvg(object)
+  }
+
+  # the residual path has no sparse solver, so the auto-flip below must not
+  # fire: it would quietly run the normalised algorithm instead
+  if (residuals) {
+    return(.calculate_pca_residual(
+      object = object,
+      no_pcs = no_pcs,
+      pca_params = pca_params,
+      selected_hvg = selected_hvg,
+      sparse_svd = sparse_svd,
+      seed = seed,
+      .verbose = .verbose
+    ))
   }
 
   # swap to sparse SVD for large data sets

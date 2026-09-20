@@ -18,6 +18,16 @@ S7::method(find_hvg_sc, SingleCellsSubset) <- function(
   checkmate::qassert(streaming, c("B1", "0"))
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
+  # the subset carries no var table, so nothing is written back
+  if (hvg_params$method == "residual") {
+    return(.find_hvg_residual(
+      object = object,
+      hvg_no = hvg_no,
+      write_var = FALSE,
+      .verbose = .verbose
+    ))
+  }
+
   streaming <- auto_streaming(
     n_cells = nrow(object),
     streaming = streaming,
@@ -64,6 +74,7 @@ S7::method(calculate_pca_sc, SingleCellsSubset) <- function(
   sparse_svd = FALSE,
   hvg = NULL,
   seed = 42L,
+  residuals = FALSE,
   .verbose = TRUE
 ) {
   checkmate::assertClass(object, "bixverse::SingleCellsSubset")
@@ -72,6 +83,7 @@ S7::method(calculate_pca_sc, SingleCellsSubset) <- function(
   checkmate::qassert(sparse_svd, "B1")
   checkmate::qassert(hvg, c("I+", "0"))
   checkmate::qassert(seed, "I1")
+  checkmate::qassert(residuals, "B1")
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   if ((length(get_hvg(object)) == 0) && is.null(hvg)) {
@@ -94,6 +106,20 @@ S7::method(calculate_pca_sc, SingleCellsSubset) <- function(
     hvg - 1L
   } else {
     get_hvg(object) # already 0-indexed
+  }
+
+  # as above: the residual path has no sparse solver, so it must branch before
+  # the auto-flip
+  if (residuals) {
+    return(.calculate_pca_residual(
+      object = object,
+      no_pcs = no_pcs,
+      pca_params = pca_params,
+      selected_hvg = selected_hvg,
+      sparse_svd = sparse_svd,
+      seed = seed,
+      .verbose = .verbose
+    ))
   }
 
   n_cells <- length(get_cells_to_keep(object))

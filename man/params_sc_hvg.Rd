@@ -12,7 +12,12 @@ params_sc_hvg(
 )
 }
 \arguments{
-\item{method}{String. One of \code{c("vst", "meanvarbin", "dispersion")}.}
+\item{method}{String. One of
+\code{c("vst", "meanvarbin", "dispersion", "residual")}. \code{"residual"} ranks genes
+by the residual variance of a model fitted with
+\code{\link[=fit_residuals_sc]{fit_residuals_sc()}}, and needs that fit on the object first. It
+also treats \code{hvg_no} as a per-group count and returns the union across
+groups, so a grouped fit can select more than \code{hvg_no} genes.}
 
 \item{loess_span}{Numeric. The span parameter for the loess function that is
 used to standardise the variance for \code{method = "vst"}.}

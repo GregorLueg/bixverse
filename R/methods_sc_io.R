@@ -2292,8 +2292,9 @@ S7::method(load_existing, SingleCells) <- function(object, .verbose = TRUE) {
     }
 
     S7::prop(object, "dims") <- as.integer(rust_con$get_shape())
-    S7::prop(object, "sc_map") <- saved_data$sc_map
-    S7::prop(object, "sc_cache") <- saved_data$sc_cache
+    # objects saved before a slot was added come back without it
+    S7::prop(object, "sc_map") <- .migrate_sc_map(saved_data$sc_map)
+    S7::prop(object, "sc_cache") <- .migrate_sc_cache(saved_data$sc_cache)
 
     # check that memory-stored data agrees with Rust to avoid panics...
 
@@ -2424,8 +2425,9 @@ S7::method(load_existing, SingleCellsMultiModal) <- function(
     }
 
     S7::prop(object, "dims") <- as.integer(rust_con$get_shape())
-    S7::prop(object, "sc_map") <- saved_data$sc_map
-    S7::prop(object, "sc_cache") <- saved_data$sc_cache
+    # objects saved before a slot was added come back without it
+    S7::prop(object, "sc_map") <- .migrate_sc_map(saved_data$sc_map)
+    S7::prop(object, "sc_cache") <- .migrate_sc_cache(saved_data$sc_cache)
     S7::prop(object, "adt_cache") <- saved_data$adt_cache
     S7::prop(object, "atac_cache") <- saved_data$atac_cache
     S7::prop(object, "adt_counts") <- saved_data$adt_counts

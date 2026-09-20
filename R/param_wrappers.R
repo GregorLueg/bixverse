@@ -1392,7 +1392,12 @@ params_sc_min_quality <- function(
 
 #' Wrapper function for HVG detection parameters.
 #'
-#' @param method String. One of `c("vst", "meanvarbin", "dispersion")`.
+#' @param method String. One of
+#' `c("vst", "meanvarbin", "dispersion", "residual")`. `"residual"` ranks genes
+#' by the residual variance of a model fitted with
+#' [bixverse::fit_residuals_sc()], and needs that fit on the object first. It
+#' also treats `hvg_no` as a per-group count and returns the union across
+#' groups, so a grouped fit can select more than `hvg_no` genes.
 #' @param loess_span Numeric. The span parameter for the loess function that is
 #' used to standardise the variance for `method = "vst"`.
 #' @param num_bin Integer. Not yet implemented.
@@ -1408,7 +1413,10 @@ params_sc_hvg <- function(
   bin_method = "equal_width"
 ) {
   # check
-  checkmate::assertChoice(method, c("vst", "meanvarbin", "dispersion"))
+  checkmate::assertChoice(
+    method,
+    c("vst", "meanvarbin", "dispersion", "residual")
+  )
   checkmate::qassert(loess_span, "N1[0.1, 1]")
   checkmate::qassert(num_bin, "N1")
   checkmate::assertChoice(bin_method, c("equal_width", "equal_freq"))
@@ -1458,6 +1466,140 @@ params_sc_pca <- function(
     clr = clr,
     size_factor = size_factor
   )
+}
+
+#### residuals -----------------------------------------------------------------
+
+#' Wrapper function for scTransform (v2) parameters
+#'
+#' @description
+#' Defaults are sctransform's own with `vst.flavor = "v2"` applied.
+#'
+#' Only the step-1 fit scales with `n_genes` and `n_cells`: those bound the
+#' subsample the negative binomial models are fitted on, and every later pass
+#' streams gene by gene. Raising them costs fitting time, not memory.
+#'
+#' @param n_genes Integer. Genes in the step-1 subsample. Defaults to `2000L`.
+#' @param n_cells Integer. Cells in the step-1 subsample. Defaults to `2000L`.
+#' @param min_cells Integer. Minimum number of cells a gene must be detected in
+#' to be modelled. Defaults to `5L`.
+#' @param bw_adjust Float. Bandwidth multiplier for the kernel regression that
+#' regularises the parameters. Defaults to `3.0`.
+#' @param gmean_eps Float. Offset in the geometric mean. Defaults to `1.0`.
+#' @param outlier_th Float. Threshold, in median absolute deviations, past
+#' which a step-1 fit is treated as an outlier. Defaults to `10.0`.
+#' @param poisson_diff_theta Float. Below this, the fitted dispersion is taken
+#' as the Poisson limit. Defaults to `1e-3`.
+#' @param clip_min Float or `NULL`. Lower residual clipping bound. `NULL` uses
+#' `-sqrt(n_cells)`. Must be given together with `clip_max`.
+#' @param clip_max Float or `NULL`. Upper residual clipping bound. `NULL` uses
+#' `sqrt(n_cells)`. Must be given together with `clip_min`.
+#'
+#' @returns A list with the scTransform parameters.
+#'
+#' @references Choudhary and Satija, Genome Biology, 2022.
+#'
+#' @export
+params_sc_sctransform <- function(
+  n_genes = 2000L,
+  n_cells = 2000L,
+  min_cells = 5L,
+  bw_adjust = 3.0,
+  gmean_eps = 1.0,
+  outlier_th = 10.0,
+  poisson_diff_theta = 1e-3,
+  clip_min = NULL,
+  clip_max = NULL
+) {
+  # checks
+  checkmate::qassert(n_genes, "I1[1,)")
+  checkmate::qassert(n_cells, "I1[1,)")
+  checkmate::qassert(min_cells, "I1[1,)")
+  checkmate::qassert(bw_adjust, "N1(0,)")
+  checkmate::qassert(gmean_eps, "N1[0,)")
+  checkmate::qassert(outlier_th, "N1(0,)")
+  checkmate::qassert(poisson_diff_theta, "N1(0,)")
+  assert_clip_range(clip_min, clip_max)
+
+  list(
+    n_genes = n_genes,
+    n_cells = n_cells,
+    min_cells = min_cells,
+    bw_adjust = bw_adjust,
+    gmean_eps = gmean_eps,
+    outlier_th = outlier_th,
+    poisson_diff_theta = poisson_diff_theta,
+    clip_min = clip_min,
+    clip_max = clip_max
+  )
+}
+
+#' Wrapper function for analytic Pearson residual parameters
+#'
+#' @description
+#' The closed-form alternative to scTransform: one shared dispersion instead of
+#' a fitted model per gene. Much cheaper, and on most data sets it ranks genes
+#' about as well.
+#'
+#' @param theta Float. The shared negative binomial dispersion. `Inf` gives the
+#' Poisson limit. Defaults to `100.0`.
+#' @param min_cells Integer. Minimum number of cells a gene must be detected in
+#' to be retained. `0L` keeps everything. Defaults to `5L`.
+#' @param clip_min Float or `NULL`. Lower residual clipping bound. `NULL` uses
+#' `-sqrt(n_cells)`. Must be given together with `clip_max`.
+#' @param clip_max Float or `NULL`. Upper residual clipping bound. `NULL` uses
+#' `sqrt(n_cells)`. Must be given together with `clip_min`.
+#'
+#' @returns A list with the analytic Pearson parameters.
+#'
+#' @references Lause, Berens and Kobak, Genome Biology, 2021.
+#'
+#' @export
+params_sc_apr <- function(
+  theta = 100.0,
+  min_cells = 5L,
+  clip_min = NULL,
+  clip_max = NULL
+) {
+  # checks
+  checkmate::qassert(theta, "N1(0,]")
+  checkmate::qassert(min_cells, "I1[0,)")
+  assert_clip_range(clip_min, clip_max)
+
+  list(
+    theta = theta,
+    min_cells = min_cells,
+    clip_min = clip_min,
+    clip_max = clip_max
+  )
+}
+
+#' Validate a residual clipping range
+#'
+#' @description
+#' Rust falls back to its own default when only one end is supplied, so half a
+#' range silently becomes no range at all. Catch it here instead.
+#'
+#' @param clip_min Float or `NULL`. Lower bound.
+#' @param clip_max Float or `NULL`. Upper bound.
+#'
+#' @returns Invisibly `TRUE`; called for the error.
+#'
+#' @keywords internal
+assert_clip_range <- function(clip_min, clip_max) {
+  checkmate::qassert(clip_min, c("N1", "0"))
+  checkmate::qassert(clip_max, c("N1", "0"))
+
+  res <- check_clip_pair(
+    list(clip_min = clip_min, clip_max = clip_max),
+    "the residual parameters"
+  )
+
+  if (!isTRUE(res)) {
+    stop(res)
+  }
+
+  invisible(TRUE)
 }
 
 #### knn -----------------------------------------------------------------------

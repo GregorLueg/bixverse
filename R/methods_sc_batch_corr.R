@@ -1089,6 +1089,16 @@ S7::method(find_hvg_batch_aware_sc, ScOrScSubset) <- function(
   checkmate::qassert(streaming, c("B1", "0"))
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
+  # the residual path does its own per-group split, at fitting time
+  if (hvg_params$method == "residual") {
+    stop(paste(
+      "find_hvg_batch_aware_sc() does not support method = 'residual'.",
+      "Fit per batch instead with",
+      "fit_residuals_sc(group_column = ...), then call find_hvg_sc():",
+      "the per-group ranking and union happen there."
+    ))
+  }
+
   streaming <- auto_streaming(
     n_cells = nrow(object),
     streaming = streaming,

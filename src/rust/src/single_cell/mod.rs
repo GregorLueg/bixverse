@@ -10,5 +10,6 @@ pub mod r_sc_metacells;
 pub mod r_sc_multimodal;
 pub mod r_sc_plot_extraction;
 pub mod r_sc_processing;
+pub mod r_sc_residuals;
 pub mod r_sc_trajectory;
 pub mod utils;

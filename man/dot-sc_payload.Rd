@@ -9,7 +9,7 @@
 \arguments{
 \item{cache}{The cache list.}
 
-\item{artefact}{String. One of \code{c("pca", "embedding", "knn", "snn", "magic")}.}
+\item{artefact}{String. One of \code{c("pca", "embedding", "knn", "snn", "magic", "residuals")}.}
 
 \item{name}{String. Embedding name, only used when \code{artefact = "embedding"}.}
 

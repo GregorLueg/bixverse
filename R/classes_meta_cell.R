@@ -706,6 +706,78 @@ S7::method(reset_cells_to_keep, MetaCells) <- function(
   ))
 }
 
+#' @name set_residual_fit.MetaCells
+#'
+#' @rdname set_residual_fit
+#'
+#' @method set_residual_fit MetaCells
+S7::method(set_residual_fit, MetaCells) <- function(
+  x,
+  residual_fit,
+  ...
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))
+  checkmate::assertClass(residual_fit, "ScResidualFit")
+
+  S7::prop(x, "sc_cache") <- set_residual_fit(
+    x = S7::prop(x, "sc_cache"),
+    residual_fit = residual_fit
+  )
+
+  x <- .stamp_artefact(x, artefact = "residuals", from = .stamp_from(...))
+
+  return(x)
+}
+
+#' @name remove_residual_fit.MetaCells
+#'
+#' @rdname remove_residual_fit
+#'
+#' @method remove_residual_fit MetaCells
+S7::method(remove_residual_fit, MetaCells) <- function(
+  x,
+  ...
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))
+
+  S7::prop(x, "sc_cache") <- remove_residual_fit(
+    x = S7::prop(x, "sc_cache")
+  )
+
+  return(x)
+}
+
+#' @name get_residual_fit.MetaCells
+#'
+#' @rdname get_residual_fit
+#'
+#' @method get_residual_fit MetaCells
+S7::method(get_residual_fit, MetaCells) <- function(
+  x,
+  ...
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))
+
+  res <- get_residual_fit(
+    x = S7::prop(x, "sc_cache")
+  )
+
+  if (is.null(res)) {
+    warning(paste(
+      "No fitted residual model found in the class.",
+      "Run fit_residuals_sc() first. Returning NULL."
+    ))
+    return(NULL)
+  }
+
+  .warn_sc_state(x, artefact = "residuals")
+
+  return(.drop_stamp(res))
+}
+
 #' @name set_pca_factors.MetaCells
 #'
 #' @rdname set_pca_factors

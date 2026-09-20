@@ -2396,7 +2396,7 @@ checkScHvg <- function(x) {
   apply_choice_rules(
     x,
     list(
-      method = c("vst", "meanvarbin", "dispersion"),
+      method = c("vst", "meanvarbin", "dispersion", "residual"),
       bin_method = c("equal_width", "equal_freq")
     ),
     label = "HVG params"
@@ -2474,6 +2474,169 @@ checkScPca <- function(x) {
 #'
 #' @keywords internal
 assertScPca <- checkmate::makeAssertionFunction(checkScPca)
+
+#### residuals -----------------------------------------------------------------
+
+#' Check scTransform parameters
+#'
+#' @description Checkmate extension for checking the scTransform parameters.
+#'
+#' @param x The list to check/assert.
+#'
+#' @returns `TRUE` if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
+checkScSctransform <- function(x) {
+  res <- check_list_shape(
+    x,
+    c(
+      "n_genes",
+      "n_cells",
+      "min_cells",
+      "bw_adjust",
+      "gmean_eps",
+      "outlier_th",
+      "poisson_diff_theta",
+      "clip_min",
+      "clip_max"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- apply_qtest_rules(
+    x,
+    list(
+      n_genes = "I1[1,)",
+      n_cells = "I1[1,)",
+      min_cells = "I1[1,)",
+      bw_adjust = "N1(0,)",
+      gmean_eps = "N1[0,)",
+      outlier_th = "N1(0,)",
+      poisson_diff_theta = "N1(0,)",
+      clip_min = c("N1", "0"),
+      clip_max = c("N1", "0")
+    ),
+    label = "scTransform params",
+    hint = paste(
+      "n_genes, n_cells and min_cells must be positive integers;",
+      "bw_adjust, outlier_th and poisson_diff_theta must be positive;",
+      "clip_min and clip_max must be single numerics or NULL."
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  check_clip_pair(x, "scTransform params")
+}
+
+#' Assert scTransform parameters
+#'
+#' @description Checkmate extension for asserting the scTransform parameters.
+#'
+#' @inheritParams checkScSctransform
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @returns Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
+assertScSctransform <- checkmate::makeAssertionFunction(checkScSctransform)
+
+#' Check analytic Pearson residual parameters
+#'
+#' @description Checkmate extension for checking the analytic Pearson
+#' parameters.
+#'
+#' @param x The list to check/assert.
+#'
+#' @returns `TRUE` if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
+checkScApr <- function(x) {
+  res <- check_list_shape(
+    x,
+    c("theta", "min_cells", "clip_min", "clip_max")
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- apply_qtest_rules(
+    x,
+    list(
+      # `Inf` is the Poisson limit and a legitimate choice, so the upper end
+      # stays open.
+      theta = "N1(0,]",
+      min_cells = "I1[0,)",
+      clip_min = c("N1", "0"),
+      clip_max = c("N1", "0")
+    ),
+    label = "analytic Pearson params",
+    hint = paste(
+      "theta must be positive (Inf is allowed);",
+      "min_cells must be a non-negative integer;",
+      "clip_min and clip_max must be single numerics or NULL."
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  check_clip_pair(x, "analytic Pearson params")
+}
+
+#' Assert analytic Pearson residual parameters
+#'
+#' @description Checkmate extension for asserting the analytic Pearson
+#' parameters.
+#'
+#' @inheritParams checkScApr
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @returns Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
+assertScApr <- checkmate::makeAssertionFunction(checkScApr)
+
+#' Check that a clipping range is whole
+#'
+#' @description Rust falls back to its own default when only one end is given,
+#' so half a range silently becomes no range at all.
+#'
+#' @param x The parameter list.
+#' @param label Short label used in the error message.
+#'
+#' @returns `TRUE` if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
+check_clip_pair <- function(x, label) {
+  if (is.null(x[["clip_min"]]) != is.null(x[["clip_max"]])) {
+    return(sprintf(
+      paste(
+        "`clip_min` and `clip_max` in %s must be given together.",
+        "Supply both to set a clipping range, or neither to use the default",
+        "of +/- sqrt(n_cells)."
+      ),
+      label
+    ))
+  }
+
+  if (!is.null(x[["clip_min"]]) && x[["clip_min"]] >= x[["clip_max"]]) {
+    return(sprintf("`clip_min` in %s must be smaller than `clip_max`.", label))
+  }
+
+  return(TRUE)
+}
 
 #### knn -----------------------------------------------------------------------
 
