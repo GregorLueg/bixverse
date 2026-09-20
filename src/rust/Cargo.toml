@@ -55,4 +55,4 @@ path = "document.rs"
 #########
 
 [patch.crates-io]
-bixverse-rs = { path = "/Users/gregorlueg/repos/shared/bixverse-rs" }
+bixverse-rs = { git = "https://github.com/GregorLueg/bixverse-rs", branch = "release-0.5.2" }

@@ -1,5 +1,100 @@
 # single cell residual methods -------------------------------------------------
 
+## consts ----------------------------------------------------------------------
+
+#' Cells held in memory per phase when transposing a corrected store
+#'
+#' @description
+#' Peak memory is roughly `cells_per_phase * mean_genes_per_cell * 12` bytes,
+#' so 50k cells is a few hundred megabytes at a typical density. The source is
+#' re-read once per phase, which is the trade.
+#'
+#' @keywords internal
+.CORRECTED_CELLS_PER_PHASE <- 50000L
+
+#' Genes read per batch when transposing a corrected store
+#'
+#' @keywords internal
+.CORRECTED_GENE_BATCH <- 1000L
+
+## helpers ---------------------------------------------------------------------
+
+#' Turn a corrected gene-major store into a `SingleCells`
+#'
+#' @description
+#' The corrected counts come out gene-major only, and a `SingleCells` needs the
+#' cell-major twin plus the database as well. The gene axis is the model's, so
+#' the variable table is rebuilt from the genes that survived rather than copied
+#' across: index `j` of the new store is a different gene from index `j` of the
+#' old one.
+#'
+#' @param object `SingleCells` or `SingleCellsSubset` class.
+#' @param dir_out String. Directory the store lives in.
+#' @param res List. The result of [bixverse::rs_sct_corrected_counts()].
+#' @param cell_indices Integer. The 0-based cells that were written.
+#' @param gene_batch_size Integer or `NULL`. Genes read per batch.
+#' @param .verbose Boolean or Integer. Controls verbosity.
+#'
+#' @returns The new `SingleCells` over the corrected counts.
+#'
+#' @keywords internal
+.build_corrected_object <- function(
+  object,
+  dir_out,
+  res,
+  cell_indices,
+  gene_batch_size,
+  .verbose
+) {
+  if (.verbose) {
+    message("Building the cell-major companion store.")
+  }
+
+  rs_sc_gene_store_to_cell_store(
+    f_path_in = res$f_path,
+    f_path_out = file.path(dir_out, "counts_cells.bin"),
+    cells_per_phase = .CORRECTED_CELLS_PER_PHASE,
+    gene_batch_size = gene_batch_size %||% .CORRECTED_GENE_BATCH,
+    verbose = parse_verbosity(.verbose)
+  )
+
+  obs <- data.table::copy(.residual_obs(object, cell_indices))
+  var_table <- data.table::copy(
+    get_sc_var(object)[as.integer(res$genes) + 1L, ]
+  )
+
+  # both axes are renumbered by the populate helpers, and the old indices would
+  # point into the source store, so they go rather than travel along wrong
+  obs[, cell_idx := NULL]
+  var_table[, gene_idx := NULL]
+
+  # the populate helpers take the first column as the id, so put it there
+  data.table::setcolorder(obs, c("cell_id", setdiff(names(obs), "cell_id")))
+  data.table::setcolorder(
+    var_table,
+    c("gene_id", setdiff(names(var_table), "gene_id"))
+  )
+
+  corrected <- SingleCells(dir_data = dir_out)
+  db <- get_sc_duckdb(corrected)
+  db$populate_obs_from_data.table(obs_dt = obs)
+  db$populate_var_from_data.table(var_dt = var_table)
+  db$set_to_keep_column()
+
+  corrected <- load_existing(corrected, .verbose = FALSE)
+
+  if (.verbose) {
+    message(sprintf(
+      "Corrected store: %i cells by %i genes in %s.",
+      res$n_cells,
+      res$n_genes,
+      dir_out
+    ))
+  }
+
+  return(corrected)
+}
+
 ## fitting ---------------------------------------------------------------------
 
 # generic found in R/base_generics_sc.R
@@ -235,94 +330,3 @@ S7::method(sct_corrected_counts_sc, ScOrScSubset) <- function(
     .verbose = .verbose
   )
 }
-
-#' Turn a corrected gene-major store into a `SingleCells`
-#'
-#' @description
-#' The corrected counts come out gene-major only, and a `SingleCells` needs the
-#' cell-major twin plus the database as well. The gene axis is the model's, so
-#' the variable table is rebuilt from the genes that survived rather than copied
-#' across: index `j` of the new store is a different gene from index `j` of the
-#' old one.
-#'
-#' @param object `SingleCells` or `SingleCellsSubset` class.
-#' @param dir_out String. Directory the store lives in.
-#' @param res List. The result of [bixverse::rs_sct_corrected_counts()].
-#' @param cell_indices Integer. The 0-based cells that were written.
-#' @param gene_batch_size Integer or `NULL`. Genes read per batch.
-#' @param .verbose Boolean or Integer. Controls verbosity.
-#'
-#' @returns The new `SingleCells` over the corrected counts.
-#'
-#' @keywords internal
-.build_corrected_object <- function(
-  object,
-  dir_out,
-  res,
-  cell_indices,
-  gene_batch_size,
-  .verbose
-) {
-  if (.verbose) {
-    message("Building the cell-major companion store.")
-  }
-
-  rs_sc_gene_store_to_cell_store(
-    f_path_in = res$f_path,
-    f_path_out = file.path(dir_out, "counts_cells.bin"),
-    cells_per_phase = .CORRECTED_CELLS_PER_PHASE,
-    gene_batch_size = gene_batch_size %||% .CORRECTED_GENE_BATCH,
-    verbose = parse_verbosity(.verbose)
-  )
-
-  obs <- data.table::copy(.residual_obs(object, cell_indices))
-  var_table <- data.table::copy(
-    get_sc_var(object)[as.integer(res$genes) + 1L, ]
-  )
-
-  # both axes are renumbered by the populate helpers, and the old indices would
-  # point into the source store, so they go rather than travel along wrong
-  obs[, cell_idx := NULL]
-  var_table[, gene_idx := NULL]
-
-  # the populate helpers take the first column as the id, so put it there
-  data.table::setcolorder(obs, c("cell_id", setdiff(names(obs), "cell_id")))
-  data.table::setcolorder(
-    var_table,
-    c("gene_id", setdiff(names(var_table), "gene_id"))
-  )
-
-  corrected <- SingleCells(dir_data = dir_out)
-  db <- get_sc_duckdb(corrected)
-  db$populate_obs_from_data.table(obs_dt = obs)
-  db$populate_var_from_data.table(var_dt = var_table)
-  db$set_to_keep_column()
-
-  corrected <- load_existing(corrected, .verbose = FALSE)
-
-  if (.verbose) {
-    message(sprintf(
-      "Corrected store: %i cells by %i genes in %s.",
-      res$n_cells,
-      res$n_genes,
-      dir_out
-    ))
-  }
-
-  return(corrected)
-}
-
-#' Cells held in memory per phase when transposing a corrected store
-#'
-#' @description
-#' Peak memory is roughly `cells_per_phase * mean_genes_per_cell * 12` bytes,
-#' so 50k cells is a few hundred megabytes at a typical density. The source is
-#' re-read once per phase, which is the trade.
-#'
-#' @keywords internal
-.CORRECTED_CELLS_PER_PHASE <- 50000L
-
-#' Genes read per batch when transposing a corrected store
-#'
-#' @keywords internal
-.CORRECTED_GENE_BATCH <- 1000L
