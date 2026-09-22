@@ -318,7 +318,7 @@ S7::method(build_symphony_ref, SingleCells) <- function(
   checkmate::qassert(batch_column, "S1")
   checkmate::qassert(additional_batch_columns, c("S+", "0"))
   checkmate::qassert(hvg, "I+")
-  assertScPca(pca_params)
+  assertScPcaParams(pca_params)
   checkmate::qassert(no_pcs, "I1[1,)")
   checkmate::qassert(slim, "B1")
   checkmate::qassert(label_columns, c("S+", "0"))
@@ -327,7 +327,7 @@ S7::method(build_symphony_ref, SingleCells) <- function(
 
   # detect harmony backend from class attribute
   harmony_version <- if (inherits(harmony_params, "params_sc_harmony_v2")) {
-    assertScHarmonyParamsV2(harmony_params)
+    assertScHarmonyV2Params(harmony_params)
     "v2"
   } else if (inherits(harmony_params, "params_sc_harmony")) {
     assertScHarmonyParams(harmony_params)
@@ -602,7 +602,7 @@ S7::method(map_symphony_query, SymphonyReference) <- function(
   checkmate::assertTRUE(S7::S7_inherits(query, SingleCells))
   checkmate::qassert(batch_column, c("S1", "0"))
   checkmate::qassert(additional_batch_columns, c("S+", "0"))
-  assertSymphonyMap(params)
+  assertSymphonyMapParams(params)
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   # gene matching: reference HVG names -> query gene index (0-based, NA if absent)
@@ -753,7 +753,7 @@ S7::method(transfer_labels_symphony, SymphonyReference) <- function(
 ) {
   checkmate::assertTRUE(S7::S7_inherits(query, SingleCells))
   checkmate::qassert(label_column, "S1")
-  assertScKnn(knn_params)
+  assertScKnnParams(knn_params)
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 

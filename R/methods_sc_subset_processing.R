@@ -14,7 +14,7 @@ S7::method(find_hvg_sc, SingleCellsSubset) <- function(
 ) {
   checkmate::assertClass(object, "bixverse::SingleCellsSubset")
   checkmate::qassert(hvg_no, "I1")
-  assertScHvg(hvg_params)
+  assertScHvgParams(hvg_params)
   checkmate::qassert(streaming, c("B1", "0"))
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
@@ -79,7 +79,7 @@ S7::method(calculate_pca_sc, SingleCellsSubset) <- function(
 ) {
   checkmate::assertClass(object, "bixverse::SingleCellsSubset")
   checkmate::qassert(no_pcs, "I1")
-  assertScPca(pca_params)
+  assertScPcaParams(pca_params)
   checkmate::qassert(sparse_svd, "B1")
   checkmate::qassert(hvg, c("I+", "0"))
   checkmate::qassert(seed, "I1")

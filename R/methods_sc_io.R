@@ -355,7 +355,7 @@ S7::method(load_seurat, SingleCells) <- function(
   # checks
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::assertClass(seurat, "Seurat")
-  assertScMinQC(sc_qc_param)
+  assertScMinQCParams(sc_qc_param)
   checkmate::qassert(streaming, "I1")
   checkmate::assertTRUE(streaming %in% c(0L, 1L, 2L))
   checkmate::qassert(.verbose, "B1")
@@ -635,7 +635,7 @@ S7::method(load_sce, SingleCells) <- function(
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::assertClass(sce, "SingleCellExperiment")
   checkmate::qassert(assay_name, "S1")
-  assertScMinQC(sc_qc_param)
+  assertScMinQCParams(sc_qc_param)
   checkmate::qassert(streaming, "I1")
   checkmate::assertTRUE(streaming %in% c(0L, 1L, 2L))
   checkmate::qassert(.verbose, "B1")
@@ -984,7 +984,7 @@ S7::method(load_h5ad, SingleCells) <- function(
 
   # checks
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
-  assertScMinQC(sc_qc_param)
+  assertScMinQCParams(sc_qc_param)
   checkmate::qassert(streaming, "I1")
   checkmate::assertTRUE(streaming %in% c(0L, 1L, 2L))
   checkmate::assertChoice(
@@ -1180,7 +1180,7 @@ S7::method(load_h5ad_norm, SingleCells) <- function(
   .verbose = TRUE
 ) {
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
-  assertScMinQC(sc_qc_param)
+  assertScMinQCParams(sc_qc_param)
   checkmate::qassert(obs_lib_size_col, "S1")
   checkmate::qassert(target_size, "N1")
   checkmate::qassert(streaming, "I1")
@@ -1425,7 +1425,7 @@ S7::method(load_multi_h5ad, SingleCells) <- function(
   .verbose = TRUE
 ) {
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
-  assertScMinQC(sc_qc_param)
+  assertScMinQCParams(sc_qc_param)
   checkmate::assertList(prescan_result)
   checkmate::assertTRUE(all(
     c("universe", "universe_size", "file_tasks") %in%
@@ -1603,8 +1603,8 @@ S7::method(load_mtx, SingleCells) <- function(
   .verbose = TRUE
 ) {
   checkmate::assertClass(object, "bixverse::SingleCells")
-  assertScMtxIO(sc_mtx_io_param)
-  assertScMinQC(sc_qc_param)
+  assertScMtxIOParams(sc_mtx_io_param)
+  assertScMinQCParams(sc_qc_param)
   checkmate::qassert(mtx_streaming, "B1")
   checkmate::qassert(streaming, "I1")
   checkmate::assertTRUE(streaming %in% c(0L, 1L, 2L))
@@ -1788,7 +1788,7 @@ S7::method(load_multi_mtx, SingleCells) <- function(
   .verbose = TRUE
 ) {
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
-  assertScMinQC(sc_qc_param)
+  assertScMinQCParams(sc_qc_param)
   checkmate::assertList(prescan_result)
   checkmate::assertTRUE(all(
     c("universe", "universe_size", "file_tasks", "temp_files") %in%
@@ -1972,7 +1972,7 @@ S7::method(load_tenx_h5, SingleCells) <- function(
   .verbose = TRUE
 ) {
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
-  assertScMinQC(sc_qc_param)
+  assertScMinQCParams(sc_qc_param)
   checkmate::qassert(feature_type, c("S1", "0"))
   checkmate::qassert(streaming, "I1")
   checkmate::assertTRUE(streaming %in% c(0L, 1L, 2L))
@@ -2139,7 +2139,7 @@ S7::method(load_multi_tenx_h5, SingleCells) <- function(
   .verbose = TRUE
 ) {
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
-  assertScMinQC(sc_qc_param)
+  assertScMinQCParams(sc_qc_param)
   checkmate::assertList(prescan_result)
   checkmate::assertTRUE(all(
     c("universe", "universe_size", "file_tasks") %in% names(prescan_result)

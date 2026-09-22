@@ -1085,7 +1085,7 @@ S7::method(find_hvg_batch_aware_sc, ScOrScSubset) <- function(
     gene_comb_method,
     c("union", "average", "intersection")
   )
-  assertScHvg(hvg_params)
+  assertScHvgParams(hvg_params)
   checkmate::qassert(streaming, c("B1", "0"))
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
@@ -1272,7 +1272,7 @@ S7::method(bbknn_sc, ScOrScSubset) <- function(
   checkmate::qassert(batch_column, "S1")
   checkmate::assertChoice(embd_to_use, c("pca"))
   checkmate::qassert(no_embd_to_use, c("I1", "0"))
-  assertScBbknn(bbknn_params)
+  assertScBbknnParams(bbknn_params)
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
@@ -1482,7 +1482,7 @@ S7::method(fast_mnn_sc, ScOrScSubset) <- function(
 ) {
   checkmate::qassert(batch_column, "S1")
   checkmate::qassert(batch_hvg_genes, "I+")
-  assertScFastmnn(fastmnn_params)
+  assertScFastmnnParams(fastmnn_params)
   checkmate::qassert(use_precomputed_pca, "B1")
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
@@ -1738,7 +1738,7 @@ S7::method(harmony_v2_sc, ScOrScSubset) <- function(
 
   checkmate::qassert(batch_column, "S1")
   checkmate::qassert(additional_batch_columns, c("S+", "0"))
-  assertScHarmonyParamsV2(harmony_params)
+  assertScHarmonyV2Params(harmony_params)
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
@@ -1923,7 +1923,7 @@ S7::method(seurat_cca_sc, SingleCells) <- function(
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::qassert(batch_column, "S1")
   checkmate::qassert(batch_hvg_genes, "I+")
-  assertScSeuratCca(cca_params)
+  assertScSeuratCcaParams(cca_params)
   checkmate::qassert(use_precomputed_pca, "B1")
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
@@ -2080,7 +2080,7 @@ S7::method(seurat_rpca_sc, SingleCells) <- function(
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::qassert(batch_column, "S1")
   checkmate::qassert(batch_hvg_genes, "I+")
-  assertScSeuratRpca(rpca_params)
+  assertScSeuratRpcaParams(rpca_params)
   checkmate::qassert(use_precomputed_pca, "B1")
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))

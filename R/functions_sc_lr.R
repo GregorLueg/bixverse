@@ -170,7 +170,7 @@ generate_ligand_target_influence <- function(
     names(grn_network),
     must.include = c("from", "to", "weight")
   )
-  assertLigandTarget(params)
+  assertLigandTargetParams(params)
 
   # gene universe = nodes appearing in either network
   all_genes <- unique(c(

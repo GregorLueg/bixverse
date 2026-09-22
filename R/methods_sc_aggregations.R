@@ -100,7 +100,7 @@ S7::method(generate_bt_meta_cells_sc, ScOrScSubset) <- function(
     S7::S7_inherits(object, SingleCells) ||
       S7::S7_inherits(object, SingleCellsSubset)
   )
-  assertScBootstrappedMetacells(sc_meta_cell_params)
+  assertScBootstrappedMetacellsParams(sc_meta_cell_params)
   checkmate::qassert(regenerate_knn, "B1")
   checkmate::qassert(embd_to_use, "S1")
   checkmate::qassert(no_embd_to_use, c("I1", "0"))
@@ -311,7 +311,7 @@ S7::method(generate_seacells_sc, ScOrScSubset) <- function(
     S7::S7_inherits(object, SingleCells) ||
       S7::S7_inherits(object, SingleCellsSubset)
   )
-  assertScSeacells(seacell_params)
+  assertScSeacellsParams(seacell_params)
   checkmate::qassert(embd_to_use, "S1")
   checkmate::qassert(no_embd_to_use, c("I1", "0"))
   checkmate::qassert(target_size, "N1")
@@ -466,7 +466,7 @@ S7::method(generate_supercells_sc, ScOrScSubset) <- function(
     S7::S7_inherits(object, SingleCells) ||
       S7::S7_inherits(object, SingleCellsSubset)
   )
-  assertScSupercell(sc_supercell_params)
+  assertScSupercellParams(sc_supercell_params)
   checkmate::qassert(regenerate_knn, "B1")
   checkmate::qassert(embd_to_use, "S1")
   checkmate::qassert(no_embd_to_use, c("I1", "0"))

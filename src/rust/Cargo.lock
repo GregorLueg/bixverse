@@ -127,7 +127,7 @@ dependencies = [
 [[package]]
 name = "bixverse-rs"
 version = "0.5.2"
-source = "git+https://github.com/GregorLueg/bixverse-rs?branch=release-0.5.2#be1e0db1a6334246592ec391f1ad40964fe3c3e0"
+source = "git+https://github.com/GregorLueg/bixverse-rs?branch=release-0.5.2#0b3dbe5e881a1950b35924f16fbb019731444e86"
 dependencies = [
  "ann-search-rs",
  "approx",
@@ -431,9 +431,9 @@ checksum = "e1d926b4d407d372f141f93bb444696142c29d32962ccbd3531117cf3aa0bfa9"
 
 [[package]]
 name = "edge-rs"
-version = "0.0.4"
+version = "0.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "16fca3d67d5222e62aad123c7e86dff1c5ffde62b3728baf9d2b0137d80ec712"
+checksum = "4255319a22b15124592b78c0ff5d899e4ffa3eda3f4df73623f7ecd25af56e14"
 dependencies = [
  "faer",
  "faer-traits",

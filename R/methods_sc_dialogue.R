@@ -285,9 +285,9 @@ S7::method(dialogue_sc, ScOrScSubset) <- function(
   checkmate::assertList(features, names = "named")
   checkmate::qassert(quality_col, c("S1", "0"))
   checkmate::qassert(gene_ids, c("S+", "0"))
-  assertDialoguePmd(pmd_params)
-  assertDialogueHlm(hlm_params)
-  assertDialogueRefine(refine_params)
+  assertDialoguePmdParams(pmd_params)
+  assertDialogueHlmParams(hlm_params)
+  assertDialogueRefineParams(refine_params)
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
   obs <- get_sc_obs(object, filtered = TRUE)
