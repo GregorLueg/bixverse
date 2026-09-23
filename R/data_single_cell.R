@@ -45,7 +45,7 @@ generate_single_cell_test_data <- function(
   seed = 42L
 ) {
   # checks
-  assertScSyntheticData(syn_data_params)
+  assertScSyntheticDataParams(syn_data_params)
   checkmate::qassert(seed, "I1")
 
   if (!requireNamespace("Matrix", quietly = TRUE)) {
@@ -183,7 +183,7 @@ generate_dialogue_test_data <- function(
   seed = 42L
 ) {
   # checks
-  assertScSyntheticDialogue(syn_data_params)
+  assertScSyntheticDialogueParams(syn_data_params)
   checkmate::qassert(seed, "I1")
 
   if (!requireNamespace("Matrix", quietly = TRUE)) {
@@ -321,7 +321,7 @@ generate_single_cell_test_data_adt <- function(
   seed = 42L
 ) {
   # checks
-  assertScSyntheticDataAdt(syn_data_params)
+  assertScSyntheticDataAdtParams(syn_data_params)
   checkmate::qassert(seed, "I1")
 
   data <- with(
@@ -430,7 +430,7 @@ generate_cellsweep_test_data <- function(
   seed = 42L
 ) {
   # checks
-  assertScSyntheticCellsweep(syn_data_params)
+  assertScSyntheticCellsweepParams(syn_data_params)
   checkmate::qassert(seed, "I1")
 
   if (!requireNamespace("Matrix", quietly = TRUE)) {
@@ -579,7 +579,7 @@ demo_single_cells <- function(
   # checks
   checkmate::qassert(dir, "S1")
   checkmate::qassert(prepped, "B1")
-  assertScSyntheticData(syn_data_params)
+  assertScSyntheticDataParams(syn_data_params)
   checkmate::qassert(hvg_no, "I1")
   checkmate::qassert(no_pcs, "I1")
   checkmate::qassert(k, "I1")

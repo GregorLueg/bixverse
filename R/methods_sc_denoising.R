@@ -51,8 +51,8 @@ CELLSWEEP_MAX_MIN_LIB_SIZE <- 100L
     message(sprintf(
       "Empty droplets (method '%s'): %s of %s barcodes called empty.",
       empty_params$method,
-      format(sum(is_empty), big.mark = ","),
-      format(nrow(obs), big.mark = ",")
+      .fmt_n(sum(is_empty)),
+      .fmt_n(nrow(obs))
     ))
   }
 
@@ -241,9 +241,9 @@ S7::method(cellsweep_sc, SingleCells) <- function(
   checkmate::assertTRUE(S7::S7_inherits(input, SingleCells))
   checkmate::qassert(celltype_column, "S1")
   checkmate::qassert(sample_column, "S1")
-  assertScEmptyDroplets(empty_params)
-  assertScCellsweep(cellsweep_params)
-  assertScMinQC(sc_qc_param)
+  assertScEmptyDropletsParams(empty_params)
+  assertScCellsweepParams(cellsweep_params)
+  assertScMinQCParams(sc_qc_param)
   checkmate::qassert(streaming, "I1")
   checkmate::assertTRUE(streaming %in% c(0L, 1L, 2L))
   checkmate::qassert(batch_size, "I1")

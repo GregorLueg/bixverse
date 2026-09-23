@@ -374,8 +374,8 @@ expect_error(
 )
 
 expect_error(
-  current = assertNmfConsensus(list(consensus_target = "h")),
-  info = "assertNmfConsensus - an incomplete parameter list is refused"
+  current = assertNmfConsensusParams(list(consensus_target = "h")),
+  info = "assertNmfConsensusParams - an incomplete parameter list is refused"
 )
 
 # A filter this tight cannot leave k components standing, and that has to be a

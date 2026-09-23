@@ -205,7 +205,7 @@ S7::method(ica_evaluate_comp, BulkCoExp) <- function(
   checkmate::assertClass(object, "bixverse::BulkCoExp")
   checkmate::assertChoice(ica_type, c("logcosh", "exp"))
   assertIcaParams(ica_params)
-  assertIcaNcomps(ncomp_params)
+  assertIcaNcompsParams(ncomp_params)
   assertIcaIterParams(iter_params)
   checkmate::qassert(.verbose, "B1")
 

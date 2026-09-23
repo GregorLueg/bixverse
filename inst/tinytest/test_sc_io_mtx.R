@@ -84,12 +84,12 @@ params_genes_rows_tsv <- params_sc_mtx_io(
 ### param checks ---------------------------------------------------------------
 
 expect_true(
-  current = bixverse:::checkScMtxIO(params_cells_rows_csv),
+  current = bixverse:::checkScMtxIOParams(params_cells_rows_csv),
   info = "MTX wrapper tests work as anticipated"
 )
 
 expect_true(
-  current = bixverse:::checkScMtxIO(params_genes_rows_tsv),
+  current = bixverse:::checkScMtxIOParams(params_genes_rows_tsv),
   info = "MTX wrapper tests work as anticipated (v2)"
 )
 

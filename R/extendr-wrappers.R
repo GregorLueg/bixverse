@@ -4263,6 +4263,194 @@ rs_magic_impute <- function(f_path, knn_data, cell_indices, total_cells, gene_in
 #' @keywords internal
 rs_sc_infer_empty_droplets <- function(lib_size, empty_params) .Call(wrap__rs_sc_infer_empty_droplets, lib_size, empty_params)
 
+#' Fits a residual model for single cell data
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Fits either scTransform (v2) or the analytic Pearson residual model of
+#' Lause, Berens and Kobak over the selected cells. With `group_of_cell` one
+#' model is fitted per group, which is what a multi-sample experiment wants:
+#' each sample keeps its own sequencing depth and composition.
+#'
+#' The fit is returned as a list rather than applied to anything. Hand it back
+#' to [bixverse::rs_sc_residual_variance()], [bixverse::rs_sc_pca_residuals()]
+#' or [bixverse::rs_sct_corrected_counts()] to use it.
+#'
+#' @param f_path_gene String. Path to the `counts_genes.bin` file.
+#' @param f_path_cell String. Path to the `counts_cells.bin` file. Used for the
+#' library sizes, and for the per-cell totals of the analytic Pearson fit.
+#' @param method String. One of `c("sctransform", "analytic_pearson")`.
+#' @param cell_indices Integer vector. The cell indices to use. (0-indexed!)
+#' @param group_of_cell Integer vector or `NULL`. Group label per selected
+#' cell. (0-indexed, dense!) `NULL` fits one model over every cell.
+#' @param covariates Named list of numeric vectors, one per covariate, each of
+#' length `length(cell_indices)`. scTransform only. The order is remembered and
+#' checked on every subsequent use.
+#' @param params Named list. The parameters, see
+#' [bixverse::params_sc_sctransform()] or [bixverse::params_sc_apr()].
+#' @param gene_batch_size Integer or `NULL`. Genes held in memory per batch.
+#' @param seed Integer. Seed for the step-1 subsample.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @returns A list with the following items
+#' \itemize{
+#'   \item method - The method that was fitted.
+#'   \item models - The per-group models.
+#'   \item genes - The gene indices modelled in every group. (0-indexed!)
+#'   \item group_of_cell - The group label per selected cell. (0-indexed!)
+#'   \item n_groups - Number of groups.
+#'   \item cell_indices - The cells that were fitted on. (0-indexed!)
+#'   \item covariates - The covariates used, scTransform only.
+#'   \item log10_umi - The per-cell offset, scTransform only.
+#'   \item cell_totals - The per-cell totals, analytic Pearson only.
+#' }
+#'
+#' @export
+#'
+#' @references Choudhary and Satija, Genome Biology, 2022; Lause, Berens and
+#' Kobak, Genome Biology, 2021.
+#'
+#' @keywords internal
+rs_sc_fit_residuals <- function(f_path_gene, f_path_cell, method, cell_indices, group_of_cell, covariates, params, gene_batch_size, seed, verbose) .Call(wrap__rs_sc_fit_residuals, f_path_gene, f_path_cell, method, cell_indices, group_of_cell, covariates, params, gene_batch_size, seed, verbose)
+
+#' Residual variance and the variable features it selects
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Computes the per-gene residual variance from a fitted model and selects the
+#' variable features from it. With more than one group the selection follows
+#' Seurat: rank within each group, take the top `n_hvg` of each, and union
+#' them, so a marker only one sample carries is not buried by a pooled ranking.
+#' The returned set can therefore be larger than `n_hvg`.
+#'
+#' Each gene's residual row is regenerated, reduced and dropped, so memory is
+#' one row per worker rather than a genes-by-cells matrix.
+#'
+#' @param f_path_gene String. Path to the `counts_genes.bin` file.
+#' @param residual_fit List. A fit from [bixverse::rs_sc_fit_residuals()].
+#' @param cell_indices Integer vector. The cell indices to use. (0-indexed!)
+#' Must be the selection the fit was fitted on.
+#' @param n_hvg Integer. Variable features to take from each group.
+#' @param gene_batch_size Integer or `NULL`. Genes held in memory per batch.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @returns A list with the following items
+#' \itemize{
+#'   \item genes - The gene indices the variances are indexed by. (0-indexed!)
+#'   \item variance - Matrix of residual variance, genes by groups.
+#'   \item hvg - The selected gene indices, ascending. (0-indexed!)
+#' }
+#'
+#' @export
+#'
+#' @references Seurat v5, `SCTransform.StdAssay`
+#'
+#' @keywords internal
+rs_sc_residual_variance <- function(f_path_gene, residual_fit, cell_indices, n_hvg, gene_batch_size, verbose) .Call(wrap__rs_sc_residual_variance, f_path_gene, residual_fit, cell_indices, n_hvg, gene_batch_size, verbose)
+
+#' Calculates PCA on Pearson residuals for single cell
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Runs the PCA on the residuals a fitted model implies, rather than on the
+#' stored normalised layer. The residual columns are dense by construction,
+#' since a zero count still has a residual, so there is no sparse or streaming
+#' variant of this path.
+#'
+#' Two settings are refused rather than ignored: the `PFlogPF` transform, which
+#' belongs to the normalised layer, and variance normalisation, which would
+#' flatten the very ranking the residuals produce.
+#'
+#' @param f_path_gene String. Path to the `counts_genes.bin` file.
+#' @param residual_fit List. A fit from [bixverse::rs_sc_fit_residuals()].
+#' @param no_pcs Integer. Number of PCs to calculate.
+#' @param pca_params Named list. Contains the parameters to use for this PCA
+#' run. `clr` and `normalise_variance` must both be `FALSE`.
+#' @param cell_indices Integer vector. The cell indices to use. (0-indexed!)
+#' Must be the selection the fit was fitted on.
+#' @param gene_indices Integer vector. The gene indices to use. (0-indexed!)
+#' Every one must be covered by the fit.
+#' @param seed Integer. Random seed for the randomised SVD.
+#' @param return_scaled Boolean. Shall the scaled data be returned.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @returns A list with the following items
+#' \itemize{
+#'   \item scores - The samples projected on the PCA space.
+#'   \item loadings - The loadings of the features for the PCA.
+#'   \item singular_values - The singular values for the PCA.
+#'   \item scaled - The scaled matrix if `return_scaled = TRUE`, otherwise
+#'   `NULL`.
+#' }
+#'
+#' @export
+#'
+#' @keywords internal
+rs_sc_pca_residuals <- function(f_path_gene, residual_fit, no_pcs, pca_params, cell_indices, gene_indices, seed, return_scaled, verbose) .Call(wrap__rs_sc_pca_residuals, f_path_gene, residual_fit, no_pcs, pca_params, cell_indices, gene_indices, seed, return_scaled, verbose)
+
+#' Writes scTransform-corrected counts to a new store
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Reverses the residual transform with every latent variable, the library size
+#' included, held at its median, so the depth structure is removed while the
+#' per-sample intercept is kept. The result is written as a new gene-major
+#' store.
+#'
+#' The output is re-indexed: its gene axis is the model's, so gene `j` in the
+#' written store is `genes[j + 1]` of the source. It also has no normalised
+#' layer, since corrected counts carry no library size to scale to.
+#'
+#' @param f_path_gene String. Path to the `counts_genes.bin` file.
+#' @param residual_fit List. A scTransform fit from
+#' [bixverse::rs_sc_fit_residuals()]. The analytic Pearson model has no
+#' corrected-count equivalent.
+#' @param cell_indices Integer vector. The cell indices to use. (0-indexed!)
+#' Must be the selection the fit was fitted on.
+#' @param f_path_out String. Path of the gene-major file to write.
+#' @param gene_batch_size Integer or `NULL`. Genes held in memory per batch.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @returns A list with the following items
+#' \itemize{
+#'   \item f_path - The file that was written.
+#'   \item genes - The source gene indices of the written axis. (0-indexed!)
+#'   \item n_genes - Number of genes written.
+#'   \item n_cells - Number of cells written.
+#' }
+#'
+#' @export
+#'
+#' @keywords internal
+rs_sct_corrected_counts <- function(f_path_gene, residual_fit, cell_indices, f_path_out, gene_batch_size, verbose) .Call(wrap__rs_sct_corrected_counts, f_path_gene, residual_fit, cell_indices, f_path_out, gene_batch_size, verbose)
+
+#' Rebuilds the cell-major companion of a gene-major store
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Writes the `counts_cells.bin` twin of a `counts_genes.bin` file. Memory is
+#' bounded by phasing over cells: each phase holds one window of cells and
+#' re-reads the gene file to fill it, so peak memory is the window rather than
+#' the matrix.
+#'
+#' @param f_path_in String. Path to the gene-major source file.
+#' @param f_path_out String. Path of the cell-major file to write.
+#' @param cells_per_phase Integer. Cells held in memory at once.
+#' @param gene_batch_size Integer. Genes read per batch within a phase.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @returns String. The path that was written.
+#'
+#' @export
+#'
+#' @keywords internal
+rs_sc_gene_store_to_cell_store <- function(f_path_in, f_path_out, cells_per_phase, gene_batch_size, verbose) .Call(wrap__rs_sc_gene_store_to_cell_store, f_path_in, f_path_out, cells_per_phase, gene_batch_size, verbose)
+
 #' Calculate DGEs between cells based on Mann Whitney stats
 #'
 #' @description
@@ -5806,6 +5994,92 @@ rs_mc_hvg <- function(sparse_data, hvg_method, loess_span, binning, n_bins, clip
 #'
 #' @references Booeshaghi, et al., bioRxive, 2026.
 rs_mc_pca <- function(sparse_data, no_pcs, pca_params, clr_offsets, seed, verbose) .Call(wrap__rs_mc_pca, sparse_data, no_pcs, pca_params, clr_offsets, seed, verbose)
+
+#' Fits a residual model for meta cells
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' In-memory version of [bixverse::rs_sc_fit_residuals()]. Meta cell counts are
+#' summed UMIs, so the negative binomial the residual models describe is still
+#' defined; it just sits at a much greater depth than a single cell.
+#'
+#' @param sparse_data A named list that needs to have `data`, `indptr`,
+#' `indices`, `nrow`, `ncol` and `cs_type`. Shape is (metacells, genes). Pass
+#' raw counts.
+#' @param method String. One of `c("sctransform", "analytic_pearson")`.
+#' @param group_of_cell Integer vector or `NULL`. Group label per meta cell.
+#' (0-indexed, dense!) `NULL` fits one model.
+#' @param covariates Named list of numeric vectors, one per covariate, each of
+#' length `nrow`. scTransform only.
+#' @param params Named list. See [bixverse::params_sc_sctransform()] or
+#' [bixverse::params_sc_apr()].
+#' @param seed Integer. Seed for the step-1 subsample.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @returns A list as described in [bixverse::rs_sc_fit_residuals()].
+#'
+#' @export
+#'
+#' @keywords internal
+rs_mc_fit_residuals <- function(sparse_data, method, group_of_cell, covariates, params, seed, verbose) .Call(wrap__rs_mc_fit_residuals, sparse_data, method, group_of_cell, covariates, params, seed, verbose)
+
+#' Residual variance and variable features for meta cells
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' In-memory version of [bixverse::rs_sc_residual_variance()].
+#'
+#' @param sparse_data A named list that needs to have `data`, `indptr`,
+#' `indices`, `nrow`, `ncol` and `cs_type`. Shape is (metacells, genes). Pass
+#' raw counts.
+#' @param residual_fit List. A fit from [bixverse::rs_mc_fit_residuals()].
+#' @param n_hvg Integer. Variable features to take from each group.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @returns A list with the following items
+#' \itemize{
+#'   \item genes - The gene indices the variances are indexed by. (0-indexed!)
+#'   \item variance - Matrix of residual variance, genes by groups.
+#'   \item hvg - The selected gene indices, ascending. (0-indexed!)
+#' }
+#'
+#' @export
+#'
+#' @keywords internal
+rs_mc_residual_variance <- function(sparse_data, residual_fit, n_hvg, verbose) .Call(wrap__rs_mc_residual_variance, sparse_data, residual_fit, n_hvg, verbose)
+
+#' Calculates PCA on Pearson residuals for meta cells
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' In-memory version of [bixverse::rs_sc_pca_residuals()]. As there, `clr` and
+#' `normalise_variance` must both be `FALSE`.
+#'
+#' @param sparse_data A named list that needs to have `data`, `indptr`,
+#' `indices`, `nrow`, `ncol` and `cs_type`. Shape is (metacells, genes). Pass
+#' raw counts.
+#' @param residual_fit List. A fit from [bixverse::rs_mc_fit_residuals()].
+#' @param no_pcs Integer. Number of PCs to calculate.
+#' @param pca_params Named list. Contains the parameters to use for this PCA
+#' run.
+#' @param gene_indices Integer vector. The gene indices to use. (0-indexed!)
+#' @param seed Integer. Random seed for the randomised SVD.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @returns A list with the following items
+#' \itemize{
+#'   \item scores - The samples projected on the PCA space.
+#'   \item loadings - The loadings of the features for the PCA.
+#'   \item singular_values - The singular values for the PCA.
+#' }
+#'
+#' @export
+#'
+#' @keywords internal
+rs_mc_pca_residuals <- function(sparse_data, residual_fit, no_pcs, pca_params, gene_indices, seed, verbose) .Call(wrap__rs_mc_pca_residuals, sparse_data, residual_fit, no_pcs, pca_params, gene_indices, seed, verbose)
 
 #' Calculate the pairwise gene-correlation for meta cells
 #'

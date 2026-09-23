@@ -63,6 +63,8 @@ navbar:
           href: articles/cell_sweep.html
         - text: "Batch corrections"
           href: articles/single_cell_batch_corrections.html
+        - text: "Pearson residuals and scTransform"
+          href: articles/single_cell_residuals.html
         - text: "Differential expression in single cell"
           href: articles/differential_expression.html
         - text: "Differential abundance in single cell"
@@ -130,6 +132,7 @@ articles:
       - thinking_single_cell
       - single_cell_io
       - pbmc_single_cell
+      - single_cell_residuals
       - doublet_detection
       - cell_sweep
       - single_cell_batch_corrections
@@ -499,6 +502,11 @@ reference:
       - find_hvg_batch_aware_sc
       - get_hvg_data_sc
       - calculate_pca_sc
+      - fit_residuals_sc
+      - sct_corrected_counts_sc
+      - get_residual_fit
+      - set_residual_fit
+      - remove_residual_fit
       - generate_sc_knn
       - find_neighbours_sc
       - run_magic_sc
@@ -510,6 +518,8 @@ reference:
       - params_boost
       - params_sc_hvg
       - params_sc_pca
+      - params_sc_sctransform
+      - params_sc_apr
       - params_scrublet
       - params_sc_fast_cluster
       - params_sc_neighbours
@@ -841,8 +851,11 @@ reference:
       - rs_mc_dialogue
       - rs_mc_hotspot_autocor
       - rs_mc_hotspot_gene_cor
+      - rs_mc_fit_residuals
       - rs_mc_hvg
       - rs_mc_pca
+      - rs_mc_pca_residuals
+      - rs_mc_residual_variance
       - rs_mc_scenic
       - rs_mc_vision
       - rs_mc_vision_with_autocorrelation

@@ -521,7 +521,7 @@ calc_ssgsea <- function(
     col.names = "named"
   )
   checkmate::assertList(pathways, types = "character", names = "named")
-  assertSingleSampleGSEAparams(ssgsea_params)
+  assertSingleSampleGSEAParams(ssgsea_params)
   checkmate::qassert(.verbose, "B1")
 
   # function body

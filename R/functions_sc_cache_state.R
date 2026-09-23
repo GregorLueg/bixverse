@@ -1,7 +1,8 @@
 # single cell cache state ------------------------------------------------------
 
 # every artefact that lands in an `ScCache` (PCA factors, embeddings, the kNN
-# object, the sNN graph, the MAGIC imputed layer) carries a provenance stamp as
+# object, the sNN graph, the MAGIC imputed layer, the fitted residual model)
+# carries a provenance stamp as
 # an attribute on the payload itself. the stamp records the cell set it was
 # computed on and the ids of the artefacts it was derived from, which is what
 # lets us tell a stale PCA from a fresh one after the cell filter moved.
@@ -11,6 +12,72 @@
 
 ## globals ---------------------------------------------------------------------
 
+#' Shape migration for state loaded off disk
+#'
+#' @description
+#' `save_sc_exp_to_disk()` writes the `ScMap` and `ScCache` lists verbatim, so
+#' an object saved before a slot was added comes back missing it. Reading a
+#' missing element gives `NULL` and nothing fails at load, which means the
+#' breakage surfaces later and far from its cause.
+#'
+#' Rebuilds the list from the current constructor and overlays whatever the
+#' saved one carried. Keys the constructor no longer knows about are dropped
+#' with a warning rather than silently kept, since they would never be read
+#' again.
+#'
+#' @param x The list loaded from disk.
+#' @param template A freshly constructed list of the same class.
+#' @param label Short label used in the warning.
+#'
+#' @returns The loaded state in the current shape.
+#'
+#' @keywords internal
+.migrate_sc_state <- function(x, template, label) {
+  # checks
+  checkmate::assertList(x)
+  checkmate::assertList(template)
+  checkmate::qassert(label, "S1")
+
+  known <- intersect(names(x), names(template))
+  unknown <- setdiff(names(x), names(template))
+
+  if (length(unknown) > 0) {
+    warning(sprintf(
+      "Dropping unknown %s %s: %s. Saved by a newer version of bixverse?",
+      label,
+      ngettext(length(unknown), "slot", "slots"),
+      paste(unknown, collapse = ", ")
+    ))
+  }
+
+  template[known] <- x[known]
+  class(template) <- class(x)
+
+  return(template)
+}
+
+#' Bring a loaded `ScCache` into the current shape
+#'
+#' @param x The `ScCache` loaded from disk.
+#'
+#' @returns The cache with every current slot present.
+#'
+#' @keywords internal
+.migrate_sc_cache <- function(x) {
+  .migrate_sc_state(x, new_sc_cache(), "ScCache")
+}
+
+#' Bring a loaded `ScMap` into the current shape
+#'
+#' @param x The `ScMap` loaded from disk.
+#'
+#' @returns The map with every current slot present.
+#'
+#' @keywords internal
+.migrate_sc_map <- function(x) {
+  .migrate_sc_state(x, new_sc_mapper(), "ScMap")
+}
+
 #' Attribute name under which every stamp is stored
 #'
 #' @keywords internal
@@ -19,12 +86,12 @@ SC_STAMP_ATTR <- "bixverse_stamp"
 #' Artefact kinds a cache can hold
 #'
 #' @keywords internal
-SC_ARTEFACTS <- c("pca", "embedding", "knn", "snn", "magic")
+SC_ARTEFACTS <- c("pca", "embedding", "knn", "snn", "magic", "residuals")
 
 #' Embedding names that would collide with an artefact label
 #'
 #' @keywords internal
-SC_RESERVED_EMBEDDINGS <- c("pca", "knn", "snn", "magic")
+SC_RESERVED_EMBEDDINGS <- c("pca", "knn", "snn", "magic", "residuals")
 
 #' Monotonic counter so two stamps minted in the same clock tick still differ
 #'
@@ -245,7 +312,7 @@ S7::method(.sc_state_hash, MetaCells) <- function(x) {
 #'
 #' @param cache The cache list.
 #' @param artefact String. One of `c("pca", "embedding", "knn", "snn",
-#' "magic")`.
+#' "magic", "residuals")`.
 #' @param name String. Embedding name, only used when `artefact = "embedding"`.
 #' @param wnn Boolean. Whether `cache` is the `wnn` slot rather than an
 #' `ScCache`.
@@ -266,6 +333,8 @@ S7::method(.sc_state_hash, MetaCells) <- function(x) {
     # the imputed layer is RNA expression whichever graph smoothed it, so it
     # only ever lives in a real `ScCache`, never in the wnn pseudo cache
     magic = if (wnn) NULL else cache[["magic"]],
+    # same reasoning: the residual model is fitted against RNA counts
+    residuals = if (wnn) NULL else cache[["residual_fit"]],
     embedding = cache[[
       if (wnn) "embeddings" else "other_embeddings"
     ]][[name]],
@@ -288,6 +357,7 @@ S7::method(.sc_state_hash, MetaCells) <- function(x) {
     knn = "knn",
     snn = if (wnn) "snn" else "snn_graph",
     magic = "magic",
+    residuals = "residual_fit",
     embedding = if (wnn) "embeddings" else "other_embeddings",
     stop(sprintf("Unknown artefact '%s'.", artefact))
   )
@@ -371,7 +441,8 @@ S7::method(.sc_state_hash, MetaCells) <- function(x) {
       purrr::map(embd_names, \(nm) list(artefact = "embedding", name = nm)),
       list(list(artefact = "knn", name = NA_character_)),
       list(list(artefact = "snn", name = NA_character_)),
-      list(list(artefact = "magic", name = NA_character_))
+      list(list(artefact = "magic", name = NA_character_)),
+      list(list(artefact = "residuals", name = NA_character_))
     )
 
     for (entry in entries) {
@@ -478,7 +549,7 @@ S7::method(.sc_state_hash, MetaCells) <- function(x) {
 #'
 #' @param x The object owning the cache.
 #' @param artefact String. One of `c("pca", "embedding", "knn", "snn",
-#' "magic")`.
+#' "magic", "residuals")`.
 #' @param name String. Embedding name, only used when `artefact = "embedding"`.
 #' @param modality String. The modality the artefact was written to.
 #' @param from Character vector of parent artefact names.
@@ -725,7 +796,7 @@ S7::method(.sc_state_hash, MetaCells) <- function(x) {
 #'
 #' @param x The object owning the cache.
 #' @param artefact String. One of `c("pca", "embedding", "knn", "snn",
-#' "magic")`.
+#' "magic", "residuals")`.
 #' @param name String. Embedding name, only used when `artefact = "embedding"`.
 #' @param modality String. The modality read from.
 #'
