@@ -11,7 +11,7 @@
 * Sweep over the Rust/rextendr documentation
 * Wired in scTransform v2 from 
   [Choudhary](https://pmc.ncbi.nlm.nih.gov/articles/PMC8764781/) and the
-  [vignette](https://gregorlueg.github.io/bixverse/articles/single_cell_residual.html).
+  [vignette](https://gregorlueg.github.io/bixverse/articles/single_cell_residuals.html).
 
 ## Fixes
 
