@@ -405,7 +405,7 @@ removes the depth structure while keeping the per-sample intercept.
 
 ```{r}
 #| label: corrected counts
-sc_sct <- fit_residuals_sc(sc_object, method = "sctransform", .verbose = FALSE)
+sc_sct <- fit_residuals_sc(sc_object, method = "sctransform", .verbose = TRUE)
 
 corrected <- sct_corrected_counts_sc(
   object = sc_sct,
