@@ -16,7 +16,7 @@ params_sc_cellsweep(
   ambient_lambda = 50,
   bulk_lambda = 10,
   eps = 1e-12,
-  log_eps = 9.99999999999999e-301,
+  log_eps = as.numeric("1e-300"),
   max_iter = 2000L,
   del0_ll_tol = 0.001,
   min_ll_tol = 1e-06,

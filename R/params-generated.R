@@ -2694,7 +2694,7 @@ params_sc_cellsweep <- function(
   ambient_lambda = 50.0,
   bulk_lambda = 10.0,
   eps = 1e-12,
-  log_eps = 1e-300,
+  log_eps = as.numeric("1e-300"),
   max_iter = 2000L,
   del0_ll_tol = 0.001,
   min_ll_tol = 1e-06,
