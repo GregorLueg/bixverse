@@ -689,7 +689,7 @@ S7::method(scrublet_sc, SingleCells) <- function(
   .verbose = TRUE
 ) {
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
-  assertScScrublet(scrublet_params)
+  assertScScrubletParams(scrublet_params)
   checkmate::qassert(seed, "I1")
   checkmate::qassert(streaming, c("B1", "0"))
   checkmate::qassert(group_by, c("S1", "0"))
@@ -819,7 +819,7 @@ S7::method(doublet_detection_boost_sc, SingleCells) <- function(
   .verbose = TRUE
 ) {
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
-  assertScBoost(boost_params)
+  assertScBoostParams(boost_params)
   checkmate::qassert(seed, "I1")
   checkmate::qassert(streaming, c("B1", "0"))
   checkmate::qassert(group_by, c("S1", "0"))
@@ -951,7 +951,7 @@ S7::method(scdblfinder_sc, SingleCells) <- function(
   .verbose = TRUE
 ) {
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
-  assertScDblFinder(scdblfinder_params)
+  assertScDblFinderParams(scdblfinder_params)
   checkmate::qassert(return_features, "B1")
   checkmate::qassert(streaming, c("B1", "0"))
   checkmate::qassert(group_by, c("S1", "0"))
@@ -1205,7 +1205,7 @@ S7::method(find_hvg_sc, SingleCells) <- function(
 ) {
   checkmate::assertClass(object, "bixverse::SingleCells")
   checkmate::qassert(hvg_no, "I1")
-  assertScHvg(hvg_params)
+  assertScHvgParams(hvg_params)
   checkmate::qassert(streaming, c("B1", "0"))
   checkmate::qassert(.verbose, c("B1", "I1[0, 2]"))
 
@@ -1272,7 +1272,7 @@ S7::method(get_hvg_data_sc, SingleCells) <- function(
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::qassert(cell_ids, c("0", "S+"))
   checkmate::qassert(hvg_no, "I1")
-  assertScHvg(hvg_params)
+  assertScHvgParams(hvg_params)
   checkmate::qassert(streaming, c("B1", "0"))
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
@@ -1345,7 +1345,7 @@ S7::method(calculate_pca_sc, SingleCells) <- function(
 ) {
   checkmate::assertClass(object, "bixverse::SingleCells")
   checkmate::qassert(no_pcs, "I1")
-  assertScPca(pca_params)
+  assertScPcaParams(pca_params)
   checkmate::qassert(sparse_svd, "B1")
   checkmate::qassert(hvg, c("I+", "0"))
   checkmate::qassert(seed, "I1")
@@ -1491,7 +1491,7 @@ S7::method(find_neighbours_sc, ScOrMc) <- function(
   )
   checkmate::qassert(embd_to_use, "S1")
   checkmate::qassert(no_embd_to_use, c("I1", "0"))
-  assertScNeighbours(neighbours_params)
+  assertScNeighboursParams(neighbours_params)
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
@@ -1915,7 +1915,7 @@ S7::method(generate_knn_sc, SingleCells) <- function(
   checkmate::qassert(embd_to_use, "S1")
   checkmate::qassert(no_embd_to_use, c("I1", "0"))
   checkmate::qassert(cells_to_use, c("S+", "0"))
-  assertScNeighbours(neighbours_params)
+  assertScNeighboursParams(neighbours_params)
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.validate_index, "B1")
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))

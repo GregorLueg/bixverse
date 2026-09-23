@@ -113,7 +113,7 @@ S7::method(merge_sc_experiments, SingleCells) <- function(
   }
   checkmate::assertCharacter(exp_ids, len = length(inputs), unique = TRUE)
   checkmate::qassert(renormalise, "B1")
-  assertScMinQC(sc_qc_param)
+  assertScMinQCParams(sc_qc_param)
   checkmate::qassert(streaming, "I1")
   checkmate::assertTRUE(streaming %in% c(0L, 1L, 2L))
   checkmate::qassert(batch_size, "I1")

@@ -335,12 +335,12 @@ expect_error(params_dialogue_refine(support_p = 0))
 expect_error(params_dialogue_refine(min_support_fraction = 1.5))
 
 expect_error(
-  bixverse:::assertDialoguePmd(within(params_dialogue_pmd(), rm(cap))),
+  bixverse:::assertDialoguePmdParams(within(params_dialogue_pmd(), rm(cap))),
   info = "a parameter list missing a field is rejected"
 )
 
 expect_error(
-  bixverse:::assertDialogueHlm(utils::modifyList(
+  bixverse:::assertDialogueHlmParams(utils::modifyList(
     params_dialogue_hlm(),
     list(satterthwaite = 1.5)
   )),
@@ -348,7 +348,7 @@ expect_error(
 )
 
 expect_error(
-  bixverse:::assertDialogueRefine(utils::modifyList(
+  bixverse:::assertDialogueRefineParams(utils::modifyList(
     params_dialogue_refine(),
     list(strict_p = 2)
   )),
@@ -356,7 +356,7 @@ expect_error(
 )
 
 expect_true(
-  bixverse:::checkDialoguePmd(params_dialogue_pmd()),
+  bixverse:::checkDialoguePmdParams(params_dialogue_pmd()),
   info = "the defaults pass their own check"
 )
 

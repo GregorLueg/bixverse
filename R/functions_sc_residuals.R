@@ -296,9 +296,9 @@ print.ScResidualFit <- function(x, ...) {
   }
 
   if (method == "sctransform") {
-    assertScSctransform(residual_params)
+    assertScSctransformParams(residual_params)
   } else {
-    assertScApr(residual_params)
+    assertScAprParams(residual_params)
   }
 
   return(residual_params)

@@ -85,7 +85,7 @@ S7::method(dgrdl_grid_search, BulkCoExp) <- function(
   checkmate::qassert(neighbours_vec, "I+")
   checkmate::qassert(dict_size_vec, "I+")
   checkmate::qassert(seed_vec, "I+")
-  assertDGRDLparams(dgrdl_params)
+  assertDGRDLParams(dgrdl_params)
   checkmate::qassert(.verbose, "B1")
 
   # function body
@@ -222,7 +222,7 @@ S7::method(dgrdl_result, BulkCoExp) <- function(
   # checks
   checkmate::assertClass(object, "bixverse::BulkCoExp")
   checkmate::qassert(seed, "I1")
-  assertDGRDLparams(dgrdl_params)
+  assertDGRDLParams(dgrdl_params)
   assertModuleMembershipParams(membership_params)
   checkmate::qassert(.verbose, "B1")
 

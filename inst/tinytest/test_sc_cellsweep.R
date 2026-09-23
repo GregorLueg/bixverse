@@ -191,13 +191,13 @@ expect_true(
 )
 
 expect_true(
-  current = isTRUE(bixverse:::checkScCellsweep(params_sc_cellsweep())),
+  current = isTRUE(bixverse:::checkScCellsweepParams(params_sc_cellsweep())),
   info = "cellsweep params: the default list passes its own check"
 )
 
 expect_true(
   current = is.character(
-    bixverse:::checkScCellsweep(list(freeze_empties = TRUE))
+    bixverse:::checkScCellsweepParams(list(freeze_empties = TRUE))
   ),
   info = "cellsweep params: an incomplete list is rejected"
 )
@@ -210,7 +210,7 @@ expect_error(
 
 expect_true(
   current = isTRUE(
-    bixverse:::checkScEmptyDroplets(
+    bixverse:::checkScEmptyDropletsParams(
       params_sc_empty_droplets(
         method = "supplied",
         is_empty_column = "is_empty"
@@ -222,7 +222,7 @@ expect_true(
 
 expect_true(
   current = is.character(
-    bixverse:::checkScEmptyDroplets(list(method = "knee"))
+    bixverse:::checkScEmptyDropletsParams(list(method = "knee"))
   ),
   info = "empty droplet params: an incomplete list is rejected"
 )
