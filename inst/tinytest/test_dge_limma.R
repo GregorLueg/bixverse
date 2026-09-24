@@ -101,7 +101,13 @@ res_rs <- run_limma_voom(
 
 # same design and contrast run_limma_voom builds: ~ 0 + dex, trt - untrt
 y_kept <- edgeR::normLibSizes(edgeR::DGEList(counts_kept))
-fit <- edgeR::voomLmFit(y_kept, design, sample.weights = FALSE)
+# voomLmFit moved from edgeR to limma in limma 3.99 / edgeR 4.99
+voom_lm_fit <- if ("voomLmFit" %in% getNamespaceExports("limma")) {
+  getExportedValue("limma", "voomLmFit")
+} else {
+  getExportedValue("edgeR", "voomLmFit")
+}
+fit <- voom_lm_fit(y_kept, design, sample.weights = FALSE)
 fit <- limma::contrasts.fit(fit, contrasts = c(1, -1))
 fit <- limma::eBayes(fit)
 res_r <- data.table::as.data.table(
