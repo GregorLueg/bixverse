@@ -501,7 +501,7 @@ metrics_dt <- rbind(
 metrics_dt[method == "Harmony"]
 #>    embedding kbet_accept batch_asw     ilisi pcr_comparison clisi cell_type_asw
 #>       <char>       <num>     <num>     <num>          <num> <num>         <num>
-#> 1:   harmony   0.8635508 0.9270982 0.6423357      0.9235815     1      0.647598
+#> 1:   harmony   0.8635508 0.9270978 0.6423357      0.9235805     1     0.6475996
 #>    graph_connectivity  method
 #>                 <num>  <char>
 #> 1:           0.989357 Harmony
@@ -591,10 +591,10 @@ metrics_dt <- rbind(
 metrics_dt[method == "Harmony v2"]
 #>     embedding kbet_accept batch_asw     ilisi pcr_comparison clisi
 #>        <char>       <num>     <num>     <num>          <num> <num>
-#> 1: harmony_v2   0.8604691 0.9189611 0.6423357      0.8947806     1
+#> 1: harmony_v2   0.8604691 0.9189611 0.6423357      0.8947809     1
 #>    cell_type_asw graph_connectivity     method
 #>            <num>              <num>     <char>
-#> 1:     0.6957046          0.9879408 Harmony v2
+#> 1:     0.6957045          0.9879408 Harmony v2
 ```
 
 ``` r
@@ -903,8 +903,8 @@ metrics_dt[, .(
 #>         <char>       <num>     <num>     <num>          <num> <num>
 #> 1: Uncorrected  0.01147064 0.8909914 0.0000000             NA     1
 #> 2:     fastMNN  0.64492381 0.9378912 0.3005779      0.8858816     1
-#> 3:     Harmony  0.86355076 0.9270982 0.6423357      0.9235815     1
-#> 4:  Harmony v2  0.86046910 0.9189611 0.6423357      0.8947806     1
+#> 3:     Harmony  0.86355076 0.9270978 0.6423357      0.9235805     1
+#> 4:  Harmony v2  0.86046910 0.9189611 0.6423357      0.8947809     1
 #> 5:  Seurat CCA  0.68567026 0.8886744 0.4705881      0.8693617     1
 #> 6: Seurat rPCA  0.77520972 0.9051192 0.6423357      0.8106860     1
 #> 7:       BBKNN  1.00000000        NA 0.8000000             NA     1
@@ -912,8 +912,8 @@ metrics_dt[, .(
 #>            <num>              <num>
 #> 1:     0.6758695          0.9894515
 #> 2:     0.6544492          0.9972923
-#> 3:     0.6475980          0.9893570
-#> 4:     0.6957046          0.9879408
+#> 3:     0.6475996          0.9893570
+#> 4:     0.6957045          0.9879408
 #> 5:     0.6997823          0.9894515
 #> 6:     0.6918660          0.9894043
 #> 7:            NA          0.9755626

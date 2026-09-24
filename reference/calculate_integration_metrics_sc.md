@@ -103,7 +103,7 @@ calculate_integration_metrics_sc(
 )
 #>    embedding kbet_accept batch_asw ilisi pcr_comparison     clisi cell_type_asw
 #>       <char>       <num>     <num> <num>          <num>     <num>         <num>
-#> 1:       pca   0.2466667 0.9330131   0.4             NA 0.5044248     0.5309406
+#> 1:       pca   0.2466667 0.9330131   0.4             NA 0.5044248     0.5309407
 #>    graph_connectivity
 #>                 <num>
 #> 1:                  1

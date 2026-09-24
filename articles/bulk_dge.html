@@ -505,7 +505,7 @@
 <span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="co">#&gt;    max_abs_diff_logfc max_abs_diff_t max_abs_diff_log10p</span></span>
 <span><span class="co">#&gt;                 &lt;num&gt;          &lt;num&gt;               &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1:       1.421085e-14   1.540386e-10        7.670664e-11</span></span></code></pre></div>
+<span><span class="co">#&gt; 1:       1.421085e-14   1.415472e-10        7.045209e-11</span></span></code></pre></div>
 </div>
 <p>Or as plots:</p>
 <div class="cell">
@@ -600,9 +600,9 @@
 <span>  times <span class="op">=</span> <span class="fl">5L</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: milliseconds</span></span>
-<span><span class="co">#&gt;      expr       min       lq     mean    median        uq       max neval</span></span>
-<span><span class="co">#&gt;     limma 1593.3436 1633.921 1747.723 1669.4712 1705.4067 2136.4707     5</span></span>
-<span><span class="co">#&gt;  bixverse  345.2062  345.498  356.875  346.5454  362.8988  384.2264     5</span></span></code></pre></div>
+<span><span class="co">#&gt;      expr       min        lq      mean    median        uq       max neval</span></span>
+<span><span class="co">#&gt;     limma 1135.0705 1159.5432 1173.1197 1187.3651 1187.6382 1195.9815     5</span></span>
+<span><span class="co">#&gt;  bixverse  216.4368  216.4829  223.9356  217.2665  234.4923  234.9997     5</span></span></code></pre></div>
 </div>
 <p>And the edgeR quasi-likelihood chain, same counts and design as <code><a href="../reference/run_edger_ql.html">run_edger_ql()</a></code> above:</p>
 <div class="cell">
@@ -625,8 +625,8 @@
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: milliseconds</span></span>
 <span><span class="co">#&gt;      expr      min       lq     mean   median       uq      max neval</span></span>
-<span><span class="co">#&gt;     edgeR 864.3576 889.7964 896.2229 896.3851 912.5195 918.0560     5</span></span>
-<span><span class="co">#&gt;  bixverse 288.2735 288.6989 301.1239 288.8206 307.9850 331.8418     5</span></span></code></pre></div>
+<span><span class="co">#&gt;     edgeR 523.6237 536.3531 545.4112 547.3437 552.7060 567.0294     5</span></span>
+<span><span class="co">#&gt;  bixverse 149.5487 157.2755 173.6443 172.7898 194.1843 194.4231     5</span></span></code></pre></div>
 </div>
 <p>Both land a few times faster on the Rust side, on eight samples. Mileage on bigger cohorts will vary with your machine, but some benchmarks have shown the delta tends to increase with Rust getting comparably faster with larger N.</p>
 </section><section class="level3"><h3 id="where-the-results-differ-on-purpose">Where the results differ on purpose<a class="anchor" aria-label="anchor" href="#where-the-results-differ-on-purpose"></a>

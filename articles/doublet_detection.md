@@ -338,13 +338,13 @@ doublet_metrics(
   actual = boosted_fast_dt$Call
 )
 #> $precision
-#> [1] 0.710988
+#> [1] 0.7108656
 #> 
 #> $recall
-#> [1] 0.4939064
+#> [1] 0.4951892
 #> 
 #> $f1
-#> [1] 0.5828917
+#> [1] 0.5837429
 ```
 
 ### scDblFinder

@@ -283,7 +283,7 @@
 <span>  gene_set_list <span class="op">=</span> <span class="va">gene_sets</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu">tictoc</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tictoc/man/tic.html" class="external-link">toc</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 1.649 sec elapsed</span></span></code></pre></div>
+<span><span class="co">#&gt; 0.97 sec elapsed</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="gene-ontology-aware-enrichment-the-elimination-method">Gene Ontology-aware enrichment: the elimination method<a class="anchor" aria-label="anchor" href="#gene-ontology-aware-enrichment-the-elimination-method"></a>
 </h2>
@@ -380,7 +380,7 @@
 <span>  target_gene_list <span class="op">=</span> <span class="va">go_target_gene_sets</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu">tictoc</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tictoc/man/tic.html" class="external-link">toc</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 1.772 sec elapsed</span></span></code></pre></div>
+<span><span class="co">#&gt; 1.492 sec elapsed</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="alternative-post-hoc-simplification-of-go-results">Alternative: post-hoc simplification of GO results<a class="anchor" aria-label="anchor" href="#alternative-post-hoc-simplification-of-go-results"></a>
 </h2>
@@ -571,8 +571,8 @@
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: seconds</span></span>
 <span><span class="co">#&gt;   expr      min       lq     mean   median       uq      max neval</span></span>
-<span><span class="co">#&gt;  fgsea 2.898659 3.056003 3.281289 3.351422 3.385161 3.715201     5</span></span>
-<span><span class="co">#&gt;   rust 2.150215 2.156587 2.167708 2.161272 2.184153 2.186312     5</span></span></code></pre></div>
+<span><span class="co">#&gt;  fgsea 2.012041 2.050371 2.212077 2.225927 2.251344 2.520701     5</span></span>
+<span><span class="co">#&gt;   rust 1.315839 1.318514 1.343393 1.339177 1.348982 1.394455     5</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="blitzgsea">blitzGSEA<a class="anchor" aria-label="anchor" href="#blitzgsea"></a>
 </h2>
@@ -678,10 +678,10 @@
 <span>  times <span class="op">=</span> <span class="fl">5L</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: milliseconds</span></span>
-<span><span class="co">#&gt;        expr        min         lq      mean     median         uq        max</span></span>
-<span><span class="co">#&gt;       fgsea 2168.93552 2171.19554 2174.8050 2174.71900 2174.75508 2184.41988</span></span>
-<span><span class="co">#&gt;  blitz_cold  889.12332  890.88379  893.7227  894.31068  895.48095  898.81495</span></span>
-<span><span class="co">#&gt;  blitz_warm   13.12132   13.87871   13.9593   13.96636   14.27158   14.55854</span></span>
+<span><span class="co">#&gt;        expr       min         lq       mean     median        uq        max</span></span>
+<span><span class="co">#&gt;       fgsea 1315.0794 1355.55552 1361.91132 1363.05908 1365.4577 1410.40491</span></span>
+<span><span class="co">#&gt;  blitz_cold  548.2042  554.03971  562.55291  562.91384  570.4685  577.13830</span></span>
+<span><span class="co">#&gt;  blitz_warm    9.6499   10.27899   10.44763   10.29146   10.8152   11.20263</span></span>
 <span><span class="co">#&gt;  neval</span></span>
 <span><span class="co">#&gt;      5</span></span>
 <span><span class="co">#&gt;      5</span></span>
