@@ -13,7 +13,10 @@ concurrency:
 jobs:
   params-drift:
     name: devforge spec drift
-    runs-on: ubuntu-latest
+    # macOS arm64 R has no extended long double, so literals like 1e-300 parse
+    # to a different double than on Linux. Match the platform the specs are
+    # forged on.
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
 
