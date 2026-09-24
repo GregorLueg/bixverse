@@ -136,9 +136,9 @@ parent-child table directly plus per-relationship weights:
 
 ```r
 wang <- calculate_wang_sim(terms = term_subset, parent_child_dt = hpo_data,
-                          weight = c(is_a = 0.8, part_of = 0.6))
+                          weights = c(is_a = 0.8, part_of = 0.6))
 wang_mat <- calculate_wang_sim_mat(parent_child_dt = hpo_data,
-                                   weight = wang_weights)
+                                   weights = wang_weights)
 ```
 
 The `%<-%` destructuring comes from `zeallot`, which bixverse imports.
@@ -163,8 +163,9 @@ guessed one, then `filter_similarities()` sparsifies on it. Worth doing, a full
 ontology similarity matrix is large and mostly noise.
 
 Human GO ships with the package (`get_go_data_human()`). For HPO or anything
-else, bring your own parent-child table with `parent`, `child` and
-`relationship` columns.
+else, bring your own parent-child table. `parent` and `child` are enough for
+the IC-based measures; Wang needs a `type` column too (`is_a`, `part_of`, ...),
+and the names in `weights` have to match its values.
 
 Semantic similarity also backs `simplify_hypergeom_res()` in `enrichment.md`,
 which is the most common reason to want it.

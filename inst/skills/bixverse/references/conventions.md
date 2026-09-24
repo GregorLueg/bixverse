@@ -1,11 +1,11 @@
 # bixverse conventions
 
-Learn these once and most of the 475-function surface becomes predictable.
+Learn these once and most of the ~750-function surface becomes predictable.
 
 ## Parameter bundles
 
 Anything with more than a handful of tunables takes a single validated list
-built by a `params_*()` constructor. There are 69 of them.
+built by a `params_*()` constructor. There are ~80 of them.
 
 Naming:
 

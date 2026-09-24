@@ -2,6 +2,17 @@
 
 ## The package itself
 
+The easy route is r-universe. Pre-built binary, no Rust toolchain, no compile:
+
+```r
+install.packages(
+  "bixverse",
+  repos = c("https://gregorlueg.r-universe.dev", "https://cloud.r-project.org")
+)
+```
+
+### From source
+
 bixverse compiles a Rust static library at install time, so a Rust toolchain has
 to be on the system first. Three steps, in order.
 
@@ -17,14 +28,15 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 install.packages("rextendr")
 ```
 
-3. bixverse:
+3. bixverse, with the r-universe repo kept in the list:
 
 ```r
+options(repos = c("https://gregorlueg.r-universe.dev", getOption("repos")))
 devtools::install_github("https://github.com/GregorLueg/bixverse")
 ```
 
-The first install compiles the whole Rust dependency tree and takes a while.
-That's normal, not a hang.
+The first source install compiles the whole Rust dependency tree and takes a
+while. That's normal, not a hang.
 
 `SystemRequirements` is `Cargo`, `rustc >= 1.90` and `xz`. R 4.2 or newer.
 
@@ -36,8 +48,8 @@ threads will tell you to use WSL. Ignore them.
 The two things that had to be solved both live in `tools/config.R`, which
 templates `src/Makevars.win` from `src/Makevars.win.in` at configure time:
 
-- MAX_PATH during the HDF5 CMake build, worked around by shortening the cargo
-  target directory
+- MAX_PATH during the HDF5 CMake build, worked around by moving the cargo
+  target directory to `~/.bixverse-cargo`
 - the cross-ABI case, where cargo runs from an msvc host against a
   `-pc-windows-gnu` target and `hdf5-metno-src` names its output the msvc way
 
@@ -79,9 +91,10 @@ door.
 | [manifoldsR](https://github.com/GregorLueg/manifoldsR) | UMAP, tSNE, diffusion maps, EVoC clustering | it's already an `Imports`, and all 2D embeddings route through it. `umap_sc()` takes `manifoldsR::params_umap()` |
 | [genewalkR](https://github.com/GregorLueg/genewalkR) | gene-gene interaction and regulatory network database | you need a network to diffuse over or to seed a GRN analysis |
 
-`manifoldsR` and `bixverse.plots` are in `Remotes`, so `devtools::install_github`
-pulls pinned versions of them automatically. `bixverse.gpu` and `genewalkR` are
-separate installs.
+`manifoldsR` (an `Imports`) and `bixverse.plots` (a `Suggests`) live on
+r-universe, not CRAN. There is no `Remotes` field, so a source install without
+the r-universe repo in `options(repos)` fails to resolve `manifoldsR`.
+`bixverse.gpu` and `genewalkR` are separate installs.
 
 ## Checking an install
 

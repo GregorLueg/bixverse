@@ -51,7 +51,7 @@ This function will return a list with:
 \itemize{
 \item hvg_genes - The gene names of the HVGs.
 \item hvg_gene_idx - The (0-index) gene features.
-\item batch_hvg_data - data.table with the detailed information of the
+\item hvg_data - data.table with the detailed information of the
 variance per batch.
 }
 }

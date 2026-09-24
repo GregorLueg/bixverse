@@ -325,9 +325,11 @@ The important structural difference: unlike `SingleCells`, a `MetaCells` object
 DuckDB. It shares `ScCache` and dispatches through the `ScOrMc` S7 union, so the
 familiar generics work on it directly: `find_hvg_sc()`, `calculate_pca_sc()`,
 `find_neighbours_sc()`, `find_clusters_sc()`, `umap_sc()`, `aucell_sc()`,
-`vision_sc()`, `vision_w_autocor_sc()`, `dialogue_sc()`.
+`vision_sc()`, `vision_w_autocor_sc()`, `dialogue_sc()`, `fit_residuals_sc()`.
 `find_hvg_sc()` ignores `streaming` there and `calculate_pca_sc()` ignores
-`sparse_svd`, since neither applies to an in-memory object.
+`sparse_svd`, since neither applies to an in-memory object. For residuals on
+metacells prefer `method = "analytic_pearson"`; the `params_sc_sctransform()`
+subsample defaults are sized for raw cells.
 
 Metacell-specific:
 

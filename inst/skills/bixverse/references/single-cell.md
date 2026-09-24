@@ -157,9 +157,15 @@ object or call `get_sc_cache_status()` after each step you're unsure of.
 | batch correction | `calculate_pca_sc` |
 | `find_neighbours_sc` | an embedding matching `embd_to_use` |
 | `find_clusters_sc` | `find_neighbours_sc` (the sNN) |
+| `fast_mnn_sc`, `seurat_cca_sc`, `seurat_rpca_sc` | `batch_hvg_genes` from `find_hvg_batch_aware_sc` |
 | `umap_sc(use_knn = TRUE)` | a kNN |
 | metacell generators, `run_paga_sc`, `run_palantir_sc`, `meld_sc`, miloR | a kNN |
 | `run_gene_trends_sc` | `run_magic_sc` |
+| `find_hvg_sc(method = "residual")`, `calculate_pca_sc(residuals = TRUE)` | `fit_residuals_sc` |
+| `cellsweep_sc` | cell type labels on the raw barcodes |
+
+The residual path is the exception to warn-and-return: a missing fit, a moved
+cell filter or a PCA setting it can't honour all error.
 
 ### Filter first, then HVG and PCA
 
@@ -225,7 +231,7 @@ Related: `obj[[...]]` is filtered, `get_sc_obs(obj)` defaults to
 
 ### Reserved embedding names
 
-`pca`, `knn`, `snn`, `magic`. Don't use them as a `slot_name`.
+`pca`, `knn`, `snn`, `magic`, `residuals`. Don't use them as a `slot_name`.
 
 ### Silent auto-switches
 
@@ -262,16 +268,165 @@ which you then hand to `find_neighbours_sc(embd_to_use = ...)`.
 | Function | Embedding | Params |
 |---|---|---|
 | `harmony_sc()` | `"harmony"` | `params_sc_harmony()` |
-| `harmony_v2_sc()` | `"harmony"` | `params_sc_harmony_v2()` |
+| `harmony_v2_sc()` | `"harmony_v2"` | `params_sc_harmony_v2()` |
 | `fast_mnn_sc()` | `"mnn"` | `params_sc_fastmnn()` |
-| `seurat_cca_sc()` | | `params_sc_seurat_cca()` |
-| `seurat_rpca_sc()` | | `params_sc_seurat_rpca()` |
+| `seurat_cca_sc()` | `"cca"` | `params_sc_seurat_cca()` |
+| `seurat_rpca_sc()` | `"rpca"` | `params_sc_seurat_rpca()` |
 | `bbknn_sc()` | modifies the graph directly | `params_sc_bbknn()` |
+
+fastMNN, CCA and rPCA need batch-aware HVGs, and `batch_hvg_genes` has no
+default. Compute them once and reuse them:
+
+```r
+batch_aware_hvg <- find_hvg_batch_aware_sc(obj, batch_column = "exp_id")
+
+obj <- fast_mnn_sc(
+  obj,
+  batch_hvg_genes = batch_aware_hvg$hvg_gene_idx,
+  batch_column = "exp_id"
+)
+obj <- find_neighbours_sc(obj, embd_to_use = "mnn")
+```
+
+`find_hvg_batch_aware_sc()` returns a list (`hvg_genes`, `hvg_gene_idx`,
+`hvg_data`), not an object, and does not touch the object's own HVG selection.
+`gene_comb_method` picks union (default), average or intersection across
+batches.
 
 Quantify the damage before and after with
 `calculate_integration_metrics_sc()`, which bundles kBET, batch ASW, iLISI and
 PCR, plus cLISI, cell type ASW and graph connectivity when given a cell type
 column. The individual `calculate_*_sc()` functions are there too.
+
+## Pearson residuals and scTransform
+
+Opt-in, not the default. `fit_residuals_sc()` fits a model and caches it on the
+object; nothing is transformed and the counts on disk are untouched. Two
+flavours: `method = "analytic_pearson"` (closed form, cheap, reach for this
+first, `params_sc_apr()`) and `method = "sctransform"` (v2 NB GLM on a bounded
+subsample, `params_sc_sctransform()`, the only one that takes covariates or
+gives corrected counts).
+
+```r
+# after QC and set_cells_to_keep(), never before
+obj <- fit_residuals_sc(obj, method = "analytic_pearson")
+get_residual_fit(obj)
+
+# gene selection on residual variance
+obj <- find_hvg_sc(
+  obj,
+  hvg_no = 2000L,
+  hvg_params = params_sc_hvg(method = "residual")
+)
+
+# either the normal PCA on the log-normalised layer ...
+obj <- calculate_pca_sc(obj, no_pcs = 30L)
+
+# ... or PCA on the residuals themselves
+obj <- calculate_pca_sc(
+  obj,
+  no_pcs = 30L,
+  pca_params = params_sc_pca(normalise_variance = FALSE),
+  residuals = TRUE
+)
+```
+
+Residual HVGs followed by the ordinary PCA is the combination with the least to
+argue against it. Things that bite:
+
+- The fit is keyed to the cells it saw. Move `cells_to_keep` afterwards and
+  anything using it errors. Refit.
+- `residuals = TRUE` errors unless `normalise_variance = FALSE`, `clr = FALSE`
+  and `sparse_svd = FALSE`. It is refused, not overridden.
+- Residuals are dense even where counts are zero. The residual PCA materialises
+  cells x HVGs as doubles and warns past 8 GB. At a million cells, fit and select
+  genes on residuals, but run the normal PCA.
+- `group_column` fits one model per sample. The gene axis narrows to the
+  intersection, and `hvg_no` is taken per group and unioned, so you get **more**
+  than `hvg_no` genes back. That's by design. It is not batch correction.
+- `covariate_columns` (sctransform only) must be numeric; factors error, dummy
+  code them yourself. Column order is checked on every later use.
+- `residual_variance` lands on the var table; genes the model dropped are `NA`,
+  not 0.
+- `get_hvg_data_sc()` does not support the residual method.
+
+Corrected counts, sctransform only:
+
+```r
+obj_sct <- fit_residuals_sc(obj, method = "sctransform")
+corrected <- sct_corrected_counts_sc(
+  obj_sct,
+  dir_out = file.path(tempdir(), "corrected")
+)
+```
+
+`corrected` is a new `SingleCells` in `dir_out`. Its gene axis is the model's,
+narrower than the source, so gene names match but raw indices do not line up
+with the original object. `set_residual_fit()` / `remove_residual_fit()` manage
+the cached fit by hand.
+
+## Ambient RNA: CellSweep
+
+`cellsweep_sc()` splits every barcode's counts into ambient soup, a global bulk
+profile and its cell type profile, subtracts the first two, and writes the
+denoised counts to a new directory. Two things are easy to get wrong:
+
+- **It runs after annotation.** It needs cell type labels on the raw barcodes.
+- **It needs the empty droplets.** They train the ambient profile, and the
+  load-time cutoffs are irreversible, so the raw object has to be ingested
+  permissively.
+
+So there are two objects: a permissive raw one, and a normally filtered one you
+cluster and annotate.
+
+```r
+raw_obj <- load_tenx_h5(
+  object = SingleCells(dir_data = dir_raw),
+  h5_path = h5_path,
+  sc_qc_param = params_sc_min_quality(
+    min_unique_genes = 0L,
+    min_lib_size = 1L,
+    min_cells = 0L
+  ),
+  feature_type = "Gene Expression"
+)
+
+# cluster/annotate a normally filtered load of the same file as cell_obj, then
+# join the labels across by barcode; unlabelled barcodes stay NA
+obs_raw <- get_sc_obs(raw_obj, filtered = FALSE)
+obs_cells <- get_sc_obs(cell_obj)
+label <- obs_cells$cell_type[match(obs_raw$cell_id, obs_cells$cell_id)]
+raw_obj[["cell_type"]] <- label
+raw_obj[["sample_id"]] <- rep("sample_1", nrow(obs_raw))
+
+clean_obj <- cellsweep_sc(
+  target = SingleCells(dir_data = dir_clean),
+  input = raw_obj,
+  celltype_column = "cell_type",
+  sample_column = "sample_id",
+  empty_params = params_sc_empty_droplets(
+    method = "umi_cutoff",
+    umi_cutoff = 257L
+  )
+)
+```
+
+- `params_sc_empty_droplets()` decides which barcodes are empty: `"supplied"`
+  (an existing logical obs column via `is_empty_column`, the most trustworthy),
+  `"umi_cutoff"`, `"expected_cells"` or `"knee"` (experimental).
+  `rs_sc_infer_empty_droplets()` lets you compare the inference methods on
+  `lib_size` before committing.
+- Keep unlabelled barcodes `NA`. `sprintf("cluster_%s", NA)` gives
+  `"cluster_NA"`, which CellSweep fits as one more cell type.
+- `sample_column` is required even for one emulsion. The ambient profile is per
+  run; never pool samples into one.
+- Barcodes above the empty cutoff but without a label are dropped from the fit
+  and the output.
+- Outputs: `cellsweep_alpha` (per-barcode ambient fraction) on obs,
+  `cellsweep_ambient` (the soup profile) on var. Filtering on alpha (the
+  reference uses `<= 0.3`) is a reasonable QC step.
+- HVG, PCA and everything after were computed on contaminated counts. Redo them
+  on `clean_obj`.
 
 ## Pipelines
 
