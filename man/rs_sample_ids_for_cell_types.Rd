@@ -8,18 +8,18 @@ rs_sample_ids_for_cell_types(cell_type_indices, n_samples, sample_bias, seed)
 }
 \arguments{
 \item{cell_type_indices}{Integer vector. Each integer represents a cell
-type.}
+type (0-based, as returned by \code{rs_synthetic_sc_data_with_cell_types()}).}
 
 \item{n_samples}{Integer. Number of different sample ids to generate.}
 
 \item{sample_bias}{String. One of
-\code{c("even", "slightly_uneven", "very_uneven")}. Determins the cell type
-to sample id associations.}
+\code{c("even", "slightly_uneven", "very_uneven")}. Determines the cell type
+to sample id associations. Other values raise an error.}
 
 \item{seed}{Integer. Random seed for reproducibility.}
 }
 \value{
-An integer vector representing the samples.
+An integer vector with the 0-based sample per cell.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}

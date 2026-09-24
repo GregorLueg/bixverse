@@ -8,7 +8,7 @@ rs_snf_affinity_cat(data, k, mu)
 }
 \arguments{
 \item{data}{Integer matrix. Needs to be oriented features x samples! The
-integers represent the factor values of the catagories.}
+integers represent the factor values of the categories.}
 
 \item{k}{Integer. Number of neighbours to consider.}
 

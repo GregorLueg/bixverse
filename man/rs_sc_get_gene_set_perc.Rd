@@ -27,8 +27,8 @@ the proportions. (0-indexed!)}
 detailed verbosity.}
 }
 \value{
-A list with the percentages of counts per gene set group detected
-in the cells.
+A list, named like \code{gene_set_idx}, with one numerical vector per
+gene set holding the percentage of counts per cell.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}

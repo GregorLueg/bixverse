@@ -7,28 +7,32 @@
 rs_mitch_calc(x, pathway_list, min_size)
 }
 \arguments{
-\item{x}{Numerical matrix. Each column represents on the contrasts you
-wish to test for and the rows represent the gene statistics per contrast.}
+\item{x}{Numerical matrix. Each column represents one of the contrasts you
+wish to test for and the rows represent the gene statistics per contrast.
+Needs row names (the genes).}
 
 \item{pathway_list}{Named list. Each element represents one of the pathways
 to test for.}
 
-\item{min_size}{Integer. Minimum size of gene the gene set to be tested for.}
+\item{min_size}{Integer. Minimum size of the gene set to be tested for.}
 }
 \value{
 A list with the following elements:
 \itemize{
 \item pathway_names - The name of the pathway.
-\item pathway_sizes The size of the pathway.
-\item manova_pvals - The p-value of the MANOVA test.
-\item anova_pvals The p-values of the ANOVA test on top of the MANOVA
-results. Total length = \code{ncol(x)} * number of pathways.
+\item pathway_sizes - The size of the pathway.
+\item manova_pval - The p-value of the MANOVA test.
+\item manova_fdr - The Benjamini-Hochberg adjusted \code{manova_pval}.
+\item anova_pvals - The p-values of the ANOVA test on top of the MANOVA
+results. Total length = \code{ncol(x)} * number of pathways, pathway-major.
 \item scores - The scores for each pathway set, contrast. Same length
-as \code{anova_pvals}.
+and layout as \code{anova_pvals}.
 \item s_dist - Calculated distances from the hypotenuse.
 \item sd - SDs of the scores.
 }
 }
 \description{
-Calculate mitch enrichment leveraging Rust under the hood
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+Ranks the contrasts column-wise and runs the mitch MANOVA/ANOVA tests per
+pathway.
 }

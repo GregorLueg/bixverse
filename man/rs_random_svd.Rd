@@ -16,17 +16,18 @@ centring will automatically occur.)}
 
 \item{seed}{Integer. Random seed for reproducibility.}
 
-\item{oversampling}{Integer. Defaults to \code{10L} if nothing is provided.}
+\item{oversampling}{Optional integer. Defaults to \code{10L} if \code{NULL}.}
 
-\item{n_power_iter}{Integer. How often shall the QR decomposition be
-applied. Defaults to \code{2L} if nothing is provided.}
+\item{n_power_iter}{Optional integer. Number of power iterations (each with
+a QR decomposition). Defaults to \code{2L} if \code{NULL}.}
 }
 \value{
 A list with:
 \itemize{
-\item u - u matrix of the SVD.
+\item scores - u matrix of the SVD multiplied by the singular values.
 \item v - v matrix of the SVD.
-\item s - Eigenvalues of the SVD.
+\item s - Singular values of the SVD.
+\item scaled - Boolean. Was the matrix scaled.
 }
 }
 \description{

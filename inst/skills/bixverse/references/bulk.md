@@ -9,7 +9,7 @@ Pseudobulked single cell data feeds straight into either, see
 ## Differential expression: BulkDge
 
 ```r
-obj <- BulkDge(...)                    # or bulk_dge_from_h5ad(path, ...)
+obj <- BulkDge(raw_counts = counts, meta_data = meta_data)  # or bulk_dge_from_h5ad()
 
 # metadata surgery, all optional
 obj <- add_new_metadata(obj, ...)
@@ -18,19 +18,39 @@ obj <- fix_meta_data_column(obj, ...)
 obj <- change_gene_identifier(obj, ...)
 obj <- remove_samples(obj, ...)
 
-obj <- qc_bulk_dge(obj)
-obj <- preprocess_bulk_dge(obj)
-obj <- normalise_bulk_dge(obj)
-obj <- batch_correction_bulk_dge(obj, batch_column = ...)
+obj <- qc_bulk_dge(obj, group_col = "dex")         # outliers, filterByExpr
+obj <- normalise_bulk_dge(obj, group_col = "dex")  # TMM + voom
 obj <- calculate_pca_bulk_dge(obj)
+obj <- batch_correction_bulk_dge(                  # optional
+  obj,
+  contrast_column = "dex",
+  batch_col = "cell"
+)
 
-obj <- calculate_dge_limma(obj, ...)   # limma
-obj <- calculate_dge_hedges(obj, ...)  # Hedges' g effect sizes
-obj <- calculate_all_dges(obj, ...)    # everything across all contrasts
+obj <- calculate_dge_limma(
+  obj,
+  contrast_column = "dex",
+  co_variates = "cell",
+  limma_params = params_limma_voom(route = "voom", robust = FALSE)
+)
+obj <- calculate_dge_hedges(obj, contrast_column = "dex")  # Hedges' g
+
+limma_res <- get_dge_limma_voom(obj)
+effects <- get_dge_effect_sizes(obj)
 ```
 
+`group_col` has no default on `qc_bulk_dge()` or `normalise_bulk_dge()`.
+`preprocess_bulk_dge()` and `calculate_all_dges()` are dead: both now just
+`stop()` and point at the functions above. Older code and answers still call
+them.
+
 `run_limma_voom()` is the standalone voom path and is what
-`calculate_dge_limma()` calls internally for count data.
+`calculate_dge_limma()` calls internally for count data. It runs
+`calcNormFactors()` -> `voomLmFit()` -> `contrasts.fit()` -> `eBayes()` ->
+`topTable(confint = TRUE)` in Rust, gated against limma 3.66.0, with the knobs
+in `params_limma_voom()`. The whole bulk DGE class runs without limma or edgeR;
+`get_dge_list()` builds an edgeR `DGEList` on demand and is the one place that
+needs edgeR installed.
 
 ### edgeR quasi-likelihood
 
@@ -61,9 +81,10 @@ The tested axis does not have to be genes. Anything shaped features x samples
 goes through it, which is why the Milo neighbourhood test calls the same
 function with `filter = FALSE`.
 
-Getters: `get_dge_list()`, `get_dge_limma_voom()`, `get_dge_effect_sizes()`,
-`get_model_fit()`, `get_tpm_counts()`, `get_fpkm_counts()`,
-`get_dge_qc_plot()`.
+Getters: `get_outputs()` (a list holding `norm_factors`, `dge_counts`,
+`sample_info`, `pca_anova`), `get_dge_list()`, `get_dge_limma_voom()`,
+`get_dge_effect_sizes()`, `get_model_fit()`, `get_tpm_counts()`,
+`get_fpkm_counts()`, `get_dge_qc_plot()`.
 
 Plots: `plot_pca_res()` on the object. Several other `plot_*` helpers exist in
 the source but are not exported, so reach for `get_dge_qc_plot()` and the

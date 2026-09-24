@@ -12,8 +12,9 @@ rs_tom(x, tom_type, signed)
 \item{tom_type}{String. One of \code{c("v1", "v2")} - pending on choice, a
 different normalisation method will be used.}
 
-\item{signed}{Boolean. Shall the signed TOM be calculated. If set to
-\code{FALSE}, values should be ≥ 0.}
+\item{signed}{Boolean. Shall the signed TOM be calculated, i.e. the
+connectivity be taken over absolute affinities. If set to \code{FALSE}, values
+should be >= 0.}
 }
 \value{
 Returns the TOM matrix.

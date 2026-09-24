@@ -7,19 +7,17 @@
 rs_dense_to_upper_triangle(x, shift)
 }
 \arguments{
-\item{x}{Numeric vector. The vector of correlation coefficients that you
-want to use to go back to a dense matrix.}
+\item{x}{Numeric matrix. The symmetric matrix to flatten.}
 
-\item{shift}{Boolean. If you applied a shift, i.e. included the diagonal
-values. If \code{true}, assumes the diagonal values are \code{1}, otherwise derives
-them from the data.}
+\item{shift}{Boolean. If \code{TRUE}, the diagonal is excluded, otherwise it is
+included.}
 }
 \value{
-The dense R matrix.
+Numeric vector with the upper triangle values.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 This function generates a vector from the upper triangle of a given
-symmetric matrix. You have the option to remove the diagonal with setting
-shift to 1.
+symmetric matrix, iterating through the rows. You have the option to
+remove the diagonal with setting \code{shift = TRUE}.
 }

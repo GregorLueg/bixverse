@@ -66,8 +66,9 @@ extendr_module! {
 ///
 /// ### Fields
 ///
-/// * `0` - Neighbour indices per meta cell, self excluded
-/// * `1` - The matching neighbour distances, ascending
+/// * `0` - Neighbour indices per meta cell. Self excluded when the graph is
+///   built here; a provided graph is taken as it comes.
+/// * `1` - The matching neighbour distances
 type ResolvedKnn = extendr_api::Result<(Vec<Vec<usize>>, Vec<Vec<f32>>)>;
 
 /// Resolve the kNN graph the HotSpot kernel runs over.
@@ -77,9 +78,10 @@ type ResolvedKnn = extendr_api::Result<(Vec<Vec<usize>>, Vec<Vec<f32>>)>;
 ///
 /// ### Params
 ///
-/// * `knn_data` - Optional pre-computed kNN data with `indices`, `dist` and
-///   `dist_metric`
-/// * `embd` - The embedding, metacells x dimensions
+/// * `knn_data` - Optional pre-computed kNN data with `indices`, `dist`,
+///   `dist_metric` and `k`
+/// * `embd` - The embedding, metacells x dimensions. Unused when `knn_data`
+///   is provided.
 /// * `knn_params` - Parameters for the ANN search, only read when a graph is
 ///   built
 /// * `seed` - Random seed for the ANN search
@@ -87,7 +89,7 @@ type ResolvedKnn = extendr_api::Result<(Vec<Vec<usize>>, Vec<Vec<f32>>)>;
 ///
 /// ### Returns
 ///
-/// The neighbour indices and their distances.
+/// The [ResolvedKnn], i.e. the neighbour indices and their distances.
 fn resolve_knn_graph(
     knn_data: Nullable<List>,
     embd: MatRef<f32>,
@@ -132,19 +134,22 @@ fn resolve_knn_graph(
 ///
 /// @description
 /// `r lifecycle::badge("experimental")`
-/// Assumes that the sparse data is pre-filtered for the genes you wish to
-/// include. The indices need to be 0-indexed.
+/// Assumes that the sparse data is pre-filtered for the cells and genes you
+/// wish to include: every column is a target gene. The regressors read the
+/// second layer, which here is an `f32` cast of the supplied counts.
 ///
 /// @param sparse_data A named list that needs to have `data`, `indptr`,
-/// `indices`, `nrow`, `ncol` and `format`.
-/// @param tf_indices Integer vector. The indices of the transcription factors.
-/// @param scenic_params Named list. Contains all of the parameters need for
-/// SCENIC.
+/// `indices`, `nrow`, `ncol` and `cs_type`. Shape is (metacells, genes).
+/// @param tf_indices Integer vector. 0-indexed(!) column positions of the
+/// transcription factors within `sparse_data`.
+/// @param scenic_params Named list. Contains all of the parameters needed for
+/// SCENIC, see [bixverse::params_scenic()].
 /// @param seed Integer. Controls reproducibility of the function.
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
 ///
-/// @returns A gene x TF importance matrix
+/// @returns A genes x TFs importance matrix, rows in column order of
+/// `sparse_data`, columns in the order of `tf_indices`.
 ///
 /// @export
 #[extendr]
@@ -177,10 +182,12 @@ fn rs_mc_scenic(
 /// calculate an AUCell type statistic. Three options here: the recovery-curve
 /// AUC of Aibar, et al. (the actual AUCell statistic), an AUC derived from the
 /// Mann-Whitney statistic, or average precision. This version works on
-/// MetaCell counts which are stored in memory directly.
+/// MetaCell counts which are stored in memory directly. Genes are ranked
+/// within each meta cell on the second layer, an `f32` cast of the supplied
+/// counts.
 ///
 /// @param sparse_data A named list that needs to have `data`, `indptr`,
-/// `indices`, `nrow`, `ncol` and `format`.
+/// `indices`, `nrow`, `ncol` and `cs_type`. Shape is (metacells, genes).
 /// @param gs_list List. List with the gene set indices (0-indexed!) of the
 /// genes of interest.
 /// @param aucell_params List. The AUCell parameters, see
@@ -188,8 +195,8 @@ fn rs_mc_scenic(
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
 ///
-/// @returns A matrix of cells x gene sets with the values representing the
-/// AUC.
+/// @returns A matrix of meta cells x gene sets with the values representing
+/// the AUC.
 ///
 /// @export
 #[extendr]
@@ -261,7 +268,7 @@ fn rs_mc_vision(sparse_data: List, gs_list: List, verbose: usize) -> Result<RArr
     Ok(faer_to_r_matrix(vision_mat.as_ref()))
 }
 
-/// Calculate VISION pathway scores in Rust with auto-correlation (for meta cells)
+/// Calculate VISION pathway scores with auto-correlation (for meta cells)
 ///
 /// @description
 /// `r lifecycle::badge("experimental")`
@@ -269,7 +276,7 @@ fn rs_mc_vision(sparse_data: List, gs_list: List, verbose: usize) -> Result<RArr
 /// and `"neg"` gene indices (0-indexed). You don't have to provide the `"neg"`,
 /// but it can be useful to classify the delta of two stats (EMT, Th1; Th2) etc.
 /// Additionally, it will take a random gene list and calculate an
-/// auto-correlation score based on Gaery's C to identify pathways that show
+/// auto-correlation score based on Geary's C to identify pathways that show
 /// significant patterns on the kNN graph generated on the provided embedding.
 /// This version works on MetaCell counts which are stored in memory directly.
 ///
@@ -280,26 +287,26 @@ fn rs_mc_vision(sparse_data: List, gs_list: List, verbose: usize) -> Result<RArr
 /// kNN graph. Needs to be of the same order/length as the meta cells in
 /// `sparse_data`.
 /// @param knn_data Optional list. This contains pre-computed kNN data
-/// (including distances) and the `dist_metric` it was built with. The user has
-/// to ensure consistency! If provided, this will be used rather than a graph
-/// built from the parameter list.
+/// (`indices`, `dist`, `k`) and the `dist_metric` it was built with. The user
+/// has to ensure consistency! If provided, this will be used rather than a
+/// graph built from the parameter list.
 /// @param gs_list Nested list. Each sublist contains the (0-indexed!) positive
 /// and negative gene indices of that specific gene set.
 /// @param random_gs_list Double-nested list. The outer list represents the
-/// clusters of clusters and the inner list represents the permutations within
-/// that cluster.
-/// @param vision_params List. Contains various parameters to use in terms
-/// of the kNN generation.
-/// @param cluster_membership Integer. Vector that indicates to which of the
-/// permuted gene set clusters the given gene set belongs.
+/// clusters of gene sets and the inner list represents the permutations
+/// within that cluster.
+/// @param vision_params List. The kNN parameters, only read when no
+/// `knn_data` is provided.
+/// @param cluster_membership Integer vector. 1-indexed(!) position in
+/// `random_gs_list` of the permuted cluster each gene set belongs to.
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
 /// @param seed Integer. Random seed for reproducibility.
 ///
 /// @returns A list with the following items:
 /// \itemize{
-///   \item autocor_res - Auto-correlation results, i.e., 1 - C, p-value and
-///   FDR.
+///   \item autocor_res - List with `auto_cor` (1 - Geary's C), `p_val` and
+///   `fdr`, one entry per gene set.
 ///   \item vision_mat - A matrix of meta cells x vision scores per gene set.
 /// }
 ///
@@ -406,14 +413,14 @@ fn rs_mc_vision_with_autocorrelation(
 /// an in-memory matrix has.
 ///
 /// @param sparse_data A named list that needs to have `data`, `indptr`,
-/// `indices`, `nrow`, `ncol` and `format`. Shape is (metacells, genes) and the
-/// data are the raw counts.
+/// `indices`, `nrow`, `ncol` and `cs_type`. Shape is (metacells, genes) and
+/// the data are the raw counts.
 /// @param embd Numerical matrix. The embedding matrix from which to generate
-/// the kNN graph.
+/// the kNN graph. Needs one row per entry of `cells_to_keep`.
 /// @param knn_data Optional list. This contains pre-computed kNN data
-/// (including distances) and the `dist_metric` it was built with. The user has
-/// to ensure consistency! If provided, this will be used rather than a graph
-/// built from the parameter list.
+/// (`indices`, `dist`, `k`) and the `dist_metric` it was built with. The user
+/// has to ensure consistency! If provided, this will be used rather than a
+/// graph built from the parameter list.
 /// @param hotspot_params List. The HotSpot parameter list. The kNN parameters
 /// are only read when no `knn_data` is provided.
 /// @param cells_to_keep Integer vector. 0-index vector indicating which meta
@@ -428,7 +435,7 @@ fn rs_mc_vision_with_autocorrelation(
 /// @returns A list with the following elements.
 /// \itemize{
 ///   \item gene_idx - 0-based integer indicating the gene index.
-///   \item gaerys_c - Gaery's C calculation for the autocorrelation
+///   \item gaerys_c - Geary's C calculation for the autocorrelation
 ///   coefficient.
 ///   \item z_score - Z-score of the auto-correlation.
 ///   \item pval - P-value derived from the Z-score.
@@ -507,14 +514,14 @@ fn rs_mc_hotspot_autocor(
 /// transcriptome.
 ///
 /// @param sparse_data A named list that needs to have `data`, `indptr`,
-/// `indices`, `nrow`, `ncol` and `format`. Shape is (metacells, genes) and the
-/// data are the raw counts.
+/// `indices`, `nrow`, `ncol` and `cs_type`. Shape is (metacells, genes) and
+/// the data are the raw counts.
 /// @param embd Numerical matrix. The embedding matrix from which to generate
-/// the kNN graph.
+/// the kNN graph. Needs one row per entry of `cells_to_keep`.
 /// @param knn_data Optional list. This contains pre-computed kNN data
-/// (including distances) and the `dist_metric` it was built with. The user has
-/// to ensure consistency! If provided, this will be used rather than a graph
-/// built from the parameter list.
+/// (`indices`, `dist`, `k`) and the `dist_metric` it was built with. The user
+/// has to ensure consistency! If provided, this will be used rather than a
+/// graph built from the parameter list.
 /// @param hotspot_params List. The HotSpot parameter list. The kNN parameters
 /// are only read when no `knn_data` is provided; `normalise` is unused on this
 /// path.
@@ -529,8 +536,9 @@ fn rs_mc_hotspot_autocor(
 ///
 /// @returns A list with the following elements.
 /// \itemize{
-///   \item cor - The gene x gene local correlation matrix.
-///   \item z - The Z-scores of these local correlations.
+///   \item cor - The genes x genes local correlation matrix, in the order of
+///   `genes_to_use`.
+///   \item z - The Z-scores of these local correlations, same shape.
 /// }
 ///
 /// @export
@@ -596,19 +604,29 @@ fn rs_mc_hotspot_gene_cor(
 /// @description
 /// `r lifecycle::badge("experimental")`
 /// Assumes that the sparse data is pre-filtered for the cells/genes you wish
-/// to include. Indices in the sparse data need to be 0-indexed.
+/// to include. Indices in the sparse data need to be 0-indexed. Both data
+/// layers hold the supplied values, so which assay NMF runs on is decided by
+/// what is passed in, not by `use_second_layer`.
 ///
 /// @param sparse_data A named list with `data`, `indptr`, `indices`, `nrow`,
-/// `ncol` and `format`.
+/// `ncol` and `cs_type`. Shape is (metacells, genes).
 /// @param k Integer. Number of latent factors to return.
 /// @param preprocessing String. One of `c("none", "sd", "sqrt_sd")`.
-/// @param use_second_layer Boolean. If `TRUE`, runs NMF on normalised counts.
-/// @param nmf_hals_params Named list. Contains the NMF parameters.
+/// @param use_second_layer Boolean. Shall the second data layer be used.
+/// @param nmf_hals_params Named list. Contains the NMF parameters, see
+/// [bixverse::params_nmf_hals()].
 /// @param seed Integer. Random seed for initialisation.
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
 ///
-/// @returns A list with `w`, `h`, `final_loss`, `n_iter`, `converged`.
+/// @returns A list with the following items
+/// \itemize{
+///   \item w - The `W` matrix of shape `n_meta_cells x k`.
+///   \item h - The `H` matrix of shape `k x n_genes`.
+///   \item final_loss - Final squared Frobenius reconstruction loss.
+///   \item n_iter - Number of iterations the algorithm ran for.
+///   \item converged - Did the NMF algorithm converge.
+/// }
 ///
 /// @export
 ///
@@ -649,21 +667,33 @@ fn rs_nmf_single_mc(
 /// @description
 /// `r lifecycle::badge("experimental")`
 /// Assumes that the sparse data is pre-filtered for the cells/genes you wish
-/// to include. Indices in the sparse data need to be 0-indexed.
+/// to include. Indices in the sparse data need to be 0-indexed. Both data
+/// layers hold the supplied values, so which assay NMF runs on is decided by
+/// what is passed in, not by `use_second_layer`.
 ///
 /// @param sparse_data A named list with `data`, `indptr`, `indices`, `nrow`,
-/// `ncol` and `format`.
+/// `ncol` and `cs_type`. Shape is (metacells, genes).
 /// @param k Integer. Number of latent factors per run.
 /// @param preprocessing String. One of `c("none", "sd", "sqrt_sd")`.
-/// @param use_second_layer Boolean. If `TRUE`, runs NMF on normalised counts.
-/// @param nmf_hals_params Named list. Contains the NMF parameters.
+/// @param use_second_layer Boolean. Shall the second data layer be used.
+/// @param nmf_hals_params Named list. Contains the NMF parameters, see
+/// [bixverse::params_nmf_hals()]. The `nmf_init` field is ignored, restarts
+/// always use random initialisation.
 /// @param n_runs Integer. Number of random restarts.
 /// @param seed Integer. Base random seed. Run `i` uses `seed + i`.
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
 ///
-/// @returns A list with `w_all`, `h_per_run`, `losses`, `converged`,
-/// `best_idx` (1-indexed).
+/// @returns A list with the following items
+/// \itemize{
+///   \item w_all - Column-bound `W` matrices across all runs, shape
+///   `n_meta_cells x (k * n_runs)`.
+///   \item h_per_run - List of `H` matrices, each `k x n_genes`.
+///   \item losses - Numeric vector. Final reconstruction loss per run.
+///   \item converged - Logical vector. Convergence flag per run.
+///   \item best_idx - Integer. 1-indexed position of the run with the lowest
+///   final loss.
+/// }
 ///
 /// @export
 ///
@@ -716,16 +746,20 @@ fn rs_nmf_multi_mc(
 /// ones by local density, k-means clusters the survivors and refits the
 /// partner factor against the per-cluster median. Assumes that the sparse data
 /// is pre-filtered for the cells/genes you wish to include. Indices in the
-/// sparse data need to be 0-indexed.
+/// sparse data need to be 0-indexed. Both data layers hold the supplied
+/// values, so which assay NMF runs on is decided by what is passed in, not by
+/// `use_second_layer`.
 ///
 /// @param sparse_data A named list with `data`, `indptr`, `indices`, `nrow`,
-/// `ncol` and `format`.
+/// `ncol` and `cs_type`. Shape is (metacells, genes).
 /// @param k Integer. Number of latent factors. Must be at least 2.
 /// @param preprocessing String. One of `c("none", "sd", "sqrt_sd")`.
-/// @param use_second_layer Boolean. If `TRUE`, runs NMF on normalised counts.
-/// @param nmf_hals_params Named list. Contains the NMF parameters. The
-/// `nmf_init` field is ignored, restarts always use random initialisation.
-/// @param nmf_consensus_params Named list. Contains the consensus parameters.
+/// @param use_second_layer Boolean. Shall the second data layer be used.
+/// @param nmf_hals_params Named list. Contains the NMF parameters, see
+/// [bixverse::params_nmf_hals()]. The `nmf_init` field is ignored, restarts
+/// always use random initialisation.
+/// @param nmf_consensus_params Named list. Contains the consensus parameters,
+/// see [bixverse::params_nmf_consensus()].
 /// @param n_runs Integer. Number of restarts. Must be at least 2.
 /// @param seed Integer. Base random seed. Restart `i` uses `seed + i`.
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
@@ -796,17 +830,21 @@ fn rs_nmf_consensus_mc(
 /// memory. Pick the k where stability is high and the error curve has not yet
 /// flattened, then call [rs_nmf_consensus_mc()] there. Assumes that the sparse
 /// data is pre-filtered for the cells/genes you wish to include. Indices in the
-/// sparse data need to be 0-indexed.
+/// sparse data need to be 0-indexed. Both data layers hold the supplied
+/// values, so which assay NMF runs on is decided by what is passed in, not by
+/// `use_second_layer`.
 ///
 /// @param sparse_data A named list with `data`, `indptr`, `indices`, `nrow`,
-/// `ncol` and `format`.
+/// `ncol` and `cs_type`. Shape is (metacells, genes).
 /// @param k_range Integer vector. Ranks to evaluate, every entry at least 2.
 /// @param preprocessing String. One of `c("none", "sd", "sqrt_sd")`.
-/// @param use_second_layer Boolean. If `TRUE`, runs NMF on normalised counts.
-/// @param nmf_hals_params Named list. Contains the NMF parameters.
-/// @param nmf_consensus_params Named list. Contains the consensus parameters.
+/// @param use_second_layer Boolean. Shall the second data layer be used.
+/// @param nmf_hals_params Named list. Contains the NMF parameters, see
+/// [bixverse::params_nmf_hals()].
+/// @param nmf_consensus_params Named list. Contains the consensus parameters,
+/// see [bixverse::params_nmf_consensus()].
 /// @param n_runs Integer. Number of restarts per k. Must be at least 2.
-/// @param seed Integer. Base random seed.
+/// @param seed Integer. Base random seed. The i-th k uses `seed + i * n_runs`.
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
 ///

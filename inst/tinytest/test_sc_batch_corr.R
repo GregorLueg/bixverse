@@ -190,22 +190,54 @@ expect_true(
 
 ### lisi scores ----------------------------------------------------------------
 
-lisi_scores.weak_batch_effect <- calculate_batch_lisi_sc(
+lisi_scores.weak_batch_effect <- calculate_lisi_sc(
   object = sc_object.weak_batch_effect,
-  batch_column = "batch_index",
+  label_column = "batch_index",
   .verbose = FALSE
 )
 
-lisi_scores.medium_batch_effect <- calculate_batch_lisi_sc(
+lisi_scores.medium_batch_effect <- calculate_lisi_sc(
   object = sc_object.medium_batch_effect,
-  batch_column = "batch_index",
+  label_column = "batch_index",
   .verbose = FALSE
 )
 
-lisi_scores.strong_batch_effect <- calculate_batch_lisi_sc(
+lisi_scores.strong_batch_effect <- calculate_lisi_sc(
   object = sc_object.strong_batch_effect,
-  batch_column = "batch_index",
+  label_column = "batch_index",
   .verbose = FALSE
+)
+
+expect_true(
+  current = checkmate::qtest(
+    c(
+      lisi_scores.weak_batch_effect$lisi_norm,
+      lisi_scores.medium_batch_effect$lisi_norm,
+      lisi_scores.strong_batch_effect$lisi_norm
+    ),
+    "N3[0, 1]"
+  ),
+  info = paste("ilisi - normalised score in [0, 1]")
+)
+
+expect_true(
+  current = lisi_scores.weak_batch_effect$lisi_norm >
+    lisi_scores.medium_batch_effect$lisi_norm &&
+    lisi_scores.medium_batch_effect$lisi_norm >
+      lisi_scores.strong_batch_effect$lisi_norm,
+  info = paste("ilisi - weak > medium > strong")
+)
+
+lisi_weighted <- calculate_lisi_sc(
+  object = sc_object.weak_batch_effect,
+  label_column = "batch_index",
+  weighted = TRUE,
+  .verbose = FALSE
+)
+
+expect_true(
+  current = checkmate::qtest(lisi_weighted$lisi_norm, "N1[0, 1]"),
+  info = paste("ilisi - weighted version runs")
 )
 
 expect_true(
@@ -248,6 +280,152 @@ expect_true(
   current = lisi_scores.strong_batch_effect$mean_lisi <
     lisi_scores.medium_batch_effect$mean_lisi,
   info = paste("lisi scores - strong lisi < medium lisi")
+)
+
+### pcr ------------------------------------------------------------------------
+
+pcr.weak <- calculate_pcr_sc(
+  object = sc_object.weak_batch_effect,
+  batch_column = "batch_index",
+  .verbose = FALSE
+)
+pcr.medium <- calculate_pcr_sc(
+  object = sc_object.medium_batch_effect,
+  batch_column = "batch_index",
+  .verbose = FALSE
+)
+pcr.strong <- calculate_pcr_sc(
+  object = sc_object.strong_batch_effect,
+  batch_column = "batch_index",
+  .verbose = FALSE
+)
+
+expect_true(
+  current = checkmate::qtest(pcr.weak$r_squared, paste0("N", no_pcs, "[0, 1]")),
+  info = paste("pcr - one R-squared per PC, in [0, 1]")
+)
+
+expect_true(
+  current = is.na(pcr.weak$pcr_comparison),
+  info = paste("pcr - no comparison on the PCA itself")
+)
+
+expect_true(
+  current = pcr.weak$pcr < pcr.medium$pcr && pcr.medium$pcr < pcr.strong$pcr,
+  info = paste("pcr - weak < medium < strong")
+)
+
+expect_warning(
+  current = calculate_pcr_sc(
+    object = sc_object.weak_batch_effect,
+    batch_column = "batch_index",
+    embd_to_use = "not_an_embedding",
+    .verbose = FALSE
+  ),
+  pattern = "embedding was not found",
+  info = paste("pcr - warning on a missing embedding")
+)
+
+### bio conservation -----------------------------------------------------------
+
+clisi.weak <- calculate_lisi_sc(
+  object = sc_object.weak_batch_effect,
+  label_column = "cell_grp",
+  type = "cell_type",
+  .verbose = FALSE
+)
+
+expect_true(
+  current = clisi.weak$type == "cell_type" &&
+    checkmate::qtest(clisi.weak$lisi_norm, "N1[0, 1]"),
+  info = paste("clisi - normalised score in [0, 1]")
+)
+
+ct_asw.weak <- calculate_cell_type_asw_sc(
+  object = sc_object.weak_batch_effect,
+  cell_type_column = "cell_grp",
+  .verbose = FALSE
+)
+
+expect_true(
+  current = checkmate::qtest(ct_asw.weak$per_cell, "N+[0, 1]") &&
+    ct_asw.weak$mean_asw > 0.5,
+  info = paste("cell type asw - rescaled and above the no structure line")
+)
+
+conn.weak <- calculate_graph_connectivity_sc(
+  object = sc_object.weak_batch_effect,
+  cell_type_column = "cell_grp",
+  .verbose = FALSE
+)
+
+expect_equal(
+  current = sort(names(conn.weak$per_cell_type)),
+  target = sort(unique(unlist(sc_object.weak_batch_effect[["cell_grp"]]))),
+  info = paste("graph connectivity - one value per cell type")
+)
+
+expect_true(
+  current = checkmate::qtest(conn.weak$per_cell_type, "N+[0, 1]"),
+  info = paste("graph connectivity - values in [0, 1]")
+)
+
+### summary --------------------------------------------------------------------
+
+metrics.weak <- calculate_integration_metrics_sc(
+  object = sc_object.weak_batch_effect,
+  batch_column = "batch_index",
+  cell_type_column = "cell_grp",
+  .verbose = FALSE
+)
+metrics.strong <- calculate_integration_metrics_sc(
+  object = sc_object.strong_batch_effect,
+  batch_column = "batch_index",
+  cell_type_column = "cell_grp",
+  .verbose = FALSE
+)
+
+expect_equal(
+  current = names(metrics.weak),
+  target = c(
+    "embedding",
+    "kbet_accept",
+    "batch_asw",
+    "ilisi",
+    "pcr_comparison",
+    "clisi",
+    "cell_type_asw",
+    "graph_connectivity"
+  ),
+  info = paste("integration metrics - columns")
+)
+
+expect_true(
+  current = nrow(metrics.weak) == 1L &&
+    is.na(metrics.weak$pcr_comparison) &&
+    checkmate::qtest(
+      unlist(metrics.weak[, -c("embedding", "pcr_comparison")]),
+      "N6[0, 1]"
+    ),
+  info = paste("integration metrics - one row, values in [0, 1]")
+)
+
+expect_true(
+  current = metrics.weak$kbet_accept > metrics.strong$kbet_accept &&
+    metrics.weak$ilisi > metrics.strong$ilisi,
+  info = paste("integration metrics - weak batch effect mixes better")
+)
+
+metrics.no_bio <- calculate_integration_metrics_sc(
+  object = sc_object.weak_batch_effect,
+  batch_column = "batch_index",
+  embd_to_use = NULL,
+  .verbose = FALSE
+)
+
+expect_true(
+  current = all(is.na(unlist(metrics.no_bio[, -c("kbet_accept", "ilisi")]))),
+  info = paste("integration metrics - NA without embedding or cell types")
 )
 
 ## bbknn -----------------------------------------------------------------------

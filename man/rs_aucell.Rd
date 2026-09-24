@@ -12,7 +12,8 @@ rs_aucell(f_path, gs_list, cells_to_keep, aucell_params, streaming, verbose)
 \item{gs_list}{List. List with the gene set indices (0-indexed!) of the
 genes of interest.}
 
-\item{cells_to_keep}{Integer. Vector of indices of the cells to keep.}
+\item{cells_to_keep}{Integer. Vector of indices (0-indexed) of the cells to
+keep.}
 
 \item{aucell_params}{List. The AUCell parameters, see
 \code{\link[=params_sc_aucell]{params_sc_aucell()}}.}
@@ -32,6 +33,6 @@ The function will take in a list of gene set indices (0-indexed!) and
 calculate an AUCell type statistic. Three options here: the recovery-curve
 AUC of Aibar, et al. (the actual AUCell statistic), an AUC derived from the
 Mann-Whitney statistic, or average precision. Data can be streamed in
-chunks of 50k cells per or loaded in in one go.
+chunks of 50k cells or loaded in one go.
 }
 \keyword{internal}

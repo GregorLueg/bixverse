@@ -14,7 +14,8 @@ represent samples}
 returned.}
 }
 \value{
-The (normalised) pointwise mutual information matrix.
+The (normalised) pointwise mutual information matrix between the
+columns. Pairs without co-occurrence are \code{-Inf}.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}

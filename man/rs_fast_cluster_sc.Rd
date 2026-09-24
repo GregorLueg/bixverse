@@ -25,8 +25,8 @@ k means clustering to run.}
 \item{resolutions}{Numeric vector. The Louvain resolutions to iterate
 through.}
 
-\item{n_centroids}{Optional integer. The number of clusters to find. If
-not provided, defaults to \code{sqrt(nrow(embd))}.}
+\item{n_centroids}{Optional integer. The number of k-means centroids. If
+not provided, defaults to \code{floor(sqrt(nrow(embd)))}.}
 
 \item{fc_params}{Named list. The fast clustering parameters.}
 
@@ -42,7 +42,15 @@ returned alongside the memberships.}
 detailed verbosity.}
 }
 \value{
-A list with the memberships per resolution.
+A list with the following elements:
+\itemize{
+\item membership - List with one integer membership vector per
+resolution.
+\item k_means_cluster - Integer vector with the k-means cluster per cell
+if \code{return_kmeans = TRUE}, otherwise \code{NULL}.
+\item centroids - Numerical matrix with the k-means centroids if
+\code{return_kmeans = TRUE}, otherwise \code{NULL}.
+}
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}

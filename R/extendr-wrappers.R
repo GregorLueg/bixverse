@@ -41,7 +41,7 @@ rs_cor <- function(x, spearman) .Call(wrap__rs_cor, x, spearman)
 #'
 #' @param x R matrix with doubles.
 #'
-#' @returns The correlation matrix.
+#' @returns The cosine similarity matrix.
 #'
 #' @export
 rs_cos <- function(x) .Call(wrap__rs_cos, x)
@@ -58,7 +58,7 @@ rs_cos <- function(x) .Call(wrap__rs_cos, x)
 #' @param spearman Shall the Spearman correlation be calculated instead of
 #' Pearson.
 #'
-#' @returns The correlation matrix.
+#' @returns The correlation matrix of dimension `ncol(x)` by `ncol(y)`.
 #'
 #' @export
 rs_cor2 <- function(x, y, spearman) .Call(wrap__rs_cor2, x, y, spearman)
@@ -86,9 +86,10 @@ rs_cov2cor <- function(x) .Call(wrap__rs_cov2cor, x)
 #' @param x Numerical matrix. The matrix for which to calculate the pairwise
 #' column distances.
 #' @param distance_type String. One of
-#' `c("euclidean", "manhattan", "canberra", "cosine")`.
+#' `c("euclidean", "manhattan", "canberra", "cosine", "correlation")`.
+#' `"correlation"` is `1 - Pearson r`. Unknown strings raise an error.
 #'
-#' @returns The calculated distance matrix
+#' @returns The calculated distance matrix.
 #'
 #' @export
 rs_dist <- function(x, distance_type) .Call(wrap__rs_dist, x, distance_type)
@@ -101,14 +102,15 @@ rs_dist <- function(x, distance_type) .Call(wrap__rs_dist, x, distance_type)
 #'
 #' @param x R matrix with doubles for which to calculate the mutual information
 #' @param n_bins Optional integer. Number of bins to use. If `NULL` is provided
-#' the function will default to `sqrt(nrows(x))`.
-#' @param strategy String. Binning strategy One of
-#' `c("equal_width", "equal_freq")`. If weird string is provided, it will
-#' default to `"equal_width"`.
+#' the function will default to `sqrt(nrow(x))`.
+#' @param strategy String. Binning strategy. One of
+#' `c("equal_width", "equal_freq")`. Unknown strings default to
+#' `"equal_width"`.
 #' @param normalise Boolean. Shall the normalised mutual information be
 #' calculated via joint entropy.
 #'
-#' @returns The mutual information matrix.
+#' @returns The symmetric mutual information matrix. The diagonal holds the
+#' column entropies, or `0` if `normalise = TRUE`.
 #'
 #' @export
 rs_mutual_info <- function(x, n_bins, strategy, normalise) .Call(wrap__rs_mutual_info, x, n_bins, strategy, normalise)
@@ -126,7 +128,8 @@ rs_mutual_info <- function(x, n_bins, strategy, normalise) .Call(wrap__rs_mutual
 #' @param normalise Shall the normalised pointwise mutual information be
 #' returned.
 #'
-#' @returns The (normalised) pointwise mutual information matrix.
+#' @returns The (normalised) pointwise mutual information matrix between the
+#' columns. Pairs without co-occurrence are `-Inf`.
 #'
 #' @export
 rs_pointwise_mutual_info <- function(x, normalise) .Call(wrap__rs_pointwise_mutual_info, x, normalise)
@@ -141,12 +144,11 @@ rs_pointwise_mutual_info <- function(x, normalise) .Call(wrap__rs_pointwise_mutu
 #' @param x R matrix with doubles.
 #' @param spearman Shall the Spearman correlation be calculated instead of
 #' Pearson.
-#' @param shift Boolean. If you applied a shift, i.e. included the diagonal
-#' values. If `true`, assumes the diagonal values are `1`, otherwise derives
-#' them from the data.
+#' @param shift Boolean. If `TRUE`, the diagonal is excluded, otherwise it is
+#' included.
 #'
 #' @returns The upper triangle of the correlation matrix iterating through the
-#' rows, shifted by one (the diagonal will not be returned).
+#' rows, with or without the diagonal depending on `shift`.
 #'
 #' @export
 rs_cor_upper_triangle <- function(x, spearman, shift) .Call(wrap__rs_cor_upper_triangle, x, spearman, shift)
@@ -155,15 +157,15 @@ rs_cor_upper_triangle <- function(x, spearman, shift) .Call(wrap__rs_cor_upper_t
 #'
 #' @description
 #' `r lifecycle::badge("experimental")`
-#' This function calculates the Jaccard or similarity index between a two given
-#' string vector and a  of other string vectors.
+#' This function calculates the Jaccard similarity or overlap coefficient
+#' between two string vectors.
 #'
-#' @param s_1 The String vector against which to calculate the set
-#' similarities.
-#' @param s_2 The String vector against which to calculate the set
-#' similarities.
+#' @param s_1 Character vector. The first set.
+#' @param s_2 Character vector. The second set.
 #' @param overlap_coefficient Boolean. Use the overlap coefficient instead of
-#' the Jaccard similarity be calculated.
+#' the Jaccard similarity.
+#'
+#' @returns The Jaccard similarity or overlap coefficient.
 #'
 #' @export
 rs_set_similarity <- function(s_1, s_2, overlap_coefficient) .Call(wrap__rs_set_similarity, s_1, s_2, overlap_coefficient)
@@ -177,9 +179,9 @@ rs_set_similarity <- function(s_1, s_2, overlap_coefficient) .Call(wrap__rs_set_
 #'
 #' @param list A named R list.
 #' @param overlap_coefficient Boolean. Use the overlap coefficient instead of
-#' the Jaccard similarity be calculated.
+#' the Jaccard similarity.
 #'
-#' @returns A list with the following items:
+#' @returns A list with the following items, one entry per unordered pair:
 #' \itemize{
 #'     \item from - Name of element i
 #'     \item to - Name of element j
@@ -193,32 +195,35 @@ rs_set_similarity_list <- function(list, overlap_coefficient) .Call(wrap__rs_set
 #'
 #' @description
 #' `r lifecycle::badge("experimental")`
-#' This function calculates the Jaccard or similarity index between two lists.
+#' This function calculates the Jaccard similarity or overlap coefficient
+#' between all elements of two lists.
 #'
 #' @param s_1_list R list. The first list of string elements you want to
 #' compare against.
 #' @param s_2_list R list. The second list of string elements you want to
 #' compare against.
 #' @param overlap_coefficient Boolean. Use the overlap coefficient instead of
-#' the Jaccard similarity be calculated.
+#' the Jaccard similarity.
 #'
-#' @returns A matrix of the Jaccard similarities between the elements. The rows
-#' represent `s_1_list` and the column `s_2_list`.
+#' @returns A matrix of the similarities between the elements. The rows
+#' represent `s_1_list` and the columns `s_2_list`.
 #'
 #' @export
 rs_set_similarity_list2 <- function(s_1_list, s_2_list, overlap_coefficient) .Call(wrap__rs_set_similarity_list2, s_1_list, s_2_list, overlap_coefficient)
 
-#' Calculate rapidbly Jaccard similarities between rows
+#' Calculate rapidly Jaccard similarities between rows
 #'
 #' @description
 #' `r lifecycle::badge("experimental")`
-#' Helper function to quickly calculate the Jaccard similarity between the rows
-#' across the two matrices.
+#' Helper function to quickly calculate the Jaccard similarity between
+#' matching rows of the two matrices. Each row is treated as a set of
+#' integers (duplicates removed).
 #'
 #' @param data_1 Integer matrix. The first matrix to compare.
-#' @param data_2 Integer matrix. The second matrix to compare.
+#' @param data_2 Integer matrix. The second matrix to compare. Needs the same
+#' number of rows as `data_1`.
 #'
-#' @returns The average Jaccard similarity.
+#' @returns The Jaccard similarity averaged over the rows.
 #'
 #' @export
 rs_jaccard_row_integers <- function(data_1, data_2) .Call(wrap__rs_jaccard_row_integers, data_1, data_2)
@@ -227,10 +232,13 @@ rs_jaccard_row_integers <- function(data_1, data_2) .Call(wrap__rs_jaccard_row_i
 #'
 #' @description
 #' `r lifecycle::badge("experimental")`
+#' Calculates the pairwise Hamming distance between the columns, i.e. the
+#' fraction of rows in which two columns differ.
 #'
 #' @param x Integer matrix. The integers represent the factor data.
 #'
-#' @returns The Hamming distance matrix
+#' @returns The Hamming distance matrix between the columns, values in
+#' `[0, 1]`.
 #'
 #' @export
 rs_hamming_dist <- function(x) .Call(wrap__rs_hamming_dist, x)
@@ -239,12 +247,16 @@ rs_hamming_dist <- function(x) .Call(wrap__rs_hamming_dist, x)
 #'
 #' @description
 #' `r lifecycle::badge("experimental")`
+#' Calculates the pairwise Gower distance between the rows. Continuous columns
+#' contribute the range-normalised absolute difference, categorical columns a
+#' simple mismatch.
 #'
 #' @param x Numerical matrix. Converted matrix of continuous and categorical
-#' variables as numerical values.
-#' @param is_cat Boolean. Which of the columns represent categorical values.
+#' variables as numerical values. Rows = samples, columns = features.
+#' @param is_cat Logical vector of length `ncol(x)`. Which of the columns
+#' represent categorical values.
 #'
-#' @returns The Gower distance matrix between the rows
+#' @returns The Gower distance matrix between the rows, values in `[0, 1]`.
 #'
 #' @export
 rs_gower_dist <- function(x, is_cat) .Call(wrap__rs_gower_dist, x, is_cat)
@@ -259,9 +271,8 @@ rs_gower_dist <- function(x, is_cat) .Call(wrap__rs_gower_dist, x, is_cat)
 #'
 #' @param data Numeric vector. The vector of for example correlation
 #' coefficients that you want to use to go back to a dense matrix.
-#' @param shift Boolean. If you applied a shift, i.e. included the diagonal
-#' values. If `true`, assumes the diagonal values are `1`, otherwise derives
-#' them from the data.
+#' @param shift Boolean. If `TRUE`, `data` excludes the diagonal and the
+#' diagonal is set to `1`. If `FALSE`, `data` includes the diagonal.
 #' @param n Integer. Original dimension (i.e., ncol/nrow) of the matrix to be
 #' reconstructed.
 #'
@@ -275,16 +286,14 @@ rs_upper_triangle_to_dense <- function(data, shift, n) .Call(wrap__rs_upper_tria
 #' @description
 #' `r lifecycle::badge("experimental")`
 #' This function generates a vector from the upper triangle of a given
-#' symmetric matrix. You have the option to remove the diagonal with setting
-#' shift to 1.
+#' symmetric matrix, iterating through the rows. You have the option to
+#' remove the diagonal with setting `shift = TRUE`.
 #'
-#' @param x Numeric vector. The vector of correlation coefficients that you
-#' want to use to go back to a dense matrix.
-#' @param shift Boolean. If you applied a shift, i.e. included the diagonal
-#' values. If `true`, assumes the diagonal values are `1`, otherwise derives
-#' them from the data.
+#' @param x Numeric matrix. The symmetric matrix to flatten.
+#' @param shift Boolean. If `TRUE`, the diagonal is excluded, otherwise it is
+#' included.
 #'
-#' @returns The dense R matrix.
+#' @returns Numeric vector with the upper triangle values.
 #'
 #' @export
 rs_dense_to_upper_triangle <- function(x, shift) .Call(wrap__rs_dense_to_upper_triangle, x, shift)
@@ -293,11 +302,13 @@ rs_dense_to_upper_triangle <- function(x, shift) .Call(wrap__rs_dense_to_upper_t
 #'
 #' @description
 #' `r lifecycle::badge("experimental")`
+#' Sorts `x` in decreasing order and sums `x[i] / i^2`, normalised by the same
+#' sum over a vector of ones of equal length.
 #'
 #' @param x The numeric vector (should be between 0 and 1) for which to
 #' calculate the harmonic sum
 #'
-#' @returns Returns the harmonic sum according to the OT calculation.
+#' @returns The normalised harmonic sum according to the OT calculation.
 #'
 #' @export
 rs_ot_harmonic_sum <- function(x) .Call(wrap__rs_ot_harmonic_sum, x)
@@ -309,12 +320,13 @@ rs_ot_harmonic_sum <- function(x) .Call(wrap__rs_ot_harmonic_sum, x)
 #' Applies a range normalisation on an R vector.
 #'
 #' @param x Numerical vector. The data to normalise.
-#' @param max_val Numeric. The upper bound value to normalise into. If set to 1,
-#' the function will be equal to a min-max normalisation.
-#' @param min_val Numeric. The lower bound value to normalise into. If set to 0,
-#' the function will equal a min-max normalisation.
+#' @param max_val Numeric. The upper bound value to normalise into. If set to
+#' 1, the function will be equal to a min-max normalisation.
+#' @param min_val Numeric. The lower bound value to normalise into. If set to
+#' 0, the function will equal a min-max normalisation.
 #'
-#' @returns Normalised values
+#' @returns Normalised values. A constant vector returns `max_val` for every
+#' element.
 #'
 #' @export
 rs_range_norm <- function(x, max_val, min_val) .Call(wrap__rs_range_norm, x, max_val, min_val)
@@ -323,14 +335,16 @@ rs_range_norm <- function(x, max_val, min_val) .Call(wrap__rs_range_norm, x, max
 #'
 #' @description
 #' `r lifecycle::badge("experimental")`
-#' This function calculates the critical value for a given set based on random
-#' permutations and a given alpha value.
+#' This function calculates the critical value for a given set based on a
+#' bootstrap sample (with replacement) and a given alpha value. The sample is
+#' sorted in decreasing order and the value at the upper `alpha` tail is
+#' returned.
 #'
 #' @param values Numeric vector. The full data set for which to calculate the
 #' critical value.
-#' @param iters Integer. Number of random permutations to use.
-#' @param alpha Float. The alpha value. For example, 0.001 would mean that the
-#' critical value is smaller than 0.1 percentile of the random permutations.
+#' @param iters Integer. Size of the bootstrap sample.
+#' @param alpha Float. The alpha value. For example, 0.001 would return the
+#' value exceeded by roughly 0.1 percent of the bootstrap sample.
 #' @param seed Integer. For reproducibility purposes
 #'
 #' @returns The critical value for the given parameters.
@@ -344,13 +358,13 @@ rs_critval <- function(values, iters, alpha, seed) .Call(wrap__rs_critval, value
 #'
 #' @description
 #' `r lifecycle::badge("experimental")`
-#' This function calculates the critical value for a given set based on random
-#' permutations and a given alpha value.
+#' Same as [bixverse::rs_critval()], but the values are taken from the upper
+#' triangle (diagonal excluded) of a symmetric matrix.
 #'
-#' @param mat Numeric matrix. The (symmetric matrix with all of the values).
-#' @param iters Integer. Number of random permutations to use.
-#' @param alpha Float. The alpha value. For example, 0.001 would mean that the
-#' critical value is smaller than 0.1 percentile of the random permutations.
+#' @param mat Numeric matrix. The symmetric matrix with all of the values.
+#' @param iters Integer. Size of the bootstrap sample.
+#' @param alpha Float. The alpha value. For example, 0.001 would return the
+#' value exceeded by roughly 0.1 percent of the bootstrap sample.
 #' @param seed Integer. For reproducibility purposes
 #'
 #' @returns The critical value for the given parameters.
@@ -364,13 +378,13 @@ rs_critval_mat <- function(mat, iters, alpha, seed) .Call(wrap__rs_critval_mat, 
 #'
 #' @description
 #' `r lifecycle::badge("experimental")`
-#' Applies a radial basis function (RBF) to a given distance vector. Has at the
+#' Applies a radial basis function (RBF) to a given distance vector. Has the
 #' option to apply a Gaussian, Bump or Inverse Quadratic RBF.
 #'
-#' @param x Numeric vector. The distances you wish to apply the Gaussian kernel
-#' onto.
+#' @param x Numeric vector. The distances you wish to apply the RBF onto.
 #' @param epsilon Float. Epsilon parameter for the RBF.
-#' @param rbf_type String. Needs to be from `c("gaussian", "bump", "inverse_quadratic")`.
+#' @param rbf_type String. Needs to be from
+#' `c("gaussian", "bump", "inverse_quadratic")`. Other values raise an error.
 #'
 #' @returns The affinities after the Kernel was applied.
 #'
@@ -381,14 +395,13 @@ rs_rbf_function <- function(x, epsilon, rbf_type) .Call(wrap__rs_rbf_function, x
 #'
 #' @description
 #' `r lifecycle::badge("experimental")`
-#' Applies a radial basis function (RBF) to a given distance matrix. Has at the
+#' Applies a radial basis function (RBF) to a given distance matrix. Has the
 #' option to apply a Gaussian, Bump or Inverse Quadratic RBF.
 #'
-#' @param x Numeric Matrix. The distances you wish to apply the Gaussian kernel
-#' onto.
+#' @param x Numeric Matrix. The distances you wish to apply the RBF onto.
 #' @param epsilon Float. Epsilon parameter for the RBF.
 #' @param rbf_type String. Needs to be from
-#' `c("gaussian", "bump", "inverse_quadratic")`.
+#' `c("gaussian", "bump", "inverse_quadratic")`. Other values raise an error.
 #'
 #' @returns The affinities after the Kernel was applied.
 #'
@@ -411,14 +424,14 @@ rs_rbf_function_mat <- function(x, epsilon, rbf_type) .Call(wrap__rs_rbf_functio
 #' @param epsilon_vec Numeric vector. The epsilons you wish to use/test.
 #' @param original_dim Integer. The original dimensions of the symmetric
 #' distance matrix.
-#' @param shift Boolean. Was the matrix shifted up (false = diagonal included;
-#' true diagonal not incldued).
-#' @param rbf_type String. One of `c('gaussian', 'bump', 'inverse_quadratic')`
-#' for the currently implemented RBF function. Weird strings will default
-#' to Gaussian.
+#' @param shift Boolean. Was the matrix shifted up (`FALSE` = diagonal
+#' included; `TRUE` = diagonal not included).
+#' @param rbf_type String. One of `c("gaussian", "bump", "inverse_quadratic")`
+#' for the currently implemented RBF function. Unknown strings default to
+#' Gaussian.
 #'
-#' @returns A matrix with rows being the epsilons tested, and columns
-#' representing the summed affinity to other features.
+#' @returns A matrix with rows representing the features and columns the
+#' epsilons tested. Values are the summed affinity to other features.
 #'
 #' @export
 #'
@@ -429,7 +442,9 @@ rs_rbf_iterate_epsilons <- function(dist, epsilon_vec, original_dim, shift, rbf_
 #'
 #' @description
 #' `r lifecycle::badge("experimental")`
-#' This function calculates rapidly AUCs based on an approximation.
+#' This function calculates rapidly AUCs based on an approximation: the
+#' fraction of `iters` random (positive, negative) pairs, drawn with
+#' replacement, where the positive score is larger.
 #'
 #' @param pos_scores The scores of your hits.
 #' @param neg_scores The scores of your non-hits.
@@ -437,7 +452,7 @@ rs_rbf_iterate_epsilons <- function(dist, epsilon_vec, original_dim, shift, rbf_
 #' Recommended size: 10000L.
 #' @param seed Seed.
 #'
-#' @returns The AUC.
+#' @returns The approximate AUC.
 #'
 #' @export
 rs_fast_auc <- function(pos_scores, neg_scores, iters, seed) .Call(wrap__rs_fast_auc, pos_scores, neg_scores, iters, seed)
@@ -478,7 +493,11 @@ rs_create_random_aucs <- function(score_vec, size_pos, random_iters, auc_iters, 
 #' calculate the Hedge's G effect.
 #' @param small_sample_correction Shall the small sample correction be applied.
 #'
-#' @returns Returns the harmonic sum according to the OT calculation.
+#' @returns A list with the following items:
+#' \itemize{
+#'  \item effect_sizes - Hedge's G effect size per feature.
+#'  \item standard_errors - Standard error of the effect size per feature.
+#' }
 #'
 #' @export
 rs_hedges_g <- function(mat_a, mat_b, small_sample_correction) .Call(wrap__rs_hedges_g, mat_a, mat_b, small_sample_correction)
@@ -487,7 +506,7 @@ rs_hedges_g <- function(mat_a, mat_b, small_sample_correction) .Call(wrap__rs_he
 #'
 #' @description
 #' `r lifecycle::badge("experimental")`
-#' Rust implementation that will be faster if you have an terrifying amount of
+#' Rust implementation that will be faster if you have a terrifying amount of
 #' p-values to adjust.
 #'
 #' @param pvals Numeric vector. The p-values you wish to adjust.
@@ -507,7 +526,7 @@ rs_fdr_adjustment <- function(pvals) .Call(wrap__rs_fdr_adjustment, pvals)
 #' @param n Number of black balls in the urn.
 #' @param k The number of balls drawn out of the urn.
 #'
-#' @returns P-value (with lower.tail set to False)
+#' @returns P-value, i.e. `P(X > q)` (equivalent to `lower.tail = FALSE`).
 #'
 #' @export
 rs_phyper <- function(q, m, n, k) .Call(wrap__rs_phyper, q, m, n, k)
@@ -518,20 +537,20 @@ rs_phyper <- function(q, m, n, k) .Call(wrap__rs_phyper, q, m, n, k)
 #' `r lifecycle::badge("experimental")`
 #'
 #' @param x Numerical vector to test.
-#' @param threshold Numeric. Number of MADs in either direction that is
-#' acceptable.
+#' @param threshold Numeric. Number of (unscaled) MADs from the median in
+#' either direction that is acceptable.
 #' @param direction String. One of `c("below", "above", "twosided")`. Shall
 #' the outlier direction be done for values below the threshold, above the
-#' threshold or in both directions. Weird strings default to twosided tests.
+#' threshold or in both directions. Unknown strings default to twosided tests.
 #'
 #' @returns A list with the following items:
 #' \itemize{
 #'  \item outlier - Boolean vector if element is an outlier
-#'  \item threshold - Applied final threshold
+#'  \item threshold - Applied margin, i.e. `threshold * MAD`.
 #' }
 #'
 #' @details
-#' Should you provide too short vectors, the function will return an empty
+#' Should you provide an empty vector, the function will return an empty
 #' boolean and a threshold of 0.
 #'
 #' @export
@@ -548,13 +567,14 @@ rs_mad_outlier <- function(x, threshold, direction) .Call(wrap__rs_mad_outlier, 
 #' @param scale Boolean. Shall the columns be variance normalised. (Mean
 #' centring will automatically occur.)
 #' @param top_pcs Optional integer. Only return the top PCs (under the hood
-#' all of them will be calculated).
+#' all of them will be calculated). `NULL` returns all.
 #'
 #' @returns A list with:
 #' \itemize{
 #'   \item scores - The product of x (centred and potentially scaled) with v.
 #'   \item v - v matrix of the SVD.
-#'   \item s - Eigenvalues of the SVD.
+#'   \item s - Standard deviations of the PCs, i.e. singular values divided
+#'   by `sqrt(nrow(x) - 1)`.
 #'   \item scaled - Boolean. Was the matrix scaled.
 #' }
 #'
@@ -570,19 +590,20 @@ rs_prcomp <- function(x, scale, top_pcs) .Call(wrap__rs_prcomp, x, scale, top_pc
 #' loss in precision.
 #'
 #' @param x Numeric matrix. Rows = samples, columns = features.
-#' @param rank Integer. The rank to use.
 #' @param scale Boolean. Shall the columns be variance normalised. (Mean
 #' centring will automatically occur.)
+#' @param rank Integer. The rank to use.
 #' @param seed Integer. Random seed for reproducibility.
-#' @param oversampling Integer. Defaults to `10L` if nothing is provided.
-#' @param n_power_iter Integer. How often shall the QR decomposition be
-#' applied. Defaults to `2L` if nothing is provided.
+#' @param oversampling Optional integer. Defaults to `10L` if `NULL`.
+#' @param n_power_iter Optional integer. Number of power iterations (each with
+#' a QR decomposition). Defaults to `2L` if `NULL`.
 #'
 #' @returns A list with:
 #' \itemize{
-#'   \item u - u matrix of the SVD.
+#'   \item scores - u matrix of the SVD multiplied by the singular values.
 #'   \item v - v matrix of the SVD.
-#'   \item s - Eigenvalues of the SVD.
+#'   \item s - Singular values of the SVD.
+#'   \item scaled - Boolean. Was the matrix scaled.
 #' }
 #'
 #' @export
@@ -592,15 +613,16 @@ rs_random_svd <- function(x, scale, rank, seed, oversampling, n_power_iter) .Cal
 #'
 #' @description
 #' `r lifecycle::badge("experimental")`
-#' This function calculate the contrastive PCA given a target covariance matrix
-#' and the background covariance matrix you wish to subtract. The alpha
+#' This function calculates the contrastive PCA given a target covariance
+#' matrix and the background covariance matrix you wish to subtract. The alpha
 #' parameter controls how much of the background covariance you wish to remove.
-#' You have the options to return the feature loadings and you can specificy
+#' You have the options to return the feature loadings and you can specify
 #' the number of cPCAs to return.
 #'
 #' @param target_covar The co-variance matrix of the target data set.
 #' @param background_covar The co-variance matrix of the background data set.
-#' @param target_mat The original values of the target matrix.
+#' @param target_mat The original values of the target matrix. Rows =
+#' samples, columns = features.
 #' @param alpha How much of the background co-variance should be removed.
 #' @param n_pcs How many contrastive PCs to return
 #' @param return_loadings Shall the loadings be returned from the contrastive
@@ -608,9 +630,10 @@ rs_random_svd <- function(x, scale, rank, seed, oversampling, n_power_iter) .Cal
 #'
 #' @returns A list containing:
 #'  \itemize{
-#'   \item factors - The factors of the contrastive PCA.
-#'   \item loadings - The loadings of the contrastive PCA. Will be NULL if
-#'    return_loadings is set to FALSE.
+#'   \item factors - The factors of the contrastive PCA, i.e. `target_mat`
+#'    multiplied by the loadings. Samples x `n_pcs`.
+#'   \item loadings - The loadings (top eigenvectors) of the contrastive PCA.
+#'    Features x `n_pcs`. Will be `NULL` if `return_loadings = FALSE`.
 #' }
 #'
 #' @export
@@ -620,18 +643,21 @@ rs_contrastive_pca <- function(target_covar, background_covar, target_mat, alpha
 #'
 #' @description
 #' `r lifecycle::badge("experimental")`
+#' Fits a Loess regression of `y` on `x`. Points where either value is
+#' non-finite are dropped from the fit.
 #'
 #' @param x Numeric. The x values to fit.
 #' @param y Numeric. The y values to fit.
-#' @param span Numeric. The span parameter. Needs to be between 0.1 and 1.
+#' @param span Numeric. The span parameter. Needs to be in `(0, 1]`.
 #' @param degree Integer. Either 1 (linear) or 2 (quadratic). Other values
 #' will cause an error.
 #'
 #' @returns A list with the following items
 #' \itemize{
-#'   \item predicted - The predicted values.
-#'   \item residuals - The residuals for every data point.
-#'   \item valid_idx - Which data indices were included.
+#'   \item predicted - The predicted values, `0` for dropped points.
+#'   \item residuals - The residuals for every data point, `0` for dropped
+#'   points.
+#'   \item valid_idx - 1-based indices of the points included in the fit.
 #' }
 #'
 #' @export
@@ -641,22 +667,25 @@ rs_2d_loess <- function(x, y, span, degree) .Call(wrap__rs_2d_loess, x, y, span,
 #'
 #' @description
 #' `r lifecycle::badge("experimental")`
-#' This function takes the values from an upper triangle matrix
-#' the shift and the nrows/ncols and returns a list.
+#' This function takes the values from an upper triangle matrix, the shift
+#' and the nrows/ncols and returns the full symmetric matrix as a compressed
+#' sparse list.
 #'
 #' @param value Numeric vector. The upper triangle values.
-#' @param shift Boolean. Was the matrix shifted up (false = diagonal included;
-#' true diagonal not incldued).
+#' @param shift Boolean. Was the matrix shifted up (`FALSE` = diagonal
+#' included; `TRUE` = diagonal not included).
 #' @param n Integer. The number of columns/rows in the symmetric matrix.
 #' @param cs_type String. One of `c("csr", "csc")`. Which type of list to
-#' return.
+#' return. Other values raise an error.
 #'
 #' @returns A list containing:
 #'  \itemize{
-#'   \item data - A vector of lists with the elements. (Related to the way
-#'   Robj are stored in Rust.)
-#'   \item row_indices - A vector of integers with the row indices.
-#'   \item col_ptr - A vector of integers with the column pointers.
+#'   \item data - Numeric vector with the non-zero values.
+#'   \item indptr - Integer vector with the index pointers.
+#'   \item indices - Integer vector with the 0-based indices.
+#'   \item nrow - Number of rows.
+#'   \item ncol - Number of columns.
+#'   \item cs_type - `"csr"` or `"csc"`.
 #' }
 #'
 #' @export
@@ -752,31 +781,33 @@ rs_simulate_dropouts <- function(count_mat, sparsity_params) .Call(wrap__rs_simu
 #' @description
 #' `r lifecycle::badge("experimental")`
 #' Helper function to generate synthetic single cell data with optional
-#' bathc effects and sample bias.
+#' batch effects and sample bias.
 #'
 #' @param n_cells Integer. Number of cells to generate.
 #' @param n_genes Integer. Number of genes to generate.
-#' @param n_batches Integer. Number of the batches to generated.
+#' @param n_batches Integer. Number of batches to generate.
 #' @param n_samples Optional integer. Shall the cells be distributed over
-#' `n_samples` samples.
-#' @param cell_configs A nested list that indicates which gene indices
-#' are markers for which cell.
-#' @param batch_effect_strength String. One of `c("strong", "medium", "low")`.
-#' Defines the strength of the added batch effect.
+#' `n_samples` samples. Only used together with `sample_bias`.
+#' @param cell_configs List. One element per cell type, each a list with a
+#' `marker_genes` integer vector of 0-based marker gene indices.
+#' @param batch_effect_strength String. One of `c("strong", "medium", "weak")`.
+#' Defines the strength of the added batch effect. Unknown values fall back to
+#' `"strong"`.
 #' @param sample_bias Optional string. One of
-#' `c("even", "slightly_uneven", "very_uneven")`
+#' `c("even", "slightly_uneven", "very_uneven")`. Other values raise an error.
 #' @param seed Integer. Random seed for reproducibility.
 #'
 #' @returns A list with the following items.
 #' \itemize{
-#'   \item data - The synthetic raw counts.
+#'   \item data - The synthetic raw counts, CSR over cells.
 #'   \item indptr - The index pointers of the cells.
-#'   \item indices - The indices of the genes for the given cells.
-#'   \item nrow - Number of rows.
-#'   \item ncol - Number of columns
-#'   \item cell_type_indices - Vector indicating which cell type this is.
-#'   \item batch_indices - Vector indicating the batch.
-#'   \item sample_indices - Optional sample indices if asked for.
+#'   \item indices - The 0-based gene indices for the given cells.
+#'   \item nrow - Number of cells.
+#'   \item ncol - Number of genes.
+#'   \item cell_type_indices - 0-based cell type per cell.
+#'   \item batch_indices - 0-based batch per cell.
+#'   \item sample_indices - 0-based sample per cell. `NULL` unless both
+#'   `n_samples` and `sample_bias` are provided.
 #' }
 #'
 #' @export
@@ -792,14 +823,14 @@ rs_synthetic_sc_data_with_cell_types <- function(n_cells, n_genes, n_batches, n_
 #' over different sample to cell type patterns
 #'
 #' @param cell_type_indices Integer vector. Each integer represents a cell
-#' type.
+#' type (0-based, as returned by `rs_synthetic_sc_data_with_cell_types()`).
 #' @param n_samples Integer. Number of different sample ids to generate.
 #' @param sample_bias String. One of
-#' `c("even", "slightly_uneven", "very_uneven")`. Determins the cell type
-#' to sample id associations.
+#' `c("even", "slightly_uneven", "very_uneven")`. Determines the cell type
+#' to sample id associations. Other values raise an error.
 #' @param seed Integer. Random seed for reproducibility.
 #'
-#' @returns An integer vector representing the samples.
+#' @returns An integer vector with the 0-based sample per cell.
 #'
 #' @export
 #'
@@ -817,7 +848,8 @@ rs_sample_ids_for_cell_types <- function(cell_type_indices, n_samples, sample_bi
 #' generic background-only protein. Counts follow a negative-binomial draw with
 #' an additive background plus per-cell-type signal, a per-cell capture
 #' efficiency factor, and an optional per-batch staining multiplier. Cell type
-#' and batch assignment match `rs_synthetic_sc_with_cell_types()` cell-for-cell
+#' and batch assignment match `rs_synthetic_sc_data_with_cell_types()`
+#' cell-for-cell
 #' for matched inputs, so RNA and ADT can be paired for multi-modal tests.
 #'
 #' @param n_cells Integer. Number of cells (matrix rows).
@@ -906,6 +938,61 @@ rs_synthetic_sc_adt_with_cell_types <- function(n_cells, n_proteins, n_batches, 
 #' @keywords internal
 rs_synthetic_sc_dialogue_data <- function(n_samples, cells_per_sample, n_cell_types, n_features, n_sample_features, n_genes, n_planted, seed) .Call(wrap__rs_synthetic_sc_dialogue_data, n_samples, cells_per_sample, n_cell_types, n_features, n_sample_features, n_genes, n_planted, seed)
 
+#' Generates synthetic single cell counts with a planted ambient profile
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Builds the fixture CellSweep is tested against. Every real barcode is a
+#' two-component multinomial: a planted fraction `alpha` of its library comes
+#' from the soup, the rest from its own cell type profile. Empty droplets are
+#' pure soup at a much smaller library size, which is what the ambient profile
+#' is estimated off. Real barcodes come first in the matrix, empty droplets
+#' after, and cell types are assigned round-robin over the real barcodes.
+#'
+#' The soup is cell type one plus flat background rather than a mixture of
+#' every profile. A soup sitting in the span of the cell type profiles makes
+#' the contamination fraction unidentifiable.
+#'
+#' @param n_real Integer. Number of real barcodes.
+#' @param n_empty Integer. Number of empty droplets. At least 30, and the
+#' ambient profile gets noisy well above that.
+#' @param n_genes Integer. Number of genes.
+#' @param n_celltypes Integer. Number of cell types.
+#' @param n_markers Integer. Width of each cell type's marker block. Blocks
+#' are disjoint and laid out from the first gene.
+#' @param marker_weight Float. Enrichment of a marker gene over background in
+#' its own cell type's profile. Must exceed 1.
+#' @param ambient_dominance Float. Fraction of the soup coming from the first
+#' cell type. The remainder is flat background.
+#' @param alpha_mean Float. Mean planted ambient fraction across real
+#' barcodes.
+#' @param alpha_sd Float. Spread of the planted ambient fraction.
+#' @param real_lib_size Integer. Expected library size of a real barcode.
+#' @param empty_lib_size Integer. Expected library size of an empty droplet.
+#' @param seed Integer. For reproducibility.
+#'
+#' @returns A list with the following items.
+#' \itemize{
+#'   \item data - Integer vector. Non-zero counts of the CSR matrix.
+#'   \item indptr - Integer vector. Row pointers of the CSR matrix.
+#'   \item indices - Integer vector. 0-indexed(!) gene positions.
+#'   \item nrow - Integer. Number of barcodes, real plus empty.
+#'   \item ncol - Integer. Number of genes.
+#'   \item cell_type_indices - Integer vector. 0-indexed(!) cell type per real
+#'   barcode. Empty droplets have none.
+#'   \item is_empty - Logical vector over all barcodes.
+#'   \item alpha_true - Numeric vector. Planted ambient fraction per real
+#'   barcode.
+#'   \item ambient_true - Numeric vector. The soup, summing to one.
+#'   \item celltype_profiles_true - Numeric vector. Cell type profiles,
+#'   row-major `n_celltypes x n_genes`, each row summing to one.
+#' }
+#'
+#' @export
+#'
+#' @keywords internal
+rs_synthetic_sc_cellsweep_data <- function(n_real, n_empty, n_genes, n_celltypes, n_markers, marker_weight, ambient_dominance, alpha_mean, alpha_sd, real_lib_size, empty_lib_size, seed) .Call(wrap__rs_synthetic_sc_cellsweep_data, n_real, n_empty, n_genes, n_celltypes, n_markers, marker_weight, ambient_dominance, alpha_mean, alpha_sd, real_lib_size, empty_lib_size, seed)
+
 #' Load in h5ad data via Rust
 #'
 #' @description
@@ -914,19 +1001,22 @@ rs_synthetic_sc_dialogue_data <- function(n_samples, cells_per_sample, n_cell_ty
 #' CSR with cells x genes.
 #'
 #' @param f_path File path. The path to the h5ad file.
-#' @param cs_type String. Is the data stored in CSC or CSR.
+#' @param cs_type String. One of `c("csr", "csc")`. How the data is stored in
+#' the file. Other values raise an error.
 #' @param nrows Integer. Number of rows in the file.
 #' @param ncols Integer. Number of columns in the file.
-#' @param cell_quality List. Specifiying the cell quality. Please refer
+#' @param cell_quality List. Specifying the cell quality. Please refer
 #' to [bixverse::params_sc_min_quality()].
-#' @param slot String. In which slot the raw data can be found.
+#' @param slot String. In which slot the raw data can be found. One of
+#' `c("X", "raw", "layers.counts")`. Unknown strings default to `"X"`.
 #' @param verbose Boolean. Controls verbosity of the function
 #'
-#' @returns A list with:
+#' @returns A list with the CSR data (cells x genes) of the cells and genes
+#' passing `cell_quality`:
 #' \itemize{
-#'   \item data - The data of the sparse matrix stored on the h5ad file.
-#'   \item indices - The indices of the sparse matrix stored in the h5ad file.
-#'   \item indptr - The indptr of the sparse matrix stored in the h5ad file.
+#'   \item data - The counts of the sparse matrix.
+#'   \item indices - The 0-based gene indices of the sparse matrix.
+#'   \item indptr - The index pointers of the sparse matrix.
 #'   \item no_genes - No of genes in the sparse matrix (i.e., ncol).
 #'   \item no_cells - No of cells in the sparse matrix (i.e., nrow).
 #' }
@@ -1008,7 +1098,8 @@ rs_blitzgsea_score <- function(stats, pathways, null_model, blitz_params) .Call(
 #' @description
 #' `r lifecycle::badge("experimental")`
 #'
-#' @param stats Named numerical vector. Needs to be sorted. The gene level statistics.
+#' @param stats Named numerical vector. Needs to be sorted. The gene level
+#' statistics.
 #' @param pathway_r String vector. The genes in the pathway.
 #'
 #' @returns The enrichment score
@@ -1023,12 +1114,14 @@ rs_calc_es <- function(stats, pathway_r) .Call(wrap__rs_calc_es, stats, pathway_
 #' @description
 #' `r lifecycle::badge("experimental")`
 #'
-#' @param gene_universe Character Vector. The genes represented in the gene universe.
-#' @param pathway_list List. A named list with each element containing the genes for this
-#' pathway.
+#' @param gene_universe Character Vector. The genes represented in the gene
+#' universe.
+#' @param pathway_list List. A named list with each element containing the
+#' genes for this pathway.
 #'
-#' @returns Returns a list with the index positions of the gene set genes in the gene universe.
-#' Importantly, these are indexed to R's 1-indexing!
+#' @returns Returns a list with the sorted index positions of the gene set
+#' genes in the gene universe. Importantly, these are indexed to R's
+#' 1-indexing! Non-character elements are passed through unchanged.
 #'
 #' @export
 #'
@@ -1040,9 +1133,9 @@ rs_get_gs_indices <- function(gene_universe, pathway_list) .Call(wrap__rs_get_gs
 #' @description
 #' `r lifecycle::badge("experimental")`
 #'
-#' @param stats Numeric vector. The gene level statistic. Needs to
+#' @param stats Numeric vector. The gene level statistic. Needs to be
 #' sorted in descending nature.
-#' @param gs_idx Integer vector. The indices of the gene set genes.
+#' @param gs_idx Integer vector. The 1-based indices of the gene set genes.
 #' @param gsea_param Float. The GSEA parameter. Usually defaults to 1.0.
 #' @param return_leading_edge Boolean. Return the leading edge indices.
 #' @param return_all_extremes Boolean. Shall the extreme values be returned
@@ -1050,8 +1143,8 @@ rs_get_gs_indices <- function(gene_universe, pathway_list) .Call(wrap__rs_get_gs
 #'
 #' @returns List with the following elements
 #' \itemize{
-#'     \item gene_stat Enrichment score for that gene set
-#'     \item leading_edge Indicies of the leading edge genes.
+#'     \item es Enrichment score for that gene set
+#'     \item leading_edge 1-based indices of the leading edge genes.
 #'     \item top Top values of the curve.
 #'     \item bottom Bottom values of the curve.
 #' }
@@ -1066,7 +1159,7 @@ rs_calc_gsea_stats <- function(stats, gs_idx, gsea_param, return_leading_edge, r
 #' @description
 #' `r lifecycle::badge("experimental")`
 #'
-#' @param stats Numeric vector. The gene level statistic. Needs to
+#' @param stats Numeric vector. The gene level statistic. Needs to be
 #' sorted in descending nature.
 #' @param pathway_scores Numeric vector. The enrichment scores for the
 #' pathways
@@ -1087,8 +1180,8 @@ rs_calc_gsea_stats <- function(stats, gs_idx, gsea_param, return_leading_edge, r
 #'     \item size Pathway size.
 #' }
 #'
-#' If `return_add_stats` is set to true, there is additional elements in the
-#' list:
+#' If `return_add_stats` is set to `TRUE`, there are additional elements in
+#' the list:
 #' \itemize{
 #'     \item le_zero Number of times the permutation was less than zero.
 #'     \item ge_zero Number of times the permutation was greater than zero.
@@ -1104,13 +1197,13 @@ rs_calc_gsea_stat_cumulative_batch <- function(stats, pathway_scores, pathway_si
 #' @description
 #' `r lifecycle::badge("experimental")`
 #'
-#' @param stats Numeric vector. The gene level statistic. Needs to
+#' @param stats Numeric vector. The gene level statistic. Needs to be
 #' sorted in descending nature.
 #' @param pathway_scores Numeric vector. The enrichment scores for the
 #' pathways
 #' @param pathway_sizes Integer vector. The sizes of the pathways.
 #' @param iters Integer. Number of permutations.
-#' @param seed Integer For reproducibility purposes
+#' @param seed Integer. For reproducibility purposes
 #'
 #' @returns List with the following elements
 #' \itemize{
@@ -1132,19 +1225,23 @@ rs_calc_gsea_stat_traditional_batch <- function(stats, pathway_scores, pathway_s
 #' @description
 #' `r lifecycle::badge("experimental")`
 #'
-#' @param stats Named numerical vector. Needs to be sorted. The gene level statistics.
-#' @param es Numerical vector. The enrichment scores of the pathways of that specific size
-#' @param pathway_size Integer. The size of the pathways to test.
-#' @param sample_size Integer. The size of the random gene sets to test against.
+#' @param stats Named numerical vector. Needs to be sorted. The gene level
+#' statistics.
+#' @param es Numerical vector. The enrichment scores of the pathways.
+#' @param pathway_size Integer vector. The size of each pathway, same length
+#' as `es`.
+#' @param sample_size Integer. The size of the random gene sets to test
+#' against.
 #' @param seed Integer. Random seed.
 #' @param eps Float. Boundary for calculating the p-value.
-#' @param sign Boolean. Used for the only positive or only negative score version.
+#' @param sign Boolean. Used for the only positive or only negative score
+#' version.
 #'
 #' @returns List with the following elements:
 #' \itemize{
-#'     \item pvals The pvalues.
-#'     \item is_cp_ge_half Flag indicating if conditional probability is ≥ 0.5. Indicates
-#'     overesimation of the p-values.
+#'     \item pvals The p-values.
+#'     \item is_cp_ge_half Flag indicating if conditional probability is
+#'     `>= 0.5`. Indicates overestimation of the p-values.
 #' }
 #'
 #' @export
@@ -1157,8 +1254,8 @@ rs_calc_multi_level <- function(stats, es, pathway_size, sample_size, seed, eps,
 #' @description
 #' `r lifecycle::badge("experimental")`
 #'
-#' @param n_more_extreme Integer vector. The number of times the ES was larger than the
-#' permutations.
+#' @param n_more_extreme Integer vector. The number of times the ES was larger
+#' than the permutations.
 #' @param nperm Integer. Number of permutations.
 #' @param sample_size Integer. Number of samples.
 #'
@@ -1184,7 +1281,9 @@ rs_simple_and_multi_err <- function(n_more_extreme, nperm, sample_size) .Call(wr
 #' genes
 #' @param min_size,max_size Integer. The minimum and maximum size respectively.
 #'
-#' @returns Returns a list with (zero-indexed) indices.
+#' @returns Returns a named list with the sorted, 0-based indices of the
+#' pathways whose size (after matching to `feature_names`) is within
+#' `[min_size, max_size]`.
 #'
 #' @export
 #'
@@ -1200,15 +1299,15 @@ rs_prepare_gsva_gs <- function(feature_names, pathway_list, min_size, max_size) 
 #'
 #' @param exp Numerical matrix. The expression matrix with rows = genes, and
 #' columns = samples
-#' @param gs_list List. A list containing the indices of the pathway genes
-#' (needs to be null indexed). See [bixverse::rs_prepare_gsva_gs()].
+#' @param gs_list List. A list containing the 0-based indices of the pathway
+#' genes. See [bixverse::rs_prepare_gsva_gs()].
 #' @param tau Float. Tau parameter, usual recommendation is to use `1.0` here.
 #' Larger values emphasise the tails more.
 #' @param kernel String. One of `c("gaussian", "poisson", "none")`. The
-#' kernel function to use.
+#' kernel function to use. Unknown strings default to `"gaussian"`.
 #' @param max_diff Boolean. Scoring mode: `TRUE` = difference, `FALSE` = larger
 #' absolute value
-#' @param abs_rank Booelan. If `TRUE` = pos-neg, `FALSE` = pos+neg
+#' @param abs_rank Boolean. If `TRUE` = pos-neg, `FALSE` = pos+neg
 #' @param timings Boolean. Prints timings from the algorithm.
 #'
 #' @returns Returns a matrix of gene set ES scores x samples.
@@ -1225,8 +1324,8 @@ rs_gsva <- function(exp, gs_list, tau, kernel, max_diff, abs_rank, timings) .Cal
 #'
 #' @param exp Numerical matrix. The expression matrix with rows = genes, and
 #' columns = samples
-#' @param gs_list List. A list containing the indices of the pathway genes
-#' (needs to be null indexed). See [bixverse::rs_prepare_gsva_gs()].
+#' @param gs_list List. A list containing the 0-based indices of the pathway
+#' genes. See [bixverse::rs_prepare_gsva_gs()].
 #' @param alpha Float. The alpha parameter to adjust the weights.
 #' @param normalise Boolean. Shall the scores be normalised.
 #' @param timings Boolean. Prints timings from the algorithm.
@@ -1238,21 +1337,28 @@ rs_ssgsea <- function(exp, gs_list, alpha, normalise, timings) .Call(wrap__rs_ss
 
 #' Calculate mitch enrichment leveraging Rust under the hood
 #'
-#' @param x Numerical matrix. Each column represents on the contrasts you
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Ranks the contrasts column-wise and runs the mitch MANOVA/ANOVA tests per
+#' pathway.
+#'
+#' @param x Numerical matrix. Each column represents one of the contrasts you
 #' wish to test for and the rows represent the gene statistics per contrast.
+#' Needs row names (the genes).
 #' @param pathway_list Named list. Each element represents one of the pathways
 #' to test for.
-#' @param min_size Integer. Minimum size of gene the gene set to be tested for.
+#' @param min_size Integer. Minimum size of the gene set to be tested for.
 #'
 #' @returns A list with the following elements:
 #'  \itemize{
 #'     \item pathway_names - The name of the pathway.
-#'     \item pathway_sizes The size of the pathway.
-#'     \item manova_pvals - The p-value of the MANOVA test.
-#'     \item anova_pvals The p-values of the ANOVA test on top of the MANOVA
-#'     results. Total length = `ncol(x)` * number of pathways.
+#'     \item pathway_sizes - The size of the pathway.
+#'     \item manova_pval - The p-value of the MANOVA test.
+#'     \item manova_fdr - The Benjamini-Hochberg adjusted `manova_pval`.
+#'     \item anova_pvals - The p-values of the ANOVA test on top of the MANOVA
+#'     results. Total length = `ncol(x)` * number of pathways, pathway-major.
 #'     \item scores - The scores for each pathway set, contrast. Same length
-#'     as `anova_pvals`.
+#'     and layout as `anova_pvals`.
 #'     \item s_dist - Calculated distances from the hypotenuse.
 #'     \item sd - SDs of the scores.
 #' }
@@ -1271,21 +1377,22 @@ rs_mitch_calc <- function(x, pathway_list, min_size) .Call(wrap__rs_mitch_calc, 
 #' @param target_genes String vector. Represents the target gene set.
 #' @param gene_sets List. Contains the strings that represent the gene sets to
 #' test against.
-#' @param gene_universe String vector. The features representing the gene universe
-#' from which the target genes and gene sets are sampled from.
-#' @param min_overlap Optional integer. Shall a filter be applied on the minimum of
-#' overlappign genes.
-#' @param fdr_threshold Optional float. Shall a filter be applied for the maximum
-#' tolerated FDR.
+#' @param gene_universe String vector. The features representing the gene
+#' universe from which the target genes and gene sets are sampled from.
+#' @param min_overlap Optional integer. Shall a filter be applied on the
+#' minimum of overlapping genes.
+#' @param fdr_threshold Optional float. Shall a filter be applied for the
+#' maximum tolerated FDR.
 #'
-#' @returns A list containing:
+#' @returns A list containing (only for the gene sets passing the filters):
 #'  \itemize{
 #'   \item pvals - The p-values from the hypergeometric test
 #'   \item odds_ratios - The calculated odds ratios
 #'   \item hits - The size of the overlap
 #'   \item gene_set_lengths - The length of the gene sets.
-#'   \item fdr - The FDR calculated across the gene sets.
-#'   \item to_keep - Indices of the gene sets that passed (optional) thresholds.
+#'   \item fdr - The FDR calculated across all gene sets (before filtering).
+#'   \item to_keep - 1-based indices of the gene sets that passed the
+#'   (optional) thresholds.
 #' }
 #'
 #' @export
@@ -1296,30 +1403,33 @@ rs_hypergeom_test <- function(target_genes, gene_sets, gene_universe, min_overla
 #' @description
 #' `r lifecycle::badge("experimental")`
 #' Given a list of target gene sets, this function will test for each of the
-#' individual target genes the hypergeoemetric enrichment against the specified
-#' gene sets.
+#' individual target gene sets the hypergeometric enrichment against the
+#' specified gene sets.
 #'
-#' @param target_genes_list A character vector representing the target gene set.
+#' @param target_genes_list A list of character vectors, each representing a
+#' target gene set.
 #' @param gene_sets A list of strings that represent the gene sets to test
 #' against.
 #' @param gene_universe A character vector representing the gene universe from
 #' which the target genes and gene sets are sampled from.
-#' @param min_overlap Optional integer. Shall a filter be applied on the minimum of
-#' overlappign genes.
-#' @param fdr_threshold Optional float. Shall a filter be applied for the maximum
-#' tolerated FDR.
+#' @param min_overlap Optional integer. Shall a filter be applied on the
+#' minimum of overlapping genes.
+#' @param fdr_threshold Optional float. Shall a filter be applied for the
+#' maximum tolerated FDR.
 #'
-#' @returns A list containing:
+#' @returns A list containing (results of all target sets concatenated, only
+#' for the tests passing the filters):
 #'  \itemize{
 #'   \item pvals - The p-values from the hypergeometric test.
-#'   \item fdr - The FDRs for each target gene calculated across all gene sets.
-#'   \item odds ratios - The calculated odds ratios
-#'   \item hits - The size of the overlap between the target gene set and individual
-#'   gene sets.
+#'   \item fdr - The FDRs for each target set calculated across all gene sets.
+#'   \item odds_ratios - The calculated odds ratios
+#'   \item hits - The size of the overlap between the target gene set and
+#'   individual gene sets.
 #'   \item gene_set_lengths - The length of the gene sets.
-#'   \item to_keep - Indices of the tests that passed.
-#'   \item tests_passed - How many tests passed the filter criteria for that target
-#'   set.
+#'   \item to_keep - 1-based indices (into `gene_sets`) of the tests that
+#'   passed.
+#'   \item tests_passed - How many tests passed the filter criteria for that
+#'   target set.
 #' }
 #'
 #' @export
@@ -1374,9 +1484,9 @@ rs_rank_matrix_col_stable <- function(exp, stable_gene_indices) .Call(wrap__rs_r
 #' Becomes irrelevant when `down_set` is also provided.
 #' @param stable Boolean. If `TRUE`, use stable-gene score bounds.
 #'
-#' @returns A named list with `TotalScore`, `TotalDispersion`, and (when
-#' `down_set` is provided) `UpScore`, `UpDispersion`, `DownScore`,
-#' `DownDispersion`.
+#' @returns A named list with `total_score`, `total_dispersion`, `up_score`,
+#' `up_dispersion`, `down_score` and `down_dispersion`. The last four are
+#' `NULL` unless `down_set` is provided.
 #'
 #' @export
 rs_singscore_single <- function(ranks, up_set, down_set, center_score, known_direction, stable) .Call(wrap__rs_singscore_single, ranks, up_set, down_set, center_score, known_direction, stable)
@@ -1389,20 +1499,21 @@ rs_singscore_single <- function(ranks, up_set, down_set, center_score, known_dir
 #' paired down sets.
 #'
 #' @param ranks Numerical matrix. The ranked expression matrix.
-#' @param up_list List. Up gene sets as zero-indexed indices. See
+#' @param up_list List. Up gene sets as 0-based indices. See
 #' [bixverse::rs_prepare_gsva_gs()].
-#' @param down_list List or NULL. Paired down gene sets, same length and
-#' ordering as `up_list`.
-#' @param center_score Boolean.
-#' @param known_direction Boolean.
-#' @param stable Boolean.
+#' @param down_list List or NULL. Paired down gene sets as 0-based indices,
+#' same length and ordering as `up_list`.
+#' @param center_score Boolean. Centre scores around 0. Disabled internally
+#' when `known_direction = FALSE`.
+#' @param known_direction Boolean. Whether the up-set direction is known.
+#' @param stable Boolean. If `TRUE`, use stable-gene score bounds.
 #'
 #' @returns A named list with
 #' \itemize{
 #'   \item `scores` - Numerical matrix with the scores
-#'   \item `dispersion` - Numerical matrix with the dispersions
+#'   \item `dispersions` - Numerical matrix with the dispersions
 #' }
-#' Both matrices are of shape gene_sets × samples.
+#' Both matrices are of shape gene sets x samples.
 #'
 #' @export
 rs_singscore_multi <- function(ranks, up_list, down_list, center_score, known_direction, stable) .Call(wrap__rs_singscore_multi, ranks, up_list, down_list, center_score, known_direction, stable)
@@ -1417,24 +1528,26 @@ rs_singscore_multi <- function(ranks, up_list, down_list, center_score, known_di
 #' one-tailed p-values: `max(1 / n_permutations, mean(null > observed))`.
 #'
 #' @param ranks Numerical matrix. The ranked expression matrix.
-#' @param up_set Integer vector. Zero-indexed.
-#' @param down_set Integer vector or NULL.
+#' @param up_set Integer vector. One-indexed (shifted internally).
+#' @param down_set Integer vector or NULL. One-indexed (shifted internally).
 #' @param center_score,known_direction,stable Booleans. Should match the
 #' values used for the real [bixverse::rs_singscore_single()] call.
 #' @param n_permutations Integer. Number of random draws (B).
 #' @param seed Integer. RNG seed.
 #'
 #' @returns A named list with `observed_scores` (length n_samples),
-#' `null_distribution` (B × n_samples matrix), and `p_values`
+#' `null_distribution` (B x n_samples matrix), and `p_values`
 #' (length n_samples).
 #'
 #' @export
 rs_singscore_permutation_test <- function(ranks, up_set, down_set, center_score, known_direction, stable, n_permutations, seed) .Call(wrap__rs_singscore_permutation_test, ranks, up_set, down_set, center_score, known_direction, stable, n_permutations, seed)
 
-#' Rust version of calcaluting the personalised page rank
+#' Rust version of calculating the personalised page rank
 #'
 #' @description
 #' `r lifecycle::badge("experimental")`
+#' Personalised page rank with a damping factor of 0.85, at most 1000
+#' iterations and a tolerance of 1e-7.
 #'
 #' @param node_names String vector. Name of the graph nodes.
 #' @param from String vector. The names of the `from` edges from the edge list.
@@ -1454,8 +1567,8 @@ rs_page_rank <- function(node_names, from, to, weights, personalised, undirected
 #'
 #' @description
 #' `r lifecycle::badge("experimental")`
-#' Helper function to calculate in parallel on the same (unweighted) network
-#' the personalised page rank as fast as possible. Can be used for permutations
+#' Helper function to calculate in parallel on the same network the
+#' personalised page rank as fast as possible. Can be used for permutation
 #' type approaches.
 #'
 #' @param node_names String vector. Name of the graph nodes.
@@ -1463,8 +1576,9 @@ rs_page_rank <- function(node_names, from, to, weights, personalised, undirected
 #' @param to String vector. The names of the `to` edges from the edge list.
 #' @param weights Optional weight vector. If NULL, defaults to 1.0 as weight
 #' for all edges.
-#' @param diffusion_scores List. The personalised vectors for the page rank reset
-#' values. Each element must sum to 1 and be of same length of `node_names`!
+#' @param diffusion_scores List. The personalised vectors for the page rank
+#' reset values. Each element must sum to 1 and be of same length of
+#' `node_names`!
 #' @param undirected Boolean. Is this an undirected graph.
 #'
 #' @returns A matrix of the scores with each row representing an element in the
@@ -1478,8 +1592,8 @@ rs_page_rank_parallel <- function(node_names, from, to, weights, diffusion_score
 #'
 #' @description
 #' `r lifecycle::badge("experimental")`
-#' Helper function to calculate in parallel on the same (unweighted) network
-#' the tied diffusions as fast as possible. Can be used for permutation.
+#' Helper function to calculate in parallel on the same network the tied
+#' diffusions as fast as possible. Can be used for permutation.
 #'
 #' @param node_names String vector. Name of the graph nodes.
 #' @param from String vector. The names of the `from` edges from the edge list.
@@ -1492,13 +1606,14 @@ rs_page_rank_parallel <- function(node_names, from, to, weights, diffusion_score
 #' @param diffusion_scores_2 List. The second set of personalised vectors for
 #' the page rank reset values. Each element must sum to 1 and be of same length
 #' of `node_names`!
-#' @param summarisation_fun String. One of `c("min", "max", "avg")`. Which type
-#' of summarisation function to use to calculate the tied diffusion.
+#' @param summarisation_fun String. One of `c("min", "max", "mean")`. Which
+#' type of summarisation function to use to calculate the tied diffusion.
+#' Other values cause a panic.
 #' @param undirected Boolean. Is this an undirected graph.
 #'
-#' @returns A matrix of the scores with each row representing a tied diffusion of
-#' of `diffusion_scores_1` and  `diffusion_scores_2` lists (in order), and each
-#' column representing the value of the tied diffusion for this node.
+#' @returns A matrix of the scores with each row representing a tied diffusion
+#' of the `diffusion_scores_1` and `diffusion_scores_2` lists (in order), and
+#' each column representing the value of the tied diffusion for this node.
 #'
 #' @export
 rs_tied_diffusion_parallel <- function(node_names, from, to, weights, diffusion_scores_1, diffusion_scores_2, summarisation_fun, undirected) .Call(wrap__rs_tied_diffusion_parallel, node_names, from, to, weights, diffusion_scores_1, diffusion_scores_2, summarisation_fun, undirected)
@@ -1507,7 +1622,7 @@ rs_tied_diffusion_parallel <- function(node_names, from, to, weights, diffusion_
 #'
 #' @description
 #' `r lifecycle::badge("experimental")`
-#' This function can be used to get constrainted personalised
+#' This function can be used to get constrained personalised
 #' page-rank scores akin to Ruiz, et al. You can provide optionally
 #' `sink_nodes` (node types that will force a reset) and/or `sink_edges`
 #' (edge types that will force a reset).
@@ -1536,7 +1651,7 @@ rs_constrained_page_rank <- function(node_names, node_types, from, to, weights, 
 #'
 #' @description
 #' `r lifecycle::badge("experimental")`
-#' This function can be used to get constrainted personalised page-rank scores
+#' This function can be used to get constrained personalised page-rank scores
 #' akin to Ruiz, et al. You can provide optionally `sink_nodes` (node types
 #' that will force a reset) and/or `sink_edges` (edge types that will force a
 #' reset). This version can take in a list of personalisation vectors and
@@ -1569,8 +1684,8 @@ rs_constrained_page_rank_list <- function(personalisation_list, node_names, node
 #'
 #' @param data Numerical matrix. Needs to be oriented features x samples!
 #' @param distance_type String. One of
-#' `c("euclidean", "manhattan", "canberra", "cosine")`. Which distance metric
-#' to use here.
+#' `c("euclidean", "manhattan", "canberra", "cosine", "correlation")`. Which
+#' distance metric to use here. Unknown strings default to `"euclidean"`.
 #' @param k Integer. Number of neighbours to consider.
 #' @param mu Float. Normalisation factor for the Gaussian kernel width.
 #' @param normalise Boolean. Shall continuous values be Z-scored.
@@ -1588,7 +1703,7 @@ rs_snf_affinity_continuous <- function(data, distance_type, k, mu, normalise) .C
 #' `r lifecycle::badge("experimental")`
 #'
 #' @param data Integer matrix. Needs to be oriented features x samples! The
-#' integers represent the factor values of the catagories.
+#' integers represent the factor values of the categories.
 #' @param k Integer. Number of neighbours to consider.
 #' @param mu Float. Normalisation factor for the Gaussian kernel width.
 #'
@@ -1650,7 +1765,7 @@ rs_snf <- function(aff_mat_list, k, t, alpha) .Call(wrap__rs_snf, aff_mat_list, 
 #' @param max_iters Integer. Number of iterations for k-means clustering
 #' @param seed Integer. Seed for reproducibility
 #'
-#' @returns A vector with the membership of the samples
+#' @returns A vector with the 1-based cluster membership of the samples.
 #'
 #' @export
 rs_spectral_clustering_sim <- function(similarities, k_neighbours, n_clusters, max_iters, seed) .Call(wrap__rs_spectral_clustering_sim, similarities, k_neighbours, n_clusters, max_iters, seed)
@@ -1660,12 +1775,13 @@ rs_spectral_clustering_sim <- function(similarities, k_neighbours, n_clusters, m
 #' @description
 #' `r lifecycle::badge("experimental")`
 #' This version can take in data as is and will calculate the distance matrix
-#' internally.
+#' internally and convert it into similarities with a Gaussian RBF.
 #'
 #' @param data Numerical matrix. The data to cluster. Rows = samples, columns =
 #' features.
 #' @param distance_type String. One of
-#' `c("euclidean", "manhattan", "canberra", "cosine")`.
+#' `c("euclidean", "manhattan", "canberra", "cosine", "correlation")`. Unknown
+#' strings raise an error.
 #' @param epsilon Numerical. The epsilon parameter for the Gaussian Radial
 #' Basis function
 #' @param k_neighbours Integer. Number of neighbours to consider in the kNN
@@ -1674,7 +1790,7 @@ rs_spectral_clustering_sim <- function(similarities, k_neighbours, n_clusters, m
 #' @param max_iters Integer. Number of iterations for k-means clustering
 #' @param seed Integer. Seed for reproducibility
 #'
-#' @returns A vector with the membership of the samples
+#' @returns A vector with the 1-based cluster membership of the samples.
 #'
 #' @export
 rs_spectral_clustering <- function(data, distance_type, epsilon, k_neighbours, n_clusters, max_iters, seed) .Call(wrap__rs_spectral_clustering, data, distance_type, epsilon, k_neighbours, n_clusters, max_iters, seed)
@@ -1687,15 +1803,15 @@ rs_spectral_clustering <- function(data, distance_type, epsilon, k_neighbours, n
 #' be useful for semi-supervised tasks. It implements the label spreading
 #' method.
 #'
-#' @param from Integer vector. Source node indices for each edge.
-#' @param to Integer vector. Target node indices for each edge. Must be the
-#' same length as `from`.
+#' @param from Integer vector. 1-based source node indices for each edge.
+#' @param to Integer vector. 1-based target node indices for each edge. Must be
+#' the same length as `from`.
 #' @param one_hot_encoding Integer matrix. Each row represents a sample, the
 #' columns the one-hot encodings. Everything 0 denotes the unlabelled data.
 #' @param label_mask Boolean vector. Which of the samples do not have a label.
 #' Needs to be same length as `nrow(one_hot_encoding)`.
 #' @param weights Optional numeric vector. Edge weights for each pair in
-#' `from`/`to`. Must have the same length as `from`. If NULL, all edges are
+#' `from`/`to`. Must have the same length as `from`. If `NULL`, all edges are
 #' treated as unweighted.
 #' @param label_prop_params List. Named list of parameters with the following
 #' optional fields (defaults in parentheses):
@@ -1704,11 +1820,13 @@ rs_spectral_clustering <- function(data, distance_type, epsilon, k_neighbours, n
 #'   \item `iter` integer, max iterations (100)
 #'   \item `tolerance` numeric, convergence threshold (1e-6)
 #'   \item `symmetrise` logical, symmetrise the graph (FALSE)
-#'   \item `symmetry_strategy` character, one of "average", "min", "max" ("average")
+#'   \item `symmetry_strategy` character, one of `"average"`, `"min"`,
+#'   `"max"` (`"average"`). Only used for weighted graphs.
 #'   \item `max_hops` integer, restrict spreading radius (unrestricted)
 #' }
 #'
 #' @returns The matrix with the probabilities of being of a certain class.
+#' Same shape as `one_hot_encoding`.
 #'
 #' @export
 rs_knn_label_propagation <- function(from, to, one_hot_encoding, label_mask, weights, label_prop_params) .Call(wrap__rs_knn_label_propagation, from, to, one_hot_encoding, label_mask, weights, label_prop_params)
@@ -1717,20 +1835,20 @@ rs_knn_label_propagation <- function(from, to, one_hot_encoding, label_mask, wei
 #'
 #' @description
 #' `r lifecycle::badge("experimental")`
-#' Helper function to leverage Rust to transform a kNN matrix into two vectors
-#' of from, to
+#' Helper function to leverage Rust to transform a kNN matrix into a flat
+#' edge list.
 #'
 #' @param knn_mat Integer matrix. Rows represent the samples and the columns
-#' the indices of the k-nearest neighbours.
-#' @param one_index Boolean. If the original data is 0-index, shall 1-indexed
-#' data be returned.
+#' the 0-based indices of the k-nearest neighbours.
+#' @param one_index Boolean. Shall 1-based indices be returned.
 #'
-#' @returns A flat vector representing the edge list.
+#' @returns A flat vector representing the edge list, alternating from and
+#' to, i.e. `c(from_1, to_1, from_2, to_2, ...)`.
 #'
 #' @export
 rs_knn_mat_to_edge_list <- function(knn_mat, one_index) .Call(wrap__rs_knn_mat_to_edge_list, knn_mat, one_index)
 
-#' Flatten kNN matrix to edge list
+#' Flatten kNN matrix to edge pairs
 #'
 #' @description
 #' `r lifecycle::badge("experimental")`
@@ -1738,9 +1856,8 @@ rs_knn_mat_to_edge_list <- function(knn_mat, one_index) .Call(wrap__rs_knn_mat_t
 #' list.
 #'
 #' @param knn_mat Integer matrix. Rows represent the samples and the columns
-#' the indices of the k-nearest neighbours.
-#' @param one_index Boolean. If the original data is 0-index, shall 1-indexed
-#' data be returned.
+#' the 0-based indices of the k-nearest neighbours.
+#' @param one_index Boolean. Shall 1-based indices be returned.
 #'
 #' @returns A list with the following elements
 #' \itemize{
@@ -1763,8 +1880,9 @@ rs_knn_mat_to_edge_pairs <- function(knn_mat, one_index) .Call(wrap__rs_knn_mat_
 #' @param x Numerical matrix. Affinity matrix.
 #' @param tom_type String. One of `c("v1", "v2")` - pending on choice, a
 #' different normalisation method will be used.
-#' @param signed Boolean. Shall the signed TOM be calculated. If set to
-#' `FALSE`, values should be ≥ 0.
+#' @param signed Boolean. Shall the signed TOM be calculated, i.e. the
+#' connectivity be taken over absolute affinities. If set to `FALSE`, values
+#' should be >= 0.
 #'
 #' @returns Returns the TOM matrix.
 #'
@@ -1777,21 +1895,21 @@ rs_tom <- function(x, tom_type, signed) .Call(wrap__rs_tom, x, tom_type, signed)
 #' `r lifecycle::badge("experimental")`
 #' This function assesses the quality of the clusters with a given cut `k`.
 #' Returns the median R2 (cor^2) and the median absolute deviation (MAD) of the
-#' clusters. Large clusters (≥1000) are subsampled to a random set of 1000
-#' genes.
+#' clusters. Clusters with more than 1000 genes are subsampled to a random set
+#' of 1000 genes. Genes not found in `row_names` are skipped.
 #'
 #' @param cluster_genes A list. Contains the cluster and their respective
-#' genes.
+#' genes as character vectors.
 #' @param cor_mat Numerical matrix. Contains the correlation coefficients.
 #' @param row_names String vector. The row names (or column names) of the
 #' correlation matrix.
 #' @param seed Integer. Random seed for the sub sampling of genes.
 #'
-#' @returns A list containing:
+#' @returns A list containing, one entry per cluster:
 #'  \itemize{
 #'   \item r2med - median R2 of the cluster.
-#'   \item r2mad - median absolute deviation of the R2 in the cluster.
-#'   \item size - size of the cluster.
+#'   \item r2mad - scaled median absolute deviation of the R2 in the cluster.
+#'   \item size - number of cluster genes found in `row_names`.
 #' }
 #'
 #' @keywords internal
@@ -1801,20 +1919,22 @@ rs_coremo_quality <- function(cluster_genes, cor_mat, row_names, seed) .Call(wra
 #'
 #' @description
 #' `r lifecycle::badge("experimental")`
-#' This function is a helper for the leave-on-out stability assessment of
+#' This function is a helper for the leave-one-out stability assessment of
 #' CoReMo clusters. The function will generate the distance vectors based on
-#' leaving out the samples defined in indices one by one.
+#' leaving out the samples defined in indices one by one. Distances are
+#' `1 - rbf(1 - |cor|)` over the feature correlations.
 #'
-#' @param data Numeric matrix. The original processed matrix.
-#' @param indices Integer vector. The sample indices to remove to re-calculate
-#' the distances.
+#' @param data Numeric matrix. The original processed matrix, samples x
+#' features.
+#' @param indices Integer vector. The 1-based sample (row) indices to remove,
+#' one at a time, to re-calculate the distances.
 #' @param epsilon Float. Epsilon parameter for the RBF.
 #' @param rbf_type String. Needs to be from
 #' `c("gaussian", "bump", "inverse_quadratic")`.
 #' @param spearman Boolean. Shall Spearman correlation be used.
 #'
-#' @returns A list with `length(indices)` elements, each containing the distance
-#' minus the given sample.
+#' @returns A list with `length(indices)` elements, each containing the
+#' flattened upper-triangle feature distances with that sample removed.
 #'
 #' @keywords internal
 rs_coremo_stability <- function(data, indices, epsilon, rbf_type, spearman) .Call(wrap__rs_coremo_stability, data, indices, epsilon, rbf_type, spearman)
@@ -1828,12 +1948,12 @@ rs_coremo_stability <- function(data, indices, epsilon, rbf_type, spearman) .Cal
 #' resampling/bootstrap and the rows represent the features, while each integer
 #' indicates cluster membership.
 #'
-#' @returns A list containing:
+#' @returns A list containing, one entry per feature:
 #'  \itemize{
-#'   \item mean_jaccard - mean Jaccard similarities for this feature across all
-#'   the bootstraps, resamplings.
-#'   \item std_jaccard - the standard deviation of the Jaccard similarities for
-#'   this feature across all the bootstraps, resamplings.
+#'   \item mean_jaccard - mean Jaccard similarity of the feature's cluster
+#'   across all pairs of bootstraps/resamplings.
+#'   \item std_jaccard - the (population) standard deviation of these Jaccard
+#'   similarities.
 #' }
 #'
 #' @keywords internal
@@ -1843,11 +1963,12 @@ rs_cluster_stability <- function(data) .Call(wrap__rs_cluster_stability, data)
 #'
 #' @description
 #' `r lifecycle::badge("experimental")`
+#' All `1` if every off-diagonal correlation is non-negative, all `-1` if
+#' every one is non-positive, otherwise a graph-based split into two groups.
 #'
 #' @param data The correlation matrix to split by sign.
 #'
-#' @returns A vector of 1 and -1 indicating the respective sign of the
-#' correlation matrix.
+#' @returns An integer vector of 1 and -1, one per column of `data`.
 #'
 #' @export
 #'
@@ -1858,10 +1979,11 @@ rs_split_cor_signs <- function(data) .Call(wrap__rs_split_cor_signs, data)
 #'
 #' @description
 #' `r lifecycle::badge("experimental")`
-#' Runs `filterByExpr` -> `calcNormFactors` -> `glmQLFit` -> `glmQLFTest`,
-#' implemented in Rust via the `edge-rs` crate and gated against edgeR 4.8.2.
-#' The tested axis does not have to be genes: Milo's neighbourhood counts are
-#' tested with the same call, with `filter = FALSE`.
+#' Runs optional `filterByExpr` -> `calcNormFactors` -> `glmQLFit` ->
+#' `glmQLFTest`, implemented in Rust via the `edge-rs` crate and gated against
+#' edgeR 4.8.2. `legacy = TRUE` adds `estimateDisp` before the fit. The tested
+#' axis does not have to be genes: Milo's neighbourhood counts are tested with
+#' the same call, with `filter = FALSE`.
 #'
 #' @param counts Numeric matrix. Raw counts of features x samples. Must not
 #' be normalised or log-transformed.
@@ -1873,7 +1995,8 @@ rs_split_cor_signs <- function(data) .Call(wrap__rs_split_cor_signs, data)
 #' columns to drop from the null model) or `contrast` (column-major weights
 #' with `n_contrasts` columns).
 #'
-#' @returns A list with the following elements
+#' @returns A list with the following elements, all but `features_to_keep`
+#' with one entry per kept feature
 #' \itemize{
 #'   \item features_to_keep - Boolean. Which features survived the filters.
 #'   Spans the full feature axis of `counts`.
@@ -1889,6 +2012,165 @@ rs_split_cor_signs <- function(data) .Call(wrap__rs_split_cor_signs, data)
 #' @export
 rs_edger_ql <- function(counts, design, edger_params) .Call(wrap__rs_edger_ql, counts, design, edger_params)
 
+#' Run the limma linear model chain on a count matrix
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Runs optional `filterByExpr` -> `calcNormFactors` -> `voomLmFit` (or
+#' limma-trend) -> `contrasts.fit` -> `eBayes` -> `topTable` for one
+#' coefficient or contrast, implemented in Rust via the `edge-rs` crate and
+#' gated against limma 3.66.0.
+#'
+#' @param counts Integer or double matrix. Raw counts of genes x samples. Must
+#' not be normalised or log-transformed.
+#' @param design Numeric matrix. The design matrix of samples x coefficients,
+#' including the intercept. Must be full rank.
+#' @param lib_size Numeric vector or NULL. Library size per sample. NULL uses
+#' the column sums of `counts`. Pass the column sums from before gene filtering
+#' to match edgeR, which keeps those on a subset `DGEList`.
+#' @param limma_params Named list. The limma parameters, see
+#' [bixverse::params_limma_voom()], plus either `coef` (a single 0-indexed(!)
+#' design column) or `contrast` (column-major weights with `n_contrasts`
+#' columns).
+#'
+#' @returns A list with the following elements, all but `features_to_keep`
+#' with one entry per kept gene, in input order
+#' \itemize{
+#'   \item features_to_keep - Boolean. Which genes survived the filters. Spans
+#'   the full gene axis of `counts`.
+#'   \item log_fc - Log2 fold changes of the tested coefficient or contrast.
+#'   \item ci_lower - Lower end of the 95% confidence interval on `log_fc`.
+#'   \item ci_upper - Upper end of the 95% confidence interval on `log_fc`.
+#'   \item ave_expr - Average log2 counts per million.
+#'   \item t_stat - Moderated t statistic.
+#'   \item p_values - Raw p-values.
+#'   \item fdr - Benjamini-Hochberg adjusted p-values.
+#'   \item b_stat - Log-odds of differential expression.
+#' }
+#'
+#' @references Law, et al., Genome Biol, 2014; Smyth, Stat Appl Genet Mol Biol,
+#' 2004
+#'
+#' @export
+rs_limma_voom <- function(counts, design, lib_size, limma_params) .Call(wrap__rs_limma_voom, counts, design, lib_size, limma_params)
+
+#' Voom-transform a count matrix
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' limma's `voom` on counts that are already filtered: log2-CPM against the
+#' supplied (effective) library sizes, the mean-variance trend and the
+#' precision weights. No filtering and no normalisation happen in here; pass
+#' `lib.size * norm.factors` as `lib_size` to get voom on a normalised
+#' DGEList.
+#'
+#' @param counts Integer or double matrix. Raw counts of genes x samples.
+#' @param design Numeric matrix. The design matrix of samples x coefficients.
+#' Must be full rank.
+#' @param lib_size Numeric vector. The effective library size per sample.
+#' @param span Numeric. Lowess span, only used if `adaptive_span = FALSE`.
+#' @param adaptive_span Boolean. Derive the span from the number of genes, as
+#' limma does since 3.56.
+#'
+#' @returns A list with the following elements
+#' \itemize{
+#'   \item e - Numeric matrix. The log2-CPM values, genes x samples. limma's
+#'   `E`.
+#'   \item weights - Numeric matrix. The precision weights, genes x samples.
+#'   \item trend_x - The mean-variance trend abscissae (average log2 count).
+#'   \item trend_y - The mean-variance trend ordinates (sqrt standard
+#'   deviation).
+#'   \item amean - Average log2-CPM per gene.
+#' }
+#'
+#' @references Law, et al., Genome Biol, 2014
+#'
+#' @export
+rs_voom_normalise <- function(counts, design, lib_size, span, adaptive_span) .Call(wrap__rs_voom_normalise, counts, design, lib_size, span, adaptive_span)
+
+#' Filter lowly expressed genes
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' edgeR's `filterByExpr`, via the `edge-rs` crate.
+#'
+#' @param counts Integer or double matrix. Raw counts of genes x samples.
+#' @param group Integer vector or NULL. 1-based group code per sample (e.g.
+#' `as.integer(factor(x))`). If NULL, all samples form one group.
+#' @param lib_size Numeric vector or NULL. Library size per sample. NULL uses
+#' the column sums.
+#' @param min_count Numeric. Minimum count in the median-sized library.
+#' @param min_total_count Numeric. Minimum total count across all samples.
+#' @param min_prop Numeric. Fraction of the smallest group size beyond
+#' edgeR's `large.n` that still has to express the gene.
+#'
+#' @returns Boolean vector, one per gene. `TRUE` if the gene is kept.
+#'
+#' @references Chen, Lun and Smyth, F1000Research, 2016
+#'
+#' @export
+rs_filter_by_expr <- function(counts, group, lib_size, min_count, min_total_count, min_prop) .Call(wrap__rs_filter_by_expr, counts, group, lib_size, min_count, min_total_count, min_prop)
+
+#' Calculate normalisation factors
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' edgeR's `calcNormFactors`, via the `edge-rs` crate.
+#'
+#' @param counts Integer or double matrix. Raw counts of genes x samples.
+#' @param lib_size Numeric vector or NULL. Library size per sample. Pass the
+#' pre-filter column sums after filtering genes, as edgeR keeps them. NULL uses
+#' the column sums of `counts`.
+#' @param norm_method String. One of
+#' `c("TMM", "TMMwsp", "RLE", "upperquartile", "none")`, case-insensitive.
+#'
+#' @returns Numeric vector of normalisation factors, one per sample.
+#'
+#' @references Robinson and Oshlack, Genome Biol, 2010
+#'
+#' @export
+rs_calc_norm_factors <- function(counts, lib_size, norm_method) .Call(wrap__rs_calc_norm_factors, counts, lib_size, norm_method)
+
+#' Counts per million
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' edgeR's `cpm` on a plain count matrix, via the `edge-rs` crate.
+#'
+#' @param counts Integer or double matrix. Raw counts of genes x samples.
+#' @param lib_size Numeric vector or NULL. Library size per sample, e.g.
+#' `lib.size * norm.factors`. NULL uses the column sums.
+#' @param log Boolean. Return log2-CPM.
+#' @param prior_count Numeric. Prior count added before the log. Ignored if
+#' `log = FALSE`.
+#'
+#' @returns Numeric matrix of (log2-)CPM values, genes x samples.
+#'
+#' @export
+rs_cpm <- function(counts, lib_size, log, prior_count) .Call(wrap__rs_cpm, counts, lib_size, log, prior_count)
+
+#' Remove batch effects from a log-expression matrix
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' limma's `removeBatchEffect`, via the `edge-rs` crate. Batch gets
+#' sum-to-zero contrasts, is fitted jointly with the design of interest and
+#' only the batch part is subtracted. Meant for plotting and unsupervised
+#' work; for testing put batch into the design.
+#'
+#' @param x Numeric matrix. Log-expression values of genes x samples.
+#' @param batch Integer vector. Batch label per sample, e.g.
+#' `as.integer(factor(x))`. Needs at least two distinct labels.
+#' @param design Numeric matrix or NULL. The design of interest, samples x
+#' coefficients, whose effects are protected. NULL is an intercept only.
+#'
+#' @returns Numeric matrix of corrected values, genes x samples.
+#'
+#' @references Smyth, Stat Appl Genet Mol Biol, 2004
+#'
+#' @export
+rs_remove_batch_effect <- function(x, batch, design) .Call(wrap__rs_remove_batch_effect, x, batch, design)
+
 #' Generate a sparse dictionary with DGRDL
 #'
 #' @description
@@ -1897,34 +2179,35 @@ rs_edger_ql <- function(counts, design, edger_params) .Call(wrap__rs_edger_ql, c
 #' learning in the implementation of Pan, et al., Cell Systems, 2022.
 #'
 #' @param x Numerical matrix. Rows = samples, columns = features.
-#' @param dgrdl_params A list with the parameters for the algorithm. Expects
-#' the following items.
+#' @param dgrdl_params A list with the parameters for the algorithm. Missing
+#' items fall back to defaults. Expects the following items.
 #' \itemize{
-#'   \item sparsity - Sparsity constraint (max non-zero coefficients per signal).
-#'   \item dict_size - Size of the dictionary.
-#'   \item alpha - Float. Sample context regularisation weight. The higher the stronger
-#'   the regularisation.
-#'   \item beta - Float. Feature context regularisation weight. The higher the stronger
-#'   the regularisation.
+#'   \item sparsity - Integer. Sparsity constraint (max non-zero coefficients
+#'   per signal).
+#'   \item dict_size - Integer. Size of the dictionary.
+#'   \item alpha - Float. Sample context regularisation weight. The higher
+#'   the stronger the regularisation.
+#'   \item beta - Float. Feature context regularisation weight. The higher
+#'   the stronger the regularisation.
 #'   \item max_iter - Integer. Maximum iteration for the algorithm.
-#'   \item k_neighbours - Integer. Number of k neighbours for the sample and feature
-#'   Laplacian matrix for the regularisation
-#'   \item admm_iter Integer. Number of iterations for using alternating direction
-#'   method of multipliers (ADMM).
-#'   \item rho Float. ADMM step size.
+#'   \item k_neighbours - Integer. Number of k neighbours for the sample and
+#'   feature Laplacian matrix for the regularisation.
+#'   \item admm_iter - Integer. Number of iterations for using alternating
+#'   direction method of multipliers (ADMM).
+#'   \item rho - Float. ADMM step size.
 #' }
 #' @param seed Integer. Seed for the initialisation of the algorithm.
-#' @param verbose Boolean. Controls the verbosity of the function and reports timing
-#' of individual steps.
+#' @param verbose Boolean. Controls the verbosity of the function and reports
+#' timing of individual steps.
 #'
 #' @returns A list with the following elements:
 #'  \itemize{
 #'   \item dictionary - The dictionary of samples x dict_size.
 #'   \item coefficients - The feature loadings of size dict_size x features.
-#'   \item feature_laplacian - The KNN graph laplacian of the features in a
-#'   sparse format list.
-#'   \item sample_laplacian - The KNN graph laplacian of the samples in a
-#'   sparse format list.
+#'   \item feature_laplacian - The kNN graph Laplacian of the features as a
+#'   CSR list with `data`, `indptr`, `indices`, `nrow`, `ncol` and `cs_type`.
+#'   \item sample_laplacian - The kNN graph Laplacian of the samples, same
+#'   format.
 #' }
 #'
 #' @export
@@ -1939,37 +2222,41 @@ rs_sparse_dict_dgrdl <- function(x, dgrdl_params, seed, verbose) .Call(wrap__rs_
 #' helper function is designed to run a grid search over the data.
 #'
 #' @param x Numerical matrix. Rows = samples, columns = features.
-#' @param dgrdl_params A list with the parameters for the algorithm. Expects
-#' the following items.
+#' @param dgrdl_params A list with the parameters for the algorithm. Missing
+#' items fall back to defaults. Expects the following items.
 #' \itemize{
-#'   \item sparsity - Sparsity constraint (max non-zero coefficients per signal).
-#'   \item dict_size - Size of the dictionary. This parameter will be ignored
-#'   for this function and `dict_sizes` will be used.
-#'   \item alpha - Float. Sample context regularisation weight. The higher the stronger
-#'   the regularisation.
-#'   \item beta - Float. Feature context regularisation weight. The higher the stronger
-#'   the regularisation.
+#'   \item sparsity - Integer. Sparsity constraint (max non-zero coefficients
+#'   per signal).
+#'   \item dict_size - Integer. Size of the dictionary. Ignored here,
+#'   `dict_sizes` is used instead.
+#'   \item alpha - Float. Sample context regularisation weight. The higher
+#'   the stronger the regularisation.
+#'   \item beta - Float. Feature context regularisation weight. The higher
+#'   the stronger the regularisation.
 #'   \item max_iter - Integer. Maximum iteration for the algorithm.
-#'   \item k_neighbours - Integer. Number of k neighbours for the sample and feature
-#'   Laplacian matrix for the regularisation. This parameter will be ignored and
-#'   `k_neighbours_vec` will be used.
-#'   \item admm_iter Integer. Number of iterations for using alternating direction
-#'   method of multipliers (ADMM).
-#'   \item rho Float. ADMM step size.
+#'   \item k_neighbours - Integer. Number of k neighbours for the sample and
+#'   feature Laplacian matrix. Ignored here, `k_neighbours_vec` is used
+#'   instead.
+#'   \item admm_iter - Integer. Number of iterations for using alternating
+#'   direction method of multipliers (ADMM).
+#'   \item rho - Float. ADMM step size.
 #' }
-#' @param seeds Integer vectors. The random seeds to include in the grid search.
+#' @param seeds Integer vector. The random seeds to include in the grid
+#' search.
 #' @param dict_sizes Integer vector. The dictionary sizes to test in the grid
 #' search.
-#' @param k_neighbours_vec Integer vector. The number of neighbours for the KNN
+#' @param k_neighbours_vec Integer vector. The number of neighbours for the kNN
 #' graph generation to test in the grid search.
 #' @param verbose Boolean. Controls verbosity of the function.
 #'
-#' @returns A list with the following elements:
+#' @returns A list with the following elements, one entry per tested
+#' combination:
 #'  \itemize{
 #'   \item seed - The tested seeds.
 #'   \item dict_size - The tested dictionary sizes.
-#'   \item reconstruction_errs - The reconstruction errors for these hyper
-#'   parameters.
+#'   \item k_neighbours - The tested numbers of neighbours.
+#'   \item reconstruction_errs - The reconstruction errors (squared Frobenius
+#'   norm) for these hyperparameters.
 #'   \item feature_laplacian_objective - The objective values of the feature
 #'   Laplacian term for these hyperparameters.
 #'   \item sample_laplacian_objective - The objective values of the sample
@@ -1988,12 +2275,13 @@ rs_sparse_dict_dgrdl_grid_search <- function(x, dgrdl_params, seeds, dict_sizes,
 #' differential correlation on the upper triangle of the two correlation
 #' matrices.
 #'
-#' @param x_a R matrix a to be used for the differential correlation analysis.
-#' @param x_b R matrix a to be used for the differential correlation analysis.
-#' @param spearman Shall the Spearman correlation be calculated instead of
-#' Pearson.
+#' @param x_a Numeric matrix a, samples x features.
+#' @param x_b Numeric matrix b, samples x features. Needs the same number of
+#' columns as `x_a`.
+#' @param spearman Boolean. Shall the Spearman correlation be calculated
+#' instead of Pearson.
 #'
-#' @returns A list containing:
+#' @returns A list containing, one entry per upper-triangle feature pair:
 #'  \itemize{
 #'   \item r_a - The correlation coefficients in the upper triangle of
 #'   matrix a.
@@ -2001,7 +2289,7 @@ rs_sparse_dict_dgrdl_grid_search <- function(x, dgrdl_params, seeds, dict_sizes,
 #'   matrix b.
 #'   \item z_score - The z-scores of the difference in correlation
 #'   coefficients.
-#'   \item p_val - The z-scores transformed to p-values.
+#'   \item p_val - The z-scores transformed to two-sided p-values.
 #' }
 #'
 #' @export
@@ -2011,28 +2299,30 @@ rs_differential_cor <- function(x_a, x_b, spearman) .Call(wrap__rs_differential_
 #'
 #' @description
 #' `r lifecycle::badge("experimental")`
-#' Prepares the data for subsequent usag in ICA. Incorrect use can cause kernel
-#' crashes. Wrapper around the Rust functions with type checks are provided in
-#' the package.
+#' Prepares the data for subsequent usage in ICA. Incorrect use can cause
+#' kernel crashes. Wrapper around the Rust functions with type checks are
+#' provided in the package.
 #'
-#' @param x The matrix to whiten. The whitening will happen over the columns.
+#' @param x Numeric matrix to whiten. The columns are centred and the
+#' whitening happens over the columns.
 #' @param fast_svd Boolean. Shall a randomised SVD be used. This is way faster
 #' on larger data sets.
 #' @param seed Integer. Only relevant with fast_svd is set to `TRUE`.
 #' @param rank Integer. How many ranks to use for the fast SVD approximation.
 #' If you supply `NULL`, it will default to `10L`. Only relevant with
 #' fast_svd is set to `TRUE`.
-#' @param oversampling Integer. Oversampling parameter to make the approximation
-#' more precise. If you supply `NULL`, it will default to `10L`. Only relevant
-#' with fast_svd is set to `TRUE`.
-#' @param n_power_iter Integer. How much shall the QR low rank approximation be
-#' powered. If you supply `NULL`, it will default to `2L`.
-#'
+#' @param oversampling Integer. Oversampling parameter to make the
+#' approximation more precise. If you supply `NULL`, it will default to `10L`.
+#' Only relevant with fast_svd is set to `TRUE`.
+#' @param n_power_iter Integer. Number of power iterations for the randomised
+#' SVD. If you supply `NULL`, it will default to `2L`. Only relevant with
+#' fast_svd is set to `TRUE`.
 #'
 #' @returns A list containing:
 #'  \itemize{
-#'   \item x - The preprocessed matrix.
-#'   \item k - The pre-whitening matrix k.
+#'   \item x - The column-centred input, transposed.
+#'   \item k - The whitening matrix K. With `fast_svd = TRUE` it can carry
+#'   more than `rank` rows; the caller trims it.
 #' }
 #'
 #' @export
@@ -2043,13 +2333,13 @@ rs_prepare_whitening <- function(x, fast_svd, seed, rank, oversampling, n_power_
 #' @description
 #' `r lifecycle::badge("experimental")`
 #' This function serves as a wrapper over the fast ICA implementations in Rust.
-#' It assumes a whitened matrix and also an intialised w_init.
+#' It assumes a whitened matrix and also an initialised w_init.
 #'
 #' @param whiten Numerical matrix. The whitened matrix.
 #' @param w_init Numerical matrix. The initial unmixing matrix. ncols need to
 #' be equal to nrows of whiten.
-#' @param ica_type String. One of 'logcosh' or 'exp'. If weird string is
-#' provided, it will default to `"logcosh"`.
+#' @param ica_type String. One of `c("logcosh", "exp")`. Any other string
+#' defaults to `"logcosh"`.
 #' @param ica_params A list containing:
 #'  \itemize{
 #'   \item maxit - Integer. Maximum number of iterations for ICA.
@@ -2065,13 +2355,14 @@ rs_prepare_whitening <- function(x, fast_svd, seed, rank, oversampling, n_power_
 #' @returns A list with the following items:
 #'  \itemize{
 #'   \item mixing - The mixing matrix for subsequent usage.
-#'   \item converged - Boolean if the algorithm converged.
+#'   \item converged - Boolean. Did the best tolerance reached fall below
+#'   `max_tol`.
 #' }
 #'
 #' @export
 rs_fast_ica <- function(whiten, w_init, ica_type, ica_params) .Call(wrap__rs_fast_ica, whiten, w_init, ica_type, ica_params)
 
-#' Run ICA over a given no_comp with random initilisations of w_init
+#' Run ICA over a given no_comp with random initialisations of w_init
 #'
 #' @description
 #' `r lifecycle::badge("experimental")`
@@ -2083,11 +2374,13 @@ rs_fast_ica <- function(whiten, w_init, ica_type, ica_params) .Call(wrap__rs_fas
 #'
 #' @param x1 Numerical matrix. The processed matrix (but not yet
 #' whitened!)
-#' @param k Numerical matrix. The whitening matrix.
+#' @param k Numerical matrix. The whitening matrix. Needs at least `no_comp`
+#' rows, only the first `no_comp` are used.
 #' @param no_comp Integer. Number of independent components to return.
 #' @param no_random_init Integer. Number of random initialisations to test.
-#' @param ica_type String. One of 'logcosh' or 'exp'.
-#' @param random_seed Integer. Seed for randomisations.
+#' @param ica_type String. One of `c("logcosh", "exp")`.
+#' @param random_seed Integer. Seed for randomisations. Run `i` uses
+#' `random_seed + i`.
 #' @param ica_params A list containing:
 #' \itemize{
 #'   \item maxit - Integer. Maximum number of iterations for ICA.
@@ -2111,19 +2404,19 @@ rs_fast_ica <- function(whiten, w_init, ica_type, ica_params) .Call(wrap__rs_fas
 #' @export
 rs_ica_iters <- function(x1, k, no_comp, no_random_init, ica_type, random_seed, ica_params) .Call(wrap__rs_ica_iters, x1, k, no_comp, no_random_init, ica_type, random_seed, ica_params)
 
-#' Run ICA with cross-validation and random initialsiation
+#' Run ICA with cross-validation and random initialisation
 #'
 #' @description
 #' `r lifecycle::badge("experimental")`
 #' This function will split the data into `no_folds` and apply ICA with
-#' `no_random_inits` over that fold.
+#' `no_random_init` random initialisations over each fold.
 #'
 #' @param x Numeric matrix. The processed data (no whitening function has
 #' been applied yet.)
 #' @param no_comp Integer. Number of components to test for.
-#' @param no_random_init Integer. Number of random initialisations.
 #' @param no_folds Integer. Number of folds to use for the cross-validation.
-#' @param ica_type String. Which type of ICA shall be run.
+#' @param no_random_init Integer. Number of random initialisations per fold.
+#' @param ica_type String. One of `c("logcosh", "exp")`.
 #' @param random_seed Integer. For reproducibility.
 #' @param ica_params A list containing:
 #' \itemize{
@@ -2140,9 +2433,9 @@ rs_ica_iters <- function(x1, k, no_comp, no_random_init, ica_type, random_seed, 
 #' @returns A list containing:
 #' \itemize{
 #'   \item s_combined - The combined matrices for S. Dimensions are nrows =
-#'   features; and ncols = ncomp * no_random_init.
+#'   features; and ncols = no_comp * no_random_init * no_folds.
 #'   \item converged - Boolean vector indicating if the respective run reached
-#'   convergence. Length = no_random_init
+#'   convergence. Length = no_random_init * no_folds
 #' }
 #'
 #' @export
@@ -2260,7 +2553,8 @@ rs_nmf_single_bulk <- function(x, k, preprocessing, nmf_hals_params, seed, verbo
 #' @param x Numerical matrix. Rows = samples, columns = features.
 #' @param k Integer. Number of latent factors per run.
 #' @param preprocessing String. One of `c("none", "sd", "sqrt_sd")`.
-#' @param nmf_hals_params Named list. See [bixverse::params_nmf_hals()].
+#' @param nmf_hals_params Named list. See [bixverse::params_nmf_hals()]. The
+#' `nmf_init` field is ignored, restarts always use random initialisation.
 #' @param n_runs Integer. Number of random restarts.
 #' @param seed Integer. Base random seed. Run `i` uses `seed + i`.
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
@@ -2344,7 +2638,7 @@ rs_nmf_consensus_bulk <- function(x, k, preprocessing, nmf_hals_params, nmf_cons
 #' @param nmf_consensus_params Named list. See
 #' [bixverse::params_nmf_consensus()].
 #' @param n_runs Integer. Number of restarts per k. Must be at least 2.
-#' @param seed Integer. Base random seed.
+#' @param seed Integer. Base random seed. The i-th k uses `seed + i * n_runs`.
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
 #'
@@ -2375,8 +2669,8 @@ rs_nmf_k_sweep_bulk <- function(x, k_range, preprocessing, nmf_hals_params, nmf_
 #' @description
 #' `r lifecycle::badge("experimental")`
 #' This function takes a nested list that contains gene modules/sets derived
-#' from various methods and generate identifies (k-th) reciprocal best hits
-#' between gene modules/sets across the different origins.
+#' from various methods and identifies (k-th) reciprocal best hits between
+#' gene modules/sets across every pair of origins.
 #'
 #' @param module_list A nested named list. The outer list should contain the
 #' origin of the gene modules, the inner list the names of the gene modules and
@@ -2385,10 +2679,10 @@ rs_nmf_k_sweep_bulk <- function(x, k_range, preprocessing, nmf_hals_params, nmf_
 #' `1L`, this behaves as the traditional reciprocal best hit. If you set this
 #' to `3L` you consider edges if the modules is in the top 3 best modules
 #' by similarity for each other.
-#' @param overlap_coefficient Shall the overlap coefficient instead of the
-#' Jaccard similarity be used.
-#' @param min_similarity Minimum similarity that should exist between any two
-#' given gene modules to actually calculate RBH pairs.
+#' @param overlap_coefficient Boolean. Shall the overlap coefficient instead
+#' of the Jaccard similarity be used.
+#' @param min_similarity Numeric. Only hits with a similarity strictly above
+#' this are returned.
 #'
 #' @returns A list containing:
 #'  \itemize{
@@ -2414,15 +2708,16 @@ rs_rbh_sets <- function(module_list, k_best, overlap_coefficient, min_similarity
 #' hits (RBH) for. The rows need to represent the features and the columns the
 #' parts you wish to calculate the RBH for.
 #'
-#' @param module_matrices A list of named matrices. Rows represent features
-#' and columns the samples you wish to calculate the correlations for.
+#' @param module_matrices A named list of matrices with row and column names.
+#' Rows represent features and columns the modules you wish to calculate the
+#' correlations for. Only features shared between two matrices are used.
 #' @param k_best Integer. Number of best neighbours to consider. If set to
 #' `1L`, this behaves as the traditional reciprocal best hit. If you set this
 #' to `3L` you consider edges if the modules is in the top 3 best modules
 #' by similarity for each other.
-#' @param spearman Shall Spearman correlation be used.
-#' @param min_similarity Minimum (absolute) correlations that needs to exist
-#' between two terms.
+#' @param spearman Boolean. Shall Spearman correlation be used.
+#' @param min_similarity Numeric. Only hits with an absolute correlation
+#' strictly above this are returned.
 #'
 #' @returns A list containing:
 #'  \itemize{
@@ -2432,8 +2727,8 @@ rs_rbh_sets <- function(module_list, k_best, overlap_coefficient, min_similarity
 #'   identified in this comparison
 #'   \item origin_modules - Names of the gene modules from the origin.
 #'   \item target_modules - Names of the gene modules from the target.
-#'   \item similarity - The similarities between the two respective gene
-#'   modules.
+#'   \item similarity - The absolute correlations between the two respective
+#'   gene modules.
 #' }
 #'
 #' @export
@@ -2444,22 +2739,35 @@ rs_rbh_cor <- function(module_matrices, k_best, spearman, min_similarity) .Call(
 #' @description
 #' `r lifecycle::badge("experimental")`
 #' Core Rust function for motif enrichment analysis using recovery curves.
+#' Gene sets are processed in parallel; only motifs with an NES at or above
+#' `nes_threshold` are returned.
 #'
 #' @param rankings Integer matrix with motif rankings for genes (genes in rows,
 #' motifs in columns). Lower ranks indicate higher regulatory potential.
 #' @param gs_list List of integer vectors. Each element contains 1-based
 #' indices of genes in the gene set (matching row indices in rankings).
-#' @param auc_threshold Absolute number of top-ranked genes to use for AUC
-#' calculation (e.g., for 5% of 10000 genes, use 500).
-#' @param nes_threshold Normalised Enrichment Score threshold for filtering
-#' significant motifs
-#' @param max_rank Maximum rank to consider (typically nrow(rankings)).
-#' @param method Recovery curve calculation method: "approx" or "icistarget".
-#' @param n_mean Number of points for averaging in approximate method.
-#' @param verbose Controls verbosity of the function.
+#' @param auc_threshold Integer. Absolute number of top-ranked genes to use
+#' for the AUC calculation (e.g., for 5% of 10000 genes, use 500).
+#' @param nes_threshold Numeric. Normalised Enrichment Score threshold for
+#' filtering significant motifs.
+#' @param max_rank Integer. Maximum rank to consider for the recovery curves
+#' (at most `nrow(rankings)`).
+#' @param method String. Recovery curve calculation method, one of
+#' `c("approx", "icistarget")`. Anything else falls back to `"approx"`.
+#' @param n_mean Integer. Window size for the smoothing in the approximate
+#' method.
+#' @param verbose Boolean. Report progress per decile of gene sets.
 #'
-#' @returns List of lists, one per gene set, each containing motif_idx, nes, auc,
-#' rank_at_max, n_enriched, and leading_edge.
+#' @returns List of lists, one per gene set, each containing
+#' \itemize{
+#'   \item motif_idx - 1-based column index of the motif in `rankings`.
+#'   \item nes - Normalised enrichment score.
+#'   \item auc - Area under the recovery curve.
+#'   \item rank_at_max - Rank at which the leading edge is reached.
+#'   \item n_enriched - Number of genes in the leading edge.
+#'   \item leading_edge - List of 1-based row indices of the leading edge
+#'   genes, one element per motif.
+#' }
 #'
 #' @export
 rs_cistarget <- function(rankings, gs_list, auc_threshold, nes_threshold, max_rank, method, n_mean, verbose) .Call(wrap__rs_cistarget, rankings, gs_list, auc_threshold, nes_threshold, max_rank, method, n_mean, verbose)
@@ -2469,10 +2777,10 @@ rs_cistarget <- function(rankings, gs_list, auc_threshold, nes_threshold, max_ra
 #' @description
 #' `r lifecycle::badge("experimental")`
 #' This function implements a Rust version of the gene ontology enrichment with
-#' elimination: the starting point are the leafs of the ontology and
-#' hypergeometric tests will first conducted there. Should the hypergeometric
-#' test p-value be below a certain threshold, the genes of that gene ontology
-#' term will be removed from all ancestors.
+#' elimination: the starting point are the leaves of the ontology and
+#' hypergeometric tests will first be conducted there. Should the
+#' hypergeometric test p-value be below a certain threshold, the genes of that
+#' gene ontology term will be removed from all ancestors.
 #'
 #' @param target_genes A character vector representing the target gene set.
 #' @param levels A character vector representing the levels to iterate through.
@@ -2487,12 +2795,13 @@ rs_cistarget <- function(rankings, gs_list, auc_threshold, nes_threshold, max_ra
 #' @param min_overlap Optional minimum overlap threshold.
 #' @param fdr_threshold Optional fdr threshold.
 #'
-#' @returns A list containing:
+#' @returns A list containing (for the terms passing the thresholds):
 #'  \itemize{
 #'   \item go_ids - The gene ontology identifier.
-#'   \item pvals - The calculated odds ratios.
+#'   \item pvals - The calculated p-values.
+#'   \item fdr - The calculated FDRs.
 #'   \item odds_ratios - The calculated odds ratios.
-#'   \item overlap - The size of the overlap.
+#'   \item hits - The size of the overlap.
 #'   \item gene_set_lengths - The length of the gene sets.
 #' }
 #'
@@ -2504,10 +2813,11 @@ rs_gse_geom_elim <- function(target_genes, levels, go_obj, gene_universe_length,
 #' @description
 #' `r lifecycle::badge("experimental")`
 #' This function implements a Rust version of the gene ontology enrichment with
-#' elimination: the starting point are the leafs of the ontology and
-#' hypergeometric tests will first conducted there. Should the hypergeometric
-#' test p-value be below a certain threshold, the genes of that gene ontology
-#' term will be removed from all ancestors. This function is designed to
+#' elimination: the starting point are the leaves of the ontology and
+#' hypergeometric tests will first be conducted there. Should the
+#' hypergeometric test p-value be below a certain threshold, the genes of that
+#' gene ontology term will be removed from all ancestors. This function is
+#' designed to
 #' leverage Rust-based threading for parallel processing of a list of target
 #' genes.
 #'
@@ -2525,13 +2835,13 @@ rs_gse_geom_elim <- function(target_genes, levels, go_obj, gene_universe_length,
 #' @param min_overlap Optional minimum overlap threshold.
 #' @param fdr_threshold Optional fdr threshold.
 #'
-#' @returns A list containing:
+#' @returns A list containing (results of all target sets concatenated):
 #'  \itemize{
 #'   \item go_ids - The gene ontology identifier.
-#'   \item pvals - The calculated odds ratios.
-#'   \item fdrs - The calculated fdrs.
+#'   \item pvals - The calculated p-values.
+#'   \item fdr - The calculated FDRs.
 #'   \item odds_ratios - The calculated odds ratios.
-#'   \item overlap - The size of the overlap.
+#'   \item hits - The size of the overlap.
 #'   \item gene_set_lengths - The length of the gene sets.
 #'   \item no_test - The number of tests for that target set that passed the
 #'   thresholds.
@@ -2545,7 +2855,8 @@ rs_gse_geom_elim_list <- function(target_genes_list, levels, go_obj, gene_univer
 #' @description
 #' `r lifecycle::badge("experimental")`
 #'
-#' @param stats Named numerical vector. Needs to be sorted. The gene level statistics.
+#' @param stats Named numerical vector. Needs to be sorted. The gene level
+#' statistics.
 #' @param levels A character vector representing the levels to iterate through.
 #' The order will be the one the iterations are happening in.
 #' @param go_obj The `GeneOntologyElim` S7 class. See
@@ -2556,22 +2867,23 @@ rs_gse_geom_elim_list <- function(target_genes_list, levels, go_obj, gene_univer
 #'     \item min_size - Integer. Minimum size for the gene sets.
 #'     \item max_size - Integer. Maximum size for the gene sets.
 #'     \item gsea_param - Float. The GSEA parameter. Defaults to `1.0`.
-#'     \item sample_size - Integer. Number of samples to iterate through for the
+#'     \item sample_size - Integer. Number of samples to iterate through for
+#'     the multi-level implementation of fgsea.
+#'     \item eps - Float. Boundary for calculating the p-value. Used for the
 #'     multi-level implementation of fgsea.
-#'     \item eps - Float. Boundary for calculating the p-value. Used for the multi-
-#'     level implementation of fgsea.
 #' }
 #' @param elim_threshold p-value below which the elimination procedure shall be
 #' applied to the ancestors.
-#' @param iters Integer. Number of random permutations for the fgsea simple method
-#' to use
+#' @param iters Integer. Number of random permutations for the fgsea simple
+#' method to use
 #' @param seed Integer. For reproducibility purposes.
 #'
 #' @returns List with the following elements
 #' \itemize{
-#'     \item go_ids The name of the tested gene ontology identifer.
+#'     \item go_id The name of the tested gene ontology identifier.
 #'     \item es The enrichment scores for the pathway
-#'     \item nes The normalised enrichment scores for the pathway
+#'     \item nes The normalised enrichment scores for the pathway. Can be
+#'     `NA`.
 #'     \item size The pathway sizes (after elimination!).
 #'     \item pvals The p-values for this pathway based on permutation
 #'     testing
@@ -2579,8 +2891,8 @@ rs_gse_geom_elim_list <- function(target_genes_list, levels, go_obj, gene_univer
 #'     bigger or smaller than the permutation (pending sign).
 #'     \item le_zero Number of times the permutation was less than zero.
 #'     \item ge_zero Number of times the permutation was greater than zero.
-#'     \item leading_edge A list of the index positions of the leading edge
-#'     genes for this given GO term.
+#'     \item leading_edge A list of the 1-based index positions (in `stats`)
+#'     of the leading edge genes for this given GO term.
 #' }
 #'
 #' @export
@@ -2590,13 +2902,15 @@ rs_geom_elim_fgsea_simple <- function(stats, levels, go_obj, gsea_params, elim_t
 #'
 #' @description
 #' `r lifecycle::badge("experimental")`
-#' This function calculates the specified semantic similarity and returns the
-#' full vector (only calculating the upper triangle) for the given similarity.
+#' This function calculates the specified semantic similarity between all
+#' unique pairs of `terms` (upper triangle, no diagonal) and returns them in
+#' long format.
 #'
-#' @param terms Vector of strings. The terms in the ontology you wish to screen.
+#' @param terms Vector of strings. The terms in the ontology you wish to
+#' screen.
 #' @param sim_type String. Must be one of `c("resnik", "lin", "combined")`.
-#' @param ancestor_list R list with names being the term and the elements in the
-#' list the names of the ancestors.
+#' @param ancestor_list R list with names being the term and the elements in
+#' the list the names of the ancestors.
 #' @param ic_list R list with the names being the term and the elements the
 #' information content of this given term. Needs to be a single float!
 #'
@@ -2614,20 +2928,24 @@ rs_onto_semantic_sim <- function(terms, sim_type, ancestor_list, ic_list) .Call(
 #'
 #' @description
 #' `r lifecycle::badge("experimental")`
-#' This function calculates the specified semantic similarity and returns the
-#' full vector (only calculating the upper triangle) for the given similarity.
+#' This function calculates the specified semantic similarity between all
+#' terms in `ic_list` (only calculating the upper triangle) and returns it
+#' either as the flat upper triangle or as the full matrix.
 #'
 #' @param sim_type String. Must be one of `c("resnik", "lin", "combined")`.
-#' @param ancestor_list R list with names being the term and the elements in the
-#' list the names of the ancestors.
+#' @param ancestor_list R list with names being the term and the elements in
+#' the list the names of the ancestors.
 #' @param ic_list R list with the names being the term and the elements the
 #' information content of this given term. Needs to be a single float!
-#' @param flat_matrix Boolean. Shall only the upper triangle be returned.
+#' @param flat_matrix Boolean. Shall only the upper triangle (row-wise,
+#' diagonal excluded) be returned.
 #'
 #' @returns A list with:
 #' \itemize{
-#'   \item sim_mat - the semantic similarity matrix (flat or as matrix.)
-#'   \item names - the row and column names for the calculated matrix.
+#'   \item sim_mat - the semantic similarity matrix (flat or as matrix). The
+#'   diagonal of the full matrix is `1`.
+#'   \item names - the row and column names for the calculated matrix, i.e.
+#'   the names of `ic_list` sorted alphabetically.
 #' }
 #'
 #' @export
@@ -2637,13 +2955,13 @@ rs_onto_semantic_sim_mat <- function(sim_type, ancestor_list, ic_list, flat_matr
 #'
 #' @description
 #' `r lifecycle::badge("experimental")`
-#' This function calculates the Wang similarities between all permutations of a
-#' given set of terms.
+#' This function calculates the Wang similarities between all unique pairs of
+#' a given set of terms. Terms not found in the ontology get `NaN`.
 #'
 #' @param terms String vector. The terms you wish to calculate the similarities
 #' for.
 #' @param parents String vector. The names of the parents.
-#' @param children String vector. The names of the childs. The length of
+#' @param children String vector. The names of the children. The length of
 #' `parents` needs to be equal to `children`.
 #' @param w Numerics. The weights between the parents and children. Need
 #' to be values between 0 and 1.
@@ -2665,11 +2983,12 @@ rs_onto_sim_wang <- function(terms, parents, children, w) .Call(wrap__rs_onto_si
 #' This function calculates the Wang similarity matrix for a given ontology.
 #'
 #' @param parents String vector. The names of the parents.
-#' @param children String vector. The names of the childs. The length of
+#' @param children String vector. The names of the children. The length of
 #' `parents` needs to be equal to `children`.
 #' @param w Numerics. The weights between the parents and children. Need
 #' to be values between 0 and 1.
-#' @param flat_matrix Boolean. Shall only the upper triangle be returned.
+#' @param flat_matrix Boolean. Shall only the upper triangle (row-wise,
+#' diagonal excluded) be returned.
 #'
 #' @returns A list with:
 #' \itemize{
@@ -2684,11 +3003,11 @@ rs_onto_sim_wang_mat <- function(parents, children, w, flat_matrix) .Call(wrap__
 #'
 #' @description
 #' `r lifecycle::badge("experimental")`
-#' This function takes the similarity values as the upper triangle, the
-#' row/column names and filtering the values down based on the threshold.
+#' This function takes the similarity values as the upper triangle and the
+#' row/column names and filters the values down to those `>= threshold`.
 #'
-#' @param sim_vals Numerical vector. The upper triangle of the similarity matrix
-#' as a flattened vector.
+#' @param sim_vals Numerical vector. The upper triangle of the similarity
+#' matrix as a flattened vector (row-wise, diagonal excluded).
 #' @param names String vector. The row/col names of the similarity matrix.
 #' @param threshold Float. The filtering threshold.
 #'
@@ -2713,8 +3032,9 @@ rs_filter_onto_sim <- function(sim_vals, names, threshold) .Call(wrap__rs_filter
 #'
 #' @param f_path String. Path to the `counts_genes.bin` file.
 #' @param cell_indices Integer vector. 0-indexed(!) positions of cells to
-#' include in the analysis
-#' @param cell_markers A list with the cell marker gene indices.
+#' include in the analysis.
+#' @param cell_markers List. One element per cell type, each a list with that
+#' cell type's marker gene indices.
 #' @param sensitivity Boolean. Shall a sensitivity correction be applied that
 #' downweights common cell type markers.
 #' @param weight_floor Optional numeric. If `sensitivity = TRUE`, what is
@@ -2724,10 +3044,10 @@ rs_filter_onto_sim <- function(sim_vals, names, threshold) .Call(wrap__rs_filter
 #'
 #' @returns A list with
 #' \itemize{
-#'   \item cell_types - String vector. The cell types
-#'   \item scores - Row-major scores (cells x cell_types).
-#'   \item n_cells - Number of cells
-#'   \item n_cell_types - Number of cell types
+#'   \item cell_types - Character vector. The cell types.
+#'   \item scores - Numerical vector. Row-major scores (cells x cell_types).
+#'   \item n_cells - Integer. Number of cells.
+#'   \item n_cell_types - Integer. Number of cell types.
 #' }
 #'
 #' @export
@@ -2739,19 +3059,18 @@ rs_sc_type <- function(f_path, cell_indices, cell_markers, sensitivity, weight_f
 #'
 #' @description
 #' `r lifecycle::badge("experimental")`
-#' This Rust function implements the cell type scoring approach from Ianevski
-#' et al. (2022).
+#' Aggregates the per-cell ScType scores into one cell type call per cluster,
+#' see Ianevski et al. (2022).
 #'
-#' @param sc_type_res List. The ScType results.
-#' @param cluster_labels Integer. Cluster assignment. Needs to be of length
-#' of scored cells.
+#' @param sc_type_res List. The ScType results, see `rs_sc_type()`.
+#' @param cluster_labels Integer vector. Cluster assignment per scored cell.
 #'
 #' @returns A list with
 #' \itemize{
-#'  \item cluster_id - The cluster id/integer
-#'  \item cell_type - String; the predicted cell type
-#'  \item score - The final score for the clsuter.
-#'  \item n_cells - The number of cells in the cluster.
+#'  \item cluster_id - Integer. The cluster id.
+#'  \item cell_type - Character. The predicted cell type.
+#'  \item scores - Numeric. The final score for the cluster.
+#'  \item n_cells - Integer. The number of cells in the cluster.
 #' }
 #'
 #' @export
@@ -2771,8 +3090,10 @@ rs_sc_type_cluster_assignment <- function(sc_type_res, cluster_labels) .Call(wra
 #'
 #' @param sc_type_res List. The ScType results, see `rs_sc_type()`.
 #' @param from,to Optional integer vectors. 1-indexed(!) edges of the sNN
-#' graph. If `NULL`, no smoothing is applied.
+#' graph, each edge listed once; the graph is symmetrised on the way in. If
+#' either is `NULL`, no smoothing is applied.
 #' @param weights Optional numeric vector. Edge weights, same length as `from`.
+#' Reciprocal weights are averaged. If `NULL`, the graph is unweighted.
 #' @param cluster_labels Optional integer vector. 0-indexed(!) cluster
 #' assignment, of length of the scored cells.
 #' @param params List. The output of `params_sctype_cells()`.
@@ -2786,10 +3107,14 @@ rs_sc_type_cluster_assignment <- function(sc_type_res, cluster_labels) .Call(wra
 #'   \item margins - Numeric vector. Best minus second best score per cell.
 #'   \item agreement - Numeric vector. Fraction of graph neighbours sharing the
 #'   call. `NULL` if no graph was provided.
-#'   \item hybrid_assignments - Integer vector, as `assignments`. Only present
-#'   if `cluster_labels` was provided.
-#'   \item composition - List with the per-cluster composition. Only present if
-#'   `cluster_labels` was provided.
+#'   \item hybrid_assignments - Integer vector, as `assignments`. `NULL` if no
+#'   `cluster_labels` were provided.
+#'   \item composition - List with the per-cluster composition (`cluster_id`,
+#'   `n_cells`, `n_unknown`, `dominant`, `second`, `purity`,
+#'   `second_fraction`, `entropy`, `cluster_mixed` and the clusters x cell
+#'   types count matrix `counts`). `dominant` and `second` use the same
+#'   1-based encoding as `assignments`. `NULL` if no `cluster_labels` were
+#'   provided.
 #' }
 #'
 #' @references
@@ -2804,25 +3129,38 @@ rs_sc_type_assign_cells <- function(sc_type_res, from, to, weights, cluster_labe
 #'
 #' @description
 #' `r lifecycle::badge("experimental")`
-#' Builds the Symphony reference in Rust, see Kang et al.
+#' Builds the Symphony reference in Rust, see Kang et al. Runs PCA on the
+#' HVGs, corrects it with Harmony and stores the terms needed to map queries.
 #'
 #' @param f_path_gene String. Path to the gene-based binary file.
-#' @param f_path_cell String. Path to the cell-based binary file.
+#' @param f_path_cell String. Path to the cell-based binary file. Only read
+#' for the PFlogPF offsets if `pca_params` requests them.
 #' @param cell_indices Integer vector. 0-based cell indices.
 #' @param hvg_indices Integer vector. 0-based HVG indices.
 #' @param batch_labels List of 0-indexed integer vectors (one per batch
-#' variable).
+#' variable), each of length `cell_indices`.
 #' @param pca_params List. Output of `params_sc_pca()`.
-#' @param no_pcs Integer.
+#' @param no_pcs Integer. Number of principal components.
 #' @param harmony_params List. Output of `params_sc_harmony()` or
-#' `params_sc_harmony_v2()`.
-#' @param harmony_version String. "v1" or "v2".
-#' @param seed Integer.
+#' `params_sc_harmony_v2()`, matching `harmony_version`.
+#' @param harmony_version String. `"v1"` or `"v2"`; anything else errors.
+#' @param seed Integer. Seed for reproducibility.
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
 #'
-#' @returns A list with gene_means, gene_sds, loadings, z_orig, z_corr, r,
-#' centroids, nr, c.
+#' @returns A list with
+#' \itemize{
+#'   \item gene_means - Numerical vector. Per-HVG mean of the normalised data.
+#'   \item gene_sds - Numerical vector. Per-HVG standard deviation.
+#'   \item loadings - Numerical matrix. PCA loadings (n_hvgs x d).
+#'   \item z_orig - Numerical matrix. Pre-Harmony PCA scores (N x d).
+#'   \item z_corr - Numerical matrix. Harmony-corrected embedding (N x d).
+#'   \item r - Numerical matrix. Soft cluster assignments (K x N).
+#'   \item centroids - Numerical matrix. Cosine-normalised centroids (K x d).
+#'   \item nr - Numerical vector. Cluster sizes, the row sums of `r`.
+#'   \item c - Numerical matrix. Compression term, `r` times `z_corr`
+#'   (K x d).
+#' }
 #'
 #' @references
 #' Kang et al., Nat Comm, 2021.
@@ -2847,15 +3185,23 @@ rs_build_symphony_ref <- function(f_path_gene, f_path_cell, cell_indices, hvg_in
 #' @param nr Reference cluster sizes (length K).
 #' @param c_cache Reference compression term R*Z_corr (K x d).
 #' @param ref_to_query_gene_map Integer vector. For each reference HVG slot,
-#' the 0-based query gene index, or `NA_integer_` if absent.
-#' @param batch_labels_query List of 0-indexed integer vectors (empty = no
-#' batch correction).
-#' @param params_symphony Named list. Contains the parameters for the referemce
-#' generation.
+#' the 0-based query gene index, or `NA_integer_` (or any negative value) if
+#' absent. Absent slots are filled with zeros.
+#' @param batch_labels_query List of 0-indexed integer vectors, one per batch
+#' variable. An empty list skips the batch correction (`z_corr = z_pca`).
+#' @param params_symphony Named list. The query mapping parameters.
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
 #'
-#' @returns A list with z_pca, z_corr, r.
+#' @returns A list with
+#' \itemize{
+#'   \item z_pca - Numerical matrix. Query projected into the reference PC
+#'   space (N_q x d).
+#'   \item z_corr - Numerical matrix. Query after the batch correction
+#'   (N_q x d).
+#'   \item r - Numerical matrix. Query soft assignments onto the reference
+#'   centroids (K x N_q).
+#' }
 #'
 #' @references
 #' Kang et al., Nat Comm, 2021.
@@ -2869,17 +3215,27 @@ rs_symphony_map_query <- function(f_path_query, cell_indices_query, gene_means, 
 #'
 #' @description
 #' `r lifecycle::badge("experimental")`
+#' Finds the reference neighbours of every query cell and assigns the
+#' majority label. Ties go to the lowest label index.
 #'
-#' @param reference_z_corr Reference Harmony-corrected embedding (N_ref x d).
-#' @param query_z_corr Query Symphony-corrected embedding (N_q x d).
-#' @param reference_labels 0-based integer-encoded reference labels.
-#' @param n_labels Number of distinct labels.
+#' @param reference_z_corr Numerical matrix. Reference Harmony-corrected
+#' embedding (N_ref x d).
+#' @param query_z_corr Numerical matrix. Query Symphony-corrected embedding
+#' (N_q x d).
+#' @param reference_labels Integer vector. 0-based integer-encoded reference
+#' labels.
+#' @param n_labels Integer. Number of distinct labels.
 #' @param knn_params List. Output of `params_sc_knn()`.
-#' @param seed Integer.
-#' @param verbose Integer. 0/1/2.
+#' @param seed Integer. Seed for the kNN search.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
 #'
-#' @returns A list with `predicted` (0-based integer per query cell) and
-#' `confidence` (vote share of the winning label).
+#' @returns A list with
+#' \itemize{
+#'   \item predicted - Integer vector. Predicted label per query cell
+#'   (0-based).
+#'   \item confidence - Numerical vector. Vote share of the winning label.
+#' }
 #'
 #' @export
 #'
@@ -2891,24 +3247,24 @@ rs_transfer_labels_symphony <- function(reference_z_corr, query_z_corr, referenc
 #' @description
 #' `r lifecycle::badge("experimental")`
 #' The function takes in a kNN matrix and a batch vector indicating which
-#' cell belongs to which batch. The function will check for the neighbourhood
-#' of each cell if the proportion of represented batches are different from
-#' the overall batch proportions. Good mixing of batches would mean very
-#' cells have significant differences; bad mixing a lot of the batches
-#' have bad mixing.
+#' cell belongs to which batch. For the neighbourhood of each cell, a
+#' chi-square test checks whether the batch proportions differ from the
+#' overall batch proportions (with Yates' correction for two batches). Good
+#' mixing means few cells with significant differences; bad mixing means
+#' many.
 #'
 #' @param knn_mat Integer matrix. The rows represent the cells and the
-#' columns the neighbour indices.
-#' @param batch_vector Integer vector. The integers indicate to which
-#' batch a given cell belongs.
+#' columns the neighbour indices (0-indexed!).
+#' @param batch_vector Integer vector. The batch per cell. The codes need
+#' not be 0-based or contiguous.
 #' @param verbose Boolean. Controls verbosity of the function.
 #'
 #' @returns A list with the following items
 #' \itemize{
-#'   \item pval - The p-values from the ChiSquare test
-#'   \item chi_square_stats - ChiSquare statistics
-#'   \item mean_chi_square - The mean ChiSquare value
-#'   \item median_chi_square - The median ChiSquare value
+#'   \item pval - Per-cell p-values from the chi-square test.
+#'   \item chi_square_stats - Per-cell chi-square statistics.
+#'   \item mean_chi_square - The mean chi-square value.
+#'   \item median_chi_square - The median chi-square value.
 #' }
 #'
 #' @export
@@ -2924,10 +3280,10 @@ rs_kbet <- function(knn_mat, batch_vector, verbose) .Call(wrap__rs_kbet, knn_mat
 #'
 #' @param embedding Numeric matrix. The embedding to assess (e.g. PCA or
 #' corrected embedding). Rows are cells, columns are dimensions.
-#' @param batch_vector Integer vector. The integers indicate to which
-#' batch a given cell belongs.
+#' @param batch_vector Integer vector. The batch per cell. The codes need
+#' not be 0-based or contiguous.
 #' @param max_cells Integer or NULL. If not NULL, subsample to this many
-#' cells for performance. Defaults to 5000.
+#' cells for performance. If NULL, all cells are used.
 #' @param verbose Boolean. Controls verbosity of the function.
 #' @param seed Integer. Seed for subsampling reproducibility.
 #'
@@ -2941,19 +3297,27 @@ rs_kbet <- function(knn_mat, batch_vector, verbose) .Call(wrap__rs_kbet, knn_mat
 #' @export
 rs_batch_silhouette_width <- function(embedding, batch_vector, max_cells, verbose, seed) .Call(wrap__rs_batch_silhouette_width, embedding, batch_vector, max_cells, verbose, seed)
 
-#' Calculate batch LISI scores
+#' Calculate LISI scores on any label
 #'
 #' @description
 #' `r lifecycle::badge("experimental")`
-#' Computes the Local Inverse Simpson's Index on batch labels using the
-#' kNN graph. Measures the effective number of batches in each cell's
-#' neighbourhood. Under perfect mixing LISI equals the number of batches,
-#' under no mixing LISI equals 1.
+#' Computes the Local Inverse Simpson's Index on the kNN graph: the effective
+#' number of labels in each cell's neighbourhood. On batch labels this is
+#' iLISI (higher is better mixing), on cell type labels cLISI (lower is better
+#' separation). Both come back rescaled to `[0, 1]`, higher is better, as in
+#' scIB.
 #'
 #' @param knn_mat Integer matrix. The rows represent the cells and the
-#' columns the neighbour indices.
-#' @param batch_vector Integer vector. The integers indicate to which
-#' batch a given cell belongs.
+#' columns the neighbour indices (0-indexed!).
+#' @param knn_dist Numeric matrix or NULL. The kNN distances, same shape as
+#' `knn_mat`. If provided, neighbours are weighted with a perplexity-calibrated
+#' Gaussian kernel as in Korsunsky et al.; if NULL, neighbours are weighted
+#' uniformly.
+#' @param labels Integer vector. The label (batch or cell type) per cell. The
+#' codes need not be 0-based or contiguous.
+#' @param perplexity Numeric or NULL. Perplexity for the weighted version.
+#' NULL defaults to 30; values above k are clamped to k. Ignored if
+#' `knn_dist` is NULL.
 #' @param verbose Boolean. Controls verbosity of the function.
 #'
 #' @returns A list with the following items
@@ -2961,10 +3325,95 @@ rs_batch_silhouette_width <- function(embedding, batch_vector, max_cells, verbos
 #'   \item per_cell - Per-cell LISI scores
 #'   \item mean_lisi - Mean LISI
 #'   \item median_lisi - Median LISI
+#'   \item n_labels - Number of distinct labels
+#'   \item ilisi_norm - Median LISI rescaled as iLISI, `(median - 1) / (n - 1)`
+#'   \item clisi_norm - Median LISI rescaled as cLISI, `(n - median) / (n - 1)`
 #' }
 #'
+#' @references Korsunsky, et al., Nat Methods, 2019; Luecken, et al., Nat
+#' Methods, 2022
+#'
 #' @export
-rs_batch_lisi <- function(knn_mat, batch_vector, verbose) .Call(wrap__rs_batch_lisi, knn_mat, batch_vector, verbose)
+rs_lisi <- function(knn_mat, knn_dist, labels, perplexity, verbose) .Call(wrap__rs_lisi, knn_mat, knn_dist, labels, perplexity, verbose)
+
+#' Principal component regression on batch
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Regresses each embedding dimension on the batch labels (one-way ANOVA) and
+#' weights the per-dimension R-squared by the variance each dimension carries.
+#' Compare the value on the uncorrected PCA with the one on the corrected
+#' embedding, `(pre - post) / pre`, rather than reading it on its own.
+#'
+#' @param embedding Numeric matrix. Cells x dimensions, ideally a PCA.
+#' @param batch_vector Integer vector. The batch per cell. The codes need not
+#' be 0-based or contiguous.
+#'
+#' @returns A list with the following items
+#' \itemize{
+#'   \item var_explained - Variance per embedding dimension.
+#'   \item r_squared - R-squared of batch per embedding dimension.
+#'   \item pcr - Variance-weighted R-squared of batch.
+#' }
+#'
+#' @references Büttner, et al., Nat Methods, 2019; Luecken, et al., Nat
+#' Methods, 2022
+#'
+#' @export
+rs_pcr <- function(embedding, batch_vector) .Call(wrap__rs_pcr, embedding, batch_vector)
+
+#' Calculate cell type silhouette width from an embedding
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Average silhouette width on cell type labels, rescaled to `[0, 1]` via
+#' `(s + 1) / 2`. Higher values mean cell types stay separated.
+#'
+#' @param embedding Numeric matrix. Cells x dimensions.
+#' @param labels Integer vector. The cell type per cell. The codes need not
+#' be 0-based or contiguous.
+#' @param max_cells Integer or NULL. If not NULL, subsample to this many
+#' cells for performance. If NULL, all cells are used.
+#' @param verbose Boolean. Controls verbosity of the function.
+#' @param seed Integer. Seed for subsampling reproducibility.
+#'
+#' @returns A list with the following items
+#' \itemize{
+#'   \item per_cell - Per-cell rescaled silhouette scores
+#'   \item mean_asw - Mean rescaled silhouette width
+#'   \item median_asw - Median rescaled silhouette width
+#' }
+#'
+#' @references Luecken, et al., Nat Methods, 2022
+#'
+#' @export
+rs_cell_type_asw <- function(embedding, labels, max_cells, verbose, seed) .Call(wrap__rs_cell_type_asw, embedding, labels, max_cells, verbose, seed)
+
+#' Calculate graph connectivity per cell type
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' For each cell type, the fraction of its cells in the largest connected
+#' component of the kNN graph restricted to that cell type. 1 means every
+#' cell type forms one connected piece. Edge direction is ignored.
+#'
+#' @param knn_mat Integer matrix. The rows represent the cells and the
+#' columns the neighbour indices (0-indexed!).
+#' @param labels Integer vector. The cell type per cell. The codes need not
+#' be 0-based or contiguous.
+#'
+#' @returns A list with the following items
+#' \itemize{
+#'   \item per_label - Connectivity per cell type, in order of first
+#'   appearance in `labels`.
+#'   \item mean - Mean connectivity.
+#'   \item median - Median connectivity.
+#' }
+#'
+#' @references Luecken, et al., Nat Methods, 2022
+#'
+#' @export
+rs_graph_connectivity <- function(knn_mat, labels) .Call(wrap__rs_graph_connectivity, knn_mat, labels)
 
 #' BBKNN implementation in Rust
 #'
@@ -2975,14 +3424,18 @@ rs_batch_lisi <- function(knn_mat, batch_vector, verbose) .Call(wrap__rs_batch_l
 #' @param embd Numerical matrix. The embedding matrix to use to generate the
 #' BBKNN parameters. Usually PCA. Rows represent cells.
 #' @param batch_labels Integer vector. These represent to which batch a given
-#' cell belongs.
+#' cell belongs (0-indexed!).
 #' @param bbknn_params List. Contains all of the BBKNN parameters.
 #' @param seed Integer. Seed for reproducibility purposes.
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
 #'
-#' @returns A list of two lists representing the sparse matrix representation
-#' of the distances and the connectivities.
+#' @returns A list with
+#' \itemize{
+#'   \item distances - Sparse list representation of the kNN distances.
+#'   \item connectivities - Sparse list representation of the
+#'   connectivities.
+#' }
 #'
 #' @export
 #'
@@ -2995,15 +3448,16 @@ rs_bbknn <- function(embd, batch_labels, bbknn_params, seed, verbose) .Call(wrap
 #'
 #' @description
 #' `r lifecycle::badge("experimental")`
+#' Keeps the first `no_neighbours_to_keep` stored entries of each CSR row.
 #'
 #' @param indptr Integer vector. The index pointers of the underlying data.
 #' @param indices Integer vector. The indices of the nearest neighbours.
 #' @param data Numeric vector. The distances to the nearest neighbours.
 #' @param no_neighbours_to_keep Integer. Number of nearest neighbours to keep.
 #'
-#' @returns A list with `indices` (integer matrix) and `dist` (numeric matrix),
-#' each with shape (n_cells, no_neighbours_to_keep). Positions without
-#' neighbours are filled with -1 (indices) or NaN (distances).
+#' @returns A list with `indices` and `dist`, both numeric (double) matrices
+#' of shape (n_cells, no_neighbours_to_keep). Positions without neighbours
+#' are `NaN` in both.
 #'
 #' @export
 #'
@@ -3025,15 +3479,16 @@ rs_bbknn_filtering <- function(indptr, indices, data, no_neighbours_to_keep) .Ca
 #' @param gene_indices Integer. The gene indices to use. (0-indexed!) Ideally
 #' these are batch-aware highly variable genes.
 #' @param batch_indices Integer vector. These represent to which batch a given
-#' cell belongs.
-#' @param mnn_params List. Contains all of the fastMNN parameters.
+#' cell belongs (0-indexed!).
 #' @param precomputed_pca Optional PCA matrix. If you want to provide a
 #' pre-computed matrix.
-#' @param seed Integer. Seed for reproducibility purposes.
+#' @param mnn_params List. Contains all of the fastMNN parameters.
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
+#' @param seed Integer. Seed for reproducibility purposes.
 #'
-#' @returns The batch-corrected embedding space.
+#' @returns Numerical matrix, cells x dimensions, with the batch-corrected
+#' embedding.
 #'
 #' @export
 #'
@@ -3048,13 +3503,14 @@ rs_mnn <- function(f_path_gene, f_path_cell, cell_indices, gene_indices, batch_i
 #'
 #' @param pca Numerical matrix, i.e., the PCA matrix you want to correct.
 #' @param harmony_params List. The parameters for the Harmony algorithm.
-#' @param batch_labels List. Each element in the list needs to be a 0-indexed
-#' integer that represents the batch effects you wish to regress out.
+#' @param batch_labels List. Each element needs to be a 0-indexed integer
+#' vector, one per batch variable you wish to regress out.
 #' @param seed Integer. Seed for reproducibility purposes.
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
 #'
-#' @returns The batch-corrected Harmony embedding space.
+#' @returns Numerical matrix, cells x dimensions, with the batch-corrected
+#' Harmony embedding.
 #'
 #' @export
 rs_harmony <- function(pca, harmony_params, batch_labels, seed, verbose) .Call(wrap__rs_harmony, pca, harmony_params, batch_labels, seed, verbose)
@@ -3068,13 +3524,14 @@ rs_harmony <- function(pca, harmony_params, batch_labels, seed, verbose) .Call(w
 #'
 #' @param pca Numerical matrix, i.e., the PCA matrix you want to correct.
 #' @param harmony_params List. The parameters for the Harmony (v2) algorithm.
-#' @param batch_labels List. Each element in the list needs to be a 0-indexed
-#' integer that represents the batch effects you wish to regress out.
+#' @param batch_labels List. Each element needs to be a 0-indexed integer
+#' vector, one per batch variable you wish to regress out.
 #' @param seed Integer. Seed for reproducibility purposes.
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
 #'
-#' @returns The batch-corrected Harmony (v2) embedding space.
+#' @returns Numerical matrix, cells x dimensions, with the batch-corrected
+#' Harmony (v2) embedding.
 #'
 #' @export
 rs_harmony_v2 <- function(pca, harmony_params, batch_labels, seed, verbose) .Call(wrap__rs_harmony_v2, pca, harmony_params, batch_labels, seed, verbose)
@@ -3104,7 +3561,8 @@ rs_harmony_v2 <- function(pca, harmony_params, batch_labels, seed, verbose) .Cal
 #' detailed verbosity.
 #' @param seed Integer. Seed for reproducibility purposes.
 #'
-#' @returns The batch-corrected embedding space.
+#' @returns Numerical matrix, cells x dimensions, with the batch-corrected
+#' embedding.
 #'
 #' @export
 #'
@@ -3138,7 +3596,8 @@ rs_seurat_cca <- function(f_path_gene, f_path_cell, cell_indices, gene_indices, 
 #' detailed verbosity.
 #' @param seed Integer. Seed for reproducibility purposes.
 #'
-#' @returns The batch-corrected embedding space.
+#' @returns Numerical matrix, cells x dimensions, with the batch-corrected
+#' embedding.
 #'
 #' @export
 #'
@@ -3179,7 +3638,7 @@ rs_seurat_rpca <- function(f_path_gene, f_path_cell, cell_indices, gene_indices,
 #'  \item doublet_errors_obs - Numerical vector with the standard errors of
 #'  the scores for the observed cells.
 #'  \item z_scores - Z-scores for the observed cells. Represents:
-#'  `score - threshold / error`.
+#'  `(score - threshold) / error`.
 #'  \item threshold - Used threshold.
 #'  \item detected_doublet_rate - Fraction of cells that are called as
 #'  doublet.
@@ -3220,11 +3679,11 @@ rs_sc_scrublet <- function(f_path_gene, f_path_cell, cells_to_keep, scrublet_par
 #'
 #' @returns A list with
 #' \itemize{
-#'  \item predicted_doublets - Boolean vector indicating which observed cells
+#'  \item doublet - Boolean vector indicating which observed cells are
 #'  predicted as doublets (TRUE = doublet, FALSE = singlet).
-#'  \item doublet_scores_obs - Numerical vector with the likelihood of being
-#'  a doublet for the observed cells.
-#'  \item voting_avg - Voting average across the different iterations.
+#'  \item doublet_score - Numerical vector with the doublet score per cell,
+#'  averaged across iterations.
+#'  \item voting_avg - Voting average per cell across the iterations.
 #' }
 #'
 #' @export
@@ -3250,8 +3709,23 @@ rs_sc_doublet_detection <- function(f_path_gene, f_path_cell, cells_to_keep, boo
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
 #'
-#' @returns A list with predicted_doublets, doublet_scores, threshold,
-#' cluster_labels and detected_doublet_rate.
+#' @returns A list with
+#' \itemize{
+#'  \item predicted_doublets - Boolean vector (TRUE = doublet).
+#'  \item doublet_scores - Numerical vector with the classifier probability
+#'  per observed cell.
+#'  \item cxds_scores - Numerical vector with the cxds scores.
+#'  \item weighted - Numerical vector with the weighted scores.
+#'  \item threshold - Threshold used for the doublet calls.
+#'  \item cluster_labels - Integer vector with the cluster labels from the
+#'  final iteration.
+#'  \item detected_doublet_rate - Fraction of cells called as doublets.
+#'  \item selected_genes - Integer vector with the selected gene indices
+#'  (0-indexed!).
+#'  \item features - If `return_features = TRUE`, a list with
+#'  `feature_names`, `feature_mat` (observed cells x features) and
+#'  `included_in_training`; otherwise an empty list.
+#' }
 #'
 #' @export
 #'
@@ -3293,8 +3767,8 @@ rs_sc_otsu_method <- function(scores, bins) .Call(wrap__rs_sc_otsu_method, score
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
 #'
-#' @returns A list with the cumulative percentages of the Top X genes defined
-#' as in `top_n_vals`.
+#' @returns A list with one numerical vector per value in `top_n_vals`, each
+#' holding the cumulative proportion of counts per cell.
 #'
 #' @export
 #'
@@ -3317,8 +3791,8 @@ rs_sc_get_top_genes_perc <- function(f_path_cell, top_n_vals, cell_indices, stre
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
 #'
-#' @returns A list with the percentages of counts per gene set group detected
-#' in the cells.
+#' @returns A list, named like `gene_set_idx`, with one numerical vector per
+#' gene set holding the percentage of counts per cell.
 #'
 #' @export
 #'
@@ -3350,7 +3824,7 @@ rs_sc_get_gene_set_perc <- function(f_path_cell, gene_set_idx, cell_indices, str
 #' @keywords internal
 rs_pairwise_gene_cors <- function(f_path, gene_indices_1, gene_indices_2, cells_to_keep, spearman, verbose) .Call(wrap__rs_pairwise_gene_cors, f_path, gene_indices_1, gene_indices_2, cells_to_keep, spearman, verbose)
 
-#' Calculate the percentage of gene sets in the cells
+#' Calculate the highly variable genes
 #'
 #' @description
 #' `r lifecycle::badge("experimental")`
@@ -3363,13 +3837,14 @@ rs_pairwise_gene_cors <- function(f_path, gene_indices_1, gene_indices_2, cells_
 #' @param cell_indices Integer positions (0-indexed!) that defines the cells
 #' to keep. Must be unique and within the store; duplicates or out-of-range
 #' positions raise an error.
-#' @param loess_span Numeric. The span parameter for the loess function. Must
-#' be within `(0, 1]`.
-#' @param clip_max Optional clipping number. Defaults to `sqrt(no_cells)` if
-#' not provided.
-#' @param binning String. The binning strategy for the `meanvarbin` method. One
-#' of `c("equal_width", "equal_frequency")`.
-#' @param n_bins Integer. Number of bins for the `meanvarbin` method.
+#' @param loess_span Numeric. The span parameter for the loess function
+#' (`"vst"` only). Must be within `(0, 1]`.
+#' @param binning String. The binning strategy for the `meanvarbin` and
+#' `dispersion` methods. One of `c("equal_width", "equal_frequency")`.
+#' @param n_bins Integer. Number of bins for the `meanvarbin` and
+#' `dispersion` methods.
+#' @param clip_max Optional clipping number (`"vst"` only). Defaults to
+#' `sqrt(no_cells)` if not provided.
 #' @param streaming Boolean. Shall the genes be streamed in to reduce memory
 #' pressure.
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
@@ -3414,13 +3889,14 @@ rs_sc_hvg <- function(f_path_gene, hvg_method, cell_indices, loess_span, binning
 #' for each cell. Must be the same length as `cell_indices` and densely cover
 #' `0:(n_batches - 1)`; a length mismatch or an empty batch raises an error.
 #' `as.integer(factor(x)) - 1L` always satisfies this.
-#' @param loess_span Numeric. The span parameter for the loess function. Must
-#' be within `(0, 1]`.
-#' @param clip_max Optional clipping number. Defaults to `sqrt(no_cells)` per
-#' batch if not provided.
-#' @param binning String. The binning strategy for the `meanvarbin` method. One
-#' of `c("equal_width", "equal_frequency")`.
-#' @param n_bins Integer. Number of bins for the `meanvarbin` method.
+#' @param loess_span Numeric. The span parameter for the loess function
+#' (`"vst"` only). Must be within `(0, 1]`.
+#' @param binning String. The binning strategy for the `meanvarbin` and
+#' `dispersion` methods. One of `c("equal_width", "equal_frequency")`.
+#' @param n_bins Integer. Number of bins for the `meanvarbin` and
+#' `dispersion` methods.
+#' @param clip_max Optional clipping number (`"vst"` only). Defaults to
+#' `sqrt(no_cells)` per batch if not provided.
 #' @param streaming Boolean. Shall the genes be streamed in to reduce memory
 #' pressure.
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
@@ -3433,7 +3909,8 @@ rs_sc_hvg <- function(f_path_gene, hvg_method, cell_indices, loess_span, binning
 #'   \item var - The variance of each gene in each batch.
 #'   \item var_exp - The expected variance of each gene in each batch.
 #'   \item var_std - The standardised variance of each gene in each batch.
-#'   \item batch - Batch index for each gene (length = n_genes * n_batches).
+#'   \item batch - Batch index for each entry (0-indexed, length = n_genes *
+#'   n_batches).
 #'   \item gene_idx - Gene index for each entry (0-indexed, length = n_genes *
 #'   n_batches).
 #' }
@@ -3444,7 +3921,8 @@ rs_sc_hvg <- function(f_path_gene, hvg_method, cell_indices, loess_span, binning
 #'   \item dispersion_scaled - The scaled dispersion per bin per gene in each
 #'   batch.
 #'   \item bin - The bin of the gene in each batch.
-#'   \item batch - Batch index for each gene (length = n_genes * n_batches).
+#'   \item batch - Batch index for each entry (0-indexed, length = n_genes *
+#'   n_batches).
 #'   \item gene_idx - Gene index for each entry (0-indexed, length = n_genes *
 #'   n_batches).
 #' }
@@ -3476,12 +3954,13 @@ rs_sc_hvg_batch_aware <- function(f_path_gene, hvg_method, cell_indices, batch_l
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
 #'
-#' @returns A list with with the following items
+#' @returns A list with the following items
 #' \itemize{
 #'   \item scores - The samples projected on the PCA space.
 #'   \item loadings - The loadings of the features for the PCA.
 #'   \item singular_values - The singular values for the PCA.
-#'   \item scaled - The scaled matrix if you set return_scaled to `TRUE`.
+#'   \item scaled - The scaled matrix if `return_scaled = TRUE`, otherwise
+#'   `NULL`.
 #' }
 #'
 #' @export
@@ -3512,7 +3991,7 @@ rs_sc_pca <- function(f_path_gene, f_path_cell, no_pcs, pca_params, cell_indices
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
 #'
-#' @returns A list with with the following items
+#' @returns A list with the following items
 #' \itemize{
 #'   \item scores - The samples projected on the PCA space (solved via sparse
 #'   SVD).
@@ -3546,8 +4025,9 @@ rs_sc_pca_sparse <- function(f_path_gene, f_path_cell, no_pcs, pca_params, cell_
 #' detailed verbosity.
 #' @param seed Integer. Seed for reproducibility purposes.
 #'
-#' @returns A integer matrix of N x k with N being the number of cells and k the
-#' number of neighbours.
+#' @returns An integer matrix of N x k with the neighbour indices
+#' (0-indexed!), N being the number of cells and k the number of neighbours.
+#' Rows the search left short are padded by repeating their last neighbour.
 #'
 #' @export
 rs_sc_knn <- function(embd, knn_params, validate_index, verbose, seed) .Call(wrap__rs_sc_knn, embd, knn_params, validate_index, verbose, seed)
@@ -3571,12 +4051,14 @@ rs_sc_knn <- function(embd, knn_params, validate_index, verbose, seed) .Call(wra
 #'
 #' @returns A list with:
 #' \itemize{
-#'  \item indices - An integer matrix representing the indices of the
-#'  approximate nearest neighbours.
-#'  \item dist - An numerical matrix representing the distances to the nearest
-#'  neighbours.
+#'  \item indices - An integer matrix (cells x k) representing the indices
+#'  (0-indexed!) of the approximate nearest neighbours.
+#'  \item dist - A numerical matrix (cells x k) representing the distances to
+#'  the nearest neighbours.
 #'  \item dist_metric - String representing the used distance metric.
 #' }
+#' Rows the search left short are padded by repeating their last neighbour
+#' and distance.
 #'
 #' @export
 rs_sc_knn_w_dist <- function(embd, knn_params, validate_index, verbose, seed) .Call(wrap__rs_sc_knn_w_dist, embd, knn_params, validate_index, verbose, seed)
@@ -3589,19 +4071,20 @@ rs_sc_knn_w_dist <- function(embd, knn_params, validate_index, verbose, seed) .C
 #' graph based on it.
 #'
 #' @param knn_mat Integer matrix. Rows represent cells and the columns
-#' represent the neighbours.
+#' represent the neighbours (0-indexed!).
 #' @param snn_method String. Which method to use to calculate the similarity.
-#' Choice of `c("jaccard", "rank")`.
+#' Choice of `c("jaccard", "rank")`; anything else errors.
 #' @param limited_graph Boolean. Shall the sNNs only be calculated between
 #' direct neighbours in the graph, or between all possible combinations.
-#' @param pruning Float. Below which value for the Jaccard similarity to prune
-#' the weight to 0.
+#' @param pruning Float. Below which similarity value to prune the weight
+#' to 0.
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
 #'
 #' @returns A list with the following items:
 #' \itemize{
-#'  \item edges - sNN edges as edge pairs.
+#'  \item edges - Integer vector with the flattened sNN edge pairs
+#'  (1-indexed!), ready for `igraph::add_edges()`.
 #'  \item weights - sNN weights of the pairs above.
 #' }
 #'
@@ -3623,11 +4106,14 @@ rs_sc_snn <- function(knn_mat, snn_method, limited_graph, pruning, verbose) .Cal
 #'
 #' @returns A list with the following elements:
 #' \itemize{
-#'  \item all_matches - Matching neighbours for this sample.
-#'  \item all_ratios - Distance ratio for this sample (with b / a).
-#'  \item final_recall - The final recall of assuming a being the ground truth
-#'  across all samples
-#'  \item final_ratio - The final distance ratio across all samples
+#'  \item all_matches - Integer vector. Number of shared neighbours per
+#'  sample.
+#'  \item all_ratios - Numerical vector. Ratio of the summed distances
+#'  (b / a) per sample. Samples whose summed distance in a is ~0 are skipped,
+#'  so this can be shorter than `all_matches`.
+#'  \item final_recall - The mean recall across all samples, with a as the
+#'  ground truth.
+#'  \item final_ratio - The mean distance ratio across the retained samples.
 #' }
 #'
 #' @export
@@ -3646,8 +4132,8 @@ rs_compare_knn <- function(knn_data_a, knn_data_b) .Call(wrap__rs_compare_knn, k
 #' k means clustering to run.
 #' @param resolutions Numeric vector. The Louvain resolutions to iterate
 #' through.
-#' @param n_centroids Optional integer. The number of clusters to find. If
-#' not provided, defaults to `sqrt(nrow(embd))`.
+#' @param n_centroids Optional integer. The number of k-means centroids. If
+#' not provided, defaults to `floor(sqrt(nrow(embd)))`.
 #' @param fc_params Named list. The fast clustering parameters.
 #' @param snn Boolean. Shall the kNN graph be additionally transformed into
 #' an sNN graph.
@@ -3657,7 +4143,15 @@ rs_compare_knn <- function(knn_data_a, knn_data_b) .Call(wrap__rs_compare_knn, k
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
 #'
-#' @returns A list with the memberships per resolution.
+#' @returns A list with the following elements:
+#' \itemize{
+#'  \item membership - List with one integer membership vector per
+#'  resolution.
+#'  \item k_means_cluster - Integer vector with the k-means cluster per cell
+#'  if `return_kmeans = TRUE`, otherwise `NULL`.
+#'  \item centroids - Numerical matrix with the k-means centroids if
+#'  `return_kmeans = TRUE`, otherwise `NULL`.
+#' }
 #'
 #' @export
 #'
@@ -3679,23 +4173,28 @@ rs_fast_cluster_sc <- function(embd, km_type, resolutions, n_centroids, fc_param
 #' k means clustering to run.
 #' @param resolutions Numeric vector. The Louvain resolutions to iterate
 #' through.
-#' @param n_centroids Optional integer. The number of clusters to find. If
-#' not provided, defaults to `sqrt(nrow(embd))`.
+#' @param n_centroids Optional integer. The number of k-means centroids. If
+#' not provided, defaults to `floor(sqrt(nrow(embd)))`.
 #' @param fc_params Named list. The fast clustering parameters.
 #' @param snn Boolean. Shall the kNN graph be additionally transformed into
 #' an sNN graph.
-#' @param no_seeds Integer. Number of additional seeds to use. Should be >=2.
 #' @param return_kmeans Boolean. Shall the k-means centroid assignments be
 #' returned alongside the memberships.
+#' @param no_seeds Integer. Number of additional seeds to use. Should be >=2.
 #' @param seed Integer. For reproducibility.
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
 #'
 #' @returns A list with the following elements:
 #' \itemize{
-#'  \item memberships - The memberships across the different resolutions. The
-#'  membership from the random seed with the best conductance is returned.
-#'  \item stats - The statistics per given resolution run.
+#'  \item membership - A list with `memberships` (one integer vector per
+#'  resolution, from the seed with the best conductance) and `stats` (list
+#'  with `mean_ari`, `median_ari`, `mean_conductance`, `median_conductance`
+#'  and `mean_n_comms`, one value per resolution).
+#'  \item k_means_cluster - Integer vector with the k-means cluster per cell
+#'  if `return_kmeans = TRUE`, otherwise `NULL`.
+#'  \item centroids - Numerical matrix with the k-means centroids if
+#'  `return_kmeans = TRUE`, otherwise `NULL`.
 #' }
 #'
 #' @export
@@ -3742,6 +4241,216 @@ rs_fast_cluster_sc_grid <- function(embd, km_type, resolutions, n_centroids, fc_
 #' @keywords internal
 rs_magic_impute <- function(f_path, knn_data, cell_indices, total_cells, gene_indices, magic_params, verbose) .Call(wrap__rs_magic_impute, f_path, knn_data, cell_indices, total_cells, gene_indices, magic_params, verbose)
 
+#' Identify the empty droplets from the per-barcode library sizes
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Kept on the Rust side so the knee detector exists once: it has to match
+#' `scipy.ndimage.gaussian_filter1d` and `numpy.gradient` closely enough to
+#' land on the same rank as the CellSweep reference, and a second copy in R
+#' would drift.
+#'
+#' @param lib_size Integer vector. Library size per barcode, in store order.
+#' @param empty_params List. Parameter list, see
+#' [bixverse::params_sc_empty_droplets()]. `"supplied"` is rejected, since
+#' there is nothing to infer.
+#'
+#' @returns A logical vector that is `TRUE` where the barcode is an empty
+#' droplet.
+#'
+#' @export
+#'
+#' @keywords internal
+rs_sc_infer_empty_droplets <- function(lib_size, empty_params) .Call(wrap__rs_sc_infer_empty_droplets, lib_size, empty_params)
+
+#' Fits a residual model for single cell data
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Fits either scTransform (v2) or the analytic Pearson residual model of
+#' Lause, Berens and Kobak over the selected cells. With `group_of_cell` one
+#' model is fitted per group, which is what a multi-sample experiment wants:
+#' each sample keeps its own sequencing depth and composition.
+#'
+#' The fit is returned as a list rather than applied to anything. Hand it back
+#' to [bixverse::rs_sc_residual_variance()], [bixverse::rs_sc_pca_residuals()]
+#' or [bixverse::rs_sct_corrected_counts()] to use it.
+#'
+#' @param f_path_gene String. Path to the `counts_genes.bin` file.
+#' @param f_path_cell String. Path to the `counts_cells.bin` file. Used for the
+#' library sizes, and for the per-cell totals of the analytic Pearson fit.
+#' @param method String. One of `c("sctransform", "analytic_pearson")`.
+#' @param cell_indices Integer vector. The cell indices to use. (0-indexed!)
+#' @param group_of_cell Integer vector or `NULL`. Group label per selected
+#' cell. (0-indexed, dense!) `NULL` fits one model over every cell.
+#' @param covariates Named list of numeric vectors, one per covariate, each of
+#' length `length(cell_indices)`. scTransform only. The order is remembered and
+#' checked on every subsequent use.
+#' @param params Named list. The parameters, see
+#' [bixverse::params_sc_sctransform()] or [bixverse::params_sc_apr()].
+#' @param gene_batch_size Integer or `NULL`. Genes held in memory per batch.
+#' @param seed Integer. Seed for the step-1 subsample.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @returns A list with the following items
+#' \itemize{
+#'   \item method - The method that was fitted.
+#'   \item models - The per-group models.
+#'   \item genes - The gene indices modelled in every group. (0-indexed!)
+#'   \item group_of_cell - The group label per selected cell. (0-indexed!)
+#'   \item n_groups - Number of groups.
+#'   \item cell_indices - The cells that were fitted on. (0-indexed!)
+#'   \item covariates - The covariates used, scTransform only.
+#'   \item log10_umi - The per-cell offset, scTransform only.
+#'   \item cell_totals - The per-cell totals, analytic Pearson only.
+#' }
+#'
+#' @export
+#'
+#' @references Choudhary and Satija, Genome Biology, 2022; Lause, Berens and
+#' Kobak, Genome Biology, 2021.
+#'
+#' @keywords internal
+rs_sc_fit_residuals <- function(f_path_gene, f_path_cell, method, cell_indices, group_of_cell, covariates, params, gene_batch_size, seed, verbose) .Call(wrap__rs_sc_fit_residuals, f_path_gene, f_path_cell, method, cell_indices, group_of_cell, covariates, params, gene_batch_size, seed, verbose)
+
+#' Residual variance and the variable features it selects
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Computes the per-gene residual variance from a fitted model and selects the
+#' variable features from it. With more than one group the selection follows
+#' Seurat: rank within each group, take the top `n_hvg` of each, and union
+#' them, so a marker only one sample carries is not buried by a pooled ranking.
+#' The returned set can therefore be larger than `n_hvg`.
+#'
+#' Each gene's residual row is regenerated, reduced and dropped, so memory is
+#' one row per worker rather than a genes-by-cells matrix.
+#'
+#' @param f_path_gene String. Path to the `counts_genes.bin` file.
+#' @param residual_fit List. A fit from [bixverse::rs_sc_fit_residuals()].
+#' @param cell_indices Integer vector. The cell indices to use. (0-indexed!)
+#' Must be the selection the fit was fitted on.
+#' @param n_hvg Integer. Variable features to take from each group.
+#' @param gene_batch_size Integer or `NULL`. Genes held in memory per batch.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @returns A list with the following items
+#' \itemize{
+#'   \item genes - The gene indices the variances are indexed by. (0-indexed!)
+#'   \item variance - Matrix of residual variance, genes by groups.
+#'   \item hvg - The selected gene indices, ascending. (0-indexed!)
+#' }
+#'
+#' @export
+#'
+#' @references Seurat v5, `SCTransform.StdAssay`
+#'
+#' @keywords internal
+rs_sc_residual_variance <- function(f_path_gene, residual_fit, cell_indices, n_hvg, gene_batch_size, verbose) .Call(wrap__rs_sc_residual_variance, f_path_gene, residual_fit, cell_indices, n_hvg, gene_batch_size, verbose)
+
+#' Calculates PCA on Pearson residuals for single cell
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Runs the PCA on the residuals a fitted model implies, rather than on the
+#' stored normalised layer. The residual columns are dense by construction,
+#' since a zero count still has a residual, so there is no sparse or streaming
+#' variant of this path.
+#'
+#' Two settings are refused rather than ignored: the `PFlogPF` transform, which
+#' belongs to the normalised layer, and variance normalisation, which would
+#' flatten the very ranking the residuals produce.
+#'
+#' @param f_path_gene String. Path to the `counts_genes.bin` file.
+#' @param residual_fit List. A fit from [bixverse::rs_sc_fit_residuals()].
+#' @param no_pcs Integer. Number of PCs to calculate.
+#' @param pca_params Named list. Contains the parameters to use for this PCA
+#' run. `clr` and `normalise_variance` must both be `FALSE`.
+#' @param cell_indices Integer vector. The cell indices to use. (0-indexed!)
+#' Must be the selection the fit was fitted on.
+#' @param gene_indices Integer vector. The gene indices to use. (0-indexed!)
+#' Every one must be covered by the fit.
+#' @param seed Integer. Random seed for the randomised SVD.
+#' @param return_scaled Boolean. Shall the scaled data be returned.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @returns A list with the following items
+#' \itemize{
+#'   \item scores - The samples projected on the PCA space.
+#'   \item loadings - The loadings of the features for the PCA.
+#'   \item singular_values - The singular values for the PCA.
+#'   \item scaled - The scaled matrix if `return_scaled = TRUE`, otherwise
+#'   `NULL`.
+#' }
+#'
+#' @export
+#'
+#' @keywords internal
+rs_sc_pca_residuals <- function(f_path_gene, residual_fit, no_pcs, pca_params, cell_indices, gene_indices, seed, return_scaled, verbose) .Call(wrap__rs_sc_pca_residuals, f_path_gene, residual_fit, no_pcs, pca_params, cell_indices, gene_indices, seed, return_scaled, verbose)
+
+#' Writes scTransform-corrected counts to a new store
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Reverses the residual transform with every latent variable, the library size
+#' included, held at its median, so the depth structure is removed while the
+#' per-sample intercept is kept. The result is written as a new gene-major
+#' store.
+#'
+#' The output is re-indexed: its gene axis is the model's, so gene `j` in the
+#' written store is `genes[j + 1]` of the source. It also has no normalised
+#' layer, since corrected counts carry no library size to scale to.
+#'
+#' @param f_path_gene String. Path to the `counts_genes.bin` file.
+#' @param residual_fit List. A scTransform fit from
+#' [bixverse::rs_sc_fit_residuals()]. The analytic Pearson model has no
+#' corrected-count equivalent.
+#' @param cell_indices Integer vector. The cell indices to use. (0-indexed!)
+#' Must be the selection the fit was fitted on.
+#' @param f_path_out String. Path of the gene-major file to write.
+#' @param gene_batch_size Integer or `NULL`. Genes held in memory per batch.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @returns A list with the following items
+#' \itemize{
+#'   \item f_path - The file that was written.
+#'   \item genes - The source gene indices of the written axis. (0-indexed!)
+#'   \item n_genes - Number of genes written.
+#'   \item n_cells - Number of cells written.
+#' }
+#'
+#' @export
+#'
+#' @keywords internal
+rs_sct_corrected_counts <- function(f_path_gene, residual_fit, cell_indices, f_path_out, gene_batch_size, verbose) .Call(wrap__rs_sct_corrected_counts, f_path_gene, residual_fit, cell_indices, f_path_out, gene_batch_size, verbose)
+
+#' Rebuilds the cell-major companion of a gene-major store
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Writes the `counts_cells.bin` twin of a `counts_genes.bin` file. Memory is
+#' bounded by phasing over cells: each phase holds one window of cells and
+#' re-reads the gene file to fill it, so peak memory is the window rather than
+#' the matrix.
+#'
+#' @param f_path_in String. Path to the gene-major source file.
+#' @param f_path_out String. Path of the cell-major file to write.
+#' @param cells_per_phase Integer. Cells held in memory at once.
+#' @param gene_batch_size Integer. Genes read per batch within a phase.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @returns String. The path that was written.
+#'
+#' @export
+#'
+#' @keywords internal
+rs_sc_gene_store_to_cell_store <- function(f_path_in, f_path_out, cells_per_phase, gene_batch_size, verbose) .Call(wrap__rs_sc_gene_store_to_cell_store, f_path_in, f_path_out, cells_per_phase, gene_batch_size, verbose)
+
 #' Calculate DGEs between cells based on Mann Whitney stats
 #'
 #' @description
@@ -3755,8 +4464,8 @@ rs_magic_impute <- function(f_path, knn_data, cell_indices, total_cells, gene_in
 #' of group 1.
 #' @param cell_indices_2 Integer. Index positions (0-indexed) of the cells
 #' of group 2.
-#' @param min_prop Minimum proportion of expression in at least one of the
-#' two groups to be tested.
+#' @param min_prop Numeric. Minimum proportion of expression in at least one
+#' of the two groups to be tested.
 #' @param alternative String. One of `c("twosided", "greater", "less")`. Null
 #' hypothesis.
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
@@ -3795,8 +4504,8 @@ rs_calculate_dge_mann_whitney <- function(f_path, cell_indices_1, cell_indices_2
 #' of the reference group.
 #' @param cell_indices_other List. List of integer vectors, each containing the
 #' index positions (0-indexed) of the cells of one comparison group.
-#' @param min_prop Minimum proportion of expression in at least one of the
-#' groups to be tested.
+#' @param min_prop Numeric. Minimum proportion of expression in at least one
+#' of the groups to be tested.
 #' @param alternative String. One of `c("twosided", "greater", "less")`. Null
 #' hypothesis.
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
@@ -3844,12 +4553,13 @@ rs_calculate_dge_one_vs_many <- function(f_path, cell_indices_ref, cell_indices_
 #' calculate an AUCell type statistic. Three options here: the recovery-curve
 #' AUC of Aibar, et al. (the actual AUCell statistic), an AUC derived from the
 #' Mann-Whitney statistic, or average precision. Data can be streamed in
-#' chunks of 50k cells per or loaded in in one go.
+#' chunks of 50k cells or loaded in one go.
 #'
 #' @param f_path String. Path to the `counts_cells.bin` file.
 #' @param gs_list List. List with the gene set indices (0-indexed!) of the
 #' genes of interest.
-#' @param cells_to_keep Integer. Vector of indices of the cells to keep.
+#' @param cells_to_keep Integer. Vector of indices (0-indexed) of the cells to
+#' keep.
 #' @param aucell_params List. The AUCell parameters, see
 #' [bixverse::params_sc_aucell()].
 #' @param streaming Boolean. Shall the data be streamed.
@@ -3898,14 +4608,14 @@ rs_regulon_thresholds <- function(auc_matrix, binarise_params) .Call(wrap__rs_re
 #' @param f_path_cells Path to the `counts_cells.bin` file.
 #' @param embd Numerical matrix. The embedding matrix from which to generate
 #' the kNN graph.
+#' @param knn_data Optional list. This contains pre-computed kNN data
+#' (`indices` (0-indexed), `dist`, `dist_metric` and `k`). The user has to
+#' ensure consistency! If provided, this will be used rather than a graph
+#' built from the parameter list.
 #' @param hotspot_params List. The HotSpot parameter list.
 #' @param cells_to_keep Integer vector. 0-index vector indicating which cells
 #' to include in the analysis. Ensure that this is of same order/length
 #' as the embedding matrix.
-#' @param knn_data Optional list. This contains pre-computed kNN data
-#' (including distances) and the `dist_metric` it was built with. The user has
-#' to ensure consistency! If provided, this will be used rather than a graph
-#' built from the parameter list.
 #' @param genes_to_use Integer vector. 0-index vector indicating which genes
 #' to include.
 #' @param streaming Boolean. Shall the data be streamed in chunks. Useful
@@ -3917,8 +4627,7 @@ rs_regulon_thresholds <- function(auc_matrix, binarise_params) .Call(wrap__rs_re
 #' @returns A list with the following elements.
 #' \itemize{
 #'   \item gene_idx - 0-based integer indicating the gene index.
-#'   \item gaerys_c - Gaery's C calculation for the autocorrelation
-#'   coefficient.
+#'   \item gaerys_c - Geary's C statistic of the gene.
 #'   \item z_score - Z-score of the auto-correlation.
 #'   \item pval - P-value derived from the Z-score.
 #'   \item fdr - False discovery rate based on the p-value.
@@ -3935,12 +4644,18 @@ rs_hotspot_autocor <- function(f_path_genes, f_path_cells, embd, knn_data, hotsp
 #'
 #' @description
 #' `r lifecycle::badge("experimental")`
+#' Builds an average-linkage dendrogram over the pair Z-scores and assigns
+#' modules as HotSpot's `compute_modules` does.
 #'
-#' @param z_matrix Numerical matrix representing the Z-scores.
-#' @param fdr_threshold Float. The FDR thresholds in terms of the Z-scores.
-#' @param min_size Integer. Minimum cluster size.
+#' @param z_matrix Numerical matrix. Symmetric gene x gene Z-scores with a
+#' zero diagonal, as returned by [bixverse::rs_hotspot_gene_cor()]. Must be
+#' finite.
+#' @param fdr_threshold Float. BH level at which a pair Z-score counts as
+#' significant.
+#' @param min_size Integer. Minimum number of genes per module.
 #'
-#' @returns An assignment vector. NA indicates that the gene did not pass the
+#' @returns Numeric vector with one module label per gene, 0-indexed and
+#' numbered densely. `NaN` indicates that the gene did not pass the
 #' thresholds and has not been assigned.
 #'
 #' @export
@@ -3960,8 +4675,8 @@ rs_hotspot_cluster_genes <- function(z_matrix, fdr_threshold, min_size) .Call(wr
 #' @param embd Numerical matrix. The embedding matrix from which to generate
 #' the kNN graph.
 #' @param knn_data Optional list. This contains pre-computed kNN data
-#' (including distances) and the `dist_metric` it was built with. The user has
-#' to ensure consistency! If provided, this will be used rather than a graph
+#' (`indices` (0-indexed), `dist`, `dist_metric` and `k`). The user has to
+#' ensure consistency! If provided, this will be used rather than a graph
 #' built from the parameter list.
 #' @param hotspot_params List. The HotSpot parameter list.
 #' @param cells_to_keep Integer vector. 0-index vector indicating which cells
@@ -3981,10 +4696,10 @@ rs_hotspot_cluster_genes <- function(z_matrix, fdr_threshold, min_size) .Call(wr
 #'
 #' @returns A list with the following elements.
 #' \itemize{
-#'   \item cor - A matrix of the N x N genes_to_use length with the auto-
+#'   \item cor - Symmetric `genes_to_use x genes_to_use` matrix with the local
 #'   correlation coefficients.
-#'   \item z - A matrix of N x N genes_to_use length with the Z-scores of the
-#'   local correlations between two genes.
+#'   \item z - Symmetric `genes_to_use x genes_to_use` matrix with the Z-scores
+#'   of the local correlations between two genes.
 #' }
 #'
 #' @export
@@ -4008,18 +4723,19 @@ rs_hotspot_gene_cor <- function(f_path_genes, f_path_cells, embd, knn_data, hots
 #' @param f_path_genes String. Path to the gene-based binary file.
 #' @param gs_list List. List of integer vectors, where each vector contains
 #' gene indices (0-based) for a module/gene set.
-#' @param cells_to_keep Integer. Vector of indices of the cells to keep.
+#' @param cells_to_keep Integer. Vector of indices (0-indexed) of the cells to
+#' keep.
 #' @param nbin Integer. Number of bins for gene stratification.
 #' @param ctrl Integer. Number of control genes to sample per gene in each
 #' module.
 #' @param seed Integer. Random seed for reproducible control gene sampling.
-#' @param streaming Logical. If TRUE, processes cells and genes are read in in
-#' chunks to reduce memory usage.
+#' @param streaming Logical. If `TRUE`, cells and genes are read in chunks to
+#' reduce memory usage.
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
 #'
-#' @returns Matrix of module scores (modules x cells). Each row corresponds to a
-#' module from gs_list, each column to a cell from cells_to_keep.
+#' @returns Matrix of module scores (cells x modules). Each row corresponds to
+#' a cell from `cells_to_keep`, each column to a module from `gs_list`.
 #'
 #' @references
 #' Tirosh et al, Science (2016)
@@ -4052,13 +4768,14 @@ rs_module_scoring <- function(f_path_cells, f_path_genes, gs_list, cells_to_keep
 #'  \item index_cell - Integer. 0-indexed positions of the cells defining the
 #'  neighbourhood.
 #'  \item nhoods_i - Integer. 0-indexed positions of the cells in the
-#'  neighbourhood.
-#'  \item nhoods_j - Integer. To which neighbourhood the cell belongs.
-#'  \item nhoods_x - Numeric. The x-value of the COO type matrix, i.e.,
-#'  defaults to `1.0`.
+#'  neighbourhood, the index cell included.
+#'  \item nhoods_j - Integer. 0-indexed neighbourhood the cell belongs to.
+#'  \item nhoods_x - Numeric. The x-value of the COO type matrix, always
+#'  `1.0`.
 #'  \item nrows - Integer. Number of cells in the matrix
 #'  \item ncols - Integer. Number of refined neighbourhoods.
-#'  \item kth_distances - The k-th distances for spatial FDR calculations.
+#'  \item kth_distances - Numeric. Distance of each index cell to its last
+#'  kNN neighbour, for the spatial FDR.
 #'  \item sample_counts - Numeric matrix of neighbourhoods x samples. The
 #'  cells of each sample found in each neighbourhood.
 #'  \item nhood_overlap - Numeric. Cells each neighbourhood shares with all
@@ -4162,10 +4879,11 @@ rs_nebula_sc <- function(f_path_genes, f_path_cells, cells_to_keep, gene_indices
 #' @param embd Numeric matrix. The original embedding that was used to generate
 #' the kNN graph.
 #' @param knn_data Optional named list. This contains pre-computed kNN data
-#' (including distances). The user has to ensure consistency! If provided, this
-#' will be used.
+#' (`indices` (0-indexed), `dist`, `dist_metric` and `k`). The user has to
+#' ensure consistency! If provided, this will be used.
 #' @param meld_params Named list. Contains the parameters to use for MELD.
-#' @param labels Integer. The labels of the different groups. (1-indexed!)
+#' @param labels Integer. The group label per cell (1-indexed!), in
+#' `1..n_labels`.
 #' @param n_labels Integer. Number of labels represented in the data.
 #' @param seed Integer. For reproducibility.
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
@@ -4173,9 +4891,9 @@ rs_nebula_sc <- function(f_path_genes, f_path_cells, cells_to_keep, gene_indices
 #'
 #' @returns A list with the following items
 #' \itemize{
-#'   \item raw_scores - The raw MELD scores
-#'   \item norm_scores - Negative values were clamped to 0 and the rows L1
-#'   normalised. This yields probability-like values.
+#'   \item raw_scores - Matrix of cells x labels with the raw MELD scores.
+#'   \item norm_scores - Same shape. Negative values were clamped to 0 and the
+#'   rows L1 normalised. This yields probability-like values.
 #' }
 #'
 #' @export
@@ -4192,9 +4910,10 @@ rs_meld_sc <- function(embd, knn_data, meld_params, labels, n_labels, seed, verb
 #' but it can be useful to classify the delta of two stats (EMT, Th1; Th2) etc.
 #'
 #' @param f_path String. Path to the `counts_cells.bin` file.
-#' @param gs_list Nested list. Each sublist contains the (0-indexed!) positive
-#' and negative gene indices of that specific gene set.
-#' @param cells_to_keep Integer. Vector of indices of the cells to keep.
+#' @param gs_list Nested list. Each sublist contains the (0-indexed!) `pos`
+#' and `neg` gene indices of that specific gene set.
+#' @param cells_to_keep Integer. Vector of indices (0-indexed) of the cells to
+#' keep.
 #' @param streaming Boolean. Shall the data be streamed.
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
@@ -4214,26 +4933,27 @@ rs_vision <- function(f_path, gs_list, cells_to_keep, streaming, verbose) .Call(
 #' and `"neg"` gene indices (0-indexed). You don't have to provide the `"neg"`,
 #' but it can be useful to classify the delta of two stats (EMT, Th1; Th2) etc.
 #' Additionally, it will take a random gene list and calculate an
-#' auto-correlation score based on Gaery's C to identify pathways that show
-#' significant patterns on the kNN graph generate on the provided embedding.
+#' auto-correlation score based on Geary's C to identify pathways that show
+#' significant patterns on the kNN graph generated on the provided embedding.
 #'
 #' @param f_path String. Path to the `counts_cells.bin` file.
 #' @param embd Numerical matrix. The embedding matrix to use to generate the
-#' kNN graph.
+#' kNN graph. Rows must align with `cells_to_keep`.
 #' @param knn_data Optional list. This contains pre-computed kNN data
-#' (including distances) and the `dist_metric` it was built with. The user has
-#' to ensure consistency! If provided, this will be used rather than a graph
+#' (`indices` (0-indexed), `dist`, `dist_metric` and `k`). The user has to
+#' ensure consistency! If provided, this will be used rather than a graph
 #' built from the parameter list.
-#' @param gs_list Nested list. Each sublist contains the (0-indexed!) positive
-#' and negative gene indices of that specific gene set.
+#' @param gs_list Nested list. Each sublist contains the (0-indexed!) `pos`
+#' and `neg` gene indices of that specific gene set.
 #' @param random_gs_list Double-nested list. The outer list represents the
-#' clusters of clusters and the inner list represents the permutations within
-#' that cluster.
+#' gene set clusters and the inner list the permuted gene sets (same structure
+#' as `gs_list`) of that cluster.
 #' @param vision_params List. Contains various parameters to use in terms
 #' of the kNN generation.
-#' @param cells_to_keep Integer. Vector of indices of the cells to keep.
+#' @param cells_to_keep Integer. Vector of indices (0-indexed) of the cells to
+#' keep.
 #' @param cluster_membership Integer. Vector that indicates to which of the
-#' permuted gene set clusters the given gene set belongs.
+#' permuted gene set clusters (1-indexed) the given gene set belongs.
 #' @param streaming Boolean. Shall the data be streamed.
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
@@ -4241,8 +4961,9 @@ rs_vision <- function(f_path, gs_list, cells_to_keep, streaming, verbose) .Call(
 #'
 #' @returns A list with the following items:
 #' \itemize{
-#'   \item autocor_res - Auto-correlation results, i.e., 1 - C, p-value and
-#'   FDR.
+#'   \item autocor_res - List with `auto_cor` (1 - Geary's C), `p_val`
+#'   (empirical, against the permuted gene sets of the same cluster) and
+#'   `fdr`.
 #'   \item vision_mat - A matrix of cells x vision scores per gene set.
 #' }
 #'
@@ -4259,7 +4980,7 @@ rs_vision_with_autocorrelation <- function(f_path, embd, knn_data, gs_list, rand
 #' @param f_path_genes Path to the `counts_genes.bin` file.
 #' @param cell_indices Integer vector. 0-indexed(!) positions of cells to
 #' include in the analysis
-#' @param scenic_params Named list. Contains all of the parameters need for
+#' @param scenic_params Named list. Contains all of the parameters needed for
 #' SCENIC.
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
@@ -4284,7 +5005,7 @@ rs_scenic_gene_filter <- function(f_path_genes, cell_indices, scenic_params, ver
 #' to include.
 #' @param tf_indices Integer vector. 0-indexed(!) positions of the TF
 #' predictor variables to use in the generation of the regression learners.
-#' @param scenic_params Named list. Contains all of the parameters need for
+#' @param scenic_params Named list. Contains all of the parameters needed for
 #' SCENIC.
 #' @param seed Integer. Controls reproducibility of the function.
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
@@ -4310,7 +5031,7 @@ rs_scenic_grn <- function(f_path_genes, cell_indices, gene_indices, tf_indices, 
 #' to include.
 #' @param tf_indices Integer vector. 0-indexed(!) positions of the TF
 #' predictor variables to use in the generation of the regression learners.
-#' @param scenic_params Named list. Contains all of the parameters need for
+#' @param scenic_params Named list. Contains all of the parameters needed for
 #' SCENIC.
 #' @param seed Integer. Controls reproducibility of the function.
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
@@ -4328,13 +5049,16 @@ rs_scenic_grn_streaming <- function(f_path_genes, cell_indices, gene_indices, tf
 #' @description
 #' `r lifecycle::badge("experimental")`
 #'
-#' @param matrix Numeric matrix with genes x TF importance values
+#' @param matrix Numeric matrix with genes (rows) x TFs (columns) importance
+#' values. Must carry row and column names.
 #' @param k Integer. Number of top genes / TFs to extract.
-#' @param margin If set to 1, the top k TFs per gene are used. If set to 2, the
-#' top k genes per TF are used. Both versions were used in the original paper.
-#' @param min_value Float. An
+#' @param margin Integer. If set to 1, the top k TFs per gene are used. If set
+#' to 2, the top k genes per TF are used. Both versions were used in the
+#' original paper. Any other value errors.
+#' @param min_value Optional float. Pairs with an importance below this are
+#' never selected.
 #'
-#' @returns A list with three vectors: tf, gene, importance
+#' @returns A list with three vectors: `tf`, `gene`, `importance`.
 #'
 #' @export
 #'
@@ -4345,17 +5069,18 @@ rs_top_k_targets <- function(matrix, k, margin, min_value) .Call(wrap__rs_top_k_
 #'
 #' @description
 #' `r lifecycle::badge("experimental")`
-#' For each gene (row), computes mean + n_sd * SD of the importance scores
-#' across all TFs and retains only pairs exceeding that threshold.
+#' For each gene (row), computes `mean + n_sd * SD` (population SD) of the
+#' importance scores across all TFs and retains only pairs at or above that
+#' threshold.
 #'
 #' @param matrix Numeric matrix with genes (rows) x TFs (columns) importance
-#' values.
+#' values. Must carry row and column names.
 #' @param n_sd Float. Number of standard deviations above the mean to use as
 #' the per-gene threshold.
 #' @param min_value Optional float. Absolute minimum importance score. Pairs
 #' below this are excluded even if they pass the per-gene threshold.
 #'
-#' @returns A list with three vectors: tf, gene, importance
+#' @returns A list with three vectors: `tf`, `gene`, `importance`.
 #'
 #' @export
 #'
@@ -4622,18 +5347,19 @@ rs_dialogue_sc <- function(f_path_gene, cell_type_indices, features, sample_ids,
 #' Helper function to generate the ligand to target influence matrix for the
 #' NicheNet like approach.
 #'
-#' @param ligand_seeds List. Contains the indices of the seeds, i.e., ligands.
+#' @param ligand_seeds List of integer vectors. The 0-indexed seed node(s) per
+#' ligand or ligand combination.
 #' @param ppi_network Named list. Contains the PPI network with the ligand
-#' to receptor to signalling to TFs. Must contain from (indices), to
-#' (indices), and edge weights.
+#' to receptor to signalling to TFs. Must contain `from` and `to` (0-indexed
+#' node indices) and `weight`.
 #' @param grn_network Named list. Contains the gene regulatory network with the
-#' TF to target gene network. Must contain from (indices), to (indices), and
-#' edge weights.
+#' TF to target gene network. Must contain `from` and `to` (0-indexed node
+#' indices) and `weight`.
 #' @param n_nodes Integer. Number of total nodes.
-#' @param params Named list.
+#' @param params Named list. The ligand-target diffusion parameters.
 #'
-#' @returns A dense matrix of ligands x genes that contains the influence
-#' scores of each
+#' @returns A dense matrix of ligands x `n_nodes`, rows in `ligand_seeds`
+#' order, with the ligand to target influence scores.
 #'
 #' @export
 rs_generate_ligand_target_influence <- function(ligand_seeds, ppi_network, grn_network, n_nodes, params) .Call(wrap__rs_generate_ligand_target_influence, ligand_seeds, ppi_network, grn_network, n_nodes, params)
@@ -4645,17 +5371,18 @@ rs_generate_ligand_target_influence <- function(ligand_seeds, ppi_network, grn_n
 #'
 #' @param ligand_influence A ligand x background genes matrix that measures the
 #' ligand to target gene influence.
-#' @param in_gene_sets A list of logicals with the genes of interest being set
-#' to `TRUE` and the background genes set to `FALSE`.
+#' @param in_gene_sets List of logical vectors, one per gene set, each of
+#' length `ncol(ligand_influence)`. Genes of interest are `TRUE`, the
+#' background genes `FALSE`.
 #'
-#' @returns A list with internal lists with:
+#' @returns A list with one element per gene set, each a list of per-ligand
+#' vectors (`NaN` where the metric is undefined):
 #' \itemize{
-#'   \item `auroc` - The Area Under the Receiver Operating Characteristic for
-#'   that ligand
-#'   \item `aupr` - The Area Under the Precision-Recall curve for that ligand.
-#'   \item `aupr_corrected` - The corrected AUPR
-#'   \item `pearson` - The Pearson correlations
-#'   \item `spearman` - The Spearman correlations
+#'   \item `auroc` - The Area Under the Receiver Operating Characteristic.
+#'   \item `aupr` - The Area Under the Precision-Recall curve.
+#'   \item `aupr_corrected` - The corrected AUPR.
+#'   \item `pearson` - The Pearson correlations.
+#'   \item `spearman` - The Spearman correlations.
 #' }
 #'
 #' @export
@@ -4701,11 +5428,13 @@ rs_compute_cluster_expr_stats <- function(f_path_gene, gene_indices, clusters) .
 #' @param embd Optional numerical matrix. The embedding matrix (for example
 #' PCA embedding) you wish to use for the generation of the kNN graph that
 #' is used subsequently for aggregation of the meta cells.
-#' @param cells_to_keep Optional indices of the cells to keep, i.e., the
-#' cells used for the generation of the embedding.
-#' @param cells_to_use Optional indices of cells to use for meta cell
-#' generation. Useful if you wish to generate meta cells in specific cell
-#' types. If this is provided, the kNN graph will be regenerated.
+#' @param cells_to_keep Optional integer vector. Original cell indices
+#' (0-indexed!) of the rows of `knn_mat` / `embd`, in row order. If `NULL`,
+#' the rows are assumed to map one-to-one onto the count file.
+#' @param cells_to_use Optional integer vector. Original cell indices
+#' (0-indexed!) to restrict the meta cell generation to, e.g. specific cell
+#' types. Needs `cells_to_keep` and `embd`; the kNN graph is then regenerated
+#' on the subset. Cells not in `cells_to_keep` are dropped silently.
 #' @param meta_cell_params A list containing the meta cell parameters.
 #' @param target_size Numeric. Target library size for re-normalisation of
 #' the meta cells. Typically `1e4`.
@@ -4715,11 +5444,13 @@ rs_compute_cluster_expr_stats <- function(f_path_gene, gene_indices, clusters) .
 #'
 #' @returns A list with the following elements:
 #' \itemize{
-#'  \item assignments - A list containing assignment information with elements:
-#'    assignments (vector), metacells (list), unassigned (vector), n_metacells,
-#'    n_cells, n_unassigned
-#'  \item aggregated - A list with indptr, indices, raw_counts, norm_counts,
-#'    nrow, ncol in sparse format.
+#'  \item assignments - A list with `assignments` (list with one integer
+#'    vector of 1-indexed meta cell ids per cell, as meta cells can overlap),
+#'    `metacells` (list of 1-indexed original cell indices per meta cell),
+#'    `unassigned` (1-indexed cells in no meta cell), `n_metacells`,
+#'    `n_cells` and `n_unassigned`.
+#'  \item aggregated - A CSR list (meta cells x genes) with indptr, indices,
+#'    raw_counts, norm_counts, nrow and ncol.
 #' }
 #'
 #' @export
@@ -4738,15 +5469,18 @@ rs_get_metacells_bootstrapped <- function(f_path, knn_mat, embd, cells_to_keep, 
 #' during matrix operations which can affect convergence.
 #'
 #' @param f_path String. Path to the `counts_cells.bin` file.
-#' @param embd Numerical matrix. The embedding matrix (for example PCA embedding)
-#' used for the generation of the kNN graph and kernel matrix.
-#' @param cells_to_keep Optional indices of the cells to keep, i.e., the
-#' cells used for the generation of the embedding.
-#' @param cells_to_use Optional indices of cells to use for meta cell
-#' generation. Useful if you wish to generate meta cells in specific cell
-#' types.
+#' @param embd Numerical matrix. The embedding matrix (for example PCA
+#' embedding) used for the generation of the kNN graph and kernel matrix.
+#' @param cells_to_keep Optional integer vector. Original cell indices
+#' (0-indexed!) of the rows of `embd`, in row order. If `NULL`, the rows are
+#' assumed to map one-to-one onto the count file.
+#' @param cells_to_use Optional integer vector. Original cell indices
+#' (0-indexed!) to restrict the meta cell generation to, e.g. specific cell
+#' types. The kNN graph is then regenerated on the subset. Cells not in
+#' `cells_to_keep` are dropped silently.
 #' @param knn_data Optional list. This contains pre-computed kNN data
-#' (including distances). The user has to ensure consistency!
+#' (including distances). The user has to ensure consistency! Ignored when
+#' `cells_to_use` is set.
 #' @param seacells_params A list containing the SEACells parameters.
 #' @param target_size Numeric. Target library size for re-normalisation of
 #' the meta cells. Typically `1e4`.
@@ -4756,13 +5490,16 @@ rs_get_metacells_bootstrapped <- function(f_path, knn_mat, embd, cells_to_keep, 
 #'
 #' @returns A list with the following elements:
 #' \itemize{
-#'  \item assignments - A list containing assignment information with elements:
-#'    assignments (vector), metacells (list), unassigned (vector), n_metacells,
-#'    n_cells, n_unassigned
-#'  \item aggregated - A list with indptr, indices, raw_counts, norm_counts,
-#'    nrow, ncol in sparse format.
-#'  \item rss - Vector of RSS values from each iteration.
-#'  \item archetypes - Vector of cell indices selected as archetypes.
+#'  \item assignments - A list with `assignments` (integer vector with the
+#'    1-indexed meta cell id per original cell, `-1` if unassigned),
+#'    `metacells` (list of 1-indexed original cell indices per meta cell),
+#'    `unassigned` (1-indexed), `n_metacells`, `n_cells` and `n_unassigned`.
+#'    Empty archetypes are dropped and the ids renumbered.
+#'  \item aggregated - A CSR list (meta cells x genes) with indptr, indices,
+#'    raw_counts, norm_counts, nrow and ncol.
+#'  \item rss - Numerical vector of RSS values from each iteration.
+#'  \item archetypes - Integer vector with the original cell indices
+#'    (0-indexed!) of the archetypes of the retained meta cells.
 #' }
 #'
 #' @export
@@ -4789,16 +5526,19 @@ rs_get_seacells <- function(f_path, embd, cells_to_keep, cells_to_use, knn_data,
 #' @param embd Optional numerical matrix. The embedding matrix (for example
 #' PCA embedding) used for the generation of the kNN graph. Required when
 #' `knn_data` is not provided, and required when using `cells_to_use`.
-#' @param cells_to_keep Optional indices of the cells to keep, i.e., the
-#' cells used for the generation of the embedding.
-#' @param cells_to_use Optional indices of cells to use for meta cell
-#' generation. Useful if you wish to generate meta cells in specific cell
+#' @param cells_to_keep Optional integer vector. Original cell indices
+#' (0-indexed!) of the rows of `embd` / the kNN data, in row order. If
+#' `NULL`, the rows are assumed to map one-to-one onto the count file.
+#' @param cells_to_use Optional integer vector. Original cell indices
+#' (0-indexed!) to restrict the meta cell generation to, e.g. specific cell
 #' types. If this is provided, `embd` and `cells_to_keep` are required and
-#' the kNN graph will be regenerated on the subset.
+#' the kNN graph will be regenerated on the subset. Cells not in
+#' `cells_to_keep` are dropped silently.
 #' @param knn_data Optional list. This contains pre-computed kNN data
 #' (including distances). The user has to ensure consistency! Ignored when
 #' `cells_to_use` is set.
-#' @param supercell_params A list containing the SuperCell parameters.
+#' @param supercell_params A list containing the SuperCell parameters. The
+#' number of meta cells is `ceiling(n_cells / graining_factor)`.
 #' @param target_size Numeric. Target library size for re-normalisation of
 #' the meta cells. Typically `1e4`.
 #' @param seed Integer. For reproducibility purposes.
@@ -4807,11 +5547,12 @@ rs_get_seacells <- function(f_path, embd, cells_to_keep, cells_to_use, knn_data,
 #'
 #' @returns A list with the following elements:
 #' \itemize{
-#'  \item assignments - A list containing assignment information with elements:
-#'    assignments (vector), metacells (list), unassigned (vector), n_metacells,
-#'    n_cells, n_unassigned
-#'  \item aggregated - A list with indptr, indices, raw_counts, norm_counts,
-#'    nrow, ncol in sparse format.
+#'  \item assignments - A list with `assignments` (integer vector with the
+#'    1-indexed meta cell id per original cell, `-1` if unassigned),
+#'    `metacells` (list of 1-indexed original cell indices per meta cell),
+#'    `unassigned` (1-indexed), `n_metacells`, `n_cells` and `n_unassigned`.
+#'  \item aggregated - A CSR list (meta cells x genes) with indptr, indices,
+#'    raw_counts, norm_counts, nrow and ncol.
 #' }
 #'
 #' @export
@@ -4823,26 +5564,31 @@ rs_supercell <- function(f_path, embd, cells_to_keep, cells_to_use, knn_data, su
 #'
 #' @description
 #' `r lifecycle::badge("experimental")`
-#' Generates diffusion maps and identifies in which density region a given
-#' cell sits (defined as distance to k-nearest neighbours quite).
+#' Builds multiscale diffusion components from the kNN graph and uses the
+#' distance to the `k_density`-th neighbour in that space as a density proxy.
+#' The lower quartile of these distances is tagged high density, the upper
+#' quartile low density, the rest mid.
 #'
-#' @param knn_data Named list. Needs to have the relevant data from the kNN
-#' graph.
+#' @param knn_data Named list. The kNN data with `indices` (0-indexed!),
+#' `dist`, `k` and `dist_metric`.
 #' @param n_dcs Integer. The number of diffusion coordinates to return.
 #' Typically `10`.
 #' @param k_density Integer. The k-nearest neighbour to use for the density
 #' estimation. Typically `150`.
 #' @param knn_params List. The kNN parameters defined by
-#' [params_sc_neighbours()].
+#' [params_sc_neighbours()], used for the search in diffusion space.
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
 #' @param seed Integer. For reproducibility.
 #'
 #' @returns A list with the following items
 #' \itemize{
-#'   \item dcs - Density coordinates
-#'   \item density_distances - Density distances at `k_density` neighbours.
-#'   \item regions - Region of the manifold where this given cell is.
+#'   \item dcs - Numerical matrix of cells x `n_dcs` with the multiscale
+#'   diffusion components.
+#'   \item density_distances - Numerical vector. Distance to the
+#'   `k_density`-th neighbour in diffusion space per cell.
+#'   \item regions - Character vector. `"high"`, `"mid"` or `"low"` density
+#'   per cell.
 #' }
 #'
 #' @export
@@ -4857,12 +5603,16 @@ rs_metacell_density <- function(knn_data, n_dcs, k_density, knn_params, verbose,
 #'
 #' @description
 #' `r lifecycle::badge("experimental")`
-#' Calculates the meta cell compactness based on the diffusion map coordinates.
+#' Calculates the meta cell compactness, i.e. the average variance across the
+#' diffusion components over the cells of each meta cell. Lower is better.
 #'
-#' @param dc Numerical matrix. The diffusion map coordinates.
-#' @param meta_cells List. The cell indices of the meta cells.
+#' @param dc Numerical matrix. The diffusion map coordinates, cells x
+#' components.
+#' @param meta_cells List. Per meta cell, an integer vector with the row
+#' indices (1-indexed!) into `dc`.
 #'
-#' @returns The compactness results
+#' @returns Numerical vector with one compactness value per meta cell. Empty
+#' meta cells yield `NaN`.
 #'
 #' @export
 #'
@@ -4874,13 +5624,17 @@ rs_metacell_compactness <- function(dc, meta_cells) .Call(wrap__rs_metacell_comp
 #'
 #' @description
 #' `r lifecycle::badge("experimental")`
-#' Calculates the separation of the single cells of a given meta cell based on
-#' the diffusion map.
+#' Calculates the separation, i.e. the Euclidean distance from each meta cell
+#' centroid in diffusion space to the nearest other meta cell centroid.
+#' Higher is better.
 #'
-#' @param dc Numerical matrix. The diffusion map coordinates.
-#' @param meta_cells List. The cell indices of the meta cells.
+#' @param dc Numerical matrix. The diffusion map coordinates, cells x
+#' components.
+#' @param meta_cells List. Per meta cell, an integer vector with the row
+#' indices (1-indexed!) into `dc`.
 #'
-#' @returns The separation results
+#' @returns Numerical vector with one separation value per meta cell. Empty
+#' meta cells yield `NaN`; a lone non-empty meta cell yields `Inf`.
 #'
 #' @export
 #'
@@ -4893,17 +5647,19 @@ rs_metacell_separation <- function(dc, meta_cells) .Call(wrap__rs_metacell_separ
 #' `r lifecycle::badge("experimental")`
 #' This function will return a dense matrix of
 #' `length(cell_indices_ls) x number of genes`. The function has the option
-#' to return the sum of the sum of the raw counts or the average of the
-#' normalised counts.
+#' to return the sum of the raw counts or the average of the normalised
+#' counts.
 #'
 #' @param f_path String. Path to the `counts_cells.bin` file.
-#' @param cell_indices_ls List. Must contains 0-indexed positions of the
-#' cells to aggregate per element.
-#' @param assay String. One of `c("raw", "norm")`. Which counts to normalise.
+#' @param cell_indices_ls List. Each element contains the 0-indexed positions
+#' of the cells to aggregate.
+#' @param assay String. One of `c("raw", "norm")`. `"raw"` sums the raw
+#' counts, `"norm"` averages the normalised counts. Unrecognised values fall
+#' back to `"raw"`.
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
 #'
-#' @returns A dense matrix with the pseudo-bulked data.
+#' @returns A dense numerical matrix of pseudo-bulked samples x genes.
 #'
 #' @export
 #'
@@ -4916,19 +5672,21 @@ rs_pseudobulk_cells_dense <- function(f_path, cell_indices_ls, assay, verbose) .
 #' `r lifecycle::badge("experimental")`
 #' This function will return a sparse matrix of
 #' `length(cell_indices_ls) x number of genes` (in list form in CSR).
-#' The function has the option to return the sum of the sum of the raw counts
-#' or the average of the normalised counts.
+#' The function has the option to return the sum of the raw counts or the
+#' average of the normalised counts.
 #'
 #' @param f_path String. Path to the `counts_cells.bin` file.
-#' @param cell_indices_ls List. Must contains 0-indexed positions of the
-#' cells to aggregate per element.
-#' @param assay String. One of `c("raw", "norm")`. Which counts to normalise.
+#' @param cell_indices_ls List. Each element contains the 0-indexed positions
+#' of the cells to aggregate.
+#' @param assay String. One of `c("raw", "norm")`. `"raw"` sums the raw
+#' counts, `"norm"` averages the normalised counts. Unrecognised values fall
+#' back to `"raw"`.
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
 #'
 #' @returns A list with the following elements (easy to convert into CSR in R)
 #' \itemize{
-#'   \item indptr - The index pointers (representing cells)
+#'   \item indptr - The index pointers (representing pseudo-bulked samples)
 #'   \item indices - The indices (representing genes)
 #'   \item data - The pseudo-bulked data
 #'   \item nrow - Number of rows (i.e., pseudo-bulked samples)
@@ -4951,11 +5709,13 @@ rs_pseudobulk_cells_sparse <- function(f_path, cell_indices_ls, assay, verbose) 
 #' to keep.
 #' @param gene_index Integer. Gene index position to return (0-indexed!).
 #' @param norm Boolean. Shall normalised counts be returned.
-#' @param scale Boolean. Shall the normalised counts be scaled.
-#' @param clip Optional float. Clipping for the Z-scores if scale is set to
-#' `TRUE`
+#' @param scale Boolean. Shall the normalised counts be z-scored across the
+#' selected cells.
+#' @param clip Optional float. Clips the Z-scores to `[-clip, clip]`. Only
+#' used if `scale = TRUE`.
 #'
-#' @returns The dense vector of expression values for this gene.
+#' @returns Numerical vector with one expression value per cell in
+#' `cell_indices`.
 #'
 #' @export
 #'
@@ -4966,17 +5726,20 @@ rs_extract_counts_plots <- function(f_path, cell_indices, gene_index, norm, scal
 #'
 #' @description
 #' `r lifecycle::badge("experimental")`
-#' Extract the single cell counts of several genes at ones.
+#' Extract the normalised single cell counts of several genes at once.
 #'
 #' @param f_path String. Path to the `counts_genes.bin` file.
 #' @param cell_indices Integer positions (0-indexed!) that defines the cells
 #' to keep.
-#' @param gene_indices Integer. Gene index position to return (0-indexed!).
-#' @param scale Boolean. Shall the normalised counts be scaled.
-#' @param clip Optional float. Clipping for the Z-scores if scale is set to
-#' `TRUE`
+#' @param gene_indices Integer vector. Gene index positions to return
+#' (0-indexed!).
+#' @param scale Boolean. Shall the normalised counts be z-scored per gene
+#' across the selected cells.
+#' @param clip Optional float. Clips the Z-scores to `[-clip, clip]`. Only
+#' used if `scale = TRUE`.
 #'
-#' @returns A list of dense vectors of the normalised counts.
+#' @returns A list of numerical vectors, one per gene in `gene_indices`, each
+#' with one normalised value per cell in `cell_indices`.
 #'
 #' @export
 #'
@@ -4992,17 +5755,19 @@ rs_extract_several_genes_plots <- function(f_path, cell_indices, gene_indices, s
 #' @param f_path String. Path to the `counts_genes.bin` file.
 #' @param cell_indices Integer positions (0-indexed!) that defines the cells
 #' to keep.
-#' @param gene_indices Integer. Gene index position to return (0-indexed!).
-#' @param group_ids Integer. The levels of the data. (0-indexed!)
-#' @param group_levels String. Name of the factors.
+#' @param gene_indices Integer vector. Gene index positions to return
+#' (0-indexed!).
+#' @param group_ids Integer vector. Group of each cell in `cell_indices`, as
+#' an index into `group_levels` (0-indexed!). Same length as `cell_indices`.
+#' @param group_levels Character vector. The group labels.
 #'
 #' @returns A list with the following elements:
 #' \itemize{
-#'   \item grp_label - The label of that group
-#'   \item mean_exp - Vector of mean expression values in row major (genes x
-#'   n_levels)
-#'   \item perc_exp - Vector of proportions of cells with expression in row
-#'   major (genes x n_levels)
+#'   \item grp_label - The group labels, i.e. `group_levels`.
+#'   \item mean_exp - Mean normalised expression per gene and group over all
+#'   cells of the group (zeros included), row-major (genes x groups).
+#'   \item perc_exp - Fraction (`[0, 1]`) of cells in the group with a
+#'   non-zero count, row-major (genes x groups).
 #' }
 #'
 #' @export
@@ -5038,14 +5803,14 @@ rs_extract_grouped_gene_stats <- function(f_path, cell_indices, gene_indices, gr
 #'  scaled to `[0, 1]`. The start cell is not pinned to 0; a start cell far
 #'  from 0 means the refinement disagreed with the anchor.
 #'  \item entropy - Numerical vector with the differentiation entropy per cell
-#'  (natural log).
+#'  (natural log), computed on the fate probabilities before thresholding.
 #'  \item branch_probs - Numerical matrix of cells x terminal states with the
 #'  fate probabilities. Rows need not sum to one, as sub-threshold values are
 #'  zeroed without renormalisation.
 #'  \item terminal_states - Integer vector with the terminal state cell indices
-#'  (0-indexed!). Sets the column order of `branch_probs`.
+#'  (0-indexed!), ascending. Sets the column order of `branch_probs`.
 #'  \item waypoints - Integer vector with the waypoint cell indices
-#'  (0-indexed!). The first element is the start cell.
+#'  (0-indexed!). The first element is the start cell, the rest ascending.
 #'  \item start_cell - Integer. The start cell that was actually used
 #'  (0-indexed!).
 #'  \item multiscale - Numerical matrix of cells x components with the
@@ -5155,20 +5920,23 @@ rs_gene_trends <- function(expression, pseudotime, branch_probs, branch_params, 
 #' `r lifecycle::badge("experimental")`
 #' Calculates highly variable genes for MetaCells or more
 #' generally speaking sparse data. This is happening in-memory compared to the
-#' (usually much) larger single cell data sets.
+#' (usually much) larger single cell data sets. `"meanvarbin"` and
+#' `"dispersion"` compute the same statistics; they differ only in how the R
+#' side selects from them.
 #'
 #' @param sparse_data A named list that needs to have `data`, `indptr`,
-#' `indices`, `nrow`, `ncol` and `format`.
+#' `indices`, `nrow`, `ncol` and `cs_type`. Shape is (metacells, genes). Pass
+#' raw counts for `"vst"` and normalised counts otherwise.
 #' @param hvg_method String. Which HVG detection method to use. Options
 #' are `c("vst", "meanvarbin", "dispersion")`.
 #' @param loess_span Numeric. The span parameter for the loess function
 #' (only used for `"vst"`).
-#' @param clip_max Optional clipping number. Defaults to `sqrt(no_cells)` if
-#' not provided (only used for `"vst"`).
 #' @param binning String. The binning strategy for the `meanvarbin` and
-#' `dispersion` methods. One of `c("equal_width", "equal_frequency")`.
+#' `dispersion` methods. One of `c("equal_width", "equal_freq")`.
 #' @param n_bins Integer. Number of bins for the `meanvarbin` and
 #' `dispersion` methods.
+#' @param clip_max Optional clipping number. Defaults to `sqrt(no_cells)` if
+#' not provided (only used for `"vst"`).
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
 #'
@@ -5196,20 +5964,23 @@ rs_mc_hvg <- function(sparse_data, hvg_method, loess_span, binning, n_bins, clip
 #' `r lifecycle::badge("experimental")`
 #' Calculates PCA for MetaCells or more generally speaking sparse
 #' data. This is happening in-memory compared to the (usually much) larger
-#' single cell data sets.
+#' single cell data sets. The matrix is densified, optionally CLR transformed
+#' and scaled according to `pca_params` before the SVD.
 #'
 #' @param sparse_data A named list that needs to have `data`, `indptr`,
-#' `indices`, `nrow`, `ncol` and `format`.
+#' `indices`, `nrow`, `ncol` and `cs_type`. Shape is (metacells, genes),
+#' holding the normalised counts of the genes to use.
 #' @param no_pcs Integer. Number of PCs to return.
 #' @param pca_params Named list. Contains the parameters to use for this PCA
-#' run.
-#' @param clr_offsets Optional numeric. If you wish to use the `PFlogPF`
-#' normalisation prior to PCA from Booeshaghi, et al.
+#' run, see [bixverse::params_sc_pca()].
+#' @param clr_offsets Optional numeric. One offset per meta cell for the
+#' `PFlogPF` normalisation from Booeshaghi, et al., computed against the full
+#' gene panel. Required if `pca_params$clr` is `TRUE`, ignored otherwise.
 #' @param seed Integer. Random seed for the randomised SVD.
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
 #'
-#' @returns A list with with the following items
+#' @returns A list with the following items
 #' \itemize{
 #'   \item scores - The samples projected on the PCA space (solved via sparse
 #'   SVD).
@@ -5224,23 +5995,112 @@ rs_mc_hvg <- function(sparse_data, hvg_method, loess_span, binning, n_bins, clip
 #' @references Booeshaghi, et al., bioRxive, 2026.
 rs_mc_pca <- function(sparse_data, no_pcs, pca_params, clr_offsets, seed, verbose) .Call(wrap__rs_mc_pca, sparse_data, no_pcs, pca_params, clr_offsets, seed, verbose)
 
+#' Fits a residual model for meta cells
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' In-memory version of [bixverse::rs_sc_fit_residuals()]. Meta cell counts are
+#' summed UMIs, so the negative binomial the residual models describe is still
+#' defined; it just sits at a much greater depth than a single cell.
+#'
+#' @param sparse_data A named list that needs to have `data`, `indptr`,
+#' `indices`, `nrow`, `ncol` and `cs_type`. Shape is (metacells, genes). Pass
+#' raw counts.
+#' @param method String. One of `c("sctransform", "analytic_pearson")`.
+#' @param group_of_cell Integer vector or `NULL`. Group label per meta cell.
+#' (0-indexed, dense!) `NULL` fits one model.
+#' @param covariates Named list of numeric vectors, one per covariate, each of
+#' length `nrow`. scTransform only.
+#' @param params Named list. See [bixverse::params_sc_sctransform()] or
+#' [bixverse::params_sc_apr()].
+#' @param seed Integer. Seed for the step-1 subsample.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @returns A list as described in [bixverse::rs_sc_fit_residuals()].
+#'
+#' @export
+#'
+#' @keywords internal
+rs_mc_fit_residuals <- function(sparse_data, method, group_of_cell, covariates, params, seed, verbose) .Call(wrap__rs_mc_fit_residuals, sparse_data, method, group_of_cell, covariates, params, seed, verbose)
+
+#' Residual variance and variable features for meta cells
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' In-memory version of [bixverse::rs_sc_residual_variance()].
+#'
+#' @param sparse_data A named list that needs to have `data`, `indptr`,
+#' `indices`, `nrow`, `ncol` and `cs_type`. Shape is (metacells, genes). Pass
+#' raw counts.
+#' @param residual_fit List. A fit from [bixverse::rs_mc_fit_residuals()].
+#' @param n_hvg Integer. Variable features to take from each group.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @returns A list with the following items
+#' \itemize{
+#'   \item genes - The gene indices the variances are indexed by. (0-indexed!)
+#'   \item variance - Matrix of residual variance, genes by groups.
+#'   \item hvg - The selected gene indices, ascending. (0-indexed!)
+#' }
+#'
+#' @export
+#'
+#' @keywords internal
+rs_mc_residual_variance <- function(sparse_data, residual_fit, n_hvg, verbose) .Call(wrap__rs_mc_residual_variance, sparse_data, residual_fit, n_hvg, verbose)
+
+#' Calculates PCA on Pearson residuals for meta cells
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' In-memory version of [bixverse::rs_sc_pca_residuals()]. As there, `clr` and
+#' `normalise_variance` must both be `FALSE`.
+#'
+#' @param sparse_data A named list that needs to have `data`, `indptr`,
+#' `indices`, `nrow`, `ncol` and `cs_type`. Shape is (metacells, genes). Pass
+#' raw counts.
+#' @param residual_fit List. A fit from [bixverse::rs_mc_fit_residuals()].
+#' @param no_pcs Integer. Number of PCs to calculate.
+#' @param pca_params Named list. Contains the parameters to use for this PCA
+#' run.
+#' @param gene_indices Integer vector. The gene indices to use. (0-indexed!)
+#' @param seed Integer. Random seed for the randomised SVD.
+#' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
+#' detailed verbosity.
+#'
+#' @returns A list with the following items
+#' \itemize{
+#'   \item scores - The samples projected on the PCA space.
+#'   \item loadings - The loadings of the features for the PCA.
+#'   \item singular_values - The singular values for the PCA.
+#' }
+#'
+#' @export
+#'
+#' @keywords internal
+rs_mc_pca_residuals <- function(sparse_data, residual_fit, no_pcs, pca_params, gene_indices, seed, verbose) .Call(wrap__rs_mc_pca_residuals, sparse_data, residual_fit, no_pcs, pca_params, gene_indices, seed, verbose)
+
 #' Calculate the pairwise gene-correlation for meta cells
 #'
 #' @description
 #' `r lifecycle::badge("experimental")`
+#' Correlates `gene_indices_1[i]` against `gene_indices_2[i]` over the meta
+#' cells, in memory.
 #'
 #' @param sparse_data A named list that needs to have `data`, `indptr`,
-#' `indices`, `nrow`, `ncol` and `format`.
+#' `indices`, `nrow`, `ncol` and `cs_type`. Shape is (metacells, genes),
+#' holding the normalised counts.
 #' @param gene_indices_1 Integer. The gene indices for the first set of genes.
 #' Must be 0-indexed!
-#' @param gene_indices_2 Integer. The gene indices for the first set of genes.
-#' Must be 0-indexed!
-#' @param spearman Boolean. Shall the spearman correlation be calculated.
+#' @param gene_indices_2 Integer. The gene indices for the second set of
+#' genes, same length as `gene_indices_1`. Must be 0-indexed!
+#' @param spearman Boolean. Shall the Spearman correlation be calculated.
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
 #'
-#' @returns The vector of correlations between the pairs of gene_indices_1
-#' and gene_indices_2
+#' @returns Numeric vector with one correlation per pair of `gene_indices_1`
+#' and `gene_indices_2`.
 #'
 #' @export
 #'
@@ -5251,19 +6111,22 @@ rs_pairwise_gene_cors_mc <- function(sparse_data, gene_indices_1, gene_indices_2
 #'
 #' @description
 #' `r lifecycle::badge("experimental")`
-#' Assumes that the sparse data is pre-filtered for the genes you wish to
-#' include. The indices need to be 0-indexed.
+#' Assumes that the sparse data is pre-filtered for the cells and genes you
+#' wish to include: every column is a target gene. The regressors read the
+#' second layer, which here is an `f32` cast of the supplied counts.
 #'
 #' @param sparse_data A named list that needs to have `data`, `indptr`,
-#' `indices`, `nrow`, `ncol` and `format`.
-#' @param tf_indices Integer vector. The indices of the transcription factors.
-#' @param scenic_params Named list. Contains all of the parameters need for
-#' SCENIC.
+#' `indices`, `nrow`, `ncol` and `cs_type`. Shape is (metacells, genes).
+#' @param tf_indices Integer vector. 0-indexed(!) column positions of the
+#' transcription factors within `sparse_data`.
+#' @param scenic_params Named list. Contains all of the parameters needed for
+#' SCENIC, see [bixverse::params_scenic()].
 #' @param seed Integer. Controls reproducibility of the function.
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
 #'
-#' @returns A gene x TF importance matrix
+#' @returns A genes x TFs importance matrix, rows in column order of
+#' `sparse_data`, columns in the order of `tf_indices`.
 #'
 #' @export
 rs_mc_scenic <- function(sparse_data, tf_indices, scenic_params, seed, verbose) .Call(wrap__rs_mc_scenic, sparse_data, tf_indices, scenic_params, seed, verbose)
@@ -5276,10 +6139,12 @@ rs_mc_scenic <- function(sparse_data, tf_indices, scenic_params, seed, verbose) 
 #' calculate an AUCell type statistic. Three options here: the recovery-curve
 #' AUC of Aibar, et al. (the actual AUCell statistic), an AUC derived from the
 #' Mann-Whitney statistic, or average precision. This version works on
-#' MetaCell counts which are stored in memory directly.
+#' MetaCell counts which are stored in memory directly. Genes are ranked
+#' within each meta cell on the second layer, an `f32` cast of the supplied
+#' counts.
 #'
 #' @param sparse_data A named list that needs to have `data`, `indptr`,
-#' `indices`, `nrow`, `ncol` and `format`.
+#' `indices`, `nrow`, `ncol` and `cs_type`. Shape is (metacells, genes).
 #' @param gs_list List. List with the gene set indices (0-indexed!) of the
 #' genes of interest.
 #' @param aucell_params List. The AUCell parameters, see
@@ -5287,8 +6152,8 @@ rs_mc_scenic <- function(sparse_data, tf_indices, scenic_params, seed, verbose) 
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
 #'
-#' @returns A matrix of cells x gene sets with the values representing the
-#' AUC.
+#' @returns A matrix of meta cells x gene sets with the values representing
+#' the AUC.
 #'
 #' @export
 rs_mc_aucell <- function(sparse_data, gs_list, aucell_params, verbose) .Call(wrap__rs_mc_aucell, sparse_data, gs_list, aucell_params, verbose)
@@ -5305,14 +6170,14 @@ rs_mc_aucell <- function(sparse_data, gs_list, aucell_params, verbose) .Call(wra
 #' an in-memory matrix has.
 #'
 #' @param sparse_data A named list that needs to have `data`, `indptr`,
-#' `indices`, `nrow`, `ncol` and `format`. Shape is (metacells, genes) and the
-#' data are the raw counts.
+#' `indices`, `nrow`, `ncol` and `cs_type`. Shape is (metacells, genes) and
+#' the data are the raw counts.
 #' @param embd Numerical matrix. The embedding matrix from which to generate
-#' the kNN graph.
+#' the kNN graph. Needs one row per entry of `cells_to_keep`.
 #' @param knn_data Optional list. This contains pre-computed kNN data
-#' (including distances) and the `dist_metric` it was built with. The user has
-#' to ensure consistency! If provided, this will be used rather than a graph
-#' built from the parameter list.
+#' (`indices`, `dist`, `k`) and the `dist_metric` it was built with. The user
+#' has to ensure consistency! If provided, this will be used rather than a
+#' graph built from the parameter list.
 #' @param hotspot_params List. The HotSpot parameter list. The kNN parameters
 #' are only read when no `knn_data` is provided.
 #' @param cells_to_keep Integer vector. 0-index vector indicating which meta
@@ -5327,7 +6192,7 @@ rs_mc_aucell <- function(sparse_data, gs_list, aucell_params, verbose) .Call(wra
 #' @returns A list with the following elements.
 #' \itemize{
 #'   \item gene_idx - 0-based integer indicating the gene index.
-#'   \item gaerys_c - Gaery's C calculation for the autocorrelation
+#'   \item gaerys_c - Geary's C calculation for the autocorrelation
 #'   coefficient.
 #'   \item z_score - Z-score of the auto-correlation.
 #'   \item pval - P-value derived from the Z-score.
@@ -5352,14 +6217,14 @@ rs_mc_hotspot_autocor <- function(sparse_data, embd, knn_data, hotspot_params, c
 #' transcriptome.
 #'
 #' @param sparse_data A named list that needs to have `data`, `indptr`,
-#' `indices`, `nrow`, `ncol` and `format`. Shape is (metacells, genes) and the
-#' data are the raw counts.
+#' `indices`, `nrow`, `ncol` and `cs_type`. Shape is (metacells, genes) and
+#' the data are the raw counts.
 #' @param embd Numerical matrix. The embedding matrix from which to generate
-#' the kNN graph.
+#' the kNN graph. Needs one row per entry of `cells_to_keep`.
 #' @param knn_data Optional list. This contains pre-computed kNN data
-#' (including distances) and the `dist_metric` it was built with. The user has
-#' to ensure consistency! If provided, this will be used rather than a graph
-#' built from the parameter list.
+#' (`indices`, `dist`, `k`) and the `dist_metric` it was built with. The user
+#' has to ensure consistency! If provided, this will be used rather than a
+#' graph built from the parameter list.
 #' @param hotspot_params List. The HotSpot parameter list. The kNN parameters
 #' are only read when no `knn_data` is provided; `normalise` is unused on this
 #' path.
@@ -5374,8 +6239,9 @@ rs_mc_hotspot_autocor <- function(sparse_data, embd, knn_data, hotspot_params, c
 #'
 #' @returns A list with the following elements.
 #' \itemize{
-#'   \item cor - The gene x gene local correlation matrix.
-#'   \item z - The Z-scores of these local correlations.
+#'   \item cor - The genes x genes local correlation matrix, in the order of
+#'   `genes_to_use`.
+#'   \item z - The Z-scores of these local correlations, same shape.
 #' }
 #'
 #' @export
@@ -5407,7 +6273,7 @@ rs_mc_hotspot_gene_cor <- function(sparse_data, embd, knn_data, hotspot_params, 
 #' @references DeTomaso, et al., Nat. Commun., 2019
 rs_mc_vision <- function(sparse_data, gs_list, verbose) .Call(wrap__rs_mc_vision, sparse_data, gs_list, verbose)
 
-#' Calculate VISION pathway scores in Rust with auto-correlation (for meta cells)
+#' Calculate VISION pathway scores with auto-correlation (for meta cells)
 #'
 #' @description
 #' `r lifecycle::badge("experimental")`
@@ -5415,7 +6281,7 @@ rs_mc_vision <- function(sparse_data, gs_list, verbose) .Call(wrap__rs_mc_vision
 #' and `"neg"` gene indices (0-indexed). You don't have to provide the `"neg"`,
 #' but it can be useful to classify the delta of two stats (EMT, Th1; Th2) etc.
 #' Additionally, it will take a random gene list and calculate an
-#' auto-correlation score based on Gaery's C to identify pathways that show
+#' auto-correlation score based on Geary's C to identify pathways that show
 #' significant patterns on the kNN graph generated on the provided embedding.
 #' This version works on MetaCell counts which are stored in memory directly.
 #'
@@ -5426,26 +6292,26 @@ rs_mc_vision <- function(sparse_data, gs_list, verbose) .Call(wrap__rs_mc_vision
 #' kNN graph. Needs to be of the same order/length as the meta cells in
 #' `sparse_data`.
 #' @param knn_data Optional list. This contains pre-computed kNN data
-#' (including distances) and the `dist_metric` it was built with. The user has
-#' to ensure consistency! If provided, this will be used rather than a graph
-#' built from the parameter list.
+#' (`indices`, `dist`, `k`) and the `dist_metric` it was built with. The user
+#' has to ensure consistency! If provided, this will be used rather than a
+#' graph built from the parameter list.
 #' @param gs_list Nested list. Each sublist contains the (0-indexed!) positive
 #' and negative gene indices of that specific gene set.
 #' @param random_gs_list Double-nested list. The outer list represents the
-#' clusters of clusters and the inner list represents the permutations within
-#' that cluster.
-#' @param vision_params List. Contains various parameters to use in terms
-#' of the kNN generation.
-#' @param cluster_membership Integer. Vector that indicates to which of the
-#' permuted gene set clusters the given gene set belongs.
+#' clusters of gene sets and the inner list represents the permutations
+#' within that cluster.
+#' @param vision_params List. The kNN parameters, only read when no
+#' `knn_data` is provided.
+#' @param cluster_membership Integer vector. 1-indexed(!) position in
+#' `random_gs_list` of the permuted cluster each gene set belongs to.
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
 #' @param seed Integer. Random seed for reproducibility.
 #'
 #' @returns A list with the following items:
 #' \itemize{
-#'   \item autocor_res - Auto-correlation results, i.e., 1 - C, p-value and
-#'   FDR.
+#'   \item autocor_res - List with `auto_cor` (1 - Geary's C), `p_val` and
+#'   `fdr`, one entry per gene set.
 #'   \item vision_mat - A matrix of meta cells x vision scores per gene set.
 #' }
 #'
@@ -5543,19 +6409,29 @@ rs_nebula_mc <- function(sparse_data, metacells_to_keep, gene_indices, subject_i
 #' @description
 #' `r lifecycle::badge("experimental")`
 #' Assumes that the sparse data is pre-filtered for the cells/genes you wish
-#' to include. Indices in the sparse data need to be 0-indexed.
+#' to include. Indices in the sparse data need to be 0-indexed. Both data
+#' layers hold the supplied values, so which assay NMF runs on is decided by
+#' what is passed in, not by `use_second_layer`.
 #'
 #' @param sparse_data A named list with `data`, `indptr`, `indices`, `nrow`,
-#' `ncol` and `format`.
+#' `ncol` and `cs_type`. Shape is (metacells, genes).
 #' @param k Integer. Number of latent factors to return.
 #' @param preprocessing String. One of `c("none", "sd", "sqrt_sd")`.
-#' @param use_second_layer Boolean. If `TRUE`, runs NMF on normalised counts.
-#' @param nmf_hals_params Named list. Contains the NMF parameters.
+#' @param use_second_layer Boolean. Shall the second data layer be used.
+#' @param nmf_hals_params Named list. Contains the NMF parameters, see
+#' [bixverse::params_nmf_hals()].
 #' @param seed Integer. Random seed for initialisation.
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
 #'
-#' @returns A list with `w`, `h`, `final_loss`, `n_iter`, `converged`.
+#' @returns A list with the following items
+#' \itemize{
+#'   \item w - The `W` matrix of shape `n_meta_cells x k`.
+#'   \item h - The `H` matrix of shape `k x n_genes`.
+#'   \item final_loss - Final squared Frobenius reconstruction loss.
+#'   \item n_iter - Number of iterations the algorithm ran for.
+#'   \item converged - Did the NMF algorithm converge.
+#' }
 #'
 #' @export
 #'
@@ -5567,21 +6443,33 @@ rs_nmf_single_mc <- function(sparse_data, k, preprocessing, use_second_layer, nm
 #' @description
 #' `r lifecycle::badge("experimental")`
 #' Assumes that the sparse data is pre-filtered for the cells/genes you wish
-#' to include. Indices in the sparse data need to be 0-indexed.
+#' to include. Indices in the sparse data need to be 0-indexed. Both data
+#' layers hold the supplied values, so which assay NMF runs on is decided by
+#' what is passed in, not by `use_second_layer`.
 #'
 #' @param sparse_data A named list with `data`, `indptr`, `indices`, `nrow`,
-#' `ncol` and `format`.
+#' `ncol` and `cs_type`. Shape is (metacells, genes).
 #' @param k Integer. Number of latent factors per run.
 #' @param preprocessing String. One of `c("none", "sd", "sqrt_sd")`.
-#' @param use_second_layer Boolean. If `TRUE`, runs NMF on normalised counts.
-#' @param nmf_hals_params Named list. Contains the NMF parameters.
+#' @param use_second_layer Boolean. Shall the second data layer be used.
+#' @param nmf_hals_params Named list. Contains the NMF parameters, see
+#' [bixverse::params_nmf_hals()]. The `nmf_init` field is ignored, restarts
+#' always use random initialisation.
 #' @param n_runs Integer. Number of random restarts.
 #' @param seed Integer. Base random seed. Run `i` uses `seed + i`.
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
 #'
-#' @returns A list with `w_all`, `h_per_run`, `losses`, `converged`,
-#' `best_idx` (1-indexed).
+#' @returns A list with the following items
+#' \itemize{
+#'   \item w_all - Column-bound `W` matrices across all runs, shape
+#'   `n_meta_cells x (k * n_runs)`.
+#'   \item h_per_run - List of `H` matrices, each `k x n_genes`.
+#'   \item losses - Numeric vector. Final reconstruction loss per run.
+#'   \item converged - Logical vector. Convergence flag per run.
+#'   \item best_idx - Integer. 1-indexed position of the run with the lowest
+#'   final loss.
+#' }
 #'
 #' @export
 #'
@@ -5596,16 +6484,20 @@ rs_nmf_multi_mc <- function(sparse_data, k, preprocessing, use_second_layer, nmf
 #' ones by local density, k-means clusters the survivors and refits the
 #' partner factor against the per-cluster median. Assumes that the sparse data
 #' is pre-filtered for the cells/genes you wish to include. Indices in the
-#' sparse data need to be 0-indexed.
+#' sparse data need to be 0-indexed. Both data layers hold the supplied
+#' values, so which assay NMF runs on is decided by what is passed in, not by
+#' `use_second_layer`.
 #'
 #' @param sparse_data A named list with `data`, `indptr`, `indices`, `nrow`,
-#' `ncol` and `format`.
+#' `ncol` and `cs_type`. Shape is (metacells, genes).
 #' @param k Integer. Number of latent factors. Must be at least 2.
 #' @param preprocessing String. One of `c("none", "sd", "sqrt_sd")`.
-#' @param use_second_layer Boolean. If `TRUE`, runs NMF on normalised counts.
-#' @param nmf_hals_params Named list. Contains the NMF parameters. The
-#' `nmf_init` field is ignored, restarts always use random initialisation.
-#' @param nmf_consensus_params Named list. Contains the consensus parameters.
+#' @param use_second_layer Boolean. Shall the second data layer be used.
+#' @param nmf_hals_params Named list. Contains the NMF parameters, see
+#' [bixverse::params_nmf_hals()]. The `nmf_init` field is ignored, restarts
+#' always use random initialisation.
+#' @param nmf_consensus_params Named list. Contains the consensus parameters,
+#' see [bixverse::params_nmf_consensus()].
 #' @param n_runs Integer. Number of restarts. Must be at least 2.
 #' @param seed Integer. Base random seed. Restart `i` uses `seed + i`.
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
@@ -5646,17 +6538,21 @@ rs_nmf_consensus_mc <- function(sparse_data, k, preprocessing, use_second_layer,
 #' memory. Pick the k where stability is high and the error curve has not yet
 #' flattened, then call [rs_nmf_consensus_mc()] there. Assumes that the sparse
 #' data is pre-filtered for the cells/genes you wish to include. Indices in the
-#' sparse data need to be 0-indexed.
+#' sparse data need to be 0-indexed. Both data layers hold the supplied
+#' values, so which assay NMF runs on is decided by what is passed in, not by
+#' `use_second_layer`.
 #'
 #' @param sparse_data A named list with `data`, `indptr`, `indices`, `nrow`,
-#' `ncol` and `format`.
+#' `ncol` and `cs_type`. Shape is (metacells, genes).
 #' @param k_range Integer vector. Ranks to evaluate, every entry at least 2.
 #' @param preprocessing String. One of `c("none", "sd", "sqrt_sd")`.
-#' @param use_second_layer Boolean. If `TRUE`, runs NMF on normalised counts.
-#' @param nmf_hals_params Named list. Contains the NMF parameters.
-#' @param nmf_consensus_params Named list. Contains the consensus parameters.
+#' @param use_second_layer Boolean. Shall the second data layer be used.
+#' @param nmf_hals_params Named list. Contains the NMF parameters, see
+#' [bixverse::params_nmf_hals()].
+#' @param nmf_consensus_params Named list. Contains the consensus parameters,
+#' see [bixverse::params_nmf_consensus()].
 #' @param n_runs Integer. Number of restarts per k. Must be at least 2.
-#' @param seed Integer. Base random seed.
+#' @param seed Integer. Base random seed. The i-th k uses `seed + i * n_runs`.
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
 #'
@@ -5686,17 +6582,20 @@ rs_nmf_k_sweep_mc <- function(sparse_data, k_range, preprocessing, use_second_la
 #'
 #' @description
 #' `r lifecycle::badge("experimental")`
+#' Reads one feature type (e.g. `"Antibody Capture"`) from a 10x h5 file as a
+#' dense matrix. Needs a v3 file; v2 files carry no feature types and error.
 #'
-#' @param f_path String. The path to the h5 file
-#' @param version String. The 10x version. If `"auto"` uses the automatic
-#' detection.
-#' @param feature_type String. The feature type to return.
+#' @param f_path String. The path to the h5 file.
+#' @param version String. The 10x version. If `"auto"`, the version is
+#' detected from the file.
+#' @param feature_type String. The feature type to return. Matched against
+#' the whitespace-trimmed feature types of the file.
 #'
 #' @returns A list with:
 #' \itemize{
-#'   \item counts - Numerical matrix of cells x features
-#'   \item barcodes - The barcodes as a string
-#'   \item features - The features as a string
+#'   \item counts - Dense numerical matrix of cells x features.
+#'   \item barcodes - Character vector of the cell barcodes, in file order.
+#'   \item features - Character vector of the feature names.
 #' }
 #'
 #' @export
@@ -5709,11 +6608,15 @@ rs_read_tenx_h5_modality <- function(f_path, version, feature_type) .Call(wrap__
 #' @description
 #' `r lifecycle::badge("experimental")`
 #'
-#' @param counts R matrix of shape cells x features.
-#' @param seurat_clr Logical; if TRUE uses the Seurat variant (non-negative),
-#' if FALSE uses proper CLR (mean-centred log, can be negative).
+#' Normalises each cell (row) separately.
 #'
-#' @returns CLR-transformed matrix.
+#' @param counts Numerical matrix of shape cells x features.
+#' @param seurat_clr Boolean. If `TRUE` uses the Seurat variant
+#' `log1p(x / g)` (non-negative); if `FALSE` uses the proper CLR
+#' `log1p(x) - mean(log1p(x))` (mean-centred, can be negative).
+#'
+#' @returns Numerical matrix of cells x features with the CLR-transformed
+#' values.
 #'
 #' @export
 #'
@@ -5729,10 +6632,12 @@ rs_adt_clr <- function(counts, seurat_clr) .Call(wrap__rs_adt_clr, counts, seura
 #' `background_counts` is provided, per-protein ambient background is estimated
 #' from empty droplets ("Step I" of the original paper). When
 #' `background_counts` is `NULL`, per-protein background is estimated by a
-#' two-component k-means on the log-transformed cell counts, with the lower
-#' centroid taken as the background level. An optional second step removes
-#' cell-to-cell technical noise by regressing out PC1 of a noise matrix built
-#' from isotype controls (if available) and the per-cell background mean.
+#' two-component k-means on the `log(x + pseudocount)` cell counts, with the
+#' lower centroid taken as the background level. An optional second step
+#' removes cell-to-cell technical noise by regressing out PC1 of a noise
+#' matrix built from isotype controls (if used) and the per-cell background
+#' mean; without isotype controls the per-cell background mean itself is
+#' regressed out. Optional per-protein quantile clipping runs last.
 #'
 #' @param raw_counts Numeric matrix. Cells x proteins matrix of raw ADT
 #' counts.
@@ -5748,8 +6653,9 @@ rs_adt_clr <- function(counts, seurat_clr) .Call(wrap__rs_adt_clr, counts, seura
 #' @param scale_factor String. One of `"standardise"` or `"mean_subtract"`.
 #' Only used when `background_counts` is provided. `"standardise"` subtracts
 #' the per-protein background mean and divides by the per-protein background
-#' SD. `"mean_subtract"` subtracts the mean only.
-#' @param seed Integer. Random seed for k-means initialisation.
+#' SD. `"mean_subtract"` subtracts the mean only. Unrecognised values fall
+#' back to `"standardise"`.
+#' @param seed Integer. Random seed for the k-means initialisations.
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 #' detailed verbosity.
 #'
@@ -5764,10 +6670,12 @@ rs_adt_clr <- function(counts, seurat_clr) .Call(wrap__rs_adt_clr, counts, seura
 #'   SD used in Step I.
 #'   \item technical_component - Numeric vector of length `n_cells`, or
 #'   empty vector if `dsb_params$denoise_counts = FALSE`. Per-cell
-#'   technical component regressed out in Step II.
+#'   covariate regressed out in Step II: PC1 of the noise matrix, or the
+#'   per-cell background mean if no isotype controls are used.
 #'   \item cellwise_background_mean - Numeric vector of length `n_cells`,
 #'   or empty vector if `dsb_params$denoise_counts = FALSE`. Per-cell
-#'   background mean from the 2-component k-means clustering.
+#'   background mean from a 2-component k-means on each cell's protein
+#'   vector.
 #' }
 #'
 #' @export
@@ -5780,12 +6688,16 @@ rs_dsb <- function(raw_counts, background_counts, isotype_indices, dsb_params, s
 #' @description
 #' `r lifecycle::badge("experimental")`
 #' This provides a Rust-based implementation of the WNN algorithm from Hao,
-#' et al.
+#' et al. Both embeddings are L2-normalised per cell, a kNN graph with
+#' `knn_range` neighbours is built per modality, and the per-cell modality
+#' weights are then used to fuse both into one kNN graph.
 #'
-#' @param modality_emb_one Numerical matrix of the first modality. For example
-#' the PCA (or other embeddings) from the transcriptomics.
-#' @param modality_emb_two Numerical matrix of the second modality. For example
-#' the PCA (or other embeddings) from the ADT counts.
+#' @param modality_emb_one Numerical matrix of the first modality, cells x
+#' dimensions. For example the PCA (or other embeddings) from the
+#' transcriptomics.
+#' @param modality_emb_two Numerical matrix of the second modality, same cells
+#' in the same row order. For example the PCA (or other embeddings) from the
+#' ADT counts.
 #' @param wnn_params Named list. The weighted nearest neighbour parameters.
 #' @param seed Integer. For reproducibility purposes.
 #' @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
@@ -5793,12 +6705,14 @@ rs_dsb <- function(raw_counts, background_counts, isotype_indices, dsb_params, s
 #'
 #' @returns A list with
 #' \itemize{
-#'   \item indices An integer matrix representing the indices of the
-#'  approximate nearest neighbours.
-#'  \item dist - An numerical matrix representing the distances to the nearest
-#'  neighbours.
-#'  \item modality_one_weights - The weights of the first modality.
-#'  \item modality_two_weights - The weights of the second modality.
+#'   \item indices - Integer matrix of cells x neighbours with the indices
+#'   (0-indexed!) of the weighted nearest neighbours.
+#'   \item dist - Numerical matrix with the distances to these neighbours.
+#'   \item dist_metric - String. Always `"kernelised pseudo-distance"`.
+#'   \item modality_one_weights - Numerical vector with the per-cell weights of
+#'   the first modality.
+#'   \item modality_two_weights - Numerical vector with the per-cell weights of
+#'   the second modality.
 #' }
 #'
 #' @export
@@ -5814,10 +6728,10 @@ rs_wnn <- function(modality_emb_one, modality_emb_two, wnn_params, seed, verbose
 #' complementary binary representations: a CSR-like layout (`f_path_cells`)
 #' for fast cell-wise access and a CSC-like layout (`f_path_genes`) for fast
 #' gene-wise access. Both raw counts and log-normalised counts are stored
-#' side by side. Provides methods for ingesting data from R, `h5ad`, and
-#' `mtx` sources (including multi-file workflows), converting between
-#' layouts, retrieving slices of the matrix, and merging existing binary
-#' objects.
+#' side by side. Provides methods for ingesting data from R, `h5ad`, `mtx`
+#' and 10x CellRanger h5 sources (including multi-file workflows),
+#' converting between layouts, retrieving slices of the matrix, merging
+#' existing binary objects and writing CellSweep-denoised counts.
 #'
 #' @usage NULL
 #' @format NULL
@@ -5877,7 +6791,7 @@ rs_wnn <- function(modality_emb_one, modality_emb_two, wnn_params, seed, verbose
 #'
 #' \subsection{Arguments}{
 #'\describe{
-#'\item{`r_data`}{(`list`)\cr A list convertible into `CompressedSparseData2`. Must contain the elements `"indptr"`, `"indices"`, `"data"`, `"nrow"`, `"ncol"` and `"cs_type"`.}
+#'\item{`r_data`}{(`list`)\cr A named list convertible into `CompressedSparseData2`. Must contain `"indptr"`, `"indices"` (0-indexed), `"data"`, `"nrow"`, `"ncol"` and `"cs_type"` (`"csr"` or `"csc"`).}
 #'\item{`qc_params`}{(`list`)\cr Quality control parameters parseable into `MinCellQuality`.}
 #'\item{`verbose`}{(`logical`)\cr Controls verbosity of the function. }
 #'}}
@@ -5887,8 +6801,8 @@ rs_wnn <- function(modality_emb_one, modality_emb_two, wnn_params, seed, verbose
 #'
 #'}
 #' \subsection{returns}{
-#'A list with `cell_indices`, `gene_indices`, `lib_size` and
-#'`nnz`.
+#'A list with `cell_indices` and `gene_indices` (0-indexed,
+#'surviving QC), `lib_size` and `nnz`.
 #'}
 #'}
 #'
@@ -5902,12 +6816,12 @@ rs_wnn <- function(modality_emb_one, modality_emb_two, wnn_params, seed, verbose
 #'\item{`no_cells`}{(`integer`)\cr Number of cells in the h5ad file.}
 #'\item{`no_genes`}{(`integer`)\cr Number of genes in the h5ad file.}
 #'\item{`qc_params`}{(`list`)\cr Quality control parameters parseable into `MinCellQuality`.}
-#'\item{`slot`}{(`character`)\cr Where to find the raw counts. One of `"X"` or `"raw.X"` (for CellXGene data).}
+#'\item{`slot`}{(`character`)\cr Where to find the raw counts. One of `"X"`, `"raw.X"` (or `"raw"`, for CellXGene data) or `"layers.counts"`. Unmatched values fall back to `"X"`.}
 #'\item{`verbose`}{(`logical`)\cr Controls verbosity of the function. }
 #'}}
 #' \subsection{returns}{
-#'A list with `cell_indices`, `gene_indices`, `lib_size` and
-#'`nnz`.
+#'A list with `cell_indices` and `gene_indices` (0-indexed,
+#'surviving QC), `lib_size` and `nnz`.
 #'}
 #'}
 #'
@@ -5932,8 +6846,8 @@ rs_wnn <- function(modality_emb_one, modality_emb_two, wnn_params, seed, verbose
 #'
 #'}
 #' \subsection{returns}{
-#'A list with `cell_indices`, `gene_indices`, `lib_size` and
-#'`nnz`.
+#'A list with `cell_indices` and `gene_indices` (0-indexed,
+#'surviving QC), `lib_size` and `nnz`.
 #'}
 #'}
 #'
@@ -5947,7 +6861,7 @@ rs_wnn <- function(modality_emb_one, modality_emb_two, wnn_params, seed, verbose
 #'\item{`no_cells`}{(`integer`)\cr Number of cells in the h5 file.}
 #'\item{`no_genes`}{(`integer`)\cr Number of genes in the h5 file.}
 #'\item{`qc_params`}{(`list`)\cr Quality control parameters parseable into `MinCellQuality`.}
-#'\item{`slot`}{(`character`)\cr Where to find the raw counts. One of `"X"` or `"raw.X"` (for CellXGene data).}
+#'\item{`slot`}{(`character`)\cr Where to find the raw counts. One of `"X"`, `"raw.X"` (or `"raw"`, for CellXGene data) or `"layers.counts"`. Unmatched values fall back to `"X"`.}
 #'\item{`verbose`}{(`logical`)\cr Controls verbosity of the function. }
 #'}}
 #' \subsection{description}{
@@ -5956,8 +6870,8 @@ rs_wnn <- function(modality_emb_one, modality_emb_two, wnn_params, seed, verbose
 #'
 #'}
 #' \subsection{returns}{
-#'A list with `cell_indices`, `gene_indices`, `lib_size` and
-#'`nnz`.
+#'A list with `cell_indices` and `gene_indices` (0-indexed,
+#'surviving QC), `lib_size` and `nnz`.
 #'}
 #'}
 #'
@@ -5966,7 +6880,7 @@ rs_wnn <- function(modality_emb_one, modality_emb_two, wnn_params, seed, verbose
 #'
 #' \subsection{Arguments}{
 #'\describe{
-#'\item{`file_tasks`}{(`list`)\cr A list of lists, each produced by the R prescan function. Each inner list must contain `exp_id`, `h5_path`, `cs_type`, `no_cells`, `no_genes` and `gene_local_to_universe`.}
+#'\item{`file_tasks`}{(`list`)\cr A list of lists, each produced by the R prescan function. Each inner list must contain `exp_id`, `h5_path`, `cs_type`, `no_cells`, `no_genes` and `gene_local_to_universe` (0-indexed integer vector, `NA` for unmapped genes), plus an optional `raw_slot`.}
 #'\item{`universe_size`}{(`integer`)\cr Total number of genes in the universe.}
 #'\item{`qc_params`}{(`list`)\cr Quality control parameters (`min_unique_genes`, `min_lib_size`, `min_cells`, `target_size`).}
 #'\item{`verbose`}{(`logical`)\cr Controls verbosity. }
@@ -5974,7 +6888,7 @@ rs_wnn <- function(modality_emb_one, modality_emb_two, wnn_params, seed, verbose
 #' \subsection{returns}{
 #'A list with `global_gene_indices`, `total_cells`,
 #'`total_genes` and `per_file` (a list of lists with `exp_id`,
-#'`cell_indices`, `lib_size`, `nnz`).
+#'`cell_indices` (file-local, 0-indexed), `lib_size`, `nnz`).
 #'}
 #'}
 #'
@@ -5989,8 +6903,8 @@ rs_wnn <- function(modality_emb_one, modality_emb_two, wnn_params, seed, verbose
 #'\item{`verbose`}{(`logical`)\cr Controls verbosity of the function. }
 #'}}
 #' \subsection{returns}{
-#'A list with `cell_indices`, `gene_indices`, `lib_size` and
-#'`nnz`.
+#'A list with `cell_indices` and `gene_indices` (0-indexed,
+#'surviving QC), `lib_size` and `nnz`.
 #'}
 #'}
 #'
@@ -6005,8 +6919,8 @@ rs_wnn <- function(modality_emb_one, modality_emb_two, wnn_params, seed, verbose
 #'\item{`verbose`}{(`logical`)\cr Controls verbosity of the function. }
 #'}}
 #' \subsection{returns}{
-#'A list with `cell_indices`, `gene_indices`, `lib_size` and
-#'`nnz`.
+#'A list with `cell_indices` and `gene_indices` (0-indexed,
+#'surviving QC), `lib_size` and `nnz`.
 #'}
 #'}
 #'
@@ -6023,7 +6937,7 @@ rs_wnn <- function(modality_emb_one, modality_emb_two, wnn_params, seed, verbose
 #' \subsection{returns}{
 #'A list with `global_gene_indices`, `total_cells`,
 #'`total_genes` and `per_file` (a list of lists with `exp_id`,
-#'`cell_indices`, `lib_size`, `nnz`).
+#'`cell_indices` (file-local, 0-indexed), `lib_size`, `nnz`).
 #'}
 #'}
 #'
@@ -6033,7 +6947,7 @@ rs_wnn <- function(modality_emb_one, modality_emb_two, wnn_params, seed, verbose
 #' \subsection{Arguments}{
 #'\describe{
 #'\item{`h5_path`}{(`character`)\cr Path to the 10x h5 file.}
-#'\item{`version`}{(`character`)\cr One of `"auto"`, `"v2"` or `"v3"`. `"auto"` detects the layout from the file.}
+#'\item{`version`}{(`character`)\cr One of `"auto"`, `"v2"` or `"v3"`. `"auto"`, and any unmatched value, detects the layout from the file.}
 #'\item{`no_cells`}{(`integer`)\cr Number of cells (columns) in the file.}
 #'\item{`no_genes`}{(`integer`)\cr Number of features (rows), including all modalities.}
 #'\item{`qc_params`}{(`list`)\cr Quality control parameters parseable into `MinCellQuality`.}
@@ -6047,8 +6961,8 @@ rs_wnn <- function(modality_emb_one, modality_emb_two, wnn_params, seed, verbose
 #'
 #'}
 #' \subsection{returns}{
-#'A list with `cell_indices`, `gene_indices`, `lib_size` and
-#'`nnz`.
+#'A list with `cell_indices` and `gene_indices` (0-indexed,
+#'surviving QC), `lib_size` and `nnz`.
 #'}
 #'}
 #'
@@ -6057,15 +6971,15 @@ rs_wnn <- function(modality_emb_one, modality_emb_two, wnn_params, seed, verbose
 #'
 #' \subsection{Arguments}{
 #'\describe{
-#'\item{`file_tasks`}{(`list`)\cr A list of lists, each produced by the R prescan function. Each inner list must contain `exp_id`, `h5_path`, `version` (`"v2"` or `"v3"`), `no_cells`, `no_genes`, `gene_local_to_universe` (integer vector, `NA` for unmapped / non-gene features) and `feature_type` (optional string, defaults to `"Gene Expression"`). }
+#'\item{`file_tasks`}{(`list`)\cr A list of lists, each produced by the R prescan function. Each inner list must contain `exp_id`, `h5_path`, `version` (`"v2"` or `"v3"`), `no_cells`, `no_genes`, `gene_local_to_universe` (integer vector, `NA` for unmapped / non-gene features) and `feature_type` (optional string, defaults to `"Gene Expression"`).}
 #'\item{`universe_size`}{(`integer`)\cr Total number of genes in the universe.}
 #'\item{`qc_params`}{(`list`)\cr Quality control parameters (`min_unique_genes`, `min_lib_size`, `min_cells`, `target_size`).}
 #'\item{`verbose`}{(`logical`)\cr Controls verbosity. }
 #'}}
 #' \subsection{returns}{
 #'A list with `global_gene_indices`, `total_cells`, `total_genes`
-#'and `per_file` (a list of lists with `exp_id`, `cell_indices`,
-#'`lib_size`, `nnz`).
+#'and `per_file` (a list of lists with `exp_id`, `cell_indices`
+#'(file-local, 0-indexed), `lib_size`, `nnz`).
 #'}
 #'}
 #'
@@ -6079,8 +6993,9 @@ rs_wnn <- function(modality_emb_one, modality_emb_two, wnn_params, seed, verbose
 #'\item{`verbose`}{(`logical`)\cr Controls verbosity of the function. }
 #'}}
 #' \subsection{returns}{
-#'A list with `indptr`, `indices`, `data`, `no_cells` and
-#'`no_genes`, parseable into a sparse matrix in R.
+#'A list with `indptr`, `indices` (0-indexed), `data`,
+#'`no_cells` and `no_genes`, parseable into a sparse matrix in R. `data`
+#'is integer for `"raw"` and double for `"norm"`.
 #'}
 #'}
 #'
@@ -6097,8 +7012,9 @@ rs_wnn <- function(modality_emb_one, modality_emb_two, wnn_params, seed, verbose
 #'
 #'}
 #' \subsection{returns}{
-#'A list with `indptr`, `indices`, `data`, `no_cells` and
-#'`no_genes`, parseable into a CSR matrix in R.
+#'A list with `indptr`, `indices` (0-indexed gene positions),
+#'`data`, `no_cells` (number of returned cells) and `no_genes`,
+#'parseable into a CSR matrix in R.
 #'}
 #'}
 #'
@@ -6178,8 +7094,9 @@ rs_wnn <- function(modality_emb_one, modality_emb_two, wnn_params, seed, verbose
 #'
 #'}
 #' \subsection{returns}{
-#'A list with `indptr`, `indices`, `data`, `no_cells` and
-#'`no_genes`, parseable into a CSC matrix in R.
+#'A list with `indptr`, `indices` (0-indexed cell positions),
+#'`data`, `no_cells` and `no_genes` (number of returned genes),
+#'parseable into a CSC matrix in R.
 #'}
 #'}
 #'
@@ -6200,7 +7117,7 @@ rs_wnn <- function(modality_emb_one, modality_emb_two, wnn_params, seed, verbose
 #'
 #' \subsection{Arguments}{
 #'\describe{
-#'\item{`merge_tasks`}{(`list`)\cr A list of lists. Each inner list must contain `exp_id`, `bin_cells_path`, `cells_to_keep` (0-indexed integer vector) and `gene_local_to_universe` (integer vector, `-1` for genes absent from the universe).}
+#'\item{`merge_tasks`}{(`list`)\cr A list of lists. Each inner list must contain `exp_id`, `bin_cells_path`, `cells_to_keep` (0-indexed integer vector) and `gene_local_to_universe` (0-indexed integer vector, `NA` for genes absent from the universe).}
 #'\item{`universe_size`}{(`integer`)\cr Number of genes in the intersection universe.}
 #'\item{`renormalise`}{(`logical`)\cr If `TRUE`, recompute `data_norm` against `target_size` using each cell's surviving raw counts. If `FALSE`, pass `data_norm` through untouched; the caller must guarantee all inputs were normalised against the same `target_size`.}
 #'\item{`target_size`}{(`numeric`)\cr Target library size for renormalisation. Ignored when `renormalise = FALSE`.}
@@ -6209,6 +7126,34 @@ rs_wnn <- function(modality_emb_one, modality_emb_two, wnn_params, seed, verbose
 #' \subsection{returns}{
 #'A list with `total_cells`, `total_genes` and `per_file` (a
 #'list of lists with `exp_id`, `lib_size`, `nnz`).
+#'}
+#'}
+#'
+#'\subsection{Method `cellsweep`}{
+#'Run CellSweep and write the denoised barcodes into the cells binary
+#'
+#'One independent EM fit per sample, since the ambient profile is a
+#'property of a single emulsion. Only the real barcodes are written: the
+#'empty droplets exist to train the ambient profile, and barcodes that
+#'are neither empty nor annotated are not part of the model.
+#'
+#'Writes the cell-based file only; regenerate the gene-based companion
+#'afterwards, as for a merge.
+#'
+#' \subsection{Arguments}{
+#'\describe{
+#'\item{`f_path_source`}{(`character`)\cr Path to the raw `counts_cells.bin`, which must still contain the empty droplets.}
+#'\item{`samples`}{(`list`)\cr A list of lists. Each inner list must contain `sample_id`, `real_cells` and `empty_cells` (0-indexed integer vectors of store indices), `celltype_idx` (0-indexed integer vector, one entry per `real_cells` entry) and `n_celltypes`.}
+#'\item{`cellsweep_params`}{(`list`)\cr The CellSweep model parameters. Missing entries fall back to the reference implementation's defaults.}
+#'\item{`target_size`}{(`numeric`)\cr Library size the normalised layer is scaled to.}
+#'\item{`verbose`}{(`integer`)\cr `0` silent, `1` per-sample progress, `2` per-EM-iteration. }
+#'}}
+#' \subsection{returns}{
+#'A list with `cell_order` (0-indexed source indices in output
+#'order), `lib_size`, `nnz` and `fits` (one list per sample with
+#'`sample_id`, `alpha`, `z_hat` (1-indexed), `beta`, `ambient`,
+#'`celltype_profiles`, `n_celltypes`, `log_likelihood`, `n_iter` and
+#'`converged`).
 #'}
 #'}
 #'
@@ -6255,6 +7200,8 @@ SingleCellCountData$get_genes_by_indices <- function(indices, assay) .Call(wrap_
 SingleCellCountData$get_nnz_genes <- function(gene_indices) .Call(wrap__SingleCellCountData__get_nnz_genes, self, gene_indices)
 
 SingleCellCountData$merge_sc_files <- function(merge_tasks, universe_size, renormalise, target_size, verbose) .Call(wrap__SingleCellCountData__merge_sc_files, self, merge_tasks, universe_size, renormalise, target_size, verbose)
+
+SingleCellCountData$cellsweep <- function(f_path_source, samples, cellsweep_params, target_size, verbose) .Call(wrap__SingleCellCountData__cellsweep, self, f_path_source, samples, cellsweep_params, target_size, verbose)
 
 #' @rdname SingleCellCountData
 #' @usage NULL

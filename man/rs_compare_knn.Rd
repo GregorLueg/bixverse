@@ -17,11 +17,14 @@ distances) of the second kNN graph.}
 \value{
 A list with the following elements:
 \itemize{
-\item all_matches - Matching neighbours for this sample.
-\item all_ratios - Distance ratio for this sample (with b / a).
-\item final_recall - The final recall of assuming a being the ground truth
-across all samples
-\item final_ratio - The final distance ratio across all samples
+\item all_matches - Integer vector. Number of shared neighbours per
+sample.
+\item all_ratios - Numerical vector. Ratio of the summed distances
+(b / a) per sample. Samples whose summed distance in a is ~0 are skipped,
+so this can be shorter than \code{all_matches}.
+\item final_recall - The mean recall across all samples, with a as the
+ground truth.
+\item final_ratio - The mean distance ratio across the retained samples.
 }
 }
 \description{

@@ -11,8 +11,8 @@ rs_harmony_v2(pca, harmony_params, batch_labels, seed, verbose)
 
 \item{harmony_params}{List. The parameters for the Harmony (v2) algorithm.}
 
-\item{batch_labels}{List. Each element in the list needs to be a 0-indexed
-integer that represents the batch effects you wish to regress out.}
+\item{batch_labels}{List. Each element needs to be a 0-indexed integer
+vector, one per batch variable you wish to regress out.}
 
 \item{seed}{Integer. Seed for reproducibility purposes.}
 
@@ -20,7 +20,8 @@ integer that represents the batch effects you wish to regress out.}
 detailed verbosity.}
 }
 \value{
-The batch-corrected Harmony (v2) embedding space.
+Numerical matrix, cells x dimensions, with the batch-corrected
+Harmony (v2) embedding.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}

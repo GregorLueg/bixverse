@@ -7,22 +7,25 @@
 rs_read_tenx_h5_modality(f_path, version, feature_type)
 }
 \arguments{
-\item{f_path}{String. The path to the h5 file}
+\item{f_path}{String. The path to the h5 file.}
 
-\item{version}{String. The 10x version. If \code{"auto"} uses the automatic
-detection.}
+\item{version}{String. The 10x version. If \code{"auto"}, the version is
+detected from the file.}
 
-\item{feature_type}{String. The feature type to return.}
+\item{feature_type}{String. The feature type to return. Matched against
+the whitespace-trimmed feature types of the file.}
 }
 \value{
 A list with:
 \itemize{
-\item counts - Numerical matrix of cells x features
-\item barcodes - The barcodes as a string
-\item features - The features as a string
+\item counts - Dense numerical matrix of cells x features.
+\item barcodes - Character vector of the cell barcodes, in file order.
+\item features - Character vector of the feature names.
 }
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+Reads one feature type (e.g. \code{"Antibody Capture"}) from a 10x h5 file as a
+dense matrix. Needs a v3 file; v2 files carry no feature types and error.
 }
 \keyword{internal}

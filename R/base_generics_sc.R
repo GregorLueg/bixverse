@@ -766,6 +766,51 @@ remove_magic <- function(x, ...) {
   UseMethod("remove_magic")
 }
 
+#' Set/add the fitted residual model
+#'
+#' @param x An object to add the fitted model to.
+#' @param residual_fit `ScResidualFit` class, as returned by
+#' [bixverse::fit_residuals_sc()].
+#' @param ... Other parameters.
+#'
+#' @returns The object with the fitted model attached.
+#'
+#' @export
+#'
+#' @examples
+#' # the fitted model taken out and put back
+#' sc <- demo_single_cells()
+#' sc <- fit_residuals_sc(sc, method = "analytic_pearson", .verbose = FALSE)
+#' fit <- get_residual_fit(sc)
+#' sc <- set_residual_fit(remove_residual_fit(sc), fit)
+#' get_residual_fit(sc)$method
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+set_residual_fit <- function(x, residual_fit, ...) {
+  UseMethod("set_residual_fit")
+}
+
+#' Remove the fitted residual model
+#'
+#' @param x An object from which to remove the fitted model.
+#' @param ... Other parameters.
+#'
+#' @returns The object with the fitted model dropped.
+#'
+#' @export
+#'
+#' @examples
+#' # drop the fitted model again
+#' sc <- demo_single_cells()
+#' sc <- fit_residuals_sc(sc, method = "analytic_pearson", .verbose = FALSE)
+#' sc <- remove_residual_fit(sc)
+#' is.null(get_residual_fit(sc))
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+remove_residual_fit <- function(x, ...) {
+  UseMethod("remove_residual_fit")
+}
+
 #### getters -------------------------------------------------------------------
 
 #' Get the PCA factors
@@ -957,6 +1002,33 @@ get_magic <- function(x, ...) {
   UseMethod("get_magic")
 }
 
+#' Get the fitted residual model
+#'
+#' @description
+#' Returns the `ScResidualFit` written by [bixverse::fit_residuals_sc()]. This
+#' function is used for the single cell-related classes and methods.
+#'
+#' Warns and returns `NULL` when nothing was fitted, so it is safe to use as a
+#' presence probe. The functions that compute with the fit assert instead.
+#'
+#' @param x An object to get the fitted model from.
+#' @param ... Other parameters.
+#'
+#' @returns The `ScResidualFit` object, or `NULL` when nothing was fitted.
+#'
+#' @export
+#'
+#' @examples
+#' # the fitted model and the genes it covers
+#' sc <- demo_single_cells()
+#' sc <- fit_residuals_sc(sc, method = "analytic_pearson", .verbose = FALSE)
+#' length(get_residual_fit(sc)$genes)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+get_residual_fit <- function(x, ...) {
+  UseMethod("get_residual_fit")
+}
+
 ### others ---------------------------------------------------------------------
 
 #### obs -----------------------------------------------------------------------
@@ -1088,6 +1160,129 @@ find_hvg_sc <- S7::new_generic(
   }
 )
 
+#' Fit a residual model for single cell data
+#'
+#' @description
+#' Fits scTransform (v2) or the analytic Pearson residual model over the cells
+#' currently kept. The fit lands in the cache, and
+#' [bixverse::find_hvg_sc()] with `params_sc_hvg(method = "residual")`,
+#' [bixverse::calculate_pca_sc()] with `residuals = TRUE` and
+#' [bixverse::sct_corrected_counts_sc()] all read it from there.
+#'
+#' Unlike the log-normalised layer, which is computed once at ingestion and
+#' written to disk, nothing is precomputed here: the residual rows are
+#' regenerated on demand by whatever consumes the fit.
+#'
+#' With `group_column` one model is fitted per group. That is what a
+#' multi-sample experiment wants, since each sample keeps its own depth and
+#' composition, and it changes how the residual HVG selection behaves, see
+#' [bixverse::params_sc_hvg()].
+#'
+#' For `MetaCells` the counts are summed UMIs, so the negative binomial still
+#' applies, but at a much greater depth than a single cell. Prefer
+#' `method = "analytic_pearson"` there, and revisit the defaults of
+#' [bixverse::params_sc_sctransform()]: `n_genes` and `n_cells` are sized for
+#' raw cells, of which there are usually far more than meta cells.
+#'
+#' @param object `SingleCells`, `SingleCellsSubset` or `MetaCells` class.
+#' @param method String. One of `c("sctransform", "analytic_pearson")`.
+#' scTransform fits a negative binomial per gene and regularises the
+#' parameters; analytic Pearson is the closed-form alternative with one shared
+#' dispersion, which is much cheaper.
+#' @param group_column String or `NULL`. Column in the observation table to fit
+#' separate models over, usually the sample. `NULL` fits one model.
+#' @param covariate_columns Character vector or `NULL`. Numeric columns in the
+#' observation table to add to the design. scTransform only. The library size
+#' is never a covariate, it enters as a fixed offset.
+#' @param residual_params List or `NULL`. Parameters, see
+#' [bixverse::params_sc_sctransform()] or [bixverse::params_sc_apr()]. `NULL`
+#' takes the defaults for `method`.
+#' @param gene_batch_size Integer or `NULL`. Genes held in memory per batch.
+#' @param seed Integer. Random seed for the step-1 subsample.
+#' @param .verbose Boolean or Integer. Controls verbosity.
+#'
+#' @returns The object with the fitted model attached.
+#'
+#' @export
+#'
+#' @references Choudhary and Satija, Genome Biology, 2022; Lause, Berens and
+#' Kobak, Genome Biology, 2021.
+#'
+#' @examples
+#' # analytic Pearson residuals over every kept cell
+#' sc <- demo_single_cells(prepped = FALSE)
+#' sc <- fit_residuals_sc(sc, method = "analytic_pearson", .verbose = FALSE)
+#' get_residual_fit(sc)$n_groups
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+fit_residuals_sc <- S7::new_generic(
+  name = "fit_residuals_sc",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    method = c("sctransform", "analytic_pearson"),
+    group_column = NULL,
+    covariate_columns = NULL,
+    residual_params = NULL,
+    gene_batch_size = NULL,
+    seed = 42L,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' Write scTransform-corrected counts to a new store
+#'
+#' @description
+#' Reverses the residual transform with every latent variable, the library size
+#' included, held at its median. The depth structure goes, the per-sample
+#' intercept stays.
+#'
+#' The result is a new store on disk, not a layer on `object`. Its gene axis is
+#' the model's, so it is narrower than the source and the indices do not line
+#' up, which is why the observation and variable tables are rebuilt rather than
+#' copied.
+#'
+#' @param object `SingleCells` or `SingleCellsSubset` class with a scTransform
+#' fit attached. The analytic Pearson model has no corrected-count equivalent.
+#' @param dir_out String or `NULL`. Directory to write to. `NULL` uses
+#' `sct_corrected` inside the object's own data directory.
+#' @param build_cell_store Boolean. Also write the `counts_cells.bin` companion
+#' and the database, giving back a `SingleCells` rather than a path. Costs a
+#' second pass over the data.
+#' @param overwrite Boolean. Overwrite an existing store in `dir_out`.
+#' @param gene_batch_size Integer or `NULL`. Genes held in memory per batch.
+#' @param .verbose Boolean or Integer. Controls verbosity.
+#'
+#' @returns With `build_cell_store = TRUE` a new `SingleCells` over the
+#' corrected counts, otherwise the path of the gene-major file, invisibly.
+#'
+#' @export
+#'
+#' @examples
+#' # corrected counts as a fresh object
+#' sc <- demo_single_cells(prepped = FALSE)
+#' sc <- fit_residuals_sc(sc, .verbose = FALSE)
+#' corrected <- sct_corrected_counts_sc(sc, .verbose = FALSE)
+#' dim(corrected)
+#'
+#' unlink(sc@dir_data, recursive = TRUE, force = TRUE)
+sct_corrected_counts_sc <- S7::new_generic(
+  name = "sct_corrected_counts_sc",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    dir_out = NULL,
+    build_cell_store = TRUE,
+    overwrite = FALSE,
+    gene_batch_size = NULL,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
 #' Identify HVGs without mutating object state
 #'
 #' @description
@@ -1159,6 +1354,12 @@ get_hvg_data_sc <- S7::new_generic(
 #' these, the internal HVG will be overwritten.
 #' @param seed Integer. Controls reproducibility. Only relevant if
 #' `randomised_svd = TRUE`.
+#' @param residuals Boolean. Run the PCA on the Pearson residuals of a model
+#' fitted with [bixverse::fit_residuals_sc()] instead of the stored normalised
+#' layer. Needs `params_sc_pca(normalise_variance = FALSE, clr = FALSE)`, since
+#' the residuals already carry the signal as variance, and does not support
+#' `sparse_svd`: a residual column is dense even where the counts are not.
+#' Not supported for `MetaCells`.
 #' @param .verbose Boolean or integer. Controls verbosity and returns run times.
 #' `FALSE` -> quiet, `TRUE` or `1L` -> normal verbosity, `2L` -> detailed
 #' verbosity.
@@ -1186,6 +1387,7 @@ calculate_pca_sc <- S7::new_generic(
     sparse_svd = FALSE,
     hvg = NULL,
     seed = 42L,
+    residuals = FALSE,
     .verbose = TRUE
   ) {
     S7::S7_dispatch()

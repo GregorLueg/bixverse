@@ -35,19 +35,27 @@ rs_symphony_map_query(
 \item{c_cache}{Reference compression term R*Z_corr (K x d).}
 
 \item{ref_to_query_gene_map}{Integer vector. For each reference HVG slot,
-the 0-based query gene index, or \code{NA_integer_} if absent.}
+the 0-based query gene index, or \code{NA_integer_} (or any negative value) if
+absent. Absent slots are filled with zeros.}
 
-\item{batch_labels_query}{List of 0-indexed integer vectors (empty = no
-batch correction).}
+\item{batch_labels_query}{List of 0-indexed integer vectors, one per batch
+variable. An empty list skips the batch correction (\code{z_corr = z_pca}).}
 
-\item{params_symphony}{Named list. Contains the parameters for the referemce
-generation.}
+\item{params_symphony}{Named list. The query mapping parameters.}
 
 \item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
 detailed verbosity.}
 }
 \value{
-A list with z_pca, z_corr, r.
+A list with
+\itemize{
+\item z_pca - Numerical matrix. Query projected into the reference PC
+space (N_q x d).
+\item z_corr - Numerical matrix. Query after the batch correction
+(N_q x d).
+\item r - Numerical matrix. Query soft assignments onto the reference
+centroids (K x N_q).
+}
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}

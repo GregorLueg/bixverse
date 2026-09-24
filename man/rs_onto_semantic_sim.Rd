@@ -7,12 +7,13 @@
 rs_onto_semantic_sim(terms, sim_type, ancestor_list, ic_list)
 }
 \arguments{
-\item{terms}{Vector of strings. The terms in the ontology you wish to screen.}
+\item{terms}{Vector of strings. The terms in the ontology you wish to
+screen.}
 
 \item{sim_type}{String. Must be one of \code{c("resnik", "lin", "combined")}.}
 
-\item{ancestor_list}{R list with names being the term and the elements in the
-list the names of the ancestors.}
+\item{ancestor_list}{R list with names being the term and the elements in
+the list the names of the ancestors.}
 
 \item{ic_list}{R list with the names being the term and the elements the
 information content of this given term. Needs to be a single float!}
@@ -27,6 +28,7 @@ A list with:
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
-This function calculates the specified semantic similarity and returns the
-full vector (only calculating the upper triangle) for the given similarity.
+This function calculates the specified semantic similarity between all
+unique pairs of \code{terms} (upper triangle, no diagonal) and returns them in
+long format.
 }

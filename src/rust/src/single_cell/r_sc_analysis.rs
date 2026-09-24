@@ -95,8 +95,8 @@ extendr_module! {
 /// of group 1.
 /// @param cell_indices_2 Integer. Index positions (0-indexed) of the cells
 /// of group 2.
-/// @param min_prop Minimum proportion of expression in at least one of the
-/// two groups to be tested.
+/// @param min_prop Numeric. Minimum proportion of expression in at least one
+/// of the two groups to be tested.
 /// @param alternative String. One of `c("twosided", "greater", "less")`. Null
 /// hypothesis.
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
@@ -186,8 +186,8 @@ fn rs_calculate_dge_mann_whitney(
 /// of the reference group.
 /// @param cell_indices_other List. List of integer vectors, each containing the
 /// index positions (0-indexed) of the cells of one comparison group.
-/// @param min_prop Minimum proportion of expression in at least one of the
-/// groups to be tested.
+/// @param min_prop Numeric. Minimum proportion of expression in at least one
+/// of the groups to be tested.
 /// @param alternative String. One of `c("twosided", "greater", "less")`. Null
 /// hypothesis.
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
@@ -310,18 +310,19 @@ fn rs_calculate_dge_one_vs_many(
 /// @param f_path_genes String. Path to the gene-based binary file.
 /// @param gs_list List. List of integer vectors, where each vector contains
 /// gene indices (0-based) for a module/gene set.
-/// @param cells_to_keep Integer. Vector of indices of the cells to keep.
+/// @param cells_to_keep Integer. Vector of indices (0-indexed) of the cells to
+/// keep.
 /// @param nbin Integer. Number of bins for gene stratification.
 /// @param ctrl Integer. Number of control genes to sample per gene in each
 /// module.
 /// @param seed Integer. Random seed for reproducible control gene sampling.
-/// @param streaming Logical. If TRUE, processes cells and genes are read in in
-/// chunks to reduce memory usage.
+/// @param streaming Logical. If `TRUE`, cells and genes are read in chunks to
+/// reduce memory usage.
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
 ///
-/// @returns Matrix of module scores (modules x cells). Each row corresponds to a
-/// module from gs_list, each column to a cell from cells_to_keep.
+/// @returns Matrix of module scores (cells x modules). Each row corresponds to
+/// a cell from `cells_to_keep`, each column to a module from `gs_list`.
 ///
 /// @references
 /// Tirosh et al, Science (2016)
@@ -388,12 +389,13 @@ fn rs_module_scoring(
 /// calculate an AUCell type statistic. Three options here: the recovery-curve
 /// AUC of Aibar, et al. (the actual AUCell statistic), an AUC derived from the
 /// Mann-Whitney statistic, or average precision. Data can be streamed in
-/// chunks of 50k cells per or loaded in in one go.
+/// chunks of 50k cells or loaded in one go.
 ///
 /// @param f_path String. Path to the `counts_cells.bin` file.
 /// @param gs_list List. List with the gene set indices (0-indexed!) of the
 /// genes of interest.
-/// @param cells_to_keep Integer. Vector of indices of the cells to keep.
+/// @param cells_to_keep Integer. Vector of indices (0-indexed) of the cells to
+/// keep.
 /// @param aucell_params List. The AUCell parameters, see
 /// [bixverse::params_sc_aucell()].
 /// @param streaming Boolean. Shall the data be streamed.
@@ -509,9 +511,10 @@ fn rs_regulon_thresholds(auc_matrix: RMatrix<f64>, binarise_params: List) -> Res
 /// but it can be useful to classify the delta of two stats (EMT, Th1; Th2) etc.
 ///
 /// @param f_path String. Path to the `counts_cells.bin` file.
-/// @param gs_list Nested list. Each sublist contains the (0-indexed!) positive
-/// and negative gene indices of that specific gene set.
-/// @param cells_to_keep Integer. Vector of indices of the cells to keep.
+/// @param gs_list Nested list. Each sublist contains the (0-indexed!) `pos`
+/// and `neg` gene indices of that specific gene set.
+/// @param cells_to_keep Integer. Vector of indices (0-indexed) of the cells to
+/// keep.
 /// @param streaming Boolean. Shall the data be streamed.
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
@@ -554,26 +557,27 @@ fn rs_vision(
 /// and `"neg"` gene indices (0-indexed). You don't have to provide the `"neg"`,
 /// but it can be useful to classify the delta of two stats (EMT, Th1; Th2) etc.
 /// Additionally, it will take a random gene list and calculate an
-/// auto-correlation score based on Gaery's C to identify pathways that show
-/// significant patterns on the kNN graph generate on the provided embedding.
+/// auto-correlation score based on Geary's C to identify pathways that show
+/// significant patterns on the kNN graph generated on the provided embedding.
 ///
 /// @param f_path String. Path to the `counts_cells.bin` file.
 /// @param embd Numerical matrix. The embedding matrix to use to generate the
-/// kNN graph.
+/// kNN graph. Rows must align with `cells_to_keep`.
 /// @param knn_data Optional list. This contains pre-computed kNN data
-/// (including distances) and the `dist_metric` it was built with. The user has
-/// to ensure consistency! If provided, this will be used rather than a graph
+/// (`indices` (0-indexed), `dist`, `dist_metric` and `k`). The user has to
+/// ensure consistency! If provided, this will be used rather than a graph
 /// built from the parameter list.
-/// @param gs_list Nested list. Each sublist contains the (0-indexed!) positive
-/// and negative gene indices of that specific gene set.
+/// @param gs_list Nested list. Each sublist contains the (0-indexed!) `pos`
+/// and `neg` gene indices of that specific gene set.
 /// @param random_gs_list Double-nested list. The outer list represents the
-/// clusters of clusters and the inner list represents the permutations within
-/// that cluster.
+/// gene set clusters and the inner list the permuted gene sets (same structure
+/// as `gs_list`) of that cluster.
 /// @param vision_params List. Contains various parameters to use in terms
 /// of the kNN generation.
-/// @param cells_to_keep Integer. Vector of indices of the cells to keep.
+/// @param cells_to_keep Integer. Vector of indices (0-indexed) of the cells to
+/// keep.
 /// @param cluster_membership Integer. Vector that indicates to which of the
-/// permuted gene set clusters the given gene set belongs.
+/// permuted gene set clusters (1-indexed) the given gene set belongs.
 /// @param streaming Boolean. Shall the data be streamed.
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
@@ -581,8 +585,9 @@ fn rs_vision(
 ///
 /// @returns A list with the following items:
 /// \itemize{
-///   \item autocor_res - Auto-correlation results, i.e., 1 - C, p-value and
-///   FDR.
+///   \item autocor_res - List with `auto_cor` (1 - Geary's C), `p_val`
+///   (empirical, against the permuted gene sets of the same cluster) and
+///   `fdr`.
 ///   \item vision_mat - A matrix of cells x vision scores per gene set.
 /// }
 ///
@@ -731,14 +736,14 @@ fn rs_vision_with_autocorrelation(
 /// @param f_path_cells Path to the `counts_cells.bin` file.
 /// @param embd Numerical matrix. The embedding matrix from which to generate
 /// the kNN graph.
+/// @param knn_data Optional list. This contains pre-computed kNN data
+/// (`indices` (0-indexed), `dist`, `dist_metric` and `k`). The user has to
+/// ensure consistency! If provided, this will be used rather than a graph
+/// built from the parameter list.
 /// @param hotspot_params List. The HotSpot parameter list.
 /// @param cells_to_keep Integer vector. 0-index vector indicating which cells
 /// to include in the analysis. Ensure that this is of same order/length
 /// as the embedding matrix.
-/// @param knn_data Optional list. This contains pre-computed kNN data
-/// (including distances) and the `dist_metric` it was built with. The user has
-/// to ensure consistency! If provided, this will be used rather than a graph
-/// built from the parameter list.
 /// @param genes_to_use Integer vector. 0-index vector indicating which genes
 /// to include.
 /// @param streaming Boolean. Shall the data be streamed in chunks. Useful
@@ -750,8 +755,7 @@ fn rs_vision_with_autocorrelation(
 /// @returns A list with the following elements.
 /// \itemize{
 ///   \item gene_idx - 0-based integer indicating the gene index.
-///   \item gaerys_c - Gaery's C calculation for the autocorrelation
-///   coefficient.
+///   \item gaerys_c - Geary's C statistic of the gene.
 ///   \item z_score - Z-score of the auto-correlation.
 ///   \item pval - P-value derived from the Z-score.
 ///   \item fdr - False discovery rate based on the p-value.
@@ -873,8 +877,8 @@ fn rs_hotspot_autocor(
 /// @param embd Numerical matrix. The embedding matrix from which to generate
 /// the kNN graph.
 /// @param knn_data Optional list. This contains pre-computed kNN data
-/// (including distances) and the `dist_metric` it was built with. The user has
-/// to ensure consistency! If provided, this will be used rather than a graph
+/// (`indices` (0-indexed), `dist`, `dist_metric` and `k`). The user has to
+/// ensure consistency! If provided, this will be used rather than a graph
 /// built from the parameter list.
 /// @param hotspot_params List. The HotSpot parameter list.
 /// @param cells_to_keep Integer vector. 0-index vector indicating which cells
@@ -894,10 +898,10 @@ fn rs_hotspot_autocor(
 ///
 /// @returns A list with the following elements.
 /// \itemize{
-///   \item cor - A matrix of the N x N genes_to_use length with the auto-
+///   \item cor - Symmetric `genes_to_use x genes_to_use` matrix with the local
 ///   correlation coefficients.
-///   \item z - A matrix of N x N genes_to_use length with the Z-scores of the
-///   local correlations between two genes.
+///   \item z - Symmetric `genes_to_use x genes_to_use` matrix with the Z-scores
+///   of the local correlations between two genes.
 /// }
 ///
 /// @export
@@ -1000,12 +1004,18 @@ fn rs_hotspot_gene_cor(
 ///
 /// @description
 /// `r lifecycle::badge("experimental")`
+/// Builds an average-linkage dendrogram over the pair Z-scores and assigns
+/// modules as HotSpot's `compute_modules` does.
 ///
-/// @param z_matrix Numerical matrix representing the Z-scores.
-/// @param fdr_threshold Float. The FDR thresholds in terms of the Z-scores.
-/// @param min_size Integer. Minimum cluster size.
+/// @param z_matrix Numerical matrix. Symmetric gene x gene Z-scores with a
+/// zero diagonal, as returned by [bixverse::rs_hotspot_gene_cor()]. Must be
+/// finite.
+/// @param fdr_threshold Float. BH level at which a pair Z-score counts as
+/// significant.
+/// @param min_size Integer. Minimum number of genes per module.
 ///
-/// @returns An assignment vector. NA indicates that the gene did not pass the
+/// @returns Numeric vector with one module label per gene, 0-indexed and
+/// numbered densely. `NaN` indicates that the gene did not pass the
 /// thresholds and has not been assigned.
 ///
 /// @export
@@ -1049,13 +1059,14 @@ fn rs_hotspot_cluster_genes(
 ///  \item index_cell - Integer. 0-indexed positions of the cells defining the
 ///  neighbourhood.
 ///  \item nhoods_i - Integer. 0-indexed positions of the cells in the
-///  neighbourhood.
-///  \item nhoods_j - Integer. To which neighbourhood the cell belongs.
-///  \item nhoods_x - Numeric. The x-value of the COO type matrix, i.e.,
-///  defaults to `1.0`.
+///  neighbourhood, the index cell included.
+///  \item nhoods_j - Integer. 0-indexed neighbourhood the cell belongs to.
+///  \item nhoods_x - Numeric. The x-value of the COO type matrix, always
+///  `1.0`.
 ///  \item nrows - Integer. Number of cells in the matrix
 ///  \item ncols - Integer. Number of refined neighbourhoods.
-///  \item kth_distances - The k-th distances for spatial FDR calculations.
+///  \item kth_distances - Numeric. Distance of each index cell to its last
+///  kNN neighbour, for the spatial FDR.
 ///  \item sample_counts - Numeric matrix of neighbourhoods x samples. The
 ///  cells of each sample found in each neighbourhood.
 ///  \item nhood_overlap - Numeric. Cells each neighbourhood shares with all
@@ -1348,7 +1359,7 @@ fn rs_nebula_sc(
 /// @param f_path_genes Path to the `counts_genes.bin` file.
 /// @param cell_indices Integer vector. 0-indexed(!) positions of cells to
 /// include in the analysis
-/// @param scenic_params Named list. Contains all of the parameters need for
+/// @param scenic_params Named list. Contains all of the parameters needed for
 /// SCENIC.
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
@@ -1390,7 +1401,7 @@ fn rs_scenic_gene_filter(
 /// to include.
 /// @param tf_indices Integer vector. 0-indexed(!) positions of the TF
 /// predictor variables to use in the generation of the regression learners.
-/// @param scenic_params Named list. Contains all of the parameters need for
+/// @param scenic_params Named list. Contains all of the parameters needed for
 /// SCENIC.
 /// @param seed Integer. Controls reproducibility of the function.
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
@@ -1446,7 +1457,7 @@ fn rs_scenic_grn(
 /// to include.
 /// @param tf_indices Integer vector. 0-indexed(!) positions of the TF
 /// predictor variables to use in the generation of the regression learners.
-/// @param scenic_params Named list. Contains all of the parameters need for
+/// @param scenic_params Named list. Contains all of the parameters needed for
 /// SCENIC.
 /// @param seed Integer. Controls reproducibility of the function.
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
@@ -1494,13 +1505,16 @@ fn rs_scenic_grn_streaming(
 /// @description
 /// `r lifecycle::badge("experimental")`
 ///
-/// @param matrix Numeric matrix with genes x TF importance values
+/// @param matrix Numeric matrix with genes (rows) x TFs (columns) importance
+/// values. Must carry row and column names.
 /// @param k Integer. Number of top genes / TFs to extract.
-/// @param margin If set to 1, the top k TFs per gene are used. If set to 2, the
-/// top k genes per TF are used. Both versions were used in the original paper.
-/// @param min_value Float. An
+/// @param margin Integer. If set to 1, the top k TFs per gene are used. If set
+/// to 2, the top k genes per TF are used. Both versions were used in the
+/// original paper. Any other value errors.
+/// @param min_value Optional float. Pairs with an importance below this are
+/// never selected.
 ///
-/// @returns A list with three vectors: tf, gene, importance
+/// @returns A list with three vectors: `tf`, `gene`, `importance`.
 ///
 /// @export
 ///
@@ -1581,17 +1595,18 @@ fn rs_top_k_targets(matrix: RMatrix<f64>, k: i32, margin: i32, min_value: Option
 ///
 /// @description
 /// `r lifecycle::badge("experimental")`
-/// For each gene (row), computes mean + n_sd * SD of the importance scores
-/// across all TFs and retains only pairs exceeding that threshold.
+/// For each gene (row), computes `mean + n_sd * SD` (population SD) of the
+/// importance scores across all TFs and retains only pairs at or above that
+/// threshold.
 ///
 /// @param matrix Numeric matrix with genes (rows) x TFs (columns) importance
-/// values.
+/// values. Must carry row and column names.
 /// @param n_sd Float. Number of standard deviations above the mean to use as
 /// the per-gene threshold.
 /// @param min_value Optional float. Absolute minimum importance score. Pairs
 /// below this are excluded even if they pass the per-gene threshold.
 ///
-/// @returns A list with three vectors: tf, gene, importance
+/// @returns A list with three vectors: `tf`, `gene`, `importance`.
 ///
 /// @export
 ///
@@ -1651,10 +1666,11 @@ fn rs_importance_threshold(matrix: RMatrix<f64>, n_sd: f64, min_value: Option<f6
 /// @param embd Numeric matrix. The original embedding that was used to generate
 /// the kNN graph.
 /// @param knn_data Optional named list. This contains pre-computed kNN data
-/// (including distances). The user has to ensure consistency! If provided, this
-/// will be used.
+/// (`indices` (0-indexed), `dist`, `dist_metric` and `k`). The user has to
+/// ensure consistency! If provided, this will be used.
 /// @param meld_params Named list. Contains the parameters to use for MELD.
-/// @param labels Integer. The labels of the different groups. (1-indexed!)
+/// @param labels Integer. The group label per cell (1-indexed!), in
+/// `1..n_labels`.
 /// @param n_labels Integer. Number of labels represented in the data.
 /// @param seed Integer. For reproducibility.
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
@@ -1662,9 +1678,9 @@ fn rs_importance_threshold(matrix: RMatrix<f64>, n_sd: f64, min_value: Option<f6
 ///
 /// @returns A list with the following items
 /// \itemize{
-///   \item raw_scores - The raw MELD scores
-///   \item norm_scores - Negative values were clamped to 0 and the rows L1
-///   normalised. This yields probability-like values.
+///   \item raw_scores - Matrix of cells x labels with the raw MELD scores.
+///   \item norm_scores - Same shape. Negative values were clamped to 0 and the
+///   rows L1 normalised. This yields probability-like values.
 /// }
 ///
 /// @export
@@ -2105,18 +2121,19 @@ fn activity_to_list(scores: &LigandActivityScores<f64>) -> List {
 /// Helper function to generate the ligand to target influence matrix for the
 /// NicheNet like approach.
 ///
-/// @param ligand_seeds List. Contains the indices of the seeds, i.e., ligands.
+/// @param ligand_seeds List of integer vectors. The 0-indexed seed node(s) per
+/// ligand or ligand combination.
 /// @param ppi_network Named list. Contains the PPI network with the ligand
-/// to receptor to signalling to TFs. Must contain from (indices), to
-/// (indices), and edge weights.
+/// to receptor to signalling to TFs. Must contain `from` and `to` (0-indexed
+/// node indices) and `weight`.
 /// @param grn_network Named list. Contains the gene regulatory network with the
-/// TF to target gene network. Must contain from (indices), to (indices), and
-/// edge weights.
+/// TF to target gene network. Must contain `from` and `to` (0-indexed node
+/// indices) and `weight`.
 /// @param n_nodes Integer. Number of total nodes.
-/// @param params Named list.
+/// @param params Named list. The ligand-target diffusion parameters.
 ///
-/// @returns A dense matrix of ligands x genes that contains the influence
-/// scores of each
+/// @returns A dense matrix of ligands x `n_nodes`, rows in `ligand_seeds`
+/// order, with the ligand to target influence scores.
 ///
 /// @export
 #[extendr]
@@ -2169,17 +2186,18 @@ fn rs_generate_ligand_target_influence(
 ///
 /// @param ligand_influence A ligand x background genes matrix that measures the
 /// ligand to target gene influence.
-/// @param in_gene_sets A list of logicals with the genes of interest being set
-/// to `TRUE` and the background genes set to `FALSE`.
+/// @param in_gene_sets List of logical vectors, one per gene set, each of
+/// length `ncol(ligand_influence)`. Genes of interest are `TRUE`, the
+/// background genes `FALSE`.
 ///
-/// @returns A list with internal lists with:
+/// @returns A list with one element per gene set, each a list of per-ligand
+/// vectors (`NaN` where the metric is undefined):
 /// \itemize{
-///   \item `auroc` - The Area Under the Receiver Operating Characteristic for
-///   that ligand
-///   \item `aupr` - The Area Under the Precision-Recall curve for that ligand.
-///   \item `aupr_corrected` - The corrected AUPR
-///   \item `pearson` - The Pearson correlations
-///   \item `spearman` - The Spearman correlations
+///   \item `auroc` - The Area Under the Receiver Operating Characteristic.
+///   \item `aupr` - The Area Under the Precision-Recall curve.
+///   \item `aupr_corrected` - The corrected AUPR.
+///   \item `pearson` - The Pearson correlations.
+///   \item `spearman` - The Spearman correlations.
 /// }
 ///
 /// @export
@@ -2194,7 +2212,7 @@ fn rs_ligand_activity_scores(ligand_influence: RMatrix<f64>, in_gene_sets: List)
         let vec_i: Vec<bool> = elem_i
             .as_logical_vector()
             .ok_or_else(|| {
-                Error::Other("One of the ligand seeds could not be transformed to integers.".into())
+                Error::Other("One of the gene set memberships could not be transformed to logicals.".into())
             })?
             .iter()
             .map(|x| x.to_bool())

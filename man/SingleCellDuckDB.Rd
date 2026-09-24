@@ -27,6 +27,7 @@ observation/cell metadata and the feature/gene metadata.
     \item \href{#method-SingleCellDuckDB-populate_vars_from_tenx_h5}{\code{SingleCellDuckDB$populate_vars_from_tenx_h5()}}
     \item \href{#method-SingleCellDuckDB-populate_obs_from_multi_tenx_h5}{\code{SingleCellDuckDB$populate_obs_from_multi_tenx_h5()}}
     \item \href{#method-SingleCellDuckDB-populate_obs_from_multi_duckdb}{\code{SingleCellDuckDB$populate_obs_from_multi_duckdb()}}
+    \item \href{#method-SingleCellDuckDB-populate_obs_from_duckdb_subset}{\code{SingleCellDuckDB$populate_obs_from_duckdb_subset()}}
     \item \href{#method-SingleCellDuckDB-populate_vars_from_duckdb_reordered}{\code{SingleCellDuckDB$populate_vars_from_duckdb_reordered()}}
     \item \href{#method-SingleCellDuckDB-populate_obs_from_multi_plain_text}{\code{SingleCellDuckDB$populate_obs_from_multi_plain_text()}}
     \item \href{#method-SingleCellDuckDB-clone}{\code{SingleCellDuckDB$clone()}}
@@ -378,6 +379,38 @@ inputs, and rbindlists.
     \describe{
       \item{\code{per_file_info}}{List of lists; each must contain \code{db_path}
 (string) and \code{exp_id} (string).}
+    }
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    Invisible self.
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SingleCellDuckDB-populate_obs_from_duckdb_subset"></a>}}
+\if{latex}{\out{\hypertarget{method-SingleCellDuckDB-populate_obs_from_duckdb_subset}{}}}
+\subsection{\code{SingleCellDuckDB$populate_obs_from_duckdb_subset()}}{
+  Populate the obs table from a single source DuckDB, restricted to a
+subset of cells and reordered to match.
+
+Needed because \code{add_data_obs()} requires an obs table to already exist,
+so an object written from scratch out of a subset of a parent (as
+\code{cellsweep_sc()} does) has nothing to attach columns to.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{SingleCellDuckDB$populate_obs_from_duckdb_subset(
+  source_db_path,
+  cell_idx_to_keep
+)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{source_db_path}}{String. Path to the source DuckDB.}
+      \item{\code{cell_idx_to_keep}}{Integer vector. \strong{1-based} source \code{cell_idx}
+values, in the order the new object stores them.}
     }
     \if{html}{\out{</div>}}
   }

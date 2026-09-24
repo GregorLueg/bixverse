@@ -10,6 +10,10 @@ use bixverse_rs::single_cell::sc_data::{
     bin_merge_io::*, data_io::*, h5_10x_io::*, h5_10x_multifile_io::*, h5ad_io::*,
     h5ad_multifile_io::*, mtx_io::*, mtx_multifile_io::*, r_obj_io::*,
 };
+use bixverse_rs::single_cell::sc_processing::cellsweep::{
+    run_cellsweep, CellSweepParams, CellSweepSample,
+};
+use bixverse_rs::single_cell::sc_r_wrappers::cellsweep_sample_from_r_list;
 
 /////////////
 // extendR //
@@ -24,10 +28,11 @@ extendr_module! {
 // Type aliases //
 //////////////////
 
-/// Type to store the GeneData during streaming
+/// Per-cell-batch maps of gene index to `(cell index, raw, norm)` entries,
+/// used by the memory-bounded CSR to CSC conversion.
 type GeneData = Vec<FxHashMap<u32, Vec<(u32, u32, F16)>>>;
 
-/// Type to store the Results structure
+/// Result of accumulating one cell batch into a gene map.
 type GeneDataRes = std::result::Result<FxHashMap<u32, Vec<(u32, u32, F16)>>, BixverseErrors>;
 
 ///////////
@@ -62,6 +67,15 @@ impl AssayData {
     }
 
     /// Flatten the data into an R vector
+    ///
+    /// ### Params
+    ///
+    /// * `data` - Chunks of one variant; the first chunk decides the type.
+    ///
+    /// ### Returns
+    ///
+    /// An integer vector for `Raw`, a double vector for `Norm`, or an empty
+    /// double vector if `data` is empty.
     fn flatten_into_r_vector(data: Vec<AssayData>) -> Robj {
         if data.is_empty() {
             return Robj::from(Vec::<f64>::new());
@@ -98,18 +112,18 @@ impl AssayData {
 // Helpers //
 /////////////
 
-/// Retrieve cell data for a given assay type
+/// Retrieve one cell's data for a given assay type
 ///
 /// ### Params
 ///
-/// * `indices` - The indices for which cells to return the data
-/// * `data_raw` - The raw counts.
-/// * `data_norm` - The normalised counts.
+/// * `indices` - Gene indices (0-indexed) of the cell's non-zero entries
+/// * `data_raw` - The raw counts, aligned to `indices`.
+/// * `data_norm` - The normalised counts, aligned to `indices`.
 /// * `assay_type` - Which assay type to return, see [AssayType]
 ///
 /// ### Returns
 ///
-/// A tuple of indices and the assay data.
+/// A tuple of the gene indices as `i32` and the assay data.
 fn get_cell_data(
     indices: &[u32],
     data_raw: &RawCounts,
@@ -135,18 +149,18 @@ fn get_cell_data(
     (all_indices, data)
 }
 
-/// Retrieve gene data for a given assay type
+/// Retrieve one gene's data for a given assay type
 ///
 /// ### Params
 ///
-/// * `indices` - The indices for which genes to return the data
-/// * `data_raw` - The raw counts.
-/// * `data_norm` - The normalised counts.
+/// * `indices` - Cell indices (0-indexed) of the gene's non-zero entries
+/// * `data_raw` - The raw counts, aligned to `indices`.
+/// * `data_norm` - The normalised counts, aligned to `indices`.
 /// * `assay_type` - Which assay type to return, see [AssayType]
 ///
 /// ### Returns
 ///
-/// A tuple of indices and the assay data.
+/// A tuple of the cell indices as `i32` and the assay data.
 fn get_gene_data(
     indices: &[u32],
     data_raw: &RawCounts,
@@ -176,11 +190,11 @@ fn get_gene_data(
 ///
 /// ### Params
 ///
-/// * `s` - String to parse. One of `"raw"` or `"norm"`.
+/// * `s` - String to parse. One of `"raw"` or `"norm"`, case-insensitive.
 ///
 /// ### Returns
 ///
-/// The optional [AssayType]
+/// The optional [AssayType]; `None` for anything else.
 fn parse_count_type(s: &str) -> Option<AssayType> {
     match s.to_lowercase().as_str() {
         "raw" => Some(AssayType::Raw),
@@ -201,10 +215,10 @@ fn parse_count_type(s: &str) -> Option<AssayType> {
 /// complementary binary representations: a CSR-like layout (`f_path_cells`)
 /// for fast cell-wise access and a CSC-like layout (`f_path_genes`) for fast
 /// gene-wise access. Both raw counts and log-normalised counts are stored
-/// side by side. Provides methods for ingesting data from R, `h5ad`, and
-/// `mtx` sources (including multi-file workflows), converting between
-/// layouts, retrieving slices of the matrix, and merging existing binary
-/// objects.
+/// side by side. Provides methods for ingesting data from R, `h5ad`, `mtx`
+/// and 10x CellRanger h5 sources (including multi-file workflows),
+/// converting between layouts, retrieving slices of the matrix, merging
+/// existing binary objects and writing CellSweep-denoised counts.
 ///
 /// @usage NULL
 /// @format NULL
@@ -292,16 +306,16 @@ impl SingleCellCountData {
     /// the result to `f_path_cells`.
     ///
     /// @param r_data (`list`)\cr
-    /// A list convertible into `CompressedSparseData2`. Must contain the
-    /// elements `"indptr"`, `"indices"`, `"data"`, `"nrow"`, `"ncol"` and
-    /// `"cs_type"`.
+    /// A named list convertible into `CompressedSparseData2`. Must contain
+    /// `"indptr"`, `"indices"` (0-indexed), `"data"`, `"nrow"`, `"ncol"` and
+    /// `"cs_type"` (`"csr"` or `"csc"`).
     /// @param qc_params (`list`)\cr
     /// Quality control parameters parseable into `MinCellQuality`.
     /// @param verbose (`logical`)\cr
     /// Controls verbosity of the function.
     ///
-    /// @returns A list with `cell_indices`, `gene_indices`, `lib_size` and
-    /// `nnz`.
+    /// @returns A list with `cell_indices` and `gene_indices` (0-indexed,
+    /// surviving QC), `lib_size` and `nnz`.
     pub fn r_data_to_file(
         &mut self,
         r_data: List,
@@ -362,13 +376,14 @@ impl SingleCellCountData {
     /// @param qc_params (`list`)\cr
     /// Quality control parameters parseable into `MinCellQuality`.
     /// @param slot (`character`)\cr
-    /// Where to find the raw counts. One of `"X"` or `"raw.X"` (for CellXGene
-    /// data).
+    /// Where to find the raw counts. One of `"X"`, `"raw.X"` (or `"raw"`, for
+    /// CellXGene data) or `"layers.counts"`. Unmatched values fall back to
+    /// `"X"`.
     /// @param verbose (`logical`)\cr
     /// Controls verbosity of the function.
     ///
-    /// @returns A list with `cell_indices`, `gene_indices`, `lib_size` and
-    /// `nnz`.
+    /// @returns A list with `cell_indices` and `gene_indices` (0-indexed,
+    /// surviving QC), `lib_size` and `nnz`.
     #[allow(clippy::too_many_arguments)]
     pub fn h5ad_to_file(
         &mut self,
@@ -438,8 +453,8 @@ impl SingleCellCountData {
     /// @param verbose (`logical`)\cr
     /// Controls verbosity of the function.
     ///
-    /// @returns A list with `cell_indices`, `gene_indices`, `lib_size` and
-    /// `nnz`.
+    /// @returns A list with `cell_indices` and `gene_indices` (0-indexed,
+    /// surviving QC), `lib_size` and `nnz`.
     #[allow(clippy::too_many_arguments)]
     pub fn norm_h5ad_to_file(
         &mut self,
@@ -495,13 +510,14 @@ impl SingleCellCountData {
     /// @param qc_params (`list`)\cr
     /// Quality control parameters parseable into `MinCellQuality`.
     /// @param slot (`character`)\cr
-    /// Where to find the raw counts. One of `"X"` or `"raw.X"` (for CellXGene
-    /// data).
+    /// Where to find the raw counts. One of `"X"`, `"raw.X"` (or `"raw"`, for
+    /// CellXGene data) or `"layers.counts"`. Unmatched values fall back to
+    /// `"X"`.
     /// @param verbose (`logical`)\cr
     /// Controls verbosity of the function.
     ///
-    /// @returns A list with `cell_indices`, `gene_indices`, `lib_size` and
-    /// `nnz`.
+    /// @returns A list with `cell_indices` and `gene_indices` (0-indexed,
+    /// surviving QC), `lib_size` and `nnz`.
     #[allow(clippy::too_many_arguments)]
     pub fn h5ad_to_file_streaming(
         &mut self,
@@ -551,7 +567,8 @@ impl SingleCellCountData {
     /// @param file_tasks (`list`)\cr
     /// A list of lists, each produced by the R prescan function. Each inner
     /// list must contain `exp_id`, `h5_path`, `cs_type`, `no_cells`,
-    /// `no_genes` and `gene_local_to_universe`.
+    /// `no_genes` and `gene_local_to_universe` (0-indexed integer vector,
+    /// `NA` for unmapped genes), plus an optional `raw_slot`.
     /// @param universe_size (`integer`)\cr
     /// Total number of genes in the universe.
     /// @param qc_params (`list`)\cr
@@ -562,7 +579,7 @@ impl SingleCellCountData {
     ///
     /// @returns A list with `global_gene_indices`, `total_cells`,
     /// `total_genes` and `per_file` (a list of lists with `exp_id`,
-    /// `cell_indices`, `lib_size`, `nnz`).
+    /// `cell_indices` (file-local, 0-indexed), `lib_size`, `nnz`).
     pub fn multi_h5ad_to_file(
         &mut self,
         file_tasks: List,
@@ -629,8 +646,8 @@ impl SingleCellCountData {
     /// @param verbose (`logical`)\cr
     /// Controls verbosity of the function.
     ///
-    /// @returns A list with `cell_indices`, `gene_indices`, `lib_size` and
-    /// `nnz`.
+    /// @returns A list with `cell_indices` and `gene_indices` (0-indexed,
+    /// surviving QC), `lib_size` and `nnz`.
     pub fn mtx_to_file(
         &mut self,
         mtx_path: String,
@@ -671,8 +688,8 @@ impl SingleCellCountData {
     /// @param verbose (`logical`)\cr
     /// Controls verbosity of the function.
     ///
-    /// @returns A list with `cell_indices`, `gene_indices`, `lib_size` and
-    /// `nnz`.
+    /// @returns A list with `cell_indices` and `gene_indices` (0-indexed,
+    /// surviving QC), `lib_size` and `nnz`.
     pub fn mtx_to_file_streaming(
         &mut self,
         mtx_path: String,
@@ -716,7 +733,7 @@ impl SingleCellCountData {
     ///
     /// @returns A list with `global_gene_indices`, `total_cells`,
     /// `total_genes` and `per_file` (a list of lists with `exp_id`,
-    /// `cell_indices`, `lib_size`, `nnz`).
+    /// `cell_indices` (file-local, 0-indexed), `lib_size`, `nnz`).
     pub fn multi_mtx_to_file(
         &mut self,
         file_tasks: List,
@@ -781,8 +798,8 @@ impl SingleCellCountData {
     /// @param h5_path (`character`)\cr
     /// Path to the 10x h5 file.
     /// @param version (`character`)\cr
-    /// One of `"auto"`, `"v2"` or `"v3"`. `"auto"` detects the layout from the
-    /// file.
+    /// One of `"auto"`, `"v2"` or `"v3"`. `"auto"`, and any unmatched value,
+    /// detects the layout from the file.
     /// @param no_cells (`integer`)\cr
     /// Number of cells (columns) in the file.
     /// @param no_genes (`integer`)\cr
@@ -794,8 +811,8 @@ impl SingleCellCountData {
     /// @param verbose (`logical`)\cr
     /// Controls verbosity of the function.
     ///
-    /// @returns A list with `cell_indices`, `gene_indices`, `lib_size` and
-    /// `nnz`.
+    /// @returns A list with `cell_indices` and `gene_indices` (0-indexed,
+    /// surviving QC), `lib_size` and `nnz`.
     #[allow(clippy::too_many_arguments)]
     pub fn tenx_h5_to_file_streaming(
         &mut self,
@@ -854,7 +871,6 @@ impl SingleCellCountData {
     /// `no_cells`, `no_genes`, `gene_local_to_universe` (integer vector, `NA`
     /// for unmapped / non-gene features) and `feature_type` (optional string,
     /// defaults to `"Gene Expression"`).
-    ///
     /// @param universe_size (`integer`)\cr
     /// Total number of genes in the universe.
     /// @param qc_params (`list`)\cr
@@ -864,8 +880,8 @@ impl SingleCellCountData {
     /// Controls verbosity.
     ///
     /// @returns A list with `global_gene_indices`, `total_cells`, `total_genes`
-    /// and `per_file` (a list of lists with `exp_id`, `cell_indices`,
-    /// `lib_size`, `nnz`).
+    /// and `per_file` (a list of lists with `exp_id`, `cell_indices`
+    /// (file-local, 0-indexed), `lib_size`, `nnz`).
     pub fn multi_tenx_h5_to_file(
         &mut self,
         file_tasks: List,
@@ -931,8 +947,9 @@ impl SingleCellCountData {
     /// @param verbose (`logical`)\cr
     /// Controls verbosity of the function.
     ///
-    /// @returns A list with `indptr`, `indices`, `data`, `no_cells` and
-    /// `no_genes`, parseable into a sparse matrix in R.
+    /// @returns A list with `indptr`, `indices` (0-indexed), `data`,
+    /// `no_cells` and `no_genes`, parseable into a sparse matrix in R. `data`
+    /// is integer for `"raw"` and double for `"norm"`.
     pub fn return_full_mat(
         &self,
         assay: &str,
@@ -1011,8 +1028,9 @@ impl SingleCellCountData {
     /// @param assay (`character`)\cr
     /// One of `"raw"` or `"norm"`.
     ///
-    /// @returns A list with `indptr`, `indices`, `data`, `no_cells` and
-    /// `no_genes`, parseable into a CSR matrix in R.
+    /// @returns A list with `indptr`, `indices` (0-indexed gene positions),
+    /// `data`, `no_cells` (number of returned cells) and `no_genes`,
+    /// parseable into a CSR matrix in R.
     pub fn get_cells_by_indices(
         &self,
         indices: &[i32],
@@ -1484,8 +1502,9 @@ impl SingleCellCountData {
     /// @param assay (`character`)\cr
     /// One of `"raw"` or `"norm"`.
     ///
-    /// @returns A list with `indptr`, `indices`, `data`, `no_cells` and
-    /// `no_genes`, parseable into a CSC matrix in R.
+    /// @returns A list with `indptr`, `indices` (0-indexed cell positions),
+    /// `data`, `no_cells` and `no_genes` (number of returned genes),
+    /// parseable into a CSC matrix in R.
     pub fn get_genes_by_indices(
         &self,
         indices: &[i32],
@@ -1571,8 +1590,8 @@ impl SingleCellCountData {
     /// @param merge_tasks (`list`)\cr
     /// A list of lists. Each inner list must contain `exp_id`,
     /// `bin_cells_path`, `cells_to_keep` (0-indexed integer vector) and
-    /// `gene_local_to_universe` (integer vector, `-1` for genes absent from
-    /// the universe).
+    /// `gene_local_to_universe` (0-indexed integer vector, `NA` for genes
+    /// absent from the universe).
     /// @param universe_size (`integer`)\cr
     /// Number of genes in the intersection universe.
     /// @param renormalise (`logical`)\cr
@@ -1627,6 +1646,88 @@ impl SingleCellCountData {
             total_cells = result.total_cells,
             total_genes = result.total_genes,
             per_file = per_file
+        ))
+    }
+
+    ///////////////
+    // CellSweep //
+    ///////////////
+
+    /// Run CellSweep and write the denoised barcodes into the cells binary
+    ///
+    /// One independent EM fit per sample, since the ambient profile is a
+    /// property of a single emulsion. Only the real barcodes are written: the
+    /// empty droplets exist to train the ambient profile, and barcodes that
+    /// are neither empty nor annotated are not part of the model.
+    ///
+    /// Writes the cell-based file only; regenerate the gene-based companion
+    /// afterwards, as for a merge.
+    ///
+    /// @param f_path_source (`character`)\cr
+    /// Path to the raw `counts_cells.bin`, which must still contain the empty
+    /// droplets.
+    /// @param samples (`list`)\cr
+    /// A list of lists. Each inner list must contain `sample_id`,
+    /// `real_cells` and `empty_cells` (0-indexed integer vectors of store
+    /// indices), `celltype_idx` (0-indexed integer vector, one entry per
+    /// `real_cells` entry) and `n_celltypes`.
+    /// @param cellsweep_params (`list`)\cr
+    /// The CellSweep model parameters. Missing entries fall back to the
+    /// reference implementation's defaults.
+    /// @param target_size (`numeric`)\cr
+    /// Library size the normalised layer is scaled to.
+    /// @param verbose (`integer`)\cr
+    /// `0` silent, `1` per-sample progress, `2` per-EM-iteration.
+    ///
+    /// @returns A list with `cell_order` (0-indexed source indices in output
+    /// order), `lib_size`, `nnz` and `fits` (one list per sample with
+    /// `sample_id`, `alpha`, `z_hat` (1-indexed), `beta`, `ambient`,
+    /// `celltype_profiles`, `n_celltypes`, `log_likelihood`, `n_iter` and
+    /// `converged`).
+    pub fn cellsweep(
+        &mut self,
+        f_path_source: String,
+        samples: List,
+        cellsweep_params: List,
+        target_size: f64,
+        verbose: usize,
+    ) -> Result<List, extendr_api::Error> {
+        let sample_specs: Vec<CellSweepSample> = samples
+            .into_iter()
+            .map(|(_, robj)| {
+                let inner = List::try_from(robj).expect("Each sample must be a list");
+                cellsweep_sample_from_r_list(inner)
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+
+        let params = CellSweepParams::from_r_list(cellsweep_params)?;
+
+        let reader = ParallelSparseReader::new(&f_path_source).to_extendr()?;
+        let result = run_cellsweep(
+            &reader,
+            &sample_specs,
+            params,
+            &self.f_path_cells,
+            target_size as f32,
+            verbose,
+        )
+        .to_extendr()?;
+
+        self.n_cells = result.cell_order.len();
+        self.n_genes = reader.get_header().total_genes;
+
+        let fits: List = result
+            .fits
+            .iter()
+            .zip(&sample_specs)
+            .map(|(fit, sample)| fit.to_r_list(&sample.sample_id))
+            .collect::<List>();
+
+        Ok(list!(
+            cell_order = result.cell_order.r_int_convert(),
+            lib_size = result.library_size.r_int_convert(),
+            nnz = result.nnz.r_int_convert(),
+            fits = fits
         ))
     }
 }

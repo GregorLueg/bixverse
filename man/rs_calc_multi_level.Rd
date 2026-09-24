@@ -7,26 +7,30 @@
 rs_calc_multi_level(stats, es, pathway_size, sample_size, seed, eps, sign)
 }
 \arguments{
-\item{stats}{Named numerical vector. Needs to be sorted. The gene level statistics.}
+\item{stats}{Named numerical vector. Needs to be sorted. The gene level
+statistics.}
 
-\item{es}{Numerical vector. The enrichment scores of the pathways of that specific size}
+\item{es}{Numerical vector. The enrichment scores of the pathways.}
 
-\item{pathway_size}{Integer. The size of the pathways to test.}
+\item{pathway_size}{Integer vector. The size of each pathway, same length
+as \code{es}.}
 
-\item{sample_size}{Integer. The size of the random gene sets to test against.}
+\item{sample_size}{Integer. The size of the random gene sets to test
+against.}
 
 \item{seed}{Integer. Random seed.}
 
 \item{eps}{Float. Boundary for calculating the p-value.}
 
-\item{sign}{Boolean. Used for the only positive or only negative score version.}
+\item{sign}{Boolean. Used for the only positive or only negative score
+version.}
 }
 \value{
 List with the following elements:
 \itemize{
-\item pvals The pvalues.
-\item is_cp_ge_half Flag indicating if conditional probability is ≥ 0.5. Indicates
-overesimation of the p-values.
+\item pvals The p-values.
+\item is_cp_ge_half Flag indicating if conditional probability is
+\verb{>= 0.5}. Indicates overestimation of the p-values.
 }
 }
 \description{

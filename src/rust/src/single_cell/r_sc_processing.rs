@@ -5,9 +5,10 @@ use bixverse_rs::single_cell::sc_processing::magic::{
 };
 use bixverse_rs::single_cell::sc_processing::metrics::pairwise_gene_correlations;
 use bixverse_rs::single_cell::sc_processing::{
-    doublet_detection::*, hvg::*, pca::*, qc::*, scdblfinder::*, scrublet::*, snn::*,
-    utils_doublets::find_threshold_otsu,
+    cellsweep::infer_empty_droplets, doublet_detection::*, hvg::*, pca::*, qc::*, scdblfinder::*,
+    scrublet::*, snn::*, utils_doublets::find_threshold_otsu,
 };
+use bixverse_rs::single_cell::sc_r_wrappers::empty_droplet_call_from_r_list;
 use extendr_api::prelude::*;
 use faer::Mat;
 use rustc_hash::FxHashSet;
@@ -46,6 +47,8 @@ extendr_module! {
     fn rs_fast_cluster_sc_grid;
     // imputation
     fn rs_magic_impute;
+    // denoising
+    fn rs_sc_infer_empty_droplets;
 }
 
 ///////////////////////
@@ -84,7 +87,7 @@ extendr_module! {
 ///  \item doublet_errors_obs - Numerical vector with the standard errors of
 ///  the scores for the observed cells.
 ///  \item z_scores - Z-scores for the observed cells. Represents:
-///  `score - threshold / error`.
+///  `(score - threshold) / error`.
 ///  \item threshold - Used threshold.
 ///  \item detected_doublet_rate - Fraction of cells that are called as
 ///  doublet.
@@ -172,11 +175,11 @@ fn rs_sc_scrublet(
 ///
 /// @returns A list with
 /// \itemize{
-///  \item predicted_doublets - Boolean vector indicating which observed cells
+///  \item doublet - Boolean vector indicating which observed cells are
 ///  predicted as doublets (TRUE = doublet, FALSE = singlet).
-///  \item doublet_scores_obs - Numerical vector with the likelihood of being
-///  a doublet for the observed cells.
-///  \item voting_avg - Voting average across the different iterations.
+///  \item doublet_score - Numerical vector with the doublet score per cell,
+///  averaged across iterations.
+///  \item voting_avg - Voting average per cell across the iterations.
 /// }
 ///
 /// @export
@@ -230,8 +233,23 @@ fn rs_sc_doublet_detection(
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
 ///
-/// @returns A list with predicted_doublets, doublet_scores, threshold,
-/// cluster_labels and detected_doublet_rate.
+/// @returns A list with
+/// \itemize{
+///  \item predicted_doublets - Boolean vector (TRUE = doublet).
+///  \item doublet_scores - Numerical vector with the classifier probability
+///  per observed cell.
+///  \item cxds_scores - Numerical vector with the cxds scores.
+///  \item weighted - Numerical vector with the weighted scores.
+///  \item threshold - Threshold used for the doublet calls.
+///  \item cluster_labels - Integer vector with the cluster labels from the
+///  final iteration.
+///  \item detected_doublet_rate - Fraction of cells called as doublets.
+///  \item selected_genes - Integer vector with the selected gene indices
+///  (0-indexed!).
+///  \item features - If `return_features = TRUE`, a list with
+///  `feature_names`, `feature_mat` (observed cells x features) and
+///  `included_in_training`; otherwise an empty list.
+/// }
 ///
 /// @export
 ///
@@ -339,8 +357,8 @@ fn rs_sc_otsu_method(scores: &[f64], bins: usize) -> f64 {
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
 ///
-/// @returns A list with the cumulative percentages of the Top X genes defined
-/// as in `top_n_vals`.
+/// @returns A list with one numerical vector per value in `top_n_vals`, each
+/// holding the cumulative proportion of counts per cell.
 ///
 /// @export
 ///
@@ -395,8 +413,8 @@ fn rs_sc_get_top_genes_perc(
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
 ///
-/// @returns A list with the percentages of counts per gene set group detected
-/// in the cells.
+/// @returns A list, named like `gene_set_idx`, with one numerical vector per
+/// gene set holding the percentage of counts per cell.
 ///
 /// @export
 ///
@@ -505,7 +523,7 @@ fn rs_pairwise_gene_cors(
 // Highly variable genes //
 ///////////////////////////
 
-/// Calculate the percentage of gene sets in the cells
+/// Calculate the highly variable genes
 ///
 /// @description
 /// `r lifecycle::badge("experimental")`
@@ -518,13 +536,14 @@ fn rs_pairwise_gene_cors(
 /// @param cell_indices Integer positions (0-indexed!) that defines the cells
 /// to keep. Must be unique and within the store; duplicates or out-of-range
 /// positions raise an error.
-/// @param loess_span Numeric. The span parameter for the loess function. Must
-/// be within `(0, 1]`.
-/// @param clip_max Optional clipping number. Defaults to `sqrt(no_cells)` if
-/// not provided.
-/// @param binning String. The binning strategy for the `meanvarbin` method. One
-/// of `c("equal_width", "equal_frequency")`.
-/// @param n_bins Integer. Number of bins for the `meanvarbin` method.
+/// @param loess_span Numeric. The span parameter for the loess function
+/// (`"vst"` only). Must be within `(0, 1]`.
+/// @param binning String. The binning strategy for the `meanvarbin` and
+/// `dispersion` methods. One of `c("equal_width", "equal_frequency")`.
+/// @param n_bins Integer. Number of bins for the `meanvarbin` and
+/// `dispersion` methods.
+/// @param clip_max Optional clipping number (`"vst"` only). Defaults to
+/// `sqrt(no_cells)` if not provided.
 /// @param streaming Boolean. Shall the genes be streamed in to reduce memory
 /// pressure.
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
@@ -634,13 +653,14 @@ fn rs_sc_hvg(
 /// for each cell. Must be the same length as `cell_indices` and densely cover
 /// `0:(n_batches - 1)`; a length mismatch or an empty batch raises an error.
 /// `as.integer(factor(x)) - 1L` always satisfies this.
-/// @param loess_span Numeric. The span parameter for the loess function. Must
-/// be within `(0, 1]`.
-/// @param clip_max Optional clipping number. Defaults to `sqrt(no_cells)` per
-/// batch if not provided.
-/// @param binning String. The binning strategy for the `meanvarbin` method. One
-/// of `c("equal_width", "equal_frequency")`.
-/// @param n_bins Integer. Number of bins for the `meanvarbin` method.
+/// @param loess_span Numeric. The span parameter for the loess function
+/// (`"vst"` only). Must be within `(0, 1]`.
+/// @param binning String. The binning strategy for the `meanvarbin` and
+/// `dispersion` methods. One of `c("equal_width", "equal_frequency")`.
+/// @param n_bins Integer. Number of bins for the `meanvarbin` and
+/// `dispersion` methods.
+/// @param clip_max Optional clipping number (`"vst"` only). Defaults to
+/// `sqrt(no_cells)` per batch if not provided.
 /// @param streaming Boolean. Shall the genes be streamed in to reduce memory
 /// pressure.
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
@@ -653,7 +673,8 @@ fn rs_sc_hvg(
 ///   \item var - The variance of each gene in each batch.
 ///   \item var_exp - The expected variance of each gene in each batch.
 ///   \item var_std - The standardised variance of each gene in each batch.
-///   \item batch - Batch index for each gene (length = n_genes * n_batches).
+///   \item batch - Batch index for each entry (0-indexed, length = n_genes *
+///   n_batches).
 ///   \item gene_idx - Gene index for each entry (0-indexed, length = n_genes *
 ///   n_batches).
 /// }
@@ -664,7 +685,8 @@ fn rs_sc_hvg(
 ///   \item dispersion_scaled - The scaled dispersion per bin per gene in each
 ///   batch.
 ///   \item bin - The bin of the gene in each batch.
-///   \item batch - Batch index for each gene (length = n_genes * n_batches).
+///   \item batch - Batch index for each entry (0-indexed, length = n_genes *
+///   n_batches).
 ///   \item gene_idx - Gene index for each entry (0-indexed, length = n_genes *
 ///   n_batches).
 /// }
@@ -820,12 +842,13 @@ fn rs_sc_hvg_batch_aware(
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
 ///
-/// @returns A list with with the following items
+/// @returns A list with the following items
 /// \itemize{
 ///   \item scores - The samples projected on the PCA space.
 ///   \item loadings - The loadings of the features for the PCA.
 ///   \item singular_values - The singular values for the PCA.
-///   \item scaled - The scaled matrix if you set return_scaled to `TRUE`.
+///   \item scaled - The scaled matrix if `return_scaled = TRUE`, otherwise
+///   `NULL`.
 /// }
 ///
 /// @export
@@ -914,7 +937,7 @@ fn rs_sc_pca(
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
 ///
-/// @returns A list with with the following items
+/// @returns A list with the following items
 /// \itemize{
 ///   \item scores - The samples projected on the PCA space (solved via sparse
 ///   SVD).
@@ -1003,8 +1026,9 @@ fn rs_sc_pca_sparse(
 /// detailed verbosity.
 /// @param seed Integer. Seed for reproducibility purposes.
 ///
-/// @returns A integer matrix of N x k with N being the number of cells and k the
-/// number of neighbours.
+/// @returns An integer matrix of N x k with the neighbour indices
+/// (0-indexed!), N being the number of cells and k the number of neighbours.
+/// Rows the search left short are padded by repeating their last neighbour.
 ///
 /// @export
 #[extendr]
@@ -1118,12 +1142,14 @@ fn rs_sc_knn(
 ///
 /// @returns A list with:
 /// \itemize{
-///  \item indices - An integer matrix representing the indices of the
-///  approximate nearest neighbours.
-///  \item dist - An numerical matrix representing the distances to the nearest
-///  neighbours.
+///  \item indices - An integer matrix (cells x k) representing the indices
+///  (0-indexed!) of the approximate nearest neighbours.
+///  \item dist - A numerical matrix (cells x k) representing the distances to
+///  the nearest neighbours.
 ///  \item dist_metric - String representing the used distance metric.
 /// }
+/// Rows the search left short are padded by repeating their last neighbour
+/// and distance.
 ///
 /// @export
 #[extendr]
@@ -1171,19 +1197,20 @@ fn rs_sc_knn_w_dist(
 /// graph based on it.
 ///
 /// @param knn_mat Integer matrix. Rows represent cells and the columns
-/// represent the neighbours.
+/// represent the neighbours (0-indexed!).
 /// @param snn_method String. Which method to use to calculate the similarity.
-/// Choice of `c("jaccard", "rank")`.
+/// Choice of `c("jaccard", "rank")`; anything else errors.
 /// @param limited_graph Boolean. Shall the sNNs only be calculated between
 /// direct neighbours in the graph, or between all possible combinations.
-/// @param pruning Float. Below which value for the Jaccard similarity to prune
-/// the weight to 0.
+/// @param pruning Float. Below which similarity value to prune the weight
+/// to 0.
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
 ///
 /// @returns A list with the following items:
 /// \itemize{
-///  \item edges - sNN edges as edge pairs.
+///  \item edges - Integer vector with the flattened sNN edge pairs
+///  (1-indexed!), ready for `igraph::add_edges()`.
 ///  \item weights - sNN weights of the pairs above.
 /// }
 ///
@@ -1243,11 +1270,14 @@ fn rs_sc_snn(
 ///
 /// @returns A list with the following elements:
 /// \itemize{
-///  \item all_matches - Matching neighbours for this sample.
-///  \item all_ratios - Distance ratio for this sample (with b / a).
-///  \item final_recall - The final recall of assuming a being the ground truth
-///  across all samples
-///  \item final_ratio - The final distance ratio across all samples
+///  \item all_matches - Integer vector. Number of shared neighbours per
+///  sample.
+///  \item all_ratios - Numerical vector. Ratio of the summed distances
+///  (b / a) per sample. Samples whose summed distance in a is ~0 are skipped,
+///  so this can be shorter than `all_matches`.
+///  \item final_recall - The mean recall across all samples, with a as the
+///  ground truth.
+///  \item final_ratio - The mean distance ratio across the retained samples.
 /// }
 ///
 /// @export
@@ -1327,8 +1357,8 @@ fn rs_compare_knn(knn_data_a: List, knn_data_b: List) -> Result<List, extendr_ap
 /// k means clustering to run.
 /// @param resolutions Numeric vector. The Louvain resolutions to iterate
 /// through.
-/// @param n_centroids Optional integer. The number of clusters to find. If
-/// not provided, defaults to `sqrt(nrow(embd))`.
+/// @param n_centroids Optional integer. The number of k-means centroids. If
+/// not provided, defaults to `floor(sqrt(nrow(embd)))`.
 /// @param fc_params Named list. The fast clustering parameters.
 /// @param snn Boolean. Shall the kNN graph be additionally transformed into
 /// an sNN graph.
@@ -1338,7 +1368,15 @@ fn rs_compare_knn(knn_data_a: List, knn_data_b: List) -> Result<List, extendr_ap
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
 ///
-/// @returns A list with the memberships per resolution.
+/// @returns A list with the following elements:
+/// \itemize{
+///  \item membership - List with one integer membership vector per
+///  resolution.
+///  \item k_means_cluster - Integer vector with the k-means cluster per cell
+///  if `return_kmeans = TRUE`, otherwise `NULL`.
+///  \item centroids - Numerical matrix with the k-means centroids if
+///  `return_kmeans = TRUE`, otherwise `NULL`.
+/// }
 ///
 /// @export
 ///
@@ -1411,23 +1449,28 @@ fn rs_fast_cluster_sc(
 /// k means clustering to run.
 /// @param resolutions Numeric vector. The Louvain resolutions to iterate
 /// through.
-/// @param n_centroids Optional integer. The number of clusters to find. If
-/// not provided, defaults to `sqrt(nrow(embd))`.
+/// @param n_centroids Optional integer. The number of k-means centroids. If
+/// not provided, defaults to `floor(sqrt(nrow(embd)))`.
 /// @param fc_params Named list. The fast clustering parameters.
 /// @param snn Boolean. Shall the kNN graph be additionally transformed into
 /// an sNN graph.
-/// @param no_seeds Integer. Number of additional seeds to use. Should be >=2.
 /// @param return_kmeans Boolean. Shall the k-means centroid assignments be
 /// returned alongside the memberships.
+/// @param no_seeds Integer. Number of additional seeds to use. Should be >=2.
 /// @param seed Integer. For reproducibility.
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
 ///
 /// @returns A list with the following elements:
 /// \itemize{
-///  \item memberships - The memberships across the different resolutions. The
-///  membership from the random seed with the best conductance is returned.
-///  \item stats - The statistics per given resolution run.
+///  \item membership - A list with `memberships` (one integer vector per
+///  resolution, from the seed with the best conductance) and `stats` (list
+///  with `mean_ari`, `median_ari`, `mean_conductance`, `median_conductance`
+///  and `mean_n_comms`, one value per resolution).
+///  \item k_means_cluster - Integer vector with the k-means cluster per cell
+///  if `return_kmeans = TRUE`, otherwise `NULL`.
+///  \item centroids - Numerical matrix with the k-means centroids if
+///  `return_kmeans = TRUE`, otherwise `NULL`.
 /// }
 ///
 /// @export
@@ -1555,4 +1598,39 @@ fn rs_magic_impute(
     Ok(RMatrix::new_matrix(res.n_cells, n_genes, |r, c| {
         res.data[r * n_genes + c] as f64
     }))
+}
+
+/////////////////////
+// Empty droplets  //
+/////////////////////
+
+/// Identify the empty droplets from the per-barcode library sizes
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Kept on the Rust side so the knee detector exists once: it has to match
+/// `scipy.ndimage.gaussian_filter1d` and `numpy.gradient` closely enough to
+/// land on the same rank as the CellSweep reference, and a second copy in R
+/// would drift.
+///
+/// @param lib_size Integer vector. Library size per barcode, in store order.
+/// @param empty_params List. Parameter list, see
+/// [bixverse::params_sc_empty_droplets()]. `"supplied"` is rejected, since
+/// there is nothing to infer.
+///
+/// @returns A logical vector that is `TRUE` where the barcode is an empty
+/// droplet.
+///
+/// @export
+///
+/// @keywords internal
+#[extendr]
+fn rs_sc_infer_empty_droplets(
+    lib_size: &[i32],
+    empty_params: List,
+) -> Result<Vec<bool>, extendr_api::Error> {
+    let call = empty_droplet_call_from_r_list(empty_params)?;
+    let sizes: Vec<u32> = lib_size.iter().map(|&x| x.max(0) as u32).collect();
+
+    infer_empty_droplets(&sizes, call).to_extendr()
 }

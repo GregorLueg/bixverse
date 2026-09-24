@@ -696,7 +696,7 @@ generate_sc_knn <- function(
   .verbose = TRUE
 ) {
   checkmate::assertMatrix(data, mode = "numeric")
-  assertScNeighbours(neighbours_params)
+  assertScNeighboursParams(neighbours_params)
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.validate_index, "B1")
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))

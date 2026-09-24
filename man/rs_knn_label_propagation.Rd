@@ -14,10 +14,10 @@ rs_knn_label_propagation(
 )
 }
 \arguments{
-\item{from}{Integer vector. Source node indices for each edge.}
+\item{from}{Integer vector. 1-based source node indices for each edge.}
 
-\item{to}{Integer vector. Target node indices for each edge. Must be the
-same length as \code{from}.}
+\item{to}{Integer vector. 1-based target node indices for each edge. Must be
+the same length as \code{from}.}
 
 \item{one_hot_encoding}{Integer matrix. Each row represents a sample, the
 columns the one-hot encodings. Everything 0 denotes the unlabelled data.}
@@ -26,7 +26,7 @@ columns the one-hot encodings. Everything 0 denotes the unlabelled data.}
 Needs to be same length as \code{nrow(one_hot_encoding)}.}
 
 \item{weights}{Optional numeric vector. Edge weights for each pair in
-\code{from}/\code{to}. Must have the same length as \code{from}. If NULL, all edges are
+\code{from}/\code{to}. Must have the same length as \code{from}. If \code{NULL}, all edges are
 treated as unweighted.}
 
 \item{label_prop_params}{List. Named list of parameters with the following
@@ -36,12 +36,14 @@ optional fields (defaults in parentheses):
 \item \code{iter} integer, max iterations (100)
 \item \code{tolerance} numeric, convergence threshold (1e-6)
 \item \code{symmetrise} logical, symmetrise the graph (FALSE)
-\item \code{symmetry_strategy} character, one of "average", "min", "max" ("average")
+\item \code{symmetry_strategy} character, one of \code{"average"}, \code{"min"},
+\code{"max"} (\code{"average"}). Only used for weighted graphs.
 \item \code{max_hops} integer, restrict spreading radius (unrestricted)
 }}
 }
 \value{
 The matrix with the probabilities of being of a certain class.
+Same shape as \code{one_hot_encoding}.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}

@@ -23,13 +23,13 @@ extendr_module! {
 ///
 /// @description
 /// `r lifecycle::badge("experimental")`
-/// Applies a radial basis function (RBF) to a given distance vector. Has at the
+/// Applies a radial basis function (RBF) to a given distance vector. Has the
 /// option to apply a Gaussian, Bump or Inverse Quadratic RBF.
 ///
-/// @param x Numeric vector. The distances you wish to apply the Gaussian kernel
-/// onto.
+/// @param x Numeric vector. The distances you wish to apply the RBF onto.
 /// @param epsilon Float. Epsilon parameter for the RBF.
-/// @param rbf_type String. Needs to be from `c("gaussian", "bump", "inverse_quadratic")`.
+/// @param rbf_type String. Needs to be from
+/// `c("gaussian", "bump", "inverse_quadratic")`. Other values raise an error.
 ///
 /// @returns The affinities after the Kernel was applied.
 ///
@@ -52,14 +52,13 @@ fn rs_rbf_function(x: &[f64], epsilon: f64, rbf_type: &str) -> extendr_api::Resu
 ///
 /// @description
 /// `r lifecycle::badge("experimental")`
-/// Applies a radial basis function (RBF) to a given distance matrix. Has at the
+/// Applies a radial basis function (RBF) to a given distance matrix. Has the
 /// option to apply a Gaussian, Bump or Inverse Quadratic RBF.
 ///
-/// @param x Numeric Matrix. The distances you wish to apply the Gaussian kernel
-/// onto.
+/// @param x Numeric Matrix. The distances you wish to apply the RBF onto.
 /// @param epsilon Float. Epsilon parameter for the RBF.
 /// @param rbf_type String. Needs to be from
-/// `c("gaussian", "bump", "inverse_quadratic")`.
+/// `c("gaussian", "bump", "inverse_quadratic")`. Other values raise an error.
 ///
 /// @returns The affinities after the Kernel was applied.
 ///
@@ -102,14 +101,14 @@ fn rs_rbf_function_mat(
 /// @param epsilon_vec Numeric vector. The epsilons you wish to use/test.
 /// @param original_dim Integer. The original dimensions of the symmetric
 /// distance matrix.
-/// @param shift Boolean. Was the matrix shifted up (false = diagonal included;
-/// true diagonal not incldued).
-/// @param rbf_type String. One of `c('gaussian', 'bump', 'inverse_quadratic')`
-/// for the currently implemented RBF function. Weird strings will default
-/// to Gaussian.
+/// @param shift Boolean. Was the matrix shifted up (`FALSE` = diagonal
+/// included; `TRUE` = diagonal not included).
+/// @param rbf_type String. One of `c("gaussian", "bump", "inverse_quadratic")`
+/// for the currently implemented RBF function. Unknown strings default to
+/// Gaussian.
 ///
-/// @returns A matrix with rows being the epsilons tested, and columns
-/// representing the summed affinity to other features.
+/// @returns A matrix with rows representing the features and columns the
+/// epsilons tested. Values are the summed affinity to other features.
 ///
 /// @export
 ///

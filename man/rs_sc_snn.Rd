@@ -8,16 +8,16 @@ rs_sc_snn(knn_mat, snn_method, limited_graph, pruning, verbose)
 }
 \arguments{
 \item{knn_mat}{Integer matrix. Rows represent cells and the columns
-represent the neighbours.}
+represent the neighbours (0-indexed!).}
 
 \item{snn_method}{String. Which method to use to calculate the similarity.
-Choice of \code{c("jaccard", "rank")}.}
+Choice of \code{c("jaccard", "rank")}; anything else errors.}
 
 \item{limited_graph}{Boolean. Shall the sNNs only be calculated between
 direct neighbours in the graph, or between all possible combinations.}
 
-\item{pruning}{Float. Below which value for the Jaccard similarity to prune
-the weight to 0.}
+\item{pruning}{Float. Below which similarity value to prune the weight
+to 0.}
 
 \item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
 detailed verbosity.}
@@ -25,7 +25,8 @@ detailed verbosity.}
 \value{
 A list with the following items:
 \itemize{
-\item edges - sNN edges as edge pairs.
+\item edges - Integer vector with the flattened sNN edge pairs
+(1-indexed!), ready for \code{igraph::add_edges()}.
 \item weights - sNN weights of the pairs above.
 }
 }

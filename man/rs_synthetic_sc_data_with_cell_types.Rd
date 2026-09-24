@@ -20,38 +20,40 @@ rs_synthetic_sc_data_with_cell_types(
 
 \item{n_genes}{Integer. Number of genes to generate.}
 
-\item{n_batches}{Integer. Number of the batches to generated.}
+\item{n_batches}{Integer. Number of batches to generate.}
 
 \item{n_samples}{Optional integer. Shall the cells be distributed over
-\code{n_samples} samples.}
+\code{n_samples} samples. Only used together with \code{sample_bias}.}
 
-\item{cell_configs}{A nested list that indicates which gene indices
-are markers for which cell.}
+\item{cell_configs}{List. One element per cell type, each a list with a
+\code{marker_genes} integer vector of 0-based marker gene indices.}
 
-\item{batch_effect_strength}{String. One of \code{c("strong", "medium", "low")}.
-Defines the strength of the added batch effect.}
+\item{batch_effect_strength}{String. One of \code{c("strong", "medium", "weak")}.
+Defines the strength of the added batch effect. Unknown values fall back to
+\code{"strong"}.}
 
 \item{sample_bias}{Optional string. One of
-\code{c("even", "slightly_uneven", "very_uneven")}}
+\code{c("even", "slightly_uneven", "very_uneven")}. Other values raise an error.}
 
 \item{seed}{Integer. Random seed for reproducibility.}
 }
 \value{
 A list with the following items.
 \itemize{
-\item data - The synthetic raw counts.
+\item data - The synthetic raw counts, CSR over cells.
 \item indptr - The index pointers of the cells.
-\item indices - The indices of the genes for the given cells.
-\item nrow - Number of rows.
-\item ncol - Number of columns
-\item cell_type_indices - Vector indicating which cell type this is.
-\item batch_indices - Vector indicating the batch.
-\item sample_indices - Optional sample indices if asked for.
+\item indices - The 0-based gene indices for the given cells.
+\item nrow - Number of cells.
+\item ncol - Number of genes.
+\item cell_type_indices - 0-based cell type per cell.
+\item batch_indices - 0-based batch per cell.
+\item sample_indices - 0-based sample per cell. \code{NULL} unless both
+\code{n_samples} and \code{sample_bias} are provided.
 }
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 Helper function to generate synthetic single cell data with optional
-bathc effects and sample bias.
+batch effects and sample bias.
 }
 \keyword{internal}

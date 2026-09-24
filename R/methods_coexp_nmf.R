@@ -95,7 +95,7 @@ S7::method(nmf_bulk, BulkCoExp) <- function(
   checkmate::assertClass(object, "bixverse::BulkCoExp")
   checkmate::qassert(k, "I1[1,)")
   checkmate::assertChoice(preprocessing, c("none", "sd", "sqrt_sd"))
-  assertNmfHals(nmf_hals_params)
+  assertNmfHalsParams(nmf_hals_params)
   assertModuleMembershipParams(membership_params)
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
@@ -260,7 +260,7 @@ S7::method(stabilised_nmf_bulk, BulkCoExp) <- function(
   checkmate::qassert(k, "I1[1,)")
   checkmate::qassert(n_runs, "I1[1,)")
   checkmate::assertChoice(preprocessing, c("none", "sd", "sqrt_sd"))
-  assertNmfHals(nmf_hals_params)
+  assertNmfHalsParams(nmf_hals_params)
   assertModuleMembershipParams(membership_params)
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
@@ -457,8 +457,8 @@ S7::method(consensus_nmf_bulk, BulkCoExp) <- function(
   checkmate::qassert(k, "I1[2,)")
   checkmate::qassert(n_runs, "I1[2,)")
   checkmate::assertChoice(preprocessing, c("none", "sd", "sqrt_sd"))
-  assertNmfHals(nmf_hals_params)
-  assertNmfConsensus(nmf_consensus_params)
+  assertNmfHalsParams(nmf_hals_params)
+  assertNmfConsensusParams(nmf_consensus_params)
   assertModuleMembershipParams(membership_params)
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
@@ -634,8 +634,8 @@ S7::method(nmf_k_sweep_bulk, BulkCoExp) <- function(
   k_range <- .assert_nmf_k_range(k_range)
   checkmate::qassert(n_runs, "I1[2,)")
   checkmate::assertChoice(preprocessing, c("none", "sd", "sqrt_sd"))
-  assertNmfHals(nmf_hals_params)
-  assertNmfConsensus(nmf_consensus_params)
+  assertNmfHalsParams(nmf_hals_params)
+  assertNmfConsensusParams(nmf_consensus_params)
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, c("B1", "I1[0,2]"))
 
@@ -718,7 +718,7 @@ S7::method(nmf_k_sweep_bulk, BulkCoExp) <- function(
 #'
 #' @keywords internal
 .inject_consensus_seed <- function(nmf_consensus_params, seed) {
-  assertNmfConsensus(nmf_consensus_params)
+  assertNmfConsensusParams(nmf_consensus_params)
   checkmate::qassert(seed, "I1")
   nmf_consensus_params[["consensus_seed"]] <- as.integer(seed)
   nmf_consensus_params
@@ -748,7 +748,7 @@ S7::method(nmf_k_sweep_bulk, BulkCoExp) <- function(
   k,
   n_runs
 ) {
-  assertNmfConsensus(nmf_consensus_params)
+  assertNmfConsensusParams(nmf_consensus_params)
   checkmate::qassert(n_samples, "I1[1,)")
 
   cell_space_cutoff <- 20000L
@@ -792,7 +792,7 @@ S7::method(nmf_k_sweep_bulk, BulkCoExp) <- function(
 #' @keywords internal
 .run_consensus_nmf <- function(.rs_call, nmf_consensus_params, seed, ...) {
   checkmate::assertFunction(.rs_call)
-  assertNmfConsensus(nmf_consensus_params)
+  assertNmfConsensusParams(nmf_consensus_params)
   checkmate::qassert(seed, "I1")
 
   tryCatch(

@@ -16,7 +16,9 @@ genes}
 \item{min_size, max_size}{Integer. The minimum and maximum size respectively.}
 }
 \value{
-Returns a list with (zero-indexed) indices.
+Returns a named list with the sorted, 0-based indices of the
+pathways whose size (after matching to \code{feature_names}) is within
+\verb{[min_size, max_size]}.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}

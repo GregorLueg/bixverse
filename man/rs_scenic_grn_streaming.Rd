@@ -26,7 +26,7 @@ to include.}
 \item{tf_indices}{Integer vector. 0-indexed(!) positions of the TF
 predictor variables to use in the generation of the regression learners.}
 
-\item{scenic_params}{Named list. Contains all of the parameters need for
+\item{scenic_params}{Named list. Contains all of the parameters needed for
 SCENIC.}
 
 \item{seed}{Integer. Controls reproducibility of the function.}

@@ -9,14 +9,15 @@ rs_range_norm(x, max_val, min_val)
 \arguments{
 \item{x}{Numerical vector. The data to normalise.}
 
-\item{max_val}{Numeric. The upper bound value to normalise into. If set to 1,
-the function will be equal to a min-max normalisation.}
+\item{max_val}{Numeric. The upper bound value to normalise into. If set to
+1, the function will be equal to a min-max normalisation.}
 
-\item{min_val}{Numeric. The lower bound value to normalise into. If set to 0,
-the function will equal a min-max normalisation.}
+\item{min_val}{Numeric. The lower bound value to normalise into. If set to
+0, the function will equal a min-max normalisation.}
 }
 \value{
-Normalised values
+Normalised values. A constant vector returns \code{max_val} for every
+element.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}

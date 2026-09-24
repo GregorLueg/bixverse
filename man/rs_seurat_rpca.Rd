@@ -41,7 +41,8 @@ detailed verbosity.}
 \item{seed}{Integer. Seed for reproducibility purposes.}
 }
 \value{
-The batch-corrected embedding space.
+Numerical matrix, cells x dimensions, with the batch-corrected
+embedding.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}

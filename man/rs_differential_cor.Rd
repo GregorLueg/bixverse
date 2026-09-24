@@ -7,15 +7,16 @@
 rs_differential_cor(x_a, x_b, spearman)
 }
 \arguments{
-\item{x_a}{R matrix a to be used for the differential correlation analysis.}
+\item{x_a}{Numeric matrix a, samples x features.}
 
-\item{x_b}{R matrix a to be used for the differential correlation analysis.}
+\item{x_b}{Numeric matrix b, samples x features. Needs the same number of
+columns as \code{x_a}.}
 
-\item{spearman}{Shall the Spearman correlation be calculated instead of
-Pearson.}
+\item{spearman}{Boolean. Shall the Spearman correlation be calculated
+instead of Pearson.}
 }
 \value{
-A list containing:
+A list containing, one entry per upper-triangle feature pair:
 \itemize{
 \item r_a - The correlation coefficients in the upper triangle of
 matrix a.
@@ -23,7 +24,7 @@ matrix a.
 matrix b.
 \item z_score - The z-scores of the difference in correlation
 coefficients.
-\item p_val - The z-scores transformed to p-values.
+\item p_val - The z-scores transformed to two-sided p-values.
 }
 }
 \description{

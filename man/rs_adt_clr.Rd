@@ -7,15 +7,19 @@
 rs_adt_clr(counts, seurat_clr)
 }
 \arguments{
-\item{counts}{R matrix of shape cells x features.}
+\item{counts}{Numerical matrix of shape cells x features.}
 
-\item{seurat_clr}{Logical; if TRUE uses the Seurat variant (non-negative),
-if FALSE uses proper CLR (mean-centred log, can be negative).}
+\item{seurat_clr}{Boolean. If \code{TRUE} uses the Seurat variant
+\code{log1p(x / g)} (non-negative); if \code{FALSE} uses the proper CLR
+\code{log1p(x) - mean(log1p(x))} (mean-centred, can be negative).}
 }
 \value{
-CLR-transformed matrix.
+Numerical matrix of cells x features with the CLR-transformed
+values.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+
+Normalises each cell (row) separately.
 }
 \keyword{internal}

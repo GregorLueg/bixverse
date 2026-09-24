@@ -27,10 +27,10 @@ extendr_module! {
 /// @description
 /// `r lifecycle::badge("experimental")`
 /// This function implements a Rust version of the gene ontology enrichment with
-/// elimination: the starting point are the leafs of the ontology and
-/// hypergeometric tests will first conducted there. Should the hypergeometric
-/// test p-value be below a certain threshold, the genes of that gene ontology
-/// term will be removed from all ancestors.
+/// elimination: the starting point are the leaves of the ontology and
+/// hypergeometric tests will first be conducted there. Should the
+/// hypergeometric test p-value be below a certain threshold, the genes of that
+/// gene ontology term will be removed from all ancestors.
 ///
 /// @param target_genes A character vector representing the target gene set.
 /// @param levels A character vector representing the levels to iterate through.
@@ -45,12 +45,13 @@ extendr_module! {
 /// @param min_overlap Optional minimum overlap threshold.
 /// @param fdr_threshold Optional fdr threshold.
 ///
-/// @returns A list containing:
+/// @returns A list containing (for the terms passing the thresholds):
 ///  \itemize{
 ///   \item go_ids - The gene ontology identifier.
-///   \item pvals - The calculated odds ratios.
+///   \item pvals - The calculated p-values.
+///   \item fdr - The calculated FDRs.
 ///   \item odds_ratios - The calculated odds ratios.
-///   \item overlap - The size of the overlap.
+///   \item hits - The size of the overlap.
 ///   \item gene_set_lengths - The length of the gene sets.
 /// }
 ///
@@ -105,10 +106,11 @@ fn rs_gse_geom_elim(
 /// @description
 /// `r lifecycle::badge("experimental")`
 /// This function implements a Rust version of the gene ontology enrichment with
-/// elimination: the starting point are the leafs of the ontology and
-/// hypergeometric tests will first conducted there. Should the hypergeometric
-/// test p-value be below a certain threshold, the genes of that gene ontology
-/// term will be removed from all ancestors. This function is designed to
+/// elimination: the starting point are the leaves of the ontology and
+/// hypergeometric tests will first be conducted there. Should the
+/// hypergeometric test p-value be below a certain threshold, the genes of that
+/// gene ontology term will be removed from all ancestors. This function is
+/// designed to
 /// leverage Rust-based threading for parallel processing of a list of target
 /// genes.
 ///
@@ -126,13 +128,13 @@ fn rs_gse_geom_elim(
 /// @param min_overlap Optional minimum overlap threshold.
 /// @param fdr_threshold Optional fdr threshold.
 ///
-/// @returns A list containing:
+/// @returns A list containing (results of all target sets concatenated):
 ///  \itemize{
 ///   \item go_ids - The gene ontology identifier.
-///   \item pvals - The calculated odds ratios.
-///   \item fdrs - The calculated fdrs.
+///   \item pvals - The calculated p-values.
+///   \item fdr - The calculated FDRs.
 ///   \item odds_ratios - The calculated odds ratios.
-///   \item overlap - The size of the overlap.
+///   \item hits - The size of the overlap.
 ///   \item gene_set_lengths - The length of the gene sets.
 ///   \item no_test - The number of tests for that target set that passed the
 ///   thresholds.
@@ -230,7 +232,8 @@ fn rs_gse_geom_elim_list(
 /// @description
 /// `r lifecycle::badge("experimental")`
 ///
-/// @param stats Named numerical vector. Needs to be sorted. The gene level statistics.
+/// @param stats Named numerical vector. Needs to be sorted. The gene level
+/// statistics.
 /// @param levels A character vector representing the levels to iterate through.
 /// The order will be the one the iterations are happening in.
 /// @param go_obj The `GeneOntologyElim` S7 class. See
@@ -241,22 +244,23 @@ fn rs_gse_geom_elim_list(
 ///     \item min_size - Integer. Minimum size for the gene sets.
 ///     \item max_size - Integer. Maximum size for the gene sets.
 ///     \item gsea_param - Float. The GSEA parameter. Defaults to `1.0`.
-///     \item sample_size - Integer. Number of samples to iterate through for the
+///     \item sample_size - Integer. Number of samples to iterate through for
+///     the multi-level implementation of fgsea.
+///     \item eps - Float. Boundary for calculating the p-value. Used for the
 ///     multi-level implementation of fgsea.
-///     \item eps - Float. Boundary for calculating the p-value. Used for the multi-
-///     level implementation of fgsea.
 /// }
 /// @param elim_threshold p-value below which the elimination procedure shall be
 /// applied to the ancestors.
-/// @param iters Integer. Number of random permutations for the fgsea simple method
-/// to use
+/// @param iters Integer. Number of random permutations for the fgsea simple
+/// method to use
 /// @param seed Integer. For reproducibility purposes.
 ///
 /// @returns List with the following elements
 /// \itemize{
-///     \item go_ids The name of the tested gene ontology identifer.
+///     \item go_id The name of the tested gene ontology identifier.
 ///     \item es The enrichment scores for the pathway
-///     \item nes The normalised enrichment scores for the pathway
+///     \item nes The normalised enrichment scores for the pathway. Can be
+///     `NA`.
 ///     \item size The pathway sizes (after elimination!).
 ///     \item pvals The p-values for this pathway based on permutation
 ///     testing
@@ -264,8 +268,8 @@ fn rs_gse_geom_elim_list(
 ///     bigger or smaller than the permutation (pending sign).
 ///     \item le_zero Number of times the permutation was less than zero.
 ///     \item ge_zero Number of times the permutation was greater than zero.
-///     \item leading_edge A list of the index positions of the leading edge
-///     genes for this given GO term.
+///     \item leading_edge A list of the 1-based index positions (in `stats`)
+///     of the leading edge genes for this given GO term.
 /// }
 ///
 /// @export
@@ -353,8 +357,10 @@ fn rs_geom_elim_fgsea_simple(
 
     let mut leading_edge_list = List::new(leading_edge.len());
 
+    // upstream returns 0-based positions (`one_indexed = false`); R wants 1-based
     for (i, x) in leading_edge.iter().enumerate() {
-        leading_edge_list.set_elt(i, Robj::from(x.clone()))?;
+        let x: Vec<i32> = x.iter().map(|idx| idx + 1).collect();
+        leading_edge_list.set_elt(i, Robj::from(x))?;
     }
 
     Ok(list!(

@@ -16,7 +16,11 @@ calculate the Hedge's G effect.}
 \item{small_sample_correction}{Shall the small sample correction be applied.}
 }
 \value{
-Returns the harmonic sum according to the OT calculation.
+A list with the following items:
+\itemize{
+\item effect_sizes - Hedge's G effect size per feature.
+\item standard_errors - Standard error of the effect size per feature.
+}
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}

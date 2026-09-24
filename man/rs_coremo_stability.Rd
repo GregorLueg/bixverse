@@ -7,10 +7,11 @@
 rs_coremo_stability(data, indices, epsilon, rbf_type, spearman)
 }
 \arguments{
-\item{data}{Numeric matrix. The original processed matrix.}
+\item{data}{Numeric matrix. The original processed matrix, samples x
+features.}
 
-\item{indices}{Integer vector. The sample indices to remove to re-calculate
-the distances.}
+\item{indices}{Integer vector. The 1-based sample (row) indices to remove,
+one at a time, to re-calculate the distances.}
 
 \item{epsilon}{Float. Epsilon parameter for the RBF.}
 
@@ -20,13 +21,14 @@ the distances.}
 \item{spearman}{Boolean. Shall Spearman correlation be used.}
 }
 \value{
-A list with \code{length(indices)} elements, each containing the distance
-minus the given sample.
+A list with \code{length(indices)} elements, each containing the
+flattened upper-triangle feature distances with that sample removed.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
-This function is a helper for the leave-on-out stability assessment of
+This function is a helper for the leave-one-out stability assessment of
 CoReMo clusters. The function will generate the distance vectors based on
-leaving out the samples defined in indices one by one.
+leaving out the samples defined in indices one by one. Distances are
+\verb{1 - rbf(1 - |cor|)} over the feature correlations.
 }
 \keyword{internal}

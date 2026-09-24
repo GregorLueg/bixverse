@@ -10,11 +10,11 @@ rs_batch_silhouette_width(embedding, batch_vector, max_cells, verbose, seed)
 \item{embedding}{Numeric matrix. The embedding to assess (e.g. PCA or
 corrected embedding). Rows are cells, columns are dimensions.}
 
-\item{batch_vector}{Integer vector. The integers indicate to which
-batch a given cell belongs.}
+\item{batch_vector}{Integer vector. The batch per cell. The codes need
+not be 0-based or contiguous.}
 
 \item{max_cells}{Integer or NULL. If not NULL, subsample to this many
-cells for performance. Defaults to 5000.}
+cells for performance. If NULL, all cells are used.}
 
 \item{verbose}{Boolean. Controls verbosity of the function.}
 

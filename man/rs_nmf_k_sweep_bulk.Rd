@@ -29,7 +29,7 @@ rs_nmf_k_sweep_bulk(
 
 \item{n_runs}{Integer. Number of restarts per k. Must be at least 2.}
 
-\item{seed}{Integer. Base random seed.}
+\item{seed}{Integer. Base random seed. The i-th k uses \code{seed + i * n_runs}.}
 
 \item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
 detailed verbosity.}

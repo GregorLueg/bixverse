@@ -8,12 +8,13 @@ rs_mc_scenic(sparse_data, tf_indices, scenic_params, seed, verbose)
 }
 \arguments{
 \item{sparse_data}{A named list that needs to have \code{data}, \code{indptr},
-\code{indices}, \code{nrow}, \code{ncol} and \code{format}.}
+\code{indices}, \code{nrow}, \code{ncol} and \code{cs_type}. Shape is (metacells, genes).}
 
-\item{tf_indices}{Integer vector. The indices of the transcription factors.}
+\item{tf_indices}{Integer vector. 0-indexed(!) column positions of the
+transcription factors within \code{sparse_data}.}
 
-\item{scenic_params}{Named list. Contains all of the parameters need for
-SCENIC.}
+\item{scenic_params}{Named list. Contains all of the parameters needed for
+SCENIC, see \code{\link[=params_scenic]{params_scenic()}}.}
 
 \item{seed}{Integer. Controls reproducibility of the function.}
 
@@ -21,10 +22,12 @@ SCENIC.}
 detailed verbosity.}
 }
 \value{
-A gene x TF importance matrix
+A genes x TFs importance matrix, rows in column order of
+\code{sparse_data}, columns in the order of \code{tf_indices}.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
-Assumes that the sparse data is pre-filtered for the genes you wish to
-include. The indices need to be 0-indexed.
+Assumes that the sparse data is pre-filtered for the cells and genes you
+wish to include: every column is a target gene. The regressors read the
+second layer, which here is an \code{f32} cast of the supplied counts.
 }

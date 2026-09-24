@@ -36,8 +36,23 @@ selection of the top genes.}
 detailed verbosity.}
 }
 \value{
-A list with predicted_doublets, doublet_scores, threshold,
-cluster_labels and detected_doublet_rate.
+A list with
+\itemize{
+\item predicted_doublets - Boolean vector (TRUE = doublet).
+\item doublet_scores - Numerical vector with the classifier probability
+per observed cell.
+\item cxds_scores - Numerical vector with the cxds scores.
+\item weighted - Numerical vector with the weighted scores.
+\item threshold - Threshold used for the doublet calls.
+\item cluster_labels - Integer vector with the cluster labels from the
+final iteration.
+\item detected_doublet_rate - Fraction of cells called as doublets.
+\item selected_genes - Integer vector with the selected gene indices
+(0-indexed!).
+\item features - If \code{return_features = TRUE}, a list with
+\code{feature_names}, \code{feature_mat} (observed cells x features) and
+\code{included_in_training}; otherwise an empty list.
+}
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}

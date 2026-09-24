@@ -17,16 +17,16 @@ rs_mc_hotspot_autocor(
 }
 \arguments{
 \item{sparse_data}{A named list that needs to have \code{data}, \code{indptr},
-\code{indices}, \code{nrow}, \code{ncol} and \code{format}. Shape is (metacells, genes) and the
-data are the raw counts.}
+\code{indices}, \code{nrow}, \code{ncol} and \code{cs_type}. Shape is (metacells, genes) and
+the data are the raw counts.}
 
 \item{embd}{Numerical matrix. The embedding matrix from which to generate
-the kNN graph.}
+the kNN graph. Needs one row per entry of \code{cells_to_keep}.}
 
 \item{knn_data}{Optional list. This contains pre-computed kNN data
-(including distances) and the \code{dist_metric} it was built with. The user has
-to ensure consistency! If provided, this will be used rather than a graph
-built from the parameter list.}
+(\code{indices}, \code{dist}, \code{k}) and the \code{dist_metric} it was built with. The user
+has to ensure consistency! If provided, this will be used rather than a
+graph built from the parameter list.}
 
 \item{hotspot_params}{List. The HotSpot parameter list. The kNN parameters
 are only read when no \code{knn_data} is provided.}
@@ -47,7 +47,7 @@ detailed verbosity.}
 A list with the following elements.
 \itemize{
 \item gene_idx - 0-based integer indicating the gene index.
-\item gaerys_c - Gaery's C calculation for the autocorrelation
+\item gaerys_c - Geary's C calculation for the autocorrelation
 coefficient.
 \item z_score - Z-score of the auto-correlation.
 \item pval - P-value derived from the Z-score.

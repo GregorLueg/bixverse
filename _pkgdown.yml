@@ -34,6 +34,10 @@ navbar:
         - text: Genetic diffusion and community detections
           href: articles/genetic_diffusions.html
         - text: -------
+        - text: "Bulk RNA-seq"
+        - text: Bulk differential expression with BulkDge
+          href: articles/bulk_dge.html
+        - text: -------
         - text: "Co-expression module detection methods"
         - text: Contrastive PCA
           href: articles/cpca.html
@@ -55,8 +59,12 @@ navbar:
           href: articles/single_cell_io.html
         - text: "Doublet detection in bixverse"
           href: articles/doublet_detection.html
+        - text: "Ambient RNA removal with CellSweep"
+          href: articles/cell_sweep.html
         - text: "Batch corrections"
           href: articles/single_cell_batch_corrections.html
+        - text: "Pearson residuals and scTransform"
+          href: articles/single_cell_residuals.html
         - text: "Differential expression in single cell"
           href: articles/differential_expression.html
         - text: "Differential abundance in single cell"
@@ -115,6 +123,7 @@ articles:
       - pathway_activity
       - genetic_diffusions
       - cpca
+      - bulk_dge
       - bulk_coexpression_modules
       - ontologies
   - title: Single Cells
@@ -123,7 +132,9 @@ articles:
       - thinking_single_cell
       - single_cell_io
       - pbmc_single_cell
+      - single_cell_residuals
       - doublet_detection
+      - cell_sweep
       - single_cell_batch_corrections
       - bag_of_genes_single_cells
       - knn_searches
@@ -282,6 +293,7 @@ reference:
       - run_edger_ql
       - pseudobulk_dge_sc
       - params_edger_ql
+      - params_limma_voom
       - hedges_g_dge
       - get_dge_effect_sizes
       - get_dge_limma_voom
@@ -480,6 +492,7 @@ reference:
       - doublet_detection_boost_sc
       - scdblfinder_sc
       - gene_set_proportions_sc
+      - cellsweep_sc
       - per_cell_qc_outlier
       - run_cell_qc
       - run_cell_qc_fixed
@@ -489,15 +502,24 @@ reference:
       - find_hvg_batch_aware_sc
       - get_hvg_data_sc
       - calculate_pca_sc
+      - fit_residuals_sc
+      - sct_corrected_counts_sc
+      - get_residual_fit
+      - set_residual_fit
+      - remove_residual_fit
       - generate_sc_knn
       - find_neighbours_sc
       - run_magic_sc
       - top_genes_perc_sc
       - params_sc_magic
+      - params_sc_cellsweep
+      - params_sc_empty_droplets
       - params_norm_doublets_defaults
       - params_boost
       - params_sc_hvg
       - params_sc_pca
+      - params_sc_sctransform
+      - params_sc_apr
       - params_scrublet
       - params_sc_fast_cluster
       - params_sc_neighbours
@@ -520,7 +542,11 @@ reference:
       - seurat_rpca_sc
       - calculate_kbet_sc
       - calculate_batch_asw_sc
-      - calculate_batch_lisi_sc
+      - calculate_lisi_sc
+      - calculate_pcr_sc
+      - calculate_cell_type_asw_sc
+      - calculate_graph_connectivity_sc
+      - calculate_integration_metrics_sc
       - params_sc_fastmnn
       - params_sc_harmony
       - params_sc_harmony_v2
@@ -729,17 +755,21 @@ reference:
       - download_pbmc_batches
       - download_pbmc_totalseq_data
       - download_pbmc8k
+      - download_pbmc_1k_5p
       - calculate_sparsity_stats
       - demo_single_cells
       - generate_gene_module_data
       - generate_single_cell_test_data
       - generate_dialogue_test_data
+      - generate_cellsweep_test_data
       - cell_cycle_genes
       - write_cellranger_output
       - write_h5ad_sc
       - write_h5ad_sc_dense
       - params_sc_synthetic_data
+      - params_sc_synthetic_data_adt
       - params_sc_synthetic_dialogue
+      - params_sc_synthetic_cellsweep
       - params_synthetic_bulk_rnaseq
       - params_bulk_sparsity
       - synthetic_signal_matrix
@@ -767,10 +797,11 @@ reference:
       There is a lot more under the hood... 
     contents:
       - rs_2d_loess
-      - rs_batch_lisi
       - rs_batch_silhouette_width
       - rs_blitzgsea_calibrate
       - rs_blitzgsea_score
+      - rs_calc_norm_factors
+      - rs_cell_type_asw
       - rs_cistarget
       - rs_compare_knn
       - rs_constrained_page_rank
@@ -783,15 +814,18 @@ reference:
       - rs_count_zeroes
       - rs_cov2cor
       - rs_covariance
+      - rs_cpm
       - rs_dense_to_upper_triangle
       - rs_differential_cor
       - rs_dist
       - rs_fast_auc
       - rs_fast_ica
       - rs_fdr_adjustment
+      - rs_filter_by_expr
       - rs_gene_trends
       - rs_geom_elim_fgsea_simple
       - rs_gower_dist
+      - rs_graph_connectivity
       - rs_gse_geom_elim
       - rs_gse_geom_elim_list
       - rs_gsva
@@ -810,14 +844,19 @@ reference:
       - rs_knn_mat_to_edge_list
       - rs_generate_ligand_target_influence
       - rs_ligand_activity_scores
+      - rs_limma_voom
+      - rs_lisi
       - rs_mad_outlier
       - rs_edger_ql
       - rs_mc_aucell
       - rs_mc_dialogue
       - rs_mc_hotspot_autocor
       - rs_mc_hotspot_gene_cor
+      - rs_mc_fit_residuals
       - rs_mc_hvg
       - rs_mc_pca
+      - rs_mc_pca_residuals
+      - rs_mc_residual_variance
       - rs_mc_scenic
       - rs_mc_vision
       - rs_mc_vision_with_autocorrelation
@@ -831,6 +870,7 @@ reference:
       - rs_ot_harmonic_sum
       - rs_page_rank
       - rs_page_rank_parallel
+      - rs_pcr
       - rs_phyper
       - rs_pointwise_mutual_info
       - rs_prcomp
@@ -843,6 +883,7 @@ reference:
       - rs_rbf_function_mat
       - rs_rbh_cor
       - rs_rbh_sets
+      - rs_remove_batch_effect
       - rs_sc_knn
       - rs_sc_knn_w_dist
       - rs_sc_snn
@@ -863,4 +904,5 @@ reference:
       - rs_tom
       - rs_upper_triangle_to_dense
       - rs_upper_triangle_to_sparse
+      - rs_voom_normalise
       - rs_wnn

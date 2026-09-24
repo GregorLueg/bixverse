@@ -11,7 +11,7 @@ rs_bbknn(embd, batch_labels, bbknn_params, seed, verbose)
 BBKNN parameters. Usually PCA. Rows represent cells.}
 
 \item{batch_labels}{Integer vector. These represent to which batch a given
-cell belongs.}
+cell belongs (0-indexed!).}
 
 \item{bbknn_params}{List. Contains all of the BBKNN parameters.}
 
@@ -21,8 +21,12 @@ cell belongs.}
 detailed verbosity.}
 }
 \value{
-A list of two lists representing the sparse matrix representation
-of the distances and the connectivities.
+A list with
+\itemize{
+\item distances - Sparse list representation of the kNN distances.
+\item connectivities - Sparse list representation of the
+connectivities.
+}
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}

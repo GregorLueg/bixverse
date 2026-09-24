@@ -32,15 +32,19 @@ pub type NeighboursData = Result<(Vec<Vec<usize>>, Vec<Vec<f32>>, usize, String)
 // Dispersion res //
 ////////////////////
 
-/// Helper function to flatten the dispersion results to a List
+/// Flatten per-batch dispersion results into one long R list.
+///
+/// Assumes every batch covers the same genes, in the same order.
 ///
 /// ### Params
 ///
-/// * `results` - A vector of `HvgDispersionRes`.
+/// * `results` - One [HvgDispersionRes] per batch.
 ///
 /// ### Returns
 ///
-/// The results list
+/// List of equal-length vectors, batch-major: `mean`, `dispersion`,
+/// `dispersion_scaled`, `bin`, `batch` (0-indexed) and `gene_idx`
+/// (0-indexed position within the batch).
 pub fn flatten_dispersion_batches(results: Vec<HvgDispersionRes>) -> List {
     let n_genes = results.first().map_or(0, |res| res.mean.len());
     let total_len = n_genes * results.len();
@@ -131,15 +135,15 @@ pub fn pad_knn_rows(
     padded
 }
 
-/// Process R KNN indices to the Rust variant
+/// Convert an R kNN index matrix into per-sample neighbour vectors.
 ///
 /// ### Params
 ///
-/// * `knn_mat` - Samples x indices of the k-nearest neighbours (0-indexed!)
+/// * `knn_mat` - Samples x k matrix of neighbour indices (0-indexed!)
 ///
 /// ### Returns
 ///
-/// A `Vec<Vec<usize>>`
+/// A `Vec<Vec<usize>>`, one inner vector per row of `knn_mat`.
 pub fn knn_indices_processing(knn_mat: RMatrix<i32>) -> Vec<Vec<usize>> {
     let nrow = knn_mat.nrows();
     let ncol = knn_mat.ncols();
@@ -155,15 +159,15 @@ pub fn knn_indices_processing(knn_mat: RMatrix<i32>) -> Vec<Vec<usize>> {
     out
 }
 
-/// Process R KNN distances to the Rust variant
+/// Convert an R kNN distance matrix into per-sample distance vectors.
 ///
 /// ### Params
 ///
-/// * `knn_dist` - Samples x indices of the k-nearest neighbours (0-indexed!)
+/// * `knn_dist` - Samples x k matrix of neighbour distances
 ///
 /// ### Returns
 ///
-/// A `Vec<Vec<f32>>`
+/// A `Vec<Vec<f32>>`, one inner vector per row of `knn_dist`.
 pub fn knn_distances_processing(knn_dist: RMatrix<f64>) -> Vec<Vec<f32>> {
     let nrow = knn_dist.nrows();
     let ncol = knn_dist.ncols();
@@ -179,15 +183,16 @@ pub fn knn_distances_processing(knn_dist: RMatrix<f64>) -> Vec<Vec<f32>> {
     out
 }
 
-/// Transform R kNN data to Rust data
+/// Transform R kNN data to Rust data.
 ///
 /// ### Params
 ///
-/// * `knn_data` - R list with the kNN data
+/// * `knn_data` - Named R list with `indices` (integer matrix, 0-indexed),
+///   `dist` (numeric matrix), `dist_metric` (string) and `k` (integer).
 ///
-/// ###
+/// ### Returns
 ///
-/// The [NeighboursData] or an error.
+/// The [NeighboursData] or an error naming the missing or mistyped element.
 pub fn knn_data_to_rust(knn_data: List) -> NeighboursData {
     let data: HashMap<&str, Robj> = knn_data.try_into()?;
 
@@ -230,12 +235,13 @@ pub fn knn_data_to_rust(knn_data: List) -> NeighboursData {
 ///
 /// ### Fields
 ///
-/// * `0` - The Louvain membership per resolution
+/// * `0` - The Louvain assignments, as returned by
+///   [FastLouvainResults::get_assignments]
 /// * `1` - Optional k-means cluster membership
 /// * `2` - Optional k-means centroids
 pub type FastClusterSingle = Result<(Vec<Vec<usize>>, Option<Vec<i32>>, Option<RMatrix<f64>>)>;
 
-/// Type for the fast clustering single results
+/// Type for the fast clustering grid results
 ///
 /// ### Fields
 ///
@@ -248,12 +254,15 @@ pub type FastClusterGrid = Result<(
     Option<RMatrix<f64>>,
 )>;
 
-/// Helper function to extract (single) results from the FastClustering
+/// Extract the single-resolution results from the FastClustering.
+///
+/// Panics if `res` holds the grid variant.
 ///
 /// ### Params
 ///
 /// * `res` - The [FastLouvainResults]
-/// * `return_km` - Shall the km results be returned
+/// * `return_km` - Shall the k-means results be returned. Errors if `res` did
+///   not keep them.
 ///
 /// ### Returns
 ///
@@ -279,16 +288,19 @@ pub fn fast_cluster_unwrap_single(res: FastLouvainResults, return_km: bool) -> F
     Ok((memberships, k_means_membership, centroids))
 }
 
-/// Helper function to extract (single) results from the FastClustering
+/// Extract the grid search results from the FastClustering.
+///
+/// Panics if `res` holds the single variant.
 ///
 /// ### Params
 ///
 /// * `res` - The [FastLouvainResults]
-/// * `return_km` - Shall the km results be returned
+/// * `return_km` - Shall the k-means results be returned. Errors if `res` did
+///   not keep them.
 ///
 /// ### Returns
 ///
-/// [FastClusterSingle]
+/// [FastClusterGrid]
 pub fn fast_cluster_unwrap_multiple(res: FastLouvainResults, return_km: bool) -> FastClusterGrid {
     let memberships = match res.get_assignments() {
         Either::Left(_) => panic!("expected Grid variant"),
@@ -310,15 +322,18 @@ pub fn fast_cluster_unwrap_multiple(res: FastLouvainResults, return_km: bool) ->
     Ok((memberships, k_means_membership, centroids))
 }
 
-/// Process the fast cluster Louvain results
+/// Process the fast cluster Louvain grid results.
 ///
 /// ### Params
 ///
-/// * `results` - Vector of [FastLouvainGridResult]
+/// * `results` - Vector of [FastLouvainGridResult], one per resolution
 ///
-/// ### Retuns
+/// ### Returns
 ///
-/// A list with the results
+/// A list with `memberships` (one integer vector of best labels per
+/// resolution, 0-indexed) and `stats` (per-resolution `mean_ari`,
+/// `median_ari`, `mean_conductance`, `median_conductance` and
+/// `mean_n_comms`).
 pub fn process_fc_louvain_results(results: Vec<FastLouvainGridResult>) -> Result<List> {
     let mut mean_ari: Vec<f32> = Vec::with_capacity(results.len());
     let mut median_ari: Vec<f32> = Vec::with_capacity(results.len());
@@ -358,7 +373,8 @@ pub fn process_fc_louvain_results(results: Vec<FastLouvainGridResult>) -> Result
 ///
 /// ### Params
 ///
-/// * `r_list` - The R list to parse
+/// * `r_list` - The R list to parse, one inner list per cell type as
+///   expected by `CellTypeMarkers::from_r_list`
 ///
 /// ### Returns
 ///
@@ -394,7 +410,7 @@ pub fn process_cell_markers(r_list: List) -> Result<Vec<CellTypeMarkers>> {
 /// GEMM blocks are too small to be efficient, and `panel_size == n_genes` is
 /// the single-panel (no-reload) case.
 ///
-/// ### Parmas
+/// ### Params
 ///
 /// * `working_mem_gb` - Working memory to allocate here
 /// * `n_cells` - Number of cells
@@ -428,8 +444,8 @@ pub type NicheNetNetwork = Result<(Vec<u32>, Vec<u32>, Vec<f64>)>;
 ///
 /// ### Params
 ///
-/// * `network_data` - R list. Needs to have the `"from"`, `"to"` and
-///   `"weights"` of the network.
+/// * `network_data` - R list. Needs `"from"` and `"to"` (integer vectors,
+///   0-indexed node positions) and `"weight"` (numeric vector).
 ///
 /// ### Returns
 ///

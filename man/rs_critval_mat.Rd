@@ -7,12 +7,12 @@
 rs_critval_mat(mat, iters, alpha, seed)
 }
 \arguments{
-\item{mat}{Numeric matrix. The (symmetric matrix with all of the values).}
+\item{mat}{Numeric matrix. The symmetric matrix with all of the values.}
 
-\item{iters}{Integer. Number of random permutations to use.}
+\item{iters}{Integer. Size of the bootstrap sample.}
 
-\item{alpha}{Float. The alpha value. For example, 0.001 would mean that the
-critical value is smaller than 0.1 percentile of the random permutations.}
+\item{alpha}{Float. The alpha value. For example, 0.001 would return the
+value exceeded by roughly 0.1 percent of the bootstrap sample.}
 
 \item{seed}{Integer. For reproducibility purposes}
 }
@@ -21,7 +21,7 @@ The critical value for the given parameters.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
-This function calculates the critical value for a given set based on random
-permutations and a given alpha value.
+Same as \code{\link[=rs_critval]{rs_critval()}}, but the values are taken from the upper
+triangle (diagonal excluded) of a symmetric matrix.
 }
 \keyword{internal}

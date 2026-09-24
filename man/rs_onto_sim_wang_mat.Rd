@@ -9,13 +9,14 @@ rs_onto_sim_wang_mat(parents, children, w, flat_matrix)
 \arguments{
 \item{parents}{String vector. The names of the parents.}
 
-\item{children}{String vector. The names of the childs. The length of
+\item{children}{String vector. The names of the children. The length of
 \code{parents} needs to be equal to \code{children}.}
 
 \item{w}{Numerics. The weights between the parents and children. Need
 to be values between 0 and 1.}
 
-\item{flat_matrix}{Boolean. Shall only the upper triangle be returned.}
+\item{flat_matrix}{Boolean. Shall only the upper triangle (row-wise,
+diagonal excluded) be returned.}
 }
 \value{
 A list with:

@@ -12,7 +12,7 @@ for.}
 
 \item{parents}{String vector. The names of the parents.}
 
-\item{children}{String vector. The names of the childs. The length of
+\item{children}{String vector. The names of the children. The length of
 \code{parents} needs to be equal to \code{children}.}
 
 \item{w}{Numerics. The weights between the parents and children. Need
@@ -28,6 +28,6 @@ A list with:
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
-This function calculates the Wang similarities between all permutations of a
-given set of terms.
+This function calculates the Wang similarities between all unique pairs of
+a given set of terms. Terms not found in the ontology get \code{NaN}.
 }

@@ -7,18 +7,19 @@
 rs_rbh_cor(module_matrices, k_best, spearman, min_similarity)
 }
 \arguments{
-\item{module_matrices}{A list of named matrices. Rows represent features
-and columns the samples you wish to calculate the correlations for.}
+\item{module_matrices}{A named list of matrices with row and column names.
+Rows represent features and columns the modules you wish to calculate the
+correlations for. Only features shared between two matrices are used.}
 
 \item{k_best}{Integer. Number of best neighbours to consider. If set to
 \code{1L}, this behaves as the traditional reciprocal best hit. If you set this
 to \code{3L} you consider edges if the modules is in the top 3 best modules
 by similarity for each other.}
 
-\item{spearman}{Shall Spearman correlation be used.}
+\item{spearman}{Boolean. Shall Spearman correlation be used.}
 
-\item{min_similarity}{Minimum (absolute) correlations that needs to exist
-between two terms.}
+\item{min_similarity}{Numeric. Only hits with an absolute correlation
+strictly above this are returned.}
 }
 \value{
 A list containing:
@@ -29,8 +30,8 @@ A list containing:
 identified in this comparison
 \item origin_modules - Names of the gene modules from the origin.
 \item target_modules - Names of the gene modules from the target.
-\item similarity - The similarities between the two respective gene
-modules.
+\item similarity - The absolute correlations between the two respective
+gene modules.
 }
 }
 \description{

@@ -15,7 +15,7 @@ rs_cor2(x, y, spearman)
 Pearson.}
 }
 \value{
-The correlation matrix.
+The correlation matrix of dimension \code{ncol(x)} by \code{ncol(y)}.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}

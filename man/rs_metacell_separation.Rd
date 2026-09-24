@@ -8,16 +8,20 @@ diffusion map coordinates.}
 rs_metacell_separation(dc, meta_cells)
 }
 \arguments{
-\item{dc}{Numerical matrix. The diffusion map coordinates.}
+\item{dc}{Numerical matrix. The diffusion map coordinates, cells x
+components.}
 
-\item{meta_cells}{List. The cell indices of the meta cells.}
+\item{meta_cells}{List. Per meta cell, an integer vector with the row
+indices (1-indexed!) into \code{dc}.}
 }
 \value{
-The separation results
+Numerical vector with one separation value per meta cell. Empty
+meta cells yield \code{NaN}; a lone non-empty meta cell yields \code{Inf}.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
-Calculates the separation of the single cells of a given meta cell based on
-the diffusion map.
+Calculates the separation, i.e. the Euclidean distance from each meta cell
+centroid in diffusion space to the nearest other meta cell centroid.
+Higher is better.
 }
 \keyword{internal}

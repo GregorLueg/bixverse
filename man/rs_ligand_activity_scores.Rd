@@ -10,18 +10,19 @@ rs_ligand_activity_scores(ligand_influence, in_gene_sets)
 \item{ligand_influence}{A ligand x background genes matrix that measures the
 ligand to target gene influence.}
 
-\item{in_gene_sets}{A list of logicals with the genes of interest being set
-to \code{TRUE} and the background genes set to \code{FALSE}.}
+\item{in_gene_sets}{List of logical vectors, one per gene set, each of
+length \code{ncol(ligand_influence)}. Genes of interest are \code{TRUE}, the
+background genes \code{FALSE}.}
 }
 \value{
-A list with internal lists with:
+A list with one element per gene set, each a list of per-ligand
+vectors (\code{NaN} where the metric is undefined):
 \itemize{
-\item \code{auroc} - The Area Under the Receiver Operating Characteristic for
-that ligand
-\item \code{aupr} - The Area Under the Precision-Recall curve for that ligand.
-\item \code{aupr_corrected} - The corrected AUPR
-\item \code{pearson} - The Pearson correlations
-\item \code{spearman} - The Spearman correlations
+\item \code{auroc} - The Area Under the Receiver Operating Characteristic.
+\item \code{aupr} - The Area Under the Precision-Recall curve.
+\item \code{aupr_corrected} - The corrected AUPR.
+\item \code{pearson} - The Pearson correlations.
+\item \code{spearman} - The Spearman correlations.
 }
 }
 \description{

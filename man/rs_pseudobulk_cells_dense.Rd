@@ -9,22 +9,24 @@ rs_pseudobulk_cells_dense(f_path, cell_indices_ls, assay, verbose)
 \arguments{
 \item{f_path}{String. Path to the \code{counts_cells.bin} file.}
 
-\item{cell_indices_ls}{List. Must contains 0-indexed positions of the
-cells to aggregate per element.}
+\item{cell_indices_ls}{List. Each element contains the 0-indexed positions
+of the cells to aggregate.}
 
-\item{assay}{String. One of \code{c("raw", "norm")}. Which counts to normalise.}
+\item{assay}{String. One of \code{c("raw", "norm")}. \code{"raw"} sums the raw
+counts, \code{"norm"} averages the normalised counts. Unrecognised values fall
+back to \code{"raw"}.}
 
 \item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
 detailed verbosity.}
 }
 \value{
-A dense matrix with the pseudo-bulked data.
+A dense numerical matrix of pseudo-bulked samples x genes.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 This function will return a dense matrix of
 \verb{length(cell_indices_ls) x number of genes}. The function has the option
-to return the sum of the sum of the raw counts or the average of the
-normalised counts.
+to return the sum of the raw counts or the average of the normalised
+counts.
 }
 \keyword{internal}

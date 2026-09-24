@@ -2,16 +2,15 @@
 % Please edit documentation in R/extendr-wrappers.R
 \name{rs_knn_mat_to_edge_pairs}
 \alias{rs_knn_mat_to_edge_pairs}
-\title{Flatten kNN matrix to edge list}
+\title{Flatten kNN matrix to edge pairs}
 \usage{
 rs_knn_mat_to_edge_pairs(knn_mat, one_index)
 }
 \arguments{
 \item{knn_mat}{Integer matrix. Rows represent the samples and the columns
-the indices of the k-nearest neighbours.}
+the 0-based indices of the k-nearest neighbours.}
 
-\item{one_index}{Boolean. If the original data is 0-index, shall 1-indexed
-data be returned.}
+\item{one_index}{Boolean. Shall 1-based indices be returned.}
 }
 \value{
 A list with the following elements

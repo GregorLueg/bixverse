@@ -45,7 +45,7 @@ generate_single_cell_test_data <- function(
   seed = 42L
 ) {
   # checks
-  assertScSyntheticData(syn_data_params)
+  assertScSyntheticDataParams(syn_data_params)
   checkmate::qassert(seed, "I1")
 
   if (!requireNamespace("Matrix", quietly = TRUE)) {
@@ -183,7 +183,7 @@ generate_dialogue_test_data <- function(
   seed = 42L
 ) {
   # checks
-  assertScSyntheticDialogue(syn_data_params)
+  assertScSyntheticDialogueParams(syn_data_params)
   checkmate::qassert(seed, "I1")
 
   if (!requireNamespace("Matrix", quietly = TRUE)) {
@@ -321,7 +321,7 @@ generate_single_cell_test_data_adt <- function(
   seed = 42L
 ) {
   # checks
-  assertScSyntheticDataAdt(syn_data_params)
+  assertScSyntheticDataAdtParams(syn_data_params)
   checkmate::qassert(seed, "I1")
 
   data <- with(
@@ -376,6 +376,158 @@ generate_single_cell_test_data_adt <- function(
   res
 }
 
+### cellsweep -----------------------------------------------------------------
+
+#' Single cell test data with a planted ambient profile
+#'
+#' @description
+#' This function generates synthetic data for CellSweep test purposes. Every
+#' real barcode is a two-component multinomial: a planted fraction `alpha` of
+#' its library comes from the soup, the rest from its own cell type profile.
+#' Empty droplets are pure soup at a much smaller library size, which is what
+#' the ambient profile is estimated off. Real barcodes come first, the empty
+#' droplets after.
+#'
+#' @details
+#' The empty droplets carry no cell type label, which is exactly what
+#' [bixverse::cellsweep_sc()] keys off: barcodes that are neither empty nor
+#' annotated are excluded from the fit. Load the counts with a fully permissive
+#' [bixverse::params_sc_min_quality()], otherwise the ingest deletes the empty
+#' droplets the model trains on.
+#'
+#' @param syn_data_params List. Contains the parameters for the generation of
+#' the synthetic data, see: [bixverse::params_sc_synthetic_cellsweep()].
+#' @param seed Integer. The seed for the generation of the synthetic data.
+#'
+#' @returns List with the following items
+#' \itemize{
+#'   \item counts - dgRMatrix with cells x genes.
+#'   \item obs - data.table with `cell_id`, `cell_grp` (`NA` for the empty
+#'   droplets), `sample_id`, `is_empty` and `alpha_true` (`NA` for the empty
+#'   droplets).
+#'   \item var - data.table that contains the gene information.
+#'   \item ambient_true - Numeric vector. The soup the empty droplets were
+#'   drawn from, named by gene and summing to one.
+#'   \item celltype_profiles_true - Numeric matrix of cell types x genes. Each
+#'   row sums to one.
+#' }
+#'
+#' @export
+#'
+#' @examples
+#' # a small synthetic experiment with a planted soup
+#' data <- generate_cellsweep_test_data(
+#'   syn_data_params = params_sc_synthetic_cellsweep(
+#'     n_real = 60L,
+#'     n_empty = 200L,
+#'     n_genes = 60L
+#'   )
+#' )
+#' dim(data$counts)
+#' head(data$obs, 3)
+generate_cellsweep_test_data <- function(
+  syn_data_params = params_sc_synthetic_cellsweep(),
+  seed = 42L
+) {
+  # checks
+  assertScSyntheticCellsweepParams(syn_data_params)
+  checkmate::qassert(seed, "I1")
+
+  if (!requireNamespace("Matrix", quietly = TRUE)) {
+    stop(
+      "Package 'Matrix' needed for this function to work. Please install it.",
+      call. = FALSE
+    )
+  }
+
+  data <- with(
+    syn_data_params,
+    rs_synthetic_sc_cellsweep_data(
+      n_real = n_real,
+      n_empty = n_empty,
+      n_genes = n_genes,
+      n_celltypes = n_celltypes,
+      n_markers = n_markers,
+      marker_weight = marker_weight,
+      ambient_dominance = ambient_dominance,
+      alpha_mean = alpha_mean,
+      alpha_sd = alpha_sd,
+      real_lib_size = real_lib_size,
+      empty_lib_size = empty_lib_size,
+      seed = seed
+    )
+  )
+
+  n_cells <- data$nrow
+  n_genes <- data$ncol
+  n_real <- syn_data_params$n_real
+
+  cell_ids <- sprintf(
+    sprintf("cell_%%0%dd", nchar(as.character(n_cells))),
+    seq_len(n_cells)
+  )
+  gene_ids <- sprintf(
+    sprintf("gene_%%0%dd", nchar(as.character(n_genes))),
+    seq_len(n_genes)
+  )
+
+  counts <- new(
+    "dgRMatrix",
+    p = as.integer(data$indptr),
+    x = as.numeric(data$data),
+    j = as.integer(data$indices),
+    Dim = as.integer(c(n_cells, n_genes)),
+    Dimnames = list(cell_ids, gene_ids)
+  )
+
+  cell_grp <- rep(NA_character_, n_cells)
+  cell_grp[seq_len(n_real)] <- sprintf(
+    "cell_type_%i",
+    data$cell_type_indices + 1L
+  )
+
+  alpha_true <- rep(NA_real_, n_cells)
+  alpha_true[seq_len(n_real)] <- data$alpha_true
+
+  obs <- data.table::data.table(
+    cell_id = cell_ids,
+    cell_grp = cell_grp,
+    sample_id = "sample_01",
+    is_empty = data$is_empty,
+    alpha_true = alpha_true
+  )
+
+  var <- data.table::data.table(
+    gene_id = gene_ids,
+    ensembl_id = sprintf(
+      sprintf("ens_%%0%dd", nchar(as.character(n_genes))),
+      seq_len(n_genes)
+    )
+  )
+
+  ambient_true <- data$ambient_true
+  names(ambient_true) <- gene_ids
+
+  celltype_profiles_true <- matrix(
+    data$celltype_profiles_true,
+    nrow = syn_data_params$n_celltypes,
+    ncol = n_genes,
+    byrow = TRUE,
+    dimnames = list(
+      sprintf("cell_type_%i", seq_len(syn_data_params$n_celltypes)),
+      gene_ids
+    )
+  )
+
+  list(
+    counts = counts,
+    obs = obs,
+    var = var,
+    ambient_true = ambient_true,
+    celltype_profiles_true = celltype_profiles_true
+  )
+}
+
 ## demo objects ----------------------------------------------------------------
 
 #' Ready-made `SingleCells` object for examples and tests
@@ -427,7 +579,7 @@ demo_single_cells <- function(
   # checks
   checkmate::qassert(dir, "S1")
   checkmate::qassert(prepped, "B1")
-  assertScSyntheticData(syn_data_params)
+  assertScSyntheticDataParams(syn_data_params)
   checkmate::qassert(hvg_no, "I1")
   checkmate::qassert(no_pcs, "I1")
   checkmate::qassert(k, "I1")
@@ -1111,6 +1263,46 @@ download_pbmc8k <- function(quiet = FALSE) {
   data_path <- file.path(temp_dir, "pmbc-8k")
 
   data_path
+}
+
+### pbmc 1k 5 prime -----------------------------------------------------------
+
+#' Download the raw PBMC 1k 5' matrix from 10x Genomics
+#'
+#' @description
+#' Downloads the unfiltered `raw_feature_bc_matrix.h5` of the 10x Genomics 5'
+#' PBMC 1k run, straight from the 10x CDN rather than the bixverse-data mirror.
+#' All 737,280 barcodes are in there, empty droplets included, which is what
+#' [bixverse::cellsweep_sc()] needs. The file also carries 19 Antibody Capture
+#' features next to the 36,601 genes, so load it with
+#' `load_tenx_h5(feature_type = "Gene Expression")`.
+#'
+#' @param quiet Boolean. If the download shall be quiet.
+#'
+#' @returns String. The path to the downloaded h5 file.
+#'
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' # pulls roughly 17MB into the session tempdir()
+#' h5_path <- download_pbmc_1k_5p()
+#' read_tenx_h5_metadata(h5_path)$dims
+#' }
+download_pbmc_1k_5p <- function(quiet = FALSE) {
+  file <- "sc5p_v2_hs_PBMC_1k_raw_feature_bc_matrix.h5"
+  dest_file <- file.path(tempdir(), file)
+  urls <- sprintf(
+    paste0(
+      "https://cf.10xgenomics.com/samples/cell-vdj/4.0.0/",
+      "sc5p_v2_hs_PBMC_1k/%s"
+    ),
+    file
+  )
+
+  .download_with_retry(urls, dest_file, quiet = quiet)
+
+  dest_file
 }
 
 ### pbmc with demuxlet ---------------------------------------------------------

@@ -26,8 +26,8 @@ the proportions. (0-indexed!)}
 detailed verbosity.}
 }
 \value{
-A list with the cumulative percentages of the Top X genes defined
-as in \code{top_n_vals}.
+A list with one numerical vector per value in \code{top_n_vals}, each
+holding the cumulative proportion of counts per cell.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}

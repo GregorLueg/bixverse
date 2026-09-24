@@ -38,13 +38,13 @@ be applied to the ancestors.}
 \item{fdr_threshold}{Optional fdr threshold.}
 }
 \value{
-A list containing:
+A list containing (results of all target sets concatenated):
 \itemize{
 \item go_ids - The gene ontology identifier.
-\item pvals - The calculated odds ratios.
-\item fdrs - The calculated fdrs.
+\item pvals - The calculated p-values.
+\item fdr - The calculated FDRs.
 \item odds_ratios - The calculated odds ratios.
-\item overlap - The size of the overlap.
+\item hits - The size of the overlap.
 \item gene_set_lengths - The length of the gene sets.
 \item no_test - The number of tests for that target set that passed the
 thresholds.
@@ -53,10 +53,11 @@ thresholds.
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 This function implements a Rust version of the gene ontology enrichment with
-elimination: the starting point are the leafs of the ontology and
-hypergeometric tests will first conducted there. Should the hypergeometric
-test p-value be below a certain threshold, the genes of that gene ontology
-term will be removed from all ancestors. This function is designed to
+elimination: the starting point are the leaves of the ontology and
+hypergeometric tests will first be conducted there. Should the
+hypergeometric test p-value be below a certain threshold, the genes of that
+gene ontology term will be removed from all ancestors. This function is
+designed to
 leverage Rust-based threading for parallel processing of a list of target
 genes.
 }

@@ -18,18 +18,20 @@ rs_nmf_consensus_mc(
 }
 \arguments{
 \item{sparse_data}{A named list with \code{data}, \code{indptr}, \code{indices}, \code{nrow},
-\code{ncol} and \code{format}.}
+\code{ncol} and \code{cs_type}. Shape is (metacells, genes).}
 
 \item{k}{Integer. Number of latent factors. Must be at least 2.}
 
 \item{preprocessing}{String. One of \code{c("none", "sd", "sqrt_sd")}.}
 
-\item{use_second_layer}{Boolean. If \code{TRUE}, runs NMF on normalised counts.}
+\item{use_second_layer}{Boolean. Shall the second data layer be used.}
 
-\item{nmf_hals_params}{Named list. Contains the NMF parameters. The
-\code{nmf_init} field is ignored, restarts always use random initialisation.}
+\item{nmf_hals_params}{Named list. Contains the NMF parameters, see
+\code{\link[=params_nmf_hals]{params_nmf_hals()}}. The \code{nmf_init} field is ignored, restarts
+always use random initialisation.}
 
-\item{nmf_consensus_params}{Named list. Contains the consensus parameters.}
+\item{nmf_consensus_params}{Named list. Contains the consensus parameters,
+see \code{\link[=params_nmf_consensus]{params_nmf_consensus()}}.}
 
 \item{n_runs}{Integer. Number of restarts. Must be at least 2.}
 
@@ -65,7 +67,9 @@ Runs \code{n_runs} HALS NMF restarts, pools their components, drops unstable
 ones by local density, k-means clusters the survivors and refits the
 partner factor against the per-cluster median. Assumes that the sparse data
 is pre-filtered for the cells/genes you wish to include. Indices in the
-sparse data need to be 0-indexed.
+sparse data need to be 0-indexed. Both data layers hold the supplied
+values, so which assay NMF runs on is decided by what is passed in, not by
+\code{use_second_layer}.
 }
 \references{
 Kotliar et al., eLife, 2019

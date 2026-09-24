@@ -1,3 +1,22 @@
+# bixverse 0.5.2
+
+## Features
+
+* Cellsweep implementation from [Caskey et al.](https://www.biorxiv.org/content/10.64898/2026.03.04.709349v1),
+  see [vignette](https://gregorlueg.github.io/bixverse/articles/cell_sweep.html).
+* Wired in new single cell batch correction metrics (cell-type specific LISI
+  and ASW).
+* Also wired in from [edge-rs](https://crates.io/crates/edge-rs) the limma-voom 
+  workflow. 
+* Sweep over the Rust/rextendr documentation
+* Wired in scTransform v2 from 
+  [Choudhary](https://pmc.ncbi.nlm.nih.gov/articles/PMC8764781/) and the
+  [vignette](https://gregorlueg.github.io/bixverse/articles/single_cell_residuals.html).
+
+## Fixes
+
+* Good old 0 to 1-index indexing issues fixed in two functions.
+
 # bixverse 0.5.1
 
 ## Documentations

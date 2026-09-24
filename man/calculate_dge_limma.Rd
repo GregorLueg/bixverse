@@ -10,8 +10,7 @@ calculate_dge_limma(
   contrast_list = NULL,
   filter_column = NULL,
   co_variates = NULL,
-  quantile_norm = FALSE,
-  ...,
+  limma_params = params_limma_voom(),
   .verbose = TRUE
 )
 }
@@ -33,11 +32,8 @@ separately in the data.}
 \item{co_variates}{Optional string vector. Any co-variates you wish to
 consider during the Limma Voom modelling.}
 
-\item{quantile_norm}{Boolean. Shall the data also be quantile normalised.
-Defaults to \code{FALSE}.}
-
-\item{...}{Additional parameters to forward to \code{\link[limma:eBayes]{limma::eBayes()}} or
-\code{\link[limma:voom]{limma::voom()}}.}
+\item{limma_params}{List. The limma parameters, see
+\code{\link[=params_limma_voom]{params_limma_voom()}}.}
 
 \item{.verbose}{Controls verbosity of the function.}
 }

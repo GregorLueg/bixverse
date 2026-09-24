@@ -2,20 +2,22 @@
 % Please edit documentation in R/extendr-wrappers.R
 \name{rs_jaccard_row_integers}
 \alias{rs_jaccard_row_integers}
-\title{Calculate rapidbly Jaccard similarities between rows}
+\title{Calculate rapidly Jaccard similarities between rows}
 \usage{
 rs_jaccard_row_integers(data_1, data_2)
 }
 \arguments{
 \item{data_1}{Integer matrix. The first matrix to compare.}
 
-\item{data_2}{Integer matrix. The second matrix to compare.}
+\item{data_2}{Integer matrix. The second matrix to compare. Needs the same
+number of rows as \code{data_1}.}
 }
 \value{
-The average Jaccard similarity.
+The Jaccard similarity averaged over the rows.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
-Helper function to quickly calculate the Jaccard similarity between the rows
-across the two matrices.
+Helper function to quickly calculate the Jaccard similarity between
+matching rows of the two matrices. Each row is treated as a set of
+integers (duplicates removed).
 }

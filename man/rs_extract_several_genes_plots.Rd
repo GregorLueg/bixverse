@@ -12,18 +12,21 @@ rs_extract_several_genes_plots(f_path, cell_indices, gene_indices, scale, clip)
 \item{cell_indices}{Integer positions (0-indexed!) that defines the cells
 to keep.}
 
-\item{gene_indices}{Integer. Gene index position to return (0-indexed!).}
+\item{gene_indices}{Integer vector. Gene index positions to return
+(0-indexed!).}
 
-\item{scale}{Boolean. Shall the normalised counts be scaled.}
+\item{scale}{Boolean. Shall the normalised counts be z-scored per gene
+across the selected cells.}
 
-\item{clip}{Optional float. Clipping for the Z-scores if scale is set to
-\code{TRUE}}
+\item{clip}{Optional float. Clips the Z-scores to \verb{[-clip, clip]}. Only
+used if \code{scale = TRUE}.}
 }
 \value{
-A list of dense vectors of the normalised counts.
+A list of numerical vectors, one per gene in \code{gene_indices}, each
+with one normalised value per cell in \code{cell_indices}.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
-Extract the single cell counts of several genes at ones.
+Extract the normalised single cell counts of several genes at once.
 }
 \keyword{internal}

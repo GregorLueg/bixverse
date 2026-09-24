@@ -7,8 +7,8 @@
 rs_simple_and_multi_err(n_more_extreme, nperm, sample_size)
 }
 \arguments{
-\item{n_more_extreme}{Integer vector. The number of times the ES was larger than the
-permutations.}
+\item{n_more_extreme}{Integer vector. The number of times the ES was larger
+than the permutations.}
 
 \item{nperm}{Integer. Number of permutations.}
 

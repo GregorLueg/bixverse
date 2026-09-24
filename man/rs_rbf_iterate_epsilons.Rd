@@ -15,16 +15,16 @@ to.}
 \item{original_dim}{Integer. The original dimensions of the symmetric
 distance matrix.}
 
-\item{shift}{Boolean. Was the matrix shifted up (false = diagonal included;
-true diagonal not incldued).}
+\item{shift}{Boolean. Was the matrix shifted up (\code{FALSE} = diagonal
+included; \code{TRUE} = diagonal not included).}
 
-\item{rbf_type}{String. One of \code{c('gaussian', 'bump', 'inverse_quadratic')}
-for the currently implemented RBF function. Weird strings will default
-to Gaussian.}
+\item{rbf_type}{String. One of \code{c("gaussian", "bump", "inverse_quadratic")}
+for the currently implemented RBF function. Unknown strings default to
+Gaussian.}
 }
 \value{
-A matrix with rows being the epsilons tested, and columns
-representing the summed affinity to other features.
+A matrix with rows representing the features and columns the
+epsilons tested. Values are the summed affinity to other features.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}

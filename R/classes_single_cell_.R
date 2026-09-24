@@ -51,7 +51,8 @@ new_sc_cache <- function() {
     other_embeddings = list(),
     knn = NULL,
     snn_graph = NULL,
-    magic = NULL
+    magic = NULL,
+    residual_fit = NULL
   )
 
   class(sc_cache) <- "ScCache"
@@ -269,6 +270,31 @@ remove_magic.ScCache <- function(x, ...) {
   checkmate::assertClass(x, "ScCache")
 
   x[["magic"]] <- NULL
+
+  return(x)
+}
+
+#' @rdname set_residual_fit
+#'
+#' @export
+set_residual_fit.ScCache <- function(x, residual_fit, ...) {
+  # checks
+  checkmate::assertClass(x, "ScCache")
+  checkmate::assertClass(residual_fit, "ScResidualFit")
+
+  x[["residual_fit"]] <- residual_fit
+
+  return(x)
+}
+
+#' @rdname remove_residual_fit
+#'
+#' @export
+remove_residual_fit.ScCache <- function(x, ...) {
+  # checks
+  checkmate::assertClass(x, "ScCache")
+
+  x[["residual_fit"]] <- NULL
 
   return(x)
 }
@@ -575,6 +601,16 @@ get_magic.ScCache <- function(x, ...) {
   checkmate::assertClass(x, "ScCache")
 
   return(x[["magic"]])
+}
+
+#' @rdname get_residual_fit
+#'
+#' @export
+get_residual_fit.ScCache <- function(x, ...) {
+  # checks
+  checkmate::assertClass(x, "ScCache")
+
+  return(x[["residual_fit"]])
 }
 
 # s7 ---------------------------------------------------------------------------
@@ -1633,6 +1669,36 @@ S7::method(get_magic, SingleCells) <- function(
   return(.drop_stamp(res))
 }
 
+#' @name get_residual_fit.SingleCells
+#'
+#' @rdname get_residual_fit
+#'
+#' @method get_residual_fit SingleCells
+S7::method(get_residual_fit, SingleCells) <- function(
+  x,
+  ...
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
+
+  # forward to S3
+  res <- get_residual_fit(
+    x = S7::prop(x, "sc_cache")
+  )
+
+  if (is.null(res)) {
+    warning(paste(
+      "No fitted residual model found in the class.",
+      "Run fit_residuals_sc() first. Returning NULL."
+    ))
+    return(NULL)
+  }
+
+  .warn_sc_state(x, artefact = "residuals")
+
+  return(.drop_stamp(res))
+}
+
 #### available variables -------------------------------------------------------
 
 #' @method get_sc_available_features SingleCells
@@ -2352,6 +2418,51 @@ S7::method(remove_magic, SingleCells) <- function(
   return(x)
 }
 
+#' @name set_residual_fit.SingleCells
+#'
+#' @rdname set_residual_fit
+#'
+#' @method set_residual_fit SingleCells
+S7::method(set_residual_fit, SingleCells) <- function(
+  x,
+  residual_fit,
+  ...
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
+  checkmate::assertClass(residual_fit, "ScResidualFit")
+
+  # add the data using the S3 method
+  S7::prop(x, "sc_cache") <- set_residual_fit(
+    x = S7::prop(x, "sc_cache"),
+    residual_fit = residual_fit
+  )
+
+  x <- .stamp_artefact(x, artefact = "residuals", from = .stamp_from(...))
+
+  return(x)
+}
+
+#' @name remove_residual_fit.SingleCells
+#'
+#' @rdname remove_residual_fit
+#'
+#' @method remove_residual_fit SingleCells
+S7::method(remove_residual_fit, SingleCells) <- function(
+  x,
+  ...
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
+
+  # add the data using the S3 method
+  S7::prop(x, "sc_cache") <- remove_residual_fit(
+    x = S7::prop(x, "sc_cache")
+  )
+
+  return(x)
+}
+
 ### generic / primitives -------------------------------------------------------
 
 #' @noRd
@@ -2382,6 +2493,17 @@ S7::method(print, SingleCells) <- function(x, ...) {
     sprintf("%i genes", length(magic[["features"]]))
   }
 
+  residual_fit <- sc_cache[["residual_fit"]]
+  residual_str <- if (is.null(residual_fit)) {
+    "none"
+  } else {
+    sprintf(
+      "%s (%i group(s))",
+      residual_fit[["method"]],
+      residual_fit[["n_groups"]]
+    )
+  }
+
   cat(
     "Single cell experiment (Single Cells).\n",
     sprintf("  No cells (original): %i\n", dims[1]),
@@ -2393,6 +2515,7 @@ S7::method(print, SingleCells) <- function(x, ...) {
     sprintf("  KNN generated: %s\n", knn_generated),
     sprintf("  SNN generated: %s\n", snn_generated),
     sprintf("  MAGIC imputed: %s\n", magic_str),
+    sprintf("  Residual model: %s\n", residual_str),
     sprintf("  Stale artefacts: %s\n", .print_stale_str(x)),
     sep = ""
   )

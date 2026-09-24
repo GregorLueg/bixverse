@@ -7,8 +7,8 @@
 rs_metacell_density(knn_data, n_dcs, k_density, knn_params, verbose, seed)
 }
 \arguments{
-\item{knn_data}{Named list. Needs to have the relevant data from the kNN
-graph.}
+\item{knn_data}{Named list. The kNN data with \code{indices} (0-indexed!),
+\code{dist}, \code{k} and \code{dist_metric}.}
 
 \item{n_dcs}{Integer. The number of diffusion coordinates to return.
 Typically \code{10}.}
@@ -17,7 +17,7 @@ Typically \code{10}.}
 estimation. Typically \code{150}.}
 
 \item{knn_params}{List. The kNN parameters defined by
-\code{\link[=params_sc_neighbours]{params_sc_neighbours()}}.}
+\code{\link[=params_sc_neighbours]{params_sc_neighbours()}}, used for the search in diffusion space.}
 
 \item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
 detailed verbosity.}
@@ -27,15 +27,20 @@ detailed verbosity.}
 \value{
 A list with the following items
 \itemize{
-\item dcs - Density coordinates
-\item density_distances - Density distances at \code{k_density} neighbours.
-\item regions - Region of the manifold where this given cell is.
+\item dcs - Numerical matrix of cells x \code{n_dcs} with the multiscale
+diffusion components.
+\item density_distances - Numerical vector. Distance to the
+\code{k_density}-th neighbour in diffusion space per cell.
+\item regions - Character vector. \code{"high"}, \code{"mid"} or \code{"low"} density
+per cell.
 }
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
-Generates diffusion maps and identifies in which density region a given
-cell sits (defined as distance to k-nearest neighbours quite).
+Builds multiscale diffusion components from the kNN graph and uses the
+distance to the \code{k_density}-th neighbour in that space as a density proxy.
+The lower quartile of these distances is tagged high density, the upper
+quartile low density, the rest mid.
 }
 \references{
 Persad, et al., Nat. Biotechnol., 2023.

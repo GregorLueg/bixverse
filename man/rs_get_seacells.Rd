@@ -19,18 +19,21 @@ rs_get_seacells(
 \arguments{
 \item{f_path}{String. Path to the \code{counts_cells.bin} file.}
 
-\item{embd}{Numerical matrix. The embedding matrix (for example PCA embedding)
-used for the generation of the kNN graph and kernel matrix.}
+\item{embd}{Numerical matrix. The embedding matrix (for example PCA
+embedding) used for the generation of the kNN graph and kernel matrix.}
 
-\item{cells_to_keep}{Optional indices of the cells to keep, i.e., the
-cells used for the generation of the embedding.}
+\item{cells_to_keep}{Optional integer vector. Original cell indices
+(0-indexed!) of the rows of \code{embd}, in row order. If \code{NULL}, the rows are
+assumed to map one-to-one onto the count file.}
 
-\item{cells_to_use}{Optional indices of cells to use for meta cell
-generation. Useful if you wish to generate meta cells in specific cell
-types.}
+\item{cells_to_use}{Optional integer vector. Original cell indices
+(0-indexed!) to restrict the meta cell generation to, e.g. specific cell
+types. The kNN graph is then regenerated on the subset. Cells not in
+\code{cells_to_keep} are dropped silently.}
 
 \item{knn_data}{Optional list. This contains pre-computed kNN data
-(including distances). The user has to ensure consistency!}
+(including distances). The user has to ensure consistency! Ignored when
+\code{cells_to_use} is set.}
 
 \item{seacells_params}{A list containing the SEACells parameters.}
 
@@ -45,13 +48,16 @@ detailed verbosity.}
 \value{
 A list with the following elements:
 \itemize{
-\item assignments - A list containing assignment information with elements:
-assignments (vector), metacells (list), unassigned (vector), n_metacells,
-n_cells, n_unassigned
-\item aggregated - A list with indptr, indices, raw_counts, norm_counts,
-nrow, ncol in sparse format.
-\item rss - Vector of RSS values from each iteration.
-\item archetypes - Vector of cell indices selected as archetypes.
+\item assignments - A list with \code{assignments} (integer vector with the
+1-indexed meta cell id per original cell, \code{-1} if unassigned),
+\code{metacells} (list of 1-indexed original cell indices per meta cell),
+\code{unassigned} (1-indexed), \code{n_metacells}, \code{n_cells} and \code{n_unassigned}.
+Empty archetypes are dropped and the ids renumbered.
+\item aggregated - A CSR list (meta cells x genes) with indptr, indices,
+raw_counts, norm_counts, nrow and ncol.
+\item rss - Numerical vector of RSS values from each iteration.
+\item archetypes - Integer vector with the original cell indices
+(0-indexed!) of the archetypes of the retained meta cells.
 }
 }
 \description{

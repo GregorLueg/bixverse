@@ -14,24 +14,27 @@ rs_pairwise_gene_cors_mc(
 }
 \arguments{
 \item{sparse_data}{A named list that needs to have \code{data}, \code{indptr},
-\code{indices}, \code{nrow}, \code{ncol} and \code{format}.}
+\code{indices}, \code{nrow}, \code{ncol} and \code{cs_type}. Shape is (metacells, genes),
+holding the normalised counts.}
 
 \item{gene_indices_1}{Integer. The gene indices for the first set of genes.
 Must be 0-indexed!}
 
-\item{gene_indices_2}{Integer. The gene indices for the first set of genes.
-Must be 0-indexed!}
+\item{gene_indices_2}{Integer. The gene indices for the second set of
+genes, same length as \code{gene_indices_1}. Must be 0-indexed!}
 
-\item{spearman}{Boolean. Shall the spearman correlation be calculated.}
+\item{spearman}{Boolean. Shall the Spearman correlation be calculated.}
 
 \item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -
 detailed verbosity.}
 }
 \value{
-The vector of correlations between the pairs of gene_indices_1
-and gene_indices_2
+Numeric vector with one correlation per pair of \code{gene_indices_1}
+and \code{gene_indices_2}.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+Correlates \code{gene_indices_1[i]} against \code{gene_indices_2[i]} over the meta
+cells, in memory.
 }
 \keyword{internal}

@@ -42,7 +42,8 @@ meta <- data.table::data.table(
   sample_id = colnames(syn$counts),
   case_control = rep(c("case", "control"), each = 50)
 )
-norm_counts <- edgeR::cpm(syn$counts, log = TRUE)
+norm_counts <- rs_cpm(syn$counts, lib_size = NULL, log = TRUE,
+  prior_count = 2)
 res <- hedges_g_dge(
   meta_data = meta,
   main_contrast = "case_control",

@@ -1,6 +1,6 @@
 ---
 name: bixverse
-description: How to USE the bixverse R package for bioinformatics and computational biology analysis. Covers installation, the single cell suite (SingleCells, MetaCells, SingleCellsMultiModal, SingleCellsSubset), gene set enrichment and GSEA, bulk differential expression and co-expression modules, network diffusion, and ontology semantic similarity. Use this whenever a task involves bixverse, or any of its classes and generics (SingleCells, BulkDge, BulkCoExp, NetworkDiffusions, OntologySim, find_hvg_sc, calculate_pca_sc, gse_hypergeometric, params_* bundles), or when a user asks for single cell QC, clustering, marker genes, doublet detection, batch correction, metacells, GO enrichment, GSEA, pathway activity scoring, or co-expression module detection in R. Apply even when the package is not named but the user is working in an R session where bixverse is loaded.
+description: How to USE the bixverse R package for bioinformatics and computational biology analysis. Covers installation, the single cell suite (SingleCells, MetaCells, SingleCellsMultiModal, SingleCellsSubset), gene set enrichment and GSEA, bulk differential expression and co-expression modules, network diffusion, and ontology semantic similarity. Use this whenever a task involves bixverse, or any of its classes and generics (SingleCells, BulkDge, BulkCoExp, NetworkDiffusions, OntologySim, find_hvg_sc, calculate_pca_sc, gse_hypergeometric, params_* bundles), or when a user asks for single cell QC, clustering, marker genes, doublet detection, ambient RNA removal, Pearson residuals or scTransform, batch correction, metacells, GO enrichment, GSEA, pathway activity scoring, limma-voom or edgeR differential expression, or co-expression module detection in R. Apply even when the package is not named but the user is working in an R session where bixverse is loaded.
 ---
 
 # Using bixverse
@@ -10,7 +10,7 @@ R package, but the heavy numerics happen in Rust, so it handles data sizes that
 would kill a normal R session. A million cells on a laptop is the design target,
 not a stretch goal.
 
-The API is large: roughly 515 user-facing functions across single cell, gene set
+The API is large: ~750 exported functions across single cell, gene set
 enrichment, bulk RNAseq, graphs and ontologies. Do not guess at signatures.
 Check `references/api-index.md` for whether something exists, then `?fn` for how
 to call it.
@@ -27,7 +27,7 @@ find_neighbours_sc(obj, neighbours_params = params_sc_neighbours(
 ```
 
 Each bundle has a matching checkmate assertion, so a malformed one fails at the
-call site with a readable message. There are 69 of them and they're all in the
+call site with a readable message. There are ~80 of them and they're all in the
 API index.
 
 **2. Analysis objects are S7 and the chain returns the object.** The shape is
@@ -46,9 +46,10 @@ than guessing, and much cheaper than recomputing a PCA you didn't need to.
 | Installing, Rust toolchain, missing dependencies, sister packages | `references/install.md` |
 | `params_*()`, S7 chains, naming, getters, what mutates what | `references/conventions.md` |
 | Single cell: load, QC, doublets, HVG, PCA, batch correction, clustering, embeddings, markers | `references/single-cell.md` |
+| Single cell: Pearson residuals / scTransform, ambient RNA removal (CellSweep) | `references/single-cell.md` |
 | Single cell downstream: gene set scoring, SCENIC, topic models, differential expression, Hotspot, trajectory, miloR, metacells, CITE-seq, reference mapping | `references/single-cell-analysis.md` |
 | Hypergeometric tests, GO elimination, GSEA, GSVA, ssGSEA, singscore | `references/enrichment.md` |
-| Bulk RNAseq: differential expression, co-expression modules, ICA, NMF, contrastive PCA | `references/bulk.md` |
+| Bulk RNAseq: limma-voom and edgeR QL (no limma/edgeR install needed), effect sizes, co-expression modules, ICA, NMF, contrastive PCA | `references/bulk.md` |
 | Network diffusion, RBH graphs, similarity network fusion, ontology semantic similarity | `references/graphs-ontology.md` |
 | Does function X exist? What's it called? | `references/api-index.md` |
 

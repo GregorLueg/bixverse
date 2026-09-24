@@ -8,15 +8,17 @@ rs_mc_pca(sparse_data, no_pcs, pca_params, clr_offsets, seed, verbose)
 }
 \arguments{
 \item{sparse_data}{A named list that needs to have \code{data}, \code{indptr},
-\code{indices}, \code{nrow}, \code{ncol} and \code{format}.}
+\code{indices}, \code{nrow}, \code{ncol} and \code{cs_type}. Shape is (metacells, genes),
+holding the normalised counts of the genes to use.}
 
 \item{no_pcs}{Integer. Number of PCs to return.}
 
 \item{pca_params}{Named list. Contains the parameters to use for this PCA
-run.}
+run, see \code{\link[=params_sc_pca]{params_sc_pca()}}.}
 
-\item{clr_offsets}{Optional numeric. If you wish to use the \code{PFlogPF}
-normalisation prior to PCA from Booeshaghi, et al.}
+\item{clr_offsets}{Optional numeric. One offset per meta cell for the
+\code{PFlogPF} normalisation from Booeshaghi, et al., computed against the full
+gene panel. Required if \code{pca_params$clr} is \code{TRUE}, ignored otherwise.}
 
 \item{seed}{Integer. Random seed for the randomised SVD.}
 
@@ -24,7 +26,7 @@ normalisation prior to PCA from Booeshaghi, et al.}
 detailed verbosity.}
 }
 \value{
-A list with with the following items
+A list with the following items
 \itemize{
 \item scores - The samples projected on the PCA space (solved via sparse
 SVD).
@@ -38,7 +40,8 @@ SVD).
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 Calculates PCA for MetaCells or more generally speaking sparse
 data. This is happening in-memory compared to the (usually much) larger
-single cell data sets.
+single cell data sets. The matrix is densified, optionally CLR transformed
+and scaled according to \code{pca_params} before the SVD.
 }
 \references{
 Booeshaghi, et al., bioRxive, 2026.

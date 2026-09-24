@@ -43,7 +43,7 @@ fn parse_rank_type(stable: bool) -> SingscoreRankType {
 ///
 /// ### Params
 ///
-/// * `obj` - The R memory object
+/// * `obj` - The R memory object. `NULL` or a 1-based integer vector.
 ///
 /// ### Returns
 ///
@@ -61,11 +61,11 @@ fn parse_optional_indices(obj: Robj) -> extendr_api::Result<Option<Vec<usize>>> 
 ///
 /// ### Params
 ///
-/// * `v` -
+/// * `v` - Optional numeric vector
 ///
 /// ### Returns
 ///
-/// The underlying R object
+/// The vector as R object, or `NULL` if `v` is `None`.
 fn optional_vec_to_robj(v: Option<Vec<f64>>) -> Robj {
     match v {
         Some(vec) => Robj::from(vec),
@@ -141,9 +141,9 @@ fn rs_rank_matrix_col_stable(
 /// Becomes irrelevant when `down_set` is also provided.
 /// @param stable Boolean. If `TRUE`, use stable-gene score bounds.
 ///
-/// @returns A named list with `TotalScore`, `TotalDispersion`, and (when
-/// `down_set` is provided) `UpScore`, `UpDispersion`, `DownScore`,
-/// `DownDispersion`.
+/// @returns A named list with `total_score`, `total_dispersion`, `up_score`,
+/// `up_dispersion`, `down_score` and `down_dispersion`. The last four are
+/// `NULL` unless `down_set` is provided.
 ///
 /// @export
 #[extendr]
@@ -195,20 +195,21 @@ fn rs_singscore_single(
 /// paired down sets.
 ///
 /// @param ranks Numerical matrix. The ranked expression matrix.
-/// @param up_list List. Up gene sets as zero-indexed indices. See
+/// @param up_list List. Up gene sets as 0-based indices. See
 /// [bixverse::rs_prepare_gsva_gs()].
-/// @param down_list List or NULL. Paired down gene sets, same length and
-/// ordering as `up_list`.
-/// @param center_score Boolean.
-/// @param known_direction Boolean.
-/// @param stable Boolean.
+/// @param down_list List or NULL. Paired down gene sets as 0-based indices,
+/// same length and ordering as `up_list`.
+/// @param center_score Boolean. Centre scores around 0. Disabled internally
+/// when `known_direction = FALSE`.
+/// @param known_direction Boolean. Whether the up-set direction is known.
+/// @param stable Boolean. If `TRUE`, use stable-gene score bounds.
 ///
 /// @returns A named list with
 /// \itemize{
 ///   \item `scores` - Numerical matrix with the scores
-///   \item `dispersion` - Numerical matrix with the dispersions
+///   \item `dispersions` - Numerical matrix with the dispersions
 /// }
-/// Both matrices are of shape gene_sets × samples.
+/// Both matrices are of shape gene sets x samples.
 ///
 /// @export
 #[extendr]
@@ -257,15 +258,15 @@ fn rs_singscore_multi(
 /// one-tailed p-values: `max(1 / n_permutations, mean(null > observed))`.
 ///
 /// @param ranks Numerical matrix. The ranked expression matrix.
-/// @param up_set Integer vector. Zero-indexed.
-/// @param down_set Integer vector or NULL.
+/// @param up_set Integer vector. One-indexed (shifted internally).
+/// @param down_set Integer vector or NULL. One-indexed (shifted internally).
 /// @param center_score,known_direction,stable Booleans. Should match the
 /// values used for the real [bixverse::rs_singscore_single()] call.
 /// @param n_permutations Integer. Number of random draws (B).
 /// @param seed Integer. RNG seed.
 ///
 /// @returns A named list with `observed_scores` (length n_samples),
-/// `null_distribution` (B × n_samples matrix), and `p_values`
+/// `null_distribution` (B x n_samples matrix), and `p_values`
 /// (length n_samples).
 ///
 /// @export
@@ -282,7 +283,7 @@ fn rs_singscore_permutation_test(
     seed: usize,
 ) -> extendr_api::Result<List> {
     let ranks_faer = r_matrix_to_faer(&ranks);
-    let up: Vec<usize> = up_set.iter().map(|&x| x as usize).collect();
+    let up: Vec<usize> = up_set.r_int_convert_shift();
     let down = parse_optional_indices(down_set)?;
 
     let result = singscore_permutation_test(

@@ -28,7 +28,7 @@ you wish to use the PFlogPF transformation during the optional PCA step.}
 these are batch-aware highly variable genes.}
 
 \item{batch_indices}{Integer vector. These represent to which batch a given
-cell belongs.}
+cell belongs (0-indexed!).}
 
 \item{precomputed_pca}{Optional PCA matrix. If you want to provide a
 pre-computed matrix.}
@@ -41,7 +41,8 @@ detailed verbosity.}
 \item{seed}{Integer. Seed for reproducibility purposes.}
 }
 \value{
-The batch-corrected embedding space.
+Numerical matrix, cells x dimensions, with the batch-corrected
+embedding.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}

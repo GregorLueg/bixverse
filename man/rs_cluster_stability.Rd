@@ -12,12 +12,12 @@ resampling/bootstrap and the rows represent the features, while each integer
 indicates cluster membership.}
 }
 \value{
-A list containing:
+A list containing, one entry per feature:
 \itemize{
-\item mean_jaccard - mean Jaccard similarities for this feature across all
-the bootstraps, resamplings.
-\item std_jaccard - the standard deviation of the Jaccard similarities for
-this feature across all the bootstraps, resamplings.
+\item mean_jaccard - mean Jaccard similarity of the feature's cluster
+across all pairs of bootstraps/resamplings.
+\item std_jaccard - the (population) standard deviation of these Jaccard
+similarities.
 }
 }
 \description{

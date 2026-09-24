@@ -87,7 +87,8 @@ fn rs_nmf_single_bulk(
 /// @param x Numerical matrix. Rows = samples, columns = features.
 /// @param k Integer. Number of latent factors per run.
 /// @param preprocessing String. One of `c("none", "sd", "sqrt_sd")`.
-/// @param nmf_hals_params Named list. See [bixverse::params_nmf_hals()].
+/// @param nmf_hals_params Named list. See [bixverse::params_nmf_hals()]. The
+/// `nmf_init` field is ignored, restarts always use random initialisation.
 /// @param n_runs Integer. Number of random restarts.
 /// @param seed Integer. Base random seed. Run `i` uses `seed + i`.
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
@@ -239,7 +240,7 @@ fn rs_nmf_consensus_bulk(
 /// @param nmf_consensus_params Named list. See
 /// [bixverse::params_nmf_consensus()].
 /// @param n_runs Integer. Number of restarts per k. Must be at least 2.
-/// @param seed Integer. Base random seed.
+/// @param seed Integer. Base random seed. The i-th k uses `seed + i * n_runs`.
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
 /// detailed verbosity.
 ///

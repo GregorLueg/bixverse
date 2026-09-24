@@ -208,6 +208,64 @@ expect_equal(
   info = "singscore single - permutation reproducible with same seed"
 )
 
+# Regression: the permutation test must score the same genes as the single
+# scorer; `up_set` used to be passed through unshifted (off by one)
+up_idx <- match(up_set, rownames(ranks))
+down_idx <- match(down_set, rownames(ranks))
+
+single_updn <- rs_singscore_single(
+  ranks = ranks,
+  up_set = up_idx,
+  down_set = down_idx,
+  center_score = TRUE,
+  known_direction = TRUE,
+  stable = FALSE
+)
+perm_updn <- rs_singscore_permutation_test(
+  ranks = ranks,
+  up_set = up_idx,
+  down_set = down_idx,
+  center_score = TRUE,
+  known_direction = TRUE,
+  stable = FALSE,
+  n_permutations = 10L,
+  seed = 42L
+)
+
+expect_equal(
+  current = perm_updn$observed_scores,
+  target = single_updn$total_score,
+  info = "singscore permutation - observed matches single (up and down)"
+)
+
+# The last gene used to index out of bounds
+up_last <- c(1L, 5L, no_genes)
+
+single_last <- rs_singscore_single(
+  ranks = ranks,
+  up_set = up_last,
+  down_set = NULL,
+  center_score = TRUE,
+  known_direction = FALSE,
+  stable = FALSE
+)
+perm_last <- rs_singscore_permutation_test(
+  ranks = ranks,
+  up_set = up_last,
+  down_set = NULL,
+  center_score = TRUE,
+  known_direction = FALSE,
+  stable = FALSE,
+  n_permutations = 10L,
+  seed = 42L
+)
+
+expect_equal(
+  current = perm_last$observed_scores,
+  target = single_last$total_score,
+  info = "singscore permutation - observed matches single (last gene in set)"
+)
+
 ### missing genes -------------------------------------------------------------
 
 # Mix of present and missing — should still score on the present ones

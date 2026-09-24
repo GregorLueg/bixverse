@@ -36,8 +36,8 @@ consider during the Limma Voom modelling.}
 \item{small_sample_correction}{Can be NULL (automatic determination if a
 small sample size correction should be applied) or a Boolean.}
 
-\item{...}{Additional parameters to forward to \code{\link[limma:eBayes]{limma::eBayes()}} or
-\code{\link[limma:voom]{limma::voom()}}.}
+\item{...}{Additional parameters that used to go to limma's \code{eBayes()} or
+\code{voom()}.}
 
 \item{.verbose}{Controls verbosity of the function.}
 }

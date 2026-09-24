@@ -7,17 +7,20 @@
 rs_top_k_targets(matrix, k, margin, min_value)
 }
 \arguments{
-\item{matrix}{Numeric matrix with genes x TF importance values}
+\item{matrix}{Numeric matrix with genes (rows) x TFs (columns) importance
+values. Must carry row and column names.}
 
 \item{k}{Integer. Number of top genes / TFs to extract.}
 
-\item{margin}{If set to 1, the top k TFs per gene are used. If set to 2, the
-top k genes per TF are used. Both versions were used in the original paper.}
+\item{margin}{Integer. If set to 1, the top k TFs per gene are used. If set
+to 2, the top k genes per TF are used. Both versions were used in the
+original paper. Any other value errors.}
 
-\item{min_value}{Float. An}
+\item{min_value}{Optional float. Pairs with an importance below this are
+never selected.}
 }
 \value{
-A list with three vectors: tf, gene, importance
+A list with three vectors: \code{tf}, \code{gene}, \code{importance}.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}

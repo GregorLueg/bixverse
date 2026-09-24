@@ -57,7 +57,8 @@ controls only ever carry background, and any column named as neither is a
 generic background-only protein. Counts follow a negative-binomial draw with
 an additive background plus per-cell-type signal, a per-cell capture
 efficiency factor, and an optional per-batch staining multiplier. Cell type
-and batch assignment match \code{rs_synthetic_sc_with_cell_types()} cell-for-cell
+and batch assignment match \code{rs_synthetic_sc_data_with_cell_types()}
+cell-for-cell
 for matched inputs, so RNA and ADT can be paired for multi-modal tests.
 }
 \keyword{internal}

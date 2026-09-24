@@ -17,9 +17,11 @@ Recommended size: 10000L.}
 \item{seed}{Seed.}
 }
 \value{
-The AUC.
+The approximate AUC.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
-This function calculates rapidly AUCs based on an approximation.
+This function calculates rapidly AUCs based on an approximation: the
+fraction of \code{iters} random (positive, negative) pairs, drawn with
+replacement, where the positive score is larger.
 }

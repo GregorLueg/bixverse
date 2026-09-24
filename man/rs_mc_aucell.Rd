@@ -8,7 +8,7 @@ rs_mc_aucell(sparse_data, gs_list, aucell_params, verbose)
 }
 \arguments{
 \item{sparse_data}{A named list that needs to have \code{data}, \code{indptr},
-\code{indices}, \code{nrow}, \code{ncol} and \code{format}.}
+\code{indices}, \code{nrow}, \code{ncol} and \code{cs_type}. Shape is (metacells, genes).}
 
 \item{gs_list}{List. List with the gene set indices (0-indexed!) of the
 genes of interest.}
@@ -20,8 +20,8 @@ genes of interest.}
 detailed verbosity.}
 }
 \value{
-A matrix of cells x gene sets with the values representing the
-AUC.
+A matrix of meta cells x gene sets with the values representing
+the AUC.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
@@ -29,5 +29,7 @@ The function will take in a list of gene set indices (0-indexed!) and
 calculate an AUCell type statistic. Three options here: the recovery-curve
 AUC of Aibar, et al. (the actual AUCell statistic), an AUC derived from the
 Mann-Whitney statistic, or average precision. This version works on
-MetaCell counts which are stored in memory directly.
+MetaCell counts which are stored in memory directly. Genes are ranked
+within each meta cell on the second layer, an \code{f32} cast of the supplied
+counts.
 }

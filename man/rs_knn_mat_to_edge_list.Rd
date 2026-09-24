@@ -8,16 +8,16 @@ rs_knn_mat_to_edge_list(knn_mat, one_index)
 }
 \arguments{
 \item{knn_mat}{Integer matrix. Rows represent the samples and the columns
-the indices of the k-nearest neighbours.}
+the 0-based indices of the k-nearest neighbours.}
 
-\item{one_index}{Boolean. If the original data is 0-index, shall 1-indexed
-data be returned.}
+\item{one_index}{Boolean. Shall 1-based indices be returned.}
 }
 \value{
-A flat vector representing the edge list.
+A flat vector representing the edge list, alternating from and
+to, i.e. \code{c(from_1, to_1, from_2, to_2, ...)}.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
-Helper function to leverage Rust to transform a kNN matrix into two vectors
-of from, to
+Helper function to leverage Rust to transform a kNN matrix into a flat
+edge list.
 }

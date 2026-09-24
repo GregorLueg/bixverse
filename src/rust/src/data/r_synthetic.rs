@@ -21,6 +21,8 @@ extendr_module! {
     fn rs_synthetic_sc_adt_with_cell_types;
     // -- dialogue --
     fn rs_synthetic_sc_dialogue_data;
+    // -- cellsweep --
+    fn rs_synthetic_sc_cellsweep_data;
 }
 
 //////////
@@ -127,31 +129,33 @@ fn rs_simulate_dropouts(
 /// @description
 /// `r lifecycle::badge("experimental")`
 /// Helper function to generate synthetic single cell data with optional
-/// bathc effects and sample bias.
+/// batch effects and sample bias.
 ///
 /// @param n_cells Integer. Number of cells to generate.
 /// @param n_genes Integer. Number of genes to generate.
-/// @param n_batches Integer. Number of the batches to generated.
+/// @param n_batches Integer. Number of batches to generate.
 /// @param n_samples Optional integer. Shall the cells be distributed over
-/// `n_samples` samples.
-/// @param cell_configs A nested list that indicates which gene indices
-/// are markers for which cell.
-/// @param batch_effect_strength String. One of `c("strong", "medium", "low")`.
-/// Defines the strength of the added batch effect.
+/// `n_samples` samples. Only used together with `sample_bias`.
+/// @param cell_configs List. One element per cell type, each a list with a
+/// `marker_genes` integer vector of 0-based marker gene indices.
+/// @param batch_effect_strength String. One of `c("strong", "medium", "weak")`.
+/// Defines the strength of the added batch effect. Unknown values fall back to
+/// `"strong"`.
 /// @param sample_bias Optional string. One of
-/// `c("even", "slightly_uneven", "very_uneven")`
+/// `c("even", "slightly_uneven", "very_uneven")`. Other values raise an error.
 /// @param seed Integer. Random seed for reproducibility.
 ///
 /// @returns A list with the following items.
 /// \itemize{
-///   \item data - The synthetic raw counts.
+///   \item data - The synthetic raw counts, CSR over cells.
 ///   \item indptr - The index pointers of the cells.
-///   \item indices - The indices of the genes for the given cells.
-///   \item nrow - Number of rows.
-///   \item ncol - Number of columns
-///   \item cell_type_indices - Vector indicating which cell type this is.
-///   \item batch_indices - Vector indicating the batch.
-///   \item sample_indices - Optional sample indices if asked for.
+///   \item indices - The 0-based gene indices for the given cells.
+///   \item nrow - Number of cells.
+///   \item ncol - Number of genes.
+///   \item cell_type_indices - 0-based cell type per cell.
+///   \item batch_indices - 0-based batch per cell.
+///   \item sample_indices - 0-based sample per cell. `NULL` unless both
+///   `n_samples` and `sample_bias` are provided.
 /// }
 ///
 /// @export
@@ -229,7 +233,8 @@ fn rs_synthetic_sc_data_with_cell_types(
 /// generic background-only protein. Counts follow a negative-binomial draw with
 /// an additive background plus per-cell-type signal, a per-cell capture
 /// efficiency factor, and an optional per-batch staining multiplier. Cell type
-/// and batch assignment match `rs_synthetic_sc_with_cell_types()` cell-for-cell
+/// and batch assignment match `rs_synthetic_sc_data_with_cell_types()`
+/// cell-for-cell
 /// for matched inputs, so RNA and ADT can be paired for multi-modal tests.
 ///
 /// @param n_cells Integer. Number of cells (matrix rows).
@@ -308,14 +313,14 @@ fn rs_synthetic_sc_adt_with_cell_types(
 /// over different sample to cell type patterns
 ///
 /// @param cell_type_indices Integer vector. Each integer represents a cell
-/// type.
+/// type (0-based, as returned by `rs_synthetic_sc_data_with_cell_types()`).
 /// @param n_samples Integer. Number of different sample ids to generate.
 /// @param sample_bias String. One of
-/// `c("even", "slightly_uneven", "very_uneven")`. Determins the cell type
-/// to sample id associations.
+/// `c("even", "slightly_uneven", "very_uneven")`. Determines the cell type
+/// to sample id associations. Other values raise an error.
 /// @param seed Integer. Random seed for reproducibility.
 ///
-/// @returns An integer vector representing the samples.
+/// @returns An integer vector with the 0-based sample per cell.
 ///
 /// @export
 ///
@@ -451,5 +456,109 @@ fn rs_synthetic_sc_dialogue_data(
         quality = synthetic.quality,
         latent = synthetic.latent,
         planted = planted
+    ))
+}
+
+/////////////////
+// Cell sweep  //
+/////////////////
+
+/// Generates synthetic single cell counts with a planted ambient profile
+///
+/// @description
+/// `r lifecycle::badge("experimental")`
+/// Builds the fixture CellSweep is tested against. Every real barcode is a
+/// two-component multinomial: a planted fraction `alpha` of its library comes
+/// from the soup, the rest from its own cell type profile. Empty droplets are
+/// pure soup at a much smaller library size, which is what the ambient profile
+/// is estimated off. Real barcodes come first in the matrix, empty droplets
+/// after, and cell types are assigned round-robin over the real barcodes.
+///
+/// The soup is cell type one plus flat background rather than a mixture of
+/// every profile. A soup sitting in the span of the cell type profiles makes
+/// the contamination fraction unidentifiable.
+///
+/// @param n_real Integer. Number of real barcodes.
+/// @param n_empty Integer. Number of empty droplets. At least 30, and the
+/// ambient profile gets noisy well above that.
+/// @param n_genes Integer. Number of genes.
+/// @param n_celltypes Integer. Number of cell types.
+/// @param n_markers Integer. Width of each cell type's marker block. Blocks
+/// are disjoint and laid out from the first gene.
+/// @param marker_weight Float. Enrichment of a marker gene over background in
+/// its own cell type's profile. Must exceed 1.
+/// @param ambient_dominance Float. Fraction of the soup coming from the first
+/// cell type. The remainder is flat background.
+/// @param alpha_mean Float. Mean planted ambient fraction across real
+/// barcodes.
+/// @param alpha_sd Float. Spread of the planted ambient fraction.
+/// @param real_lib_size Integer. Expected library size of a real barcode.
+/// @param empty_lib_size Integer. Expected library size of an empty droplet.
+/// @param seed Integer. For reproducibility.
+///
+/// @returns A list with the following items.
+/// \itemize{
+///   \item data - Integer vector. Non-zero counts of the CSR matrix.
+///   \item indptr - Integer vector. Row pointers of the CSR matrix.
+///   \item indices - Integer vector. 0-indexed(!) gene positions.
+///   \item nrow - Integer. Number of barcodes, real plus empty.
+///   \item ncol - Integer. Number of genes.
+///   \item cell_type_indices - Integer vector. 0-indexed(!) cell type per real
+///   barcode. Empty droplets have none.
+///   \item is_empty - Logical vector over all barcodes.
+///   \item alpha_true - Numeric vector. Planted ambient fraction per real
+///   barcode.
+///   \item ambient_true - Numeric vector. The soup, summing to one.
+///   \item celltype_profiles_true - Numeric vector. Cell type profiles,
+///   row-major `n_celltypes x n_genes`, each row summing to one.
+/// }
+///
+/// @export
+///
+/// @keywords internal
+#[allow(clippy::too_many_arguments)]
+#[extendr]
+fn rs_synthetic_sc_cellsweep_data(
+    n_real: usize,
+    n_empty: usize,
+    n_genes: usize,
+    n_celltypes: usize,
+    n_markers: usize,
+    marker_weight: f64,
+    ambient_dominance: f64,
+    alpha_mean: f64,
+    alpha_sd: f64,
+    real_lib_size: usize,
+    empty_lib_size: usize,
+    seed: usize,
+) -> extendr_api::Result<List> {
+    let params = CellSweepSyntheticParams {
+        n_real,
+        n_empty,
+        n_genes,
+        n_celltypes,
+        n_markers,
+        marker_weight,
+        ambient_dominance,
+        alpha_mean,
+        alpha_sd,
+        real_lib_size,
+        empty_lib_size,
+    };
+
+    let synthetic = create_cellsweep_synthetic_data(&params, seed as u64).to_extendr()?;
+    let csr = synthetic.matrix;
+
+    Ok(list!(
+        data = csr.data,
+        indptr = csr.indptr,
+        indices = csr.indices,
+        nrow = csr.shape.0,
+        ncol = csr.shape.1,
+        cell_type_indices = synthetic.cell_type_indices.r_int_convert(),
+        is_empty = synthetic.is_empty,
+        alpha_true = synthetic.alpha_true,
+        ambient_true = synthetic.ambient_true,
+        celltype_profiles_true = synthetic.celltype_profiles_true
     ))
 }

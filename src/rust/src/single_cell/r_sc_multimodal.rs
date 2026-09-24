@@ -26,12 +26,16 @@ extendr_module! {
 /// @description
 /// `r lifecycle::badge("experimental")`
 /// This provides a Rust-based implementation of the WNN algorithm from Hao,
-/// et al.
+/// et al. Both embeddings are L2-normalised per cell, a kNN graph with
+/// `knn_range` neighbours is built per modality, and the per-cell modality
+/// weights are then used to fuse both into one kNN graph.
 ///
-/// @param modality_emb_one Numerical matrix of the first modality. For example
-/// the PCA (or other embeddings) from the transcriptomics.
-/// @param modality_emb_two Numerical matrix of the second modality. For example
-/// the PCA (or other embeddings) from the ADT counts.
+/// @param modality_emb_one Numerical matrix of the first modality, cells x
+/// dimensions. For example the PCA (or other embeddings) from the
+/// transcriptomics.
+/// @param modality_emb_two Numerical matrix of the second modality, same cells
+/// in the same row order. For example the PCA (or other embeddings) from the
+/// ADT counts.
 /// @param wnn_params Named list. The weighted nearest neighbour parameters.
 /// @param seed Integer. For reproducibility purposes.
 /// @param verbose Integer. `0L` - quiet; `1L` - normal verbosity; `2L` -
@@ -39,12 +43,14 @@ extendr_module! {
 ///
 /// @returns A list with
 /// \itemize{
-///   \item indices An integer matrix representing the indices of the
-///  approximate nearest neighbours.
-///  \item dist - An numerical matrix representing the distances to the nearest
-///  neighbours.
-///  \item modality_one_weights - The weights of the first modality.
-///  \item modality_two_weights - The weights of the second modality.
+///   \item indices - Integer matrix of cells x neighbours with the indices
+///   (0-indexed!) of the weighted nearest neighbours.
+///   \item dist - Numerical matrix with the distances to these neighbours.
+///   \item dist_metric - String. Always `"kernelised pseudo-distance"`.
+///   \item modality_one_weights - Numerical vector with the per-cell weights of
+///   the first modality.
+///   \item modality_two_weights - Numerical vector with the per-cell weights of
+///   the second modality.
 /// }
 ///
 /// @export

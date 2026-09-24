@@ -13,7 +13,7 @@ rs_calc_gsea_stat_traditional_batch(
 )
 }
 \arguments{
-\item{stats}{Numeric vector. The gene level statistic. Needs to
+\item{stats}{Numeric vector. The gene level statistic. Needs to be
 sorted in descending nature.}
 
 \item{pathway_scores}{Numeric vector. The enrichment scores for the
@@ -23,7 +23,7 @@ pathways}
 
 \item{iters}{Integer. Number of permutations.}
 
-\item{seed}{Integer For reproducibility purposes}
+\item{seed}{Integer. For reproducibility purposes}
 }
 \value{
 List with the following elements

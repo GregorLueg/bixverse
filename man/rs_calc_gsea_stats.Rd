@@ -13,10 +13,10 @@ rs_calc_gsea_stats(
 )
 }
 \arguments{
-\item{stats}{Numeric vector. The gene level statistic. Needs to
+\item{stats}{Numeric vector. The gene level statistic. Needs to be
 sorted in descending nature.}
 
-\item{gs_idx}{Integer vector. The indices of the gene set genes.}
+\item{gs_idx}{Integer vector. The 1-based indices of the gene set genes.}
 
 \item{gsea_param}{Float. The GSEA parameter. Usually defaults to 1.0.}
 
@@ -28,8 +28,8 @@ for plotting.}
 \value{
 List with the following elements
 \itemize{
-\item gene_stat Enrichment score for that gene set
-\item leading_edge Indicies of the leading edge genes.
+\item es Enrichment score for that gene set
+\item leading_edge 1-based indices of the leading edge genes.
 \item top Top values of the curve.
 \item bottom Bottom values of the curve.
 }

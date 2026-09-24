@@ -1,6 +1,6 @@
 Package: bixverse
 Title: Rust-accelerated standard bioinformatics, computational biology workflows
-Version: 0.5.1
+Version: 0.5.2
 Authors@R: 
     c(
       person(
@@ -48,13 +48,11 @@ Imports:
     DBI,
     dplyr,
     duckdb (>= 1.5.5),
-    edgeR,
     fastcluster,
     ggplot2,
     igraph,
     jsonlite,
     lifecycle,
-    limma,
     magrittr,
     manifoldsR,
     MASS,
@@ -71,16 +69,19 @@ Imports:
     S7,
     stringr,
     zeallot
-Suggests: 
+Suggests:
+    airway,
     biomaRt,
     BiocParallel,
     bixverse.plots,
     cluster,
     e1071,
+    edgeR,
     fgsea,
     GSVA,
     infotheo,
     knitr,
+    limma,
     microbenchmark,
     mitch,
     methods,

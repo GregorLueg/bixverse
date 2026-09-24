@@ -23,19 +23,22 @@ rs_supercell(
 PCA embedding) used for the generation of the kNN graph. Required when
 \code{knn_data} is not provided, and required when using \code{cells_to_use}.}
 
-\item{cells_to_keep}{Optional indices of the cells to keep, i.e., the
-cells used for the generation of the embedding.}
+\item{cells_to_keep}{Optional integer vector. Original cell indices
+(0-indexed!) of the rows of \code{embd} / the kNN data, in row order. If
+\code{NULL}, the rows are assumed to map one-to-one onto the count file.}
 
-\item{cells_to_use}{Optional indices of cells to use for meta cell
-generation. Useful if you wish to generate meta cells in specific cell
+\item{cells_to_use}{Optional integer vector. Original cell indices
+(0-indexed!) to restrict the meta cell generation to, e.g. specific cell
 types. If this is provided, \code{embd} and \code{cells_to_keep} are required and
-the kNN graph will be regenerated on the subset.}
+the kNN graph will be regenerated on the subset. Cells not in
+\code{cells_to_keep} are dropped silently.}
 
 \item{knn_data}{Optional list. This contains pre-computed kNN data
 (including distances). The user has to ensure consistency! Ignored when
 \code{cells_to_use} is set.}
 
-\item{supercell_params}{A list containing the SuperCell parameters.}
+\item{supercell_params}{A list containing the SuperCell parameters. The
+number of meta cells is \code{ceiling(n_cells / graining_factor)}.}
 
 \item{target_size}{Numeric. Target library size for re-normalisation of
 the meta cells. Typically \code{1e4}.}
@@ -48,11 +51,12 @@ detailed verbosity.}
 \value{
 A list with the following elements:
 \itemize{
-\item assignments - A list containing assignment information with elements:
-assignments (vector), metacells (list), unassigned (vector), n_metacells,
-n_cells, n_unassigned
-\item aggregated - A list with indptr, indices, raw_counts, norm_counts,
-nrow, ncol in sparse format.
+\item assignments - A list with \code{assignments} (integer vector with the
+1-indexed meta cell id per original cell, \code{-1} if unassigned),
+\code{metacells} (list of 1-indexed original cell indices per meta cell),
+\code{unassigned} (1-indexed), \code{n_metacells}, \code{n_cells} and \code{n_unassigned}.
+\item aggregated - A CSR list (meta cells x genes) with indptr, indices,
+raw_counts, norm_counts, nrow and ncol.
 }
 }
 \description{

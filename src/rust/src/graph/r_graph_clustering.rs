@@ -33,7 +33,7 @@ extendr_module! {
 /// @param max_iters Integer. Number of iterations for k-means clustering
 /// @param seed Integer. Seed for reproducibility
 ///
-/// @returns A vector with the membership of the samples
+/// @returns A vector with the 1-based cluster membership of the samples.
 ///
 /// @export
 #[extendr]
@@ -64,12 +64,13 @@ fn rs_spectral_clustering_sim(
 /// @description
 /// `r lifecycle::badge("experimental")`
 /// This version can take in data as is and will calculate the distance matrix
-/// internally.
+/// internally and convert it into similarities with a Gaussian RBF.
 ///
 /// @param data Numerical matrix. The data to cluster. Rows = samples, columns =
 /// features.
 /// @param distance_type String. One of
-/// `c("euclidean", "manhattan", "canberra", "cosine")`.
+/// `c("euclidean", "manhattan", "canberra", "cosine", "correlation")`. Unknown
+/// strings raise an error.
 /// @param epsilon Numerical. The epsilon parameter for the Gaussian Radial
 /// Basis function
 /// @param k_neighbours Integer. Number of neighbours to consider in the kNN
@@ -78,7 +79,7 @@ fn rs_spectral_clustering_sim(
 /// @param max_iters Integer. Number of iterations for k-means clustering
 /// @param seed Integer. Seed for reproducibility
 ///
-/// @returns A vector with the membership of the samples
+/// @returns A vector with the 1-based cluster membership of the samples.
 ///
 /// @export
 #[extendr]
@@ -101,6 +102,10 @@ fn rs_spectral_clustering(
         DistanceType::L1Norm => column_pairwise_l1_norm(data),
         DistanceType::Cosine => column_pairwise_cosine_dist(data),
         DistanceType::Canberra => column_pairwise_canberra_dist(data),
+        DistanceType::Correlation => {
+            let cor = bixverse_rs::core::base::cors_similarity::column_pairwise_cor(data, false);
+            faer::Mat::from_fn(cor.nrows(), cor.ncols(), |i, j| 1.0 - cor[(i, j)])
+        }
     };
 
     let params = KMeansParamsWrappers::new(max_iters, None, None);

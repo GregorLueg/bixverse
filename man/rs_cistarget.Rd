@@ -22,25 +22,38 @@ motifs in columns). Lower ranks indicate higher regulatory potential.}
 \item{gs_list}{List of integer vectors. Each element contains 1-based
 indices of genes in the gene set (matching row indices in rankings).}
 
-\item{auc_threshold}{Absolute number of top-ranked genes to use for AUC
-calculation (e.g., for 5\% of 10000 genes, use 500).}
+\item{auc_threshold}{Integer. Absolute number of top-ranked genes to use
+for the AUC calculation (e.g., for 5\% of 10000 genes, use 500).}
 
-\item{nes_threshold}{Normalised Enrichment Score threshold for filtering
-significant motifs}
+\item{nes_threshold}{Numeric. Normalised Enrichment Score threshold for
+filtering significant motifs.}
 
-\item{max_rank}{Maximum rank to consider (typically nrow(rankings)).}
+\item{max_rank}{Integer. Maximum rank to consider for the recovery curves
+(at most \code{nrow(rankings)}).}
 
-\item{method}{Recovery curve calculation method: "approx" or "icistarget".}
+\item{method}{String. Recovery curve calculation method, one of
+\code{c("approx", "icistarget")}. Anything else falls back to \code{"approx"}.}
 
-\item{n_mean}{Number of points for averaging in approximate method.}
+\item{n_mean}{Integer. Window size for the smoothing in the approximate
+method.}
 
-\item{verbose}{Controls verbosity of the function.}
+\item{verbose}{Boolean. Report progress per decile of gene sets.}
 }
 \value{
-List of lists, one per gene set, each containing motif_idx, nes, auc,
-rank_at_max, n_enriched, and leading_edge.
+List of lists, one per gene set, each containing
+\itemize{
+\item motif_idx - 1-based column index of the motif in \code{rankings}.
+\item nes - Normalised enrichment score.
+\item auc - Area under the recovery curve.
+\item rank_at_max - Rank at which the leading edge is reached.
+\item n_enriched - Number of genes in the leading edge.
+\item leading_edge - List of 1-based row indices of the leading edge
+genes, one element per motif.
+}
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 Core Rust function for motif enrichment analysis using recovery curves.
+Gene sets are processed in parallel; only motifs with an NES at or above
+\code{nes_threshold} are returned.
 }

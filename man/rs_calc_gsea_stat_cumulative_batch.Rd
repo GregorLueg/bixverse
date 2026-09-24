@@ -15,7 +15,7 @@ rs_calc_gsea_stat_cumulative_batch(
 )
 }
 \arguments{
-\item{stats}{Numeric vector. The gene level statistic. Needs to
+\item{stats}{Numeric vector. The gene level statistic. Needs to be
 sorted in descending nature.}
 
 \item{pathway_scores}{Numeric vector. The enrichment scores for the
@@ -43,8 +43,8 @@ bigger or smaller than the permutation (pending sign).
 \item size Pathway size.
 }
 
-If \code{return_add_stats} is set to true, there is additional elements in the
-list:
+If \code{return_add_stats} is set to \code{TRUE}, there are additional elements in
+the list:
 \itemize{
 \item le_zero Number of times the permutation was less than zero.
 \item ge_zero Number of times the permutation was greater than zero.

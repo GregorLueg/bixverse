@@ -9,10 +9,11 @@ rs_vision(f_path, gs_list, cells_to_keep, streaming, verbose)
 \arguments{
 \item{f_path}{String. Path to the \code{counts_cells.bin} file.}
 
-\item{gs_list}{Nested list. Each sublist contains the (0-indexed!) positive
-and negative gene indices of that specific gene set.}
+\item{gs_list}{Nested list. Each sublist contains the (0-indexed!) \code{pos}
+and \code{neg} gene indices of that specific gene set.}
 
-\item{cells_to_keep}{Integer. Vector of indices of the cells to keep.}
+\item{cells_to_keep}{Integer. Vector of indices (0-indexed) of the cells to
+keep.}
 
 \item{streaming}{Boolean. Shall the data be streamed.}
 

@@ -12,7 +12,7 @@ rs_scenic_gene_filter(f_path_genes, cell_indices, scenic_params, verbose)
 \item{cell_indices}{Integer vector. 0-indexed(!) positions of cells to
 include in the analysis}
 
-\item{scenic_params}{Named list. Contains all of the parameters need for
+\item{scenic_params}{Named list. Contains all of the parameters needed for
 SCENIC.}
 
 \item{verbose}{Integer. \code{0L} - quiet; \code{1L} - normal verbosity; \code{2L} -

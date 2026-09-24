@@ -286,9 +286,13 @@ Networks come from outside bixverse. `genewalkR` is one source.
 
 ## Batch metrics
 
-`calculate_kbet_sc()`, `calculate_batch_asw_sc()`, `calculate_batch_lisi_sc()`.
-Run them on the uncorrected embedding first so you have a baseline, otherwise
-the numbers mean nothing.
+Batch mixing: `calculate_kbet_sc()`, `calculate_batch_asw_sc()`,
+`calculate_lisi_sc()` (iLISI), `calculate_pcr_sc()`. Bio conservation, with a
+cell type column: `calculate_lisi_sc(type = "cell_type")` (cLISI),
+`calculate_cell_type_asw_sc()`, `calculate_graph_connectivity_sc()`.
+`calculate_integration_metrics_sc()` runs all of them and returns one
+scIB-style row, higher is better throughout. Run them on the uncorrected
+embedding first so you have a baseline, otherwise the numbers mean nothing.
 
 ## Plot data extractors
 
@@ -321,9 +325,11 @@ The important structural difference: unlike `SingleCells`, a `MetaCells` object
 DuckDB. It shares `ScCache` and dispatches through the `ScOrMc` S7 union, so the
 familiar generics work on it directly: `find_hvg_sc()`, `calculate_pca_sc()`,
 `find_neighbours_sc()`, `find_clusters_sc()`, `umap_sc()`, `aucell_sc()`,
-`vision_sc()`, `vision_w_autocor_sc()`, `dialogue_sc()`.
+`vision_sc()`, `vision_w_autocor_sc()`, `dialogue_sc()`, `fit_residuals_sc()`.
 `find_hvg_sc()` ignores `streaming` there and `calculate_pca_sc()` ignores
-`sparse_svd`, since neither applies to an in-memory object.
+`sparse_svd`, since neither applies to an in-memory object. For residuals on
+metacells prefer `method = "analytic_pearson"`; the `params_sc_sctransform()`
+subsample defaults are sized for raw cells.
 
 Metacell-specific:
 

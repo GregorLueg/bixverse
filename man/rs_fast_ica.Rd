@@ -12,8 +12,8 @@ rs_fast_ica(whiten, w_init, ica_type, ica_params)
 \item{w_init}{Numerical matrix. The initial unmixing matrix. ncols need to
 be equal to nrows of whiten.}
 
-\item{ica_type}{String. One of 'logcosh' or 'exp'. If weird string is
-provided, it will default to \code{"logcosh"}.}
+\item{ica_type}{String. One of \code{c("logcosh", "exp")}. Any other string
+defaults to \code{"logcosh"}.}
 
 \item{ica_params}{A list containing:
 \itemize{
@@ -31,11 +31,12 @@ are used.}
 A list with the following items:
 \itemize{
 \item mixing - The mixing matrix for subsequent usage.
-\item converged - Boolean if the algorithm converged.
+\item converged - Boolean. Did the best tolerance reached fall below
+\code{max_tol}.
 }
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 This function serves as a wrapper over the fast ICA implementations in Rust.
-It assumes a whitened matrix and also an intialised w_init.
+It assumes a whitened matrix and also an initialised w_init.
 }

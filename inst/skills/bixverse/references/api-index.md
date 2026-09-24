@@ -137,6 +137,7 @@ Methods to help out with differential gene expression analyses in a structured w
 - `run_edger_ql`: Run the edgeR quasi-likelihood workflow
 - `pseudobulk_dge_sc`: Run the edgeR quasi-likelihood workflow on pseudo-bulked single cells
 - `params_edger_ql`: Wrapper function for parameters for the edgeR quasi-likelihood workflow
+- `params_limma_voom`: Wrapper function for parameters for the limma-voom workflow
 - `hedges_g_dge`: Calculate the effect size
 - `get_dge_effect_sizes`: Return the effect size results
 - `get_dge_limma_voom`: Return the Limma Voom results
@@ -329,6 +330,7 @@ Helpers to process single cell data. Doublet detection, proportions of gene sets
 - `doublet_detection_boost_sc`: Doublet detection with boosted doublet classification
 - `scdblfinder_sc`: Run scDblFinder doublet detection on a SingleCells object
 - `gene_set_proportions_sc`: Calculate the proportions of reads for specific gene sets
+- `cellsweep_sc`: Remove ambient and bulk contamination with CellSweep
 - `per_cell_qc_outlier`: Use MAD outlier detection on per-cell QC metrics
 - `run_cell_qc`: Run outlier detection on per-cell QC metrics
 - `run_cell_qc_fixed`: Fixed-threshold cell QC
@@ -338,15 +340,24 @@ Helpers to process single cell data. Doublet detection, proportions of gene sets
 - `find_hvg_batch_aware_sc`: Identify HVGs (batch aware)
 - `get_hvg_data_sc`: Identify HVGs without mutating object state
 - `calculate_pca_sc`: Run PCA for single cell
+- `fit_residuals_sc`: Fit a residual model for single cell data
+- `sct_corrected_counts_sc`: Write scTransform-corrected counts to a new store
+- `get_residual_fit`: Get the fitted residual model
+- `set_residual_fit`: Set/add the fitted residual model
+- `remove_residual_fit`: Remove the fitted residual model
 - `generate_sc_knn`: Generate a new SingleCellNearestNeighbour from data
 - `find_neighbours_sc`: Find the neighbours for single cell.
 - `run_magic_sc`: Impute a subset of genes with MAGIC
 - `top_genes_perc_sc`: Calculate the proportions of reads for the Top N genes
 - `params_sc_magic`: Wrapper function for MAGIC imputation parameters
+- `params_sc_cellsweep`: Default parameters for CellSweep denoising
+- `params_sc_empty_droplets`: Parameters for identifying empty droplets
 - `params_norm_doublets_defaults`: Helper function to generate normalisation defaults for doublet detection.
 - `params_boost`: Wrapper function for Boost parameters
 - `params_sc_hvg`: Wrapper function for HVG detection parameters.
 - `params_sc_pca`: Wrapper for PCA specifically designed for single cells
+- `params_sc_sctransform`: Wrapper function for scTransform (v2) parameters
+- `params_sc_apr`: Wrapper function for analytic Pearson residual parameters
 - `params_scrublet`: Wrapper function for Scrublet doublet detection parameters
 - `params_sc_fast_cluster`: Fast single cell clustering parameters
 - `params_sc_neighbours`: Wrapper function for parameters for neighbour identification in single cell
@@ -370,7 +381,11 @@ Batch correction methods and metrics for single cell
 - `seurat_rpca_sc`: Run Seurat rPCA integration
 - `calculate_kbet_sc`: Calculate kBET scores
 - `calculate_batch_asw_sc`: Calculate batch average silhouette width
-- `calculate_batch_lisi_sc`: Calculate batch LISI scores
+- `calculate_lisi_sc`: Calculate LISI scores (iLISI or cLISI)
+- `calculate_pcr_sc`: Calculate the principal component regression on batch
+- `calculate_cell_type_asw_sc`: Calculate cell type average silhouette width
+- `calculate_graph_connectivity_sc`: Calculate the graph connectivity per cell type
+- `calculate_integration_metrics_sc`: Calculate a summary of integration metrics
 - `params_sc_fastmnn`: Wrapper function for the fastMNN parameters
 - `params_sc_harmony`: Default parameters for Harmony batch correction
 - `params_sc_harmony_v2`: Default parameters for Harmony v2 batch correction
@@ -568,17 +583,21 @@ Functions and helpers to download or generate synthetic data.
 - `download_pbmc_batches`: Download two different PBMC data sets for batch correction testing
 - `download_pbmc_totalseq_data`: Download the PBMC TotalSeq data with ADT counts
 - `download_pbmc8k`: Download PBMC8K data from Zenodo
+- `download_pbmc_1k_5p`: Download the raw PBMC 1k 5' matrix from 10x Genomics
 - `calculate_sparsity_stats`: Helper function to calculate the induced sparsity
 - `demo_single_cells`: Ready-made SingleCells object for examples and tests
 - `generate_gene_module_data`: Generates synthetic gene module data.
 - `generate_single_cell_test_data`: Single cell test data
 - `generate_dialogue_test_data`: Single cell test data with a planted multicellular programme
+- `generate_cellsweep_test_data`: Single cell test data with a planted ambient profile
 - `cell_cycle_genes`: Cell cycle genes
 - `write_cellranger_output`: Helper function to write data to a cell ranger like output
 - `write_h5ad_sc`: Helper function to write data to h5ad format
 - `write_h5ad_sc_dense`: Helper function to write data to a dense h5ad file
 - `params_sc_synthetic_data`: Default parameters for generation of synthetic single cell data (RNA)
+- `params_sc_synthetic_data_adt`: Default parameters for generation of synthetic single cell data (ADT)
 - `params_sc_synthetic_dialogue`: Default parameters for generation of synthetic DIALOGUE data
+- `params_sc_synthetic_cellsweep`: Default parameters for generation of synthetic CellSweep data
 - `params_synthetic_bulk_rnaseq`: Wrapper function to generate synthetic bulk RNAseq parameters
 - `params_bulk_sparsity`: Wrapper function to generate bulk sparsification parameters
 - `synthetic_signal_matrix`: Generates a simple synthetic, pseudo gene expression matrix
@@ -603,7 +622,7 @@ All types of other random helpers without a clear pattern
 
 Everything Rusty - only use this if you know what you are doing... Maybe useful for your own package? Use with care and read the documentation! The ones exposed here are general enough to be useful in other packages. There is a lot more under the hood...
 
-98 `rs_*` functions are exposed here. They are the raw extendr bindings with no input validation. Use the R wrapper instead; only reach for these if you are building on top of bixverse and know exactly what you are doing.
+110 `rs_*` functions are exposed here. They are the raw extendr bindings with no input validation. Use the R wrapper instead; only reach for these if you are building on top of bixverse and know exactly what you are doing.
 
 ## Not on the package website
 
@@ -653,7 +672,6 @@ Exported but absent from `_pkgdown.yml`. Mostly internal constructors and `rs_*`
 - `new_scenic_grn`: Constructor for SCENIC GRN results
 - `new_stabilised_nmf_result`: Constructor for stabilised (multi-run) NMF results
 - `ontology`: Ontology class (deprecated)
-- `params_sc_synthetic_data_adt`: Default parameters for generation of synthetic single cell data (ADT)
 - `prep_data_gower_hamming_dist`: Transform data.tables into matrices for distance calculations
 - `rbh_graph`: Reciprocal best hit graph (deprecated)
 - `remove_knn`: Remove the KNN data
@@ -690,7 +708,7 @@ Exported but absent from `_pkgdown.yml`. Mostly internal constructors and `rs_*`
 - `rs_hotspot_cluster_genes`: Cluster the genes by Z-score together
 - `rs_hotspot_gene_cor`: Calculate gene to gene spatial correlations
 - `rs_importance_threshold`: SCENIC: Select TF-gene pairs by per-gene importance threshold
-- `rs_knn_mat_to_edge_pairs`: Flatten kNN matrix to edge list
+- `rs_knn_mat_to_edge_pairs`: Flatten kNN matrix to edge pairs
 - `rs_lda`: Fit a latent Dirichlet allocation model to a document-term matrix
 - `rs_lda_k_sweep`: Fit LDA across a range of topic counts and score each fit
 - `rs_magic_impute`: Impute a subset of genes with MAGIC
@@ -726,13 +744,18 @@ Exported but absent from `_pkgdown.yml`. Mostly internal constructors and `rs_*`
 - `rs_regulon_thresholds`: Derive the on/off threshold per regulon in Rust
 - `rs_sample_ids_for_cell_types`: Helper function to generate sample identifiers based on cells
 - `rs_sc_doublet_detection`: Detect Doublets via BoostClassifier (in Rust)
+- `rs_sc_fit_residuals`: Fits a residual model for single cell data
+- `rs_sc_gene_store_to_cell_store`: Rebuilds the cell-major companion of a gene-major store
 - `rs_sc_get_gene_set_perc`: Calculate the percentage of gene sets in the cells
 - `rs_sc_get_top_genes_perc`: Calculates the cumulative proportion of the top X genes
-- `rs_sc_hvg`: Calculate the percentage of gene sets in the cells
+- `rs_sc_hvg`: Calculate the highly variable genes
 - `rs_sc_hvg_batch_aware`: Calculate HVG per batch
+- `rs_sc_infer_empty_droplets`: Identify the empty droplets from the per-barcode library sizes
 - `rs_sc_otsu_method`: Run Otsu's method
 - `rs_sc_pca`: Calculates PCA for single cell
+- `rs_sc_pca_residuals`: Calculates PCA on Pearson residuals for single cell
 - `rs_sc_pca_sparse`: Calculates sparse PCA for single cell
+- `rs_sc_residual_variance`: Residual variance and the variable features it selects
 - `rs_sc_scdblfinder`: Run scDblFinder doublet detection
 - `rs_sc_scrublet`: Scrublet Rust interface
 - `rs_sc_type`: Run the ScType scoring approach
@@ -741,6 +764,7 @@ Exported but absent from `_pkgdown.yml`. Mostly internal constructors and `rs_*`
 - `rs_scenic_gene_filter`: Identifies genes to include into a SCENIC analysis
 - `rs_scenic_grn`: SCENIC: Generating gene-regulatory networks
 - `rs_scenic_grn_streaming`: SCENIC: Generating gene-regulatory networks (streaming version)
+- `rs_sct_corrected_counts`: Writes scTransform-corrected counts to a new store
 - `rs_seurat_cca`: Seurat CCA batch correction in Rust
 - `rs_seurat_rpca`: Seurat rPCA batch correction in Rust
 - `rs_simple_and_multi_err`: Calculates the simple and multi error for fgsea multi level
@@ -752,6 +776,7 @@ Exported but absent from `_pkgdown.yml`. Mostly internal constructors and `rs_*`
 - `rs_supercell`: Generate SuperCells.
 - `rs_symphony_map_query`: Map a query onto a Symphony reference (Rust)
 - `rs_synthetic_sc_adt_with_cell_types`: Generates synthetic ADT counts with defined cell types
+- `rs_synthetic_sc_cellsweep_data`: Generates synthetic single cell counts with a planted ambient profile
 - `rs_synthetic_sc_data_with_cell_types`: Generates synthetic data for single cell
 - `rs_synthetic_sc_dialogue_data`: Generates synthetic data with a planted multicellular programme
 - `rs_top_k_targets`: SCENIC: Select the Top TF <> Gene pairs
@@ -773,6 +798,5 @@ Exported but absent from `_pkgdown.yml`. Mostly internal constructors and `rs_*`
 - `SingleCellDuckDBBase`: Base class for the single cell DuckDB connection
 - `snf`: Similarity network fusion (deprecated)
 - `sparse_list_to_mat`: Helper function to transform the Rust-exported sparse matrices into R ones
-- `testSNFParams`: Check SNF parameters
 - `write_tenx_h5_sc`: Helper function to write data to a 10x CellRanger-style h5 file
 

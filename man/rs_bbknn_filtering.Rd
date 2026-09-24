@@ -16,11 +16,12 @@ rs_bbknn_filtering(indptr, indices, data, no_neighbours_to_keep)
 \item{no_neighbours_to_keep}{Integer. Number of nearest neighbours to keep.}
 }
 \value{
-A list with \code{indices} (integer matrix) and \code{dist} (numeric matrix),
-each with shape (n_cells, no_neighbours_to_keep). Positions without
-neighbours are filled with -1 (indices) or NaN (distances).
+A list with \code{indices} and \code{dist}, both numeric (double) matrices
+of shape (n_cells, no_neighbours_to_keep). Positions without neighbours
+are \code{NaN} in both.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+Keeps the first \code{no_neighbours_to_keep} stored entries of each CSR row.
 }
 \keyword{internal}

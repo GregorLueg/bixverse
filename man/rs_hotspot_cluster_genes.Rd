@@ -7,17 +7,23 @@
 rs_hotspot_cluster_genes(z_matrix, fdr_threshold, min_size)
 }
 \arguments{
-\item{z_matrix}{Numerical matrix representing the Z-scores.}
+\item{z_matrix}{Numerical matrix. Symmetric gene x gene Z-scores with a
+zero diagonal, as returned by \code{\link[=rs_hotspot_gene_cor]{rs_hotspot_gene_cor()}}. Must be
+finite.}
 
-\item{fdr_threshold}{Float. The FDR thresholds in terms of the Z-scores.}
+\item{fdr_threshold}{Float. BH level at which a pair Z-score counts as
+significant.}
 
-\item{min_size}{Integer. Minimum cluster size.}
+\item{min_size}{Integer. Minimum number of genes per module.}
 }
 \value{
-An assignment vector. NA indicates that the gene did not pass the
+Numeric vector with one module label per gene, 0-indexed and
+numbered densely. \code{NaN} indicates that the gene did not pass the
 thresholds and has not been assigned.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+Builds an average-linkage dendrogram over the pair Z-scores and assigns
+modules as HotSpot's \code{compute_modules} does.
 }
 \keyword{internal}
